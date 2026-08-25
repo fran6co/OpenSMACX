@@ -3054,7 +3054,7 @@ int Buffer::write_right_l(char * a1, int a2, int a3, int a4, int a5) {
 }
 
 // Fixed-slot bindings carried from 005d8290.cpp
-static int *const g_00696d14 = (int *)0x00696D14;
+static int *const WinFillColour = (int *)0x00696D14;
 static int *const g_009b3a54 = (int *)0x009B3A54;
 static int *const g_009b3a58 = (int *)0x009B3A58;
 static int *const g_009b3a5c = (int *)0x009B3A5C;
@@ -3082,7 +3082,7 @@ void Buffer::setup_buff_sprite(int a1) {
         return;
     }
     if (a1 == -1) {
-        a1 = *(unsigned char *)g_00696d14;
+        a1 = *(unsigned char *)WinFillColour;
     }
     int val54 = *(int *)(self + 0x54);
     *(int *)(self + 0x50) = val54;
@@ -3121,5 +3121,115 @@ void Buffer::setup_buff_sprite(int a1) {
         *(int *)(self + 0x50) = 0;
         *field6c = 0;
     }
+}
+
+// DirectDraw surface vtable slots 0x19 (Lock) and 0x20 (Unlock), reached the
+// way win.cpp reaches its own: an explicit index through the interface's
+// vtable. A `VCall` shim would say the same thing in bytes and cost the
+// compiler-work ratchet a site for a call that is not a C++ virtual at all.
+typedef int(__stdcall *DDLockFn)(void *, void *, void *, int, int);
+typedef int(__stdcall *DDUnlockFn)(void *, int);
+
+/*
+Purpose: One pixel out of the surface, for the pixel-precise hit test in
+         get_mouse_window_recurse. HOMED from src/unrecovered/005e2210.cpp
+         on 2026-08-25 because homing that caller made this the last
+         undefined symbol in the link; 15 callers tree-wide.
+*/
+// ORIGINAL: 0x005E2210 ?get_pixel@Buffer@@QAEHHH@Z 0x005E2210-0x005E232E FILE
+// symbol    ?get_pixel@Buffer@@QAEHHH@Z
+// size      286 bytes
+// prototype int (__thiscall ?get_pixel@Buffer@@QAEHHH@Z)(Buffer* this, int, int)
+// callers   15   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+int Buffer::get_pixel(int a1, int a2) {
+    char *self = reinterpret_cast<char *>(this);
+    unsigned char desc[0x6c];
+    int localHandle;
+    unsigned char *pixelPtr;
+    int lockResult;
+    int **sub;
+    int count;
+
+    int handleVal = *reinterpret_cast<int *>(self + 0x54);
+    if ((handleVal == 0) && (*reinterpret_cast<int *>(self + 0x58) == 0)) {
+        return 0;
+    }
+    if (a1 < 0) {
+        return 0;
+    }
+    if (a2 < 0) {
+        return 0;
+    }
+    if (*reinterpret_cast<int *>(self + 0x80) <= a1) {
+        return 0;
+    }
+    if (-*reinterpret_cast<int *>(self + 0x84) <= a2) {
+        return 0;
+    }
+
+    sub = reinterpret_cast<int **>(self + 0x58);
+    if (*sub == 0) {
+        *reinterpret_cast<int *>(self + 0x50) = handleVal;
+        if (handleVal == 0) {
+            goto null_pixel;
+        }
+        *reinterpret_cast<int *>(self + 0x6c) = *reinterpret_cast<int *>(self + 0x6c) + 1;
+        localHandle = handleVal;
+        goto have_handle;
+    }
+
+    if (*reinterpret_cast<int *>(self + 0x50) == 0) {
+        *reinterpret_cast<int *>(desc) = 0x6c;
+        lockResult = (*reinterpret_cast<DDLockFn **>(*sub))[0x19](
+            reinterpret_cast<void *>(*sub), 0, desc, 1, 0);
+        if (lockResult != 0) {
+            goto null_pixel;
+        }
+        *reinterpret_cast<int *>(self + 0x4a8) = *reinterpret_cast<int *>(desc + 0xc);
+        *reinterpret_cast<int *>(self + 0x6c) = *reinterpret_cast<int *>(self + 0x6c) + 1;
+        *reinterpret_cast<int *>(self + 0x50) = *reinterpret_cast<int *>(desc + 0x20);
+    } else {
+        *reinterpret_cast<int *>(self + 0x6c) = *reinterpret_cast<int *>(self + 0x6c) + 1;
+    }
+    localHandle = *reinterpret_cast<int *>(self + 0x50);
+
+have_handle:
+    if (localHandle == 0) {
+        goto null_pixel;
+    }
+    pixelPtr = reinterpret_cast<unsigned char *>(
+        *reinterpret_cast<int *>(self + 0x4a8) * a2 + *reinterpret_cast<int *>(self + 0x50) + a1);
+    goto after_pixel;
+
+null_pixel:
+    pixelPtr = 0;
+
+after_pixel:
+    sub = reinterpret_cast<int **>(self + 0x58);
+    if (*sub == 0) {
+        count = *reinterpret_cast<int *>(self + 0x6c) - 1;
+        *reinterpret_cast<int *>(self + 0x6c) = count;
+        if (count > 0) {
+            goto done;
+        }
+    } else {
+        count = *reinterpret_cast<int *>(self + 0x6c) - 1;
+        *reinterpret_cast<int *>(self + 0x6c) = count;
+        if ((*reinterpret_cast<int *>(self + 0x50) == 0) || (count > 0)) {
+            goto done;
+        }
+        (*reinterpret_cast<DDUnlockFn **>(*sub))[0x20](
+            reinterpret_cast<void *>(*sub), *reinterpret_cast<int *>(self + 0x50));
+    }
+    *reinterpret_cast<int *>(self + 0x50) = 0;
+    *reinterpret_cast<int *>(self + 0x6c) = 0;
+
+done:
+    if (pixelPtr == 0) {
+        return 0;
+    }
+    return *pixelPtr;
 }
 

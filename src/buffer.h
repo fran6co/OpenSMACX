@@ -290,6 +290,12 @@ class Buffer {
   // the same reason as the rest of this block: the homed Win bodies call it,
   // and its own body is still an artifact. `Win::redraw_nc_buffer` and the
   // caption-button painters are the callers.
+  // Declared 2026-08-25 for get_mouse_window_recurse, homed into win.cpp:
+  // its pixel-precise hit test reads one pixel from each of a window's
+  // four render buffers and compares it against the transparent key.
+  // The body is not recovered yet - this is the declaration only.
+  int get_pixel(int x, int y);
+
   int draw(Buffer *source, int index, int x, int y, int flag_a, int flag_b);
   // Tile `source` across a destination rectangle. Declared here for the same
   // reason as `draw` above: the homed Win bodies paint with it and its own

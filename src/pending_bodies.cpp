@@ -1081,10 +1081,6 @@ void Dialogs::on_mouse_leave(int a1, int a2) {  // 0x00612AE0
     PENDING_BODY(0x00612AE0, pending)(this, nullptr, a1, a2);
 }
 
-void Dialogs::on_mouse_move(int a1, int a2) {  // 0x00612B80
-    typedef void(__fastcall *pending)(Dialogs *, void *, int, int);
-    PENDING_BODY(0x00612B80, pending)(this, nullptr, a1, a2);
-}
 
 void Dialogs::on_redraw() {  // 0x00612E00
     typedef void(__fastcall *pending)(Dialogs *, void *);
@@ -1427,31 +1423,18 @@ int __cdecl cd_check() {
 // src/win.cpp. These six are what its recovery still stands on, and the
 // first thing that faults if you move the mouse or press a key.
 //
-// ?recurse_zorder@@YAXPAUWin@@@Z at 0x005F4EC0
-void __cdecl recurse_zorder(Win *window) {
-    typedef void(__cdecl *pending)(Win *);
-    PENDING_BODY(0x005F4EC0, pending)(window);
-}
 
 
 
 // ?get_mouse_window_recurse@@YAHPAUWin@@PAHPAH@Z at 0x005F6AB0 - the tree walk
 // `get_mouse_window` delegates to, 1110 bytes.
-Win *__cdecl get_mouse_window_recurse(Win *window, int *x, int *y) {
-    typedef Win *(__cdecl *pending)(Win *, int *, int *);
-    return PENDING_BODY(0x005F6AB0, pending)(window, x, y);
-}
-
 
 
 // ?do_tracking@Win@@QAEXHH@Z at 0x005F7580 - the one __thiscall member of the
 
-// sub_5f86a0 at 0x005F86A0 - byte-exact in src/recovered/005f86a0.cpp, which
-// is in no build, so the edge is still pending here.
-extern "C" void __stdcall sub_5f86a0(int a1) {
-    typedef void(__stdcall *pending)(int);
-    PENDING_BODY(0x005F86A0, pending)(a1);
-}
+// sub_5f86a0 at 0x005F86A0 - homed from src/recovered/005f86a0.cpp into
+// win.cpp on 2026-08-25 and BYTE_EXACT in the build, so the forwarder
+// that used to stand here is gone and the edge is no longer pending.
 
 // ?trig_init@@YAHXZ at 0x0063B940
 int __cdecl trig_init() {
@@ -1599,20 +1582,6 @@ void Net::stop_voice() {
     PENDING_BODY(0x0062DFC0, pending)(this, nullptr);
 }
 
-extern "C" int __cdecl sub_5f1750(int a1) {
-    typedef int(__cdecl *pending)(int);
-    return PENDING_BODY(0x005F1750, pending)(a1);
-}
-
-extern "C" int __cdecl sub_5f8670() {
-    typedef int(__cdecl *pending)();
-    return PENDING_BODY(0x005F8670, pending)();
-}
-
-extern "C" int __cdecl sub_5f86c0(RECT *r, int a, int b, int c, int d) {
-    typedef int(__cdecl *pending)(RECT *, int, int, int, int);
-    return PENDING_BODY(0x005F86C0, pending)(r, a, b, c, d);
-}
 
 int Win::sub_63c7c0() {
     typedef int(__fastcall *pending)(Win *, void *);
@@ -1624,7 +1593,4 @@ void __cdecl wait_task() {
     PENDING_BODY(0x005FC700, pending)();
 }
 
-extern "C" void __cdecl do_all_chars() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x005FCFE0, pending)();
-}
+

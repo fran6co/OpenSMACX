@@ -19,8 +19,6 @@
 #include "net_class.h"
 #include "win_slots.h"
 #include "init_thunks.h"  // g_WIN_BUFFER, the 0x009B6F08 Buffer Win draws into
-extern "C" void __cdecl do_all_chars();
-extern "C" int __cdecl sub_5f86c0(RECT *, int, int, int, int);
 
 typedef signed char int8;  // a scaffold spelling the artifacts use
 #include "vtable_shim.h"
@@ -725,7 +723,7 @@ HINSTANCE WinInstance;     // 0x009B7B14
 int WinScreenWidth;        // 0x009B7B1C
 int WinScreenHeight;       // 0x009B7B20
 Win *WinTrackingWindow;    // 0x009B7AAC
-Win *WinHoverWindow;       // 0x009B7A7C
+Win *WinHoverWindow;      // 0x009B7A7C
 Win *WinPointerOwner1;     // 0x009B7ACC
 Win *WinPointerOwner2;     // 0x009B7AD0
 Win *WinPointerOwner3;     // 0x009B7ABC
@@ -1360,15 +1358,20 @@ void Win::set_def_focus(int focus) {
 /*
 Purpose: Publish a value into both attached scrollbars' first shared slot.
 // ORIGINAL: 0x005EE130 ?UNK8@Win@@QAEXH@Z 0x005EE130-0x005EE157 BYTE_EXACT
+// symbol    ?set_scroll_sprite@Win@@QAEXH@Z
+// notes     NAMED from its body and from popup.cpp:926, which assigns a
+//           Sprite * to the same Scroll::field_2144_ this method writes on
+//           both bars. The catalogue's UNK8 stays on the ORIGINAL line -
+//           that is the name the image was catalogued under.
 // size      39 bytes
-// prototype void (__thiscall ?UNK8@Win@@QAEXH@Z)(Win* this, int)
+// prototype void (__thiscall ?set_scroll_sprite@Win@@QAEXH@Z)(Win* this, int)
 // callers   0   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
 Status: Complete
 */
-void Win::UNK8(int value) {
+void Win::set_scroll_sprite(int value) {
     // Each scrollbar is optional and tested separately, so one attached bar
     // is still updated when the other is absent.
     if (scroll_vert_) {
@@ -2705,7 +2708,7 @@ static const char WinClassName[] = "JackalClass";
 // WRITTEN AGAINST THE REAL HEADERS. It used to reach every Win32 import
 // through a hand-written function-pointer typedef and its IAT slot address
 // - `(*(FnRegisterClassA *)g)(&wndclass)` - and every global
-// through `static int *const g_009b7b14 = (int *)0x009B7B14`. That is what
+// through `static int *const WinInstance = (int *)0x009B7B14`. That is what
 // a MEASUREMENT SCAFFOLD has to do, because a scaffold includes no
 // <windows.h> and declares no project header; this file is in the build and
 // has both. So the imports are called by name, `WNDCLASSA` is the real
@@ -3235,45 +3238,6 @@ int DDInit::report_error(int hr) {
 }
 
 namespace {
-// A second vtable shim, distinct from vtable_shim.h's own VCall: that one
-// fixes every slot to void(), which does not reproduce slot017/031's two
-// int arguments or slot023's int return. Only DECLARATION ORDER decides a
-// slot's offset, so the generous count before/after the ones this body
-// uses costs nothing.
-class VCallX { public:
-  virtual void slot000();
-  virtual void slot001();
-  virtual void slot002();
-  virtual void slot003();
-  virtual void slot004();
-  virtual void slot005();
-  virtual void slot006();
-  virtual void slot007();
-  virtual void slot008();
-  virtual void slot009();
-  virtual void slot010();
-  virtual void slot011();
-  virtual void slot012();
-  virtual void slot013();
-  virtual void slot014();
-  virtual void slot015();
-  virtual void slot016();
-  virtual void slot017(int, int);
-  virtual void slot018();
-  virtual void slot019();
-  virtual void slot020();
-  virtual void slot021();
-  virtual void slot022();
-  virtual int slot023();
-  virtual void slot024();
-  virtual void slot025();
-  virtual void slot026();
-  virtual void slot027();
-  virtual void slot028();
-  virtual void slot029();
-  virtual void slot030();
-  virtual void slot031(int, int);
-};
 }  // namespace
 
 /*
@@ -3296,23 +3260,25 @@ Purpose: Route a mouse-move event either to the primary handler chain (a4
 Return Value: n/a
 Status: Complete
 */
-void Win::on_mouse_move(int a1, int a2, unsigned int a3, int a4) {
+void Win::on_mouse_move(int x, int y, unsigned int keys, int from_parent) {
     char *const self = reinterpret_cast<char *>(this);
-    if ((*reinterpret_cast<uint32_t *>(self + 0x98) & 0x200000U) != 0) {
+    if ((iFlags_ & 0x200000U) != 0) {
         return;
     }
-    if ((*reinterpret_cast<uint8_t *>(self + 0x9C) & 8U) != 0) {
+    if ((iSomeFlag_ & 8U) != 0) {
         return;
     }
-    if (a4 == 0) {
+    if (from_parent == 0) {
         ScrollCurrentWin() = this;
         typedef void (__cdecl *MouseCallbackFn)(int, int);
+        // The member is uint32_t storage; these fields hold CALLBACKS, and
+        // the cast that used to sit on the raw offset now sits here.
         MouseCallbackFn const fn =
-            *reinterpret_cast<MouseCallbackFn *>(self + 0x408);
+            reinterpret_cast<MouseCallbackFn>(field_408_);
         if (fn != 0) {
-            fn(a1, a2);
+            fn(x, y);
         }
-        this->vslot_17(a1, a2);
+        this->vslot_17(x, y);
         Win *const child = *reinterpret_cast<Win **>(self + 0x1C);
         if (child != 0) {
             if (child->vslot_23() == 0) {
@@ -3320,7 +3286,7 @@ void Win::on_mouse_move(int a1, int a2, unsigned int a3, int a4) {
             }
         }
     } else {
-        this->vslot_31(a1, a2);
+        this->vslot_31(x, y);
         Win *const child = *reinterpret_cast<Win **>(self + 0x4C);
         if (child != 0) {
             if (child->vslot_23() == 0) {
@@ -3328,6 +3294,418 @@ void Win::on_mouse_move(int a1, int a2, unsigned int a3, int a4) {
             }
         }
     }
+}
+
+/*
+Purpose: Walk one root window's subtree in z-order, appending every visible
+         window to the z-order array. HOMED from src/recovered/units/
+         005f4ec0.cpp on 2026-08-25: it is a free function in Win's own
+         translation unit, twelve callers all live in win.cpp, and the
+         pending_bodies forwarder that stood in for it jumped to the raw
+         image address. It measures MISMATCH and is here for COVERAGE and
+         to retire that forwarder - the divergence travels with it rather
+         than being hidden in an archive the build never sees.
+*/
+// ORIGINAL: 0x005F4EC0 ?recurse_zorder@@YAXPAUWin@@@Z 0x005F4EC0-0x005F5013 FILE
+// symbol    ?recurse_zorder@@YAXPAVWin@@@Z
+// notes     PAV, not the catalogue's PAU: the catalogue guessed `struct
+//           Win`, the tree declares a class. Same function, and
+//           marker_symbols.py is the arbiter of which spelling the build
+//           actually emits.
+// size      339 bytes
+// callers   12   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F4EC0 0x005F7E90
+void __cdecl recurse_zorder(Win * a1) {
+    bool found = false;
+    int i = 0;
+    int cur;
+
+    if (a1->child_count_ > 0) {
+        cur = *WinHighlighted;
+        Win **child = &a1->children_[0];
+        do {
+            Win *c = *child;
+            if ((c->iFlags_ & 0x20) == 0) {
+                if (cur != 0 && cur == reinterpret_cast<int>(c)) {
+                    WinZOrderCount = 0;
+                    found = true;
+                }
+                if (c->iSomeFlag_ & 1) {
+                    int child_c4 = *reinterpret_cast<int *>(
+                        reinterpret_cast<char *>(c) + 0xc4);
+                    if (child_c4 == 0 ||
+                        reinterpret_cast<Win *>(child_c4)->is_visible() != 0) {
+                        recurse_zorder(c);
+                    }
+                    cur = *WinHighlighted;
+                }
+                if (cur != 0 && found) {
+                    break;
+                }
+            }
+            ++i;
+            ++child;
+        } while (i < a1->child_count_);
+    } else {
+        cur = *WinHighlighted;
+    }
+
+    if (!(cur != 0 && found)) {
+        i = 0;
+        if (a1->child_count_ > 0) {
+            Win **child = &a1->children_[0];
+            do {
+                Win *c = *child;
+                if (cur != 0 && cur == reinterpret_cast<int>(c)) {
+                    WinZOrderCount = 0;
+                    found = true;
+                }
+                if (a1->poWinBase_ == a1 &&
+                    (c->iFlags_ & 0x20)) {
+                    if (c->iSomeFlag_ & 1) {
+                        int child_c4 = *reinterpret_cast<int *>(
+                            reinterpret_cast<char *>(c) + 0xc4);
+                        if (child_c4 == 0 ||
+                            reinterpret_cast<Win *>(child_c4)->is_visible() != 0) {
+                            recurse_zorder(c);
+                        }
+                        cur = *WinHighlighted;
+                    }
+                }
+                if (cur != 0 && found) {
+                    break;
+                }
+                ++i;
+                ++child;
+            } while (i < a1->child_count_);
+        }
+    }
+
+    if (a1->iSomeFlag_ & 1) {
+        int a1_c4 = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 0xc4);
+        if (a1_c4 == 0 || reinterpret_cast<Win *>(a1_c4)->is_visible() != 0) {
+            int idx = WinZOrderCount;
+            reinterpret_cast<int *>(g_win_array)[idx] = reinterpret_cast<int>(a1);
+            WinZOrderCount = idx + 1;
+        }
+    }
+}
+
+
+
+/*
+Purpose: The tree walk `Win::get_mouse_window` delegates to once it has a
+         root - HOMED from src/unrecovered/005f6ab0.cpp on 2026-08-25 to
+         retire its pending_bodies forwarder, which jumped to the raw image
+         address while the real body sat in an archive the build never
+         compiled.
+*/
+// ORIGINAL: 0x005F6AB0 ?get_mouse_window_recurse@@YAHPAUWin@@PAHPAH@Z 0x005F6AB0-0x005F6F06 FILE
+// symbol    ?get_mouse_window_recurse@@YAPAVWin@@PAV1@PAH1@Z
+// notes     Differs from the catalogued name in both directions: PAV for
+//           the class the catalogue called a struct, and a Win* return
+//           where the catalogue says int (YAH). win.h has declared the
+//           Win* form since before this body was homed and all four
+//           callers use the result as a window.
+// size      1110 bytes
+// kind      game
+// Returns Win *, not the catalogue's `int` (YAH): win.h has declared it
+// that way since before this body was homed and every caller uses the
+// result as a window. The mangled name differs from the catalogue's for
+// exactly that reason; the body is unclaimed, so no claim rests on it.
+Win *__cdecl get_mouse_window_recurse(Win * a1, int * a2, int * a3) {
+    char *wc = reinterpret_cast<char *>(a1);
+    int savedX = 0, savedY = 0;
+    int i;
+
+    if ((*(unsigned char *)(wc + 0x9c) & 1) == 0) {
+        return 0;
+    }
+    {
+        Win *parent = *reinterpret_cast<Win **>(wc + 0xc4);
+        if (parent != 0 && !parent->is_visible()) {
+            return 0;
+        }
+    }
+
+    if ((*(unsigned char *)(wc + 0x98) & 0x20) == 0) {
+        savedX = *a2;
+        savedY = *a3;
+        *a2 = *WinMouseScreenXSaved;
+        *a3 = *WinMouseScreenYSaved;
+    }
+
+    {
+        int childCount = *reinterpret_cast<int *>(wc + 0x3fc);
+        Win **children = reinterpret_cast<Win **>(wc + 0x1a4);
+        for (i = 0; i < childCount; i++) {
+            Win *child = children[i];
+            if ((*reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(child) + 0x98) & 0x20) == 0) {
+                Win *r = get_mouse_window_recurse(child, a2, a3);
+                if (r != 0) return r;
+            }
+        }
+    }
+
+    if ((*(unsigned char *)(wc + 0x9c) & 2) == 0) {
+        goto alt_path;
+    }
+
+    if (!in_box(*a2, *a3, reinterpret_cast<RECT *>(wc + 0x14c))) {
+        goto tail;
+    }
+    *a2 -= *reinterpret_cast<int *>(wc + 0x14c);
+    *a3 -= *reinterpret_cast<int *>(wc + 0x150);
+
+    {
+        int childCount = *reinterpret_cast<int *>(wc + 0x3fc);
+        Win **children = reinterpret_cast<Win **>(wc + 0x1a4);
+        if (a1 == *reinterpret_cast<Win **>(wc + 0xa8)) {
+            for (i = 0; i < childCount; i++) {
+                Win *child = children[i];
+                unsigned int flags = *reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(child) + 0x98);
+                if ((flags & 0x8000) != 0 && (flags & 0x20) != 0) {
+                    Win *r = get_mouse_window_recurse(child, a2, a3);
+                    if (r != 0) return r;
+                }
+            }
+        }
+    }
+
+    if (!in_box(*a2, *a3, reinterpret_cast<RECT *>(wc + 0x13c))) {
+        // pixel-precise hit test against one of the window's four render buffers
+        unsigned char key = *reinterpret_cast<unsigned char *>(WinFillColour);
+        unsigned int flagsHere;
+        int threshold1, threshold2;
+        unsigned int pixel;
+        Buffer *buf;
+        bool hit;
+
+        int slotResult = reinterpret_cast<Win *>(wc)->vslot_61();
+        flagsHere = *reinterpret_cast<unsigned int *>(wc + 0x98);
+        if (slotResult == 0 || (flagsHere & 0x10000000) == 0) {
+            *WinDoubleClickFlag = 1;
+            return a1;
+        }
+
+        threshold1 = ((flagsHere & 0x10) == 0 || (flagsHere & 0x400000) != 0)
+                         ? *reinterpret_cast<int *>(wc + 0x118)
+                         : *reinterpret_cast<int *>(wc + 0x114);
+        threshold2 = (*reinterpret_cast<int *>(wc + 0x11c) != -1)
+                              ? *reinterpret_cast<int *>(wc + 0x11c)
+                              : *reinterpret_cast<int *>(wc + 0x118);
+
+        if (*a3 < threshold1) {
+            buf = *reinterpret_cast<Buffer **>(wc + 0xb4);
+            pixel = (unsigned int)buf->get_pixel(*a2, *a3);
+            hit = (pixel != key);
+        } else if (*reinterpret_cast<int *>(wc + 0x158) - *reinterpret_cast<int *>(wc + 0x150) - threshold2 < *a3) {
+            buf = *reinterpret_cast<Buffer **>(wc + 0xc0);
+            pixel = (unsigned int)buf->get_pixel(*a2, (*reinterpret_cast<int *>(wc + 0x150) - *reinterpret_cast<int *>(wc + 0x158)) + *a3 + threshold2);
+            hit = (pixel != key);
+        } else if (*a2 < *reinterpret_cast<int *>(wc + 0x118)) {
+            buf = *reinterpret_cast<Buffer **>(wc + 0xbc);
+            pixel = (unsigned int)buf->get_pixel(*a2, *a3 - threshold1);
+            hit = (pixel != key);
+        } else {
+            buf = *reinterpret_cast<Buffer **>(wc + 0xb8);
+            pixel = (unsigned int)buf->get_pixel((*reinterpret_cast<int *>(wc + 0x154) - *reinterpret_cast<int *>(wc + 0x14c)) + *reinterpret_cast<int *>(wc + 0x118) + *a2, *a3 - threshold1);
+            hit = (pixel != key);
+        }
+
+        if (hit) {
+            *WinDoubleClickFlag = 1;
+            return a1;
+        }
+        *a2 += *reinterpret_cast<int *>(wc + 0x14c);
+        *a3 += *reinterpret_cast<int *>(wc + 0x150);
+        goto tail;
+    }
+
+    *a2 += *reinterpret_cast<int *>(wc + 0x14c);
+    *a3 += *reinterpret_cast<int *>(wc + 0x150);
+    return a1;
+
+alt_path:
+    if (!in_box(*a2, *a3, reinterpret_cast<RECT *>(wc + 0x13c))) {
+        goto tail;
+    }
+    *a2 -= *reinterpret_cast<int *>(wc + 0x13c);
+    *a3 -= *reinterpret_cast<int *>(wc + 0x140);
+    *WinDoubleClickFlag = 0;
+
+    {
+        int childCount = *reinterpret_cast<int *>(wc + 0x3fc);
+        Win **children = reinterpret_cast<Win **>(wc + 0x1a4);
+        if (a1 == *reinterpret_cast<Win **>(wc + 0xa8)) {
+            for (i = 0; i < childCount; i++) {
+                Win *child = children[i];
+                unsigned int flags = *reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(child) + 0x98);
+                if ((flags & 0x8000) == 0 && (flags & 0x20) != 0) {
+                    Win *r = get_mouse_window_recurse(child, a2, a3);
+                    if (r != 0) return r;
+                }
+            }
+        }
+    }
+
+    if ((*(unsigned char *)(wc + 0x98) & 2) == 0) {
+        int slotResult = reinterpret_cast<Win *>(wc)->vslot_61();
+        unsigned int flagsHere = *reinterpret_cast<unsigned int *>(wc + 0x98);
+        if (slotResult == 0 || (flagsHere & 0x1000000) == 0 || (*(unsigned char *)(wc + 0x99) & 1) != 0) {
+            return a1;
+        }
+        {
+            Buffer *buf = reinterpret_cast<Buffer *>(wc + 0x444);
+            unsigned char pixel = (unsigned char)buf->get_pixel(*a2, *a3);
+            if (pixel != *reinterpret_cast<unsigned char *>(WinFillColour)) {
+                if (*reinterpret_cast<int *>(wc + 0xa0) == 0) {
+                    return a1;
+                }
+                if (pixel != 0) {
+                    return a1;
+                }
+            }
+        }
+    }
+
+tail:
+    if ((*(unsigned char *)(wc + 0x98) & 0x20) == 0) {
+        *a2 = savedX;
+        *a3 = savedY;
+    }
+    return 0;
+}
+
+
+/*
+Purpose: Restore the saved screen area and union its rectangle into the
+         dirty region. HOMED from src/unrecovered/005f1750.cpp on
+         2026-08-25 to retire its pending_bodies forwarder; its globals are
+         win.cpp's own, renamed on the way in rather than re-imported as
+         addresses.
+*/
+// ORIGINAL: 0x005F1750 sub_5f1750 0x005F1750-0x005F1812 FILE
+// size      194 bytes
+// kind      game
+void __cdecl sub_5f1750(int a1) {
+    if (*WinSavedFocus != 0) {
+        g_WIN_BUFFER->copy(
+            (&ScreenBuffer), 0, 0,
+            *WinClipLeft, *WinClipTop, *WinClipWidth, *WinClipHeight);
+        int x = *WinClipLeft;
+        int y = *WinClipTop;
+        RECT local;
+        local.right = x + *WinClipWidth;
+        local.left = x;
+        local.bottom = y + *WinClipHeight;
+        local.top = y;
+        UnionRect(reinterpret_cast<RECT *>(WinDirtyRect),
+                  reinterpret_cast<RECT *>(WinDirtyRect), &local);
+        if (a1 != 0) {
+            int saved = *WinSavedFocus;
+            *WinSavedFocus = 0;
+            // Win::flip is a STATIC member (win.h:211), so the image's
+            // single RECT push with no ecx setup IS this call - which is
+            // what the artifact's invented `win_flip_stub` was standing in
+            // for. No stub and no forwarder needed.
+            Win::flip(reinterpret_cast<RECT *>(WinDirtyRect));
+            *WinSavedFocus = saved;
+            *WinDirtyRect = 0;
+            *WinModalResult = 0;
+        }
+    }
+}
+
+
+/*
+Purpose: Run the teardown step for the given instance, but only while it is
+         still the current one - the timer callback Win::sub_63c340 hands to
+         Time::start. HOMED from src/recovered/0063c4e0.cpp on 2026-08-25.
+         The artifact needed a one-method `S_0063C7C0` shim because its
+         callee is __thiscall and nothing declared it; Win::sub_63c7c0 is a
+         real member now, so the shim is gone and the receiver comes from
+         the class.
+*/
+// ORIGINAL: 0x0063C4E0 sub_63c4e0 0x0063C4E0-0x0063C4F6 BYTE_EXACT
+// symbol    ?sub_63c4e0@@YAXH@Z
+// size      22 bytes
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// TRIED: forwarding `a1` as an ordinary cdecl argument puts it in eax and
+// tops out at MNEMONIC_ONLY - seven mnemonics agreeing, one register wrong -
+// across eight source shapes. Only phrasing the tail call as a member on
+// `a1` reproduces ecx.
+void __cdecl sub_63c4e0(int a1) {
+    if (a1 != 0 && WinFocusWindow == reinterpret_cast<Win *>(a1)) {
+        reinterpret_cast<Win *>(a1)->sub_63c7c0();
+    }
+}
+
+/*
+Purpose: Close one window through its vtable, but only when it reports it
+         is not already closing. HOMED from src/recovered/005f86a0.cpp on
+         2026-08-25; the artifact needed a `GateVCall` shim class because
+         win.h declared no virtuals, and slots 23 and 7 are ordinary
+         declared members now.
+*/
+// ORIGINAL: 0x005F86A0 sub_5f86a0 0x005F86A0-0x005F86BF BYTE_EXACT
+// symbol    ?sub_5f86a0@@YGXH@Z
+// size      32 bytes
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+void __stdcall sub_5f86a0(int a1) {
+    Win *const self = reinterpret_cast<Win *>(a1);
+    if (self != 0) {
+        if (self->vslot_23() == 0) {
+            self->vslot_07();
+        }
+    }
+}
+
+/*
+Purpose: Drain every pending WM_CHAR, pumping video and net between polls.
+         HOMED from src/recovered/005fcfe0.cpp on 2026-08-25. Its three
+         USER32 entry points came from tools/iat_names.py - the PE import
+         table names them exactly - and 0x009B7B9C is temp.cpp's MsgStatus.
+*/
+// ORIGINAL: 0x005FCFE0 ?do_all_chars@@YAXXZ 0x005FCFE0-0x005FD04B BYTE_EXACT
+// symbol    ?do_all_chars@@YAXXZ
+// size      108 bytes
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+void __cdecl do_all_chars() {
+    typedef int(__stdcall * PeekMessageFn)(void *, void *, unsigned, unsigned,
+                                           unsigned);
+    typedef int(__stdcall * TranslateMessageFn)(void *);
+    typedef int(__stdcall * DispatchMessageFn)(void *);
+    int msg[7];
+
+    MsgStatus = 4;
+
+    TranslateMessageFn translate =
+        *reinterpret_cast<TranslateMessageFn *>(g_TranslateMessage);
+    PeekMessageFn peek = *reinterpret_cast<PeekMessageFn *>(g_PeekMessageA);
+    DispatchMessageFn dispatch =
+        *reinterpret_cast<DispatchMessageFn *>(g_DispatchMessageA);
+
+    int has_message;
+    do {
+        do_video();
+        check_net();
+        has_message = peek(msg, 0, 0x102, 0x102, 1);
+        if (has_message) {
+            translate(msg);
+            dispatch(msg);
+        }
+    } while (has_message);
+
+    MsgStatus = 0;
+    do_net();
 }
 
 /*
@@ -3423,8 +3801,7 @@ void Win::get_mouse_pos(int * a1, int * a2) {
 // calls     0x00644EF2
 
 void Win::remove_parent_dialog() {
-    char *self = reinterpret_cast<char *>(this);
-    int parent = *reinterpret_cast<int *>(self + 0xc4);
+    Win *parent = win_parent_;
     if (parent != 0 && *reinterpret_cast<int *>(parent + 0xcc) != 0) {
         int counter = 0;
         if (*reinterpret_cast<int *>(parent + 0xd4) > 0) {
@@ -3561,7 +3938,7 @@ int Win::UNK2(int a1) {
 // calls     0x005ECDC0
 
 int Win::UNK4() {
-    Win *w = *reinterpret_cast<Win **>(g_009b7ae0);
+    Win *w = WinFocusWindow;
     if (w == 0 || w == this) {
         return 1;
     }
@@ -3702,38 +4079,38 @@ void Win::nonclient_to_screen(RECT * a1) {
 // working copy - scaffold materialised by --work
 
 void Win::release_modal() {
-    int count = *g_009b7ae4;
+    int count = *WinModalDepth;
     if (count != 0) {
         int last = count - 1;
-        *g_009b7ae4 = last;
-        int *top_ptr = &g_009b6ef8[last];
-        if (*top_ptr == (int)this) {
-            *top_ptr = 0;
-            g_009b7a1c[last] = 0;
+        *WinModalDepth = last;
+        Win **top_ptr = &WinModalStack[last];
+        if (*top_ptr == this) {
+            *top_ptr = nullptr;
+            WinFocusStack[last] = 0;
             if (0 < last) {
-                *g_009b7adc = g_009b7a1c[last - 1];
-                *g_009b7ae0 = top_ptr[-1];
+                *WinFocusTop = WinFocusStack[last - 1];
+                WinFocusWindow = top_ptr[-1];
                 return;
             }
-            *g_009b7ae0 = 0;
+            WinFocusWindow = nullptr;
         } else {
             int i = 0;
             if (0 < last) {
-                int *p = g_009b6ef8;
+                Win **p = WinModalStack;
                 do {
-                    if (*p == (int)this) break;
+                    if (*p == this) break;
                     i = i + 1;
                     p = p + 1;
                 } while (i < last);
             }
             if (i == last) {
-                *g_009b7ae4 = last + 1;
+                *WinModalDepth = last + 1;
                 return;
             }
             if (i < last) {
                 do {
-                    g_009b6ef8[i] = g_009b6efc[i];
-                    g_009b7a1c[i] = g_009b7a20[i];
+                    WinModalStack[i] = WinModalStack[i + 1];
+                    WinFocusStack[i] = WinFocusStack[i + 1];
                     i = i + 1;
                 } while (i < last);
                 return;
@@ -3787,7 +4164,7 @@ void Win::release_modal() {
 // emitter computes declarations; it does not carry lessons.
 
 
-void Win::on_paint(RECT * a1) {
+void Win::on_paint(RECT * area) {
     int val = 0;
 }
 
@@ -3802,36 +4179,36 @@ void Win::on_paint(RECT * a1) {
 // calls     (none)
 
 
-int Win::on_nc_hittest(int a1, int a2) {
+int Win::on_nc_hittest(int x, int y) {
   if (iSomeFlag_ & 2) {
     int iVar1 = field_170_;
-    if (a1 < iVar1) {
-      if (a2 < iVar1) {
+    if (x < iVar1) {
+      if (y < iVar1) {
         return 0xd;
       }
-      if (client_rect_.bottom - client_rect_.top - iVar1 < a2) {
+      if (client_rect_.bottom - client_rect_.top - iVar1 < y) {
         return 0x10;
       }
     }
     int iVar2 = client_rect_.right - client_rect_.left - iVar1;
-    if (iVar2 < a1) {
-      if (a2 < iVar1) {
+    if (iVar2 < x) {
+      if (y < iVar1) {
         return 0xe;
       }
-      if (client_rect_.bottom - client_rect_.top - iVar1 < a2) {
+      if (client_rect_.bottom - client_rect_.top - iVar1 < y) {
         return 0x11;
       }
     }
-    if (a1 < iVar1) {
+    if (x < iVar1) {
       return 0xa;
     }
-    if (a2 < iVar1) {
+    if (y < iVar1) {
       return 0xc;
     }
-    if (iVar2 < a1) {
+    if (iVar2 < x) {
       return 0xb;
     }
-    if (client_rect_.bottom - client_rect_.top - iVar1 < a2) {
+    if (client_rect_.bottom - client_rect_.top - iVar1 < y) {
       return 0xf;
     }
   }
@@ -3839,7 +4216,7 @@ int Win::on_nc_hittest(int a1, int a2) {
     if (iFlags_ & 1) {
       return 2;
     }
-  } else if (field_16C_ != 0 && a2 < (int)field_16C_) {
+  } else if (field_16C_ != 0 && y < (int)field_16C_) {
     return 2;
   }
   return 0;
@@ -4183,71 +4560,7 @@ bool __cdecl Win::OnPaint(void * a1) {
     return endPaint(a1, &ps) != 0;
 }
 
-// Helper shims the artifacts carried, one copy each, ahead of first use.
-class ButtonUpVCall { public: virtual void slot082(void *, int, int, int); };
 
-class HideVCall {
- public:
-  virtual void slot000();
-  virtual void slot001();
-  virtual void slot002();
-  virtual void slot003();
-  virtual void slot004();  // <-- used, void
-  virtual void slot005();
-  virtual void slot006();
-  virtual void slot007();  // <-- used, void
-  virtual void slot008();
-  virtual void slot009();
-  virtual void slot010();
-  virtual void slot011();
-  virtual void slot012();
-  virtual void slot013();
-  virtual void slot014();
-  virtual void slot015();
-  virtual void slot016();
-  virtual void slot017();
-  virtual void slot018();
-  virtual void slot019();
-  virtual void slot020();
-  virtual void slot021();
-  virtual void slot022();
-  virtual int slot023();  // <-- used, returns int (tested with `test eax,eax`)
-  virtual void slot024();
-  virtual void slot025();
-  virtual void slot026();
-  virtual void slot027();
-  virtual void slot028();
-  virtual void slot029();
-  virtual void slot030();
-  virtual void slot031();
-  virtual void slot032();
-  virtual void slot033();
-  virtual void slot034();
-  virtual void slot035();
-  virtual void slot036();
-  virtual void slot037();
-  virtual void slot038();
-  virtual void slot039();
-  virtual void slot040();
-  virtual void slot041();
-  virtual void slot042();
-  virtual void slot043();
-  virtual void slot044();
-  virtual void slot045();
-  virtual void slot046();
-  virtual void slot047();
-  virtual void slot048();
-  virtual void slot049();
-  virtual void slot050();
-  virtual void slot051();
-  virtual void slot052();
-  virtual void slot053();
-  virtual void slot054();
-  virtual void slot055();
-  virtual void slot056();
-  virtual void slot057();
-  virtual void slot058();  // <-- used, void
-};
 
 struct LocalLogPen {
     unsigned int style;
@@ -4362,32 +4675,6 @@ struct MsgT {
     long pt_y;
 };
 
-class MyVCall { public:
-    virtual void slot000();
-    virtual void slot001();
-    virtual void slot002();
-    virtual void slot003();
-    virtual void slot004();
-    virtual void slot005();
-    virtual void slot006();
-    virtual void slot007();
-    virtual void slot008();
-    virtual void slot009();
-    virtual void slot010();
-    virtual void slot011();
-    virtual void slot012();
-    virtual void slot013();
-    virtual void slot014();
-    virtual void slot015();
-    virtual void slot016();
-    virtual void slot017();
-    virtual void slot018();
-    virtual void slot019();
-    virtual void slot020();
-    virtual void slot021();
-    virtual void slot022();
-    virtual int slot023();
-};
 
 class NCCall { public:
     virtual void slot000();
@@ -4484,84 +4771,6 @@ class NCCall { public:
     virtual int slot091();
 };
 
-class NcVCall {
- public:
-  virtual void slot000();
-  virtual void slot001();
-  virtual void slot002();
-  virtual void slot003();
-  virtual void slot004();
-  virtual void slot005();
-  virtual void slot006();
-  virtual void slot007();
-  virtual void slot008();
-  virtual void slot009();
-  virtual void slot010();
-  virtual void slot011();
-  virtual void slot012();
-  virtual void slot013();
-  virtual void slot014();
-  virtual void slot015();
-  virtual void slot016();
-  virtual void slot017();
-  virtual void slot018();
-  virtual void slot019();
-  virtual void slot020();
-  virtual void slot021();
-  virtual void slot022();
-  virtual void slot023();
-  virtual void slot024();
-  virtual void slot025();
-  virtual void slot026();
-  virtual void slot027();
-  virtual void slot028();
-  virtual void slot029();
-  virtual void slot030();
-  virtual void slot031();
-  virtual void slot032();
-  virtual void slot033();
-  virtual void slot034();
-  virtual void slot035();
-  virtual void slot036();
-  virtual void slot037();
-  virtual void slot038();
-  virtual void slot039();
-  virtual void slot040();
-  virtual void slot041();
-  virtual void slot042();
-  virtual void slot043();
-  virtual void slot044();
-  virtual void slot045();
-  virtual void slot046();
-  virtual void slot047();
-  virtual void slot048();
-  virtual void slot049();
-  virtual void slot050();
-  virtual void slot051();
-  virtual void slot052();
-  virtual void slot053();
-  virtual void slot054();
-  virtual void slot055();
-  virtual void slot056();
-  virtual void slot057();
-  virtual void slot058();
-  virtual void slot059();
-  virtual void slot060();
-  virtual void slot061();
-  virtual void slot062();
-  virtual void slot063();
-  virtual void slot064();
-  virtual void slot065();
-  virtual void slot066();
-  virtual void slot067();
-  virtual void slot068();
-  virtual void slot069();
-  virtual void slot070();
-  virtual void slot071();
-  virtual void slot072();
-  virtual void slot073();
-  virtual void slot074(int, int);
-};
 
 struct PAINTSTRUCT_ {
     HDC hdc;
@@ -4572,22 +4781,6 @@ struct PAINTSTRUCT_ {
     unsigned char rgbReserved[32];
 };
 
-class VCall12 {
-public:
-    virtual void slot000();
-    virtual void slot001();
-    virtual void slot002();
-    virtual void slot003();
-    virtual void slot004();
-    virtual void slot005();
-    virtual void slot006();
-    virtual void slot007();
-    virtual void slot008();
-    virtual void slot009();
-    virtual void slot010();
-    virtual void slot011();
-    virtual void slot012();
-};
 
 class VCall2 { public:
     virtual void slot000();
@@ -4684,155 +4877,8 @@ class VCall2 { public:
     virtual int slot091();
 };
 
-class VCall3 {
-public:
-    virtual void slot000();
-    virtual void slot001();
-    virtual void slot002();
-    virtual void slot003(int, int, int);
-};
 
-class VCall66 {
-public:
-    virtual void slot000();
-    virtual void slot001();
-    virtual void slot002();
-    virtual void slot003();
-    virtual void slot004();
-    virtual void slot005();
-    virtual void slot006();
-    virtual void slot007();
-    virtual void slot008();
-    virtual void slot009();
-    virtual void slot010();
-    virtual void slot011();
-    virtual void slot012();
-    virtual void slot013();
-    virtual void slot014();
-    virtual void slot015();
-    virtual void slot016();
-    virtual void slot017();
-    virtual void slot018();
-    virtual void slot019();
-    virtual void slot020();
-    virtual void slot021();
-    virtual void slot022();
-    virtual void slot023();
-    virtual void slot024();
-    virtual void slot025();
-    virtual void slot026();
-    virtual void slot027();
-    virtual void slot028();
-    virtual void slot029();
-    virtual void slot030();
-    virtual void slot031();
-    virtual void slot032();
-    virtual void slot033();
-    virtual void slot034();
-    virtual void slot035();
-    virtual void slot036();
-    virtual void slot037();
-    virtual void slot038();
-    virtual void slot039();
-    virtual void slot040();
-    virtual void slot041();
-    virtual void slot042();
-    virtual void slot043();
-    virtual void slot044();
-    virtual void slot045();
-    virtual void slot046();
-    virtual void slot047();
-    virtual void slot048();
-    virtual void slot049();
-    virtual void slot050();
-    virtual void slot051();
-    virtual void slot052();
-    virtual void slot053();
-    virtual void slot054();
-    virtual void slot055();
-    virtual void slot056();
-    virtual void slot057();
-    virtual void slot058();
-    virtual void slot059();
-    virtual void slot060();
-    virtual void slot061();
-    virtual void slot062();
-    virtual void slot063();
-    virtual void slot064();
-    virtual void slot065();
-    virtual void slot066();
-};
 
-class VCall67 { public:
-    virtual void slot000();
-    virtual void slot001();
-    virtual void slot002();
-    virtual void slot003();
-    virtual void slot004();
-    virtual void slot005();
-    virtual void slot006();
-    virtual void slot007();
-    virtual void slot008();
-    virtual void slot009();
-    virtual void slot010();
-    virtual void slot011();
-    virtual void slot012();
-    virtual void slot013();
-    virtual void slot014();
-    virtual void slot015();
-    virtual void slot016();
-    virtual void slot017();
-    virtual void slot018();
-    virtual void slot019();
-    virtual void slot020();
-    virtual void slot021();
-    virtual void slot022();
-    virtual void slot023();
-    virtual void slot024();
-    virtual void slot025();
-    virtual void slot026();
-    virtual void slot027();
-    virtual void slot028();
-    virtual void slot029();
-    virtual void slot030();
-    virtual void slot031();
-    virtual void slot032();
-    virtual void slot033();
-    virtual void slot034();
-    virtual void slot035();
-    virtual void slot036();
-    virtual void slot037();
-    virtual void slot038();
-    virtual void slot039();
-    virtual void slot040();
-    virtual void slot041();
-    virtual void slot042();
-    virtual void slot043();
-    virtual void slot044();
-    virtual void slot045();
-    virtual void slot046();
-    virtual void slot047();
-    virtual void slot048();
-    virtual void slot049();
-    virtual void slot050();
-    virtual void slot051();
-    virtual void slot052();
-    virtual void slot053();
-    virtual void slot054();
-    virtual void slot055();
-    virtual void slot056();
-    virtual void slot057();
-    virtual void slot058();
-    virtual void slot059();
-    virtual void slot060();
-    virtual void slot061();
-    virtual void slot062();
-    virtual void slot063();
-    virtual void slot064();
-    virtual void slot065();
-    virtual void slot066();
-    virtual void slot067(int, int);  // <-- used, widened
-};
 
 class VCallArg { public:
     virtual void s00(); virtual void s01(); virtual void s02(); virtual void s03();
@@ -4862,166 +4908,8 @@ class VCallArg51 { public:
     virtual void s51(int);  // <-- used, takes an int
 };
 
-class VCallArgs { public:
-    virtual void slot000();
-    virtual void slot001();
-    virtual void slot002();
-    virtual void slot003();
-    virtual void slot004();
-    virtual void slot005();
-    virtual void slot006();
-    virtual void slot007();
-    virtual void slot008();
-    virtual void slot009();
-    virtual void slot010();
-    virtual void slot011();
-    virtual void slot012();
-    virtual void slot013();
-    virtual void slot014();
-    virtual void slot015();
-    virtual void slot016();
-    virtual void slot017();
-    virtual void slot018();
-    virtual void slot019();
-    virtual void slot020();
-    virtual void slot021();
-    virtual void slot022();
-    virtual void slot023(int, int);  // <-- used
-    virtual void slot024();
-    virtual void slot025();
-    virtual void slot026();
-    virtual void slot027();
-    virtual void slot028();
-    virtual void slot029(int, int);  // <-- used
-    virtual void slot030();
-    virtual void slot031();
-    virtual void slot032();
-    virtual void slot033();
-    virtual void slot034();
-    virtual void slot035();
-    virtual void slot036(int, int);  // <-- used
-    virtual void slot037();
-    virtual void slot038();
-    virtual void slot039(int, int);  // <-- used
-    virtual void slot040();
-    virtual void slot041();
-    virtual void slot042();
-    virtual void slot043();
-    virtual void slot044();
-    virtual void slot045();
-    virtual void slot046();
-    virtual void slot047();
-    virtual void slot048();
-    virtual void slot049();
-    virtual void slot050();
-    virtual void slot051();
-    virtual void slot052();
-    virtual void slot053();
-    virtual void slot054();
-    virtual void slot055();
-    virtual void slot056();
-    virtual void slot057();
-    virtual void slot058();
-    virtual void slot059();
-    virtual void slot060();
-    virtual void slot061();
-    virtual void slot062();
-    virtual void slot063();
-    virtual void slot064();
-    virtual void slot065(Win *);  // <-- used
-};
 
-class VCallChild { public:
-    virtual void slot000();
-    virtual void slot001();
-    virtual void slot002();
-    virtual void slot003();
-    virtual void slot004();
-    virtual void slot005();
-    virtual void slot006();
-    virtual void slot007();  // <-- used
-    virtual void slot008();
-    virtual void slot009();
-    virtual void slot010();
-    virtual void slot011();
-    virtual void slot012();
-    virtual void slot013();
-    virtual void slot014();
-    virtual void slot015();
-    virtual void slot016();
-    virtual void slot017();
-    virtual void slot018();
-    virtual void slot019();
-    virtual void slot020();
-    virtual void slot021();
-    virtual void slot022();
-    virtual int slot023();  // <-- used; return value is tested against 0
-};
 
-class VCallInt { public:
-    virtual void slot000();
-    virtual void slot001();
-    virtual void slot002();
-    virtual void slot003();
-    virtual void slot004();
-    virtual void slot005();
-    virtual void slot006();
-    virtual void slot007();
-    virtual void slot008();
-    virtual void slot009();
-    virtual void slot010();
-    virtual void slot011();
-    virtual void slot012();
-    virtual void slot013();
-    virtual void slot014();
-    virtual void slot015();
-    virtual void slot016();
-    virtual void slot017();
-    virtual void slot018();
-    virtual void slot019();
-    virtual void slot020();
-    virtual void slot021();
-    virtual void slot022();
-    virtual void slot023();
-    virtual void slot024();
-    virtual void slot025();
-    virtual void slot026();
-    virtual void slot027();
-    virtual void slot028();
-    virtual void slot029();
-    virtual void slot030();
-    virtual void slot031();
-    virtual void slot032();
-    virtual void slot033();
-    virtual void slot034();
-    virtual void slot035();
-    virtual void slot036();
-    virtual void slot037();
-    virtual void slot038();
-    virtual void slot039();
-    virtual void slot040();
-    virtual void slot041();
-    virtual void slot042();
-    virtual void slot043();
-    virtual void slot044();
-    virtual void slot045();
-    virtual void slot046();
-    virtual void slot047();
-    virtual void slot048();
-    virtual void slot049();
-    virtual void slot050();
-    virtual void slot051();
-    virtual void slot052();
-    virtual void slot053();
-    virtual void slot054();
-    virtual void slot055();
-    virtual void slot056();
-    virtual void slot057();
-    virtual void slot058();
-    virtual void slot059();
-    virtual void slot060();
-    virtual int slot061();
-};
 
 class VCallModal { public:
     virtual void slot00();
@@ -5128,67 +5016,8 @@ class VCallW { public:
     virtual void slot084(int, int, unsigned int, int);  // <-- used
 };
 
-class VCallX { public:
-    virtual void slot000();
-    virtual void slot001();
-    virtual void slot002();
-    virtual void slot003();
-    virtual void slot004();
-    virtual void slot005();
-    virtual void slot006();
-    virtual void slot007();
-    virtual void slot008();
-    virtual void slot009();
-    virtual void slot010();
-    virtual void slot011();
-    virtual void slot012();
-    virtual void slot013();
-    virtual void slot014();
-    virtual void slot015();
-    virtual void slot016();
-    virtual void slot017();
-    virtual void slot018();
-    virtual void slot019(int, int);
-    virtual void slot020();
-    virtual void slot021(int, int);
-    virtual void slot022();
-    virtual int slot023();
-    virtual void slot024();
-    virtual void slot025();
-    virtual void slot026();
-    virtual void slot027();
-    virtual void slot028();
-    virtual void slot029();
-    virtual void slot030();
-    virtual void slot031();
-    virtual void slot032(int, int);
-    virtual void slot033();
-    virtual void slot034(int, int);
-};
 
 
-class WinVCall074 { public:
-    virtual void slot000(); virtual void slot001(); virtual void slot002(); virtual void slot003();
-    virtual void slot004(); virtual void slot005(); virtual void slot006(); virtual void slot007();
-    virtual void slot008(); virtual void slot009(); virtual void slot010(); virtual void slot011();
-    virtual void slot012(); virtual void slot013(); virtual void slot014(); virtual void slot015();
-    virtual void slot016(); virtual void slot017(); virtual void slot018(); virtual void slot019();
-    virtual void slot020(); virtual void slot021(); virtual void slot022(); virtual void slot023();
-    virtual void slot024(); virtual void slot025(); virtual void slot026(); virtual void slot027();
-    virtual void slot028(); virtual void slot029(); virtual void slot030(); virtual void slot031();
-    virtual void slot032(); virtual void slot033(); virtual void slot034(); virtual void slot035();
-    virtual void slot036(); virtual void slot037(); virtual void slot038(); virtual void slot039();
-    virtual void slot040(); virtual void slot041(); virtual void slot042(); virtual void slot043();
-    virtual void slot044(); virtual void slot045(); virtual void slot046(); virtual void slot047();
-    virtual void slot048(); virtual void slot049(); virtual void slot050(); virtual void slot051();
-    virtual void slot052(); virtual void slot053(); virtual void slot054(); virtual void slot055();
-    virtual void slot056(); virtual void slot057(); virtual void slot058(); virtual void slot059();
-    virtual void slot060(); virtual void slot061(); virtual void slot062(); virtual void slot063();
-    virtual void slot064(); virtual void slot065(); virtual void slot066(); virtual void slot067();
-    virtual void slot068(); virtual void slot069(); virtual void slot070(); virtual void slot071();
-    virtual void slot072(); virtual void slot073();
-    virtual void slot074(int, int);
-};
 
 // Fixed-slot bindings the homed bodies name but no artifact defined
 // in this file - each is an address the image reaches directly.
@@ -5208,7 +5037,6 @@ namespace { class Slot88Shim { public:
   virtual int slot090(Win *);
 }; }
 
-extern "C" int __cdecl sub_5f8670();
 void __cdecl flush_input();
 void __cdecl wait_task();
 typedef int (__stdcall *ComSlot17)(void *self, int *out);
@@ -5218,21 +5046,21 @@ typedef int (__stdcall *ComSlot17)(void *self, int *out);
 // does not travel with a function body.
 #define ACQUIRE_HDC(haveHdcVar) \
     do { \
-        if (*g_009b3ab0 == 0) { \
-            if (*g_009bc498 != 0) { \
-                ComSlot17 fn = (ComSlot17)(*reinterpret_cast<void ***>(*g_009bc498))[0x11]; \
-                fn(reinterpret_cast<void *>(*g_009bc498), g_009b7b2c); \
+        if (*WinScreenDCDepth == 0) { \
+            if (*WinDDSurface != 0) { \
+                ComSlot17 fn = (ComSlot17)(*reinterpret_cast<void ***>(*WinDDSurface))[0x11]; \
+                fn(reinterpret_cast<void *>(*WinDDSurface), WinScreenDC); \
             } else { \
                 GetDCFn getDc = *reinterpret_cast<GetDCFn *>(g_GetDC); \
-                *g_009b7b2c = getDc(reinterpret_cast<void *>(*g_009b7b28)); \
+                *WinScreenDC = getDc(reinterpret_cast<void *>(*WinMainHwnd)); \
             } \
-            (haveHdcVar) = (*g_009b7b2c != 0); \
+            (haveHdcVar) = (*WinScreenDC != 0); \
             if (haveHdcVar) { \
-                *g_009b3ab0 = 1; \
+                *WinScreenDCDepth = 1; \
             } \
         } else { \
-            ++*g_009b3ab0; \
-            (haveHdcVar) = (*g_009b7b2c != 0); \
+            ++*WinScreenDCDepth; \
+            (haveHdcVar) = (*WinScreenDC != 0); \
         } \
     } while (0)
 
@@ -5241,7 +5069,9 @@ typedef int (__stdcall *ComSlot17)(void *self, int *out);
 // method body.
 
 #define WFIELD(obj, off) (*reinterpret_cast<int *>(reinterpret_cast<char *>(obj) + (off)))
-extern "C" int __cdecl sub_5f1750(int);
+// Homed below; the signature is the one its TRIED note measured -
+// `void __cdecl sub_5f1750(int)`, from the [esp+0x14] stack read.
+void __cdecl sub_5f1750(int);
 extern "C" int __cdecl update_screen(RECT *, Win *);
 
 
@@ -5268,10 +5098,10 @@ typedef int(__stdcall *PollFn)(int);
 
 // Builds the saved-region rect the "direct" way: left,top,right=left+w,bottom=top+h.
 static void BuildRectDirect(RECT &r) {
-    r.left = *g_009b7a30;
-    r.top = *g_009b7a34;
-    r.right = *g_009b7a30 + *g_009b7a40;
-    r.bottom = *g_009b7a34 + *g_009b7a44;
+    r.left = *WinClipLeft;
+    r.top = *WinClipTop;
+    r.right = *WinClipLeft + *WinClipWidth;
+    r.bottom = *WinClipTop + *WinClipHeight;
 }
 
 // Restores the saved screen region (if one is pending) and flips it, then
@@ -5279,23 +5109,23 @@ static void BuildRectDirect(RECT &r) {
 // strategies the disassembly duplicates at each call site (a direct sum,
 // or the opaque sub_5f86c0 helper) - both read the same four fields.
 static void RestoreAndFlip(UnionRectFn UnionRect, bool useHelper) {
-    if (*g_009b7a2c != 0) {
+    if (*WinSavedFocus != 0) {
         g_WIN_BUFFER
-            ->copy(reinterpret_cast<Buffer *>(g_009b7490), 0, 0, *g_009b7a30, *g_009b7a34,
-                   *g_009b7a40, *g_009b7a44);
+            ->copy((&ScreenBuffer), 0, 0, *WinClipLeft, *WinClipTop,
+                   *WinClipWidth, *WinClipHeight);
         RECT rect;
         if (useHelper) {
-            sub_5f86c0(&rect, *g_009b7a30, *g_009b7a34, *g_009b7a40, *g_009b7a44);
+            make_rect(&rect, *WinClipLeft, *WinClipTop, *WinClipWidth, *WinClipHeight);
         } else {
             BuildRectDirect(rect);
         }
         RECT merged;
-        UnionRect(&merged, &rect, reinterpret_cast<RECT *>(g_009b6ee8));
+        UnionRect(&merged, &rect, reinterpret_cast<RECT *>(WinDirtyRect));
         Win::flip(&merged);
-        *g_009b6ee8 = 0;
-        *g_009b6ef0 = 0;
+        *WinDirtyRect = 0;
+        *WinModalResult = 0;
     }
-    *g_009b7a2c = 0;
+    *WinSavedFocus = 0;
 }
 
 namespace {
@@ -5425,7 +5255,7 @@ int __stdcall Win::adjust_menus(void *a1) {
         obj->set_rects();
         Menu *menu = obj->menu_;
         if (menu != 0) {
-            reinterpret_cast<VCall *>(menu)->slot093();
+            menu->vslot_93();
         }
     }
     return 1;
@@ -5448,17 +5278,17 @@ int __stdcall Win::adjust_menus(void *a1) {
 // and rewriting it in the tree's own style is a later phase. See README.md
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
 int Win::show_maximize() {
-    int active = *g_009b7abc;
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
+    int active = *WinActiveDialog;
+    *WinFocusPrimary = 0;
+    *WinFocusSecondary = 0;
     if (active == reinterpret_cast<int>(this)) {
-        *g_009b7abc = 0;
+        *WinActiveDialog = 0;
         this->vslot_04();
     }
-    if (*g_009b7ac0 == reinterpret_cast<int>(this)) {
-        *g_009b7ac0 = 0;
+    if (*WinLastActive == reinterpret_cast<int>(this)) {
+        *WinLastActive = 0;
     }
-    ShowWindow(reinterpret_cast<HWND>(*g_009b7b28), 3);
+    ShowWindow(reinterpret_cast<HWND>(*WinMainHwnd), 3);
     return 0;
 }
 
@@ -5480,17 +5310,17 @@ typedef int(__stdcall *ShowWindowFn)(void *, int);
 // and rewriting it in the tree's own style is a later phase. See README.md
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
 int Win::maximize() {
-    void *active = *reinterpret_cast<void **>(g_009b7abc);
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
+    void *active = *reinterpret_cast<void **>(WinActiveDialog);
+    *WinFocusPrimary = 0;
+    *WinFocusSecondary = 0;
     if (active == this) {
-        *g_009b7abc = 0;
+        *WinActiveDialog = 0;
         this->vslot_04();
     }
-    if (*reinterpret_cast<void **>(g_009b7ac0) == this) {
-        *g_009b7ac0 = 0;
+    if (*reinterpret_cast<void **>(WinLastActive) == this) {
+        *WinLastActive = 0;
     }
-    (*reinterpret_cast<ShowWindowFn *>(g))(*reinterpret_cast<void **>(g_009b7b28), 3);
+    (*reinterpret_cast<ShowWindowFn *>(g))(*reinterpret_cast<void **>(WinMainHwnd), 3);
     return 0;
 }
 
@@ -5592,18 +5422,18 @@ void Win::update_nc_buffer(int a1) {
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
 void __cdecl Win::OnChar(void * a1, int a2, int a3) {
     int result;
-    if (*g_009b7ae0 != 0) {
-        result = *g_009b8d7c;
+    if (WinFocusWindow != nullptr) {
+        result = *WinModalFocus;
         if (result == 0) {
-            result = *g_009b7ae0;
+            result = reinterpret_cast<int>(WinFocusWindow);
         }
     } else {
-        result = *g_009b7ac4;
+        result = *WinInputFocus;
         if (result == 0) {
             result = *WinDefaultFocus;
         }
     }
-    *g_009b7ac8 = result;
+    *WinActiveWindow = result;
     if (result != 0) {
         char *p = *reinterpret_cast<char **>(result + 0xa8);
         if (p != 0 && (*reinterpret_cast<unsigned char *>(p + 0x9c) & 1) != 0) {
@@ -5723,8 +5553,8 @@ void Win::hide() {
     zero = 0;
 
 converge:
-    focus_a = *g_009b7acc;
-    focus_b = *g_009b7ad0;
+    focus_a = *WinFocusPrimary;
+    focus_b = *WinFocusSecondary;
     chosen = (focus_a != zero) ? focus_a : focus_b;
     if (chosen == reinterpret_cast<int32_t>(this)) {
         goto clear_focus;
@@ -5763,43 +5593,43 @@ search:
 found:
     zero = 0;
 clear_focus:
-    *g_009b7acc = zero;
-    *g_009b7ad0 = zero;
+    *WinFocusPrimary = zero;
+    *WinFocusSecondary = zero;
 
 skip_all:
-    if (*g_009b7abc == reinterpret_cast<int32_t>(this)) {
-        *g_009b7abc = 0;
+    if (*WinActiveDialog == reinterpret_cast<int32_t>(this)) {
+        *WinActiveDialog = 0;
         this->vslot_04();
     }
-    if (*g_009b7ac0 == reinterpret_cast<int32_t>(this)) {
-        *g_009b7ac0 = 0;
+    if (*WinLastActive == reinterpret_cast<int32_t>(this)) {
+        *WinLastActive = 0;
     }
     iSomeFlag_ &= 0xfffffffeu;
-    if (*g_009b7ae0 == reinterpret_cast<int32_t>(this)) {
+    if (WinFocusWindow == this) {
         this->release_modal();
     }
 
-    if (!(*reinterpret_cast<uint8_t *>(g_009bc4b0) & 1)) {
+    if (!(*reinterpret_cast<uint8_t *>(JackalInitFlags) & 1)) {
         return;
     }
 
     {
-        int32_t total = *g_009b7b34;
-        *g_009b7b30 = 0;
+        int32_t total = *WinZOrderListCount;
+        WinZOrderCount = 0;
         if (total > 0) {
-            int32_t target = *g_009b7a6c;
+            int32_t target = *WinHighlighted;
             Win **p = reinterpret_cast<Win **>(g_zorder_list);
             int32_t j = 0;
             for (;;) {
                 if (target != 0 && target == reinterpret_cast<int32_t>(*p)) {
-                    *g_009b7b30 = 0;
-                    *g_009b7a78 = 0;
+                    WinZOrderCount = 0;
+                    *WinZOrderDirty = 0;
                 }
                 if ((*p)->iSomeFlag_ & 1) {
                     recurse_zorder(*p);
-                    target = *g_009b7a6c;
+                    target = *WinHighlighted;
                 }
-                total = *g_009b7b34;
+                total = *WinZOrderListCount;
                 j++;
                 p++;
                 if (j >= total) {
@@ -5809,7 +5639,7 @@ skip_all:
         }
     }
 
-    (*reinterpret_cast<ThreeArgFn *>(g_00669304))(*g_009b7b28, 0, 0);
+    (*reinterpret_cast<ThreeArgFn *>(g_InvalidateRect))(*WinMainHwnd, 0, 0);
 
     {
         Win *other = *reinterpret_cast<Win **>(self + 0x10);
@@ -5823,16 +5653,16 @@ skip_all:
 
 // ===== homed from src/recovered/units/005f63c0.cpp =====
 
-void Win::on_l_button_down(long a1, int a2, int a3, unsigned int a4, int a5) {
+void Win::on_l_button_down(long flags, int x, int y, unsigned int keys, int dbl) {
     char *self = reinterpret_cast<char *>(this);
 
-    int32_t child = *reinterpret_cast<int32_t *>(self + 0xc4);
+    Win *child = win_parent_;
     if (child != 0) {
         reinterpret_cast<Win *>(child)->bring_child_to_top(reinterpret_cast<Win *>(self));
     } else if (reinterpret_cast<int32_t>(self) != 0 &&
-               (*reinterpret_cast<int32_t *>(self + 0x98) & 0x2000000) == 0) {
+               (iFlags_ & 0x2000000) == 0) {
         int32_t idx = 0;
-        int32_t count = *g_009b7b34;
+        int32_t count = *WinZOrderListCount;
         if (count > 0) {
             Win **p = g_zorder_list;
             for (;;) {
@@ -5860,12 +5690,12 @@ void Win::on_l_button_down(long a1, int a2, int a3, unsigned int a4, int a5) {
         reinterpret_cast<Win *>(self)->update_zorder();
     }
 
-    child = *reinterpret_cast<int32_t *>(self + 0xc4);
+    child = win_parent_;
     if (child != 0) {
         reinterpret_cast<Win *>(child)->set_dialog_focus(reinterpret_cast<Win *>(self));
     }
 
-    if (a4 == 0) {
+    if (keys == 0) {
         WinPointerOwner2 = nullptr;
         WinPointerOwner1 = reinterpret_cast<Win *>(self);
     } else {
@@ -5873,21 +5703,21 @@ void Win::on_l_button_down(long a1, int a2, int a3, unsigned int a4, int a5) {
         WinPointerOwner2 = reinterpret_cast<Win *>(reinterpret_cast<int32_t>(self));
     }
 
-    *g_009b7ad4 = 1;
-    if (a1 != 0 &&
-        (*reinterpret_cast<int32_t *>(self + 0x98) & 0x200200) == 0 &&
-        (*reinterpret_cast<uint8_t *>(self + 0x9c) & 8) == 0) {
+    *WinSizingFlag = 1;
+    if (flags != 0 &&
+        (iFlags_ & 0x200200) == 0 &&
+        (iSomeFlag_ & 8) == 0) {
         int32_t related;
-        if (a4 == 0) {
-            *g_009b7ab8 = reinterpret_cast<int32_t>(self);
-            int32_t fp = *reinterpret_cast<int32_t *>(self + 0x40c);
+        if (keys == 0) {
+            *WinCallbackWindow = reinterpret_cast<int32_t>(self);
+            int32_t fp = field_40C_;
             if (fp != 0) {
-                reinterpret_cast<void(__cdecl *)(int, int)>(fp)(a2, a3);
+                reinterpret_cast<void(__cdecl *)(int, int)>(fp)(x, y);
             }
-            reinterpret_cast<Win *>(self)->vslot_28(a3, a2);
+            reinterpret_cast<Win *>(self)->vslot_28(y, x);
             related = *reinterpret_cast<int32_t *>(self + 0x44);
         } else {
-            reinterpret_cast<Win *>(self)->vslot_38(a3, a2);
+            reinterpret_cast<Win *>(self)->vslot_38(y, x);
             related = *reinterpret_cast<int32_t *>(self + 0x68);
         }
         if (related != 0 && reinterpret_cast<Win *>(related)->vslot_23() == 0) {
@@ -5898,23 +5728,23 @@ void Win::on_l_button_down(long a1, int a2, int a3, unsigned int a4, int a5) {
     int32_t hitTest = reinterpret_cast<Win *>(self)->vslot_61();
     int32_t idx = 0;
     if (hitTest == 0 ||
-        reinterpret_cast<Spot *>(self + 0x8f4)->check(a2, a3, &idx, 0) < 0 ||
+        reinterpret_cast<Spot *>(self + 0x8f4)->check(x, y, &idx, 0) < 0 ||
         reinterpret_cast<Slot88Shim *>(self)->slot088(
             idx, *reinterpret_cast<int32_t *>(self + idx * 4 + 0x900)) != 0) {
-        reinterpret_cast<Win *>(self)->left_down_event(a2, a3, a5);
+        reinterpret_cast<Win *>(self)->left_down_event(x, y, dbl);
     }
 }
 
 // ===== homed from src/recovered/units/005f6550.cpp =====
 
-void Win::on_l_button_up(int a1, int a2, unsigned int a3, int a4) {
+void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
     Win *captured = WinPointerOwner1;
     if (captured == nullptr) {
-        captured = *reinterpret_cast<Win **>(g_009b7ad0);
+        captured = *reinterpret_cast<Win **>(WinFocusSecondary);
     }
     bool isSelf = (captured == this);
     WinPointerOwner1 = nullptr;
-    *reinterpret_cast<Win **>(g_009b7ad0) = 0;
+    *reinterpret_cast<Win **>(WinFocusSecondary) = 0;
 
     if (isSelf) {
         RECT r;
@@ -5922,23 +5752,23 @@ void Win::on_l_button_up(int a1, int a2, unsigned int a3, int a4) {
         r.top = 0;
         r.right = outer_rect_.right - outer_rect_.left;
         r.bottom = outer_rect_.bottom - outer_rect_.top;
-        if (in_box(a1, a2, &r) != 0 &&
+        if (in_box(x, y, &r) != 0 &&
             (iFlags_ & 0x200000) == 0 &&
             (*reinterpret_cast<uint8_t *>(&iSomeFlag_) & 8) == 0) {
-            if (a4 == 0) {
-                *g_009b7ab8 = reinterpret_cast<int>(this);
+            if (dbl == 0) {
+                *WinCallbackWindow = reinterpret_cast<int>(this);
                 void(__cdecl * cb)(int, int) =
                     reinterpret_cast<void(__cdecl *)(int, int)>(field_414_);
                 if (cb != 0) {
-                    cb(a1, a2);
+                    cb(x, y);
                 }
-                this->vslot_19(a1, a2);
+                this->vslot_19(x, y);
                 Win *child = *reinterpret_cast<Win **>(reinterpret_cast<char *>(this) + 0x20);
                 if (child != 0 && child->vslot_23() == 0) {
                     child->vslot_07();
                 }
             } else {
-                this->vslot_32(a1, a2);
+                this->vslot_32(x, y);
                 Win *child = *reinterpret_cast<Win **>(reinterpret_cast<char *>(this) + 0x50);
                 if (child != 0 && child->vslot_23() == 0) {
                     child->vslot_07();
@@ -5954,20 +5784,20 @@ void Win::on_l_button_up(int a1, int a2, unsigned int a3, int a4) {
         }
         if ((iFlags_ & 0x200000) == 0 &&
             (*reinterpret_cast<uint8_t *>(&iSomeFlag_) & 8) == 0) {
-            if (a4 == 0) {
-                *g_009b7ab8 = reinterpret_cast<int>(this);
+            if (dbl == 0) {
+                *WinCallbackWindow = reinterpret_cast<int>(this);
                 void(__cdecl * cb)(int, int) =
                     reinterpret_cast<void(__cdecl *)(int, int)>(field_41C_);
                 if (cb != 0) {
-                    cb(a1, a2);
+                    cb(x, y);
                 }
-                this->vslot_21(a1, a2);
+                this->vslot_21(x, y);
                 Win *child = *reinterpret_cast<Win **>(reinterpret_cast<char *>(this) + 0x28);
                 if (child != 0 && child->vslot_23() == 0) {
                     child->vslot_07();
                 }
             } else {
-                this->vslot_34(a1, a2);
+                this->vslot_34(x, y);
                 Win *child = *reinterpret_cast<Win **>(reinterpret_cast<char *>(this) + 0x58);
                 if (child != 0 && child->vslot_23() == 0) {
                     child->vslot_07();
@@ -5983,8 +5813,8 @@ int Win::set_cursor(Sprite* a1, int a2, int a3) {
     char *self = reinterpret_cast<char *>(this);
     if (a1 != 0) {
         *reinterpret_cast<Sprite **>(self + 0x188) = a1;
-        *reinterpret_cast<int *>(self + 0x18c) = a2;
-        *reinterpret_cast<int *>(self + 0x190) = a3;
+        field_18C_ = a2;
+        field_190_ = a3;
     }
     // IDENTIFIED: the image emits `push 1; push 0; call 0x5f1820` here, and
     // 0x005F1820 is `Win::update_cursor`. The artifact spelled it `fn(0, 1)`
@@ -6082,9 +5912,9 @@ typedef long (__stdcall *SendMsgFn)(int, int, int, void*);
 //    prologue), it had enough register pressure to do so. That is a
 //    hard case - the tool reports a similarity ratio so you can tell a
 //    near miss from a wrong body.
-LRESULT Win::on_window_pos_changed(WINDOWPOS* a1) {
+LRESULT Win::on_window_pos_changed(WINDOWPOS* pos) {
     this->set_rects();
-    return (*reinterpret_cast<SendMsgFn *>(g_006692b0))(*g_009b7b28, 0x47, 0, a1);
+    return (*reinterpret_cast<SendMsgFn *>(g_DefWindowProcA))(*WinMainHwnd, 0x47, 0, pos);
 }
 
 // ===== homed from src/recovered/units/005f4ab0.cpp =====
@@ -6117,18 +5947,18 @@ void Win::bring_to_top() {
         }
 
         WinZOrderCount = 0;
-        if (*g_009b7b34 > 0) {
-            Win *highlighted = reinterpret_cast<Win *>(*g_009b7a6c);
+        if (*WinZOrderListCount > 0) {
+            Win *highlighted = reinterpret_cast<Win *>(*WinHighlighted);
             Win **zslot = g_zorder_list;
-            for (int j = 0; j < *g_009b7b34; j++) {
+            for (int j = 0; j < *WinZOrderListCount; j++) {
                 if (highlighted != 0 && highlighted == *zslot) {
                     WinZOrderCount = 0;
-                    *g_009b7a78 = 0;
+                    *WinZOrderDirty = 0;
                 }
                 Win *w = reinterpret_cast<Win *>(*zslot);
                 if (w->iSomeFlag_ & 1) {
                     recurse_zorder(w);
-                    highlighted = reinterpret_cast<Win *>(*g_009b7a6c);
+                    highlighted = reinterpret_cast<Win *>(*WinHighlighted);
                 }
                 zslot++;
             }
@@ -6139,7 +5969,7 @@ void Win::bring_to_top() {
     if (this == 0) return;
     if (iFlags_ & 0x2000000) return;
 
-    int count = *g_009b7b34;
+    int count = *WinZOrderListCount;
     int i = 0;
     if (count > 0) {
         Win **slot = g_zorder_list;
@@ -6161,18 +5991,18 @@ void Win::bring_to_top() {
     }
 
     WinZOrderCount = 0;
-    if (*g_009b7b34 > 0) {
-        Win *highlighted = reinterpret_cast<Win *>(*g_009b7a6c);
+    if (*WinZOrderListCount > 0) {
+        Win *highlighted = reinterpret_cast<Win *>(*WinHighlighted);
         Win **zslot = g_zorder_list;
-        for (int j = 0; j < *g_009b7b34; j++) {
+        for (int j = 0; j < *WinZOrderListCount; j++) {
             if (highlighted != 0 && highlighted == *zslot) {
                 WinZOrderCount = 0;
-                *g_009b7a78 = 0;
+                *WinZOrderDirty = 0;
             }
             Win *w = reinterpret_cast<Win *>(*zslot);
             if (w->iSomeFlag_ & 1) {
                 recurse_zorder(w);
-                highlighted = reinterpret_cast<Win *>(*g_009b7a6c);
+                highlighted = reinterpret_cast<Win *>(*WinHighlighted);
             }
             zslot++;
         }
@@ -6244,9 +6074,9 @@ typedef int (__stdcall *KeyFn)(int);
 //    hard case - the tool reports a similarity ratio so you can tell a
 //    near miss from a wrong body.
 int Win::get_rbutton_state() {
-    short r1 = (*reinterpret_cast<RBtnFn *>(g_00669330))(2);
+    short r1 = (*reinterpret_cast<RBtnFn *>(g_GetAsyncKeyState))(2);
     int mask = r1 >> 15;
-    int r2 = (*reinterpret_cast<KeyFn *>(g_00669334))(0x17);
+    int r2 = (*reinterpret_cast<KeyFn *>(g_GetSystemMetrics))(0x17);
     return r2 ^ mask;
 }
 
@@ -6294,13 +6124,13 @@ int Win::get_rbutton_state() {
 void Win::set_parent_dialog(Win *a1) {
     char *self = reinterpret_cast<char *>(this);
 
-    if (*reinterpret_cast<unsigned int *>(self + 0x98) & 0x200000) {
+    if (iFlags_ & 0x200000) {
         return;
     }
-    if (*reinterpret_cast<unsigned char *>(self + 0x9c) & 8) {
+    if (iSomeFlag_ & 8) {
         return;
     }
-    if ((*reinterpret_cast<unsigned int *>(self + 0x98) & 0x1000) && a1 == 0) {
+    if ((iFlags_ & 0x1000) && a1 == 0) {
         return;
     }
 
@@ -6451,12 +6281,12 @@ void Win::add_child(Win* a1) {
     char *self = reinterpret_cast<char *>(this);
     char *other = reinterpret_cast<char *>(a1);
     if (*reinterpret_cast<unsigned int *>(other + 0x98) & 0x2000000) {
-        int count = *reinterpret_cast<int *>(self + 0x3FC);
+        int count = child_count_;
         *reinterpret_cast<Win **>(self + 0x1A4 + count * 4) = a1;
-        *reinterpret_cast<int *>(self + 0x3FC) = *reinterpret_cast<int *>(self + 0x3FC) + 1;
+        child_count_ = child_count_ + 1;
         return;
     }
-    int count = *reinterpret_cast<int *>(self + 0x3FC);
+    int count = child_count_;
     if (count > 0) {
         Win **slot = reinterpret_cast<Win **>(self + 0x1A4 + count * 4);
         do {
@@ -6465,7 +6295,7 @@ void Win::add_child(Win* a1) {
         } while (--count);
     }
     *reinterpret_cast<Win **>(self + 0x1A4) = a1;
-    *reinterpret_cast<int *>(self + 0x3FC) = *reinterpret_cast<int *>(self + 0x3FC) + 1;
+    child_count_ = child_count_ + 1;
 }
 
 // ===== homed from src/recovered/units/005f50e0.cpp =====
@@ -6535,14 +6365,14 @@ void __cdecl Win::remove_parent(Win* a1) {
     if (this == 0) {
         return;
     }
-    int count = *g_009b7b34;
+    int count = *WinZOrderListCount;
     for (int i = 0; i < count; i++) {
         if (reinterpret_cast<Win **>(0x009B6E48)[i] == this) {
             if (i < count) {
                 count--;
-                *g_009b7b34 = count;
+                *WinZOrderListCount = count;
                 this->hide();
-                count = *g_009b7b34;
+                count = *WinZOrderListCount;
                 if (i < count) {
                     Win **p = reinterpret_cast<Win **>(&reinterpret_cast<Win **>(0x009B6E48)[i]);
                     int n = count - i;
@@ -6573,24 +6403,24 @@ void Win::set_rects() {
         }
 
         this->buffer1_->init(this->client_rect_.right - this->client_rect_.left, barH, 0, 0);
-        this->buffer1_->sync_to_palette(reinterpret_cast<Palette *>(g_009b8180));
-        this->buffer1_->fill(*reinterpret_cast<uint8_t *>(g_00696d14));
+        this->buffer1_->sync_to_palette(reinterpret_cast<Palette *>(WinPalette));
+        this->buffer1_->fill(*reinterpret_cast<uint8_t *>(WinFillColour));
 
         this->buffer4_->init(this->client_rect_.right - this->client_rect_.left, bottomBar, 0, 0);
-        this->buffer4_->sync_to_palette(reinterpret_cast<Palette *>(g_009b8180));
-        this->buffer4_->fill(*reinterpret_cast<uint8_t *>(g_00696d14));
+        this->buffer4_->sync_to_palette(reinterpret_cast<Palette *>(WinPalette));
+        this->buffer4_->fill(*reinterpret_cast<uint8_t *>(WinFillColour));
 
         this->buffer3_->init(this->border_thickness_,
                               (this->client_rect_.bottom - this->client_rect_.top) - bottomBar - barH,
                               0, 0);
-        this->buffer3_->sync_to_palette(reinterpret_cast<Palette *>(g_009b8180));
-        this->buffer3_->fill(*reinterpret_cast<uint8_t *>(g_00696d14));
+        this->buffer3_->sync_to_palette(reinterpret_cast<Palette *>(WinPalette));
+        this->buffer3_->fill(*reinterpret_cast<uint8_t *>(WinFillColour));
 
         this->buffer2_->init(this->border_thickness_,
                               (this->client_rect_.bottom - this->client_rect_.top) - bottomBar - barH,
                               0, 0);
-        this->buffer2_->sync_to_palette(reinterpret_cast<Palette *>(g_009b8180));
-        this->buffer2_->fill(*reinterpret_cast<uint8_t *>(g_00696d14));
+        this->buffer2_->sync_to_palette(reinterpret_cast<Palette *>(WinPalette));
+        this->buffer2_->fill(*reinterpret_cast<uint8_t *>(WinFillColour));
 
         this->on_redraw_nc(0, -1);
     }
@@ -6608,27 +6438,26 @@ typedef int (__stdcall *LineToProc)(HDC, int, int);
 typedef int (__stdcall *DeleteObjectProc)(void *);
 
 void Win::window_line_raw(int a1, int a2, int a3, int a4, int a5, int a6, unsigned int a7) {
-    if (*g_009b3ab0 != 0) {
-        *g_009b3ab0 = *g_009b3ab0 + 1;
+    if (*WinScreenDCDepth != 0) {
+        *WinScreenDCDepth = *WinScreenDCDepth + 1;
     } else {
-        void *iface = reinterpret_cast<void *>(*g_009bc498);
+        void *iface = reinterpret_cast<void *>(*WinDDSurface);
         if (iface != 0) {
             IfaceGetHdcProc fn = (*reinterpret_cast<IfaceGetHdcProc **>(iface))[17];
-            fn(iface, g_009b7b2c);
+            fn(iface, WinScreenDC);
         } else {
             GetDCProc getDC = *reinterpret_cast<GetDCProc *>(g_GetDC);
-            *g_009b7b2c = reinterpret_cast<int>(getDC(HandleMain));
+            *WinScreenDC = reinterpret_cast<int>(getDC(HandleMain));
         }
-        if (*g_009b7b2c == 0) {
+        if (*WinScreenDC == 0) {
             return;
         }
-        *g_009b3ab0 = 1;
+        *WinScreenDCDepth = 1;
     }
-    if (*g_009b7b2c != 0) {
-        char *self = reinterpret_cast<char *>(this);
-        if (*reinterpret_cast<int *>(self + 0x184) != *reinterpret_cast<int *>(*g_009b8180 + 0x400)) {
-            (*reinterpret_cast<Palette **>(g_009b8180))->set_active_window(this);
-            *reinterpret_cast<int *>(self + 0x184) = *reinterpret_cast<int *>(*g_009b8180 + 0x400);
+    if (*WinScreenDC != 0) {
+        if (field_184_ != *reinterpret_cast<int *>(*WinPalette + 0x400)) {
+            (*reinterpret_cast<Palette **>(WinPalette))->set_active_window(this);
+            field_184_ = *reinterpret_cast<int *>(*WinPalette + 0x400);
         }
 
         LocalLogPen pen;
@@ -6636,35 +6465,35 @@ void Win::window_line_raw(int a1, int a2, int a3, int a4, int a5, int a6, unsign
         pen.widthX = a6;
         pen.color = (a5 & 0xffff) | 0x1000000;
 
-        CreatePenIndirectProc createPen = *reinterpret_cast<CreatePenIndirectProc *>(g_0066904c);
+        CreatePenIndirectProc createPen = *reinterpret_cast<CreatePenIndirectProc *>(g_CreatePenIndirect);
         void *hpen = createPen(&pen);
         if (hpen != 0) {
-            SelectObjectProc selectObj = *reinterpret_cast<SelectObjectProc *>(g_00669060);
-            void *oldPen = selectObj(reinterpret_cast<HDC>(*g_009b7b2c), hpen);
+            SelectObjectProc selectObj = *reinterpret_cast<SelectObjectProc *>(g_SelectObject);
+            void *oldPen = selectObj(reinterpret_cast<HDC>(*WinScreenDC), hpen);
 
-            MoveToExProc moveTo = *reinterpret_cast<MoveToExProc *>(g_00669048);
-            moveTo(reinterpret_cast<HDC>(*g_009b7b2c), a3, a4, 0);
+            MoveToExProc moveTo = *reinterpret_cast<MoveToExProc *>(g_MoveToEx);
+            moveTo(reinterpret_cast<HDC>(*WinScreenDC), a3, a4, 0);
 
-            LineToProc lineTo = *reinterpret_cast<LineToProc *>(g_006690c4);
-            lineTo(reinterpret_cast<HDC>(*g_009b7b2c), a1, a2);
+            LineToProc lineTo = *reinterpret_cast<LineToProc *>(g_LineTo);
+            lineTo(reinterpret_cast<HDC>(*WinScreenDC), a1, a2);
 
-            selectObj(reinterpret_cast<HDC>(*g_009b7b2c), oldPen);
+            selectObj(reinterpret_cast<HDC>(*WinScreenDC), oldPen);
 
-            DeleteObjectProc deleteObj = *reinterpret_cast<DeleteObjectProc *>(g_00669058);
+            DeleteObjectProc deleteObj = *reinterpret_cast<DeleteObjectProc *>(g_DeleteObject);
             deleteObj(hpen);
 
-            *g_009b3ab0 = *g_009b3ab0 - 1;
-            if (*g_009b3ab0 == 0) {
-                void *iface2 = reinterpret_cast<void *>(*g_009bc498);
+            *WinScreenDCDepth = *WinScreenDCDepth - 1;
+            if (*WinScreenDCDepth == 0) {
+                void *iface2 = reinterpret_cast<void *>(*WinDDSurface);
                 if (iface2 != 0) {
                     IfaceReleaseHdcProc fn2 = (*reinterpret_cast<IfaceReleaseHdcProc **>(iface2))[26];
-                    fn2(iface2, *g_009b7b2c);
-                    *g_009b7b2c = 0;
+                    fn2(iface2, *WinScreenDC);
+                    *WinScreenDC = 0;
                     return;
                 }
                 ReleaseDCProc releaseDC = *reinterpret_cast<ReleaseDCProc *>(g);
-                releaseDC(HandleMain, reinterpret_cast<HDC>(*g_009b7b2c));
-                *g_009b7b2c = 0;
+                releaseDC(HandleMain, reinterpret_cast<HDC>(*WinScreenDC));
+                *WinScreenDC = 0;
             }
         }
     }
@@ -6684,20 +6513,19 @@ void __cdecl Win::update() {
 
 // ===== homed from src/recovered/units/005f4c30.cpp =====
 
-int Win::redraw_nc_buffer(int a1) {
-    char *self = reinterpret_cast<char *>(this);
-    this->on_redraw_nc(0, a1);
-    switch (a1) {
+Buffer *Win::redraw_nc_buffer(int index) {
+    this->on_redraw_nc(0, index);
+    switch (index) {
         case 0:
-            return *reinterpret_cast<int *>(self + 0xb4);
+            return buffer1_;
         case 1:
-            return *reinterpret_cast<int *>(self + 0xb8);
+            return buffer2_;
         case 2:
-            return *reinterpret_cast<int *>(self + 0xc0);
+            return buffer4_;
         case 3:
-            return *reinterpret_cast<int *>(self + 0xbc);
+            return buffer3_;
         default:
-            return 0;
+            return nullptr;
     }
 }
 
@@ -6822,98 +6650,98 @@ int Win::on_redraw(int, int) {
 // ===== homed from src/recovered/units/005f5810.cpp =====
 typedef unsigned int uint32_t;
 
-void Win::on_nc_paint(RECT * a1, int a2) {
+void Win::on_nc_paint(RECT * area, int flags) {
     char *self = reinterpret_cast<char *>(this);
 
-    if ((*reinterpret_cast<uint8_t *>(self + 0x98) & 0x11) != 0 &&
-        (*reinterpret_cast<uint8_t *>(self + 0x9c) & 1) != 0 &&
-        (*reinterpret_cast<int *>(self + 0xc4) == 0 || this->is_visible() != 0)) {
+    if ((iFlags_ & 0x11) != 0 &&
+        (iSomeFlag_ & 1) != 0 &&
+        (win_parent_ == 0 || this->is_visible() != 0)) {
         int stack8 = 0, stack4 = 0;
         this->client_to_screen(&stack8, &stack4);
-        stack8 -= *reinterpret_cast<int *>(self + 0x13c);
-        stack4 -= *reinterpret_cast<int *>(self + 0x140);
+        stack8 -= outer_rect_.left;
+        stack4 -= outer_rect_.top;
 
-        if (a1 != 0) {
-            a2 = -1;
-            reinterpret_cast<Buffer *>(a1)->set_clip(a1);
+        if (area != 0) {
+            flags = -1;
+            reinterpret_cast<Buffer *>(area)->set_clip(area);
         }
 
         int iVar1;
-        if ((*reinterpret_cast<uint32_t *>(self + 0x98) & 0x10) == 0 ||
-            (*reinterpret_cast<uint32_t *>(self + 0x98) & 0x400000) != 0) {
-            iVar1 = *reinterpret_cast<int *>(self + 0x118);
+        if ((iFlags_ & 0x10) == 0 ||
+            (iFlags_ & 0x400000) != 0) {
+            iVar1 = border_thickness_;
         } else {
-            iVar1 = *reinterpret_cast<int *>(self + 0x114);
+            iVar1 = caption_height_;
         }
 
-        if (*reinterpret_cast<int *>(self + 0xb4) != 0 && (a2 == -1 || a2 == 0)) {
+        if (buffer1_ != 0 && (flags == -1 || flags == 0)) {
             Buffer *buf;
             int x, y;
-            if (*g_009b7a68 == 0) {
-                buf = reinterpret_cast<Buffer *>(g_009b7490);
+            if (*WinBackBuffer == 0) {
+                buf = (&ScreenBuffer);
                 x = stack8;
                 y = stack4;
             } else {
-                buf = reinterpret_cast<Buffer *>(*g_009b7a68);
-                x = stack8 - *g_009b7a70;
-                y = stack4 - *g_009b7a74;
+                buf = reinterpret_cast<Buffer *>(*WinBackBuffer);
+                x = stack8 - *WinViewOriginX;
+                y = stack4 - *WinViewOriginY;
             }
-            reinterpret_cast<Buffer *>(g_009b7490)->draw(buf, *g_00696d14, x, y, 1, 1);
+            (&ScreenBuffer)->draw(buf, *WinFillColour, x, y, 1, 1);
         }
 
-        if (*reinterpret_cast<int *>(self + 0xc0) != 0 && (a2 == -1 || a2 == 2)) {
+        if (buffer4_ != 0 && (flags == -1 || flags == 2)) {
             int v = *reinterpret_cast<int *>(self + 0x11c);
             if (v == -1) {
-                v = *reinterpret_cast<int *>(self + 0x118);
+                v = border_thickness_;
             }
             Buffer *buf;
             int x;
-            if (*g_009b7a68 == 0) {
-                v = (*reinterpret_cast<int *>(self + 0x158) -
-                     *reinterpret_cast<int *>(self + 0x150)) - v;
-                buf = reinterpret_cast<Buffer *>(g_009b7490);
+            if (*WinBackBuffer == 0) {
+                v = (client_rect_.bottom -
+                     client_rect_.top) - v;
+                buf = (&ScreenBuffer);
                 x = stack8;
             } else {
-                v = ((*reinterpret_cast<int *>(self + 0x158) -
-                      *reinterpret_cast<int *>(self + 0x150)) - *g_009b7a74) - v;
-                buf = reinterpret_cast<Buffer *>(*g_009b7a68);
-                x = stack8 - *g_009b7a70;
+                v = ((client_rect_.bottom -
+                      client_rect_.top) - *WinViewOriginY) - v;
+                buf = reinterpret_cast<Buffer *>(*WinBackBuffer);
+                x = stack8 - *WinViewOriginX;
             }
-            reinterpret_cast<Buffer *>(g_009b7490)->draw(buf, *g_00696d14, x, v + stack4, 1, 1);
+            (&ScreenBuffer)->draw(buf, *WinFillColour, x, v + stack4, 1, 1);
         }
 
-        if (*reinterpret_cast<int *>(self + 0xbc) != 0 && (a2 == -1 || a2 == 3)) {
-            if (*g_009b7a68 == 0) {
-                reinterpret_cast<Buffer *>(g_009b7490)
-                    ->draw(reinterpret_cast<Buffer *>(g_009b7490), *g_00696d14, stack8,
+        if (buffer3_ != 0 && (flags == -1 || flags == 3)) {
+            if (*WinBackBuffer == 0) {
+                (&ScreenBuffer)
+                    ->draw((&ScreenBuffer), *WinFillColour, stack8,
                            stack4 + iVar1, 1, 1);
             } else {
-                reinterpret_cast<Buffer *>(g_009b7490)
-                    ->draw(reinterpret_cast<Buffer *>(*g_009b7a68), *g_00696d14,
-                           stack8 - *g_009b7a70, (iVar1 - *g_009b7a74) + stack4, 1, 1);
+                (&ScreenBuffer)
+                    ->draw(reinterpret_cast<Buffer *>(*WinBackBuffer), *WinFillColour,
+                           stack8 - *WinViewOriginX, (iVar1 - *WinViewOriginY) + stack4, 1, 1);
             }
         }
 
-        if (*reinterpret_cast<int *>(self + 0xb8) != 0 && (a2 == -1 || a2 == 1)) {
+        if (buffer2_ != 0 && (flags == -1 || flags == 1)) {
             Buffer *buf;
             int v;
             int yv = iVar1;
-            if (*g_009b7a68 == 0) {
-                v = (*reinterpret_cast<int *>(self + 0x154) -
-                     *reinterpret_cast<int *>(self + 0x14c)) -
-                    *reinterpret_cast<int *>(self + 0x118);
-                buf = reinterpret_cast<Buffer *>(g_009b7490);
+            if (*WinBackBuffer == 0) {
+                v = (client_rect_.right -
+                     client_rect_.left) -
+                    border_thickness_;
+                buf = (&ScreenBuffer);
             } else {
-                yv = iVar1 - *g_009b7a74;
-                v = ((*reinterpret_cast<int *>(self + 0x154) -
-                      *reinterpret_cast<int *>(self + 0x14c)) -
-                     *reinterpret_cast<int *>(self + 0x118)) - *g_009b7a70;
-                buf = reinterpret_cast<Buffer *>(*g_009b7a68);
+                yv = iVar1 - *WinViewOriginY;
+                v = ((client_rect_.right -
+                      client_rect_.left) -
+                     border_thickness_) - *WinViewOriginX;
+                buf = reinterpret_cast<Buffer *>(*WinBackBuffer);
             }
-            reinterpret_cast<Buffer *>(g_009b7490)->draw(buf, *g_00696d14, v + stack8, yv + stack4, 1, 1);
+            (&ScreenBuffer)->draw(buf, *WinFillColour, v + stack8, yv + stack4, 1, 1);
         }
 
-        reinterpret_cast<Buffer *>(g_009b7490)->set_clip(reinterpret_cast<RECT *>(g_009b74c0));
+        (&ScreenBuffer)->set_clip(reinterpret_cast<RECT *>(WinScreenClipRect));
     }
 }
 
@@ -6944,7 +6772,7 @@ void Win::remove_child(Win *a1) {
 
 // ===== homed from src/recovered/units/005f6880.cpp =====
 
-void Win::on_r_button_up(int a1, int a2, unsigned int a3, int a4) {
+void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
     char *self = reinterpret_cast<char *>(this);
 
     Win *captured = WinPointerOwner1;
@@ -6955,26 +6783,26 @@ void Win::on_r_button_up(int a1, int a2, unsigned int a3, int a4) {
     WinPointerOwner2 = nullptr;
 
     if (captured == this) {
-        int32_t fa = *reinterpret_cast<int32_t *>(self + 0x13c);
-        int32_t fb = *reinterpret_cast<int32_t *>(self + 0x140);
-        int32_t fc = *reinterpret_cast<int32_t *>(self + 0x144);
-        int32_t fd = *reinterpret_cast<int32_t *>(self + 0x148);
+        int32_t fa = outer_rect_.left;
+        int32_t fb = outer_rect_.top;
+        int32_t fc = outer_rect_.right;
+        int32_t fd = outer_rect_.bottom;
         RECT testRect = {0, 0, fc - fa, fd - fb};
 
-        if (in_box(a1, a2, &testRect)) {
-            if ((*reinterpret_cast<int32_t *>(self + 0x98) & 0x200000) == 0) {
-                if ((*reinterpret_cast<uint8_t *>(self + 0x9c) & 8) == 0) {
+        if (in_box(x, y, &testRect)) {
+            if ((iFlags_ & 0x200000) == 0) {
+                if ((iSomeFlag_ & 8) == 0) {
                     int32_t related;
-                    if (a4 == 0) {
-                        *g_009b7ab8 = reinterpret_cast<int32_t>(self);
-                        int32_t fp = *reinterpret_cast<int32_t *>(self + 0x420);
+                    if (dbl == 0) {
+                        *WinCallbackWindow = reinterpret_cast<int32_t>(self);
+                        int32_t fp = field_420_;
                         if (fp != 0) {
-                            reinterpret_cast<void(__cdecl *)(int, int)>(fp)(a1, a2);
+                            reinterpret_cast<void(__cdecl *)(int, int)>(fp)(x, y);
                         }
-                        reinterpret_cast<Win *>(self)->vslot_22(a1, a2);
+                        reinterpret_cast<Win *>(self)->vslot_22(x, y);
                         related = *reinterpret_cast<int32_t *>(self + 0x2c);
                     } else {
-                        reinterpret_cast<Win *>(self)->vslot_35(a1, a2);
+                        reinterpret_cast<Win *>(self)->vslot_35(x, y);
                         related = *reinterpret_cast<int32_t *>(self + 0x5c);
                     }
                     if (related != 0 && reinterpret_cast<Win *>(related)->vslot_23() == 0) {
@@ -6985,19 +6813,19 @@ void Win::on_r_button_up(int a1, int a2, unsigned int a3, int a4) {
         }
     }
 
-    if ((*reinterpret_cast<int32_t *>(self + 0x98) & 0x200000) == 0 &&
-        (*reinterpret_cast<uint8_t *>(self + 0x9c) & 8) == 0) {
+    if ((iFlags_ & 0x200000) == 0 &&
+        (iSomeFlag_ & 8) == 0) {
         int32_t related2;
-        if (a4 == 0) {
-            *g_009b7ab8 = reinterpret_cast<int32_t>(self);
-            int32_t fp = *reinterpret_cast<int32_t *>(self + 0x428);
+        if (dbl == 0) {
+            *WinCallbackWindow = reinterpret_cast<int32_t>(self);
+            int32_t fp = field_428_;
             if (fp != 0) {
-                reinterpret_cast<void(__cdecl *)(int, int)>(fp)(a1, a2);
+                reinterpret_cast<void(__cdecl *)(int, int)>(fp)(x, y);
             }
-            reinterpret_cast<Win *>(self)->vslot_24(a1, a2);
+            reinterpret_cast<Win *>(self)->vslot_24(x, y);
             related2 = *reinterpret_cast<int32_t *>(self + 0x34);
         } else {
-            reinterpret_cast<Win *>(self)->vslot_37(a1, a2);
+            reinterpret_cast<Win *>(self)->vslot_37(x, y);
             related2 = *reinterpret_cast<int32_t *>(self + 0x64);
         }
         if (related2 != 0 && reinterpret_cast<Win *>(related2)->vslot_23() == 0) {
@@ -7012,10 +6840,10 @@ void __cdecl Win::OnRButtonDown(void * a1, long a2, int a3, int a4, unsigned int
     int result = reinterpret_cast<int>(get_mouse_window(
         reinterpret_cast<int *>(&a2), reinterpret_cast<int *>(&a3)));
     if (result != 0) {
-        reinterpret_cast<Win *>(result)->on_r_button_down(reinterpret_cast<long>(a1), a2, a3, a4, *g_009b7aa4);
+        reinterpret_cast<Win *>(result)->on_r_button_down(reinterpret_cast<long>(a1), a2, a3, a4, *WinDoubleClickFlag);
     }
-    if (*g_009b7a94 != 0) {
-        reinterpret_cast<void (__cdecl *)(int, int)>(*g_009b7a94)(a2, a3);
+    if (*WinMouseCallback != 0) {
+        reinterpret_cast<void (__cdecl *)(int, int)>(*WinMouseCallback)(a2, a3);
     }
     if (WinCursorMoved != 0) {
         reinterpret_cast<void (__cdecl *)()>(WinCursorMoved)();
@@ -7030,7 +6858,7 @@ void __cdecl Win::OnRButtonUp(void * a1, int a2, int a3, unsigned int a4) {
     Win *win = reinterpret_cast<Win *>(get_mouse_window(&a2, &a3));
     if (win != 0) {
         VCallW *vcall = reinterpret_cast<VCallW *>(win);
-        vcall->slot084(a2, a3, a4, *g_009b7aa4);
+        vcall->slot084(a2, a3, a4, *WinDoubleClickFlag);
     }
 }
 
@@ -7097,11 +6925,10 @@ void __cdecl Win::OnRButtonUp(void * a1, int a2, int a3, unsigned int a4) {
 //    hard case - the tool reports a similarity ratio so you can tell a
 //    near miss from a wrong body.
 void Win::set_caption_height(int a1) {
-    char *self = reinterpret_cast<char *>(this);
-    if (*reinterpret_cast<unsigned char *>(self + 0x9c) & 2) {
-        *reinterpret_cast<int *>(self + 0x114) = a1;
-        int w = *reinterpret_cast<int *>(self + 0x154) - *reinterpret_cast<int *>(self + 0x14c);
-        int h = *reinterpret_cast<int *>(self + 0x158) - *reinterpret_cast<int *>(self + 0x150);
+    if (iSomeFlag_ & 2) {
+        caption_height_ = a1;
+        int w = client_rect_.right - client_rect_.left;
+        int h = client_rect_.bottom - client_rect_.top;
         this->resize(w, h, 0);
     }
 }
@@ -7113,18 +6940,18 @@ void Win::set_caption_height(int a1) {
 // the pointer, and win.h has said so since the focus-window work.
 Win *Win::get_key_window() {
     char *w;
-    if (*g_009b7ae0 == 0) {
-        w = (char *)*g_009b7ac4;
-        if (*g_009b7ac4 == 0) {
+    if (WinFocusWindow == nullptr) {
+        w = (char *)*WinInputFocus;
+        if (*WinInputFocus == 0) {
             w = (char *)*WinDefaultFocus;
         }
     } else {
-        w = (char *)*g_009b7ae0;
-        if (*g_009b8d7c != 0) {
-            w = (char *)*g_009b8d7c;
+        w = (char *)WinFocusWindow;
+        if (*WinModalFocus != 0) {
+            w = (char *)*WinModalFocus;
         }
     }
-    *g_009b7ac8 = (int)w;
+    *WinActiveWindow = (int)w;
     int result = 0;
     if (w != 0) {
         result = *(int *)(w + 0xa8);
@@ -7146,15 +6973,15 @@ Win *Win::get_key_window() {
 typedef BOOL (__stdcall *InvalidateRectFn)(void *, const RECT *, BOOL);
 typedef void (__cdecl *Sub5f8670Fn)(RECT *, int, int);
 
-void Win::show(int a1) {
+void Win::show(int visible) {
     if ((iSomeFlag_ & 1) == 0 && (iSomeFlag_ & 4) != 0) {
         field_1A0_ |= 2;
         if ((iFlags_ & 2) == 0) {
-            *g_009b7acc = 0;
-            *g_009b7ad0 = 0;
+            *WinFocusPrimary = 0;
+            *WinFocusSecondary = 0;
         }
         iSomeFlag_ |= 1;
-        if ((a1 & 4) == 0) {
+        if ((visible & 4) == 0) {
             if (win_parent_) {
                 win_parent_->bring_child_to_top(this);
             } else {
@@ -7162,27 +6989,27 @@ void Win::show(int a1) {
             }
         }
 
-        int32_t count = *g_009b7b34;
-        *g_009b7b30 = 0;
+        int32_t count = *WinZOrderListCount;
+        WinZOrderCount = 0;
         if (count > 0) {
-            int32_t cur = *g_009b7a6c;
+            int32_t cur = *WinHighlighted;
             for (int32_t i = 0; i < count; ++i) {
                 Win *w = g_zorder_list[i];
                 if (cur != 0 && cur == reinterpret_cast<int32_t>(w)) {
-                    *g_009b7b30 = 0;
-                    *g_009b7a78 = 0;
+                    WinZOrderCount = 0;
+                    *WinZOrderDirty = 0;
                 }
                 if (reinterpret_cast<uint8_t *>(w)[0x9c] & 1) {
                     recurse_zorder(w);
-                    cur = *g_009b7a6c;
+                    cur = *WinHighlighted;
                 }
             }
         }
 
-        if ((a1 & 2) == 0) {
+        if ((visible & 2) == 0) {
             resize_event(outer_rect_.right - outer_rect_.left, outer_rect_.bottom - outer_rect_.top);
         }
-        if ((a1 & 1) == 0) {
+        if ((visible & 1) == 0) {
             this->vslot_12();
         }
         if (menu_ != 0) {
@@ -7210,7 +7037,7 @@ void Win::show(int a1) {
                     y -= win_parent_->outer_rect_.top;
                 }
             }
-            reinterpret_cast<Sub5f8670Fn>(sub_5f8670)(&rect, x, y);
+            offset_rect(&rect, x, y);
         } else {
             rect.right = client_rect_.right - client_rect_.left;
             rect.bottom = client_rect_.bottom - client_rect_.top;
@@ -7225,7 +7052,7 @@ void Win::show(int a1) {
             rect.bottom += y - outer_rect_.top;
         }
 
-        (*reinterpret_cast<InvalidateRectFn *>(g_00669304))(reinterpret_cast<void *>(*g_009b7b28), &rect, 0);
+        (*reinterpret_cast<InvalidateRectFn *>(g_InvalidateRect))(reinterpret_cast<void *>(*WinMainHwnd), &rect, 0);
 
         Win *obj2 = reinterpret_cast<Win *>(val_3_);
         if (obj2 != 0) {
@@ -7245,20 +7072,20 @@ void Win::update_back_to_window(Buffer * a1) {
         return;
     }
 
-    *g_009b7a68 = reinterpret_cast<int>(a1);
-    *g_009b7a6c = 0;
-    *g_009b7a70 = 0;
-    *g_009b7a74 = 0;
+    *WinBackBuffer = reinterpret_cast<int>(a1);
+    *WinHighlighted = 0;
+    *WinViewOriginX = 0;
+    *WinViewOriginY = 0;
 
-    uint32_t savedFlags = *reinterpret_cast<uint32_t *>(self + 0x9c);
-    *reinterpret_cast<uint32_t *>(self + 0x9c) = savedFlags & 0xfffffffe;
+    uint32_t savedFlags = iSomeFlag_;
+    iSomeFlag_ = savedFlags & 0xfffffffe;
 
     WinZOrderCount = 0;
-    for (int i = 0; i < *g_009b7b34; i++) {
+    for (int i = 0; i < *WinZOrderListCount; i++) {
         Win *w = g_zorder_list[i];
-        if (*g_009b7a6c != 0 && *g_009b7a6c == reinterpret_cast<int>(w)) {
+        if (*WinHighlighted != 0 && *WinHighlighted == reinterpret_cast<int>(w)) {
             WinZOrderCount = 0;
-            *g_009b7a78 = 0;
+            *WinZOrderDirty = 0;
         }
         if (*reinterpret_cast<uint8_t *>(reinterpret_cast<char *>(w) + 0x9c) & 1) {
             recurse_zorder(w);
@@ -7267,64 +7094,64 @@ void Win::update_back_to_window(Buffer * a1) {
 
     int tail;
     if (!(savedFlags & 2)) {
-        *g_009b7a70 += *reinterpret_cast<int *>(self + 0x14c) + *reinterpret_cast<int *>(self + 0x13c);
-        *g_009b7a74 += *reinterpret_cast<int *>(self + 0x150) + *reinterpret_cast<int *>(self + 0x140);
+        *WinViewOriginX += client_rect_.left + outer_rect_.left;
+        *WinViewOriginY += client_rect_.top + outer_rect_.top;
 
-        if (!(*reinterpret_cast<uint8_t *>(self + 0x98) & 0x20) ||
-            *reinterpret_cast<int *>(self + 0xc4) == 0) {
+        if (!(iFlags_ & 0x20) ||
+            win_parent_ == 0) {
             goto after_offset_fixup;
         }
-        this->client_to_screen(g_009b7a70, g_009b7a74);
-        if (!(*reinterpret_cast<uint16_t *>(self + 0x98) & 0x8000)) {
+        this->client_to_screen(WinViewOriginX, WinViewOriginY);
+        if (!(iFlags_ & 0x8000)) {
             goto after_offset_fixup;
         }
         {
             char *owner = reinterpret_cast<char *>(*reinterpret_cast<Win **>(self + 0xc4));
-            *g_009b7a70 -= *reinterpret_cast<int *>(owner + 0x13c);
+            *WinViewOriginX -= *reinterpret_cast<int *>(owner + 0x13c);
             tail = *reinterpret_cast<int *>(owner + 0x140);
         }
     } else {
-        this->client_to_screen(g_009b7a70, g_009b7a74);
-        *g_009b7a70 -= *reinterpret_cast<int *>(self + 0x13c);
-        tail = *reinterpret_cast<int *>(self + 0x140);
+        this->client_to_screen(WinViewOriginX, WinViewOriginY);
+        *WinViewOriginX -= outer_rect_.left;
+        tail = outer_rect_.top;
     }
-    *g_009b7a74 -= tail;
+    *WinViewOriginY -= tail;
 after_offset_fixup:;
 
     RECT rect;
     if (!(savedFlags & 2)) {
-        rect.left = *reinterpret_cast<int *>(self + 0x13c);
-        rect.top = *reinterpret_cast<int *>(self + 0x140);
-        rect.right = *reinterpret_cast<int *>(self + 0x144);
-        rect.bottom = *reinterpret_cast<int *>(self + 0x148);
+        rect.left = outer_rect_.left;
+        rect.top = outer_rect_.top;
+        rect.right = outer_rect_.right;
+        rect.bottom = outer_rect_.bottom;
     } else {
-        rect.left = *reinterpret_cast<int *>(self + 0x14c);
-        rect.top = *reinterpret_cast<int *>(self + 0x150);
-        rect.right = *reinterpret_cast<int *>(self + 0x154);
-        rect.bottom = *reinterpret_cast<int *>(self + 0x158);
+        rect.left = client_rect_.left;
+        rect.top = client_rect_.top;
+        rect.right = client_rect_.right;
+        rect.bottom = client_rect_.bottom;
     }
 
     a1->init(rect.right - rect.left, rect.bottom - rect.top, 0, 0);
 
-    int dx = *g_009b7a70 - rect.left;
-    int dy = *g_009b7a74 - rect.top;
-    rect.left = *g_009b7a70;
-    rect.top = *g_009b7a74;
+    int dx = *WinViewOriginX - rect.left;
+    int dy = *WinViewOriginY - rect.top;
+    rect.left = *WinViewOriginX;
+    rect.top = *WinViewOriginY;
     rect.right += dx;
     rect.bottom += dy;
 
     this->update_screen(&rect, 0);
 
-    *g_009b7a68 = 0;
-    *g_009b7a6c = 0;
-    *reinterpret_cast<uint32_t *>(self + 0x9c) = savedFlags;
+    *WinBackBuffer = 0;
+    *WinHighlighted = 0;
+    iSomeFlag_ = savedFlags;
 
     WinZOrderCount = 0;
-    for (int j = 0; j < *g_009b7b34; j++) {
+    for (int j = 0; j < *WinZOrderListCount; j++) {
         Win *w = g_zorder_list[j];
-        if (*g_009b7a6c != 0 && *g_009b7a6c == reinterpret_cast<int>(w)) {
+        if (*WinHighlighted != 0 && *WinHighlighted == reinterpret_cast<int>(w)) {
             WinZOrderCount = 0;
-            *g_009b7a78 = 0;
+            *WinZOrderDirty = 0;
         }
         if (*reinterpret_cast<uint8_t *>(reinterpret_cast<char *>(w) + 0x9c) & 1) {
             recurse_zorder(w);
@@ -7337,35 +7164,35 @@ typedef void *(__stdcall *PFN_LoadCursorA)(void *, const char *);
 typedef void *(__stdcall *PFN_SetCursor)(void *);
 
 int Win::set_modal(int a1, int (__cdecl *a2)(), Win * a3) {
-    if (*g_009b7ae4 >= 4) {
+    if (*WinModalDepth >= 4) {
         return 0;
     }
-    int idx = *g_009b7ae4;
-    reinterpret_cast<void **>(g_009b6ef8)[idx] = this;
-    reinterpret_cast<void **>(g_009b7a1c)[idx] = a3;
-    *g_009b7ae4 = idx + 1;
-    *g_009b7ae0 = reinterpret_cast<int>(this);
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
+    int idx = *WinModalDepth;
+    WinModalStack[idx] = this;
+    reinterpret_cast<void **>(WinFocusStack)[idx] = a3;
+    *WinModalDepth = idx + 1;
+    WinFocusWindow = this;
+    *WinFocusPrimary = 0;
+    *WinFocusSecondary = 0;
 
-    void *prior = reinterpret_cast<void *>(*g_009b7abc);
+    void *prior = reinterpret_cast<void *>(*WinActiveDialog);
     if (prior != 0 && prior != this) {
         reinterpret_cast<Win *>(prior)->vslot_04();
-        *g_009b7abc = 0;
+        *WinActiveDialog = 0;
     }
-    *g_009b7ac4 = 0;
+    *WinInputFocus = 0;
     if (a3 != 0) {
-        *g_009b7adc = reinterpret_cast<int>(a3);
+        *WinFocusTop = reinterpret_cast<int>(a3);
         reinterpret_cast<Win *>(a3)->show(0);
     }
     reinterpret_cast<Win *>(this)->show(0);
     flush_input();
 
-    void *cursor = (*reinterpret_cast<PFN_LoadCursorA *>(g_0066928c))(0, reinterpret_cast<const char *>(0x7f00));
-    (*reinterpret_cast<PFN_SetCursor *>(g_00669288))(cursor);
+    void *cursor = (*reinterpret_cast<PFN_LoadCursorA *>(g_LoadCursorA))(0, reinterpret_cast<const char *>(0x7f00));
+    (*reinterpret_cast<PFN_SetCursor *>(g_SetCursor))(cursor);
 
     int result = 0;
-    if (*g_009b7ae0 == reinterpret_cast<int>(this)) {
+    if (WinFocusWindow == this) {
         for (;;) {
             int r = reinterpret_cast<Win *>(this)->vslot_59();
             if (r == 0) {
@@ -7374,7 +7201,7 @@ int Win::set_modal(int a1, int (__cdecl *a2)(), Win * a3) {
             if (a2 != 0) {
                 int rr = a2();
                 if (rr == 0) {
-                    int cur = *g_009b7ae0;
+                    int cur = reinterpret_cast<int>(WinFocusWindow);
                     if (cur != 0) {
                         reinterpret_cast<VCallModal *>(reinterpret_cast<void *>(cur))->slot58();
                     }
@@ -7383,7 +7210,7 @@ int Win::set_modal(int a1, int (__cdecl *a2)(), Win * a3) {
                 }
             }
             wait_task();
-            if (*g_009b7ae0 != reinterpret_cast<int>(this)) {
+            if (WinFocusWindow != reinterpret_cast<Win *>(this)) {
                 return 0;
             }
         }
@@ -7397,19 +7224,19 @@ typedef int (__stdcall *MoveToExFn)(void *hdc, int x, int y, void *point);
 typedef int (__stdcall *LineToFn)(void *hdc, int x, int y);
 
 void Win::draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ pen2, int unused7) {
-    SelectObjectFn selectObject = *reinterpret_cast<SelectObjectFn *>(g_00669060);
-    MoveToExFn moveToEx = *reinterpret_cast<MoveToExFn *>(g_00669048);
-    LineToFn lineTo = *reinterpret_cast<LineToFn *>(g_006690c4);
+    SelectObjectFn selectObject = *reinterpret_cast<SelectObjectFn *>(g_SelectObject);
+    MoveToExFn moveToEx = *reinterpret_cast<MoveToExFn *>(g_MoveToEx);
+    LineToFn lineTo = *reinterpret_cast<LineToFn *>(g_LineTo);
     bool haveHdc;
 
     ACQUIRE_HDC(haveHdc);
     if (haveHdc) {
-        Palette *pal = reinterpret_cast<Palette *>(*g_009b8180);
+        Palette *pal = reinterpret_cast<Palette *>(*WinPalette);
         if (this->field_184_ != pal->seed_) {
             pal->set_active_window(this);
             this->field_184_ = pal->seed_;
         }
-        void *hdc = reinterpret_cast<void *>(*g_009b7b2c);
+        void *hdc = reinterpret_cast<void *>(*WinScreenDC);
         void *prev = reinterpret_cast<void *>(selectObject(hdc, pen1));
         moveToEx(hdc, x1 + 1, y1, 0);
         lineTo(hdc, x2 + 1, y1);
@@ -7419,12 +7246,12 @@ void Win::draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ
 
     ACQUIRE_HDC(haveHdc);
     if (haveHdc) {
-        Palette *pal = reinterpret_cast<Palette *>(*g_009b8180);
+        Palette *pal = reinterpret_cast<Palette *>(*WinPalette);
         if (this->field_184_ != pal->seed_) {
             pal->set_active_window(this);
             this->field_184_ = pal->seed_;
         }
-        void *hdc = reinterpret_cast<void *>(*g_009b7b2c);
+        void *hdc = reinterpret_cast<void *>(*WinScreenDC);
         void *prev = reinterpret_cast<void *>(selectObject(hdc, pen2));
         moveToEx(hdc, x1, y2, 0);
         lineTo(hdc, x2, y2);
@@ -7434,12 +7261,12 @@ void Win::draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ
 
     ACQUIRE_HDC(haveHdc);
     if (haveHdc) {
-        Palette *pal = reinterpret_cast<Palette *>(*g_009b8180);
+        Palette *pal = reinterpret_cast<Palette *>(*WinPalette);
         if (this->field_184_ != pal->seed_) {
             pal->set_active_window(this);
             this->field_184_ = pal->seed_;
         }
-        void *hdc = reinterpret_cast<void *>(*g_009b7b2c);
+        void *hdc = reinterpret_cast<void *>(*WinScreenDC);
         void *prev = reinterpret_cast<void *>(selectObject(hdc, pen1));
         moveToEx(hdc, x1, y1, 0);
         lineTo(hdc, x1, y2);
@@ -7450,7 +7277,7 @@ void Win::draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ
     ACQUIRE_HDC(haveHdc);
     if (haveHdc) {
         sync_palette();
-        void *hdc = reinterpret_cast<void *>(*g_009b7b2c);
+        void *hdc = reinterpret_cast<void *>(*WinScreenDC);
         void *prev = reinterpret_cast<void *>(selectObject(hdc, pen2));
         moveToEx(hdc, x2, y1 + 1, 0);
         lineTo(hdc, x2, y2 + 1);
@@ -7464,15 +7291,14 @@ void Win::draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ
 int Win::key_up_event(int a1) {
     char *self = reinterpret_cast<char *>(this);
     int result = 0;
-    if ((*reinterpret_cast<unsigned int *>(self + 0x98) & 0x200000) != 0 ||
-        (*reinterpret_cast<unsigned char *>(self + 0x9C) & 8) != 0) {
+    if ((iFlags_ & 0x200000) != 0 ||
+        (iSomeFlag_ & 8) != 0) {
         return 0;
     }
-    if (*reinterpret_cast<int *>(self + 0xD4) != 0) {
+    if (list_.count_ != 0) {
         int recvThis;
-        if (*reinterpret_cast<int *>(self + 0xCC) != 0) {
-            int fieldD0 = *reinterpret_cast<int *>(self + 0xD0);
-            recvThis = *reinterpret_cast<int *>(fieldD0 + 4);
+        if (list_.head_ != 0) {
+            recvThis = *(reinterpret_cast<int *>(list_.current_) + 1);
         } else {
             recvThis = 0;
         }
@@ -7480,8 +7306,8 @@ int Win::key_up_event(int a1) {
             return 1;
         }
     }
-    *g_009b7ab8 = reinterpret_cast<int>(this);
-    int callback = *reinterpret_cast<int *>(self + 0x434);
+    *WinCallbackWindow = reinterpret_cast<int>(this);
+    int callback = field_434_;
     if (callback != 0) {
         result = reinterpret_cast<int (__cdecl *)(int)>(callback)(a1);
     }
@@ -7501,17 +7327,17 @@ int Win::key_down_event(int a1) {
     typedef int (__cdecl *KeyHookFn)(int);
     char *self = reinterpret_cast<char *>(this);
 
-    if ((*reinterpret_cast<unsigned int *>(self + 0x98) & 0x200000) != 0 ||
-        (*reinterpret_cast<unsigned char *>(self + 0x9c) & 8) != 0) {
+    if ((iFlags_ & 0x200000) != 0 ||
+        (iSomeFlag_ & 8) != 0) {
         return 0;
     }
 
     bool clicked = false;
     int ebx = 0;
 
-    if (*reinterpret_cast<int *>(self + 0xd4) != 0) {
-        if (*reinterpret_cast<int *>(self + 0xcc) != 0) {
-            ebx = *reinterpret_cast<int *>(*reinterpret_cast<int *>(self + 0xd0) + 4);
+    if (list_.count_ != 0) {
+        if (list_.head_ != 0) {
+            ebx = *(reinterpret_cast<int *>(list_.current_) + 1);
         }
         Win *focus = reinterpret_cast<Win *>(ebx);
 
@@ -7564,9 +7390,9 @@ int Win::key_down_event(int a1) {
         return 1;
     }
 
-    *g_009b7ab8 = reinterpret_cast<int>(this);
+    *WinCallbackWindow = reinterpret_cast<int>(this);
 
-    KeyHookFn hook = *reinterpret_cast<KeyHookFn *>(self + 0x430);
+    KeyHookFn hook = reinterpret_cast<KeyHookFn>(field_430_);
     if (hook != 0) {
         ebx = hook(a1);
     }
@@ -7649,8 +7475,8 @@ int Win::init(int a1, int a2, int a3, int a4, char * a5, int a6, Win * a7, Menu 
     if (a7 != 0) {
         if (a7->child_count_ == 150) {
             this->close();
-            (*reinterpret_cast<MessageBoxAFn *>(g_00669318))(
-                0, reinterpret_cast<const char *>(g_00696d80), reinterpret_cast<const char *>(g_00696d60), 0);
+            (*reinterpret_cast<MessageBoxAFn *>(g_MessageBoxA))(
+                0, reinterpret_cast<const char *>(WinMsgTooManyChildren), reinterpret_cast<const char *>(WinMsgIncreaseMaxChildren), 0);
             // MEASURED at 0x005EBFC4: `push 4; call 0x644dff` - the CRT's exit with
             // status 4, not a member call. The artifact declared a local
             // `void exit();` in its stub class, which was a guess.
@@ -7668,11 +7494,11 @@ int Win::init(int a1, int a2, int a3, int a4, char * a5, int a6, Win * a7, Menu 
             a7->child_count_++;
         }
     } else {
-        int cnt = *g_009b7b34;
+        int cnt = *WinZOrderListCount;
         if (cnt == 0x28) {
             this->close();
-            (*reinterpret_cast<MessageBoxAFn *>(g_00669318))(
-                0, reinterpret_cast<const char *>(g_00696db4), reinterpret_cast<const char *>(g_00696d94), 0);
+            (*reinterpret_cast<MessageBoxAFn *>(g_MessageBoxA))(
+                0, reinterpret_cast<const char *>(WinMsgTooManyParents), reinterpret_cast<const char *>(WinMsgIncreaseMaxParents), 0);
             // MEASURED at 0x005EBFC4: `push 4; call 0x644dff` - the CRT's exit with
             // status 4, not a member call. The artifact declared a local
             // `void exit();` in its stub class, which was a guess.
@@ -7689,7 +7515,7 @@ int Win::init(int a1, int a2, int a3, int a4, char * a5, int a6, Win * a7, Menu 
                 }
                 globalList[0] = this;
             }
-            *g_009b7b34 = cnt + 1;
+            *WinZOrderListCount = cnt + 1;
         }
     }
 
@@ -7790,7 +7616,7 @@ int Win::init(int a1, int a2, int a3, int a4, char * a5, int a6, Win * a7, Menu 
             this->buffer4_ = (raw != 0) ? reinterpret_cast<Buffer *>(new (raw) Scroll()) : 0;
             if (this->buffer4_ == 0) return 4;
             Scroll *sc = reinterpret_cast<Scroll *>(this->buffer4_);
-            int top = *g_009b8dd4;
+            int top = *WinTitleBarHeight;
             int nc = this->outer_rect_.bottom - top;
             int arg2 = ((this->iFlags_ & 8) != 0)
                            ? (this->outer_rect_.right - this->outer_rect_.left) - top
@@ -7808,7 +7634,7 @@ int Win::init(int a1, int a2, int a3, int a4, char * a5, int a6, Win * a7, Menu 
                 this->buffer3_ = (raw != 0) ? reinterpret_cast<Buffer *>(new (raw) Scroll()) : 0;
                 if (this->buffer3_ == 0) return 4;
                 Scroll *sc = reinterpret_cast<Scroll *>(this->buffer3_);
-                int top = *g_009b8dd4;
+                int top = *WinTitleBarHeight;
                 int nc = this->outer_rect_.right - top;
                 int arg2 = ((this->iFlags_ & 4) != 0)
                                ? (this->outer_rect_.bottom - this->outer_rect_.top) - top
@@ -7820,7 +7646,7 @@ int Win::init(int a1, int a2, int a3, int a4, char * a5, int a6, Win * a7, Menu 
     }
 
     this->do_caption_buttons();
-    *g_009b7ab8 = reinterpret_cast<int>(this);
+    *WinCallbackWindow = reinterpret_cast<int>(this);
 
     unsigned int fl = this->iFlags_;
     bool skipMenuList = (fl & 0x100000) != 0 || (fl & 0x200000) != 0 ||
@@ -7892,11 +7718,11 @@ typedef void(__stdcall *GetCursorPosFn)(int *);
 typedef int(__stdcall *PollFn)(int);
 
 int __cdecl Win::update_cursor(Win *a1, int a2) {
-    UnionRectFn UnionRect = (UnionRectFn)(*g_00669328);
+    UnionRectFn UnionRect = (UnionRectFn)(*g_UnionRect);
     GetCursorPosFn GetCursorPosPtr = (GetCursorPosFn)(*g);
-    LoadCursorFn LoadCursorPtr = (LoadCursorFn)(*g_0066928c);
-    SetCursorFn SetCursorPtr = (SetCursorFn)(*g_00669288);
-    PollFn PollPtr = (PollFn)(*g_00669354);
+    LoadCursorFn LoadCursorPtr = (LoadCursorFn)(*g_LoadCursorA);
+    SetCursorFn SetCursorPtr = (SetCursorFn)(*g_SetCursor);
+    PollFn PollPtr = (PollFn)(*g_ShowCursor);
 
     int pt[2];
     GetCursorPosPtr(pt);
@@ -7913,11 +7739,11 @@ int __cdecl Win::update_cursor(Win *a1, int a2) {
         }
     }
 
-    if (*g_009b7aa4 == 0 && (WFIELD(win, 0x98) & 0x4000000) == 0) {
+    if (*WinDoubleClickFlag == 0 && (WFIELD(win, 0x98) & 0x4000000) == 0) {
         int field188 = WFIELD(win, 0x188);
         if (field188 != 0) {
             // A window wants the cursor image saved/restored under it.
-            int saved = *g_009b7a2c;
+            int saved = *WinSavedFocus;
             if (saved == 0) {
                 while (PollPtr(0) >= 0) {
                 }
@@ -7926,26 +7752,26 @@ int __cdecl Win::update_cursor(Win *a1, int a2) {
             }
 
             int field188b = WFIELD(win, 0x188);
-            int prevSaved = *g_009b7a2c;
+            int prevSaved = *WinSavedFocus;
             if (field188b != prevSaved) {
-                *g_009b7a40 = *reinterpret_cast<int *>(field188b + 0x18);
-                *g_009b7a44 = *reinterpret_cast<int *>(field188b + 0x1c);
-                *g_009b7a38 = WFIELD(win, 0x18c);
-                *g_009b7a3c = WFIELD(win, 0x190);
-                bool sameArea = *g_009b6f88 == field188b && -*g_009b6f8c == prevSaved;
+                *WinClipWidth = *reinterpret_cast<int *>(field188b + 0x18);
+                *WinClipHeight = *reinterpret_cast<int *>(field188b + 0x1c);
+                *WinDragOffsetX = WFIELD(win, 0x18c);
+                *WinDragOffsetY = WFIELD(win, 0x190);
+                bool sameArea = *WinSavedAreaWidth == field188b && -*WinSavedAreaHeight == prevSaved;
                 if (!sameArea) {
                     g_WIN_BUFFER->init(field188b, prevSaved, 0, 0);
                 }
             }
-            int width = *g_009b7a40;
-            int height = *g_009b7a44;
-            int destX = x - *g_009b7a38;
-            int destY = y - *g_009b7a3c;
-            *g_009b7a30 = destX;
-            *g_009b7a34 = destY;
-            *g_009b7a2c = field188b;
+            int width = *WinClipWidth;
+            int height = *WinClipHeight;
+            int destX = x - *WinDragOffsetX;
+            int destY = y - *WinDragOffsetY;
+            *WinClipLeft = destX;
+            *WinClipTop = destY;
+            *WinSavedFocus = field188b;
             int copyResult = g_WIN_BUFFER
-                                  ->copy(reinterpret_cast<Buffer *>(g_009b7490), 0, 0, destX, destY,
+                                  ->copy((&ScreenBuffer), 0, 0, destX, destY,
                                          width, height);
 
             RECT rect;
@@ -7954,27 +7780,27 @@ int __cdecl Win::update_cursor(Win *a1, int a2) {
             rect.right = destX + width;
             rect.bottom = destY + height;
             RECT merged;
-            UnionRect(&merged, &rect, reinterpret_cast<RECT *>(g_009b6ee8));
+            UnionRect(&merged, &rect, reinterpret_cast<RECT *>(WinDirtyRect));
             if (merged.bottom == 0) {
                 return copyResult;
             }
-            int prevFlag = *g_009b7ad8;
-            *g_009b7ad8 = 1;
+            int prevFlag = WinFlipClipped;
+            WinFlipClipped = 1;
             Win::flip(&merged);
-            int result = *g_009b6ef0;
-            *g_009b7ad8 = prevFlag;
-            *g_009b6ee8 = result;
+            int result = *WinModalResult;
+            WinFlipClipped = prevFlag;
+            *WinDirtyRect = result;
             return result;
         }
 
         // win->0x188 == 0: nothing pending under this window.
-        if (*g_009b7a2c != 0) {
+        if (*WinSavedFocus != 0) {
             int ebxFlag = 1;
             sub_5f1750(1);
             while (PollPtr(ebxFlag) <= 0) {
             }
         }
-        *g_009b7a2c = 0;
+        *WinSavedFocus = 0;
 
         int owner = WFIELD(win, 0x194);
         if (owner != 0) {
@@ -8007,35 +7833,35 @@ int __cdecl Win::update_cursor(Win *a1, int a2) {
         case 2:
         case 4:
             RestoreAndFlip(UnionRect, false);
-            *g_009b7b3c = ebxFlag;
+            *WinKeyState = ebxFlag;
             SetCursorPtr(LoadCursorPtr(0, 0x7f00));
             break;
         case 12:
             RestoreAndFlip(UnionRect, false);
-            *g_009b7b3c = ebxFlag;
+            *WinKeyState = ebxFlag;
             SetCursorPtr(LoadCursorPtr(0, 0x7f84));
             break;
         case 13:
             RestoreAndFlip(UnionRect, true);
-            *g_009b7b3c = ebxFlag;
+            *WinKeyState = ebxFlag;
             SetCursorPtr(LoadCursorPtr(0, 0x7f84));
             break;
         case 14:
         case 17:
             RestoreAndFlip(UnionRect, true);
-            *g_009b7b3c = ebxFlag;
+            *WinKeyState = ebxFlag;
             SetCursorPtr(LoadCursorPtr(0, 0x7f85));
             break;
         case 15:
         case 19:
             RestoreAndFlip(UnionRect, true);
-            *g_009b7b3c = ebxFlag;
+            *WinKeyState = ebxFlag;
             SetCursorPtr(LoadCursorPtr(0, 0x7f82));
             break;
         case 16:
         case 18:
             RestoreAndFlip(UnionRect, true);
-            *g_009b7b3c = ebxFlag;
+            *WinKeyState = ebxFlag;
             SetCursorPtr(LoadCursorPtr(0, 0x7f83));
             break;
         case 0:
@@ -8050,20 +7876,20 @@ int __cdecl Win::update_cursor(Win *a1, int a2) {
             break;
         }
 
-        if (*g_009b7aa4 == 0 && WFIELD(win, 0x188) == 0 && *g_009b7a2c != 0) {
+        if (*WinDoubleClickFlag == 0 && WFIELD(win, 0x188) == 0 && *WinSavedFocus != 0) {
             g_WIN_BUFFER
-                ->copy(reinterpret_cast<Buffer *>(g_009b7490), 0, 0, *g_009b7a30, *g_009b7a34,
-                       *g_009b7a40, *g_009b7a44);
+                ->copy((&ScreenBuffer), 0, 0, *WinClipLeft, *WinClipTop,
+                       *WinClipWidth, *WinClipHeight);
             RECT rect;
-            sub_5f86c0(&rect, *g_009b7a30, *g_009b7a34, *g_009b7a40, *g_009b7a44);
+            make_rect(&rect, *WinClipLeft, *WinClipTop, *WinClipWidth, *WinClipHeight);
             RECT merged;
-            UnionRect(&merged, &rect, reinterpret_cast<RECT *>(g_009b6ee8));
-            int savedFlag = *g_009b7a2c;
-            *g_009b7a2c = 0;
+            UnionRect(&merged, &rect, reinterpret_cast<RECT *>(WinDirtyRect));
+            int savedFlag = *WinSavedFocus;
+            *WinSavedFocus = 0;
             Win::flip(&merged);
-            *g_009b7a2c = savedFlag;
-            *g_009b6ee8 = 0;
-            *g_009b6ef0 = 0;
+            *WinSavedFocus = savedFlag;
+            *WinDirtyRect = 0;
+            *WinModalResult = 0;
         }
 
         while (PollPtr(ebxFlag) <= 0) {
@@ -8072,7 +7898,7 @@ int __cdecl Win::update_cursor(Win *a1, int a2) {
     }
 
 lab_default_cursor:
-    *g_009b7a2c = 0;
+    *WinSavedFocus = 0;
     {
         void *cur = LoadCursorPtr(0, 0x7f00);
         return reinterpret_cast<int>(SetCursorPtr(cur));
@@ -8126,20 +7952,20 @@ typedef void (__cdecl *FnCallback)(int, int);
 // indirect  0x005EE795 0x005EE7A5 0x005EE7B5 0x005EE7C3 0x005EE7CE 0x005EE7DD 0x005EE7EE 0x005EE7F9
 void Win::left_down_event(int a1, int a2, int a3) {
     char *self = reinterpret_cast<char *>(this);
-    uint32_t iFlags = *reinterpret_cast<uint32_t *>(self + 0x98);
+    uint32_t iFlags = iFlags_;
     if ((iFlags & 0x200000) != 0) return;
-    uint8_t iSomeFlagByte = *reinterpret_cast<uint8_t *>(self + 0x9c);
+    uint8_t iSomeFlagByte = iSomeFlag_;
     if ((iSomeFlagByte & 8) != 0) return;
 
     if (a3 == 0) {
-        *g_009b7ab8 = reinterpret_cast<int>(this);
-        FnCallback cb = *reinterpret_cast<FnCallback *>(self + 0x418);
+        *WinCallbackWindow = reinterpret_cast<int>(this);
+        FnCallback cb = reinterpret_cast<FnCallback>(field_418_);
         if (cb != 0) {
             cb(a1, a2);
         }
     }
 
-    FnCallback global_cb = *reinterpret_cast<FnCallback *>(g_009b7a90);
+    FnCallback global_cb = *reinterpret_cast<FnCallback *>(WinGlobalCallback);
     if (global_cb != 0) {
         global_cb(a1, a2);
     }
@@ -8179,38 +8005,38 @@ void Win::left_down_event(int a1, int a2, int a3) {
 // calls     (none)
 // indirect  0x005EF1C4
 // working copy - scaffold materialised by --work
-void Win::nonclient_to_client(RECT * a1) {
-    if (a1 != 0) {
+void Win::nonclient_to_client(RECT * rect) {
+    if (rect != 0) {
         if ((iFlags_ & 4) != 0) {
-            a1->bottom -= *g_009b8dd4;
+            rect->bottom -= *WinTitleBarHeight;
         }
         if ((iFlags_ & 8) != 0) {
-            a1->right -= *g_009b8dd4;
+            rect->right -= *WinTitleBarHeight;
         }
         if (((iFlags_ & 0x400) != 0) || ((iFlags_ & 0x11) != 0)) {
             int border = border_thickness_;
-            int left = a1->left;
-            int right = a1->right;
+            int left = rect->left;
+            int right = rect->right;
             int neg_border = -border;
             left -= neg_border;
             right += neg_border;
-            a1->left = left;
-            int top = a1->top;
-            a1->right = right;
-            int bottom = a1->bottom;
+            rect->left = left;
+            int top = rect->top;
+            rect->right = right;
+            int bottom = rect->bottom;
             top -= neg_border;
             bottom += neg_border;
-            a1->top = top;
-            a1->bottom = bottom;
+            rect->top = top;
+            rect->bottom = bottom;
             if (bottom_border_thickness_ != -1) {
-                a1->bottom = (border_thickness_ - bottom_border_thickness_) + a1->bottom;
+                rect->bottom = (border_thickness_ - bottom_border_thickness_) + rect->bottom;
             }
         }
         if ((iFlags_ & 0x10) != 0) {
-            a1->top = a1->top + (caption_height_ - border_thickness_);
+            rect->top = rect->top + (caption_height_ - border_thickness_);
         }
         if (menu_ != 0) {
-            a1->top = a1->top + reinterpret_cast<NCCall *>(menu_)->slot091();
+            rect->top = rect->top + reinterpret_cast<NCCall *>(menu_)->slot091();
         }
     }
 }
@@ -8248,7 +8074,7 @@ void Win::on_redraw_nc(RECT * a1, int a2) {
     int capM1 = capHeight - 1;
     int outerH = ((clientH - bottomThick) - capHeight) + 2 + capM1;
 
-    IntersectRectFn intersectRect = (IntersectRectFn)*(void **)g_00669338;
+    IntersectRectFn intersectRect = (IntersectRectFn)*(void **)g_IntersectRect;
 
     // ---- edge 0: top caption bar (buffer1_) ----
     {
@@ -8450,29 +8276,29 @@ void Win::on_redraw_nc(RECT * a1, int a2) {
 // calls     0x005ED2D0
 void Win::screen_to_nonclient(int * a1, int * a2) {
     char *self = reinterpret_cast<char *>(this);
-    *a1 -= *reinterpret_cast<int *>(self + 0x14c) + *reinterpret_cast<int *>(self + 0x13c);
-    *a2 -= *reinterpret_cast<int *>(self + 0x150) + *reinterpret_cast<int *>(self + 0x140);
-    if ((*reinterpret_cast<uint8_t *>(self + 0x98) & 0x20) != 0 &&
+    *a1 -= client_rect_.left + outer_rect_.left;
+    *a2 -= client_rect_.top + outer_rect_.top;
+    if ((iFlags_ & 0x20) != 0 &&
         *reinterpret_cast<Win **>(self + 0xc4) != 0) {
         (*reinterpret_cast<Win **>(self + 0xc4))->screen_to_client(a1, a2);
-        if ((*reinterpret_cast<uint32_t *>(self + 0x98) & 0x8000) != 0) {
+        if ((iFlags_ & 0x8000) != 0) {
             *a1 += *reinterpret_cast<int *>(reinterpret_cast<char *>(*reinterpret_cast<Win **>(self + 0xc4)) + 0x13c);
             *a2 += *reinterpret_cast<int *>(reinterpret_cast<char *>(*reinterpret_cast<Win **>(self + 0xc4)) + 0x140);
         }
     }
-    *a1 += *reinterpret_cast<int *>(self + 0x13c);
-    *a2 += *reinterpret_cast<int *>(self + 0x140);
+    *a1 += outer_rect_.left;
+    *a2 += outer_rect_.top;
 }
 
 // ===== homed from src/unrecovered/005f5fb0.cpp =====
 
 void Win::sub_5f5fb0(char param2, int param3) {
-    char **cursor = (char **)g_00696d5c;
+    char **cursor = (char **)WinKeyRingCursor;
     **cursor = param2;
 
     bool matched = true;
     {
-        char *pat = (char *)g_00696dfd;
+        char *pat = (char *)WinMdebugCodeEnd;
         char *pos = *cursor;
         int count = 6;
         do {
@@ -8482,81 +8308,81 @@ void Win::sub_5f5fb0(char param2, int param3) {
             }
             pos--;
             pat--;
-            if (pos < (char *)g_009b7b48) {
-                pos = (char *)g_009b7b51;
+            if (pos < (char *)WinKeyRingStart) {
+                pos = (char *)WinKeyRingEnd;
             }
             count--;
         } while (count > 0);
     }
 
     if (matched) {
-        if ((*(uint8_t *)g_009b238c & 1) == 0 ||
-            (*g_009b23b4 != 0 && ((Win *)*g_009b23b4)->is_visible() == 0)) {
-            ((Win *)g_009b22f0)->show(0);
-        } else if ((*(uint8_t *)g_009b238c & 1) != 0) {
-            if (*WinBubbleCompanion == (Win *)g_009b22f0 &&
+        if ((*(uint8_t *)WinDrawFlags & 1) == 0 ||
+            (*WinPopupWindow != 0 && ((Win *)*WinPopupWindow)->is_visible() == 0)) {
+            ((Win *)WinBubbleWindow)->show(0);
+        } else if ((*(uint8_t *)WinDrawFlags & 1) != 0) {
+            if (*WinBubbleCompanion == (Win *)WinBubbleWindow &&
                 *WinBubbleActive != 0) {
                 *WinBubbleCompanion = nullptr;
                 *WinBubbleActive = 0;
-                ((Win *)g_009b22f0)->update_screen(WinBubbleRect, 0);
-                ((Win *)g_009b22f0)->flip(WinBubbleRect);
+                ((Win *)WinBubbleWindow)->update_screen(WinBubbleRect, 0);
+                ((Win *)WinBubbleWindow)->flip(WinBubbleRect);
             }
 
             Win *cand = WinPointerOwner1;
             if (cand == nullptr) {
-                cand = *(Win **)g_009b7ad0;
+                cand = *(Win **)WinFocusSecondary;
             }
-            if (cand == (Win *)g_009b22f0) {
+            if (cand == (Win *)WinBubbleWindow) {
                 WinPointerOwner1 = nullptr;
-                *(int *)g_009b7ad0 = 0;
-            } else if (cand != nullptr && *(int *)g_009b26ec > 0) {
-                Win **list = (Win **)g_009b2494;
+                *(int *)WinFocusSecondary = 0;
+            } else if (cand != nullptr && *(int *)WinPopupCount > 0) {
+                Win **list = (Win **)WinDialogList;
                 int i = 0;
                 do {
                     if (list[i] == cand || list[i]->is_descendant(cand)) {
                         WinPointerOwner1 = nullptr;
-                        *(int *)g_009b7ad0 = 0;
+                        *(int *)WinFocusSecondary = 0;
                         break;
                     }
                     i++;
-                } while (i < *(int *)g_009b26ec);
+                } while (i < *(int *)WinPopupCount);
             }
 
-            if (*(void **)g_009b7abc == (void *)g_009b22f0) {
-                *(int *)g_009b7abc = 0;
-                ((VCall *)g_009b22f0)->slot004();
+            if (*(void **)WinActiveDialog == (void *)WinBubbleWindow) {
+                *(int *)WinActiveDialog = 0;
+                ((Win *)WinBubbleWindow)->vslot_04();
             }
-            if (*(void **)g_009b7ac0 == (void *)g_009b22f0) {
-                *(int *)g_009b7ac0 = 0;
+            if (*(void **)WinLastActive == (void *)WinBubbleWindow) {
+                *(int *)WinLastActive = 0;
             }
-            *(int *)g_009b238c &= ~1;
-            if (*(void **)g_009b7ae0 == (void *)g_009b22f0) {
-                ((VCall *)g_009b22f0)->slot058();
+            *(int *)WinDrawFlags &= ~1;
+            if (WinFocusWindow == (Win *)WinBubbleWindow) {
+                ((Win *)WinBubbleWindow)->release_modal();
             }
 
-            if ((*(uint8_t *)g_009bc4b0 & 1) != 0) {
+            if ((*(uint8_t *)JackalInitFlags & 1) != 0) {
                 WinZOrderCount = 0;
-                if (*(int *)g_009b7b34 > 0) {
+                if (*(int *)WinZOrderListCount > 0) {
                     Win **entries = (Win **)g_zorder_list;
-                    int cur = *(int *)g_009b7a6c;
+                    int cur = *(int *)WinHighlighted;
                     int j = 0;
                     do {
                         if (cur != 0 && cur == (int)entries[j]) {
                             WinZOrderCount = 0;
-                            *(int *)g_009b7a78 = 0;
+                            *(int *)WinZOrderDirty = 0;
                         }
                         if ((*(uint8_t *)((char *)entries[j] + 0x9c) & 1) != 0) {
                             recurse_zorder(entries[j]);
-                            cur = *(int *)g_009b7a6c;
+                            cur = *(int *)WinHighlighted;
                         }
                         j++;
-                    } while (j < *(int *)g_009b7b34);
+                    } while (j < *(int *)WinZOrderListCount);
                 }
 
-                InvalidateRectFn invalidate = *(InvalidateRectFn *)g_00669304;
+                InvalidateRectFn invalidate = *(InvalidateRectFn *)g_InvalidateRect;
                 invalidate(*(void **)&HandleMain, 0, 0);
 
-                Win *w = *(Win **)g_009b2300;
+                Win *w = *(Win **)WinTopDialog;
                 if (w != 0 && reinterpret_cast<Win *>(w)->vslot_23() == 0) {
                     reinterpret_cast<Win *>(w)->vslot_07();
                 }
@@ -8565,32 +8391,32 @@ void Win::sub_5f5fb0(char param2, int param3) {
     }
 
     *cursor = *cursor + 1;
-    if (*cursor > (char *)g_009b7b51) {
-        *cursor = (char *)g_009b7b48;
+    if (*cursor > (char *)WinKeyRingEnd) {
+        *cursor = (char *)WinKeyRingStart;
     }
 
     bool handled = false;
     if (scroll_vert_ != 0 &&
-        reinterpret_cast<ScrollSlots *>(scroll_vert_)->slot025((int)param2, *(int *)g_009b7b18) != 0) {
+        reinterpret_cast<ScrollSlots *>(scroll_vert_)->slot025((int)param2, *(int *)WinKeyModifiers) != 0) {
         handled = true;
     }
     if (!handled && scroll_horz_ != 0 &&
-        reinterpret_cast<ScrollSlots *>(scroll_horz_)->slot025((int)param2, *(int *)g_009b7b18) != 0) {
+        reinterpret_cast<ScrollSlots *>(scroll_horz_)->slot025((int)param2, *(int *)WinKeyModifiers) != 0) {
         handled = true;
     }
     if (!handled) {
-        key_click_event((int)param2, *(int *)g_009b7b18);
+        key_click_event((int)param2, *(int *)WinKeyModifiers);
     }
 }
 
 // ===== homed from src/recovered/units/005ec780.cpp =====
 
-int Win::set_cursor(HCURSOR *a1) {
-    if (a1 != 0 && *reinterpret_cast<int *>(a1) == 0) {
+int Win::set_cursor(HCURSOR *name) {
+    if (name != 0 && *reinterpret_cast<int *>(name) == 0) {
         return 7;
     }
     cursor_sprite_ = 0;
-    cursor_handle_ = a1;
+    cursor_handle_ = name;
     cursor_name_ = 0;
     Win::update_cursor(nullptr, 1);
     return 0;
@@ -8598,26 +8424,26 @@ int Win::set_cursor(HCURSOR *a1) {
 
 // ===== homed from src/unrecovered/005ed880.cpp =====
 
-int Win::resize(int a2, int a3, int a4) {
-    if (a4 != 0) {
+int Win::resize(int width, int height, int repaint) {
+    if (repaint != 0) {
         if ((iSomeFlag_ & 2) == 0) {
             int left = outer_rect_.left;
             int top = outer_rect_.top;
             outer_rect_.left = left;
-            outer_rect_.right = left + a2;
+            outer_rect_.right = left + width;
             outer_rect_.top = top;
-            outer_rect_.bottom = top + a3;
+            outer_rect_.bottom = top + height;
             goto shared;
         }
-        client_to_nonclient(&a2, &a3);
+        client_to_nonclient(&width, &height);
     }
     {
         int cleft = client_rect_.left;
         int ctop = client_rect_.top;
         client_rect_.left = cleft;
         client_rect_.top = ctop;
-        client_rect_.right = cleft + a2;
-        client_rect_.bottom = ctop + a3;
+        client_rect_.right = cleft + width;
+        client_rect_.bottom = ctop + height;
         outer_rect_.left = client_rect_.left;
         outer_rect_.top = client_rect_.top;
         outer_rect_.right = client_rect_.right;
@@ -8632,7 +8458,7 @@ int Win::resize(int a2, int a3, int a4) {
 shared:
     this->set_rects();
     if (reinterpret_cast<Win *>(poWinBase_) != this) {
-        poWinBase_->resize(a2, a3, 0);
+        poWinBase_->resize(width, height, 0);
     }
     resize_event(outer_rect_.right - outer_rect_.left, outer_rect_.bottom - outer_rect_.top);
     this->vslot_12();
@@ -8705,7 +8531,7 @@ shared:
 int Win::sub_63c340() {
     char *self = reinterpret_cast<char *>(this);
     if (reinterpret_cast<Time *>(self + 0xa14)->start(
-            reinterpret_cast<void (__cdecl *)(int)>(g_0063c4e0),
+            sub_63c4e0,
             reinterpret_cast<int>(this), 1000, 5) != 0) {
         return 0;
     }
@@ -8734,7 +8560,7 @@ void Win::set_caption(char * a1) {
         *reinterpret_cast<char *>(buf) = 0;
         strcat(reinterpret_cast<char *>(*caption), a1);
     }
-    if (*reinterpret_cast<uint8_t *>(self + 0x9c) & 1) {
+    if (iSomeFlag_ & 1) {
         Win *other = *reinterpret_cast<Win **>(self + 0xc4);
         if (other != 0) {
             if (!other->is_visible()) {
@@ -8749,7 +8575,7 @@ void Win::set_caption(char * a1) {
 
 void __cdecl Win::bring_parent_to_top(Win * a1) {
     if (a1 != 0 && (reinterpret_cast<unsigned int *>(a1)[0x26] & 0x2000000) == 0) {
-        int count = *g_009b7b34;
+        int count = *WinZOrderListCount;
         int i = 0;
         if (count > 0) {
             while (true) {
@@ -8771,15 +8597,15 @@ void __cdecl Win::bring_parent_to_top(Win * a1) {
         WinZOrderCount = 0;
         if (count > 0) {
             for (int j = 0; j < count; ++j) {
-                int cur = *g_009b7a6c;
+                int cur = *WinHighlighted;
                 if (cur != 0 && cur == reinterpret_cast<int>(g_zorder_list[j])) {
                     WinZOrderCount = 0;
-                    *g_009b7a78 = 0;
+                    *WinZOrderDirty = 0;
                 }
                 Win *w = g_zorder_list[j];
                 if (*(reinterpret_cast<unsigned char *>(w) + 0x9c) & 1) {
                     recurse_zorder(w);
-                    count = *g_009b7b34;
+                    count = *WinZOrderListCount;
                 }
             }
         }
@@ -8806,10 +8632,10 @@ void Win::client_to_nonclient(int * a1, int * a2) {
         return;
     }
     if (*reinterpret_cast<uint8_t *>(&iFlags_) & 4) {
-        *a2 += *g_009b8dd4;
+        *a2 += *WinTitleBarHeight;
     }
     if (*reinterpret_cast<uint8_t *>(&iFlags_) & 8) {
-        *a1 += *g_009b8dd4;
+        *a1 += *WinTitleBarHeight;
     }
     uint32_t flags = iFlags_;
     if (flags & 0x400) {
@@ -8919,37 +8745,36 @@ int Win::key_click_event(int a1, int a2) {
 
 // ===== homed from src/unrecovered/005f74a0.cpp =====
 
-int Win::update_window(RECT * a1) {
-    char *self = reinterpret_cast<char *>(this);
-    if (a1 == 0) {
+int Win::update_window(RECT * area) {
+    if (area == 0) {
         return update_screen(0, this);
     }
-    int y = *reinterpret_cast<int *>(self + 0x150) + *reinterpret_cast<int *>(self + 0x140);
-    int x = *reinterpret_cast<int *>(self + 0x14c) + *reinterpret_cast<int *>(self + 0x13c);
-    if ((*reinterpret_cast<unsigned char *>(self + 0x98) & 0x20) != 0 &&
-        *reinterpret_cast<int *>(self + 0xc4) != 0) {
+    int y = client_rect_.top + outer_rect_.top;
+    int x = client_rect_.left + outer_rect_.left;
+    if ((iFlags_ & 0x20) != 0 &&
+        win_parent_ != 0) {
         client_to_screen(&x, &y);
-        if ((*reinterpret_cast<unsigned int *>(self + 0x98) & 0x8000) != 0) {
-            char *rel = reinterpret_cast<char *>(*reinterpret_cast<int *>(self + 0xc4));
+        if ((iFlags_ & 0x8000) != 0) {
+            char *rel = reinterpret_cast<char *>(win_parent_);
             x -= *reinterpret_cast<int *>(rel + 0x13c);
             y -= *reinterpret_cast<int *>(rel + 0x140);
         }
     }
     RECT r;
-    r.left = a1->left + x;
-    r.top = a1->top + y;
-    r.right = a1->right + x;
-    r.bottom = a1->bottom + y;
+    r.left = area->left + x;
+    r.top = area->top + y;
+    r.right = area->right + x;
+    r.bottom = area->bottom + y;
     return update_screen(&r, this);
 }
 
 // ===== homed from src/unrecovered/005f52e0.cpp =====
 
-void Win::bring_child_to_top(Win * a1) {
-    if (a1 == 0) {
+void Win::bring_child_to_top(Win * child) {
+    if (child == 0) {
         return;
     }
-    if (a1->iFlags_ & 0x2000000) {
+    if (child->iFlags_ & 0x2000000) {
         return;
     }
     int count = child_count_;
@@ -8957,7 +8782,7 @@ void Win::bring_child_to_top(Win * a1) {
     if (count > 0) {
         Win **slot = children_;
         do {
-            if (*slot == a1) {
+            if (*slot == child) {
                 break;
             }
             ++i;
@@ -8973,25 +8798,25 @@ void Win::bring_child_to_top(Win * a1) {
                 --i;
             } while (i != 0);
         }
-        children_[0] = a1;
+        children_[0] = child;
     }
     WinZOrderCount = 0;
-    if (*g_009b7b34 > 0) {
+    if (*WinZOrderListCount > 0) {
         Win **entry = g_zorder_list;
-        int cur = *g_009b7a6c;
+        int cur = *WinHighlighted;
         int j = 0;
         do {
             if (cur != 0 && cur == reinterpret_cast<int>(*entry)) {
                 WinZOrderCount = 0;
-                *g_009b7a78 = 0;
+                *WinZOrderDirty = 0;
             }
             if ((*entry)->iSomeFlag_ & 1) {
                 recurse_zorder(*entry);
-                cur = *g_009b7a6c;
+                cur = *WinHighlighted;
             }
             ++j;
             ++entry;
-        } while (j < *g_009b7b34);
+        } while (j < *WinZOrderListCount);
     }
 }
 
@@ -9012,29 +8837,29 @@ void Win::bring_child_to_top(Win * a1) {
 // and rewriting it in the tree's own style is a later phase. See README.md
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
 int Win::minimize() {
-    int active = *g_009b7abc;
-    *g_009b7acc = 0;
-    *g_009b7ad0 = 0;
+    int active = *WinActiveDialog;
+    *WinFocusPrimary = 0;
+    *WinFocusSecondary = 0;
     if (active == reinterpret_cast<int>(this)) {
-        *g_009b7abc = 0;
+        *WinActiveDialog = 0;
         this->vslot_04();
     }
-    if (*g_009b7ac0 == reinterpret_cast<int>(this)) {
-        *g_009b7ac0 = 0;
+    if (*WinLastActive == reinterpret_cast<int>(this)) {
+        *WinLastActive = 0;
     }
-    (*reinterpret_cast<ShowWindowFn *>(g))(reinterpret_cast<void *>(*g_009b7b28), 6);
+    (*reinterpret_cast<ShowWindowFn *>(g))(reinterpret_cast<void *>(*WinMainHwnd), 6);
     return 0;
 }
 
 // ===== homed from src/unrecovered/005f7580.cpp =====
 
-void Win::do_tracking(int a1, int a2) {
+void Win::do_tracking(int x, int y) {
     int dx, dy;
 
-    // ---- 0x005F7589-0x005F7657: normalize (a1,a2) into a client-space delta ----
+    // ---- 0x005F7589-0x005F7657: normalize (x,y) into a client-space delta ----
     if ((iFlags_ & 0x4000000) != 0) {
-        dx = a1 - (client_rect_.left + outer_rect_.left);
-        dy = a2 - (client_rect_.top + outer_rect_.top);
+        dx = x - (client_rect_.left + outer_rect_.left);
+        dy = y - (client_rect_.top + outer_rect_.top);
         if ((iFlags_ & 0x20) != 0 && win_parent_ != 0) {
             win_parent_->screen_to_client(&dx, &dy);
             if ((iFlags_ & 0x8000) != 0) {
@@ -9043,9 +8868,9 @@ void Win::do_tracking(int a1, int a2) {
             }
         }
     } else {
-        screen_to_client(&a1, &a2);
-        dx = a1 + outer_rect_.left;
-        dy = a2 + outer_rect_.top;
+        screen_to_client(&x, &y);
+        dx = x + outer_rect_.left;
+        dy = y + outer_rect_.top;
     }
     dx -= WinTrackingX;
     dy -= WinTrackingY;
@@ -9278,7 +9103,7 @@ void Win::do_tracking(int a1, int a2) {
 
     // ---- 0x005F7E0F-0x005F7E3A: union the two rects and repaint ----
     RECT unioned;
-    (*reinterpret_cast<UnionRectFn *>(g_00669328))(&unioned, &rectA, &rectB);
+    (*reinterpret_cast<UnionRectFn *>(g_UnionRect))(&unioned, &rectA, &rectB);
     update_screen(&unioned, 0);
     flip(&unioned);
 }
@@ -9288,64 +9113,64 @@ void Win::do_tracking(int a1, int a2) {
 void Win::sub_5ef1e0(int x1, int y1, int x2, int y2, void *pen, int unused6) {
     (void)unused6;
     int hdc;
-    if (*g_009b3ab0 != 0) {
-        *g_009b3ab0 = *g_009b3ab0 + 1;
-        hdc = *g_009b7b2c;
+    if (*WinScreenDCDepth != 0) {
+        *WinScreenDCDepth = *WinScreenDCDepth + 1;
+        hdc = *WinScreenDC;
     } else {
-        void *iface = reinterpret_cast<void *>(*g_009bc498);
+        void *iface = reinterpret_cast<void *>(*WinDDSurface);
         if (iface != 0) {
             IfaceGetHdcProc fn = (*reinterpret_cast<IfaceGetHdcProc **>(iface))[17];
-            fn(iface, g_009b7b2c);
-            hdc = *g_009b7b2c;
+            fn(iface, WinScreenDC);
+            hdc = *WinScreenDC;
         } else {
-            *g_009b7b2c = reinterpret_cast<int>(GetDC(reinterpret_cast<HWND>(*g_009b7b28)));
-            hdc = *g_009b7b2c;
+            *WinScreenDC = reinterpret_cast<int>(GetDC(reinterpret_cast<HWND>(*WinMainHwnd)));
+            hdc = *WinScreenDC;
         }
         if (hdc == 0) {
             return;
         }
-        *g_009b3ab0 = 1;
+        *WinScreenDCDepth = 1;
     }
     if (hdc != 0) {
-        if ((int)field_184_ != *reinterpret_cast<int *>(*g_009b8180 + 0x400)) {
-            (*reinterpret_cast<Palette **>(g_009b8180))->set_active_window(this);
-            field_184_ = *reinterpret_cast<unsigned int *>(*g_009b8180 + 0x400);
+        if ((int)field_184_ != *reinterpret_cast<int *>(*WinPalette + 0x400)) {
+            (*reinterpret_cast<Palette **>(WinPalette))->set_active_window(this);
+            field_184_ = *reinterpret_cast<unsigned int *>(*WinPalette + 0x400);
         }
 
-        void *oldPen = SelectObject(reinterpret_cast<HDC>(*g_009b7b2c), pen);
+        void *oldPen = SelectObject(reinterpret_cast<HDC>(*WinScreenDC), pen);
 
-        MoveToEx(reinterpret_cast<HDC>(*g_009b7b2c), x1, y1, 0);
+        MoveToEx(reinterpret_cast<HDC>(*WinScreenDC), x1, y1, 0);
 
-        LineTo(reinterpret_cast<HDC>(*g_009b7b2c), x2, y2);
+        LineTo(reinterpret_cast<HDC>(*WinScreenDC), x2, y2);
 
-        SelectObject(reinterpret_cast<HDC>(*g_009b7b2c), oldPen);
+        SelectObject(reinterpret_cast<HDC>(*WinScreenDC), oldPen);
 
-        *g_009b3ab0 = *g_009b3ab0 - 1;
-        if (*g_009b3ab0 == 0) {
-            void *iface2 = reinterpret_cast<void *>(*g_009bc498);
+        *WinScreenDCDepth = *WinScreenDCDepth - 1;
+        if (*WinScreenDCDepth == 0) {
+            void *iface2 = reinterpret_cast<void *>(*WinDDSurface);
             if (iface2 != 0) {
                 IfaceReleaseHdcProc fn2 = (*reinterpret_cast<IfaceReleaseHdcProc **>(iface2))[26];
-                fn2(iface2, *g_009b7b2c);
-                *g_009b7b2c = 0;
+                fn2(iface2, *WinScreenDC);
+                *WinScreenDC = 0;
                 return;
             }
-            ReleaseDC(reinterpret_cast<HWND>(*g_009b7b28), reinterpret_cast<HDC>(*g_009b7b2c));
-            *g_009b7b2c = 0;
+            ReleaseDC(reinterpret_cast<HWND>(*WinMainHwnd), reinterpret_cast<HDC>(*WinScreenDC));
+            *WinScreenDC = 0;
         }
     }
 }
 
 // ===== homed from src/unrecovered/005f7320.cpp =====
 
-int __cdecl Win::update_screen(RECT *a1, Win *a2) {
+int __cdecl Win::update_screen(RECT *area, Win *window) {
     int windowCount = WinZOrderCount;
     if (windowCount == 0) {
         return 0;
     }
 
     int target;
-    if (*g_009b7a6c != 0) {
-        target = reinterpret_cast<int>(a2);
+    if (*WinHighlighted != 0) {
+        target = reinterpret_cast<int>(window);
     } else {
         target = 0;
     }
@@ -9368,11 +9193,11 @@ int __cdecl Win::update_screen(RECT *a1, Win *a2) {
             return windowCount;
         }
     } else {
-        if (*g_009b7a68 == 0) {
-            if (a1 != 0) {
-                reinterpret_cast<Buffer *>(g_009b7490)->fill(a1, 0);
+        if (*WinBackBuffer == 0) {
+            if (area != 0) {
+                (&ScreenBuffer)->fill(area, 0);
             } else {
-                reinterpret_cast<Buffer *>(g_009b7490)->fill(0);
+                (&ScreenBuffer)->fill(0);
             }
         }
     }
@@ -9389,7 +9214,7 @@ int __cdecl Win::update_screen(RECT *a1, Win *a2) {
                 }
                 if (visible) {
                     if ((*(wb + 0x9c) & 2) != 0) {
-                        w->on_nc_paint(a1, -1);
+                        w->on_nc_paint(area, -1);
                     }
                     bool doSecond = true;
                     if (target != 0) {
@@ -9397,31 +9222,31 @@ int __cdecl Win::update_screen(RECT *a1, Win *a2) {
                     }
                     if (doSecond) {
                         Win *const other = *reinterpret_cast<Win **>(wb + 0xa8);
-                        other->on_paint(a1);
+                        other->on_paint(area);
                     }
                 }
             }
         }
     }
 
-    if (*g_009b7a2c == 0) {
+    if (*WinSavedFocus == 0) {
         return 0;
     }
 
-    int base = *g_009b7a30;
-    int wA = *g_009b7a40;
-    int base2 = *g_009b7a34;
+    int base = *WinClipLeft;
+    int wA = *WinClipWidth;
+    int base2 = *WinClipTop;
     int l10 = base;
     int l14 = base2;
     int l18 = wA + base;
-    int wB = *g_009b7a44;
+    int wB = *WinClipHeight;
     int l1c = wB + base2;
 
-    if (a1 != 0) {
+    if (area != 0) {
         int rectA[2] = {l10, l14};
         int rectB[2] = {l18, l1c};
-        IntersectRectFn fn = *reinterpret_cast<IntersectRectFn *>(g_00669338);
-        int result = fn(reinterpret_cast<RECT *>(&rectB[0]), reinterpret_cast<const RECT *>(a1),reinterpret_cast<const tagRECT *>(&rectA[0]));
+        IntersectRectFn fn = *reinterpret_cast<IntersectRectFn *>(g_IntersectRect);
+        int result = fn(reinterpret_cast<RECT *>(&rectB[0]), reinterpret_cast<const RECT *>(area),reinterpret_cast<const tagRECT *>(&rectA[0]));
         if (result == 0) {
             return 0;
         }
@@ -9429,11 +9254,11 @@ int __cdecl Win::update_screen(RECT *a1, Win *a2) {
         l18 = rectB[1];
         l10 = rectA[0];
         l14 = rectA[1];
-        base2 = *g_009b7a34;
-        base = *g_009b7a30;
+        base2 = *WinClipTop;
+        base = *WinClipLeft;
     }
 
-    reinterpret_cast<Buffer *>(g_009b7490)
+    (&ScreenBuffer)
         ->copy(g_WIN_BUFFER, l14 - base2, l10 - base, l1c - l14,
                l18 - l10, l14, l10);
     return 0;
@@ -9449,15 +9274,15 @@ void Win::on_key(unsigned int a1, long a2, int a3, unsigned int a4) {
     (void)a3;
     (void)a4;
 
-    GetKeyStateFn getKeyState = *reinterpret_cast<GetKeyStateFn *>(g_0066932c);
+    GetKeyStateFn getKeyState = *reinterpret_cast<GetKeyStateFn *>(g_GetKeyState);
     unsigned int key = a1;
     if (getKeyState(0x10) & 0x8000) key |= 0x10000;
     if (getKeyState(0x11) & 0x8000) key |= 0x20000;
     if (getKeyState(0x12) & 0x8000) key |= 0x40000;
 
-    char *net = *reinterpret_cast<char **>(g_009be608);
+    char *net = *reinterpret_cast<char **>(WinNetBuffer);
     if (net != 0) {
-        PeekMessageFn peekMessage = *reinterpret_cast<PeekMessageFn *>(g_00669358);
+        PeekMessageFn peekMessage = *reinterpret_cast<PeekMessageFn *>(g_PeekMessageA);
         MsgT msg;
         if (key == *reinterpret_cast<unsigned int *>(net + 0x48)) {
             if (a2 == 0) {
@@ -9490,15 +9315,15 @@ void Win::on_key(unsigned int a1, long a2, int a3, unsigned int a4) {
     }
 
     if (a2 == 0) {
-        if (*reinterpret_cast<unsigned int *>(self + 0x98) & 0x200000) {
+        if (iFlags_ & 0x200000) {
             return;
         }
-        if (*reinterpret_cast<unsigned char *>(self + 0x9c) & 8) {
+        if (iSomeFlag_ & 8) {
             return;
         }
-        if (*reinterpret_cast<int *>(self + 0xd4) != 0) {
+        if (list_.count_ != 0) {
             void *target;
-            if (*reinterpret_cast<int *>(self + 0xcc) != 0) {
+            if (list_.head_ != 0) {
                 target = *reinterpret_cast<void **>(*reinterpret_cast<char **>(self + 0xd0) + 4);
             } else {
                 target = 0;
@@ -9508,9 +9333,9 @@ void Win::on_key(unsigned int a1, long a2, int a3, unsigned int a4) {
             }
         }
 
-        *reinterpret_cast<void **>(g_009b7ab8) = self;
+        *reinterpret_cast<void **>(WinCallbackWindow) = self;
         typedef void(__cdecl * OnKeyCb)(unsigned int);
-        OnKeyCb cb = *reinterpret_cast<OnKeyCb *>(self + 0x434);
+        OnKeyCb cb = reinterpret_cast<OnKeyCb>(field_434_);
         if (cb != 0) {
             cb(key);
         }
@@ -9527,14 +9352,14 @@ void Win::on_key(unsigned int a1, long a2, int a3, unsigned int a4) {
         return;
     }
 
-    *reinterpret_cast<unsigned int *>(g_009b7b18) = key;
-    Fn1 fn = *reinterpret_cast<Fn1 *>(g_006692c8);
+    *reinterpret_cast<unsigned int *>(WinKeyModifiers) = key;
+    Fn1 fn = *reinterpret_cast<Fn1 *>(g_IsWindow);
     if (fn(HandleMain)) {
         reinterpret_cast<Win *>(self)->key_down_event(key);
     }
 
     if (key >= 0x60 && key <= 0x6f) {
-        PeekMessageFn peekMessage = *reinterpret_cast<PeekMessageFn *>(g_00669358);
+        PeekMessageFn peekMessage = *reinterpret_cast<PeekMessageFn *>(g_PeekMessageA);
         MsgT msg;
         if (!peekMessage(&msg, HandleMain, 0x102, 0x102, 1)) {
             return;
@@ -9563,23 +9388,23 @@ int __cdecl Win::OnSysCommand(void * a1, unsigned int a2, int a3, int a4) {
         return 0;
     }
     if (a2 != 0xf060) {
-        return (*reinterpret_cast<DefWindowProcAFn *>(g_006692b0))(
+        return (*reinterpret_cast<DefWindowProcAFn *>(g_DefWindowProcA))(
             a1, 0x112, a2,
             (static_cast<unsigned int>(static_cast<unsigned short>(a4)) << 16)
                 | static_cast<unsigned short>(a3));
     }
-    *reinterpret_cast<Win **>(g_009b7ab8) = self;
+    *reinterpret_cast<Win **>(WinCallbackWindow) = self;
     Callback404 cb = *reinterpret_cast<Callback404 *>(
         reinterpret_cast<char *>(self) + 0x404);
     if (cb != 0) {
         cb();
     }
     self->vslot_14();
-    MyVCall *child = *reinterpret_cast<MyVCall **>(
+    Win *child = *reinterpret_cast<Win **>(
         reinterpret_cast<char *>(self) + 0x18);
     if (child != 0) {
-        if (child->slot023() == 0) {
-            child->slot007();
+        if (child->vslot_23() == 0) {
+            child->vslot_07();
         }
     }
     return 0;
@@ -9587,31 +9412,31 @@ int __cdecl Win::OnSysCommand(void * a1, unsigned int a2, int a3, int a4) {
 
 // ===== homed from src/unrecovered/005ef050.cpp =====
 
-void Win::client_to_nonclient(RECT * a1) {
-    if (a1 != 0) {
+void Win::client_to_nonclient(RECT * rect) {
+    if (rect != 0) {
         if ((iFlags_ & 4) != 0) {
-            a1->bottom += *g_009b8dd4;
+            rect->bottom += *WinTitleBarHeight;
         }
         if ((iFlags_ & 8) != 0) {
-            a1->right += *g_009b8dd4;
+            rect->right += *WinTitleBarHeight;
         }
         if ((iFlags_ & 0x400) != 0 || (iFlags_ & 0x11) != 0) {
             int adj = border_thickness_;
-            a1->left -= adj;
-            a1->right += adj;
-            a1->top -= adj;
-            long bottom = a1->bottom;
-            a1->bottom = bottom + adj;
+            rect->left -= adj;
+            rect->right += adj;
+            rect->top -= adj;
+            long bottom = rect->bottom;
+            rect->bottom = bottom + adj;
             if (bottom_border_thickness_ != -1) {
-                a1->bottom = (bottom_border_thickness_ - border_thickness_) + bottom + adj;
+                rect->bottom = (bottom_border_thickness_ - border_thickness_) + bottom + adj;
             }
         }
         if ((iFlags_ & 0x10) != 0) {
-            a1->top += border_thickness_ - caption_height_;
+            rect->top += border_thickness_ - caption_height_;
         }
         if (menu_ != 0) {
             int adj = reinterpret_cast<VCall2 *>(menu_)->slot091();
-            a1->top -= adj;
+            rect->top -= adj;
         }
     }
 }
@@ -9626,10 +9451,10 @@ void Win::nonclient_to_client(int * a1, int * a2) {
         return;
     }
     if ((iFlags_ & 4) != 0) {
-        *a2 -= *g_009b8dd4;
+        *a2 -= *WinTitleBarHeight;
     }
     if ((iFlags_ & 8) != 0) {
-        *a1 -= *g_009b8dd4;
+        *a1 -= *WinTitleBarHeight;
     }
     if ((iFlags_ & 0x400) != 0) {
         *a1 += -border_thickness_ * 2;
@@ -9658,92 +9483,92 @@ void Win::update_window_to_buffer(Buffer * a1) {
     if (a1 != 0) {
         char *self = reinterpret_cast<char *>(this);
 
-        *g_009b7a68 = (int)a1;
-        *g_009b7a6c = (int)this;
-        (*g_009b7a70) = 0;
-        (*g_009b7a74) = 0;
+        *WinBackBuffer = (int)a1;
+        *WinHighlighted = (int)this;
+        (*WinViewOriginX) = 0;
+        (*WinViewOriginY) = 0;
 
-        uint32_t flags9c = *reinterpret_cast<uint32_t *>(self + 0x9c);
+        uint32_t flags9c = iSomeFlag_;
         int iVar3 = 0;
-        *reinterpret_cast<uint32_t *>(self + 0x9c) = flags9c | 1;
+        iSomeFlag_ = flags9c | 1;
         WinZOrderCount = 0;
-        if (0 < *g_009b7b34) {
+        if (0 < *WinZOrderListCount) {
             Win **piVar4 = reinterpret_cast<Win **>(g_zorder_list);
-            int iVar2 = *g_009b7a6c;
+            int iVar2 = *WinHighlighted;
             do {
                 if (iVar2 != 0 && iVar2 == (int)*piVar4) {
                     WinZOrderCount = 0;
-                    *g_009b7a78 = 0;
+                    *WinZOrderDirty = 0;
                 }
                 if ((*reinterpret_cast<uint8_t *>(reinterpret_cast<char *>(*piVar4) + 0x9c) & 1) != 0) {
                     recurse_zorder(*piVar4);
-                    iVar2 = *g_009b7a6c;
+                    iVar2 = *WinHighlighted;
                 }
                 iVar3++;
                 piVar4++;
-            } while (iVar3 < *g_009b7b34);
+            } while (iVar3 < *WinZOrderListCount);
         }
 
-        if ((*reinterpret_cast<uint8_t *>(self + 0x9c) & 2) == 0) {
-            (*g_009b7a70) += *reinterpret_cast<int32_t *>(self + 0x14c) + *reinterpret_cast<int32_t *>(self + 0x13c);
-            (*g_009b7a74) += *reinterpret_cast<int32_t *>(self + 0x150) + *reinterpret_cast<int32_t *>(self + 0x140);
-            if ((*reinterpret_cast<uint32_t *>(self + 0x98) & 0x20) != 0 &&
-                *reinterpret_cast<int *>(self + 0xc4) != 0) {
+        if ((iSomeFlag_ & 2) == 0) {
+            (*WinViewOriginX) += client_rect_.left + outer_rect_.left;
+            (*WinViewOriginY) += client_rect_.top + outer_rect_.top;
+            if ((iFlags_ & 0x20) != 0 &&
+                win_parent_ != 0) {
                 Win *parent = *reinterpret_cast<Win **>(self + 0xc4);
-                parent->client_to_screen(&(*g_009b7a70), &(*g_009b7a74));
-                if ((*reinterpret_cast<uint32_t *>(self + 0x98) & 0x8000) != 0) {
+                parent->client_to_screen(&(*WinViewOriginX), &(*WinViewOriginY));
+                if ((iFlags_ & 0x8000) != 0) {
                     char *pself = reinterpret_cast<char *>(*reinterpret_cast<Win **>(self + 0xc4));
-                    (*g_009b7a70) -= *reinterpret_cast<int32_t *>(pself + 0x13c);
-                    (*g_009b7a74) -= *reinterpret_cast<int32_t *>(pself + 0x140);
+                    (*WinViewOriginX) -= *reinterpret_cast<int32_t *>(pself + 0x13c);
+                    (*WinViewOriginY) -= *reinterpret_cast<int32_t *>(pself + 0x140);
                 }
             }
         } else {
-            (*g_009b7a70) += *reinterpret_cast<int32_t *>(self + 0x14c) + *reinterpret_cast<int32_t *>(self + 0x13c);
-            (*g_009b7a74) += *reinterpret_cast<int32_t *>(self + 0x150) + *reinterpret_cast<int32_t *>(self + 0x140);
-            if ((*reinterpret_cast<uint32_t *>(self + 0x98) & 0x20) != 0 &&
-                *reinterpret_cast<int *>(self + 0xc4) != 0) {
+            (*WinViewOriginX) += client_rect_.left + outer_rect_.left;
+            (*WinViewOriginY) += client_rect_.top + outer_rect_.top;
+            if ((iFlags_ & 0x20) != 0 &&
+                win_parent_ != 0) {
                 Win *parent = *reinterpret_cast<Win **>(self + 0xc4);
-                parent->client_to_screen(&(*g_009b7a70), &(*g_009b7a74));
-                if ((*reinterpret_cast<uint32_t *>(self + 0x98) & 0x8000) != 0) {
+                parent->client_to_screen(&(*WinViewOriginX), &(*WinViewOriginY));
+                if ((iFlags_ & 0x8000) != 0) {
                     char *pself = reinterpret_cast<char *>(*reinterpret_cast<Win **>(self + 0xc4));
-                    (*g_009b7a70) -= *reinterpret_cast<int32_t *>(pself + 0x13c);
-                    (*g_009b7a74) -= *reinterpret_cast<int32_t *>(pself + 0x140);
+                    (*WinViewOriginX) -= *reinterpret_cast<int32_t *>(pself + 0x13c);
+                    (*WinViewOriginY) -= *reinterpret_cast<int32_t *>(pself + 0x140);
                 }
             }
-            (*g_009b7a70) -= *reinterpret_cast<int32_t *>(self + 0x13c);
-            (*g_009b7a74) -= *reinterpret_cast<int32_t *>(self + 0x140);
+            (*WinViewOriginX) -= outer_rect_.left;
+            (*WinViewOriginY) -= outer_rect_.top;
         }
 
         update_screen(0, this);
 
-        *g_009b7a68 = 0;
-        *g_009b7a6c = 0;
-        *reinterpret_cast<uint32_t *>(self + 0x9c) = flags9c;
+        *WinBackBuffer = 0;
+        *WinHighlighted = 0;
+        iSomeFlag_ = flags9c;
 
         iVar3 = 0;
         WinZOrderCount = 0;
-        if (0 < *g_009b7b34) {
+        if (0 < *WinZOrderListCount) {
             Win **piVar4 = reinterpret_cast<Win **>(g_zorder_list);
-            int iVar2 = *g_009b7a6c;
+            int iVar2 = *WinHighlighted;
             do {
                 if (iVar2 != 0 && iVar2 == (int)*piVar4) {
                     WinZOrderCount = 0;
-                    *g_009b7a78 = 0;
+                    *WinZOrderDirty = 0;
                 }
                 if ((*reinterpret_cast<uint8_t *>(reinterpret_cast<char *>(*piVar4) + 0x9c) & 1) != 0) {
                     recurse_zorder(*piVar4);
-                    iVar2 = *g_009b7a6c;
+                    iVar2 = *WinHighlighted;
                 }
                 iVar3++;
                 piVar4++;
-            } while (iVar3 < *g_009b7b34);
+            } while (iVar3 < *WinZOrderListCount);
         }
     }
 }
 
 // ===== homed from src/recovered/units/005f6710.cpp =====
 
-void Win::on_r_button_down(long a1, int a2, int a3, unsigned int a4, int a5) {
+void Win::on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl) {
     char *self = reinterpret_cast<char *>(this);
     typedef void(__cdecl *RawHandler)(int, int);
 
@@ -9759,25 +9584,25 @@ void Win::on_r_button_down(long a1, int a2, int a3, unsigned int a4, int a5) {
         parent->set_dialog_focus(this);
     }
 
-    if (a5 == 0) {
+    if (dbl == 0) {
         WinPointerOwner2 = nullptr;
         WinPointerOwner1 = this;
     } else {
         WinPointerOwner1 = nullptr;
         WinPointerOwner2 = this;
     }
-    *g_009b7ad4 = 0;
+    *WinSizingFlag = 0;
 
-    if (a1 != 0 &&
-        (*reinterpret_cast<unsigned int *>(self + 0x98) & 0x200200) == 0 &&
-        (*reinterpret_cast<unsigned char *>(self + 0x9C) & 8) == 0) {
-        if (a5 == 0) {
-            *g_009b7ab8 = reinterpret_cast<int>(this);
-            RawHandler fn = *reinterpret_cast<RawHandler *>(self + 0x410);
+    if (flags != 0 &&
+        (iFlags_ & 0x200200) == 0 &&
+        (iSomeFlag_ & 8) == 0) {
+        if (dbl == 0) {
+            *WinCallbackWindow = reinterpret_cast<int>(this);
+            RawHandler fn = reinterpret_cast<RawHandler>(field_410_);
             if (fn != 0) {
-                fn(a2, a3);
+                fn(x, y);
             }
-            this->vslot_29(a2, a3);
+            this->vslot_29(x, y);
             Win *child = *reinterpret_cast<Win **>(self + 0x48);
             if (child != 0) {
                 int r = child->vslot_23();
@@ -9786,7 +9611,7 @@ void Win::on_r_button_down(long a1, int a2, int a3, unsigned int a4, int a5) {
                 }
             }
         } else {
-            this->vslot_39(a2, a3);
+            this->vslot_39(x, y);
             Win *child = *reinterpret_cast<Win **>(self + 0x6C);
             if (child != 0) {
                 int r = child->vslot_23();
@@ -9797,13 +9622,13 @@ void Win::on_r_button_down(long a1, int a2, int a3, unsigned int a4, int a5) {
         }
     }
 
-    if ((*reinterpret_cast<unsigned int *>(self + 0x98) & 0x200000) == 0 &&
-        (*reinterpret_cast<unsigned char *>(self + 0x9C) & 8) == 0) {
-        if (a5 == 0) {
-            *g_009b7ab8 = reinterpret_cast<int>(this);
-            RawHandler fn = *reinterpret_cast<RawHandler *>(self + 0x424);
+    if ((iFlags_ & 0x200000) == 0 &&
+        (iSomeFlag_ & 8) == 0) {
+        if (dbl == 0) {
+            *WinCallbackWindow = reinterpret_cast<int>(this);
+            RawHandler fn = reinterpret_cast<RawHandler>(field_424_);
             if (fn != 0) {
-                fn(a2, a3);
+                fn(x, y);
             }
             this->vslot_23();
             Win *child = *reinterpret_cast<Win **>(self + 0x30);
@@ -9814,7 +9639,7 @@ void Win::on_r_button_down(long a1, int a2, int a3, unsigned int a4, int a5) {
                 }
             }
         } else {
-            this->vslot_36(a2, a3);
+            this->vslot_36(x, y);
             Win *child = *reinterpret_cast<Win **>(self + 0x60);
             if (child != 0) {
                 int r = child->vslot_23();
@@ -9831,10 +9656,12 @@ void Win::on_r_button_down(long a1, int a2, int a3, unsigned int a4, int a5) {
 
 void Win::OnLButtonUp(void *a1, int a2, int a3, unsigned int a4) {
     WinTrackingWindow = nullptr;
-    ButtonUpVCall *obj = reinterpret_cast<ButtonUpVCall *>(
-        get_mouse_window(reinterpret_cast<int *>(&a1), &a2));
+    // get_mouse_window already RETURNS Win *, and win.h declares slot 82 as
+    // on_l_button_up - so the shim was casting a Win to a shim class to call
+    // a slot the class itself now names.
+    Win *obj = get_mouse_window(reinterpret_cast<int *>(&a1), &a2);
     if (obj) {
-        obj->slot082(a1, a2, a3, *g_009b7aa4);
+        obj->on_l_button_up(reinterpret_cast<int>(a1), a2, a3, *WinDoubleClickFlag);
     }
 }
 
@@ -9898,44 +9725,44 @@ typedef long (__stdcall *Fn2)(void *, void *);
 
 
 
-long Win::on_activate(unsigned int a1, void * a2, long a3) {
-    if (a1 != 0 && a3 == 0 && *g_009bc494 == 0) {
-        if (*g_009b3ab0 == 0) {
-            int obj = *g_009bc498;
+long Win::on_activate(unsigned int state, void * other, long minimized) {
+    if (state != 0 && minimized == 0 && BufferDirectDraw == 0) {
+        if (*WinScreenDCDepth == 0) {
+            int obj = *WinDDSurface;
             if (obj == 0) {
-                *g_009b7b2c = reinterpret_cast<int>(GetDC(HandleMain));
+                *WinScreenDC = reinterpret_cast<int>(GetDC(HandleMain));
             } else {
                 void **vtbl = *reinterpret_cast<void ***>(obj);
                 Fn2 fn = reinterpret_cast<Fn2>(vtbl[0x44 / 4]);
-                fn(reinterpret_cast<void *>(obj), g_009b7b2c);
+                fn(reinterpret_cast<void *>(obj), WinScreenDC);
             }
-            if (*g_009b7b2c == 0) {
+            if (*WinScreenDC == 0) {
                 goto done;
             }
-            *g_009b3ab0 = 1;
+            *WinScreenDCDepth = 1;
         } else {
-            *g_009b3ab0 = *g_009b3ab0 + 1;
+            *WinScreenDCDepth = *WinScreenDCDepth + 1;
         }
-        if (*g_009b7b2c != 0) {
-            SelectPalette(reinterpret_cast<HDC>(*g_009b7b2c), reinterpret_cast<HPALETTE>(*g_009b8178), 0);
-            RealizePalette(reinterpret_cast<HDC>(*g_009b7b2c));
-            *g_009b3ab0 = *g_009b3ab0 - 1;
-            if (*g_009b3ab0 == 0) {
-                int obj = *g_009bc498;
+        if (*WinScreenDC != 0) {
+            SelectPalette(reinterpret_cast<HDC>(*WinScreenDC), reinterpret_cast<HPALETTE>(PaletteInitialized), 0);
+            RealizePalette(reinterpret_cast<HDC>(*WinScreenDC));
+            *WinScreenDCDepth = *WinScreenDCDepth - 1;
+            if (*WinScreenDCDepth == 0) {
+                int obj = *WinDDSurface;
                 if (obj == 0) {
-                    ReleaseDC(HandleMain, reinterpret_cast<HDC>(*g_009b7b2c));
+                    ReleaseDC(HandleMain, reinterpret_cast<HDC>(*WinScreenDC));
                 } else {
                     void **vtbl = *reinterpret_cast<void ***>(obj);
                     Fn2 fn = reinterpret_cast<Fn2>(vtbl[0x68 / 4]);
-                    fn(reinterpret_cast<void *>(obj), reinterpret_cast<void *>(*g_009b7b2c));
+                    fn(reinterpret_cast<void *>(obj), reinterpret_cast<void *>(*WinScreenDC));
                 }
-                *g_009b7b2c = 0;
+                *WinScreenDC = 0;
             }
         }
     }
 done:
     return DefWindowProcA(HandleMain, 6,
-                          ((a3 & 0xffff) << 16) | (a1 & 0xffff), reinterpret_cast<long>(a2));
+                          ((minimized & 0xffff) << 16) | (state & 0xffff), reinterpret_cast<long>(other));
 }
 
 // ===== homed from src/recovered/units/005f5020.cpp =====
@@ -9958,7 +9785,7 @@ done:
 //
 // address        0x005F5020
 // measured tier  NO_COMPILE
-// refusal        u005f5020.cpp(29) : error C2653: 'Win' : is not a class or namespace name u005f5020.cpp(31) : error C2065: 'g_009b7b34' : undeclared identifier u005f5020.cpp(31
+// refusal        u005f5020.cpp(29) : error C2653: 'Win' : is not a class or namespace name u005f5020.cpp(31) : error C2065: 'WinZOrderListCount' : undeclared identifier u005f5020.cpp(31
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
@@ -9970,17 +9797,17 @@ done:
 //
 // `QAAXXZ`: public, __cdecl, void, no params - a STATIC member (no `this` is
 // ever read; every operand is one of the five fixed globals or the array at
-// g_009b6e48). The stale on-disk scaffold had this as `fn_005f5020(Win* a1)`;
+// WinRootWindows). The stale on-disk scaffold had this as `fn_005f5020(Win* a1)`;
 // the fresh brief's contract head (`void __cdecl Win::update_zorder()`)
 // matches the disassembly, so that is what is defined here.
 //
 // The initial `mov eax, dword ptr [0x9b7b34]` (the loop bound) happens
 // BEFORE the `mov dword ptr [0x9b7b30], ebp` store in the original, even
 // though the store is unconditional and the load only feeds the guard below
-// it. Writing `*g_009b7b30 = 0;` before reading the count reordered the two
+// it. Writing `WinZOrderCount = 0;` before reading the count reordered the two
 // (store first) under /O2; reading the count into a local FIRST, in source
 // order, reproduces the original ordering exactly. The do-while's own
-// continuation test re-reads `*g_009b7b34` fresh each iteration (matching
+// continuation test re-reads `*WinZOrderListCount` fresh each iteration (matching
 // the original's second `mov eax, [0x9b7b34]` at the bottom of the loop) -
 // only the ONE-TIME guard above the loop uses the cached local.
 //
@@ -9988,7 +9815,7 @@ done:
 // two-branch `cmp ecx,ebp / je skip; cmp ecx,[esi] / jne skip` - no
 // restructuring needed there.
 //
-// g_009b6e48 (the Win* array base) did NOT need the extern-array override
+// WinRootWindows (the Win* array base) did NOT need the extern-array override
 // the general lever warns about: the given `static Win *const g = ...`
 // (cast at the point of use, not redeclared) already reproduces the
 // register-walked indexing here - the lever's "address itself does work"
@@ -10009,47 +9836,47 @@ done:
 // emitter computes declarations; it does not carry lessons.
 void __cdecl Win::update_zorder() {
     int i = 0;
-    int n = *g_009b7b34;
-    *g_009b7b30 = 0;
+    int n = *WinZOrderListCount;
+    WinZOrderCount = 0;
     if (n > 0) {
         Win **arr = reinterpret_cast<Win **>(0x009B6E48);
-        Win *target = *reinterpret_cast<Win **>(g_009b7a6c);
+        Win *target = *reinterpret_cast<Win **>(WinHighlighted);
         do {
             if (target != 0 && target == arr[i]) {
-                *g_009b7b30 = 0;
-                *g_009b7a78 = 0;
+                WinZOrderCount = 0;
+                *WinZOrderDirty = 0;
             }
             if (arr[i]->iSomeFlag_ & 1) {
                 recurse_zorder(arr[i]);
-                target = *reinterpret_cast<Win **>(g_009b7a6c);
+                target = *reinterpret_cast<Win **>(WinHighlighted);
             }
             i++;
-        } while (i < *g_009b7b34);
+        } while (i < *WinZOrderListCount);
     }
 }
 
 // ===== homed from src/unrecovered/005f53a0.cpp =====
 
-long Win::on_window_pos_changing(WINDOWPOS * a1) {
+long Win::on_window_pos_changing(WINDOWPOS * pos) {
     char *self = reinterpret_cast<char *>(this);
-    char *wp = reinterpret_cast<char *>(a1);
+    char *wp = reinterpret_cast<char *>(pos);
     if ((*reinterpret_cast<unsigned char *>(wp + 0x18) & 1) == 0) {
         int ok = this->vslot_61();
         if (ok != 0) {
             int cx = *reinterpret_cast<int *>(wp + 0x10);
-            int f134 = *reinterpret_cast<int *>(self + 0x134);
+            int f134 = field_134_;
             if (cx <= f134) {
                 cx = f134;
             }
             *reinterpret_cast<int *>(wp + 0x10) = cx;
             int cy = *reinterpret_cast<int *>(wp + 0x14);
-            int f138 = *reinterpret_cast<int *>(self + 0x138);
+            int f138 = field_138_;
             if (cy <= f138) {
                 cy = f138;
             }
             *reinterpret_cast<int *>(wp + 0x14) = cy;
         }
-        if ((*reinterpret_cast<unsigned int *>(self + 0x98) & 0x800000) != 0) {
+        if ((iFlags_ & 0x800000) != 0) {
             int ncx = *reinterpret_cast<int *>(wp + 0x10);
             int ncy = *reinterpret_cast<int *>(wp + 0x14);
             nonclient_to_client(&ncx, &ncy);
@@ -10058,13 +9885,13 @@ long Win::on_window_pos_changing(WINDOWPOS * a1) {
             *reinterpret_cast<int *>(wp + 0x14) = ncy;
         }
     }
-    if ((*reinterpret_cast<unsigned int *>(self + 0x98) & 0x4000) != 0) {
+    if ((iFlags_ & 0x4000) != 0) {
         *reinterpret_cast<unsigned int *>(wp + 0x18) |= 4;
     }
     if (*reinterpret_cast<int *>(wp + 4) == 0) {
         PostMessageA(HandleMain, 3, 0, 0);
     }
-    return DefWindowProcA(HandleMain, 0x46, 0, reinterpret_cast<int>(a1));
+    return DefWindowProcA(HandleMain, 0x46, 0, reinterpret_cast<int>(pos));
 }
 
 // ===== homed from src/unrecovered/005ef950.cpp =====
@@ -10077,29 +9904,29 @@ void Win::paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left,
         return;
     }
 
-    if (*g_009b3ab0 == 0) {
-        if (*g_009bc498 == 0) {
-            *g_009b7b2c = (int)(*reinterpret_cast<GetDCFn *>(g_GetDC))(
-                reinterpret_cast<HWND>(*g_009b7b28));
+    if (*WinScreenDCDepth == 0) {
+        if (*WinDDSurface == 0) {
+            *WinScreenDC = (int)(*reinterpret_cast<GetDCFn *>(g_GetDC))(
+                reinterpret_cast<HWND>(*WinMainHwnd));
         } else {
-            ComSlot017 fn = (ComSlot017)(*reinterpret_cast<void ***>(*g_009bc498))[17];
-            fn(reinterpret_cast<void *>(*g_009bc498), g_009b7b2c);
+            ComSlot017 fn = (ComSlot017)(*reinterpret_cast<void ***>(*WinDDSurface))[17];
+            fn(reinterpret_cast<void *>(*WinDDSurface), WinScreenDC);
         }
-        if (*g_009b7b2c == 0) {
+        if (*WinScreenDC == 0) {
             return;
         }
-        *g_009b3ab0 = 1;
+        *WinScreenDCDepth = 1;
     } else {
-        *g_009b3ab0 = *g_009b3ab0 + 1;
+        *WinScreenDCDepth = *WinScreenDCDepth + 1;
     }
 
-    if (*g_009b7b2c == 0) {
+    if (*WinScreenDC == 0) {
         return;
     }
 
-    if (field_184_ != *reinterpret_cast<uint32_t *>(*g_009b8180 + 0x400)) {
+    if (field_184_ != *reinterpret_cast<uint32_t *>(*WinPalette + 0x400)) {
         (*g_SetActiveWindow)(this);
-        field_184_ = *reinterpret_cast<uint32_t *>(*g_009b8180 + 0x400);
+        field_184_ = *reinterpret_cast<uint32_t *>(*WinPalette + 0x400);
     }
 
     RECT clip_rect;
@@ -10111,7 +9938,7 @@ void Win::paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left,
     if (clip_region == 0) {
         return;
     }
-    (*g_SelectClipRgn)(reinterpret_cast<HDC>(*g_009b7b2c), clip_region);
+    (*g_SelectClipRgn)(reinterpret_cast<HDC>(*WinScreenDC), clip_region);
 
     int tile_width = static_cast<int>(tile->dib_.bmiHeader.biWidth);
     int neg_tile_height = -static_cast<int>(tile->dib_.bmiHeader.biHeight);
@@ -10147,15 +9974,16 @@ void Win::paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left,
         }
     }
 
-    if (--*g_009b3ab0 == 0) {
-        if (*g_009bc498 != 0) {
-            ComSlot026 fn = (ComSlot026)(*reinterpret_cast<void ***>(*g_009bc498))[26];
-            fn(reinterpret_cast<void *>(*g_009bc498), reinterpret_cast<void *>(*g_009b7b2c));
-            *g_009b7b2c = 0;
+    if (--*WinScreenDCDepth == 0) {
+        if (*WinDDSurface != 0) {
+            ComSlot026 fn = (ComSlot026)(*reinterpret_cast<void ***>(*WinDDSurface))[26];
+            fn(reinterpret_cast<void *>(*WinDDSurface), reinterpret_cast<void *>(*WinScreenDC));
+            *WinScreenDC = 0;
             return;
         }
-        (*g_ReleaseDC)(reinterpret_cast<HWND>(*g_009b7b28), reinterpret_cast<HDC>(*g_009b7b2c));
-        *g_009b7b2c = 0;
+        (*reinterpret_cast<FnReleaseDC *>(g_ReleaseDC))(
+            reinterpret_cast<HWND>(*WinMainHwnd), reinterpret_cast<HDC>(*WinScreenDC));
+        *WinScreenDC = 0;
     }
 }
 
@@ -10167,7 +9995,7 @@ void Win::pass_dialog_focus() {
 
     parent = win_parent_;
     if (parent != 0 && (int)parent->list_.count_ > 1) {
-        *g_009b7b38 = (parent->list_.head_ != 0)
+        *WinPendingFocus = (parent->list_.head_ != 0)
             ? *reinterpret_cast<int *>(reinterpret_cast<char *>(parent->list_.current_) + 4) : 0;
         parent = win_parent_;
         if (parent->list_.head_ != 0) {
@@ -10201,8 +10029,8 @@ void Win::close() {
     int count;
     bool doClear;
 
-    modal = (Win *)*g_009b7acc;
-    focusWin = (Win *)*g_009b7ad0;
+    modal = (Win *)*WinFocusPrimary;
+    focusWin = (Win *)*WinFocusSecondary;
     candidate = modal != 0 ? modal : focusWin;
     doClear = false;
     if (candidate == this) {
@@ -10224,16 +10052,16 @@ void Win::close() {
         }
     }
     if (doClear) {
-        *g_009b7acc = 0;
-        *g_009b7ad0 = 0;
+        *WinFocusPrimary = 0;
+        *WinFocusSecondary = 0;
     }
 
-    if (*g_009b7abc == (int)this) {
-        *g_009b7abc = 0;
+    if (*WinActiveDialog == (int)this) {
+        *WinActiveDialog = 0;
         this->vslot_04();
     }
-    if (*g_009b7ac0 == (int)this) {
-        *g_009b7ac0 = 0;
+    if (*WinLastActive == (int)this) {
+        *WinLastActive = 0;
     }
     if ((*WinBubbleCompanion == this) && (*WinBubbleActive != 0)) {
         *WinBubbleCompanion = nullptr;
@@ -10241,8 +10069,8 @@ void Win::close() {
         update_screen(WinBubbleRect, 0);
         flip(WinBubbleRect);
     }
-    if (*g_009b7a7c == (int)this) {
-        *g_009b7a7c = 0;
+    if (WinHoverWindow == this) {
+        WinHoverWindow = 0;
     }
     this->hide();
 
@@ -10364,7 +10192,7 @@ void Win::close() {
             }
         } else if (this != 0) {
             bool found = false;
-            count = *g_009b7b34;
+            count = *WinZOrderListCount;
             i = 0;
             if (0 < count) {
                 Win **node = (Win **)reinterpret_cast<Win **>(0x009B6E48);
@@ -10382,10 +10210,10 @@ void Win::close() {
             }
             if (found) {
                 count = count - 1;
-                *g_009b7b34 = count;
+                *WinZOrderListCount = count;
                 this->hide();
-                if (i < *g_009b7b34) {
-                    int remaining = *g_009b7b34 - i;
+                if (i < *WinZOrderListCount) {
+                    int remaining = *WinZOrderListCount - i;
                     int *node2 = (int *)((char *)reinterpret_cast<Win **>(0x009B6E48) + i * 4);
                     do {
                         node2[0] = node2[1];
@@ -10408,7 +10236,7 @@ void Win::close() {
     field_190_ = 0;
     cursor_handle_ = 0;
     field_19C_ = 0;
-    *g_009b7b2c = 0;
+    *WinScreenDC = 0;
     menu_ = 0;
 
     if (list_.head_ != 0) {
@@ -10435,19 +10263,26 @@ void Win::close() {
     field_12C_ = 0;
     field_130_ = 1;
 
-    field_FC_ = *g_009b7af0;
-    field_100_ = *g_00696d34;
-    field_104_ = *g_009b7af8;
-    field_108_ = *g_00696d3c;
-    field_10C_ = *g_00696d40;
-    field_110_ = *g_00696d44;
-    caption_height_ = *g_00696d38;
-    border_thickness_ = *g_00696d48;
-    bottom_border_thickness_ = *g_00696d4c;
-    field_120_ = *g_00696d50;
-    field_124_ = *g_009b7afc;
-    field_128_ = *g_00696d54;
-    field_F8_ = *g_009b7af4;
+    // TWO TABLES, NOT THIRTEEN GLOBALS. 0x00696D34 and 0x009B7AF0 are the
+    // heads of contiguous default arrays; the addresses this block used to
+    // name one at a time are their entries. Read out of the image:
+    // WinStaticDefaults = {247, 24, -1, 1, 1, 8, -1, 7, 2}, and [1] is 24 -
+    // the caption height assigned below, which is what confirms the indexing.
+    // The assignment ORDER is the image's: fields go in field order while the
+    // table is read out of order, so do not tidy it into index order.
+    field_FC_ = WinDynamicDefaults[0];
+    field_100_ = WinStaticDefaults[0];
+    field_104_ = WinDynamicDefaults[2];
+    field_108_ = WinStaticDefaults[2];
+    field_10C_ = WinStaticDefaults[3];
+    field_110_ = WinStaticDefaults[4];
+    caption_height_ = WinStaticDefaults[1];
+    border_thickness_ = WinStaticDefaults[5];
+    bottom_border_thickness_ = WinStaticDefaults[6];
+    field_120_ = WinStaticDefaults[7];
+    field_124_ = WinDynamicDefaults[3];
+    field_128_ = WinStaticDefaults[8];
+    field_F8_ = WinDynamicDefaults[1];
 
     {
         void *p0xE0 = *(void **)((char *)this + 0xE0);
@@ -10543,7 +10378,7 @@ void __cdecl Win::OnMouseMove(void * a1, int a2, int a3, unsigned int a4) {
     Win *tracking;
 
     tracking = WinTrackingWindow;
-    *g_009b7b3c = 0;
+    *WinKeyState = 0;
     if (tracking != nullptr) {
         do_tracking(a2, a3);
         return;
@@ -10551,13 +10386,13 @@ void __cdecl Win::OnMouseMove(void * a1, int a2, int a3, unsigned int a4) {
     hit = (Win *)get_mouse_window(&a2, &a3);
     update_cursor(hit, 1);
     if (hit != 0) {
-        if (*g_009b7a7c != 0 &&
-            (*g_009b7b3c != 0 || hit != (Win *)*g_009b7a7c) &&
-            (*g_009b7abc == 0 || *g_009b7abc == *g_009b7a7c)) {
-            reinterpret_cast<Win *>(*g_009b7a7c)->vslot_18(a2, a3);
+        if (WinHoverWindow != 0 &&
+            (*WinKeyState != 0 || hit != (Win *)WinHoverWindow) &&
+            (*WinActiveDialog == 0 || *WinActiveDialog == reinterpret_cast<int>(WinHoverWindow))) {
+            WinHoverWindow->vslot_18(a2, a3);
         }
-        *g_009b7a7c = (int)hit;
-        hit->on_mouse_move(a2, a3, a4, *g_009b7aa4);
+        WinHoverWindow = hit;
+        hit->on_mouse_move(a2, a3, a4, *WinDoubleClickFlag);
     }
 }
 
@@ -10581,21 +10416,21 @@ typedef int (__stdcall *ReleaseDCFn)(void *, void *);
 int __cdecl Win::OnQueryNewPalette(void * a1) {
     int eax;
 
-    if (*g_009bc494 != 0) {
+    if (BufferDirectDraw != 0) {
         return 1;
     }
 
-    eax = *g_009b3ab0;
+    eax = *WinScreenDCDepth;
     if (eax != 0) {
         eax = eax + 1;
-        *g_009b3ab0 = eax;
-        eax = *g_009b7b2c;
+        *WinScreenDCDepth = eax;
+        eax = *WinScreenDC;
     } else {
-        eax = *g_009bc498;
+        eax = *WinDDSurface;
         if (eax != 0) {
             int *vtbl = *reinterpret_cast<int **>(eax);
-            (*reinterpret_cast<NotifyFn>(vtbl[0x44 / 4]))(reinterpret_cast<void *>(eax), g_009b7b2c);
-            eax = *g_009b7b2c;
+            (*reinterpret_cast<NotifyFn>(vtbl[0x44 / 4]))(reinterpret_cast<void *>(eax), WinScreenDC);
+            eax = *WinScreenDC;
         } else {
             // TWO STEPS, and the second one is load-bearing. Calling through
             // `(*g_GetDC)(...)` directly compiled `mov eax,[0]` + `call [eax]`
@@ -10605,40 +10440,40 @@ int __cdecl Win::OnQueryNewPalette(void * a1) {
             // GetDCFn line in the macro above, BYTE_EXACT), and it restores
             // the direct indirect-call encoding.
             eax = (*reinterpret_cast<GetDCFn *>(g_GetDC))(
-                reinterpret_cast<void *>(*g_009b7b28));
-            *g_009b7b2c = eax;
+                reinterpret_cast<void *>(*WinMainHwnd));
+            *WinScreenDC = eax;
         }
         if (eax == 0) {
             return 0;
         }
-        *g_009b3ab0 = 1;
+        *WinScreenDCDepth = 1;
     }
 
     if (eax == 0) {
         return 0;
     }
 
-    (*reinterpret_cast<SelectPaletteFn *>(g_006690b8))(reinterpret_cast<void *>(eax), reinterpret_cast<void *>(*g_009b8178), 0);
+    (*reinterpret_cast<SelectPaletteFn *>(g_SelectPalette))(reinterpret_cast<void *>(eax), reinterpret_cast<void *>(PaletteInitialized), 0);
 
-    (*reinterpret_cast<RealizePaletteFn *>(g_0066909c))(reinterpret_cast<void *>(*g_009b7b2c));
+    (*reinterpret_cast<RealizePaletteFn *>(g_RealizePalette))(reinterpret_cast<void *>(*WinScreenDC));
 
-    eax = *g_009b3ab0;
+    eax = *WinScreenDCDepth;
     eax = eax - 1;
-    *g_009b3ab0 = eax;
+    *WinScreenDCDepth = eax;
     if (eax != 0) {
         return 0;
     }
 
-    eax = *g_009bc498;
+    eax = *WinDDSurface;
     if (eax != 0) {
         int *vtbl = *reinterpret_cast<int **>(eax);
-        (*reinterpret_cast<ReleaseFn>(vtbl[0x68 / 4]))(reinterpret_cast<void *>(eax), reinterpret_cast<void *>(*g_009b7b2c));
-        *g_009b7b2c = 0;
+        (*reinterpret_cast<ReleaseFn>(vtbl[0x68 / 4]))(reinterpret_cast<void *>(eax), reinterpret_cast<void *>(*WinScreenDC));
+        *WinScreenDC = 0;
         return 0;
     }
 
-    (*reinterpret_cast<ReleaseDCFn *>(g_00669280))(reinterpret_cast<void *>(*g_009b7b28), reinterpret_cast<void *>(*g_009b7b2c));
-    *g_009b7b2c = 0;
+    (*reinterpret_cast<ReleaseDCFn *>(g_ReleaseDC))(reinterpret_cast<void *>(*WinMainHwnd), reinterpret_cast<void *>(*WinScreenDC));
+    *WinScreenDC = 0;
     return 0;
 }
 
@@ -10649,12 +10484,12 @@ void Win::set_dialog_focus(Win * a1) {
     if (a1 == 0) {
         return;
     }
-    if (*reinterpret_cast<int *>(self + 0xd4) == 0) {
+    if (list_.count_ == 0) {
         return;
     }
 
     int *newFocus;
-    if (*reinterpret_cast<int *>(self + 0xcc) == 0) {
+    if (list_.head_ == 0) {
         newFocus = 0;
     } else {
         int *node = *reinterpret_cast<int **>(self + 0xd0);
@@ -10665,16 +10500,16 @@ void Win::set_dialog_focus(Win * a1) {
         return;
     }
 
-    *reinterpret_cast<int **>(g_009b7b38) = newFocus;
+    *reinterpret_cast<int **>(WinPendingFocus) = newFocus;
 
-    if (*reinterpret_cast<int *>(self + 0xcc) == 0) {
+    if (list_.head_ == 0) {
         return;
     }
 
-    int count = *reinterpret_cast<int *>(self + 0xd4);
+    int count = list_.count_;
     int idx = 0;
-    *reinterpret_cast<int *>(self + 0xd8) = 0;
-    *reinterpret_cast<int *>(self + 0xd0) = *reinterpret_cast<int *>(self + 0xcc);
+    list_.tail_ = 0;
+    list_.current_ = list_.head_;
 
     if (count > 0) {
         int *node;
@@ -10683,9 +10518,9 @@ void Win::set_dialog_focus(Win * a1) {
             if (reinterpret_cast<int *>(node[1]) == reinterpret_cast<int *>(a1)) {
                 break;
             }
-            *reinterpret_cast<int *>(self + 0xd8) = *reinterpret_cast<int *>(self + 0xd8) + 1;
+            list_.tail_ = list_.tail_ + 1;
             idx++;
-            *reinterpret_cast<int *>(self + 0xd0) = node[3];
+            list_.current_ = reinterpret_cast<void *>(node[3]);
             if (idx >= count) {
                 return;
             }
@@ -10695,7 +10530,7 @@ void Win::set_dialog_focus(Win * a1) {
             call_slot_cc(newFocus, 0);
         }
 
-        if (*reinterpret_cast<int *>(self + 0xcc) != 0) {
+        if (list_.head_ != 0) {
             int *node2 = *reinterpret_cast<int **>(self + 0xd0);
             int *target = reinterpret_cast<int *>(node2[1]);
             if (target != 0) {
@@ -10710,42 +10545,42 @@ void Win::set_dialog_focus(Win * a1) {
 long __cdecl Win::OnActivate(void *a1, unsigned int a2, void *a3, long a4) {
     InvalidateRect(reinterpret_cast<HWND>(HandleMain), 0, 0);
     if (a2 != 0) {
-      if (a4 == 0 && *g_009bc494 == 0) {
+      if (a4 == 0 && BufferDirectDraw == 0) {
         int hdc;
-        if (*g_009b3ab0 != 0) {
-            *g_009b3ab0 = *g_009b3ab0 + 1;
-            hdc = *g_009b7b2c;
+        if (*WinScreenDCDepth != 0) {
+            *WinScreenDCDepth = *WinScreenDCDepth + 1;
+            hdc = *WinScreenDC;
         } else {
-            void *iface = reinterpret_cast<void *>(*g_009bc498);
+            void *iface = reinterpret_cast<void *>(*WinDDSurface);
             if (iface != 0) {
                 IfaceGetHdcProc fn = (*reinterpret_cast<IfaceGetHdcProc **>(iface))[17];
-                fn(iface, g_009b7b2c);
-                hdc = *g_009b7b2c;
+                fn(iface, WinScreenDC);
+                hdc = *WinScreenDC;
             } else {
-                *g_009b7b2c = reinterpret_cast<int>(GetDC(HandleMain));
-                hdc = *g_009b7b2c;
+                *WinScreenDC = reinterpret_cast<int>(GetDC(HandleMain));
+                hdc = *WinScreenDC;
             }
             if (hdc != 0) {
-                *g_009b3ab0 = 1;
+                *WinScreenDCDepth = 1;
             }
         }
         if (hdc != 0) {
-            SelectPalette(reinterpret_cast<HDC>(*g_009b7b2c), reinterpret_cast<HPALETTE>(*g_009b8178), 0);
-            RealizePalette(reinterpret_cast<HDC>(*g_009b7b2c));
+            SelectPalette(reinterpret_cast<HDC>(*WinScreenDC), reinterpret_cast<HPALETTE>(PaletteInitialized), 0);
+            RealizePalette(reinterpret_cast<HDC>(*WinScreenDC));
 
-            *g_009b3ab0 = *g_009b3ab0 - 1;
-            if (*g_009b3ab0 == 0) {
-                void *iface2 = reinterpret_cast<void *>(*g_009bc498);
+            *WinScreenDCDepth = *WinScreenDCDepth - 1;
+            if (*WinScreenDCDepth == 0) {
+                void *iface2 = reinterpret_cast<void *>(*WinDDSurface);
                 if (iface2 != 0) {
                     IfaceReleaseHdcProc fn2 = (*reinterpret_cast<IfaceReleaseHdcProc **>(iface2))[26];
-                    fn2(iface2, *g_009b7b2c);
+                    fn2(iface2, *WinScreenDC);
                 } else {
                     typedef int (__stdcall *ReleaseDCProc)(void *, HDC);
                     static int *const g = (int *)0x00669280;
                     (*reinterpret_cast<ReleaseDCProc *>(g))(
-                        HandleMain, reinterpret_cast<HDC>(*g_009b7b2c));
+                        HandleMain, reinterpret_cast<HDC>(*WinScreenDC));
                 }
-                *g_009b7b2c = 0;
+                *WinScreenDC = 0;
             }
         }
       }
@@ -10845,8 +10680,8 @@ void Win::screen_to_client(RECT * a1) {
 // byte-for-byte what the claim was measured on.
 void __cdecl Win::redraw() {
     int i;
-    for (i = 0; i < *g_009b7b30; ++i) {
-        reinterpret_cast<VCall *>(reinterpret_cast<void **>(g_win_array)[i])->slot062();
+    for (i = 0; i < WinZOrderCount; ++i) {
+        reinterpret_cast<Win *>(reinterpret_cast<void **>(g_win_array)[i])->vslot_62();
         do_sound();
     }
 }
@@ -10900,11 +10735,11 @@ void __cdecl add_parent(Win *);
 // emitter computes declarations; it does not carry lessons.
 void __cdecl add_parent(Win * a1) {
     if (a1 == 0) return;
-    int count = *g_009b7b34;
+    int count = *WinZOrderListCount;
     unsigned int flags = a1->iFlags_;
     if (flags & 0x2000000) {
         reinterpret_cast<Win **>(0x009B6E48)[count] = a1;
-        *g_009b7b34 = count + 1;
+        *WinZOrderListCount = count + 1;
         return;
     }
     if (count > 0) {
@@ -10917,5 +10752,5 @@ void __cdecl add_parent(Win * a1) {
         } while (--n);
     }
     reinterpret_cast<Win **>(0x009B6E48)[0] = a1;
-    *g_009b7b34 = count + 1;
+    *WinZOrderListCount = count + 1;
 }

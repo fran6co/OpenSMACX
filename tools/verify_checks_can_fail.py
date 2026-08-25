@@ -117,6 +117,18 @@ CASES = [
      "FAILED: the tree does more of the compiler's work",
      lambda: _append("src/palette.h",
                      "static int *const g_00dead01 = (int *)0x00DEAD01;\n")),
+    # THE CENSUS MUST NOT COUNT PROSE. compiler_work skipped only `//` lines,
+    # so a shape named inside a `/* */` block counted as a live site: on
+    # 2026-08-25 "anonymous fixed-address global" read 184 where the truth was
+    # 103, because Purpose blocks explaining a homing mentioned the bindings
+    # they had just removed. This case is the fix stated as a control - the
+    # same text that fails as CODE (the growth case above) must be invisible
+    # as a COMMENT, so a regression to `//`-only skipping turns this green
+    # case red.
+    ("compiler_work ignores block comments",
+     None,
+     lambda: _append("src/palette.h",
+                     "/*\n g_00dead02 = (int *)0x00DEAD02;\n*/\n")),
     ("marker_symbols floor",
      "FAILED: a marker names a symbol the build does not emit",
      lambda: _append("src/palette.cpp",
@@ -228,9 +240,20 @@ def main() -> int:
             damage()
             expected = wording() if callable(wording) else wording
             code, out = run_gate()
-            ok = code == 1 and expected in out
-            print(f"  {'PASS' if ok else 'FAIL'} {name}: exit {code}, "
-                  f"{expected[:40]!r} {'found' if expected in out else 'MISSING'}")
+            if expected is None:
+                # A MUST-STAY-GREEN case: the damage is something the check
+                # is required to IGNORE. Without this, every control here
+                # asserts a check can fail and none asserts it can decline
+                # to - which is how a census that counts prose looks healthy.
+                ok = "COMPILER WORK GREW" not in out
+                print(f"  {'PASS' if ok else 'FAIL'} {name}: exit {code}, "
+                      f"expected no growth, "
+                      f"{'none reported' if ok else 'GREW'}")
+            else:
+                ok = code == 1 and expected in out
+                print(f"  {'PASS' if ok else 'FAIL'} {name}: exit {code}, "
+                      f"{expected[:40]!r} "
+                      f"{'found' if expected in out else 'MISSING'}")
             if not ok:
                 failures.append(name)
         except Exception as exc:                       # noqa: BLE001

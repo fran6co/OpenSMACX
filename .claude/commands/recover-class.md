@@ -104,6 +104,26 @@ In the same worktree, same agent, after the declarations land:
 6. **Claim every lowered ceiling** in `class_debt.py` in the same commit -
    the gate fails on slack.
 
+**Four tools do the mechanical bulk of 1-5; run them before hand-naming
+anything.** Homing ALWAYS raises these counts - the census excludes the
+artifact archives, so a homed body's debt becomes countable the moment it
+lands - and budgeting this cleanup into the homing batch is what keeps the
+gate honest rather than red:
+
+```sh
+uv run tools/iat_names.py --map src/<class>.cpp        # 0x00669xxx IS the PE import
+uv run tools/name_globals.py src/<class>.cpp           # evidence sheet, then --map
+uv run tools/name_params.py src/<class>.h src/<class>.cpp    # copy param names off the header
+uv run tools/name_offsets.py src/<class>.cpp map.json  # self + 0xNN -> the declared member
+```
+
+The distinction that makes them safe: a RENAME is byte-neutral and needs no
+re-measurement; a RETYPE or an offset rewrite is not, and every touched claim
+must be measured. `name_globals.py` refuses to retype for exactly that reason,
+and refuses a name the tree already declares - on 2026-08-25 renaming
+0x009B7A40 to `WinScreenWidth` would have pointed sixteen dereferences at
+win.h's real `WinScreenWidth` at a DIFFERENT address.
+
 The claim floor must not move through any of this: renames and type fixes
 re-measure to the same claims under corrected names, never to fewer.
 
