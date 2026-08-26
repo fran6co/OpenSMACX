@@ -165,28 +165,11 @@ int forward_sound_device(Sound *self, int vtable_offset, int a1,
     return (ORIGINAL(device)->*original_slot<sound_device_arg>(vtable + vtable_offset))(a1);
 }
 
-__forceinline int query_sound_device_default(Sound *self, int vtable_offset,
-                               int no_device_result) {
-    void *device = *reinterpret_cast<void **>(
-        reinterpret_cast<uint8_t *>(self) + 0x3C);
-    // THE DEFAULT IS LOADED BEFORE THE TEST, and the zero path is LAST: the
-    // image does `mov eax, 0x14` at 0x004C64D3 before `test ecx, ecx`, and
-    // `je` jumps forward to a bare `ret`. A guard clause reverses both.
-    // THE ZERO PATH LAST, as the image lays it out. What is still unmatched
-    // is WHERE the default is loaded: the image sets `eax` to it at
-    // 0x004C64D3, before `test ecx, ecx`, on a path the tail jump then
-    // discards. A named result across the branch and a ternary both compile
-    // to the same thing as this - VC6 sinks the constant either way.
-    if (device) {
-        return vtable_slot<sound_device_query>(device, vtable_offset)(device);
-    }
-    return no_device_result;
-}
 }  // namespace
 
 /*
 Purpose: Ask the wrapped device to play, through vtable slot 0x1C.
-// ORIGINAL: 0x004C6480 ?play@Sound@@QAEHXZ 0x004C6480-0x004C6492
+// ORIGINAL: 0x004C6480 ?play@Sound@@QAEHXZ 0x004C6480-0x004C6492 BYTE_EXACT
 // size      18 bytes
 // prototype int (__thiscall ?play@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0
@@ -197,7 +180,12 @@ Return Value: the device's answer, or 0x14 when none is wrapped
 Status: Complete
 */
 int Sound::play() {
-    return query_sound_device_default(this, 0x1C, 0x14);
+    void *device = device_;
+    int result = 0x14;
+    if (device) {
+        result = vtable_slot<sound_device_query>(device, 0x1C)(device);
+    }
+    return result;
 }
 
 /*
@@ -215,12 +203,18 @@ Return Value: the device's answer, or 0x14 when none is wrapped
 Status: Complete
 */
 int Sound::play(unsigned int effect) {
+    // TRIED writing this out of forward_sound_device the way play()/stop()/
+    // release() were - that is what made THOSE byte-exact - but the argument
+    // is what differs: the image passes it thiscall-on-the-stack, and both
+    // spellings reached for here compile 13-15 instructions against the
+    // image's 12 (3/12, against 2/12 through the helper). The no-argument
+    // family is fixed; this one needs its own shape.
     return forward_sound_device(this, 0x18, static_cast<int>(effect), 0x14);
 }
 
 /*
 Purpose: Ask the wrapped device to stop, through vtable slot 0x20.
-// ORIGINAL: 0x004C64D0 ?stop@Sound@@QAEHXZ 0x004C64D0-0x004C64E2
+// ORIGINAL: 0x004C64D0 ?stop@Sound@@QAEHXZ 0x004C64D0-0x004C64E2 BYTE_EXACT
 // size      18 bytes
 // prototype int (__thiscall ?stop@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0
@@ -231,12 +225,17 @@ Return Value: the device's answer, or 0x14 when none is wrapped
 Status: Complete
 */
 int Sound::stop() {
-    return query_sound_device_default(this, 0x20, 0x14);
+    void *device = device_;
+    int result = 0x14;
+    if (device) {
+        result = vtable_slot<sound_device_query>(device, 0x20)(device);
+    }
+    return result;
 }
 
 /*
 Purpose: Ask the wrapped device to release, through vtable slot 0x38.
-// ORIGINAL: 0x004C64F0 ?release@Sound@@QAEHXZ 0x004C64F0-0x004C6502
+// ORIGINAL: 0x004C64F0 ?release@Sound@@QAEHXZ 0x004C64F0-0x004C6502 BYTE_EXACT
 // size      18 bytes
 // prototype int (__thiscall ?release@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0
@@ -247,7 +246,12 @@ Return Value: the device's answer, or 0x14 when none is wrapped
 Status: Complete
 */
 int Sound::release() {
-    return query_sound_device_default(this, 0x38, 0x14);
+    void *device = device_;
+    int result = 0x14;
+    if (device) {
+        result = vtable_slot<sound_device_query>(device, 0x38)(device);
+    }
+    return result;
 }
 
 /*
@@ -299,30 +303,12 @@ void Sound::set_delay(unsigned int delay) {
 
 
 namespace {
-// fade and fade_in are guarded twice: the field at 0x38 must be set as well as
-// a device wrapped, and either being absent gives the same 0x13.
-int guarded_query_sound_device(Sound *self, int vtable_offset) {
-    uint8_t *const obj = reinterpret_cast<uint8_t *>(self);
-    int gate;
-    std::memcpy(&gate, obj + 0x38, sizeof(gate));
-    if (gate == 0) {
-        return 0x13;
-    }
-    void *device = *reinterpret_cast<void **>(obj + 0x3C);
-    if (!device) {
-        return 0x13;
-    }
-    // CALLED WHERE THE SLOT LIVES. The image tail-jumps through it -
-    // `jmp dword ptr [eax+0x5c]` at 0x004C64C9 - and reading the slot into a
-    // pointer-to-member first costs a `mov` before the call.
-    return vtable_slot<sound_device_query>(device, vtable_offset)(device);
-}
 }  // namespace
 
 /*
 Purpose: Ask the wrapped device to fade, through vtable slot 0x28. Refuses
          unless the gate field at 0x38 is set and a device is wrapped.
-// ORIGINAL: 0x004C65E0 ?fade@Sound@@QAEHXZ 0x004C65E0-0x004C65F9
+// ORIGINAL: 0x004C65E0 ?fade@Sound@@QAEHXZ 0x004C65E0-0x004C65F9 BYTE_EXACT
 // size      25 bytes
 // prototype int (__thiscall ?fade@Sound@@QAEHXZ)(Sound* this)
 // callers   1   call targets   0
@@ -333,13 +319,20 @@ Return Value: the device's answer, or 0x13 when either guard fails
 Status: Complete
 */
 int Sound::fade() {
-    return guarded_query_sound_device(this, 0x28);
+    if (fade_38_ == 0) {
+        return 0x13;
+    }
+    void *device = device_;
+    if (!device) {
+        return 0x13;
+    }
+    return vtable_slot<sound_device_query>(device, 0x28)(device);
 }
 
 /*
 Purpose: Ask the wrapped device to fade in, through vtable slot 0x30. Carries
          the same pair of guards fade does.
-// ORIGINAL: 0x004C6620 ?fade_in@Sound@@QAEHXZ 0x004C6620-0x004C6639
+// ORIGINAL: 0x004C6620 ?fade_in@Sound@@QAEHXZ 0x004C6620-0x004C6639 BYTE_EXACT
 // size      25 bytes
 // prototype int (__thiscall ?fade_in@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0
@@ -350,7 +343,14 @@ Return Value: the device's answer, or 0x13 when either guard fails
 Status: Complete
 */
 int Sound::fade_in() {
-    return guarded_query_sound_device(this, 0x30);
+    if (fade_38_ == 0) {
+        return 0x13;
+    }
+    void *device = device_;
+    if (!device) {
+        return 0x13;
+    }
+    return vtable_slot<sound_device_query>(device, 0x30)(device);
 }
 
 /*

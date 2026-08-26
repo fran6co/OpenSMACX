@@ -99,7 +99,7 @@ class Wave_Device {
   int set_group_volume(unsigned int group, unsigned int volume);
   int enable_group(unsigned int group);
   int disable_group(unsigned int group);
-  void get_description(unsigned long a1, char *a2, unsigned long a3);
+  int get_description(unsigned long a1, char *a2, unsigned long a3);
   int start_raw_dump(char *path);
   int set_eax(EAX_REVERB_PROPERTIES *properties);
   int set_eax(unsigned long eax);
