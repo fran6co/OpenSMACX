@@ -71,7 +71,8 @@ import sys
 # char *>(this) + 0x98)`. Same access, same remedy - the tool used to see
 # only the `self` spelling and left these behind.
 INLINE = re.compile(
-    r"\*\s*(?:reinterpret_cast<\s*[\w ]+\*+\s*>|\(\s*[\w ]+\*+\s*\))\s*"
+    r"\*\s*(?:reinterpret_cast<\s*(?P<ty>[\w ]+?)\s*(?P<stars>\*+)\s*>"
+    r"|\(\s*(?P<ty2>[\w ]+?)\s*(?P<stars2>\*+)\s*\))\s*"
     r"\(\s*(?:reinterpret_cast<\s*char\s*\*\s*>\s*\(\s*this\s*\)"
     r"|\(\s*char\s*\*\s*\)\s*this)\s*\+\s*0x(?P<off>[0-9A-Fa-f]+)\s*\)")
 INLINE_RECT = re.compile(
@@ -87,9 +88,13 @@ INLINE_RECT = re.compile(
 NARROW = {"char", "unsigned char", "signed char", "uint8_t", "int8_t",
           "short", "unsigned short", "uint16_t", "int16_t", "BYTE", "WORD"}
 
+# THE STARS ARE PART OF THE TYPE. `\*+` used to swallow them while `ty`
+# kept only the base, so reconstructing the cast as `<{ty} *>` turned
+# `<void **>` into `<void *>` and dropped a whole pointer level. NARROW
+# never exposed it because no narrow type is a pointer.
 ACCESS = re.compile(
-    r"\*\s*(?:reinterpret_cast<\s*(?P<ty>[\w ]+?)\s*\*+\s*>"
-    r"|\(\s*(?P<ty2>[\w ]+?)\s*\*+\s*\))\s*"
+    r"\*\s*(?:reinterpret_cast<\s*(?P<ty>[\w ]+?)\s*(?P<stars>\*+)\s*>"
+    r"|\(\s*(?P<ty2>[\w ]+?)\s*(?P<stars2>\*+)\s*\))\s*"
     # `self` bare, or wrapped in a redundant `(char *)` the artifact emitted
     # even where `self` is already `char *`.
     r"\(\s*(?:\(\s*char\s*\*\s*\)\s*)?(?P<base>self)\s*\+\s*"
@@ -105,12 +110,26 @@ def main() -> int:
         print(__doc__)
         return 2
     src = pathlib.Path(sys.argv[1])
-    table = {k.lower(): v for k, v in json.loads(
-        pathlib.Path(sys.argv[2]).read_text()).items()}
+    raw = json.loads(pathlib.Path(sys.argv[2]).read_text())
+    # The map is either offset -> name (the old shape) or offset ->
+    # {name, type} from `header_offsets --json --types`. Both are accepted;
+    # only the second can check a cast against what the member IS.
+    table = {k.lower(): (v["name"] if isinstance(v, dict) else v)
+             for k, v in raw.items()}
+    declared = {k.lower(): v.get("type", "") for k, v in raw.items()
+                if isinstance(v, dict)}
     apply = "--apply" in sys.argv
     text = src.read_text(errors="replace")
 
     counts = collections.Counter()
+    counts_retyped: collections.Counter = collections.Counter()
+
+    def _norm(ty: str) -> str:
+        """`unsigned int`, `uint32_t` and `int` are one type to this check."""
+        ty = " ".join(ty.split()).replace(" *", "*")
+        return {"unsigned int": "int", "uint32_t": "int", "int32_t": "int",
+                "long": "int", "unsigned long": "int", "UINT": "int",
+                "DWORD": "int", "BOOL": "int", "LONG": "int"}.get(ty, ty)
 
     def rect(m):
         off = f"0x{int(m.group('off'), 16):x}"
@@ -127,10 +146,27 @@ def main() -> int:
         if not name:
             return m.group(0)
         counts[off] += 1
-        cast = (m.groupdict().get("ty") or m.groupdict().get("ty2") or "").strip()
-        if cast in NARROW:
+        g = m.groupdict()
+        cast = (g.get("ty") or g.get("ty2") or "").strip()
+        stars = (g.get("stars") or g.get("stars2") or "*")
+        full = f"{cast} {stars}"
+        if cast in NARROW and stars == "*":
             # keep the width, name the member
-            return f"*reinterpret_cast<{cast} *>(&{name})"
+            return f"*reinterpret_cast<{full}>(&{name})"
+        # THE CAST MUST AGREE WITH WHAT THE MEMBER IS. Dropping the cast is
+        # only sound when the member's declared type IS the cast's type; a
+        # `void *` member read through `int *` becomes uncompilable code the
+        # moment the cast goes, and an uncompilable body is reverted whole.
+        # When the map carries no types at all we keep the old behaviour, so
+        # an old map still works - it just cannot make this check.
+        want = declared.get(off)
+        # `cast` is never empty now that both patterns capture a type, but a
+        # bare name is only safe when the map SAYS what the member is.
+        if want is None or not cast:
+            return name
+        if _norm(want) != _norm(cast + " " + stars[1:]):
+            counts_retyped[off] += 1
+            return f"*reinterpret_cast<{full}>(&{name})"
         return name
 
     # REFUSE THE WHOLE FILE, not just the body. `self` is not always

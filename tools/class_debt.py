@@ -55,9 +55,16 @@ CEILINGS = {
     # The rest of the excess is SpriteBox, CheckBox and Dialogs walking
     # their own objects by offset, which needs each of those classes'
     # layout model - their passes, not Win's.
-    "raw self-access": 234,
+    # CORRECTED with the same fix - and this shape was hit hardest,
+    # because `*reinterpret_cast<T *>(self + 0xNN)` IS a line starting
+    # with `*`. Eleven of them were invisible to the census that
+    # exists to count them.
+    "raw self-access": 245,
     "pointer-parameter as int": 4,
-    "scaffold name": 1427,
+    # CORRECTED 2026-08-26, not raised to absorb a regression: this
+    # census skipped every code line starting with `*`, so two of these
+    # were never counted. The tree did not change; the ruler did.
+    "scaffold name": 1429,
 }
 
 WHY = {
@@ -159,7 +166,16 @@ def code_lines(path: Path):
             if "*/" in s:
                 in_block = False
             continue
-        if s.startswith(("//", "*")):
+        # A LINE STARTING WITH `*` IS CODE UNLESS WE ARE INSIDE A BLOCK
+        # COMMENT - and that case is already handled above, by `in_block`.
+        # Treating a leading `*` as prose out here hid every
+        # `*reinterpret_cast<T *>(...) = ...;` statement from this census:
+        # 971 code lines across 64 files, which is what every ratcheted
+        # ceiling below has been measured against. Found because rewriting
+        # three such lines in net_class.cpp to use their members made them
+        # VISIBLE and the count "grew" by three without the file gaining a
+        # single new site.
+        if s.startswith("//"):
             continue
         if s.startswith("/*"):
             if "*/" not in s:
@@ -172,6 +188,35 @@ def code_lines(path: Path):
         # only-falls ceiling turns into a visible "lower it" rather than a
         # silent lie.
         yield line.split("//", 1)[0]
+
+
+def _selftest_code_lines() -> str:
+    """`code_lines` must keep a `*`-leading STATEMENT and drop real prose.
+
+    A CHECK, NOT A COMMENT, because this exact walk was wrong for a long
+    time in two censuses at once and nothing noticed: `*reinterpret_cast<T *>
+    (self + 0xNN) = v;` starts with `*`, was classified as block-comment
+    continuation, and vanished from the very census that exists to count it -
+    `raw self-access` was blind to its own canonical spelling.
+    Returns a complaint, or "" when the walk behaves.
+    """
+    import tempfile, os
+    sample = ("/* a block\n"
+              " * continuation must be dropped\n"
+              " */\n"
+              "// a line comment must be dropped\n"
+              "*reinterpret_cast<int *>(self + 0x10) = 1;\n"
+              "    *self_ptr = 0;\n")
+    fd, path = tempfile.mkstemp(suffix=".cpp")
+    try:
+        os.write(fd, sample.encode()); os.close(fd)
+        kept = [ln.strip() for ln in code_lines(Path(path)) if ln.strip()]
+    finally:
+        os.unlink(path)
+    if len(kept) != 2 or not all(k.startswith("*") for k in kept):
+        return (f"code_lines is misclassifying code as comment: kept {kept!r}, "
+                f"expected the two `*`-leading statements and nothing else")
+    return ""
 
 
 def census():
@@ -280,6 +325,13 @@ def _lower_ceilings(counts) -> int:
 
 def main() -> int:
     check = "--check" in sys.argv
+    # THE WALK CHECKS ITSELF BEFORE IT COUNTS ANYTHING. A census whose
+    # comment walk is wrong reports a confident number that is simply
+    # not the tree.
+    complaint = _selftest_code_lines()
+    if complaint:
+        print(f"SEMANTIC DEBT CENSUS IS BROKEN: {complaint}")
+        return 1
     as_json = "--json" in sys.argv
     counts, files = census()
 

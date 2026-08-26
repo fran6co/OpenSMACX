@@ -2192,7 +2192,7 @@ Return Value: n/a
 Status: Semantics transcribed from the image
 
 PROMOTED FROM src/recovered/units/005e1a80.cpp, which read every field as
-`*reinterpret_cast<int *>(self + 0x50)` and left `Buffer::box` calling both
+`*reinterpret_cast<int *>(&locked_bits_)` and left `Buffer::box` calling both
 of these through a pointer-to-member.
 
 The acquire and release in the middle are `get_data` and `free_data`, which
@@ -2449,7 +2449,7 @@ Return Value: The x coordinate one past the last glyph drawn
 Status: Semantics transcribed from the image; not yet byte exact
 
 PROMOTED FROM src/unrecovered/005dcae0.cpp, which reached every field through
-`*reinterpret_cast<int *>(self + 0x51c)` and left four call sites paying
+`markup_pending_` and left four call sites paying
 `call [ptr]` against the image's `call rel32`.
 
 THE MEASURER'S TWIN. `text_width` walks the same markup and the same four
@@ -3008,19 +3008,19 @@ static int *const g_009b3a78 = (int *)0x009B3A78;
 
 void Buffer::setup_buff_sprite(int colour) {
     char *self = (char *)this;
-    if (*(int *)(self + 0x58) != 0) {
+    if (*reinterpret_cast<int *>(&surface_) != 0) {
         return;
     }
     if (colour == -1) {
         colour = *(unsigned char *)WinFillColour;
     }
-    int val54 = *(int *)(self + 0x54);
-    *(int *)(self + 0x50) = val54;
+    int val54 = *reinterpret_cast<int *>(&dib_bits_);
+    *reinterpret_cast<int *>(&locked_bits_) = val54;
     if (val54 != 0) {
-        ++*(int *)(self + 0x6c);
+        ++surface_lock_count_;
     }
     *BlitSourceBits = val54;
-    *BlitSourceField4A8 = *(int *)(self + 0x4a8);
+    *BlitSourceField4A8 = stride_;
     *BlitSourceWidth = *(int *)(self + 0x80);
     *BlitSourceNegHeight = -*(int *)(self + 0x84);
     *BlitClipWidth = *(int *)(self + 0x80);
@@ -3030,25 +3030,25 @@ void Buffer::setup_buff_sprite(int colour) {
     *(unsigned char *)BlitTransparentIndex = (unsigned char)colour;
     *g_009b3a78 = 0;
 
-    void **field58 = *(void ***)(self + 0x58);
+    void **field58 = *reinterpret_cast<void ***>(&surface_);
     int *field6c = (int *)(self + 0x6c);
     if (field58 == 0) {
         int newCount = *field6c - 1;
         *field6c = newCount;
         if (newCount <= 0) {
-            *(int *)(self + 0x50) = 0;
+            *reinterpret_cast<int *>(&locked_bits_) = 0;
             *field6c = 0;
         }
         return;
     }
     int newCount = *field6c - 1;
     *field6c = newCount;
-    int owner = *(int *)(self + 0x50);
+    int owner = *reinterpret_cast<int *>(&locked_bits_);
     if (owner != 0 && newCount <= 0) {
         typedef void (__stdcall *Fn)(void *, int);
         void **vtbl = *(void ***)field58;
         ((Fn)vtbl[0x20])(field58, owner);
-        *(int *)(self + 0x50) = 0;
+        *reinterpret_cast<int *>(&locked_bits_) = 0;
         *field6c = 0;
     }
 }
@@ -3082,8 +3082,8 @@ int Buffer::get_pixel(int x, int y) {
     int **sub;
     int count;
 
-    int handleVal = *reinterpret_cast<int *>(self + 0x54);
-    if ((handleVal == 0) && (*reinterpret_cast<int *>(self + 0x58) == 0)) {
+    int handleVal = *reinterpret_cast<int *>(&dib_bits_);
+    if ((handleVal == 0) && (*reinterpret_cast<int *>(&surface_) == 0)) {
         return 0;
     }
     if (x < 0) {
@@ -3101,36 +3101,36 @@ int Buffer::get_pixel(int x, int y) {
 
     sub = reinterpret_cast<int **>(self + 0x58);
     if (*sub == 0) {
-        *reinterpret_cast<int *>(self + 0x50) = handleVal;
+        *reinterpret_cast<int *>(&locked_bits_) = handleVal;
         if (handleVal == 0) {
             goto null_pixel;
         }
-        *reinterpret_cast<int *>(self + 0x6c) = *reinterpret_cast<int *>(self + 0x6c) + 1;
+        surface_lock_count_ = surface_lock_count_ + 1;
         localHandle = handleVal;
         goto have_handle;
     }
 
-    if (*reinterpret_cast<int *>(self + 0x50) == 0) {
+    if (*reinterpret_cast<int *>(&locked_bits_) == 0) {
         *reinterpret_cast<int *>(desc) = 0x6c;
         lockResult = (*reinterpret_cast<DDLockFn **>(*sub))[0x19](
             reinterpret_cast<void *>(*sub), 0, desc, 1, 0);
         if (lockResult != 0) {
             goto null_pixel;
         }
-        *reinterpret_cast<int *>(self + 0x4a8) = *reinterpret_cast<int *>(desc + 0xc);
-        *reinterpret_cast<int *>(self + 0x6c) = *reinterpret_cast<int *>(self + 0x6c) + 1;
-        *reinterpret_cast<int *>(self + 0x50) = *reinterpret_cast<int *>(desc + 0x20);
+        stride_ = *reinterpret_cast<int *>(desc + 0xc);
+        surface_lock_count_ = surface_lock_count_ + 1;
+        *reinterpret_cast<int *>(&locked_bits_) = *reinterpret_cast<int *>(desc + 0x20);
     } else {
-        *reinterpret_cast<int *>(self + 0x6c) = *reinterpret_cast<int *>(self + 0x6c) + 1;
+        surface_lock_count_ = surface_lock_count_ + 1;
     }
-    localHandle = *reinterpret_cast<int *>(self + 0x50);
+    localHandle = *reinterpret_cast<int *>(&locked_bits_);
 
 have_handle:
     if (localHandle == 0) {
         goto null_pixel;
     }
     pixelPtr = reinterpret_cast<unsigned char *>(
-        *reinterpret_cast<int *>(self + 0x4a8) * y + *reinterpret_cast<int *>(self + 0x50) + x);
+        stride_ * y + *reinterpret_cast<int *>(&locked_bits_) + x);
     goto after_pixel;
 
 null_pixel:
@@ -3139,22 +3139,22 @@ null_pixel:
 after_pixel:
     sub = reinterpret_cast<int **>(self + 0x58);
     if (*sub == 0) {
-        count = *reinterpret_cast<int *>(self + 0x6c) - 1;
-        *reinterpret_cast<int *>(self + 0x6c) = count;
+        count = surface_lock_count_ - 1;
+        surface_lock_count_ = count;
         if (count > 0) {
             goto done;
         }
     } else {
-        count = *reinterpret_cast<int *>(self + 0x6c) - 1;
-        *reinterpret_cast<int *>(self + 0x6c) = count;
-        if ((*reinterpret_cast<int *>(self + 0x50) == 0) || (count > 0)) {
+        count = surface_lock_count_ - 1;
+        surface_lock_count_ = count;
+        if ((*reinterpret_cast<int *>(&locked_bits_) == 0) || (count > 0)) {
             goto done;
         }
         (*reinterpret_cast<DDUnlockFn **>(*sub))[0x20](
-            reinterpret_cast<void *>(*sub), *reinterpret_cast<int *>(self + 0x50));
+            reinterpret_cast<void *>(*sub), *reinterpret_cast<int *>(&locked_bits_));
     }
-    *reinterpret_cast<int *>(self + 0x50) = 0;
-    *reinterpret_cast<int *>(self + 0x6c) = 0;
+    *reinterpret_cast<int *>(&locked_bits_) = 0;
+    surface_lock_count_ = 0;
 
 done:
     if (pixelPtr == 0) {

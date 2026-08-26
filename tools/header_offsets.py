@@ -178,9 +178,11 @@ def derive(header: Path, cls: str, extra: dict[str, int] | None = None):
     if packed(text, cls):
         print(f"  ...refusing `{cls}`: declared under #pragma pack, where this "
               f"walk's alignment model does not hold", file=sys.stderr)
+        derive.types = {}
         return {}, [], 0, False, None
     body = class_body(text, cls)
     offset, table, anchored = None, {}, False
+    types: dict[str, str] = {}
     disagreements: list = []
     seen = 0            # members parsed, anchored or not
     for line in body:
@@ -235,8 +237,17 @@ def derive(header: Path, cls: str, extra: dict[str, int] | None = None):
         if not star and ty in FIELDS and n == 1:
             for fname, delta in FIELDS[ty]:
                 table[f"{offset + delta:#x}"] = f"{name}.{fname}"
+                types[f"{offset + delta:#x}"] = "int"      # RECT/POINT fields
         else:
             table[f"{offset:#x}"] = name
+            # THE DECLARED TYPE IS PART OF THE MAP. Without it `name_offsets`
+            # cannot tell whether `*reinterpret_cast<int *>(self + 0xNN)` may
+            # become a bare `member` - it may only when the member IS an int.
+            # It assumed so, and rewrote `void *` members read through `int *`
+            # into code that does not compile, in buffer.cpp and net_class.cpp
+            # both. An uncompilable body is reverted WHOLE, so a tool that can
+            # emit one silently destroys the work around it.
+            types[f"{offset:#x}"] = (ty + " *") if star else ty
         offset += size * n
     # THE END OF THE WALK IS EVIDENCE, not a byproduct. A class whose last
     # member ends exactly on a size derived elsewhere corroborates that size;
@@ -244,6 +255,7 @@ def derive(header: Path, cls: str, extra: dict[str, int] | None = None):
     # map ignore this, but `sizeof_from_embeds.py` cannot do its job without
     # it - and reporting the last member's OFFSET instead of its END is a
     # whole member's worth of false shortfall.
+    derive.types = types
     return table, disagreements, seen, bool(body), offset
 
 
@@ -253,6 +265,9 @@ def main() -> int:
     ap.add_argument("header", type=Path, nargs="?")
     ap.add_argument("cls", nargs="?")
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--types", action="store_true",
+                    help="with --json, carry each member's DECLARED type "
+                         "so a rewrite can check the cast against it")
     ap.add_argument("--survey", action="store_true",
                     help="every class under --root: which can derive a map, "
                          "and which declare members but carry no anchor")
@@ -355,7 +370,11 @@ def main() -> int:
 
     table, bad, seen, found, _end = derive(args.header, args.cls, sizes(args.root))
     if args.json:
-        print(json.dumps(table, indent=2))
+        if args.types:
+            print(json.dumps({k: {"name": v, "type": derive.types.get(k, "")}
+                              for k, v in table.items()}, indent=2))
+        else:
+            print(json.dumps(table, indent=2))
     else:
         for off, name in sorted(table.items(), key=lambda kv: int(kv[0], 16)):
             print(f"  {off:>8}  {name}")
