@@ -245,12 +245,13 @@ class CouncWin : public GraphicWin, public SubInterface {
   uint32_t field_D88_;  // 0xD88
   uint32_t field_D8C_;  // 0xD8C
   uint32_t field_D90_;  // 0xD90
-  FlatButton flatButton1_;  // 0xD94
-  FlatButton flatButton2_;  // 0x18E0
-  FlatButton flatButton3_;  // 0x242C
-  FlatButton flatButton4_;  // 0x2F78
-  FlatButton flatButton5_;  // 0x3AC4
-  FlatButton flatButton6_;  // 0x4610, the IDB's last member; ends 0x515C
+  // AN ARRAY, not six separate members: ~CouncWin tears the six down through
+  // ONE `??_M` vector-destructor-iterator call (`push 0x406880; push 6;
+  // push 0xB4C; push eax; call 0x6456E4` at 0x0042856F), which only an array
+  // member makes the compiler emit. 0xD94 + 6 * 0xB4C ends at 0x515C, the
+  // IDB's last-member bound. Nothing in the compiled tree names the
+  // individual buttons, so the remodel rewires no caller.
+  FlatButton buttons_[6];  // 0xD94
 };
 
 

@@ -794,11 +794,6 @@ CheckButton::~CheckButton() {  // ??1CheckButton@@QAE@XZ at 0x004B3EC0
     PENDING_BODY(0x004B3EC0, pending)(this, nullptr);
 }
 
-CouncWin::~CouncWin() {  // ??1CouncWin@@QAE@XZ at 0x00428550
-    typedef void(__fastcall *pending)(CouncWin *, void *);
-    PENDING_BODY(0x00428550, pending)(this, nullptr);
-}
-
 Credits::~Credits() {  // ??1Credits@@QAE@XZ at 0x00428E90
     typedef void(__fastcall *pending)(Credits *, void *);
     PENDING_BODY(0x00428E90, pending)(this, nullptr);
