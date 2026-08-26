@@ -16,6 +16,37 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * WHAT BLOCKS THE REMAINING ??_G BODIES, MEASURED 2026-08-26.
+ *
+ * 65 `??_G` scalar deleting destructors live here, 48 claimed and 17 not.
+ * The unclaimed ones are not seventeen problems and they are not a byte
+ * grind: sampled bodies measure 2-4 of 11-14, which is the signature of a
+ * MISSING DECLARATION rather than a wrong spelling.
+ *
+ * The image spells every one of them `U` - `??_GFlatButton@@UAEPAXI@Z`,
+ * `??_GWin@@UAEPAXI@Z` - so the destructor is VIRTUAL in the original, and
+ * a virtual destructor is a thing THE COMPILER EMITS `??_G` FOR. Every
+ * hand-written body in this file exists because the tree does not declare
+ * one. win.h:463 already says so about slot 0: "??_GWin - the compiler
+ * emits this".
+ *
+ * The chain is `FlatButton : BaseButton : GraphicWin : ... : Win`, and NOT
+ * ONE of them declares `virtual ~X()` - `~Win()`, `~GraphicWin()`,
+ * `~BaseButton()`, `~FlatButton()` are all non-virtual, while win.h
+ * declares 94 other virtuals. So the fix is a single named change,
+ * `virtual ~Win()` at vtable slot 0 (0x0066FDD0 holds 0x005F8610, which IS
+ * ??_GWin), propagating down the hierarchy.
+ *
+ * IT IS ALSO THE MOST DANGEROUS CHANGE AVAILABLE, which is why it is
+ * written down here instead of attempted at the end of a session. It moves
+ * Win's 88-slot vtable, which hundreds of claims depend on, and
+ * AGENT_BRIEF records a previous tree-wide virtualisation sweep that cost
+ * six claims. The Q/U rule licenses it for THIS slot - the image spells U -
+ * but it wants the class-pass treatment: one slot, marker_symbols.py for
+ * what the build emits, re-measure, repeat.
+ */
+
 #include "stdafx.h"
 #include "original_seam.h"
 #include "deleting_thunks.h"
