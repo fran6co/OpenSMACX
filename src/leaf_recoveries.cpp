@@ -1350,7 +1350,7 @@ Purpose: Reset six fields, then close the window and its Buffer.
          GraphicWin::close is called on `this` itself; Buffer::close on the
          subobject at 0x406c.
 
-// ORIGINAL: 0x00432970 ?close@SelectPartWin@@QAEXXZ 0x00432970-0x004329AF
+// ORIGINAL: 0x00432970 ?close@SelectPartWin@@QAEXXZ 0x00432970-0x004329AF BYTE_EXACT
 // symbol    ?leaf_00432970_redirect@@YIXPAX0@Z
 // size      63 bytes
 // prototype void (__thiscall ?close@SelectPartWin@@QAEXXZ)(SelectPartWin* this)
@@ -1372,9 +1372,8 @@ void __fastcall leaf_00432970_redirect(void *self, void *) {
     // second argument materialises `xor edx, edx`, which the image does not
     // emit. Same fix as `ImageButton::close` and `ImageButton::init`.
     reinterpret_cast<GraphicWin *>(self)->GraphicWin::close();
-    buffer_close_redirect(
-        reinterpret_cast<Buffer *>(static_cast<uint8_t *>(self) + 0x406C),
-        nullptr);
+    reinterpret_cast<Buffer *>(static_cast<uint8_t *>(self) + 0x406C)
+        ->Buffer::close();
 }
 
 /*
