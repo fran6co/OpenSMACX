@@ -1032,11 +1032,19 @@ def record(
     else:
         measured = [_record_one(job) for job in work]
 
-    updated, regressed, results = [], [], []
+    updated, regressed, results, unresolved = [], [], [], []
+    # EVERY PIECE IS ALREADY MEASURED BY THE TIME WE GET HERE - the pool
+    # above ran them all. Bailing on the first unresolvable one threw that
+    # work away and wrote NOTHING, so a run over 34 addresses where two
+    # destructors are not emitted into the object reported exit 2 with zero
+    # verdicts - which greps identically to a clean run over zero claims.
+    # Four verification passes were lost to this on 2026-08-26, each costing
+    # a full sweep to rediscover one address. Collect them, keep the
+    # measurements that succeeded, and still fail at the end.
     for piece, result in measured:
         if isinstance(result, str):
-            typer.secho(f"{piece.address_hex}: {result}", fg=typer.colors.RED)
-            raise typer.Exit(2) from None
+            unresolved.append((piece, result))
+            continue
         results.append((piece, result))
         after = stamped(piece, result, demote)
         if piece.byte_exact and str(result.verdict) != "BYTE_EXACT":
@@ -1054,7 +1062,13 @@ def record(
         mark = "  claimed" if gained else ""
         typer.echo(f"{piece.address_hex}  {result.verdict:14}"
                    f"{piece.name}{mark}")
-    typer.echo(f"\n{len(updated)} annotation(s) rewritten")
+    # THE DENOMINATOR, ALWAYS. "0 rewritten" is two different answers -
+    # nothing moved, or nothing was measured - and only this separates them.
+    typer.echo(f"\n{len(updated)} annotation(s) rewritten, "
+               f"{len(results)} of {len(measured)} measured")
+    for piece, why in unresolved:
+        typer.secho(f"  UNRESOLVED {piece.address_hex}: {why}",
+                    fg=typer.colors.RED)
 
     for piece, result in regressed:
         typer.secho(
@@ -1073,6 +1087,11 @@ def record(
             fg=typer.colors.RED)
         if not demote:
             raise typer.Exit(1)
+    # AN UNRESOLVABLE ADDRESS IS STILL A FAILURE - it just no longer costs
+    # the whole run. The verdicts above are written and reported first, then
+    # this.
+    if unresolved:
+        raise typer.Exit(2)
 
 
 @app.command()
