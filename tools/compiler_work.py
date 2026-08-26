@@ -141,7 +141,7 @@ HEADER_SHAPES = [
     # CORRECTED, not raised: the comment walk skipped every code line
     # starting with `*`, hiding 69 of these. The tree did not change;
     # the ruler did. See _code_lines.
-    ("anonymous fixed-address global", 165,
+    ("anonymous fixed-address global", 160,
      re.compile(r"\bg_00[0-9a-f]{4,6}\b"),
      "a global named by its address instead of its meaning. Name it from "
      "evidence - the image's .data value, the arithmetic identity, the "
