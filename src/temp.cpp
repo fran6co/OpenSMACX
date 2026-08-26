@@ -659,7 +659,7 @@ uint32_t MsgStatus;  // 0x009B7B9C
 
 /*
 Purpose: Process non-input related message.
-// ORIGINAL: 0x005FCA30 ?do_non_input@@YAXXZ 0x005FCA30-0x005FCB14
+// ORIGINAL: 0x005FCA30 ?do_non_input@@YAXXZ 0x005FCA30-0x005FCB14 BYTE_EXACT
 // symbol    ?do_non_input@@YAHXZ
 // LEVER: A WRONG PROGRAM, not a wrong spelling. The three PeekMessage guards
 //        were chained with `||`: `if (!A || !B || !C) return false;`, which
@@ -675,14 +675,11 @@ Purpose: Process non-input related message.
 //        it names the operand pair, "push immediate 0x20a against 0x209",
 //        where `listing_diff` cannot: it masks every immediate before
 //        comparing, so a wrong constant is invisible there.
-// TRIED: the last two instructions, 82/84 at `/c /O2 /Gy /GR- /GX`. VC6
-//        emits the two strength-reduced byte offsets of the min-search loop -
-//        `mov eax, 0x1c` for `c` and `xor esi, esi` for `a` - in the opposite
-//        ORDER to the image; nothing else differs and the instruction counts
-//        match. Measured against three rewrites of that loop: declaring `c`
-//        before `a` (81/84), reversing the comparison to `msg[a].time >
-//        msg[c].time` (78/84) and a while-form with the increment written out
-//        (81/84). None beats the plain `for`.
+// LEVER: init-decl order for strength-reduced loop offsets. VC6 emits the
+//        byte-offset initialisations for the min-search loop in DECLARATION
+//        ORDER: `int c = 1; int a = 0; for (; c < 3; c++)` puts `mov eax, 0x1c`
+//        (c's offset) before `xor esi, esi` (a's offset), matching the image.
+//        The old `int a = 0; for (int c = 1; ...)` had them swapped. 82/84 -> 84/84.
 // size      228 bytes
 // prototype 
 // callers   12   call targets   3
@@ -715,8 +712,9 @@ BOOL __cdecl do_non_input() {
         && !PeekMessage(&msg[2], NULL, 0x020A, UNICODE_NOCHAR, PM_NOREMOVE)) {
         return false;
     }
+    int c = 1;
     int a = 0;
-    for (int c = 1; c < 3; c++) {
+    for (; c < 3; c++) {
         if (msg[c].time < msg[a].time) {
             a = c;
         }
