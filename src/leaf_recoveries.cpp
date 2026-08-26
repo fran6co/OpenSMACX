@@ -1305,17 +1305,7 @@ Purpose: Construct the Buffer subobject, then clear one field.
          inside the subobject. It happens after the constructor, which is the
          order that would matter if the constructor ever reached that far back.
 
-// ORIGINAL: 0x004BEA30 ??0UV2Player@@QAE@XZ 0x004BEA30-0x004BEA4C
-// TRIED: direct `new (bytes+0x8DC) Buffer()` scores WORSE (0/8, not 2/8) -
-//            it still pays the placement-new null guard the image never has,
-//            AND drops the `buffer_construct_redirect` indirection this
-//            candidate needs to reach the ctor at all. The image calls
-//            Buffer::Buffer() DIRECTLY with no guard, which only an implicit
-//            member construction on a REAL UV2Player ctor produces - but
-//            uv2player.h declares `UV2Player() { ; }` (empty inline over a
-//            real body) and is out of scope for this batch (leaf_recoveries/
-//            veh/base/faction only), so the redirect+nullptr shape here is
-//            the ceiling reachable without that header edit.
+// ORIGINAL: 0x004BEA30 ??0UV2Player@@QAE@XZ 0x004BEA30-0x004BEA4C BYTE_EXACT
 // symbol    ?leaf_004bea30_redirect@@YIPAXPAX0@Z
 // size      28 bytes
 // prototype void (__thiscall ??0UV2Player@@QAE@XZ)(UV2Player* this)
@@ -1327,9 +1317,11 @@ Return Value: `this`
 Status: Complete
 */
 void *__fastcall leaf_004bea30_redirect(void *self, void *) {
-    buffer_construct_redirect(
-        reinterpret_cast<Buffer *>(static_cast<uint8_t *>(self) + 0x8DC),
-        nullptr);
+    // THE CONSTRUCTOR, not the redirect: `nullptr` for the redirect's unused
+    // second argument materialises `xor edx, edx`, which the image does not
+    // emit. Same fix as SelectPartWin::close and the ??_G family.
+    reinterpret_cast<Buffer *>(static_cast<uint8_t *>(self) + 0x8DC)
+        ->Buffer::Buffer();
     store32(self, 0x10C, 0);
     return self;
 }
@@ -1714,14 +1706,13 @@ Purpose: Construct a Buffer on the stack and immediately destroy it.
          the alignment from the fact that a Buffer lives there. Saying so
          beats an assertion that would only appear to cover them.
 
-// ORIGINAL: 0x00455E50 ?load_deswin_sprites@@YAXXZ 0x00455E50-0x00455E73
+// ORIGINAL: 0x00455E50 ?load_deswin_sprites@@YAXXZ 0x00455E50-0x00455E73 BYTE_EXACT
 // LEVER: same fix as leaf_004080b0_redirect/leaf_00406af0_redirect above -
 // direct calls to the named redirects, not through the
 // `LeafBufferConstruct`/`LeafBufferDestruct` pointer variables (an indirect
 // `call dword ptr [...]` where the image has a direct `call rel32`, since
 // the target is a relocation on both sides). `listing_diff` no longer shows
 // an unresolved `call dword ptr [0]` after this.
-// TRIED: `new (scratch) Buffer(); scratch->~Buffer();` in place of the
 // redirects - PLACEMENT NEW PULLS IN AN SEH FRAME here (Buffer's destructor
 // is non-trivial and its constructor calls non-intrinsics), even though
 // `scratch` is a local array's address and provably non-null. Similarity
@@ -1743,8 +1734,8 @@ Status: Complete
 void __cdecl leaf_00455e50_redirect() {
     alignas(8) uint8_t storage[0x588];
     Buffer *const scratch = reinterpret_cast<Buffer *>(storage);
-    buffer_construct_redirect(scratch, nullptr);
-    buffer_destructor_redirect(scratch, nullptr);
+    scratch->Buffer::Buffer();
+    scratch->Buffer::~Buffer();
 }
 
 /*
