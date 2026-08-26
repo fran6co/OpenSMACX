@@ -563,7 +563,6 @@ static const size_t BufferSurfaceUnlockSlot = 0x80;
 
 
 
-void __fastcall buffer_close_redirect(Buffer *self, void *);
 void __fastcall buffer_destructor_redirect(Buffer *self, void *);
 extern const uint32_t BufferVtable;
 Buffer *__fastcall buffer_construct_redirect(Buffer *self, void *);

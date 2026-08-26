@@ -1694,9 +1694,6 @@ void Buffer::close() {
     init_flags_ = 0;
 }
 
-void __fastcall buffer_close_redirect(Buffer *self, void *) {
-    self->close();
-}
 
 const uint32_t BufferVtable = 0x0066FDBC;
 
