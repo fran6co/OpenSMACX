@@ -121,17 +121,12 @@ __forceinline int forward_to_wrapped_device(Wave_Device *self, int vtable_offset
 
 /*
 Purpose: Enable the wrapped device, if there is one, through vtable slot 0x60.
-// ORIGINAL: 0x004C51C0 ?enable@Wave_Device@@QAEXXZ 0x004C51C0-0x004C51CF
-// TRIED: byte-exactness - plateaus at 4/7 agreeing (0.769 similar)
-// across every flag set tried. The image keeps a real `call` on the
-// device-present path and falls through into a SHARED `xor eax,eax; ret`
-// epilogue the null-device path also jumps to; this tree's void wrapper
-// always folds the trailing call into a tail `jmp` since nothing follows
-// it, matching `disable()`'s own sibling shape rather than the image's.
-// Three spellings measured, all 4/7: `dispatch_wrapped_device` as-is,
-// discarding `query_wrapped_device(this, 0x60)`'s int return, and a
-// guard-clause early-return before the dispatch. Contrast `get_ds()`
-// (int-returning, correctly tail-jumps on the call path) - see it there.
+// ORIGINAL: 0x004C51C0 ?enable@Wave_Device@@QAEXXZ 0x004C51C0-0x004C51CF BYTE_EXACT
+// symbol    ?enable@Wave_Device@@QAEHXZ
+// LEVER: returns-int - same as `release()`. The image's shared epilogue
+// `xor eax,eax; ret` is the int-returning pattern; a void body tail-jumps
+// instead. Changing to `int` with `// symbol` produces the `call` + shared
+// zero-return that both the null-device and post-call paths reach.
 // size      15 bytes
 // prototype void (__thiscall ?enable@Wave_Device@@QAEXXZ)(Wave_Device* this)
 // callers   4   call targets   0
@@ -142,16 +137,16 @@ Purpose: Enable the wrapped device, if there is one, through vtable slot 0x60.
 Return Value: n/a
 Status: Complete
 */
-void Wave_Device::enable() {
+int Wave_Device::enable() {
     dispatch_wrapped_device(this, 0x60);
+    return 0;
 }
 
 /*
 Purpose: Disable the wrapped device, if there is one, through vtable slot 0x64.
-// ORIGINAL: 0x004C51D0 ?disable@Wave_Device@@QAEXXZ 0x004C51D0-0x004C51DF
-// TRIED: byte-exactness, same plateau and same cause as `enable()` -
-// see the note there (4/7 agreeing, 0.769 similar, the image's real `call`
-// against this tree's tail `jmp`).
+// ORIGINAL: 0x004C51D0 ?disable@Wave_Device@@QAEXXZ 0x004C51D0-0x004C51DF BYTE_EXACT
+// symbol    ?disable@Wave_Device@@QAEHXZ
+// LEVER: returns-int - same lever as `enable()` and `release()`.
 // size      15 bytes
 // prototype void (__thiscall ?disable@Wave_Device@@QAEXXZ)(Wave_Device* this)
 // callers   4   call targets   0
@@ -162,8 +157,9 @@ Purpose: Disable the wrapped device, if there is one, through vtable slot 0x64.
 Return Value: n/a
 Status: Complete
 */
-void Wave_Device::disable() {
+int Wave_Device::disable() {
     dispatch_wrapped_device(this, 0x64);
+    return 0;
 }
 
 

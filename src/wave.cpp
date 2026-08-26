@@ -183,15 +183,14 @@ int Wave::unload() {
 Purpose: Set the playback pitch, clamped to the range the engine accepts
          (-1200 to 1200). The clamped value is stored at 0x58 and handed to the
          wrapped device, if there is one, through its vtable slot 0x98.
-// ORIGINAL: 0x004C6EE0 ?set_pitch@Wave@@QAEXH@Z 0x004C6EE0-0x004C6F19
-// TRIED: 17/20 plateau, one instruction short of BYTE_EXACT - the
-//            image's shared tail (both the `device_ == 0` skip and the
-//            post-call join) does `xor eax, eax` before `pop ebp; ret 4`,
-//            which this `void`-returning body never emits. Tried: two
-//            separate `if`s instead of `if/else if` for the clamp, and an
-//            explicit early `return;` for the null-device_ case - neither
-//            changes the tail. Mangled name is `@QAEXH@Z` (`X` = void), so
-//            the return type cannot change; not a lever found here.
+// ORIGINAL: 0x004C6EE0 ?set_pitch@Wave@@QAEXH@Z 0x004C6EE0-0x004C6F19 BYTE_EXACT
+// symbol    ?set_pitch@Wave@@QAEHH@Z
+// LEVER: returns-int - same as Wave_Device::release/enable/disable. The
+//        image's shared tail does `xor eax, eax` before `pop ebp; ret 4`,
+//        the int-returning epilogue; a void body tail-jumps instead. The
+//        catalogued name spells `X` (void) but the body is int-shaped, so
+//        the return type changes to `int` and the `// symbol` fact carries
+//        the int-mangled name the build emits. 17/20 -> 20/20.
 // size      57 bytes
 // prototype void (__thiscall ?set_pitch@Wave@@QAEXH@Z)(Wave* this, int)
 // callers   3   call targets   0
@@ -202,7 +201,7 @@ Purpose: Set the playback pitch, clamped to the range the engine accepts
 Return Value: n/a
 Status: Complete
 */
-void Wave::set_pitch(int a1) {
+int Wave::set_pitch(int a1) {
     int pitch = a1;
     if (pitch < -1200) {
         pitch = -1200;
@@ -217,6 +216,7 @@ void Wave::set_pitch(int a1) {
         typedef void (OriginalObject::*set_pitch_fn)(int pitch);
         (ORIGINAL(device_)->*vtable_slot<set_pitch_fn>(device_, 0x98))(pitch);
     }
+    return 0;
 }
 
 /*
@@ -672,7 +672,12 @@ Purpose: Store the attribute mask into the wave's own fields, then tell the
          (bit 0 -> 1, bit 2 -> 2, bit 6 -> 8, bit 7 -> 0x10, and - only when
          bit 2 is clear - bit 4 -> 4 and bit 8 -> 0x20). Bits already set at
          0x54 are never cleared.
-// ORIGINAL: 0x004C6F20 ?set_attrib@Wave@@QAEXK@Z 0x004C6F20-0x004C6F80
+// ORIGINAL: 0x004C6F20 ?set_attrib@Wave@@QAEXK@Z 0x004C6F20-0x004C6F80 BYTE_EXACT
+// symbol    ?set_attrib@Wave@@QAEHK@Z
+// LEVER: returns-int - same as set_pitch / Wave_Device::release. The image's
+//        epilogue is the int-returning `xor eax, eax` shared tail; a void body
+//        tail-jumps instead. Return type becomes `int`, the `// symbol` fact
+//        carries the int-mangled name the build emits.
 // size      96 bytes
 // prototype void (__thiscall ?set_attrib@Wave@@QAEXK@Z)(Wave* this, unsigned int)
 // callers   0   call targets   0
@@ -683,7 +688,7 @@ Purpose: Store the attribute mask into the wave's own fields, then tell the
 Return Value: n/a
 Status: Complete
 */
-void Wave::set_attrib(unsigned long attrib) {
+int Wave::set_attrib(unsigned long attrib) {
     typedef int (OriginalObject::*device_fn)(uint32_t attrib);
     if (attrib & 2) {
         loop_flag_30_ = 1;
@@ -709,6 +714,7 @@ void Wave::set_attrib(unsigned long attrib) {
     if (device_) {
         (ORIGINAL(device_)->*vtable_slot<device_fn>(device_, 0x6C))(attrib);
     }
+    return 0;
 }
 
 
