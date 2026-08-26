@@ -280,11 +280,14 @@ Purpose: Parse the #RULES & #WORLDBUILDER sections inside the alpha(x).txt.
 //        AGENT_BRIEF's MEASURING section on this exact artifact. Still deep
 //        MISMATCH; not chased further this pass.
 // size      3254 bytes
-// prototype 
+// prototype
 // callers   1   call targets   6
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x00422F00 0x00584D60 0x005FD550 0x005FD570 0x005FD670 0x005FD740
+// TRIED: plateau after the tech_item and text_get_number rewrites (129/883 under
+//        /Ob0); the ~40 remaining unrelated #SECTION parsers still diverge, deep
+//        MISMATCH
 Return Value: Was there an error? true/false
 Status: Complete
 */
@@ -616,6 +619,8 @@ Purpose: Parse the 1st eight lines of the specified faction's file into a player
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00584D60 0x005BF310 0x005FD550 0x005FD570 0x005FD670 0x005FD740 0x006169A0 0x00625EC0 0x006453E0 0x00645460 0x00645470 0x00645DA7 0x00645E90 0x0064FD20 0x0064FDF0
+// TRIED: plateau 196/985 after the clear_faction inline and local-buffer rewrites;
+//        still short 5 calls (tech_name/X_pop/text_open/text_get), deep MISMATCH
 Return Value: n/a
 Status: Complete
 */

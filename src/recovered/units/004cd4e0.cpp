@@ -110,9 +110,10 @@ extern unsigned char g_00946d54_tbl[];
 // reads that same stack slot; and `uVar3`'s row (`uVar3 * 0x167`) is
 // computed ONCE and reused across the 3rd and 4th `parse_says` calls
 // without recomputing, matching a single named local reused across two
-// statements rather than two independent expressions. The prologue
-// register-save ORDER itself is the one piece left unmatched -
-// REGISTER ALLOCATION, not chased further.
+// statements rather than two independent expressions.
+// TRIED: prologue register-save ORDER plateau (mnemonic similarity 0.90,
+//        15 of 138 edits, 445 bytes both sides) - register allocation, the
+//        body otherwise lines up
 void __cdecl action_oblit(int a1, int a2) {
     unsigned uVar3 = g_00952836_tbl[a1 * 0x34];
     int iVar4 = a2 * 0x134;

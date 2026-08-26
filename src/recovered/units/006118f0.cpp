@@ -85,8 +85,8 @@ int __cdecl fn_0064557f();
 // body content, because its catalogued span is discontiguous -
 // 0x006118F0-0x00611901 (this adjustor) plus 0x006117E0-0x0061181E (a
 // destructor body a DIFFERENT vtable slot also reaches directly). No
-// C++ shape changes that classification, so this is not chased further
-// - see the "COMDAT glue" wall in the brief. The body below is still a
+// C++ shape changes that classification - see the "COMDAT glue" wall in
+// the brief. The body below is still a
 // faithful translation for readability/coverage: `sub ecx,[ecx-0x448];
 // sub ecx,0x444` is a virtual-base offset adjustment, then the shared
 // tail at 0x6117E0 re-derives the true object base (`adj-0x8c`) and
@@ -95,6 +95,9 @@ int __cdecl fn_0064557f();
 // receiver reads `[ecx+N]` with no stack arg for `this`, so this is a
 // __thiscall member (the placeholder's `__stdcall sub_6118f0(int)`
 // free-function signature does not match the evidence).
+// TRIED: COMDAT glue wall - discontiguous span folds onto a destructor body
+//        a different vtable slot reaches; no per-function verdict is well
+//        defined regardless of source form (scored on the untouched placeholder)
 class Sub6118f0Base { public:
     int deleting_dtor_thunk(unsigned int flags);
 };

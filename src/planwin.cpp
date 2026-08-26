@@ -113,14 +113,16 @@ throughout. That is the image's own convention, not a bug reproduced here -
 `??__Fg_PLANWIN` calls this and then `GraphicWin::~GraphicWin()` on the same
 address, in that order.
 
-KNOWN DIVERGENCE, not chased further here: `PlanWin` publicly inherits
-`MapWin`, and `MapWin` now has a genuine `~MapWin()` (needed so
-`guarded_teardowns.cpp`'s own already-matching `->MapWin::~MapWin()` keeps
-compiling), so this destructor's epilogue gets an EXTRA, compiler-inserted
-call into `MapWin::~MapWin()` that the image does not make. The image tears
-down MapWin's own fields here directly, calling `MapWin::clear` for the
-"this window is live" flag - PlanWin's destructor never calls MapWin's own
-separate destructor at 0x00420F90.
+KNOWN DIVERGENCE: `PlanWin` publicly inherits `MapWin`, and `MapWin` now has
+a genuine `~MapWin()` (needed so `guarded_teardowns.cpp`'s own already-matching
+`->MapWin::~MapWin()` keeps compiling), so this destructor's epilogue gets an
+EXTRA, compiler-inserted call into `MapWin::~MapWin()` that the image does not
+make. The image tears down MapWin's own fields here directly, calling
+`MapWin::clear` for the "this window is live" flag - PlanWin's destructor never
+calls MapWin's own separate destructor at 0x00420F90.
+// TRIED: public inheritance of MapWin with its real destructor; the
+//        compiler-inserted ~MapWin epilogue call is the divergence - the
+//        MapWin/PlanWin boundary needs class modelling, not a body edit
 */
 PlanWin::~PlanWin() {
     char *const self = reinterpret_cast<char *>(this);
