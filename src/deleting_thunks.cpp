@@ -38,13 +38,26 @@
  * `virtual ~Win()` at vtable slot 0 (0x0066FDD0 holds 0x005F8610, which IS
  * ??_GWin), propagating down the hierarchy.
  *
- * IT IS ALSO THE MOST DANGEROUS CHANGE AVAILABLE, which is why it is
- * written down here instead of attempted at the end of a session. It moves
- * Win's 88-slot vtable, which hundreds of claims depend on, and
- * AGENT_BRIEF records a previous tree-wide virtualisation sweep that cost
- * six claims. The Q/U rule licenses it for THIS slot - the image spells U -
- * but it wants the class-pass treatment: one slot, marker_symbols.py for
- * what the build emits, re-measure, repeat.
+ * AND THAT DIAGNOSIS IS WRONG. MEASURED, NOT REASONED, THE SAME DAY.
+ *
+ * `virtual ~Win()` was applied in an isolated worktree and is a COMPLETE
+ * NO-OP. It builds clean with no other declaration change; win.cpp holds 89
+ * claims either way; a 40-body sample measures 40 of 40 with ZERO
+ * regressions; and the three blocked bodies above measure 4/14, 4/14 and
+ * 2/11 - digit for digit what they measure without it.
+ *
+ * The reason is visible in the build's own symbols: `Win::`scalar deleting
+ * destructor'` is ALREADY emitted, and the count of emitted scalar deleting
+ * destructors is 298 with the change and 298 without. The compiler was
+ * never withholding `??_G`. Whatever `??_GFlatButton` needs, it is not this.
+ *
+ * So the paragraph above had the risk right and the remedy wrong: the
+ * change is harmless rather than dangerous, and useless rather than
+ * unblocking. A stated remedy is a claim like any other, and this one is
+ * refuted. What actually blocks these seventeen is still unknown - start by
+ * asking why a body whose count is already close (15 compiled against the
+ * image's 14) disagrees from instruction 0, rather than by declaring
+ * anything.
  */
 
 #include "stdafx.h"
