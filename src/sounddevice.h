@@ -58,8 +58,8 @@ class Midi_Device {
   int get_volume();
   int stop();
   int get_rate();
-  void enable();
-  void disable();
+  int enable();
+  int disable();
   int is_disabled();
  private:
   uint32_t vtable_storage_;
@@ -67,7 +67,7 @@ class Midi_Device {
   uint32_t field_8_;
   uint32_t field_C_;
   uint32_t field_10_;
-  uint32_t field_14_;
+  void *device_;  // 0x14, the wrapped device this forwards to
   uint32_t field_18_;
   uint32_t field_1C_;
 };
@@ -101,7 +101,7 @@ class Wave_In_Device {
   uint32_t field_8_;
   uint32_t field_C_;
   uint32_t field_10_;
-  uint32_t field_14_;
+  void *device_;  // 0x14, the wrapped device this forwards to
   uint32_t field_18_;
   uint32_t field_1C_;
 };
