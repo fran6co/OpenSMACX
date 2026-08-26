@@ -36,7 +36,12 @@ class TextIndex {
  private:
   friend void text_clear_index_source(TextIndex *indexes);
 
-  char file_name_[256];    // name of file to be mapped
+  // ANCHORED FROM THE CONSTRUCTOR, which names all three members.
+  // 0x005FDF40 does `lea ecx, [esi + 0x104]; call 0x5d4560` - and
+  // 0x005D4560 is `Heap::Heap()`, so heap_ is at 0x104 - then
+  // `mov [esi + 0x100], 0` for section_count_ and `mov byte ptr [esi], 0`
+  // for this array's first byte. 0x100 is 256, which is exactly its extent.
+  char file_name_[256];    // 0x0, name of file to be mapped
   uint32_t section_count_; // number of section entries
   Heap heap_;
 };
