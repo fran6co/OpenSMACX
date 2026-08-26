@@ -44,12 +44,33 @@
  * instructions against our 5), 0x00407060, 0x0048C020, and on the sibling
  * shape in deleting_thunks.cpp (0x00421980 PopMenu::delete1: 2 against 9).
  *
- * SO THE ROUTE IS DECLARATION WORK ON THE CLASSES - Dialogs, PopMenu,
- * SpriteBox, CheckBox and the rest of the multiple-inheritance leaves -
- * not measurement of these bodies. Grinding them one at a time cannot
- * work, and this note exists so nobody spends a session finding that out.
- * `/recover-class` is the runbook; the family is worth roughly 112
- * unclaimed bodies across the two files.
+ * WHAT THE ROUTE IS NOT, CHECKED THE SAME DAY. "Declare the inheritance
+ * and the compiler writes them" is the obvious answer and it is NOT
+ * sufficient:
+ *
+ *   - CheckBox is ALREADY `: public virtual GraphicWin, public virtual
+ *     Dialog`, converted in an earlier pass;
+ *   - GraphicWin ALREADY declares `virtual void on_dialog_focus(int)` and
+ *     `virtual void on_mouse_leave(int, int)`, so CheckBox's overrides are
+ *     implicitly virtual;
+ *   - and only 1 of CheckBox's 5 thunks is claimed.
+ *
+ * So the declarations that were supposed to be missing are present, and
+ * the thunks still do not match. VC6 does emit adjustor thunks here - the
+ * build carries 77 `adjustor{1092}` entries, 1092 being the 0x444 these
+ * thunks adjust by - but they attach to `vector deleting destructor`
+ * symbols, the ones the compiler already owns, not to the ordinary virtual
+ * methods this file forwards. No `@@W...`-mangled thunk appears in any
+ * object file.
+ *
+ * WHAT IS ESTABLISHED: the shape above, on 0x00407260, 0x00407060,
+ * 0x0048C020 and deleting_thunks.cpp's 0x00421980 - image tail-jumps,
+ * ours pushes and calls, and the difference is the forwarder's OWN
+ * signature. WHAT IS NOT: which declaration, if any, makes VC6 emit these
+ * particular thunks. Two greps supported two different theories today and
+ * both were wrong, so the next attempt should start by finding ONE
+ * compiler-emitted thunk for an ordinary virtual override and reading what
+ * declaration produced it - not by changing 112 bodies on a hypothesis.
  */
 
 #include "stdafx.h"
