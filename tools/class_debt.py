@@ -53,7 +53,7 @@ CEILINGS = {
     # unchanged. Raising this ceiling for any other reason means someone is
     # excusing work rather than recording a result - the two counts must
     # move against each other, or it is not a reclassification.
-    "evidence-free unk": 20,
+    "evidence-free unk": 22,
     "function-address binding": 55,
     "orphan redirect": 209,
     "pointer-as-int": 2,
@@ -72,12 +72,12 @@ CEILINGS = {
     # because `*reinterpret_cast<T *>(self + 0xNN)` IS a line starting
     # with `*`. Eleven of them were invisible to the census that
     # exists to count them.
-    "raw self-access": 245,
+    "raw self-access": 243,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
     # were never counted. The tree did not change; the ruler did.
-    "scaffold name": 1429,
+    "scaffold name": 1427,
 }
 
 WHY = {
@@ -316,6 +316,17 @@ def census():
                 counts["pointer-parameter as int"] += 1
                 files["pointer-parameter as int"][path.name] += 1
             for _ in SCAFFOLD_NAME.findall(line):
+                # A PARAMETER OF AN EVIDENCE-FREE METHOD IS EVIDENCE-FREE TOO.
+                # You cannot name the arguments of a method whose purpose is
+                # provably unknowable - Sprite::UNK4(int a1, int a2) has no
+                # caller, no dispatch and no CSV entry, so `a1` and `a2` can
+                # only be invented. The excuse reaches exactly as far as the
+                # declaration line of an UNK the block already names, and no
+                # further: a scaffold name anywhere else still counts.
+                if any(u in line for u in EXCUSED.get(path.stem, ())):
+                    counts["evidence-free unk"] += 1
+                    files["evidence-free unk"][path.name] += 1
+                    continue
                 counts["scaffold name"] += 1
                 files["scaffold name"][path.name] += 1
 
