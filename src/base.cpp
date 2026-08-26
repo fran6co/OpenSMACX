@@ -2293,8 +2293,9 @@ Purpose: Calculate the current base's psych values.
 //        byte image); the remaining ~1250 bytes (soc_effect/celebration/
 //        stack_fix/has_abil/veh_at logic near the end of the function, see
 //        `osmx calls`) are not yet written. This already compiles
-//        (MISMATCH, not NO_COMPILE) and reproduces the leading control flow;
-//        finishing the transcription is out of scope for this pass.
+//        (MISMATCH, not NO_COMPILE) and reproduces the leading control flow.
+// TRIED: transcription prefix only; the ~1250 tail bytes are unwritten, so the
+//        body stays MISMATCH until they land
 Return Value: n/a
 Status: WIP
 */

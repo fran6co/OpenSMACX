@@ -379,7 +379,9 @@ Purpose: Calculate faction's tech related bonuses for commerce and resource prod
 //   default-picked flag set (no /Oy-) the raw agreeing count is unchanged at 3/133 - that flag set
 //   never keeps the frame pointer regardless of loop shape, so instruction 0 always diverges there.
 //   Under /Oy- (which does keep it) this moved 12-14/133 -> 17/133; compiled instruction count also
-//   moved closer to the image's 133 (149 -> 122). Left in; not chased further.
+//   moved closer to the image's 133 (149 -> 122). Left in.
+// TRIED: plateau 17/133 under /Oy-; loop register allocation differs from the image -
+//        the same open plateau as has_tech/tech_recurse (MEASURED-inline family ceiling)
 Return Value: n/a
 Status: Complete
 */
@@ -723,8 +725,9 @@ Purpose: Determine a tech the specified faction should research.
 //   image expands `tech_recurse(i, 0)` one level inside this function's main loop, which is
 //   what turns the loop's integer index into the image's pointer stepping by 0x2C. Moved
 //   4/124 -> 10/124 agreeing; the induction-variable strength reduction itself did not fall out
-//   automatically (i is also used for tech_avail/tech_val/the Formers compare/the return value),
-//   not chased further this pass.
+//   automatically (i is also used for tech_avail/tech_val/the Formers compare/the return value).
+// TRIED: plateau 10/124 after the tech_recurse inline; the loop's induction variable stays an
+//        int index where the image steps a pointer by 0x2C - strength reduction did not fall out
 // size      340 bytes
 // prototype int (__cdecl ?tech_ai@@YAHH@Z)(int factionID)
 // callers   3   call targets   5

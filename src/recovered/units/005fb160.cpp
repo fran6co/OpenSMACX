@@ -81,9 +81,12 @@ class Menu { public:
 //    bounds) gets branch-threaded by this backend straight to the
 //    loop-exhaustion `return 0xb;` block instead of emitting its own
 //    identical copy the way the original does - i.e. the ORIGINAL declines
-//    an optimization this compiler takes. Not reproducible from source form
-//    without duplicating the tail by hand, which would just be retyping
-//    the target's bytes.
+//    an optimization this compiler takes. Duplicating the tail by hand
+//    would just be retyping the target's bytes.
+// TRIED: for/while/do-while, goto/break spellings - dependency-free
+//        prologue and loop-tail pairs still issue in the opposite order
+//        (instruction scheduling wall), and no source form reproduces the
+//        duplicated dead-guard tail
 int Menu::add_separator(int a1, int a2) {
     char *self = reinterpret_cast<char *>(this);
     int i;

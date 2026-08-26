@@ -42,7 +42,10 @@ Purpose: Construct BaseWin's large aggregate of sub-windows: a ProdPicker, a
 //        needed for ordering control. First divergence at instruction 10:
 //        this compiled body reserves an extra `push edi` and calls through
 //        an extra local thunk where the image calls GraphicWin::construct
-//        directly - not chased further given the SHARED_TAIL caveat above.
+//        directly.
+// TRIED: plateau 120/144; divergence #10 is the extra push edi + local thunk
+//        against the image's direct GraphicWin::construct call, measured under
+//        the SHARED_TAIL caveat (no per-function verdict is well defined)
 // size      1147 bytes
 // prototype void (__thiscall ??0BaseWin@@QAE@XZ)(BaseWin* this)
 // callers   1   call targets   15

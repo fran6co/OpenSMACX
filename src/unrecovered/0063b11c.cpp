@@ -46,7 +46,9 @@ typedef unsigned char uint8;
 static int *const g_00698b70 = (int *)0x00698B70;
 static int *const g_00698b78 = (int *)0x00698B78;
 // SIGNATURE CHANGED: `ret` with no operand and 11 distinct [esp+N] reads
-// before any push - the zero-arg fallback can't reach any of them.
+// before any push.
+// TRIED: zero-arg fallback signature - the image's 11 [esp+N] reads ahead of
+//        any push are only reachable through the full __cdecl parameter list
 extern "C" void __cdecl sub_63b11c(int a1, int a2, int a3, int a4, int a5, int a6,
                                      int a7, int a8, int a9, int a10, int a11) {
     if (a5 > 0 && a6 > 0) {

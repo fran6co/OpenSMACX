@@ -558,7 +558,10 @@ uint32_t Scroll::set_button_color(int color) {
 /*
 Purpose: Set the bevel thickness shared by the scrollbar and both end buttons.
 // ORIGINAL: 0x00605A50 ?set_bevel_thickness@Scroll@@QAEXH@Z 0x00605A50-0x00605A8D SEMANTIC
-// LEVER: replaced both redraw_from_vtable(__asm helper) calls with the inline read_volatile_bits/original_slot<func_noarg_virtual> dispatch 0x00605A10 already uses - 4/14 to 7/14 agreeing. First dispatch now matches the image's single `call dword ptr [reg+0xf8]`; the second still schedules as `mov eax,[obj]; mov eax,[eax+0xf8]; call eax` - the same residual 0x00605A10's own TRIED note already gives up on.
+// LEVER: replaced both redraw_from_vtable(__asm helper) calls with the inline read_volatile_bits/original_slot<func_noarg_virtual> dispatch 0x00605A10 already uses - 4/14 to 7/14 agreeing. First dispatch now matches the image's single `call dword ptr [reg+0xf8]`; the second still schedules as `mov eax,[obj]; mov eax,[eax+0xf8]; call eax`.
+// TRIED: the second dispatch still schedules mov/mov/call against the image's
+//        single `call dword ptr [reg+0xf8]` - the same residual 0x00605A10's
+//        own TRIED note records; claimed SEMANTIC at this plateau
 // symbol    ?set_bevel_thickness@Scroll@@QAEIH@Z
 // size      61 bytes
 // prototype void (__thiscall ?set_bevel_thickness@Scroll@@QAEXH@Z)(Scroll* this, int)

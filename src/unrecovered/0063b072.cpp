@@ -47,7 +47,9 @@ static int *const g_00698b70 = (int *)0x00698B70;
 static int *const g_00698b74 = (int *)0x00698B74;
 static int *const g_00698b78 = (int *)0x00698B78;
 // SIGNATURE CHANGED: `ret` with no operand and 10 distinct [esp+N] reads
-// before any push - the zero-arg fallback can't reach any of them.
+// before any push.
+// TRIED: zero-arg fallback signature - the image's 10 [esp+N] reads ahead of
+//        any push are only reachable through the full __cdecl parameter list
 extern "C" void __cdecl sub_63b072(int a1, int a2, int a3, int a4, int a5, int a6,
                                      int a7, int a8, int a9, short a10) {
     if (a5 > 0 && a6 > 0) {
