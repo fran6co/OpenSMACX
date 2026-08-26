@@ -1019,7 +1019,11 @@ class DDInit { public:
   // stack argument, `call rel32`.
   int report_error(int hr);   // 0x00635870, defined in win.cpp
 
-  HWND hwnd_;
+  // SELF-VERIFYING ANCHOR: DDInit has no base and no virtual, so its first
+  // member is at 0 - and field_8_, two members later, states its own offset.
+  // Annotating hwnd_ at 0x0 is only correct if the walk lands field_8_ on
+  // 0x8, which it does.
+  HWND hwnd_;  // 0x0
   IDirectDraw *surf_;
   uint32_t field_8_;
   IDirectDrawSurface *locked_surface_;

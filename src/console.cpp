@@ -782,7 +782,7 @@ Status: Complete
 */
 void Console::menu_update() {
     char *self = reinterpret_cast<char *>(this);
-    int v = *reinterpret_cast<int *>(self + 0x23bdc);
+    int v = field_23BDC_;
     reinterpret_cast<MainMenu *>(self + 0x22a2c)->MainMenu::check(v);
 }
 
@@ -817,31 +817,31 @@ Status: Complete
 */
 void Console::close() {
     char *self = reinterpret_cast<char *>(this);
-    *reinterpret_cast<uint32_t *>(self + 0x23bc8) = 0xffffffff;
-    *reinterpret_cast<uint32_t *>(self + 0x23bd8) = 0;
-    *reinterpret_cast<uint32_t *>(self + 0x23be4) = 0;
-    *reinterpret_cast<uint32_t *>(self + 0x23be8) = 0;
-    *reinterpret_cast<uint32_t *>(self + 0x23bf0) = 0;
-    *reinterpret_cast<uint32_t *>(self + 0x23bf4) = 0;
-    *reinterpret_cast<uint32_t *>(self + 0x23c00) = 0;
-    *reinterpret_cast<uint32_t *>(self + 0x23c04) = 0;
-    *reinterpret_cast<uint32_t *>(self + 0x23bfc) = 0;
-    *reinterpret_cast<uint32_t *>(self + 0x23bf8) = 0;
-    *reinterpret_cast<uint32_t *>(self + 0x23c08) = 0;
+    field_23BC8_ = 0xffffffff;
+    field_23BD8_ = 0;
+    field_23BE4_ = 0;
+    field_23BE8_ = 0;
+    field_23BF0_ = 0;
+    field_23BF4_ = 0;
+    field_23C00_ = 0;
+    field_23C04_ = 0;
+    field_23BFC_ = 0;
+    field_23BF8_ = 0;
+    field_23C08_ = 0;
     int count = 0x20;
     do {
         count -= 1;
-        uint32_t idx1 = *reinterpret_cast<uint32_t *>(self + 0x23c08);
+        uint32_t idx1 = field_23C08_;
         *reinterpret_cast<uint32_t *>(self + 0x23c10 + idx1 * 4) = 0;
-        uint32_t idx2 = *reinterpret_cast<uint32_t *>(self + 0x23c08);
+        uint32_t idx2 = field_23C08_;
         *reinterpret_cast<uint32_t *>(self + 0x23c90 + idx2 * 4) = 0;
     } while (count != 0);
-    *reinterpret_cast<uint32_t *>(self + 0x23d10) = 0;
-    *reinterpret_cast<uint32_t *>(self + 0x23d18) = 0;
-    *reinterpret_cast<uint32_t *>(self + 0x23d88) = 0;
-    *reinterpret_cast<uint32_t *>(self + 0x23d80) = 0;
-    *reinterpret_cast<uint32_t *>(self + 0x23d8c) = 0;
-    *reinterpret_cast<uint32_t *>(self + 0x23d84) = 0;
+    field_23D10_ = 0;
+    field_23D18_ = 0;
+    field_23D88_ = 0;
+    field_23D80_ = 0;
+    field_23D8C_ = 0;
+    field_23D84_ = 0;
     reinterpret_cast<Buffer *>(self + 0x2247c)->close();
     reinterpret_cast<Time *>(self + 0x22a04)->close();
     reinterpret_cast<GraphicWin *>(self + 0x22a2c)->close();
