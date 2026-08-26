@@ -333,11 +333,35 @@ void CouncWin::show(int visible) {
 
 /*
 // ORIGINAL: 0x00428550 ??1CouncWin@@QAE@XZ 0x00428550-0x00428614;0x00652C40-0x00652CB4
-// body      src/councwin.h
+// symbol    ??1CouncWin@@UAE@XZ
 // size      312 bytes
 // prototype void (__thiscall ??1CouncWin@@QAE@XZ)(CouncWin* this)
 // callers   1   call targets   4
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005D4DD0 0x005FA870 0x00618EE0 0x006456E4
+The catalogued QAE is a reconstruction over an unnamed image body
+(sub_428550); Win's own vtable slot 0 is ??_GWin, a virtual destructor's
+emission, so the inherited chain - GraphicWin, CouncWin - is virtual too,
+and this build emits the U spelling.
 */
+// The image's destructor is the compiler's own member-teardown chain: `??_M`
+// over `buttons_[6]` (0xB4C elements, `??1FlatButton@@QAE@XZ` at 0x00406880
+// as the element deleter), the six Fonts in reverse, `~Spot`, then the
+// GraphicWin base - the implicit epilogue VC6 emits for the members
+// councwin.h now declares, with the SEH frame (the funclet span at
+// 0x00652C40) the non-trivial destructors pull in. The empty body below
+// reproduces ALL of that - except two instructions the tree adds and the
+// image does not have:
+// TRIED: the empty-body/real-members form, measured 48/50 agreeing. VC6
+//        prefixes a polymorphic destructor with vtable-restore stores - here
+//        `mov [esi], ??_7CouncWin@@6BWin@@` and the Buffer-vtable store at
+//        0x444 - and the image's body has NEITHER (nor does the image's
+//        ~PlanWin; the image's ~Win and ~GraphicWin DO carry them and match).
+//        The image compiled this destructor without a vtable to restore, so
+//        the open question is the INHERITANCE EDGE, not the body: whether
+//        the original CouncWin derives the polymorphic Win chain at all.
+//        The forwarder is deleted and the buttons_[6] remodel landed
+//        regardless - this body is the tree's definition now.
+CouncWin::~CouncWin() {
+}
