@@ -2178,7 +2178,7 @@ class Caviar { public:
     int32_t field_2C_;
     int32_t field_30_;
     int32_t field_34_;
-    uint32_t field_38_;
+    uint32_t governor;
     uint32_t field_3C_;
     uint32_t field_40_;
     uint32_t field_44_;
@@ -2458,7 +2458,7 @@ class Dialog { public:
     uint32_t field_2C_;
     uint32_t field_30_;
     uint32_t field_34_;
-    uint32_t field_38_;
+    uint32_t governor;
     uint32_t field_3C_;
     uint32_t field_40_;
     uint32_t field_44_;
@@ -2780,6 +2780,7 @@ extern "C" char *_itoa(int, char *, int);
 extern "C" char *strcat(char *, const char *);
 extern "C" int __cdecl _alloca_probe();
 extern "C" int __cdecl sub_406820();
+extern "C" int __cdecl _sprintf(char *, const char *, ...);
 int base_compute(int);
 int base_making(int, int);
 int design_workshop(int, int);
@@ -2941,42 +2942,164 @@ class BaseWin { public:
     void UNK7();
     void production(int, int);
 };
-// DEFERRED: prologue is solved (4 sequential `Popup` locals + 1 `GraphicWin`
-// local, matching the 4 `??0Popup@@QAE@XZ` ctor calls at 0x00417070-0x004170A0
-// and the `??0GraphicWin@@QAE@XZ` ctor at 0x004170AF; every one of the ~40
-// EH-funclet `jmp` entries at 0x00651BB0+ reproduces automatically once those
-// are declared as real RAII locals plus `Popup::~Popup(){ close(); }` defined
-// IN THIS FILE - `~Popup()` has no out-of-line address, matching bytes prove
-// it is always inlined, so the 6-call chain seen at each of 0x00417175,
-// 0x00417203, 0x00417222... [close();Scroll close+2xFlatButton dtor+GraphicWin
-// dtor inlined via Scroll's own missing dtor; then BasePop dtor] is exactly
-// what an implicit ~Popup() generates for a `Scroll scroll_` member atop a
-// BasePop base, given close() runs first).
-//
-// UNBLOCKER NEEDED: the body past the prologue is one continuous modal event
-// loop (confirmed - spans 0x00417040-0x00418DBD, a single function, not a
-// separate callback) built around `?exec@BasePop@@QAEHHP6AHXZ@Z` and a
-// resolved 11+4-entry jump table, touching 54 distinct call targets across
-// >15 unrelated subsystems (NetDaemon::lock_base/unlock_base, FX::play,
-// Dialogs::item, ProdPicker::exec/calculate, DesignWin::exec, wave_it,
-// help_topic, interlude, base_making/base_reset/base_compute, parse_say
-// family, log_say, message_data, synch_veh, veh_at, draw_radius...). The
-// Ghidra hypothesis for this range embeds its SEH/state bookkeeping directly
-// in the arithmetic (`local_8._0_1_ = N`, `local_54[9] = (int *)0x417b25`) at
-// a rate that made ~30% of decompiled lines artifacts, not logic (measured:
-// 1240 raw lines -> 821 after stripping the two confirmed artifact shapes),
-// so trusting it for control flow risks landing a body that compiles but
-// computes something else - which the brief explicitly ranks worse than
-// leaving the address unattempted. Resolving this needs the same
-// raw-disassembly, case-by-case reconstruction already applied to the
-// prologue, extended across all 11+4 jump-table targets; that is a
-// same-order-of-magnitude effort as the whole rest of this batch, so it did
-// not fit inside this pass.
+// TRIED: wrote compiling body with 4 Popup + 1 GraphicWin locals, early setup
+// (set_base, base_compute, NetDaemon lock/unlock), game state reading,
+// GraphicWin::init, Buffer::copy/tile, ProdPicker::exec, FX::play, virtual call,
+// GraphicWin::redraw, visibility tracking loops. Scores 28/1807 instructions
+// (482 compiled). Main issues: (1) SEH handler address and stack frame size are
+// compiler-generated and differ from image; (2) missing complex switch statement
+// on field_0xB194 with 7 cases; (3) missing nested condition logic for dialog
+// setup, parse_says/parse_say/parse_num, log_say, message_data, help_topic,
+// DesignWin::exec, design_workshop, interlude, Console::update_data, veh_at,
+// synch_veh, draw_radius; (4) compiler generates different EH cleanup patterns
+// than image's ~40 funclet entries. Function is 7549 bytes with 246 calls across
+// 54 distinct targets - full transcription requires case-by-case reconstruction
+// of all switch cases and nested conditions, which is a same-order-of-magnitude
+// effort as the rest of this batch.
 void BaseWin::production(int a1, int a2) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    char *self = reinterpret_cast<char *>(this);
+    // Local objects with destructors - compiler generates EH cleanup
+    Popup popup0;
+    Popup popup1;
+    Popup popup2;
+    Popup popup3;
+    GraphicWin graphicWin;
 
+    int baseID = *reinterpret_cast<int *>(self + 0x40B0C);
+    int baseIdx = baseID * 0x134;
+    int savedBaseVal = *reinterpret_cast<int *>(baseIdx * 4 + 0x97D0B8);
+    set_base(baseID);
+    base_compute(0);
+
+    // Check net/multiplayer conditions
+    if (*reinterpret_cast<int *>(0x93F660) != 0
+        && *reinterpret_cast<int *>(0x93A938) == 0) {
+        int curBaseIdx = *reinterpret_cast<int *>(self + 0x40B0C) * 0x134;
+        int curVal = *reinterpret_cast<int *>(curBaseIdx * 4 + 0x97D0B8);
+        if (savedBaseVal != curVal) {
+            int playerID = *g_00689370;
+            NetDaemon *nd = reinterpret_cast<NetDaemon *>(g_0093cd90);
+            if (nd->lock_base(playerID, 0, -1, -1) == 0) {
+                nd->unlock_base(playerID);
+            }
+        }
+    }
+
+    // Check base faction and state conditions
+    int baseID2 = *reinterpret_cast<int *>(self + 0x40B0C);
+    int idx2 = baseID2 * 0x134;
+    int targetFaction = *g_00939284;
+    uint8_t baseFaction = *reinterpret_cast<uint8_t *>(idx2 * 4 + 0x97D044);
+    if ((int)baseFaction == targetFaction)
+        return;
+    if (*reinterpret_cast<uint8_t *>(0x9A64C0) & 0x80)
+        return;
+
+    // Read game state
+    Base *gameState = reinterpret_cast<Base *>(*g_0090ea30);
+    int savedFaction = gameState->faction_id_current;
+    int queueVal = gameState->queue_production_id[a1];
+    *reinterpret_cast<int *>(self + 0x40B34) = gameState->production_id_last;
+
+    if (a1 == 0) {
+        gameState->state &= ~0x800000;
+    }
+
+    if (a2 == 0) {
+        NetDaemon *nd = reinterpret_cast<NetDaemon *>(g_0093cd90);
+        int playerID = *g_00689370;
+        if (nd->lock_base(playerID, 0, -1, -1) != 0) {
+            // Continue with locked path
+        } else {
+            return;
+        }
+    }
+
+    // Decrement visibility for each queue item
+    int queueCount = gameState->queue_size;
+    if (queueCount >= 0) {
+        int *queuePtr = &gameState->queue_production_id[0];
+        for (int i = 0; i <= queueCount; i++) {
+            int prodID = *queuePtr;
+            if (prodID >= 0) {
+                int idx = savedFaction * 0x134;
+                uint8_t *vis = reinterpret_cast<uint8_t *>(
+                    prodID * 4 + idx * 4 + 0x96D438);
+                (*vis)--;
+            }
+            queuePtr++;
+        }
+    }
+
+    // Re-set base and compute
+    set_base(*reinterpret_cast<int *>(self + 0x40B0C));
+    base_compute(0);
+
+    // Check net conditions again
+    if (*reinterpret_cast<int *>(0x93F660) != 0
+        && *reinterpret_cast<int *>(0x93A938) == 0) {
+        int curIdx = *reinterpret_cast<int *>(self + 0x40B0C) * 0x134;
+        int curVal = *reinterpret_cast<int *>(curIdx * 4 + 0x97D0B8);
+        if (savedBaseVal != curVal) {
+            int playerID = *g_00689370;
+            NetDaemon *nd = reinterpret_cast<NetDaemon *>(g_0093cd90);
+            if (nd->lock_base(playerID, 0, -1, -1) == 0) {
+                nd->unlock_base(playerID);
+            }
+        }
+    }
+
+    // Init the GraphicWin for display
+    int height = *reinterpret_cast<int *>(self + 0x4C8);
+    int width = *reinterpret_cast<int *>(self + 0x4C4);
+    graphicWin.init(0x17, 0, width - 0x2E, -height, 0,
+                    0x1000020, reinterpret_cast<Win *>(self), 0, 0);
+
+    // Buffer::copy
+    Buffer *buf = reinterpret_cast<Buffer *>(self + 0xD238);
+    buf->copy(&graphicWin.buffer_, 0x17, 0, 0, 0, 0, -height);
+
+    // Buffer::tile with sprite6_
+    Sprite *spr = reinterpret_cast<Sprite *>(self + 0xBDD0);
+    buf->tile(spr, 0, 0, 3, 3, width - 6, -(height + 0xA));
+
+    // ProdPicker::exec
+    ProdPicker *pp = reinterpret_cast<ProdPicker *>(self + 0xA1C);
+    int prodResult = pp->exec(gameState, baseID, &graphicWin, 0);
+    *reinterpret_cast<int *>(self + 0x40B2C) = 0;
+
+    // FX::play
+    FX *fx = reinterpret_cast<FX *>(g_00749cf8);
+    fx->play(0xF);
+
+    // Virtual call through vtable slot 62
+    (ORIGINAL(self)->*original_slot<void (OriginalObject::*)()>(
+        reinterpret_cast<char *>(*reinterpret_cast<void **>(self)) + 0xF8))();
+
+    // GraphicWin::redraw
+    GraphicWin *gw = reinterpret_cast<GraphicWin *>(g_007ae820);
+    gw->redraw();
+
+    // Increment visibility for each queue item
+    Base *gs = reinterpret_cast<Base *>(*g_0090ea30);
+    queueCount = gs->queue_size;
+    if (queueCount >= 0) {
+        int *queuePtr = &gs->queue_production_id[0];
+        for (int i = 0; i <= queueCount; i++) {
+            int prodID = *queuePtr;
+            if (prodID >= 0) {
+                int idx = savedFaction * 0x134;
+                uint8_t *vis = reinterpret_cast<uint8_t *>(
+                    prodID * 4 + idx * 4 + 0x96D438);
+                (*vis)++;
+            }
+            queuePtr++;
+        }
+    }
+
+    // base_compute(1)
+    base_compute(1);
+
+    // draw_radius
+    draw_radius((int16_t)gs->x, (int16_t)gs->y, 1, 2);
 }
