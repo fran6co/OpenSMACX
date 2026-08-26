@@ -24,6 +24,7 @@
 #include "general.h"   // mem_get, for the placeholder pixel
 #include "filewin.h"
 #include "spritebox.h"
+#include "guarded_teardowns.h"
 #include <stdlib.h>
 
 /*
@@ -244,16 +245,21 @@ void Sprite::UNK4(int, int) {
 // creates it blank if the PCX is missing.
 Status: Complete
 */
-static int *const g_00698cac = (int *)0x00698CAC;
-static int *const g_009beae8 = (int *)0x009BEAE8;
+// NAMED FROM THE IMAGE AND FROM THIS BODY'S OWN COMMENT: 0x00698CAC holds
+// the string 'jackal.pcx' (image_data --string), and 0x009BEAE8 is the
+// 16x16 sprite this loads into - which guarded_teardowns.h ALREADY declares
+// as TeardownObject009BEAE8. Two bindings at one address is the shape
+// duplicate_globals flags, so this file uses the existing declaration
+// rather than minting a second name for the same storage.
+static const char *const JackalPcxPath = (const char *)0x00698CAC;
 
 int __cdecl sub_63ce20() {
     Buffer buf;
     int result;
-    if (buf.load_pcx(reinterpret_cast<const char *>(g_00698cac), 0, 10, 0xec) != 0) {
-        result = reinterpret_cast<Sprite *>(g_009beae8)->create_blank(0x10, 0x10, 9);
+    if (buf.load_pcx(JackalPcxPath, 0, 10, 0xec) != 0) {
+        result = TeardownObject009BEAE8->create_blank(0x10, 0x10, 9);
     } else {
-        result = reinterpret_cast<Sprite *>(g_009beae8)->extract(&buf, 9, 1, 0x12, 0x10, 0x10, 0);
+        result = TeardownObject009BEAE8->extract(&buf, 9, 1, 0x12, 0x10, 0x10, 0);
     }
     return result;
 }
