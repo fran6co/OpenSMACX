@@ -29,9 +29,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import header_offsets as ho
 
 # `Type name_;  // 0xNN...` and `Type name_[N];  // 0xNN...`
+# THE SAME TWO NOTATIONS header_offsets reads - shared, not re-spelled, so a
+# second parser cannot drift into knowing only one of the tree's dialects.
 MEMBER = re.compile(
     r"^\s{2,}([A-Za-z_][\w:\s*]*?)\s+(\*?)\s*([A-Za-z_]\w*)\s*"
-    r"(\[([^\]]*)\])?\s*;\s*//\s*(0x[0-9A-Fa-f]+)")
+    r"(\[([^\]]*)\])?\s*;\s*//\s*" + ho.NOTE)
 SCALARS = set(ho.SIZES)
 
 
@@ -54,7 +56,7 @@ def evidence(root: Path):
                 continue
             ty, star, name, _arr, count, note = m.groups()
             ty = " ".join(ty.split())
-            here = int(note, 16)
+            here = ho.parse_note(note)
             if prev is not None:
                 pty, pstar, pname, poff, pline = prev
                 # Only an un-starred, un-arrayed class-typed member proves a

@@ -66,10 +66,23 @@ FIELDS = {
     "WinNodeList": [("head_", 0), ("current_", 4), ("tail_", 8),
                     ("count_", 12), ("external_", 16)],
 }
+# TWO NOTATIONS, BOTH ALREADY IN THE TREE. Most headers annotate an offset
+# as `// 0xNN`, but the older hand-written ones use `// (+N)` in DECIMAL -
+# heap.h, filemap.h, text.h and strings.h among them. Reading only the first
+# spelling did not make those classes fail; it made them look UNANCHORED, so
+# the survey listed four fully-annotated classes as blockers to go and
+# annotate. A parser that recognises one of the tree's two dialects reports
+# the other as missing work.
+NOTE = r"(0x[0-9A-Fa-f]+|\(\+\d+\))"
 MEMBER = re.compile(
     r"^\s{2,}(?!(?:public|private|protected|virtual|static|friend|typedef|using)\b)"
     r"([A-Za-z_][\w:]*(?:\s+[A-Za-z_][\w:]*)?)\s+(\*?)(\w+)\s*(\[([^\]]+)\])?\s*;"
-    r"(?:\s*//\s*(?:Win\+)?(0x[0-9A-Fa-f]+))?")
+    r"(?:\s*//\s*(?:Win\+)?" + NOTE + r")?")
+
+
+def parse_note(note: str) -> int:
+    """`0x1C` and `(+28)` are the same offset written two ways."""
+    return int(note[2:-1], 10) if note.startswith("(+") else int(note, 16)
 
 
 def class_body(text: str, name: str) -> list[str]:
@@ -190,7 +203,7 @@ def derive(header: Path, cls: str, extra: dict[str, int] | None = None):
         if anchored and offset is not None and align > 1 and offset % align:
             offset += align - (offset % align)
         if note:
-            stated = int(note, 16)
+            stated = parse_note(note)
             # AN ANNOTATION THAT DISAGREES WITH THE WALK IS A LAYOUT FINDING,
             # not a place to silently re-anchor. Re-anchoring would absorb
             # exactly the defect this map exists to avoid: a member declared
