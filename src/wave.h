@@ -118,7 +118,7 @@ class Wave : public Sound {
   int set_decay(unsigned int a1, unsigned int a2, unsigned int a3);
   int set_release(unsigned int a1, unsigned int a2, unsigned int a3);
   int unload();
-  void set_pitch(int pitch);
+  int set_pitch(int pitch);
   // PADK per ?load@Wave@@QAEHPADK@Z: a string and an unsigned long, not two
   // integers.
   int load(char *a1, unsigned long a2);
@@ -138,7 +138,7 @@ class Wave : public Sound {
   int set_xpos(float x);
   int set_ypos(float y);
   int set_zpos(float z);
-  void set_attrib(unsigned long attrib);
+  int set_attrib(unsigned long attrib);
   int get_attrib();
  private:
   // 0x54, a whole 32-bit field - see the withdrawal above. Bit 1 suppresses

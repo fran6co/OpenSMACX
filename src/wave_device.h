@@ -69,8 +69,8 @@ class Wave_Device {
   ~Wave_Device();
   void set_pan(int);
   int fade(uint32_t);
-  void enable();
-  void disable();
+  int enable();
+  int disable();
   int get_volume();
   int stop();
   void suspend();
