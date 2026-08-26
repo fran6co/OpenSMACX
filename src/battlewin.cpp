@@ -168,8 +168,8 @@ void BattleWin::on_iface_button_clicked(int a1) {
 // ---------------------------------------------------------------------------
 
 /*
-// ORIGINAL: 0x00422EE0 ??0BattleWin@@QAE@XZ 0x00422EE0-0x00422EFB
-// body      src/battlewin.h
+// ORIGINAL: 0x00422EE0 ??0BattleWin@@QAE@XZ 0x00422EE0-0x00422EFB BYTE_EXACT
+// body      src/battlewin.cpp
 // size      27 bytes
 // prototype void (__thiscall ??0BattleWin@@QAE@XZ)(BattleWin* this)
 // callers   1   call targets   1
@@ -177,3 +177,14 @@ void BattleWin::on_iface_button_clicked(int a1) {
 // flags     sp_ready;purged_ok
 // calls     0x006161D0
 */
+// THE BASE VTABLE FIRST, THE DERIVED ONE LAST, with the Time member at +8
+// constructed in between - the image computes the Time receiver
+// (`lea ecx, [esi + 8]`) before either store. Time is held as storage in
+// battlewin.h, so the construction is an explicit qualified call, the idiom
+// basebutton.cpp's TRIED notes score against placement new's null guards.
+BattleWin::BattleWin() {
+    Time *const time = reinterpret_cast<Time *>(time_storage_);
+    vtable_ = 0x0066A6E4;
+    time->Time::Time();
+    vtable_ = 0x0066AA44;
+}
