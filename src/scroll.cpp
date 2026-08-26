@@ -751,6 +751,7 @@ RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical) {
 /*
 Purpose: Set the left scrollbar sprites and horizontal button sprites.
 // ORIGINAL: 0x00605BE0 ?set_sprite_left@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z 0x00605BE0-0x00605C2B
+// TRIED     ALL FOUR SPRITE SETTERS SHARE THIS WALL - 0x00605BE0, 0x00605C30, 0x00605C80 and 0x00605CD0 measure 5 of 21 IDENTICALLY, with the instruction counts matching - and it is NOT the helper. Unfactoring set_sprite_triplet into this body verbatim measured 5 of 21 again, unchanged: `__forceinline` already emits exactly what the inline source does, unlike sound.cpp's helpers, where unfactoring took five bodies to BYTE_EXACT. What differs is SCHEDULING: the image loads the argument pair into eax/edx up front (`mov eax, [esp+4]; mov edx, [esp+8]`) and stores both afterwards, where VC6 here interleaves load-store-load-store. offsetof PROVES the layout is right - `offsetof(Scroll, sprite_left1_) == 0xA7C` compiles, matching the image's own `[ecx + 0xa7c]` - so the differing `[ecx + 0xa80]`/`[ecx + 0xa84]` lines are the SECOND and THIRD stores, not a shifted member. I read them as a 4-byte layout error first; they are not.
 // LEVER: marking the shared set_sprite_triplet helper __forceinline removed
 //   the 7-argument push sequence and the E8 call, taking this from 0/21 to
 //   5/21 agreeing (0.905 similar) - same fix as the other three sprite
