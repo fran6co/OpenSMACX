@@ -148,6 +148,7 @@ void __cdecl kill_nl(LPSTR str) {
 Purpose: Add a line feed (LF) to the end of a string. This assumes the buffer has an extra byte and 
          doesn't take into account a carriage return (CR).
 // ORIGINAL: 0x00600840 ?add_lf@@YAXPAD@Z 0x00600840-0x00600859
+// TRIED     THE ORDERING IS THE ALLOCATOR'S, NOT THE SOURCE'S. Counts match at 10, the instructions match, and one moves: the image puts `add esp, 4` at position 5 and we put it at 4, doing the stack cleanup where the image does one more thing first. Four spellings measured, all 8 of 10 or worse - `end += strlen(str)` split from its declaration, a named `const size_t n` before the addition, indexing `str[n]`/`str[n+1]` instead of a pointer (4/10, the worst), and `*end`/`*(end+1)` instead of `end[0]`/`end[1]`. The pointer form the note above argues for is already the best of them. CHECKED BECAUSE THE WALL MIGHT HAVE BEEN A MISREAD - a low agreement score beside a matching instruction count usually means alignment slip, and three bodies today sat one instruction from BYTE_EXACT while scoring 2-4 of 14. This one is not that: same instructions, same count, one displaced by a single position, which is scheduling and no source order reaches it.
 // TRIED: MNEMONIC_ONLY plateau (8/10, 1.000 similar at the best flag
 // set /O2 /Gy /GR- /GX) across all --all-flags sets and several spellings
 // (strlen(str)+str, non-const end, *end/*(end+1), a separate `int len`
