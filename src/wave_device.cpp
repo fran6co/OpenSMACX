@@ -445,6 +445,7 @@ void Wave_Device::set_volume(unsigned long volume) {
 /*
 Purpose: Hand the game window to the wrapped device, through vtable slot 0x6C.
 // ORIGINAL: 0x004C5000 ?set_hwnd@Wave_Device@@QAEHPAX@Z 0x004C5000-0x004C5020
+// TRIED     BYTE_EXACT IS REACHABLE AND COSTS A SEAM, WHICH IS WHY THIS IS STILL UNCLAIMED. The image wants the device path FIRST and the default LAST - it `je`s forward to `mov eax, 0x13` and falls through into the call - where forward_to_wrapped_device is a guard clause. The helper CANNOT be flipped to suit: its other two users, set_rate (0x004C5120) and set_volume (0x004C5150), are BYTE_EXACT with the guard order, so this shape belongs to the body. Written out with the flip it measures BYTE_EXACT, 14 of 14 - and takes `ORIGINAL() named-pointer seam` from 94 to 95, above its ceiling. The seam-free spelling that saved the sounddevice family does not work here because this call TAKES AN ARGUMENT: `__fastcall(void *, int)` passes it in edx while the image passes it on the stack, which is thiscall - the one convention VC6 reserves (C4234). Measured 4 of 14 that way. The claim is real but costs a ratcheted site, and buying that slot by rewriting some OTHER claimed body's seam would risk a live regression to satisfy a counter. Left unclaimed deliberately, with the price written down.
 // size      32 bytes
 // prototype int (__thiscall ?set_hwnd@Wave_Device@@QAEHPAX@Z)(Wave_Device* this, void*)
 // callers   0   call targets   0
