@@ -40,7 +40,20 @@ from decomp import read  # noqa: E402
 # eyeballed before pinning - vector-dtor iterators, atexit callbacks, and
 # `g_00406850`-style disguises, every one a real function reference.
 CEILINGS = {
-    "unk-method": 190,
+    "unk-method": 170,
+    # THE ESCAPE HATCH, RATCHETED. An UNKn whose comment block says
+    # EVIDENCE-FREE and names it has been investigated and found unnameable -
+    # no caller, no dispatch, no CSV entry. That is a result, not unfinished
+    # work, and counting it as debt pressures someone into inventing a name.
+    # It is ratcheted anyway: widening this requires writing the
+    # justification, and the number cannot drift up unnoticed.
+    # 18 -> 20 IS A RECLASSIFICATION, NOT A WIDENING: unk-method fell by
+    # exactly two in the same edit, when font.h's note was made to NAME the
+    # UNK1 it had already investigated and refused to name. The total is
+    # unchanged. Raising this ceiling for any other reason means someone is
+    # excusing work rather than recording a result - the two counts must
+    # move against each other, or it is not a reclassification.
+    "evidence-free unk": 20,
     "function-address binding": 55,
     "orphan redirect": 209,
     "pointer-as-int": 2,
@@ -68,6 +81,11 @@ CEILINGS = {
 }
 
 WHY = {
+    "evidence-free unk":
+        "an UNKn whose comment block says EVIDENCE-FREE and NAMES it: "
+        "investigated and found unnameable - no caller, no dispatch, no CSV "
+        "entry. Do not invent a name to clear this; the refusal is the "
+        "finding. Only the names inside the block are excused.",
     "unk-method":
         "a method named UNKn is a body whose behaviour nobody wrote down. "
         "Name it from evidence: callers, the image's data, "
@@ -147,6 +165,42 @@ SELF_CAST = re.compile(
     # which is how `memcpy(selfCopy, this, 0x400)` outlived the cast ban.
     # The member being copied has a name and a sizeof; use them.
     r"|\bmem(?:cpy|set|move)\s*\([^;)]*\bthis\b")
+
+
+# AN INVESTIGATED REFUSAL IS NOT THE SAME AS UNFINISHED WORK, and a census
+# that cannot tell them apart pushes people to invent a name to clear it -
+# which is a false statement that outlives whoever wrote it. font.h says so
+# in as many words about 0x00618F30: no caller, `QAE` so no dispatch names
+# it either, and a body that is `mov eax,1; ret 0x10` with four arguments
+# discarded. Nothing can say what it was called.
+#
+# So a comment block containing EVIDENCE-FREE excuses the UNKn identifiers
+# NAMED INSIDE THAT BLOCK, and only those - a note cannot excuse a file it
+# happens to sit in. The excused ones move to their own ratcheted shape
+# rather than vanishing, so the escape hatch cannot widen quietly. A
+# header's refusal also covers its own .cpp, because the declaration and
+# the definition are the same method.
+EVIDENCE_FREE = re.compile(r"EVIDENCE-FREE")
+
+
+def excused_unks(root: Path) -> dict[str, set[str]]:
+    """stem -> the UNKn names a documented refusal covers."""
+    out: dict[str, set[str]] = {}
+    for path in sorted(root.glob("*.h")) + sorted(root.glob("*.cpp")):
+        text = path.read_text(errors="replace")
+        lines = text.split("\n")
+        named: set[str] = set()
+        for i, line in enumerate(lines):
+            if not EVIDENCE_FREE.search(line):
+                continue
+            # the block is this line and the comment lines that follow it
+            j = i
+            while j < len(lines) and lines[j].lstrip().startswith("//"):
+                named.update(UNK.findall(lines[j]))
+                j += 1
+        if named:
+            out.setdefault(path.stem, set()).update(named)
+    return out
 
 
 def product_files() -> list[Path]:
@@ -236,13 +290,16 @@ def census():
 
     counts = collections.Counter()
     files = collections.defaultdict(collections.Counter)
+    EXCUSED = excused_unks(REPO / "src") if (REPO / "src").is_dir() else {}
     redirect_refs = collections.Counter()
 
     for path in product_files():
         for line in code_lines(path):
             for name in UNK.findall(line):
-                counts["unk-method"] += 1
-                files["unk-method"][path.name] += 1
+                shape = ("evidence-free unk"
+                         if name in EXCUSED.get(path.stem, ()) else "unk-method")
+                counts[shape] += 1
+                files[shape][path.name] += 1
             for hexpart in ADDRESS_CAST.findall(line):
                 if in_function(int("0x" + hexpart, 16)):
                     counts["function-address binding"] += 1
