@@ -86,7 +86,6 @@ extern const uint32_t PullDownBufferVtable;
 extern uint32_t PullDownFieldF38Default;
 extern uint32_t PullDownFieldF3CDefault;
 
-PullDown *__fastcall pull_down_destructor_redirect(PullDown *self, void *);
 
 
 

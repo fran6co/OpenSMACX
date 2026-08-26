@@ -54,7 +54,6 @@ class Ambience {
   uint8_t base_storage_[0x58];
 };
 
-void __fastcall ambience_dtor_redirect(Ambience *self, void *);
 
 // The four derived vtables. They are named constants rather than literals in
 // the bodies so the image addresses live in one place each, which is what

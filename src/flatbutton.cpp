@@ -164,10 +164,6 @@ FlatButton *FlatButton::destroy() {
     return this;
 }
 
-FlatButton *__fastcall flat_button_destructor_redirect(
-        FlatButton *self, void *) {
-    return self->destroy();
-}
 
 
 // ---------------------------------------------------------------------------

@@ -401,9 +401,6 @@ Ambience::~Ambience() {
     self->vtable_storage_ = 0x0066E444;
 }
 
-void __fastcall ambience_dtor_redirect(Ambience *self, void *) {
-    self->~Ambience();
-}
 
 /*
 Purpose: Build the ambience. The original constructs in four vtable stages -

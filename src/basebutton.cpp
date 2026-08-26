@@ -227,10 +227,6 @@ BaseButton *BaseButton::destroy() {
     return this;
 }
 
-BaseButton *__fastcall base_button_destructor_redirect(
-        BaseButton *self, void *) {
-    return self->destroy();
-}
 
 /*
 Purpose: Set the button's bubble text.

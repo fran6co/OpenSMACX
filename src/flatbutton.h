@@ -76,4 +76,3 @@ static_assert(sizeof(FlatButton) == 0xB4C,
 extern const uint32_t FlatButtonPrimaryVtable;
 extern const uint32_t FlatButtonBufferVtable;
 
-FlatButton *__fastcall flat_button_destructor_redirect(FlatButton *self, void *);
