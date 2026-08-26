@@ -242,6 +242,7 @@ Purpose: ??__Fg_BUFFER_SPRITE@@YAXXZ - tear down the global at 0x9b3a50 through
          ?close@Sprite@@QAEXXZ, at most once, gated on bit 2 of the flag byte
          at 0x9b37cc.
 // ORIGINAL: 0x005D71F0 ??__Fg_BUFFER_SPRITE@@YAXXZ 0x005D71F0-0x005D720F
+// TRIED     THE WHOLE ??__F FAMILY SHARES THIS WALL - 0x005D71F0, 0x0060D080 and 0x0063BB00 all measure 0 of 9 identically, so one spelling would move thirteen bodies and none does. The image keeps BOTH values in byte registers - `mov cl, [flags]; mov al, 2; test al, cl` ... `or cl, al; mov [flags], cl` - materialising the mask once and reusing it, where VC6 folds it into two immediates and emits one instruction FEWER (8 against the image's 9). Measured: a named `const uint8_t mask` (folded, 0/9), `flags & 2` operand order (0/9), `volatile uint8_t mask` (0/9), re-reading the flag byte at both sites (0/9), and widening both to `int` - the only one that moves, to 2/9, and only because it matches the instruction COUNT by adding `xor eax, eax` for zero-extension, which the image does not emit either. The flag search already picked /c /O2 /Gy /GR- /Oy- /GX as best. This is the allocator choosing to hold the mask, not a source form.
 // symbol    ?teardown_g_buffer_sprite@@YAXXZ
 // size      31 bytes
 // prototype 
