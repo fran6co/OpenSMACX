@@ -486,21 +486,20 @@ int Wave_In_Device::get_rate() {
 namespace {
 // Midi_Device wraps its device at 0x14, the same offset Wave_Device uses, and
 // drives it through the device's own vtable.
+// A PLAIN THISCALL-SHAPED FUNCTION POINTER, not an ORIGINAL()
+// seam. sound.cpp proved this form compiles byte-identical, and
+// unfactoring the helpers into five bodies through the SEAM would
+// have multiplied `ORIGINAL() named-pointer seam` 96 -> 99. A
+// recovery does not get to raise a ceiling to pay for itself.
+typedef int(__fastcall *device_query_fn)(void *);
 typedef void (OriginalObject::*midi_device_vfn)();
 
-void dispatch_midi_device(Midi_Device *self, int vtable_offset) {
-    void *device = *reinterpret_cast<void **>(
-        reinterpret_cast<uint8_t *>(self) + 0x14);
-    if (device) {
-        uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
-        (ORIGINAL(device)->*vtable_method<midi_device_vfn>(device, vtable_offset))();
-    }
-}
 }  // namespace
 
 /*
 Purpose: Enable the wrapped device, if there is one, through vtable slot 0x54.
-// ORIGINAL: 0x004C5900 ?enable@Midi_Device@@QAEXXZ 0x004C5900-0x004C590F
+// ORIGINAL: 0x004C5900 ?enable@Midi_Device@@QAEXXZ 0x004C5900-0x004C590F BYTE_EXACT
+// symbol    ?enable@Midi_Device@@QAEHXZ
 // size      15 bytes
 // prototype void (__thiscall ?enable@Midi_Device@@QAEXXZ)(Midi_Device* this)
 // callers   0   call targets   0
@@ -511,13 +510,21 @@ Purpose: Enable the wrapped device, if there is one, through vtable slot 0x54.
 Return Value: n/a
 Status: Complete
 */
-void Midi_Device::enable() {
-    dispatch_midi_device(this, 0x54);
+int Midi_Device::enable() {
+    void *device = device_;
+    if (device) {
+        vtable_slot<device_query_fn>(device, 0x54)(device);
+    }
+    // RETURNS 0, WHICH IS WHY THE IMAGE CANNOT TAIL-JUMP: it `call`s the
+    // slot and then `xor eax, eax`, discarding the callee's answer. Declared
+    // void, this compiles the jump and loses the last two instructions.
+    return 0;
 }
 
 /*
 Purpose: Disable the wrapped device, if there is one, through vtable slot 0x58.
-// ORIGINAL: 0x004C5910 ?disable@Midi_Device@@QAEXXZ 0x004C5910-0x004C591F
+// ORIGINAL: 0x004C5910 ?disable@Midi_Device@@QAEXXZ 0x004C5910-0x004C591F BYTE_EXACT
+// symbol    ?disable@Midi_Device@@QAEHXZ
 // size      15 bytes
 // prototype void (__thiscall ?disable@Midi_Device@@QAEXXZ)(Midi_Device* this)
 // callers   0   call targets   0
@@ -528,8 +535,15 @@ Purpose: Disable the wrapped device, if there is one, through vtable slot 0x58.
 Return Value: n/a
 Status: Complete
 */
-void Midi_Device::disable() {
-    dispatch_midi_device(this, 0x58);
+int Midi_Device::disable() {
+    void *device = device_;
+    if (device) {
+        vtable_slot<device_query_fn>(device, 0x58)(device);
+    }
+    // RETURNS 0, WHICH IS WHY THE IMAGE CANNOT TAIL-JUMP: it `call`s the
+    // slot and then `xor eax, eax`, discarding the callee's answer. Declared
+    // void, this compiles the jump and loses the last two instructions.
+    return 0;
 }
 
 
@@ -537,24 +551,12 @@ void Midi_Device::disable() {
 namespace {
 typedef int (OriginalObject::*device_query_vfn)();
 
-// The querying form of the same dispatch, shared by both device classes: the
-// original tail-jumps or calls into the device's method, and answers a fixed
-// value when no device is wrapped.
-int query_device_at_14(void *self, int vtable_offset, int no_device_result) {
-    void *device = *reinterpret_cast<void **>(
-        reinterpret_cast<uint8_t *>(self) + 0x14);
-    if (!device) {
-        return no_device_result;
-    }
-    uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
-    return (ORIGINAL(device)->*vtable_method<device_query_vfn>(device, vtable_offset))();
-}
 }  // namespace
 
 /*
 Purpose: Ask the wrapped device whether it is disabled, through vtable slot
          0x5C. With no device wrapped the answer is yes.
-// ORIGINAL: 0x004C5920 ?is_disabled@Midi_Device@@QAEHXZ 0x004C5920-0x004C5932
+// ORIGINAL: 0x004C5920 ?is_disabled@Midi_Device@@QAEHXZ 0x004C5920-0x004C5932 BYTE_EXACT
 // size      18 bytes
 // prototype int (__thiscall ?is_disabled@Midi_Device@@QAEHXZ)(Midi_Device* this)
 // callers   0   call targets   0
@@ -565,13 +567,20 @@ Return Value: the device's answer, or 1 when none is wrapped
 Status: Complete
 */
 int Midi_Device::is_disabled() {
-    return query_device_at_14(this, 0x5C, 1);
+    void *device = device_;
+    // THE DEVICE PATH FIRST AND THE DEFAULT LAST, which is the opposite of
+    // what a guard clause writes: the image does `je` FORWARD to the
+    // `mov eax, 1` and falls through into the call.
+    if (device) {
+        return vtable_slot<device_query_fn>(device, 0x5C)(device);
+    }
+    return 1;
 }
 
 /*
 Purpose: Ask the wrapped device to start recording, through vtable slot 0x58.
          The original discards its answer.
-// ORIGINAL: 0x004C5B60 ?start_record@Wave_In_Device@@QAEHXZ 0x004C5B60-0x004C5B6F
+// ORIGINAL: 0x004C5B60 ?start_record@Wave_In_Device@@QAEHXZ 0x004C5B60-0x004C5B6F BYTE_EXACT
 // size      15 bytes
 // prototype int (__thiscall ?start_record@Wave_In_Device@@QAEHXZ)(Wave_In_Device* this)
 // callers   1   call targets   0
@@ -583,14 +592,17 @@ Return Value: 0, always
 Status: Complete
 */
 int Wave_In_Device::start_record() {
-    query_device_at_14(this, 0x58, 0);
+    void *device = device_;
+    if (device) {
+        vtable_slot<device_query_fn>(device, 0x58)(device);
+    }
     return 0;
 }
 
 /*
 Purpose: Ask the wrapped device to stop recording, through vtable slot 0x5C.
          The original discards its answer.
-// ORIGINAL: 0x004C5B70 ?end_record@Wave_In_Device@@QAEHXZ 0x004C5B70-0x004C5B7F
+// ORIGINAL: 0x004C5B70 ?end_record@Wave_In_Device@@QAEHXZ 0x004C5B70-0x004C5B7F BYTE_EXACT
 // size      15 bytes
 // prototype int (__thiscall ?end_record@Wave_In_Device@@QAEHXZ)(Wave_In_Device* this)
 // callers   1   call targets   0
@@ -602,7 +614,10 @@ Return Value: 0, always
 Status: Complete
 */
 int Wave_In_Device::end_record() {
-    query_device_at_14(this, 0x5C, 0);
+    void *device = device_;
+    if (device) {
+        vtable_slot<device_query_fn>(device, 0x5C)(device);
+    }
     return 0;
 }
 
@@ -650,7 +665,7 @@ Midi_Device::Midi_Device() {
     field_18_ = 0;
     field_1C_ = 0;
     field_10_ = 0;
-    field_14_ = 0;
+    device_ = nullptr;
     field_8_ = 0x7F;
     vtable_storage_ = 0x0066E190;
 }
@@ -678,7 +693,7 @@ Wave_In_Device::Wave_In_Device() {
     field_18_ = 0;
     field_1C_ = 0;
     field_10_ = 0;
-    field_14_ = 0;
+    device_ = nullptr;
     field_8_ = 0x7F;
     vtable_storage_ = 0x0066E1F0;
 }
