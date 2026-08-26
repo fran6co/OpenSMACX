@@ -703,7 +703,8 @@ void __fastcall wave_group_insert_redirect(WaveGroupList *self, void *,
 /*
 Purpose: Forward get_description to the wrapped device through its vtable slot
          0x1c.
-// ORIGINAL: 0x004C50F0 ?get_description@Wave_Device@@QAEXKPADK@Z 0x004C50F0-0x004C5111
+// ORIGINAL: 0x004C50F0 ?get_description@Wave_Device@@QAEXKPADK@Z 0x004C50F0-0x004C5111 BYTE_EXACT
+// symbol    ?get_description@Wave_Device@@QAEHKPADK@Z
 // size      33 bytes
 // prototype void (__thiscall ?get_description@Wave_Device@@QAEXKPADK@Z)(Wave_Device* this, unsigned int, int8*, unsigned int)
 // callers   0   call targets   0
@@ -714,11 +715,16 @@ Purpose: Forward get_description to the wrapped device through its vtable slot
 Return Value: n/a
 Status: Complete
 */
-void Wave_Device::get_description(unsigned long a1, char *a2, unsigned long a3) {
+int Wave_Device::get_description(unsigned long a1, char *a2, unsigned long a3) {
     if (device_14_) {
         typedef void (OriginalObject::*device_fn)(unsigned long a1, char *a2, unsigned long a3);
         (ORIGINAL(device_14_)->*vtable_slot<device_fn>(device_14_, 0x1c))(a1, a2, a3);
     }
+    // THE IMAGE RETURNS 0 ON BOTH PATHS - its `xor eax, eax` sits AFTER the
+    // branch rejoins, not in the no-device arm, so the forwarded call's value
+    // is discarded. Returning it instead compiles 18 instructions against the
+    // image's 16.
+    return 0;
 }
 
 
