@@ -492,6 +492,7 @@ namespace {
 // have multiplied `ORIGINAL() named-pointer seam` 96 -> 99. A
 // recovery does not get to raise a ceiling to pay for itself.
 typedef int(__fastcall *device_query_fn)(void *);
+typedef void(__fastcall *device_release_fn)(void *);
 typedef void (OriginalObject::*midi_device_vfn)();
 
 }  // namespace
@@ -699,23 +700,43 @@ Wave_In_Device::Wave_In_Device() {
 }
 
 /*
-// ORIGINAL: 0x004C5780 ??1Midi_Device@@QAE@XZ 0x004C5780-0x004C5793
-// body      src/sounddevice.h
+// ORIGINAL: 0x004C5780 ??1Midi_Device@@QAE@XZ 0x004C5780-0x004C5793 BYTE_EXACT
+// body      src/sounddevice.cpp
 // size      19 bytes
 // prototype void (__thiscall ??1Midi_Device@@QAE@XZ)(Midi_Device* this)
 // callers   0   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C578F
 */
+// The image re-installs the shared device vtable and then TAIL-JUMPS through
+// the wrapped device's own slot 4 - the dispatch is the destructor's last
+// act. Promoted from src/recovered/004c5780.cpp.
+Midi_Device::~Midi_Device() {
+    vtable_storage_ = 0x0066E098;
+    void *device = device_;
+    if (device) {
+        vtable_slot<device_release_fn>(device, 0x10)(device);
+    }
+}
 
 /*
-// ORIGINAL: 0x004C5980 ??1Wave_In_Device@@QAE@XZ 0x004C5980-0x004C5993
-// body      src/sounddevice.h
+// ORIGINAL: 0x004C5980 ??1Wave_In_Device@@QAE@XZ 0x004C5980-0x004C5993 BYTE_EXACT
+// body      src/sounddevice.cpp
 // size      19 bytes
 // prototype void (__thiscall ??1Wave_In_Device@@QAE@XZ)(Wave_In_Device* this)
 // callers   0   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
+// indirect  0x004C598F
 */
+// Same shape as ~Midi_Device() above. Promoted from src/recovered/004c5980.cpp.
+Wave_In_Device::~Wave_In_Device() {
+    vtable_storage_ = 0x0066E098;
+    void *device = device_;
+    if (device) {
+        vtable_slot<device_release_fn>(device, 0x10)(device);
+    }
+}

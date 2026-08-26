@@ -42,7 +42,11 @@ class Midi_Device {
   // and the body was `{ ; }` - the image writes nine fields and both vtable
   // pointers. Promoted from src/recovered/units/004c5740.cpp.
   Midi_Device();
-  ~Midi_Device() { ; }
+  // DEFINED IN sounddevice.cpp, not empty: its marker claims 19 image bytes
+  // and the body was `{ ; }` - the image re-installs the shared device vtable
+  // and tears down the wrapped device through its own virtual slot 4. Promoted
+  // from src/recovered/004c5780.cpp.
+  ~Midi_Device();
   int init(void *window, unsigned long backends);  // 004C57A0
   void update_sound();
   void suspend();
@@ -80,7 +84,9 @@ class Wave_In_Device {
   // DEFINED IN sounddevice.cpp, not empty - the same shape as
   // Midi_Device::Midi_Device() next door.
   Wave_In_Device();
-  ~Wave_In_Device() { ; }
+  // DEFINED IN sounddevice.cpp, not empty - the same shape as
+  // ~Midi_Device() next door. Promoted from src/recovered/004c5980.cpp.
+  ~Wave_In_Device();
   int init(void *window, unsigned long backends);  // 004C5A10
   void update_sound();
   void suspend();
