@@ -179,6 +179,20 @@ CASES = [
      # more claim than `osmx record` ever wrote down.
      "CLAIMS ABOVE THE FLOOR",
      lambda: _floor_decrement()),
+    # A WALK THAT SHIFTS RENAMES THE WRONG MEMBER. `name_offsets.py` turns
+    # `self + 0xNN` into a member name from the map header_offsets derives,
+    # and both spellings compile to the identical offset - so a walk that
+    # slips by four bytes is invisible to every byte comparison in this
+    # project while it silently renames every access after the slip.
+    #
+    # The damage is COMMENT-ONLY on purpose: it changes not one compiled
+    # byte, so nothing else in the gate can go red for it and a pass here
+    # cannot be borrowed from another check noticing something.
+    ("offset walk disagrees",
+     "FAILED: an offset walk disagrees with the tree's own names",
+     lambda: _patch("src/basewin.h",
+                    "uint32_t field_1D04C_;  // 0x1D04C",
+                    "uint32_t field_1D04C_;  // 0x1D0FC")),
     ("annotation identity",
      "FAILED: an annotation does not survive being rewritten",
      _origin_blind),

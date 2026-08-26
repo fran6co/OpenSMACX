@@ -102,7 +102,7 @@ def main() -> int:
         for m in re.finditer(r"^class (\w+)\s*(?::[^{]*)?\{", text, re.M):
             cls = m.group(1)
             try:
-                table, _bad, seen, found = derive(header, cls, known)
+                table, _bad, seen, found, _end = derive(header, cls, known)
             except Exception:
                 continue
             if not found or not seen or table:
@@ -131,7 +131,7 @@ def main() -> int:
                         lines[idx] = lines[idx].rstrip() + f"  // {off:#06x}"
                         header.write_text("\n".join(lines))
                         try:
-                            t2, b2, _s, _f = derive(header, cls, known)
+                            t2, b2, _s, _f, _e = derive(header, cls, known)
                             end = max((int(k, 16) for k in t2), default=-1)
                             ok = bool(t2) and not b2 and end < known[cls]
                         finally:
@@ -153,7 +153,7 @@ def main() -> int:
             trial = "\n".join(lines)
             header.write_text(trial)
             try:
-                table2, bad2, _s, _f = derive(header, cls, known)
+                table2, bad2, _s, _f, _e = derive(header, cls, known)
                 agree = all(table2.get(f"{o:#x}") == n for _i, _ind, n, o in fields
                             if f"{o:#x}" in table2)
                 covered = sum(1 for _i, _ind, n, o in fields if f"{o:#x}" in table2)

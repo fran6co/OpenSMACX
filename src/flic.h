@@ -65,3 +65,7 @@ class Flic {
   uint32_t field_A10_[53];
 };
 
+
+
+static_assert(sizeof(Flic) == 0xae4,
+              "Flic size is the span flic1_ occupies in diplopop.h");

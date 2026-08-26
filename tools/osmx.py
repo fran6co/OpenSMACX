@@ -2208,10 +2208,26 @@ def check(
         for line in said[:-1][:4]:
             typer.secho(f"  {line}", fg=typer.colors.RED)
 
+    # OFFSET MAPS: `name_offsets.py` turns `self + 0xNN` into a member name
+    # using a walk derived from the header, so a walk that shifts by four
+    # bytes renames every access after it to the WRONG member - and no byte
+    # comparison can see it, because both spellings compile to the identical
+    # offset. The invariant is self-verifying: a member named `field_NN_`
+    # states its own offset, and an annotated one states it twice.
+    offsets = subprocess.run(
+        [sys.executable, str(REPO_ROOT / "tools" / "header_offsets.py"),
+         "--check"], cwd=REPO_ROOT, capture_output=True, text=True)
+    if not as_json:
+        said = offsets.stdout.strip().splitlines() or [""]
+        typer.secho("  " + said[-1],
+                    fg=typer.colors.RED if offsets.returncode
+                    else typer.colors.WHITE)
+
     if floor_broken and not as_json:
         typer.secho(f"  {floor_broken}", fg=typer.colors.RED, bold=True)
 
     code = (1 if regressed or dangling or unread or link.returncode
+            or offsets.returncode
             or vtables.returncode or stale.returncode or symbols.returncode
             or index.returncode or floor_broken or debt.returncode
             or annotations.returncode or scaling.returncode
@@ -2255,6 +2271,7 @@ def check(
                 "pointer_scale": bool(scaling.returncode),
                 "duplicate_globals": bool(dupes.returncode),
                 "data_values": bool(values.returncode),
+                "header_offsets": bool(offsets.returncode),
                 "claim_floor": bool(floor_broken),
                 "regressed": bool(regressed),
                 "dangling": bool(dangling),
