@@ -190,7 +190,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GFlatButton@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-// ORIGINAL: 0x004068E0 ??_GFlatButton@@UAEPAXI@Z 0x004068E0-0x00406901
+// ORIGINAL: 0x004068E0 ??_GFlatButton@@UAEPAXI@Z 0x004068E0-0x00406901 BYTE_EXACT
 // symbol    ?scalar_delete_flat_button@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GFlatButton@@UAEPAXI@Z)(FlatButton* this, unsigned int)
@@ -203,8 +203,10 @@ Status: Complete
 */
 void *__fastcall scalar_delete_flat_button(void *self, void *,
                                            unsigned int arg0) {
-    flat_button_destructor_redirect(
-        reinterpret_cast<FlatButton *>(self), nullptr);
+    // THE METHOD, not the redirect: `nullptr` for the redirect's unused
+    // second argument materialises `xor edx, edx`, which the image does not
+    // emit. Same fix as SelectPartWin::close.
+    reinterpret_cast<FlatButton *>(self)->destroy();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -747,7 +749,7 @@ void *__fastcall scalar_delete_effect(void *self, void *, unsigned int arg0) {
 Purpose: The compiler-generated scalar deleting destructor at sub_448390: run
          the complete destructor, then release the storage through the
          executable's operator delete only when bit 0 of the flags asks.
-// ORIGINAL: 0x00448390 sub_448390 0x00448390-0x004483B1
+// ORIGINAL: 0x00448390 sub_448390 0x00448390-0x004483B1 BYTE_EXACT
 // symbol    ?scalar_delete_sub_448390@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype 
@@ -760,8 +762,10 @@ Status: Complete
 */
 void *__fastcall scalar_delete_sub_448390(void *self, void *,
                                           unsigned int arg0) {
-    ambience_dtor_redirect(reinterpret_cast<Ambience *>(self),
-                           nullptr);
+    // THE METHOD, not the redirect: `nullptr` for the redirect's unused
+    // second argument materialises `xor edx, edx`, which the image does not
+    // emit. Same fix as SelectPartWin::close.
+    reinterpret_cast<Ambience *>(self)->~Ambience();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -1439,7 +1443,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GAmbience@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x004C9330 ??_GAmbience@@UAEPAXI@Z 0x004C9330-0x004C9351
+// ORIGINAL: 0x004C9330 ??_GAmbience@@UAEPAXI@Z 0x004C9330-0x004C9351 BYTE_EXACT
 // symbol    ?scalar_delete_ambience@@YIPAXPAX0I@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GAmbience@@UAEPAXI@Z)(Ambience* this, unsigned int)
@@ -1452,8 +1456,10 @@ Status: Complete
 */
 void *__fastcall scalar_delete_ambience(void *self, void *,
                                         unsigned int arg0) {
-    ambience_dtor_redirect(reinterpret_cast<Ambience *>(self),
-                           nullptr);
+    // THE METHOD, not the redirect: `nullptr` for the redirect's unused
+    // second argument materialises `xor edx, edx`, which the image does not
+    // emit. Same fix as SelectPartWin::close.
+    reinterpret_cast<Ambience *>(self)->~Ambience();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -1700,8 +1706,10 @@ Return Value: the object pointer
 Status: Complete
 */
 void *__fastcall scalar_delete_buffer(void *self, void *, unsigned int arg0) {
-    buffer_destructor_redirect(reinterpret_cast<Buffer *>(self),
-                               nullptr);
+    // THE METHOD, not the redirect: `nullptr` for the redirect's unused
+    // second argument materialises `xor edx, edx`, which the image does not
+    // emit. Same fix as SelectPartWin::close.
+    reinterpret_cast<Buffer *>(self)->Buffer::~Buffer();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -1739,7 +1747,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GPullDown@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
-// ORIGINAL: 0x005FA770 ??_GPullDown@@UAEPAXI@Z 0x005FA770-0x005FA78E
+// ORIGINAL: 0x005FA770 ??_GPullDown@@UAEPAXI@Z 0x005FA770-0x005FA78E BYTE_EXACT
 // symbol    ?scalar_delete_pull_down@@YIPAXPAX0I@Z
 // size      30 bytes
 // prototype void* (__thiscall ??_GPullDown@@UAEPAXI@Z)(PullDown* this, unsigned int)
@@ -1752,8 +1760,10 @@ Status: Complete
 */
 void *__fastcall scalar_delete_pull_down(void *self, void *,
                                          unsigned int arg0) {
-    pull_down_destructor_redirect(
-        reinterpret_cast<PullDown *>(self), nullptr);
+    // THE METHOD, not the redirect: `nullptr` for the redirect's unused
+    // second argument materialises `xor edx, edx`, which the image does not
+    // emit. Same fix as SelectPartWin::close.
+    reinterpret_cast<PullDown *>(self)->destroy();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -1789,7 +1799,7 @@ Purpose: The compiler-generated scalar deleting destructor at
          ??_GBaseButton@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
-// ORIGINAL: 0x00607CC0 ??_GBaseButton@@UAEPAXI@Z 0x00607CC0-0x00607CDE
+// ORIGINAL: 0x00607CC0 ??_GBaseButton@@UAEPAXI@Z 0x00607CC0-0x00607CDE BYTE_EXACT
 // symbol    ?scalar_delete_base_button@@YIPAXPAX0I@Z
 // size      30 bytes
 // prototype void* (__thiscall ??_GBaseButton@@UAEPAXI@Z)(BaseButton* this, unsigned int)
@@ -1802,8 +1812,10 @@ Status: Complete
 */
 void *__fastcall scalar_delete_base_button(void *self, void *,
                                            unsigned int arg0) {
-    base_button_destructor_redirect(
-        reinterpret_cast<BaseButton *>(self), nullptr);
+    // THE METHOD, not the redirect: `nullptr` for the redirect's unused
+    // second argument materialises `xor edx, edx`, which the image does not
+    // emit. Same fix as SelectPartWin::close.
+    reinterpret_cast<BaseButton *>(self)->destroy();
     if (arg0 & 1) {
         operator delete(self);
     }

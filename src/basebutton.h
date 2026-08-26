@@ -99,7 +99,6 @@ extern const uint32_t BaseButtonBufferVtable;
 uint32_t *const BaseButtonStaticDefaults = (uint32_t *)0x0069704C;
 uint32_t *const BaseButtonDynamicDefaults = (uint32_t *)0x009B8E2C;
 
-BaseButton *__fastcall base_button_destructor_redirect(BaseButton *self, void *);
 BaseButton *__fastcall base_button_construct_redirect(BaseButton *self, void *);
 uint32_t __fastcall base_button_close_redirect(BaseButton *self, void *);
 int __fastcall base_button_init_redirect(

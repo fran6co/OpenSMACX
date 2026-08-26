@@ -261,10 +261,6 @@ PullDown *PullDown::destroy() {
     return this;
 }
 
-PullDown *__fastcall pull_down_destructor_redirect(PullDown *self, void *) {
-    self->destroy();
-    return self;
-}
 
 /*
 Purpose: Legacy stub; the original body returns 8 without reading its
