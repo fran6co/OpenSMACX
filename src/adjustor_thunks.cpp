@@ -16,6 +16,42 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * WHY 92 OF THESE 116 ARE UNCLAIMED, MEASURED 2026-08-26.
+ *
+ * They are not 92 problems and they are not a byte grind. Every one
+ * measured shows the same shape, and it is structural:
+ *
+ *   IMAGE   add ecx, 0x188          OURS   push dword ptr [esp + 4]
+ *           jmp  0x6130e0                  add  ecx, 0x188
+ *                                          call 0x407272
+ *
+ * The image's thunk is a TAIL JUMP. Ours pushes the argument and calls,
+ * because a hand-written `__fastcall(void *self, void *unused, T arg)`
+ * forwarder does not have the callee's signature and so cannot be
+ * tail-called. The receiver adjustment already matches; the transfer does
+ * not, and no spelling of the body changes that - the two forms differ in
+ * the FUNCTION'S OWN signature, not in its statements.
+ *
+ * These thunks are COMPILER OUTPUT in the original. VC6 emits
+ * `sub ecx, N; jmp target` for a virtual override reached through a
+ * multiple-inheritance or vtordisp subobject, and it emits them only when
+ * the override is DECLARED. Every hand-written forwarder in this file
+ * exists because the tree does not declare the inheritance edge that would
+ * make the compiler write it.
+ *
+ * Verified on 0x00407260 (thunk1_Dialogs::on_dialog_focus, 2 image
+ * instructions against our 5), 0x00407060, 0x0048C020, and on the sibling
+ * shape in deleting_thunks.cpp (0x00421980 PopMenu::delete1: 2 against 9).
+ *
+ * SO THE ROUTE IS DECLARATION WORK ON THE CLASSES - Dialogs, PopMenu,
+ * SpriteBox, CheckBox and the rest of the multiple-inheritance leaves -
+ * not measurement of these bodies. Grinding them one at a time cannot
+ * work, and this note exists so nobody spends a session finding that out.
+ * `/recover-class` is the runbook; the family is worth roughly 112
+ * unclaimed bodies across the two files.
+ */
+
 #include "stdafx.h"
 #include "original_seam.h"
 #include "adjustor_thunks.h"
