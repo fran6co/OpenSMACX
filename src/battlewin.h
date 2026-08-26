@@ -32,7 +32,11 @@
 class BattleWin : public SubInterface {
  public:
   void on_iface_button_clicked(int a1);
-  BattleWin() { ; }
+  // DEFINED IN battlewin.cpp, not empty: its marker claims 27 image bytes and
+  // the body was `{ ; }` - the image installs the SubInterface vtable, builds
+  // the Time member at +8, then installs BattleWin's own vtable. Promoted from
+  // src/recovered/units/00422ee0.cpp.
+  BattleWin();
   ~BattleWin();
   void on_iface_left_click(int a1, int a2);
   void on_iface_right_click(int a1, int a2);
