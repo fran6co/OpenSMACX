@@ -57,7 +57,12 @@ class Path {
   BOOL sensors(int faction_id, int *x_sensor, int *y_sensor);
 
  private:
-  int *map_table_;
+  // ANCHORED FROM THE IMAGE, not from the ABI alone. `Path::shutdown`
+  // (0x0059A2D0) frees `[esi]`, `[esi+4]` and `[esi+8]` in this
+  // declaration's order, then nulls them as `[esi]`, `[esi+8]`, `[esi+4]` -
+  // which is why the body above spells y_table_ before x_table_. Three
+  // members at three known offsets, and the first of them is 0.
+  int *map_table_;  // 0x0
   int16_t *x_table_;
   int16_t *y_table_;
   int index1_; // specific territory count
