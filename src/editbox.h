@@ -153,3 +153,7 @@ class EditBox {
   uint32_t field_B48_;  // 0xB48
   Time time_;  // 0xB4C, the IDB's trailing member; the class ends at 0xB74
 };
+
+
+static_assert(sizeof(EditBox) == 0xb74,
+              "EditBox size is the span edit_box_ occupies in filewin.h");

@@ -43,6 +43,21 @@ SIZES = {
     "BITMAPINFOHEADER": 40,
     "LOGPEN": 16,           # UINT + POINT + COLORREF
     "SIZE": 8,
+    # CRITICAL_SECTION is the one Win32 struct here that is NOT a handful of
+    # DWORDs by inspection: on x86 it is DebugInfo, LockCount, RecursionCount,
+    # OwningThread, LockSemaphore, SpinCount - six 4-byte fields, 0x18. It
+    # stopped Ambience's walk, and a stopped walk reads as "no anchor", which
+    # is why a missing size here costs a whole class.
+    "CRITICAL_SECTION": 24,
+    "FILETIME": 8, "LARGE_INTEGER": 8, "ULARGE_INTEGER": 8,
+    # The remaining pointer-width and fixed-width typedefs. Every _PTR type is
+    # 4 on x86; BYTE/WORD are the sizes their names promise.
+    "UINT_PTR": 4, "INT_PTR": 4, "LONG_PTR": 4, "ULONG_PTR": 4,
+    "DWORD_PTR": 4, "LRESULT": 4, "HRESULT": 4, "HBRUSH": 4, "HPEN": 4,
+    "HMODULE": 4, "HGLOBAL": 4, "HLOCAL": 4, "HKEY": 4, "HRSRC": 4,
+    "WNDPROC": 4, "FARPROC": 4, "LPRECT": 4, "LPPOINT": 4, "LPWORD": 4,
+    "LPDWORD": 4, "LPBYTE": 4, "ULONG": 4, "BYTE": 1, "CHAR": 1, "TCHAR": 1,
+    "WORD": 2, "USHORT": 2, "SHORT": 2, "ATOM": 2, "INT": 4, "UCHAR": 1,
 }
 # A struct member is expanded so `self + 0x140` names a FIELD, not the struct.
 FIELDS = {
@@ -114,8 +129,44 @@ def sizes(root: Path) -> dict[str, int]:
     return out
 
 
+def packed(text: str, cls: str) -> bool:
+    """Is `cls` declared while a `#pragma pack` is in effect?
+
+    THE ALIGNMENT MODEL BELOW IS ONLY TRUE AT THE DEFAULT PACKING. Under
+    `#pragma pack(1)` the compiler inserts no padding at all, so every offset
+    this walk derives for such a class would be wrong in the one direction
+    that looks plausible. caviar.h packs a three-member group precisely so
+    `camera_` can sit at the unaligned 0xA5 the image uses; a walk that
+    "helpfully" rounded that to 0xA8 would hand name_offsets the wrong member.
+    Refusing is the honest answer - the map is not derivable here.
+    """
+    depth = 0
+    for line in text.splitlines():
+        s = line.strip()
+        if s.startswith("#pragma pack"):
+            arg = s[s.index("(") + 1:s.rindex(")")].strip() if "(" in s else ""
+            if arg in ("", "pop"):
+                depth = max(0, depth - 1)
+            elif arg.startswith("push") or arg.isdigit():
+                depth += 1
+        # WORD BOUNDARY, not a prefix. `"struct CaviarCamera".startswith(
+        # "struct Caviar")` is true, and without the boundary this refused
+        # `Caviar` - which is declared at line 55, well outside the pack
+        # region - because the packed struct three lines up shares its prefix.
+        # Same defect as matching a member declaration by suffix; a name test
+        # that can match a LONGER name is not a name test.
+        if depth and re.match(rf"(class|struct)\s+{re.escape(cls)}\b", s):
+            return True
+    return False
+
+
 def derive(header: Path, cls: str, extra: dict[str, int] | None = None):
-    body = class_body(header.read_text(errors="replace"), cls)
+    text = header.read_text(errors="replace")
+    if packed(text, cls):
+        print(f"  ...refusing `{cls}`: declared under #pragma pack, where this "
+              f"walk's alignment model does not hold", file=sys.stderr)
+        return {}, [], 0, False, None
+    body = class_body(text, cls)
     offset, table, anchored = None, {}, False
     disagreements: list = []
     seen = 0            # members parsed, anchored or not
@@ -126,6 +177,18 @@ def derive(header: Path, cls: str, extra: dict[str, int] | None = None):
         ty, star, name, _arr, count, note = m.groups()
         ty = " ".join(ty.split())
         seen += 1
+        # ALIGNMENT IS PART OF THE COMPARISON, not just part of the placement.
+        # This padding used to happen further down, AFTER the disagreement
+        # check below, so a correctly-annotated member that follows a narrow
+        # one was compared against an unpadded offset and reported as a
+        # LAYOUT FINDING. Flic is the case: `uint8_t field_0_` at 0x0 leaves
+        # the walk at 0x1, `Buffer buffer_` is annotated 0x4 and IS at 0x4,
+        # and the check called the header wrong while the very next lines
+        # placed it correctly. Pad first, then compare.
+        align = min(4 if star else (SIZES.get(ty) if extra is None
+                                    else extra.get(ty, SIZES.get(ty))) or 1, 4)
+        if anchored and offset is not None and align > 1 and offset % align:
+            offset += align - (offset % align)
         if note:
             stated = int(note, 16)
             # AN ANNOTATION THAT DISAGREES WITH THE WALK IS A LAYOUT FINDING,
@@ -151,16 +214,6 @@ def derive(header: Path, cls: str, extra: dict[str, int] | None = None):
         if size is None:
             print(f"  ...stopping at `{ty} {name}`: unknown size", file=sys.stderr)
             break
-        # ALIGNMENT, which this walk ignored entirely. `int8_t err_flags_;`
-        # followed by a pointer does NOT put the pointer at 0x1 - the
-        # compiler aligns a 4-byte member to 4. Harmless for the all-uint32_t
-        # classes whose field_NN_ names verified the walk, and wrong for any
-        # mixed-size layout, which is exactly where a wrong offset would be
-        # handed to name_offsets and rewrite the wrong member.
-        align = min(4 if star else (SIZES.get(ty) if extra is None
-                                    else extra.get(ty, SIZES.get(ty))) or 1, 4)
-        if align > 1 and offset % align:
-            offset += align - (offset % align)
         n = extent(count) if count else 1
         if n is None:
             print(f"  ...stopping at `{ty} {name}[{count}]`: extent is not a "
@@ -172,7 +225,13 @@ def derive(header: Path, cls: str, extra: dict[str, int] | None = None):
         else:
             table[f"{offset:#x}"] = name
         offset += size * n
-    return table, disagreements, seen, bool(body)
+    # THE END OF THE WALK IS EVIDENCE, not a byproduct. A class whose last
+    # member ends exactly on a size derived elsewhere corroborates that size;
+    # one that falls short has an undeclared tail. Callers that only want the
+    # map ignore this, but `sizeof_from_embeds.py` cannot do its job without
+    # it - and reporting the last member's OFFSET instead of its END is a
+    # whole member's worth of false shortfall.
+    return table, disagreements, seen, bool(body), offset
 
 
 def main() -> int:
@@ -185,7 +244,68 @@ def main() -> int:
                     help="every class under --root: which can derive a map, "
                          "and which declare members but carry no anchor")
     ap.add_argument("--root", type=Path, default=Path("src"))
+    ap.add_argument("--check", action="store_true",
+                    help="every derivable class agrees with its own names and "
+                         "annotations; the gate's invariant, and it must be 0")
     args = ap.parse_args()
+
+    if args.check:
+        # WHY THIS IS A GATE CHECK AND NOT A THING SOMEONE RE-RUNS.
+        # `name_offsets.py` rewrites `self + 0xNN` into a member name using
+        # the map this file derives, so a walk that quietly shifts by four
+        # bytes renames every access after it to the WRONG member - and the
+        # bytes cannot see it, because the compiled offset is identical
+        # either way. Two edits on 2026-08-26 changed this walk (alignment
+        # moved above the comparison, packed classes became refusals), and
+        # nothing in the gate would have noticed if either had been wrong.
+        #
+        # The invariant is self-verifying and needs no list to maintain: a
+        # member NAMED `field_NN_` states its own offset, so the walk landing
+        # on it is a proof, and every annotation is a second one.
+        import re as _re
+        known = sizes(args.root)
+        checked = wrong = 0
+        clashes: list[str] = []
+        for header in sorted(args.root.glob("*.h")):
+            text = header.read_text(errors="replace")
+            for m in _re.finditer(r"^(?:class|struct) (\w+)\s*(?::[^{]*)?\{",
+                                  text, _re.M):
+                cls = m.group(1)
+                try:
+                    table, bad, _seen, found, _end = derive(header, cls, known)
+                except Exception:
+                    continue
+                if not found:
+                    continue
+                for name, stated, walked in bad:
+                    clashes.append(f"  {header.name} {cls}::{name}: header says "
+                                   f"{stated:#x}, walk says {walked:#x}")
+                    wrong += 1
+                for off, name in table.items():
+                    nm = _re.fullmatch(r"field_([0-9A-Fa-f]+)_", name)
+                    if not nm:
+                        continue
+                    checked += 1
+                    if int(nm.group(1), 16) != int(off, 16):
+                        clashes.append(f"  {header.name} {cls}::{name} walked to "
+                                       f"{off} - its own name says "
+                                       f"{int(nm.group(1), 16):#x}")
+                        wrong += 1
+        for line in clashes[:40]:
+            print(line, file=sys.stderr)
+        if len(clashes) > 40:
+            print(f"  ...and {len(clashes) - 40} more", file=sys.stderr)
+        # A DISTINCT VERDICT ON FAILURE, because "0 disagree" and
+        # "3 disagree" differ by one character and the harness that proves
+        # this check can fail matches on TEXT. A green line that a red line
+        # is a substring of is how a control passes without proving anything.
+        if wrong:
+            print(f"FAILED: an offset walk disagrees with the tree's own "
+                  f"names - {wrong} of {checked} self-naming member(s)")
+            return 1
+        print(f"{checked} self-naming member(s) checked against the walk, "
+              f"0 disagree")
+        return 0
 
     if args.survey:
         # WHY THIS EXISTS. `name_offsets.py` clears the "raw self-access"
@@ -203,7 +323,7 @@ def main() -> int:
             for m in _re.finditer(r"^class (\w+)\s*(?::[^{]*)?\{", text, _re.M):
                 cls = m.group(1)
                 try:
-                    table, _bad, seen, found = derive(header, cls, known)
+                    table, _bad, seen, found, _end = derive(header, cls, known)
                 except Exception:
                     continue
                 if not found or not seen:
@@ -220,7 +340,7 @@ def main() -> int:
             print(f"  {seen:4d}  {cls:<22} {f}")
         return 0 if not cannot else 1
 
-    table, bad, seen, found = derive(args.header, args.cls, sizes(args.root))
+    table, bad, seen, found, _end = derive(args.header, args.cls, sizes(args.root))
     if args.json:
         print(json.dumps(table, indent=2))
     else:
