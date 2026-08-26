@@ -62,7 +62,10 @@ class TextureStore {
   ~TextureStore();
 
  private:
-  uint32_t field_0_;
+  // ANCHORED FROM THE CONSTRUCTOR. 0x006252A0 opens `mov eax, ecx` and
+  // writes `[eax] = 3` then `[eax+4] = 0` - this member and iWidth_, at
+  // the two offsets the walk gives them, and field_0_'s own name agrees.
+  uint32_t field_0_;  // 0x0
   uint32_t iWidth_;
 };
 
