@@ -37,7 +37,8 @@ REPO = pathlib.Path(__file__).resolve().parent.parent
 
 # Measured 2026-08-22 on a clean tree. Lower a ceiling when its count falls.
 SHAPES = [
-    ("vtable", 19,
+    # CORRECTED with the same fix: 5 of these sat on `*`-leading lines.
+    ("vtable", 24,
      re.compile(r"""(?x)
         (?: \w+ \s* \[ \s* 0x[0-9A-Fa-f]+ \s* / \s* 4 \s* \]
           | \* \s* reinterpret_cast \s* < [^>]*? \* \s* > \s* \([^)]*\)
@@ -137,7 +138,10 @@ HEADER_SHAPES = [
      "a fixed-address binding whose name is one or two letters. Name it "
      "from the import table (tools/iat_names.py) or from its use; a short "
      "name is invisible to the anonymous-global census AND to the reader."),
-    ("anonymous fixed-address global", 96,
+    # CORRECTED, not raised: the comment walk skipped every code line
+    # starting with `*`, hiding 69 of these. The tree did not change;
+    # the ruler did. See _code_lines.
+    ("anonymous fixed-address global", 165,
      re.compile(r"\bg_00[0-9a-f]{4,6}\b"),
      "a global named by its address instead of its meaning. Name it from "
      "evidence - the image's .data value, the arithmetic identity, the "
@@ -220,13 +224,52 @@ def _code_lines(path):
             if "*/" in s:
                 in_block = False
             continue
-        if s.startswith(("//", "*")):
+        # A LINE STARTING WITH `*` IS CODE UNLESS WE ARE INSIDE A BLOCK
+        # COMMENT - and that case is already handled above, by `in_block`.
+        # Treating a leading `*` as prose out here hid every
+        # `*reinterpret_cast<T *>(...) = ...;` statement from this census:
+        # 971 code lines across 64 files, which is what every ratcheted
+        # ceiling below has been measured against. Found because rewriting
+        # three such lines in net_class.cpp to use their members made them
+        # VISIBLE and the count "grew" by three without the file gaining a
+        # single new site.
+        if s.startswith("//"):
             continue
         if s.startswith("/*"):
             if "*/" not in s:
                 in_block = True
             continue
         yield line.split("//", 1)[0]
+
+
+def _selftest_code_lines() -> str:
+    """`_code_lines` must keep a `*`-leading STATEMENT and drop real prose.
+
+    A CHECK, NOT A COMMENT, because this exact walk was wrong for a long
+    time in two censuses at once and nothing noticed: `*reinterpret_cast<T *>
+    (self + 0xNN) = v;` starts with `*`, was classified as block-comment
+    continuation, and vanished from the very census that exists to count it.
+    Returns a complaint, or "" when the walk behaves.
+    """
+    import tempfile, os
+    sample = (
+        "/* a block\n"
+        " * continuation must be dropped\n"
+        " */\n"
+        "// a line comment must be dropped\n"
+        "*reinterpret_cast<int *>(self + 0x10) = g_00dead01;\n"
+        "    *g_00dead02 = 0;\n"
+    )
+    fd, path = tempfile.mkstemp(suffix=".cpp")
+    try:
+        os.write(fd, sample.encode()); os.close(fd)
+        kept = [ln.strip() for ln in _code_lines(pathlib.Path(path)) if ln.strip()]
+    finally:
+        os.unlink(path)
+    if len(kept) != 2 or not all(k.startswith("*") for k in kept):
+        return (f"_code_lines is misclassifying code as comment: kept {kept!r}, "
+                f"expected the two `*`-leading statements and nothing else")
+    return ""
 
 
 def _skipped(path) -> bool:
@@ -284,6 +327,10 @@ def main():
     ap.add_argument("--root", type=pathlib.Path, default=REPO / "src",
                     help="scan elsewhere; used to positive-control --check")
     args = ap.parse_args()
+    complaint = _selftest_code_lines()
+    if complaint:
+        print(f"COMPILER WORK CENSUS IS BROKEN: {complaint}")
+        return 1
 
     counts, files = census(args.root)
 

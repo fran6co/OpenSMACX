@@ -84,73 +84,73 @@ Net::Net() {
 
     voice_tx_.VoiceTx::VoiceTx();
 
-    *reinterpret_cast<void **>(self + 0xb4) = g_00670dcc;
-    *reinterpret_cast<void **>(self + 0xcc) = g_006693ac;
-    *reinterpret_cast<int32_t *>(self + 0xd0) = *g_009b3374;
+    *reinterpret_cast<void **>(&field_B4_) = g_00670dcc;
+    *reinterpret_cast<void **>(&field_CC_) = g_006693ac;
+    field_D0_ = *g_009b3374;
     *g_009b3374 = 0;
 
-    *reinterpret_cast<void **>(self + 0xb0) = g_0066eafc;
+    *reinterpret_cast<void **>(&field_B0_) = g_0066eafc;
     {
-        char *const vtbl = *reinterpret_cast<char **>(self + 0xb4);
+        char *const vtbl = *reinterpret_cast<char **>(&field_B4_);
         int32_t const adj = *reinterpret_cast<int32_t *>(vtbl + 4);
         *reinterpret_cast<void **>(self + 0xb4 + adj) = g_0066eaf8;
     }
-    *reinterpret_cast<int32_t *>(self + 0xb8) = 0;
-    *reinterpret_cast<int32_t *>(self + 0xbc) = 0;
-    *reinterpret_cast<int32_t *>(self + 0xc0) = 0;
-    *reinterpret_cast<int32_t *>(self + 0xc4) = 0;
-    *reinterpret_cast<int32_t *>(self + 0xc8) = 0;
+    field_B8_ = 0;
+    field_BC_ = 0;
+    field_C0_ = 0;
+    field_C4_ = 0;
+    field_C8_ = 0;
 
     reinterpret_cast<NetFifo *>(self + 0xe8)->NetFifo::NetFifo();
     reinterpret_cast<NetFifo *>(self + 0x10c)->NetFifo::NetFifo();
     reinterpret_cast<NetFifo *>(self + 0x130)->NetFifo::NetFifo();
 
-    *reinterpret_cast<void **>(self + 0x700) = g_00669430;
-    *reinterpret_cast<void **>(self + 0x758) = g_006693ac;
-    *reinterpret_cast<int32_t *>(self + 0x75c) = *g_009b3374;
+    *reinterpret_cast<void **>(&field_700_) = g_00669430;
+    *reinterpret_cast<void **>(&field_758_) = g_006693ac;
+    field_75C_ = *g_009b3374;
     *g_009b3374 = 0;
 
-    *reinterpret_cast<void **>(self + 0x730) = g_00669424;
-    *reinterpret_cast<void **>(self + 0x750) = g_006693ac;
-    *reinterpret_cast<int32_t *>(self + 0x754) = *g_009b3374;
+    *reinterpret_cast<void **>(&field_730_) = g_00669424;
+    *reinterpret_cast<void **>(&field_750_) = g_006693ac;
+    field_754_ = *g_009b3374;
     *g_009b3374 = 0;
 
     {
-        int32_t const vtbl = *reinterpret_cast<int32_t *>(self + 0x730);
-        *reinterpret_cast<void **>(self + 0x72c) = g_006693f4;
+        int32_t const vtbl = field_730_;
+        *reinterpret_cast<void **>(&field_72C_) = g_006693f4;
         int32_t const adj = *reinterpret_cast<int32_t *>(vtbl + 4);
         *reinterpret_cast<void **>(self + 0x730 + adj) = g_006693f0;
     }
 
     {
-        int32_t const vtbl = *reinterpret_cast<int32_t *>(self + 0x730);
-        *reinterpret_cast<int32_t *>(self + 0x734) = 0;
-        *reinterpret_cast<int32_t *>(self + 0x738) = 0;
-        *reinterpret_cast<int32_t *>(self + 0x73c) = 0;
-        *reinterpret_cast<int32_t *>(self + 0x740) = 0;
-        *reinterpret_cast<int32_t *>(self + 0x744) = 0;
-        *reinterpret_cast<void **>(self + 0x72c) = g_0066941c;
+        int32_t const vtbl = field_730_;
+        field_734_ = 0;
+        field_738_ = 0;
+        field_73C_ = 0;
+        field_740_ = 0;
+        field_744_ = 0;
+        *reinterpret_cast<void **>(&field_72C_) = g_0066941c;
         int32_t const adj = *reinterpret_cast<int32_t *>(vtbl + 4);
         *reinterpret_cast<void **>(self + 0x730 + adj) = g_00669418;
     }
 
     {
-        int32_t const vtbl = *reinterpret_cast<int32_t *>(self + 0x700);
+        int32_t const vtbl = field_700_;
         int32_t const adj = *reinterpret_cast<int32_t *>(vtbl + 4);
         *reinterpret_cast<void **>(self + 0x700 + adj) = g_0066942c;
     }
 
     *reinterpret_cast<void **>(self) = g_0066eb04;
     *WinNetBuffer = this;
-    *reinterpret_cast<int32_t *>(self + 0xdc) = 0;
-    *reinterpret_cast<int32_t *>(self + 0xe0) = 0x4e20;
+    field_DC_ = 0;
+    field_E0_ = 0x4e20;
     *g_009be600 = 0;
-    *reinterpret_cast<int32_t *>(self + 0x6dc) = 0;
-    *reinterpret_cast<int32_t *>(self + 0x760) = 0;
-    *reinterpret_cast<int32_t *>(self + 0x764) = 0;
-    *reinterpret_cast<int32_t *>(self + 0x6e0) = 0;
-    *reinterpret_cast<int32_t *>(self + 0x6e4) = 0;
-    *reinterpret_cast<int32_t *>(self + 0x6fc) = 0xc8;
+    field_6DC_ = 0;
+    field_760_ = 0;
+    field_764_ = 0;
+    field_6E0_ = 0;
+    field_6E4_ = 0;
+    field_6FC_ = 0xc8;
 
     char *slot = self + 0x158;
     for (int32_t n = 0x10; n != 0; --n) {
@@ -162,9 +162,9 @@ Net::Net() {
         slot += 0x58;
     }
 
-    *reinterpret_cast<int32_t *>(self + 0x6d4) = 0x64;
-    *reinterpret_cast<int32_t *>(self + 0xd8) = 0;
-    *reinterpret_cast<int32_t *>(self + 0xe4) = 1;
+    field_6D4_ = 0x64;
+    field_D8_ = 0;
+    field_E4_ = 1;
     field_48_ = 0;
     field_4C_ = 0;
     field_50_ = 0;
@@ -254,8 +254,8 @@ Net::~Net() {
     *reinterpret_cast<void **>(sub1) = g_006693ac;
     *g_009b3374 = *reinterpret_cast<int32_t *>(sub1 + 4);
 
-    *reinterpret_cast<void **>(self + 0x758) = g_006693ac;
-    *g_009b3374 = *reinterpret_cast<int32_t *>(self + 0x75c);
+    *reinterpret_cast<void **>(&field_758_) = g_006693ac;
+    *g_009b3374 = field_75C_;
 
     reinterpret_cast<NetFifo *>(self + 0x130)->~NetFifo();
     reinterpret_cast<NetFifo *>(self + 0x10c)->~NetFifo();
@@ -268,7 +268,7 @@ Net::~Net() {
     char *const vec = self + 0xb0;
     *reinterpret_cast<void **>(vec) = g_0066eafc;
     {
-        char *const vbase = *reinterpret_cast<char **>(self + 0xb4);
+        char *const vbase = *reinterpret_cast<char **>(&field_B4_);
         int32_t const delta = *reinterpret_cast<int32_t *>(vbase + 4);
         *reinterpret_cast<void **>(self + 0xb4 + delta) = g_0066eaf8;
     }
@@ -304,8 +304,8 @@ Net::~Net() {
     }
     *reinterpret_cast<int32_t *>(vec + 0x14) = 0;
 
-    *g_009b3374 = *reinterpret_cast<int32_t *>(self + 0xd0);
-    *reinterpret_cast<void **>(self + 0xcc) = g_006693ac;
+    *g_009b3374 = field_D0_;
+    *reinterpret_cast<void **>(&field_CC_) = g_006693ac;
 
     // NO EXPLICIT `voice_tx_.VoiceTx::~VoiceTx()`. This is a real destructor
     // and `voice_tx_` is a real member, so VC6 emits its destruction after the
