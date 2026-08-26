@@ -2498,6 +2498,7 @@ extern "C" char *_itoa(int, char *, int);
 extern "C" char *strcat(char *, const char *);
 extern "C" int __cdecl _alloca_probe();
 extern "C" int __cdecl fn_00402970();
+extern "C" int __cdecl fn_00645470(char *, char *);
 int __cdecl X_pop(char *, const char *, int (__cdecl *)());
 int __cdecl X_pop(const char *, int (__cdecl *)());
 int ambience(int);
@@ -2688,11 +2689,646 @@ static int *const g_009b90d8 = (int *)0x009B90D8;
 static int *const g_009b90f8 = (int *)0x009B90F8;
 static int *const g_009bbfec = (int *)0x009BBFEC;
 static int *const g_009bbff0 = (int *)0x009BBFF0;
-void __cdecl tech_achieved(int a1, int a2, int a3, int a4) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+// Seam typedefs for tech_achieved's thiscall callees. VC6 rejects
+// __thiscall in a function pointer (C4234); pointer-to-member is
+// thiscall without naming it.
+typedef void (OriginalObject::*ta_void_0)();
+typedef void (OriginalObject::*ta_void_1i)(int);
+typedef void (OriginalObject::*ta_void_2i)(int, int);
+typedef void (OriginalObject::*ta_void_6)(int, int, int, int, char *, GraphicWin *);
+typedef void (OriginalObject::*ta_void_sc)(char *, const char *, int, char *, int, GraphicWin *);
+typedef int  (OriginalObject::*ta_int_1c)(char *);
+typedef int  (OriginalObject::*ta_int_2i)(int, int);
+typedef void (OriginalObject::*ta_strcat)(char *, int);
+typedef char *(OriginalObject::*ta_lpstr_0)();
+typedef int  (OriginalObject::*ta_sprite)(int, char *, int);
 
+void __cdecl tech_achieved(int a1, int a2, int a3, int a4) {
+    // SEH prologue is implicit; the compiler emits the frame.
+    Popup popup;
+    int ebx = a2;
+    int edi = a1;
+    int esi = a3;
+    int active_player = *g_00939284;
+
+    if (ebx < 0) {
+        popup.close();
+        return;
+    }
+
+    // Compute faction stride offsets
+    int faction_off = (((a1 * 5) * 9) * 8 - a1) * 4;
+    char *faction_base = (char *)g_00946a84 + faction_off;
+
+    // player_mask = 1 << a1
+    int player_mask = 1 << a1;
+    char active_mask = *(char *)g_009a64e8;
+    if (player_mask & active_mask) {
+        ambience(0xc9);
+    }
+    int saved_mask = player_mask;
+
+    // === Branch: tech >= 10000 ===
+    if (ebx >= 0x270f) {
+        int p1_idx = (((a1 * 65 * 2 + a1) * 8 + a1) * 2 + a1);
+        int p2_idx = (((a3 * 65 * 2 + a3) * 8 + a3) * 2 + a3);
+        int *row1 = g_0096cbac + p1_idx;
+        int *row2 = g_0096cbac + p2_idx;
+        *row1 |= (1 << a3);
+        *row2 |= *row1;
+
+        int num_players = *g_00949884;
+        char *players = (char *)g_0094a30c;
+        for (int i = 0; i < num_players; i++) {
+            char pflag = players[4];
+            if ((1 << a3) & pflag) {
+                players[4] |= (char)saved_mask;
+                if (a1 != 0 && a3 != 0) {
+                    int val = *(int *)(players + a3 * 4 + 0xc);
+                    int base_val = *(int *)(players + 8);
+                    val &= base_val;
+                    *(int *)(players + a1 * 4 + 0xc) |= val;
+                }
+            }
+            players += 0x2c;
+        }
+
+        int num_spies = *g_009a64cc;
+        char *spy = (char *)g_0097d044;
+        for (int s = 0; s < num_spies; s++) {
+            if (!(spy[6] & (1 << a3))) {
+                if (spy[0] == a3) {
+                    spot_base(s, a1);
+                }
+            }
+            spy += 0x134;
+        }
+
+        if (a1 == *g_00939284) {
+            draw_map(1);
+            char val = *(char *)g_0090d91c;
+            val |= 4;
+            *(char *)g_0090d91c = val;
+            (ORIGINAL(g_008e9f60)->*original_method<ta_void_0>(0x5D5A70))();
+        }
+
+        popup.close();
+        return;
+    }
+
+    // === Branch: 89 <= tech < 97 ===
+    if (ebx >= 0x59 && ebx < 0x61) {
+        treaty_on(a1, ebx - 0x59, 8);
+        popup.close();
+        return;
+    }
+
+    // === Branch: tech >= 97 ===
+    if (ebx >= 0x61) {
+        int tech_idx = ebx - 0x61;
+        char *tech_entry = (char *)g_009ab868 + tech_idx * 0x34;
+
+        int proto_result = propose_proto(a1,
+            (int)(unsigned char)tech_entry[0x20],
+            (int)(unsigned char)tech_entry[0x24],
+            (int)(unsigned char)tech_entry[0x25],
+            *(int *)(tech_entry + 0x20),
+            (int)(unsigned char)tech_entry[0x27],
+            -2,
+            tech_entry + 0x28);
+
+        if (proto_result >= 0) {
+            if (*g_0093f660 != 0) {
+                if ((saved_mask & *(char *)g_009a64e8)) {
+                    char *proto_entry = (char *)g_009ab898 + proto_result * 0x34;
+                    proto_entry[1] |= 1;
+                }
+            } else {
+                prune_protos(a1, proto_result, 0);
+                upgrade_any_prototypes(a1);
+            }
+        }
+
+        popup.close();
+        return;
+    }
+
+    // === Main path: 0 <= tech < 89 ===
+    int pair_off = ((((a1 * 65 * 2 + a1) * 8 + a1) * 2 + a1) * 4);
+    int *pair_ptr = g_0096cdac + pair_off / 4;
+
+    if (*pair_ptr == ebx) {
+        *pair_ptr = -1;
+    }
+
+    char tech_known_byte = *(char *)(g_009a6670 + ebx);
+    int was_new = (esi <= 0) ? 1 : 0;
+    int flag_val = was_new;
+
+    char new_mask = (char)(1 << a1);
+    char old_byte = *(char *)(g_009a6670 + ebx);
+    *(char *)(g_009a6670 + ebx) = new_mask | old_byte;
+
+    int *tech_count = g_0096ea30 + pair_off / 4;
+    (*tech_count)++;
+
+    if (*g_009a64d4 != 0 && *g_00945f40 == 0) {
+        int *res1 = g_0096cd3c + pair_off / 4;
+        (*res1)++;
+        int *res2 = g_0096cd40 + pair_off / 4;
+        if (*res2 != 0) { (*res2)--; }
+        (*res1)++;
+        if (*res2 != 0) { (*res2)--; }
+        if (flag_val == 0x58) {
+            int *res3 = g_0096cd48 + pair_off / 4;
+            (*res3)++;
+        }
+    }
+
+    // === Tech prerequisite loop ===
+    int prereq_count = 0;
+    char *prereq_ptr = (char *)g_0095280c;
+    int counter = 2;
+
+    while (prereq_ptr <= (char *)g_00952824) {
+        short prereq_tech = *(short *)prereq_ptr;
+        if (prereq_tech == a2) {
+            int player_off_big = a1 * 0xD00;
+            char *tech_table = (char *)g_009ab898 + player_off_big;
+            for (int inner = 0; inner < 0x40; inner++) {
+                char *entry = tech_table;
+                if (entry[0] & 1) {
+                    if (!((char)saved_mask & entry[0])) {
+                        if (counter <= (int)(unsigned char)entry[0x27]) {
+                            short tech_word = *(short *)entry;
+                            int neg_level = ~(tech_word >> 2) | 0xFFFFFFFE;
+                            propose_proto(a1,
+                                (int)(unsigned char)entry[0x26],
+                                (int)(unsigned char)entry[0x25],
+                                (int)(unsigned char)entry[0x24],
+                                *(int *)(entry + 0x20),
+                                counter,
+                                neg_level,
+                                0);
+                        }
+                    }
+                }
+                tech_table += 0x34;
+            }
+            prereq_count++;
+        }
+        counter++;
+        prereq_ptr += 0xc;
+    }
+
+    if (prereq_count != 0 && a1 == *g_00939284 && *g_0093f660 == 0) {
+        int msg_idx = prereq_count * 3;
+        int msg_id = *(g_009527ec + msg_idx);
+        parse_say(0, msg_id, -1, -1);
+        X_pop((const char *)g_0069170c, 0);
+    }
+
+    *g_0068f0f0 = -1;
+
+    if (*g_0093f660 == 0) {
+        if ((*(char *)g_009a64e8 & (char)saved_mask) != 0) {
+            if ((*(short *)g_009a6490 & 0x4000) != 0) {
+                char *base = (char *)g_009ab898 + a1 * 0xD00;
+                for (int t = 0; t < 0x40; t++) {
+                    base[0] &= 0x3f;
+                    base += 0x34;
+                }
+                consider_designs(a1);
+                if (a1 == *g_00939284) {
+                    char *scan2 = (char *)g_009ab89a;
+                    while (scan2 < (char *)g_009ac59a) {
+                        if (scan2[-2] & 1) {
+                            short st = *(short *)scan2;
+                            if (st == a2) {
+                                if (*g_0068f0f0 < 0) {
+                                    *g_0068f0f0 = 0;
+                                }
+                            }
+                        }
+                        scan2 += 0x34;
+                    }
+                }
+            }
+        }
+    } else {
+        *(int *)((char *)g_0096c9e0 + pair_off) |= 2;
+    }
+
+    *g_007591a4 = -1;
+    *g_007591a8 = -1;
+
+    if (a1 != *g_00939284) {
+        if ((*(char *)g_009a64c0 & 0x80) == 0) {
+            goto after_exec;
+        }
+    }
+
+    // === Main UI section ===
+    esi = a3;
+    ebx = a2;
+    edi = faction_off;
+
+    say_tech((char *)g_009b86a0, a2, 0);
+    *(char *)g_009b86a0 = 0;
+    parse_says(0, (char *)g_009b86a0, -1, -1);
+
+    *g_009bbfec = *(int *)(faction_base + 0x2cc);
+    *g_009bbff0 = *(int *)(faction_base + 0x2d0);
+    parse_says(1, faction_base + 0x2b4, -1, -1);
+
+    if (esi > 0) {
+        int p2_off = (((esi * 5) * 9) * 8 - esi) * 4;
+        char *p2_base = (char *)g_00946a84 + p2_off;
+        *g_009bbfec = *(int *)(p2_base + 0x2cc);
+        *g_009bbff0 = *(int *)(p2_base + 0x2d0);
+        parse_says(2, p2_base + 0x2b4, -1, -1);
+    } else if (esi < 0) {
+        if (esi == -1) {
+            parse_say(2, *g_009a5a98, -1, -1);
+        } else {
+            Strings *strings_obj = reinterpret_cast<Strings *>(g_009b90d8);
+            char *result = (char *)strings_obj->get(*(int *)g_009b90f8);
+            parse_says(2, result, -1, -1);
+        }
+    }
+
+    active_player = *g_00939284;
+    edi = 0;
+
+    if (a1 == active_player) {
+        char buf[132];
+        _itoa(a2, buf, 10);
+
+        popup.init(0, 0);
+        popup.set_width(0x1f4);
+
+        int str_ptr1 = *g_00691b04;
+        popup.start((char *)str_ptr1, (const char *)g_009b86a0, -1, 0, 0x80, (GraphicWin *)0);
+
+        popup.string((char *)g_00691724);
+        popup.string((char *)g_00691728);
+        popup.string((char *)g_00691730);
+        edi = 0x80;
+    }
+
+    // Player-dependent messages via fn_00645470 (string append)
+    *(char *)g_009b86a0 = 0;
+    if (a1 == active_player) {
+        fn_00645470((char *)g_009b86a0, (char *)g_00691734);
+    } else {
+        fn_00645470((char *)g_009b86a0, (char *)g_00691738);
+    }
+    if (a3 != 0) {
+        fn_00645470((char *)g_009b86a0, (char *)g_00691740);
+    } else {
+        fn_00645470((char *)g_009b86a0, (char *)g_00691748);
+    }
+    if (a4 != 0) {
+        *(char *)g_009b86a0 = 0;
+        fn_00645470((char *)g_009b86a0, (char *)g_00691750);
+    }
+
+    // SpriteBox setup
+    {
+        int sprite_idx = a2 * 0x2c;
+        char *sprite_ptr = (char *)g_00759e28 + sprite_idx;
+        SpriteBox sb;
+        sb.sprite((Sprite *)0, sprite_ptr, 0);
+    }
+
+    // Start popup
+    popup.start((char *)g_009b8aa8, (const char *)g_009b86a0, -1, 0, 0, (GraphicWin *)0);
+
+    if (a1 == active_player) {
+        help_tech_info(&popup, a2, a1);
+    }
+
+    reinterpret_cast<FX *>(g_00749cf8)->play(0x33);
+
+    // Exec path
+    if (a1 == active_player) {
+        if (*g_0093f660 != 0) {
+            if (*g_0093fab4 != 0 || *g_007492cc != 0 || *g_00703de0 != 0) {
+                int msg_val = *(g_0094f35c + a2 * 0x2c / 4);
+                parse_say(0, msg_val, -1, -1);
+                NetMsg nmsg;
+                nmsg.pop((const char *)g_00691760, 0x1388, 0, 0);
+                goto after_exec;
+            }
+        }
+        {
+            NewTechWin ntw;
+            ntw.exec(a2, (int (__cdecl *)())a3);
+        }
+    } else {
+        if (*g_0093f660 == 0) {
+            popup.exec(0, 0);
+        }
+    }
+
+after_exec:
+    a4 = 0;
+    a3 = 0;
+    int proposal_count = *(int *)(faction_base + 0x4dc);
+    if (proposal_count > 0) {
+        char *prop_ptr = faction_base + 0x500;
+        for (int p = 0; p < proposal_count; p++) {
+            if (*(int *)(prop_ptr - 0x20) == 0xc) {
+                int prop_val = *(int *)prop_ptr;
+                int tech_check_off = prop_val * 3 * 16;
+                if (*(int *)((char *)g_009a4b7c + tech_check_off) == a2) {
+                    a4 = 1;
+                    int num_spies2 = *g_009a64cc;
+                    char *spy2 = (char *)g_0097d044;
+                    for (int s = 0; s < num_spies2; s++) {
+                        if ((int)(unsigned char)spy2[0] == a1) {
+                            set_fac(*(int *)prop_ptr, s, 1);
+                        }
+                        spy2 += 0x134;
+                    }
+                    if (a1 == active_player) {
+                        parse_say(0, *(int *)((char *)g_0094f35c + prop_val * 0x2c / 4), -1, -1);
+                        parse_say(1, *(int *)((char *)g_009a4b68 + prop_val * 3 * 16), -1, -1);
+                        NetMsg nmsg2;
+                        nmsg2.pop((const char *)g_00691770, -5000, 0, 0);
+                    }
+                }
+            }
+            prop_ptr += 4;
+        }
+    }
+
+    if (a4 != 0) {
+        NetDaemon nd;
+        nd.synch(0x14, 0, 0, 0, 0, 1, 0x2101);
+    }
+
+    // Tech unlock loop
+    int unlock_count = *(int *)(faction_base + 0x4dc);
+    if (unlock_count > 0) {
+        char *unlock_ptr = faction_base + 0x500;
+        for (int u = 0; u < unlock_count; u++) {
+            if (*(int *)(unlock_ptr - 0x20) == 0xf) {
+                int unlock_val = *(int *)unlock_ptr;
+                short tech_word2 = *(short *)((char *)g_009ab550 + unlock_val * 7 * 4);
+                if (a2 == tech_word2 && a1 == active_player) {
+                    parse_say(0, *(int *)((char *)g_0094f35c + a2 * 0x2c / 4), -1, -1);
+                    int name_val = *(int *)((char *)g_009ab538 + unlock_val * 7 * 4);
+                    parse_say(1, name_val, -1, -1);
+                    NetMsg nmsg3;
+                    nmsg3.pop((const char *)g_0069177c, -5000, 0, 0);
+                }
+            }
+            unlock_ptr += 4;
+        }
+    }
+
+    // Secrets of tech
+    if (*(char *)((char *)g_0094f358 + a2 * 0x2c) & 1) {
+        mon_secrets_of_tech(a1);
+    }
+
+    if (a1 != active_player) {
+        goto after_secrets;
+    }
+    if ((*(short *)g_009a6490 & 0x4000) == 0) {
+        goto after_secrets;
+    }
+
+    if (*g_0068f0f0 >= 0 && *g_0093f660 == 0) {
+        *g_0090ea3c = 0;
+        *g_0073396c = 1;
+
+        char *ft_scan = (char *)g_009ab89a;
+        int ft_idx = 0;
+        int design_flag = 0;
+
+        while (ft_scan < (char *)g_009ac59a) {
+            if (ft_scan[-2] & 1) {
+                short ft_tech = *(short *)ft_scan;
+                if (ft_tech == a2) {
+                    int cat_idx = (unsigned char)ft_scan[-0xd];
+                    char cat_val = *(char *)((char *)g_0094ae68 + cat_idx * 16);
+                    if (cat_val >= 0 && ft_scan != (char *)g_009abba6) {
+                        if (design_flag == 0) {
+                            int xr = X_pop((const char *)g_00691798, 0);
+                            if (xr == 0) {
+                                design_flag = -1;
+                            } else {
+                                design_flag = 1;
+                            }
+                        } else if (design_flag > 0) {
+                            design_new_veh(-a1, ft_idx);
+                        }
+                    }
+                }
+            }
+            ft_scan += 0x34;
+            ft_idx++;
+        }
+
+        a4 = design_flag;
+
+        char *up_scan = (char *)g_009ab898 + a1 * 0xD00;
+        int up_idx = a1 * 64;
+        for (int u2 = 0; u2 < 0x40; u2++) {
+            if (up_scan[0] & 0x80) {
+                if (!((char)saved_mask & up_scan[0])) {
+                    if (a4 == 0) {
+                        int xr2 = X_pop((const char *)g_006917a8, 0);
+                        if (xr2 == 0) {
+                            a4 = -1;
+                        } else {
+                            a4 = 1;
+                        }
+                    }
+                    if (a4 > 0) {
+                        design_new_veh(-a1, up_idx);
+                    }
+                }
+                up_scan[0] &= 0x7f;
+            }
+            up_scan += 0x34;
+            up_idx++;
+        }
+
+        DesignWin dw;
+        dw.shut_that_badboy_down();
+
+        char *up2_scan = (char *)g_009ab898 + a1 * 0xD00;
+        for (int u3 = 0; u3 < 0x40; u3++) {
+            if (!((char)saved_mask & up2_scan[0])) {
+                short up2_word = *(short *)up2_scan;
+                if (up2_word & 0x100) {
+                    if (*g_0093f660 == 0 || !((char)saved_mask & *(char *)g_009a64e8)) {
+                        upgrade_prototypes(a1, up_idx);
+                    }
+                }
+            }
+            up2_scan += 0x34;
+        }
+    }
+
+after_secrets:
+    if (a1 != active_player) {
+        goto after_social;
+    }
+
+    {
+        int *social_ptr = g_0096c9e8 + pair_off / 4;
+        if (*social_ptr > 1 && *g_0093f660 == 0) {
+            char *soc_data = (char *)g_0094b014;
+            int soc_idx = 0;
+            while (soc_data < (char *)g_0094b364) {
+                int soc_tech = *(int *)(soc_data - 0x10);
+                if (soc_tech == a2) {
+                    int avail = society_avail(soc_idx, a4, a1);
+                    if (avail != 0) {
+                        parse_say(0, *(int *)((char *)g_0094f35c + a2 * 0x2c / 4), -1, -1);
+                        parse_say(1, *(int *)soc_data, -1, -1);
+                        *(char *)g_009b86a0 = 0;
+                        fn_00645470((char *)g_009b86a0, (char *)g_006917b8);
+                        int xr3 = X_pop((char *)g_009b86a0, (const char *)g_00691b14, 0);
+                        if (xr3 != 0) {
+                            social_select(a1);
+                        }
+                        if (xr3 == 2) {
+                            goto after_social;
+                        }
+                    }
+                }
+                soc_data += 0xd4;
+                soc_idx++;
+                a4++;
+            }
+        }
+    }
+
+after_social:
+    {
+        if (!(*(char *)((char *)g_0094f358 + a2 * 0x2c) & 8)) {
+            goto after_net;
+        }
+        int *state_ptr = g_0096c9e0 + pair_off / 4;
+        if (*(int *)state_ptr & 0x200) {
+            goto after_net;
+        }
+
+        int np = *g_00949884;
+        char *pa = (char *)g_0094a30c;
+        for (int i2 = 0; i2 < np; i2++) {
+            pa[4] |= (char)saved_mask;
+            if (a1 != 0) {
+                *(int *)(pa + a1 * 4 + 0xc) = *(int *)(pa + 8);
+            }
+            pa += 0x2c;
+        }
+
+        int ns = *g_009a64cc;
+        if (ns > 0) {
+            char *sb = (char *)g_0097d04a;
+            char *sb2 = (char *)g_0097d04b;
+            for (int s2 = 0; s2 < ns; s2++) {
+                *sb |= (char)saved_mask;
+                *sb2 = *(sb - 4);
+                sb += 0x134;
+                sb2 += 0x134;
+            }
+        }
+
+        *(char *)((char *)state_ptr + 1) |= 2;
+
+        if (*g_009a64d4 != 0 && a1 == active_player) {
+            parse_say(0, *(int *)((char *)g_0094f35c + a2 * 0x2c / 4), -1, -1);
+            popp((char *)g_006917d0, (const char *)g_00691b0c, 0, (const char *)g_006917c0, 0);
+            draw_map(1);
+            set_dirty();
+            (ORIGINAL(g_008e9f60)->*original_method<ta_void_0>(0x5D5A70))();
+        }
+    }
+
+after_net:
+    edi = a1;
+    tech_effects(a1);
+    ebx = a2;
+
+    if (a1 == active_player) {
+        if (a2 == *g_009a4d2c) {
+            interlude(1, 0, 1, 0);
+        }
+        if (a2 == 0x2f) {
+            interlude(2, 0, 1, 0);
+        }
+
+        if (*g_009a6590 != -1 && a1 > 0 && *g_0094f954 >= -1) {
+            if (!(*g_0094f958 < -1 && *g_0094f954 != -1)) {
+                char vp_mask = *(char *)g_009a6692;
+                if ((vp_mask & (char)saved_mask) != 0) {
+                    if (*g_0094fd48 >= -1) {
+                        if (!(*g_0094fd4c < -1 && *g_0094fd48 != -1)) {
+                            char vp_mask2 = *(char *)g_009a66a9;
+                            if ((vp_mask2 & (char)saved_mask) != 0) {
+                                interlude(0xf, 0, 1, 0);
+                                interlude(0x10, 0, 0, 0);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (a2 == 4) {
+            if (*(char *)(faction_base + 0x4d8) & 0x80) {
+                char *t4_scan = (char *)g_009474f4;
+                int t4_idx = 1;
+                while (t4_scan < (char *)g_00949c38) {
+                    if (a1 != t4_idx && !(*t4_scan & 0x80)) {
+                        int t4_pair = ((((t4_idx * 65 * 2 + t4_idx) * 8 + t4_idx) * 2 + t4_idx) * 4);
+                        if (*(char *)((char *)g_0096c9f8 + t4_pair) & 8) {
+                            interlude(0x24, 0, 1, 0);
+                        }
+                    }
+                    t4_scan += 0x59c;
+                    t4_idx++;
+                }
+            }
+        }
+    }
+
+    // Recursive chain
+    {
+        int chain_val = *g_009a6540;
+        if (chain_val >= 0) {
+            int chain_off = (((chain_val * 9 * 2 + chain_val) * 4 + chain_val) * 4);
+            int chain_tech = (int)(unsigned char)*(char *)((char *)g_0097d044 + chain_off);
+            if (chain_tech > 0 && a1 <= 0) {
+                tech_achieved(chain_tech, -1, a2, 0);
+            }
+        }
+    }
+
+    // Final message section
+    if (*g_009a64d4 != 0 && was_new != 0) {
+        if (*(char *)((char *)g_0094f358 + a2 * 0x2c) & 1) {
+            *(int *)((char *)g_0096c9e0 + pair_off) |= 0x40;
+            parse_say(0, *(int *)((char *)g_0094f35c + a2 * 0x2c / 4), -1, -1);
+            parse_says(1, faction_base + 0x2d4, -1, -1);
+            *(char *)g_009b86a0 = 0;
+            fn_00645470((char *)g_009b86a0, (char *)g_006916f0);
+            char buf2[132];
+            _itoa((a1 != active_player) ? 1 : 0, buf2, 10);
+            fn_00645470((char *)g_009b86a0, buf2);
+            X_pop((const char *)g_009b86a0, 0);
+            log_say((char *)g_006917d8, (char *)g_0096cbac, a1, a2,
+                    (int)(unsigned char)*(char *)(g_009a6670 + a2));
+        }
+    }
+
+    desktop_update();
+    popup.close();
 }
