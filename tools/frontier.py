@@ -342,6 +342,16 @@ def by_class(records, order, built, visible) -> None:
             [sys.executable, str(REPO_ROOT / "tools" / "class_debt.py"),
              "--json"], cwd=REPO_ROOT, capture_output=True, text=True)
         for _shape, per_file in json.loads(debt_json.stdout).items():
+            # AN INVESTIGATED REFUSAL IS NOT DEBT. `evidence-free unk` counts
+            # UNKn methods whose comment block says EVIDENCE-FREE and names
+            # them: no caller, no dispatch, no CSV entry, nothing that can
+            # say what they were called. Font is the case that forced this -
+            # 5/9 exact with every remaining body diagnosed, held off [DONE]
+            # by one method that font.h had ALREADY investigated and refused
+            # to name, in as many words. Summing that here is what turns a
+            # correct refusal into pressure to invent a name.
+            if _shape == "evidence-free unk":
+                continue
             for name, n in per_file.items():
                 debt_by_file[name] += n
     except (ValueError, OSError):

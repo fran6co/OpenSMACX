@@ -22,7 +22,7 @@
   */
 class Font {
  public:
-  // EVIDENCE-FREE, measured 2026-08-25 rather than left unfinished. The
+  // UNK1 IS EVIDENCE-FREE, measured 2026-08-25 rather than left unfinished. The
   // image records no caller for 0x00618F30; the mangled name is `QAE`, so
   // it is not virtual and no dispatch names it either; and the body is a
   // stub - `mov eax,1; ret 0x10`, four arguments discarded. Nothing here
