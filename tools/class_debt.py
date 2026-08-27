@@ -75,7 +75,10 @@ CEILINGS = {
     # 241 as of the 2026-08-27 WIN pass: Win::Win's member-form rewrite and
     # the palette_seed_cache_/key_hook_ retypes removed two more of these;
     # the pun-per-marker floors they used to sit on are gone.
-    "raw self-access": 241,
+    # 239 as of the 2026-08-27 WIN pass, second sweep: on_activate's
+    # IDirectDrawSurface slots go by name and resize_event's callback/slot
+    # dispatch reads its own members; two more offset walks retired.
+    "raw self-access": 239,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
