@@ -40,7 +40,9 @@ from decomp import read  # noqa: E402
 # eyeballed before pinning - vector-dtor iterators, atexit callbacks, and
 # `g_00406850`-style disguises, every one a real function reference.
 CEILINGS = {
-    "unk-method": 170,
+    # 170 -> 162, same edit as the evidence-free reclassification above:
+    # BaseWin's four UNK methods move shapes, they do not disappear.
+    "unk-method": 162,
     # THE ESCAPE HATCH, RATCHETED. An UNKn whose comment block says
     # EVIDENCE-FREE and names it has been investigated and found unnameable -
     # no caller, no dispatch, no CSV entry. That is a result, not unfinished
@@ -53,7 +55,14 @@ CEILINGS = {
     # unchanged. Raising this ceiling for any other reason means someone is
     # excusing work rather than recording a result - the two counts must
     # move against each other, or it is not a reclassification.
-    "evidence-free unk": 22,
+    # 22 -> 31 IS A RECLASSIFICATION, NOT A WIDENING (2026-08-27
+    # BASE-CLASS pass): BaseWin's four UNK methods (UNK4, UNK5, UNK6, UNK7)
+    # are now documented EVIDENCE-FREE - catalogue callers 0 / call targets
+    # 0, no slot in any of BaseWin's three vtables, no CSV entry, no UNK
+    # string in the shipped binary - and unk-method fell by exactly the same
+    # eight mentions in the same edit (170 -> 162), plus one scaffold
+    # parameter the excuse now covers. The totals moved against each other.
+    "evidence-free unk": 31,
     "function-address binding": 55,
     "orphan redirect": 209,
     "pointer-as-int": 2,
@@ -102,7 +111,9 @@ CEILINGS = {
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
     # were never counted. The tree did not change; the ruler did.
-    "scaffold name": 1427,
+    # 1427 -> 1426: UNK5's `int a1` is covered by the EVIDENCE-FREE block
+    # that excuses the method (same commit as the reclassification).
+    "scaffold name": 1426,
 }
 
 WHY = {

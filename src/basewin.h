@@ -81,6 +81,22 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   // nothing and the deleting destructor needs a `call rel32`.
   ~BaseWin();
   void close();
+  // THE FOUR UNK METHODS ARE EVIDENCE-FREE, and that is a measured result
+  // rather than an unfinished job (the same finding win.h records for its
+  // five). Searched 2026-08-27, all of it empty:
+  //   - the catalogue records callers 0 and call targets 0 for all four;
+  //   - none of the four occupies a slot in any of BaseWin's three vtables
+  //     (primary 0x0066A40C, SubInterface 0x0066A3B8, Buffer 0x0066A404 -
+  //     read with tools/image_data.py, 80 dwords each), so no dispatch
+  //     names them either;
+  //   - docs/recovery/behaviour-member-names.csv has no BaseWin entry;
+  //   - the shipped binary carries no UNK?@BaseWin string - the names are
+  //     IDB placeholders, and there is no evidence to replace them with.
+  //   UNK4, UNK6 and UNK7 are bare returns; UNK5 discards its int. A name
+  //   invented to satisfy the census would be a false statement that
+  //   outlives whoever wrote it; the house rule is that a body which cannot
+  //   lose its scaffold name is a finding, not a style problem. This is the
+  //   finding.
   void UNK4();
   void UNK6();
   void UNK7();
