@@ -4428,7 +4428,7 @@ void Win::nonclient_to_screen(RECT * rect) {
 
 // Fixed-slot bindings carried from 005ee280.cpp
 
-// ORIGINAL: 0x005EE280 ?release_modal@Win@@QAEXXZ 0x005EE280-0x005EE327 FILE
+// ORIGINAL: 0x005EE280 ?release_modal@Win@@QAEXXZ 0x005EE280-0x005EE327 FILE BYTE_EXACT
 // symbol    ?release_modal@Win@@UAEXXZ
 // size      167 bytes
 // prototype void (__thiscall ?release_modal@Win@@QAEXXZ)(Win* this)
@@ -4463,6 +4463,14 @@ void Win::nonclient_to_screen(RECT * rect) {
 // still divides us is the opening compare: image `test edx,edx`, ours
 // `xor eax,eax / cmp edx,eax` - the zero materialises under /Oy- and no
 // spelling tried moves it.
+// LEVER (2026-08-27, found): the ARM ORDER, not the compare. At 11 of 50 the
+// whole body was instruction-for-instruction identical to the image except
+// instruction 10 - image `je 0x5ee2f1`, ours `jne` - which is the
+// if/else arms in the other order: the image puts the SEARCH first and the
+// found-at-`last` block second (0x005EE2F1). `if (WinModalStack[last] != this)
+// { search } else { found }` emits the image's `je` and lands 50 of 50.
+// The `test edx,edx` / materialised-zero note above is REFUTED: that was the
+// same divergence read through the swapped layout.
 void Win::release_modal() {
     // ONE VARIABLE, DECREMENTED IN PLACE, and an early return. The
     // image loads WinModalDepth into edx, tests it there, decrements
@@ -4478,18 +4486,11 @@ void Win::release_modal() {
     // INDEX-ONLY EVERYWHERE: the image addresses both stacks as
     // `[const + idx*4]` and never parks an array base in a callee-saved
     // register - any `&stack[i]` pointer here buys one it does not spend.
-    if (WinModalStack[last] == this) {
-        WinModalStack[last] = 0;
-        WinFocusStack[last] = 0;
-        if (0 < last) {
-            WinModalWindow = reinterpret_cast<Win *>(WinFocusStack[last - 1]);
-            WinFocusWindow = WinModalStack[last - 1];
-            return;
-        }
-        WinFocusWindow = 0;
-    } else {
+    if (WinModalStack[last] != this) {
         // INDEX-ONLY SEARCH: `p` was a second copy of the same cursor and
-        // cost a callee-saved register the image does not spend.
+        // cost a callee-saved register the image does not spend. This block
+        // is FIRST in the source because it is first in the image - the
+        // found-at-`last` arm sits at 0x005EE2F1, after it.
         int i = 0;
         while (i < last && WinModalStack[i] != this) {
             i = i + 1;
@@ -4506,6 +4507,15 @@ void Win::release_modal() {
             } while (i < last);
             return;
         }
+    } else {
+        WinModalStack[last] = 0;
+        WinFocusStack[last] = 0;
+        if (0 < last) {
+            WinModalWindow = reinterpret_cast<Win *>(WinFocusStack[last - 1]);
+            WinFocusWindow = WinModalStack[last - 1];
+            return;
+        }
+        WinFocusWindow = 0;
     }
 }
 
@@ -4689,42 +4699,54 @@ int __cdecl Win::OnPaletteChanged(void * hwnd, void * lparam) {
 // calls     0x005ED7D0
 // indirect  0x005F27CC
 
-// TRIED: 10 of 57, and the whole gap is ONE INSTRUCTION VC6 will not emit.
-// The image computes `right - (w+w) - left - border_thickness_ -
-// caption_height_ - 2` as six separate instructions, ending `sub esi, 2`.
-// Every spelling of that folds the constant into the doubling instead -
-// `lea eax, [ebx + ebx + 2]` where the image has `lea eax, [ebx + ebx]` -
-// so this body is 56 instructions against 57 and everything after the fold
-// is shifted. Tried: one expression; five separate `y -=` statements;
-// `w + w` in place of `w * 2`; and applying the 2 to `client_rect_.right`
-// instead, so it cannot reach the doubling. All four fold. The flag search
-// already covers /Oy-, /Ob0 and /Oi- and settles on /O2 /Gy /GR- /GX.
-// The subtraction ORDER below is the image's, read off 0x005F2782-0x005F2794.
+// TRIED: 46 of 57 at `w << 1`, and the last 11 are one scheduling decision.
+// The image computes `right - (2*w) - left - border_thickness_ -
+// caption_height_ - 2` as six separate instructions, ending `sub esi, 2`,
+// with the doubling FIRST (`lea eax, [ebx + ebx]` at 0x005F277D). `w * 2`
+// reaches that lea and VC6 then also folds the trailing constant into it -
+// `lea eax, [ebx + ebx + 2]`, 56 instructions against 57, everything after
+// shifted. Tried and all folded: `w * 2`; `2 * w`; `(w * 2)`; `w + w`;
+// `w * 2U`; an unsigned `w`; `const int w`; a `(2)` at the end; the
+// parenthesised chain; `field_128_ * 2` inline; and a separate `x -= 2;`
+// STATEMENT (35/57 - it still folds). `w << 1` is the one form VC6 will not
+// fold the constant into, but its scheduler then moves the shift to the END
+// of the subtract chain (ours: `lea` at instruction 14, image: 9), which is
+// the whole remaining gap. Flag search still settles on /O2 /Gy /GR- /GX.
+// Subtraction order is the image's, read off 0x005F2777-0x005F2794.
+//
+// TRIED (as written, 10 of 57): `move(w, y)` - the arguments were SWAPPED.
+// The image pushes `w` FIRST and the computed value second
+// (0x005F279B-0x005F279C, and twice more), and `Win::move(int x, int y)`
+// takes its second argument last, so the call is `move(computed, w)`.
+// Also swapped: the `IsZoomed` arms. The image's fallthrough arm (zoomed)
+// stores 0x009B7B08 (`WinRestoreIcon`) and its branch arm stores 0x009B7B04
+// (`WinMaximizeIcon`), so the test is plain `IsZoomed(...)` with the restore
+// icon first, not `== 0` with the maximise icon first.
 void Win::redo_caption_buttons() {
     int w = field_128_;
-    int y = client_rect_.right - w * 2 - client_rect_.left -
+    int x = client_rect_.right - (w << 1) - client_rect_.left -
             border_thickness_ - caption_height_ - 2;
     if (close_button_ != 0) {
-        close_button_->move(w, y);
-        y += -3 - *reinterpret_cast<int *>(
+        close_button_->move(x, w);
+        x += -3 - *reinterpret_cast<int *>(
                        reinterpret_cast<char *>(close_button_) + 0x4C4);
     }
     if (zoom_button_ != 0) {
-        zoom_button_->move(w, y);
-        if (IsZoomed(HandleMain) == 0) {
-            *reinterpret_cast<int *>(
-                reinterpret_cast<char *>(zoom_button_) + 0xAB8) =
-                WinMaximizeIcon;
-        } else {
+        zoom_button_->move(x, w);
+        if (IsZoomed(HandleMain) != 0) {
             *reinterpret_cast<int *>(
                 reinterpret_cast<char *>(zoom_button_) + 0xAB8) =
                 WinRestoreIcon;
+        } else {
+            *reinterpret_cast<int *>(
+                reinterpret_cast<char *>(zoom_button_) + 0xAB8) =
+                WinMaximizeIcon;
         }
-        y += -1 - *reinterpret_cast<int *>(
+        x += -1 - *reinterpret_cast<int *>(
                        reinterpret_cast<char *>(zoom_button_) + 0x4C4);
     }
     if (minimize_button_ != 0) {
-        minimize_button_->move(w, y);
+        minimize_button_->move(x, w);
     }
 }
 
