@@ -718,6 +718,10 @@ Purpose: Allocate a BasePop on the heap and construct it.
 Return Value: The new object as an int, or zero if the allocation failed
 Status: Complete
 */
+// `int`, not `BasePop *`: the image's own name is ?basepop_alloc@BasePop@@SAHXZ
+// - H, an int return - and all seven call sites reach it through the
+// allocator hook at 0x00696ECC, typed to match. The value carried is really
+// the new object; the H is the image's wire format, not this tree's model.
 int BasePop::basepop_alloc() {
     return (int)new BasePop();
 }

@@ -336,12 +336,21 @@ class Buffer {
   int copy(Buffer *buffer, int xCoord, int yCoord, int width, int height,
            int src_width, int src_height);
 
- private:
+ // PROTECTED, NOT PRIVATE: GraphicWin derives from Buffer and the homed
+ // window bodies read these directly - which is what the image does, since
+ // the surface subobject and the window are one object (Win already grants
+ // itself friendship for the same reason). Access to a member affects no
+ // offset and no emitted byte, so the layout and every claim are untouched.
+ protected:
   // `Win::flip` clips the screen buffer back to its own extent and reads
   // the DIB's dimensions for the final BitBlt.
   friend class Win;
   
-  uint32_t poOwner_;
+  // 0x4. The window the surface belongs to - `GraphicWin::init` stores its
+  // `this` here before the minimum-size computation, and nothing recovered
+  // reads it. `void *` until a reader proves which base pointer the image
+  // stores; it was `uint32_t`, which needed a cast at the one store.
+  void *poOwner_;
   uint32_t field_8_;  // 0x0008
   uint32_t field_C_;
   uint32_t field_10_;
