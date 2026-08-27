@@ -92,7 +92,7 @@ SHAPES = [
      "reads the target out of a vtable slot by hand because the method is not "
      "declared virtual. Declare it - the compiler writes this dispatch."),
 
-    ("ORIGINAL() named-pointer seam", 94,
+    ("ORIGINAL() named-pointer seam", 93,
      re.compile(r"\bORIGINAL\((?!.*vtable\[)"),
      "reaches a member through a function-pointer slot, which compiles "
      "`FF 15` where the image has `E8`. Call it by name once its body lands."),
