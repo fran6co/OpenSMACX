@@ -1561,7 +1561,7 @@ int Win::on_sys_command(unsigned int, int, int) {
 Purpose: Bring this window's palette into step with the active one, but only
          when it has fallen behind - set_active_window is skipped when the
          cached generation at 0x184 already matches the palette's at 0x400.
-// ORIGINAL: 0x005F2C60 ?sync_palette@Win@@QAEXXZ 0x005F2C60-0x005F2C94
+// ORIGINAL: 0x005F2C60 ?sync_palette@Win@@QAEXXZ 0x005F2C60-0x005F2C94 BYTE_EXACT
 // size      52 bytes
 // prototype void (__thiscall ?sync_palette@Win@@QAEXXZ)(Win* this)
 // callers   5   call targets   1
@@ -1571,27 +1571,27 @@ Purpose: Bring this window's palette into step with the active one, but only
 Return Value: n/a
 Status: Complete
 */
-// TRIED: 7 of 14, and the memcpy-into-a-temporary form is the BEST one
-// found - which is surprising, because this image has no C++ library and a
-// dword read is the idiom everywhere else. Reading the palette's field
-// directly in the comparison (either both sites or only the first) drops it
-// to 0 of 14 at 15 instructions. Swapping the `==` operands changes nothing,
-// as it should not. What remains is which side lands in the register: the
-// image does `mov eax, [esi + 0x184]` / `cmp eax, [ecx + 0x400]`, this body
-// the reverse, and the temporary is what puts the palette's field in eax.
+// TRIED (2026-08-25): the memcpy-into-a-temporary form was the best then,
+// 7 of 14 - reading the palette's field directly scored 0 of 14 at 15
+// instructions, because something had to put the palette's field in eax
+// and only the temporary did.
+// LEVER (2026-08-27): everything upstream changed underneath that plateau.
+// The generation puns became palette_seed_cache_ vs PaletteActive->seed_,
+// and the fn-pointer binding g_SetActiveWindow became the real named
+// Palette::set_active_window(this). Under those schedulings the honest
+// form lands exactly on the image's `mov eax,[esi+0x184]` /
+// `cmp eax,[ecx+0x400]`: 14 of 14 BYTE_EXACT. Recorded for every other
+// body stuck at a register-side plateau whose neighbourhood has moved
+// since: re-measure before believing it.
 void Win::sync_palette() {
-    Palette *const active = PaletteActive;
-    uint32_t generation;
-    std::memcpy(&generation,
-                reinterpret_cast<uint8_t *>(active) + 0x400, sizeof(generation));
-    if (palette_seed_cache_ == generation) {
+    // Re-tried 2026-08-27 with the named set_active_window call in place
+    // (its TRIED entry predated the swap off the fn-pointer binding): the
+    // honest member read measures like the temporary now. Keep members.
+    if (palette_seed_cache_ == PaletteActive->seed_) {
         return;
     }
     Palette::set_active_window(this);
-    std::memcpy(&generation,
-                reinterpret_cast<uint8_t *>(PaletteActive) + 0x400,
-                sizeof(generation));
-    palette_seed_cache_ = generation;
+    palette_seed_cache_ = PaletteActive->seed_;
 }
 
 
