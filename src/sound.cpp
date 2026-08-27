@@ -368,14 +368,14 @@ Return Value: n/a
 Status: Complete
 */
 void Sound::ramp(int a1, int a2, unsigned int a3) {
-    void *device = *reinterpret_cast<void **>(
-        reinterpret_cast<uint8_t *>(this) + 0x3C);
-    if (!device) {
+    // The wrapped device, named: it is this class's own member, not an
+    // offset to be walked.
+    if (!device_) {
         return;
     }
     typedef void (OriginalObject::*ramp_fn)(int a1, int a2, int a3);
-    uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
-    (ORIGINAL(device)->*original_slot<ramp_fn>(vtable + 0x34))(a1, a2, static_cast<int>(a3));
+    uint8_t *vtable = *reinterpret_cast<uint8_t **>(device_);
+    (ORIGINAL(device_)->*original_slot<ramp_fn>(vtable + 0x34))(a1, a2, static_cast<int>(a3));
 }
 
 

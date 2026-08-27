@@ -85,7 +85,16 @@ CEILINGS = {
     # field_1A0_/field_A10_/rect2_, update's rect2_ pair, init's poOwner_
     # store and iFlags_ read. Every touched claim re-measured BYTE_EXACT,
     # and fill(int) went 1/80 -> 11/80 on the honest form.
-    "raw self-access": 230,
+    # 230 -> 229, still the 2026-08-27 BASE-CLASS pass: Sound::ramp names
+    # device_ instead of walking this+0x3C (claim held 15/15) and
+    # BaseWin::show calls its two bases by unqualified name - the
+    # static_cast spelling was measured and REFUTED (VC6 inserts a null
+    # guard around the upcast that the image has no room for), the
+    # unqualified call compiles exactly.
+    # 229 -> 228: show's rewrite cleared two census lines, not one - the
+    # census counts the pun line AND the SubInterface pointer arithmetic
+    # hanging off it, which died together.
+    "raw self-access": 228,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these

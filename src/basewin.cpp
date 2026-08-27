@@ -417,9 +417,11 @@ void BaseWin::on_mouse_leave(int, int) {
 Status: Complete
 */
 void BaseWin::show(int visible) {
-    char *self = reinterpret_cast<char *>(this);
-    if (!reinterpret_cast<Win *>(self)->is_visible()) {
-        reinterpret_cast<SubInterface *>(self + 0xa14)->set_iface_mode();
+    // Win is the base at 0 and SubInterface the base at 0xA14 - both real
+    // bases, so both calls go by their unqualified names and the compiler
+    // makes the adjustments.
+    if (!is_visible()) {
+        set_iface_mode();
     }
 }
 
