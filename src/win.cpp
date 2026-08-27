@@ -4713,6 +4713,13 @@ int __cdecl Win::OnPaletteChanged(void * hwnd, void * lparam) {
 // of the subtract chain (ours: `lea` at instruction 14, image: 9), which is
 // the whole remaining gap. Flag search still settles on /O2 /Gy /GR- /GX.
 // Subtraction order is the image's, read off 0x005F2777-0x005F2794.
+// TRIED (2026-08-27, both 46/57 - unchanged): hoisting the shift into its
+// own declaration (`int ww = w << 1;` before the chain) and packing it into
+// the first declarator (`int w = field_128_, ww = w << 1;`). VC6's /O2
+// scheduler is free with declaration order: it groups the memory loads and
+// runs any register-only op after them, so the doubling lands at the end of
+// the chain whatever the source says. The image interleaves (load w, shift,
+// then load the rest) and no spelling tried makes VC6 interleave.
 //
 // TRIED (as written, 10 of 57): `move(w, y)` - the arguments were SWAPPED.
 // The image pushes `w` FIRST and the computed value second
