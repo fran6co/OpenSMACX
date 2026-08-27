@@ -3004,7 +3004,6 @@ static int *const g_009b3a78 = (int *)0x009B3A78;
 // indirect  0x005D834B
 
 void Buffer::setup_buff_sprite(int colour) {
-    char *self = (char *)this;
     if (*reinterpret_cast<int *>(&surface_) != 0) {
         return;
     }
@@ -3018,17 +3017,17 @@ void Buffer::setup_buff_sprite(int colour) {
     }
     *BlitSourceBits = val54;
     *BlitSourceField4A8 = stride_;
-    *BlitSourceWidth = *(int *)(self + 0x80);
-    *BlitSourceNegHeight = -*(int *)(self + 0x84);
-    *BlitClipWidth = *(int *)(self + 0x80);
-    *BlitClipNegHeight = -*(int *)(self + 0x84);
+    *BlitSourceWidth = dib_.bmiHeader.biWidth;
+    *BlitSourceNegHeight = -dib_.bmiHeader.biHeight;
+    *BlitClipWidth = dib_.bmiHeader.biWidth;
+    *BlitClipNegHeight = -dib_.bmiHeader.biHeight;
     *g_009b3a70 = 0;
     *g_009b3a74 = 0;
     *(unsigned char *)BlitTransparentIndex = (unsigned char)colour;
     *g_009b3a78 = 0;
 
     void **field58 = *reinterpret_cast<void ***>(&surface_);
-    int *field6c = (int *)(self + 0x6c);
+    int *const field6c = &surface_lock_count_;
     if (field58 == 0) {
         int newCount = *field6c - 1;
         *field6c = newCount;
