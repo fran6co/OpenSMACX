@@ -102,98 +102,101 @@ Status: Complete
 // order: 0x005EB3DA installs `list_`'s vtable, 0x005EB3E4-0x005EB3FC zero
 // its fields, and only then does 0x005EB402 install Win's OWN vtable at
 // offset 0 - the first statement of this body below.
+// MEMBER FORM, in the IMAGE'S STORE ORDER. The two vtable installs that
+// precede the first store are not statements: 0x005EB3DA-0x005EB3FC is
+// `list_`'s own implicit construction (vfptr first, then its four fields)
+// and 0x005EB402 installs Win's vfptr - both emitted by the declarations,
+// which is why neither appears below.
 Win::Win() {
-    uint32_t *const object =
-        reinterpret_cast<uint32_t *>(this);
     const uint32_t *const fixed = WinStaticDefaults;
     const uint32_t *const dynamic = WinDynamicDefaults;
 
-    object[0x0A8 / 4] = reinterpret_cast<uintptr_t>(this);
-    object[0x3FC / 4] = 0;
-    object[0x09C / 4] = 0;
-    object[0x0A0 / 4] = 0;
-    object[0x0A4 / 4] = 0;
-    object[0x0AC / 4] = 0;
-    object[0x0B0 / 4] = 0;
-    object[0x134 / 4] = 0;
-    object[0x138 / 4] = 0;
-    object[0x188 / 4] = 0;
-    object[0x18C / 4] = 0;
-    object[0x190 / 4] = 0;
-    object[0x194 / 4] = 0;
-    object[0x198 / 4] = 0;
-    object[0x184 / 4] = 0;
-    object[0x0C4 / 4] = 0;
-    object[0x0F0 / 4] = 0;
-    object[0x19C / 4] = 0;
-    object[0x12C / 4] = 0;
-    object[0x130 / 4] = 1;
-    object[0x0FC / 4] = dynamic[0];
-    object[0x100 / 4] = fixed[0];
-    object[0x114 / 4] = fixed[1];
-    object[0x104 / 4] = dynamic[2];
-    object[0x108 / 4] = fixed[2];
-    object[0x10C / 4] = fixed[3];
-    object[0x110 / 4] = fixed[4];
-    object[0x118 / 4] = fixed[5];
-    object[0x11C / 4] = fixed[6];
-    object[0x120 / 4] = fixed[7];
-    object[0x124 / 4] = dynamic[3];
-    object[0x128 / 4] = fixed[8];
-    object[0x0F8 / 4] = dynamic[1];
-    object[0x0E0 / 4] = 0;
-    object[0x0E4 / 4] = 0;
-    object[0x0E8 / 4] = 0;
-    object[0x0EC / 4] = 0;
-    object[0x43C / 4] = 0;
-    object[0x440 / 4] = 0;
-    object[0x0F4 / 4] = 0;
-    object[0x15C / 4] = 0;
-    object[0x160 / 4] = 0;
-    object[0x164 / 4] = 0;
-    object[0x168 / 4] = 0;
+    poWinBase_ = this;
+    child_count_ = 0;
+    iSomeFlag_ = 0;
+    field_A0_ = 0;
+    field_A4_ = 0;
+    iVertScaleDenom_ = 0;
+    iVertScaleNum_ = 0;
+    field_134_ = 0;
+    field_138_ = 0;
+    cursor_sprite_ = 0;
+    field_18C_ = 0;
+    field_190_ = 0;
+    cursor_handle_ = 0;
+    cursor_name_ = 0;
+    palette_seed_cache_ = 0;
+    win_parent_ = 0;
+    menu_ = 0;
+    field_19C_ = 0;
+    field_12C_ = 0;
+    field_130_ = 1;
+    field_FC_ = dynamic[0];
+    field_100_ = fixed[0];
+    caption_height_ = fixed[1];
+    field_104_ = dynamic[2];
+    field_108_ = fixed[2];
+    field_10C_ = fixed[3];
+    field_110_ = fixed[4];
+    border_thickness_ = fixed[5];
+    bottom_border_thickness_ = fixed[6];
+    field_120_ = fixed[7];
+    field_124_ = dynamic[3];
+    field_128_ = fixed[8];
+    field_F8_ = dynamic[1];
+    field_E0_ = 0;
+    minimize_button_ = 0;
+    zoom_button_ = 0;
+    close_button_ = 0;
+    scroll_vert_ = 0;
+    scroll_horz_ = 0;
+    field_F4_ = 0;
+    field_15C_ = 0;
+    field_160_ = 0;
+    field_164_ = 0;
+    field_168_ = 0;
     // UNROLLED, not a loop: the image is a straight run of `mov [esi+X],
     // eax`, 0x13C through 0x158 by 4, with no loop counter at all. A `for`
     // here gives the compiler an index variable that outlives its loop -
     // VC6 then wants a THIRD callee-saved register (edi) and pushes it up
     // front, which the image never does (only `push esi`). Spelling every
     // store out cost nothing and dropped the extra push.
-    object[0x13C / 4] = 0;
-    object[0x140 / 4] = 0;
-    object[0x144 / 4] = 0;
-    object[0x148 / 4] = 0;
-    object[0x14C / 4] = 0;
-    object[0x150 / 4] = 0;
-    object[0x154 / 4] = 0;
-    object[0x158 / 4] = 0;
-    object[0x0B4 / 4] = 0;
-    object[0x0C0 / 4] = 0;
-    object[0x0BC / 4] = 0;
-    object[0x0B8 / 4] = 0;
-    object[0x16C / 4] = 0;
-    object[0x170 / 4] = 0;
-    object[0x098 / 4] = 0;
+    outer_rect_.left = 0;
+    outer_rect_.top = 0;
+    outer_rect_.right = 0;
+    outer_rect_.bottom = 0;
+    client_rect_.left = 0;
+    client_rect_.top = 0;
+    client_rect_.right = 0;
+    client_rect_.bottom = 0;
+    buffer1_ = 0;
+    buffer4_ = 0;
+    buffer3_ = 0;
+    buffer2_ = 0;
+    field_16C_ = 0;
+    field_170_ = 0;
+    iFlags_ = 0;
     // Same defect, same fix: 0x400 through 0x438 by 4, unrolled.
-    object[0x400 / 4] = 0;
-    object[0x404 / 4] = 0;
-    object[0x408 / 4] = 0;
-    object[0x40C / 4] = 0;
-    object[0x410 / 4] = 0;
-    object[0x414 / 4] = 0;
-    object[0x418 / 4] = 0;
-    object[0x41C / 4] = 0;
-    object[0x420 / 4] = 0;
-    object[0x424 / 4] = 0;
-    object[0x428 / 4] = 0;
-    object[0x42C / 4] = 0;
-    object[0x430 / 4] = 0;
-    object[0x434 / 4] = 0;
-    object[0x438 / 4] = 0;
-    object[0x174 / 4] = 1;
-    object[0x178 / 4] = 1;
-    object[0x17C / 4] = 1;
-    object[0x180 / 4] = 1;
-    object[0x1A0 / 4] = 2;
+    field_400_ = 0;
+    field_404_ = 0;
+    mouse_move_hook_ = 0;
+    field_40C_ = 0;
+    field_410_ = 0;
+    field_414_ = 0;
+    field_418_ = 0;
+    field_41C_ = 0;
+    field_420_ = 0;
+    field_424_ = 0;
+    field_428_ = 0;
+    field_42C_ = 0;
+    key_hook_ = 0;
+    field_434_ = 0;
+    field_438_ = 0;
+    field_174_ = 1;
+    field_178_ = 1;
+    field_17C_ = 1;
+    field_180_ = 1;
+    field_1A0_ = 2;
 }
 
 
@@ -704,9 +707,6 @@ int Win::is_dialog_focus() {
     return 0;
 }
 
-int __fastcall win_is_dialog_focus_redirect(Win *self, void *) {
-    return self->is_dialog_focus();
-}
 
 int WinHdcRefCount;        // 0x009B3AB0
 HDC WinSharedHdc;          // 0x009B7B2C
@@ -1397,17 +1397,21 @@ int Win::on_set_cursor(void *, unsigned int, unsigned int) {
 /*
 Purpose: Record the window that receives focus by default.
 // ORIGINAL: 0x005F2CE0 ?set_def_focus@Win@@QAAXPAUWin@@@Z 0x005F2CE0-0x005F2CEA BYTE_EXACT
-// symbol    ?set_def_focus@Win@@SAXH@Z
+// symbol    ?set_def_focus@Win@@SAXPAV1@@Z
+// LEVER (2026-08-26): the parameter is a `Win *`, exactly as the image's own
+// name spells it (PAUWin@@) - it had been forced to `(int)` through this
+// alias, which cost a reinterpret_cast at the only store. Same bytes, no
+// cast: `mov eax,[esp+4] / mov ds:[0x9B7AEC],eax / ret`.
 // size      10 bytes
-// prototype 
+// prototype void (__cdecl ?set_def_focus@Win@@QAAXPAUWin@@@Z)(Win* this, Win*)
 // callers   3   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 Status: Complete
 */
-void Win::set_def_focus(int focus) {
-    WinDefaultFocus = reinterpret_cast<Win *>(focus);
+void Win::set_def_focus(Win *focus) {
+    WinDefaultFocus = focus;
 }
 
 
@@ -1580,14 +1584,14 @@ void Win::sync_palette() {
     uint32_t generation;
     std::memcpy(&generation,
                 reinterpret_cast<uint8_t *>(active) + 0x400, sizeof(generation));
-    if (field_184_ == generation) {
+    if (palette_seed_cache_ == generation) {
         return;
     }
     Palette::set_active_window(this);
     std::memcpy(&generation,
                 reinterpret_cast<uint8_t *>(PaletteActive) + 0x400,
                 sizeof(generation));
-    field_184_ = generation;
+    palette_seed_cache_ = generation;
 }
 
 
@@ -3359,16 +3363,12 @@ void Win::on_mouse_move(int x, int y, unsigned int keys, int from_parent) {
     }
     if (from_parent == 0) {
         ScrollCurrentWin() = this;
-        typedef void (__cdecl *MouseCallbackFn)(int, int);
-        // The member is uint32_t storage; these fields hold CALLBACKS, and
-        // the cast that used to sit on the raw offset now sits here.
-        MouseCallbackFn const fn =
-            reinterpret_cast<MouseCallbackFn>(field_408_);
+        WinMouseMoveHookFn const fn = mouse_move_hook_;
         if (fn != 0) {
             fn(x, y);
         }
         this->vslot_17(x, y);
-        Win *const child = reinterpret_cast<Win *>(val_7_);
+        Win *const child = val_7_;
         if (child != 0) {
             if (child->vslot_23() == 0) {
                 child->vslot_07();
@@ -3376,7 +3376,7 @@ void Win::on_mouse_move(int x, int y, unsigned int keys, int from_parent) {
         }
     } else {
         this->vslot_31(x, y);
-        Win *const child = reinterpret_cast<Win *>(val_19_);
+        Win *const child = val_19_;
         if (child != 0) {
             if (child->vslot_23() == 0) {
                 child->vslot_07();
@@ -5541,7 +5541,6 @@ class ScrollSlots { public:
 }
 
 
-static FnSetActiveWindow const g_SetActiveWindow = (FnSetActiveWindow)0x005FE4F0;
 // ===== homed from src/recovered/005f2700.cpp =====
 
 // ORIGINAL: 0x005F2700 ?do_caption_buttons@Win@@QAEXXZ 0x005F2700-0x005F2753 BYTE_EXACT
@@ -6858,9 +6857,9 @@ void Win::window_line_raw(int x2, int y2, int x1, int y1, int colour,
         WinHdcRefCount = 1;
     }
     if (WinSharedHdc != 0) {
-        if (field_184_ != PaletteActive->seed_) {
+        if (palette_seed_cache_ != PaletteActive->seed_) {
             PaletteActive->set_active_window(this);
-            field_184_ = PaletteActive->seed_;
+            palette_seed_cache_ = PaletteActive->seed_;
         }
 
         LOGPEN pen;
@@ -7626,9 +7625,9 @@ void Win::draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ
     ACQUIRE_HDC(haveHdc);
     if (haveHdc) {
         Palette *pal = PaletteActive;
-        if (this->field_184_ != pal->seed_) {
+        if (this->palette_seed_cache_ != pal->seed_) {
             pal->set_active_window(this);
-            this->field_184_ = pal->seed_;
+            this->palette_seed_cache_ = pal->seed_;
         }
         HDC hdc = WinSharedHdc;
         HGDIOBJ prev = SelectObject(hdc, pen1);
@@ -7641,9 +7640,9 @@ void Win::draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ
     ACQUIRE_HDC(haveHdc);
     if (haveHdc) {
         Palette *pal = PaletteActive;
-        if (this->field_184_ != pal->seed_) {
+        if (this->palette_seed_cache_ != pal->seed_) {
             pal->set_active_window(this);
-            this->field_184_ = pal->seed_;
+            this->palette_seed_cache_ = pal->seed_;
         }
         HDC hdc = WinSharedHdc;
         void *prev = reinterpret_cast<void *>(SelectObject(hdc, pen2));
@@ -7656,9 +7655,9 @@ void Win::draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ
     ACQUIRE_HDC(haveHdc);
     if (haveHdc) {
         Palette *pal = PaletteActive;
-        if (this->field_184_ != pal->seed_) {
+        if (this->palette_seed_cache_ != pal->seed_) {
             pal->set_active_window(this);
-            this->field_184_ = pal->seed_;
+            this->palette_seed_cache_ = pal->seed_;
         }
         HDC hdc = WinSharedHdc;
         HGDIOBJ prev = SelectObject(hdc, pen1);
@@ -7717,7 +7716,6 @@ int Win::key_up_event(int key) {
 // ===== homed from src/unrecovered/005eeb90.cpp =====
 
 int Win::key_down_event(int key) {
-    typedef int (__cdecl *KeyHookFn)(int);
 
     if ((iFlags_ & 0x200000) != 0 ||
         (iSomeFlag_ & 8) != 0) {
@@ -7784,7 +7782,7 @@ int Win::key_down_event(int key) {
 
     WinCallbackWindow = this;
 
-    KeyHookFn hook = reinterpret_cast<KeyHookFn>(field_430_);
+    WinKeyHookFn hook = key_hook_;
     if (hook != 0) {
         ebx = hook(key);
     }
@@ -9547,9 +9545,9 @@ void Win::sub_5ef1e0(int x1, int y1, int x2, int y2, void *pen, int unused6) {
         WinHdcRefCount = 1;
     }
     if (hdc != 0) {
-        if ((int)field_184_ != PaletteActive->seed_) {
+        if ((int)palette_seed_cache_ != PaletteActive->seed_) {
             PaletteActive->set_active_window(this);
-            field_184_ = *reinterpret_cast<unsigned int *>(PaletteActive + 0x400);
+            palette_seed_cache_ = PaletteActive->seed_;
         }
 
         void *oldPen = SelectObject(WinSharedHdc, pen);
@@ -10332,9 +10330,9 @@ void Win::paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left,
         return;
     }
 
-    if (field_184_ != *reinterpret_cast<uint32_t *>(PaletteActive + 0x400)) {
-        (*g_SetActiveWindow)(this);
-        field_184_ = *reinterpret_cast<uint32_t *>(PaletteActive + 0x400);
+    if (palette_seed_cache_ != PaletteActive->seed_) {
+        Palette::set_active_window(this);
+        palette_seed_cache_ = PaletteActive->seed_;
     }
 
     RECT clip_rect;
@@ -10739,7 +10737,7 @@ void Win::close() {
 
     field_400_ = 0;
     field_404_ = 0;
-    field_408_ = 0;
+    mouse_move_hook_ = 0;
     field_40C_ = 0;
     field_410_ = 0;
     field_414_ = 0;
@@ -10749,7 +10747,7 @@ void Win::close() {
     field_424_ = 0;
     field_428_ = 0;
     field_42C_ = 0;
-    field_430_ = 0;
+    key_hook_ = 0;
     field_434_ = 0;
     field_438_ = 0;
     field_1A0_ = 2;

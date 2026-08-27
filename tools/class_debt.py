@@ -72,7 +72,10 @@ CEILINGS = {
     # because `*reinterpret_cast<T *>(self + 0xNN)` IS a line starting
     # with `*`. Eleven of them were invisible to the census that
     # exists to count them.
-    "raw self-access": 243,
+    # 241 as of the 2026-08-27 WIN pass: Win::Win's member-form rewrite and
+    # the palette_seed_cache_/key_hook_ retypes removed two more of these;
+    # the pun-per-marker floors they used to sit on are gone.
+    "raw self-access": 241,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these

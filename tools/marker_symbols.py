@@ -137,7 +137,7 @@ if __name__ == "__main__":
     # neighbour regressions the gate exists to catch. The count may only
     # fall; --check fails when it rises, and reaching zero retires this
     # ceiling in its own commit.
-    CEILING = 6
+    CEILING = 2
     if "--check" in sys.argv:
         if len(missing) > CEILING:
             print(f"SYMBOL FACTS GREW: {len(missing)}, above the floor of "

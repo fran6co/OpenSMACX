@@ -83,3 +83,45 @@ void EditBox::close() {
     reinterpret_cast<Time *>(self + 0xb4c)->close();
     reinterpret_cast<GraphicWin *>(self)->close();
 }
+/*
+Purpose: Does this window hold the dialog focus, and its partner too?
+
+             mov esi,ecx / call Win::is_dialog_focus / test eax,eax / je no
+             mov ecx,[esi+0xc4] / test ecx,ecx / je yes
+             call Win::is_dialog_focus / test eax,eax / je no
+             yes: mov eax,1 / ret        no: xor eax,eax / ret
+
+         The second call is made on the window at field 0xc4 - which
+         src/win.h names `win_parent_` - not on `this` again; ECX is reloaded
+         from it just before. A NULL parent is not a failure: the answer is
+         yes.
+
+// ORIGINAL: 0x006161A0 ?UNK2@EditBox@@QAEXXZ 0x006161A0-0x006161CA
+// symbol    ?leaf_006161a0_redirect@@YIHPAX0@Z
+// TRIED (2026-08-26, deleting win_is_dialog_focus_redirect and calling
+// Win::is_dialog_focus directly): 2/17 -> 10/17 agreeing, 20 -> 18 compiled
+// instructions. What remains is the wrapper's own tail: ours ends
+// `push 1 / pop eax` where the image has `mov eax,1`, and the two early
+// `je` distances differ by that one instruction. Restructuring to the
+// image's exact arm order (null-parent arm returning 1 as its own `if`)
+// REGRESSED to 4/17 with 19 instructions under /O2 - reverted. Plateau.
+// size      42 bytes
+// prototype void (__thiscall ?UNK2@EditBox@@QAEXXZ)(EditBox* this)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F2CA0
+Return Value: 1 when both hold focus, 0 otherwise
+Status: Complete
+*/
+int __fastcall leaf_006161a0_redirect(void *self, void *) {
+    if (reinterpret_cast<Win *>(self)->is_dialog_focus() == 0) {
+        return 0;
+    }
+    Win *const parent = *reinterpret_cast<Win *const *>(
+        static_cast<uint8_t *>(self) + 0xC4);
+    if (parent != nullptr && parent->is_dialog_focus() == 0) {
+        return 0;
+    }
+    return 1;
+}

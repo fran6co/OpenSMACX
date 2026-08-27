@@ -414,7 +414,7 @@ typedef void (Buffer::*BufferColourSetter)(int, int, int, int);
 
 __forceinline void recolour(Buffer &buffer, BufferColourSetter setter,
               int c1, int c2, int c3, int c4) {
-    buffer.sync_to_palette(BaseButtonActivePalette());
+    buffer.sync_to_palette(PaletteActive);
     (buffer.*setter)(c1, c2, c3, c4);
 }
 
@@ -443,7 +443,7 @@ void BaseButton::set_text_color(int color1, int color2, int color3, int color4) 
     if (!win_parent_) {
         return;
     }
-    Buffer::sync_to_palette(BaseButtonActivePalette());
+    Buffer::sync_to_palette(PaletteActive);
     Buffer::set_text_color(color1, color2, color3, color4);
 }
 
@@ -462,7 +462,7 @@ void BaseButton::set_text_color2(int color1, int color2, int color3, int color4)
     if (!win_parent_) {
         return;
     }
-    Buffer::sync_to_palette(BaseButtonActivePalette());
+    Buffer::sync_to_palette(PaletteActive);
     Buffer::set_text_color2(color1, color2, color3, color4);
 }
 
@@ -481,7 +481,7 @@ void BaseButton::set_text_color3(int color1, int color2, int color3, int color4)
     if (!win_parent_) {
         return;
     }
-    Buffer::sync_to_palette(BaseButtonActivePalette());
+    Buffer::sync_to_palette(PaletteActive);
     Buffer::set_text_color3(color1, color2, color3, color4);
 }
 

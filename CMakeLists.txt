@@ -213,6 +213,7 @@ set(OPENSMACX_SOURCES
     src/veh.cpp
     src/vector.cpp
     src/win.cpp
+    src/winnodelist.cpp
 )
 
 # `<stdint.h>` and `<cstdint>` are C99 and C++11; cl 12.00.8168 ships neither,

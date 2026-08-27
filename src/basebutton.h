@@ -112,9 +112,10 @@ uint32_t *const BaseButtonDefaultTextColors = (uint32_t *)0x00697060;
 Font **const BaseButtonDefaultFonts = (Font **)0x009B8E34;
 
 
-// The palette these setters publish before recolouring. Distinct from
-// `PaletteCurrent` at 0x009B8174; tests outside the hybrid process rebind it.
-inline Palette *&BaseButtonActivePalette() { return *reinterpret_cast<Palette **>(0x009B8180); }
+// The palette these setters publish before recolouring is `PaletteActive`
+// (palette.h, 0x009B8180) - distinct from `PaletteCurrent` at 0x009B8174.
+// The `BaseButtonActivePalette()` pun accessor that used to sit here read
+// the same address through a cast.
 
 
 // The timer tick declared above is not recovered; it forwards to the original

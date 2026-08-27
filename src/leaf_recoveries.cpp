@@ -1085,43 +1085,6 @@ int __cdecl leaf_00592db0_redirect(int x, int y, int left, int top,
     return 1;
 }
 
-/*
-Purpose: Does this window hold the dialog focus, and its partner too?
-
-             mov esi,ecx / call Win::is_dialog_focus / test eax,eax / je no
-             mov ecx,[esi+0xc4] / test ecx,ecx / je yes
-             call Win::is_dialog_focus / test eax,eax / je no
-             yes: mov eax,1 / ret        no: xor eax,eax / ret
-
-         The second call is made on the window at field 0xc4 - which
-         src/win.h names `win_parent_` - not on `this` again; ECX is reloaded
-         from it just before. A NULL parent is not a failure: the answer is
-         yes.
-
-// ORIGINAL: 0x006161A0 ?UNK2@EditBox@@QAEXXZ 0x006161A0-0x006161CA
-// symbol    ?leaf_006161a0_redirect@@YIHPAX0@Z
-// size      42 bytes
-// prototype void (__thiscall ?UNK2@EditBox@@QAEXXZ)(EditBox* this)
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005F2CA0
-Return Value: 1 when both hold focus, 0 otherwise
-Status: Complete
-*/
-int __fastcall leaf_006161a0_redirect(void *self, void *) {
-    if (win_is_dialog_focus_redirect(reinterpret_cast<Win *>(self),
-                                     nullptr) == 0) {
-        return 0;
-    }
-    Win *const parent = *reinterpret_cast<Win *const *>(
-        static_cast<uint8_t *>(self) + 0xC4);
-    if (parent != nullptr
-            && win_is_dialog_focus_redirect(parent, nullptr) == 0) {
-        return 0;
-    }
-    return 1;
-}
 
 /*
 Purpose: Find the table entry matching two keys and set its third word.

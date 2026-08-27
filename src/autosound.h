@@ -17,6 +17,8 @@
  */
 #pragma once
 
+class Win;  // the window this record is embedded at offset 0 of
+
  /*
   * AutoSound - the PROCESS SETTINGS RECORD, embedded at offset 0 of every
   * window (class Win : public AutoSound). 37 ints behind one vfptr; the
@@ -26,7 +28,15 @@
   *
   * FIELD MAP (offset = 0x04 + 4*(N-1)). One member is anchored:
   *   flags_   0x20  BasePop toggles bits 0/1 (UNK3/UNK4)
-  * The other 36 are bulk-copy/reset/zero only across the whole tree -
+  * Two more are typed, not numbered:
+  *   val_7_   0x1C  the child `on_mouse_move` notifies when a position
+  *                  arrives that is NOT the window's own - `Win *`
+  *   val_19_  0x4C  the same slot for the from-parent arm - `Win *`
+  * Both are read only as windows (win.cpp on_mouse_move null-tests them
+  * and calls vslot_23/vslot_07 on them), and the defaults block stores
+  * whatever pointer value it was filled with, so the int was storage
+  * typing, not behaviour.
+  * The other 34 are bulk-copy/reset/zero only across the whole tree -
   * no per-field behaviour exists anywhere yet, so they stay numbered
   * rather than guessed. Their names arrive with the settings/options
   * writer, still unrecovered. IDB independently numbered them identically
@@ -71,7 +81,9 @@ class AutoSound {
   int val_4_;
   int val_5_;
   int val_6_;
-  int val_7_;
+  // 0x1C. A `Win *`, not an int: `Win::on_mouse_move` reads it as the child
+  // to notify when the position is not the window's own. Was `int val_7_`.
+  Win *val_7_;
  protected:
   // MEASURED: BasePop::UNK3/UNK4 set/clear bits 0/1 of this word
   // (basepop.cpp) - the only per-field behaviour recovered anywhere.
@@ -92,7 +104,9 @@ class AutoSound {
   int val_16_;
   int val_17_;
   int val_18_;
-  int val_19_;
+  // 0x4C. A `Win *`, not an int: the from-parent arm of
+  // `Win::on_mouse_move` reads it as the child to notify. Was `int val_19_`.
+  Win *val_19_;
   int val_20_;
   int val_21_;
   int val_22_;
