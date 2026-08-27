@@ -74,7 +74,11 @@ PENDING_AT = re.compile(r"PENDING_BODY\s*\(\s*(0x[0-9A-Fa-f]{8})")
 # made this floor read 9 and then be left alone: five of the nine could not
 # be fixed the way the other three had to be, so nobody fixed any.
 FLOORS = {
-    "duplicate": 4,
+    # 1, not the 4 an earlier commit recorded: the four documented below are
+    # down to the single live one - 0x00428550, CouncWin::~CouncWin - whose
+    # defusal belongs to CouncWin's class pass (empty hypothesis-layout
+    # destructor; see the long note above).
+    "duplicate": 1,
     # TWO LIVE LANDMINES REMAIN, named so the number cannot become scenery:
     #   0x00428550 - claimed in BOTH 00428550.cpp and councwin.cpp (it is
     #     also a duplicate), so which definition the build links has to be
@@ -98,7 +102,10 @@ FLOORS = {
     # a forwarder edit. A floor above 0 still means the gate passes on a live
     # fault - see P0.5 - so this stays a stated debt with an owner, not a
     # number nobody remembers choosing.
-    "contradicted": 1,
+    # 0 as of the 2026-08-27 WIN pass: every reference pointing at a
+    # no-longer-existing layout is gone, so nothing contradicts its host any
+    # more; zero is where this floor now stands.
+    "contradicted": 0,
     "archive-only-forwarder": 20,
     "unknown-host-files": 0,
 }

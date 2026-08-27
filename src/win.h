@@ -31,74 +31,10 @@ class Menu; // forward declaration
 struct BorderSizing;
 class Scroll; // forward declaration
 
-// THE EMBEDDED OBJECT AT Win+0xC8. Only `??0Win@@QAE@XZ`, `??1Win@@QAE@XZ`
-// and this class's own out-of-line scalar deleting destructor (0x005F8770)
-// reference its vtable at 0x0066FF30 anywhere in .text, and that table is
-// exactly ONE slot - the destructor's own address - so it belongs to Win
-// alone. It is a small singly-linked list: `head_` walks nodes whose own
-// +0x8 is a payload `free()`s and +0xC is the next pointer, proven by
-// 0x005F8770 and by `Win::~Win()` (0x005EBC90) performing the identical
-// walk INLINE at Win+0xCC.._0xDC rather than calling it. `external_` is a
-// "do not own this list" guard: nonzero skips the free loop entirely.
-// `current_` is scratch during that loop, but is read live elsewhere too -
-// `Win::is_dialog_focus` (0x005F2CA0) reads it as the top-of-stack node,
-// whose own +0x4 holds the `Win *` currently holding focus.
-//
-// NOT A SECOND BASE: it is a plain member (`Win::list_`), so Win's own
-// vtable at offset 0 stays exactly as it is - hand-installed, not
-// compiler-generated.
-class WinNodeList {
- public:
-  WinNodeList() : head_(0), current_(0), count_(0), tail_(0), external_(0) {}
-  // DEFINED IN THE CLASS so VC6 can inline it into `??_GWinNodeList`,
-  // which is what the image is: ONE function at 0x005F8770 that restores
-  // the vfptr and walks the list. Out-of-line, the deleting destructor
-  // tail-CALLS `??1WinNodeList@@UAE@XZ` instead and measures 14
-  // instructions against the image's 54.
-  virtual ~WinNodeList() {
-      // IMAGE ORDER: the head is read before the vfptr-restore that every
-      // scalar deleting destructor opens with, matching `Win::~Win()`
-      // performing the same walk inline. `external_` guards the whole loop -
-      // nonzero means this list does not own its nodes.
-      void *node = head_;
-      if (node != 0) {
-          if (external_ == 0 && count_ > 0) {
-              int i = 0;
-              do {
-                  Win *next = *reinterpret_cast<Win **>(
-                      reinterpret_cast<char *>(node) + 0xC);
-                  current_ = next;
-                  void *payload = *reinterpret_cast<void **>(
-                      reinterpret_cast<char *>(node) + 8);
-                  if (payload != 0) {
-                      std::free(payload);
-                  }
-                  *reinterpret_cast<void **>(
-                      reinterpret_cast<char *>(head_) + 8) = 0;
-                  if (head_ != 0) {
-                      std::free(head_);
-                  }
-                  node = current_;
-                  head_ = node;
-                  ++i;
-              } while (i < count_);
-          }
-          head_ = 0;
-          tail_ = 0;
-          count_ = 0;
-      }
-      tail_ = 0;
-  }
-
-  void *head_;      // 0x4  (Win+0xCC)
-  void *current_;   // 0x8  (Win+0xD0)
-  int count_;         // 0xC  (Win+0xD4)
-  // AN INDEX, not a pointer: the node walk does `++tail_ == count_`,
-  // which is a ring position. Same four bytes either way, so the
-  // layout is unchanged and the assert still holds.
-  int tail_;          // 0x10 (Win+0xD8)
-  int external_;      // 0x14 (Win+0xDC)
-};
+// The embedded Win+0xC8 object, in its own TU since 2026-08-26. The class
+// is carried VERBATIM - in-class destructor included, which is what makes
+// `??_GWinNodeList` at 0x005F8770 measure 54/54 - see winnodelist.h.
+#include "winnodelist.h"
 
  /*
   * Win class: Most basic window class.
@@ -111,6 +47,13 @@ class WinNodeList {
 // shape independently.
 //
 // Declaring it is what gives Win, and through it GraphicWin, a real vfptr.
+// The two per-window hooks Win carries as members, typed as what the
+// image dispatches through them: `mouse_move_hook_` is called with the
+// position on every non-parent mouse move, `key_hook_` with the virtual
+// key on every key-down. Both default to null and the bodies null-test.
+typedef void (__cdecl *WinMouseMoveHookFn)(int x, int y);
+typedef int (__cdecl *WinKeyHookFn)(int key);
+
 class Win : public AutoSound {
  public:
   // Reaches Win's fields directly: the byte-exact body for 0x005F5080
@@ -300,7 +243,12 @@ class Win : public AutoSound {
   static LRESULT __stdcall window_proc(HWND window, UINT message,
                                        WPARAM wparam, LPARAM lparam);
   static void clear_bubble_text();
-  static void set_def_focus(int focus);
+  // `Win *`, not int: the image's own name is
+  // ?set_def_focus@Win@@QAAXPAUWin@@@Z - PAUWin@@ in the parameter list.
+  // Declared static here for the same measured reason as every other `QAA`
+  // image name above: the body reads its argument at [esp+4], with no
+  // receiver on the stack.
+  static void set_def_focus(Win *focus);
   void set_scroll_sprite(int value);
   void UNK9(int value);
   void reset_window_clip();
@@ -405,7 +353,12 @@ class Win : public AutoSound {
   uint32_t field_178_;
   uint32_t field_17C_;
   uint32_t field_180_;
-  uint32_t field_184_;
+  // 0x184. The palette generation this window last synchronised to: every
+  // seed-compare site (`sync_palette`, `minimize`, `update_zorder`, the
+  // redraw family) compares it against `PaletteActive->seed_` (Palette's
+  // own 0x400) and refreshes through `set_active_window` when it has
+  // fallen behind. Was `field_184_`.
+  uint32_t palette_seed_cache_;
   Sprite *cursor_sprite_;
   uint32_t field_18C_;
   uint32_t field_190_;
@@ -430,7 +383,9 @@ class Win : public AutoSound {
   int child_count_;
   uint32_t field_400_;
   uint32_t field_404_;
-  uint32_t field_408_;
+  // 0x408. A CALLBACK, not storage: `on_mouse_move` calls it with the
+  // position when the move is not from a parent. Was `uint32_t field_408_`.
+  WinMouseMoveHookFn mouse_move_hook_;
   uint32_t field_40C_;
   uint32_t field_410_;
   uint32_t field_414_;
@@ -440,7 +395,9 @@ class Win : public AutoSound {
   uint32_t field_424_;
   uint32_t field_428_;
   uint32_t field_42C_;
-  uint32_t field_430_;
+  // 0x430. A CALLBACK, not storage: `key_down_event` calls it with the
+  // virtual key and keeps its return. Was `uint32_t field_430_`.
+  WinKeyHookFn key_hook_;
   uint32_t field_434_;
   uint32_t field_438_;
   Scroll *scroll_vert_;
@@ -691,8 +648,6 @@ int __cdecl in_box(
 void __cdecl offset_rect(RECT *rect, int dx, int dy);
 RECT *__cdecl make_rect(RECT *rect, int x, int y, int width, int height);
 int __stdcall rect_center(RECT *rect, int *x, int *y);
-
-int __fastcall win_is_dialog_focus_redirect(Win *self, void *);
 
 
 // Shared device-context state: the reference count, the cached handle, and
@@ -971,9 +926,9 @@ extern RECT DirectDrawClipRect;        // 0x009BC2D0
 
 
 
-// The active palette lives at a fixed address; rebindable so tests can
-// point it at a local rather than requiring the mapped global.
-inline Palette *&WinActivePalette() { return *reinterpret_cast<Palette **>(0x009B8180); }
+// The active palette is `PaletteActive` (palette.h), the mapped global at
+// 0x009B8180. The `WinActivePalette()` pun accessor that used to sit here
+// had zero callers and read the same address through a cast.
 
 
 
@@ -1051,8 +1006,6 @@ int __cdecl cd_check();
 // .cpp binding, BYTE_EXACT once the address reached the expression as a
 // literal. That is the whole reason these live in a header - it was never
 // a reason for them to live in a header of their OWN.
-
-typedef void(__cdecl *FnSetActiveWindow)(Win *);
 
 // SUPERSEDED - and the part that was wrong is the REMEDY, not the
 // diagnosis. This note recorded, correctly and by measurement, that

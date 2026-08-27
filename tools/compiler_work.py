@@ -165,7 +165,7 @@ SCAFFOLD_CEILINGS = {
     "deleting_thunks.cpp markers": 74,
     "delegation_thunks.cpp markers": 27,
     "field_accessors.cpp markers": 42,
-    "leaf_recoveries.cpp markers": 53,
+    "leaf_recoveries.cpp markers": 52,
     "nullsub_thunks.cpp markers": 56,
     "guarded_teardowns.cpp markers": 25,
     "PENDING_BODY forwarders": 224,
