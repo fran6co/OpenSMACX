@@ -288,7 +288,13 @@ class Win : public AutoSound {
   // never through a vtable slot - PullDown::hide, DiploPop::hide,
   // Popup::on_nc_hittest and ReportIf::done all encode one - so they are
   // declared non-virtual on purpose. All three are unrecovered.
- private:
+ // PROTECTED, NOT PRIVATE: GraphicWin derives from Win and the homed window
+ // bodies read these directly - which is what the image does, since they are
+ // one object (the same reasoning that made AutoSound's fields protected).
+ // `private` modelled a containment that the inheritance edge replaced.
+ // Access to a member affects no offset and no emitted byte, so the layout
+ // and every claim are untouched.
+ protected:
   uint32_t iFlags_;         // 0x98, immediately after AutoSound's 0x98 bytes
   uint32_t iSomeFlag_;
   uint32_t field_A0_;

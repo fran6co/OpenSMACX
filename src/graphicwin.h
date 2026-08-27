@@ -24,6 +24,11 @@
  /*
   * GraphicWin class
   */
+// The optional paint hook stored at 0xA10. See redraw's Verification note:
+// it is entered by a bare `call eax` with nothing pushed and ECX not set, so
+// it is not __thiscall, and zero-argument __cdecl and __stdcall are
+// indistinguishable here.
+typedef void(__cdecl func_graphic_win_paint_hook)();
 // The base is spelled `public` deliberately. Win grants `friend class
 // BaseButton;` / `friend class Scroll;` so those classes may touch
 // win_parent_, but VC6 does not implement the friend clause of
@@ -112,7 +117,10 @@ class GraphicWin : public Win, public Buffer {
   uint32_t field_A04_;
   uint32_t poCanvas_;
   uint32_t field_A0C_;
-  uint32_t field_A10_;
+  // 0xA10. THE PAINT HOOK `redraw` calls before painting, not storage: null
+  // by default, installed from outside, entered with no arguments. Was
+  // `uint32_t field_A10_` - same four bytes, and the caller stops casting.
+  func_graphic_win_paint_hook *field_A10_;
 };
 
 // Buffer::fill is not recovered yet, so it is reached through a seam on the
@@ -202,11 +210,6 @@ typedef void (OriginalObject::*func_graphic_win_overlay_nonclient)(RECT *);
 // The translation table fill consults before remapping. A null table means
 // the plain blit is the whole operation, which is the common case.
 inline void *&GraphicWinColorMapTable() { return *reinterpret_cast<void **>(0x009B3390); }
-// The optional hook stored at 0xA10. See redraw's Verification note: it is
-// entered by a bare `call eax` with nothing pushed and ECX not set, so it is
-// not __thiscall, and zero-argument __cdecl and __stdcall are
-// indistinguishable here.
-typedef void(__cdecl func_graphic_win_paint_hook)();
 
 
 // GraphicWin::init's four remaining original dependencies. Win::init at

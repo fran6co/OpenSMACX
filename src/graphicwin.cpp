@@ -85,14 +85,13 @@ disjoint regions.
 GraphicWin::GraphicWin() {
 
     // Win's own vtable slot and the Buffer subobject's vtable slot are
-    // compiler-managed, not ordinary members a derived class can name; Win's
-    // own field_134_/field_138_ are private to Win, unreachable from
-    // GraphicWin except at their raw offset. Everything else below is
-    // GraphicWin's own field, written directly.
-    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
+    // compiler-managed, not ordinary members a derived class can name.
+    // field_134_/field_138_ are Win's own, named now that the base's fields
+    // are protected - one object, which is how the image reaches them.
+    // Everything else below is GraphicWin's own field, written directly.
     field_A10_ = 0;
-    object[0x134 / 4] = 0;
-    object[0x138 / 4] = 0;
+    field_134_ = 0;
+    field_138_ = 0;
     field_9CC_ = 0;
     field_9D0_ = 0;
     field_9D4_ = 0;
@@ -180,15 +179,14 @@ uint32_t GraphicWin::close() {
     win_close_original(this);
     Buffer::close();
 
-    // Win's own field_134_/field_138_ are private to Win, unreachable from
-    // GraphicWin except at their raw offset; everything else here is
-    // GraphicWin's own field, written directly.
+    // Win's own field_134_/field_138_ are named now that the base's fields
+    // are protected; everything else here is GraphicWin's own field, written
+    // directly.
     void *const release_target =
         reinterpret_cast<void *>(static_cast<uintptr_t>(poCanvas_));
     field_A10_ = 0;
-    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
-    object[0x134 / 4] = 0;
-    object[0x138 / 4] = 0;
+    field_134_ = 0;
+    field_138_ = 0;
     field_9CC_ = 0;
     field_9D0_ = 0;
     field_9D4_ = 0;
@@ -276,17 +274,15 @@ Status: Complete
 */
 
 int GraphicWin::fill(int x1, int y1, int x2, int y2, int color) {
-    return reinterpret_cast<Buffer *>(
-        reinterpret_cast<uint8_t *>(this) + 0x444)->fill(x1, y1, x2, y2,
-                                                        color);
+    // The surface subobject: Buffer is a real base at 0x444, so the qualified
+    // call names it directly instead of casting the offset by hand.
+    return Buffer::fill(x1, y1, x2, y2, color);
 }
 
 
 // Slot 0xF4 on the parent's vtable. The stock body at 0x004042B0 is
 // `mov eax, ecx; ret`, so a non-null parent answers with itself.
 typedef void * (OriginalObject::*func_graphic_win_parent_query)();
-// Virtual slot 0x30, the window's own paint.
-typedef void (OriginalObject::*func_graphic_win_paint)();
 
 // USER32!InvalidateRect - called directly (see GraphicWin::redraw below).
 // image address 0x00669304 is that call's own IAT slot; it is not read as
@@ -304,11 +300,15 @@ Purpose: Paint the window's surface in one colour. A window that is marked
 //        `call dword ptr [eax+0xf4]`, where the pointer-to-member form
 //        loads the slot into a register first (two instructions).
 // TRIED: not chased to completion - still a big structural gap beyond
-//            that one call (80 image instructions against this body's 66,
-//            largely a different register plan for `flags_`/`parent`
-//            starting at the very first branch). This is a large function
-//            (246 bytes); the vtable-slot fix is banked, the rest is not
-//            at this budget.
+//            that one call (80 image instructions, largely a different
+//            register plan for `flags_`/`parent` starting at the very first
+//            branch). This is a large function (246 bytes); the vtable-slot
+//            fix is banked, the rest is not at this budget.
+// LEVER: the member-form rewrite of 2026-08-27 (iFlags_/win_parent_/the two
+//        RECTs/dib_ named instead of memcpy walks off raw offsets) scored
+//        11/80 where the raw-offset form scored 1/80 - the honest spelling
+//        is the close one, and the remaining gap stays a register-plan
+//        divergence from the first branch on.
 // size      246 bytes
 // prototype void (__thiscall ?fill@GraphicWin@@QAEXH@Z)(GraphicWin* this, int)
 // callers   58   call targets   3
@@ -328,24 +328,21 @@ Verification note: three loads the original performs are deliberately absent.
          reader diffing against the disassembly will see both differences.
 */
 void GraphicWin::fill(int color) {
-    uint8_t *const object = reinterpret_cast<uint8_t *>(this);
     // The window's Buffer subobject at +0x444, typed so its methods can be
     // called by NAME - through a pointer-to-member the call sites emitted
-    // `call [ptr]` where the image has `call rel32`.
-    Buffer *const surface = reinterpret_cast<Buffer *>(object + 0x444);
-    uint32_t flags;
-    std::memcpy(&flags, object + 0x98, sizeof(flags));
-    uint8_t *parent;
-    std::memcpy(&parent, object + 0xC4, sizeof(parent));
+    // `call [ptr]` where the image has `call rel32`. Buffer is a real base,
+    // so the upcast is the language's own +0x444.
+    Buffer *const surface = this;
     // Bit 19 alone does not make the window transparent: the parent has to
     // exist and has to answer its slot 0xF4 with a nonzero value. The stock
     // implementation at 0x004042B0 is `mov eax, ecx; ret`, so a non-null
     // parent answers with itself and the copy path is the default.
     bool transparent = false;
-    if ((flags & 0x80000) != 0 && parent != nullptr) {
+    if ((iFlags_ & 0x80000) != 0 && win_parent_ != nullptr) {
         // ONE `call dword ptr [reg+0xf4]`, not two instructions: the
         // pointer-to-member spelling loads the slot into a register first.
         typedef void *(__fastcall *parent_query_fn)(void *);
+        Win *const parent = win_parent_;
         transparent =
             vtable_slot<parent_query_fn>(parent, 0xF4)(parent) != nullptr;
     }
@@ -353,17 +350,16 @@ void GraphicWin::fill(int color) {
         surface->fill(color);
         return;
     }
-    int32_t outer_x, outer_y, inner_x, inner_y;
-    std::memcpy(&outer_x, object + 0x14C, sizeof(outer_x));
-    std::memcpy(&outer_y, object + 0x150, sizeof(outer_y));
-    std::memcpy(&inner_x, object + 0x13C, sizeof(inner_x));
-    std::memcpy(&inner_y, object + 0x140, sizeof(inner_y));
-    int32_t width, height;
-    std::memcpy(&width, object + 0x4C4, sizeof(width));
-    std::memcpy(&height, object + 0x4C8, sizeof(height));
-    reinterpret_cast<Buffer *>(parent + 0x444)->copy(
-        reinterpret_cast<Buffer *>(surface), outer_x + inner_x,
-        outer_y + inner_y, 0, 0, width, -height);
+    // The blit origin is where the window sits in its parent (outer_rect_)
+    // plus where the draw area sits in the window (client_rect_).
+    const int origin_x = client_rect_.left + outer_rect_.left;
+    const int origin_y = client_rect_.top + outer_rect_.top;
+    // The DIB's own dimensions: biHeight is stored negative (top-down), so
+    // the vertical passes negate it back.
+    int width = static_cast<int>(dib_.bmiHeader.biWidth);
+    int height = static_cast<int>(dib_.bmiHeader.biHeight);
+    static_cast<Buffer *>(static_cast<GraphicWin *>(win_parent_))->copy(
+        surface, origin_x, origin_y, 0, 0, width, -height);
     void *const table = GraphicWinColorMapTable();
     if (table == nullptr) {
         return;
@@ -371,8 +367,8 @@ void GraphicWin::fill(int color) {
     // Re-read, do NOT hoist onto the pair above: the original reloads both at
     // 0x005D5302 and 0x005D5308, so a blit that resized the surface is seen
     // by the remap. The bounds are inclusive, hence width-1 and -1-height.
-    std::memcpy(&width, object + 0x4C4, sizeof(width));
-    std::memcpy(&height, object + 0x4C8, sizeof(height));
+    width = static_cast<int>(dib_.bmiHeader.biWidth);
+    height = static_cast<int>(dib_.bmiHeader.biHeight);
     surface->map_colors(0, 0, width - 1, -1 - height, table);
 }
 
@@ -406,42 +402,41 @@ Verification note: the calling convention of the 0xA10 paint hook is inferred,
          callee-pop fact.
 */
 void GraphicWin::redraw() {
-    uint8_t *const object = reinterpret_cast<uint8_t *>(this);
     if (HandleMain == nullptr) {
         return;
     }
-    uint32_t state;
-    std::memcpy(&state, object + 0x1A0, sizeof(state));
+    // Win's own re-entrancy latch, named now that the base's fields are
+    // protected.
+    uint32_t state = field_1A0_;
     if ((state & 1) != 0) {
         return;
     }
     state |= 1;
-    std::memcpy(object + 0x1A0, &state, sizeof(state));
+    field_1A0_ = state;
     ScrollCurrentWin() = static_cast<Win *>(this);
 
-    func_graphic_win_paint_hook *hook;
-    std::memcpy(&hook, object + 0xA10, sizeof(hook));
-    if (hook != nullptr) {
-        hook();
+    // The paint hook, called before the paint itself.
+    if (field_A10_ != nullptr) {
+        field_A10_();
     }
-    uintptr_t *const vtable = *reinterpret_cast<uintptr_t **>(object);
-    func_graphic_win_paint const paint =
-        original_method<func_graphic_win_paint>(vtable[0x30 / 4]);
-    (ORIGINAL(this)->*paint)();
+    // The window's own paint, vtable slot 12: the image reaches it the way
+    // any virtual call is reached, so the call is spelled as one.
+    vslot_12();
     this->overlay_nonclient(nullptr);
 
     // Re-read, do NOT reuse the latched value: the original reloads at
     // 0x005D5ABB before clearing bit 0, so any bit the paint hook or the
     // virtual paint set on 0x1A0 survives this clear.
-    std::memcpy(&state, object + 0x1A0, sizeof(state));
+    state = field_1A0_;
     state &= 0xFFFFFFFEU;
-    std::memcpy(object + 0x1A0, &state, sizeof(state));
+    field_1A0_ = state;
 
     if (!static_cast<Win *>(this)->is_visible()) {
         return;
     }
-    RECT area;
-    std::memcpy(&area, object + 0x474, sizeof(area));
+    // The surface RECT inside the Buffer subobject - the same field
+    // update() reads below.
+    RECT area = rect2_;
     int x_offset = 0;
     int y_offset = 0;
     static_cast<Win *>(this)->client_to_screen(&x_offset, &y_offset);
@@ -475,15 +470,12 @@ Return Value: n/a
 Status: Complete
 */
 void GraphicWin::update(GraphicWin *) {
-    // Four separate field reads, not a memcpy'd RECT: the latter compiles
-    // a real `call memcpy` here (unlike redraw()'s own read of the same
-    // field, which VC6 happens to inline), where the image loads each of
-    // the four dwords directly.
-    uint8_t *const object = reinterpret_cast<uint8_t *>(this);
-    int height = *reinterpret_cast<int *>(object + 0x480) -
-                 *reinterpret_cast<int *>(object + 0x478);
-    int width = *reinterpret_cast<int *>(object + 0x47C) -
-                *reinterpret_cast<int *>(object + 0x474);
+    // Four separate field reads of the surface RECT, not a copied RECT: the
+    // latter compiles a real `call memcpy` here (unlike redraw()'s own read
+    // of the same field, which VC6 happens to inline), where the image loads
+    // each of the four dwords directly.
+    int height = rect2_.bottom - rect2_.top;
+    int width = rect2_.right - rect2_.left;
 
     if (static_cast<Win *>(this)->is_visible()) {
         RECT rect;
@@ -644,15 +636,12 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
         return base_result;
     }
 
-    // The window's own Buffer keeps a back pointer to the window in its field
-    // at 0x4, written as `mov [esi+0x448], esi` at 0x005D5012 - before the
-    // minimum-size computation, in the original's order. That field
-    // (Buffer::poOwner_) is private to Buffer and friended only to Win, not
-    // to GraphicWin, so it is reached at its raw offset rather than through
-    // `buffer_.poOwner_`.
-    uint32_t *const buffer_owner_slot =
-        reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(this) + 0x448);
-    *buffer_owner_slot = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this));
+    // The window's own Buffer keeps a back pointer to the window, written as
+    // `mov [esi+0x448], esi` at 0x005D5012 - before the minimum-size
+    // computation, in the original's order. poOwner_ is Buffer's own member
+    // now that the base's fields are protected, so the store needs no offset
+    // and no cast.
+    poOwner_ = this;
     compute_min_size();
 
     if ((flags & 0x800) == 0) {
@@ -665,10 +654,7 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
         // bit 2 with the height. Both the flag dword and the thickness are
         // loaded once, at 0x005D5038 and 0x005D503E, ahead of either test;
         // the original tests only AL, which is equivalent for bits 2 and 3.
-        // 0x98 is Win's own private iFlags_, unreachable from GraphicWin
-        // except at its raw offset.
-        const uint32_t nonclient_flags =
-            *reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(this) + 0x98);
+        const uint32_t nonclient_flags = iFlags_;
         const int thickness = ScrollDefaultThickness;
         if ((nonclient_flags & 8) != 0) {
             width += thickness;

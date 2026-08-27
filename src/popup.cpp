@@ -765,6 +765,10 @@ int Popup::on_nc_hittest(int x, int y) {
 // popup allocator hook, so it must stay a real symbol.
 Status: Complete
 */
+// `int`, not `Popup *`: the image's own name is ?alloc@Popup@@SAHXZ - H, an
+// int return - and WinMain stores this address in the popup allocator hook,
+// which is typed to match. The value carried is really the new object (the
+// same wire-format lesson as Win::move); the H is what the image decreed.
 int __cdecl Popup::alloc() {
     return (int)new Popup;
 }

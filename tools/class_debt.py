@@ -78,7 +78,14 @@ CEILINGS = {
     # 239 as of the 2026-08-27 WIN pass, second sweep: on_activate's
     # IDirectDrawSurface slots go by name and resize_event's callback/slot
     # dispatch reads its own members; two more offset walks retired.
-    "raw self-access": 239,
+    # 230 as of the 2026-08-27 BASE-CLASS pass: Win's and Buffer's field
+    # blocks went protected (the AutoSound precedent) and GraphicWin's five
+    # bodies stopped punning `this` to reach them - the ctor/close
+    # field_134_/field_138_ pun, fill's nine memcpy walks, redraw's
+    # field_1A0_/field_A10_/rect2_, update's rect2_ pair, init's poOwner_
+    # store and iFlags_ read. Every touched claim re-measured BYTE_EXACT,
+    # and fill(int) went 1/80 -> 11/80 on the honest form.
+    "raw self-access": 230,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
