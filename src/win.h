@@ -52,6 +52,8 @@ class Scroll; // forward declaration
 // position on every non-parent mouse move, `key_hook_` with the virtual
 // key on every key-down. Both default to null and the bodies null-test.
 typedef void (__cdecl *WinMouseMoveHookFn)(int x, int y);
+// resize_event's installable width/height callback, stored in Win::field_400_.
+typedef void (__cdecl *WinResizeCallback)(int width, int height);
 typedef int (__cdecl *WinKeyHookFn)(int key);
 
 class Win : public AutoSound {
@@ -381,7 +383,12 @@ class Win : public AutoSound {
   // is_descendant does `test eax,eax / jle` and then `cmp edi, eax / jl`
   // against a loop index.
   int child_count_;
-  uint32_t field_400_;
+  // 0x400. The RESIZE CALLBACK: `resize_event` null-tests it and calls it
+  // with the new width and height; nothing in the recovered tree writes it,
+  // so its installer is still an original dependency. Typed here rather
+  // than cast at the one use, same rule as key_hook_. Named typedef so
+  // header_offsets' layout walk treats this like mouse_move_hook_ above.
+  WinResizeCallback field_400_;
   uint32_t field_404_;
   // 0x408. A CALLBACK, not storage: `on_mouse_move` calls it with the
   // position when the move is not from a parent. Was `uint32_t field_408_`.

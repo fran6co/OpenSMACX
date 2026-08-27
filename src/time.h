@@ -51,6 +51,13 @@ class Time {
   Time(); // 006161D0
   ~Time(); // 00616200
   
+  // THE INT PAYLOADS ARE THE IMAGE'S OWN ABI. `param2` carries pointers in
+  // practice (Palette::timer_callback's Palette*, win.cpp sub_63c4e0's
+  // Win*) and cb_param2_ below models it as one - but every Time symbol the
+  // shipped binary emits spells these H (int): P6AXH@ZHII across init/
+  // start/pulse. Typing a parameter here would emit PAV and detach this
+  // class from its recorded names; the storage side keeps the pointer
+  // truth instead.
   void init(void(__cdecl *callback)(int), int param, uint32_t cnt, uint32_t res);
   void init(void(__cdecl *callback)(int, int), int param, int param2, uint32_t cnt, uint32_t res);
   uint32_t start(void(__cdecl *callback)(int), int param, uint32_t cnt, uint32_t res);

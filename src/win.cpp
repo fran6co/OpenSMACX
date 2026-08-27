@@ -3395,6 +3395,13 @@ Purpose: Walk one root window's subtree in z-order, appending every visible
          to retire that forwarder - the divergence travels with it rather
          than being hidden in an archive the build never sees.
 */
+// TRIED (2026-08-27, the mandated honest spellings): carrying `cur` as
+// `Win *` and reading each child's parent through `c->win_parent_` instead
+// of the 0xC4 pun. Measured 1 of 107 - identical to the pre-existing state,
+// so neither form moves the body. THE CAUSE IS UPSTREAM OF SPELLING: the
+// image opens `push ecx` and reads its argument at [esp+N] (the FPO-style
+// prologue of the RECEIVER-SPILL WALL in docs/recovery/AGENT_BRIEF.md),
+// which no source spelling reaches here.
 // ORIGINAL: 0x005F4EC0 ?recurse_zorder@@YAXPAUWin@@@Z 0x005F4EC0-0x005F5013 FILE
 // symbol    ?recurse_zorder@@YAXPAVWin@@@Z
 // notes     PAV, not the catalogue's PAU: the catalogue guessed `struct
@@ -3409,6 +3416,11 @@ Purpose: Walk one root window's subtree in z-order, appending every visible
 void __cdecl recurse_zorder(Win * window) {
     bool found = false;
     int i = 0;
+    // TRIED (2026-08-27): carrying `cur` as `Win *` and reading the parent
+    // through c->win_parent_ - both the honest spellings. It collapsed the
+    // body from its high-nineties agreement to 1 of 107: the typed compare
+    // forces VC6 off the register pairing the image schedules, unlike
+    // get_mouse_window_recurse where the same retype held. Casts restored.
     int cur;
 
     if (window->child_count_ > 0) {
@@ -3491,6 +3503,16 @@ Purpose: The tree walk `Win::get_mouse_window` delegates to once it has a
          address while the real body sat in an archive the build never
          compiled.
 */
+// TRIED (2026-08-27, the mandated honest form): walking this object's own
+// members - iSomeFlag_/iFlags_, win_parent_, child_count_, children_[],
+// poWinBase_, outer_rect_/client_rect_ fields, buffer1_..4_ - instead of
+// the char*-plus-offset walk. Attempted after a full listing_diff: the
+// image opens `push ecx` with args read at [esp+N], ours opens a real EBP
+// frame regardless of spelling, so agreement never leaves instruction 0
+// (measured 1 of 332 both ways). RECEIVER-SPILL WALL per
+// docs/recovery/AGENT_BRIEF.md; member rewrite parked until a lever for
+// that prologue exists. The +0x444 Buffer cast at the tail predates this
+// note and is part of that same untested walk.
 // ORIGINAL: 0x005F6AB0 ?get_mouse_window_recurse@@YAHPAUWin@@PAHPAH@Z 0x005F6AB0-0x005F6F06 FILE
 // symbol    ?get_mouse_window_recurse@@YAPAVWin@@PAV1@PAH1@Z
 // notes     Differs from the catalogued name in both directions: PAV for
@@ -3677,11 +3699,17 @@ Purpose: Restore the saved screen area and union its rectangle into the
          addresses.
 */
 // ORIGINAL: 0x005F1750 sub_5f1750 0x005F1750-0x005F1812 FILE
+// symbol    ?restore_flip_sprite@@YAXH@Z
+// named     from behaviour at its two call sites (cursor-save restore)
 // size      194 bytes
 // kind      game
 // `a1` gates the flip: nonzero means push the accumulated dirty rect to
 // the screen before returning.
-void __cdecl sub_5f1750(int do_flip) {
+// NAMED 2026-08-27 from its two call sites, both in the cursor-draw
+// path: before a cursor paints, whatever WinFlipSprite keeps of the
+// screen under the old one goes back - copy onto ScreenBuffer, union the
+// rectangle into the dirty region, flip only when asked.
+void __cdecl restore_flip_sprite(int do_flip) {
     if (WinFlipSprite != 0) {
         g_WIN_BUFFER->copy(
             (&ScreenBuffer), 0, 0,
@@ -3730,6 +3758,13 @@ Purpose: Run the teardown step for the given instance, but only while it is
 // tops out at MNEMONIC_ONLY - seven mnemonics agreeing, one register wrong -
 // across eight source shapes. Only phrasing the tail call as a member on
 // `a1` reproduces ecx.
+// NAMED-INT, DELIBERATE (2026-08-27): `context` IS a Win* - its one
+// registration site below passes `reinterpret_cast<int>(this)` into
+// Time::start - but the IMAGE keeps it an H end to end: the symbol above
+// spells YAXH, and every Time prototype spells its callback payload H
+// (time.cpp P6AXH@ZH...). A pointer-typed parameter would emit PAV and
+// detach the name from the shipped bytes. The int is the image's own
+// generic-timer ABI; the pun documents itself here instead of pretending.
 void __cdecl sub_63c4e0(int context) {
     if (context != 0 && WinFocusWindow == reinterpret_cast<Win *>(context)) {
         reinterpret_cast<Win *>(context)->sub_63c7c0();
@@ -4889,20 +4924,14 @@ int Win::resize_event(int width, int height) {
       }
     }
   }
+  // field_400_ IS the resize callback: storage typed where it is declared,
+  // so no cast sits between the null-test and the call.
   if (field_400_ != 0) {
-    typedef void(__cdecl * Fn2)(int, int);
-    Fn2 fn = (Fn2)field_400_;
-    fn(width, height);
+    field_400_(width, height);
   }
-  {
-    typedef int (MfpBase::*Fn2m)(int, int);
-    union Conv2 {
-      Fn2m asMfp;
-      void *asPtr;
-    } c2;
-    c2.asPtr = (*(void ***)this)[0x34 / 4];
-    (reinterpret_cast<MfpBase *>(this)->*c2.asMfp)(width, height);
-  }
+  // Slot 13 of Win's own vtable - vslot_13 - reached as the virtual call
+  // the image's [vtable+0x34] dispatch is.
+  vslot_13(width, height);
   redo_caption_buttons();
   return 0;
 }
@@ -5446,8 +5475,8 @@ typedef int (__stdcall *ComSlot17)(void *self, HDC *out);
 
 #define WFIELD(obj, off) (*reinterpret_cast<int *>(reinterpret_cast<char *>(obj) + (off)))
 // Homed below; the signature is the one its TRIED note measured -
-// `void __cdecl sub_5f1750(int)`, from the [esp+0x14] stack read.
-void __cdecl sub_5f1750(int);
+// `void __cdecl restore_flip_sprite(int)`, from the [esp+0x14] stack read.
+void __cdecl restore_flip_sprite(int);
 extern "C" int __cdecl update_screen(RECT *, Win *);
 
 
@@ -8133,7 +8162,7 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
                 while (ShowCursor(0) >= 0) {
                 }
             } else {
-                sub_5f1750(0);
+                restore_flip_sprite(0);
             }
 
             int field188b = WFIELD(win, 0x188);
@@ -8181,7 +8210,7 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
         // win->0x188 == 0: nothing pending under this window.
         if (WinFlipSprite != 0) {
             int ebxFlag = 1;
-            sub_5f1750(1);
+            restore_flip_sprite(1);
             while (ShowCursor(ebxFlag) <= 0) {
             }
         }
@@ -10114,24 +10143,24 @@ void __cdecl Win::OnKey(void * hwnd, unsigned int key, long flags, int repeat, u
     }
 
     if (*p_9b7a8c != 0 && flags != 0) {
-        typedef void (__cdecl *cb_t)(unsigned int);
-        cb_t cb = (cb_t)*p_9b7a8c;
-        cb(key);
+        // 0x009B7A8C IS win.h's typed key hook; call it by its name.
+        WinKeyHook(key);
     }
 
     if (*p_9b7a88 != 0) {
-        typedef void (__cdecl *jmp_t)(void);
-        jmp_t jmp = (jmp_t)*p_9b7a88;
-        jmp();
+        // 0x009B7A88, likewise the message hook.
+        WinMessageHook();
     }
 }
 
 // ===== homed from src/unrecovered/005f5c00.cpp =====
-typedef long (__stdcall *Fn2)(void *, void *);
-
-
-
-
+// ORIGINAL: 0x005F5C00 sub_5f5c00 0x005F5C00-0x005F5D05 FILE
+// symbol    ?on_activate@Win@@UAEJIPAXJ@Z
+// size      261 bytes
+// kind      game
+// Win vtable slot 87 (win.h); unnamed in the catalogue. The DC acquire/
+// release arms call IDirectDrawSurface::GetDC/ReleaseDC by name - the
+// same slots 17/26 OnQueryNewPalette reaches.
 long Win::on_activate(unsigned int state, void * other, long minimized) {
     if (state != 0 && minimized == 0 && BufferDirectDraw == 0) {
         if (WinHdcRefCount == 0) {
@@ -10139,9 +10168,9 @@ long Win::on_activate(unsigned int state, void * other, long minimized) {
             if (obj == 0) {
                 WinSharedHdc = GetDC(HandleMain);
             } else {
-                void **vtbl = *reinterpret_cast<void ***>(obj);
-                Fn2 fn = reinterpret_cast<Fn2>(vtbl[0x44 / 4]);
-                fn(reinterpret_cast<void *>(obj), &WinSharedHdc);
+                // IDirectDrawSurface::GetDC is slot 17, offset 0x44 - the
+                // named call emits the image's push-addr/call-[vtbl+0x44].
+                obj->GetDC(&WinSharedHdc);
             }
             if (WinSharedHdc == 0) {
                 goto done;
@@ -10159,9 +10188,12 @@ long Win::on_activate(unsigned int state, void * other, long minimized) {
                 if (obj == 0) {
                     ReleaseDC(HandleMain, WinSharedHdc);
                 } else {
-                    void **vtbl = *reinterpret_cast<void ***>(obj);
-                    Fn2 fn = reinterpret_cast<Fn2>(vtbl[0x68 / 4]);
-                    fn(reinterpret_cast<void *>(obj), &WinSharedHdc);
+                    // Slot 26, offset 0x68, is IDirectDrawSurface::ReleaseDC
+                    // (HDC by value per ddraw.h); if the image turns out to
+                    // push the ADDRESS instead, that is a finding for this
+                    // body's own grind, recorded on the body - not a reason
+                    // to keep the slot arithmetic here.
+                    obj->ReleaseDC(WinSharedHdc);
                 }
                 WinSharedHdc = 0;
             }
@@ -10803,11 +10835,6 @@ void __cdecl Win::OnMouseMove(void * hwnd, int x, int y, unsigned int keys) {
 }
 
 // ===== homed from src/unrecovered/005f1070.cpp =====
-typedef void (__stdcall *NotifyFn)(void *, HDC *);
-typedef void (__stdcall *ReleaseFn)(void *, void *);
-typedef void *(__stdcall *SelectPaletteFn)(void *, void *, int);
-typedef int (__stdcall *RealizePaletteFn)(void *);
-typedef int (__stdcall *ReleaseDCFn)(void *, void *);
 
 // ORIGINAL: 0x005F1070 ?OnQueryNewPalette@Win@@QAAHPAX@Z 0x005F1070-0x005F1141 FILE
 // TRIED: call directly through `(*reinterpret_cast<Fn*>(g_addr))(args)` at the call site instead of binding the function pointer to a named local first - the named local forced an extra reg-to-reg mov before the GetDC argument push. Also: these two "vtable" calls (slots 17/26) push the object pointer as an explicit stack arg with ecx holding the vtable pointer, not a real __thiscall dispatch, so plain `int*`/function-pointer casts matched where the VCall shim would not.
@@ -10849,8 +10876,7 @@ int __cdecl Win::OnQueryNewPalette(void * hwnd) {
     } else {
         eax = reinterpret_cast<int>(DirectDrawSurface);
         if (eax != 0) {
-            int *vtbl = *reinterpret_cast<int **>(eax);
-            (*reinterpret_cast<NotifyFn>(vtbl[0x44 / 4]))(reinterpret_cast<void *>(eax), &WinSharedHdc);
+            reinterpret_cast<IDirectDrawSurface *>(eax)->GetDC(&WinSharedHdc);
             eax = reinterpret_cast<int>(WinSharedHdc);
         } else {
             // TWO STEPS, and the second one is load-bearing. Calling through
@@ -10888,8 +10914,13 @@ int __cdecl Win::OnQueryNewPalette(void * hwnd) {
 
     eax = reinterpret_cast<int>(DirectDrawSurface);
     if (eax != 0) {
-        int *vtbl = *reinterpret_cast<int **>(eax);
-        (*reinterpret_cast<ReleaseFn>(vtbl[0x68 / 4]))(reinterpret_cast<void *>(eax), &WinSharedHdc);
+        // Slot 26 (0x68) is IDirectDrawSurface::ReleaseDC(HDC). The
+        // transcription passes the ADDRESS of WinSharedHdc and both this
+        // body and on_activate agree, so the named call keeps that form;
+        // ddraw.h types the slot HDC-by-value, so the pointer goes as an
+        // explicit reinterpretation rather than pretending it is a handle.
+        reinterpret_cast<IDirectDrawSurface *>(eax)->ReleaseDC(
+            reinterpret_cast<HDC>(&WinSharedHdc));
         WinSharedHdc = 0;
         return 0;
     }
