@@ -309,6 +309,17 @@ Purpose: Paint the window's surface in one colour. A window that is marked
 //        11/80 where the raw-offset form scored 1/80 - the honest spelling
 //        is the close one, and the remaining gap stays a register-plan
 //        divergence from the first branch on.
+// READ OFF THE IMAGE (2026-08-27): the redundant test at 0x005D52BC is a
+//        CONDITIONAL SELECT feeding copy's source argument -
+//        `test esi,esi / je +8 / lea edi,[esi+0x444] / jmp / xor edi,edi` -
+//        it computes the surface INSIDE the true arm from `this`, it does
+//        not branch around the call, and it sits between the argument
+//        spills. Three source shapes tried and all score BELOW the plain
+//        body: ternary selecting the existing `surface` local (5/80), a
+//        null test on a `Buffer *` copy with a two-arm call (1/80), the
+//        select computed in the call argument from a `self` local (2/80).
+//        The select is real but no spelling tried yet makes VC6 schedule
+//        it where the image has it; the dominant gap is elsewhere.
 // size      246 bytes
 // prototype void (__thiscall ?fill@GraphicWin@@QAEXH@Z)(GraphicWin* this, int)
 // callers   58   call targets   3
