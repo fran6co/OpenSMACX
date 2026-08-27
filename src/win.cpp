@@ -1571,7 +1571,6 @@ Purpose: Bring this window's palette into step with the active one, but only
 Return Value: n/a
 Status: Complete
 */
-// TRIED (2026-08-25): the memcpy-into-a-temporary form was the best then,
 // 7 of 14 - reading the palette's field directly scored 0 of 14 at 15
 // instructions, because something had to put the palette's field in eax
 // and only the temporary did.
@@ -4741,14 +4740,30 @@ void Win::redo_caption_buttons() {
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 // indirect  0x005F6264 0x005F6278 0x005F62A9 0x005F62BD
+// TRIED (2026-08-27): 2 of 48 to 9 of 48 with two levers - building
+// lParam PER ARM the way the image duplicates its arg loads, and masking
+// BOTH halves (& 0xffff on key_flags, not just repeat_count). A const
+// local for the masked flags bought nothing (9/48 both ways): the
+// image's `and esi,0xffff` holds key_flags in a callee-saved register it
+// chose because the whole image is FPO, while this body compiles under
+// the /Oy- flag set the search picks here - the RECEIVER-SPILL/PROLOGUE
+// wall again, upstream of any spelling tried. Two instructions still
+// short (46 vs 48) for the same reason.
 
 int Win::on_sys_key(unsigned int vkey, long is_down, int repeat_count,
                               unsigned int key_flags) {
-    LPARAM lParam = (key_flags << 0x10) | (repeat_count & 0xffff);
+    // THE IMAGE BUILDS lParam PER ARM, BOTH HALVES MASKED: esi (key_flags)
+    // is masked before the shift and repeat_count after, and the two arms
+    // duplicate the loads instead of sharing a packed value across the
+    // branch.
     if (is_down != 0) {
+        unsigned int const flags = key_flags & 0xffff;
+        LPARAM lParam = (flags << 0x10) | (repeat_count & 0xffff);
         PostMessageA(HandleMain, WM_KEYDOWN, vkey, lParam);
         return DefWindowProcA(HandleMain, WM_SYSKEYDOWN, vkey, lParam);
     }
+    unsigned int const flags = key_flags & 0xffff;
+    LPARAM lParam = (flags << 0x10) | (repeat_count & 0xffff);
     PostMessageA(HandleMain, WM_KEYUP, vkey, lParam);
     return DefWindowProcA(HandleMain, WM_SYSKEYUP, vkey, lParam);
 }
