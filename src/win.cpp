@@ -4453,8 +4453,17 @@ void Win::nonclient_to_screen(RECT * rect) {
 // what the image does (`test edx,edx` / `je` / `dec edx` / store) instead of
 // `count` plus `last = count - 1`; spelling the nulls `0` rather than
 // `nullptr`; and computing `&WinFocusStack[last]` as a pointer so both
-// stores go through a lea, as the image's do. None moved the count. Three
-// callee-saved registers against one is the thing to attack next.
+// stores go through a lea, as the image's do. None moved the count.
+// LEVER (2026-08-27, found): index-only everywhere. Killing the `p`
+// cursor in the search loop and every `&WinModalStack[last]` pointer in
+// the found arm - the image addresses both stacks as `[const + idx*4]`
+// and never parks an array base - took this from 1 of 50 with 52
+// instructions to 11 of 50 at exactly the image's 50, the extra
+// callee-saved push gone. Fresh-depth null test (`if (WinModalDepth == 0)`
+// before loading) measured WORSE (8/50); load-then-test stands. What
+// still divides us is the opening compare: image `test edx,edx`, ours
+// `xor eax,eax / cmp edx,eax` - the zero materialises under /Oy- and no
+// spelling tried moves it.
 void Win::release_modal() {
     // ONE VARIABLE, DECREMENTED IN PLACE, and an early return. The
     // image loads WinModalDepth into edx, tests it there, decrements
@@ -4467,25 +4476,24 @@ void Win::release_modal() {
     }
     --last;
     WinModalDepth = last;
-    Win **top_ptr = &WinModalStack[last];
-    if (*top_ptr == this) {
-        *top_ptr = 0;
+    // INDEX-ONLY EVERYWHERE: the image addresses both stacks as
+    // `[const + idx*4]` and never parks an array base in a callee-saved
+    // register - any `&stack[i]` pointer here buys one it does not spend.
+    if (WinModalStack[last] == this) {
+        WinModalStack[last] = 0;
         WinFocusStack[last] = 0;
         if (0 < last) {
             WinModalWindow = reinterpret_cast<Win *>(WinFocusStack[last - 1]);
-            WinFocusWindow = top_ptr[-1];
+            WinFocusWindow = WinModalStack[last - 1];
             return;
         }
         WinFocusWindow = 0;
     } else {
+        // INDEX-ONLY SEARCH: `p` was a second copy of the same cursor and
+        // cost a callee-saved register the image does not spend.
         int i = 0;
-        if (0 < last) {
-            Win **p = WinModalStack;
-            do {
-                if (*p == this) break;
-                i = i + 1;
-                p = p + 1;
-            } while (i < last);
+        while (i < last && WinModalStack[i] != this) {
+            i = i + 1;
         }
         if (i == last) {
             WinModalDepth = last + 1;
