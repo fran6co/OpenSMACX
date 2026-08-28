@@ -59,7 +59,8 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   void click(int a1, int a2, int right, int is_double);
   // 0x004160F0, a pending_bodies forwarder.
   void iface_click(int a1, int a2, int right, int is_double);
-  // 0x0040C850, a pending_bodies forwarder.
+  // 0x0040C850, a pending_bodies forwarder. The int stays scaffold: the body
+  // is not recovered and its only caller reaches it with the literal 1.
   void draw_supported(int a1);
  public:
   // (code, pos), the Win32 WM_VSCROLL shape the image mirrors. Evidence
@@ -68,10 +69,16 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   // field_A1C_; BaseWin::on_iface_scrolled tests `a1 != 2` and copies a2.
   // The first is switched on, the second is kept - a code and a position.
   void on_scrolled(int code, int pos);
+  // The four stay scaffold - see the note on the body in basewin.cpp.
   void UNK2(int a1, int a2, int a3, int a4);
   // Two siblings the recovered bodies above reach with a direct `call rel32`
   // - UNK2 calls garrison_click, on_scrolled calls draw_facilities. Both are
   // unrecovered; pending_bodies.cpp forwards them.
+  // Both unrecovered. None of these parameters is named from evidence:
+  // ida9-functions.csv has 0x0040B140 as `sub_40B140` and 0x0040FCC0 likewise
+  // unnamed, and a prototype records types, never names - so every name below
+  // that is not `aN` should be read as a placeholder, not a finding. See the
+  // note on UNK2's body in basewin.cpp.
   void garrison_click(int vehID, int a2, int right, int is_double);  // 0x0040B140
   void draw_facilities(int a1);                            // 0x0040FCC0
   void show(int visible);
@@ -101,19 +108,25 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   void UNK6();
   void UNK7();
   void UNK5(int a1);
+  // SAME REFUSAL, SAME EVIDENCE, for the two ints each of these carries: all
+  // four bodies are bare returns that discard both arguments, and the
+  // catalogue's own prototype line spells them `(BaseWin* this, int, int)` -
+  // unnamed. The method names are real (they come out of the mangled
+  // symbols); the parameter names are not, and the bare returns are the proof
+  // that the image never reads them either.
   void on_button_toggled(int a1, int a2);
   void on_mouse_leave(int a1, int a2);
   void on_iface_right_down(int a1, int a2);
   void on_iface_selected(int a1, int a2);
-  void on_iface_left_click(int a1, int a2);
-  void on_iface_right_click(int a1, int a2);
-  void on_iface_left_double_click(int a1, int a2);
-  void on_iface_right_double_click(int a1, int a2);
+  void on_iface_left_click(int xCoord, int yCoord);
+  void on_iface_right_click(int xCoord, int yCoord);
+  void on_iface_left_double_click(int xCoord, int yCoord);
+  void on_iface_right_double_click(int xCoord, int yCoord);
   void on_iface_scrolled(int code, int pos);
   static void timer_callback(int key, int context);
-  void on_left_click(int a1, int a2);
-  void on_right_click(int a, int b);
-  void on_left_double_click(int a1, int a2);
+  void on_left_click(int xCoord, int yCoord);
+  void on_right_click(int xCoord, int yCoord);
+  void on_left_double_click(int xCoord, int yCoord);
 
   // Storage the image proves is here: its own methods reach 0x40D20.
   // Extent only - this class carries no size assertion, and the bound is a floor.
@@ -529,14 +542,19 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
 // BaseWin embeds an interface subobject at 0xA14; these four are reached
 // through its vtable, so their `this` points there and is adjusted back to
 // the BaseWin before dispatching to iface_click, which is not recovered.
-typedef void (OriginalObject::*func_base_win_iface_click)(int a1, int a2, int button, int is_double);
+// The first two carry the same names the catalogue's own prototype line gives
+// the seven forwarders that call them (xCoord/yCoord); `button` and
+// `is_double` come from the forwarders' four distinct call-site literals.
+typedef void (OriginalObject::*func_base_win_iface_click)(int xCoord, int yCoord, int button, int is_double);
 
-// draw_supported is not recovered.
+// draw_supported is not recovered. Its one int has no name evidence: the only
+// caller reaches it with the literal 1, and nothing else reads it.
 typedef void (OriginalObject::*func_base_win_draw_supported)(int a1);
 
 // The shared click handler these three forward to is not recovered. Unlike
-// the iface_click family, these carry no this-adjustment.
-typedef void (OriginalObject::*func_base_win_click)(int a1, int a2, int button, int is_double);
+// the iface_click family, these carry no this-adjustment. xCoord/yCoord as
+// above.
+typedef void (OriginalObject::*func_base_win_click)(int xCoord, int yCoord, int button, int is_double);
 
 
 // draw_facilities and garrison_click are declared on the class because the
@@ -547,6 +565,8 @@ typedef void (OriginalObject::*func_base_win_click)(int a1, int a2, int button, 
 //   ?draw_facilities@BaseWin@@QAEXH@Z    0x0040FCC0  public __thiscall void(int)
 //   ?garrison_click@BaseWin@@QAEXHHHH@Z  0x0040B140  public __thiscall
 //                                                    void(int, int, int, int)
+// draw_facilities is not recovered; its one int has no name evidence - the
+// only caller reaches it with the literal 1.
 typedef void (OriginalObject::*func_base_win_draw_facilities)(int a1);
 
 typedef void (OriginalObject::*func_base_win_garrison_click)(int vehID, int a2,

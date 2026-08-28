@@ -113,7 +113,14 @@ CEILINGS = {
     # were never counted. The tree did not change; the ruler did.
     # 1427 -> 1426: UNK5's `int a1` is covered by the EVIDENCE-FREE block
     # that excuses the method (same commit as the reclassification).
-    "scaffold name": 1426,
+    # 1426 -> 1383 (2026-08-28, graphicwin/basewin/basebutton batch): 43
+    # parameters renamed from evidence - the annotation `prototype` lines
+    # (on_iface_left_click's xCoord/yCoord) and call sites (click's
+    # right/is_double). Two renames REVERTED after the evidence check:
+    # UNK2's four ints stay scaffold because garrison_click is sub_40B140
+    # to IDA and FUN_0040b140 to Ghidra - placeholders one remove is still
+    # invention. All ten renamed bodies re-measured BYTE_EXACT.
+    "scaffold name": 1383,
 }
 
 WHY = {
