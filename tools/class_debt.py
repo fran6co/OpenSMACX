@@ -109,7 +109,10 @@ CEILINGS = {
     # 224 -> 223 (2026-08-28, scroll batch): compute_thumb_rect's member
     # rewrite reads the thumb RECT through flat_button_right_'s own members
     # instead of a this+0xA4C walk.
-    "raw self-access": 223,
+    # 223 -> 222 (2026-08-28, buffer batch): get_pixel's char* walk is gone
+    # - and the body went 1/107 -> BYTE_EXACT 107/107 on members plus one
+    # chained bounds guard sharing a single epilogue.
+    "raw self-access": 222,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these

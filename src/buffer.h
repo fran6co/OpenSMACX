@@ -8,7 +8,7 @@
  * (at your option) any later version.
  *
  * OpenSMACX is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY_; without even the implied warranty of
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
@@ -101,7 +101,12 @@ class Buffer {
 
  public:
   // homed from 005dd300.cpp
-  int write_right_l(char *text, int y_coord, int x_coord, int field_width,
+  // X FIRST. The image adds `field_width - text_width` to the SECOND
+  // parameter and returns that parameter untouched on every early exit, and
+  // the raster writer it tails into hands back the advanced pen position -
+  // so the pen position (x) is the second argument and y is the third. Two
+  // decompiled callers name the third argument `y`, which agrees.
+  int write_right_l(char *text, int x_coord, int y_coord, int field_width,
                     int len);
   // The RECT overload: same right-aligned text, one rectangle instead of
   // four coordinates. Called by the homed caption painters.
