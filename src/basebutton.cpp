@@ -53,6 +53,17 @@ Purpose: Construct the GraphicWin base and two Time members, then install the
 //   image has, because a plain method has no partially-built object to
 //   protect: 38 instructions, agreeing 0. The frame is worth more than the
 //   guards cost, so the placement new stays.
+// TRIED: MEASURED 2026-08-28 - the real constructor, now that GraphicWin has
+//   one. The blocker in the next note is STALE: `GraphicWin() { ; }` has been
+//   a real out-of-line constructor since the GraphicWin pass. Spelling
+//   `BaseButton::BaseButton()` over this same body (with `construct()` kept
+//   beside it for its two external callers) DOES emit the frame the image has,
+//   but with `sub esp, 8` - two spill slots - where the image pushes one
+//   (`push ecx`), and it drops to 0/54 at 23 compiled instructions against
+//   this spelling's 10/54 at 64. The one-slot frame is the whole remaining
+//   gap; the placement-new null guards are a symptom of the same spill budget,
+//   not an independent cause. Reverted to `construct()`, which scores better
+//   and does not duplicate the body.
 // TRIED: the real fix is a REAL constructor - the image is one, base
 //   first (`call 0x005D4CF0`), then `time1_` at 0xA1C and `time2_` at 0xA4C
 //   implicitly, then this body, then `mov eax, esi`. It is not reachable from
@@ -60,7 +71,8 @@ Purpose: Construct the GraphicWin base and two Time members, then install the
 //   `GraphicWin() { ; }`, so a real `BaseButton::BaseButton()` would call
 //   NOTHING where the image calls 0x005D4CF0, and giving GraphicWin a real
 //   constructor is a graphicwin.h edit with every GraphicWin-derived class
-//   downstream of it.
+//   downstream of it. [SUPERSEDED by the measurement above: GraphicWin's
+//   constructor is real now, and the real spelling measured WORSE.]
 // symbol    ?construct@BaseButton@@QAEPAV1@XZ
 // size      291 bytes
 // prototype void (__thiscall ??0BaseButton@@QAE@XZ)(BaseButton* this)
@@ -121,18 +133,7 @@ BaseButton *__fastcall base_button_construct_redirect(
 /*
 Purpose: Close the GraphicWin base, reset BaseButton-owned state from the
          process defaults, then release the owned name and bubble strings.
-// ORIGINAL: 0x006070C0 ?close@BaseButton@@QAEXXZ 0x006070C0-0x00607190
-// TRIED: hoisting `0xFFFFFFFFU` into a named local before the stores -
-//   no effect; the `or eax, 0xffffffff` for A44/A48 still schedules 4
-//   instructions later than the image (41/47 agreeing either way). The
-//   fixed/dynamic absolute-lvalue rewrite (LEVER, see body) fixed the other
-// TRIED: member-form rewrite of 2026-08-28 (field_A74_ .. bubble_text_ and
-//   group_ named instead of the `volatile uint32_t` pun of `this`) took this
-//   from 41/47 to 45/47, and the `or eax,0xffffffff` divergence the earlier
-//   TRIED line recorded is gone with it - the pun was the reason the -1
-//   landed four instructions late, so that residual was never a scheduling
-//   problem at all. VOID return (the image spells `X`, and the tree's
-//   `uint32_t` was the free() residue) removed the last one: 47/47.
+// ORIGINAL: 0x006070C0 ?close@BaseButton@@QAEXXZ 0x006070C0-0x00607190 BYTE_EXACT
 // size      208 bytes
 // prototype void (__thiscall ?close@BaseButton@@QAEXXZ)(BaseButton* this)
 // callers   3   call targets   2
@@ -210,6 +211,20 @@ Purpose: Destroy a BaseButton by installing its two virtual tables, closing
 //   compiler-generated tail would call nothing where the image calls
 //   0x005D4DD0. `~Time()` at 0x00616200 is real and would work; GraphicWin is
 //   the one that has to change first, and it is not this pass's file.
+// TRIED: MEASURED 2026-08-28 - blocker (2) above is STALE, `~GraphicWin()` has
+//   been a real destructor since the GraphicWin pass, and `~BaseButton()` is
+//   reachable (keep `destroy()` beside it for the nine external callers, the
+//   way FlatButton keeps `destroy()` under `~FlatButton`). It does not help:
+//   0/27 either way, 16 compiled instructions against the plain method's 16.
+//   The NEW wall is that the compiler-generated base-destructor tail dispatches
+//   VIRTUALLY - `mov eax,[esi] / push 0 / mov ecx,esi / call dword ptr [eax]`,
+//   the hidden most-derived flag included - where the image calls 0x005D4DD0
+//   DIRECTLY, and that no SEH frame is emitted at all. The image's own
+//   `??1GraphicWin@@UAE@XZ` spells the virtual form, so the direct call reads
+//   like an explicit qualified destructor call in the original, which a
+//   destructor body cannot spell without destroying its members twice.
+//  FlatButton's `~FlatButton()` is BYTE_EXACT and unaffected by the swap
+//   (re-measured 24/24), as are ??_GBaseButton and ??_GFlatButton.
 // symbol    ?destroy@BaseButton@@QAEPAV1@XZ
 // size      167 bytes
 // prototype void (__thiscall ??1BaseButton@@QAE@XZ)(BaseButton* this)
@@ -271,13 +286,28 @@ int BaseButton::set_bubble_text(LPCSTR input) {
 
 /*
 Purpose: Set the button's name string.
-// ORIGINAL: 0x006074E0 ?set_name@BaseButton@@QAEHPAD@Z 0x006074E0-0x0060754D
-// LEVER: empty-then-concatenate through the field (name_[0]='\0'; strcat_s)
-//   instead of strcpy_s brought this from 25/37 to 26/37 agreeing at
-//   /c /O2 /Oi- /Gy /GR- /GX. Residual: the image re-reads 0xA7C into a
-//   SECOND register (ecx) for the strcat destination; this tree's compiler
-//   reuses the eax already holding the zeroed pointer instead of reloading -
-//   not reproduced by any spelling tried.
+// ORIGINAL: 0x006074E0 ?set_name@BaseButton@@QAEHPAD@Z 0x006074E0-0x0060754D BYTE_EXACT
+// LEVER: THE CONCAT BLOCK SITS OUTSIDE THE `if (input)`, and that is the whole
+//   body. 25/37 -> 26/37 was the empty-then-concatenate spelling; 26/37 ->
+//   37/37 was moving `name_[0] = '\0'; strcat_s(...)` out of the `if (input)`
+//   so the join of the `input == 0` branch and the `allocation != 0` branch is
+//   the concat block itself. At a join with a predecessor that does not hold
+//   name_ in a register, VC6 MUST reload it, which is where the image's two
+//   0xA7C re-reads (into eax and then ecx) come from - not from any register
+//   preference. `size_t len` is dead on both paths (vc6_compat.h's strcat_s
+//   discards its size), so its declaration costs no instruction.
+// TRIED: `name_ = (LPSTR)mem_get_old(len)` storing straight into the field -
+//   the register copy stayed live across the join and VC6 reused it, 26/37.
+// TRIED: an `LPSTR const allocated` local held in a register with both uses
+//   spelled `name_` (the set_bubble_text shape) - VC6 copy-propagated it and
+//   re-used the register, still 26/37.
+// BUG IN THE ORIGINAL: with `input == 0` the image reaches the concat block
+//   with name_ == 0 and input == 0, so it executes `mov byte ptr [eax], 0`
+//   writing to address 0 - a null-pointer write, before strcat is reached.
+//   0x00607507 `je 0x60752d` and 0x00607521 `jne 0x60752d` both target the
+//   concat block at 0x0060752d, so the `if (input)` guard does not cover it.
+//   Reproduced deliberately: a body that hoists the block back inside the `if`
+//   is a different, safer program that never matches these 37 instructions.
 // symbol    ?set_name@BaseButton@@QAEHPBD@Z
 // size      109 bytes
 // prototype int (__thiscall ?set_name@BaseButton@@QAEHPAD@Z)(BaseButton* this, int8*)
@@ -291,25 +321,24 @@ Status: Complete with redirect for free to prevent hang/freeze. Incompatibility 
         to dll.
 */
 int BaseButton::set_name(LPCSTR input) {
-    // Bug fix: Fixed crash if input parameter was null. Original code had string copy outside last 
-    // if statement causing potential write to null name variable.
     if (name_) {
         free(name_);
         name_ = 0;
     }
+    size_t len = 0;
     if (input) {
-        size_t len = strlen(input) + 1;
+        len = strlen(input) + 1;
         name_ = (LPSTR)mem_get_old(len);
         if (!name_) {
             return 4;
         }
-        // Empty then concatenate, both through the field - the image re-reads
-        // 0xA7C twice, once for the zeroing and once for the strcat
-        // destination, unlike set_bubble_text which zeroes through the
-        // allocation register. Do not collapse the two reads into one local.
-        name_[0] = '\0';
-        strcat_s(name_, len, input);
     }
+    // Empty then concatenate, both through the field - the image re-reads
+    // 0xA7C twice, once for the zeroing and once for the strcat destination,
+    // unlike set_bubble_text which zeroes through the allocation register. Do
+    // not collapse the two reads into one local.
+    name_[0] = '\0';
+    strcat_s(name_, len, input);
     return 0;
 }
 
@@ -768,9 +797,12 @@ void BaseButton::on_right_click(int a, int b) {
 // calls     0x00607B30
 Status: Complete
 */
-void __cdecl fn_00607b10(int a1, BaseButton* a2) {
-    if (a2) {
-        a2->timer_callback(a1);
+// `button` is named from the body's own use - a null test then a dispatch on
+// a BaseButton *. The int stays scaffold: it is forwarded to a timer_callback
+// this tree does not recover, so nothing here says what it carries.
+void __cdecl fn_00607b10(int a1, BaseButton* button) {
+    if (button) {
+        button->timer_callback(a1);
     }
 }
 

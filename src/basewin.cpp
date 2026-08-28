@@ -46,6 +46,13 @@ Purpose: Construct BaseWin's large aggregate of sub-windows: a ProdPicker, a
 // TRIED: plateau 120/144; divergence #10 is the extra push edi + local thunk
 //        against the image's direct GraphicWin::construct call, measured under
 //        the SHARED_TAIL caveat (no per-function verdict is well defined)
+// TRIED: 2026-08-28 confirming sweep, one re-measure of the tree's own body
+//        after basewin.h grew member declarations and the click forwarders
+//        were renamed: 104 of 144 agreeing at /c /O2 /Ob0 /Gy /GR- /Oy- /GX,
+//        149 compiled, first divergence still #10 (the same `push edi` before
+//        the esi spill, then a link-time call where the image has
+//        `call 0x5d4cf0`). The 120/144 above is the deleted isolated
+//        scaffold's number, not this tree's; do not chase it. No new lever.
 // size      1147 bytes
 // prototype void (__thiscall ??0BaseWin@@QAE@XZ)(BaseWin* this)
 // callers   1   call targets   15
@@ -212,10 +219,10 @@ Purpose: Report a left click on the interface. Reached through the interface
 Return Value: n/a
 Status: Complete
 */
-void BaseWin::on_iface_left_click(int a1, int a2) {
+void BaseWin::on_iface_left_click(int xCoord, int yCoord) {
     BaseWin *const base = reinterpret_cast<BaseWin *>(
         reinterpret_cast<uint8_t *>(this) - 0xA14);
-    base->iface_click(a1, a2, 0, 0);
+    base->iface_click(xCoord, yCoord, 0, 0);
 }
 
 /*
@@ -231,10 +238,10 @@ Purpose: Report a right click on the interface. Reached through the interface
 Return Value: n/a
 Status: Complete
 */
-void BaseWin::on_iface_right_click(int a1, int a2) {
+void BaseWin::on_iface_right_click(int xCoord, int yCoord) {
     BaseWin *const base = reinterpret_cast<BaseWin *>(
         reinterpret_cast<uint8_t *>(this) - 0xA14);
-    base->iface_click(a1, a2, 1, 0);
+    base->iface_click(xCoord, yCoord, 1, 0);
 }
 
 /*
@@ -250,10 +257,10 @@ Purpose: Report a left double-click on the interface. Reached through the interf
 Return Value: n/a
 Status: Complete
 */
-void BaseWin::on_iface_left_double_click(int a1, int a2) {
+void BaseWin::on_iface_left_double_click(int xCoord, int yCoord) {
     BaseWin *const base = reinterpret_cast<BaseWin *>(
         reinterpret_cast<uint8_t *>(this) - 0xA14);
-    base->iface_click(a1, a2, 0, 1);
+    base->iface_click(xCoord, yCoord, 0, 1);
 }
 
 /*
@@ -269,10 +276,10 @@ Purpose: Report a right double-click on the interface. Reached through the inter
 Return Value: n/a
 Status: Complete
 */
-void BaseWin::on_iface_right_double_click(int a1, int a2) {
+void BaseWin::on_iface_right_double_click(int xCoord, int yCoord) {
     BaseWin *const base = reinterpret_cast<BaseWin *>(
         reinterpret_cast<uint8_t *>(this) - 0xA14);
-    base->iface_click(a1, a2, 1, 1);
+    base->iface_click(xCoord, yCoord, 1, 1);
 }
 
 
@@ -285,24 +292,50 @@ Purpose: Handle an interface scroll, but only for scroll kind 2 - stash the
          new position at 0x40100 (interface-relative) and redraw the supported
          markers. Like the click handlers, `this` arrives at the interface
          subobject and is adjusted back to the BaseWin for that redraw.
-// ORIGINAL: 0x0041DC80 ?on_iface_scrolled@BaseWin@@QAEXHH@Z 0x0041DC80-0x0041DCA5
+// ORIGINAL: 0x0041DC80 ?on_iface_scrolled@BaseWin@@QAEXHH@Z 0x0041DC80-0x0041DCA5 BYTE_EXACT
 // size      37 bytes
 // prototype void (__thiscall ?on_iface_scrolled@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
 // callers   0   call targets   1
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x0040C850
+// LEVER: two moves took this 2/12 -> 12/12. (1) The guard is a SWITCH on one
+//        case, not an `if` - `mov eax,[ebp+8] / sub eax,2 / jne` against the
+//        `cmp dword ptr [ebp+8],2` an `if` emits. (2) The -0xA14 adjustment is
+//        written INLINE on the store, so VC6 folds 0x40B14-0xA14 into the
+//        store's displacement and keeps the raw receiver in ecx until the call.
+// TRIED: `std::memcpy(this+0x40100, &pos, 4)` - the previous spelling, 2/12;
+//        the memcpy call and the missed switch were both divergences.
+// TRIED: one named `BaseWin *const base` local used for BOTH the store and the
+//        call - VC6 materialises `add ecx,-0xA14` before the store, 9/12.
+// TRIED: member store on `this` (`field_40B14_ = pos`) with `base` only for
+//        the call - right schedule, wrong displacement (`[ecx+0x40b14]`),
+//        11/12. The image spells the same address as `[ecx+0x40100]`.
 Return Value: n/a
 Status: Complete
 */
 void BaseWin::on_iface_scrolled(int code, int pos) {
-    if (code != 2) {
-        return;
+    // A SWITCH, not an `if`: the image loads the code into a register and
+    // subtracts the case value (`mov eax,[ebp+8] / sub eax,2 / jne`), which is
+    // what a one-case switch statement compiles to - the same shape the
+    // sibling on_scrolled below is BYTE_EXACT with. An `if` emits
+    // `cmp dword ptr [ebp+8],2` instead.
+    switch (code) {
+        case 2: {
+            // The store names the member through the adjusted pointer INLINE,
+            // with no local holding it: 0x40B14 - 0xA14 == 0x40100, and VC6
+            // folds the two constants into the store's own displacement
+            // (`mov [ecx+0x40100], eax`) exactly as the image spells it. A
+            // named `base` local makes VC6 materialise the adjusted pointer
+            // in ecx BEFORE the store instead.
+            reinterpret_cast<BaseWin *>(
+                reinterpret_cast<uint8_t *>(this) - 0xA14)->field_40B14_ = pos;
+            BaseWin *const base = reinterpret_cast<BaseWin *>(
+                reinterpret_cast<uint8_t *>(this) - 0xA14);
+            base->draw_supported(1);
+            break;
+        }
     }
-    std::memcpy(reinterpret_cast<uint8_t *>(this) + 0x40100, &pos, sizeof(pos));
-    BaseWin *const base = reinterpret_cast<BaseWin *>(
-        reinterpret_cast<uint8_t *>(this) - 0xA14);
-    base->draw_supported(1);
 }
 
 
@@ -320,8 +353,8 @@ Purpose: Report a left click to the shared click handler. Unlike the
 Return Value: n/a
 Status: Complete
 */
-void BaseWin::on_left_click(int a1, int a2) {
-    click(a1, a2, 0, 0);
+void BaseWin::on_left_click(int xCoord, int yCoord) {
+    click(xCoord, yCoord, 0, 0);
 }
 
 /*
@@ -337,8 +370,8 @@ Purpose: Report a right click to the shared click handler. Unlike the
 Return Value: n/a
 Status: Complete
 */
-void BaseWin::on_right_click(int a, int b) {
-    click(a, b, 1, 0);
+void BaseWin::on_right_click(int xCoord, int yCoord) {
+    click(xCoord, yCoord, 1, 0);
 }
 
 /*
@@ -354,8 +387,8 @@ Purpose: Report a left double-click to the shared click handler. Unlike the
 Return Value: n/a
 Status: Complete
 */
-void BaseWin::on_left_double_click(int a1, int a2) {
-    click(a1, a2, 0, 1);
+void BaseWin::on_left_double_click(int xCoord, int yCoord) {
+    click(xCoord, yCoord, 0, 1);
 }
 
 
@@ -435,6 +468,13 @@ void BaseWin::show(int visible) {
 // calls     0x0040B140
 Status: Complete
 */
+// ALL FOUR PARAMETERS STAY SCAFFOLD. The body is one positional forward, so
+// its only "evidence" is garrison_click's own parameter list - and those names
+// have no provenance: ida9-functions.csv has 0x0040B140 as `sub_40B140` and
+// ghidra-functions.csv as `FUN_0040b140`, both tools leaving it unnamed, and a
+// prototype records types, never names. Renaming UNK2 from them would invent a
+// meaning at one remove from an invention. (vehID/right/is_double were tried
+// here and reverted for exactly that reason.)
 void BaseWin::UNK2(int a1, int a2, int a3, int a4) {
     garrison_click(a1, a2, a3, a4);
 }

@@ -340,6 +340,10 @@ Purpose: Paint the window's surface in one colour. A window that is marked
 //        stores: 7/80. (g) (e) with the first local's address taken: 11/80,
 //        still deleted. The image's `sub esp,0x10` frame and its 10 dead
 //        instructions are what no spelling reaches; the wall stands.
+// TRIED: 2026-08-28 confirming sweep, one re-measure of the tree's own body
+//        after the neighbourhood moved (basewin.cpp / basebutton.cpp edited
+//        today): still 11/80 at /c /O2 /Gy /GR- /GX, 71 compiled. No new
+//        lever attempted - nine refutations are on this marker already.
 // size      246 bytes
 // prototype void (__thiscall ?fill@GraphicWin@@QAEXH@Z)(GraphicWin* this, int)
 // callers   58   call targets   3
