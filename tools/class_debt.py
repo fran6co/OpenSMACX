@@ -106,7 +106,7 @@ CEILINGS = {
     # 228 -> 227, still the base-class pass: Buffer::setup_buff_sprite reads
     # the DIB dimensions and the lock count through its own members instead
     # of a char* pun (unclaimed working copy; score unchanged at 14/64).
-    "raw self-access": 227,
+    "raw self-access": 224,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
