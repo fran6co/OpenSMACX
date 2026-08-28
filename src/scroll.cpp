@@ -153,6 +153,10 @@ Purpose: Construct a Scroll: run the GraphicWin base construction, install
 //   `mov eax, 0x14`, which is one of the two remaining divergences, but
 //   hoisting costs six more. The other divergence is the `[0x697048]`
 //   load at 0x006052EF reading `fixed[10]`.
+// TRIED (2026-08-28): the `uint32_t *dest = object + 0xA88 / 4;` cursor
+//   form (dest[-3]/dest[0]/dest[3]/dest[6], ++dest per iteration) - 81 of
+//   83, unchanged. The induction wall is not about which spelling names
+//   the four windows.
 // LEVER: base-ctor ordering  the image runs GraphicWin::construct() BEFORE the
 //   two FlatButton members, and a call in the constructor BODY can never get
 //   there - member ctors always run first. Moving it into a base subobject
@@ -840,6 +844,12 @@ Purpose: Clamp, optionally reverse, and redraw the scrollbar position.
 //   offsets, so nothing to rename, just the qualifier to drop. Plain reads
 //   took this from 8/29 to 11/29. The branch-polarity gap above is
 //   unaffected: it is still the first divergence, at instruction 2.
+// LEVER: the vslot_62 tail (2026-08-28) took this to 13/29 - the plain
+//   virtual call replaced the redraw_from_vtable helper. TRIED after it:
+//   the whole work block wrapped in `if (parent != nullptr)` with a single
+//   fallthrough exit - 13/29, similarity 0.933 vs 0.931, two instructions
+//   longer. The polarity gap survives its own new tail; first divergence
+//   remains at instruction 2.
 // symbol    ?set_pos@Scroll@@QAEIH@Z
 // size      106 bytes
 // prototype void (__thiscall ?set_pos@Scroll@@QAEXH@Z)(Scroll* this, int position)
