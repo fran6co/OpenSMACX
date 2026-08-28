@@ -2736,16 +2736,22 @@ Purpose: Draw at most `len` characters of a string horizontally centred in a
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DC7C0 0x005DCAE0 0x006453E0
-// TRIED: splitting the MIN guard into two guard clauses - `if (MIN < 0)
-//   return;` then `const int limit = MIN; if (!limit) return;` - on the
-//   theory that the image's separate return block at instruction 41 wants
-//   two distinct early exits. It is WORSE: 39 of 76 agreeing becomes 34, and
-//   the compiled body grows from 70 instructions to 80 against the image's
-//   76. The merged `||` (committed) is the right shape. Best measured is
-//   /O2 /Gy /GR- /GX at 39/76, 0.932 similar; the remaining divergence is
-//   the image's SEPARATE, unmerged epilogue at 0x005DD08A (identical to the
-//   one at 0x005DD02D) where this tree's tail-merges the two returns into
-//   one jump - a VC6 block-folding decision, not a semantic difference.
+// LEVER: PIN THE SHARED EXIT WITH A GOTO. The merged `||` guard that used to
+//   be here tail-merged the empty-draw return into the null-text epilogue at
+//   0x005DD02D, so our `je` jumped BACKWARDS - 39/76 (0.932). Splitting it
+//   and pinning a second copy of the block between the tests and `text_width`
+//   with a `goto fail:` from the `< 0` guard - the same lever that fixed
+//   `write_right_l` - puts our `jl 0x5dd08a` and the fall-through of
+//   `test esi,esi; jne 0x5dd094` on the image's own second epilogue:
+//   39/76 (0.932) -> 55/76 (0.980).
+// TRIED: the last 21 instructions, and the two shapes left are both worse.
+//   Computing the centring INLINE in the call argument,
+//   `x_coord + (width - drawn) / 2` instead of through the `centred` local,
+//   scores 50/76 - the opposite of `write_right_l`, where hoisting the
+//   offset into a local was the win. The residue is interleaving the image
+//   has and we do not (`push y` at 0x5DD058, before the `sar`, with `this`
+//   held back to 0x5DD063 where we hoist `mov ecx,ebx` ten instructions
+//   early) plus one instruction the image pays and we do not: 76 against 75.
 Return Value: The raster writer's result; the incoming x for a null string or
               an empty draw; unusable font (3)
 Status: Complete with temporary raster-writer and text-width dependencies
@@ -2784,12 +2790,23 @@ int Buffer::write_cent_l(LPSTR text, int x_coord, int y_coord, int width,
     // 0x005DD08A. Two separate `if (...) return x_coord;` statements make
     // VC6 emit that epilogue twice; a short-circuit `||` gives it one.
     int limit;
-    if (BUFFER_MIN(static_cast<int>(strlen(text)), len) < 0 ||
-        (limit = BUFFER_MIN(static_cast<int>(strlen(text)), len)) == 0) {
+    // ONE EXIT BLOCK, PINNED BETWEEN THE TEST AND THE WORK. The image's
+    // `jl 0x5dd08a` (the negative guard) and the fall-through of
+    // `test esi,esi; jne 0x5dd094` (the zero guard) both land on the SAME
+    // epilogue at 0x5dd08a, which sits AFTER both tests and BEFORE
+    // text_width. Written as one short-circuit `||` VC6 folds that block
+    // into the null-text epilogue at 0x5dd02d and jumps BACKWARDS to it
+    // (39/76); this `goto` holds a second copy of it where the image has it
+    // - the same lever that fixed `write_right_l`.
+    if (BUFFER_MIN(static_cast<int>(strlen(text)), len) < 0) {
+        goto fail;
+    }
+    limit = BUFFER_MIN(static_cast<int>(strlen(text)), len);
+    if (limit == 0) {
+    fail:
         return x_coord;
     }
-    const int drawn =
-        text_width(text, limit);
+    const int drawn = text_width(text, limit);
     // PLAIN INT ARITHMETIC, because that is what the image emits: `sub`,
     // then `cdq; sub eax, edx; sar edx, 1` - a signed halving that truncates
     // toward zero - then `add`. The `edge_bits`/`edge_int` round trip is a
@@ -2930,52 +2947,82 @@ int __cdecl polygon(Buffer *buffer, Vert *verts, int a3, int a4) {
 #pragma auto_inline(on)
 
 // ORIGINAL: 0x005DD300 ?write_right_l@Buffer@@QAEHPADHHHH@Z 0x005DD300-0x005DD3A5 FILE
+// LEVER: X BEFORE Y, the reverse of what the note below used to claim. The
+//        image adds `field_width - text_width` to the SECOND parameter and
+//        passes that as write_multi_font_raw_l's second argument, and its
+//        early exits return the second parameter untouched - and buffer.h's
+//        own fact about the raster writer says the scalar writers "return
+//        the incoming x". So the second parameter is the x, the third the
+//        y, and the alignment offset lands on x. Two decompiled callers
+//        (src/unrecovered/005ddbb0.cpp, src/recovered/units/004b0410.cpp)
+//        independently name the third argument `y`, which agrees. Swapping
+//        the two names moves the offset from the third to the second stack
+//        slot, which is the whole of the semantic difference.
+// LEVER: BUFFER_MIN, WHICH EVALUATES BOTH ARGUMENTS. `int w = len; if
+//        (strlen(text) < len) w = strlen(text);` holds `w` in a callee-saved
+//        register across the call and that is what pushes `this` out to ebp
+//        (12/71, `push ebp` against the image's `push ebx`). Spelled
+//        `BUFFER_MIN((int)strlen(text), len)` there is no local to keep
+//        alive, the second `strlen` lands inside the macro's true arm exactly
+//        where the image has it, and `this` gets ebx back.
 // TRIED: nesting everything inside a single `if (font1_ && font_obj_)` block with one trailing `return a2` (matching Ghidra's shape more literally) instead of early returns - same MISMATCH #1 'push' vs 'mov' either way; the divergence is in the prologue's register push order (ebx/esi/edi count/order), not the branch structure. similarity ~0.61-0.63.
-// working copy - scaffold materialised by --work
+// TRIED: the last four instructions. The image loads y ([esp+0x18]) into edx
+//        and x ([esp+0x14]) into eax and ends `add eax,ecx`; VC6 gives us x
+//        in edx and y in eax ending `add ecx,edx`. Measured `offset +
+//        x_coord` for `x_coord + offset` (65/71 both, so it is not the
+//        operand order) and `int new_x = x_coord + offset` hoisted into a
+//        local of its own (64/71, worse). Register plan on the two argument
+//        loads, not source form.
+// TRIED: confirming that once more with three spellings ranked in one run
+//        against the tree's own 65/71: folding `width` away into
+//        `field_width - text_width(text, len)` (65/71, byte-identical),
+//        `const int new_x = x_coord + offset;` ahead of the return (64/71)
+//        and accumulating into the parameter, `x_coord += field_width -
+//        width;` then passing `x_coord` (61/71). Nothing reaches the image's
+//        `mov edx,[esp+0x18]` / `mov eax,[esp+0x14]` / `add eax,ecx` before
+//        the four pushes.
 // size      165 bytes
 // prototype int (__thiscall ?write_right_l@Buffer@@QAEHPADHHHH@Z)(Buffer* this, int8*, int, int, int, int)
 // callers   4   call targets   3
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DC7C0 0x005DCAE0 0x006453E0
-
-// Y BEFORE X, and the tail call is what proves it rather than the order
-// looking odd: `write_multi_font_raw_l(text, x_coord + (field_width -
-// width), y_coord, len)` against that method's declared
-// `(LPSTR text, int x_coord, int y_coord, int len)`. So the second
-// parameter is the y, the third is the left edge and the fourth is the
-// field to right-align within - which is also why every early exit
-// returns the second parameter unchanged.
-int Buffer::write_right_l(char *text, int y_coord, int x_coord, int field_width, int len) {
+int Buffer::write_right_l(char *text, int x_coord, int y_coord, int field_width, int len) {
     if (text == 0) {
-        return y_coord;
+        return x_coord;
     }
     if (font1_ == 0 || font1_->font_obj_ == 0) {
         return 3;
     }
 
-    int text_len = (int)strlen(text);
-    int w = len;
-    if (text_len < len) {
-        w = (int)strlen(text);
+    // THE SHARED EXIT SITS BETWEEN THE TEST AND THE WORK. The image returns
+    // x_coord from ONE block at 0x005DD366 that both the negative-length
+    // guard (`jl`) and the zero-length guard (fall-through) reach, and the
+    // drawing code carries on after it. Spelled as two `return` statements
+    // VC6 emits two epilogues and the shared block dissolves (33/71); spelled
+    // as one `if (a || b)` it merges the block with the `text == 0` return
+    // above and the jumps turn round and point backwards (40/71). This label
+    // is what holds the block where the image has it - `fail` is not an
+    // error path, it is the ordinary "nothing to draw" exit.
+    if (BUFFER_MIN((int)strlen(text), len) < 0) {
+        goto fail;
     }
-    if (w < 0) {
-        return y_coord;
-    }
-
-    int len2 = (int)strlen(text);
-    if (len2 < len) {
-        len = (int)strlen(text);
-    }
+    len = BUFFER_MIN((int)strlen(text), len);
     if (len == 0) {
-        return y_coord;
+    fail:
+        return x_coord;
     }
 
+    // THE OFFSET IS A LOCAL, not part of the argument expression: hoisting
+    // `field_width - width` out of the call is what makes VC6 load the field
+    // first and subtract the measured width, in the image's own order.
     int width = text_width(text, len);
-    return write_multi_font_raw_l(text, x_coord + (field_width - width), y_coord, len);
+    int offset = field_width - width;
+    return write_multi_font_raw_l(text, x_coord + offset, y_coord, len);
 }
 
 // Fixed-slot bindings carried from 005d8290.cpp.
+
 // THE BLIT DESCRIPTOR AT 0x009B3A54.. IS NAMED FROM ANOTHER BODY'S OWN
 // PARAMETERS: src/unrecovered/005d92c0.cpp writes the same ten addresses
 // from locals it has already named - `bits`, `*pWidth`, `-*pHeight`,
@@ -2994,7 +3041,23 @@ static int *const g_009b3a74 = (int *)0x009B3A74;
 static int *const g_009b3a78 = (int *)0x009B3A78;
 
 // ORIGINAL: 0x005D8290 ?setup_buff_sprite@Buffer@@QAEXH@Z 0x005D8290-0x005D835C FILE
-// working copy - scaffold materialised by --work
+// LEVER: NAMED MEMBERS AND THE REAL INTERFACE. This was `*(int *)((char *)this
+//        + 0x50)` for every field and a hand-rolled `((DDUnlockFn)vtbl[0x20])
+//        (field58, owner)` for the release - 14/64 (0.571). Written through
+//        `locked_bits_`, `dib_bits_`, `stride_`, `dib_.bmiHeader.biWidth`,
+//        `-dib_.bmiHeader.biHeight` and `surface_->Unlock(locked_bits_)`
+//        exactly as the BYTE_EXACT `get_pixel` spells them: 60/64 (0.986).
+// TRIED: the last four instructions. The image reads the fill colour as ONE
+//        BYTE - `xor ecx,ecx; mov cl, byte ptr [0x696d14]` - which is VC6's
+//        zero-extension of a BYTE-typed object; `WinFillColour` is `const int`
+//        (win.h), so ours is a dword load and a mask (`mov ecx,[0x696d14];
+//        and ecx,0xff`), same register, same 8 bytes, same value.
+//        Two byte-width spellings measured against the verbatim control
+//        (60/64): `*reinterpret_cast<const unsigned char *>
+//        (&WinFillColour)` compiles to the SAME dword load and mask, 60/64,
+//        and `colour = 0; memcpy(&colour, &WinFillColour, 1)` is WORSE,
+//        58/64. Reaching the image's form needs `WinFillColour` declared
+//        `unsigned char`, which is win.h's to change, not this unit's.
 // size      204 bytes
 // prototype void (__thiscall ?setup_buff_sprite@Buffer@@QAEXH@Z)(Buffer* this, int)
 // callers   0   call targets   0
@@ -3004,18 +3067,26 @@ static int *const g_009b3a78 = (int *)0x009B3A78;
 // indirect  0x005D834B
 
 void Buffer::setup_buff_sprite(int colour) {
-    if (*reinterpret_cast<int *>(&surface_) != 0) {
+    if (surface_ != nullptr) {
         return;
     }
     if (colour == -1) {
-        colour = *(unsigned char *)WinFillColour;
+        // HONEST READ OF THE WORD. The image reads ONE byte here
+        // (`xor ecx,ecx; mov cl, byte ptr [0x696d14]`), the low byte of the
+        // colour word, which is how VC6 zero-extends a BYTE-typed object.
+        // `WinFillColour` is `const int` (win.h, another agent's file), so the
+        // best this unit can say is the cast: same value, same register, same
+        // length - a dword load and a mask instead of a byte load.
+        colour = static_cast<unsigned char>(WinFillColour);
     }
-    int val54 = *reinterpret_cast<int *>(&dib_bits_);
-    *reinterpret_cast<int *>(&locked_bits_) = val54;
-    if (val54 != 0) {
+    // THE BITS ARE PUBLISHED WHATEVER THEY ARE, and `locked_bits_` is stored
+    // before the test - the same shape `get_data` and `get_pixel` have.
+    LPVOID bits = dib_bits_;
+    locked_bits_ = bits;
+    if (bits != nullptr) {
         ++surface_lock_count_;
     }
-    *BlitSourceBits = val54;
+    *BlitSourceBits = reinterpret_cast<int>(bits);
     *BlitSourceField4A8 = stride_;
     *BlitSourceWidth = dib_.bmiHeader.biWidth;
     *BlitSourceNegHeight = -dib_.bmiHeader.biHeight;
@@ -3026,26 +3097,20 @@ void Buffer::setup_buff_sprite(int colour) {
     *(unsigned char *)BlitTransparentIndex = (unsigned char)colour;
     *g_009b3a78 = 0;
 
-    void **field58 = *reinterpret_cast<void ***>(&surface_);
-    int *const field6c = &surface_lock_count_;
-    if (field58 == 0) {
-        int newCount = *field6c - 1;
-        *field6c = newCount;
-        if (newCount <= 0) {
-            *reinterpret_cast<int *>(&locked_bits_) = 0;
-            *field6c = 0;
+    // The same release pair `get_pixel` ends with, in the same two arms.
+    if (surface_ == nullptr) {
+        const int count = --surface_lock_count_;
+        if (count <= 0) {
+            locked_bits_ = nullptr;
+            surface_lock_count_ = 0;
         }
         return;
     }
-    int newCount = *field6c - 1;
-    *field6c = newCount;
-    int owner = *reinterpret_cast<int *>(&locked_bits_);
-    if (owner != 0 && newCount <= 0) {
-        typedef void (__stdcall *Fn)(void *, int);
-        void **vtbl = *(void ***)field58;
-        ((Fn)vtbl[0x20])(field58, owner);
-        *reinterpret_cast<int *>(&locked_bits_) = 0;
-        *field6c = 0;
+    const int count = --surface_lock_count_;
+    if (locked_bits_ != nullptr && count <= 0) {
+        surface_->Unlock(locked_bits_);
+        locked_bits_ = nullptr;
+        surface_lock_count_ = 0;
     }
 }
 
@@ -3062,7 +3127,22 @@ Purpose: One pixel out of the surface, for the pixel-precise hit test in
          on 2026-08-25 because homing that caller made this the last
          undefined symbol in the link; 15 callers tree-wide.
 */
-// ORIGINAL: 0x005E2210 ?get_pixel@Buffer@@QAEHHH@Z 0x005E2210-0x005E232E FILE
+// ORIGINAL: 0x005E2210 ?get_pixel@Buffer@@QAEHHH@Z 0x005E2210-0x005E232E FILE BYTE_EXACT
+// LEVER: the pun came out and the members went in - `self + 0x58/0x80/0x84`
+//        are `surface_`, `dib_.bmiHeader.biWidth`, `dib_.bmiHeader.biHeight`,
+//        and the two hand-rolled vtable walks at slots 0x19/0x20 are
+//        `surface_->Lock(...)` / `surface_->Unlock(...)` exactly as the
+//        BYTE_EXACT `get_data`/`free_data` pair in buffer.h spells them.
+//        11/107 (0.837) -> BYTE_EXACT 107/107.
+// LEVER: CHAIN THE FOUR BOUNDS GUARDS. Written as four separate `if`s the
+//        image's single shared epilogue becomes SIX separate
+//        `pop/xor/add esp/ret 8` blocks and nothing lands in position
+//        (11/107); written as one `if (a || b || c || d)` there is one
+//        `return 0` for the whole guard set and VC6 merges it with the
+//        first guard's into the single epilogue at 0x005E2322 -> 107/107.
+//        This is the MIRROR of the "do not chain conditions the image tests
+//        separately" rule: here the image DOES share one epilogue, so the
+//        conditions have to share one `return`.
 // symbol    ?get_pixel@Buffer@@QAEHHH@Z
 // size      286 bytes
 // prototype int (__thiscall ?get_pixel@Buffer@@QAEHHH@Z)(Buffer* this, int, int)
@@ -3070,92 +3150,71 @@ Purpose: One pixel out of the surface, for the pixel-precise hit test in
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 int Buffer::get_pixel(int x, int y) {
-    char *self = reinterpret_cast<char *>(this);
-    unsigned char desc[0x6c];
-    int localHandle;
-    unsigned char *pixelPtr;
-    int lockResult;
-    int **sub;
-    int count;
-
-    int handleVal = *reinterpret_cast<int *>(&dib_bits_);
-    if ((handleVal == 0) && (*reinterpret_cast<int *>(&surface_) == 0)) {
+    // THE EARLY OUTS SHARE ONE EPILOGUE: the first guard keeps its own
+    // `return 0` and the four bounds tests share the second, which is what
+    // puts both on the single epilogue at 0x005E2322.
+    if (dib_bits_ == nullptr && surface_ == nullptr) {
         return 0;
     }
-    if (x < 0) {
-        return 0;
-    }
-    if (y < 0) {
-        return 0;
-    }
-    if (*reinterpret_cast<int *>(self + 0x80) <= x) {
-        return 0;
-    }
-    if (-*reinterpret_cast<int *>(self + 0x84) <= y) {
+    if (x < 0 || y < 0 || x >= dib_.bmiHeader.biWidth
+        || y >= -dib_.bmiHeader.biHeight) {
         return 0;
     }
 
-    sub = reinterpret_cast<int **>(self + 0x58);
-    if (*sub == 0) {
-        *reinterpret_cast<int *>(&locked_bits_) = handleVal;
-        if (handleVal == 0) {
-            goto null_pixel;
+    // THE BITS TO READ FROM, whichever of the two storages is live. The
+    // no-surface arm stores `locked_bits_` whether or not the bits exist -
+    // the image emits that store before its `je` - exactly as `get_data` does.
+    LPVOID bits;
+    if (surface_ == nullptr) {
+        locked_bits_ = dib_bits_;
+        bits = dib_bits_;
+        if (dib_bits_ != nullptr) {
+            ++surface_lock_count_;
         }
-        surface_lock_count_ = surface_lock_count_ + 1;
-        localHandle = handleVal;
-        goto have_handle;
-    }
-
-    if (*reinterpret_cast<int *>(&locked_bits_) == 0) {
-        *reinterpret_cast<int *>(desc) = 0x6c;
-        lockResult = (*reinterpret_cast<DDLockFn **>(*sub))[0x19](
-            reinterpret_cast<void *>(*sub), 0, desc, 1, 0);
-        if (lockResult != 0) {
-            goto null_pixel;
-        }
-        stride_ = *reinterpret_cast<int *>(desc + 0xc);
-        surface_lock_count_ = surface_lock_count_ + 1;
-        *reinterpret_cast<int *>(&locked_bits_) = *reinterpret_cast<int *>(desc + 0x20);
+    } else if (locked_bits_ != nullptr) {
+        ++surface_lock_count_;
+        bits = locked_bits_;
     } else {
-        surface_lock_count_ = surface_lock_count_ + 1;
+        // UNINITIALISED APART FROM ITS SIZE, as `get_data`: `Lock` fills it.
+        DDSURFACEDESC description;
+        description.dwSize = sizeof(description);
+        if (surface_->Lock(nullptr, &description, DDLOCK_WAIT, nullptr) != 0) {
+            bits = nullptr;
+        } else {
+            stride_ = description.lPitch;
+            ++surface_lock_count_;
+            locked_bits_ = description.lpSurface;
+            bits = description.lpSurface;
+        }
     }
-    localHandle = *reinterpret_cast<int *>(&locked_bits_);
 
-have_handle:
-    if (localHandle == 0) {
-        goto null_pixel;
+    unsigned char *pixel;
+    if (bits == nullptr) {
+        pixel = nullptr;
+    } else {
+        // Re-read from the member, as the image does: `stride_ * y` first,
+        // then the locked base, then x.
+        pixel = reinterpret_cast<unsigned char *>(locked_bits_) + stride_ * y + x;
     }
-    pixelPtr = reinterpret_cast<unsigned char *>(
-        stride_ * y + *reinterpret_cast<int *>(&locked_bits_) + x);
-    goto after_pixel;
 
-null_pixel:
-    pixelPtr = 0;
-
-after_pixel:
-    sub = reinterpret_cast<int **>(self + 0x58);
-    if (*sub == 0) {
-        count = surface_lock_count_ - 1;
-        surface_lock_count_ = count;
-        if (count > 0) {
-            goto done;
+    if (surface_ == nullptr) {
+        const int count = --surface_lock_count_;
+        if (count <= 0) {
+            locked_bits_ = nullptr;
+            surface_lock_count_ = 0;
         }
     } else {
-        count = surface_lock_count_ - 1;
-        surface_lock_count_ = count;
-        if ((*reinterpret_cast<int *>(&locked_bits_) == 0) || (count > 0)) {
-            goto done;
+        const int count = --surface_lock_count_;
+        if (locked_bits_ != nullptr && count <= 0) {
+            surface_->Unlock(locked_bits_);
+            locked_bits_ = nullptr;
+            surface_lock_count_ = 0;
         }
-        (*reinterpret_cast<DDUnlockFn **>(*sub))[0x20](
-            reinterpret_cast<void *>(*sub), *reinterpret_cast<int *>(&locked_bits_));
     }
-    *reinterpret_cast<int *>(&locked_bits_) = 0;
-    surface_lock_count_ = 0;
 
-done:
-    if (pixelPtr == 0) {
+    if (pixel == nullptr) {
         return 0;
     }
-    return *pixelPtr;
+    return *pixel;
 }
 
