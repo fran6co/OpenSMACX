@@ -4757,7 +4757,7 @@ void Win::redo_caption_buttons() {
     }
 }
 
-// ORIGINAL: 0x005F6230 ?on_sys_key@Win@@QAGHIJHI@Z 0x005F6230-0x005F62C8 FILE
+// ORIGINAL: 0x005F6230 ?on_sys_key@Win@@QAGHIJHI@Z 0x005F6230-0x005F62C8 FILE BYTE_EXACT
 // symbol    ?on_sys_key@Win@@UAEHIJHI@Z
 // LEVER: `PostMessageA`/`DefWindowProcA` by name instead of the two import
 // thunks (0x00669314, 0x006692B0) as `g_`-named function pointers - both
@@ -4769,7 +4769,6 @@ void Win::redo_caption_buttons() {
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 // indirect  0x005F6264 0x005F6278 0x005F62A9 0x005F62BD
-// TRIED (2026-08-27): 2 of 48 to 9 of 48 with two levers - building
 // lParam PER ARM the way the image duplicates its arg loads, and masking
 // BOTH halves (& 0xffff on key_flags, not just repeat_count). A const
 // local for the masked flags bought nothing (9/48 both ways): the
@@ -4778,21 +4777,28 @@ void Win::redo_caption_buttons() {
 // the /Oy- flag set the search picks here - the RECEIVER-SPILL/PROLOGUE
 // wall again, upstream of any spelling tried. Two instructions still
 // short (46 vs 48) for the same reason.
+// BYTE_EXACT 48/48 - that wall was never the prologue. `<< 0x10` lets VC6
+// prove `(key_flags & 0xffff) << 0x10` == `key_flags << 0x10` and DELETE the
+// image's `and esi,0xffff` (one per arm, hence 46 vs 48); spelling the same
+// operation `* 0x10000` hides the shift from that fold and the mask survives.
+// Scored against the tree's 9/48 in one `measure --dir` run alongside the
+// hoisted-load, expression-only and unmasked-high spellings (all 9/48).
 
 int Win::on_sys_key(unsigned int vkey, long is_down, int repeat_count,
                               unsigned int key_flags) {
     // THE IMAGE BUILDS lParam PER ARM, BOTH HALVES MASKED: esi (key_flags)
-    // is masked before the shift and repeat_count after, and the two arms
+    // is masked before the doubling and repeat_count after, and the two arms
     // duplicate the loads instead of sharing a packed value across the
-    // branch.
+    // branch. The doubling is a multiply in the source, not a shift - see
+    // the BYTE_EXACT note above.
     if (is_down != 0) {
-        unsigned int const flags = key_flags & 0xffff;
-        LPARAM lParam = (flags << 0x10) | (repeat_count & 0xffff);
+        LPARAM lParam = ((key_flags & 0xffff) * 0x10000)
+                      | (repeat_count & 0xffff);
         PostMessageA(HandleMain, WM_KEYDOWN, vkey, lParam);
         return DefWindowProcA(HandleMain, WM_SYSKEYDOWN, vkey, lParam);
     }
-    unsigned int const flags = key_flags & 0xffff;
-    LPARAM lParam = (flags << 0x10) | (repeat_count & 0xffff);
+    LPARAM lParam = ((key_flags & 0xffff) * 0x10000)
+                  | (repeat_count & 0xffff);
     PostMessageA(HandleMain, WM_KEYUP, vkey, lParam);
     return DefWindowProcA(HandleMain, WM_SYSKEYUP, vkey, lParam);
 }

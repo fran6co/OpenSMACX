@@ -320,6 +320,26 @@ Purpose: Paint the window's surface in one colour. A window that is marked
 //        select computed in the call argument from a `self` local (2/80).
 //        The select is real but no spelling tried yet makes VC6 schedule
 //        it where the image has it; the dominant gap is elsewhere.
+// TRIED: 2026-08-28, `measure --dir`, seven more spellings of the two
+//        remaining structural differences, against the tree's 11/80 (0.649).
+//        (a) the query result held as a `void *` instead of `bool`, so the
+//        guard is `test eax,eax / je` rather than `setne al / test al,al /
+//        jne`: 1/80. (b) the whole transparent path nested INSIDE the two
+//        guards (`if (flags && parent) { if (query) { ... } }`), which puts
+//        the parent upcast where `win_parent_` is provably non-null and so
+//        drops the parent select the tree emits: 3/80, similarity 0.728 -
+//        the only spelling that scores ABOVE the tree on similarity while
+//        agreeing with FEWER instructions, so the tier metric and the
+//        agreement count disagree here. (c) (b) plus the parent's own
+//        `Buffer *` upcast hoisted out of the inner test: 4/80. (d) (a) with
+//        `surface` dropped and both Buffer calls qualified (`Buffer::fill` /
+//        `Buffer::map_colors`): 11/80, no change. (e) the image's dead RECT
+//        pair transcribed as four plain stores into two locals - the
+//        compiler deletes them and the listing is byte-identical to the
+//        tree's: 11/80. (f) the same pair `volatile`, which does keep the
+//        stores: 7/80. (g) (e) with the first local's address taken: 11/80,
+//        still deleted. The image's `sub esp,0x10` frame and its 10 dead
+//        instructions are what no spelling reaches; the wall stands.
 // size      246 bytes
 // prototype void (__thiscall ?fill@GraphicWin@@QAEXH@Z)(GraphicWin* this, int)
 // callers   58   call targets   3
