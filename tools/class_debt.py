@@ -106,7 +106,10 @@ CEILINGS = {
     # 228 -> 227, still the base-class pass: Buffer::setup_buff_sprite reads
     # the DIB dimensions and the lock count through its own members instead
     # of a char* pun (unclaimed working copy; score unchanged at 14/64).
-    "raw self-access": 224,
+    # 224 -> 223 (2026-08-28, scroll batch): compute_thumb_rect's member
+    # rewrite reads the thumb RECT through flat_button_right_'s own members
+    # instead of a this+0xA4C walk.
+    "raw self-access": 223,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
