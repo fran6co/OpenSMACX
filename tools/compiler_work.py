@@ -87,12 +87,12 @@ SHAPES = [
     # shrank, invisibly. The two regexes classify by what follows on the
     # LINE - the census is line-wise, so a lookahead cannot leak across
     # statements.
-    ("ORIGINAL() vtable-slot dispatch", 38,
+    ("ORIGINAL() vtable-slot dispatch", 35,
      re.compile(r"\bORIGINAL\((?=.*vtable\[)"),
      "reads the target out of a vtable slot by hand because the method is not "
      "declared virtual. Declare it - the compiler writes this dispatch."),
 
-    ("ORIGINAL() named-pointer seam", 93,
+    ("ORIGINAL() named-pointer seam", 84,
      re.compile(r"\bORIGINAL\((?!.*vtable\[)"),
      "reaches a member through a function-pointer slot, which compiles "
      "`FF 15` where the image has `E8`. Call it by name once its body lands."),
