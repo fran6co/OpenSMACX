@@ -172,14 +172,19 @@ def line_program(sources: list, sequences: list) -> bytes:
 
     `sources` is the file table - a translation unit's lines come from its
     `.cpp` AND every header it defines a body in, and the map reports those as
-    separate blocks. `sequences` is `[[(address, file_index, line), ...], ...]`,
-    ONE SEQUENCE PER FUNCTION: the state machine attributes every address from
-    one row to the next, so a single sequence spanning the unit would claim the
-    gaps between its functions - which the linker fills with other units'
-    COMDATs. Bounding each function closes that.
+    separate blocks. `sequences` is `[(rows, end), ...]` with rows
+    `[(address, file_index, line), ...]`, ONE SEQUENCE PER FUNCTION: the state
+    machine attributes every address from one row to the next, so a single
+    sequence spanning the unit would claim the gaps between its functions -
+    which the linker fills with other units' COMDATs. Bounding each function
+    closes that. `end` is the function's end address: end_sequence marks the
+    first address OUTSIDE the sequence, so ending on the last row's own
+    address makes its range empty - a function with a single row (a
+    header-defined body like `MainInterface::MainInterface`, whose whole body
+    is one map row) then has no line info at all.
     """
     body = bytearray()
-    for rows in sequences:
+    for rows, end in sequences:
         body += b"\x00" + uleb(5) + bytes([DW_LNE_set_address])
         body += struct.pack("<I", rows[0][0])
         address, line, source_file = rows[0][0], 1, 0
@@ -194,6 +199,8 @@ def line_program(sources: list, sequences: list) -> bytes:
                 body += bytes([DW_LNS_advance_line]) + sleb(row_line - line)
                 line = row_line
             body += bytes([DW_LNS_copy])
+        if end > address:
+            body += bytes([DW_LNS_advance_pc]) + uleb(end - address)
         body += b"\x00" + uleb(1) + bytes([DW_LNE_end_sequence])
 
     prologue = bytearray()
@@ -659,8 +666,8 @@ def build(exe: Path, map_path: Path, output: Path, comp_dir: Path,
                 taken.append(rows[cursor])
                 cursor += 1
             if taken:
-                sequences.append(taken)
-        attributed += sum(len(sequence) for sequence in sequences)
+                sequences.append((taken, high))
+        attributed += sum(len(taken) for taken, _ in sequences)
 
         stem = Path(owner).name.replace(".obj", "")
         primary = next((s for s in sources if Path(s).name == stem),
