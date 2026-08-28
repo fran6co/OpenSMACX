@@ -73,7 +73,11 @@ class Win : public AutoSound {
   friend void __cdecl OnSysKey(void *, unsigned int, long, int, unsigned int);
  public:
   // homed from 005f1340.cpp
-  bool __cdecl OnPaint(HWND hwnd);
+  // STATIC, not the `QAA` member the catalogue reconstructs: the body reads
+  // its argument at [esp+0x58] with no receiver below it - the same
+  // argument-offset shift that made OnPaletteChanged, init_class and
+  // set_display_mode statics above.
+  static bool __cdecl OnPaint(HWND hwnd);
 
  public:
   // homed from 005ee330.cpp
@@ -345,7 +349,11 @@ class Win : public AutoSound {
   uint32_t field_120_;
   uint32_t field_124_;
   uint32_t field_128_;
-  uint32_t field_12C_;
+  // 0x12C. PROVEN a `Buffer *`: `on_paint` reads `dib_.bmiHeader.biWidth`
+  // (+0x80) and `.biHeight` (+0x84) through it and calls `copy_to_window`
+  // (0x005D9BE0) on it with `this` as the target window.
+  Buffer *buffer5_;
+  // 0x130. Non-zero selects `on_paint`'s edge-fill path over the tiling loop.
   uint32_t field_130_;
   uint32_t field_134_;
   uint32_t field_138_;
@@ -809,7 +817,11 @@ extern int WinDrawFlags;            // 0x009B238C
 extern int WinKeyModifiers;         // 0x009B7B18
 extern int WinViewOriginX;          // 0x009B7A70
 extern int WinViewOriginY;          // 0x009B7A74
-extern const int WinFillColour;           // 0x00696D14
+// A BYTE, not an int: the image reads it with `xor ecx,ecx; mov cl,
+// byte ptr [0x696d14]` - the zero-extension of a byte-typed object - and
+// the int spelling forced every reader to load a dword and mask
+// (setup_buff_sprite measured 60/64 that way, 64/64 as a byte).
+extern const unsigned char WinFillColour;  // 0x00696D14
 // The four child/parent overflow messages MessageBoxA shows, read out of
 // the image with tools/image_data.py rather than left as bare addresses.
 extern const char WinMsgTooManyChildren[];      // 0x00696D80
