@@ -3040,24 +3040,13 @@ static int *const g_009b3a70 = (int *)0x009B3A70;
 static int *const g_009b3a74 = (int *)0x009B3A74;
 static int *const g_009b3a78 = (int *)0x009B3A78;
 
-// ORIGINAL: 0x005D8290 ?setup_buff_sprite@Buffer@@QAEXH@Z 0x005D8290-0x005D835C FILE
+// ORIGINAL: 0x005D8290 ?setup_buff_sprite@Buffer@@QAEXH@Z 0x005D8290-0x005D835C FILE BYTE_EXACT
 // LEVER: NAMED MEMBERS AND THE REAL INTERFACE. This was `*(int *)((char *)this
 //        + 0x50)` for every field and a hand-rolled `((DDUnlockFn)vtbl[0x20])
 //        (field58, owner)` for the release - 14/64 (0.571). Written through
 //        `locked_bits_`, `dib_bits_`, `stride_`, `dib_.bmiHeader.biWidth`,
 //        `-dib_.bmiHeader.biHeight` and `surface_->Unlock(locked_bits_)`
 //        exactly as the BYTE_EXACT `get_pixel` spells them: 60/64 (0.986).
-// TRIED: the last four instructions. The image reads the fill colour as ONE
-//        BYTE - `xor ecx,ecx; mov cl, byte ptr [0x696d14]` - which is VC6's
-//        zero-extension of a BYTE-typed object; `WinFillColour` is `const int`
-//        (win.h), so ours is a dword load and a mask (`mov ecx,[0x696d14];
-//        and ecx,0xff`), same register, same 8 bytes, same value.
-//        Two byte-width spellings measured against the verbatim control
-//        (60/64): `*reinterpret_cast<const unsigned char *>
-//        (&WinFillColour)` compiles to the SAME dword load and mask, 60/64,
-//        and `colour = 0; memcpy(&colour, &WinFillColour, 1)` is WORSE,
-//        58/64. Reaching the image's form needs `WinFillColour` declared
-//        `unsigned char`, which is win.h's to change, not this unit's.
 // size      204 bytes
 // prototype void (__thiscall ?setup_buff_sprite@Buffer@@QAEXH@Z)(Buffer* this, int)
 // callers   0   call targets   0
@@ -3073,11 +3062,9 @@ void Buffer::setup_buff_sprite(int colour) {
     if (colour == -1) {
         // HONEST READ OF THE WORD. The image reads ONE byte here
         // (`xor ecx,ecx; mov cl, byte ptr [0x696d14]`), the low byte of the
-        // colour word, which is how VC6 zero-extends a BYTE-typed object.
-        // `WinFillColour` is `const int` (win.h, another agent's file), so the
-        // best this unit can say is the cast: same value, same register, same
-        // length - a dword load and a mask instead of a byte load.
-        colour = static_cast<unsigned char>(WinFillColour);
+        // colour word - which is how VC6 zero-extends a BYTE-typed object,
+        // and WinFillColour is one now.
+        colour = WinFillColour;
     }
     // THE BITS ARE PUBLISHED WHATEVER THEY ARE, and `locked_bits_` is stored
     // before the test - the same shape `get_data` and `get_pixel` have.
