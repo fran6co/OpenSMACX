@@ -1,7 +1,7 @@
 ---
 name: byte-match-recovery
 description: Recover one or more functions to byte-exactness against the shipped image. Use for OpenSMACX matching decompilation work handed out as a batch of addresses.
-model: glm-5.3-flash
+model: glm-5.3-flash[1m]
 tools: Bash, Read, Write, Edit
 ---
 
