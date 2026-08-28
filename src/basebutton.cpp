@@ -78,31 +78,37 @@ BaseButton *BaseButton::construct() {
     new (static_cast<GraphicWin *>(this)) GraphicWin();
     new (&time1_) Time();
     new (&time2_) Time();
-    volatile uint32_t *const object =
-        reinterpret_cast<volatile uint32_t *>(this);
-    volatile const uint32_t *const fixed = BaseButtonStaticDefaults;
-    volatile const uint32_t *const dynamic = BaseButtonDynamicDefaults;
+    // The two vfptrs are the one thing a member cannot name: they are the
+    // primary table at 0 and the Buffer subobject's at 0x444, installed by
+    // hand because nothing here is declared virtual. Everything below is an
+    // ordinary field.
+    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
     object[0x000 / 4] = BaseButtonPrimaryVtable;
     object[0x444 / 4] = BaseButtonBufferVtable;
-    object[0xA74 / 4] = 0;
-    object[0xA44 / 4] = 0xFFFFFFFFU;
-    object[0xA48 / 4] = 0xFFFFFFFFU;
-    object[0xA78 / 4] = 0;
-    object[0xA9C / 4] = 0;
-    object[0xA7C / 4] = 0;
-    object[0xA80 / 4] = 0;
-    object[0xAA8 / 4] = 0;
-    object[0xAAC / 4] = 0;
-    object[0xAB0 / 4] = 0;
-    object[0xAB4 / 4] = 0;
-    object[0xA94 / 4] = dynamic[0];
-    object[0xA84 / 4] = fixed[0];
-    object[0xA88 / 4] = fixed[1];
-    object[0xA8C / 4] = fixed[2];
-    object[0xA90 / 4] = fixed[3];
-    object[0xA98 / 4] = dynamic[1];
-    object[0xAA4 / 4] = 0;
-    object[0xAA0 / 4] = fixed[4];
+    field_A74_ = 0;
+    field_A44_ = 0xFFFFFFFFU;
+    field_A48_ = 0xFFFFFFFFU;
+    field_A78_ = 0;
+    field_A9C_ = 0;
+    name_ = nullptr;
+    bubble_text_ = nullptr;
+    group_ = nullptr;
+    field_AAC_ = 0;
+    field_AB0_ = 0;
+    field_AB4_ = 0;
+    // Read each default through its own absolute lvalue rather than a named
+    // pointer alias - the alias materialises the table's base address into a
+    // register before indexing element 0, where the image folds every
+    // element, including 0, straight into the operand (the same lever that
+    // took close() from 2/47 to 41/47).
+    field_A94_ = *reinterpret_cast<const uint32_t *>(0x009B8E2C);
+    color_ = *reinterpret_cast<const uint32_t *>(0x0069704C);
+    bevel_upper_ = *reinterpret_cast<const uint32_t *>(0x00697050);
+    bevel_lower_ = *reinterpret_cast<const uint32_t *>(0x00697054);
+    bevel_thickness_ = *reinterpret_cast<const uint32_t *>(0x00697058);
+    field_A98_ = *reinterpret_cast<const uint32_t *>(0x009B8E30);
+    field_AA4_ = 0;
+    field_AA0_ = *reinterpret_cast<const uint32_t *>(0x0069705C);
     return this;
 }
 
@@ -120,9 +126,13 @@ Purpose: Close the GraphicWin base, reset BaseButton-owned state from the
 //   no effect; the `or eax, 0xffffffff` for A44/A48 still schedules 4
 //   instructions later than the image (41/47 agreeing either way). The
 //   fixed/dynamic absolute-lvalue rewrite (LEVER, see body) fixed the other
-//   39 instructions; this residual plus the documented free-residue tail are
-//   what remain.
-// symbol    ?close@BaseButton@@QAEIXZ
+// TRIED: member-form rewrite of 2026-08-28 (field_A74_ .. bubble_text_ and
+//   group_ named instead of the `volatile uint32_t` pun of `this`) took this
+//   from 41/47 to 45/47, and the `or eax,0xffffffff` divergence the earlier
+//   TRIED line recorded is gone with it - the pun was the reason the -1
+//   landed four instructions late, so that residual was never a scheduling
+//   problem at all. VOID return (the image spells `X`, and the tree's
+//   `uint32_t` was the free() residue) removed the last one: 47/47.
 // size      208 bytes
 // prototype void (__thiscall ?close@BaseButton@@QAEXXZ)(BaseButton* this)
 // callers   3   call targets   2
@@ -133,54 +143,49 @@ Return Value: Zero when no bubble string is released; otherwise the executable
               free routine's EAX residue
 Status: Complete; string storage remains owned by the executable CRT
 */
-uint32_t BaseButton::close() {
+void BaseButton::close() {
     GraphicWin::close();
 
-    volatile uint32_t *const object =
-        reinterpret_cast<volatile uint32_t *>(this);
     // Read each default through its own absolute lvalue rather than a named
     // `fixed`/`dynamic` pointer alias - the alias materialises the table's
     // base address into a register before indexing element 0, where the
     // image folds every element, including 0, straight into the operand.
-    object[0xA74 / 4] = 0;
-    object[0xA9C / 4] = 0;
-    object[0xA78 / 4] = 0;
-    object[0xA44 / 4] = 0xFFFFFFFFU;
-    object[0xA48 / 4] = 0xFFFFFFFFU;
-    object[0xAAC / 4] = 0;
-    object[0xAB0 / 4] = 0;
-    object[0xAB4 / 4] = 0;
-    object[0xA94 / 4] = *reinterpret_cast<const uint32_t *>(0x009B8E2C);
-    object[0xA84 / 4] = *reinterpret_cast<const uint32_t *>(0x0069704C);
-    object[0xA88 / 4] = *reinterpret_cast<const uint32_t *>(0x00697050);
-    object[0xA8C / 4] = *reinterpret_cast<const uint32_t *>(0x00697054);
-    object[0xA90 / 4] = *reinterpret_cast<const uint32_t *>(0x00697058);
-    object[0xA98 / 4] = *reinterpret_cast<const uint32_t *>(0x009B8E30);
-    object[0xAA4 / 4] = 0;
-    object[0xAA0 / 4] = *reinterpret_cast<const uint32_t *>(0x0069705C);
+    field_A74_ = 0;
+    field_A9C_ = 0;
+    field_A78_ = 0;
+    field_A44_ = 0xFFFFFFFFU;
+    field_A48_ = 0xFFFFFFFFU;
+    field_AAC_ = 0;
+    field_AB0_ = 0;
+    field_AB4_ = 0;
+    field_A94_ = *reinterpret_cast<const uint32_t *>(0x009B8E2C);
+    color_ = *reinterpret_cast<const uint32_t *>(0x0069704C);
+    bevel_upper_ = *reinterpret_cast<const uint32_t *>(0x00697050);
+    bevel_lower_ = *reinterpret_cast<const uint32_t *>(0x00697054);
+    bevel_thickness_ = *reinterpret_cast<const uint32_t *>(0x00697058);
+    field_A98_ = *reinterpret_cast<const uint32_t *>(0x009B8E30);
+    field_AA4_ = 0;
+    field_AA0_ = *reinterpret_cast<const uint32_t *>(0x0069705C);
 
-    const uint32_t name = object[0xA7C / 4];
-    if (name != 0) {
-        free(reinterpret_cast<void *>(static_cast<uintptr_t>(name)));
-        object[0xA7C / 4] = 0;
+    if (name_ != nullptr) {
+        free(name_);
+        name_ = nullptr;
     }
-    // THE RESIDUE IS NOT MODELLED. The image returns whatever `free` left in
-    // EAX at 0x00607179 - it is `?close@BaseButton@@QAEXXZ`, declared void, so
-    // nothing reads it. The tree used to capture it by declaring `free` as
-    // returning `void *`, which is what kept the CRT's own `free` out of this
-    // file.
-    uint32_t result = 0;
-    const uint32_t bubble = object[0xA80 / 4];
-    if (bubble != 0) {
-        free(reinterpret_cast<void *>(static_cast<uintptr_t>(bubble)));
-        object[0xA80 / 4] = 0;
+    // THE RESIDUE IS THE IMAGE'S, NOT OURS. EAX at 0x00607179 holds whatever
+    // `free` left there, and the image never sets it on purpose - its own
+    // name spells the return `X`, void. Modelling it as a `uint32_t` return
+    // cost exactly one instruction (`xor eax,eax`) at the close of the body,
+    // which is why this is void now.
+    if (bubble_text_ != nullptr) {
+        free(bubble_text_);
+        bubble_text_ = nullptr;
     }
-    object[0xAA8 / 4] = 0;
-    return result;
+    group_ = nullptr;
 }
 
 uint32_t __fastcall base_button_close_redirect(BaseButton *self, void *) {
-    return self->close();
+    self->close();
+    return 0;
 }
 
 /*
@@ -527,14 +532,17 @@ void BaseButton::set(int value) {
     }
     field_A18_ = value;
 
-    void **const own_vtable = *reinterpret_cast<void ***>(this);
-    (ORIGINAL(this)->*original_method<func_button_refresh_slot>(reinterpret_cast<unsigned long>(own_vtable[BaseButtonRefreshSlot / sizeof(void *)])))();
+    // Slot 0xF8 is Win::vslot_62 - the window's own repaint-and-notify hook,
+    // reached the way any virtual call is reached, so it is spelled as one.
+    vslot_62();
 
     if (!win_parent_) {
         return;
     }
-    void **const parent_vtable = *reinterpret_cast<void ***>(win_parent_);
-    (ORIGINAL(win_parent_)->*original_method<func_parent_notify_slot>(reinterpret_cast<unsigned long>(parent_vtable[WinValueChangedSlot / sizeof(void *)])))(static_cast<int>(field_A78_), value);
+    // Slot 0xB4 is Win::vslot_45, the parent's value-changed notifier; the
+    // id goes first and the new value second. Read AFTER the store above, so
+    // a redraw that retargeted the button is seen here.
+    win_parent_->vslot_45(static_cast<int>(field_A78_), value);
 }
 
 
@@ -715,11 +723,13 @@ int BaseButton::init(LPCSTR name, int id, int x, int y, int width, int height,
                       *reinterpret_cast<Font **>(0x009B8E38),
                       *reinterpret_cast<Font **>(0x009B8E3C), nullptr);
 
-    // Re-read, do NOT hoist onto the close dispatch above: the original
-    // reloads the vtable pointer at 0x00607341, so a GraphicWin::init or a
-    // Buffer setter that restaged the table is seen by the show.
-    void **const show_vtable = *reinterpret_cast<void ***>(this);
-    (ORIGINAL(this)->*original_method<func_button_init_show_slot>(reinterpret_cast<unsigned long>(show_vtable[BaseButtonInitShowSlot / sizeof(void *)])))(0);
+    // Slot 0x04 is Win::show - a declared virtual, so the call is spelled as
+    // one and the table is re-read at the call, after every GraphicWin::init
+    // and Buffer setter above it, exactly as the image re-reads it at
+    // 0x00607341. The close dispatch above stays a raw walk: slot 0x168 is
+    // NOT one of Win's declared slots (they stop at 87), so there is no name
+    // to call it by.
+    show(0);
     return 0;
 }
 

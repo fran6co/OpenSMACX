@@ -58,6 +58,8 @@ void Spot::init(int count) {
 /*
 Purpose: Search for a specific spot and replace the RECT value.
 // ORIGINAL: 0x005FA900 ?replace@Spot@@QAEXHHHHHH@Z 0x005FA900-0x005FA956
+// LEVER: int-index + one `SpotInternal *const spot = &spots_[i];` local 0/37 (0.805) -> 10/37 (0.987). The image keeps ONE base in a register for the position/type compares AND the four RECT stores, and it needs the signed `jle` entry guard (`int i` against `static_cast<int>(add_count_)`), not the `jb`/`jbe` a `uint32_t i` gives. Direct `spots_[i].` indexing everywhere scores 0/37 (0.829) - VC6 re-reads `[ecx]` before every store.
+// TRIED: `spots_ + i` for `&spots_[i]`; `SpotInternal &spot` reference; `while` loop with `++i`; swapping the compares to `position == spot->position`. All four identical, 10/37 (0.987). Remaining gap is one instruction at the loop head: the image loads `spots_` straight into the result register (`mov eax,[ecx]; add eax,edi`) where VC6 gives us `mov ebp,[ecx]; mov eax,edi; add eax,ebp` - a copy the image does not pay - and the two compares come out operand-mirrored (`cmp [eax+0x10],ebp` vs `cmp ebp,[eax+0x10]`) as a consequence. Register-plan wall, not source form.
 // size      86 bytes
 // prototype void (__thiscall ?replace@Spot@@QAEXHHHHHH@Z)(Spot* this, int position, int type, int left, int top, int length, int width)
 // callers   0   call targets   0
@@ -68,12 +70,13 @@ Return Value: n/a
 Status: Complete
 */
 void Spot::replace(int position, int type, int left, int top, int length, int width) {
-    for (uint32_t i = 0; i < add_count_; i++) {
-        if (spots_[i].position == position && spots_[i].type == type) {
-            spots_[i].rect.left = left;
-            spots_[i].rect.right = left + length;
-            spots_[i].rect.top = top;
-            spots_[i].rect.bottom = top + width;
+    for (int i = 0; i < static_cast<int>(add_count_); i++) {
+        SpotInternal *const spot = &spots_[i];
+        if (spot->position == position && spot->type == type) {
+            spot->rect.left = left;
+            spot->rect.top = top;
+            spot->rect.right = left + length;
+            spot->rect.bottom = top + width;
         }
     }
 }
@@ -123,7 +126,9 @@ int Spot::add(int position, int type, RECT *rect) {
 
 /*
 Purpose: Remove all spots at a specific position.
-// ORIGINAL: 0x005FA9C0 ?kill_pos@Spot@@QAEXH@Z 0x005FA9C0-0x005FAA04
+// ORIGINAL: 0x005FA9C0 ?kill_pos@Spot@@QAEXH@Z 0x005FA9C0-0x005FAA04 BYTE_EXACT
+// LEVER: element-assign loop, NOT memcpy_s. The image is a `rep movsd` of 6 dwords per iteration with the bound re-read from `[edx+8]` - that is VC6 inlining `spots_[i] = spots_[i + 1]` for a 24-byte POD. The `memcpy_s(&spots_[position], size, &spots_[position + 1], size)` spelling scored 0/31.
+// LEVER: `add_count_--` goes AFTER the copy loop, and both the pre-guard and the loop bound read `static_cast<int>(add_count_) - 1`. Decrementing first makes the image's `dec ecx` in the loop condition subtract twice.
 // size      68 bytes
 // prototype void (__thiscall ?kill_pos@Spot@@QAEXH@Z)(Spot* this, int position)
 // callers   0   call targets   0
@@ -133,20 +138,23 @@ Purpose: Remove all spots at a specific position.
 Return Value: n/a
 Status: Complete
 */
-void Spot::kill_pos(int position) {
-    if (position < 0 || (uint32_t)position >= add_count_) {
+__forceinline void Spot::kill_pos(int position) {
+    if (position < 0 || position >= static_cast<int>(add_count_)) {
         return;
     }
-    add_count_--;
-    if ((uint32_t)position < add_count_) {
-        size_t size = sizeof(SpotInternal) * (add_count_ - position);
-        memcpy_s(&spots_[position], size, &spots_[position + 1], size);
+    if (position < static_cast<int>(add_count_) - 1) {
+        for (int i = position; i < static_cast<int>(add_count_) - 1; i++) {
+            spots_[i] = spots_[i + 1];
+        }
     }
+    add_count_--;
 }
 
 /*
 Purpose: Remove a specific spot.
 // ORIGINAL: 0x005FAA10 ?kill_specific@Spot@@QAEXHH@Z 0x005FAA10-0x005FAA89
+// LEVER: kill_pos must be `__forceinline` (and defined ABOVE this body) for the image's 54-instruction inlined copy to appear at all: without it the tree emits a `call` and scores 0/54 (32 instructions, 0.811). With it 0/54 (0.811) -> 28/54 (0.963).
+// TRIED: `static_cast<int>(add_count_) - 1` for the loop initialiser; swapping the compares to `type == ... && position == ...`. Both identical to the tree's 28/54 (0.963). Remaining gap is one register: the image keeps `this` in `edx` (`mov edx,ecx`, same as the out-of-line kill_pos) and `ebx` free for the inlined copy index, where VC6 gives us `push ebx; mov ebx,ecx` and copies the index into `edx` instead. Pure allocator choice, not source form.
 // size      121 bytes
 // prototype void (__thiscall ?kill_specific@Spot@@QAEXHH@Z)(Spot* this, int position, int type)
 // callers   0   call targets   0
@@ -191,7 +199,8 @@ void Spot::kill_type(int type) {
 
 /*
 Purpose: Check if the coordinates fall inside a spot. If so, return information about the spot.
-// ORIGINAL: 0x005FAB00 ?check@Spot@@QAEHHHPAH0@Z 0x005FAB00-0x005FAB69
+// ORIGINAL: 0x005FAB00 ?check@Spot@@QAEHHHPAH0@Z 0x005FAB00-0x005FAB69 BYTE_EXACT
+// LEVER: infinite-`for` with an EXPLICIT second guard. The image's loop tail is `test eax,eax; jl <exit>; jmp <top>` - a conditional jump to the shared `-1` epilogue followed by an UNCONDITIONAL jump back - which only a source whose loop condition is stated as a guard inside the body produces. `for (int i = offset; i >= 0; i--)` compiles the inverted `jge <top>` and scores 20/46 (0.857); spelling `i--;` then `if (i < 0) return -1;` is 46/46.
 // size      105 bytes
 // prototype int (__thiscall ?check@Spot@@QAEHHHPAH0@Z)(Spot* this, int xCoord, int yCoord, int* spotPos, int* spotType)
 // callers   49   call targets   0
@@ -202,12 +211,12 @@ Return Value: Spot position on success otherwise -1 on error
 Status: Complete
 */
 int Spot::check(int x, int y, int *spot_pos, int *spot_type) {
-    int offset = add_count_ - 1;
-    if (offset < 0) {
+    int i = static_cast<int>(add_count_) - 1;
+    if (i < 0) {
         return -1;
     }
-    for (int i = offset; i >= 0; i--) {
-        if (x >= spots_[i].rect.left && x < spots_[i].rect.right && y >= spots_[i].rect.top 
+    for (;;) {
+        if (x >= spots_[i].rect.left && x < spots_[i].rect.right && y >= spots_[i].rect.top
             && y < spots_[i].rect.bottom) {
             if (spot_pos) {
                 *spot_pos = spots_[i].position;
@@ -217,13 +226,17 @@ int Spot::check(int x, int y, int *spot_pos, int *spot_type) {
             }
             return i;
         }
+        i--;
+        if (i < 0) {
+            return -1;
+        }
     }
-    return -1;
 }
 
 /*
 Purpose: Check if the coordinates fall within a spot. If so, return information about the spot.
-// ORIGINAL: 0x005FAB70 ?check@Spot@@QAEHHHPAH0PAURECT@@@Z 0x005FAB70-0x005FABFF
+// ORIGINAL: 0x005FAB70 ?check@Spot@@QAEHHHPAH0PAURECT@@@Z 0x005FAB70-0x005FABFF BYTE_EXACT
+// LEVER: same infinite-`for` + explicit `if (i < 0) return -1;` guard as the 4-arg overload above - `for (int i = offset; i >= 0; i--)` scored 20/60, this is 60/60.
 // symbol    ?check@Spot@@QAEHHHPAH0PAUtagRECT@@@Z
 // size      143 bytes
 // prototype int (__thiscall ?check@Spot@@QAEHHHPAH0PAURECT@@@Z)(Spot* this, int xCoord, int yCoord, int* spotPos, int* spotType, RECT* spotRect)
@@ -235,12 +248,12 @@ Return Value: Spot position on success otherwise -1 on error
 Status: Complete
 */
 int Spot::check(int x, int y, int *spot_pos, int *spot_type, RECT *spot_rect) {
-    int offset = add_count_ - 1;
-    if (offset < 0) {
+    int i = static_cast<int>(add_count_) - 1;
+    if (i < 0) {
         return -1;
     }
-    for (int i = offset; i >= 0; i--) {
-        if (x >= spots_[i].rect.left && x < spots_[i].rect.right && y >= spots_[i].rect.top 
+    for (;;) {
+        if (x >= spots_[i].rect.left && x < spots_[i].rect.right && y >= spots_[i].rect.top
             && y < spots_[i].rect.bottom) {
             if (spot_pos) {
                 *spot_pos = spots_[i].position;
@@ -253,8 +266,11 @@ int Spot::check(int x, int y, int *spot_pos, int *spot_type, RECT *spot_rect) {
             }
             return i;
         }
+        i--;
+        if (i < 0) {
+            return -1;
+        }
     }
-    return -1;
 }
 
 /*

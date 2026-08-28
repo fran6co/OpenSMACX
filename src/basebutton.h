@@ -47,7 +47,11 @@ class BaseButton : public GraphicWin {
   ~BaseButton() { ; }
 
   BaseButton *construct();
-  uint32_t close();
+  // VOID, AND THE IMAGE IS WHAT SAYS SO: the catalogue spells it
+  // ?close@BaseButton@@QAEXXZ. The `uint32_t` this used to return was the
+  // free() residue in EAX that the image never sets on purpose, and spelling
+  // it cost one instruction (`xor eax,eax`) at the close of the body.
+  void close();
   int init(LPCSTR name, int id, int x, int y, int width, int height,
            Win *parent, int style_flag);
   BaseButton *destroy();

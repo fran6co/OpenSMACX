@@ -153,7 +153,7 @@ Return Value: Memory pointer with address to requested size
 Status: Complete
 */
 LPVOID Heap::get(size_t req_size) {
-    while (free_size_ < req_size) {
+    while (static_cast<int>(free_size_) < static_cast<int>(req_size)) {
         if (err_flags_ & 1) {
             return NULL; // error
         }
@@ -182,8 +182,6 @@ LPVOID Heap::get(size_t req_size) {
             exit(3);
         }
         base_ = new_addr;
-        // bug fix: in case realloc shifts memory
-        current_ = LPVOID(size_t(base_) + base_size_ - free_size_);
         base_size_ += 1024;
         free_size_ += 1024;
     }
