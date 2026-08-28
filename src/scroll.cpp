@@ -635,6 +635,31 @@ Purpose: Set the scrollbar thickness and reset its thumb rectangle.
 //   into an `or eax, edx` the image never has and drops 4 instructions the
 //   image keeps (23 -> 19 compiled) - same dead-store-elimination hazard
 //   `set_border_color` below already measured and rejected. Reverted.
+// LEVER (2026-08-28) the guard clause's POLARITY, not the branch: the image
+//   falls through into the inset work and jumps forward to ONE shared `ret 4`
+//   for the early exit, which is what a single `return` at the end of an
+//   if-wrapped block compiles to. The previous spelling - early `return color`
+//   then `return bottom` - put the work on the jump target and emitted `jne` +
+//   `or eax,eax` + a second `ret 4` (7/22). Holding the value in one `result`
+//   local assigned on both paths gives the image's `cmp eax,-1 / je <shared
+//   ret>` verbatim: 7/22 -> 12/22, 0.756 -> 0.930. `result = bottom` costs
+//   nothing - bottom is already in EAX, so VC6 emits no move and the two paths
+//   converge on the same `ret`. Same wall set_pos documents, solved by the one
+//   shape its TRIED list does not name (a single exit whose value is a local,
+//   not a `goto`).
+// LEVER (same pass) `bar_thickness_ = thickness` as a plain member store, not
+//   through `reinterpret_cast<volatile int *>`: the volatile pushed the
+//   `xor edx,edx` for the zero-init AFTER the thickness store, where the image
+//   has it at instruction 1, before it. Only the STORE loses its volatile; the
+//   reads of `thumb->right`/`top`/`bottom` keep it, because the image reloads
+//   those three fields and that is what keeps the reset stores alive.
+// TRIED: `thumb_rect_.left = thumb_rect_.left + 1` and
+//   `thumb->left = thumb->left + 1`, to reproduce the image's
+//   `inc edx / mov [ecx+0xa4c],edx` (it synthesises the literal 1 by
+//   incrementing the zero still live in edx) - 11/22 and 10/22, both worse
+//   than the plain literal's 12/22. VC6 constant-propagates the member read
+//   and emits `mov dword ptr [ecx+0xa4c], 1`. Refuted; what is left is that
+//   one instruction pair and the 3-byte shift it puts in the `je` target.
 // symbol    ?set_bar_thickness@Scroll@@QAEIH@Z
 // size      96 bytes
 // prototype void (__thiscall ?set_bar_thickness@Scroll@@QAEXH@Z)(Scroll* this, int)
@@ -647,26 +672,24 @@ Status: Complete
 */
 uint32_t Scroll::set_bar_thickness(int thickness) {
     const uint32_t thickness_bits = static_cast<uint32_t>(thickness);
-    *reinterpret_cast<volatile int *>(&bar_thickness_) = thickness;
+    bar_thickness_ = thickness;
     volatile RECT *const thumb = &thumb_rect_;
     thumb->left = 0;
     thumb->top = 0;
     thumb->right = long_from_bits(thickness_bits);
     thumb->bottom = long_from_bits(thickness_bits);
-    const uint32_t color = static_cast<uint32_t>(
-        *reinterpret_cast<volatile int *>(&border_color_));
-    if (color == 0xFFFFFFFFU) {
-        return color;
+    uint32_t result = static_cast<uint32_t>(border_color_);
+    if (result != -1) {
+        const uint32_t right = static_cast<uint32_t>(thumb->right) - 1U;
+        thumb->left = 1;
+        const uint32_t top = static_cast<uint32_t>(thumb->top) + 1U;
+        thumb->right = long_from_bits(right);
+        const uint32_t bottom = static_cast<uint32_t>(thumb->bottom) - 1U;
+        thumb->top = long_from_bits(top);
+        thumb->bottom = long_from_bits(bottom);
+        result = bottom;
     }
-
-    const uint32_t right = static_cast<uint32_t>(thumb->right) - 1U;
-    thumb->left = 1;
-    const uint32_t top = static_cast<uint32_t>(thumb->top) + 1U;
-    thumb->right = long_from_bits(right);
-    const uint32_t bottom = static_cast<uint32_t>(thumb->bottom) - 1U;
-    thumb->top = long_from_bits(top);
-    thumb->bottom = long_from_bits(bottom);
-    return bottom;
+    return result;
 }
 
 /*
@@ -690,6 +713,21 @@ Purpose: Set the border color and reset the scrollbar thumb rectangle.
 //   schedule. Reverted. The `xor edx, edx` vs its later position is the
 //   remaining divergence and is pure instruction scheduling, not source
 //   shape.
+// RETRACTED (2026-08-28) that "pure instruction scheduling" conclusion, and
+//   the conclusion it shared with set_thumb_rect's TRIED. It was the STORE's
+//   volatile, not the schedule: `border_color_ = color` as a plain member
+//   store moves the `xor edx,edx` to instruction 1 where the image has it,
+//   because the volatile cast was what ordered it after the colour store.
+//   9/22 -> 12/22, 0.837 -> 0.930. The branch still re-READS `border_color_`
+//   from memory (`cmp dword ptr [ecx+0xa1c],-1`), which is what this body's
+//   own LEVER above established, so nothing the volatile was guarding is
+//   lost - the image's one store and one load are both still there.
+// TRIED (2026-08-28) `thumb_rect_.left = thumb_rect_.left + 1` for the
+//   image's `inc edx / mov [ecx+0xa4c],edx` once the schedule was right:
+//   11/22, WORSE than the plain literal's 12/22, same as set_bar_thickness's
+//   own attempt. VC6 constant-propagates the member read back to the literal.
+//   Refuted twice now, in two different schedules. The residue is that one
+//   instruction pair and the 3-byte shift it puts in the `je` target.
 // size      100 bytes
 // prototype void (__thiscall ?set_border_color@Scroll@@QAEXH@Z)(Scroll* this, int)
 // callers   1   call targets   0
@@ -700,7 +738,7 @@ Purpose: Set the border color and reset the scrollbar thumb rectangle.
 Status: Complete
 */
 void Scroll::set_border_color(int color) {
-    *reinterpret_cast<volatile int *>(&border_color_) = color;
+    border_color_ = color;
     const uint32_t thickness = static_cast<uint32_t>(bar_thickness_);
     volatile RECT *const thumb = &thumb_rect_;
     thumb->left = 0;
@@ -789,6 +827,18 @@ void Scroll::set_sprite_right(
 /*
 Purpose: Set the upper scrollbar sprites and vertical upper-button sprites.
 // ORIGINAL: 0x00605C80 ?UNK1@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z 0x00605C80-0x00605CCB
+// NAMING EVIDENCE (2026-08-28) for both UNKs (this and 0x00605CD0): the image
+//   offers nothing - `strings -a terranx_original.exe` has ZERO `Scroll@@`
+//   strings, so UNK1/UNK2 are IDB placeholders, not names the binary carries.
+//   The structure is decisive instead. The button offset 0x15BC is
+//   offsetof(Scroll, flat_button_left_) + offsetof(FlatButton, sprite1_)
+//   (0xAAC + 0xB10) and 0x2108 is the SAME field of flat_button_right_
+//   (0x15F8 + 0xB10): each pair writes the scrollbar's own stored triplet AND
+//   the same three sprites into one end button's sprite1_..sprite3_. Left/up
+//   share the LEFT button, right/down share the RIGHT button - a vertical
+//   scrollbar's up arrow is its horizontal left arrow - and horizontal=false
+//   here against set_sprite_left/right's true picks the vertical half of each
+//   pair. That is what the names in scroll.h rest on.
 // symbol    ?set_sprite_up@Scroll@@QAEXPAVSprite@@00@Z
 // size      75 bytes
 // prototype void (__thiscall ?UNK1@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z)(Scroll* this, Sprite*, Sprite*, Sprite*)
@@ -808,6 +858,9 @@ void Scroll::set_sprite_up(
 /*
 Purpose: Set the lower scrollbar sprites and vertical lower-button sprites.
 // ORIGINAL: 0x00605CD0 ?UNK2@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z 0x00605CD0-0x00605D1B
+// NAMING EVIDENCE (2026-08-28): see set_sprite_up (0x00605C80) - 0x2108 is
+//   flat_button_right_.sprite1_, the RIGHT button, and horizontal=false makes
+//   this its vertical (down) half. No image name evidence exists either way.
 // symbol    ?set_sprite_down@Scroll@@QAEXPAVSprite@@00@Z
 // size      75 bytes
 // prototype void (__thiscall ?UNK2@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z)(Scroll* this, Sprite*, Sprite*, Sprite*)
@@ -900,6 +953,49 @@ uint32_t Scroll::set_pos(int position) {
 /*
 Purpose: Compute and publish the scrollbar thumb rectangle.
 // ORIGINAL: 0x00606C50 ?compute_thumb_rect@Scroll@@QAEXPAURECT@@@Z 0x00606C50-0x00606E9E
+// REWRITTEN 2026-08-28 off the raw-offset working copy (4/215, first divergence
+//   at instruction 0) into named members: 52/215 at /c /O2 /Gy /GR- /GX, first
+//   divergence now at instruction 48 - the first 48 instructions, the whole
+//   prologue, the unrolled 16-byte copy and the whole normalize-to-origin
+//   block, agree instruction for instruction.
+// FIELD MAP (what the raw offsets were): 0xA4C thumb_rect_, 0xA1C
+//   border_color_, 0xA3C field_A3C_ (the drag coordinate), 0xA14 field_A14_
+//   (bit 1 = no end buttons), 0xA24 range_maximum_, 0xA20 range_minimum_,
+//   0xA2C position_, 0x4C4/0x4C8 dib_.bmiHeader.biWidth/biHeight (Buffer is at
+//   0x444, so those are +0x80/+0x84 - biHeight stored negative, hence the neg).
+// LEVER: the copy loops were the body's own `for (offset; offset < sizeof
+//   (RECT); offset += 4)` over read_bits/write_bits. The image UNROLLS both
+//   16-byte copies into four load/store pairs; writing `*rect = thumb_rect_`
+//   and `thumb_rect_ = *rect` gives exactly that. 4/215 -> 21/215 together
+//   with the member rewrite.
+// LEVER: the normalize block holds its offsets NEGATED and ADDS them
+//   (`const LONG left = -rect->left; rect->right += left; rect->left += left;`).
+//   The spelling you would write - read `left`, subtract twice - lets VC6 CSE
+//   the two loads of rect->left and fold `left - left` to zero, which the image
+//   never does: it loads rect->left TWICE and shares one `neg` across both
+//   additions. Sub-form measured 12/215, negated form 26/215.
+// LEVER: declaration and statement order in that block. `top` declared BEFORE
+//   `left`, and the field updates in the order left/right/top/bottom (not
+//   right/left/bottom/top), move it 26/215 -> 52/215. Pure register-allocation
+//   scheduling: VC6 hands the two locals eax/edx the other way round
+//   otherwise, and every load after them shifts.
+// TRIED: restructuring the no-end-buttons selects in the not-dragging branch
+//   into the single `if/else` the image's one `test byte` suggests (it sets
+//   thumb_offset AND adjustment in the same two arms). 52/215 unchanged, only
+//   0.590 -> 0.598 similar - kept, but it does not buy the instruction. The
+//   real residue there is that VC6 materialises the mask `2` in edx
+//   (`mov edx,2 / test byte ptr [ecx+0xa14], dl / sub [esp+0x1c], edx`) where
+//   the image uses two immediates, so `adjustment` spills to the stack where
+//   the image keeps it in a register.
+// TRIED: `adjustment = -1 - adjustment` to reuse the -1 the image keeps live in
+//   ebx - WORSE, 50/215 and 0.598 -> 0.504 similar; `0 - adjustment` (neg) is
+//   what the image's own `neg`-bearing schedule wants. Reverted.
+// TRIED: the two `if` conditions as `test byte`-friendly bools - the image
+//   tests `[ecx+0xa14]` once per branch and never materialises a bool, so the
+//   bool form is right; the earlier working copy's `no_end_buttons` bool was
+//   NOT the defect. What is left is register naming (image carries rect->left
+//   in ebp / drag in edx at instruction 48, this tree the other way round)
+//   cascading through the two arms.
 // symbol    ?compute_thumb_rect@Scroll@@QAEXPAUtagRECT@@@Z
 // size      590 bytes
 // prototype void (__thiscall ?compute_thumb_rect@Scroll@@QAEXPAURECT@@@Z)(Scroll* this, RECT*)
@@ -922,103 +1018,88 @@ statements earlier, so off-by-small-constant offset mutants read the same
 zeros.
 */
 void Scroll::compute_thumb_rect(RECT *rect) {
-    uint8_t *thumb = reinterpret_cast<uint8_t *>(this) + 0xA4C;
-    for (size_t offset = 0; offset < sizeof(RECT); offset += sizeof(uint32_t)) {
-        write_bits(rect, offset, read_bits(thumb, offset));
+    *rect = thumb_rect_;
+    const LONG top = -rect->top;
+    const LONG left = -rect->left;
+    rect->left += left;
+    rect->right += left;
+    rect->top += top;
+    rect->bottom += top;
+    if (border_color_ != -1) {
+        rect->left += 1;
+        rect->right += 1;
+        rect->top += 1;
+        rect->bottom += 1;
     }
-
-    uint32_t left = read_bits(rect, 0);
-    uint32_t right = read_bits(rect, 8) - left;
-    const uint32_t top = read_bits(rect, 4);
-    write_bits(rect, 8, right);
-    uint32_t bottom = read_bits(rect, 12) - top;
-    left = 0;
-    write_bits(rect, 0, left);
-    write_bits(rect, 12, bottom);
-    write_bits(rect, 4, 0);
-    if (read_bits(this, 0xA1C) != 0xFFFFFFFFU) {
-        left = read_bits(rect, 0) + 1U;
-        right = read_bits(rect, 8) + 1U;
-        const uint32_t inset_top = read_bits(rect, 4) + 1U;
-        bottom = read_bits(rect, 12) + 1U;
-        write_bits(rect, 0, left);
-        write_bits(rect, 8, right);
-        write_bits(rect, 4, inset_top);
-        write_bits(rect, 12, bottom);
-    }
-
-    right = read_bits(rect, 8);
-    left = read_bits(rect, 0);
-    const uint32_t extent = right - left;
-    const uint32_t drag_coordinate = read_bits(this, 0xA3C);
-    uint32_t thumb_offset;
-
-    if (drag_coordinate == 0xFFFFFFFFU) {
-        const bool no_end_buttons = (read_bits(this, 0xA14) & 2U) != 0;
-        thumb_offset = no_end_buttons ? 0U : extent + 1U;
-        uint32_t adjustment = 0xFFFFFFFFU - (no_end_buttons
-            ? extent : extent * 3U);
-        if (read_bits(this, 0xA1C) != 0xFFFFFFFFU) {
-            adjustment -= 2U;
-        }
-        const uint32_t height = 0U - read_bits(this, 0x4C8);
-        const uint32_t width = read_bits(this, 0x4C4);
-        const bool horizontal = long_from_bits(width) > long_from_bits(height);
-        const uint32_t axis_length = horizontal ? width : height;
-        const uint32_t maximum = read_bits(this, 0xA24);
-        const uint32_t minimum = read_bits(this, 0xA20);
-        if (maximum != minimum) {
-            const uint32_t numerator = (read_bits(this, 0xA2C) - minimum)
-                * (axis_length + adjustment);
-            // LEVER: the image makes NO calls at all in this body -
-            // signed_divide/arithmetic_shift_right_one/signed_min are
-            // hand-inlined here rather than called, matching call_diff's
-            // "this tree 3, image 0" gap.
-            thumb_offset += static_cast<uint32_t>(
-                long_from_bits(numerator) / long_from_bits(maximum - minimum));
-        }
-        if (horizontal) {
-            write_bits(rect, 0, read_bits(rect, 0) + thumb_offset);
-            write_bits(rect, 8, read_bits(rect, 8) + thumb_offset);
+    const LONG extent = rect->right - rect->left;
+    LONG thumb_offset;
+    if (field_A3C_ == -1) {
+        LONG adjustment;
+        if ((field_A14_ & 2) != 0) {
+            thumb_offset = 0;
+            adjustment = extent;
         } else {
-            write_bits(rect, 4, read_bits(rect, 4) + thumb_offset);
-            write_bits(rect, 12, read_bits(rect, 12) + thumb_offset);
+            thumb_offset = extent + 1;
+            adjustment = extent * 3;
+        }
+        adjustment = 0 - adjustment;
+        if (border_color_ != -1) {
+            adjustment -= 2;
+        }
+        const LONG height = -dib_.bmiHeader.biHeight;
+        const LONG width = dib_.bmiHeader.biWidth;
+        if (width > height) {
+            if (range_maximum_ != range_minimum_) {
+                thumb_offset += (position_ - range_minimum_)
+                    * (width + adjustment) / (range_maximum_ - range_minimum_);
+            }
+            rect->left += thumb_offset;
+            rect->right += thumb_offset;
+        } else {
+            if (range_maximum_ != range_minimum_) {
+                thumb_offset += (position_ - range_minimum_)
+                    * (height + adjustment) / (range_maximum_ - range_minimum_);
+            }
+            rect->top += thumb_offset;
+            rect->bottom += thumb_offset;
         }
     } else {
-        const bool no_end_buttons = (read_bits(this, 0xA14) & 2U) != 0;
-        const uint32_t far_edge = left + extent;
-        const uint32_t candidate = drag_coordinate
-            + ((extent >> 1U) | (extent & 0x80000000U));
-        write_bits(this, 0xA3C, candidate);
-        const uint32_t height = 0U - read_bits(this, 0x4C8);
-        const uint32_t width = read_bits(this, 0x4C4);
-        const bool horizontal = long_from_bits(width) > long_from_bits(height);
-        const uint32_t axis_length = horizontal ? width : height;
-        const uint32_t upper = axis_length - (no_end_buttons
-            ? far_edge : far_edge * 2U);
-        const uint32_t limited =
-            (long_from_bits(candidate) < long_from_bits(upper)) ? candidate : upper;
-        if (no_end_buttons) {
-            thumb_offset = long_from_bits(limited) < 0 ? 0U : limited;
-        } else if (long_from_bits(far_edge) > long_from_bits(limited)) {
-            thumb_offset = far_edge;
+        const bool no_end_buttons = (field_A14_ & 2) != 0;
+        const LONG far_edge = rect->left + extent;
+        const LONG candidate = field_A3C_ + extent / 2;
+        field_A3C_ = candidate;
+        const LONG height = -dib_.bmiHeader.biHeight;
+        const LONG width = dib_.bmiHeader.biWidth;
+        if (width > height) {
+            const LONG upper = no_end_buttons ? width - far_edge : width - far_edge * 2;
+            const LONG limited = candidate < upper ? candidate : upper;
+            if (no_end_buttons) {
+                thumb_offset = limited < 0 ? 0 : limited;
+            } else if (far_edge > limited) {
+                thumb_offset = far_edge;
+            } else {
+                thumb_offset = limited;
+            }
+            field_A3C_ = thumb_offset;
+            rect->left += thumb_offset;
+            rect->right += thumb_offset;
         } else {
-            thumb_offset = limited;
+            const LONG upper = no_end_buttons ? height - far_edge : height - far_edge * 2;
+            const LONG limited = candidate < upper ? candidate : upper;
+            if (no_end_buttons) {
+                thumb_offset = limited < 0 ? 0 : limited;
+            } else if (far_edge > limited) {
+                thumb_offset = far_edge;
+            } else {
+                thumb_offset = limited;
+            }
+            field_A3C_ = thumb_offset;
+            rect->top += thumb_offset;
+            rect->bottom += thumb_offset;
         }
-        write_bits(this, 0xA3C, thumb_offset);
-        if (horizontal) {
-            write_bits(rect, 0, read_bits(rect, 0) + thumb_offset);
-            write_bits(rect, 8, read_bits(rect, 8) + thumb_offset);
-        } else {
-            write_bits(rect, 4, read_bits(rect, 4) + thumb_offset);
-            write_bits(rect, 12, read_bits(rect, 12) + thumb_offset);
-        }
-        write_bits(this, 0xA3C, 0xFFFFFFFFU);
+        field_A3C_ = -1;
     }
-    for (size_t coordinate = 0; coordinate < sizeof(RECT);
-            coordinate += sizeof(uint32_t)) {
-        write_bits(thumb, coordinate, read_bits(rect, coordinate));
-    }
+    thumb_rect_ = *rect;
 }
 
 /*
@@ -1030,6 +1111,21 @@ Purpose: Reset the scrollbar thumb rectangle from its stored thickness.
 //   rect writes are dead when the branch below overwrites them and elides
 //   them, which the image does not do - same shape as `set_border_color`'s
 //   already-documented dead-store hazard. Reverted.
+// TRIED (2026-08-28) dropping the volatile ONLY on the two integer accesses,
+//   `bar_thickness_` and the `border_color_` guard, keeping `volatile RECT
+//   *const thumb`: fixes the compare - the image has a memory-immediate
+//   `cmp dword ptr [ecx+0xa1c],-1` and the volatile read forces
+//   `mov edx,[ecx+0xa1c] / cmp edx,-1`, one instruction longer - but the
+//   body then compiles to 19 instructions against the image's 20, so the
+//   `je` target shifts 3 bytes and lands differently: 10/20 at 0.923 similar
+//   against the tree's 12/20 at 0.900. Same measurement for the single-exit
+//   `result` shape that took set_bar_thickness to 12/22, and for holding the
+//   zero in a `uint32_t left_edge` local. LEFT on the tree's 12/20, but note
+//   the direction: the volatile-read version is one lever from exact (the
+//   image's `inc edx / mov [ecx+0xa4c],edx` pair, see set_bar_thickness's
+//   TRIED), while the volatile-guard version is two.
+// TRIED (2026-08-28) `thumb_rect_.left = thumb_rect_.left + 1` and
+//   `thumb->left = thumb->left + 1` for that pair: 9/20 and 9/20. Refuted.
 // symbol    ?set_thumb_rect@Scroll@@QAEIXZ
 // size      88 bytes
 // prototype void (__thiscall ?set_thumb_rect@Scroll@@QAEXXZ)(Scroll* this)
