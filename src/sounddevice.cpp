@@ -657,7 +657,6 @@ Midi_Device::Midi_Device() {
     // in between - the same shape `Wave_Device::Wave_Device` next door already
     // reproduces. The image writes 0x0066E098, then the fields OUT of
     // declaration order, then 0x0066E190 over the top.
-    vtable_storage_ = 0x0066E098;
     // A REAL `memset` CALL, not a store: the image emits
     // `push 4; push 0; push esi+4; call 0x6465f0` at 0x004C5753. The same
     // shape `Wave::init` needed for its own flag field.
@@ -668,7 +667,6 @@ Midi_Device::Midi_Device() {
     field_10_ = 0;
     device_ = nullptr;
     field_8_ = 0x7F;
-    vtable_storage_ = 0x0066E190;
 }
 
 /*
@@ -688,7 +686,6 @@ Midi_Device::Midi_Device() {
 // `memset(&field_4_, 0, 4)` is a real `memset` CALL in the image
 // (`push 4; push 0; push esi+4; call 0x6465f0`), not a store.
 Wave_In_Device::Wave_In_Device() {
-    vtable_storage_ = 0x0066E098;
     memset(&field_4_, 0, 4);
     field_C_ = 0;
     field_18_ = 0;
@@ -696,7 +693,6 @@ Wave_In_Device::Wave_In_Device() {
     field_10_ = 0;
     device_ = nullptr;
     field_8_ = 0x7F;
-    vtable_storage_ = 0x0066E1F0;
 }
 
 /*
@@ -714,7 +710,6 @@ Wave_In_Device::Wave_In_Device() {
 // the wrapped device's own slot 4 - the dispatch is the destructor's last
 // act. Promoted from src/recovered/004c5780.cpp.
 Midi_Device::~Midi_Device() {
-    vtable_storage_ = 0x0066E098;
     void *device = device_;
     if (device) {
         vtable_slot<device_release_fn>(device, 0x10)(device);
@@ -734,9 +729,24 @@ Midi_Device::~Midi_Device() {
 */
 // Same shape as ~Midi_Device() above. Promoted from src/recovered/004c5980.cpp.
 Wave_In_Device::~Wave_In_Device() {
-    vtable_storage_ = 0x0066E098;
     void *device = device_;
     if (device) {
         vtable_slot<device_release_fn>(device, 0x10)(device);
     }
 }
+
+// The unrecovered vftable slots (a bare `ret` stub at 0x00404280 in the
+// image's Midi_Device and Wave_In_Device tables). Semantic debt until named.
+void Midi_Device::unk_slot2() {}
+void Wave_In_Device::unk_slot2() {}
+
+// Unrecovered vftable slots for Midi_Device and Wave_In_Device: the image's
+// create_device / delete_device / release bodies at 0x004C56D0 / 0x004C5710 /
+// 0x004C57F0 and their Wave_In_Device counterparts. Semantic debt until
+// recovered.
+int Midi_Device::create_device(unsigned long) { return 0; }
+int Midi_Device::delete_device() { return 0; }
+void Midi_Device::release() {}
+int Wave_In_Device::create_device(unsigned long) { return 0; }
+int Wave_In_Device::delete_device() { return 0; }
+void Wave_In_Device::release() {}

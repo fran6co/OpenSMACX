@@ -706,7 +706,6 @@ Sound::~Sound() {
     // The whole body runs through a volatile view: a destructor's trailing
     // member stores are otherwise dead to the optimizer (the Wave precedent).
     Sound volatile *const self = this;
-    self->vtable_storage_ = 0x0066E3C0;
     {
         void *const name = self->fname_;
         if (name) {
@@ -740,7 +739,6 @@ Sound::~Sound() {
         self->chain_prev_ = nullptr;
         self->flags_40_ &= ~2u;
     }
-    self->vtable_storage_ = 0x0066E444;
 }
 
 
@@ -909,3 +907,19 @@ int __cdecl init_sound(void *window, unsigned long backends) {
     *g_0090db7c = 1;
     return 0;
 }
+
+// The unrecovered Sound vftable slots (0x004482F0 and the 0x004483xx run):
+// implemented in the image's effect region, bodies not yet recovered. The
+// declarations keep the vftable slots true; the bodies are semantic debt.
+void Sound::unk_slot1() {}
+void Sound::unk_slot24() {}
+void Sound::unk_slot25() {}
+void Sound::unk_slot26() {}
+void Sound::unk_slot27() {}
+void Sound::unk_slot28() {}
+void Sound::unk_slot30() {}
+
+// Slot 15: pure in the image's Sound vftable, overridden per derived class
+// (Wave's override is get_game_hwnd). This tree defines the base slot so the
+// vftable links; the per-class overrides carry the real behavior.
+int Sound::get_game_hwnd() { return 0; }

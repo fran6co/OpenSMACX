@@ -38,6 +38,17 @@
   */
 class Midi_Device {
  public:
+  // THE VIRTUAL SET, in the image's own vftable slot order (0x0066E190).
+  // The base-interface table (0x0066E098) is all-pure: the original compiled
+  // Midi_Device's base as abstract.
+  virtual int create_device(unsigned long a1);      // slot 0 (0x4C56D0)
+  virtual int delete_device();                      // slot 1 (0x4C5710)
+  virtual void unk_slot2();                         // slot 2 (0x404280 `ret` stub)
+  virtual int init(void *window, unsigned long backends);  // slot 3
+  virtual void release();                           // slot 4 (0x4C57F0)
+  virtual int get_ndevices();                       // slot 5 (0x4C5830)
+  virtual int select(unsigned int a1);              // slot 6 (0x4C5840)
+  virtual int get_description(unsigned int a1, char *a2, unsigned int a3);  // slot 7
   // DEFINED IN sounddevice.cpp, not empty. Its marker claims 60 image bytes
   // and the body was `{ ; }` - the image writes nine fields and both vtable
   // pointers. Promoted from src/recovered/units/004c5740.cpp.
@@ -47,18 +58,14 @@ class Midi_Device {
   // and tears down the wrapped device through its own virtual slot 4. Promoted
   // from src/recovered/004c5780.cpp.
   ~Midi_Device();
-  int init(void *window, unsigned long backends);  // 004C57A0
   void update_sound();
   void suspend();
   void restart();
 
-  int select(unsigned int a1);
   void set_volume(unsigned int volume);
   void set_pan(int pan);
   int fade(unsigned int a1);
   void set_rate(unsigned int rate);
-  int get_description(unsigned int a1, char *a2, unsigned int a3);
-  int get_ndevices();
   int get_volume();
   int stop();
   int get_rate();
@@ -66,7 +73,6 @@ class Midi_Device {
   int disable();
   int is_disabled();
  private:
-  uint32_t vtable_storage_;
   uint32_t field_4_;  // 0x0004
   uint32_t field_8_;
   uint32_t field_C_;
@@ -74,35 +80,39 @@ class Midi_Device {
   void *device_;  // 0x14, the wrapped device this forwards to
   uint32_t field_18_;
   uint32_t field_1C_;
-};
+};  // vptr at 0x00 replaces the retired vtable_storage_
 
 static_assert(sizeof(Midi_Device) == 0x20,
               "Midi_Device layout must match the original executable");
 
 class Wave_In_Device {
  public:
+  // THE VIRTUAL SET, in the image's own vftable slot order (0x0066E1F0).
+  virtual int create_device(unsigned long a1);      // slot 0 (0x4C59A0)
+  virtual int delete_device();                      // slot 1 (0x4C59E0)
+  virtual void unk_slot2();                         // slot 2 (0x404280 `ret` stub)
+  virtual int init(void *window, unsigned long backends);  // slot 3
+  virtual void release();                           // slot 4 (0x4C5A50)
+  virtual int get_ndevices();                       // slot 5 (0x4C5AC0)
+  virtual int select(unsigned int a1);              // slot 6 (0x4C5AD0)
+  virtual int get_description(unsigned int a1, char *a2, unsigned int a3);  // slot 7
   // DEFINED IN sounddevice.cpp, not empty - the same shape as
   // Midi_Device::Midi_Device() next door.
   Wave_In_Device();
   // DEFINED IN sounddevice.cpp, not empty - the same shape as
   // ~Midi_Device() next door. Promoted from src/recovered/004c5980.cpp.
   ~Wave_In_Device();
-  int init(void *window, unsigned long backends);  // 004C5A10
   void update_sound();
   void suspend();
   void restart();
 
-  int select(unsigned int a1);
   int get_caps(unsigned int a1);
   void set_rate(unsigned int rate);
-  int get_description(unsigned int a1, char *a2, unsigned int a3);
-  int get_ndevices();
   int stop();
   int get_rate();
   int start_record();
   int end_record();
  private:
-  uint32_t vtable_storage_;
   uint32_t field_4_;  // 0x0004
   uint32_t field_8_;
   uint32_t field_C_;
@@ -110,7 +120,7 @@ class Wave_In_Device {
   void *device_;  // 0x14, the wrapped device this forwards to
   uint32_t field_18_;
   uint32_t field_1C_;
-};
+};  // vptr at 0x00 replaces the retired vtable_storage_
 
 static_assert(sizeof(Wave_In_Device) == 0x20,
               "Wave_In_Device layout must match the original executable");

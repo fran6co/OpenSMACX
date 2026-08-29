@@ -65,6 +65,9 @@ struct WaveControlGroup {
   */
 class Wave_Device {
  public:
+  // THE VIRTUAL SET, in the image's own vftable slot order (0x0066E0E8).
+
+ public:
   Wave_Device();
   ~Wave_Device();
   void set_pan(int);
@@ -92,8 +95,10 @@ class Wave_Device {
   int pull_from_group(Wave *wave);
   int is_group_disabled(unsigned int group);
   int select(unsigned long a1);
-  int create_device(unsigned long a1);
-  int delete_device();
+  virtual int create_device(unsigned long a1);   // slot 0 (0x4C4ED0)
+  virtual int delete_device();                   // slot 1 (0x4C4F10)
+  virtual void unk_slot2();                      // slot 2 (0x404280 `ret` stub)
+  // slot 3: init — already declared below
   int init(void *group_id, unsigned long flags);
   int release();
   int set_group_volume(unsigned int group, unsigned int volume);
@@ -114,7 +119,6 @@ class Wave_Device {
   int get_listener_zpos(float *z);
 
  private:
-  uint32_t vtable_storage_;  // 0x00, opaque so no C++ vtable is generated
   uint32_t field_4_;         // 0x04, zeroed at construction
   uint32_t volume_8_;        // 0x08, 0x7F at construction
   uint32_t field_C_;
