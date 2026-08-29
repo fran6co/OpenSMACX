@@ -32,6 +32,7 @@ it checks is the defect it exists to catch.
 from __future__ import annotations
 
 import collections
+import concurrent.futures
 import sys
 from dataclasses import replace
 from pathlib import Path
@@ -69,48 +70,66 @@ def _one_keyword_flip(text: str, after: str) -> str:
     return f"the changed line differs by more than a keyword:\n  {a}\n  {b}"
 
 
+def _census_file(item: tuple) -> tuple[int, list[tuple[str, str]]]:
+    """One file's invariants: (record count, [(invariant, message), ...])."""
+    path, group = item
+    problems: list[tuple[str, str]] = []
+    text = path.read_text(errors="replace")
+
+    # I - a no-op rewrite must not touch a byte.
+    if write(text, group) != text:
+        problems.append(("I no-op rewrite", str(path)))
+
+    for record in group:
+        where = f"{path.name}:{record.line} {record.address_hex}"
+
+        # II - the ratchet keyword is the only thing a flip may move.
+        flipped = replace(record, byte_exact=not record.byte_exact)
+        problem = _one_keyword_flip(text, write(text, [flipped]))
+        if problem:
+            problems.append(("II keyword flip", f"{where}: {problem}"))
+
+        # III - a demotion may not change how many lines the file has,
+        # nor which lessons it re-reads.
+        down = stamped(record, AsmComparison(verdict=Tier.MISMATCH),
+                       demote=True)
+        after = write(text, [down])
+        if len(after.splitlines()) != len(text.splitlines()):
+            problems.append(("III demotion line count", where))
+        elif (collections.Counter(_reread(after, record.line).ruled_out)
+              != collections.Counter(down.ruled_out)):
+            problems.append(("III demotion lessons", where))
+
+        # IV - clearing the lessons deletes exactly their own lines.
+        if record.origin:
+            bare = replace(record, levers=(), ruled_out=(),
+                           unrecoverable=(), deferred=())
+            owned = sum(len(lesson.lines) for lesson in record.origin)
+            lost = (len(text.splitlines())
+                    - len(write(text, [bare]).splitlines()))
+            if lost != owned:
+                problems.append(("IV lesson deletion",
+                                 f"{where}: dropped {lost} lines, "
+                                 f"owns {owned}"))
+
+    return len(group), problems
+
+
 def census(root: Path):
+    """FILES ARE INDEPENDENT AND THE WORK IS PURE CPU, so they run across
+    cores. Invariant III re-reads a whole rewritten file once per record -
+    84% of the census by profile - and the honest fix is a faster rewrite
+    check, not a weaker one; until then the wall clock divides by the
+    machine. `pool.map` keeps input order, so the report reads as before.
+    """
     failures = collections.defaultdict(list)
     records = 0
-    for path, group in sorted(by_file(root).items()):
-        text = path.read_text(errors="replace")
-        records += len(group)
-
-        # I - a no-op rewrite must not touch a byte.
-        if write(text, group) != text:
-            failures["I no-op rewrite"].append(str(path))
-
-        for record in group:
-            where = f"{path.name}:{record.line} {record.address_hex}"
-
-            # II - the ratchet keyword is the only thing a flip may move.
-            flipped = replace(record, byte_exact=not record.byte_exact)
-            problem = _one_keyword_flip(text, write(text, [flipped]))
-            if problem:
-                failures["II keyword flip"].append(f"{where}: {problem}")
-
-            # III - a demotion may not change how many lines the file has,
-            # nor which lessons it re-reads.
-            down = stamped(record, AsmComparison(verdict=Tier.MISMATCH),
-                           demote=True)
-            after = write(text, [down])
-            if len(after.splitlines()) != len(text.splitlines()):
-                failures["III demotion line count"].append(where)
-            elif (collections.Counter(_reread(after, record.line).ruled_out)
-                  != collections.Counter(down.ruled_out)):
-                failures["III demotion lessons"].append(where)
-
-            # IV - clearing the lessons deletes exactly their own lines.
-            if record.origin:
-                bare = replace(record, levers=(), ruled_out=(),
-                               unrecoverable=(), deferred=())
-                owned = sum(len(lesson.lines) for lesson in record.origin)
-                lost = (len(text.splitlines())
-                        - len(write(text, [bare]).splitlines()))
-                if lost != owned:
-                    failures["IV lesson deletion"].append(
-                        f"{where}: dropped {lost} lines, owns {owned}")
-
+    items = sorted(by_file(root).items())
+    with concurrent.futures.ProcessPoolExecutor() as pool:
+        for count, problems in pool.map(_census_file, items, chunksize=8):
+            records += count
+            for invariant, message in problems:
+                failures[invariant].append(message)
     return records, failures
 
 
