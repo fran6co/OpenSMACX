@@ -113,7 +113,10 @@ HEADER_SHAPES = [
      re.compile(r"\w+\s*\(\s*[A-Za-z_]\w*Vtable\w*\s*\)"),
      "a base installed by an initialiser-list store is a base that has not "
      "been declared (Win's second base at 0xC8). Declare it."),
-    ("vtable address constant", 75,
+    # 75 -> 73 (2026-08-29, stringbox batch): StringBoxPrimaryVtable and
+    # StringBoxBufferVtable are gone - the class is real, and the compiler
+    # installs ??_7StringBox itself.
+    ("vtable address constant", 73,
      re.compile(r"\b[A-Za-z_]\w*Vtable\w*\s*=\s*\(?\s*0x"),
      "the raw material every hand-installed vtable is built from. When the "
      "classes are real, these constants have nothing left to point at."),
