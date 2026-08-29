@@ -79,8 +79,10 @@ class Sprite {
 static_assert(sizeof(Sprite) == 0x2C, "Sprite layout must match the legacy ABI");
 
 // Running total of Sprite-owned bytes. The constructor adds one object; the
-// release paths subtract the object plus its pixel buffer.
-int *const SpriteMemoryUsed = (int *)0x009B6618;
+// release paths subtract the object plus its pixel buffer. The image holds
+// the counter in .bss at 0x009B6618 - zero at load - so the tree owns it as
+// a real zero-initialised global (sprite.cpp) rather than a raw address.
+extern int SpriteMemoryUsed;
 
 // Sprite allocations come from the executable's CRT, so they must be released
 // through its free rather than this module's. Tests outside the hybrid process
