@@ -27,60 +27,39 @@ func_string_struct_add StringBoxStructAdd = original_method<func_string_struct_a
 const uint32_t StringBoxPrimaryVtable = 0x0066ADC8;
 const uint32_t StringBoxBufferVtable = 0x0066ADC0;
 
-// The StringList at 0x2B70 and the eight-byte virtual base its vbtable names.
-const uint32_t StringListVirtualBaseTable = 0x0066B0EC;
-const uint32_t StringVirtualBaseTable = 0x006693AC;
-const uint32_t StringStructTable = 0x006693A4;
-const uint32_t StringStructBaseTable = 0x006693A0;
-const uint32_t StringListTable = 0x006698C4;
-const uint32_t StringListBaseTable = 0x006698C0;
-
 /*
 Purpose: Construct a StringBox: run the GraphicWin base construction, build
          the Scroll at 0xA20 and the StringList at 0x2B70, install this
          class's own two virtual tables, and clear the window state.
-// ORIGINAL: 0x00629110 ??0StringBox@@QAE@XZ 0x00629110-0x00629208;0x00663300-0x00663312
-// LEVER: PROMOTED out of src/recovered/units/00629110.cpp, where the header
-//        said "measured MISMATCH", and out of the `StringBox() { ; }` inline
-//        that stood in its place. Written as a REAL constructor, because the
-//        image constructs its bases: it CALLS 0x005D4CF0 and 0x006051D0 and
-//        carries the unwind frame that implies, and the first six instructions
-//        - the whole `push -1 / push handler / fs:[0]` SEH prologue - agree.
-// LEVER: WRITE THE StringList BLOCK OUT, do not factor it into a helper. The
-//        0x30 bytes at 0x2B70 are a StringList and the image builds it inline.
-//        Through a `static void ...(char *self, unsigned offset)` helper -
-//        prodpicker.cpp's shape - VC6 declines to inline it and emits
-//        `push 0x2b70 / push esi / call`: 0.683 similar. Written out in the
-//        body it is 0.917, and every instruction from the block to the closing
-//        vtable stores agrees.
-// TRIED: BYTE_EXACT, and the wall is not in this file. call_diff says this
-//        tree makes THREE calls where the image makes two:
-//        ??0GraphicWin@@QAE@XZ, ??0Scroll@@QAE@XZ and, extra,
-//        ?construct@GraphicWin@@QAEXXZ. The image's ONE `call 0x005D4CF0` is
-//        GraphicWin's real constructor; this tree splits that into an empty
-//        inline `GraphicWin() { ; }` (which the implicit base construction
-//        calls) plus a separate `construct()` this body has to call by hand,
-//        exactly as Scroll::Scroll() does. MEASURED: deleting the explicit
-//        `GraphicWin::construct();` line leaves 46 instructions against 47 and
-//        0.946 similar, with the entire remainder aligned - so the call really
-//        is the whole structural gap. It is not shippable, because
-//        `GraphicWin() { ; }` then leaves field_9CC_..field_A10_ unwritten. The
-//        fix is `GraphicWin() { construct(); }` in src/graphicwin.h, which is
-//        outside this batch's files and would move every GraphicWin-derived
-//        constructor at once.
-// TRIED: a `construct()` METHOD with `new (&scroll_) Scroll()` in place of
-//        the real constructor - the shape that beats the SEH-frame ceiling
-//        elsewhere. MEASURED WORSE: 0.627 against the real constructor's 0.917,
-//        because the placement-new guard and the extra state transitions cost
-//        more than the member ordering buys. The image's own `sub esp, 8` is
-//        NOT a placement-new guard slot here.
-// TRIED: the last two instructions of the frame, `sub esp, 8` against this
-//        tree's `push ecx` and the missing `mov dword ptr [esp + 0xc], edi`.
-//        The image reserves TWO dwords below its EH record and writes `this`
-//        into one and zero into the other before calling the base; this tree
-//        reserves one. It survives even with the extra call removed (the 46/47
-//        measurement above), so it is downstream of the same base-class
-//        spelling, not a body-order question.
+// ORIGINAL: 0x00629110 ??0StringBox@@QAE@XZ 0x00629110-0x00629208;0x00663300-0x00663312 BYTE_EXACT
+// LEVER: THE StringList IS A REAL, VIRTUALLY-DERIVED MEMBER. The image's
+//        frame reserves TWO dwords below its EH record (`sub esp, 8`) and
+//        stores `this` into one and zero into the other before the base call;
+//        every spelling with the StringList held by layout reserved one. The
+//        two-slot frame is what VC6 emits only when the constructed hierarchy
+//        really derives virtually - measured against cl 12.00.8168 in
+//        isolation (2026-08-29), and landed here by making StringStruct
+//        `: public virtual StringAllocationBase` (stringstruct.h) with the
+//        owner capture in StringAllocationBase's inline ctor and the field
+//        zeroing in StringStruct's. The whole 0x2B70 block - vbtable, vbase
+//        vtable, owner capture, both vtable stages, the five zeroes - is then
+//        COMPILER-GENERATED, inlined in the image's exact store order, with
+//        no call anywhere: the earlier hand-written body reproduced the block
+//        but never the frame.
+// LEVER: DERIVE FROM GraphicWin DIRECTLY, not through ConstructedGraphicWin.
+//        The shim is an empty pass-through now that GraphicWin has a real
+//        constructor, but its inlined implicit constructor stores the SHIM's
+//        own two vftables between the base call and the Scroll member - a
+//        pair the image does not have. Dropping the layer removed exactly
+//        those two instructions; the funclet (cold span) is the image's own
+//        `mov ecx, [this-slot] / jmp ??1StringBox` shape because ~StringBox
+//        stays declared in the header and defined only in pending_bodies.cpp.
+// TRIED: BYTE_EXACT with the StringList held by layout, and the wall was the
+//        frame, not the block: the hand-written staging measured 46 of 47
+//        instructions with only `sub esp, 8` against `push ecx` disagreeing.
+// TRIED: a `static void ...(char *self, unsigned offset)` helper for the
+//        StringList staging - prodpicker.cpp's shape. VC6 declines to inline
+//        it and emits `push 0x2b70 / push esi / call`: 0.683 similar.
 // size      266 bytes
 // prototype void (__thiscall ??0StringBox@@QAE@XZ)(StringBox* this)
 // callers   6   call targets   2
@@ -91,35 +70,6 @@ Return Value: Instance pointer in EAX
 Status: Complete
 */
 StringBox::StringBox() {
-
-    char *const self = reinterpret_cast<char *>(this);
-    // The 0x30 bytes at 0x2B70 are a StringList (src/stringstruct.h) and the
-    // image builds it INLINE - there is no call to its constructor here. Same
-    // block, same two-stage vtable install through the vbtable's second slot,
-    // that prodpicker.cpp reproduces at its own three raw offsets. Written out
-    // rather than factored into a helper because VC6 declines to inline the
-    // helper and emits a `call` the image does not have.
-    uint32_t *const pending_owner = reinterpret_cast<uint32_t *>(0x009B3374);
-    field_2B74_ = StringListVirtualBaseTable;
-    field_2B98_ = StringVirtualBaseTable;
-    field_2B9C_ = *pending_owner;
-    *pending_owner = 0;
-
-    uint32_t vbtable = field_2B74_;
-    field_2B70_ = StringStructTable;
-    int adjust = *reinterpret_cast<int *>(reinterpret_cast<char *>(vbtable) + 4);
-    *reinterpret_cast<uint32_t *>(self + 0x2B74 + adjust) = StringStructBaseTable;
-
-    vbtable = field_2B74_;
-    field_2B78_ = 0;
-    field_2B7C_ = 0;
-    field_2B80_ = 0;
-    field_2B84_ = 0;
-    field_2B88_ = 0;
-    field_2B70_ = StringListTable;
-    adjust = *reinterpret_cast<int *>(reinterpret_cast<char *>(vbtable) + 4);
-    *reinterpret_cast<uint32_t *>(self + 0x2B74 + adjust) = StringListBaseTable;
-
     field_A1C_ = 0;
     field_2B6C_ = 0;
     field_A14_ = 0;
@@ -143,10 +93,10 @@ Status: Complete
 void StringBox::add(char *text, int index, int flag) {
     // ONE ADDRESS, TAKEN ONCE. The image computes `ecx = &field_2B70_` a
     // single time (`lea ecx, [esi + 0x2b70]`) and reaches every field below
-    // it - `field_2B8C_`, `field_2B90_`, `field_2B94_` and the
+    // it - the StringList's field_1C_, field_20_ and field_24_ and the
     // StringStruct::add call itself - off THAT register. Storing through
-    // the named members instead makes VC6 re-derive each one from `this`.
-    char *const base = reinterpret_cast<char *>(&field_2B70_);
+    // named members instead makes VC6 re-derive each one from `this`.
+    char *const base = reinterpret_cast<char *>(&stringList_);
     std::memcpy(base + 0x1c, &text, sizeof(text));
     *reinterpret_cast<uint32_t *>(base + 0x20) = static_cast<uint32_t>(flag);
     *reinterpret_cast<uint32_t *>(base + 0x24) = 0;

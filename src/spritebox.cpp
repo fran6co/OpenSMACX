@@ -707,8 +707,8 @@ Purpose: Close the list - install its pair of virtual tables, release every
 //   It is a StringStruct-derived list's `close`. src/stringstruct.h declares
 //   `close_with_tables(primary, virtual_base)` as "installs the pair of
 //   virtual tables, releases the entries, then clears the position", and
-//   StringStruct's first two members are `primary_abi_word_` and
-//   `virtual_base_abi_word_` - this body's two immediate stores. src/dialog.cpp
+//   StringStruct's offsets 0x00/0x04 are its vftable and vbtable slots - the
+//   two raw stores this body's immediates make. src/dialog.cpp
 //   calls the same helper the same way for the list at Dialog's this+0xBC.
 // LEVER: PROMOTED out of src/unrecovered/00611730.cpp. Called by both ??0SpriteBox and ??1SpriteBox, so it is shared setup and teardown rather than one or the other.
 // TRIED: spelling the body AS `list->close_with_tables(0x0066943C, 0x00669438)` on the StringStruct at `this - 0x28`, which is the idiom dialog.cpp uses. It compiles to 5 instructions against the image's 63 - the inline folds to almost nothing at this offset - so the walk stays written out here.
