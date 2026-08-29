@@ -847,3 +847,6 @@ void Console::close() {
     reinterpret_cast<GraphicWin *>(self + 0x22a2c)->close();
     clear(0);
 }
+
+// ====================
+Time g_CONSOLE_TIMER;

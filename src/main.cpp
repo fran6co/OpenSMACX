@@ -18,7 +18,6 @@
 #include "stdafx.h"
 #include "main.h"
 #include "alpha.h"          // prefs_get, prefs_put
-#include "atexit_thunks.h"  // g_JACKAL_FONT
 #include "caviar.h"
 #include "font.h"
 #include "game.h"     // control_game

@@ -1597,3 +1597,27 @@ Status: Complete
 */
 Effect::~Effect() {
 }
+
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit. Addresses of
+// the ones documented individually live beside their definitions.
+Wave g_ALPHAMENU_WAVE;  // 0x006A7090
+Wave g_CPU_WAVES[45];  // 0x0074C5F0, 0x6c stride
+Wave g_SCOOT_WAVE;  // 0x00749C18
+Wave g_OK_WAVE;  // 0x0074D8F0
+Wave g_PASSOVER_WAVE;  // 0x0074D9D0
+Wave g_MAININTERFACE_WAVE;  // 0x007D38B8
+Wave g_MULTIWIN_WAVE;  // 0x007FFF00
+Wave g_TOP_MENU_WAVE;  // 0x00945780
+Wave g_CRASH_LANDING_WAVE;  // 0x00945E08
+Wave g_WAVE_GENERAL;  // 0x00945ED0
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit.

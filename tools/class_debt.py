@@ -66,7 +66,10 @@ CEILINGS = {
     # 55 -> 54 (2026-08-29, init_thunks batch): destroy_vehdraw_caviar and
     # siblings reached their globals through raw address casts; the real
     # objects need no cast.
-    "function-address binding": 54,
+    # 54 -> 38 (2026-08-29, lifecycle-retirement batch): the construct and
+    # atexit teardown thunks reached their globals through raw address casts;
+    # the CRT-owned lifecycle needs none of them.
+    "function-address binding": 38,
     "orphan redirect": 209,
     "pointer-as-int": 2,
     "undocumented trivial body": 0,
@@ -132,7 +135,7 @@ CEILINGS = {
     # UNK2's four ints stay scaffold because garrison_click is sub_40B140
     # to IDA and FUN_0040b140 to Ghidra - placeholders one remove is still
     # invention. All ten renamed bodies re-measured BYTE_EXACT.
-    "scaffold name": 1383,
+    "scaffold name": 1379,
 }
 
 WHY = {

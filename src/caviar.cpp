@@ -9,6 +9,7 @@
  */
 #include "stdafx.h"
 #include "caviar.h"
+#include "buffer.h"
 
 #include <new>
 
@@ -421,3 +422,113 @@ void Caviar::close() {
     field_4_ = 0;
     scene_scale_ = 2.0f / 3.0f;
 }
+
+// ====================
+Caviar g_VEHDRAW_CAVIAR;
+Buffer g_CAVIAR_BUFFER_1;
+Buffer g_CAVIAR_BUFFER_2;
+
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit.
+CaviarData g_UNUSED_CAVIARDATA_VAR1;  // 0x00791D68
+CaviarData g_SSF_CAVIARDATA;  // 0x007ACCA0
+CaviarData g_SDP_CAVIARDATA;  // 0x0079A6A0
+CaviarData g_SAS_CAVIARDATA;  // 0x00787E48
+CaviarData g_SCD_CAVIARDATA;  // 0x00799228
+CaviarData g_SCJ_CAVIARDATA;  // 0x007ACC90
+CaviarData g_SAGS_CAVIARDATA;  // 0x0077A578
+CaviarData g_SFT_CAVIARDATA;  // 0x0079A6B0
+CaviarData g_VHR_CAVIARDATA1;  // 0x007765B0
+CaviarData g_SHT_CAVIARDATA;  // 0x0078A5E0
+CaviarData g_SRB_CAVIARDATA;  // 0x0078A300
+CaviarData g_ASAS_CAVIARDATA;  // 0x007AC030
+CaviarData g_RESLASER_CAVIARDATA;  // 0x007ACCC0
+CaviarData g_RESBOLT_CAVIARDATA;  // 0x007A7900
+CaviarData g_FUNLOAD_CAVIARDATA;  // 0x007ACC10
+CaviarData g_TECLOAD_CAVIARDATA;  // 0x00788028
+CaviarData g_SP_DISSWAVE_CAVIARDATA;  // 0x00799E38
+CaviarData g_SP_MARINED_CAVIARDATA;  // 0x007792A0
+CaviarData g_SP_NANOO_CAVIARDATA;  // 0x0075AEF0
+CaviarData g_SP_SOPORIFIC_CAVIARDATA;  // 0x007AD130
+CaviarData g_AA01_CAVIARDATA;  // 0x007AD040
+CaviarData g_AA_ROVER_CAVIARDATA;  // 0x0075AFC0
+CaviarData g_AA_WING_CAVIARDATA[2];  // 0x00779288, 0xc stride
+CaviarData g_ACP_CAVIARDATA[4];  // 0x0078A610, 0xc stride
+CaviarData g_AX_CAVIARDATA;  // 0x0079A6F0
+CaviarData g_AA_CAVIARDATA;  // 0x00789A50
+CaviarData g_ACOLPOD_CAVIARDATA;  // 0x0078A600
+CaviarData g_AT_CAVIARDATA;  // 0x00787E60
+CaviarData g_VTA_CAVIARDATA;  // 0x007880C0
+CaviarData g_ATP_CAVIARDATA;  // 0x007ABFC0
+CaviarData g_SSFA_CAVIARDATA;  // 0x0078A510
+CaviarData g_SFTA_CAVIARDATA;  // 0x0079A640
+CaviarData g_VW00_CAVIARDATA;  // 0x007871C0
+CaviarData g_VIPTAWL_CAVIARDATA;  // 0x0079A700
+CaviarData g_VIPTASGN_CAVIARDATA;  // 0x007AB3F0
+CaviarData g_VIPTAPSI_CAVIARDATA;  // 0x007795A0
+CaviarData g_VIPTR_CAVIARDATA[4];  // 0x00799628, 0xc stride
+CaviarData g_VIPTA_CAVIARDATA[2];  // 0x007791D0, 0xc stride
+CaviarData g_PTMOD_CAVIARDATA;  // 0x0078A500
+CaviarData g_VB_CAVIARDATA;  // 0x00779230
+CaviarData g_VBP_CAVIARDATA;  // 0x0078E968
+CaviarData g_VGMC_CAVIARDATA;  // 0x0075AED0
+CaviarData g_VGMCP_CAVIARDATA;  // 0x0076EBE0
+CaviarData g_VLIGHTS_CAVIARDATA;  // 0x0075B848
+CaviarData g_VPT_CAVIARDATA;  // 0x007592D0
+CaviarData g_A_CAVIARDATA;  // 0x0075AF00
+CaviarData g_APWALL_CAVIARDATA;  // 0x0078A490
+CaviarData g_ASGEN_CAVIARDATA;  // 0x007AD120
+CaviarData g_APSID_CAVIARDATA;  // 0x007ACCB0
+CaviarData g_VA01_CAVIARDATA;  // 0x007AD0E0
+CaviarData g_VR_CAVIARDATA[4];  // 0x0076E560, 0xc stride
+CaviarData g_VHR_CAVIARDATA2;  // 0x00779560
+CaviarData g_VRC_CAVIARDATA[4];  // 0x0075ADB8, 0xc stride
+CaviarData g_VI_CAVIARDATA;  // 0x0078B740
+CaviarData g_VGMT_CAVIARDATA;  // 0x0077A5B8
+CaviarData g_VGMTP_CAVIARDATA;  // 0x0078B720
+CaviarData g_UNUSED_CAVIARDATA_VAR2;  // 0x007ACF90
+CaviarData g_VWNTU_CAVIARDATA;  // 0x007796A0
+CaviarData g_VT_CAVIARDATA;  // 0x0075AD78
+CaviarData g_DROP_CAVIARDATA;  // 0x007ACD60
+CaviarData g_DROPLET_CAVIARDATA;  // 0x0076EBD0
+CaviarData g_VCL_CAVIARDATA;  // 0x007AD170
+CaviarData g_UNUSED_CAVIARDATA_VAR3[2];  // 0x007795F0, 0xc stride
+CaviarData g_VCLT00_CAVIARDATA;  // 0x00789B58
+CaviarData g_VHT_VBP_CAVIARDATA;  // 0x00779608
+CaviarData g_VHTP_CAVIARDATA;  // 0x0078A640
+CaviarData g_VHTA0_CAVIARDATA[2];  // 0x00779648, 0xc stride
+CaviarData g_VHTTP_CAVIARDATA;  // 0x00759310
+CaviarData g_VHTTPA0_CAVIARDATA[3];  // 0x0078B750, 0xc stride
+CaviarData g_VSP_CAVIARDATA;  // 0x007A6820
+CaviarData g_VSPA0_CAVIARDATA[2];  // 0x00779270, 0xc stride
+CaviarData g_VSPTF_CAVIARDATA;  // 0x007A7290
+CaviarData g_VSPTB_CAVIARDATA;  // 0x007A7280
+CaviarData g_VFL_CAVIARDATA;  // 0x007ACC50
+CaviarData g_VGS_CAVIARDATA;  // 0x007A7240
+CaviarData g_VGSP_CAVIARDATA;  // 0x00798BF0
+CaviarData g_VJTP_CAVIARDATA;  // 0x007795B0
+CaviarData g_VJT0_CAVIARDATA[2];  // 0x0078A2B8, 0xc stride
+CaviarData g_VCU_CAVIARDATA;  // 0x0075AEE0
+CaviarData g_VCUP_CAVIARDATA;  // 0x0075B440
+CaviarData g_VCUA0_CAVIARDATA[2];  // 0x0078CAB8, 0xc stride
+CaviarData g_VCUW_CAVIARDATA;  // 0x0075B088
+CaviarData g_VCT_CAVIARDATA;  // 0x0079A680
+CaviarData g_VCTP_CAVIARDATA;  // 0x007ACFA0
+CaviarData g_VCTB_CAVIARDATA;  // 0x0076E890
+CaviarData g_VCT0_CAVIARDATA[2];  // 0x0079A628, 0xc stride
+CaviarData g_VWNTT_CAVIARDATA;  // 0x0078B730
+CaviarData g_VWNST_CAVIARDATA;  // 0x0078DE20
+CaviarData g_VWNAA_CAVIARDATA;  // 0x007AC1A0
+CaviarData g_VW_CAVIARDATA[16];  // 0x00787100, 0xc stride
+CaviarData g_VM_CAVIARDATA;  // 0x00791D78
+CaviarData g_VM13_CAVIARDATA;  // 0x0078A5F0
+CaviarData g_VPBR0_CAVIARDATA[4];  // 0x0076E9B0, 0xc stride
+CaviarData g_UNUSED_CAVIARDATA_VAR4[2];  // 0x007791E8, 0xc stride
+CaviarData g_NW_CAVIARDATA;  // 0x0079A690
+CaviarData g_NI_CAVIARDATA;  // 0x007791C0
+CaviarData g_NLC_CAVIARDATA;  // 0x00779660
+CaviarData g_UNUSED_CAVIARDATA_VAR5[5];  // 0x00787E08, 0xc stride

@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "wave.h"
 #include "original_seam.h"
 #include "basewin.h"
 #include "win.h"
@@ -517,3 +518,18 @@ Purpose: Step the receiver back to the subobject ??_GBaseWin@@UAEPAXI@Z
 Return Value: the forwarded call's
 Status: Complete
 */
+
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit. Addresses of
+// the ones documented individually live beside their definitions.
+Wave g_BASEWIN_WAVE;  // 0x006EEE68
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit.

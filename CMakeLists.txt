@@ -94,8 +94,6 @@ set(OPENSMACX_SOURCES
     src/alpha.cpp
     src/main.cpp
     src/pending_bodies.cpp
-    src/atexit_thunks.cpp
-    src/init_thunks.cpp
     src/adjustor_thunks.cpp
     src/deleting_thunks.cpp
     src/delegation_thunks.cpp
@@ -104,7 +102,6 @@ set(OPENSMACX_SOURCES
     src/field_accessors.cpp
     src/leaf_recoveries.cpp
     src/global_arith.cpp
-    src/guarded_teardowns.cpp
     src/fx.cpp
     src/vector_teardown.cpp
     src/alphanet.cpp

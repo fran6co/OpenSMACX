@@ -3392,7 +3392,7 @@ void __cdecl world_analysis() {
 uint32_t WorldClimateSkipTerrainClear = 1;  // 0x0068F21C
 uint32_t WorldClimateSkipTerritoryReset;  // 0x009B22EC
 // The process-wide WorldWin, torn down/built at this same fixed address
-// elsewhere (atexit_thunks.cpp, init_thunks.cpp).
+// elsewhere (the retired atexit_thunks.cpp / init_thunks.cpp).
 WorldWin *const WorldClimateWorldWin = (WorldWin *)0x008E9F60;
 
 /*

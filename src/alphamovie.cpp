@@ -28,8 +28,8 @@
 // src/recovered/005ffd80.cpp - left as-is). This definition exists so
 // AlphaMovie::AlphaMovie(), below, has something to auto-construct
 // `mciVideo_` through: `palette_.Palette::Palette();` is the explicit
-// member-function-call placement syntax already established elsewhere
-// (init_thunks.cpp's fixed-address Palette placements) rather than a
+// member-function-call placement syntax (the fixed-address Palette
+// placements the retired init_thunks.cpp used to spell) rather than a
 // `new`-expression, which pulls in an SEH frame the image does not have
 // here.
 MCIVideo::MCIVideo() {

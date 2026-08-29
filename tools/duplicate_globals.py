@@ -35,7 +35,9 @@ REPO = pathlib.Path(__file__).resolve().parent.parent
 # 27 -> 26 (2026-08-29, init_thunks batch): the managed globals became real
 # objects defined in init_thunks.cpp, which retired the address-pointer
 # bindings and the one doubled name they carried.
-CEILING = 26
+# 26 -> 25 (2026-08-29, lifecycle-retirement batch): TeardownObject009BEAE8
+# became g_BLANK_SPRITE in sprite.cpp, collapsing the last doubled name.
+CEILING = 25
 
 BINDING = re.compile(r"^\s*(?:static\s+)?[\w:]+[\s\*&]+const\s+(\w+)\s*=\s*"
                      r"\(?\s*\([\w:\s\*]+\)\s*0x(00[0-9A-Fa-f]{6})")

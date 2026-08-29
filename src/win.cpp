@@ -17,7 +17,6 @@
  */
 #include "stdafx.h"
 #include "net_class.h"
-#include "init_thunks.h"  // g_WIN_BUFFER, the 0x009B6F08 Buffer Win draws into
 
 typedef signed char int8;  // a scaffold spelling the artifacts use
 #include "vtable_shim.h"
@@ -33,6 +32,9 @@ typedef signed char int8;  // a scaffold spelling the artifacts use
 #include "popup.h"   // pop_caption_title, for DDInit::report_error
 #include "basepop.h"  // BasePopScreenWidth, for Win::set_bubble_text
 #include <ddraw.h>  // IDirectDrawSurface::GetDC / ReleaseDC in the hdc pair
+
+// 0x009B6F08 in the image - the buffer Win draws into.
+extern Buffer g_WIN_BUFFER;
 // `DirectDrawCreate` (DDInit::init) is the one symbol this tree needs out of
 // ddraw.lib; it is on the CMake link line now, where dxguid already was.
 
@@ -11496,3 +11498,6 @@ void __cdecl add_parent(Win * window) {
     WinRootWindows[0] = window;
     WinRootCount = count + 1;
 }
+
+// ====================
+Buffer g_WIN_BUFFER;

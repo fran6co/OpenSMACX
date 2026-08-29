@@ -21,6 +21,11 @@
 
 #include "radiobutton.h"
 
+// The checkbox sprites, real objects now: the image holds them at
+// 0x009B8F60 / 0x009B8F90, constructed before WinMain and closed at exit.
+extern Sprite g_CHECKBOX_SPRITE_1;
+extern Sprite g_CHECKBOX_SPRITE_2;
+
 
  /*
   * CheckBox class

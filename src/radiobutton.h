@@ -16,6 +16,13 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+
+#include "sprite.h"
+
+// The radiobutton sprites, real objects now: the image holds them at
+// 0x009B8EF8 / 0x009B8F28.
+extern Sprite g_RADIOBUTTON_SPRITE_1;
+extern Sprite g_RADIOBUTTON_SPRITE_2;
 #include "dialog.h"   // func_dialog_close
 #include "graphicwin.h"
 

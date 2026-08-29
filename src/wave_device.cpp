@@ -1544,3 +1544,5 @@ Wave_Device::~Wave_Device() {
     }
 }
 
+// ====================
+Wave_Device g_WAVE_DEVICE;

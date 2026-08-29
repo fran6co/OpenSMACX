@@ -16,6 +16,15 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "sprite.h"
+#include "popup.h"
+#include "buffer.h"
+
+// close_class methods, homed to checkbox.cpp / radiobutton.cpp
+void __cdecl teardown_0060fd60();
+void __cdecl teardown_0060e5d0();
+extern Sprite g_BLANK_SPRITE;
+void __cdecl teardown_0063cef0();
 #include "temp.h"
 #include "general.h"
 #include "alpha.h"
@@ -37,7 +46,6 @@
 #include "filewin.h"
 #include "cursor.h"
 #include "time.h"
-#include "guarded_teardowns.h"  // teardown_0063cef0, jackal_close's callee
 
 uint32_t ScenEditorUndoPosition = 1; // 0x00690D7C
 // GenderDefault (0x009BBFEC) and PluralityDefault (0x009BBFF0) are defined in
@@ -1955,6 +1963,26 @@ Purpose: Tear down every subsystem jackal_init_real brought up, in the
 Return Value: n/a
 Status: Complete
 */
+
+/*
+Purpose: sub_63cef0 - close the blank sprite (0x009BEAE8 in the image, the
+         real object g_BLANK_SPRITE here), unguarded; the caller
+         (jackal_close) tail-calls it as the sprite's teardown stage.
+// ORIGINAL: 0x0063CEF0 sub_63cef0 0x0063CEF0-0x0063CEFA BYTE_EXACT
+// symbol    ?teardown_0063cef0@@YAXXZ
+// size      10 bytes
+// prototype
+// callers   1   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl teardown_0063cef0() {
+    g_BLANK_SPRITE.close();
+}
+
 void __cdecl jackal_close() {
     sub_62d100();
     Time::close_class();
@@ -1973,3 +2001,80 @@ void __cdecl jackal_close() {
     StringTable->shutdown();
     JackalInitFlags &= ~1;
 }
+
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit.
+// FactionArt is not modelled yet - its constructor runs through the
+// FactionArtCtorTarget seam, so this stands in as raw storage until the
+// class is recovered. 8 elements of 0x65C stride, per the image's own
+// VectorCtorIterator. NOT constructed in this build (documented gap).
+uint8_t FactionArtGlobal_storage[8 * 0x65C];  // 0x0078E978
+// ===== archived teardown callbacks for still-bound globals =====
+// These globals are not modelled as real objects yet; the bindings move
+// with the callbacks until their domains claim them.
+void *const TeardownObject0090EA68 = (void *)0x0090EA68;
+Buffer *const TeardownObject00915068 = (Buffer *)0x00915068;
+void *const TeardownObject009403E0 = (void *)0x009403E0;
+/*
+Purpose: ??__Eg_BOOM_BUFFER1@@YAXXZ - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
+         unguarded. The last is a tail jump in the original, so its
+         return goes straight to this function's caller.
+// ORIGINAL: 0x00505D20 ??__Eg_BOOM_BUFFER1@@YAXXZ 0x00505D20-0x00505D2A BYTE_EXACT
+// symbol    ?teardown_00505d20@@YAXXZ
+// size      10 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl teardown_00505d20() {
+    TeardownObject00915068->Buffer::~Buffer();
+}
+/*
+Purpose: ??__Eg_BOOM_FLIC@@YAXXZ - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
+         unguarded. The last is a tail jump in the original, so its
+         return goes straight to this function's caller.
+// ORIGINAL: 0x00505D30 ??__Eg_BOOM_FLIC@@YAXXZ 0x00505D30-0x00505D3A BYTE_EXACT
+// symbol    ?teardown_00505d30@@YAXXZ
+// size      10 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl teardown_00505d30() {
+    reinterpret_cast<Flic *>(TeardownObject0090EA68)->Flic::~Flic();
+}
+/*
+Purpose: sub_589890 - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
+         unguarded. The last is a tail jump in the original, so its
+         return goes straight to this function's caller.
+// ORIGINAL: 0x00589890 sub_589890 0x00589890-0x0058989A BYTE_EXACT
+// symbol    ?teardown_00589890@@YAXXZ
+// size      10 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl teardown_00589890() {
+    // THIS SITE is why `convert_seams --dtors` refused PopupDtorTarget: it read
+    // the seam as a VALUE through `original_address`, so the pointer could not
+    // be retired while it stood. It is a named destructor call now.
+    reinterpret_cast<Popup *>(TeardownObject009403E0)->Popup::~Popup();
+}
+
+
