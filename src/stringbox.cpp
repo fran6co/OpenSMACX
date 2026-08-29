@@ -22,11 +22,6 @@
 #include <cstring>
 #include "vtable_shim.h"
 
-func_string_struct_add StringBoxStructAdd = original_method<func_string_struct_add>(0x00401100);
-
-const uint32_t StringBoxPrimaryVtable = 0x0066ADC8;
-const uint32_t StringBoxBufferVtable = 0x0066ADC0;
-
 /*
 Purpose: Construct a StringBox: run the GraphicWin base construction, build
          the Scroll at 0xA20 and the StringList at 0x2B70, install this
@@ -102,7 +97,8 @@ void StringBox::add(char *text, int index, int flag) {
     *reinterpret_cast<uint32_t *>(base + 0x24) = 0;
     // CALLED BY NAME, same as Dialog::item at 0x00609990: a real
     // `StringStruct::add` reaches the image's `call rel32`, where the
-    // pointer-to-member `StringBoxStructAdd` compiles `call dword ptr [0]`.
+    // function-pointer seam this file used to bind compiles
+    // `call dword ptr [0]`.
     if (reinterpret_cast<StringStruct *>(base)->add(index) == 0) {
         StringBox::add_fixup();
     }

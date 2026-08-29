@@ -67,9 +67,3 @@ class StringBox : public GraphicWin {
 static_assert(sizeof(StringBox) == 0x2BA0,
               "StringBox layout must match the original executable");
 
-// add() stages three fields into the embedded string struct at 0x2B70 and
-// then calls its add, falling back to a fixup pass when that reports the
-// entry did not fit. Neither callee is recovered yet.
-typedef int (OriginalObject::*func_string_struct_add)(int);
-extern func_string_struct_add StringBoxStructAdd;
-
