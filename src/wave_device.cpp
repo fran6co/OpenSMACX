@@ -1289,6 +1289,7 @@ Purpose: Build the wrapped device of the requested kind through the factory
          hook, straight into the 0x14 field. A device already wrapped is
          refused with 0xC; a dead factory answers 0x14.
 // ORIGINAL: 0x004C4ED0 ?create_device@Wave_Device@@QAEHK@Z 0x004C4ED0-0x004C4F07
+// symbol    ?create_device@Wave_Device@@UAEHK@Z
 // size      55 bytes
 // prototype int (__thiscall ?create_device@Wave_Device@@QAEHK@Z)(Wave_Device* this, unsigned int)
 // callers   0   call targets   0
@@ -1315,6 +1316,7 @@ int Wave_Device::create_device(unsigned long a1) {
 Purpose: Tear the wrapped device down through the argument-less destroy hook
          and forget it. Without a device or a hook, 0x14 and nothing happens.
 // ORIGINAL: 0x004C4F10 ?delete_device@Wave_Device@@QAEHXZ 0x004C4F10-0x004C4F37
+// symbol    ?delete_device@Wave_Device@@UAEHXZ
 // size      39 bytes
 // prototype int (__thiscall ?delete_device@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0

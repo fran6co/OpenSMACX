@@ -197,6 +197,7 @@ int Sound::play() {
 Purpose: Ask the wrapped device to play the given sound, through vtable slot
          0x18.
 // ORIGINAL: 0x004C64A0 ?play@Sound@@QAEHI@Z 0x004C64A0-0x004C64BC
+// symbol    ?play@Sound@@UAEHI@Z
 // size      28 bytes
 // prototype int (__thiscall ?play@Sound@@QAEHI@Z)(Sound* this, unsigned int)
 // callers   0   call targets   0
@@ -266,6 +267,7 @@ Purpose: Record the loop state at 0x30 and hand it to the wrapped device,
          through vtable slot 0x48. The field is written whether or not a device
          is wrapped.
 // ORIGINAL: 0x004C6540 ?set_loop_state@Sound@@QAEXJ@Z 0x004C6540-0x004C655A
+// symbol    ?set_loop_state@Sound@@UAEXJ@Z
 // size      26 bytes
 // prototype void (__thiscall ?set_loop_state@Sound@@QAEXJ@Z)(Sound* this, int)
 // callers   0   call targets   0
@@ -287,6 +289,7 @@ Purpose: Record the delay at 0x34 and hand it to the wrapped device, through
          vtable slot 0x4C. The field is written whether or not a device is
          wrapped.
 // ORIGINAL: 0x004C6560 ?set_delay@Sound@@QAEXI@Z 0x004C6560-0x004C657A
+// symbol    ?set_delay@Sound@@UAEXI@Z
 // size      26 bytes
 // prototype void (__thiscall ?set_delay@Sound@@QAEXI@Z)(Sound* this, unsigned int)
 // callers   0   call targets   0
@@ -534,6 +537,7 @@ Purpose: Set the sound's volume: the low seven bits are stored at 0x04 and
          the wrapped device, if any, hears them through its vtable slot 0x40.
          Unlike Wave's override there is no group rescaling here.
 // ORIGINAL: 0x004C6510 ?set_volume@Sound@@QAEXH@Z 0x004C6510-0x004C6532
+// symbol    ?set_volume@Sound@@UAEXH@Z
 // size      34 bytes
 // prototype void (__thiscall ?set_volume@Sound@@QAEXH@Z)(Sound* this, int)
 // callers   0   call targets   0
@@ -619,6 +623,7 @@ int Sound::set_fade_in(unsigned int fade_in) {
 Purpose: Fade the sound in: its own vtable slot 0x54 takes the time, and only
          a zero answer lets its own slot 0x28 follow up.
 // ORIGINAL: 0x004C6660 ?fade_in@Sound@@QAEXI@Z 0x004C6660-0x004C6681
+// symbol    ?fade_in@Sound@@UAEXI@Z
 // size      33 bytes
 // prototype void (__thiscall ?fade_in@Sound@@QAEXI@Z)(Sound* this, unsigned int)
 // callers   0   call targets   0
@@ -675,6 +680,7 @@ Purpose: Release the loaded sound. The wrapped device, if any, is asked to
          (Wave's override suppresses it by flag; the base does not), the
          device is forgotten, and the loaded bit at 0x40 is cleared.
 // ORIGINAL: 0x004C6440 ?unload@Sound@@QAEHXZ 0x004C6440-0x004C6472
+// symbol    ?unload@Sound@@UAEHXZ
 // size      50 bytes
 // prototype int (__thiscall ?unload@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0
@@ -707,6 +713,7 @@ Purpose: Destroy the sound. This is exactly the body ~Wave inlines as its
          the sound chain, and publish the ultimate base's vtable on the way
          out. The registered SEH frame is omitted as unreachable.
 // ORIGINAL: 0x004C6120 ??1Sound@@QAE@XZ 0x004C6120-0x004C61D4;0x004C8450-0x004C8457;0x00659EE2-0x00659EF4
+// symbol    ??1Sound@@UAE@XZ
 // size      205 bytes
 // prototype void (__thiscall ??1Sound@@QAE@XZ)(Sound* this)
 // callers   1   call targets   1
@@ -788,6 +795,7 @@ Purpose: Join the sound chain at the tail. A sound with either neighbour
          slot advances, as the original orders it - and learns its next.
          Either way the chained bit sets.
 // ORIGINAL: 0x004C6370 ?attach@Sound@@QAEHXZ 0x004C6370-0x004C63C1
+// symbol    ?attach@Sound@@UAEHXZ
 // size      81 bytes
 // prototype int (__thiscall ?attach@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0

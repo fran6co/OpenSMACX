@@ -336,6 +336,7 @@ Purpose: Destroy an ambience. Its own stage frees the remembered filename
          exception frame is omitted as unreachable. The vtable is staged
          through all three levels.
 // ORIGINAL: 0x004C7670 ??1Ambience@@QAE@XZ 0x004C7670-0x004C7760;0x004C8450-0x004C8457;0x00659F32-0x00659F4C
+// symbol    ??1Ambience@@UAE@XZ
 // size      273 bytes
 // prototype void (__thiscall ??1Ambience@@QAE@XZ)(Ambience* this)
 // callers   1   call targets   1

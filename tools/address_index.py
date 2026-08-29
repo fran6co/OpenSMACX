@@ -106,7 +106,12 @@ FLOORS = {
     # no-longer-existing layout is gone, so nothing contradicts its host any
     # more; zero is where this floor now stands.
     "contradicted": 0,
-    "archive-only-forwarder": 20,
+    # 20 -> 22 (2026-08-30, boot-path batch): control_game's homing declared
+    # seams for two callees whose proved bodies still sit in the archive -
+    # 0x0043C1A0 DesignWin::close and 0x0046EB90 on_lose_mouse_capture (the
+    # latter tails into go_reset, itself unrecovered). Promotion is the next
+    # batch's first work, and this floor falls back with it.
+    "archive-only-forwarder": 22,
     "unknown-host-files": 0,
 }
 
