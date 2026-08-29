@@ -2949,6 +2949,16 @@ Purpose: Draw at most `len` characters of a string centred both horizontally
 //            `write_cent_l(int,int,int,int)`'s own documented note that a
 //            two-guard split scores WORSE here (34/76 against 39/76); not
 //            re-tried. No further source-form lever found at this budget.
+// TRIED (2026-08-29): the image allocates this=esi, text=edi, left=ebx,
+//            len=ebp and spills top/right/bottom to 0x14/0x18/0x1c; ours
+//            allocates text=ebx, left=ebp, right=edi and interleaves the
+//            text load with the callee-saved pushes (divergence at
+//            instruction 2). Dropping the four `const int` edge locals and
+//            reading the `area.` copy fields at their uses - making the
+//            frame slots the only storage, as the image's spills suggest -
+//            measured IDENTICALLY 9/106: VC6 promotes the copy's fields to
+//            pseudo-registers either way, so the allocation is cost-model
+//            internal and did not yield to the source shape.
 // symbol    ?write_cent_l@Buffer@@QAEHPADPAUtagRECT@@H@Z
 // size      282 bytes
 // prototype int (__thiscall ?write_cent_l@Buffer@@QAEHPADPAURECT@@H@Z)(Buffer* this, int8*, RECT*, int)
