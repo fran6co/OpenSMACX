@@ -93,12 +93,13 @@ class SubInterface {
   void set_iface_mode();      // 0x0045D310  ?set_iface_mode@SubInterface@@QAEXXZ
   void release_iface_mode();  // 0x0045D380  ?release_iface_mode@SubInterface@@QAEXXZ
 
+  // Slot 0 of the image's SubInterface vftable (0x66A6E4, all-pure). The
+  // base declares it so the compiler emits the vptr at offset 0 and the
+  // all-pure base vftable, replacing the hand-installed vtable_. The real
+  // method names are unrecovered; this is semantic debt.
+  virtual void unk_slot0() {}
+
  protected:
-  uint32_t vtable_;  // 0x0  the vftable at 0x0066A6E4, installed by hand by
-                     //      ten constructors; opaque so no C++ vtable is
-                     //      generated. No method of this class reads it.
-                     //      Protected, not private: the derived constructors
-                     //      that install it write it directly.
   uint32_t field_4_;  // 0x4  PROVED: set_iface_mode and release_iface_mode
                       //      both access 4 bytes here
 };

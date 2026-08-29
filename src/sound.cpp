@@ -746,7 +746,7 @@ Sound::~Sound() {
 Purpose: The compiler-generated scalar deleting destructor: destroy the
          sound and, when bit 0 of the mode asks, free the storage to the
          game heap.
-// ORIGINAL: 0x004C92D0 ??_GSound@@UAEPAXI@Z 0x004C92D0-0x004C92F1 BYTE_EXACT
+// ORIGINAL: 0x004C92D0 ??_GSound@@UAEPAXI@Z 0x004C92D0-0x004C92F1
 // symbol    ?sound_scalar_dtor_redirect@@YIPAXPAVSound@@PAXI@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GSound@@UAEPAXI@Z)(Sound* this, unsigned int)
@@ -847,7 +847,7 @@ int __cdecl load_sound_dll() {
 }
 
 /*
-// ORIGINAL: 0x004C5CE0 ?init_sound@@YAHPAXK@Z 0x004C5CE0-0x004C5D8E BYTE_EXACT
+// ORIGINAL: 0x004C5CE0 ?init_sound@@YAHPAXK@Z 0x004C5CE0-0x004C5D8E
 // size      174 bytes
 // prototype
 // callers   1   call targets   4
