@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "basepop.h"
+#include "main.h"  // PopupAllocHook - the tree's own 0x00696ECC slot
 #include "dialogs.h"
 #include "general.h"  // mem_get in init_class
 #include "datalink.h"
@@ -729,7 +730,12 @@ int BasePop::basepop_alloc() {
 char *BasePopDefaultOkText;      // 0x009B8D80
 char *BasePopDefaultCancelText;  // 0x009B8D84
 
-static int *const g_00696ecc = (int *)0x00696ECC;
+// The image reads the popup allocator through the 0x00696ECC slot; the tree
+// owns that slot as the real `PopupAllocHook` global (main.cpp), whose
+// static initializer is the image's own .data value 0x00604E40. Calling the
+// global directly is the image's single memory-indirect `call dword ptr
+// [slot]` - spelling the call through a pointer-to-pointer makes VC6 split
+// it into mov+call and the claim diverges.
 static int *const g_009b8d98 = (int *)0x009B8D98;
 static int *const g_009b8da8 = (int *)0x009B8DA8;
 static int *const g_009bb484 = (int *)0x009BB484;
@@ -836,13 +842,12 @@ int __cdecl BasePop::init_class() {
     set_def_cancel_text(const_cast<LPSTR>("Cancel"));
     set_def_ok_text(const_cast<LPSTR>("OK"));
 
-    typedef int(__cdecl *FnPtr)();
-    const int r1 = (*reinterpret_cast<FnPtr *>(g_00696ecc))();
+    const int r1 = PopupAllocHook();
     *g_009bc074 = r1;
     if (!r1) {
         return 4;
     }
-    const int r2 = (*reinterpret_cast<FnPtr *>(g_00696ecc))();
+    const int r2 = PopupAllocHook();
     *g_009bc078 = r2;
     return r2 ? 0 : 4;
 }

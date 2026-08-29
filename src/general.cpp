@@ -20,6 +20,7 @@
 #include "sprite.h"
 #include "popup.h"
 #include "buffer.h"
+#include "main.h"  // PopupAllocHook - the tree's own 0x00696ECC slot
 
 // close_class methods, homed to checkbox.cpp / radiobutton.cpp
 void __cdecl teardown_0060fd60();
@@ -962,11 +963,9 @@ int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete) {
 
     // SAME HOOK AS `BasePop::init_class` (basepop.cpp): the image reaches
     // the popup allocator through the pointer at 0x00696ECC rather than by
-    // name.
-    typedef int(__cdecl *FnPtr)();
-    static int *const g_00696ecc = (int *)0x00696ECC;
-    BasePop *const popup =
-        reinterpret_cast<BasePop *>((*reinterpret_cast<FnPtr *>(g_00696ecc))());
+    // name. The tree owns the slot as the real `PopupAllocHook` global;
+    // calling it directly is the image's single memory-indirect.
+    BasePop *const popup = reinterpret_cast<BasePop *>(PopupAllocHook());
     if (!popup) {
         return 4;
     }
