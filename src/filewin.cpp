@@ -217,8 +217,12 @@ void FileWin::on_double_clicked(int a1) {
 // the calls real where the image has real calls (string_routine_pragma).
 Status: Complete
 */
-static int *const g_006971cc = (int *)0x006971CC;
-static int *const g_006971d4 = (int *)0x006971D4;
+// 0x006971CC and 0x006971D4 - the image stores both names INLINE in .rdata
+// ("FILEWIN", then "jackal"), so the tree stores them inline too. The raw
+// fixed-address bindings read unmapped memory in the standalone build, which
+// is where the boot's `return 6` out of jackal_init_real came from.
+static const char kFileWinSection[] = "FILEWIN";  // 0x006971CC
+static const char kFileWinTextName[] = "jackal";  // 0x006971D4
 static int *const g_009b90a8 = (int *)0x009B90A8;
 
 int __cdecl FileWin::init_class() {
@@ -226,7 +230,8 @@ int __cdecl FileWin::init_class() {
         free(reinterpret_cast<void *>(*g_009b90a8));
         *g_009b90a8 = 0;
     }
-    if (text_open(reinterpret_cast<char *>(g_006971d4), reinterpret_cast<char *>(g_006971cc)) != 0) {
+    if (text_open(const_cast<char *>(kFileWinTextName),
+                  const_cast<char *>(kFileWinSection)) != 0) {
         return 6;
     }
     char *str = text_get();
