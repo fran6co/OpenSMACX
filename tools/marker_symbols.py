@@ -52,7 +52,6 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SCRATCH = Path("/tmp/opensmacx-marker-symbols")
 # re.M IS LOAD-BEARING: without it `^` anchors to the start of the whole
 # file and every marker below line 1 is invisible - the check then reports
 # "0 file(s) checked" and exits 0, which reads exactly like a clean tree.
@@ -62,14 +61,22 @@ MARKER = re.compile(r"^// ORIGINAL: (0x[0-9A-Fa-f]{8})\s+(\S+)", re.M)
 MANGLED = re.compile(r"^[?@]")
 
 
-def emitted(entry: dict, out: Path) -> set[str] | None:
-    """Every symbol the object defines, or None if it will not compile."""
-    command = re.sub(r"/FoCMakeFiles\S+", f"/Fo{out}", entry["command"])
-    done = subprocess.run(command, shell=True, cwd=entry["directory"],
-                          capture_output=True, text=True)
-    if not out.exists():
+def emitted(entry: dict) -> set[str] | None:
+    """Every symbol the object defines, or None if it will not compile.
+
+    THE BUILD'S OWN OBJECT IS THE EVIDENCE, not a recompile: `main` runs one
+    incremental `cmake --build` first (header-aware - the wrapper emits
+    depfiles and ninja tracks them), so `entry[\"output\"]` is exactly what
+    the identical command in the database just produced. Recompiling each
+    file here again cost 167 of the gate's 257 epilogue seconds to learn
+    nothing the object did not already say.
+    """
+    obj = Path(entry["output"])
+    if not obj.is_absolute():
+        obj = Path(entry["directory"]) / obj
+    if not obj.exists():
         return None
-    listed = subprocess.run(["nm", str(out)], capture_output=True, text=True)
+    listed = subprocess.run(["nm", str(obj)], capture_output=True, text=True)
     names = set()
     for line in listed.stdout.splitlines():
         parts = line.split()
@@ -82,7 +89,11 @@ if __name__ == "__main__":
     database = json.loads(
         (REPO_ROOT / "build" / "compile_commands.json").read_text())
     wanted = [a for a in sys.argv[1:] if not a.startswith("-")]
-    SCRATCH.mkdir(parents=True, exist_ok=True)
+    # FRESH OBJECTS FIRST, or `emitted` reads yesterday's symbols. Incremental
+    # and header-aware, so a clean tree pays under a second. When `osmx check`
+    # runs this, its own link step has already built - ninja no-ops.
+    subprocess.run(["cmake", "--build", "build"], cwd=REPO_ROOT,
+                   capture_output=True, text=True)
 
     missing: list[tuple[str, str, str]] = []
     scanned = 0
@@ -109,7 +120,7 @@ if __name__ == "__main__":
                 claims.append((head.group(1), wanted))
         if not claims:
             continue
-        names = emitted(entry, SCRATCH / f"{path.stem}.obj")
+        names = emitted(entry)
         if names is None:
             print(f"  (skipped {path.name}: does not compile)")
             continue
