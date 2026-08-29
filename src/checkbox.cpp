@@ -496,8 +496,8 @@ int __cdecl CheckBox::init_class() {
     if (result != 0) {
         return result;
     }
-    g_CHECKBOX_SPRITE_1->extract(&buf, 0x109, 1, 0x44, 0x20, 0x20, 0);
-    g_CHECKBOX_SPRITE_2->extract(&buf, 0x109, 0x22, 0x44, 0x20, 0x20, 0);
+    g_CHECKBOX_SPRITE_1.extract(&buf, 0x109, 1, 0x44, 0x20, 0x20, 0);
+    g_CHECKBOX_SPRITE_2.extract(&buf, 0x109, 0x22, 0x44, 0x20, 0x20, 0);
     return 0;
 }
 

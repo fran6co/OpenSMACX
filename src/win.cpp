@@ -3801,7 +3801,7 @@ Purpose: Restore the saved screen area and union its rectangle into the
 // rectangle into the dirty region, flip only when asked.
 void __cdecl restore_flip_sprite(int do_flip) {
     if (WinFlipSprite != 0) {
-        g_WIN_BUFFER->copy(
+        g_WIN_BUFFER.copy(
             (&ScreenBuffer), 0, 0,
             WinFlipSpriteY, WinFlipSpriteX, WinClipWidth, WinClipHeight);
         int x = WinFlipSpriteY;
@@ -5812,7 +5812,7 @@ static void BuildRectDirect(RECT &r) {
 static void RestoreAndFlip(UnionRectFn UnionRect, bool useHelper) {
     if (WinFlipSprite != 0) {
         g_WIN_BUFFER
-            ->copy((&ScreenBuffer), 0, 0, WinFlipSpriteY, WinFlipSpriteX,
+            .copy((&ScreenBuffer), 0, 0, WinFlipSpriteY, WinFlipSpriteX,
                    WinClipWidth, WinClipHeight);
         RECT rect;
         if (useHelper) {
@@ -8470,7 +8470,7 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
                 WinDragOffsetY = WFIELD(win, 0x190);
                 bool sameArea = WinSavedAreaWidth == field188b && -WinSavedAreaHeight == prevSaved;
                 if (!sameArea) {
-                    g_WIN_BUFFER->init(field188b, prevSaved, 0, 0);
+                    g_WIN_BUFFER.init(field188b, prevSaved, 0, 0);
                 }
             }
             int width = WinClipWidth;
@@ -8481,7 +8481,7 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
             WinFlipSpriteX = destY;
             WinFlipSprite = reinterpret_cast<Sprite *>(field188b);
             int copyResult = g_WIN_BUFFER
-                                  ->copy((&ScreenBuffer), 0, 0, destX, destY,
+                                  .copy((&ScreenBuffer), 0, 0, destX, destY,
                                          width, height);
 
             RECT rect;
@@ -8588,7 +8588,7 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
 
         if (WinMouseDirect == 0 && WFIELD(win, 0x188) == 0 && WinFlipSprite != 0) {
             g_WIN_BUFFER
-                ->copy((&ScreenBuffer), 0, 0, WinFlipSpriteY, WinFlipSpriteX,
+                .copy((&ScreenBuffer), 0, 0, WinFlipSpriteY, WinFlipSpriteX,
                        WinClipWidth, WinClipHeight);
             RECT rect;
             make_rect(&rect, WinFlipSpriteY, WinFlipSpriteX, WinClipWidth, WinClipHeight);
@@ -9996,7 +9996,7 @@ int __cdecl Win::update_screen(RECT *area, Win *window) {
     }
 
     (&ScreenBuffer)
-        ->copy(g_WIN_BUFFER, l14 - base2, l10 - base, l1c - l14,
+        ->copy(&g_WIN_BUFFER, l14 - base2, l10 - base, l1c - l14,
                l18 - l10, l14, l10);
     return 0;
 }

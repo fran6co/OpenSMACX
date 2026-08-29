@@ -335,8 +335,8 @@ int __cdecl RadioButton::init_class() {
     if (result != 0) {
         return result;
     }
-    g_RADIOBUTTON_SPRITE_1->extract(&buf, 0x109, 1, 0x23, 0x20, 0x20, 0);
-    g_RADIOBUTTON_SPRITE_2->extract(&buf, 0x109, 0x22, 0x23, 0x20, 0x20, 0);
+    g_RADIOBUTTON_SPRITE_1.extract(&buf, 0x109, 1, 0x23, 0x20, 0x20, 0);
+    g_RADIOBUTTON_SPRITE_2.extract(&buf, 0x109, 0x22, 0x23, 0x20, 0x20, 0);
     return 0;
 }
 
