@@ -575,6 +575,13 @@ Purpose: Decode a PCX image out of memory into this buffer, then install the
 // divergence starts at instruction 0, before any of the inlined code is
 // reached. Kept for call-graph fidelity; do not re-chase similarity from
 // this alone.
+// LEVER (measured 2026-08-29, moved the counts): `get_hdc` and
+// `release_hdc` are ALSO open-coded by the image here - vtable GetDC at
+// 0x005E2A56 and ReleaseDC at 0x005E2AB3 with both counts and the hdc2_
+// publishes between - and writing both protocols out (Win::init_class
+// idiom) took the compiled body 253 -> 311 instructions and agreement
+// 5/374 -> 22/374, and `call_diff` stopped reporting FEWER. The remaining
+// delta is frame layout (0x94 against 0xfc), not missing code.
 // symbol    ?load_pcx@Buffer@@QAEHPAEKPAVPalette@@HH@Z
 // size      1127 bytes
 // prototype int (__thiscall ?load_pcx@Buffer@@QAEHPAEKPAVPalette@@HH@Z)(Buffer* this, unsigned int8*, unsigned int, Palette*, int, int)
@@ -613,14 +620,10 @@ int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette,
         return 3;
     }
 
-    // TRIED for now, and it is the whole remaining gap: the image is 374
-    // instructions and we compile 288. The missing 86 are `sync_to_palette`,
-    // which the image OPEN-CODES here - `Palette::get_rgbquad` at 0x005E2A1C
-    // and `SetDIBColorTable` through [0x006690B4] at 0x005E2A7C are emitted
-    // inline - while we call it. `sync_to_palette` is itself BYTE_EXACT at
-    // 0x005DE8F0, so the move is `MEASURED inline`, keeping the standalone
-    // copy; that is a larger change than this pass, and the call graph is
-    // correct either way.
+    // The image is 374 instructions; after open-coding `sync_to_palette`
+    // AND `get_hdc`/`release_hdc` (all three are called in the call form and
+    // all three are inline in the image) this tree compiles 311. The rest of
+    // the gap is frame layout: the image reserves 0xfc where ours is 0x94.
     // The shipped assets carry a watermark ahead of the PCX itself.
     //
     // `strlen` THREE TIMES, not hoisted. The image calls it at 0x005E26B7,
@@ -724,9 +727,49 @@ int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette,
         palette_seed_ = palette->seed_;
         RGBQUAD *const table = dib_.bmiColors;
         palette->get_rgbquad(table, 0, 0x100);
-        if (get_hdc() != nullptr) {
+        // get_hdc and release_hdc, written out: the image inlines the whole
+        // acquire protocol here (vtable GetDC at 0x005E2A56, ReleaseDC at
+        // 0x005E2AB3, both counts and the hdc2_ publishes in between), and
+        // the call form leaves ~60 instructions of this body unaccounted
+        // for. Same idiom as Win::init_class.
+        if (locked_bits_ != 0) {
+            surface_lost();
+        }
+        IDirectDrawSurface *const surface = surface_;
+        HDC acquired;
+        if (surface == nullptr) {
+            hdc2_ = hdc_;
+            ++hdc_lock_count_;
+            acquired = hdc_;
+        } else if (hdc2_ != nullptr) {
+            ++hdc_lock_count_;
+            acquired = hdc2_;
+        } else {
+            if (surface->GetDC(&hdc2_) != 0) {
+                surface_lost();
+            }
+            ++hdc_lock_count_;
+            acquired = hdc2_;
+        }
+        if (acquired != nullptr) {
             SetDIBColorTable(hdc2_, 0, 0x100, table);
-            release_hdc(1);
+            // release_hdc(1), written out the same way.
+            if (surface_ == nullptr) {
+                --hdc_lock_count_;
+                if (hdc_lock_count_ <= 0) {
+                    hdc2_ = nullptr;
+                    hdc_lock_count_ = 0;
+                }
+            } else {
+                --hdc_lock_count_;
+                if (hdc2_ != nullptr && hdc_lock_count_ <= 0) {
+                    if (surface_->ReleaseDC(hdc2_) != 0) {
+                        surface_lost();
+                    }
+                    hdc_lock_count_ = 0;
+                    hdc2_ = nullptr;
+                }
+            }
         }
     }
     has_palette_ = 1;
