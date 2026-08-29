@@ -144,7 +144,7 @@ HEADER_SHAPES = [
     # CORRECTED, not raised: the comment walk skipped every code line
     # starting with `*`, hiding 69 of these. The tree did not change;
     # the ruler did. See _code_lines.
-    ("anonymous fixed-address global", 160,
+    ("anonymous fixed-address global", 155,
      re.compile(r"\bg_00[0-9a-f]{4,6}\b"),
      "a global named by its address instead of its meaning. Name it from "
      "evidence - the image's .data value, the arithmetic identity, the "
@@ -166,7 +166,7 @@ SCAFFOLD_CEILINGS = {
     "field_accessors.cpp markers": 42,
     "leaf_recoveries.cpp markers": 52,
     "nullsub_thunks.cpp markers": 56,
-    "PENDING_BODY forwarders": 224,
+    "PENDING_BODY forwarders": 222,
     # 1334 -> 1333 (2026-08-29, lifecycle-retirement batch): the archived
     # global_lifecycle.cpp went away with the thunks it recorded.
     "artifact files (recovered/)": 1333,
