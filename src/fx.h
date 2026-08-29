@@ -34,6 +34,11 @@ class FX {
   void play(int effect);
 
  public:
+  // 0x00445CD0, a pending_bodies forwarder. control_game (game.cpp) inits the
+  // bank once the Shift check says the sound stack is wanted.
+  void init();
+
+ public:
   void fade(int a1);
   void release(int a1);
   void stop(int a1);
@@ -52,6 +57,11 @@ class FX {
 
 static_assert(sizeof(FX) == 0x28F0,
               "FX layout must match the original executable");
+
+// The process-wide bank, at the fixed address fx.cpp pins it to. Declared
+// here rather than cast at use sites so control_game (game.cpp) reaches it
+// by name.
+extern FX g_FX;  // 0x00749CF8
 
 // The per-element destructor the original passes: the Effect jump thunk at
 // 0x004482C0, which lands on the Wave destructor. Held as its own rebindable

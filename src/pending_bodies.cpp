@@ -1395,10 +1395,110 @@ void __cdecl load_faction_art(int player_id) {
     PENDING_BODY(0x00453710, pending)(player_id);
 }
 
-// ?control_game@@YAXXZ at 0x0052AA30 - body in src/unrecovered/0052aa30.cpp
-void __cdecl control_game() {
+// ?control_game@@YAXXZ at 0x0052AA30 - homed into game.cpp on 2026-08-29,
+// so the forwarder that stood here is gone. ITS CALLEES moved in here with
+// it: everything below that control_game calls is still an original body.
+// desktop_close, close_opening and game_close carry proved bodies in
+// src/recovered/units/ (0058eff0, 00589b20, 0058f430) that the build does
+// not compile - those forwarders stay until the artifacts are promoted and
+// their callers repointed.
+
+// ?system_init@@YAHXZ at 0x0058F040
+int __cdecl system_init() {
+    typedef int(__cdecl *pending)();
+    return PENDING_BODY(0x0058F040, pending)();
+}
+
+// ?game_init@@YAHHH@Z at 0x0058F2F0
+int __cdecl game_init(int mode, int reload) {
+    typedef int(__cdecl *pending)(int, int);
+    return PENDING_BODY(0x0058F2F0, pending)(mode, reload);
+}
+
+// ?game_reload@@YAHHH@Z at 0x0058F450
+int __cdecl game_reload(int mode, int reload) {
+    typedef int(__cdecl *pending)(int, int);
+    return PENDING_BODY(0x0058F450, pending)(mode, reload);
+}
+
+// ?setup_game@@YAXH@Z at 0x005B3920
+void __cdecl setup_game(int reload) {
+    typedef void(__cdecl *pending)(int);
+    PENDING_BODY(0x005B3920, pending)(reload);
+}
+
+// ?top_menu@@YAHH@Z at 0x0058E360
+int __cdecl top_menu(int mode) {
+    typedef int(__cdecl *pending)(int);
+    return PENDING_BODY(0x0058E360, pending)(mode);
+}
+
+// ?desktop_init@@YAHH@Z at 0x0058EE60
+int __cdecl desktop_init(int fresh) {
+    typedef int(__cdecl *pending)(int);
+    return PENDING_BODY(0x0058EE60, pending)(fresh);
+}
+
+// ?multiplayer_init@@YAHH@Z at 0x0058DB30
+int __cdecl multiplayer_init(int mode) {
+    typedef int(__cdecl *pending)(int);
+    return PENDING_BODY(0x0058DB30, pending)(mode);
+}
+
+// ?control_turn@@YAXXZ at 0x005275B0
+void __cdecl control_turn() {
     typedef void(__cdecl *pending)();
-    PENDING_BODY(0x0052AA30, pending)();
+    PENDING_BODY(0x005275B0, pending)();
+}
+
+// ?net_control_turn@@YAXXZ at 0x0052A2E0
+void __cdecl net_control_turn() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x0052A2E0, pending)();
+}
+
+// ?desktop_close@@YAXXZ at 0x0058EFF0
+void __cdecl desktop_close() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x0058EFF0, pending)();
+}
+
+// ?close_opening@@YAXXZ at 0x00589B20
+void __cdecl close_opening() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x00589B20, pending)();
+}
+
+// ?game_close@@YAXH@Z at 0x0058F430
+void __cdecl game_close(int mode) {
+    typedef void(__cdecl *pending)(int);
+    PENDING_BODY(0x0058F430, pending)(mode);
+}
+
+// ?system_close@@YAXXZ at 0x0058F250
+void __cdecl system_close() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x0058F250, pending)();
+}
+
+// ?amovie_project@@YAXPAD@Z at 0x00403BE0
+void __cdecl amovie_project(char *movie) {
+    typedef void(__cdecl *pending)(char *);
+    PENDING_BODY(0x00403BE0, pending)(movie);
+}
+
+// ?check_for_lobby@Net@@QAEHPADPAU_GUID@@HH@Z at 0x0062D9E0
+int Net::check_for_lobby(char *app_name, _GUID *guid, int option_a,
+                         int option_b) {
+    typedef int(__fastcall *pending)(Net *, void *, char *, _GUID *, int, int);
+    return PENDING_BODY(0x0062D9E0, pending)(this, nullptr, app_name, guid,
+                                             option_a, option_b);
+}
+
+// ?init@FX@@QAEXXZ at 0x00445CD0
+void FX::init() {
+    typedef void(__fastcall *pending)(FX *, void *);
+    PENDING_BODY(0x00445CD0, pending)(this, nullptr);
 }
 
 // ??0BasePop@@QAE@XZ at 0x00600860 - homed into basepop.cpp on 2026-08-29

@@ -132,7 +132,12 @@ extern BOOL IsMultiplayerPBEM;
 // turn around; the faction dword then names whose turn it currently is, and is
 // compared against the local faction at 0x00939284. `net_control_turn` and
 // `Console::use_time_bonus` read the same pair the same way.
-extern uint8_t NetTurnFlags;
+//
+// DWORD, not the byte the bit lives in: control_game (game.cpp) clears the
+// slot with a whole `mov dword ptr [0x9a681c], esi` each pass of the main
+// loop, and `& 0x10` on a dword still narrows to the image's
+// `test byte ptr [0x9a681c], 0x10` in not_my_turn.
+extern uint32_t NetTurnFlags;
 extern int NetTurnFaction;
 extern int LocalFaction;
 
@@ -146,6 +151,55 @@ void __cdecl repair_phase(int faction_id);
 // The game's main loop, called once from WinMain between Jackal bring-up and
 // teardown. Everything the player ever sees happens inside this call.
 void __cdecl control_game();
+
+// Turn-flow state control_game owns. Addresses in comments; definitions in
+// game.cpp.
+//
+// GameRestartQueued is raised by the net handlers (0x00514B30 sets it from the
+// closed-net path, 0x00514D30 from its sibling) and consumed once per pass of
+// the main loop, which reloads and sets up a game when it sees it.
+extern int GameRestartQueued;  // 0x0093A948
+// An id slot maintained the way the selection id is: veh_kill (0x005C08C0)
+// clears it when it names the killed vehicle and decrements it when the id
+// was below. The main loop resets it between games. Exact role not recovered.
+extern int FocusVehId;  // 0x00939290
+// The flag the turn loop watches: Console::on_sys_close raises it, control_turn
+// and net_control_turn raise and clear it, and the main loop clears it before
+// each turn and again at the same four-store sequence it opens with. Formerly
+// bound raw, as console.h's ConsoleExitTurnLoop and scenario.cpp's
+// ExitTurnLoopAddress; both now reach this global by name.
+extern int ExitTurnLoop;  // 0x009B2068
+// Where control_turn / net_control_turn are in their phase; the main loop
+// reads it to size the desktop before the turn runs, and scenario.cpp gates
+// the end-turn path on it. Formerly scenario.cpp's raw ControlTurnPhaseAddress.
+extern int ControlTurnPhase;  // 0x009B2070
+// The open savegame's file name, copied into SaveNameBuffer and handed to
+// filefind_set_alternate when the loop reloads. Bounds unknown, like
+// CommandLineText - the next referenced dword in, 0x0093AA10, only caps it.
+extern char SaveGameFileName[0x104];  // 0x0093AA0C
+// The working copy filefind_set_alternate runs on. Same unknown bound.
+extern char SaveNameBuffer[0x104];  // 0x009B2078
+
+// The main loop's callees. Each is still an original body reached through a
+// pending_bodies.cpp forwarder; declaring them here is what lets
+// control_game emit the image's `call rel32` to any symbol. Arities are the
+// mangled names' and the call sites' - the bodies name nothing yet.
+int __cdecl system_init();
+int __cdecl game_init(int mode, int reload);
+int __cdecl game_reload(int mode, int reload);
+void __cdecl setup_game(int reload);
+int __cdecl top_menu(int mode);
+int __cdecl desktop_init(int fresh);
+int __cdecl multiplayer_init(int a1);
+void __cdecl control_turn();
+void __cdecl net_control_turn();
+void __cdecl desktop_close();
+void __cdecl close_opening();
+void __cdecl game_close(int mode);
+void __cdecl system_close();
+// 0x00403BE0. Its proved body sits in src/recovered/units/00403be0.cpp,
+// which the build does not compile; the forwarder stays until it is promoted.
+void __cdecl amovie_project(char *movie);
 
 MEASURED inline BOOL __cdecl not_my_turn() {
     // Both guards return before the comparison, so a non-net game and a net

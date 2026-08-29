@@ -164,6 +164,11 @@ void __cdecl sort_descending(uint32_t count, int *id, int *value);
 
 // WIP
 int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete);
+// BYTE_EXACT in general.cpp, spelled `alternative` there: its `// symbol`
+// fact records that this tree emits ?filefind_set_alternative@@YAXPBD@Z
+// where the image's own mangled name spells set_alternate/PAD. control_game
+// (game.cpp) feeds it the savegame name before each reload.
+void __cdecl filefind_set_alternative(LPCSTR path);
 int __cdecl parse_string(LPSTR input, LPSTR output);
 
 MEASURED inline int __cdecl range(int input, int min, int max) {

@@ -325,8 +325,10 @@ LPCSTR const CursorNextDangerMsg2 = (LPCSTR)0x00939FF0;
 int32_t *const ConsoleControlTurnActive = (int32_t *)0x0093A938;  // 0x0093A938
 
 // on_sys_close raises the flag the turn loop watches. The dword at 0x009B2068
-// is the same one src/scenario.cpp binds as `ExitTurnLoopAddress`.
-int32_t *const ConsoleExitTurnLoop = (int32_t *)0x009B2068;  // 0x009B2068
+// is game.h's ExitTurnLoop now - a real global, defined in game.cpp when
+// control_game was homed (2026-08-29); the `int32_t *const` binding that stood
+// here pointed at the image's address while the binary's own storage lived
+// elsewhere, and on_sys_close stores through the global with the same bytes.
 
 // menu_update hands the console's selected-vehicle id to the MainMenu the
 // original embeds at +0x22A2C. MainMenu::check (0x00460DD0, 4782 bytes) is

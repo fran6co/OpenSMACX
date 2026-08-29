@@ -32,8 +32,10 @@ static const uintptr_t ConsoleAddress = 0x009156B0;
 static const uintptr_t CurrentFactionAddress = 0x00939284;
 static const uintptr_t ActionGoToAddress = 0x004CB310;
 static const uintptr_t TurnUpkeepCallerReturn = 0x0052768F;
-static const uintptr_t ExitTurnLoopAddress = 0x009B2068;
-static const uintptr_t ControlTurnPhaseAddress = 0x009B2070;
+// The turn-loop exit flag and the turn phase are named globals now - see
+// game.h (ExitTurnLoop, ControlTurnPhase); the raw uintptr_t bindings that
+// stood here were retired when control_game was homed into game.cpp on
+// 2026-08-29 and both addresses gained real definitions.
 static const size_t ConsoleSelectedVehicleOffset = 0x23BDC;
 static const size_t ConsolePreviousVehicleOffset = 0x23BE0;
 static const size_t ConsoleTurnLoopOffset = 0x23BE4;
@@ -136,7 +138,7 @@ void write_progress(const char *phase) {
 
 void finish_failure(const char *error) {
     State.phase = ScenarioPhase::Finished;
-    *reinterpret_cast<int *>(ExitTurnLoopAddress) = 1;
+    ExitTurnLoop = 1;
     write_failure(error);
 }
 
@@ -253,14 +255,14 @@ void inspect_loaded_state() {
     }
     used += static_cast<size_t>(added);
     State.phase = ScenarioPhase::Finished;
-    *reinterpret_cast<int *>(ExitTurnLoopAddress) = 1;
+    ExitTurnLoop = 1;
     write_bytes(output, static_cast<DWORD>(used));
 }
 
 void request_end_turn(Console *self) {
     uint8_t *bytes = reinterpret_cast<uint8_t *>(self);
     GameState |= STATE_UNK_2;
-    *reinterpret_cast<int *>(ControlTurnPhaseAddress) = 0;
+    ControlTurnPhase = 0;
     *reinterpret_cast<int *>(bytes + ConsoleTurnLoopOffset) = 0;
     *reinterpret_cast<int *>(bytes + ConsoleTurnActiveOffset) = 0;
     *reinterpret_cast<int *>(bytes + ConsolePreviousVehicleOffset) =
@@ -353,7 +355,7 @@ void execute_commands(Console *self) {
     request_end_turn(self);
     uint8_t *bytes = reinterpret_cast<uint8_t *>(self);
     bool end_turn_requested = (GameState & STATE_UNK_2) != 0
-        && *reinterpret_cast<int *>(ControlTurnPhaseAddress) == 0
+        && ControlTurnPhase == 0
         && *reinterpret_cast<int *>(bytes + ConsoleTurnLoopOffset) == 0
         && *reinterpret_cast<int *>(bytes + ConsoleTurnActiveOffset) == 0;
     bool passed = movement_ordered && end_turn_requested
@@ -386,7 +388,7 @@ void execute_commands(Console *self) {
         order_cleared ? "true" : "false", movement_cost,
         end_turn_requested ? "true" : "false");
     State.phase = ScenarioPhase::Finished;
-    *reinterpret_cast<int *>(ExitTurnLoopAddress) = 1;
+    ExitTurnLoop = 1;
     if (size > 0 && static_cast<size_t>(size) < sizeof(output)) {
         write_bytes(output, static_cast<DWORD>(size));
     }
@@ -418,7 +420,7 @@ extern "C" void __cdecl scenario_human_turn_ready(Console *self) {
     }
     ScenarioTrampolineAction = 2;
     if (State.phase == ScenarioPhase::Finished) {
-        *reinterpret_cast<int *>(ExitTurnLoopAddress) = 1;
+        ExitTurnLoop = 1;
         return;
     }
     if (!validate_loaded_state()) {
@@ -470,7 +472,7 @@ extern "C" void __cdecl scenario_turn_advanced(uintptr_t caller_return) {
             Vehs[State.vehicle_id].x, Vehs[State.vehicle_id].y,
             State.target_x, State.target_y);
         State.phase = ScenarioPhase::Finished;
-        *reinterpret_cast<int *>(ExitTurnLoopAddress) = 1;
+        ExitTurnLoop = 1;
         if (failure_size > 0 && static_cast<size_t>(failure_size) < sizeof(failure)) {
             write_bytes(failure, static_cast<DWORD>(failure_size));
         }
@@ -499,7 +501,7 @@ extern "C" void __cdecl scenario_turn_advanced(uintptr_t caller_return) {
         State.vehicle_id, State.initial_x, State.initial_y,
         State.target_x, State.target_y, State.movement_cost);
     State.phase = ScenarioPhase::Finished;
-    *reinterpret_cast<int *>(ExitTurnLoopAddress) = 1;
+    ExitTurnLoop = 1;
     if (size > 0 && static_cast<size_t>(size) < sizeof(output)) {
         write_bytes(output, static_cast<DWORD>(size));
     }

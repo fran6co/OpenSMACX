@@ -32,13 +32,16 @@
   * compiler this tree targets, and VC6 puts the base exactly where the
   * vbtable names. The static_assert is what withdrew the claim.)
   *
-  * The base is spelled `protected` for the same class of reason graphicwin.h
+  * The base is spelled `public` for the same class of reason graphicwin.h
   * spells its own base `public`: a virtual base is initialised by the MOST
   * DERIVED class, so `class Console : MapWin` has to reach GraphicWin's
-  * constructor itself, and a PRIVATE base here is `C2243: conversion from
-  * 'const class Console *' to 'const class GraphicWin &' exists, but is
-  * inaccessible` on Console's own constructors, which VC6 emits wherever
-  * they are reached. Access changes no offset;
+  * constructor itself, and anything below `public` is C2243/C2244 on the
+  * constructors VC6 emits wherever they are reached - and, measured
+  * 2026-08-29, on control_game's `ConsoleGlobal->Win::hide()` in game.cpp,
+  * the one free-function caller the image has on this path. (`protected`
+  * stood here for a while under the theory encapsulation was free; the
+  * virtual-base-adjusted call from outside the hierarchy is what it cost.)
+  * Access changes no offset;
   * sizeof(MapWin) and sizeof(Console) are both unmoved by it.
   *
   * The size is the vbtable's, not a guess: the table at 0x0066C870 reads
@@ -52,7 +55,7 @@
   * rather than appended - appending would move the virtual base and break
   * every offset in the class.
   */
-class MapWin : protected virtual GraphicWin {
+class MapWin : public virtual GraphicWin {
  public:
   // 0x0046F880, a pending_bodies forwarder.
   void on_sys_close();
