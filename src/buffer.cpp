@@ -2072,6 +2072,25 @@ int Buffer::set_clip(int left, int top, int width, int height) {
 /*
 Purpose: Measure `len` bytes of a string, following the buffer's markup.
 // ORIGINAL: 0x005DC7C0 ?text_width@Buffer@@QAEHPADH@Z 0x005DC7C0-0x005DCA02
+// TRIED: THE HELPER SHAPE, spelled and refused. The image's scan is one
+//            helper INLINED TWICE - specialised on font slot 3, the '='
+//            test present in one copy (0x5DC82C loop) and absent in the
+//            other (0x5DC871) - driving `len` through `&len` and spilling
+//            the cursor through [ebp-8]/[ebp-0xc]. Spelled that way here as
+//            a static __forceinline taking (LPSTR, int *, int) and called
+//            from `if (font_slot_ == 3)`: VC6 12.00.8168 REFUSES the
+//            inline in this TU (a real `call` where the image has the
+//            copies), every flag set scores 2-15 of 201 and similarity
+//            0.031-0.582, all below the committed 0.463. The IDENTICAL
+//            shape DOES inline in a minimal TU - free or member caller,
+//            /O1 and /O2, with this tree's /FI vc6_compat.h and
+//            /DBUILD_DEBUG, with 400 filler functions ahead of it, and
+//            with Font::width an in-class method - so the refusal is
+//            specific to this TU, not to the shape. Reverted to the
+//            committed loop-over-locals form; also confirmed: the
+//            `switch` must keep its `static_cast<unsigned char>` - spelled
+//            on the plain `char` the image's `movsx` implies, VC6 emits a
+//            sub/je compare chain instead of the jump table.
 // TRIED: see the "NOT BYTE EXACT" paragraph below - the image drives
 //            this scan through `&len` (a spilled frame slot reloaded every
 //            iteration) and accumulates width in the dead `text` parameter
@@ -2846,6 +2865,14 @@ Purpose: Draw at most `len` characters of a string horizontally centred in a
 //   has and we do not (`push y` at 0x5DD058, before the `sar`, with `this`
 //   held back to 0x5DD063 where we hoist `mov ecx,ebx` ten instructions
 //   early) plus one instruction the image pays and we do not: 76 against 75.
+// TRIED: the two-locals spelling of that residue, `const int offset =
+//   (width - drawn) / 2;` then `x_coord + offset` in the call, and the same
+//   with the add swapped (`offset + x_coord`): both 55/76, byte-identical
+//   to the committed `centred` local - the image's `mov edx,eax` copy
+//   before the `sar` and its late `mov eax,x` load are a register plan the
+//   sibling `write_right_l` also could not reach (its note above). And
+//   accumulating into the parameter, `x_coord += (width - drawn) / 2`, is
+//   50/76. Committed shape stands.
 Return Value: The raster writer's result; the incoming x for a null string or
               an empty draw; unusable font (3)
 Status: Complete with temporary raster-writer and text-width dependencies
