@@ -25,6 +25,7 @@
 #include "worldwin.h"
 #include "dipedit.h"
 #include "filewin.h"
+#include "stringstruct.h"  // StringVirtualBaseOwner - the 0x009B3374 dance
 #include <cstring>
 
 /*
@@ -127,8 +128,20 @@ int BasePop::set_def_button_font(Font *font1, Font *font2, Font *font3) {
 // four tiers so its four slots are 0x10 apart, the button table has three so
 // its slots are 0xC apart. `BasePopDefaultStringColors[1][0]` is 0x00696EF4,
 // which is where the image's second store goes.
-uint32_t BasePopDefaultStringColors[4][4];  // 0x00696EE4
-uint32_t BasePopDefaultButtonColors[4][3];  // 0x00696F24
+// The initializers are the image's own file bytes at 0x00696EE4 and
+// 0x00696F24 (this table is below .data's 0x006A8000 file-backed end, unlike
+// the 0x009B8xxx slots): transparent for slot 0, white for slots 0-1 tier 1+,
+// and palette index 1 for slots 2-3.
+uint32_t BasePopDefaultStringColors[4][4] = {
+    {0x00000000, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF},
+    {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF},
+    {0x00000001, 0x00000001, 0x00000001, 0x00000001},
+    {0x00000001, 0x00000001, 0x00000001, 0x00000001}};  // 0x00696EE4
+uint32_t BasePopDefaultButtonColors[4][3] = {
+    {0x00000000, 0xFFFFFFFF, 0xFFFFFFFF},
+    {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF},
+    {0x00000001, 0x00000001, 0x00000001},
+    {0x00000001, 0x00000001, 0x00000001}};  // 0x00696F24
 
 namespace {
 
@@ -903,84 +916,127 @@ Purpose: The BasePop constructor. The base GraphicWin and the Heap, two
 // STRUCTURE BasePop ctor | SEH states skip 4 and 5 | state bytes stored are
 //        0,1,2,3,6,7,8 | `mov byte ptr [esp+0x20], N` sequence 0x00600893..
 //        0x006009f7 - the numbering is not one-per-subobject.
+// LEVER: real-data-bindings the ~70 `g_00XXXXXX` fixed-address bindings and
+//        the `RD(reinterpret_cast<int>(g_00XXXXXX))` default loads now name
+//        real globals defined above the body (BasePopVbtable,
+//        BasePopStageTables6693A0/6698C0, BasePopDefault*), each holding the
+//        pinned image's bytes. The game addresses are unmapped in a
+//        standalone build and the ctor faulted on the vbtable content read
+//        at 0x00600907 (`RD(ecx + 4)`); the reads now resolve in-binary, and
+//        the relocation discount keeps the immediates comparable. The .data
+//        slots are zero at image load (.data's file bytes end at 0x006A8000),
+//        so the 0x009B8xxx globals are deliberately zero-initialized; only
+//        the 0x00696EC4 class-defaults table is file-backed and carries the
+//        shipped values. popups_normal (0x00588460, in recovered/units)
+//        rewrites most of both at run time.
+// LEVER: font-slot-load-fix the font loads were spelled
+//        `RD(reinterpret_cast<int>(BasePopDefaultStringFonts[N]))` - the
+//        cast converts the font POINTER to an int, so RD dereferenced the
+//        font object instead of the slot, two loads where the image has one
+//        `mov eax, [0x009B8D98]`. The slot reads are direct now
+//        (`string_font1_ = BasePopDefaultStringFonts[0]`); a dropped `&`
+//        would have been the honest spelling of the old form.
+// TRIED: real-data-bindings measured 9 of 321 against the old spellings' 10
+//        of 321, with 396 compiled instructions against the old 513 (image
+//        321). The first divergence is the same in both - this body's frame
+//        is `sub esp, 0x10` where the image has `sub esp, 8`; the old
+//        spelling was +4, this one +8. Register colouring (image ebp=this /
+//        ebx=0, ours swapped) still dominates the remaining disagreement.
 Return Value: n/a
 Status: Complete
 */
 
-// Fixed .data objects the popup-list insertions thread through, and the
-// class-default tables the image copies into every popup. Const-pointer
-// spellings: the address folds to an immediate.
-static int *const g_006693a0 = (int *)0x006693A0;
-static int *const g_006693a4 = (int *)0x006693A4;
-static int *const g_006693ac = (int *)0x006693AC;
-static int *const g_006698c0 = (int *)0x006698C0;
-static int *const g_006698c4 = (int *)0x006698C4;
-static int *const g_0066b0ec = (int *)0x0066B0EC;
-static int *const g_00696ec4 = (int *)0x00696EC4;
-static int *const g_00696ec8 = (int *)0x00696EC8;
-static int *const g_00696ed0 = (int *)0x00696ED0;
-static int *const g_00696ed4 = (int *)0x00696ED4;
-static int *const g_00696ed8 = (int *)0x00696ED8;
-static int *const g_00696edc = (int *)0x00696EDC;
-static int *const g_00696ee0 = (int *)0x00696EE0;
-static int *const g_00696ee4 = (int *)0x00696EE4;
-static int *const g_00696ee8 = (int *)0x00696EE8;
-static int *const g_00696eec = (int *)0x00696EEC;
-static int *const g_00696ef0 = (int *)0x00696EF0;
-static int *const g_00696ef4 = (int *)0x00696EF4;
-static int *const g_00696ef8 = (int *)0x00696EF8;
-static int *const g_00696efc = (int *)0x00696EFC;
-static int *const g_00696f00 = (int *)0x00696F00;
-static int *const g_00696f04 = (int *)0x00696F04;
-static int *const g_00696f08 = (int *)0x00696F08;
-static int *const g_00696f0c = (int *)0x00696F0C;
-static int *const g_00696f10 = (int *)0x00696F10;
-static int *const g_00696f14 = (int *)0x00696F14;
-static int *const g_00696f18 = (int *)0x00696F18;
-static int *const g_00696f1c = (int *)0x00696F1C;
-static int *const g_00696f20 = (int *)0x00696F20;
-static int *const g_00696f24 = (int *)0x00696F24;
-static int *const g_00696f28 = (int *)0x00696F28;
-static int *const g_00696f2c = (int *)0x00696F2C;
-static int *const g_00696f30 = (int *)0x00696F30;
-static int *const g_00696f34 = (int *)0x00696F34;
-static int *const g_00696f38 = (int *)0x00696F38;
-static int *const g_00696f3c = (int *)0x00696F3C;
-static int *const g_00696f40 = (int *)0x00696F40;
-static int *const g_00696f44 = (int *)0x00696F44;
-static int *const g_00696f48 = (int *)0x00696F48;
-static int *const g_00696f4c = (int *)0x00696F4C;
-static int *const g_00696f50 = (int *)0x00696F50;
-static int *const g_00696f54 = (int *)0x00696F54;
-static int *const g_00696f58 = (int *)0x00696F58;
-static int *const g_00696f5c = (int *)0x00696F5C;
-static int *const g_00696f60 = (int *)0x00696F60;
-static int *const g_009b3374 = (int *)0x009B3374;
-static int *const g_009b8ab8 = (int *)0x009B8AB8;
-static int *const g_009b8bd0 = (int *)0x009B8BD0;
-static int *const g_009b8cf8 = (int *)0x009B8CF8;
-static int *const g_009b8d04 = (int *)0x009B8D04;
-static int *const g_009b8d08 = (int *)0x009B8D08;
-static int *const g_009b8d0c = (int *)0x009B8D0C;
-static int *const g_009b8d10 = (int *)0x009B8D10;
-static int *const g_009b8d18 = (int *)0x009B8D18;
-static int *const g_009b8d24 = (int *)0x009B8D24;
-static int *const g_009b8d30 = (int *)0x009B8D30;
-static int *const g_009b8d3c = (int *)0x009B8D3C;
-static int *const g_009b8d48 = (int *)0x009B8D48;
-static int *const g_009b8d54 = (int *)0x009B8D54;
-static int *const g_009b8d60 = (int *)0x009B8D60;
-static int *const g_009b8d6c = (int *)0x009B8D6C;
-static int *const g_009b8d88 = (int *)0x009B8D88;
-static int *const g_009b8d8c = (int *)0x009B8D8C;
-static int *const g_009b8d90 = (int *)0x009B8D90;
-static int *const g_009b8d94 = (int *)0x009B8D94;
-static int *const g_009b8db4 = (int *)0x009B8DB4;
-static int *const g_009b8db8 = (int *)0x009B8DB8;
-static int *const g_009b8dbc = (int *)0x009B8DBC;
-static int *const g_009b8dc0 = (int *)0x009B8DC0;
-static int *const g_009b8dcc = (int *)0x009B8DCC;
-static int *const g_009b8dd0 = (int *)0x009B8DD0;
+// ---------------------------------------------------------------------------
+// The data the ctor stages into every popup. These used to be fixed-address
+// bindings (`static int *const g_00XXXXXX = (int *)0x00XXXXXX;`), which read
+// the GAME's addresses; in a standalone build those pages are unmapped and
+// the ctor faulted on its first content read, the vbtable load at
+// 0x00600907. They are now real definitions carrying the pinned image's
+// bytes, so every staged pointer and default load resolves inside this
+// binary. Image addresses in the comments.
+
+// --- .rdata: the staged vtables and the vbtable ---
+
+// The vbtable staged at +0x2154 and +0x2184. Entries are displacements from
+// the SLOT that holds the table's address: -4 reaches back to the primary
+// vptr at +0x2150/+0x2180, +0x24 down to the StringList virtual base's vptr
+// at +0x2178/+0x21a8, which the ctor also stores directly. The ctor READS
+// entry[1] to place that virtual base's vtable - the read that faulted. In
+// the image the table is the two dwords at 0x0066B0EC; 0x0066B0F4 opens with
+// a function pointer, so the table ends there.
+const uint32_t BasePopVbtable[2] = {0xFFFFFFFC, 0x00000024};  // 0x0066B0EC
+
+// The function-pointer runs the ctor stages, Dialog-stage spellings first
+// and the final spellings after the refresh. The staged starts are
+// 0x006693A0/0x006693A4/0x006693AC and 0x006698C0/0x006698C4; 0x006693AC is
+// StringAllocationBase's one-slot vftable (stringstruct.h) and 0x006693A0 /
+// 0x006693A4 are the Dialog List tables (dialog.h, as value constants there
+// - different storage, same image addresses). The first run ends at
+// 0x006693AF because 0x006693B0 opens with a vbtable-shaped FFFFFFFC; the
+// second ends at 0x006698D3 because 0x006698D4 is the [this] vptr the ctor's
+// not-yet-spelled store writes.
+const uint32_t BasePopStageTables6693A0[4] = {
+    0x004029F0, 0x00404250, 0x00404270, 0x00401520};  // 0x006693A0
+const uint32_t BasePopStageTables6698C0[5] = {0x00406670, 0x006086F0,
+                                              0x00608770, 0x004070B0,
+                                              0x00404420};  // 0x006698C0
+
+// --- .data: the class-default slots the ctor loads ---
+
+// The class-defaults table is FILE-BACKED in the image (0x00696EC4 sits below
+// the 0x006A8000 end of .data's file bytes), so these carry the shipped
+// initial values. popups_normal (0x00588460) rewrites parts of the table at
+// run time before the first popup is built; the values here are the load
+// state. Everything below this table - all the 0x009B8xxx slots - is past
+// that end: zero at load, and left zero-initialized here on purpose.
+
+// {100, 100}: the defaults the ctor's tail sends through field_A20_/A24_
+// into the embedded Dialog's width/height slots.
+const uint32_t BasePopDefaultDialogSize[2] = {100, 100};  // 0x00696EC4
+
+// Copied to +0x21c0/+0x21c4. popups_normal rewrites these to 0 and 4.
+const uint32_t BasePopDefaultField21C0[2] = {10, 4};  // 0x00696ED0
+
+// Copied to +0x3104/+0x3108/+0x310c.
+const uint32_t BasePopDefaultField3104[3] = {1, 1, 255};  // 0x00696ED8
+
+// Copied to +0x31a0 (its low byte)/+0x31a4/+0x31a8/+0x31ac. popups_normal
+// rewrites the first byte; the shipped byte is 0xf7.
+const uint32_t BasePopDefaultField31A0[4] = {247, 7, 248, 2};  // 0x00696F54
+
+// The two 0x118-byte default blocks the ctor copies to +0x2e64 and +0x2f7c.
+// 0x118 is exactly ten sizeof(DialogEntry) records (dialog.h); the entries
+// are all zero until popups_normal and the set_def_* setters fill them.
+uint32_t BasePopDefaultBlock2E64[70];  // 0x009B8AB8
+uint32_t BasePopDefaultBlock2F7C[70];  // 0x009B8BD0
+
+// Copied to +0x3094, the head of the object's third block-sized region.
+uint32_t BasePopDefaultField3094;  // 0x009B8CF8
+
+// The defaults for field_A14_ (the high-res-scaling opt-out set_width tests)
+// and field_A18_/field_A1C_ (the starting loc_a_/loc_b_; 0x2000 keeps the
+// current value, so zero here means "location 0,0").
+uint32_t BasePopDefaultLayout[3];  // 0x009B8D04
+
+// The 27 dwords the ctor transposes into +0x31b8..+0x3223.
+uint32_t BasePopDefaultBlock31B8[27];  // 0x009B8D10
+
+// Copied to +0x21b0/+0x21b4/+0x21bc/+0x21b8, in this table's order.
+// popups_normal seeds 0x1a/0x3a/0x32/3 here at run time.
+uint32_t BasePopDefaultField21B0[4];  // 0x009B8D88
+
+// Copied to +0x31b0/+0x31b4.
+uint32_t BasePopDefaultField31B0[2];  // 0x009B8DB4
+
+// Copied to +0x2148/+0x214c.
+uint32_t BasePopDefaultField2148[2];  // 0x009B8DBC
+
+// Copied to +0x30a4. popups_normal seeds 0x1000080 here at run time.
+uint32_t BasePopDefaultField30A4;  // 0x009B8DCC
+
+// Copied to +0x322c, immediately after the zero store the image overwrites.
+// The image references this slot from 13 sites, all outside this file.
+uint32_t BasePopDefaultField322C;  // 0x009B8DD0
 
 namespace {
 // The register-transcription helper for the list-node walks: its arguments
@@ -998,17 +1054,17 @@ BasePop::BasePop() {
     int eax, ecx, edx, esi, edi;
     int ebx = 0;
 
-    field_2154_ = reinterpret_cast<int>(g_0066b0ec);
-    field_2178_ = reinterpret_cast<int>(g_006693ac);
-    eax = *g_009b3374;
-    esi = reinterpret_cast<int>(g_006693a4);
+    field_2154_ = reinterpret_cast<int>(BasePopVbtable);
+    field_2178_ = reinterpret_cast<int>(BasePopStageTables6693A0 + 3);
+    eax = static_cast<int>(StringVirtualBaseOwner);
+    esi = reinterpret_cast<int>(BasePopStageTables6693A0 + 1);
     field_217C_ = eax;
-    *g_009b3374 = ebx;
+    StringVirtualBaseOwner = ebx;
     ecx = field_2154_;
     field_2150_ = esi;
-    edx = reinterpret_cast<int>(g_006693a0);
+    edx = reinterpret_cast<int>(BasePopStageTables6693A0);
     eax = RD(ecx + 4);
-    ecx = reinterpret_cast<int>(g_006698c4);
+    ecx = reinterpret_cast<int>(BasePopStageTables6698C0 + 1);
     RD(eax + reinterpret_cast<int>(&field_2154_)) = edx;
     eax = field_2154_;
     field_2158_ = ebx;
@@ -1018,14 +1074,14 @@ BasePop::BasePop() {
     field_2168_ = ebx;
     field_2150_ = ecx;
     edi = RD(eax + 4);
-    eax = reinterpret_cast<int>(g_006698c0);
+    eax = reinterpret_cast<int>(BasePopStageTables6698C0);
     RD(edi + reinterpret_cast<int>(&field_2154_)) = eax;
 
-    field_2184_ = reinterpret_cast<int>(g_0066b0ec);
-    field_21A8_ = reinterpret_cast<int>(g_006693ac);
-    edi = *g_009b3374;
+    field_2184_ = reinterpret_cast<int>(BasePopVbtable);
+    field_21A8_ = reinterpret_cast<int>(BasePopStageTables6693A0 + 3);
+    edi = static_cast<int>(StringVirtualBaseOwner);
     field_21AC_ = edi;
-    *g_009b3374 = ebx;
+    StringVirtualBaseOwner = ebx;
     field_2180_ = esi;
     esi = field_2184_;
     esi = RD(esi + 4);
@@ -1041,35 +1097,35 @@ BasePop::BasePop() {
     RD(edx + reinterpret_cast<int>(&field_2184_)) = eax;
 
 
-    eax = *g_009b8dcc;
+    eax = static_cast<int>(BasePopDefaultField30A4);
     field_30A4_ = eax;
-    ecx = *g_009b8cf8;
+    ecx = static_cast<int>(BasePopDefaultField3094);
     field_3094_ = ecx;
 
-        memcpy(&field_2E64_, g_009b8ab8, 0x118);
-        memcpy(&field_2F7C_, g_009b8bd0, 0x118);
+    memcpy(&field_2E64_, BasePopDefaultBlock2E64, 0x118);
+    memcpy(&field_2F7C_, BasePopDefaultBlock2F7C, 0x118);
     {
         int ecxPtr = reinterpret_cast<int>(&field_31C4_);
         int eaxIdx = 0;
         do {
-            edx = RD(reinterpret_cast<int>(g_009b8d10) + eaxIdx);
+            edx = RD(reinterpret_cast<int>(BasePopDefaultBlock31B8) + eaxIdx);
             eaxIdx += 4;
             RD(ecxPtr - 0xc) = edx;
-            edx = RD(reinterpret_cast<int>(g_009b8d18) + eaxIdx);
+            edx = RD(reinterpret_cast<int>(BasePopDefaultBlock31B8 + 2) + eaxIdx);
             RD(ecxPtr) = edx;
-            edx = RD(reinterpret_cast<int>(g_009b8d24) + eaxIdx);
+            edx = RD(reinterpret_cast<int>(BasePopDefaultBlock31B8 + 5) + eaxIdx);
             RD(ecxPtr + 0xc) = edx;
-            edx = RD(reinterpret_cast<int>(g_009b8d30) + eaxIdx);
+            edx = RD(reinterpret_cast<int>(BasePopDefaultBlock31B8 + 8) + eaxIdx);
             RD(ecxPtr + 0x18) = edx;
-            edx = RD(reinterpret_cast<int>(g_009b8d3c) + eaxIdx);
+            edx = RD(reinterpret_cast<int>(BasePopDefaultBlock31B8 + 11) + eaxIdx);
             RD(ecxPtr + 0x24) = edx;
-            edx = RD(reinterpret_cast<int>(g_009b8d48) + eaxIdx);
+            edx = RD(reinterpret_cast<int>(BasePopDefaultBlock31B8 + 14) + eaxIdx);
             RD(ecxPtr + 0x30) = edx;
-            edx = RD(reinterpret_cast<int>(g_009b8d54) + eaxIdx);
+            edx = RD(reinterpret_cast<int>(BasePopDefaultBlock31B8 + 17) + eaxIdx);
             RD(ecxPtr + 0x3c) = edx;
-            edx = RD(reinterpret_cast<int>(g_009b8d60) + eaxIdx);
+            edx = RD(reinterpret_cast<int>(BasePopDefaultBlock31B8 + 20) + eaxIdx);
             RD(ecxPtr + 0x48) = edx;
-            edx = RD(reinterpret_cast<int>(g_009b8d6c) + eaxIdx);
+            edx = RD(reinterpret_cast<int>(BasePopDefaultBlock31B8 + 23) + eaxIdx);
             RD(ecxPtr + 0x54) = edx;
             ecxPtr += 4;
         } while (eaxIdx < 0xc);
@@ -1095,18 +1151,18 @@ BasePop::BasePop() {
     field_2110_ = 0;
     field_2114_ = 0;
     field_A48_ = ebx;
-    field_21B8_ = RD(reinterpret_cast<int>(g_009b8d94));
-    field_21BC_ = RD(reinterpret_cast<int>(g_009b8d90));
-    field_21B0_ = RD(reinterpret_cast<int>(g_009b8d88));
-    field_21B4_ = RD(reinterpret_cast<int>(g_009b8d8c));
-    field_21C0_ = RD(reinterpret_cast<int>(g_00696ed0));
-    field_21C4_ = RD(reinterpret_cast<int>(g_00696ed4));
+    field_21B8_ = BasePopDefaultField21B0[3];
+    field_21BC_ = BasePopDefaultField21B0[2];
+    field_21B0_ = BasePopDefaultField21B0[0];
+    field_21B4_ = BasePopDefaultField21B0[1];
+    field_21C0_ = BasePopDefaultField21C0[0];
+    field_21C4_ = BasePopDefaultField21C0[1];
 
     sprite_.close();
 
     field_2144_ = ebx;
-    field_214C_ = RD(reinterpret_cast<int>(g_009b8dc0));
-    field_2148_ = RD(reinterpret_cast<int>(g_009b8dbc));
+    field_214C_ = BasePopDefaultField2148[1];
+    field_2148_ = BasePopDefaultField2148[0];
     field_30B0_ = ebx;
     field_30B4_ = ebx;
     field_30B8_ = ebx;
@@ -1129,60 +1185,60 @@ BasePop::BasePop() {
     loc_a_ = eax;
     loc_b_ = eax;
     field_3100_ = ebx;
-    field_3104_ = RD(reinterpret_cast<int>(g_00696ed8));
-    field_3108_ = RD(reinterpret_cast<int>(g_00696edc));
-    field_310C_ = RD(reinterpret_cast<int>(g_00696ee0));
-    string_font1_ = reinterpret_cast<Font *>(RD(reinterpret_cast<int>(BasePopDefaultStringFonts[0])));
-    string_color_a_ = RD(reinterpret_cast<int>(g_00696ee4));
-    string_color_b_ = RD(reinterpret_cast<int>(g_00696ef4));
-    string_color_c_ = RD(reinterpret_cast<int>(g_00696f04));
-    string_color_d_ = RD(reinterpret_cast<int>(g_00696f14));
-    string_font2_ = reinterpret_cast<Font *>(RD(reinterpret_cast<int>(BasePopDefaultStringFonts[1])));
-    string_color_2a_ = RD(reinterpret_cast<int>(g_00696ee8));
-    string_color_2b_ = RD(reinterpret_cast<int>(g_00696ef8));
-    string_color_2c_ = RD(reinterpret_cast<int>(g_00696f08));
-    string_color_2d_ = RD(reinterpret_cast<int>(g_00696f18));
-    string_font3_ = reinterpret_cast<Font *>(RD(reinterpret_cast<int>(BasePopDefaultStringFonts[2])));
-    string_color_3a_ = RD(reinterpret_cast<int>(g_00696eec));
-    string_color_3b_ = RD(reinterpret_cast<int>(g_00696efc));
-    string_color_3c_ = RD(reinterpret_cast<int>(g_00696f0c));
-    string_color_3d_ = RD(reinterpret_cast<int>(g_00696f1c));
-    string_font4_ = reinterpret_cast<Font *>(RD(reinterpret_cast<int>(BasePopDefaultStringFonts[3])));
-    string_color_hyper_a_ = RD(reinterpret_cast<int>(g_00696ef0));
-    string_color_hyper_b_ = RD(reinterpret_cast<int>(g_00696f00));
-    string_color_hyperc_ = RD(reinterpret_cast<int>(g_00696f10));
-    string_color_hyper_d_ = RD(reinterpret_cast<int>(g_00696f20));
+    field_3104_ = BasePopDefaultField3104[0];
+    field_3108_ = BasePopDefaultField3104[1];
+    field_310C_ = BasePopDefaultField3104[2];
+    string_font1_ = BasePopDefaultStringFonts[0];
+    string_color_a_ = static_cast<int>(BasePopDefaultStringColors[0][0]);
+    string_color_b_ = static_cast<int>(BasePopDefaultStringColors[1][0]);
+    string_color_c_ = static_cast<int>(BasePopDefaultStringColors[2][0]);
+    string_color_d_ = static_cast<int>(BasePopDefaultStringColors[3][0]);
+    string_font2_ = BasePopDefaultStringFonts[1];
+    string_color_2a_ = static_cast<int>(BasePopDefaultStringColors[0][1]);
+    string_color_2b_ = static_cast<int>(BasePopDefaultStringColors[1][1]);
+    string_color_2c_ = static_cast<int>(BasePopDefaultStringColors[2][1]);
+    string_color_2d_ = static_cast<int>(BasePopDefaultStringColors[3][1]);
+    string_font3_ = BasePopDefaultStringFonts[2];
+    string_color_3a_ = static_cast<int>(BasePopDefaultStringColors[0][2]);
+    string_color_3b_ = static_cast<int>(BasePopDefaultStringColors[1][2]);
+    string_color_3c_ = static_cast<int>(BasePopDefaultStringColors[2][2]);
+    string_color_3d_ = static_cast<int>(BasePopDefaultStringColors[3][2]);
+    string_font4_ = BasePopDefaultStringFonts[3];
+    string_color_hyper_a_ = static_cast<int>(BasePopDefaultStringColors[0][3]);
+    string_color_hyper_b_ = static_cast<int>(BasePopDefaultStringColors[1][3]);
+    string_color_hyperc_ = static_cast<int>(BasePopDefaultStringColors[2][3]);
+    string_color_hyper_d_ = static_cast<int>(BasePopDefaultStringColors[3][3]);
     field_3160_ = ebx;
     field_3164_ = ebx;
     field_3168_ = ebx;
-    button_font1_ = reinterpret_cast<Font *>(RD(reinterpret_cast<int>(BasePopDefaultButtonFonts[0])));
-    button_color_a_ = *reinterpret_cast<uint8_t *>(g_00696f24);
-    button_color_b_ = RD(reinterpret_cast<int>(g_00696f30));
-    button_color_c_ = RD(reinterpret_cast<int>(g_00696f3c));
-    button_color_d_ = RD(reinterpret_cast<int>(g_00696f48));
-    button_font2_ = reinterpret_cast<Font *>(RD(reinterpret_cast<int>(BasePopDefaultButtonFonts[1])));
-    button_color_2a_ = *reinterpret_cast<uint8_t *>(g_00696f28);
-    button_color_2b_ = RD(reinterpret_cast<int>(g_00696f34));
-    button_color_2c_ = RD(reinterpret_cast<int>(g_00696f40));
-    button_color_2d_ = RD(reinterpret_cast<int>(g_00696f4c));
-    button_font3_ = reinterpret_cast<Font *>(RD(reinterpret_cast<int>(BasePopDefaultButtonFonts[2])));
-    button_color_3a_ = *reinterpret_cast<uint8_t *>(g_00696f2c);
-    button_color_3b_ = RD(reinterpret_cast<int>(g_00696f38));
-    button_color_3c_ = RD(reinterpret_cast<int>(g_00696f44));
-    button_color_3d_ = RD(reinterpret_cast<int>(g_00696f50));
-    field_31A0_ = *reinterpret_cast<uint8_t *>(g_00696f54);
-    field_31A4_ = RD(reinterpret_cast<int>(g_00696f58));
-    field_31A8_ = RD(reinterpret_cast<int>(g_00696f5c));
-    field_31AC_ = RD(reinterpret_cast<int>(g_00696f60));
-    field_31B0_ = RD(reinterpret_cast<int>(g_009b8db4));
-    field_31B4_ = RD(reinterpret_cast<int>(g_009b8db8));
+    button_font1_ = BasePopDefaultButtonFonts[0];
+    button_color_a_ = static_cast<uint8_t>(BasePopDefaultButtonColors[0][0]);
+    button_color_b_ = static_cast<int>(BasePopDefaultButtonColors[1][0]);
+    button_color_c_ = static_cast<int>(BasePopDefaultButtonColors[2][0]);
+    button_color_d_ = static_cast<int>(BasePopDefaultButtonColors[3][0]);
+    button_font2_ = BasePopDefaultButtonFonts[1];
+    button_color_2a_ = static_cast<uint8_t>(BasePopDefaultButtonColors[0][1]);
+    button_color_2b_ = static_cast<int>(BasePopDefaultButtonColors[1][1]);
+    button_color_2c_ = static_cast<int>(BasePopDefaultButtonColors[2][1]);
+    button_color_2d_ = static_cast<int>(BasePopDefaultButtonColors[3][1]);
+    button_font3_ = BasePopDefaultButtonFonts[2];
+    button_color_3a_ = static_cast<uint8_t>(BasePopDefaultButtonColors[0][2]);
+    button_color_3b_ = static_cast<int>(BasePopDefaultButtonColors[1][2]);
+    button_color_3c_ = static_cast<int>(BasePopDefaultButtonColors[2][2]);
+    button_color_3d_ = static_cast<int>(BasePopDefaultButtonColors[3][2]);
+    field_31A0_ = static_cast<uint8_t>(BasePopDefaultField31A0[0]);
+    field_31A4_ = BasePopDefaultField31A0[1];
+    field_31A8_ = BasePopDefaultField31A0[2];
+    field_31AC_ = BasePopDefaultField31A0[3];
+    field_31B0_ = BasePopDefaultField31B0[0];
+    field_31B4_ = BasePopDefaultField31B0[1];
     field_322C_ = ebx;
-    field_322C_ = RD(reinterpret_cast<int>(g_009b8dd0));
-    field_A14_ = RD(reinterpret_cast<int>(g_009b8d04));
-    field_A18_ = RD(reinterpret_cast<int>(g_009b8d08));
-    field_A1C_ = RD(reinterpret_cast<int>(g_009b8d0c));
-    field_A20_ = RD(reinterpret_cast<int>(g_00696ec4));
-    field_A24_ = RD(reinterpret_cast<int>(g_00696ec8));
+    field_322C_ = BasePopDefaultField322C;
+    field_A14_ = BasePopDefaultLayout[0];
+    field_A18_ = BasePopDefaultLayout[1];
+    field_A1C_ = BasePopDefaultLayout[2];
+    field_A20_ = BasePopDefaultDialogSize[0];
+    field_A24_ = BasePopDefaultDialogSize[1];
 
     if (field_A14_ != 0) {
         // The image's tail here walks the Dialogs subobject at +0x21d0 (see
