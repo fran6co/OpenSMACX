@@ -65,10 +65,10 @@ Return Value: Instance pointer in EAX
 Status: Complete
 */
 StringBox::StringBox() {
-    field_A1C_ = 0;
-    field_2B6C_ = 0;
-    field_A14_ = 0;
-    field_A18_ = 0xFFFFFFFFU;
+    top_line_ = 0;
+    list_override_ = 0;
+    per_line_draw_ = 0;
+    visible_rows_ = -1;
 }
 
 /*
@@ -126,7 +126,7 @@ Return Value: n/a
 Status: Complete
 */
 void StringBox::on_scrolled(int code, int pos) {
-    field_A1C_ = pos;
+    top_line_ = pos;
     reinterpret_cast<VCall *>(this)->slot062();
 }
 
