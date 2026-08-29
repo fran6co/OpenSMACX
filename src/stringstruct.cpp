@@ -16,6 +16,18 @@
 
 #include <cstring>
 
+// Defined out of line and empty: OUT OF LINE is the point. A header-inline
+// empty destructor is provably nothrow, and VC6 then sheds the /GX unwind
+// states from the construction chain that StringBox::StringBox's frame
+// carries. The teardown itself is the raw vtable reinstall + owner republish
+// in StringList::destroy().
+StringAllocationBase::~StringAllocationBase() {
+    allocation_owner_ = 0;
+}
+
+void StringStruct::unk_slot00() {
+}
+
 /*
 Purpose: Return the current string-list item ID.
 // ORIGINAL: 0x00401640 ?current_id@StringStruct@@QAEHXZ 0x00401640-0x00401651 BYTE_EXACT

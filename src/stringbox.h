@@ -18,12 +18,20 @@
 #pragma once
 
 #include "original_seam.h"
+#include "graphicwin.h"
 #include "scroll.h"
+#include "stringstruct.h"
 
  /*
   * StringBox class
   */
-class StringBox : public ConstructedGraphicWin {
+// GraphicWin DIRECTLY, not through ConstructedGraphicWin: that shim is an
+// empty pass-through now that GraphicWin::GraphicWin() is a real constructor,
+// but its inlined implicit constructor stores the SHIM's own two vftables
+// between the GraphicWin base call and the member construction - a store pair
+// the image does not have (its StringBox derives from GraphicWin directly).
+// The base's real constructor runs implicitly either way.
+class StringBox : public GraphicWin {
  public:
   // 0x00629490, a pending_bodies forwarder.
   void add_fixup();
@@ -50,18 +58,10 @@ class StringBox : public ConstructedGraphicWin {
   uint32_t field_A1C_;
   Scroll scroll_;
   uint32_t field_2B6C_;
-  uint32_t field_2B70_;
-  uint32_t field_2B74_;
-  uint32_t field_2B78_;
-  uint32_t field_2B7C_;
-  uint32_t field_2B80_;
-  uint32_t field_2B84_;
-  uint32_t field_2B88_;
-  uint32_t field_2B8C_;
-  uint32_t field_2B90_;
-  uint32_t field_2B94_;
-  uint32_t field_2B98_;
-  uint32_t field_2B9C_;
+  // 0x2B70. The StringList, constructed IMPLICITLY - the image inlines its
+  // constructor here, which is why the image's vftable stores for StringBox
+  // itself land after this block.
+  StringList stringList_;
 };
 
 static_assert(sizeof(StringBox) == 0x2BA0,

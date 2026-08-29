@@ -112,7 +112,10 @@ CEILINGS = {
     # 223 -> 222 (2026-08-28, buffer batch): get_pixel's char* walk is gone
     # - and the body went 1/107 -> BYTE_EXACT 107/107 on members plus one
     # chained bounds guard sharing a single epilogue.
-    "raw self-access": 222,
+    # 222 -> 221 (2026-08-29, stringbox batch): StringBox::add walked the
+    # StringList through a char* off &field_2B70_; the member is a real
+    # StringList now, and add's staging is unchanged on the list pointer.
+    "raw self-access": 221,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
