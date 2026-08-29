@@ -48,8 +48,8 @@ Sprite::Sprite() {
     // not the punning. Each `&member` keeps the exact width and the exact
     // sequence the image writes, and the class stops walking itself.
     *reinterpret_cast<volatile uint32_t *>(&ppszFileName_) = 0;
-    *SpriteMemoryUsed = static_cast<int>(
-        static_cast<uint32_t>(*SpriteMemoryUsed) + sizeof(Sprite));
+    SpriteMemoryUsed = static_cast<int>(
+        static_cast<uint32_t>(SpriteMemoryUsed) + sizeof(Sprite));
     *reinterpret_cast<volatile uint32_t *>(&pcBits_) = 0;
     *reinterpret_cast<volatile uint32_t *>(&iSpriteWidth2_) = 0;
     *reinterpret_cast<volatile uint32_t *>(&iSpriteWidth_) = 0;
@@ -69,19 +69,7 @@ Sprite::Sprite() {
 /*
 Purpose: Release a sprite's allocations, discount its pixel memory, and clear
          every field except the type byte.
-// ORIGINAL: 0x005E3820 ?close@Sprite@@QAEXXZ 0x005E3820-0x005E3884 SEMANTIC
-// TRIED: byte-exactness, on ONE REGISTER NAME. 35 of 38 instructions
-//   agree and similarity is 1.000 under every /O2 flag set; the whole
-//   divergence is that VC6 holds the loaded `*SpriteMemoryUsed` in ecx where
-//   the image holds it in edx (`mov edx, [0x9b6618]` / `sub edx, eax` /
-//   `mov [0x9b6618], edx`). Everything else, including the image's second
-//   redundant `cmp [esi+4]` before the free, already reproduces.
-//   Ten spellings measured, all 35 of 38: `-=` compound assignment, the
-//   unsigned-cast form committed here, `a - b` written out, a local for the
-//   product, a local for the loaded value, a local `int *const` alias,
-//   `SpriteMemoryUsed[0]`, the multiplicands swapped, and splitting the
-//   chained `fObj1Exists_ == 0 && pcBits_ != 0` guard into two nested `if`s.
-//   /O1 is worse (27 of 38); /Ob0 and /Oi- change nothing.
+// ORIGINAL: 0x005E3820 ?close@Sprite@@QAEXXZ 0x005E3820-0x005E3884 BYTE_EXACT
 // size      100 bytes
 // prototype void (__thiscall ?close@Sprite@@QAEXXZ)(Sprite* this)
 // callers   111   call targets   1
@@ -101,8 +89,8 @@ void Sprite::close() {
     // The pixel buffer is only owned, accounted, and released while the
     // borrowed flag at 0x28 is clear.
     if (fObj1Exists_ == 0 && pcBits_ != 0) {
-        *SpriteMemoryUsed = static_cast<int>(
-            static_cast<uint32_t>(*SpriteMemoryUsed)
+        SpriteMemoryUsed = static_cast<int>(
+            static_cast<uint32_t>(SpriteMemoryUsed)
             - static_cast<uint32_t>(iSpriteHeight_)
                   * static_cast<uint32_t>(iSpriteWidth_));
         // A SECOND TEST OF THE SAME POINTER, which the image really does: it
@@ -135,6 +123,11 @@ void Sprite::close() {
 // loads the pointer first.
 int SpriteDrawOriginX = 1;  // 0x00696D18
 int SpriteDrawOriginY = 1;  // 0x00696D1C
+
+// The sprite-memory accounting total, the image's .bss counter at
+// 0x009B6618 - zero at load. A real object, not a pointer into an image
+// that is not mapped here: every constructor and release path touches it.
+int SpriteMemoryUsed = 0;
 
 /*
 Purpose: Draw the sprite with a temporarily substituted draw origin.
@@ -377,8 +370,8 @@ int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
         // block is only owned, accounted, and released while the borrowed flag is
         // clear, and the image re-tests `pcBits_` before the free.
         if (fObj1Exists_ == 0 && pcBits_ != 0) {
-            *SpriteMemoryUsed = static_cast<int>(
-                static_cast<uint32_t>(*SpriteMemoryUsed)
+            SpriteMemoryUsed = static_cast<int>(
+                static_cast<uint32_t>(SpriteMemoryUsed)
                 - static_cast<uint32_t>(iSpriteHeight_)
                       * static_cast<uint32_t>(iSpriteWidth_));
             if (pcBits_ != 0) {
@@ -536,7 +529,7 @@ int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
             }
             fObj1Exists_ = 0;
         }
-        *SpriteMemoryUsed += iSpriteWidth_ * iSpriteHeight_;
+        SpriteMemoryUsed += iSpriteWidth_ * iSpriteHeight_;
         pixels = reinterpret_cast<const uint8_t *>(
             buffer->get_data(left + iLeftOffset_, top + iTopOffset_));
         uint8_t *out = reinterpret_cast<uint8_t *>(pcBits_);
