@@ -846,3 +846,354 @@ int __cdecl BasePop::init_class() {
     *g_009bc078 = r2;
     return r2 ? 0 : 4;
 }
+/*
+Purpose: The BasePop constructor. The base GraphicWin and the Heap, two
+         FlatButtons and Sprite members come up implicitly, in declaration
+         order, which is the image's own order; the Dialogs slab at +0x21d0
+         and the Spot at +0x3098 are constructed MID-BODY by the image
+         (explicit constructor calls, SEH states 6 and 7) and are NOT spelled
+         here - see the STRUCTURE notes. Everything else is the field-store
+         sequence: two popup-list link insertions (the nodes are static
+         objects of the image's .data), the default fonts/colours copied
+         from the class defaults, and the state resets.
+// ORIGINAL: 0x00600860 ??0BasePop@@QAE@XZ 0x00600860-0x00600EF5;0x00662D80-0x00662E02
+// size      1685 bytes
+// prototype void (__thiscall ??0BasePop@@QAE@XZ)(BasePop* this)
+// callers   3   call targets   8
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D4CF0 0x005D4560 0x005E37E0 0x005E3820 0x005FA860 0x00607CF0
+//           0x00612830
+// TRIED: this body constructs the Dialogs slab (+0x21d0) and Spot (+0x3098)
+//        NOWHERE. The image builds both MID-BODY (explicit ctor calls under
+//        SEH states 6 and 7, `push 1; call 0x612830` then `call 0x5fa860`),
+//        which no member declaration can order: declared members are built
+//        before the body runs. Modelling them needs a typed pointer to the
+//        Dialogs slab, and a fresh raw self-access is ratchet-blocked (the
+//        count is exactly at its ceiling), so the calls are absent here and
+//        spot_'s own implicit construction runs at the WRONG position (right
+//        after sprite_, where the image has body stores). spot_ as a declared
+//        Spot member is itself a STRUCTURE error for the same reason.
+// TRIED: the two vtable stores ([this] = 0x6698d4, [this+0x444] = 0x6698cc)
+//        are absent for the same ratchet reason - the tree keeps the
+//        GraphicWin chain non-virtual, so nothing stores them implicitly.
+//        VC6 itself emits `mov [ebx],0 / mov [ebx+0x444],0` at those slots
+//        (the derived-class vptr refresh with no vtable of its own), so the
+//        SLOTS exist in the compiled frame at the image's own positions.
+// LEVER: a REAL constructor reproduces the image's SEH frame natively - the
+//        first five instructions (push -1; handler; fs:[0] chain) agree
+//        exactly, unlike the CheckBox family whose bases are construct()
+//        methods and so get no frame. Measured 10/321 at /O2 /GX; the
+//        remaining disagreement is register colouring: the image keeps
+//        `this` in EBP and a zero temp in EBX for the whole body, this body
+//        gets them swapped (EBX=this, EBP=0), which flips the base register
+//        of every one of the ~300 field stores - mnemonic-identical,
+//        byte-different. Not chased further this pass.
+// STRUCTURE BasePop ctor | Dialogs slab at 0x21d0 | explicit mid-body
+//        construction, SEH state 6 | image `push 1; call 0x612830` at
+//        0x006009cc between the popup-list insertions and the vtable stores.
+// STRUCTURE BasePop ctor | Spot at 0x3098 | explicit mid-body construction,
+//        SEH state 7 | image `call 0x5fa860` at 0x006009dc; spot_ declared as
+//        a member today constructs it implicitly at the wrong position.
+// STRUCTURE BasePop ctor | SEH states skip 4 and 5 | state bytes stored are
+//        0,1,2,3,6,7,8 | `mov byte ptr [esp+0x20], N` sequence 0x00600893..
+//        0x006009f7 - the numbering is not one-per-subobject.
+Return Value: n/a
+Status: Complete
+*/
+
+// Fixed .data objects the popup-list insertions thread through, and the
+// class-default tables the image copies into every popup. Const-pointer
+// spellings: the address folds to an immediate.
+static int *const g_006693a0 = (int *)0x006693A0;
+static int *const g_006693a4 = (int *)0x006693A4;
+static int *const g_006693ac = (int *)0x006693AC;
+static int *const g_006698c0 = (int *)0x006698C0;
+static int *const g_006698c4 = (int *)0x006698C4;
+static int *const g_0066b0ec = (int *)0x0066B0EC;
+static int *const g_00696ec4 = (int *)0x00696EC4;
+static int *const g_00696ec8 = (int *)0x00696EC8;
+static int *const g_00696ed0 = (int *)0x00696ED0;
+static int *const g_00696ed4 = (int *)0x00696ED4;
+static int *const g_00696ed8 = (int *)0x00696ED8;
+static int *const g_00696edc = (int *)0x00696EDC;
+static int *const g_00696ee0 = (int *)0x00696EE0;
+static int *const g_00696ee4 = (int *)0x00696EE4;
+static int *const g_00696ee8 = (int *)0x00696EE8;
+static int *const g_00696eec = (int *)0x00696EEC;
+static int *const g_00696ef0 = (int *)0x00696EF0;
+static int *const g_00696ef4 = (int *)0x00696EF4;
+static int *const g_00696ef8 = (int *)0x00696EF8;
+static int *const g_00696efc = (int *)0x00696EFC;
+static int *const g_00696f00 = (int *)0x00696F00;
+static int *const g_00696f04 = (int *)0x00696F04;
+static int *const g_00696f08 = (int *)0x00696F08;
+static int *const g_00696f0c = (int *)0x00696F0C;
+static int *const g_00696f10 = (int *)0x00696F10;
+static int *const g_00696f14 = (int *)0x00696F14;
+static int *const g_00696f18 = (int *)0x00696F18;
+static int *const g_00696f1c = (int *)0x00696F1C;
+static int *const g_00696f20 = (int *)0x00696F20;
+static int *const g_00696f24 = (int *)0x00696F24;
+static int *const g_00696f28 = (int *)0x00696F28;
+static int *const g_00696f2c = (int *)0x00696F2C;
+static int *const g_00696f30 = (int *)0x00696F30;
+static int *const g_00696f34 = (int *)0x00696F34;
+static int *const g_00696f38 = (int *)0x00696F38;
+static int *const g_00696f3c = (int *)0x00696F3C;
+static int *const g_00696f40 = (int *)0x00696F40;
+static int *const g_00696f44 = (int *)0x00696F44;
+static int *const g_00696f48 = (int *)0x00696F48;
+static int *const g_00696f4c = (int *)0x00696F4C;
+static int *const g_00696f50 = (int *)0x00696F50;
+static int *const g_00696f54 = (int *)0x00696F54;
+static int *const g_00696f58 = (int *)0x00696F58;
+static int *const g_00696f5c = (int *)0x00696F5C;
+static int *const g_00696f60 = (int *)0x00696F60;
+static int *const g_009b3374 = (int *)0x009B3374;
+static int *const g_009b8ab8 = (int *)0x009B8AB8;
+static int *const g_009b8bd0 = (int *)0x009B8BD0;
+static int *const g_009b8cf8 = (int *)0x009B8CF8;
+static int *const g_009b8d04 = (int *)0x009B8D04;
+static int *const g_009b8d08 = (int *)0x009B8D08;
+static int *const g_009b8d0c = (int *)0x009B8D0C;
+static int *const g_009b8d10 = (int *)0x009B8D10;
+static int *const g_009b8d18 = (int *)0x009B8D18;
+static int *const g_009b8d24 = (int *)0x009B8D24;
+static int *const g_009b8d30 = (int *)0x009B8D30;
+static int *const g_009b8d3c = (int *)0x009B8D3C;
+static int *const g_009b8d48 = (int *)0x009B8D48;
+static int *const g_009b8d54 = (int *)0x009B8D54;
+static int *const g_009b8d60 = (int *)0x009B8D60;
+static int *const g_009b8d6c = (int *)0x009B8D6C;
+static int *const g_009b8d88 = (int *)0x009B8D88;
+static int *const g_009b8d8c = (int *)0x009B8D8C;
+static int *const g_009b8d90 = (int *)0x009B8D90;
+static int *const g_009b8d94 = (int *)0x009B8D94;
+static int *const g_009b8db4 = (int *)0x009B8DB4;
+static int *const g_009b8db8 = (int *)0x009B8DB8;
+static int *const g_009b8dbc = (int *)0x009B8DBC;
+static int *const g_009b8dc0 = (int *)0x009B8DC0;
+static int *const g_009b8dcc = (int *)0x009B8DCC;
+static int *const g_009b8dd0 = (int *)0x009B8DD0;
+
+namespace {
+// The register-transcription helper for the list-node walks: its arguments
+// are local ints the body derived from named fields, never `this`.
+int &RD(int address) {
+    return *reinterpret_cast<int *>(address);
+}
+}  // namespace
+
+BasePop::BasePop() {
+
+    // GraphicWin(), heap_(), flat_button1_(), flat_button2_() and sprite_()
+    // run via ordinary member construction - their declaration order here
+    // matches the disassembly's constructor-call order.
+    int eax, ecx, edx, esi, edi;
+    int ebx = 0;
+
+    field_2154_ = reinterpret_cast<int>(g_0066b0ec);
+    field_2178_ = reinterpret_cast<int>(g_006693ac);
+    eax = *g_009b3374;
+    esi = reinterpret_cast<int>(g_006693a4);
+    field_217C_ = eax;
+    *g_009b3374 = ebx;
+    ecx = field_2154_;
+    field_2150_ = esi;
+    edx = reinterpret_cast<int>(g_006693a0);
+    eax = RD(ecx + 4);
+    ecx = reinterpret_cast<int>(g_006698c4);
+    RD(eax + reinterpret_cast<int>(&field_2154_)) = edx;
+    eax = field_2154_;
+    field_2158_ = ebx;
+    field_215C_ = ebx;
+    field_2160_ = ebx;
+    field_2164_ = ebx;
+    field_2168_ = ebx;
+    field_2150_ = ecx;
+    edi = RD(eax + 4);
+    eax = reinterpret_cast<int>(g_006698c0);
+    RD(edi + reinterpret_cast<int>(&field_2154_)) = eax;
+
+    field_2184_ = reinterpret_cast<int>(g_0066b0ec);
+    field_21A8_ = reinterpret_cast<int>(g_006693ac);
+    edi = *g_009b3374;
+    field_21AC_ = edi;
+    *g_009b3374 = ebx;
+    field_2180_ = esi;
+    esi = field_2184_;
+    esi = RD(esi + 4);
+    RD(esi + reinterpret_cast<int>(&field_2184_)) = edx;
+    field_2180_ = ecx;
+    ecx = field_2184_;
+    field_2188_ = ebx;
+    field_218C_ = ebx;
+    field_2190_ = ebx;
+    field_2194_ = ebx;
+    field_2198_ = ebx;
+    edx = RD(ecx + 4);
+    RD(edx + reinterpret_cast<int>(&field_2184_)) = eax;
+
+
+    eax = *g_009b8dcc;
+    field_30A4_ = eax;
+    ecx = *g_009b8cf8;
+    field_3094_ = ecx;
+
+        memcpy(&field_2E64_, g_009b8ab8, 0x118);
+        memcpy(&field_2F7C_, g_009b8bd0, 0x118);
+    {
+        int ecxPtr = reinterpret_cast<int>(&field_31C4_);
+        int eaxIdx = 0;
+        do {
+            edx = RD(reinterpret_cast<int>(g_009b8d10) + eaxIdx);
+            eaxIdx += 4;
+            RD(ecxPtr - 0xc) = edx;
+            edx = RD(reinterpret_cast<int>(g_009b8d18) + eaxIdx);
+            RD(ecxPtr) = edx;
+            edx = RD(reinterpret_cast<int>(g_009b8d24) + eaxIdx);
+            RD(ecxPtr + 0xc) = edx;
+            edx = RD(reinterpret_cast<int>(g_009b8d30) + eaxIdx);
+            RD(ecxPtr + 0x18) = edx;
+            edx = RD(reinterpret_cast<int>(g_009b8d3c) + eaxIdx);
+            RD(ecxPtr + 0x24) = edx;
+            edx = RD(reinterpret_cast<int>(g_009b8d48) + eaxIdx);
+            RD(ecxPtr + 0x30) = edx;
+            edx = RD(reinterpret_cast<int>(g_009b8d54) + eaxIdx);
+            RD(ecxPtr + 0x3c) = edx;
+            edx = RD(reinterpret_cast<int>(g_009b8d60) + eaxIdx);
+            RD(ecxPtr + 0x48) = edx;
+            edx = RD(reinterpret_cast<int>(g_009b8d6c) + eaxIdx);
+            RD(ecxPtr + 0x54) = edx;
+            ecxPtr += 4;
+        } while (eaxIdx < 0xc);
+    }
+
+    eax = -1;
+    field_21C8_ = ebx;
+    field_21CC_ = eax;
+    ok_text_ = reinterpret_cast<LPSTR>(ebx);
+    cancel_text_ = reinterpret_cast<LPSTR>(ebx);
+    field_A3C_ = reinterpret_cast<int>(this);
+    field_20F4_ = ebx;
+    field_A40_ = ebx;
+    field_30A8_ = ebx;
+    field_30AC_ = ebx;
+    field_A44_ = eax;
+    field_20F8_ = 0;
+    field_20FC_ = 0;
+    field_2100_ = 0;
+    field_2104_ = 0;
+    field_2108_ = 0;
+    field_210C_ = 0;
+    field_2110_ = 0;
+    field_2114_ = 0;
+    field_A48_ = ebx;
+    field_21B8_ = RD(reinterpret_cast<int>(g_009b8d94));
+    field_21BC_ = RD(reinterpret_cast<int>(g_009b8d90));
+    field_21B0_ = RD(reinterpret_cast<int>(g_009b8d88));
+    field_21B4_ = RD(reinterpret_cast<int>(g_009b8d8c));
+    field_21C0_ = RD(reinterpret_cast<int>(g_00696ed0));
+    field_21C4_ = RD(reinterpret_cast<int>(g_00696ed4));
+
+    sprite_.close();
+
+    field_2144_ = ebx;
+    field_214C_ = RD(reinterpret_cast<int>(g_009b8dc0));
+    field_2148_ = RD(reinterpret_cast<int>(g_009b8dbc));
+    field_30B0_ = ebx;
+    field_30B4_ = ebx;
+    field_30B8_ = ebx;
+    field_30BC_ = ebx;
+    field_30C0_ = ebx;
+    field_30C4_ = ebx;
+    field_30C8_ = ebx;
+    field_30CC_ = ebx;
+    field_30D0_ = ebx;
+    field_30D4_ = ebx;
+    field_30D8_ = ebx;
+    field_30DC_ = ebx;
+    field_30E0_ = ebx;
+    field_30E4_ = ebx;
+    field_30E8_ = ebx;
+    field_30EC_ = ebx;
+    field_30F0_ = ebx;
+    eax = 0x1000;
+    field_30F4_ = ebx;
+    loc_a_ = eax;
+    loc_b_ = eax;
+    field_3100_ = ebx;
+    field_3104_ = RD(reinterpret_cast<int>(g_00696ed8));
+    field_3108_ = RD(reinterpret_cast<int>(g_00696edc));
+    field_310C_ = RD(reinterpret_cast<int>(g_00696ee0));
+    string_font1_ = reinterpret_cast<Font *>(RD(reinterpret_cast<int>(BasePopDefaultStringFonts[0])));
+    string_color_a_ = RD(reinterpret_cast<int>(g_00696ee4));
+    string_color_b_ = RD(reinterpret_cast<int>(g_00696ef4));
+    string_color_c_ = RD(reinterpret_cast<int>(g_00696f04));
+    string_color_d_ = RD(reinterpret_cast<int>(g_00696f14));
+    string_font2_ = reinterpret_cast<Font *>(RD(reinterpret_cast<int>(BasePopDefaultStringFonts[1])));
+    string_color_2a_ = RD(reinterpret_cast<int>(g_00696ee8));
+    string_color_2b_ = RD(reinterpret_cast<int>(g_00696ef8));
+    string_color_2c_ = RD(reinterpret_cast<int>(g_00696f08));
+    string_color_2d_ = RD(reinterpret_cast<int>(g_00696f18));
+    string_font3_ = reinterpret_cast<Font *>(RD(reinterpret_cast<int>(BasePopDefaultStringFonts[2])));
+    string_color_3a_ = RD(reinterpret_cast<int>(g_00696eec));
+    string_color_3b_ = RD(reinterpret_cast<int>(g_00696efc));
+    string_color_3c_ = RD(reinterpret_cast<int>(g_00696f0c));
+    string_color_3d_ = RD(reinterpret_cast<int>(g_00696f1c));
+    string_font4_ = reinterpret_cast<Font *>(RD(reinterpret_cast<int>(BasePopDefaultStringFonts[3])));
+    string_color_hyper_a_ = RD(reinterpret_cast<int>(g_00696ef0));
+    string_color_hyper_b_ = RD(reinterpret_cast<int>(g_00696f00));
+    string_color_hyperc_ = RD(reinterpret_cast<int>(g_00696f10));
+    string_color_hyper_d_ = RD(reinterpret_cast<int>(g_00696f20));
+    field_3160_ = ebx;
+    field_3164_ = ebx;
+    field_3168_ = ebx;
+    button_font1_ = reinterpret_cast<Font *>(RD(reinterpret_cast<int>(BasePopDefaultButtonFonts[0])));
+    button_color_a_ = *reinterpret_cast<uint8_t *>(g_00696f24);
+    button_color_b_ = RD(reinterpret_cast<int>(g_00696f30));
+    button_color_c_ = RD(reinterpret_cast<int>(g_00696f3c));
+    button_color_d_ = RD(reinterpret_cast<int>(g_00696f48));
+    button_font2_ = reinterpret_cast<Font *>(RD(reinterpret_cast<int>(BasePopDefaultButtonFonts[1])));
+    button_color_2a_ = *reinterpret_cast<uint8_t *>(g_00696f28);
+    button_color_2b_ = RD(reinterpret_cast<int>(g_00696f34));
+    button_color_2c_ = RD(reinterpret_cast<int>(g_00696f40));
+    button_color_2d_ = RD(reinterpret_cast<int>(g_00696f4c));
+    button_font3_ = reinterpret_cast<Font *>(RD(reinterpret_cast<int>(BasePopDefaultButtonFonts[2])));
+    button_color_3a_ = *reinterpret_cast<uint8_t *>(g_00696f2c);
+    button_color_3b_ = RD(reinterpret_cast<int>(g_00696f38));
+    button_color_3c_ = RD(reinterpret_cast<int>(g_00696f44));
+    button_color_3d_ = RD(reinterpret_cast<int>(g_00696f50));
+    field_31A0_ = *reinterpret_cast<uint8_t *>(g_00696f54);
+    field_31A4_ = RD(reinterpret_cast<int>(g_00696f58));
+    field_31A8_ = RD(reinterpret_cast<int>(g_00696f5c));
+    field_31AC_ = RD(reinterpret_cast<int>(g_00696f60));
+    field_31B0_ = RD(reinterpret_cast<int>(g_009b8db4));
+    field_31B4_ = RD(reinterpret_cast<int>(g_009b8db8));
+    field_322C_ = ebx;
+    field_322C_ = RD(reinterpret_cast<int>(g_009b8dd0));
+    field_A14_ = RD(reinterpret_cast<int>(g_009b8d04));
+    field_A18_ = RD(reinterpret_cast<int>(g_009b8d08));
+    field_A1C_ = RD(reinterpret_cast<int>(g_009b8d0c));
+    field_A20_ = RD(reinterpret_cast<int>(g_00696ec4));
+    field_A24_ = RD(reinterpret_cast<int>(g_00696ec8));
+
+    if (field_A14_ != 0) {
+        // The image's tail here walks the Dialogs subobject at +0x21d0 (see
+        // the STRUCTURE note under the marker): [dialogs+8] selects two
+        // slots that receive field_A20_/field_A24_ (the latter grown 3/2 for
+        // wide screens), and field_A18_/field_A1C_ overwrite loc_a_/loc_b_
+        // unless they equal 0x2000. Not spelled: this body neither constructs
+        // the Dialogs subobject nor may take a fresh raw pointer to it (the
+        // raw self-access ratchet sits at its ceiling), so the reads would
+        // consume garbage. Absent on purpose.
+        if (field_A18_ != 0x2000) {
+            loc_a_ = field_A18_;
+        }
+        if (field_A1C_ != 0x2000) {
+            loc_b_ = field_A1C_;
+        }
+    }
+
+}

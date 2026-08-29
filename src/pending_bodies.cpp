@@ -1383,17 +1383,13 @@ void __cdecl control_game() {
     PENDING_BODY(0x0052AA30, pending)();
 }
 
-// ??0BasePop@@QAE@XZ at 0x00600860 - body in src/unrecovered/00600860.cpp
-//
-// THE FRONTIER MOVED HERE when basepop_alloc was recovered into
-// src/basepop.cpp: `new BasePop()` needs a constructor to link against, and
-// basepop.h no longer defines one inline. The forwarder that used to sit here
-// for basepop_alloc itself is gone - the linker enforces that, since two
-// definitions of one symbol is LNK2005.
-BasePop::BasePop() {
-    typedef void(__cdecl *pending)(void *);
-    PENDING_BODY(0x00600860, pending)(this);
-}
+// ??0BasePop@@QAE@XZ at 0x00600860 - homed into basepop.cpp on 2026-08-29
+// (a real field-store constructor, not a forwarder), so the definition that
+// used to stand here is gone. THE FRONTIER MOVED HERE when basepop_alloc was
+// recovered into src/basepop.cpp: `new BasePop()` needs a constructor to link
+// against, and basepop.h no longer defines one inline. The forwarder that
+// used to sit here for basepop_alloc itself is gone - the linker enforces
+// that, since two definitions of one symbol is LNK2005.
 
 // ---------------------------------------------------------------------------
 // THE FRONTIER AFTER jackal_init_real, which was recovered into
@@ -1407,14 +1403,8 @@ BasePop::BasePop() {
 // that are still unrecovered stay here as forwarders:
 
 // 0x00628F30, what `DDInit::report_error` tails into once its popup is
-// dismissed. 432 bytes of GetDriveTypeA/FindFirstFileA/LoadLibraryA against
-// fixed-slot pointers - the install-media check - with two callers and no
-// recovery yet. The name describes the body; the catalogue only has
-// `sub_628f30`.
-int __cdecl cd_check() {
-    typedef int(__cdecl *pending)();
-    return PENDING_BODY(0x00628F30, pending)();
-}
+// dismissed - the install-media check - is homed into win.cpp on 2026-08-29
+// as `cd_check`, so the forwarder that used to stand here is gone.
 
 
 // What `Win::window_proc` routes to, now that it is promoted into
@@ -1434,11 +1424,9 @@ int __cdecl cd_check() {
 // win.cpp on 2026-08-25 and BYTE_EXACT in the build, so the forwarder
 // that used to stand here is gone and the edge is no longer pending.
 
-// ?trig_init@@YAHXZ at 0x0063B940
-int __cdecl trig_init() {
-    typedef int(__cdecl *pending)();
-    return PENDING_BODY(0x0063B940, pending)();
-}
+// ?trig_init@@YAHXZ at 0x0063B940 - homed into general.cpp on 2026-08-29,
+// so the forwarder that used to stand here is gone and the edge is no
+// longer pending.
 
 // ?insert@WaveGroupList@@ at 0x004C5BF0 - the wave group list-insert helper
 // Wave_Device::add_to_group threads new waves through.
