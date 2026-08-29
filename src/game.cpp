@@ -21,16 +21,24 @@
 #include "game.h"
 #include "alpha.h"
 #include "base.h"
-#include "console.h"  // ConsoleGlobal
+#include "basepop.h"  // BasePopDefaultField322C
+#include "basewin.h"  // BaseWin::close
+#include "console.h"  // ConsoleGlobal, ConsoleStatusWin
+#include "designwin.h"  // DesignWin::close
 #include "faction.h"
 #include "fx.h"  // g_FX
 #include "general.h"
 #include "map.h"
 #include "main.h"  // CommandLineText
-#include "mapwin.h" // draw_tile
+#include "mapwin.h" // draw_tile, mapwin_system_shutdown
 #include "netdaemon.h"  // NetDaemonNet
+#include "statuswin.h"  // StatusWin::close
+#include "strings.h"  // StringTable
+#include "time.h"  // stop_timers
+#include "tutwin.h"  // TutWinDesWindow, TutWinBaseWindow, TutWinIfaceWindow
 #include "veh.h"
 #include "wave.h"  // g_WAVE_GENERAL
+#include "worldwin.h"  // world_climate_window
 
 BOOL ExpansionEnabled;  // 0x009A6488
 uint32_t GamePreferences;  // 0x009A6490
@@ -1054,4 +1062,120 @@ close_opening:
 close_game:
     game_close(0);
     system_close();
+}
+
+// ---------------------------------------------------------------------------
+// The teardown half of control_game's wheel, homed 2026-08-29 from
+// src/recovered/units/ (0058eff0, 00589b20, 0058f430). Their forwarders in
+// pending_bodies.cpp are gone; these definitions own the symbols now.
+// ---------------------------------------------------------------------------
+
+// map.cpp binds this window as WorldClimateWorldWin with internal linkage,
+// which game.cpp cannot name; the same fixed address, returned by value. The
+// image closes its GraphicWin base directly (`call 0x5d4e40` on
+// `mov ecx, 0x8e9f60`).
+inline WorldWin *world_climate_window() {
+    return (WorldWin *)0x008E9F60;
+}
+
+// The multiplayer window the desktop tears down second to last. The
+// recovered artifacts (0050ef10, 0045d170, 0045ca40) reach it as a MultiWin;
+// every call this body makes on it is GraphicWin::close.
+GraphicWin *const MultiWindow = (GraphicWin *)0x007FD648;
+
+/*
+Purpose: Tear the desktop down at the end of each main-loop pass.
+// ORIGINAL: 0x0058EFF0 ?desktop_close@@YAXXZ 0x0058EFF0-0x0058F031 FILE BYTE_EXACT
+// size      65 bytes
+// prototype
+// callers   1   call targets   5
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00408710 0x0043C1A0 0x004710E0 0x004B9F80 0x005D4E40
+// LEVER: byte-exact on promotion. The tree's existing header bindings
+//   (TutWinDesWindow, TutWinBaseWindow, ConsoleStatusWin, TutWinIfaceWindow)
+//   fold each receiver to `mov ecx, imm32`; the casts to DesignWin/BaseWin
+//   keep the opaque-object idiom the artifacts prove; `Win::hide` is
+//   qualified to keep the slot-2 virtual a direct tail `jmp`, and
+//   `GraphicWin::close` on the WorldWin is qualified so a later WorldWin
+//   declaration cannot steal the call from the direct E8 the image has. WorldClimateWorldWin is map.cpp-internal, hence the by-value
+//   world_climate_window() helper - same fold, no second binding name.
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl desktop_close() {
+    reinterpret_cast<DesignWin *>(TutWinDesWindow)->close();
+    reinterpret_cast<BaseWin *>(TutWinBaseWindow)->close();
+    mapwin_system_shutdown();
+    ConsoleStatusWin->close();
+    world_climate_window()->GraphicWin::close();
+    MultiWindow->close();
+    TutWinIfaceWindow->Win::hide();
+}
+
+/*
+Purpose: Leave the opening path: publish the Console's GraphicWin virtual
+         base and dismiss the opening window through its first vtable slot.
+// ORIGINAL: 0x00589B20 ?close_opening@@YAXXZ 0x00589B20-0x00589B57 FILE
+// size      55 bytes
+// prototype
+// callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x00589B4A
+// TRIED: `static_cast<GraphicWin *>(ConsoleGlobal)` for the vbtable walk -
+//   the folded const binding lets VC6 PROVE the pointer non-null, so the
+//   image's `test eax,eax / je` guard is dropped and the vbptr reload merges
+//   into one absolute load. Measured 0 of 15, diverging at instruction 0:
+//   image opens `mov eax, 0x9156b0` immediate, ours `mov eax, [0x9156b0]`.
+// TRIED: an explicit `if (console_window != 0)` guard around the walk - the
+//   value is the same compile-time constant, so VC6 folds the test away and
+//   the output is identical to the static_cast spelling.
+// LEVER: the image's shape is VC6's virtual-base conversion of an
+//   `&extern_object` - a RELOCATED symbol address, which VC6 cannot prove
+//   non-null (hence the guard) and re-derives absolutely (hence the
+//   `mov ecx, dword ptr [0x9156b0]` reload). Reproducing it needs an object
+//   SYMBOL for the console; the artifact's `extern ConsoleShadow g_console;`
+//   has no definition anywhere, so the shape cannot link from this tree.
+//   The explicit walk below is the closest linking form: value, guard,
+//   vbtable slot 1 through the fixed address.
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl close_opening() {
+    int console_window = reinterpret_cast<int>(ConsoleGlobal);
+    if (console_window != 0) {
+        console_window += reinterpret_cast<int *>(
+            *reinterpret_cast<int **>(0x009156B0))[1];
+    }
+    GraphicWin *opening = opening_window();
+    BasePopDefaultField322C = console_window;
+    if (opening != 0) {
+        opening->on_dialog_focus(1);
+        opening_window() = 0;
+    }
+}
+
+/*
+Purpose: Shut the game state down: timers, label strings, then the string
+         table. The mode parameter is read by none of it.
+// ORIGINAL: 0x0058F430 ?game_close@@YAXH@Z 0x0058F430-0x0058F444 FILE BYTE_EXACT
+// size      20 bytes
+// prototype
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0050F440 0x006169D0
+// LEVER: byte-exact on promotion. StringTable is strings.h's header binding,
+//   so the receiver folds to `mov ecx, 0x9b90d8`; the image's closing `jmp`
+//   into Strings::shutdown comes free from the call being the last statement
+//   of a void function, and the discarded int result costs nothing.
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl game_close(int mode) {
+    stop_timers();
+    labels_shutdown();
+    StringTable->shutdown();
 }

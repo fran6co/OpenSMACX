@@ -42,6 +42,7 @@ Purpose: Select the device (vtable slot 0), then open the wrapped device at
          failure to open, restart (vtable slot 4) and clear the wrapped
          device pointer before reporting the failure.
 // ORIGINAL: 0x004C57A0 ?init@Midi_Device@@QAEHPAXK@Z 0x004C57A0-0x004C57E4 BYTE_EXACT
+// symbol    ?init@Midi_Device@@UAEHPAXK@Z
 // size      68 bytes
 // prototype int (__thiscall ?init@Midi_Device@@QAEHPAXK@Z)(Midi_Device* this, void*, unsigned long)
 // callers   1   call targets   0
@@ -76,6 +77,7 @@ Purpose: Select the device (vtable slot 0), then open the wrapped device at
          unlike Midi_Device::init above, the wrapped device pointer is left
          alone.
 // ORIGINAL: 0x004C5A10 ?init@Wave_In_Device@@QAEHPAXK@Z 0x004C5A10-0x004C5A4D BYTE_EXACT
+// symbol    ?init@Wave_In_Device@@UAEHPAXK@Z
 // size      61 bytes
 // prototype int (__thiscall ?init@Wave_In_Device@@QAEHPAXK@Z)(Wave_In_Device* this, void*, unsigned long)
 // callers   1   call targets   0
@@ -201,6 +203,7 @@ void Wave_In_Device::restart() {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
 // ORIGINAL: 0x004C5840 ?select@Midi_Device@@QAEHI@Z 0x004C5840-0x004C5845 BYTE_EXACT
+// symbol    ?select@Midi_Device@@UAEHI@Z
 // size      5 bytes
 // prototype int (__thiscall ?select@Midi_Device@@QAEHI@Z)(Midi_Device* this, unsigned int)
 // callers   0   call targets   0
@@ -283,6 +286,7 @@ void Midi_Device::set_rate(unsigned int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
 // ORIGINAL: 0x004C5AD0 ?select@Wave_In_Device@@QAEHI@Z 0x004C5AD0-0x004C5AD5 BYTE_EXACT
+// symbol    ?select@Wave_In_Device@@UAEHI@Z
 // size      5 bytes
 // prototype int (__thiscall ?select@Wave_In_Device@@QAEHI@Z)(Wave_In_Device* this, unsigned int)
 // callers   0   call targets   0
@@ -333,6 +337,7 @@ void Wave_In_Device::set_rate(unsigned int) {
 /*
 Purpose: Report no device description; the legacy implementation returns 0.
 // ORIGINAL: 0x004C5850 ?get_description@Midi_Device@@QAEHIPADI@Z 0x004C5850-0x004C5855 BYTE_EXACT
+// symbol    ?get_description@Midi_Device@@UAEHIPADI@Z
 // size      5 bytes
 // prototype int (__thiscall ?get_description@Midi_Device@@QAEHIPADI@Z)(Midi_Device* this, unsigned int, int8*, unsigned int)
 // callers   0   call targets   0
@@ -350,6 +355,7 @@ int Midi_Device::get_description(unsigned int, char *, unsigned int) {
 /*
 Purpose: Report no device description; the legacy implementation returns 0.
 // ORIGINAL: 0x004C5AE0 ?get_description@Wave_In_Device@@QAEHIPADI@Z 0x004C5AE0-0x004C5AE5 BYTE_EXACT
+// symbol    ?get_description@Wave_In_Device@@UAEHIPADI@Z
 // size      5 bytes
 // prototype int (__thiscall ?get_description@Wave_In_Device@@QAEHIPADI@Z)(Wave_In_Device* this, unsigned int, int8*, unsigned int)
 // callers   0   call targets   0
@@ -367,6 +373,7 @@ int Wave_In_Device::get_description(unsigned int, char *, unsigned int) {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
 // ORIGINAL: 0x004C5830 ?get_ndevices@Midi_Device@@QAEHXZ 0x004C5830-0x004C5833 BYTE_EXACT
+// symbol    ?get_ndevices@Midi_Device@@UAEHXZ
 // size      3 bytes
 // prototype int (__thiscall ?get_ndevices@Midi_Device@@QAEHXZ)(Midi_Device* this)
 // callers   0   call targets   0
@@ -431,6 +438,7 @@ int Midi_Device::get_rate() {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
 // ORIGINAL: 0x004C5AC0 ?get_ndevices@Wave_In_Device@@QAEHXZ 0x004C5AC0-0x004C5AC3 BYTE_EXACT
+// symbol    ?get_ndevices@Wave_In_Device@@UAEHXZ
 // size      3 bytes
 // prototype int (__thiscall ?get_ndevices@Wave_In_Device@@QAEHXZ)(Wave_In_Device* this)
 // callers   0   call targets   0

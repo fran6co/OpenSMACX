@@ -258,6 +258,11 @@ extern func_set_date MainInterfaceOriginalSetDate;
 extern MainInterface MainInterfaceGlobal;
 extern char MapWinMainCaption[256];
 
+// 0x004710E0, still an original body (src/unrecovered/004710e0.cpp); the
+// definition in pending_bodies.cpp forwards to it. desktop_close tears the
+// map-window system down between the window closes and the final hide.
+void __cdecl mapwin_system_shutdown();
+
 
 // The heap pointer at 0x4 is freed through the game's CRT boundary, the same
 // address buffer.cpp frees through. Rebindable so tests observe it.

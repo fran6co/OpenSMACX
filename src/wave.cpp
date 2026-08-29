@@ -134,7 +134,7 @@ Purpose: Release the loaded wave. The wrapped device, if there is one, is asked
          dword at 0x54 suppresses it, the object's own vtable slot 0x80 is run,
          and the loaded bit (bit 0) of the flag dword at 0x40 is cleared.
 // ORIGINAL: 0x004C6EA0 ?unload@Wave@@QAEXXZ 0x004C6EA0-0x004C6ED9 SEMANTIC
-// symbol    ?unload@Wave@@QAEHXZ
+// symbol    ?unload@Wave@@UAEHXZ
 // size      57 bytes
 // prototype void (__thiscall ?unload@Wave@@QAEXXZ)(Wave* this)
 // callers   7   call targets   0
@@ -431,6 +431,7 @@ int Wave::get_current_marker() {
 Purpose: Ask the wrapped device for the game window handle through its vtable
          slot 0x3C.
 // ORIGINAL: 0x004C7010 ?get_game_hwnd@Wave@@QAEHXZ 0x004C7010-0x004C701F BYTE_EXACT
+// symbol    ?get_game_hwnd@Wave@@UAEHXZ
 // size      15 bytes
 // prototype int (__thiscall ?get_game_hwnd@Wave@@QAEHXZ)(Wave* this)
 // callers   0   call targets   0
@@ -477,6 +478,7 @@ Purpose: Unknown. The original chases the pointer chain that starts at the
          it runs out, reads nothing else, and always answers 1. The argument
          is ignored.
 // ORIGINAL: 0x004C7080 ?UNK1@Wave@@QAEHH@Z 0x004C7080-0x004C7096 BYTE_EXACT
+// symbol    ?UNK1@Wave@@UAEHH@Z
 // size      22 bytes
 // prototype int (__thiscall ?UNK1@Wave@@QAEHH@Z)(Wave* this, int)
 // callers   0   call targets   0
@@ -867,6 +869,7 @@ Purpose: Start the wave. While it holds a device group slot, a disabled group
          timeGetTime import, runs its own vtable slot 0x80, and forgets the
          device.
 // ORIGINAL: 0x004C6920 ?play@Wave@@QAEHXZ 0x004C6920-0x004C69AD SEMANTIC
+// symbol    ?play@Wave@@UAEHXZ
 // TRIED: 52/54 MNEMONIC_ONLY; sole divergence is the vtable-pointer
 //   register (edx vs eax) at the FIRST `vtable_slot<device_start_fn>(device_,
 //   0x1C)(device_)` call site only - the second, identical call already
@@ -1572,6 +1575,7 @@ Wave::~Wave() {
 /*
 Purpose: Tear down an Effect, which is a Wave and nothing more.
 // ORIGINAL: 0x004482C0 ??1Effect@@QAE@XZ 0x004482C0-0x004482C5 BYTE_EXACT
+// symbol    ??1Effect@@UAE@XZ
 // CORRECTED from 0x004482C0-0x004482C4, which the artifact carried: the body
 //   is one `E9 rel32`, five bytes, and a four-byte span cannot decode a single
 //   instruction - `measure` read "0 of 0 instructions, 4 discounted as

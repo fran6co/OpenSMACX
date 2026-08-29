@@ -1398,10 +1398,8 @@ void __cdecl load_faction_art(int player_id) {
 // ?control_game@@YAXXZ at 0x0052AA30 - homed into game.cpp on 2026-08-29,
 // so the forwarder that stood here is gone. ITS CALLEES moved in here with
 // it: everything below that control_game calls is still an original body.
-// desktop_close, close_opening and game_close carry proved bodies in
-// src/recovered/units/ (0058eff0, 00589b20, 0058f430) that the build does
-// not compile - those forwarders stay until the artifacts are promoted and
-// their callers repointed.
+// desktop_close, close_opening and game_close were promoted the same day
+// (bodies now in game.cpp); amovie_project went to alphamovie.cpp.
 
 // ?system_init@@YAHXZ at 0x0058F040
 int __cdecl system_init() {
@@ -1457,23 +1455,9 @@ void __cdecl net_control_turn() {
     PENDING_BODY(0x0052A2E0, pending)();
 }
 
-// ?desktop_close@@YAXXZ at 0x0058EFF0
-void __cdecl desktop_close() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x0058EFF0, pending)();
-}
-
-// ?close_opening@@YAXXZ at 0x00589B20
-void __cdecl close_opening() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x00589B20, pending)();
-}
-
-// ?game_close@@YAXH@Z at 0x0058F430
-void __cdecl game_close(int mode) {
-    typedef void(__cdecl *pending)(int);
-    PENDING_BODY(0x0058F430, pending)(mode);
-}
+// ?desktop_close@@YAXXZ at 0x0058EFF0, ?close_opening@@YAXXZ at 0x00589B20
+// and ?game_close@@YAXH@Z at 0x0058F430 - homed into game.cpp on 2026-08-29,
+// so the forwarders that stood here are gone.
 
 // ?system_close@@YAXXZ at 0x0058F250
 void __cdecl system_close() {
@@ -1481,10 +1465,37 @@ void __cdecl system_close() {
     PENDING_BODY(0x0058F250, pending)();
 }
 
-// ?amovie_project@@YAXPAD@Z at 0x00403BE0
-void __cdecl amovie_project(char *movie) {
-    typedef void(__cdecl *pending)(char *);
-    PENDING_BODY(0x00403BE0, pending)(movie);
+// ?amovie_project@@YAXPAD@Z at 0x00403BE0 - homed into alphamovie.cpp on
+// 2026-08-29, so the forwarder that stood here is gone.
+
+// ?mapwin_system_shutdown@@YAXXZ at 0x004710E0 - body in src/unrecovered/004710e0.cpp.
+// desktop_close tears the map-window system down between the window closes
+// and the final hide.
+void __cdecl mapwin_system_shutdown() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x004710E0, pending)();
+}
+
+// ?close@DesignWin@@QAEXXZ at 0x0043C1A0 - body in src/unrecovered/0043c1a0.cpp.
+// desktop_close closes the process-wide design window through this member.
+void DesignWin::close() {
+    typedef void(__fastcall *pending)(DesignWin *, void *);
+    PENDING_BODY(0x0043C1A0, pending)(this, nullptr);
+}
+
+// ?exec@AlphaMovie@@QAEHPAD@Z at 0x00404070 - body in src/unrecovered/00404070.cpp.
+// amovie_project plays the .avi candidates through it.
+int AlphaMovie::exec(char *movie_name) {
+    typedef int(__fastcall *pending)(AlphaMovie *, void *, char *);
+    return PENDING_BODY(0x00404070, pending)(this, nullptr, movie_name);
+}
+
+// ?exec@UV2Player@@QAEHPADHHH@Z at 0x004BEA50 - body in src/unrecovered/004bea50.cpp.
+// amovie_project plays the .wve candidates through it.
+int UV2Player::exec(char *movie_file, int width, int height, int flags) {
+    typedef int(__fastcall *pending)(UV2Player *, void *, char *, int, int, int);
+    return PENDING_BODY(0x004BEA50, pending)(this, nullptr, movie_file, width,
+                                             height, flags);
 }
 
 // ?check_for_lobby@Net@@QAEHPADPAU_GUID@@HH@Z at 0x0062D9E0

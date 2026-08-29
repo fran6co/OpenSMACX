@@ -32,6 +32,7 @@
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 11.
 // ORIGINAL: 0x004C6430 ?UNK1@Sound@@QAEHH@Z 0x004C6430-0x004C6438 BYTE_EXACT
+// symbol    ?UNK1@Sound@@UAEHH@Z
 // size      8 bytes
 // prototype int (__thiscall ?UNK1@Sound@@QAEHH@Z)(Sound* this, int)
 // callers   0   call targets   0
@@ -50,6 +51,7 @@ Purpose: Fade the sound out. The work is done by two of the object's own
          virtual methods: slot 0 is asked to fade with the given argument, and
          only when it declines (returns zero) is slot 0x28 run as the fallback.
 // ORIGINAL: 0x004C6600 ?fade@Sound@@QAEXK@Z 0x004C6600-0x004C6620 BYTE_EXACT
+// symbol    ?fade@Sound@@UAEXK@Z
 // size      32 bytes
 // prototype void (__thiscall ?fade@Sound@@QAEXK@Z)(Sound* this, unsigned int)
 // callers   11   call targets   0
@@ -103,6 +105,7 @@ __forceinline int query_sound_device(Sound *self, int vtable_offset) {
 /*
 Purpose: Ask the wrapped device whether it is playing, through vtable slot 0x5C.
 // ORIGINAL: 0x004C64C0 ?is_playing@Sound@@QAEHXZ 0x004C64C0-0x004C64CF BYTE_EXACT
+// symbol    ?is_playing@Sound@@UAEHXZ
 // size      15 bytes
 // prototype int (__thiscall ?is_playing@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0
@@ -119,6 +122,7 @@ int Sound::is_playing() {
 /*
 Purpose: Ask the wrapped device whether it is looping, through vtable slot 0x58.
 // ORIGINAL: 0x004C6690 ?is_looping@Sound@@QAEHXZ 0x004C6690-0x004C669F BYTE_EXACT
+// symbol    ?is_looping@Sound@@UAEHXZ
 // size      15 bytes
 // prototype int (__thiscall ?is_looping@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0
@@ -170,6 +174,7 @@ int forward_sound_device(Sound *self, int vtable_offset, int a1,
 /*
 Purpose: Ask the wrapped device to play, through vtable slot 0x1C.
 // ORIGINAL: 0x004C6480 ?play@Sound@@QAEHXZ 0x004C6480-0x004C6492 BYTE_EXACT
+// symbol    ?play@Sound@@UAEHXZ
 // size      18 bytes
 // prototype int (__thiscall ?play@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0
@@ -215,6 +220,7 @@ int Sound::play(unsigned int effect) {
 /*
 Purpose: Ask the wrapped device to stop, through vtable slot 0x20.
 // ORIGINAL: 0x004C64D0 ?stop@Sound@@QAEHXZ 0x004C64D0-0x004C64E2 BYTE_EXACT
+// symbol    ?stop@Sound@@UAEHXZ
 // size      18 bytes
 // prototype int (__thiscall ?stop@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0
@@ -236,6 +242,7 @@ int Sound::stop() {
 /*
 Purpose: Ask the wrapped device to release, through vtable slot 0x38.
 // ORIGINAL: 0x004C64F0 ?release@Sound@@QAEHXZ 0x004C64F0-0x004C6502 BYTE_EXACT
+// symbol    ?release@Sound@@UAEHXZ
 // size      18 bytes
 // prototype int (__thiscall ?release@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0
@@ -309,6 +316,7 @@ namespace {
 Purpose: Ask the wrapped device to fade, through vtable slot 0x28. Refuses
          unless the gate field at 0x38 is set and a device is wrapped.
 // ORIGINAL: 0x004C65E0 ?fade@Sound@@QAEHXZ 0x004C65E0-0x004C65F9 BYTE_EXACT
+// symbol    ?fade@Sound@@UAEHXZ
 // size      25 bytes
 // prototype int (__thiscall ?fade@Sound@@QAEHXZ)(Sound* this)
 // callers   1   call targets   0
@@ -333,6 +341,7 @@ int Sound::fade() {
 Purpose: Ask the wrapped device to fade in, through vtable slot 0x30. Carries
          the same pair of guards fade does.
 // ORIGINAL: 0x004C6620 ?fade_in@Sound@@QAEHXZ 0x004C6620-0x004C6639 BYTE_EXACT
+// symbol    ?fade_in@Sound@@UAEHXZ
 // size      25 bytes
 // prototype int (__thiscall ?fade_in@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0
@@ -357,6 +366,7 @@ int Sound::fade_in() {
 Purpose: Hand a three-argument ramp to the wrapped device, through vtable slot
          0x34. Does nothing when no device is wrapped.
 // ORIGINAL: 0x004C6640 ?ramp@Sound@@QAEXHHI@Z 0x004C6640-0x004C665F BYTE_EXACT
+// symbol    ?ramp@Sound@@UAEXHHI@Z
 // size      31 bytes
 // prototype void (__thiscall ?ramp@Sound@@QAEXHHI@Z)(Sound* this, int, int, unsigned int)
 // callers   0   call targets   0
@@ -388,6 +398,7 @@ Purpose: Record the sound's type. Types 1..7 - except 3, which the original's
          4 -> 4, 5 -> 0x28, 6 -> 0x100, 7 -> 0x80. Anything else stores
          type 0 and leaves the flags alone.
 // ORIGINAL: 0x004C61E0 ?set_type@Sound@@QAEXI@Z 0x004C61E0-0x004C6260 BYTE_EXACT
+// symbol    ?set_type@Sound@@UAEXI@Z
 // size      128 bytes
 // prototype void (__thiscall ?set_type@Sound@@QAEXI@Z)(Sound* this, SOUNDTYPE)
 // callers   5   call targets   0
@@ -454,6 +465,7 @@ Purpose: Load the sound from a filename. The name resolves through the
          the game heap - new copy first, old one freed after - and remembered
          at 0x4C.
 // ORIGINAL: 0x004C6280 ?load@Sound@@QAEHPBD@Z 0x004C6280-0x004C6361 SEMANTIC
+// symbol    ?load@Sound@@UAEHPBD@Z
 // LEVER: the two vtable dispatches (slots 0x60 and 0x10) spelled with `vtable_method<Fn>(object, offset)` instead of `original_slot<Fn>(vtable + offset)` - single indirect call, matching the image's `call dword ptr [reg+N]` where the slot-read idiom cost an extra `mov`. Took this from 44/102 to 100/102.
 // TRIED: the one remaining byte is the slot-0x60 dispatch alone - image loads the vtable into EDX (`mov edx,[ecx]; call [edx+0x60]`), this tree into EAX. Naming the method pointer in its own local first made it much WORSE (47/102) rather than fixing the register; reverted. Not chased further.
 // size      225 bytes
@@ -548,6 +560,7 @@ Purpose: Set the fade time. Zero is refused with 0xA; otherwise the value is
          remembered at 0x38 and the wrapped device hears it through its
          vtable slot 0.
 // ORIGINAL: 0x004C6580 ?set_fade@Sound@@QAEHK@Z 0x004C6580-0x004C65A8 BYTE_EXACT
+// symbol    ?set_fade@Sound@@UAEHK@Z
 // size      40 bytes
 // prototype int (__thiscall ?set_fade@Sound@@QAEHK@Z)(Sound* this, unsigned int)
 // callers   0   call targets   0
@@ -577,6 +590,7 @@ Purpose: Set the fade-in time. Zero is refused with 0xA; otherwise the value
          shares the 0x38 field with set_fade and the wrapped device hears it
          through its vtable slot 0x54.
 // ORIGINAL: 0x004C65B0 ?set_fade_in@Sound@@QAEHI@Z 0x004C65B0-0x004C65D9 BYTE_EXACT
+// symbol    ?set_fade_in@Sound@@UAEHI@Z
 // size      41 bytes
 // prototype int (__thiscall ?set_fade_in@Sound@@QAEHI@Z)(Sound* this, unsigned int)
 // callers   0   call targets   0
@@ -629,6 +643,7 @@ Purpose: Set the pan, clamped to the range the engine accepts (-0x40 to
          0x3F), stored at 0x08 and handed to the wrapped device through its
          vtable slot 0x44.
 // ORIGINAL: 0x004C66B0 ?set_pan@Sound@@QAEXH@Z 0x004C66B0-0x004C66E0 BYTE_EXACT
+// symbol    ?set_pan@Sound@@UAEXH@Z
 // size      48 bytes
 // prototype void (__thiscall ?set_pan@Sound@@QAEXH@Z)(Sound* this, int)
 // callers   2   call targets   0
@@ -808,6 +823,7 @@ Purpose: Leave the sound chain: nothing at all for an unchained sound;
          maintained at the ends, both links cleared, and the chained bit
          dropped.
 // ORIGINAL: 0x004C63D0 ?detach@Sound@@QAEHXZ 0x004C63D0-0x004C642C BYTE_EXACT
+// symbol    ?detach@Sound@@UAEHXZ
 // size      92 bytes
 // prototype int (__thiscall ?detach@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0

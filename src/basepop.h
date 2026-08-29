@@ -517,3 +517,10 @@ int *const BasePopFalloutFlag = (int *)0x009B8CFC;
 // replace them.
 extern char *BasePopDefaultOkText;      // 0x009B8D80
 extern char *BasePopDefaultCancelText;  // 0x009B8D84
+
+// Defined in basepop.cpp (0x009B8DD0, "copied to +0x322c" of the popup
+// defaults). close_opening publishes the address of the Console's GraphicWin
+// virtual base here on the way out of the opening, which is why the slot
+// holds a window pointer at run time despite the popup-defaults name it
+// carried before that call was recovered.
+extern uint32_t BasePopDefaultField322C;  // 0x009B8DD0
