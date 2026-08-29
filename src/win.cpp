@@ -3060,7 +3060,7 @@ extern "C" int __cdecl DDInitRefreshScreenMetrics() {
 
 /*
 Purpose: Name the DirectDraw error and put it in front of the user.
-// ORIGINAL: 0x00635870 sub_635870 0x00635870-0x00635F0B
+// ORIGINAL: 0x00635870 sub_635870 0x00635870-0x00635F0B BYTE_EXACT
 // symbol    ?report_error@DDInit@@QAEHH@Z
 // size      1691 bytes
 // callers   2   call targets   3
@@ -3081,321 +3081,326 @@ Purpose: Name the DirectDraw error and put it in front of the user.
 // 99 agreeing with the SDK's DDRAW.H. So the case labels below are the
 // macros rather than the raw HRESULTs, and the strings are what shipped.
 //
-// TRIED: byte-exactness, and it is the lowering rather than the mapping.
 // A flat switch over all 99 cases reaches instruction #22 before diverging
 // (`push` against `mov`): MSVC re-groups this case set into different
 // sub-tables than the original's five, and which case maps to which string
 // is not in dispute - it is verified above.
+//
+// LEVER (2026-08-29): THE CASES CALL parse_says DIRECTLY, and VC6
+// tail-merges all 99 into the image's shared
+// `push 0; call parse_says; add esp,0x10` at 0x00635ed6 -
+// `case X: parse_says(0, "DDERR_X", -1, -1); break;` is BYTE_EXACT 469/469.
+// The previous shape (`message = "..."` per case, one
+// `if (message) parse_says(0, message, -1, -1);` after the switch) is the
+// 744-instruction lowering the flat-switch TRIED line describes: with the
+// call outside the switch, VC6 never sinks it into the cases, and each case
+// shrinks to `mov eax, OFFSET str; jmp`. The call belongs IN the case body.
 Return Value: 0 if the popup was dismissed, otherwise whatever the media
               check returns.
 Status: Complete
 */
 int DDInit::report_error(int hr) {
-    const char *message;
     switch (hr) {
     case DDERR_SURFACEALREADYATTACHED:
-        message = "DDERR_SURFACEALREADYATTACHED";
+        parse_says(0, "DDERR_SURFACEALREADYATTACHED", -1, -1);
         break;
     case DDERR_NOCOLORKEY:
-        message = "DDERR_NOCOLORKEY";
+        parse_says(0, "DDERR_NOCOLORKEY", -1, -1);
         break;
     case DDERR_INVALIDCAPS:
-        message = "DDERR_INVALIDCAPS";
+        parse_says(0, "DDERR_INVALIDCAPS", -1, -1);
         break;
     case DDERR_CANNOTATTACHSURFACE:
-        message = "DDERR_CANNOTATTACHSURFACE";
+        parse_says(0, "DDERR_CANNOTATTACHSURFACE", -1, -1);
         break;
     case DDERR_OUTOFMEMORY:
-        message = "DDERR_OUTOFMEMORY";
+        parse_says(0, "DDERR_OUTOFMEMORY", -1, -1);
         break;
     case DDERR_UNSUPPORTED:
-        message = "DDERR_UNSUPPORTED";
+        parse_says(0, "DDERR_UNSUPPORTED", -1, -1);
         break;
     case DDERR_GENERIC:
-        message = "DDERR_GENERIC";
+        parse_says(0, "DDERR_GENERIC", -1, -1);
         break;
     case DDERR_NOTINITIALIZED:
-        message = "DDERR_NOTINITIALIZED";
+        parse_says(0, "DDERR_NOTINITIALIZED", -1, -1);
         break;
     case DDERR_INVALIDPARAMS:
-        message = "DDERR_INVALIDPARAMS";
+        parse_says(0, "DDERR_INVALIDPARAMS", -1, -1);
         break;
     case DDERR_ALREADYINITIALIZED:
-        message = "DDERR_ALREADYINITIALIZED";
+        parse_says(0, "DDERR_ALREADYINITIALIZED", -1, -1);
         break;
     case DDERR_CANNOTDETACHSURFACE:
-        message = "DDERR_CANNOTDETACHSURFACE";
+        parse_says(0, "DDERR_CANNOTDETACHSURFACE", -1, -1);
         break;
     case DDERR_CURRENTLYNOTAVAIL:
-        message = "DDERR_CURRENTLYNOTAVAIL";
+        parse_says(0, "DDERR_CURRENTLYNOTAVAIL", -1, -1);
         break;
     case DDERR_EXCEPTION:
-        message = "DDERR_EXCEPTION";
+        parse_says(0, "DDERR_EXCEPTION", -1, -1);
         break;
     case DDERR_HEIGHTALIGN:
-        message = "DDERR_HEIGHTALIGN";
+        parse_says(0, "DDERR_HEIGHTALIGN", -1, -1);
         break;
     case DDERR_INCOMPATIBLEPRIMARY:
-        message = "DDERR_INCOMPATIBLEPRIMARY";
+        parse_says(0, "DDERR_INCOMPATIBLEPRIMARY", -1, -1);
         break;
     case DDERR_INVALIDCLIPLIST:
-        message = "DDERR_INVALIDCLIPLIST";
+        parse_says(0, "DDERR_INVALIDCLIPLIST", -1, -1);
         break;
     case DDERR_INVALIDMODE:
-        message = "DDERR_INVALIDMODE";
+        parse_says(0, "DDERR_INVALIDMODE", -1, -1);
         break;
     case DDERR_INVALIDOBJECT:
-        message = "DDERR_INVALIDOBJECT";
+        parse_says(0, "DDERR_INVALIDOBJECT", -1, -1);
         break;
     case DDERR_INVALIDPIXELFORMAT:
-        message = "DDERR_INVALIDPIXELFORMAT";
+        parse_says(0, "DDERR_INVALIDPIXELFORMAT", -1, -1);
         break;
     case DDERR_INVALIDRECT:
-        message = "DDERR_INVALIDRECT";
+        parse_says(0, "DDERR_INVALIDRECT", -1, -1);
         break;
     case DDERR_LOCKEDSURFACES:
-        message = "DDERR_LOCKEDSURFACES";
+        parse_says(0, "DDERR_LOCKEDSURFACES", -1, -1);
         break;
     case DDERR_NO3D:
-        message = "DDERR_NO3D";
+        parse_says(0, "DDERR_NO3D", -1, -1);
         break;
     case DDERR_NOALPHAHW:
-        message = "DDERR_NOALPHAHW";
+        parse_says(0, "DDERR_NOALPHAHW", -1, -1);
         break;
     case DDERR_NOCLIPLIST:
-        message = "DDERR_NOCLIPLIST";
+        parse_says(0, "DDERR_NOCLIPLIST", -1, -1);
         break;
     case DDERR_NOCOLORCONVHW:
-        message = "DDERR_NOCOLORCONVHW";
+        parse_says(0, "DDERR_NOCOLORCONVHW", -1, -1);
         break;
     case DDERR_NOCOOPERATIVELEVELSET:
-        message = "DDERR_NOCOOPERATIVELEVELSET";
+        parse_says(0, "DDERR_NOCOOPERATIVELEVELSET", -1, -1);
         break;
     case DDERR_NOCOLORKEYHW:
-        message = "DDERR_NOCOLORKEYHW";
+        parse_says(0, "DDERR_NOCOLORKEYHW", -1, -1);
         break;
     case DDERR_NODIRECTDRAWSUPPORT:
-        message = "DDERR_NODIRECTDRAWSUPPORT";
+        parse_says(0, "DDERR_NODIRECTDRAWSUPPORT", -1, -1);
         break;
     case DDERR_NOEXCLUSIVEMODE:
-        message = "DDERR_NOEXCLUSIVEMODE";
+        parse_says(0, "DDERR_NOEXCLUSIVEMODE", -1, -1);
         break;
     case DDERR_NOFLIPHW:
-        message = "DDERR_NOFLIPHW";
+        parse_says(0, "DDERR_NOFLIPHW", -1, -1);
         break;
     case DDERR_NOGDI:
-        message = "DDERR_NOGDI";
+        parse_says(0, "DDERR_NOGDI", -1, -1);
         break;
     case DDERR_NOMIRRORHW:
-        message = "DDERR_NOMIRRORHW";
+        parse_says(0, "DDERR_NOMIRRORHW", -1, -1);
         break;
     case DDERR_NOTFOUND:
-        message = "DDERR_NOTFOUND";
+        parse_says(0, "DDERR_NOTFOUND", -1, -1);
         break;
     case DDERR_NOOVERLAYHW:
-        message = "DDERR_NOOVERLAYHW";
+        parse_says(0, "DDERR_NOOVERLAYHW", -1, -1);
         break;
     case DDERR_NORASTEROPHW:
-        message = "DDERR_NORASTEROPHW";
+        parse_says(0, "DDERR_NORASTEROPHW", -1, -1);
         break;
     case DDERR_NOROTATIONHW:
-        message = "DDERR_NOROTATIONHW";
+        parse_says(0, "DDERR_NOROTATIONHW", -1, -1);
         break;
     case DDERR_NOSTRETCHHW:
-        message = "DDERR_NOSTRETCHHW";
+        parse_says(0, "DDERR_NOSTRETCHHW", -1, -1);
         break;
     case DDERR_NOT4BITCOLOR:
-        message = "DDERR_NOT4BITCOLOR";
+        parse_says(0, "DDERR_NOT4BITCOLOR", -1, -1);
         break;
     case DDERR_NOT4BITCOLORINDEX:
-        message = "DDERR_NOT4BITCOLORINDEX";
+        parse_says(0, "DDERR_NOT4BITCOLORINDEX", -1, -1);
         break;
     case DDERR_NOT8BITCOLOR:
-        message = "DDERR_NOT8BITCOLOR";
+        parse_says(0, "DDERR_NOT8BITCOLOR", -1, -1);
         break;
     case DDERR_NOTEXTUREHW:
-        message = "DDERR_NOTEXTUREHW";
+        parse_says(0, "DDERR_NOTEXTUREHW", -1, -1);
         break;
     case DDERR_NOVSYNCHW:
-        message = "DDERR_NOVSYNCHW";
+        parse_says(0, "DDERR_NOVSYNCHW", -1, -1);
         break;
     case DDERR_NOZBUFFERHW:
-        message = "DDERR_NOZBUFFERHW";
+        parse_says(0, "DDERR_NOZBUFFERHW", -1, -1);
         break;
     case DDERR_NOZOVERLAYHW:
-        message = "DDERR_NOZOVERLAYHW";
+        parse_says(0, "DDERR_NOZOVERLAYHW", -1, -1);
         break;
     case DDERR_OUTOFCAPS:
-        message = "DDERR_OUTOFCAPS";
+        parse_says(0, "DDERR_OUTOFCAPS", -1, -1);
         break;
     case DDERR_OUTOFVIDEOMEMORY:
-        message = "DDERR_OUTOFVIDEOMEMORY";
+        parse_says(0, "DDERR_OUTOFVIDEOMEMORY", -1, -1);
         break;
     case DDERR_OVERLAYCANTCLIP:
-        message = "DDERR_OVERLAYCANTCLIP";
+        parse_says(0, "DDERR_OVERLAYCANTCLIP", -1, -1);
         break;
     case DDERR_OVERLAYCOLORKEYONLYONEACTIVE:
-        message = "DDERR_OVERLAYCOLORKEYONLYONEACTIVE";
+        parse_says(0, "DDERR_OVERLAYCOLORKEYONLYONEACTIVE", -1, -1);
         break;
     case DDERR_PALETTEBUSY:
-        message = "DDERR_PALETTEBUSY";
+        parse_says(0, "DDERR_PALETTEBUSY", -1, -1);
         break;
     case DDERR_COLORKEYNOTSET:
-        message = "DDERR_COLORKEYNOTSET";
+        parse_says(0, "DDERR_COLORKEYNOTSET", -1, -1);
         break;
     case DDERR_HWNDALREADYSET:
-        message = "DDERR_HWNDALREADYSET";
+        parse_says(0, "DDERR_HWNDALREADYSET", -1, -1);
         break;
     case DDERR_SURFACEALREADYDEPENDENT:
-        message = "DDERR_SURFACEALREADYDEPENDENT";
+        parse_says(0, "DDERR_SURFACEALREADYDEPENDENT", -1, -1);
         break;
     case DDERR_SURFACEBUSY:
-        message = "DDERR_SURFACEBUSY";
+        parse_says(0, "DDERR_SURFACEBUSY", -1, -1);
         break;
     case DDERR_CANTLOCKSURFACE:
-        message = "DDERR_CANTLOCKSURFACE";
+        parse_says(0, "DDERR_CANTLOCKSURFACE", -1, -1);
         break;
     case DDERR_SURFACEISOBSCURED:
-        message = "DDERR_SURFACEISOBSCURED";
+        parse_says(0, "DDERR_SURFACEISOBSCURED", -1, -1);
         break;
     case DDERR_SURFACELOST:
-        message = "DDERR_SURFACELOST";
+        parse_says(0, "DDERR_SURFACELOST", -1, -1);
         break;
     case DDERR_SURFACENOTATTACHED:
-        message = "DDERR_SURFACENOTATTACHED";
+        parse_says(0, "DDERR_SURFACENOTATTACHED", -1, -1);
         break;
     case DDERR_TOOBIGHEIGHT:
-        message = "DDERR_TOOBIGHEIGHT";
+        parse_says(0, "DDERR_TOOBIGHEIGHT", -1, -1);
         break;
     case DDERR_TOOBIGSIZE:
-        message = "DDERR_TOOBIGSIZE";
+        parse_says(0, "DDERR_TOOBIGSIZE", -1, -1);
         break;
     case DDERR_TOOBIGWIDTH:
-        message = "DDERR_TOOBIGWIDTH";
+        parse_says(0, "DDERR_TOOBIGWIDTH", -1, -1);
         break;
     case DDERR_UNSUPPORTEDFORMAT:
-        message = "DDERR_UNSUPPORTEDFORMAT";
+        parse_says(0, "DDERR_UNSUPPORTEDFORMAT", -1, -1);
         break;
     case DDERR_UNSUPPORTEDMASK:
-        message = "DDERR_UNSUPPORTEDMASK";
+        parse_says(0, "DDERR_UNSUPPORTEDMASK", -1, -1);
         break;
     case DDERR_VERTICALBLANKINPROGRESS:
-        message = "DDERR_VERTICALBLANKINPROGRESS";
+        parse_says(0, "DDERR_VERTICALBLANKINPROGRESS", -1, -1);
         break;
     case DDERR_WASSTILLDRAWING:
-        message = "DDERR_WASSTILLDRAWING";
+        parse_says(0, "DDERR_WASSTILLDRAWING", -1, -1);
         break;
     case DDERR_XALIGN:
-        message = "DDERR_XALIGN";
+        parse_says(0, "DDERR_XALIGN", -1, -1);
         break;
     case DDERR_INVALIDDIRECTDRAWGUID:
-        message = "DDERR_INVALIDDIRECTDRAWGUID";
+        parse_says(0, "DDERR_INVALIDDIRECTDRAWGUID", -1, -1);
         break;
     case DDERR_DIRECTDRAWALREADYCREATED:
-        message = "DDERR_DIRECTDRAWALREADYCREATED";
+        parse_says(0, "DDERR_DIRECTDRAWALREADYCREATED", -1, -1);
         break;
     case DDERR_NODIRECTDRAWHW:
-        message = "DDERR_NODIRECTDRAWHW";
+        parse_says(0, "DDERR_NODIRECTDRAWHW", -1, -1);
         break;
     case DDERR_PRIMARYSURFACEALREADYEXISTS:
-        message = "DDERR_PRIMARYSURFACEALREADYEXISTS";
+        parse_says(0, "DDERR_PRIMARYSURFACEALREADYEXISTS", -1, -1);
         break;
     case DDERR_NOEMULATION:
-        message = "DDERR_NOEMULATION";
+        parse_says(0, "DDERR_NOEMULATION", -1, -1);
         break;
     case DDERR_REGIONTOOSMALL:
-        message = "DDERR_REGIONTOOSMALL";
+        parse_says(0, "DDERR_REGIONTOOSMALL", -1, -1);
         break;
     case DDERR_CLIPPERISUSINGHWND:
-        message = "DDERR_CLIPPERISUSINGHWND";
+        parse_says(0, "DDERR_CLIPPERISUSINGHWND", -1, -1);
         break;
     case DDERR_NOCLIPPERATTACHED:
-        message = "DDERR_NOCLIPPERATTACHED";
+        parse_says(0, "DDERR_NOCLIPPERATTACHED", -1, -1);
         break;
     case DDERR_NOHWND:
-        message = "DDERR_NOHWND";
+        parse_says(0, "DDERR_NOHWND", -1, -1);
         break;
     case DDERR_HWNDSUBCLASSED:
-        message = "DDERR_HWNDSUBCLASSED";
+        parse_says(0, "DDERR_HWNDSUBCLASSED", -1, -1);
         break;
     case DDERR_NOPALETTEATTACHED:
-        message = "DDERR_NOPALETTEATTACHED";
+        parse_says(0, "DDERR_NOPALETTEATTACHED", -1, -1);
         break;
     case DDERR_NOPALETTEHW:
-        message = "DDERR_NOPALETTEHW";
+        parse_says(0, "DDERR_NOPALETTEHW", -1, -1);
         break;
     case DDERR_BLTFASTCANTCLIP:
-        message = "DDERR_BLTFASTCANTCLIP";
+        parse_says(0, "DDERR_BLTFASTCANTCLIP", -1, -1);
         break;
     case DDERR_NOBLTHW:
-        message = "DDERR_NOBLTHW";
+        parse_says(0, "DDERR_NOBLTHW", -1, -1);
         break;
     case DDERR_NODDROPSHW:
-        message = "DDERR_NODDROPSHW";
+        parse_says(0, "DDERR_NODDROPSHW", -1, -1);
         break;
     case DDERR_OVERLAYNOTVISIBLE:
-        message = "DDERR_OVERLAYNOTVISIBLE";
+        parse_says(0, "DDERR_OVERLAYNOTVISIBLE", -1, -1);
         break;
     case DDERR_NOOVERLAYDEST:
-        message = "DDERR_NOOVERLAYDEST";
+        parse_says(0, "DDERR_NOOVERLAYDEST", -1, -1);
         break;
     case DDERR_INVALIDPOSITION:
-        message = "DDERR_INVALIDPOSITION";
+        parse_says(0, "DDERR_INVALIDPOSITION", -1, -1);
         break;
     case DDERR_NOTAOVERLAYSURFACE:
-        message = "DDERR_NOTAOVERLAYSURFACE";
+        parse_says(0, "DDERR_NOTAOVERLAYSURFACE", -1, -1);
         break;
     case DDERR_EXCLUSIVEMODEALREADYSET:
-        message = "DDERR_EXCLUSIVEMODEALREADYSET";
+        parse_says(0, "DDERR_EXCLUSIVEMODEALREADYSET", -1, -1);
         break;
     case DDERR_NOTFLIPPABLE:
-        message = "DDERR_NOTFLIPPABLE";
+        parse_says(0, "DDERR_NOTFLIPPABLE", -1, -1);
         break;
     case DDERR_CANTDUPLICATE:
-        message = "DDERR_CANTDUPLICATE";
+        parse_says(0, "DDERR_CANTDUPLICATE", -1, -1);
         break;
     case DDERR_NOTLOCKED:
-        message = "DDERR_NOTLOCKED";
+        parse_says(0, "DDERR_NOTLOCKED", -1, -1);
         break;
     case DDERR_CANTCREATEDC:
-        message = "DDERR_CANTCREATEDC";
+        parse_says(0, "DDERR_CANTCREATEDC", -1, -1);
         break;
     case DDERR_NODC:
-        message = "DDERR_NODC";
+        parse_says(0, "DDERR_NODC", -1, -1);
         break;
     case DDERR_WRONGMODE:
-        message = "DDERR_WRONGMODE";
+        parse_says(0, "DDERR_WRONGMODE", -1, -1);
         break;
     case DDERR_IMPLICITLYCREATED:
-        message = "DDERR_IMPLICITLYCREATED";
+        parse_says(0, "DDERR_IMPLICITLYCREATED", -1, -1);
         break;
     case DDERR_NOTPALETTIZED:
-        message = "DDERR_NOTPALETTIZED";
+        parse_says(0, "DDERR_NOTPALETTIZED", -1, -1);
         break;
     case DDERR_UNSUPPORTEDMODE:
-        message = "DDERR_UNSUPPORTEDMODE";
+        parse_says(0, "DDERR_UNSUPPORTEDMODE", -1, -1);
         break;
     case DDERR_NOMIPMAPHW:
-        message = "DDERR_NOMIPMAPHW";
+        parse_says(0, "DDERR_NOMIPMAPHW", -1, -1);
         break;
     case DDERR_INVALIDSURFACETYPE:
-        message = "DDERR_INVALIDSURFACETYPE";
+        parse_says(0, "DDERR_INVALIDSURFACETYPE", -1, -1);
         break;
     case DDERR_CANTPAGELOCK:
-        message = "DDERR_CANTPAGELOCK";
+        parse_says(0, "DDERR_CANTPAGELOCK", -1, -1);
         break;
     case DDERR_CANTPAGEUNLOCK:
-        message = "DDERR_CANTPAGEUNLOCK";
+        parse_says(0, "DDERR_CANTPAGEUNLOCK", -1, -1);
         break;
     case DDERR_NOTPAGELOCKED:
-        message = "DDERR_NOTPAGELOCKED";
+        parse_says(0, "DDERR_NOTPAGELOCKED", -1, -1);
         break;
     default:
-        message = nullptr;
         break;
-    }
-    if (message) {
-        parse_says(0, message, -1, -1);
+        break;
     }
     if (pop_caption_title(const_cast<char *>("jackal"),
                           const_cast<char *>("DDRAWERROR"), 0x10040,

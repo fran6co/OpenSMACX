@@ -870,6 +870,9 @@ static int *const PopupCloseRectBottom = (int *)0x009BC064;
 // ORIGINAL: 0x006276A0 ?pops@@YAHPADPADHPADHPAUSprite@@HHP6AHXZ@Z 0x006276A0-0x006277F9
 // TRIED: the pending_bodies scaffold this replaces had the two start()/sprite() success checks inverted (`== 0` where the image's `je` jumps to the CONTINUE label when the callee returns 0, i.e. success is 0 and only a nonzero result is an error), and folded read_check()'s return value into the *(self+0x3100) store instead of keeping them as the two separate globals (0x9BC06C and 0x9BC070) the image writes.
 // TRIED: win-selection guard reads `*PopupInstanceSlotB` as the DEFAULT and only re-reads `*PopupInstanceSlotA` inside the `!is_visible()` branch (never binding `*PopupInstanceSlotA` to a local kept live across the call) - 91/110 -> 98/110. The `field_2274_` ternary needed its arms swapped (`== 0` first) to match the image placing the ELSE body as the fallthrough. The 0x8000 tail's four field reads declared in REVERSE offset order (0x30C0 down to 0x30B4, matching the image's load order) fixed its register choice - 87/110 -> 91/110. Plateaued at 98/110: one `add` operand order in that same tail and the prologue's exact register pick for the is_visible receiver did not yield to further reordering attempts.
+// LEVER (2026-08-29): SAVE THE FLAG, THEN READ THE DEFAULT - `const BOOL winVisible = ...SlotA->is_visible(); Win *win = *SlotB; if (!winVisible) win = *SlotA;` puts the SlotB load AFTER the call like the image (0x006276AE), 98/110 -> 101/110.
+// TRIED (2026-08-29): positive if/else and `c ? B : A` ternary for the win selection - both grow the `jmp` the image does not have (11/110); `if (sprite)` vs `if (sprite != 0)` identical.
+// TRIED (2026-08-29): the last two clusters are scheduler placements no source shape reached. (a) The image tests the sprite pointer BEFORE the two 0x2000 stores (0x00627709); ours stores first - the branch is textually after the stores in every structured spelling. (b) The image computes w+x (into w's register edx) BEFORE the Left store; VC6 here sinks w+x below Left and Bottom, which COMMUTES the add into x's register (`add esi,edx`) because x is dead by then - named sums in the image's compute order rescheduled identically. --all-flags: 101/110 is the best across all 20 sets (the /O2 non-/Oy- family ties).
 // symbol    ?pops@@YAHPAD0H0HPAVSprite@@HHP6AHXZ@Z
 // size      345 bytes
 // prototype
@@ -881,8 +884,16 @@ Status: Complete - testing
 */
 int __cdecl pops(char *caption, char *label, int a3, char *a4, int a5,
                  Sprite *sprite, int a7, int a8, int (__cdecl *callback)()) {
+    // SAVE THE FLAG, THEN READ THE DEFAULT: the image's order is
+    // `mov ecx,[SlotA]; call is_visible; mov esi,[SlotB]; test eax,eax;
+    // jne +6; mov esi,[SlotA]` - the SlotB default load sits AFTER the call,
+    // so the visibility result has to be bound to a named local BEFORE the
+    // default is read, with the guard testing the saved value. Reading the
+    // default first hoisted its load above the call (98/110); if/else and
+    // ternary spellings both grew a `jmp` the image does not have.
+    const BOOL winVisible = reinterpret_cast<Win *>(*PopupInstanceSlotA)->is_visible();
     Win *win = reinterpret_cast<Win *>(*PopupInstanceSlotB);
-    if (!reinterpret_cast<Win *>(*PopupInstanceSlotA)->is_visible()) {
+    if (!winVisible) {
         win = reinterpret_cast<Win *>(*PopupInstanceSlotA);
     }
     BasePop *pop = reinterpret_cast<BasePop *>(win);
@@ -895,7 +906,7 @@ int __cdecl pops(char *caption, char *label, int a3, char *a4, int a5,
     *PopupSavedLocY = 0x2000;
     *PopupSavedLocX = 0x2000;
 
-    if (sprite != 0) {
+    if (sprite) {
         if (a7 != a8) {
             pop->field_3104_ = a7;
             pop->field_3108_ = a8;
@@ -923,12 +934,17 @@ int __cdecl pops(char *caption, char *label, int a3, char *a4, int a5,
         int w = pop->field_30BC_;
         int y = pop->field_30B8_;
         int x = pop->field_30B4_;
+        // NAMED SUMS IN THE IMAGE'S COMPUTE ORDER: the image adds w+x
+        // (0x006277B4, into w's register) BEFORE y+h, and only then does it
+        // store Left, Bottom, and finally Right - sunk past the pops. The
+        // mutate-in-place spelling computed w+x last and commuted the add
+        // into x's register.
         *PopupCloseRectTop = y;
-        w += x;
-        y += h;
+        const int closeRectRight = w + x;
+        const int closeRectBottom = y + h;
         *PopupCloseRectLeft = x;
-        *PopupCloseRectBottom = y;
-        *PopupCloseRectRight = w;
+        *PopupCloseRectBottom = closeRectBottom;
+        *PopupCloseRectRight = closeRectRight;
         return execResult;
     }
 
