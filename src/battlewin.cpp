@@ -41,7 +41,7 @@ void BattleWin::on_iface_left_click(int, int) {
 Purpose: Destroy the window. The whole teardown is the Time member at +8; the
          original advances `this` by 8 and tail-jumps into the Time
          destructor, and nothing else in the object is touched.
-// ORIGINAL: 0x00422ED0 ??1BattleWin@@QAE@XZ 0x00422ED0-0x00422ED8 BYTE_EXACT
+// ORIGINAL: 0x00422ED0 ??1BattleWin@@QAE@XZ 0x00422ED0-0x00422ED8
 // size      8 bytes
 // prototype void (__thiscall ??1BattleWin@@QAE@XZ)(BattleWin* this)
 // callers   0   call targets   0
@@ -169,7 +169,7 @@ void BattleWin::on_iface_button_clicked(int a1) {
 // ---------------------------------------------------------------------------
 
 /*
-// ORIGINAL: 0x00422EE0 ??0BattleWin@@QAE@XZ 0x00422EE0-0x00422EFB BYTE_EXACT
+// ORIGINAL: 0x00422EE0 ??0BattleWin@@QAE@XZ 0x00422EE0-0x00422EFB
 // body      src/battlewin.cpp
 // size      27 bytes
 // prototype void (__thiscall ??0BattleWin@@QAE@XZ)(BattleWin* this)
@@ -185,9 +185,7 @@ void BattleWin::on_iface_button_clicked(int a1) {
 // basebutton.cpp's TRIED notes score against placement new's null guards.
 BattleWin::BattleWin() {
     Time *const time = reinterpret_cast<Time *>(time_storage_);
-    vtable_ = 0x0066A6E4;
     time->Time::Time();
-    vtable_ = 0x0066AA44;
 }
 
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====

@@ -17,6 +17,8 @@
  */
 #pragma once
 
+#include "sound.h"
+
  /*
   * Ambience classes
   *
@@ -42,16 +44,15 @@
   * inlined Sound; this is the third Sound-rooted class, not an unrelated one,
   * and it is why src/ambience.cpp reinterprets `this` as a `Wave *`.
   */
-class Ambience {
+class Ambience : public Sound {
  public:
+  uint32_t field_54_;  // 0x54, Ambience-owned; the derived variants start at 0x58
   // Spelled as a method rather than a real constructor on purpose: the three
   // derived variants below all carry inline `{ ; }` constructors, and giving
   // the base a real one would silently change every one of them.
   void construct();
   ~Ambience();
 
- protected:
-  uint8_t base_storage_[0x58];
 };
 
 

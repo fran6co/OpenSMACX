@@ -642,7 +642,7 @@ int Wave_In_Device::end_record() {
 // ---------------------------------------------------------------------------
 
 /*
-// ORIGINAL: 0x004C5740 ??0Midi_Device@@QAE@XZ 0x004C5740-0x004C577C BYTE_EXACT
+// ORIGINAL: 0x004C5740 ??0Midi_Device@@QAE@XZ 0x004C5740-0x004C577C
 // body      src/sounddevice.h
 // size      60 bytes
 // prototype void (__thiscall ??0Midi_Device@@QAE@XZ)(Midi_Device* this)
@@ -670,7 +670,7 @@ Midi_Device::Midi_Device() {
 }
 
 /*
-// ORIGINAL: 0x004C5940 ??0Wave_In_Device@@QAE@XZ 0x004C5940-0x004C597C BYTE_EXACT
+// ORIGINAL: 0x004C5940 ??0Wave_In_Device@@QAE@XZ 0x004C5940-0x004C597C
 // body      src/sounddevice.h
 // size      60 bytes
 // prototype void (__thiscall ??0Wave_In_Device@@QAE@XZ)(Wave_In_Device* this)
