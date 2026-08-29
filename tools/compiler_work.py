@@ -181,7 +181,7 @@ SCAFFOLD_CEILINGS = {
     # 1334 -> 1333 (2026-08-29, lifecycle-retirement batch): the archived
     # global_lifecycle.cpp went away with the thunks it recorded.
     "artifact files (recovered/)": 1326,
-    "unrecovered files": 1688,
+    "unrecovered files": 1683,
     "hypothesis_layouts.h lines": 2709,
 }
 
