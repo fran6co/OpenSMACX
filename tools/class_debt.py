@@ -69,7 +69,10 @@ CEILINGS = {
     # 54 -> 38 (2026-08-29, lifecycle-retirement batch): the construct and
     # atexit teardown thunks reached their globals through raw address casts;
     # the CRT-owned lifecycle needs none of them.
-    "function-address binding": 38,
+    # 38 -> 3 (2026-08-29, fx batch): the vector element callbacks stopped
+    # being address constants into the original - each is a real __fastcall
+    # function calling the recovered lifecycle body on the element.
+    "function-address binding": 3,
     "orphan redirect": 209,
     "pointer-as-int": 2,
     "undocumented trivial body": 0,

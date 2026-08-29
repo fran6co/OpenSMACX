@@ -20,20 +20,19 @@
 #include "vtable_shim.h"
 #include "hypothesis_layouts.h"
 
-// The Effect element callbacks, spelled for real: the constructor runs
-// Wave::Wave on the element front and installs the Effect vftable
-// (0x0066B7A4 in the image) over the Wave's; the teardown lands on ~Wave.
-// The vftable VALUE is the image's own and stays inert unless something
-// dispatches virtually through it.
-static void *EffectVtable = (void *)0x0066B7A4;
+// The FX bank's element is the hypothesis Effect (hypothesis_layouts.h): a
+// Wave-derived type adding nothing - stride equals sizeof(Wave) at 0x6C. Its
+// construction runs Wave::Wave and installs the type's own vftable over the
+// Wave's (0x0066B7A4 in the image); its teardown is the five-byte jump into
+// ~Wave that wave.cpp documents. Both are what the compiler emits for the
+// placement construction and destruction of a plain Effect.
 
 void __fastcall EffectElementTeardown(void *self) {
-    reinterpret_cast<Wave *>(self)->~Wave();
+    reinterpret_cast<Effect *>(self)->~Effect();
 }
 
 void __fastcall EffectElementCtor(void *self) {
-    reinterpret_cast<Wave *>(self)->Wave::Wave();
-    *reinterpret_cast<void **>(self) = EffectVtable;
+    new (self) Effect();
 }
 
 /*
