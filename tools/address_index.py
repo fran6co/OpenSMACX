@@ -111,7 +111,7 @@ FLOORS = {
     # 0x0043C1A0 DesignWin::close and 0x0046EB90 on_lose_mouse_capture (the
     # latter tails into go_reset, itself unrecovered). Promotion is the next
     # batch's first work, and this floor falls back with it.
-    "archive-only-forwarder": 22,
+    "archive-only-forwarder": 23,
     "unknown-host-files": 0,
 }
 
