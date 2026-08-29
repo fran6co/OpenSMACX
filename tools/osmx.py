@@ -1723,10 +1723,13 @@ def check(
     image and fails if one stopped. The floor is the number of claims, so
     there is no constant to bump.
 
-    IT WRITES NOTHING, and that is what makes it a gate rather than a pass
-    of `record` that happens to fail. A gate that can add a claim changes
-    the floor as a side effect of measuring it, and one that can clear a
-    broken claim can always be made to pass.
+    IT WRITES NOTHING INTO THE TREE, and that is what makes it a gate rather
+    than a pass of `record` that happens to fail. A gate that can add a claim
+    changes the floor as a side effect of measuring it, and one that can
+    clear a broken claim can always be made to pass. The one thing it does
+    write is a verdict memo beside the build database, which no command
+    reads for anything but skipping a byte-identical re-measurement -
+    deleting it costs one full run and changes no verdict.
 
     Exit 1 means a claim REGRESSED - measured, and worse. Exit 3 means some
     claim could not be measured at all, which is a different job and must
@@ -1790,29 +1793,77 @@ def check(
         command = _command_for(compile_commands, path, borrow)
         work.append((path, mine, exe, command, FLAG_SETS))
 
+    # THE CACHE IS A MEMO, NOT A LEDGER: it never adds, clears, or counts a
+    # claim - it only skips re-measuring a file whose every input is
+    # byte-identical to a measurement this gate already made. The salt is
+    # conservative because VC6 has no /showIncludes and nothing here can know
+    # which file includes what: ANY header changing re-measures everything,
+    # and the tool sources and the image are in the salt so a change to the
+    # measurement itself, or to the ruler, throws the whole memo away.
+    # Not salted: the VC6 system headers and wine, which do not change
+    # between runs on a machine where this tree builds at all.
+    cache_path = compile_commands.parent / "osmx_check_cache.json"
+    salt = hashlib.sha256(
+        b"".join(p.read_bytes() for p in
+                 sorted((REPO_ROOT / "decomp").glob("*.py")))
+        + Path(__file__).read_bytes()
+        + b"".join(p.read_bytes() for p in sorted(src.rglob("*.h")))
+        + (exe.read_bytes() if exe.exists() else b"no-image")).hexdigest()
+    try:
+        cache = json.loads(cache_path.read_text())
+    except (OSError, ValueError):
+        cache = {}
+    if cache.get("salt") != salt:
+        cache = {"salt": salt, "files": {}}
+
+    def _file_key(job: tuple) -> str:
+        path, _mine, _exe, command, _flags = job
+        return hashlib.sha256(path.read_bytes()
+                              + "\0".join(command).encode()).hexdigest()
+
+    measured: dict = {}
+    fresh = []
+    for job in work:
+        entry = cache["files"].get(str(job[0]))
+        if entry and entry["key"] == _file_key(job):
+            for p, address, line, verdict, note in entry["rows"]:
+                measured[(Path(p), address, line)] = (verdict, note)
+        else:
+            fresh.append(job)
+
     if not as_json:
         # `--json` must emit JSON and nothing else, or it is not
         # machine-readable - which is the only reason it exists.
         typer.echo(f"{scored:,} bodies ({claims:,} claimed) in "
-                   f"{len(grouped):,} files, "
+                   f"{len(grouped):,} files - "
+                   f"{len(work) - len(fresh):,} unchanged from the last "
+                   f"measurement, {len(fresh):,} to measure, "
                    f"{jobs} at a time")
-    measured: dict = {}
     if jobs == 1:
         # SERIAL IS A REAL MODE, not a degenerate pool of one. A failure
         # inside a worker arrives as a re-raised copy with the original
         # traceback lost, so `--jobs 1` is how anything here is debugged -
         # and a pool of one pays setup to gain nothing.
-        batches = (_check_one_file(job) for job in work)
+        finished = [(job, _check_one_file(job)) for job in fresh]
     else:
         pool = concurrent.futures.ProcessPoolExecutor(max_workers=jobs)
         with pool:
-            batches = [done.result() for done in
-                       concurrent.futures.as_completed(
-                           [pool.submit(_check_one_file, job)
-                            for job in work])]
-    for batch in batches:
+            futures = {pool.submit(_check_one_file, job): job
+                       for job in fresh}
+            finished = [(futures[done], done.result()) for done in
+                        concurrent.futures.as_completed(futures)]
+    for job, batch in finished:
+        cache["files"][str(job[0])] = {
+            "key": _file_key(job),
+            "rows": [[str(key[0]), key[1], key[2], verdict, note]
+                     for key, verdict, note in batch]}
         for key, verdict, note in batch:
             measured[key] = (verdict, note)
+    try:
+        cache_path.write_text(json.dumps(cache))
+    except OSError:
+        # A MEMO THAT CANNOT BE SAVED COSTS THE NEXT RUN, not this one.
+        pass
 
     # A WALL IS NOT A MISS, and one number would bury the difference. A
     # claim measured WORSE has stopped reproducing - that is the ratchet
@@ -2055,6 +2106,43 @@ def check(
                         else
                         f"DANGLING  {record.address_hex} body fact: {note} - "
                         f"{record.location}", fg=typer.colors.RED)
+    # THE AUDITS BELOW ARE INDEPENDENT PROCESSES, so they all start here and
+    # the blocks below only collect and print, in the same order as before.
+    # Serial, the epilogue cost the SUM of eleven full-tree parses - 4m17s of
+    # a warm run's 4m20s - and the wall is now the slowest one. Wine is idle
+    # by this point (measurement is done), so the link shares the clock with
+    # the pure-python censuses.
+    audits = concurrent.futures.ThreadPoolExecutor(max_workers=11)
+
+    def _audit(tool: str, *argv):
+        return audits.submit(
+            subprocess.run,
+            [sys.executable, str(REPO_ROOT / "tools" / tool), *argv],
+            cwd=REPO_ROOT, capture_output=True, text=True)
+
+    link_job = audits.submit(subprocess.run, ["cmake", "--build", "build"],
+                             cwd=REPO_ROOT, capture_output=True, text=True)
+    vtables_job = _audit("compiler_work.py", "--check")
+    stale_job = _audit("stale_references.py")
+
+    def _symbols_after_link():
+        # marker_symbols runs its own incremental build before reading the
+        # objects; two ninjas in one build dir race, so it starts after the
+        # link finishes (and its inner build then no-ops).
+        link_job.result()
+        return subprocess.run(
+            [sys.executable, str(REPO_ROOT / "tools" / "marker_symbols.py"),
+             "--check"], cwd=REPO_ROOT, capture_output=True, text=True)
+
+    symbols_job = audits.submit(_symbols_after_link)
+    index_job = _audit("address_index.py", "--check")
+    debt_job = _audit("class_debt.py", "--check")
+    dupes_job = _audit("duplicate_globals.py", "--check")
+    values_job = _audit("data_values.py", "--check")
+    scaling_job = _audit("pointer_scale.py", "--check")
+    annotations_job = _audit("annotation_identity.py", "--check")
+    offsets_job = _audit("header_offsets.py", "--check")
+
     # DOES IT STILL LINK? The gate compiles each body on its own and never
     # built the executable, so a tree could be 2,532-verified green while
     # OpenSMACX.exe did not link at all. That is not hypothetical: declaring
@@ -2067,8 +2155,7 @@ def check(
     #
     # The build is incremental and this is the last thing the gate does, so a
     # clean tree pays almost nothing for it.
-    link = subprocess.run(["cmake", "--build", "build"], cwd=REPO_ROOT,
-                          capture_output=True, text=True)
+    link = link_job.result()
     unlinked = [line for line in (link.stdout + link.stderr).splitlines()
                 if "LNK" in line or "error" in line.lower()]
     if link.returncode and not as_json:
@@ -2083,9 +2170,7 @@ def check(
     # doing VC6's job, and doing it somewhere VC6 would not have put it, which
     # is why they cost bytes rather than taste. Every large gain on 2026-08-22
     # came from deleting one. Ratcheted per shape; none may grow.
-    vtables = subprocess.run(
-        [sys.executable, str(REPO_ROOT / "tools" / "compiler_work.py"),
-         "--check"], cwd=REPO_ROOT, capture_output=True, text=True)
+    vtables = vtables_job.result()
     if not as_json:
         typer.secho("  " + vtables.stdout.strip(),
                     fg=typer.colors.RED if vtables.returncode
@@ -2099,9 +2184,7 @@ def check(
     # had existed for months and its roots stopped one directory short of that
     # file, and one directory is the whole difference between a check and a
     # check that cannot see the defect it was written for.
-    stale = subprocess.run(
-        [sys.executable, str(REPO_ROOT / "tools" / "stale_references.py")],
-        cwd=REPO_ROOT, capture_output=True, text=True)
+    stale = stale_job.result()
     if not as_json:
         said = stale.stdout.strip().splitlines() or [""]
         typer.secho("  " + said[-1],
@@ -2115,9 +2198,7 @@ def check(
     # or abandons it - and the class passes rewrite those facts constantly.
     # Six of today's markers await stub conversions and the ordinal
     # initialiser matcher; the floor starts there and only goes down.
-    symbols = subprocess.run(
-        [sys.executable, str(REPO_ROOT / "tools" / "marker_symbols.py"),
-         "--check"], cwd=REPO_ROOT, capture_output=True, text=True)
+    symbols = symbols_job.result()
     if not as_json:
         said = symbols.stdout.strip().splitlines() or [""]
         typer.secho("  " + said[-1],
@@ -2134,9 +2215,7 @@ def check(
     # falling; duplicated_markers/redundant_artifacts stay (they encode
     # within-file and claimed-copy RULES) while orphan_artifacts' report is
     # subsumed here.
-    index = subprocess.run(
-        [sys.executable, str(REPO_ROOT / "tools" / "address_index.py"),
-         "--check"], cwd=REPO_ROOT, capture_output=True, text=True)
+    index = index_job.result()
     if not as_json:
         said = index.stdout.strip().splitlines() or [""]
         typer.secho("  " + said[-1],
@@ -2149,9 +2228,7 @@ def check(
     # names, function addresses in data clothes, orphan redirects, pointers
     # travelling as int. The bytes cannot see any of it, which is exactly why
     # a census must: palette.cpp measured clean while carrying all four.
-    debt = subprocess.run(
-        [sys.executable, str(REPO_ROOT / "tools" / "class_debt.py"),
-         "--check"], cwd=REPO_ROOT, capture_output=True, text=True)
+    debt = debt_job.result()
     if not as_json:
         said = debt.stdout.strip().splitlines() or [""]
         typer.secho("  " + said[-1],
@@ -2167,9 +2244,7 @@ def check(
     # other. Each body stays internally consistent, so the byte ratchet is
     # blind to it. Fifteen were created in one afternoon by a naming pass
     # whose duplicate check knew only the binding spelling.
-    dupes = subprocess.run(
-        [sys.executable, str(REPO_ROOT / "tools" / "duplicate_globals.py"),
-         "--check"], cwd=REPO_ROOT, capture_output=True, text=True)
+    dupes = dupes_job.result()
     if not as_json:
         said = dupes.stdout.strip().splitlines() or [""]
         typer.secho("  " + said[-1],
@@ -2183,9 +2258,7 @@ def check(
     # difference. WinFillColour shipped as 0 against the image's 9 on
     # 2026-08-25, caught only because tools/image_data.py had just been
     # written to ask the image what its DATA says rather than its code.
-    values = subprocess.run(
-        [sys.executable, str(REPO_ROOT / "tools" / "data_values.py"),
-         "--check"], cwd=REPO_ROOT, capture_output=True, text=True)
+    values = values_job.result()
     if not as_json:
         said = values.stdout.strip().splitlines() or [""]
         typer.secho("  " + said[-1],
@@ -2199,9 +2272,7 @@ def check(
     # Win::remove_parent_dialog carried eight of them at 12 of 61 and nobody
     # asked why. Ceiling is zero; the correct form casts the POINTER, not
     # the sum.
-    scaling = subprocess.run(
-        [sys.executable, str(REPO_ROOT / "tools" / "pointer_scale.py"),
-         "--check"], cwd=REPO_ROOT, capture_output=True, text=True)
+    scaling = scaling_job.result()
     if not as_json:
         said = scaling.stdout.strip().splitlines() or [""]
         typer.secho("  " + said[-1],
@@ -2216,9 +2287,7 @@ def check(
     # prose of 434 records the moment it touched their file - and the
     # roundtrip test could not see it, because it compared POST-PARSE data.
     # This is the check that had to exist outside the parse.
-    annotations = subprocess.run(
-        [sys.executable, str(REPO_ROOT / "tools" / "annotation_identity.py"),
-         "--check"], cwd=REPO_ROOT, capture_output=True, text=True)
+    annotations = annotations_job.result()
     if not as_json:
         said = annotations.stdout.strip().splitlines() or [""]
         typer.secho("  " + said[-1],
@@ -2233,9 +2302,8 @@ def check(
     # comparison can see it, because both spellings compile to the identical
     # offset. The invariant is self-verifying: a member named `field_NN_`
     # states its own offset, and an annotated one states it twice.
-    offsets = subprocess.run(
-        [sys.executable, str(REPO_ROOT / "tools" / "header_offsets.py"),
-         "--check"], cwd=REPO_ROOT, capture_output=True, text=True)
+    offsets = offsets_job.result()
+    audits.shutdown()
     if not as_json:
         said = offsets.stdout.strip().splitlines() or [""]
         typer.secho("  " + said[-1],
