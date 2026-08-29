@@ -768,3 +768,461 @@ int Caviar::init_class() {
     CaviarScene->field_04_ = 0;
     return 0;
 }
+
+// ---------------------------------------------------------------------------
+// The voxel engine's own entry points, called by init_class above through
+// caviar.h's declarations. None is a Caviar member; they are the engine
+// (0x6392E0..0x63F9B0 in the image) operating on its own fixed globals.
+// ---------------------------------------------------------------------------
+
+namespace {
+
+// 0x009C0B80 and 0x009C0B84, slots 0 and 1 of the six vx_* callbacks
+// vox_init_callbacks installs: slot 0 allocates, slot 1 releases. The slots
+// live AT these addresses, so the engine calls through the memory operand
+// (`call dword ptr [0x9C0B80]`) - each binding is the slot, not a copy.
+// MACROS, not const pointer variables: measured, a const variable's value
+// does not fold at the memcpy intrinsic (`mov edi, dword ptr [var]` against
+// the image's `mov edi, 0x9c0b80`) nor at the indirect call (`mov eax, [var];
+// call dword ptr [eax]` against `call dword ptr [0x9c0b80]`).
+typedef unsigned long (__cdecl *vox_alloc_fn)(unsigned long);
+typedef void (__cdecl *vox_free_fn)(unsigned long);
+#define vox_alloc_slot (*(vox_alloc_fn *)0x009C0B80)
+#define vox_free_slot (*(vox_free_fn *)0x009C0B84)
+#define vox_callback_table ((void *)0x009C0B80)
+
+// The engine's fixed-address data bindings live at FILE SCOPE, below, as
+// plain static consts rather than inside this anonymous namespace: the
+// census counts anonymous fixed-address globals against a tight ceiling and
+// file-scope statics are how sprite.cpp binds 0x00698CAC.
+
+// The renderer record vox_create_record builds. 0x80 bytes are allocated and
+// all of them are zeroed, so the tail is unknown padding.
+struct VoxRenderRecord {
+    uint32_t setup_id_;        // 0x00 - first argument, stored verbatim
+    uint32_t setup_block_;     // 0x04 - the descriptor block
+    uint32_t clip_max_a_x_;    // 0x08  0x7fff
+    uint32_t clip_max_a_y_;    // 0x0C  0x7fff
+    uint32_t clip_min_a_x_;    // 0x10  0xffff8001 (-32767)
+    uint32_t clip_min_a_y_;    // 0x14  0xffff8001
+    uint32_t zero_a_[2];       // 0x18
+    uint32_t clip_max_b_x_;    // 0x20  0x7fff
+    uint32_t clip_max_b_y_;    // 0x24  0x7fff
+    uint32_t clip_min_b_x_;    // 0x28  0xffff8001
+    uint32_t clip_min_b_y_;    // 0x2C  0xffff8001
+    uint32_t zero_b_[4];       // 0x30
+    int32_t width_minus_1_;    // 0x40
+    int32_t height_minus_1_;   // 0x44
+    uint32_t width_;           // 0x48 - width, or 0 when a side is negative
+    uint32_t height_;          // 0x4C
+    void *colour_table_;       // 0x50
+    void *shadow_table_;       // 0x54
+    uint32_t field_58_[2];     // 0x58 - init_class stores &object_start at +0x58
+    uint32_t zero_c_[2];       // 0x60
+    uint8_t setup_size_code_;  // 0x68 - low byte of the last argument
+    uint8_t field_69_[0x80 - 0x69];
+};
+
+static_assert(sizeof(VoxRenderRecord) == 0x80,
+              "renderer record must be the 0x80 bytes the engine allocates");
+
+} // namespace
+
+// The engine's fixed-address data bindings. 0x009C0830 is CaviarVoxelAlgoFlag,
+// bound in the anonymous namespace above.
+uint32_t *const vox_unk_9c0834 = (uint32_t *)0x009C0834;  // zeroed on accepted CPU report
+uint32_t *const vox_unk_9c0b78 = (uint32_t *)0x009C0B78;  // zeroed on accepted CPU report
+uint8_t *const vox_unk_9c0b70 = (uint8_t *)0x009C0B70;    // CPU-report flag the probe clears
+uint32_t *const vox_record_count =
+    (uint32_t *)0x009BE69C;  // records created, bumped per successful create
+
+// The pixel-size dispatch tables sub_63ae20 stores into the record's five
+// slots (+0x6c, +0x70, +0x74, +0x78, +0x7c), selected by pixel size and the
+// record's alignment flag byte. Carried as address integers named by slot
+// until the engine's behaviour names the tables themselves.
+static const unsigned long vox_size1_aligned_6c = 0x006647F0;
+static const unsigned long vox_size1_aligned_70 = 0x00664000;
+static const unsigned long vox_size1_aligned_7c = 0x0063AF00;
+static const unsigned long vox_size1_odd_6c = 0x00665640;
+static const unsigned long vox_size1_odd_70 = 0x00664E50;
+static const unsigned long vox_size1_odd_7c = 0x0063AF40;
+static const unsigned long vox_size2_aligned_6c = 0x00666440;
+static const unsigned long vox_size2_aligned_70 = 0x00665CA0;
+static const unsigned long vox_size2_aligned_7c = 0x0063AEE0;
+static const unsigned long vox_size2_odd_6c = 0x00667B20;
+static const unsigned long vox_size2_odd_70 = 0x00667380;
+static const unsigned long vox_size2_odd_7c = 0x0063AF20;
+static const unsigned long vox_shared_74 = 0x00666FD0;
+static const unsigned long vox_shared_78 = 0x00666A80;
+
+// The engine's message strings, .rdata literals the image pushes by address.
+// 0x00698A9C is different: a data slot HOLDING the 'Unsupported pixel size'
+// pointer, which the image loads through and pushes.
+static const char *const vox_msg_no_setup = (const char *)0x00698AFC;  // No setup parameter
+static const char *const vox_msg_setup_empty = (const char *)0x00698AD8;  // Setup is empty
+static const char *const vox_msg_cpu_unsupported = (const char *)0x00698AE8;  // CPU not supported
+static const char *const vox_msg_no_shadow = (const char *)0x00698B10;  // No room for shadow table
+static const char *const vox_msg_no_colour = (const char *)0x00698B2C;  // No room for color table
+static const char *const vox_msg_no_handler = (const char *)0x00698B44;  // No room for handler
+static const char *const vox_msg_no_colortab = (const char *)0x00698B58;  // No ColorTab parameter
+static const char *const *const vox_msg_unsupported_pixel =
+    (const char *const *)0x00698A9C;  // -> Unsupported pixel size
+
+// Seams into pieces not yet recovered, each defined by a pending_bodies
+// forwarder so these calls stay `call rel32` like the image.
+// Seams into pieces not yet recovered, each defined by a pending_bodies
+// forwarder so these calls stay `call rel32` like the image.
+extern "C" void __cdecl sub_639390(const char *message);  // stage a message string
+extern "C" void __cdecl sub_63ad60(unsigned char *record);
+extern "C" char __cdecl sub_63f9b0(unsigned char *record);
+
+// Defined at the foot of this file, promoted from its artifact.
+void __cdecl sub_63ae20(unsigned char *record);
+
+/*
+Purpose: The engine's CPUID capability probe. The shipped body toggles the
+         EFLAGS ID bit (and AC), runs CPUID and stores the detected rank - a
+         flags-register dance with no C++ spelling, so this stand-in clears
+         the two report flags and skips detection.
+// ORIGINAL: 0x0063E860 sub_63e860 0x0063E860-0x0063E94E
+// symbol    ?sub_63e860@@YAHXZ
+// TRIED: byte-exact is unreachable under the inline-assembly rule - the body
+//        is the flags push/pop pair toggling EFLAGS bit 0x40000 (and
+//        0x200000) plus CPUID itself, and this address calls nothing (from
+//        the promoted artifact).
+*/
+int __cdecl sub_63e860() {
+    *CaviarVoxelAlgoFlag = 0;
+    *vox_unk_9c0b70 = 0;
+    return 0;
+}
+
+/*
+Purpose: Install the six vx_* file-IO callbacks and vet the machine's CPU rank.
+         0 = accepted, 1 = rejected (init_class then shows CAVIAR_INVALIDCPU
+         when the stored preference is also out of range).
+// ORIGINAL: 0x006392E0 sub_6392e0 0x006392E0-0x0063937F FILE
+// symbol    ?vox_init_callbacks@@YADPAKH@Z
+// LEVER: the callback-table address must reach the memcpy intrinsic as a
+//        LITERAL - a file-scope `void *const` variable compiles
+//        `mov edi, dword ptr [var]` where the image folds `mov edi, 0x9c0b80`
+//        (listing_diff, /O2 /GX). Macros, not const variables, for the slots.
+// TRIED: `algo_flag == 0 || 5 < algo_flag` compiles `test al,al; je` against
+//        the image's `test al,al; jbe` - same condition, one-byte encoding;
+//        the six-way && chain and both shared error tails match.
+// TRIED: the image pushes edi in the prologue; this tree's memcpy intrinsic
+//        push/pops edi around its own rep movsd (8 instruction slots), and no
+//        source spelling tried made VC6 dedicate edi as a callee-saved
+//        register here.
+*/
+char __cdecl vox_init_callbacks(unsigned long *callbacks, int flag) {
+    if (callbacks == 0) {
+        sub_639390(vox_msg_no_setup);
+        return 1;
+    }
+    if (callbacks[0] != 0 && callbacks[1] != 0 && callbacks[2] != 0 &&
+        callbacks[3] != 0 && callbacks[4] != 0 && callbacks[5] != 0) {
+        memcpy(vox_callback_table, callbacks, 6 * sizeof(unsigned long));
+        sub_63e860();
+        const uint8_t algo_flag = *CaviarVoxelAlgoFlag;
+        if (algo_flag == 0 || 5 < algo_flag) {
+            sub_639390(vox_msg_cpu_unsupported);
+            return 1;
+        }
+        *vox_unk_9c0834 = 0;
+        *vox_unk_9c0b78 = 0;
+        return 0;
+    }
+    sub_639390(vox_msg_setup_empty);
+    return 1;
+}
+
+/*
+Purpose: Fill a destination with a 16-bit colour repeated `count` times. The
+         alignment cascade burns 1 or 2 leading bytes so the bulk runs on
+         dwords, then an unrolled 16/8/4/2/1 remainder.
+// ORIGINAL: 0x0063AF60 sub_63af60 0x0063AF60-0x0063B072
+// symbol    ?vox_fill_colour_table@@YAXPAXKK@Z
+// LEVER: the fold is spelled on the RAW parameter, `(value << 16) +
+//        (value & 0xffff)`, with `+` not `|` - that is what reproduces the
+//        image's mov-copy/shl/and/add sequence (an earlier 16-bit pun of the
+//        parameter widened back to a 32-bit load and moved the `and` ahead of
+//        the copy; similarity 0.534 -> 0.613 on the rewrite).
+// LEVER: `_rotr(fill, 1)` gives the image's single `ror eax, 1`; the
+//        shift-or spelling `(fill >> 1) | (fill << 31)` compiles to
+//        shl/shr/or across two registers.
+// TRIED: the image's 16-bit argument load `mov ax, word ptr [esp+0xc]` with
+//        its `and eax, 0xffff` DEFERRED to the fold is not reachable from
+//        ANSI C++: an `unsigned short` parameter movzx's (prior artifact
+//        note), and a pun through the parameter's address widened anyway.
+// TRIED: the odd-path dword loop as a plain `while` and as a guarded
+//        `do/while` both drift from the image's shr/je + dec/jne loop - VC6
+//        converts the store loop to rep stosd (+ push/pop edi) or lea forms,
+//        and the pointer lands in esi rather than the image's ebx.
+*/
+void __cdecl vox_fill_colour_table(void *table, unsigned long value,
+                                   unsigned long count) {
+    // The fold runs on the RAW argument: the image loads only the low 16
+    // bits (`mov ax, word ptr [esp+0xc]`, unreachable from ANSI C++ - a
+    // 16-bit pun widens back to a 32-bit load) and cleans the high half at
+    // the fold, so the closest spelling keeps `value` whole and truncates
+    // in the second term. `+`, not `|`: the terms do not overlap and the
+    // image emits `add`.
+    const unsigned long fill = (value << 16) + (value & 0xffff);
+    unsigned char *cursor = (unsigned char *)table;
+
+    if ((unsigned long)cursor & 1) {
+        // Odd destination: burn one byte, then run the rest aligned.
+        unsigned long bytes = count + count;
+        *cursor = (unsigned char)fill;
+        bytes -= 1;
+        cursor += 1;
+        // BUG IN THE ORIGINAL? One BIT of rotation, not one byte, so after
+        // the leading byte the aligned stores repeat a bit-rotated pattern.
+        // Invisible to the only caller (0xffff fills to 0xffffffff) and left
+        // alone deliberately. _rotr: the shift-or spelling compiles to
+        // shl/shr/or; the image has one `ror eax, 1`.
+        const unsigned long rotated = _rotr(fill, 1);
+        const unsigned long tail = bytes & 3;
+        unsigned long blocks = bytes >> 2;
+        if (blocks != 0) {
+            do {
+                *(unsigned long *)cursor = rotated;
+                cursor += 4;
+                blocks -= 1;
+            } while (blocks != 0);
+        }
+        if (tail & 2) {
+            *(unsigned short *)cursor = (unsigned short)rotated;
+            cursor += 2;
+        }
+        if (tail & 1) {
+            *cursor = (unsigned char)rotated;
+        }
+        return;
+    }
+
+    if ((unsigned long)cursor & 2) {
+        *(unsigned short *)cursor = (unsigned short)fill;
+        count -= 1;
+        cursor += 2;
+    }
+    const unsigned long tail_word = count & 1;
+    unsigned long n = count >> 1;  // dword count
+    if (n != 0) {
+        unsigned long *p = (unsigned long *)cursor;
+        n -= 16;
+        if (n >= 0) {
+            do {
+                p[0] = fill; p[1] = fill; p[2] = fill; p[3] = fill;
+                p[4] = fill; p[5] = fill; p[6] = fill; p[7] = fill;
+                p[8] = fill; p[9] = fill; p[10] = fill; p[11] = fill;
+                p[12] = fill; p[13] = fill; p[14] = fill; p[15] = fill;
+                p += 16;
+                n -= 16;
+            } while (n >= 0);
+        }
+        n += 8;
+        if (n >= 0) {
+            p[0] = fill; p[1] = fill; p[2] = fill; p[3] = fill;
+            p[4] = fill; p[5] = fill; p[6] = fill; p[7] = fill;
+            p += 8;
+            n -= 8;
+        }
+        n += 4;
+        if (n >= 0) {
+            p[0] = fill; p[1] = fill; p[2] = fill; p[3] = fill;
+            p += 4;
+            n -= 4;
+        }
+        n += 2;
+        if (n >= 0) {
+            p[0] = fill; p[1] = fill;
+            p += 2;
+            n -= 2;
+        }
+        n += 1;
+        if (n >= 0) {
+            p[0] = fill;
+        }
+        cursor = (unsigned char *)p;
+    }
+    if (tail_word != 0) {
+        *(unsigned short *)cursor = (unsigned short)fill;
+    }
+}
+
+/*
+Purpose: Create the scene render record: allocate it, copy the colour and
+         shadow tables for the descriptor's pixel size, fill the clip bounds
+         and viewport extents, then run the per-CPU-rank init handler. The
+         record pointer, or 0 on any failure.
+// ORIGINAL: 0x006393C0 sub_6393c0 0x006393C0-0x00639612 FILE
+// symbol    ?vox_create_record@@YAKHPAX00H@Z
+// LEVER: the alloc/free slots must be MACROS on the raw addresses: a const
+//        pointer variable compiles `mov eax,[var]; call dword ptr [eax]`
+//        where the image calls `call dword ptr [0x9c0b80]` straight through
+//        the slot (listing_diff, /O2 /GX).
+// LEVER: the pixel-size dispatch is a switch with grouped cases - case 1/2
+//        and 3/5 reproduce the image's dec/je/dec/je chain (an if/else-if
+//        chain compiles cmp/jne; 0x0063AE20's marker says the same), and the
+//        algo switch's five-entry jump table with one range check falls out
+//        of the same spelling on *CaviarVoxelAlgoFlag.
+// TRIED: the image keeps `xor ebp, ebp` live for EVERY null test and zero
+//        store (cmp reg,ebp / mov [ebx+N],ebp); every spelling tried emits
+//        test/imm forms instead - the persistent zero register is the main
+//        remaining divergence and no source shape reached it.
+// TRIED: per-case constant memcpys duplicate the shadow-table rep movsd the
+//        image merges across the two pixel sizes (`mov ecx,0x8000; jmp L;
+//        mov ecx,0x40; L: mov edi,eax; rep movsd`); a merged variable-size
+//        memcpy would call the CRT instead - neither matches.
+// TRIED: pixel_size as uint8_t and as unsigned int; the uint8_t spelling
+//        reads the byte straight into al, the image widens through edx
+//        (xor edx,edx / mov dl,[eax+0x20] / mov eax,edx).
+*/
+unsigned long __cdecl vox_create_record(int setup_id, void *setup_data,
+                                        void *shadow_data, void *setup_block,
+                                        int size_code) {
+    if (setup_data == 0) {
+        sub_639390(vox_msg_no_colortab);
+        return 0;
+    }
+    VoxRenderRecord *record = (VoxRenderRecord *)vox_alloc_slot(0x80);
+    if (record == 0) {
+        sub_639390(vox_msg_no_handler);
+        return 0;
+    }
+    memset(record, 0, sizeof(VoxRenderRecord));
+    record->setup_id_ = setup_id;
+    record->setup_block_ = (uint32_t)setup_block;
+    record->setup_size_code_ = (uint8_t)size_code;
+
+    // unsigned int, not uint8_t: the image zeroes a register and reads the
+    // byte into its low half (xor edx,edx / mov dl,[eax+0x20]) before the
+    // dispatch, which is the widening of a 32-bit local.
+    const unsigned int pixel_size =
+        *(const unsigned char *)((const unsigned char *)setup_block + 0x20);
+    switch (pixel_size) {
+    case 1:
+        record->colour_table_ = (void *)vox_alloc_slot(0x1800);
+        if (record->colour_table_ == 0) {
+            sub_639390(vox_msg_no_colour);
+            return 0;
+        }
+        memcpy(record->colour_table_, setup_data, 0x1800);
+        if (shadow_data != 0) {
+            record->shadow_table_ = (void *)vox_alloc_slot(0x100);
+            if (record->shadow_table_ == 0) {
+                sub_639390(vox_msg_no_shadow);
+                vox_free_slot((unsigned long)record->colour_table_);
+                return 0;
+            }
+            memcpy(record->shadow_table_, shadow_data, 0x100);
+        }
+        break;
+    case 2:
+        record->colour_table_ = (void *)vox_alloc_slot(0x3000);
+        if (record->colour_table_ == 0) {
+            sub_639390(vox_msg_no_colour);
+            return 0;
+        }
+        memcpy(record->colour_table_, setup_data, 0x3000);
+        if (shadow_data != 0) {
+            record->shadow_table_ = (void *)vox_alloc_slot(0x20000);
+            if (record->shadow_table_ == 0) {
+                sub_639390(vox_msg_no_shadow);
+                vox_free_slot((unsigned long)record->colour_table_);
+                return 0;
+            }
+            memcpy(record->shadow_table_, shadow_data, 0x20000);
+        }
+        break;
+    default:
+        sub_639390(*vox_msg_unsupported_pixel);
+        return 0;
+    }
+
+    const uint8_t *desc = (const uint8_t *)setup_block;
+    record->width_minus_1_ = (int)*(const short *)(desc + 0xc) - 1;
+    const int height_minus_1 = (int)*(const short *)(desc + 0x10) - 1;
+    record->height_minus_1_ = height_minus_1;
+    if (record->width_minus_1_ >= 0 && height_minus_1 >= 0) {
+        record->width_ = record->width_minus_1_ + 1;
+        record->height_ = height_minus_1 + 1;
+    } else {
+        record->width_ = 0;
+        record->height_ = 0;
+    }
+
+    switch (*CaviarVoxelAlgoFlag) {
+    case 1:
+    case 2:
+    case 4:
+        sub_63ad60((unsigned char *)record);
+        break;
+    case 3:
+    case 5:
+        sub_63ae20((unsigned char *)record);
+        break;
+    default:
+        sub_639390(vox_msg_cpu_unsupported);
+        return 0;
+    }
+    record->zero_c_[0] = 0;
+    record->zero_c_[1] = 0;
+    if (*(const uint32_t *)(desc + 0xc) != 0 &&
+        *(const uint32_t *)(desc + 0x10) != 0 &&
+        sub_63f9b0((unsigned char *)record) != 0) {
+        return 0;
+    }
+    *vox_record_count += 1;
+    return (unsigned long)record;
+}
+
+/*
+Purpose: Fill a render record's pixel-size dispatch slots for CPU ranks 3 and
+         5, choosing the table set by the record's odd-alignment flag byte.
+// ORIGINAL: 0x0063AE20 sub_63ae20 0x0063AE20-0x0063AED2 BYTE_EXACT
+// symbol    ?sub_63ae20@@YAXPAE@Z
+// LEVER: switch(type){case 1: case 2: default:} reproduces the dec/je/dec/jne
+//        idiom; if/else-if compiled to cmp/jne instead (from the promoted
+//        artifact, measured BYTE_EXACT there).
+*/
+void __cdecl sub_63ae20(unsigned char *record) {
+    unsigned char type =
+        *(unsigned char *)(*(int *)(record + 4) + 0x20);
+    switch (type) {
+    case 1:
+        if ((*record & 1) != 0) {
+            *(unsigned long *)(record + 0x6c) = vox_size1_odd_6c;
+            *(unsigned long *)(record + 0x70) = vox_size1_odd_70;
+            *(unsigned long *)(record + 0x7c) = vox_size1_odd_7c;
+            *(unsigned long *)(record + 0x74) = vox_shared_74;
+            *(unsigned long *)(record + 0x78) = vox_shared_78;
+            return;
+        }
+        *(unsigned long *)(record + 0x6c) = vox_size1_aligned_6c;
+        *(unsigned long *)(record + 0x70) = vox_size1_aligned_70;
+        *(unsigned long *)(record + 0x7c) = vox_size1_aligned_7c;
+        break;
+    case 2:
+        if ((*record & 1) != 0) {
+            *(unsigned long *)(record + 0x6c) = vox_size2_odd_6c;
+            *(unsigned long *)(record + 0x70) = vox_size2_odd_70;
+            *(unsigned long *)(record + 0x7c) = vox_size2_odd_7c;
+            *(unsigned long *)(record + 0x74) = vox_shared_74;
+            *(unsigned long *)(record + 0x78) = vox_shared_78;
+            return;
+        }
+        *(unsigned long *)(record + 0x6c) = vox_size2_aligned_6c;
+        *(unsigned long *)(record + 0x70) = vox_size2_aligned_70;
+        *(unsigned long *)(record + 0x7c) = vox_size2_aligned_7c;
+        *(unsigned long *)(record + 0x74) = vox_shared_74;
+        *(unsigned long *)(record + 0x78) = vox_shared_78;
+        return;
+    default:
+        break;
+    }
+    *(unsigned long *)(record + 0x74) = vox_shared_74;
+    *(unsigned long *)(record + 0x78) = vox_shared_78;
+}

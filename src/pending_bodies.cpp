@@ -1314,27 +1314,29 @@ void Unk9BE618::unk_call() {
 
 // ?init_class@Caviar@@QAAHXZ at 0x006185A0 is HOMED into src/caviar.cpp
 // (a real RAII body over BasePop), so its forwarder is gone - the linker
-// enforces that. The three voxel-engine seams its body calls are still
-// pending, declared in caviar.h:
+// enforces that. The three voxel-engine entry points it calls are now HOMED
+// THERE TOO (0x006392E0 vox_init_callbacks, 0x0063AF60
+// vox_fill_colour_table, 0x006393C0 vox_create_record), so their forwarders
+// are gone as well. What is still pending are the CALLEES those bodies
+// reach, declared in src/caviar.cpp beside them:
 
-// sub_6392E0 - see caviar.h
-char __cdecl vox_init_callbacks(unsigned long *callbacks, int flag) {
-    typedef char(__cdecl *pending)(unsigned long *, int);
-    return PENDING_BODY(0x006392E0, pending)(callbacks, flag);
+// sub_639390 - stages a message string into the engine's buffer at 0x9C0D60.
+extern "C" void __cdecl sub_639390(const char *message) {
+    typedef void(__cdecl *pending)(const char *);
+    PENDING_BODY(0x00639390, pending)(message);
 }
 
-// sub_63AF60 - see caviar.h
-void __cdecl vox_fill_colour_table(void *table, unsigned long value,
-                                   unsigned long count) {
-    typedef void(__cdecl *pending)(void *, unsigned long, unsigned long);
-    PENDING_BODY(0x0063AF60, pending)(table, value, count);
+// sub_63AD60 - per-rank record init for CPU ranks 1, 2, 4.
+extern "C" void __cdecl sub_63ad60(unsigned char *record) {
+    typedef void(__cdecl *pending)(unsigned char *);
+    PENDING_BODY(0x0063AD60, pending)(record);
 }
 
-// sub_6393C0 - see caviar.h
-unsigned long __cdecl vox_create_record(int a1, void *a2, void *a3, void *a4,
-                                        int a5) {
-    typedef unsigned long(__cdecl *pending)(int, void *, void *, void *, int);
-    return PENDING_BODY(0x006393C0, pending)(a1, a2, a3, a4, a5);
+// sub_63F9B0 - the post-init record check vox_create_record vets with
+// `test al, al`.
+extern "C" char __cdecl sub_63f9b0(unsigned char *record) {
+    typedef char(__cdecl *pending)(unsigned char *);
+    return PENDING_BODY(0x0063F9B0, pending)(record);
 }
 
 // ?close_class@Caviar@@QAAXXZ at 0x00618D20
