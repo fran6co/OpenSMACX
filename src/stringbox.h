@@ -40,7 +40,7 @@ class StringBox : public GraphicWin {
   // (code, pos), the Win32 WM_VSCROLL shape the image mirrors. Evidence
   // is in the bodies: BaseWin::on_scrolled does `switch (a1)` and then
   // stores a2 in field_40B10_; StringBox::on_scrolled stores a2 in
-  // field_A1C_; BaseWin::on_iface_scrolled tests `a1 != 2` and copies a2.
+  // top_line_; BaseWin::on_iface_scrolled tests `a1 != 2` and copies a2.
   // The first is switched on, the second is kept - a code and a position.
   void on_scrolled(int code, int pos);
   // 0x00629110. A REAL constructor: the image constructs its GraphicWin
@@ -53,11 +53,24 @@ class StringBox : public GraphicWin {
   void add(char *text, int index, int flag);
 
  private:
-  uint32_t field_A14_;  // 0x0a14
-  uint32_t field_A18_;
-  uint32_t field_A1C_;
+  // Draw-mode flag: 0 and on_redraw paints the whole list with one bulk
+  // Buffer::write_strings; set, it walks the visible lines individually
+  // (wrap_height / wrap_cent / wrap), honouring each entry's alignment bit.
+  uint32_t per_line_draw_;  // 0x0a14
+  // The visible-row budget. -1 from the constructor means "do not trim";
+  // add_fixup deletes oldest entries while the list measures taller than
+  // this many text lines.
+  uint32_t visible_rows_;
+  // The first visible line, kept in step with the scrollbar: on_scrolled
+  // stores the WM_VSCROLL position here, add_fixup copies the clamped
+  // position back from the Scroll after re-fitting, and on_redraw starts
+  // drawing from this entry.
+  uint32_t top_line_;
   Scroll scroll_;
-  uint32_t field_2B6C_;
+  // An optional ALTERNATE StringList. add_fixup and on_redraw both read it
+  // first and fall back to the embedded list when it is null, so measuring,
+  // trimming and drawing all target the override while one is installed.
+  uint32_t list_override_;  // 0x2b6c
   // 0x2B70. The StringList, constructed IMPLICITLY - the image inlines its
   // constructor here, which is why the image's vftable stores for StringBox
   // itself land after this block.
