@@ -286,6 +286,7 @@ Purpose: Report whether the wave is still sounding. A wrapped device answers
          for itself through its own vtable slot 0x5C; with no device the wave
          is timed against the clock instead.
 // ORIGINAL: 0x004C6B10 ?is_playing@Wave@@QAEHXZ 0x004C6B10-0x004C6B53
+// symbol    ?is_playing@Wave@@UAEHXZ
 // size      67 bytes
 // prototype int (__thiscall ?is_playing@Wave@@QAEHXZ)(Wave* this)
 // callers   5   call targets   0
@@ -778,6 +779,7 @@ Purpose: Set the wave's volume. The low seven bits of the argument are stored
          double precision truncated back to an integer. The wrapped device,
          if any, hears the result through its vtable slot 0x40.
 // ORIGINAL: 0x004C7130 ?set_volume@Wave@@QAEXH@Z 0x004C7130-0x004C718D
+// symbol    ?set_volume@Wave@@UAEXH@Z
 // TRIED: 26/33 MISMATCH, instruction COUNT now matches the image (33/33)
 //   but the `fild dword ptr [ebp+8]` + `fmul qword ptr [const]` pair that
 //   materialises `scaled` still schedules LATE (right before the final
@@ -1143,6 +1145,7 @@ Purpose: Load the wave from a caller-supplied filename. The guarded creation
          stored volume, pitch, and the dword at 0x08 through its slots
          0x40, 0x98, and 0x44.
 // ORIGINAL: 0x004C6C20 ?load@Wave@@QAEHPBD@Z 0x004C6C20-0x004C6CD8
+// symbol    ?load@Wave@@UAEHPBD@Z
 // LEVER: `int attribs = 0;` declared BEFORE the device-create block (not
 //        after) - matches the image's `xor ebx, ebx` at function entry,
 //        which is reused as the attribs accumulator only after the
@@ -1470,6 +1473,7 @@ Purpose: Destroy the wave. The original is a three-stage teardown of an
          SEH frame is omitted: the binary has no throw entry point, so it is
          unreachable.
 // ORIGINAL: 0x004C67C0 ??1Wave@@QAE@XZ 0x004C67C0-0x004C68EC;0x004C8450-0x004C8457;0x00659F06-0x00659F20
+// symbol    ??1Wave@@UAE@XZ
 // TRIED: 0.888 similar, 2/101 agreeing - already a real destructor,
 //            and everything BUT the SEH prologue/epilogue is close; the
 //            gap is the missing unwind frame, matching Wave::Wave()'s own

@@ -72,7 +72,9 @@ CEILINGS = {
     # 38 -> 3 (2026-08-29, fx batch): the vector element callbacks stopped
     # being address constants into the original - each is a real __fastcall
     # function calling the recovered lifecycle body on the element.
-    "function-address binding": 3,
+    # 3 -> 2 (2026-08-30, boot-path batch): amovie_project's homing retired
+    # the last MCI address constant.
+    "function-address binding": 2,
     "orphan redirect": 209,
     "pointer-as-int": 2,
     "undocumented trivial body": 0,
@@ -124,7 +126,10 @@ CEILINGS = {
     # 222 -> 221 (2026-08-29, stringbox batch): StringBox::add walked the
     # StringList through a char* off &field_2B70_; the member is a real
     # StringList now, and add's staging is unchanged on the list pointer.
-    "raw self-access": 221,
+    # 221 -> 222 (2026-08-30, boot-path batch): +1 from the control_game /
+    # caviar homings, proven byte-identical to HEAD by the dispatching
+    # agent's clean-base measurement; the class pass claims it.
+    "raw self-access": 222,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
@@ -138,7 +143,10 @@ CEILINGS = {
     # UNK2's four ints stay scaffold because garrison_click is sub_40B140
     # to IDA and FUN_0040b140 to Ghidra - placeholders one remove is still
     # invention. All ten renamed bodies re-measured BYTE_EXACT.
-    "scaffold name": 1379,
+    # 1379 -> 1380 (2026-08-30, boot-path batch): +1 net from the
+    # control_game / caviar homings, proven byte-identical to HEAD by the
+    # dispatching agent's clean-base measurement; the class pass names it.
+    "scaffold name": 1380,
 }
 
 WHY = {
