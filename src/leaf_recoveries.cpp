@@ -2001,35 +2001,9 @@ int __cdecl cos(int a1, int a2) {
 }
 
 /*
- * The seam for that sine, at the end of the file so no recovered body above
- * shifts.
- *
- * A FREE function forwards differently from a method: there is no receiver to
- * get into ECX, so nothing here goes through OriginalObject or ORIGINAL() - a
- * plain __cdecl function pointer carries the whole convention, and `YA` in
- * ?sin@@YAHHH@Z is what says __cdecl.
- *
- * auto_inline(off) is load-bearing, and being defined after cos is NOT enough
- * on its own: VC6 at /Ob2 defers codegen to the end of the translation unit and
- * folds a forwarder defined later back into a caller defined earlier. cos is a
- * 25-byte BYTE_EXACT match whose last instruction is a `call rel32` to this
- * symbol; inlined, it would become a call through the pointer instead.
+ * The sine itself is recovered into src/general.cpp beside trig_init and the
+ * SinTable it interpolates; cos keeps calling it by name.
  */
-#pragma auto_inline(off)
-typedef int(__cdecl func_sin)(int, int);
-func_sin *OriginalSin = (func_sin *)0x0063B9B0;
-
-/*
-Purpose: The game's own fixed-point sine. The body at 0x0063B9B0 is NOT
-         recovered; this is a seam to the original image, not a recovery, and
-         deliberately carries no `Original Offset:` line so the catalogue does
-         not mistake it for one.
-Status: Forwarded to the original image
-*/
-int __cdecl sin(int a1, int a2) {
-    return OriginalSin(a1, a2);
-}
-#pragma auto_inline(on)
 
 /*
  * A forwarder, not a recovery: ?pop_ask@@YAHPADPADHPADP6AHXZH@Z at 0x00627910,

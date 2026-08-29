@@ -2109,10 +2109,70 @@ Purpose: Fill SinTable, the 256-entry fixed-point sine table the game's own
 Return Value: n/a
 Status: Complete
 */
-// The game's own fixed-point sine, an int overload of the CRT's double
-// sin(double) - the mangled name ?sin@@YAHHH@Z says both. Not recovered; the
-// definition is the seam forwarder in leaf_recoveries.cpp.
-int __cdecl sin(int angle, int scale);
+/*
+// ORIGINAL: 0x0063B9B0 ?sin@@YAHHH@Z 0x0063B9B0-0x0063BABB BYTE_EXACT
+// PROMOTED 2026-08-30 from src/unrecovered/0063b9b0.cpp: the edi pressure came
+// from NAMING the second table value. Loading SinTable[index + 1] straight
+// into the expression that subtracts t0 gives the value's whole life to eax,
+// and shifting `scale` in place before the loads (not at the use) puts the
+// `sar edx, N` where the image has it.
+// size      267 bytes
+// prototype
+// callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+int __cdecl sin(int angle, int scale) {
+    if (angle & 0x80000000) {
+        scale = -scale;
+    }
+    const int quad = angle & 0x40000000;
+    const int masked = angle & 0x3fffffff;
+    const int index = masked >> 22;
+    // The table loads are spelled in BOTH arms and let the compiler CSE them
+    // to the merge point after the quadrant test - the image's order is test,
+    // load t0, load t1, branch, which is what frees esi for t0.
+    if (scale < 0xffff) {
+        if (quad != 0) {
+            const int t0 = SinTable[index];
+            return (((SinTable[index + 1] - t0) * (masked & 0x3fffff) >> 22)
+                     - t0 + 0xffff)
+                   * scale
+                   >> 16;
+        }
+        const int t0 = SinTable[index];
+        return (((SinTable[index + 1] - t0) * (masked & 0x3fffff) >> 22) + t0)
+               * scale
+               >> 16;
+    }
+    if (scale < 0xffffff) {
+        scale >>= 8;
+        if (quad != 0) {
+            const int t0 = SinTable[index];
+            return (((SinTable[index + 1] - t0) * (masked & 0x3fffff) >> 22)
+                     - t0 + 0xffff)
+                   * scale
+                   >> 8;
+        }
+        const int t0 = SinTable[index];
+        return (((SinTable[index + 1] - t0) * (masked & 0x3fffff) >> 22) + t0)
+               * scale
+               >> 8;
+    }
+    scale >>= 16;
+    if (quad != 0) {
+        const int t0 = SinTable[index];
+        return (((SinTable[index + 1] - t0) * (masked & 0x3fffff) >> 22)
+                 - t0 + 0xffff)
+               * scale;
+    }
+    const int t0 = SinTable[index];
+    return (((SinTable[index + 1] - t0) * (masked & 0x3fffff) >> 22) + t0)
+           * scale;
+}
 
 int SinTable[256]; // 0x009BE6DC
 int __cdecl trig_init() {
