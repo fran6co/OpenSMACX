@@ -765,7 +765,11 @@ void *__fastcall scalar_delete_sub_448390(void *self, void *,
     // THE METHOD, not the redirect: `nullptr` for the redirect's unused
     // second argument materialises `xor edx, edx`, which the image does not
     // emit. Same fix as SelectPartWin::close.
-    reinterpret_cast<Ambience *>(self)->~Ambience();
+    // QUALIFIED: Sound's destructor is virtual since the sound family
+    // declared its real virtual set, so the unqualified `~Ambience()`
+    // dispatched through the vtable (a `push 0` and an indirect call the
+    // image's direct `call` to the complete destructor never has).
+    reinterpret_cast<Ambience *>(self)->Ambience::~Ambience();
     if (arg0 & 1) {
         operator delete(self);
     }
@@ -1459,7 +1463,11 @@ void *__fastcall scalar_delete_ambience(void *self, void *,
     // THE METHOD, not the redirect: `nullptr` for the redirect's unused
     // second argument materialises `xor edx, edx`, which the image does not
     // emit. Same fix as SelectPartWin::close.
-    reinterpret_cast<Ambience *>(self)->~Ambience();
+    // QUALIFIED: Sound's destructor is virtual since the sound family
+    // declared its real virtual set, so the unqualified `~Ambience()`
+    // dispatched through the vtable (a `push 0` and an indirect call the
+    // image's direct `call` to the complete destructor never has).
+    reinterpret_cast<Ambience *>(self)->Ambience::~Ambience();
     if (arg0 & 1) {
         operator delete(self);
     }

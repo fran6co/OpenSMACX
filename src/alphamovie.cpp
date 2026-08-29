@@ -18,10 +18,13 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "alphamovie.h"
+#include "alpha.h"  // prefs_get
+#include "general.h"  // filefind_get
 #include "graphicwin.h"
 #include "filewin.h"
 #include "spritebox.h"
 #include "net_class.h"
+#include "uv2player.h"  // amovie_project's player
 
 // Not independently claimed here (0x005FFD80 is not in this batch; a
 // staged, unclaimed transcription already exists at
@@ -38,6 +41,23 @@ MCIVideo::MCIVideo() {
     field_8_ = 0;
     field_C_ = 0;
     field_468_ = 0;
+}
+
+/*
+Purpose: Shut the MCI device down; the palette member is destroyed by the
+         compiler after the body.
+// ORIGINAL: 0x004042C0 ??1MCIVideo@@QAE@XZ 0x004042C0-0x00404309;0x006506F0-0x00650705 FILE BYTE_EXACT
+// size      94 bytes
+// prototype void (__thiscall ??1MCIVideo@@QAE@XZ)(MCIVideo* this)
+// callers   1   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005FE2E0 0x005FFDB0
+Return Value: n/a
+Status: Complete
+*/
+MCIVideo::~MCIVideo() {
+    close();
 }
 
 const uint32_t AlphaMoviePrimaryVtable = 0x00669458;
@@ -272,3 +292,131 @@ Purpose: Step the receiver back to the subobject ??_GAlphaMovie@@UAEPAXI@Z
 Return Value: the forwarded call's
 Status: Complete
 */
+
+/*
+Purpose: Play the opening movie. Builds the player and a stack window dressed
+         as an AlphaMovie, then hunts for the movie as a .wve under movies\,
+         a .wve under the game directory, a .avi under movies\, and a .avi
+         under the game directory - the last two only when the Firaxis
+         preference is set - playing the first file found and tearing the
+         objects down on every path out.
+// ORIGINAL: 0x00403BE0 ?amovie_project@@YAXPAD@Z 0x00403BE0-0x0040400D;0x006505E0-0x006506DC FILE
+// size      1321 bytes
+// prototype
+// callers   5   call targets   16
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00404070 0x004042C0 0x004BEA30 0x004BEA50 0x004BF400 0x0059DB40 0x005D4CF0 0x005D4DD0 0x005D4E40 0x005D7410 0x005FE2E0 0x005FFD80 0x005FFDB0 0x006005D0 0x00645470 0x00645550
+// LEVER: the frame is three REAL locals - UV2Player at ebp-0x1f0c,
+//   GraphicWin at ebp-0x10a4, MCIVideo at ebp-0x690 - built by their own
+//   constructors, and the teardown per path is the compiler's: each return
+//   destroys video, win, player in reverse order, which is why the image
+//   repeats the dtor sequences per path instead of tail-merging them. The
+//   tail's `call 0x4bf400` (UV2Player::close) then `call 0x5d7410`
+//   (~Buffer on player.buffer_) is ~UV2Player itself, already BYTE_EXACT at
+//   0x004043D0 - the image inlines it here.
+// STRUCTURE: the stack GraphicWin is DRESSED AS AN ALPHAMOVIE. The image
+//   overwrites the window's two vtable pointers (primary 0x00669458, Buffer
+//   subobject at +0x444 with 0x00669450 - AlphaMovie's, NOT GraphicWin's
+//   0x66fc50/0x66fc48) and dispatches AlphaMovie::exec on it; the mciVideo_
+//   slot the exec reaches at +0xa14 coincides exactly with the MCIVideo
+//   local at ebp-0x690. The wve paths tear the MCIVideo down through
+//   ??1MCIVideo (0x004042c0); the avi paths spell the same thing out
+//   (close, close, ~Palette, ~GraphicWin) because VC6 inlined the dtor
+//   there and called it on the wve paths.
+// TRIED: this body - real locals, per-path returns, explicit vtable
+//   reinstall after each play. Measured 8 of 247, compiled 159 instructions
+//   against the image's 247. The image's prologue pushes a REAL SEH
+//   scopetable (0x006506d2, the flags' `frame`; the cold span
+//   0x006505e0-0x006506dc is the handler/funclet region) and keeps an EBP
+//   frame; this body compiles under the best-scoring flag set to an
+//   ESP frame whose EH record pushes a null scopetable, so every
+//   ebp-relative encoding diverges and the unwind funclets are missing
+//   entirely. Reproducing it needs the playback guarded by structured
+//   exception handling, which the spelled body does not have.
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl amovie_project(char *movie) {
+    UV2Player player;
+    GraphicWin win;
+    MCIVideo video;
+    char movie_path[260];
+    char movie_file[208];
+
+    // The image turns the stack GraphicWin into an AlphaMovie for the length
+    // of the playback: it overwrites the window's two vtable pointers with
+    // AlphaMovie's (primary 0x00669458, Buffer subobject at +0x444 with
+    // 0x00669450), then dispatches AlphaMovie::exec through the object, and
+    // re-installs the pair after every play. No C++ declaration can express a
+    // base vtable swap, so the stores are spelled the way
+    // GraphicWin::construct spells its own.
+    *reinterpret_cast<uint32_t *>(&win) = AlphaMoviePrimaryVtable;
+    reinterpret_cast<uint32_t *>(&win)[0x444 / 4] = AlphaMovieBufferVtable;
+
+    movie_path[0] = 0;
+    strcat(movie_path, "movies\\");
+    strcat(movie_path, movie);
+    movie_file[0] = 0;
+    strcat(movie_file, movie_path);
+    strcat(movie_file, ".wve");
+    char *found = filefind_get(movie_file);
+    if (found != 0) {
+        player.exec(found, 0x280, 0x1E0, 0xC);
+        *reinterpret_cast<uint32_t *>(&win) = AlphaMoviePrimaryVtable;
+        reinterpret_cast<uint32_t *>(&win)[0x444 / 4] = AlphaMovieBufferVtable;
+        video.close();
+        win.close();
+        return;
+    }
+
+    if (prefs_get("Firaxis", 0, 0) != 0) {
+        movie_file[0] = 0;
+        strcat(movie_file, "k:\\game\\");
+        strcat(movie_file, movie_path);
+        strcat(movie_file, ".wve");
+        found = filefind_get(movie_file);
+        if (found != 0) {
+            player.exec(found, 0x280, 0x1E0, 0xC);
+            *reinterpret_cast<uint32_t *>(&win) = AlphaMoviePrimaryVtable;
+            reinterpret_cast<uint32_t *>(&win)[0x444 / 4] =
+                AlphaMovieBufferVtable;
+            video.close();
+            win.close();
+            return;
+        }
+    }
+
+    movie_file[0] = 0;
+    strcat(movie_file, movie_path);
+    strcat(movie_file, ".avi");
+    found = filefind_get(movie_file);
+    if (found != 0) {
+        static_cast<AlphaMovie *>(&win)->exec(found);
+        *reinterpret_cast<uint32_t *>(&win) = AlphaMoviePrimaryVtable;
+        reinterpret_cast<uint32_t *>(&win)[0x444 / 4] = AlphaMovieBufferVtable;
+        video.close();
+        win.close();
+        return;
+    }
+
+    if (prefs_get("Firaxis", 0, 0) != 0) {
+        movie_file[0] = 0;
+        strcat(movie_file, "k:\\game\\");
+        strcat(movie_file, movie_path);
+        strcat(movie_file, ".avi");
+        found = filefind_get(movie_file);
+        if (found != 0) {
+            static_cast<AlphaMovie *>(&win)->exec(found);
+            *reinterpret_cast<uint32_t *>(&win) = AlphaMoviePrimaryVtable;
+            reinterpret_cast<uint32_t *>(&win)[0x444 / 4] =
+                AlphaMovieBufferVtable;
+            video.close();
+            win.close();
+            return;
+        }
+    }
+
+    video.close();
+    win.close();
+}

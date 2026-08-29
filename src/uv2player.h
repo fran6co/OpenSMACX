@@ -35,6 +35,10 @@ class UV2Player {
   // protection around that call, matching the image's SEH-wrapped close()
   // before the Buffer subobject's destructor runs.
   void close();
+  // ?exec@UV2Player@@QAEHPADHHH@Z at 0x004BEA50, still an original body
+  // (src/unrecovered/004bea50.cpp); the definition in pending_bodies.cpp
+  // forwards to it. amovie_project plays the .wve opening through it.
+  int exec(char *movie_file, int width, int height, int flags);
   int UNK4();
 
   // Storage the image proves is here: its own methods reach 0xE68.

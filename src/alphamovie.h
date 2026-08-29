@@ -32,6 +32,11 @@ class MCIVideo {
  public:
   MCIVideo();  // ??0MCIVideo@@QAE@XZ  0x005FFD80
   void close();  // ?close@MCIVideo@@QAEXXZ  0x005FFDB0
+  // ??1MCIVideo@@QAE@XZ at 0x004042C0, a user destructor that calls close();
+  // the palette_ member is destroyed by the compiler after the body. The
+  // homed definition in alphamovie.cpp is what amovie_project's stack
+  // MCIVideo destroys at scope exit.
+  ~MCIVideo();
 
   // Storage the image proves is here: its own methods reach 0x474.
   // Extent only - this class carries no size assertion, and the bound is a floor.
@@ -75,6 +80,11 @@ class AlphaMovie : public ConstructedGraphicWin {
   void update();
   void close();
   AlphaMovie();
+  // ?exec@AlphaMovie@@QAEHPAD@Z at 0x00404070, still an original body
+  // (src/unrecovered/00404070.cpp); the definition in pending_bodies.cpp
+  // forwards to it. amovie_project reaches it on a stack GraphicWin it has
+  // dressed with AlphaMovie's vtables, so the forwarder is the call's target.
+  int exec(char *movie_name);
   // 0x00404310 is not recovered: a
   // pending_bodies forwarder, because an empty inline stub emits
   // nothing and the deleting destructor needs a `call rel32`.

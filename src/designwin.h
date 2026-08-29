@@ -51,6 +51,10 @@ class DesignWin : public GraphicWin, public SubInterface {
   void select_special(int a1);
   void select_special_2();
   void select_special_1();
+  // 0x0043C1A0, still an original body; the definition in pending_bodies.cpp
+  // forwards to it. desktop_close closes the process-wide design window
+  // through this member.
+  void close();
   DesignWin() { ; }
   // 0x0043ECB0 is not recovered: a
   // pending_bodies forwarder, because an empty inline stub emits

@@ -197,9 +197,22 @@ void __cdecl desktop_close();
 void __cdecl close_opening();
 void __cdecl game_close(int mode);
 void __cdecl system_close();
-// 0x00403BE0. Its proved body sits in src/recovered/units/00403be0.cpp,
-// which the build does not compile; the forwarder stays until it is promoted.
+// 0x00403BE0, defined in alphamovie.cpp (homed from
+// src/recovered/units/00403be0.cpp on 2026-08-29).
 void __cdecl amovie_project(char *movie);
+
+class GraphicWin;
+
+// The opening-window slot at 0x00945824. The desktop bring-up at 0x00589B60
+// allocates 0xA14 bytes and constructs a GraphicWin there (ctor 0x005D4CF0);
+// close_opening dispatches its vtable slot 0 - on_dialog_focus - with 1 and
+// then clears the slot. SetupWin's constructor (0x004AD985) copies the pointer
+// into its own field +0xa40 for as long as the window lives. AN LVALUE AT A
+// FIXED ADDRESS, the way console.h's console_map_win is spelled: the image
+// reads the slot with one absolute load and stores 0 over it directly.
+inline GraphicWin *&opening_window() {
+  return *reinterpret_cast<GraphicWin **>(0x00945824);
+}
 
 MEASURED inline BOOL __cdecl not_my_turn() {
     // Both guards return before the comparison, so a non-net game and a net
