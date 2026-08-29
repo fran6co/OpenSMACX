@@ -46,10 +46,19 @@ void __fastcall buffer_subobject_close(void *self) {
     reinterpret_cast<Buffer *>(self)->close();
 }
 
+void __fastcall win_subobject_destructor(void *self) {
+    // Source-owned since the body homed into win.cpp: dispatches to the
+    // recovered Win destructor rather than the raw image address 0x005EBC90,
+    // which is unmapped in a standalone build. Same move the Buffer
+    // subobject destructor above made when its body landed.
+    reinterpret_cast<Win *>(self)->Win::~Win();
+}
+
 func_subobject_destructor BufferSubobjectDestructor = original_method<func_subobject_destructor>(
     reinterpret_cast<unsigned long>(&buffer_subobject_destructor));
 func_subobject_destructor WinOriginalDestructor =
-    original_method<func_subobject_destructor>(0x005EBC90);
+    original_method<func_subobject_destructor>(
+        reinterpret_cast<unsigned long>(&win_subobject_destructor));
 func_subobject_close BufferSubobjectClose = original_method<func_subobject_close>(
     reinterpret_cast<unsigned long>(&buffer_subobject_close));
 func_subobject_close WinOriginalClose = original_method<func_subobject_close>(0x005EB640);

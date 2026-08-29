@@ -11246,6 +11246,47 @@ void Win::close() {
 
 }
 
+/*
+Purpose: Destroy a Win. The body closes the window; everything else the image
+         does is compiler-emitted teardown of the declared model - `list_`'s
+         in-class virtual destructor walks and frees the node list, and the
+         AutoSound base destructor restores the base vfptr and calls close().
+         That is also where the /GX EH scaffolding comes from: the image's
+         push -1 / fs:[0] prologue, the state variable (1 while close() and
+         the list teardown run, -1 for the base), the unwind funclets at
+         0x005F8630 / 0x005F86F0 and the funcInfo at 0x0067F8B8 (unwind map:
+         state 1 -> list teardown, state 0 -> base close). Calling close()
+         FIRST is what matches the image: member destruction happens after
+         the destructor body, exactly where the image has it.
+// ORIGINAL: 0x005EBC90 ??1Win@@QAE@XZ 0x005EBC90-0x005EBD7F;0x005F8630-0x005F863B;0x005F86F0-0x005F8767;0x00662C60-0x00662C80
+// symbol    ??1Win@@UAE@XZ
+// size      401 bytes
+// prototype void (__thiscall ??1Win@@QAE@XZ)(Win* this)
+// kind      game
+// LEVER: the whole /GX EH shape - push -1 / handler / fs:[0] chain, the
+// `mov [esp+0x14],1` then `,-1` state transitions, the cold funclets
+// (0x005F8630 base close, 0x005F86F0 list walk) and the funcInfo at
+// 0x0067F8B8 (unwind map: state 1 -> list teardown, state 0 -> base close)
+// - is compiler-emitted from the DECLARATIONS once the body is a real
+// destructor: `Win::~Win() { close(); }` against the base AutoSound (virtual
+// in-class dtor restoring 0x66FF34 and calling close) and the member `list_`
+// (in-class virtual dtor, walk inlined). First spelling measured 12/64
+// agreeing at 0.896 similarity with every call, offset and branch shape
+// already right; homing it also removed the PENDING_BODY raw jump that
+// faulted the standalone build's atexit teardown of WinBubbleWindow.
+// TRIED: nothing beyond the first spelling - the remaining gap is the
+// measured register-allocation wall this family already carries on
+// ??_GWinNodeList (marker 0x005F8770 in this file): the image zeroes into
+// edi (`push edi; xor edi,edi`, counter in a late-pushed ebx) where this
+// build picks ebx for the zero (`push ebx; xor ebx,ebx`, counter in edi),
+// and the guard compares (`mov eax,[esi+0xDC]; cmp eax,edi` vs
+// `cmp dword ptr [esi+0xDC],ebx`) plus the loop-top `head_` reload follow
+// from that one choice. Receiver-spill-wall fingerprint; not re-ground.
+*/
+Win::~Win() {
+    close();
+}
+
 // ===== homed from src/unrecovered/005f2290.cpp =====
 
 void __cdecl Win::OnMouseMove(void * hwnd, int x, int y, unsigned int keys) {

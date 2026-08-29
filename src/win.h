@@ -197,12 +197,11 @@ class Win : public AutoSound {
   // STATIC, not the `QAA` member the census reconstructs: the body at
   // 0x005F04E0 reads no receiver, and its one caller sets up no ecx.
   static void close_class();   // 0x005F04E0
-  // DECLARED, NOT DEFINED EMPTY. The real destructor is at 0x005EBC90, and it
-  // ends `ret` rather than `ret 4` - it takes no vbase flag - so a direct call
-  // to it is reachable, unlike RadioButton's. An empty inline body compiles
-  // every call away, which is why `??_GWin` emitted `call dword ptr [...]`
-  // through a seam where the image emits `call rel32`. Forwarded in
-  // `pending_bodies.cpp` until its body lands.
+  // The real destructor is at 0x005EBC90, and it ends `ret` rather than
+  // `ret 4` - it takes no vbase flag - so a direct call to it is reachable,
+  // unlike RadioButton's. An empty inline body compiles every call away,
+  // which is why `??_GWin` emitted `call dword ptr [...]` through a seam
+  // where the image emits `call rel32`. Body homed in `win.cpp`.
   ~Win();
 
 

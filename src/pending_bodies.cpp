@@ -253,12 +253,9 @@ void __cdecl consider_designs(uint32_t faction_id) {
     PENDING_BODY(0x00581260, pending)(faction_id);
 }
 
-// ??1Win@@UAE@XZ at 0x005EBC90 - the destructor the scalar deleting thunks
-// call. See the note in `win.h`.
-Win::~Win() {
-    typedef void(__fastcall *pending)(Win *, void *);
-    PENDING_BODY(0x005EBC90, pending)(this, nullptr);
-}
+// `Win::~Win` WAS HERE, forwarding to 0x005EBC90. Homed into `win.cpp`
+// 2026-08-29; the linker (LNK2005) enforced it exactly as the note at the
+// top of this file says it would.
 
 // ??1Popup@@UAE@XZ at 0x00406C00 - reached by `??_GPopup` and by one guarded
 // teardown. See the note in `popup.h`.
