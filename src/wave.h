@@ -152,6 +152,10 @@ class Wave : public Sound {
   uint32_t group_slot_;          // 0x68, pulled from its device group when < 0x10
 };
 
+// The process-wide wave, at the fixed address wave.cpp pins it to. Declared
+// here so control_game (game.cpp) reaches it by name.
+extern Wave g_WAVE_GENERAL;  // 0x00945ED0
+
 static_assert(sizeof(Wave) == 0x6C, "Wave layout must match terranx.exe");
 
 

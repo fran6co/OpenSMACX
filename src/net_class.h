@@ -123,6 +123,12 @@ class Net {
   void check_polling();
 
  public:
+  // 0x0062D9E0, a pending_bodies forwarder. control_game (game.cpp) calls it
+  // once at boot with the command line and the DirectPlay application GUID.
+  int check_for_lobby(char *app_name, _GUID *guid, int option_a,
+                      int option_b);
+
+ public:
   Net();
   ~Net();
   int poll_players(int);

@@ -747,7 +747,7 @@ Return Value: n/a
 Status: Complete
 */
 void Console::on_sys_close() {
-    *ConsoleExitTurnLoop = 1;
+    ExitTurnLoop = 1;
 }
 
 /*

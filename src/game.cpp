@@ -21,11 +21,16 @@
 #include "game.h"
 #include "alpha.h"
 #include "base.h"
+#include "console.h"  // ConsoleGlobal
 #include "faction.h"
+#include "fx.h"  // g_FX
 #include "general.h"
 #include "map.h"
+#include "main.h"  // CommandLineText
 #include "mapwin.h" // draw_tile
+#include "netdaemon.h"  // NetDaemonNet
 #include "veh.h"
+#include "wave.h"  // g_WAVE_GENERAL
 
 BOOL ExpansionEnabled;  // 0x009A6488
 uint32_t GamePreferences;  // 0x009A6490
@@ -48,7 +53,7 @@ uint32_t MountPlanetY;  // 0x009A6808
 int DustCloudDuration;  // 0x009A680C
 BOOL IsMultiplayerNet;  // 0x0093F660 // DirectPlay - Serial, Modem, Internet (TCP/IP)
 BOOL IsMultiplayerPBEM;  // 0x0093A95C // HotSeat / PBEM
-uint8_t NetTurnFlags;  // 0x009A681C
+uint32_t NetTurnFlags;  // 0x009A681C
 int NetTurnFaction;  // 0x009A6820
 
 /*
@@ -843,3 +848,210 @@ Status: Complete
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
 
+
+// ---------------------------------------------------------------------------
+// The main loop.
+// ---------------------------------------------------------------------------
+
+// The four unnamed globals the loop drives; addresses and roles documented in
+// game.h next to each declaration.
+int GameRestartQueued;  // 0x0093A948
+int FocusVehId;         // 0x00939290
+int ExitTurnLoop;       // 0x009B2068
+int ControlTurnPhase;   // 0x009B2070
+char SaveGameFileName[0x104];  // 0x0093AA0C
+char SaveNameBuffer[0x104];    // 0x009B2078
+
+// The window the loop paints colour 9 over and hides while the game boots,
+// showing it again for a PBEM session. A fixed-address object the image names
+// with `mov ecx, 0x937118`; its class is not recovered - the artifacts reach
+// it as a GraphicWin (fill) and a Win (show/hide), which is what this binding
+// says. Namespace-scope `const`, so VC6 folds it to the image's immediate.
+GraphicWin *const CoverWindow = (GraphicWin *)0x00937118;
+
+// 0x00689218 - the DirectPlay application GUID the lobby check registers the
+// session under, bytes read off the image. The trailing words spell "DEST".
+static const GUID LobbyAppGuid = {0x02D1B480, 0xD680, 0x11D0,
+                                  {0x82, 0x1E, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}};
+
+/*
+Purpose: Run the game. Brings the system and game up, decides the intro
+         movie, then turns the wheel: menu or multiplayer handshake, desktop,
+         one turn, teardown - until nothing queues another game.
+// ORIGINAL: 0x0052AA30 ?control_game@@YAXXZ 0x0052AA30-0x0052AD2D FILE
+// TRIED: MISMATCH #4 push/call - straight g_* global derefs and direct member calls gave the allocator no reason to hold ebx/esi/edi live across the whole body the way the original's cached fn-ptr (ebx) and zero/flag temps (esi/edi) do.
+// LEVER: /Oy- flag set, not /O2 alone - the image keeps the ebp frame, and
+// under /Oy- this body's prologue, spills ([ebp-8] for lobby_status) and
+// tail all line up (2026-08-29: 19/215, best-similar set).
+// LEVER: a `short (__stdcall *)(int)` local seeded once from GetAsyncKeyState
+// is what holds the import across both Shift tests; a straight
+// GetAsyncKeyState(x) at each site costs the load twice.
+// LEVER: the loop clears lobby_status after the menu/multiplayer branch
+// (`mov [ebp-8], esi` at 0x0052AC7D) - only the first pass runs the lobby
+// handshake. The first transcription dropped that store; without it the
+// image's re-read of [ebp-8] has no writer. NetTurnFlags went uint8_t ->
+// uint32_t on the same pass: the image clears it with a whole dword.
+// TRIED: `int window_flags = 0x8C0;` before the loop, volatile RMW, and the
+// bare literal - all fold to `or reg, 0x8c0` where the image materializes
+// 0x8C0 into a dead callee-saved register before the loop (`mov ebx, 0x8c0`
+// at 0x0052AB8D) and ors through it at 0x0052ACDD. Not reached from source.
+// TRIED: this tree's VC6 caches the literal 1 in a callee-saved register
+// from the first `game_init(0, 1)` (`mov edi, 1` ahead of the prologue
+// pushes) where the image pushes the immediate every time; spelling the call
+// args, dropping the window_flags local, and both flag families leave it
+// unchanged.
+Status: homed from src/unrecovered/0052aa30.cpp on 2026-08-29. MISMATCH
+        against the best-similar flag set, /O2 /Gy /GR- /Oy- /GX; the
+        remaining runs are register-role permutation (image ebx/esi/edi =
+        fn-ptr+0x8C0/zero/found-to-minus-1; this tree shifts the roles) and
+        the two TRIED folds. Callees still original are forwarders in
+        pending_bodies.cpp.
+*/
+void __cdecl control_game() {
+    // The image loads the import once into a callee-saved register and calls
+    // it twice (Shift before filefind, Shift before FX::init).
+    typedef short(__stdcall *get_key_state_fn)(int);
+    get_key_state_fn get_key_state;
+
+    int lobby_status;
+    HKEY hkey;
+    unsigned long value_type;
+    unsigned char value_data[12];
+    int is_complete;
+    int movie_disabled;
+    unsigned long value_length;
+
+    if (system_init() != 0) {
+        return;
+    }
+    if (game_init(0, 1) != 0) {
+        return;
+    }
+
+    GameRestartQueued = 0;
+    WorldClimateSkipTerrainClear = 1;
+    ExitTurnLoop = 0;
+    IsMultiplayerNet = 0;
+    lobby_status = NetDaemonNet->Net::check_for_lobby(CommandLineText,
+                                                      const_cast<_GUID *>(&LobbyAppGuid), 3, 9);
+    get_key_state = GetAsyncKeyState;
+
+    if (lobby_status == 0) {
+        // Holding Shift skips the lobby's "is the intro complete" registry
+        // look-up and takes the movie path directly.
+        if (HIBYTE(get_key_state(VK_SHIFT)) == 0) {
+            is_complete = 0;
+            if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+                              "SOFTWARE\\Microsoft\\DirectPlay\\Applications\\"
+                              "Sid Meier's Alpha Centauri",
+                              0, 0, &hkey) == 0) {
+                value_length = 10;
+                if (RegQueryValueExA(hkey, "Complete", 0, &value_type, value_data,
+                                     &value_length) == 0
+                    && _strcmpi((const char *)value_data, "Yes") == 0) {
+                    is_complete = 1;
+                }
+                RegCloseKey(hkey);
+            }
+        } else {
+            is_complete = 1;
+        }
+        filefind_init("movies\\virtualWorld.wve", is_complete);
+
+        prefs_load(0);
+        GamePreferences = AlphaIniPrefs->preferences;
+        movie_disabled = prefs_get("DisableOpeningMovie", 0, 0);
+        prefs_put("DisableOpeningMovie", movie_disabled, 0);
+        if (movie_disabled == 0 && (GamePreferences & 0x10000000) != 0) {
+            amovie_project("openingx");
+        }
+    }
+
+    if ((get_key_state(VK_SHIFT) & 0x8000) == 0) {
+        g_FX.init();
+    }
+    for (;;) {
+        if (GameRestartQueued != 0) {
+            if (g_WAVE_GENERAL.Wave::is_playing() != 0) {
+                g_WAVE_GENERAL.Sound::fade(2000);
+            }
+            ConsoleGlobal->Win::hide();
+            do_all_draws();
+            strcpy(SaveNameBuffer, SaveGameFileName);
+            filefind_set_alternative(SaveNameBuffer);
+            if (game_reload(0, 1) != 0) {
+                goto close_game;
+            }
+            VehCurrentCount = 0;
+            setup_game(1);
+            GameRules = AlphaIniPrefs->rules;
+            NetTurnFlags = 0;
+        }
+
+        GameRestartQueued = 0;
+        WorldClimateSkipTerrainClear = 1;
+        ExitTurnLoop = 0;
+        IsMultiplayerNet = 0;
+        flush_input();
+        if (lobby_status == 0) {
+            if (top_menu(0) != 0) {
+                goto close_opening;
+            }
+        } else {
+            prefs_load(0);
+            prefs_use();
+            if (multiplayer_init(1) != 0) {
+                goto close_opening;
+            }
+        }
+
+        // Only the first pass runs the lobby handshake; after the menu or the
+        // multiplayer branch the loop clears it and every later pass comes
+        // through top_menu.
+        lobby_status = 0;
+
+        if (IsMultiplayerPBEM != 0) {
+            CoverWindow->fill(0);
+            CoverWindow->Win::show(0);
+        } else {
+            CoverWindow->fill(9);
+            CoverWindow->Win::hide();
+        }
+        if (desktop_init(ControlTurnPhase == 0) != 0) {
+            goto close_opening;
+        }
+        {
+            // The image loads the primary map-window slot before it stores
+            // the skip flag, then ors the live-flag dword through a register.
+            // The flag dword sits above the mapped fields; raw offset, the
+            // way draw_tile reads its neighbour.
+            MapWin *const primary_window = MapWinTable[0];
+            WorldClimateSkipTerrainClear = 0;
+            uint32_t flags = *reinterpret_cast<volatile uint32_t *>(
+                reinterpret_cast<uint8_t *>(primary_window) + 0x1DD70);
+            // The image materializes 0x8C0 into a dead callee-saved
+            // register before the loop and ors through it; every spelling of
+            // that constant this tree has tried folds to the immediate
+            // instead (TRIED: note under the marker).
+            flags |= 0x8C0;
+            *reinterpret_cast<volatile uint32_t *>(
+                reinterpret_cast<uint8_t *>(primary_window) + 0x1DD70) = flags;
+        }
+        FocusVehId = -1;
+        if (IsMultiplayerNet != 0) {
+            net_control_turn();
+        } else {
+            control_turn();
+        }
+        desktop_close();
+        if (GameRestartQueued == 0) {
+            goto close_game;
+        }
+    }
+
+close_opening:
+    close_opening();
+close_game:
+    game_close(0);
+    system_close();
+}

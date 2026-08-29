@@ -424,6 +424,10 @@ void __cdecl world_rivers();                    // 0x005C38B0
 // ?world_climate@@YAXXZ at 0x005C5A30 - still an original body, behind a
 // forwarder in src/pending_bodies.cpp. See draw_map in mapwin.h.
 void __cdecl world_climate();
+
+// The skip flag world_climate tests (map.cpp defines both of the pair it
+// reads); control_game (game.cpp) sets and clears it around each turn.
+extern uint32_t WorldClimateSkipTerrainClear;  // 0x0068F21C
 // ?custom_planet@@YAHHH@Z at 0x0058C2A0 - still an original body, behind a
 // forwarder in src/pending_bodies.cpp. It has a second span at
 // 0x006605A5-0x006607D7, which is why it is a long way from being promoted.
