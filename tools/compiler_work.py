@@ -166,7 +166,11 @@ SCAFFOLD_CEILINGS = {
     "field_accessors.cpp markers": 42,
     "leaf_recoveries.cpp markers": 52,
     "nullsub_thunks.cpp markers": 56,
-    "PENDING_BODY forwarders": 222,
+    # 222 -> 235 (2026-08-29, boot-path batch): sanctioned coverage growth,
+    # not drift - homing control_game declared 16 seams for its unrecovered
+    # callees and Caviar::init_class three (vox_*); their retirement is the
+    # next batches' work.
+    "PENDING_BODY forwarders": 235,
     # 1334 -> 1333 (2026-08-29, lifecycle-retirement batch): the archived
     # global_lifecycle.cpp went away with the thunks it recorded.
     "artifact files (recovered/)": 1333,
