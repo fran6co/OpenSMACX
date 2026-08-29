@@ -281,8 +281,10 @@ extern IDirectDrawPalette *DirectDrawPalette;
 
 /*
  * The process palette, at 0x0094C590 in the image. The name is the image's
- * own: its dynamic initialiser is `??__Eg_PALETTE1@@YAXXZ`, recovered in
- * src/init_thunks.cpp, and its teardown `??__Fg_PALETTE1@@YAXXZ`.
+ * own: its dynamic initialiser `??__Eg_PALETTE1@@YAXXZ` and teardown
+ * `??__Fg_PALETTE1@@YAXXZ` were recovered and have since been retired - the
+ * CRT owns both halves for the real object (construction before WinMain,
+ * atexit destruction at exit).
  *
  * AN OBJECT, NOT A `Palette *` TO A FIXED ADDRESS. Both spellings name the
  * same storage while the DLL is injected into the shipped image, but they are

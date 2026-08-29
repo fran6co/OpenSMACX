@@ -200,3 +200,6 @@ extern Font *FontDefault;
  */
 extern LPCSTR DefaultFontFace;
 
+// 0x007D3948 in the image - the single game-wide font, initialised by
+// WinMain and closed at exit.
+extern Font g_JACKAL_FONT;

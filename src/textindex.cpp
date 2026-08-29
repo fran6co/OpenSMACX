@@ -226,3 +226,11 @@ void __cdecl text_make_index(LPCSTR source_txt) {
 // loop rather than calling it, same reason as `text_get_source` and
 // neighbours in text.h. VC6 still emits this address as its own COMDAT for
 // the claim above, which is what the comparison pulls out.
+
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit.
+TextIndex TxtIndexGlobal[4];  // 0x009B7D08, 0x118 stride

@@ -24,7 +24,6 @@
 #include "general.h"   // mem_get, for the placeholder pixel
 #include "filewin.h"
 #include "spritebox.h"
-#include "guarded_teardowns.h"
 #include <stdlib.h>
 
 /*
@@ -253,13 +252,15 @@ Status: Complete
 // rather than minting a second name for the same storage.
 static const char *const JackalPcxPath = (const char *)0x00698CAC;
 
+Sprite g_BLANK_SPRITE;  // 0x009BEAE8 - the create_blank scratch sprite
+
 int __cdecl sub_63ce20() {
     Buffer buf;
     int result;
     if (buf.load_pcx(JackalPcxPath, 0, 10, 0xec) != 0) {
-        result = TeardownObject009BEAE8->create_blank(0x10, 0x10, 9);
+        result = g_BLANK_SPRITE.create_blank(0x10, 0x10, 9);
     } else {
-        result = TeardownObject009BEAE8->extract(&buf, 9, 1, 0x12, 0x10, 0x10, 0);
+        result = g_BLANK_SPRITE.extract(&buf, 9, 1, 0x12, 0x10, 0x10, 0);
     }
     return result;
 }
@@ -345,3 +346,207 @@ int Sprite::create_blank(int width, int height, int depth) {
     pcBits_ = reinterpret_cast<int>(mem_get(1));
     return pcBits_ ? 0 : 4;
 }
+
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit. Addresses of
+// the ones documented individually live beside their definitions.
+Sprite g_UNUSED_SPRITE_VAR02;  // 0x006A7130
+Sprite g_UNUSED_SPRITE_VAR11;  // 0x006A72E0
+Sprite g_UNUSED_SPRITE_VAR06;  // 0x006A71F0
+Sprite g_UNUSED_SPRITE_VAR09;  // 0x006A7280
+Sprite g_UNUSED_SPRITE_VAR21;  // 0x006A74C0
+Sprite g_UNUSED_SPRITE_VAR05;  // 0x006A71C0
+Sprite g_UNUSED_SPRITE_VAR08;  // 0x006A7250
+Sprite g_UNUSED_SPRITE_VAR04;  // 0x006A7190
+Sprite g_UNUSED_SPRITE_VAR01;  // 0x006A7100
+Sprite g_UNUSED_SPRITE_VAR18;  // 0x006A7430
+Sprite g_UNUSED_SPRITE_VAR03;  // 0x006A7160
+Sprite g_UNUSED_SPRITE_VAR20;  // 0x006A7490
+Sprite g_UNUSED_SPRITE_VAR16;  // 0x006A73D0
+Sprite g_UNUSED_SPRITE_VAR14;  // 0x006A7370
+Sprite g_UNUSED_SPRITE_VAR22;  // 0x006A74F0
+Sprite g_UNUSED_SPRITE_VAR10;  // 0x006A72B0
+Sprite g_UNUSED_SPRITE_VAR15;  // 0x006A73A0
+Sprite g_UNUSED_SPRITE_VAR13;  // 0x006A7340
+Sprite g_UNUSED_SPRITE_VAR17;  // 0x006A7400
+Sprite g_UNUSED_SPRITE_VAR19;  // 0x006A7460
+Sprite g_UNUSED_SPRITE_VAR12;  // 0x006A7310
+Sprite g_UNUSED_SPRITE_VAR07;  // 0x006A7220
+Sprite g_IFACE_CLOSE_X_SPRITES[3];  // 0x007794D8, 0x2c stride
+Sprite g_IFACE_BOX_SPRITES1[51];  // 0x007AC290, 0x2c stride
+Sprite g_IFACE_BOX_SPRITES2[51];  // 0x0076DC98, 0x2c stride
+Sprite g_IFACE_BOX_SPRITES3[51];  // 0x0078AE58, 0x2c stride
+Sprite g_IFACE_BOX_SPRITES4[51];  // 0x0078CC60, 0x2c stride
+Sprite g_IFACE_BOX_SPRITES5[51];  // 0x00779CB0, 0x2c stride
+Sprite g_IFACE_BOX_SPRITES6[51];  // 0x007A6978, 0x2c stride
+Sprite g_IFACE_BOX_SPRITES7[51];  // 0x0078E0A0, 0x2c stride
+Sprite g_IFACE_BOX_SPRITES8[51];  // 0x0075B950, 0x2c stride
+Sprite g_IFACE_STD_POPUPS_TOP_LEFT_SPRITE;  // 0x007921E8
+Sprite g_IFACE_STD_POPUPS_TOP_RIGHT_SPRITE;  // 0x00779478
+Sprite g_IFACE_STD_POPUPS_BOT_LEFT_SPRITE;  // 0x007AC1C0
+Sprite g_IFACE_STD_POPUPS_BOT_RIGHT_SPRITE;  // 0x007AB400
+Sprite g_IFACE_STD_POPUPS_TOP_MID_SPRITE;  // 0x007793F0
+Sprite g_IFACE_STD_POPUPS_BOT_MID_SPRITE;  // 0x007871D0
+Sprite g_IFACE_STD_POPUPS_MID_LEFT_SPRITE;  // 0x007ACFB0
+Sprite g_IFACE_STD_POPUPS_MID_RIGHT_SPRITE;  // 0x0075B058
+Sprite g_TER1_WHITE_ORG_YEL_TILE_SPRITES[6];  // 0x00791C58, 0x2c stride
+Sprite g_TER1_BOTTOM_LEFT_TILE_SPRITES[9];  // 0x007A99A0, 0x2c stride
+Sprite g_TER1_UNUSED_SPRITES2[2];  // 0x00779420, 0x2c stride
+Sprite g_TER1_MINE_SPRITE;  // 0x00776A50
+Sprite g_TER1_SOLAR_COLLECTOR_SPRITE;  // 0x007991F8
+Sprite g_TER1_TIDAL_HARNESS_SPRITE;  // 0x0078A5B0
+Sprite g_TER1_MINING_PLATFORM_SPRITE;  // 0x00789B68
+Sprite g_TER1_TUT_BLANK_SPRITE;  // 0x00798C40
+Sprite g_TER1_KELP_FARM_SPRITE;  // 0x007A6860
+Sprite g_TER1_CONDENSER_SPRITE;  // 0x00779390
+Sprite g_TER1_ECHELON_MIRROR_SPRITE;  // 0x007ABF60
+Sprite g_TER1_BOREHOLE_SPRITE;  // 0x0078DD20
+Sprite g_TER1_BOREHOLE_CLUSTER_SPRITE;  // 0x007ACB88
+Sprite g_TER1_MANIFOLD_NEXUS_SPRITES[6];  // 0x007AC098, 0x2c stride
+Sprite g_TER1WRECK_UNITY_WRECKAGE_SPRITES[15];  // 0x00776758, 0x2c stride
+Sprite g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES[4];  // 0x00799658, 0x2c stride
+Sprite g_FOSSIL_FIELD_RIDGE_SPRITES[6];  // 0x007ACD70, 0x2c stride
+Sprite g_TER1_UNUSED_SPRITES1[5];  // 0x007792B0, 0x2c stride
+Sprite g_TER1_FARM_SPRITES[5];  // 0x00791FC8, 0x2c stride
+Sprite g_TER1_SOIL_ENRICHER_SPRITES[5];  // 0x0079A710, 0x2c stride
+Sprite g_TER1_SEA_LAND_RESOURCE_SPRITES[12];  // 0x0075B230, 0x2c stride
+Sprite g_TER1_LANDMARK_RESOURCE_SPRITES[6];  // 0x0078A650, 0x2c stride
+Sprite g_GLOW_SPRITES[2];  // 0x00779770, 0x2c stride
+Sprite g_TER1_UNITY_POD_SPRITES[6];  // 0x0077AFF8, 0x2c stride
+Sprite g_TER1_MONOLITH_SPRITE;  // 0x0075B098
+Sprite g_TER1_BUNKER_SPRITE;  // 0x007AD010
+Sprite g_TER1_AIRBASE_SPRITE;  // 0x007ACC60
+Sprite g_TER1_SENSOR_ARRAY_SPRITE;  // 0x007A6830
+Sprite g_RAINFALL_DOUBLE_TILE_SPRITES[2];  // 0x007ACBB8, 0x2c stride
+Sprite g_VEH_SPRITES[152];  // 0x007777A0, 0x2c stride
+Sprite g_FLAGS_VEH_SPRITES[112];  // 0x0078B778, 0x2c stride
+Sprite g_ICONS_GENERAL_SPRITES[16];  // 0x0075B450, 0x2c stride
+Sprite g_RESOURCE_ICON_SPRITES[32];  // 0x007A72A0, 0x2c stride
+Sprite g_CITIZEN_LG_CURSOR_SPRITES[8];  // 0x0078CAD0, 0x2c stride
+Sprite g_SPECIALIST_LG_CURSOR_SPRITES[7];  // 0x007765C0, 0x2c stride
+Sprite g_CITIZEN_SM_CURSOR_SPRITES[8];  // 0x00776420, 0x2c stride
+Sprite g_SPECIALIST_SM_CURSOR_SPRITES[7];  // 0x00779B78, 0x2c stride
+Sprite g_AL_CITIZEN_LG_CURSOR_SPRITES[4];  // 0x007AD1B0, 0x2c stride
+Sprite g_AL_SPECIALIST_LG_CURSOR_SPRITES[7];  // 0x00798CD0, 0x2c stride
+Sprite g_AL_CITIZEN_SM_CURSOR_SPRITES[4];  // 0x0075B180, 0x2c stride
+Sprite g_AL_SPECIALIST_SM_CURSOR_SPRITES[7];  // 0x0075B710, 0x2c stride
+Sprite g_RED_ALIEN_HEAD_ICON_SPRITE;  // 0x00791F98
+Sprite g_SILVER_MENU_ICON_SPRITES[4];  // 0x0075AE20, 0x2c stride
+Sprite g_SILVER_CHECKBOX_ICON_SPRITES[2];  // 0x0075AF68, 0x2c stride
+Sprite g_RED_MALE_HEAD_ICON_SPRITE;  // 0x0075AD88
+Sprite g_NULL_RESOURCE_ICON_SPRITE;  // 0x0078A520
+Sprite g_PEACE_SIGN_SPRITES[2];  // 0x0075AF10, 0x2c stride
+Sprite g_ICON_TILE_SQUARE_SPRITE;  // 0x00776728
+Sprite g_XI_BOOM_VEH_SPRITES[144];  // 0x007A9B30, 0x2c stride
+Sprite g_XF_BOOM_VEH_SPRITES[64];  // 0x007AB460, 0x2c stride
+Sprite g_BATTLE_MIND_WORM_SPRITE;  // 0x00779200
+Sprite g_BATTLE_ISLE_DEEP_SPRITE;  // 0x0076DC30
+Sprite g_BATTLE_LOCUSTS_CHIRON_SPRITE;  // 0x0078A4A0
+Sprite g_BATTLE_FUNGAL_TOWER_SPRITE;  // 0x00787E70
+Sprite g_BATTLE_SPORE_LAUNCHER_SPRITE;  // 0x007AC000
+Sprite g_BATTLE_SEALURK_SPRITE;  // 0x00779570
+Sprite g_TECH_ICON_SPRITES[89];  // 0x00759E28, 0x2c stride
+Sprite g_FACILITY_ICON_SPRITES[70];  // 0x00787200, 0x2c stride
+Sprite g_SECRET_PROJECT_ICON_SPRITES[64];  // 0x00759320, 0x2c stride
+Sprite g_IFACE_MP_COMBO_ARROW_SPRITES[3];  // 0x00788038, 0x2c stride
+Sprite g_SCROLL_BAR_ARROW_ICON_SPRITES[12];  // 0x00791D88, 0x2c stride
+Sprite g_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES[12];  // 0x0078DE30, 0x2c stride
+Sprite g_SCROLL_BAR_FILLER_ICON_SPRITES;  // 0x0079A5E8
+Sprite g_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE;  // 0x007796B0
+Sprite g_IFACE_LOCK_SPRITES[2];  // 0x007AC040, 0x2c stride
+Sprite g_UNUSED_SPRITES_VAR01[8];  // 0x007A7940, 0x2c stride
+Sprite g_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE;  // 0x0078DD50
+Sprite g_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE;  // 0x00789BC8
+Sprite g_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE;  // 0x00776580
+Sprite g_IFACE_GENERAL_WINDOWS_BOT_RIGHT_SPRITE;  // 0x007ABFD0
+Sprite g_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE;  // 0x00787F88
+Sprite g_IFACE_GENERAL_WINDOWS_MID_RIGHT_SPRITE;  // 0x0078A2D0
+Sprite g_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE;  // 0x0078E070
+Sprite g_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE;  // 0x0078A550
+Sprite g_IFACE_GENERAL_WINDOWS_NONCAP_MID_SPRITE;  // 0x00789BF8
+Sprite g_IFACE_GENERAL_WINDOWS_NONCAP_LEFT_SPRITE;  // 0x0075B150
+Sprite g_IFACE_GENERAL_WINDOWS_NONCAP_RIGHT_SPRITE;  // 0x007AD180
+Sprite g_UNUSED_SPRITE_VAR23;  // 0x007880D0
+Sprite g_UNUSED_SPRITE_VAR24;  // 0x0079A5B8
+Sprite g_UNUSED_SPRITE_VAR25;  // 0x007797C8
+Sprite g_UNUSED_SPRITE_VAR26;  // 0x00792638
+Sprite g_UNUSED_SPRITE_VAR27;  // 0x0079A650
+Sprite g_UNUSED_SPRITE_VAR28;  // 0x00799708
+Sprite g_UNUSED_SPRITE_VAR29;  // 0x007ACFE0
+Sprite g_UNUSED_SPRITE_VAR30;  // 0x007A7910
+Sprite g_UNUSED_SPRITE_VAR31;  // 0x00779240
+Sprite g_UNUSED_SPRITE_VAR32;  // 0x007ACD00
+Sprite g_UNUSED_SPRITE_VAR33;  // 0x00776A20
+Sprite g_UNUSED_SPRITE_VAR34;  // 0x007769F0
+Sprite g_UNUSED_SPRITE_VAR35;  // 0x007796E0
+Sprite g_UNUSED_SPRITE_VAR36;  // 0x007AC1F0
+Sprite g_UNUSED_SPRITE_VAR37;  // 0x00789A60
+Sprite g_UNUSED_SPRITE_VAR38;  // 0x0078CC30
+Sprite g_UNUSED_SPRITE_VAR39;  // 0x00787F58
+Sprite g_UNUSED_SPRITE_VAR40;  // 0x00798C00
+Sprite g_UNUSED_SPRITE_VAR41;  // 0x0078A580
+Sprite g_UNUSED_SPRITE_VAR42;  // 0x007AD0F0
+Sprite g_UNUSED_SPRITE_VAR43;  // 0x007AD080
+Sprite g_UNUSED_SPRITE_VAR44;  // 0x00792608
+Sprite g_UNUSED_SPRITE_VAR45;  // 0x00787EA0
+Sprite g_UNUSED_SPRITE_VAR46;  // 0x007ACCD0
+Sprite g_IFACE_TECH_TREE_ARROW_SPRITES[3];  // 0x0075AFD0, 0x2c stride
+Sprite g_UNUSED_SPRITE_VAR47;  // 0x00779740
+Sprite g_UNUSED_SPRITE_VAR48;  // 0x0078A4D0
+Sprite g_UNUSED_SPRITE_VAR49;  // 0x007AD140
+Sprite g_UNUSED_SPRITE_VAR50;  // 0x007793C0
+Sprite g_UNUSED_SPRITE_VAR51;  // 0x00789B98
+Sprite g_UNUSED_SPRITE_VAR52;  // 0x007766F8
+Sprite g_UNUSED_SPRITE_VAR53;  // 0x00798C70
+Sprite g_UNUSED_SPRITE_VAR54;  // 0x0076EBA0
+Sprite g_UNUSED_SPRITE_VAR55;  // 0x007592E0
+Sprite g_UNUSED_SPRITE_VAR56;  // 0x007795C0
+Sprite g_UNUSED_SPRITE_VAR57;  // 0x00792130
+Sprite g_UNUSED_SPRITE_VAR58;  // 0x0075ADF0
+Sprite g_UNUSED_SPRITE_VAR59;  // 0x0076E980
+Sprite g_UNUSED_SPRITE_VAR60;  // 0x0078A310
+Sprite g_UNUSED_SPRITE_VAR61;  // 0x0076DC60
+Sprite g_UNUSED_SPRITE_VAR62;  // 0x00789B18
+Sprite g_UNUSED_SPRITE_VAR63;  // 0x007A68C0
+Sprite g_UNUSED_SPRITE_VAR64;  // 0x0077A588
+Sprite g_UNUSED_SPRITE_VAR65;  // 0x00779710
+Sprite g_UNUSED_SPRITE_VAR66;  // 0x0079A6C0
+Sprite g_UNUSED_SPRITE_VAR67;  // 0x0078DDF0
+Sprite g_UNUSED_SPRITE_VAR68;  // 0x007A7250
+Sprite g_UNUSED_SPRITE_VAR69;  // 0x007AD0B0
+Sprite g_UNUSED_SPRITE_VAR70;  // 0x007AD050
+Sprite g_UNUSED_SPRITE_VAR71;  // 0x007A6890
+Sprite g_UNUSED_SPRITE_VAR72;  // 0x007763F0
+Sprite g_UNUSED_SPRITE_VAR73;  // 0x007ACD30
+Sprite g_UNUSED_SPRITE_VAR74;  // 0x007ABF90
+Sprite g_UNUSED_SPRITES_VAR02[3];  // 0x007A68F0, 0x2c stride
+Sprite g_UNUSED_SPRITES_VAR03[3];  // 0x00789A90, 0x2c stride
+Sprite g_UNUSED_SPRITES_VAR04[3];  // 0x00792160, 0x2c stride
+Sprite g_UNUSED_SPRITES_VAR05[3];  // 0x0075B0C8, 0x2c stride
+Sprite g_UNUSED_SPRITES_VAR06[3];  // 0x0075B8C8, 0x2c stride
+Sprite g_UNUSED_SPRITES_VAR07[3];  // 0x00787ED0, 0x2c stride
+Sprite g_UNUSED_SPRITES_VAR08[3];  // 0x007ACE80, 0x2c stride
+Sprite g_UNUSED_SPRITES_VAR09[3];  // 0x007920A8, 0x2c stride
+Sprite g_UNUSED_SPRITES_VAR10[3];  // 0x007ACF08, 0x2c stride
+Sprite g_UNUSED_SPRITE_VAR75;  // 0x007794A8
+Sprite g_UNUSED_SPRITE_VAR76;  // 0x00779670
+Sprite g_UNUSED_SPRITE_VAR77;  // 0x007AB430
+Sprite g_UNUSED_SPRITE_VAR78;  // 0x00798CA0
+Sprite g_UNUSED_SPRITE_VAR79;  // 0x0078E040
+Sprite g_UNUSED_SPRITE_VAR80;  // 0x007A67F0
+Sprite g_UNUSED_SPRITE_VAR81;  // 0x00779618
+Sprite g_UNUSED_SPRITE_VAR82;  // 0x007ACB58
+Sprite g_UNUSED_SPRITE_VAR83;  // 0x007ACC20
+Sprite g_BASEWIN_SPRITES[27];  // 0x0077A5C8, 0x2c stride
+Sprite g_IFACE_GREEN_RIGHT_ARROW_SPRITE[1];  // 0x007F67C8, 0x2c stride
+Sprite g_CURSOR_SPRITES[12];  // 0x0093AA70, 0x2c stride
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit.

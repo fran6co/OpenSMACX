@@ -3205,3 +3205,24 @@ int Buffer::get_pixel(int x, int y) {
     return *pixel;
 }
 
+// ====================
+Sprite g_BUFFER_SPRITE;
+
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit. Addresses of
+// the ones documented individually live beside their definitions.
+Buffer g_PCX_PARSE_TEMP_BUFFER1;  // 0x00798668
+Buffer g_IFACE_BOX_SPRITE_BUFFERS[51];  // 0x0075C218, 0x588 stride
+Buffer g_IFACE_STD_POPUPS_MIDDLE_BUFFER;  // 0x0077AA70
+Buffer g_VEHDRAW_BUFFER;  // 0x008CC298
+Buffer g_BUFFER;  // 0x009B6080
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit.

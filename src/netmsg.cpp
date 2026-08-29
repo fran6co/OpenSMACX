@@ -41,7 +41,7 @@ Purpose: Construct the Popup base and the embedded Time, then install
 //
 //        AND THE CALL SITES COST NOTHING, which took two attempts to get
 //        right and is the part worth remembering. Written
-//        `new (ptr) NetMsg(...)` in init_thunks.cpp, the two dynamic
+//        `new (ptr) NetMsg(...)` in the retired init_thunks.cpp, the two dynamic
 //        initialisers pay the guard instead: 0x0047A7A0 went BYTE_EXACT ->
 //        1 of 9 agreeing, 17 compiled instructions against an image of 9,
 //        and the whole conversion was reverted as a bad trade on that basis.

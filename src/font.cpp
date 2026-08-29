@@ -462,11 +462,11 @@ Font::~Font() {
 }
 
 // The per-element teardown the queue passes: the Font destructor, bound here
-// under its own name so this file needs nothing from the generated thunk
-// family. atexit_thunks.cpp binds the same address as FontElementTeardown.
+// under its own name so this file needs nothing from the retired thunk
+// family; the old atexit_thunks.cpp binding covered the same address.
 // Its construction-side companion, likewise bound locally rather than
-// pulling in init_thunks.h; init_thunks.cpp binds the same address as
-// FontElementCtor.
+// pulling in a shared header; init_thunks.cpp used to bind the same
+// address as FontElementCtor (both retired with the lifecycle batch).
 
 /*
 Purpose: Construct the queue: hand the three-slot walk to the CRT vector
@@ -565,3 +565,16 @@ int Font::UNK1(int, int, int, int) {
     return 1;
 }
 
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit.
+FontQueue g_FONTQUEUE_VAL2;  // 0x0093FB88
+FontQueue g_FONTQUEUE_VAL1;  // 0x0093FAE8
+Font g_FONTS[48];  // 0x0093FC58, 0x28 stride
+
+// 0x007D3948 in the image - the single game-wide font, initialised by
+// WinMain and closed at exit.
+Font g_JACKAL_FONT;

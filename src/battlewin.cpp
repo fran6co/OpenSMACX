@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "battlewin.h"
+#include "statuswin.h"
 #include "maininterface.h"
 #include "subinterface.h"
 #include "time.h"
@@ -187,4 +188,56 @@ BattleWin::BattleWin() {
     vtable_ = 0x0066A6E4;
     time->Time::Time();
     vtable_ = 0x0066AA44;
+}
+
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit. Addresses of
+// the ones documented individually live beside their definitions.
+BattleWin g_BattleWin;  // 0x006EEED8
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit.
+// ===== atexit-registered timer callbacks (image teardown thunks) =====
+/*
+Purpose: ?timer_callback_daemon@BattleWin@@QAAXHH@Z - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
+         unguarded. The last is a tail jump in the original, so its
+         return goes straight to this function's caller.
+// ORIGINAL: 0x00422EB0 ?timer_callback_daemon@BattleWin@@QAAXHH@Z 0x00422EB0-0x00422EBA BYTE_EXACT
+// symbol    ?teardown_00422eb0@@YAXXZ
+// size      10 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl teardown_00422eb0() {
+    sub_interface_global()->release_iface_mode();
+}
+/*
+Purpose: ?timer_callback_daemon@BattleWin@@QAAXH@Z - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
+         unguarded. The last is a tail jump in the original, so its
+         return goes straight to this function's caller.
+// ORIGINAL: 0x00422EC0 ?timer_callback_daemon@BattleWin@@QAAXH@Z 0x00422EC0-0x00422ECA BYTE_EXACT
+// symbol    ?teardown_00422ec0@@YAXXZ
+// size      10 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl teardown_00422ec0() {
+    sub_interface_global()->release_iface_mode();
 }

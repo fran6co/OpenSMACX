@@ -18,7 +18,6 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "radiobutton.h"
-#include "init_thunks.h"
 #include "vtable_shim.h"
 
 uint32_t RadioButtonDefault1;  // 0x006970F0
@@ -352,3 +351,29 @@ Purpose: Adjust the receiver from the thunk1 subobject back to RadioButton and
 // kind      game
 Status: Complete
 */
+
+// ====================
+Sprite g_RADIOBUTTON_SPRITE_1;
+Sprite g_RADIOBUTTON_SPRITE_2;
+
+// ===== close_class: once-only teardown of the managed sprites =====
+
+/*
+Purpose: ?close_class@RadioButton@@QAAXXZ - run 2 (ORIGINAL(s)->*teardown)() on fixed globals,
+         unguarded. The last is a tail jump in the original, so its
+         return goes straight to this function's caller.
+// ORIGINAL: 0x0060E5D0 ?close_class@RadioButton@@QAAXXZ 0x0060E5D0-0x0060E5E4 BYTE_EXACT
+// symbol    ?teardown_0060e5d0@@YAXXZ
+// size      20 bytes
+// prototype 
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E3820
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl teardown_0060e5d0() {
+    g_RADIOBUTTON_SPRITE_2.close();
+    g_RADIOBUTTON_SPRITE_1.close();
+}

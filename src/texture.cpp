@@ -147,3 +147,29 @@ TextureStore *TextureStore::construct() {
     return this;
 }
 
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit.
+Texture g_RADIUS1_TEXTURE;  // 0x00787FB8
+Texture g_RADIUS2_TEXTURE;  // 0x0075B858
+Texture g_ROCKY_TEXTURES[4];  // 0x0076E9E0, 0x70 stride
+Texture g_OCEAN_TEXTURES[2];  // 0x007A7820, 0x70 stride
+Texture g_FLAT_ARID_LAND_TEXTURE;  // 0x00799E48
+Texture g_MOIST_LAND_TEXTURES[16];  // 0x00799EB8, 0x70 stride
+Texture g_RAINY_LAND_TEXTURES[16];  // 0x00799738, 0x70 stride
+Texture g_JUNGLE_LAND_TEXTURES[15];  // 0x00789C28, 0x70 stride
+Texture g_DUNE_LAND_TEXTURE;  // 0x007AC220
+Texture g_SUNNY_MESA_TEXTURES[8];  // 0x007797F8, 0x70 stride
+Texture g_RAINFALL_SINGLE_TILE_TEXTURES[2];  // 0x0076E8A0, 0x70 stride
+Texture g_ROAD_TEXTURES[9];  // 0x00792218, 0x70 stride
+Texture g_MAGTUBE_TEXTURES[9];  // 0x00798E08, 0x70 stride
+Texture g_RIVER_TEXTURES[16];  // 0x007A7AA0, 0x70 stride
+Texture g_MOUNT_PLANET_TEXTURES[3];  // 0x0078A340, 0x70 stride
+Texture g_GARLAND_CRATER_TEXTURES[3];  // 0x00788100, 0x70 stride
+Texture g_FUNGUS_TEXTURES[30];  // 0x00776A80, 0x70 stride
+Texture g_FARM_TEXTURES[9];  // 0x00799238, 0x70 stride
+Texture g_FOREST_TEXTURES[16];  // 0x0078A758, 0x70 stride
+Texture g_RAINFALL_SINGLE_TILE_TEXTURE;  // 0x0078DD80

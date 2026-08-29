@@ -156,25 +156,20 @@ HEADER_SHAPES = [
 # recovery includes their retirement, so their sizes are ceilings like any
 # shape's. A scaffold at zero is deleted in its own commit. Measured
 # 2026-08-23 on a clean tree at 2bbecdbd.
-SCAFFOLD_MARKERS = ("init_thunks.cpp", "atexit_thunks.cpp",
-                    "adjustor_thunks.cpp", "deleting_thunks.cpp",
+SCAFFOLD_MARKERS = ("adjustor_thunks.cpp", "deleting_thunks.cpp",
                     "delegation_thunks.cpp", "field_accessors.cpp",
-                    "leaf_recoveries.cpp", "nullsub_thunks.cpp",
-                    "guarded_teardowns.cpp")
+                    "leaf_recoveries.cpp", "nullsub_thunks.cpp")
 SCAFFOLD_CEILINGS = {
-    "init_thunks.cpp markers": 380,
-    "atexit_thunks.cpp markers": 370,
     "adjustor_thunks.cpp markers": 116,
     "deleting_thunks.cpp markers": 74,
     "delegation_thunks.cpp markers": 27,
     "field_accessors.cpp markers": 42,
     "leaf_recoveries.cpp markers": 52,
     "nullsub_thunks.cpp markers": 56,
-    "guarded_teardowns.cpp markers": 14,
     "PENDING_BODY forwarders": 224,
-    # 1333 -> 1334 (2026-08-29, init_thunks batch): global_lifecycle.cpp
-    # archives the ??__E/??__F thunks the real globals retired.
-    "artifact files (recovered/)": 1334,
+    # 1334 -> 1333 (2026-08-29, lifecycle-retirement batch): the archived
+    # global_lifecycle.cpp went away with the thunks it recorded.
+    "artifact files (recovered/)": 1333,
     "unrecovered files": 1696,
     "hypothesis_layouts.h lines": 2709,
 }

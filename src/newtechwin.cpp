@@ -50,3 +50,5 @@ int NewTechWin::on_key_click(int, int) {
     return 1;
 }
 
+// ====================
+Sprite g_NEWTECHWIN_SPRITES[6];

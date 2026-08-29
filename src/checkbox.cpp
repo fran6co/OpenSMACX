@@ -18,7 +18,6 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "checkbox.h"
-#include "init_thunks.h"
 #include "vtable_shim.h"
 
 uint32_t CheckBoxDefault1;  // 0x00697104
@@ -550,3 +549,28 @@ void CheckBox::set_state_id(int id, int value) {
     }
 }
 
+// ====================
+Sprite g_CHECKBOX_SPRITE_1;
+Sprite g_CHECKBOX_SPRITE_2;
+
+// ===== close_class: once-only teardown of the managed sprites =====
+
+/*
+Purpose: ?close_class@CheckBox@@QAAXXZ - run 2 (ORIGINAL(s)->*teardown)() on fixed globals,
+         unguarded. The last is a tail jump in the original, so its
+         return goes straight to this function's caller.
+// ORIGINAL: 0x0060FD60 ?close_class@CheckBox@@QAAXXZ 0x0060FD60-0x0060FD74 BYTE_EXACT
+// symbol    ?teardown_0060fd60@@YAXXZ
+// size      20 bytes
+// prototype 
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E3820
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl teardown_0060fd60() {
+    g_CHECKBOX_SPRITE_1.close();
+    g_CHECKBOX_SPRITE_2.close();
+}

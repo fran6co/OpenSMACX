@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "wave.h"
 #include "designwin.h"
 #include "win.h"
 #include "worldwin.h"
@@ -211,3 +212,18 @@ void DesignWin::select_special_2() {
 // defined earlier. Measured - without the pragma cl reports C4711 at
 // designwin.cpp(153) and (161), the two select_special_N thunks, and each is
 // an 8-byte BYTE_EXACT `call rel32` today.
+
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit. Addresses of
+// the ones documented individually live beside their definitions.
+Wave g_DESIGNWIN_WAVE;  // 0x0071F240
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// Here the same recovered constructors run through this build's own
+// startup, and the matching destructors close them at exit.
