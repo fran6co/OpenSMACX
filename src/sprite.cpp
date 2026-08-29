@@ -98,12 +98,12 @@ void Sprite::close() {
         // outer condition already proved it non-zero, and the `je` target is
         // the zero-store - so that store sits OUTSIDE the inner guard.
         if (pcBits_ != 0) {
-            free(reinterpret_cast<void *>(pcBits_));
+            free(pcBits_);
         }
         pcBits_ = 0;
     }
     if (ppszFileName_ != 0) {
-        free(reinterpret_cast<void *>(ppszFileName_));
+        free(ppszFileName_);
         ppszFileName_ = 0;
     }
     // The type byte at 0x08 is deliberately preserved.
@@ -375,12 +375,12 @@ int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
                 - static_cast<uint32_t>(iSpriteHeight_)
                       * static_cast<uint32_t>(iSpriteWidth_));
             if (pcBits_ != 0) {
-                free(reinterpret_cast<void *>(pcBits_));
+                free(pcBits_);
             }
             pcBits_ = 0;
         }
         if (ppszFileName_ != 0) {
-            free(reinterpret_cast<void *>(ppszFileName_));
+            free(ppszFileName_);
             ppszFileName_ = 0;
         }
         iSpriteWidth2_ = 0;
@@ -503,17 +503,17 @@ int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
         // else comes off the CRT as plain owned memory.
         pcBits_ = 0;
         if (heap != 0) {
-            pcBits_ = heap->get_mem(iSpriteHeight_ * iSpriteWidth_);
+            pcBits_ = reinterpret_cast<char *>(heap->get_mem(iSpriteHeight_ * iSpriteWidth_));
             if (pcBits_ != 0) {
                 fObj1Exists_ = 1;
             }
         }
         do_sound();
         if (pcBits_ == 0) {
-            pcBits_ = reinterpret_cast<int>(mem_get(iSpriteWidth_ * iSpriteHeight_));
+            pcBits_ = static_cast<char *>(mem_get(iSpriteWidth_ * iSpriteHeight_));
             if (pcBits_ == 0) {
                 if (ppszFileName_ != 0) {
-                    free(reinterpret_cast<void *>(ppszFileName_));
+                    free(ppszFileName_);
                     ppszFileName_ = 0;
                 }
                 iSpriteWidth2_ = 0;
@@ -621,7 +621,7 @@ int Sprite::create_blank(int width, int height, int depth) {
     iTopOffset_ = 0;
     cTransparentIndex_ = static_cast<char>(depth);
     iHeight_ = height;
-    pcBits_ = reinterpret_cast<int>(mem_get(1));
+    pcBits_ = static_cast<char *>(mem_get(1));
     return pcBits_ ? 0 : 4;
 }
 
