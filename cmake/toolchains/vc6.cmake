@@ -124,7 +124,9 @@ set(CMAKE_C_DEPFILE_FORMAT gcc)
 # 16 of 19 on the first run here. `/Z7` puts the debug info in the object
 # file, where there is no shared state and no race. CMake's MSVC defaults
 # assume a compiler that can share a PDB; this one cannot.
-set(CMAKE_CXX_FLAGS_DEBUG "/Z7 /Ob0 /Od /GZ" CACHE STRING "" FORCE)
+# /Oy- keeps frame pointers: without them (/O2 implies /Oy) gdb and winedbg
+# cannot walk a backtrace, which is the whole point of the debug profile.
+set(CMAKE_CXX_FLAGS_DEBUG "/Z7 /Ob0 /Od /Oy- /GZ" CACHE STRING "" FORCE)
 set(CMAKE_C_FLAGS_DEBUG "/Z7 /Ob0 /Od /GZ" CACHE STRING "" FORCE)
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/Z7 /O2" CACHE STRING "" FORCE)
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "/Z7 /O2" CACHE STRING "" FORCE)
