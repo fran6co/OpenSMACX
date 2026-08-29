@@ -1269,12 +1269,10 @@ Status: Complete
 // memset, then the FINAL vtable write (0x66E44C) ahead of the flags_54_
 // memset.
 Wave::Wave() {
-    vtable_storage_ = 0x0066E444;
     volume_ = 0x7F;
     pan_8_ = 0;
     memset(&field_C_, 0, 0x24);
     loop_flag_30_ = 0;
-    vtable_storage_ = 0x0066E3C0;
     chain_prev_ = nullptr;
     chain_next_ = nullptr;
     device_ = nullptr;
@@ -1290,7 +1288,6 @@ Wave::Wave() {
     // with nothing between) and is not transcribed - same policy as the
     // other Wave bodies with an `indirect` marker line.
     type_ = 0;
-    vtable_storage_ = 0x0066E44C;
     // The original's `memset(this + 0x54, 0, 4)` at 0x004C6774 - same lever
     // as set_fname's own `memset(&flags_54_, 0, 4)` below.
     memset(&flags_54_, 0, sizeof(flags_54_));
@@ -1501,7 +1498,6 @@ Wave::~Wave() {
     // precedent, extended to the whole body): each store happens, in the
     // original's order, and each guard re-reads memory where the original does.
     Wave volatile *const self = this;
-    self->vtable_storage_ = 0x0066E44C;
     if (self->group_slot_ < 0x10) {
         WaveDeviceGlobal->pull_from_group(this);
     }
@@ -1535,7 +1531,6 @@ Wave::~Wave() {
         self->chain_prev_ = nullptr;
         self->flags_40_ &= ~2u;
     }
-    self->vtable_storage_ = 0x0066E3C0;
     // The inlined base destructor's copy of the free: reachable only when the
     // unlink above re-populated the slot through an aliased neighbour.
     void *const late_block = self->fname_;
@@ -1571,7 +1566,6 @@ Wave::~Wave() {
         self->chain_prev_ = nullptr;
         self->flags_40_ &= ~2u;
     }
-    self->vtable_storage_ = 0x0066E444;
 }
 
 

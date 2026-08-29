@@ -1527,7 +1527,6 @@ Return Value: n/a (the redirect answers the object pointer)
 Status: Complete
 */
 Wave_Device::Wave_Device() {
-    vtable_storage_ = 0x0066E098;
     field_4_ = 0;
     volume_8_ = 0x7F;
     field_C_ = 0;
@@ -1537,7 +1536,6 @@ Wave_Device::Wave_Device() {
     device_14_ = nullptr;
     (*VectorCtorIterator)(groups_, 0x18, 0x10, WaveControlGroupOriginalCtor,
                           WaveControlGroupOriginalDtor);
-    vtable_storage_ = 0x0066E0E8;
     field_20_ = 0;
 }
 
@@ -1561,10 +1559,8 @@ Status: Complete
 */
 Wave_Device::~Wave_Device() {
     Wave_Device volatile *const self = this;
-    self->vtable_storage_ = 0x0066E0E8;
     VectorDtorIterator(const_cast<WaveControlGroup *>(self->groups_), 0x18,
                        0x10, WaveControlGroupOriginalDtor);
-    self->vtable_storage_ = 0x0066E098;
     {
         void *const device = self->device_14_;
         if (device) {
@@ -1576,3 +1572,6 @@ Wave_Device::~Wave_Device() {
 
 // ====================
 Wave_Device g_WAVE_DEVICE;
+
+// Slot 2 of Wave_Device's image vftable: a bare `ret` stub at 0x00404280.
+void Wave_Device::unk_slot2() {}

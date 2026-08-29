@@ -30,31 +30,44 @@
 class Sound {
  public:
   Sound() { ; }
-  ~Sound();
-  int UNK1(int);
-  void fade(unsigned long a1);
-  int is_playing();
-  int is_looping();
+  // THE VIRTUAL SET, in the image's own vftable slot order (0x0066E3C0).
+  // The compiler now owns the vftable these slots name; Sound's storage no
+  // longer carries a hand-rolled table. Slot 1 and the three FX-region slots
+  // (24/25/26/30 in the image's table) are unrecovered bodies - placeholder
+  // definitions in sound.cpp, semantic debt until named.
+  virtual int set_fade(unsigned long fade);        // slot 0 (0x4C6580)
+  virtual void unk_slot1();                        // slot 1 (0x4482F0, unrecovered)
+  virtual ~Sound();                                // slot 2 (0x4C92D0 ??_GSound)
+  virtual int UNK1(int a1);                        // slot 3 (0x4C6430)
+  virtual int load(const char *fname);             // slot 4 (0x4C6280)
+  virtual int unload();                            // slot 5 (0x4C6440)
+  virtual int play(unsigned int effect);           // slot 6 (0x4C64A0)
+  virtual int play();                              // slot 7 (0x4C6480)
+  virtual int stop();                              // slot 8 (0x4C64D0)
+  virtual void fade(unsigned long a1);             // slot 9 (0x4C6600)
+  virtual int fade();                              // slot 10 (0x4C65E0)
+  virtual void fade_in(unsigned int a1);           // slot 11 (0x4C6660)
+  virtual int fade_in();                           // slot 12 (0x4C6620)
+  virtual void ramp(int a1, int a2, unsigned int a3);  // slot 13 (0x4C6640)
+  virtual int release();                           // slot 14 (0x4C64F0)
+  virtual int get_game_hwnd();                     // slot 15 (pure in image; Wave implements)
+  virtual void set_volume(int volume);             // slot 16 (0x4C6510)
+  virtual void set_pan(int pan);                   // slot 17 (0x4C66B0)
+  virtual void set_loop_state(long loop_state);    // slot 18 (0x4C6540)
+  virtual void set_delay(unsigned int delay);      // slot 19 (0x4C6560)
+  virtual void set_type(unsigned int type);        // slot 20 (0x4C61E0)
+  virtual int set_fade_in(unsigned int fade_in);   // slot 21 (0x4C65B0)
+  virtual int is_looping();                        // slot 22 (0x4C6690)
+  virtual int is_playing();                        // slot 23 (0x4C64C0)
+  virtual void unk_slot24();                       // slot 24 (0x448380, unrecovered)
+  virtual void unk_slot25();                       // slot 25 (0x448310, unrecovered)
+  virtual void unk_slot26();                       // slot 26 (0x448320, unrecovered)
+  virtual void unk_slot27();                       // slot 27 (pure in image)
+  virtual void unk_slot28();                       // slot 28 (pure in image)
+  virtual int attach();                            // slot 29 (0x4C6370)
+  virtual void unk_slot30();                       // slot 30 (0x448330, unrecovered)
+  virtual int detach();                            // slot 31 (0x4C6370?)
   int get_time();
-  int play();
-  int play(unsigned int effect);
-  int stop();
-  int release();
-  void set_loop_state(long loop_state);
-  void set_delay(unsigned int delay);
-  int fade();
-  int fade_in();
-  void ramp(int a1, int a2, unsigned int a3);
-  void set_type(unsigned int type);
-  int load(const char *fname);
-  void set_volume(int volume);
-  int set_fade(unsigned long fade);
-  int set_fade_in(unsigned int fade_in);
-  void fade_in(unsigned int a1);
-  void set_pan(int pan);
-  int unload();
-  int attach();
-  int detach();
 
  protected:
   // PROTECTED, not private, because `Wave` is a real derived class - its
@@ -64,7 +77,6 @@ class Sound {
   // offsets: the loop dword at 0x30, the wrapped device at 0x3C, the flag
   // dword at 0x40 (bit 0 the loaded bit, plus set_type's class bits), the
   // heap-owned filename at 0x4C, and the type at 0x50.
-  uint32_t vtable_storage_;  // 0x00, opaque so no C++ vtable is generated
   uint32_t volume_;       // 0x04, low seven bits of set_volume's argument
   int32_t pan_8_;         // 0x08, set_pan's clamp to [-0x40, 0x3F]
   uint32_t field_C_;      // 0x0C, IDB field_C..field_2C for the nine dwords
