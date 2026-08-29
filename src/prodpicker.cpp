@@ -23,10 +23,13 @@
 // Sprite and FlatButton are constructed in a loop through the CRT's own
 // vector constructor iterator - see vector_teardown.h. The addresses are the
 // two element types' own real constructor/destructor.
-const void *const ProdPickerSpriteCtor = (const void *)0x005E37E0;
-const void *const ProdPickerSpriteDtor = (const void *)0x00406850;
-const void *const ProdPickerFlatButtonCtor = (const void *)0x00607CF0;
-const void *const ProdPickerFlatButtonDtor = (const void *)0x00406880;
+// The element callbacks, spelled for real against the recovered
+// constructors and destructors (the image passes 0x005E37E0, 0x00406850,
+// 0x00607CF0 and 0x00406880 - Sprite and FlatButton lifecycle bodies).
+void __fastcall ProdPickerSpriteCtor(void *self) { reinterpret_cast<Sprite *>(self)->Sprite::Sprite(); }
+void __fastcall ProdPickerSpriteDtor(void *self) { reinterpret_cast<Sprite *>(self)->~Sprite(); }
+void __fastcall ProdPickerFlatButtonCtor(void *self) { reinterpret_cast<FlatButton *>(self)->FlatButton::FlatButton(); }
+void __fastcall ProdPickerFlatButtonDtor(void *self) { reinterpret_cast<FlatButton *>(self)->~FlatButton(); }
 
 const uint32_t ProdPickerPrimaryVtable = 0x0066A250;
 const uint32_t ProdPickerBufferVtable = 0x0066A248;

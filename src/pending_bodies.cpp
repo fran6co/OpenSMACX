@@ -147,20 +147,28 @@
 // ??_M@YGXPAXIHP6EX0@Z@Z at 0x006456E4 and ??_L@YGXPAXIHP6EX0@Z1@Z at
 // 0x006457C2 - the CRT's vector destructor and constructor iterators, reached
 // by 204 array-thunk call sites. They were bound as `*const` pointers, which
-// costs every one of those sites the `E8` the image emits; see the note in
-// `vector_teardown.h`. They cannot be PROMOTED, because no declaration can
-// carry a `??_` mangling - so unlike every other forwarder here, these two
-// never leave.
+// REAL NOW, not seams: the image's two iterators are plain loops - the
+// constructor walk front to back (0x006457C2), the destructor walk back to
+// front, last element first (0x006456E4) - and jumping into the original for
+// them is what crashed the standalone build at startup. The element callback
+// is __fastcall: the element arrives in ECX, thiscall's own shape.
 void __stdcall VectorDtorIterator(void *array, unsigned int element_size, int count,
-                                  const void *teardown) {
-    typedef void(__stdcall *pending)(void *, unsigned int, int, const void *);
-    PENDING_BODY(0x006456E4, pending)(array, element_size, count, teardown);
+                                  func_vector_element_callback teardown) {
+    char *element = static_cast<char *>(array) + element_size * count;
+    for (int index = 0; index < count; ++index) {
+        element -= element_size;
+        teardown(element);
+    }
 }
 
 void __stdcall VectorCtorIterator(void *array, unsigned int element_size, int count,
-                                  const void *ctor, const void *dtor) {
-    typedef void(__stdcall *pending)(void *, unsigned int, int, const void *, const void *);
-    PENDING_BODY(0x006457C2, pending)(array, element_size, count, ctor, dtor);
+                                  func_vector_element_callback ctor,
+                                  func_vector_element_callback dtor) {
+    char *element = static_cast<char *>(array);
+    for (int index = 0; index < count; ++index) {
+        ctor(element);
+        element += element_size;
+    }
 }
 
 // ?do_video@@YAXXZ at 0x00636300 - a message-loop pump. See the note in

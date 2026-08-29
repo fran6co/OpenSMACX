@@ -27,11 +27,14 @@
  * its own per-element teardown seam.
  */
 typedef void (OriginalObject::*func_thiscall_teardown)();
-typedef void(__stdcall func_vector_dtor_iterator)(
-    void *array, unsigned int element_size, int count,
-    const void *teardown);
+
+// The element callbacks are __fastcall with one pointer argument: the ABI is
+// thiscall's (the element arrives in ECX), which is what the image's vector
+// iterators invoke, and __fastcall is how a standalone build spells it.
+typedef void(__fastcall *func_vector_element_callback)(void *element);
+
 void __stdcall VectorDtorIterator(void *array, unsigned int element_size, int count,
-                                  const void *teardown);
+                                  func_vector_element_callback teardown);
 
 // Its construction-side companion: walk an array calling one constructor per
 // element, with the destructor along for exception unwind (unreachable here,
@@ -40,11 +43,9 @@ void __stdcall VectorDtorIterator(void *array, unsigned int element_size, int co
 // pushes them as immediates - `push 0x4c67c0` at 0x00445450 - and a
 // `func_thiscall_teardown` built by `original_method` at load time is a
 // variable, so every caller pushed `dword ptr [...]` instead.
-typedef void(__stdcall func_vector_ctor_iterator)(
-    void *array, unsigned int element_size, int count,
-    const void *ctor, const void *dtor);
 void __stdcall VectorCtorIterator(void *array, unsigned int element_size, int count,
-                                  const void *ctor, const void *dtor);
+                                  func_vector_element_callback ctor,
+                                  func_vector_element_callback dtor);
 
 // THE LAST TWO INSTRUCTIONS OF EVERY ARRAY THUNK, and there is no C++ for
 // them. `??_L@YGXPAXIHP6EX0@Z1@Z` and `??_M@...` are the compiler's own vector

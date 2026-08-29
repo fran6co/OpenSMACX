@@ -24,9 +24,28 @@
 #include "spritebox.h"
 #include "net_class.h"
 #include "texture.h"
+#include "imagebutton.h"
 #include "vector_teardown.h"
 #include <cstring>
 #include <stdlib.h>
+
+// The element callbacks for MapWin's managed arrays (TextureStore and
+// ImageButton runs), spelled for real against the recovered lifecycle
+// bodies - the image passes 0x006252A0 / 0x006252B0 / 0x006252E0 /
+// 0x00625310 at these sites.
+static void __fastcall mapwin_texture_store_element_ctor(void *self) {
+    reinterpret_cast<TextureStore *>(self)->TextureStore::TextureStore();
+}
+static void __fastcall mapwin_texture_store_element_dtor(void *self) {
+    reinterpret_cast<TextureStore *>(self)->~TextureStore();
+}
+static void __fastcall mapwin_image_button_element_ctor(void *self) {
+    reinterpret_cast<ImageButton *>(self)->ImageButton::ImageButton();
+}
+static void __fastcall mapwin_image_button_element_dtor(void *self) {
+    reinterpret_cast<ImageButton *>(self)->~ImageButton();
+}
+
 
 // The vbtable MapWin stores at its own front when it is the one building
 // the embedded GraphicWin, and the two hand-maintained "vtable" pointers
@@ -37,6 +56,7 @@
 static void *const g_0066c870 = reinterpret_cast<void *>(0x0066C870);
 static void *const g_0066a57c = reinterpret_cast<void *>(0x0066A57C);
 static void *const g_0066a574 = reinterpret_cast<void *>(0x0066A574);
+
 
 /*
 Purpose: Build a map window - attach its embedded GraphicWin virtual base,
@@ -83,12 +103,13 @@ void MapWin::construct(int input) {
         new (reinterpret_cast<GraphicWin *>(self + 0x21a6c)) GraphicWin();
     }
 
-    VectorCtorIterator(self + 0xc, 0x260, 4,
-                        reinterpret_cast<const void *>(0x006252A0),
-                        reinterpret_cast<const void *>(0x006252B0));
+    
+VectorCtorIterator(self + 0xc, 0x260, 4,
+                        mapwin_texture_store_element_ctor,
+                        mapwin_texture_store_element_dtor);
     VectorCtorIterator(self + 0x98c, 0x260, 0xc4,
-                        reinterpret_cast<const void *>(0x006252A0),
-                        reinterpret_cast<const void *>(0x006252B0));
+                        mapwin_texture_store_element_ctor,
+                        mapwin_texture_store_element_dtor);
 
     reinterpret_cast<TextureStore *>(self + 0x1db0c)->TextureStore::TextureStore();
     reinterpret_cast<Buffer *>(self + 0x1de28)->Buffer::Buffer();
@@ -99,8 +120,8 @@ void MapWin::construct(int input) {
     reinterpret_cast<Font *>(self + 0x1ef20)->Font::Font();
 
     VectorCtorIterator(self + 0x1ef54, 0xabc, 4,
-                        reinterpret_cast<const void *>(0x006252E0),
-                        reinterpret_cast<const void *>(0x00625310));
+                        mapwin_image_button_element_ctor,
+                        mapwin_image_button_element_dtor);
 
     char *const graphic_win = self + 0x21a6c;
     *reinterpret_cast<void **>(graphic_win) = g_0066a57c;
@@ -146,7 +167,7 @@ MapWin::~MapWin() {
     reinterpret_cast<MapWin *>(self - 0x21a6c)->clear(0);
 
     VectorDtorIterator(self - 0x2b18, 0xabc, 4,
-                        reinterpret_cast<const void *>(0x00625310));
+                        mapwin_image_button_element_dtor);
     reinterpret_cast<Font *>(self - 0x2b4c)->~Font();
     reinterpret_cast<Font *>(self - 0x2b78)->~Font();
     reinterpret_cast<Font *>(self - 0x2ba4)->~Font();
@@ -155,9 +176,9 @@ MapWin::~MapWin() {
     reinterpret_cast<Buffer *>(self - 0x3c44)->~Buffer();
     reinterpret_cast<TextureStore *>(self - 0x3f60)->~TextureStore();
     VectorDtorIterator(self - 0x210e0, 0x260, 0xc4,
-                        reinterpret_cast<const void *>(0x006252B0));
+                        mapwin_texture_store_element_dtor);
     VectorDtorIterator(self - 0x21a60, 0x260, 4,
-                        reinterpret_cast<const void *>(0x006252B0));
+                        mapwin_texture_store_element_dtor);
 }
 
 /*

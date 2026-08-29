@@ -56,10 +56,12 @@ static_assert(sizeof(FX) == 0x28F0,
 // The per-element destructor the original passes: the Effect jump thunk at
 // 0x004482C0, which lands on the Wave destructor. Held as its own rebindable
 // dependency so the bank teardown retires with the Wave work.
-extern const void *const EffectElementTeardown;
+// The element callbacks, real functions now - see fx.cpp for the recovered
+// bodies (Wave::Wave + the Effect vftable; ~Wave).
+void __fastcall EffectElementTeardown(void *self);
+void __fastcall EffectElementCtor(void *self);
 
 // Its construction-side twin, ??0Effect@@QAE@XZ at 0x004482D0. Still original;
 // the constructor passes it and the teardown above to the same CRT iterator,
 // so both retire together with the Wave work.
-extern const void *const EffectElementCtor;
 

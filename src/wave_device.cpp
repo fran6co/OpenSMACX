@@ -1411,8 +1411,38 @@ int Wave_Device::release() {
 }
 
 
-const void *const WaveControlGroupOriginalCtor = (const void *)0x004C5490;
-const void *const WaveControlGroupOriginalDtor = (const void *)0x004C5B80;
+// The group element lifecycle, recovered from 0x004C5490 / 0x004C5B80: the
+// constructor arms the group (enabled, volume 0x7f, empty list) and the
+// destructor frees every node head-first through the process allocator,
+// stopping at a node that carries no wave.
+void __fastcall WaveControlGroupOriginalCtor(void *self) {
+    WaveControlGroup *group = reinterpret_cast<WaveControlGroup *>(self);
+    group->head = nullptr;
+    group->tail = nullptr;
+    group->cursor = nullptr;
+    group->count = 0;
+    group->volume = 0x7f;
+    group->enabled = 1;
+}
+
+void __fastcall WaveControlGroupOriginalDtor(void *self) {
+    WaveControlGroup *group = reinterpret_cast<WaveControlGroup *>(self);
+    while (WaveGroupNode *node = group->head) {
+        Wave *wave = node->wave;
+        if (node->next) {
+            node->next->prev = nullptr;
+            group->head = node->next;
+        } else {
+            group->tail = nullptr;
+            group->head = nullptr;
+        }
+        operator delete(node);
+        --group->count;
+        if (!wave) {
+            break;
+        }
+    }
+}
 
 /*
 Purpose: Construct one control group: the list fields - head, tail, cursor,

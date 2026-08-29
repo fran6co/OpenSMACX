@@ -37,6 +37,23 @@
 #include "vector_teardown.h"
 #include <cstring>
 
+// The element dtors for Console's managed arrays, spelled for real against
+// the recovered lifecycle bodies (the image passes 0x005E37E0, 0x00406850,
+// 0x00625310 and 0x006252B0 at these sites).
+static void __fastcall console_sprite_element_ctor(void *self) {
+    reinterpret_cast<Sprite *>(self)->Sprite::Sprite();
+}
+static void __fastcall console_sprite_element_dtor(void *self) {
+    reinterpret_cast<Sprite *>(self)->~Sprite();
+}
+static void __fastcall console_image_button_element_dtor(void *self) {
+    reinterpret_cast<ImageButton *>(self)->~ImageButton();
+}
+static void __fastcall console_texture_store_element_dtor(void *self) {
+    reinterpret_cast<TextureStore *>(self)->~TextureStore();
+}
+
+
 // The manual "vtable" pointers `GraphicWin::construct`'s own idiom writes
 // when GraphicWin is directly the most-derived object (see graphicwin.cpp),
 // repeated here on Console's own embedded Menu and on its virtual base -
@@ -47,8 +64,6 @@ static void *const g_0066ed88 = reinterpret_cast<void *>(0x0066ED88);
 static void *const g_0066ed80 = reinterpret_cast<void *>(0x0066ED80);
 static void *const g_0066ec18 = reinterpret_cast<void *>(0x0066EC18);
 static void *const g_0066ec10 = reinterpret_cast<void *>(0x0066EC10);
-static void *const g_005e37e0 = reinterpret_cast<void *>(0x005E37E0);
-static void *const g_00406850 = reinterpret_cast<void *>(0x00406850);
 static void *const g_0066a57c = reinterpret_cast<void *>(0x0066A57C);
 static void *const g_0066a574 = reinterpret_cast<void *>(0x0066A574);
 
@@ -94,7 +109,8 @@ void Console::construct(int input) {
     reinterpret_cast<Buffer *>(menu + 0xb64)->Buffer::Buffer();
     reinterpret_cast<Sprite *>(menu + 0x10ec)->Sprite::Sprite();
 
-    VectorCtorIterator(menu + 0x1118, 0x2c, 3, g_005e37e0, g_00406850);
+    
+VectorCtorIterator(menu + 0x1118, 0x2c, 3, console_sprite_element_ctor, console_sprite_element_dtor);
 
     *reinterpret_cast<void **>(menu) = g_0066ed88;
     *reinterpret_cast<void **>(menu + 0x444) = g_0066ed80;
@@ -193,7 +209,7 @@ Console::~Console() {
     reinterpret_cast<Sprite *>(self - 0x6c)->close();
 
     char *const menu = self - 0x1368;
-    VectorDtorIterator(menu + 0x1118, 0x2c, 3, g_00406850);
+    VectorDtorIterator(menu + 0x1118, 0x2c, 3, console_sprite_element_dtor);
     reinterpret_cast<Sprite *>(menu + 0x10ec)->close();
     reinterpret_cast<Buffer *>(menu + 0xb64)->~Buffer();
     reinterpret_cast<Menu *>(menu)->Menu::~Menu();
@@ -222,7 +238,7 @@ Console::~Console() {
 
     reinterpret_cast<MapWin *>(mapwin_vbase)->clear(0);
 
-    VectorDtorIterator(mapwin_vbase - 0x2b18, 0xabc, 4, reinterpret_cast<const void *>(0x00625310));
+    VectorDtorIterator(mapwin_vbase - 0x2b18, 0xabc, 4, console_image_button_element_dtor);
 
     reinterpret_cast<Font *>(mapwin_vbase - 0x2b4c)->~Font();
     reinterpret_cast<Font *>(mapwin_vbase - 0x2b78)->~Font();
@@ -232,8 +248,8 @@ Console::~Console() {
     reinterpret_cast<Buffer *>(mapwin_vbase - 0x3c44)->~Buffer();
     reinterpret_cast<TextureStore *>(mapwin_vbase - 0x3f60)->~TextureStore();
 
-    VectorDtorIterator(mapwin_vbase - 0x210e0, 0x260, 0xc4, reinterpret_cast<const void *>(0x006252B0));
-    VectorDtorIterator(mapwin_vbase - 0x21a60, 0x260, 4, reinterpret_cast<const void *>(0x006252B0));
+    VectorDtorIterator(mapwin_vbase - 0x210e0, 0x260, 0xc4, console_texture_store_element_dtor);
+    VectorDtorIterator(mapwin_vbase - 0x21a60, 0x260, 4, console_texture_store_element_dtor);
 }
 
 /*

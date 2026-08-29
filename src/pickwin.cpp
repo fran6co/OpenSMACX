@@ -19,10 +19,12 @@
 #include "pickwin.h"
 #include "vector_teardown.h"
 
-const void *const PickWinSpriteCtor = (const void *)0x005E37E0;
-const void *const PickWinSpriteDtor = (const void *)0x00406850;
-const void *const PickWinFlatButtonCtor = (const void *)0x00607CF0;
-const void *const PickWinFlatButtonDtor = (const void *)0x00406880;
+// Element callbacks against the recovered Sprite and FlatButton lifecycle
+// bodies (the image passes 0x005E37E0, 0x00406850, 0x00607CF0, 0x00406880).
+void __fastcall PickWinSpriteCtor(void *self) { reinterpret_cast<Sprite *>(self)->Sprite::Sprite(); }
+void __fastcall PickWinSpriteDtor(void *self) { reinterpret_cast<Sprite *>(self)->~Sprite(); }
+void __fastcall PickWinFlatButtonCtor(void *self) { reinterpret_cast<FlatButton *>(self)->FlatButton::FlatButton(); }
+void __fastcall PickWinFlatButtonDtor(void *self) { reinterpret_cast<FlatButton *>(self)->~FlatButton(); }
 
 const uint32_t PickWinPrimaryVtable = 0x0066D13C;
 const uint32_t PickWinBufferVtable = 0x0066D134;
