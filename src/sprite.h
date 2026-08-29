@@ -42,9 +42,9 @@ class Sprite {
   int UNK2(int a, int b, int c, int d, int e);
   int draw(Buffer *buffer, int a, int b, int c, int x, int y);
   int draw(Buffer *buffer, int a, int b, int c);
-  // Sprite-sheet extraction used by the per-control init_class bodies; declared
-  // here so they compile, still pending_bodies forwarders. `extract`'s last
-  // parameter is a texture-heap pointer the callers pass as null.
+  // Sprite-sheet extraction used by the per-control init_class bodies. The
+  // body lives in sprite.cpp beside its marker. `extract`'s last parameter is
+  // a texture-heap pointer most callers pass as null.
   int extract(Buffer *buffer, int a, int b, int c, int width, int height,
               TexHeap *heap);
   int create_blank(int width, int height, int depth);

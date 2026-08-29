@@ -228,6 +228,12 @@ class Buffer {
           surface_lock_count_ = 0;
       }
   }
+  // 0x005E33F3. The two-coordinate form over the no-argument one above: the
+  // pixel row at (x, y), bounds-checked against `dib_.bmiHeader.biWidth` and
+  // the negated top-down `biHeight` the same way. The body lives in
+  // buffer.cpp beside its marker; `Sprite::extract` calls it by name five
+  // times.
+  int get_data(int x, int y);
 
   HDC get_hdc() {
       if (locked_bits_ != 0) {
@@ -455,9 +461,15 @@ class Buffer {
    * generation tag.
    */
   uint32_t palette_seed_;
+  // PUBLIC, not private: `Sprite::extract` reads it straight off the object -
+  // `mov edx, [buffer + 0x4A8]` at 0x005E3AB3 - the way callers of the
+  // drawing primitives read `dib_` above. Same offset; only the access run
+  // changes, and access never moves a member.
+ public:
   // 0x4A8. `Buffer::init` sets it to `(width + 3) & ~3`: the row pitch a
   // DIB needs, the width rounded up to a DWORD.
   uint32_t stride_;
+ private:
   /*
    * 0x4AC. HOW MANY OF `owned_` ARE IN USE, and it is ONE-BASED:
    * `write_multi_font_raw_l` increments it first and then stores through

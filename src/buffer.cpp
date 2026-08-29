@@ -95,6 +95,57 @@ values, so their order is genuinely not observable.
 // 0x00406B30.
 int Buffer::surface_lost() { return 0; }
 
+/*
+Purpose: Return the address of the pixel at (x, y) in the buffer, locking the
+         surface first when needed, and refusing coordinates outside the DIB.
+// ORIGINAL: 0x005E33F3 ?get_data@Buffer@@QAEHHH@Z 0x005E33F3-0x005E349D FILE BYTE_EXACT
+// size      170 bytes
+// prototype int (__thiscall ?get_data@Buffer@@QAEHHH@Z)(Buffer* this, int, int)
+// callers   9   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// indirect  0x005E3456
+// calls     (none)
+Status: Promoted 2026-08-29 from src/unrecovered/005e33f3.cpp, which proved the
+claim against the opaque scaffold. The body is the two-coordinate sibling of
+the in-class `get_data()` in buffer.h and reads the same members the same way:
+`dib_.bmiHeader.biWidth` is the x bound, the NEGATIVE top-down `biHeight` is
+the negated y bound, and the lock path stores `stride_` before
+`locked_bits_`. `Sprite::extract` calls it by name five times.
+*/
+int Buffer::get_data(int x, int y) {
+    if (x < dib_.bmiHeader.biWidth && y < -dib_.bmiHeader.biHeight) {
+        int value;
+        if (surface_ == nullptr) {
+            locked_bits_ = dib_bits_;
+            if (dib_bits_ == nullptr) {
+                return 0;
+            }
+            ++surface_lock_count_;
+            value = reinterpret_cast<int>(dib_bits_);
+        } else {
+            if (locked_bits_ != nullptr) {
+                ++surface_lock_count_;
+                value = reinterpret_cast<int>(locked_bits_);
+            } else {
+                DDSURFACEDESC description;
+                description.dwSize = sizeof(description);
+                if (surface_->Lock(nullptr, &description, DDLOCK_WAIT, nullptr) != 0) {
+                    return 0;
+                }
+                stride_ = description.lPitch;
+                ++surface_lock_count_;
+                locked_bits_ = description.lpSurface;
+                value = reinterpret_cast<int>(description.lpSurface);
+            }
+        }
+        if (value != 0) {
+            return stride_ * y + reinterpret_cast<int>(locked_bits_) + x;
+        }
+    }
+    return 0;
+}
+
 Buffer::Buffer() {
     // `spot_` is constructed ahead of this body by declaration order, and
     // the vtable store the image makes here is the compiler's, not source.
