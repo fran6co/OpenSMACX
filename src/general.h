@@ -115,6 +115,12 @@ void __cdecl jackal_close();
 int __cdecl trig_init();
 int __cdecl sub_63ce20();
 
+// The fixed-point sine table trig_init builds at 0x009BE6DC: 256 truncated
+// int samples of sin(i * 2pi/1020) scaled to 65535. The game's own
+// `int sin(int angle, int scale)` (0x0063B9B0) interpolates adjacent entries
+// - `SinTable[i]` and `SinTable[i + 1]` - so nothing else may write it.
+extern int SinTable[256]; // 0x009BE6DC
+
 // jackal_close's own callees that are not yet recovered anywhere else.
 // Each is a pending_bodies forwarder; `sub_62d100` carries no catalogued
 // name, the same as `sub_63ce20` above.

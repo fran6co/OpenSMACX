@@ -3405,6 +3405,140 @@ int DDInit::report_error(int hr) {
     return cd_check();
 }
 
+/*
+Purpose: The install-media check `DDInit::report_error` tails into. Scan
+         drive letters A.. for a CD carrying directx\dsetup.dll, ask the
+         player to insert it (`FILEFIND_NOCD`) when none has it, and when one
+         does, LoadLibrary it and run the DirectXSetup entry points it
+         exports (`DIRECTXNOVERSION` / `DIRECTXVERSION` popups report how
+         that went). Returns 1 only when the setup run completed.
+// ORIGINAL: 0x00628F30 sub_628f30 0x00628F30-0x006290E0 FILE
+// symbol    ?cd_check@@YAHXZ
+// LEVER: seed find_handle from an unwritten local (`HANDLE seeded;`) and
+//        compare the NOCD pop's answer against `(int)find_handle` rather than
+//        -1 - that keeps find_handle live in esi through the test and is what
+//        puts module/GetProcAddress/SetCurrentDirectoryA in the image's own
+//        edi/esi registers (measured: 51/139 both with and without).
+// TRIED: `--BaseAtKeyPollFlag` stores the decrement back; the image only
+//        reads the slot (`mov eax,[0x9bc070]; dec eax; je`) - the store-back
+//        spelling scores 53/139 but corrupts the shared slot, so the plain
+//        read stands at 51/139.
+// TRIED: `if (--response == 0) continue;` / `!`-form / `-= 1` / inverted
+//        arm order / do-while bottom test - all 51/139; VC6 keeps the
+//        `dec;test;jne;jmp` shape where the image has `dec;je` falling into a
+//        mid-function shared return-0 epilogue (image 139, ours 141).
+// size      432 bytes
+// prototype int __cdecl sub_628f30(void)
+// callers   2   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00625E30 0x00627260 0x00645470
+// indirect  0x00628F68 0x00628F92 0x00628F97 0x00628FF3 0x0062900B 0x00629019
+//           0x00629026 0x0062908F 0x006290A0 0x006290BD 0x006290C0 0x006290CE
+Return Value: 1 when DirectXSetupA ran; 0 otherwise
+Status: Complete
+*/
+// The tree's name for 0x009BC070 (base.cpp), the retry budget this body
+// decrements; base.h does not declare it, popup.cpp takes the same extern.
+extern int BaseAtKeyPollFlag;
+int __cdecl cd_check() {
+    int version;
+    char root_path[256];      // 0x00628F4A: "A:\", then the dsetup.dll path
+    char saved_dir[260];      // 0x104: GetCurrentDirectoryA's own buffer size
+    WIN32_FIND_DATAA find_data;
+    // BUG IN THE ORIGINAL: the image seeds esi (find_handle) from an
+    // UNWRITTEN stack slot at entry (`mov esi,[esp + 0xc]`), so on a machine
+    // with NO cd-rom drives at all the post-loop find_handle test reads
+    // garbage and can enter the setup path unbidden. Reproduced, not fixed:
+    // `seeded` is never written either, and the FILEFIND_NOCD test below
+    // compares pop's response against find_handle (esi, holding
+    // INVALID_HANDLE_VALUE on every path that reaches it) rather than against
+    // -1, which is what keeps find_handle live in esi through that test.
+    HANDLE seeded;
+    HANDLE find_handle = seeded;
+    int response; // pop answers; also reused for the BaseAtKeyPollFlag reload
+    for (;;) {
+        root_path[0] = 0;
+        strcat(root_path, "A:\\");
+        for (int drive = 0; drive < 26; drive++) {
+            if (GetDriveTypeA(root_path) == DRIVE_CDROM) {
+                strcat(root_path, "directx\\dsetup.dll");
+                find_handle = FindFirstFileA(root_path, &find_data);
+                FindClose(find_handle);
+                if (find_handle != INVALID_HANDLE_VALUE) {
+                    goto found;
+                }
+                // strip the appended path back to "A:\" for the next letter
+                root_path[3] = 0;
+            }
+            root_path[0]++;
+        }
+        if (find_handle != INVALID_HANDLE_VALUE) {
+            goto found;
+        }
+        if (pop_caption_title(const_cast<char *>("jackal"),
+                              const_cast<char *>("FILEFIND_NOCD"), 0x10040,
+                              nullptr) == (int)find_handle) {
+            return 0;
+        }
+        // the pop system leaves the response in the shared slot at
+        // 0x009BC070 (base.cpp's BaseAtKeyPollFlag); rescan while it is 1.
+        // Reuses `response` - the image reloads it into the same register
+        // the pop answer sat in, and never stores the decrement back.
+        response = BaseAtKeyPollFlag;
+        if (--response == 0) {
+            continue;
+        }
+        return 0;
+    }
+found:
+    HMODULE module = LoadLibraryA(root_path);
+    if (!module) {
+        return 0;
+    }
+    FARPROC setup_a = GetProcAddress(module, "DirectXSetupA");
+    if (!setup_a) {
+        return 0;
+    }
+    FARPROC setup_get_version = GetProcAddress(module, "DirectXSetupGetVersion");
+    if (!setup_get_version) {
+        return 0;
+    }
+    // dsetup's entry points are __stdcall: the image leaves the two pushed
+    // arguments for the callee to pop, and reads `version` through the
+    // un-shifted [esp + 0x10] afterwards.
+    typedef int(__stdcall *setup_get_version_fn)(int *, int);
+    if ((reinterpret_cast<setup_get_version_fn>(setup_get_version))(&version,
+                                                                    0) == 0) {
+        response = pop_caption_title(const_cast<char *>("jackal"),
+                                     const_cast<char *>("DIRECTXNOVERSION"),
+                                     0x40, nullptr);
+    } else {
+        parse_num(0, version & 0xffff);
+        response = pop_caption_title(const_cast<char *>("jackal"),
+                                     const_cast<char *>("DIRECTXVERSION"), 0x40,
+                                     nullptr);
+    }
+    if (response == -1) {
+        return 0;
+    }
+    if (response == 1) {
+        return 0;
+    }
+    root_path[3] = 0; // SetCurrentDirectory wants the drive root, not the dll
+    GetCurrentDirectoryA(260, saved_dir);
+    SetCurrentDirectoryA(root_path);
+    typedef int(__stdcall *setup_a_fn)(int, int, int);
+    if (HandleMain != 0) {
+        (reinterpret_cast<setup_a_fn>(setup_a))(ExpansionEnabled, 0, 0x10018);
+    } else {
+        (reinterpret_cast<setup_a_fn>(setup_a))(0, 0, 0x10018);
+    }
+    FreeLibrary(module);
+    SetCurrentDirectoryA(saved_dir);
+    return 1;
+}
+
 namespace {
 }  // namespace
 

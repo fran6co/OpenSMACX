@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include <math.h> // sin(double), lowered to the CRT's _sin
 #include "sprite.h"
 #include "popup.h"
 #include "buffer.h"
@@ -2078,3 +2079,41 @@ void __cdecl teardown_00589890() {
 }
 
 
+
+/*
+Purpose: Fill SinTable, the 256-entry fixed-point sine table the game's own
+         `int sin(int angle, int scale)` (0x0063B9B0) interpolates, then make
+         two fixed calls through it. The table step is 2pi/1020 and the scale
+         is 65535.0, both read as .rdata doubles in the image at 0x00671030
+         and 0x00671028; each entry is sin(sample * step) * scale truncated
+         to int by the CRT's __ftol. The two trailing calls pass angle 2.0
+         and 0xe02d82d7 with scale 100; the first result is overwritten by
+         the second, which stays in eax as this function's return.
+// ORIGINAL: 0x0063B940 ?trig_init@@YAHXZ 0x0063B940-0x0063B9AE FILE BYTE_EXACT
+// LEVER: index the table (`SinTable[sample]`) and test the int counter signed;
+// a separate `int *entry` cursor makes VC6 compare the pointer unsigned
+// (`jb` where the image has `jl`) and hold the counter in ecx instead of edx.
+// The loop is a plain `for` - VC6 bottom-tests it itself.
+// size      110 bytes
+// prototype int __cdecl trig_init(void)
+// callers   1   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0063B9B0 0x006458C8 0x006463E4
+Return Value: n/a
+Status: Complete
+*/
+// The game's own fixed-point sine, an int overload of the CRT's double
+// sin(double) - the mangled name ?sin@@YAHHH@Z says both. Not recovered; the
+// definition is the seam forwarder in leaf_recoveries.cpp.
+int __cdecl sin(int angle, int scale);
+
+int SinTable[256]; // 0x009BE6DC
+int __cdecl trig_init() {
+    for (int sample = 0; sample < 256; sample++) {
+        SinTable[sample] = static_cast<int>(
+            sin(static_cast<double>(sample) * 0.006159985596078431) * 65535.0);
+    }
+    sin(0x40000000, 100);
+    return sin(static_cast<int>(0xe02d82d7), 100);
+}
