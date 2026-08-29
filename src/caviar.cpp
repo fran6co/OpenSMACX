@@ -9,7 +9,11 @@
  */
 #include "stdafx.h"
 #include "caviar.h"
+#include "basepop.h"
 #include "buffer.h"
+#include "general.h"    // mem_get
+#include "stringstruct.h"
+#include "strings.h"    // StringTemp
 
 #include <new>
 
@@ -532,3 +536,235 @@ CaviarData g_NW_CAVIARDATA;  // 0x0079A690
 CaviarData g_NI_CAVIARDATA;  // 0x007791C0
 CaviarData g_NLC_CAVIARDATA;  // 0x00779660
 CaviarData g_UNUSED_CAVIARDATA_VAR5[5];  // 0x00787E08, 0xc stride
+
+// ---------------------------------------------------------------------------
+// The voxel renderer's workspace, set up once by init_class below. Every
+// binding is terranx data the body reads or writes through a fixed address;
+// they are file-local because nothing else in the tree reaches them yet.
+// ---------------------------------------------------------------------------
+
+namespace {
+
+// 0x009B9100. The 0x20000-byte colour table mem_get allocates here, filled
+// with 0xffff, copied into the render record and walked into its two ramps.
+int *const CaviarSceneMemory = (int *)0x009B9100;
+
+// 0x009B9108 and 0x009B96B0. The two 256x256 scene surfaces this function
+// creates (init) and clears (fill 9 / fill 0).
+Buffer *const CaviarSceneBufferA = (Buffer *)0x009B9108;
+Buffer *const CaviarSceneBufferB = (Buffer *)0x009B96B0;
+
+// BufferA + 0x54 and BufferB + 0x54: each surface's bits pointer, copied
+// into the render record's descriptor block below.
+int *const CaviarSceneBufferABits = (int *)0x009B915C;
+int *const CaviarSceneBufferBBits = (int *)0x009B9704;
+
+// 0x009B95B0 and 0x009B9B58: two slots read verbatim into the render record;
+// 0x009B9C38: passed twice to vox_create_record as the record's name.
+int *const CaviarRecordBitsSource = (int *)0x009B95B0;
+int *const CaviarRecordOwnerSource = (int *)0x009B9B58;
+void *const CaviarRecordName = (void *)0x009B9C38;
+
+// 0x009B9690..0x009B969C: four slots zeroed once the record is built. The
+// image clears them in the order 0, 2, 3, 1 - not slot order.
+int *const CaviarViewportState = (int *)0x009B9690;
+
+// ForceOldVoxelAlgorithm, the PREFERENCES byte the ini read seeds.
+uint8_t *const CaviarVoxelAlgoFlag = (uint8_t *)0x009C0830;
+
+// The scene render record this function fills and hands to vox_create_record;
+// the created handle lands at the tail (+0x40, 0x009BB478).
+struct CaviarSceneRecord {
+  uint32_t field_00_;      // 0x9BB438, zeroed on success
+  uint32_t field_04_;      // 0x9BB43C, zeroed on success
+  uint32_t field_08_;      // 0x9BB440, zeroed on success
+  uint32_t field_0C_;      // 0x9BB444, zeroed on success
+  void *buffer_a_bits_;    // 0x9BB448
+  void *scene_memory_;     // 0x9BB44C
+  void *buffer_b_bits_;    // 0x9BB450
+  uint32_t width_a_;       // 0x9BB454
+  uint32_t height_a_;      // 0x9BB458
+  void *record_bits_;      // 0x9BB45C
+  uint32_t width_b_;       // 0x9BB460
+  void *record_owner_;     // 0x9BB464
+  uint8_t record_flag_;    // 0x9BB468
+  uint8_t pad_[0x40 - 0x31];
+  void *created_;          // 0x9BB478
+};
+
+CaviarSceneRecord *const CaviarScene = (CaviarSceneRecord *)0x009BB438;
+
+} // namespace
+
+/*
+Purpose: Boot the CAVIAR voxel renderer. Hands the vx_* file-IO callbacks to
+         the engine and, when the machine's CPU report needs showing, opens a
+         popup over BasePop's infrastructure and flattens its entry list into
+         StringTemp. Then reads the ForceOldVoxelAlgorithm preference, creates
+         the two 256x256 scene surfaces plus the shared 0x20000-entry colour
+         table, and builds the render record from them. Nonzero returns make
+         WinMain abort the boot; 0x17 is the render-record failure.
+// ORIGINAL: 0x006185A0 ?init_class@Caviar@@QAAHXZ 0x006185A0-0x00618D16;0x00663150-0x006632F1
+// symbol    ?init_class@Caviar@@SAHXZ
+//           (static member: WinMain's `call 0x6185a0` sets up no ecx, so a
+//           plain member would C2352 - the same rule as palette.h's
+//           set_active_window, which is why the emitted name spells S not Q)
+// TRIED: explicit __try/__except(EXCEPTION_EXECUTE_HANDLER) returning 0x17
+//        around the post-construction body - C2712, VC6 refuses __try in a
+//        function that requires object unwinding, and pop needs it. Measured
+//        2026-08-29; reverted. The image's own shape is out of C++ reach: a
+//        byte scan of .text and SELFMOD finds exactly ONE executable branch
+//        into the teardown block at 0x618763 (the `jmp 0x618873` tail of the
+//        block above it), so that block is referenced ONLY by the scope
+//        table at 0x6632e7 - it IS an __except handler - and the image's
+//        per-path teardown chains (state variable [esp+0x325c] walking
+//        9..1, 0x12..0xa, 0x1b..0x13, 0x24..0x1c) are its unwind actions.
+//        Those chains destroy pop's MEMBERS directly - 0x406820 (StringStruct
+//        dtor) at +0x2150/+0x2180, 0x4066c0 on the second one's virtual base
+//        at +0x21a8, 0x406910+0x608e10+0x5d4dd0 on the Dialogs slab at
+//        +0x21d0 - where the out-of-line ??1BasePop (0x4064D0) spells the
+//        same teardown as remove_all (0x402970) calls. This body's returns
+//        all run ??1BasePop instead, which is the same work at runtime and
+//        not reproducible from any C++ spelling that also links.
+// TRIED: int return on vox_init_callbacks tested `test eax, eax` against the
+//        image's `test al, al`; the forwarder now returns char and the test
+//        agrees (18 -> 19 of 392 at /O2 /GX).
+// TRIED: holding the popup StringList in a named local versus re-deriving
+//        `&pop + 0x2180` at every use - identical scores (19/392, 195
+//        compiled). The image's prologue pushes one register fewer than
+//        either spelling; kept the named local for readability.
+// TRIED: the image INLINES seek_pos(-1), next_entry and current_entry of the
+//        popup's StringList at +0x2180 (~60 of the ~200 remaining divergent
+//        instructions); those are BYTE_EXACT out-of-line members in
+//        stringstruct.cpp, so __forceinline-ing them for this one site would
+//        regress their own claims and every other call site. Ceiling noted,
+//        not chased.
+Return Value: 0 on success, 4 when a scene surface or the colour table could
+              not be created, 0x17 when the render record could not.
+Status: REWRITTEN under RAII - the body is faithful; the notes above carry
+        what measurement showed about the remaining divergence.
+*/
+int Caviar::init_class() {
+    // The popup infrastructure, its heap, buttons and sprite. Its real
+    // constructor (0x00600860, in basepop.cpp) builds every subobject the
+    // image's teardown paths name; the destructor (0x004064D0, still a
+    // pending forwarder) reverses all of it, so a plain local under RAII
+    // replays each early exit's cleanup - and its nontrivial destructor is
+    // what makes VC6 emit the image's fs:[0] unwind frame for this function.
+    BasePop pop;
+
+    // The six vx_* file-IO callbacks the engine is handed: vx_malloc,
+    // vx_free, vx_read, vx_write, vx_seek, vx_tell (0x00618E10..0x00618E90,
+    // mapped in recovered/units). Raw addresses because none of the six is
+    // source-owned yet.
+    unsigned long vx_callbacks[6] = {
+        0x00618E10, 0x00618E20, 0x00618E30, 0x00618E50, 0x00618E70,
+        0x00618E90};
+
+    if (vox_init_callbacks(vx_callbacks, 1) != 0) {
+        // The engine sized up this machine's CPU. Without a stored
+        // preference - or with one above the known range - tell the player
+        // this is not a CPU the renderer supports, by listing the popup's
+        // entries as one space-separated line in StringTemp.
+        const uint8_t algo_flag = *CaviarVoxelAlgoFlag;
+        if (algo_flag == 0 || 5 < algo_flag) {
+            pop.start("jackal", "CAVIAR_INVALIDCPU", -1, 0, 0, 0);
+
+            // The popup's unit-name list at +0x2180, which start() filled.
+            // NOT carved into BasePop, for the same reason its header gives
+            // for the CheckBox at +0x2228: StringList derives a virtual
+            // base, so a declared member would give BasePop's constructor
+            // implicit stores the image's does not have. The offset spelling
+            // is the one the class already owns (check_box()).
+            StringList *const unit_ids = reinterpret_cast<StringList *>(
+                reinterpret_cast<uint8_t *>(&pop) + 0x2180);
+            StringTemp[0] = 0;
+            unit_ids->seek_pos(-1);
+            for (int i = 0; i < unit_ids->entry_count_; ++i) {
+                unit_ids->next_entry();
+                const char *entry_text = 0;
+                if (unit_ids->current_ != 0) {
+                    entry_text = reinterpret_cast<const char *const *>(
+                        unit_ids->current_entry())[1];
+                }
+                strcat(StringTemp, entry_text);
+                strcat(StringTemp, " ");
+            }
+        }
+    }
+
+    if (GetPrivateProfileIntA("PREFERENCES", "ForceOldVoxelAlgorithm", 0,
+                              ".\\Alpha Centauri.ini") != 0) {
+        *CaviarVoxelAlgoFlag = 1;
+    } else {
+        WritePrivateProfileStringA("PREFERENCES", "ForceOldVoxelAlgorithm",
+                                   "0", ".\\Alpha Centauri.ini");
+    }
+
+    if (CaviarSceneBufferA->init(0x100, 0x100, 0, 0) != 0) {
+        return 4;
+    }
+    if (CaviarSceneBufferB->init(0x100, 0x100, 0, 0) != 0) {
+        return 4;
+    }
+
+    *CaviarSceneMemory = reinterpret_cast<int>(mem_get(0x20000));
+    if (*CaviarSceneMemory == 0) {
+        return 4;
+    }
+
+    CaviarSceneBufferA->fill(9);
+    CaviarSceneBufferB->fill(0);
+    vox_fill_colour_table((void *)*CaviarSceneMemory, 0xffff, 0x10000);
+
+    // The descriptor block, in the image's store order.
+    CaviarScene->scene_memory_ = (void *)*CaviarSceneMemory;
+    CaviarScene->record_bits_ = (void *)*CaviarRecordBitsSource;
+    CaviarScene->buffer_a_bits_ = (void *)*CaviarSceneBufferABits;
+    CaviarScene->width_a_ = 0x100;
+    CaviarScene->height_a_ = 0x100;
+    CaviarScene->record_flag_ = 1;
+    CaviarScene->buffer_b_bits_ = (void *)*CaviarSceneBufferBBits;
+    CaviarScene->record_owner_ = (void *)*CaviarRecordOwnerSource;
+    CaviarScene->width_b_ = 0x100;
+
+    CaviarScene->created_ = (void *)vox_create_record(
+        0, CaviarRecordName, CaviarRecordName,
+        (void *)&CaviarScene->buffer_a_bits_, 0x80);
+    if (CaviarScene->created_ == 0) {
+        return 0x17;
+    }
+
+    unsigned long *const created =
+        (unsigned long *)CaviarScene->created_;
+    created[0x58 / 4] = 0x00618DA0;  // &Caviar::object_start, still an artifact
+    created[0x38 / 4] = 0;
+    created[0x3C / 4] = 0;
+    created[0x40 / 4] = 0xff;
+    created[0x44 / 4] = 0xff;
+    created[0x48 / 4] = 0x100;
+    created[0x4C / 4] = 0x100;
+
+    // The record's two 256-entry ramps: table A gets the colour table's own
+    // base stepped 0x100 per entry, table B a 0x100-stepped ramp from zero.
+    unsigned long base = (unsigned long)*CaviarSceneMemory;
+    unsigned long shade = 0;
+    unsigned long *const ramp_a = (unsigned long *)created[0x60 / 4];
+    unsigned long *const ramp_b = (unsigned long *)created[0x64 / 4];
+    for (int index = 0; index < 0x100; ++index) {
+        ramp_a[index] = base;
+        base += 0x100;
+        ramp_b[index] = shade;
+        shade += 0x100;
+    }
+
+    CaviarViewportState[0] = 0;
+    CaviarViewportState[2] = 0;
+    CaviarViewportState[3] = 0;
+    CaviarViewportState[1] = 0;
+    CaviarScene->field_00_ = 0;
+    CaviarScene->field_08_ = 0;
+    CaviarScene->field_0C_ = 0;
+    CaviarScene->field_04_ = 0;
+    return 0;
+}

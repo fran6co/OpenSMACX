@@ -182,3 +182,28 @@ void __cdecl caviar_free_record(void *record);
 // `caviar_free_record` above.
 void __cdecl caviar_apply_rotation(float *angles, void *matrix);
 
+// ---------------------------------------------------------------------------
+// The voxel (CAVIAR) engine seam init_class reaches. None of the three is
+// recovered yet; each is a pending_bodies forwarder, for the same reason as
+// `caviar_free_record` above. Both 0x0063AF60 and 0x006393C0 are __cdecl -
+// the image cleans their arguments with one `add esp, 0x20` that covers the
+// pair of calls - and 0x006392E0's answer is tested with `test al, al`.
+// ---------------------------------------------------------------------------
+
+// 0x006392E0. Hands the six vx_* file-IO callbacks (the table init_class
+// builds, 0x00618E10..0x00618E90) to the voxel engine and reports whether it
+// initialised; a false answer skips the CAVIAR_INVALIDCPU popup. char, not
+// int: the image's call site tests the answer with `test al, al` - a byte
+// -sized value (init_class: image instruction 25).
+char __cdecl vox_init_callbacks(unsigned long *callbacks, int flag);
+
+// 0x0063AF60. Fills the scene colour table with `count` entries of `value`
+// (0xffff through 0x10000 entries here).
+void __cdecl vox_fill_colour_table(void *table, unsigned long value,
+                                   unsigned long count);
+
+// 0x006393C0. Creates the scene render record from the descriptor block
+// init_class fills at 0x009BB438; the created handle lands at 0x009BB478.
+unsigned long __cdecl vox_create_record(int a1, void *a2, void *a3, void *a4,
+                                        int a5);
+

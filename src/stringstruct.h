@@ -163,11 +163,17 @@ class StringStruct : public virtual StringAllocationBase {
   // this+0xBC) a payload id node too. Dialog::item calls it BY NAME.
   int add(int id);
 
- private:
   // Offset 0x00 is the compiler's vftable and 0x04 its vbtable - the
   // vbtable's second dword is the virtual base's displacement, which
   // close_with_tables reads back at runtime. StringStructEntry *head_ lands
   // at 0x08, where the image's list head lives.
+  //
+  // PUBLIC, not private: the image pokes these fields directly from outside
+  // the class - Caviar::init_class (0x006185A0) walks head_/current_/
+  // entry_count_/current_position_ of the BasePop member at +0x2180 inline,
+  // reading the count as its loop bound and advancing the cursor by hand.
+  // No layout change: the members keep their declaration order and offsets
+  // (0x08, 0x0C, 0x10, 0x14, 0x18); only the access label moved.
   StringStructEntry *head_;      // 0x08
   StringStructEntry *current_;   // 0x0C
   int entry_count_;              // 0x10

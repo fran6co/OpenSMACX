@@ -1315,11 +1315,29 @@ void Unk9BE618::unk_call() {
     PENDING_BODY(0x00635750, pending)(this, nullptr);
 }
 
-// ?init_class@Caviar@@QAAHXZ at 0x006185A0
-//             body in src/unrecovered/006185a0.cpp
-int Caviar::init_class() {
-    typedef int(__cdecl *pending)();
-    return PENDING_BODY(0x006185A0, pending)();
+// ?init_class@Caviar@@QAAHXZ at 0x006185A0 is HOMED into src/caviar.cpp
+// (a real RAII body over BasePop), so its forwarder is gone - the linker
+// enforces that. The three voxel-engine seams its body calls are still
+// pending, declared in caviar.h:
+
+// sub_6392E0 - see caviar.h
+char __cdecl vox_init_callbacks(unsigned long *callbacks, int flag) {
+    typedef char(__cdecl *pending)(unsigned long *, int);
+    return PENDING_BODY(0x006392E0, pending)(callbacks, flag);
+}
+
+// sub_63AF60 - see caviar.h
+void __cdecl vox_fill_colour_table(void *table, unsigned long value,
+                                   unsigned long count) {
+    typedef void(__cdecl *pending)(void *, unsigned long, unsigned long);
+    PENDING_BODY(0x0063AF60, pending)(table, value, count);
+}
+
+// sub_6393C0 - see caviar.h
+unsigned long __cdecl vox_create_record(int a1, void *a2, void *a3, void *a4,
+                                        int a5) {
+    typedef unsigned long(__cdecl *pending)(int, void *, void *, void *, int);
+    return PENDING_BODY(0x006393C0, pending)(a1, a2, a3, a4, a5);
 }
 
 // ?close_class@Caviar@@QAAXXZ at 0x00618D20
