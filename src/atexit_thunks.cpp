@@ -6077,24 +6077,7 @@ void __cdecl destroy_tutwin() {
     static_cast<TutWin *>(reinterpret_cast<void *>(0x008C6E68))->TutWin::~TutWin();
 }
 
-/*
-Purpose: Atexit teardown thunk for g_VEHDRAW_CAVIAR.
-// ORIGINAL: 0x004BF700 ??__Fg_VEHDRAW_CAVIAR@@YAXXZ 0x004BF700-0x004BF70A BYTE_EXACT
-// symbol    ?destroy_vehdraw_caviar@@YAXXZ
-// size      10 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl destroy_vehdraw_caviar() {
-    // A NAMED METHOD, not the seam. `Caviar::close` is in the tree now, at
-    // 0x00617020, and the image tail-jumps straight to it.
-    reinterpret_cast<Caviar *>(0x008CC828)->Caviar::close();
-}
+
 
 /*
 Purpose: Atexit teardown thunk for g_VEHDRAW_BUFFER.
@@ -6130,22 +6113,7 @@ void __cdecl destroy_worldwin() {
     static_cast<WorldWin *>(reinterpret_cast<void *>(0x008E9F60))->WorldWin::~WorldWin();
 }
 
-/*
-Purpose: Atexit teardown thunk for g_WAVE_DEVICE.
-// ORIGINAL: 0x004C5C70 ??__Fg_WAVE_DEVICE@@YAXXZ 0x004C5C70-0x004C5C7A BYTE_EXACT
-// symbol    ?destroy_wave_device@@YAXXZ
-// size      10 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl destroy_wave_device() {
-    reinterpret_cast<Wave_Device *>(0x0090D978)->Wave_Device::~Wave_Device();
-}
+
 
 /*
 Purpose: Atexit teardown thunk for g_MIDI_DEVICE.
@@ -6181,22 +6149,7 @@ void __cdecl destroy_wave_in_device() {
     reinterpret_cast<Wave_In_Device *>(0x0090DB50)->Wave_In_Device::~Wave_In_Device();
 }
 
-/*
-Purpose: Atexit teardown thunk for g_CONSOLE_TIMER.
-// ORIGINAL: 0x0050E9A0 ??__Fg_CONSOLE_TIMER@@YAXXZ 0x0050E9A0-0x0050E9AA BYTE_EXACT
-// symbol    ?destroy_console_timer@@YAXXZ
-// size      10 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl destroy_console_timer() {
-    reinterpret_cast<Time *>(0x00939E88)->Time::~Time();
-}
+
 
 /*
 Purpose: Atexit teardown thunk for g_CURSOR_SPRITES.

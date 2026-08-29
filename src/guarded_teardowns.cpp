@@ -237,58 +237,9 @@ void __cdecl teardown_00589890() {
     reinterpret_cast<Popup *>(TeardownObject009403E0)->Popup::~Popup();
 }
 
-/*
-Purpose: ??__Fg_BUFFER_SPRITE@@YAXXZ - tear down the global at 0x9b3a50 through
-         ?close@Sprite@@QAEXXZ, at most once, gated on bit 2 of the flag byte
-         at 0x9b37cc.
-// ORIGINAL: 0x005D71F0 ??__Fg_BUFFER_SPRITE@@YAXXZ 0x005D71F0-0x005D720F
-// TRIED     THE WHOLE ??__F FAMILY SHARES THIS WALL - 0x005D71F0, 0x0060D080 and 0x0063BB00 all measure 0 of 9 identically, so one spelling would move thirteen bodies and none does. The image keeps BOTH values in byte registers - `mov cl, [flags]; mov al, 2; test al, cl` ... `or cl, al; mov [flags], cl` - materialising the mask once and reusing it, where VC6 folds it into two immediates and emits one instruction FEWER (8 against the image's 9). Measured: a named `const uint8_t mask` (folded, 0/9), `flags & 2` operand order (0/9), `volatile uint8_t mask` (0/9), re-reading the flag byte at both sites (0/9), and widening both to `int` - the only one that moves, to 2/9, and only because it matches the instruction COUNT by adding `xor eax, eax` for zero-extension, which the image does not emit either. The flag search already picked /c /O2 /Gy /GR- /Oy- /GX as best. This is the allocator choosing to hold the mask, not a source form.
-// symbol    ?teardown_g_buffer_sprite@@YAXXZ
-// size      31 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl teardown_g_buffer_sprite() {
-    const uint8_t flags = *TeardownFlags009B37CC;
-    if ((2 & flags) != 0) {
-        return;
-    }
-    // Set BEFORE the teardown, not after: the original stores at the
-    // instruction preceding its tail jump.
-    *TeardownFlags009B37CC = static_cast<uint8_t>(flags | 2);
-    g_BUFFER_SPRITE.close();
-}
 
-/*
-Purpose: ??__Fg_WIN_BUFFER@@YAXXZ - tear down the global at 0x9b6f08 through
-         ??1Buffer@@QAE@XZ, at most once, gated on bit 1 of the flag byte
-         at 0x9b6e30.
-// ORIGINAL: 0x005EB370 ??__Fg_WIN_BUFFER@@YAXXZ 0x005EB370-0x005EB38F
-// symbol    ?teardown_g_win_buffer@@YAXXZ
-// size      31 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl teardown_g_win_buffer() {
-    const uint8_t flags = *TeardownFlags009B6E30;
-    if ((1 & flags) != 0) {
-        return;
-    }
-    // Set BEFORE the teardown, not after: the original stores at the
-    // instruction preceding its tail jump.
-    *TeardownFlags009B6E30 = static_cast<uint8_t>(flags | 1);
-    g_WIN_BUFFER.Buffer::~Buffer();
-}
+
+
 
 /*
 Purpose: sub_5eb3b0 - tear down the global at 0x9b7490 through
@@ -316,57 +267,9 @@ void __cdecl teardown_005eb3b0() {
     TeardownObject009B7490->Buffer::~Buffer();
 }
 
-/*
-Purpose: ??__Fg_RADIOBUTTON_SPRITE_1@@YAXXZ - tear down the global at 0x9b8ef8 through
-         ?close@Sprite@@QAEXXZ, at most once, gated on bit 1 of the flag byte
-         at 0x9b8ef0.
-// ORIGINAL: 0x0060D080 ??__Fg_RADIOBUTTON_SPRITE_1@@YAXXZ 0x0060D080-0x0060D09F
-// symbol    ?teardown_g_radiobutton_sprite_1@@YAXXZ
-// size      31 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl teardown_g_radiobutton_sprite_1() {
-    const uint8_t flags = *TeardownFlags009B8EF0;
-    if ((1 & flags) != 0) {
-        return;
-    }
-    // Set BEFORE the teardown, not after: the original stores at the
-    // instruction preceding its tail jump.
-    *TeardownFlags009B8EF0 = static_cast<uint8_t>(flags | 1);
-    g_RADIOBUTTON_SPRITE_1.close();
-}
 
-/*
-Purpose: ??__Fg_RADIOBUTTON_SPRITE_2@@YAXXZ - tear down the global at 0x9b8f28 through
-         ?close@Sprite@@QAEXXZ, at most once, gated on bit 2 of the flag byte
-         at 0x9b8ef0.
-// ORIGINAL: 0x0060D0C0 ??__Fg_RADIOBUTTON_SPRITE_2@@YAXXZ 0x0060D0C0-0x0060D0DF
-// symbol    ?teardown_g_radiobutton_sprite_2@@YAXXZ
-// size      31 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl teardown_g_radiobutton_sprite_2() {
-    const uint8_t flags = *TeardownFlags009B8EF0;
-    if ((2 & flags) != 0) {
-        return;
-    }
-    // Set BEFORE the teardown, not after: the original stores at the
-    // instruction preceding its tail jump.
-    *TeardownFlags009B8EF0 = static_cast<uint8_t>(flags | 2);
-    g_RADIOBUTTON_SPRITE_2.close();
-}
+
+
 
 /*
 Purpose: ?close_class@RadioButton@@QAAXXZ - run 2 (ORIGINAL(s)->*teardown)() on fixed globals,
@@ -388,57 +291,9 @@ void __cdecl teardown_0060e5d0() {
     g_RADIOBUTTON_SPRITE_1.close();
 }
 
-/*
-Purpose: ??__Fg_CHECKBOX_SPRITE_1@@YAXXZ - tear down the global at 0x9b8f60 through
-         ?close@Sprite@@QAEXXZ, at most once, gated on bit 1 of the flag byte
-         at 0x9b8f58.
-// ORIGINAL: 0x0060E610 ??__Fg_CHECKBOX_SPRITE_1@@YAXXZ 0x0060E610-0x0060E62F
-// symbol    ?teardown_g_checkbox_sprite_1@@YAXXZ
-// size      31 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl teardown_g_checkbox_sprite_1() {
-    const uint8_t flags = *TeardownFlags009B8F58;
-    if ((1 & flags) != 0) {
-        return;
-    }
-    // Set BEFORE the teardown, not after: the original stores at the
-    // instruction preceding its tail jump.
-    *TeardownFlags009B8F58 = static_cast<uint8_t>(flags | 1);
-    g_CHECKBOX_SPRITE_1.close();
-}
 
-/*
-Purpose: ??__Fg_CHECKBOX_SPRITE_2@@YAXXZ - tear down the global at 0x9b8f90 through
-         ?close@Sprite@@QAEXXZ, at most once, gated on bit 2 of the flag byte
-         at 0x9b8f58.
-// ORIGINAL: 0x0060E650 ??__Fg_CHECKBOX_SPRITE_2@@YAXXZ 0x0060E650-0x0060E66F
-// symbol    ?teardown_g_checkbox_sprite_2@@YAXXZ
-// size      31 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl teardown_g_checkbox_sprite_2() {
-    const uint8_t flags = *TeardownFlags009B8F58;
-    if ((2 & flags) != 0) {
-        return;
-    }
-    // Set BEFORE the teardown, not after: the original stores at the
-    // instruction preceding its tail jump.
-    *TeardownFlags009B8F58 = static_cast<uint8_t>(flags | 2);
-    g_CHECKBOX_SPRITE_2.close();
-}
+
+
 
 /*
 Purpose: ?close_class@CheckBox@@QAAXXZ - run 2 (ORIGINAL(s)->*teardown)() on fixed globals,
@@ -460,135 +315,15 @@ void __cdecl teardown_0060fd60() {
     g_CHECKBOX_SPRITE_2.close();
 }
 
-/*
-Purpose: ??__Fg_FILEWIN_SPRITE_1@@YAXXZ - tear down the global at 0x9b9048 through
-         ?close@Sprite@@QAEXXZ, at most once, gated on bit 1 of the flag byte
-         at 0x9b9014.
-// ORIGINAL: 0x006137B0 ??__Fg_FILEWIN_SPRITE_1@@YAXXZ 0x006137B0-0x006137CF
-// symbol    ?teardown_g_filewin_sprite_1@@YAXXZ
-// size      31 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl teardown_g_filewin_sprite_1() {
-    const uint8_t flags = *TeardownFlags009B9014;
-    if ((1 & flags) != 0) {
-        return;
-    }
-    // Set BEFORE the teardown, not after: the original stores at the
-    // instruction preceding its tail jump.
-    *TeardownFlags009B9014 = static_cast<uint8_t>(flags | 1);
-    g_FILEWIN_SPRITE_1.close();
-}
 
-/*
-Purpose: ??__Fg_FILEWIN_SPRITE_2@@YAXXZ - tear down the global at 0x9b9018 through
-         ?close@Sprite@@QAEXXZ, at most once, gated on bit 2 of the flag byte
-         at 0x9b9014.
-// ORIGINAL: 0x006137F0 ??__Fg_FILEWIN_SPRITE_2@@YAXXZ 0x006137F0-0x0061380F
-// symbol    ?teardown_g_filewin_sprite_2@@YAXXZ
-// size      31 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl teardown_g_filewin_sprite_2() {
-    const uint8_t flags = *TeardownFlags009B9014;
-    if ((2 & flags) != 0) {
-        return;
-    }
-    // Set BEFORE the teardown, not after: the original stores at the
-    // instruction preceding its tail jump.
-    *TeardownFlags009B9014 = static_cast<uint8_t>(flags | 2);
-    g_FILEWIN_SPRITE_2.close();
-}
 
-/*
-Purpose: ??__Fg_FILEWIN_SPRITE_3@@YAXXZ - tear down the global at 0x9b9078 through
-         ?close@Sprite@@QAEXXZ, at most once, gated on bit 4 of the flag byte
-         at 0x9b9014.
-// ORIGINAL: 0x00613830 ??__Fg_FILEWIN_SPRITE_3@@YAXXZ 0x00613830-0x0061384F
-// symbol    ?teardown_g_filewin_sprite_3@@YAXXZ
-// size      31 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl teardown_g_filewin_sprite_3() {
-    const uint8_t flags = *TeardownFlags009B9014;
-    if ((4 & flags) != 0) {
-        return;
-    }
-    // Set BEFORE the teardown, not after: the original stores at the
-    // instruction preceding its tail jump.
-    *TeardownFlags009B9014 = static_cast<uint8_t>(flags | 4);
-    g_FILEWIN_SPRITE_3.close();
-}
 
-/*
-Purpose: ??__Fg_CAVIAR_BUFFER_1@@YAXXZ - tear down the global at 0x9b9108 through
-         ??1Buffer@@QAE@XZ, at most once, gated on bit 1 of the flag byte
-         at 0x9b9104.
-// ORIGINAL: 0x00616AC0 ??__Fg_CAVIAR_BUFFER_1@@YAXXZ 0x00616AC0-0x00616ADF
-// symbol    ?teardown_g_caviar_buffer_1@@YAXXZ
-// size      31 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl teardown_g_caviar_buffer_1() {
-    const uint8_t flags = *TeardownFlags009B9104;
-    if ((1 & flags) != 0) {
-        return;
-    }
-    // Set BEFORE the teardown, not after: the original stores at the
-    // instruction preceding its tail jump.
-    *TeardownFlags009B9104 = static_cast<uint8_t>(flags | 1);
-    g_CAVIAR_BUFFER_1.Buffer::~Buffer();
-}
 
-/*
-Purpose: ??__Fg_CAVIAR_BUFFER_2@@YAXXZ - tear down the global at 0x9b96b0 through
-         ??1Buffer@@QAE@XZ, at most once, gated on bit 2 of the flag byte
-         at 0x9b9104.
-// ORIGINAL: 0x00616B00 ??__Fg_CAVIAR_BUFFER_2@@YAXXZ 0x00616B00-0x00616B1F
-// symbol    ?teardown_g_caviar_buffer_2@@YAXXZ
-// size      31 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl teardown_g_caviar_buffer_2() {
-    const uint8_t flags = *TeardownFlags009B9104;
-    if ((2 & flags) != 0) {
-        return;
-    }
-    // Set BEFORE the teardown, not after: the original stores at the
-    // instruction preceding its tail jump.
-    *TeardownFlags009B9104 = static_cast<uint8_t>(flags | 2);
-    g_CAVIAR_BUFFER_2.Buffer::~Buffer();
-}
+
+
+
+
+
 
 /*
 Purpose: sub_63bb00 - tear down the global at 0x9beae8 through

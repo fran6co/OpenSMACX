@@ -162,17 +162,19 @@ SCAFFOLD_MARKERS = ("init_thunks.cpp", "atexit_thunks.cpp",
                     "leaf_recoveries.cpp", "nullsub_thunks.cpp",
                     "guarded_teardowns.cpp")
 SCAFFOLD_CEILINGS = {
-    "init_thunks.cpp markers": 395,
-    "atexit_thunks.cpp markers": 373,
+    "init_thunks.cpp markers": 380,
+    "atexit_thunks.cpp markers": 370,
     "adjustor_thunks.cpp markers": 116,
     "deleting_thunks.cpp markers": 74,
     "delegation_thunks.cpp markers": 27,
     "field_accessors.cpp markers": 42,
     "leaf_recoveries.cpp markers": 52,
     "nullsub_thunks.cpp markers": 56,
-    "guarded_teardowns.cpp markers": 25,
+    "guarded_teardowns.cpp markers": 14,
     "PENDING_BODY forwarders": 224,
-    "artifact files (recovered/)": 1333,
+    # 1333 -> 1334 (2026-08-29, init_thunks batch): global_lifecycle.cpp
+    # archives the ??__E/??__F thunks the real globals retired.
+    "artifact files (recovered/)": 1334,
     "unrecovered files": 1696,
     "hypothesis_layouts.h lines": 2709,
 }

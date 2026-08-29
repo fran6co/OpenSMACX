@@ -63,7 +63,10 @@ CEILINGS = {
     # eight mentions in the same edit (170 -> 162), plus one scaffold
     # parameter the excuse now covers. The totals moved against each other.
     "evidence-free unk": 31,
-    "function-address binding": 55,
+    # 55 -> 54 (2026-08-29, init_thunks batch): destroy_vehdraw_caviar and
+    # siblings reached their globals through raw address casts; the real
+    # objects need no cast.
+    "function-address binding": 54,
     "orphan redirect": 209,
     "pointer-as-int": 2,
     "undocumented trivial body": 0,
