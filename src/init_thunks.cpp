@@ -44,11 +44,33 @@
 #include "netdaemon.h"
 #include "reportif.h"
 
-// The managed globals themselves. Their construction and teardown is spelled
-// out by the construct_*/teardown_* thunks below, exactly as the image's named
-// ??__E/??__F pairs do it; what this tree does NOT carry is the image's fixed
-// addresses (0x00822610, 0x009B6F08, 0x009B8EF8..0x009B96B0) - the objects
-// live wherever this build's linker puts them.
+// The managed globals - REAL objects. In the shipped image each lives at a
+// fixed data address and is constructed before WinMain by the CRT's
+// dynamic-initializer walk (winedbg-confirmed: the walker's return address
+// 0x00644EEB, table at 0x682568..0x6826D0; the archived ??__E/??__F thunk
+// bodies are kept in src/recovered/global_lifecycle.cpp). Here the same
+// recovered constructors run through this build's own startup - their
+// BYTE_EXACT claims (Sprite::Sprite 0x005E37E0, Buffer::Buffer 0x005D7210,
+// Caviar::Caviar, Wave_Device::Wave_Device, Time::Time) are what pin
+// construction correctness - and the matching destructors close everything
+// at exit.
+//
+//   global                     image address
+//   g_NEWTECHWIN_SPRITES[6]    0x00822610   (0x2C stride)
+//   g_VEHDRAW_CAVIAR           0x008CC828
+//   g_WAVE_DEVICE              0x0090D978
+//   g_CONSOLE_TIMER            0x00939E88
+//   g_BUFFER_SPRITE            0x009B3A50
+//   g_WIN_BUFFER               0x009B6F08
+//   g_RADIOBUTTON_SPRITE_1     0x009B8EF8
+//   g_RADIOBUTTON_SPRITE_2     0x009B8F28
+//   g_CHECKBOX_SPRITE_1        0x009B8F60
+//   g_CHECKBOX_SPRITE_2        0x009B8F90
+//   g_FILEWIN_SPRITE_1         0x009B9048
+//   g_FILEWIN_SPRITE_2         0x009B9018
+//   g_FILEWIN_SPRITE_3         0x009B9078
+//   g_CAVIAR_BUFFER_1          0x009B9108
+//   g_CAVIAR_BUFFER_2          0x009B96B0
 Sprite g_NEWTECHWIN_SPRITES[6];
 Caviar g_VEHDRAW_CAVIAR;
 Wave_Device g_WAVE_DEVICE;
@@ -6362,23 +6384,7 @@ void __cdecl construct_newtechwin() {
     atexit(destroy_newtechwin);
 }
 
-/*
-Purpose: Dynamic initializer for g_NEWTECHWIN_SPRITES; registers its ??__F teardown.
-// ORIGINAL: 0x00483880 ??__Eg_NEWTECHWIN_SPRITES@@YAXXZ 0x00483880-0x004838A4 BYTE_EXACT
-// symbol    ?construct_newtechwin_sprites@@YAXXZ
-// size      36 bytes
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00645398 0x006457C2
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl construct_newtechwin_sprites() {
-    VectorCtorIterator(g_NEWTECHWIN_SPRITES, 0x2C, 6, SpriteElementCtor, SpriteElementTeardown);
-    atexit(reinterpret_cast<func_atexit_callback *>(0x004838B0));
-}
+
 
 /*
 Purpose: Dynamic initializer for g_PICKWIN; registers its ??__F teardown.
@@ -6560,23 +6566,7 @@ void __cdecl construct_tutwin() {
     atexit(destroy_tutwin);
 }
 
-/*
-Purpose: Dynamic initializer for g_VEHDRAW_CAVIAR; registers its ??__F teardown.
-// ORIGINAL: 0x004BF6E0 ??__Eg_VEHDRAW_CAVIAR@@YAXXZ 0x004BF6E0-0x004BF6F6 BYTE_EXACT
-// symbol    ?construct_vehdraw_caviar@@YAXXZ
-// size      22 bytes
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00616DA0 0x00645398
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl construct_vehdraw_caviar() {
-    g_VEHDRAW_CAVIAR.Caviar::Caviar();
-    atexit(destroy_vehdraw_caviar);
-}
+
 
 /*
 Purpose: Dynamic initializer for g_VEHDRAW_BUFFER; registers its ??__F teardown.
@@ -6614,23 +6604,7 @@ void __cdecl construct_worldwin() {
     atexit(destroy_worldwin);
 }
 
-/*
-Purpose: Dynamic initializer for g_WAVE_DEVICE; registers its ??__F teardown.
-// ORIGINAL: 0x004C5C50 ??__Eg_WAVE_DEVICE@@YAXXZ 0x004C5C50-0x004C5C66 BYTE_EXACT
-// symbol    ?construct_wave_device@@YAXXZ
-// size      22 bytes
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x004C4DD0 0x00645398
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl construct_wave_device() {
-    g_WAVE_DEVICE.Wave_Device::Wave_Device();
-    atexit(destroy_wave_device);
-}
+
 
 /*
 Purpose: Dynamic initializer for g_MIDI_DEVICE; registers its ??__F teardown.
@@ -6686,23 +6660,7 @@ void __cdecl construct_console() {
     atexit(teardown_g_console);
 }
 
-/*
-Purpose: Dynamic initializer for g_CONSOLE_TIMER; registers its ??__F teardown.
-// ORIGINAL: 0x0050E980 ??__Eg_CONSOLE_TIMER@@YAXXZ 0x0050E980-0x0050E996 BYTE_EXACT
-// symbol    ?construct_console_timer@@YAXXZ
-// size      22 bytes
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x006161D0 0x00645398
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl construct_console_timer() {
-    g_CONSOLE_TIMER.Time::Time();
-    atexit(destroy_console_timer);
-}
+
 
 /*
 Purpose: Dynamic initializer for g_CURSOR_SPRITES; registers its ??__F teardown.
@@ -6902,23 +6860,7 @@ void __cdecl construct_multidebug() {
     atexit(destroy_multidebug);
 }
 
-/*
-Purpose: Dynamic initializer for g_BUFFER_SPRITE; registers its ??__F teardown.
-// ORIGINAL: 0x005D71D0 ??__Eg_BUFFER_SPRITE@@YAXXZ 0x005D71D0-0x005D71E6 BYTE_EXACT
-// symbol    ?construct_buffer_sprite@@YAXXZ
-// size      22 bytes
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x005E37E0 0x00645398
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl construct_buffer_sprite() {
-    g_BUFFER_SPRITE.Sprite::Sprite();
-    atexit(teardown_g_buffer_sprite);
-}
+
 
 /*
 Purpose: Dynamic initializer for g_BUFFER; registers its ??__F teardown.
@@ -6938,23 +6880,7 @@ void __cdecl construct_buffer() {
     atexit(destroy_buffer);
 }
 
-/*
-Purpose: Dynamic initializer for g_WIN_BUFFER; registers its ??__F teardown.
-// ORIGINAL: 0x005EB350 ??__Eg_WIN_BUFFER@@YAXXZ 0x005EB350-0x005EB366 BYTE_EXACT
-// symbol    ?construct_win_buffer@@YAXXZ
-// size      22 bytes
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005D7210 0x00645398
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl construct_win_buffer() {
-    g_WIN_BUFFER.Buffer::Buffer();
-    atexit(teardown_g_win_buffer);
-}
+
 
 /*
 Purpose: Dynamic initializer for TxtIndex; registers its ??__F teardown.
@@ -6974,131 +6900,19 @@ void __cdecl construct_txtindex() {
     atexit(destroy_txtindex);
 }
 
-/*
-Purpose: Dynamic initializer for g_RADIOBUTTON_SPRITE_1; registers its ??__F teardown.
-// ORIGINAL: 0x0060D060 ??__Eg_RADIOBUTTON_SPRITE_1@@YAXXZ 0x0060D060-0x0060D076 BYTE_EXACT
-// symbol    ?construct_radiobutton_sprite_1@@YAXXZ
-// size      22 bytes
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005E37E0 0x00645398
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl construct_radiobutton_sprite_1() {
-    g_RADIOBUTTON_SPRITE_1.Sprite::Sprite();
-    atexit(teardown_g_radiobutton_sprite_1);
-}
 
-/*
-Purpose: Dynamic initializer for g_RADIOBUTTON_SPRITE_2; registers its ??__F teardown.
-// ORIGINAL: 0x0060D0A0 ??__Eg_RADIOBUTTON_SPRITE_2@@YAXXZ 0x0060D0A0-0x0060D0B6 BYTE_EXACT
-// symbol    ?construct_radiobutton_sprite_2@@YAXXZ
-// size      22 bytes
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005E37E0 0x00645398
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl construct_radiobutton_sprite_2() {
-    g_RADIOBUTTON_SPRITE_2.Sprite::Sprite();
-    atexit(teardown_g_radiobutton_sprite_2);
-}
 
-/*
-Purpose: Dynamic initializer for g_CHECKBOX_SPRITE_1; registers its ??__F teardown.
-// ORIGINAL: 0x0060E5F0 ??__Eg_CHECKBOX_SPRITE_1@@YAXXZ 0x0060E5F0-0x0060E606 BYTE_EXACT
-// symbol    ?construct_checkbox_sprite_1@@YAXXZ
-// size      22 bytes
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005E37E0 0x00645398
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl construct_checkbox_sprite_1() {
-    g_CHECKBOX_SPRITE_1.Sprite::Sprite();
-    atexit(teardown_g_checkbox_sprite_1);
-}
 
-/*
-Purpose: Dynamic initializer for g_CHECKBOX_SPRITE_2; registers its ??__F teardown.
-// ORIGINAL: 0x0060E630 ??__Eg_CHECKBOX_SPRITE_2@@YAXXZ 0x0060E630-0x0060E646 BYTE_EXACT
-// symbol    ?construct_checkbox_sprite_2@@YAXXZ
-// size      22 bytes
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005E37E0 0x00645398
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl construct_checkbox_sprite_2() {
-    g_CHECKBOX_SPRITE_2.Sprite::Sprite();
-    atexit(teardown_g_checkbox_sprite_2);
-}
 
-/*
-Purpose: Dynamic initializer for g_FILEWIN_SPRITE_1; registers its ??__F teardown.
-// ORIGINAL: 0x00613790 ??__Eg_FILEWIN_SPRITE_1@@YAXXZ 0x00613790-0x006137A6 BYTE_EXACT
-// symbol    ?construct_filewin_sprite_1@@YAXXZ
-// size      22 bytes
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x005E37E0 0x00645398
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl construct_filewin_sprite_1() {
-    g_FILEWIN_SPRITE_1.Sprite::Sprite();
-    atexit(teardown_g_filewin_sprite_1);
-}
 
-/*
-Purpose: Dynamic initializer for g_FILEWIN_SPRITE_2; registers its ??__F teardown.
-// ORIGINAL: 0x006137D0 ??__Eg_FILEWIN_SPRITE_2@@YAXXZ 0x006137D0-0x006137E6 BYTE_EXACT
-// symbol    ?construct_filewin_sprite_2@@YAXXZ
-// size      22 bytes
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005E37E0 0x00645398
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl construct_filewin_sprite_2() {
-    g_FILEWIN_SPRITE_2.Sprite::Sprite();
-    atexit(teardown_g_filewin_sprite_2);
-}
 
-/*
-Purpose: Dynamic initializer for g_FILEWIN_SPRITE_3; registers its ??__F teardown.
-// ORIGINAL: 0x00613810 ??__Eg_FILEWIN_SPRITE_3@@YAXXZ 0x00613810-0x00613826 BYTE_EXACT
-// symbol    ?construct_filewin_sprite_3@@YAXXZ
-// size      22 bytes
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005E37E0 0x00645398
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl construct_filewin_sprite_3() {
-    g_FILEWIN_SPRITE_3.Sprite::Sprite();
-    atexit(teardown_g_filewin_sprite_3);
-}
+
+
+
+
+
+
+
 
 /*
 Purpose: Dynamic initializer for StringTable; registers its ??__F teardown.
@@ -7118,41 +6932,9 @@ void __cdecl construct_stringtable() {
     atexit(destroy_stringtable);
 }
 
-/*
-Purpose: Dynamic initializer for g_CAVIAR_BUFFER_1; registers its ??__F teardown.
-// ORIGINAL: 0x00616AA0 ??__Eg_CAVIAR_BUFFER_1@@YAXXZ 0x00616AA0-0x00616AB6 BYTE_EXACT
-// symbol    ?construct_caviar_buffer_1@@YAXXZ
-// size      22 bytes
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005D7210 0x00645398
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl construct_caviar_buffer_1() {
-    g_CAVIAR_BUFFER_1.Buffer::Buffer();
-    atexit(teardown_g_caviar_buffer_1);
-}
 
-/*
-Purpose: Dynamic initializer for g_CAVIAR_BUFFER_2; registers its ??__F teardown.
-// ORIGINAL: 0x00616AE0 ??__Eg_CAVIAR_BUFFER_2@@YAXXZ 0x00616AE0-0x00616AF6 BYTE_EXACT
-// symbol    ?construct_caviar_buffer_2@@YAXXZ
-// size      22 bytes
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005D7210 0x00645398
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl construct_caviar_buffer_2() {
-    g_CAVIAR_BUFFER_2.Buffer::Buffer();
-    atexit(teardown_g_caviar_buffer_2);
-}
+
+
 
 /*
 Purpose: Step the receiver back to the subobject ??_GCouncWin@@UAEPAXI@Z
