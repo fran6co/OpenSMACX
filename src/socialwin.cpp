@@ -21,12 +21,12 @@
 #include "subinterface.h"
 #include "vector_teardown.h"
 
-const void *const SocialWinFlatButtonCtor = (const void *)0x00607CF0;
-const void *const SocialWinFlatButtonDtor = (const void *)0x00406880;
-const void *const SocialWinCheckButtonCtor = (const void *)0x004B3EC0;
-const void *const SocialWinCheckButtonDtor = (const void *)0x00633750;
-const void *const SocialWinButtonGroupCtor = (const void *)0x0062B7C0;
-const void *const SocialWinButtonGroupDtor = (const void *)0x004325B0;
+void __fastcall SocialWinFlatButtonCtor(void *self) { reinterpret_cast<FlatButton *>(self)->FlatButton::FlatButton(); }
+void __fastcall SocialWinFlatButtonDtor(void *self) { reinterpret_cast<FlatButton *>(self)->~FlatButton(); }
+void __fastcall SocialWinCheckButtonCtor(void *self) { reinterpret_cast<CheckButton *>(self)->CheckButton::CheckButton(); }
+void __fastcall SocialWinCheckButtonDtor(void *self) { reinterpret_cast<CheckButton *>(self)->~CheckButton(); }
+void __fastcall SocialWinButtonGroupCtor(void *self) { reinterpret_cast<ButtonGroup *>(self)->ButtonGroup::ButtonGroup(); }
+void __fastcall SocialWinButtonGroupDtor(void *self) { reinterpret_cast<ButtonGroup *>(self)->~ButtonGroup(); }
 
 const uint32_t SocialWinSubInterfaceVtable = 0x0066A6E4;
 const uint32_t SocialWinPrimaryVtable = 0x0066DAA4;

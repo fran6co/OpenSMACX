@@ -20,9 +20,21 @@
 #include "vtable_shim.h"
 #include "hypothesis_layouts.h"
 
-const void *const EffectElementTeardown = (const void *)0x004482C0;
+// The Effect element callbacks, spelled for real: the constructor runs
+// Wave::Wave on the element front and installs the Effect vftable
+// (0x0066B7A4 in the image) over the Wave's; the teardown lands on ~Wave.
+// The vftable VALUE is the image's own and stays inert unless something
+// dispatches virtually through it.
+static void *EffectVtable = (void *)0x0066B7A4;
 
-const void *const EffectElementCtor = (const void *)0x004482D0;
+void __fastcall EffectElementTeardown(void *self) {
+    reinterpret_cast<Wave *>(self)->~Wave();
+}
+
+void __fastcall EffectElementCtor(void *self) {
+    reinterpret_cast<Wave *>(self)->Wave::Wave();
+    *reinterpret_cast<void **>(self) = EffectVtable;
+}
 
 /*
 Purpose: Build the effect bank: the mirror image of the destructor below, one

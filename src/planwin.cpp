@@ -22,8 +22,19 @@
 #include "spritebox.h"
 #include "net_class.h"
 #include "texture.h"
+#include "imagebutton.h"
 #include "vector_teardown.h"
 #include <cstring>
+
+// The element dtors for PlanWin's shared MapWin-layout arrays - see
+// mapwin.cpp's callback note.
+static void __fastcall planwin_texture_store_element_dtor(void *self) {
+    reinterpret_cast<TextureStore *>(self)->~TextureStore();
+}
+static void __fastcall planwin_image_button_element_dtor(void *self) {
+    reinterpret_cast<ImageButton *>(self)->~ImageButton();
+}
+
 
 // The dword immediately ahead of MapWin's virtual base. MapWin used to
 // declare it as a member; VC6 owns those four bytes as MapWin's vtordisp now
@@ -131,8 +142,9 @@ PlanWin::~PlanWin() {
     char *const base = self - 0x5e4;
     reinterpret_cast<MapWin *>(base - 0x21a6c)->clear(0);
 
-    VectorDtorIterator(base - 0x2b18, 0xabc, 4,
-                        reinterpret_cast<const void *>(0x00625310));
+    
+VectorDtorIterator(base - 0x2b18, 0xabc, 4,
+                        planwin_image_button_element_dtor);
     reinterpret_cast<Font *>(base - 0x2b4c)->~Font();
     reinterpret_cast<Font *>(base - 0x2b78)->~Font();
     reinterpret_cast<Font *>(base - 0x2ba4)->~Font();
@@ -141,9 +153,9 @@ PlanWin::~PlanWin() {
     reinterpret_cast<Buffer *>(base - 0x3c44)->~Buffer();
     reinterpret_cast<TextureStore *>(base - 0x3f60)->~TextureStore();
     VectorDtorIterator(base - 0x210e0, 0x260, 0xc4,
-                        reinterpret_cast<const void *>(0x006252B0));
+                        planwin_texture_store_element_dtor);
     VectorDtorIterator(base - 0x21a60, 0x260, 4,
-                        reinterpret_cast<const void *>(0x006252B0));
+                        planwin_texture_store_element_dtor);
 }
 
 /*
