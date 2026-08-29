@@ -261,7 +261,7 @@ void __cdecl teardown_g_buffer_sprite() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B37CC = static_cast<uint8_t>(flags | 2);
-    g_BUFFER_SPRITE->close();
+    g_BUFFER_SPRITE.close();
 }
 
 /*
@@ -287,7 +287,7 @@ void __cdecl teardown_g_win_buffer() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B6E30 = static_cast<uint8_t>(flags | 1);
-    g_WIN_BUFFER->Buffer::~Buffer();
+    g_WIN_BUFFER.Buffer::~Buffer();
 }
 
 /*
@@ -339,7 +339,7 @@ void __cdecl teardown_g_radiobutton_sprite_1() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B8EF0 = static_cast<uint8_t>(flags | 1);
-    g_RADIOBUTTON_SPRITE_1->close();
+    g_RADIOBUTTON_SPRITE_1.close();
 }
 
 /*
@@ -365,7 +365,7 @@ void __cdecl teardown_g_radiobutton_sprite_2() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B8EF0 = static_cast<uint8_t>(flags | 2);
-    g_RADIOBUTTON_SPRITE_2->close();
+    g_RADIOBUTTON_SPRITE_2.close();
 }
 
 /*
@@ -384,8 +384,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl teardown_0060e5d0() {
-    g_RADIOBUTTON_SPRITE_2->close();
-    g_RADIOBUTTON_SPRITE_1->close();
+    g_RADIOBUTTON_SPRITE_2.close();
+    g_RADIOBUTTON_SPRITE_1.close();
 }
 
 /*
@@ -411,7 +411,7 @@ void __cdecl teardown_g_checkbox_sprite_1() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B8F58 = static_cast<uint8_t>(flags | 1);
-    g_CHECKBOX_SPRITE_1->close();
+    g_CHECKBOX_SPRITE_1.close();
 }
 
 /*
@@ -437,7 +437,7 @@ void __cdecl teardown_g_checkbox_sprite_2() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B8F58 = static_cast<uint8_t>(flags | 2);
-    g_CHECKBOX_SPRITE_2->close();
+    g_CHECKBOX_SPRITE_2.close();
 }
 
 /*
@@ -456,8 +456,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl teardown_0060fd60() {
-    g_CHECKBOX_SPRITE_1->close();
-    g_CHECKBOX_SPRITE_2->close();
+    g_CHECKBOX_SPRITE_1.close();
+    g_CHECKBOX_SPRITE_2.close();
 }
 
 /*
@@ -483,7 +483,7 @@ void __cdecl teardown_g_filewin_sprite_1() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B9014 = static_cast<uint8_t>(flags | 1);
-    g_FILEWIN_SPRITE_1->close();
+    g_FILEWIN_SPRITE_1.close();
 }
 
 /*
@@ -509,7 +509,7 @@ void __cdecl teardown_g_filewin_sprite_2() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B9014 = static_cast<uint8_t>(flags | 2);
-    g_FILEWIN_SPRITE_2->close();
+    g_FILEWIN_SPRITE_2.close();
 }
 
 /*
@@ -535,7 +535,7 @@ void __cdecl teardown_g_filewin_sprite_3() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B9014 = static_cast<uint8_t>(flags | 4);
-    g_FILEWIN_SPRITE_3->close();
+    g_FILEWIN_SPRITE_3.close();
 }
 
 /*
@@ -561,7 +561,7 @@ void __cdecl teardown_g_caviar_buffer_1() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B9104 = static_cast<uint8_t>(flags | 1);
-    g_CAVIAR_BUFFER_1->Buffer::~Buffer();
+    g_CAVIAR_BUFFER_1.Buffer::~Buffer();
 }
 
 /*
@@ -587,7 +587,7 @@ void __cdecl teardown_g_caviar_buffer_2() {
     // Set BEFORE the teardown, not after: the original stores at the
     // instruction preceding its tail jump.
     *TeardownFlags009B9104 = static_cast<uint8_t>(flags | 2);
-    g_CAVIAR_BUFFER_2->Buffer::~Buffer();
+    g_CAVIAR_BUFFER_2.Buffer::~Buffer();
 }
 
 /*

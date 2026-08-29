@@ -43,6 +43,28 @@
 #include "messagewin.h"
 #include "netdaemon.h"
 #include "reportif.h"
+
+// The managed globals themselves. Their construction and teardown is spelled
+// out by the construct_*/teardown_* thunks below, exactly as the image's named
+// ??__E/??__F pairs do it; what this tree does NOT carry is the image's fixed
+// addresses (0x00822610, 0x009B6F08, 0x009B8EF8..0x009B96B0) - the objects
+// live wherever this build's linker puts them.
+Sprite g_NEWTECHWIN_SPRITES[6];
+Caviar g_VEHDRAW_CAVIAR;
+Wave_Device g_WAVE_DEVICE;
+Time g_CONSOLE_TIMER;
+Sprite g_BUFFER_SPRITE;
+Buffer g_WIN_BUFFER;
+Sprite g_RADIOBUTTON_SPRITE_1;
+Sprite g_RADIOBUTTON_SPRITE_2;
+Sprite g_CHECKBOX_SPRITE_1;
+Sprite g_CHECKBOX_SPRITE_2;
+Sprite g_FILEWIN_SPRITE_1;
+Sprite g_FILEWIN_SPRITE_2;
+Sprite g_FILEWIN_SPRITE_3;
+Buffer g_CAVIAR_BUFFER_1;
+Buffer g_CAVIAR_BUFFER_2;
+
 #include "sounddevice.h"
 #include "statuswin.h"
 
@@ -6552,7 +6574,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_vehdraw_caviar() {
-    g_VEHDRAW_CAVIAR->Caviar::Caviar();
+    g_VEHDRAW_CAVIAR.Caviar::Caviar();
     atexit(destroy_vehdraw_caviar);
 }
 
@@ -6606,7 +6628,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_wave_device() {
-    g_WAVE_DEVICE->Wave_Device::Wave_Device();
+    g_WAVE_DEVICE.Wave_Device::Wave_Device();
     atexit(destroy_wave_device);
 }
 
@@ -6678,7 +6700,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_console_timer() {
-    g_CONSOLE_TIMER->Time::Time();
+    g_CONSOLE_TIMER.Time::Time();
     atexit(destroy_console_timer);
 }
 
@@ -6894,7 +6916,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_buffer_sprite() {
-    g_BUFFER_SPRITE->Sprite::Sprite();
+    g_BUFFER_SPRITE.Sprite::Sprite();
     atexit(teardown_g_buffer_sprite);
 }
 
@@ -6930,7 +6952,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_win_buffer() {
-    g_WIN_BUFFER->Buffer::Buffer();
+    g_WIN_BUFFER.Buffer::Buffer();
     atexit(teardown_g_win_buffer);
 }
 
@@ -6966,7 +6988,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_radiobutton_sprite_1() {
-    g_RADIOBUTTON_SPRITE_1->Sprite::Sprite();
+    g_RADIOBUTTON_SPRITE_1.Sprite::Sprite();
     atexit(teardown_g_radiobutton_sprite_1);
 }
 
@@ -6984,7 +7006,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_radiobutton_sprite_2() {
-    g_RADIOBUTTON_SPRITE_2->Sprite::Sprite();
+    g_RADIOBUTTON_SPRITE_2.Sprite::Sprite();
     atexit(teardown_g_radiobutton_sprite_2);
 }
 
@@ -7002,7 +7024,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_checkbox_sprite_1() {
-    g_CHECKBOX_SPRITE_1->Sprite::Sprite();
+    g_CHECKBOX_SPRITE_1.Sprite::Sprite();
     atexit(teardown_g_checkbox_sprite_1);
 }
 
@@ -7020,7 +7042,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_checkbox_sprite_2() {
-    g_CHECKBOX_SPRITE_2->Sprite::Sprite();
+    g_CHECKBOX_SPRITE_2.Sprite::Sprite();
     atexit(teardown_g_checkbox_sprite_2);
 }
 
@@ -7038,7 +7060,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_filewin_sprite_1() {
-    g_FILEWIN_SPRITE_1->Sprite::Sprite();
+    g_FILEWIN_SPRITE_1.Sprite::Sprite();
     atexit(teardown_g_filewin_sprite_1);
 }
 
@@ -7056,7 +7078,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_filewin_sprite_2() {
-    g_FILEWIN_SPRITE_2->Sprite::Sprite();
+    g_FILEWIN_SPRITE_2.Sprite::Sprite();
     atexit(teardown_g_filewin_sprite_2);
 }
 
@@ -7074,7 +7096,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_filewin_sprite_3() {
-    g_FILEWIN_SPRITE_3->Sprite::Sprite();
+    g_FILEWIN_SPRITE_3.Sprite::Sprite();
     atexit(teardown_g_filewin_sprite_3);
 }
 
@@ -7110,7 +7132,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_caviar_buffer_1() {
-    g_CAVIAR_BUFFER_1->Buffer::Buffer();
+    g_CAVIAR_BUFFER_1.Buffer::Buffer();
     atexit(teardown_g_caviar_buffer_1);
 }
 
@@ -7128,7 +7150,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl construct_caviar_buffer_2() {
-    g_CAVIAR_BUFFER_2->Buffer::Buffer();
+    g_CAVIAR_BUFFER_2.Buffer::Buffer();
     atexit(teardown_g_caviar_buffer_2);
 }
 
