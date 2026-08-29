@@ -53,6 +53,10 @@ class Heap {
   LPVOID base_;      // (+4) -> pointer to base memory address
   LPVOID current_;   // (+8) -> current memory address position
   size_t base_size_; // (+12) -> size of total memory
+  // PUBLIC, not private: TexHeap::get_mem walks the block table and reads
+  // each block's free tail straight off the object - the `+0x10` compare in
+  // the image. Same offset; only the access run changes.
+ public:
   size_t free_size_; // (+16) -> size of free available memory
 };
 

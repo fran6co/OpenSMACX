@@ -22,6 +22,7 @@
 
 #include <new>
 #include "general.h"   // mem_get, for the placeholder pixel
+#include "heap.h"      // Heap::get, behind TexHeap::get_mem below
 #include "filewin.h"
 #include "spritebox.h"
 #include <stdlib.h>
@@ -265,9 +266,293 @@ int __cdecl sub_63ce20() {
     return result;
 }
 
-// Sheet extraction reached by the per-control init_class bodies. Not yet
-// recovered; it forwards through the seam. `create_blank` used to sit
-// here beside it and is promoted below.
+// THE SHEET HEAP, completed here because the class has no other home in the
+// tree: 0x10 bytes, four uint32 members, the IDB's layout (it used to live in
+// hypothesis_layouts.h, whose line ceiling has no room for a method). The
+// blocks it hands out are Heap objects - `get_mem` walks the block table and
+// takes the first block whose free tail fits.
+struct TexHeap {
+    uint32_t basePtr_;     // 0x0
+    uint32_t baseSize_;    // 0x4
+    uint32_t currentPtr_;  // 0x8
+    uint32_t count_;       // 0xC
+    int get_mem(int size);
+};
+
+/*
+Purpose: Take `size` bytes of sheet memory: walk the heap's block table and
+         allocate from the first block whose free tail is large enough.
+// ORIGINAL: 0x006353C0 ?get_mem@TexHeap@@QAEHH@Z 0x006353C0-0x00635402 FILE
+// size      66 bytes
+// prototype int (__thiscall ?get_mem@TexHeap@@QAEHH@Z)(#120* this, int)
+// callers   1   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D4680
+Status: Promoted 2026-08-29 from src/recovered/units/006353c0.cpp, which
+measured MNEMONIC_ONLY against the opaque scaffold and carried no claim. The
+`+0x10` read is the block Heap's `free_size_`; the allocation itself is
+`Heap::get` (0x005D4680). `Sprite::extract` below is the one caller, and it
+only reaches here when a caller passed a heap at all.
+*/
+int TexHeap::get_mem(int size) {
+    if (basePtr_ != 0) {
+        int index = 0;
+        int count = static_cast<int>(count_) + 1;
+        if (count > 0) {
+            Heap **blocks = reinterpret_cast<Heap **>(currentPtr_);
+            while (index < count) {
+                if (static_cast<int>(blocks[index]->free_size_) >= size) {
+                    return reinterpret_cast<int>(blocks[index]->get(size));
+                }
+                ++index;
+            }
+        }
+    }
+    return 0;
+}
+
+/*
+Purpose: Cut the width x height rectangle at (left, top) out of a locked
+         buffer's pixels into this sprite, trimming the fully transparent
+         border on all four sides, then allocate the trimmed pixel block from
+         the sheet heap or the CRT and copy it across.
+// ORIGINAL: 0x005E39A0 ?extract@Sprite@@QAEHPAUBuffer@@HHHHHPAUTexHeap@@@Z 0x005E39A0-0x005E3DF1 FILE
+// symbol    ?extract@Sprite@@QAEHPAVBuffer@@HHHHHPAUTexHeap@@@Z
+// The image spells the buffer pointer `PAU` - Buffer as a STRUCT - where this
+// tree declares `class Buffer`, and MSVC decorates the first-seen class-key.
+// `Sprite::draw` carries the same fact for the same reason.
+// TRIED: direct field-name transcription of Sprite::extract mirroring Ghidra's param_1[N]; frame-pointer/register allocation shape diverges at insn #0
+// TRIED: first guard spelled `buffer == 0 || buffer->get_data() == 0`, as two
+//   nested `if (x != 0)` blocks, and as one `x != 0 && y != 0` chain - all
+//   three compile to the same 44 of 397 agreeing instructions (0.392 similar).
+//   Flag sets scored by measure --all-flags: /c /O2 /Ob0 /Gy /GR- /GX is the
+//   best at 44/397; every non-/Ob0 set is 7/397 or worse because the in-class
+//   `get_data()` then inlines and its E8 disappears. /Ob0 is load-bearing.
+// TRIED: the receiver-spill fingerprint, not reached. The image never
+//   enregisters `buffer`: it loads it fresh into volatile ecx at each of its
+//   ten uses (`mov ecx, [esp+0x1c]`) and spends the callee-saved registers on
+//   this=esi, width=ebx, height=edi, zero=ebp - `xor ebp,ebp` sits above the
+//   first null test. Every spelling tried instead enregisters `buffer` into
+//   ebx at the function's first statement (scheduled before the remaining
+//   callee-saved pushes) and shifts every other role one register over
+//   (this=ebp, width=esi, zero=edi), renaming every field access and call
+//   receiver in the body at once. Same wall as the Palette receiver-spill
+//   bodies: guard reordering and condition shape do not move it.
+// size      1105 bytes
+// prototype int (__thiscall ?extract@Sprite@@QAEHPAUBuffer@@HHHHHPAUTexHeap@@@Z)(Sprite* this, Buffer*, int, int, int, int, int, #120*)
+// callers   29   call targets   8
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x005E3373 0x005E33F3 0x005E34A3 0x005FD2B0 0x006353C0 0x00644EF2 0x00645930
+Return Value: 0 extracted; 3 bad arguments or empty rectangle; 4 the CRT
+              allocation failed; 7 the buffer would not lock; 9 the rectangle
+              is entirely transparent
+Status: Semantics transcribed from the image
+
+The four scans walk the requested rectangle four ways: top down for the first
+row with a visible pixel, bottom up for the last, and across the kept rows for
+the first and last visible columns. `iTopOffset_` counts the rows the top scan
+spent; `iSpriteHeight_` opens as the untrimmed height and each bottom-scan row
+spends one; `iLeftOffset_` and the right-trim local mirror them on the columns.
+The bounds come off `dib_.bmiHeader`, whose `biHeight` is NEGATIVE for a
+top-down DIB - so the bottom bound really is `-biHeight`, and the
+two-coordinate `get_data` rejects the same way.
+*/
+int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
+                    int width, int height, TexHeap *heap) {
+    int stride;
+    int col;
+    int rows;
+    int right_trim;
+    int row_index;
+    const uint8_t *pixels;
+
+    // ONE LOAD, ONE EXIT: the image tests `buffer` against zero with the same
+    // ecx load that then serves as the call's receiver, and both tests share
+    // the `return 3` tail with the four guards further down. NESTED, not `||`:
+    // the nesting is what ends `buffer`'s live range at the test.
+    if (buffer != 0 && buffer->get_data() != 0) {
+        // Free the previous contents exactly as Sprite::close opens: the pixel
+        // block is only owned, accounted, and released while the borrowed flag is
+        // clear, and the image re-tests `pcBits_` before the free.
+        if (fObj1Exists_ == 0 && pcBits_ != 0) {
+            *SpriteMemoryUsed = static_cast<int>(
+                static_cast<uint32_t>(*SpriteMemoryUsed)
+                - static_cast<uint32_t>(iSpriteHeight_)
+                      * static_cast<uint32_t>(iSpriteWidth_));
+            if (pcBits_ != 0) {
+                free(reinterpret_cast<void *>(pcBits_));
+            }
+            pcBits_ = 0;
+        }
+        if (ppszFileName_ != 0) {
+            free(reinterpret_cast<void *>(ppszFileName_));
+            ppszFileName_ = 0;
+        }
+        iSpriteWidth2_ = 0;
+        iSpriteWidth_ = 0;
+        iSpriteHeight_ = 0;
+        iWidth_ = 0;
+        iHeight_ = 0;
+        iLeftOffset_ = 0;
+        iTopOffset_ = 0;
+        fObj1Exists_ = 0;
+
+        if (width == 0) {
+            return 3;
+        }
+        if (height == 0) {
+            return 3;
+        }
+        if (left + width > static_cast<int>(buffer->dib_.bmiHeader.biWidth)) {
+            return 3;
+        }
+        if (top + height > -static_cast<int>(buffer->dib_.bmiHeader.biHeight)) {
+            return 3;
+        }
+
+        transparent &= 0xff;
+        cTransparentIndex_ = static_cast<char>(transparent);
+        iWidth_ = width;
+        iHeight_ = height;
+        pixels = reinterpret_cast<const uint8_t *>(buffer->get_data(left, top));
+        if (pixels == 0) {
+            buffer->free_data(1);
+            return 7;
+        }
+        stride = static_cast<int>(buffer->stride_);
+        iTopOffset_ = 0;
+        // TOP TRIM: walk down until a row carries a visible pixel.
+        for (row_index = 0; row_index < height; row_index++) {
+            for (col = 0; col < width; col++) {
+                if (pixels[col] != transparent) {
+                    goto top_done;
+                }
+            }
+            pixels += stride;
+            iTopOffset_++;
+        }
+    top_done:
+        do_sound();
+        if (iTopOffset_ == height) {
+            buffer->free_data(2);
+            return 9;
+        }
+        buffer->free_data(1);
+        // BOTTOM TRIM: walk up from the last row, right to left, until a row
+        // carries a visible pixel. The pointer arrives pre-decremented - the
+        // image indexes `row[col]` off `pixels - 1`, not `pixels[col - 1]`.
+        pixels = reinterpret_cast<const uint8_t *>(
+            buffer->get_data(left, top + height - 1));
+        iSpriteHeight_ = height - iTopOffset_;
+        for (row_index = 0; row_index < height; row_index++) {
+            const uint8_t *from_right = pixels - 1;
+            for (col = width; col > 0; col--) {
+                if (from_right[col] != transparent) {
+                    goto bottom_done;
+                }
+            }
+            pixels -= stride;
+            iSpriteHeight_--;
+        }
+    bottom_done:
+        if (iSpriteHeight_ == 0) {
+            buffer->free_data(2);
+            return 9;
+        }
+        do_sound();
+        buffer->free_data(1);
+        // LEFT TRIM: on every kept row, find the first visible column.
+        pixels = reinterpret_cast<const uint8_t *>(
+            buffer->get_data(left, top + iTopOffset_));
+        iLeftOffset_ = width;
+        for (rows = iSpriteHeight_; rows > 0; rows--) {
+            for (col = 0; col < width; col++) {
+                if (pixels[col] != transparent) {
+                    break;
+                }
+            }
+            if (col < iLeftOffset_) {
+                iLeftOffset_ = col;
+            }
+            pixels += stride;
+        }
+        do_sound();
+        buffer->free_data(1);
+        // RIGHT TRIM: on every kept row, count the transparent pixels at the end.
+        // THIS scan indexes `pixels[col - 1]` - the image folds the -1 into the
+        // addressing here, unlike the bottom trim above.
+        pixels = reinterpret_cast<const uint8_t *>(
+            buffer->get_data(left, top + iTopOffset_));
+        right_trim = width;
+        for (rows = iSpriteHeight_; rows > 0; rows--) {
+            int counted = 0;
+            for (col = width; col > 0; col--) {
+                if (pixels[col - 1] != transparent) {
+                    break;
+                }
+                counted++;
+            }
+            if (counted < right_trim) {
+                right_trim = counted;
+            }
+            pixels += stride;
+        }
+        buffer->free_data(1);
+        iSpriteWidth_ = width - iLeftOffset_ - right_trim;
+        if (iSpriteWidth_ == 0) {
+            buffer->free_data(1);
+            return 9;
+        }
+        // The sheet heap is tried first and only when the caller named one. The
+        // pixels then draw through the heap and `fObj1Exists_` says so; anything
+        // else comes off the CRT as plain owned memory.
+        pcBits_ = 0;
+        if (heap != 0) {
+            pcBits_ = heap->get_mem(iSpriteHeight_ * iSpriteWidth_);
+            if (pcBits_ != 0) {
+                fObj1Exists_ = 1;
+            }
+        }
+        do_sound();
+        if (pcBits_ == 0) {
+            pcBits_ = reinterpret_cast<int>(mem_get(iSpriteWidth_ * iSpriteHeight_));
+            if (pcBits_ == 0) {
+                if (ppszFileName_ != 0) {
+                    free(reinterpret_cast<void *>(ppszFileName_));
+                    ppszFileName_ = 0;
+                }
+                iSpriteWidth2_ = 0;
+                iSpriteWidth_ = 0;
+                iSpriteHeight_ = 0;
+                iWidth_ = 0;
+                iHeight_ = 0;
+                iLeftOffset_ = 0;
+                iTopOffset_ = 0;
+                fObj1Exists_ = 0;
+                buffer->free_data(1);
+                return 4;
+            }
+            fObj1Exists_ = 0;
+        }
+        *SpriteMemoryUsed += iSpriteWidth_ * iSpriteHeight_;
+        pixels = reinterpret_cast<const uint8_t *>(
+            buffer->get_data(left + iLeftOffset_, top + iTopOffset_));
+        uint8_t *out = reinterpret_cast<uint8_t *>(pcBits_);
+        do_sound();
+        for (rows = iSpriteHeight_; rows > 0; rows--) {
+            memcpy(out, pixels, iSpriteWidth_);
+            out += iSpriteWidth_;
+            pixels += stride;
+        }
+        iSpriteWidth2_ = iSpriteWidth_;
+        buffer->free_data(2);
+        return 0;
+
+    }
+    return 3;
+}
 
 
 

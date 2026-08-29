@@ -672,11 +672,6 @@ void Menu::mouse_move(int a1, int a2) {  // 0x005FBDB0
     PENDING_BODY(0x005FBDB0, pending)(this, nullptr, a1, a2);
 }
 
-int Sprite::extract(Buffer * a1, int a2, int a3, int a4, int a5, int a6, TexHeap * a7) {  // 0x005E39A0
-    typedef int(__fastcall *pending)(Sprite *, void *, Buffer *, int, int, int, int, int, TexHeap *);
-    return PENDING_BODY(0x005E39A0, pending)(this, nullptr, a1, a2, a3, a4, a5, a6, a7);
-}
-
 void ReportWin::sat_anim() {  // 0x0049FE40
     typedef void(__fastcall *pending)(ReportWin *, void *);
     PENDING_BODY(0x0049FE40, pending)(this, nullptr);
