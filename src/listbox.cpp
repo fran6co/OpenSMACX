@@ -43,6 +43,7 @@ void ListBox::on_dialog_focus(int) {
 func_dialog_close ListBoxOriginalDialogClose =
     original_method<func_dialog_close>(0x00608F50);
 uint32_t ListBoxCloseDynamicDefault;  // 0x009B8EE0
+int ListBoxClickGuard;                // 0x009B8EEC
 
 namespace {
 // The three subobject vtables ListBox re-stages during teardown, the same
@@ -261,5 +262,144 @@ void ListBox::on_mouse_leave(int a1, int a2) {
         *reinterpret_cast<int *>(reinterpret_cast<char *>(
             *reinterpret_cast<int **>(
                 reinterpret_cast<char *>(this))) + 4))->slot062();
+}
+
+namespace {
+// Slots 20, 28 and 49 of the vtable at the GraphicWin virtual base, each
+// spelled with the (int, int) the three click handlers below push. A LOCAL
+// shim, not vtable_shim.h's VCall, for the same reason editgroup.cpp spells
+// CloseVCall: only DECLARATION ORDER fixes a slot, and a slot's signature is
+// chosen to match its call site.
+class ListBoxClickVCall { public:
+    virtual void slot000(int, int);
+    virtual void slot001(int, int);
+    virtual void slot002(int, int);
+    virtual void slot003(int, int);
+    virtual void slot004(int, int);
+    virtual void slot005(int, int);
+    virtual void slot006(int, int);
+    virtual void slot007(int, int);
+    virtual void slot008(int, int);
+    virtual void slot009(int, int);
+    virtual void slot010(int, int);
+    virtual void slot011(int, int);
+    virtual void slot012(int, int);
+    virtual void slot013(int, int);
+    virtual void slot014(int, int);
+    virtual void slot015(int, int);
+    virtual void slot016(int, int);
+    virtual void slot017(int, int);
+    virtual void slot018(int, int);
+    virtual void slot019(int, int);
+    virtual void slot020(int, int);  // on_right_down -> [eax + 0x50]
+    virtual void slot021(int, int);
+    virtual void slot022(int, int);
+    virtual void slot023(int, int);
+    virtual void slot024(int, int);
+    virtual void slot025(int, int);
+    virtual void slot026(int, int);
+    virtual void slot027(int, int);
+    virtual void slot028(int, int);  // on_right_double_click -> [eax + 0x70]
+    virtual void slot029(int, int);
+    virtual void slot030(int, int);
+    virtual void slot031(int, int);
+    virtual void slot032(int, int);
+    virtual void slot033(int, int);
+    virtual void slot034(int, int);
+    virtual void slot035(int, int);
+    virtual void slot036(int, int);
+    virtual void slot037(int, int);
+    virtual void slot038(int, int);
+    virtual void slot039(int, int);
+    virtual void slot040(int, int);
+    virtual void slot041(int, int);
+    virtual void slot042(int, int);
+    virtual void slot043(int, int);
+    virtual void slot044(int, int);
+    virtual void slot045(int, int);
+    virtual void slot046(int, int);
+    virtual void slot047(int, int);
+    virtual void slot048(int, int);
+    virtual void slot049(int, int);  // on_scrolled -> [eax + 0xc4]
+};
+}  // namespace
+
+/*
+Purpose: Report a right press: raise the click guard, forward (a1, a2) through
+         GraphicWin vtable slot 20, drop the guard.
+// ORIGINAL: 0x0060AA20 ?on_right_down@ListBox@@QAEXHH@Z 0x0060AA20-0x0060AA52 BYTE_EXACT
+// LEVER: byte-exact on promotion from src/recovered/units/0060aa20.cpp. The
+//   Q spelling enters with `this` on the GraphicWin virtual base, so the
+//   ListBox front is walked back with the same explicit -0x48 the image folds
+//   (`mov eax, [ecx - 0x48]`, receiver `lea ecx, [edx + ecx - 0x48]`) - the
+//   on_left_click idiom in mapwin.cpp, not on_mouse_leave's virtual-entry
+//   walk, which VC6 only generates for a U-spelled override. The vbtable read
+//   stays INSIDE the receiver expression: naming it a local lets VC6
+//   materialize the front pointer the image keeps folded away.
+// size      50 bytes
+// prototype void (__thiscall ?on_right_down@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x0060AA42
+Return Value: n/a
+Status: Complete
+*/
+void ListBox::on_right_down(int a1, int a2) {
+    ListBoxClickGuard = 1;
+    ListBox *const base = from_graphic_base(this);
+    reinterpret_cast<ListBoxClickVCall *>(
+        reinterpret_cast<uint8_t *>(base) +
+        (*reinterpret_cast<const int32_t *const *>(base))[1])->slot020(a1, a2);
+    ListBoxClickGuard = 0;
+}
+
+/*
+Purpose: Forward a vertical-scroll (code, pos) through GraphicWin vtable
+         slot 49.
+// ORIGINAL: 0x0060C6A0 ?on_scrolled@ListBox@@QAEXHH@Z 0x0060C6A0-0x0060C6C1 BYTE_EXACT
+// LEVER: byte-exact on promotion, same entered-adjusted receiver as
+//   on_right_down above; no guard on this one.
+// size      33 bytes
+// prototype void (__thiscall ?on_scrolled@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x0060C6B8
+Return Value: n/a
+Status: Complete
+*/
+void ListBox::on_scrolled(int code, int pos) {
+    ListBox *const base = from_graphic_base(this);
+    reinterpret_cast<ListBoxClickVCall *>(
+        reinterpret_cast<uint8_t *>(base) +
+        (*reinterpret_cast<const int32_t *const *>(base))[1])->slot049(code, pos);
+}
+
+/*
+Purpose: Report a right double click: raise the click guard, forward (a1, a2)
+         through GraphicWin vtable slot 28, drop the guard.
+// ORIGINAL: 0x0060C6D0 ?on_right_double_click@ListBox@@QAEXHH@Z 0x0060C6D0-0x0060C702 BYTE_EXACT
+// LEVER: byte-exact on promotion, same entered-adjusted receiver as
+//   on_right_down above.
+// size      50 bytes
+// prototype void (__thiscall ?on_right_double_click@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x0060C6F2
+Return Value: n/a
+Status: Complete
+*/
+void ListBox::on_right_double_click(int a1, int a2) {
+    ListBoxClickGuard = 1;
+    ListBox *const base = from_graphic_base(this);
+    reinterpret_cast<ListBoxClickVCall *>(
+        reinterpret_cast<uint8_t *>(base) +
+        (*reinterpret_cast<const int32_t *const *>(base))[1])->slot028(a1, a2);
+    ListBoxClickGuard = 0;
 }
 

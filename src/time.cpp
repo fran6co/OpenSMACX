@@ -22,6 +22,25 @@
 #include "console.h"     // ConsoleStatusWin
 #include "statuswin.h"   // StatusWin::set_title, on the object above
 #include "win.h"         // WinPointerOwner3/4
+#include "tutwin.h"        // TutWinBaseWindow, TutWinSocWindow
+#include "game.h"          // ExitTurnLoop, IsMultiplayerNet
+#include "map.h"           // WorldClimateSkipTerrainClear
+#include "planwin.h"       // PlanWin::on_redraw, MapWinTable
+#include "hypothesis_layouts.h"  // MultiWin::draw
+
+// The timer callbacks' shared state; declarations in temp.h beside the
+// callbacks themselves. All four are zero-initialised .data in the image.
+int TimerHoldFlag;      // 0x00915620
+int Blink2Counter;      // 0x009392B4
+int PlanLineCounter;    // 0x00939FD4
+int TurnRedrawPending;  // 0x00703DE0
+
+// The PlanWin the line timer repaints; the image loads the receiver as an
+// immediate (`mov ecx, 0x856dc0`), which a header binding folds to.
+static PlanWin *const LineTimerPlanWindow = (PlanWin *)0x00856DC0;
+// The MultiWin the turn timer redraws (`mov ecx, 0x7fd648`). game.cpp binds
+// the same address as its GraphicWin front for desktop_close.
+static MultiWin *const TurnTimerMultiWindow = (MultiWin *)0x007FD648;
 
 Time *Time::TimeModal;
 int Time::TimeInitCount;
@@ -561,6 +580,135 @@ void __cdecl go_reset() {
         (*slot)->vslot_63();
         ConsoleStatusWin->set_title(0);
         MapWinSelectedSlot = -1;
+    }
+}
+
+/*
+Purpose: Blink timer tick: skip while any window is up or the game holds the
+         timers, then advance the blink counter and repaint the interface.
+// ORIGINAL: 0x0050EE30 ?blink2_timer@@YAXH@Z 0x0050EE30-0x0050EE7D BYTE_EXACT
+// LEVER: byte-exact on promotion from src/recovered/units/0050ee30.cpp. Five
+//   sequential early-return `if`s (NOT one chained `&&`): the image jumps to a
+//   SHARED `ret` epilogue from every test. The counter increment and the
+//   MainInterface receiver load interleave in the image (`mov eax,[ctr]; mov
+//   ecx,0x7ae820; inc; mov [ctr],eax`) exactly as the two-statement spelling
+//   schedules, and the redraw_complete call is the last statement, which VC6
+//   tail-jumps (`jmp 0x45c3a0`).
+// size      77 bytes
+// prototype
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F7E90
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl blink2_timer(int a1) {
+    if (TutWinBaseWindow->is_visible() != 0) {
+        return;
+    }
+    if (TutWinSocWindow->is_visible() != 0) {
+        return;
+    }
+    if (TimerHoldFlag != 0) {
+        return;
+    }
+    if (ExitTurnLoop != 0) {
+        return;
+    }
+    if (WorldClimateSkipTerrainClear != 0) {
+        return;
+    }
+    ++Blink2Counter;
+    MainInterfaceVar->redraw_complete();
+}
+
+/*
+Purpose: Plan-line timer tick: count the line counter down and repaint the
+         plan lines on every live map window.
+// ORIGINAL: 0x0050EE80 ?line_timer@@YAXH@Z 0x0050EE80-0x0050EF01 BYTE_EXACT
+// LEVER: byte-exact on promotion from src/unrecovered/0050ee80.cpp. The slot
+//   walk is a POINTER walk (`slot < &MapWinTable[8]`), not an index loop -
+//   the image keeps the slot pointer in esi (`cmp esi, 0x7d3c5c; jl`), and
+//   "slot == &MapWinTable[0]" is the primary-window exemption
+//   (`cmp esi, 0x7d3c3c; je`), as in draw_tile. The PlanWin::on_redraw call
+//   sits between the counter store and the loop with the receiver loaded as
+//   an immediate; the two flag reads are plain (non-volatile) dwords off the
+//   window pointer, which VC6 keeps in ecx across the guards.
+// size      129 bytes
+// prototype
+// callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00467970 0x0048AF30 0x005F7E90
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl line_timer(int a1) {
+    if (WorldClimateSkipTerrainClear != 0) {
+        return;
+    }
+    if (TimerHoldFlag != 0) {
+        return;
+    }
+    if (TutWinBaseWindow->is_visible() != 0) {
+        return;
+    }
+    if (TutWinSocWindow->is_visible() != 0) {
+        return;
+    }
+    --PlanLineCounter;
+    LineTimerPlanWindow->on_redraw();
+
+    for (MapWin *const *slot = &MapWinTable[0];
+         reinterpret_cast<int32_t>(slot) <
+         reinterpret_cast<int32_t>(&MapWinTable[MapWinTableSlots]);
+         ++slot) {
+        MapWin *const window = *slot;
+        if (window == nullptr) {
+            continue;
+        }
+        if (slot != &MapWinTable[0]) {
+            const uint32_t active = *reinterpret_cast<const uint32_t *>(
+                reinterpret_cast<const uint8_t *>(window) +
+                MapWinActiveOffset);
+            if (active == 0) {
+                continue;
+            }
+        }
+        const uint32_t draw_flags = *reinterpret_cast<const uint32_t *>(
+            reinterpret_cast<const uint8_t *>(window) + 0x1DD70);
+        if ((draw_flags & 0xC40000) != 0) {
+            window->draw_base_dest(1);
+        }
+    }
+}
+
+/*
+Purpose: Network turn timer tick: pulse the turn window while a multiplayer
+         game is running and the timers are not held.
+// ORIGINAL: 0x0050EF10 ?turn_timer@@YAXH@Z 0x0050EF10-0x0050EF42 BYTE_EXACT
+// LEVER: byte-exact on promotion from src/recovered/0050ef10.cpp. Three
+//   nested `if`s, not chained conditions - the image tests each in turn with
+//   its own jump to the shared `ret`. TurnTimerMultiWindow->draw(1) is the
+//   last statement, so VC6 tails it after loading the receiver immediate.
+// size      50 bytes
+// prototype
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00479330 0x005D5A70
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl turn_timer(int a1) {
+    if (IsMultiplayerNet != 0) {
+        if (TimerHoldFlag == 0) {
+            if (TurnRedrawPending != 0) {
+                TurnRedrawWindow->redraw();
+            }
+            TurnTimerMultiWindow->draw(1);
+        }
     }
 }
 

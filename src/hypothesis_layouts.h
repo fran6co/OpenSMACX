@@ -1583,6 +1583,10 @@ class MultiWin {
   // needs a `call rel32`.
   ~MultiWin();
 
+  // 0x00479330, a pending_bodies forwarder. turn_timer (time.cpp) reaches it
+  // on the fixed MultiWin at 0x007FD648 with the literal 1.
+  void draw(int draw_type);
+
  public:
   uint8_t graphicWin_[0xA14];  // 0x0
   uint32_t field_A14_;  // 0xA14

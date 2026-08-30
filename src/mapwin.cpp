@@ -263,6 +263,47 @@ void MapWin::close() {
         reinterpret_cast<uint8_t *>(this) + vbtable[1])->close();
 }
 
+/*
+Purpose: Answer WM_SYSCLOSE: clear the window's per-slot state words, then run
+         close() - the same owned-pointer free and vbtable walk, inlined.
+// ORIGINAL: 0x0046F880 ?on_sys_close@MapWin@@QAEXXZ 0x0046F880-0x0046F8C0 BYTE_EXACT
+// LEVER: byte-exact on promotion from src/recovered/0046f880.cpp. The Q
+//   spelling enters with `this` on the GraphicWin virtual base, and the image
+//   folds the guard and clear off the ENTERED this ([ecx - 0x3cf4],
+//   [ecx - 0x3cf8]) while materializing the walked-back front in esi only for
+//   the inlined close tail. Spell each flag access as a ONE-SHOT
+//   `((MapWin *)((uint8_t *)this - 0x21A6C))->field...` conversion and VC6
+//   folds it the same way; naming one `base` local up front materializes esi
+//   at the top and puts the guard/store on [esi + 0x1dd78] instead
+//   (TRIED: single base local for everything - 17 of 19, two addressing
+//   divergences). The image has close() INLINED here - its two callees
+//   (0x005D4E40 GraphicWin::close, 0x00644EF2 free) are the only calls - so
+//   the body spells the free and the vbtable walk out rather than calling
+//   close(), whose E8 would be an edge the image lacks.
+// size      64 bytes
+// prototype void (__thiscall ?on_sys_close@MapWin@@QAEXXZ)(MapWin* this)
+// callers   0   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D4E40 0x00644EF2
+Return Value: n/a
+Status: Complete
+*/
+void MapWin::on_sys_close() {
+    if (from_graphic_base(this)->field_1DD78_ != 0) {
+        from_graphic_base(this)->field_1DD74_ = 0;
+        MapWin *const base = from_graphic_base(this);
+        if (base->owned_ != nullptr) {
+            free(base->owned_);
+            base->owned_ = nullptr;
+        }
+        const int32_t *const vbtable =
+            *reinterpret_cast<const int32_t *const *>(base);
+        reinterpret_cast<GraphicWin *>(
+            reinterpret_cast<uint8_t *>(base) + vbtable[1])->close();
+    }
+}
+
 
 
 /*

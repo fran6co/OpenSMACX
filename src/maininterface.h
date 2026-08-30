@@ -38,6 +38,9 @@ class MainInterface : public GraphicWin {
 
   int set_bubble_text(uint32_t button_id, LPCSTR text);
   void clear_message();
+  // 0x0045C3A0, a pending_bodies forwarder. blink2_timer (time.cpp) reaches
+  // it on the fixed MainInterface at 0x007AE820 as its whole tick body.
+  void redraw_complete();
   void UNK2();
   void UNK3();
   void UNK4();

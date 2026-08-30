@@ -223,24 +223,13 @@ void __cdecl world_rainfall() {
 // Four Time callbacks `temp.h` bound as pointers - start_timers (time.cpp)
 // calls each by name now, reaching the image's `push 0x...` immediate
 // instead of loading the pointer from memory.
+// blink2_timer, line_timer and turn_timer WERE HERE, forwarding to
+// 0x0050EE30, 0x0050EE80 and 0x0050EF10. Homed into time.cpp 2026-08-29;
+// blink_timer's forwarder below remains.
+
 void __cdecl blink_timer(int a1) {
     typedef void(__cdecl *pending)(int);
     PENDING_BODY(0x0050EA40, pending)(a1);
-}
-
-void __cdecl blink2_timer(int a1) {
-    typedef void(__cdecl *pending)(int);
-    PENDING_BODY(0x0050EE30, pending)(a1);
-}
-
-void __cdecl line_timer(int a1) {
-    typedef void(__cdecl *pending)(int);
-    PENDING_BODY(0x0050EE80, pending)(a1);
-}
-
-void __cdecl turn_timer(int a1) {
-    typedef void(__cdecl *pending)(int);
-    PENDING_BODY(0x0050EF10, pending)(a1);
 }
 
 void __cdecl social_set(uint32_t faction_id) {
@@ -480,6 +469,13 @@ void Dialog::close() {                                      // 0x00608F50
 void MainInterface::set_date(char *text) {              // 0x0045BE80
     typedef void(__fastcall *pending)(MainInterface *, void *, char *);
     PENDING_BODY(0x0045BE80, pending)(this, nullptr, text);
+}
+
+// ?redraw_complete@MainInterface@@QAEXXZ at 0x0045C3A0. blink2_timer
+// (time.cpp) reaches it on the fixed MainInterface at 0x007AE820.
+void MainInterface::redraw_complete() {                 // 0x0045C3A0
+    typedef void(__fastcall *pending)(MainInterface *, void *);
+    PENDING_BODY(0x0045C3A0, pending)(this, nullptr);
 }
 
 
@@ -947,6 +943,13 @@ MultiWin::~MultiWin() {  // ??1MultiWin@@QAE@XZ at 0x0047A430
     PENDING_BODY(0x0047A430, pending)(this, nullptr);
 }
 
+// ?draw@MultiWin@@QAEXH@Z at 0x00479330. turn_timer (time.cpp) reaches it on
+// the fixed MultiWin at 0x007FD648 with the literal 1.
+void MultiWin::draw(int draw_type) {  // 0x00479330
+    typedef void(__fastcall *pending)(MultiWin *, void *, int);
+    PENDING_BODY(0x00479330, pending)(this, nullptr, draw_type);
+}
+
 PickTech::~PickTech() {  // ??1PickTech@@QAE@XZ at 0x00488690
     typedef void(__fastcall *pending)(PickTech *, void *);
     PENDING_BODY(0x00488690, pending)(this, nullptr);
@@ -1156,20 +1159,9 @@ void ListBox::on_redraw() {  // 0x0060C350
     PENDING_BODY(0x0060C350, pending)(this, nullptr);
 }
 
-void ListBox::on_right_double_click(int a1, int a2) {  // 0x0060C6D0
-    typedef void(__fastcall *pending)(ListBox *, void *, int, int);
-    PENDING_BODY(0x0060C6D0, pending)(this, nullptr, a1, a2);
-}
-
-void ListBox::on_right_down(int a1, int a2) {  // 0x0060AA20
-    typedef void(__fastcall *pending)(ListBox *, void *, int, int);
-    PENDING_BODY(0x0060AA20, pending)(this, nullptr, a1, a2);
-}
-
-void ListBox::on_scrolled(int a1, int a2) {  // 0x0060C6A0
-    typedef void(__fastcall *pending)(ListBox *, void *, int, int);
-    PENDING_BODY(0x0060C6A0, pending)(this, nullptr, a1, a2);
-}
+// ListBox::on_right_double_click, on_right_down and on_scrolled WERE HERE,
+// forwarding to 0x0060C6D0, 0x0060AA20 and 0x0060C6A0. Homed into listbox.cpp
+// 2026-08-29.
 
 void MapWin::on_button_clicked(int a1) {  // 0x0046F8C0
     typedef void(__fastcall *pending)(MapWin *, void *, int);
@@ -1207,9 +1199,14 @@ void MapWin::on_right_down(int a1, int a2) {  // 0x0046EC10
     PENDING_BODY(0x0046EC10, pending)(this, nullptr, a1, a2);
 }
 
-void MapWin::on_sys_close() {  // 0x0046F880
-    typedef void(__fastcall *pending)(MapWin *, void *);
-    PENDING_BODY(0x0046F880, pending)(this, nullptr);
+// MapWin::on_sys_close WAS HERE, forwarding to 0x0046F880. Homed into
+// mapwin.cpp 2026-08-29.
+
+// ?draw_base_dest@MapWin@@QAEXH@Z at 0x00467970. line_timer (time.cpp) calls
+// it per live map-window slot with the literal 1.
+void MapWin::draw_base_dest(int draw_type) {  // 0x00467970
+    typedef void(__fastcall *pending)(MapWin *, void *, int);
+    PENDING_BODY(0x00467970, pending)(this, nullptr, draw_type);
 }
 
 void PlanWin::on_redraw() {  // 0x0048AF30
@@ -1394,11 +1391,8 @@ int __cdecl game_init(int mode, int reload) {
     return PENDING_BODY(0x0058F2F0, pending)(mode, reload);
 }
 
-// ?game_reload@@YAHHH@Z at 0x0058F450
-int __cdecl game_reload(int mode, int reload) {
-    typedef int(__cdecl *pending)(int, int);
-    return PENDING_BODY(0x0058F450, pending)(mode, reload);
-}
+// ?game_reload@@YAHHH@Z at 0x0058F450 WAS HERE. Homed into game.cpp
+// 2026-08-29, beside desktop_close / close_opening / game_close.
 
 // ?setup_game@@YAXH@Z at 0x005B3920
 void __cdecl setup_game(int reload) {
