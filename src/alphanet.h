@@ -11,6 +11,8 @@
 
 #include "net_class.h"
 #include "original_seam.h"
+#include "heap.h"          // heap_ at 0x148C
+#include "stringstruct.h"  // the ledger's virtual base
 
 /*
  * AlphaNet class
@@ -55,6 +57,40 @@
   // `call rel32`. Spelled `class X : Base` - private, since that is
   // what `class` means - those calls do not compile at all, and the
   // seam that stood in for them cost the caller `call [ptr]`.
+// THE LEDGER - AlphaNet's StringList-family subobject at 0x144C. A
+// StringStruct-shaped base stage (vftable 0x669408, its one slot a leaf)
+// over a VIRTUAL StringAllocationBase at +0x38 (vbtable 0x66EAF0 places it
+// there; the owner capture lands at 0x1488), then a derived list stage
+// (vftable 0x66EAE8) that adds no state. The two-stage construction the old
+// transcription staged by hand is the compiler's own base-chain sequence.
+class AlphaNetStringStruct : public virtual StringAllocationBase {
+ public:
+  virtual void unk_slot0();   // 0x00404250, unrecovered leaf
+
+  uint32_t head_;              // +0x08 - the five the constructor zeroes
+  uint32_t current_;           // +0x0C
+  uint32_t entry_count_;       // +0x10
+  uint32_t current_position_;  // +0x14
+  uint32_t field_18_;          // +0x18
+  uint8_t field_1C_[0x1C];     // +0x1C..+0x37, opaque to the virtual base
+
+  AlphaNetStringStruct();
+};
+
+class AlphaNetLedger : public AlphaNetStringStruct {
+  // the list stage - its own vtable (0x66EAE8, slot 0x5D4890) and nothing
+  // else; the base chain carries all the state.
+};
+
+// One player's process slot: the pid dword (cleared at construction and by
+// close) and the five-byte {FF,0,0,FF,2} identity pattern at +4.
+struct AlphaNetProcessSlot {
+  uint32_t pid_;
+  uint8_t pattern_[5];
+  uint8_t pad_[0x193];
+};
+static_assert(sizeof(AlphaNetProcessSlot) == 0x19C, "process slot stride");
+
 class AlphaNet : public Net {
  public:
   AlphaNet();   // 0x004E2490, defined in alphanet.cpp
@@ -65,7 +101,21 @@ class AlphaNet : public Net {
   void close();
 
  private:
-  uint8_t data_[0xD20];  // 0x780, immediately after the Net base subobject
+  uint8_t field_780_[0xC];        // 0x780..0x78B, opaque
+  // THE SLOT REGION AND THE LEDGER SHARE STORAGE: eight 0x19C process
+  // slots run 0x78C..0x146C, and the ledger (0x144C..0x148C) with its Heap
+  // (0x148C..0x14A0) begins inside the eighth slot's unused tail - the
+  // seventh slot's WRITTEN fields end at 0x12D9, far below. The original
+  // models this as a union; both arms are placement-constructed (the image
+  // calls Heap::Heap on 0x148C explicitly and inlines the ledger's ctor).
+  union {
+      AlphaNetProcessSlot process_slots_[8];  // from 0x78C
+      struct {
+          uint8_t slot_region_[0xCC0];        // the slot region's extent
+          AlphaNetLedger ledger_;             // at 0x144C
+          Heap heap_;                         // at 0x148C
+      };
+  };
 };
 
 static_assert(sizeof(AlphaNet) == 0x14A0,
