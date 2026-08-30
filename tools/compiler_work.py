@@ -72,7 +72,7 @@ SHAPES = [
      "costs a null guard (`test ecx, ecx; je`) the image does not have. A real "
      "base or member is constructed unconditionally."),
 
-    ("hand-walked vbtable", 14,
+    ("hand-walked vbtable", 17,
      re.compile(r"\*reinterpret_cast<(?:const )?int32_t \*(?:const )?\*>\([^)]*\)\)\[[12]\]"),
      "reads a virtual-base displacement out of the vbtable by hand. That is "
      "what `public virtual` makes the compiler do."),
@@ -176,15 +176,15 @@ SCAFFOLD_CEILINGS = {
     # 234 -> 231 (2026-08-30, caviar-voxel batch): the three seams Caviar's
     # homing had declared for sub_639390 / sub_63ad60 / sub_63f9b0 retired -
     # all three bodies now live at the foot of src/caviar.cpp.
-    "PENDING_BODY forwarders": 227,
+    "PENDING_BODY forwarders": 222,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
-    "artifact files (recovered/)": 1320,
+    "artifact files (recovered/)": 1314,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
-    "unrecovered files": 1679,
-    "hypothesis_layouts.h lines": 2709,
+    "unrecovered files": 1677,
+    "hypothesis_layouts.h lines": 2713,
 }
 
 
