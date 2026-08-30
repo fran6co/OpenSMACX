@@ -23,7 +23,7 @@
 #include "lock.h"
 #include "playerlock.h"
 
-#include "stringstruct.h"  // StringVirtualBaseOwner - the image's 0x009B3374
+#include "stringstruct.h"  // StringAllocationHeap - the 0x009B3374 hand-off
 
 int NetDaemonIsMultiplayerNet;  // 0x0093F660
 int NetDaemonLocalFaction;  // 0x00939284
@@ -208,15 +208,15 @@ NetDaemon::~NetDaemon() {
     *reinterpret_cast<int32_t *>(self + 0x1460) = 0;
     reinterpret_cast<RemoveAllShim *>(self + 0x144c)->remove_all();
     *reinterpret_cast<int32_t *>(self + 0x1460) = 0;
-    StringVirtualBaseOwner = *reinterpret_cast<int32_t *>(self + 0x1488);
+    StringAllocationHeap = *reinterpret_cast<Heap **>(self + 0x1488);
 
     Net::close();
 
     reinterpret_cast<RemoveAllShim *>(self + 0x72c)->remove_all();
     *reinterpret_cast<int32_t *>(self + 0x740) = 0;
     reinterpret_cast<Sub401be0Shim *>(self + 0x748)->run();
-    StringVirtualBaseOwner = *reinterpret_cast<int32_t *>(self + 0x754);
-    StringVirtualBaseOwner = *reinterpret_cast<int32_t *>(self + 0x75c);
+    StringAllocationHeap = *reinterpret_cast<Heap **>(self + 0x754);
+    StringAllocationHeap = *reinterpret_cast<Heap **>(self + 0x75c);
 
     reinterpret_cast<NetFifoShim *>(self + 0x130)->~NetFifoShim();
     reinterpret_cast<NetFifoShim *>(self + 0x10c)->~NetFifoShim();
@@ -224,7 +224,7 @@ NetDaemon::~NetDaemon() {
 
     reinterpret_cast<JackalVoiceRxShim *>(self + 0xb0)->~JackalVoiceRxShim();
     *reinterpret_cast<int32_t *>(self + 0xc4) = 0;
-    StringVirtualBaseOwner = *reinterpret_cast<int32_t *>(self + 0xd0);
+    StringAllocationHeap = *reinterpret_cast<Heap **>(self + 0xd0);
 
     reinterpret_cast<VoiceTx *>(self + 0x58)->~VoiceTx();
 }

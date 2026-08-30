@@ -104,8 +104,12 @@ const uint32_t StringListBaseTable = 0x006698C0;         // StringList btable
 // really derives virtually - measured against cl 12.00.8168 in isolation,
 // 2026-08-29. Checkbox, RadioButton and ListBox already declare real virtual
 // bases under this same toolchain (see checkbox.h for the layout argument).
-// The pending-allocation owner slot, the image's 0x009B3374 .bss.
-extern uint32_t StringVirtualBaseOwner;
+class Heap;  // defined in heap.h; the owner slot carries one
+
+// THE ALLOCATOR HAND-OFF SLOT, the image's 0x009B3374 .bss: a Heap*. Heap::get
+// publishes itself here on a successful allocation; the StringAllocationBase
+// constructed on that block captures it and clears the slot.
+extern Heap *StringAllocationHeap;
 
 class StringAllocationBase {
  public:
@@ -115,19 +119,24 @@ class StringAllocationBase {
   // StringStruct's stage - which is exactly where the base's own constructor
   // body lands. The address is terranx.exe's data, unmapped in a standalone
   // build; the same raw spelling StringBox::add uses.
+  // THE ALLOCATOR HAND-OFF. Heap::get publishes the allocating Heap into
+  // the global slot (image 0x009B3374) and the base constructor running
+  // right after captures it - "who allocated me" - then clears the slot.
+  // The destructor republishes the saved Heap so the next allocation can
+  // route through it, and frees with operator delete only when no Heap
+  // owns the block (the saved owner is null). Measured at 0x00401100:
+  // `call Heap::get; mov [0x9B3374], edi; ... mov ecx, [0x9B3374];
+  // mov [obj+0x18], ecx; mov [0x9B3374], 0`.
   StringAllocationBase() {
-    // Through the tree's OWN slot (stringstruct.cpp's StringVirtualBaseOwner,
-    // the image's 0x009B3374 .bss): the raw-address spelling wrote unmapped
-    // memory and faulted the boot inside StringBox's construction.
-    allocation_owner_ = reinterpret_cast<void *>(StringVirtualBaseOwner);
-    StringVirtualBaseOwner = 0;
+    allocation_owner_ = StringAllocationHeap;
+    StringAllocationHeap = 0;
   }
   // VIRTUAL, and the class is therefore polymorphic: the image gives this
   // base its own one-slot vftable (0x006693AC), and without the virtual the
   // vbtables that name this base do not exist - VC6 drops the vbptr and the
   // StringStruct layout loses its 0x04 slot.
   virtual ~StringAllocationBase();
-  void *allocation_owner_;
+  Heap *allocation_owner_;
 };
 
 class StringStruct : public virtual StringAllocationBase {

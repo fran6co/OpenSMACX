@@ -261,8 +261,8 @@ Net::Net() {
 
     *reinterpret_cast<void **>(&field_B4_) = g_00670dcc;
     *reinterpret_cast<void **>(&field_CC_) = g_006693ac;
-    field_D0_ = StringVirtualBaseOwner;
-    StringVirtualBaseOwner = 0;
+    field_D0_ = reinterpret_cast<int>(StringAllocationHeap);
+    StringAllocationHeap = 0;
 
     *reinterpret_cast<void **>(&field_B0_) = g_0066eafc;
     {
@@ -282,13 +282,13 @@ Net::Net() {
 
     *reinterpret_cast<void **>(&field_700_) = g_00669430;
     *reinterpret_cast<void **>(&field_758_) = g_006693ac;
-    field_75C_ = StringVirtualBaseOwner;
-    StringVirtualBaseOwner = 0;
+    field_75C_ = reinterpret_cast<int>(StringAllocationHeap);
+    StringAllocationHeap = 0;
 
     *reinterpret_cast<void **>(&field_730_) = g_00669424;
     *reinterpret_cast<void **>(&field_750_) = g_006693ac;
-    field_754_ = StringVirtualBaseOwner;
-    StringVirtualBaseOwner = 0;
+    field_754_ = reinterpret_cast<int>(StringAllocationHeap);
+    StringAllocationHeap = 0;
 
     {
         int32_t const vtbl = field_730_;
@@ -427,10 +427,10 @@ Net::~Net() {
     sub_401be0(sub1 - 8, nullptr);
 
     *reinterpret_cast<void **>(sub1) = g_006693ac;
-    StringVirtualBaseOwner = *reinterpret_cast<int32_t *>(sub1 + 4);
+    StringAllocationHeap = *reinterpret_cast<Heap **>(sub1 + 4);
 
     *reinterpret_cast<void **>(&field_758_) = g_006693ac;
-    StringVirtualBaseOwner = field_75C_;
+    StringAllocationHeap = reinterpret_cast<Heap *>(field_75C_);
 
     reinterpret_cast<NetFifo *>(self + 0x130)->~NetFifo();
     reinterpret_cast<NetFifo *>(self + 0x10c)->~NetFifo();
@@ -479,7 +479,7 @@ Net::~Net() {
     }
     *reinterpret_cast<int32_t *>(vec + 0x14) = 0;
 
-    StringVirtualBaseOwner = field_D0_;
+    StringAllocationHeap = reinterpret_cast<Heap *>(field_D0_);
     *reinterpret_cast<void **>(&field_CC_) = g_006693ac;
 
     // NO EXPLICIT `voice_tx_.VoiceTx::~VoiceTx()`. This is a real destructor
