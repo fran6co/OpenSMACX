@@ -43,3 +43,5 @@ class PlayerLock {
   Entry entries_[2];
 };
 
+
+static_assert(sizeof(PlayerLock) == 0x1C, "PlayerLock stride must match NetDaemon's 0x14A0 table");

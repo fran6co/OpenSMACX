@@ -101,22 +101,20 @@ PlayerLocks and the 0x18-entry lock table reach their elements by raw
 offset rather than through invented array members.
 */
 NetDaemon::NetDaemon() : AlphaNet() {
-    char *const self = reinterpret_cast<char *>(this);
-
-    char *p = self + 0x14a0;
-    for (int32_t n = 8; n != 0; --n) {
-        reinterpret_cast<PlayerLock *>(p)->clear();
-        p += 0x1c;
+    // The eight per-player locks (0x14A0, 0x1C stride), then the embedded
+    // Lock of the first one cleared directly - the image calls the Lock
+    // version explicitly, twice (here and again after the table below).
+    for (int32_t n = 0; n < 8; ++n) {
+        player_locks_[n].clear();
     }
+    reinterpret_cast<Lock *>(&player_locks_[0])->clear();
 
-    reinterpret_cast<Lock *>(self + 0x14a0)->clear();
-
-    char *q = self + 0x158c;
-    for (int32_t m = 0x18; m != 0; --m) {
-        *reinterpret_cast<uint8_t *>(q) = 0xff;
-        *reinterpret_cast<int16_t *>(q + 8) = 0;
-        *reinterpret_cast<int32_t *>(q + 0x5a0) = 0;
-        q += 0x3c;
+    for (int32_t m = 0; m < 0x18; ++m) {
+        lock_table_[m].flag_ = 0xFF;
+        lock_table_[m].word_8_ = 0;
+        // the per-entry scratch dword lives past the entry, at +0x5A0
+        *reinterpret_cast<uint32_t *>(
+             reinterpret_cast<char *>(&lock_table_[m]) + 0x5A0) = 0;
     }
 
     field_1B30_ = 0;
@@ -149,13 +147,14 @@ NetDaemon::NetDaemon() : AlphaNet() {
     field_1B4C_ = 0;
     field_1B78_ = 0;
 
-    *reinterpret_cast<void **>(self) = reinterpret_cast<void *>(0x0066EF0C);
-    field_1BD0_ = 0xff;
+    // the vptr store the compiler emits here is NetDaemon's own table
+    field_1BD0_ = 0xFF;
+    uint32_t *const zero_block = &field_1B80_;
     for (int32_t i = 0; i < 8; i++) {
-        reinterpret_cast<int32_t *>(self + 0x1b80)[i] = 0;
+        zero_block[i] = 0;
     }
 
-    reinterpret_cast<Lock *>(self + 0x14a0)->clear();
+    reinterpret_cast<Lock *>(&player_locks_[0])->clear();
     AlphaNet::close();
 }
 
