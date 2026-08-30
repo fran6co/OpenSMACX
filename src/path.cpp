@@ -24,6 +24,8 @@
 #include "veh.h"
 #include "map.h"
 
+Path Paths;                                              // 0x00945B00
+
 /*
 Purpose: Initialize an instance of the class.
 // ORIGINAL: 0x0059A220 ?init@Path@@QAEXXZ 0x0059A220-0x0059A2C3 BYTE_EXACT

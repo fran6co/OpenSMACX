@@ -2987,7 +2987,7 @@ Return Value: Are there any issues with the world continents? true/false
 Status: Complete - testing
 */
 BOOL __cdecl world_validate() {
-    Paths->continents();
+    Paths.continents();
     int val1 = 0; // rename to better var descriptions
     int val2 = 0; // rename to better var descriptions
     for (uint32_t region = 1; region < MaxRegionLandNum; region++) {
@@ -3393,7 +3393,8 @@ uint32_t WorldClimateSkipTerrainClear = 1;  // 0x0068F21C
 uint32_t WorldClimateSkipTerritoryReset;  // 0x009B22EC
 // The process-wide WorldWin, torn down/built at this same fixed address
 // elsewhere (the retired atexit_thunks.cpp / init_thunks.cpp).
-WorldWin *const WorldClimateWorldWin = (WorldWin *)0x008E9F60;
+// THE WORLD-CLIMATE WINDOW - real storage; the image's 0x008E9F60.
+WorldWin WorldClimateWorldWin;
 
 /*
 Purpose: Regenerate the world's climate: shorelines, temperature, rivers,
@@ -3420,7 +3421,7 @@ void __cdecl world_climate() {
     world_temperature();
     world_rivers();
     world_rainfall();
-    Paths->continents();
+    Paths.continents();
     world_analysis();
     if (WorldClimateSkipTerritoryReset == 0) {
         reset_territory();
@@ -3439,7 +3440,7 @@ void __cdecl world_climate() {
             }
             cursor += 4;
         } while (cursor < end);
-        WorldClimateWorldWin->clear_terrain();
+        WorldClimateWorldWin.clear_terrain();
     }
 
     log_say(reinterpret_cast<LPCSTR>(0x00691E4C), 0, 0, 0);

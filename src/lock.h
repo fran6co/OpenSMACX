@@ -81,7 +81,7 @@ uint8_t *const LockMapTable = (uint8_t *)0x0094A30C;
 
 // A per-slot enable mask any_locks gates its record scan on, at a fixed
 // address; rebindable for tests.
-uint32_t *const LockEnableMask = (uint32_t *)0x009A64E8;
+extern uint32_t LockEnableMask;   // 0x009A64E8 - byte 0/1 are the faction is_human/is_alive bytes
 
 // SquareLock::unlock is 231 bytes of coordinate wrapping over several
 // globals and is not recovered; unlock forwards each record entry to it.

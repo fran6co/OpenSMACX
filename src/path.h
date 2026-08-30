@@ -76,4 +76,4 @@ class Path {
 };
 
 // global
-Path *const Paths = (Path *)0x00945B00;
+extern Path Paths;                             // 0x00945B00

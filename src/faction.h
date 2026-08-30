@@ -582,21 +582,26 @@ static const int MaxRankingHistoryTurns = 1000;
 static const int MaxGoalsNum = 75;
 static const int MaxSitesNum = 25;
 
-RulesSocialCategory *const SocialCategories = (RulesSocialCategory *)0x0094B000;
-RulesSocialEffect *const SocialEffects = (RulesSocialEffect *)0x00946580;
-LPSTR *const Mood = (LPSTR *)0x0094C9E4;
-LPSTR *const Repute = (LPSTR *)0x00946A30;
-RulesMight *const Might = (RulesMight *)0x0094C558;
-RulesBonusName *const BonusName = (RulesBonusName *)0x009461A8;
-Player *const Players = (Player *)0x00946A50; // Players[0] is AI native life faction
-PlayerData *const PlayersData = (PlayerData *)0x0096C9E0;
-FactionArt *const FactionsArt = (FactionArt *)0x0078E978;
-uint8_t *const FactionsStatus = (uint8_t *)0x009A64E8;
-uint32_t *const FactionRankings = (uint32_t *)0x009A64EC;
+// THE FACTION STORAGE - real objects, not pointers into the original image.
+// Every address below is uninitialised .data in the shipped binary (zero at
+// load); the rules walkers in alpha.cpp and the faction code fill them.
+// Definitions in alpha.cpp. FactionsArt (0x0078E978) is general.cpp's
+// FactionArtGlobal_storage - one storage, one name, no second object.
+// FactionsStatus (0x009A64E8) is lock.h's LockEnableMask - same rule.
+extern RulesSocialCategory SocialCategories[MaxSocialCatNum];   // 0x0094B000
+extern RulesSocialEffect SocialEffects[MaxSocialEffectNum];     // 0x00946580
+extern LPSTR Mood[MaxMoodNum];                                  // 0x0094C9E4
+extern LPSTR Repute[MaxReputeNum];                              // 0x00946A30
+extern RulesMight Might[MaxMightNum];                           // 0x0094C558
+extern RulesBonusName BonusName[MaxBonusNameNum];               // 0x009461A8
+extern Player Players[MaxPlayerNum];   // Players[0] is AI native life faction (0x00946A50)
+extern PlayerData PlayersData[MaxPlayerNum];                    // 0x0096C9E0
+extern uint32_t FactionRankings[MaxPlayerNum];                  // 0x009A64EC
+extern uint32_t LockEnableMask;  // 0x009A64E8 - declared in lock.h too; byte 0 = is_human bytes, byte 1 = is_alive
 // Per-turn archive of every faction's power score, written by rankings() for the first
 // MaxRankingHistoryTurns turns and indexed faction + turn * MaxPlayerNum. Sixteen bits per
 // entry, which is why a score above 65535 wraps in the graph and not in the ranking.
-uint16_t *const FactionRankingHistory = (uint16_t *)0x009A68AC;
+extern uint16_t FactionRankingHistory[MaxPlayerNum * MaxRankingHistoryTurns];  // 0x009A68AC
 extern uint32_t RankingFactionIDUnk1;
 extern uint32_t RankingFactionIDUnk2;
 uint32_t *const FactionRankingsUnk = (uint32_t *)0x00945DD8;
@@ -673,12 +678,12 @@ MEASURED inline LPSTR __cdecl get_adjective(int faction_id) {
 
 // INLINE: the image has no is_human - it open-codes what this names.
 inline BOOL __cdecl is_human(uint32_t faction_id) {
-    return FactionsStatus[0] & (1 << faction_id);
+    return LockEnableMask & (1u << faction_id);
 }
 
 // INLINE: the image has no is_alive - it open-codes what this names.
 inline BOOL __cdecl is_alive(uint32_t faction_id) {
-    return FactionsStatus[1] & (1 << faction_id);
+    return (LockEnableMask >> 8) & (1u << faction_id);
 }
 
 inline BOOL __cdecl is_alien_faction(uint32_t faction_id) {

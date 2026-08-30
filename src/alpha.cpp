@@ -62,6 +62,23 @@ RulesBasic Rules;                                   // 0x00949738
 RulesWorldbuilder WorldBuilder;                     // 0x009502A8
 AlphaIniPref AlphaIniPrefs;                         // 0x0094B464
 DefaultPref DefaultPrefs;                           // 0x0094B350
+
+// THE FACTION/MAP RULES STORAGE (faction.h / map.h) - real zero-initialised
+// objects; the image's copies are uninitialised .data the rules walkers fill.
+RulesSocialCategory SocialCategories[MaxSocialCatNum];      // 0x0094B000
+RulesSocialEffect SocialEffects[MaxSocialEffectNum];        // 0x00946580
+LPSTR Mood[MaxMoodNum];                                     // 0x0094C9E4
+LPSTR Repute[MaxReputeNum];                                 // 0x00946A30
+RulesMight Might[MaxMightNum];                              // 0x0094C558
+RulesBonusName BonusName[MaxBonusNameNum];                  // 0x009461A8
+Player Players[MaxPlayerNum];                               // 0x00946A50
+PlayerData PlayersData[MaxPlayerNum];                       // 0x0096C9E0
+RulesNatural Natural[MaxNaturalNum];                        // 0x0094ADE0
+Landmark MapLandmark[MaxLandmarkNum];                       // 0x00949894
+Continent Continents[MaxContinentNum];                      // 0x009AA730
+uint32_t FactionRankings[MaxPlayerNum];                     // 0x009A64EC
+uint16_t FactionRankingHistory[MaxPlayerNum * MaxRankingHistoryTurns];  // 0x009A68AC
+char MapFilePath[80];                                       // 0x0094A2BC
 RulesTechnology Technology[MaxTechnologyNum];       // 0x0094F358
 RulesMandate Mandate[MaxMandateNum];                // 0x0094B4A0
 RulesTerraforming Terraforming[MaxTerrainNum];      // 0x00691878
@@ -1406,7 +1423,8 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     if (text_open(AlphaxFileID, "COMPASS")) {
         return true;
     }
-    for (i = 0; i < MaxCompassNum; i++) {
+    
+for (i = 0; i < MaxCompassNum; i++) {
         text_get();
         Compass[i] = text_item_string();
     }
