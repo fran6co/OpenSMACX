@@ -106,16 +106,13 @@ FLOORS = {
     # no-longer-existing layout is gone, so nothing contradicts its host any
     # more; zero is where this floor now stands.
     "contradicted": 0,
-    # 20 -> 22 (2026-08-30, boot-path batch): control_game's homing declared
-    # seams for two callees whose proved bodies still sit in the archive -
-    # 0x0043C1A0 DesignWin::close and 0x0046EB90 on_lose_mouse_capture (the
-    # latter tails into go_reset, itself unrecovered). Promotion is the next
-    # batch's first work, and this floor falls back with it.
-    # 23 -> 21 (2026-08-29, dwin batch): exactly that promotion ran -
-    # 0x0043C1A0 homed into designwin.cpp and 0x0046EB90 into mapwin.cpp
-    # (as a BYTE_EXACT 5-byte tail jmp; go_reset itself went to time.cpp),
-    # their forwarders retired and their archive units deleted.
-    "archive-only-forwarder": 21,
+    # 23 -> 20 (2026-08-30, boot-path + caviar-voxel batches): three
+    # promotions landed - 0x0043C1A0 DesignWin::close into designwin.cpp,
+    # 0x0046EB90 on_lose_mouse_capture into mapwin.cpp (BYTE_EXACT 5-byte
+    # tail jmp; go_reset itself into time.cpp), and 0x00639390 into
+    # caviar.cpp (BYTE_EXACT) - their forwarders retired, their archive
+    # units deleted.
+    "archive-only-forwarder": 16,
     "unknown-host-files": 0,
 }
 

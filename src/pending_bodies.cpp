@@ -1314,30 +1314,12 @@ void __cdecl basepop_close_class() {
 
 // ?init_class@Caviar@@QAAHXZ at 0x006185A0 is HOMED into src/caviar.cpp
 // (a real RAII body over BasePop), so its forwarder is gone - the linker
-// enforces that. The three voxel-engine entry points it calls are now HOMED
+// enforces that. The voxel-engine entry points init_class calls are HOMED
 // THERE TOO (0x006392E0 vox_init_callbacks, 0x0063AF60
-// vox_fill_colour_table, 0x006393C0 vox_create_record), so their forwarders
-// are gone as well. What is still pending are the CALLEES those bodies
-// reach, declared in src/caviar.cpp beside them:
-
-// sub_639390 - stages a message string into the engine's buffer at 0x9C0D60.
-extern "C" void __cdecl sub_639390(const char *message) {
-    typedef void(__cdecl *pending)(const char *);
-    PENDING_BODY(0x00639390, pending)(message);
-}
-
-// sub_63AD60 - per-rank record init for CPU ranks 1, 2, 4.
-extern "C" void __cdecl sub_63ad60(unsigned char *record) {
-    typedef void(__cdecl *pending)(unsigned char *);
-    PENDING_BODY(0x0063AD60, pending)(record);
-}
-
-// sub_63F9B0 - the post-init record check vox_create_record vets with
-// `test al, al`.
-extern "C" char __cdecl sub_63f9b0(unsigned char *record) {
-    typedef char(__cdecl *pending)(unsigned char *);
-    return PENDING_BODY(0x0063F9B0, pending)(record);
-}
+// vox_fill_colour_table, 0x006393C0 vox_create_record), and so are the
+// callees those bodies reach: 0x00639390 sub_639390, 0x0063AD60 sub_63ad60
+// and 0x0063F9B0 sub_63f9b0 are all defined at the foot of src/caviar.cpp
+// beside their callers, so their forwarders are gone as well.
 
 // ?close_class@Caviar@@QAAXXZ at 0x00618D20
 //             body in src/recovered/units/00618d20.cpp
