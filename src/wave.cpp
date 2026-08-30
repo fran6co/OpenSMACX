@@ -1499,6 +1499,11 @@ Purpose: Destroy the wave. The original is a three-stage teardown of an
 Return Value: n/a
 Status: Complete
 */
+// auto_inline(off): with ~Wave virtual (inherited from ~Sound), VC6's
+// inlining of the base-dtor call into trivial derived dtors (~Effect)
+// changes their shape away from the image's tail-jmp. The image calls the
+// base dtor out of line; this keeps every derived dtor doing the same.
+#pragma auto_inline(off)
 Wave::~Wave() {
     // A destructor's member stores are dead to the optimizer once the object's
     // lifetime ends, so every access goes through a volatile view (the Texture
@@ -1574,6 +1579,7 @@ Wave::~Wave() {
         self->flags_40_ &= ~2u;
     }
 }
+#pragma auto_inline(on)
 
 
 /*
@@ -1584,6 +1590,18 @@ Purpose: Tear down an Effect, which is a Wave and nothing more.
 //   is one `E9 rel32`, five bytes, and a four-byte span cannot decode a single
 //   instruction - `measure` read "0 of 0 instructions, 4 discounted as
 //   relocations", which is what a span one byte short looks like.
+// TRIED 2026-08-30, post-virtualization sweep (the claim regressed when
+//   ~Sound went virtual): empty user dtor measures `mov [ecx],0; ret` - the
+//   base-dtor call is ELIDED outright; qualified `this->Wave::~Wave()` gives
+//   23 instructions of SEH frame + vptr store + TWO base calls; a no-user-
+//   dtor implicit compiles the dtor straight into the fx.cpp caller and the
+//   symbol disappears; `#pragma auto_inline(off)` on ~Wave changes nothing.
+//   Evidence for the class pass: the image's Sound vtable slot 2 holds
+//   ??_GSound (0x004C92D0, verified in the image), so ~Sound IS virtual and
+//   the catalogue's QAE spelling hides UAE - yet the original's ??1Effect
+//   still folds to a 5-byte tail-jmp, which our VC6 refuses for a virtual
+//   base dtor. Something about the original Effect model (a friend-side
+//   emission, a different TU split, or /GX flags) remains unmodelled.
 // size      5 bytes
 // prototype void (__thiscall ??1Effect@@QAE@XZ)(Effect* this)
 // kind      game
@@ -1597,6 +1615,8 @@ Purpose: Tear down an Effect, which is a Wave and nothing more.
 Return Value: n/a
 Status: Complete
 */
+
+
 Effect::~Effect() {
 }
 
