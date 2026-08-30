@@ -302,7 +302,7 @@ extern uint32_t MapArea;
 extern uint32_t MapAreaSqRoot;
 extern BOOL MapIsFlat;
 extern int MapLandmarkCount;
-Landmark *const MapLandmark = (Landmark *)0x00949894;
+extern Landmark MapLandmark[MaxLandmarkNum];   // 0x00949894
 // `int`: `abstract_at` shifts it right and the image's shift is
 // `sar eax, 1` at 0x0059121B - arithmetic, so the value is signed.
 extern int MapAbstractLongBounds; // abstract x
@@ -315,7 +315,7 @@ extern uint32_t MapErosiveForces;
 extern uint32_t MapPlanetaryOrbit; // affects temp
 extern uint32_t MapCloudCover; // affects rainfall, rivers
 extern uint32_t MapNativeLifeForms;
-LPSTR *const MapFilePath = (LPSTR *)0x0094A2BC;
+extern char MapFilePath[80];                   // 0x0094A2BC, the working map-path buffer
 // AN LVALUE AT A FIXED ADDRESS, not a pointer to one. The tile array's base
 // lives AT 0x0094A30C and the image reads it with a single absolute
 // `mov ecx, [0x94a30c]`. Spelled `Map **const MapTiles = (Map **)0x0094A30C`
@@ -329,8 +329,8 @@ extern uint32_t BrushVal1; // TODO: more descriptive variable name
 extern uint32_t BrushVal2; // TODO: more descriptive variable name
 extern uint32_t WorldBuildVal1; // TODO: more descriptive variable name
 
-Continent *const Continents = (Continent *)0x009AA730;
-RulesNatural *const Natural = (RulesNatural *)0x0094ADE0;
+extern Continent Continents[MaxContinentNum];  // 0x009AA730
+extern RulesNatural Natural[MaxNaturalNum];    // 0x0094ADE0
 extern uint32_t MapLongitude; // halve of MapLongitudeBounds
 uint32_t *const AltNatural = (uint32_t *)0x0068FB4C; // Default: { 0, 15, 32, 45, 60,  75,  80, 100, 100, 100, 100 };
 

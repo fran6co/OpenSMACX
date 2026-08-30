@@ -24,6 +24,8 @@
 #include "strings.h"
 #include "map.h"
 
+extern uint32_t LockEnableMask;  // 0x009A64E8, defined in lock.cpp
+
 BOOL ProbeHasAlgoEnhancement;  // 0x00945B30
 uint32_t ProbeTargetFactionID;  // 0x00945B34
 BOOL ProbeTargetHasHSA;  // 0x00945B38
@@ -153,7 +155,7 @@ int __cdecl mind_control(int base_id, int faction_id, BOOL is_corner_market) {
         + PlayersData[faction_id].mind_control_total / 4 + Bases[base_id].population_size)
         * ((PlayersData[target_faction_id].corner_market_active
             + PlayersData[target_faction_id].energy_reserves + 1200) / (cost + 4));
-    if (!(FactionsStatus[0] & (1 << faction_id)) && (FactionsStatus[0] & (1 << target_faction_id))) {
+    if (!((LockEnableMask & 0xFF) & (1 << faction_id)) && ((LockEnableMask & 0xFF) & (1 << target_faction_id))) {
         int diff = PlayersData[target_faction_id].diff_level;
         if (diff > DLVL_LIBRARIAN) {
             cost = (cost * 3) / diff;

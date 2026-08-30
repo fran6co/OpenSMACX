@@ -27,6 +27,8 @@
 #include "technology.h"
 #include "veh.h"
 
+extern uint32_t LockEnableMask;  // 0x009A64E8, defined in lock.cpp
+
 uint32_t RankingFactionIDUnk1;  // 0x009A650C
 uint32_t RankingFactionIDUnk2;  // 0x009A6510
 int DiploFriction;  // 0x0093FA74 // not always bounded, should it be 0-20?
@@ -189,7 +191,7 @@ Purpose: Determine if the overall dominant human faction is a minor threat based
 //        `test dl,al` (is_human's bit test, register/operand-order only) and
 //        the mov+lea fold itself - not chased per the no-register-only rule.
 //        TRIED (2026-08-22): swapping is_human's own source operand order
-//        (`(1<<faction_id) & FactionsStatus[0]` instead of the reverse) in
+//        (`(1<<faction_id) & (LockEnableMask & 0xFF)` instead of the reverse) in
 //        faction.h - the compiler canonicalises the AND back to the same
 //        `test dl,al` regardless; ties at 37/43, no change, reverted.
 // size      130 bytes
@@ -348,7 +350,7 @@ Purpose: Check if the human controlled player is nearing the endgame.
 //        != SP_Unbuilt` (base_project is already MEASURED inline in base.h).
 //        Swapping the call for that expression moved 14/56 -> 16/56 agreeing.
 //        Remaining divergence starts at instruction 0: the image loads
-//        FactionsStatus[0]/TurnCurrentNum and walks PlayersData[1].. by a raw
+//        (LockEnableMask & 0xFF)/TurnCurrentNum and walks PlayersData[1].. by a raw
 //        incrementing pointer through the first loop; this tree's compile
 //        still indexes by `i` and schedules differently from instruction 0.
 //        Plateaus here after the ascending() fix; not chased further.
@@ -1860,7 +1862,7 @@ void __cdecl rankings(int apply_ranks) {
             FactionRankings[PlayersData[faction_id].ranking] = (uint32_t)faction_id;
         }
     }
-    uint32_t humans = FactionsStatus[0];
+    uint32_t humans = (LockEnableMask & 0xFF);
     RankingFactionIDUnk1 = 0;
     RankingFactionIDUnk2 = 0;
     for (rank = MaxPlayerNum - 1; rank >= 0; rank--) {

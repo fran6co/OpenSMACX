@@ -29,6 +29,8 @@
 #include "technology.h"
 #include "terraforming.h"
 
+extern uint32_t LockEnableMask;  // 0x009A64E8, defined in lock.cpp
+
 
 int VehCurrentCount;  // 0x009A64C8
 int VehDropLiftVehID;  // 0x009B2280
@@ -3619,7 +3621,7 @@ int __cdecl stack_veh(int veh_id, int mode) {
                 uint32_t unit_faction = Vehs[i].faction_id;
                 BOOL both_unk_200 = ((Vehs[veh_id].state & VSTATE_UNK_200)
                                      && (Vehs[i].state & VSTATE_UNK_200));
-                if (accept && ((1 << unit_faction) & *FactionsStatus) && !both_unk_200) {
+                if (accept && (((1 << unit_faction) & LockEnableMask)) && !both_unk_200) {
                     accept = (Vehs[i].order == ORDER_SENTRY_BOARD)
                         ? (Vehs[i].waypoint_x[0] < 0) : is_open_ocean;
                 } else if (accept) {

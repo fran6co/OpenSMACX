@@ -19,6 +19,8 @@
 #include "original_seam.h"
 #include "lock.h"
 
+uint32_t LockEnableMask;  // 0x009A64E8, the faction human/alive status dword
+
 
 /*
 Purpose: Drop the movement bits (0x38) from the flag byte at offset 5 of every
@@ -103,7 +105,7 @@ int Lock::any_locks() {
     if (field_E0_ != 0) {
         return 1;
     }
-    const uint32_t mask = *LockEnableMask;
+    const uint32_t mask = LockEnableMask;
     const uint32_t low_byte = mask & 0xFF;
     const uint8_t second_byte = reinterpret_cast<const uint8_t *>(&mask)[1];
     for (int index = 1; index < 8; ++index) {
