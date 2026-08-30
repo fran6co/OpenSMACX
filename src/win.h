@@ -998,6 +998,13 @@ class DDInit { public:
   // stack argument, `call rel32`.
   int report_error(int hr);   // 0x00635870, defined in win.cpp
 
+  // 0x00635750, PROMOTED out of src/unrecovered/00635750.cpp - the teardown
+  // stages of `init`'s own mode switch as their own member: unlock and
+  // release the locked surface, restore the display mode and release
+  // DirectDraw, destroy the mode's window, then refresh the metrics.
+  // jackal_close runs it on the global object below.
+  void teardown();            // 0x00635750, defined in win.cpp
+
   // SELF-VERIFYING ANCHOR: DDInit has no base and no virtual, so its first
   // member is at 0 - and field_8_, two members later, states its own offset.
   // Annotating hwnd_ at 0x0 is only correct if the walk lands field_8_ on

@@ -1287,12 +1287,12 @@ int Buffer::write_raw_l(LPSTR text, int x_coord, int y_coord, int len) {
                                              y_coord, len);
 }
 
-// jackal_close's own not-yet-recovered callees (src/general.cpp).
-// sub_62d100 at 0x0062D100 - no catalogued name.
-extern "C" int __cdecl sub_62d100() {
-    typedef int(__cdecl *pending)();
-    return PENDING_BODY(0x0062D100, pending)();
-}
+// jackal_close's remaining not-yet-recovered callees (src/general.cpp).
+// Two former entries here were PROMOTED and their forwarders retired:
+// sub_62d100 (0x0062D100) is now defined in general.cpp above jackal_close,
+// and the 0x00635750 thiscall on the object at 0x9BE618 turned out to be
+// `DDInit::teardown` on WinDisplayInit - defined in win.cpp beside `init`,
+// whose five fields are DDInit's own.
 
 // ?close_class@FileWin@@QAAXXZ at 0x00614E30
 void __cdecl filewin_close_class() {
@@ -1304,12 +1304,6 @@ void __cdecl filewin_close_class() {
 void __cdecl basepop_close_class() {
     typedef void(__cdecl *pending)();
     PENDING_BODY(0x00604680, pending)();
-}
-
-// sub_635750 at 0x00635750 - a genuine thiscall on the object at 0x9BE618.
-void Unk9BE618::unk_call() {
-    typedef void(__fastcall *pending)(Unk9BE618 *, void *);
-    PENDING_BODY(0x00635750, pending)(this, nullptr);
 }
 
 // ?init_class@Caviar@@QAAHXZ at 0x006185A0 is HOMED into src/caviar.cpp
@@ -1689,14 +1683,16 @@ void Buffer::copy_to_window(Win *target, int sx, int sy, int x, int y, int w, in
     PENDING_BODY(0x005D9BE0, pending)(this, nullptr, target, sx, sy, x, y, w, h);
 }
 
-void Net::start_voice(int a1) {
-    typedef void(__fastcall *pending)(Net *, void *, int);
-    PENDING_BODY(0x0062DF20, pending)(this, nullptr, a1);
-}
-
-void Net::stop_voice() {
-    typedef void(__fastcall *pending)(Net *, void *);
-    PENDING_BODY(0x0062DFC0, pending)(this, nullptr);
+// ?send_packet_type@Net@@QAEHPAXHKHH@Z at 0x0062F8A0 - still unrecovered
+// (a 2015-byte sender). Net::start_voice and Net::stop_voice, promoted into
+// src/net_class.cpp, are gone from here; stop_voice tails into this member,
+// and the forwarder keeps that call site's `E8`.
+int Net::send_packet_type(void *data, int mode, unsigned long who, int size,
+                          int flags) {
+    typedef int(__fastcall *pending)(Net *, void *, void *, int, unsigned long,
+                                     int, int);
+    return PENDING_BODY(0x0062F8A0, pending)(this, nullptr, data, mode, who,
+                                             size, flags);
 }
 
 

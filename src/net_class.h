@@ -101,12 +101,20 @@ static_assert(sizeof(VoiceTx) == 0x58,
   */
 class Net {
  public:
-  // Called by a homed Win body; its own definition is still an
-  // artifact. Arity taken from the call site.
-  void start_voice(int);
-  // Called by Win's teardown when a window closes mid-voice; its own
-  // body is still an artifact.
+  // ?start_voice@Net@@QAEHK@Z at 0x0062DF20. `K`, not `I` - the image spells
+  // the argument `unsigned long`, and the wrong spelling stops the symbol
+  // matching. PROMOTED out of src/recovered/0062df20.cpp; its
+  // pending_bodies forwarder is gone.
+  int start_voice(unsigned long key);
+  // ?stop_voice@Net@@QAEXXZ at 0x0062DFC0. PROMOTED out of
+  // src/recovered/units/0062dfc0.cpp; its pending_bodies forwarder is gone.
   void stop_voice();
+  // 0x0062F8A0, still unrecovered - a 2015-byte reliable-UDP-style sender
+  // with per-peer RTT tracking. `stop_voice` calls it; the declaration lets
+  // its pending_bodies forwarder carry the receiver, so the call site keeps
+  // the image's own `E8`.
+  int send_packet_type(void *data, int mode, unsigned long who, int size,
+                       int flags);
   int get(unsigned long *a, unsigned long *b);
 
  public:

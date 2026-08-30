@@ -20,6 +20,7 @@
 #include "net_class.h"
 #include "stringstruct.h"
 #include "hypothesis_layouts.h"
+#include "vtable_shim.h"
 
 // 0x00401BE0, recovered in src/leaf_recoveries.cpp. Declared here so
 // Net::~Net reaches it with the image's own `call rel32` at 0x004E353A
@@ -41,6 +42,51 @@ class VCallArg {
   virtual void slot000(int);
   virtual void slot001(void *);
   virtual void slot002(int);
+};
+
+// The same shim idiom, for the VoiceTx subobject at +0x58: its own vtable
+// has the voice-stop entry at slot 8 and the voice-start entry at slot 36.
+// The other 35 slots are unrecovered, so VoiceTx cannot declare them virtual
+// - a real vtable would have to link every one - and this stays a local,
+// declared-order shim, exactly like VCallArg above.
+class VoiceCall { public:
+  virtual void slot000();
+  virtual void slot001();
+  virtual void slot002();
+  virtual void slot003();
+  virtual void slot004();
+  virtual void slot005();
+  virtual void slot006();
+  virtual void slot007();
+  virtual void slot008();  // voice stop
+  virtual void slot009();
+  virtual void slot010();
+  virtual void slot011();
+  virtual void slot012();
+  virtual void slot013();
+  virtual void slot014();
+  virtual void slot015();
+  virtual void slot016();
+  virtual void slot017();
+  virtual void slot018();
+  virtual void slot019();
+  virtual void slot020();
+  virtual void slot021();
+  virtual void slot022();
+  virtual void slot023();
+  virtual void slot024();
+  virtual void slot025();
+  virtual void slot026();
+  virtual void slot027();
+  virtual void slot028();
+  virtual void slot029();
+  virtual void slot030();
+  virtual void slot031();
+  virtual void slot032();
+  virtual void slot033();
+  virtual void slot034();
+  virtual void slot035();
+  virtual void slot036();  // voice start
 };
 
 static void *const g_006693ac = reinterpret_cast<void *>(0x006693AC);
@@ -434,6 +480,69 @@ void __cdecl check_net() {
         return;
     }
     net->check_polling();
+}
+
+/*
+Purpose: Begin streaming voice over this connection, when net play is live
+         and the voice channel is not already starting or running.
+
+// ORIGINAL: 0x0062DF20 ?start_voice@Net@@QAEHK@Z 0x0062DF20-0x0062DF6E BYTE_EXACT
+// size      78 bytes
+// prototype int (__thiscall ?start_voice@Net@@QAEHK@Z)(Net* this, unsigned int)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x0062DF58
+//
+// PROMOTED out of src/recovered/0062df20.cpp (measured byte-exact there,
+// never compiled into the build). The VoiceTx subobject at +0x58 carries the
+// dispatch: its vtable slot 36 is the voice "start" entry, and the two flag
+// words at +0xd4/+0xd8 are the handle and its state bits - 0x60000000 means
+// a start or stop already in flight, 0x20000000 is the voice-started bit
+// this body sets once slot 36 has been told to go.
+*/
+int Net::start_voice(unsigned long key) {
+    if (*NetEnabled == 0) {
+        return 7;
+    }
+    if ((field_D8_ & 0x60000000) == 0) {
+        field_54_ = 0;
+        field_D4_ = key;
+        reinterpret_cast<VoiceCall *>(&voice_tx_)->slot036();
+        field_D8_ |= 0x20000000;
+    }
+    return 0;
+}
+
+/*
+Purpose: Stop the voice stream this connection is carrying, if any, and
+         tell the peer the channel closed.
+
+// ORIGINAL: 0x0062DFC0 ?stop_voice@Net@@QAEXXZ 0x0062DFC0-0x0062E005 BYTE_EXACT
+// size      69 bytes
+// prototype void (__thiscall ?stop_voice@Net@@QAEXXZ)(Net* this)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0062F8A0
+// indirect  0x0062DFD5
+//
+// PROMOTED out of src/recovered/units/0062dfc0.cpp. VoiceTx vtable slot 8
+// is the voice "stop" entry; `send_packet_type` then announces the close on
+// packet type 0x200. 0x0062F8A0 is still unrecovered, so the call goes
+// through that member's pending_bodies forwarder - an `E8` to the same
+// place the image jumps.
+*/
+void Net::stop_voice() {
+    if ((field_D8_ & 0x20000000) != 0) {
+        reinterpret_cast<VoiceCall *>(&voice_tx_)->slot008();
+        int handle = static_cast<int>(field_D4_);
+        uint32_t flags = field_D8_;
+        flags &= 0xDFFFFFFF;
+        field_D8_ = flags;
+        send_packet_type(0, 0, handle, 0x200, 0);
+    }
 }
 
 uint32_t NetGetScratch;  // 0x009BC4BC

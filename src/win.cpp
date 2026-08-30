@@ -2852,6 +2852,48 @@ int DDInit::init(int width, int height, int depth, int tgl) {
     return 0;
 }
 
+/*
+Purpose: Tear down whatever DirectDraw surface and device window this object
+         is holding - the same stages as the mode switch inside `init` above,
+         as their own entry point, and what jackal_close runs on the
+         0x009BE618 object.
+// ORIGINAL: 0x00635750 sub_635750 0x00635750-0x006357C1 BYTE_EXACT
+// symbol    ?teardown@DDInit@@QAEXXZ
+// size      113 bytes
+// prototype
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005EFD00
+// indirect  0x00635765 0x0063577C 0x00635785 0x00635796 0x006357AD
+//
+// PROMOTED out of src/unrecovered/00635750.cpp, which measured it byte-exact
+// against opaque scaffolding: the object there called `TeardownObj` IS
+// `WinDisplayInit` - its five fields are DDInit's own, in this order, and it
+// is destroyed through `ecx = 0x9BE618`, the address win.h pins the global
+// to. The interface calls go by name, as in `init` above: Unlock is vtable
+// offset 0x80, RestoreDisplayMode 0x4c, Release 8 - and 0x005EFD00 is the
+// homed DDInitRefreshScreenMetrics.
+*/
+void DDInit::teardown() {
+    if (locked_surface_ != nullptr && locked_bits_ != nullptr) {
+        locked_surface_->Unlock(locked_bits_);
+        locked_bits_ = nullptr;
+    }
+    if (surf_ != nullptr) {
+        surf_->RestoreDisplayMode();
+        surf_->Release();
+        surf_ = nullptr;
+    }
+    if (hwnd_ != nullptr) {
+        DestroyWindow(hwnd_);
+        hwnd_ = nullptr;
+        UnregisterClassA(DDInitClassName, WinInstance);
+    }
+    locked_surface_ = nullptr;
+    DDInitRefreshScreenMetrics();
+}
+
 // `JackalClass` is at 0x00696DC8 and again at 0x00696DD4 - the image holds
 // two copies, one for the registration and one for the creation, and the
 // operand is relocated either way, so the literal is the honest spelling.
