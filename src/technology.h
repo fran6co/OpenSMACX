@@ -156,9 +156,10 @@ static const int TechNone = -1;
 static const int TechDisabled = -2;
 static const int MaxMandateNum = 4;
 
-RulesTechnology *const Technology = (RulesTechnology *)0x0094F358; // [89]
+// Real storage in the image (.bss, filled by read_tech()), defined in alpha.cpp.
+extern RulesTechnology Technology[MaxTechnologyNum]; // 0x0094F358
 uint8_t *const GameTechAchieved = (uint8_t *)0x009A6670; // [89]
-RulesMandate *const Mandate = (RulesMandate *)0x0094B4A0; // [4]
+extern RulesMandate Mandate[MaxMandateNum]; // 0x0094B4A0
 extern int TechValidCount;
 extern int TechCommerceCount;
 extern char TechName[80];

@@ -41,22 +41,33 @@ const char *PrefsSection = "Alpha Centauri";       // 0x006900D0
 
 LPCSTR AlphaxFileID = "ALPHAX";
 LPCSTR ScriptTxtID = "SCRIPT";
-// `const`: nothing outside this file names them, so internal
+// `const` + static: nothing outside this file names them, so internal
 // linkage folds the address into every subscript.
-// THE RULES STORAGE (alpha.h) - real zero-initialised objects; the image's
-// copies are uninitialised .data the rules walkers fill at run time.
-Label Labels;                                               // 0x009B90F8
-RulesResourceinfo ResourceInfo[MaxResourceInfoNum];         // 0x00945F50
-RulesTimeControl TimeControl[MaxTimeControlNum];            // 0x0094F1B8
-RulesResource Resource[MaxResourceNum];                     // 0x00946158
-RulesEnergy Energy[MaxEnergyNum];                           // 0x0094A318
-RulesBasic Rules;                                           // 0x00949738
-RulesWorldbuilder WorldBuilder;                             // 0x009502A8
-AlphaIniPref AlphaIniPrefs;                                 // 0x0094B464
-DefaultPref DefaultPrefs;                                   // 0x0094B350
-
-LPSTR *const Compass = (LPSTR *)0x00945D48;
-LPSTR *const Difficulty = (LPSTR *)0x0096C85C;
+static LPSTR Compass[MaxCompassNum];      // 0x00945D48
+static LPSTR Difficulty[MaxDiffNum];      // 0x0096C85C
+// ===== THE RULES OBJECTS - real storage, homed to the parser =====
+// Each address is zero-initialised data in the shipped image (image_data.py:
+// all sixteen sit in .data past the bytes the file carries, ZERO at run
+// time), filled in by read_rules()/read_basic_rules()/read_tech() below.
+// They were typed-pointer bindings into the image's address space until
+// converted to the objects themselves; the folded absolute addressing of
+// every use site is unchanged, the immediate now a relocation.
+Label Labels;                                       // 0x009B90F8
+RulesResourceinfo ResourceInfo[MaxResourceInfoNum]; // 0x00945F50
+RulesTimeControl TimeControl[MaxTimeControlNum];    // 0x0094F1B8
+RulesResource Resource[MaxResourceNum];             // 0x00946158
+RulesEnergy Energy[MaxEnergyNum];                   // 0x0094A318
+RulesBasic Rules;                                   // 0x00949738
+RulesWorldbuilder WorldBuilder;                     // 0x009502A8
+AlphaIniPref AlphaIniPrefs;                         // 0x0094B464
+DefaultPref DefaultPrefs;                           // 0x0094B350
+RulesTechnology Technology[MaxTechnologyNum];       // 0x0094F358
+RulesMandate Mandate[MaxMandateNum];                // 0x0094B4A0
+RulesTerraforming Terraforming[MaxTerrainNum];      // 0x00691878
+RulesFacility Facility[MaxFacilityNum];             // 0x009A4B68
+RulesCitizen Citizen[MaxCitizenNum];                // 0x00946020
+Base Bases[MaxBaseNum];                             // 0x0097D040
+BaseSecretProject SecretProject;                    // 0x009A6514
 // AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
 // load at every use where the image addresses the storage directly, and
 // the address is terranx.exe's data, unmapped in a standalone build.
@@ -2017,15 +2028,11 @@ void __cdecl prefs_use() {
 
 /*
 Purpose: Parse the #LABELS section inside the labels.txt file.
-// ORIGINAL: 0x00616A00 ?labels_init@@YAHXZ 0x00616A00-0x00616A93
-// TRIED: 40/45 plateau - the image stores `Labels.count` THEN reuses the
-//            same register for `shl eax,2` (no reload); every source form
-//            tried instead computes `count*4` into a second register (`lea
-//            ecx,[eax*4]`) before the store: local `int count`, a separate
-//            `int byte_count = count*4;` statement, `<<2` instead of `*4`,
-//            and a nested `(Labels.count = text_item_number()) * 4` all
-//            produced the identical `lea`+deferred-store shape. VC6
-//            scheduling choice, not a source-form lever found here.
+// ORIGINAL: 0x00616A00 ?labels_init@@YAHXZ 0x00616A00-0x00616A93 BYTE_EXACT
+// LEVER: `Labels` as a typed-pointer binding plateaued at 40/45 - every source
+// form computed `count*4` via `lea` before the store. Converting it to the real
+// object (defined above) let VC6 fold `shl eax,2` into the store exactly as the
+// image does. (Promoted from TRIED when the body matched, 2026-08-29.)
 // size      147 bytes
 // prototype 
 // callers   3   call targets   7

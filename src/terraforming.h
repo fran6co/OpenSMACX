@@ -88,7 +88,9 @@ const uint32_t TerraformingBits[20][2] = { // terrain enhancement, incompatible 
 
 static const int MaxTerrainNum = 20;
 
-RulesTerraforming *const Terraforming = (RulesTerraforming *)0x00691878;
+// Real storage in the image (.data, zero bytes in the file), filled by
+// read_rules() from ALPHAX.TXT's TERRAIN section. Defined in alpha.cpp.
+extern RulesTerraforming Terraforming[MaxTerrainNum]; // 0x00691878
 
 int __cdecl terraform_cost(int x, int y, int faction_id);
 int __cdecl contribution(int veh_id, int terraform_id);

@@ -500,10 +500,12 @@ static const int MaxSpecialistNum = 7;
 static const int SP_Unbuilt = -1;
 static const int SP_Destroyed = -2;
 
-RulesFacility *const Facility = (RulesFacility *)0x009A4B68;
-RulesCitizen *const Citizen = (RulesCitizen *)0x00946020;
-Base *const Bases = (Base *)0x0097D040;
-BaseSecretProject *const SecretProject = (BaseSecretProject *)0x009A6514;
+// Real storage in the image (.bss, filled by read_rules()/read_basic_rules()),
+// defined in alpha.cpp.
+extern RulesFacility Facility[MaxFacilityNum];      // 0x009A4B68
+extern RulesCitizen Citizen[MaxCitizenNum];         // 0x00946020
+extern Base Bases[MaxBaseNum];                      // 0x0097D040
+extern BaseSecretProject SecretProject;             // 0x009A6514
 extern int BaseIDCurrentSelected;
 extern int BaseCurrentCount;
 extern int BaseFindDist;
@@ -590,7 +592,7 @@ MEASURED inline void __cdecl set_base(int base_id) {
 }
 
 MEASURED inline int __cdecl base_project(int project_id) {
-    return *(&SecretProject->human_genome_project + project_id);
+    return *(&SecretProject.human_genome_project + project_id);
 }
 
 MEASURED inline BOOL __cdecl has_project(int project_id, int faction_id) {
