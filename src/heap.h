@@ -33,7 +33,7 @@ class Heap {
       std::free(base_);
       base_ = nullptr;
     }
-    *reinterpret_cast<volatile int8_t *>(&err_flags_) = 0;
+    err_flags_ = 0;
     current_ = nullptr;
     base_ = nullptr;
     free_size_ = 0;
