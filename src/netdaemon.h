@@ -19,6 +19,7 @@
 
 #include "original_seam.h"
 #include "alphanet.h"
+#include "playerlock.h"  // player_locks_[8] at 0x14A0
 
  /*
   * NetDaemon class
@@ -57,16 +58,18 @@ class NetDaemon : public AlphaNet {
 
   // Storage the image proves is here: its own methods reach 0x1BD0.
   // Extent only - this class carries no size assertion, and the bound is a floor.
-  uint8_t field_14A0_[0x1C];  // 0x14A0
-  uint8_t field_14BC_;  // 0x14BC
-  uint8_t field_14BD_[0xC3];  // 0x14BD
-  uint32_t field_1580_;  // 0x1580
-  uint32_t field_1584_;  // 0x1584
-  uint8_t field_1588_[0x4];  // 0x1588
-  uint8_t field_158C_;  // 0x158C
-  uint8_t field_158D_[0x7];  // 0x158D
-  uint16_t field_1594_;  // 0x1594
-  uint8_t field_1596_[0x596];  // 0x1596
+  PlayerLock player_locks_[8];  // 0x14A0, eight per-player locks (0x1C stride)
+
+  // THE NET LOCK TABLE, 0x158C..0x1B2C: 24 entries of 0x3C. The constructor
+  // sets each entry's flag byte to 0xFF and its word at +8 to 0.
+  struct LockTableEntry {
+    uint8_t flag_;        // 0xFF once constructed
+    uint8_t pad_1_[7];
+    uint16_t word_8_;
+    uint8_t pad_A_[0x32];
+  };
+  static_assert(sizeof(LockTableEntry) == 0x3C, "lock table stride");
+  LockTableEntry lock_table_[24];  // 0x158C
   uint32_t field_1B2C_;  // 0x1B2C
   uint32_t field_1B30_;  // 0x1B30
   uint32_t field_1B34_;  // 0x1B34
