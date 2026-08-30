@@ -13,6 +13,10 @@
 #include "spritebox.h"
 #include "net_class.h"
 
+#include "stringstruct.h"  // StringAllocationBaseVtable, StringAllocationHeap
+#include "heap.h"
+#include <new>      // Heap placement-construction at 0x148C
+
 /*
 Purpose: Convert a multiplayer process ID to its one-based player index.
 // ORIGINAL: 0x004E25E0 ?pid_2_idx@AlphaNet@@QAEHK@Z 0x004E25E0-0x004E2607 BYTE_EXACT
@@ -136,6 +140,71 @@ Purpose: Clear every player's process slot and hand off to the network close.
 // calls     (none)
 Status: Complete with a temporary dependency on the network close
 */
+// The ledger's staged tables - the image's .rdata, real storage here.
+const uint32_t AlphaNetLedgerVbtable[2] = {0xFFFFFFFC, 0x00000034};   // 0x0066EAF0
+const uint32_t AlphaNetStringStructVtable[1] = {0x00402F10};           // 0x00669408
+const uint32_t AlphaNetListVirtualBaseVtable[1] = {0x00402C70};        // 0x00669404
+const uint32_t AlphaNetListDerivedVtable[1] = {0x00402E40};            // 0x0066EAE8
+const uint32_t AlphaNetListDerivedVirtualBaseVtable[1] = {0x00402C00}; // 0x0066EAE4
+
+
+/*
+Purpose: Build an AlphaNet: the Net base, the eight process slots, the
+         StringList-family ledger at 0x144C, and the trailing Heap.
+// ORIGINAL: 0x004E2490 ??0AlphaNet@@QAE@XZ 0x004E2490-0x004E25A5;0x0065C610-0x0065C630
+// symbol    ??0AlphaNet@@QAE@XZ
+// size      277 bytes
+// kind      game
+// PROMOTED from the archived transcription. The Net base constructs
+// implicitly; the ledger's two-stage StringStruct/StringList staging and the
+// Heap placement-construction are the live parts.
+Return Value: n/a
+Status: Complete
+*/
+AlphaNet::AlphaNet() {
+    char *const self = reinterpret_cast<char *>(this);
+
+    // Eight per-player process slots at 0x790, 0x19C stride: {FF, 0, 0, FF, 2}.
+    for (int slot_i = 0; slot_i < 8; ++slot_i) {
+        uint8_t *const slot = reinterpret_cast<uint8_t *>(self + 0x790 + slot_i * 0x19C);
+        slot[0] = 0xFF;
+        slot[1] = 0;
+        slot[2] = 0;
+        slot[3] = 0xFF;
+        slot[4] = 2;
+    }
+
+    // The StringList-family ledger at 0x144C: StringStruct staging over the
+    // virtual StringAllocationBase at 0x1484 (owner captured at 0x1488), then
+    // the list stage over it. Staged through the tree's real tables.
+    *reinterpret_cast<const uint32_t **>(self + 0x1450) = &AlphaNetLedgerVbtable[0];
+    *reinterpret_cast<const uint32_t **>(self + 0x1484) = &StringAllocationBaseVtable;
+    *reinterpret_cast<Heap **>(self + 0x1488) = StringAllocationHeap;
+    StringAllocationHeap = 0;
+    *reinterpret_cast<const uint32_t **>(self + 0x144C) = &AlphaNetStringStructVtable[0];
+    // the vbtable walk: [0x1450] + vbtable[1]
+    const uint32_t off = AlphaNetLedgerVbtable[1];
+    *reinterpret_cast<const uint32_t **>(self + 0x1450 + off) =
+        &AlphaNetListVirtualBaseVtable[0];
+    *reinterpret_cast<uint32_t *>(self + 0x1454) = 0;
+    *reinterpret_cast<uint32_t *>(self + 0x1458) = 0;
+    *reinterpret_cast<uint32_t *>(self + 0x145C) = 0;
+    *reinterpret_cast<uint32_t *>(self + 0x1460) = 0;
+    *reinterpret_cast<uint32_t *>(self + 0x1464) = 0;
+    // the list stage's own tables
+    *reinterpret_cast<const uint32_t **>(self + 0x144C) = &AlphaNetListDerivedVtable[0];
+    *reinterpret_cast<const uint32_t **>(self + 0x1450 + off) =
+        &AlphaNetListDerivedVirtualBaseVtable[0];
+
+    new (reinterpret_cast<Heap *>(self + 0x148C)) Heap();
+
+    // the eight slot dwords at 0x78C and the count at 0x768
+    for (int dword_i = 0; dword_i < 8; ++dword_i) {
+        *reinterpret_cast<uint32_t *>(self + 0x78C + dword_i * 0x19C) = 0;
+    }
+    *reinterpret_cast<uint32_t *>(self + 0x768) = 0;
+}
+
 void AlphaNet::close() {
     uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
     // Eight process-ID slots at 0x78C, one per player, stride 0x19C.

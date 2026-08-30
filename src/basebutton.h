@@ -116,7 +116,7 @@ int __fastcall base_button_init_redirect(
 // Interleaved 3x4 default colour table and the three default font slots the
 // setters publish; tests outside the hybrid process rebind them.
 uint32_t *const BaseButtonDefaultTextColors = (uint32_t *)0x00697060;
-Font **const BaseButtonDefaultFonts = (Font **)0x009B8E34;
+extern Font *BaseButtonDefaultFonts[3];  // 0x009B8E34..E3C, defined in basebutton.cpp
 
 
 // The palette these setters publish before recolouring is `PaletteActive`

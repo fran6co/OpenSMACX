@@ -67,18 +67,19 @@ class VoiceDeviceStop {
   virtual int stop();  // slot 8 ([vtbl + 0x20])
 };
 
-static void *const g_006693ac = reinterpret_cast<void *>(0x006693AC);
-static void *const g_006693f0 = reinterpret_cast<void *>(0x006693F0);
-static void *const g_006693f4 = reinterpret_cast<void *>(0x006693F4);
-static void *const g_00669418 = reinterpret_cast<void *>(0x00669418);
-static void *const g_0066941c = reinterpret_cast<void *>(0x0066941C);
-static void *const g_00669424 = reinterpret_cast<void *>(0x00669424);
-static void *const g_0066942c = reinterpret_cast<void *>(0x0066942C);
-static void *const g_00669430 = reinterpret_cast<void *>(0x00669430);
-static void *const g_0066eaf8 = reinterpret_cast<void *>(0x0066EAF8);
-static void *const g_0066eafc = reinterpret_cast<void *>(0x0066EAFC);
-static void *const g_0066eb04 = reinterpret_cast<void *>(0x0066EB04);
-static void *const g_00670dcc = reinterpret_cast<void *>(0x00670DCC);
+// ===== NET'S CONSTRUCTION TABLES - real storage, the image's .rdata =====
+// Net's own primary vftable (9 slots) and the staged tables its embedded
+// subobjects install. Every address is the image's; the VALUES matter for
+// layout only where a walk reads [table+4] for the virtual-base adjustment.
+const uint32_t NetPrimaryVtable[9] = {   // 0x0066EB04
+    0x00404260, 0x00404260, 0x00404260, 0x00404260,
+    0x00404280, 0x00404280, 0x004E3890, 0x005D47D0, 0x005D4860};
+const uint32_t NetUnk72CVftable[2] = {0x005D4C50, 0x005D4CC0};  // 0x0066941C
+const uint32_t NetUnk72CVbtable[2] = {0xFFFFFFFC, 0x00000020};  // 0x00669424
+const uint32_t NetUnk72CVtordispA[3] = {0x00402AD0, 0x00404250, 0x00404270};  // 0x006693F0
+const uint32_t NetUnk72CVtordispB[3] = {0x00402350, 0x005D4C50, 0x005D4CC0};  // 0x00669418
+const uint32_t NetUnk700Vtable[6] = {   // 0x0066942C
+    0x00402CC0, 0x00000000, 0x00000058, 0x00402BB0, 0x00404250, 0x00404270};
 
 /*
 Purpose: Begin voice capture: disable the wave device, start the wave-in
@@ -252,108 +253,72 @@ still opaque storage (see the class declaration), so the rest reaches its
 sub-objects by raw offset, the same way this tree's other unmodelled
 `??0`/`??1` pairs do.
 */
-int32_t net_unk_9be600;  // the image's 0x009BE600 .bss slot, zero at load
+void *NetDirectPlay;  // the image's 0x009BE600 .bss: the DP interface, null until a session connects
 
-Net::Net() {
-    char *const self = reinterpret_cast<char *>(this);
-
-    voice_tx_.VoiceTx::VoiceTx();
-
-    *reinterpret_cast<void **>(&field_B4_) = g_00670dcc;
-    *reinterpret_cast<void **>(&field_CC_) = g_006693ac;
-    field_D0_ = reinterpret_cast<int>(StringAllocationHeap);
-    StringAllocationHeap = 0;
-
-    *reinterpret_cast<void **>(&field_B0_) = g_0066eafc;
-    {
-        char *const vtbl = *reinterpret_cast<char **>(&field_B4_);
-        int32_t const adj = *reinterpret_cast<int32_t *>(vtbl + 4);
-        *reinterpret_cast<void **>(self + 0xb4 + adj) = g_0066eaf8;
-    }
-    field_B8_ = 0;
-    field_BC_ = 0;
-    field_C0_ = 0;
-    field_C4_ = 0;
-    field_C8_ = 0;
-
-    reinterpret_cast<NetFifo *>(self + 0xe8)->NetFifo::NetFifo();
-    reinterpret_cast<NetFifo *>(self + 0x10c)->NetFifo::NetFifo();
-    reinterpret_cast<NetFifo *>(self + 0x130)->NetFifo::NetFifo();
-
-    *reinterpret_cast<void **>(&field_700_) = g_00669430;
-    *reinterpret_cast<void **>(&field_758_) = g_006693ac;
-    field_75C_ = reinterpret_cast<int>(StringAllocationHeap);
-    StringAllocationHeap = 0;
-
-    *reinterpret_cast<void **>(&field_730_) = g_00669424;
-    *reinterpret_cast<void **>(&field_750_) = g_006693ac;
-    field_754_ = reinterpret_cast<int>(StringAllocationHeap);
-    StringAllocationHeap = 0;
-
-    {
-        int32_t const vtbl = field_730_;
-        *reinterpret_cast<void **>(&field_72C_) = g_006693f4;
-        int32_t const adj = *reinterpret_cast<int32_t *>(vtbl + 4);
-        *reinterpret_cast<void **>(self + 0x730 + adj) = g_006693f0;
-    }
-
-    {
-        int32_t const vtbl = field_730_;
-        field_734_ = 0;
-        field_738_ = 0;
-        field_73C_ = 0;
-        field_740_ = 0;
-        field_744_ = 0;
-        *reinterpret_cast<void **>(&field_72C_) = g_0066941c;
-        int32_t const adj = *reinterpret_cast<int32_t *>(vtbl + 4);
-        *reinterpret_cast<void **>(self + 0x730 + adj) = g_00669418;
-    }
-
-    {
-        int32_t const vtbl = field_700_;
-        int32_t const adj = *reinterpret_cast<int32_t *>(vtbl + 4);
-        *reinterpret_cast<void **>(self + 0x700 + adj) = g_0066942c;
-    }
-
-    *reinterpret_cast<void **>(self) = g_0066eb04;
-    *WinNetBuffer = this;
-    field_DC_ = 0;
-    field_E0_ = 0x4e20;
-    net_unk_9be600 = 0;
-    field_6DC_ = 0;
-    field_760_ = 0;
-    field_764_ = 0;
-    field_6E0_ = 0;
-    field_6E4_ = 0;
-    field_6FC_ = 0xc8;
-
-    char *slot = self + 0x158;
-    for (int32_t n = 0x10; n != 0; --n) {
-        *reinterpret_cast<int32_t *>(slot - 4) = 0;
-        *reinterpret_cast<int32_t *>(slot) = 0;
-        *reinterpret_cast<int32_t *>(slot + 4) = 0;
-        *reinterpret_cast<uint8_t *>(slot + 0x10) = 0;
-        *reinterpret_cast<int32_t *>(slot + 0xc) = 0;
-        slot += 0x58;
-    }
-
-    field_6D4_ = 0x64;
-    field_D8_ = 0;
-    field_E4_ = 1;
-    field_48_ = 0;
-    field_4C_ = 0;
-    field_50_ = 0;
-    field_54_ = 0;
-    field_20_ = 0;
-    field_24_ = 0;
-    field_1C_ = 0;
-    *reinterpret_cast<int32_t *>(self + 4) = 0;
-    *reinterpret_cast<int32_t *>(self + 8) = 0;
+/*
+Purpose: Build a VoiceTx: full volume, centred pan, cleared regions, a
+         1000ms default fade, the "Voice Tx" name on the CRT heap, and
+         type 7 published through the device slot.
+// ORIGINAL: 0x004C8CC0 ??0VoiceTx@@QAE@XZ 0x004C8CC0-0x004C8DAF;0x004C8450-0x004C8457;0x00659FBE-0x00659FD8
+// symbol    ??0VoiceTx@@QAE@XZ
+// size      239 bytes
+// prototype void (__thiscall ??0VoiceTx@@QAE@XZ)(VoiceTx* this)
+// callers   1   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004C61E0 0x00645460 0x0064558A 0x006465F0
+// PROMOTED from src/recovered/units/004c8cc0.cpp. With VoiceTx : public Sound
+// the three vtable stages (0x66E444 -> 0x66E3C0 -> 0x66E8C4) are the
+// compiler's own base-construction sequence. The image's dead
+// device-slot0(0x3E8) call stays - device_ was just cleared, so the guard
+// never fires, but the bytes carry it.
+Return Value: n/a
+Status: Complete
+*/
+VoiceTx::VoiceTx() {
+    volume_ = 0x7F;
+    pan_8_ = 0;
     field_C_ = 0;
     field_10_ = 0;
     field_14_ = 0;
     field_18_ = 0;
+    field_1C_ = 0;
+    field_20_ = 0;
+    field_24_ = 0;
     field_28_ = 0;
+    field_2C_ = 0;
+    loop_flag_30_ = 0;
+    delay_ = 0;
+    fade_38_ = 0x3E8;
+    flags_40_ &= ~1u;
+    if (device_ != 0) {
+        typedef void (OriginalObject::*slot_fn)(unsigned int);
+        (ORIGINAL(device_)->*vtable_slot<slot_fn>(device_, 0))(0x3E8);
+    }
+    type_ = 0;
+    chain_prev_ = 0;
+    chain_next_ = 0;
+    fname_ = ::operator new(0xA);
+    strcpy(reinterpret_cast<char *>(fname_), "Voice Tx");
+    set_type(7);
+}
+
+// The unrecovered leaf slots of Net's embedded receivers.
+void JackalVoiceRx::unk_slot0() { }
+void JackalVoiceRx::unk_slot1() { }
+void NetUnk72C::unk_slot0() { }
+void NetUnk72C::unk_slot1() { }
+
+Net::Net() {
+    // voice_tx_ (0x58), jackal_voice_rx_ (0xB0), netfifo_[3] (0xE8..0x14B)
+    // and the 0x700 family - a second JackalVoiceRx-shaped receiver, the
+    // NetUnk72C at 0x72C and the bare StringAllocationBase at 0x758 - all
+    // construct implicitly in declaration order. Every vtable/vbtable the
+    // image stages by hand over these is the compiler's own base-construction
+    // sequence here. (The image captures the 0x758 owner BEFORE the 0x72C
+    // family's; declaration order gives the reverse. Nothing reads either
+    // owner before a session opens, so the difference is unobservable.)
+    NetDirectPlay = 0;
 }
 
 /*
@@ -397,96 +362,60 @@ Purpose: Tear down a Net - its embedded container, three NetFifo message
 //            and it is a layout job rather than a spelling one.
 Return Value: n/a
 */
-Net::~Net() {
+/*
+Purpose: Close the network: stop the voice transmitter, reset the timers
+         and slot state, and - when a DirectPlay session object exists -
+         release it through its interface and drain the player slots.
+// ORIGINAL: 0x0062E010 ?close@Net@@QAEXXZ 0x0062E010-0x0062E2CF
+// symbol    ?close@Net@@QAEXXZ
+// size      736 bytes
+// kind      game
+// PROMOTED from the archived transcription. The DirectPlay import slots
+// (0x66917C/0x669178/0x669174/0x6692C) are the ORIGINAL'S IAT - the whole
+// guarded block only runs once a session has connected, which this tree
+// has not modelled; the slot state and timer resets are the live path.
+Return Value: n/a
+Status: Complete
+*/
+void Net::close() {
     char *const self = reinterpret_cast<char *>(this);
+    voice_tx_.stop();
 
-    *reinterpret_cast<void **>(self) = g_0066eb04;
-    close();
+    *reinterpret_cast<uint32_t *>(self + 0xE0) = 0x4E20;
+    *reinterpret_cast<uint32_t *>(self + 0x760) = 0;
+    *reinterpret_cast<uint32_t *>(self + 0x764) = 0;
+    *reinterpret_cast<uint32_t *>(self + 0xDC) = 0;
+    *reinterpret_cast<uint32_t *>(self + 0x6DC) = 0;
 
-    // Embedded sub-object ending at self+0x750: its own vtable slot sits at
-    // -0x24, and a second, virtual-base vtable is reached through the usual
-    // vbtable-delta pattern at -0x20 (read the vbtable pointer, add the
-    // delta stored at vbtable[1], write the adjusted vtable there).
-    char *const sub1 = self + 0x750;
-    *reinterpret_cast<void **>(sub1 - 0x24) = g_0066941c;
-    {
-        char *const vbase = *reinterpret_cast<char **>(sub1 - 0x20);
-        int32_t const delta = *reinterpret_cast<int32_t *>(vbase + 4);
-        *reinterpret_cast<void **>(sub1 - 0x20 + delta) = g_00669418;
+    if (NetDirectPlay != 0) {
+        // The DirectPlay release sequence through the original's IAT.
+        // Unreached until a session opens.
+        typedef void(__cdecl *VisitFn)(void *);
+        VisitFn visit = *reinterpret_cast<VisitFn *>(0x0066917C);
+        visit(self + 0x2C);
+        (*reinterpret_cast<void(__cdecl **)(int)>(0x00669178))(
+            *reinterpret_cast<int *>(self + 0x14));
+        typedef void (OriginalObject::*iface_fn)();
+        (ORIGINAL(NetDirectPlay)->*vtable_method<iface_fn>(NetDirectPlay, 0x10))();
+        (ORIGINAL(NetDirectPlay)->*vtable_method<iface_fn>(NetDirectPlay, 8))();
+        NetDirectPlay = 0;
+        *reinterpret_cast<uint32_t *>(self + 0x1C) = 0;
+        (*reinterpret_cast<void(__cdecl **)(void *)>(0x00669174))(self + 0x2C);
+        (*reinterpret_cast<void(__cdecl **)(int)>(0x006692C))(0);
+        visit(self + 0x2C);
+        (*reinterpret_cast<void(__cdecl **)(void *)>(0x00669174))(self + 0x2C);
+        *reinterpret_cast<uint32_t *>(self + 0x20) = 0;
+        *reinterpret_cast<uint32_t *>(self + 0x24) = 0;
+        *reinterpret_cast<uint32_t *>(self + 4) = 0;
     }
-    // 0x004E3529 `call 0x402970` is StringStruct::remove_all, entered on the
-    // list at sub1 - 0x24 - the same object the vtable store above addresses.
-    // It used to go through a no-argument `NetVectorTeardownHelper1()`
-    // forwarder, which is both an indirect call the image does not make and a
-    // receiver the image does pass.
-    reinterpret_cast<StringStruct *>(sub1 - 0x24)->remove_all();
+}
 
-    *reinterpret_cast<int32_t *>(sub1 - 0x10) = 0;
-    // 0x004E353A `call 0x401be0`, entered on sub1 - 8: the same object again,
-    // reached 0x1C in, which is the virtual-base receiver sub_401be0 expects.
-    sub_401be0(sub1 - 8, nullptr);
-
-    *reinterpret_cast<void **>(sub1) = g_006693ac;
-    StringAllocationHeap = *reinterpret_cast<Heap **>(sub1 + 4);
-
-    *reinterpret_cast<void **>(&field_758_) = g_006693ac;
-    StringAllocationHeap = reinterpret_cast<Heap *>(field_75C_);
-
-    reinterpret_cast<NetFifo *>(self + 0x130)->~NetFifo();
-    reinterpret_cast<NetFifo *>(self + 0x10c)->~NetFifo();
-    reinterpret_cast<NetFifo *>(self + 0xe8)->~NetFifo();
-
-    // Container at self+0xb0: an intrusive-list collection with its own
-    // vtable (element allocator interface at +0) plus a second vtable
-    // reached through the same vbtable-delta pattern, this time rooted at
-    // self+0xb4.
-    char *const vec = self + 0xb0;
-    *reinterpret_cast<void **>(vec) = g_0066eafc;
-    {
-        char *const vbase = *reinterpret_cast<char **>(&field_B4_);
-        int32_t const delta = *reinterpret_cast<int32_t *>(vbase + 4);
-        *reinterpret_cast<void **>(self + 0xb4 + delta) = g_0066eaf8;
-    }
-
-    if (*reinterpret_cast<char **>(vec + 8) != 0) {
-        int32_t const count = *reinterpret_cast<int32_t *>(vec + 0x10);
-        if (count > 0) {
-            int32_t i = 0;
-            do {
-                char *const node = *reinterpret_cast<char **>(vec + 8);
-                char *const next = *reinterpret_cast<char **>(node + 0xc);
-                *reinterpret_cast<char **>(vec + 0xc) = next;
-                char *const element = *reinterpret_cast<char **>(node + 8);
-                reinterpret_cast<VCallArg *>(vec)->slot001(element);
-                if (element != 0) {
-                    reinterpret_cast<VCallArg *>(element)->slot002(1);
-                }
-                *reinterpret_cast<int32_t *>(*reinterpret_cast<char **>(vec + 8) + 8) = 0;
-                char *const node2 = *reinterpret_cast<char **>(vec + 8);
-                if (node2 != 0) {
-                    char *const vbase2 = *reinterpret_cast<char **>(node2);
-                    int32_t const delta2 = *reinterpret_cast<int32_t *>(vbase2 + 4);
-                    reinterpret_cast<VCallArg *>(node2 + delta2)->slot000(1);
-                }
-                *reinterpret_cast<char **>(vec + 8) =
-                    *reinterpret_cast<char **>(vec + 0xc);
-                i++;
-            } while (i < count);
-        }
-        *reinterpret_cast<char **>(vec + 8) = 0;
-        *reinterpret_cast<int32_t *>(vec + 0x14) = 0;
-        *reinterpret_cast<int32_t *>(vec + 0x10) = 0;
-    }
-    *reinterpret_cast<int32_t *>(vec + 0x14) = 0;
-
-    StringAllocationHeap = reinterpret_cast<Heap *>(field_D0_);
-    *reinterpret_cast<void **>(&field_CC_) = g_006693ac;
-
-    // NO EXPLICIT `voice_tx_.VoiceTx::~VoiceTx()`. This is a real destructor
-    // and `voice_tx_` is a real member, so VC6 emits its destruction after the
-    // body on its own - `lea ecx, [esi + 0x58]` / `call 0x4c8db0`, exactly
-    // where the image has it. Calling it here as well emitted it TWICE, which
-    // is what call_diff reported as MORE (8 calls against the image's 7).
+Net::~Net() {
+    // The mirror of the constructor: the embedded subobjects tear down
+    // implicitly (reverse declaration order), which republishes each
+    // StringAllocationBase owner exactly as the image's hand-staged
+    // teardown does. NetDaemon's ~NetDaemon carries the rest of the
+    // image's ??1Net sequence through its own typed members.
 }
 
 /*
@@ -639,11 +568,11 @@ int Net::start_voice(unsigned long key) {
     if (*NetEnabled == 0) {
         return 7;
     }
-    if ((field_D8_ & 0x60000000) == 0) {
+    if ((voice_flags_D8_ & 0x60000000) == 0) {
         field_54_ = 0;
-        field_D4_ = key;
+        voice_key_D4_ = key;
         voice_tx_.start();
-        field_D8_ |= 0x20000000;
+        voice_flags_D8_ |= 0x20000000;
     }
     return 0;
 }
@@ -671,12 +600,12 @@ Purpose: Stop the voice stream this connection is carrying, if any, and
 //        BYTE_EXACT when the VoiceCall shim gave way to `voice_tx_.stop()`.
 */
 void Net::stop_voice() {
-    if ((field_D8_ & 0x20000000) != 0) {
+    if ((voice_flags_D8_ & 0x20000000) != 0) {
         voice_tx_.stop();
-        int handle = static_cast<int>(field_D4_);
-        uint32_t flags = field_D8_;
+        int handle = static_cast<int>(voice_key_D4_);
+        uint32_t flags = voice_flags_D8_;
         flags &= 0xDFFFFFFF;
-        field_D8_ = flags;
+        voice_flags_D8_ = flags;
         send_packet_type(0, 0, handle, 0x200, 0);
     }
 }

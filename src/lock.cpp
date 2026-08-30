@@ -20,6 +20,7 @@
 #include "lock.h"
 
 uint32_t LockEnableMask;  // 0x009A64E8, the faction human/alive status dword
+uint8_t *LockMapTable;    // 0x0094A30C, the map-record table pointer
 
 
 /*
@@ -40,8 +41,8 @@ void Lock::reset_map() {
     // NOT CACHED: the image RE-READS *LockMapCount at every iteration's
     // test rather than hoisting it into a local once.
     // SEE lock.h: the extra cast is what keeps LockMapTable's fold.
-    uint8_t *const table = *reinterpret_cast<uint8_t *const *>(LockMapTable);
-    for (int32_t index = 0; index < *LockMapCount; ++index) {
+    uint8_t *const table = LockMapTable;
+    for (int32_t index = 0; index < static_cast<int32_t>(MapArea); ++index) {
         table[index * 0x2C + 5] &= 0xC7;
     }
 }
@@ -76,8 +77,8 @@ void Lock::clear() {
     }
     // reset_map()'S BODY, INLINED: `osmx calls` names zero call targets.
     // NOT CACHED: see reset_map() above.
-    uint8_t *const table = *reinterpret_cast<uint8_t *const *>(LockMapTable);
-    for (int32_t index = 0; index < *LockMapCount; ++index) {
+    uint8_t *const table = LockMapTable;
+    for (int32_t index = 0; index < static_cast<int32_t>(MapArea); ++index) {
         table[index * 0x2C + 5] &= 0xC7;
     }
 }

@@ -88,7 +88,7 @@ void __fastcall string_struct_derived_close_redirect(void *adjusted);
 // addresses also live under other names in stringstruct.cpp for the close
 // paths: StringStructVtable, StringStructVirtualBaseVtable,
 // StringStructDerivedVtable, StringStructDerivedVirtualBaseVtable,
-// StringVirtualBaseVtable.
+// StringAllocationBaseVtable.
 const uint32_t StringListVirtualBaseTable = 0x0066B0EC;  // vbtable, at +0x04
 const uint32_t StringVirtualBaseTable = 0x006693AC;      // vbase vftable, +0x28
 const uint32_t StringStructTable = 0x006693A4;           // StringStruct vftable
@@ -105,6 +105,9 @@ const uint32_t StringListBaseTable = 0x006698C0;         // StringList btable
 // 2026-08-29. Checkbox, RadioButton and ListBox already declare real virtual
 // bases under this same toolchain (see checkbox.h for the layout argument).
 class Heap;  // defined in heap.h; the owner slot carries one
+
+// StringAllocationBase's own one-slot vftable (its deleting dtor).
+extern const uint32_t StringAllocationBaseVtable;
 
 // THE ALLOCATOR HAND-OFF SLOT, the image's 0x009B3374 .bss: a Heap*. Heap::get
 // publishes itself here on a successful allocation; the StringAllocationBase

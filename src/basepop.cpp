@@ -749,9 +749,7 @@ char *BasePopDefaultCancelText;  // 0x009B8D84
 // global directly is the image's single memory-indirect `call dword ptr
 // [slot]` - spelling the call through a pointer-to-pointer makes VC6 split
 // it into mov+call and the claim diverges.
-static int *const g_009b8d98 = (int *)0x009B8D98;
-static int *const g_009b8da8 = (int *)0x009B8DA8;
-static int *const g_009bb484 = (int *)0x009BB484;
+int32_t BasePopSharedHeapBase;  // 0x009BB484 - the heap base both font tables seed from
 
 // The fallout pair (basepop.h) and the two singleton slots `init_class`
 // below allocates and `pops` (popup.cpp) consumes - real storage, one name
@@ -836,7 +834,7 @@ __forceinline int __cdecl BasePop::set_def_cancel_text(LPSTR text) {
 // LEVER: inline-the-two-setters the body is `set_def_cancel_text("Cancel");` then `set_def_ok_text("OK");` INLINED, not open-coded. Each inlined copy keeps its own `if (text == nullptr) return 3;` and `return 5`/`return 4` failure exits, which is why the image has `mov eax, <caption>; test eax, eax; je` before each block and why both failure paths jump to the START OF THE NEXT BLOCK (0x006045F8, 0x00604650) rather than to a return. The two setters are `__forceinline` here and MUST be defined ABOVE this body: VC6 is single-pass and will not inline a definition it has not seen. Both keep their own out-of-line BYTE_EXACT bodies, which /Gy still emits.
 // LEVER: string-literal-not-address the captions are the LITERALS "Cancel" (0x00697008) and "OK" (0x00697010), read out of the image. Spelled as `(LPSTR)0x00697008` VC6 folds `text == nullptr` to false at compile time and the whole `mov/test/je` triple disappears; a literal's address is a RELOCATION, which VC6 cannot fold and the comparison masks away.
 // LEVER: no-hook-local `(*reinterpret_cast<FnPtr *>(g_00696ecc))()` written out at BOTH call sites. Binding it to a local `FnPtr *const` costs a callee-saved esi, a push/pop pair, and `call dword ptr [esi]` where the image has `call dword ptr [0x696ECC]`.
-// LEVER: shared-load `const int base = *g_009bb484;` for both stores - the image loads 0x009BB484 ONCE (0x00604590) and stores eax twice. Written as two assignments straight from the global, VC6 must re-read it because the first store may alias.
+// LEVER: shared-load `const int base = BasePopSharedHeapBase;` for both stores - the image loads 0x009BB484 ONCE (0x00604590) and stores eax twice. Written as two assignments straight from the global, VC6 must re-read it because the first store may alias.
 // LEVER: guard-clause-tail `if (!r1) { return 4; }` then the second hook call. The image falls through to `mov eax, 4; ret` and jumps FORWARD to the second call, which is a guard clause and not an `if (r1) {...} return 4;`. The final `return r2 ? 0 : 4;` is VC6's `neg/sbb/and al,0xFC/add` select; spelling it as arithmetic on `(r2 != 0)` emits setne instead.
 // symbol    ?init_class@BasePop@@SAHXZ
 // size      234 bytes
@@ -859,9 +857,9 @@ __forceinline int __cdecl BasePop::set_def_cancel_text(LPSTR text) {
 Status: Complete
 */
 int __cdecl BasePop::init_class() {
-    const int base = *g_009bb484;
-    *g_009b8d98 = base;
-    *g_009b8da8 = base;
+    const int base = BasePopSharedHeapBase;
+    *reinterpret_cast<int *>(&BasePopDefaultStringFonts[0]) = base;
+    *reinterpret_cast<int *>(&BasePopDefaultButtonFonts[0]) = base;
 
     set_def_cancel_text(const_cast<LPSTR>("Cancel"));
     set_def_ok_text(const_cast<LPSTR>("OK"));

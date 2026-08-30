@@ -422,7 +422,7 @@ void __fastcall string_struct_derived_close_redirect(void *adjusted) {
 
 // StringAllocationBase's own one-slot vftable (its deleting destructor,
 // 0x00401520) - the table the destructor stages back onto the base.
-const uint32_t StringVirtualBaseVtable = 0x006693AC;
+const uint32_t StringAllocationBaseVtable = 0x006693AC;   // was StringVirtualBaseVtable
 // THE ALLOCATOR HAND-OFF SLOT: the allocating Heap published by Heap::get
 // and captured by the next StringAllocationBase construction.
 Heap *StringAllocationHeap;  // 0x009B3374
@@ -496,7 +496,7 @@ uint32_t StringList::destroy() {
         reinterpret_cast<Heap *volatile *>(virtual_base);
     const Heap *const owner = virtual_base_slots[1];   // mov eax, [esi + 4]
     reinterpret_cast<volatile uint32_t &>(virtual_base_slots[0]) =
-        StringVirtualBaseVtable;                        // mov [esi], 0x6693AC
+        StringAllocationBaseVtable;                     // mov [esi], 0x6693AC
     StringAllocationHeap = const_cast<Heap *>(owner);   // mov [0x9B3374], eax
     return reinterpret_cast<uint32_t>(owner);           // EAX at the ret
 }

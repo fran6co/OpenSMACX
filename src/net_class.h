@@ -17,7 +17,9 @@
  */
 #pragma once
 
-#include "sound.h"
+#include "sound.h"          // VoiceTx's base
+#include "stringstruct.h"      // StringAllocationBase - the virtual base of Net's subobjects
+#include "hypothesis_layouts.h"  // NetFifo
 
  /*
   * VoiceTx class
@@ -115,6 +117,19 @@ static_assert(sizeof(VoiceTx) == 0x58,
   * `static_assert(sizeof(AlphaNet) == 0x14A0)` there, which is the intended
   * alarm - re-measure AlphaNet's `data_` rather than silence it.
   */
+// THE NET EMBEDDED RECEIVER at Net+0xB0: two virtual slots (the image's
+// vftable 0x66EAFC, both entries leaves) over a virtual StringAllocationBase
+// (vbtable 0x670DCC places the base at +0x18 - Net+0xCC). The construction
+// staging the register transcription spelled by hand is the compiler's now.
+class NetUnk72C : public virtual StringAllocationBase {
+ public:
+  virtual void unk_slot0();  // 0x005D4C50, unrecovered
+  virtual void unk_slot1();  // 0x005D4CC0, unrecovered
+
+ private:
+  uint8_t field_8_[0x1C];  // 0x8..0x23, opaque
+};
+
 class Net {
  public:
   // ?start_voice@Net@@QAEHK@Z at 0x0062DF20. `K`, not `I` - the image spells
@@ -184,21 +199,12 @@ class Net {
   // 0x0062D6C9, and ??1Net tears it down at the same offset. The two members
   // this replaces covered exactly 0x58 bytes, so nothing moves.
   VoiceTx voice_tx_;  // 0x58
-  uint32_t field_B0_;  // 0xB0
-  uint32_t field_B4_;  // 0xB4
-  uint32_t field_B8_;  // 0xB8
-  uint32_t field_BC_;  // 0xBC
-  uint32_t field_C0_;  // 0xC0
-  uint32_t field_C4_;  // 0xC4
-  uint32_t field_C8_;  // 0xC8
-  uint32_t field_CC_;  // 0xCC
-  uint32_t field_D0_;  // 0xD0
-  uint32_t field_D4_;  // 0xD4
-  uint32_t field_D8_;  // 0xD8
-  uint32_t field_DC_;  // 0xDC
-  uint32_t field_E0_;  // 0xE0
-  uint32_t field_E4_;  // 0xE4
-  uint8_t field_E8_[0x6C];  // 0xE8
+  JackalVoiceRx jackal_voice_rx_;  // 0xB0 (vbase StringAllocationBase at 0xCC)
+  // The voice-transmitter state between the receiver and the fifos.
+  uint32_t voice_key_D4_;      // 0xD4, start_voice's key
+  uint32_t voice_flags_D8_;    // 0xD8, 0x20000000 started / 0x60000000 in-flight
+  uint8_t field_DC_[0xC];      // 0xDC..0xE7, opaque
+  NetFifo netfifo_[3];  // 0xE8, 0x10C, 0x130 - the three message queues
   uint32_t field_154_;  // 0x154
   uint32_t field_158_;  // 0x158
   uint32_t field_15C_;  // 0x15C
@@ -214,31 +220,19 @@ class Net {
   uint32_t field_6E8_;  // 0x6E8
   uint8_t field_6EC_[0x10];  // 0x6EC
   uint32_t field_6FC_;  // 0x6FC
-  uint32_t field_700_;  // 0x700
-  uint32_t field_704_;  // 0x704
-  uint32_t field_708_;  // 0x708
-  uint32_t field_70C_;  // 0x70C
-  uint32_t field_710_;  // 0x710
-  uint32_t field_714_;  // 0x714
-  uint32_t field_718_;  // 0x718
-  uint32_t field_71C_;  // 0x71C
-  uint32_t field_720_;  // 0x720
-  uint8_t field_724_[0x8];  // 0x724
-  uint32_t field_72C_;  // 0x72C
-  uint32_t field_730_;  // 0x730
-  uint32_t field_734_;  // 0x734
-  uint32_t field_738_;  // 0x738
-  uint32_t field_73C_;  // 0x73C
-  uint32_t field_740_;  // 0x740
-  uint32_t field_744_;  // 0x744
-  uint8_t field_748_[0x8];  // 0x748
-  uint32_t field_750_;  // 0x750
-  uint32_t field_754_;  // 0x754
-  uint32_t field_758_;  // 0x758
-  uint32_t field_75C_;  // 0x75C
-  uint32_t field_760_;  // 0x760
-  uint32_t field_764_;  // 0x764
-  uint8_t field_768_[0x18];  // 0x768
+  // THE 0x700 FAMILY - a second JackalVoiceRx-shaped receiver at 0x700
+  // (its final table is the same two leaf slots), then an unknown
+  // two-virtual class at 0x72C whose virtual base is a StringAllocationBase
+  // at 0x750, then one more bare StringAllocationBase at 0x758. The image
+  // stages all of these by hand inside ??0Net; here the classes construct
+  // and the owner captures run implicitly.
+  JackalVoiceRx jackal_voice_rx_700_;  // 0x700
+  uint8_t field_724_[0x8];  // 0x724..0x72B, opaque
+  NetUnk72C unk_72c_;       // 0x72C (vbase StringAllocationBase at 0x750)
+  StringAllocationBase unk_base_758_;  // 0x758
+  // 0x760/0x764 are close()'s timer words and 0x768 the slot count
+  // AlphaNet::close zeroes; the rest is opaque to 0x780.
+  uint8_t field_760_[0x20];  // 0x760..0x77F
 };
 
 // Pinned by AlphaNet's own assert: AlphaNet = Net + data_[0xD20] = 0x14A0.

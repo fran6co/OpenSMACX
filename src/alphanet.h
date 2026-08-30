@@ -57,6 +57,7 @@
   // seam that stood in for them cost the caller `call [ptr]`.
 class AlphaNet : public Net {
  public:
+  AlphaNet();   // 0x004E2490, defined in alphanet.cpp
   int pid_2_idx(uint32_t process_id);
   int pid_2_who(uint32_t process_id);
   int who_2_pid(int identity);

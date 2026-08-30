@@ -344,6 +344,7 @@ int BaseButton::set_name(LPCSTR input) {
 
 // The three default colour tiers interleave within one table: slot s and
 // tier t live at 0x00697060 + s * 0xC + t * 4, so each setter strides 0xC.
+Font *BaseButtonDefaultFonts[3];  // 0x009B8E34..E3C - the three default slots
 // Default font1/font2/font3 at 0x009B8E34, 0x009B8E38 and 0x009B8E3C.
 
 /*
@@ -425,10 +426,10 @@ int BaseButton::set_def_font(Font *font1, Font *font2, Font *font3) {
     // slot is an independent absolute lvalue - a named `Font **const` alias
     // reloads the pointer at every use instead of folding to the immediate.
     if (font1->is_initialized()) {
-        *reinterpret_cast<Font **>(0x009B8E34) = font1;
+        BaseButtonDefaultFonts[0] = font1;
     }
-    *reinterpret_cast<Font **>(0x009B8E38) = font2;
-    *reinterpret_cast<Font **>(0x009B8E3C) = font3;
+    BaseButtonDefaultFonts[1] = font2;
+    BaseButtonDefaultFonts[2] = font3;
     return 0;
 }
 
