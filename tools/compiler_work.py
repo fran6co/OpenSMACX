@@ -179,7 +179,11 @@ SCAFFOLD_CEILINGS = {
     "PENDING_BODY forwarders": 211,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
-    "artifact files (recovered/)": 1300,
+    # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
+    # homed into src/caviar.cpp as callable Caviar statics (three BYTE_EXACT:
+    # vx_read/vx_write/vx_seek); their four archive claims died with the
+    # files and three live claims were re-banked by osmx record.
+    "artifact files (recovered/)": 1294,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
