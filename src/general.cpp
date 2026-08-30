@@ -1947,7 +1947,7 @@ int __cdecl jackal_init_real(Palette *palette, Font *font, LPSTR window_name,
         return result;
     }
 
-    jackal_unk_9b7af4 = BasePopSharedHeapBase;
+    jackal_unk_9b7af4 = reinterpret_cast<int32_t>(FontDefault);
     trig_init();
     result = Cursor::init_cursor_class();
     if (result != 0) {

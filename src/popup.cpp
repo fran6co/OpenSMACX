@@ -754,7 +754,7 @@ int Popup::on_nc_hittest(int x, int y) {
 
 /*
 // ORIGINAL: 0x00404FB0 ?alloc@Popup@@QAAHXZ 0x00404FB0-0x0040501C;0x00650772-0x0065078F
-// symbol    ?alloc@Popup@@SAHXZ
+// symbol    ?alloc@Popup@@SAPAVBasePop@@XZ
 // TRIED: spelling the allocation as manual operator-new + placement-new of BasePop diverges at the EH state-byte store and runs longer than the original; plain `new Popup` is the shape that matches.
 // TRIED: manual operator-new + placement-new of Popup itself (2026-08-21) - measured 7/32 vs plain `new Popup`'s 8/32; the ternary null-check adds a `sub esp,8` the image never emits. The image inlines ??0Popup@@QAE@XZ's body here while keeping it a real out-of-line call at its other 104 sites; that per-callsite inlining split is not reachable by resurfacing the new-expression, only by a compiler heuristic this tree cannot force without breaking the other 104 callers. Left as plain `new Popup` (8/32, WRONG CALLEE stands).
 // size      137 bytes
@@ -769,12 +769,11 @@ int Popup::on_nc_hittest(int x, int y) {
 // popup allocator hook, so it must stay a real symbol.
 Status: Complete
 */
-// `int`, not `Popup *`: the image's own name is ?alloc@Popup@@SAHXZ - H, an
-// int return - and WinMain stores this address in the popup allocator hook,
-// which is typed to match. The value carried is really the new object (the
-// same wire-format lesson as Win::move); the H is what the image decreed.
-int __cdecl Popup::alloc() {
-    return (int)new Popup;
+// The image spells the return H (an int) for the allocator hook's wire
+// format; the value carried is the new Popup. The hook's type is the BASE -
+// the allocator contract every popup allocator satisfies.
+BasePop *Popup::alloc() {
+    return new Popup;
 }
 
 

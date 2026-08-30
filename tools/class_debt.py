@@ -76,7 +76,7 @@ CEILINGS = {
     # the last MCI address constant.
     "function-address binding": 2,
     "orphan redirect": 208,
-    "pointer-as-int": 2,
+    "pointer-as-int": 0,
     "undocumented trivial body": 0,
     # 239 IS BELOW WHAT THE TREE CAN REACH TODAY, and this is the only
     # ceiling knowingly left above its count. Homing moved Win's bodies out
