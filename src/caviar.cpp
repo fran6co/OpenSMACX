@@ -15,6 +15,7 @@
 #include "stringstruct.h"
 #include "strings.h"    // StringTemp
 
+#include <io.h>        // _read/_write/_lseek/_tell - the vx_* IO shims
 #include <new>
 
 namespace {
@@ -575,8 +576,10 @@ int CaviarViewportState[4];  // 0x009B9690
 // the shipped game is not recovered. Sized to the 0x1800 the call reads.
 uint8_t CaviarColourSource[0x1800];  // 0x009B9C38
 
-// ForceOldVoxelAlgorithm, the PREFERENCES byte the ini read seeds.
-uint8_t *const CaviarVoxelAlgoFlag = (uint8_t *)0x009C0830;
+// ForceOldVoxelAlgorithm, the PREFERENCES byte the ini read seeds. Real
+// storage - the image's slot is 0x009C0830, unmapped in the standalone
+// build, and both init_class and the engine's algo dispatch read it.
+uint8_t CaviarVoxelAlgoFlag = 0;
 
 // The scene render record this function fills and hands to vox_create_record;
 // the created handle lands at the tail (+0x40, 0x009BB478).
@@ -660,19 +663,21 @@ int Caviar::init_class() {
     BasePop pop;
 
     // The six vx_* file-IO callbacks the engine is handed: vx_malloc,
-    // vx_free, vx_read, vx_write, vx_seek, vx_tell (0x00618E10..0x00618E90,
-    // mapped in recovered/units). Raw addresses because none of the six is
-    // source-owned yet.
+    // vx_free, vx_read, vx_write, vx_seek, vx_tell. Real functions homed
+    // below (0x00618E10..0x00618E90 in the image) - the raw literals this
+    // array used to carry pointed into the original image's .text, which
+    // the standalone build does not map.
     unsigned long vx_callbacks[6] = {
-        0x00618E10, 0x00618E20, 0x00618E30, 0x00618E50, 0x00618E70,
-        0x00618E90};
+        (unsigned long)Caviar::vx_malloc, (unsigned long)Caviar::vx_free,
+        (unsigned long)Caviar::vx_read,   (unsigned long)Caviar::vx_write,
+        (unsigned long)Caviar::vx_seek,   (unsigned long)Caviar::vx_tell};
 
     if (vox_init_callbacks(vx_callbacks, 1) != 0) {
         // The engine sized up this machine's CPU. Without a stored
         // preference - or with one above the known range - tell the player
         // this is not a CPU the renderer supports, by listing the popup's
         // entries as one space-separated line in StringTemp.
-        const uint8_t algo_flag = *CaviarVoxelAlgoFlag;
+        const uint8_t algo_flag = CaviarVoxelAlgoFlag;
         if (algo_flag == 0 || 5 < algo_flag) {
             pop.start("jackal", "CAVIAR_INVALIDCPU", -1, 0, 0, 0);
 
@@ -701,7 +706,7 @@ int Caviar::init_class() {
 
     if (GetPrivateProfileIntA("PREFERENCES", "ForceOldVoxelAlgorithm", 0,
                               ".\\Alpha Centauri.ini") != 0) {
-        *CaviarVoxelAlgoFlag = 1;
+        CaviarVoxelAlgoFlag = 1;
     } else {
         WritePrivateProfileStringA("PREFERENCES", "ForceOldVoxelAlgorithm",
                                    "0", ".\\Alpha Centauri.ini");
@@ -776,6 +781,95 @@ int Caviar::init_class() {
 }
 
 // ---------------------------------------------------------------------------
+// The six vx_* IO shims init_class hands the engine. Each is one pure
+// forwarding call; the image bodies shuffle their stack operands into the
+// callee's order and nothing else. Homed 2026-08-29 from the image bytes
+// (the source the array above used to spell as raw .text literals).
+// ---------------------------------------------------------------------------
+
+/*
+Purpose: The engine's allocation callback - mem_get with the engine's
+         unsigned-long size. Declared `void`, yet the engine reads its
+         result: the body returns without touching eax, so mem_get's
+         pointer survives in the return register exactly as the image
+         leaves it.
+// ORIGINAL: 0x00618E10 ?vx_malloc@Caviar@@SAXK@Z 0x00618E10-0x00618E1E
+// size      14 bytes
+// calls     0x005D4510
+// TRIED: 5/5 real instructions agree; the image cleans the pushed argument
+//        with `add esp, 4` where this tree's VC6 emits `pop ecx` - the same
+//        stack-cleanup heuristic auto_save's marker documents as not a
+//        source-form lever (src/general.cpp, 0x005ABD20).
+*/
+void Caviar::vx_malloc(unsigned long size) {
+    mem_get(size);
+}
+
+/*
+Purpose: The engine's release callback - free behind a null test, so the
+         engine may hand back a slot it never filled.
+// ORIGINAL: 0x00618E20 ?vx_free@Caviar@@SAXPAX@Z 0x00618E20-0x00618E2F
+// size      16 bytes
+// calls     0x00644EF2
+// TRIED: 6/6 real instructions agree; the unit's link binds the header's
+//        `free` through an incremental-link pad (`call $+5; jmp`) that the
+//        image does not have - the archive spelling this homing replaced
+//        declared its own never-defined `free`, which the harness resolves
+//        straight at the image's import thunk, but a real CRT call cannot
+//        spell that and stay callable in the standalone build.
+*/
+void Caviar::vx_free(void *block) {
+    if (block != 0) {
+        free(block);
+    }
+}
+
+/*
+Purpose: The engine's read callback - the CRT's _read with the operands
+         forwarded in call order.
+// ORIGINAL: 0x00618E30 ?vx_read@Caviar@@SAXHPADJ@Z 0x00618E30-0x00618E48 BYTE_EXACT
+// size      24 bytes
+// calls     0x0064A178
+*/
+void Caviar::vx_read(int fd, char *buffer, long count) {
+    _read(fd, buffer, count);
+}
+
+/*
+Purpose: The engine's write callback - the CRT's _write, same forwarding
+         shape as vx_read.
+// ORIGINAL: 0x00618E50 ?vx_write@Caviar@@SAXHPAXJ@Z 0x00618E50-0x00618E68 BYTE_EXACT
+// size      24 bytes
+// calls     0x00649EAC
+*/
+void Caviar::vx_write(int fd, void *buffer, long count) {
+    _write(fd, buffer, count);
+}
+
+/*
+Purpose: The engine's seek callback - the CRT's _lseek.
+// ORIGINAL: 0x00618E70 ?vx_seek@Caviar@@SAXHJH@Z 0x00618E70-0x00618E88 BYTE_EXACT
+// size      24 bytes
+// calls     0x0064BF67
+*/
+void Caviar::vx_seek(int fd, long offset, int origin) {
+    _lseek(fd, offset, origin);
+}
+
+/*
+Purpose: The engine's tell callback - the CRT's _tell.
+// ORIGINAL: 0x00618E90 ?vx_tell@Caviar@@SAXH@Z 0x00618E90-0x00618E9E
+// size      14 bytes
+// calls     0x00650220
+// TRIED: both of the other shims' residuals at once - `pop ecx` against
+//        the image's `add esp, 4` (auto_save's documented heuristic) and
+//        the incremental-link pad on the CRT `_tell` call.
+*/
+void Caviar::vx_tell(int fd) {
+    _tell(fd);
+}
+
+// ---------------------------------------------------------------------------
 // The voxel engine's own entry points, called by init_class above through
 // caviar.h's declarations. None is a Caviar member; they are the engine
 // (0x6392E0..0x63F9B0 in the image) operating on its own fixed globals.
@@ -783,19 +877,23 @@ int Caviar::init_class() {
 
 namespace {
 
-// 0x009C0B80 and 0x009C0B84, slots 0 and 1 of the six vx_* callbacks
-// vox_init_callbacks installs: slot 0 allocates, slot 1 releases. The slots
-// live AT these addresses, so the engine calls through the memory operand
-// (`call dword ptr [0x9C0B80]`) - each binding is the slot, not a copy.
-// MACROS, not const pointer variables: measured, a const variable's value
-// does not fold at the memcpy intrinsic (`mov edi, dword ptr [var]` against
-// the image's `mov edi, 0x9c0b80`) nor at the indirect call (`mov eax, [var];
-// call dword ptr [eax]` against `call dword ptr [0x9c0b80]`).
+// The six vx_* IO callback slots vox_init_callbacks installs: alloc, free,
+// read, write, seek, tell. The image's .data holds them at
+// 0x009C0B80..0x009C0B94 and the engine calls through the memory operand
+// (`call dword ptr [0x9C0B80]`); this real array keeps every slot call and
+// the installer's memcpy destination as memory operands on this build's own
+// address - the relocation every binding in this tree takes when it becomes
+// real storage. MACROS over the array, not const pointer variables: measured,
+// a const variable's value does not fold at the memcpy intrinsic
+// (`mov edi, dword ptr [var]` against the image's `mov edi, 0x9c0b80`) nor
+// at the indirect call (`mov eax, [var]; call dword ptr [eax]` against
+// `call dword ptr [0x9c0b80]`).
 typedef unsigned long (__cdecl *vox_alloc_fn)(unsigned long);
 typedef void (__cdecl *vox_free_fn)(unsigned long);
-#define vox_alloc_slot (*(vox_alloc_fn *)0x009C0B80)
-#define vox_free_slot (*(vox_free_fn *)0x009C0B84)
-#define vox_callback_table ((void *)0x009C0B80)
+void *vox_callback_slots[6];
+#define vox_alloc_slot (*reinterpret_cast<vox_alloc_fn *>(&vox_callback_slots[0]))
+#define vox_free_slot (*reinterpret_cast<vox_free_fn *>(&vox_callback_slots[1]))
+#define vox_callback_table (vox_callback_slots)
 
 // The engine's fixed-address data bindings live at FILE SCOPE, below, as
 // plain static consts rather than inside this anonymous namespace: the
@@ -841,13 +939,12 @@ static_assert(sizeof(VoxRenderRecord) == 0x80,
 
 } // namespace
 
-// The engine's fixed-address data bindings. 0x009C0830 is CaviarVoxelAlgoFlag,
-// bound in the anonymous namespace above.
-uint32_t *const vox_unk_9c0834 = (uint32_t *)0x009C0834;  // zeroed on accepted CPU report
-uint32_t *const vox_unk_9c0b78 = (uint32_t *)0x009C0B78;  // zeroed on accepted CPU report
-uint8_t *const vox_unk_9c0b70 = (uint8_t *)0x009C0B70;    // CPU-report flag the probe clears
-uint32_t *const vox_record_count =
-    (uint32_t *)0x009BE69C;  // records created, bumped per successful create
+// The engine's data slots, real storage now - each was a binding on the
+// image address in its name, which the standalone build does not map.
+uint32_t vox_unk_9c0834 = 0;    // 0x009C0834, zeroed on accepted CPU report
+uint32_t vox_unk_9c0b78 = 0;    // 0x009C0B78, zeroed on accepted CPU report
+uint8_t vox_unk_9c0b70 = 0;     // 0x009C0B70, CPU-report flag the probe clears
+uint32_t vox_record_count = 0;  // 0x009BE69C, records created, bumped per create
 
 // The pixel-size dispatch tables the engine's two dispatchers (sub_63ad60
 // for CPU ranks 1/2/4, sub_63ae20 for ranks 3/5) store into the record's
@@ -871,18 +968,20 @@ static const unsigned long vox_size2_odd_7c = 0x0063AF20;
 static const unsigned long vox_shared_74 = 0x00666FD0;
 static const unsigned long vox_shared_78 = 0x00666A80;
 
-// The engine's message strings, .rdata literals the image pushes by address.
-// 0x00698A9C is different: a data slot HOLDING the 'Unsupported pixel size'
-// pointer, which the image loads through and pushes.
-static const char *const vox_msg_no_setup = (const char *)0x00698AFC;  // No setup parameter
-static const char *const vox_msg_setup_empty = (const char *)0x00698AD8;  // Setup is empty
-static const char *const vox_msg_cpu_unsupported = (const char *)0x00698AE8;  // CPU not supported
-static const char *const vox_msg_no_shadow = (const char *)0x00698B10;  // No room for shadow table
-static const char *const vox_msg_no_colour = (const char *)0x00698B2C;  // No room for color table
-static const char *const vox_msg_no_handler = (const char *)0x00698B44;  // No room for handler
-static const char *const vox_msg_no_colortab = (const char *)0x00698B58;  // No ColorTab parameter
-static const char *const *const vox_msg_unsupported_pixel =
-    (const char *const *)0x00698A9C;  // -> Unsupported pixel size
+// The engine's message strings. Real literals now - the image keeps them in
+// .rdata at the addresses each name carried, and sub_639390 copies from the
+// pointer it is handed, so a raw binding dereferenced unmapped memory the
+// moment any error arm ran. "Unsupported pixel size" is different in the
+// image: a data SLOT at 0x00698A9C holds the string's pointer and the body
+// loads through it - one indirection the literal here does not need.
+static const char vox_msg_no_setup[] = "No setup parameter";        // 0x00698AFC
+static const char vox_msg_setup_empty[] = "Setup is empty";         // 0x00698AD8
+static const char vox_msg_cpu_unsupported[] = "CPU not supported";  // 0x00698AE8
+static const char vox_msg_no_shadow[] = "No room for shadow table"; // 0x00698B10
+static const char vox_msg_no_colour[] = "No room for color table";  // 0x00698B2C
+static const char vox_msg_no_handler[] = "No room for handler";     // 0x00698B44
+static const char vox_msg_no_colortab[] = "No ColorTab parameter";  // 0x00698B58
+static const char vox_msg_unsupported_pixel[] = "Unsupported pixel size"; // 0x00698AC0
 
 // The three engine callees, all HOMED to the foot of this file. The forward
 // declarations keep the call sites above them compiling; being same-file
@@ -907,8 +1006,15 @@ Purpose: The engine's CPUID capability probe. The shipped body toggles the
 //        the promoted artifact).
 */
 int __cdecl sub_63e860() {
-    *CaviarVoxelAlgoFlag = 0;
-    *vox_unk_9c0b70 = 0;
+    // 2026-08-29: rank 1, not 0. This stand-in cannot run CPUID (the flags
+    // dance needs __asm, which the tree bans), and a probe that leaves rank
+    // 0 makes vox_create_record's algo switch take its default arm - which
+    // aborts Caviar::init_class with 0x17 and the whole standalone boot
+    // with it. Rank 1 is the old-algorithm rank the preferences path itself
+    // forces via ForceOldVoxelAlgorithm, so the engine proceeds exactly as
+    // it does on a machine whose user pinned the old path.
+    CaviarVoxelAlgoFlag = 1;
+    vox_unk_9c0b70 = 0;
     return 0;
 }
 
@@ -939,13 +1045,13 @@ char __cdecl vox_init_callbacks(unsigned long *callbacks, int flag) {
         callbacks[3] != 0 && callbacks[4] != 0 && callbacks[5] != 0) {
         memcpy(vox_callback_table, callbacks, 6 * sizeof(unsigned long));
         sub_63e860();
-        const uint8_t algo_flag = *CaviarVoxelAlgoFlag;
+        const uint8_t algo_flag = CaviarVoxelAlgoFlag;
         if (algo_flag == 0 || 5 < algo_flag) {
             sub_639390(vox_msg_cpu_unsupported);
             return 1;
         }
-        *vox_unk_9c0834 = 0;
-        *vox_unk_9c0b78 = 0;
+        vox_unk_9c0834 = 0;
+        vox_unk_9c0b78 = 0;
         return 0;
     }
     sub_639390(vox_msg_setup_empty);
@@ -1153,7 +1259,7 @@ unsigned long __cdecl vox_create_record(int setup_id, void *setup_data,
         }
         break;
     default:
-        sub_639390(*vox_msg_unsupported_pixel);
+        sub_639390(vox_msg_unsupported_pixel);
         return 0;
     }
 
@@ -1169,7 +1275,7 @@ unsigned long __cdecl vox_create_record(int setup_id, void *setup_data,
         record->height_ = 0;
     }
 
-    switch (*CaviarVoxelAlgoFlag) {
+    switch (CaviarVoxelAlgoFlag) {
     case 1:
     case 2:
     case 4:
@@ -1190,7 +1296,7 @@ unsigned long __cdecl vox_create_record(int setup_id, void *setup_data,
         sub_63f9b0((unsigned char *)record) != 0) {
         return 0;
     }
-    *vox_record_count += 1;
+    vox_record_count += 1;
     return (unsigned long)record;
 }
 
@@ -1278,8 +1384,12 @@ Return Value: n/a
 #if defined(_MSC_VER) && _MSC_VER <= 1200
 #pragma intrinsic(strcpy)
 #endif
+// The engine's staged-message slot, 0x009C0D60 in the image - real storage
+// now; every error arm writes it and the renderer displays it.
+char vox_message_buffer[0x100];
+
 extern "C" void __cdecl sub_639390(const char *message) {
-    strcpy((char *)0x009C0D60, message);
+    strcpy(vox_message_buffer, message);
 }
 
 /*

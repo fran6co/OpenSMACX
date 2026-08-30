@@ -92,6 +92,21 @@ class Caviar {
   // for `set_active_window`.
   static int init_class();
   static void close_class();
+  // The six file-IO shims handed to the voxel engine (0x00618E10..
+  // 0x00618E90). STATIC, each `__cdecl`, none touches a receiver: the
+  // bodies read their parameters straight off [esp+4].. with no this -
+  // measured on the image; the catalogue's QAA spellings on vx_seek and
+  // vx_tell would shift every read +4 and the bytes do not have that.
+  // One-line forwarders onto the allocator and the CRT: mem_get, free,
+  // _read, _write, _lseek, _tell. vx_malloc is `void` yet the engine
+  // reads its result - the body calls mem_get and returns without
+  // touching eax, so the pointer survives in the return register.
+  static void vx_malloc(unsigned long size);
+  static void vx_free(void *block);
+  static void vx_read(int fd, char *buffer, long count);
+  static void vx_write(int fd, void *buffer, long count);
+  static void vx_seek(int fd, long offset, int origin);
+  static void vx_tell(int fd);
 
  private:
   float scene_scale_;
