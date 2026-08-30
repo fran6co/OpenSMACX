@@ -75,6 +75,34 @@ class GraphicWin : public Win, public Buffer {
   // and cast to it), so making it abstract breaks those. A virtual with no
   // definition does not link at all - it has to be in the vtable - which is
   // what 2 unresolved externals across 30 objects said.
+  // THE WINDOW-EVENT ENTRY CONVENTION, proved by the promotion pass against
+  // six BYTE_EXACT bodies. The image's window-event handlers for the
+  // virtually-derived window classes are ENTERED ON A BASE-SUBOBJECT-
+  // ADJUSTED RECEIVER, not on the class front - even though every catalogued
+  // symbol spells QAEX, a plain member. The bodies prove it themselves, by
+  // the displacements they open with:
+  //   RadioButton::on_left_double_click (0x0060E1E0) reads its vbtable at
+  //   this-0x18; CheckBox::on_left_double_click (0x0060FA80) at this-0x1C;
+  //   SpriteBox::on_left_down (0x00611150) and on_left_double_click
+  //   (0x006112E0) find their Spot table at this-0x7C; Dialogs::on_left_click
+  //   (0x00612E80) and on_scroll_delete (0x00613260) read the kind
+  //   discriminator at this-8, on_scroll_delete's vbtable at this-0x188.
+  // Those displacements only add up counted from a subobject inside the
+  // object, never from the front - EditGroup::on_dialog_focus (0x00612670)
+  // reads its box array at this-0x88 where the array lives at front+4, so
+  // its receiver is the GraphicWin subobject. The image's own thunk1/$4
+  // adjustor thunks (EditGroup's 0x006127C0, SpriteBox's 0x006118E0) are
+  // what perform the adjustment and land on these bodies. The catalogued
+  // QAEX spellings therefore name THUNK-TARGET bodies, not class-front
+  // overrides - and the census agrees: 75 of the 80 adjustor_thunks.cpp
+  // targets spell Q in the image and zero spell U, so this is not C++
+  // virtual dispatch.
+  // MODEL A NEW HANDLER FROM THAT SHAPE: its `this` is the adjusted
+  // subobject pointer, and the class's declared virtual bases decide the
+  // displacements. Do not model one as a class-front override of these
+  // slots - as a real override VC6 enters it vtordisp-adjusted and shifts
+  // every displacement (measured on EditGroup::on_dialog_focus: 24/26 as an
+  // override, 26/26 spelled plain; see editgroup.h).
   virtual void on_dialog_focus(int) { ; }
   virtual void on_mouse_leave(int, int) { ; }
   // Returns `this`: the image's own closing `mov eax, esi` is the compiler

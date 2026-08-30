@@ -818,7 +818,14 @@ struct VoxRenderRecord {
     void *colour_table_;       // 0x50
     void *shadow_table_;       // 0x54
     uint32_t field_58_[2];     // 0x58 - init_class stores &object_start at +0x58
-    uint32_t zero_c_[2];       // 0x60
+    // 0x60, 0x64. The two per-entry ramp pointers. Created zeroed, then
+    // owned by sub_63f9b0: it frees each, reallocates count<<2 bytes (count
+    // = the descriptor's entry count at setup_block+0x10), and fills ramp A
+    // from *(setup_block+4) stepped *(setup_block+0x18)*2 per entry, ramp B
+    // as a running accumulation of *(setup_block+0x14) per entry.
+    // init_class fills the same slots with its own two 256-entry ramps.
+    void *ramp_a_ptr_;         // 0x60
+    void *ramp_b_ptr_;         // 0x64
     uint8_t setup_size_code_;  // 0x68 - low byte of the last argument
     uint8_t field_69_[0x80 - 0x69];
 };
@@ -1170,8 +1177,8 @@ unsigned long __cdecl vox_create_record(int setup_id, void *setup_data,
         sub_639390(vox_msg_cpu_unsupported);
         return 0;
     }
-    record->zero_c_[0] = 0;
-    record->zero_c_[1] = 0;
+    record->ramp_a_ptr_ = 0;
+    record->ramp_b_ptr_ = 0;
     if (*(const uint32_t *)(desc + 0xc) != 0 &&
         *(const uint32_t *)(desc + 0x10) != 0 &&
         sub_63f9b0((unsigned char *)record) != 0) {
