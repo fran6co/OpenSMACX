@@ -553,7 +553,16 @@ namespace {
 
 // 0x009B9100. The 0x20000-byte colour table mem_get allocates here, filled
 // with 0xffff, copied into the render record and walked into its two ramps.
-void *CaviarSceneMemory;  // 0x009B9100
+// One scene row: 0x100 16-bit pixels, 0x200 bytes - 0x100 rows make the
+// scene's own 0x20000-byte surface, which vox_fill_colour_table clears to
+// 0xffff and the render record's ramp A walks in 0x100-byte (half-row)
+// steps.
+struct CaviarSceneRow { uint16_t pixel[0x100]; };
+
+static_assert(sizeof(CaviarSceneRow) == 0x200,
+              "scene row must be 0x200 bytes so 0x100 rows are 0x20000");
+
+CaviarSceneRow *CaviarSceneMemory;  // 0x009B9100
 
 // 0x009B9108 and 0x009B96B0. The two 256x256 scene surfaces this function
 // creates (init) and clears (fill 9 / fill 0). Their `dib_bits_` (+0x54) and
@@ -598,48 +607,12 @@ struct CaviarSceneRecord {
   void *record_owner_;     // 0x9BB464
   uint8_t record_flag_;    // 0x9BB468
   uint8_t pad_[0x40 - 0x31];
-  void *created_;          // 0x9BB478
+  VoxRenderRecord *created_;  // 0x9BB478
 };
 
 CaviarSceneRecord CaviarScene;  // 0x009BB438
 
 
-// The renderer record vox_create_record builds. 0x80 bytes are allocated and
-// all of them are zeroed, so the tail is unknown padding.
-struct VoxRenderRecord {
-    uint32_t setup_id_;        // 0x00 - first argument, stored verbatim
-    uint32_t setup_block_;     // 0x04 - the descriptor block
-    uint32_t clip_max_a_x_;    // 0x08  0x7fff
-    uint32_t clip_max_a_y_;    // 0x0C  0x7fff
-    uint32_t clip_min_a_x_;    // 0x10  0xffff8001 (-32767)
-    uint32_t clip_min_a_y_;    // 0x14  0xffff8001
-    uint32_t zero_a_[2];       // 0x18
-    uint32_t clip_max_b_x_;    // 0x20  0x7fff
-    uint32_t clip_max_b_y_;    // 0x24  0x7fff
-    uint32_t clip_min_b_x_;    // 0x28  0xffff8001
-    uint32_t clip_min_b_y_;    // 0x2C  0xffff8001
-    uint32_t zero_b_[4];       // 0x30
-    int32_t width_minus_1_;    // 0x40
-    int32_t height_minus_1_;   // 0x44
-    uint32_t width_;           // 0x48 - width, or 0 when a side is negative
-    uint32_t height_;          // 0x4C
-    void *colour_table_;       // 0x50
-    void *shadow_table_;       // 0x54
-    uint32_t field_58_[2];     // 0x58 - init_class stores &object_start at +0x58
-    // 0x60, 0x64. The two per-entry ramp pointers. Created zeroed, then
-    // owned by sub_63f9b0: it frees each, reallocates count<<2 bytes (count
-    // = the descriptor's entry count at setup_block+0x10), and fills ramp A
-    // from *(setup_block+4) stepped *(setup_block+0x18)*2 per entry, ramp B
-    // as a running accumulation of *(setup_block+0x14) per entry.
-    // init_class fills the same slots with its own two 256-entry ramps.
-    void *ramp_a_ptr_;         // 0x60
-    void *ramp_b_ptr_;         // 0x64
-    uint8_t setup_size_code_;  // 0x68 - low byte of the last argument
-    uint8_t field_69_[0x80 - 0x69];
-};
-
-static_assert(sizeof(VoxRenderRecord) == 0x80,
-              "renderer record must be the 0x80 bytes the engine allocates");
 } // namespace
 
 /*
@@ -752,7 +725,7 @@ int Caviar::init_class() {
         return 4;
     }
 
-    CaviarSceneMemory = mem_get(0x20000);
+    CaviarSceneMemory = static_cast<CaviarSceneRow *>(mem_get(0x100 * sizeof(CaviarSceneRow)));
     if (CaviarSceneMemory == 0) {
         return 4;
     }
@@ -772,15 +745,14 @@ int Caviar::init_class() {
     CaviarScene.record_owner_ = (void *)CaviarSceneBufferB.stride_;
     CaviarScene.width_b_ = 0x100;
 
-    CaviarScene.created_ = (void *)vox_create_record(
+    CaviarScene.created_ = vox_create_record(
         0, CaviarColourSource, CaviarColourSource,
         (void *)&CaviarScene.buffer_a_bits_, 0x80);
     if (CaviarScene.created_ == 0) {
         return 0x17;
     }
 
-    VoxRenderRecord *const record =
-        static_cast<VoxRenderRecord *>(CaviarScene.created_);
+    VoxRenderRecord *const record = CaviarScene.created_;
     record->zero_b_[2] = 0;             // 0x38
     record->zero_b_[3] = 0;             // 0x3C
     record->width_minus_1_ = 0xff;
@@ -791,21 +763,21 @@ int Caviar::init_class() {
     // own 0x00618DA0, which this build does not map.
     record->field_58_[0] = 0x00618DA0;
 
-    // The record's two 256-entry ramps: table A's entries are POINTERS into
-    // the colour table (each steps one 0x100-byte shade row), table B's the
-    // same addresses from zero - the old unsigned-long address arithmetic
-    // with the pointer source cast away.
-    unsigned long base = reinterpret_cast<unsigned long>(CaviarSceneMemory);
-    unsigned long shade = 0;
+    // The record's two 256-entry ramp tables. Table A's entries are the
+    // addresses of successive 0x100-byte shade rows of the colour table;
+    // table B's are the same addresses measured from zero, which the engine
+    // rebases when it runs. The slots are dwords in the record's own layout.
     unsigned long *const ramp_a =
         static_cast<unsigned long *>(record->ramp_a_ptr_);
     unsigned long *const ramp_b =
         static_cast<unsigned long *>(record->ramp_b_ptr_);
+    // Each ramp entry steps 0x100 bytes - HALF a scene row, the engine's
+    // own ramp granularity (128 16-bit pixels per shade level).
+    const unsigned long colour_base =
+        reinterpret_cast<unsigned long>(CaviarSceneMemory);
     for (int index = 0; index < 0x100; ++index) {
-        ramp_a[index] = base;
-        base += 0x100;
-        ramp_b[index] = shade;
-        shade += 0x100;
+        ramp_a[index] = colour_base + index * 0x100;
+        ramp_b[index] = index * 0x100;
     }
 
     CaviarViewportState[0] = 0;
@@ -1196,7 +1168,10 @@ Purpose: Create the scene render record: allocate it, copy the colour and
          and viewport extents, then run the per-CPU-rank init handler. The
          record pointer, or 0 on any failure.
 // ORIGINAL: 0x006393C0 sub_6393c0 0x006393C0-0x00639612 FILE
-// symbol    ?vox_create_record@@YAKHPAX00H@Z
+// symbol    ?vox_create_record@@YAPAUVoxRenderRecord@@HPAX00H@Z
+// NAMED RETURN 2026-08-30: the catalogue's K (unsigned long) decorates a
+// pointer - the body allocates a VoxRenderRecord and every caller stores it
+// as one; the return register carries the same dword either way.
 // LEVER: the alloc/free slots must be MACROS on the raw addresses: a const
 //        pointer variable compiles `mov eax,[var]; call dword ptr [eax]`
 //        where the image calls `call dword ptr [0x9c0b80]` straight through
@@ -1218,9 +1193,9 @@ Purpose: Create the scene render record: allocate it, copy the colour and
 //        reads the byte straight into al, the image widens through edx
 //        (xor edx,edx / mov dl,[eax+0x20] / mov eax,edx).
 */
-unsigned long __cdecl vox_create_record(int setup_id, void *setup_data,
-                                        void *shadow_data, void *setup_block,
-                                        int size_code) {
+VoxRenderRecord *__cdecl vox_create_record(int setup_id, void *setup_data,
+                                           void *shadow_data,
+                                           void *setup_block, int size_code) {
     if (setup_data == 0) {
         vox_stage_error(vox_msg_no_colortab);
         return 0;
@@ -1314,7 +1289,7 @@ unsigned long __cdecl vox_create_record(int setup_id, void *setup_data,
         return 0;
     }
     vox_record_count += 1;
-    return (unsigned long)record;
+    return record;
 }
 
 /*
