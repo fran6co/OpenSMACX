@@ -252,7 +252,7 @@ always sets both before this reads them on the taken path.
 int NetDaemon::receive() {
     unsigned long first;
     unsigned long second;
-    const int result = NetDaemonNet->Net::get(&first, &second);
+    const int result = NetDaemonNet.Net::get(&first, &second);
     if (result == 0) {
         return 0;
     }
@@ -276,7 +276,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_veh(int id) {
-    NetDaemonNet->synch(0x11, id, 0, 0, nullptr, 1, 0x2101);
+    NetDaemonNet.synch(0x11, id, 0, 0, nullptr, 1, 0x2101);
 }
 
 /*
@@ -292,7 +292,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_base(int id) {
-    NetDaemonNet->synch(0x13, id, 0, 0, nullptr, 1, 0x2101);
+    NetDaemonNet.synch(0x13, id, 0, 0, nullptr, 1, 0x2101);
 }
 
 /*
@@ -308,7 +308,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_energy(int id) {
-    NetDaemonNet->synch(0xB, id, 0, 0, nullptr, 1, 0x2101);
+    NetDaemonNet.synch(0xB, id, 0, 0, nullptr, 1, 0x2101);
 }
 
 /*
@@ -324,7 +324,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_researching(int id) {
-    NetDaemonNet->synch(0xA, id, 0, 0, nullptr, 1, 0x2101);
+    NetDaemonNet.synch(0xA, id, 0, 0, nullptr, 1, 0x2101);
 }
 
 /*
@@ -340,7 +340,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_leader(int id) {
-    NetDaemonNet->synch(0x6, id, 0, 0, nullptr, 1, 0x2101);
+    NetDaemonNet.synch(0x6, id, 0, 0, nullptr, 1, 0x2101);
 }
 
 /*
@@ -356,7 +356,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_ai(int id) {
-    NetDaemonNet->synch(0x8, id, 0, 0, nullptr, 1, 0x2101);
+    NetDaemonNet.synch(0x8, id, 0, 0, nullptr, 1, 0x2101);
 }
 
 /*
@@ -372,7 +372,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_research(int id) {
-    NetDaemonNet->synch(0x9, id, 0, 0, nullptr, 1, 0x2101);
+    NetDaemonNet.synch(0x9, id, 0, 0, nullptr, 1, 0x2101);
 }
 
 /*
@@ -389,7 +389,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_alloc(int id) {
-    NetDaemonNet->synch(0xC, id, 0, 0, nullptr, 1, 0x2101);
+    NetDaemonNet.synch(0xC, id, 0, 0, nullptr, 1, 0x2101);
 }
 
 /*
@@ -405,7 +405,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_soc(int id) {
-    NetDaemonNet->synch(0xD, id, 0, 0, nullptr, 1, 0x2101);
+    NetDaemonNet.synch(0xD, id, 0, 0, nullptr, 1, 0x2101);
 }
 
 /*
@@ -421,7 +421,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_proto(int id) {
-    NetDaemonNet->synch(0xE, id, 0, 0, nullptr, 1, 0x2101);
+    NetDaemonNet.synch(0xE, id, 0, 0, nullptr, 1, 0x2101);
 }
 
 /*
@@ -437,7 +437,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_obs(int id) {
-    NetDaemonNet->synch(0x10, id, 0, 0, nullptr, 1, 0x2101);
+    NetDaemonNet.synch(0x10, id, 0, 0, nullptr, 1, 0x2101);
 }
 
 /*
@@ -455,7 +455,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_diplo(int a, int b) {
-    NetDaemonNet->synch(0x16, a, b, 0, nullptr, 1, 0x2101);
+    NetDaemonNet.synch(0x16, a, b, 0, nullptr, 1, 0x2101);
 }
 
 /*
@@ -471,7 +471,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_template(int id) {
-    NetDaemonNet->synch(0x18, id, 0, 0, nullptr, 1, 0x2101);
+    NetDaemonNet.synch(0x18, id, 0, 0, nullptr, 1, 0x2101);
 }
 
 /*
@@ -487,7 +487,7 @@ Return Value: none
 Status: Complete
 */
 void __cdecl synch_radius(int id) {
-    NetDaemonNet->synch(0x23, id, 0, 0, nullptr, 1, 0x2101);
+    NetDaemonNet.synch(0x23, id, 0, 0, nullptr, 1, 0x2101);
 }
 
 /*
@@ -537,3 +537,9 @@ uint32_t NetDaemon::unlock_veh() {
     return residue;
 }
 
+
+// The daemon's Net, 0x0093CD90 in the image - see netdaemon.h. The image's
+// dynamic initializer at 0x0052DB00 constructs it at the fixed address
+// before WinMain; the recovered NetDaemon constructor here runs through this
+// build's own startup instead.
+NetDaemon NetDaemonNet;  // 0x0093CD90

@@ -379,8 +379,8 @@ Purpose: Close the energy report's three list boxes.
          order. The FIRST is not a subobject at all - it is a process-wide
          ListBox at a fixed address, and it goes first.
 
-         0x0087BE84 is a new fixed-address DATA binding, named
-         ReportIfEnergyListBox in the header so the literal appears once. It
+         0x0087BE84 is the process-wide ListBox OBJECT (reportif.cpp, named
+         ReportIfEnergyListBox in the header so the address appears once). It
          needs no row in recovery-binding-classifications.csv: that file
          classifies original FUNCTION bindings, and ConsoleGlobal - the same
          shape, a named pointer to a process object - carries none either.
@@ -396,7 +396,7 @@ Status: Complete
 */
 void ReportIf::close_energy() {
     uint8_t *const self = reinterpret_cast<uint8_t *>(this);
-    ReportIfEnergyListBox->close();
+    ReportIfEnergyListBox.close();
     reinterpret_cast<ListBox *>(self + 0xA2D0)->close();
     reinterpret_cast<ListBox *>(self + 0xAE24)->close();
 }
@@ -460,3 +460,9 @@ void SubInterface::release_iface_mode() {
     (ORIGINAL(this)->*SubInterfaceReleaseIfaceMode)();
 }
 #pragma auto_inline(on)
+
+// The energy report's process-wide list box, 0x0087BE84 in the image - see
+// reportif.h. Nothing constructs it before ReportIf's own init does, and
+// ListBox's constructor here is the empty inline the tree models, so the
+// object is the zero storage the image leaves until then.
+ListBox ReportIfEnergyListBox;  // 0x0087BE84

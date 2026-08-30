@@ -130,6 +130,11 @@ class Wave_Device {
   WaveControlGroup groups_[16];  // 0x24..0x1A3
 };
 
+// THE OBJECT, at 0x0090D978 in the shipped image. Consumers (wave.cpp,
+// net_class.cpp, sound.cpp) reach the device singleton through this name;
+// see wave_device.cpp.
+extern Wave_Device WaveDeviceGlobal;  // 0x0090D978
+
 static_assert(sizeof(WaveControlGroup) == 0x18, "group records stride 24 bytes");
 
 

@@ -493,7 +493,7 @@ int Sound::load(const char *fname) {
     if (!resolved) {
         return 0xA;
     }
-    if (!*WaveDeviceReleaseGuard) {
+    if (!WaveDeviceReleaseGuard) {
         return 1;
     }
     if (!device_) {
@@ -742,7 +742,7 @@ Sound::~Sound() {
     }
     void *const device = self->device_;
     if (device) {
-        if (*WaveDeviceReleaseGuard) {
+        if (WaveDeviceReleaseGuard) {
             (WaveDeviceReleaseSlot())(device);
         }
         self->device_ = nullptr;
@@ -904,11 +904,9 @@ typedef void(__stdcall *FreeLibraryFn)(int);
 
 static int *const g_00669128 = (int *)0x00669128;
 static int *const g_0090d950 = (int *)0x0090D950;
-static int *const g_0090d978 = (int *)0x0090D978;
 static int *const g_0090db24 = (int *)0x0090DB24;
 static int *const g_0090db2c = (int *)0x0090DB2C;
 static int *const g_0090db78 = (int *)0x0090DB78;
-static int *const g_0090db7c = (int *)0x0090DB7C;
 
 int __cdecl init_sound(void *window, unsigned long backends) {
     int loadResult = load_sound_dll();
@@ -918,14 +916,13 @@ int __cdecl init_sound(void *window, unsigned long backends) {
     if (*g_0090db78 != 0) {
         (*reinterpret_cast<ZeroArgFn *>(g_0090db2c))(0, 0);
     }
-    Wave_Device *waveDevice = reinterpret_cast<Wave_Device *>(g_0090d978);
-    int result = waveDevice->init(window, backends);
+    int result = WaveDeviceGlobal.init(window, backends);
     if (result != 0) {
         // THE GUARD IS READ BEFORE THE STORE. The image loads [0x90db78]
         // at 0x004C5D21 and only then writes 0 to [0x90db7c]; the two are
         // different addresses, so the order is free and the image picked one.
         const int module = *g_0090db78;
-        *g_0090db7c = 0;
+        WaveDeviceReleaseGuard = 0;
         if (module != 0) {
             (*reinterpret_cast<FreeLibraryFn *>(g_00669128))(module);
             *g_0090db78 = 0;
@@ -941,7 +938,7 @@ int __cdecl init_sound(void *window, unsigned long backends) {
         Wave_In_Device *waveInDevice = WaveInDeviceGlobal;
         waveInDevice->init(window, backends);
     }
-    *g_0090db7c = 1;
+    WaveDeviceReleaseGuard = 1;
     return 0;
 }
 

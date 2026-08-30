@@ -107,7 +107,7 @@ Return Value: 0, or the first failing stage's answer
 */
 int VoiceTx::start() {
     if ((flags_54_ & 1) == 0) {
-        int result = WaveDeviceGlobal->disable();
+        int result = WaveDeviceGlobal.disable();
         if (result != 0) {
             return result;
         }
@@ -153,7 +153,7 @@ int VoiceTx::stop() {
             return result;
         }
         flags_54_ &= ~1u;
-        WaveDeviceGlobal->enable();
+        WaveDeviceGlobal.enable();
         if (device_ != nullptr) {
             return reinterpret_cast<VoiceDeviceStop *>(device_)->stop();
         }
@@ -214,7 +214,7 @@ Return Value: 0, always
 int VoiceTx::unload() {
     stop();
     release();
-    if (*WaveDeviceReleaseGuard != 0) {
+    if (WaveDeviceReleaseGuard != 0) {
         (WaveDeviceReleaseSlot())(device_);
     }
     device_ = nullptr;

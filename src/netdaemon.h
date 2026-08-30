@@ -110,8 +110,16 @@ class NetDaemon : public AlphaNet {
 };
 
 // Net::get and NetDaemon::process_message are not recovered yet; the Net the
-// daemon reads from lives at a fixed address.
-NetDaemon *const NetDaemonNet = (NetDaemon *)0x0093CD90;
+// daemon reads from is THE OBJECT below, at 0x0093CD90 in the image - REAL
+// STORAGE, defined in netdaemon.cpp. It was
+// `NetDaemon *const NetDaemonNet = (NetDaemon *)0x0093CD90` naming terranx.exe
+// data that is unmapped in a standalone build. The image's ??__E dynamic
+// initializer at 0x0052DB00 runs the real NetDaemon constructor against it
+// and registers the deleting destructor with atexit; here the same recovered
+// constructor runs through this build's own startup. Every `NetDaemonNet->`
+// receiver keeps its folded `mov ecx, imm32` form, the displacement
+// relocated, and `->` becomes `.`.
+extern NetDaemon NetDaemonNet;  // 0x0093CD90
 
 
 // The multiplayer-transport flag at 0x0093F660 and the local faction id at

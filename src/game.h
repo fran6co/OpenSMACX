@@ -17,6 +17,8 @@
  */
 #pragma once
 
+class MultiWin;
+
  /*
   * Game related objects, variables and functions.
   */
@@ -179,6 +181,15 @@ extern int ControlTurnPhase;  // 0x009B2070
 extern char SaveGameFileName[0x104];  // 0x0093AA0C
 // The working copy filefind_set_alternate runs on. Same unknown bound.
 extern char SaveNameBuffer[0x104];  // 0x009B2078
+
+// The multiplayer window, 0x007FD648 in the image - a REAL OBJECT defined in
+// game.cpp, not the `GraphicWin *const MultiWindow` binding that named
+// terranx.exe data. Its class is MultiWin (the artifacts 0050ef10, 0045d170
+// and 0045ca40 reach it as one; time.cpp's turn timer calls its draw), so
+// the object carries that type; desktop_close and game_reload reach the
+// GraphicWin at its front the way the image does, by address. Defined in
+// game.cpp.
+extern MultiWin MultiWindow;  // 0x007FD648
 
 // The main loop's callees. Each is still an original body reached through a
 // pending_bodies.cpp forwarder; declaring them here is what lets

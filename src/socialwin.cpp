@@ -353,3 +353,11 @@ Purpose: Step the receiver back to the subobject ??_GSocialWin@@UAEPAXI@Z
 Return Value: the forwarded call's
 Status: Complete
 */
+
+// The process-wide social window, 0x008A6270 in the image - REAL STORAGE, not
+// the `Win *const TutWinSocWindow` binding that named terranx.exe data (see
+// tutwin.h). The image's dynamic initializer at 0x004AE9B0 runs the real
+// SocialWin constructor against it and registers the deleting destructor
+// with atexit; here the same recovered constructor runs through this
+// build's own startup and the destructor closes it at exit.
+SocialWin TutWinSocWindow;  // 0x008A6270

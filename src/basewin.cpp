@@ -527,6 +527,14 @@ Status: Complete
 // startup, and the matching destructors close them at exit. Addresses of
 // the ones documented individually live beside their definitions.
 Wave g_BASEWIN_WAVE;  // 0x006EEE68
+
+// The process-wide base window, 0x006A7628 in the image - REAL STORAGE, not
+// the `Win *const TutWinBaseWindow` binding that named terranx.exe data
+// (see tutwin.h). The image's dynamic initializer at 0x004083B0 runs the
+// real BaseWin constructor against it and registers the deleting destructor
+// with atexit; here the same recovered constructor runs through this
+// build's own startup and the destructor closes it at exit.
+BaseWin TutWinBaseWindow;  // 0x006A7628
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are
 // constructed before WinMain by the CRT's dynamic-initializer walk

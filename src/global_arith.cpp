@@ -591,5 +591,5 @@ Return Value: n/a
 Status: Complete
 */
 void __fastcall global_arith_005d8360_redirect(void *, void *) {
-    *GlobalSlot009B3A54 = 0;
+    BlitSourceBits = 0;
 }

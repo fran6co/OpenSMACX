@@ -3152,24 +3152,28 @@ int Buffer::write_right_l(char *text, int x_coord, int y_coord, int field_width,
     return write_multi_font_raw_l(text, x_coord + offset, y_coord, len);
 }
 
-// Fixed-slot bindings carried from 005d8290.cpp.
-
-// THE BLIT DESCRIPTOR AT 0x009B3A54.. IS NAMED FROM ANOTHER BODY'S OWN
-// PARAMETERS: src/unrecovered/005d92c0.cpp writes the same ten addresses
-// from locals it has already named - `bits`, `*pWidth`, `-*pHeight`,
-// `transparentIndex` - so these are evidence rather than inference. The
-// three that stay anonymous (0x70, 0x74, 0x78) are written as literal 0
-// in BOTH bodies, which says nothing about what they hold.
-static int *const BlitSourceBits = (int *)0x009B3A54;
-static int *const BlitTransparentIndex = (int *)0x009B3A58;
-static int *const BlitSourceField4A8 = (int *)0x009B3A5C;
-static int *const BlitSourceWidth = (int *)0x009B3A60;
-static int *const BlitSourceNegHeight = (int *)0x009B3A64;
-static int *const BlitClipWidth = (int *)0x009B3A68;
-static int *const BlitClipNegHeight = (int *)0x009B3A6C;
-static int *const g_009b3a70 = (int *)0x009B3A70;
-static int *const g_009b3a74 = (int *)0x009B3A74;
-static int *const g_009b3a78 = (int *)0x009B3A78;
+// THE BLIT DESCRIPTOR AT 0x009B3A54.. - REAL STORAGE, ten zero-initialised
+// globals (the image's slots are zero-fill past the carried bytes). They were
+// `static int *const BlitSourceBits = (int *)0x009B3A54` and nine neighbours
+// naming terranx.exe data that is unmapped in a standalone build. IS NAMED
+// FROM ANOTHER BODY'S OWN PARAMETERS: src/unrecovered/005d92c0.cpp writes the
+// same ten addresses from locals it has already named - `bits`, `*pWidth`,
+// `-*pHeight`, `transparentIndex` - so the names are evidence rather than
+// inference. The three that stay anonymous (0x70, 0x74, 0x78) are written as
+// literal 0 in BOTH bodies, which says nothing about what they hold. The
+// transparent index is a BYTE-typed object: the image stores it with
+// `mov byte ptr [0x9b3a58], cl`, which is how VC6 writes a uint8_t global.
+// Every store keeps its folded `[disp32]` form, the displacement relocated.
+int BlitSourceBits;        // 0x009B3A54
+uint8_t BlitTransparentIndex;  // 0x009B3A58, written one byte wide
+static int BlitSourceField4A8;  // 0x009B3A5C
+static int BlitSourceWidth;     // 0x009B3A60
+static int BlitSourceNegHeight;  // 0x009B3A64
+static int BlitClipWidth;       // 0x009B3A68
+static int BlitClipNegHeight;   // 0x009B3A6C
+static int g_009b3a70;          // 0x009B3A70
+static int g_009b3a74;          // 0x009B3A74
+static int g_009b3a78;          // 0x009B3A78
 
 // ORIGINAL: 0x005D8290 ?setup_buff_sprite@Buffer@@QAEXH@Z 0x005D8290-0x005D835C FILE BYTE_EXACT
 // LEVER: NAMED MEMBERS AND THE REAL INTERFACE. This was `*(int *)((char *)this
@@ -3204,16 +3208,16 @@ void Buffer::setup_buff_sprite(int colour) {
     if (bits != nullptr) {
         ++surface_lock_count_;
     }
-    *BlitSourceBits = reinterpret_cast<int>(bits);
-    *BlitSourceField4A8 = stride_;
-    *BlitSourceWidth = dib_.bmiHeader.biWidth;
-    *BlitSourceNegHeight = -dib_.bmiHeader.biHeight;
-    *BlitClipWidth = dib_.bmiHeader.biWidth;
-    *BlitClipNegHeight = -dib_.bmiHeader.biHeight;
-    *g_009b3a70 = 0;
-    *g_009b3a74 = 0;
-    *(unsigned char *)BlitTransparentIndex = (unsigned char)colour;
-    *g_009b3a78 = 0;
+    BlitSourceBits = reinterpret_cast<int>(bits);
+    BlitSourceField4A8 = stride_;
+    BlitSourceWidth = dib_.bmiHeader.biWidth;
+    BlitSourceNegHeight = -dib_.bmiHeader.biHeight;
+    BlitClipWidth = dib_.bmiHeader.biWidth;
+    BlitClipNegHeight = -dib_.bmiHeader.biHeight;
+    g_009b3a70 = 0;
+    g_009b3a74 = 0;
+    BlitTransparentIndex = (uint8_t)colour;
+    g_009b3a78 = 0;
 
     // The same release pair `get_pixel` ends with, in the same two arms.
     if (surface_ == nullptr) {

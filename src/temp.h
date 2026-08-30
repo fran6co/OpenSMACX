@@ -138,7 +138,9 @@ extern uint32_t UnkBitfield1;
  * path this tree read through it was a wild pointer.
  */
 extern Filefind FilefindPath;
-MainInterface *const MainInterfaceVar = (MainInterface *)0x007AE820;
+// 0x007AE820 is MainInterfaceGlobal (mapwin.cpp) - the same object this file
+// used to bind as `MainInterface *const MainInterfaceVar`. Uses name the
+// object directly.
 
 int __cdecl tester();
 
