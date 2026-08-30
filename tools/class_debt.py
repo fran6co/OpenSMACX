@@ -139,7 +139,13 @@ CEILINGS = {
     # cannot name what `this` points at and the pun IS the layout finding -
     # the family pass that converts these entries to real adjustor thunks
     # claims it back.
-    "raw self-access": 227,
+    # 227 -> 225 (2026-08-30, Console/MapWin destructor pass): the
+    # TextureStore/Buffer/Font/ImageButton carve in mapwin.h and the
+    # GraphicWin/Buffer/Time/Menu/Sprite carve in console.h replaced whole
+    # blocks of reinterpret_cast member access with named members, and the
+    # hand-spelled ~MapWin/~Console bodies came out of the .cpp files with
+    # them. ??1MapWin went BYTE_EXACT 73/73 on the declared model.
+    "raw self-access": 225,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these

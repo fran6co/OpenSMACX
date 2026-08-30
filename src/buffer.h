@@ -131,6 +131,12 @@ class Buffer {
   //
   // 0x005D7410, and the body really is this: see the annotation in
   // buffer.cpp beside the marker.
+  // VIRTUAL, and not negotiable: the image's Buffer-side vftable
+  // (0x0066FC48, the one ??1GraphicWin stores at +0x444) opens with a
+  // deleting-destructor THUNK (0x005D7160) - a secondary-table thunk only
+  // exists when the destructor is virtual. A 2026-08-30 experiment spelled
+  // it non-virtual while chasing ??1Console's member-teardown shape; that
+  // changed nothing there and would have emptied this slot.
   MEASURED virtual ~Buffer() { close(); }
   // `int`, and returning 0, because that is what the three bytes are:
   // `xor eax, eax; ret`. Declared `void` it compiles to `ret` alone and

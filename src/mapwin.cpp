@@ -141,8 +141,9 @@ VectorCtorIterator(self + 0xc, 0x260, 4,
 /*
 Purpose: Tear down a map window's own members. Nothing here calls
          MapWin::clear as MapWin - it is reached by name.
-// ORIGINAL: 0x00420F90 ??1MapWin@@QAE@XZ 0x00420F90-0x004210CB;0x00651190-0x00651250
+// ORIGINAL: 0x00420F90 ??1MapWin@@QAE@XZ 0x00420F90-0x004210CB;0x00651190-0x00651250 BYTE_EXACT
 // symbol    ??1MapWin@@UAE@XZ
+// body      src/mapwin.h
 // size      315 bytes
 // prototype void (__thiscall ??1MapWin@@QAE@XZ)(MapWin* this)
 // callers   1   call targets   6
@@ -157,30 +158,18 @@ Return Value: n/a
 0x21A6C, the offset of MapWin's own embedded GraphicWin virtual base. The
 destructor re-stores the same manual vtable pointers the constructor wrote,
 then reaches its own front (`self - 0x21a6c`) only to call `clear(0)`.
+
+HOMED INTO THE CLASS 2026-08-30: the hand-spelled body this spot carried
+measured MISMATCH (1/73) because everything but `clear` is compiler-owned -
+the EH frame, the vtable re-stores, the vtordisp zero, and the member
+teardown of the TextureStore/Buffer/Font/ImageButton members mapwin.h now
+declares. `MEASURED ~MapWin() { clear(0); }` in mapwin.h emits THIS piece
+as the out-of-line COMDAT `??_DMapWin@@QAEXXZ` (the base-object destructor;
+the `symbol` line above names it, per DECOMP_MAP's own rule for
+compiler-generated constructs the catalogue spells ??1) and inlines the
+same body into ??_DConsole. The funclet span 0x00651190-0x00651250 is that
+EH machinery's own.
 */
-MapWin::~MapWin() {
-    char *const self = reinterpret_cast<char *>(this);
-    *reinterpret_cast<void **>(self) = g_0066a57c;
-    *reinterpret_cast<void **>(self + 0x444) = g_0066a574;
-    *reinterpret_cast<int32_t *>(self - 4) = 0;
-
-    reinterpret_cast<MapWin *>(self - 0x21a6c)->clear(0);
-
-    VectorDtorIterator(self - 0x2b18, 0xabc, 4,
-                        mapwin_image_button_element_dtor);
-    reinterpret_cast<Font *>(self - 0x2b4c)->~Font();
-    reinterpret_cast<Font *>(self - 0x2b78)->~Font();
-    reinterpret_cast<Font *>(self - 0x2ba4)->~Font();
-    reinterpret_cast<Buffer *>(self - 0x3134)->~Buffer();
-    reinterpret_cast<Buffer *>(self - 0x36bc)->~Buffer();
-    reinterpret_cast<Buffer *>(self - 0x3c44)->~Buffer();
-    reinterpret_cast<TextureStore *>(self - 0x3f60)->~TextureStore();
-    VectorDtorIterator(self - 0x210e0, 0x260, 0xc4,
-                        mapwin_texture_store_element_dtor);
-    VectorDtorIterator(self - 0x21a60, 0x260, 4,
-                        mapwin_texture_store_element_dtor);
-}
-
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
 // ORIGINAL: 0x00467960 ?UNK3@MapWin@@QAEXXZ 0x00467960-0x00467961 BYTE_EXACT

@@ -67,7 +67,21 @@ class TextureStore {
   // the two offsets the walk gives them, and field_0_'s own name agrees.
   uint32_t field_0_;  // 0x0
   uint32_t iWidth_;
+  // SIZED BY THE EMBEDDED ARRAYS, 2026-08-30. MapWin and Console carry
+  // TextureStore BY VALUE as TextureStore[4] at front+0xC and
+  // TextureStore[0xC4] at front+0x98C - the image's own ??_M element
+  // destructor is ??1TextureStore (0x006252B0) in both - and the second
+  // array's end lands exactly on the lone TextureStore at front+0x1DB0C,
+  // whose end is the field the map already names field_1DD6C_. That pins
+  // the stride at 0x260 per element: 0x98C = 0xC + 4*0x260 and
+  // 0x1DB0C = 0x98C + 0xC4*0x260. Nothing recovered touches bytes 8..0x260,
+  // so the tail stays an unnamed slab - a floor from the dtor's own two
+  // fields, a size from the two arrays' arithmetic.
+  uint8_t unmapped_[0x260 - 0x8];
 };
+
+static_assert(sizeof(TextureStore) == 0x260,
+              "TextureStore must match the embedded array stride in MapWin");
 
 
 typedef void *func_texture_free(void *);
