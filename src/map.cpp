@@ -2328,7 +2328,7 @@ plateau documented across this file. Not chased further.
 Three questions in order, and every one of them can answer no on its own.
 
 WHO OWNS IT. The tile must already be the faction's own territory, and if it is fungus at
-ALT_BIT_OCEAN_SHELF or above the faction must hold Rules->tech_improve_fungus_sqr - the same
+ALT_BIT_OCEAN_SHELF or above the faction must hold Rules.tech_improve_fungus_sqr - the same
 technology that lets it work a fungus square at all, at offset 0x3C of RulesBasic.
 
 IS IT WANTED. The 25 tiles of the surrounding radius are scanned. Any one of them that already
@@ -2382,7 +2382,7 @@ int __cdecl good_sensor(int faction_id, int x, int y) {
     }
     Map *tile = map_loc(x, y);
     if (tile->bit & BIT_FUNGUS && (tile->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF
-        && !has_tech(Rules->tech_improve_fungus_sqr, faction_id)) {
+        && !has_tech(Rules.tech_improve_fungus_sqr, faction_id)) {
         return false;
     }
     int reasons = 0;
@@ -2779,7 +2779,7 @@ void __cdecl build_continent(int size) {
     if (coverage && BrushVal1 >= WorldBuildVal1) {
         coverage--;
     }
-    int radius = WorldBuilder->continent_mod * coverage * coverage + WorldBuilder->continent_base;
+    int radius = WorldBuilder.continent_mod * coverage * coverage + WorldBuilder.continent_base;
     int x;
     int y;
     int count = 0;
@@ -2797,15 +2797,15 @@ void __cdecl build_continent(int size) {
     } while (count++ < 100 && alt_at(x, y) >= ALT_BIT_SHORE_LINE);
     if (alt_at(x, y) < ALT_BIT_SHORE_LINE) {
         uint32_t ratio = (size * 3200) / MapArea;
-        if (ratio > WorldBuilder->cont_size_ratio5 || BrushVal1 >= WorldBuildVal1) {
+        if (ratio > WorldBuilder.cont_size_ratio5 || BrushVal1 >= WorldBuildVal1) {
             radius /= 4;
-            if (BrushVal1 >= WorldBuildVal1 && ratio > WorldBuilder->cont_size_ratio5) {
+            if (BrushVal1 >= WorldBuildVal1 && ratio > WorldBuilder.cont_size_ratio5) {
                 radius = rand() % 3 + 1;
             }
-        } else if (ratio <= WorldBuilder->cont_size_ratio4) {
-            if (ratio <= WorldBuilder->cont_size_ratio3) {
-                if (ratio <= WorldBuilder->cont_size_ratio2) {
-                    if (ratio < WorldBuilder->cont_size_ratio1 && MapLandCoverage > 1) {
+        } else if (ratio <= WorldBuilder.cont_size_ratio4) {
+            if (ratio <= WorldBuilder.cont_size_ratio3) {
+                if (ratio <= WorldBuilder.cont_size_ratio2) {
+                    if (ratio < WorldBuilder.cont_size_ratio1 && MapLandCoverage > 1) {
                         radius += radius / 2;
                     }
                 } else {
@@ -2874,11 +2874,11 @@ void __cdecl build_hills(int altitude) {
             }
         }
         keep_going = false;
-        int plat_mod = WorldBuilder->plateau_mod * (2 - MapOceanCoverage);
+        int plat_mod = WorldBuilder.plateau_mod * (2 - MapOceanCoverage);
         if (altitude != ALT_1_LEVEL_ABOVE_SEA) {
             plat_mod /= 4;
         }
-        uint32_t plat_base = WorldBuilder->plateau_base;
+        uint32_t plat_base = WorldBuilder.plateau_base;
         if (MapOceanCoverage >= 2) {
             plat_base /= 2;
         }
@@ -2915,8 +2915,8 @@ void __cdecl world_riverbeds() {
         tile++;
     }
     uint32_t riverbed_count = 0;
-    uint32_t max_riverbeds = (MapArea * ((4 - MapOceanCoverage) * (WorldBuilder->rivers_base
-        + MapCloudCover * WorldBuilder->rivers_rain_mod) / 3)) / 3200;
+    uint32_t max_riverbeds = (MapArea * ((4 - MapOceanCoverage) * (WorldBuilder.rivers_base
+        + MapCloudCover * WorldBuilder.rivers_rain_mod) / 3)) / 3200;
     for (i = 0; i < 4000 && riverbed_count < max_riverbeds; i++) {
         int x_bound = MapLongitudeBounds;
         int x = (x_bound - 1 > 0) ? rand() % x_bound : 0;
@@ -3015,7 +3015,7 @@ Purpose: Set up the world temperature.
 // ORIGINAL: 0x005C4170 ?world_temperature@@YAXXZ 0x005C4170-0x005C4401
 // TRIED: MISMATCH plateau, not chased to BYTE_EXACT (657-byte function,
 //   226 image instructions). LEVER that DID help: `MapLatitudeBounds /
-//   WorldBuilder->solar_energy` (and the three siblings) is `int / uint32_t`,
+//   WorldBuilder.solar_energy` (and the three siblings) is `int / uint32_t`,
 //   which promotes to an UNSIGNED `div`; the image uses signed `idiv` at all
 //   four, so each RHS is cast `(int)`. Raised best similarity 0.611 -> 0.654
 //   (best flags /c /O2 /Ob0 /Gy /GR- /GX). Remaining gap starts at the
@@ -3036,10 +3036,10 @@ void __cdecl world_temperature() {
     // SIGNED DIVISION: `WorldBuilder`'s fields are `uint32_t`, and dividing
     // `int / uint32_t` promotes to an UNSIGNED `div`; the image uses `idiv`
     // at all four, so the RHS is cast back to `int` to match.
-    int temp_heat = MapLatitudeBounds / (int)WorldBuilder->solar_energy;
-    int thermal_banding = MapLatitudeBounds / (int)WorldBuilder->thermal_band;
-    int thermal_deviance = MapLatitudeBounds / (int)WorldBuilder->thermal_deviance;
-    int global_warming = MapLatitudeBounds / (int)WorldBuilder->global_warming;
+    int temp_heat = MapLatitudeBounds / (int)WorldBuilder.solar_energy;
+    int thermal_banding = MapLatitudeBounds / (int)WorldBuilder.thermal_band;
+    int thermal_deviance = MapLatitudeBounds / (int)WorldBuilder.thermal_deviance;
+    int global_warming = MapLatitudeBounds / (int)WorldBuilder.global_warming;
     for (int y = 0; y < MapLatitudeBounds; y++) {
         for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
             if ((bit2_at(x, y) & (BIT2_UNK_80000000 | BIT2_CRATER)) != BIT2_CRATER

@@ -711,15 +711,19 @@ static const int MaxDiffNum = 6;
 
 extern LPCSTR AlphaxFileID;
 extern LPCSTR ScriptTxtID;
-Label *const Labels = (Label *)0x009B90F8;
-RulesResourceinfo *const ResourceInfo = (RulesResourceinfo *)0x00945F50;
-RulesTimeControl *const TimeControl = (RulesTimeControl *)0x0094F1B8;
-RulesResource *const Resource = (RulesResource *)0x00946158;
-RulesEnergy *const Energy = (RulesEnergy *)0x0094A318;
-RulesBasic *const Rules = (RulesBasic *)0x00949738;
-RulesWorldbuilder *const WorldBuilder = (RulesWorldbuilder *)0x009502A8;
-AlphaIniPref *const AlphaIniPrefs = (AlphaIniPref *)0x0094B464;
-DefaultPref *const DefaultPrefs = (DefaultPref *)0x0094B350;
+// THE RULES STORAGE - real objects, not pointers into the original image.
+// The image holds all nine in uninitialised .data (zero at load); the text
+// walkers below fill them from ALPHAX.TXT at run time. Definitions in
+// alpha.cpp.
+extern Label Labels;                                       // 0x009B90F8
+extern RulesResourceinfo ResourceInfo[MaxResourceInfoNum];  // 0x00945F50
+extern RulesTimeControl TimeControl[MaxTimeControlNum];     // 0x0094F1B8
+extern RulesResource Resource[MaxResourceNum];              // 0x00946158
+extern RulesEnergy Energy[MaxEnergyNum];                    // 0x0094A318
+extern RulesBasic Rules;                                   // 0x00949738
+extern RulesWorldbuilder WorldBuilder;                     // 0x009502A8
+extern AlphaIniPref AlphaIniPrefs;                         // 0x0094B464
+extern DefaultPref DefaultPrefs;                           // 0x0094B350
 extern uint32_t Language;
 
 int __cdecl tech_name(LPSTR name);
@@ -758,11 +762,11 @@ MEASURED inline uint32_t __cdecl default_warn() {
 }
 
 MEASURED inline void __cdecl labels_shutdown() {
-    if (Labels->strings_ptr) {
-        free(Labels->strings_ptr);
-        Labels->strings_ptr = 0;
+    if (Labels.strings_ptr) {
+        free(Labels.strings_ptr);
+        Labels.strings_ptr = 0;
     }
-    Labels->count = 0;
+    Labels.count = 0;
 }
 
 MEASURED inline void __cdecl set_language(int language) {
@@ -805,5 +809,5 @@ MEASURED inline void __cdecl clear_faction(Player *player) {
 // a function the image has its own address for. `say_base` (base.cpp) needs
 // it to fold to `StringTable->get(...)` the way the image does.
 __forceinline LPSTR __cdecl label_get(int label_offset) {
-    return StringTable->get((int)*((LPSTR *)Labels->strings_ptr + label_offset));
+    return StringTable->get((int)*((LPSTR *)Labels.strings_ptr + label_offset));
 }

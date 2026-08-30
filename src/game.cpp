@@ -147,7 +147,7 @@ Return Value: n/a
 Status: Complete
 
 Ownership is decided by proximity: the nearest base within
-Rules->territory_max_dist_base owns the tile, and an OCEAN tile halves that
+Rules.territory_max_dist_base owns the tile, and an OCEAN tile halves that
 distance and is then overruled outright by any base in its own eight-tile
 ring - which is how coastal water ends up belonging to the base beside it
 rather than to a larger one further off. A tile with no base in range is
@@ -234,7 +234,7 @@ void __cdecl reset_territory() {
             // `& 0xE0` gives `and cl, 0xE0 / cmp cl, 0x60 / sbb / neg` instead.
             BOOL is_ocean_tile = (tile->climate & ~0x1F) < (ALT_SHORE_LINE << 5);
             if (base_id >= 0) {
-                int max_dist = (int)Rules->territory_max_dist_base;
+                int max_dist = (int)Rules.territory_max_dist_base;
                 if (is_ocean_tile) {
                     max_dist >>= 1;
                 }
@@ -337,7 +337,7 @@ void __cdecl reset_territory() {
                 if (base_find(x, y, faction_id, region, -1, -1) < 0) {
                     continue;
                 }
-                int limit = (int)Rules->territory_max_dist_base;
+                int limit = (int)Rules.territory_max_dist_base;
                 if (BaseFindDist < limit || BaseFindDist > limit + limit) {
                     continue;
                 }
@@ -433,9 +433,9 @@ void __cdecl clear_scenario() {
     ObjectivesSuddenDeathVictory = 9999;
     ObjectiveAchievePts = 0;
     VictoryAchieveBonusPts = 0;
-    StartingMissionYear = Rules->normal_starting_year;
+    StartingMissionYear = Rules.normal_starting_year;
     EndingMissionYear = DiffLevelCurrent < DLVL_LIBRARIAN
-        ? Rules->normal_end_year_low_three_diff : Rules->normal_end_year_high_three_diff;
+        ? Rules.normal_end_year_low_three_diff : Rules.normal_end_year_high_three_diff;
 }
 
 /*
@@ -967,7 +967,7 @@ void __cdecl control_game() {
         filefind_init("movies\\virtualWorld.wve", is_complete);
 
         prefs_load(0);
-        GamePreferences = AlphaIniPrefs->preferences;
+        GamePreferences = AlphaIniPrefs.preferences;
         movie_disabled = prefs_get("DisableOpeningMovie", 0, 0);
         prefs_put("DisableOpeningMovie", movie_disabled, 0);
         if (movie_disabled == 0 && (GamePreferences & 0x10000000) != 0) {
@@ -992,7 +992,7 @@ void __cdecl control_game() {
             }
             VehCurrentCount = 0;
             setup_game(1);
-            GameRules = AlphaIniPrefs->rules;
+            GameRules = AlphaIniPrefs.rules;
             NetTurnFlags = 0;
         }
 

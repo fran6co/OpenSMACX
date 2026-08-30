@@ -43,6 +43,18 @@ LPCSTR AlphaxFileID = "ALPHAX";
 LPCSTR ScriptTxtID = "SCRIPT";
 // `const`: nothing outside this file names them, so internal
 // linkage folds the address into every subscript.
+// THE RULES STORAGE (alpha.h) - real zero-initialised objects; the image's
+// copies are uninitialised .data the rules walkers fill at run time.
+Label Labels;                                               // 0x009B90F8
+RulesResourceinfo ResourceInfo[MaxResourceInfoNum];         // 0x00945F50
+RulesTimeControl TimeControl[MaxTimeControlNum];            // 0x0094F1B8
+RulesResource Resource[MaxResourceNum];                     // 0x00946158
+RulesEnergy Energy[MaxEnergyNum];                           // 0x0094A318
+RulesBasic Rules;                                           // 0x00949738
+RulesWorldbuilder WorldBuilder;                             // 0x009502A8
+AlphaIniPref AlphaIniPrefs;                                 // 0x0094B464
+DefaultPref DefaultPrefs;                                   // 0x0094B350
+
 LPSTR *const Compass = (LPSTR *)0x00945D48;
 LPSTR *const Difficulty = (LPSTR *)0x0096C85C;
 // AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
@@ -262,7 +274,7 @@ Status: Complete
 /*
 Purpose: Parse the #RULES & #WORLDBUILDER sections inside the alpha(x).txt.
 // ORIGINAL: 0x00585170 ?read_basic_rules@@YAHXZ 0x00585170-0x00585E26
-// LEVER: the ten `Rules->tech_* = tech_item();` sites now match the image's
+// LEVER: the ten `Rules.tech_* = tech_item();` sites now match the image's
 //        call pattern (`text_get; text_item; tech_name` per site, confirmed
 //        against `osmx calls`) now that `tech_item` is `MEASURED inline` in
 //        alpha.h - it was a call the image never makes (see its own
@@ -296,205 +308,205 @@ BOOL __cdecl read_basic_rules() {
         return true;
     }
     text_get();
-    Rules->move_rate_roads = range(text_item_number(), 1, 100);
+    Rules.move_rate_roads = range(text_item_number(), 1, 100);
     text_get();
-    Rules->nutrient_req_citizen = range(text_item_number(), 0, 100);
+    Rules.nutrient_req_citizen = range(text_item_number(), 0, 100);
     text_get();
-    Rules->artillery_dmg_num = range(text_item_number(), 1, 1000);
-    Rules->artillery_dmg_denom = range(text_item_number(), 1, 1000);
+    Rules.artillery_dmg_num = range(text_item_number(), 1, 1000);
+    Rules.artillery_dmg_denom = range(text_item_number(), 1, 1000);
     text_get();
-    Rules->artillery_max_rng = range(text_item_number(), 1, 8);
+    Rules.artillery_max_rng = range(text_item_number(), 1, 8);
     text_get();
-    Rules->max_airdrop_sans_orb_insert = range(text_item_number(), 1, 500);
+    Rules.max_airdrop_sans_orb_insert = range(text_item_number(), 1, 500);
     text_get();
-    Rules->nutrient_cost_multi = range(text_item_number(), 1, 100);
+    Rules.nutrient_cost_multi = range(text_item_number(), 1, 100);
     text_get();
-    Rules->mineral_cost_multi = range(text_item_number(), 1, 100);
+    Rules.mineral_cost_multi = range(text_item_number(), 1, 100);
     text_get();
-    Rules->tech_discovery_rate_pct_std = range(text_item_number(), 0, 1000);
+    Rules.tech_discovery_rate_pct_std = range(text_item_number(), 0, 1000);
     text_get();
-    Rules->limit_mineral_mine_sans_road = range(text_item_number(), 0, 100);
+    Rules.limit_mineral_mine_sans_road = range(text_item_number(), 0, 100);
     text_get();
-    Rules->tgl_nutrient_effect_with_mine = range(text_item_number(), -1, 0); // Weird logic behind -1/0 value
+    Rules.tgl_nutrient_effect_with_mine = range(text_item_number(), -1, 0); // Weird logic behind -1/0 value
     text_get();
-    Rules->min_base_size_specialists = range(text_item_number(), 0, 100);
+    Rules.min_base_size_specialists = range(text_item_number(), 0, 100);
     text_get();
-    Rules->drones_genejack_factory = range(text_item_number(), 0, 100);
+    Rules.drones_genejack_factory = range(text_item_number(), 0, 100);
     text_get();
-    Rules->pop_limit_sans_hab_complex = range(text_item_number(), 1, 100);
+    Rules.pop_limit_sans_hab_complex = range(text_item_number(), 1, 100);
     text_get();
-    Rules->pop_limit_sans_hab_dome = range(text_item_number(), 1, 100);
+    Rules.pop_limit_sans_hab_dome = range(text_item_number(), 1, 100);
     text_get();
-    Rules->extra_pct_cost_proto_land = range(text_item_number(), 0, 500);
+    Rules.extra_pct_cost_proto_land = range(text_item_number(), 0, 500);
     text_get();
-    Rules->extra_pct_cost_proto_sea = range(text_item_number(), 0, 500);
+    Rules.extra_pct_cost_proto_sea = range(text_item_number(), 0, 500);
     text_get();
-    Rules->extra_pct_cost_proto_air = range(text_item_number(), 0, 500);
+    Rules.extra_pct_cost_proto_air = range(text_item_number(), 0, 500);
     text_get();
-    Rules->psi_combat_ratio_atk[TRIAD_LAND] = range(text_item_number(), 1, 1000);
-    Rules->psi_combat_ratio_def[TRIAD_LAND] = range(text_item_number(), 1, 1000);
+    Rules.psi_combat_ratio_atk[TRIAD_LAND] = range(text_item_number(), 1, 1000);
+    Rules.psi_combat_ratio_def[TRIAD_LAND] = range(text_item_number(), 1, 1000);
     text_get();
-    Rules->psi_combat_ratio_atk[TRIAD_SEA] = range(text_item_number(), 1, 1000);
-    Rules->psi_combat_ratio_def[TRIAD_SEA] = range(text_item_number(), 1, 1000);
+    Rules.psi_combat_ratio_atk[TRIAD_SEA] = range(text_item_number(), 1, 1000);
+    Rules.psi_combat_ratio_def[TRIAD_SEA] = range(text_item_number(), 1, 1000);
     text_get();
-    Rules->psi_combat_ratio_atk[TRIAD_AIR] = range(text_item_number(), 1, 1000);
-    Rules->psi_combat_ratio_def[TRIAD_AIR] = range(text_item_number(), 1, 1000);
+    Rules.psi_combat_ratio_atk[TRIAD_AIR] = range(text_item_number(), 1, 1000);
+    Rules.psi_combat_ratio_def[TRIAD_AIR] = range(text_item_number(), 1, 1000);
     text_get();
-    Rules->player_start_energy_reserve = range(text_item_number(), 0, 1000);
+    Rules.player_start_energy_reserve = range(text_item_number(), 0, 1000);
     text_get();
-    Rules->combat_pct_base_def = range(text_item_number(), -100, 1000);
+    Rules.combat_pct_base_def = range(text_item_number(), -100, 1000);
     text_get();
-    Rules->combat_pct_atk_road = range(text_item_number(), -100, 1000);
+    Rules.combat_pct_atk_road = range(text_item_number(), -100, 1000);
     text_get();
-    Rules->combat_pct_atk_higher_elev = range(text_item_number(), -100, 1000);
+    Rules.combat_pct_atk_higher_elev = range(text_item_number(), -100, 1000);
     text_get();
-    Rules->combat_pen_pct_atk_lwr_elev = range(text_item_number(), -100, 1000);
+    Rules.combat_pen_pct_atk_lwr_elev = range(text_item_number(), -100, 1000);
     text_get();
-    Rules->combat_pct_mobile_open_ground = range(text_item_number(), -100, 1000);
+    Rules.combat_pct_mobile_open_ground = range(text_item_number(), -100, 1000);
     text_get();
-    Rules->combat_pct_def_vs_mobile_rough = range(text_item_number(), -100, 1000);
+    Rules.combat_pct_def_vs_mobile_rough = range(text_item_number(), -100, 1000);
     text_get();
-    Rules->combat_pct_infantry_vs_base = range(text_item_number(), -100, 1000);
+    Rules.combat_pct_infantry_vs_base = range(text_item_number(), -100, 1000);
     text_get();
-    Rules->combat_pen_pct_atk_airdrop = range(text_item_number(), -100, 1000);
+    Rules.combat_pen_pct_atk_airdrop = range(text_item_number(), -100, 1000);
     text_get();
-    Rules->combat_pct_fanatic_atk_bonus = range(text_item_number(), -100, 1000);
+    Rules.combat_pct_fanatic_atk_bonus = range(text_item_number(), -100, 1000);
     text_get();
-    Rules->combat_pct_land_gun_vs_ship_art = range(text_item_number(), -100, 1000);
+    Rules.combat_pct_land_gun_vs_ship_art = range(text_item_number(), -100, 1000);
     text_get();
-    Rules->combat_pct_art_bonus_lvl_alt = range(text_item_number(), -100, 1000);
+    Rules.combat_pct_art_bonus_lvl_alt = range(text_item_number(), -100, 1000);
     text_get();
-    Rules->combat_pct_trance_def_vs_psi = range(text_item_number(), -100, 1000);
+    Rules.combat_pct_trance_def_vs_psi = range(text_item_number(), -100, 1000);
     text_get();
-    Rules->combat_pct_emp_song_atk_vs_psi = range(text_item_number(), -100, 1000);
+    Rules.combat_pct_emp_song_atk_vs_psi = range(text_item_number(), -100, 1000);
     text_get();
-    Rules->combat_pen_pct_air_supr_vs_grnd = range(text_item_number(), -100, 1000);
+    Rules.combat_pen_pct_air_supr_vs_grnd = range(text_item_number(), -100, 1000);
     text_get();
-    Rules->combat_pct_air_supr_vs_air = range(text_item_number(), -100, 1000);
+    Rules.combat_pct_air_supr_vs_air = range(text_item_number(), -100, 1000);
     text_get();
-    Rules->combat_pen_pct_non_cbt_def_vs_cbt = range(text_item_number(), -100, 1000);
+    Rules.combat_pen_pct_non_cbt_def_vs_cbt = range(text_item_number(), -100, 1000);
     text_get();
-    Rules->combat_pct_com_jam_def_vs_mobl = range(text_item_number(), -100, 1000);
+    Rules.combat_pct_com_jam_def_vs_mobl = range(text_item_number(), -100, 1000);
     text_get();
-    Rules->combat_pct_bonus_vs_ship_port = range(text_item_number(), -100, 1000);
+    Rules.combat_pct_bonus_vs_ship_port = range(text_item_number(), -100, 1000);
     text_get();
-    Rules->combat_pct_aaa_bonus_vs_air = range(text_item_number(), -100, 1000);
+    Rules.combat_pct_aaa_bonus_vs_air = range(text_item_number(), -100, 1000);
     text_get();
-    Rules->combat_pct_def_range_sensor = range(text_item_number(), -100, 1000);
+    Rules.combat_pct_def_range_sensor = range(text_item_number(), -100, 1000);
     text_get();
-    Rules->combat_pct_psi_atk_bonus_planet = range(text_item_number(), -100, 1000);
+    Rules.combat_pct_psi_atk_bonus_planet = range(text_item_number(), -100, 1000);
     text_get();
-    Rules->retool_pct_pen_prod_chg = range(text_item_number(), 0, 100);
+    Rules.retool_pct_pen_prod_chg = range(text_item_number(), 0, 100);
     text_get();
-    Rules->retool_strictness = range(text_item_number(), 0, 3); // Bug fix: increased max param to 3
+    Rules.retool_strictness = range(text_item_number(), 0, 3); // Bug fix: increased max param to 3
     text_get();
-    Rules->retool_exemption = range(text_item_number(), 0, 1000);
+    Rules.retool_exemption = range(text_item_number(), 0, 1000);
     text_get();
-    Rules->min_turns_councils = range(text_item_number(), 0, 1000);
+    Rules.min_turns_councils = range(text_item_number(), 0, 1000);
     text_get();
-    Rules->minerals_harvesting_forest = range(text_item_number(), 0, 100);
+    Rules.minerals_harvesting_forest = range(text_item_number(), 0, 100);
     text_get();
-    Rules->territory_max_dist_base = range(text_item_number(), 0, 100);
+    Rules.territory_max_dist_base = range(text_item_number(), 0, 100);
     text_get();
-    Rules->turns_corner_gbl_energy_mrkt = range(text_item_number(), 1, 100);
-    Rules->tech_improve_fungus_sqr = tech_item();
-    Rules->tech_ease_fungus_movement = tech_item();
-    Rules->tech_build_roads_fungus = tech_item();
-    Rules->tech_two_spec_abilities = tech_item();
-    Rules->tech_three_nutrients_sqr = tech_item();
-    Rules->tech_three_minerals_sqr = tech_item();
-    Rules->tech_three_energy_sqr = tech_item();
-    Rules->tech_orb_insert_sans_spc_elev = tech_item();
-    Rules->tech_mining_platform_bonus = tech_item();
-    Rules->tech_economic_victory = tech_item();
+    Rules.turns_corner_gbl_energy_mrkt = range(text_item_number(), 1, 100);
+    Rules.tech_improve_fungus_sqr = tech_item();
+    Rules.tech_ease_fungus_movement = tech_item();
+    Rules.tech_build_roads_fungus = tech_item();
+    Rules.tech_two_spec_abilities = tech_item();
+    Rules.tech_three_nutrients_sqr = tech_item();
+    Rules.tech_three_minerals_sqr = tech_item();
+    Rules.tech_three_energy_sqr = tech_item();
+    Rules.tech_orb_insert_sans_spc_elev = tech_item();
+    Rules.tech_mining_platform_bonus = tech_item();
+    Rules.tech_economic_victory = tech_item();
     text_get();
-    Rules->tgl_probe_can_steal_tech = range(text_item_number(), 0, 1); // Fix: Set min param to 0
+    Rules.tgl_probe_can_steal_tech = range(text_item_number(), 0, 1); // Fix: Set min param to 0
     text_get();
-    Rules->tgl_human_always_contact_net = range(text_item_number(), 0, 1); // Fix: Set min param to 0
+    Rules.tgl_human_always_contact_net = range(text_item_number(), 0, 1); // Fix: Set min param to 0
     text_get();
-    Rules->tgl_humans_always_contact_pbem = range(text_item_number(), 0, 1); // Fix: Set min param to 0
+    Rules.tgl_humans_always_contact_pbem = range(text_item_number(), 0, 1); // Fix: Set min param to 0
     text_get();
-    Rules->max_pct_dmg_art_vs_unit_base_bnkr = range(text_item_number(), 10, 100);
+    Rules.max_pct_dmg_art_vs_unit_base_bnkr = range(text_item_number(), 10, 100);
     text_get();
-    Rules->max_pct_dmg_art_vs_units_open = range(text_item_number(), 10, 100);
+    Rules.max_pct_dmg_art_vs_units_open = range(text_item_number(), 10, 100);
     text_get();
-    Rules->max_pct_dmg_art_vs_units_sea = range(text_item_number(), 10, 100);
+    Rules.max_pct_dmg_art_vs_units_sea = range(text_item_number(), 10, 100);
     text_get();
-    Rules->freq_global_warming_num = range(text_item_number(), 0, 1000);
-    Rules->freq_global_warming_denom = range(text_item_number(), 1, 1000);
+    Rules.freq_global_warming_num = range(text_item_number(), 0, 1000);
+    Rules.freq_global_warming_denom = range(text_item_number(), 1, 1000);
     text_get();
-    Rules->normal_starting_year = range(text_item_number(), 0, 999999);
+    Rules.normal_starting_year = range(text_item_number(), 0, 999999);
     text_get();
-    Rules->normal_end_year_low_three_diff = range(text_item_number(), 0, 999999);
+    Rules.normal_end_year_low_three_diff = range(text_item_number(), 0, 999999);
     text_get();
-    Rules->normal_end_year_high_three_diff = range(text_item_number(), 0, 999999);
+    Rules.normal_end_year_high_three_diff = range(text_item_number(), 0, 999999);
     text_get();
-    Rules->tgl_oblit_base_atrocity = range(text_item_number(), 0, 1); // Fix: Set min param to 0
+    Rules.tgl_oblit_base_atrocity = range(text_item_number(), 0, 1); // Fix: Set min param to 0
     text_get();
-    Rules->size_base_subspace_gen = range(text_item_number(), 1, 999); // SMACX only
+    Rules.size_base_subspace_gen = range(text_item_number(), 1, 999); // SMACX only
     text_get();
-    Rules->subspace_generators_needed = range(text_item_number(), 1, 999); // SMACX only
+    Rules.subspace_generators_needed = range(text_item_number(), 1, 999); // SMACX only
     if (text_open(AlphaxFileID, "WORLDBUILDER")) {
         return 1;
     }
     text_get();
-    WorldBuilder->land_base = range(text_item_number(), 50, 4000);
+    WorldBuilder.land_base = range(text_item_number(), 50, 4000);
     text_get();
-    WorldBuilder->land_mod = range(text_item_number(), 0, 2000);
+    WorldBuilder.land_mod = range(text_item_number(), 0, 2000);
     text_get();
-    WorldBuilder->continent_base = range(text_item_number(), 5, 1000);
+    WorldBuilder.continent_base = range(text_item_number(), 5, 1000);
     text_get();
-    WorldBuilder->continent_mod = range(text_item_number(), 5, 1000);
+    WorldBuilder.continent_mod = range(text_item_number(), 5, 1000);
     text_get();
-    WorldBuilder->hills_base = range(text_item_number(), 0, 100);
+    WorldBuilder.hills_base = range(text_item_number(), 0, 100);
     text_get();
-    WorldBuilder->hills_mod = range(text_item_number(), 0, 100);
+    WorldBuilder.hills_mod = range(text_item_number(), 0, 100);
     text_get();
-    WorldBuilder->plateau_base = range(text_item_number(), 0, 500);
+    WorldBuilder.plateau_base = range(text_item_number(), 0, 500);
     text_get();
-    WorldBuilder->plateau_mod = range(text_item_number(), 0, 500);
+    WorldBuilder.plateau_mod = range(text_item_number(), 0, 500);
     text_get();
-    WorldBuilder->rivers_base = range(text_item_number(), 0, 100);
+    WorldBuilder.rivers_base = range(text_item_number(), 0, 100);
     text_get();
-    WorldBuilder->rivers_rain_mod = range(text_item_number(), 0, 100);
+    WorldBuilder.rivers_rain_mod = range(text_item_number(), 0, 100);
     text_get();
-    WorldBuilder->solar_energy = range(text_item_number(), 1, 64);
+    WorldBuilder.solar_energy = range(text_item_number(), 1, 64);
     text_get();
-    WorldBuilder->thermal_band = range(text_item_number(), 1, 64);
+    WorldBuilder.thermal_band = range(text_item_number(), 1, 64);
     text_get();
-    WorldBuilder->thermal_deviance = range(text_item_number(), 1, 64);
+    WorldBuilder.thermal_deviance = range(text_item_number(), 1, 64);
     text_get();
-    WorldBuilder->global_warming = range(text_item_number(), 1, 64);
+    WorldBuilder.global_warming = range(text_item_number(), 1, 64);
     text_get();
-    WorldBuilder->sea_level_rises = range(text_item_number(), 1, 100);
+    WorldBuilder.sea_level_rises = range(text_item_number(), 1, 100);
     text_get();
-    WorldBuilder->cloudmass_peaks = range(text_item_number(), 0, 20);
+    WorldBuilder.cloudmass_peaks = range(text_item_number(), 0, 20);
     text_get();
-    WorldBuilder->cloudmass_hills = range(text_item_number(), 0, 20);
+    WorldBuilder.cloudmass_hills = range(text_item_number(), 0, 20);
     text_get();
-    WorldBuilder->rainfall_coeff = range(text_item_number(), 0, 8);
+    WorldBuilder.rainfall_coeff = range(text_item_number(), 0, 8);
     text_get();
-    WorldBuilder->deep_water = range(text_item_number(), -100, 100);
+    WorldBuilder.deep_water = range(text_item_number(), -100, 100);
     text_get();
-    WorldBuilder->shelf = range(text_item_number(), -100, 100);
+    WorldBuilder.shelf = range(text_item_number(), -100, 100);
     text_get();
-    WorldBuilder->plains = range(text_item_number(), -100, 100);
+    WorldBuilder.plains = range(text_item_number(), -100, 100);
     text_get();
-    WorldBuilder->beach = range(text_item_number(), -100, 100);
+    WorldBuilder.beach = range(text_item_number(), -100, 100);
     text_get();
-    WorldBuilder->hills = range(text_item_number(), 0, 100);
+    WorldBuilder.hills = range(text_item_number(), 0, 100);
     text_get();
-    WorldBuilder->peaks = range(text_item_number(), -100, 100);
+    WorldBuilder.peaks = range(text_item_number(), -100, 100);
     text_get();
-    WorldBuilder->fungus = range(text_item_number(), 0, 5);
+    WorldBuilder.fungus = range(text_item_number(), 0, 5);
     text_get();
-    WorldBuilder->cont_size_ratio1 = text_item_number();
-    WorldBuilder->cont_size_ratio2 = text_item_number();
-    WorldBuilder->cont_size_ratio3 = text_item_number();
-    WorldBuilder->cont_size_ratio4 = text_item_number();
-    WorldBuilder->cont_size_ratio5 = text_item_number();
+    WorldBuilder.cont_size_ratio1 = text_item_number();
+    WorldBuilder.cont_size_ratio2 = text_item_number();
+    WorldBuilder.cont_size_ratio3 = text_item_number();
+    WorldBuilder.cont_size_ratio4 = text_item_number();
+    WorldBuilder.cont_size_ratio5 = text_item_number();
     text_get();
-    WorldBuilder->islands = range(text_item_number(), 1, 500);
+    WorldBuilder.islands = range(text_item_number(), 1, 500);
     return false;
 }
 
@@ -1811,29 +1823,29 @@ Status: Complete
 void __cdecl prefs_load(BOOL use_default) {
     set_language(prefs_get("Language", 0, false));
     prefs_get("Difficulty", 0, false);
-    DefaultPrefs->difficulty = text_item_number();
+    DefaultPrefs.difficulty = text_item_number();
     prefs_get("Map Type", 0, false);
-    DefaultPrefs->map_type = text_item_number();
+    DefaultPrefs.map_type = text_item_number();
     prefs_get("Top Menu", 0, false);
-    DefaultPrefs->top_menu = text_item_number();
+    DefaultPrefs.top_menu = text_item_number();
     prefs_get("Faction", 1, false);
-    DefaultPrefs->faction_id = text_item_number();
+    DefaultPrefs.faction_id = text_item_number();
     uint32_t prefs = default_prefs();
-    if (DefaultPrefs->difficulty < DLVL_TALENT) {
+    if (DefaultPrefs.difficulty < DLVL_TALENT) {
         prefs |= PREF_BSC_TUTORIAL_MSGS;
     }
     prefs_get("Preferences", prefs_get_binary(prefs), use_default);
-    AlphaIniPrefs->preferences = text_item_binary();
+    AlphaIniPrefs.preferences = text_item_binary();
     prefs_get("More Preferences", prefs_get_binary(default_prefs2()), use_default);
-    AlphaIniPrefs->more_preferences = text_item_binary();
+    AlphaIniPrefs.more_preferences = text_item_binary();
     prefs_get("Semaphore", "00000000", use_default);
-    AlphaIniPrefs->semaphore = text_item_binary();
+    AlphaIniPrefs.semaphore = text_item_binary();
     prefs_get("Customize", 0, false);
-    AlphaIniPrefs->customize = text_item_number();
+    AlphaIniPrefs.customize = text_item_number();
     prefs_get("Rules", prefs_get_binary(default_rules()), use_default);
-    AlphaIniPrefs->rules = text_item_binary();
+    AlphaIniPrefs.rules = text_item_binary();
     prefs_get("Announce", prefs_get_binary(default_warn()), use_default);
-    AlphaIniPrefs->announce = text_item_binary();
+    AlphaIniPrefs.announce = text_item_binary();
     // NOT std::stringstream: the image builds this directly into the global
     // `StringTemp`, exactly like `prefs_get_binary` above - `mov byte ptr
     // [0x9b86a0], 0` at 0x0059E405, then a `strcat` per entry at
@@ -1846,10 +1858,10 @@ void __cdecl prefs_load(BOOL use_default) {
     }
     prefs_get("Custom World", StringTemp, use_default);
     for (i = 0; i < 7; i++) {
-        AlphaIniPrefs->custom_world[i] = text_item_number();
+        AlphaIniPrefs.custom_world[i] = text_item_number();
     }
     prefs_get("Time Controls", 1, use_default);
-    AlphaIniPrefs->time_controls = text_item_number();
+    AlphaIniPrefs.time_controls = text_item_number();
 }
 
 /*
@@ -1940,16 +1952,16 @@ Status: Complete
 */
 void __cdecl prefs_save(BOOL save_factions) {
     prefs_put("Prefs Format", 12, false);
-    prefs_put("Difficulty", DefaultPrefs->difficulty, false);
-    prefs_put("Map Type", DefaultPrefs->map_type, false);
-    prefs_put("Top Menu", DefaultPrefs->top_menu, false);
-    prefs_put("Faction", DefaultPrefs->faction_id, false);
-    prefs_put("Preferences", AlphaIniPrefs->preferences, true);
-    prefs_put("More Preferences", AlphaIniPrefs->more_preferences, true);
-    prefs_put("Semaphore", AlphaIniPrefs->semaphore, true);
-    prefs_put("Announce", AlphaIniPrefs->announce, true);
-    prefs_put("Rules", AlphaIniPrefs->rules, true);
-    prefs_put("Customize", AlphaIniPrefs->customize, false);
+    prefs_put("Difficulty", DefaultPrefs.difficulty, false);
+    prefs_put("Map Type", DefaultPrefs.map_type, false);
+    prefs_put("Top Menu", DefaultPrefs.top_menu, false);
+    prefs_put("Faction", DefaultPrefs.faction_id, false);
+    prefs_put("Preferences", AlphaIniPrefs.preferences, true);
+    prefs_put("More Preferences", AlphaIniPrefs.more_preferences, true);
+    prefs_put("Semaphore", AlphaIniPrefs.semaphore, true);
+    prefs_put("Announce", AlphaIniPrefs.announce, true);
+    prefs_put("Rules", AlphaIniPrefs.rules, true);
+    prefs_put("Customize", AlphaIniPrefs.customize, false);
     // THE IMAGE HAS NO C++ LIBRARY: no stringstream, no sprintf - the
     // call list is just `strcat`/`_itoa` (say_num's own idiom) into the
     // global StringTemp buffer.
@@ -1958,10 +1970,10 @@ void __cdecl prefs_save(BOOL save_factions) {
         if (i != 0) {
             strcat(StringTemp, ", "); // removed last trailing comma
         }
-        say_num(AlphaIniPrefs->custom_world[i]);
+        say_num(AlphaIniPrefs.custom_world[i]);
     }
     prefs_put("Custom World", StringTemp);
-    prefs_put("Time Controls", AlphaIniPrefs->time_controls, false);
+    prefs_put("Time Controls", AlphaIniPrefs.time_controls, false);
     if (save_factions && ExpansionEnabled) {
         for (uint32_t i = 1; i < MaxPlayerNum; i++) {
             StringTemp[0] = 0;
@@ -1995,9 +2007,9 @@ void __cdecl prefs_use() {
     // ALL THREE LOADS BEFORE ANY STORE, which is what the image does at
     // 0x0059E950 - three `mov reg, [...]` then three `mov [...], reg`.
     // Written as three assignments the compiler interleaves them.
-    const uint32_t preferences = AlphaIniPrefs->preferences;
-    const uint32_t more = AlphaIniPrefs->more_preferences;
-    const uint32_t announce = AlphaIniPrefs->announce;
+    const uint32_t preferences = AlphaIniPrefs.preferences;
+    const uint32_t more = AlphaIniPrefs.more_preferences;
+    const uint32_t announce = AlphaIniPrefs.announce;
     GamePreferences = preferences;
     GameMorePreferences = more;
     GameWarnings = announce;
@@ -2006,12 +2018,12 @@ void __cdecl prefs_use() {
 /*
 Purpose: Parse the #LABELS section inside the labels.txt file.
 // ORIGINAL: 0x00616A00 ?labels_init@@YAHXZ 0x00616A00-0x00616A93
-// TRIED: 40/45 plateau - the image stores `Labels->count` THEN reuses the
+// TRIED: 40/45 plateau - the image stores `Labels.count` THEN reuses the
 //            same register for `shl eax,2` (no reload); every source form
 //            tried instead computes `count*4` into a second register (`lea
 //            ecx,[eax*4]`) before the store: local `int count`, a separate
 //            `int byte_count = count*4;` statement, `<<2` instead of `*4`,
-//            and a nested `(Labels->count = text_item_number()) * 4` all
+//            and a nested `(Labels.count = text_item_number()) * 4` all
 //            produced the identical `lea`+deferred-store shape. VC6
 //            scheduling choice, not a source-form lever found here.
 // size      147 bytes
@@ -2029,13 +2041,13 @@ BOOL __cdecl labels_init() {
         return true;
     }
     text_get();
-    Labels->count = text_item_number();
-    Labels->strings_ptr = (LPSTR)mem_get(Labels->count * 4);
-    if (!Labels->strings_ptr) {
+    Labels.count = text_item_number();
+    Labels.strings_ptr = (LPSTR)mem_get(Labels.count * 4);
+    if (!Labels.strings_ptr) {
         return true;
     }
-    for (int i = 0; i < Labels->count; i++) {
-        *((LPSTR *)Labels->strings_ptr + i) = text_string();
+    for (int i = 0; i < Labels.count; i++) {
+        *((LPSTR *)Labels.strings_ptr + i) = text_string();
     }
     text_close();
     return false;
@@ -2085,7 +2097,7 @@ Purpose: Get the label string and concatenate it to the stringTemp buffer.
 //        drops it to 10/14 MNEMONIC_ONLY.
 // TRIED: remaining divergence is load order inside the inlined
 //            `label_get` - image loads `label_offset` before
-//            `Labels->strings_ptr`, this tree's forceinline loads the
+//            `Labels.strings_ptr`, this tree's forceinline loads the
 //            reverse. Caching `label_offset` in a local first, caching the
 //            `label_get` result first, and manually inlining the
 //            `StringTable->get(...)` expression in place of the call all
