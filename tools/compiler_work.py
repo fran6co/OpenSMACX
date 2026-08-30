@@ -151,7 +151,7 @@ HEADER_SHAPES = [
     # 155 -> 146 (2026-08-30, boot-path batch): the BasePop ctor's defaults
     # became real named globals and the windtor/amovie homings retired more
     # raw bindings.
-    ("anonymous fixed-address global", 133,
+    ("anonymous fixed-address global", 129,
      re.compile(r"\bg_00[0-9a-f]{4,6}\b"),
      "a global named by its address instead of its meaning. Name it from "
      "evidence - the image's .data value, the arithmetic identity, the "
