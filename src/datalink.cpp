@@ -28,7 +28,11 @@
 #include "win.h"
 #include "spritebox.h"
 
-// Unclassified data seam: the Datalink singleton object, not a call target.
+// The Datalink singleton, 0x00703EA0 in the shipped image - the storage the
+// `Datalink *const DatalinkMain` binding used to name (see datalink.h). Plain
+// data, not a call target; the Datalink constructor that builds it runs from
+// the game's class bring-up, as in the image.
+Datalink DatalinkMain;  // 0x00703EA0
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
@@ -334,7 +338,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl help_tech(int id) {
-    DatalinkMain->exec(0xE, id);
+    DatalinkMain.exec(0xE, id);
 }
 
 /*

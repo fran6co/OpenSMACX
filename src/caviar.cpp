@@ -538,36 +538,42 @@ CaviarData g_NLC_CAVIARDATA;  // 0x00779660
 CaviarData g_UNUSED_CAVIARDATA_VAR5[5];  // 0x00787E08, 0xc stride
 
 // ---------------------------------------------------------------------------
-// The voxel renderer's workspace, set up once by init_class below. Every
-// binding is terranx data the body reads or writes through a fixed address;
-// they are file-local because nothing else in the tree reaches them yet.
+// The voxel renderer's workspace, set up once by init_class below. These are
+// REAL OBJECTS now - they used to be `T *const` bindings naming terranx.exe
+// data addresses, which every use read or wrote through, unmapped in a
+// standalone build. The image's addresses travel in the comments; the image's
+// own layout lines up behind them exactly: BufferA (sizeof 0x588) ends at
+// CaviarViewportState, BufferB ends at the colour-table block, and the block's
+// 0x1800 read extent ends at CaviarScene. They stay file-local because nothing
+// else in the tree reaches them.
 // ---------------------------------------------------------------------------
 
 namespace {
 
 // 0x009B9100. The 0x20000-byte colour table mem_get allocates here, filled
 // with 0xffff, copied into the render record and walked into its two ramps.
-int *const CaviarSceneMemory = (int *)0x009B9100;
+int CaviarSceneMemory;  // 0x009B9100
 
 // 0x009B9108 and 0x009B96B0. The two 256x256 scene surfaces this function
-// creates (init) and clears (fill 9 / fill 0).
-Buffer *const CaviarSceneBufferA = (Buffer *)0x009B9108;
-Buffer *const CaviarSceneBufferB = (Buffer *)0x009B96B0;
-
-// BufferA + 0x54 and BufferB + 0x54: each surface's bits pointer, copied
-// into the render record's descriptor block below.
-int *const CaviarSceneBufferABits = (int *)0x009B915C;
-int *const CaviarSceneBufferBBits = (int *)0x009B9704;
-
-// 0x009B95B0 and 0x009B9B58: two slots read verbatim into the render record;
-// 0x009B9C38: passed twice to vox_create_record as the record's name.
-int *const CaviarRecordBitsSource = (int *)0x009B95B0;
-int *const CaviarRecordOwnerSource = (int *)0x009B9B58;
-void *const CaviarRecordName = (void *)0x009B9C38;
+// creates (init) and clears (fill 9 / fill 0). Their `dib_bits_` (+0x54) and
+// `stride_` (+0x4A8) are what the descriptor block below reads - the old
+// CaviarSceneBufferABits/CaviarSceneBufferBBits/CaviarRecordBitsSource/
+// CaviarRecordOwnerSource bindings were those very fields under fixed
+// addresses (0x9B915C, 0x9B9704, 0x9B95B0 = BufferA+0x4A8, 0x9B9B58 =
+// BufferB+0x4A8).
+Buffer CaviarSceneBufferA;  // 0x009B9108
+Buffer CaviarSceneBufferB;  // 0x009B96B0
 
 // 0x009B9690..0x009B969C: four slots zeroed once the record is built. The
 // image clears them in the order 0, 2, 3, 1 - not slot order.
-int *const CaviarViewportState = (int *)0x009B9690;
+int CaviarViewportState[4];  // 0x009B9690
+
+// 0x009B9C38. Passed twice to vox_create_record, which reads it as the
+// colour-table source (0x1800 bytes for pixel size 1) and the shadow-table
+// source (0x100 bytes) - the old "record's name" reading was the binding's,
+// not the body's. Zero at load in the image, as here; whatever filled it in
+// the shipped game is not recovered. Sized to the 0x1800 the call reads.
+uint8_t CaviarColourSource[0x1800];  // 0x009B9C38
 
 // ForceOldVoxelAlgorithm, the PREFERENCES byte the ini read seeds.
 uint8_t *const CaviarVoxelAlgoFlag = (uint8_t *)0x009C0830;
@@ -592,7 +598,7 @@ struct CaviarSceneRecord {
   void *created_;          // 0x9BB478
 };
 
-CaviarSceneRecord *const CaviarScene = (CaviarSceneRecord *)0x009BB438;
+CaviarSceneRecord CaviarScene;  // 0x009BB438
 
 } // namespace
 
@@ -701,42 +707,42 @@ int Caviar::init_class() {
                                    "0", ".\\Alpha Centauri.ini");
     }
 
-    if (CaviarSceneBufferA->init(0x100, 0x100, 0, 0) != 0) {
+    if (CaviarSceneBufferA.init(0x100, 0x100, 0, 0) != 0) {
         return 4;
     }
-    if (CaviarSceneBufferB->init(0x100, 0x100, 0, 0) != 0) {
-        return 4;
-    }
-
-    *CaviarSceneMemory = reinterpret_cast<int>(mem_get(0x20000));
-    if (*CaviarSceneMemory == 0) {
+    if (CaviarSceneBufferB.init(0x100, 0x100, 0, 0) != 0) {
         return 4;
     }
 
-    CaviarSceneBufferA->fill(9);
-    CaviarSceneBufferB->fill(0);
-    vox_fill_colour_table((void *)*CaviarSceneMemory, 0xffff, 0x10000);
+    CaviarSceneMemory = reinterpret_cast<int>(mem_get(0x20000));
+    if (CaviarSceneMemory == 0) {
+        return 4;
+    }
+
+    CaviarSceneBufferA.fill(9);
+    CaviarSceneBufferB.fill(0);
+    vox_fill_colour_table((void *)CaviarSceneMemory, 0xffff, 0x10000);
 
     // The descriptor block, in the image's store order.
-    CaviarScene->scene_memory_ = (void *)*CaviarSceneMemory;
-    CaviarScene->record_bits_ = (void *)*CaviarRecordBitsSource;
-    CaviarScene->buffer_a_bits_ = (void *)*CaviarSceneBufferABits;
-    CaviarScene->width_a_ = 0x100;
-    CaviarScene->height_a_ = 0x100;
-    CaviarScene->record_flag_ = 1;
-    CaviarScene->buffer_b_bits_ = (void *)*CaviarSceneBufferBBits;
-    CaviarScene->record_owner_ = (void *)*CaviarRecordOwnerSource;
-    CaviarScene->width_b_ = 0x100;
+    CaviarScene.scene_memory_ = (void *)CaviarSceneMemory;
+    CaviarScene.record_bits_ = (void *)CaviarSceneBufferA.stride_;
+    CaviarScene.buffer_a_bits_ = (void *)CaviarSceneBufferA.dib_bits_;
+    CaviarScene.width_a_ = 0x100;
+    CaviarScene.height_a_ = 0x100;
+    CaviarScene.record_flag_ = 1;
+    CaviarScene.buffer_b_bits_ = (void *)CaviarSceneBufferB.dib_bits_;
+    CaviarScene.record_owner_ = (void *)CaviarSceneBufferB.stride_;
+    CaviarScene.width_b_ = 0x100;
 
-    CaviarScene->created_ = (void *)vox_create_record(
-        0, CaviarRecordName, CaviarRecordName,
-        (void *)&CaviarScene->buffer_a_bits_, 0x80);
-    if (CaviarScene->created_ == 0) {
+    CaviarScene.created_ = (void *)vox_create_record(
+        0, CaviarColourSource, CaviarColourSource,
+        (void *)&CaviarScene.buffer_a_bits_, 0x80);
+    if (CaviarScene.created_ == 0) {
         return 0x17;
     }
 
     unsigned long *const created =
-        (unsigned long *)CaviarScene->created_;
+        (unsigned long *)CaviarScene.created_;
     created[0x58 / 4] = 0x00618DA0;  // &Caviar::object_start, still an artifact
     created[0x38 / 4] = 0;
     created[0x3C / 4] = 0;
@@ -747,7 +753,7 @@ int Caviar::init_class() {
 
     // The record's two 256-entry ramps: table A gets the colour table's own
     // base stepped 0x100 per entry, table B a 0x100-stepped ramp from zero.
-    unsigned long base = (unsigned long)*CaviarSceneMemory;
+    unsigned long base = (unsigned long)CaviarSceneMemory;
     unsigned long shade = 0;
     unsigned long *const ramp_a = (unsigned long *)created[0x60 / 4];
     unsigned long *const ramp_b = (unsigned long *)created[0x64 / 4];
@@ -762,10 +768,10 @@ int Caviar::init_class() {
     CaviarViewportState[2] = 0;
     CaviarViewportState[3] = 0;
     CaviarViewportState[1] = 0;
-    CaviarScene->field_00_ = 0;
-    CaviarScene->field_08_ = 0;
-    CaviarScene->field_0C_ = 0;
-    CaviarScene->field_04_ = 0;
+    CaviarScene.field_00_ = 0;
+    CaviarScene.field_08_ = 0;
+    CaviarScene.field_0C_ = 0;
+    CaviarScene.field_04_ = 0;
     return 0;
 }
 

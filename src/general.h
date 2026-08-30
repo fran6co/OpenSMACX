@@ -33,22 +33,25 @@ struct Filefind {
 
 extern uint32_t ScenEditorUndoPosition;
 
-// THESE WERE `extern T *Name;` AND THAT COST AN INSTRUCTION EVERY TIME.
-//
-// The address is a compile-time constant and always was; `extern` was the only
-// thing hiding it, so `*GenderDefault = gender` had to load the pointer and
-// store through it. Making the constant visible lets the compiler fold the
-// indirection into a direct absolute store - which is what the original does.
-// Measured on ?parse_set@@YAXHH@Z (0x005A58E0), three spellings of the same
-// body scored together by `verify_recovered_function.py --dir`:
+// THE DEFAULT NOUN FORMS, at 0x009BBFEC and 0x009BBFF0 in the shipped image -
+// REAL OBJECTS, defined in general.cpp. They used to be
+// `static T *const GenderDefault = (T *)0x009BBFEC` bindings: the address is
+// a compile-time constant and always was, and the `*const` spelling folded the
+// indirection into the image's own direct absolute access, which is what closed
+// `parse_set` (measured 2026-08-15, three spellings scored together:
 //
 //   static int *const g = (int *)0x9BBFEC;   BYTE_EXACT, 22 of 22 bytes
 //   extern int *g;                           MISMATCH #6, `pop` vs `mov`
 //   extern int *const g;                     MISMATCH #6, `pop` vs `mov`
 //
-// and in the real translation unit, compiled with this repository's own VC6
-// flags: `mov [0x9bbfec],eax` / `mov [0x9bbff0],ecx`, four instructions and no
-// relocation, against six instructions and two relocations before.
+// - the two `extern` POINTER forms cost a pointer load per access; the object
+// form keeps the direct access and only swaps the literal immediate for a
+// relocated one, which is discounted like any data relocation). The addresses
+// are terranx.exe's data, unmapped in a standalone build: every read and write
+// through the binding corrupted live memory, so the objects now carry the
+// storage and the call sites name it directly. `mov [0x9bbfec],eax` and
+// `mov [GenderDefault],eax` are the same instruction; only the displacement's
+// provenance differs.
 //
 // THE CENSUS SAID MISMATCH FOR TWO WEEKS, AND THE INSTRUMENT WAS WRONG. It
 // does not include this header; `src_declarations.py` re-derived a declaration
@@ -63,17 +66,8 @@ extern uint32_t ScenEditorUndoPosition;
 // a preamble built to have none - and both halves are held by
 // `test_src_declarations.py`. The same fix is what closed the last
 // instruction between `jackal_init_real` and its match, via `StringTable`.
-//
-// Call sites are unchanged - `*GenderDefault` still reads and writes the same
-// address. `static` is safe here only because nothing takes `&GenderDefault`
-// itself; a header-scope `static` gives each translation unit its own copy, so
-// any global whose POINTER address is taken must stay `extern`. It is also
-// only safe for a plain load or store: a read-modify-write through a
-// const-pointer spelling makes VC6 emit load/dec/store where the original has
-// an in-place `dec`, so those stay `extern T Name;` (see
-// tools/emit_translation_unit.py, decision 2).
-static int *const GenderDefault = (int *)0x009BBFEC;
-static BOOL *const PluralityDefault = (BOOL *)0x009BBFF0;
+extern int GenderDefault;       // 0x009BBFEC
+extern BOOL PluralityDefault;   // 0x009BBFF0
 
 // purge_trailing(LPSTR input) is defined at the end of this header - see the
 // LEVER note there.
@@ -178,8 +172,8 @@ MEASURED inline int __cdecl range(int input, int min, int max) {
 }
 
 MEASURED inline void __cdecl parse_set(int gender, BOOL plurality) {
-    *GenderDefault = gender;
-    *PluralityDefault = plurality;
+    GenderDefault = gender;
+    PluralityDefault = plurality;
 }
 
 MEASURED inline void __cdecl swap(uint8_t *var1, uint8_t *var2) {

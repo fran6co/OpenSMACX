@@ -113,3 +113,10 @@ BOOL __cdecl eligible(int faction_id) {
     }
     return faction_count < 2;
 }
+
+// The council proposal table, 0x009A6828 in the shipped image - MaxProposalNum
+// entries of 0xc bytes. Was `RulesProposal *const Proposal =
+// (RulesProposal *)0x009A6828` in council.h, naming terranx.exe data that is
+// unmapped in a standalone build; see council.h. Zero at load there, as here:
+// alpha.cpp's PROPOSALS text load fills it before anything reads it.
+RulesProposal Proposal[MaxProposalNum];  // 0x009A6828, 0xc stride

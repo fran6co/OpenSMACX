@@ -3638,7 +3638,7 @@ void __cdecl world_crater(int x, int y) {
             }
         }
     }
-    new_landmark(x, y, StringTable->get((int)Natural[LM_CRATER].name));
+    new_landmark(x, y, StringTable.get((int)Natural[LM_CRATER].name));
 }
 
 /*
@@ -3708,7 +3708,7 @@ void __cdecl world_monsoon(int x, int y) {
             code_set(x_radius, y_radius, i);
         }
     }
-    new_landmark(x, y, StringTable->get((int)Natural[LM_JUNGLE].name));
+    new_landmark(x, y, StringTable.get((int)Natural[LM_JUNGLE].name));
 }
 
 /*
@@ -3779,7 +3779,7 @@ void __cdecl world_sargasso(int x, int y) {
             }
         }
     }
-    new_landmark(x, y, StringTable->get((int)Natural[LM_SARGASSO].name));
+    new_landmark(x, y, StringTable.get((int)Natural[LM_SARGASSO].name));
 }
 
 /*
@@ -3854,7 +3854,7 @@ void __cdecl world_ruin(int x, int y) {
             code_set(x_radius, y_radius, i);
         }
     }
-    new_landmark(x, y, StringTable->get((int)Natural[LM_RUINS].name));
+    new_landmark(x, y, StringTable.get((int)Natural[LM_RUINS].name));
 }
 
 /*
@@ -3925,7 +3925,7 @@ void __cdecl world_dune(int x, int y) {
             code_set(x_radius, y_radius, i);
         }
     }
-    new_landmark(x, y + 2, StringTable->get((int)Natural[LM_DUNES].name));
+    new_landmark(x, y + 2, StringTable.get((int)Natural[LM_DUNES].name));
 }
 
 /*
@@ -3990,7 +3990,7 @@ void __cdecl world_diamond(int x, int y) {
             }
         }
     }
-    new_landmark(x, y, StringTable->get((int)Natural[LM_URANIUM].name));
+    new_landmark(x, y, StringTable.get((int)Natural[LM_URANIUM].name));
 }
 
 /*
@@ -4055,7 +4055,7 @@ void __cdecl world_fresh(int x, int y) {
             } else if(!has_set_landmark && x_search >= 0) {
                 int x_fresh = (x_search + x_it - 2) / 2;
                 new_landmark(((x_fresh ^ y_it) & 1) ^ x_fresh, y_it,
-                    StringTable->get((int)Natural[LM_FRESH].name));
+                    StringTable.get((int)Natural[LM_FRESH].name));
                 has_set_landmark = true;
             }
         }
@@ -4138,7 +4138,7 @@ void __cdecl world_volcano(int x, int y, BOOL is_not_landmark) {
     MountPlanetX = x;
     MountPlanetY = y;
     if (!is_not_landmark) {
-        new_landmark(x, y, StringTable->get((int)Natural[LM_VOLCANO].name));
+        new_landmark(x, y, StringTable.get((int)Natural[LM_VOLCANO].name));
     }
 }
 
@@ -4246,7 +4246,7 @@ void __cdecl world_borehole(int x, int y) {
         }
     }
     bit2_set(x, y, LM_BOREHOLE, true);
-    new_landmark(x, y, StringTable->get((int)Natural[LM_BOREHOLE].name));
+    new_landmark(x, y, StringTable.get((int)Natural[LM_BOREHOLE].name));
 }
 
 /*
@@ -4308,7 +4308,7 @@ void __cdecl world_temple(int x, int y) {
             code_set(x_radius, y_radius, i);
         }
     }
-    new_landmark(x, y, StringTable->get((int)Natural[LM_NEXUS].name));
+    new_landmark(x, y, StringTable.get((int)Natural[LM_NEXUS].name));
 }
 
 /*
@@ -4402,7 +4402,7 @@ void __cdecl world_unity(int x, int y) {
                 }
             }
         }
-        new_landmark(x, y, StringTable->get((int)Natural[LM_UNITY].name));
+        new_landmark(x, y, StringTable.get((int)Natural[LM_UNITY].name));
     }
 }
 
@@ -4466,7 +4466,7 @@ void __cdecl world_fossil(int x, int y) {
                 code_set(x_radius, y_radius, i);
             }
         }
-        new_landmark(x, y, StringTable->get((int)Natural[LM_FOSSIL].name));
+        new_landmark(x, y, StringTable.get((int)Natural[LM_FOSSIL].name));
     }
 }
 
@@ -4510,7 +4510,7 @@ void __cdecl world_canyon(int x, int y) {
             code_set(x_radius, y_radius, WorldCanyonOffsetValues[i]); // the above world_alt_set()
         }
     }
-    new_landmark(x, y + 2, StringTable->get((int)Natural[LM_CANYON].name));
+    new_landmark(x, y + 2, StringTable.get((int)Natural[LM_CANYON].name));
 }
 
 /*
@@ -4571,7 +4571,7 @@ void __cdecl world_mesa(int x, int y) {
             code_set(x_radius, y_radius, i);
         }
     }
-    new_landmark(x, y + 2, StringTable->get((int)Natural[LM_MESA].name));
+    new_landmark(x, y + 2, StringTable.get((int)Natural[LM_MESA].name));
 }
 
 /*
@@ -4633,7 +4633,7 @@ void __cdecl world_ridge(int x, int y) {
             code_set(x_radius, y_radius, world_ridge_offset_val[i]); // the above world_alt_set()
         }
     }
-    new_landmark(x, y + 2, StringTable->get((int)Natural[LM_RIDGE].name));
+    new_landmark(x, y + 2, StringTable.get((int)Natural[LM_RIDGE].name));
 }
 
 /*
@@ -4708,7 +4708,7 @@ void __cdecl world_geothermal(int x, int y) {
             }
         }
     }
-    new_landmark(x, y, StringTable->get((int)Natural[LM_GEOTHERMAL].name));
+    new_landmark(x, y, StringTable.get((int)Natural[LM_GEOTHERMAL].name));
 }
 
 /*

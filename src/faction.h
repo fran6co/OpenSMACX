@@ -714,7 +714,7 @@ MEASURED inline uint32_t __cdecl social_upheaval(int faction_id, SocialCategory 
 // name_base (base.cpp) needs this folded in place - the image never calls
 // get_noun out of line there.
 MEASURED inline LPSTR __cdecl get_noun(int faction_id) {
-    *GenderDefault = Players[faction_id].noun_gender;
-    *PluralityDefault = Players[faction_id].is_noun_plural;
+    GenderDefault = Players[faction_id].noun_gender;
+    PluralityDefault = Players[faction_id].is_noun_plural;
     return Players[faction_id].noun_faction;
 }

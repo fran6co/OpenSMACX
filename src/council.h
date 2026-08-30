@@ -41,7 +41,14 @@ struct RulesProposal {
 
 static const int MaxProposalNum = 11;
 
-RulesProposal *const Proposal = (RulesProposal *)0x009A6828;
+// THE ARRAY, at 0x009A6828 in the shipped image - MaxProposalNum entries,
+// defined in council.cpp. It was `RulesProposal *const Proposal =
+// (RulesProposal *)0x009A6828`, naming terranx.exe data that is unmapped in a
+// standalone build; alpha.cpp's PROPOSALS load and faction.cpp's
+// Supreme-Leader check read and wrote through that address. Indexing the
+// array compiles to the same `[disp32 + i*0xc]` element loads, the
+// displacement relocated, and every use site is unchanged.
+extern RulesProposal Proposal[MaxProposalNum];  // 0x009A6828, 0xc stride
 
 int __cdecl council_votes(int faction_id);
 BOOL __cdecl eligible(int faction_id);

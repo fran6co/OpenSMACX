@@ -178,7 +178,7 @@ Purpose: Get base name string from base id and store it in base_str. If base id 
 // LEVER: dropped std::string entirely for the image's two-branch form - a
 //        real strcat() call in each branch rather than selecting a pointer
 //        and calling once - and made label_get __forceinline (alpha.h) so it
-//        folds to `StringTable->get(...)` the way the image does. Best
+//        folds to `StringTable.get(...)` the way the image does. Best
 //        similarity 0.964 (16/28 agreeing, /c /O2 /Gy /GR- /Oy- /GX), up
 //        from 2/28. Residual: the image keeps a full ebp frame here and
 //        this tree's winning flag set omits it despite /Oy-, not chased

@@ -356,6 +356,12 @@ class Buffer {
   // `Win::flip` clips the screen buffer back to its own extent and reads
   // the DIB's dimensions for the final BitBlt.
   friend class Win;
+
+  // Caviar::init_class reads the two voxel scene surfaces' `dib_bits_` into
+  // its render record - the image reads BufferA/BufferB + 0x54 by fixed
+  // address, and the object spelling names the field. Access control is
+  // compile-time only, so no offset and no emitted byte moves.
+  friend class Caviar;
   
   // 0x4. The window the surface belongs to - `GraphicWin::init` stores its
   // `this` here before the minimum-size computation, and nothing recovered

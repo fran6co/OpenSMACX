@@ -207,7 +207,7 @@ Return Value: Pointer to string table
 Status: Complete
 */
 LPSTR Text::string() {
-    return text_string_source(this, StringTable);
+    return text_string_source(this, &StringTable);
 }
 
 /*
@@ -251,7 +251,7 @@ Return Value: Pointer to string table
 Status: Complete
 */
 LPSTR Text::item_string() {
-    return StringTable->put(text_item_source(this));
+    return StringTable.put(text_item_source(this));
 }
 
 /*
@@ -420,7 +420,7 @@ LPSTR __cdecl text_get() { return text_get_source(&Txt); }
 // flags     hidden;sp_ready;purged_ok
 // calls     0x006007B0 0x00600820 0x00616970 0x0064726A
 // notes     Staged hybrid export redirect calls the source-owned wrapper
-LPSTR __cdecl text_string() { return text_string_source(&Txt, StringTable); }
+LPSTR __cdecl text_string() { return text_string_source(&Txt, &StringTable); }
 
 // ORIGINAL: 0x005FD670 ?text_item@@YAPADXZ 0x005FD670-0x005FD6C7 BYTE_EXACT
 // size      87 bytes
@@ -441,7 +441,7 @@ LPSTR __cdecl text_item() { return text_item_source(&Txt); }
 // calls     0x006007B0 0x00616970
 // notes     Staged hybrid export redirect calls the source-owned wrapper
 LPSTR __cdecl text_item_string() {
-    return text_item_string_source(&Txt, StringTable);
+    return text_item_string_source(&Txt, &StringTable);
 }
 
 // ORIGINAL: 0x005FD740 ?text_item_number@@YAHXZ 0x005FD740-0x005FD79D BYTE_EXACT

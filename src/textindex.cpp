@@ -233,4 +233,8 @@ void __cdecl text_make_index(LPCSTR source_txt) {
 // (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
 // Here the same recovered constructors run through this build's own
 // startup, and the matching destructors close them at exit.
-TextIndex TxtIndexGlobal[4];  // 0x009B7D08, 0x118 stride
+// Was `TextIndex TxtIndexGlobal[4]` beside textindex.h's
+// `TextIndex *const TxtIndex = (TextIndex *)0x009B7D08` binding; the array is
+// that binding's storage, so the object carries the public name now. See
+// textindex.h.
+TextIndex TxtIndex[MaxTextIndexNum];  // 0x009B7D08, 0x118 stride

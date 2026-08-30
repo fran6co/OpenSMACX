@@ -133,11 +133,18 @@ static_assert(sizeof(Font) == 0x28, "Font must match the embedded stride in Stat
 #if defined(_M_IX86) || defined(__i386__)
 static_assert(sizeof(Font) == 0x28, "Font layout must match the legacy ABI");
 
-// Twelve candidate point sizes and the Font table they index, both owned by
-// the original image.
-int *const FontSizeTable = (int *)0x0068F220;
-Font *const FontTable = (Font *)0x0093FC58;
+// Twelve candidate point sizes and the Font table they index - REAL OBJECTS,
+// both defined in font.cpp. They used to be fixed-address bindings
+// (`int *const FontSizeTable = (int *)0x0068F220` and
+// `Font *const FontTable = (Font *)0x0093FC58`): the table at 0x68F220 is
+// file-backed .data the image carries real values in, and 0x93FC58 is
+// zero-fill, so the object forms lose nothing - and the bindings named
+// terranx.exe storage, unmapped in a standalone build. `FontSizeTable[index]`
+// and `FontTable + N` read identically off the arrays: the loop-indexed loads
+// fold to the same `[disp32 + index*4]` form, the displacement relocated.
 static const size_t FontSizeTableCount = 12;
+extern const int FontSizeTable[FontSizeTableCount];  // 0x0068F220
+extern Font FontTable[48];                           // 0x0093FC58, 0x28 stride
 
 /*
  * FontQueue - three Font slots torn down together.

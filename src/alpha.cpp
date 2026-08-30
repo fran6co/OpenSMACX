@@ -125,7 +125,7 @@ Purpose: Convert the chassis name string to a numeric chassis id.
 //   is the image's rotated-while shape with one head. Moved 20/98 -> 55/98 agreeing.
 // TRIED (still open): the chas_id loop's `_stricmp(name, Chassis[chas_id].offsv_1_name)`
 //   diverges at instruction 53 - the image resolves the comparison string through
-//   `StringTable->get(...)` (`call 0x6169a0`, the same idiom say_tech uses for label lookups)
+//   `StringTable.get(...)` (`call 0x6169a0`, the same idiom say_tech uses for label lookups)
 //   before the ecx pointer switches over; this tree compares the field directly. Not chased -
 //   may mean a different field or a `Strings::get` indirection is missing here.
 // size      243 bytes
@@ -176,7 +176,7 @@ Purpose: Convert the weapon name string to a numeric weapon id.
 // LEVER: same as chas_name - `if (strlen != 0) { do {...} while; }` duplicated the loop head;
 //   a plain `while (strlen(name) != 0) { if (...) break; ...; }` matches the image's single
 //   backedge. Moved 20/98 -> 55/98 agreeing.
-// TRIED (still open): same weap_id-loop StringTable->get() divergence as chas_name, not
+// TRIED (still open): same weap_id-loop StringTable.get() divergence as chas_name, not
 //   chased further this pass.
 // size      240 bytes
 // prototype 
@@ -225,7 +225,7 @@ Purpose: Convert the armor name string to a numeric armor id.
 //   function's own documented "error (0)" return and chas_name/weap_name's `return 0;`. Because
 //   the old -2 return matched the earlier 'Disable' early return, VC6 had merged the two exits;
 //   fixing the constant also restored the image's separate epilogue. Moved 24/98 -> 55/98.
-// TRIED (still open): same arm_id-loop StringTable->get() divergence as chas_name, not
+// TRIED (still open): same arm_id-loop StringTable.get() divergence as chas_name, not
 //   chased further this pass.
 // size      240 bytes
 // prototype 
@@ -778,7 +778,7 @@ void __cdecl read_faction(Player *player, int toggle) {
             for (int j = 0; j < MaxSocialCatNum; j++) {
                 for (int k = 0; k < MaxSocialModelNum; k++) {
                     if (!_stricmp(parse_param,
-                        StringTable->get((int)SocialCategories[j].name[k]))) {
+                        StringTable.get((int)SocialCategories[j].name[k]))) {
                         player->faction_bonus_id[player->faction_bonus_count] =
                             !_stricmp(parse_rule, BonusName[19].key) ? RULE_IMPUNITY : RULE_PENALTY;
                         player->faction_bonus_val1[player->faction_bonus_count] = j; // category id
@@ -873,7 +873,7 @@ void __cdecl read_faction(Player *player, int toggle) {
         text_get();
         LPSTR soc_category = text_item();
         for (int j = 0; j < MaxSocialCatNum; j++) {
-            LPSTR check_cat_type = StringTable->get((int)SocialCategories[j].type);
+            LPSTR check_cat_type = StringTable.get((int)SocialCategories[j].type);
             if (Language ? !_strnicmp(soc_category, check_cat_type, 4) 
                 : !_stricmp(soc_category, check_cat_type)) {
                 *(&player->soc_ideology_category + i) = j;
@@ -884,7 +884,7 @@ void __cdecl read_faction(Player *player, int toggle) {
         int soc_cat_num = *(&player->soc_ideology_category + i);
         if (soc_cat_num >= 0) {
             for (int j = 0; j < MaxSocialModelNum; j++) {
-                LPSTR check_model = StringTable->get((int)SocialCategories[soc_cat_num].name[j]);
+                LPSTR check_model = StringTable.get((int)SocialCategories[soc_cat_num].name[j]);
                 if (Language ?
                     !_strnicmp(soc_model, check_model, 4) : !_stricmp(soc_model, check_model)) {
                     *(&player->soc_ideology_model + i) = j;
@@ -1178,7 +1178,7 @@ Return Value: Was there an error? true/false
 Status: Complete
 */
 BOOL __cdecl read_rules(BOOL tgl_all_rules) {
-    StringTable->init(49952);
+    StringTable.init(49952);
     if (labels_init()) {
         return true;
     }
@@ -1210,7 +1210,7 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
             parse_say(0, (int)*(&Terraforming[i].name + j), -1, -1);
             StringTemp[0] = 0;
             parse_string(order_buf, StringTemp);
-            *(&Order[i + 4].order + j) = StringTable->put(StringTemp);
+            *(&Order[i + 4].order + j) = StringTable.put(StringTemp);
         }
         Order[i + 4].letter = text_item_string();
         Terraforming[i].shortcuts = text_item_string();
@@ -1560,13 +1560,13 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
         // excludes: Fungus (removal), Aquifer, Raise Land, Lower Land, Level Terrain
         if (Terraforming[i].bit) {
             MainInterfaceVar->set_bubble_text(j++ + 17,
-                StringTable->get((int)Terraforming[i].name)); // 17-31
+                StringTable.get((int)Terraforming[i].name)); // 17-31
         }
     }
-    MainInterfaceVar->set_bubble_text(32, StringTable->get((int)Natural[LM_JUNGLE].name_short));
-    MainInterfaceVar->set_bubble_text(33, StringTable->get((int)Natural[LM_DUNES].name_short));
-    MainInterfaceVar->set_bubble_text(34, StringTable->get((int)Natural[LM_URANIUM].name_short));
-    MainInterfaceVar->set_bubble_text(35, StringTable->get((int)Natural[LM_GEOTHERMAL].name_short));
+    MainInterfaceVar->set_bubble_text(32, StringTable.get((int)Natural[LM_JUNGLE].name_short));
+    MainInterfaceVar->set_bubble_text(33, StringTable.get((int)Natural[LM_DUNES].name_short));
+    MainInterfaceVar->set_bubble_text(34, StringTable.get((int)Natural[LM_URANIUM].name_short));
+    MainInterfaceVar->set_bubble_text(35, StringTable.get((int)Natural[LM_GEOTHERMAL].name_short));
     return false;
 }
 
@@ -2107,7 +2107,7 @@ Purpose: Get the label string and concatenate it to the stringTemp buffer.
 //            `Labels.strings_ptr`, this tree's forceinline loads the
 //            reverse. Caching `label_offset` in a local first, caching the
 //            `label_get` result first, and manually inlining the
-//            `StringTable->get(...)` expression in place of the call all
+//            `StringTable.get(...)` expression in place of the call all
 //            score identically (10/14) - not a lever found at this call
 //            site; `label_get` itself is shared and used correctly
 //            elsewhere.
@@ -2131,5 +2131,5 @@ Return Value: Pointer to label string
 Status: Complete
 */
 // BODY IN alpha.h, as plain `inline` (no ORIGINAL marker of its own - "Original
-// Offset: n/a"): say_base (base.cpp) needs it folded to `StringTable->get(...)`
+// Offset: n/a"): say_base (base.cpp) needs it folded to `StringTable.get(...)`
 // the way the image does.

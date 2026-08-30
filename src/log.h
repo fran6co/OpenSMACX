@@ -104,7 +104,14 @@ static_assert(sizeof(Log) == 8, "Log layout must match the legacy ABI");
 #endif
 
 // global
-Log *const Logging = (Log *)0x009BBFF8;
+// THE OBJECT, at 0x009BBFF8 in the shipped image - REAL STORAGE, defined in
+// log.cpp. It was `Log *const Logging = (Log *)0x009BBFF8`, naming terranx.exe
+// data that is unmapped in a standalone build; every `Logging->` read and
+// wrote through that address. The object keeps the folded access the binding
+// bought - `mov ecx, 0x9bbff8` receivers become `mov ecx, <reloc>`, and the
+// field loads the image folds straight to `[0x9bbff8]` stay direct memory
+// operands off the object - while `->` becomes `.`.
+extern Log Logging;  // 0x009BBFF8
 
 void __cdecl log_logging();
 void __cdecl log_logging_exit();

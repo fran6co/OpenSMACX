@@ -1177,7 +1177,7 @@ Status: Complete
 void __cdecl game_close(int mode) {
     stop_timers();
     labels_shutdown();
-    StringTable->shutdown();
+    StringTable.shutdown();
 }
 
 /*
@@ -1216,7 +1216,7 @@ int __cdecl game_reload(int mode, int reload) {
     }
     stop_timers();
     labels_shutdown();
-    StringTable->shutdown();
+    StringTable.shutdown();
     if (game_init(1, reload) != 0) {
         return 1;
     }

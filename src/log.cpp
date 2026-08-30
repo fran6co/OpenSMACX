@@ -60,7 +60,14 @@ int Log::init(LPCSTR input) {
 // the address is terranx.exe's data, unmapped in a standalone build.
 BOOL IsLoggingDisabled;  // 0x009BC004
 
-// ORIGINAL: 0x00625F20 ??__ELogging@@YAXXZ 0x00625F20-0x00625F8B
+// THE OBJECT, at 0x009BBFF8 in the image - was `Log *const Logging =
+// (Log *)0x009BBFF8` (see log.h). Zero at load there, as here; the image's
+// ??__ELogging (log_logging below) reaches `construct` as an ordinary method
+// against this storage, and the real constructor runs ahead of it in both
+// binaries.
+Log Logging;  // 0x009BBFF8
+
+// ORIGINAL: 0x00625F20 ??__ELogging@@YAXXZ 0x00625F20-0x00625F8B BYTE_EXACT
 // symbol    ?log_logging@@YAXXZ
 // size      107 bytes
 // prototype 
@@ -69,15 +76,19 @@ BOOL IsLoggingDisabled;  // 0x009BC004
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4510 0x00634BB0 0x00645398 0x006453E0 0x00645470 0x00645598
 // notes     Staged hybrid export redirect calls the source-owned initializer
-// LEVER: `Logging->construct("logfile.txt")` (an ordinary method, see
+// LEVER: `Logging.construct("logfile.txt")` (an ordinary method, see
 //        log.h) rather than `new (Logging) Log(...)` - the constructor
 //        spelling wraps the body in an SEH frame the image does not have.
+// LEVER: Logging as the REAL OBJECT (log.h/log.cpp, 2026-08-29) instead of
+//        the `Log *const Logging = (Log *)0x009BBFF8` fixed-address binding.
+//        Was 2/107 through the binding; the object's folded receiver measured
+//        this in, and `record` banked it on that change.
 void __cdecl log_logging() {
-    Logging->construct("logfile.txt");
+    Logging.construct("logfile.txt");
     atexit(log_logging_exit);
 }
 
-// ORIGINAL: 0x00625F90 ??__FLogging@@YAXXZ 0x00625F90-0x00625FAD
+// ORIGINAL: 0x00625F90 ??__FLogging@@YAXXZ 0x00625F90-0x00625FAD BYTE_EXACT
 // symbol    ?log_logging_exit@@YAXXZ
 // size      29 bytes
 // prototype 
@@ -86,7 +97,9 @@ void __cdecl log_logging() {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00644EF2
 // notes     Staged hybrid export redirect calls the source-owned exit cleanup
-void __cdecl log_logging_exit() { Logging->~Log(); }
+// LEVER: Logging as the REAL OBJECT (log.h/log.cpp, 2026-08-29) instead of
+//        the `Log *const` fixed-address binding; measured in on that change.
+void __cdecl log_logging_exit() { Logging.~Log(); }
 
 // ORIGINAL: 0x00626230 ?log_reset@@YAXXZ 0x00626230-0x0062624F BYTE_EXACT
 // size      31 bytes
@@ -96,10 +109,9 @@ void __cdecl log_logging_exit() { Logging->~Log(); }
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00634BB0 0x00645598
 // notes     Staged hybrid export redirect calls the source-owned reset wrapper
-void __cdecl log_reset() { Logging->reset(); }
+void __cdecl log_reset() { Logging.reset(); }
 
-// ORIGINAL: 0x00626250 ?log_say@@YAXPADPADHHH@Z 0x00626250-0x006262E9
-// TRIED: separate `if` guards instead of the `||` chain; `reinterpret_cast<Log*>(0x9BBFF8)->say(...)` instead of `Logging->`; all 10 FLAG_SETS via --all-flags. Structural fix (call count now matches the image; previously this tree inlined nothing and called Log::say/say_hex as a real function). Residual: the FIRST field read (log_file_) through the constant `this` materializes it into a register (`mov eax,0x9bbff8; mov eax,[eax]`) where the image folds base+offset directly (`mov eax,[0x9bbff8]`) - matches Log::reset's same pattern when log_file_ is a push-argument, not a boolean test.
+// ORIGINAL: 0x00626250 ?log_say@@YAXPADPADHHH@Z 0x00626250-0x006262E9 BYTE_EXACT
 // symbol    ?log_say@@YAXPBD0HHH@Z
 // size      153 bytes
 // prototype 
@@ -108,12 +120,12 @@ void __cdecl log_reset() { Logging->reset(); }
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00634BB0 0x00645598 0x00647815
 // notes     Staged hybrid export redirect calls the source-owned wrapper
+// LEVER: Logging as the REAL OBJECT (log.h/log.cpp, 2026-08-29) instead of the `Log *const` binding - through the binding the first log_file_ read materialised the receiver (`mov eax,0x9bbff8; mov eax,[eax]`) where the image folds `mov eax,[0x9bbff8]`; the object folds the same direct load and each of these four measured in on the change.
 void __cdecl log_say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
-    Logging->say(str1, str2, num1, num2, num3);
+    Logging.say(str1, str2, num1, num2, num3);
 }
 
-// ORIGINAL: 0x006262F0 ?log_say@@YAXPADHHH@Z 0x006262F0-0x0062634C
-// TRIED: separate `if` guards instead of the `||` chain; `reinterpret_cast<Log*>(0x9BBFF8)->say(...)` instead of `Logging->`; all 10 FLAG_SETS via --all-flags. Structural fix (call count now matches the image; previously this tree inlined nothing and called Log::say/say_hex as a real function). Residual: the FIRST field read (log_file_) through the constant `this` materializes it into a register (`mov eax,0x9bbff8; mov eax,[eax]`) where the image folds base+offset directly (`mov eax,[0x9bbff8]`) - matches Log::reset's same pattern when log_file_ is a push-argument, not a boolean test.
+// ORIGINAL: 0x006262F0 ?log_say@@YAXPADHHH@Z 0x006262F0-0x0062634C BYTE_EXACT
 // symbol    ?log_say@@YAXPBDHHH@Z
 // size      92 bytes
 // prototype 
@@ -122,12 +134,12 @@ void __cdecl log_say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00634BB0 0x00645598 0x00647815
 // notes     Staged hybrid export redirect calls the source-owned wrapper
+// LEVER: Logging as the REAL OBJECT (log.h/log.cpp, 2026-08-29) instead of the `Log *const` binding - through the binding the first log_file_ read materialised the receiver (`mov eax,0x9bbff8; mov eax,[eax]`) where the image folds `mov eax,[0x9bbff8]`; the object folds the same direct load and each of these four measured in on the change.
 void __cdecl log_say(LPCSTR str1, int num1, int num2, int num3) {
-    Logging->say(str1, NULL, num1, num2, num3);
+    Logging.say(str1, NULL, num1, num2, num3);
 }
 
-// ORIGINAL: 0x00626350 ?log_say_hex@@YAXPADPADHHH@Z 0x00626350-0x006263E9
-// TRIED: separate `if` guards instead of the `||` chain; `reinterpret_cast<Log*>(0x9BBFF8)->say(...)` instead of `Logging->`; all 10 FLAG_SETS via --all-flags. Structural fix (call count now matches the image; previously this tree inlined nothing and called Log::say/say_hex as a real function). Residual: the FIRST field read (log_file_) through the constant `this` materializes it into a register (`mov eax,0x9bbff8; mov eax,[eax]`) where the image folds base+offset directly (`mov eax,[0x9bbff8]`) - matches Log::reset's same pattern when log_file_ is a push-argument, not a boolean test.
+// ORIGINAL: 0x00626350 ?log_say_hex@@YAXPADPADHHH@Z 0x00626350-0x006263E9 BYTE_EXACT
 // symbol    ?log_say_hex@@YAXPBD0HHH@Z
 // size      153 bytes
 // prototype 
@@ -136,12 +148,12 @@ void __cdecl log_say(LPCSTR str1, int num1, int num2, int num3) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00634BB0 0x00645598 0x00647815
 // notes     Staged hybrid export redirect calls the source-owned wrapper
+// LEVER: Logging as the REAL OBJECT (log.h/log.cpp, 2026-08-29) instead of the `Log *const` binding - through the binding the first log_file_ read materialised the receiver (`mov eax,0x9bbff8; mov eax,[eax]`) where the image folds `mov eax,[0x9bbff8]`; the object folds the same direct load and each of these four measured in on the change.
 void __cdecl log_say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
-    Logging->say_hex(str1, str2, num1, num2, num3);
+    Logging.say_hex(str1, str2, num1, num2, num3);
 }
 
-// ORIGINAL: 0x006263F0 ?log_say_hex@@YAXPADHHH@Z 0x006263F0-0x0062644C
-// TRIED: separate `if` guards instead of the `||` chain; `reinterpret_cast<Log*>(0x9BBFF8)->say(...)` instead of `Logging->`; all 10 FLAG_SETS via --all-flags. Structural fix (call count now matches the image; previously this tree inlined nothing and called Log::say/say_hex as a real function). Residual: the FIRST field read (log_file_) through the constant `this` materializes it into a register (`mov eax,0x9bbff8; mov eax,[eax]`) where the image folds base+offset directly (`mov eax,[0x9bbff8]`) - matches Log::reset's same pattern when log_file_ is a push-argument, not a boolean test.
+// ORIGINAL: 0x006263F0 ?log_say_hex@@YAXPADHHH@Z 0x006263F0-0x0062644C BYTE_EXACT
 // symbol    ?log_say_hex@@YAXPBDHHH@Z
 // size      92 bytes
 // prototype 
@@ -150,8 +162,9 @@ void __cdecl log_say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3)
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00634BB0 0x00645598 0x00647815
 // notes     Staged hybrid export redirect calls the source-owned wrapper
+// LEVER: Logging as the REAL OBJECT (log.h/log.cpp, 2026-08-29) instead of the `Log *const` binding - through the binding the first log_file_ read materialised the receiver (`mov eax,0x9bbff8; mov eax,[eax]`) where the image folds `mov eax,[0x9bbff8]`; the object folds the same direct load and each of these four measured in on the change.
 void __cdecl log_say_hex(LPCSTR str1, int num1, int num2, int num3) {
-    Logging->say_hex(str1, NULL, num1, num2, num3);
+    Logging.say_hex(str1, NULL, num1, num2, num3);
 }
 
 // ORIGINAL: 0x00626450 ?log_set_state@@YAXH@Z 0x00626450-0x00626461 BYTE_EXACT
@@ -166,7 +179,7 @@ void __cdecl log_say_hex(LPCSTR str1, int num1, int num2, int num3) {
 // flags     sp_ready;purged_ok
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned state wrapper
-void __cdecl log_set_state(BOOL state) { Logging->set_state(state); }
+void __cdecl log_set_state(BOOL state) { Logging.set_state(state); }
 
 
 // ---------------------------------------------------------------------------
@@ -198,7 +211,7 @@ void __cdecl log_set_state(BOOL state) { Logging->set_state(state); }
 
 /*
 // ORIGINAL: 0x00625FC0 ??0Log@@QAE@PAD@Z 0x00625FC0-0x00626016 BYTE_EXACT
-// LEVER: not a constructor - see the "NOT a constructor" note in log.h. `Logging->construct(input)` is an ordinary method (`??__ELogging` reaches it that way, not through a `new`-expression), which drops the SEH frame VC6 wraps around a placement-new'd non-trivial destructor. Inlines env_open/fclose directly on `input` rather than calling `reset()`, because the image keeps the incoming pointer live in edi and reopens THAT, not a reload of log_file_.
+// LEVER: not a constructor - see the "NOT a constructor" note in log.h. `Logging.construct(input)` is an ordinary method (`??__ELogging` reaches it that way, not through a `new`-expression), which drops the SEH frame VC6 wraps around a placement-new'd non-trivial destructor. Inlines env_open/fclose directly on `input` rather than calling `reset()`, because the image keeps the incoming pointer live in edi and reopens THAT, not a reload of log_file_.
 // body      src/log.h
 // symbol    ?construct@Log@@QAEPAV1@PBD@Z
 // size      86 bytes

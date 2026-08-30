@@ -20,6 +20,13 @@
 
 char StringTemp[1032];   // 0x009B86A0
 
+// The one game-wide string table, 0x009B90D8 in the image - REAL STORAGE,
+// not the `static Strings *const` binding that named terranx.exe's address
+// (see strings.h). The image's ??__E runs the real constructor against it;
+// here the CRT walk does the same, and jackal_init_real's
+// `StringTable.init(0x8000)` populates it.
+Strings StringTable;  // 0x009B90D8
+
 /*
 Purpose: Initialize the class instance with a new string table of the specified size.
 // ORIGINAL: 0x006168F0 ?init@Strings@@QAEHH@Z 0x006168F0-0x00616950 BYTE_EXACT
