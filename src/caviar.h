@@ -219,6 +219,43 @@ void __cdecl vox_fill_colour_table(void *table, unsigned long value,
 
 // 0x006393C0. Creates the scene render record from the descriptor block
 // init_class fills at 0x009BB438; the created handle lands at 0x009BB478.
-unsigned long __cdecl vox_create_record(int a1, void *a2, void *a3, void *a4,
+// The renderer record vox_create_record builds. 0x80 bytes are allocated and
+// all of them are zeroed, so the tail is unknown padding.
+struct VoxRenderRecord {
+    uint32_t setup_id_;        // 0x00 - first argument, stored verbatim
+    uint32_t setup_block_;     // 0x04 - the descriptor block
+    uint32_t clip_max_a_x_;    // 0x08  0x7fff
+    uint32_t clip_max_a_y_;    // 0x0C  0x7fff
+    uint32_t clip_min_a_x_;    // 0x10  0xffff8001 (-32767)
+    uint32_t clip_min_a_y_;    // 0x14  0xffff8001
+    uint32_t zero_a_[2];       // 0x18
+    uint32_t clip_max_b_x_;    // 0x20  0x7fff
+    uint32_t clip_max_b_y_;    // 0x24  0x7fff
+    uint32_t clip_min_b_x_;    // 0x28  0xffff8001
+    uint32_t clip_min_b_y_;    // 0x2C  0xffff8001
+    uint32_t zero_b_[4];       // 0x30
+    int32_t width_minus_1_;    // 0x40
+    int32_t height_minus_1_;   // 0x44
+    uint32_t width_;           // 0x48 - width, or 0 when a side is negative
+    uint32_t height_;          // 0x4C
+    void *colour_table_;       // 0x50
+    void *shadow_table_;       // 0x54
+    uint32_t field_58_[2];     // 0x58 - init_class stores &object_start at +0x58
+    // 0x60, 0x64. The two per-entry ramp pointers. Created zeroed, then
+    // owned by sub_63f9b0: it frees each, reallocates count<<2 bytes (count
+    // = the descriptor's entry count at setup_block+0x10), and fills ramp A
+    // from *(setup_block+4) stepped *(setup_block+0x18)*2 per entry, ramp B
+    // as a running accumulation of *(setup_block+0x14) per entry.
+    // init_class fills the same slots with its own two 256-entry ramps.
+    void *ramp_a_ptr_;         // 0x60
+    void *ramp_b_ptr_;         // 0x64
+    uint8_t setup_size_code_;  // 0x68 - low byte of the last argument
+    uint8_t field_69_[0x80 - 0x69];
+};
+
+static_assert(sizeof(VoxRenderRecord) == 0x80,
+              "renderer record must be the 0x80 bytes the engine allocates");
+
+VoxRenderRecord *__cdecl vox_create_record(int a1, void *a2, void *a3, void *a4,
                                         int a5);
 
