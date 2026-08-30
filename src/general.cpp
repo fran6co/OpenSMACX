@@ -27,7 +27,6 @@
 void __cdecl teardown_0060fd60();
 void __cdecl teardown_0060e5d0();
 extern Sprite g_BLANK_SPRITE;
-void __cdecl teardown_0063cef0();
 #include "temp.h"
 #include "general.h"
 #include "alpha.h"
@@ -1944,7 +1943,7 @@ int __cdecl jackal_init_real(Palette *palette, Font *font, LPSTR window_name,
     if (result != 0) {
         return result;
     }
-    result = sub_63ce20();
+    result = Sprite::init_class();
     if (result != 0) {
         return result;
     }
@@ -2029,11 +2028,13 @@ Status: Complete
 */
 
 /*
-Purpose: sub_63cef0 - close the blank sprite (0x009BEAE8 in the image, the
+Purpose: close_class - close the blank sprite (0x009BEAE8 in the image, the
          real object g_BLANK_SPRITE here), unguarded; the caller
-         (jackal_close) tail-calls it as the sprite's teardown stage.
+         (jackal_close) tail-calls it as the sprite's teardown stage. Named
+         Sprite::close_class 2026-08-30 as the mirror of Sprite::init_class
+         (0x0063CE20) - the catalogue carries no name for either.
 // ORIGINAL: 0x0063CEF0 sub_63cef0 0x0063CEF0-0x0063CEFA BYTE_EXACT
-// symbol    ?teardown_0063cef0@@YAXXZ
+// symbol    ?close_class@Sprite@@SAXXZ
 // size      10 bytes
 // prototype
 // callers   1   call targets   0
@@ -2043,7 +2044,7 @@ Purpose: sub_63cef0 - close the blank sprite (0x009BEAE8 in the image, the
 Return Value: n/a
 Status: Complete
 */
-void __cdecl teardown_0063cef0() {
+void Sprite::close_class() {
     g_BLANK_SPRITE.close();
 }
 
@@ -2056,7 +2057,7 @@ void __cdecl jackal_close() {
     teardown_0060fd60();
     teardown_0060e5d0();
     Font::close_font_class();
-    teardown_0063cef0();
+    Sprite::close_class();
     filewin_close_class();
     basepop_close_class();
     Cursor::close_cursor_class();
