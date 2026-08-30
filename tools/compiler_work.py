@@ -67,7 +67,7 @@ SHAPES = [
      "duplicates the base constructor or destructor the compiler already "
      "calls, so the body carries one call too many."),
 
-    ("placement new on a subobject", 20,
+    ("placement new on a subobject", 21,
      re.compile(r"new\s*\(\s*(?:&|static_cast|reinterpret_cast)"),
      "costs a null guard (`test ecx, ecx; je`) the image does not have. A real "
      "base or member is constructed unconditionally."),

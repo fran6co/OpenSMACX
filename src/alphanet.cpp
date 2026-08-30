@@ -149,71 +149,62 @@ const uint32_t AlphaNetListDerivedVirtualBaseVtable[1] = {0x00402C00}; // 0x0066
 
 
 /*
-Purpose: Build an AlphaNet: the Net base, the eight process slots, the
-         StringList-family ledger at 0x144C, and the trailing Heap.
+Purpose: Build an AlphaNet: the Net base (implicit), the eight process
+         slots' {FF,0,0,FF,2} patterns, the ledger, and the trailing Heap -
+         all through its typed members.
 // ORIGINAL: 0x004E2490 ??0AlphaNet@@QAE@XZ 0x004E2490-0x004E25A5;0x0065C610-0x0065C630
 // symbol    ??0AlphaNet@@QAE@XZ
 // size      277 bytes
 // kind      game
-// PROMOTED from the archived transcription. The Net base constructs
-// implicitly; the ledger's two-stage StringStruct/StringList staging and the
-// Heap placement-construction are the live parts.
+// PROMOTED and TYPED: the ledger (AlphaNetStringStruct/AlphaNetLedger) and
+// the Heap construct implicitly - the two-stage table staging and the
+// placement-new are the compiler's own base-construction sequence. The
+// image's final [this]=0x66EACC store publishes AlphaNet's own vtable,
+// which this non-polymorphic model does not carry.
 Return Value: n/a
 Status: Complete
 */
 AlphaNet::AlphaNet() {
-    char *const self = reinterpret_cast<char *>(this);
-
-    // Eight per-player process slots at 0x790, 0x19C stride: {FF, 0, 0, FF, 2}.
-    for (int slot_i = 0; slot_i < 8; ++slot_i) {
-        uint8_t *const slot = reinterpret_cast<uint8_t *>(self + 0x790 + slot_i * 0x19C);
-        slot[0] = 0xFF;
-        slot[1] = 0;
-        slot[2] = 0;
-        slot[3] = 0xFF;
-        slot[4] = 2;
+    for (int i = 0; i < 8; ++i) {
+        AlphaNetProcessSlot &slot = process_slots_[i];
+        slot.pattern_[0] = 0xFF;
+        slot.pattern_[1] = 0;
+        slot.pattern_[2] = 0;
+        slot.pattern_[3] = 0xFF;
+        slot.pattern_[4] = 2;
     }
-
-    // The StringList-family ledger at 0x144C: StringStruct staging over the
-    // virtual StringAllocationBase at 0x1484 (owner captured at 0x1488), then
-    // the list stage over it. Staged through the tree's real tables.
-    *reinterpret_cast<const uint32_t **>(self + 0x1450) = &AlphaNetLedgerVbtable[0];
-    *reinterpret_cast<const uint32_t **>(self + 0x1484) = &StringAllocationBaseVtable;
-    *reinterpret_cast<Heap **>(self + 0x1488) = StringAllocationHeap;
-    StringAllocationHeap = 0;
-    *reinterpret_cast<const uint32_t **>(self + 0x144C) = &AlphaNetStringStructVtable[0];
-    // the vbtable walk: [0x1450] + vbtable[1]
-    const uint32_t off = AlphaNetLedgerVbtable[1];
-    *reinterpret_cast<const uint32_t **>(self + 0x1450 + off) =
-        &AlphaNetListVirtualBaseVtable[0];
-    *reinterpret_cast<uint32_t *>(self + 0x1454) = 0;
-    *reinterpret_cast<uint32_t *>(self + 0x1458) = 0;
-    *reinterpret_cast<uint32_t *>(self + 0x145C) = 0;
-    *reinterpret_cast<uint32_t *>(self + 0x1460) = 0;
-    *reinterpret_cast<uint32_t *>(self + 0x1464) = 0;
-    // the list stage's own tables
-    *reinterpret_cast<const uint32_t **>(self + 0x144C) = &AlphaNetListDerivedVtable[0];
-    *reinterpret_cast<const uint32_t **>(self + 0x1450 + off) =
-        &AlphaNetListDerivedVirtualBaseVtable[0];
-
-    new (reinterpret_cast<Heap *>(self + 0x148C)) Heap();
-
-    // the eight slot dwords at 0x78C and the count at 0x768
-    for (int dword_i = 0; dword_i < 8; ++dword_i) {
-        *reinterpret_cast<uint32_t *>(self + 0x78C + dword_i * 0x19C) = 0;
+    // The union's ledger arm: placement-constructed, as the image does -
+    // the base chain stages the tables, zeroes the five list fields and
+    // captures the allocation owner into the virtual base at 0x1488.
+    new (&ledger_) AlphaNetLedger();
+    // and the Heap, exactly the image's explicit call on 0x148C.
+    new (&heap_) Heap();
+    for (int j = 0; j < 8; ++j) {
+        process_slots_[j].pid_ = 0;
     }
-    *reinterpret_cast<uint32_t *>(self + 0x768) = 0;
 }
 
+// The ledger's five list fields, zeroed; the rest of the construction (the
+// vtable staging and the owner capture) belongs to the compiler.
+AlphaNetStringStruct::AlphaNetStringStruct() {
+    head_ = 0;
+    current_ = 0;
+    entry_count_ = 0;
+    current_position_ = 0;
+    field_18_ = 0;
+}
+
+void AlphaNetStringStruct::unk_slot0() { }
+
 void AlphaNet::close() {
-    uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
     // Eight process-ID slots at 0x78C, one per player, stride 0x19C.
     for (size_t slot = 0; slot < 8; ++slot) {
         const uint32_t zero = 0;
-        memcpy(bytes + 0x78C + slot * 0x19C, &zero, sizeof(zero));
+        memcpy(&process_slots_[slot].pid_, &zero, sizeof(zero));
     }
     const uint32_t zero = 0;
-    memcpy(bytes + 0x768, &zero, sizeof(zero));
+    memcpy(reinterpret_cast<uint32_t *>(
+               reinterpret_cast<char *>(this) + 0x768), &zero, sizeof(zero));
     // The legacy body tail-jumps here with this unchanged, so the network
     // close runs against the same object.
     Net::close();
