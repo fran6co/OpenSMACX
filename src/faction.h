@@ -677,13 +677,18 @@ MEASURED inline LPSTR __cdecl get_adjective(int faction_id) {
 }
 
 // INLINE: the image has no is_human - it open-codes what this names.
+inline uint8_t __cdecl factions_status_byte(int index) {
+    // the image's FactionsStatus byte view of the LockEnableMask dword
+    return reinterpret_cast<const uint8_t *>(&LockEnableMask)[index];
+}
+
 inline BOOL __cdecl is_human(uint32_t faction_id) {
-    return LockEnableMask & (1u << faction_id);
+    return factions_status_byte(0) & (1u << faction_id);
 }
 
 // INLINE: the image has no is_alive - it open-codes what this names.
 inline BOOL __cdecl is_alive(uint32_t faction_id) {
-    return (LockEnableMask >> 8) & (1u << faction_id);
+    return factions_status_byte(1) & (1u << faction_id);
 }
 
 inline BOOL __cdecl is_alien_faction(uint32_t faction_id) {
