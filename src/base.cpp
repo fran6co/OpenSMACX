@@ -479,7 +479,7 @@ uint32_t  __cdecl best_specialist() {
         base_current = BaseCurrent();
         if (known) {
             uint32_t bonus = Citizen[i].psych_bonus * 3;
-            if (base_current->population_size >= (int)Rules->min_base_size_specialists) {
+            if (base_current->population_size >= (int)Rules.min_base_size_specialists) {
                 bonus += Citizen[i].ops_bonus + Citizen[i].research_bonus;
             }
             if ((int)bonus > current_bonus) {
@@ -701,7 +701,7 @@ int __cdecl cost_factor(int faction_id, int rsc_type, int base_id) {
     int factor = is_human(faction_id) ? 10 : diff_cost_base[DiffLevelCurrent]
         - great_satan(FactionRankings[7], false)
         - (!IsMultiplayerNet && is_human(FactionRankings[7]));
-    int cost_multiplier = rsc_type ? Rules->mineral_cost_multi : Rules->nutrient_cost_multi;
+    int cost_multiplier = rsc_type ? Rules.mineral_cost_multi : Rules.nutrient_cost_multi;
     if (cost_multiplier != 10) {
         factor = (factor * cost_multiplier) / 10;
     }
@@ -790,7 +790,7 @@ Return Value: Fixed value (-1, 0, 1, 2, 3, -70) or productionID
 Status: Complete
 */
 int __cdecl base_making(int production_id, int base_id) {
-    int retool = Rules->retool_strictness;
+    int retool = Rules.retool_strictness;
     if (has_fac_built_call(FAC_SKUNKWORKS, base_id) // has Skunkworks
         && retool >= 1) { // don't override if retool strictness is already set to always free (0)
         retool = 1; // Skunkworks or FREEPROTO + prerequisite tech > 'Free in Category'
@@ -841,13 +841,13 @@ Status: Complete
 */
 int __cdecl base_lose_minerals(int base_id, int UNUSED(production_id)) {
     int min_accum;
-    if (Rules->retool_pct_pen_prod_chg && is_human(Bases[base_id].faction_id_current)
+    if (Rules.retool_pct_pen_prod_chg && is_human(Bases[base_id].faction_id_current)
         && base_making(Bases[base_id].production_id_last, base_id)
         != base_making(Bases[base_id].queue_production_id[0], base_id)
         && (min_accum = Bases[base_id].minerals_accumulated_2, 
-            min_accum > (int)Rules->retool_exemption)) {
-        return min_accum - (100 - (int)Rules->retool_pct_pen_prod_chg)
-            * (min_accum - (int)Rules->retool_exemption) / 100 - (int)Rules->retool_exemption;
+            min_accum > (int)Rules.retool_exemption)) {
+        return min_accum - (100 - (int)Rules.retool_pct_pen_prod_chg)
+            * (min_accum - (int)Rules.retool_exemption) / 100 - (int)Rules.retool_exemption;
     }
     return 0;
 }
@@ -1256,7 +1256,7 @@ int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
                     }
                 }
                 if ((bit & BIT_MINE) && crop > 1) {
-                    crop += Rules->tgl_nutrient_effect_with_mine;
+                    crop += Rules.tgl_nutrient_effect_with_mine;
                 }
             }
         } else if (bit & BIT_FOREST) {
@@ -1295,7 +1295,7 @@ int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
                 crop += ResourceInfo[RSCINFO_IMPROVED_LAND].nutrients;
             }
             if ((bit & BIT_MINE) && crop > 1) {
-                crop += Rules->tgl_nutrient_effect_with_mine;
+                crop += Rules.tgl_nutrient_effect_with_mine;
             }
         }
         if (bit & BIT_SOIL_ENRICHER) {
@@ -1307,7 +1307,7 @@ int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
         }
         // Only the ocean and land arms reach the restriction; the base,
         // borehole, monolith and fungus arms jump past it to the event tail.
-        if (crop > 2 && !has_tech(Rules->tech_three_nutrients_sqr, faction_id)
+        if (crop > 2 && !has_tech(Rules.tech_three_nutrients_sqr, faction_id)
             && !has_nutrient_bonus && !has_condenser) {
             TileYieldRestricted += crop - 2;
             crop = 2;
@@ -1444,7 +1444,7 @@ int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
         if ((tile->climate & 0xE0) == ALT_BIT_OCEAN_SHELF || ExpansionEnabled) {
             if ((bit & BIT_MINE) || assume_improved) {
                 mineral += ResourceInfo[RSCINFO_IMPROVED_SEA].minerals;
-                if (has_tech(Rules->tech_mining_platform_bonus, faction_id)) {
+                if (has_tech(Rules.tech_mining_platform_bonus, faction_id)) {
                     mineral++;
                 }
                 // Legacy: unguarded for base_id < 0, exactly as 0x004E765F.
@@ -1465,7 +1465,7 @@ int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
                 extra++;
             }
             if (!(bit & BIT_ROAD) && !assume_improved) {
-                int limit = (int)Rules->limit_mineral_mine_sans_road;
+                int limit = (int)Rules.limit_mineral_mine_sans_road;
                 if (extra > limit) {
                     TileYieldRestricted += extra - limit;
                     extra = limit;
@@ -1478,7 +1478,7 @@ int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
     }
 
     if (restrict_yield && mineral > 2
-        && !has_tech(Rules->tech_three_minerals_sqr, faction_id)
+        && !has_tech(Rules.tech_three_minerals_sqr, faction_id)
         && !has_mineral_bonus) {
         TileYieldRestricted += mineral - 2;
         mineral = 2;
@@ -1726,7 +1726,7 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
             energy = range(energy, 0, 99);
             BaseSquareEnergy = energy;
         } else if (energy > 2
-                   && !has_tech(Rules->tech_three_energy_sqr, faction_id)
+                   && !has_tech(Rules.tech_three_energy_sqr, faction_id)
                    && !has_energy_bonus) {
             TileYieldRestricted += energy - 2;
             energy = 2;
@@ -2028,7 +2028,7 @@ void __cdecl base_nutrient() {
     }
     (BaseCurrent())->nutrient_intake_2 += BaseCurrentConvoyTo[RSC_NUTRIENTS];
     (BaseCurrent())->nutrient_consumption = BaseCurrentConvoyFrom[RSC_NUTRIENTS]
-        + (BaseCurrent())->population_size * Rules->nutrient_req_citizen;
+        + (BaseCurrent())->population_size * Rules.nutrient_req_citizen;
     (BaseCurrent())->nutrient_surplus = (BaseCurrent())->nutrient_intake_2
         - (BaseCurrent())->nutrient_consumption;
     if ((BaseCurrent())->nutrient_surplus >= 0) {
@@ -2125,7 +2125,7 @@ void __cdecl base_minerals() {
     if (is_human(faction_id)) {
         (BaseCurrent())->eco_damage += ((PlayersData[faction_id].major_atrocities
             + TectonicDetonationCount[faction_id]) * 5) / (range(MapSeaLevel, 0, 100)
-                / range(WorldBuilder->sea_level_rises, 1, 100) + eco_dmg_reduction);
+                / range(WorldBuilder.sea_level_rises, 1, 100) + eco_dmg_reduction);
     }
     if ((BaseCurrent())->eco_damage < 0) {
         (BaseCurrent())->eco_damage = 0;
@@ -2329,7 +2329,7 @@ void __cdecl base_psych() {
         }
     }
     int drones = has_fac(FAC_GENEJACK_FACTORY, BaseIDCurrentSelected, 0)
-        ? Rules->drones_genejack_factory : 0;
+        ? Rules.drones_genejack_factory : 0;
     // BUG IN THE ORIGINAL (probably): the image's second has_fac() call
     // passes facility id 6 (FAC_RECREATION_COMMONS), not 2
     // (FAC_CHILDREN_CRECHE) - thematically Rec Commons is the psych/drone
@@ -2461,10 +2461,10 @@ int __cdecl pop_goal_fac(int base_id) {
     uint32_t faction_id = Bases[base_id].faction_id_current;
     uint32_t limit_mod = has_project(SP_ASCETIC_VIRTUES, faction_id) ? 2 : 0;
     int pop = Bases[base_id].population_size - limit_mod + Players[faction_id].rule_population;
-    if (pop >= (int)Rules->pop_limit_sans_hab_complex && !has_fac_built(FAC_HAB_COMPLEX, base_id)) {
+    if (pop >= (int)Rules.pop_limit_sans_hab_complex && !has_fac_built(FAC_HAB_COMPLEX, base_id)) {
         return FAC_HAB_COMPLEX;
     }
-    if (pop >= (int)Rules->pop_limit_sans_hab_dome 
+    if (pop >= (int)Rules.pop_limit_sans_hab_dome 
         && !has_fac_built(FAC_HABITATION_DOME, base_id)) {
         return FAC_HABITATION_DOME;
     }
@@ -2499,14 +2499,14 @@ int __cdecl pop_goal(int base_id) {
         goal = 6;
     }
     if (!has_fac_built_call(FAC_HAB_COMPLEX, base_id)) {
-        int compare = Rules->pop_limit_sans_hab_complex - Players[faction_id].rule_population
+        int compare = Rules.pop_limit_sans_hab_complex - Players[faction_id].rule_population
             + limit_mod;
         if (goal >= compare) {
             goal = compare;
         }
     }
     if (!has_fac_built_call(FAC_HABITATION_DOME, base_id)) {
-        int compare = Rules->pop_limit_sans_hab_dome - Players[faction_id].rule_population
+        int compare = Rules.pop_limit_sans_hab_dome - Players[faction_id].rule_population
             + limit_mod;
         if (goal >= compare) {
             goal = compare;

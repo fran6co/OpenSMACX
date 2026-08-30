@@ -423,11 +423,11 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
                 if (((Bases[base_id].state & BSTATE_UNK_4000)
                         || Bases[base_id].nutrient_surplus < 2)
                     && has_tech(Terraforming[TERRA_SOLAR_TIDAL].preq_tech_sea, faction_id)
-                    && Rules->tgl_nutrient_effect_with_mine < 0) {
+                    && Rules.tgl_nutrient_effect_with_mine < 0) {
                     return ORDER_SOLAR_COLLECTOR;
                 }
                 // Census the base's own radius for water improvements already standing.
-                int mine_count = (Rules->tgl_nutrient_effect_with_mine < 0) ? 1 : 0;
+                int mine_count = (Rules.tgl_nutrient_effect_with_mine < 0) ? 1 : 0;
                 int solar_count = 0;
                 int base_x = Bases[base_id].x;
                 int base_y = Bases[base_id].y;
@@ -456,7 +456,7 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
                 }
             }
             if (has_tech(Terraforming[TERRA_MINE].preq_tech_sea, faction_id)
-                && (Rules->tgl_nutrient_effect_with_mine >= 0
+                && (Rules.tgl_nutrient_effect_with_mine >= 0
                     || (base_id >= 0 && Bases[base_id].nutrient_surplus > 1
                         && !(Bases[base_id].state & BSTATE_UNK_4000)))) {
                 return ORDER_MINE;
@@ -525,7 +525,7 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
             if (bonus == 2 && rockiness == ROCKINESS_ROCKY) {
                 farm_rule = true;
             } else if (rockiness == ROCKINESS_ROCKY
-                       || Rules->tgl_nutrient_effect_with_mine >= 0) {
+                       || Rules.tgl_nutrient_effect_with_mine >= 0) {
                 rolling_rule = true;
             } else {
                 int worked = crop + (has_farm ? 0 : 1);
@@ -574,7 +574,7 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
         && !(bit & BIT_THERMAL_BORE)
         && (tile->bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) != BIT2_VOLCANO
         && !(bit & BIT_ECH_MIRROR)
-        && (crop < 2 || has_tech(Rules->tech_three_nutrients_sqr, faction_id)
+        && (crop < 2 || has_tech(Rules.tech_three_nutrients_sqr, faction_id)
             || bonus == 1 /* nutrient */)) {
         if (has_solar || has_mine) {
             order = ORDER_FARM;
@@ -597,7 +597,7 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
         && !has_soil_enricher) {
         BOOL enrich = false;
         if (crop > 1
-            && (crop != 2 || has_tech(Rules->tech_three_nutrients_sqr, faction_id))) {
+            && (crop != 2 || has_tech(Rules.tech_three_nutrients_sqr, faction_id))) {
             if (has_solar || has_mine) {
                 order = ORDER_FARM;
             }

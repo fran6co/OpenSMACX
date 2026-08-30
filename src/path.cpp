@@ -315,7 +315,7 @@ int Path::move(int veh_id, int faction_id) {
     // caching one value for both compares. The inner store is also
     // `or ah, 0x10` (bit 12, 0x1000), not `or dh, 1` (bit 8, 0x100) again -
     // a different bit than the outer one.
-    } else if (veh_moves(veh_id) <= Rules->move_rate_roads) {
+    } else if (veh_moves(veh_id) <= Rules.move_rate_roads) {
         flags |= 0x100;
         if (veh_moves(veh_id) <= (uint32_t)((Vehs[veh_id].proto_id != BSC_MIND_WORMS) + 1)) {
             flags |= 0x1000;
@@ -735,7 +735,7 @@ BOOL Path::sensors(int faction_id, int *x_sensor, int *y_sensor) {
                             && altitude_at(x, y) >= ALT_BIT_OCEAN_SHELF))
                     && (!(bit & BIT_FUNGUS)
                         || altitude_at(x, y) < ALT_BIT_OCEAN_SHELF
-                        || has_tech(Rules->tech_improve_fungus_sqr, faction_id))) {
+                        || has_tech(Rules.tech_improve_fungus_sqr, faction_id))) {
                     uint32_t flags = 0;
                     for (int i = 0; i < RadiusRange[2]; i++) {
                         int x_radius = xrange(x + RadiusOffsetX[i]);

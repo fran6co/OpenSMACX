@@ -858,7 +858,7 @@ Purpose: Calculate how much researching a tech will cost the specified faction.
 //   throughout: as `int` VC6 emits `sar` for both shifts.
 // LEVER: signed-divide-through-a-uint32_t-operand three expressions divided or
 //   multiplied through a `uint32_t` global and came out unsigned where the image
-//   is signed - `100 * discovery_rate / Rules->tech_discovery_rate_pct_std`
+//   is signed - `100 * discovery_rate / Rules.tech_discovery_rate_pct_std`
 //   (`div` against the image's `cdq; idiv`) and `discovery_rate * MapAreaSqRoot
 //   / 56` (`mul`/`shr` against `imul`/`sar`). Casting each divisor and factor to
 //   `int` at the use site fixes both without changing the shared declarations.
@@ -912,7 +912,7 @@ int __cdecl tech_rate(int faction_id) {
     if (PlayersData[faction_id].tech_cost >= 0) {
         return PlayersData[faction_id].tech_cost; // already set
     }
-    if (!Rules->tech_discovery_rate_pct_std) {
+    if (!Rules.tech_discovery_rate_pct_std) {
         return 999999999; // max cost
     }
     int player_factor = range(PlayersData[faction_id].earned_techs_saved * 2
@@ -942,9 +942,9 @@ int __cdecl tech_rate(int faction_id) {
         - range((top_factor - diff_lvl - player_factor + 7) / (8 - diff_lvl),
             0, diff_lvl * fin_factor / 10 + 1))
         * range(player_factor - resch_base, 1, 99999);
-    if (Rules->tech_discovery_rate_pct_std != 100) {
+    if (Rules.tech_discovery_rate_pct_std != 100) {
         discovery_rate = 100 * discovery_rate
-            / static_cast<int>(Rules->tech_discovery_rate_pct_std);
+            / static_cast<int>(Rules.tech_discovery_rate_pct_std);
     }
     if (Players[faction_id].rule_techcost != 100) {
         discovery_rate = discovery_rate * Players[faction_id].rule_techcost / 100;

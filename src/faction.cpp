@@ -170,8 +170,8 @@ Return Value: Is always contact enabled? true/false
 Status: Complete
 */
 BOOL __cdecl auto_contact() {
-    return (IsMultiplayerNet && Rules->tgl_human_always_contact_net) ? true
-        : IsMultiplayerPBEM && Rules->tgl_humans_always_contact_pbem;
+    return (IsMultiplayerNet && Rules.tgl_human_always_contact_net) ? true
+        : IsMultiplayerPBEM && Rules.tgl_humans_always_contact_pbem;
 }
 
 /*
