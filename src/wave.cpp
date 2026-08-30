@@ -900,7 +900,7 @@ int Wave::play() {
     int result = 0;
     if (group_slot_ < 0x10) {
         if (static_cast<uint8_t>(
-                WaveDeviceGlobal->is_group_disabled(group_slot_))) {
+                WaveDeviceGlobal.is_group_disabled(group_slot_))) {
             return 0x14;
         }
         if (flags_54_ & 0x10) {
@@ -964,7 +964,7 @@ int Wave::load() {
         return 8;
     }
     if (!device_) {
-        if (!*WaveDeviceReleaseGuard) {
+        if (!WaveDeviceReleaseGuard) {
             return 1;
         }
         const int created = (WaveDeviceCreateSlot())(&device_, fname, 1);
@@ -1045,7 +1045,7 @@ int Wave::reload() {
         return 8;
     }
     if (!device_) {
-        if (!*WaveDeviceReleaseGuard) {
+        if (!WaveDeviceReleaseGuard) {
             return 1;
         }
         const int created = (WaveDeviceCreateSlot())(&device_, fname, 1);
@@ -1110,7 +1110,7 @@ int Wave::dyna_load(char *fname) {
     if (device_) {
         return 0xC;
     }
-    if (!*WaveDeviceReleaseGuard) {
+    if (!WaveDeviceReleaseGuard) {
         return 1;
     }
     const int created = (WaveDeviceCreateSlot())(&device_, fname, 1);
@@ -1169,7 +1169,7 @@ Status: Complete
 int Wave::load(const char *fname) {
     int attribs = 0;
     if (!device_) {
-        if (!*WaveDeviceReleaseGuard) {
+        if (!WaveDeviceReleaseGuard) {
             return 1;
         }
         const int created = (WaveDeviceCreateSlot())(&device_, fname, 1);
@@ -1378,7 +1378,7 @@ void Wave::init(char *group_id, unsigned long flags) {
     memset(&flags_54_, 0, 4);
     if (streaming) {
         flags_54_ |= 2;
-        if (!device_ && *WaveDeviceReleaseGuard) {
+        if (!device_ && WaveDeviceReleaseGuard) {
             const int created = (WaveDeviceCreateSlot())(&device_, resolved, 1);
             if (!created) {
                 // The device vtable is captured HERE, before the wave's own
@@ -1511,7 +1511,7 @@ Wave::~Wave() {
     // original's order, and each guard re-reads memory where the original does.
     Wave volatile *const self = this;
     if (self->group_slot_ < 0x10) {
-        WaveDeviceGlobal->pull_from_group(this);
+        WaveDeviceGlobal.pull_from_group(this);
     }
     void *const block = self->fname_;
     if (block) {
@@ -1552,7 +1552,7 @@ Wave::~Wave() {
     }
     void *const device = self->device_;
     if (device) {
-        if (*WaveDeviceReleaseGuard) {
+        if (WaveDeviceReleaseGuard) {
             (WaveDeviceReleaseSlot())(device);
         }
         self->device_ = nullptr;

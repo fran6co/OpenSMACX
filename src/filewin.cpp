@@ -24,8 +24,15 @@
 static const uint32_t EditBoxPrimaryVtable = 0x0066A038;
 static const uint32_t EditBoxBufferVtable = 0x0066A030;
 
-// The default file-name suffix appended to field_531_ at construction.
-static char *const FileWinTextTableDefault = (char *)0x00697118;
+// The default file-name suffix appended to field_531_ at construction - REAL
+// STORAGE seeded from the image's own .data bytes (image_data.py, 0x00697118:
+// 2e 00 00 00 - a "." entry in the dword-slotted text table that continues
+// with the second ".", "LISTBOX" and "jackal.pcx" further on). It was
+// `static char *const FileWinTextTableDefault = (char *)0x00697118`, pointing
+// at the image's mapped-in data; the array carries the bytes instead. strcat
+// reads up to the first NUL either way, and the `push offset` folds to the
+// same instruction, the displacement relocated.
+static const char FileWinTextTableDefault[4] = {'.', 0, 0, 0};  // 0x00697118
 
 /*
 Purpose: Compose a FileWin from four member subobjects (two FlatButtons, an
@@ -224,13 +231,17 @@ Status: Complete
 static const char kFileWinSection[] = "FILEWIN";  // 0x006971CC
 static const char kFileWinTextName[] = "jackal";  // 0x006971D4
 // 0x009B90A8 - the loaded file's text buffer: init_class stages text_get()'s
-// string into it through mem_get, and close_class frees it once.
-static int *const s_filewin_text_ptr = (int *)0x009B90A8;
+// string into it through mem_get, and close_class frees it once. THE OBJECT,
+// not the `static int *const s_filewin_text_ptr = (int *)0x009B90A8` binding:
+// the slot itself is real storage now, a pointer-sized object seeded zero
+// like the image's, and every `*s_filewin_text_ptr` read/write through the
+// binding becomes a read/write of the object at the same folded addresses.
+static void *s_filewin_text_ptr = nullptr;  // 0x009B90A8
 
 int __cdecl FileWin::init_class() {
-    if (*s_filewin_text_ptr != 0) {
-        free(reinterpret_cast<void *>(*s_filewin_text_ptr));
-        *s_filewin_text_ptr = 0;
+    if (s_filewin_text_ptr != nullptr) {
+        free(s_filewin_text_ptr);
+        s_filewin_text_ptr = nullptr;
     }
     if (text_open(const_cast<char *>(kFileWinTextName),
                   const_cast<char *>(kFileWinSection)) != 0) {
@@ -240,16 +251,16 @@ int __cdecl FileWin::init_class() {
     if (str == 0) {
         return 1;
     }
-    if (*s_filewin_text_ptr != 0) {
-        free(reinterpret_cast<void *>(*s_filewin_text_ptr));
-        *s_filewin_text_ptr = 0;
+    if (s_filewin_text_ptr != nullptr) {
+        free(s_filewin_text_ptr);
+        s_filewin_text_ptr = nullptr;
     }
-    *s_filewin_text_ptr = reinterpret_cast<int>(mem_get(strlen(str) + 1));
-    if (*s_filewin_text_ptr == 0) {
+    s_filewin_text_ptr = mem_get(strlen(str) + 1);
+    if (s_filewin_text_ptr == nullptr) {
         return 4;
     }
-    *reinterpret_cast<char *>(*s_filewin_text_ptr) = 0;
-    strcat(reinterpret_cast<char *>(*s_filewin_text_ptr), str);
+    static_cast<char *>(s_filewin_text_ptr)[0] = 0;
+    strcat(reinterpret_cast<char *>(s_filewin_text_ptr), str);
     return 0;
 }
 
@@ -326,9 +337,9 @@ Return Value: n/a
 Status: Complete
 */
 void FileWin::close_class() {
-    void *value = *reinterpret_cast<void **>(s_filewin_text_ptr);
+    void *value = s_filewin_text_ptr;
     if (value) {
         free(value);
-        *s_filewin_text_ptr = 0;
+        s_filewin_text_ptr = nullptr;
     }
 }

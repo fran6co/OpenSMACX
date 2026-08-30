@@ -188,12 +188,17 @@ void *__fastcall wave_scalar_dtor_redirect(Wave *self, void *,
 typedef int (OriginalObject::*func_wave_device_pull_from_group)(Wave *wave);
 typedef void(__cdecl func_wave_device_release)(void *device);
 extern func_wave_device_pull_from_group WaveDevicePullFromGroup;
-// TYPED, not `void *`: it is the process Wave_Device at 0x0090D978 -
-// the same object init_thunks.cpp calls `g_WAVE_DEVICE` - and the call
-// sites in wave.cpp reach its methods by name.
-Wave_Device *const WaveDeviceGlobal = (Wave_Device *)0x0090D978;
+// The process Wave_Device and its release-hook guard are REAL OBJECTS - the
+// device defined in wave_device.cpp (it was `Wave_Device *const
+// WaveDeviceGlobal = (Wave_Device *)0x0090D978` there and a `g_WAVE_DEVICE`
+// object beside it; the object now carries the public name), the guard an
+// int defined in wave_device.cpp (it was `int *const WaveDeviceReleaseGuard
+// = (int *)0x0090DB7C`). Both named terranx.exe data that is unmapped in a
+// standalone build. Every `WaveDeviceGlobal->` receiver and every
+// `*WaveDeviceReleaseGuard` read keeps its folded form - the immediates and
+// disp32s become the same instructions against relocated symbols.
 inline func_wave_device_release *&WaveDeviceReleaseSlot() { return *reinterpret_cast<func_wave_device_release **>(0x0090DB28); }
-int *const WaveDeviceReleaseGuard = (int *)0x0090DB7C;
+extern int WaveDeviceReleaseGuard;  // 0x0090DB7C
 inline Wave *&WaveChainHead() { return *reinterpret_cast<Wave **>(0x0090DB20); }
 inline Wave *&WaveChainTail() { return *reinterpret_cast<Wave **>(0x0090DB1C); }
 

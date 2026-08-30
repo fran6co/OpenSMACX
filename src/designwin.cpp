@@ -294,6 +294,14 @@ void DesignWin::close() {
 // startup, and the matching destructors close them at exit. Addresses of
 // the ones documented individually live beside their definitions.
 Wave g_DESIGNWIN_WAVE;  // 0x0071F240
+
+// The process-wide design window, 0x0071F2B0 in the image - REAL STORAGE,
+// not the `Win *const TutWinDesWindow` binding that named terranx.exe data
+// (see tutwin.h). The image's dynamic initializer at 0x00432850 constructs
+// it at its fixed address before WinMain; DesignWin's constructor here is
+// the empty inline the tree models, so this object is zero storage the
+// game's own init populates, exactly as the image leaves it.
+DesignWin TutWinDesWindow;  // 0x0071F2B0
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are
 // constructed before WinMain by the CRT's dynamic-initializer walk

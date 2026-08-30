@@ -343,7 +343,7 @@ Ambience::~Ambience() {
         operator delete(fname_);
     }
     fname_ = nullptr;
-    if (device_ && *WaveDeviceReleaseGuard) {
+    if (device_ && WaveDeviceReleaseGuard) {
         (WaveDeviceReleaseSlot())(device_);
     }
     device_ = nullptr;

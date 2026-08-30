@@ -178,3 +178,11 @@ void StatusWin::redraw() {
 void __fastcall status_win_redraw_redirect(StatusWin *self, void *) {
     self->redraw();
 }
+
+// The process-wide status window, 0x008C5568 in the image - REAL STORAGE, not
+// the `StatusWin *const ConsoleStatusWin` binding that named terranx.exe data
+// (see console.h). The image's dynamic initializer at 0x004B3FA0 runs the
+// real StatusWin constructor against it and registers the deleting destructor
+// with atexit; here the same recovered constructor runs through this build's
+// own startup and the destructor closes it at exit.
+StatusWin ConsoleStatusWin;  // 0x008C5568

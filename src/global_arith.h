@@ -72,7 +72,11 @@ int32_t *const GlobalSlot008578C4 = (int32_t *)0x008578C4;
 int32_t *const GlobalSlot008578C8 = (int32_t *)0x008578C8;
 int32_t *const GlobalSlot008578CC = (int32_t *)0x008578CC;
 int32_t *const GlobalSlot008578D0 = (int32_t *)0x008578D0;
-int32_t *const GlobalSlot009B3A54 = (int32_t *)0x009B3A54;
+// 0x009B3A54 is a real object now - buffer.cpp's BlitSourceBits, the first
+// slot of the blit descriptor - not a slot binding. global_arith_005d8360
+// zeroes it: `BlitSourceBits = 0` folds to the image's
+// `mov dword ptr [0x9b3a54], 0`, displacement relocated.
+extern int BlitSourceBits;
 
 void __fastcall global_arith_0044c870_redirect(void *self, void *);
 void __fastcall global_arith_0048d550_redirect(void *self, void *);

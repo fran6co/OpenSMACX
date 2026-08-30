@@ -17,8 +17,11 @@
  */
 #pragma once
 
+#include "basewin.h"
+#include "designwin.h"
 #include "original_seam.h"
 #include "popup.h"
+#include "socialwin.h"
 #include "win.h"
 
  /*
@@ -110,14 +113,33 @@ static_assert(sizeof(TutWin) == 0x53D8,
 extern uint32_t TutWinShownFlag;
 
 
-// The fixed window iface_rect centres onto, at 0x007AE820.
-Win *const TutWinIfaceWindow = (Win *)0x007AE820;
-// The fixed window base_rect centres onto, at 0x006A7628.
-Win *const TutWinBaseWindow = (Win *)0x006A7628;
-// The fixed window soc_rect centres onto, at 0x008A6270.
-Win *const TutWinSocWindow = (Win *)0x008A6270;
-// The fixed window des_rect centres onto, at 0x0071F2B0.
-Win *const TutWinDesWindow = (Win *)0x0071F2B0;
+// THE FIXED WINDOWS THE FOUR rect HELPERS CENTRE ONTO ARE REAL OBJECTS.
+// They were `Win *const TutWinXxxWindow = (Win *)0x00...` bindings naming
+// terranx.exe data that is unmapped in a standalone build; every call read
+// the receiver as the image's own `mov ecx, 0x...` immediate.
+//
+// - 0x007AE820, the iface window, is MainInterface - the MainInterfaceGlobal
+//   object mapwin.cpp already defines at that address. Uses name it directly.
+// - 0x006A7628, the base window, is the process-wide BaseWin. The image's
+//   ??__E at 0x004083B0 runs `mov ecx, 0x6a7628; call BaseWin::BaseWin` and
+//   registers the deleting destructor with atexit - a CRT-constructed global,
+//   which is what the object below is. Defined in basewin.cpp.
+// - 0x008A6270, the soc window, is the process-wide SocialWin (?social_select
+//   inits and closes it as one). Its ??__E at 0x004AE9B0 constructs it the
+//   same way. Defined in socialwin.cpp.
+// - 0x0071F2B0, the des window, is the process-wide DesignWin (desktop_close
+//   closes it through DesignWin::close; the ??__E at 0x00432850 constructs
+//   it). Defined in designwin.cpp.
+//
+// The objects keep every folded access: the receiver `mov ecx, 0x...`
+// immediates become the same instruction against a relocated symbol, and
+// `->` becomes `.`. 0x006A7628/0x008A6270/0x0071F2B0 are Win subobjects at
+// each class's own front (Win is the first, non-virtual, base of the
+// GraphicWin chain all three derive from), so client_to_screen/is_visible
+// receivers stay the object address itself.
+extern BaseWin TutWinBaseWindow;    // 0x006A7628
+extern SocialWin TutWinSocWindow;   // 0x008A6270
+extern DesignWin TutWinDesWindow;   // 0x0071F2B0
 
 
 // The shared tail of the four do_* helpers: 0x004BDFE0, still original.

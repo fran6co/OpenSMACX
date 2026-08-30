@@ -24,6 +24,7 @@
 #include "game.h"
 #include "general.h"
 #include "map.h"
+#include "mapwin.h"  // MainInterfaceGlobal
 #include "random.h"
 #include "strings.h"
 #include "technology.h"
@@ -1559,14 +1560,14 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
     for (i = 0; i < MaxTerrainNum; i++) {
         // excludes: Fungus (removal), Aquifer, Raise Land, Lower Land, Level Terrain
         if (Terraforming[i].bit) {
-            MainInterfaceVar->set_bubble_text(j++ + 17,
+            MainInterfaceGlobal.set_bubble_text(j++ + 17,
                 StringTable.get((int)Terraforming[i].name)); // 17-31
         }
     }
-    MainInterfaceVar->set_bubble_text(32, StringTable.get((int)Natural[LM_JUNGLE].name_short));
-    MainInterfaceVar->set_bubble_text(33, StringTable.get((int)Natural[LM_DUNES].name_short));
-    MainInterfaceVar->set_bubble_text(34, StringTable.get((int)Natural[LM_URANIUM].name_short));
-    MainInterfaceVar->set_bubble_text(35, StringTable.get((int)Natural[LM_GEOTHERMAL].name_short));
+    MainInterfaceGlobal.set_bubble_text(32, StringTable.get((int)Natural[LM_JUNGLE].name_short));
+    MainInterfaceGlobal.set_bubble_text(33, StringTable.get((int)Natural[LM_DUNES].name_short));
+    MainInterfaceGlobal.set_bubble_text(34, StringTable.get((int)Natural[LM_URANIUM].name_short));
+    MainInterfaceGlobal.set_bubble_text(35, StringTable.get((int)Natural[LM_GEOTHERMAL].name_short));
     return false;
 }
 

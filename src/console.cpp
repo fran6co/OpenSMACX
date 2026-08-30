@@ -35,6 +35,7 @@
 #include "time.h"
 #include "texture.h"
 #include "vector_teardown.h"
+#include "veh.h"  // Vehs - the group table is the Vehs[i].state run
 #include <cstring>
 
 // The element dtors for Console's managed arrays, spelled for real against
@@ -265,7 +266,7 @@ Return Value: n/a
 Status: Complete
 */
 void Console::set_preferences() {
-    ConsolePrefWin->PrefWin::display(0);
+    ConsolePrefWin.PrefWin::display(0);
 }
 
 /*
@@ -281,7 +282,7 @@ Return Value: n/a
 Status: Complete
 */
 void Console::set_auto_preferences() {
-    ConsolePrefWin->PrefWin::display(3);
+    ConsolePrefWin.PrefWin::display(3);
 }
 
 /*
@@ -297,7 +298,7 @@ Return Value: n/a
 Status: Complete
 */
 void Console::set_base_preferences() {
-    ConsolePrefWin->PrefWin::display(2);
+    ConsolePrefWin.PrefWin::display(2);
 }
 
 /*
@@ -313,7 +314,7 @@ Return Value: n/a
 Status: Complete
 */
 void Console::set_audiovisual() {
-    ConsolePrefWin->PrefWin::display(4);
+    ConsolePrefWin.PrefWin::display(4);
 }
 
 /*
@@ -329,7 +330,7 @@ Return Value: n/a
 Status: Complete
 */
 void Console::set_map_display() {
-    ConsolePrefWin->PrefWin::display(5);
+    ConsolePrefWin.PrefWin::display(5);
 }
 
 
@@ -360,7 +361,11 @@ void Console::clear_group() {
     std::memcpy(reinterpret_cast<uint8_t *>(this) + 0x23D1C, &zero, sizeof(zero));
     const int32_t count = *ConsoleGroupCount;
     for (int32_t index = 0; index < count; ++index) {
-        uint8_t *const entry = ConsoleGroupTable + index * 0x34;
+        // 0x0095282C is Vehs + 4: the group table is the state dword of every
+        // Veh record (see console.h), so the walk is an offset of Vehs, not a
+        // separate object.
+        uint8_t *const entry =
+            reinterpret_cast<uint8_t *>(&Vehs[index].state);
         uint32_t value;
         std::memcpy(&value, entry, sizeof(value));
         value &= 0xF7FFFFFFu;
@@ -409,7 +414,7 @@ Return Value: n/a
 Status: Complete
 */
 void Console::set_adv_preferences() {
-    ConsolePrefWin->PrefWin::display(1);
+    ConsolePrefWin.PrefWin::display(1);
 }
 
 /*
@@ -464,9 +469,9 @@ a1 are therefore equivalent by construction.
 void Console::update_data(int a1) {
     // 0x00514883 mov eax,[ebp+8] / 0x00514886 mov ecx,0x7ad2a0 /
     // 0x0051488B push eax / 0x0051488C call 0x458900.
-    reinterpret_cast<InfoWin *>(ConsoleInfoWin)->change(a1);
+    ConsoleInfoWin.change(a1);
     // 0x00514891 mov ecx,0x8c5568 / 0x00514896 call 0x4b9ea0.
-    ConsoleStatusWin->StatusWin::redraw();
+    ConsoleStatusWin.StatusWin::redraw();
     // 0x0051489B mov ecx,[0x7d3c3c] - a load, not an address-of - then
     // 0x005148A1 call 0x46fb10. The slot is read here, never cached.
     console_map_win()->main_caption();
@@ -506,7 +511,7 @@ void Console::cursor_next(int x_coord, int y_coord) {
             x_coord += 1;
         }
     }
-    ConsoleStatusWin->set_loc(x_coord, y_coord);
+    ConsoleStatusWin.set_loc(x_coord, y_coord);
     int idx = CursorLastIndex;
     if (x_coord == CursorLastX[idx]) {
         if (y_coord == CursorLastY[idx]) {
@@ -636,7 +641,7 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
             // 0x009156B0, NOT on `this`. Every call site happens to enter focus
             // with the same object, but the constant is in the instruction
             // stream and is transcribed as one.
-            ConsoleGlobal->cursor_next(x_coord, y_coord);
+            ConsoleGlobal.cursor_next(x_coord, y_coord);
             // 0x0051092B reloads `this`, 0x0051092E reads the survey-overlay
             // latch. Read AFTER the call, do NOT hoist: this comes from `this`
             // while cursor_next was handed ConsoleGlobal, and cursor_next
@@ -866,3 +871,14 @@ void Console::close() {
 
 // ====================
 Time g_CONSOLE_TIMER;
+
+// ===== The console domain's fixed windows, REAL OBJECTS at their image
+// addresses (0x008578D8, 0x007AD2A0, 0x009156B0 - see console.h). The image's
+// ??__E dynamic initializers construct the InfoWin and the Console's
+// neighbours at their fixed addresses before WinMain (measured: `mov ecx,
+// 0x7ad2a0; call InfoWin::InfoWin` at 0x004562C0 with an atexit thunk);
+// PrefWin and Console carry no constructor in this tree, so those two are
+// the zero storage the image leaves until its own init fills them.
+PrefWin ConsolePrefWin;   // 0x008578D8
+InfoWin ConsoleInfoWin;   // 0x007AD2A0
+Console ConsoleGlobal;    // 0x009156B0

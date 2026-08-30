@@ -110,7 +110,7 @@ Verification note: client_to_screen is entered on the FIXED window at 0x007AE820
 void TutWin::iface_rect(RECT *rect, int *x, int *y) {
     *x = rect->left + (rect->right - rect->left) / 2;
     *y = rect->top + (rect->bottom - rect->top) / 2;
-    TutWinIfaceWindow->client_to_screen(x, y);
+    MainInterfaceGlobal.client_to_screen(x, y);
 }
 
 
@@ -137,7 +137,7 @@ void TutWin::base_rect(RECT *rect, int *x, int *y) {
     // (round-toward-zero) for each half, not a rounding bit-trick.
     *x = rect->left + (rect->right - rect->left) / 2;
     *y = rect->top + (rect->bottom - rect->top) / 2;
-    TutWinBaseWindow->client_to_screen(x, y);
+    TutWinBaseWindow.client_to_screen(x, y);
 }
 
 
@@ -164,7 +164,7 @@ void TutWin::soc_rect(RECT *rect, int *x, int *y) {
     // (round-toward-zero) for each half, not a rounding bit-trick.
     *x = rect->left + (rect->right - rect->left) / 2;
     *y = rect->top + (rect->bottom - rect->top) / 2;
-    TutWinSocWindow->client_to_screen(x, y);
+    TutWinSocWindow.client_to_screen(x, y);
 }
 
 
@@ -191,7 +191,7 @@ void TutWin::des_rect(RECT *rect, int *x, int *y) {
     // (round-toward-zero) for each half, not a rounding bit-trick.
     *x = rect->left + (rect->right - rect->left) / 2;
     *y = rect->top + (rect->bottom - rect->top) / 2;
-    TutWinDesWindow->client_to_screen(x, y);
+    TutWinDesWindow.client_to_screen(x, y);
 }
 
 
@@ -232,7 +232,7 @@ void TutWin::do_base(RECT *rect, const char *text, int flag) {
     // (round-toward-zero) for each half, not a rounding bit-trick.
     int x = rect->left + (rect->right - rect->left) / 2;
     int y = rect->top + (rect->bottom - rect->top) / 2;
-    TutWinBaseWindow->client_to_screen(&x, &y);
+    TutWinBaseWindow.client_to_screen(&x, &y);
 
     uint8_t *const primary = reinterpret_cast<uint8_t *>(MapWinTable[0]);
     void *window;
@@ -277,7 +277,7 @@ void TutWin::do_iface(RECT *rect, const char *text, int flag) {
     // (round-toward-zero) for each half, not a rounding bit-trick.
     int x = rect->left + (rect->right - rect->left) / 2;
     int y = rect->top + (rect->bottom - rect->top) / 2;
-    TutWinIfaceWindow->client_to_screen(&x, &y);
+    MainInterfaceGlobal.client_to_screen(&x, &y);
 
     uint8_t *const primary = reinterpret_cast<uint8_t *>(MapWinTable[0]);
     void *window;
@@ -322,7 +322,7 @@ void TutWin::do_soc(RECT *rect, const char *text, int flag) {
     // (round-toward-zero) for each half, not a rounding bit-trick.
     int x = rect->left + (rect->right - rect->left) / 2;
     int y = rect->top + (rect->bottom - rect->top) / 2;
-    TutWinSocWindow->client_to_screen(&x, &y);
+    TutWinSocWindow.client_to_screen(&x, &y);
 
     uint8_t *const primary = reinterpret_cast<uint8_t *>(MapWinTable[0]);
     void *window;
@@ -367,7 +367,7 @@ void TutWin::do_des(RECT *rect, const char *text, int flag) {
     // (round-toward-zero) for each half, not a rounding bit-trick.
     int x = rect->left + (rect->right - rect->left) / 2;
     int y = rect->top + (rect->bottom - rect->top) / 2;
-    TutWinDesWindow->client_to_screen(&x, &y);
+    TutWinDesWindow.client_to_screen(&x, &y);
 
     uint8_t *const primary = reinterpret_cast<uint8_t *>(MapWinTable[0]);
     void *window;

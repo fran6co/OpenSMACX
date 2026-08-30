@@ -24,6 +24,8 @@ class StatusWin;
 
 class PrefWin;
 
+class InfoWin;
+
  /*
   * Console class
   *
@@ -227,14 +229,26 @@ static_assert(sizeof(Console) == 0x247A8, "Console layout must match terranx.exe
 
 // All five preference openers drive the one PrefWin the game keeps at a fixed
 // address, opening it to a different page. PrefWin::display is not recovered.
-PrefWin *const ConsolePrefWin = (PrefWin *)0x008578D8;
+// THE OBJECT, at 0x008578D8 in the image - REAL STORAGE, defined in
+// console.cpp. It was `PrefWin *const ConsolePrefWin = (PrefWin *)0x008578D8`
+// naming terranx.exe data that is unmapped in a standalone build. PrefWin has
+// no constructor in this tree (an opaque layout), so the object is the zero
+// storage the image leaves until its own init fills it, and every
+// `ConsolePrefWin->PrefWin::display(n)` receiver keeps its folded
+// `mov ecx, imm32` form, the displacement relocated.
+extern PrefWin ConsolePrefWin;  // 0x008578D8
 
 
 // clear_group masks a bit in each entry of a group table the game keeps at a
 // fixed address, counted by another fixed-address field; both are rebindable
 // so tests drive them against a local table.
+//
+// THE GROUP TABLE IS NOT SEPARATE STORAGE: 0x0095282C is Vehs + 4 - the
+// `state` field of Vehs[0], veh.cpp's Veh array (0x00952828, 0x34 stride).
+// `ConsoleGroupTable + index * 0x34` is `&Vehs[index].state`, and the bit
+// clear_group drops (0x08000000) is VSTATE_UNK_8000000 in that state dword.
+// clear_group walks it as an offset of Vehs now; no second object exists.
 int32_t *const ConsoleGroupCount = (int32_t *)0x009A64C8;
-uint8_t *const ConsoleGroupTable = (uint8_t *)0x0095282C;
 
 
 // edit_lock consults the Scroll Lock key through the game's imported
@@ -261,8 +275,15 @@ inline func_get_key_state *&ConsoleEditKeyStateSlot() { return *reinterpret_cast
 // through the runtime slot at 0x00669328, and GraphicWin::soft_update - so it
 // is reached through a rebindable seam, exactly as ListBox reaches
 // Dialog::close.
-void *const ConsoleInfoWin = (void *)0x007AD2A0;      // 0x007AD2A0, the process-wide InfoWin
-StatusWin *const ConsoleStatusWin = (StatusWin *)0x008C5568;    // 0x008C5568, the process-wide StatusWin
+// THE OBJECTS, defined in console.cpp and statuswin.cpp - REAL STORAGE, not
+// the `void *const` / `StatusWin *const` bindings that named terranx.exe
+// data. The image's ??__E dynamic initializers construct both at their fixed
+// addresses before WinMain (`mov ecx, 0x7ad2a0; call InfoWin::InfoWin` at
+// 0x004562C0, `mov ecx, 0x8c5568; call StatusWin::StatusWin` at 0x004B3FA0,
+// each registering the deleting destructor with atexit), which is what the
+// real objects do through this build's own startup.
+extern InfoWin ConsoleInfoWin;    // 0x007AD2A0, the process-wide InfoWin
+extern StatusWin ConsoleStatusWin;  // 0x008C5568, the process-wide StatusWin
 // AN LVALUE AT A FIXED ADDRESS. The MapWin POINTER lives at 0x007D3C3C and
 // the image reads it with one absolute `mov ecx, [0x7d3c3c]`; spelled
 // `void **const` it took two loads - the constant, then the pointer.
@@ -300,7 +321,15 @@ typedef void(__cdecl func_console_flush_input)(void);
 // a second binding, and it caught this one.
 // 0x005FD120, defined in src/console.cpp.
 void __cdecl flush_input();
-Console *const ConsoleGlobal = (Console *)0x009156B0;  // 0x009156B0, the process-wide Console
+// THE OBJECT, at 0x009156B0 in the image - REAL STORAGE, defined in
+// console.cpp. It was `Console *const ConsoleGlobal = (Console *)0x009156B0`
+// naming terranx.exe data that is unmapped in a standalone build. Console's
+// constructor here is the empty inline the tree models, so the object is the
+// zero storage the image leaves until its own construct() fills it. Every
+// `ConsoleGlobal->` receiver keeps its folded `mov ecx, imm32` form, the
+// displacement relocated; body text that READS the console's address (the
+// vbtable walk in close_opening) now takes `&ConsoleGlobal`.
+extern Console ConsoleGlobal;  // 0x009156B0, the process-wide Console
 
 // Console::cursor_next's own last-position cache: the CURRENT index and the
 // two coordinate arrays it indexes, distinct from the per-object ring buffer

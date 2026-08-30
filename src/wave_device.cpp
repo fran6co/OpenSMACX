@@ -1573,7 +1573,21 @@ Wave_Device::~Wave_Device() {
 }
 
 // ====================
-Wave_Device g_WAVE_DEVICE;
+// The process wave device, 0x0090D978 in the image - REAL STORAGE carrying
+// the public name wave.h's consumers read. It was `Wave_Device g_WAVE_DEVICE`
+// beside the `Wave_Device *const WaveDeviceGlobal = (Wave_Device *)0x0090D978`
+// binding in wave.h naming terranx.exe data that is unmapped in a standalone
+// build; the object and the binding were the same address, so the object now
+// carries the public name and every `WaveDeviceGlobal->` call site reaches it
+// directly, the folded `mov ecx, imm32` receivers relocated.
+Wave_Device WaveDeviceGlobal;  // 0x0090D978
+
+// The release-hook guard, 0x0090DB7C in the image: init_sound zeroes it when
+// the device fails to come up and sets it once the hook is live, and the
+// wave teardown paths run the release slot only while it reads nonzero. Was
+// `int *const WaveDeviceReleaseGuard = (int *)0x0090DB7C` (wave.h) and a
+// `g_0090db7c` static in sound.cpp - the same terranx.exe dword twice.
+int WaveDeviceReleaseGuard;  // 0x0090DB7C
 
 // Slot 2 of Wave_Device's image vftable: a bare `ret` stub at 0x00404280.
 void Wave_Device::unk_slot2() {}

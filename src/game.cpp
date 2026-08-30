@@ -31,6 +31,7 @@
 #include "map.h"
 #include "main.h"  // CommandLineText
 #include "mapwin.h" // draw_tile, mapwin_system_shutdown
+#include "hypothesis_layouts.h"  // MultiWin, for MultiWindow
 #include "netdaemon.h"  // NetDaemonNet
 #include "statuswin.h"  // StatusWin::close
 #include "strings.h"  // StringTable
@@ -871,11 +872,21 @@ char SaveGameFileName[0x104];  // 0x0093AA0C
 char SaveNameBuffer[0x104];    // 0x009B2078
 
 // The window the loop paints colour 9 over and hides while the game boots,
-// showing it again for a PBEM session. A fixed-address object the image names
-// with `mov ecx, 0x937118`; its class is not recovered - the artifacts reach
-// it as a GraphicWin (fill) and a Win (show/hide), which is what this binding
-// says. Namespace-scope `const`, so VC6 folds it to the image's immediate.
-GraphicWin *const CoverWindow = (GraphicWin *)0x00937118;
+// showing it again for a PBEM session - REAL STORAGE, not the
+// `GraphicWin *const CoverWindow = (GraphicWin *)0x00937118` binding that
+// named terranx.exe data, unmapped in a standalone build. Its class is not
+// recovered - the artifacts reach it as a GraphicWin (fill) and a Win
+// (show/hide), which is what this object's type says. The image names it
+// with `mov ecx, 0x937118` immediates; the object keeps that fold, the
+// displacement relocated. time.cpp's go_reset hides it by name too (its
+// go_cover_window() helper is retired).
+GraphicWin CoverWindow;  // 0x00937118
+
+// The multiplayer window - REAL STORAGE at the image's 0x007FD648, not the
+// `GraphicWin *const MultiWindow` binding (see game.h). Its class is
+// MultiWin, and nothing constructs it before the game's own init does, so
+// the object is the zero storage the image leaves until then.
+MultiWin MultiWindow;  // 0x007FD648
 
 // 0x00689218 - the DirectPlay application GUID the lobby check registers the
 // session under, bytes read off the image. The trailing words spell "DEST".
@@ -940,7 +951,7 @@ void __cdecl control_game() {
     WorldClimateSkipTerrainClear = 1;
     ExitTurnLoop = 0;
     IsMultiplayerNet = 0;
-    lobby_status = NetDaemonNet->Net::check_for_lobby(CommandLineText,
+    lobby_status = NetDaemonNet.Net::check_for_lobby(CommandLineText,
                                                       const_cast<_GUID *>(&LobbyAppGuid), 3, 9);
     get_key_state = GetAsyncKeyState;
 
@@ -983,7 +994,7 @@ void __cdecl control_game() {
             if (g_WAVE_GENERAL.Wave::is_playing() != 0) {
                 g_WAVE_GENERAL.Sound::fade(2000);
             }
-            ConsoleGlobal->Win::hide();
+            ConsoleGlobal.Win::hide();
             do_all_draws();
             strcpy(SaveNameBuffer, SaveGameFileName);
             filefind_set_alternative(SaveNameBuffer);
@@ -1019,11 +1030,11 @@ void __cdecl control_game() {
         lobby_status = 0;
 
         if (IsMultiplayerPBEM != 0) {
-            CoverWindow->fill(0);
-            CoverWindow->Win::show(0);
+            CoverWindow.fill(0);
+            CoverWindow.Win::show(0);
         } else {
-            CoverWindow->fill(9);
-            CoverWindow->Win::hide();
+            CoverWindow.fill(9);
+            CoverWindow.Win::hide();
         }
         if (desktop_init(ControlTurnPhase == 0) != 0) {
             goto close_opening;
@@ -1078,11 +1089,6 @@ inline WorldWin *world_climate_window() {
     return (WorldWin *)0x008E9F60;
 }
 
-// The multiplayer window the desktop tears down second to last. The
-// recovered artifacts (0050ef10, 0045d170, 0045ca40) reach it as a MultiWin;
-// every call this body makes on it is GraphicWin::close.
-GraphicWin *const MultiWindow = (GraphicWin *)0x007FD648;
-
 /*
 Purpose: Tear the desktop down at the end of each main-loop pass.
 // ORIGINAL: 0x0058EFF0 ?desktop_close@@YAXXZ 0x0058EFF0-0x0058F031 FILE BYTE_EXACT
@@ -1092,25 +1098,29 @@ Purpose: Tear the desktop down at the end of each main-loop pass.
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00408710 0x0043C1A0 0x004710E0 0x004B9F80 0x005D4E40
-// LEVER: byte-exact on promotion. The tree's existing header bindings
-//   (TutWinDesWindow, TutWinBaseWindow, ConsoleStatusWin, TutWinIfaceWindow)
-//   fold each receiver to `mov ecx, imm32`; the casts to DesignWin/BaseWin
-//   keep the opaque-object idiom the artifacts prove; `Win::hide` is
-//   qualified to keep the slot-2 virtual a direct tail `jmp`, and
-//   `GraphicWin::close` on the WorldWin is qualified so a later WorldWin
-//   declaration cannot steal the call from the direct E8 the image has. WorldClimateWorldWin is map.cpp-internal, hence the by-value
-//   world_climate_window() helper - same fold, no second binding name.
+// LEVER: byte-exact on promotion. The fixed windows are REAL OBJECTS now
+//   (TutWinDesWindow, TutWinBaseWindow in their domain .cpps; ConsoleStatusWin
+//   in statuswin.cpp; MainInterfaceGlobal in mapwin.cpp for TutWinIfaceWindow)
+//   and still fold each receiver to `mov ecx, imm32`, the displacement
+//   relocated; `Win::hide` is qualified to keep the slot-2 virtual a direct
+//   tail `jmp`, and `GraphicWin::close` on the WorldWin and on MultiWindow's
+//   front is qualified so a later base-class declaration cannot steal the
+//   call from the direct E8 the image has. WorldClimateWorldWin is
+//   map.cpp-internal, hence the by-value world_climate_window() helper -
+//   same fold, no second binding name.
 Return Value: n/a
 Status: Complete
 */
 void __cdecl desktop_close() {
-    reinterpret_cast<DesignWin *>(TutWinDesWindow)->close();
-    reinterpret_cast<BaseWin *>(TutWinBaseWindow)->close();
+    TutWinDesWindow.close();
+    TutWinBaseWindow.close();
     mapwin_system_shutdown();
-    ConsoleStatusWin->close();
+    ConsoleStatusWin.close();
     world_climate_window()->GraphicWin::close();
-    MultiWindow->close();
-    TutWinIfaceWindow->Win::hide();
+    // The MultiWin object's GraphicWin front - the image closes that base
+    // directly (`call 0x5d4e40` on `mov ecx, 0x7fd648`).
+    reinterpret_cast<GraphicWin *>(&MultiWindow)->close();
+    MainInterfaceGlobal.Win::hide();
 }
 
 /*
@@ -1140,14 +1150,25 @@ Purpose: Leave the opening path: publish the Console's GraphicWin virtual
 //   has no definition anywhere, so the shape cannot link from this tree.
 //   The explicit walk below is the closest linking form: value, guard,
 //   vbtable slot 1 through the fixed address.
+// LEVER: ConsoleGlobal is the REAL object now (console.cpp), and both reads
+//   of the walk take `&ConsoleGlobal` - the relocated symbol address the
+//   TRIED above asked for. Measured 1/15 (was 0/15 through the binding): the
+//   image's opening `mov eax, 0x9156b0` now matches. What is left is
+//   register naming on the guard copy - ours emits `mov ecx, eax; test ecx,
+//   ecx` where the image tests eax in place and re-adds the immediate -
+//   plus the tail dispatch's register choice. Unmeasured ideas stop here;
+//   the body is unclaimed and the shape is the image's.
 Return Value: n/a
 Status: Complete
 */
 void __cdecl close_opening() {
-    int console_window = reinterpret_cast<int>(ConsoleGlobal);
+    // ConsoleGlobal is the REAL Console object now (console.cpp), so both
+    // reads below are its own relocated address - the `mov eax, 0x9156b0`
+    // immediate the image opens with, then the absolute vbtable reload.
+    int console_window = reinterpret_cast<int>(&ConsoleGlobal);
     if (console_window != 0) {
         console_window += reinterpret_cast<int *>(
-            *reinterpret_cast<int **>(0x009156B0))[1];
+            *reinterpret_cast<int **>(&ConsoleGlobal))[1];
     }
     GraphicWin *opening = opening_window();
     BasePopDefaultField322C = console_window;
@@ -1203,16 +1224,16 @@ Status: Complete
 */
 int __cdecl game_reload(int mode, int reload) {
     if (mode != 0) {
-        reinterpret_cast<DesignWin *>(TutWinDesWindow)->close();
-        reinterpret_cast<BaseWin *>(TutWinBaseWindow)->close();
+        TutWinDesWindow.close();
+        TutWinBaseWindow.close();
         mapwin_system_shutdown();
-        ConsoleStatusWin->close();
+        ConsoleStatusWin.close();
         // The world-climate window, spelled as the literal rather than through
         // world_climate_window(): this body's best flag set is /Ob0, where the
         // helper is a real call the image does not make.
         reinterpret_cast<WorldWin *>(0x008E9F60)->GraphicWin::close();
-        MultiWindow->close();
-        TutWinIfaceWindow->Win::hide();
+        reinterpret_cast<GraphicWin *>(&MultiWindow)->close();
+        MainInterfaceGlobal.Win::hide();
     }
     stop_timers();
     labels_shutdown();

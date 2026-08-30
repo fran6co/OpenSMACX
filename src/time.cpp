@@ -47,15 +47,9 @@ int TurnRedrawPending;  // 0x00703DE0
 // PlanWin::on_redraw is a pending-body forwarder that faults on entry
 // before anything dereferences the receiver.
 static PlanWin *const LineTimerPlanWindow = (PlanWin *)0x00856DC0;
-// The MultiWin the turn timer redraws (`mov ecx, 0x7fd648`). game.cpp binds
-// the same address as its GraphicWin front for desktop_close.
-// LEFT AS A BINDING, measured 2026-08-29: no ??__E in the image's
-// initializer table constructs 0x007FD648 either, and `~MultiWin` is a
-// pending_bodies forwarder that faults on entry - a real global would
-// register it for exit and crash a teardown the image never performs. The
-// only use (turn_timer, BYTE_EXACT) folds to the image's own immediate
-// receiver, and MultiWin::draw faults on entry before touching it.
-static MultiWin *const TurnTimerMultiWindow = (MultiWin *)0x007FD648;
+// The MultiWin the turn timer redraws (`mov ecx, 0x7fd648`) is the REAL
+// object MultiWindow in game.cpp; game.cpp closes its GraphicWin front for
+// desktop_close - the same fixed address, one object.
 
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are
@@ -564,7 +558,7 @@ void __cdecl go_reset() {
                 WinPointerOwner4 = nullptr;
             }
             window->vslot_63();
-            ConsoleStatusWin->set_title(0);
+            ConsoleStatusWin.set_title(0);
         }
         ++index;
         cursor += 4;
@@ -611,7 +605,7 @@ void __cdecl go_reset() {
             WinPointerOwner4 = nullptr;
         }
         (*slot)->vslot_63();
-        ConsoleStatusWin->set_title(0);
+        ConsoleStatusWin.set_title(0);
         MapWinSelectedSlot = -1;
     }
 }
@@ -637,10 +631,10 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl blink2_timer(int a1) {
-    if (TutWinBaseWindow->is_visible() != 0) {
+    if (TutWinBaseWindow.is_visible() != 0) {
         return;
     }
-    if (TutWinSocWindow->is_visible() != 0) {
+    if (TutWinSocWindow.is_visible() != 0) {
         return;
     }
     if (TimerHoldFlag != 0) {
@@ -653,7 +647,7 @@ void __cdecl blink2_timer(int a1) {
         return;
     }
     ++Blink2Counter;
-    MainInterfaceVar->redraw_complete();
+    MainInterfaceGlobal.redraw_complete();
 }
 
 /*
@@ -684,10 +678,10 @@ void __cdecl line_timer(int a1) {
     if (TimerHoldFlag != 0) {
         return;
     }
-    if (TutWinBaseWindow->is_visible() != 0) {
+    if (TutWinBaseWindow.is_visible() != 0) {
         return;
     }
-    if (TutWinSocWindow->is_visible() != 0) {
+    if (TutWinSocWindow.is_visible() != 0) {
         return;
     }
     --PlanLineCounter;
@@ -723,7 +717,7 @@ Purpose: Network turn timer tick: pulse the turn window while a multiplayer
 // ORIGINAL: 0x0050EF10 ?turn_timer@@YAXH@Z 0x0050EF10-0x0050EF42 BYTE_EXACT
 // LEVER: byte-exact on promotion from the 0050ef10 archive unit. Three
 //   nested `if`s, not chained conditions - the image tests each in turn with
-//   its own jump to the shared `ret`. TurnTimerMultiWindow->draw(1) is the
+//   its own jump to the shared `ret`. MultiWindow.draw(1) is the
 //   last statement, so VC6 tails it after loading the receiver immediate.
 // size      50 bytes
 // prototype
@@ -740,7 +734,7 @@ void __cdecl turn_timer(int a1) {
             if (TurnRedrawPending != 0) {
                 TurnRedrawWindow->redraw();
             }
-            TurnTimerMultiWindow->draw(1);
+            MultiWindow.draw(1);
         }
     }
 }

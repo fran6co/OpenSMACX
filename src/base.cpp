@@ -257,7 +257,7 @@ int __cdecl base_at(int x, int y) {
         GetAsyncKeyState(VK_CONTROL);
     }
     rebuild_base_bits();
-    ConsoleGlobal->focus(x, y, NetDaemonLocalFaction);
+    ConsoleGlobal.focus(x, y, NetDaemonLocalFaction);
     return -1;
 }
 

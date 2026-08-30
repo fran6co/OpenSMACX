@@ -152,9 +152,16 @@ class ReportIf : public SubInterface {
 
 // The energy report's third list box is a PROCESS-WIDE object at a fixed
 // address, not a subobject: close_energy closes it alongside the two this
-// object owns. Named here so the address appears once, the way
-// ConsoleGlobal does for 0x009156B0, and so a fixture can repoint it.
-ListBox *const ReportIfEnergyListBox = (ListBox *)0x0087BE84;  // 0x0087BE84
+// object owns. THE OBJECT, at 0x0087BE84 in the image - REAL STORAGE,
+// defined in reportif.cpp. It was
+// `ListBox *const ReportIfEnergyListBox = (ListBox *)0x0087BE84` naming
+// terranx.exe data that is unmapped in a standalone build. The image
+// constructs it inside ReportIf's own init (nothing at the ??__E layer
+// touches 0x0087BE84), and ListBox's constructor here is the empty inline
+// the tree models, so the object is the zero storage the image leaves until
+// then. The `close()` receiver keeps its folded form, the displacement
+// relocated.
+extern ListBox ReportIfEnergyListBox;  // 0x0087BE84
 
 
 // ReportIf::bl_anim is not recovered, so the body at the end of reportif.cpp
