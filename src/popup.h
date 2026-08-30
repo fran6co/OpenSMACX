@@ -48,7 +48,7 @@ class Popup : public BasePop {
   // popup allocator hook and never calls it from there, and it has to be a
   // real symbol for that store to be the `mov eax, OFFSET` the image emits
   // rather than a load of a constant a header made up.
-  static int alloc();
+  static BasePop *alloc();
 
   Popup();
   // DECLARED, NOT DEFINED EMPTY. The real destructor is 0x00406C00 and ends
