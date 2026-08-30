@@ -73,8 +73,8 @@ class RadioButton : public virtual GraphicWin, public virtual Dialog {
   void on_left_down(int a1, int a2);
 
  public:
-  // 0x0060E1E0, a pending_bodies forwarder.
-  void on_left_double_click(int a1, int a2);
+  // 0x0060E1E0, recovered in radiobutton.cpp.
+  void on_left_double_click(int x_coord, int y_coord);
 
  public:
   // 0x0060E020, a pending_bodies forwarder.

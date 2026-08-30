@@ -778,3 +778,77 @@ void SpriteBoxList::close() {
         *reinterpret_cast<int *>(self + 0x14) = 0;
     }
 }
+
+// ====================
+// Window-event handlers
+// ====================
+
+/*
+Purpose: A left press on a sprite box runs the hit test over its Spot table
+         and, when a spot took the hit, notifies the object's stored click
+         callback with the spot position; a true return then posts WM_KEYDOWN
+         (VK_RETURN) to the main window. Entered on the GraphicWin-subobject
+         adjusted pointer (the family's thunk convention), so the Spot table
+         sits 0x7C below `this` and the callback 0x20 below - the Spot is the
+         constructor's placement-new at the object's own +0x10.
+// ORIGINAL: 0x00611150 ?on_left_down@SpriteBox@@QAEXHH@Z 0x00611150-0x006111A0 BYTE_EXACT
+// size      80 bytes
+// prototype void (__thiscall ?on_left_down@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)
+// callers   1   call targets   1
+// kind      game
+// calls     0x005FAB00
+// indirect  0x0061117D 0x00611196
+//
+// PROMOTED out of the archived verification unit for this address. The import thunk
+// 0x00669314 is PostMessageA (win.cpp: on_sys_key landed the same call by
+// name), and 0x009B7B28 is HandleMain; both compile to the same indirect
+// forms the image emits.
+// keeps it live in a register where the image re-reads [this-0x20] for the
+// call - the nested ifs and the two separate reads are the image's own.
+Return Value: n/a
+Status: Complete
+*/
+void SpriteBox::on_left_down(int x_coord, int y_coord) {
+    char *self = reinterpret_cast<char *>(this);
+    Spot *spot = reinterpret_cast<Spot *>(self - 0x7c);
+    if (spot->check(x_coord, y_coord, &y_coord, 0) != -1) {
+        typedef int (__cdecl *sprite_box_click)(int);
+        sprite_box_click callback =
+            *reinterpret_cast<sprite_box_click *>(self - 0x20);
+        if (callback != 0) {
+            if (callback(y_coord) != 0) {
+                PostMessageA(HandleMain, 0x100, 0xd, 0);
+            }
+        }
+    }
+}
+
+/*
+Purpose: The double-click twin of on_left_down: hit test, notify the stored
+         double-click callback, post WM_KEYDOWN (VK_RETURN) on a true return.
+         Entered on the same adjusted pointer; its callback sits 0xC below
+         `this`.
+// ORIGINAL: 0x006112E0 ?on_left_double_click@SpriteBox@@QAEXHH@Z 0x006112E0-0x00611330 BYTE_EXACT
+// size      80 bytes
+// prototype void (__thiscall ?on_left_double_click@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)
+// callers   1   call targets   1
+// kind      game
+// calls     0x005FAB00
+// indirect  0x0061130D 0x00611326
+//
+// PROMOTED out of the archived verification unit for this address; same two bindings as
+// on_left_down above.
+Return Value: n/a
+Status: Complete
+*/
+void SpriteBox::on_left_double_click(int x_coord, int y_coord) {
+    char *self = reinterpret_cast<char *>(this);
+    Spot *spot = reinterpret_cast<Spot *>(self - 0x7c);
+    if (spot->check(x_coord, y_coord, &y_coord, 0) != -1) {
+        typedef int (__cdecl *sprite_box_click)(int);
+        sprite_box_click click = *reinterpret_cast<sprite_box_click *>(self - 0xc);
+        if (click != 0 && click(y_coord) != 0) {
+            PostMessageA(HandleMain, 0x100, 0xd, 0);
+        }
+    }
+}

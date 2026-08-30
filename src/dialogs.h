@@ -44,8 +44,9 @@ class Dialogs : public ListBox,
   void pass_dialog_focus();
 
  public:
-  // 0x00613260, a pending_bodies forwarder.
-  int on_scroll_delete(void * a1);
+  // 0x00613260, recovered in dialogs.cpp. The catalogued name spells the
+  // parameter Scroll *; this tree spells it void * - the bytes are the same.
+  int on_scroll_delete(void *scroll);
 
  public:
   // 0x00613220, a pending_bodies forwarder.
@@ -72,8 +73,8 @@ class Dialogs : public ListBox,
   void on_left_double_click(int a1, int a2);
 
  public:
-  // 0x00612E80, a pending_bodies forwarder.
-  void on_left_click(int a1, int a2);
+  // 0x00612E80, recovered in dialogs.cpp.
+  void on_left_click(int a, int b);
 
  public:
   // 0x00612CC0, a pending_bodies forwarder.

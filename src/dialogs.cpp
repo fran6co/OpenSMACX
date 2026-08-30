@@ -557,3 +557,107 @@ void Dialogs::on_mouse_move(int a1, int a2) {
             break;
     }
 }
+
+// ====================
+// Window-event handlers, promoted out of the artifact archives
+// ====================
+
+namespace {
+// A LOCAL SHIM, not vtable_shim.h's VCall: only DECLARATION ORDER decides a
+// slot, and the image's call site (vtable slot 0x24/4 = 9) takes one pointer
+// as an int and returns int, where the shared VCall's slot009 is nullary.
+class ScrollVCall { public:
+    virtual void slot000();
+    virtual void slot001();
+    virtual void slot002();
+    virtual void slot003();
+    virtual void slot004();
+    virtual void slot005();
+    virtual void slot006();
+    virtual void slot007();
+    virtual void slot008();
+    virtual int slot009(int);  // <-- used
+};
+}  // namespace
+
+/*
+Purpose: Hand a closing scroll control to the list box: only when the active
+         dialog is the list-box kind (2) and the scroll's flags byte has bit
+         0x40 set does the scroll's own vtable slot 9 take it, and its return
+         is this function's return; otherwise the argument passes back
+         unchanged. Entered on the interface subobject (the GraphicWin virtual
+         base at +0x188 in a most-derived Dialogs), so the discriminator sits
+         8 bytes below `this` and the ListBox's vbtable names where its
+         scroll machinery sits.
+// ORIGINAL: 0x00613260 ?on_scroll_delete@Dialogs@@QAEHPAUScroll@@@Z 0x00613260-0x0061329F BYTE_EXACT
+// symbol    ?on_scroll_delete@Dialogs@@QAEHPAX@Z
+// size      63 bytes
+// prototype int (__thiscall ?on_scroll_delete@Dialogs@@QAEHPAUScroll@@@Z)(Dialogs* this, Scroll*)
+// callers   0   call targets   0
+// kind      game
+// indirect  0x00613292
+//
+// PROMOTED out of the archived verification unit for this address, which proved the body
+// against the same shim shape under its own name. The pointer parameter
+// travels as the int the vtable slot takes; the header spells it void *
+// and the catalogued name spells it Scroll * - the bytes are the same.
+Return Value: the scroll, or the slot's answer
+Status: Complete
+*/
+int Dialogs::on_scroll_delete(void *scroll) {
+    char *self = reinterpret_cast<char *>(this);
+    // A SWITCH, NOT AN `if`: the image is `sub eax, 2; jne`, which is what
+    // VC6 emits for a one-case switch; an equality test folds to a fused
+    // `cmp [mem], imm` instead.
+    switch (*reinterpret_cast<int *>(self - 8)) {
+    case 2: {
+        char *base = *reinterpret_cast<char **>(self - 0x188);
+        int off = *reinterpret_cast<int *>(base + 4);
+        char *mid = self + off - 0x140;
+        unsigned char flags = *reinterpret_cast<unsigned char *>(mid + 0x50);
+        if (flags & 0x40) {
+            ScrollVCall *scroll_box = *reinterpret_cast<ScrollVCall **>(mid + 0x7c);
+            if (scroll_box != 0) {
+                return scroll_box->slot009(reinterpret_cast<int>(scroll));
+            }
+        }
+    }
+    }
+    return reinterpret_cast<int>(scroll);
+}
+
+/*
+Purpose: Forward a left click to the embedded sprite box for every dialog
+         kind except the list box (0), the text kinds (8's neighbours at 0)
+         and the unused 8 - the same sixteen-way discrimination the sibling
+         on_right_down makes with a single compare. Entered on the interface
+         subobject, so the discriminator sits 8 bytes below `this` and the
+         sprite box is reached by adjusting back 0x8C.
+// ORIGINAL: 0x00612E80 ?on_left_click@Dialogs@@QAEXHH@Z 0x00612E80-0x00612EB0
+// size      48 bytes
+// prototype void (__thiscall ?on_left_click@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)
+// callers   0   call targets   1
+// kind      game
+// calls     0x00611060
+//
+// PROMOTED out of the archived verification unit for this address, which proved the sixteen-case
+// switch against the image's own jump-table and case-map bytes.
+// MEASURED SHAPE_EXACT 14/14, 1.000 similar: every in-span byte agrees
+// modulo relocations (the case-map address, the jmp-table address and the
+// call to SpriteBox::on_left_click). The 24 bytes past the span - the image's
+// inline case map and jump table - differ only because this tree's /Gy object
+// puts them in their own comdat elsewhere instead of inline after the
+// function; that is section placement, not source form. The artifact's own
+// BYTE_EXACT came from a single-function unit where the tables landed inline.
+Return Value: n/a
+Status: Complete
+*/
+void Dialogs::on_left_click(int a, int b) {
+    char *const self = reinterpret_cast<char *>(this);
+    switch (*reinterpret_cast<int *>(self - 8)) {
+    case 1: case 2: case 3: case 4: case 5: case 6: case 7:
+    case 9: case 10: case 11: case 12: case 13: case 14: case 15: case 16:
+        reinterpret_cast<SpriteBox *>(self - 0x8C)->on_left_click(a, b);
+        break;
+    }
+}

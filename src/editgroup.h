@@ -68,8 +68,19 @@ class EditGroup : public virtual GraphicWin, public virtual Dialog {
   void on_redraw();
 
  public:
-  // 0x00612670, a pending_bodies forwarder.
-  void on_dialog_focus(int a1);
+  // 0x00612670, recovered in editgroup.cpp. LONG, NOT INT - deliberately not
+  // an override of GraphicWin's on_dialog_focus: the catalogue spells this
+  // QAEX (a plain member, and its body carries no vtordisp entry adjust),
+  // while an override makes VC6 enter it 0x90 high and fold the adjustment
+  // into every displacement. The `// symbol` fact on the body records what
+  // the tree emits instead; same trick as init_class's QAAHX->SAHX.
+  void on_dialog_focus(long focus_id);
+  // The GraphicWin override itself, kept EMPTY on purpose: the image's
+  // compiler emitted its $4 vtordisp adjustor for this slot (0x006127C0,
+  // claimed in editgroup.cpp), and that thunk exists only while an int
+  // override does - dropping the override made the thunk claim UNRESOLVED.
+  // No tree code calls the empty body.
+  void on_dialog_focus(int) { ; }
 
  public:
   // 0x00611AF0, a pending_bodies forwarder.

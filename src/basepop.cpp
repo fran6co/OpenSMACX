@@ -491,7 +491,7 @@ Status: Complete
 void BasePop::set_width(int width) {
     uint8_t *const dialogs = reinterpret_cast<uint8_t *>(this) + 0x21D0;
     if (field_A14_ == 0 && (field_30A8_ & 0x400) == 0 &&
-        *BasePopScreenWidth >= 0x400) {
+        WinScreenWidth >= 0x400) {
         *reinterpret_cast<int32_t *>(
             dialogs + 0x2C +
             (*reinterpret_cast<const int32_t *const *>(dialogs))[2]) =

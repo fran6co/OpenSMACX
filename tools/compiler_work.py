@@ -151,7 +151,7 @@ HEADER_SHAPES = [
     # 155 -> 146 (2026-08-30, boot-path batch): the BasePop ctor's defaults
     # became real named globals and the windtor/amovie homings retired more
     # raw bindings.
-    ("anonymous fixed-address global", 146,
+    ("anonymous fixed-address global", 135,
      re.compile(r"\bg_00[0-9a-f]{4,6}\b"),
      "a global named by its address instead of its meaning. Name it from "
      "evidence - the image's .data value, the arithmetic identity, the "
@@ -176,10 +176,10 @@ SCAFFOLD_CEILINGS = {
     # 234 -> 231 (2026-08-30, caviar-voxel batch): the three seams Caviar's
     # homing had declared for sub_639390 / sub_63ad60 / sub_63f9b0 retired -
     # all three bodies now live at the foot of src/caviar.cpp.
-    "PENDING_BODY forwarders": 222,
+    "PENDING_BODY forwarders": 214,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
-    "artifact files (recovered/)": 1314,
+    "artifact files (recovered/)": 1306,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).

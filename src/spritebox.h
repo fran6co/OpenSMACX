@@ -36,12 +36,12 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
   void on_redraw();
 
  public:
-  // 0x00611150, a pending_bodies forwarder.
-  void on_left_down(int a1, int a2);
+  // 0x00611150, recovered in spritebox.cpp.
+  void on_left_down(int x_coord, int y_coord);
 
  public:
-  // 0x006112E0, a pending_bodies forwarder.
-  void on_left_double_click(int a1, int a2);
+  // 0x006112E0, recovered in spritebox.cpp.
+  void on_left_double_click(int x_coord, int y_coord);
 
  public:
   // 0x00611060, a pending_bodies forwarder.

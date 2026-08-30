@@ -223,12 +223,14 @@ Status: Complete
 // is where the boot's `return 6` out of jackal_init_real came from.
 static const char kFileWinSection[] = "FILEWIN";  // 0x006971CC
 static const char kFileWinTextName[] = "jackal";  // 0x006971D4
-static int *const g_009b90a8 = (int *)0x009B90A8;
+// 0x009B90A8 - the loaded file's text buffer: init_class stages text_get()'s
+// string into it through mem_get, and close_class frees it once.
+static int *const s_filewin_text_ptr = (int *)0x009B90A8;
 
 int __cdecl FileWin::init_class() {
-    if (*g_009b90a8 != 0) {
-        free(reinterpret_cast<void *>(*g_009b90a8));
-        *g_009b90a8 = 0;
+    if (*s_filewin_text_ptr != 0) {
+        free(reinterpret_cast<void *>(*s_filewin_text_ptr));
+        *s_filewin_text_ptr = 0;
     }
     if (text_open(const_cast<char *>(kFileWinTextName),
                   const_cast<char *>(kFileWinSection)) != 0) {
@@ -238,16 +240,16 @@ int __cdecl FileWin::init_class() {
     if (str == 0) {
         return 1;
     }
-    if (*g_009b90a8 != 0) {
-        free(reinterpret_cast<void *>(*g_009b90a8));
-        *g_009b90a8 = 0;
+    if (*s_filewin_text_ptr != 0) {
+        free(reinterpret_cast<void *>(*s_filewin_text_ptr));
+        *s_filewin_text_ptr = 0;
     }
-    *g_009b90a8 = reinterpret_cast<int>(mem_get(strlen(str) + 1));
-    if (*g_009b90a8 == 0) {
+    *s_filewin_text_ptr = reinterpret_cast<int>(mem_get(strlen(str) + 1));
+    if (*s_filewin_text_ptr == 0) {
         return 4;
     }
-    *reinterpret_cast<char *>(*g_009b90a8) = 0;
-    strcat(reinterpret_cast<char *>(*g_009b90a8), str);
+    *reinterpret_cast<char *>(*s_filewin_text_ptr) = 0;
+    strcat(reinterpret_cast<char *>(*s_filewin_text_ptr), str);
     return 0;
 }
 
@@ -301,3 +303,32 @@ Purpose: Adjust the receiver from the thunk1 subobject back to ListBox and
 // kind      game
 Status: Complete
 */
+
+/*
+Purpose: Free the file text the init_class staged, once. Reads no state of
+         its own - the object is irrelevant to the body - and is called by
+         jackal_close with no receiver set up at all.
+// ORIGINAL: 0x00614E30 ?close_class@FileWin@@QAAXXZ 0x00614E30-0x00614E4D BYTE_EXACT
+// symbol    ?close_class@FileWin@@QAAXXZ
+// size      29 bytes
+// callers   1   call targets   1
+// kind      game
+// calls     0x00644EF2
+//
+// PROMOTED out of the archived verification unit for this address. The free is the same
+// CRT callee init_class above reaches with the same `free` spelling; the
+// freed pointer is read once and the null test jumps to the plain return.
+// jackal_close still reaches this through the free forwarder
+// filewin_close_class (src/pending_bodies.cpp), which now forwards to the
+// member - the image's call there sets up no receiver, and a member call
+// cannot spell that.
+Return Value: n/a
+Status: Complete
+*/
+void FileWin::close_class() {
+    void *value = *reinterpret_cast<void **>(s_filewin_text_ptr);
+    if (value) {
+        free(value);
+        *s_filewin_text_ptr = 0;
+    }
+}

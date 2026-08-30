@@ -713,7 +713,7 @@ extern HINSTANCE WinInstance;
 // 0x009B7B1C and 0x009B7B20. The screen metrics, read once from
 // GetSystemMetrics in `Win::init_class` and then from 166 and 51 other
 // sites in the image. `basepop.cpp` binds the first of the two separately
-// as `BasePopScreenWidth`.
+// as `WinScreenWidth`.
 extern int WinScreenWidth;
 extern int WinScreenHeight;
 

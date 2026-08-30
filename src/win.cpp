@@ -30,7 +30,7 @@ typedef signed char int8;  // a scaffold spelling the artifacts use
 #include "sounddevice.h"
 #include "menu.h"
 #include "popup.h"   // pop_caption_title, for DDInit::report_error
-#include "basepop.h"  // BasePopScreenWidth, for Win::set_bubble_text
+#include "basepop.h"  // Win::set_bubble_text's popup interfaces
 #include <ddraw.h>  // IDirectDrawSurface::GetDC / ReleaseDC in the hdc pair
 
 // 0x009B6F08 in the image - the buffer Win draws into.
@@ -5194,7 +5194,7 @@ static char *const WinBubblePrefixGlyph = reinterpret_cast<char *>(0x00696E00);
 // symbol    ?set_bubble_text@Win@@QAEXPADPAUtagRECT@@@Z
 // LEVER: `WinBubbleActive`/`WinBubbleCompanion`/`WinBubbleFont`/`WinBubbleRect`
 // (already declared, `WinBubbleCompanion` retyped `Win **` so `this` needs no
-// cast) and `BasePopScreenWidth`, in place of the eight `g_`-named bindings.
+// cast) and `WinScreenWidth`, in place of the eight `g_`-named bindings.
 // `strchr` called directly - the scaffold's function-pointer cast of it
 // serves no purpose `char *strchr(const char *, int)` does not already.
 // size      299 bytes
@@ -5295,8 +5295,8 @@ void Win::set_bubble_text(char * text, RECT * rect) {
     int x = ((rect->right - max_width) + rect->left) / 2;
     if (x < 0) {
         x = 0;
-    } else if (*BasePopScreenWidth < x + max_width) {
-        x = *BasePopScreenWidth - max_width;
+    } else if (WinScreenWidth < x + max_width) {
+        x = WinScreenWidth - max_width;
     }
     WinBubbleRect.left = x;
     WinBubbleRect.top = y;

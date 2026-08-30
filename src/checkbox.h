@@ -101,8 +101,8 @@ class CheckBox : public virtual GraphicWin, public virtual Dialog {
   void on_left_down(int a1, int a2);
 
  public:
-  // 0x0060FA80, a pending_bodies forwarder.
-  void on_left_double_click(int a1, int a2);
+  // 0x0060FA80, recovered in checkbox.cpp.
+  void on_left_double_click(int x_coord, int y_coord);
 
  public:
   // 0x0060F8B0, a pending_bodies forwarder.

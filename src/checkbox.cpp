@@ -19,6 +19,7 @@
 #include "original_seam.h"
 #include "checkbox.h"
 #include "vtable_shim.h"
+#include "win.h"  // WinCallbackWindow
 
 uint32_t CheckBoxDefault1;  // 0x00697104
 uint32_t CheckBoxDefault2;  // 0x00697108
@@ -573,4 +574,40 @@ Status: Complete
 void __cdecl teardown_0060fd60() {
     g_CHECKBOX_SPRITE_1.close();
     g_CHECKBOX_SPRITE_2.close();
+}
+
+/*
+Purpose: A double click on a check box copies the selected row marker to the
+         current-win pointer and calls the object's stored callback with the
+         group's selected id. Entered on the GraphicWin-subobject adjusted
+         pointer (the family's thunk convention), so the vbtable sits 0x1C
+         below `this` and the callback 0x10 below; the marker and the
+         callback argument are located through that vbtable at run time,
+         since this class is used as a subobject of larger windows.
+// ORIGINAL: 0x0060FA80 ?on_left_double_click@CheckBox@@QAEXHH@Z 0x0060FA80-0x0060FAAD BYTE_EXACT
+// size      45 bytes
+// prototype void (__thiscall ?on_left_double_click@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)
+// callers   1   call targets   0
+// kind      game
+// indirect  0x0060FAA7
+//
+// PROMOTED out of the archived verification unit for this address, which proved the body against
+// the fixed-address form of the current-win global; this tree's real
+// WinCallbackWindow object is the same variable.
+Return Value: n/a
+Status: Complete
+*/
+void CheckBox::on_left_double_click(int x_coord, int y_coord) {
+    char *self = reinterpret_cast<char *>(this);
+    int graphicwin_disp = (*reinterpret_cast<int **>(self - 0x1c))[1];
+    WinCallbackWindow = reinterpret_cast<Win *>(
+        *reinterpret_cast<int *>(self + graphicwin_disp + 0xa8));
+
+    int callback = *reinterpret_cast<int *>(self - 0x10);
+    if (callback != 0) {
+        int dialog_disp = (*reinterpret_cast<int **>(self - 0x1c))[2];
+        int arg = *reinterpret_cast<int *>(self + dialog_disp + 0xd0);
+        typedef int(__cdecl *check_click_callback)(int);
+        reinterpret_cast<check_click_callback>(callback)(arg);
+    }
 }
