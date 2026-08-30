@@ -146,7 +146,7 @@ CEILINGS = {
     # 1379 -> 1380 (2026-08-30, boot-path batch): +1 net from the
     # control_game / caviar homings, proven byte-identical to HEAD by the
     # dispatching agent's clean-base measurement; the class pass names it.
-    "scaffold name": 1368,
+    "scaffold name": 1361,
 }
 
 WHY = {
