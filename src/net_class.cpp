@@ -79,8 +79,6 @@ static void *const g_0066eaf8 = reinterpret_cast<void *>(0x0066EAF8);
 static void *const g_0066eafc = reinterpret_cast<void *>(0x0066EAFC);
 static void *const g_0066eb04 = reinterpret_cast<void *>(0x0066EB04);
 static void *const g_00670dcc = reinterpret_cast<void *>(0x00670DCC);
-static int32_t *const g_009b3374 = reinterpret_cast<int32_t *>(0x009B3374);
-static int32_t *const g_009be600 = reinterpret_cast<int32_t *>(0x009BE600);
 
 /*
 Purpose: Begin voice capture: disable the wave device, start the wave-in
@@ -254,6 +252,8 @@ still opaque storage (see the class declaration), so the rest reaches its
 sub-objects by raw offset, the same way this tree's other unmodelled
 `??0`/`??1` pairs do.
 */
+int32_t net_unk_9be600;  // the image's 0x009BE600 .bss slot, zero at load
+
 Net::Net() {
     char *const self = reinterpret_cast<char *>(this);
 
@@ -261,8 +261,8 @@ Net::Net() {
 
     *reinterpret_cast<void **>(&field_B4_) = g_00670dcc;
     *reinterpret_cast<void **>(&field_CC_) = g_006693ac;
-    field_D0_ = *g_009b3374;
-    *g_009b3374 = 0;
+    field_D0_ = StringVirtualBaseOwner;
+    StringVirtualBaseOwner = 0;
 
     *reinterpret_cast<void **>(&field_B0_) = g_0066eafc;
     {
@@ -282,13 +282,13 @@ Net::Net() {
 
     *reinterpret_cast<void **>(&field_700_) = g_00669430;
     *reinterpret_cast<void **>(&field_758_) = g_006693ac;
-    field_75C_ = *g_009b3374;
-    *g_009b3374 = 0;
+    field_75C_ = StringVirtualBaseOwner;
+    StringVirtualBaseOwner = 0;
 
     *reinterpret_cast<void **>(&field_730_) = g_00669424;
     *reinterpret_cast<void **>(&field_750_) = g_006693ac;
-    field_754_ = *g_009b3374;
-    *g_009b3374 = 0;
+    field_754_ = StringVirtualBaseOwner;
+    StringVirtualBaseOwner = 0;
 
     {
         int32_t const vtbl = field_730_;
@@ -319,7 +319,7 @@ Net::Net() {
     *WinNetBuffer = this;
     field_DC_ = 0;
     field_E0_ = 0x4e20;
-    *g_009be600 = 0;
+    net_unk_9be600 = 0;
     field_6DC_ = 0;
     field_760_ = 0;
     field_764_ = 0;
@@ -427,10 +427,10 @@ Net::~Net() {
     sub_401be0(sub1 - 8, nullptr);
 
     *reinterpret_cast<void **>(sub1) = g_006693ac;
-    *g_009b3374 = *reinterpret_cast<int32_t *>(sub1 + 4);
+    StringVirtualBaseOwner = *reinterpret_cast<int32_t *>(sub1 + 4);
 
     *reinterpret_cast<void **>(&field_758_) = g_006693ac;
-    *g_009b3374 = field_75C_;
+    StringVirtualBaseOwner = field_75C_;
 
     reinterpret_cast<NetFifo *>(self + 0x130)->~NetFifo();
     reinterpret_cast<NetFifo *>(self + 0x10c)->~NetFifo();
@@ -479,7 +479,7 @@ Net::~Net() {
     }
     *reinterpret_cast<int32_t *>(vec + 0x14) = 0;
 
-    *g_009b3374 = field_D0_;
+    StringVirtualBaseOwner = field_D0_;
     *reinterpret_cast<void **>(&field_CC_) = g_006693ac;
 
     // NO EXPLICIT `voice_tx_.VoiceTx::~VoiceTx()`. This is a real destructor
