@@ -42,7 +42,7 @@ SHAPES = [
     # transcription hand-installs the two vtables the IMAGE itself installs -
     # a stack GraphicWin dressed as an AlphaMovie (0x669458/0x669450); the
     # STRUCTURE finding is banked under the marker.
-    ("vtable", 29,
+    ("vtable", 28,
      re.compile(r"""(?x)
         (?: \w+ \s* \[ \s* 0x[0-9A-Fa-f]+ \s* / \s* 4 \s* \]
           | \* \s* reinterpret_cast \s* < [^>]*? \* \s* > \s* \([^)]*\)
@@ -151,7 +151,7 @@ HEADER_SHAPES = [
     # 155 -> 146 (2026-08-30, boot-path batch): the BasePop ctor's defaults
     # became real named globals and the windtor/amovie homings retired more
     # raw bindings.
-    ("anonymous fixed-address global", 124,
+    ("anonymous fixed-address global", 107,
      re.compile(r"\bg_00[0-9a-f]{4,6}\b"),
      "a global named by its address instead of its meaning. Name it from "
      "evidence - the image's .data value, the arithmetic identity, the "

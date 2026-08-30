@@ -241,6 +241,10 @@ class Net {
   uint8_t field_768_[0x18];  // 0x768
 };
 
+// Pinned by AlphaNet's own assert: AlphaNet = Net + data_[0xD20] = 0x14A0.
+static_assert(sizeof(Net) == 0x780, "Net is the 0x780-byte base AlphaNet pads from");
+
+
 
 // THE LIVE NET AND THE FLAG THAT GATES IT. `do_net` and `check_net` both read
 // 0x009BE608 for the object and 0x009BE600 for the enable flag, and do nothing

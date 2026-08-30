@@ -139,7 +139,7 @@ CEILINGS = {
     # cannot name what `this` points at and the pun IS the layout finding -
     # the family pass that converts these entries to real adjustor thunks
     # claims it back.
-    "raw self-access": 229,
+    "raw self-access": 228,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
