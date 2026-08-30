@@ -7,11 +7,13 @@ extern int SpyingCurrentFaction;
 extern int SpyingBaseIndex;
 uint8_t *const SpyingBaseFactionBytes = (uint8_t *)0x0097D044;  // Bases[index] + 4
 extern int SpyingObserverFaction;
-uint8_t *const SpyingFactionFlagBytes = (uint8_t *)0x00946F58;  // Factions[index] + 0
+// GONE since 2026-08-29: SpyingFactionFlagBytes bound 0x00946F58, which is
+// &Players[0].rule_flags (Players 0x00946A50 + 0x508) and bit 0x80 is
+// RFLAG_ALIEN - both uses now read Players[i].rule_flags directly, which
+// works in the standalone build where the raw address is unmapped.
 
 static const size_t SpyingStatusStride = 2099;
 static const size_t SpyingBaseStride = 0x134;
-static const size_t SpyingFactionStride = 0x59C;
 
 int __cdecl spying(int subject);
 

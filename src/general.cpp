@@ -413,7 +413,9 @@ int __cdecl parse_says(int id, LPCSTR input, int gender, int pluralality) {
     // TRIED (2026-08-29): declaring ParseStrBuffer as a real array object
     // (`extern char256 ParseStrBuffer[10]` defined in temp.cpp) - the
     // address-constant form still lowers to `add` here and in parse_say
-    // (both unchanged), so reverted. The image ITSELF lowers this same
+    // (both unchanged). LANDED anyway that same day: the pointer form wrote
+    // through unmapped image memory at runtime, and parse_num's BYTE_EXACT
+    // claim survived the conversion. The image ITSELF lowers this same
     // access as `shl edi, 8; add edi, 0x9bb5e8` in parse_string
     // (0x00625BD8), so the lea at 0x00625EFF is VC6 scheduling context,
     // not reachable by the declaration or by any dest spelling measured.

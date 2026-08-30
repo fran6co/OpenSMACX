@@ -467,30 +467,34 @@ int __cdecl x_pops_no_flags(char *caption, const char *label, int title,
                              callback);
 }
 
-// Eight fixed-address strings X_pop reaches for the mod-key check below, no
-// established identity beyond what this one function shows: two
+// Eight fixed strings X_pop reaches for the mod-key check below: two
 // filename/mode pairs it fopen/fclose-probes, two override captions/labels
 // it compares against, and two override-caption pointers it substitutes.
-// XPopModCheckString1 lives AT the address, not pointed at from it - a
-// variable holding a string pointer, read INLINE through a cast so the
-// dereference folds to one instruction rather than materialising the
-// address in a register first (the shape console_map_win() already uses).
-// string2 is used at the address level - a literal sitting right there.
+// REAL LITERALS AND SLOTS since 2026-08-29 - the raw .rdata bindings
+// (0x691B7C, 0x691C80, 0x691C8C, 0x691C90, 0x691CA4, 0x691CA8) and the
+// three pointer slots (0x691B0C, 0x691B20, 0x691B24, initialized in the
+// image to "SCRIPT", "alienIscript", "alienuscript") all pointed into
+// terranx.exe's read-only data, unmapped in the standalone build - the
+// very first X_pop call faulted reading the second compare string.
+// The three SLOT-HELD ones stay behind inline accessors reading through
+// a real slot variable, which is the one-instruction double indirection
+// the image's `mov eax, [slot]` has.
+static const char *const XPopModCheckString1Slot = "SCRIPT";
+static const char XPopModCheckString2Text[] = "SCRIPT.txt";
+static const char XPopModCheckFile1Text[] = "alienIscript.txt";
+static const char XPopModCheckMode1Text[] = "rb";
+static const char *const XPopModCheckCaption1Slot = "alienIscript";
+static const char XPopModCheckFile2Text[] = "alienuscript.txt";
+static const char XPopModCheckMode2Text[] = "rb";
+static const char *const XPopModCheckCaption2Slot = "alienuscript";
 inline LPCSTR XPopModCheckString1() {
-    return *reinterpret_cast<LPCSTR *>(0x00691B0C);
+    return XPopModCheckString1Slot;
 }
-LPCSTR const XPopModCheckString2 = (LPCSTR)0x00691C80;
-LPCSTR const XPopModCheckFile1 = (LPCSTR)0x00691C90;
-LPCSTR const XPopModCheckMode1 = (LPCSTR)0x00691C8C;
-// Both caption substitutes are variables holding a string pointer, like
-// XPopModCheckString1 above.
 inline LPCSTR XPopModCheckCaption1() {
-    return *reinterpret_cast<LPCSTR *>(0x00691B20);
+    return XPopModCheckCaption1Slot;
 }
-LPCSTR const XPopModCheckFile2 = (LPCSTR)0x00691CA8;
-LPCSTR const XPopModCheckMode2 = (LPCSTR)0x00691CA4;
 inline LPCSTR XPopModCheckCaption2() {
-    return *reinterpret_cast<LPCSTR *>(0x00691B24);
+    return XPopModCheckCaption2Slot;
 }
 
 /*
@@ -515,11 +519,17 @@ Status: Complete
 int __cdecl X_pop(char *caption, const char *label, int a3, char *a4, int a5,
                   int (__cdecl *callback)()) {
     char *const label2 = const_cast<char *>(label);
+    // THE ALIEN FLAG, not a "spying" flag: 0x00946F58 is &Players[0].
+    // rule_flags (the old binding's own address proves it - Players sits at
+    // 0x00946A50 and rule_flags walks to +0x508), and bit 0x80 is
+    // RFLAG_ALIEN. That is why the probe files are alienIscript.txt and
+    // alienuscript.txt: only an expansion alien faction redirects these
+    // two captions.
     if (strcmp(caption, XPopModCheckString1()) == 0 ||
-        strcmp(caption, XPopModCheckString2) == 0) {
-        if ((SpyingFactionFlagBytes[LocalFaction * 0x59C] & 0x80) != 0) {
+        strcmp(caption, XPopModCheckString2Text) == 0) {
+        if ((Players[LocalFaction].rule_flags & RFLAG_ALIEN) != 0) {
             if (ExpansionEnabled != 0) {
-                FILE *const fp = fopen(XPopModCheckFile1, XPopModCheckMode1);
+                FILE *const fp = fopen(XPopModCheckFile1Text, XPopModCheckMode1Text);
                 if (fp != nullptr) {
                     fclose(fp);
                     char *const lbl = label2;
@@ -532,9 +542,9 @@ int __cdecl X_pop(char *caption, const char *label, int a3, char *a4, int a5,
             }
         } else if (ExpansionEnabled != 0 && 0 < PopupDialogFactionID &&
                   PopupDialogFactionID < 8 &&
-                  (SpyingFactionFlagBytes[PopupDialogFactionID * 0x59C] &
-                   0x80) != 0) {
-            FILE *const fp = fopen(XPopModCheckFile2, XPopModCheckMode2);
+                  (Players[PopupDialogFactionID].rule_flags &
+                   RFLAG_ALIEN) != 0) {
+            FILE *const fp = fopen(XPopModCheckFile2Text, XPopModCheckMode2Text);
             if (fp != nullptr) {
                 fclose(fp);
                 char *const lbl = label2;

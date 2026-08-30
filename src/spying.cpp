@@ -9,6 +9,7 @@
  */
 #include "stdafx.h"
 #include "spying_recovery.h"
+#include "faction.h"  // Players, RFLAG_ALIEN
 
 int SpyingCurrentFaction;  // 0x00939284
 int SpyingBaseIndex;  // 0x009A6524
@@ -53,9 +54,8 @@ int __cdecl spying(int subject) {
                                          * SpyingBaseStride] == faction)
                : 0) != 0
            || (faction == SpyingObserverFaction
-               && (SpyingFactionFlagBytes[static_cast<size_t>(subject)
-                                          * SpyingFactionStride]
-                   & 0x80U) == 0);
+               && (Players[static_cast<size_t>(subject)].rule_flags &
+                   RFLAG_ALIEN) == 0);
 }
 
 namespace {

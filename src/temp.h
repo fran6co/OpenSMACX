@@ -116,12 +116,18 @@ GraphicWin *const TurnRedrawWindow = (GraphicWin *)0x006FEC80;
 
 // testing
 typedef int *func8(LPSTR, LPSTR);
-char256 *const ParseStrBuffer = (char256 *)0x009BB5E8;
+// The four parse-string tables, REAL OBJECTS since 2026-08-29 - they were
+// bindings on 0x009BB570..0x009BB5E8, and every parse_says/parse_num call
+// wrote through them into unmapped image memory. Ten entries each, the
+// `id > 9` guard every family member enforces; the image lays them out
+// contiguously in this order (plurality, num, gender, then the 0xA00-byte
+// string buffer ending at GenderDefault's 0x009BBFEC).
+extern char256 ParseStrBuffer[10];
 
 extern int BufferStrHeight;
-int *const ParseNumTable = (int *)0x009BB598;
-int *const ParseStrPlurality = (int *)0x009BB570;
-int *const ParseStrGender = (int *)0x009BB5C0;
+extern int ParseNumTable[10];
+extern int ParseStrPlurality[10];
+extern int ParseStrGender[10];
 // The main window. AN OBJECT, for the reason in game.h on
 // ExpansionEnabled: 0x009B7B28 is zero-fill, so the pointer form carried
 // no information and cost a load at every use.
