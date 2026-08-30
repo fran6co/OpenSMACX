@@ -19,7 +19,8 @@
 
 #include "original_seam.h"
 #include "alphanet.h"
-#include "playerlock.h"  // player_locks_[8] at 0x14A0
+#include "lock.h"        // locks_ - the whole network-lock block
+#include "playerlock.h"  // its records are PlayerLocks
 
  /*
   * NetDaemon class
@@ -58,7 +59,10 @@ class NetDaemon : public AlphaNet {
 
   // Storage the image proves is here: its own methods reach 0x1BD0.
   // Extent only - this class carries no size assertion, and the bound is a floor.
-  PlayerLock player_locks_[8];  // 0x14A0, eight per-player locks (0x1C stride)
+  // THE NETWORK LOCKS - one whole Lock at 0x14A0: records_[8] are the eight
+  // per-player locks (0x14A0..0x157F) and field_E0_/E4_/E8 are the dwords at
+  // 0x1580/0x1584/0x1588.
+  Lock locks_;
 
   // THE NET LOCK TABLE, 0x158C..0x1B2C: 24 entries of 0x3C. The constructor
   // sets each entry's flag byte to 0xFF and its word at +8 to 0.
@@ -70,10 +74,16 @@ class NetDaemon : public AlphaNet {
   };
   static_assert(sizeof(LockTableEntry) == 0x3C, "lock table stride");
   LockTableEntry lock_table_[24];  // 0x158C
-  uint32_t field_1B2C_;  // 0x1B2C
-  uint32_t field_1B30_;  // 0x1B30
-  uint32_t field_1B34_;  // 0x1B34
-  uint32_t field_1B38_;  // 0x1B38
+
+  // THE LOCK-TABLE STATE - parallel to lock_table_ (each entry's state dword
+  // sits 0x5A0 past its lock-table twin, so the ctor's merged loop writes
+  // [entry + 0x5A0], [entry] and [entry + 8] per iteration). Entries e0..e2
+  // carry the named dwords the constructor clears; e3..e23 are unreached by
+  // any recovered body.
+  struct LockStateEntry {
+    uint32_t dword_[15];
+  };
+  LockStateEntry lock_state_[24];  // 0x1B2C..0x2090
   uint32_t field_1B3C_;  // 0x1B3C
   uint32_t field_1B40_;  // 0x1B40
   uint32_t field_1B44_;  // 0x1B44
@@ -107,9 +117,6 @@ class NetDaemon : public AlphaNet {
 
   // Storage the image proves is here: its own methods reach 0x1BDC.
   // Extent only - this class carries no size assertion, and the bound is a floor.
-  uint32_t field_1BD0_;  // 0x1BD0
-  uint32_t field_1BD4_;  // 0x1BD4
-  uint32_t field_1BD8_;  // 0x1BD8
 };
 
 // Net::get and NetDaemon::process_message are not recovered yet; the Net the

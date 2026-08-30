@@ -18,6 +18,7 @@
 #pragma once
 
 #include "original_seam.h"
+#include "playerlock.h"  // records_ are real PlayerLocks
 #include "squarelock.h"
 
  /*
@@ -43,18 +44,15 @@ class Lock {
   int add_lock(int slot, int flags, int x, int y);
   int lock(int slot, int flags, int a3, int a4, int a5, int a6, int a7);
 
+ public:
+  // THE EIGHT PER-PLAYER LOCKS. One PlayerLock per faction - the ctor's
+  // per-record PlayerLock::clear walk and NetDaemon's construction both
+  // reach these directly. PlayerLock's layout (flag byte + two SquareLocks,
+  // 0x1C) is this table's record, and the old private Record struct was the
+  // same bytes under another name.
+  PlayerLock records_[8];
+
  private:
-  // A SquareLock, and not a look-alike. Both are {first, second, flag} at
-  // 12 bytes, and every `Entry` this class holds is handed to
-  // `SquareLock::lock` and `SquareLock::unlock` - which the tree reached
-  // through a pointer-to-member because the types did not admit the call.
-  typedef SquareLock Entry;
-  struct Record {
-    uint8_t flag;
-    uint8_t pad[3];
-    Entry entries[2];
-  };
-  Record records_[8];
   uint32_t field_E0_;  // 0x00e0
   uint32_t field_E4_;
   uint32_t field_E8_;

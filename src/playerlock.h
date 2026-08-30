@@ -36,8 +36,7 @@ class PlayerLock {
   void unlock(int factionID);
   int active();
 
- private:
-  typedef SquareLock Entry;
+ typedef SquareLock Entry;
   uint8_t active_;
   uint8_t pad_1_[3];
   Entry entries_[2];

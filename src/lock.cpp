@@ -68,11 +68,11 @@ void Lock::clear() {
         // IMAGE ORDER: both entries' flag/second/first, THEN the record's
         // own flag byte last - not the record's flag first.
         for (int entry = 0; entry < 2; ++entry) {
-            records_[record].entries[entry].flag = 0;
-            records_[record].entries[entry].second = -1;
-            records_[record].entries[entry].first = -1;
+            records_[record].entries_[entry].flag = 0;
+            records_[record].entries_[entry].second = -1;
+            records_[record].entries_[entry].first = -1;
         }
-        records_[record].flag = 0;
+        records_[record].active_ = 0;
     }
     // reset_map()'S BODY, INLINED: `osmx calls` names zero call targets.
     // NOT CACHED: see reset_map() above.
@@ -114,7 +114,7 @@ int Lock::any_locks() {
             continue;
         }
         for (int entry = 0; entry < 2; ++entry) {
-            if (records_[index].entries[entry].flag & 1) {
+            if (records_[index].entries_[entry].flag & 1) {
                 return 1;
             }
         }
@@ -142,11 +142,11 @@ void Lock::unlock(int slot) {
         field_E0_ = 0;
         field_E4_ = 0;
     }
-    Record &record = records_[slot];
+    PlayerLock &record = records_[slot];
     for (int entry = 0; entry < 2; ++entry) {
-        record.entries[entry].unlock(slot);
+        record.entries_[entry].unlock(slot);
     }
-    record.flag = 0;
+    record.active_ = 0;
 }
 
 
@@ -205,7 +205,7 @@ int Lock::check_global_2(int owner) {
             continue;
         }
         for (int entry = 0; entry < 2; ++entry) {
-            if (records_[index].entries[entry].flag & 1) {
+            if (records_[index].entries_[entry].flag & 1) {
                 return 0;
             }
         }
@@ -242,7 +242,7 @@ void Lock::check_global() {
             continue;
         }
         for (int entry = 0; entry < 2; ++entry) {
-            if (records_[index].entries[entry].flag & 1) {
+            if (records_[index].entries_[entry].flag & 1) {
                 return;
             }
         }
@@ -269,7 +269,7 @@ Return Value: whatever SquareLock::lock returns
 Status: Complete
 */
 int Lock::add_lock(int slot, int flags, int x, int y) {
-    return records_[slot].entries[1].lock(slot, flags | 0x10, x, y);
+    return records_[slot].entries_[1].lock(slot, flags | 0x10, x, y);
 }
 
 
@@ -321,16 +321,16 @@ int Lock::lock(int slot, int flags, int a3, int a4, int a5, int a6, int a7) {
         field_E4_ = 1;
     }
 
-    Record &record = records_[slot];
+    PlayerLock &record = records_[slot];
     for (int entry = 0; entry < 2; ++entry) {
-        record.entries[entry].first = -1;
-        record.entries[entry].second = -1;
-        record.entries[entry].flag = 0;
+        record.entries_[entry].first = -1;
+        record.entries_[entry].second = -1;
+        record.entries_[entry].flag = 0;
     }
-    record.flag = 0;
+    record.active_ = 0;
 
-    if (record.entries[0].lock(slot, flags, a3, a4) == 0 &&
-        record.entries[1].lock(slot, a5, a6, a7) == 0) {
+    if (record.entries_[0].lock(slot, flags, a3, a4) == 0 &&
+        record.entries_[1].lock(slot, a5, a6, a7) == 0) {
         if (take_global && current_server() != 0 && field_E4_ != 0) {
             const uint32_t owner = field_E0_;
             for (int index = 1; index < 8; ++index) {
@@ -338,7 +338,7 @@ int Lock::lock(int slot, int flags, int a3, int a4, int a5, int a6, int a7) {
                     continue;
                 }
                 for (int entry = 0; entry < 2; ++entry) {
-                    if (records_[index].entries[entry].flag & 1) {
+                    if (records_[index].entries_[entry].flag & 1) {
                         return 0;
                     }
                 }
@@ -352,9 +352,9 @@ int Lock::lock(int slot, int flags, int a3, int a4, int a5, int a6, int a7) {
     // A square failed: unlock both entries, clear the record, and drop the
     // global lock if this slot holds it.
     for (entry = 0; entry < 2; ++entry) {
-        record.entries[entry].unlock(slot);
+        record.entries_[entry].unlock(slot);
     }
-    record.flag = 0;
+    record.active_ = 0;
     if (field_E0_ == static_cast<uint32_t>(slot)) {
         field_E4_ = 0;
         field_E0_ = 0;

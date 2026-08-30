@@ -23,6 +23,8 @@
 #include "lock.h"
 #include "playerlock.h"
 
+#include "stringstruct.h"  // StringVirtualBaseOwner - the image's 0x009B3374
+
 int NetDaemonIsMultiplayerNet;  // 0x0093F660
 int NetDaemonLocalFaction;  // 0x00939284
 
@@ -78,7 +80,6 @@ NetFifoShim::~NetFifoShim() {
     reinterpret_cast<pending>(static_cast<unsigned long>(0x006339E0))(this, nullptr);
 }
 
-static int32_t *const g_009b3374 = reinterpret_cast<int32_t *>(0x009B3374);
 
 /*
 Purpose: Build a network daemon - its AlphaNet base, then its own eight
@@ -105,56 +106,54 @@ NetDaemon::NetDaemon() : AlphaNet() {
     // Lock of the first one cleared directly - the image calls the Lock
     // version explicitly, twice (here and again after the table below).
     for (int32_t n = 0; n < 8; ++n) {
-        player_locks_[n].clear();
+        locks_.records_[n].clear();
     }
-    reinterpret_cast<Lock *>(&player_locks_[0])->clear();
+    locks_.clear();
 
     for (int32_t m = 0; m < 0x18; ++m) {
         lock_table_[m].flag_ = 0xFF;
         lock_table_[m].word_8_ = 0;
         // the per-entry scratch dword lives past the entry, at +0x5A0
-        *reinterpret_cast<uint32_t *>(
-             reinterpret_cast<char *>(&lock_table_[m]) + 0x5A0) = 0;
+        lock_state_[m].dword_[0] = 0;
     }
 
-    field_1B30_ = 0;
-    field_1B34_ = 0;
-    field_1B38_ = 0;
-    field_1B3C_ = 0;
-    field_1B60_ = 0;
-    field_1B5C_ = 0;
-    field_1B6C_ = 0;
-    field_1B68_ = 0;
-    field_1B7C_ = 0;
-    field_1BA8_ = 0;
-    field_1BA0_ = 0;
-    field_1BA4_ = 0;
-    field_1BCC_ = 0;
-    field_1BC8_ = 0;
-    field_1B50_ = 0;
-    field_1B54_ = 0;
-    field_1B58_ = 0;
-    field_1BC4_ = 0;
-    field_1BC0_ = 0;
-    field_1BB0_ = 0;
-    field_1BAC_ = 0;
-    field_1BB4_ = 0;
-    field_1B40_ = 0;
-    field_1B44_ = 0;
-    field_1BD8_ = 0;
-    field_1BD4_ = 0;
-    field_1B48_ = 0;
-    field_1B4C_ = 0;
-    field_1B78_ = 0;
+    lock_state_[0].dword_[1] = 0;
+    lock_state_[0].dword_[2] = 0;
+    lock_state_[0].dword_[3] = 0;
+    lock_state_[0].dword_[4] = 0;
+    lock_state_[0].dword_[13] = 0;
+    lock_state_[0].dword_[12] = 0;
+    lock_state_[1].dword_[1] = 0;
+    lock_state_[1].dword_[0] = 0;
+    lock_state_[1].dword_[4] = 0;
+    lock_state_[2].dword_[1] = 0;
+    lock_state_[1].dword_[14] = 0;
+    lock_state_[2].dword_[0] = 0;
+    lock_state_[2].dword_[9] = 0;
+    lock_state_[2].dword_[8] = 0;
+    lock_state_[0].dword_[9] = 0;
+    lock_state_[0].dword_[10] = 0;
+    lock_state_[0].dword_[11] = 0;
+    lock_state_[2].dword_[6] = 0;
+    lock_state_[2].dword_[5] = 0;
+    lock_state_[2].dword_[3] = 0;
+    lock_state_[2].dword_[2] = 0;
+    lock_state_[2].dword_[4] = 0;
+    lock_state_[0].dword_[5] = 0;
+    lock_state_[0].dword_[6] = 0;
+    lock_state_[2].dword_[12] = 0;
+    lock_state_[2].dword_[11] = 0;
+    lock_state_[0].dword_[7] = 0;
+    lock_state_[0].dword_[8] = 0;
+    lock_state_[1].dword_[3] = 0;
 
-    // the vptr store the compiler emits here is NetDaemon's own table
-    field_1BD0_ = 0xFF;
-    uint32_t *const zero_block = &field_1B80_;
+    // 0x1BD0 is lock_state_[2]'s eleventh dword - the ctor sets it to 0xFF.
+    lock_state_[2].dword_[11] = 0xFF;
     for (int32_t i = 0; i < 8; i++) {
-        zero_block[i] = 0;
+        lock_state_[1].dword_[5 + i] = 0;
     }
 
-    reinterpret_cast<Lock *>(&player_locks_[0])->clear();
+    locks_.clear();
     AlphaNet::close();
 }
 
@@ -209,15 +208,15 @@ NetDaemon::~NetDaemon() {
     *reinterpret_cast<int32_t *>(self + 0x1460) = 0;
     reinterpret_cast<RemoveAllShim *>(self + 0x144c)->remove_all();
     *reinterpret_cast<int32_t *>(self + 0x1460) = 0;
-    *g_009b3374 = *reinterpret_cast<int32_t *>(self + 0x1488);
+    StringVirtualBaseOwner = *reinterpret_cast<int32_t *>(self + 0x1488);
 
     Net::close();
 
     reinterpret_cast<RemoveAllShim *>(self + 0x72c)->remove_all();
     *reinterpret_cast<int32_t *>(self + 0x740) = 0;
     reinterpret_cast<Sub401be0Shim *>(self + 0x748)->run();
-    *g_009b3374 = *reinterpret_cast<int32_t *>(self + 0x754);
-    *g_009b3374 = *reinterpret_cast<int32_t *>(self + 0x75c);
+    StringVirtualBaseOwner = *reinterpret_cast<int32_t *>(self + 0x754);
+    StringVirtualBaseOwner = *reinterpret_cast<int32_t *>(self + 0x75c);
 
     reinterpret_cast<NetFifoShim *>(self + 0x130)->~NetFifoShim();
     reinterpret_cast<NetFifoShim *>(self + 0x10c)->~NetFifoShim();
@@ -225,7 +224,7 @@ NetDaemon::~NetDaemon() {
 
     reinterpret_cast<JackalVoiceRxShim *>(self + 0xb0)->~JackalVoiceRxShim();
     *reinterpret_cast<int32_t *>(self + 0xc4) = 0;
-    *g_009b3374 = *reinterpret_cast<int32_t *>(self + 0xd0);
+    StringVirtualBaseOwner = *reinterpret_cast<int32_t *>(self + 0xd0);
 
     reinterpret_cast<VoiceTx *>(self + 0x58)->~VoiceTx();
 }
