@@ -41,7 +41,9 @@ REPO = pathlib.Path(__file__).resolve().parent.parent
 # g_FONTS (font.cpp, 0x0093FC58) and TxtIndex took over TxtIndexGlobal
 # (textindex.cpp, 0x009B7D08) - the object carries the binding's public
 # name, so each pair is one name again.
-CEILING = 11
+# 11 -> 9 (2026-08-30, class-pass binding sweep): the popup wave/flag and
+# faction-art pairs consolidated onto their existing objects.
+CEILING = 9
 
 BINDING = re.compile(r"^\s*(?:static\s+)?[\w:]+[\s\*&]+const\s+(\w+)\s*=\s*"
                      r"\(?\s*\([\w:\s\*]+\)\s*0x(00[0-9A-Fa-f]{6})")
