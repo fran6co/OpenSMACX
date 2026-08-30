@@ -681,22 +681,16 @@ int Caviar::init_class() {
         if (algo_flag == 0 || 5 < algo_flag) {
             pop.start("jackal", "CAVIAR_INVALIDCPU", -1, 0, 0, 0);
 
-            // The popup's unit-name list at +0x2180, which start() filled.
-            // NOT carved into BasePop, for the same reason its header gives
-            // for the CheckBox at +0x2228: StringList derives a virtual
-            // base, so a declared member would give BasePop's constructor
-            // implicit stores the image's does not have. The offset spelling
-            // is the one the class already owns (check_box()).
-            StringList *const unit_ids = reinterpret_cast<StringList *>(
-                reinterpret_cast<uint8_t *>(&pop) + 0x2180);
+            // The popup's unit-name list, which start() filled.
+            StringList &unit_ids = pop.unit_ids_;
             StringTemp[0] = 0;
-            unit_ids->seek_pos(-1);
-            for (int i = 0; i < unit_ids->entry_count_; ++i) {
-                unit_ids->next_entry();
+            unit_ids.seek_pos(-1);
+            for (int i = 0; i < unit_ids.entry_count_; ++i) {
+                unit_ids.next_entry();
                 const char *entry_text = 0;
-                if (unit_ids->current_ != 0) {
+                if (unit_ids.current_ != 0) {
                     entry_text = reinterpret_cast<const char *const *>(
-                        unit_ids->current_entry())[1];
+                        unit_ids.current_entry())[1];
                 }
                 strcat(StringTemp, entry_text);
                 strcat(StringTemp, " ");

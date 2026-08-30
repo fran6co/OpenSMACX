@@ -1087,24 +1087,9 @@ BasePop::BasePop() {
     eax = reinterpret_cast<int>(BasePopStageTables6698C0);
     RD(edi + reinterpret_cast<int>(&field_2154_)) = eax;
 
-    field_2184_ = reinterpret_cast<int>(BasePopVbtable);
-    field_21A8_ = reinterpret_cast<int>(BasePopStageTables6693A0 + 3);
-    edi = reinterpret_cast<int>(StringAllocationHeap);
-    field_21AC_ = edi;
-    StringAllocationHeap = reinterpret_cast<Heap *>(ebx);
-    field_2180_ = esi;
-    esi = field_2184_;
-    esi = RD(esi + 4);
-    RD(esi + reinterpret_cast<int>(&field_2184_)) = edx;
-    field_2180_ = ecx;
-    ecx = field_2184_;
-    field_2188_ = ebx;
-    field_218C_ = ebx;
-    field_2190_ = ebx;
-    field_2194_ = ebx;
-    field_2198_ = ebx;
-    edx = RD(ecx + 4);
-    RD(edx + reinterpret_cast<int>(&field_2184_)) = eax;
+    // unit_ids_'s construction (vbtable, staged vtables, allocator
+    // hand-off, StringStruct zeroing) is the compiler's now, emitted from
+    // the declared StringList member - these were its hand-spelled copy.
 
 
     eax = static_cast<int>(BasePopDefaultField30A4);
