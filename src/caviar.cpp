@@ -1129,7 +1129,12 @@ void __cdecl vox_fill_colour_table(void *table, unsigned long value,
         cursor += 2;
     }
     const unsigned long tail_word = count & 1;
-    unsigned long n = count >> 1;  // dword count
+    // SIGNED, and the whole 16/8/4/2/1 cascade hangs on it: the image's
+    // stage guards are jl/jge (0x63AFDD..0x63B066), so the count is meant
+    // to go negative and stop. An unsigned spelling makes every `n >= 0`
+    // tautologically true and the 16-wide loop wraps straight past the
+    // buffer - the page fault this body produced on its first live run.
+    int n = (int)(count >> 1);  // dword count
     if (n != 0) {
         unsigned long *p = (unsigned long *)cursor;
         n -= 16;

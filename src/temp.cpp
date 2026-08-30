@@ -47,6 +47,15 @@ uint32_t UnkBitfield1;  // 0x0090D91C
 
 Filefind FilefindPath;  // 0x009B8198
 
+// The parse-string family's four tables (temp.h has the layout note):
+// plurality 0x009BB570, num 0x009BB598, gender 0x009BB5C0, and the
+// 10x256 string buffer 0x009BB5E8 - zero-initialised .data in the image,
+// which is what these plain definitions are.
+int ParseStrPlurality[10];  // 0x009BB570
+int ParseNumTable[10];      // 0x009BB598
+int ParseStrGender[10];     // 0x009BB5C0
+char256 ParseStrBuffer[10]; // 0x009BB5E8
+
 int __cdecl tester() {
     log_set_state(true);
     log_say("Start test", 0, 0, 0);

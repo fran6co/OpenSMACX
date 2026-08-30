@@ -10938,6 +10938,24 @@ void Win::pass_dialog_focus() {
 
 // ===== homed from src/unrecovered/005eb640.cpp =====
 
+/*
+Purpose: Close a window: clear it from every focus/bubble/hover slot, hide
+         it, tear down its scrollbars and children, unlink it from its
+         parent's child array or the root list, then reset the whole object
+         to its constructed state - fonts, defaults tables, caption buttons -
+         and finish with the AutoSound base's own close.
+// ORIGINAL: 0x005EB640 ?close@Win@@QAEXXZ 0x005EB640-0x005EBC8A
+// symbol    ?close@Win@@QAEXXZ
+// size      1610 bytes
+// kind      game
+// calls     0x005ECE20 0x005F7320 0x005EFD20 0x005EB640 0x00644EF2 0x0062BBF0
+// TRIED: MISMATCH since its homing, 5 instructions off - the trailing
+//        unqualified `close()` compiled as a RECURSIVE self-call (it
+//        resolves to Win::close, not the base) and the byte diff hid it;
+//        found from the running build's stack overflow. The image's last
+//        call is AutoSound::close at 0x005EBC80, `mov ecx,esi; call
+//        0x62bbf0`, now spelled qualified below.
+*/
 void Win::close() {
     Win *modal;
     Win *focusWin;
@@ -11284,7 +11302,14 @@ void Win::close() {
         buffer4_ = 0;
     }
 
-    close();
+    // THE BASE'S close, QUALIFIED. The image's last act is `mov ecx, esi;
+    // call 0x62bbf0` - AutoSound::close - while an unqualified `close()`
+    // here resolves to Win::close itself: same this, unbounded recursion,
+    // and the boot's stack-overflow death (nested exception on the signal
+    // stack, first popup teardown). Found from the running build, not the
+    // listing - the recursive E8 had compiled into the 5-instruction diff
+    // this body carried since its homing.
+    AutoSound::close();
 
 }
 
