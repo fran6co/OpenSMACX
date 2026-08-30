@@ -91,7 +91,7 @@ SHAPES = [
     # shrank, invisibly. The two regexes classify by what follows on the
     # LINE - the census is line-wise, so a lookahead cannot leak across
     # statements.
-    ("ORIGINAL() vtable-slot dispatch", 35,
+    ("ORIGINAL() vtable-slot dispatch", 34,
      re.compile(r"\bORIGINAL\((?=.*vtable\[)"),
      "reads the target out of a vtable slot by hand because the method is not "
      "declared virtual. Declare it - the compiler writes this dispatch."),
@@ -108,7 +108,7 @@ SHAPES = [
 # 10 -> 20, VCall 21 -> 23, named-pointer seam 121 -> 123 - measured
 # 2026-08-23). Same ratchet, narrower lens.
 HEADER_SHAPES = [
-    ("vtable-as-member", 5,
+    ("vtable-as-member", 4,
      re.compile(r"\b[A-Za-z_]\w*\s+vtable\w*\s*;"),
      "a vtable pointer spelled as a data member is a base class that has "
      "not been declared. Declare the base whose vfptr lives at that offset "
@@ -151,7 +151,7 @@ HEADER_SHAPES = [
     # 155 -> 146 (2026-08-30, boot-path batch): the BasePop ctor's defaults
     # became real named globals and the windtor/amovie homings retired more
     # raw bindings.
-    ("anonymous fixed-address global", 135,
+    ("anonymous fixed-address global", 133,
      re.compile(r"\bg_00[0-9a-f]{4,6}\b"),
      "a global named by its address instead of its meaning. Name it from "
      "evidence - the image's .data value, the arithmetic identity, the "
@@ -169,17 +169,17 @@ SCAFFOLD_MARKERS = ("adjustor_thunks.cpp", "deleting_thunks.cpp",
 SCAFFOLD_CEILINGS = {
     "adjustor_thunks.cpp markers": 116,
     "deleting_thunks.cpp markers": 74,
-    "delegation_thunks.cpp markers": 27,
+    "delegation_thunks.cpp markers": 26,
     "field_accessors.cpp markers": 42,
     "leaf_recoveries.cpp markers": 52,
     "nullsub_thunks.cpp markers": 56,
     # 234 -> 231 (2026-08-30, caviar-voxel batch): the three seams Caviar's
     # homing had declared for sub_639390 / sub_63ad60 / sub_63f9b0 retired -
     # all three bodies now live at the foot of src/caviar.cpp.
-    "PENDING_BODY forwarders": 214,
+    "PENDING_BODY forwarders": 213,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
-    "artifact files (recovered/)": 1306,
+    "artifact files (recovered/)": 1303,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).

@@ -67,7 +67,6 @@ int __fastcall voice_rx_stop_redirect(void *self, void *);
 int __fastcall voice_rx_unload_redirect(void *self, void *);
 int __fastcall voice_rx_add_buffer_redirect(void *self, void *, int a1);
 int __fastcall voice_rx_get_buffer_size_redirect(void *self, void *);
-int __fastcall voice_tx_release_redirect(void *self, void *);
 int __fastcall voice_tx_get_nbuffers_redirect(void *self, void *);
 int __fastcall voice_tx_get_next_buffer_redirect(void *self, void *);
 int __fastcall voice_tx_return_buffer_redirect(void *self, void *, int a1);

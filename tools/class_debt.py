@@ -75,7 +75,7 @@ CEILINGS = {
     # 3 -> 2 (2026-08-30, boot-path batch): amovie_project's homing retired
     # the last MCI address constant.
     "function-address binding": 2,
-    "orphan redirect": 209,
+    "orphan redirect": 208,
     "pointer-as-int": 2,
     "undocumented trivial body": 0,
     # 239 IS BELOW WHAT THE TREE CAN REACH TODAY, and this is the only
@@ -139,7 +139,7 @@ CEILINGS = {
     # cannot name what `this` points at and the pun IS the layout finding -
     # the family pass that converts these entries to real adjustor thunks
     # claims it back.
-    "raw self-access": 230,
+    "raw self-access": 229,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
