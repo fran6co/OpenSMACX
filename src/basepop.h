@@ -22,6 +22,7 @@
 #include "dialogs.h"
 #include "checkbox.h"
 #include "flatbutton.h"
+#include "stringstruct.h"
 
 class SpriteBox;  // sprite_box() below returns a pointer only; spritebox.h
                   // is not included here to avoid pulling in its own chain.
@@ -175,18 +176,21 @@ class BasePop : public GraphicWin {
   uint32_t field_2174_;
   uint32_t field_2178_;
   uint32_t field_217C_;
-  uint32_t field_2180_;
-  uint32_t field_2184_;
-  uint32_t field_2188_;
-  uint32_t field_218C_;
-  uint32_t field_2190_;
-  uint32_t field_2194_;
-  uint32_t field_2198_;
-  uint32_t field_219C_;
-  uint32_t field_21A0_;
-  uint32_t field_21A4_;
-  uint32_t field_21A8_;
-  uint32_t field_21AC_;
+  public:
+  // THE POPUP'S UNIT-NAME LIST, carved 2026-08-30 from what was the twelve
+  // dwords field_2180_..field_21AC_: exactly 0x30 = sizeof(StringList), and
+  // the image's own ctor writes are StringList's construction, not raw
+  // stores - the vbtable (0x0066B0EC = stringstruct.h's
+  // StringListVirtualBaseTable) at +0x2184, the StringAllocationBase vftable
+  // (0x006693AC) at +0x21A8, the allocator hand-off capture into +0x21AC,
+  // and the StringStruct zeroing. The old hand-spelled copies of those
+  // stores are deleted from the ctor; the compiler now emits them from this
+  // declaration, as it already does for StringBox's stringList_ at 0x2B70.
+  // PUBLIC because Caviar::init_class flattens it into StringTemp for the
+  // unsupported-CPU popup, and access specifiers do not change layout.
+  StringList unit_ids_;  // 0x2180
+
+  private:
   uint32_t field_21B0_;
   uint32_t field_21B4_;
   uint32_t field_21B8_;
