@@ -711,19 +711,19 @@ static const int MaxDiffNum = 6;
 
 extern LPCSTR AlphaxFileID;
 extern LPCSTR ScriptTxtID;
-// THE RULES STORAGE - real objects, not pointers into the original image.
-// The image holds all nine in uninitialised .data (zero at load); the text
-// walkers below fill them from ALPHAX.TXT at run time. Definitions in
-// alpha.cpp.
-extern Label Labels;                                       // 0x009B90F8
+// THE RULES OBJECTS ARE REAL STORAGE, not typed pointers into the image.
+// In the shipped binary each address below is zero-initialised data
+// (image_data.py: past the bytes the file carries) that read_rules() and
+// read_basic_rules() fill from ALPHAX.TXT/SCRIPT.TXT. Defined in alpha.cpp.
+extern Label Labels;                                        // 0x009B90F8
 extern RulesResourceinfo ResourceInfo[MaxResourceInfoNum];  // 0x00945F50
 extern RulesTimeControl TimeControl[MaxTimeControlNum];     // 0x0094F1B8
 extern RulesResource Resource[MaxResourceNum];              // 0x00946158
 extern RulesEnergy Energy[MaxEnergyNum];                    // 0x0094A318
-extern RulesBasic Rules;                                   // 0x00949738
-extern RulesWorldbuilder WorldBuilder;                     // 0x009502A8
-extern AlphaIniPref AlphaIniPrefs;                         // 0x0094B464
-extern DefaultPref DefaultPrefs;                           // 0x0094B350
+extern RulesBasic Rules;                                    // 0x00949738
+extern RulesWorldbuilder WorldBuilder;                      // 0x009502A8
+extern AlphaIniPref AlphaIniPrefs;                          // 0x0094B464
+extern DefaultPref DefaultPrefs;                            // 0x0094B350
 extern uint32_t Language;
 
 int __cdecl tech_name(LPSTR name);

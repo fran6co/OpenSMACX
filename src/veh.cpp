@@ -333,7 +333,7 @@ int __cdecl drop_range(int faction_id) {
     // shared `has_project()` inline does not fold back open, so this repeats
     // its body (base_project() then the owning base's faction) directly.
     if (!has_tech(Rules.tech_orb_insert_sans_spc_elev, faction_id)) { // default 'Graviton Theory'
-        int base_id = *(&SecretProject->human_genome_project + SP_SPACE_ELEVATOR);
+        int base_id = *(&SecretProject.human_genome_project + SP_SPACE_ELEVATOR);
         if (base_id < 0 || Bases[base_id].faction_id_current != faction_id) {
             return Rules.max_airdrop_sans_orb_insert;
         }

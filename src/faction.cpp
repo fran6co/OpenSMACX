@@ -1799,7 +1799,7 @@ void __cdecl rankings(int apply_ranks) {
                         : 4;
                 }
             }
-            const int *projects = reinterpret_cast<const int *>(SecretProject);
+            const int *projects = reinterpret_cast<const int *>(&SecretProject);
             for (int i = 0; i < MaxSecretProjectNum; i++) {
                 if (projects[i] >= 0
                     && Bases[projects[i]].faction_id_current == (uint8_t)faction_id) {

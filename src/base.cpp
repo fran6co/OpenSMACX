@@ -1711,7 +1711,7 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
         }
         int golden_age = 0;
         if (base_id >= 0) {
-            if (SecretProject->merchant_exchange == base_id) {
+            if (SecretProject.merchant_exchange == base_id) {
                 energy++;
             }
             if (Bases[base_id].state & BSTATE_GOLDEN_AGE_ACTIVE) {
