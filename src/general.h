@@ -103,6 +103,9 @@ int __cdecl jackal_init_real(Palette *palette, Font *font,
                                        int colour_depth);
 void __cdecl jackal_close();
 
+// The fixed-point trig table bring-up (0x0063B940, BYTE_EXACT - marker and
+// body in general.cpp). Builds SinTable below, then exercises the image's
+// own int sin(angle, scale) twice for its return value.
 int __cdecl trig_init();
 
 // The fixed-point sine table trig_init builds at 0x009BE6DC: 256 truncated
