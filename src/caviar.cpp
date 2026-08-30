@@ -943,7 +943,9 @@ static_assert(sizeof(VoxRenderRecord) == 0x80,
 // image address in its name, which the standalone build does not map.
 uint32_t vox_unk_9c0834 = 0;    // 0x009C0834, zeroed on accepted CPU report
 uint32_t vox_unk_9c0b78 = 0;    // 0x009C0B78, zeroed on accepted CPU report
-uint8_t vox_unk_9c0b70 = 0;     // 0x009C0B70, CPU-report flag the probe clears
+// 0x009C0B70, the CPU VENDOR byte vox_detect_cpu fills: 0 unknown,
+// 1 GenuineIntel, 2 AuthenticAMD.
+uint8_t vox_cpu_vendor = 0;
 uint32_t vox_record_count = 0;  // 0x009BE69C, records created, bumped per create
 
 // The pixel-size dispatch tables the engine's two dispatchers (sub_63ad60
@@ -969,7 +971,7 @@ static const unsigned long vox_shared_74 = 0x00666FD0;
 static const unsigned long vox_shared_78 = 0x00666A80;
 
 // The engine's message strings. Real literals now - the image keeps them in
-// .rdata at the addresses each name carried, and sub_639390 copies from the
+// .rdata at the addresses each name carried, and vox_stage_error copies from the
 // pointer it is handed, so a raw binding dereferenced unmapped memory the
 // moment any error arm ran. "Unsupported pixel size" is different in the
 // image: a data SLOT at 0x00698A9C holds the string's pointer and the body
@@ -986,7 +988,7 @@ static const char vox_msg_unsupported_pixel[] = "Unsupported pixel size"; // 0x0
 // The three engine callees, all HOMED to the foot of this file. The forward
 // declarations keep the call sites above them compiling; being same-file
 // definitions, the calls stay `call rel32` like the image.
-extern "C" void __cdecl sub_639390(const char *message);  // stage a message string
+extern "C" void __cdecl vox_stage_error(const char *message);  // stage a message string
 extern "C" void __cdecl sub_63ad60(unsigned char *record);
 extern "C" char __cdecl sub_63f9b0(unsigned char *record);
 
@@ -994,18 +996,26 @@ extern "C" char __cdecl sub_63f9b0(unsigned char *record);
 void __cdecl sub_63ae20(unsigned char *record);
 
 /*
-Purpose: The engine's CPUID capability probe. The shipped body toggles the
-         EFLAGS ID bit (and AC), runs CPUID and stores the detected rank - a
-         flags-register dance with no C++ spelling, so this stand-in clears
-         the two report flags and skips detection.
+Purpose: The engine's CPU DETECTION PROBE, named vox_detect_cpu 2026-08-30
+         from the decode below. The shipped body toggles EFLAGS.ID (0x40000)
+         to test for the CPUID instruction at all, then EFLAGS.AC (0x200000)
+         to separate 386-class from 486-class, then runs CPUID: leaf 0's
+         vendor string selects vox_cpu_vendor - 1 for "GenuineIntel"
+         (0x00698DD8), 2 for "AuthenticAMD" (0x00698DE4) - and leaf 1's
+         family ((eax>>8)&0xf) with the MMX feature bit (EDX 0x800000)
+         picks the renderer rank in CaviarVoxelAlgoFlag: family 5 = rank 2,
+         family 5+MMX = 3, family 6 = 4, family 6+MMX = 5, anything else 0.
+         A flags-register dance with no C++ spelling, so this stand-in
+         leaves rank 1 (the fallback the AC test itself produces) and skips
+         detection.
 // ORIGINAL: 0x0063E860 sub_63e860 0x0063E860-0x0063E94E
-// symbol    ?sub_63e860@@YAHXZ
+// symbol    ?vox_detect_cpu@@YAHXZ
 // TRIED: byte-exact is unreachable under the inline-assembly rule - the body
 //        is the flags push/pop pair toggling EFLAGS bit 0x40000 (and
 //        0x200000) plus CPUID itself, and this address calls nothing (from
 //        the promoted artifact).
 */
-int __cdecl sub_63e860() {
+int __cdecl vox_detect_cpu() {
     // 2026-08-29: rank 1, not 0. This stand-in cannot run CPUID (the flags
     // dance needs __asm, which the tree bans), and a probe that leaves rank
     // 0 makes vox_create_record's algo switch take its default arm - which
@@ -1014,7 +1024,7 @@ int __cdecl sub_63e860() {
     // forces via ForceOldVoxelAlgorithm, so the engine proceeds exactly as
     // it does on a machine whose user pinned the old path.
     CaviarVoxelAlgoFlag = 1;
-    vox_unk_9c0b70 = 0;
+    vox_cpu_vendor = 0;
     return 0;
 }
 
@@ -1038,23 +1048,23 @@ Purpose: Install the six vx_* file-IO callbacks and vet the machine's CPU rank.
 */
 char __cdecl vox_init_callbacks(unsigned long *callbacks, int flag) {
     if (callbacks == 0) {
-        sub_639390(vox_msg_no_setup);
+        vox_stage_error(vox_msg_no_setup);
         return 1;
     }
     if (callbacks[0] != 0 && callbacks[1] != 0 && callbacks[2] != 0 &&
         callbacks[3] != 0 && callbacks[4] != 0 && callbacks[5] != 0) {
         memcpy(vox_callback_table, callbacks, 6 * sizeof(unsigned long));
-        sub_63e860();
+        vox_detect_cpu();
         const uint8_t algo_flag = CaviarVoxelAlgoFlag;
         if (algo_flag == 0 || 5 < algo_flag) {
-            sub_639390(vox_msg_cpu_unsupported);
+            vox_stage_error(vox_msg_cpu_unsupported);
             return 1;
         }
         vox_unk_9c0834 = 0;
         vox_unk_9c0b78 = 0;
         return 0;
     }
-    sub_639390(vox_msg_setup_empty);
+    vox_stage_error(vox_msg_setup_empty);
     return 1;
 }
 
@@ -1210,12 +1220,12 @@ unsigned long __cdecl vox_create_record(int setup_id, void *setup_data,
                                         void *shadow_data, void *setup_block,
                                         int size_code) {
     if (setup_data == 0) {
-        sub_639390(vox_msg_no_colortab);
+        vox_stage_error(vox_msg_no_colortab);
         return 0;
     }
     VoxRenderRecord *record = (VoxRenderRecord *)vox_alloc_slot(0x80);
     if (record == 0) {
-        sub_639390(vox_msg_no_handler);
+        vox_stage_error(vox_msg_no_handler);
         return 0;
     }
     memset(record, 0, sizeof(VoxRenderRecord));
@@ -1232,14 +1242,14 @@ unsigned long __cdecl vox_create_record(int setup_id, void *setup_data,
     case 1:
         record->colour_table_ = (void *)vox_alloc_slot(0x1800);
         if (record->colour_table_ == 0) {
-            sub_639390(vox_msg_no_colour);
+            vox_stage_error(vox_msg_no_colour);
             return 0;
         }
         memcpy(record->colour_table_, setup_data, 0x1800);
         if (shadow_data != 0) {
             record->shadow_table_ = (void *)vox_alloc_slot(0x100);
             if (record->shadow_table_ == 0) {
-                sub_639390(vox_msg_no_shadow);
+                vox_stage_error(vox_msg_no_shadow);
                 vox_free_slot((unsigned long)record->colour_table_);
                 return 0;
             }
@@ -1249,14 +1259,14 @@ unsigned long __cdecl vox_create_record(int setup_id, void *setup_data,
     case 2:
         record->colour_table_ = (void *)vox_alloc_slot(0x3000);
         if (record->colour_table_ == 0) {
-            sub_639390(vox_msg_no_colour);
+            vox_stage_error(vox_msg_no_colour);
             return 0;
         }
         memcpy(record->colour_table_, setup_data, 0x3000);
         if (shadow_data != 0) {
             record->shadow_table_ = (void *)vox_alloc_slot(0x20000);
             if (record->shadow_table_ == 0) {
-                sub_639390(vox_msg_no_shadow);
+                vox_stage_error(vox_msg_no_shadow);
                 vox_free_slot((unsigned long)record->colour_table_);
                 return 0;
             }
@@ -1264,7 +1274,7 @@ unsigned long __cdecl vox_create_record(int setup_id, void *setup_data,
         }
         break;
     default:
-        sub_639390(vox_msg_unsupported_pixel);
+        vox_stage_error(vox_msg_unsupported_pixel);
         return 0;
     }
 
@@ -1291,7 +1301,7 @@ unsigned long __cdecl vox_create_record(int setup_id, void *setup_data,
         sub_63ae20((unsigned char *)record);
         break;
     default:
-        sub_639390(vox_msg_cpu_unsupported);
+        vox_stage_error(vox_msg_cpu_unsupported);
         return 0;
     }
     record->ramp_a_ptr_ = 0;
@@ -1354,13 +1364,19 @@ void __cdecl sub_63ae20(unsigned char *record) {
 }
 
 /*
-Purpose: Copy the caller's message string into the engine's shared buffer at
-         0x9C0D60. Every engine error path stages its text here first; the
+Purpose: Stage the engine's ERROR MESSAGE: copy the caller's string into
+         the shared buffer vox_message_buffer (0x9C0D60). Named
+         vox_stage_error 2026-08-30 from the buffer's readers - the engine
+         clears it to NUL before each use (0x0063830E), strlen-tests it and
+         stages a default when empty (0x006383F1, "Error reading user data
+         chunk"), and copies a staged default out of it wholesale
+         (0x0063FA61) - every vox_* error path stages through here first.
+         The
          catalogued nullary-int contract is wrong on both counts - the body
          reads a real stack argument, and `return 0;` would insert an
          `xor eax,eax` ahead of the expansion's `and ecx,3`.
 // ORIGINAL: 0x00639390 sub_639390 0x00639390-0x006393B9 BYTE_EXACT
-// symbol    _sub_639390
+// symbol    _vox_stage_error
 // size      41 bytes
 // callers   12   call targets   0
 // kind      game
@@ -1390,10 +1406,13 @@ Return Value: n/a
 #pragma intrinsic(strcpy)
 #endif
 // The engine's staged-message slot, 0x009C0D60 in the image - real storage
-// now; every error arm writes it and the renderer displays it.
+// now. Every error arm writes it via vox_stage_error; the engine clears it,
+// strlen-tests it and reads it back (0x0063830E/0x006383F1/0x0063FA61 - the
+// last copies 27 bytes, so the slot holds at least that; the image's extent
+// is unpinned, 0x100 is comfortable).
 char vox_message_buffer[0x100];
 
-extern "C" void __cdecl sub_639390(const char *message) {
+extern "C" void __cdecl vox_stage_error(const char *message) {
     strcpy(vox_message_buffer, message);
 }
 
