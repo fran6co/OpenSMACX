@@ -39,6 +39,30 @@ int VehMoraleModifierCount; // only used by say_morale(), optimize to local var?
 // Battle related globals
 LPSTR VehBattleDisplayTerrain;
 
+// ===== MANAGED GLOBALS - the veh.h tables, homed here =====
+// Zero initialisation IS the image's initialisation: every base below reads
+// ZERO at run time (`image_data.py`, all past the file-backed end of .data),
+// and the alpha.txt / x.txt loaders fill them before use.
+VehPrototype VehPrototypes[MaxVehProtoNum];  // 0x009AB868
+Veh Vehs[2049];  // 0x00952828
+RulesChassis Chassis[MaxChassisNum];  // 0x0094A330
+RulesWeapon Weapon[MaxWeaponNum];  // 0x0094AE60
+RulesArmor Armor[MaxArmorNum];  // 0x0094F278
+RulesReactor Reactor[MaxReactorNum];  // 0x009527F8
+RulesAbility Ability[MaxAbilityNum];  // 0x009AB538
+RulesMorale Morale[MaxMoraleNum];  // 0x00952328
+RulesCombatMode DefenseModes[MaxDefenseModeNum];  // 0x00946A00
+RulesCombatMode OffenseModes[MaxOffenseModeNum];  // 0x00946178
+RulesOrder Order[MaxOrderNum];  // 0x0096C878
+LPSTR PlansShortName[MaxPlanNum];  // 0x00945FE0
+LPSTR PlansFullName[MaxPlanNum];  // 0x00952360
+LPSTR Triad[MaxTriadNum];  // 0x0094F1A8
+uint32_t VehBasicBattleMorale[2];  // 0x00912420
+uint32_t VehBattleModCount[2];  // 0x00915614
+BOOL VehBattleUnkTgl[2];  // 0x0091561C
+int VehBattleModifier[8];  // 0x009155F0
+LPSTR VehBattleDisplay[160];  // 0x0090F554
+
 // has_fac_built_call() (real bitmask() call, general.h bitmask_call) is now
 // declared in base.h, which this file already includes - no local
 // redeclaration needed.
@@ -717,6 +741,9 @@ int __cdecl get_basic_defense(int veh_id_def, int veh_id_atk, int psi_combat_typ
 /*
 Purpose: Initialize or reset the battle related global variables.
 // ORIGINAL: 0x00501D30 ?battle_init@@YAXXZ 0x00501D30-0x00501D47 BYTE_EXACT
+// LEVER: the real-object conversion SURVIVED the claim. 2026-08-29
+//        VehBattleModCount/VehBattleUnkTgl became real arrays (veh.h);
+//        measured 6/6, 16 bytes discounted as relocations.
 // size      23 bytes
 // prototype 
 // callers   0   call targets   0
@@ -736,6 +763,14 @@ Status: Complete
 Purpose: Add combat battle modifier for type (offense, defense).
 // ORIGINAL: 0x00501D50 ?add_bat@@YAXHHPAD@Z 0x00501D50-0x00501D9A BYTE_EXACT
 // LEVER: BYTE_EXACT 25/25, from 2/25, on four measured changes at once. (1) SPLIT THE CHAIN: `if (modifier && offset < 4)` shares one epilogue, and the image tests `modifier` FIRST and falls through to `pop ebp; ret` before it even loads the count - two guard clauses, in that order. Reading the count first instead scores 5/25. (2) `int offset`, not `uint32_t`: the image's `cmp eax, 4` is followed by `jge`, and unsigned gives `jae`. (3) `VehBattleModCount[type] = offset + 1` BEFORE the two stores, where this tree had the increment last - the image's `lea esi, [eax + 1]; mov [ecx*4 + 0x915614], esi` comes first. (4) ONE `int index = type * 4 + offset` used by both the modifier store and the display address: the image keeps that value in eax and addresses `[eax*4 + 0x9155f0]` and `(eax + eax*4) << 4`, which `type * 80 + offset * 20` spelled out twice does not reproduce (9/25 -> 13/25).
+// LEVER: the real-object conversion SURVIVED the claim. 2026-08-29 the three
+//        battle bindings became real arrays (VehBattleModCount[2],
+//        VehBattleModifier[8], VehBattleDisplay[160], veh.h); every folded
+//        immediate here is now a discounted relocation - measured 25/25,
+//        20 bytes discounted as relocations - and the literal-initialised
+//        `display` local is gone: as an ARRAY, the name is an address, so
+//        `&VehBattleDisplay[index * 20]` folds the base exactly as the old
+//        literal did.
 // LEVER: strcpy, not strcpy_s. The image's only callee here is 0x00645460, plain strcpy; the safe-CRT form does not exist in it.
 // symbol    ?add_bat@@YAXHHPBD@Z
 // size      74 bytes
@@ -759,14 +794,14 @@ void __cdecl add_bat(int type, int modifier, LPCSTR display_str) {
     VehBattleModCount[type] = offset + 1;
     int index = type * 4 + offset;
     VehBattleModifier[index] = modifier;
-    // FOLD THE BASE, do not read it. `&VehBattleDisplay[i]` needs the
-    // binding's VALUE, and through the file-scope `LPSTR *const` VC6 emits
-    // `mov esi, dword ptr [VehBattleDisplay]` then `add edx, esi` where the
-    // image has `add edx, 0x90f554`. A local const initialised FROM THE
-    // LITERAL folds to that immediate; one initialised from
-    // VehBattleDisplay does not - measured, 13/25 either way.
-    LPSTR *const display = (LPSTR *)0x0090F554;   // VehBattleDisplay
-    strcpy((LPSTR)&display[index * 20], display_str);
+    // FOLD THE BASE: `VehBattleDisplay` is a real ARRAY now, so its name is
+    // an address, not a value - `&VehBattleDisplay[index * 20]` emits the
+    // image's single `add edx, <base>` (the immediate discounted as a
+    // relocation). The old `LPSTR *const` binding made VC6 read the
+    // pointer's VALUE first (`mov esi, dword ptr [VehBattleDisplay]` then
+    // `add edx, esi`), which is why a literal-initialised local stood in
+    // for it; measured 13/25 through the binding, exact through the literal.
+    strcpy((LPSTR)&VehBattleDisplay[index * 20], display_str);
 }
 
 /*
@@ -5177,9 +5212,12 @@ something else.
 Bug notes, reproduced rather than corrected:
 
   - veh_at() answers -1 for a tile with no unit, and both neighbour loops read
-    Vehs[veh_id].faction_id from that -1 without checking. The address is fifty-two bytes below
-    Vehs[0], four bytes inside Reactor, and it is compared against a live faction id. The read
-    is preserved exactly - writing it through the same Vehs pointer lands on the same byte.
+    Vehs[veh_id].faction_id from that -1 without checking. In the image the
+    address is fifty-two bytes below Vehs[0] - four bytes inside Reactor - and
+    it is compared against a live faction id. The read is preserved exactly:
+    Vehs[-1] is as far out of bounds below the real array as it was above the
+    image's Reactor table, and whatever uninitialised byte it compares is the
+    original's behaviour, not a defect to fix.
   - The division by the attacker's prototype cost is a bare idiv with no zero guard.
   - The two terraform-order tests are two independent ifs in the original, not an else-if. They
     are mutually exclusive in practice because `order` holds one value, so this is a shape
