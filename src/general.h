@@ -103,11 +103,7 @@ int __cdecl jackal_init_real(Palette *palette, Font *font,
                                        int colour_depth);
 void __cdecl jackal_close();
 
-// Called once from jackal_init_real, between the FileWin and Cursor class
-// bring-ups. `sub_63ce20` has no catalogued name - the image carries no
-// symbols and IDA reconstructed none for it - so it keeps the address.
 int __cdecl trig_init();
-int __cdecl sub_63ce20();
 
 // The fixed-point sine table trig_init builds at 0x009BE6DC: 256 truncated
 // int samples of sin(i * 2pi/1020) scaled to 65535. The game's own

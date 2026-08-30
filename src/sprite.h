@@ -48,6 +48,19 @@ class Sprite {
   int extract(Buffer *buffer, int a, int b, int c, int width, int height,
               TexHeap *heap);
   int create_blank(int width, int height, int depth);
+  // THE CLASS BRING-UP, named 2026-08-30 from its call site: jackal_init_real
+  // runs it in the X::init_class() chain between FileWin::init_class and the
+  // font bring-up, and it seeds the class-shared sprite the tree names
+  // g_BLANK_SPRITE (0x009BEAE8) - jackal.pcx's 16x16 cell, or a blank when
+  // the PCX is missing. jackal_close's mirror teardown is close_class below.
+  // The catalogue carries no name for it, so there is no catalogued spelling
+  // to conflict with; the body and marker stay in sprite.cpp.
+  static int init_class();
+  // The mirror teardown: jackal_close tail-calls it as the sprite's
+  // teardown stage (0x0063CEF0, BYTE_EXACT as a free function before the
+  // 2026-08-30 naming - the body is the one close() and the bytes do not
+  // change with the static-member spelling).
+  static void close_class();
   Sprite();
   // `jmp ?close@Sprite@@QAEXXZ` in the image - see Palette.
   MEASURED ~Sprite() { close(); }   // 00406850

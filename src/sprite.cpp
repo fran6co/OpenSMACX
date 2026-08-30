@@ -224,7 +224,7 @@ void Sprite::UNK4(int, int) {
 
 /*
 // ORIGINAL: 0x0063CE20 sub_63ce20 0x0063CE20-0x0063CEE7;0x00663998-0x006639AD
-// symbol    ?sub_63ce20@@YAHXZ
+// symbol    ?init_class@Sprite@@SAHXZ
 // TRIED: the original wraps the local Buffer in an fs:[0] SEH frame; no swept flag set reproduces that prologue/epilogue or the secondary 0x663998 span, so the SEH shape stays unmatched.
 // size      220 bytes
 // prototype
@@ -232,6 +232,13 @@ void Sprite::UNK4(int, int) {
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D7210 0x005D7410 0x005D7DE0 0x005E39A0 0x005EAF3F
+//
+// NAMED Sprite::init_class 2026-08-30: jackal_init_real runs it in the
+// X::init_class() chain between FileWin::init_class and the font bring-up,
+// and it seeds the class-shared sprite (g_BLANK_SPRITE, 0x009BEAE8) from
+// jackal.pcx - or blank when the PCX is missing. The catalogue carries no
+// name for it, so the address keeps the marker line. The teardown twin,
+// 0x0063CEF0 in general.cpp, is close_class by the same reading.
 //
 // Promoted 2026-08-15 from src/unrecovered/0063ce20.cpp to retire its
 // pending_bodies forwarder. Loads the 16x16 sprite at 0x9BEAE8 from a PCX, or
@@ -248,7 +255,7 @@ static const char *const JackalPcxPath = (const char *)0x00698CAC;
 
 Sprite g_BLANK_SPRITE;  // 0x009BEAE8 - the create_blank scratch sprite
 
-int __cdecl sub_63ce20() {
+int Sprite::init_class() {
     Buffer buf;
     int result;
     if (buf.load_pcx(JackalPcxPath, 0, 10, 0xec) != 0) {
