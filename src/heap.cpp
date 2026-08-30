@@ -29,7 +29,7 @@
 */
 Heap::Heap() {
     // IMAGE ORDER: current_ before base_, free_size_ before base_size_.
-    *reinterpret_cast<volatile int8_t *>(&err_flags_) = 0;
+    err_flags_ = 0;
     current_ = nullptr;
     base_ = nullptr;
     free_size_ = 0;
@@ -56,7 +56,7 @@ void Heap::shutdown() {
         free(base_);
         base_ = nullptr;
     }
-    *reinterpret_cast<volatile int8_t *>(&err_flags_) = 0;
+    err_flags_ = 0;
     current_ = nullptr;
     base_ = nullptr;
     free_size_ = 0;
@@ -109,7 +109,7 @@ BOOL Heap::init(size_t req_size) {
     // already null.
     if (base_) {
         free(base_);
-        *reinterpret_cast<volatile int8_t *>(&err_flags_) = 0;
+        err_flags_ = 0;
         current_ = nullptr;
         base_ = nullptr;
         free_size_ = 0;
