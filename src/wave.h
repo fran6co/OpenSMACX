@@ -156,6 +156,13 @@ class Wave : public Sound {
 // here so control_game (game.cpp) reaches it by name.
 extern Wave g_WAVE_GENERAL;  // 0x00945ED0
 
+// The forty-five entry wave bank, at the fixed address wave.cpp pins it to
+// (0x6c element stride, the image's own `VectorCtorIterator(g_CPU_WAVES,
+// 0x6C, 45, ...)` array thunk). Declared here so popup_wave_callback
+// (popup.cpp) reaches the bank by name instead of through a pointer
+// binding into the image's data.
+extern Wave g_CPU_WAVES[45];  // 0x0074C5F0
+
 static_assert(sizeof(Wave) == 0x6C, "Wave layout must match terranx.exe");
 
 

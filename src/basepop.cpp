@@ -443,8 +443,8 @@ Purpose: Raise the fallout flag, but only while the gate is set.
 Status: Complete
 */
 void BasePop::fallout() {
-    if (*BasePopFalloutGate != 0) {
-        *BasePopFalloutFlag = 1;
+    if (BasePopFalloutGate != 0) {
+        BasePopFalloutFlag = 1;
     }
 }
 
@@ -752,8 +752,14 @@ char *BasePopDefaultCancelText;  // 0x009B8D84
 static int *const g_009b8d98 = (int *)0x009B8D98;
 static int *const g_009b8da8 = (int *)0x009B8DA8;
 static int *const g_009bb484 = (int *)0x009BB484;
-static int *const g_009bc074 = (int *)0x009BC074;
-static int *const g_009bc078 = (int *)0x009BC078;
+
+// The fallout pair (basepop.h) and the two singleton slots `init_class`
+// below allocates and `pops` (popup.cpp) consumes - real storage, one name
+// per address. Zero-initialised dwords in the image, as here.
+int BasePopFalloutGate;   // 0x009B8D00
+int BasePopFalloutFlag;   // 0x009B8CFC
+Win *PopupInstanceSlotA;  // 0x009BC074
+Win *PopupInstanceSlotB;  // 0x009BC078
 
 
 /*
@@ -845,6 +851,11 @@ __forceinline int __cdecl BasePop::set_def_cancel_text(LPSTR text) {
 // pending_bodies forwarder. Copies the two default-caption strings into
 // heap buffers, then reaches the two allocation hooks through the pointer at
 // 0x00696ECC, as the original does.
+// LEVER (2026-08-29, slot conversion): the two slot stores go through the
+// real `Win *PopupInstanceSlotA/B` objects (basepop.h) instead of the
+// g_009bc074/78 bindings - the same `mov dword ptr [addr], eax` folded
+// shape, claim re-measured BYTE_EXACT after, and `pops` (popup.cpp) now
+// reads the same storage.
 Status: Complete
 */
 int __cdecl BasePop::init_class() {
@@ -856,12 +867,12 @@ int __cdecl BasePop::init_class() {
     set_def_ok_text(const_cast<LPSTR>("OK"));
 
     const int r1 = PopupAllocHook();
-    *g_009bc074 = r1;
+    PopupInstanceSlotA = reinterpret_cast<Win *>(r1);
     if (!r1) {
         return 4;
     }
     const int r2 = PopupAllocHook();
-    *g_009bc078 = r2;
+    PopupInstanceSlotB = reinterpret_cast<Win *>(r2);
     return r2 ? 0 : 4;
 }
 /*

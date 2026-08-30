@@ -169,13 +169,25 @@ class Time {
 static_assert(sizeof(Time) == 0x28, "Time layout must match the legacy ABI");
 #endif
 
-// global
-Time *const TurnTimer = (Time *)0x00915628;
-Time *const LineTimer = (Time *)0x00915658;
-Time *const BlinkTimer = (Time *)0x00915688;
-Time *const Blink2Timer = (Time *)0x00939EB0;
-Time *const GoTimer = (Time *)0x00939E60;
-Time *const ConsoleTimer = (Time *)0x00939E88;
+// GLOBAL TIMER OBJECTS - real storage, defined in time.cpp. In the shipped
+// image these are Time objects at fixed .bss addresses, constructed before
+// WinMain by the CRT's dynamic-initializer walk: the ??__E at 0x0050E980
+// constructs the ConsoleTimer object at 0x00939E88, and the one at
+// 0x0050E9B0 constructs the other five (`mov ecx, <addr>; call Time::Time`
+// each - Blink 0x00915688, Blink2 0x00939EB0, Line 0x00915658, Go
+// 0x00939E60, Turn 0x00915628) and registers their teardowns. Here the same
+// recovered constructor runs through this build's own startup. The image's
+// own bodies already take the objects' ADDRESSES as the receiver (`mov ecx,
+// 0x939eb0` in stop_timers at 0x0050F440), which a real object reproduces;
+// the old `Time *const X = (Time *)0x...` bindings loaded and stored through
+// those addresses as if they held pointers, which is unmapped memory in the
+// standalone build.
+extern Time TurnTimer;    // 0x00915628
+extern Time LineTimer;    // 0x00915658
+extern Time BlinkTimer;   // 0x00915688
+extern Time Blink2Timer;  // 0x00939EB0
+extern Time GoTimer;      // 0x00939E60
+extern Time ConsoleTimer; // 0x00939E88
 
 void __cdecl start_timers();
 void __cdecl flush_timer();
@@ -187,8 +199,8 @@ void __cdecl flush_timer();
 void __cdecl go_reset();
 
 MEASURED inline void __cdecl stop_timers() {
-    Blink2Timer->close();
-    BlinkTimer->close();
-    LineTimer->close();
+    Blink2Timer.close();
+    BlinkTimer.close();
+    LineTimer.close();
     // missing MP TurnTimer. TODO: In future determine if timer should be closed on stop
 }

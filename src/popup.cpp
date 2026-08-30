@@ -631,8 +631,12 @@ Purpose: Sound a popup's wave. Nothing sounds unless bit 0x400 of the flag
 Return Value: n/a
 Status: Complete
 */
+// The last-played entry of the wave bank (popup.h). Zero-initialised, as
+// the image's dword at 0x0074DAA4 is.
+int PopupWaveLastIndex;  // 0x0074DAA4
+
 void __cdecl popup_wave_callback(PopupWave *popup, int) {
-    if (!(*PopupWaveFlags & 0x400)) {
+    if (!(GamePreferences & 0x400)) {
         return;
     }
     if (!popup) {
@@ -659,11 +663,11 @@ void __cdecl popup_wave_callback(PopupWave *popup, int) {
         return;
     }
     const int32_t chosen = popup->wave_index_;
-    if (*PopupWaveFlags & 0x400) {
-        if (!PopupWaveVoice->Wave::is_playing() &&
-            !reinterpret_cast<Wave *>(PopupWaveBank + *PopupWaveLastIndex)->Wave::is_playing()) {
-            *PopupWaveLastIndex = chosen;
-            Wave *const wave = PopupWaveBank + chosen;
+    if (GamePreferences & 0x400) {
+        if (!g_WAVE_GENERAL.Wave::is_playing() &&
+            !(g_CPU_WAVES + PopupWaveLastIndex)->Wave::is_playing()) {
+            PopupWaveLastIndex = chosen;
+            Wave *const wave = g_CPU_WAVES + chosen;
             wave->Wave::load();
             wave->Wave::play();
         }
@@ -675,7 +679,7 @@ void __cdecl popup_wave_callback(PopupWave *popup, int) {
         }
     }
     if (popup->wave_index_ == 0x10) {
-        PopupWaveFx->FX::play(0x38);
+        g_FX.FX::play(0x38);
     }
 }
 
@@ -841,30 +845,34 @@ extern int BaseAtKeyPollFlag;  // 0x009BC070
 // all; it reproduced on the original just as readily.
 //
 // Two singleton BasePop instances, allocated once by BasePop::init_class()
-// (basepop.cpp, which already casts to this pair of fixed addresses under
-// the names g_009bc074/g_009bc078) and chosen between here by which one is
-// not already on screen.
-static int *const PopupInstanceSlotA = (int *)0x009BC074;
-static int *const PopupInstanceSlotB = (int *)0x009BC078;
-
+// (basepop.cpp, which stores the same two objects under the names
+// PopupInstanceSlotA/B - one storage, one name) and chosen between here by
+// which one is not already on screen. The slots are real pointer variables
+// now: in the image they are the two zero-initialised pointer dwords at
+// 0x009BC074/78, and the old `int *const` bindings into those addresses read
+// and wrote unmapped memory in the standalone build - the DDRAWERROR path
+// dereferenced slot A's garbage outright.
 // The screen location saved across one call to `pops()` and restored on the
 // next, then reset to the sentinel 0x2000 (BasePop::set_loc's own "let the
-// popup centre itself" value elsewhere in this file).
-static int *const PopupSavedLocX = (int *)0x006973DC;
-static int *const PopupSavedLocY = (int *)0x006973E0;
+// popup centre itself" value elsewhere in this file). The image's .data
+// carries 0x2000 in both dwords, so the objects initialise from it.
+static int PopupSavedLocX = 0x2000;  // 0x006973DC
+static int PopupSavedLocY = 0x2000;  // 0x006973E0
 
 // Read before write_check() and overwritten from read_check()'s result at
 // the bottom of the non-modal-close tail - a request/response pair the two
-// calls share across invocations.
-static int *const PopupWriteCheckState = (int *)0x009BC06C;
+// calls share across invocations. Zero-initialised .bss in the image at
+// 0x009BC06C.
+static int PopupWriteCheckState;  // 0x009BC06C
 
 // The `a5 & 0x8000` tail's rectangle: BasePop's field_30B4_/_30B8_ are an
 // origin, field_30BC_/_30C0_ a width and height added to that origin to
 // close the rectangle. Inferred from the arithmetic pattern alone.
-static int *const PopupCloseRectLeft = (int *)0x009BC058;
-static int *const PopupCloseRectTop = (int *)0x009BC05C;
-static int *const PopupCloseRectRight = (int *)0x009BC060;
-static int *const PopupCloseRectBottom = (int *)0x009BC064;
+// Zero-initialised .bss in the image at 0x009BC058..0x009BC064.
+static int PopupCloseRectLeft;    // 0x009BC058
+static int PopupCloseRectTop;     // 0x009BC05C
+static int PopupCloseRectRight;   // 0x009BC060
+static int PopupCloseRectBottom;  // 0x009BC064
 
 /*
 // ORIGINAL: 0x006276A0 ?pops@@YAHPADPADHPADHPAUSprite@@HHP6AHXZ@Z 0x006276A0-0x006277F9
@@ -873,6 +881,13 @@ static int *const PopupCloseRectBottom = (int *)0x009BC064;
 // LEVER (2026-08-29): SAVE THE FLAG, THEN READ THE DEFAULT - `const BOOL winVisible = ...SlotA->is_visible(); Win *win = *SlotB; if (!winVisible) win = *SlotA;` puts the SlotB load AFTER the call like the image (0x006276AE), 98/110 -> 101/110.
 // TRIED (2026-08-29): positive if/else and `c ? B : A` ternary for the win selection - both grow the `jmp` the image does not have (11/110); `if (sprite)` vs `if (sprite != 0)` identical.
 // TRIED (2026-08-29): the last two clusters are scheduler placements no source shape reached. (a) The image tests the sprite pointer BEFORE the two 0x2000 stores (0x00627709); ours stores first - the branch is textually after the stores in every structured spelling. (b) The image computes w+x (into w's register edx) BEFORE the Left store; VC6 here sinks w+x below Left and Bottom, which COMMUTES the add into x's register (`add esi,edx`) because x is dead by then - named sums in the image's compute order rescheduled identically. --all-flags: 101/110 is the best across all 20 sets (the /O2 non-/Oy- family ties).
+// LEVER (2026-08-29, slot conversion): the two instance slots as real `Win *`
+// objects (basepop.h/basepop.cpp) instead of `int *const` bindings into
+// 0x9BC074/78 - the identical folded loads, and 101/110 -> 103/110 (0.982
+// similar, /O2 non-/Oy-): the win-selection `je` now agrees and the first
+// divergence is the 0x8000 tail's add commute. Saved locs, write-check state
+// and close rect converted the same way; every verdict on this page
+// re-measured before and after, no other tier moved.
 // symbol    ?pops@@YAHPAD0H0HPAVSprite@@HHP6AHXZ@Z
 // size      345 bytes
 // prototype
@@ -891,10 +906,10 @@ int __cdecl pops(char *caption, char *label, int a3, char *a4, int a5,
     // default is read, with the guard testing the saved value. Reading the
     // default first hoisted its load above the call (98/110); if/else and
     // ternary spellings both grew a `jmp` the image does not have.
-    const BOOL winVisible = reinterpret_cast<Win *>(*PopupInstanceSlotA)->is_visible();
-    Win *win = reinterpret_cast<Win *>(*PopupInstanceSlotB);
+    const BOOL winVisible = PopupInstanceSlotA->is_visible();
+    Win *win = PopupInstanceSlotB;
     if (!winVisible) {
-        win = reinterpret_cast<Win *>(*PopupInstanceSlotA);
+        win = PopupInstanceSlotA;
     }
     BasePop *pop = reinterpret_cast<BasePop *>(win);
 
@@ -902,9 +917,9 @@ int __cdecl pops(char *caption, char *label, int a3, char *a4, int a5,
         return -1;
     }
 
-    pop->set_loc(*PopupSavedLocX, *PopupSavedLocY);
-    *PopupSavedLocY = 0x2000;
-    *PopupSavedLocX = 0x2000;
+    pop->set_loc(PopupSavedLocX, PopupSavedLocY);
+    PopupSavedLocY = 0x2000;
+    PopupSavedLocX = 0x2000;
 
     if (sprite) {
         if (a7 != a8) {
@@ -922,7 +937,7 @@ int __cdecl pops(char *caption, char *label, int a3, char *a4, int a5,
         }
     }
 
-    pop->write_check(*PopupWriteCheckState);
+    pop->write_check(PopupWriteCheckState);
     int execResult = pop->exec(0, callback);
 
     if (pop->field_A14_ == 0) {
@@ -939,16 +954,16 @@ int __cdecl pops(char *caption, char *label, int a3, char *a4, int a5,
         // store Left, Bottom, and finally Right - sunk past the pops. The
         // mutate-in-place spelling computed w+x last and commuted the add
         // into x's register.
-        *PopupCloseRectTop = y;
+        PopupCloseRectTop = y;
         const int closeRectRight = w + x;
         const int closeRectBottom = y + h;
-        *PopupCloseRectLeft = x;
-        *PopupCloseRectBottom = closeRectBottom;
-        *PopupCloseRectRight = closeRectRight;
+        PopupCloseRectLeft = x;
+        PopupCloseRectBottom = closeRectBottom;
+        PopupCloseRectRight = closeRectRight;
         return execResult;
     }
 
-    *PopupWriteCheckState = pop->read_check();
+    PopupWriteCheckState = pop->read_check();
     BaseAtKeyPollFlag = pop->field_3100_;
     if ((a5 & 0x300) == 0) {
         pop->close();

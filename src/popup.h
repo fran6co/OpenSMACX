@@ -221,13 +221,19 @@ static_assert(offsetof(PopupWave, armed_108_) == 0x108,
 typedef int (OriginalObject::*func_popup_wave_query)();
 typedef unsigned long(__stdcall func_popup_time_source)(void);
 
-uint32_t *const PopupWaveFlags = (uint32_t *)0x009A6490;
+// The four dependencies that are REAL OBJECTS in this binary are reached by
+// their own names: the flag word is `GamePreferences` (game.cpp,
+// 0x009A6490), the voiceover wave is `g_WAVE_GENERAL` and the forty-five
+// entry bank is `g_CPU_WAVES` (wave.cpp, 0x00945ED0 and 0x0074C5F0), and
+// the FX bank is `g_FX` (fx.cpp, 0x00749CF8) - all declared by the headers
+// this file's users already include. The last-played index has no home yet,
+// so it is real storage homed to popup.cpp; in the image it is the
+// zero-initialised dword at 0x0074DAA4 beside the bank. The three inline
+// accessors below are seams that remain, not bindings: each names a single
+// fixed address the tests rebind.
+extern int PopupWaveLastIndex;  // 0x0074DAA4
 inline void *&PopupWaveContext() { return *reinterpret_cast<void **>(0x0090EA30); }
-Wave *const PopupWaveVoice = (Wave *)0x00945ED0;
-Wave *const PopupWaveBank = (Wave *)0x0074C5F0;
-int32_t *const PopupWaveLastIndex = (int32_t *)0x0074DAA4;
 inline void *&PopupWaveOwnerSlot() { return *reinterpret_cast<void **>(0x0074DAA0); }
-FX *const PopupWaveFx = (FX *)0x00749CF8;
 inline func_popup_time_source *&PopupWaveTimeSlot() { return *reinterpret_cast<func_popup_time_source **>(0x00669368); }
 
 void __cdecl popup_wave_callback(PopupWave *popup, int);

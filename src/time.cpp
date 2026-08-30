@@ -37,10 +37,43 @@ int TurnRedrawPending;  // 0x00703DE0
 
 // The PlanWin the line timer repaints; the image loads the receiver as an
 // immediate (`mov ecx, 0x856dc0`), which a header binding folds to.
+// LEFT AS A BINDING, measured 2026-08-29: the image's CRT initializer table
+// (89 entries at 0x682568) has NO ??__E that constructs 0x00856DC0 - unlike
+// the six timers below - and PlanWin deliberately declares no constructor
+// (planwin.h), so a real `PlanWin` global would emit an implicit default
+// constructor building its Buffer member pre-WinMain, construction the
+// image does not perform at this address. The only use (line_timer,
+// BYTE_EXACT) folds to the image's own `mov ecx, imm32` receiver, and
+// PlanWin::on_redraw is a pending-body forwarder that faults on entry
+// before anything dereferences the receiver.
 static PlanWin *const LineTimerPlanWindow = (PlanWin *)0x00856DC0;
 // The MultiWin the turn timer redraws (`mov ecx, 0x7fd648`). game.cpp binds
 // the same address as its GraphicWin front for desktop_close.
+// LEFT AS A BINDING, measured 2026-08-29: no ??__E in the image's
+// initializer table constructs 0x007FD648 either, and `~MultiWin` is a
+// pending_bodies forwarder that faults on entry - a real global would
+// register it for exit and crash a teardown the image never performs. The
+// only use (turn_timer, BYTE_EXACT) folds to the image's own immediate
+// receiver, and MultiWin::draw faults on entry before touching it.
 static MultiWin *const TurnTimerMultiWindow = (MultiWin *)0x007FD648;
+
+// ===== MANAGED GLOBALS - real objects, homed to their domain =====
+// In the shipped image these live at fixed data addresses and are
+// constructed before WinMain by the CRT's dynamic-initializer walk
+// (image bytes: ??__E at 0x0050E980 builds the ConsoleTimer object at
+// 0x00939E88, the one at 0x0050E9B0 builds the other five - Blink 0x915688,
+// Blink2 0x939EB0, Line 0x915658, Go 0x939E60, Turn 0x915628, each
+// `mov ecx, <addr>; call Time::Time` - and registers their teardowns;
+// winedbg-confirmed walker return 0x00644EEB, table at 0x682568..). Here
+// the same recovered constructors run through this build's own startup,
+// and the matching destructors close them at exit. Declarations in time.h
+// beside their users.
+Time TurnTimer;    // 0x00915628
+Time LineTimer;    // 0x00915658
+Time BlinkTimer;   // 0x00915688
+Time Blink2Timer;  // 0x00939EB0
+Time GoTimer;      // 0x00939E60
+Time ConsoleTimer; // 0x00939E88
 
 Time *Time::TimeModal;
 int Time::TimeInitCount;
@@ -494,7 +527,7 @@ Status: Complete
 */
 void __cdecl go_reset() {
     go_cover_window()->Win::hide();
-    GoTimer->close();
+    GoTimer.close();
 
     int index = 0;
     int cursor = reinterpret_cast<int>(MapWinTable);
@@ -721,14 +754,21 @@ Purpose: Start global timers.
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00616350
+// LEVER (2026-08-29, timer conversion): the six timers are real `Time`
+// objects (time.h/time.cpp) instead of `Time *const` bindings into their
+// image addresses - the image's own receivers are the objects' ADDRESSES
+// (`mov ecx, 0x915688` here), which `BlinkTimer.start(...)` on a real
+// object reproduces; the claim re-measured BYTE_EXACT after, as did
+// stop_timers, the three timer callbacks and game.cpp's inlined stop
+// expansions.
 Return Value: n/a
 Status: Complete
 */
 void __cdecl start_timers() {
-    BlinkTimer->start(blink_timer, 1, 150, 150);
-    Blink2Timer->start(blink2_timer, 2, 100, 100);
-    LineTimer->start(line_timer, 3, 100, 100);
-    TurnTimer->start(turn_timer, 4, 500, 500);
+    BlinkTimer.start(blink_timer, 1, 150, 150);
+    Blink2Timer.start(blink2_timer, 2, 100, 100);
+    LineTimer.start(line_timer, 3, 100, 100);
+    TurnTimer.start(turn_timer, 4, 500, 500);
 }
 
 /*
