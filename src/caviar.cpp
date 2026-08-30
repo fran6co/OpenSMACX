@@ -689,7 +689,9 @@ int Caviar::init_class() {
                 unit_ids.next_entry();
                 const char *entry_text = 0;
                 if (unit_ids.current_ != 0) {
-                    entry_text = reinterpret_cast<const char *const *>(
+                    // The payload points at a {id, name} record; [1] is the
+                    // display name.
+                    entry_text = static_cast<const char *const *>(
                         unit_ids.current_entry())[1];
                 }
                 strcat(StringTemp, entry_text);
