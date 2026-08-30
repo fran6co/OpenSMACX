@@ -173,15 +173,17 @@ SCAFFOLD_CEILINGS = {
     "field_accessors.cpp markers": 42,
     "leaf_recoveries.cpp markers": 52,
     "nullsub_thunks.cpp markers": 56,
-    # 222 -> 235 (2026-08-29, boot-path batch): sanctioned coverage growth,
-    # not drift - homing control_game declared 16 seams for its unrecovered
-    # callees and Caviar::init_class three (vox_*); their retirement is the
-    # next batches' work.
-    "PENDING_BODY forwarders": 234,
-    # 1334 -> 1333 (2026-08-29, lifecycle-retirement batch): the archived
-    # global_lifecycle.cpp went away with the thunks it recorded.
-    "artifact files (recovered/)": 1326,
-    "unrecovered files": 1683,
+    # 234 -> 231 (2026-08-30, caviar-voxel batch): the three seams Caviar's
+    # homing had declared for sub_639390 / sub_63ad60 / sub_63f9b0 retired -
+    # all three bodies now live at the foot of src/caviar.cpp.
+    "PENDING_BODY forwarders": 227,
+    # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
+    # homed BYTE_EXACT into src/caviar.cpp.
+    "artifact files (recovered/)": 1320,
+    # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
+    # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
+    # honest MISMATCH).
+    "unrecovered files": 1679,
     "hypothesis_layouts.h lines": 2709,
 }
 

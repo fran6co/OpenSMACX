@@ -836,10 +836,13 @@ uint8_t *const vox_unk_9c0b70 = (uint8_t *)0x009C0B70;    // CPU-report flag the
 uint32_t *const vox_record_count =
     (uint32_t *)0x009BE69C;  // records created, bumped per successful create
 
-// The pixel-size dispatch tables sub_63ae20 stores into the record's five
-// slots (+0x6c, +0x70, +0x74, +0x78, +0x7c), selected by pixel size and the
-// record's alignment flag byte. Carried as address integers named by slot
-// until the engine's behaviour names the tables themselves.
+// The pixel-size dispatch tables the engine's two dispatchers (sub_63ad60
+// for CPU ranks 1/2/4, sub_63ae20 for ranks 3/5) store into the record's
+// five slots (+0x6c, +0x70, +0x74, +0x78, +0x7c), selected by pixel size
+// and the record's alignment flag byte. Carried as address integers named by
+// slot until the engine's behaviour names the tables themselves. The two
+// dispatchers are byte-identical twins in the shipped image, so both bodies
+// store the SAME five tables.
 static const unsigned long vox_size1_aligned_6c = 0x006647F0;
 static const unsigned long vox_size1_aligned_70 = 0x00664000;
 static const unsigned long vox_size1_aligned_7c = 0x0063AF00;
@@ -868,10 +871,9 @@ static const char *const vox_msg_no_colortab = (const char *)0x00698B58;  // No 
 static const char *const *const vox_msg_unsupported_pixel =
     (const char *const *)0x00698A9C;  // -> Unsupported pixel size
 
-// Seams into pieces not yet recovered, each defined by a pending_bodies
-// forwarder so these calls stay `call rel32` like the image.
-// Seams into pieces not yet recovered, each defined by a pending_bodies
-// forwarder so these calls stay `call rel32` like the image.
+// The three engine callees, all HOMED to the foot of this file. The forward
+// declarations keep the call sites above them compiling; being same-file
+// definitions, the calls stay `call rel32` like the image.
 extern "C" void __cdecl sub_639390(const char *message);  // stage a message string
 extern "C" void __cdecl sub_63ad60(unsigned char *record);
 extern "C" char __cdecl sub_63f9b0(unsigned char *record);
@@ -1225,4 +1227,190 @@ void __cdecl sub_63ae20(unsigned char *record) {
     }
     *(unsigned long *)(record + 0x74) = vox_shared_74;
     *(unsigned long *)(record + 0x78) = vox_shared_78;
+}
+
+/*
+Purpose: Copy the caller's message string into the engine's shared buffer at
+         0x9C0D60. Every engine error path stages its text here first; the
+         catalogued nullary-int contract is wrong on both counts - the body
+         reads a real stack argument, and `return 0;` would insert an
+         `xor eax,eax` ahead of the expansion's `and ecx,3`.
+// ORIGINAL: 0x00639390 sub_639390 0x00639390-0x006393B9 BYTE_EXACT
+// symbol    _sub_639390
+// size      41 bytes
+// callers   12   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+//
+// LEVER: stdafx.h's `#pragma function(strcpy)` makes every strcpy a call,
+//        but the image INLINES this one (`repne scasb` + `rep movsd/movsb`
+//        is VC6's /Oi expansion). A TU-local `#pragma intrinsic(strcpy)`
+//        just above the body restores the expansion at exactly this one
+//        site - destination as a literal `(char *)0x009C0D60` so the
+//        immediate folds - and BYTE_EXACT fell out first try. The pragma
+//        sits below every other body in this file, none of which calls
+//        strcpy, so nothing else can move.
+//
+// PROMOTED from src/recovered/00639390.cpp.
+Return Value: n/a
+*/
+// The image INLINES this one strcpy - the `repne scasb` + `rep movsd/movsb`
+// tail is VC6's own /Oi expansion, and calling strcpy while discarding the
+// result is what reproduces it. Every other string op in the shipped image
+// is an out-of-line call, which is why stdafx.h turns the four string
+// routines into calls tree-wide - so this one TU-local pragma restores the
+// expansion exactly where the image has it. Placed below every other body
+// in this file, none of which calls strcpy, so nothing else can move.
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+#pragma intrinsic(strcpy)
+#endif
+extern "C" void __cdecl sub_639390(const char *message) {
+    strcpy((char *)0x009C0D60, message);
+}
+
+/*
+Purpose: Fill a render record's pixel-size dispatch slots for CPU ranks 1, 2
+         and 4 - vox_create_record's other dispatch target beside sub_63ae20.
+         The shipped image's two dispatchers are byte-identical twins: same
+         178 bytes, same five tables, same dec/je/dec/jne chain, so this body
+         is sub_63ae20's transcription unchanged.
+// ORIGINAL: 0x0063AD60 sub_63ad60 0x0063AD60-0x0063AE12 BYTE_EXACT
+// symbol    _sub_63ad60
+// size      178 bytes
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+//
+// LEVER: the shipped image's two pixel-size dispatchers (this and 0x63AE20)
+//        are byte-identical twins - same 178 bytes, same five tables - so
+//        sub_63ae20's proven transcription transplants unchanged: the
+//        switch(type) spelling, the shared file-scope table integers, and
+//        `unsigned char type` read through the zero-extended byte load.
+//        BYTE_EXACT first try on the homing.
+//
+// PROMOTED from src/unrecovered/0063ad60.cpp, whose artifact spelling
+// (if/else-if chain, const-pointer globals) measured NOT_MATCHING in its
+// scaffold; the switch and the shared table integers are sub_63ae20's
+// measured levers.
+Return Value: n/a
+*/
+void __cdecl sub_63ad60(unsigned char *record) {
+    unsigned char type =
+        *(unsigned char *)(*(int *)(record + 4) + 0x20);
+    switch (type) {
+    case 1:
+        if ((*record & 1) != 0) {
+            *(unsigned long *)(record + 0x6c) = vox_size1_odd_6c;
+            *(unsigned long *)(record + 0x70) = vox_size1_odd_70;
+            *(unsigned long *)(record + 0x7c) = vox_size1_odd_7c;
+            *(unsigned long *)(record + 0x74) = vox_shared_74;
+            *(unsigned long *)(record + 0x78) = vox_shared_78;
+            return;
+        }
+        *(unsigned long *)(record + 0x6c) = vox_size1_aligned_6c;
+        *(unsigned long *)(record + 0x70) = vox_size1_aligned_70;
+        *(unsigned long *)(record + 0x7c) = vox_size1_aligned_7c;
+        break;
+    case 2:
+        if ((*record & 1) != 0) {
+            *(unsigned long *)(record + 0x6c) = vox_size2_odd_6c;
+            *(unsigned long *)(record + 0x70) = vox_size2_odd_70;
+            *(unsigned long *)(record + 0x7c) = vox_size2_odd_7c;
+            *(unsigned long *)(record + 0x74) = vox_shared_74;
+            *(unsigned long *)(record + 0x78) = vox_shared_78;
+            return;
+        }
+        *(unsigned long *)(record + 0x6c) = vox_size2_aligned_6c;
+        *(unsigned long *)(record + 0x70) = vox_size2_aligned_70;
+        *(unsigned long *)(record + 0x7c) = vox_size2_aligned_7c;
+        *(unsigned long *)(record + 0x74) = vox_shared_74;
+        *(unsigned long *)(record + 0x78) = vox_shared_78;
+        return;
+    default:
+        break;
+    }
+    *(unsigned long *)(record + 0x74) = vox_shared_74;
+    *(unsigned long *)(record + 0x78) = vox_shared_78;
+}
+
+/*
+Purpose: Allocate a render record's two per-entry ramps. Frees whatever the
+         record still held at +0x60 and +0x64, allocates count entries of
+         each from the setup descriptor at +4, and when both succeed fills
+         them: ramp A with base stepped by the descriptor's step, ramp B with
+         a running accumulation of its delta. On either allocation failing,
+         stages the engine's 27-byte failure message into the shared buffer
+         and reports failure to vox_create_record.
+// ORIGINAL: 0x0063F9B0 sub_63f9b0 0x0063F9B0-0x0063FA72
+// symbol    _sub_63f9b0
+// size      194 bytes
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x0063F9C0 0x0063F9D1 0x0063F9E4 0x0063F9FA
+//
+// PROMOTED from src/unrecovered/0063f9b0.cpp, whose artifact spelling
+// (cached alloc locals, const-pointer globals, a `char *self` copy of the
+// parameter) measured NOT_MATCHING in its scaffold.
+// TRIED: MISMATCH #0 'push ebx' vs 'push esi' - the image saves ebx/ebp in
+//        the prologue (eager saves, one save set covering the base==0 early
+//        return) while every spelling here saves them LAZILY, in the loop
+//        preheader (push ebx / mov ebx,[edx+0x18] / push ebp / mov
+//        ebp,[edx+0x10]). Two consequences ride along: the image emits
+//        `add esp,4` after EACH alloc call where this tree merges both into
+//        one `add esp,8` after the second, and the loop's accum/index bind
+//        to the opposite pair (image accum=eax,index=ecx; tree the reverse).
+//        Everything else agrees: the frees (load-once, test, push), the
+//        interleaved alloc-arg recomputes (`mov edx,[esi+4]` before the
+//        alloc1 store), the guard, the loop body, the memcpy tail including
+//        `mov al,1` ahead of `rep movsd`, and both `xor al,al` epilogues.
+//        /c /O2 /Gy /GR- /GX: 78 of 83 instructions, 0.919 similar.
+// TRIED: eight spellings, all measured, all within 2 of 83: volatile on the
+//        two alloc stores; cached ramp_a/ramp_b locals; swapped
+//        accum/index declaration order; a named count local for the guard;
+//        count+step declared BEFORE the base test so their live ranges span
+//        the early exit (the eager-save shape; 80 instr, 2/83); C89
+//        declarations at block top (80 instr, 2/83). /Ox compiles identical
+//        to /O2; /Oy- sets reach 23/83 but carry the `mov ebp,esp` frame the
+//        image does not have. The eager-vs-lazy save decision is upstream of
+//        everything tried; same register ASSIGNMENT both sides (esi=record,
+//        edi=base, ebx=step, ebp=scratch), only its placement differs.
+Return Value: 0 when both ramps are filled, 1 on failure.
+*/
+extern "C" char __cdecl sub_63f9b0(unsigned char *record) {
+    if (*(int *)(record + 0x60) != 0) {
+        vox_free_slot(*(unsigned long *)(record + 0x60));
+    }
+    if (*(int *)(record + 0x64) != 0) {
+        vox_free_slot(*(unsigned long *)(record + 0x64));
+    }
+    *(int *)(record + 0x60) =
+        vox_alloc_slot(*(int *)(*(int *)(record + 4) + 0x10) << 2);
+    *(int *)(record + 0x64) =
+        vox_alloc_slot(*(int *)(*(int *)(record + 4) + 0x10) << 2);
+    if (*(int *)(record + 0x60) != 0 && *(int *)(record + 0x64) != 0) {
+        int info = *(int *)(record + 4);
+        int base = *(int *)(info + 4);
+        if (base == 0) {
+            return 0;
+        }
+        int step = *(int *)(info + 0x18) << 1;
+        int accum = 0;
+        int index = 0;
+        if (*(int *)(info + 0x10) > 0) {
+            do {
+                *(int *)(*(int *)(record + 0x60) + index * 4) = base;
+                base += step;
+                *(int *)(*(int *)(record + 0x64) + index * 4) = accum;
+                accum += *(int *)(*(int *)(record + 4) + 0x14);
+                ++index;
+            } while (index < *(int *)(*(int *)(record + 4) + 0x10));
+        }
+        return 0;
+    }
+    memcpy((void *)0x009C0D60, (const void *)0x00698DF0, 27);
+    return 1;
 }
