@@ -1863,10 +1863,10 @@ void __cdecl sort_descending(uint32_t count, int *id, int *value) {
 // because this returned zero.
 // ---------------------------------------------------------------------------
 
-// 0x009B7AF4 and 0x009BB484. A copy of one word into another, once, and
-// nothing else in the recovered corpus touches either - so there is no
-// evidence for a name and they keep their addresses rather than gaining an
-// invented one.
+// 0x009B7AF4 is WinDynamicDefaults.default_font_ (win.h) - the store below
+// seeds it from FontDefault (0x009BB484), and config_popups later re-points
+// it via find_font; the two readers are the Win constructor and Win::close,
+// both of which move it into field_F8_.
 
 int JackalInitFlags;      // 0x009BC4B0
 
@@ -1886,8 +1886,6 @@ Return Value: Zero once every subsystem is up; the first refusal's code
               otherwise, or 3 if the palette or font is missing
 Status: Complete
 */
-int32_t jackal_unk_9b7af4;  // the image's 0x009B7AF4 .bss slot
-
 int __cdecl jackal_init_real(Palette *palette, Font *font, LPSTR window_name,
                              int tgl_direct_draw, int display_width,
                              int display_height, int colour_depth) {
@@ -1948,7 +1946,12 @@ int __cdecl jackal_init_real(Palette *palette, Font *font, LPSTR window_name,
         return result;
     }
 
-    jackal_unk_9b7af4 = reinterpret_cast<int32_t>(FontDefault);
+    // THE DEFAULT WINDOW FONT (win.h's WinDynamicDefaults.default_font_,
+    // 0x009B7AF4): every Win the game opens takes its field_F8_ font from
+    // this slot until config_popups re-points it at the popup 12px font.
+    // It used to be a second object named jackal_unk_9b7af4 - a duplicate
+    // of the defaults table's own storage - so the font never flowed.
+    WinDynamicDefaults.default_font_ = FontDefault;
     trig_init();
     result = Cursor::init_cursor_class();
     if (result != 0) {

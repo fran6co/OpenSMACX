@@ -111,7 +111,7 @@ Status: Complete
 // which is why neither appears below.
 Win::Win() {
     const uint32_t *const fixed = WinStaticDefaults;
-    const uint32_t *const dynamic = WinDynamicDefaults;
+    const WinDynamicDefaultsTable *const dynamic = &WinDynamicDefaults;
 
     poWinBase_ = this;
     child_count_ = 0;
@@ -133,19 +133,19 @@ Win::Win() {
     field_19C_ = 0;
     buffer5_ = 0;
     field_130_ = 1;
-    field_FC_ = dynamic[0];
+    field_FC_ = dynamic->field_0_;
     field_100_ = fixed[0];
     caption_height_ = fixed[1];
-    field_104_ = dynamic[2];
+    field_104_ = dynamic->rest_[0];
     field_108_ = fixed[2];
     field_10C_ = fixed[3];
     field_110_ = fixed[4];
     border_thickness_ = fixed[5];
     bottom_border_thickness_ = fixed[6];
     field_120_ = fixed[7];
-    field_124_ = dynamic[3];
+    field_124_ = dynamic->rest_[1];
     field_128_ = fixed[8];
-    field_F8_ = dynamic[1];
+    field_F8_ = dynamic->default_font_;
     field_E0_ = 0;
     minimize_button_ = 0;
     zoom_button_ = 0;
@@ -777,7 +777,7 @@ char WinKeyRing[10];       // 0x009B7B48
 char *WinKeyRingCursor = WinKeyRing;  // 0x00696D5C
 const uint32_t WinStaticDefaults[10] = {  // 0x00696D34, the image's values
     247, 24, 0xffffffff, 1, 1, 8, 0xffffffff, 7, 2, 1};
-uint32_t WinDynamicDefaults[10];       // 0x009B7AF0
+WinDynamicDefaultsTable WinDynamicDefaults;  // 0x009B7AF0
 int WinBubbleActive;       // 0x009B7A50
 Win *WinZOrderWindow;      // 0x009B7A6C
 int WinZOrderCount;        // 0x009B7B30
@@ -9020,7 +9020,7 @@ void Win::on_redraw_nc(RECT * area, int flags) {
                     int w = clientW - capHeight;
                     RECT r; r.left = 0; r.top = 0; r.right = w; r.bottom = capHeight;
                     buf->set_text_color(this->field_104_, this->field_108_, this->field_10C_, this->field_110_);
-                    buf->set_font((Font *)this->field_F8_, 0, 0, 0);
+                    buf->set_font(this->field_F8_, 0, 0, 0);
                     buf->set_clip(&r);
                     char *title = (char *)this->field_E0_;
                     if ((win_flags & 0x10000) != 0) {
@@ -11205,9 +11205,9 @@ void Win::close() {
     // the caption height assigned below, which is what confirms the indexing.
     // The assignment ORDER is the image's: fields go in field order while the
     // table is read out of order, so do not tidy it into index order.
-    field_FC_ = WinDynamicDefaults[0];
+    field_FC_ = WinDynamicDefaults.field_0_;
     field_100_ = WinStaticDefaults[0];
-    field_104_ = WinDynamicDefaults[2];
+    field_104_ = WinDynamicDefaults.rest_[0];
     field_108_ = WinStaticDefaults[2];
     field_10C_ = WinStaticDefaults[3];
     field_110_ = WinStaticDefaults[4];
@@ -11215,9 +11215,9 @@ void Win::close() {
     border_thickness_ = WinStaticDefaults[5];
     bottom_border_thickness_ = WinStaticDefaults[6];
     field_120_ = WinStaticDefaults[7];
-    field_124_ = WinDynamicDefaults[3];
+    field_124_ = WinDynamicDefaults.rest_[1];
     field_128_ = WinStaticDefaults[8];
-    field_F8_ = WinDynamicDefaults[1];
+    field_F8_ = WinDynamicDefaults.default_font_;
 
     {
         void *p0xE0 = reinterpret_cast<void *>(field_E0_);
