@@ -669,3 +669,28 @@ Purpose: Step the receiver back to the subobject ??_GMainInterface@@UAEPAXI@Z
 Return Value: the forwarded call's
 Status: Complete
 */
+
+// THE SLOT INDEX go_reset (time.cpp) works against, defined here beside the
+// table it indexes. The image seeds the dword at 0x0068A5CC with 0xffffffff -
+// no window selected - so the initialiser folds straight into .data and pays
+// no dynamic initialiser.
+int MapWinSelectedSlot = -1;
+
+/*
+// ORIGINAL: 0x0046EB90 ?on_lose_mouse_capture@MapWin@@QAEXXZ 0x0046EB90-0x0046EB95 BYTE_EXACT
+// size      5 bytes
+// prototype void (__thiscall ?on_lose_mouse_capture@MapWin@@QAEXXZ)(MapWin* this)
+// callers   0   call targets   0
+// kind      thunk
+// flags     thunk;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+// Losing the pointer cancels the go mode wholesale: the whole body is one
+// tail `jmp go_reset` (E9 at 0x0046EB90), which a void function whose only
+// statement is the void call compiles to under /O2 - the same sibcall merge
+// game_close (game.cpp) documents.
+void MapWin::on_lose_mouse_capture() {
+    go_reset();
+}

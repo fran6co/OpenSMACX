@@ -111,7 +111,11 @@ FLOORS = {
     # 0x0043C1A0 DesignWin::close and 0x0046EB90 on_lose_mouse_capture (the
     # latter tails into go_reset, itself unrecovered). Promotion is the next
     # batch's first work, and this floor falls back with it.
-    "archive-only-forwarder": 23,
+    # 23 -> 21 (2026-08-29, dwin batch): exactly that promotion ran -
+    # 0x0043C1A0 homed into designwin.cpp and 0x0046EB90 into mapwin.cpp
+    # (as a BYTE_EXACT 5-byte tail jmp; go_reset itself went to time.cpp),
+    # their forwarders retired and their archive units deleted.
+    "archive-only-forwarder": 21,
     "unknown-host-files": 0,
 }
 

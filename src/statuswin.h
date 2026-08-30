@@ -47,6 +47,10 @@ class StatusWin {
   void close();
   void set_loc(int x, int y);
   void reset();
+  // 0x004B4A20, 451 bytes - still an original body (an archived artifact in
+  // src/recovered/units/004b4a20.cpp), declared here so go_reset's direct
+  // `call 0x4b4a20` at 0x0050F020 / 0x0050F150 compiles and links.
+  void set_title(int title_id);
 
 
  private:

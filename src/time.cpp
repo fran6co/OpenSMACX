@@ -18,6 +18,10 @@
 #include "stdafx.h"
 #include "temp.h" // MsgStatus, HandleMain
 #include "time.h"
+#include "mapwin.h"      // MapWinTable, go_reset's window walk
+#include "console.h"     // ConsoleStatusWin
+#include "statuswin.h"   // StatusWin::set_title, on the object above
+#include "win.h"         // WinPointerOwner3/4
 
 Time *Time::TimeModal;
 int Time::TimeInitCount;
@@ -427,6 +431,138 @@ void CALLBACK Time::MultimediaProc(uint32_t UNUSED(timer_id), uint32_t UNUSED(ms
 }
 
 // global
+
+// The full-screen window the go mode drops over the desktop, at a fixed
+// address. game.cpp binds the same address as `CoverWindow` with internal
+// linkage, which time.cpp cannot name, and a second variable binding for one
+// address fails the duplicate-globals ceiling - so the address comes back
+// from an inline function instead, which VC6 folds to the same
+// `mov ecx, imm32` receiver at the call site (the world_climate_window
+// idiom, game.cpp).
+inline Win *go_cover_window() {
+    return (Win *)0x00937118;
+}
+
+/*
+Purpose: Cancel the go mode: hide the cover window, stop the go timer, then
+         reset the mode state and cursor of every live map window and of the
+         selected one.
+// ORIGINAL: 0x0050EF50 ?go_reset@@YAXXZ 0x0050EF50-0x0050F166
+// size      534 bytes
+// prototype
+// callers   7   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004B4A20 0x005EC7C0 0x005EDCD0 0x00616780
+// indirect  0x0050EFF6 0x0050F014 0x0050F126 0x0050F144
+// MEASURED 2026-08-29: /O2 best at 10/137 (0.842 similar). Image
+//   instructions 0..7 agree - prologue, the cover window and
+//   its direct `call Win::hide`. The counted divergence is the catalogued
+//   MEASURED-inline ceiling: `GoTimer->close()` is inlined here in full
+//   (stop()'s two kill branches plus the nine field clears, writing
+//   0x939E60..0x939E84 directly) where the image makes one plain
+//   `call 0x616780`. time.h keeps close() in-class BECAUSE ~Time must
+//   inline it, so an out-of-line spelling would regress that claim; VC6
+//   honours no per-site noinline. Everything after is that block's
+//   register-allocation shadow (the walking cursor lands in edi instead of
+//   esi), not a spelling defect this file can reach.
+// TRIED: the dead cursor guard as a cached local (`cursor_sprite != 0`)
+//   - same 10/137. The image loads the sprite value once for the two
+//   equality compares (3D imm at 0x0050F097/0x0050F09E) but re-reads the
+//   FIELD for the dead arm (39 at 0x0050F0A5), so the body re-reads it.
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl go_reset() {
+    go_cover_window()->Win::hide();
+    GoTimer->close();
+
+    int index = 0;
+    int cursor = reinterpret_cast<int>(MapWinTable);
+    const int end = cursor + static_cast<int>(MapWinTableSlots) * 4;
+    do {
+        MapWin *const window = *reinterpret_cast<MapWin *const *>(cursor);
+        if (window != nullptr &&
+            (cursor == reinterpret_cast<int>(MapWinTable) ||
+             *reinterpret_cast<const volatile uint32_t *>(
+                 reinterpret_cast<const uint8_t *>(window) +
+                 MapWinActiveOffset) != 0) &&
+            index != MapWinSelectedSlot &&
+            window->field_1DD80_ != 0) {
+            // The FIRST store runs off the window the tests loaded; the rest
+            // re-read the slot each time, as the image re-reads [esi] for
+            // every store after the first (0x0050EFB6 on).
+            window->field_1DD88_ = 1;
+            (*reinterpret_cast<MapWin *const *>(cursor))->field_1DD80_ = 0;
+            (*reinterpret_cast<MapWin *const *>(cursor))->field_1DD8C_ = 0;
+            (*reinterpret_cast<MapWin *const *>(cursor))->field_1DD84_ = 0;
+            (*reinterpret_cast<MapWin *const *>(cursor))->field_1DE0C_ = -1;
+
+            // The GraphicWin virtual base the dispatches run through, as a
+            // Win* so the owner comparisons are same-type. Each use
+            // re-derives the vbtable walk - the image computes the adjusted
+            // receiver twice (0x0050EFDA, 0x0050F007) rather than keeping
+            // one.
+            const Win *const base = static_cast<GraphicWin *>(window);
+            if (WinPointerOwner3 == base) {
+                WinPointerOwner3 = nullptr;
+                window->vslot_04();
+            }
+            if (WinPointerOwner4 == base) {
+                WinPointerOwner4 = nullptr;
+            }
+            window->vslot_63();
+            ConsoleStatusWin->set_title(0);
+        }
+        ++index;
+        cursor += 4;
+    } while (cursor < end);
+
+    // Slot 0's cursor first, unconditionally.
+    MapWin *const primary = MapWinTable[0];
+    if (primary->field_1EF4C_ != 0 || primary->field_1EF50_ != 0x7F00) {
+        primary->GraphicWin::set_cursor(0x7F00);
+        primary->field_1EF50_ = 0x7F00;
+        primary->field_1EF4C_ = 0;
+    }
+
+    if (MapWinSelectedSlot >= 0) {
+        // The slot walks two registers in the image - the window loaded once
+        // for the cursor work, the slot's own address kept for the reset
+        // stores below (`lea esi, [eax*4 + 0x7d3c3c]` at 0x0050F08A).
+        MapWin *const window = MapWinTable[MapWinSelectedSlot];
+        MapWin **const slot = &MapWinTable[MapWinSelectedSlot];
+        // Only the two go-mode cursor sprites are replaced by the default.
+        // The sprite value is loaded once for the two equality tests, but
+        // the dead `!= 0` arm re-reads the FIELD from memory (0x0050F0A5
+        // compares [edi + 0x1ef4c] again, not the register) - the same
+        // re-read-the-lvalue shape as the reset stores below. Reproduced.
+        const uint32_t cursor_sprite = window->field_1EF4C_;
+        if ((cursor_sprite == 0x0093AA9C || cursor_sprite == 0x0093ABFC) &&
+            (window->field_1EF4C_ != 0 || window->field_1EF50_ != 0x7F00)) {
+            window->GraphicWin::set_cursor(0x7F00);
+            window->field_1EF50_ = 0x7F00;
+            window->field_1EF4C_ = 0;
+        }
+        (*slot)->field_1DD88_ = 1;
+        (*slot)->field_1DD80_ = 0;
+        (*slot)->field_1DD8C_ = 0;
+        (*slot)->field_1DD84_ = 0;
+        (*slot)->field_1DE0C_ = -1;
+
+        const Win *const base = static_cast<GraphicWin *>((*slot));
+        if (WinPointerOwner3 == base) {
+            WinPointerOwner3 = nullptr;
+            (*slot)->vslot_04();
+        }
+        if (WinPointerOwner4 == base) {
+            WinPointerOwner4 = nullptr;
+        }
+        (*slot)->vslot_63();
+        ConsoleStatusWin->set_title(0);
+        MapWinSelectedSlot = -1;
+    }
+}
 
 /*
 Purpose: Start global timers.

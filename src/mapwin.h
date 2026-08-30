@@ -142,14 +142,13 @@ class MapWin : public virtual GraphicWin {
   // mapwin.cpp).
   void clear(int index);
 
- private:
-  // The vbtable pointer opens the object; a heap pointer close() frees sits at
-  // 0x4. Both are carved out of the derived storage, keeping the total the
-  // static_assert pins.
-  // EXPERIMENT: the vbtable pointer and the trailing base are now the
-  // compiler's, not ours. MSVC puts the vbptr at 0 and the virtual base after
-  // the derived members, which is what the vbtable at 0x0066C870 says
-  // ({0, 0x21A6C}). The static_assert below is the check.
+  // THE FIELD BLOCK IS PUBLIC, deliberately. go_reset (time.cpp, a free
+  // function) resets several of these dwords on every window of the table,
+  // and the mapwin_terrain_fixup / draw_map family reads 0x1DD74 from
+  // outside through the documented raw-offset idiom; the offsets are
+  // already carved members, so hiding the reset targets behind raw-offset
+  // writes would model the same bytes twice. Access changes no offset; the
+  // static_assert below still pins the layout.
   void *owned_;
   uint8_t field_8_[0x1DD64];  // 0x8
   uint32_t field_1DD6C_;  // 0x1DD6C
@@ -182,7 +181,13 @@ class MapWin : public virtual GraphicWin {
   uint32_t field_1DDD8_;  // 0x1DDD8
   uint32_t field_1DDDC_;  // 0x1DDDC
   uint32_t field_1DDE0_;  // 0x1DDE0
-  uint8_t field_1DDE4_[0x40];  // 0x1DDE4
+  uint8_t field_1DDE4_[0x28];  // 0x1DDE4
+  // Carved out of what was field_1DDE4_[0x40] for go_reset (0x0050EF50), which
+  // writes -1 here for every window it resets - the only access the image makes
+  // to the offset. The trailing pad keeps the array's 0x40 extent, so no offset
+  // past it moves.
+  uint32_t field_1DE0C_;  // 0x1DE0C
+  uint8_t field_1DE10_[0x14];  // 0x1DE10
   uint32_t field_1DE24_;  // 0x1DE24
   uint8_t field_1DE28_[0x1098];  // 0x1DE28
   uint32_t field_1EEC0_;  // 0x1EEC0
@@ -301,6 +306,15 @@ inline MapWinSlots &map_win_table() {
 }
 #define MapWinTable (map_win_table())
 static const size_t MapWinTableSlots = 8;        // (0x007D3C5C - 0x007D3C3C) / 4
+
+// 0x0068A5CC. THE SLOT OF THE WINDOW BEING WORKED WITH, or -1 for none.
+// go_reset (0x0050EF50) proves the pairing with the table above: its walk
+// skips the slot whose index equals this (`cmp ecx, edx / je` at 0x0050EF9C,
+// the index and this side by side), then resets THIS slot separately at
+// 0x0050F083 (`mov edi, [eax*4 + 0x7d3c3c]`) and stores -1 back at the end
+// (0x0050F155). Every read is a signed compare against zero (`jl` at
+// 0x0050F07D, and 0x00517BF6 the same), so `int`, not unsigned.
+extern int MapWinSelectedSlot;  // 0x0068A5CC
 
 // Per-window "this window is live" dword. The MapWin constructor clears it
 // (0x00462822), MapWin::clear writes it (0x004628AF), and mapwin_system_init

@@ -51,9 +51,8 @@ class DesignWin : public GraphicWin, public SubInterface {
   void select_special(int a1);
   void select_special_2();
   void select_special_1();
-  // 0x0043C1A0, still an original body; the definition in pending_bodies.cpp
-  // forwards to it. desktop_close closes the process-wide design window
-  // through this member.
+  // 0x0043C1A0, homed into designwin.cpp. desktop_close closes the
+  // process-wide design window through this member.
   void close();
   DesignWin() { ; }
   // 0x0043ECB0 is not recovered: a
@@ -359,7 +358,12 @@ class DesignWin : public GraphicWin, public SubInterface {
   uint32_t mineralCostFactor_;  // 0x14214
   uint32_t protoAbilityID1_;  // 0x14218
   uint32_t protoAbilityID2_;  // 0x1421C
-  uint32_t field_14220_;  // 0x14220
+  // BYTE in the image: DesignWin::close writes it `mov byte ptr
+  // [esi+0x14220], bl` (0x0043C23C) - the only access to the offset. The
+  // dword the IDA database typed here was its own rounding; the pad keeps
+  // every offset past it where it was.
+  uint8_t field_14220_;  // 0x14220
+  uint8_t field_14221_[3];  // 0x14221
   uint32_t field_14224_;  // 0x14224
   uint32_t field_14228_;  // 0x14228
   uint32_t field_1422C_;  // 0x1422C
