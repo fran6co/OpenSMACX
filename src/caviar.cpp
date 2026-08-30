@@ -767,17 +767,17 @@ int Caviar::init_class() {
     // addresses of successive 0x100-byte shade rows of the colour table;
     // table B's are the same addresses measured from zero, which the engine
     // rebases when it runs. The slots are dwords in the record's own layout.
-    unsigned long *const ramp_a =
-        static_cast<unsigned long *>(record->ramp_a_ptr_);
-    unsigned long *const ramp_b =
-        static_cast<unsigned long *>(record->ramp_b_ptr_);
-    // Each ramp entry steps 0x100 bytes - HALF a scene row, the engine's
-    // own ramp granularity (128 16-bit pixels per shade level).
-    const unsigned long colour_base =
-        reinterpret_cast<unsigned long>(CaviarSceneMemory);
+    // Table A holds the shade-row addresses: successive 0x100-byte steps
+    // of the scene memory - half a scene row per shade level, the engine's
+    // own ramp granularity. Table B holds the same rows ADDRESSED FROM
+    // ZERO; the engine adds the scene base when it renders.
+    void **const ramp_a = record->ramp_a_ptr_;
+    void **const ramp_b = record->ramp_b_ptr_;
+    uint8_t *shade_row = reinterpret_cast<uint8_t *>(CaviarSceneMemory);
     for (int index = 0; index < 0x100; ++index) {
-        ramp_a[index] = colour_base + index * 0x100;
-        ramp_b[index] = index * 0x100;
+        ramp_a[index] = shade_row;
+        shade_row += 0x100;
+        ramp_b[index] = reinterpret_cast<void *>(index * 0x100);
     }
 
     CaviarViewportState[0] = 0;

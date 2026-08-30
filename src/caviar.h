@@ -247,8 +247,11 @@ struct VoxRenderRecord {
     // from *(setup_block+4) stepped *(setup_block+0x18)*2 per entry, ramp B
     // as a running accumulation of *(setup_block+0x14) per entry.
     // init_class fills the same slots with its own two 256-entry ramps.
-    void *ramp_a_ptr_;         // 0x60
-    void *ramp_b_ptr_;         // 0x64
+    // The two ramp tables: arrays of shade-row POINTERS (0x100 bytes per
+    // shade level - half a scene row). init_class fills them from the scene
+    // memory; sub_63f9b0 reallocates and refills them per descriptor count.
+    void **ramp_a_ptr_;  // 0x60
+    void **ramp_b_ptr_;  // 0x64
     uint8_t setup_size_code_;  // 0x68 - low byte of the last argument
     uint8_t field_69_[0x80 - 0x69];
 };
