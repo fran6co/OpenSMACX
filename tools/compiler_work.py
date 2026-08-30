@@ -151,7 +151,11 @@ HEADER_SHAPES = [
     # 155 -> 146 (2026-08-30, boot-path batch): the BasePop ctor's defaults
     # became real named globals and the windtor/amovie homings retired more
     # raw bindings.
-    ("anonymous fixed-address global", 63,
+    # 63 -> 57 (2026-08-30, Console/MapWin destructor pass): the member
+    # carves replaced g_-named raw bindings with named class members, and
+    # the vtable-restore puns in the hand-spelled destructors left with the
+    # bodies.
+    ("anonymous fixed-address global", 57,
      re.compile(r"\bg_00[0-9a-f]{4,6}\b"),
      "a global named by its address instead of its meaning. Name it from "
      "evidence - the image's .data value, the arithmetic identity, the "

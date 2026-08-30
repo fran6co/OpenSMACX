@@ -169,6 +169,42 @@ Purpose: Tear down the game console - its own Buffer/Time/Menu/Sprite
          destructor).
 // ORIGINAL: 0x0051D9F0 ??1Console@@QAE@XZ 0x0051D9F0-0x0051DC10;0x0065D0E0-0x0065D220
 // symbol    ??1Console@@UAE@XZ
+// body      src/console.h
+//
+// HOMED INTO THE CLASS 2026-08-30: the hand-spelled body this spot carried
+// measured MISMATCH (7/123) because everything but `close()` is
+// compiler-owned - the EH frame, the vtable/vtordisp re-stores on the
+// vbase, the member teardown of the GraphicWin/Buffer/Time/Menu/Sprite
+// members console.h now declares, and MapWin's own base teardown inlined
+// (clear(0) and MapWin's carved members). `MEASURED ~Console() { close();
+// }` in console.h emits THIS piece as the out-of-line COMDAT
+// ??_DConsole@@QAEXXZ (the base-object destructor; the catalogue's ??1
+// name sits on the base flavor - the true ??1Console complete destructor
+// is 0x0051DDF0, `lea esi,[ecx-0x23D94]` adjust, a call to this, then
+// ??1GraphicWin on the vbase, then the conditional operator delete, with
+// the deleting wrapper ??_GConsole at 0x0051DDE0 before it). The funclet
+// span 0x0065D0E0-0x0065D220 is that EH machinery's own.
+//
+// TRIED (2026-08-30, after the carve): 30/123, 151 instructions against the
+//        image's 123, and every teardown element is present in the right
+//        order - the whole frame (EH prologue, all three vtable/vtordisp
+//        re-stores) agrees through instruction 22. The +28 are VC6's /O2
+//        member-teardown discipline, which the image does not carry: our
+//        compile nulls each Buffer member's vptr (`mov [edi],0`) before
+//        every ??1Buffer call - five of them, own and inlined-MapWin
+//        alike - spills the member pointer through [ebp-0x10]/[ebp-0x14],
+//        and renumbers the EH states (+3 at close: 9 where the image has
+//        6). The image calls the same five ??1Buffer functions bare.
+//        Established along the way: ~Buffer's virtuality is NOT the
+//        trigger (the store appears with it spelled either way - a
+//        non-virtual spelling was tried and reverted; the Buffer-side
+//        vftable 0x0066FC48 opens with a deleting-dtor thunk, which only
+//        a virtual destructor produces), and the /Od build tree emits no
+//        stores - this is /O2-specific. MapWin's own ??1DMapWin, carved
+//        identically, went BYTE_EXACT 73/73 in the same pass, so the
+//        model and the method are right; whatever makes VC6 skip the
+//        vptr-null for Console's Buffer members specifically is still
+//        hiding.
 // size      864 bytes
 // prototype void (__thiscall ??1Console@@QAE@XZ)(Console* this)
 // callers   2   call targets   10
@@ -183,76 +219,6 @@ already-matching `->Console::~Console()` on `TeardownObject00939444` -
 GraphicWin, the same convention PlanWin's and MapWin's destructors use (see
 the note in `planwin.cpp`).
 */
-Console::~Console() {
-    char *const self = reinterpret_cast<char *>(this);
-
-    // Console's own tail, ahead of the virtual base at `self`.
-    char *const front = self - 0x23d94;
-    {
-        int32_t *const vtbl = *reinterpret_cast<int32_t **>(front);
-        int32_t const off = vtbl[1];
-        *reinterpret_cast<void **>(front + off) = g_0066ec18;
-    }
-    {
-        int32_t *const vtbl = *reinterpret_cast<int32_t **>(front);
-        int32_t const off = vtbl[1];
-        *reinterpret_cast<void **>(self - 0x23950 + off) = g_0066ec10;
-    }
-    {
-        int32_t *const vtbl = *reinterpret_cast<int32_t **>(front);
-        int32_t const off = vtbl[1];
-        *reinterpret_cast<int32_t *>(self - 0x23d98 + off) = off - 0x23d94;
-    }
-
-    close();
-
-    reinterpret_cast<Sprite *>(self - 0x40)->close();
-    reinterpret_cast<Sprite *>(self - 0x6c)->close();
-
-    char *const menu = self - 0x1368;
-    VectorDtorIterator(menu + 0x1118, 0x2c, 3, console_sprite_element_dtor);
-    reinterpret_cast<Sprite *>(menu + 0x10ec)->close();
-    reinterpret_cast<Buffer *>(menu + 0xb64)->~Buffer();
-    reinterpret_cast<Menu *>(menu)->Menu::~Menu();
-
-    reinterpret_cast<Time *>(self - 0x1390)->~Time();
-    reinterpret_cast<Buffer *>(self - 0x1918)->~Buffer();
-    reinterpret_cast<GraphicWin *>(self - 0x232c)->GraphicWin::~GraphicWin();
-
-    // Rebase onto the MapWin base's own embedded (virtual) GraphicWin.
-    char *const mapwin_vbase = self - 0x2328;
-    {
-        int32_t *const vtbl = *reinterpret_cast<int32_t **>(mapwin_vbase - 0x21a6c);
-        int32_t const off = vtbl[1];
-        *reinterpret_cast<void **>(mapwin_vbase - 0x21a6c + off) = g_0066a57c;
-    }
-    {
-        int32_t *const vtbl = *reinterpret_cast<int32_t **>(mapwin_vbase - 0x21a6c);
-        int32_t const off = vtbl[1];
-        *reinterpret_cast<void **>(mapwin_vbase - 0x21628 + off) = g_0066a574;
-    }
-    {
-        int32_t *const vtbl = *reinterpret_cast<int32_t **>(mapwin_vbase - 0x21a6c);
-        int32_t const off = vtbl[1];
-        *reinterpret_cast<int32_t *>(mapwin_vbase - 0x21a70 + off) = off - 0x21a6c;
-    }
-
-    reinterpret_cast<MapWin *>(mapwin_vbase)->clear(0);
-
-    VectorDtorIterator(mapwin_vbase - 0x2b18, 0xabc, 4, console_image_button_element_dtor);
-
-    reinterpret_cast<Font *>(mapwin_vbase - 0x2b4c)->~Font();
-    reinterpret_cast<Font *>(mapwin_vbase - 0x2b78)->~Font();
-    reinterpret_cast<Font *>(mapwin_vbase - 0x2ba4)->~Font();
-    reinterpret_cast<Buffer *>(mapwin_vbase - 0x3134)->~Buffer();
-    reinterpret_cast<Buffer *>(mapwin_vbase - 0x36bc)->~Buffer();
-    reinterpret_cast<Buffer *>(mapwin_vbase - 0x3c44)->~Buffer();
-    reinterpret_cast<TextureStore *>(mapwin_vbase - 0x3f60)->~TextureStore();
-
-    VectorDtorIterator(mapwin_vbase - 0x210e0, 0x260, 0xc4, console_texture_store_element_dtor);
-    VectorDtorIterator(mapwin_vbase - 0x21a60, 0x260, 4, console_texture_store_element_dtor);
-}
-
 /*
 Purpose: Open the shared preferences window to the preferences page.
 // ORIGINAL: 0x00514EF0 ?set_preferences@Console@@QAEXXZ 0x00514EF0-0x00514EFD BYTE_EXACT

@@ -19,6 +19,9 @@
 
 #include "original_seam.h"
 #include "graphicwin.h"
+#include "texture.h"    // TextureStore textures_a_/textures_b_/texture_store_
+#include "font.h"       // font_a_/font_b_/font_c_
+#include "imagebutton.h"  // image_buttons_[4]
 #include "maininterface.h"   // MainInterfaceGlobal is one of these
 
  /*
@@ -143,7 +146,17 @@ class MapWin : public virtual GraphicWin {
   // constructor here at all (the implicit default is never called), and
   // `construct` below carries the recovered body by hand.
   void construct(int input);
-  ~MapWin();
+  // MEASURED IN-CLASS 2026-08-30, the same move as ~Console below it in
+  // console.h: the image's 0x00420F90 is the BASE-object destructor
+  // (??_DMapWin@@QAEXXZ - no caller in the image destroys a standalone
+  // MapWin completely, so no ??1 exists there to match). The bytes are the
+  // EH frame, the two vtable re-stores and the vtordisp zero on the
+  // GraphicWin vbase, the body's clear(0), and the member teardown of the
+  // carve above - compiler-emitted from these declarations, out-of-line as
+  // the COMDAT the unwind funclets jump to and inlined into ??_DConsole's
+  // normal path (its MapWin-part tail). The hand-spelled body this
+  // replaces measured MISMATCH on exactly the compiler-owned frame.
+  MEASURED ~MapWin() { clear(0); }
   int UNK1();
   void UNK3();
   void do_image_buttons();
@@ -168,7 +181,21 @@ class MapWin : public virtual GraphicWin {
   // writes would model the same bytes twice. Access changes no offset; the
   // static_assert below still pins the layout.
   void *owned_;
-  uint8_t field_8_[0x1DD64];  // 0x8
+  uint32_t field_8_;  // 0x8
+  // THE MANAGED OBJECTS, CARVED 2026-08-30 out of what was the
+  // field_8_[0x1DD64] slab. The image's own ??_M vector-destructor calls
+  // name the model: both TextureStore ranges carry ??1TextureStore
+  // (0x006252B0) as their element destructor, so the elements ARE
+  // TextureStore objects, and the arithmetic closes exactly -
+  // 0xC + 4*0x260 = 0x98C and 0x98C + 0xC4*0x260 = 0x1DB0C, where the
+  // lone store sits, ending at the already-named field_1DD6C_. The
+  // destructors and constructors in mapwin.cpp spelled these same
+  // addresses through VectorCtorIterator/VectorDtorIterator before the
+  // carve; declaring the members hands the array lifetimes to the
+  // compiler, which is what ??_DMapWin's own bytes are.
+  TextureStore textures_a_[4];      // 0xC
+  TextureStore textures_b_[0xC4];   // 0x98C
+  TextureStore texture_store_;      // 0x1DB0C
   uint32_t field_1DD6C_;  // 0x1DD6C
   uint32_t field_1DD70_;  // 0x1DD70
   uint32_t field_1DD74_;  // 0x1DD74
@@ -207,22 +234,31 @@ class MapWin : public virtual GraphicWin {
   uint32_t field_1DE0C_;  // 0x1DE0C
   uint8_t field_1DE10_[0x14];  // 0x1DE10
   uint32_t field_1DE24_;  // 0x1DE24
-  uint8_t field_1DE28_[0x1098];  // 0x1DE28
+  // THE THREE BUFFERS, carved from what was field_1DE28_[0x1098]: three
+  // consecutive 0x588-byte Buffer objects, ??1Buffer@front+0x1E938/
+  // +0x1E3B0/+0x1DE28 in ??_DMapWin's own call list. Declared in the
+  // order destruction reverses (highest address first), so the compiler's
+  // member teardown runs buffer_a_, buffer_b_, buffer_c_ - the image's
+  // order.
+  Buffer buffer_c_;  // 0x1DE28
+  Buffer buffer_b_;  // 0x1E3B0
+  Buffer buffer_a_;  // 0x1E938
   uint32_t field_1EEC0_;  // 0x1EEC0
   uint32_t field_1EEC4_;  // 0x1EEC4
-  uint8_t field_1EEC8_[0x28];  // 0x1EEC8
+  Font font_a_;  // 0x1EEC8 - three Fonts, ??1Font calls at these offsets in
+                 // ??_DMapWin; each followed by one dword the map named.
   uint32_t field_1EEF0_;  // 0x1EEF0
-  uint32_t field_1EEF4_;  // 0x1EEF4
-  uint8_t field_1EEF8_[0x8];  // 0x1EEF8
-  uint32_t field_1EF00_;  // 0x1EF00
-  uint32_t field_1EF04_;  // 0x1EF04
-  uint8_t field_1EF08_[0x14];  // 0x1EF08
+  Font font_b_;  // 0x1EEF4
   uint32_t field_1EF1C_;  // 0x1EF1C
-  uint8_t field_1EF20_[0x28];  // 0x1EF20
+  Font font_c_;  // 0x1EF20
   uint32_t field_1EF48_;  // 0x1EF48
   uint32_t field_1EF4C_;  // 0x1EF4C
   uint32_t field_1EF50_;  // 0x1EF50
-  uint8_t field_1EF54_[0x2AF0];  // 0x1EF54
+  // THE IMAGE BUTTONS: 4 * 0xABC (BaseButton 0xAB8 + the field imagebutton.h
+  // names) = the 0x2AF0 this replaces, ending at 0x21A44 where the dword run
+  // the map already names picks up. The image's ??_M arg here is
+  // ??1ImageButton (0x00625310).
+  ImageButton image_buttons_[4];  // 0x1EF54
   uint32_t field_21A44_;  // 0x21A44
   uint32_t field_21A48_;  // 0x21A48
   uint32_t field_21A4C_;  // 0x21A4C

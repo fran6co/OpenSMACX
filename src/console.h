@@ -19,6 +19,9 @@
 
 #include "original_seam.h"
 #include "mapwin.h"
+#include "menu.h"     // menu_
+#include "sprite.h"   // menu_sprite_, menu_sprites_[3], sprite_a_/sprite_b_
+#include "time.h"     // time_
 
 class StatusWin;
 
@@ -138,7 +141,19 @@ class Console : public MapWin {
   // never carry the most-derived flag - `guarded_teardowns.cpp`'s own
   // already-matching `->Console::~Console()` proves it, the same way it did
   // for MapWin's and PlanWin's.
-  ~Console();
+  // MEASURED IN-CLASS 2026-08-30, and the whole point of the member carve
+  // above: the image's 0x0051D9F0 is the BASE-object destructor
+  // (??_DConsole@@QAEXXZ - the complete ??1Console at 0x0051DDF0 calls it
+  // and then ??1GraphicWin on the vbase; the catalogue pinned the ??1 name
+  // on the base flavor). ??_DConsole's bytes are the EH frame, the two
+  // vtable/vtordisp re-stores on the vbase, the body's close(), the
+  // compiler's member teardown in the reverse-declaration order of the
+  // carve, and MapWin's own base teardown INLINED (clear(0) and MapWin's
+  // members) - all of it compiler-emitted from these declarations once the
+  // body is the one line below. Out-of-line in console.cpp it measured
+  // MISMATCH with every teardown hand-spelled; declared here the funclet
+  // spans (0x0065D0E0-0x0065D220) come out of the same EH machinery.
+  MEASURED ~Console() { close(); }
   // 0x0051D7D0. Not declared before this landed, which is why the body
   // could only live in an artifact.
   void close();
@@ -178,11 +193,31 @@ class Console : public MapWin {
   // 0x21A68 and this slab has to start there or every field below sits
   // four bytes early - measured: cursor_next read [eax*4 + 0x23C08]
   // where the image reads 0x23C0C.
-  uint8_t field_21A68_[0xFC4];  // 0x21A68
-  uint32_t field_22A2C_;  // 0x22A2C
-  uint8_t field_22A30_[0x440];  // 0x22A30
-  uint32_t field_22E70_;  // 0x22E70
-  uint8_t field_22E74_[0xD54];  // 0x22E74
+  // THE MANAGED OBJECTS, CARVED 2026-08-30 out of what was the
+  // field_21A68_[0xFC4] / field_22A2C_ / field_22A30_[0x440] /
+  // field_22E70_ / field_22E74_[0xD54] runs. ??0Console's own call list
+  // names every one: ??0GraphicWin at +0x21A68 (0x005D4CF0), ??0Buffer at
+  // +0x2247C (0x005D7210), ??0Time at +0x22A04 (0x006161D0), ??0Menu at
+  // +0x22A2C (0x005FAC60), then the menu's companions at +0x23590,
+  // +0x23B18 and +0x23B44 - a Buffer, a Sprite and Sprite[3] the image's
+  // ??_M walk carries with ??1Sprite as its element destructor. The
+  // arithmetic closes exactly: 0x21A68+0xA14(GraphicWin)=0x2247C,
+  // +0x588(Buffer)=0x22A04, +0x28(Time)=0x22A2C, +0xB64(Menu)=0x23590,
+  // +0x588(Buffer)=0x23B18, +0x2C(Sprite)=0x23B44, +3*0x2C=0x23BC8 where
+  // the dword run the map already names picks up. Declared in the order
+  // destruction reverses, so the compiler's teardown runs sprite_a_,
+  // sprite_b_, menu_sprites_ (??_M), menu_sprite_, menu_buffer_, menu_,
+  // time_, buffer_, graphic_win_ - ??_DConsole's own order.
+  GraphicWin graphic_win_;  // 0x21A68 - Console's own second GraphicWin,
+                            // beside the virtual base it inherits (whose
+                            // vbtable displacement 0x23D94 is set by these
+                            // very members)
+  Buffer buffer_;           // 0x2247C
+  Time time_;               // 0x22A04
+  Menu menu_;               // 0x22A2C
+  Buffer menu_buffer_;      // 0x23590
+  Sprite menu_sprite_;      // 0x23B18
+  Sprite menu_sprites_[3];  // 0x23B44
   uint32_t field_23BC8_;  // 0x23BC8
   uint32_t field_23BCC_;  // 0x23BCC
   uint32_t field_23BD0_;  // 0x23BD0
@@ -208,7 +243,12 @@ class Console : public MapWin {
   uint32_t field_23D1C_;  // 0x23D1C
   uint8_t field_23D20_[0x4];  // 0x23D20
   uint32_t field_23D24_;  // 0x23D24
-  uint8_t field_23D28_[0x58];  // 0x23D28
+  // THE TWO SPRITES, carved from what was field_23D28_[0x58]: two
+  // 0x2C-byte Sprite objects, ??_DConsole's own close() calls at
+  // vbase-0x40 and vbase-0x6C (front+0x23D54, front+0x23D28). Declared
+  // in the order destruction reverses.
+  Sprite sprite_b_;  // 0x23D28
+  Sprite sprite_a_;  // 0x23D54
   uint32_t field_23D80_;  // 0x23D80
   uint32_t field_23D84_;  // 0x23D84
   uint32_t field_23D88_;  // 0x23D88
