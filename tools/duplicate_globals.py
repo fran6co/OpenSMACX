@@ -37,7 +37,11 @@ REPO = pathlib.Path(__file__).resolve().parent.parent
 # bindings and the one doubled name they carried.
 # 26 -> 25 (2026-08-29, lifecycle-retirement batch): TeardownObject009BEAE8
 # became g_BLANK_SPRITE in sprite.cpp, collapsing the last doubled name.
-CEILING = 25
+# 25 -> 23 (2026-08-29, binding-conversion batch): FontTable took over
+# g_FONTS (font.cpp, 0x0093FC58) and TxtIndex took over TxtIndexGlobal
+# (textindex.cpp, 0x009B7D08) - the object carries the binding's public
+# name, so each pair is one name again.
+CEILING = 22
 
 BINDING = re.compile(r"^\s*(?:static\s+)?[\w:]+[\s\*&]+const\s+(\w+)\s*=\s*"
                      r"\(?\s*\([\w:\s\*]+\)\s*0x(00[0-9A-Fa-f]{6})")

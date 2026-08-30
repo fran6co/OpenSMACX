@@ -109,9 +109,9 @@ void __cdecl say_morale(LPSTR morale_output, int veh_id, int faction_id_vs_nativ
     // "+" loop body, ")", and the designate-defender "(d)".
     if (proto_id < MaxVehProtoFactionNum &&
         (get_proto_offense_rating(proto_id) < 0 || proto_id == BSC_SPORE_LAUNCHER)) {
-        strcat(morale_output, StringTable->get((int)Morale[morale].name_lifecycle));
+        strcat(morale_output, StringTable.get((int)Morale[morale].name_lifecycle));
     } else {
-        strcat(morale_output, StringTable->get((int)Morale[morale].name));
+        strcat(morale_output, StringTable.get((int)Morale[morale].name));
     }
     if (VehPrototypes[proto_id].plan < PLAN_COLONIZATION) {
         uint32_t morale_penalty = 0;
@@ -407,7 +407,7 @@ Status: Complete
 Purpose: Calculate how defensive the specified tile is to the defending unit based on the terrain.
 // ORIGINAL: 0x005010C0 ?defense_value@@YAHHHHHH@Z 0x005010C0-0x0050134F
 // LEVER: MORE (3 calls vs image's 0) - `label_get()` folds its array read
-//        into a REAL `StringTable->get()` call, but the image never calls
+//        into a REAL `StringTable.get()` call, but the image never calls
 //        anything here: `VehBattleDisplayTerrain` is read back at
 //        battle_compute (0x501350-ish, line ~959) as `get(int(...))`, so
 //        this site only needs to stash the raw id, not resolve it. Replaced
@@ -1049,7 +1049,7 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                         // StringTemp buffer is safe here.
                         strcpy(StringTemp, label_get(331)); // "Terrain"
                         strcat(StringTemp, " (");
-                        strcat(StringTemp, StringTable->get(int(VehBattleDisplayTerrain)));
+                        strcat(StringTemp, StringTable.get(int(VehBattleDisplayTerrain)));
                         strcat(StringTemp, ")");
                         add_bat(1, 10 * (5 * terrain_def - 10), StringTemp);
                     }
@@ -1132,7 +1132,7 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                             defense *= def_multi;
                             if (def_multi > 2) {
                                 add_bat(1, 10 * (5 * def_multi - 10), 
-                                    StringTable->get(int(display_def)));
+                                    StringTable.get(int(display_def)));
                             }
                         }
                     }
@@ -2087,7 +2087,7 @@ Purpose: Generate stats string for specified prototype. List whether prototype i
          Replaced existing non-safe strcat with string. Reworked to integrate with existing C code.
 // ORIGINAL: 0x0057D8E0 ?say_stats_2@@YAXPADH@Z 0x0057D8E0-0x0057DA94
 // TRIED: label_get(196/163/162) calls (25/140); open-coding
-//            StringTable->get((int)*((LPSTR*)Labels.strings_ptr + N)) plus the
+//            StringTable.get((int)*((LPSTR*)Labels.strings_ptr + N)) plus the
 //            off_rating<0/>=99/else branch order got to 58/140. def_rating via
 //            get_proto_defense_rating() vs inlined Armor[...] made no further
 //            difference; plateaus on the same shl-vs-add-const address split
@@ -2109,7 +2109,7 @@ void __cdecl say_stats_2(LPSTR stat, int proto_id) {
     int8_t off_rating = get_proto_offense_rating(proto_id);
     if (off_rating < 0) {
         // INLINE: the image open-codes label_get(196) here rather than calling it.
-        strcat(stat, StringTable->get((int)*((LPSTR *)Labels.strings_ptr + 196))); // 'Psi'
+        strcat(stat, StringTable.get((int)*((LPSTR *)Labels.strings_ptr + 196))); // 'Psi'
     } else if (off_rating >= 99) {
         strcat(stat, "*");
     } else {
@@ -2117,7 +2117,7 @@ void __cdecl say_stats_2(LPSTR stat, int proto_id) {
     }
     strcat(stat, "-");
     if (get_proto_defense_rating(proto_id) < 0) {
-        strcat(stat, StringTable->get((int)*((LPSTR *)Labels.strings_ptr + 196))); // 'Psi'
+        strcat(stat, StringTable.get((int)*((LPSTR *)Labels.strings_ptr + 196))); // 'Psi'
     } else {
         say_defense(stat, proto_id);
     }
@@ -2127,10 +2127,10 @@ void __cdecl say_stats_2(LPSTR stat, int proto_id) {
     uint32_t triad = get_proto_triad(proto_id);
     if (triad == TRIAD_SEA) {
         strcat(stat, " ");
-        strcat(stat, StringTable->get((int)*((LPSTR *)Labels.strings_ptr + 163))); // 'Sea'
+        strcat(stat, StringTable.get((int)*((LPSTR *)Labels.strings_ptr + 163))); // 'Sea'
     } else if (triad == TRIAD_AIR) {
         strcat(stat, " ");
-        strcat(stat, StringTable->get((int)*((LPSTR *)Labels.strings_ptr + 162))); // 'Air'
+        strcat(stat, StringTable.get((int)*((LPSTR *)Labels.strings_ptr + 162))); // 'Air'
     }
     uint32_t reactor = VehPrototypes[proto_id].reactor_id;
     if (reactor > 1) {
@@ -2151,7 +2151,7 @@ Purpose: Generate verbose stats string for specified prototype. Used by Design W
 //            shared "defense+spacer+speed" tail, matching the two physical
 //            jumps into 0x57dd70) got the call count to 42/44. label_get(N)
 //            calls had to become the open-coded
-//            StringTable->get((int)*((LPSTR*)Labels.strings_ptr + N)) - the
+//            StringTable.get((int)*((LPSTR*)Labels.strings_ptr + N)) - the
 //            image never calls a separate label helper here. The
 //            `custom_spacer ? custom_spacer : "/"` after the offense append
 //            is two strcat call sites in the image (if/else, not a ternary
@@ -2159,7 +2159,7 @@ Purpose: Generate verbose stats string for specified prototype. Used by Design W
 //            IS one call site (a shared "push ebx or literal, then push+call"
 //            tail) - only the first needed splitting.
 //            Still 2 calls short: the compiler CSEs the two identical
-//            `StringTable->get(Labels[196])` + strcat 'Psi' pairs (one on the
+//            `StringTable.get(Labels[196])` + strcat 'Psi' pairs (one on the
 //            off_rating<0 arm, one on the def_rating<0 arm) into one shared
 //            block, where the image keeps them as two separate call sites.
 //            No source spelling tried defeated that merge. Also plateaus on
@@ -2185,16 +2185,16 @@ void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer) {
     int8_t def_rating = get_proto_defense_rating(proto_id);
     if (plan == PLAN_RECONNAISANCE && triad == TRIAD_LAND && off_rating == 1 && def_rating == 1
         && !VehPrototypes[proto_id].ability_flags) {
-        strcat(stat, StringTable->get((int)PlansFullName[3])); // 'Explore/Defense'
+        strcat(stat, StringTable.get((int)PlansFullName[3])); // 'Explore/Defense'
         strcat(stat, ", ");
     } else if (mode < 3) { // Projectile, energy, missile
-        strcat(stat, StringTable->get((plan != PLAN_DEFENSIVE || (off_rating >= 0 && off_rating <= def_rating))
+        strcat(stat, StringTable.get((plan != PLAN_DEFENSIVE || (off_rating >= 0 && off_rating <= def_rating))
             ? (int)PlansShortName[plan] : (int)*((LPSTR *)Labels.strings_ptr + 312))); // 'Combat'
         strcat(stat, ", ");
     }
     if (off_rating < 0 || mode < 3) {
         if (off_rating < 0) {
-            strcat(stat, StringTable->get((int)*((LPSTR *)Labels.strings_ptr + 196))); // 'Psi'
+            strcat(stat, StringTable.get((int)*((LPSTR *)Labels.strings_ptr + 196))); // 'Psi'
         } else {
             say_offense(stat, proto_id);
         }
@@ -2206,7 +2206,7 @@ void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer) {
         goto append_defense_tail;
     } else if (def_rating != 1 || VehPrototypes[proto_id].ability_flags || (Chassis[chas].speed != 1
         && (mode != WPN_MODE_TRANSPORT || chas != CHSI_FOIL))) {
-        strcat(stat, StringTable->get(int(PlansShortName[mode])));
+        strcat(stat, StringTable.get(int(PlansShortName[mode])));
         if (plan == PLAN_NAVAL_TRANSPORT) {
             strcat(stat, "(");
             _itoa(VehPrototypes[proto_id].carry_capacity, num_buf, 10);
@@ -2216,7 +2216,7 @@ void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer) {
         strcat(stat, ", ");
 append_defense_tail:
         if (def_rating < 0) {
-            strcat(stat, StringTable->get((int)*((LPSTR *)Labels.strings_ptr + 196))); // 'Psi'
+            strcat(stat, StringTable.get((int)*((LPSTR *)Labels.strings_ptr + 196))); // 'Psi'
         } else {
             say_defense(stat, proto_id);
         }
@@ -2224,7 +2224,7 @@ append_defense_tail:
         _itoa(speed_proto(proto_id) / Rules.move_rate_roads, num_buf, 10);
         strcat(stat, num_buf);
     } else {
-        strcat(stat, StringTable->get((int)PlansFullName[mode]));
+        strcat(stat, StringTable.get((int)PlansFullName[mode]));
         if (plan == PLAN_NAVAL_TRANSPORT) {
             strcat(stat, "(");
             _itoa(VehPrototypes[proto_id].carry_capacity, num_buf, 10);
@@ -2237,10 +2237,10 @@ append_defense_tail:
     }
     if (triad == TRIAD_SEA) {
         strcat(stat, " ");
-        strcat(stat, StringTable->get((int)*((LPSTR *)Labels.strings_ptr + 163))); // 'Sea'
+        strcat(stat, StringTable.get((int)*((LPSTR *)Labels.strings_ptr + 163))); // 'Sea'
     } else if (triad == TRIAD_AIR) {
         strcat(stat, " ");
-        strcat(stat, StringTable->get((int)*((LPSTR *)Labels.strings_ptr + 162))); // 'Air'
+        strcat(stat, StringTable.get((int)*((LPSTR *)Labels.strings_ptr + 162))); // 'Air'
     }
     uint32_t reactor = VehPrototypes[proto_id].reactor_id;
     if (reactor > 1) {

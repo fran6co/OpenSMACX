@@ -52,12 +52,21 @@ static_assert(sizeof(TextIndex) == 0x118, "TextIndex layout must match the legac
 
 /*
 * global
-* The executable owns the four-object array and invokes the exported source constructors/destructors.
+* THE ARRAY, at 0x009B7D08 in the shipped image - four TextIndex objects,
+* defined in textindex.cpp (it was `TextIndex TxtIndexGlobal[4]` beside a
+* `TextIndex *const TxtIndex = (TextIndex *)0x009B7D08` binding, so the
+* storage existed twice: a real, constructed array nothing used, and every
+* `TxtIndex[i]` here reading and writing terranx.exe data, unmapped in a
+* standalone build). The object now carries the public name and the uses
+* index it directly - the element loads fold to the same `[disp32 + i*0x118]`
+* form, the displacement relocated.
+* The executable owns the four-object array and invokes the exported source
+* constructors/destructors.
 * void __cdecl `dynamic initializer for 'TxtIndex''(): 005FD4E0
 * void __cdecl `dynamic atexit destructor for 'TxtIndex''(): 005FD510
 */
 static const int MaxTextIndexNum = 4;
-TextIndex *const TxtIndex = (TextIndex *)0x009B7D08;
+extern TextIndex TxtIndex[MaxTextIndexNum];  // 0x009B7D08, 0x118 stride
 void __cdecl text_make_index(LPCSTR source_txt);
 // INLINE: `Text::open` (0x005FDA00) carries this whole loop rather than a
 // `call 0x5fe230` - only `TextIndex::search_index` (0x005FE120) shows up in

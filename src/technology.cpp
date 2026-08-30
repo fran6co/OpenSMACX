@@ -174,7 +174,7 @@ void __cdecl say_tech(LPSTR output, int tech_id, BOOL category_lvl) {
     } else if (tech_id == 9999) {
         strcat_s(output, 80, label_get(306)); // "World Map"
     } else if (tech_id < MaxTechnologyNum) {
-        strcat_s(output, 80, StringTable->get((int)Technology[tech_id].name));
+        strcat_s(output, 80, StringTable.get((int)Technology[tech_id].name));
         if (category_lvl) {
             strcat(output, " (");
             strcat(output, label_get(629 + tech_category(tech_id))); // 'E#', 'D#', 'B#', 'C#'

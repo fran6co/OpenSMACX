@@ -252,13 +252,17 @@ static_assert(sizeof(Datalink) == 0x1B394,
 
 // Datalink::exec (thiscall, `void exec(unsigned int topic, int index)`) is not
 // yet source-owned; every help_* forwarder below dispatches through it
-// against the fixed-address Datalink singleton, so both the exec entry point
-// and the singleton object are seams here rather than baked-in literals.
+// against the Datalink singleton, so the exec entry point remains a seam here
+// rather than a baked-in literal.
 
-// The Datalink singleton the forwarders dispatch against - plain data, not a
-// call target, so it stays an unclassified rebindable seam rather than a
-// classified dependency.
-Datalink *const DatalinkMain = (Datalink *)0x00703EA0;
+// THE SINGLETON the forwarders dispatch against - REAL STORAGE now, defined
+// in datalink.cpp at 0x00703EA0's place in the image. It was
+// `Datalink *const DatalinkMain = (Datalink *)0x00703EA0`: plain data, not a
+// call target, but terranx.exe data all the same, and every `DatalinkMain->
+// exec` here set a receiver that pointed outside this binary. The object
+// keeps the folded receiver (`mov ecx, 0x703ea0` becomes
+// `mov ecx, <reloc>`) and `->` becomes `.`.
+extern Datalink DatalinkMain;  // 0x00703EA0
 
 // Datalink::draw_entry (0x0042BF10) is likewise unrecovered; on_selected calls
 // it, so its definition is a seam into the original image.
@@ -266,37 +270,37 @@ Datalink *const DatalinkMain = (Datalink *)0x00703EA0;
 void __cdecl help_tech(int id);
 
 MEASURED inline void __cdecl help_weapon(int id) {
-    DatalinkMain->exec(0x6, id);
+    DatalinkMain.exec(0x6, id);
 }
 
 MEASURED inline void __cdecl help_armor(int id) {
-    DatalinkMain->exec(0x7, id);
+    DatalinkMain.exec(0x7, id);
 }
 
 MEASURED inline void __cdecl help_chassis(int id) {
-    DatalinkMain->exec(0x4, id);
+    DatalinkMain.exec(0x4, id);
 }
 
 MEASURED inline void __cdecl help_facility(int id) {
-    DatalinkMain->exec(0xA, id);
+    DatalinkMain.exec(0xA, id);
 }
 
 MEASURED inline void __cdecl help_abil(int id) {
-    DatalinkMain->exec(0x8, id);
+    DatalinkMain.exec(0x8, id);
 }
 
 MEASURED inline void __cdecl help_social(int id) {
-    DatalinkMain->exec(0xC, id);
+    DatalinkMain.exec(0xC, id);
 }
 
 MEASURED inline void __cdecl help_faction(int id) {
-    DatalinkMain->exec(0xF, id);
+    DatalinkMain.exec(0xF, id);
 }
 
 MEASURED inline void __cdecl help_veh(int id) {
-    DatalinkMain->exec(0x3, id);
+    DatalinkMain.exec(0x3, id);
 }
 
 MEASURED inline void __cdecl help_topic(unsigned int topic, int index) {
-    DatalinkMain->exec(topic, index);
+    DatalinkMain.exec(topic, index);
 }

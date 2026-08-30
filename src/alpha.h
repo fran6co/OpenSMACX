@@ -807,7 +807,7 @@ MEASURED inline void __cdecl clear_faction(Player *player) {
 
 // BODY IN alpha.h: "Original Offset: n/a" - a helper the recovery added, not
 // a function the image has its own address for. `say_base` (base.cpp) needs
-// it to fold to `StringTable->get(...)` the way the image does.
+// it to fold to `StringTable.get(...)` the way the image does.
 __forceinline LPSTR __cdecl label_get(int label_offset) {
-    return StringTable->get((int)*((LPSTR *)Labels.strings_ptr + label_offset));
+    return StringTable.get((int)*((LPSTR *)Labels.strings_ptr + label_offset));
 }

@@ -573,7 +573,17 @@ int Font::UNK1(int, int, int, int) {
 // startup, and the matching destructors close them at exit.
 FontQueue g_FONTQUEUE_VAL2;  // 0x0093FB88
 FontQueue g_FONTQUEUE_VAL1;  // 0x0093FAE8
-Font g_FONTS[48];  // 0x0093FC58, 0x28 stride
+// Was `Font g_FONTS[48]` beside the `Font *const FontTable = (Font
+// *)0x0093FC58` binding - the array is the binding's storage, so the object
+// now carries the public name and find_font's `FontTable + N` indexes it
+// directly. See font.h.
+Font FontTable[48];  // 0x0093FC58, 0x28 stride
+
+// 0x0068F220, twelve point sizes find_font matches against. The values are
+// the image's own .data dwords (image_data.py, 0x28 0x24 0x20 0x18 0x16 0x14
+// 0x12 0x10 0x0e 0x0c 0x0a 0x08), largest first.
+const int FontSizeTable[FontSizeTableCount] = {
+    0x28, 0x24, 0x20, 0x18, 0x16, 0x14, 0x12, 0x10, 0x0e, 0x0c, 0x0a, 0x08};
 
 // 0x007D3948 in the image - the single game-wide font, initialised by
 // WinMain and closed at exit.

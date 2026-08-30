@@ -51,9 +51,12 @@ void __cdecl teardown_0063cef0();
 #include "time.h"
 
 uint32_t ScenEditorUndoPosition = 1; // 0x00690D7C
-// GenderDefault (0x009BBFEC) and PluralityDefault (0x009BBFF0) are defined in
-// general.h as `static T *const`, so the compiler can see the address. See the
-// comment there for the measurement.
+// The default noun forms parse_set/parse_say/parse_says/get_noun fall back to,
+// at 0x009BBFEC and 0x009BBFF0 in the shipped image - REAL OBJECTS (zero at
+// load there, as here; see general.h for the conversion from the `static
+// T *const` bindings and the measurement behind it).
+int GenderDefault;       // 0x009BBFEC
+BOOL PluralityDefault;   // 0x009BBFF0
 
 /*
 Purpose: Trim the trailing spaces in-line from the end of the string.
@@ -317,7 +320,7 @@ int __cdecl parse_num(int id, int value) {
 /*
 Purpose: Use the string table input reference to copy a string into the global message buffer.
 // ORIGINAL: 0x00625E50 ?parse_say@@YAHHHHH@Z 0x00625E50-0x00625EB3
-// LEVER: hoisting `StringTable->get(input)` into its own local BEFORE
+// LEVER: hoisting `StringTable.get(input)` into its own local BEFORE
 // the truncating store moved 17/30 to 20/30 - the image loads the
 // `StringTable` this-pointer (`mov ecx, 0x9b90d8`) right next to the
 // dest-pointer computation, before either call, and folding the call
@@ -348,15 +351,15 @@ int __cdecl parse_say(int id, int input, int gender, int pluralality) {
         return 3;
     }
     if (gender < 0) {
-        gender = *GenderDefault;
+        gender = GenderDefault;
     }
     ParseStrGender[id] = gender;
     if (pluralality < 0) {
-        pluralality = *PluralityDefault;
+        pluralality = PluralityDefault;
     }
     ParseStrPlurality[id] = pluralality;
     char *const dest = ParseStrBuffer[id].str;
-    LPSTR text = StringTable->get(input);
+    LPSTR text = StringTable.get(input);
     dest[0] = 0;
     strcat(dest, text);
     return 0;
@@ -386,11 +389,11 @@ int __cdecl parse_says(int id, LPCSTR input, int gender, int pluralality) {
         return 3;
     }
     if (gender < 0) {
-        gender = *GenderDefault;
+        gender = GenderDefault;
     }
     ParseStrGender[id] = gender;
     if (pluralality < 0) {
-        pluralality = *PluralityDefault;
+        pluralality = PluralityDefault;
     }
     ParseStrPlurality[id] = pluralality;
     // TRUNCATE THEN APPEND, which is what the image does: `mov byte ptr
@@ -526,11 +529,19 @@ Status: Complete
 // `char *`, not `LPSTR`. The same type, but the verification scaffolding
 // forward-declares only types reachable from a signature, so the Windows
 // typedef made this body NO_COMPILE and unscoreable.
+// The digit bounds, read from MEMORY: the image's .rdata carries the literal
+// "09" at 0x670C1C and both comparisons load through it. The literal used to
+// be reached as `char *const digits = (char *)0x00670C1C`, naming storage
+// inside terranx.exe - unmapped here, so the body read garbage. This array is
+// that storage: the image's own bytes ('0', '9', NUL), and the loads fold to
+// the same `byte ptr [disp32]` form, the displacement relocated.
+char findnum_digits[] = "09";  // 0x00670C1C
+
 char *__cdecl findnum(char *str) {
     if (!str) {
         return 0;
     }
-    char *const digits = (char *)0x00670C1C;
+    char *const digits = findnum_digits;
     char lo = digits[0];
     char hi = digits[1];
     char c;
@@ -1943,7 +1954,7 @@ int __cdecl jackal_init_real(Palette *palette, Font *font, LPSTR window_name,
         return result;
     }
 
-    if (StringTable->init(0x8000) != 0) {
+    if (StringTable.init(0x8000) != 0) {
         return 1;
     }
 
@@ -2049,7 +2060,7 @@ void __cdecl jackal_close() {
     Cursor::close_cursor_class();
     Win::close_class();
     Palette::close_palette_class();
-    StringTable->shutdown();
+    StringTable.shutdown();
     JackalInitFlags &= ~1;
 }
 

@@ -130,8 +130,8 @@ Purpose: Get the faction's noun.
 // ORIGINAL: 0x0050B930 ?get_noun@@YAHH@Z 0x0050B930-0x0050B964
 // LEVER: calling `parse_set(...)` grouped the two field reads together (matching
 //        the image's read/read/store/store order) but gave the temps the wrong
-//        registers (edx for gender, ecx for plurality). Assigning `*GenderDefault`
-//        and `*PluralityDefault` directly, without going through parse_set, keeps
+//        registers (edx for gender, ecx for plurality). Assigning `GenderDefault`
+//        and `PluralityDefault` directly, without going through parse_set, keeps
 //        the image's register choice (ecx for gender, edx for plurality) - moved
 //        10/15 -> 12/15. Remaining divergence: the image computes the
 //        `noun_faction` return pointer (`lea eax,[eax+0x946d34]`) only after BOTH
