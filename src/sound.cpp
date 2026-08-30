@@ -796,6 +796,15 @@ Purpose: Join the sound chain at the tail. A sound with either neighbour
          Either way the chained bit sets.
 // ORIGINAL: 0x004C6370 ?attach@Sound@@QAEHXZ 0x004C6370-0x004C63C1
 // symbol    ?attach@Sound@@UAEHXZ
+// TRIED 2026-08-30, after the slot reconciliation (the image's vftable slot
+//   29 is get_time 0x4C66A0 and slot 31 is attach - the old header had them
+//   swapped with detach at 31, and detach 0x4C63D0 is not in the vftable at
+//   all): now MEASURABLE, this body shows the image's persistent zero
+//   register - `xor edx,edx` materialised once, then `cmp eax,edx` and
+//   `cmp [ecx+0x44],edx` - where every source spelling emits `test`. Same
+//   wall class as sub_63f9b0 (vox2 batch): 5/28, the virtualization made it
+//   measurable, the zero-register plan awaits the flag-axis/emitter-level
+//   investigation.
 // size      81 bytes
 // prototype int (__thiscall ?attach@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0
