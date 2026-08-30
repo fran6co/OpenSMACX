@@ -1866,8 +1866,6 @@ void __cdecl sort_descending(uint32_t count, int *id, int *value) {
 // nothing else in the recovered corpus touches either - so there is no
 // evidence for a name and they keep their addresses rather than gaining an
 // invented one.
-static int *const g_009b7af4 = (int *)0x009B7AF4;
-static int *const g_009bb484 = (int *)0x009BB484;
 
 int JackalInitFlags;      // 0x009BC4B0
 
@@ -1887,6 +1885,8 @@ Return Value: Zero once every subsystem is up; the first refusal's code
               otherwise, or 3 if the palette or font is missing
 Status: Complete
 */
+int32_t jackal_unk_9b7af4;  // the image's 0x009B7AF4 .bss slot
+
 int __cdecl jackal_init_real(Palette *palette, Font *font, LPSTR window_name,
                              int tgl_direct_draw, int display_width,
                              int display_height, int colour_depth) {
@@ -1947,7 +1947,7 @@ int __cdecl jackal_init_real(Palette *palette, Font *font, LPSTR window_name,
         return result;
     }
 
-    *g_009b7af4 = *g_009bb484;
+    jackal_unk_9b7af4 = BasePopSharedHeapBase;
     trig_init();
     result = Cursor::init_cursor_class();
     if (result != 0) {

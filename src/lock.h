@@ -74,8 +74,12 @@ static_assert(sizeof(Lock) == 0xEC,
 // dereference, costing a whole extra `mov`. Casting the folded immediate to
 // a pointer-to-pointer AT THE USE SITE keeps the fold and reaches the same
 // address.
-int32_t *const LockMapCount = (int32_t *)0x00949884;
-uint8_t *const LockMapTable = (uint8_t *)0x0094A30C;
+// THE MAP TABLE, as real storage. The COUNT is map.cpp's MapArea (the image
+// holds it at 0x00949884 - one address, one name); the TABLE POINTER lives
+// in the image's 0x0094A30C slot, which the map loader fills and everything
+// else reads. Both were raw bindings reading unmapped memory.
+extern uint32_t MapArea;       // 0x00949884, defined in map.cpp
+extern uint8_t *LockMapTable;  // 0x0094A30C, defined in lock.cpp
 
 // A per-slot enable mask any_locks gates its record scan on, at a fixed
 // address; rebindable for tests.

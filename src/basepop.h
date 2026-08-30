@@ -496,6 +496,7 @@ static_assert(sizeof(BasePop) == 0x3230,
 // ARRAYS, NOT POINTERS. Four string fonts at 0x009B8D98 and three button
 // fonts at 0x009B8DA8; the image stores straight into them.
 extern Font *BasePopDefaultStringFonts[4];  // 0x009B8D98
+extern int32_t BasePopSharedHeapBase;  // 0x009BB484
 extern Font *BasePopDefaultButtonFonts[3];  // 0x009B8DA8
 
 

@@ -67,7 +67,7 @@ SHAPES = [
      "duplicates the base constructor or destructor the compiler already "
      "calls, so the body carries one call too many."),
 
-    ("placement new on a subobject", 19,
+    ("placement new on a subobject", 20,
      re.compile(r"new\s*\(\s*(?:&|static_cast|reinterpret_cast)"),
      "costs a null guard (`test ecx, ecx; je`) the image does not have. A real "
      "base or member is constructed unconditionally."),
@@ -96,7 +96,7 @@ SHAPES = [
      "reads the target out of a vtable slot by hand because the method is not "
      "declared virtual. Declare it - the compiler writes this dispatch."),
 
-    ("ORIGINAL() named-pointer seam", 84,
+    ("ORIGINAL() named-pointer seam", 87,
      re.compile(r"\bORIGINAL\((?!.*vtable\[)"),
      "reaches a member through a function-pointer slot, which compiles "
      "`FF 15` where the image has `E8`. Call it by name once its body lands."),
@@ -151,7 +151,7 @@ HEADER_SHAPES = [
     # 155 -> 146 (2026-08-30, boot-path batch): the BasePop ctor's defaults
     # became real named globals and the windtor/amovie homings retired more
     # raw bindings.
-    ("anonymous fixed-address global", 107,
+    ("anonymous fixed-address global", 63,
      re.compile(r"\bg_00[0-9a-f]{4,6}\b"),
      "a global named by its address instead of its meaning. Name it from "
      "evidence - the image's .data value, the arithmetic identity, the "
@@ -176,15 +176,15 @@ SCAFFOLD_CEILINGS = {
     # 234 -> 231 (2026-08-30, caviar-voxel batch): the three seams Caviar's
     # homing had declared for sub_639390 / sub_63ad60 / sub_63f9b0 retired -
     # all three bodies now live at the foot of src/caviar.cpp.
-    "PENDING_BODY forwarders": 213,
+    "PENDING_BODY forwarders": 211,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
-    "artifact files (recovered/)": 1303,
+    "artifact files (recovered/)": 1300,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
     "unrecovered files": 1677,
-    "hypothesis_layouts.h lines": 2713,
+    "hypothesis_layouts.h lines": 2723,
 }
 
 

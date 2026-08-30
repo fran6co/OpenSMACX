@@ -725,10 +725,6 @@ void ReplayWin::timer_callback() {  // 0x005AD9E0
     PENDING_BODY(0x005AD9E0, pending)(this, nullptr);
 }
 
-void Net::close() {  // 0x0062E010
-    typedef void(__fastcall *pending)(Net *, void *);
-    PENDING_BODY(0x0062E010, pending)(this, nullptr);
-}
 
 void Popup::hide() {  // 0x00404A80
     typedef void(__fastcall *pending)(Popup *, void *);
@@ -981,11 +977,6 @@ VoiceRx::~VoiceRx() {  // ??1VoiceRx@@QAE@XZ at 0x004C8A50
 // image's destructor (which inlines the whole three-stage Sound descent)
 // actually tears down. 0x004C8DB0 itself stays unrecovered.
 
-VoiceTx::VoiceTx() {  // ??0VoiceTx@@QAE@XZ at 0x004C8CC0 - not this batch's
-                       // address; Net::Net (0x0062D6A0) reaches it directly.
-    typedef void(__fastcall *pending)(VoiceTx *, void *);
-    PENDING_BODY(0x004C8CC0, pending)(this, nullptr);
-}
 
 int MapWin::focus(int x_coord, int y_coord) {  // 0x0046B310
     typedef int(__fastcall *pending)(MapWin *, void *, int, int);
