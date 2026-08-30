@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "basepop.h"
+#include "stringstruct.h"  // StringVirtualBaseOwner  // the staged vbtable constants
 #include "prodpicker.h"
 #include "vector_teardown.h"
 #include <cstring>
@@ -43,26 +45,37 @@ const uint32_t ProdPickerBufferVtable = 0x0066A248;
 // header does not otherwise model. Reproduced at the raw offset because
 // nothing establishes what class it is.
 static void prod_picker_unknown_a7_block(char *self, unsigned int offset) {
-    uint32_t *const global_sequence = reinterpret_cast<uint32_t *>(0x009B3374);
-    *reinterpret_cast<uint32_t *>(self + offset + 0x04) = 0x0066B0EC;
-    *reinterpret_cast<uint32_t *>(self + offset + 0x28) = 0x006693AC;
+    // Every table address is the tree's OWN storage now (basepop.cpp): the
+    // raw 0x66xxxx literals live in the image's .rdata, which is unmapped
+    // here - dereferencing them for the adjustment read faulted the boot.
+    uint32_t *global_sequence = &StringVirtualBaseOwner;
+    *reinterpret_cast<uint32_t *>(self + offset + 0x04) =
+        reinterpret_cast<uint32_t>(BasePopVbtable);
+    *reinterpret_cast<uint32_t *>(self + offset + 0x28) =
+        reinterpret_cast<uint32_t>(&BasePopStageTables6693A0[3]);
     *reinterpret_cast<uint32_t *>(self + offset + 0x2C) = *global_sequence;
     *global_sequence = 0;
 
-    uint32_t vtbl = *reinterpret_cast<uint32_t *>(self + offset + 0x04);
-    *reinterpret_cast<uint32_t *>(self + offset) = 0x006693A4;
-    int adj = *reinterpret_cast<int *>(reinterpret_cast<char *>(vtbl) + 4);
-    *reinterpret_cast<uint32_t *>(self + offset + 0x04 + adj) = 0x006693A0;
+    *reinterpret_cast<uint32_t *>(self + offset) = 0;
+    *reinterpret_cast<uint32_t *>(self + offset) =
+        reinterpret_cast<uint32_t>(&BasePopStageTables6693A0[1]);
+    int adj = static_cast<int>(BasePopVbtable[1]);
+    *reinterpret_cast<uint32_t *>(self + offset + 0x04 + adj) =
+        reinterpret_cast<uint32_t>(&BasePopStageTables6693A0[0]);
 
-    vtbl = *reinterpret_cast<uint32_t *>(self + offset + 0x04);
-    *reinterpret_cast<uint32_t *>(self + offset) = 0x006698C4;
+    *reinterpret_cast<uint32_t *>(self + offset + 0x04) =
+        reinterpret_cast<uint32_t>(&BasePopStageTables6698C0[1]);
+    *reinterpret_cast<uint32_t *>(self + offset) = 0;
     *reinterpret_cast<uint32_t *>(self + offset + 0x08) = 0;
     *reinterpret_cast<uint32_t *>(self + offset + 0x0C) = 0;
     *reinterpret_cast<uint32_t *>(self + offset + 0x10) = 0;
     *reinterpret_cast<uint32_t *>(self + offset + 0x14) = 0;
     *reinterpret_cast<uint32_t *>(self + offset + 0x18) = 0;
-    adj = *reinterpret_cast<int *>(reinterpret_cast<char *>(vtbl) + 4);
-    *reinterpret_cast<uint32_t *>(self + offset + 0x04 + adj) = 0x006698C0;
+    // the second adjustment re-reads [self+off+4], which still holds the
+    // first table's pointer - same 0x24 displacement, per the image.
+    adj = static_cast<int>(BasePopVbtable[1]);
+    *reinterpret_cast<uint32_t *>(self + offset + 0x04 + adj) =
+        reinterpret_cast<uint32_t>(&BasePopStageTables6698C0[0]);
 }
 
 /*

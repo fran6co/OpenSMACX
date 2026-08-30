@@ -534,3 +534,9 @@ extern char *BasePopDefaultCancelText;  // 0x009B8D84
 // holds a window pointer at run time despite the popup-defaults name it
 // carried before that call was recovered.
 extern uint32_t BasePopDefaultField322C;  // 0x009B8DD0
+
+// The staged vbtable/vftable constants the construction sequences write
+// into objects; real storage replaces the image's .rdata addresses.
+extern const uint32_t BasePopVbtable[2];                 // 0x0066B0EC
+extern const uint32_t BasePopStageTables6693A0[4];       // 0x006693A0
+extern const uint32_t BasePopStageTables6698C0[5];       // 0x006698C0
