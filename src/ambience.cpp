@@ -309,32 +309,14 @@ void GAmbience::eot() {
 
 
 
-namespace {
-
-// The Sound-side fields the destructor tears down, viewed at their fixed
-// offsets inside the opaque base storage. Ambience sits on the same Sound
-// base the waves use: the vtable staging below walks 0x66E538 (its own)
-// through 0x66E3C0 (Sound) to the 0x66E444 ultimate base.
-struct AmbienceSoundView {
-    uint32_t vtable_storage_;       // 0x00
-    uint8_t pad_04_[0x38];          // 0x04..0x3B
-    void *device_;                  // 0x3C
-    uint32_t flags_40_;             // 0x40, bit 1 = chained
-    AmbienceSoundView *chain_prev_; // 0x44, toward the chain head
-    AmbienceSoundView *chain_next_; // 0x48, toward the chain tail
-    void *fname_;                   // 0x4C
-};
-
-}  // namespace
-
 /*
 Purpose: Destroy an ambience. Its own stage frees the remembered filename
          and releases the device through the guarded hook, clearing both
-         fields unconditionally; the inlined Sound stage then repeats the
-         same teardown on the now-cleared fields and unlinks from the
-         global sound chain when the chained bit is set. The original's
-         exception frame is omitted as unreachable. The vtable is staged
-         through all three levels.
+         fields unconditionally; the compiler-appended ~Sound then repeats
+         the same teardown on the now-cleared fields (its frees no-op) and
+         unlinks from the global sound chain when the chained bit is set -
+         the image carries that Sound stage INLINED, which is why the old
+         transcription duplicated it by hand.
 // ORIGINAL: 0x004C7670 ??1Ambience@@QAE@XZ 0x004C7670-0x004C7760;0x004C8450-0x004C8457;0x00659F32-0x00659F4C
 // symbol    ??1Ambience@@UAE@XZ
 // size      273 bytes
@@ -348,58 +330,23 @@ Return Value: n/a
 Status: Complete
 */
 Ambience::~Ambience() {
-    AmbienceSoundView volatile *const self =
-        reinterpret_cast<AmbienceSoundView volatile *>(this);
-    self->vtable_storage_ = 0x0066E538;
-    {
-        void *const name = self->fname_;
-        if (name) {
-            operator delete(name);
-        }
+    // THE OWN STAGE ONLY: free the remembered filename and release the
+    // device through the guarded hook, clearing both unconditionally. The
+    // compiler appends ~Sound, whose stage repeats the same teardown on the
+    // now-cleared fields (so its frees no-op) and unlinks from the global
+    // sound chain when the chained bit sets - the work the image's ~Ambience
+    // carries INLINED. The vtable staging (0x66E538 -> 0x66E3C0 -> 0x66E444)
+    // is the compiler's now; AmbienceSoundView - Sound's own member layout
+    // under another name - is gone with the inheritance that made it
+    // redundant.
+    if (fname_) {
+        operator delete(fname_);
     }
-    // One statement: nothing can observe the order of the device fetch and
-    // the unconditional name clear, and separate adjacent statements only
-    // breed an equivalent swap mutant.
-    void *const device = (self->fname_ = nullptr, self->device_);
-    if (device && *WaveDeviceReleaseGuard) {
-        (WaveDeviceReleaseSlot())(device);
+    fname_ = nullptr;
+    if (device_ && *WaveDeviceReleaseGuard) {
+        (WaveDeviceReleaseSlot())(device_);
     }
-    self->device_ = nullptr;
-    self->vtable_storage_ = 0x0066E3C0;
-    {
-        void *const name = self->fname_;
-        if (name) {
-            operator delete(name);
-            self->fname_ = nullptr;
-        }
-    }
-    void *const device2 = self->device_;
-    if (device2) {
-        if (*WaveDeviceReleaseGuard) {
-            (WaveDeviceReleaseSlot())(device2);
-        }
-        self->device_ = nullptr;
-    }
-    if (self->flags_40_ & 2) {
-        AmbienceSoundView *const prev = self->chain_prev_;
-        if (prev) {
-            reinterpret_cast<AmbienceSoundView volatile *>(prev)->chain_next_ =
-                self->chain_next_;
-        } else {
-            WaveChainHead() = reinterpret_cast<Wave *>(self->chain_next_);
-        }
-        AmbienceSoundView *const next = self->chain_next_;
-        if (next) {
-            reinterpret_cast<AmbienceSoundView volatile *>(next)->chain_prev_ =
-                self->chain_prev_;
-        } else {
-            WaveChainTail() = reinterpret_cast<Wave *>(self->chain_prev_);
-        }
-        self->chain_next_ = nullptr;
-        self->chain_prev_ = nullptr;
-        self->flags_40_ &= ~2u;
-    }
-    self->vtable_storage_ = 0x0066E444;
+    device_ = nullptr;
 }
 
 
