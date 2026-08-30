@@ -523,33 +523,52 @@ static const int MaxOrderNum = 30;
 static const int MaxPlanNum = 15;
 static const int MaxTriadNum = 3;
 
-VehPrototype *const VehPrototypes = (VehPrototype *)0x009AB868;
-Veh *const Vehs = (Veh *)0x00952828;
-RulesChassis *const Chassis = (RulesChassis *)0x0094A330;
-RulesWeapon *const Weapon = (RulesWeapon *)0x0094AE60;
-RulesArmor *const Armor = (RulesArmor *)0x0094F278;
-RulesReactor *const Reactor = (RulesReactor *)0x009527F8;
-RulesAbility *const Ability = (RulesAbility *)0x009AB538;
-RulesMorale *const Morale = (RulesMorale *)0x00952328;
-RulesCombatMode *const DefenseModes = (RulesCombatMode *)0x00946A00;
-RulesCombatMode *const OffenseModes = (RulesCombatMode *)0x00946178;
-RulesOrder *const Order = (RulesOrder *)0x0096C878;
-LPSTR *const PlansShortName = (LPSTR *)0x00945FE0;
-LPSTR *const PlansFullName = (LPSTR *)0x00952360;
-LPSTR *const Triad = (LPSTR *)0x0094F1A8;
+// ===== MANAGED GLOBALS - real objects, defined in veh.cpp =====
+// In the shipped image these tables live at the fixed data addresses in the
+// comments. `image_data.py` reads every base as ZERO at run time - they all
+// sit past the file-backed end of .data - and the alpha.txt / x.txt loaders
+// fill them. Each was a `T *const Name = (T *)0xADDRESS` binding, which read
+// and wrote the image's addresses directly: unmapped memory in this build.
+// The real objects carry the public names now; `Name[i].field` compiles to
+// the same displaced addressing, the immediate discounted as a relocation.
+extern VehPrototype VehPrototypes[MaxVehProtoNum];  // 0x009AB868, 0x34 stride
+// 2049 slots: veh_fake() clears the fake id 2048, and Order (0x0096C878)
+// bounds the table - 2049 * 0x34 ends at 0x0096C85C, the largest slot count
+// that fits before it.
+extern Veh Vehs[2049];  // 0x00952828, 0x34 stride
+extern RulesChassis Chassis[MaxChassisNum];  // 0x0094A330, 0x90 stride
+// Exactly fills to SocialCategories (0x0094B000): 26 * 0x10 = 0x1A0.
+extern RulesWeapon Weapon[MaxWeaponNum];  // 0x0094AE60, 0x10 stride
+// Exactly fills to Technology (0x0094F358): 14 * 0x10 = 0xE0.
+extern RulesArmor Armor[MaxArmorNum];  // 0x0094F278, 0x10 stride
+// Exactly fills to Vehs (0x00952828): 4 * 0xC = 0x30.
+extern RulesReactor Reactor[MaxReactorNum];  // 0x009527F8, 0xC stride
+extern RulesAbility Ability[MaxAbilityNum];  // 0x009AB538, 0x1C stride
+// Exactly fills to PlansFullName (0x00952360): 7 * 8 = 0x38.
+extern RulesMorale Morale[MaxMoraleNum];  // 0x00952328, 8 stride
+extern RulesCombatMode DefenseModes[MaxDefenseModeNum];  // 0x00946A00
+extern RulesCombatMode OffenseModes[MaxOffenseModeNum];  // 0x00946178
+extern RulesOrder Order[MaxOrderNum];  // 0x0096C878, 0xC stride
+extern LPSTR PlansShortName[MaxPlanNum];  // 0x00945FE0
+extern LPSTR PlansFullName[MaxPlanNum];  // 0x00952360
+extern LPSTR Triad[MaxTriadNum];  // 0x0094F1A8
 
 extern int VehCurrentCount;
 extern int VehDropLiftVehID;
 extern int VehLiftX;
 extern int VehLiftY;
 extern BOOL VehBitError;
-uint32_t *const VehBasicBattleMorale = (uint32_t *)0x00912420;
+extern uint32_t VehBasicBattleMorale[2];  // 0x00912420
 extern int VehMoraleModifierCount;
 // Battle related globals
-uint32_t *const VehBattleModCount = (uint32_t *)0x00915614;
-BOOL *const VehBattleUnkTgl = (BOOL *)0x0091561C;
-int *const VehBattleModifier = (int *)0x009155F0;
-LPSTR *const VehBattleDisplay = (LPSTR *)0x0090F554;
+// Fills to VehBattleUnkTgl: 2 * 4 ends exactly at 0x0091561C.
+extern uint32_t VehBattleModCount[2];  // 0x00915614
+extern BOOL VehBattleUnkTgl[2];  // 0x0091561C
+// 2 types x 4 modifier slots (add_bat's `type * 4 + offset`), ends 0x00915610.
+extern int VehBattleModifier[8];  // 0x009155F0
+// 8 slots (type * 4 + offset) of 20 LPSTRs - 80 bytes - each; add_bat strcpy's
+// into slot `index`, battle_compute reads back the same arithmetic.
+extern LPSTR VehBattleDisplay[160];  // 0x0090F554
 extern LPSTR VehBattleDisplayTerrain;
 
 void __cdecl say_morale(LPSTR morale_output, uint32_t veh_id, int faction_id_vs_native);
