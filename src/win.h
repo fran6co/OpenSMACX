@@ -335,7 +335,11 @@ class Win : public AutoSound {
   Win *close_button_;      // 0xEC
   Menu *menu_;
   uint32_t field_F4_;
-  uint32_t field_F8_;
+  // THE WINDOW'S FONT, seeded from WinDynamicDefaults.default_font_ by the
+  // constructor and reset by close; `redraw_nc_buffer` hands it straight to
+  // Buffer::set_font - the cast that used to dress this up as uint32_t is
+  // gone with the type.
+  Font *field_F8_;
   uint32_t field_FC_;
   uint32_t field_100_;
   uint32_t field_104_;
@@ -880,7 +884,19 @@ extern char *WinKeyRingCursor;   // 0x00696D5C, initialised to the ring
 // 0x00696D5C, and the values are the image's own, read with
 // tools/image_data.py rather than left as an address.
 extern const uint32_t WinStaticDefaults[10];   // 0x00696D34
-extern uint32_t WinDynamicDefaults[10];        // 0x009B7AF0
+// THE DYNAMIC WINDOW DEFAULTS, 0x009B7AF0 - ten dwords, of which slot 1 is
+// named: it is THE DEFAULT WINDOW FONT (a Font* - the Win constructor seeds
+// every new window's field_F8_ from it, Win::close resets the same way, and
+// config_popups re-points it at the popup 12px font via find_font). It used
+// to be a raw dword slot wearing the address name jackal_unk_9b7af4, which
+// was a second C++ object over these same bytes - the font never flowed in
+// the standalone build until the two became one.
+struct WinDynamicDefaultsTable {
+  uint32_t field_0_;      // was [0]
+  Font *default_font_;    // 0x009B7AF4, was [1] - see the note above
+  uint32_t rest_[8];      // 0x009B7AF8..0x009B7B14, was [2]..[9]
+};
+extern WinDynamicDefaultsTable WinDynamicDefaults;
 extern int WinBubbleActive;      // 0x009B7A50
 extern Win *WinZOrderWindow;  // 0x009B7A6C
 extern int WinZOrderCount;    // 0x009B7B30
