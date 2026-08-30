@@ -112,7 +112,7 @@ FLOORS = {
     # tail jmp; go_reset itself into time.cpp), and 0x00639390 into
     # caviar.cpp (BYTE_EXACT) - their forwarders retired, their archive
     # units deleted.
-    "archive-only-forwarder": 8,
+    "archive-only-forwarder": 0,
     "unknown-host-files": 0,
 }
 

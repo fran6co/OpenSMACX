@@ -267,7 +267,7 @@ void MapWin::close() {
 Purpose: Answer WM_SYSCLOSE: clear the window's per-slot state words, then run
          close() - the same owned-pointer free and vbtable walk, inlined.
 // ORIGINAL: 0x0046F880 ?on_sys_close@MapWin@@QAEXXZ 0x0046F880-0x0046F8C0 BYTE_EXACT
-// LEVER: byte-exact on promotion from src/recovered/0046f880.cpp. The Q
+// LEVER: byte-exact on promotion from the 0046f880 archive unit. The Q
 //   spelling enters with `this` on the GraphicWin virtual base, and the image
 //   folds the guard and clear off the ENTERED this ([ecx - 0x3cf4],
 //   [ecx - 0x3cf8]) while materializing the walked-back front in esi only for

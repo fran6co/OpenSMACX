@@ -587,7 +587,7 @@ void __cdecl go_reset() {
 Purpose: Blink timer tick: skip while any window is up or the game holds the
          timers, then advance the blink counter and repaint the interface.
 // ORIGINAL: 0x0050EE30 ?blink2_timer@@YAXH@Z 0x0050EE30-0x0050EE7D BYTE_EXACT
-// LEVER: byte-exact on promotion from src/recovered/units/0050ee30.cpp. Five
+// LEVER: byte-exact on promotion from the 0050ee30 archive unit. Five
 //   sequential early-return `if`s (NOT one chained `&&`): the image jumps to a
 //   SHARED `ret` epilogue from every test. The counter increment and the
 //   MainInterface receiver load interleave in the image (`mov eax,[ctr]; mov
@@ -627,7 +627,7 @@ void __cdecl blink2_timer(int a1) {
 Purpose: Plan-line timer tick: count the line counter down and repaint the
          plan lines on every live map window.
 // ORIGINAL: 0x0050EE80 ?line_timer@@YAXH@Z 0x0050EE80-0x0050EF01 BYTE_EXACT
-// LEVER: byte-exact on promotion from src/unrecovered/0050ee80.cpp. The slot
+// LEVER: byte-exact on promotion from the 0050ee80 archive unit. The slot
 //   walk is a POINTER walk (`slot < &MapWinTable[8]`), not an index loop -
 //   the image keeps the slot pointer in esi (`cmp esi, 0x7d3c5c; jl`), and
 //   "slot == &MapWinTable[0]" is the primary-window exemption
@@ -688,7 +688,7 @@ void __cdecl line_timer(int a1) {
 Purpose: Network turn timer tick: pulse the turn window while a multiplayer
          game is running and the timers are not held.
 // ORIGINAL: 0x0050EF10 ?turn_timer@@YAXH@Z 0x0050EF10-0x0050EF42 BYTE_EXACT
-// LEVER: byte-exact on promotion from src/recovered/0050ef10.cpp. Three
+// LEVER: byte-exact on promotion from the 0050ef10 archive unit. Three
 //   nested `if`s, not chained conditions - the image tests each in turn with
 //   its own jump to the shared `ret`. TurnTimerMultiWindow->draw(1) is the
 //   last statement, so VC6 tails it after loading the receiver immediate.

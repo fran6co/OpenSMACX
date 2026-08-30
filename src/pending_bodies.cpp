@@ -1001,11 +1001,6 @@ int CheckBox::on_key_down(int a1) {  // 0x0060F8B0
     return PENDING_BODY(0x0060F8B0, pending)(this, nullptr, a1);
 }
 
-void CheckBox::on_left_double_click(int a1, int a2) {  // 0x0060FA80
-    typedef void(__fastcall *pending)(CheckBox *, void *, int, int);
-    PENDING_BODY(0x0060FA80, pending)(this, nullptr, a1, a2);
-}
-
 void CheckBox::on_left_down(int a1, int a2) {  // 0x0060F700
     typedef void(__fastcall *pending)(CheckBox *, void *, int, int);
     PENDING_BODY(0x0060F700, pending)(this, nullptr, a1, a2);
@@ -1067,11 +1062,6 @@ int Dialogs::on_key_down(int a1) {  // 0x00612CC0
     return PENDING_BODY(0x00612CC0, pending)(this, nullptr, a1);
 }
 
-void Dialogs::on_left_click(int a1, int a2) {  // 0x00612E80
-    typedef void(__fastcall *pending)(Dialogs *, void *, int, int);
-    PENDING_BODY(0x00612E80, pending)(this, nullptr, a1, a2);
-}
-
 void Dialogs::on_left_double_click(int a1, int a2) {  // 0x00612D60
     typedef void(__fastcall *pending)(Dialogs *, void *, int, int);
     PENDING_BODY(0x00612D60, pending)(this, nullptr, a1, a2);
@@ -1098,11 +1088,6 @@ void Dialogs::on_scroll_create() {  // 0x00613220
     PENDING_BODY(0x00613220, pending)(this, nullptr);
 }
 
-int Dialogs::on_scroll_delete(void * a1) {  // 0x00613260
-    typedef int(__fastcall *pending)(Dialogs *, void *, void *);
-    return PENDING_BODY(0x00613260, pending)(this, nullptr, a1);
-}
-
 void Dialogs::pass_dialog_focus() {  // 0x00613180
     typedef void(__fastcall *pending)(Dialogs *, void *);
     PENDING_BODY(0x00613180, pending)(this, nullptr);
@@ -1111,11 +1096,6 @@ void Dialogs::pass_dialog_focus() {  // 0x00613180
 int EditGroup::attach(void * a1, int a2, int a3, int a4) {  // 0x00611AF0
     typedef int(__fastcall *pending)(EditGroup *, void *, void *, int, int, int);
     return PENDING_BODY(0x00611AF0, pending)(this, nullptr, a1, a2, a3, a4);
-}
-
-void EditGroup::on_dialog_focus(int a1) {  // 0x00612670
-    typedef void(__fastcall *pending)(EditGroup *, void *, int);
-    PENDING_BODY(0x00612670, pending)(this, nullptr, a1);
 }
 
 void EditGroup::on_redraw() {  // 0x00612450
@@ -1224,11 +1204,6 @@ int RadioButton::on_key_down(int a1) {  // 0x0060E020
     return PENDING_BODY(0x0060E020, pending)(this, nullptr, a1);
 }
 
-void RadioButton::on_left_double_click(int a1, int a2) {  // 0x0060E1E0
-    typedef void(__fastcall *pending)(RadioButton *, void *, int, int);
-    PENDING_BODY(0x0060E1E0, pending)(this, nullptr, a1, a2);
-}
-
 void RadioButton::on_left_down(int a1, int a2) {  // 0x0060DE10
     typedef void(__fastcall *pending)(RadioButton *, void *, int, int);
     PENDING_BODY(0x0060DE10, pending)(this, nullptr, a1, a2);
@@ -1259,16 +1234,6 @@ void SpriteBox::on_left_click(int a1, int a2) {  // 0x00611060
     PENDING_BODY(0x00611060, pending)(this, nullptr, a1, a2);
 }
 
-void SpriteBox::on_left_double_click(int a1, int a2) {  // 0x006112E0
-    typedef void(__fastcall *pending)(SpriteBox *, void *, int, int);
-    PENDING_BODY(0x006112E0, pending)(this, nullptr, a1, a2);
-}
-
-void SpriteBox::on_left_down(int a1, int a2) {  // 0x00611150
-    typedef void(__fastcall *pending)(SpriteBox *, void *, int, int);
-    PENDING_BODY(0x00611150, pending)(this, nullptr, a1, a2);
-}
-
 void SpriteBox::on_redraw() {  // 0x00611380
     typedef void(__fastcall *pending)(SpriteBox *, void *);
     PENDING_BODY(0x00611380, pending)(this, nullptr);
@@ -1297,10 +1262,14 @@ int Buffer::write_raw_l(LPSTR text, int x_coord, int y_coord, int len) {
 // `DDInit::teardown` on WinDisplayInit - defined in win.cpp beside `init`,
 // whose five fields are DDInit's own.
 
-// ?close_class@FileWin@@QAAXXZ at 0x00614E30
+// ?close_class@FileWin@@QAAXXZ at 0x00614E30 - recovered as the member it is
+// (src/filewin.cpp). jackal_close reaches the address with NO receiver set
+// up, which no member call can spell, so this free stand-in forwards to the
+// member on a receiver the body never reads. It stays because general.h
+// declares this name and jackal_close calls it; the E8 to the member is a
+// relocation on both sides either way.
 void __cdecl filewin_close_class() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x00614E30, pending)();
+    reinterpret_cast<FileWin *>(0)->close_class();
 }
 
 // ?close_class@BasePop@@QAAXXZ at 0x00604680

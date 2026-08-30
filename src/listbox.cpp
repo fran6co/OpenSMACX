@@ -328,7 +328,7 @@ class ListBoxClickVCall { public:
 Purpose: Report a right press: raise the click guard, forward (a1, a2) through
          GraphicWin vtable slot 20, drop the guard.
 // ORIGINAL: 0x0060AA20 ?on_right_down@ListBox@@QAEXHH@Z 0x0060AA20-0x0060AA52 BYTE_EXACT
-// LEVER: byte-exact on promotion from src/recovered/units/0060aa20.cpp. The
+// LEVER: byte-exact on promotion from the 0060aa20 archive unit. The
 //   Q spelling enters with `this` on the GraphicWin virtual base, so the
 //   ListBox front is walked back with the same explicit -0x48 the image folds
 //   (`mov eax, [ecx - 0x48]`, receiver `lea ecx, [edx + ecx - 0x48]`) - the

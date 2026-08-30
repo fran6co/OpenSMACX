@@ -484,7 +484,6 @@ typedef int (OriginalObject::*func_base_pop_exec)(int flag, int (__cdecl *callba
 
 // The screen width the high-resolution scaling switches on, read at a
 // fixed address. Rebindable so tests can drive both sides of the branch.
-int32_t *const BasePopScreenWidth = (int32_t *)0x009B7B1C;
 
 
 static_assert(sizeof(BasePop) == 0x3230,

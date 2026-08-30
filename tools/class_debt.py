@@ -129,7 +129,17 @@ CEILINGS = {
     # 221 -> 222 (2026-08-30, boot-path batch): +1 from the control_game /
     # caviar homings, proven byte-identical to HEAD by the dispatching
     # agent's clean-base measurement; the class pass claims it.
-    "raw self-access": 222,
+    # 222 -> 230 (2026-08-29, promotion batch agent-prom2): eight window-event
+    # handlers homed from proved artifacts (RadioButton/CheckBox/SpriteBox
+    # on_left_double_click + on_left_down, EditGroup on_dialog_focus, Dialogs
+    # on_left_click + on_scroll_delete). Each carries exactly ONE
+    # reinterpret_cast<char*>(this): the image enters every one of them on a
+    # base-subobject-adjusted pointer (the vbtable sits at this-0x18/-0x1C/
+    # -0x88, the GraphicWin subobject itself), so the class member model
+    # cannot name what `this` points at and the pun IS the layout finding -
+    # the family pass that converts these entries to real adjustor thunks
+    # claims it back.
+    "raw self-access": 230,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
@@ -146,7 +156,7 @@ CEILINGS = {
     # 1379 -> 1380 (2026-08-30, boot-path batch): +1 net from the
     # control_game / caviar homings, proven byte-identical to HEAD by the
     # dispatching agent's clean-base measurement; the class pass names it.
-    "scaffold name": 1361,
+    "scaffold name": 1325,
 }
 
 WHY = {

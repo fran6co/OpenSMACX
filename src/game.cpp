@@ -1186,7 +1186,7 @@ Purpose: Restart the game state: tear the desktop down (mode-gated, the same
          and string tables, re-init the game, and re-init the desktop when the
          caller asked for it. Always clears the climate skip flag.
 // ORIGINAL: 0x0058F450 ?game_reload@@YAHHH@Z 0x0058F450-0x0058F4E7 BYTE_EXACT
-// LEVER: byte-exact on promotion from src/unrecovered/0058f450.cpp. The
+// LEVER: byte-exact on promotion from the 0058f450 archive unit. The
 //   closer block is desktop_close's own sequence spelled the same way, so
 //   every receiver folds to its `mov ecx, imm32` and every call lands on the
 //   image's E8 target; `mode` is read into esi once at entry (the image's
