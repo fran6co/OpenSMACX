@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include <math.h> // sin(double), lowered to the CRT's _sin
+#include <ddraw.h>  // IDirectDraw::Release in the DirectDraw teardown stage
 #include "sprite.h"
 #include "popup.h"
 #include "buffer.h"
@@ -1955,6 +1956,49 @@ int __cdecl jackal_init_real(Palette *palette, Font *font, LPSTR window_name,
     return 0;
 }
 
+// The DirectDraw state this teardown clears that no other homed body
+// touches yet. The two caches copy DirectDrawBackBuffer and the clipper
+// (0x009BC4A4) at the end of the DirectDraw bring-up (0x0062CD50, still
+// unrecovered); the flag is that bring-up's success bit, set to 1 once the
+// clipper is up. None of the three has stored bytes in the image's .data,
+// so zero-initialisation here is faithful.
+IDirectDrawSurface *DDCachedBackbuffer;  // 0x009B74E8
+IDirectDrawClipper *DDCachedClipper;     // 0x009B74EC
+int DDActive;                            // 0x009BC478
+
+/*
+Purpose: sub_62d100 - jackal_close's DirectDraw stage: release the DirectDraw
+         object, then clear every surface and cache the display mode brought
+         up.
+// ORIGINAL: 0x0062D100 sub_62d100 0x0062D100-0x0062D13A BYTE_EXACT
+// size      58 bytes
+// prototype
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x0062D10F
+//
+// PROMOTED out of src/recovered/units/0062d100.cpp (measured byte-exact
+// there, never compiled into the build). The release is BufferDirectDraw's
+// own IUnknown::Release - vtable slot 2, `call [vtbl + 8]` - spelled through
+// the real IDirectDraw declaration the same way DDInit::init calls
+// RestoreDisplayMode and Release on its object.
+Return Value: 0, always
+*/
+extern "C" int __cdecl sub_62d100() {
+    if (BufferDirectDraw != nullptr) {
+        BufferDirectDraw->Release();
+        BufferDirectDraw = nullptr;
+    }
+    DDCachedBackbuffer = nullptr;
+    DDCachedClipper = nullptr;
+    DirectDrawSurface = nullptr;
+    DirectDrawBackBuffer = nullptr;
+    DDActive = 0;
+    return 0;
+}
+
 /*
 Purpose: Tear down every subsystem jackal_init_real brought up, in the
          image's own order, then clear the "initialised" bit.
@@ -1993,7 +2037,7 @@ void __cdecl teardown_0063cef0() {
 void __cdecl jackal_close() {
     sub_62d100();
     Time::close_class();
-    reinterpret_cast<Unk9BE618 *>(0x009BE618)->unk_call();
+    WinDisplayInit.teardown();
     CheckButton::close_class();
     buffer_close_class_redirect();
     teardown_0060fd60();
