@@ -53,6 +53,7 @@ int StringStruct::current_id() {
 /*
 Purpose: Return the current string-list payload.
 // ORIGINAL: 0x00402530 ?current_entry@StringStruct@@QAEHXZ 0x00402530-0x00402541 BYTE_EXACT
+// symbol    ?current_entry@StringStruct@@QAEPAXXZ
 // size      17 bytes
 // prototype int (__thiscall ?current_entry@StringStruct@@QAEHXZ)(StringStruct* this)
 // callers   9   call targets   0
@@ -63,7 +64,7 @@ Purpose: Return the current string-list payload.
 Return Value: Current payload, or zero when the list is empty
 Status: Complete
 */
-int StringStruct::current_entry() {
+void *StringStruct::current_entry() {
     if (head_) {
         return current_->payload;
     }
@@ -73,6 +74,7 @@ int StringStruct::current_entry() {
 /*
 Purpose: Advance the current string-list entry and return its payload.
 // ORIGINAL: 0x00402500 ?next_entry@StringStruct@@QAEHXZ 0x00402500-0x0040252F BYTE_EXACT
+// symbol    ?next_entry@StringStruct@@QAEPAXXZ
 // size      47 bytes
 // prototype int (__thiscall ?next_entry@StringStruct@@QAEHXZ)(StringStruct* this)
 // callers   9   call targets   0
@@ -83,7 +85,7 @@ Purpose: Advance the current string-list entry and return its payload.
 Return Value: New current payload, or zero when the list is empty
 Status: Complete
 */
-int StringStruct::next_entry() {
+void *StringStruct::next_entry() {
     if (!head_) {
         return 0;
     }
@@ -158,13 +160,6 @@ inline void destroy_virtual_base(void *object) {
     (ORIGINAL(subobject)->*original_method<func_scalar_deleting_destructor>(static_cast<unsigned long>(subobject_vtable[0])))(1);
 }
 
-// `inline`: the image reads entry->payload directly with no call at all - a
-// pure identity cast, which only disappears when this folds into its caller.
-inline void *payload_pointer(int payload) {
-    return reinterpret_cast<void *>(
-        static_cast<uintptr_t>(static_cast<uint32_t>(payload)));
-}
-
 }  // namespace
 
 /*
@@ -222,13 +217,13 @@ inline void StringStruct::remove_all() {
         do {
             StringStructEntry *const entry = head_;
             current_ = entry->next;
-            void *const payload = payload_pointer(entry->payload);
+            void *const payload = entry->payload;
             uint32_t *const vtable = *reinterpret_cast<uint32_t **>(this);
             (ORIGINAL(this)->*original_method<func_entry_visitor>(static_cast<unsigned long>(vtable[1])))(payload);
             if (payload) {
                 destroy_virtual_base(payload);
             }
-            head_->payload = 0;
+            head_->payload = nullptr;
             if (head_) {
                 destroy_virtual_base(head_);
             }

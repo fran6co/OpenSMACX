@@ -18,7 +18,11 @@
 struct StringStructEntry {
   uint32_t abi_word;
   int id;
-  int payload;
+  // The entry's payload: a POINTER, not an int - remove_all hands it to the
+  // entry-visitor virtual and destroys it through the virtual-base teardown,
+  // and Caviar's unit-list walks read record fields through it. The old int
+  // spelling was the catalogue's H return leaking into the struct.
+  void *payload;
   StringStructEntry *next;
   StringStructEntry *previous;
   uint32_t secondary_abi_word;
@@ -167,8 +171,10 @@ class StringStruct : public virtual StringAllocationBase {
   }
   int seek_pos(int a1);
   int current_id();
-  int current_entry();
-  int next_entry();
+  // Both return the entry's payload pointer; the catalogue's H spelling
+  // decorates the same dword return the bytes make.
+  void *current_entry();
+  void *next_entry();
   int seek_id(int id);
   void remove_all();
   void close();
