@@ -213,6 +213,79 @@ void DesignWin::select_special_2() {
 // designwin.cpp(153) and (161), the two select_special_N thunks, and each is
 // an 8-byte BYTE_EXACT `call rel32` today.
 
+/*
+Purpose: Close the design window: dismiss all 25 palette buttons, release the
+         spot list, stop the clock, release the buffer, reset the prototype
+         selection, and close the three fonts.
+// ORIGINAL: 0x0043C1A0 ?close@DesignWin@@QAEXXZ 0x0043C1A0-0x0043C261
+// size      193 bytes
+// prototype void (__thiscall ?close@DesignWin@@QAEXXZ)(DesignWin* this)
+// callers   6   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D7470 0x005FA830 0x00616780 0x00619230
+// indirect  0x0043C1B4
+// MEASURED 2026-08-29: /O2 best at 12/42. Image instructions 0..11 agree -
+//   the prologue and the whole 25-button loop, the slot-0x168 dispatch
+//   arriving as the image's own single `call dword ptr [eax + 0x168]` out of
+//   vtable_slot once /Ob2 inlines it (at /Ob0 the template function itself
+//   is CALLED - `push 0x168 / push edi / call`, which is why /Ob0's
+//   higher-similarity 6/42 is the worse listing; do not chase it).
+//   Everything from image instruction 12 on diverges for the catalogued
+//   MEASURED-inline ceiling: spot2_.shutdown(), time_.close() and the three
+//   font_.close() calls are in-class definitions in spot.h / time.h /
+//   font.h (in-class so ~Spot / ~Time / ~Font inline them), and VC6 inlines
+//   all five HERE where the image makes five plain calls (0x005FA830,
+//   0x00616780, 0x00619230 x3) - 141 instructions against the image's 42.
+//   Out-of-line bodies would regress those destructor claims, and VC6
+//   honours no per-site noinline.
+Return Value: n/a
+Status: Complete
+*/
+// The button loop dispatches slot 0x168 - BaseButton::close's slot, the same
+// walk BaseButton::init (basebutton.cpp) and Scroll::close make - through the
+// live vtable of whatever each button holds, with the receiver as the only
+// argument so no edx zeroing appears beside it.
+namespace {
+
+typedef void (__fastcall *func_design_win_button_close)(void *);
+
+}
+
+void DesignWin::close() {
+    // A do/while counting DOWN from 25 over a walking pointer - the image
+    // keeps `mov ebx, 0x19` and steps `add edi, 0xb4c` (sizeof FlatButton).
+    FlatButton *button = flatButtons_;
+    int count = 0x19;
+    do {
+        vtable_slot<func_design_win_button_close>(button, 0x168)(button);
+        ++button;
+        --count;
+    } while (count != 0);
+
+    spot2_.shutdown();
+    // IMAGE ORDER: scene_rotation_ and field_CE8_ are written between the
+    // clock receiver's computation and the call itself.
+    scene_rotation_ = 0.0f;
+    field_CE8_ = 0;
+    time_.close();
+    buffer_.close();
+    factionID_ = 0;
+    protoID_ = 0;
+    protoChassisType_ = 0;
+    protoWeaponType_ = 0;
+    protoArmorType_ = 0;
+    protoAbilityFlags_ = 0;
+    protoReactorType_ = 1;
+    field_14210_ = 0;
+    mineralCostFactor_ = 0;
+    field_CE0_ = static_cast<uint32_t>(-1);
+    field_14220_ = 0;
+    font1_.close();
+    font2_.close();
+    font3_.close();
+}
+
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are
 // constructed before WinMain by the CRT's dynamic-initializer walk

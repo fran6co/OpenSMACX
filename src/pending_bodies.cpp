@@ -564,6 +564,14 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
     PENDING_BODY(0x004B6570, pending)(this, nullptr, a1, a2, a3, a4, a5);
 }
 
+// ?set_title@StatusWin@@QAEXH@Z at 0x004B4A20 - 451 bytes, still an original
+// body. go_reset (src/time.cpp) calls it twice, so it needs a definition the
+// build owns; the body is in src/recovered/units/004b4a20.cpp.
+void StatusWin::set_title(int title_id) {
+    typedef void(__fastcall *pending)(StatusWin *, void *, int);
+    PENDING_BODY(0x004B4A20, pending)(this, nullptr, title_id);
+}
+
 int ButtonGroup::button_click(int a1) {  // 0x0062B8A0
     typedef int(__fastcall *pending)(ButtonGroup *, void *, int);
     return PENDING_BODY(0x0062B8A0, pending)(this, nullptr, a1);
@@ -1173,10 +1181,8 @@ void MapWin::on_left_down(int a1, int a2) {  // 0x0046ED30
     PENDING_BODY(0x0046ED30, pending)(this, nullptr, a1, a2);
 }
 
-void MapWin::on_lose_mouse_capture() {  // 0x0046EB90
-    typedef void(__fastcall *pending)(MapWin *, void *);
-    PENDING_BODY(0x0046EB90, pending)(this, nullptr);
-}
+// ?MapWin::on_lose_mouse_capture at 0x0046EB90 - homed into mapwin.cpp on
+// 2026-08-29, so the forwarder that stood here is gone.
 
 void MapWin::on_mouse_move(int a1, int a2) {  // 0x0046F000
     typedef void(__fastcall *pending)(MapWin *, void *, int, int);
@@ -1469,12 +1475,9 @@ void __cdecl mapwin_system_shutdown() {
     PENDING_BODY(0x004710E0, pending)();
 }
 
-// ?close@DesignWin@@QAEXXZ at 0x0043C1A0 - body in src/unrecovered/0043c1a0.cpp.
-// desktop_close closes the process-wide design window through this member.
-void DesignWin::close() {
-    typedef void(__fastcall *pending)(DesignWin *, void *);
-    PENDING_BODY(0x0043C1A0, pending)(this, nullptr);
-}
+// ?close@DesignWin@@QAEXXZ at 0x0043C1A0 - homed into designwin.cpp on
+// 2026-08-29, so the forwarder that stood here is gone. desktop_close closes
+// the process-wide design window through this member.
 
 // ?exec@AlphaMovie@@QAEHPAD@Z at 0x00404070 - body in src/unrecovered/00404070.cpp.
 // amovie_project plays the .avi candidates through it.

@@ -179,6 +179,12 @@ Time *const ConsoleTimer = (Time *)0x00939E88;
 
 void __cdecl start_timers();
 void __cdecl flush_timer();
+// 0x0050EF50, homed into time.cpp - it closes GoTimer and sits in the same
+// original address run as the timer family (0x50EE30 blink2_timer,
+// 0x50EE80 line_timer, 0x50EF10 turn_timer, then this, then start_timers
+// at 0x50F3D0 and stop_timers at 0x50F440). Declared here because
+// MapWin::on_lose_mouse_capture (0x0046EB90) is a 5-byte tail `jmp` into it.
+void __cdecl go_reset();
 
 MEASURED inline void __cdecl stop_timers() {
     Blink2Timer->close();
