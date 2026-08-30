@@ -16,6 +16,8 @@
 
 #include <cstring>
 
+#include "heap.h"  // StringAllocationHeap
+
 // Defined out of line and empty: OUT OF LINE is the point. A header-inline
 // empty destructor is provably nothrow, and VC6 then sheds the /GX unwind
 // states from the construction chain that StringBox::StringBox's frame
@@ -418,11 +420,12 @@ void __fastcall string_struct_derived_close_redirect(void *adjusted) {
         StringStructVtable, StringStructVirtualBaseVtable);
 }
 
+// StringAllocationBase's own one-slot vftable (its deleting destructor,
+// 0x00401520) - the table the destructor stages back onto the base.
 const uint32_t StringVirtualBaseVtable = 0x006693AC;
-// AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
-// load at every use where the image addresses the storage directly, and
-// the address is terranx.exe's data, unmapped in a standalone build.
-uint32_t StringVirtualBaseOwner;  // 0x009B3374
+// THE ALLOCATOR HAND-OFF SLOT: the allocating Heap published by Heap::get
+// and captured by the next StringAllocationBase construction.
+Heap *StringAllocationHeap;  // 0x009B3374
 
 /*
 Purpose: Destroy a most-derived StringList: run the source-owned two-stage
@@ -460,7 +463,7 @@ Purpose: Destroy a most-derived StringList: run the source-owned two-stage
 // flags     sp_ready;purged_ok
 // calls     0x004066C0
 Return Value: EAX residue - the saved owner value, republished into
-              StringVirtualBaseOwner. The original is a void destructor;
+              StringAllocationHeap. The original is a void destructor;
               modelled as uint32_t to preserve the residue, as
               GraphicWin::close and Scroll::destroy do.
 Status: Complete
@@ -487,12 +490,15 @@ uint32_t StringList::destroy() {
     // The three tail operations, in the original's order. The read of
     // [esi + 4] precedes the store to [esi]; both are volatile so an
     // optimised build keeps the legacy access order.
-    volatile uint32_t *const virtual_base_slots =
-        reinterpret_cast<volatile uint32_t *>(virtual_base);
-    const uint32_t owner = virtual_base_slots[1];    // mov eax, [esi + 4]
-    virtual_base_slots[0] = StringVirtualBaseVtable; // mov [esi], 0x006693AC
-    StringVirtualBaseOwner = owner;                 // mov [0x9B3374], eax
-    return owner;                                    // EAX at the ret
+    // [esi] is the vptr slot and [esi+4] the saved Heap*. The owner read
+    // precedes the vtable store; both stay in the image's order.
+    Heap *volatile *const virtual_base_slots =
+        reinterpret_cast<Heap *volatile *>(virtual_base);
+    const Heap *const owner = virtual_base_slots[1];   // mov eax, [esi + 4]
+    reinterpret_cast<volatile uint32_t &>(virtual_base_slots[0]) =
+        StringVirtualBaseVtable;                        // mov [esi], 0x6693AC
+    StringAllocationHeap = const_cast<Heap *>(owner);   // mov [0x9B3374], eax
+    return reinterpret_cast<uint32_t>(owner);           // EAX at the ret
 }
 
 

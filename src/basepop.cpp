@@ -25,7 +25,7 @@
 #include "worldwin.h"
 #include "dipedit.h"
 #include "filewin.h"
-#include "stringstruct.h"  // StringVirtualBaseOwner - the 0x009B3374 dance
+#include "stringstruct.h"  // StringAllocationHeap - the 0x009B3374 hand-off
 #include <cstring>
 
 /*
@@ -1067,10 +1067,10 @@ BasePop::BasePop() {
 
     field_2154_ = reinterpret_cast<int>(BasePopVbtable);
     field_2178_ = reinterpret_cast<int>(BasePopStageTables6693A0 + 3);
-    eax = static_cast<int>(StringVirtualBaseOwner);
+    eax = reinterpret_cast<int>(StringAllocationHeap);
     esi = reinterpret_cast<int>(BasePopStageTables6693A0 + 1);
     field_217C_ = eax;
-    StringVirtualBaseOwner = ebx;
+    StringAllocationHeap = reinterpret_cast<Heap *>(ebx);
     ecx = field_2154_;
     field_2150_ = esi;
     edx = reinterpret_cast<int>(BasePopStageTables6693A0);
@@ -1090,9 +1090,9 @@ BasePop::BasePop() {
 
     field_2184_ = reinterpret_cast<int>(BasePopVbtable);
     field_21A8_ = reinterpret_cast<int>(BasePopStageTables6693A0 + 3);
-    edi = static_cast<int>(StringVirtualBaseOwner);
+    edi = reinterpret_cast<int>(StringAllocationHeap);
     field_21AC_ = edi;
-    StringVirtualBaseOwner = ebx;
+    StringAllocationHeap = reinterpret_cast<Heap *>(ebx);
     field_2180_ = esi;
     esi = field_2184_;
     esi = RD(esi + 4);

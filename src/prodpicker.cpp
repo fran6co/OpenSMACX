@@ -17,7 +17,7 @@
  */
 #include "stdafx.h"
 #include "basepop.h"
-#include "stringstruct.h"  // StringVirtualBaseOwner  // the staged vbtable constants
+#include "stringstruct.h"  // StringAllocationHeap; the staged vbtable constants
 #include "prodpicker.h"
 #include "vector_teardown.h"
 #include <cstring>
@@ -48,12 +48,12 @@ static void prod_picker_unknown_a7_block(char *self, unsigned int offset) {
     // Every table address is the tree's OWN storage now (basepop.cpp): the
     // raw 0x66xxxx literals live in the image's .rdata, which is unmapped
     // here - dereferencing them for the adjustment read faulted the boot.
-    uint32_t *global_sequence = &StringVirtualBaseOwner;
+    Heap **const global_sequence = &StringAllocationHeap;
     *reinterpret_cast<uint32_t *>(self + offset + 0x04) =
         reinterpret_cast<uint32_t>(BasePopVbtable);
     *reinterpret_cast<uint32_t *>(self + offset + 0x28) =
         reinterpret_cast<uint32_t>(&BasePopStageTables6693A0[3]);
-    *reinterpret_cast<uint32_t *>(self + offset + 0x2C) = *global_sequence;
+    *reinterpret_cast<Heap **>(self + offset + 0x2C) = *global_sequence;
     *global_sequence = 0;
 
     *reinterpret_cast<uint32_t *>(self + offset) = 0;
