@@ -96,6 +96,24 @@ void __cdecl line_timer(int a1);
 // 0x0050EF10, a pending_bodies forwarder.
 void __cdecl turn_timer(int a1);
 
+// Timer-domain state, defined in time.cpp beside the callbacks. Every one of
+// these is zero-initialised .data in the image (image_data.py).
+// The hold flag: blink_timer, blink2_timer, line_timer and turn_timer all
+// return early while it is nonzero (0x0050EA40, 0x0050EE30, 0x0050EE80,
+// 0x0050EF10) and so does the start side at 0x0050F170.
+extern int TimerHoldFlag;     // 0x00915620
+// blink2_timer's tick counter, incremented once per accepted tick.
+extern int Blink2Counter;     // 0x009392B4
+// line_timer counts it down once per accepted tick before repainting the plan
+// lines; the plan-line draw bodies pass the dword to Buffer::line as a color.
+extern int PlanLineCounter;   // 0x00939FD4
+// turn_timer repaints the network turn window only while it is nonzero; the
+// send-side loop at 0x00515770 reads it in the same breath as its turn flags.
+extern int TurnRedrawPending;  // 0x00703DE0
+// The window TurnRedrawPending gates: turn_timer redraws it (GraphicWin::redraw
+// at 0x005D5A70) before MultiWin::draw on 0x007FD648.
+GraphicWin *const TurnRedrawWindow = (GraphicWin *)0x006FEC80;
+
 // testing
 typedef int *func8(LPSTR, LPSTR);
 char256 *const ParseStrBuffer = (char256 *)0x009BB5E8;

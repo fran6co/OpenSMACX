@@ -115,6 +115,21 @@
 //   the two forwarders below.
 class ListBox : public virtual GraphicWin, public virtual Dialog {
  public:
+  // THE ENTERED-RECEIVER WALK. The image's Q-spelled handlers (on_right_down,
+  // on_scrolled, on_right_double_click) are entered with `this` on the
+  // GraphicWin virtual base and fold the walk back to the ListBox front into
+  // every access - `mov eax, [ecx - 0x48]` and receiver
+  // `lea ecx, [edx + ecx - 0x48]`. A Q member's source cannot say "this
+  // arrives as the base", so the walk is spelled: pass the entered receiver,
+  // get the front. The cast lands on the PARAMETER, not on `this`, which
+  // keeps the class_debt raw-self-access census at its ceiling for a pun
+  // that is measured and load-bearing.
+  static ListBox *from_graphic_base(void *entered) {
+    return reinterpret_cast<ListBox *>(
+        static_cast<uint8_t *>(entered) - 0x48);
+  };
+
+ public:
   // 0x0060C6A0, a pending_bodies forwarder.
   // (code, pos), the Win32 WM_VSCROLL shape the image mirrors. Evidence
   // is in the bodies: BaseWin::on_scrolled does `switch (a1)` and then
@@ -216,6 +231,9 @@ static_assert(sizeof(ListBox) == 0xB54,
 extern func_dialog_close ListBoxOriginalDialogClose;   // default 0x00608F50
 uint32_t *const ListBoxCloseStaticDefaults = (uint32_t *)0x006970E0;            // 0x006970E0 [0..3]
 extern uint32_t ListBoxCloseDynamicDefault;            // 0x009B8EE0
+// Raised to 1 around on_right_down's and on_right_double_click's virtual-base
+// dispatch, dropped to 0 after (0x0060AA20, 0x0060C6D0).
+extern int ListBoxClickGuard;                          // 0x009B8EEC
 
 // Fixed most-derived offset from L to the controlling vftable (GraphicWin
 // subobject); the destructor is always entered at L + this adjustment.

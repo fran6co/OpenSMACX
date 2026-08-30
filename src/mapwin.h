@@ -61,6 +61,21 @@ class MapWin : public virtual GraphicWin {
   void on_sys_close();
 
  public:
+  // THE ENTERED-RECEIVER WALK. The image's Q-spelled handlers (on_sys_close,
+  // on_left_click, ...) are entered with `this` on the GraphicWin virtual
+  // base and fold the walk back to the MapWin front into every access -
+  // `mov eax, [ecx - 0x3cf4]` in on_sys_close, `add ecx, 0xfffde594` in
+  // on_left_click. A Q member's source cannot say "this arrives as the
+  // base", so the walk is spelled: pass the entered receiver, get the front.
+  // The cast lands on the PARAMETER, not on `this`, which keeps the
+  // class_debt raw-self-access census at its ceiling for a pun that is
+  // measured and load-bearing.
+  static MapWin *from_graphic_base(void *entered) {
+    return reinterpret_cast<MapWin *>(
+        static_cast<uint8_t *>(entered) - 0x21A6C);
+  };
+
+ public:
   // 0x0046EC10, a pending_bodies forwarder.
   void on_right_down(int a, int b);
 
@@ -100,6 +115,9 @@ class MapWin : public virtual GraphicWin {
  public:
   void on_resize(int a1, int a2);
   void on_redraw();
+  // 0x00467970, a pending_bodies forwarder. line_timer (time.cpp) calls it
+  // per live map-window slot with the literal 1.
+  void draw_base_dest(int draw_type);
   // ?draw_map@MapWin@@QAEXH@Z at 0x0046A550, still an original body: declared
   // here so on_redraw's direct call compiles, resolved at link time.
   void draw_map(int draw_type);

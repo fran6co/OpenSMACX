@@ -1179,3 +1179,50 @@ void __cdecl game_close(int mode) {
     labels_shutdown();
     StringTable->shutdown();
 }
+
+/*
+Purpose: Restart the game state: tear the desktop down (mode-gated, the same
+         closer sequence desktop_close runs), stop the timers, drop the label
+         and string tables, re-init the game, and re-init the desktop when the
+         caller asked for it. Always clears the climate skip flag.
+// ORIGINAL: 0x0058F450 ?game_reload@@YAHHH@Z 0x0058F450-0x0058F4E7 BYTE_EXACT
+// LEVER: byte-exact on promotion from src/unrecovered/0058f450.cpp. The
+//   closer block is desktop_close's own sequence spelled the same way, so
+//   every receiver folds to its `mov ecx, imm32` and every call lands on the
+//   image's E8 target; `mode` is read into esi once at entry (the image's
+//   `mov esi, [ebp + 8]`) because the source uses it twice - the opening
+//   guard and the desktop_init guard - exactly as the image does.
+// size      151 bytes
+// prototype int (__cdecl ?game_reload@@YAHHH@Z)(int, BOOL tglAllRules)
+// callers   2   call targets   11
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00408710 0x0043C1A0 0x004710E0 0x004B9F80 0x0050F440 0x0058EE60 0x0058F2F0 0x005D4E40 0x005EDCD0 0x00616950 0x006169D0
+Return Value: 1 when game_init fails, else 0.
+Status: Complete
+*/
+int __cdecl game_reload(int mode, int reload) {
+    if (mode != 0) {
+        reinterpret_cast<DesignWin *>(TutWinDesWindow)->close();
+        reinterpret_cast<BaseWin *>(TutWinBaseWindow)->close();
+        mapwin_system_shutdown();
+        ConsoleStatusWin->close();
+        // The world-climate window, spelled as the literal rather than through
+        // world_climate_window(): this body's best flag set is /Ob0, where the
+        // helper is a real call the image does not make.
+        reinterpret_cast<WorldWin *>(0x008E9F60)->GraphicWin::close();
+        MultiWindow->close();
+        TutWinIfaceWindow->Win::hide();
+    }
+    stop_timers();
+    labels_shutdown();
+    StringTable->shutdown();
+    if (game_init(1, reload) != 0) {
+        return 1;
+    }
+    if (mode != 0) {
+        desktop_init(1);
+    }
+    WorldClimateSkipTerrainClear = 0;
+    return 0;
+}
