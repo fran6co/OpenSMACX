@@ -104,6 +104,9 @@ const uint32_t StringListBaseTable = 0x006698C0;         // StringList btable
 // really derives virtually - measured against cl 12.00.8168 in isolation,
 // 2026-08-29. Checkbox, RadioButton and ListBox already declare real virtual
 // bases under this same toolchain (see checkbox.h for the layout argument).
+// The pending-allocation owner slot, the image's 0x009B3374 .bss.
+extern uint32_t StringVirtualBaseOwner;
+
 class StringAllocationBase {
  public:
   // Inline so it inlines into the implicit StringStruct/StringList
@@ -113,9 +116,11 @@ class StringAllocationBase {
   // body lands. The address is terranx.exe's data, unmapped in a standalone
   // build; the same raw spelling StringBox::add uses.
   StringAllocationBase() {
-    uint32_t *const pending_owner = reinterpret_cast<uint32_t *>(0x009B3374);
-    allocation_owner_ = reinterpret_cast<void *>(*pending_owner);
-    *pending_owner = 0;
+    // Through the tree's OWN slot (stringstruct.cpp's StringVirtualBaseOwner,
+    // the image's 0x009B3374 .bss): the raw-address spelling wrote unmapped
+    // memory and faulted the boot inside StringBox's construction.
+    allocation_owner_ = reinterpret_cast<void *>(StringVirtualBaseOwner);
+    StringVirtualBaseOwner = 0;
   }
   // VIRTUAL, and the class is therefore polymorphic: the image gives this
   // base its own one-slot vftable (0x006693AC), and without the virtual the
@@ -221,5 +226,4 @@ extern const uint32_t StringVirtualBaseVtable;
 // this global into the object and clears it; the virtual base's destructors
 // republish it. Rebindable so tests can substitute their own storage: the
 // default address is only mapped inside the game process.
-extern uint32_t StringVirtualBaseOwner;   // default 0x009B3374
 
