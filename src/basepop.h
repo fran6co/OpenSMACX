@@ -164,18 +164,14 @@ class BasePop : public GraphicWin {
   uint32_t field_2144_;
   uint32_t field_2148_;
   uint32_t field_214C_;
-  uint32_t field_2150_;
-  uint32_t field_2154_;
-  uint32_t field_2158_;
-  uint32_t field_215C_;
-  uint32_t field_2160_;
-  uint32_t field_2164_;
-  uint32_t field_2168_;
-  uint32_t field_216C_;
-  uint32_t field_2170_;
-  uint32_t field_2174_;
-  uint32_t field_2178_;
-  uint32_t field_217C_;
+  // The popup's ITEM-TEXT list, carved 2026-08-30 beside unit_ids_ below on
+  // the identical evidence: 0x30 = sizeof(StringList), and the ctor's stores
+  // for this block are StringList's two-stage construction (the same
+  // 0x0066B0EC vbtable and staged vtables, +0x006693AC virtual-base vtable),
+  // which the compiler emits from the declaration. BasePop::start adds the
+  // popup's per-item strings here (0x006021A1) as it adds the unit ids to
+  // unit_ids_ (0x006024F4).
+  StringList item_ids_;  // 0x2150
   public:
   // THE POPUP'S UNIT-NAME LIST, carved 2026-08-30 from what was the twelve
   // dwords field_2180_..field_21AC_: exactly 0x30 = sizeof(StringList), and

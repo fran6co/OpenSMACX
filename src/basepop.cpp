@@ -1058,85 +1058,51 @@ int &RD(int address) {
 
 BasePop::BasePop() {
 
-    // GraphicWin(), heap_(), flat_button1_(), flat_button2_() and sprite_()
-    // run via ordinary member construction - their declaration order here
-    // matches the disassembly's constructor-call order.
-    int eax, ecx, edx, esi, edi;
-    int ebx = 0;
+    // GraphicWin(), heap_(), flat_button1_(), flat_button2_(), sprite_(),
+    // item_ids_() and unit_ids_() run via ordinary member construction -
+    // their declaration order matches the disassembly's construction order.
 
-    field_2154_ = reinterpret_cast<int>(BasePopVbtable);
-    field_2178_ = reinterpret_cast<int>(BasePopStageTables6693A0 + 3);
-    eax = reinterpret_cast<int>(StringAllocationHeap);
-    esi = reinterpret_cast<int>(BasePopStageTables6693A0 + 1);
-    field_217C_ = eax;
-    StringAllocationHeap = reinterpret_cast<Heap *>(ebx);
-    ecx = field_2154_;
-    field_2150_ = esi;
-    edx = reinterpret_cast<int>(BasePopStageTables6693A0);
-    eax = RD(ecx + 4);
-    ecx = reinterpret_cast<int>(BasePopStageTables6698C0 + 1);
-    RD(eax + reinterpret_cast<int>(&field_2154_)) = edx;
-    eax = field_2154_;
-    field_2158_ = ebx;
-    field_215C_ = ebx;
-    field_2160_ = ebx;
-    field_2164_ = ebx;
-    field_2168_ = ebx;
-    field_2150_ = ecx;
-    edi = RD(eax + 4);
-    eax = reinterpret_cast<int>(BasePopStageTables6698C0);
-    RD(edi + reinterpret_cast<int>(&field_2154_)) = eax;
+    // item_ids_'s construction, like unit_ids_'s, is the compiler's now.
 
     // unit_ids_'s construction (vbtable, staged vtables, allocator
     // hand-off, StringStruct zeroing) is the compiler's now, emitted from
     // the declared StringList member - these were its hand-spelled copy.
 
 
-    eax = static_cast<int>(BasePopDefaultField30A4);
-    field_30A4_ = eax;
-    ecx = static_cast<int>(BasePopDefaultField3094);
-    field_3094_ = ecx;
+    field_30A4_ = static_cast<int>(BasePopDefaultField30A4);
+    field_3094_ = static_cast<int>(BasePopDefaultField3094);
 
     memcpy(&field_2E64_, BasePopDefaultBlock2E64, 0x118);
     memcpy(&field_2F7C_, BasePopDefaultBlock2F7C, 0x118);
     {
-        int ecxPtr = reinterpret_cast<int>(&field_31C4_);
-        int eaxIdx = 0;
+        // The image fills eight 3-dword records at field_31B8_ from a
+        // column-major 0x30-byte table: column c's eight dwords land at
+        // record stride 0xC. One turn per column, eight dwords per turn -
+        // the same three-sources-per-turn shape the register transcription
+        // spelled with eaxIdx.
+        uint32_t *const records = reinterpret_cast<uint32_t *>(&field_31C4_) - 3;
+        const uint32_t *const table = BasePopDefaultBlock31B8;
+        int column = 0;
         do {
-            edx = RD(reinterpret_cast<int>(BasePopDefaultBlock31B8) + eaxIdx);
-            eaxIdx += 4;
-            RD(ecxPtr - 0xc) = edx;
-            edx = RD(reinterpret_cast<int>(BasePopDefaultBlock31B8 + 2) + eaxIdx);
-            RD(ecxPtr) = edx;
-            edx = RD(reinterpret_cast<int>(BasePopDefaultBlock31B8 + 5) + eaxIdx);
-            RD(ecxPtr + 0xc) = edx;
-            edx = RD(reinterpret_cast<int>(BasePopDefaultBlock31B8 + 8) + eaxIdx);
-            RD(ecxPtr + 0x18) = edx;
-            edx = RD(reinterpret_cast<int>(BasePopDefaultBlock31B8 + 11) + eaxIdx);
-            RD(ecxPtr + 0x24) = edx;
-            edx = RD(reinterpret_cast<int>(BasePopDefaultBlock31B8 + 14) + eaxIdx);
-            RD(ecxPtr + 0x30) = edx;
-            edx = RD(reinterpret_cast<int>(BasePopDefaultBlock31B8 + 17) + eaxIdx);
-            RD(ecxPtr + 0x3c) = edx;
-            edx = RD(reinterpret_cast<int>(BasePopDefaultBlock31B8 + 20) + eaxIdx);
-            RD(ecxPtr + 0x48) = edx;
-            edx = RD(reinterpret_cast<int>(BasePopDefaultBlock31B8 + 23) + eaxIdx);
-            RD(ecxPtr + 0x54) = edx;
-            ecxPtr += 4;
-        } while (eaxIdx < 0xc);
+            int row = 0;
+            do {
+                records[row * 3 + column] = table[column * 8 + row];
+                row += 1;
+            } while (row < 8);
+            column += 1;
+        } while (column < 3);
     }
 
-    eax = -1;
-    field_21C8_ = ebx;
-    field_21CC_ = eax;
-    ok_text_ = reinterpret_cast<LPSTR>(ebx);
-    cancel_text_ = reinterpret_cast<LPSTR>(ebx);
+    field_21C8_ = 0;
+    field_21CC_ = -1;
+    ok_text_ = 0;
+    cancel_text_ = 0;
     field_A3C_ = reinterpret_cast<int>(this);
-    field_20F4_ = ebx;
-    field_A40_ = ebx;
-    field_30A8_ = ebx;
-    field_30AC_ = ebx;
-    field_A44_ = eax;
+    field_20F4_ = 0;
+    field_A40_ = 0;
+    field_30A8_ = 0;
+    field_30AC_ = 0;
+    field_A44_ = -1;
     field_20F8_ = 0;
     field_20FC_ = 0;
     field_2100_ = 0;
@@ -1145,7 +1111,7 @@ BasePop::BasePop() {
     field_210C_ = 0;
     field_2110_ = 0;
     field_2114_ = 0;
-    field_A48_ = ebx;
+    field_A48_ = 0;
     field_21B8_ = BasePopDefaultField21B0[3];
     field_21BC_ = BasePopDefaultField21B0[2];
     field_21B0_ = BasePopDefaultField21B0[0];
@@ -1155,31 +1121,30 @@ BasePop::BasePop() {
 
     sprite_.close();
 
-    field_2144_ = ebx;
+    field_2144_ = 0;
     field_214C_ = BasePopDefaultField2148[1];
     field_2148_ = BasePopDefaultField2148[0];
-    field_30B0_ = ebx;
-    field_30B4_ = ebx;
-    field_30B8_ = ebx;
-    field_30BC_ = ebx;
-    field_30C0_ = ebx;
-    field_30C4_ = ebx;
-    field_30C8_ = ebx;
-    field_30CC_ = ebx;
-    field_30D0_ = ebx;
-    field_30D4_ = ebx;
-    field_30D8_ = ebx;
-    field_30DC_ = ebx;
-    field_30E0_ = ebx;
-    field_30E4_ = ebx;
-    field_30E8_ = ebx;
-    field_30EC_ = ebx;
-    field_30F0_ = ebx;
-    eax = 0x1000;
-    field_30F4_ = ebx;
-    loc_a_ = eax;
-    loc_b_ = eax;
-    field_3100_ = ebx;
+    field_30B0_ = 0;
+    field_30B4_ = 0;
+    field_30B8_ = 0;
+    field_30BC_ = 0;
+    field_30C0_ = 0;
+    field_30C4_ = 0;
+    field_30C8_ = 0;
+    field_30CC_ = 0;
+    field_30D0_ = 0;
+    field_30D4_ = 0;
+    field_30D8_ = 0;
+    field_30DC_ = 0;
+    field_30E0_ = 0;
+    field_30E4_ = 0;
+    field_30E8_ = 0;
+    field_30EC_ = 0;
+    field_30F0_ = 0;
+    field_30F4_ = 0;
+    loc_a_ = 0x1000;
+    loc_b_ = 0x1000;
+    field_3100_ = 0;
     field_3104_ = BasePopDefaultField3104[0];
     field_3108_ = BasePopDefaultField3104[1];
     field_310C_ = BasePopDefaultField3104[2];
@@ -1203,9 +1168,9 @@ BasePop::BasePop() {
     string_color_hyper_b_ = static_cast<int>(BasePopDefaultStringColors[1][3]);
     string_color_hyperc_ = static_cast<int>(BasePopDefaultStringColors[2][3]);
     string_color_hyper_d_ = static_cast<int>(BasePopDefaultStringColors[3][3]);
-    field_3160_ = ebx;
-    field_3164_ = ebx;
-    field_3168_ = ebx;
+    field_3160_ = 0;
+    field_3164_ = 0;
+    field_3168_ = 0;
     button_font1_ = BasePopDefaultButtonFonts[0];
     button_color_a_ = static_cast<uint8_t>(BasePopDefaultButtonColors[0][0]);
     button_color_b_ = static_cast<int>(BasePopDefaultButtonColors[1][0]);
@@ -1227,7 +1192,7 @@ BasePop::BasePop() {
     field_31AC_ = BasePopDefaultField31A0[3];
     field_31B0_ = BasePopDefaultField31B0[0];
     field_31B4_ = BasePopDefaultField31B0[1];
-    field_322C_ = ebx;
+    field_322C_ = 0;
     field_322C_ = BasePopDefaultField322C;
     field_A14_ = BasePopDefaultLayout[0];
     field_A18_ = BasePopDefaultLayout[1];
