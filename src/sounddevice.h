@@ -125,3 +125,9 @@ class Wave_In_Device {
 static_assert(sizeof(Wave_In_Device) == 0x20,
               "Wave_In_Device layout must match the original executable");
 
+// The wave-in device singleton, at the fixed address init_sound binds and
+// brings up (sound.cpp) and VoiceTx's record path drives (net_class.cpp).
+// Defined HERE rather than as a per-file address binding so uses fold to the
+// immediate - the same convention as WaveDeviceGlobal in wave.h.
+Wave_In_Device *const WaveInDeviceGlobal = (Wave_In_Device *)0x0090DB50;
+

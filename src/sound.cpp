@@ -139,12 +139,17 @@ int Sound::is_looping() {
 /*
 Purpose: Ask the wrapped device for its play position, through vtable slot 0x74.
 // ORIGINAL: 0x004C66A0 ?get_time@Sound@@QAEHXZ 0x004C66A0-0x004C66AF BYTE_EXACT
+// symbol    ?get_time@Sound@@UAEHXZ
 // size      15 bytes
 // prototype int (__thiscall ?get_time@Sound@@QAEHXZ)(Sound* this)
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// VIRTUAL since 2026-08-30: slot 29 of Sound's table (0x0066E3C0) is this
+// function in the image, between the pure pair and unk_slot30. Virtualness
+// spells U, not Q, in the mangled name - hence the symbol fact. The body is
+// unchanged; the claim re-measured BYTE_EXACT under it.
 Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
@@ -902,7 +907,6 @@ static int *const g_0090d950 = (int *)0x0090D950;
 static int *const g_0090d978 = (int *)0x0090D978;
 static int *const g_0090db24 = (int *)0x0090DB24;
 static int *const g_0090db2c = (int *)0x0090DB2C;
-static int *const g_0090db50 = (int *)0x0090DB50;
 static int *const g_0090db78 = (int *)0x0090DB78;
 static int *const g_0090db7c = (int *)0x0090DB7C;
 
@@ -934,7 +938,7 @@ int __cdecl init_sound(void *window, unsigned long backends) {
         midiDevice->init(window, 2);
     }
     if ((backends & 8) != 0) {
-        Wave_In_Device *waveInDevice = reinterpret_cast<Wave_In_Device *>(g_0090db50);
+        Wave_In_Device *waveInDevice = WaveInDeviceGlobal;
         waveInDevice->init(window, backends);
     }
     *g_0090db7c = 1;

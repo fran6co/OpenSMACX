@@ -17,64 +17,80 @@
  */
 #pragma once
 
+#include "sound.h"
+
  /*
   * VoiceTx class
   *
-  * Net's first embedded subobject, and one of only two classes in this tree
-  * whose members come from TWO independent sources that agree exactly.
+  * Net's first embedded subobject, and a real Sound: ??0VoiceTx (0x004C8CC0)
+  * stages THREE vftables in construction order - 0x0066E444 (the family root,
+  * which the IDB's member list mis-attributed to this class), 0x0066E3C0
+  * (Sound's own, inlining ??0Sound store for store exactly as ??0Wave and
+  * ??0Ambience do), then its own 0x0066E8C4 - and ??1VoiceTx (0x004C8DB0)
+  * walks the same three back down. The voice dispatches in Net prove the
+  * final table is what sits in the object: start_voice reads the subobject's
+  * vptr and calls [vptr + 0x90] - slot 36 - and stop_voice calls
+  * [vptr + 0x20] - slot 8 - of the SAME live pointer, which the old flat
+  * model could not even name.
   *
-  *   * The IDB gives 22 members at 0x0..0x54 summing to 0x58. Its offsets
-  *     ACCUMULATE, so on its own a probe of them proves self-consistency
-  *     rather than truth - which is the argument src/hypothesis_layouts.h
-  *     makes about itself, and why this could not simply be asserted there.
-  *   * docs/recovery/thinker-members.csv gives the same 22 members at the
-  *     same EXPLICIT offsets and the same 0x58 total. Thinker writes offsets
-  *     down rather than deriving them, so it cannot inherit an accumulation
-  *     error from the IDB.
+  * The table at 0x0066E8C4 is 38 slots: Sound's 33 (0..32, with VoiceTx
+  * overriding unload at 5, stop at 8 and release at 14) plus five of its own,
+  * declared below in slot order. Two Sound-pure slots get real bodies here in
+  * the image (15 and 28 answer through the 0x00406B30 `xor eax,eax; ret`
+  * stub, 27 through a `mov eax,0xb; ret 4` getter); this tree leaves them
+  * inherited from Sound's placeholders - their slot content is semantic debt
+  * either way, because no claim measures the table's contents.
   *
-  * The image supplies the bound that closes it. `??0Net@@QAE@XZ` constructs
-  * this at `lea ecx, [esi+0x58]` (0x0062D6C9) and Net's next subobject sits
-  * at 0x000000B0 - a difference of exactly 0x58, so the object cannot be
-  * larger. Two agreeing member sources and an upper bound from the bytes is
-  * the standard this tree pins a size to; `derive_agreed_sizes` had already
-  * agreed 0x58 and had nowhere honest to assert it.
+  * The catalogue spells release `?release@VoiceTx@@QAEXXZ` (void), but both
+  * of its epilogues are `xor eax,eax; ret` - the shape that CORRECTED
+  * unload's catalogue name to int when unload's body was promoted out of
+  * src/recovered/004c8f40.cpp, and the same test the int-returning redirect
+  * that held these bytes passes. Measured int wins here too.
   *
-  * The members are unnamed because neither source names them: `0 named` is
-  * what hypothesis_layouts.h recorded, and inventing names would be the only
-  * part of this that is not measured.
+  * THE OLD FLAT MODEL IS WITHDRAWN. It held 22 uint32_t members whose first
+  * "field" was really the vptr, defended by two agreeing member sources -
+  * but both sources catalogue offsets, and neither could see that ??0VoiceTx
+  * stores 0x66E8C4, not the 0x66E444 its first stage writes. The size bound
+  * survives unchanged: sizeof(Sound) is 0x54, one dword follows, and ??0Net
+  * still constructs this at `lea ecx, [esi+0x58]` with Net's next subobject
+  * at 0xB0 - exactly 0x58 of room.
   */
-class VoiceTx {
+class VoiceTx : public Sound {
  public:
   // 0x004C8CC0, a pending_bodies forwarder - not this batch's address.
   VoiceTx();
-  // 0x004C8DB0 is not recovered: a pending_bodies forwarder, because
-  // an empty inline stub emits nothing and the deleting destructor
-  // needs a `call rel32`.
-  ~VoiceTx();
+  // NO DECLARED DESTRUCTOR. The old pending_bodies forwarder for 0x004C8DB0
+  // is retired: with a Sound base the compiler-generated ??1VoiceTx calls the
+  // REAL, claimed ~Sound (src/sound.cpp) once, which is both a smaller
+  // compiled form and the first teardown path in this tree that runs instead
+  // of faulting. The image's own ??1VoiceTx inlines the whole three-stage
+  // descent and stays unrecovered.
 
- public:
-  uint32_t field_0_;    // 0x0
-  uint32_t field_4_;    // 0x4
-  uint32_t field_8_;    // 0x8
-  uint32_t field_C_;    // 0xC
-  uint32_t field_10_;   // 0x10
-  uint32_t field_14_;   // 0x14
-  uint32_t field_18_;   // 0x18
-  uint32_t field_1C_;   // 0x1C
-  uint32_t field_20_;   // 0x20
-  uint32_t field_24_;   // 0x24
-  uint32_t field_28_;   // 0x28
-  uint32_t field_2C_;   // 0x2C
-  uint32_t field_30_;   // 0x30
-  uint32_t field_34_;   // 0x34
-  uint32_t field_38_;   // 0x38
-  uint32_t field_3C_;   // 0x3C
-  uint32_t field_40_;   // 0x40
-  uint32_t field_44_;   // 0x44
-  uint32_t field_48_;   // 0x48
-  uint32_t field_4C_;   // 0x4C
-  uint32_t field_50_;   // 0x50
-  uint32_t field_54_;   // 0x54
+  // THE VIRTUAL SET VoiceTx ADDS OR OVERRIDES, in 0x0066E8C4 slot order.
+  // Sound's other slots (set_fade .. detach, 0..32) are inherited untouched.
+  // init/get_next_buffer/return_buffer/get_nbuffers are unrecovered bodies -
+  // placeholder definitions in net_class.cpp keep the slots true, semantic
+  // debt until named, exactly like Sound's unk_slots in sound.cpp.
+  // The overrides (unload/stop/release) would inherit virtualness from
+  // Sound; the own slots BELOW THEM would not - a missing `virtual` on
+  // start compiled start_voice's dispatch into a plain direct call and
+  // regressed its claim - so every one spells the keyword.
+  virtual int unload();                          // slot  5 (0x4C8F40)
+  virtual int stop();                            // slot  8 (0x4C8F00), the
+                                                 // voice stop Net dispatches
+  virtual int release();                         // slot 14 (0x4C8EA0)
+  virtual int init(unsigned long, void *, unsigned long);  // 33 (0x4C8F70)
+  virtual int get_next_buffer();                 // slot 34 (0x4C9030)
+  virtual int return_buffer(struct _MMIOINFO *);  // slot 35 (0x4C9050)
+  virtual int start();                           // slot 36 (0x4C8EB0), the
+                                                 // voice start Net dispatches
+  virtual int get_nbuffers();                    // slot 37 (0x4C9010)
+
+ private:
+  // Bit 0 is the voice-started bit: set by start once the device chain has
+  // answered, tested by stop (both `test byte ptr [this + 0x54], 1`), and
+  // read by Net as the 0x20000000 flag word at +0xD8 alongside it.
+  uint32_t flags_54_;  // 0x54
 };
 
 static_assert(sizeof(VoiceTx) == 0x58,

@@ -975,10 +975,11 @@ VoiceRx::~VoiceRx() {  // ??1VoiceRx@@QAE@XZ at 0x004C8A50
     PENDING_BODY(0x004C8A50, pending)(this, nullptr);
 }
 
-VoiceTx::~VoiceTx() {  // ??1VoiceTx@@QAE@XZ at 0x004C8DB0
-    typedef void(__fastcall *pending)(VoiceTx *, void *);
-    PENDING_BODY(0x004C8DB0, pending)(this, nullptr);
-}
+// NO VoiceTx::~VoiceTx forwarder. VoiceTx is now `VoiceTx : public Sound`
+// (net_class.h), so the compiler-generated ??1VoiceTx calls the real,
+// claimed ~Sound once - the retired 0x004C8DB0 forwarder faulted where the
+// image's destructor (which inlines the whole three-stage Sound descent)
+// actually tears down. 0x004C8DB0 itself stays unrecovered.
 
 VoiceTx::VoiceTx() {  // ??0VoiceTx@@QAE@XZ at 0x004C8CC0 - not this batch's
                        // address; Net::Net (0x0062D6A0) reaches it directly.

@@ -64,10 +64,16 @@ class Sound {
   virtual void unk_slot26();                       // slot 26 (0x448320, unrecovered)
   virtual void unk_slot27();                       // slot 27 (pure in image)
   virtual void unk_slot28();                       // slot 28 (pure in image)
-  virtual int attach();                            // slot 29 (0x4C6370)
+  // THE TAIL, corrected 2026-08-29 against the family tables: the image's
+  // Sound table runs to slot 32 with get_time VIRTUAL at 29 (?get_time@@QAEHXZ
+  // at 0x4C66A0 sits between the pure pair and unk_slot30 in 0x0066E3C0,
+  // 0x0066E8C4 and every family table), attach at 31 and detach at 32. The
+  // old tail declared get_time non-virtual after detach, which left Sound a
+  // slot short and shifted every derived class's own slots one early.
+  virtual int get_time();                          // slot 29 (0x4C66A0)
   virtual void unk_slot30();                       // slot 30 (0x448330, unrecovered)
-  virtual int detach();                            // slot 31 (0x4C6370?)
-  int get_time();
+  virtual int attach();                            // slot 31 (0x4C6370)
+  virtual int detach();                            // slot 32 (0x4C63D0)
 
  protected:
   // PROTECTED, not private, because `Wave` is a real derived class - its

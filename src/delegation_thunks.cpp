@@ -469,34 +469,12 @@ int __fastcall voice_rx_get_buffer_size_redirect(void *self, void *) {
     return (ORIGINAL(member)->*original_method<func_delegation_0>(reinterpret_cast<unsigned long>(vtable[0x90 / sizeof(void *)])))();
 }
 
-/*
-Purpose: ?release@VoiceTx@@QAEXXZ - dispatch to slot 0x38 of the object at
-         0x3c when it is present, and answer 0x0 either way: both
-         paths land on the same zeroing, so the delegate's own result
-         never reaches the caller.
-// ORIGINAL: 0x004C8EA0 ?release@VoiceTx@@QAEXXZ 0x004C8EA0-0x004C8EAF BYTE_EXACT
-// symbol    ?voice_tx_release_redirect@@YIHPAX0@Z
-// size      15 bytes
-// prototype void (__thiscall ?release@VoiceTx@@QAEXXZ)(VoiceTx* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x004C8EA9
-Return Value: 0x0, whether the delegate ran or not
-Status: Complete
+/* RETIRED 2026-08-30: ?release@VoiceTx@@QAEXXZ (0x004C8EA0) is now a real
+   member of the real VoiceTx class (net_class.h/net_class.cpp), BYTE_EXACT
+   as `virtual int release()` - the catalogue's void spelling loses to the
+   measured `xor eax,eax` epilogue, exactly as unload's did. This redirect
+   was its only other spelling; the member claim supersedes it.
 */
-int __fastcall voice_tx_release_redirect(void *self, void *) {
-    void *const member = *reinterpret_cast<void **>(
-        static_cast<uint8_t *>(self) + 0x3c);
-    if (member == nullptr) {
-        return 0x0;
-    }
-    void **const vtable = *reinterpret_cast<void ***>(member);
-    (void)(ORIGINAL(member)->*original_method<func_delegation_0>(reinterpret_cast<unsigned long>(vtable[0x38 / sizeof(void *)])))();
-    return 0x0;
-}
-
 /*
 Purpose: ?get_nbuffers@VoiceTx@@QAEHXZ - forward 0 argument(s) to slot 0x94 of the
          object at +0x3c, answering 0x0 when that object is absent.

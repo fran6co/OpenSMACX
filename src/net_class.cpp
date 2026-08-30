@@ -18,9 +18,13 @@
 #include "stdafx.h"
 #include <cstring>
 #include "net_class.h"
+#include "original_seam.h"
 #include "stringstruct.h"
 #include "hypothesis_layouts.h"
 #include "vtable_shim.h"
+#include "wave.h"
+#include "wave_device.h"
+#include "sounddevice.h"
 
 // 0x00401BE0, recovered in src/leaf_recoveries.cpp. Declared here so
 // Net::~Net reaches it with the image's own `call rel32` at 0x004E353A
@@ -44,12 +48,14 @@ class VCallArg {
   virtual void slot002(int);
 };
 
-// The same shim idiom, for the VoiceTx subobject at +0x58: its own vtable
-// has the voice-stop entry at slot 8 and the voice-start entry at slot 36.
-// The other 35 slots are unrecovered, so VoiceTx cannot declare them virtual
-// - a real vtable would have to link every one - and this stays a local,
-// declared-order shim, exactly like VCallArg above.
-class VoiceCall { public:
+// The wrapped device's own interface, as far as VoiceTx's dispatches reach.
+// The tree has no modelled class for this device yet (wave.cpp reaches the
+// same object through vtable_slot seams); the one-slot shim exists because a
+// FUNCTION-POINTER dispatch in return position compiles a tail-jump where
+// the image calls and epilogues - a member virtual call does not. Slot 8 is
+// the stop entry ([vtbl + 0x20]); the fillers ahead of it only count offsets.
+class VoiceDeviceStop {
+ public:
   virtual void slot000();
   virtual void slot001();
   virtual void slot002();
@@ -58,35 +64,7 @@ class VoiceCall { public:
   virtual void slot005();
   virtual void slot006();
   virtual void slot007();
-  virtual void slot008();  // voice stop
-  virtual void slot009();
-  virtual void slot010();
-  virtual void slot011();
-  virtual void slot012();
-  virtual void slot013();
-  virtual void slot014();
-  virtual void slot015();
-  virtual void slot016();
-  virtual void slot017();
-  virtual void slot018();
-  virtual void slot019();
-  virtual void slot020();
-  virtual void slot021();
-  virtual void slot022();
-  virtual void slot023();
-  virtual void slot024();
-  virtual void slot025();
-  virtual void slot026();
-  virtual void slot027();
-  virtual void slot028();
-  virtual void slot029();
-  virtual void slot030();
-  virtual void slot031();
-  virtual void slot032();
-  virtual void slot033();
-  virtual void slot034();
-  virtual void slot035();
-  virtual void slot036();  // voice start
+  virtual int stop();  // slot 8 ([vtbl + 0x20])
 };
 
 static void *const g_006693ac = reinterpret_cast<void *>(0x006693AC);
@@ -103,6 +81,157 @@ static void *const g_0066eb04 = reinterpret_cast<void *>(0x0066EB04);
 static void *const g_00670dcc = reinterpret_cast<void *>(0x00670DCC);
 static int32_t *const g_009b3374 = reinterpret_cast<int32_t *>(0x009B3374);
 static int32_t *const g_009be600 = reinterpret_cast<int32_t *>(0x009BE600);
+
+/*
+Purpose: Begin voice capture: disable the wave device, start the wave-in
+         device, arm the Sound-level device through its own vtable slot 0x90,
+         and only then light the started bit at 0x54.
+// ORIGINAL: 0x004C8EB0 ?start@VoiceTx@@QAEHXZ 0x004C8EB0-0x004C8EF4 BYTE_EXACT
+// symbol    ?start@VoiceTx@@UAEHXZ
+// size      68 bytes
+// prototype int (__thiscall ?start@VoiceTx@@QAEHXZ)(VoiceTx* this)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004C51D0 0x004C5B60
+// indirect  0x004C8EDE
+// LEVER: PROMOTED out of src/recovered/004c8eb0.cpp, which reached the
+//        fields as `reinterpret_cast<char *>(this) + 0x54/0x3c` and the
+//        device dispatch through a 37-slot local shim. The named-member
+//        spelling reproduces the same bytes: flags_54_ is the dword at 0x54
+//        (bit 0, and the image TESTS it as a byte and ORs bit 0 as a byte
+//        inside a dword store), device_ is Sound's at 0x3C, and the armed
+//        dispatch is slot 36 of the device's live vtable - 0x90, the slot
+//        this class's own start occupies in VoiceTx's table 0x0066E8C4.
+Return Value: 0, or the first failing stage's answer
+*/
+int VoiceTx::start() {
+    if ((flags_54_ & 1) == 0) {
+        int result = WaveDeviceGlobal->disable();
+        if (result != 0) {
+            return result;
+        }
+        result = WaveInDeviceGlobal->start_record();
+        if (result != 0) {
+            return result;
+        }
+        if (device_ != nullptr) {
+            typedef int(__fastcall *device_voice_start_fn)(void *);
+            result = vtable_slot<device_voice_start_fn>(device_, 0x90)(device_);
+            if (result != 0) {
+                return result;
+            }
+        }
+        flags_54_ |= 1;
+    }
+    return 0;
+}
+
+/*
+Purpose: Stop voice capture in the reverse order of start, and tear the
+         started bit down first.
+// ORIGINAL: 0x004C8F00 ?stop@VoiceTx@@QAEHXZ 0x004C8F00-0x004C8F3C BYTE_EXACT
+// symbol    ?stop@VoiceTx@@UAEHXZ
+// size      60 bytes
+// prototype int (__thiscall ?stop@VoiceTx@@QAEHXZ)(VoiceTx* this)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004C51C0 0x004C5B70
+// indirect  0x004C8F33
+// LEVER: PROMOTED out of src/recovered/004c8f00.cpp the same way as start
+//        above. The started-bit clear is a full DWORD and-cycle
+//        (`and ecx, 0xfffffffe`) while start's set is a byte `or al, 1`
+//        inside a dword read-modify-write - both fall out of the one
+//        `flags_54_` dword with plain `&=` / `|=`.
+Return Value: 0, or the failing stage's answer
+*/
+int VoiceTx::stop() {
+    if ((flags_54_ & 1) != 0) {
+        int result = WaveInDeviceGlobal->end_record();
+        if (result != 0) {
+            return result;
+        }
+        flags_54_ &= ~1u;
+        WaveDeviceGlobal->enable();
+        if (device_ != nullptr) {
+            return reinterpret_cast<VoiceDeviceStop *>(device_)->stop();
+        }
+    }
+    return 0;
+}
+
+/*
+Purpose: Drop the Sound-level device (vtable slot 0x38) and forget it, so a
+         later init re-wraps; the answer is discarded - release always
+         answers 0.
+// ORIGINAL: 0x004C8EA0 ?release@VoiceTx@@QAEXXZ 0x004C8EA0-0x004C8EAF BYTE_EXACT
+// symbol    ?release@VoiceTx@@UAEHXZ
+// size      15 bytes
+// prototype int (__thiscall ?release@VoiceTx@@QAEXXZ)(VoiceTx* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x004C8EA9
+// LEVER: the catalogue spells this `QAEXXZ` (void) - withdrawn here. Both
+//        epilogues are `xor eax, eax; ret`, the shape that CORRECTED unload's
+//        catalogue name to int. The dispatch differs from Sound::release only
+//        in the default: the base returns 0x14 when no device is wrapped,
+//        this returns 0. The ?voice_tx_release_redirect@@YIHPAX0@Z spelling
+//        that held these bytes first was retired with the delegation_thunks
+//        block when this member superseded it.
+Return Value: 0, always
+*/
+int VoiceTx::release() {
+    if (device_ != nullptr) {
+        typedef int(__fastcall *device_release_fn)(void *);
+        vtable_slot<device_release_fn>(device_, 0x38)(device_);
+    }
+    return 0;
+}
+
+/*
+Purpose: Detach from the Sound-level device, stopping voice first, and hand
+         the device to the release hook while the guard dword says the hook
+         is live - the same hook and guard ~Sound consults.
+// ORIGINAL: 0x004C8F40 ?unload@VoiceTx@@QAEHXZ 0x004C8F40-0x004C8F70 BYTE_EXACT
+// symbol    ?unload@VoiceTx@@UAEHXZ
+// size      48 bytes
+// prototype int (__thiscall ?unload@VoiceTx@@QAEHXZ)(VoiceTx* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x004C8F45 0x004C8F4C 0x004C8F5C
+// LEVER: PROMOTED out of src/recovered/004c8f40.cpp. The first two
+//        dispatches are VIRTUAL SELF-CALLS of slots 8 and 14 - spelled
+//        `stop(); release();`, which is why the class model matters here:
+//        the shim spelling could not see that they are this class's own
+//        stop and release.
+Return Value: 0, always
+*/
+int VoiceTx::unload() {
+    stop();
+    release();
+    if (*WaveDeviceReleaseGuard != 0) {
+        (WaveDeviceReleaseSlot())(device_);
+    }
+    device_ = nullptr;
+    return 0;
+}
+
+// THE UNRECOVERED VIRTUAL SET. These four bodies keep VoiceTx's vftable
+// slots (0x0066E8C4, 33/34/35/37) true without reproducing them: init
+// (0x004C8F70, 151 bytes) sits verbatim in src/unrecovered/, and the other
+// three are wrapped-device delegations, two of them still NOT_MATCHING
+// redirect spellings in delegation_thunks.cpp. Semantic debt until named,
+// exactly like Sound::unk_slot1 - placeholders, not claims.
+int VoiceTx::init(unsigned long, void *, unsigned long) { return 0; }
+int VoiceTx::get_next_buffer() { return 0; }
+int VoiceTx::return_buffer(struct _MMIOINFO *) { return 0; }
+int VoiceTx::get_nbuffers() { return 0; }
+
 
 /*
 Purpose: Build a Net - its embedded VoiceTx, three NetFifo message queues,
@@ -501,6 +630,10 @@ Purpose: Begin streaming voice over this connection, when net play is live
 // words at +0xd4/+0xd8 are the handle and its state bits - 0x60000000 means
 // a start or stop already in flight, 0x20000000 is the voice-started bit
 // this body sets once slot 36 has been told to go.
+// LEVER: slot 36 is VoiceTx's OWN `?start@VoiceTx@@QAEHXZ` (0x004C8EB0, at
+//        its table 0x0066E8C4). The flat VoiceTx model could only spell this
+//        dispatch as a local 37-slot VoiceCall shim; the real virtual does
+//        it, and the claim held unchanged through the swap.
 */
 int Net::start_voice(unsigned long key) {
     if (*NetEnabled == 0) {
@@ -509,7 +642,7 @@ int Net::start_voice(unsigned long key) {
     if ((field_D8_ & 0x60000000) == 0) {
         field_54_ = 0;
         field_D4_ = key;
-        reinterpret_cast<VoiceCall *>(&voice_tx_)->slot036();
+        voice_tx_.start();
         field_D8_ |= 0x20000000;
     }
     return 0;
@@ -533,10 +666,13 @@ Purpose: Stop the voice stream this connection is carrying, if any, and
 // packet type 0x200. 0x0062F8A0 is still unrecovered, so the call goes
 // through that member's pending_bodies forwarder - an `E8` to the same
 // place the image jumps.
+// LEVER: slot 8 is VoiceTx's OWN `?stop@VoiceTx@@QAEHXZ` (0x004C8F00), an
+//        override of Sound's stop. Like start_voice, the dispatch held
+//        BYTE_EXACT when the VoiceCall shim gave way to `voice_tx_.stop()`.
 */
 void Net::stop_voice() {
     if ((field_D8_ & 0x20000000) != 0) {
-        reinterpret_cast<VoiceCall *>(&voice_tx_)->slot008();
+        voice_tx_.stop();
         int handle = static_cast<int>(field_D4_);
         uint32_t flags = field_D8_;
         flags &= 0xDFFFFFFF;

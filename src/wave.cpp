@@ -1584,7 +1584,7 @@ Wave::~Wave() {
 
 /*
 Purpose: Tear down an Effect, which is a Wave and nothing more.
-// ORIGINAL: 0x004482C0 ??1Effect@@QAE@XZ 0x004482C0-0x004482C5 BYTE_EXACT
+// ORIGINAL: 0x004482C0 ??1Effect@@QAE@XZ 0x004482C0-0x004482C5
 // symbol    ??1Effect@@UAE@XZ
 // CORRECTED from 0x004482C0-0x004482C4, which the artifact carried: the body
 //   is one `E9 rel32`, five bytes, and a four-byte span cannot decode a single
@@ -1602,6 +1602,18 @@ Purpose: Tear down an Effect, which is a Wave and nothing more.
 //   still folds to a 5-byte tail-jmp, which our VC6 refuses for a virtual
 //   base dtor. Something about the original Effect model (a friend-side
 //   emission, a different TU split, or /GX flags) remains unmodelled.
+//   MEASURED 2026-08-30, VoiceTx class pass: the regression reproduces on the
+//   PRISTINE tree - `git checkout HEAD` of every file this pass touched and
+//   this body still measures 0/1 (`mov [ecx], <vtable>` + the jump) - so the
+//   red claim was inherited, not caused here. The structural reading the
+//   evidence supports: the shipped Effect.obj was compiled against a sound.h
+//   that did not yet have `virtual ~Sound` (a stale-TU build), which is why
+//   the SAME 12.00.8168 compiler both puts ??_GSound in slot 2 of every
+//   Sound-family vtable AND emits this storeless tail-jmp - the two shapes
+//   cannot come from one consistent header, and no source this tree can hold
+//   reproduces both. The model choice stands with the virtual ~Sound, because
+//   slot 2 is measured in the image's tables and ??1Effect is one 5-byte
+//   thorn; leave the claim red and the TRIED wall standing.
 // size      5 bytes
 // prototype void (__thiscall ??1Effect@@QAE@XZ)(Effect* this)
 // kind      game
