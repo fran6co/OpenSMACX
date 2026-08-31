@@ -164,7 +164,15 @@ HEADER_SHAPES = [
     # 49 -> 45 (sound batch): init_sound went BYTE_EXACT through the named
     # instances - MidiDeviceGlobal in sounddevice.h, SoundDllInitSlot's table
     # view - and its last two raw bindings left with them.
-    ("anonymous fixed-address global", 45,
+    # 45 -> 0 (2026-08-31, anonymous-globals sweep): every remaining
+    # g_<address> binding renamed from evidence - the vftable installs by the
+    # deleting-destructor slot each table carries (ConsoleVftable,
+    # MapWinVftable, AlphaMenuVftable, PlanWinVftable, MonuWinVftable,
+    # PrefWinVftable and their virtual-base pairs), the blit-state family by
+    # its neighbours (BlitSourceField70/74/78 beside BlitSourceField4A8),
+    # CheckButton's two ctor defaults, and FlatButtonDefaultsTable. The two
+    # prose mentions of retired bindings now carry plain hex.
+    ("anonymous fixed-address global", 0,
      re.compile(r"\bg_00[0-9a-f]{4,6}\b"),
      "a global named by its address instead of its meaning. Name it from "
      "evidence - the image's .data value, the arithmetic identity, the "

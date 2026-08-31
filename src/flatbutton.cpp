@@ -21,11 +21,11 @@
 const uint32_t FlatButtonPrimaryVtable = 0x00669754;
 const uint32_t FlatButtonBufferVtable = 0x0066974C;
 // The nine-group defaults table read by both the constructor and close():
-// a fixed image address, not a runtime-loaded pointer - `g_009b8e44` folds
+// a fixed image address, not a runtime-loaded pointer - `FlatButtonDefaultsTable` folds
 // to the immediate the same way the constructor's own copy of this table
 // already did, where dereferencing a variable holding the address would
 // not.
-static int *const g_009b8e44 = (int *)0x009B8E44;
+static int *const FlatButtonDefaultsTable = (int *)0x009B8E44;
 
 // A real, out-of-line forwarder so this call site gets an actual `call`
 // where `time1_.close()` directly would inline away under /O2 - same
@@ -45,7 +45,7 @@ Purpose: Close the primary Time member, reset FlatButton orientation state,
 //        veh.cpp) so `time1_.close()` compiles the `call rel32` the image
 //        has instead of inlining away under /O2 - `Time::close()` is
 //        itself separately claimed BYTE_EXACT at 0x00616780. (2)
-//        `g_009b8e44` (a real constant pointer to the fixed image address)
+//        `FlatButtonDefaultsTable` (a real constant pointer to the fixed image address)
 //        in place of dereferencing the `FlatButtonDefaults` VARIABLE,
 //        which read a runtime pointer VALUE where the image folds a
 //        compile-time address - same table the constructor already binds
@@ -86,9 +86,9 @@ Purpose: Close the primary Time member, reset FlatButton orientation state,
 //   strides, `cmp ecx, 0xc; jl`); this tree bases the same induction variable
 //   on the SECOND column instead (`mov ecx, 0x9b8e50`, `mov edx, [ecx - 0xc]`),
 //   which re-spells all nine displacements. MEASURED at the same 28 of 41:
-//   `g_009b8e44[index + g * 3]`, `*(g_009b8e44 + index + g * 3)`, a
+//   `FlatButtonDefaultsTable[index + g * 3]`, `*(FlatButtonDefaultsTable + index + g * 3)`, a
 //   `const int *const table` local, `index != 3` for the loop test, and a
-//   `column` pointer recomputed as `g_009b8e44 + index` each iteration. A
+//   `column` pointer recomputed as `FlatButtonDefaultsTable + index` each iteration. A
 //   byte-offset loop (`for (offset = 0; offset < 12; offset += 4)`) reproduces
 //   the image's `[ecx + 0x9b8e44]` form but loses more elsewhere: 21 of 41.
 //   Walking a SECOND pointer over the table alongside `dest` is far worse,
@@ -114,15 +114,15 @@ uint32_t FlatButton::close() {
     uint32_t *dest = object + 0xAE0 / 4;
     for (int index = 0; index < 3; ++index) {
         dest[-9] = 0xFFFFFFFFU;
-        dest[0] = static_cast<uint32_t>(g_009b8e44[0 * 3 + index]);
-        dest[3] = static_cast<uint32_t>(g_009b8e44[1 * 3 + index]);
-        dest[6] = static_cast<uint32_t>(g_009b8e44[2 * 3 + index]);
-        dest[9] = static_cast<uint32_t>(g_009b8e44[3 * 3 + index]);
-        dest[12] = static_cast<uint32_t>(g_009b8e44[4 * 3 + index]);
-        dest[15] = static_cast<uint32_t>(g_009b8e44[5 * 3 + index]);
-        dest[18] = static_cast<uint32_t>(g_009b8e44[6 * 3 + index]);
-        dest[21] = static_cast<uint32_t>(g_009b8e44[7 * 3 + index]);
-        dest[24] = static_cast<uint32_t>(g_009b8e44[8 * 3 + index]);
+        dest[0] = static_cast<uint32_t>(FlatButtonDefaultsTable[0 * 3 + index]);
+        dest[3] = static_cast<uint32_t>(FlatButtonDefaultsTable[1 * 3 + index]);
+        dest[6] = static_cast<uint32_t>(FlatButtonDefaultsTable[2 * 3 + index]);
+        dest[9] = static_cast<uint32_t>(FlatButtonDefaultsTable[3 * 3 + index]);
+        dest[12] = static_cast<uint32_t>(FlatButtonDefaultsTable[4 * 3 + index]);
+        dest[15] = static_cast<uint32_t>(FlatButtonDefaultsTable[5 * 3 + index]);
+        dest[18] = static_cast<uint32_t>(FlatButtonDefaultsTable[6 * 3 + index]);
+        dest[21] = static_cast<uint32_t>(FlatButtonDefaultsTable[7 * 3 + index]);
+        dest[24] = static_cast<uint32_t>(FlatButtonDefaultsTable[8 * 3 + index]);
         dest[-3] = 0;
         dest[-6] = 0;
         ++dest;
@@ -293,7 +293,7 @@ FlatButton::FlatButton() {
         object[(0xABC / 4) + index] = 0xFFFFFFFFU;
         for (size_t group = 0; group < 9; ++group) {
             object[(0xAE0 / 4) + group * 3 + index] =
-                static_cast<uint32_t>(g_009b8e44[group * 3 + index]);
+                static_cast<uint32_t>(FlatButtonDefaultsTable[group * 3 + index]);
         }
         object[(0xAD4 / 4) + index] = 0;
         object[(0xAC8 / 4) + index] = 0;
