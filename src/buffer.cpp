@@ -2058,7 +2058,8 @@ Return Value: whatever the RECT overload returns
 Status: Complete
 
 Promoted from src/recovered/005d8200.cpp, which is deleted. That unit reached
-`SetRect` through its IAT slot - `(*(SetRectFn *)g_00669274)(...)` - because
+`SetRect` through its IAT slot at 0x00669274 - the same indirection the
+image uses - because
 a verification scaffold declares no headers; here it is the import by name,
 and the relocation is masked either way.
 */
@@ -3171,9 +3172,9 @@ static int BlitSourceWidth;     // 0x009B3A60
 static int BlitSourceNegHeight;  // 0x009B3A64
 static int BlitClipWidth;       // 0x009B3A68
 static int BlitClipNegHeight;   // 0x009B3A6C
-static int g_009b3a70;          // 0x009B3A70
-static int g_009b3a74;          // 0x009B3A74
-static int g_009b3a78;          // 0x009B3A78
+static int BlitSourceField70;          // 0x009B3A70
+static int BlitSourceField74;          // 0x009B3A74
+static int BlitSourceField78;          // 0x009B3A78
 
 // ORIGINAL: 0x005D8290 ?setup_buff_sprite@Buffer@@QAEXH@Z 0x005D8290-0x005D835C FILE BYTE_EXACT
 // LEVER: NAMED MEMBERS AND THE REAL INTERFACE. This was `*(int *)((char *)this
@@ -3214,10 +3215,10 @@ void Buffer::setup_buff_sprite(int colour) {
     BlitSourceNegHeight = -dib_.bmiHeader.biHeight;
     BlitClipWidth = dib_.bmiHeader.biWidth;
     BlitClipNegHeight = -dib_.bmiHeader.biHeight;
-    g_009b3a70 = 0;
-    g_009b3a74 = 0;
+    BlitSourceField70 = 0;
+    BlitSourceField74 = 0;
     BlitTransparentIndex = (uint8_t)colour;
-    g_009b3a78 = 0;
+    BlitSourceField78 = 0;
 
     // The same release pair `get_pixel` ends with, in the same two arms.
     if (surface_ == nullptr) {

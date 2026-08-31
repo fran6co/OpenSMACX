@@ -55,9 +55,9 @@ static int32_t &pre_vbase_dword(void *self) {
 // the most-derived object (see graphicwin.cpp) - PlanWin has to repeat the
 // latter pair on its own embedded GraphicWin, because nothing in this chain
 // declares a single `virtual` and so VC6 never refreshes them on its own.
-static void *const g_0066d414 = reinterpret_cast<void *>(0x0066D414);
-static void *const g_0066d2ac = reinterpret_cast<void *>(0x0066D2AC);
-static void *const g_0066d2a4 = reinterpret_cast<void *>(0x0066D2A4);
+static void *const PrefWinVftable = reinterpret_cast<void *>(0x0066D414);
+static void *const PlanWinVftable = reinterpret_cast<void *>(0x0066D2AC);
+static void *const PlanWinVirtualBaseVftable = reinterpret_cast<void *>(0x0066D2A4);
 
 /*
 Purpose: Build a plan window - attach its embedded GraphicWin, the MapWin
@@ -81,7 +81,7 @@ void PlanWin::construct(int input) {
     char *const self = reinterpret_cast<char *>(this);
 
     if (input) {
-        *reinterpret_cast<void **>(self) = g_0066d414;
+        *reinterpret_cast<void **>(self) = PrefWinVftable;
         new (reinterpret_cast<GraphicWin *>(self + 0x22050)) GraphicWin();
     }
 
@@ -89,8 +89,8 @@ void PlanWin::construct(int input) {
     buffer_.Buffer::Buffer();
 
     char *const graphic_win = self + 0x22050;
-    *reinterpret_cast<void **>(graphic_win) = g_0066d2ac;
-    *reinterpret_cast<void **>(graphic_win + 0x444) = g_0066d2a4;
+    *reinterpret_cast<void **>(graphic_win) = PlanWinVftable;
+    *reinterpret_cast<void **>(graphic_win + 0x444) = PlanWinVirtualBaseVftable;
     *reinterpret_cast<int32_t *>(graphic_win - 4) = 0;
     field_21A6C_ = 0;
     // 0x21A68 BY OFFSET: MapWin no longer names it (VC6 owns those four

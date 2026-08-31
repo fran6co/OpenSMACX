@@ -22,8 +22,8 @@ const uint32_t CheckButtonPrimaryVtable = 0x0066DC14;
 const uint32_t CheckButtonBufferVtable = 0x0066DC0C;
 // The two defaults the constructor reads once and copies into the object:
 // unnamed globals the image reads by fixed address and never writes back.
-static int *const g_00697f20 = (int *)0x00697F20;
-static int *const g_00697f24 = (int *)0x00697F24;
+static int *const CheckButtonDefaultA24 = (int *)0x00697F20;
+static int *const CheckButtonDefaultA28 = (int *)0x00697F24;
 
 /*
 Purpose: Construct the GraphicWin base, then install CheckButton's own
@@ -44,8 +44,8 @@ CheckButton::CheckButton() {
     isToggled_ = 0;
     field_A1C_ = 0;
     field_A20_ = 0;
-    field_A28_ = *g_00697f24;
-    field_A24_ = *g_00697f20;
+    field_A28_ = *CheckButtonDefaultA28;
+    field_A24_ = *CheckButtonDefaultA24;
 }
 
 /*

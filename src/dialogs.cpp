@@ -529,9 +529,9 @@ Purpose: Route a mouse move to whichever control this Dialogs subobject is
          embedded in - the `kind_` at this-8 says which, and each case steps
          back to the enclosing control's own base. HOMED from
          src/unrecovered/00612b80.cpp on 2026-08-25 to retire its
-         pending_bodies forwarder. The artifact's `g_00612bf8` binding was
-         unused scaffold pointing at this function's own end address and did
-         not come with it.
+         pending_bodies forwarder. The artifact's binding at 0x00612BF8 was
+         unused scaffold pointing at this function's own end address and
+         did not come with it.
 */
 // ORIGINAL: 0x00612B80 ?on_mouse_move@Dialogs@@QAEXHH@Z 0x00612B80-0x00612BF8 FILE BYTE_EXACT
 // symbol    ?on_mouse_move@Dialogs@@QAEXHH@Z

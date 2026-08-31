@@ -53,9 +53,9 @@ static void __fastcall mapwin_image_button_element_dtor(void *self) {
 // the most-derived object (see graphicwin.cpp) - MapWin has to repeat the
 // latter pair on its own embedded GraphicWin, because nothing in this chain
 // declares a single `virtual` and so VC6 never refreshes them on its own.
-static void *const g_0066c870 = reinterpret_cast<void *>(0x0066C870);
-static void *const g_0066a57c = reinterpret_cast<void *>(0x0066A57C);
-static void *const g_0066a574 = reinterpret_cast<void *>(0x0066A574);
+static void *const MonuWinVftable = reinterpret_cast<void *>(0x0066C870);
+static void *const MapWinVftable = reinterpret_cast<void *>(0x0066A57C);
+static void *const MapWinVirtualBaseVftable = reinterpret_cast<void *>(0x0066A574);
 
 
 /*
@@ -99,7 +99,7 @@ void MapWin::construct(int input) {
     char *const self = reinterpret_cast<char *>(this);
 
     if (input) {
-        *reinterpret_cast<void **>(self) = g_0066c870;
+        *reinterpret_cast<void **>(self) = MonuWinVftable;
         new (reinterpret_cast<GraphicWin *>(self + 0x21a6c)) GraphicWin();
     }
 
@@ -124,8 +124,8 @@ VectorCtorIterator(self + 0xc, 0x260, 4,
                         mapwin_image_button_element_dtor);
 
     char *const graphic_win = self + 0x21a6c;
-    *reinterpret_cast<void **>(graphic_win) = g_0066a57c;
-    *reinterpret_cast<void **>(graphic_win + 0x444) = g_0066a574;
+    *reinterpret_cast<void **>(graphic_win) = MapWinVftable;
+    *reinterpret_cast<void **>(graphic_win + 0x444) = MapWinVirtualBaseVftable;
     *reinterpret_cast<int32_t *>(graphic_win - 4) = 0;
 
     field_1DD74_ = 0;
