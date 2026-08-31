@@ -1858,16 +1858,20 @@ void __cdecl sort_descending(uint32_t count, int *id, int *value) {
 }
 
 /*
-Purpose: The jackal DLL's version probe. The whole image body is
-         `mov eax,1 / ret`, and load_sound_dll compares its answer against
-         1 and against the DLL's own reported version. Recovered as the plain
-         __cdecl function the image's only caller calls through, replacing the
-         generator's field_accessor_0062d390_redirect: that adapter's two dead
-         __fastcall slots would have cost the call site the two register
-         setups the image does not have, and a redirect nothing calls is
-         class debt. Was a BYTE_EXACT claim in field_accessors.cpp under the
-         redirect's symbol; re-record here against the real name.
+Purpose: The sound-header version the game was built with. The whole image
+         body is `mov eax,1 / ret` - the compiler folded the header's version
+         constant to the literal - and load_sound_dll compares its answer
+         against the sound DLL's own reported version and against 1, showing
+         the "check all sound.h and sound device.h versions" complaint when
+         they disagree. Recovered as the plain __cdecl function the image's
+         only caller calls through, replacing the generator's
+         field_accessor_0062d390_redirect: that adapter's two dead __fastcall
+         slots would have cost the call site the two register setups the
+         image does not have, and a redirect nothing calls is class debt. Was
+         a BYTE_EXACT claim in field_accessors.cpp under the redirect's
+         symbol; re-record here against the real name.
 // ORIGINAL: 0x0062D390 sub_62d390 0x0062D390-0x0062D396 BYTE_EXACT
+// symbol    _sound_header_version
 // size      6 bytes
 // prototype
 // callers   1   call targets   0
@@ -1877,7 +1881,7 @@ Purpose: The jackal DLL's version probe. The whole image body is
 Return Value: 1
 Status: Complete
 */
-extern "C" int __cdecl sub_62d390() {
+extern "C" int __cdecl sound_header_version() {
     return 1;
 }
 

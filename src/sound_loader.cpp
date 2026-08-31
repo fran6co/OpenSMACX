@@ -59,11 +59,11 @@
 // helper below, is homed in the same file so the pair loads as one story.
 
 // ---- callees, declared and never defined here ----
-// sub_62d390 runs from general.cpp: the jackal version probe, a real
-// `mov eax,1 / ret` recovered under its own name there.
-extern "C" int __cdecl sub_62d390();
-// sub_4c9080 is homed below, under its own marker in this file.
-extern "C" void __cdecl sub_4c9080(const char *text, const char *caption);
+// sound_header_version runs from general.cpp: the sound-header version the
+// game was built with, a real `mov eax,1 / ret` recovered under its own name.
+extern "C" int __cdecl sound_header_version();
+// sound_version_warning is homed below, under its own marker in this file.
+extern "C" void __cdecl sound_version_warning(const char *text, const char *caption);
 
 // The module handle and the version slot are sound.h's SoundDllModule() and
 // SoundDllVersionSlot(). The three kernel32 entrypoints are direct API calls:
@@ -77,11 +77,10 @@ int __cdecl load_sound_dll() {
         if (SoundDllModule() == 0) {
             return 1;
         }
+        void **procs = SoundDllProcs();
+        void **slot = procs;
+        void **procs_end = procs + 11;
         int index = 0;
-        // A pointer-VALUE use of a fixed address must be spelled as the
-        // literal - a binding used for its own value compiles a memory read
-        // of the binding where the image has the immediate (mov esi, 0x90db24).
-        void **slot = (void **)0x0090DB24;
         do {
             void *proc = reinterpret_cast<void *>(GetProcAddress(
                 SoundDllModule(), MAKEINTRESOURCEA((index + 1) & 0xffff)));
@@ -94,36 +93,36 @@ int __cdecl load_sound_dll() {
                     SoundDllModule() = 0;
                 }
                 WaveDeviceReleaseGuard = 0;
-                void **zero = (void **)0x0090DB24;
                 for (int i = 0; i < 0xb; ++i) {
-                    zero[i] = 0;
+                    procs[i] = 0;
                 }
                 return 1;
             }
             ++slot;
             ++index;
-        } while ((int)slot < 0x0090DB50);
+        } while ((int)slot < (int)procs_end);
 
         unsigned int version;
         if (SoundDllModule() == 0) {
             version = 0;
         } else {
-            version = (*SoundDllVersionSlot())();
+            version = (*reinterpret_cast<func_sound_dll_version *>(
+                SoundDllVersionSlot()))();
         }
         if ((version & 0xff00) != 0x100) {
-            sub_4c9080("The sound header files used in the game do not match "
+            sound_version_warning("The sound header files used in the game do not match "
                        "the ones used in sound.dll. Check all sound.h and "
                        "sound device.h versions!",
                        "Sound Version Warning");
         }
-        if (sub_62d390() != 1) {
-            sub_4c9080("The sound header files used by jackal do not match "
+        if (sound_header_version() != 1) {
+            sound_version_warning("The sound header files used by jackal do not match "
                        "the ones used by the game. Check all sound.h and "
                        "sound device.h versions!",
                        "Sound Version Warning");
         }
-        if (sub_62d390() != ((version >> 8) & 0xff)) {
-            sub_4c9080("The sound header files used by jackal do not match "
+        if (sound_header_version() != ((version >> 8) & 0xff)) {
+            sound_version_warning("The sound header files used by jackal do not match "
                        "the ones used in sound.dll. ",
                        "Sound Version Warning");
         }
@@ -140,6 +139,7 @@ Purpose: The sound-DLL version complaint box. load_sound_dll shows it through
          and torn down by the real destructor; the two copies of the caller's
          strings are the 0x100/0xe0 buffers the frame sits beside.
 // ORIGINAL: 0x004C9080 sub_4c9080 0x004C9080-0x004C92CF;0x00659FF2-0x0065A090 FILE
+// symbol    _sound_version_warning
 // TRIED: the teardown tail is ~BasePop's INLINE EXPANSION - the image's
 // compiler ran the destructor body at the destruction site (staged-vtable
 // refreshes, then Spot/Dialogs/Dialog/both StringStructs/both FlatButtons/
@@ -161,7 +161,7 @@ Purpose: The sound-DLL version complaint box. load_sound_dll shows it through
 Return Value: none
 Status: Complete
 */
-extern "C" void __cdecl sub_4c9080(const char *text, const char *caption) {
+extern "C" void __cdecl sound_version_warning(const char *text, const char *caption) {
     BasePop popup;
     char message[0x100];
     strcpy(message, text);

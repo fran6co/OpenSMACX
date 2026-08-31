@@ -159,7 +159,12 @@ HEADER_SHAPES = [
     # the image - SoundDllModule, the three kernel32 slots, the version proc
     # and the four complaint strings - and init_sound's shared bindings took
     # the same names.
-    ("anonymous fixed-address global", 51,
+    # 51 -> 49 (sound batch): the export table recovered as sound.h's
+    # SoundDllProcs(), and init_sound's raw table binding left with it.
+    # 49 -> 45 (sound batch): init_sound went BYTE_EXACT through the named
+    # instances - MidiDeviceGlobal in sounddevice.h, SoundDllInitSlot's table
+    # view - and its last two raw bindings left with them.
+    ("anonymous fixed-address global", 45,
      re.compile(r"\bg_00[0-9a-f]{4,6}\b"),
      "a global named by its address instead of its meaning. Name it from "
      "evidence - the image's .data value, the arithmetic identity, the "
