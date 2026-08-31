@@ -131,3 +131,8 @@ static_assert(sizeof(Wave_In_Device) == 0x20,
 // immediate - the same convention as WaveDeviceGlobal in wave.h.
 Wave_In_Device *const WaveInDeviceGlobal = (Wave_In_Device *)0x0090DB50;
 
+// The MIDI device singleton, at the fixed address init_sound brings up for
+// the backend-2 path (sound.cpp) - the same convention as WaveInDeviceGlobal
+// above.
+Midi_Device *const MidiDeviceGlobal = (Midi_Device *)0x0090D950;
+

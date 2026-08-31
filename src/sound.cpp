@@ -880,7 +880,7 @@ int Sound::detach() {
 
 
 /*
-// ORIGINAL: 0x004C5CE0 ?init_sound@@YAHPAXK@Z 0x004C5CE0-0x004C5D8E
+// ORIGINAL: 0x004C5CE0 ?init_sound@@YAHPAXK@Z 0x004C5CE0-0x004C5D8E BYTE_EXACT
 // size      174 bytes
 // prototype
 // callers   1   call targets   4
@@ -894,19 +894,13 @@ int Sound::detach() {
 // calls are read out of their fixed slots, as the original does.
 Status: Complete
 */
-typedef void(__cdecl *ZeroArgFn)(int, int);
-
-static int *const g_0090d950 = (int *)0x0090D950;
-static int *const g_0090db24 = (int *)0x0090DB24;
-static int *const g_0090db2c = (int *)0x0090DB2C;
-
 int __cdecl init_sound(void *window, unsigned long backends) {
     int loadResult = load_sound_dll();
     if (loadResult != 0) {
         return loadResult;
     }
     if (SoundDllModule() != 0) {
-        (*reinterpret_cast<ZeroArgFn *>(g_0090db2c))(0, 0);
+        (*reinterpret_cast<func_sound_dll_init *>(SoundDllInitSlot()))(0, 0);
     }
     int result = WaveDeviceGlobal.init(window, backends);
     if (result != 0) {
@@ -919,16 +913,18 @@ int __cdecl init_sound(void *window, unsigned long backends) {
             FreeLibrary(module);
             SoundDllModule() = 0;
         }
-        memset(g_0090db24, 0, 0xb * 4);
+        memset(SoundDllProcs(), 0, sizeof(SoundDllProcsTable));
         return result;
     }
     if ((backends & 2) != 0) {
-        Midi_Device *midiDevice = reinterpret_cast<Midi_Device *>(g_0090d950);
-        midiDevice->init(window, 2);
+        // QUALIFIED CALLS: the image calls both device inits directly
+        // (`call 0x4c57a0` / `call 0x4c5a10`, receiver in ecx), not through
+        // the vtables - an unqualified call virtual-dispatches and the
+        // shapes diverge.
+        MidiDeviceGlobal->Midi_Device::init(window, 2);
     }
     if ((backends & 8) != 0) {
-        Wave_In_Device *waveInDevice = WaveInDeviceGlobal;
-        waveInDevice->init(window, backends);
+        WaveInDeviceGlobal->Wave_In_Device::init(window, backends);
     }
     WaveDeviceReleaseGuard = 1;
     return 0;
