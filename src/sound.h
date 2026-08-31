@@ -131,3 +131,17 @@ int __cdecl init_sound(void *window, unsigned long backends);
 // Loads the sound driver DLL; returns zero on success. Called first thing by
 // init_sound. Body not yet recovered.
 int __cdecl load_sound_dll();
+
+// The sound DLL's load state, at the addresses the original gave them.
+// 0x0090DB78 holds the HMODULE load_sound_dll's LoadLibraryA produces - zero
+// until it runs - and 0x0090DB4C is the tenth slot of the eleven-slot proc
+// table the DLL's exports land in (0x0090DB24..0x0090DB50, whose first slot
+// wave.h names WaveDeviceCreateSlot): the version probe load_sound_dll
+// checks the game's sound headers against. Accessors rather than real
+// storage, exactly like those wave-table slots: unrecovered image code reads
+// these beside the tree, so they stay image-addressed.
+typedef unsigned int (__cdecl *func_sound_dll_version)();
+inline HMODULE &SoundDllModule() { return *reinterpret_cast<HMODULE *>(0x0090DB78); }
+inline func_sound_dll_version *&SoundDllVersionSlot() {
+  return *reinterpret_cast<func_sound_dll_version **>(0x0090DB4C);
+}
