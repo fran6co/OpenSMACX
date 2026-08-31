@@ -220,7 +220,7 @@ def write_depfile(executable, arguments: list, path: str, target: str) -> None:
     """
     kept = [a for a in arguments if not a.startswith(DEP_PASS_DROP)]
     finished = subprocess.run(
-        ["wine", str(executable), "/nologo", "/E"] + [translate(a) for a in kept],
+        ["wine32", str(executable), "/nologo", "/E"] + [translate(a) for a in kept],
         env=environment(), capture_output=True, text=True, errors="replace")
     seen, ordered = set(), []
     for name in LINE_DIRECTIVE.findall(finished.stdout):
@@ -271,7 +271,7 @@ def main(argv: list) -> int:
         scratch.write("\n".join(f'"{a}"' for a in translated) + "\n")
         scratch.close()
         translated = ["@" + windows_path(scratch.name)]
-    command = ["wine", str(executable)] + translated
+    command = ["wine32", str(executable)] + translated
     finished = subprocess.run(command, env=environment(), capture_output=True,
                               text=True, errors="replace")
     if scratch is not None:
