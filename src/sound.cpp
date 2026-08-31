@@ -878,11 +878,6 @@ int Sound::detach() {
 }
 
 
-// load_sound_dll's body is not yet recovered; forward into the original image.
-int __cdecl load_sound_dll() {
-    typedef int(__cdecl *func_load_sound_dll)();
-    return reinterpret_cast<func_load_sound_dll>(0x004C5E50)();
-}
 
 /*
 // ORIGINAL: 0x004C5CE0 ?init_sound@@YAHPAXK@Z 0x004C5CE0-0x004C5D8E
@@ -902,18 +897,18 @@ Status: Complete
 typedef void(__cdecl *ZeroArgFn)(int, int);
 typedef void(__stdcall *FreeLibraryFn)(int);
 
-static int *const g_00669128 = (int *)0x00669128;
+static int *const Kernel32FreeLibrary = (int *)0x00669128;
 static int *const g_0090d950 = (int *)0x0090D950;
 static int *const g_0090db24 = (int *)0x0090DB24;
 static int *const g_0090db2c = (int *)0x0090DB2C;
-static int *const g_0090db78 = (int *)0x0090DB78;
+static int *const SoundDllModule = (int *)0x0090DB78;
 
 int __cdecl init_sound(void *window, unsigned long backends) {
     int loadResult = load_sound_dll();
     if (loadResult != 0) {
         return loadResult;
     }
-    if (*g_0090db78 != 0) {
+    if (*SoundDllModule != 0) {
         (*reinterpret_cast<ZeroArgFn *>(g_0090db2c))(0, 0);
     }
     int result = WaveDeviceGlobal.init(window, backends);
@@ -921,11 +916,11 @@ int __cdecl init_sound(void *window, unsigned long backends) {
         // THE GUARD IS READ BEFORE THE STORE. The image loads [0x90db78]
         // at 0x004C5D21 and only then writes 0 to [0x90db7c]; the two are
         // different addresses, so the order is free and the image picked one.
-        const int module = *g_0090db78;
+        const int module = *SoundDllModule;
         WaveDeviceReleaseGuard = 0;
         if (module != 0) {
-            (*reinterpret_cast<FreeLibraryFn *>(g_00669128))(module);
-            *g_0090db78 = 0;
+            (*reinterpret_cast<FreeLibraryFn *>(Kernel32FreeLibrary))(module);
+            *SoundDllModule = 0;
         }
         memset(g_0090db24, 0, 0xb * 4);
         return result;

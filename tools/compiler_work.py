@@ -155,7 +155,11 @@ HEADER_SHAPES = [
     # carves replaced g_-named raw bindings with named class members, and
     # the vtable-restore puns in the hand-spelled destructors left with the
     # bodies.
-    ("anonymous fixed-address global", 57,
+    # 57 -> 51 (sound batch): load_sound_dll's homing named its bindings from
+    # the image - SoundDllModule, the three kernel32 slots, the version proc
+    # and the four complaint strings - and init_sound's shared bindings took
+    # the same names.
+    ("anonymous fixed-address global", 51,
      re.compile(r"\bg_00[0-9a-f]{4,6}\b"),
      "a global named by its address instead of its meaning. Name it from "
      "evidence - the image's .data value, the arithmetic identity, the "
@@ -174,7 +178,9 @@ SCAFFOLD_CEILINGS = {
     "adjustor_thunks.cpp markers": 116,
     "deleting_thunks.cpp markers": 74,
     "delegation_thunks.cpp markers": 26,
-    "field_accessors.cpp markers": 42,
+    # 42 -> 41 (sound batch): field_accessor_0062d390_redirect retired for the
+    # real `sub_62d390` in general.cpp.
+    "field_accessors.cpp markers": 41,
     "leaf_recoveries.cpp markers": 52,
     "nullsub_thunks.cpp markers": 56,
     # 234 -> 231 (2026-08-30, caviar-voxel batch): the three seams Caviar's
@@ -191,7 +197,10 @@ SCAFFOLD_CEILINGS = {
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
-    "unrecovered files": 1677,
+    # 1677 -> 1675 (sound batch): load_sound_dll homed into
+    # src/sound_loader.cpp and its message helper with it; 004c5e50.cpp and
+    # 004c9080.cpp deleted.
+    "unrecovered files": 1675,
     "hypothesis_layouts.h lines": 2723,
 }
 
