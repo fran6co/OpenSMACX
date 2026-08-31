@@ -37,7 +37,12 @@
 // needs one to lower to `rep stosd`. The three kernel32 entrypoints are the
 // image's own imports (tools/iat_names.py: 0x00669120 LoadLibraryA,
 // 0x00669124 GetProcAddress, 0x00669128 FreeLibrary), so the source calls
-// the APIs directly and the IAT operands mask like every relocation.
+// the APIs directly and the IAT operands mask like every relocation. The
+// image hoists the GetProcAddress entry into ebx for the walk (mov 0x4c5e7d,
+// `call ebx` 0x4c5e9c); the direct call landed here emits a fresh
+// `call dword ptr [__imp_GetProcAddress]` per iteration instead - the
+// fn-pointer local that reproduced the hoist measured 33/86 against this
+// spelling's score below.
 // Semantically equivalent: same stores, same calls, same guards, same
 // failure paths.
 // size      280 bytes
@@ -72,19 +77,14 @@ int __cdecl load_sound_dll() {
         if (SoundDllModule() == 0) {
             return 1;
         }
-        // The image hoists the GetProcAddress entrypoint into a callee-saved
-        // register for the walk; a local carrying the API does the same.
-        typedef void *(__stdcall *GetProcAddressFn)(HMODULE, unsigned int);
-        GetProcAddressFn get_proc_address =
-            reinterpret_cast<GetProcAddressFn>(GetProcAddress);
         int index = 0;
         // A pointer-VALUE use of a fixed address must be spelled as the
         // literal - a binding used for its own value compiles a memory read
         // of the binding where the image has the immediate (mov esi, 0x90db24).
         void **slot = (void **)0x0090DB24;
         do {
-            void *proc = get_proc_address(SoundDllModule(),
-                                          (index + 1) & 0xffff);
+            void *proc = reinterpret_cast<void *>(GetProcAddress(
+                SoundDllModule(), MAKEINTRESOURCEA((index + 1) & 0xffff)));
             *slot = proc;
             if (proc == 0) {
                 HMODULE handle = SoundDllModule();
