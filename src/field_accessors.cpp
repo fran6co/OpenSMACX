@@ -627,35 +627,6 @@ void * __fastcall field_accessor_00616b20_redirect(void *self, void *) {
 }
 
 /*
-Purpose: Return the constant 0x1.
-         Emitted by tools/generate_field_accessors.py from
-
-             mov eax, 1 / ret
-
-         The name is the ADDRESS, not an invention, and `self` is a void
-         pointer because this body needs `this` to be nothing more than a
-         pointer and an offset - the class it belongs to is not established.
-         The adapter declares 0 stack dword(s) so it
-         cleans 0 bytes, taken from the body's own `ret` -
-         the only statement of this function's arity that exists, since it has
-         no mangled name. Declaring fewer would leave them on the caller's
-         stack.
-// ORIGINAL: 0x0062D390 sub_62d390 0x0062D390-0x0062D396 BYTE_EXACT
-// symbol    ?field_accessor_0062d390_redirect@@YIIPAX0@Z
-// size      6 bytes
-// prototype 
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the value described above
-Status: Complete
-*/
-uint32_t __fastcall field_accessor_0062d390_redirect(void *, void *) {
-    return 0x1U;
-}
-
-/*
 Purpose: Set 9 field(s) to constants.
          Emitted by tools/generate_field_accessors.py from
 

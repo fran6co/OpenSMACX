@@ -1857,6 +1857,30 @@ void __cdecl sort_descending(uint32_t count, int *id, int *value) {
     } while (has_swapped);
 }
 
+/*
+Purpose: The jackal DLL's version probe. The whole image body is
+         `mov eax,1 / ret`, and load_sound_dll compares its answer against
+         1 and against the DLL's own reported version. Recovered as the plain
+         __cdecl function the image's only caller calls through, replacing the
+         generator's field_accessor_0062d390_redirect: that adapter's two dead
+         __fastcall slots would have cost the call site the two register
+         setups the image does not have, and a redirect nothing calls is
+         class debt. Was a BYTE_EXACT claim in field_accessors.cpp under the
+         redirect's symbol; re-record here against the real name.
+// ORIGINAL: 0x0062D390 sub_62d390 0x0062D390-0x0062D396 BYTE_EXACT
+// size      6 bytes
+// prototype
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: 1
+Status: Complete
+*/
+extern "C" int __cdecl sub_62d390() {
+    return 1;
+}
+
 // ---------------------------------------------------------------------------
 // The Jackal engine's bring-up, promoted out of src/unrecovered/0062d3a0.cpp
 // on 2026-08-15. WinMain calls it once; everything the game draws with exists

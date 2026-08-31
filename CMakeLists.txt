@@ -177,6 +177,7 @@ set(OPENSMACX_SOURCES
     src/uv2player.cpp
     src/dipedit.cpp
     src/sound.cpp
+    src/sound_loader.cpp
     src/wave_device.cpp
     src/spritebox.cpp
     src/listbox.cpp

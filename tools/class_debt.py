@@ -75,7 +75,10 @@ CEILINGS = {
     # 3 -> 2 (2026-08-30, boot-path batch): amovie_project's homing retired
     # the last MCI address constant.
     "function-address binding": 2,
-    "orphan redirect": 208,
+    # 208 -> 207 (sound batch): retiring field_accessor_0062d390_redirect for
+    # the real `sub_62d390` in general.cpp leaves one fewer redirect nothing
+    # calls.
+    "orphan redirect": 207,
     "pointer-as-int": 0,
     "undocumented trivial body": 0,
     # 239 IS BELOW WHAT THE TREE CAN REACH TODAY, and this is the only
