@@ -31,11 +31,15 @@
 // `push 1`, `mov edi,1` after, bottom test inverted to `jge`), +5
 // instructions, best 31/86 at /O2 /Gy /GR- /GX. Tried unchanged: for(;;)+break
 // (canonicalizes to the same rotation), /O1 sets (7/86), /Oy- (10/86),
-// /Ob0, /Oi-. Pointer-VALUE uses of the fixed addresses must be spelled as
-// literals (the g_ binding itself compiles a memory read where the image has
-// the immediate) and the slot-zeroing loop needs a literal-initialized local
-// to lower to `rep stosd`. Semantically equivalent: same stores, same calls,
-// same guards, same failure paths.
+// /Ob0, /Oi-. Pointer-VALUE uses of a fixed address must be spelled as the
+// literal - a binding used for its own value compiles a memory read of the
+// binding where the image has the immediate - and the slot-zeroing loop
+// needs one to lower to `rep stosd`. The three kernel32 entrypoints are the
+// image's own imports (tools/iat_names.py: 0x00669120 LoadLibraryA,
+// 0x00669124 GetProcAddress, 0x00669128 FreeLibrary), so the source calls
+// the APIs directly and the IAT operands mask like every relocation.
+// Semantically equivalent: same stores, same calls, same guards, same
+// failure paths.
 // size      280 bytes
 // prototype
 // callers   1   call targets   2
@@ -56,51 +60,38 @@ extern "C" int __cdecl sub_62d390();
 // sub_4c9080 is homed below, under its own marker in this file.
 extern "C" void __cdecl sub_4c9080(const char *text, const char *caption);
 
-// ---- fixed globals this body references, named from the image ----
-// The three kernel32 entrypoints are the game's own hand-bound API slots;
-// 0x0090DB24..0x0090DB50 is the eleven-slot table the DLL's exports land in
-// (wave.h names its first slot WaveDeviceCreateSlot), and 0x0090DB4C is that
-// table's tenth - the version probe. The rest are .rdata strings this body
-// shows through the version-complaint box below: the DLL path, the shared
-// caption, and the three mismatch complaints.
-static int *const SoundDllModule = (int *)0x0090DB78;
-static int *const Kernel32LoadLibraryA = (int *)0x00669120;
-static int *const Kernel32GetProcAddress = (int *)0x00669124;
-static int *const Kernel32FreeLibrary = (int *)0x00669128;
-static int *const SoundDllVersionProc = (int *)0x0090DB4C;
-static int *const SoundDllPath = (int *)0x00687B14;
-static int *const GameDllHeaderText = (int *)0x0066E258;
-static int *const SoundVersionWarningCaption = (int *)0x0066E2D8;
-static int *const JackalGameHeaderText = (int *)0x0066E2F0;
-static int *const JackalVersionHeaderText = (int *)0x0066E370;
-typedef int (__stdcall *LoadLibraryAFn)(const char *);
-typedef int (__stdcall *FreeLibraryFn)(int);
-typedef void *(__stdcall *GetProcAddressFn)(int, unsigned int);
-typedef unsigned int (__cdecl *VersionFn)();
+// The module handle and the version slot are sound.h's SoundDllModule() and
+// SoundDllVersionSlot(). The three kernel32 entrypoints are direct API calls:
+// the image calls them through its own import table, and this tree does the
+// same through its own. The strings are the image's .rdata/.data text,
+// recovered verbatim.
 
 int __cdecl load_sound_dll() {
-    if (*SoundDllModule == 0) {
-        *SoundDllModule = (*reinterpret_cast<LoadLibraryAFn *>(Kernel32LoadLibraryA))(
-            reinterpret_cast<const char *>(SoundDllPath));
-        if (*SoundDllModule == 0) {
+    if (SoundDllModule() == 0) {
+        SoundDllModule() = LoadLibraryA(".\\soundx.dll");
+        if (SoundDllModule() == 0) {
             return 1;
         }
+        // The image hoists the GetProcAddress entrypoint into a callee-saved
+        // register for the walk; a local carrying the API does the same.
+        typedef void *(__stdcall *GetProcAddressFn)(HMODULE, unsigned int);
         GetProcAddressFn get_proc_address =
-            *reinterpret_cast<GetProcAddressFn *>(Kernel32GetProcAddress);
+            reinterpret_cast<GetProcAddressFn>(GetProcAddress);
         int index = 0;
         // A pointer-VALUE use of a fixed address must be spelled as the
         // literal - a binding used for its own value compiles a memory read
         // of the binding where the image has the immediate (mov esi, 0x90db24).
         void **slot = (void **)0x0090DB24;
         do {
-            void *proc = get_proc_address(*SoundDllModule, (index + 1) & 0xffff);
+            void *proc = get_proc_address(SoundDllModule(),
+                                          (index + 1) & 0xffff);
             *slot = proc;
             if (proc == 0) {
-                int handle = *SoundDllModule;
+                HMODULE handle = SoundDllModule();
                 WaveDeviceReleaseGuard = 0;
                 if (handle != 0) {
-                    (*reinterpret_cast<FreeLibraryFn *>(Kernel32FreeLibrary))(handle);
-                    *SoundDllModule = 0;
+                    FreeLibrary(handle);
+                    SoundDllModule() = 0;
                 }
                 WaveDeviceReleaseGuard = 0;
                 void **zero = (void **)0x0090DB24;
@@ -114,22 +105,27 @@ int __cdecl load_sound_dll() {
         } while ((int)slot < 0x0090DB50);
 
         unsigned int version;
-        if (*SoundDllModule == 0) {
+        if (SoundDllModule() == 0) {
             version = 0;
         } else {
-            version = (*reinterpret_cast<VersionFn *>(SoundDllVersionProc))();
+            version = (*SoundDllVersionSlot())();
         }
         if ((version & 0xff00) != 0x100) {
-            sub_4c9080(reinterpret_cast<const char *>(GameDllHeaderText),
-                       reinterpret_cast<const char *>(SoundVersionWarningCaption));
+            sub_4c9080("The sound header files used in the game do not match "
+                       "the ones used in sound.dll. Check all sound.h and "
+                       "sound device.h versions!",
+                       "Sound Version Warning");
         }
         if (sub_62d390() != 1) {
-            sub_4c9080(reinterpret_cast<const char *>(JackalGameHeaderText),
-                       reinterpret_cast<const char *>(SoundVersionWarningCaption));
+            sub_4c9080("The sound header files used by jackal do not match "
+                       "the ones used by the game. Check all sound.h and "
+                       "sound device.h versions!",
+                       "Sound Version Warning");
         }
         if (sub_62d390() != ((version >> 8) & 0xff)) {
-            sub_4c9080(reinterpret_cast<const char *>(JackalVersionHeaderText),
-                       reinterpret_cast<const char *>(SoundVersionWarningCaption));
+            sub_4c9080("The sound header files used by jackal do not match "
+                       "the ones used in sound.dll. ",
+                       "Sound Version Warning");
         }
     }
     return 0;
@@ -140,8 +136,8 @@ Purpose: The sound-DLL version complaint box. load_sound_dll shows it through
          whenever JACKAL.DLL's exports disagree with the game's sound headers;
          the strings name them plainly ("Sound Version Warning", "The sound
          header files used by jackal do not match..."). One BasePop local
-         carries the whole 0x3230 frame, built by the real constructor and
-         torn down by the real destructor; the two copies of the caller's
+         carries the whole 0x3230-byte frame, built by the real constructor
+         and torn down by the real destructor; the two copies of the caller's
          strings are the 0x100/0xe0 buffers the frame sits beside.
 // ORIGINAL: 0x004C9080 sub_4c9080 0x004C9080-0x004C92CF;0x00659FF2-0x0065A090 FILE
 // TRIED: the teardown tail is ~BasePop's INLINE EXPANSION - the image's
