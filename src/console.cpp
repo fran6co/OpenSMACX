@@ -96,10 +96,10 @@ Console::Console(int input) {
     // scalar field clears.
     MapWin::construct(0);
 
-    *reinterpret_cast<void **>(&alpha_menu_) = AlphaMenuVftable;
-    *reinterpret_cast<void **>(
-        reinterpret_cast<uint8_t *>(&alpha_menu_) + 0x444) =
-        AlphaMenuVirtualBaseVftable;
+    // The menu subobject's AlphaMenu-stage vptrs need no hand store either:
+    // alpha_menu_ is a real AlphaMenu, and its own constructor - which the
+    // compiler calls with the rest of the members - installs both of its
+    // vtables (the Win-part table at +0 and the Buffer-part table at +0x444).
 
     field_23BC8_ = static_cast<uint32_t>(-1);
     field_23BD8_ = 0;
