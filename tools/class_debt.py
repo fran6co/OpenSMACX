@@ -183,7 +183,9 @@ CEILINGS = {
     # field_F0_ = -1 + vslot_62() member forms.
     # 180 -> 170 (batch 10 sweep): the thirteen VCall conversions' raw self
     # casts left with the named virtual calls that replaced them.
-    "raw self-access": 170,
+    # 170 -> 167 (fx element identification): the element calls' last raw
+    # self arithmetic left with the Wave-typed member dispatches.
+    "raw self-access": 167,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
