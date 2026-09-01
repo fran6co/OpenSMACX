@@ -16,7 +16,13 @@
 #endif
 
 struct StringStructEntry {
-  uint32_t abi_word;
+  // THE ENTRY'S OWN TWO VTABLE WORDS, not ints: the node's construction
+  // installs them (the primary at +0 and the virtual-base one at +0x14),
+  // and the tearing-down walks treat [child] as a displacement table and
+  // [vtbl+4] as a this-adjustment (spritebox.cpp, leaf_recoveries.cpp).
+  // Nothing in src/ reads or writes either word by name - typing them
+  // honestly changes no byte.
+  const void *entry_vptr;        // 0x00 - the node's primary vtable word
   int id;
   // The entry's payload: a POINTER, not an int - remove_all hands it to the
   // entry-visitor virtual and destroys it through the virtual-base teardown,
@@ -25,7 +31,7 @@ struct StringStructEntry {
   void *payload;
   StringStructEntry *next;
   StringStructEntry *previous;
-  uint32_t secondary_abi_word;
+  const void *vbase_vptr;        // 0x14 - the node's virtual-base vtable word
   void *allocation_owner;
 };
 
@@ -202,7 +208,11 @@ class StringList : public StringStruct {
   // residue, as GraphicWin::close, Scroll::destroy and ListBox::close do.
   uint32_t destroy();
 
- private:
+  // PUBLIC, not private: the image pokes these three fields directly from
+  // outside the class - Dialog::item writes field_1C_/field_20_/field_24_
+  // of its embedded list (dialog.cpp) - and access specifiers do not change
+  // layout, exactly as StringStruct's own list fields above.
+  //
   // 0x00 is the compiler's vftable, 0x04 its vbtable, 0x08..0x18 the
   // inherited StringStruct fields; 0x1C..0x24 is this class's own storage,
   // which neither the construction above nor destroy() below touches.

@@ -20,27 +20,10 @@
 #include "original_seam.h"
 #include "font.h"
 #include "heap.h"
+#include "stringstruct.h"
 
 #include <cstddef>
 
-struct DialogEntry {
-  uint32_t vtable;
-  int id;
-  void *payload;
-  DialogEntry *next;
-  DialogEntry *previous;
-  uint32_t secondary_vtable;
-  void *heap;
-};
-
-static_assert(sizeof(DialogEntry) == 0x1C,
-              "DialogEntry layout must match the original executable");
-static_assert(offsetof(DialogEntry, id) == 0x4,
-              "DialogEntry ID offset must match the original executable");
-static_assert(offsetof(DialogEntry, next) == 0xC,
-              "DialogEntry next offset must match the original executable");
-static_assert(offsetof(DialogEntry, previous) == 0x10,
-              "DialogEntry previous offset must match the original executable");
 
  /*
   * Dialog class
@@ -178,18 +161,15 @@ class Dialog {
   uint32_t field_B0_;
   uint32_t field_B4_;
   uint32_t field_B8_;
-  uint32_t field_BC_;
-  uint32_t field_C0_;
-  DialogEntry *entry_head_;
-  DialogEntry *current_entry_;
-  int entry_count_;
-  int entry_position_;
-  uint32_t field_D4_;
-  uint32_t field_D8_;
-  uint32_t field_DC_;
-  uint32_t field_E0_;
-  uint32_t field_E4_;
-  uint32_t field_E8_;
+  // THE EMBEDDED ITEM LIST, carved 2026-09-01 from what was field_BC_ ..
+  // field_E8_: exactly 0x30 = sizeof(StringList) at 0xBC..0xEC - the two ABI
+  // words at its front (the old field_BC_/field_C0_), the four list fields,
+  // the allocator, StringList's own field_1C_/20_/24_, and the virtual base
+  // (vptr + saved owner) at 0xE4/0xE8. The image's ??1Dialog tears this list
+  // down with the two-stage derived close and the virtual-base publish -
+  // which is ~StringList's own compiler-emitted chain, spelled in destroy()
+  // as the one explicit destructor call.
+  StringList item_list_;
   int selected_position_;
   uint32_t field_F0_;
 };
@@ -211,20 +191,16 @@ typedef void (OriginalObject::*func_dialog_close)();
 // scalar deleting destructor frees through the executable's operator delete.
 extern func_dialog_close DialogOriginalClose;          // default 0x00608F50
 
-// Virtual tables the destructor stages. The list virtual base's final table
-// is written but never dispatched, so it is a fixed constant like Scroll's.
-// The four list-stage tables ARE dispatched through - the embedded
-// StringStruct walk reads the table installed at this+0xBC - so they are
-// rebindable: outside the hybrid process the game addresses are unmapped and
-// a leaf test must substitute a stand-in.
+// Virtual tables the two-stage list close stages. All four ARE dispatched
+// through - the embedded StringStruct walk reads the table installed at
+// this+0xBC - so they are rebindable: outside the hybrid process the game
+// addresses are unmapped and a leaf test must substitute a stand-in. The
+// virtual base's final table and the owner publish are ~StringAllocationBase's
+// own body now (stringstruct.cpp), not staged here.
 extern uint32_t DialogListDerivedVtable;                // this+0xBC = 0x006698C4
 extern uint32_t DialogListDerivedVirtualBaseVtable;     // this+0xE4 = 0x006698C0
 extern uint32_t DialogListVtable;                       // this+0xBC = 0x006693A4
 extern uint32_t DialogListVirtualBaseVtable;            // this+0xE4 = 0x006693A0
-extern const uint32_t DialogVirtualBaseFinalVtable;     // this+0xE4 = 0x006693AC
-
-// The list virtual base's context word is published here on teardown.
-uint32_t *const DialogPublishedGlobal = (uint32_t *)0x009B3374;                 // 0x009B3374
 
 // ?init@Dialog@@QAEHH@Z (0x006095F0), the one-int init overload. Unrecovered;
 // SpriteBox forwards to it, so its definition is a seam into the original.
