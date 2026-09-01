@@ -60,9 +60,6 @@ MCIVideo::~MCIVideo() {
     close();
 }
 
-const uint32_t AlphaMoviePrimaryVtable = 0x00669458;
-const uint32_t AlphaMovieBufferVtable = 0x00669450;
-
 /*
 Purpose: Construct the GraphicWin base and the embedded MCIVideo, then
          install AlphaMovie's own vtables.
@@ -351,8 +348,6 @@ void __cdecl amovie_project(char *movie) {
     // re-installs the pair after every play. No C++ declaration can express a
     // base vtable swap, so the stores are spelled the way
     // GraphicWin::construct spells its own.
-    *reinterpret_cast<uint32_t *>(&win) = AlphaMoviePrimaryVtable;
-    reinterpret_cast<uint32_t *>(&win)[0x444 / 4] = AlphaMovieBufferVtable;
 
     movie_path[0] = 0;
     strcat(movie_path, "movies\\");
@@ -363,8 +358,6 @@ void __cdecl amovie_project(char *movie) {
     char *found = filefind_get(movie_file);
     if (found != 0) {
         player.exec(found, 0x280, 0x1E0, 0xC);
-        *reinterpret_cast<uint32_t *>(&win) = AlphaMoviePrimaryVtable;
-        reinterpret_cast<uint32_t *>(&win)[0x444 / 4] = AlphaMovieBufferVtable;
         video.close();
         win.close();
         return;
@@ -378,9 +371,6 @@ void __cdecl amovie_project(char *movie) {
         found = filefind_get(movie_file);
         if (found != 0) {
             player.exec(found, 0x280, 0x1E0, 0xC);
-            *reinterpret_cast<uint32_t *>(&win) = AlphaMoviePrimaryVtable;
-            reinterpret_cast<uint32_t *>(&win)[0x444 / 4] =
-                AlphaMovieBufferVtable;
             video.close();
             win.close();
             return;
@@ -393,8 +383,6 @@ void __cdecl amovie_project(char *movie) {
     found = filefind_get(movie_file);
     if (found != 0) {
         static_cast<AlphaMovie *>(&win)->exec(found);
-        *reinterpret_cast<uint32_t *>(&win) = AlphaMoviePrimaryVtable;
-        reinterpret_cast<uint32_t *>(&win)[0x444 / 4] = AlphaMovieBufferVtable;
         video.close();
         win.close();
         return;
@@ -408,9 +396,6 @@ void __cdecl amovie_project(char *movie) {
         found = filefind_get(movie_file);
         if (found != 0) {
             static_cast<AlphaMovie *>(&win)->exec(found);
-            *reinterpret_cast<uint32_t *>(&win) = AlphaMoviePrimaryVtable;
-            reinterpret_cast<uint32_t *>(&win)[0x444 / 4] =
-                AlphaMovieBufferVtable;
             video.close();
             win.close();
             return;
