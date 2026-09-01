@@ -382,7 +382,7 @@ int PullDown::id_to_index(int id) {
 Status: Complete
 */
 void PullDown::hide() {
-    reinterpret_cast<VCall *>(this)->slot058();
+    release_modal();
     reinterpret_cast<Win *>(this)->Win::hide();
     do_all_draws();
 }

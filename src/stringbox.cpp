@@ -127,7 +127,7 @@ Status: Complete
 */
 void StringBox::on_scrolled(int code, int pos) {
     top_line_ = pos;
-    reinterpret_cast<VCall *>(this)->slot062();
+    vslot_62();
 }
 
 /*

@@ -182,11 +182,7 @@ uint32_t RadioButton::close() {
 Status: Complete
 */
 void RadioButton::on_dialog_focus(int a1) {
-    reinterpret_cast<VCall *>(
-        reinterpret_cast<char *>(this) +
-        *reinterpret_cast<int *>(
-            *reinterpret_cast<char **>(reinterpret_cast<char *>(this)) + 4)
-    )->slot062();
+    vslot_62();
 }
 
 /*
