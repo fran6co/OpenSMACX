@@ -56,13 +56,6 @@ class Ambience : public Sound {
 };
 
 
-// The four derived vtables. They are named constants rather than literals in
-// the bodies so the image addresses live in one place each, which is what
-// docs/recovery-binding-classifications.csv records them against.
-extern const uint32_t FactionAmbienceVtable;
-extern const uint32_t MAmbienceVtable;
-extern const uint32_t SAmbienceVtable;
-extern const uint32_t GAmbienceVtable;
 
 class FactionAmbience : public Ambience {
  public:

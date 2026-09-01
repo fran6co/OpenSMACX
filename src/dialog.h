@@ -211,13 +211,12 @@ typedef void (OriginalObject::*func_dialog_close)();
 // scalar deleting destructor frees through the executable's operator delete.
 extern func_dialog_close DialogOriginalClose;          // default 0x00608F50
 
-// Virtual tables the destructor stages. The Dialog primary table and the
-// list virtual base's final table are written but never dispatched, so they
-// are fixed constants like Scroll's. The four list-stage tables ARE dispatched
-// through - the embedded StringStruct walk reads the table installed at
-// this+0xBC - so they are rebindable: outside the hybrid process the game
-// addresses are unmapped and a leaf test must substitute a stand-in.
-extern const uint32_t DialogPrimaryVtable;              // this+0x00 = 0x006703FC
+// Virtual tables the destructor stages. The list virtual base's final table
+// is written but never dispatched, so it is a fixed constant like Scroll's.
+// The four list-stage tables ARE dispatched through - the embedded
+// StringStruct walk reads the table installed at this+0xBC - so they are
+// rebindable: outside the hybrid process the game addresses are unmapped and
+// a leaf test must substitute a stand-in.
 extern uint32_t DialogListDerivedVtable;                // this+0xBC = 0x006698C4
 extern uint32_t DialogListDerivedVirtualBaseVtable;     // this+0xE4 = 0x006698C0
 extern uint32_t DialogListVtable;                       // this+0xBC = 0x006693A4

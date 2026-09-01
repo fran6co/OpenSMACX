@@ -75,11 +75,6 @@ static_assert(sizeof(PullDown) == 0xF40,
 // must release them through its free rather than this module's. Tests
 // outside the hybrid process rebind this.
 
-// Original virtual table addresses the destructor installs before delegating
-// to the GraphicWin destructor (which then overwrites both with its own).
-extern const uint32_t PullDownPrimaryVtable;
-extern const uint32_t PullDownBufferVtable;
-
 // Defaults the destructor copies into the two trailing fields; the game keeps
 // them at 0x009B7B58/0x009B7B5C. Tests outside the hybrid process rebind
 // them at locally mapped storage.

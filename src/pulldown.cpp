@@ -204,8 +204,6 @@ int PullDown::get_selected() {
 
 
 
-const uint32_t PullDownPrimaryVtable = 0x0066FF40;
-const uint32_t PullDownBufferVtable = 0x0066FF38;
 uint32_t PullDownFieldF38Default;  // 0x009B7B58
 uint32_t PullDownFieldF3CDefault;  // 0x009B7B5C
 
@@ -228,19 +226,15 @@ Purpose: Destroy a PullDown by releasing every item's text pair, resetting
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4DD0 0x00644EF2
 Status: Complete
-Verification note: the two virtual-table stores are dead - the GraphicWin
-delegation unconditionally overwrites both slots with its own tables - so
-they mirror the original's transient writes and no suite can observe them.
+DEMOTED from BYTE_EXACT by direction (strip-all hand vptr writes): the two
+virtual-table stores left with the de-management sweep. They were not dead
+to the optimizer the way FlatButton's were - holding `ordered` anchored
+`this` in ebx for the whole body - so the stripped body re-allocates to
+edi and diverges at instruction 0 (1 of 36). The stores were dead to the
+PROGRAM: the GraphicWin delegation below unconditionally overwrites both
+slots with its own tables.
 */
 PullDown *PullDown::destroy() {
-    // 0x000 and 0x444 are the Win and Buffer vtable slots GraphicWin
-    // installs; they are compiler-managed, not ordinary members, so they
-    // stay at their raw offset. They are also dead stores here - the
-    // GraphicWin delegation below unconditionally overwrites both.
-    uint32_t *const ordered = reinterpret_cast<uint32_t *>(this);
-    ordered[0x000 / 4] = PullDownPrimaryVtable;
-    ordered[0x444 / 4] = PullDownBufferVtable;
-
     // Sixty-four items with two owned strings each, released directly
     // through items_'s own named fields.
     for (size_t index = 0; index < 64; ++index) {

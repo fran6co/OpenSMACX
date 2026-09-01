@@ -235,18 +235,6 @@ extern func_dialogs_teardown DialogsEditGroupDestructor;  // 0x00611A20
 extern func_dialogs_teardown DialogsSpriteBoxDestructor;  // 0x00610120
 extern func_dialogs_teardown DialogsCheckBoxDestructor;   // 0x0060E740
 
-// Virtual tables ~Dialogs stages: three into the GraphicWin/Win virtual base,
-// three into the embedded RadioButton, every slot located through the
-// subobject's OWN vbtable at run time. All six are written but never
-// dispatched - the dispatches happen inside the recovered close/destroy
-// bodies - so they are fixed constants like Scroll's.
-extern const uint32_t DialogsVbaseGraphicWinVtable;  // 0x00669BE8
-extern const uint32_t DialogsVbaseBufferVtable;      // 0x00669BE0
-extern const uint32_t DialogsVbaseWinVtable;         // 0x00669BD4
-extern const uint32_t DialogsRadioPrimaryVtable;     // 0x00669A6C
-extern const uint32_t DialogsRadioBufferVtable;      // 0x00669A64
-extern const uint32_t DialogsRadioWinVtable;         // 0x00669A58
-
 // ~Dialogs and ??_GDialogs are entered at B + 0x188 (the GraphicWin
 // co-located subobject); both redirects recover the allocation base B first.
 static const size_t DialogsDestructorAdjustment = 0x188;

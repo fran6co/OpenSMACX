@@ -78,7 +78,9 @@ CEILINGS = {
     # 208 -> 207 (sound batch): retiring field_accessor_0062d390_redirect for
     # the real `sub_62d390` in general.cpp leaves one fewer redirect nothing
     # calls.
-    "orphan redirect": 207,
+    # 207 -> 206 (batch 4, stringstruct): the orphan string_struct_close_redirect
+    # deleted - zero callers; close() performs its own 0x1C, as the image does.
+    "orphan redirect": 206,
     "pointer-as-int": 0,
     "undocumented trivial body": 0,
     # 239 IS BELOW WHAT THE TREE CAN REACH TODAY, and this is the only
@@ -157,7 +159,9 @@ CEILINGS = {
     # object anchors.
     # 218 -> 217 (batch 4, dialog family): Dialog::destroy's primary overlay
     # store stripped with its constant.
-    "raw self-access": 217,
+    # 217 -> 216 (batch 4, pulldown): the stripped stores' reinterpret_cast
+    # object anchor left with them.
+    "raw self-access": 216,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
