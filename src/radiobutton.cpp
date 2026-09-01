@@ -155,21 +155,17 @@ Return Value: n/a
 Status: Complete
 */
 uint32_t RadioButton::close() {
-    // The base offsets come from the object's own vbtable, read at run time,
-    // not from where they sit in a most-derived RadioButton. When one is
-    // embedded in a larger class - Dialogs holds a RadioButton at 0x44 - that
-    // object's vbtable names different offsets, and hardcoding this class's
-    // own sends both calls to the wrong subobject. Doing exactly that passed
-    // every unit test here and crashed the game on a null vtable pointer.
-    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
+    // The base calls go through the runtime vbtable either way - the
+    // compiler's own dispatch for a virtual-base member call reads it at run
+    // time exactly as the old hand walk did, so the embedded-in-Dialogs case
+    // (whose vbtable names different offsets) still reaches the right
+    // subobjects.
     field_C_ = 0;
     field_10_ = 0;
     field_8_ = RadioButtonDefault2;
     field_4_ = RadioButtonDefault1;
-    reinterpret_cast<Dialog *>(
-        self + (*reinterpret_cast<const int32_t *const *>(self))[2])->Dialog::close();
-    return reinterpret_cast<GraphicWin *>(
-        self + (*reinterpret_cast<const int32_t *const *>(self))[1])->close();
+    Dialog::close();
+    return GraphicWin::close();
 }
 
 

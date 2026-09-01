@@ -143,8 +143,8 @@ CheckBox::~CheckBox() {
     // double-counts it. The TRIED note above diagnosed exactly this and could
     // not act on it while the base was a member.
     // Strip-all direction: the image's five derived-stage re-stores here are
-    // gone, same as the constructor's.
-    char *const self = reinterpret_cast<char *>(this);
+    // gone, same as the constructor's. The two base closes are qualified
+    // calls - the compiler's virtual-base dispatch.
 
     field_4_ = 0;
     field_8_ = 0;
@@ -152,10 +152,8 @@ CheckBox::~CheckBox() {
     field_14_ = CheckBoxDefault2;
     field_10_ = CheckBoxDefault1;
 
-    const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-    reinterpret_cast<Dialog *>(self + vbtable[2])->Dialog::close();
-    const int32_t *const vbtable2 = *reinterpret_cast<const int32_t *const *>(self);
-    reinterpret_cast<GraphicWin *>(self + vbtable2[1])->close();
+    Dialog::close();
+    GraphicWin::close();
 }
 
 /*
@@ -188,18 +186,17 @@ uint32_t CheckBox::close() {
     // object's vbtable names different offsets, and hardcoding this class's
     // own sends both calls to the wrong subobject. Doing exactly that passed
     // every unit test here and crashed the game on a null vtable pointer.
-    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
-    const int32_t *const vbtable =
-        *reinterpret_cast<const int32_t *const *>(self);
+    // The base calls go through the runtime vbtable either way - the
+    // compiler's dispatch for a virtual-base member call reads it at run
+    // time exactly as the old hand walk did, so the embedded case still
+    // reaches the right subobjects.
     field_4_ = 0;
     field_8_ = 0;
     field_C_ = 0;
     field_14_ = CheckBoxDefault2;
     field_10_ = CheckBoxDefault1;
-    reinterpret_cast<Dialog *>(self + vbtable[2])->Dialog::close();
-    const int32_t *const vbtable2 =
-        *reinterpret_cast<const int32_t *const *>(self);
-    return reinterpret_cast<GraphicWin *>(self + vbtable2[1])->close();
+    Dialog::close();
+    return GraphicWin::close();
 }
 
 
