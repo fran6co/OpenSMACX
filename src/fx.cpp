@@ -93,7 +93,9 @@ FX::~FX() {
 Status: Complete
 */
 void FX::stop(int a1) {
-    reinterpret_cast<VCall *>(reinterpret_cast<char *>(this) + a1 * 0x6C)->slot008();
+    // The elements are Waves (0x6C = sizeof(Wave), 97 of them) - this is
+    // the element's own stop() virtual, which is what this method is named.
+    reinterpret_cast<Wave *>(effects_)[a1].stop();
 }
 
 /*
@@ -108,8 +110,7 @@ void FX::stop(int a1) {
 Status: Complete
 */
 void FX::release(int a1) {
-    char *self = reinterpret_cast<char *>(this);
-    reinterpret_cast<VCall *>(self + a1 * 108)->slot014();
+    reinterpret_cast<Wave *>(effects_)[a1].release();
 }
 
 /*
@@ -124,8 +125,8 @@ void FX::release(int a1) {
 Status: Complete
 */
 void FX::fade(int a1) {
-    char *self = reinterpret_cast<char *>(this);
-    reinterpret_cast<VCall *>(self)[a1 * 27].slot010();
+    // The element's own fade() virtual - what this method is named after.
+    reinterpret_cast<Wave *>(effects_)[a1].fade();
 }
 
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====

@@ -125,7 +125,14 @@ SHAPES = [
     # (cb->vslot_62() with the re-derived receiver) - all BYTE_EXACT.
     # Remaining: fx.cpp's three array-element dispatches (element type
     # unidentified) and win.cpp's seven shim classes.
-    ("VCall shim", 5,
+    # 5 -> 2 (fx.cpp element identification): the 0x6C/97-element array is
+    # Wave objects - FX::stop/release/fade are the elements' own stop()/
+    # release()/fade() virtuals (the FX methods were NAMED after them), all
+    # three BYTE_EXACT. Fixing fade forced the Sound-table discovery: VC6
+    # assigns same-name overloads to vtable slots in REVERSE declaration
+    # order - int fade() landed at slot 9 where the image has fade(unsigned
+    # long); declaring fade() first aligns the 9/10 pair with the image.
+    ("VCall shim", 2,
      re.compile(r"\bVCall\b"),
      "dispatches through a fake class because the real function is not "
      "declared virtual. Declare it."),
