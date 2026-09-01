@@ -60,13 +60,8 @@ static void __fastcall console_texture_store_element_dtor(void *self) {
 // repeated here on Console's own embedded Menu and on its virtual base -
 // nothing in this chain declares a single `virtual`, so VC6 never refreshes
 // them on its own.
-static void *const ConsoleVftable = reinterpret_cast<void *>(0x0066EF04);
 static void *const AlphaMenuVftable = reinterpret_cast<void *>(0x0066ED88);
 static void *const AlphaMenuVirtualBaseVftable = reinterpret_cast<void *>(0x0066ED80);
-static void *const ConsoleEmbeddedGraphicWinVftable = reinterpret_cast<void *>(0x0066EC18);
-static void *const ConsoleEmbeddedGraphicWinVirtualBaseVftable = reinterpret_cast<void *>(0x0066EC10);
-static void *const MapWinVftable = reinterpret_cast<void *>(0x0066A57C);
-static void *const MapWinVirtualBaseVftable = reinterpret_cast<void *>(0x0066A574);
 
 /*
 Purpose: Build the game console - its virtual GraphicWin base, its MapWin
@@ -90,49 +85,20 @@ storage (see the class declaration), so everything below reaches its
 sub-objects by raw offset.
 */
 Console::Console(int input) {
-    char *const self = reinterpret_cast<char *>(this);
-
-    if (input) {
-        *reinterpret_cast<void **>(self) = ConsoleVftable;
-        new (reinterpret_cast<GraphicWin *>(self + 0x23d94)) GraphicWin();
-    }
-
+    // The compiler owns the construction machinery for the real constructor:
+    // the Console vbtable store, the virtual GraphicWin base at +0x23D94
+    // under the most-derived flag, the MapWin base, and every declared
+    // member below in declaration order - the same sequence the image's
+    // ??0Console spells. What remains in the body is the base's own
+    // initialize-by-hand (MapWin has no constructor - mapwin.h), the
+    // menu subobject's AlphaMenu-stage vptr overlay (the image installs
+    // those itself, over what Menu's constructor installed), and the
+    // scalar field clears.
     MapWin::construct(0);
 
-    new (reinterpret_cast<GraphicWin *>(self + 0x21a68)) GraphicWin();
-    reinterpret_cast<Buffer *>(self + 0x2247c)->Buffer::Buffer();
-    reinterpret_cast<Time *>(self + 0x22a04)->Time::Time();
-
-    char *const menu = self + 0x22a2c;
-    reinterpret_cast<Menu *>(menu)->Menu::Menu();
-
-    reinterpret_cast<Buffer *>(menu + 0xb64)->Buffer::Buffer();
-    reinterpret_cast<Sprite *>(menu + 0x10ec)->Sprite::Sprite();
-
-    
-VectorCtorIterator(menu + 0x1118, 0x2c, 3, console_sprite_element_ctor, console_sprite_element_dtor);
-
-    *reinterpret_cast<void **>(menu) = AlphaMenuVftable;
-    *reinterpret_cast<void **>(menu + 0x444) = AlphaMenuVirtualBaseVftable;
-
-    reinterpret_cast<Sprite *>(self + 0x23d28)->Sprite::Sprite();
-    reinterpret_cast<Sprite *>(self + 0x23d54)->Sprite::Sprite();
-
-    {
-        int32_t *const vtbl = *reinterpret_cast<int32_t **>(self);
-        int32_t const off = vtbl[1];
-        *reinterpret_cast<void **>(self + off) = ConsoleEmbeddedGraphicWinVftable;
-    }
-    {
-        int32_t *const vtbl = *reinterpret_cast<int32_t **>(self);
-        int32_t const off = vtbl[1];
-        *reinterpret_cast<void **>(self + off + 0x444) = ConsoleEmbeddedGraphicWinVirtualBaseVftable;
-    }
-    {
-        int32_t *const vtbl = *reinterpret_cast<int32_t **>(self);
-        int32_t const off = vtbl[1];
-        *reinterpret_cast<int32_t *>(self + off - 4) = off - 0x23d94;
-    }
+    *reinterpret_cast<void **>(&menu_) = AlphaMenuVftable;
+    *reinterpret_cast<void **>(reinterpret_cast<uint8_t *>(&menu_) + 0x444) =
+        AlphaMenuVirtualBaseVftable;
 
     field_23BC8_ = static_cast<uint32_t>(-1);
     field_23BD8_ = 0;
@@ -147,10 +113,8 @@ VectorCtorIterator(menu + 0x1118, 0x2c, 3, console_sprite_element_ctor, console_
     field_23C08_ = 0;
 
     for (int32_t i = 0x20; i != 0; i--) {
-        int32_t idx = field_23C08_;
-        *reinterpret_cast<int32_t *>(self + 0x23c10 + idx * 4) = 0;
-        idx = field_23C08_;
-        *reinterpret_cast<int32_t *>(self + 0x23c90 + idx * 4) = 0;
+        field_23C10_[field_23C08_] = 0;
+        field_23C90_[field_23C08_] = 0;
     }
 
     field_23D10_ = 0;
