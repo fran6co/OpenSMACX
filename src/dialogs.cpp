@@ -369,12 +369,6 @@ func_dialogs_teardown DialogsSpriteBoxDestructor =
 func_dialogs_teardown DialogsCheckBoxDestructor =
     original_method<func_dialogs_teardown>(0x0060E740);
 
-const uint32_t DialogsVbaseGraphicWinVtable = 0x00669BE8;
-const uint32_t DialogsVbaseBufferVtable = 0x00669BE0;
-const uint32_t DialogsVbaseWinVtable = 0x00669BD4;
-const uint32_t DialogsRadioPrimaryVtable = 0x00669A6C;
-const uint32_t DialogsRadioBufferVtable = 0x00669A64;
-const uint32_t DialogsRadioWinVtable = 0x00669A58;
 
 namespace {
 
@@ -456,6 +450,9 @@ uint32_t Dialogs::destroy() {
 
     // Dialogs' own vbtable sits at the allocation base; the 0x188/0xBA0
     // subtrahends are its most-derived entries, baked in by the original.
+    const uint32_t DialogsVbaseGraphicWinVtable = 0x00669BE8;
+    const uint32_t DialogsVbaseBufferVtable = 0x00669BE0;
+    const uint32_t DialogsVbaseWinVtable = 0x00669BD4;
     stage_virtual_tables(base, DialogsVbaseGraphicWinVtable,
                          DialogsVbaseBufferVtable, DialogsVbaseWinVtable,
                          0x188, 0xBA0);
@@ -474,6 +471,9 @@ uint32_t Dialogs::destroy() {
     // virtual bases, so this staging overwrites the step-one tables, and its
     // recovered close walks them through the same vbtable.
     uint8_t *const radio = static_cast<uint8_t *>(guarded_member(guard, 0x44, 0));
+    const uint32_t DialogsRadioPrimaryVtable = 0x00669A6C;
+    const uint32_t DialogsRadioBufferVtable = 0x00669A64;
+    const uint32_t DialogsRadioWinVtable = 0x00669A58;
     stage_virtual_tables(radio, DialogsRadioPrimaryVtable,
                          DialogsRadioBufferVtable, DialogsRadioWinVtable,
                          0x18, 0xA30);
