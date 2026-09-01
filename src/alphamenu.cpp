@@ -34,3 +34,13 @@ int AlphaMenu::requested_height() {
     return 0;
 }
 
+
+// The two vtable slots AlphaMenu overrides, stubbed at their image entry
+// points - the bodies are unrecovered (0x00403830 and 0x00403340 sit in
+// recovered/units/ as NOT_MATCHING artifacts). The slots stay true so the
+// compiler-built vtable keeps the image's shape.
+void AlphaMenu::hide() {}
+void AlphaMenu::vslot_12() {}
+
+// 0x00403550 on_mouse_move@AlphaMenu - unrecovered; stub for slot 17.
+void AlphaMenu::vslot_17(int x, int y) {}
