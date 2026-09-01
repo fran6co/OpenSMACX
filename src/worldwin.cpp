@@ -20,14 +20,10 @@
 #include "worldwin.h"
 #include "vtable_shim.h"
 
-const uint32_t WorldWinPrimaryVtable = 0x0066DF30;
-const uint32_t WorldWinBufferVtable = 0x0066DF28;
-
 /*
 Purpose: Construct the GraphicWin base and the three embedded subobjects
          (buffer1_, buffer2_, mapWin_), then install WorldWin's own vtables.
 // ORIGINAL: 0x004C4BF0 ??0WorldWin@@QAE@XZ 0x004C4BF0-0x004C4C67;0x00659E50-0x00659E7E
-// symbol    ?construct@WorldWin@@QAEPAV1@XZ
 // size      119 bytes
 // prototype void (__thiscall ??0WorldWin@@QAE@XZ)(WorldWin* this)
 // callers   0   call targets   4
@@ -50,15 +46,8 @@ Purpose: Construct the GraphicWin base and the three embedded subobjects
 Return Value: n/a
 Status: Complete
 */
-WorldWin *WorldWin::construct() {
-    new (static_cast<GraphicWin *>(this)) GraphicWin();
-    new (&buffer1_) Buffer();
-    new (&buffer2_) Buffer();
+WorldWin::WorldWin() {
     mapWin_.construct(1);
-    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
-    object[0x000 / 4] = WorldWinPrimaryVtable;
-    object[0x444 / 4] = WorldWinBufferVtable;
-    return this;
 }
 
 /*

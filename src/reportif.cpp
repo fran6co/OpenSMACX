@@ -29,8 +29,6 @@
 #include "vector_teardown.h"
 
 
-const uint32_t ReportIfSubInterfaceVtable = 0x0066A6E4;
-const uint32_t ReportIfPrimaryVtable = 0x0066D700;
 
 /*
 Purpose: Install the SubInterface vftable, then placement-new every
@@ -67,8 +65,6 @@ Purpose: Install the SubInterface vftable, then placement-new every
 // immediately, compiles the image's own `call rel32` rather than the
 // `call dword ptr [...]` a stored pointer would give.
 ReportIf::ReportIf() {
-    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
-    object[0] = ReportIfSubInterfaceVtable;
 
 
     typedef void(__fastcall *pending_listbox_ctor)(void *, void *, int);
@@ -98,9 +94,6 @@ ReportIf::ReportIf() {
     new (flatButton13_) FlatButton();
     new (flatButton14_) FlatButton();
     new (spot_) Spot();
-
-
-    object[0] = ReportIfPrimaryVtable;
 }
 
 // The two ListBox sub-objects are torn down through their virtual bases at

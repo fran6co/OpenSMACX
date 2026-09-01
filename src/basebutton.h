@@ -101,8 +101,6 @@ class BaseButton : public GraphicWin {
 static_assert(sizeof(BaseButton) == 0xAB8,
               "BaseButton layout must match the legacy ABI");
 
-extern const uint32_t BaseButtonPrimaryVtable;
-extern const uint32_t BaseButtonBufferVtable;
 uint32_t *const BaseButtonStaticDefaults = (uint32_t *)0x0069704C;
 uint32_t *const BaseButtonDynamicDefaults = (uint32_t *)0x009B8E2C;
 

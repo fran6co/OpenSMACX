@@ -28,11 +28,6 @@
  * recovered and nothing pins the sizeof yet.
  */
 // The two virtual tables the destructor stages before delegating to
-// BaseButton::destroy(). DEFINED HERE, NOT `extern`, so the value is
-// visible at the use site and folds to an immediate store, the same
-// reasoning as ScrollPrimaryVtable/ScrollBufferVtable (scroll.h).
-const uint32_t PushButtonPrimaryVtable = 0x00670C60;
-const uint32_t PushButtonBufferVtable = 0x00670C58;
 
 class PushButton : public BaseButton {
  public:

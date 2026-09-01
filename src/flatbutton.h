@@ -73,6 +73,4 @@ class FlatButton : public BaseButton {
 static_assert(sizeof(FlatButton) == 0xB4C,
               "FlatButton layout must match the legacy ABI");
 
-extern const uint32_t FlatButtonPrimaryVtable;
-extern const uint32_t FlatButtonBufferVtable;
 

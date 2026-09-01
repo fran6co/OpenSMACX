@@ -29,9 +29,6 @@
 
 #include <new>
 
-const uint32_t BaseButtonPrimaryVtable = 0x00670290;
-const uint32_t BaseButtonBufferVtable = 0x00670288;
-
 /*
 Purpose: Construct the GraphicWin base and two Time members, then install the
          BaseButton tables and process defaults.
@@ -95,8 +92,6 @@ BaseButton *BaseButton::construct() {
     // hand because nothing here is declared virtual. Everything below is an
     // ordinary field.
     uint32_t *const object = reinterpret_cast<uint32_t *>(this);
-    object[0x000 / 4] = BaseButtonPrimaryVtable;
-    object[0x444 / 4] = BaseButtonBufferVtable;
     field_A74_ = 0;
     field_A44_ = 0xFFFFFFFFU;
     field_A48_ = 0xFFFFFFFFU;
@@ -238,8 +233,6 @@ Status: Complete
 BaseButton *BaseButton::destroy() {
     volatile uint32_t *const object =
         reinterpret_cast<volatile uint32_t *>(this);
-    object[0x000 / 4] = BaseButtonPrimaryVtable;
-    object[0x444 / 4] = BaseButtonBufferVtable;
     close();
     time2_.~Time();
     time1_.~Time();

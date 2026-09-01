@@ -61,7 +61,11 @@ Purpose: Re-install PushButton's two virtual tables, then delegate to
          (pulldown.cpp) does NOT apply here because it depends on the caller
          needing the callee's return value; this one genuinely wants the
          jmp, and the image has one.
-// ORIGINAL: 0x0062C010 ??1PushButton@@QAE@XZ 0x0062C010-0x0062C025 BYTE_EXACT
+// ORIGINAL: 0x0062C010 ??1PushButton@@QAE@XZ 0x0062C010-0x0062C025
+// DEMOTED from BYTE_EXACT 3/3 by direction (strip-all hand vptr writes): the
+// body's whole content WAS the two vtable re-stage stores, deleted along with
+// their constants in the de-management sweep. Re-earns BYTE_EXACT only if the
+// re-stage stores return as a faithful transcription.
 // LEVER: a real `~PushButton()` mangles `??1PushButton@@UAE@XZ` and compiles ~15 instructions of vtable-pointer/base-unwind bookkeeping - AutoSound's virtual destructor (autosound.h, added for RadioButton's vbtable layout) cascades virtuality onto every Win-derived destructor. `destroy()`, an ordinary method rather than a destructor override, is never cascaded into virtual and reproduces the image's plain 3-instruction body; see pushbutton.h for the declaration. Same idiom as BaseButton::destroy()/Scroll::destroy().
 // symbol    ?destroy@PushButton@@QAEPAV1@XZ
 // size      21 bytes
@@ -74,8 +78,6 @@ Status: Complete
 */
 PushButton *PushButton::destroy() {
     uint32_t *const ordered = reinterpret_cast<uint32_t *>(this);
-    ordered[0x000 / 4] = PushButtonPrimaryVtable;
-    ordered[0x444 / 4] = PushButtonBufferVtable;
     return static_cast<PushButton *>(BaseButton::destroy());
 }
 
