@@ -96,8 +96,9 @@ Console::Console(int input) {
     // scalar field clears.
     MapWin::construct(0);
 
-    *reinterpret_cast<void **>(&menu_) = AlphaMenuVftable;
-    *reinterpret_cast<void **>(reinterpret_cast<uint8_t *>(&menu_) + 0x444) =
+    *reinterpret_cast<void **>(&alpha_menu_) = AlphaMenuVftable;
+    *reinterpret_cast<void **>(
+        reinterpret_cast<uint8_t *>(&alpha_menu_) + 0x444) =
         AlphaMenuVirtualBaseVftable;
 
     field_23BC8_ = static_cast<uint32_t>(-1);

@@ -20,7 +20,8 @@
 #include "original_seam.h"
 #include "mapwin.h"
 #include "menu.h"     // menu_
-#include "sprite.h"   // menu_sprite_, menu_sprites_[3], sprite_a_/sprite_b_
+#include "sprite.h"   // sprite_a_/sprite_b_
+#include "alphamenu.h"  // alpha_menu_
 #include "time.h"     // time_
 
 class StatusWin;
@@ -220,10 +221,7 @@ class Console : public MapWin {
                             // very members)
   Buffer buffer_;           // 0x2247C
   Time time_;               // 0x22A04
-  Menu menu_;               // 0x22A2C
-  Buffer menu_buffer_;      // 0x23590
-  Sprite menu_sprite_;      // 0x23B18
-  Sprite menu_sprites_[3];  // 0x23B44
+  AlphaMenu alpha_menu_;    // 0x22A2C - menu_+buffer_+sprite1_+sprites_[3]
   uint32_t field_23BC8_;  // 0x23BC8
   uint32_t field_23BCC_;  // 0x23BCC
   uint32_t field_23BD0_;  // 0x23BD0
