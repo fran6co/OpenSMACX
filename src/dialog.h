@@ -62,8 +62,12 @@ class Dialog {
   // (0x00612A70) both open on an unadjusted receiver - and it is no longer
   // virtual.
   int item(char *text, int index);
-  virtual void on_redraw() { ; }
+  // THE VIRTUAL ORDER IS THE IMAGE'S, dumped from the ListBox Dialog-part
+  // table 0x00670408 on 2026-09-01: slot 0 = the dtor, slot 1 = attach,
+  // slot 2 = on_redraw. The declarations follow that order.
+  virtual ~Dialog() { ; }
   virtual int attach(void *a1, int a2, int a3, int a4) { return 0; }
+  virtual void on_redraw() { ; }
   // 0x00608F50, a pending_bodies forwarder. checkbox.cpp and
   // radiobutton.cpp both reach it, and both did so through a pointer.
   // VIRTUAL, and this is what earns the vtordisp before the Dialog base in
@@ -79,12 +83,12 @@ class Dialog {
   // Static default shared by every dialog; __cdecl in the original.
   static int set_def_dialog_font(Font *font1, Font *font2, Font *font3);
   Dialog() { ; }
-  // VIRTUAL, so VC6 emits the vfptr the image has at offset 0 instead of the
-  // hand-modelled `LPVOID vtable_` this replaces. That vfptr is the 4 of the
+  // The dtor is VIRTUAL (declared first above, matching the image's slot 0),
+  // so VC6 emits the vfptr the image has at offset 0 instead of the
+  // hand-modelled `LPVOID vtable_` this replaced. That vfptr is the 4 of the
   // 8 bytes `: virtual GraphicWin, virtual Dialog` came up short by on
   // CheckBox/RadioButton/EditGroup/ListBox/SpriteBox/Dialogs - see
   // radiobutton.h, which measured the shortfall and named this as the cause.
-  virtual ~Dialog() { ; }
   // A `construct` METHOD, NOT A CONSTRUCTOR - the `Win::construct` idiom.
   // The real body (??0Dialog@@QAE@XZ, 0x00608C10) is not promoted yet;
   // classes that hold a Dialog as a virtual-base-shaped subobject (CheckBox,
