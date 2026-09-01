@@ -38,31 +38,6 @@
 #include "veh.h"  // Vehs - the group table is the Vehs[i].state run
 #include <cstring>
 
-// The element dtors for Console's managed arrays, spelled for real against
-// the recovered lifecycle bodies (the image passes 0x005E37E0, 0x00406850,
-// 0x00625310 and 0x006252B0 at these sites).
-static void __fastcall console_sprite_element_ctor(void *self) {
-    reinterpret_cast<Sprite *>(self)->Sprite::Sprite();
-}
-static void __fastcall console_sprite_element_dtor(void *self) {
-    reinterpret_cast<Sprite *>(self)->~Sprite();
-}
-static void __fastcall console_image_button_element_dtor(void *self) {
-    reinterpret_cast<ImageButton *>(self)->~ImageButton();
-}
-static void __fastcall console_texture_store_element_dtor(void *self) {
-    reinterpret_cast<TextureStore *>(self)->~TextureStore();
-}
-
-
-// The manual "vtable" pointers `GraphicWin::construct`'s own idiom writes
-// when GraphicWin is directly the most-derived object (see graphicwin.cpp),
-// repeated here on Console's own embedded Menu and on its virtual base -
-// nothing in this chain declares a single `virtual`, so VC6 never refreshes
-// them on its own.
-static void *const AlphaMenuVftable = reinterpret_cast<void *>(0x0066ED88);
-static void *const AlphaMenuVirtualBaseVftable = reinterpret_cast<void *>(0x0066ED80);
-
 /*
 Purpose: Build the game console - its virtual GraphicWin base, its MapWin
          base, its own extra (non-virtual) embedded GraphicWin, and its own
