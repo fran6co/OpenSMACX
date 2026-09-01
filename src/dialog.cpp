@@ -120,20 +120,20 @@ Return Value: Matching position, or the configured entry count on a miss
 Status: Complete
 */
 int Dialog::id_to_pos(int id) {
-    if (entry_head_) {
-        int count = entry_count_;
-        entry_position_ = 0;
-        current_entry_ = entry_head_;
+    if (item_list_.head_) {
+        int count = item_list_.entry_count_;
+        item_list_.current_position_ = 0;
+        item_list_.current_ = item_list_.head_;
         for (int traversed = 0; traversed < count; traversed++) {
-            DialogEntry *entry = current_entry_;
+            StringStructEntry *entry = item_list_.current_;
             if (entry->id == id) {
                 break;
             }
-            entry_position_++;
-            current_entry_ = entry->next;
+            item_list_.current_position_++;
+            item_list_.current_ = entry->next;
         }
     }
-    return entry_position_;
+    return item_list_.current_position_;
 }
 
 /*
@@ -187,8 +187,8 @@ int Dialog::get_selected_id() {
     // for count == INT_MIN that decrement WRAPS, which is the whole reason
     // this tree carried an explicit INT_MIN test beside the comparison. The
     // wrap is the semantics; the test is a second read of it.
-    if (position <= entry_count_ - 1) {
-        current_entry_ = entry_head_;
+    if (position <= item_list_.entry_count_ - 1) {
+        item_list_.current_ = item_list_.head_;
         if (position < 0) {
             // `abs`, CALLED TWICE, and the count RE-READ between them: the
             // image is `push edi; call 0x644F3A; mov ecx, [esi+0xcc];
@@ -196,32 +196,32 @@ int Dialog::get_selected_id() {
             // That is a MIN-style macro over `abs(position)`, not a local -
             // and `abs(INT_MIN)` returning INT_MIN is what the hand-rolled
             // ternary here was standing in for.
-            if (abs(position) <= entry_count_) {
+            if (abs(position) <= item_list_.entry_count_) {
                 int distance = abs(position);
                 while (distance > 0) {
-                    current_entry_ = current_entry_->previous;
+                    item_list_.current_ = item_list_.current_->previous;
                     distance--;
                 }
                 // The member again, not a local - see the note above the
                 // guard. Plain `int` addition: the image is one `add`, and
                 // the uint32 round trip through memcpy is a bit-cast VC6
                 // will not inline away.
-                position += entry_count_;
+                position += item_list_.entry_count_;
                 // ONE STORE FOR BOTH ARMS. The image's negative arm ends
                 // `add edi, [esi+0xcc]` and jumps STRAIGHT to the store the
                 // positive arm falls into - `jmp` with no `mov` before it.
-                entry_position_ = position;
+                item_list_.current_position_ = position;
             }
         } else {
             int distance = position;
             while (distance > 0) {
-                current_entry_ = current_entry_->next;
+                item_list_.current_ = item_list_.current_->next;
                 distance--;
             }
-            entry_position_ = position;
+            item_list_.current_position_ = position;
         }
     }
-    return entry_head_ ? current_entry_->id : 0;
+    return item_list_.head_ ? item_list_.current_->id : 0;
 }
 
 /*
@@ -257,8 +257,8 @@ int Dialog::pos_to_id(int position) {
     // for count == INT_MIN that decrement WRAPS, which is the whole reason
     // this tree carried an explicit INT_MIN test beside the comparison. The
     // wrap is the semantics; the test is a second read of it.
-    if (position <= entry_count_ - 1) {
-        current_entry_ = entry_head_;
+    if (position <= item_list_.entry_count_ - 1) {
+        item_list_.current_ = item_list_.head_;
         if (position < 0) {
             // `abs`, CALLED TWICE, and the count RE-READ between them: the
             // image is `push edi; call 0x644F3A; mov ecx, [esi+0xcc];
@@ -266,32 +266,32 @@ int Dialog::pos_to_id(int position) {
             // That is a MIN-style macro over `abs(position)`, not a local -
             // and `abs(INT_MIN)` returning INT_MIN is what the hand-rolled
             // ternary here was standing in for.
-            if (abs(position) <= entry_count_) {
+            if (abs(position) <= item_list_.entry_count_) {
                 int distance = abs(position);
                 while (distance > 0) {
-                    current_entry_ = current_entry_->previous;
+                    item_list_.current_ = item_list_.current_->previous;
                     distance--;
                 }
                 // The member again, not a local - see the note above the
                 // guard. Plain `int` addition: the image is one `add`, and
                 // the uint32 round trip through memcpy is a bit-cast VC6
                 // will not inline away.
-                position += entry_count_;
+                position += item_list_.entry_count_;
                 // ONE STORE FOR BOTH ARMS. The image's negative arm ends
                 // `add edi, [esi+0xcc]` and jumps STRAIGHT to the store the
                 // positive arm falls into - `jmp` with no `mov` before it.
-                entry_position_ = position;
+                item_list_.current_position_ = position;
             }
         } else {
             int distance = position;
             while (distance > 0) {
-                current_entry_ = current_entry_->next;
+                item_list_.current_ = item_list_.current_->next;
                 distance--;
             }
-            entry_position_ = position;
+            item_list_.current_position_ = position;
         }
     }
-    return entry_head_ ? current_entry_->id : 0;
+    return item_list_.head_ ? item_list_.current_->id : 0;
 }
 
 /*
@@ -313,16 +313,18 @@ int Dialog::item(char *text, int index) {
         return 3;
     }
     // The list at this+0xBC, same subobject Dialog::destroy() reaches. Its
-    // OWN field_1C_/field_20_/field_24_ (StringList-relative - Dialog's
-    // field_D8_/field_DC_/field_E0_) are set through the LIST POINTER, not
-    // Dialog's absolute offsets: the image advances ecx to this+0xBC first
-    // (`add ecx, 0xbc`) and addresses 0x1C/0x20/0x24 off of that, which is
-    // what keeps the small displacements instead of Dialog's own 0xD8 etc.
-    uint8_t *const list = reinterpret_cast<uint8_t *>(this) + 0xBC;
-    *reinterpret_cast<char **>(list + 0x1C) = text;
-    *reinterpret_cast<int *>(list + 0x20) = 0;
-    *reinterpret_cast<int *>(list + 0x24) = 1;
-    return reinterpret_cast<StringStruct *>(list)->add(index);
+    // OWN field_1C_/field_20_/field_24_ (StringList-relative) are set
+    // through the LIST, not Dialog's absolute offsets: the image advances
+    // ecx to this+0xBC first (`add ecx, 0xbc`) and addresses 0x1C/0x20/0x24
+    // off of that, which is what keeps the small displacements instead of
+    // Dialog's own 0xD8 etc. The `list` local is that advanced receiver -
+    // spelled through the member; TRIED: direct `item_list_.field_1C_`
+    // selects made VC6 drop the `add` and store at [ecx+0xd8..e0], 7 of 13.
+    StringList *const list = &item_list_;
+    list->field_1C_ = reinterpret_cast<uint32_t>(text);
+    list->field_20_ = 0;
+    list->field_24_ = 1;
+    return list->add(index);
 }
 
 
@@ -372,7 +374,9 @@ uint32_t DialogListDerivedVtable = 0x006698C4;
 uint32_t DialogListDerivedVirtualBaseVtable = 0x006698C0;
 uint32_t DialogListVtable = 0x006693A4;
 uint32_t DialogListVirtualBaseVtable = 0x006693A0;
-const uint32_t DialogVirtualBaseFinalVtable = 0x006693AC;
+// DialogVirtualBaseFinalVtable and DialogPublishedGlobal are gone: the final
+// table install and the owner publish are ~StringAllocationBase's own body,
+// and destroy()'s tail now runs them as item_list_'s explicit destructor.
 
 
 /*
@@ -429,21 +433,15 @@ void Dialog::destroy() {
     // run time (never the compile-time 0x24 - the RadioButton rule), and the
     // second stage's walk is a run-time no-op because the first emptied the
     // list.
-    StringStruct *const list = reinterpret_cast<StringStruct *>(
-        reinterpret_cast<uint8_t *>(this) + 0xBC);
-    list->close_with_tables(DialogListDerivedVtable,
-                            DialogListDerivedVirtualBaseVtable);
-    list->close_with_tables(DialogListVtable, DialogListVirtualBaseVtable);
+    item_list_.close_with_tables(DialogListDerivedVtable,
+                                 DialogListDerivedVirtualBaseVtable);
+    item_list_.close_with_tables(DialogListVtable, DialogListVirtualBaseVtable);
 
-    // The list virtual base's subobject destructor. ??1Dialog is the
-    // complete-object destructor, so the original addresses it at the fixed
-    // most-derived this+0xE4 rather than through the vbtable; reproduce that.
-    // field_E4_/field_E8_ are exactly those two slots, so they are read and
-    // written directly. Read the context word before installing the final
-    // table, then publish.
-    const uint32_t published = field_E8_;
-    field_E4_ = DialogVirtualBaseFinalVtable;
-    *DialogPublishedGlobal = published;
+    // The list virtual base's subobject destructor - the read of the saved
+    // owner, the final-table install, and the publish are the destructor's
+    // own body now (~StringAllocationBase, stringstruct.cpp), spelled here
+    // as the one explicit destructor call the image inlines at this tail.
+    item_list_.~StringList();
 
     heap_.shutdown();
 }

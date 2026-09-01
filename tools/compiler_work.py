@@ -129,7 +129,10 @@ SHAPES = [
 # 10 -> 20, VCall 21 -> 23, named-pointer seam 121 -> 123 - measured
 # 2026-08-23). Same ratchet, narrower lens.
 HEADER_SHAPES = [
-    ("vtable-as-member", 4,
+    # 4 -> 3 (batch 6, dialog family): DialogEntry's vtable/secondary_vtable
+    # pair left with the struct - the embedded list is a real StringList
+    # member (item_list_) and the node type is StringStructEntry.
+    ("vtable-as-member", 3,
      re.compile(r"\b[A-Za-z_]\w*\s+vtable\w*\s*;"),
      "a vtable pointer spelled as a data member is a base class that has "
      "not been declared. Declare the base whose vfptr lives at that offset "
@@ -155,7 +158,10 @@ HEADER_SHAPES = [
     # 21 -> 19 (batch 4, pulldown + dead externs): PullDownPrimary/BufferVtable
     # deleted with their dead stores; the eleven orphan externs (DialogPrimary,
     # the four Ambience, the six Dialogs stage tables) left with zero users.
-    ("vtable address constant", 19,
+    # 19 -> 18 (batch 6, dialog family): DialogVirtualBaseFinalVtable left -
+    # the final-table install is ~StringAllocationBase's own body now, run as
+    # item_list_'s explicit destructor in Dialog::destroy.
+    ("vtable address constant", 18,
      re.compile(r"\b[A-Za-z_]\w*Vtable\w*\s*=\s*\(?\s*0x"),
      "the raw material every hand-installed vtable is built from. When the "
      "classes are real, these constants have nothing left to point at."),

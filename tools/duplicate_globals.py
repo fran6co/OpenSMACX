@@ -43,7 +43,9 @@ REPO = pathlib.Path(__file__).resolve().parent.parent
 # name, so each pair is one name again.
 # 11 -> 9 (2026-08-30, class-pass binding sweep): the popup wave/flag and
 # faction-art pairs consolidated onto their existing objects.
-CEILING = 6
+# 6 -> 5 (batch 6, stringstruct family): the BasePop stage-table copies left
+# with ProdPicker's three StringList members - one doubled name fewer.
+CEILING = 5
 
 BINDING = re.compile(r"^\s*(?:static\s+)?[\w:]+[\s\*&]+const\s+(\w+)\s*=\s*"
                      r"\(?\s*\([\w:\s\*]+\)\s*0x(00[0-9A-Fa-f]{6})")

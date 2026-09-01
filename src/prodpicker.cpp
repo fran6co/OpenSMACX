@@ -33,47 +33,13 @@ void __fastcall ProdPickerSpriteDtor(void *self) { reinterpret_cast<Sprite *>(se
 void __fastcall ProdPickerFlatButtonCtor(void *self) { reinterpret_cast<FlatButton *>(self)->FlatButton::FlatButton(); }
 void __fastcall ProdPickerFlatButtonDtor(void *self) { reinterpret_cast<FlatButton *>(self)->~FlatButton(); }
 
-// The three 0x30-byte blocks at 0xA780/0xA7B0/0xA7E0 are unnamed: each
-// installs a vtable pair through a computed adjustor offset (the second
-// dword of the object at +4 is itself a small vbtable-shaped blob whose
-// second entry is the byte offset to re-stamp), the same "construct a
-// generic sub-object, then immediately overwrite its vtable with the real
-// one" shape GraphicWin::construct()/FlatButton use, just for something this
-// header does not otherwise model. Reproduced at the raw offset because
-// nothing establishes what class it is.
-static void prod_picker_unknown_a7_block(char *self, unsigned int offset) {
-    // Every table address is the tree's OWN storage now (basepop.cpp): the
-    // raw 0x66xxxx literals live in the image's .rdata, which is unmapped
-    // here - dereferencing them for the adjustment read faulted the boot.
-    Heap **const global_sequence = &StringAllocationHeap;
-    *reinterpret_cast<uint32_t *>(self + offset + 0x04) =
-        reinterpret_cast<uint32_t>(BasePopVbtable);
-    *reinterpret_cast<uint32_t *>(self + offset + 0x28) =
-        reinterpret_cast<uint32_t>(&BasePopStageTables6693A0[3]);
-    *reinterpret_cast<Heap **>(self + offset + 0x2C) = *global_sequence;
-    *global_sequence = 0;
-
-    *reinterpret_cast<uint32_t *>(self + offset) = 0;
-    *reinterpret_cast<uint32_t *>(self + offset) =
-        reinterpret_cast<uint32_t>(&BasePopStageTables6693A0[1]);
-    int adj = static_cast<int>(BasePopVbtable[1]);
-    *reinterpret_cast<uint32_t *>(self + offset + 0x04 + adj) =
-        reinterpret_cast<uint32_t>(&BasePopStageTables6693A0[0]);
-
-    *reinterpret_cast<uint32_t *>(self + offset + 0x04) =
-        reinterpret_cast<uint32_t>(&BasePopStageTables6698C0[1]);
-    *reinterpret_cast<uint32_t *>(self + offset) = 0;
-    *reinterpret_cast<uint32_t *>(self + offset + 0x08) = 0;
-    *reinterpret_cast<uint32_t *>(self + offset + 0x0C) = 0;
-    *reinterpret_cast<uint32_t *>(self + offset + 0x10) = 0;
-    *reinterpret_cast<uint32_t *>(self + offset + 0x14) = 0;
-    *reinterpret_cast<uint32_t *>(self + offset + 0x18) = 0;
-    // the second adjustment re-reads [self+off+4], which still holds the
-    // first table's pointer - same 0x24 displacement, per the image.
-    adj = static_cast<int>(BasePopVbtable[1]);
-    *reinterpret_cast<uint32_t *>(self + offset + 0x04 + adj) =
-        reinterpret_cast<uint32_t>(&BasePopStageTables6698C0[0]);
-}
+// The three 0x30-byte blocks at 0xA780/0xA7B0/0xA7E0 - read once as unnamed
+// "generic sub-objects" staged through a computed adjustor - are StringLists
+// (see prodpicker.h): prod_picker_unknown_a7_block's store sequence is
+// StringList's compiler-emitted construction, stage for stage. The helper
+// and basepop.cpp's hand copies of the tables (BasePopVbtable,
+// BasePopStageTables6693A0/6698C0) are gone; prod_a_/prod_b_/prod_c_ build
+// from the declaration.
 
 /*
 // ORIGINAL: 0x00492420 ??0ProdPicker@@QAE@XZ 0x00492420-0x004926AD;0x00658B70-0x00658C09
@@ -81,12 +47,12 @@ static void prod_picker_unknown_a7_block(char *self, unsigned int offset) {
 //            (7/7) then diverges at the push ebx/esi/edi save order; VC6
 //            chose a different callee-save order for this body's register
 //            pressure. MISMATCH, 11/127 instructions agree. The three
-//            0x30-byte "mystery" sub-objects at 0xA780/0xA7B0/0xA7E0 are
-//            reproduced at their raw offset (prod_picker_unknown_a7_block) -
-//            nothing in this header names what class they are, and the
-//            per-block instruction SCHEDULING (which register holds the
-//            vtable pointer, when it gets reloaded) varies between the three
-//            in the image in a way plain repeated C++ does not reproduce.
+//            0x30-byte sub-objects at 0xA780/0xA7B0/0xA7E0 were reproduced
+//            at their raw offset (prod_picker_unknown_a7_block) until the
+//            StringList identification; the per-block instruction
+//            SCHEDULING (which register holds the vtable pointer, when it
+//            gets reloaded) varies between the three in the image in a way
+//            plain repeated C++ does not reproduce.
 // TRIED: real declared members (Sprite[3]/Font x4/Time/FlatButton[9]/
 //            Scroll/Caviar) built implicitly instead of placement-new -
 //            measured WORSE, 8/127 against this baseline's 11/127. This
@@ -109,7 +75,6 @@ static void prod_picker_unknown_a7_block(char *self, unsigned int offset) {
 // them all BEFORE this body - and GraphicWin::construct() has to be first.
 ProdPicker::ProdPicker() {
     new (static_cast<GraphicWin *>(this)) GraphicWin();
-    char *const self = reinterpret_cast<char *>(this);
 
     VectorCtorIterator(sprites_, 0x2C, 3, ProdPickerSpriteCtor, ProdPickerSpriteDtor);
 
@@ -124,9 +89,9 @@ ProdPicker::ProdPicker() {
     new (scroll_) Scroll();
     new (caviar_) Caviar();
 
-    prod_picker_unknown_a7_block(self, 0xA780);
-    prod_picker_unknown_a7_block(self, 0xA7B0);
-    prod_picker_unknown_a7_block(self, 0xA7E0);
+    // prod_a_/prod_b_/prod_c_ construct from the declaration - implicitly,
+    // before this body, where the image builds them here last. Order
+    // divergence accepted by direction; see the note in prodpicker.h.
 
     field_A830_ = 0x86;
     field_A834_ = 0x86;

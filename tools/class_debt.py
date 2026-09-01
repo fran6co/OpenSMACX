@@ -163,7 +163,10 @@ CEILINGS = {
     # object anchor left with them.
     # 216 -> 214 (batch 5, mapwin attempt #2): MapWin's and PlanWin's
     # construct(int) bodies' raw self casts left with the real constructors.
-    "raw self-access": 214,
+    # 214 -> 211 (batch 6, dialog/prodpicker): the item-list and the three
+    # ProdPicker blocks are real members - the raw self casts of the old
+    # item()/a7-block spellings left with them.
+    "raw self-access": 211,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these

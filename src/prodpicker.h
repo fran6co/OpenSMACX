@@ -23,6 +23,7 @@
 #include "font.h"
 #include "flatbutton.h"
 #include "graphicwin.h"
+#include "stringstruct.h"
 
  /*
   * ProdPicker class
@@ -111,42 +112,20 @@ class ProdPicker : public GraphicWin {
   uint32_t field_A774_;  // 0xA774
   uint32_t field_A778_;  // 0xA778
   uint32_t field_A77C_;  // 0xA77C
-  uint32_t field_A780_;  // 0xA780
-  uint32_t field_A784_;  // 0xA784
-  uint32_t field_A788_;  // 0xA788
-  uint32_t field_A78C_;  // 0xA78C
-  uint32_t field_A790_;  // 0xA790
-  uint32_t field_A794_;  // 0xA794
-  uint32_t field_A798_;  // 0xA798
-  uint32_t field_A79C_;  // 0xA79C
-  uint32_t field_A7A0_;  // 0xA7A0
-  uint32_t field_A7A4_;  // 0xA7A4
-  uint32_t field_A7A8_;  // 0xA7A8
-  uint32_t field_A7AC_;  // 0xA7AC
-  uint32_t field_A7B0_;  // 0xA7B0
-  uint32_t field_A7B4_;  // 0xA7B4
-  uint32_t field_A7B8_;  // 0xA7B8
-  uint32_t field_A7BC_;  // 0xA7BC
-  uint32_t field_A7C0_;  // 0xA7C0
-  uint32_t field_A7C4_;  // 0xA7C4
-  uint32_t field_A7C8_;  // 0xA7C8
-  uint32_t field_A7CC_;  // 0xA7CC
-  uint32_t field_A7D0_;  // 0xA7D0
-  uint32_t field_A7D4_;  // 0xA7D4
-  uint32_t field_A7D8_;  // 0xA7D8
-  uint32_t field_A7DC_;  // 0xA7DC
-  uint32_t field_A7E0_;  // 0xA7E0
-  uint32_t field_A7E4_;  // 0xA7E4
-  uint32_t field_A7E8_;  // 0xA7E8
-  uint32_t field_A7EC_;  // 0xA7EC
-  uint32_t field_A7F0_;  // 0xA7F0
-  uint32_t field_A7F4_;  // 0xA7F4
-  uint32_t field_A7F8_;  // 0xA7F8
-  uint32_t field_A7FC_;  // 0xA7FC
-  uint32_t field_A800_;  // 0xA800
-  uint32_t field_A804_;  // 0xA804
-  uint32_t field_A808_;  // 0xA808
-  uint32_t field_A80C_;  // 0xA80C
+  // THE THREE ITEM LISTS, carved 2026-09-01 from what was the thirty-six
+  // dwords field_A780_..field_A80C_: three consecutive StringLists (3 * 0x30),
+  // proven by prod_picker_unknown_a7_block's own store sequence - vbptr
+  // ({-4, +0x24}, BasePop's copy of StringList's vbtable), the
+  // StringAllocationBase capture at +0x28/+0x2C, the primary vptr, the five
+  // list-field zeros, then the derived-table refresh - exactly the
+  // compiler-emitted StringList construction the declaration below now owns.
+  // REAL MEMBERS, not placement-new: the placement census only lowers, and
+  // the construction-order divergence (the image builds these three last,
+  // after Scroll and Caviar; implicit member construction runs them first)
+  // is accepted by direction - the ctor is unclaimed at 11/127 either way.
+  StringList prod_a_;  // 0xA780
+  StringList prod_b_;  // 0xA7B0
+  StringList prod_c_;  // 0xA7E0
   uint32_t field_A810_;  // 0xA810
   uint32_t field_A814_;  // 0xA814
   uint32_t field_A818_;  // 0xA818

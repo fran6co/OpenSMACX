@@ -967,29 +967,12 @@ Status: Complete
 
 // --- .rdata: the staged vtables and the vbtable ---
 
-// The vbtable staged at +0x2154 and +0x2184. Entries are displacements from
-// the SLOT that holds the table's address: -4 reaches back to the primary
-// vptr at +0x2150/+0x2180, +0x24 down to the StringList virtual base's vptr
-// at +0x2178/+0x21a8, which the ctor also stores directly. The ctor READS
-// entry[1] to place that virtual base's vtable - the read that faulted. In
-// the image the table is the two dwords at 0x0066B0EC; 0x0066B0F4 opens with
-// a function pointer, so the table ends there.
-const uint32_t BasePopVbtable[2] = {0xFFFFFFFC, 0x00000024};  // 0x0066B0EC
-
-// The function-pointer runs the ctor stages, Dialog-stage spellings first
-// and the final spellings after the refresh. The staged starts are
-// 0x006693A0/0x006693A4/0x006693AC and 0x006698C0/0x006698C4; 0x006693AC is
-// StringAllocationBase's one-slot vftable (stringstruct.h) and 0x006693A0 /
-// 0x006693A4 are the Dialog List tables (dialog.h, as value constants there
-// - different storage, same image addresses). The first run ends at
-// 0x006693AF because 0x006693B0 opens with a vbtable-shaped FFFFFFFC; the
-// second ends at 0x006698D3 because 0x006698D4 is the [this] vptr the ctor's
-// not-yet-spelled store writes.
-const uint32_t BasePopStageTables6693A0[4] = {
-    0x004029F0, 0x00404250, 0x00404270, 0x00401520};  // 0x006693A0
-const uint32_t BasePopStageTables6698C0[5] = {0x00406670, 0x006086F0,
-                                              0x00608770, 0x004070B0,
-                                              0x00404420};  // 0x006698C0
+// BasePopVbtable and BasePopStageTables6693A0/6698C0 are gone: they were the
+// tree's own copies of StringList's vbtable ({-4, +0x24}) and the two staged
+// table pairs, hand-consumed by ProdPicker's block helper until the three
+// blocks were identified as StringLists (prodpicker.h) and their
+// construction moved to the compiler. item_ids_/unit_ids_ above were already
+// constructed the same way.
 
 // --- .data: the class-default slots the ctor loads ---
 
