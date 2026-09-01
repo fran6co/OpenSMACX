@@ -141,11 +141,11 @@ void DipEdit::do_check() {
         SpyingStatusTable[field_A1C_ * SpyingStatusStride
             + field_A20_ + 8] & DTREATY_WANT_TO_TALK);
 
-    reinterpret_cast<VCall *>(
-        self + 0x15A0
-        + *reinterpret_cast<int *>(reinterpret_cast<char *>(
-            field_15A0_) + 4))
-        ->slot062();
+    // The redraw goes through the embedded CheckBox's own virtual dispatch
+    // (win-table slot 62). Re-derived here rather than through the cached
+    // `cb`: the image folds the +0x15A0 into the call's own receiver
+    // computation (`lea ecx, [edx + esi + 0x15a0]`).
+    reinterpret_cast<CheckBox *>(self + 0x15A0)->vslot_62();
 }
 
 void __fastcall dip_edit_do_check_redirect(DipEdit *self, void *) {

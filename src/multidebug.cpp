@@ -69,7 +69,7 @@ Status: Complete
 */
 void __cdecl MultiDebug::timer_callback_daemon(int a2) {
     if (this) {
-        reinterpret_cast<VCall *>(this)->slot062();
+        vslot_62();
     }
 }
 

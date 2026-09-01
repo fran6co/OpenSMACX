@@ -119,7 +119,13 @@ SHAPES = [
     # set_state_flag repaint and the three family on_mouse_leave bodies are
     # plain `vslot_62()` calls - every one BYTE_EXACT - and the ListBox
     # click-handler shim is gone with its three vslot_20/28/49 conversions.
-    ("VCall shim", 15,
+    # 15 -> 5 (batch 10 sweep): stringbox/multidebug vslot_62, diplowin/
+    # pulldown release_modal, worldwin vslot_12 x3, checkbox/radiobutton/
+    # spritebox on_dialog_focus vslot_62, and DipEdit's do_check
+    # (cb->vslot_62() with the re-derived receiver) - all BYTE_EXACT.
+    # Remaining: fx.cpp's three array-element dispatches (element type
+    # unidentified) and win.cpp's seven shim classes.
+    ("VCall shim", 5,
      re.compile(r"\bVCall\b"),
      "dispatches through a fake class because the real function is not "
      "declared virtual. Declare it."),

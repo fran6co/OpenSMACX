@@ -347,6 +347,6 @@ Status: Complete
 */
 void DiploWin::hide() {
     if (reinterpret_cast<Win *>(this)->is_visible()) {
-        reinterpret_cast<VCall *>(this)->slot058();
+        release_modal();
     }
 }

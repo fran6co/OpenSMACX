@@ -329,18 +329,10 @@ Return Value: n/a
 Status: Complete
 */
 void SpriteBox::on_dialog_focus(int a1) {
-    // THE COMPILER WALKS OUT OF THE SUBOBJECT NOW. This body used to write
-    // `this - 0x8c` by hand; with GraphicWin a real virtual base and this an
-    // override of its `on_dialog_focus`, VC6 performs that adjustment as part
-    // of the entry, and subtracting it again in source double-counts it
-    // (`-0x11c` where the image has `-0x8c`). One expression still: naming an
-    // intermediate changes the register choice. `a1` is dead; `ret 4` still
-    // pops it.
-    reinterpret_cast<VCall *>(
-        reinterpret_cast<char *>(this)
-        + *reinterpret_cast<int *>(
-            *reinterpret_cast<int *>(
-                reinterpret_cast<char *>(this)) + 4))->slot062();
+    // The repaint, as the plain virtual call it is (the vslot_62 default).
+    // The compiler performs the out-of-subobject adjustment as part of the
+    // override's entry; `a1` is dead; `ret 4` still pops it.
+    vslot_62();
 }
 
 /*

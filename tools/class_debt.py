@@ -181,7 +181,9 @@ CEILINGS = {
     # 196 -> 180 (entered-receiver conversions): the four on_mouse_leave/
     # on_dialog_focus bodies' nested cast chains left with the plain
     # field_F0_ = -1 + vslot_62() member forms.
-    "raw self-access": 180,
+    # 180 -> 170 (batch 10 sweep): the thirteen VCall conversions' raw self
+    # casts left with the named virtual calls that replaced them.
+    "raw self-access": 170,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
