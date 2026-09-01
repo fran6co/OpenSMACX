@@ -169,16 +169,15 @@ void MapWin::close() {
         free(owned_);
         owned_ = nullptr;
     }
-    // The image's own dispatch, kept as the walk it compiles to: `close` is
-    // a Q member of GraphicWin reached through the vbase-typed receiver, and
-    // the original itself performs the vbtable walk here (`mov eax, [esi]`,
-    // `mov ecx, [eax + 4]`, add, call). TRIED: `static_cast<GraphicWin
-    // *>(this)->close()` - VC6 then emits 21 instructions against the
-    // image's 15, diverging after the free. The walk IS the image's code.
-    const int32_t *const vbtable =
-        *reinterpret_cast<const int32_t *const *>(this);
-    reinterpret_cast<GraphicWin *>(
-        reinterpret_cast<uint8_t *>(this) + vbtable[1])->close();
+    // THE IDIOMATIC SPELLING, BY DIRECTION (2026-09-01): call the base's
+    // close, no cast. This body's claim was demoted for it - and that is
+    // the point. The compiled form of this line disagrees with the image's
+    // 15-instruction dispatch, which means THIS TREE IS MISSING A
+    // RELATIONSHIP the original's declarations had (candidate hypotheses on
+    // the marker below). The hand vbtable walk the old body spelled went
+    // byte-exact, but it was bad C++ that masked the gap; the mismatch is
+    // the signal to explore, not a wall to transcribe.
+    GraphicWin::close();
 }
 
 /*
@@ -215,12 +214,8 @@ void MapWin::on_sys_close() {
             free(base->owned_);
             base->owned_ = nullptr;
         }
-        // The image's own vbase dispatch, as in close() above - the
-        // static_cast spelling emits 25 instructions against the image's 19.
-        const int32_t *const vbtable =
-            *reinterpret_cast<const int32_t *const *>(base);
-        reinterpret_cast<GraphicWin *>(
-            reinterpret_cast<uint8_t *>(base) + vbtable[1])->close();
+        // The idiomatic spelling, by direction - see close() above.
+        base->GraphicWin::close();
     }
 }
 

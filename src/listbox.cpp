@@ -71,42 +71,43 @@ address - the code reads the seam pointers, so the mutants are byte-identical
 and equivalent by construction.
 */
 uint32_t ListBox::close() {
-    uint8_t *const base = reinterpret_cast<uint8_t *>(this);
-    // Base offsets come from the object's OWN vbtable, read at run time - never
-    // the compile-time 0x48/0xA60 - so an embedded ListBox with a different
-    // vbtable still reaches the correct subobjects (AGENTS.md RadioButton rule).
-    // GraphicWin virtual base: source-owned close at 0x005D4E40. Return discarded.
-    reinterpret_cast<GraphicWin *>(
-        base + (*reinterpret_cast<const int32_t *const *>(base))[1])->close();
-    // Dialog virtual base at 0x00608F50, CALLED BY NAME. Reached through the
-    // `ListBoxOriginalDialogClose` member pointer it cost a `call dword ptr`
-    // where the image emits `call rel32` - `osmx semantic` refused this body
-    // at "instruction 9: call operand is a different KIND". `Dialog::close`
-    // is a real declared method backed by a pending_bodies forwarder, and
-    // checkbox.cpp and radiobutton.cpp already reach it this way.
-    reinterpret_cast<Dialog *>(
-        base + (*reinterpret_cast<const int32_t *const *>(base))[2])->Dialog::close();
+    // Base offsets come from the object's OWN vbtable, read at run time -
+    // never the compile-time 0x48/0xA60 - so an embedded ListBox with a
+    // different vbtable still reaches the correct subobjects (AGENTS.md
+    // RadioButton rule). The qualified calls give that runtime dispatch:
+    // the compiler's virtual-base member call reads the vbtable exactly
+    // where the old hand walks read it.
+    // GraphicWin virtual base: source-owned close at 0x005D4E40. Return
+    // discarded.
+    GraphicWin::close();
+    // Dialog virtual base at 0x00608F50, CALLED BY NAME. `Dialog::close`
+    // is a real declared method backed by a pending_bodies forwarder.
+    Dialog::close();
 
-    uint32_t *const object = reinterpret_cast<uint32_t *>(base);
-    object[0x04 / 4] = 0;
-    object[0x08 / 4] = 0;
-    object[0x18 / 4] = 0;
-    object[0x1C / 4] = 0;
-    object[0x20 / 4] = 0;
-    object[0x24 / 4] = ListBoxCloseStaticDefaults[0];   // 0x006970E0
-    object[0x28 / 4] = ListBoxCloseDynamicDefault;     // 0x009B8EE0
-    object[0x2C / 4] = ListBoxCloseStaticDefaults[1];   // 0x006970E4
-    object[0x10 / 4] = ListBoxCloseStaticDefaults[2];   // 0x006970E8
-    object[0x14 / 4] = ListBoxCloseStaticDefaults[3];   // 0x006970EC
+    // The ListBox-owned resets, as the member writes they are; the defaults
+    // come from the same seams as before. The Dialog::field_B4_ = 1 store
+    // below is reached through the runtime vbtable displacement, as the
+    // image does - its access-and-naming pass is the recorded follow-up.
+    field_4_ = 0;
+    field_8_ = 0;
+    field_18_ = 0;
+    field_1C_ = 0;
+    field_20_ = 0;
+    field_24_ = ListBoxCloseStaticDefaults[0];   // 0x006970E0
+    field_28_ = ListBoxCloseDynamicDefault;     // 0x009B8EE0
+    field_2C_ = ListBoxCloseStaticDefaults[1];   // 0x006970E4
+    field_10_ = ListBoxCloseStaticDefaults[2];   // 0x006970E8
+    field_14_ = ListBoxCloseStaticDefaults[3];   // 0x006970EC
     // Dialog::field_B4_ = 1, reached through the runtime vbtable displacement.
     *reinterpret_cast<uint32_t *>(
-        base + (*reinterpret_cast<const int32_t *const *>(base))[2] + 0xB4) = 1;
-    object[0x30 / 4] = 0;
-    object[0x34 / 4] = 0;
-    object[0x38 / 4] = 0;
-    object[0x3C / 4] = 0;
-    object[0x40 / 4] = 0;
-    object[0x0C / 4] = 0;
+        reinterpret_cast<uint8_t *>(this) +
+        (*reinterpret_cast<const int32_t *const *>(this))[2] + 0xB4) = 1;
+    field_30_ = 0;
+    field_34_ = 0;
+    field_38_ = 0;
+    field_3C_ = 0;
+    field_40_ = 0;
+    field_C_ = 0;
     return 0;
 }
 

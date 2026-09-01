@@ -102,42 +102,26 @@ SpriteBox::SpriteBox(int a1) {
 
     field_8_ = *reinterpret_cast<int *>(0x009B8FC4);
 
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off1 = vbtable[1];
-        Buffer *const buf = reinterpret_cast<Buffer *>(self + off1 + 0x444);
-        buf->set_text_color(*reinterpret_cast<int *>(0x006970AC),
-                             *reinterpret_cast<int *>(0x006970B8),
-                             *reinterpret_cast<int *>(0x006970C4),
-                             *reinterpret_cast<int *>(0x006970D0));
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off1 = vbtable[1];
-        Buffer *const buf = reinterpret_cast<Buffer *>(self + off1 + 0x444);
-        buf->set_text_color2(*reinterpret_cast<int *>(0x006970B0),
-                              *reinterpret_cast<int *>(0x006970BC),
-                              *reinterpret_cast<int *>(0x006970C8),
-                              *reinterpret_cast<int *>(0x006970D4));
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off1 = vbtable[1];
-        Buffer *const buf = reinterpret_cast<Buffer *>(self + off1 + 0x444);
-        buf->set_text_color3(*reinterpret_cast<int *>(0x006970B4),
-                              *reinterpret_cast<int *>(0x006970C0),
-                              *reinterpret_cast<int *>(0x006970CC),
-                              *reinterpret_cast<int *>(0x006970D8));
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off1 = vbtable[1];
-        Buffer *const buf = reinterpret_cast<Buffer *>(self + off1 + 0x444);
-        buf->set_font(*reinterpret_cast<Font **>(0x009B8EC0),
-                      *reinterpret_cast<Font **>(0x009B8EC4),
-                      *reinterpret_cast<Font **>(0x009B8EC8),
-                      0);
-    }
+    // The buffer-default calls, spelled as the qualified base calls they are:
+    // the receiver the old hand walks computed (GraphicWin vbase through the
+    // vbtable, then the Buffer base at its +0x444) is what the compiler
+    // computes for a Buffer member call from this class.
+    Buffer::set_text_color(*reinterpret_cast<int *>(0x006970AC),
+                           *reinterpret_cast<int *>(0x006970B8),
+                           *reinterpret_cast<int *>(0x006970C4),
+                           *reinterpret_cast<int *>(0x006970D0));
+    Buffer::set_text_color2(*reinterpret_cast<int *>(0x006970B0),
+                            *reinterpret_cast<int *>(0x006970BC),
+                            *reinterpret_cast<int *>(0x006970C8),
+                            *reinterpret_cast<int *>(0x006970D4));
+    Buffer::set_text_color3(*reinterpret_cast<int *>(0x006970B4),
+                            *reinterpret_cast<int *>(0x006970C0),
+                            *reinterpret_cast<int *>(0x006970CC),
+                            *reinterpret_cast<int *>(0x006970D8));
+    Buffer::set_font(*reinterpret_cast<Font **>(0x009B8EC0),
+                     *reinterpret_cast<Font **>(0x009B8EC4),
+                     *reinterpret_cast<Font **>(0x009B8EC8),
+                     0);
 }
 
 /*

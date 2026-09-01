@@ -96,7 +96,12 @@ SHAPES = [
     # 17 -> 12 (batch 8, dialogs/listbox staging strips): the staging reads
     # left with the derived-stage stores they fed. The remaining 12 are the
     # image's own dispatch (close/handler receivers it walks itself).
-    ("hand-walked vbtable", 12,
+    # 12 -> 8 (idiomatic-dispatch direction, 2026-09-01): MapWin close/
+    # on_sys_close, CheckBox/RadioButton/ListBox closes and SpriteBox's
+    # buffer-default calls are qualified base calls now - EVERY one of them
+    # measures BYTE_EXACT through the compiler's own dispatch, including the
+    # three that held claims. The hand walk was masking convergence.
+    ("hand-walked vbtable", 8,
      re.compile(r"\*reinterpret_cast<(?:const )?int32_t \*(?:const )?\*>\([^)]*\)\)\[[12]\]"),
      "reads a virtual-base displacement out of the vbtable by hand. That is "
      "what `public virtual` makes the compiler do."),
