@@ -586,9 +586,12 @@ int Dialogs::on_scroll_delete(void *scroll) {
         char *mid = self + off - 0x140;
         unsigned char flags = *reinterpret_cast<unsigned char *>(mid + 0x50);
         if (flags & 0x40) {
-            ScrollVCall *scroll_box = *reinterpret_cast<ScrollVCall **>(mid + 0x7c);
+            // The scroll is a Win-family object: slot 9 is the declared
+            // vslot_09(int), whose default returns its argument - which is
+            // exactly this body's documented pass-back behaviour.
+            Scroll *scroll_box = *reinterpret_cast<Scroll **>(mid + 0x7c);
             if (scroll_box != 0) {
-                return scroll_box->slot009(reinterpret_cast<int>(scroll));
+                return reinterpret_cast<int>(scroll_box->vslot_09(scroll));
             }
         }
     }
