@@ -63,14 +63,10 @@ Purpose: Construct BaseWin's large aggregate of sub-windows: a ProdPicker, a
 // finding from an isolated scaffold. Bodied for COVERAGE: every sub-object
 // below is a real, correctly-offset, correctly-typed member already modelled
 // in basewin.h, constructed implicitly in declaration order (matching the
-// image's own order field-for-field) except MapWin, whose own constructor
-// is the empty inline stub - its real work is `MapWin::construct(int)`,
-// the established seam for a virtual-base constructor reached through a
-// pointer-to-member elsewhere in this tree.
+// image's own order field-for-field) - mapWin_ included now that MapWin has
+// its real constructor, which pushes the hidden most-derived flag 1 exactly
+// where the image's member construction does.
 BaseWin::BaseWin() {
-
-    mapWin_.construct(1);
-
 }
 
 /*

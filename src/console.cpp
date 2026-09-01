@@ -42,7 +42,8 @@
 Purpose: Build the game console - its virtual GraphicWin base, its MapWin
          base, its own extra (non-virtual) embedded GraphicWin, and its own
          Buffer/Time/Menu/Sprite members.
-// ORIGINAL: 0x0050F460 ??0Console@@QAE@H@Z 0x0050F460-0x0050F629;0x0065D250-0x0065D2EF
+// ORIGINAL: 0x0050F460 ??0Console@@QAE@H@Z 0x0050F460-0x0050F629;0x0065D250-0x0065D2EF BYTE_EXACT
+// symbol    ??0Console@@QAE@XZ
 // size      616 bytes
 // prototype void (__thiscall ??0Console@@QAE@H@Z)(Console* this, int)
 // callers   1   call targets   7
@@ -51,25 +52,24 @@ Purpose: Build the game console - its virtual GraphicWin base, its MapWin
 // calls     0x004626E0 0x005D4CF0 0x005D7210 0x005E37E0 0x005FAC60 0x006161D0 0x006457C2
 Return Value: this
 
-MEASURED: not spelled as a real constructor - see the note in `console.h`
-and `mapwin.h`. A plain method never gets VC6's own most-derived-flag
-treatment, so the single `a1` here is read and branched on exactly as the
-image's `[ebp+8]` is, with no second, compiler-inserted flag arriving
-alongside it. Console's own fields past the MapWin base are still opaque
-storage (see the class declaration), so everything below reaches its
-sub-objects by raw offset.
+MEASURED: spelled as the bare real constructor - the catalogue's `H` is the
+hidden most-derived flag (see the note in `console.h` and mapwin.h's
+attempt-#2 note). The earlier `Console(int input)` spelling landed with a
+known regression by direction: VC6 emitted flag AND int, doubling the body's
+vbase machinery to 169 instructions against the image's 106. That regression
+comes back off with the bare spelling now that MapWin's real constructor
+converted.
 */
-Console::Console(int input) {
+Console::Console()
+    : MapWin() {
     // The compiler owns the construction machinery for the real constructor:
     // the Console vbtable store, the virtual GraphicWin base at +0x23D94
-    // under the most-derived flag, the MapWin base, and every declared
+    // under the most-derived flag, the MapWin base (the mem-initialiser
+    // above - the compiler pushes the hidden flag 0 for the base stage,
+    // where the image's ??0Console pushes it once), and every declared
     // member below in declaration order - the same sequence the image's
-    // ??0Console spells. What remains in the body is the base's own
-    // initialize-by-hand (MapWin has no constructor - mapwin.h), the
-    // menu subobject's AlphaMenu-stage vptr overlay (the image installs
-    // those itself, over what Menu's constructor installed), and the
-    // scalar field clears.
-    MapWin::construct(0);
+    // ??0Console spells. What remains in the body is the menu subobject's
+    // share of the scalar field clears.
 
     // The menu subobject's AlphaMenu-stage vptrs need no hand store either:
     // alpha_menu_ is a real AlphaMenu, and its own constructor - which the
@@ -786,5 +786,9 @@ Time g_CONSOLE_TIMER;
 // the zero storage the image leaves until its own init fills them.
 PrefWin ConsolePrefWin;   // 0x008578D8
 InfoWin ConsoleInfoWin;   // 0x007AD2A0
-Console ConsoleGlobal(1);  // 0x009156B0 - the image's ??__E passes the
-                           // most-derived flag: push 1 at 0x0050E852
+// 0x009156B0 - the bare declaration is what the image has: its ??__E
+// dynamic initialiser pushes the hidden most-derived flag (push 1 at
+// 0x0050E852) and the compiler emits that push for a most-derived global
+// on its own. The old explicit `ConsoleGlobal(1)` was the flag spelled as
+// a real int - the exact doubling Console(int) carried.
+Console ConsoleGlobal;

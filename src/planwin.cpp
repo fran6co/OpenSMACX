@@ -37,11 +37,11 @@ static void __fastcall planwin_image_button_element_dtor(void *self) {
 
 
 // The dword immediately ahead of MapWin's virtual base. MapWin used to
-// declare it as a member; VC6 owns those four bytes as MapWin's vtordisp now
-// that MapWin's methods override Win's virtuals, so it has no name here any
-// more - and giving PlanWin its own member at 0x21A68 measured +4 on sizeof,
-// which proves the dword still belongs to the MapWin subobject. This reaches
-// it the same way `virtual_base_of` reaches the base: through the parameter,
+// declare it as a member; VC6 owns those four bytes as MapWin's vtordisp
+// when MapWin is the most-derived object, but inside PlanWin the base is
+// not most-derived and emits no vtordisp there, so PlanWin names the slot
+// itself (field_21A68_ in planwin.h) to hold the layout. This reaches it
+// the same way `virtual_base_of` reaches the base: through the parameter,
 // so no body has to pun its own `this`.
 static int32_t &pre_vbase_dword(void *self) {
     return *reinterpret_cast<int32_t *>(
@@ -49,21 +49,11 @@ static int32_t &pre_vbase_dword(void *self) {
 }
 
 
-// The vbtable PlanWin stores at its own front when it is the one building
-// the embedded GraphicWin, and the two hand-maintained "vtable" pointers
-// `GraphicWin::construct`'s own idiom writes when GraphicWin is directly
-// the most-derived object (see graphicwin.cpp) - PlanWin has to repeat the
-// latter pair on its own embedded GraphicWin, because nothing in this chain
-// declares a single `virtual` and so VC6 never refreshes them on its own.
-static void *const PrefWinVftable = reinterpret_cast<void *>(0x0066D414);
-static void *const PlanWinVftable = reinterpret_cast<void *>(0x0066D2AC);
-static void *const PlanWinVirtualBaseVftable = reinterpret_cast<void *>(0x0066D2A4);
-
 /*
 Purpose: Build a plan window - attach its embedded GraphicWin, the MapWin
          base beneath it, and its own Buffer.
 // ORIGINAL: 0x0048BCD0 ??0PlanWin@@QAE@H@Z 0x0048BCD0-0x0048BD7E;0x006581D0-0x00658205
-// symbol    ?construct@PlanWin@@QAEXH@Z
+// symbol    ??0PlanWin@@QAE@XZ
 // size      227 bytes
 // prototype void (__thiscall ??0PlanWin@@QAE@H@Z)(PlanWin* this, int)
 // callers   1   call targets   3
@@ -72,34 +62,20 @@ Purpose: Build a plan window - attach its embedded GraphicWin, the MapWin
 // calls     0x004626E0 0x005D4CF0 0x005D7210
 Return Value: this
 
-MEASURED: not spelled as a real constructor - see the note in `planwin.h`. A
-plain method never gets VC6's own most-derived-flag treatment, so the single
-`a1` here is read and branched on exactly as the image's `[ebp+8]` is, with
-no second, compiler-inserted flag arriving alongside it.
+The compiler owns the construction machinery from the declarations in
+planwin.h: the vbtable store, the MapWin base stage (the hidden flag
+pushed 0, where the image's ??0PlanWin pushes it once), the virtual
+GraphicWin base at +0x22050 under PlanWin's own flag, buffer_, and the
+vbase-branch vtable pair plus vtordisp the old hand body spelled at
+graphic_win. The body keeps the two scalar clears. One accepted divergence
+by direction: the image builds the +0x22050 GraphicWin through the
+`GraphicWin::construct()` method (0x005D4CF0 in its call list) - the same
+hand-rolled vtable idiom this sweep exists to remove - where the real
+constructor chain calls ??0GraphicWin.
 */
-void PlanWin::construct(int input) {
-    char *const self = reinterpret_cast<char *>(this);
-
-    if (input) {
-        *reinterpret_cast<void **>(self) = PrefWinVftable;
-        new (reinterpret_cast<GraphicWin *>(self + 0x22050)) GraphicWin();
-    }
-
-    MapWin::construct(0);
-    buffer_.Buffer::Buffer();
-
-    char *const graphic_win = self + 0x22050;
-    *reinterpret_cast<void **>(graphic_win) = PlanWinVftable;
-    *reinterpret_cast<void **>(graphic_win + 0x444) = PlanWinVirtualBaseVftable;
-    *reinterpret_cast<int32_t *>(graphic_win - 4) = 0;
+PlanWin::PlanWin() {
+    field_21A68_ = 0;
     field_21A6C_ = 0;
-    // 0x21A68 BY OFFSET: MapWin no longer names it (VC6 owns those four
-    // bytes as MapWin's vtordisp now that MapWin overrides Win's virtuals),
-    // and giving PlanWin a member here measured +4 on sizeof - so the dword
-    // still belongs to the MapWin subobject. Reaching it by offset is the
-    // honest holding position; it is 3 raw accesses of debt, to be paid when
-    // the MapWin/PlanWin pass models this boundary properly.
-    pre_vbase_dword(this) = 0;
 }
 
 /*

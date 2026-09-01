@@ -85,7 +85,10 @@ SHAPES = [
     # left with it.
     # 19 -> 16 (batch 2, leaf families): the WorldWin ctor placements joined
     # the compiler-owned set with the real WorldWin(int) constructor.
-    ("placement new on a subobject", 16,
+    # 16 -> 14 (batch 5, mapwin attempt #2): MapWin's and PlanWin's GraphicWin
+    # placements left with their real constructors - ??0MapWin BYTE_EXACT
+    # 92/92, ??0Console BYTE_EXACT 106/106 on the bare spellings.
+    ("placement new on a subobject", 14,
      re.compile(r"new\s*\(\s*(?:&|static_cast|reinterpret_cast)"),
      "costs a null guard (`test ecx, ecx; je`) the image does not have. A real "
      "base or member is constructed unconditionally."),
