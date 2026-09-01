@@ -105,12 +105,21 @@ SHAPES = [
     # accessors and ListBox's field_B4_ re-arm are plain member writes
     # through the virtual Dialog base (selected_position_/field_B4_ made
     # public). set_state_flag holds BYTE_EXACT through it.
-    ("hand-walked vbtable", 6,
+    # 6 -> 2 (entered-receiver conversions): the four on_mouse_leave/
+    # on_dialog_focus bodies were field_F0_ = -1 + vslot_62() all along -
+    # every one measures BYTE_EXACT as plain member forms. The remaining
+    # sites are the Q-spelled entered-receiver handlers (ListBox's three,
+    # demoted with the finding) and mapwin's helper.
+    ("hand-walked vbtable", 2,
      re.compile(r"\*reinterpret_cast<(?:const )?int32_t \*(?:const )?\*>\([^)]*\)\)\[[12]\]"),
      "reads a virtual-base displacement out of the vbtable by hand. That is "
      "what `public virtual` makes the compiler do."),
 
-    ("VCall shim", 21,
+    # 21 -> 15 (idiomatic-dispatch direction, 2026-09-01): CheckBox's
+    # set_state_flag repaint and the three family on_mouse_leave bodies are
+    # plain `vslot_62()` calls - every one BYTE_EXACT - and the ListBox
+    # click-handler shim is gone with its three vslot_20/28/49 conversions.
+    ("VCall shim", 15,
      re.compile(r"\bVCall\b"),
      "dispatches through a fake class because the real function is not "
      "declared virtual. Declare it."),

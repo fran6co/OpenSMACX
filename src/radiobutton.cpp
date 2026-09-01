@@ -218,29 +218,12 @@ Return Value: n/a
 Status: Complete
 */
 void RadioButton::on_mouse_leave(int a1, int a2) {
-    // `this` reaches a vbtable-shaped descriptor with two deltas:
-    // entry +8 locates the field, entry +4 the enclosing object's vtable.
-    // THE CONSTANT IS 0xF0 NOW - the compiler performs the walk back to the
-    // enclosing object as part of the override's entry, so the source states
-    // the field's ACTUAL offset there. Note 0x18 + 0xD8 == 0xF0, so the
-    // field is at a FIXED +0xF0 in the enclosing object and these classes are
-    // subobjects at differing offsets inside it.
-    //
-    // The arithmetic must go through `char *`. Through `int *` the compiler
-    // scales the +8 and emits [eax+0x20].
-    //
-    // Both parameters are dead; `ret 8` still pops them.
-    *reinterpret_cast<int *>(
-        reinterpret_cast<char *>(this) + 0xF0 +
-        *reinterpret_cast<int *>(reinterpret_cast<char *>(
-            *reinterpret_cast<int **>(
-                reinterpret_cast<char *>(this))) + 8)) = -1;
-
-    reinterpret_cast<VCall *>(
-        reinterpret_cast<char *>(this) +
-        *reinterpret_cast<int *>(reinterpret_cast<char *>(
-            *reinterpret_cast<int **>(
-                reinterpret_cast<char *>(this))) + 4))->slot062();
+    // Clear the hover index (Dialog::field_F0_, through the virtual base)
+    // and repaint (the vslot_62 virtual) - plain member forms; the
+    // compiler's virtual-base machinery does the walking the old hand
+    // chains spelled. Both parameters are dead; `ret 8` still pops them.
+    field_F0_ = -1;
+    vslot_62();
 }
 
 /*
