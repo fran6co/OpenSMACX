@@ -155,7 +155,7 @@ CEILINGS = {
     # 224 -> 222 (batch 2, leaf families): stripping the Scroll/PushButton/
     # FlatButton/FileWin re-stage stores removed their reinterpret_cast
     # object anchors.
-    "raw self-access": 222,
+    "raw self-access": 218,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these

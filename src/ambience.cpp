@@ -445,7 +445,6 @@ void Ambience::construct() {
     // order.
     object[0x40 / 4] |= 8;
     bytes[0x54] |= 1;
-    object[0x00 / 4] = 0x0066E664;
     reinterpret_cast<Sound *>(this)->set_type(5);
 }
 
@@ -567,11 +566,6 @@ void GAmbience::basewin_hide() {
 }
 
 
-const uint32_t FactionAmbienceVtable = 0x0066C0F8;
-const uint32_t MAmbienceVtable = 0x0066BE28;
-const uint32_t SAmbienceVtable = 0x0066BB58;
-const uint32_t GAmbienceVtable = 0x0066BF90;
-
 /*
 Purpose: Run the shared Ambience constructor, publish this variant's vtable,
          and zero the fields this variant owns.
@@ -596,7 +590,10 @@ Purpose: Run the shared Ambience constructor, publish this variant's vtable,
          0x6c and 0x6d are BYTES. 0x6e and 0x6f are not written, so whatever
          the storage held survives there.
 
-// ORIGINAL: 0x004471F0 ??0FactionAmbience@@QAE@XZ 0x004471F0-0x00447219 BYTE_EXACT
+// ORIGINAL: 0x004471F0 ??0FactionAmbience@@QAE@XZ 0x004471F0-0x00447219
+// DEMOTED from BYTE_EXACT by direction (strip-all hand vptr writes): the
+// derived-stage vptr overlay store left with the de-management sweep.
+
 // LEVER: the vtable store must NOT be `volatile`. A volatile store is a scheduling barrier for VC6, so the `xor eax, eax` that feeds the seven zero field stores could not be hoisted above it - 13 of 15, with the image's `xor eax, eax` / `mov [esi], vtable` pair in the wrong order. Dropping the qualifier gives 15 of 15, BYTE_EXACT. The store stays alive without it because the seven field stores that follow are not dead, so nothing lets VC6 prove the object unobserved. Measured the same 15 of 15 with the `object[0x000 / 4]` idiom and with the zero stores written before the vtable store, so only the qualifier matters.
 // symbol    ?construct@FactionAmbience@@QAEPAV1@XZ
 //   The catalogued name is the mangled CONSTRUCTOR, `??0FactionAmbience@@QAE@XZ`,
@@ -617,7 +614,6 @@ FactionAmbience *FactionAmbience::construct() {
     // redirect's unused second argument materialises `xor edx, edx`, one
     // instruction the image does not have.
     reinterpret_cast<Ambience *>(this)->Ambience::construct();
-    *reinterpret_cast<uint32_t *>(this) = FactionAmbienceVtable;
     field_58_ = 0;
     field_5C_ = 0;
     field_60_ = 0;
@@ -631,7 +627,10 @@ FactionAmbience *FactionAmbience::construct() {
 
 /*
 Purpose: As 004471F0, with the MAmbience vtable and one more field.
-// ORIGINAL: 0x00447310 ??0MAmbience@@QAE@XZ 0x00447310-0x0044733C BYTE_EXACT
+// ORIGINAL: 0x00447310 ??0MAmbience@@QAE@XZ 0x00447310-0x0044733C
+// DEMOTED from BYTE_EXACT by direction (strip-all hand vptr writes): the
+// derived-stage vptr overlay store left with the de-management sweep.
+
 // LEVER: same as 0x004471F0 - the vtable store must not be `volatile`, because the barrier stops VC6 hoisting the `xor eax, eax` the zero field stores share. Dropping it took this body byte-exact too.
 // symbol    ?construct@MAmbience@@QAEPAV1@XZ
 //   The catalogued name is the mangled CONSTRUCTOR, `??0MAmbience@@QAE@XZ`,
@@ -652,7 +651,6 @@ MAmbience *MAmbience::construct() {
     // redirect's unused second argument materialises `xor edx, edx`, one
     // instruction the image does not have.
     reinterpret_cast<Ambience *>(this)->Ambience::construct();
-    *reinterpret_cast<uint32_t *>(this) = MAmbienceVtable;
     field_58_ = 0;
     field_5C_ = 0;
     field_60_ = 0;
@@ -667,7 +665,10 @@ MAmbience *MAmbience::construct() {
 
 /*
 Purpose: As 004471F0, with the SAmbience vtable and two more fields.
-// ORIGINAL: 0x00447850 ??0SAmbience@@QAE@XZ 0x00447850-0x0044787F BYTE_EXACT
+// ORIGINAL: 0x00447850 ??0SAmbience@@QAE@XZ 0x00447850-0x0044787F
+// DEMOTED from BYTE_EXACT by direction (strip-all hand vptr writes): the
+// derived-stage vptr overlay store left with the de-management sweep.
+
 // LEVER: same as 0x004471F0 - the vtable store must not be `volatile`, because the barrier stops VC6 hoisting the `xor eax, eax` the zero field stores share. Dropping it took this body byte-exact too.
 // symbol    ?construct@SAmbience@@QAEPAV1@XZ
 //   The catalogued name is the mangled CONSTRUCTOR, `??0SAmbience@@QAE@XZ`,
@@ -688,7 +689,6 @@ SAmbience *SAmbience::construct() {
     // redirect's unused second argument materialises `xor edx, edx`, one
     // instruction the image does not have.
     reinterpret_cast<Ambience *>(this)->Ambience::construct();
-    *reinterpret_cast<uint32_t *>(this) = SAmbienceVtable;
     field_58_ = 0;
     field_5C_ = 0;
     field_60_ = 0;
@@ -704,7 +704,10 @@ SAmbience *SAmbience::construct() {
 
 /*
 Purpose: As 004471F0, with the GAmbience vtable and one more field.
-// ORIGINAL: 0x00447B90 ??0GAmbience@@QAE@XZ 0x00447B90-0x00447BBC BYTE_EXACT
+// ORIGINAL: 0x00447B90 ??0GAmbience@@QAE@XZ 0x00447B90-0x00447BBC
+// DEMOTED from BYTE_EXACT by direction (strip-all hand vptr writes): the
+// derived-stage vptr overlay store left with the de-management sweep.
+
 // LEVER: same as 0x004471F0 - the vtable store must not be `volatile`, because the barrier stops VC6 hoisting the `xor eax, eax` the zero field stores share. Dropping it took this body byte-exact too.
 // symbol    ?construct@GAmbience@@QAEPAV1@XZ
 //   The catalogued name is the mangled CONSTRUCTOR, `??0GAmbience@@QAE@XZ`,
@@ -725,7 +728,6 @@ GAmbience *GAmbience::construct() {
     // redirect's unused second argument materialises `xor edx, edx`, one
     // instruction the image does not have.
     reinterpret_cast<Ambience *>(this)->Ambience::construct();
-    *reinterpret_cast<uint32_t *>(this) = GAmbienceVtable;
     field_58_ = 0;
     field_5C_ = 0;
     field_60_ = 0;

@@ -44,7 +44,7 @@ SHAPES = [
     # STRUCTURE finding is banked under the marker.
     # 28 -> 12 (batch 2, leaf families): the Scroll/PushButton/FlatButton/
     # WorldWin re-stage stores stripped with their constants.
-    ("vtable", 12,
+    ("vtable", 8,
      re.compile(r"""(?x)
         (?: \w+ \s* \[ \s* 0x[0-9A-Fa-f]+ \s* / \s* 4 \s* \]
           | \* \s* reinterpret_cast \s* < [^>]*? \* \s* > \s* \([^)]*\)
@@ -140,7 +140,7 @@ HEADER_SHAPES = [
     # ProdPicker pairs, BaseWin's four, SocialWin's four, Gamma's pair,
     # GraphicWin's pair, BufferVtable, the ImageButton pair - plus net_class's
     # six and alphanet's five unused construction-table arrays.
-    ("vtable address constant", 28,
+    ("vtable address constant", 24,
      re.compile(r"\b[A-Za-z_]\w*Vtable\w*\s*=\s*\(?\s*0x"),
      "the raw material every hand-installed vtable is built from. When the "
      "classes are real, these constants have nothing left to point at."),
