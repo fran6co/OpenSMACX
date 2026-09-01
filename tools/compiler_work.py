@@ -101,7 +101,11 @@ SHAPES = [
     # buffer-default calls are qualified base calls now - EVERY one of them
     # measures BYTE_EXACT through the compiler's own dispatch, including the
     # three that held claims. The hand walk was masking convergence.
-    ("hand-walked vbtable", 8,
+    # 8 -> 6 (idiomatic-access direction): CheckBox's four state-word
+    # accessors and ListBox's field_B4_ re-arm are plain member writes
+    # through the virtual Dialog base (selected_position_/field_B4_ made
+    # public). set_state_flag holds BYTE_EXACT through it.
+    ("hand-walked vbtable", 6,
      re.compile(r"\*reinterpret_cast<(?:const )?int32_t \*(?:const )?\*>\([^)]*\)\)\[[12]\]"),
      "reads a virtual-base displacement out of the vbtable by hand. That is "
      "what `public virtual` makes the compiler do."),

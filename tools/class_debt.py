@@ -176,7 +176,9 @@ CEILINGS = {
     # recovery simplified with its re-stores.
     # 204 -> 200 (idiomatic-dispatch direction, 2026-09-01): the walks' raw
     # self casts left with the qualified base calls that replaced them.
-    "raw self-access": 200,
+    # 200 -> 196 (idiomatic-access direction): the state-word accessors'
+    # raw self casts left with the plain member writes through the vbase.
+    "raw self-access": 196,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
