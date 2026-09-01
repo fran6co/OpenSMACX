@@ -133,10 +133,16 @@ class Console : public MapWin {
   void menu_update();
   void editor_redo();
   void editor_climate();
-  Console() { ; }
-  // See the note in `mapwin.h`: a `construct` method rather than a real
-  // constructor, because VC6's hidden most-derived flag doubles the push.
-  void construct(int input);
+  // The image's ??0Console@@QAE@H@Z spells one explicit `int` - the flag
+  // that gates the most-derived construction (the vbtable store and the
+  // virtual GraphicWin base at +0x23D94 sit inside its `if`) - so the
+  // real-constructor spelling carries that int as a real parameter and
+  // mangles to the image's own name. LANDED WITH KNOWN REGRESSIONS by
+  // direction: the compiler's own vbase/vbtable machinery doubles the
+  // body's hand-written equivalents (169 instructions against 106) until
+  // MapWin's real constructor converts - mapwin.h records the wall its
+  // own attempt hit.
+  Console(int input);
   // A genuine destructor is safe here (unlike the constructor): destructors
   // never carry the most-derived flag - `guarded_teardowns.cpp`'s own
   // already-matching `->Console::~Console()` proves it, the same way it did
