@@ -242,7 +242,8 @@ class Console : public MapWin {
   uint32_t field_23C04_;  // 0x23C04
   uint32_t field_23C08_;  // 0x23C08
   uint32_t field_23C0C_;  // 0x23C0C
-  uint8_t field_23C10_[0x100];  // 0x23C10
+  uint32_t field_23C10_[0x20];  // 0x23C10
+  uint32_t field_23C90_[0x20];  // 0x23C90
   uint32_t field_23D10_;  // 0x23D10
   uint32_t field_23D14_;  // 0x23D14
   uint32_t field_23D18_;  // 0x23D18

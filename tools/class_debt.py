@@ -148,7 +148,11 @@ CEILINGS = {
     # blocks of reinterpret_cast member access with named members, and the
     # hand-spelled ~MapWin/~Console bodies came out of the .cpp files with
     # them. ??1MapWin went BYTE_EXACT 73/73 on the declared model.
-    "raw self-access": 225,
+    # 225 -> 224 (2026-09-01, console real-constructor round): Console(int)
+    # dropped its `char *const self = reinterpret_cast<char *>(this)` anchor
+    # and the placement news went with it - the compiler builds the declared
+    # members.
+    "raw self-access": 224,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these

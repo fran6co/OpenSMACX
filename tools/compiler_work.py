@@ -67,7 +67,11 @@ SHAPES = [
      "duplicates the base constructor or destructor the compiler already "
      "calls, so the body carries one call too many."),
 
-    ("placement new on a subobject", 21,
+    # 21 -> 19 (console batch): Console's real constructor lets the compiler
+    # build graphic_win_ and the virtual GraphicWin base from the declared
+    # members - the two GraphicWin placements in the old construct() body
+    # left with it.
+    ("placement new on a subobject", 19,
      re.compile(r"new\s*\(\s*(?:&|static_cast|reinterpret_cast)"),
      "costs a null guard (`test ecx, ecx; je`) the image does not have. A real "
      "base or member is constructed unconditionally."),
