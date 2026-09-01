@@ -169,7 +169,10 @@ CEILINGS = {
     # 211 -> 209 (batch 6, stringstruct dtor chain): close()'s vbtable-walk
     # stores and the redirect's adjusted-receiver recovery left with the hand
     # close chain.
-    "raw self-access": 209,
+    # 209 -> 205 (batch 7, virtual-base four): CheckBox/RadioButton/EditGroup/
+    # SpriteBox ctor+dtor staging blocks stripped - their vbtable reads and
+    # raw self casts went with the derived-stage stores.
+    "raw self-access": 205,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
