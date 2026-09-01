@@ -368,7 +368,6 @@ int Dialog::set_def_dialog_font(Font *font1, Font *font2, Font *font3) {
 
 func_dialog_close DialogOriginalClose = original_method<func_dialog_close>(0x00608F50);
 
-const uint32_t DialogPrimaryVtable = 0x006703FC;
 uint32_t DialogListDerivedVtable = 0x006698C4;
 uint32_t DialogListDerivedVirtualBaseVtable = 0x006698C0;
 uint32_t DialogListVtable = 0x006693A4;
@@ -423,7 +422,6 @@ mutant is equivalent by construction.
 void Dialog::destroy() {
     // The vtable slot is no longer a declared member; reach the same four
     // bytes the compiler's vfptr occupies.
-    *reinterpret_cast<uint32_t *>(this) = DialogPrimaryVtable;
     (ORIGINAL(this)->*DialogOriginalClose)();
 
     // The derived-close chain at 0x004066C0, inlined by the original: each

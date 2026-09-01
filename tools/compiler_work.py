@@ -46,7 +46,9 @@ SHAPES = [
     # WorldWin re-stage stores stripped with their constants.
     # 12 -> 3 (batch 3, alphamovie): amovie_project's five install/re-install
     # pairs stripped with the two AlphaMovie constants.
-    ("vtable", 3,
+    # 3 -> 2 (batch 4, dialog family): Dialog::destroy's primary overlay store
+    # stripped with its constant.
+    ("vtable", 2,
      re.compile(r"""(?x)
         (?: \w+ \s* \[ \s* 0x[0-9A-Fa-f]+ \s* / \s* 4 \s* \]
           | \* \s* reinterpret_cast \s* < [^>]*? \* \s* > \s* \([^)]*\)
@@ -144,7 +146,7 @@ HEADER_SHAPES = [
     # six and alphanet's five unused construction-table arrays.
     # 24 -> 22 (batch 3, alphamovie): AlphaMoviePrimary/BufferVtable stripped
     # with amovie_project's five install/re-install pairs.
-    ("vtable address constant", 22,
+    ("vtable address constant", 21,
      re.compile(r"\b[A-Za-z_]\w*Vtable\w*\s*=\s*\(?\s*0x"),
      "the raw material every hand-installed vtable is built from. When the "
      "classes are real, these constants have nothing left to point at."),
