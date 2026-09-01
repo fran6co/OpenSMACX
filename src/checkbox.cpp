@@ -232,16 +232,14 @@ Return Value: n/a
 Status: Complete
 */
 void CheckBox::UNK1(int pos) {
-    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
-    const int32_t *const vbtable =
-        *reinterpret_cast<const int32_t *const *>(self);
-    uint32_t *const flags =
-        reinterpret_cast<uint32_t *>(self + vbtable[2] + 0xEC);
+    // The state word is Dialog::selected_position_, reached through the
+    // virtual base - the compiler's member access walks the vbtable exactly
+    // where the old hand walk read it.
     const uint32_t mask = 1U << (static_cast<uint32_t>(pos) & 31U);
-    if (*flags & mask) {
-        *flags &= ~mask;
+    if (selected_position_ & mask) {
+        selected_position_ &= ~mask;
     } else {
-        *flags |= mask;
+        selected_position_ |= mask;
     }
 }
 
@@ -262,13 +260,8 @@ Return Value: the state word masked to the requested bit
 Status: Complete
 */
 int CheckBox::UNK2(int pos) {
-    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
-    const int32_t *const vbtable =
-        *reinterpret_cast<const int32_t *const *>(self);
-    const uint32_t *const flags =
-        reinterpret_cast<const uint32_t *>(self + vbtable[2] + 0xEC);
     const uint32_t mask = 1U << (static_cast<uint32_t>(pos) & 31U);
-    return static_cast<int>(*flags & mask);
+    return static_cast<int>(selected_position_ & mask);
 }
 
 
@@ -286,16 +279,11 @@ Return Value: n/a
 Status: Complete
 */
 void CheckBox::set_state_pos(int pos, int state) {
-    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
-    const int32_t *const vbtable =
-        *reinterpret_cast<const int32_t *const *>(self);
-    uint32_t *const flags =
-        reinterpret_cast<uint32_t *>(self + vbtable[2] + 0xEC);
     const uint32_t mask = 1U << (static_cast<uint32_t>(pos) & 31U);
     if (state) {
-        *flags |= mask;
+        selected_position_ |= mask;
     } else {
-        *flags &= ~mask;
+        selected_position_ &= ~mask;
     }
 }
 
@@ -316,16 +304,14 @@ Return Value: n/a
 Status: Complete
 */
 void CheckBox::set_state_flag(long value) {
-    // Two separate reads of `*this` as a vbtable, not one cached local: the
-    // image reloads it (`mov edx,[ecx]`) between the store and the virtual
-    // call rather than keeping it live across both.
-    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
-    *reinterpret_cast<int32_t *>(
-        self + (*reinterpret_cast<const int32_t *const *>(self))[2] + 0xEC) =
-        static_cast<int32_t>(value);
+    // The state word as a plain member write; the repaint dispatch beside it
+    // (slot062 through the GraphicWin vbase) is batch-10 dispatch work and
+    // keeps its hand form for now. Two separate vbtable reads in the image,
+    // one per half.
+    selected_position_ = static_cast<int32_t>(value);
     reinterpret_cast<VCall *>(
-        self +
-        (*reinterpret_cast<const int32_t *const *>(self))[1])->slot062();
+        reinterpret_cast<uint8_t *>(this) +
+        (*reinterpret_cast<const int32_t *const *>(this))[1])->slot062();
 }
 
 /*

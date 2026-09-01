@@ -98,10 +98,9 @@ uint32_t ListBox::close() {
     field_2C_ = ListBoxCloseStaticDefaults[1];   // 0x006970E4
     field_10_ = ListBoxCloseStaticDefaults[2];   // 0x006970E8
     field_14_ = ListBoxCloseStaticDefaults[3];   // 0x006970EC
-    // Dialog::field_B4_ = 1, reached through the runtime vbtable displacement.
-    *reinterpret_cast<uint32_t *>(
-        reinterpret_cast<uint8_t *>(this) +
-        (*reinterpret_cast<const int32_t *const *>(this))[2] + 0xB4) = 1;
+    // Dialog::field_B4_ = 1, re-arming it through the virtual base as a
+    // plain member write.
+    field_B4_ = 1;
     field_30_ = 0;
     field_34_ = 0;
     field_38_ = 0;

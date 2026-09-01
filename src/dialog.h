@@ -159,7 +159,11 @@ class Dialog {
   uint32_t text_color_3d_;
   uint32_t field_AC_;
   uint32_t field_B0_;
+ public:
+  // See the note at selected_position_ below: ListBox re-arms this from
+  // close() through its virtual Dialog base.
   uint32_t field_B4_;
+ private:
   uint32_t field_B8_;
   // THE EMBEDDED ITEM LIST, carved 2026-09-01 from what was field_BC_ ..
   // field_E8_: exactly 0x30 = sizeof(StringList) at 0xBC..0xEC - the two ABI
@@ -170,7 +174,15 @@ class Dialog {
   // which is ~StringList's own compiler-emitted chain, spelled in destroy()
   // as the one explicit destructor call.
   StringList item_list_;
+  // PUBLIC, not private, with field_B4_ above: the derived families reach
+  // these through their virtual Dialog base - ListBox re-arms field_B4_ in
+  // close(), and CheckBox's four state-word accessors bit-work
+  // selected_position_ (the dword doubles as the per-box state bits, which
+  // is what the image's bytes do). Access changes no offset; the
+  // static_assert pins the layout, as with StringStruct's own fields.
+ public:
   int selected_position_;
+ private:
   uint32_t field_F0_;
 };
 
