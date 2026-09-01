@@ -182,7 +182,8 @@ class Dialog {
   // static_assert pins the layout, as with StringStruct's own fields.
  public:
   int selected_position_;
- private:
+  // 0xF0: the hover index the on_mouse_leave overrides clear (-1) through
+  // their virtual Dialog base - same public reason as selected_position_.
   uint32_t field_F0_;
 };
 

@@ -178,7 +178,10 @@ CEILINGS = {
     # self casts left with the qualified base calls that replaced them.
     # 200 -> 196 (idiomatic-access direction): the state-word accessors'
     # raw self casts left with the plain member writes through the vbase.
-    "raw self-access": 196,
+    # 196 -> 180 (entered-receiver conversions): the four on_mouse_leave/
+    # on_dialog_focus bodies' nested cast chains left with the plain
+    # field_F0_ = -1 + vslot_62() member forms.
+    "raw self-access": 180,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these

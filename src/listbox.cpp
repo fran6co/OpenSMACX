@@ -174,99 +174,23 @@ Return Value: n/a
 Status: Complete
 */
 void ListBox::on_mouse_leave(int a1, int a2) {
-    // `this - 0x48` reaches a vbtable-shaped descriptor with two deltas:
-    // entry +8 locates the field, entry +4 the enclosing object's vtable.
-    // Note 0x48 + 0xA8 == 0xF0 across this whole family, so the
-    // field is at a FIXED +0xF0 in the enclosing object and these classes are
-    // subobjects at differing offsets inside it.
-    //
-    // The arithmetic must go through `char *`. Through `int *` the compiler
-    // scales the +8 and emits [eax+0x20].
-    //
-    // Both parameters are dead; `ret 8` still pops them.
-    // 0xF0, NOT 0xA8 - and that is the third class to confirm the constant.
-    // The compiler walks out of the subobject as part of the override's entry
-    // now, so the source states the field's actual offset in the ENCLOSING
-    // object rather than a subobject-relative remainder. 0x48 + 0xA8 == 0xF0,
-    // exactly as 0x1C + 0xD4 and 0x18 + 0xD8 do in CheckBox and RadioButton.
-    *reinterpret_cast<int *>(
-        reinterpret_cast<char *>(this) + 0xF0 +
-        *reinterpret_cast<int *>(reinterpret_cast<char *>(
-            *reinterpret_cast<int **>(
-                reinterpret_cast<char *>(this))) + 8)) = -1;
-
-    reinterpret_cast<VCall *>(
-        reinterpret_cast<char *>(this) +
-        *reinterpret_cast<int *>(reinterpret_cast<char *>(
-            *reinterpret_cast<int **>(
-                reinterpret_cast<char *>(this))) + 4))->slot062();
+    // Clear the hover index (Dialog::field_F0_, through the virtual base)
+    // and repaint (the vslot_62 virtual) - plain member forms; the
+    // compiler's virtual-base machinery does the walking the old hand
+    // chains spelled. Both parameters are dead; `ret 8` still pops them.
+    field_F0_ = -1;
+    vslot_62();
 }
-
-namespace {
-// Slots 20, 28 and 49 of the vtable at the GraphicWin virtual base, each
-// spelled with the (int, int) the three click handlers below push. A LOCAL
-// shim, not vtable_shim.h's VCall, for the same reason editgroup.cpp spells
-// CloseVCall: only DECLARATION ORDER fixes a slot, and a slot's signature is
-// chosen to match its call site.
-class ListBoxClickVCall { public:
-    virtual void slot000(int, int);
-    virtual void slot001(int, int);
-    virtual void slot002(int, int);
-    virtual void slot003(int, int);
-    virtual void slot004(int, int);
-    virtual void slot005(int, int);
-    virtual void slot006(int, int);
-    virtual void slot007(int, int);
-    virtual void slot008(int, int);
-    virtual void slot009(int, int);
-    virtual void slot010(int, int);
-    virtual void slot011(int, int);
-    virtual void slot012(int, int);
-    virtual void slot013(int, int);
-    virtual void slot014(int, int);
-    virtual void slot015(int, int);
-    virtual void slot016(int, int);
-    virtual void slot017(int, int);
-    virtual void slot018(int, int);
-    virtual void slot019(int, int);
-    virtual void slot020(int, int);  // on_right_down -> [eax + 0x50]
-    virtual void slot021(int, int);
-    virtual void slot022(int, int);
-    virtual void slot023(int, int);
-    virtual void slot024(int, int);
-    virtual void slot025(int, int);
-    virtual void slot026(int, int);
-    virtual void slot027(int, int);
-    virtual void slot028(int, int);  // on_right_double_click -> [eax + 0x70]
-    virtual void slot029(int, int);
-    virtual void slot030(int, int);
-    virtual void slot031(int, int);
-    virtual void slot032(int, int);
-    virtual void slot033(int, int);
-    virtual void slot034(int, int);
-    virtual void slot035(int, int);
-    virtual void slot036(int, int);
-    virtual void slot037(int, int);
-    virtual void slot038(int, int);
-    virtual void slot039(int, int);
-    virtual void slot040(int, int);
-    virtual void slot041(int, int);
-    virtual void slot042(int, int);
-    virtual void slot043(int, int);
-    virtual void slot044(int, int);
-    virtual void slot045(int, int);
-    virtual void slot046(int, int);
-    virtual void slot047(int, int);
-    virtual void slot048(int, int);
-    virtual void slot049(int, int);  // on_scrolled -> [eax + 0xc4]
-};
-}  // namespace
 
 /*
 Purpose: Report a right press: raise the click guard, forward (a1, a2) through
          GraphicWin vtable slot 20, drop the guard.
-// ORIGINAL: 0x0060AA20 ?on_right_down@ListBox@@QAEXHH@Z 0x0060AA20-0x0060AA52 BYTE_EXACT
-// LEVER: byte-exact on promotion from the 0060aa20 archive unit. The
+
+/*
+Purpose: Report a right press: raise the click guard, forward (a1, a2) through
+         GraphicWin vtable slot 20, drop the guard.
+// ORIGINAL: 0x0060AA20 ?on_right_down@ListBox@@QAEXHH@Z 0x0060AA20-0x0060AA52
+// TRIED: byte-exact on promotion from the 0060aa20 archive unit. The
 //   Q spelling enters with `this` on the GraphicWin virtual base, so the
 //   ListBox front is walked back with the same explicit -0x48 the image folds
 //   (`mov eax, [ecx - 0x48]`, receiver `lea ecx, [edx + ecx - 0x48]`) - the
@@ -283,21 +207,26 @@ Purpose: Report a right press: raise the click guard, forward (a1, a2) through
 // indirect  0x0060AA42
 Return Value: n/a
 Status: Complete
+DEMOTED from BYTE_EXACT by direction (idiomatic-first): the forward is the
+plain virtual call it always was - win-table slot 20, vslot_20 - dispatched
+on the entered receiver, which already points at the GraphicWin subobject
+whose vftable the old hand walk re-derived through the front. The image
+walks back to the ListBox front and re-walks out to that same table
+(`mov eax,[ecx-0x48]`, 9 of 12, 0.917 similar); reproducing that addressing
+is the entered-receiver relationship work (batch 9). The dispatch target is
+identical either way.
 */
 void ListBox::on_right_down(int a1, int a2) {
     ListBoxClickGuard = 1;
-    ListBox *const base = from_graphic_base(this);
-    reinterpret_cast<ListBoxClickVCall *>(
-        reinterpret_cast<uint8_t *>(base) +
-        (*reinterpret_cast<const int32_t *const *>(base))[1])->slot020(a1, a2);
+    vslot_20(a1, a2);
     ListBoxClickGuard = 0;
 }
 
 /*
 Purpose: Forward a vertical-scroll (code, pos) through GraphicWin vtable
          slot 49.
-// ORIGINAL: 0x0060C6A0 ?on_scrolled@ListBox@@QAEXHH@Z 0x0060C6A0-0x0060C6C1 BYTE_EXACT
-// LEVER: byte-exact on promotion, same entered-adjusted receiver as
+// ORIGINAL: 0x0060C6A0 ?on_scrolled@ListBox@@QAEXHH@Z 0x0060C6A0-0x0060C6C1
+// TRIED: byte-exact on promotion, same entered-adjusted receiver as
 //   on_right_down above; no guard on this one.
 // size      33 bytes
 // prototype void (__thiscall ?on_scrolled@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
@@ -308,19 +237,19 @@ Purpose: Forward a vertical-scroll (code, pos) through GraphicWin vtable
 // indirect  0x0060C6B8
 Return Value: n/a
 Status: Complete
+DEMOTED from BYTE_EXACT by direction (idiomatic-first): vslot_49 is the
+plain virtual call; the image's front-walk addressing is the entered-
+receiver relationship work (see on_right_down's note).
 */
 void ListBox::on_scrolled(int code, int pos) {
-    ListBox *const base = from_graphic_base(this);
-    reinterpret_cast<ListBoxClickVCall *>(
-        reinterpret_cast<uint8_t *>(base) +
-        (*reinterpret_cast<const int32_t *const *>(base))[1])->slot049(code, pos);
+    vslot_49(code, pos);
 }
 
 /*
 Purpose: Report a right double click: raise the click guard, forward (a1, a2)
          through GraphicWin vtable slot 28, drop the guard.
-// ORIGINAL: 0x0060C6D0 ?on_right_double_click@ListBox@@QAEXHH@Z 0x0060C6D0-0x0060C702 BYTE_EXACT
-// LEVER: byte-exact on promotion, same entered-adjusted receiver as
+// ORIGINAL: 0x0060C6D0 ?on_right_double_click@ListBox@@QAEXHH@Z 0x0060C6D0-0x0060C702
+// TRIED: byte-exact on promotion, same entered-adjusted receiver as
 //   on_right_down above.
 // size      50 bytes
 // prototype void (__thiscall ?on_right_double_click@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
@@ -331,13 +260,13 @@ Purpose: Report a right double click: raise the click guard, forward (a1, a2)
 // indirect  0x0060C6F2
 Return Value: n/a
 Status: Complete
+DEMOTED from BYTE_EXACT by direction (idiomatic-first): vslot_28 is the
+plain virtual call; the image's front-walk addressing is the entered-
+receiver relationship work (see on_right_down's note).
 */
 void ListBox::on_right_double_click(int a1, int a2) {
     ListBoxClickGuard = 1;
-    ListBox *const base = from_graphic_base(this);
-    reinterpret_cast<ListBoxClickVCall *>(
-        reinterpret_cast<uint8_t *>(base) +
-        (*reinterpret_cast<const int32_t *const *>(base))[1])->slot028(a1, a2);
+    vslot_28(a1, a2);
     ListBoxClickGuard = 0;
 }
 

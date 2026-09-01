@@ -304,14 +304,17 @@ Return Value: n/a
 Status: Complete
 */
 void CheckBox::set_state_flag(long value) {
-    // The state word as a plain member write; the repaint dispatch beside it
-    // (slot062 through the GraphicWin vbase) is batch-10 dispatch work and
-    // keeps its hand form for now. Two separate vbtable reads in the image,
-    // one per half.
+    // The state word as a plain member write, the repaint as the plain
+    // virtual call it is (win-table slot 62, the vslot_62 default the
+    // most-derived may override). BYTE_EXACT 10/10. Measured around it:
+    // `static_cast<GraphicWin *>(this)->vslot_62()` grew an EBP frame the
+    // image does not carry, a reference binding framed the same way, and
+    // `GraphicWin::vslot_62()` is wrong outright - a qualified call
+    // suppresses the dispatch and would call the empty default body. The
+    // vbtable re-reads the old hand walk reproduced were the compiler's
+    // own, for the member write and the primary-vftable dispatch.
     selected_position_ = static_cast<int32_t>(value);
-    reinterpret_cast<VCall *>(
-        reinterpret_cast<uint8_t *>(this) +
-        (*reinterpret_cast<const int32_t *const *>(this))[1])->slot062();
+    vslot_62();
 }
 
 /*
@@ -328,18 +331,10 @@ Return Value: n/a
 Status: Complete
 */
 void CheckBox::on_dialog_focus(int a1) {
-    // `this - 0x1c` is NOT arithmetic on a member: CheckBox is a SUBOBJECT of
-    // a larger object, and this walks back to the enclosing one, then applies
-    // a further delta read from its own +4. Written as one expression on
-    // purpose - naming either intermediate makes VC6 pick eax for the delta
-    // and edx for the vtable, which is mnemonic-identical and byte-different.
-    // a1 is never read; `ret 4` still pops it.
-    VCall *const target = reinterpret_cast<VCall *>(
-        reinterpret_cast<char *>(this) +
-        *reinterpret_cast<int *>(reinterpret_cast<char *>(
-            *reinterpret_cast<int **>(
-                reinterpret_cast<char *>(this))) + 4));
-    target->slot062();
+    // The repaint, as the plain virtual call it is (win-table slot 62, the
+    // vslot_62 default the most-derived may override). a1 is never read;
+    // `ret 4` still pops it.
+    vslot_62();
 }
 
 /*
@@ -369,32 +364,12 @@ Return Value: n/a
 Status: Complete
 */
 void CheckBox::on_mouse_leave(int a1, int a2) {
-    // `this` reaches a vbtable-shaped descriptor with two deltas: entry +8
-    // locates the field, entry +4 the enclosing object's vtable.
-    //
-    // THE CONSTANT IS 0xF0 NOW, AND THAT IS THE TRUE ONE. This body used to
-    // hand-write the -0x1C walk back to the enclosing object and carry 0xD4,
-    // with a note that 0x1C + 0xD4 == 0xF0 "across this whole family". With
-    // GraphicWin a real virtual base the compiler performs that walk itself as
-    // part of the override's entry, so the source states the field's ACTUAL
-    // fixed offset in the enclosing object instead of a subobject-relative
-    // remainder. The image emits `[edx + ecx + 0xd4]` either way.
-    //
-    // The arithmetic must go through `char *`. Through `int *` the compiler
-    // scales the +8 and emits [eax+0x20].
-    //
-    // Both parameters are dead; `ret 8` still pops them.
-    *reinterpret_cast<int *>(
-        reinterpret_cast<char *>(this) + 0xF0 +
-        *reinterpret_cast<int *>(reinterpret_cast<char *>(
-            *reinterpret_cast<int **>(
-                reinterpret_cast<char *>(this))) + 8)) = -1;
-
-    reinterpret_cast<VCall *>(
-        reinterpret_cast<char *>(this) +
-        *reinterpret_cast<int *>(reinterpret_cast<char *>(
-            *reinterpret_cast<int **>(
-                reinterpret_cast<char *>(this))) + 4))->slot062();
+    // Clear the hover index (Dialog::field_F0_, through the virtual base)
+    // and repaint (the vslot_62 virtual) - plain member forms; the
+    // compiler's virtual-base machinery does the walking the old hand
+    // chains spelled. Both parameters are dead; `ret 8` still pops them.
+    field_F0_ = -1;
+    vslot_62();
 }
 
 /*
