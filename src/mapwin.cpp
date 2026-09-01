@@ -25,57 +25,15 @@
 #include "net_class.h"
 #include "texture.h"
 #include "imagebutton.h"
-#include "vector_teardown.h"
 #include <cstring>
 #include <stdlib.h>
-
-// The element callbacks for MapWin's managed arrays (TextureStore and
-// ImageButton runs), spelled for real against the recovered lifecycle
-// bodies - the image passes 0x006252A0 / 0x006252B0 / 0x006252E0 /
-// 0x00625310 at these sites.
-static void __fastcall mapwin_texture_store_element_ctor(void *self) {
-    reinterpret_cast<TextureStore *>(self)->TextureStore::TextureStore();
-}
-static void __fastcall mapwin_texture_store_element_dtor(void *self) {
-    reinterpret_cast<TextureStore *>(self)->~TextureStore();
-}
-static void __fastcall mapwin_image_button_element_ctor(void *self) {
-    reinterpret_cast<ImageButton *>(self)->ImageButton::ImageButton();
-}
-static void __fastcall mapwin_image_button_element_dtor(void *self) {
-    reinterpret_cast<ImageButton *>(self)->~ImageButton();
-}
-
-
-// The vbtable MapWin stores at its own front when it is the one building
-// the embedded GraphicWin, and the two hand-maintained "vtable" pointers
-// `GraphicWin::construct`'s own idiom writes when GraphicWin is directly
-// the most-derived object (see graphicwin.cpp) - MapWin has to repeat the
-// latter pair on its own embedded GraphicWin, because nothing in this chain
-// declares a single `virtual` and so VC6 never refreshes them on its own.
-static void *const MonuWinVftable = reinterpret_cast<void *>(0x0066C870);
-static void *const MapWinVftable = reinterpret_cast<void *>(0x0066A57C);
-static void *const MapWinVirtualBaseVftable = reinterpret_cast<void *>(0x0066A574);
 
 
 /*
 Purpose: Build a map window - attach its embedded GraphicWin virtual base,
          then its own TextureStore/Buffer/Font/ImageButton members.
-// ORIGINAL: 0x004626E0 ??0MapWin@@QAE@H@Z 0x004626E0-0x00462868;0x00655860-0x00655920
-// TRIED: 4/92 - the image carries an SEH unwind frame here (`push -1
-//            / push 0x655916 / mov eax,fs:[0] / ...`), same symptom
-//            catalogued on FlatButton's constructor/destructor and
-//            GraphicWin's destructor. Not attempted: MapWin::construct is
-//            already the correct spelling per `most_derived_flag.py`'s
-//            confirmed finding (a plain method, because a real
-//            constructor would double-push the most-derived flag at every
-//            `->MapWin::MapWin(1)` call site) - there is no constructor-
-//            vs-method swap available the way FlatButton's destructor
-//            had. Reproducing the frame here would need isolating what
-//            about this specific `construct()` body triggers it despite
-//            being a plain method, which this pass's budget does not
-//            cover for an already-92-instruction function.
-// symbol    ?construct@MapWin@@QAEXH@Z
+// ORIGINAL: 0x004626E0 ??0MapWin@@QAE@H@Z 0x004626E0-0x00462868;0x00655860-0x00655920 BYTE_EXACT
+// symbol    ??0MapWin@@QAE@XZ
 // size      584 bytes
 // prototype void (__thiscall ??0MapWin@@QAE@H@Z)(MapWin* this, int)
 // callers   3   call targets   9
@@ -84,50 +42,15 @@ Purpose: Build a map window - attach its embedded GraphicWin virtual base,
 // calls     0x005D4CF0 0x006252A0 0x005D7210 0x00618EA0 0x006456E4 0x006457C2
 Return Value: this
 
-MEASURED: not spelled as a real constructor - see the note in `mapwin.h`. A
-plain method never gets VC6's own most-derived-flag treatment, so the single
-`a1` here is read and branched on exactly as the image's `[ebp+8]` is, with
-no second, compiler-inserted flag arriving alongside it. What is left, since
-MapWin's own members are still opaque storage (see the class declaration),
-is: the two array-of-TextureStore member ranges (via the CRT's own vector
-constructor iterator, `VectorCtorIterator` - see `vector_teardown.h`), the
-single TextureStore/Buffer/Buffer/Buffer/Font/Font/Font members, the
-array-of-4 ImageButton range, and the manual vtable-pointer stores plus
-vtordisp on the embedded GraphicWin.
+The compiler owns the construction machinery from the declarations in
+mapwin.h: the vbtable store, the virtual GraphicWin base at +0x21A6C under
+the most-derived flag, the two TextureStore vector ranges, the lone
+TextureStore, the three Buffers, the three Fonts, the ImageButton array, and
+the vbase-branch vtable pair the old hand body spelled at graphic_win and
+graphic_win+0x444. The body keeps the eight scalar clears, which the image
+runs after the members.
 */
-void MapWin::construct(int input) {
-    char *const self = reinterpret_cast<char *>(this);
-
-    if (input) {
-        *reinterpret_cast<void **>(self) = MonuWinVftable;
-        new (reinterpret_cast<GraphicWin *>(self + 0x21a6c)) GraphicWin();
-    }
-
-    
-VectorCtorIterator(self + 0xc, 0x260, 4,
-                        mapwin_texture_store_element_ctor,
-                        mapwin_texture_store_element_dtor);
-    VectorCtorIterator(self + 0x98c, 0x260, 0xc4,
-                        mapwin_texture_store_element_ctor,
-                        mapwin_texture_store_element_dtor);
-
-    reinterpret_cast<TextureStore *>(self + 0x1db0c)->TextureStore::TextureStore();
-    reinterpret_cast<Buffer *>(self + 0x1de28)->Buffer::Buffer();
-    reinterpret_cast<Buffer *>(self + 0x1e3b0)->Buffer::Buffer();
-    reinterpret_cast<Buffer *>(self + 0x1e938)->Buffer::Buffer();
-    reinterpret_cast<Font *>(self + 0x1eec8)->Font::Font();
-    reinterpret_cast<Font *>(self + 0x1eef4)->Font::Font();
-    reinterpret_cast<Font *>(self + 0x1ef20)->Font::Font();
-
-    VectorCtorIterator(self + 0x1ef54, 0xabc, 4,
-                        mapwin_image_button_element_ctor,
-                        mapwin_image_button_element_dtor);
-
-    char *const graphic_win = self + 0x21a6c;
-    *reinterpret_cast<void **>(graphic_win) = MapWinVftable;
-    *reinterpret_cast<void **>(graphic_win + 0x444) = MapWinVirtualBaseVftable;
-    *reinterpret_cast<int32_t *>(graphic_win - 4) = 0;
-
+MapWin::MapWin() {
     field_1DD74_ = 0;
     owned_ = 0;
     field_1DD80_ = 0;
@@ -246,6 +169,12 @@ void MapWin::close() {
         free(owned_);
         owned_ = nullptr;
     }
+    // The image's own dispatch, kept as the walk it compiles to: `close` is
+    // a Q member of GraphicWin reached through the vbase-typed receiver, and
+    // the original itself performs the vbtable walk here (`mov eax, [esi]`,
+    // `mov ecx, [eax + 4]`, add, call). TRIED: `static_cast<GraphicWin
+    // *>(this)->close()` - VC6 then emits 21 instructions against the
+    // image's 15, diverging after the free. The walk IS the image's code.
     const int32_t *const vbtable =
         *reinterpret_cast<const int32_t *const *>(this);
     reinterpret_cast<GraphicWin *>(
@@ -286,6 +215,8 @@ void MapWin::on_sys_close() {
             free(base->owned_);
             base->owned_ = nullptr;
         }
+        // The image's own vbase dispatch, as in close() above - the
+        // static_cast spelling emits 25 instructions against the image's 19.
         const int32_t *const vbtable =
             *reinterpret_cast<const int32_t *const *>(base);
         reinterpret_cast<GraphicWin *>(

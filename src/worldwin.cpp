@@ -23,31 +23,21 @@
 /*
 Purpose: Construct the GraphicWin base and the three embedded subobjects
          (buffer1_, buffer2_, mapWin_), then install WorldWin's own vtables.
-// ORIGINAL: 0x004C4BF0 ??0WorldWin@@QAE@XZ 0x004C4BF0-0x004C4C67;0x00659E50-0x00659E7E
+// ORIGINAL: 0x004C4BF0 ??0WorldWin@@QAE@XZ 0x004C4BF0-0x004C4C67;0x00659E50-0x00659E7E BYTE_EXACT
 // size      119 bytes
 // prototype void (__thiscall ??0WorldWin@@QAE@XZ)(WorldWin* this)
 // callers   0   call targets   4
 // kind      game
 // flags     hidden;sp_ready;purged_ok;frame
 // calls     0x005D4CF0 0x005D7210 0x004626E0
-// TRIED: best reached is 13/31, 0.882 similar (best of 10 flag sets).
-//        The residual is placement-new's null guard - see
-//        multidebug.cpp, where converting to a real constructor closed it
-//        outright. NOT APPLIED HERE: `mapWin_` is built with
-//        `MapWin::construct(1)`, and as an ordinary member of a real
-//        constructor it would be built by `MapWin`'s own constructor instead,
-//        which is blocked on the hidden most-derived flag
-//        (tools/most_derived_flag.py names it). The lever needs that first.
-//        Same residual as NetMsg::construct() and MultiDebug::construct()
-//        (netmsg.cpp, multidebug.cpp): image has `push ecx` at instruction
-//        7 where this body has `sub esp, 8` - a stack-frame-size
-//        difference from spill-slot count, not control flow or field
-//        order. Not chased further.
 Return Value: n/a
 Status: Complete
 */
 WorldWin::WorldWin() {
-    mapWin_.construct(1);
+    // mapWin_ is a declared member: the compiler constructs it most-derived,
+    // pushing the hidden flag 1 exactly where the image's ??0WorldWin pushes
+    // it - the old `mapWin_.construct(1)` hand call is gone with MapWin's
+    // real constructor.
 }
 
 /*

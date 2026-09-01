@@ -201,10 +201,13 @@ void NetWin::UNK5() {
 // automatically by the compiler once CheckBox::CheckBox() takes it - not
 // reachable while checkBox_'s constructor is the current no-arg stub).
 NetWin::NetWin() {
+    // The two vtable stores the old hand body spelled at [this] (0x0066CCEC)
+    // and [this+0x444] (0x0066CCE4) are the compiler's now: NetWin is
+    // most-derived through GraphicWin's Win/Buffer base pair, and its real
+    // constructor installs both vptrs itself. The two scalar clears below
+    // are the body's own work.
     volatile uint32_t *const object =
         reinterpret_cast<volatile uint32_t *>(this);
-    object[0x000 / 4] = 0x0066CCEC;
-    object[0x444 / 4] = 0x0066CCE4;
     object[0x772C / 4] = 0;
     object[0x7730 / 4] = 0;
 }
@@ -212,7 +215,7 @@ NetWin::NetWin() {
 /*
 Purpose: Step the receiver back to the subobject ??_GNetWin@@UAEPAXI@Z expects,
          then forward unchanged.
-// ORIGINAL: 0x00483840 ??_GNetWin@@WEEE@AEPAXI@Z 0x00483840-0x0048384B
+// ORIGINAL: 0x00483840 ??_GNetWin@@WEEE@AEPAXI@Z 0x00483840-0x0048384B BYTE_EXACT
 // symbol    ??_ENetWin@@WEEE@AEPAXI@Z
 // CORRECTED from ??3NetWin@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x004837C0` into

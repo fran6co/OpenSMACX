@@ -71,22 +71,17 @@ class PlanWin : public MapWin {
   void on_redraw();
 
  public:
-  // MEASURED: a genuine `PlanWin(int a1)` constructor was tried first, on
-  // the theory the mangled `H` on `??0PlanWin@@QAE@H@Z` is VC6's own
-  // most-derived flag for the virtual `GraphicWin` base MapWin declares,
-  // needing no parameter here at all. Built and disassembled with this
-  // project's own `cl`: a class that genuinely has a virtual base gets the
-  // hidden flag INSTEAD of a name change, not IN ADDITION to one - a bare
-  // `PlanWin()` mangles `??0PlanWin@@QAE@XZ` (no `H`), and adding an
-  // explicit `int a1` alongside the real virtual base makes VC6 emit BOTH:
-  // the flag arrives at [ebp+0xc], a1 at [ebp+8], and a caller doing
-  // `->PlanWin::PlanWin(1)` pushes 1 twice - the exact defect this file
-  // used to warn about, now reproduced and confirmed rather than assumed.
-  // The image's own `??__Eg_PLANWIN` (0x0048AE00) pushes ONE 1. So: no
-  // constructor here at all (the implicit default is never called), and
-  // `construct` below carries the recovered body by hand, exactly as
-  // `mapwin.h`'s `MapWin::construct` already does for the same reason.
-  void construct(int input);
+  // ??0PlanWin@@QAE@H@Z, now spelled as the bare real constructor it is.
+  // ATTEMPT #2, mirroring mapwin.h's: the first try built `PlanWin(int a1)`,
+  // measured VC6 emitting BOTH the hidden most-derived flag at [ebp+0xc] and
+  // a1 at [ebp+8] (a caller pushing 1 twice), and concluded "no constructor
+  // here at all" - but the image's own `??__Eg_PLANWIN` (0x0048AE00) pushes
+  // ONE 1, and the hidden flag IS that one push, arriving at [ebp+8] for a
+  // bare `PlanWin()`. The catalogue's `H` is IDA's guess at that stack
+  // dword (the image is stripped); the two-fact rule carries the name
+  // mismatch. Zero callers for either spelling in this tree, so the
+  // conversion cannot break a call site.
+  PlanWin();
   ~PlanWin();
   void clear_lines();
   void close();

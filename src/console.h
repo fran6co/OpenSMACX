@@ -134,16 +134,16 @@ class Console : public MapWin {
   void menu_update();
   void editor_redo();
   void editor_climate();
-  // The image's ??0Console@@QAE@H@Z spells one explicit `int` - the flag
-  // that gates the most-derived construction (the vbtable store and the
-  // virtual GraphicWin base at +0x23D94 sit inside its `if`) - so the
-  // real-constructor spelling carries that int as a real parameter and
-  // mangles to the image's own name. LANDED WITH KNOWN REGRESSIONS by
-  // direction: the compiler's own vbase/vbtable machinery doubles the
-  // body's hand-written equivalents (169 instructions against 106) until
-  // MapWin's real constructor converts - mapwin.h records the wall its
-  // own attempt hit.
-  Console(int input);
+  // ??0Console@@QAE@H@Z, now spelled as the bare constructor it is - the
+  // catalogue's `H` is the hidden most-derived flag (Console holds a
+  // virtual GraphicWin through MapWin), read by the image at [ebp+8] where
+  // the flag arrives. The earlier `Console(int input)` spelling made VC6
+  // emit flag AND int, doubling the body's vbase machinery (169
+  // instructions against the image's 106) - the known regression that
+  // landing was carried by direction until MapWin's real constructor
+  // converted. The mem-initialiser delegates the MapWin base stage; the
+  // scalar clears stay in the body.
+  Console();
   // A genuine destructor is safe here (unlike the constructor): destructors
   // never carry the most-derived flag - `guarded_teardowns.cpp`'s own
   // already-matching `->Console::~Console()` proves it, the same way it did

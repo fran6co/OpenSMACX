@@ -161,7 +161,9 @@ CEILINGS = {
     # store stripped with its constant.
     # 217 -> 216 (batch 4, pulldown): the stripped stores' reinterpret_cast
     # object anchor left with them.
-    "raw self-access": 216,
+    # 216 -> 214 (batch 5, mapwin attempt #2): MapWin's and PlanWin's
+    # construct(int) bodies' raw self casts left with the real constructors.
+    "raw self-access": 214,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these

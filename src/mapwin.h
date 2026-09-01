@@ -132,20 +132,22 @@ class MapWin : public virtual GraphicWin {
   // 0x0046FD90, not yet recovered - a pending_bodies forwarder.
   // world_climate (src/map.cpp) calls it BY NAME.
   void clear_terrain();
-  // MEASURED: a genuine `MapWin(int a1)` constructor was tried first, on the
-  // theory the mangled `H` on `??0MapWin@@QAE@H@Z` is VC6's own
-  // most-derived flag for the virtual `GraphicWin` base declared above,
-  // needing no parameter here at all. Built and disassembled with this
-  // project's own `cl`: a class that genuinely has a virtual base gets the
-  // hidden flag INSTEAD of a name change, not IN ADDITION to one - a bare
-  // `MapWin()` mangles `??0MapWin@@QAE@XZ` (no `H`), and adding an explicit
-  // `int a1` alongside the real virtual base makes VC6 emit BOTH: the flag
-  // arrives at [ebp+0xc], a1 at [ebp+8], and a caller doing
-  // `->MapWin::MapWin(1)` pushes 1 twice - the exact defect this file used
-  // to warn about, now reproduced and confirmed rather than assumed. So: no
-  // constructor here at all (the implicit default is never called), and
-  // `construct` below carries the recovered body by hand.
-  void construct(int input);
+  // ??0MapWin@@QAE@H@Z at 0x004626E0, spelled as the real constructor it is.
+  // ATTEMPT #2. The first try built `MapWin(int a1)`, measured VC6 emitting
+  // BOTH the hidden most-derived flag at [ebp+0xc] and a1 at [ebp+8] (every
+  // caller pushing twice), and concluded "no constructor here at all" - but
+  // it inverted the measurement it made. tools/most_derived_flag.py is
+  // unambiguous about the body: the image's two vbtable-relative stores are
+  // the tell no real `int` produces, and a bare constructor on a class with
+  // a genuine virtual base receives the hidden flag AS its [ebp+8] argument,
+  // mangled `??0MapWin@@QAE@XZ`. The image is stripped - docs/DECOMP_MAP.md
+  // - and the catalogue's `H` is IDA's guess at that one stack dword, so the
+  // two-fact rule carries the name mismatch: the marker keeps the catalogue
+  // name, the `// symbol` line records what this compiler emits. The body
+  // keeps only the scalar clears; the vbtable, the vbase construction, every
+  // member/vector ctor call, and the three vtable stores the old hand body
+  // spelled are the compiler's, from the declarations below.
+  MapWin();
   // MEASURED IN-CLASS 2026-08-30, the same move as ~Console below it in
   // console.h: the image's 0x00420F90 is the BASE-object destructor
   // (??_DMapWin@@QAEXXZ - no caller in the image destroys a standalone
