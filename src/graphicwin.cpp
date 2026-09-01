@@ -33,9 +33,6 @@
 
 #include <cstring>
 
-const uint32_t GraphicWinPrimaryVtable = 0x0066FC50;
-const uint32_t GraphicWinBufferVtable = 0x0066FC48;
-
 void __fastcall buffer_subobject_destructor(void *self) {
     // Source-owned: dispatches to the recovered Buffer destructor rather than
     // the original body at 0x005D7410.

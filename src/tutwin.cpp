@@ -439,9 +439,6 @@ void TutWin::on_move(int x, int y) {
 // implicit base constructor (now BYTE_EXACT, see popup.cpp) - no explicit
 // `Popup::Popup()` call needed, and (matching Popup's own fix) the trailing
 // stores use a non-volatile pointer.
-static const uint32_t TutWinPrimaryVtable = 0x0066DD84;
-static const uint32_t TutWinBufferVtable = 0x0066DD7C;
-
 TutWin::TutWin() {
     field_53B4_ = 0;
     field_53C0_ = 0;

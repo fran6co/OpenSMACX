@@ -93,12 +93,6 @@ void __fastcall string_struct_derived_close_redirect(void *adjusted);
 // paths: StringStructVtable, StringStructVirtualBaseVtable,
 // StringStructDerivedVtable, StringStructDerivedVirtualBaseVtable,
 // StringAllocationBaseVtable.
-const uint32_t StringListVirtualBaseTable = 0x0066B0EC;  // vbtable, at +0x04
-const uint32_t StringVirtualBaseTable = 0x006693AC;      // vbase vftable, +0x28
-const uint32_t StringStructTable = 0x006693A4;           // StringStruct vftable
-const uint32_t StringStructBaseTable = 0x006693A0;       // StringStruct btable
-const uint32_t StringListTable = 0x006698C4;             // StringList vftable
-const uint32_t StringListBaseTable = 0x006698C0;         // StringList btable
 
 // The eight-byte allocation-tracking virtual base the vbtables name: one
 // vtable slot and the saved allocation owner. REAL, not held by layout:
@@ -238,7 +232,6 @@ static const size_t StringListVirtualBaseOffset = 0x28;
 
 // The virtual base's own one-slot vftable (0x006693AC), reinstalled once the
 // StringStruct stage has finished with the subobject.
-extern const uint32_t StringVirtualBaseVtable;
 
 // Pending-allocation bookkeeping. ??0StringStruct@@QAE@H@Z (0x00401000) saves
 // this global into the object and clears it; the virtual base's destructors

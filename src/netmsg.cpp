@@ -23,9 +23,6 @@
 #include "popup.h"
 #include "time.h"
 
-const uint32_t NetMsgPrimaryVtable = 0x0066CB60;
-const uint32_t NetMsgBufferVtable = 0x0066CB58;
-
 /*
 Purpose: Construct the Popup base and the embedded Time, then install
          NetMsg's own vtables and the three constructor arguments.

@@ -30,7 +30,6 @@
 // the two virtual-base slots. Same idiom as CheckBoxDefault1/2 - a plain
 // literal, since these are byte-visible immediates in the image, not
 // runtime-read globals.
-static const uint32_t SpriteBoxVbtable = 0x006708B4;
 
 /*
 Purpose: Compose a SpriteBox from its GraphicWin and Dialog virtual-base-

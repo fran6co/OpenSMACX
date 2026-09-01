@@ -140,12 +140,6 @@ Purpose: Clear every player's process slot and hand off to the network close.
 // calls     (none)
 Status: Complete with a temporary dependency on the network close
 */
-// The ledger's staged tables - the image's .rdata, real storage here.
-const uint32_t AlphaNetLedgerVbtable[2] = {0xFFFFFFFC, 0x00000034};   // 0x0066EAF0
-const uint32_t AlphaNetStringStructVtable[1] = {0x00402F10};           // 0x00669408
-const uint32_t AlphaNetListVirtualBaseVtable[1] = {0x00402C70};        // 0x00669404
-const uint32_t AlphaNetListDerivedVtable[1] = {0x00402E40};            // 0x0066EAE8
-const uint32_t AlphaNetListDerivedVirtualBaseVtable[1] = {0x00402C00}; // 0x0066EAE4
 
 
 /*

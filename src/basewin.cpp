@@ -24,11 +24,6 @@
 #include <cstdint>
 #include <cstring>
 
-const uint32_t BaseWinSubInterfaceVtableInitial = 0x0066A6E4;
-const uint32_t BaseWinSubInterfaceVtable = 0x0066A3B8;
-const uint32_t BaseWinPrimaryVtable = 0x0066A40C;
-const uint32_t BaseWinBufferVtable = 0x0066A404;
-
 /*
 Purpose: Construct BaseWin's large aggregate of sub-windows: a ProdPicker, a
          second GraphicWin, several Sprite runs, a FlatButton, a Buffer, a

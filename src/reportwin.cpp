@@ -24,9 +24,6 @@
 const void *const ReportWinFlatButtonCtor = (const void *)0x00607CF0;
 const void *const ReportWinFlatButtonDtor = (const void *)0x00406880;
 
-const uint32_t ReportWinPrimaryVtable = 0x0066D754;
-const uint32_t ReportWinBufferVtable = 0x0066D74C;
-
 /*
 Purpose: Construct every sub-object in image order - a FlatButton[7] run, a
          Spot, a ListBox(1), nine individually-constructed FlatButtons split

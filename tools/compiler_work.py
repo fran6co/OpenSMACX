@@ -128,7 +128,12 @@ HEADER_SHAPES = [
     # CheckButtonBufferVtable were declared but never referenced - the class
     # is real (: public GraphicWin, virtual destructor), and the compiler
     # installs its vptrs in the ctor itself.
-    ("vtable address constant", 71,
+    # 71 -> 42 (batch 1, dead-constant sweep): the 29 zero-use vtable-address
+    # constants died - Menu/MultiDebug/NetMsg/TutWin/PickWin/ReportWin/
+    # ProdPicker pairs, BaseWin's four, SocialWin's four, Gamma's pair,
+    # GraphicWin's pair, BufferVtable, the ImageButton pair - plus net_class's
+    # six and alphanet's five unused construction-table arrays.
+    ("vtable address constant", 42,
      re.compile(r"\b[A-Za-z_]\w*Vtable\w*\s*=\s*\(?\s*0x"),
      "the raw material every hand-installed vtable is built from. When the "
      "classes are real, these constants have nothing left to point at."),

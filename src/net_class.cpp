@@ -67,20 +67,6 @@ class VoiceDeviceStop {
   virtual int stop();  // slot 8 ([vtbl + 0x20])
 };
 
-// ===== NET'S CONSTRUCTION TABLES - real storage, the image's .rdata =====
-// Net's own primary vftable (9 slots) and the staged tables its embedded
-// subobjects install. Every address is the image's; the VALUES matter for
-// layout only where a walk reads [table+4] for the virtual-base adjustment.
-const uint32_t NetPrimaryVtable[9] = {   // 0x0066EB04
-    0x00404260, 0x00404260, 0x00404260, 0x00404260,
-    0x00404280, 0x00404280, 0x004E3890, 0x005D47D0, 0x005D4860};
-const uint32_t NetUnk72CVftable[2] = {0x005D4C50, 0x005D4CC0};  // 0x0066941C
-const uint32_t NetUnk72CVbtable[2] = {0xFFFFFFFC, 0x00000020};  // 0x00669424
-const uint32_t NetUnk72CVtordispA[3] = {0x00402AD0, 0x00404250, 0x00404270};  // 0x006693F0
-const uint32_t NetUnk72CVtordispB[3] = {0x00402350, 0x005D4C50, 0x005D4CC0};  // 0x00669418
-const uint32_t NetUnk700Vtable[6] = {   // 0x0066942C
-    0x00402CC0, 0x00000000, 0x00000058, 0x00402BB0, 0x00404250, 0x00404270};
-
 /*
 Purpose: Begin voice capture: disable the wave device, start the wave-in
          device, arm the Sound-level device through its own vtable slot 0x90,

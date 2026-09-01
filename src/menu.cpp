@@ -23,9 +23,6 @@
 #include "filewin.h"
 #include "win.h"
 
-const uint32_t MenuPrimaryVtable = 0x006700B0;
-const uint32_t MenuBufferVtable = 0x006700A8;
-
 /*
 Purpose: Construct the GraphicWin base and the embedded Spot, install
          Menu's own vtables, then zero the scalar fields and the 15-entry

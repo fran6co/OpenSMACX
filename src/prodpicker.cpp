@@ -33,9 +33,6 @@ void __fastcall ProdPickerSpriteDtor(void *self) { reinterpret_cast<Sprite *>(se
 void __fastcall ProdPickerFlatButtonCtor(void *self) { reinterpret_cast<FlatButton *>(self)->FlatButton::FlatButton(); }
 void __fastcall ProdPickerFlatButtonDtor(void *self) { reinterpret_cast<FlatButton *>(self)->~FlatButton(); }
 
-const uint32_t ProdPickerPrimaryVtable = 0x0066A250;
-const uint32_t ProdPickerBufferVtable = 0x0066A248;
-
 // The three 0x30-byte blocks at 0xA780/0xA7B0/0xA7E0 are unnamed: each
 // installs a vtable pair through a computed adjustor offset (the second
 // dword of the object at +4 is itself a small vbtable-shaped blob whose
