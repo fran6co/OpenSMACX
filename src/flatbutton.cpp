@@ -21,10 +21,13 @@
 const uint32_t FlatButtonPrimaryVtable = 0x00669754;
 const uint32_t FlatButtonBufferVtable = 0x0066974C;
 // The nine-group defaults table read by both the constructor and close():
-// a fixed image address, not a runtime-loaded pointer - `FlatButtonDefaultsTable` folds
-// to the immediate the same way the constructor's own copy of this table
-// already did, where dereferencing a variable holding the address would
-// not.
+// runtime .data that load_interface (0x00455610, unrecovered - its reference
+// sits at 0x455c05) populates alongside the constructor, so it STAYS
+// image-addressed - real storage here would fork the state the image code
+// writes. TRIED: an accessor returning the pointer - identical 28/41: cl
+// materializes the row base either way (`mov ecx, 0x9b8e50 / mov edx,
+// [ecx - 0xc]`) where the image keeps the index in ecx against the
+// constant (`xor ecx,ecx / mov edx,[ecx + 0x9b8e44]`).
 static int *const FlatButtonDefaultsTable = (int *)0x009B8E44;
 
 // A real, out-of-line forwarder so this call site gets an actual `call`
