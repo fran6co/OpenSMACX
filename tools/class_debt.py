@@ -152,7 +152,10 @@ CEILINGS = {
     # dropped its `char *const self = reinterpret_cast<char *>(this)` anchor
     # and the placement news went with it - the compiler builds the declared
     # members.
-    "raw self-access": 224,
+    # 224 -> 222 (batch 2, leaf families): stripping the Scroll/PushButton/
+    # FlatButton/FileWin re-stage stores removed their reinterpret_cast
+    # object anchors.
+    "raw self-access": 222,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these

@@ -167,7 +167,7 @@ Purpose: Construct a Scroll: run the GraphicWin base construction, install
 //   is right. This RETRACTS the "raw bytes and placement-new" conclusion the
 //   TRIED below reached; that note read the divergence correctly and then
 //   picked the wrong of two ways to fix it.
-// LEVER: vtable immediates  `extern const uint32_t ScrollPrimaryVtable` with
+// LEVER: vtable immediates
 //   the definition down in this file is invisible at the constructor, so VC6
 //   emits a load-then-store where the image has one `mov [esi], 0x669d58`.
 //   Defining the value IN scroll.h folds it. 22 -> 77 of 83 - by far the
@@ -1228,8 +1228,6 @@ Status: Complete
 Scroll *Scroll::destroy() {
     volatile uint32_t *const object =
         reinterpret_cast<volatile uint32_t *>(this);
-    object[0x000 / 4] = ScrollPrimaryVtable;
-    object[0x444 / 4] = ScrollBufferVtable;
     close();
     flat_button_right_.destroy();
     flat_button_left_.destroy();

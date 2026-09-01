@@ -140,18 +140,6 @@ extern int ScrollNonClientInit;
 // the sprite defaults and one intentionally unused hole.
 extern uint32_t ScrollCloseStaticDefaults;
 extern uint32_t ScrollCloseDynamicDefaults;
-// The two virtual tables the destructor stages before running close.
-// DEFINED HERE, NOT `extern`, because the value has to be VISIBLE at the use
-// site to fold. 0x006051D0 stores both as immediates
-// (`mov dword ptr [esi], 0x669d58`); with the definition down in scroll.cpp
-// and only `extern const` in scope at the constructor, VC6 must emit a load
-// from the global and then a store - two instructions where the image has one.
-// A namespace-scope `const` has internal linkage, so defining it in the header
-// gives every translation unit its own foldable copy rather than a symbol
-// clash.
-const uint32_t ScrollPrimaryVtable = 0x00669D58;
-const uint32_t ScrollBufferVtable = 0x00669D50;
-
 RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical);
 void *__fastcall scroll_scalar_dtor_redirect(Scroll *self, void *,
                                              unsigned int mode);

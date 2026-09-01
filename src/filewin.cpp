@@ -21,9 +21,6 @@
 #include "dialog.h"
 #include "basebutton.h"
 
-static const uint32_t EditBoxPrimaryVtable = 0x0066A038;
-static const uint32_t EditBoxBufferVtable = 0x0066A030;
-
 // The default file-name suffix appended to field_531_ at construction - REAL
 // STORAGE seeded from the image's own .data bytes (image_data.py, 0x00697118:
 // 2e 00 00 00 - a "." entry in the dword-slotted text table that continues
@@ -118,19 +115,13 @@ FileWin::~FileWin() {
     reinterpret_cast<Dialog *>(reinterpret_cast<char *>(&list_box_) + 0xA60)->destroy();
     reinterpret_cast<GraphicWin *>(&list_box_)->~GraphicWin();
 
-    reinterpret_cast<uint32_t *>(&edit_box_)[0x000 / 4] = EditBoxPrimaryVtable;
-    reinterpret_cast<uint32_t *>(&edit_box_)[0x444 / 4] = EditBoxBufferVtable;
     edit_box_.close();
     edit_box_.time_.~Time();
     reinterpret_cast<GraphicWin *>(&edit_box_)->~GraphicWin();
 
-    reinterpret_cast<uint32_t *>(&flat_button1_)[0x000 / 4] = FlatButtonPrimaryVtable;
-    reinterpret_cast<uint32_t *>(&flat_button1_)[0x444 / 4] = FlatButtonBufferVtable;
     flat_button1_.close();
     flat_button1_.BaseButton::destroy();
 
-    reinterpret_cast<uint32_t *>(&flat_button2_)[0x000 / 4] = FlatButtonPrimaryVtable;
-    reinterpret_cast<uint32_t *>(&flat_button2_)[0x444 / 4] = FlatButtonBufferVtable;
     flat_button2_.close();
     flat_button2_.BaseButton::destroy();
 }

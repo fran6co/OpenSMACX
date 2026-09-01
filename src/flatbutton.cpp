@@ -18,8 +18,6 @@
 #include "stdafx.h"
 #include "flatbutton.h"
 
-const uint32_t FlatButtonPrimaryVtable = 0x00669754;
-const uint32_t FlatButtonBufferVtable = 0x0066974C;
 // The nine-group defaults table read by both the constructor and close():
 // runtime .data that load_interface (0x00455610, unrecovered - its reference
 // sits at 0x455c05) populates alongside the constructor, so it STAYS
@@ -160,8 +158,6 @@ FlatButton::~FlatButton() {
 FlatButton *FlatButton::destroy() {
     volatile uint32_t *const object =
         reinterpret_cast<volatile uint32_t *>(this);
-    object[0x000 / 4] = FlatButtonPrimaryVtable;
-    object[0x444 / 4] = FlatButtonBufferVtable;
     close();
     BaseButton::destroy();
     return this;
@@ -287,8 +283,6 @@ FlatButton::FlatButton() {
     BaseButton::construct();
     volatile uint32_t *const object =
         reinterpret_cast<volatile uint32_t *>(this);
-    object[0x000 / 4] = FlatButtonPrimaryVtable;
-    object[0x444 / 4] = FlatButtonBufferVtable;
     object[0xA18 / 4] = 0;
     object[0xA14 / 4] = 0;
     object[0xAB8 / 4] = 0xFFFFFFFFU;

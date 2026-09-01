@@ -42,7 +42,9 @@ SHAPES = [
     # transcription hand-installs the two vtables the IMAGE itself installs -
     # a stack GraphicWin dressed as an AlphaMovie (0x669458/0x669450); the
     # STRUCTURE finding is banked under the marker.
-    ("vtable", 28,
+    # 28 -> 12 (batch 2, leaf families): the Scroll/PushButton/FlatButton/
+    # WorldWin re-stage stores stripped with their constants.
+    ("vtable", 12,
      re.compile(r"""(?x)
         (?: \w+ \s* \[ \s* 0x[0-9A-Fa-f]+ \s* / \s* 4 \s* \]
           | \* \s* reinterpret_cast \s* < [^>]*? \* \s* > \s* \([^)]*\)
@@ -51,7 +53,10 @@ SHAPES = [
      "a class that stores its own vtable dword gets no compiler vtable, and no "
      "adjustor thunks in it. Give it a real constructor and delete the store."),
 
-    ("construct", 11,
+    # 11 -> 10 (batch 2): WorldWin::construct became the real WorldWin()
+    # constructor (the image's ??0WorldWin has zero callers, so the conversion
+    # cannot break a call site).
+    ("construct", 10,
      re.compile(r"^\w[\w :*&]*\b\w+::construct\(\)\s*\{", re.M),
      "a `construct()` method standing in for a constructor. Convert it; put "
      "anything the image writes BEFORE the vfptr store in the member-"
@@ -71,7 +76,9 @@ SHAPES = [
     # build graphic_win_ and the virtual GraphicWin base from the declared
     # members - the two GraphicWin placements in the old construct() body
     # left with it.
-    ("placement new on a subobject", 19,
+    # 19 -> 16 (batch 2, leaf families): the WorldWin ctor placements joined
+    # the compiler-owned set with the real WorldWin(int) constructor.
+    ("placement new on a subobject", 16,
      re.compile(r"new\s*\(\s*(?:&|static_cast|reinterpret_cast)"),
      "costs a null guard (`test ecx, ecx; je`) the image does not have. A real "
      "base or member is constructed unconditionally."),
@@ -133,7 +140,7 @@ HEADER_SHAPES = [
     # ProdPicker pairs, BaseWin's four, SocialWin's four, Gamma's pair,
     # GraphicWin's pair, BufferVtable, the ImageButton pair - plus net_class's
     # six and alphanet's five unused construction-table arrays.
-    ("vtable address constant", 42,
+    ("vtable address constant", 28,
      re.compile(r"\b[A-Za-z_]\w*Vtable\w*\s*=\s*\(?\s*0x"),
      "the raw material every hand-installed vtable is built from. When the "
      "classes are real, these constants have nothing left to point at."),
