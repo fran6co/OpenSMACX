@@ -5459,201 +5459,9 @@ struct LocalLogPen {
     unsigned int color;
 };
 
-class MenuVCall {
-public:
-    virtual void slot000();
-    virtual void slot001();
-    virtual void slot002();
-    virtual void slot003();
-    virtual void slot004();
-    virtual void slot005();
-    virtual void slot006();
-    virtual void slot007();
-    virtual void slot008();
-    virtual void slot009();
-    virtual void slot010();
-    virtual void slot011();
-    virtual void slot012();
-    virtual void slot013();
-    virtual void slot014();
-    virtual void slot015();
-    virtual void slot016();
-    virtual void slot017();
-    virtual void slot018();
-    virtual void slot019();
-    virtual void slot020();
-    virtual void slot021();
-    virtual void slot022();
-    virtual void slot023();
-    virtual void slot024();
-    virtual void slot025();
-    virtual void slot026();
-    virtual void slot027();
-    virtual void slot028();
-    virtual void slot029();
-    virtual void slot030();
-    virtual void slot031();
-    virtual void slot032();
-    virtual void slot033();
-    virtual void slot034();
-    virtual void slot035();
-    virtual void slot036();
-    virtual void slot037();
-    virtual void slot038();
-    virtual void slot039();
-    virtual void slot040();
-    virtual void slot041();
-    virtual void slot042();
-    virtual void slot043();
-    virtual void slot044();
-    virtual void slot045();
-    virtual void slot046();
-    virtual void slot047();
-    virtual void slot048();
-    virtual void slot049();
-    virtual void slot050();
-    virtual void slot051();
-    virtual void slot052();
-    virtual void slot053();
-    virtual void slot054();
-    virtual void slot055();
-    virtual void slot056();
-    virtual void slot057();
-    virtual void slot058();
-    virtual void slot059();
-    virtual void slot060();
-    virtual void slot061();
-    virtual void slot062();
-    virtual void slot063();
-    virtual void slot064();
-    virtual void slot065();
-    virtual void slot066();
-    virtual void slot067();
-    virtual void slot068();
-    virtual void slot069();
-    virtual void slot070();
-    virtual void slot071();
-    virtual void slot072();
-    virtual void slot073();
-    virtual void slot074();
-    virtual void slot075();
-    virtual void slot076();
-    virtual void slot077();
-    virtual void slot078();
-    virtual void slot079();
-    virtual void slot080();
-    virtual void slot081();
-    virtual void slot082();
-    virtual void slot083();
-    virtual void slot084();
-    virtual void slot085();
-    virtual void slot086();
-    virtual void slot087();
-    virtual void slot088();
-    virtual void slot089();
-    virtual void slot090();
-    virtual int slot091();
-};
-
 // The artifact spelled MSG out by hand; these ARE its fields, and the
 // message pump below passes one straight to PeekMessageA.
 typedef MSG MsgT;
-
-
-class NCCall { public:
-    virtual void slot000();
-    virtual void slot001();
-    virtual void slot002();
-    virtual void slot003();
-    virtual void slot004();
-    virtual void slot005();
-    virtual void slot006();
-    virtual void slot007();
-    virtual void slot008();
-    virtual void slot009();
-    virtual void slot010();
-    virtual void slot011();
-    virtual void slot012();
-    virtual void slot013();
-    virtual void slot014();
-    virtual void slot015();
-    virtual void slot016();
-    virtual void slot017();
-    virtual void slot018();
-    virtual void slot019();
-    virtual void slot020();
-    virtual void slot021();
-    virtual void slot022();
-    virtual void slot023();
-    virtual void slot024();
-    virtual void slot025();
-    virtual void slot026();
-    virtual void slot027();
-    virtual void slot028();
-    virtual void slot029();
-    virtual void slot030();
-    virtual void slot031();
-    virtual void slot032();
-    virtual void slot033();
-    virtual void slot034();
-    virtual void slot035();
-    virtual void slot036();
-    virtual void slot037();
-    virtual void slot038();
-    virtual void slot039();
-    virtual void slot040();
-    virtual void slot041();
-    virtual void slot042();
-    virtual void slot043();
-    virtual void slot044();
-    virtual void slot045();
-    virtual void slot046();
-    virtual void slot047();
-    virtual void slot048();
-    virtual void slot049();
-    virtual void slot050();
-    virtual void slot051();
-    virtual void slot052();
-    virtual void slot053();
-    virtual void slot054();
-    virtual void slot055();
-    virtual void slot056();
-    virtual void slot057();
-    virtual void slot058();
-    virtual void slot059();
-    virtual void slot060();
-    virtual void slot061();
-    virtual void slot062();
-    virtual void slot063();
-    virtual void slot064();
-    virtual void slot065();
-    virtual void slot066();
-    virtual void slot067();
-    virtual void slot068();
-    virtual void slot069();
-    virtual void slot070();
-    virtual void slot071();
-    virtual void slot072();
-    virtual void slot073();
-    virtual void slot074();
-    virtual void slot075();
-    virtual void slot076();
-    virtual void slot077();
-    virtual void slot078();
-    virtual void slot079();
-    virtual void slot080();
-    virtual void slot081();
-    virtual void slot082();
-    virtual void slot083();
-    virtual void slot084();
-    virtual void slot085();
-    virtual void slot086();
-    virtual void slot087();
-    virtual void slot088();
-    virtual void slot089();
-    virtual void slot090();
-    virtual int slot091();
-};
 
 
 struct PAINTSTRUCT_ {
@@ -5664,243 +5472,6 @@ struct PAINTSTRUCT_ {
     int fIncUpdate;
     unsigned char rgbReserved[32];
 };
-
-
-class VCall2 { public:
-    virtual void slot000();
-    virtual void slot001();
-    virtual void slot002();
-    virtual void slot003();
-    virtual void slot004();
-    virtual void slot005();
-    virtual void slot006();
-    virtual void slot007();
-    virtual void slot008();
-    virtual void slot009();
-    virtual void slot010();
-    virtual void slot011();
-    virtual void slot012();
-    virtual void slot013();
-    virtual void slot014();
-    virtual void slot015();
-    virtual void slot016();
-    virtual void slot017();
-    virtual void slot018();
-    virtual void slot019();
-    virtual void slot020();
-    virtual void slot021();
-    virtual void slot022();
-    virtual void slot023();
-    virtual void slot024();
-    virtual void slot025();
-    virtual void slot026();
-    virtual void slot027();
-    virtual void slot028();
-    virtual void slot029();
-    virtual void slot030();
-    virtual void slot031();
-    virtual void slot032();
-    virtual void slot033();
-    virtual void slot034();
-    virtual void slot035();
-    virtual void slot036();
-    virtual void slot037();
-    virtual void slot038();
-    virtual void slot039();
-    virtual void slot040();
-    virtual void slot041();
-    virtual void slot042();
-    virtual void slot043();
-    virtual void slot044();
-    virtual void slot045();
-    virtual void slot046();
-    virtual void slot047();
-    virtual void slot048();
-    virtual void slot049();
-    virtual void slot050();
-    virtual void slot051();
-    virtual void slot052();
-    virtual void slot053();
-    virtual void slot054();
-    virtual void slot055();
-    virtual void slot056();
-    virtual void slot057();
-    virtual void slot058();
-    virtual void slot059();
-    virtual void slot060();
-    virtual void slot061();
-    virtual void slot062();
-    virtual void slot063();
-    virtual void slot064();
-    virtual void slot065();
-    virtual void slot066();
-    virtual void slot067();
-    virtual void slot068();
-    virtual void slot069();
-    virtual void slot070();
-    virtual void slot071();
-    virtual void slot072();
-    virtual void slot073();
-    virtual void slot074();
-    virtual void slot075();
-    virtual void slot076();
-    virtual void slot077();
-    virtual void slot078();
-    virtual void slot079();
-    virtual void slot080();
-    virtual void slot081();
-    virtual void slot082();
-    virtual void slot083();
-    virtual void slot084();
-    virtual void slot085();
-    virtual void slot086();
-    virtual void slot087();
-    virtual void slot088();
-    virtual void slot089();
-    virtual void slot090();
-    virtual int slot091();
-};
-
-
-
-
-class VCallArg { public:
-    virtual void s00(); virtual void s01(); virtual void s02(); virtual void s03();
-    virtual void s04(); virtual void s05(); virtual void s06(); virtual void s07();
-    virtual void s08(); virtual void s09(); virtual void s10(); virtual void s11();
-    virtual void s12(); virtual void s13(); virtual void s14(); virtual void s15();
-    virtual void s16(); virtual void s17(); virtual void s18(); virtual void s19();
-    virtual void s20(); virtual void s21(); virtual void s22(); virtual int s23();  // <-- used
-    virtual void s24(); virtual void s25(); virtual void s26();
-    virtual void s27(int);  // <-- used
-};
-
-class VCallArg51 { public:
-    virtual void s00(); virtual void s01(); virtual void s02(); virtual void s03();
-    virtual void s04(); virtual void s05(); virtual void s06(); virtual void s07();
-    virtual void s08(); virtual void s09(); virtual void s10(); virtual void s11();
-    virtual void s12(); virtual void s13(); virtual void s14(); virtual void s15();
-    virtual void s16(); virtual void s17(); virtual void s18(); virtual void s19();
-    virtual void s20(); virtual void s21(); virtual void s22(); virtual void s23();
-    virtual void s24(); virtual void s25(); virtual void s26(); virtual void s27();
-    virtual void s28(); virtual void s29(); virtual void s30(); virtual void s31();
-    virtual void s32(); virtual void s33(); virtual void s34(); virtual void s35();
-    virtual void s36(); virtual void s37(); virtual void s38(); virtual void s39();
-    virtual void s40(); virtual void s41(); virtual void s42(); virtual void s43();
-    virtual void s44(); virtual void s45(); virtual void s46(); virtual void s47();
-    virtual void s48(); virtual void s49(); virtual void s50();
-    virtual void s51(int);  // <-- used, takes an int
-};
-
-
-
-
-class VCallModal { public:
-    virtual void slot00();
-    virtual void slot01(int);  // offset 4, used
-    virtual void slot02();
-    virtual void slot03();
-    virtual void slot04();     // offset 0x10, used
-    virtual void slot05();
-    virtual void slot06();
-    virtual void slot07();
-    virtual void slot08();
-    virtual void slot09();
-    virtual void slot10();
-    virtual void slot11();
-    virtual void slot12();
-    virtual void slot13();
-    virtual void slot14();
-    virtual void slot15();
-    virtual void slot16();
-    virtual void slot17();
-    virtual void slot18();
-    virtual void slot19();
-    virtual void slot20();
-    virtual void slot21();
-    virtual void slot22();
-    virtual void slot23();
-    virtual void slot24();
-    virtual void slot25();
-    virtual void slot26();
-    virtual void slot27();
-    virtual void slot28();
-    virtual void slot29();
-    virtual void slot30();
-    virtual void slot31();
-    virtual void slot32();
-    virtual void slot33();
-    virtual void slot34();
-    virtual void slot35();
-    virtual void slot36();
-    virtual void slot37();
-    virtual void slot38();
-    virtual void slot39();
-    virtual void slot40();
-    virtual void slot41();
-    virtual void slot42();
-    virtual void slot43();
-    virtual void slot44();
-    virtual void slot45();
-    virtual void slot46();
-    virtual void slot47();
-    virtual void slot48();
-    virtual void slot49();
-    virtual void slot50();
-    virtual void slot51();
-    virtual void slot52();
-    virtual void slot53();
-    virtual void slot54();
-    virtual void slot55();
-    virtual void slot56();
-    virtual void slot57();
-    virtual void slot58();  // offset 0xe8, used
-    virtual int  slot59();  // offset 0xec, used, checked
-};
-
-class VCallRet23 { public:
-    virtual void s00(); virtual void s01(); virtual void s02(); virtual void s03();
-    virtual void s04(); virtual void s05(); virtual void s06(); virtual void s07();
-    virtual void s08(); virtual void s09(); virtual void s10(); virtual void s11();
-    virtual void s12(); virtual void s13(); virtual void s14(); virtual void s15();
-    virtual void s16(); virtual void s17(); virtual void s18(); virtual void s19();
-    virtual void s20(); virtual void s21(); virtual void s22();
-    virtual int  s23();  // <-- used, returns int
-};
-
-class VCallW { public:
-    virtual void slot000();  virtual void slot001();  virtual void slot002();
-    virtual void slot003();  virtual void slot004();  virtual void slot005();
-    virtual void slot006();  virtual void slot007();  virtual void slot008();
-    virtual void slot009();  virtual void slot010();  virtual void slot011();
-    virtual void slot012();  virtual void slot013();  virtual void slot014();
-    virtual void slot015();  virtual void slot016();  virtual void slot017();
-    virtual void slot018();  virtual void slot019();  virtual void slot020();
-    virtual void slot021();  virtual void slot022();  virtual void slot023();
-    virtual void slot024();  virtual void slot025();  virtual void slot026();
-    virtual void slot027();  virtual void slot028();  virtual void slot029();
-    virtual void slot030();  virtual void slot031();  virtual void slot032();
-    virtual void slot033();  virtual void slot034();  virtual void slot035();
-    virtual void slot036();  virtual void slot037();  virtual void slot038();
-    virtual void slot039();  virtual void slot040();  virtual void slot041();
-    virtual void slot042();  virtual void slot043();  virtual void slot044();
-    virtual void slot045();  virtual void slot046();  virtual void slot047();
-    virtual void slot048();  virtual void slot049();  virtual void slot050();
-    virtual void slot051();  virtual void slot052();  virtual void slot053();
-    virtual void slot054();  virtual void slot055();  virtual void slot056();
-    virtual void slot057();  virtual void slot058();  virtual void slot059();
-    virtual void slot060();  virtual void slot061();  virtual void slot062();
-    virtual void slot063();  virtual void slot064();  virtual void slot065();
-    virtual void slot066();  virtual void slot067();  virtual void slot068();
-    virtual void slot069();  virtual void slot070();  virtual void slot071();
-    virtual void slot072();  virtual void slot073();  virtual void slot074();
-    virtual void slot075();  virtual void slot076();  virtual void slot077();
-    virtual void slot078();  virtual void slot079();  virtual void slot080();
-    virtual void slot081();  virtual void slot082();  virtual void slot083();
-    virtual void slot084(int, int, unsigned int, int);  // <-- used
-};
-
-
 
 
 // Fixed-slot bindings the homed bodies name but no artifact defined
@@ -7765,8 +7336,7 @@ void __cdecl Win::OnRButtonUp(void * hwnd, int x, int y, unsigned int keys) {
     WinTrackingWindow = nullptr;
     Win *win = reinterpret_cast<Win *>(get_mouse_window(&x, &y));
     if (win != 0) {
-        VCallW *vcall = reinterpret_cast<VCallW *>(win);
-        vcall->slot084(x, y, keys, WinMouseDirect);
+        win->on_r_button_up(x, y, keys, WinMouseDirect);
     }
 }
 
@@ -7926,7 +7496,7 @@ void Win::show(int visible) {
         if (list_.count_ != 0 && list_.head_ != 0) {
             Win *obj = *reinterpret_cast<Win **>(reinterpret_cast<char *>(list_.current_) + 4);
             if (obj != 0) {
-                reinterpret_cast<VCallArg51 *>(obj)->s51(1);
+                obj->vslot_51(1);
             }
         }
 
@@ -7964,7 +7534,7 @@ void Win::show(int visible) {
 
         Win *obj2 = reinterpret_cast<Win *>(val_3_);
         if (obj2 != 0) {
-            if (reinterpret_cast<VCallRet23 *>(obj2)->s23() == 0) {
+            if (obj2->vslot_23() == 0) {
                 obj2->vslot_07();
             }
         }
@@ -8110,7 +7680,7 @@ int Win::set_modal(int flags, int (__cdecl *callback)(), Win * owner) {
                 if (rr == 0) {
                     int cur = reinterpret_cast<int>(WinFocusWindow);
                     if (cur != 0) {
-                        reinterpret_cast<VCallModal *>(reinterpret_cast<void *>(cur))->slot58();
+                        reinterpret_cast<Win *>(cur)->release_modal();
                     }
                     result = 1;
                     break;
@@ -8944,7 +8514,7 @@ void Win::nonclient_to_client(RECT * rect) {
             rect->top = rect->top + (caption_height_ - border_thickness_);
         }
         if (menu_ != 0) {
-            rect->top = rect->top + reinterpret_cast<NCCall *>(menu_)->slot091();
+            rect->top = rect->top + menu_->vslot_91();
         }
     }
 }
@@ -9581,7 +9151,7 @@ void Win::client_to_nonclient(int * points, int * count) {
         *count += caption_height_ - border_thickness_;
     }
     if (menu_ != 0) {
-        *count += reinterpret_cast<MenuVCall *>(menu_)->slot091();
+        *count += menu_->vslot_91();
     }
 }
 
@@ -10257,7 +9827,7 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
         if (cb != 0) {
             cb(with_modifiers);
         }
-        reinterpret_cast<VCallArg *>(self)->s27(with_modifiers);
+        vslot_27(with_modifiers);
 
         Win *next = reinterpret_cast<Win *>(val_16_);
         if (next == 0) {
@@ -10352,7 +9922,7 @@ void Win::client_to_nonclient(RECT * rect) {
             rect->top += border_thickness_ - caption_height_;
         }
         if (menu_ != 0) {
-            int adj = reinterpret_cast<VCall2 *>(menu_)->slot091();
+            int adj = menu_->vslot_91();
             rect->top -= adj;
         }
     }
@@ -10390,7 +9960,7 @@ void Win::nonclient_to_client(int * x, int * y) {
         *y += caption_height_ - border_thickness_;
     }
     if (menu_ != 0) {
-        *y -= reinterpret_cast<NCCall *>(menu_)->slot091();
+        *y -= menu_->vslot_91();
     }
 }
 

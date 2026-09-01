@@ -102,7 +102,11 @@ class Menu : public GraphicWin {
   // of them is a later measurement; the declaration is what lets the
   // compiler emit the dispatch instead of a fake-class shim.
   virtual void vslot_90() {}
-  virtual void vslot_91() {}
+  // RETURNS int: Win's two consumers read its return as the caption-height
+  // adjustment (`*count += menu_->vslot_91()`, `rect->top -= adj` - the old
+  // VCall2/MenuVCall shims spelled the slot int-returning). The body is
+  // unrecovered; the default holds the slot, semantic debt until named.
+  virtual int vslot_91() { return 0; }
   virtual void vslot_92() {}
   virtual void vslot_93() {}
 };
