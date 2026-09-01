@@ -66,8 +66,6 @@ Return Value: n/a
 Status: Complete
 */
 RadioButton::RadioButton(int a1) {
-    char *const self = reinterpret_cast<char *>(this);
-
     // THE COMPILER OWNS THE VIRTUAL-BASE SETUP NOW. With
     // `: public virtual GraphicWin, public virtual Dialog` declared, VC6 emits
     // the vbtable pointer store, both vtordisp initialisations, and the unwind
@@ -76,35 +74,13 @@ RadioButton::RadioButton(int a1) {
     // What is left is what the compiler cannot do: GraphicWin and Dialog model
     // construction as a `construct()` METHOD rather than a constructor, so the
     // two calls stay, and they are base-qualified rather than member calls.
+    // Strip-all direction: the image's five derived-stage stores
+    // (0x00669A6C/0x00669A64/0x00669A58 + the two vtordisp refreshes) are
+    // gone, exactly as the Dialogs::destroy staging they mirror; the
+    // constructor is unclaimed either way.
     if (a1 != 0) {
         new (static_cast<GraphicWin *>(this)) GraphicWin();
         Dialog::construct();
-    }
-
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off1 = vbtable[1];
-        *reinterpret_cast<int32_t *>(self + off1) = 0x00669A6C;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off1 = vbtable[1];
-        *reinterpret_cast<int32_t *>(self + off1 + 0x444) = 0x00669A64;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off2 = vbtable[2];
-        *reinterpret_cast<int32_t *>(self + off2) = 0x00669A58;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off1 = vbtable[1];
-        *reinterpret_cast<int32_t *>(self + off1 - 4) = off1 - 0x18;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off2 = vbtable[2];
-        *reinterpret_cast<int32_t *>(self + off2 - 4) = off2 - 0xA30;
     }
 
     field_C_ = 0;
@@ -143,29 +119,8 @@ RadioButton *__fastcall radio_button_teardown_redirect(void *adjusted, void *,
                                                         unsigned int mode) {
     char *const self = static_cast<char *>(adjusted) - 0x18;
 
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        *reinterpret_cast<int32_t *>(self + vbtable[1]) = 0x00669A6C;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        *reinterpret_cast<int32_t *>(self + vbtable[1] + 0x444) = 0x00669A64;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        *reinterpret_cast<int32_t *>(self + vbtable[2]) = 0x00669A58;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off1 = vbtable[1];
-        *reinterpret_cast<int32_t *>(self + off1 - 4) = off1 - 0x18;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off2 = vbtable[2];
-        *reinterpret_cast<int32_t *>(self + off2 - 4) = off2 - 0xA30;
-    }
-
+    // Strip-all direction: the image's five derived-stage re-stores here are
+    // gone, as in the constructor.
     reinterpret_cast<RadioButton *>(self)->close();
     reinterpret_cast<Dialog *>(self + 0xA30)->destroy();
     reinterpret_cast<GraphicWin *>(self + 0x18)->~GraphicWin();

@@ -21,6 +21,22 @@
 #include "graphicwin.h"
 #include "dialog.h"
 #include "spot.h"
+#include "stringstruct.h"
+
+// THE SPRITE LIST, the StringStruct sibling SpriteBox embeds at 0x24. Its
+// own close (0x00611730, spritebox.cpp) stages the sibling pair
+// 0x0066943C/0x00669438 - StringStruct's construction shape at this class's
+// own table address - and its deleting destructor (0x00402BB0, still
+// unrecovered) installs the same pair, which is the evidence that this is a
+// distinct class and not plain StringStruct. StringList-shaped (0x30: the
+// three list-own dwords at SpriteBox+0x40 are StringList's field_1C_/20_/
+// 24_). No own virtual is declared yet: the table the compiler emits for it
+// is StringStruct-shaped until the sibling's virtual surface is named
+// (recorded semantic debt, unk-method).
+class SpriteBoxList : public StringList {
+ public:
+  void close();
+};
 
  /*
   * SpriteBox class
@@ -98,26 +114,23 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
   uint8_t spot_storage_[0xC];  // 0x10, sizeof(Spot)
   uint32_t field_1C_;  // 0x1C
   uint32_t field_20_;  // 0x20
-  uint32_t field_24_;  // 0x24
-  uint32_t field_28_;  // 0x28
-  // The intrusive list `?id_to_pos@SpriteBox@@QAEIH@Z` walks, proved at
-  // 0x00611600: `mov eax, [ecx + 0x2c]` (the head, tested for null first),
-  // `mov [ecx + 0x30], eax` (the cursor), `mov esi, [ecx + 0x34]` compared
-  // with `cmp esi, edx / jle` - so the count is SIGNED - and
-  // `mov [ecx + 0x38], edx` (the position, which is also the return
-  // residue). The IDB names all four field_2C..field_38 at four bytes each.
-  uint32_t field_2C_;
-  uint32_t field_30_;
-  // 0x34. Dialogs returns this for kind 8 - at 0x70 + 0x34 == 0xA4, which that
-  // header called `field_A4_`.
- protected:
-  int32_t field_34_;
+  // THE EMBEDDED SPRITE LIST, carved 2026-09-01 from what was field_24_ ..
+  // field_50_: exactly 0x30 = sizeof(StringList) - the two ABI words at its
+  // front, the four list fields (head 0x2C, cursor 0x30, signed count 0x34,
+  // position 0x38 - the walk `?id_to_pos@SpriteBox@@QAEIH@Z` proves at
+  // 0x00611600), the allocator, StringList's own three dwords, and the
+  // virtual base (vptr 0x4C + saved owner 0x50). The ctor's field_24_/
+  // field_28_/field_4C_/field_50_ stores were StringList's construction
+  // sequence by hand - the StringAllocationBase capture read the hand-off
+  // global and cleared it - and the compiler emits all of it from this
+  // declaration now. SpriteBoxList is the sibling whose own close stages
+  // the 0x0066943C/0x00669438 pair (spritebox.cpp).
+  // PUBLIC, not private: Dialogs (which derives SpriteBox) returns the
+  // list's count for kind 8, exactly as it did through field_34_ before.
+  // Access changes no offset.
+ public:
+  SpriteBoxList list_;  // 0x24
  private:
-  uint32_t field_38_;
-  uint32_t field_3C_;  // 0x3C
-  uint8_t field_40_[0xC];  // 0x40
-  uint32_t field_4C_;  // 0x4C
-  uint32_t field_50_;  // 0x50
   uint32_t field_54_;  // 0x54
   uint32_t field_58_;  // 0x58
   uint32_t field_5C_;  // 0x5C

@@ -65,40 +65,15 @@ Return Value: n/a
 Status: Complete
 */
 EditGroup::EditGroup(int a1) {
-    char *const self = reinterpret_cast<char *>(this);
-
     // THE COMPILER OWNS THE VIRTUAL-BASE SETUP - see the class declaration.
     // Only the two `construct()` calls remain, because those bases model
     // construction as a method rather than a constructor.
+    // Strip-all direction: the image's five derived-stage stores
+    // (0x006708D4/0x006708CC/0x006708C0 + the two vtordisp refreshes) are
+    // gone, as in CheckBox and RadioButton; the constructor is unclaimed.
     if (a1 != 0) {
         new (static_cast<GraphicWin *>(this)) GraphicWin();
         Dialog::construct();
-    }
-
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off1 = vbtable[1];
-        *reinterpret_cast<int32_t *>(self + off1) = 0x006708D4;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off1 = vbtable[1];
-        *reinterpret_cast<int32_t *>(self + off1 + 0x444) = 0x006708CC;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off2 = vbtable[2];
-        *reinterpret_cast<int32_t *>(self + off2) = 0x006708C0;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off1 = vbtable[1];
-        *reinterpret_cast<int32_t *>(self + off1 - 4) = off1 - 0x8C;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off2 = vbtable[2];
-        *reinterpret_cast<int32_t *>(self + off2 - 4) = off2 - 0xAA4;
     }
 
     for (int i = 0; i < 10; ++i) {
@@ -118,8 +93,8 @@ EditGroup::EditGroup(int a1) {
 Purpose: Tear down an EditGroup: reinstall the base subobjects' own
          vtable/vtordisp values, then close the object through its own
          `close()`.
-// ORIGINAL: 0x00611A20 ??1EditGroup@@QAE@XZ 0x00611A20-0x00611A88 BYTE_EXACT
-// LEVER: TWO changes, measured separately. (1) A real `~EditGroup()` has to destroy `virtual_base_` and `dialog_`, which under /GX is an SEH frame plus a thirty-instruction member-teardown tail - 67 compiled instructions against the image's 23, agreeing 0. The image reinstalls the base vtables and calls `close()` and destroys nothing, so this is a METHOD; spelling it `destruct()` drops the frame and the tail and lands exactly 23. (2) With that done the only remaining difference was register allocation, and a NAMED `base` local was causing it: `char *const base = self - 0x8C;` gets EAX and costs a `mov ecx, eax` before the call, 3 of 23. Writing `self - 0x8C` at each use lets VC6 common it into ECX - where the thiscall receiver has to be anyway - and spill `this` to EAX, which is the image's opening `mov eax, ecx`. 23 of 23, BYTE_EXACT.
+// ORIGINAL: 0x00611A20 ??1EditGroup@@QAE@XZ 0x00611A20-0x00611A88
+// TRIED: TWO changes, measured separately. (1) A real `~EditGroup()` has to destroy `virtual_base_` and `dialog_`, which under /GX is an SEH frame plus a thirty-instruction member-teardown tail - 67 compiled instructions against the image's 23, agreeing 0. The image reinstalls the base vtables and calls `close()` and destroys nothing, so this is a METHOD; spelling it `destruct()` drops the frame and the tail and lands exactly 23. (2) With that done the only remaining difference was register allocation, and a NAMED `base` local was causing it: `char *const base = self - 0x8C;` gets EAX and costs a `mov ecx, eax` before the call, 3 of 23. Writing `self - 0x8C` at each use lets VC6 common it into ECX - where the thiscall receiver has to be anyway - and spill `this` to EAX, which is the image's opening `mov eax, ecx`. 23 of 23, BYTE_EXACT.
 // TRIED: naming the local and calling through `self - 0x8C` anyway (3/23), a typed `EditGroup *const base_object` (3/23), an explicitly qualified `->EditGroup::close()` (3/23), and deriving `self` from `base` rather than the other way round, which loses four instructions outright (0 of 23, 19 compiled).
 // TRIED: `record` DROPPED the line above the first time it was written. Re-recording a body whose tier changes rewrites its annotation and keeps only the LEVER. Re-added after the claim was banked.
 // symbol    ?destruct@EditGroup@@QAEXXZ
@@ -138,33 +113,11 @@ Return Value: n/a
 Status: Complete
 */
 void EditGroup::destruct() {
+    // Strip-all direction: the image's five derived-stage re-stores here -
+    // the whole content this BYTE_EXACT claim used to bank - are gone, as in
+    // CheckBox and RadioButton. What remains is the close() dispatch the
+    // image ends with.
     char *const self = reinterpret_cast<char *>(this);
-
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self - 0x8C);
-        const int32_t off1 = vbtable[1];
-        *reinterpret_cast<int32_t *>(self - 0x8C + off1) = 0x006708D4;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self - 0x8C);
-        const int32_t off1 = vbtable[1];
-        *reinterpret_cast<int32_t *>(self + off1 + 0x3B8) = 0x006708CC;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self - 0x8C);
-        const int32_t off2 = vbtable[2];
-        *reinterpret_cast<int32_t *>(self - 0x8C + off2) = 0x006708C0;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self - 0x8C);
-        const int32_t off1 = vbtable[1];
-        *reinterpret_cast<int32_t *>(self + off1 - 0x90) = off1 - 0x8C;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self - 0x8C);
-        const int32_t off2 = vbtable[2];
-        *reinterpret_cast<int32_t *>(self + off2 - 0x90) = off2 - 0xAA4;
-    }
 
     // NO `base` LOCAL. Naming `self - 0x8C` pins it to EAX and forces a
     // `mov ecx, eax` before the call; letting VC6 common the subexpression

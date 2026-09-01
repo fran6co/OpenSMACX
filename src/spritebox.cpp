@@ -72,56 +72,16 @@ SpriteBox::SpriteBox(int a1) {
 
     new (self + 0x10) Spot();
 
-    field_28_ = 0x006708AC;
-    field_4C_ = 0x006693AC;
-    field_50_ = *reinterpret_cast<int *>(0x009B3374);
-    *reinterpret_cast<int *>(0x009B3374) = 0;
-
-    field_24_ = 0x0066943C;
-    {
-        const int32_t *const table = reinterpret_cast<const int32_t *>(field_28_);
-        const int32_t voff = table[1];
-        *reinterpret_cast<int32_t *>(self + 0x28 + voff) = 0x00669438;
-    }
-
-    field_2C_ = 0;
-    field_30_ = 0;
-    field_34_ = 0;
-    field_38_ = 0;
-    field_3C_ = 0;
-
-    field_24_ = 0x006708A4;
-    {
-        const int32_t *const table = reinterpret_cast<const int32_t *>(field_28_);
-        const int32_t voff = table[1];
-        *reinterpret_cast<int32_t *>(self + 0x28 + voff) = 0x006708A0;
-    }
-
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off1 = vbtable[1];
-        *reinterpret_cast<int32_t *>(self + off1) = 0x00670738;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off1 = vbtable[1];
-        *reinterpret_cast<int32_t *>(self + off1 + 0x444) = 0x00670730;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off2 = vbtable[2];
-        *reinterpret_cast<int32_t *>(self + off2) = 0x00670724;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off1 = vbtable[1];
-        *reinterpret_cast<int32_t *>(self + off1 - 4) = off1 - 0x8C;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off2 = vbtable[2];
-        *reinterpret_cast<int32_t *>(self + off2 - 4) = off2 - 0xAA4;
-    }
+    // The sprite list builds from the declaration: list_'s implicit member
+    // construction is StringList's chain (StringStruct stage, five field
+    // zeros, the StringAllocationBase capture reading 0x009B3374 and
+    // clearing it - the old field_28_/field_4C_/field_50_/field_24_ hand
+    // stores and the two vbtable-relative derived-stage stores), then the
+    // five SpriteBox derived-stage blocks below it in the old body are gone
+    // per the strip-all direction, as in CheckBox/RadioButton/EditGroup.
+    // Divergences accepted: the list's staged table is StringStruct-shaped
+    // until SpriteBoxList's own virtual surface is named, and SpriteBox's
+    // derived tables are no longer staged at all.
 
     field_4_ = 0;
     field_1C_ = 1;
@@ -230,30 +190,9 @@ Return Value: n/a
 Status: Complete
 */
 SpriteBox::~SpriteBox() {
+    // Strip-all direction: the image's five derived-stage re-stores here are
+    // gone, as in the constructor.
     char *const self = reinterpret_cast<char *>(this) - 0x8C;
-
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        *reinterpret_cast<int32_t *>(self + vbtable[1]) = 0x00670738;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        *reinterpret_cast<int32_t *>(self + vbtable[1] + 0x444) = 0x00670730;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        *reinterpret_cast<int32_t *>(self + vbtable[2]) = 0x00670724;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off1 = vbtable[1];
-        *reinterpret_cast<int32_t *>(self + off1 - 4) = off1 - 0x8C;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off2 = vbtable[2];
-        *reinterpret_cast<int32_t *>(self + off2 - 4) = off2 - 0xAA4;
-    }
 
     reinterpret_cast<SpriteBox *>(self)->close();
 
@@ -669,15 +608,8 @@ Status: Complete
 //
 // THE NAME IS OURS. The image is stripped, so no mangled name is being matched
 // here - only bytes - and the artifact's `Obj611730` was as invented as this.
-//
-// NOT IN AN ANONYMOUS NAMESPACE, though it is file-private in spirit: VC6
-// mangles one by embedding the translation unit's ABSOLUTE PATH and a hash,
-// so the `// symbol` fact below would be machine-specific and would break on
-// any other checkout.
-class SpriteBoxList {
- public:
-  void close();
-};
+// SpriteBoxList itself moved to spritebox.h as the real StringStruct sibling
+// SpriteBox embeds at 0x24.
 
 // SUB_402BB0 IS THIS CLASS'S DELETING DESTRUCTOR, still unrecovered
 // (src/recovered/units/00402bb0.cpp, NOT_MATCHING). Named here because the
@@ -701,7 +633,7 @@ class SpriteBoxList {
 /*
 Purpose: Close the list - install its pair of virtual tables, release every
          entry through its own vtable, then clear head, count and position.
-// ORIGINAL: 0x00611730 sub_611730 0x00611730-0x006117C3 BYTE_EXACT
+// ORIGINAL: 0x00611730 sub_611730 0x00611730-0x006117C3
 // CORRECTED from sub_611730
 //   It is a StringStruct-derived list's `close`. src/stringstruct.h declares
 //   `close_with_tables(primary, virtual_base)` as "installs the pair of
@@ -709,7 +641,7 @@ Purpose: Close the list - install its pair of virtual tables, release every
 //   StringStruct's offsets 0x00/0x04 are its vftable and vbtable slots - the
 //   two raw stores this body's immediates make. src/dialog.cpp
 //   calls the same helper the same way for the list at Dialog's this+0xBC.
-// LEVER: PROMOTED out of src/unrecovered/00611730.cpp. Called by both ??0SpriteBox and ??1SpriteBox, so it is shared setup and teardown rather than one or the other.
+// TRIED: PROMOTED out of src/unrecovered/00611730.cpp. Called by both ??0SpriteBox and ??1SpriteBox, so it is shared setup and teardown rather than one or the other.
 // TRIED: spelling the body AS `list->close_with_tables(0x0066943C, 0x00669438)` on the StringStruct at `this - 0x28`, which is the idiom dialog.cpp uses. It compiles to 5 instructions against the image's 63 - the inline folds to almost nothing at this offset - so the walk stays written out here.
 // symbol    ?close@SpriteBoxList@@QAEXXZ
 // size      147 bytes
@@ -725,13 +657,11 @@ void SpriteBoxList::close() {
     };
 
     char *self = reinterpret_cast<char *>(this) - 0x28;
-    char *this_char = reinterpret_cast<char *>(this);
 
-    *reinterpret_cast<int *>(self) = 0x66943c;
-
-    int *base_ptr = *reinterpret_cast<int **>(this_char - 0x24);
-    int adjust = *reinterpret_cast<int *>(reinterpret_cast<char *>(base_ptr) + 4);
-    *reinterpret_cast<int *>(this_char - 0x24 + adjust) = 0x669438;
+    // Strip-all direction: the pair install the image stages here
+    // (`mov [esi-0x28], 0x66943c` and the vbtable-relative 0x669438) is
+    // gone; the walk below dispatches through whatever tables the
+    // constructing chain installed.
 
     void *head = *reinterpret_cast<void **>(self + 8);
     if (head != 0) {

@@ -74,43 +74,21 @@ Return Value: n/a
 Status: Complete
 */
 CheckBox::CheckBox(int a1) {
-    char *const self = reinterpret_cast<char *>(this);
-
     // THE COMPILER OWNS THE VIRTUAL-BASE SETUP. The vbtable pointer store,
     // both vtordisp initialisations and the unwind that destroys GraphicWin
     // if Dialog's stage throws are emitted from the declaration now. What is
     // left is what the language cannot do for us: GraphicWin and Dialog model
     // construction as a `construct()` METHOD, so those two calls stay,
     // base-qualified rather than member calls.
+    // DEMOTED-shape note, strip-all direction: the image stages its own
+    // derived tables here by hand (0x006705B0/0x006705A8/0x0067059C plus the
+    // two vtordisp refreshes, all vbtable-relative). Those five stores are
+    // gone - the object runs on whatever the construction chain installed
+    // until the classes declare their full virtual surfaces (batch 9's
+    // GraphicWin/Dialog edit). The constructor is unclaimed either way.
     if (a1 != 0) {
         new (static_cast<GraphicWin *>(this)) GraphicWin();
         Dialog::construct();
-    }
-
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off1 = vbtable[1];
-        *reinterpret_cast<int32_t *>(self + off1) = 0x006705B0;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off1 = vbtable[1];
-        *reinterpret_cast<int32_t *>(self + off1 + 0x444) = 0x006705A8;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off2 = vbtable[2];
-        *reinterpret_cast<int32_t *>(self + off2) = 0x0067059C;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off1 = vbtable[1];
-        *reinterpret_cast<int32_t *>(self + off1 - 4) = off1 - 0x1C;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off2 = vbtable[2];
-        *reinterpret_cast<int32_t *>(self + off2 - 4) = off2 - 0xA34;
     }
 
     field_4_ = 0;
@@ -164,39 +142,17 @@ CheckBox::~CheckBox() {
     // back to the CheckBox pointer itself; subtracting 0x1C again in source
     // double-counts it. The TRIED note above diagnosed exactly this and could
     // not act on it while the base was a member.
+    // Strip-all direction: the image's five derived-stage re-stores here are
+    // gone, same as the constructor's.
     char *const self = reinterpret_cast<char *>(this);
-    CheckBox *const obj = this;
 
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        *reinterpret_cast<int32_t *>(self + vbtable[1]) = 0x006705B0;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        *reinterpret_cast<int32_t *>(self + vbtable[1] + 0x444) = 0x006705A8;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        *reinterpret_cast<int32_t *>(self + vbtable[2]) = 0x0067059C;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off1 = vbtable[1];
-        *reinterpret_cast<int32_t *>(self + off1 - 4) = off1 - 0x1C;
-    }
-    {
-        const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-        const int32_t off2 = vbtable[2];
-        *reinterpret_cast<int32_t *>(self + off2 - 4) = off2 - 0xA34;
-    }
+    field_4_ = 0;
+    field_8_ = 0;
+    field_C_ = 0;
+    field_14_ = CheckBoxDefault2;
+    field_10_ = CheckBoxDefault1;
 
     const int32_t *const vbtable = *reinterpret_cast<const int32_t *const *>(self);
-    obj->field_4_ = 0;
-    obj->field_8_ = 0;
-    obj->field_C_ = 0;
-    obj->field_14_ = CheckBoxDefault2;
-    obj->field_10_ = CheckBoxDefault1;
-
     reinterpret_cast<Dialog *>(self + vbtable[2])->Dialog::close();
     const int32_t *const vbtable2 = *reinterpret_cast<const int32_t *const *>(self);
     reinterpret_cast<GraphicWin *>(self + vbtable2[1])->close();

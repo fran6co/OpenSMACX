@@ -124,7 +124,7 @@ int Dialogs::get_num_items() {
             return count;
         }
         case 8:
-            return SpriteBox::field_34_;
+            return SpriteBox::list_.entry_count_;
         default:
             return 0;
     }
