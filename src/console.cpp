@@ -73,7 +73,6 @@ Purpose: Build the game console - its virtual GraphicWin base, its MapWin
          base, its own extra (non-virtual) embedded GraphicWin, and its own
          Buffer/Time/Menu/Sprite members.
 // ORIGINAL: 0x0050F460 ??0Console@@QAE@H@Z 0x0050F460-0x0050F629;0x0065D250-0x0065D2EF
-// symbol    ?construct@Console@@QAEXH@Z
 // size      616 bytes
 // prototype void (__thiscall ??0Console@@QAE@H@Z)(Console* this, int)
 // callers   1   call targets   7
@@ -90,7 +89,7 @@ alongside it. Console's own fields past the MapWin base are still opaque
 storage (see the class declaration), so everything below reaches its
 sub-objects by raw offset.
 */
-void Console::construct(int input) {
+Console::Console(int input) {
     char *const self = reinterpret_cast<char *>(this);
 
     if (input) {
@@ -847,4 +846,5 @@ Time g_CONSOLE_TIMER;
 // the zero storage the image leaves until its own init fills them.
 PrefWin ConsolePrefWin;   // 0x008578D8
 InfoWin ConsoleInfoWin;   // 0x007AD2A0
-Console ConsoleGlobal;    // 0x009156B0
+Console ConsoleGlobal(1);  // 0x009156B0 - the image's ??__E passes the
+                           // most-derived flag: push 1 at 0x0050E852
