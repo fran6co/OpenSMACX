@@ -13,7 +13,7 @@
 #include "spritebox.h"
 #include "net_class.h"
 
-#include "stringstruct.h"  // StringAllocationBaseVtable, StringAllocationHeap
+#include "stringstruct.h"  // StringAllocationBase, the ledger's virtual base
 #include "heap.h"
 #include <new>      // Heap placement-construction at 0x148C
 

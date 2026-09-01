@@ -48,7 +48,10 @@ SHAPES = [
     # pairs stripped with the two AlphaMovie constants.
     # 3 -> 2 (batch 4, dialog family): Dialog::destroy's primary overlay store
     # stripped with its constant.
-    ("vtable", 2,
+    # 2 -> 0 (batch 4, pulldown): PullDown::destroy's two dead stores stripped
+    # with PullDownPrimary/BufferVtable - the last vtable-shaped stores in the
+    # tree. The body demoted (1 of 36): the stores anchored this in ebx.
+    ("vtable", 0,
      re.compile(r"""(?x)
         (?: \w+ \s* \[ \s* 0x[0-9A-Fa-f]+ \s* / \s* 4 \s* \]
           | \* \s* reinterpret_cast \s* < [^>]*? \* \s* > \s* \([^)]*\)
@@ -146,7 +149,10 @@ HEADER_SHAPES = [
     # six and alphanet's five unused construction-table arrays.
     # 24 -> 22 (batch 3, alphamovie): AlphaMoviePrimary/BufferVtable stripped
     # with amovie_project's five install/re-install pairs.
-    ("vtable address constant", 21,
+    # 21 -> 19 (batch 4, pulldown + dead externs): PullDownPrimary/BufferVtable
+    # deleted with their dead stores; the eleven orphan externs (DialogPrimary,
+    # the four Ambience, the six Dialogs stage tables) left with zero users.
+    ("vtable address constant", 19,
      re.compile(r"\b[A-Za-z_]\w*Vtable\w*\s*=\s*\(?\s*0x"),
      "the raw material every hand-installed vtable is built from. When the "
      "classes are real, these constants have nothing left to point at."),

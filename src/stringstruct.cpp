@@ -18,13 +18,16 @@
 
 #include "heap.h"  // StringAllocationHeap
 
-// Defined out of line and empty: OUT OF LINE is the point. A header-inline
-// empty destructor is provably nothrow, and VC6 then sheds the /GX unwind
-// states from the construction chain that StringBox::StringBox's frame
-// carries. The teardown itself is the raw vtable reinstall + owner republish
-// in StringList::destroy().
+// The real teardown: republish the saved allocation owner so the next
+// allocation routes through it again (sub_401520, the image's deleting
+// destructor, and StringList::destroy's tail are this destructor as
+// compiled - the [esi] = 0x6693AC vptr re-stage on top of it is the
+// compiler's own destructor machinery). Out of line: OUT OF LINE is the
+// point. A header-inline empty destructor is provably nothrow, and VC6 then
+// sheds the /GX unwind states from the construction chain that
+// StringBox::StringBox's frame carries.
 StringAllocationBase::~StringAllocationBase() {
-    allocation_owner_ = 0;
+    StringAllocationHeap = allocation_owner_;
 }
 
 void StringStruct::unk_slot00() {
@@ -348,12 +351,6 @@ void StringStruct::close() {
         StringStructVirtualBaseVtable;
     self->remove_all();
     self->current_position_ = 0;
-}
-
-// The redirect hands the adjusted pointer straight through - close() itself
-// performs the 0x1C, as the image does.
-void __fastcall string_struct_close_redirect(void *adjusted, void *) {
-    reinterpret_cast<StringStruct *>(adjusted)->close();
 }
 
 const uint32_t StringStructDerivedVtable = 0x006698C4;

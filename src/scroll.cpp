@@ -1204,10 +1204,9 @@ int Scroll::on_left_click(int, int) {
 
 
 /*
-Purpose: Destroy a Scroll: stage its two virtual tables, run close, destroy
-         the embedded right then left FlatButtons, and finish with the
-         GraphicWin base teardown. The original's exception frame is omitted
-         as unreachable per policy.
+Purpose: Destroy a Scroll: run close, destroy the embedded right then left
+         FlatButtons, and finish with the GraphicWin base teardown. The
+         original's exception frame is omitted as unreachable per policy.
 // ORIGINAL: 0x00406E60 ??1Scroll@@QAE@XZ 0x00406E60-0x00406F1A;0x00650BB0-0x00650BEE
 // TRIED: dropping `volatile` from `object` (plain `uint32_t *`, same raw
 //   offsets): no change, still 0/46. The image's prologue is an SEH frame

@@ -176,8 +176,8 @@ class BasePop : public GraphicWin {
   // THE POPUP'S UNIT-NAME LIST, carved 2026-08-30 from what was the twelve
   // dwords field_2180_..field_21AC_: exactly 0x30 = sizeof(StringList), and
   // the image's own ctor writes are StringList's construction, not raw
-  // stores - the vbtable (0x0066B0EC = stringstruct.h's
-  // StringListVirtualBaseTable) at +0x2184, the StringAllocationBase vftable
+  // stores - the vbtable (0x0066B0EC) at +0x2184, the StringAllocationBase
+  // vftable
   // (0x006693AC) at +0x21A8, the allocator hand-off capture into +0x21AC,
   // and the StringStruct zeroing. The old hand-spelled copies of those
   // stores are deleted from the ctor; the compiler now emits them from this

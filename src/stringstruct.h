@@ -41,7 +41,6 @@ static_assert(offsetof(StringStructEntry, payload) == 0x8,
 static const size_t StringStructCloseAdjustment = 0x1C;
 extern const uint32_t StringStructVtable;
 extern const uint32_t StringStructVirtualBaseVtable;
-void __fastcall string_struct_close_redirect(void *adjusted, void *);
 
 // A derived list closes with its own tables before closing its StringStruct
 // base; its adjustor sits 0x28 bytes into the object.
@@ -86,13 +85,6 @@ void __fastcall string_struct_derived_close_redirect(void *adjusted);
  * zeroing (its inline constructor body), then StringList's own vtable stage -
  * the image's exact store order, with no call anywhere.
  */
-// The six tables the StringList construction installs, defined IN THE HEADER
-// so the inlined constructor folds them to immediates (`mov [esi + 4],
-// 0x66b0ec`), the way ScrollPrimaryVtable folds in scroll.h. The same
-// addresses also live under other names in stringstruct.cpp for the close
-// paths: StringStructVtable, StringStructVirtualBaseVtable,
-// StringStructDerivedVtable, StringStructDerivedVirtualBaseVtable,
-// StringAllocationBaseVtable.
 
 // The eight-byte allocation-tracking virtual base the vbtables name: one
 // vtable slot and the saved allocation owner. REAL, not held by layout:
