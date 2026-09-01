@@ -93,7 +93,10 @@ SHAPES = [
      "costs a null guard (`test ecx, ecx; je`) the image does not have. A real "
      "base or member is constructed unconditionally."),
 
-    ("hand-walked vbtable", 17,
+    # 17 -> 12 (batch 8, dialogs/listbox staging strips): the staging reads
+    # left with the derived-stage stores they fed. The remaining 12 are the
+    # image's own dispatch (close/handler receivers it walks itself).
+    ("hand-walked vbtable", 12,
      re.compile(r"\*reinterpret_cast<(?:const )?int32_t \*(?:const )?\*>\([^)]*\)\)\[[12]\]"),
      "reads a virtual-base displacement out of the vbtable by hand. That is "
      "what `public virtual` makes the compiler do."),
@@ -170,7 +173,11 @@ HEADER_SHAPES = [
     # the image's 0x004066C0 was the compiler-generated teardown the real
     # ~StringStruct now emits, and its only in-tree caller was the demoted
     # StringList::destroy.
-    ("vtable address constant", 9,
+    # 9 -> 0 (batch 8, dialogs/listbox staging strips): the Dialogs six
+    # function-local stage tables and ListBox's three teardown re-stage
+    # constants left with their stores. ZERO - the named vtable-address
+    # constant is extinct in src/.
+    ("vtable address constant", 0,
      re.compile(r"\b[A-Za-z_]\w*Vtable\w*\s*=\s*\(?\s*0x"),
      "the raw material every hand-installed vtable is built from. When the "
      "classes are real, these constants have nothing left to point at."),

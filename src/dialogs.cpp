@@ -372,29 +372,11 @@ func_dialogs_teardown DialogsCheckBoxDestructor =
 
 namespace {
 
-// Stage a virtually-derived subobject's three tables plus its two vbase-adjust
-// words, every slot located through THAT subobject's own vbtable at run time
-// (the RadioButton-at-0x44 hazard: an embedded vbtable names different offsets
-// than a most-derived one, and hardcoding aims every store at the wrong
-// address). The buffer table always sits 0x444 past the primary; each adjust
-// word, four bytes below its slot, records the live entry minus the class's
-// own most-derived entry.
-void stage_virtual_tables(uint8_t *subobject, uint32_t primary_vtable,
-                          uint32_t buffer_vtable, uint32_t win_vtable,
-                          int32_t primary_own_offset, int32_t win_own_offset) {
-    const int32_t *const vbtable =
-        *reinterpret_cast<const int32_t *const *>(subobject);
-    const int32_t primary = vbtable[1];
-    const int32_t win = vbtable[2];
-    *reinterpret_cast<volatile uint32_t *>(subobject + primary) = primary_vtable;
-    *reinterpret_cast<volatile uint32_t *>(subobject + primary + 0x444) =
-        buffer_vtable;
-    *reinterpret_cast<volatile uint32_t *>(subobject + win) = win_vtable;
-    *reinterpret_cast<volatile int32_t *>(subobject + primary - 4) =
-        primary - primary_own_offset;
-    *reinterpret_cast<volatile int32_t *>(subobject + win - 4) =
-        win - win_own_offset;
-}
+// stage_virtual_tables and its six function-local constants are gone: the
+// two staging rounds (Dialogs' own GraphicWin/Win virtual base at 0x188/0xBA0
+// and the embedded RadioButton at 0x18/0xA30) were the derived-stage overlay
+// idiom - hand writes the image itself performs - and they left with the
+// strip-all direction, exactly as the AlphaMovie and Ambience overlays did.
 
 // A member's entry address, guarded the way the original guards it. A plain
 // function rather than the lambda this was: VC6 has no lambdas, and the
@@ -448,14 +430,9 @@ close() call is equivalent by construction: Dialogs::close is an empty body.
 uint32_t Dialogs::destroy() {
     uint8_t *const base = reinterpret_cast<uint8_t *>(this);
 
-    // Dialogs' own vbtable sits at the allocation base; the 0x188/0xBA0
-    // subtrahends are its most-derived entries, baked in by the original.
-    const uint32_t DialogsVbaseGraphicWinVtable = 0x00669BE8;
-    const uint32_t DialogsVbaseBufferVtable = 0x00669BE0;
-    const uint32_t DialogsVbaseWinVtable = 0x00669BD4;
-    stage_virtual_tables(base, DialogsVbaseGraphicWinVtable,
-                         DialogsVbaseBufferVtable, DialogsVbaseWinVtable,
-                         0x188, 0xBA0);
+    // Both staging rounds left (see stage_virtual_tables' note above): the
+    // object runs on whatever its constructing chain installed.
+
     close();
 
     // The three widget members, each entered at its fixed adjustment past the
@@ -467,21 +444,14 @@ uint32_t Dialogs::destroy() {
     (ORIGINAL(guarded_member(guard, 0x70, 0x8C))->*DialogsSpriteBoxDestructor)();
     (ORIGINAL(guarded_member(guard, 0x58, 0x1C))->*DialogsCheckBoxDestructor)();
 
-    // The embedded RadioButton at base+0x44: its vbtable names the SHARED
-    // virtual bases, so this staging overwrites the step-one tables, and its
-    // recovered close walks them through the same vbtable.
+    // The embedded RadioButton at base+0x44: its recovered close walks the
+    // shared virtual bases through its own vbtable.
     uint8_t *const radio = static_cast<uint8_t *>(guarded_member(guard, 0x44, 0));
-    const uint32_t DialogsRadioPrimaryVtable = 0x00669A6C;
-    const uint32_t DialogsRadioBufferVtable = 0x00669A64;
-    const uint32_t DialogsRadioWinVtable = 0x00669A58;
-    stage_virtual_tables(radio, DialogsRadioPrimaryVtable,
-                         DialogsRadioBufferVtable, DialogsRadioWinVtable,
-                         0x18, 0xA30);
     reinterpret_cast<RadioButton *>(radio)->close();
 
     // The embedded ListBox's base coincides with the allocation base; its
-    // recovered destroy stages the ListBox tables - overwriting once more -
-    // and closes both shared bases. Unguarded, as the original left it.
+    // recovered destroy closes both shared bases. Unguarded, as the original
+    // left it.
     return reinterpret_cast<ListBox *>(base)->destroy();
 }
 
