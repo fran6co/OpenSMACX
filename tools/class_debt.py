@@ -166,7 +166,10 @@ CEILINGS = {
     # 214 -> 211 (batch 6, dialog/prodpicker): the item-list and the three
     # ProdPicker blocks are real members - the raw self casts of the old
     # item()/a7-block spellings left with them.
-    "raw self-access": 211,
+    # 211 -> 209 (batch 6, stringstruct dtor chain): close()'s vbtable-walk
+    # stores and the redirect's adjusted-receiver recovery left with the hand
+    # close chain.
+    "raw self-access": 209,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these

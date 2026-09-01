@@ -191,16 +191,12 @@ typedef void (OriginalObject::*func_dialog_close)();
 // scalar deleting destructor frees through the executable's operator delete.
 extern func_dialog_close DialogOriginalClose;          // default 0x00608F50
 
-// Virtual tables the two-stage list close stages. All four ARE dispatched
-// through - the embedded StringStruct walk reads the table installed at
-// this+0xBC - so they are rebindable: outside the hybrid process the game
-// addresses are unmapped and a leaf test must substitute a stand-in. The
-// virtual base's final table and the owner publish are ~StringAllocationBase's
-// own body now (stringstruct.cpp), not staged here.
-extern uint32_t DialogListDerivedVtable;                // this+0xBC = 0x006698C4
-extern uint32_t DialogListDerivedVirtualBaseVtable;     // this+0xE4 = 0x006698C0
-extern uint32_t DialogListVtable;                       // this+0xBC = 0x006693A4
-extern uint32_t DialogListVirtualBaseVtable;            // this+0xE4 = 0x006693A0
+// The four rebindable list-stage table constants left with the hand
+// close_with_tables calls they fed: destroy() runs the one compiler-owned
+// item_list_ destructor chain, which stages the same tables (0x006698C4/
+// 0x006698C0 derived, 0x006693A4/0x006693A0 base) from the StringList
+// declarations. The virtual base's final table and the owner publish are
+// ~StringAllocationBase's own body (stringstruct.cpp).
 
 // ?init@Dialog@@QAEHH@Z (0x006095F0), the one-int init overload. Unrecovered;
 // SpriteBox forwards to it, so its definition is a seam into the original.

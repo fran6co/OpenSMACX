@@ -370,13 +370,12 @@ int Dialog::set_def_dialog_font(Font *font1, Font *font2, Font *font3) {
 
 func_dialog_close DialogOriginalClose = original_method<func_dialog_close>(0x00608F50);
 
-uint32_t DialogListDerivedVtable = 0x006698C4;
-uint32_t DialogListDerivedVirtualBaseVtable = 0x006698C0;
-uint32_t DialogListVtable = 0x006693A4;
-uint32_t DialogListVirtualBaseVtable = 0x006693A0;
-// DialogVirtualBaseFinalVtable and DialogPublishedGlobal are gone: the final
-// table install and the owner publish are ~StringAllocationBase's own body,
-// and destroy()'s tail now runs them as item_list_'s explicit destructor.
+// The four list-stage constants (DialogListDerived/VirtualBase and
+// DialogList/VirtualBaseVtable) are gone: destroy()'s two hand
+// close_with_tables calls folded into the one compiler-owned
+// item_list_ destructor chain, which stages the same tables from the
+// StringList declarations. DialogVirtualBaseFinalVtable and
+// DialogPublishedGlobal left in the batch before.
 
 
 /*
@@ -416,8 +415,9 @@ Return Value: n/a (the original leaves Heap::shutdown's EAX residue; the
               scalar deleting destructor overwrites it and the 116 direct
               callers ignore it, so void is faithful)
 Status: Complete with temporary Dialog::close original dependency; the list
-        walk and the Heap teardown are the source-owned
-        StringStruct::close_with_tables/remove_all and Heap::shutdown.
+        teardown is item_list_'s compiler-owned destructor chain
+        (~StringList: derived stage, base stage, entry walk, virtual-base
+        destructor) and the Heap shutdown is Heap::shutdown.
 Verification note: the sweep's one survivor swaps the context-word read at
 virtual_base[1] past the final-table install at virtual_base[0]; the slots are
 disjoint, so the original's read-before-install order is unobservable and the
@@ -428,19 +428,12 @@ void Dialog::destroy() {
     // bytes the compiler's vfptr occupies.
     (ORIGINAL(this)->*DialogOriginalClose)();
 
-    // The derived-close chain at 0x004066C0, inlined by the original: each
-    // stage resolves the virtual-base slot through the list's own vbtable at
-    // run time (never the compile-time 0x24 - the RadioButton rule), and the
-    // second stage's walk is a run-time no-op because the first emptied the
-    // list.
-    item_list_.close_with_tables(DialogListDerivedVtable,
-                                 DialogListDerivedVirtualBaseVtable);
-    item_list_.close_with_tables(DialogListVtable, DialogListVirtualBaseVtable);
-
-    // The list virtual base's subobject destructor - the read of the saved
-    // owner, the final-table install, and the publish are the destructor's
-    // own body now (~StringAllocationBase, stringstruct.cpp), spelled here
-    // as the one explicit destructor call the image inlines at this tail.
+    // The list teardown is the one explicit destructor call: the compiler's
+    // chain stages the derived pair, then the base pair, walks the entries
+    // once, and runs the virtual-base destructor (final-table install +
+    // owner republish). The image inlines the same two stages at this tail;
+    // the hand close_with_tables calls and their four rebindable constants
+    // are gone with them.
     item_list_.~StringList();
 
     heap_.shutdown();

@@ -161,7 +161,16 @@ HEADER_SHAPES = [
     # 19 -> 18 (batch 6, dialog family): DialogVirtualBaseFinalVtable left -
     # the final-table install is ~StringAllocationBase's own body now, run as
     # item_list_'s explicit destructor in Dialog::destroy.
-    ("vtable address constant", 18,
+    # 18 -> 14 (batch 6, stringstruct dtor chain): the four list-stage
+    # constants left - destroy()'s hand close_with_tables calls folded into
+    # the one compiler-owned ~StringList chain, which stages the same tables
+    # (derived pair, base pair) from the real declarations.
+    # 14 -> 9 (batch 6, chain deletion): StringStruct's four table constants
+    # left with close_with_tables and the orphaned derived-close redirect -
+    # the image's 0x004066C0 was the compiler-generated teardown the real
+    # ~StringStruct now emits, and its only in-tree caller was the demoted
+    # StringList::destroy.
+    ("vtable address constant", 9,
      re.compile(r"\b[A-Za-z_]\w*Vtable\w*\s*=\s*\(?\s*0x"),
      "the raw material every hand-installed vtable is built from. When the "
      "classes are real, these constants have nothing left to point at."),

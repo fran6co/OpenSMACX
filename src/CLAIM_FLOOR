@@ -2,4 +2,4 @@
 # `osmx check` fails when the tree's live claim count differs in
 # EITHER direction. Never edit by hand - bank or demote through
 # `osmx record`, which rewrites this file with what it measured.
-claims 2301
+claims 2300
