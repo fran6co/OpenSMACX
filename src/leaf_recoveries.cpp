@@ -1390,8 +1390,6 @@ void __cdecl leaf_0063d420_redirect(void *stream, uint32_t value) {
 // the same treatment BufferVtable and BaseButtonBufferVtable already get, and
 // the reason the two candidates carrying them stayed in the queue when the
 // seven that DEREFERENCE image addresses left it.
-const uint32_t ImageButtonPrimaryVtable = 0x00670A94;
-const uint32_t ImageButtonBufferVtable = 0x00670A8C;
 
 /*
 Purpose: Clear the field, then close as a BaseButton.

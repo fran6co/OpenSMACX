@@ -26,9 +26,6 @@ void __fastcall PickWinSpriteDtor(void *self) { reinterpret_cast<Sprite *>(self)
 void __fastcall PickWinFlatButtonCtor(void *self) { reinterpret_cast<FlatButton *>(self)->FlatButton::FlatButton(); }
 void __fastcall PickWinFlatButtonDtor(void *self) { reinterpret_cast<FlatButton *>(self)->~FlatButton(); }
 
-const uint32_t PickWinPrimaryVtable = 0x0066D13C;
-const uint32_t PickWinBufferVtable = 0x0066D134;
-
 /*
 // ORIGINAL: 0x0048AC10 ??0PickWin@@QAE@XZ 0x0048AC10-0x0048ADB6;0x00657E30-0x00657F65
 // TRIED: deriving from ConstructedGraphicWin (graphicwin.h) to move the

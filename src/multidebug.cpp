@@ -19,9 +19,6 @@
 #include "multidebug.h"
 #include "vtable_shim.h"
 
-const uint32_t MultiDebugPrimaryVtable = 0x0066FA88;
-const uint32_t MultiDebugBufferVtable = 0x0066FA80;
-
 /*
 Purpose: Construct the GraphicWin base, the embedded Font and Time, then
          install MultiDebug's own vtables and zero the flag field.

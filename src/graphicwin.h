@@ -180,10 +180,6 @@ extern func_subobject_close WinOriginalClose;
 // Process default copied into field_A0C_ by close().
 extern uint32_t GraphicWinFieldA0CDefault;
 
-// Original virtual table addresses the destructor installs before delegating.
-extern const uint32_t GraphicWinPrimaryVtable;
-extern const uint32_t GraphicWinBufferVtable;
-
 GraphicWin *__fastcall graphic_win_destructor_redirect(GraphicWin *self, void *);
 // A GraphicWin THAT CONSTRUCTS ITSELF, for the derived classes whose image
 // constructor calls GraphicWin::construct() BEFORE its own members.

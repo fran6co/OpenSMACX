@@ -1789,7 +1789,6 @@ void Buffer::close() {
 }
 
 
-const uint32_t BufferVtable = 0x0066FDBC;
 
 /*
 Purpose: Destroy a Buffer by installing its virtual table, releasing every

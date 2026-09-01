@@ -28,11 +28,6 @@ void __fastcall SocialWinCheckButtonDtor(void *self) { reinterpret_cast<CheckBut
 void __fastcall SocialWinButtonGroupCtor(void *self) { reinterpret_cast<ButtonGroup *>(self)->ButtonGroup::ButtonGroup(); }
 void __fastcall SocialWinButtonGroupDtor(void *self) { reinterpret_cast<ButtonGroup *>(self)->~ButtonGroup(); }
 
-const uint32_t SocialWinSubInterfaceVtable = 0x0066A6E4;
-const uint32_t SocialWinPrimaryVtable = 0x0066DAA4;
-const uint32_t SocialWinBufferVtable = 0x0066DA9C;
-const uint32_t SocialWinSubInterfaceVtable2 = 0x0066DA50;
-
 /*
 Purpose: Install the SubInterface vftable, construct the Spot, nine runs of
          further sub-objects (a CheckButton[3], four Sprite runs, a

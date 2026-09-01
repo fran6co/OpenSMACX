@@ -79,12 +79,6 @@ PushButton *PushButton::destroy() {
     return static_cast<PushButton *>(BaseButton::destroy());
 }
 
-// Gamma's own virtual table addresses, installed by the constructor. The pair
-// mirrors GraphicWin's exactly - primary at +0, the Buffer subobject's at
-// +0x444, eight bytes apart - because Gamma inherits that layout unchanged.
-const uint32_t GammaPrimaryVtable = 0x0066C3D8;
-const uint32_t GammaBufferVtable = 0x0066C3D0;
-
 /*
 Purpose: Construct the gamma-correction dialog.
 // ORIGINAL: 0x005C8DA0 ??0Gamma@@QAE@XZ 0x005C8DA0-0x005C8E60;0x00662A70-0x00662AC8 BYTE_EXACT

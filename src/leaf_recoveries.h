@@ -44,8 +44,6 @@ int __fastcall leaf_004041c0_redirect(void *, void *);
 void *__fastcall leaf_004bea30_redirect(void *, void *);
 void __fastcall leaf_00432970_redirect(void *, void *);
 void __cdecl leaf_0063d420_redirect(void *, uint32_t);
-extern const uint32_t ImageButtonPrimaryVtable;
-extern const uint32_t ImageButtonBufferVtable;
 void __fastcall image_button_close_redirect(void *, void *);
 int __fastcall image_button_init_redirect(void *, void *, int, LPCSTR, int,
                                           int, int, int, int, Win *, int);
