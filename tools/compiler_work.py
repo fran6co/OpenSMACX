@@ -120,7 +120,11 @@ HEADER_SHAPES = [
     # 75 -> 73 (2026-08-29, stringbox batch): StringBoxPrimaryVtable and
     # StringBoxBufferVtable are gone - the class is real, and the compiler
     # installs ??_7StringBox itself.
-    ("vtable address constant", 73,
+    # 73 -> 71 (checkbutton batch): CheckButtonPrimaryVtable and
+    # CheckButtonBufferVtable were declared but never referenced - the class
+    # is real (: public GraphicWin, virtual destructor), and the compiler
+    # installs its vptrs in the ctor itself.
+    ("vtable address constant", 71,
      re.compile(r"\b[A-Za-z_]\w*Vtable\w*\s*=\s*\(?\s*0x"),
      "the raw material every hand-installed vtable is built from. When the "
      "classes are real, these constants have nothing left to point at."),

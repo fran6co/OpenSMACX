@@ -17,13 +17,21 @@
  */
 #include "stdafx.h"
 #include "checkbutton.h"
+#include "checkbox.h"
 
-const uint32_t CheckButtonPrimaryVtable = 0x0066DC14;
-const uint32_t CheckButtonBufferVtable = 0x0066DC0C;
 // The two defaults the constructor reads once and copies into the object:
-// unnamed globals the image reads by fixed address and never writes back.
-static int *const CheckButtonDefaultA24 = (int *)0x00697F20;
-static int *const CheckButtonDefaultA28 = (int *)0x00697F24;
+// pointers to the checkbox sprites the whole check family shares -
+// g_CHECKBOX_SPRITE_1 / g_CHECKBOX_SPRITE_2 (checkbox.h), the instances the
+// image holds at 0x009B8F60 / 0x009B8F90 and CheckBox::init_class populates
+// from jackal.pcx. The image's slots at 0x00697F20 / 0x00697F24 hold these
+// two addresses, and nothing but this constructor ever reads them.
+//
+// SPELLED AS BINDINGS, MEASURED: the image LOADS these two slots
+// (`mov eax,[0x697f20]` then stores the copy) - taking &instance directly
+// compiles one store-immediate instead of that load/store pair and the
+// ctor drops from 17 instructions to 15, 5/17.
+Sprite *const CheckButtonDefaultA24 = &g_CHECKBOX_SPRITE_1;
+Sprite *const CheckButtonDefaultA28 = &g_CHECKBOX_SPRITE_2;
 
 /*
 Purpose: Construct the GraphicWin base, then install CheckButton's own
@@ -44,8 +52,8 @@ CheckButton::CheckButton() {
     isToggled_ = 0;
     field_A1C_ = 0;
     field_A20_ = 0;
-    field_A28_ = *CheckButtonDefaultA28;
-    field_A24_ = *CheckButtonDefaultA24;
+    field_A28_ = reinterpret_cast<uint32_t>(CheckButtonDefaultA28);
+    field_A24_ = reinterpret_cast<uint32_t>(CheckButtonDefaultA24);
 }
 
 /*
