@@ -452,7 +452,10 @@ class Win : public AutoSound {
   virtual int vslot_07() { return 0; }  // 21 call sites pass nothing and
                                       // the image pushes nothing  // 0x00404230
   virtual int vslot_08() { return 0; }  // 0x00406B30
-  virtual int vslot_09(int value = 0) { return value; }  // 0x00404230
+  // The parameter is the POINTER the image's one call site passes through
+  // it (Dialogs::on_scroll_delete hands a Scroll* over this slot); typed as
+  // such rather than as the int the shim era spelled.
+  virtual void *vslot_09(void *value = 0) { return value; }  // 0x00404230
   virtual int vslot_10(int = 0) { return 0; }  // 0x00404250
   virtual int vslot_11(int = 0, int = 0, int = 0, int = 0) { return 0; }  // 0x00404240
   virtual void vslot_12() {}  // 0x00404280

@@ -132,7 +132,12 @@ SHAPES = [
     # assigns same-name overloads to vtable slots in REVERSE declaration
     # order - int fade() landed at slot 9 where the image has fade(unsigned
     # long); declaring fade() first aligns the 9/10 pair with the image.
-    ("VCall shim", 2,
+    # 2 -> 0 (batch 10 complete): tutwin's on_move is
+    # field_53D4_->vslot_63() with the member typed Win* (pointer = pointer,
+    # no layout change), and Dialogs::on_scroll_delete's scroll is a typed
+    # Scroll calling vslot_09 - the declared default whose RETURN-THE-
+    # ARGUMENT is exactly the body's documented pass-back. ZERO sites.
+    ("VCall shim", 0,
      re.compile(r"\bVCall\b"),
      "dispatches through a fake class because the real function is not "
      "declared virtual. Declare it."),

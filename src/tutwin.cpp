@@ -55,6 +55,7 @@ void TutWin::UNK1() {
 /*
 Purpose: Store a single value at 0x53D4.
 // ORIGINAL: 0x004BDDD0 ?UNK3@TutWin@@QAEXH@Z 0x004BDDD0-0x004BDDE0 BYTE_EXACT
+// symbol    ?UNK3@TutWin@@QAEXPAVWin@@@Z
 // size      16 bytes
 // prototype void (__thiscall ?UNK3@TutWin@@QAEXH@Z)(TutWin* this, int)
 // callers   0   call targets   0
@@ -64,7 +65,7 @@ Purpose: Store a single value at 0x53D4.
 Return Value: n/a
 Status: Complete
 */
-void TutWin::UNK3(int a1) {
+void TutWin::UNK3(Win *a1) {
     field_53D4_ = a1;
 }
 
@@ -399,12 +400,10 @@ Return Value: n/a
 Status: Complete
 */
 void TutWin::on_move(int x, int y) {
-    // field_53D4_ is declared int32_t but holds an object pointer - the
-    // cast stays until the member's own type is settled, which is a layout
-    // question for TutWin rather than a naming one.
-    VCall *obj = *reinterpret_cast<VCall **>(&field_53D4_);
-    if (obj) {
-        obj->slot063();
+    // field_53D4_ holds a Win-family object pointer (now typed as one); the
+    // repaint is its declared vslot_63 virtual.
+    if (field_53D4_) {
+        field_53D4_->vslot_63();
     }
 }
 

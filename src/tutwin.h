@@ -70,7 +70,7 @@ class TutWin : public Popup {
   // nothing and the deleting destructor needs a `call rel32`.
   ~TutWin();
   void UNK1();
-  void UNK3(int a1);
+  void UNK3(Win *a1);
   void do_base(RECT *rect, const char *text, int flag);
   void do_iface(RECT *rect, const char *text, int flag);
   void do_soc(RECT *rect, const char *text, int flag);
@@ -104,7 +104,10 @@ class TutWin : public Popup {
   uint32_t field_53C8_;  // 0x53C8
   uint32_t field_53CC_;  // 0x53CC
   uint32_t field_53D0_;  // 0x53D0
-  int32_t field_53D4_;
+  // HOLDS A WIN-FAMILY OBJECT POINTER (on_move dispatches vslot_63 through
+  // it; UNK3 stores it as the int the image passes) - typed as the pointer
+  // it is. Pointer = pointer: no layout change.
+  Win *field_53D4_;
 };
 
 static_assert(sizeof(TutWin) == 0x53D8,
