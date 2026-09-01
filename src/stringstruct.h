@@ -45,15 +45,12 @@ static_assert(offsetof(StringStructEntry, payload) == 0x8,
 // The legacy close is entered through a virtual-base adjustor, so the redirect
 // receives a pointer 0x1C bytes into the object rather than its base.
 static const size_t StringStructCloseAdjustment = 0x1C;
-extern const uint32_t StringStructVtable;
-extern const uint32_t StringStructVirtualBaseVtable;
 
-// A derived list closes with its own tables before closing its StringStruct
-// base; its adjustor sits 0x28 bytes into the object.
-static const size_t StringStructDerivedCloseAdjustment = 0x28;
-extern const uint32_t StringStructDerivedVtable;
-extern const uint32_t StringStructDerivedVirtualBaseVtable;
-void __fastcall string_struct_derived_close_redirect(void *adjusted);
+// The hand-staged close chain is gone: the four staged table constants, the
+// close_with_tables helper, and string_struct_derived_close_redirect left
+// with the real ~StringStruct destructor, whose compiler-owned chain stages
+// the same tables (derived pair 0x006698C4/0x006698C0, base pair
+// 0x006693A4/0x006693A0, virtual base 0x006693AC) from the declarations.
 
 /*
  * StringList - the string list whose two-stage teardown at 0x004066C0 is
@@ -101,9 +98,6 @@ void __fastcall string_struct_derived_close_redirect(void *adjusted);
 // 2026-08-29. Checkbox, RadioButton and ListBox already declare real virtual
 // bases under this same toolchain (see checkbox.h for the layout argument).
 class Heap;  // defined in heap.h; the owner slot carries one
-
-// StringAllocationBase's own one-slot vftable (its deleting dtor).
-extern const uint32_t StringAllocationBaseVtable;
 
 // THE ALLOCATOR HAND-OFF SLOT, the image's 0x009B3374 .bss: a Heap*. Heap::get
 // publishes itself here on a successful allocation; the StringAllocationBase
@@ -161,6 +155,16 @@ class StringStruct : public virtual StringAllocationBase {
     current_position_ = 0;
     allocator_ = 0;
   }
+  // THE REAL DESTRUCTOR. Declaring it hands the derived-stage table
+  // installs to the compiler: ~StringList's prologue stages the derived
+  // pair, this destructor's prologue stages the base pair (the stores
+  // close() and close_with_tables used to spell by hand), then the body
+  // runs the entry walk. The original hand-managed these tables - 1998
+  // C++ emulating virtual inheritance - and per direction the hand writes
+  // go even where the image performs them; the compiled chain stages the
+  // same tables from the declarations instead. Out of line in
+  // stringstruct.cpp.
+  ~StringStruct();
   int seek_pos(int a1);
   int current_id();
   // Both return the entry's payload pointer; the catalogue's H spelling
@@ -170,9 +174,6 @@ class StringStruct : public virtual StringAllocationBase {
   int seek_id(int id);
   void remove_all();
   void close();
-  // Shared body of every virtual-base close: installs the pair of virtual
-  // tables, releases the entries, then clears the position.
-  void close_with_tables(uint32_t primary, uint32_t virtual_base);
   // 0x00401100, still a pending_bodies forwarder: allocates and links a new
   // entry, its own id, and (for the derived StringList at Dialog::item's
   // this+0xBC) a payload id node too. Dialog::item calls it BY NAME.
@@ -225,12 +226,10 @@ class StringList : public StringStruct {
 static_assert(sizeof(StringList) == 0x30,
               "StringList layout must match the original executable");
 
-// Displacement from a most-derived StringList to its virtual base. The
-// original bakes this into `lea esi, [ecx + 0x28]`; it is deliberately NOT
-// read from the vbtable, because the original does not read it either. The
-// vbtable IS honoured where the original honours it, inside the delegated
-// StringStruct::close_with_tables.
-static const size_t StringListVirtualBaseOffset = 0x28;
+// The 0x28 displacement from a most-derived StringList to its virtual base
+// (the image bakes it into `lea esi, [ecx + 0x28]`) is the compiler's own
+// vbtable arithmetic now - no named constant, the same as the original,
+// which does not read it from the vbtable either.
 
 // The virtual base's own one-slot vftable (0x006693AC), reinstalled once the
 // StringStruct stage has finished with the subobject.

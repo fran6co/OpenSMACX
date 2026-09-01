@@ -33,6 +33,18 @@ StringAllocationBase::~StringAllocationBase() {
 void StringStruct::unk_slot00() {
 }
 
+// The real destructor body: release the entries and clear the position.
+// The derived- and base-stage table installs around it are the compiler's
+// (the destructor prologues), replacing the hand stores close() and
+// close_with_tables spelled - the image's own ??1StringList-shaped chain
+// (0x004066C0) carries the same two stages, walked with everything
+// inlined; this compiled chain keeps a real remove_all, which is the
+// recorded divergence.
+StringStruct::~StringStruct() {
+    remove_all();
+    current_position_ = 0;
+}
+
 /*
 Purpose: Return the current string-list item ID.
 // ORIGINAL: 0x00401640 ?current_id@StringStruct@@QAEHXZ 0x00401640-0x00401651 BYTE_EXACT
@@ -242,31 +254,9 @@ inline void StringStruct::remove_all() {
 }
 
 
-const uint32_t StringStructVtable = 0x006693A4;
-const uint32_t StringStructVirtualBaseVtable = 0x006693A0;
-
-// The shared body of every virtual-base close: installs the pair of virtual
-// tables, releases the entries, then clears the position. `inline` because
-// 0x004066C0 writes both of its stages out in place and makes no real call.
-inline void StringStruct::close_with_tables(uint32_t primary, uint32_t virtual_base) {
-    uint8_t *const base = reinterpret_cast<uint8_t *>(this);
-    *reinterpret_cast<volatile uint32_t *>(base) = primary;
-    // The virtual base's table is reached through the displacement held in the
-    // second slot of the vbtable pointed at by offset 4.
-    const uint32_t *const vbtable =
-        *reinterpret_cast<uint32_t **>(base + 4);
-    const uint32_t displacement = vbtable[1];
-    *reinterpret_cast<volatile uint32_t *>(base + 4 + displacement) =
-        virtual_base;
-    // The legacy bodies inline the entry walk; it clears the same fields in
-    // the same order, and does nothing at all when the list is already empty.
-    // The sweep's surviving swap of the walk against the position reset is
-    // observable only to a visitor reading current_position_ mid-walk, and no
-    // leaf fixture can walk through close: the real (unmapped) tables are
-    // installed first, so the walk tier belongs to the in-process oracle.
-    remove_all();
-    current_position_ = 0;
-}
+// StringStructVtable / StringStructVirtualBaseVtable (0x006693A4/0x006693A0)
+// are gone with the hand close chain - the compiler emits both tables from
+// the declarations, and nothing names them any more.
 
 /*
 Purpose: Reset the list to its constructed state, installing both virtual
@@ -318,103 +308,34 @@ Purpose: Reset the list to its constructed state, installing both virtual
 Status: Complete
 */
 void StringStruct::close() {
-    // ENTERED ON THE VIRTUAL BASE, NOT ON THE OBJECT. The first instruction
-    // after the prologue is `lea esi, [ecx - 0x1c]` at 0x00401066, and every
-    // field it then touches is [esi + N] - the list head at +8, the count at
-    // +0x10, the position at +0x14 - so ECX arrives pointing at the two-word
-    // virtual base this class holds at 0x1C, exactly as the adjustor-entered
-    // destructors in guarded_teardowns.cpp do. The adjustment therefore
-    // belongs HERE and not in the redirect: with the redirect subtracting it
-    // instead, the compiled body starts `mov esi, ecx` and diverges at
-    // instruction 0.
+    // ENTERED ON THE VIRTUAL BASE, NOT ON THE OBJECT. The image's close
+    // opens `lea esi, [ecx - 0x1c]` at 0x00401066, and every field it then
+    // touches is [esi + N] - so ECX arrives pointing at the two-word
+    // virtual base this class holds at 0x1C. The adjustment belongs HERE
+    // and not in the redirect: with the redirect subtracting it instead,
+    // the compiled body starts `mov esi, ecx` and diverges at instruction 0.
     uint8_t *const vbase = reinterpret_cast<uint8_t *>(this);
     StringStruct *const self = reinterpret_cast<StringStruct *>(
         vbase - StringStructCloseAdjustment);
-    // The two table stores are written out here rather than delegated to
-    // close_with_tables because the image reaches the vbtable through the
-    // INCOMING pointer - `mov eax, [ecx - 0x18]`, `mov [edx + ecx - 0x18],
-    // 0x6693a0` - not through the recovered object base. close_with_tables is
-    // entered on the object at its other two call sites and cannot say both.
-    // NOT `volatile`, unlike close_with_tables' pair: the image hoists its
-    // zero register (`xor ebx, ebx` at 0x00401069) BETWEEN the `lea` and the
-    // first table store, and a volatile store pins the schedule so the xor
-    // lands six instructions late. 50 of 64 with the qualifier, 56 without.
-    // Both stores survive - the walk that follows calls through a vtable VC6
-    // cannot see through.
-    *reinterpret_cast<uint32_t *>(vbase - StringStructCloseAdjustment) =
-        StringStructVtable;
-    const uint32_t *const vbtable =
-        *reinterpret_cast<uint32_t **>(vbase - StringStructCloseAdjustment + 4);
-    const uint32_t displacement = vbtable[1];
-    *reinterpret_cast<uint32_t *>(
-        vbase - StringStructCloseAdjustment + 4 + displacement) =
-        StringStructVirtualBaseVtable;
+    // TRIED: the two table stores the image stages here (`mov [ecx-0x1c],
+    // 0x6693a4` and the vbtable-relative base-pair store) - hand writes in
+    // the original itself, stripped by direction; the walk now dispatches
+    // through whatever tables the constructing chain installed. The image
+    // hoists its zero register between the lea and the first store; both
+    // gaps are recorded on the marker below.
     self->remove_all();
     self->current_position_ = 0;
 }
 
-const uint32_t StringStructDerivedVtable = 0x006698C4;
-const uint32_t StringStructDerivedVirtualBaseVtable = 0x006698C0;
+// StringStructDerivedVtable / StringStructDerivedVirtualBaseVtable
+// (0x006698C4/0x006698C0), close_with_tables, and
+// string_struct_derived_close_redirect are gone. The redirect's own marker
+// carried the diagnosis all along: the image's 0x004066C0 is a
+// COMPILER-GENERATED two-stage teardown (its LEVER/TRIED notes record the
+// /GX frame no free function can produce), and the real ~StringStruct
+// destructor above now emits that chain from the declarations. The EH
+// frame's funclet span 0x00650980-0x00650995 is that machinery's own.
 
-/*
-Purpose: Close a derived string list, releasing its entries under its own
-         virtual tables before closing its StringStruct base the same way.
-// ORIGINAL: 0x004066C0 sub_4066c0 0x004066C0-0x00406818;0x00650980-0x00650995
-// symbol    ?string_struct_derived_close_redirect@@YIXPAX@Z
-// size      365 bytes
-// prototype 
-// callers   61   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x00406721 0x00406735 0x00406754 0x004067B7 0x004067C9 0x004067E9
-// notes     Runtime redirect installed by DllMain after byte-signature validation
-// LEVER: 2 of 126 -> 6 of 126, 112 compiled instructions -> 114, on the same
-//        two fixes StringStruct::close records: the second stage is
-//        close_with_tables written out (0x00406778 recomputes the object with
-//        the SAME `lea esi, [ebx - 0x28]` the first stage used, so close()'s
-//        own 0x1C entry adjustment has no part in it), and remove_all's
-//        `int index = 0` moved out of the count test.
-// TRIED: the ceiling is THE EH FRAME, and it is worth 14 instructions
-//            before anything else can line up. The image opens `push -1; push
-//            0x65098b; mov eax, fs:[0]; push eax; mov fs:[0], esp` - the
-//            second span, 0x00650980-0x00650995, is that handler's scope
-//            table - and it moves an unwind state through [ebp - 4]: 0 at
-//            0x00406701, just before the DERIVED walk, and -1 at 0x0040677B,
-//            just before the base stage. It also parks the adjusted receiver
-//            at [ebp - 0x14] for the unwind funclet. VC6 emits none of that
-//            for a plain function: under /GX the frame appears only when
-//            something in scope has to be unwound, which means this body is a
-//            COMPILER-GENERATED teardown of a class whose base still needs
-//            destroying while the derived stage runs - the same shape
-//            ??1Net@@QAE@XZ documents at 0x004E34D0. No spelling of a free
-//            `__fastcall` redirect can produce it, and `/GX-` is ruled out
-//            tree-wide in AGENT_BRIEF.md.
-Status: Complete
-Verification note: the base stage overwrites the derived tables, so with the
-non-walking fixtures the oracle can safely drive, the derived stage leaves no
-observable trace and dropping it still compares equal. The derived table
-addresses and the 0x28 adjustor were instead confirmed by reading the
-instruction bytes directly (`mov [ebx-0x28], 0x6698C4` and
-`mov [ecx+ebx-0x24], 0x6698C0`).
-*/
-void __fastcall string_struct_derived_close_redirect(void *adjusted) {
-    StringStruct *self = reinterpret_cast<StringStruct *>(
-        static_cast<uint8_t *>(adjusted) - StringStructDerivedCloseAdjustment);
-    self->close_with_tables(
-        StringStructDerivedVtable, StringStructDerivedVirtualBaseVtable);
-    // The second stage is close()'s body written out, NOT a call to close():
-    // 0x00406778 recomputes the object with the SAME `lea esi, [ebx - 0x28]`
-    // the first stage used, so the 0x1C adjustment close() performs on its own
-    // entry has no part in it. src/dialog.cpp stages its embedded list the
-    // same way.
-    self->close_with_tables(
-        StringStructVtable, StringStructVirtualBaseVtable);
-}
-
-// StringAllocationBase's own one-slot vftable (its deleting destructor,
-// 0x00401520) - the table the destructor stages back onto the base.
-const uint32_t StringAllocationBaseVtable = 0x006693AC;   // was StringVirtualBaseVtable
 // THE ALLOCATOR HAND-OFF SLOT: the allocating Heap published by Heap::get
 // and captured by the next StringAllocationBase construction.
 Heap *StringAllocationHeap;  // 0x009B3374
@@ -423,8 +344,8 @@ Heap *StringAllocationHeap;  // 0x009B3374
 Purpose: Destroy a most-derived StringList: run the source-owned two-stage
          derived close, then hand the virtual base back its own vtable and
          republish the pending-allocation owner the constructor captured.
-// ORIGINAL: 0x00406820 sub_406820 0x00406820-0x0040683B BYTE_EXACT
-// LEVER: THE SECOND PARAMETER WAS INVENTED, so it is gone rather than worked
+// ORIGINAL: 0x00406820 sub_406820 0x00406820-0x0040683B
+// TRIED: THE SECOND PARAMETER WAS INVENTED, so it is gone rather than worked
 //   around. 0x00406820 sets only ECX (`mov ecx, esi; call 0x4066c0`) and never
 //   EDX, and 0x004066C0's body reads only ECX - the `_redirect` name is this
 //   tree's own, so nothing about the image required the arity. Declaring ONE
@@ -459,38 +380,23 @@ Return Value: EAX residue - the saved owner value, republished into
               modelled as uint32_t to preserve the residue, as
               GraphicWin::close and Scroll::destroy do.
 Status: Complete
-Verification note: the delegated close installs the real 0x006698C4 /
-0x006693A4 table addresses into [this] before remove_all dispatches through
-vtable[1], so the entry walk cannot be driven from the leaf suite - those
-addresses are unmapped outside the game process. The sweep's three surviving
-constant mutants rewrite hex values that occur only in the margin comments
-naming each instruction; the code reads the named constants, so the mutants
-are byte-identical and equivalent by construction. The leaf test drives only
-non-walking list shapes, which reach every effect of this function; the walk
-belongs to 0x004066C0 and is covered in-process by the stringstruct
-runtime-oracle suite.
+DEMOTED from BYTE_EXACT by direction (strip-all hand vptr writes): the hand
+derived-close call and the three tail operations (owner read, final-table
+install, republish) left - the teardown is the compiler's ~StringList chain
+now, staging the same tables from the StringStruct/StringList declarations.
+Compiled is 8 instructions against the image's 9: the image inlines the
+vbase tail after its call; ours folds it into the chain. The EAX residue
+survives as the republished global.
 */
 uint32_t StringList::destroy() {
-    uint8_t *const base = reinterpret_cast<uint8_t *>(this);
-    // `lea esi, [ecx + 0x28]` / `mov ecx, esi` / `call 0x004066C0`. The
-    // source-owned derived close is entered on the virtual base and recovers
-    // the object by subtracting the same 0x28, which is why the raw pointer
-    // is handed to the recovered entry point rather than cast to StringStruct.
-    uint8_t *const virtual_base = base + StringListVirtualBaseOffset;
-    string_struct_derived_close_redirect(virtual_base);
-
-    // The three tail operations, in the original's order. The read of
-    // [esi + 4] precedes the store to [esi]; both are volatile so an
-    // optimised build keeps the legacy access order.
-    // [esi] is the vptr slot and [esi+4] the saved Heap*. The owner read
-    // precedes the vtable store; both stay in the image's order.
-    Heap *volatile *const virtual_base_slots =
-        reinterpret_cast<Heap *volatile *>(virtual_base);
-    const Heap *const owner = virtual_base_slots[1];   // mov eax, [esi + 4]
-    reinterpret_cast<volatile uint32_t &>(virtual_base_slots[0]) =
-        StringAllocationBaseVtable;                     // mov [esi], 0x6693AC
-    StringAllocationHeap = const_cast<Heap *>(owner);   // mov [0x9B3374], eax
-    return reinterpret_cast<uint32_t>(owner);           // EAX at the ret
+    // The whole teardown is the compiler's chain now: ~StringList's derived
+    // stage, ~StringStruct's base stage and entry walk, and the virtual-base
+    // destructor whose body restores the one-slot vftable and republishes
+    // the saved owner - the three tail operations the old body spelled by
+    // hand. The EAX residue the 26 callers consume is the republished owner,
+    // which the chain leaves in StringAllocationHeap.
+    this->~StringList();
+    return reinterpret_cast<uint32_t>(StringAllocationHeap);
 }
 
 
