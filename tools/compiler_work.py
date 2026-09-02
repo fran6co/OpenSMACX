@@ -336,7 +336,20 @@ SCAFFOLD_CEILINGS = {
     # came onto the frontier as forwarders (+2) - Buffer::tile_mask
     # (0x005DA6C0) and the Sprite overload of Buffer::tile (0x005DA9F0),
     # neither previously declared anywhere in src/.
-    "PENDING_BODY forwarders": 217,
+    # 216 -> 225 (2026-09-02, boot-sequence batch): system_init and game_init
+    # homed into src/game.cpp. game_init's own forwarder went with the body,
+    # and the boot sequence brought eleven callees onto the frontier that the
+    # build defines nothing for - load_sprites, load_fixed_sprites,
+    # textcolor_init, config_popups, bung_momma, and the six member `init`s
+    # (MainInterface, BattleWin, Console, MultiDebug, MessageWin, Datalink).
+    # Six of the eleven are member functions whose declarations belong in
+    # maininterface.h / battlewin.h / console.h / multidebug.h / messagewin.h /
+    # datalink.h, which that batch does not own, so game.h spells them as
+    # __fastcall receiver-first free functions. Each is one line to convert
+    # when its own header lands.
+    # 225 -> 226 (this merge): the boot batch's 11 callees and the box_sprite
+    # batch's two land in one tree; the union census above is the count.
+    "PENDING_BODY forwarders": 226,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -376,7 +389,13 @@ SCAFFOLD_CEILINGS = {
     # 1666 -> 1665 (2026-09-02, Buffer::box_sprite batch): 005e2dd3.cpp homed
     # into src/buffer.cpp; the three tile()/tile_mask() transcriptions it
     # calls (005da6c0/005da860/005da9f0) are still artifacts, so they stay.
-    "unrecovered files": 1665,
+    # 1670 -> 1664 (same day, boot-sequence batch): 0058f040.cpp and
+    # 0058f2f0.cpp homed into src/game.cpp - system_init MISMATCH 32/135 and
+    # game_init MISMATCH 74/82, both compiling, both with their scaffold
+    # archive units deleted.
+    # 1664 -> 1663 (this merge): box_sprite's archive deletion joins the boot
+    # batch's two; the union census above is the count.
+    "unrecovered files": 1663,
     "hypothesis_layouts.h lines": 2723,
 }
 

@@ -1383,16 +1383,80 @@ void __cdecl load_faction_art(int player_id) {
 // desktop_close, close_opening and game_close were promoted the same day
 // (bodies now in game.cpp); amovie_project went to alphamovie.cpp.
 
-// ?system_init@@YAHXZ at 0x0058F040
-int __cdecl system_init() {
-    typedef int(__cdecl *pending)();
-    return PENDING_BODY(0x0058F040, pending)();
+// ?system_init@@YAHXZ and ?game_init@@YAHHH@Z at 0x0058F040 / 0x0058F2F0 WERE
+// HERE. Homed into game.cpp 2026-09-02, and the twelve forwarders the boot
+// sequence needed came in with them - the five free functions and the six
+// member `init` calls the two bodies drive, all still original bodies. game.h
+// declares them; the six member calls are spelled as `__fastcall`
+// receiver-first free functions there, because game.h cannot add a member to
+// a header it does not own.
+
+// ?load_sprites@@YAXXZ at 0x00455EB0
+void __cdecl load_sprites() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x00455EB0, pending)();
 }
 
-// ?game_init@@YAHHH@Z at 0x0058F2F0
-int __cdecl game_init(int mode, int reload) {
-    typedef int(__cdecl *pending)(int, int);
-    return PENDING_BODY(0x0058F2F0, pending)(mode, reload);
+// ?load_fixed_sprites@@YAXXZ at 0x00455E80
+void __cdecl load_fixed_sprites() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x00455E80, pending)();
+}
+
+// ?textcolor_init@@YAXXZ at 0x004BA220
+void __cdecl textcolor_init() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x004BA220, pending)();
+}
+
+// ?config_popups@@YAXXZ at 0x00588AA0
+void __cdecl config_popups() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x00588AA0, pending)();
+}
+
+// ?bung_momma@@YAXXZ at 0x004595C0
+void __cdecl bung_momma() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x004595C0, pending)();
+}
+
+// ?init@MainInterface@@QAEHH@Z at 0x00459680
+int __fastcall maininterface_init(MainInterface *self, int mode) {
+    typedef int(__fastcall *pending)(MainInterface *, int);
+    return PENDING_BODY(0x00459680, pending)(self, mode);
+}
+
+// ?init@BattleWin@@QAEXXZ at 0x004219E0
+void __fastcall battlewin_init(BattleWin *self) {
+    typedef void(__fastcall *pending)(BattleWin *);
+    PENDING_BODY(0x004219E0, pending)(self);
+}
+
+// ?init@Console@@QAEXH@Z at 0x0051D890
+void __fastcall console_init(Console *self, int mode) {
+    typedef void(__fastcall *pending)(Console *, int);
+    PENDING_BODY(0x0051D890, pending)(self, mode);
+}
+
+// ?init@MultiDebug@@QAEHPAUNet@@PAUWin@@PAE@Z at 0x005C9860
+int __fastcall multidebug_init(MultiDebug *self, Net *net, Win *window,
+                               unsigned char *text) {
+    typedef int(__fastcall *pending)(MultiDebug *, Net *, Win *,
+                                     unsigned char *);
+    return PENDING_BODY(0x005C9860, pending)(self, net, window, text);
+}
+
+// ?init@MessageWin@@QAEXXZ at 0x00471D50
+void __fastcall messagewin_init(MessageWin *self) {
+    typedef void(__fastcall *pending)(MessageWin *);
+    PENDING_BODY(0x00471D50, pending)(self);
+}
+
+// ?init@Datalink@@QAEXXZ at 0x00429300
+void __fastcall datalink_init(Datalink *self) {
+    typedef void(__fastcall *pending)(Datalink *);
+    PENDING_BODY(0x00429300, pending)(self);
 }
 
 // ?game_reload@@YAHHH@Z at 0x0058F450 WAS HERE. Homed into game.cpp
