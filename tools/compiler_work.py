@@ -331,7 +331,12 @@ SCAFFOLD_CEILINGS = {
     # EditGroup::edit; the merged tree's own census then retired the duplicated
     # treaty_on forwarder and the three apply_* seams whose addresses the UNK
     # batch had already homed as claimed UNK2-4 bodies.
-    "PENDING_BODY forwarders": 216,
+    # 216 -> 217 (2026-09-02, Buffer::box_sprite batch): box_sprite's own
+    # forwarder died with the homed body (-1) and the two callees it reaches
+    # came onto the frontier as forwarders (+2) - Buffer::tile_mask
+    # (0x005DA6C0) and the Sprite overload of Buffer::tile (0x005DA9F0),
+    # neither previously declared anywhere in src/.
+    "PENDING_BODY forwarders": 217,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -368,7 +373,10 @@ SCAFFOLD_CEILINGS = {
     # DUPLICATE apiece.
     # 1675 -> 1670 (2026-09-02, DipEdit UNK1-4 batch): 004da760/004da7e0/
     # 004da870/004da900.cpp homed BYTE_EXACT into src/dipedit.cpp.
-    "unrecovered files": 1666,
+    # 1666 -> 1665 (2026-09-02, Buffer::box_sprite batch): 005e2dd3.cpp homed
+    # into src/buffer.cpp; the three tile()/tile_mask() transcriptions it
+    # calls (005da6c0/005da860/005da9f0) are still artifacts, so they stay.
+    "unrecovered files": 1665,
     "hypothesis_layouts.h lines": 2723,
 }
 
