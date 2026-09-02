@@ -151,9 +151,10 @@ Purpose: Destroy a FlatButton by installing its two virtual tables, closing
 Return Value: Instance pointer in EAX
 Status: Complete
 */
-FlatButton::~FlatButton() {
-    close();
-}
+// MOVED IN-CLASS 2026-09-02 (body: src/flatbutton.h) so ??1DipEdit can expand
+// its five FlatButton teardowns the way the image does; this class's own
+// COMDAT keeps being emitted here and still measures 24/24 against
+// 0x00406880.
 
 FlatButton *FlatButton::destroy() {
     volatile uint32_t *const object =

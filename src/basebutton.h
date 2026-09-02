@@ -52,7 +52,7 @@ class BaseButton : public GraphicWin {
   int on_key_down(int a);
   int on_key_up(int a);
   BaseButton() { ; }
-  ~BaseButton() { ; }
+  ~BaseButton();
 
   BaseButton *construct();
   // VOID, AND THE IMAGE IS WHAT SAYS SO: the catalogue spells it

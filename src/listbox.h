@@ -182,7 +182,12 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
  public:
   void on_mouse_leave(int a1, int a2);
   ListBox() { ; }
-  ~ListBox() { ; }
+  // DECLARATION-ONLY (2026-09-02): ??1ListBox is called out-of-line 35 times
+  // in the image, and ??1DipEdit/??1FileWin tear their ListBox members down
+  // with `call ??1ListBox` entered on the GraphicWin vbase - an inline-visible
+  // definition makes those sites expand the (empty) body plus the compiler's
+  // own vbase/vtordisp staging instead. Defined in listbox.cpp.
+  ~ListBox();
   // A `construct` METHOD, NOT A CONSTRUCTOR - the `Win::construct` idiom.
   // The real body (??0ListBox@@QAE@H@Z, 0x00609DB0) is not promoted yet;
   // FileWin::FileWin placement-news a most-derived ListBox member and

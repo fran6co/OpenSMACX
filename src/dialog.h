@@ -65,7 +65,11 @@ class Dialog {
   // THE VIRTUAL ORDER IS THE IMAGE'S, dumped from the ListBox Dialog-part
   // table 0x00670408 on 2026-09-01: slot 0 = the dtor, slot 1 = attach,
   // slot 2 = on_redraw. The declarations follow that order.
-  virtual ~Dialog() { ; }
+  // DECLARATION-ONLY (2026-09-02): ??1Dialog is called out-of-line 35 times
+  // in the image - ??1DipEdit and ??1FileWin tear their Dialog virtual bases
+  // down with `call ??1Dialog` - so the definition must not be inline-visible
+  // in those TUs. Defined in dialog.cpp.
+  virtual ~Dialog();
   virtual int attach(void *a1, int a2, int a3, int a4) { return 0; }
   virtual void on_redraw() { ; }
   // 0x00608F50, a pending_bodies forwarder. checkbox.cpp and

@@ -303,7 +303,7 @@ SCAFFOLD_CEILINGS = {
     # 234 -> 231 (2026-08-30, caviar-voxel batch): the three seams Caviar's
     # homing had declared for sub_639390 / sub_63ad60 / sub_63f9b0 retired -
     # all three bodies now live at the foot of src/caviar.cpp.
-    "PENDING_BODY forwarders": 210,
+    "PENDING_BODY forwarders": 209,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -318,7 +318,7 @@ SCAFFOLD_CEILINGS = {
     # plus the jump-dispatch function our binary lays out elsewhere).
     # 1292 is the count after 00612830.cpp homed; 004ba830.cpp had no archive
     # (the body was already in win.cpp, only MOVED to tutwin.cpp this pass).
-    "artifact files (recovered/)": 1292,
+    "artifact files (recovered/)": 1291,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).

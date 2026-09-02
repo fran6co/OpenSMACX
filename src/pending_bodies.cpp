@@ -805,11 +805,6 @@ DesignWin::~DesignWin() {  // ??1DesignWin@@QAE@XZ at 0x0043ECB0
     PENDING_BODY(0x0043ECB0, pending)(this, nullptr);
 }
 
-DipEdit::~DipEdit() {  // ??1DipEdit@@QAE@XZ at 0x004E2240
-    typedef void(__fastcall *pending)(DipEdit *, void *);
-    PENDING_BODY(0x004E2240, pending)(this, nullptr);
-}
-
 DiploPop::~DiploPop() {  // ??1DiploPop@@QAE@XZ at 0x00440D50
     typedef void(__fastcall *pending)(DiploPop *, void *);
     PENDING_BODY(0x00440D50, pending)(this, nullptr);
@@ -1544,26 +1539,6 @@ Purpose: Step the receiver back to the subobject ??_GSetupWin@@UAEPAXI@Z
 // CORRECTED from ??3SetupWin@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x004AE760` into
 //   ??_GSetupWin@@UAEPAXI@Z, which executes `ret 4`; no stack access and
-//   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
-//   and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-
-/*
-Purpose: Step the receiver back to the subobject ??_GDipEdit@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x004E23F0 ??_GDipEdit@@WEEE@AEPAXI@Z 0x004E23F0-0x004E23FB BYTE_EXACT
-// symbol    ??_EDipEdit@@WEEE@AEPAXI@Z
-// CORRECTED from ??3DipEdit@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x004E23C0` into
-//   ??_GDipEdit@@UAEPAXI@Z, which executes `ret 4`; no stack access and
 //   the receiver stays in ECX. `WEEE@` re-demangles to adjustor{1092}
 //   and 1092 == 0x444, the constant subtracted
 // size      11 bytes

@@ -235,6 +235,18 @@ Purpose: Destroy a BaseButton by installing its two virtual tables, closing
 Return Value: Instance pointer in EAX
 Status: Complete
 */
+// DECLARATION-ONLY IN THE HEADER (2026-09-02): the image calls
+// ??1BaseButton@@QAE@XZ out-of-line 134 times - ??1FlatButton's own teardown
+// is `call ??1BaseButton`, and so are the five FlatButton teardowns expanded
+// in ??1DipEdit - so the definition must NOT be inline-visible, or those
+// sites expand through it. The body is just close(); the staging, the Time
+// members and the GraphicWin base are the compiler's, which is the whole
+// content the image's own ??1BaseButton has. destroy() stays beside it for
+// the nine external callers, exactly as FlatButton keeps destroy().
+BaseButton::~BaseButton() {
+    close();
+}
+
 BaseButton *BaseButton::destroy() {
     volatile uint32_t *const object =
         reinterpret_cast<volatile uint32_t *>(this);

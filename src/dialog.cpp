@@ -539,6 +539,15 @@ void __fastcall dialog_destructor_redirect(Dialog *self, void *) {
     self->destroy();
 }
 
+// DECLARATION-ONLY IN THE HEADER (2026-09-02): ??1Dialog is called
+// out-of-line 35 times in the image, so the definition must not be
+// inline-visible in other TUs. The body is trivial - the item_list_ teardown
+// below is the same chain the compiler's own generated destructor runs, so
+// this definition only anchors the symbol the 35 callers need. destroy()
+// stays beside it as the recovered-spelling home of the 0x00608E10 marker.
+Dialog::~Dialog() {
+}
+
 /*
 Purpose: The compiler-generated scalar deleting destructor: run the complete
          destructor and free the storage through the executable's operator

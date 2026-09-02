@@ -25,7 +25,17 @@
 class FlatButton : public BaseButton {
  public:
   FlatButton();
-  ~FlatButton();
+  // DEFINED IN-CLASS so enclosing destructors can expand it, which is what
+  // the image does: ??1DipEdit carries five expanded copies (the
+  // 0x669754/0x66974c stage pair, `call ?close@FlatButton`, `call
+  // ??1BaseButton`, the enclosing EH state written between them), and so do
+  // ??1BasePop and ??1FileWin. Out-of-line here the compiler can only emit
+  // `call ??1FlatButton` at those sites - the six-flat-button teardown in
+  // ??1FileWin was hand-spelled around exactly that wall. The class's own
+  // COMDAT still measures against ??1FlatButton@@QAE@XZ 0x00406880 from
+  // flatbutton.cpp, where it keeps being emitted (24/24 re-measured after
+  // the move).
+  MEASURED ~FlatButton() { close(); }
 
   uint32_t close();
   FlatButton *destroy();

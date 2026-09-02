@@ -122,6 +122,14 @@ Purpose: Destroy a ListBox: re-stage the GraphicWin, Buffer, and Dialog subobjec
          `this` is always the class's own front. See the redirect's marker.
 Status: Complete with temporary Dialog::close original dependency (through close)
 */
+// DECLARATION-ONLY IN THE HEADER (2026-09-02), for the 35 out-of-line
+// callers and the member teardowns in ??1DipEdit/??1FileWin. The body is
+// trivial; the entered-on-the-GraphicWin-vbase convention and the vbase
+// re-staging live in list_box_destructor_redirect below, which is where the
+// 0x00609EC0 marker's claim is measured.
+ListBox::~ListBox() {
+}
+
 uint32_t ListBox::destroy() {
     // Strip-all direction: the image's five derived-stage re-stores here are
     // gone; the object runs on whatever its constructing chain installed.

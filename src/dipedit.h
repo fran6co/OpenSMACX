@@ -19,7 +19,10 @@
 
 #include "original_seam.h"
 #include "checkbox.h"
+#include "flatbutton.h"
+#include "font.h"
 #include "graphicwin.h"
+#include "listbox.h"
 
  /*
   * DipEdit class
@@ -43,13 +46,36 @@
   * [0, 0xA14) - field_0_, field_4_[0x470], field_474_, field_478_, field_47C_,
   * field_480_, field_484_[0x590] - which is exactly sizeof(GraphicWin) (0xA14),
   * so they were the base's bytes described as unmapped storage; the base
-  * declaration replaces them and moves nothing. Everything from 0xA14 on is
-  * DipEdit's own and is untouched, and sizeof(DipEdit) is 0x5240 before and
-  * after.
+  * declaration replaces them and moves nothing.
   *
-  * What is still NOT established is where the object ends: its methods reach
-  * as far as 0x5240, the class carries no size assertion, and the runs above
-  * 0xA14 remain an extent floor rather than a modelled layout.
+  * THE MEMBERS BELOW ARE THE IDB'S OWN NAMES, proven by the compiler's
+  * member teardown in ??1DipEdit (docs/recovery/subobject-sites.csv):
+  *
+  *   0xA24   Font      ??1Font on `lea ecx,[esi+0xa24]`  (IDB `font`)
+  *   0xA4C   ListBox   ??1ListBox entered on the GraphicWin vbase at
+  *                     +0x48 = 0xa94, then ??1Dialog at +0xa60 = 0x14ac
+  *                     and ??1GraphicWin at 0xa94 - the
+  *                     member-with-virtual-bases pattern
+  *   0x15A0  CheckBox  ??1CheckBox entered on its GraphicWin vbase at
+  *                     +0x1c = 0x15bc, then ??1Dialog at +0xa34 = 0x1fd4
+  *                     and ??1GraphicWin at 0x15bc
+  *   0x20C8..0x4DF8    five FlatButtons, one every 0xB4C (each
+  *                     sizeof(FlatButton)); ??1DipEdit expands each
+  *                     ~FlatButton inline - the 0x669754/0x66974c stage
+  *                     pair, `call ?close@FlatButton`, `call
+  *                     ??1BaseButton`, with the EH state stepped between
+  *                     - which is why ~FlatButton is defined in-class in
+  *                     flatbutton.h
+  *
+  * The old extent reading is withdrawn with them: "methods reach 0x5240" was
+  * ??1DipEdit's `mov dword ptr [edi + 0x444], ebx` at 0x004E227E - the Buffer
+  * vtable slot INSIDE the FlatButton at 0x4df8 (0x4df8 + 0x444 = 0x523c), not
+  * an offset into DipEdit. The object is 0x5944 bytes, and the IDB's member
+  * list stops at flatButton5 + 2892 for exactly that reason.
+  * `?init@DipEdit@@QAEXH@Z` (0x004DB080) reaches them by name too:
+  * `?close@ListBox@@QAEXXZ` at +0xa4c (0x004DB2BF), `?close@CheckBox@@QAEXXZ`
+  * at +0x15a0 (0x004DB440), and per-button loads at 0x42ac (0x004DB752) and
+  * 0x4df8 (0x004DB6EB).
   */
 class DipEdit : public GraphicWin {
  public:
@@ -60,28 +86,46 @@ class DipEdit : public GraphicWin {
   void read_check();
   void do_check();  // 0x004DADA0, defined in src/dipedit.cpp
   DipEdit() { ; }
-  // 0x004E2240 is not recovered: a
-  // pending_bodies forwarder, because an empty inline stub emits
-  // nothing and the deleting destructor needs a `call rel32`.
+  // EMPTY ON PURPOSE: the teardown IS the compiler's, from the member
+  // declarations below - five expanded ~FlatButtons, the CheckBox (dtor
+  // entered on its GraphicWin vbase at 0x15bc, then ??1Dialog/??1GraphicWin
+  // on its virtual bases), the ListBox (dtor entered on 0xa94, then its
+  // virtual bases), the Font, and the GraphicWin base - in that order,
+  // reverse of declaration, with the EH state stepped between each. Defined
+  // out-of-line in dipedit.cpp, beside its claim against
+  // ??1DipEdit@@QAE@XZ 0x004E2240.
   ~DipEdit();
   void on_left_click(int, int);
   void on_redraw();
 
  private:
-  // The GraphicWin base occupies [0, 0xA14). DipEdit's own storage starts here.
-  uint32_t field_A14_;  // 0xA14
-  uint32_t field_A18_;  // 0xA18
-  uint32_t field_A1C_;  // 0xA1C
+  // The GraphicWin base occupies [0, 0xA14). DipEdit's own storage starts
+  // here. THE WINDOW SIZE: ?init@DipEdit@@QAEXH@Z writes 0x2F6 (758) and
+  // 0x18E (398) here (0x004DB0C6/0x004DB0D0) and passes the same two
+  // constants as the width/height arguments of the GraphicWin::init call at
+  // 0x004DB0DA - BaseButton::init's signature names those positions
+  // width/height. BasePop's set_width (0x00601B20, BYTE_EXACT) tests the
+  // same-offset field in that class, which is what makes the pair
+  // width-then-height rather than the reverse.
+  uint32_t width_;   // 0xA14
+  uint32_t height_;  // 0xA18
+  // The faction whose status table row we're viewing. do_check indexes
+  // SpyingStatusTable[faction_index_ * SpyingStatusStride + selected_target_].
+  uint32_t faction_index_;  // 0xA1C
   // 0xA20, the IDB's `field_A20`. `?on_selected@DipEdit@@QAEXH@Z` at
   // 0x004DA740 stores its incoming argument straight here:
   // `mov dword ptr [esi + 0xa20], eax`. The IDB's next member is `font` at
   // 0xA24, so this is a standalone dword rather than the head of a run.
-  int32_t field_A20_;
-  uint8_t field_A24_[0x28];  // 0xA24
-  uint32_t field_A4C_;  // 0xA4C
-  uint8_t field_A50_[0x28];  // 0xA50
-  uint32_t field_A78_;  // 0xA78
-  uint8_t field_A7C_[0xB24];  // 0xA7C
+  // The selected target faction, stored by on_selected(index).
+  int32_t selected_target_;
+  // The IDB's `font` at 0xA24: 0x28 == sizeof(Font).
+  Font font_;  // 0xA24
+  // THE EMBEDDED LISTBOX at the IDB's field_A4C: `?init@DipEdit@@QAEXH@Z`
+  // calls `?close@ListBox@@QAEXXZ` on this+0xA4C (0x004DB2BF), and
+  // ??1DipEdit tears it down with the member-with-virtual-bases pattern:
+  // ??1ListBox entered on the GraphicWin vbase at 0xA4C+0x48 = 0xA94,
+  // ??1Dialog at +0xA60 = 0x14AC, ??1GraphicWin at 0xA94.
+  ListBox list_box_;  // 0xA4C
   // THE EMBEDDED CHECKBOX, real now: the five declarations it replaces
   // (field_15A0_ + field_15A4_[0xC] + field_15B0_ + field_15B4_ +
   // field_15B8_[0xB10]) total exactly sizeof(CheckBox) = 0xB28 at
@@ -89,38 +133,19 @@ class DipEdit : public GraphicWin {
   // from the real CheckBox() ctor, and the twelve set_state_id calls in
   // do_check reach it as `check_box_.set_state_id(...)` through the member.
   CheckBox check_box_;  // 0x15A0
-  uint32_t field_20C8_;  // 0x20C8
-  uint8_t field_20CC_[0x440];  // 0x20CC
-  uint32_t field_250C_;  // 0x250C
-  uint8_t field_2510_[0x704];  // 0x2510
-  uint32_t field_2C14_;  // 0x2C14
-  uint8_t field_2C18_[0x440];  // 0x2C18
-  uint32_t field_3058_;  // 0x3058
-  uint8_t field_305C_[0x704];  // 0x305C
-  uint32_t field_3760_;  // 0x3760
-  uint8_t field_3764_[0x440];  // 0x3764
-  uint32_t field_3BA4_;  // 0x3BA4
-  uint8_t field_3BA8_[0x704];  // 0x3BA8
-  uint32_t field_42AC_;  // 0x42AC
-  uint8_t field_42B0_[0x440];  // 0x42B0
-  uint32_t field_46F0_;  // 0x46F0
-  uint8_t field_46F4_[0x704];  // 0x46F4
-  uint32_t field_4DF8_;  // 0x4DF8
-  uint8_t field_4DFC_[0x14];  // 0x4DFC
-
-  // 0xA20 + 4 + 0x43EC == 0x4E10: the split names storage that was already
-  // here and moves nothing after it. The body still reaches the field by
-  // offset, because DipEdit carries no size assertion and so is absent from
-  // docs/recovery/verified-layouts.txt - the scaffolding a measured body is
-  // compiled in would give this class an opaque shell, and a named member
-  // there is `C2065: undeclared identifier`. 0x004DA740 is BYTE_EXACT;
-  // naming it in the body would cost that.
-
-  // Storage the image proves is here: its own methods reach 0x5240.
-  // Extent only - this class carries no size assertion, and the bound is a floor.
-  uint8_t field_4E10_[0x42C];  // 0x4E10
-  uint32_t field_523C_;  // 0x523C
+  // THE FIVE IDB FlatButtons (flatButton1..flatButton5, 2892 == 0xB4C each).
+  // ??1DipEdit destroys them last-declared-first (0x4DF8 down to 0x20C8),
+  // each as an expanded ~FlatButton, so they are declared in address order
+  // here.
+  FlatButton flat_button1_;  // 0x20C8
+  FlatButton flat_button2_;  // 0x2C14
+  FlatButton flat_button3_;  // 0x3760
+  FlatButton flat_button4_;  // 0x42AC
+  FlatButton flat_button5_;  // 0x4DF8
 };
+
+static_assert(sizeof(DipEdit) == 0x5944,
+              "DipEdit layout must match the legacy ABI");
 
 
 // The two siblings on_selected calls are still in the original image, and
