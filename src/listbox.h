@@ -184,7 +184,17 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
 
  public:
   void on_mouse_leave(int a1, int a2);
-  ListBox() { ; }
+  // DECLARATION-ONLY (2026-09-03), for the same reason as ~ListBox below and
+  // from the same evidence. Editor_diplomacy (console.cpp) builds a stack
+  // DipEdit, and the image's inlined DipEdit constructor reaches this member
+  // with the three instructions `push 1 / lea ecx, [member] / call
+  // ??0ListBox@@QAE@H@Z` (0x004DB8B1..0x004DB8BD) - one call, the virtual
+  // bases built inside the callee. Spelled `{ ; }` here, VC6 expanded the
+  // whole virtual-base stage inline at that site instead: the vbtable store,
+  // both vbase constructors, and the two vtordisp writes, some 25
+  // instructions the image does not have, and the enclosing frame grew four
+  // bytes for the spill slot the expansion needed. Defined in listbox.cpp.
+  ListBox();
   // DECLARATION-ONLY (2026-09-02): ??1ListBox is called out-of-line 35 times
   // in the image, and ??1DipEdit/??1FileWin tear their ListBox members down
   // with `call ??1ListBox` entered on the GraphicWin vbase - an inline-visible

@@ -377,7 +377,12 @@ SCAFFOLD_CEILINGS = {
     # 1290 -> 1289 (2026-09-02, DipEdit::init batch): units/0055b760.cpp and
     # 0060ec10.cpp deleted with the bodies they drafted - treaty_on and
     # CheckBox::get_state_id, both homed as pending forwarders / src bodies.
-    "artifact files (recovered/)": 1289,
+    # 1289 -> 1288 (2026-09-03, editor_diplomacy): units/004db870.cpp deleted
+    # with the body it drafted - Console::editor_diplomacy homed in
+    # src/console.cpp (MISMATCH 58/157; the residual is the two inline
+    # teardown expansions the image pays for and this tree's out-of-line
+    # ~Popup/~DipEdit definitions cannot spell).
+    "artifact files (recovered/)": 1288,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
