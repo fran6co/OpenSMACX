@@ -223,7 +223,11 @@ CEILINGS = {
     # (Buffer::box_sprite, ListBox::set_selected_id, CheckBox::item,
     # EditGroup::edit, X_pop_ask_number) name their parameters a1../a3..
     # pending each body's own evidence. That batch's number to bring down.
-    "scaffold name": 1334,
+    # 1334 -> 1322 (2026-09-02, NOT this work either): the on_button_clicked
+    # batch named twelve of them (button_id, and the EditGroup/X_pop_ask_number
+    # params). DipEdit::init's three new seams (Buffer::box_sprite,
+    # ListBox::set_selected_id, CheckBox::item) land named, adding none.
+    "scaffold name": 1322,
 }
 
 WHY = {

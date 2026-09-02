@@ -335,7 +335,10 @@ SCAFFOLD_CEILINGS = {
     # (the body was already in win.cpp, only MOVED to tutwin.cpp this pass).
     # 1291 -> 1290 (2026-09-01, dipedit read_check batch): units/004da990.cpp
     # deleted with the body it drafted, homed BYTE_EXACT in src/dipedit.cpp.
-    "artifact files (recovered/)": 1290,
+    # 1290 -> 1289 (2026-09-02, DipEdit::init batch): units/0055b760.cpp and
+    # 0060ec10.cpp deleted with the bodies they drafted - treaty_on and
+    # CheckBox::get_state_id, both homed as pending forwarders / src bodies.
+    "artifact files (recovered/)": 1289,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
