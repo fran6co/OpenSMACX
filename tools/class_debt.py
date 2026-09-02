@@ -202,7 +202,10 @@ CEILINGS = {
     # 1379 -> 1380 (2026-08-30, boot-path batch): +1 net from the
     # control_game / caviar homings, proven byte-identical to HEAD by the
     # dispatching agent's clean-base measurement; the class pass names it.
-    "scaffold name": 1325,
+    # 1325 -> 1313 (batch 9, family ctor conversion): the four families'
+    # construct()-era scaffold parameters (the a1 flag spellings) left with
+    # the bare real constructors.
+    "scaffold name": 1313,
 }
 
 WHY = {

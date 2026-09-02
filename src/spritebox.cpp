@@ -46,6 +46,7 @@ Purpose: Compose a SpriteBox from its GraphicWin and Dialog virtual-base-
          (see the class comment in spritebox.h), so it is modelled as an
          explicit parameter instead.
 // ORIGINAL: 0x0060FF00 ??0SpriteBox@@QAE@H@Z 0x0060FF00-0x0061011B;0x006116C0-0x006116DB;0x00662FA0-0x00662FFA
+// symbol    ??0SpriteBox@@QAE@XZ
 // size      656 bytes
 // prototype void (__thiscall ??0SpriteBox@@QAE@H@Z)(SpriteBox* this, int)
 // callers   1   call targets   8
@@ -62,14 +63,12 @@ Purpose: Compose a SpriteBox from its GraphicWin and Dialog virtual-base-
 Return Value: n/a
 Status: Complete
 */
-SpriteBox::SpriteBox(int a1) {
+SpriteBox::SpriteBox() {
     char *const self = reinterpret_cast<char *>(this);
 
-    if (a1 != 0) {
-        new (static_cast<GraphicWin *>(this)) GraphicWin();
-        Dialog::construct();
-    }
-
+    // The virtual-base construction is the compiler's now (both bases are
+    // real constructors) - the old `if (a1) { placement; construct(); }`
+    // guard block is gone with the flag-spelling.
     new (self + 0x10) Spot();
 
     // The sprite list builds from the declaration: list_'s implicit member

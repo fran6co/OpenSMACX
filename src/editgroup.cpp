@@ -42,6 +42,7 @@ Purpose: Compose an EditGroup from its two base-shaped subobjects
          comment in editgroup.h), so it is modelled as an explicit parameter
          instead and the guard is written out by hand.
 // ORIGINAL: 0x00611940 ??0EditGroup@@QAE@H@Z 0x00611940-0x00611A15;0x00663020-0x00663047
+// symbol    ??0EditGroup@@QAE@XZ
 // size      252 bytes
 // prototype void (__thiscall ??0EditGroup@@QAE@H@Z)(EditGroup* this, int)
 // callers   1   call targets   2
@@ -64,17 +65,10 @@ Purpose: Compose an EditGroup from its two base-shaped subobjects
 Return Value: n/a
 Status: Complete
 */
-EditGroup::EditGroup(int a1) {
-    // THE COMPILER OWNS THE VIRTUAL-BASE SETUP - see the class declaration.
-    // Only the two `construct()` calls remain, because those bases model
-    // construction as a method rather than a constructor.
-    // Strip-all direction: the image's five derived-stage stores
-    // (0x006708D4/0x006708CC/0x006708C0 + the two vtordisp refreshes) are
-    // gone, as in CheckBox and RadioButton; the constructor is unclaimed.
-    if (a1 != 0) {
-        new (static_cast<GraphicWin *>(this)) GraphicWin();
-        Dialog::construct();
-    }
+EditGroup::EditGroup() {
+    // THE COMPILER OWNS THE VIRTUAL-BASE SETUP, end to end - see checkbox.cpp.
+    // Strip-all direction: the image's five derived-stage stores remain
+    // unreproduced; the constructor is unclaimed.
 
     for (int i = 0; i < 10; ++i) {
         boxes_[i] = nullptr;

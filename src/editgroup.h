@@ -98,7 +98,7 @@ class EditGroup : public virtual GraphicWin, public virtual Dialog {
   // `: virtual GraphicWin, virtual Dialog` declaration; this constructor
   // takes an explicit flag instead and mirrors what the image's own guard
   // does with it.
-  EditGroup(int a1);
+  EditGroup();
   // The catalogued `??1EditGroup@@QAE@XZ` at 0x00611A20 is spelled as a
   // METHOD, not a destructor: the image's body reinstalls the base
   // vtables and calls `close()`, and never destroys `virtual_base_` or

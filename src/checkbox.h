@@ -138,13 +138,16 @@ class CheckBox : public virtual GraphicWin, public virtual Dialog {
   // workaround for that, not an oversight; tools/most_derived_flag.py lists
   // this class as needing a base and is right about the LAYOUT while being
   // unable to see that constraint.
-  CheckBox(int a1);
-  // Trivial default, kept ONLY so an embedding class that has not itself
-  // been recovered to call the flag-taking constructor (NetWin::checkBox_,
-  // see the note in netwin.cpp) still compiles. The image has no
-  // `??0CheckBox@@QAE@XZ` of its own - every construction goes through the
-  // address above.
-  CheckBox() { ; }
+  // ??0CheckBox@@QAE@H@Z, the bare real constructor - the catalogue's H is
+  // the hidden most-derived flag (the MapWin finding), arriving at [ebp+8]
+  // where the image reads it. The compiler owns the virtual-base
+  // construction: with GraphicWin() and Dialog() both real constructors,
+  // the implicit machinery builds both bases under the flag - the hand
+  // placement-new + Dialog::construct() calls and their guard are gone.
+  CheckBox();
+  // The image has no separate `??0CheckBox@@QAE@XZ` - every construction
+  // (NetWin::checkBox_'s embed included) goes through the one bare ctor
+  // above.
   ~CheckBox();
   uint32_t close();
   void UNK1(int pos);

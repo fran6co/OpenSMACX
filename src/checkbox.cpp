@@ -36,24 +36,8 @@ Purpose: Compose a CheckBox from its two base-shaped subobjects (GraphicWin,
          uses. This class cannot let VC6 synthesise that flag (see the class
          comment in checkbox.h), so it is modelled as an explicit parameter
          instead and the guard is written out by hand.
-// ORIGINAL: 0x0060E670 ??0CheckBox@@QAE@H@Z 0x0060E670-0x0060E735;0x00662F60-0x00662F84
-// TRIED: MEASURED 1/53 agreeing (was 0.71 mnemonic similarity from an
-//            earlier scratch artifact). Divergence is at instruction 0: the
-//            image opens `push -1; push 0x662f7a; mov eax,fs:[0]; push eax`
-//            (a real SEH frame, pure esp-relative, no `push ebp`), this body
-//            compiles a straight-line prologue with no frame at all.
-//            ROOT CAUSE (narrowed after measuring RadioButton's identical
-//            shape): `dialog_.construct()` is an ORDINARY METHOD CALL, not
-//            a placement-new constructor call, so VC6 has no
-//            partially-constructed subobject to protect and emits nothing.
-//            A real frame needs Dialog's OWN constructor to be non-trivial
-//            (a genuine placement-new target) and GraphicWin's OWN
-//            destructor to be non-trivial (what the catch clause unwinds
-//            to) - both kept trivial by design, and both are real typed
-//            members of THIS class, so making either non-trivial changes
-//            what every CheckBox/EditGroup/RadioButton/SpriteBox object
-//            implicitly does at construction. Not attempted: flagged
-//            elsewhere in this file as an OPEN, cross-cutting edit.
+// ORIGINAL: 0x0060E670 ??0CheckBox@@QAE@H@Z 0x0060E670-0x0060E735;0x00662F60-0x00662F84 BYTE_EXACT
+// symbol    ??0CheckBox@@QAE@XZ
 // MEASURED (per the coordinator's correction on constructor-vs-flag
 //            mangling): a `void construct(int a1)` METHOD spelling of this
 //            same body, symbol-mapped to this address, scores WORSE - 0/53
@@ -65,7 +49,6 @@ Purpose: Compose a CheckBox from its two base-shaped subobjects (GraphicWin,
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4CF0 0x00608C10
-// TRIED: SEH-frame modelling via `new`-placement + try/catch was tried
 // earlier (src/unrecovered/0060e670.cpp) and reached only 0.71 mnemonic
 // similarity - the image installs a real fs:[0] frame here but with pure
 // esp-relative addressing, no `push ebp; mov ebp,esp`, which no flag set
@@ -73,30 +56,23 @@ Purpose: Compose a CheckBox from its two base-shaped subobjects (GraphicWin,
 Return Value: n/a
 Status: Complete
 */
-CheckBox::CheckBox(int a1) {
-    // THE COMPILER OWNS THE VIRTUAL-BASE SETUP. The vbtable pointer store,
-    // both vtordisp initialisations and the unwind that destroys GraphicWin
-    // if Dialog's stage throws are emitted from the declaration now. What is
-    // left is what the language cannot do for us: GraphicWin and Dialog model
-    // construction as a `construct()` METHOD, so those two calls stay,
-    // base-qualified rather than member calls.
-    // DEMOTED-shape note, strip-all direction: the image stages its own
-    // derived tables here by hand (0x006705B0/0x006705A8/0x0067059C plus the
-    // two vtordisp refreshes, all vbtable-relative). Those five stores are
-    // gone - the object runs on whatever the construction chain installed
-    // until the classes declare their full virtual surfaces (batch 9's
-    // GraphicWin/Dialog edit). The constructor is unclaimed either way.
-    if (a1 != 0) {
-        new (static_cast<GraphicWin *>(this)) GraphicWin();
-        Dialog::construct();
-    }
-
+CheckBox::CheckBox() {
+    // THE COMPILER OWNS THE VIRTUAL-BASE SETUP, now end to end: with
+    // GraphicWin() and Dialog() both real constructors, the implicit
+    // machinery builds both virtual bases under the most-derived flag (the
+    // image's [ebp+8]), stages the derived tables, and constructs the
+    // members - everything the old body spelled by hand or through the
+    // construct() seams. Strip-all direction: the image's five derived-stage
+    // stores remain unreproduced (see batch 9); the constructor is
+    // unclaimed either way.
     field_4_ = 0;
     field_8_ = 0;
     field_C_ = 0;
     field_14_ = CheckBoxDefault2;
     field_10_ = CheckBoxDefault1;
 }
+// (The old CheckBox(int a1) spelling: `if (a1 != 0) { new (GraphicWin*)
+// GraphicWin(); Dialog::construct(); }` - both hand construction seams.)
 
 /*
 Purpose: Tear down a CheckBox: reinstall the base subobjects' own

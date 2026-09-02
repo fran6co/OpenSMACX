@@ -74,7 +74,12 @@ SHAPES = [
      "a destructor modelled as a free function. Make it `X::~X()`. A free "
      "function is only needed where C++ cannot take a destructor's address."),
 
-    ("explicit base construct/destroy", 12,
+    # 12 -> 8 (batch 9, family ctor conversion): CheckBox/RadioButton/
+    # EditGroup/SpriteBox ctors became real bare constructors - their
+    # Dialog::construct()/GraphicWin placement seams left with the compiler's
+    # own virtual-base machinery (??0CheckBox BYTE_EXACT 53/53,
+    # ??0RadioButton BYTE_EXACT, ??0EditGroup SHAPE_EXACT).
+    ("explicit base construct/destroy", 8,
      re.compile(r"\b\w+::(?:destroy|construct)\(\)\s*;"),
      "duplicates the base constructor or destructor the compiler already "
      "calls, so the body carries one call too many."),
@@ -88,7 +93,10 @@ SHAPES = [
     # 16 -> 14 (batch 5, mapwin attempt #2): MapWin's and PlanWin's GraphicWin
     # placements left with their real constructors - ??0MapWin BYTE_EXACT
     # 92/92, ??0Console BYTE_EXACT 106/106 on the bare spellings.
-    ("placement new on a subobject", 14,
+    # 14 -> 10 (batch 9, family ctor conversion): CheckBox's GraphicWin
+    # placement and SpriteBox's GraphicWin/Dialog placements left with the
+    # compiler's virtual-base machinery on the bare ctor spellings.
+    ("placement new on a subobject", 10,
      re.compile(r"new\s*\(\s*(?:&|static_cast|reinterpret_cast)"),
      "costs a null guard (`test ecx, ecx; je`) the image does not have. A real "
      "base or member is constructed unconditionally."),

@@ -97,7 +97,7 @@ class RadioButton : public virtual GraphicWin, public virtual Dialog {
   // would for a real `: virtual GraphicWin, virtual Dialog` declaration;
   // this constructor takes an explicit flag instead and mirrors what the
   // image's own guard does with it.
-  RadioButton(int a1);
+  RadioButton();
   // VIRTUAL, and that is what earns the vtordisp. A displacement is emitted
   // for a virtual base only when the derived class OVERRIDES one of its
   // virtuals; inheriting Dialog's destructor implicitly is not enough for

@@ -37,25 +37,8 @@ Purpose: Compose a RadioButton from its two base-shaped subobjects
          the most-derived object" guard ListBox's constructor uses. This
          class cannot let VC6 synthesise that flag (see the class comment in
          radiobutton.h), so it is modelled as an explicit parameter instead.
-// ORIGINAL: 0x0060D0E0 ??0RadioButton@@QAE@H@Z 0x0060D0E0-0x0060D1A2;0x00662F20-0x00662F44
-// TRIED: MEASURED 3/52 agreeing, same family as CheckBox/EditGroup - no
-//            SEH frame at all in this compiled body (`mov eax,0; call $+5`
-//            in place of `push -1; push handler`). `dialog_.construct()`
-//            is an ORDINARY METHOD CALL, not a placement-new constructor
-//            call, so VC6 has no partially-constructed subobject to
-//            protect and emits no frame - the same distinction the
-//            coordinator's CheckButton::construct() finding names from the
-//            other direction. Getting the frame back needs Dialog's OWN
-//            constructor to be non-trivial (a real placement-new target)
-//            AND GraphicWin's OWN destructor to be non-trivial (what the
-//            catch clause would actually unwind to) - both currently kept
-//            trivial by design (see the class comment above), and both are
-//            real typed members here (dialog_, virtual_base_), so making
-//            either non-trivial changes what EVERY CheckBox/EditGroup/
-//            RadioButton/SpriteBox object implicitly does at construction,
-//            not just this one function. Not attempted: the coupled edit
-//            this blocks on is explicitly flagged elsewhere in this file as
-//            OPEN and cross-cutting, well beyond one constructor.
+// ORIGINAL: 0x0060D0E0 ??0RadioButton@@QAE@H@Z 0x0060D0E0-0x0060D1A2;0x00662F20-0x00662F44 BYTE_EXACT
+// symbol    ??0RadioButton@@QAE@XZ
 // size      230 bytes
 // prototype void (__thiscall ??0RadioButton@@QAE@H@Z)(RadioButton* this, int)
 // callers   1   call targets   3
@@ -65,23 +48,12 @@ Purpose: Compose a RadioButton from its two base-shaped subobjects
 Return Value: n/a
 Status: Complete
 */
-RadioButton::RadioButton(int a1) {
-    // THE COMPILER OWNS THE VIRTUAL-BASE SETUP NOW. With
-    // `: public virtual GraphicWin, public virtual Dialog` declared, VC6 emits
-    // the vbtable pointer store, both vtordisp initialisations, and the unwind
-    // that destroys GraphicWin if Dialog's stage throws - all of which this
-    // body used to write by hand against a layout composed out of members.
-    // What is left is what the compiler cannot do: GraphicWin and Dialog model
-    // construction as a `construct()` METHOD rather than a constructor, so the
-    // two calls stay, and they are base-qualified rather than member calls.
-    // Strip-all direction: the image's five derived-stage stores
-    // (0x00669A6C/0x00669A64/0x00669A58 + the two vtordisp refreshes) are
-    // gone, exactly as the Dialogs::destroy staging they mirror; the
-    // constructor is unclaimed either way.
-    if (a1 != 0) {
-        new (static_cast<GraphicWin *>(this)) GraphicWin();
-        Dialog::construct();
-    }
+RadioButton::RadioButton() {
+    // THE COMPILER OWNS THE VIRTUAL-BASE SETUP, end to end: the implicit
+    // machinery builds both virtual bases (GraphicWin() and Dialog(), both
+    // real constructors now) under the most-derived flag and stages the
+    // derived tables. Strip-all direction: the image's five derived-stage
+    // stores remain unreproduced; the constructor is unclaimed either way.
 
     field_C_ = 0;
     field_10_ = 0;

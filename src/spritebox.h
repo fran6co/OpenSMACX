@@ -96,7 +96,7 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
   // `: virtual GraphicWin, virtual Dialog` declaration; this constructor
   // takes an explicit flag instead and mirrors what the image's own guard
   // does with it.
-  SpriteBox(int a1);
+  SpriteBox();
   ~SpriteBox();
   uint32_t id_to_pos(int id);
   void on_mouse_move(int, int);
