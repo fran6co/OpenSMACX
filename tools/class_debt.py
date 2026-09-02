@@ -53,11 +53,15 @@ CEILINGS = {
     # member-accesses.csv entry and all four have measured behaviour, which is
     # written down in the markers in src/dipedit.cpp. Renaming them to clear
     # this count would trade a true symbol for a false name.
-    # 170 -> 176 (2026-09-02, the DipEdit read_check homing): not six new
-    # bodies - the six CALL SITES where read_check drives UNK2/UNK3/UNK4 by
-    # name, the same four catalogue-named methods the paragraph above covers.
-    # Their behaviour is measured into the class block in src/dipedit.h.
-    "unk-method": 176,
+    # 170 -> 176 -> 162 (2026-09-02, DipEdit batch then rename): the read_check
+    # homing added the six call sites that drive the four catalogue-named
+    # helpers; the rename then took all fourteen code-line mentions out -
+    # UNK1..UNK4 are now sync_treaty_bit/sync_agenda_bit/set_treaty_bit/
+    # set_agenda_bit, named from the measured 2x2 (which word, mirrored or
+    # single-row writer), with `// symbol` facts carrying the emitted names
+    # under the catalogue's markers. The image names nothing (every PE
+    # section scanned), so the new names are ours, evidenced by behaviour.
+    "unk-method": 162,
     # THE ESCAPE HATCH, RATCHETED. An UNKn whose comment block says
     # EVIDENCE-FREE and names it has been investigated and found unnameable -
     # no caller, no dispatch, no CSV entry. That is a result, not unfinished

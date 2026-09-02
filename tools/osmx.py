@@ -559,6 +559,13 @@ def measure(
         help="Score EVERY flag set instead of reporting the best. A source "
              "change can improve one set while the winner comes from "
              "another; this is where that shows.")] = False,
+    pin_flags: Annotated[str, typer.Option(
+        "--flags",
+        help="Score ONLY this flag set (e.g. \"/c /O2 /Gy /GR- /Oy- /GX\"). "
+             "For edit-measure loops on a body whose winning set the last "
+             "verdict already printed: the ladder searches 20 sets and only "
+             "stops early on BYTE_EXACT, so a mismatched body pays all 20 "
+             "compiles - pinned, it pays one.")] = "",
     as_json: Annotated[bool, typer.Option("--json")] = False,
 ) -> None:
     """Does this body reproduce the shipped bytes?
@@ -605,6 +612,31 @@ def measure(
         return
 
     source = body if body is not None else record.path
+    if pin_flags and every_flag_set:
+        typer.secho("--flags and --all-flags answer different questions: "
+                    "one set, or every one of them. Pick one.",
+                    fg=typer.colors.RED)
+        raise typer.Exit(2)
+    if pin_flags:
+        # ONE COMPILE, ON DEMAND. The ladder's early exit fires only on
+        # BYTE_EXACT, so iterating on a not-yet-exact body costs twenty
+        # wine compiles of the TU per edit - and the wineserver serialises
+        # them behind anything else compiling. The previous verdict names
+        # the set that won, and this turns the loop into one compile.
+        try:
+            result = compare_source(record, exe, source, command,
+                                    (pin_flags,), shared)
+        except (ValueError, CompileFailed) as problem:
+            typer.secho(f"{record.address_hex}: {problem}",
+                        fg=typer.colors.RED)
+            raise typer.Exit(2) from None
+        if as_json:
+            typer.echo(json.dumps(
+                {"source": str(source), **_verdict_row(record, result)},
+                indent=2))
+        else:
+            _print_verdict(record, result, source)
+        raise typer.Exit(0 if str(result.verdict) == "BYTE_EXACT" else 1)
     if every_flag_set:
         # EVERY SET, NOT THE WINNER. `compare_source` ranks on similarity
         # first and agreement second, across flag sets that answer different

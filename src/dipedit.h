@@ -85,29 +85,31 @@ class DipEdit : public GraphicWin {
   // then seeds selected_target_ from it.
   void init(int faction_index);
   void on_selected(int index);
-  // The four checkbox handlers, 0x004DA760/0x004DA7E0/0x004DA870/0x004DA900.
-  // The image carries NO symbol and NO reference for any of them - no E8
-  // call site, no vtable slot, no data word points at 0x004DA760..0x004DA98B
-  // - so the catalogue's UNK1..UNK4 placeholders are the only names that
-  // exist and the method names here must stay UNK1..UNK4 to emit them. What
-  // each one DOES is measured, and is the same four times over: ask the
-  // embedded CheckBox whether the item for one diplomatic bit is checked
-  // (CheckBox::get_state_id), then apply that bit between faction_index_ and
-  // selected_target_ if the status word disagrees with the checkbox.
-  //   UNK1  treaty bits,   both directions, through treaty_on/treaty_off
-  //   UNK2  agenda bits,   both directions, through agenda_on/agenda_off
-  //   UNK3  treaty bits,   one direction,   through set_treaty(.., TRUE/FALSE)
-  //   UNK4  agenda bits,   one direction,   through set_agenda(.., TRUE/FALSE)
-  // UNK2 and UNK4 take the checkbox id `0x80000000 | bit`, which is the
+  // The four checkbox-to-world writers, 0x004DA760/0x004DA7E0/0x004DA870/
+  // 0x004DA900. Each asks the embedded CheckBox whether the item for one
+  // diplomatic bit is checked (CheckBox::get_state_id) and settles that bit
+  // between faction_index_ and selected_target_ where the status word
+  // disagrees - a 2x2 over WHICH word and WHICH writer:
+  //   sync_treaty_bit  treaty, mirrored - treaty_on/treaty_off maintain
+  //                    both factions' rows
+  //   sync_agenda_bit  agenda, mirrored - agenda_on/agenda_off likewise
+  //   set_treaty_bit   treaty, our row only - set_treaty(.., TRUE/FALSE)
+  //   set_agenda_bit   agenda, our row only - set_agenda(.., TRUE/FALSE)
+  // The agenda pair takes the checkbox id `0x80000000 | bit`, which is the
   // second PlayerData word - diplo_agenda, 8 dwords past diplo_treaties -
   // exactly the ids do_check writes those two views of the table back with.
-  // ?read_check@DipEdit@@QAEXXZ (0x004DA990) inlines UNK1's shape eleven
-  // times for the eleven DTREATY_* bits and calls UNK2, UNK3 and UNK4 for the
-  // rest: these are its per-bit helpers.
-  void UNK1(int bit);
-  void UNK2(int bit);
-  void UNK3(int bit);
-  void UNK4(int bit);
+  // THE CATALOGUE NAMES WERE UNK1..UNK4 (IDA placeholders): the image
+  // carries no symbol and no reference for any of the four - no E8 call
+  // site, no vtable slot, no data word points at 0x004DA760..0x004DA98B -
+  // so the names here are OURS, and each marker carries a `// symbol` fact
+  // so the claim still finds the body our object emits.
+  // ?read_check@DipEdit@@QAEXXZ (0x004DA990) inlines sync_treaty_bit's
+  // shape eleven times for the eleven DTREATY_* bits and calls the other
+  // three for the rest: these are its per-bit helpers.
+  void sync_treaty_bit(int bit);   // 0x004DA760 (catalogue ?UNK1@)
+  void sync_agenda_bit(int bit);   // 0x004DA7E0 (catalogue ?UNK2@)
+  void set_treaty_bit(int bit);    // 0x004DA870 (catalogue ?UNK3@)
+  void set_agenda_bit(int bit);    // 0x004DA900 (catalogue ?UNK4@)
   // 0x004D9DE0, defined in src/dipedit.cpp. The click handler the five
   // FlatButtons share: `a1` is the control id, -1 being the window's own
   // close row (release_modal and nothing else), 1 the treaty/agenda row,

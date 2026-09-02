@@ -170,8 +170,8 @@ Purpose: Push the checkboxes OUT to the diplomacy status word - the write-back
          set_treaty .., TRUE), unchecked against a set bit calls treaty_off
          (or set_treaty .., FALSE). HAVE_INFILTRATOR and WANT_TO_TALK spell
          the same decision through set_treaty; the four bits after them go
-         through the one-flag helpers - UNK3,
-         UNK4 and UNK2, this pattern folded
+         through the one-flag helpers - set_treaty_bit,
+         set_agenda_bit and sync_agenda_bit, this pattern folded
          into methods of their own. The unconditional tail applies
          three consequences of the word the commit left behind: a
          HAVE_SURRENDERED opponent keeps the PACT and drops the 0xc20 treaty
@@ -191,7 +191,7 @@ Purpose: Push the checkboxes OUT to the diplomacy status word - the write-back
 // into a loop or a helper. VC6 then hoists the two member loads above the
 // first branch itself, keeps the bit constant in a callee-saved register
 // (ebx for the treaty_on/off blocks, edi from HAVE_INFILTRATOR on, which is
-// why the last UNK2 call pushes edi), and narrows the masks below 0x100 to
+// why the last sync_agenda_bit call pushes edi), and narrows the masks below 0x100 to
 // `test byte ptr`. First spelling measured BYTE_EXACT; no divergence to try
 // against.
 Return Value: n/a
@@ -287,15 +287,15 @@ void DipEdit::read_check() {
     }
 
     // The four editable bits whose apply step is a helper of its own, in the
-    // image's order: UNK3 on WANT_REVENGE / HAVE_SURRENDERED /
-    // SHALL_BETRAY / ATROCITY_VICTIM, then UNK4 on
-    // COMMLINK, then UNK2 on WANT_TO_TALK.
-    UNK3(DTREATY_WANT_REVENGE);
-    UNK3(DTREATY_HAVE_SURRENDERED);
-    UNK3(DTREATY_SHALL_BETRAY);
-    UNK3(DTREATY_ATROCITY_VICTIM);
-    UNK4(DTREATY_COMMLINK);
-    UNK2(DTREATY_WANT_TO_TALK);
+    // image's order: set_treaty_bit on WANT_REVENGE / HAVE_SURRENDERED /
+    // SHALL_BETRAY / ATROCITY_VICTIM, then set_agenda_bit on
+    // COMMLINK, then sync_agenda_bit on WANT_TO_TALK.
+    set_treaty_bit(DTREATY_WANT_REVENGE);
+    set_treaty_bit(DTREATY_HAVE_SURRENDERED);
+    set_treaty_bit(DTREATY_SHALL_BETRAY);
+    set_treaty_bit(DTREATY_ATROCITY_VICTIM);
+    set_agenda_bit(DTREATY_COMMLINK);
+    sync_agenda_bit(DTREATY_WANT_TO_TALK);
 
     if (SpyingStatusTable[faction_index_ * SpyingStatusStride
             + selected_target_] & DTREATY_HAVE_SURRENDERED) {
@@ -336,8 +336,12 @@ Purpose: Apply one treaty bit's checkbox to the diplomatic status the dialog is
          checkbox id and the mask, so a caller names the DTREATY_* constant
          once.
 // ORIGINAL: 0x004DA760 ?UNK1@DipEdit@@QAEXH@Z 0x004DA760-0x004DA7E0 BYTE_EXACT
+// symbol    ?sync_treaty_bit@DipEdit@@QAEXH@Z
+//   renamed from the catalogue's UNK1 placeholder 2026-09-02; the image
+//   carries no symbol of its own for this body (see the class block in
+//   dipedit.h), so the claim resolves through this emitted name instead.
 // size      128 bytes
-// prototype void (__thiscall ?UNK1@DipEdit@@QAEXH@Z)(DipEdit* this, int)
+// prototype void (__thiscall ?sync_treaty_bit@DipEdit@@QAEXH@Z)(DipEdit* this, int)
 // callers   0   call targets   3
 // kind      game
 // flags     frame;sp_ready;purged_ok
@@ -353,7 +357,7 @@ Purpose: Apply one treaty bit's checkbox to the diplomatic status the dialog is
 Return Value: n/a
 Status: Complete
 */
-void DipEdit::UNK1(int bit) {
+void DipEdit::sync_treaty_bit(int bit) {
     if (check_box_.get_state_id(bit)) {
         if (!(SpyingStatusTable[faction_index_ * SpyingStatusStride
             + selected_target_] & bit)) {
@@ -370,15 +374,18 @@ void DipEdit::UNK1(int bit) {
 
 
 /*
-Purpose: UNK1 for the AGENDA word. The checkbox id carries 0x80000000, which
+Purpose: sync_treaty_bit for the AGENDA word. The checkbox id carries 0x80000000, which
          do_check also does when it writes the second table view back, and
          that view is diplo_agenda - 8 dwords past diplo_treaties in
          PlayerData, which is what moves the table base 0x96C9F8 -> 0x96CA18.
          The writers are agenda_on/agenda_off rather than
          treaty_on/treaty_off.
 // ORIGINAL: 0x004DA7E0 ?UNK2@DipEdit@@QAEXH@Z 0x004DA7E0-0x004DA867 BYTE_EXACT
+// symbol    ?sync_agenda_bit@DipEdit@@QAEXH@Z
+//   renamed from the catalogue's UNK2 placeholder 2026-09-02; see the
+//   class block in dipedit.h
 // size      135 bytes
-// prototype void (__thiscall ?UNK2@DipEdit@@QAEXH@Z)(DipEdit* this, int)
+// prototype void (__thiscall ?sync_agenda_bit@DipEdit@@QAEXH@Z)(DipEdit* this, int)
 // callers   1   call targets   3
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -390,7 +397,7 @@ Purpose: UNK1 for the AGENDA word. The checkbox id carries 0x80000000, which
 Return Value: n/a
 Status: Complete
 */
-void DipEdit::UNK2(int bit) {
+void DipEdit::sync_agenda_bit(int bit) {
     int id = static_cast<int>(0x80000000U) | bit;
 
     if (check_box_.get_state_id(id)) {
@@ -409,15 +416,18 @@ void DipEdit::UNK2(int bit) {
 
 
 /*
-Purpose: UNK1 narrowed to ONE direction. Same checkbox id and same treaty word
-         as UNK1, but the writer is set_treaty(faction_index_, selected_target_
+Purpose: sync_treaty_bit narrowed to ONE direction. Same checkbox id and same treaty word
+         as sync_treaty_bit, but the writer is set_treaty(faction_index_, selected_target_
          , bit, TRUE/FALSE) - which writes only PlayersData[faction_index_]
          .diplo_treaties[selected_target_] and leaves the mirror entry alone -
-         and it is called only when it would change something, where UNK1's
+         and it is called only when it would change something, where sync_treaty_bit's
          writers decide that for themselves.
 // ORIGINAL: 0x004DA870 ?UNK3@DipEdit@@QAEXH@Z 0x004DA870-0x004DA8F4 BYTE_EXACT
+// symbol    ?set_treaty_bit@DipEdit@@QAEXH@Z
+//   renamed from the catalogue's UNK3 placeholder 2026-09-02; see the
+//   class block in dipedit.h
 // size      132 bytes
-// prototype void (__thiscall ?UNK3@DipEdit@@QAEXH@Z)(DipEdit* this, int)
+// prototype void (__thiscall ?set_treaty_bit@DipEdit@@QAEXH@Z)(DipEdit* this, int)
 // callers   1   call targets   2
 // kind      game
 // flags     frame;sp_ready;purged_ok
@@ -427,7 +437,7 @@ Purpose: UNK1 narrowed to ONE direction. Same checkbox id and same treaty word
 Return Value: n/a
 Status: Complete
 */
-void DipEdit::UNK3(int bit) {
+void DipEdit::set_treaty_bit(int bit) {
     if (check_box_.get_state_id(bit)) {
         if (!(SpyingStatusTable[faction_index_ * SpyingStatusStride
             + selected_target_] & bit)) {
@@ -444,11 +454,14 @@ void DipEdit::UNK3(int bit) {
 
 
 /*
-Purpose: UNK3 for the AGENDA word: the 0x80000000 checkbox id, the +8 dword
+Purpose: set_treaty_bit for the AGENDA word: the 0x80000000 checkbox id, the +8 dword
          view, and set_agenda as the writer instead of set_treaty.
 // ORIGINAL: 0x004DA900 ?UNK4@DipEdit@@QAEXH@Z 0x004DA900-0x004DA98B BYTE_EXACT
+// symbol    ?set_agenda_bit@DipEdit@@QAEXH@Z
+//   renamed from the catalogue's UNK4 placeholder 2026-09-02; see the
+//   class block in dipedit.h
 // size      139 bytes
-// prototype void (__thiscall ?UNK4@DipEdit@@QAEXH@Z)(DipEdit* this, int)
+// prototype void (__thiscall ?set_agenda_bit@DipEdit@@QAEXH@Z)(DipEdit* this, int)
 // callers   1   call targets   2
 // kind      game
 // flags     frame;sp_ready;purged_ok
@@ -462,7 +475,7 @@ Purpose: UNK3 for the AGENDA word: the 0x80000000 checkbox id, the +8 dword
 Return Value: n/a
 Status: Complete
 */
-void DipEdit::UNK4(int bit) {
+void DipEdit::set_agenda_bit(int bit) {
     int id = static_cast<int>(0x80000000U) | bit;
 
     if (check_box_.get_state_id(id)) {
