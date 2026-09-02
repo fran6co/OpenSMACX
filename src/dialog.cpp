@@ -370,6 +370,72 @@ int Dialog::set_def_dialog_font(Font *font1, Font *font2, Font *font3) {
 
 func_dialog_close DialogOriginalClose = original_method<func_dialog_close>(0x00608F50);
 
+/*
+Purpose: Construct a Dialog: construct the embedded Heap and the item list,
+         then load every color/font/field default from the process tables.
+// ORIGINAL: 0x00608C10 ??0Dialog@@QAE@XZ 0x00608C10-0x00608E09
+// size      509 bytes
+// prototype void (__thiscall ??0Dialog@@QAE@XZ)(Dialog* this)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D4560
+Return Value: this
+*/
+Dialog::Dialog() {
+    // The store order is the image's, including its interleaving of
+    // selected_position_/field_F0_ after field_30_, field_34_ between
+    // field_44_ and field_48_, and field_1C_ near the end. The three -1
+    // stores are the image's one `or eax,-1` reused.
+    field_20_ = *reinterpret_cast<uint32_t *>(0x006970DC);
+    field_24_ = 0;
+    field_28_ = 0;
+    field_2C_ = *reinterpret_cast<uint32_t *>(0x00697098);
+    field_30_ = *reinterpret_cast<uint32_t *>(0x009B8EB4);
+    selected_position_ = 0;
+    field_F0_ = -1;
+    field_38_ = 0;
+    field_3C_ = 0;
+    field_40_ = *reinterpret_cast<uint32_t *>(0x009B8EBC);
+    field_44_ = *reinterpret_cast<uint32_t *>(0x0069709C);
+    field_34_ = *reinterpret_cast<uint32_t *>(0x009B8EB8);
+    field_48_ = -1;
+    field_4C_ = *reinterpret_cast<uint32_t *>(0x006970A0);
+    field_50_ = *reinterpret_cast<uint32_t *>(0x006970A4);
+    field_54_ = 0;
+    field_58_ = 0;
+    field_5C_ = 0;
+    field_60_ = 0;
+    field_64_ = 0;
+    field_68_ = 0;
+    field_6C_ = *reinterpret_cast<uint32_t *>(0x006970A8);
+    field_AC_ = *reinterpret_cast<uint32_t *>(0x009B8ECC);
+    field_B0_ = *reinterpret_cast<uint32_t *>(0x009B8ED0);
+    field_B4_ = *reinterpret_cast<uint32_t *>(0x009B8ED4);
+    field_B8_ = *reinterpret_cast<uint32_t *>(0x009B8ED8);
+    font1_ = *reinterpret_cast<Font **>(0x009B8EC0);
+    text_color_a_ = *reinterpret_cast<uint32_t *>(0x006970AC);
+    text_color_b_ = *reinterpret_cast<uint32_t *>(0x006970B8);
+    text_color_c_ = *reinterpret_cast<uint32_t *>(0x006970C4);
+    text_color_d_ = *reinterpret_cast<uint32_t *>(0x006970D0);
+    font2_ = *reinterpret_cast<Font **>(0x009B8EC4);
+    text_color_2a_ = *reinterpret_cast<uint32_t *>(0x006970B0);
+    text_color_2b_ = *reinterpret_cast<uint32_t *>(0x006970BC);
+    text_color_2c_ = *reinterpret_cast<uint32_t *>(0x006970C8);
+    text_color_2d_ = *reinterpret_cast<uint32_t *>(0x006970D4);
+    font3_ = *reinterpret_cast<Font **>(0x009B8EC8);
+    text_color_3a_ = *reinterpret_cast<uint32_t *>(0x006970B4);
+    text_color_3b_ = *reinterpret_cast<uint32_t *>(0x006970C0);
+    text_color_3c_ = *reinterpret_cast<uint32_t *>(0x006970CC);
+    // RESIDUAL (99 of 103): the image issues text_color_3d_'s default load
+    // (mov edx,[0x6970d8]) BEFORE the field_1C_ store; this spelling stores
+    // field_1C_ first and loads after. A scheduling nit - the stores land in
+    // the same order; TRIED: a named local to pin the load (73/103 - VC6
+    // stole ecx for the -1 and re-scheduled the whole block).
+    field_1C_ = -1;
+    text_color_3d_ = *reinterpret_cast<uint32_t *>(0x006970D8);
+}
+
 // The four list-stage constants (DialogListDerived/VirtualBase and
 // DialogList/VirtualBaseVtable) are gone: destroy()'s two hand
 // close_with_tables calls folded into the one compiler-owned

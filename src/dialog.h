@@ -82,7 +82,17 @@ class Dialog {
  public:
   // Static default shared by every dialog; __cdecl in the original.
   static int set_def_dialog_font(Font *font1, Font *font2, Font *font3);
-  Dialog() { ; }
+  // ??0Dialog@@QAE@XZ (0x00608C10), a real out-of-line constructor. The
+  // implicit member machinery owns most of the image's body: heap_'s Heap
+  // construction (its `lea ecx,[esi+4]; call 0x5d4560`), item_list_'s whole
+  // StringList chain (the 0x66B0EC vbtable, the 0x6693AC/0x6693A4/0x6693A0
+  // stages, the owner capture off 0x009B3374, the five field zeros, and the
+  // derived 0x6698C4/0x6698C0 refresh), and the Dialog vftable store at
+  // [this]. The body keeps the field initialization in the image's store
+  // order - including the three -1 stores, which the image computes once
+  // (or eax,-1) and stores to field_F0_, field_48_ and field_1C_ at three
+  // separate points.
+  Dialog();
   // The dtor is VIRTUAL (declared first above, matching the image's slot 0),
   // so VC6 emits the vfptr the image has at offset 0 instead of the
   // hand-modelled `LPVOID vtable_` this replaced. That vfptr is the 4 of the
