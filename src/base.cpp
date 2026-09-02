@@ -824,7 +824,7 @@ int __cdecl base_making(int production_id, int base_id) {
 
 /*
 Purpose: Calculate the mineral loss if production were to changed at the specified base.
-// ORIGINAL: 0x004E4810 ?base_lose_minerals@@YAHHH@Z 0x004E4810-0x004E48B0
+// ORIGINAL: 0x004E4810 ?base_lose_minerals@@YAHHH@Z 0x004E4810-0x004E48B0 BYTE_EXACT
 // size      160 bytes
 // prototype int (__cdecl ?base_lose_minerals@@YAHHH@Z)(int baseID, int)
 // callers   1   call targets   1

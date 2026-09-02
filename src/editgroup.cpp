@@ -41,7 +41,7 @@ Purpose: Compose an EditGroup from its two base-shaped subobjects
          uses. This class cannot let VC6 synthesise that flag (see the class
          comment in editgroup.h), so it is modelled as an explicit parameter
          instead and the guard is written out by hand.
-// ORIGINAL: 0x00611940 ??0EditGroup@@QAE@H@Z 0x00611940-0x00611A15;0x00663020-0x00663047
+// ORIGINAL: 0x00611940 ??0EditGroup@@QAE@H@Z 0x00611940-0x00611A15;0x00663020-0x00663047 SEMANTIC
 // symbol    ??0EditGroup@@QAE@XZ
 // size      252 bytes
 // prototype void (__thiscall ??0EditGroup@@QAE@H@Z)(EditGroup* this, int)

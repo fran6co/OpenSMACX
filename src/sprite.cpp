@@ -282,7 +282,7 @@ struct TexHeap {
 /*
 Purpose: Take `size` bytes of sheet memory: walk the heap's block table and
          allocate from the first block whose free tail is large enough.
-// ORIGINAL: 0x006353C0 ?get_mem@TexHeap@@QAEHH@Z 0x006353C0-0x00635402 FILE
+// ORIGINAL: 0x006353C0 ?get_mem@TexHeap@@QAEHH@Z 0x006353C0-0x00635402 FILE SEMANTIC
 // size      66 bytes
 // prototype int (__thiscall ?get_mem@TexHeap@@QAEHH@Z)(#120* this, int)
 // callers   1   call targets   1

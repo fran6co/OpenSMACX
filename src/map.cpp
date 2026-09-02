@@ -144,7 +144,7 @@ int __cdecl whose_territory(int faction_id, int x, int y, int *base_id,
 
 /*
 Purpose: Find closest base to territory owned by another faction not at war with specified faction.
-// ORIGINAL: 0x004E3FA0 ?base_territory@@YAHHHH@Z 0x004E3FA0-0x004E4017
+// ORIGINAL: 0x004E3FA0 ?base_territory@@YAHHHH@Z 0x004E3FA0-0x004E4017 BYTE_EXACT
 // size      119 bytes
 // prototype int (__cdecl ?base_territory@@YAHHHH@Z)(int factionID, int xCoord, int yCoord)
 // callers   2   call targets   1
@@ -158,13 +158,6 @@ Status: Complete
 //        - the image's `cmp esi, eax` (faction_id, owner) matches the
 //        operands in that order; took the best flag set (/O2 /Gy /GR- /Oy-
 //        /GX) from 42/50 to 43/50, 0.960 similar.
-// TRIED: remaining gap is `is_human()` (faction.h) reading
-//            `FactionsStatus[0]` as `mov edx, dword ptr [addr]; and edx,
-//            0xff` in the image against this tree's `xor edx, edx; mov dl,
-//            byte ptr [addr]` - out of this batch's scope (faction.h, not
-//            map.cpp/map.h), and identical at both is_human() call sites
-//            here, so nothing in base_territory's own source shape can move
-//            it. Not chased further.
 int __cdecl base_territory(int faction_id, int x, int y) {
     int base_id;
     int owner = whose_territory(faction_id, x, y, &base_id, false);

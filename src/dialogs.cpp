@@ -632,7 +632,7 @@ Purpose: Forward a left click to the embedded sprite box for every dialog
          on_right_down makes with a single compare. Entered on the interface
          subobject, so the discriminator sits 8 bytes below `this` and the
          sprite box is reached by adjusting back 0x8C.
-// ORIGINAL: 0x00612E80 ?on_left_click@Dialogs@@QAEXHH@Z 0x00612E80-0x00612EB0
+// ORIGINAL: 0x00612E80 ?on_left_click@Dialogs@@QAEXHH@Z 0x00612E80-0x00612EB0 SEMANTIC
 // size      48 bytes
 // prototype void (__thiscall ?on_left_click@Dialogs@@QAEXHH@Z)(Dialogs* this, int xCoord, int yCoord)
 // callers   0   call targets   1

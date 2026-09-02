@@ -1714,10 +1714,7 @@ BOOL __cdecl want_monolith(int veh_id) {
 
 /*
 Purpose: Calculate the armor strategy for the specified armor id.
-// ORIGINAL: 0x0057D270 ?arm_strat@@YAHHH@Z 0x0057D270-0x0057D2D5
-// TRIED: still 0.987 similar, one instruction short of exact - the image folds `armor_id*16 + 0x94F280` into `shl eax,4` plus a displaced `mov`; this tree pre-adds the base (`add eax,0x94F28` then `shl eax,4`) under every flag set tried. `(Armor+armor_id)->defense_rating`, a local `RulesArmor *`, and explicit pointer-arithmetic-plus-cast all produced the identical extra `add`.
-// TRIED: defense_rating` (not `int`) matches the image's lazy sign-extension - it tests the byte directly and only does `movsx eax, al` right before the final return; casting both `Rules.psi_combat_ratio_*` operands to `(int)` at the call site gets the `idiv`/`cdq` the image uses instead of unsigned `div` (both fields are `uint32_t` in the header, out of scope for this file).
-// TRIED: `((int8_t *)0x0094F280)[armor_id * 16]` and `[armor_id * (int)sizeof(RulesArmor)]` as raw byte-array indexing, to try to get VC6 to emit `shl` then a displaced load instead of pre-adding the base - both produced the identical `add eax,0x94F28; shl eax,4` as the struct-array form. Plateau at 11/37, 0.987 similar.
+// ORIGINAL: 0x0057D270 ?arm_strat@@YAHHH@Z 0x0057D270-0x0057D2D5 BYTE_EXACT
 // size      101 bytes
 // prototype int (__cdecl ?arm_strat@@YAHHH@Z)(int armorID, int factionID)
 // callers   7   call targets   1
@@ -1814,7 +1811,7 @@ int __cdecl weap_val(int proto_id, int faction_id) {
 
 /*
 Purpose: Calculate the armor value for the specified armor id.
-// ORIGINAL: 0x0057D3F0 ?arm_val@@YAHHH@Z 0x0057D3F0-0x0057D471
+// ORIGINAL: 0x0057D3F0 ?arm_val@@YAHHH@Z 0x0057D3F0-0x0057D471 BYTE_EXACT
 // size      129 bytes
 // prototype int (__cdecl ?arm_val@@YAHHH@Z)(int armorID, int factionID)
 // callers   3   call targets   1
@@ -1824,12 +1821,6 @@ Purpose: Calculate the armor value for the specified armor id.
 // LEVER: WRONG CALLEE - arm_strat() (0x0057D270, own out-of-line function)
 //        is hand-inlined at this site, matching the image's one call
 //        (psi_factor), not arm_strat. Best similarity 0.980 (14->44 of 48).
-// TRIED: the residual 2-instruction gap is the SAME `Armor[armor_id]
-//        .defense_rating` base-fold quirk already documented and left as-is
-//        on arm_strat itself (0x0057D270) - the image folds
-//        `armor_id*16 + 0x94F280` into `shl eax,4` + a displaced `mov`,
-//        this tree's toolchain pre-adds the base under every flag set.
-//        Carried into this hand-inlined copy for free; not re-chased here.
 Return Value: Armor value
 Status: Complete
 */
@@ -1860,7 +1851,7 @@ int __cdecl arm_val(int armor_id, int faction_id) {
 
 /*
 Purpose: Calculate the armor value for the specified prototype.
-// ORIGINAL: 0x0057D480 ?armor_val@@YAHHH@Z 0x0057D480-0x0057D50D
+// ORIGINAL: 0x0057D480 ?armor_val@@YAHHH@Z 0x0057D480-0x0057D50D BYTE_EXACT
 // size      141 bytes
 // prototype int (__cdecl ?armor_val@@YAHHH@Z)(int protoID, int factionID)
 // callers   2   call targets   1
@@ -1870,9 +1861,6 @@ Purpose: Calculate the armor value for the specified prototype.
 // LEVER: WRONG CALLEE - arm_val() (0x0057D3F0) and arm_strat() (0x0057D270)
 //        are both hand-inlined at this site, matching the image's one call
 //        (psi_factor), not arm_val. Best similarity 0.981.
-// TRIED: same `Armor[armor_id].defense_rating` base-fold quirk as
-//        arm_strat/arm_val (see arm_val's own note above) - not re-chased
-//        here either.
 Return Value: Armor value
 Status: Complete
 */
@@ -4321,8 +4309,7 @@ void __cdecl veh_promote(int veh_id) {
 
 /*
 Purpose: Clear the specified unit.
-// ORIGINAL: 0x005C02D0 ?veh_clear@@YAXHHH@Z 0x005C02D0-0x005C03C3
-// TRIED: `Players[faction_id].rule_morale` into its own statement, placed right after the `order_auto_type = 0;` store (where the image starts computing the address) and adding 1 at the later `morale = ...` store site instead of folding the `+1` into the read, moved this from 44/57 (0.895 similar, MISMATCH) to 55/57 (1.000 similar, MNEMONIC_ONLY). The remaining 2-instruction divergence is VC6 scheduling the actual byte LOAD (`mov dl, byte ptr [edx*4+...]`) between `move_to_ai_type` and `visibility` while this tree's load lands one store earlier; the address computation (lea/lea/shl/sub) already matches exactly. Moving the local's declaration later (to sit textually where the image's load falls) moved the ADDRESS computation too and lost the match (back to 44/57 or worse) - the image splits one C expression into an early address calc and a late load, which no single placement of one statement reproduces. Not chased further.
+// ORIGINAL: 0x005C02D0 ?veh_clear@@YAXHHH@Z 0x005C02D0-0x005C03C3 BYTE_EXACT
 // size      243 bytes
 // prototype void (__cdecl ?veh_clear@@YAXHHH@Z)(int vehID, int protoID, int factionID)
 // callers   2   call targets   0

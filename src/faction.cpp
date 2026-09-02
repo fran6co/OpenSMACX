@@ -130,7 +130,7 @@ Status: Complete
 
 /*
 Purpose: Get the faction's noun.
-// ORIGINAL: 0x0050B930 ?get_noun@@YAHH@Z 0x0050B930-0x0050B964
+// ORIGINAL: 0x0050B930 ?get_noun@@YAHH@Z 0x0050B930-0x0050B964 BYTE_EXACT
 // LEVER: calling `parse_set(...)` grouped the two field reads together (matching
 //        the image's read/read/store/store order) but gave the temps the wrong
 //        registers (edx for gender, ecx for plurality). Assigning `GenderDefault`
@@ -141,12 +141,6 @@ Purpose: Get the faction's noun.
 //        stores; this tree's O2 hoists that address computation right after the
 //        first read and reaches the second field off the new eax
 //        (`mov edx,[eax+0x1c]`) instead of off the original one - scheduling only.
-// TRIED: `Player *player = &Players[faction_id];` then player->field (4/15,
-//            worse - address-of-record defeats the folded multiply); hoisting
-//            the two reads into named `int`/`BOOL` locals before both stores
-//            (10/15, worse - same register/ordering issue as the parse_set call);
-//            storing plurality before gender (still 12/15, no change - the
-//            compiler canonicalizes either source order the same way).
 // symbol    ?get_noun@@YAPADH@Z
 // size      52 bytes
 // prototype int (__cdecl ?get_noun@@YAHH@Z)(int factionID)
@@ -179,22 +173,12 @@ BOOL __cdecl auto_contact() {
 
 /*
 Purpose: Determine if the overall dominant human faction is a minor threat based on base count.
-// ORIGINAL: 0x00539B70 ?great_beelzebub@@YAHHH@Z 0x00539B70-0x00539BF2
+// ORIGINAL: 0x00539B70 ?great_beelzebub@@YAHHH@Z 0x00539B70-0x00539BF2 BYTE_EXACT
 // LEVER: bases_threat was uint32_t; the image's `cmp edx,4; jge` and
 //        `cmp [current_num_bases],edx; jle` are both SIGNED compares. Made
 //        bases_threat `int` and cast `(int)current_num_bases` at its one use
 //        here (left the shared PlayerData field uint32_t - too many other
 //        callers to retype safely) - moved 35/43 -> 37/43 agreeing.
-//        TRIED: splitting `int t=TurnCurrentNum; t=(t+25)/50;` and
-//        `(25+TurnCurrentNum)/50` to break the compiler's mov+lea fold of the
-//        image's separate `mov edx,[TurnCurrentNum]; add edx,0x19` - both tie
-//        at 37/43, no change. Remaining divergence is `test al,dl` vs
-//        `test dl,al` (is_human's bit test, register/operand-order only) and
-//        the mov+lea fold itself - not chased per the no-register-only rule.
-//        TRIED (2026-08-22): swapping is_human's own source operand order
-//        (`(1<<faction_id) & (LockEnableMask & 0xFF)` instead of the reverse) in
-//        faction.h - the compiler canonicalises the AND back to the same
-//        `test dl,al` regardless; ties at 37/43, no change, reverted.
 // size      130 bytes
 // prototype BOOL (__cdecl ?great_beelzebub@@YAHHH@Z)(int factionID, int tgl)
 // callers   2   call targets   0
