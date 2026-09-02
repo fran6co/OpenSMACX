@@ -15,27 +15,8 @@
 #include <cstdint>
 #endif
 
-// THE ENTRY PAYLOAD NODE StringStruct::add allocates (0x18 bytes, primary
-// vtable 0x006693BC): what current_entry()/next_entry() hand back. It is a
-// StringAllocationBase-family object, not a bare string - add constructs it
-// by installing the primary word at +0, the base's vftable at +0x10
-// (0x006693AC, then the derived 0x006693B8 through the vbtable walk) and
-// capturing the allocation owner at +0x14 - and remove_all destroys it
-// through the virtual-base teardown for that reason. THE STRING IS AT +4:
-// the image's consumers read the second word as the text (Caviar's
-// unit-list walk indexes payload[1] for the display name), which is the
-// string-related type the accessor family is named for.
-struct StringStructPayload {
-  const void *node_vptr;        // 0x00 - the node's primary vtable word
-  char *text;                   // 0x04 - the string this entry carries
-  uint32_t field_8_;            // 0x08 - never read by name in src/
-  uint32_t field_C_;            // 0x0C
-  const void *vbase_vptr;       // 0x10 - StringAllocationBase's vftable
-  void *allocation_owner;       // 0x14
-};
 
-static_assert(sizeof(StringStructPayload) == 0x18,
-              "payload node must match the 0x18 allocation add makes");
+class StringStructPayload;
 
 struct StringStructEntry {
   // THE ENTRY'S OWN TWO VTABLE WORDS, not ints: the node's construction
@@ -155,6 +136,27 @@ class StringAllocationBase {
   virtual ~StringAllocationBase();
   Heap *allocation_owner_;
 };
+
+// THE ENTRY PAYLOAD NODE StringStruct::add allocates: what
+// current_entry()/next_entry() hand back. REAL VIRTUAL INHERITANCE, the
+// same shape StringStruct itself has: add's construction stores the vbtable
+// 0x006693BC at +0 - whose two entries read {0, 0x10}, placing the
+// StringAllocationBase virtual base at +0x10 - installs the base's vftable
+// there (0x006693AC, then the derived 0x006693B8 through the vbtable walk)
+// and captures the owner at +0x14, all of which the declaration below makes
+// the compiler's rather than words spelled by hand. THE STRING IS AT +4:
+// the image's consumers read the second word as the text (Caviar's
+// unit-list walk indexes payload[1] for the display name), which is the
+// string-related type the accessor family is named for.
+class StringStructPayload : public virtual StringAllocationBase {
+ public:
+  char *text;      // 0x04 - the string this entry carries
+  uint32_t field_8_;  // 0x08 - never read by name in src/
+  uint32_t field_C_;  // 0x0C
+};
+
+static_assert(sizeof(StringStructPayload) == 0x18,
+              "payload node must match the 0x18 allocation add makes");
 
 class StringStruct : public virtual StringAllocationBase {
  public:

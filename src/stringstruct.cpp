@@ -68,7 +68,7 @@ int StringStruct::current_id() {
 /*
 Purpose: Return the current string-list payload.
 // ORIGINAL: 0x00402530 ?current_entry@StringStruct@@QAEHXZ 0x00402530-0x00402541 BYTE_EXACT
-// symbol    ?current_entry@StringStruct@@QAEPAUStringStructPayload@@XZ
+// symbol    ?current_entry@StringStruct@@QAEPAVStringStructPayload@@XZ
 //   the image's own symbol spells the return PAX (void *); this tree types
 //   it StringStructPayload * for the string at +4, and the fact above is
 //   what our object emits for it now.
@@ -92,7 +92,7 @@ StringStructPayload *StringStruct::current_entry() {
 /*
 Purpose: Advance the current string-list entry and return its payload.
 // ORIGINAL: 0x00402500 ?next_entry@StringStruct@@QAEHXZ 0x00402500-0x0040252F BYTE_EXACT
-// symbol    ?next_entry@StringStruct@@QAEPAUStringStructPayload@@XZ
+// symbol    ?next_entry@StringStruct@@QAEPAVStringStructPayload@@XZ
 //   as current_entry above: typed for the string, resolved through this
 //   emitted name.
 // size      47 bytes
