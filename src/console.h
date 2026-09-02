@@ -130,6 +130,9 @@ class Console : public MapWin {
 
  public:
   void editor_polar();
+  // 0x004DB870, defined in src/console.cpp. Asks which faction to edit and
+  // opens the diplomacy screen on it - the one caller that builds a DipEdit.
+  void editor_diplomacy();
   void on_sys_close();
   void menu_update();
   void editor_redo();

@@ -130,6 +130,61 @@ Status: Complete with temporary Dialog::close original dependency (through close
 ListBox::~ListBox() {
 }
 
+// DECLARATION-ONLY IN THE HEADER (2026-09-03), beside ~ListBox above. The
+// body is trivial; the virtual-base stage the image builds inside
+// ??0ListBox@@QAE@H@Z (0x00609DB0, still a pending_bodies forwarder reached
+// through construct()) is the compiler's from the two base declarations.
+ListBox::ListBox() {
+}
+
+/*
+Purpose: Adjust the receiver from the thunk1 subobject back to ListBox and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         ListBox::on_dialog_focus overrides a virtual reached through a virtual
+         base. There is no C++ here to get right, only a name to record.
+         MOVED HERE from filewin.cpp 2026-09-03, with ListBox's constructor
+         going declaration-only above: these COMDATs are emitted in every TU
+         that CONSTRUCTS the object, and this file now is one - the three
+         markers had already predicted the move ("NOT IN listbox.cpp, which
+         defines no ListBox constructor"), which stopped being true.
+// ORIGINAL: 0x0060D000 ?on_dialog_focus@thunk1_ListBox@@QAEXH@Z 0x0060D000-0x0060D008 BYTE_EXACT
+// symbol    ?on_dialog_focus@ListBox@@$4PPPPPPPM@A@AEXH@Z
+// size      8 bytes
+// kind      game
+Status: Complete
+*/
+
+/*
+Purpose: Adjust the receiver from the thunk1 subobject back to ListBox and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         ListBox::on_mouse_leave overrides a virtual reached through a virtual
+         base. There is no C++ here to get right, only a name to record.
+         MOVED HERE from filewin.cpp 2026-09-03, for the same reason as
+         on_dialog_focus's marker directly above.
+// ORIGINAL: 0x0060CF80 ?on_mouse_leave@thunk1_ListBox@@QAEXHH@Z 0x0060CF80-0x0060CF88 BYTE_EXACT
+// symbol    ?on_mouse_leave@ListBox@@$4PPPPPPPM@A@AEXHH@Z
+// size      8 bytes
+// kind      game
+Status: Complete
+*/
+
+/*
+Purpose: Adjust the receiver from the thunk1 subobject back to ListBox and
+         tail-jump to the override. THE COMPILER WRITES THIS BODY - the claim
+         names VC6's own vtordisp adjustor thunk, emitted because
+         ListBox::attach overrides a virtual reached through a virtual
+         base. There is no C++ here to get right, only a name to record.
+         MOVED HERE from filewin.cpp 2026-09-03, for the same reason as
+         on_dialog_focus's marker directly above.
+// ORIGINAL: 0x0060D040 ?attach@thunk1_ListBox@@QAEHPAUGraphicWin@@HHH@Z 0x0060D040-0x0060D048 BYTE_EXACT
+// symbol    ?attach@ListBox@@$4PPPPPPPM@A@AEHPAXHHH@Z
+// size      8 bytes
+// kind      game
+Status: Complete
+*/
+
 uint32_t ListBox::destroy() {
     // Strip-all direction: the image's five derived-stage re-stores here are
     // gone; the object runs on whatever its constructing chain installed.

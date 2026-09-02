@@ -18,8 +18,10 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "console.h"
+#include "dipedit.h"  // editor_diplomacy's stack DipEdit
 #include "game.h"
 #include "general.h"
+#include "popup.h"  // editor_diplomacy's modal faction picker
 #include "infowin.h"
 #include "map.h"
 #include "mapwin.h"
@@ -727,6 +729,107 @@ void Console::editor_polar() {
     world_polar_caps();
     world_climate();
     ::draw_map(1);   // the FREE draw_map; see Console::editor_climate above
+}
+
+/*
+Purpose: Open the diplomacy editor. A modal list popup asks which faction to
+         edit - one item per playable faction, preselected to the faction the
+         human is playing - and the answer builds a stack DipEdit, whose
+         construction the image has no ??0DipEdit for: every member
+         constructor is inlined here, then init() runs and the scope-end
+         teardown destroys it.
+// ORIGINAL: 0x004DB870 ?editor_diplomacy@Console@@QAEXXZ 0x004DB870-0x004DBB40;0x0065B469-0x0065B55F
+// size      966 bytes
+// prototype void (__thiscall ?editor_diplomacy@Console@@QAEXXZ)(Console* this)
+// callers   2   call targets   22
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x004064D0 0x00406880 0x00406E60 0x004080B0 0x0043EF70 0x004837F0 0x004DB080 0x004E2240 0x005D4CF0 0x005D4DD0 0x00602600 0x00607040 0x00607CF0 0x00607DA0 0x00609DB0 0x0060E670 0x00612A70 0x00618EA0 0x00618EE0 0x00645550
+// LEVER: THE WHOLE BODY IS ONE STACK DipEdit PLUS ONE STACK Popup. `DipEdit
+//   edit;` and `Popup popup;` are what produce the image's 22 calls - the
+//   compiler inlines DipEdit's empty constructor and runs GraphicWin, Font,
+//   ListBox, CheckBox and the five FlatButtons itself, then re-stores
+//   DipEdit's own two vptrs (0x66e964/0x66e95c, slot 0 being ??_GDipEdit) at
+//   the tail, exactly where the image has them. The two frame locals are
+//   also why the frame is 0xacc4.
+// LEVER: THE POPUP'S SCOPE ENDS BEFORE THE BRANCH. Spelled as one flat
+//   function, our compiler ran the popup teardown after `edit.init()` where
+//   the image destroys it immediately after exec returns; nesting the popup
+//   in a block that closes on the result moved the teardown to the image's
+//   site and took the body from 50/157 to 58/157.
+// LEVER: ListBox's constructor had to leave the header for this body - see
+//   listbox.h. An inline-visible `ListBox() { ; }` made VC6 expand the
+//   virtual-base stage (25 instructions, and a four-byte frame) at this one
+//   site where the image makes a single `call ??0ListBox@@QAE@H@Z`.
+//   11/157 -> 50/157 on that edit alone.
+// CEILING, NOT A SPELLING: the image expands ~Popup INLINE at the scope end
+//   - `mov [popup],0x6695c8 / mov [popup+0x444],0x6695c0 / call close /
+//   call ~Scroll / call ~BasePop` - because its ~Popup is visible there.
+//   This tree's ~Popup is a pending_bodies forwarder, so we emit one `call
+//   ??1Popup`. Closing it needs ~Popup/~Scroll/~BasePop defined inline in
+//   their headers, which moves ??1TutWin/??1PickWin and every other Popup
+//   destroyer; see the same note on DipEdit::on_button_clicked.
+// CEILING, NOT A SPELLING: the image's `result < 0` early exit re-expands
+//   ~DipEdit member by member - both ~FlatButton expansions first, then
+//   out-of-line ??1FlatButton for the remaining three, then the CheckBox,
+//   ListBox, Font and GraphicWin teardowns, ~40 instructions - while the
+//   success exit makes a single `call ??1DipEdit`. ~DipEdit is defined in
+//   dipedit.cpp, not visible here, so our compiler emits one call and MERGES
+//   the two exits into a shared tail. Both are the image's inliner choosing
+//   a different depth per site; no source form reaches it.
+// TRIED: the frame slots. The image puts the popup BELOW the DipEdit
+//   (popup at ebp-0xacd0, edit at ebp-0x5954); ours lays them the other way
+//   round. Measured twice on 20-line repros: this compiler gives the
+//   FIRST-declared local the lowest slot, so the image's layout implies the
+//   popup was declared first there, and its construction order (DipEdit
+//   first, 0x004DB894 before 0x004DB947) then contradicts C++ declaration
+//   order. Declaring the popup first here moves its constructor call to the
+//   top of the body and misaligns the whole listing, which is far worse
+//   than ~30 ebp-relative displacements. Not chased further.
+*/
+void Console::editor_diplomacy() {
+    DipEdit edit;
+
+    // Read before the popup exists: the image caches the faction in a local
+    // across the whole item loop and the two popup calls, which cannot be
+    // the global re-read - either of those calls could store through its
+    // char* argument.
+    int faction = LocalFaction;
+
+    int result;
+    {
+        Popup popup;
+
+        PopupModalState = 6;
+        popup.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40);
+
+        // Players[0] is the native-life faction and is not offered; the loop
+        // is over the seven playable ones, each item text the faction noun.
+        for (int i = 1; i < MaxPlayerNum; i++) {
+            GenderDefault = Players[i].noun_gender;
+            PluralityDefault = Players[i].is_noun_plural;
+            reinterpret_cast<Dialogs *>(reinterpret_cast<uint8_t *>(&popup)
+                                            + 0x21d0)
+                ->Dialogs::item(Players[i].noun_faction, i);
+        }
+
+        // BasePop's default answer: when the player accepts without picking,
+        // the popup hands back the faction already being played.
+        if (faction >= 0) {
+            *reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(&popup)
+                                              + 0xa44) =
+                static_cast<uint32_t>(faction);
+        }
+
+        result = popup.exec(0, 0);
+        PopupModalState = 0;
+    }
+
+    if (result < 0) {
+        return;
+    }
+
+    edit.init(result);
 }
 
 /*
