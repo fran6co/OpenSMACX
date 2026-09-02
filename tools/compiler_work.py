@@ -331,7 +331,18 @@ SCAFFOLD_CEILINGS = {
     # EditGroup::edit; the merged tree's own census then retired the duplicated
     # treaty_on forwarder and the three apply_* seams whose addresses the UNK
     # batch had already homed as claimed UNK2-4 bodies.
-    "PENDING_BODY forwarders": 216,
+    # 216 -> 225 (2026-09-02, boot-sequence batch): system_init and game_init
+    # homed into src/game.cpp. game_init's own forwarder went with the body,
+    # and the boot sequence brought eleven callees onto the frontier that the
+    # build defines nothing for - load_sprites, load_fixed_sprites,
+    # textcolor_init, config_popups, bung_momma, and the six member `init`s
+    # (MainInterface, BattleWin, Console, MultiDebug, MessageWin, Datalink).
+    # Six of the eleven are member functions whose declarations belong in
+    # maininterface.h / battlewin.h / console.h / multidebug.h / messagewin.h /
+    # datalink.h, which that batch does not own, so game.h spells them as
+    # __fastcall receiver-first free functions. Each is one line to convert
+    # when its own header lands.
+    "PENDING_BODY forwarders": 225,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -368,7 +379,11 @@ SCAFFOLD_CEILINGS = {
     # DUPLICATE apiece.
     # 1675 -> 1670 (2026-09-02, DipEdit UNK1-4 batch): 004da760/004da7e0/
     # 004da870/004da900.cpp homed BYTE_EXACT into src/dipedit.cpp.
-    "unrecovered files": 1666,
+    # 1670 -> 1664 (same day, boot-sequence batch): 0058f040.cpp and
+    # 0058f2f0.cpp homed into src/game.cpp - system_init MISMATCH 32/135 and
+    # game_init MISMATCH 74/82, both compiling, both with their scaffold
+    # archive units deleted.
+    "unrecovered files": 1664,
     "hypothesis_layouts.h lines": 2723,
 }
 

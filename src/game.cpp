@@ -32,6 +32,12 @@
 #include "main.h"  // CommandLineText
 #include "mapwin.h" // draw_tile, mapwin_system_shutdown
 #include "hypothesis_layouts.h"  // MultiWin, for MultiWindow
+#include "log.h"  // log_set_state
+#include "random.h"  // random_reseed
+#include "battlewin.h"  // the standing battle window
+#include "datalink.h"  // DatalinkMain
+#include "messagewin.h"  // the standing MessageWin
+#include "multidebug.h"  // MultiDebug, the standing debug window
 #include "netdaemon.h"  // NetDaemonNet
 #include "statuswin.h"  // StatusWin::close
 #include "strings.h"  // StringTable
@@ -43,6 +49,17 @@
 
 BOOL ExpansionEnabled;  // 0x009A6488
 uint32_t GamePreferences;  // 0x009A6490
+
+// The two caption-button icon slots win.h does not name. See the externs in
+// game.h for the identification, and game_init's closing stores for the
+// addresses the image puts in them.
+int WinCloseIcon;      // 0x009B7B00
+int WinMinimizeIcon;   // 0x009B7B0C
+
+uint32_t SystemInterfaceFlags;  // 0x00933420
+
+// 0x006F107C. See game.h.
+unsigned char MultiDebugText;  // 0x006F107C
 uint32_t GameMorePreferences;  // 0x009A6494
 uint32_t GameWarnings;  // 0x009A6498
 uint32_t GameRules;  // 0x009A649C
@@ -1199,6 +1216,215 @@ void __cdecl game_close(int mode) {
     stop_timers();
     labels_shutdown();
     StringTable.shutdown();
+}
+
+/*
+Purpose: Bring the shared system up, once per process: create the four data
+         directories, read the language preference and load the string and
+         label tables, upper-case the two default button captions out of them,
+         load the fixed art, then build the eight map-window slots and the
+         desktop's standing windows.
+// ORIGINAL: 0x0058F040 ?system_init@@YAHXZ 0x0058F040-0x0058F245;0x00660BD7-0x00660BEC
+// size      538 bytes
+// prototype int (__cdecl ?system_init@@YAHXZ)(void)
+// callers   1   call targets   23
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004219E0 0x00429300 0x00455E80 0x004595C0 0x00459680 0x004626E0 0x00471D50 0x004BA220 0x0051D890 0x00588AA0 0x0059DB40 0x005C9860 0x006018A0 0x00601910 0x006168F0 0x006169A0 0x00616A00 0x00626450 0x00627100 0x00645470 0x0064557F 0x0064558A 0x00646829
+// indirect  0x0058F11A 0x0058F159
+// LEVER: the SEH frame the archive unit could not reproduce is the
+//   `new MapWin` below it. MapWin has a real destructor (mapwin.h), so /GX
+//   makes VC6 wrap the whole function - `push -1 / push handler / fs:[0]` at
+//   instruction 0, the `[ebp-4]` state toggle around the constructor and the
+//   `operator delete` funclet at 0x660BD7 - which is exactly the frame the
+//   artifact's plain operator-new-plus-placement-new spelling was missing.
+//   `new MapWin` with no argument is also what produces the image's
+//   `push 1` before the ctor call: that 1 is the hidden most-derived flag,
+//   not the catalogue's `H`.
+// LEVER: the two captions are `label_get` (alpha.h's forceinline of
+//   Strings::get over Labels.strings_ptr) at offsets 102 and 101, which is the
+//   image's `[strings_ptr + 0x198]` and `[+ 0x194]`.
+// LEVER: slot 0 of the map-window table is published last, as the Console -
+//   the image's single `mov dword ptr [0x7d3c3c], 0x9156b0` - and the seven
+//   slots above it are the ones the allocation loop walks (0x7D3C40 to
+//   0x7D3C5C exclusive), so the loop is `&MapWinTable[1] .. &MapWinTable[8]`
+//   and not the whole table.
+// TRIED: `static_cast<MultiDebug *>(&WinBubbleWindow)` and a named extern for
+//   the MessageWin storage - the image has no MessageWin object in this tree
+//   (messagewin.cpp defines nothing at 0x7F67F8) and WinBubbleWindow is a
+//   `Win`, so both stay address spellings, the way game_reload reaches
+//   0x008E9F60.
+// TRIED: set_language as a real `call` - alpha.h spells it `MEASURED inline`,
+//   so VC6 expands it to `mov [Language], eax` where the image has
+//   `push eax / call 0x627100`. `#pragma auto_inline(off)` is C2156 inside a
+//   function, so this tree cannot scope it to the one site, and alpha.h is not
+//   this batch's file. One instruction.
+// TRIED: the two caption builds spelled `label_get(102)` / `label_get(101)`
+//   instead of the local `LPSTR *labels` plus `StringTable.get(labels[n])` now
+//   in the body - that spelling scores 32/135 against this one's 34, and
+//   game_init measures the same either way, so the two bodies legitimately
+//   spell it differently. What is left is the register the label value lands
+//   in and the register holding `Labels.strings_ptr` across the StringTemp
+//   store (image eax/eax, ours eax/ecx on the first caption), plus the
+//   `SystemInterfaceFlags` read-modify-write, which the image interleaves with
+//   maininterface_init's argument setup and runs in esi while ours runs it as
+//   a block in edx and re-derives the zero twice. All register assignment;
+//   /Ob0 scores worse (53/135) because map_win_table and friends turn into
+//   real calls.
+Return Value: 1 when the label table fails to load, else 0.
+Status: homed from src/unrecovered/0058f040.cpp on this pass. Its five free
+        callees and six member `init` callees are pending_bodies forwarders
+        (game.h). 34/135 agreeing, 0.925 similar, best set /O2 /Gy /GR- /Oy-
+        /GX; the remaining runs are register naming, not structure.
+*/
+int __cdecl system_init() {
+    _mkdir("saves");
+    _mkdir("saves\\auto");
+    _mkdir("maps");
+    _mkdir("scenarios");
+    WorldClimateSkipTerrainClear = 1;
+    log_set_state(0);
+    set_language(prefs_get("Language", 0, 0));
+    textcolor_init();
+    StringTable.init(0xC320);
+    if (labels_init() != 0) {
+        return 1;
+    }
+
+    // The Cancel caption, label 102: upper-cased unless the language is 2.
+    LPSTR *labels = (LPSTR *)Labels.strings_ptr;
+    StringTemp[0] = '\0';
+    strcat(StringTemp, StringTable.get((int)labels[102]));
+    func_string_upper *string_upper = string_upper_slot();
+    if (Language != 2) {
+        string_upper(StringTemp);
+    }
+    BasePop::set_def_cancel_text(StringTemp);
+
+    // The OK caption, label 101: upper-cased whatever the language.
+    labels = (LPSTR *)Labels.strings_ptr;
+    StringTemp[0] = '\0';
+    strcat(StringTemp, StringTable.get((int)labels[101]));
+    string_upper(StringTemp);
+    BasePop::set_def_ok_text(StringTemp);
+
+    load_fixed_sprites();
+    config_popups();
+
+    // Slots 1..7. The null check and the delete-on-throw are the compiler's,
+    // from the EH frame the new-expression brings in. The bound is compared as
+    // an INT - the image's `cmp esi, 0x7d3c5c / jl` - because a pointer `<`
+    // renders unsigned and VC6 emits `jb` for it.
+    for (MapWin **slot = &MapWinTable[1]; (int)slot < (int)&MapWinTable[8];
+         ++slot) {
+        *slot = new MapWin;
+    }
+
+    SystemInterfaceFlags &= ~0x8C0u;
+    MapWinTable[0] = &ConsoleGlobal;
+
+    maininterface_init(&MainInterfaceGlobal, 0);
+    battlewin_init(static_cast<BattleWin *>(sub_interface_global()));
+    console_init(&ConsoleGlobal, 0);
+
+    // MultiDebug's window argument is the Console's GraphicWin virtual base,
+    // the same walk close_opening spells out: vtable slot 1 holds the
+    // subobject displacement, and the receiver is that displacement added.
+    int console_window = reinterpret_cast<int>(&ConsoleGlobal);
+    if (console_window != 0) {
+        console_window += reinterpret_cast<int *>(
+            *reinterpret_cast<int **>(&ConsoleGlobal))[1];
+    }
+    multidebug_init(reinterpret_cast<MultiDebug *>(&WinBubbleWindow),
+                    &NetDaemonNet, reinterpret_cast<Win *>(console_window),
+                    &MultiDebugText);
+
+    messagewin_init(reinterpret_cast<MessageWin *>(0x007F67F8));
+    datalink_init(&DatalinkMain);
+    bung_momma();
+    return 0;
+}
+
+/*
+Purpose: Bring a game up: reseed both random chains off the clock, then either
+         just turn the log off (mode 0) or reload the string table and
+         re-read the two default button captions before the art and the rules
+         load. mode 0 is the first boot, anything else a reload into a live
+         system.
+// ORIGINAL: 0x0058F2F0 ?game_init@@YAHHH@Z 0x0058F2F0-0x0058F421
+// size      305 bytes
+// prototype BOOL (__cdecl ?game_init@@YAHHH@Z)(BOOL tglParseStrings, BOOL tglAllRules)
+// callers   4   call targets   12
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00455EB0 0x0050F3D0 0x005873C0 0x006018A0 0x00601910 0x006168F0 0x006169A0 0x00616A00 0x006257E0 0x00626450 0x00645470
+// indirect  0x0058F304 0x0058F30F 0x0058F38D 0x0058F3CD
+// LEVER: the clock slot is read ONCE into a register and called twice, the
+//   same shape control_game's GetAsyncKeyState lever records - holding
+//   WaveTimeGetTimeSlot in a local is what keeps the load from happening
+//   twice.
+// LEVER: the `add esp,4` at 0x58F3D9 is one instruction serving BOTH arms -
+//   log_set_state's argument on the mode==0 arm, set_def_ok_text's on the
+//   other - so the source converges the two arms into one `if/else` whose
+//   join the compiler cleans once.
+// TRIED: naming the three caption-icon stores through sprite.cpp's array -
+//   sprite.h does not declare it, and game.h cannot add a member to a header
+//   it does not own, so the three store their addresses (see WinCloseIcon in
+//   game.h for the identification).
+// TRIED: the two caption builds spelled `LPSTR *labels` and
+//   `StringTable.get(labels[n])` instead of label_get - byte-identical output,
+//   so it is a free spelling, not a lever. The six runs that remain are the
+//   register the label value lands in (image eax, ours ecx on the first
+//   caption), the register holding `Labels.strings_ptr` for the second caption
+//   (image ecx, ours edx), and the register `reload` is read into for
+//   read_rules (image edx, ours ecx). Register naming only; the instruction
+//   count and the call set agree exactly.
+Return Value: 1 when the label table or the rules fail to load, else 0.
+Status: homed from src/unrecovered/0058f2f0.cpp on this pass; its pending
+        forwarder is gone. 74/82 agreeing, best set /O2 /Gy /GR- /Oy- /GX,
+        156 bytes discounted as relocations.
+*/
+int __cdecl game_init(int mode, int reload) {
+    func_time_get_time *time_get_time = WaveTimeGetTimeSlot();
+    WorldClimateSkipTerrainClear = 1;
+    my_srand(time_get_time());
+    random_reseed(time_get_time());
+
+    if (mode == 0) {
+        log_set_state(0);
+    } else {
+        StringTable.init(0xC320);
+        if (labels_init() != 0) {
+            return 1;
+        }
+        // The same two captions system_init builds, for the same two buttons.
+        StringTemp[0] = '\0';
+        strcat(StringTemp, label_get(102));
+        func_string_upper *string_upper = string_upper_slot();
+        if (Language != 2) {
+            string_upper(StringTemp);
+        }
+        BasePop::set_def_cancel_text(StringTemp);
+
+        StringTemp[0] = '\0';
+        strcat(StringTemp, label_get(101));
+        string_upper(StringTemp);
+        BasePop::set_def_ok_text(StringTemp);
+    }
+
+    load_sprites();
+    if (read_rules(reload) != 0) {
+        return 1;
+    }
+    start_timers();
+
+    // The three caption-button icons: sprite.cpp's array at 0x0075AE20, a 0x2c
+    // stride, so these are its [1], [2] and [0]. WinRestoreIcon, the slot
+    // between the last two, is not set here.
+    WinCloseIcon = 0x0075AE4C;
+    WinMaximizeIcon = 0x0075AE78;
+    WinMinimizeIcon = 0x0075AE20;
+    return 0;
 }
 
 /*

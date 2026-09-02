@@ -18,6 +18,14 @@
 #pragma once
 
 class MultiWin;
+class MainInterface;
+class BattleWin;
+class Console;
+class MultiDebug;
+class MessageWin;
+class Datalink;
+class Net;
+class Win;
 
  /*
   * Game related objects, variables and functions.
@@ -208,6 +216,70 @@ void __cdecl desktop_close();
 void __cdecl close_opening();
 void __cdecl game_close(int mode);
 void __cdecl system_close();
+
+// system_init and game_init's own callees. Everything here is still an
+// original body reached through a pending_bodies.cpp forwarder, so the two
+// boot bodies emit the image's `call rel32`. Arities are the mangled names'
+// and the call sites'.
+//
+// The six `...Init` shapes are MEMBER functions - `MainInterface::init`,
+// `BattleWin::init`, `Console::init`, `MultiDebug::init`, `MessageWin::init`
+// and `Datalink::init` - spelled here as free functions with the receiver as
+// their first `__fastcall` parameter, which is the one spelling that puts the
+// receiver in `ecx` and keeps the image's `mov ecx, imm32; call rel32` pair.
+// The member declarations belong in maininterface.h / battlewin.h / console.h
+// / multidebug.h / messagewin.h / datalink.h, none of which this batch owns;
+// when they land, delete the shape here and call the member directly.
+void __cdecl load_sprites();                       // ?load_sprites@@YAXXZ
+void __cdecl load_fixed_sprites();                 // ?load_fixed_sprites@@YAXXZ
+void __cdecl textcolor_init();                     // ?textcolor_init@@YAXXZ
+void __cdecl config_popups();                      // ?config_popups@@YAXXZ
+void __cdecl bung_momma();                         // ?bung_momma@@YAXXZ
+int __fastcall maininterface_init(MainInterface *self, int mode);
+void __fastcall battlewin_init(BattleWin *self);
+void __fastcall console_init(Console *self, int mode);
+int __fastcall multidebug_init(MultiDebug *self, Net *net, Win *window,
+                               unsigned char *text);
+void __fastcall messagewin_init(MessageWin *self);
+void __fastcall datalink_init(Datalink *self);
+
+// The upper-case helper the two boot bodies call through a fixed .rdata slot.
+// 0x0066931C is one entry of a function-pointer table (its neighbours at
+// 0x669310-0x669324 point 0x10 apart into the same code), not an IAT slot, so
+// no direct CharUpper spelling reaches it: the image loads the slot into a
+// callee-saved register and calls it at both caption sites. __stdcall, not
+// __cdecl - the caller's `add esp,4` after the second site covers only
+// set_def_ok_text's argument, so the callee cleans its own.
+typedef void(__stdcall func_string_upper)(char *);
+inline func_string_upper *&string_upper_slot() {
+  return *reinterpret_cast<func_string_upper **>(0x0066931C);
+}
+
+// The caption-button icons game_init publishes. win.h names the two between
+// them - WinMaximizeIcon at 0x009B7B04 and WinRestoreIcon at 0x009B7B08 - so
+// the two flanking slots are the close and minimise icons of the same family.
+// game_init stores sprite-array addresses into all three except Restore, and
+// sprite.cpp's g_SILVER_MENU_ICON_SPRITES at 0x0075AE20 (0x2c stride) is where
+// those three addresses land: [1], [2] and [0] in that order. sprite.h does
+// not declare the array, so the elements are stored as the addresses they are.
+extern int WinCloseIcon;      // 0x009B7B00
+extern int WinMinimizeIcon;   // 0x009B7B0C
+
+// A flags dword nothing else in the image touches: system_init is its only
+// reader and its only writer, and it clears 0x8C0 - bits 0x40 and 0x800 - out
+// of it. Zero-initialised .data, so on the first pass the read and the masked
+// write-back are both zero. Named for where it is used; the image gives no
+// other clue to what the two bits mean.
+extern uint32_t SystemInterfaceFlags;  // 0x00933420
+
+// A byte buffer the image pushes BY ADDRESS at fifteen call sites, among them
+// multidebug_init's third argument. Nothing in the tree names it and the image
+// gives it no type, so it is bound as the one object whose address is what the
+// callers actually take.
+extern unsigned char MultiDebugText;  // 0x006F107C
+
+extern "C" int __cdecl _mkdir(const char *path);
+
 // 0x00403BE0, defined in alphamovie.cpp (homed from
 // src/recovered/units/00403be0.cpp on 2026-08-29).
 void __cdecl amovie_project(char *movie);
