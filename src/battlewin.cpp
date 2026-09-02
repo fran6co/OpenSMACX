@@ -42,6 +42,20 @@ Purpose: Destroy the window. The whole teardown is the Time member at +8; the
          original advances `this` by 8 and tail-jumps into the Time
          destructor, and nothing else in the object is touched.
 // ORIGINAL: 0x00422ED0 ??1BattleWin@@QAE@XZ 0x00422ED0-0x00422ED8
+// TRIED 2026-09-03: the body is already the image's two instructions -
+// `add ecx, 8` plus the tail `jmp` into ~Time. The third instruction, the
+// one the image does not have, is `mov dword ptr [ecx], <vtable>` and it is
+// the COMPILER'S, not the body's: an EMPTY ~BattleWin() still emits it
+// (measured, `for(;;)` control - 2 compiled instructions, one of them that
+// store). It is the SubInterface base's implicit-destructor vptr write,
+// which SubInterface earns from `virtual void unk_slot0()` in
+// subinterface.h; the image's ??1BattleWin writes no vptr, so there the
+// SubInterface vftable is hand-installed rather than compiler-owned. The
+// lever is a SubInterface declaration change (non-polymorphic base), which
+// is class work and moves every SubInterface-derived constructor that now
+// inherits its vtable from the compiler.
+// TRIED: `((Time *)reinterpret_cast<uint8_t *>(this))->stop();` in place of
+// the dtor call - 1 of 2, no better.
 // size      8 bytes
 // prototype void (__thiscall ??1BattleWin@@QAE@XZ)(BattleWin* this)
 // callers   0   call targets   0

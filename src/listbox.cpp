@@ -198,6 +198,20 @@ Purpose: Report a right press: raise the click guard, forward (a1, a2) through
 Purpose: Report a right press: raise the click guard, forward (a1, a2) through
          GraphicWin vtable slot 20, drop the guard.
 // ORIGINAL: 0x0060AA20 ?on_right_down@ListBox@@QAEXHH@Z 0x0060AA20-0x0060AA52
+// TRIED 2026-09-03: re-dumped the divergence. The 3 instructions the image
+// has and this tree does not are entirely the entered-receiver walk
+// (`mov eax,[ecx-0x48]` / `mov eax,[edx+ecx-0x48]` / `lea ecx,[edx+ecx-0x48]`
+// against this tree's `mov eax,[ecx]` / `mov eax,[ecx+edx]` /
+// `add ecx,edx`) - the front walk through the vbtable that VC6 emits only
+// for a U-spelled virtual override entered on the GraphicWin virtual base.
+// No body spelling reaches it while the receiver enters adjusted; it needs
+// the ListBox/GraphicWin declaration (on_right_down virtual in GraphicWin),
+// which is batch 9's entered-receiver work and regresses the six
+// window-event families whose image symbols spell Q. Same wall on
+// on_scrolled and on_right_double_click below.
+// TRIED: byte-exact on promotion from the 0060aa20 archive unit. The
+//   Q spelling enters with `this` on the GraphicWin virtual base, so the
+//   ListBox front is walked back with the same explicit -0x48 the image folds
 // TRIED: byte-exact on promotion from the 0060aa20 archive unit. The
 //   Q spelling enters with `this` on the GraphicWin virtual base, so the
 //   ListBox front is walked back with the same explicit -0x48 the image folds
