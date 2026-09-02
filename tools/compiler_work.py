@@ -313,6 +313,8 @@ SCAFFOLD_CEILINGS = {
     # 1293 -> 1292 (batch 9, Dialogs ctor): 00612830.cpp homed - the Dialogs
     # real bare constructor landed (MISMATCH 68/201, the span covers the ctor
     # plus the jump-dispatch function our binary lays out elsewhere).
+    # 1292 is the count after 00612830.cpp homed; 004ba830.cpp had no archive
+    # (the body was already in win.cpp, only MOVED to tutwin.cpp this pass).
     "artifact files (recovered/)": 1292,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one

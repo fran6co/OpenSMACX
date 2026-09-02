@@ -27,6 +27,27 @@
 uint32_t TutWinShownFlag;  // 0x008CC244
 
 /*
+Purpose: Compute a rectangle center with wrapping subtraction and truncation toward zero.
+// ORIGINAL: 0x004BA830 ?UNK2@TutWin@@QAEXPAURECT@@PAHPAH@Z 0x004BA830-0x004BA863 BYTE_EXACT
+// LEVER: MORE (2 calls vs image's 0: midpoint/int_from_bits helpers never inline) - the image writes the signed halving directly (`sub;cdq;sub;sar;add`), not through any helper, and the tail is `ret 0xc` (callee-cleans), not `ret` - the ORIGINAL is a thiscall member ignoring `this` entirely, and this free-function stand-in needs `__stdcall` (not `__cdecl`) to match that stack cleanup. Rewriting the body as plain field arithmetic and switching the calling convention took 0/25 (0.553 best) to 24/25 (0.960 best, /Oy- flag set) with 0 calls disagreeing.
+// symbol    ?rect_center@@YGHPAUtagRECT@@PAH1@Z
+// size      51 bytes
+// prototype void (__thiscall ?UNK2@TutWin@@QAEXPAURECT@@PAHPAH@Z)(TutWin* this, RECT*, int*, int*)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
+Status: Complete
+*/
+int __stdcall rect_center(RECT *rect, int *x, int *y) {
+    *x = rect->left + (rect->right - rect->left) / 2;
+    int center_y = rect->top + (rect->bottom - rect->top) / 2;
+    *y = center_y;
+    return center_y;
+}
+
+/*
 Purpose: Reset the tutorial window - four fields to zero, four to -1, and the
          shared shown-marker cleared with them.
 // ORIGINAL: 0x004BA720 ?UNK1@TutWin@@QAEXXZ 0x004BA720-0x004BA761 BYTE_EXACT

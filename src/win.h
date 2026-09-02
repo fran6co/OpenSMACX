@@ -674,7 +674,6 @@ int __cdecl in_box(
     int x, int y, int left, int top, int width, int height);
 void __cdecl offset_rect(RECT *rect, int dx, int dy);
 RECT *__cdecl make_rect(RECT *rect, int x, int y, int width, int height);
-int __stdcall rect_center(RECT *rect, int *x, int *y);
 
 
 // Shared device-context state: the reference count, the cached handle, and
