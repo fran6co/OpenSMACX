@@ -573,3 +573,22 @@ Status: Complete
 int __cdecl X_pop(const char *label, int (__cdecl *callback)()) {
     return X_pop(PopupStartCaption, label, -1, nullptr, 0, callback);
 }
+
+/*
+Purpose: The three-argument numeric-entry popup form: caption from the shared
+         buffer, value and poll callback as given.
+// ORIGINAL: 0x005BFD10 ?X_pop_ask_number@@YAHPBDHP6AHXZ@Z 0x005BFD10-0x005BFD2E BYTE_EXACT
+// LEVER: PROMOTED out of src/recovered/005bfd10.cpp on the same terms as
+//        0x005BF310 above - the claim proved the artifact and nothing in the
+//        shipped program owned the address. DipEdit::on_button_clicked is the
+//        compiled caller that needed it (the integrity prompt).
+// size      30 bytes
+// kind      game
+// calls     0x005BFD70
+Return Value: whatever the four-argument form returns
+Status: Complete
+*/
+int __cdecl X_pop_ask_number(const char *label, int value,
+                             int (__cdecl *callback)()) {
+    return X_pop_ask_number(PopupStartCaption, label, value, callback);
+}

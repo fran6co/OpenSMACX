@@ -79,6 +79,11 @@
   */
 class DipEdit : public GraphicWin {
  public:
+  // 0x004DB080 (?init@DipEdit@@QAEXH@Z), defined in src/dipedit.cpp. The int
+  // is the faction whose status the window opens on: init stores it straight
+  // into faction_index_ (`mov dword ptr [esi+0xa1c], ecx` at 0x004DB0BA) and
+  // then seeds selected_target_ from it.
+  void init(int faction_index);
   void on_selected(int index);
   // The four checkbox handlers, 0x004DA760/0x004DA7E0/0x004DA870/0x004DA900.
   // The image carries NO symbol and NO reference for any of them - no E8
@@ -103,9 +108,13 @@ class DipEdit : public GraphicWin {
   void UNK2(int bit);
   void UNK3(int bit);
   void UNK4(int bit);
-  // 0x004DA990 (?read_check@DipEdit@@QAEXXZ) - a pending_bodies forwarder;
-  // still a declaration only, resolved at link time like the other
-  // unrecovered methods.
+  // 0x004D9DE0, defined in src/dipedit.cpp. The click handler the five
+  // FlatButtons share: `a1` is the control id, -1 being the window's own
+  // close row (release_modal and nothing else), 1 the treaty/agenda row,
+  // 2 the integrity prompt and 3 the atrocity prompt.
+  void on_button_clicked(int button_id);
+  // 0x004DA990, defined in src/dipedit.cpp.
+
   void read_check();
   void do_check();  // 0x004DADA0, defined in src/dipedit.cpp
   DipEdit() { ; }
@@ -130,8 +139,13 @@ class DipEdit : public GraphicWin {
   // width/height. BasePop's set_width (0x00601B20, BYTE_EXACT) tests the
   // same-offset field in that class, which is what makes the pair
   // width-then-height rather than the reverse.
-  uint32_t width_;   // 0xA14
-  uint32_t height_;  // 0xA18
+  // SIGNED, and this is measured not stylistic: init's
+  // `width_ / 3` at 0x004DB259 compiles to the 0x55555556 magic multiply with
+  // the `shr eax,0x1f / add` sign fixup, and its `width_ / 2` at 0x004DB426 to
+  // `cdq / sub eax,edx / sar eax,1`. Both are the SIGNED sequences; an
+  // unsigned field emits `shr` alone and loses the fixup.
+  int width_;   // 0xA14
+  int height_;  // 0xA18
   // The faction whose status table row we're viewing. do_check indexes
   // SpyingStatusTable[faction_index_ * SpyingStatusStride + selected_target_].
   uint32_t faction_index_;  // 0xA1C
@@ -171,6 +185,10 @@ static_assert(sizeof(DipEdit) == 0x5944,
               "DipEdit layout must match the legacy ABI");
 
 
-// The two siblings on_selected calls are still in the original image, and
-// share one signature: ?read_check@DipEdit@@QAEXXZ (0x004DA990) and
-// ?do_check@DipEdit@@QAEXXZ (0x004DADA0) are both public __thiscall void(void).
+// The three siblings on_selected and DipEdit::init call share one signature:
+// ?read_check@DipEdit@@QAEXXZ (0x004DA990) and ?do_check@DipEdit@@QAEXXZ
+// (0x004DADA0) are both public __thiscall void(void), and both are defined in
+// src/dipedit.cpp now. They read as a pair: do_check pulls the diplomacy
+// status word INTO the checkboxes, read_check pushes the checkboxes OUT to the
+// status word - which is why on_selected commits the outgoing target's
+// checkbox state BEFORE it stores the new index.

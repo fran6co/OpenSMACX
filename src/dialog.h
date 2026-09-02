@@ -150,6 +150,15 @@ class Dialog {
   Heap heap_;
   Heap *heap_ptr_;
   uint32_t field_1C_;  // 0x001c
+ public:
+  // field_20_, field_44_ and field_6C_ are PUBLIC for the same reason the
+  // block near the bottom of the class is: the derived families write them
+  // through their VIRTUAL Dialog base, and an access through a virtual base
+  // can only be spelled from outside it. DipEdit::init's
+  // `list_box_.field_20_ &= ~4` walks the ListBox vbtable to find the base
+  // (0x004DB381..0x004DB397) and stores through the displacement it finds
+  // there - no Dialog member function could emit that walk. Access is
+  // compile-time only; the static_assert below still pins the layout.
   uint32_t field_20_;
   uint32_t field_24_;
   uint32_t field_28_;
@@ -173,6 +182,7 @@ class Dialog {
   Font *font1_;
   Font *font2_;
   Font *font3_;
+ private:
   uint32_t text_color_a_;
   uint32_t text_color_2a_;
   uint32_t text_color_3a_;
@@ -193,6 +203,11 @@ class Dialog {
   uint32_t field_B4_;
  private:
   uint32_t field_B8_;
+ public:
+  // PUBLIC like selected_position_ below, and for the same reason: CheckBox's
+  // two state accessors (set_state_id / get_state_id) walk it through their
+  // virtual Dialog base by name. Access changes no offset; the static_assert
+  // pins the layout.
   // THE EMBEDDED ITEM LIST, carved 2026-09-01 from what was field_BC_ ..
   // field_E8_: exactly 0x30 = sizeof(StringList) at 0xBC..0xEC - the two ABI
   // words at its front (the old field_BC_/field_C0_), the four list fields,

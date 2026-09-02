@@ -631,20 +631,23 @@ int __cdecl reputation(int faction_id, int faction_id_with);
 int __cdecl get_patience(int faction_id_with, int faction_id);
 int __cdecl energy_value(int loan_principal);
 void __cdecl scan_prototypes(int faction_id, int faction_id_with);
-// `int`, NOT `uint32_t`, for the same reason `wants_to_attack` below spells
-// out: faction.cpp defines these as `?set_treaty@@YAXHHHH@Z` and
-// `?set_agenda@@YAXHHHH@Z`, and the `uint32_t` spellings here were a second,
-// UNDEFINED overload - invisible inside faction.cpp (where the `int`
-// definition wins overload resolution) but the only candidate in any other
-// unit, so the first caller outside faction.cpp was a plain LNK2001.
+// `int`, NOT `uint32_t`, for the reason wants_to_attack documents below: the
+// image exports `?set_treaty@@YAXHHHH@Z` / `?set_agenda@@YAXHHHH@Z` - four H,
+// four ints - and faction.cpp defines both that way. These spelled `uint32_t`,
+// which decorated to `@@YAXIIII@Z` and declared an overload nothing defined;
+// that stayed latent until read_check became the first caller outside
+// faction.cpp, which would have paid for it with an LNK2001.
 void __cdecl set_treaty(int faction_id, int faction_id_with, int treaty,
                                   BOOL set);
 void __cdecl set_agenda(int faction_id, int faction_id_with, int agenda,
                                   BOOL set);
-// The four one-directional treaty/agenda writers the DipEdit checkbox
-// handlers call. 0x0055B870, 0x0055B760, 0x0055BA80, 0x0055B820 - bodies in
-// src/recovered/units and src/unrecovered, none promoted into the build yet,
-// so pending_bodies.cpp carries their forwarders.
+// The treaty and agenda writers beside set_treaty: treaty_on(faction,
+// faction_with, treaty) moves `treaty` INTO the pair's status word,
+// treaty_off clears it; agenda_on/agenda_off the same for the agenda word.
+// DipEdit's UNK handlers and read_check drive all four from its checkboxes.
+// 0x0055B760 (treaty_off), defined in src/faction.cpp. 0x0055B870
+// (treaty_on), 0x0055BA80 and 0x0055B820 (the agenda pair) are still
+// pending_bodies forwarders.
 void __cdecl treaty_on(int faction_id, int faction_id_with, int treaty);
 void __cdecl treaty_off(int faction_id, int faction_id_with, int treaty);
 void __cdecl agenda_on(int faction_id, int faction_id_with, int agenda);

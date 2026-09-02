@@ -307,7 +307,31 @@ SCAFFOLD_CEILINGS = {
     # five callees those four bodies need and nothing in the build defines -
     # CheckBox::get_state_id (0x0060EC10) and treaty_on/treaty_off/agenda_on/
     # agenda_off (0x0055B870/0x0055B760/0x0055BA80/0x0055B820).
-    "PENDING_BODY forwarders": 214,
+        # 209 -> 214 (2026-09-01, dipedit read_check batch): read_check's own
+    # forwarder went with the BYTE_EXACT body in src/dipedit.cpp, and the body
+    # needed six seams in its place - DipEdit::apply_treaty_check /
+    # apply_treaty_check_alt / apply_agenda_check (the three per-flag helpers
+    # it drives, homed separately), CheckBox::get_state_id (set_state_id's
+    # read-side twin) and the free treaty_on/treaty_off pair. None of those six
+    # had a homed caller before.
+    # 214 -> 212 (same batch): two of those six did not stay seams.
+    # get_state_id and treaty_off PROMOTED out of src/unrecovered/ into
+    # checkbox.cpp and faction.cpp, their archive units deleted with them.
+    # 212 -> 217 (same batch, NOT this work): the five seams of the
+    # concurrent DipEdit::on_button_clicked homing sharing this worktree -
+    # Buffer::box_sprite, ListBox::set_selected_id, CheckBox::item,
+    # EditGroup::edit, X_pop_ask_number. That batch's own number to bring
+    # down when its bodies land.
+    # 217 -> 220 (this merge, the DipEdit batch collected): master's UNK
+    # batch brought its five callees onto the branch's frontier; the branch's
+    # own promotions (CheckBox::get_state_id, treaty_off, X_pop_ask_number)
+    # retired three forwarders from the union, and its homings added the
+    # apply_treaty_check/apply_treaty_check_alt/apply_agenda_check trio plus
+    # Buffer::box_sprite, ListBox::set_selected_id, CheckBox::item and
+    # EditGroup::edit; the merged tree's own census then retired the duplicated
+    # treaty_on forwarder and the three apply_* seams whose addresses the UNK
+    # batch had already homed as claimed UNK2-4 bodies.
+    "PENDING_BODY forwarders": 216,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -322,22 +346,29 @@ SCAFFOLD_CEILINGS = {
     # plus the jump-dispatch function our binary lays out elsewhere).
     # 1292 is the count after 00612830.cpp homed; 004ba830.cpp had no archive
     # (the body was already in win.cpp, only MOVED to tutwin.cpp this pass).
-    "artifact files (recovered/)": 1291,
+    # 1291 -> 1290 (2026-09-01, dipedit read_check batch): units/004da990.cpp
+    # deleted with the body it drafted, homed BYTE_EXACT in src/dipedit.cpp.
+    # 1290 -> 1289 (2026-09-02, DipEdit::init batch): units/0055b760.cpp and
+    # 0060ec10.cpp deleted with the bodies they drafted - treaty_on and
+    # CheckBox::get_state_id, both homed as pending forwarders / src bodies.
+    "artifact files (recovered/)": 1289,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
     # 1677 -> 1675 (sound batch): load_sound_dll homed into
     # src/sound_loader.cpp and its message helper with it; 004c5e50.cpp and
     # 004c9080.cpp deleted.
-    # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
-    # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
-    # honest MISMATCH).
-    # 1677 -> 1675 (sound batch): load_sound_dll homed into
-    # src/sound_loader.cpp and its message helper with it; 004c5e50.cpp and
-    # 004c9080.cpp deleted.
+    # 1674 -> 1672 (2026-09-01, dipedit read_check batch): 0060ec10.cpp
+    # (CheckBox::get_state_id) and 0055b760.cpp (treaty_off) promoted into
+    # checkbox.cpp and faction.cpp - the two archive-only forwarders the
+    # address index had begun to count.
+    # 1672 -> 1670 (same batch, the concurrent on_button_clicked homing's
+    # two): 004d9de0.cpp and 004db080.cpp, whose bodies are homed and claimed
+    # in dipedit.cpp and whose only remaining effect was an address-index
+    # DUPLICATE apiece.
     # 1675 -> 1670 (2026-09-02, DipEdit UNK1-4 batch): 004da760/004da7e0/
     # 004da870/004da900.cpp homed BYTE_EXACT into src/dipedit.cpp.
-    "unrecovered files": 1670,
+    "unrecovered files": 1666,
     "hypothesis_layouts.h lines": 2723,
 }
 

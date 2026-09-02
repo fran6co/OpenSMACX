@@ -154,20 +154,32 @@ class CheckBox : public virtual GraphicWin, public virtual Dialog {
   int UNK2(int pos);
   void set_state_pos(int pos, int state);
   void set_state_id(int id, int value);
-  // 0x0060EC10, a pending_bodies forwarder. The read side of set_state_id:
-  // it walks the same per-item list to find `id` and returns
-  // `(1 << item->bit) & this->state_flags` - so nonzero means the checkbox
-  // item with that id is currently CHECKED. DipEdit's four UNK methods and
-  // ?read_check@DipEdit@@QAEXXZ all ask it per treaty/agenda bit.
+  // 0x0060EC10, defined in src/checkbox.cpp beside set_state_id above - the
+  // read-side twin: walks the same list for `id` and returns
+  // `(1 << bit) & flags`, nonzero when the box with this id is checked.
+  // `int`, not `bool`: DipEdit::read_check tests the result with
+  // `test eax, eax`, which is the dword-wide form.
   int get_state_id(int id);
+  // ?item@CheckBox@@QAEHPADHH@Z at 0x0060E980, still a pending_bodies
+  // forwarder. Adds `text` to the box's item list for `id` and sets or clears
+  // the box's own state bit from `state`. DipEdit::init calls it once per
+  // treaty flag with the label string.
+  int item(char *text, int id, int state);
 
  private:
   // The vbtable pointer is EMITTED by the compiler now.
   uint32_t field_4_;  // 0x0004
   uint32_t field_8_;
   uint32_t field_C_;
+ public:
+  // PUBLIC, like Dialog's carved-out fields: DipEdit::init stores the two
+  // sprite-table addresses straight into them (`mov dword ptr [edi+0x10],
+  // 0x779504` and `[edi+0x14], 0x779530` at 0x004DB457/0x004DB45E) with no
+  // call in between, so the access has to be spelled from outside the class.
+  // Access is compile-time only; the static_assert below pins the layout.
   uint32_t field_10_;
   uint32_t field_14_;
+ private:
   // The vbtable puts the base at 0x1C; the declared fields reach
   // 0x18, so 4 bytes sit between them.
   // NO GAP MEMBER HERE. These four bytes are GraphicWin's VTORDISP and the

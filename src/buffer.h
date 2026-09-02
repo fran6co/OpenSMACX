@@ -305,6 +305,13 @@ class Buffer {
   int copy(Buffer *buffer, int xCoord, int yCoord, int width, int height);
   int copy(Buffer *buffer, RECT *rect);
   int box(RECT *rect, int color1, int color2);
+  // ?box_sprite@Buffer@@QAEHPAURECT@@PAUBoxSpriteParams@@@Z (0x005E2DD3),
+  // still a pending_bodies forwarder. The second argument is one of the
+  // image's own `BoxSpriteParams` blocks in .data - DipEdit's frame and title
+  // pass 0x0078D690 and 0x0078D528, ReplayWin::on_redraw passes 0x0078D690
+  // and 0x0078D618 - and nothing recovered has read inside one, so it stays
+  // unnamed storage rather than a guessed struct.
+  int box_sprite(RECT *rect, void *params);
   int write_l(LPSTR text, int x_coord, int y_coord, int len);
   int write_l(LPSTR text, RECT *rect, int len);
   int write_cent_l(LPSTR text, int x_coord, int y_coord, int width, int len);
@@ -369,6 +376,11 @@ class Buffer {
   // compile-time only, so no offset and no emitted byte moves.
   friend class Caviar;
   
+  // DipEdit::init copies `rect2_` out as the starting point for its frame,
+  // title field and button strip - a window body reading its own buffer's
+  // working rectangle, exactly as Win and Caviar do above.
+  friend class DipEdit;
+
   // 0x4. The window the surface belongs to - `GraphicWin::init` stores its
   // `this` here before the minimum-size computation, and nothing recovered
   // reads it. `void *` until a reader proves which base pointer the image
@@ -585,6 +597,15 @@ class Buffer {
 };
 
 static_assert(sizeof(Buffer) == 0x588, "Buffer layout must match the original executable");
+
+// 0x008C6E2C and 0x008C6E30, the two .bss text colours the centred-title
+// writers hand to set_text_color's first two slots (DipEdit::init and
+// ReplayWin::on_redraw both pass the pair, with 1 and 1 in the last two).
+// Uninitialised storage the preferences write at run time, and the IDB has no
+// name for either, so the storage here is our own - zero like the image's,
+// and the accesses stay direct rather than pointer-bound.
+extern int TextColourTitleMain;
+extern int TextColourTitleShadow;
 
 // ?polygon@@YAHPAUBuffer@@PAUVert@@HH@Z at 0x00626620 is the 736-byte
 // rasteriser Buffer::poly hands its arguments to. YA = __cdecl, H = int, and

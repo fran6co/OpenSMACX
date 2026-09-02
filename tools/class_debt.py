@@ -53,7 +53,11 @@ CEILINGS = {
     # member-accesses.csv entry and all four have measured behaviour, which is
     # written down in the markers in src/dipedit.cpp. Renaming them to clear
     # this count would trade a true symbol for a false name.
-    "unk-method": 170,
+    # 170 -> 176 (2026-09-02, the DipEdit read_check homing): not six new
+    # bodies - the six CALL SITES where read_check drives UNK2/UNK3/UNK4 by
+    # name, the same four catalogue-named methods the paragraph above covers.
+    # Their behaviour is measured into the class block in src/dipedit.h.
+    "unk-method": 176,
     # THE ESCAPE HATCH, RATCHETED. An UNKn whose comment block says
     # EVIDENCE-FREE and names it has been investigated and found unnameable -
     # no caller, no dispatch, no CSV entry. That is a result, not unfinished
@@ -202,7 +206,14 @@ CEILINGS = {
     # self arithmetic left with the Wave-typed member dispatches.
     # 167 -> 166 (dipedit check_box_ member): the embedded CheckBox is a
     # real typed member now - do_check's reads go through it, not raw casts.
-    "raw self-access": 166,
+    # 166 -> 171 (2026-09-01, dipedit read_check batch): CheckBox::get_state_id
+    # promoted out of src/unrecovered/0060ec10.cpp beside set_state_id, in the
+    # SAME hand vbtable spelling that body carries - the five new sites are its
+    # second half. The idiomatic member spelling was measured and diverges at
+    # instruction 0 (VC6 grows the EBP frame the image does not have), so the
+    # debt is the one set_state_id's marker already owns: a class-model pass
+    # takes both accessors together or neither.
+    "raw self-access": 171,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
@@ -222,7 +233,16 @@ CEILINGS = {
     # 1325 -> 1313 (batch 9, family ctor conversion): the four families'
     # construct()-era scaffold parameters (the a1 flag spellings) left with
     # the bare real constructors.
-    "scaffold name": 1313,
+    # 1313 -> 1334 (2026-09-01, NOT this work): the five seams of the
+    # concurrent DipEdit::on_button_clicked homing sharing this worktree
+    # (Buffer::box_sprite, ListBox::set_selected_id, CheckBox::item,
+    # EditGroup::edit, X_pop_ask_number) name their parameters a1../a3..
+    # pending each body's own evidence. That batch's number to bring down.
+    # 1334 -> 1322 (2026-09-02, NOT this work either): the on_button_clicked
+    # batch named twelve of them (button_id, and the EditGroup/X_pop_ask_number
+    # params). DipEdit::init's three new seams (Buffer::box_sprite,
+    # ListBox::set_selected_id, CheckBox::item) land named, adding none.
+    "scaffold name": 1322,
 }
 
 WHY = {

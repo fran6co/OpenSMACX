@@ -107,6 +107,13 @@ static_assert(sizeof(Popup) == 0x537C,
 // The two short start forms share the caption buffer at a fixed address.
 extern char PopupStartCaption[256];
 
+// 0x006A721C. Set to 6 before a popup is started or exec'd and cleared to 0
+// as soon as exec returns, on every site that drives a modal popup
+// (0x004D9E1C/0x004DA45B here, 0x004DB966/0x004DB9CC in the DipEdit
+// constructor's caller, and fifty more). Read at 0x00404BED while a popup
+// handles a key. Defined in popup.cpp.
+extern int PopupModalState;  // 0x006A721C
+
 
 /*
  * pop/pops forwarder family
