@@ -15,6 +15,28 @@
 #include <cstdint>
 #endif
 
+// THE ENTRY PAYLOAD NODE StringStruct::add allocates (0x18 bytes, primary
+// vtable 0x006693BC): what current_entry()/next_entry() hand back. It is a
+// StringAllocationBase-family object, not a bare string - add constructs it
+// by installing the primary word at +0, the base's vftable at +0x10
+// (0x006693AC, then the derived 0x006693B8 through the vbtable walk) and
+// capturing the allocation owner at +0x14 - and remove_all destroys it
+// through the virtual-base teardown for that reason. THE STRING IS AT +4:
+// the image's consumers read the second word as the text (Caviar's
+// unit-list walk indexes payload[1] for the display name), which is the
+// string-related type the accessor family is named for.
+struct StringStructPayload {
+  const void *node_vptr;        // 0x00 - the node's primary vtable word
+  char *text;                   // 0x04 - the string this entry carries
+  uint32_t field_8_;            // 0x08 - never read by name in src/
+  uint32_t field_C_;            // 0x0C
+  const void *vbase_vptr;       // 0x10 - StringAllocationBase's vftable
+  void *allocation_owner;       // 0x14
+};
+
+static_assert(sizeof(StringStructPayload) == 0x18,
+              "payload node must match the 0x18 allocation add makes");
+
 struct StringStructEntry {
   // THE ENTRY'S OWN TWO VTABLE WORDS, not ints: the node's construction
   // installs them (the primary at +0 and the virtual-base one at +0x14),
@@ -24,16 +46,18 @@ struct StringStructEntry {
   // honestly changes no byte.
   const void *entry_vptr;        // 0x00 - the node's primary vtable word
   int id;
-  // The entry's payload: a POINTER, not an int - remove_all hands it to the
+  // The entry's payload: StringStruct::add's 0x18-byte node, whose +4 is
+  // the string (see StringStructPayload below) - remove_all hands it to the
   // entry-visitor virtual and destroys it through the virtual-base teardown,
-  // and Caviar's unit-list walks read record fields through it. The old int
+  // and Caviar's unit-list walks read its text through it. The old int
   // spelling was the catalogue's H return leaking into the struct.
-  void *payload;
+  StringStructPayload *payload;
   StringStructEntry *next;
   StringStructEntry *previous;
   const void *vbase_vptr;        // 0x14 - the node's virtual-base vtable word
   void *allocation_owner;
 };
+
 
 static_assert(sizeof(StringStructEntry) == 0x1C,
               "StringStructEntry layout must match the original executable");
@@ -167,10 +191,13 @@ class StringStruct : public virtual StringAllocationBase {
   ~StringStruct();
   int seek_pos(int a1);
   int current_id();
-  // Both return the entry's payload pointer; the catalogue's H spelling
-  // decorates the same dword return the bytes make.
-  void *current_entry();
-  void *next_entry();
+  // Both return the entry's payload node - StringStructPayload, whose +4 is
+  // the string the entry carries. The catalogue spelled both returns H (int)
+  // and the image's own symbols spell them PAX (void *); this tree's emitted
+  // names are carried by `// symbol` facts under the markers, which is what
+  // resolves the claims.
+  StringStructPayload *current_entry();
+  StringStructPayload *next_entry();
   int seek_id(int id);
   void remove_all();
   void close();

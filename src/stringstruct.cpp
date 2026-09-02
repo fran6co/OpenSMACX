@@ -68,7 +68,10 @@ int StringStruct::current_id() {
 /*
 Purpose: Return the current string-list payload.
 // ORIGINAL: 0x00402530 ?current_entry@StringStruct@@QAEHXZ 0x00402530-0x00402541 BYTE_EXACT
-// symbol    ?current_entry@StringStruct@@QAEPAXXZ
+// symbol    ?current_entry@StringStruct@@QAEPAUStringStructPayload@@XZ
+//   the image's own symbol spells the return PAX (void *); this tree types
+//   it StringStructPayload * for the string at +4, and the fact above is
+//   what our object emits for it now.
 // size      17 bytes
 // prototype int (__thiscall ?current_entry@StringStruct@@QAEHXZ)(StringStruct* this)
 // callers   9   call targets   0
@@ -79,7 +82,7 @@ Purpose: Return the current string-list payload.
 Return Value: Current payload, or zero when the list is empty
 Status: Complete
 */
-void *StringStruct::current_entry() {
+StringStructPayload *StringStruct::current_entry() {
     if (head_) {
         return current_->payload;
     }
@@ -89,7 +92,9 @@ void *StringStruct::current_entry() {
 /*
 Purpose: Advance the current string-list entry and return its payload.
 // ORIGINAL: 0x00402500 ?next_entry@StringStruct@@QAEHXZ 0x00402500-0x0040252F BYTE_EXACT
-// symbol    ?next_entry@StringStruct@@QAEPAXXZ
+// symbol    ?next_entry@StringStruct@@QAEPAUStringStructPayload@@XZ
+//   as current_entry above: typed for the string, resolved through this
+//   emitted name.
 // size      47 bytes
 // prototype int (__thiscall ?next_entry@StringStruct@@QAEHXZ)(StringStruct* this)
 // callers   9   call targets   0
@@ -100,7 +105,7 @@ Purpose: Advance the current string-list entry and return its payload.
 Return Value: New current payload, or zero when the list is empty
 Status: Complete
 */
-void *StringStruct::next_entry() {
+StringStructPayload *StringStruct::next_entry() {
     if (!head_) {
         return 0;
     }
