@@ -356,14 +356,6 @@ class Buffer {
   // and 0x0078D618.
   int box_sprite(RECT *rect, BoxSpriteParams *params);
   // THE ADAPTER THE RAW-ADDRESS CALLERS STILL NEED. `DipEdit::init` passes
-  // the image's own .data tables spelled `reinterpret_cast<void *>`, which
-  // was lossless while the second parameter was unnamed storage and is now
-  // the only thing standing between this struct and those three call sites.
-  // It compiles to the plain call it wraps; retyping those three casts to
-  // `BoxSpriteParams *` deletes this overload again.
-  int box_sprite(RECT *rect, void *params) {
-    return box_sprite(rect, static_cast<BoxSpriteParams *>(params));
-  }
   int write_l(LPSTR text, int x_coord, int y_coord, int len);
   int write_l(LPSTR text, RECT *rect, int len);
   int write_cent_l(LPSTR text, int x_coord, int y_coord, int width, int len);

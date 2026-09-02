@@ -821,7 +821,7 @@ void DipEdit::init(int faction_index) {
     fill(9);
 
     RECT rect = rect2_;
-    box_sprite(&rect, reinterpret_cast<void *>(0x0078D690));
+    box_sprite(&rect, reinterpret_cast<BoxSpriteParams *>(0x0078D690));
 
     // The window title: "<label 866> <faction noun>", upper-cased in place.
     StringTemp[0] = 0;
@@ -834,7 +834,7 @@ void DipEdit::init(int faction_index) {
     rect.right -= 4;
     rect.top += 4;
     rect.bottom = rect.top + 0x14;
-    box_sprite(&rect, reinterpret_cast<void *>(0x0078D528));
+    box_sprite(&rect, reinterpret_cast<BoxSpriteParams *>(0x0078D528));
 
     set_font(find_font(0x10, 0), 0, 0, 0);
     set_text_color(TextColourTitleMain, TextColourTitleShadow, 1, 1);
@@ -847,7 +847,7 @@ void DipEdit::init(int faction_index) {
     rect.right = width_ / 3 - 4;
     rect.bottom = 0x172;
     rect.top = 0x1F;
-    box_sprite(&rect, reinterpret_cast<void *>(0x0078D528));
+    box_sprite(&rect, reinterpret_cast<BoxSpriteParams *>(0x0078D528));
 
     // The item area is the box just drawn, inset by the 3-pixel bevel.
     rect.left += 3;
