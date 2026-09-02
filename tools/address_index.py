@@ -137,7 +137,13 @@ FLOORS = {
     # boot bodies.
     # 5 (this merge): the boot batch's callees joined box_sprite's set; the
     # census above is the count.
-    "archive-only-forwarder": 5,
+    # 4 -> 3 (2026-09-03, Net::check_for_lobby): 0x0062D9E0 was the fourth -
+    # its claim lived in src/unrecovered/0062d9e0.cpp and the pending_bodies
+    # forwarder was the only definition the build had. The body is now homed
+    # into src/net_class.cpp (honest MISMATCH, residual documented on the
+    # marker) and both the forwarder and the archive are gone.
+    # (this merge): the union census is the count.
+    "archive-only-forwarder": 6,
     "unknown-host-files": 0,
 }
 

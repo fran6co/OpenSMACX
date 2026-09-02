@@ -349,7 +349,15 @@ SCAFFOLD_CEILINGS = {
     # when its own header lands.
     # 225 -> 226 (this merge): the boot batch's 11 callees and the box_sprite
     # batch's two land in one tree; the union census above is the count.
-    "PENDING_BODY forwarders": 226,
+    # 216 -> 217 (2026-09-03, Net::check_for_lobby homed into net_class.cpp):
+    # the check_for_lobby forwarder retired, but the body's first callee
+    # (Net::init, 0x0062D8E0) and its last (Net::join_session, 0x0062E540) are
+    # both unrecovered, so homing the one body put TWO new forwarders on the
+    # frontier - a net +1. Both were already archived (0062d8e0.cpp,
+    # 0062e540.cpp) with no compiled caller; naming them is what lets the homed
+    # body emit the image's own `E8`.
+    # (this merge): the union census is the count.
+    "PENDING_BODY forwarders": 227,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -395,7 +403,13 @@ SCAFFOLD_CEILINGS = {
     # archive units deleted.
     # 1664 -> 1663 (this merge): box_sprite's archive deletion joins the boot
     # batch's two; the union census above is the count.
-    "unrecovered files": 1663,
+    # 1666 -> 1665 (2026-09-03, Net::check_for_lobby): 0062d9e0.cpp deleted
+    # with the body it drafted, homed into src/net_class.cpp as the DirectPlay
+    # lobby probe - honest MISMATCH 20/432, the residual documented on the
+    # marker (VC6 merges the three bare returns; the DP struct store order is
+    # scheduler output, not source order).
+    # (this merge): the union census is the count.
+    "unrecovered files": 1662,
     "hypothesis_layouts.h lines": 2723,
 }
 
