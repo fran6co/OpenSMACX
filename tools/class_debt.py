@@ -80,7 +80,9 @@ CEILINGS = {
     # calls.
     # 207 -> 206 (batch 4, stringstruct): the orphan string_struct_close_redirect
     # deleted - zero callers; close() performs its own 0x1C, as the image does.
-    "orphan redirect": 206,
+    # 206 -> 203 (TU homing): the dead injected-DLL redirect wrappers around
+    # BasePop's two font setters and mandate_color left with the homing.
+    "orphan redirect": 203,
     "pointer-as-int": 0,
     "undocumented trivial body": 0,
     # 239 IS BELOW WHAT THE TREE CAN REACH TODAY, and this is the only

@@ -110,7 +110,6 @@ set(OPENSMACX_SOURCES
     src/base.cpp
     src/basebutton.cpp
     src/basepop.cpp
-    src/basepop_font.cpp
     src/buffer.cpp
     src/buttongroup.cpp
     src/caviar.cpp
@@ -129,7 +128,6 @@ set(OPENSMACX_SOURCES
     src/log.cpp
     src/maininterface.cpp
     src/map.cpp
-    src/map_color.cpp
     src/mapwin.cpp
     src/basewin.cpp
     src/datalink.cpp
