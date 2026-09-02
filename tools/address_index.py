@@ -121,7 +121,13 @@ FLOORS = {
     # (14/31) already plateaued on - a batch of its own, not a side effect of
     # recovering DipEdit. treaty_on (0x0055B870) is the fifth callee and is
     # NOT counted here: its archive holds no claim.
-    "archive-only-forwarder": 4,
+    # 4 -> 2 (2026-09-02, Buffer::box_sprite batch): 0x005E2DD3 was the
+    # fourth - the box_sprite claim in src/unrecovered/005e2dd3.cpp behind
+    # its pending_bodies forwarder - and homing that body into buffer.cpp
+    # resolves it. 0x0060EC10 and 0x0055B760 left the set the same day when
+    # master homed CheckBox::get_state_id and treaty_off without lowering
+    # this floor, so it had been stale before that too.
+    "archive-only-forwarder": 2,
     "unknown-host-files": 0,
 }
 

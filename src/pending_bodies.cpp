@@ -601,11 +601,26 @@ void BaseButton::timer_callback(int a1) {  // 0x00607B30
 }
 
 
-// ?box_sprite@Buffer@@QAEHPAURECT@@PAUBoxSpriteParams@@@Z - DipEdit::init
-// draws its frame, its title field and its button strip through it.
-int Buffer::box_sprite(RECT *rect, void *params) {
-    typedef int(__fastcall *pending)(Buffer *, void *, RECT *, void *);
-    return PENDING_BODY(0x005E2DD3, pending)(this, nullptr, rect, params);
+// ?tile_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z (0x005DA6C0) - the masked tile
+// every `box_sprite` frame element paints its shadow through. Body still an
+// artifact; the forwarder is what keeps box_sprite's call an `E8`.
+int Buffer::tile_mask(Buffer *mask, int src_x, int src_y, int x, int y, int w,
+                      int h, int color) {
+    typedef int(__fastcall *pending)(Buffer *, void *, Buffer *, int, int, int,
+                                     int, int, int, int);
+    return PENDING_BODY(0x005DA6C0, pending)(this, nullptr, mask, src_x, src_y,
+                                             x, y, w, h, color);
+}
+
+// ?tile@Buffer@@QAEHPAVSprite@@HHHHHH@Z (0x005DA9F0) - the SPRITE overload of
+// `tile`, which `box_sprite` tiles the four edge strips through. Body still
+// an artifact.
+int Buffer::tile(Sprite *sprite, int src_x, int src_y, int x, int y, int w,
+                 int h) {
+    typedef int(__fastcall *pending)(Buffer *, void *, Sprite *, int, int, int,
+                                     int, int, int);
+    return PENDING_BODY(0x005DA9F0, pending)(this, nullptr, sprite, src_x,
+                                             src_y, x, y, w, h);
 }
 
 // ?set_selected_id@ListBox@@QAEXH@Z - DipEdit::init lands the list selection

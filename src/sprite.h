@@ -73,10 +73,19 @@ class Sprite {
   // `Win::flip` draws the overlay sprite and takes its frame index from
   // `cTransparentIndex_`, which is the byte the image reads at +8.
   friend class Win;
+  // `Buffer::box_sprite` reads the same byte for every frame element it
+  // draws and masks, and reads `iWidth_`/`iHeight_` to place the corners and
+  // to inset the edges by. Access is compile-time only: no offset moves and
+  // no emitted byte changes.
+  friend class Buffer;
   char *ppszFileName_;  // 0x0000 - heap copy of the source file's name;
                         // released with the CRT free
   char *pcBits_;        // 0x0004 - the pixel block, same allocator
-  char cTransparentIndex_;
+  // UNSIGNED, and this is measured not stylistic: the image reads the byte
+  // as `xor eax,eax; mov al,[sprite+8]` at every site that passes it to
+  // `Sprite::draw` as an int (0x005E2E07 here, 0x005EFF02 in Win::flip). A
+  // `char` compiles to `movsx`, which is a different instruction.
+  unsigned char cTransparentIndex_;
   char pad1_;
   char pad2_;
   char pad3_;

@@ -3340,6 +3340,207 @@ int Buffer::get_pixel(int x, int y) {
     return *pixel;
 }
 
+/*
+Purpose: Draw one framed panel: four corner sprites, four tiled edge strips
+         and a tiled centre, every element optionally masked through the
+         params' pattern buffer.
+// ORIGINAL: 0x005E2DD3 ?box_sprite@Buffer@@QAEHPAURECT@@PAUBoxSpriteParams@@@Z 0x005E2DD3-0x005E3188
+// symbol    ?box_sprite@Buffer@@QAEHPAUtagRECT@@PAUBoxSpriteParams@@@Z
+// size      949 bytes
+// prototype int (__thiscall ?box_sprite@Buffer@@QAEHPAURECT@@PAUBoxSpriteParams@@@Z)(Buffer* this, RECT*, BoxSpriteParams*)
+// callers   127   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DA6C0 0x005DA860 0x005DA9F0 0x005E4B4A
+// LEVER: cTransparentIndex_ is UNSIGNED. The image reads the byte as
+//        `xor eax,eax; mov al,[sprite+8]` at every site that hands it to
+//        Sprite::draw as an int (here and at 0x005EFF02 in Win::flip); a
+//        `char` compiles to `movsx` and cost four instructions.
+// LEVER: the corner-trim widths/heights are NOT named locals. Spelling
+//        `const int cw = corner0_->iWidth_; x += cw; w -= cw;` gives the
+//        temporary a home slot and stores it three times; repeating the
+//        expression keeps it in a register. That one change was worth 24
+//        agreeing instructions and the whole frame shape (409 -> 406, which
+//        is the image's own count).
+// LEVER: the whole body sits inside one `if (rect != 0 && params != 0)`
+//        rather than returning early from two guards. A `return 0` guard
+//        makes VC6 emit a second epilogue with `xor eax,eax`; the image has
+//        ONE epilogue and nothing writes eax on the guard path, because the
+//        value the function returns is the centre tile's and the guards
+//        simply skip the work. Bare `return;` is error C2561 and an
+//        uninitialised `return result;` emits a load, so the wrapped `if` is
+//        the only spelling that reaches it.
+// TRIED: hoisting x/y to function scope (initialised and not), `register`,
+//        dropping `const`, caching vs not caching the sprite pointer, naming
+//        the corner-trim temporaries, reordering the edge insets. All leave
+//        the same four instructions: in corner1 and corner2 the image spills
+//        the sprite pointer into its reserved frame slot (`push ecx`), this
+//        tree spills it into the dead `params` parameter slot instead - the
+//        allocator's slot preference, not a source relationship, and it
+//        costs one displacement on each of the two stores and their two
+//        reloads.
+Status: SHAPE_EXACT 402/406 - the instruction count matches at 406, and the
+        four that disagree are the corner1/corner2 spill-slot choice above.
+*/
+int Buffer::box_sprite(RECT *rect, BoxSpriteParams *params) {
+    if (rect != 0 && params != 0) {
+        int x;
+        int y;
+
+        // The corners, drawn 1:1. Top-left, top-right, bottom-left, bottom-right:
+        // the order of the four tests is the order the image draws them in.
+        if (params->corner0_ != 0) {
+            Sprite *const sprite = params->corner0_;
+            x = rect->left;
+            y = rect->top;
+            sprite->draw(this, sprite->cTransparentIndex_, x, y, 1, 1);
+            if (params->mask_ != 0) {
+                tile_mask(params->mask_, x, y, x, y, sprite->iWidth_,
+                          sprite->iHeight_, params->mask_color_);
+            }
+        }
+
+        if (params->corner1_ != 0) {
+            Sprite *const sprite = params->corner1_;
+            x = rect->right - sprite->iWidth_;
+            y = rect->top;
+            sprite->draw(this, sprite->cTransparentIndex_, x, y, 1, 1);
+            if (params->mask_ != 0) {
+                tile_mask(params->mask_, x, y, x, y, sprite->iWidth_,
+                          sprite->iHeight_, params->mask_color_);
+            }
+        }
+
+        if (params->corner2_ != 0) {
+            Sprite *const sprite = params->corner2_;
+            x = rect->left;
+            y = rect->bottom - sprite->iHeight_;
+            sprite->draw(this, sprite->cTransparentIndex_, x, y, 1, 1);
+            if (params->mask_ != 0) {
+                tile_mask(params->mask_, x, y, x, y, sprite->iWidth_,
+                          sprite->iHeight_, params->mask_color_);
+            }
+        }
+
+        if (params->corner3_ != 0) {
+            Sprite *const sprite = params->corner3_;
+            x = rect->right - sprite->iWidth_;
+            y = rect->bottom - sprite->iHeight_;
+            sprite->draw(this, sprite->cTransparentIndex_, x, y, 1, 1);
+            if (params->mask_ != 0) {
+                tile_mask(params->mask_, x, y, x, y, sprite->iWidth_,
+                          sprite->iHeight_, params->mask_color_);
+            }
+        }
+
+        // The edges, tiled between the corners. Top, bottom, left, right: each
+        // strip is inset by the two corners that stand on it. THE INSET ORDER
+        // IS MEASURED - edge1 trims its width before it moves x, the other
+        // three move first, and swapping them costs four instructions.
+        if (params->edge0_ != 0) {
+            Sprite *const sprite = params->edge0_;
+            x = rect->left;
+            y = rect->top;
+            int w = rect->right - x;
+            const int h = sprite->iHeight_;
+            if (params->corner0_ != 0) {
+                x += params->corner0_->iWidth_;
+                w -= params->corner0_->iWidth_;
+            }
+            if (params->corner1_ != 0) {
+                w -= params->corner1_->iWidth_;
+            }
+            tile(sprite, 0, 0, x, y, w, h);
+            if (params->mask_ != 0) {
+                tile_mask(params->mask_, x, y, x, y, w, h, params->mask_color_);
+            }
+        }
+
+        if (params->edge1_ != 0) {
+            Sprite *const sprite = params->edge1_;
+            x = rect->left;
+            y = rect->bottom - sprite->iHeight_;
+            int w = rect->right - x;
+            const int h = sprite->iHeight_;
+            if (params->corner2_ != 0) {
+                w -= params->corner2_->iWidth_;
+                x += params->corner2_->iWidth_;
+            }
+            if (params->corner3_ != 0) {
+                w -= params->corner3_->iWidth_;
+            }
+            tile(sprite, 0, 0, x, y, w, h);
+            if (params->mask_ != 0) {
+                tile_mask(params->mask_, x, y, x, y, w, h, params->mask_color_);
+            }
+        }
+
+        if (params->edge2_ != 0) {
+            Sprite *const sprite = params->edge2_;
+            x = rect->left;
+            y = rect->top;
+            const int w = sprite->iWidth_;
+            int h = rect->bottom - y;
+            if (params->corner0_ != 0) {
+                y += params->corner0_->iHeight_;
+                h -= params->corner0_->iHeight_;
+            }
+            if (params->corner2_ != 0) {
+                h -= params->corner2_->iHeight_;
+            }
+            tile(sprite, 0, 0, x, y, w, h);
+            if (params->mask_ != 0) {
+                tile_mask(params->mask_, x, y, x, y, w, h, params->mask_color_);
+            }
+        }
+
+        if (params->edge3_ != 0) {
+            Sprite *const sprite = params->edge3_;
+            x = rect->right - sprite->iWidth_;
+            y = rect->top;
+            const int w = sprite->iWidth_;
+            int h = rect->bottom - y;
+            if (params->corner1_ != 0) {
+                y += params->corner1_->iHeight_;
+                h -= params->corner1_->iHeight_;
+            }
+            if (params->corner3_ != 0) {
+                h -= params->corner3_->iHeight_;
+            }
+            tile(sprite, 0, 0, x, y, w, h);
+            if (params->mask_ != 0) {
+                tile_mask(params->mask_, x, y, x, y, w, h, params->mask_color_);
+            }
+        }
+
+        // The centre, tiled from the mask buffer itself and inset by all four
+        // edges. The image re-tests mask_ here rather than reusing the last
+        // edge's test, and its return value is this tile's: the guards at the
+        // top leave eax alone, so this is the only `return` the body needs.
+        if (params->mask_ != 0) {
+            int cx = rect->left;
+            int cy = rect->top;
+            int w = rect->right - cx;
+            int h = rect->bottom - cy;
+            if (params->edge2_ != 0) {
+                cx += params->edge2_->iWidth_;
+                w -= params->edge2_->iWidth_;
+            }
+            if (params->edge0_ != 0) {
+                cy += params->edge0_->iHeight_;
+                h -= params->edge0_->iHeight_;
+            }
+            if (params->edge3_ != 0) {
+                w -= params->edge3_->iWidth_;
+            }
+            if (params->edge1_ != 0) {
+                h -= params->edge1_->iHeight_;
+            }
+            return tile(params->mask_, cx, cy, cx, cy, w, h);
+        }
+    }
+}
+
 // ====================
 Sprite g_BUFFER_SPRITE;
 

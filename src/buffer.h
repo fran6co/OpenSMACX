@@ -88,6 +88,43 @@ struct Dib : BITMAPINFO {
 // stopping there and reporting a layout it never measured.
 static_assert(sizeof(Dib) == 0x428, "Dib is BITMAPINFOHEADER + 256 RGBQUAD");
 
+class Buffer;
+
+/*
+ * The panel-drawing table `Buffer::box_sprite` is driven by. The image holds
+ * ten of these as static .data blocks (DipEdit's frame is 0x0078D690, its
+ * field and button strip 0x0078D528, ReplayWin's 0x0078D618 and 0x0078D7F8)
+ * and nothing ever writes one, so every field is a sprite pointer or colour
+ * chosen at build time and the layout is read straight off the body:
+ *
+ *   +0x00..+0x0c  the four CORNERS, drawn once each at 1:1 - top-left,
+ *                 top-right, bottom-left, bottom-right in that order
+ *   +0x10..+0x1c  the four EDGES, tiled between the corners - top, bottom,
+ *                 left, right in that order
+ *   +0x20         the pattern buffer every element is masked through, and
+ *                 the source the panel's centre is tiled from
+ *   +0x24         the colour the mask is read at
+ *
+ * A null entry skips that element: a panel with no corners is all edges, and
+ * a null mask skips both the shadows and the centre fill.
+ */
+struct BoxSpriteParams {
+  Sprite *corner0_;  // 0x00 top-left
+  Sprite *corner1_;  // 0x04 top-right
+  Sprite *corner2_;  // 0x08 bottom-left
+  Sprite *corner3_;  // 0x0c bottom-right
+  Sprite *edge0_;    // 0x10 top edge
+  Sprite *edge1_;    // 0x14 bottom edge
+  Sprite *edge2_;    // 0x18 left edge
+  Sprite *edge3_;    // 0x1c right edge
+  Buffer *mask_;     // 0x20 pattern buffer and centre source
+  int mask_color_;   // 0x24
+};
+
+static_assert(sizeof(BoxSpriteParams) == 0x28,
+              "BoxSpriteParams is ten dwords: eight sprite pointers, a mask "
+              "buffer and a colour");
+
 class Buffer {
  public:
   // Blit this buffer into a window's client area. Called by the homed
@@ -305,13 +342,28 @@ class Buffer {
   int copy(Buffer *buffer, int xCoord, int yCoord, int width, int height);
   int copy(Buffer *buffer, RECT *rect);
   int box(RECT *rect, int color1, int color2);
+  // 0x005DA6C0 - `?tile_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z`. The same
+  // rectangle tiled through a mask colour: `box_sprite` paints every frame
+  // element twice, once as the sprite and once as its shadow.
+  // DECLARED AND NEVER DEFINED here - the body is still an artifact, and the
+  // pending_bodies forwarder is what gives the call its `E8`.
+  int tile_mask(Buffer *mask, int src_x, int src_y, int x, int y, int w, int h,
+                int color);
   // ?box_sprite@Buffer@@QAEHPAURECT@@PAUBoxSpriteParams@@@Z (0x005E2DD3),
-  // still a pending_bodies forwarder. The second argument is one of the
+  // the image's universal panel drawer. The second argument is one of the
   // image's own `BoxSpriteParams` blocks in .data - DipEdit's frame and title
   // pass 0x0078D690 and 0x0078D528, ReplayWin::on_redraw passes 0x0078D690
-  // and 0x0078D618 - and nothing recovered has read inside one, so it stays
-  // unnamed storage rather than a guessed struct.
-  int box_sprite(RECT *rect, void *params);
+  // and 0x0078D618.
+  int box_sprite(RECT *rect, BoxSpriteParams *params);
+  // THE ADAPTER THE RAW-ADDRESS CALLERS STILL NEED. `DipEdit::init` passes
+  // the image's own .data tables spelled `reinterpret_cast<void *>`, which
+  // was lossless while the second parameter was unnamed storage and is now
+  // the only thing standing between this struct and those three call sites.
+  // It compiles to the plain call it wraps; retyping those three casts to
+  // `BoxSpriteParams *` deletes this overload again.
+  int box_sprite(RECT *rect, void *params) {
+    return box_sprite(rect, static_cast<BoxSpriteParams *>(params));
+  }
   int write_l(LPSTR text, int x_coord, int y_coord, int len);
   int write_l(LPSTR text, RECT *rect, int len);
   int write_cent_l(LPSTR text, int x_coord, int y_coord, int width, int len);
@@ -338,6 +390,11 @@ class Buffer {
   // reason as `draw` above: the homed Win bodies paint with it and its own
   // body is still an artifact.
   int tile(Buffer *source, int src_x, int src_y, int x, int y, int w, int h);
+  // 0x005DA9F0 - `?tile@Buffer@@QAEHPAVSprite@@HHHHHH@Z`, the SPRITE overload
+  // of the tile above: `box_sprite` tiles the frame's four edge strips from
+  // sprites rather than from a buffer. Declared for the same reason - the
+  // body is still an artifact and the pending_bodies forwarder owns the `E8`.
+  int tile(Sprite *sprite, int src_x, int src_y, int x, int y, int w, int h);
   int fill(int color);
   int fill(RECT *area, int color);  // 005DFCD0
   // 0x005D8240 - builds a RECT from the four coordinates and forwards to

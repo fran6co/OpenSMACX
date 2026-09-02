@@ -413,7 +413,7 @@ int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
         }
 
         transparent &= 0xff;
-        cTransparentIndex_ = static_cast<char>(transparent);
+        cTransparentIndex_ = static_cast<unsigned char>(transparent);
         iWidth_ = width;
         iHeight_ = height;
         pixels = reinterpret_cast<const uint8_t *>(buffer->get_data(left, top));
@@ -626,7 +626,7 @@ int Sprite::create_blank(int width, int height, int depth) {
     iSpriteHeight_ = 1;
     iLeftOffset_ = 0;
     iTopOffset_ = 0;
-    cTransparentIndex_ = static_cast<char>(depth);
+    cTransparentIndex_ = static_cast<unsigned char>(depth);
     iHeight_ = height;
     pcBits_ = static_cast<char *>(mem_get(1));
     return pcBits_ ? 0 : 4;
