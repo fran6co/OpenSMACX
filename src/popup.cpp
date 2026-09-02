@@ -925,7 +925,7 @@ int __cdecl pops(char *caption, char *label, int a3, char *a4, int a5,
             pop->field_3104_ = a7;
             pop->field_3108_ = a8;
         }
-        if (pop->field_2274_ == 0) {
+        if (pop->dialogs_.list_.entry_count_ == 0) {
             pop->field_2144_ = reinterpret_cast<uint32_t>(sprite);
         } else {
             pop->field_2144_ = 0;

@@ -200,9 +200,12 @@ class BasePop : public GraphicWin {
   // sprite replaces the popup's own - has a name. The CheckBox at +0x2228
   // and the SpriteBox at +0x2240 both still live in the opaque first span;
   // neither is carved out as a stored member (see check_box() below).
-  uint8_t dialogs_[0x2274 - 0x21D0];
-  uint32_t field_2274_;
-  uint8_t dialogs_tail_[0x2E64 - 0x2278];
+  // THE EMBEDDED DIALOGS, real now: the three spans it replaces
+  // (dialogs_[0xA4] + field_2274_ + dialogs_tail_[0xBEC]) total exactly
+  // sizeof(Dialogs) = 0xC94 at 0x21D0..0x2E64. Its construction is the
+  // compiler's (the image's `push 1; call 0x612830` mid-body), and the
+  // CheckBox at +0x2228 / SpriteBox at +0x2240 are its own subobjects.
+  Dialogs dialogs_;  // 0x21D0
 
  public:
   // The CheckBox subobject at 0x2228, which is INSIDE `dialogs_` above. Not

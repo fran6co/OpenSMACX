@@ -89,7 +89,14 @@ class Dialogs : public ListBox,
   int attach(void * a1, int a2, int a3, int a4);
 
  public:
-  void close();
+  // ??0Dialogs@@QAE@H@Z (0x00612830), the bare real constructor - the H is
+  // the hidden most-derived flag (the MapWin finding). The implicit
+  // machinery owns all of it: the five vbtable pointers, the GraphicWin and
+  // Dialog virtual-base construction, and the five base constructors each
+  // run with a cleared flag - which is what the image's body spends its
+  // 0x2B0 bytes on. NO OWN DATA (see the class note); sizeof stays 0xC94.
+  Dialogs();
+  void close();  // hides ListBox::close; the image's body is one `ret`
   // The recovered complete-object destructor body (0x00406910), modelled on
   // the primary this (the allocation base); the original enters at
   // this + 0x188 and the redirect recovers the base, as ListBox's does. The

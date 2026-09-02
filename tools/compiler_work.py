@@ -310,7 +310,10 @@ SCAFFOLD_CEILINGS = {
     # 1294 -> 1293 (batch 9, Dialog ctor): 00608c10.cpp homed - the Dialog
     # constructor recovered as a real out-of-line Dialog() in dialog.cpp
     # (MNEMONIC_ONLY 99/103, the residual is one load/store scheduling nit).
-    "artifact files (recovered/)": 1293,
+    # 1293 -> 1292 (batch 9, Dialogs ctor): 00612830.cpp homed - the Dialogs
+    # real bare constructor landed (MISMATCH 68/201, the span covers the ctor
+    # plus the jump-dispatch function our binary lays out elsewhere).
+    "artifact files (recovered/)": 1292,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).

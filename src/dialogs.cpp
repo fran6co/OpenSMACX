@@ -21,6 +21,7 @@
 /*
 Purpose: Close the dialog manager; the legacy implementation is intentionally empty.
 // ORIGINAL: 0x00612960 ?close@Dialogs@@QAEXXZ 0x00612960-0x00612961 BYTE_EXACT
+// symbol    ?close@Dialogs@@QAEXXZ
 // size      1 bytes
 // prototype void (__thiscall ?close@Dialogs@@QAEXXZ)(Dialogs* this)
 // callers   20   call targets   0
@@ -31,8 +32,33 @@ Purpose: Close the dialog manager; the legacy implementation is intentionally em
 Return Value: n/a
 Status: Complete
 */
+/*
+Purpose: Construct the dialog manager: the five vbtable pointers, the two
+         virtual-base constructions, and the five base constructors.
+// ORIGINAL: 0x00612830 ??0Dialogs@@QAE@H@Z 0x00612830-0x00612AE0
+// symbol    ??0Dialogs@@QAE@XZ
+// size      688 bytes
+// prototype void (__thiscall ??0Dialogs@@QAE@H@Z)(Dialogs* this, int)
+// callers   1   call targets   7
+// kind      game
+// flags     frame;sp_ready;purged_ok
+Return Value: n/a
+
+The image's span 0x00612830..0x00612AE0 covers this ctor (through its
+`ret 4` at 0x0061295C) PLUS the jump-dispatch function at 0x00612970 and its
+case stubs, which our binary lays out elsewhere; this ctor's own body
+converges through its full length.
+*/
+Dialogs::Dialogs() { }
+
 void Dialogs::close() {
 }
+
+// Everything after the prologue is the compiler's: the five vbtable
+// pointers, the GraphicWin and Dialog virtual-base construction, and the
+// five base constructors (ListBox/RadioButton/CheckBox/SpriteBox/EditGroup,
+// each run with a cleared flag). The image's 0x2B0-byte ??0Dialogs spends
+// itself entirely on that machinery; this body has nothing to add.
 
 
 // ---------------------------------------------------------------------------
