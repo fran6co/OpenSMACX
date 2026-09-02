@@ -395,7 +395,7 @@ void DipEdit::do_check() {
 }
 
 /*
-Purpose: The handler the diplomatic-edit window's FlatButtons share. `a1` is
+Purpose: The handler the diplomatic-edit window's FlatButtons share. The int is
          the control id the caller passes, and the four values the body
          distinguishes are -1 (the window's own close row: release the modal
          and nothing else), 1 (the treaty/agenda row: clear every treaty bit
@@ -420,21 +420,58 @@ Purpose: The handler the diplomatic-edit window's FlatButtons share. `a1` is
 // flags     frame;sp_ready;purged_ok
 // calls     0x00402970 0x004048A0 0x00404900 0x00406380 0x004064D0 0x00406880 0x00406910 0x004DADA0 0x0055B760 0x0055BB30 0x0055BBA0 0x005BFD10 0x005D45B0 0x005D4DD0 0x005E3820 0x005FA870 0x00600F00 0x00602600 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00611F80 0x006169A0 0x00625810 0x00625EC0 0x00645470 0x00645550 0x00645DA7 0x0064FC88
 // indirect  0x004D9E30
+// LEVER: the frame is the source's doing, and it lands exactly. A single
+//   `Popup popup;` local (0x537C == sizeof(Popup)) plus one `char number_text
+//   [0x50]` compiles to the image's own prologue under /O2 /Oy- /GX: the EBP
+//   frame, `mov eax, 0x53d0 / call __alloca_probe`, `push ebx / push esi` after
+//   it, `Popup::Popup` on ebp-0x53DC, the `cmp eax, -1` read of the argument
+//   and the `mov ds:0x6a721c, 6` - all 23 leading instructions agree, and the
+//   frame size rounds to the same 0x53D0. Under /O2 without /Oy- the frame
+//   pointer goes away and the whole body shifts, so the EBP form is the
+//   image's.
+// LEVER: get_noun folds at the parse_says sites. `parse_says(0,
+//   get_noun(faction_index_), -1, -1)` is the image's own 0x59C-stride multiply
+//   (`lea eax,[ecx+ecx*4]; lea eax,[eax+eax*8]; shl eax,3; sub eax,ecx; shl
+//   eax,2`), the two GenderDefault/PluralityDefault stores and the noun pointer
+//   pushed - MEASURED inline in faction.h is what makes that fold.
+// TRIED: caching `faction_index_`/`selected_target_` in locals through the
+//   treaty block. The image re-reads both members off `this` at every one of
+//   the four treaty/agenda calls and at every table index it builds (the calls
+//   can edit the record), so the member names stay in the source.
+// CEILING, NOT A SPELLING: the last ~160 of the image's 576 instructions are
+//   the destructor of the local Popup, expanded INLINE at two sites, with
+//   different depth at each - the control-id -1 row expands `scroll_.~Scroll()` and
+//   calls ??1BasePop out of line (0x004D9E36..0x004D9EC2), the common exit
+//   expands both ~Scroll and ~BasePop all the way down to Heap::shutdown and
+//   the GraphicWin base (0x004DA461..0x004DA727). This tree's ~Popup, ~Scroll
+//   and ~BasePop are out-of-line definitions (pending_bodies forwarders, the
+//   image's own ??1 copies live at 0x00406C00/0x00406E60/0x004064D0), so VC6
+//   emits one shared cleanup holding a single `call ??1Popup` where the image
+//   holds 160 instructions, and the compiled body is 32 calls to the image's
+//   55 - the whole gap is that expansion, and `call_diff` confirms no business
+//   call is missing. Closing it needs ~Popup/~Scroll/~BasePop defined inline in
+//   their headers so the compiler can expand them per site; that moves
+//   ??1TutWin, ??1PickWin and every other Popup/Scroll/BasePop destroyer in the
+//   tree, and VC6's per-site choice of how deep to expand is not reachable from
+//   source. Not chased further this pass. The 4-byte difference in the local
+//   area (image puts the popup at ebp-0x53DC, this tree at ebp-0x53D8) is the
+//   same cause: the image's spill slot at ebp-0x10 exists only for the inlined
+//   teardown.
 Return Value: n/a
 Status: Complete
 */
-void DipEdit::on_button_clicked(int a1) {
+void DipEdit::on_button_clicked(int button_id) {
     Popup popup;
     char number_text[0x50];
 
     PopupModalState = 6;
 
-    if (a1 == -1) {
+    if (button_id == -1) {
         release_modal();
         return;
     }
 
-    if (a1 == 1) {
+    if (button_id == 1) {
         treaty_off(faction_index_, selected_target_, 0x1f);
         set_treaty(faction_index_, selected_target_, 0x02043c20, FALSE);
         set_treaty(faction_index_, selected_target_,
@@ -460,6 +497,14 @@ void DipEdit::on_button_clicked(int a1) {
                 + selected_target_] = random(0, 10) + 5;
             SpyingStatusTable[16 + selected_target_ * SpyingStatusStride
                 + faction_index_] = random(0, 10) + 5;
+        } else {
+            // Nothing settled between the pair: the intensity is a fresh
+            // random score in both directions, and each direction rolls its
+            // own.
+            SpyingStatusTable[16 + faction_index_ * SpyingStatusStride
+                + selected_target_] = random(0, 15);
+            SpyingStatusTable[16 + selected_target_ * SpyingStatusStride
+                + faction_index_] = random(0, 15);
         }
 
         // The six per-pair detail words, wiped both ways.
@@ -489,7 +534,7 @@ void DipEdit::on_button_clicked(int a1) {
             + faction_index_] = 0;
 
         do_check();
-    } else if (a1 == 2) {
+    } else if (button_id == 2) {
         parse_says(0, get_noun(faction_index_), -1, -1);
         if (X_pop_ask_number("EDITINTEGRITY",
                 SpyingStatusTable[67 + faction_index_ * SpyingStatusStride],
@@ -497,7 +542,7 @@ void DipEdit::on_button_clicked(int a1) {
             SpyingStatusTable[67 + faction_index_ * SpyingStatusStride]
                 = ParseNumTable[0];
         }
-    } else if (a1 == 3) {
+    } else if (button_id == 3) {
         parse_says(0, get_noun(faction_index_), -1, -1);
         popup.start(PopupStartCaption, "EDITATROCITY", -1, nullptr, 0x44,
                     nullptr);
@@ -558,7 +603,41 @@ control init does NOT touch.
 The two globals 0x008C6E2C/0x008C6E30 are the title text colours, declared in
 buffer.h; 0x0078D690/0x0078D528 are the two BoxSpriteParams blocks the frame
 and the title field are drawn from.
-Status: In progress - the body is a full transcription; see the TRIED notes.
+
+// LEVER: every control reached as a named member - `list_box_.Dialog::init`
+//   and `check_box_.Dialog::init` are QUALIFIED on purpose, because the
+//   receiver is the ListBox's/CheckBox's VIRTUAL Dialog base: the image walks
+//   the vbtable (`mov eax,[edi]; mov ecx,[eax+8]; add ecx,edi`) and then makes
+//   a direct E8 into 0x00609470. The qualified spelling is what produces that
+//   walk; an unqualified `list_box_.init(...)` would be ambiguous against
+//   GraphicWin::init anyway.
+// LEVER: `width_`/`height_` are SIGNED (dipedit.h) - the /3 at 0x004DB259 and
+//   the /2 at 0x004DB426 both compile to the signed division sequences.
+// TRIED: `Buffer *buffer = this;` for the six Buffer calls at +0x444 - the
+//   conversion emits a null test on `this`, a spill slot and a re-load
+//   (instructions 33-35 of the image have none of them, and the frame grows
+//   0x14 -> 0x18), so the calls are spelled on the inherited members instead;
+//   that alone moved the body 41 -> 86 agreeing instructions.
+// TRIED: `const RECT &frame = rect2_;` to hold &rect2_ live in a register the
+//   way the image keeps it in ebx from 0x004DB0EF to 0x004DB675 - 100 -> 96
+//   agreeing, reverted.
+// TRIED: `check_box_.item(text, flag, flag)` - the third argument is 0 at
+//   twelve of the thirteen sites and DTREATY_WANT_REVENGE at the eighth
+//   (0x004DB563 pushes 0x20 twice); only the SECOND argument is the treaty
+//   flag everywhere.
+// TRIED: the ordering of `list_box_.Dialog::field_20_ &= ~4` (0x004DB38D) -
+//   both spellings materialise a pointer, the image folds the base into the
+//   `lea` and 0x20 into the store, this tree folds 0xa6c into the `lea` and
+//   stores through it. Six bytes against three, same semantics, not chased.
+// CEILING: 100 of 614 instructions agree at /O2 /Gy /GR- /Oy- /GX. The
+//   remaining divergence is register allocation, not structure: every call
+//   target, argument list and field store matches, but this tree picks
+//   different registers for the ~20 inlined `label_get` expansions (the image
+//   reserves ecx for the StringTable receiver before evaluating the argument,
+//   this tree computes the argument first and loads the receiver last) and for
+//   the `if (StringTemp)` test (ecx in the image, eax here). The compiled body
+//   is 594 instructions against the image's 614.
+Status: In progress - full transcription, MISMATCH on register allocation.
 */
 void DipEdit::init(int faction_index) {
     font_.init(DefaultFontFace, 0xE, 0);
@@ -576,7 +655,7 @@ void DipEdit::init(int faction_index) {
 
     // The window title: "<label 866> <faction noun>", upper-cased in place.
     StringTemp[0] = 0;
-    strcat(StringTemp, label_get(0x362));
+    strcat(StringTemp, label_get(866));
     strcat(StringTemp, " ");
     strcat(StringTemp, get_noun(faction_index_));
     CharUpperA(StringTemp);
@@ -595,10 +674,16 @@ void DipEdit::init(int faction_index) {
     }
 
     rect.left = 4;
-    rect.top = 0x1F;
     rect.right = width_ / 3 - 4;
     rect.bottom = 0x172;
+    rect.top = 0x1F;
     box_sprite(&rect, reinterpret_cast<void *>(0x0078D528));
+
+    // The item area is the box just drawn, inset by the 3-pixel bevel.
+    rect.left += 3;
+    rect.right -= 3;
+    rect.top += 3;
+    rect.bottom -= 3;
 
     // The list of rival factions: every index but our own, the selected one
     // re-armed last so the row ends up highlighted.
@@ -638,34 +723,29 @@ void DipEdit::init(int faction_index) {
     check_box_.Dialog::init(&rect, 0);
     check_box_.field_10_ = 0x779504;
     check_box_.field_14_ = 0x779530;
-    check_box_.item(label_get(875), DTREATY_COMMLINK, DTREATY_COMMLINK);
-    check_box_.item(label_get(646), DTREATY_VENDETTA, DTREATY_VENDETTA);
-    check_box_.item(label_get(643), DTREATY_TRUCE, DTREATY_TRUCE);
-    check_box_.item(label_get(644), DTREATY_TREATY, DTREATY_TREATY);
-    check_box_.item(label_get(645), DTREATY_PACT, DTREATY_PACT);
-    check_box_.item(label_get(868), DTREATY_HAVE_INFILTRATOR,
-                    DTREATY_HAVE_INFILTRATOR);
-    check_box_.item(label_get(869), DTREATY_WANT_TO_TALK, DTREATY_WANT_TO_TALK);
-    check_box_.item(label_get(870), DTREATY_WANT_REVENGE, DTREATY_WANT_REVENGE);
-    check_box_.item(label_get(871), DTREATY_HAVE_SURRENDERED,
-                    DTREATY_HAVE_SURRENDERED);
-    check_box_.item(label_get(872), DTREATY_SHALL_BETRAY, DTREATY_SHALL_BETRAY);
-    check_box_.item(label_get(873), DTREATY_ATROCITY_VICTIM,
-                    DTREATY_ATROCITY_VICTIM);
+    check_box_.item(label_get(875), DTREATY_COMMLINK, 0);
+    check_box_.item(label_get(646), DTREATY_VENDETTA, 0);
+    check_box_.item(label_get(643), DTREATY_TRUCE, 0);
+    check_box_.item(label_get(644), DTREATY_TREATY, 0);
+    check_box_.item(label_get(645), DTREATY_PACT, 0);
+    check_box_.item(label_get(868), DTREATY_HAVE_INFILTRATOR, 0);
+    check_box_.item(label_get(869), DTREATY_WANT_TO_TALK, 0);
+    check_box_.item(label_get(870), DTREATY_WANT_REVENGE,
+                    DTREATY_WANT_REVENGE);
+    check_box_.item(label_get(871), DTREATY_HAVE_SURRENDERED, 0);
+    check_box_.item(label_get(872), DTREATY_SHALL_BETRAY, 0);
+    check_box_.item(label_get(873), DTREATY_ATROCITY_VICTIM, 0);
     check_box_.item(label_get(874), static_cast<int>(0x80000000U)
-                    | DTREATY_COMMLINK,
-                    static_cast<int>(0x80000000U) | DTREATY_COMMLINK);
+                    | DTREATY_COMMLINK, 0);
     check_box_.item(label_get(894), static_cast<int>(0x80000000U)
-                    | DTREATY_WANT_TO_TALK,
-                    static_cast<int>(0x80000000U) | DTREATY_WANT_TO_TALK);
+                    | DTREATY_WANT_TO_TALK, 0);
     check_box_.attach(this, rect.left, rect.bottom, DTREATY_WANT_REVENGE);
     check_box_.show(0);
 
-    // The button row: four FlatButtons, each one button-width further right.
-    // flat_button2_ is left alone - the image never inits it here.
-    // Start from the frame rectangle, inset it to the button strip, and size
-    // each button as a quarter of the width. flat_button2_ is left alone - the
-    // image never inits it here.
+    // The button row: start from the frame rectangle, inset it to the strip,
+    // and size each button as a quarter of the width. Each button then steps
+    // right by (width + 2). flat_button2_ is the one control init never
+    // touches - the image drives it from somewhere else.
     rect = rect2_;
     rect.left += 4;
     rect.right -= 4;

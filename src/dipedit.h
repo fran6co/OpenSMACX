@@ -89,7 +89,7 @@ class DipEdit : public GraphicWin {
   // FlatButtons share: `a1` is the control id, -1 being the window's own
   // close row (release_modal and nothing else), 1 the treaty/agenda row,
   // 2 the integrity prompt and 3 the atrocity prompt.
-  void on_button_clicked(int a1);
+  void on_button_clicked(int button_id);
   // 0x004DA990, defined in src/dipedit.cpp.
   void read_check();
   void do_check();  // 0x004DADA0, defined in src/dipedit.cpp

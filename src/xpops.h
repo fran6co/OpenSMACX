@@ -53,12 +53,16 @@ int __cdecl X_pop(const char *label, int (__cdecl *callback)());
 int __cdecl X_pop(char *caption, const char *label, int a3, char *a4, int a5,
                   int (__cdecl *callback)());
 
-// 0x005BFD10, a pending_bodies forwarder. The numeric-entry prompt of the
-// X_pop family: it asks for a number against `label` (a label token such as
+// 0x005BFD10, defined in xpops.cpp - the numeric-entry prompt of the X_pop
+// family: it asks for a number against `label` (a label token such as
 // "EDITINTEGRITY"), seeds the field with `value` and parks the answer in
 // ParseNumTable[0]. DipEdit::on_button_clicked drives it for the integrity
 // prompt.
 int __cdecl X_pop_ask_number(const char *label, int value,
+                             int (__cdecl *callback)());
+// 0x005BFD70, its four-argument sibling, which the three-argument form
+// forwards to with PopupStartCaption. Still a pending_bodies forwarder.
+int __cdecl X_pop_ask_number(char *caption, const char *label, int value,
                              int (__cdecl *callback)());
 
 int __cdecl x_pop_caption_label(char *caption, const char *label,

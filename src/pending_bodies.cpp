@@ -771,11 +771,14 @@ int EditGroup::edit(char *a1, char *a2, int a3) {
     return PENDING_BODY(0x00611F80, pending)(this, nullptr, a1, a2, a3);
 }
 
-// ?X_pop_ask_number@@YAHPBDHP6AHXZ@Z at 0x005BFD10 - the integrity prompt of
-// DipEdit::on_button_clicked.
-int __cdecl X_pop_ask_number(const char *a1, int a2, int (__cdecl *a3)()) {
-    typedef int(__cdecl *pending)(const char *, int, int (__cdecl *)());
-    return PENDING_BODY(0x005BFD10, pending)(a1, a2, a3);
+// ?X_pop_ask_number@@YAHPADPBDHP6AHXZ@Z at 0x005BFD70 - the four-argument
+// numeric-entry prompt. Its three-argument sibling (0x005BFD10) is the real
+// body in xpops.cpp and forwards here with PopupStartCaption.
+int __cdecl X_pop_ask_number(char *caption, const char *label, int value,
+                             int (__cdecl *callback)()) {
+    typedef int(__cdecl *pending)(char *, const char *, int,
+                                  int (__cdecl *)());
+    return PENDING_BODY(0x005BFD70, pending)(caption, label, value, callback);
 }
 
 // ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z at 0x00633F70 - Net::get (src/net_class.cpp)
