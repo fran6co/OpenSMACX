@@ -18,6 +18,7 @@
 #pragma once
 
 #include "original_seam.h"
+#include "checkbox.h"
 #include "graphicwin.h"
 
  /*
@@ -81,11 +82,13 @@ class DipEdit : public GraphicWin {
   uint8_t field_A50_[0x28];  // 0xA50
   uint32_t field_A78_;  // 0xA78
   uint8_t field_A7C_[0xB24];  // 0xA7C
-  uint32_t field_15A0_;  // 0x15A0
-  uint8_t field_15A4_[0xC];  // 0x15A4
-  uint32_t field_15B0_;  // 0x15B0
-  uint32_t field_15B4_;  // 0x15B4
-  uint8_t field_15B8_[0xB10];  // 0x15B8
+  // THE EMBEDDED CHECKBOX, real now: the five declarations it replaces
+  // (field_15A0_ + field_15A4_[0xC] + field_15B0_ + field_15B4_ +
+  // field_15B8_[0xB10]) total exactly sizeof(CheckBox) = 0xB28 at
+  // 0x15A0..0x20C8. Its construction and destruction are the compiler's
+  // from the real CheckBox() ctor, and the twelve set_state_id calls in
+  // do_check reach it as `check_box_.set_state_id(...)` through the member.
+  CheckBox check_box_;  // 0x15A0
   uint32_t field_20C8_;  // 0x20C8
   uint8_t field_20CC_[0x440];  // 0x20CC
   uint32_t field_250C_;  // 0x250C

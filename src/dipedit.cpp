@@ -95,8 +95,7 @@ Return Value: n/a
 Status: Complete
 */
 void DipEdit::do_check() {
-    char *const self = reinterpret_cast<char *>(this);
-    CheckBox *const cb = reinterpret_cast<CheckBox *>(self + 0x15A0);
+    CheckBox *const cb = &check_box_;
 
     cb->set_state_id(DTREATY_COMMLINK,
         SpyingStatusTable[field_A1C_ * SpyingStatusStride
@@ -145,9 +144,5 @@ void DipEdit::do_check() {
     // (win-table slot 62). Re-derived here rather than through the cached
     // `cb`: the image folds the +0x15A0 into the call's own receiver
     // computation (`lea ecx, [edx + esi + 0x15a0]`).
-    reinterpret_cast<CheckBox *>(self + 0x15A0)->vslot_62();
-}
-
-void __fastcall dip_edit_do_check_redirect(DipEdit *self, void *) {
-    self->do_check();
+    check_box_.vslot_62();
 }

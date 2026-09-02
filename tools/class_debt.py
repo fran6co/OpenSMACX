@@ -82,7 +82,9 @@ CEILINGS = {
     # deleted - zero callers; close() performs its own 0x1C, as the image does.
     # 206 -> 203 (TU homing): the dead injected-DLL redirect wrappers around
     # BasePop's two font setters and mandate_color left with the homing.
-    "orphan redirect": 203,
+    # 203 -> 202 (dipedit): the dip_edit_do_check_redirect wrapper removed -
+    # zero callers; do_check is called directly.
+    "orphan redirect": 202,
     "pointer-as-int": 0,
     "undocumented trivial body": 0,
     # 239 IS BELOW WHAT THE TREE CAN REACH TODAY, and this is the only
@@ -187,7 +189,9 @@ CEILINGS = {
     # casts left with the named virtual calls that replaced them.
     # 170 -> 167 (fx element identification): the element calls' last raw
     # self arithmetic left with the Wave-typed member dispatches.
-    "raw self-access": 167,
+    # 167 -> 166 (dipedit check_box_ member): the embedded CheckBox is a
+    # real typed member now - do_check's reads go through it, not raw casts.
+    "raw self-access": 166,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
