@@ -154,6 +154,163 @@ void DipEdit::on_selected(int index) {
 
 
 /*
+Purpose: Apply one treaty bit's checkbox to the diplomatic status the dialog is
+         editing. Ask the embedded CheckBox whether the item whose id is that
+         bit is checked, then compare with the status word -
+         SpyingStatusTable[faction_index_ * SpyingStatusStride +
+         selected_target_], which is PlayersData[faction_index_]
+         .diplo_treaties[selected_target_] (sizeof(PlayerData) == 0x20CC ==
+         2099 * 4, and diplo_treaties sits at 0x18). Checked and the bit clear
+         -> treaty_on; unchecked and the bit set -> treaty_off; a checkbox that
+         already agrees with the status word does nothing. The bit is both the
+         checkbox id and the mask, so a caller names the DTREATY_* constant
+         once.
+// ORIGINAL: 0x004DA760 ?UNK1@DipEdit@@QAEXH@Z 0x004DA760-0x004DA7E0 BYTE_EXACT
+// size      128 bytes
+// prototype void (__thiscall ?UNK1@DipEdit@@QAEXH@Z)(DipEdit* this, int)
+// callers   0   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0055B760 0x0055B870 0x0060EC10
+// LEVER: the idiomatic spelling is exact first try - real
+//        `check_box_.get_state_id(bit)` plus the very subscript do_check
+//        uses - where the src/unrecovered/004da760.cpp scaffold this body was
+//        homed from sat NOT_MATCHING on its `(char *)this + 0xa1c` form. Worth
+//        one line because the index lea chain here is NOT do_check's: it folds
+//        (selected + faction) in before the *2 instead of adding the member
+//        after. Same source, different schedule - so the schedule is context,
+//        not something to chase with a spelling.
+Return Value: n/a
+Status: Complete
+*/
+void DipEdit::UNK1(int bit) {
+    if (check_box_.get_state_id(bit)) {
+        if (!(SpyingStatusTable[faction_index_ * SpyingStatusStride
+            + selected_target_] & bit)) {
+            treaty_on(faction_index_, selected_target_, bit);
+        }
+    } else {
+        if (SpyingStatusTable[faction_index_ * SpyingStatusStride
+            + selected_target_] & bit) {
+            treaty_off(faction_index_, selected_target_, bit);
+        }
+    }
+}
+
+
+
+/*
+Purpose: UNK1 for the AGENDA word. The checkbox id carries 0x80000000, which
+         do_check also does when it writes the second table view back, and
+         that view is diplo_agenda - 8 dwords past diplo_treaties in
+         PlayerData, which is what moves the table base 0x96C9F8 -> 0x96CA18.
+         The writers are agenda_on/agenda_off rather than
+         treaty_on/treaty_off.
+// ORIGINAL: 0x004DA7E0 ?UNK2@DipEdit@@QAEXH@Z 0x004DA7E0-0x004DA867 BYTE_EXACT
+// size      135 bytes
+// prototype void (__thiscall ?UNK2@DipEdit@@QAEXH@Z)(DipEdit* this, int)
+// callers   1   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0055B820 0x0055BA80 0x0060EC10
+// LEVER: naming the checkbox id in a local ahead of the call - the idiom
+//        do_check already uses for these ids - is exact first try, and it is
+//        also what the image's order shows: `or eax, 0x80000000` sits BEFORE
+//        the `lea`/`push`, not inside the argument expression.
+Return Value: n/a
+Status: Complete
+*/
+void DipEdit::UNK2(int bit) {
+    int id = static_cast<int>(0x80000000U) | bit;
+
+    if (check_box_.get_state_id(id)) {
+        if (!(SpyingStatusTable[faction_index_ * SpyingStatusStride
+            + selected_target_ + 8] & bit)) {
+            agenda_on(faction_index_, selected_target_, bit);
+        }
+    } else {
+        if (SpyingStatusTable[faction_index_ * SpyingStatusStride
+            + selected_target_ + 8] & bit) {
+            agenda_off(faction_index_, selected_target_, bit);
+        }
+    }
+}
+
+
+
+/*
+Purpose: UNK1 narrowed to ONE direction. Same checkbox id and same treaty word
+         as UNK1, but the writer is set_treaty(faction_index_, selected_target_
+         , bit, TRUE/FALSE) - which writes only PlayersData[faction_index_]
+         .diplo_treaties[selected_target_] and leaves the mirror entry alone -
+         and it is called only when it would change something, where UNK1's
+         writers decide that for themselves.
+// ORIGINAL: 0x004DA870 ?UNK3@DipEdit@@QAEXH@Z 0x004DA870-0x004DA8F4 BYTE_EXACT
+// size      132 bytes
+// prototype void (__thiscall ?UNK3@DipEdit@@QAEXH@Z)(DipEdit* this, int)
+// callers   1   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0055BB30 0x0060EC10
+// LEVER: `TRUE`/`FALSE` as set_treaty's fourth argument are what push the 1/0
+//        the image pushes; no local for the boolean is wanted.
+Return Value: n/a
+Status: Complete
+*/
+void DipEdit::UNK3(int bit) {
+    if (check_box_.get_state_id(bit)) {
+        if (!(SpyingStatusTable[faction_index_ * SpyingStatusStride
+            + selected_target_] & bit)) {
+            set_treaty(faction_index_, selected_target_, bit, TRUE);
+        }
+    } else {
+        if (SpyingStatusTable[faction_index_ * SpyingStatusStride
+            + selected_target_] & bit) {
+            set_treaty(faction_index_, selected_target_, bit, FALSE);
+        }
+    }
+}
+
+
+
+/*
+Purpose: UNK3 for the AGENDA word: the 0x80000000 checkbox id, the +8 dword
+         view, and set_agenda as the writer instead of set_treaty.
+// ORIGINAL: 0x004DA900 ?UNK4@DipEdit@@QAEXH@Z 0x004DA900-0x004DA98B BYTE_EXACT
+// size      139 bytes
+// prototype void (__thiscall ?UNK4@DipEdit@@QAEXH@Z)(DipEdit* this, int)
+// callers   1   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0055BBA0 0x0060EC10
+// LEVER: answers the TRIED the archive this body was homed from carried -
+//        src/unrecovered/004da900.cpp, whose raw-pointer translation
+//        ("(char *)this + 0xa1c", fixed globals) plateaued at "MISMATCH #4
+//        'mov' vs 'push'". The member spelling - real
+//        `check_box_.get_state_id(id)`, real set_agenda, the subscript -
+//        is exact first try; no pointer arithmetic anywhere.
+Return Value: n/a
+Status: Complete
+*/
+void DipEdit::UNK4(int bit) {
+    int id = static_cast<int>(0x80000000U) | bit;
+
+    if (check_box_.get_state_id(id)) {
+        if (!(SpyingStatusTable[faction_index_ * SpyingStatusStride
+            + selected_target_ + 8] & bit)) {
+            set_agenda(faction_index_, selected_target_, bit, TRUE);
+        }
+    } else {
+        if (SpyingStatusTable[faction_index_ * SpyingStatusStride
+            + selected_target_ + 8] & bit) {
+            set_agenda(faction_index_, selected_target_, bit, FALSE);
+        }
+    }
+}
+
+
+
+/*
 Purpose: Sync eleven checkbox bits on the embedded CheckBox to the current
          diplomatic status word (SpyingStatusTable[subject * 2099 +
          faction]) - one set_state_id call per treaty flag - then redraw the

@@ -112,7 +112,16 @@ FLOORS = {
     # tail jmp; go_reset itself into time.cpp), and 0x00639390 into
     # caviar.cpp (BYTE_EXACT) - their forwarders retired, their archive
     # units deleted.
-    "archive-only-forwarder": 0,
+    # 0 -> 4 (2026-09-02, DipEdit UNK1-4 batch): the four recovered checkbox
+    # handlers call CheckBox::get_state_id (0x0060EC10), treaty_off
+    # (0x0055B760), agenda_on (0x0055BA80) and agenda_off (0x0055B820), and
+    # nothing in the build defines those, so pending_bodies.cpp carries their
+    # forwarders while their claims stay in the archives. Homing the four is
+    # the PlayersData indexed-write family set_treaty (15/36) and set_agenda
+    # (14/31) already plateaued on - a batch of its own, not a side effect of
+    # recovering DipEdit. treaty_on (0x0055B870) is the fifth callee and is
+    # NOT counted here: its archive holds no claim.
+    "archive-only-forwarder": 4,
     "unknown-host-files": 0,
 }
 

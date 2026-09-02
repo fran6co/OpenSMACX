@@ -153,9 +153,13 @@ class CheckBox : public virtual GraphicWin, public virtual Dialog {
   void UNK1(int pos);
   int UNK2(int pos);
   void set_state_pos(int pos, int state);
-  // 0x0060EB80, not yet recovered - a pending_bodies forwarder.
-  // DipEdit::do_check calls it BY NAME.
   void set_state_id(int id, int value);
+  // 0x0060EC10, a pending_bodies forwarder. The read side of set_state_id:
+  // it walks the same per-item list to find `id` and returns
+  // `(1 << item->bit) & this->state_flags` - so nonzero means the checkbox
+  // item with that id is currently CHECKED. DipEdit's four UNK methods and
+  // ?read_check@DipEdit@@QAEXXZ all ask it per treaty/agenda bit.
+  int get_state_id(int id);
 
  private:
   // The vbtable pointer is EMITTED by the compiler now.

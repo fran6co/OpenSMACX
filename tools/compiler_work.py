@@ -303,7 +303,11 @@ SCAFFOLD_CEILINGS = {
     # 234 -> 231 (2026-08-30, caviar-voxel batch): the three seams Caviar's
     # homing had declared for sub_639390 / sub_63ad60 / sub_63f9b0 retired -
     # all three bodies now live at the foot of src/caviar.cpp.
-    "PENDING_BODY forwarders": 209,
+    # 209 -> 214 (2026-09-02, DipEdit UNK1-4 batch): the frontier grows by the
+    # five callees those four bodies need and nothing in the build defines -
+    # CheckBox::get_state_id (0x0060EC10) and treaty_on/treaty_off/agenda_on/
+    # agenda_off (0x0055B870/0x0055B760/0x0055BA80/0x0055B820).
+    "PENDING_BODY forwarders": 214,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -325,7 +329,15 @@ SCAFFOLD_CEILINGS = {
     # 1677 -> 1675 (sound batch): load_sound_dll homed into
     # src/sound_loader.cpp and its message helper with it; 004c5e50.cpp and
     # 004c9080.cpp deleted.
-    "unrecovered files": 1674,
+    # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
+    # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
+    # honest MISMATCH).
+    # 1677 -> 1675 (sound batch): load_sound_dll homed into
+    # src/sound_loader.cpp and its message helper with it; 004c5e50.cpp and
+    # 004c9080.cpp deleted.
+    # 1675 -> 1670 (2026-09-02, DipEdit UNK1-4 batch): 004da760/004da7e0/
+    # 004da870/004da900.cpp homed BYTE_EXACT into src/dipedit.cpp.
+    "unrecovered files": 1670,
     "hypothesis_layouts.h lines": 2723,
 }
 

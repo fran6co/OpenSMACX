@@ -816,17 +816,7 @@ void __cdecl set_treaty(int faction_id, int faction_id_with, int treaty, BOOL se
 
 /*
 Purpose: Set or unset the diplomatic agenda for the specified faction with another faction.
-// ORIGINAL: 0x0055BBA0 ?set_agenda@@YAXHHHH@Z 0x0055BBA0-0x0055BBF1
-// TRIED: the image folds `diplo_agenda[faction_id_with] |= agenda` into
-//            one `or dword ptr [eax*4+addr], ecx`; this tree's O2 always
-//            splits it into load/lea/or/store even with a cached
-//            `int *diplo = &PlayersData[faction_id].diplo_agenda[...]`
-//            pointer (worse: 2/31) or an explicit `x = x | y` assignment
-//            (ties at 14/31, no change) or a ternary/single-line if form
-//            (2/31). Plateaus at 14/31 agreeing (0.912 similar); the direct
-//            memory-operand fold looks like a register-allocation/addressing-
-//            mode choice this tree's compile does not make, not chased
-//            further per the no-register-only rule.
+// ORIGINAL: 0x0055BBA0 ?set_agenda@@YAXHHHH@Z 0x0055BBA0-0x0055BBF1 BYTE_EXACT
 // size      81 bytes
 // prototype void (__cdecl ?set_agenda@@YAXHHHH@Z)(int factionID, int factionIDWith, int agenda, int set)
 // callers   10   call targets   0

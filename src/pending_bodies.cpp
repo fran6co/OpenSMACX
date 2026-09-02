@@ -999,6 +999,14 @@ void CheckBox::on_redraw() {  // 0x0060FAB0
     PENDING_BODY(0x0060FAB0, pending)(this, nullptr);
 }
 
+// ?get_state_id@CheckBox@@QAEHH@Z - the read side of set_state_id. Body in
+// src/unrecovered/0060ec10.cpp (CLAIMED, not compiled). DipEdit's four
+// checkbox handlers and ?read_check@DipEdit@@QAEXXZ call it per bit.
+int CheckBox::get_state_id(int id) {  // 0x0060EC10
+    typedef int(__fastcall *pending)(CheckBox *, void *, int);
+    return PENDING_BODY(0x0060EC10, pending)(this, nullptr, id);
+}
+
 int Console::on_key_click(int a1, int a2) {  // 0x005178C0
     typedef int(__fastcall *pending)(Console *, void *, int, int);
     return PENDING_BODY(0x005178C0, pending)(this, nullptr, a1, a2);
@@ -1615,6 +1623,30 @@ int Win::sub_63c7c0() {
 void __cdecl wait_task() {
     typedef void(__cdecl *pending)();
     PENDING_BODY(0x005FC700, pending)();
+}
+
+// The four one-directional treaty/agenda writers DipEdit's checkbox handlers
+// call. treaty_on (0x0055B870) is in src/recovered/units, treaty_off
+// (0x0055B760), agenda_on (0x0055BA80) and agenda_off (0x0055B820) in
+// src/unrecovered - all CLAIMED there, none promoted into the build yet.
+void __cdecl treaty_on(int faction_id, int faction_id_with, int treaty) {
+    typedef void(__cdecl *pending)(int, int, int);
+    PENDING_BODY(0x0055B870, pending)(faction_id, faction_id_with, treaty);
+}
+
+void __cdecl treaty_off(int faction_id, int faction_id_with, int treaty) {
+    typedef void(__cdecl *pending)(int, int, int);
+    PENDING_BODY(0x0055B760, pending)(faction_id, faction_id_with, treaty);
+}
+
+void __cdecl agenda_on(int faction_id, int faction_id_with, int agenda) {
+    typedef void(__cdecl *pending)(int, int, int);
+    PENDING_BODY(0x0055BA80, pending)(faction_id, faction_id_with, agenda);
+}
+
+void __cdecl agenda_off(int faction_id, int faction_id_with, int agenda) {
+    typedef void(__cdecl *pending)(int, int, int);
+    PENDING_BODY(0x0055B820, pending)(faction_id, faction_id_with, agenda);
 }
 
 

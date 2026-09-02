@@ -80,6 +80,29 @@
 class DipEdit : public GraphicWin {
  public:
   void on_selected(int index);
+  // The four checkbox handlers, 0x004DA760/0x004DA7E0/0x004DA870/0x004DA900.
+  // The image carries NO symbol and NO reference for any of them - no E8
+  // call site, no vtable slot, no data word points at 0x004DA760..0x004DA98B
+  // - so the catalogue's UNK1..UNK4 placeholders are the only names that
+  // exist and the method names here must stay UNK1..UNK4 to emit them. What
+  // each one DOES is measured, and is the same four times over: ask the
+  // embedded CheckBox whether the item for one diplomatic bit is checked
+  // (CheckBox::get_state_id), then apply that bit between faction_index_ and
+  // selected_target_ if the status word disagrees with the checkbox.
+  //   UNK1  treaty bits,   both directions, through treaty_on/treaty_off
+  //   UNK2  agenda bits,   both directions, through agenda_on/agenda_off
+  //   UNK3  treaty bits,   one direction,   through set_treaty(.., TRUE/FALSE)
+  //   UNK4  agenda bits,   one direction,   through set_agenda(.., TRUE/FALSE)
+  // UNK2 and UNK4 take the checkbox id `0x80000000 | bit`, which is the
+  // second PlayerData word - diplo_agenda, 8 dwords past diplo_treaties -
+  // exactly the ids do_check writes those two views of the table back with.
+  // ?read_check@DipEdit@@QAEXXZ (0x004DA990) inlines UNK1's shape eleven
+  // times for the eleven DTREATY_* bits and calls UNK2, UNK3 and UNK4 for the
+  // rest: these are its per-bit helpers.
+  void UNK1(int bit);
+  void UNK2(int bit);
+  void UNK3(int bit);
+  void UNK4(int bit);
   // 0x004DA990 (?read_check@DipEdit@@QAEXXZ) - a pending_bodies forwarder;
   // still a declaration only, resolved at link time like the other
   // unrecovered methods.

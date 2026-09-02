@@ -42,7 +42,18 @@ from decomp import read  # noqa: E402
 CEILINGS = {
     # 170 -> 162, same edit as the evidence-free reclassification above:
     # BaseWin's four UNK methods move shapes, they do not disappear.
-    "unk-method": 162,
+    # 162 -> 170 (2026-09-02, DipEdit UNK1-4 batch): the four checkbox
+    # handlers are catalogued ?UNK1@DipEdit@@QAEXH@Z .. ?UNK4@DipEdit@@QAEXH@Z,
+    # and that catalogue name is what our own object has to emit for the claim
+    # to match - AGENTS.md's mangled-name rule, not a naming failure. The
+    # image offers nothing better: UNK1 has no symbol, no E8 caller, no vtable
+    # slot and no data word anywhere in the shipped binary (every section
+    # scanned for 0x004DA760), and UNK2-4 are reached only by read_check. Not
+    # EVIDENCE-FREE, so the escape hatch does not apply: UNK1 has a
+    # member-accesses.csv entry and all four have measured behaviour, which is
+    # written down in the markers in src/dipedit.cpp. Renaming them to clear
+    # this count would trade a true symbol for a false name.
+    "unk-method": 170,
     # THE ESCAPE HATCH, RATCHETED. An UNKn whose comment block says
     # EVIDENCE-FREE and names it has been investigated and found unnameable -
     # no caller, no dispatch, no CSV entry. That is a result, not unfinished

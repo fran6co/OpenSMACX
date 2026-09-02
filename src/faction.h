@@ -631,10 +631,24 @@ int __cdecl reputation(int faction_id, int faction_id_with);
 int __cdecl get_patience(int faction_id_with, int faction_id);
 int __cdecl energy_value(int loan_principal);
 void __cdecl scan_prototypes(int faction_id, int faction_id_with);
-void __cdecl set_treaty(uint32_t faction_id, uint32_t faction_id_with, uint32_t treaty, 
+// `int`, NOT `uint32_t`, for the same reason `wants_to_attack` below spells
+// out: faction.cpp defines these as `?set_treaty@@YAXHHHH@Z` and
+// `?set_agenda@@YAXHHHH@Z`, and the `uint32_t` spellings here were a second,
+// UNDEFINED overload - invisible inside faction.cpp (where the `int`
+// definition wins overload resolution) but the only candidate in any other
+// unit, so the first caller outside faction.cpp was a plain LNK2001.
+void __cdecl set_treaty(int faction_id, int faction_id_with, int treaty,
                                   BOOL set);
-void __cdecl set_agenda(uint32_t faction_id, uint32_t faction_id_with, uint32_t agenda, 
+void __cdecl set_agenda(int faction_id, int faction_id_with, int agenda,
                                   BOOL set);
+// The four one-directional treaty/agenda writers the DipEdit checkbox
+// handlers call. 0x0055B870, 0x0055B760, 0x0055BA80, 0x0055B820 - bodies in
+// src/recovered/units and src/unrecovered, none promoted into the build yet,
+// so pending_bodies.cpp carries their forwarders.
+void __cdecl treaty_on(int faction_id, int faction_id_with, int treaty);
+void __cdecl treaty_off(int faction_id, int faction_id_with, int treaty);
+void __cdecl agenda_on(int faction_id, int faction_id_with, int agenda);
+void __cdecl agenda_off(int faction_id, int faction_id_with, int agenda);
 uint32_t __cdecl has_agenda(uint32_t faction_id, uint32_t faction_id_with, 
                                       uint32_t agenda);
 // `int`, NOT `uint32_t`. The image's symbol is `?wants_to_attack@@YAHHHH@Z` -
