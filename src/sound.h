@@ -150,6 +150,15 @@ int __cdecl load_sound_dll();
 typedef void *SoundDllProcsTable[11];
 // Returns the table as a plain pointer: VC6 cannot return an array by
 // reference (C2101 '&' on constant on any use that decays or addresses it).
+// AND NO GLOBAL SPELLING WORKS, MEASURED 2026-09-02, not just asserted:
+// `void **const p = (void **)0x0090DB24;` - static or not - double-derefs
+// (`mov eax,[p]; cmp [eax],0` against the image's `mov eax,[0x90DB24]`),
+// the scalar reference `HMODULE &m = *(HMODULE *)0x0090DB78;` double-derefs
+// identically, and the array reference is C2101 at the declaration. Only
+// the inlined return expression folds, which is what makes these
+// accessors - not globals - the tree's fixed-address binding here. The
+// storage cannot move into this tree's .bss either: unrecovered image code
+// in the 0x4C5D8E/0x4C5F68 bands reads the same bytes (see below).
 inline void **SoundDllProcs() {
   return reinterpret_cast<void **>(0x0090DB24);
 }
