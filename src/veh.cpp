@@ -4356,6 +4356,17 @@ void __cdecl veh_clear(int veh_id, int proto_id, int faction_id) {
 Purpose: Check if the prototype can perform artillery combat. The 2nd parameter determines how sea 
          units are treated.
 // ORIGINAL: 0x005C0DB0 ?can_arty@@YAHHH@Z 0x005C0DB0-0x005C0E35
+// TRIED 2026-09-03: the one remaining divergence is NOT the `mov bl/test bl`
+// wall the first TRIED line below describes - that is gone (both sides now
+// emit `mov bl, [edx+..]; test bl,bl`), and the Armor addressing of the
+// second line went with it. What is left is ONE JUMP TARGET: the image's
+// `dec eax / je 0x5c0dda` for case TRIAD_AIR against this tree's
+// `je 0x5c0df9` - the image shares the FIRST `return false` epilogue, this
+// tree the SECOND. Spelling the switch's `return false` as `return 0`,
+// putting TRIAD_AIR before TRIAD_SEA in the case list, and adding an
+// explicit `default: break;` each measured 53/54 identically. Which of two
+// identical epilogues VC6's return-sharing picks is not reachable from the
+// case order or from the constant's type; every other byte agrees.
 // TRIED: the OR'd (offense<=0 || defense<0) guard into two sequential `if`s, one per term - matches the image's per-term SPORE_LAUNCHER exception check. Also: the TRIAD_SEA/TRIAD_AIR dispatch is a `switch`, not chained `if`s - the image's dec/je chain is switch codegen. 19/54 -> 50/54. One divergence remains: the defense_rating byte load folds into `cmp byte ptr [edx], 0` here where the image keeps `mov bl, ...; test bl, bl` - tried swapping check order, `0 > x`, a BOOL local, and `!(x >= 0)`; none moved it. Plateau.
 // TRIED: same `Armor[armor_id].defense_rating` addressing defect as arm_strat (0x0057D270): the image computes `shl edx,4` then loads with a displaced `[edx+0x94F280]`, this tree's `get_proto_defense_rating` inline always compiles `add edx,0x94F28` (pre-adding the displaced/16 constant) then `shl edx,4` then a base-only load. Raw byte-array indexing forms tried at arm_strat produced the identical bytes there too, so not re-tried per-callsite here. Cross-function confirmation that this is a compiler addressing-mode choice, not something source-shape-local to either caller.
 // size      133 bytes

@@ -44,6 +44,15 @@
 Purpose: sub_44c870 - arithmetic over 1 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0044C870 sub_44c870 0x0044C870-0x0044C878
+// TRIED 2026-09-03: five spellings for the single statement, scored with
+// tools/try_spellings.py - `*p ^= 1`, `*p = *p ^ 1` (as committed), a
+// `uint32_t *const p` local, `volatile int32_t *const p` read-modify-write
+// and `volatile ... ^= 1`, plus `|= 1`. Every one still compiles the
+// load/xor/store triple (3 or 4 instructions against the image's 2); none
+// reaches the memory-form `xor dword ptr [0x7591c4], 1`. VC6 will not emit
+// the in-memory read-modify-write through a const-pointer lvalue, only
+// through a named global object, and these globals are bound rather than
+// placed so no named object can live at 0x7591c4.
 // symbol    ?global_arith_0044c870_redirect@@YIXPAX0@Z
 // size      8 bytes
 // prototype 

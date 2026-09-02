@@ -586,6 +586,13 @@ int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
 /*
 Purpose: Turn the sprite into a one-pixel placeholder of the given extent.
 // ORIGINAL: 0x005EAF3F ?create_blank@Sprite@@QAEHHHH@Z 0x005EAF3F-0x005EAF86
+// TRIED 2026-09-03: `osmx semantic` REFUSED this body - "instruction 14: mov
+// displacement 0x1c against 0x8", the height/depth store pair the LEVER
+// below describes. Same count, 1.000 similarity, but the store swap is a
+// value difference the tier will not cover, so MNEMONIC_ONLY is as far as
+// this spelling goes.
+// LEVER: the two `1` stores go BEFORE the two zero stores, and the depth
+//   store goes BEFORE the height store. Field order alone moved this from
 // LEVER: the two `1` stores go BEFORE the two zero stores, and the depth
 //   store goes BEFORE the height store. Field order alone moved this from
 //   16 of 25 to 23 of 25 (similarity 1.000, every instruction present):

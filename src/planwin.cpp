@@ -52,7 +52,11 @@ static int32_t &pre_vbase_dword(void *self) {
 /*
 Purpose: Build a plan window - attach its embedded GraphicWin, the MapWin
          base beneath it, and its own Buffer.
-// ORIGINAL: 0x0048BCD0 ??0PlanWin@@QAE@H@Z 0x0048BCD0-0x0048BD7E;0x006581D0-0x00658205
+// ORIGINAL: 0x0048BCD0 ??0PlanWin@@QAE@H@Z 0x0048BCD0-0x0048BD7E;0x006581D0-0x00658205 BYTE_EXACT
+// LEVER: store order, not declaration order - the image writes field_21A6C_
+// before field_21A68_, so the two clears sit in that order in the body. 46/48
+// SHAPE_EXACT 1.000-similar flipped to 48/48 on the swap alone; nothing else
+// in the constructor moved.
 // symbol    ??0PlanWin@@QAE@XZ
 // size      227 bytes
 // prototype void (__thiscall ??0PlanWin@@QAE@H@Z)(PlanWin* this, int)
@@ -74,8 +78,8 @@ hand-rolled vtable idiom this sweep exists to remove - where the real
 constructor chain calls ??0GraphicWin.
 */
 PlanWin::PlanWin() {
-    field_21A68_ = 0;
     field_21A6C_ = 0;
+    field_21A68_ = 0;
 }
 
 /*
