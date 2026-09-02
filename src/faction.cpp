@@ -50,6 +50,10 @@ int BestProtoToMention;  // 0x0093FA40
 // is why suggest_plan writes it unconditionally rather than only on the paths
 // that go on to show one.
 int PopupDialogFactionID;  // 0x0093F7CC
+// The diplomacy flag word at 0x0074DA9C and the multiplayer-window gate at
+// 0x007FE06C, both declared in faction.h beside the writers that drive them.
+int DiploRedrawFlag;  // 0x0074DA9C
+int MultiWindowOpen;  // 0x007FE06C
 
 /*
 Purpose: Determine if the specified faction is a Progenitor alien faction (Caretakers / Usurpers).
@@ -793,6 +797,173 @@ void __cdecl treaty_off(int faction_id, int faction_id_with, int treaty) {
     SpyingStatusTable[index] &= ~treaty;
     index = faction_id + faction_id_with * SpyingStatusStride;
     SpyingStatusTable[index] &= ~treaty;
+}
+
+/*
+Purpose: Set `treaty` in the diplomatic status word between two factions, both
+         directions of the pair, and take the side effects the set implies:
+         a PACT carries TREATY with it, a vendetta declared on top of a live
+         pact/treaty/truce zeroes both directions of the third status view and
+         clears a block of status bits in both directions, and either faction
+         being the local one asks for the multiplayer window to be redrawn.
+// ORIGINAL: 0x0055B870 ?treaty_on@@YAXHHH@Z 0x0055B870-0x0055BA76
+// LEVER: the local faction is a CACHED LOCAL, not a global read at each use -
+// `int local_faction = LocalFaction;` at entry plus two re-reads (after the
+// vendetta-table clearing, after the ambience call) is what puts the image's
+// `mov ecx,[0x939284]` at instruction 2 and keeps 94/152 instructions
+// agreeing. Reading LocalFaction at each use dropped it to 15/152, because
+// VC6 then loads the global lazily inside the first block.
+// TRIED: naming `index` at the TOP of the `treaty & 7` block (the treaty_off
+//            spelling) so the stores could use scaled addressing - VC6 then
+//            hoists the whole lea chain ABOVE the two LocalFaction compares
+//            and the match falls to 12/152. The image computes the index
+//            between the compares and the clear, so the first block spells
+//            the expression inline in the `if` and names `index` only for the
+//            two clears.
+// RESIDUAL: 13 divergent instructions. Ten are one cluster the source cannot
+//            reach from here: the vendetta block wants its index scaled ONCE -
+//            `shl eax,2` then `[eax + 0x96c9f8]` and `[eax + 0x96cb8c]` for
+//            the byte test, the vendetta-table store and the status load - and
+//            one `index` local reaching two different table bases compiles as
+//            a SIB `[eax*4 + base]` per access instead, plus a
+//            `lea eax,[eax*4+..]; mov [eax],edx` for the last
+//            `&= 0xfaeef378`. The three after that are register choice
+//            (eax vs edx) in the two final lea chains. The archived unit bound
+//            both tables as `extern int g_0096c9f8_tbl[]` arrays rather than
+//            folded `uint32_t *const` pointers, which may be what buys the
+//            shared scaling - untested, since binding those addresses as real
+//            arrays means defining storage the tree does not own.
+// TRIED: three further flag sets under --all-flags: /O2 without /Oy- scores
+//            26/152, /O1 7/152 - the default /O2 /Gy /GR- /Oy- /GX at 0.993
+//            similar is the winner.
+// size      518 bytes
+// prototype void (__cdecl ?treaty_on@@YAXHHH@Z)(int faction_id, int faction_id_with, int treaty)
+// callers   33   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00446B40 0x005D5A70
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl treaty_on(int faction_id, int faction_id_with, int treaty) {
+    // The local faction, cached for the pair tests and re-read after each
+    // store or call that could alias it - the image keeps it in ecx and does
+    // exactly two reloads, one after the vendetta-table clearing and one
+    // after the ambience call.
+    int local_faction = LocalFaction;
+    if (treaty & 7) {
+        if ((faction_id == local_faction || faction_id_with == local_faction)
+            && (SpyingStatusTable[faction_id_with
+                                  + faction_id * SpyingStatusStride]
+                & DTREATY_VENDETTA)) {
+            // ~1 on a bit-0 flag: the request goes away here.
+            DiploRedrawFlag &= ~1;
+        }
+        // ~0x118050: VENDETTA, both UNK_40/UNK_8000 and the 0x1100000 pair -
+        // the same bits treaty_off adds to its mask for the same three low
+        // bits, cleared here rather than or'ed on.
+        int index = faction_id_with + faction_id * SpyingStatusStride;
+        SpyingStatusTable[index] &= 0xffee7faf;
+        index = faction_id + faction_id_with * SpyingStatusStride;
+        SpyingStatusTable[index] &= 0xffee7faf;
+    }
+    if (treaty & DTREATY_PACT) {
+        treaty |= DTREATY_TREATY;
+    }
+    if (treaty & DTREATY_VENDETTA) {
+        int index = faction_id_with + faction_id * SpyingStatusStride;
+        if (SpyingStatusTable[index] & 7) {
+            DiploVendettaTable[faction_id + faction_id_with
+                               * SpyingStatusStride] = 0;
+            DiploVendettaTable[index] = 0;
+            local_faction = LocalFaction;
+        }
+        treaty |= 0x80000108;
+        SpyingStatusTable[index] &= 0xfaeef378;
+        SpyingStatusTable[faction_id + faction_id_with * SpyingStatusStride]
+            &= 0xfaeef378;
+        if (faction_id == local_faction
+            || faction_id_with == local_faction) {
+            DiploRedrawFlag |= 1;
+            ambience(0xcc);
+            local_faction = LocalFaction;
+        }
+    }
+    if (treaty & 0x17) {
+        int index = faction_id_with + faction_id * SpyingStatusStride;
+        SpyingStatusTable[index] &= 0xff7fffff;
+        index = faction_id + faction_id_with * SpyingStatusStride;
+        SpyingStatusTable[index] &= 0xff7fffff;
+    }
+    int index = faction_id_with + faction_id * SpyingStatusStride;
+    SpyingStatusTable[index] |= treaty;
+    index = faction_id + faction_id_with * SpyingStatusStride;
+    SpyingStatusTable[index] |= treaty;
+    if ((faction_id == local_faction || faction_id_with == local_faction)
+        && (treaty & 0x1f) && MultiWindowOpen) {
+        reinterpret_cast<GraphicWin *>(&MultiWindow)->redraw();
+    }
+}
+
+/*
+Purpose: Set `agenda` in the diplomatic agenda word between two factions, both
+         directions of the pair; setting the 0x20 agenda bit also clears the
+         0x40 bit beside it.
+// ORIGINAL: 0x0055BA80 ?agenda_on@@YAXHHH@Z 0x0055BA80-0x0055BB29 BYTE_EXACT
+// LEVER: the agenda view is `SpyingStatusTable[index + 8]`, exactly
+//         treaty_off's spelling for the +8 view, and `index` is declared
+//         INSIDE each block the way treaty_off declares it - one `int index`
+//         per block, reassigned for the second direction. Declaring it before
+//         the `agenda & 0x20` test hoisted the index chain above the test and
+//         cost 49 of 56 instructions; the image computes it inside the branch.
+// size      169 bytes
+// prototype void (__cdecl ?agenda_on@@YAXHHH@Z)(int faction_id, int faction_id_with, int agenda)
+// callers   8   call targets   0
+// kind      game
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl agenda_on(int faction_id, int faction_id_with, int agenda) {
+    // The agenda view is the same table eight dwords in - 0x96CA18, which is
+    // PlayerData::diplo_agenda[0].
+    if (agenda & 0x20) {
+        int index = faction_id_with + faction_id * SpyingStatusStride;
+        SpyingStatusTable[index + 8] &= ~0x40;
+        index = faction_id + faction_id_with * SpyingStatusStride;
+        SpyingStatusTable[index + 8] &= ~0x40;
+    }
+    int index = faction_id_with + faction_id * SpyingStatusStride;
+    SpyingStatusTable[index + 8] |= agenda;
+    index = faction_id + faction_id_with * SpyingStatusStride;
+    SpyingStatusTable[index + 8] |= agenda;
+}
+
+/*
+Purpose: Clear `agenda` in the diplomatic agenda word between two factions,
+         both directions of the pair. agenda_on's mirror, without its 0x20/0x40
+         interaction - the caller has already decided which bit it wants gone.
+// ORIGINAL: 0x0055B820 ?agenda_off@@YAXHHH@Z 0x0055B820-0x0055B870 BYTE_EXACT
+// LEVER: `int mask = ~agenda;` FIRST - naming the complement up front is what
+//         makes VC6 emit the image's `not edx` before the index arithmetic and
+//         keeps the mask in a register for both directions. Writing
+//         `SpyingStatusTable[index + 8] &= ~agenda` twice deferred the `not`
+//         past the first `push edi` and diverged at instruction 5 (18/30).
+// size      80 bytes
+// prototype void (__cdecl ?agenda_off@@YAXHHH@Z)(int faction_id, int faction_id_with, int agenda)
+// callers   5   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl agenda_off(int faction_id, int faction_id_with, int agenda) {
+    int mask = ~agenda;
+    int index = faction_id_with + faction_id * SpyingStatusStride;
+    SpyingStatusTable[index + 8] &= mask;
+    index = faction_id + faction_id_with * SpyingStatusStride;
+    SpyingStatusTable[index + 8] &= mask;
 }
 
 /*

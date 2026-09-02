@@ -611,6 +611,28 @@ extern uint32_t DiploFrictionFactionID;
 extern int BestProtoForTrade;
 extern int BestProtoToMention;
 extern int PopupDialogFactionID;
+// Bit 0 of the diplomacy flag word at 0x0074DA9C. treaty_on sets it when a
+// vendetta lands on a pair with the local faction in it and clears it again
+// when the vendetta answers an earlier request - the two accesses the image
+// makes through this address, and the only ones any homed body or archive
+// transcription shows. Defined in faction.cpp.
+extern int DiploRedrawFlag;  // 0x0074DA9C
+// Nonzero while the multiplayer window is up. treaty_on redraws the window
+// only through this gate; the interface handler at 0x0045D170 reads it to
+// decide between MultiWindow::hide and MultiWindow::show. Defined in
+// faction.cpp.
+extern int MultiWindowOpen;  // 0x007FE06C
+// The third per-(faction, faction) status view, 0x194 past the treaty view
+// SpyingStatusTable is the front of and 0x74 past its agenda view. Same
+// `faction_with + faction * SpyingStatusStride` indexing, same 2099 stride.
+// treaty_on zeroes both directions of it when a vendetta lands on top of a
+// live pact/treaty/truce; nothing homed reads it yet, so the name is the
+// role, not a catalogue label.
+uint32_t *const DiploVendettaTable = (uint32_t *)0x0096CB8C;
+// The sound ambience an event asks for by id. Declared here because
+// treaty_on is the homed caller that needs it; the body is still an
+// unrecovered pending_bodies forwarder.
+int __cdecl ambience(int ambience_id);
 
 void __cdecl psych_check(int faction_id, int *drones, int *talents);
 // `int`, not `uint32_t`, and the catalogue is the authority: the original
@@ -645,9 +667,13 @@ void __cdecl set_agenda(int faction_id, int faction_id_with, int agenda,
 // faction_with, treaty) moves `treaty` INTO the pair's status word,
 // treaty_off clears it; agenda_on/agenda_off the same for the agenda word.
 // DipEdit's UNK handlers and read_check drive all four from its checkboxes.
-// 0x0055B760 (treaty_off), defined in src/faction.cpp. 0x0055B870
-// (treaty_on), 0x0055BA80 and 0x0055B820 (the agenda pair) are still
-// pending_bodies forwarders.
+// 0x0055B760 (treaty_off), 0x0055B870 (treaty_on), 0x0055BA80 (agenda_on) and
+// 0x0055B820 (agenda_off) are all defined in src/faction.cpp.
+// NOTE ON THE CATALOGUE: 0x0055BA80 is `?agenda_on@@YAXHHH@Z` - three H - and
+// NOT a `set_agenda`; the catalogue's `?set_agenda@@YAXHHHH@Z` is the
+// four-argument set-or-clear at 0x0055BBA0, defined below. Naming 0x0055BA80
+// `set_agenda` would collide with that definition, which is why the writers
+// are spelled on/off here.
 void __cdecl treaty_on(int faction_id, int faction_id_with, int treaty);
 void __cdecl treaty_off(int faction_id, int faction_id_with, int treaty);
 void __cdecl agenda_on(int faction_id, int faction_id_with, int agenda);
