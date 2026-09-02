@@ -2202,7 +2202,7 @@ uint32_t __cdecl black_market(int energy) {
     uint32_t faction_id = (BaseCurrent())->faction_id_current;
     int dist_hq = 999;
     for (int i = 0; i < BaseCurrentCount; i++) { // modified version of vulnerable()
-        if (Bases[i].faction_id_current == faction_id && has_fac_built(FAC_HEADQUARTERS, i)) {
+        if (Bases[i].faction_id_current == faction_id && has_fac_built_call(FAC_HEADQUARTERS, i)) {
             // Open-coded vector_dist(x,y,a,b): the image calls abs() four
             // times, never vector_dist itself - see base_find (0x004E3D50)
             // for the same expansion. (BaseCurrent())->x/y are re-read here,
@@ -2454,6 +2454,12 @@ Purpose: Check what facility (if any) a base needs for additional population gro
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0050BA00
+// LEVER: both has_fac_built(FAC_HAB_COMPLEX/FAC_HABITATION_DOME, base_id)
+//        sites routed through has_fac_built_call (the same lever pop_goal,
+//        its twin below, already records) - the folded `MEASURED inline
+//        bitmask` turns the two tests into bare `test byte ptr`, where the
+//        image makes a real `call 0x50ba00` and keeps the offset/mask local
+//        pair. Compiled body 54 -> 81 instructions against the image's 102.
 Return Value: Facility id needed for pop growth or zero if base already has Hab Complex and Dome.
 Status: Complete
 */
@@ -2461,11 +2467,12 @@ int __cdecl pop_goal_fac(int base_id) {
     uint32_t faction_id = Bases[base_id].faction_id_current;
     uint32_t limit_mod = has_project(SP_ASCETIC_VIRTUES, faction_id) ? 2 : 0;
     int pop = Bases[base_id].population_size - limit_mod + Players[faction_id].rule_population;
-    if (pop >= (int)Rules.pop_limit_sans_hab_complex && !has_fac_built(FAC_HAB_COMPLEX, base_id)) {
+    if (pop >= (int)Rules.pop_limit_sans_hab_complex
+        && !has_fac_built_call(FAC_HAB_COMPLEX, base_id)) {
         return FAC_HAB_COMPLEX;
     }
-    if (pop >= (int)Rules.pop_limit_sans_hab_dome 
-        && !has_fac_built(FAC_HABITATION_DOME, base_id)) {
+    if (pop >= (int)Rules.pop_limit_sans_hab_dome
+        && !has_fac_built_call(FAC_HABITATION_DOME, base_id)) {
         return FAC_HABITATION_DOME;
     }
     return 0; // Pop hasn't reached capacity or Base already has Hab Complex and Dome
@@ -3130,6 +3137,15 @@ Purpose: Determine ideal non-offense (defense, combat, recon) unit count for the
 //        bitmask() half of the evidence (has_fac_built folding to a byte
 //        test) is the documented systemic gap - TRIED on has_fac
 //        base.cpp:104 - and not fixable here.
+// LEVER: that gap IS fixable here, for this one site - the FAC_HEADQUARTERS
+//        test has a LITERAL facility id, so routing it through
+//        has_fac_built_call forces the real `call 0x50ba00` the image makes
+//        (base_making/pop_goal/pop_goal_fac's lever). Compiled body
+//        159 -> 167 instructions against the image's 170, differing runs
+//        26 -> 19. NOTE the same lever is the WRONG way round in
+//        value_of_base (0x0054CB50): its `has_fac_built(fac, base_id)` has
+//        a RUNTIME fac, and forcing the call there costs 3 instructions and
+//        5 more differing runs - reverted.
 Return Value: Amount of non-offensive units needed (1-10)
 Status: Complete
 */
@@ -3144,7 +3160,7 @@ int __cdecl garrison_check(int base_id) {
         }
     }
     int garrison = (sp_count + 2) / 3 + (Bases[base_id].population_size + 1) / 4 + 1;
-    if (has_fac_built(FAC_HEADQUARTERS, base_id) || bit_at(x, y) & BIT_UNK_40000000
+    if (has_fac_built_call(FAC_HEADQUARTERS, base_id) || bit_at(x, y) & BIT_UNK_40000000
         || is_objective(base_id)) {
         garrison++;
     }
@@ -3227,13 +3243,18 @@ Purpose: Calculate how vulnerable the coordinates are for the specified faction 
 //        folding away the image's real bitmask() call) is the documented
 //        systemic gap - TRIED on has_fac base.cpp:104 - and not
 //        addressed here.
+// LEVER: that note is superseded - the FAC_HEADQUARTERS test has a LITERAL
+//        facility id, so routing it through has_fac_built_call (general.h
+//        bitmask_call) reaches the image's real `call 0x50ba00`. Compiled
+//        body 78 -> 92 instructions against the image's 96, differing runs
+//        21 -> 17 (listing_diff, /c /O2 /Oi- /Gy /GR- /Oy- /GX).
 Return Value: Radial distance between coordinates and faction's HQ or 12 if no HQ/bases
 Status: Complete
 */
 int __cdecl vulnerable(int faction_id, int x, int y) {
     int dist = 12; // default value for no bases or no HQ
     for (int i = 0; i < BaseCurrentCount; i++) {
-        if (Bases[i].faction_id_current == faction_id && has_fac_built(FAC_HEADQUARTERS, i)) {
+        if (Bases[i].faction_id_current == faction_id && has_fac_built_call(FAC_HEADQUARTERS, i)) {
             // Open-coded vector_dist(x, y, Bases[i].x, Bases[i].y): the
             // image calls abs() four times, never vector_dist itself - see
             // del_site (0x00579E70) and base_find(x,y) (0x004E3B80) for the
@@ -3262,6 +3283,7 @@ Purpose: Determine whether the specified base is considered an objective.
 // ORIGINAL: 0x005AC060 ?is_objective@@YAHH@Z 0x005AC060-0x005AC10B
 // TRIED: the image still boolifies the `facilities_built[offset] & mask` test with a `neg/sbb/neg` 0-or-1 materialization into the old base_id stack slot before the final `je`, where this tree emits a plain `test`; hoisting `has_fac_built_call(...)` into its own named `BOOL` local before the `if` did not reproduce it (same 43/64, 0.927) - VC6 still proves the value is only used for one branch and drops the materialization.
 // TRIED: `GameRules & X || Bases[base_id].event & Y` into two separate `if` statements (matching the image's two separate short-circuit branches instead of one `||`) moved 0.586 -> 0.762 similar. CORRECTION to the note this replaces: `calls agrees at exactly 1 (0x0050BA00, bitmask)` was wrong - the one call this tree made was to has_fac (out-of-line), not bitmask; the image inlines has_fac itself (its `cmp eax,0x41/jge` IS has_fac's own FacilityRepStart guard) and keeps ONLY the bitmask call inside that. Open-coding has_fac(ScnVictFacilityObj, base_id, 0) as its own `< FacilityRepStart` guard + has_fac_built() at the site removed the out-of-line has_fac call and moved best similarity 0.762 -> 0.783. `ScnVictFacilityObj` is a runtime facility id (read from a global, not a compile-time constant), so the folded `MEASURED inline bitmask` cannot constant-fold it away - routing it through `has_fac_built_call` (the real `bitmask()` call, same lever as cost_factor/pop_goal/num_objectives) reaches the call the image makes; call_diff agreed at 0/1 before, 1/1 after. Casting the `(int)ScnVictFacilityObj < FacilityRepStart` guard fixed a jge/jae signed-vs-unsigned split (ScnVictFacilityObj is uint32_t, compared unsigned without the cast). Moved 2/64 -> 43/64 agreeing, 0.586 -> 0.927 similar.
+// TRIED: rewriting base_project()'s loop as an explicit pointer walk (`for (int *p = &SecretProject.human_genome_project; p < ... + MaxSecretProjectNum; p++)`) - the image's `cmp eax,0x9a6614/jl` reads like one, but the explicit walk makes VC6 test the pointer UNSIGNED (`jb`, 42/64) while the INDEX loop keeps the signed `jl` through strength reduction and test replacement (43/64, agreeing on `jl` exactly). Open-coding the bitmask call at block scope (int mask; int offset; bitmask_call(...); Bases[..].facilities_built[offset] & mask) instead of via `has_fac_built_call` also loses the whole shape - `push ecx` becomes `sub esp,0xc` and the image's `neg/sbb/neg` boolification never appears. Residual (listing_diff, 2 runs): the image materializes the `& mask` test 0-or-1 into base_id's own dead argument slot ([ebp+8]) with offset at [ebp-4]; this tree's inline has_fac_built assigns offset->[ebp-4] and mask->[ebp+8], the mirror image, and no source form tried at this call site flips it.
 // size      171 bytes
 // prototype int (__cdecl ?is_objective@@YAHH@Z)(int baseID)
 // callers   14   call targets   1
@@ -3280,7 +3302,7 @@ BOOL __cdecl is_objective(int base_id) {
     }
     if (GameRules & RULES_SCN_VICT_SP_COUNT_OBJ) {
         for (int i = 0; i < MaxSecretProjectNum; i++) {
-            if (base_project(i) == (int)base_id) {
+            if (base_project(i) == base_id) {
                 return true;
             }
         }
@@ -3528,6 +3550,22 @@ Purpose: Determine if the facility is redundant due to a Secret Project counting
 //        call site, so each one folds to the fixed global the image reads
 //        (0x9a653c, 0x9a6528, ...), and if/else instead of switch avoids
 //        the jump table. Moved 11/61 (0.478) -> 16/61 (0.950).
+// TRIED: pulling the image's shared normalizing tail out (`test eax,eax / je
+//        / mov eax,1 / xor eax,eax` at 0x5ba0ce, jumped at by arm 0 and
+//        fallen into by arms 1-6) with three spellings - `return
+//        has_project(...) ? TRUE : FALSE;` per arm; a `BOOL built`
+//        accumulator assigned down one if/else-if chain with `return built ?
+//        TRUE : FALSE;` after; `BOOL built` per arm + `return built;`. ALL
+//        THREE lose VC6's inline expansion of has_project (a real `call` per
+//        arm, 49-119 instructions against the image's 61). Only the bare
+//        `return has_project(...)` keeps the body written out seven times,
+//        and that form returns the inlined `sete` straight away, so the
+//        image's re-normalize-through-a-branch tail never appears. Also
+//        measured: a `static __forceinline` twin of has_project is IGNORED
+//        by VC6 at every one of those call-site shapes (2, 3 and 7 arms)
+//        while the identical `static __forceinline` has_fac_built_call IS
+//        honoured in is_objective - the twin's own body calls a `MEASURED
+//        inline` (dllexport) function, which the other does not.
 Return Value: Is facility redundant? true/false
 Status: Complete
 */
