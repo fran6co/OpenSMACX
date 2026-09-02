@@ -2041,3 +2041,219 @@ Palette &Palette::copy_from(Palette *src) {
 
     return *this;
 }
+
+// THE INTERFACE TEXT COLOURS. One .bss run the boot fills by sampling
+// text.pcx: 0x008C6B5C through 0x008C6E68, 195 ints. The walk writes
+// p[-1] before it writes p[0], so the run starts one int below the lowest
+// table base the image names (0x008C6B60) and that lower edge is part of it.
+// Nothing else in the tree owns the run, and the two slots the centred-title
+// writers pass by name - TextColourTitleMain and TextColourTitleShadow at
+// 0x008C6E2C and 0x008C6E30, buffer.cpp - are its [180] and [181]: they were
+// homed before this run had a name, so both spellings point at the same image
+// storage and the build carries the two words twice. map.h's MandateColors,
+// the mandate row at 0x008C6DE4, is its [162] and is reached by address there.
+int TextColourTable[195];
+
+/*
+Purpose: Build the interface's text colours: load text.pcx into a scratch
+         buffer, publish its palette as the process palette, then sample the
+         swatch rows out of it two pixels at a time into TextColourTable.
+         Each colour lands as a pair - the pixel and, when that pixel is
+         palette index 9 (the transparent one), -1 in its place - and the
+         eleven groups cover the run from [1] to the end. The last group
+         samples three pixels a row and does no index-9 substitution.
+// ORIGINAL: 0x004BA220 ?textcolor_init@@YAXXZ 0x004BA220-0x004BA5B3;0x00659BD0-0x00659BE5 BYTE_EXACT
+// size      915 bytes
+// prototype void (__cdecl ?textcolor_init@@YAXXZ)(void)
+// callers   1   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D7210 0x005D7410 0x005D7DE0 0x005E2210 0x005FE460
+// LEVER: byte-exact, promoted from the src/recovered/units/004ba220.cpp
+//   archive unit. The bound is compared as an INT - `(int)p < (int)&...` -
+//   because a pointer comparison renders unsigned and VC6 emits `jb` where
+//   the image has `jl`. Every loop is a do-while, not a for: the image tests
+//   at the bottom with no guard jump in front of the first iteration. And the
+//   swatch is one array, not the archive's twelve separate symbols: a real
+//   array keeps both ends of every walk as `offset` relocations, where a
+//   `static int *const` spelling folds the address into the store and turns
+//   `mov [esi-4], eax` into `mov dword ptr [0x8c6b8c], eax`.
+// LEVER: the verdict is at /c /O2 /Ob0 /Gy /GR- /Oy- /GX, the one set of the
+//   twenty the ladder searches that reproduces the teardown. buffer.h defines
+//   `~Buffer()` in the class - MEASURED there, on ??1Buffer's own claim - so
+//   the /O2 sets expand it into four teardown instructions, `mov
+//   [ebp-0x594], 0` ahead of the `call 0x5d7410` the image makes, and 232/242
+//   agreeing is where that leaves an /O2 run. The image's compiler called the
+//   destructor out of line; ours, given the same header, does not.
+// TRIED: spelling that teardown by hand - raw storage, placement `new`, and a
+//   qualified `buf.Buffer::~Buffer()` - 9/242 under /O2: the storage lands at
+//   [ebp-0x59c] instead of [ebp-0x594] and every offset after it shifts.
+//   Reverted.
+// TRIED: `#pragma auto_inline(off)` around the `#include "buffer.h"` that
+//   defines the destructor - measured, no effect on the expansion. Reverted.
+Return Value: n/a
+Status: homed on this pass; its forwarder and its archive unit are gone.
+*/
+void __cdecl textcolor_init() {
+    Buffer buf;
+    int c;
+    int *p;
+    int y;
+
+    buf.load_pcx("text.pcx", 0, 0xa, 0xec);
+    g_PALETTE1.set();
+
+    y = 0x15;
+    p = &TextColourTable[13];
+    do {
+        c = buf.get_pixel(8, y);
+        p[-1] = c;
+        c = buf.get_pixel(0x12, y);
+        p[0] = c;
+        if (c == 9) {
+            p[0] = -1;
+        }
+        p += 2;
+        y += 0x10;
+    } while ((int)p < (int)&TextColourTable[31]);
+
+    y = 0x24;
+    p = &TextColourTable[83];
+    do {
+        c = buf.get_pixel(0xcd, y);
+        p[-1] = c;
+        c = buf.get_pixel(0xd7, y);
+        p[0] = c;
+        if (c == 9) {
+            p[0] = -1;
+        }
+        p += 2;
+        y += 0x10;
+    } while ((int)p < (int)&TextColourTable[141]);
+
+    y = 0x24;
+    p = &TextColourTable[141];
+    do {
+        c = buf.get_pixel(0x173, y);
+        p[-1] = c;
+        c = buf.get_pixel(0x17d, y);
+        p[0] = c;
+        if (c == 9) {
+            p[0] = -1;
+        }
+        p += 2;
+        y += 0x10;
+    } while ((int)p < (int)&TextColourTable[163]);
+
+    y = 0x24;
+    p = &TextColourTable[181];
+    do {
+        c = buf.get_pixel(0x234, y);
+        p[-1] = c;
+        c = buf.get_pixel(0x23e, y);
+        p[0] = c;
+        if (c == 9) {
+            p[0] = -1;
+        }
+        p += 2;
+        y += 0x10;
+    } while ((int)p < (int)&TextColourTable[195]);
+
+    y = 0xb0;
+    p = &TextColourTable[69];
+    do {
+        c = buf.get_pixel(0x232, y);
+        p[-1] = c;
+        c = buf.get_pixel(0x23c, y);
+        p[0] = c;
+        if (c == 9) {
+            p[0] = -1;
+        }
+        p += 2;
+        y += 0x10;
+    } while ((int)p < (int)&TextColourTable[83]);
+
+    y = 0x25;
+    p = &TextColourTable[163];
+    do {
+        c = buf.get_pixel(0x2ce, y);
+        p[-1] = c;
+        c = buf.get_pixel(0x2d8, y);
+        p[0] = c;
+        if (c == 9) {
+            p[0] = -1;
+        }
+        p += 2;
+        y += 0x10;
+    } while ((int)p < (int)&TextColourTable[171]);
+
+    y = 0xbe;
+    p = &TextColourTable[31];
+    do {
+        c = buf.get_pixel(7, y);
+        p[-1] = c;
+        c = buf.get_pixel(0x11, y);
+        p[0] = c;
+        if (c == 9) {
+            p[0] = -1;
+        }
+        p += 2;
+        y += 0x10;
+    } while ((int)p < (int)&TextColourTable[39]);
+
+    y = 0x126;
+    p = &TextColourTable[39];
+    do {
+        c = buf.get_pixel(6, y);
+        p[-1] = c;
+        c = buf.get_pixel(0x10, y);
+        p[0] = c;
+        if (c == 9) {
+            p[0] = -1;
+        }
+        p += 2;
+        y += 0x10;
+    } while ((int)p < (int)&TextColourTable[51]);
+
+    y = 0x11e;
+    p = &TextColourTable[171];
+    do {
+        c = buf.get_pixel(0x175, y);
+        p[-1] = c;
+        c = buf.get_pixel(0x17f, y);
+        p[0] = c;
+        if (c == 9) {
+            p[0] = -1;
+        }
+        p += 2;
+        y += 0x10;
+    } while ((int)p < (int)&TextColourTable[181]);
+
+    y = 0x19e;
+    p = &TextColourTable[1];
+    do {
+        c = buf.get_pixel(0x175, y);
+        p[-1] = c;
+        c = buf.get_pixel(0x17f, y);
+        p[0] = c;
+        if (c == 9) {
+            p[0] = -1;
+        }
+        p += 2;
+        y += 0x10;
+    } while ((int)p < (int)&TextColourTable[13]);
+
+    y = 0x1a4;
+    p = &TextColourTable[51];
+    do {
+        c = buf.get_pixel(8, y);
+        p[-1] = c;
+        c = buf.get_pixel(0x12, y);
+        p[0] = c;
+        c = buf.get_pixel(0x1c, y);
+        p[1] = c;
+        p += 3;
+        y += 0x10;
+    } while ((int)p < (int)&TextColourTable[69]);
+}
+

@@ -1335,9 +1335,9 @@ int __cdecl system_init() {
         console_window += reinterpret_cast<int *>(
             *reinterpret_cast<int **>(&ConsoleGlobal))[1];
     }
-    multidebug_init(reinterpret_cast<MultiDebug *>(&WinBubbleWindow),
-                    &NetDaemonNet, reinterpret_cast<Win *>(console_window),
-                    &MultiDebugText);
+    reinterpret_cast<MultiDebug *>(&WinBubbleWindow)
+        ->init(&NetDaemonNet, reinterpret_cast<Win *>(console_window),
+               &MultiDebugText);
 
     messagewin_init(reinterpret_cast<MessageWin *>(0x007F67F8));
     datalink_init(&DatalinkMain);
@@ -1425,6 +1425,41 @@ int __cdecl game_init(int mode, int reload) {
     WinMaximizeIcon = 0x0075AE78;
     WinMinimizeIcon = 0x0075AE20;
     return 0;
+}
+
+/*
+Purpose: Load the art that never changes between games: the palette, the
+         miscellaneous bitmaps, the interface sprites (mode 0), the voxels,
+         the Deswin sprites, the colour tables, and the cycling palette, in
+         that order. system_init's only art step; the per-game art load is
+         game_init's load_sprites.
+// ORIGINAL: 0x00455E80 ?load_fixed_sprites@@YAXXZ 0x00455E80-0x00455EA8 BYTE_EXACT
+// size      40 bytes
+// prototype void (__cdecl ?load_fixed_sprites@@YAXXZ)(void)
+// callers   1   call targets   6
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00423570 0x00451030 0x00451A10 0x00454D10 0x00455610 0x00455E50
+// tail      0x00455400 - load_cycling, the image's closing `jmp`, which a
+//           void function's last statement compiles the same way
+// LEVER: byte-exact, promoted from the src/recovered/00455e80.cpp archive
+//   unit. Nothing to it but the order: seven calls, six of them `call rel32`
+//   and the last a tail `jmp`, which is what `load_cycling();` in tail
+//   position compiles to for a void callee.
+Return Value: n/a
+Status: homed on this pass; its forwarder and its archive unit are gone. Six
+        of its seven callees were declared nowhere in the tree, so the
+        forwarders that carry them arrived with this body (game.h); the
+        seventh was already compiled under a seam name.
+*/
+void __cdecl load_fixed_sprites() {
+    load_palette();
+    load_misc();
+    load_interface(0);
+    load_voxels();
+    load_deswin_sprites();
+    colortables_init();
+    load_cycling();
 }
 
 /*

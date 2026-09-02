@@ -66,4 +66,5 @@ typedef Buffer *(__fastcall func_leaf_buffer_ctor)(Buffer *, void *);
 typedef void(__fastcall func_leaf_buffer_dtor)(Buffer *, void *);
 extern func_leaf_buffer_ctor *LeafBufferConstruct;
 extern func_leaf_buffer_dtor *LeafBufferDestruct;
-void __cdecl leaf_00455e50_redirect();
+// 0x00455E50 ?load_deswin_sprites@@YAXXZ, homed under its own image name.
+void __cdecl load_deswin_sprites();

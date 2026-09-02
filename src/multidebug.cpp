@@ -21,7 +21,7 @@
 
 /*
 Purpose: Construct the GraphicWin base, the embedded Font and Time, then
-         install MultiDebug's own vtables and zero the flag field.
+         install MultiDebug's own vtables and zero the session pointer.
 // ORIGINAL: 0x005C97F0 ??0MultiDebug@@QAE@XZ 0x005C97F0-0x005C9860;0x00662AF0-0x00662B10 BYTE_EXACT
 // LEVER: `new (&font_) Font(); new (&timer_) Time();` - a `new`-expression, not the member-function-call syntax used elsewhere (MCIVideo's Palette) - is what picks up the image's SEH frame here; the member-call-syntax spelling compiled with NO frame at all (0/28 agreeing, diverging at instruction 0).
 // size      112 bytes
@@ -34,7 +34,7 @@ Return Value: n/a
 Status: Complete
 */
 MultiDebug::MultiDebug() {
-    field_A3C_ = 0;
+    net_ = 0;
 }
 
 /*
@@ -50,7 +50,56 @@ Return Value: n/a
 Status: Complete
 */
 void MultiDebug::close() {
-    field_A3C_ = 0;
+    net_ = 0;
+}
+
+/*
+Purpose: Bring the standing debug window up on its GraphicWin base, then
+         arm the pieces that make it a debug window: the face it draws with,
+         the text buffer it shows, and the once-a-second tick that drives it.
+         Returns GraphicWin::init's verdict; nothing else here can fail.
+// ORIGINAL: 0x005C9860 ?init@MultiDebug@@QAEHPAUNet@@PAUWin@@PAE@Z 0x005C9860-0x005C98DB BYTE_EXACT
+// symbol    ?init@MultiDebug@@QAEHPAVNet@@PAVWin@@PAE@Z
+//   the catalogue's own spelling: both Net and Win are `class`, so the tree
+//   emits `PAV` for each, where the forwarder's annotation had carried the
+//   `PAU` of a `struct`. Recorded here so the claim follows the symbol.
+// size      123 bytes
+// prototype int (__thiscall ?init@MultiDebug@@QAEHPAUNet@@PAUWin@@PAE@Z)(MultiDebug* this, Net*, Win*, unsigned char*)
+// callers   1   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D4EF0 0x005D5250 0x00616350 0x00618F40
+// LEVER: byte-exact, promoted from the src/unrecovered/005c9860.cpp archive
+//   unit, whose `GraphicWinInitShim` is gone with it: graphicwin.h declares
+//   `init` returning `int`, so the base call names the base directly. The two
+//   stores the image sinks into its calls' argument setup - `net_` ahead of
+//   the GraphicWin::init call, the text pointer ahead of Font::init - are
+//   plain member stores in source order; VC6 places them, the source does not.
+Return Value: GraphicWin::init's, which is 0 when the window came up.
+Status: homed on this pass; its forwarder and its archive unit are gone, and
+        the `multidebug_init` free-function shape in game.h went with them.
+*/
+int MultiDebug::init(Net *net, Win *window, unsigned char *text) {
+    net_ = net;
+    int const result =
+        GraphicWin::init(0, 0, 0x96, 0x12c, 0, 0x1000002, window, 0, 0);
+    if (result != 0) {
+        return result;
+    }
+    // The text buffer lives in Win::field_A0_, one word the rest of Win
+    // treats as storage; see the base class for why it is not typed.
+    field_A0_ = reinterpret_cast<uint32_t>(text);
+    font_.init("Times New Roman", 0xa, 0);
+    fill(0);
+    // The tick is passed as the bare `void (__cdecl *)(int)` that
+    // Time::start takes, and the function it names is this class's own
+    // `void __cdecl` member - so its address is a pointer-to-member and
+    // VC6 refuses every conversion to a plain function pointer (C2440,
+    // measured on both the `reinterpret_cast` and the C-style cast). The
+    // address is spelled directly instead; it is the member above.
+    timer_.start(reinterpret_cast<void (__cdecl *)(int)>(0x005C9900),
+                 reinterpret_cast<int>(this), 0x3e8, 5);
+    return 0;
 }
 
 

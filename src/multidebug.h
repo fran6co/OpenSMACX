@@ -20,6 +20,8 @@
 #include "font.h"
 #include "time.h"
 
+class Net;
+
  /*
   * MultiDebug class
   *
@@ -28,7 +30,7 @@
   * inferred from the call alone - four headers here previously declared a
   * base that was really a member at a nonzero offset.
   *
-  * GraphicWin is pinned at 0xA14, which fixes the origin for the one field
+  * GraphicWin is pinned at 0xA14, which fixes the origin for the two fields
   * below. Where the object ends is not established.
   */
 class MultiDebug : public GraphicWin {
@@ -43,13 +45,19 @@ class MultiDebug : public GraphicWin {
   // nothing and the deleting destructor needs a `call rel32`.
   ~MultiDebug();
   void close();
+  // Bring the debug window up on its GraphicWin base: 0x96 by 0x12c in the
+  // parent given, style 0x1000002, then the face, the text buffer and the
+  // once-a-second tick. `net` is remembered here and cleared by close, which
+  // is what says the window belongs to one network session.
+  int init(Net *net, Win *window, unsigned char *text);
 
  private:
   Font font_;  // 0xA14, the IDB's 40-byte member covering 0xA14..0xA3C
-  int32_t field_A3C_;  // 0xA3C
+  Net *net_;   // 0xA3C, the IDB's field_A3C: zeroed by the constructor and
+               // by close, set to the session by init
   // The constructor places a Time HERE (`lea ecx,[esi+0xa40]; call
-  // ??0Time@@QAE@XZ`), right after field_A3C_, before ever storing to
-  // field_A3C_ itself - see MultiDebug::construct() in multidebug.cpp.
+  // ??0Time@@QAE@XZ`), right after net_, before ever storing to net_
+  // itself - see MultiDebug::construct() in multidebug.cpp.
   Time timer_;  // 0xA40
 };
 
