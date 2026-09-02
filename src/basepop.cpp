@@ -924,21 +924,18 @@ __forceinline int __cdecl BasePop::set_def_cancel_text(LPSTR text) {
 Status: Complete
 */
 int __cdecl BasePop::init_class() {
-    const Font *const base = FontDefault;
-    *reinterpret_cast<Font **>(&BasePopDefaultStringFonts[0]) = const_cast<Font *>(base);
-    *reinterpret_cast<Font **>(&BasePopDefaultButtonFonts[0]) = const_cast<Font *>(base);
+    BasePopDefaultStringFonts[0] = FontDefault;
+    BasePopDefaultButtonFonts[0] = FontDefault;
 
-    set_def_cancel_text(const_cast<LPSTR>("Cancel"));
-    set_def_ok_text(const_cast<LPSTR>("OK"));
+    set_def_cancel_text("Cancel");
+    set_def_ok_text("OK");
 
-    BasePop *const r1 = PopupAllocHook();
-    PopupInstanceSlotA = reinterpret_cast<Win *>(r1);
-    if (r1 == 0) {
+    PopupInstanceSlotA = PopupAllocHook();
+    if (PopupInstanceSlotA == 0) {
         return 4;
     }
-    BasePop *const r2 = PopupAllocHook();
-    PopupInstanceSlotB = reinterpret_cast<Win *>(r2);
-    return r2 ? 0 : 4;
+    PopupInstanceSlotB = PopupAllocHook();
+    return PopupInstanceSlotB ? 0 : 4;
 }
 /*
 Purpose: The BasePop constructor. The base GraphicWin and the Heap, two

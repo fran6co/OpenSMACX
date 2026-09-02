@@ -234,8 +234,7 @@ int __cdecl FileWin::init_class() {
         free(s_filewin_text_ptr);
         s_filewin_text_ptr = nullptr;
     }
-    if (text_open(const_cast<char *>(kFileWinTextName),
-                  const_cast<char *>(kFileWinSection)) != 0) {
+    if (text_open(kFileWinTextName, kFileWinSection) != 0) {
         return 6;
     }
     char *str = text_get();

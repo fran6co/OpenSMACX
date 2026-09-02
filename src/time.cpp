@@ -908,7 +908,7 @@ Return Value: 0, always
 Status: Complete
 */
 int __cdecl Time::init_class() {
-    TimeInitCount = static_cast<int>(static_cast<uint32_t>(TimeInitCount) + 1U);
+    TimeInitCount = TimeInitCount + 1;
     return 0;
 }
 

@@ -49,7 +49,7 @@ BOOL Strings::init(size_t mem_size) {
     // strlen/Heap::get/strcpy, spelled out. Both keep their own out-of-line
     // BYTE_EXACT claims at 0x00616950 and 0x00616970.
     if (is_populated_) {
-        Heap::~Heap();
+        shutdown();
         is_populated_ = false;
     }
     if (Heap::init(mem_size)) {
