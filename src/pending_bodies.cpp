@@ -1459,12 +1459,25 @@ int UV2Player::exec(char *movie_file, int width, int height, int flags) {
                                              height, flags);
 }
 
-// ?check_for_lobby@Net@@QAEHPADPAU_GUID@@HH@Z at 0x0062D9E0
-int Net::check_for_lobby(char *app_name, _GUID *guid, int option_a,
-                         int option_b) {
-    typedef int(__fastcall *pending)(Net *, void *, char *, _GUID *, int, int);
-    return PENDING_BODY(0x0062D9E0, pending)(this, nullptr, app_name, guid,
-                                             option_a, option_b);
+// ?check_for_lobby@Net@@QAEHPADPAU_GUID@@HH@Z at 0x0062D9E0 - homed into
+// net_class.cpp, so the forwarder that stood here is gone.
+
+// ?init@Net@@QAEHPAU_GUID@@HH@Z at 0x0062D8E0 - unrecovered; check_for_lobby
+// opens with it.
+int Net::init(_GUID *guid, int option_a, int option_b) {
+    typedef int(__fastcall *pending)(Net *, void *, _GUID *, int, int);
+    return PENDING_BODY(0x0062D8E0, pending)(this, nullptr, guid, option_a,
+                                             option_b);
+}
+
+// ?join_session@Net@@QAEHPAUSessionStruct@@PADPAD@Z at 0x0062E540 -
+// unrecovered; check_for_lobby hands the lobby's session to it.
+int Net::join_session(struct SessionStruct *session, char *player_name,
+                      char *address) {
+    typedef int(__fastcall *pending)(Net *, void *, SessionStruct *, char *,
+                                     char *);
+    return PENDING_BODY(0x0062E540, pending)(this, nullptr, session,
+                                             player_name, address);
 }
 
 // ?init@FX@@QAEXXZ at 0x00445CD0

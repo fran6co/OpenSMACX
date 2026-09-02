@@ -331,7 +331,14 @@ SCAFFOLD_CEILINGS = {
     # EditGroup::edit; the merged tree's own census then retired the duplicated
     # treaty_on forwarder and the three apply_* seams whose addresses the UNK
     # batch had already homed as claimed UNK2-4 bodies.
-    "PENDING_BODY forwarders": 216,
+    # 216 -> 217 (2026-09-03, Net::check_for_lobby homed into net_class.cpp):
+    # the check_for_lobby forwarder retired, but the body's first callee
+    # (Net::init, 0x0062D8E0) and its last (Net::join_session, 0x0062E540) are
+    # both unrecovered, so homing the one body put TWO new forwarders on the
+    # frontier - a net +1. Both were already archived (0062d8e0.cpp,
+    # 0062e540.cpp) with no compiled caller; naming them is what lets the homed
+    # body emit the image's own `E8`.
+    "PENDING_BODY forwarders": 217,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -368,7 +375,12 @@ SCAFFOLD_CEILINGS = {
     # DUPLICATE apiece.
     # 1675 -> 1670 (2026-09-02, DipEdit UNK1-4 batch): 004da760/004da7e0/
     # 004da870/004da900.cpp homed BYTE_EXACT into src/dipedit.cpp.
-    "unrecovered files": 1666,
+    # 1666 -> 1665 (2026-09-03, Net::check_for_lobby): 0062d9e0.cpp deleted
+    # with the body it drafted, homed into src/net_class.cpp as the DirectPlay
+    # lobby probe - honest MISMATCH 20/432, the residual documented on the
+    # marker (VC6 merges the three bare returns; the DP struct store order is
+    # scheduler output, not source order).
+    "unrecovered files": 1665,
     "hypothesis_layouts.h lines": 2723,
 }
 

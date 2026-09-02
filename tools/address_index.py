@@ -121,7 +121,12 @@ FLOORS = {
     # (14/31) already plateaued on - a batch of its own, not a side effect of
     # recovering DipEdit. treaty_on (0x0055B870) is the fifth callee and is
     # NOT counted here: its archive holds no claim.
-    "archive-only-forwarder": 4,
+    # 4 -> 3 (2026-09-03, Net::check_for_lobby): 0x0062D9E0 was the fourth -
+    # its claim lived in src/unrecovered/0062d9e0.cpp and the pending_bodies
+    # forwarder was the only definition the build had. The body is now homed
+    # into src/net_class.cpp (honest MISMATCH, residual documented on the
+    # marker) and both the forwarder and the archive are gone.
+    "archive-only-forwarder": 3,
     "unknown-host-files": 0,
 }
 

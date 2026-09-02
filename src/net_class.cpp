@@ -25,6 +25,24 @@
 #include "wave.h"
 #include "wave_device.h"
 #include "sounddevice.h"
+#include "general.h"  // mem_get, for the lobby's address and session buffers
+
+// The lobby probe's DirectPlay types and import. The image really does import
+// DirectPlayLobbyCreateA from DPLAYX.DLL, so the link input belongs beside the
+// only translation unit that names it - a `#pragma comment` here rather than a
+// `target_link_libraries` entry, which this file cannot reach.
+#include <dplobby.h>
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+#pragma comment(lib, "dplayx.lib")
+#endif
+
+// 0x697548 - the application GUID the lobby session registers under, read out
+// four dwords at a time into session.guidInstance. It holds the same
+// {02D1B480-D680-11D0-821E-44454F5454} that control_game passes in as `guid`
+// and that game.cpp keeps its own copy of, so it is spelled once more here
+// rather than shared: game.cpp's is file-local and this one is too.
+static const GUID NetLobbyAppGuid = {
+    0x02D1B480, 0xD680, 0x11D0, {0x82, 0x1E, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}};
 
 // 0x00401BE0, recovered in src/leaf_recoveries.cpp. Declared here so
 // Net::~Net reaches it with the image's own `call rel32` at 0x004E353A
@@ -623,6 +641,286 @@ int Net::get(unsigned long *a, unsigned long *b) {
             return result ? reinterpret_cast<int>(&NetGetScratch) : 0;
         }
     }
+    return 0;
+}
+
+/*
+Purpose: Probe the DirectPlay lobby for a connection the command line asked
+         for, and hand it to the session layer when there is one.
+
+         `/net h` hosts, `/net j` joins, `/net n <name>` names the player and
+         `/net tcp <address>` names the host to dial. Everything below the
+         option walk is IDirectPlayLobbyA: DirectPlayLobbyCreateA builds the
+         lobby, SetConnectionSettings hands it a DPLCONNECTION (an embedded
+         DPSESSIONDESC2 plus a DPNAME), GetConnectionSettings reads it back
+         sized to DPERR_BUFFERTOOSMALL, and Connect brings up IDirectPlay2A -
+         which lands in the 0x9BE600 word every other Net entry point tests as
+         the "net play is live" flag.
+
+// ORIGINAL: 0x0062D9E0 ?check_for_lobby@Net@@QAEHPADPAU_GUID@@HH@Z 0x0062D9E0-0x0062DF16
+// symbol    ?check_for_lobby@Net@@QAEHPADPAU_GUID@@HH@Z
+// size      1334 bytes
+// prototype int (__thiscall ?check_for_lobby@Net@@QAEHPADPAU_GUID@@HH@Z)(Net* this, char*, _GUID*, int, int)
+// callers   1   call targets   11
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x0062D8E0 0x0062E010 0x0062E540 0x00644EF2 0x006453E0 0x00645470 0x00645DD0 0x006468D0 0x006474A0 0x00650208
+// indirect  0x0062DCAB 0x0062DD24 0x0062DD67 0x0062DDB9 0x0062DDCA 0x0062DE13 0x0062DE46 0x0062DE5B 0x0062DE73 0x0062DE91 0x0062DEBC
+//
+// The 0x6717C0/0x6717D0/0x6717E0 the image pushes are dxguid's
+// IID_IDirectPlay2A / DPAID_INet / DPSPGUID_TCPIP, and 0x697548 is its own
+// copy of the application GUID control_game passes in as `guid`. 0x697568 and
+// 0x69756c are the literals "tcp" and "0123456789". DirectPlayLobbyCreateA is
+// a real DPLAYX.DLL import, so this file carries the
+// `#pragma comment(lib, "dplayx.lib")` that names it - the one link input this
+// tree cannot reach from CMakeLists.txt.
+//
+// 0x9BE600 is the same word net_class.h binds as `NetEnabled`; QueryInterface
+// fills it with the IDirectPlay2A and every other Net entry point then tests
+// it as the "net play is live" flag, so `(void **)NetEnabled` - the pointer
+// VALUE, not the address of the binding - is what reproduces the image's
+// `push 0x9be600`.
+//
+// LEVER: the option walk is a `switch`, not an if/else chain - and that is not
+//        a style choice. The switch is what makes VC6 promote the case value
+//        through `movsx` and emit the image's own `sub eax,0x68 / sub eax,2 /
+//        sub eax,4` chain; the if/else spelling gave `mov al,[esi+1] /
+//        cmp al,0x68`. The switch ALSO flips VC6's register assignment so
+//        `this` lands in EDI instead of ESI, which is what frees ESI for the
+//        address buffer and drops the frame back to the image's 0x298.
+// LEVER: `player_name` and `net_address` are BOTH 0x100 - the two buffers sit
+//        at 0xA8 and 0x1A8 and the frame total is 0x298, so the first guess of
+//        0xF0 for the second was wrong by exactly the padding it seemed to
+//        explain.
+// LEVER: the lobby-address local and the session buffer are TWO variables, not
+//        one reused. As one long-lived `address` VC6 gave it a stack slot and
+//        every struct offset shifted by 4; split, each fits the register the
+//        image uses.
+// LEVER: the strings "tcp"/"0123456789", the DP* structs out of <dplobby.h>
+//        and the two `strchr(app_name, '/')` calls - the image really does
+//        call it twice with the same arguments, the first result discarded.
+// TRIED: an if/else chain instead of the switch - `this` moved to ESI, the
+//        address buffer to the stack, frame 0x28C, 12 of 432 agreeing.
+// TRIED: declaring `host_mode`/`lobby`/`address` before the `init` call - the
+//        prologue then zeroed them before the call, where the image zeroes
+//        them after; moved after and the first 16 instructions agree.
+// TRIED: `char *address` declared without an initialiser and zeroed at the
+//        DirectPlayLobbyCreateA call - 16 of 432, worse.
+// TRIED: `session`/`name`/`connection` assignment order in all five
+//        permutations (name,session,conn / sess,name,conn / conn,sess,name /
+//        sess,conn,name / guidInstance first) - 20 of 432 for every one. The
+//        interleaved store order the image shows is VC6's scheduler over the
+//        hoisted GUID loads, not source order.
+// TRIED: dropping the `goto`/`fail:` label and nesting the five late failure
+//        conditions - 20 of 432, unchanged. The merge is not caused by the
+//        label.
+// TRIED: `dwFlags != DPOPEN_JOIN` for the session's status test - the image
+//        compares with 2, so it is `!= DPOPEN_CREATE`.
+//
+// THE RESIDUAL. MISMATCH 20 of 432, and it is two things, not a transcription
+// error:
+//  1. VC6 merges this body's three BARE `return 0`s into one block at the tail
+//     (each is then a 6-byte `jne`), where the image writes all eight
+//     epilogues out inline and branches over them with a 2-byte `je`. Probed
+//     against four synthetic bodies - a cdecl free function, a __thiscall
+//     member with a 0x200 frame, a 4-callee-saved-register member with a
+//     switch and eight returns - and VC6 replicated the epilogues in every
+//     one, so the trigger is in this body's shape and not in the flag set.
+//     Everything after instruction 16 then aligns at a fixed +8 offset.
+//  2. The 25 DPSESSIONDESC2/DPNAME/DPLCONNECTION field stores are emitted in a
+//     different permutation (every offset otherwise identical). See the TRIED
+//     line above: not reachable from assignment order.
+Return Value: 1 joined, 2 hosting, 0 on any failure or no lobby request
+Status: Homed from src/unrecovered/0062d9e0.cpp. MISMATCH - see THE RESIDUAL.
+*/
+int Net::check_for_lobby(char *app_name, _GUID *guid, int option_a,
+                         int option_b) {
+    if (init(guid, option_a, option_b) != 0) {
+        return 0;
+    }
+
+    int host_mode = 0;
+    IDirectPlayLobby *lobby = 0;
+    unsigned long address_size;
+    IDirectPlay2 *direct_play;
+    DPLCONNECTION connection;
+    DPNAME name;
+    DPSESSIONDESC2 session;
+    char net_address[0x100];
+    char player_name[0x100];
+    char *cursor;
+    char *buffer;
+    int status;
+
+    if (app_name != 0) {
+        field_44_ = option_b;
+        if (strchr(app_name, '/') != 0) {
+            cursor = strchr(app_name, '/');
+            do {
+                switch (*++cursor) {
+                case 'h':
+                    host_mode = 1;
+                    break;
+                case 'j':
+                    host_mode = 0;
+                    break;
+                case 'n':
+                    ++cursor;
+                    char *end = strchr(cursor, ' ');
+                    player_name[0] = '\0';
+                    if (end != 0) {
+                        *end = '\0';
+                        strcat(player_name, cursor);
+                        *end = ' ';
+                    } else {
+                        strcat(player_name, cursor);
+                    }
+                    break;
+                }
+                cursor = strchr(cursor, '/');
+            } while (cursor != 0);
+
+            if (host_mode == 0) {
+                char *tcp = strstr(app_name, "tcp");
+                if (tcp == 0) {
+                    goto have_lobby;
+                }
+                tcp += strcspn(tcp, "0123456789");
+                char *end = strchr(tcp, ' ');
+                net_address[0] = '\0';
+                if (end != 0) {
+                    *end = '\0';
+                    strcat(net_address, tcp);
+                    *end = ' ';
+                } else {
+                    strcat(net_address, tcp);
+                }
+            }
+
+            char *address = 0;
+            DirectPlayLobbyCreateA(0, &lobby, 0, 0, 0);
+
+            name.dwSize = sizeof(DPNAME);
+            name.dwFlags = 0;
+            name.lpszShortNameA = player_name;
+            name.lpszLongNameA = player_name;
+
+            session.dwSize = sizeof(DPSESSIONDESC2);
+            session.dwFlags = DPSESSION_MIGRATEHOST;
+            session.guidInstance = NetLobbyAppGuid;
+            session.guidApplication = *guid;
+            session.dwMaxPlayers = 7;
+            session.dwCurrentPlayers = 0;
+            session.lpszSessionNameA = 0;
+            session.lpszPasswordA = 0;
+            session.dwReserved1 = 0;
+            session.dwReserved2 = 0;
+            session.dwUser1 = option_b;
+            session.dwUser2 = 0;
+            session.dwUser3 = 0;
+            session.dwUser4 = 0;
+
+            connection.dwSize = sizeof(DPLCONNECTION);
+            connection.dwFlags = host_mode != 0 ? DPOPEN_CREATE : DPOPEN_JOIN;
+            connection.lpSessionDesc = &session;
+            connection.lpPlayerName = &name;
+            connection.guidSP = DPSPGUID_TCPIP;
+
+            if (host_mode == 0) {
+                if (lobby->CreateAddress(DPSPGUID_TCPIP, DPAID_INet,
+                                         net_address, strlen(net_address) + 1,
+                                         0, &address_size)
+                    != DPERR_BUFFERTOOSMALL) {
+                    return 0;
+                }
+                address = static_cast<char *>(mem_get(address_size));
+                if (address == 0) {
+                    close();
+                    return 0;
+                }
+                if (lobby->CreateAddress(DPSPGUID_TCPIP, DPAID_INet,
+                                         net_address, strlen(net_address) + 1,
+                                         address, &address_size)
+                    != 0) {
+                    close();
+                    return 0;
+                }
+                connection.lpAddress = address;
+                connection.dwAddressSize = address_size;
+            } else {
+                connection.lpAddress = 0;
+                connection.dwAddressSize = 0;
+            }
+
+            lobby->SetConnectionSettings(0, 0, &connection);
+            if (address != 0) {
+                free(address);
+            }
+        }
+    }
+
+have_lobby:
+    if (lobby == 0) {
+        if (DirectPlayLobbyCreateA(0, &lobby, 0, 0, 0) != 0) {
+            close();
+            return 0;
+        }
+    }
+
+    if (lobby->GetConnectionSettings(0, 0, &address_size)
+        != DPERR_BUFFERTOOSMALL) {
+        lobby->Release();
+        close();
+        return 0;
+    }
+
+    buffer = static_cast<char *>(mem_get(address_size));
+    if (buffer == 0) {
+        return 0;
+    }
+
+    if (lobby->GetConnectionSettings(0, buffer, &address_size) == 0) {
+        status = reinterpret_cast<DPLCONNECTION *>(buffer)->dwFlags
+                     != DPOPEN_CREATE
+                     ? DPOPEN_CREATE
+                     : DPOPEN_JOIN;
+        if (reinterpret_cast<DPLCONNECTION *>(buffer)->lpSessionDesc != 0) {
+            reinterpret_cast<DPLCONNECTION *>(buffer)->lpSessionDesc->dwFlags =
+                DPSESSION_MIGRATEHOST;
+            reinterpret_cast<DPLCONNECTION *>(buffer)->lpSessionDesc
+                ->dwMaxPlayers = 7;
+            if (lobby->SetConnectionSettings(
+                    0, 0, reinterpret_cast<DPLCONNECTION *>(buffer)) == 0) {
+                if (lobby->Connect(0, &direct_play, 0) == 0) {
+                    if (direct_play->QueryInterface(IID_IDirectPlay2A,
+                                                    (void **)NetEnabled)
+                        == 0) {
+                        field_1C_ = *NetEnabled;
+                        direct_play->Release();
+                        direct_play = 0;
+                        if (status == 1) {
+                            voice_flags_D8_ |= 0x10000;
+                        } else {
+                            voice_flags_D8_ |= 0x20000;
+                        }
+                        join_session(
+                            0,
+                            reinterpret_cast<DPLCONNECTION *>(buffer)
+                                ->lpPlayerName->lpszShortNameA,
+                            0);
+                        free(buffer);
+                        return status;
+                    }
+                }
+            }
+        }
+    }
+
+    if (lobby != 0) {
+        lobby->Release();
+    }
+    free(buffer);
+    close();
     return 0;
 }
 
