@@ -222,24 +222,36 @@ void __cdecl system_close();
 // boot bodies emit the image's `call rel32`. Arities are the mangled names'
 // and the call sites'.
 //
-// The six `...Init` shapes are MEMBER functions - `MainInterface::init`,
-// `BattleWin::init`, `Console::init`, `MultiDebug::init`, `MessageWin::init`
-// and `Datalink::init` - spelled here as free functions with the receiver as
-// their first `__fastcall` parameter, which is the one spelling that puts the
-// receiver in `ecx` and keeps the image's `mov ecx, imm32; call rel32` pair.
-// The member declarations belong in maininterface.h / battlewin.h / console.h
-// / multidebug.h / messagewin.h / datalink.h, none of which this batch owns;
-// when they land, delete the shape here and call the member directly.
+// The five `...Init` shapes are MEMBER functions - `MainInterface::init`,
+// `BattleWin::init`, `Console::init`, `MessageWin::init` and `Datalink::init`
+// - spelled here as free functions with the receiver as their first
+// `__fastcall` parameter, which is the one spelling that puts the receiver in
+// `ecx` and keeps the image's `mov ecx, imm32; call rel32` pair. The member
+// declarations belong in maininterface.h / battlewin.h / console.h /
+// messagewin.h / datalink.h, none of which this batch owns; when they land,
+// delete the shape here and call the member directly. MultiDebug::init was
+// the first to go this way (multidebug.h, this batch).
 void __cdecl load_sprites();                       // ?load_sprites@@YAXXZ
 void __cdecl load_fixed_sprites();                 // ?load_fixed_sprites@@YAXXZ
 void __cdecl textcolor_init();                     // ?textcolor_init@@YAXXZ
+// The fixed-art load itself. Six of the seven are still original bodies
+// reached through pending_bodies.cpp forwarders - declared nowhere before
+// load_fixed_sprites landed, so the forwarders came with it. The seventh,
+// load_deswin_sprites, was already compiled in leaf_recoveries.cpp under the
+// seam name leaf_00455e50_redirect and answers to its own image name here.
+// Arities are the mangled names'.
+void __cdecl load_palette();                       // ?load_palette@@YAXXZ
+void __cdecl load_misc();                          // ?load_misc@@YAXXZ
+void __cdecl load_interface(int mode);             // ?load_interface@@YAXH@Z
+void __cdecl load_voxels();                        // ?load_voxels@@YAXXZ
+void __cdecl load_deswin_sprites();                // 0x00455E50, leaf_recoveries.cpp
+void __cdecl colortables_init();                   // ?colortables_init@@YAXXZ
+void __cdecl load_cycling();                       // ?load_cycling@@YAXXZ
 void __cdecl config_popups();                      // ?config_popups@@YAXXZ
 void __cdecl bung_momma();                         // ?bung_momma@@YAXXZ
 int __fastcall maininterface_init(MainInterface *self, int mode);
 void __fastcall battlewin_init(BattleWin *self);
 void __fastcall console_init(Console *self, int mode);
-int __fastcall multidebug_init(MultiDebug *self, Net *net, Win *window,
-                               unsigned char *text);
 void __fastcall messagewin_init(MessageWin *self);
 void __fastcall datalink_init(Datalink *self);
 

@@ -103,7 +103,11 @@ CEILINGS = {
     # BasePop's two font setters and mandate_color left with the homing.
     # 203 -> 202 (dipedit): the dip_edit_do_check_redirect wrapper removed -
     # zero callers; do_check is called directly.
-    "orphan redirect": 202,
+    # 202 -> 201 (2026-09-03, boot-callee batch): leaf_00455e50_redirect took
+    # its image name, load_deswin_sprites, when load_fixed_sprites needed to
+    # call it - the seam name was the only thing orphan about it, and the body
+    # stays BYTE_EXACT under the rename.
+    "orphan redirect": 201,
     "pointer-as-int": 0,
     "undocumented trivial body": 0,
     # 239 IS BELOW WHAT THE TREE CAN REACH TODAY, and this is the only
@@ -217,7 +221,14 @@ CEILINGS = {
     # instruction 0 (VC6 grows the EBP frame the image does not have), so the
     # debt is the one set_state_id's marker already owns: a class-model pass
     # takes both accessors together or neither.
-    "raw self-access": 171,
+    # 171 -> 172 (2026-09-03, boot-callee batch): MultiDebug::init homed
+    # BYTE_EXACT into multidebug.cpp, and its once-a-second tick is
+    # Time::start's callback context - `start(fn, int param, ...)`, so the
+    # receiver crosses as `reinterpret_cast<int>(this)`. Same site as the one
+    # Win::sub_63c340's marker already owns: the pointer is crossing an
+    # int-typed API, the member spelling cannot apply, and retyping that
+    # context is the Time work the plan calls A3.
+    "raw self-access": 172,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these

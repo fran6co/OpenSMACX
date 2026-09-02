@@ -357,7 +357,19 @@ SCAFFOLD_CEILINGS = {
     # 0062e540.cpp) with no compiled caller; naming them is what lets the homed
     # body emit the image's own `E8`.
     # (this merge): the union census is the count.
-    "PENDING_BODY forwarders": 227,
+    # 227 -> 230 (2026-09-03, boot-callee batch): three of the boot batch's
+    # callees homed - load_fixed_sprites (0x00455E80) into game.cpp,
+    # textcolor_init (0x004BA220) into palette.cpp and MultiDebug::init
+    # (0x005C9860) into multidebug.cpp - so their forwarders died with the
+    # bodies (-3, and the game.h `multidebug_init` free-function shape with
+    # them). But load_fixed_sprites' seven callees were declared nowhere in the
+    # tree, so naming them for the body put forwarders on the frontier for six
+    # of them (load_palette, load_misc, load_interface, load_voxels,
+    # colortables_init, load_cycling) - the seventh, load_deswin_sprites, was
+    # already compiled and claimed in leaf_recoveries.cpp under the seam name
+    # leaf_00455e50_redirect, so it took its own image name instead of a
+    # forwarder that would have landed on it as a LANDMINE. Net +3.
+    "PENDING_BODY forwarders": 230,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -377,7 +389,10 @@ SCAFFOLD_CEILINGS = {
     # 1290 -> 1289 (2026-09-02, DipEdit::init batch): units/0055b760.cpp and
     # 0060ec10.cpp deleted with the bodies they drafted - treaty_on and
     # CheckBox::get_state_id, both homed as pending forwarders / src bodies.
-    "artifact files (recovered/)": 1289,
+    # 1289 -> 1287 (2026-09-03, boot-callee batch): 00455e80.cpp homed BYTE_EXACT
+    # into src/game.cpp and units/004ba220.cpp homed BYTE_EXACT into
+    # src/palette.cpp, both files gone with the bodies.
+    "artifact files (recovered/)": 1287,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -409,7 +424,10 @@ SCAFFOLD_CEILINGS = {
     # marker (VC6 merges the three bare returns; the DP struct store order is
     # scheduler output, not source order).
     # (this merge): the union census is the count.
-    "unrecovered files": 1662,
+    # 1662 -> 1661 (2026-09-03, boot-callee batch): 005c9860.cpp deleted with
+    # the MultiDebug::init body it drafted - homed BYTE_EXACT into
+    # src/multidebug.cpp as a real member, its GraphicWinInitShim gone with it.
+    "unrecovered files": 1661,
     "hypothesis_layouts.h lines": 2723,
 }
 

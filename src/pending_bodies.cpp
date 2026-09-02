@@ -1397,17 +1397,48 @@ void __cdecl load_sprites() {
     PENDING_BODY(0x00455EB0, pending)();
 }
 
-// ?load_fixed_sprites@@YAXXZ at 0x00455E80
-void __cdecl load_fixed_sprites() {
+// load_fixed_sprites' callees, declared in game.h when its body landed: the
+// fixed-art load names them and nothing else in the tree does.
+// ?load_palette@@YAXXZ at 0x00451A10
+void __cdecl load_palette() {
     typedef void(__cdecl *pending)();
-    PENDING_BODY(0x00455E80, pending)();
+    PENDING_BODY(0x00451A10, pending)();
 }
 
-// ?textcolor_init@@YAXXZ at 0x004BA220
-void __cdecl textcolor_init() {
+// ?load_misc@@YAXXZ at 0x00454D10
+void __cdecl load_misc() {
     typedef void(__cdecl *pending)();
-    PENDING_BODY(0x004BA220, pending)();
+    PENDING_BODY(0x00454D10, pending)();
 }
+
+// ?load_interface@@YAXH@Z at 0x00455610
+void __cdecl load_interface(int mode) {
+    typedef void(__cdecl *pending)(int);
+    PENDING_BODY(0x00455610, pending)(mode);
+}
+
+// ?load_voxels@@YAXXZ at 0x00451030
+void __cdecl load_voxels() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x00451030, pending)();
+}
+
+// ?load_deswin_sprites@@YAXXZ at 0x00455E50 is homed in leaf_recoveries.cpp
+// under its own name - no forwarder, that claim is compiled.
+
+// ?colortables_init@@YAXXZ at 0x00423570
+void __cdecl colortables_init() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x00423570, pending)();
+}
+
+// ?load_cycling@@YAXXZ at 0x00455400
+void __cdecl load_cycling() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x00455400, pending)();
+}
+
+// ?textcolor_init@@YAXXZ at 0x004BA220 is homed in palette.cpp - no forwarder.
 
 // ?config_popups@@YAXXZ at 0x00588AA0
 void __cdecl config_popups() {
@@ -1439,13 +1470,8 @@ void __fastcall console_init(Console *self, int mode) {
     PENDING_BODY(0x0051D890, pending)(self, mode);
 }
 
-// ?init@MultiDebug@@QAEHPAUNet@@PAUWin@@PAE@Z at 0x005C9860
-int __fastcall multidebug_init(MultiDebug *self, Net *net, Win *window,
-                               unsigned char *text) {
-    typedef int(__fastcall *pending)(MultiDebug *, Net *, Win *,
-                                     unsigned char *);
-    return PENDING_BODY(0x005C9860, pending)(self, net, window, text);
-}
+// ?init@MultiDebug@@QAEHPAUNet@@PAUWin@@PAE@Z at 0x005C9860 is homed as a
+// real member in multidebug.cpp - no forwarder, and no game.h shape either.
 
 // ?init@MessageWin@@QAEXXZ at 0x00471D50
 void __fastcall messagewin_init(MessageWin *self) {

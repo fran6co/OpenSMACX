@@ -143,7 +143,14 @@ FLOORS = {
     # into src/net_class.cpp (honest MISMATCH, residual documented on the
     # marker) and both the forwarder and the archive are gone.
     # (this merge): the union census is the count.
-    "archive-only-forwarder": 6,
+    # 6 -> 3 (2026-09-03, boot-callee batch): the three the boot batch named as
+    # its own are homed - load_fixed_sprites (0x00455E80) BYTE_EXACT into
+    # src/game.cpp, textcolor_init (0x004BA220) BYTE_EXACT into src/palette.cpp
+    # and MultiDebug::init (0x005C9860) BYTE_EXACT into src/multidebug.cpp - and
+    # their forwarders and archives are gone with the bodies. What is left is
+    # set_agenda (0x0055B820), 0x0062D8E0 and treaty_on (0x0055B870, which holds
+    # no claim and is counted only because its archive is in the tree).
+    "archive-only-forwarder": 3,
     "unknown-host-files": 0,
 }
 
