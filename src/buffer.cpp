@@ -3343,6 +3343,11 @@ int Buffer::get_pixel(int x, int y) {
 // ====================
 Sprite g_BUFFER_SPRITE;
 
+// 0x008C6E2C and 0x008C6E30 - see the declaration in buffer.h. Zero here as
+// the image's .bss is; the preferences write them before any window is drawn.
+int TextColourTitleMain;
+int TextColourTitleShadow;
+
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are
 // constructed before WinMain by the CRT's dynamic-initializer walk

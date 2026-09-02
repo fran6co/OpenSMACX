@@ -631,10 +631,23 @@ int __cdecl reputation(int faction_id, int faction_id_with);
 int __cdecl get_patience(int faction_id_with, int faction_id);
 int __cdecl energy_value(int loan_principal);
 void __cdecl scan_prototypes(int faction_id, int faction_id_with);
-void __cdecl set_treaty(uint32_t faction_id, uint32_t faction_id_with, uint32_t treaty, 
+// `int`, NOT `uint32_t`, for the reason wants_to_attack documents below: the
+// image exports `?set_treaty@@YAXHHHH@Z` / `?set_agenda@@YAXHHHH@Z` - four H,
+// four ints - and faction.cpp defines both that way. These spelled `uint32_t`,
+// which decorated to `@@YAXIIII@Z` and declared an overload nothing defined;
+// that stayed latent until read_check became the first caller outside
+// faction.cpp, which would have paid for it with an LNK2001.
+void __cdecl set_treaty(int faction_id, int faction_id_with, int treaty,
                                   BOOL set);
-void __cdecl set_agenda(uint32_t faction_id, uint32_t faction_id_with, uint32_t agenda, 
+void __cdecl set_agenda(int faction_id, int faction_id_with, int agenda,
                                   BOOL set);
+// The pair beside set_treaty: treaty_on(faction, faction_with, treaty) moves
+// `treaty` INTO the pair's status word, treaty_off clears it. DipEdit's
+// read_check drives both from its checkboxes.
+// 0x0055B760, defined in src/faction.cpp. 0x0055B870, still a pending_bodies
+// forwarder.
+void __cdecl treaty_on(int faction_id, int faction_id_with, int treaty);
+void __cdecl treaty_off(int faction_id, int faction_id_with, int treaty);
 uint32_t __cdecl has_agenda(uint32_t faction_id, uint32_t faction_id_with, 
                                       uint32_t agenda);
 // `int`, NOT `uint32_t`. The image's symbol is `?wants_to_attack@@YAHHHH@Z` -

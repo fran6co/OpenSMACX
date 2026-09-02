@@ -26,6 +26,7 @@
 #include "probe.h"
 #include "technology.h"
 #include "veh.h"
+#include "spying_recovery.h"  // SpyingStatusTable, SpyingStatusStride
 
 extern uint32_t LockEnableMask;  // 0x009A64E8, defined in lock.cpp
 
@@ -764,6 +765,50 @@ void __cdecl scan_prototypes(int faction_id, int faction_id_with) {
             BestProtoToMention = proto_id;
         }
     }
+}
+
+/*
+Purpose: Clear `treaty` in the diplomatic status word between two factions, both
+         directions of the pair, and take the side effects the clear implies:
+         clearing any of the three low bits also clears 0x1100000, clearing
+         VENDETTA also clears 0x8040, and clearing WANT_REVENGE also clears
+         SHALL_BETRAY in the +8 view of the same table.
+// ORIGINAL: 0x0055B760 ?treaty_off@@YAXHHH@Z 0x0055B760-0x0055B818 BYTE_EXACT
+// LEVER: PROMOTED out of src/unrecovered/0055b760.cpp, whose claim proved the
+//         ARTIFACT reproduced while the shipped program contained nothing - the
+//         same promotion set_state_id made beside CheckBox::get_state_id. The
+//         artifact's two raw table bindings are SpyingStatusTable and the same
+//         table eight uint32_t elements further in, which is
+//         SpyingStatusTable[index + 8] - the view do_check reads for its
+//         0x80000000-id boxes, and the fold lands on the same displacement.
+// size      184 bytes
+// prototype void (__cdecl ?treaty_off@@YAXHHH@Z)(int faction_id, int faction_id_with, int treaty)
+// callers   14   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl treaty_off(int faction_id, int faction_id_with, int treaty) {
+    if (treaty & 7) {
+        treaty |= 0x1100000;
+    }
+    if (treaty & DTREATY_VENDETTA) {
+        treaty |= 0x8040;
+    }
+    if (treaty & DTREATY_WANT_REVENGE) {
+        // 0xfffff3ff == ~(SHALL_BETRAY | 0x800), and in the +8 view: dropping
+        // WANT_REVENGE drops that pair as well.
+        int index = faction_id_with + faction_id * SpyingStatusStride;
+        SpyingStatusTable[index + 8] &= 0xfffff3ff;
+        index = faction_id + faction_id_with * SpyingStatusStride;
+        SpyingStatusTable[index + 8] &= 0xfffff3ff;
+    }
+    int index = faction_id_with + faction_id * SpyingStatusStride;
+    SpyingStatusTable[index] &= ~treaty;
+    index = faction_id + faction_id_with * SpyingStatusStride;
+    SpyingStatusTable[index] &= ~treaty;
 }
 
 /*

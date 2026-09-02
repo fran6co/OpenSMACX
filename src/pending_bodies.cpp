@@ -90,6 +90,7 @@
 #include "planwin.h"
 #include "uv2player.h"
 #include "vector_teardown.h"
+#include "xpops.h"
 
 /*
  * THE FRONTIER.
@@ -599,9 +600,44 @@ void BaseButton::timer_callback(int a1) {  // 0x00607B30
     PENDING_BODY(0x00607B30, pending)(this, nullptr, a1);
 }
 
-void DipEdit::read_check() {  // 0x004DA990
-    typedef void(__fastcall *pending)(DipEdit *, void *);
-    PENDING_BODY(0x004DA990, pending)(this, nullptr);
+void DipEdit::apply_agenda_check(int agenda_flag) {  // 0x004DA7E0
+    typedef void(__fastcall *pending)(DipEdit *, void *, int);
+    PENDING_BODY(0x004DA7E0, pending)(this, nullptr, agenda_flag);
+}
+
+// ?box_sprite@Buffer@@QAEHPAURECT@@PAUBoxSpriteParams@@@Z - DipEdit::init
+// draws its frame, its title field and its button strip through it.
+int Buffer::box_sprite(RECT *rect, void *params) {
+    typedef int(__fastcall *pending)(Buffer *, void *, RECT *, void *);
+    return PENDING_BODY(0x005E2DD3, pending)(this, nullptr, rect, params);
+}
+
+// ?set_selected_id@ListBox@@QAEXH@Z - DipEdit::init lands the list selection
+// on the row matching its own faction.
+void ListBox::set_selected_id(int id) {
+    typedef void(__fastcall *pending)(ListBox *, void *, int);
+    PENDING_BODY(0x00609FA0, pending)(this, nullptr, id);
+}
+
+// ?item@CheckBox@@QAEHPADHH@Z - DipEdit::init adds one item per treaty flag.
+int CheckBox::item(char *text, int id, int state) {
+    typedef int(__fastcall *pending)(CheckBox *, void *, char *, int, int);
+    return PENDING_BODY(0x0060E980, pending)(this, nullptr, text, id, state);
+}
+
+void DipEdit::apply_treaty_check(int treaty_flag) {  // 0x004DA870
+    typedef void(__fastcall *pending)(DipEdit *, void *, int);
+    PENDING_BODY(0x004DA870, pending)(this, nullptr, treaty_flag);
+}
+
+void DipEdit::apply_treaty_check_alt(int treaty_flag) {  // 0x004DA900
+    typedef void(__fastcall *pending)(DipEdit *, void *, int);
+    PENDING_BODY(0x004DA900, pending)(this, nullptr, treaty_flag);
+}
+
+void __cdecl treaty_on(int faction_id, int faction_id_with, int treaty) {  // 0x0055B870
+    typedef void(__cdecl *pending)(int, int, int);
+    PENDING_BODY(0x0055B870, pending)(faction_id, faction_id_with, treaty);
 }
 
 
@@ -725,6 +761,21 @@ void ReplayWin::timer_callback() {  // 0x005AD9E0
 void Popup::hide() {  // 0x00404A80
     typedef void(__fastcall *pending)(Popup *, void *);
     PENDING_BODY(0x00404A80, pending)(this, nullptr);
+}
+
+// ?edit@EditGroup@@QAEHPADPADH@Z at 0x00611F80 - DipEdit::on_button_clicked
+// drives it twice on BasePop's EditGroup subobject at 0x22C8 (see
+// BasePop::edit_group), once per atrocity-prompt field.
+int EditGroup::edit(char *a1, char *a2, int a3) {
+    typedef int(__fastcall *pending)(EditGroup *, void *, char *, char *, int);
+    return PENDING_BODY(0x00611F80, pending)(this, nullptr, a1, a2, a3);
+}
+
+// ?X_pop_ask_number@@YAHPBDHP6AHXZ@Z at 0x005BFD10 - the integrity prompt of
+// DipEdit::on_button_clicked.
+int __cdecl X_pop_ask_number(const char *a1, int a2, int (__cdecl *a3)()) {
+    typedef int(__cdecl *pending)(const char *, int, int (__cdecl *)());
+    return PENDING_BODY(0x005BFD10, pending)(a1, a2, a3);
 }
 
 // ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z at 0x00633F70 - Net::get (src/net_class.cpp)

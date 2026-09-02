@@ -441,6 +441,48 @@ void CheckBox::set_state_id(int id, int value) {
     }
 }
 
+/*
+Purpose: Read the shared state bit of the control with `id`: walk the item list
+         to that control, then report `(1 << its ordinal) & state word` -
+         nonzero when the box with this id is checked. set_state_id's read-side
+         twin, and DipEdit::read_check's per-bit test.
+// ORIGINAL: 0x0060EC10 ?get_state_id@CheckBox@@QAEHH@Z 0x0060EC10-0x0060EC79 BYTE_EXACT
+// LEVER: PROMOTED out of src/unrecovered/0060ec10.cpp, whose claim proved the
+//         ARTIFACT reproduced while the shipped program contained nothing, and
+//         kept in that artifact's spelling, for the same reason set_state_id
+//         above is: it reaches the Dialog subobject through the vbtable by
+//         hand. The loop is the artifact's `for (idx = 0; idx < count;
+//         idx = idx + 1)` - its note records that the do-while phrasing
+//         compiled an extra `cmp;jge` ahead of the back-edge in all 11 tries.
+// size      105 bytes
+// prototype int (__thiscall ?get_state_id@CheckBox@@QAEHH@Z)(CheckBox* this, int)
+// callers   6   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: (1 << ordinal) & state word - nonzero when `id`'s box is checked
+Status: Complete
+*/
+int CheckBox::get_state_id(int id) {
+    int base = *(int *)(*(int *)this + 8);
+    char *list = (char *)this + base + 0xbc;
+    int head = *(int *)(list + 8);
+    if (head != 0) {
+        int count = *(int *)(list + 0x10);
+        int idx;
+        *(int *)(list + 0x14) = 0;
+        *(int *)(list + 0xc) = head;
+        for (idx = 0; idx < count; idx = idx + 1) {
+            int cur = *(int *)(list + 0xc);
+            if (*(int *)(cur + 4) == id) break;
+            *(int *)(list + 0x14) = *(int *)(list + 0x14) + 1;
+            *(int *)(list + 0xc) = *(int *)(cur + 0xc);
+        }
+    }
+    return (1 << *(int *)((int)this + *(int *)(*(int *)this + 8) + 0xd0)) &
+           *(unsigned int *)((int)this + *(int *)(*(int *)this + 8) + 0xec);
+}
+
 // ====================
 Sprite g_CHECKBOX_SPRITE_1;
 Sprite g_CHECKBOX_SPRITE_2;

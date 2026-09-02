@@ -303,7 +303,22 @@ SCAFFOLD_CEILINGS = {
     # 234 -> 231 (2026-08-30, caviar-voxel batch): the three seams Caviar's
     # homing had declared for sub_639390 / sub_63ad60 / sub_63f9b0 retired -
     # all three bodies now live at the foot of src/caviar.cpp.
-    "PENDING_BODY forwarders": 209,
+    # 209 -> 214 (2026-09-01, dipedit read_check batch): read_check's own
+    # forwarder went with the BYTE_EXACT body in src/dipedit.cpp, and the body
+    # needed six seams in its place - DipEdit::apply_treaty_check /
+    # apply_treaty_check_alt / apply_agenda_check (the three per-flag helpers
+    # it drives, homed separately), CheckBox::get_state_id (set_state_id's
+    # read-side twin) and the free treaty_on/treaty_off pair. None of those six
+    # had a homed caller before.
+    # 214 -> 212 (same batch): two of those six did not stay seams.
+    # get_state_id and treaty_off PROMOTED out of src/unrecovered/ into
+    # checkbox.cpp and faction.cpp, their archive units deleted with them.
+    # 212 -> 217 (same batch, NOT this work): the five seams of the
+    # concurrent DipEdit::on_button_clicked homing sharing this worktree -
+    # Buffer::box_sprite, ListBox::set_selected_id, CheckBox::item,
+    # EditGroup::edit, X_pop_ask_number. That batch's own number to bring
+    # down when its bodies land.
+    "PENDING_BODY forwarders": 217,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -318,14 +333,24 @@ SCAFFOLD_CEILINGS = {
     # plus the jump-dispatch function our binary lays out elsewhere).
     # 1292 is the count after 00612830.cpp homed; 004ba830.cpp had no archive
     # (the body was already in win.cpp, only MOVED to tutwin.cpp this pass).
-    "artifact files (recovered/)": 1291,
+    # 1291 -> 1290 (2026-09-01, dipedit read_check batch): units/004da990.cpp
+    # deleted with the body it drafted, homed BYTE_EXACT in src/dipedit.cpp.
+    "artifact files (recovered/)": 1290,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
     # 1677 -> 1675 (sound batch): load_sound_dll homed into
     # src/sound_loader.cpp and its message helper with it; 004c5e50.cpp and
     # 004c9080.cpp deleted.
-    "unrecovered files": 1674,
+    # 1674 -> 1672 (2026-09-01, dipedit read_check batch): 0060ec10.cpp
+    # (CheckBox::get_state_id) and 0055b760.cpp (treaty_off) promoted into
+    # checkbox.cpp and faction.cpp - the two archive-only forwarders the
+    # address index had begun to count.
+    # 1672 -> 1670 (same batch, the concurrent on_button_clicked homing's
+    # two): 004d9de0.cpp and 004db080.cpp, whose bodies are homed and claimed
+    # in dipedit.cpp and whose only remaining effect was an address-index
+    # DUPLICATE apiece.
+    "unrecovered files": 1670,
     "hypothesis_layouts.h lines": 2723,
 }
 

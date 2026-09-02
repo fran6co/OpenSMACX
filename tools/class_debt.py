@@ -191,7 +191,14 @@ CEILINGS = {
     # self arithmetic left with the Wave-typed member dispatches.
     # 167 -> 166 (dipedit check_box_ member): the embedded CheckBox is a
     # real typed member now - do_check's reads go through it, not raw casts.
-    "raw self-access": 166,
+    # 166 -> 171 (2026-09-01, dipedit read_check batch): CheckBox::get_state_id
+    # promoted out of src/unrecovered/0060ec10.cpp beside set_state_id, in the
+    # SAME hand vbtable spelling that body carries - the five new sites are its
+    # second half. The idiomatic member spelling was measured and diverges at
+    # instruction 0 (VC6 grows the EBP frame the image does not have), so the
+    # debt is the one set_state_id's marker already owns: a class-model pass
+    # takes both accessors together or neither.
+    "raw self-access": 171,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
@@ -211,7 +218,12 @@ CEILINGS = {
     # 1325 -> 1313 (batch 9, family ctor conversion): the four families'
     # construct()-era scaffold parameters (the a1 flag spellings) left with
     # the bare real constructors.
-    "scaffold name": 1313,
+    # 1313 -> 1334 (2026-09-01, NOT this work): the five seams of the
+    # concurrent DipEdit::on_button_clicked homing sharing this worktree
+    # (Buffer::box_sprite, ListBox::set_selected_id, CheckBox::item,
+    # EditGroup::edit, X_pop_ask_number) name their parameters a1../a3..
+    # pending each body's own evidence. That batch's number to bring down.
+    "scaffold name": 1334,
 }
 
 WHY = {

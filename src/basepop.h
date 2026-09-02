@@ -229,6 +229,18 @@ class BasePop : public GraphicWin {
         reinterpret_cast<uint8_t *>(this) + 0x2240);
   }
 
+  // The EditGroup subobject at 0x22C8, also inside `dialogs_` above and not
+  // carved out as a stored member for the same reason: EditGroup has virtual
+  // bases, so a real member here would give BasePop a generated constructor
+  // the image does not have. DipEdit::on_button_clicked drives
+  // `edit(...)` on it twice - the two prompt fields of the atrocity popup -
+  // and the image reaches it with the same unadjusted receiver this returns
+  // (`lea ecx, [popup + 0x22c8]` at 0x004DA384 and 0x004DA3ED).
+  EditGroup *edit_group() {
+    return reinterpret_cast<EditGroup *>(
+        reinterpret_cast<uint8_t *>(this) + 0x22C8);
+  }
+
  private:
   uint32_t field_2E64_;
   uint32_t field_2E68_;

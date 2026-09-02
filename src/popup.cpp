@@ -72,6 +72,10 @@ void Popup::start(char *a1, const char *a2, int a3, char *a4, int a5) {
 // 256 is this tree's usual caption size rather than a measured one.
 char PopupStartCaption[256];  // 0x009B8AA8
 
+// 0x006A721C, the modal-popup flag every popup driver parks 6 in while its
+// popup runs and clears the moment exec comes back. See the note in popup.h.
+int PopupModalState;  // 0x006A721C
+
 /*
 Purpose: Start a popup from just a label, defaulting the rest.
 // ORIGINAL: 0x005A5990 ?start@Popup@@QAEXPBD@Z 0x005A5990-0x005A59AD BYTE_EXACT

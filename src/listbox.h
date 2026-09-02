@@ -178,6 +178,9 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
  public:
   // 0x0060C920, still a pending_bodies forwarder.
   int item(char *text, int index);
+  // 0x00609FA0, also a pending_bodies forwarder. DipEdit::init adds one item
+  // per rival faction and then lands the selection on the matching one.
+  void set_selected_id(int id);
 
  public:
   void on_mouse_leave(int a1, int a2);
@@ -213,7 +216,14 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   uint32_t field_20_;             // 0x20
   uint32_t field_24_;             // 0x24
   uint32_t field_28_;             // 0x28
+ public:
+  // PUBLIC, like Dialog's own carved-out fields: DipEdit::init clears this
+  // through the ListBox front (`mov dword ptr [esi+0xa78], eax` at
+  // 0x004DB39C) with no call in between, so the access has to be spelled
+  // from outside the class. Access is compile-time only; the static_assert
+  // below pins the layout.
   uint32_t field_2C_;             // 0x2C
+ private:
   uint32_t field_30_;             // 0x30
   uint32_t field_34_;             // 0x34
   uint32_t field_38_;             // 0x38
