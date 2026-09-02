@@ -78,6 +78,16 @@ class Dialog {
   // base. RadioButton::close() has the same `void ()` signature and so
   // overrides this.
   void close();
+  // TRIED (2026-09-02, phase B): `virtual uint32_t close()` - the four
+  // Dialog-part thunks in the image's ListBox table suggested close was a
+  // Dialog virtual. REFUTED by the family closes' own bodies: the image's
+  // closes open on an unadjusted receiver and walk the runtime vbtable
+  // (`mov eax,[esi]; mov edx,[eax+4]`), which a Q-spelled plain member
+  // called directly produces exactly - the virtual spelling enters via the
+  // vtordisp and reaches the Dialog subobject through the direct
+  // displacement instead, different semantics for the embedded cases and
+  // different bytes (7/20, 9/37). The four-table decode belongs to
+  // ListBox's dtor/attach/on_redraw/+1, not close.
 
  public:
   // Static default shared by every dialog; __cdecl in the original.

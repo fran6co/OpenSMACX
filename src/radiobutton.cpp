@@ -108,6 +108,7 @@ Purpose: Reset the radio button to its defaults, then close its dialog and
          graphic base. Both calls resolve through the vbtable, so they reach
          the Dialog and the virtual base rather than the object itself.
 // ORIGINAL: 0x0060D1B0 ?close@RadioButton@@QAEIXZ 0x0060D1B0-0x0060D1E6 BYTE_EXACT
+// symbol    ?close@RadioButton@@QAEIXZ
 // TRIED: the reconstructed signature `?close@CheckBox@@QAEXXZ`. The census
 //   names are RECONSTRUCTIONS - the image is stripped - and this one had the
 //   same method carrying two signatures across one hierarchy: Dialog::close and

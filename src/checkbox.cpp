@@ -137,6 +137,7 @@ Purpose: Reset the check box to its defaults, then close its dialog and
          graphic base. Both calls resolve through the vbtable, so they reach
          the Dialog and the virtual base rather than the object itself.
 // ORIGINAL: 0x0060E7C0 ?close@CheckBox@@QAEIXZ 0x0060E7C0-0x0060E7F9 BYTE_EXACT
+// symbol    ?close@CheckBox@@QAEIXZ
 // TRIED: the reconstructed signature `?close@CheckBox@@QAEXXZ`. The census
 //   names are RECONSTRUCTIONS - the image is stripped - and this one had the
 //   same method carrying two signatures across one hierarchy: Dialog::close and
