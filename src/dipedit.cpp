@@ -57,6 +57,26 @@ stack DipEdit, calls ?init@DipEdit@@QAEXH@Z on it, and destroys it with the
 */
 
 /*
+Purpose: The compiler-generated scalar deleting destructor at
+         ??_GDipEdit@@UAEPAXI@Z: run the complete destructor, then release
+         the storage through the executable's operator delete only when bit 0
+         of the flags asks. COMPILER-EMITTED from the real ~DipEdit below;
+         the hand shim this claim used to live on (deleting_thunks.cpp's
+         scalar_delete_dip_edit) is retired with the emission, the same move
+         the adjustor above made.
+// ORIGINAL: 0x004E23C0 ??_GDipEdit@@UAEPAXI@Z 0x004E23C0-0x004E23E1 BYTE_EXACT
+// symbol    ??_GDipEdit@@UAEPAXI@Z
+// size      33 bytes
+// prototype void* (__thiscall ??_GDipEdit@@UAEPAXI@Z)(DipEdit* this, unsigned int)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004E2240 0x0064557F
+Return Value: the object pointer
+Status: Complete
+*/
+
+/*
 Purpose: Step the receiver back to the subobject ??_GDipEdit@@UAEPAXI@Z
          expects, then forward unchanged. COMPILER-EMITTED from the real
          ~DipEdit below (the forwarder era emitted it from

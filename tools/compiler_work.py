@@ -293,7 +293,7 @@ SCAFFOLD_MARKERS = ("adjustor_thunks.cpp", "deleting_thunks.cpp",
                     "leaf_recoveries.cpp", "nullsub_thunks.cpp")
 SCAFFOLD_CEILINGS = {
     "adjustor_thunks.cpp markers": 116,
-    "deleting_thunks.cpp markers": 74,
+    "deleting_thunks.cpp markers": 73,
     "delegation_thunks.cpp markers": 26,
     # 42 -> 41 (sound batch): field_accessor_0062d390_redirect retired for the
     # real `sub_62d390` in general.cpp.

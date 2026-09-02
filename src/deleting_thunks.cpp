@@ -1550,31 +1550,6 @@ void *__fastcall scalar_delete_voice_tx(void *self, void *,
 
 /*
 Purpose: The compiler-generated scalar deleting destructor at
-         ??_GDipEdit@@UAEPAXI@Z: run the complete destructor, then release the
-         storage through the executable's operator delete only when bit 0 of
-         the flags asks.
-// ORIGINAL: 0x004E23C0 ??_GDipEdit@@UAEPAXI@Z 0x004E23C0-0x004E23E1 BYTE_EXACT
-// symbol    ?scalar_delete_dip_edit@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype void* (__thiscall ??_GDipEdit@@UAEPAXI@Z)(DipEdit* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x004E2240 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_dip_edit(void *self, void *,
-                                        unsigned int arg0) {
-    static_cast<DipEdit *>(self)->DipEdit::~DipEdit();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
-
-/*
-Purpose: The compiler-generated scalar deleting destructor at
          ??_GAlphaMenu@@UAEPAXI@Z: run the complete destructor, then release
          the storage through the executable's operator delete only when bit 0
          of the flags asks.
