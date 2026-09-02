@@ -61,7 +61,13 @@ CEILINGS = {
     # single-row writer), with `// symbol` facts carrying the emitted names
     # under the catalogue's markers. The image names nothing (every PE
     # section scanned), so the new names are ours, evidenced by behaviour.
-    "unk-method": 162,
+    # 162 -> 167 (2026-09-03, menu batch): Menu::UNK5 and Menu::UNK11 homed
+    # out of src/unrecovered/005fb240.cpp and src/recovered/units/005fb8e0.cpp
+    # into src/menu.cpp. UNKn is the image's own catalogue name here - the
+    # bodies are search-and-forward to a PullDown member, so nothing in them
+    # says what they are FOR. The homing is coverage; naming them is the
+    # class pass's job.
+    "unk-method": 167,
     # THE ESCAPE HATCH, RATCHETED. An UNKn whose comment block says
     # EVIDENCE-FREE and names it has been investigated and found unnameable -
     # no caller, no dispatch, no CSV entry. That is a result, not unfinished
@@ -228,7 +234,13 @@ CEILINGS = {
     # Win::sub_63c340's marker already owns: the pointer is crossing an
     # int-typed API, the member spelling cannot apply, and retyping that
     # context is the Time work the plan calls A3.
-    "raw self-access": 172,
+    # 172 -> 168 (2026-09-03, menu batch): Menu's four flag operations
+    # (UNK6-9) dropped their `void **const vtable =
+    # *reinterpret_cast<void ***>(this)` anchor plus the ORIGINAL() shim it
+    # fed - the dispatch is Win's own slot 62, which win.h declares virtual,
+    # so the plain call `vslot_62()` compiles the same two instructions.
+    # Measured 33/35 before and after on all four.
+    "raw self-access": 168,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
@@ -257,7 +269,12 @@ CEILINGS = {
     # batch named twelve of them (button_id, and the EditGroup/X_pop_ask_number
     # params). DipEdit::init's three new seams (Buffer::box_sprite,
     # ListBox::set_selected_id, CheckBox::item) land named, adding none.
-    "scaffold name": 1322,
+    # 1322 -> 1328 (2026-09-03, menu batch): Menu::UNK5's three forwarded ints
+    # come home still scaffold. There is nothing to name them from - the body's
+    # only use of a2/a3/a4 is the argument list of PullDown::UNK3, which is
+    # itself a stub that reads none of its three, so a name here would be
+    # invented, not inferred.
+    "scaffold name": 1328,
 }
 
 WHY = {

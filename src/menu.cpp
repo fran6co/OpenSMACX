@@ -27,7 +27,7 @@
 Purpose: Construct the GraphicWin base and the embedded Spot, install
          Menu's own vtables, then zero the scalar fields and the 15-entry
          entries_ table.
-// ORIGINAL: 0x005FAC60 ??0Menu@@QAE@XZ 0x005FAC60-0x005FACF6;0x00662CF0-0x00662D02
+// ORIGINAL: 0x005FAC60 ??0Menu@@QAE@XZ 0x005FAC60-0x005FACF6;0x00662CF0-0x00662D02 BYTE_EXACT
 // size      150 bytes
 // prototype void (__thiscall ??0Menu@@QAE@XZ)(Menu* this)
 // callers   0   call targets   2
@@ -51,11 +51,19 @@ Purpose: Construct the GraphicWin base and the embedded Spot, install
 //        0x005FA860, which is exactly base-then-member in declaration order.
 //        10/38 -> 15/38, and the compiled body drops from 42 instructions to
 //        39 against the image's 38.
-// TRIED: the last gap is one hoisted constant. VC6 puts -1 in edx
-//        (`or edx, 0xffffffff`) because `field_A24_` and the fifteen
-//        `entries_[i].id` share it, where the image writes the immediate
-//        straight to `[esi + 0xa24]`. Not reachable by reordering the
-//        assignments; not chased further.
+// LEVER: STORE ORDER inside the entries_ loop closed the last gap, and it
+//        took out two divergences at once. Writing `text` before `id` (not
+//        the declaration order `id`, `text`) makes VC6 aim the induction
+//        pointer at `entries_[i].id` - `lea eax, [esi + 0xa38]`, stores at
+//        [eax+4] then [eax] - which is what the image does; the id-first
+//        spelling aimed it at `.text` and stored at [eax-4]. And the same
+//        reorder stops VC6 materialising the -1 in edx (`or edx, 0xffffffff`
+//        shared between field_A24_ and the fifteen `entries_[i].id`): the
+//        image writes the immediate twice, once to [esi+0xa24] and once to
+//        [eax] per iteration. 15/38 -> BYTE_EXACT 38/38. The earlier TRIED
+//        note here said the hoisted constant was "not reachable by
+//        reordering the assignments"; it was, and that note was measured
+//        before the store order was tried.
 Return Value: n/a
 Status: Complete
 */
@@ -65,8 +73,8 @@ Menu::Menu() {
     field_A20_ = 0;
     field_A24_ = 0xFFFFFFFF;
     for (int i = 0; i < 15; i++) {
-        entries_[i].id = -1;
         entries_[i].text = nullptr;
+        entries_[i].id = -1;
         entries_[i].flags = 0;
         entries_[i].mnemonic = nullptr;
         entries_[i].pull_down = nullptr;
@@ -192,7 +200,7 @@ int Menu::requested_height() {
 Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
-// ORIGINAL: 0x005FB1D0 ?UNK3@Menu@@QAEHHH@Z 0x005FB1D0-0x005FB224
+// ORIGINAL: 0x005FB1D0 ?UNK3@Menu@@QAEHHH@Z 0x005FB1D0-0x005FB224 BYTE_EXACT
 // size      84 bytes
 // prototype int (__thiscall ?UNK3@Menu@@QAEHHH@Z)(Menu* this, int, int)
 // callers   0   call targets   1
@@ -201,15 +209,26 @@ Purpose: Find the menu whose id matches and forward the item id to its
 // calls     0x005F8C90
 Return Value: PullDown::UNK2's, or 0xB when no entry matches
 Status: Complete
-Verification note: the original checks the found index against -1 at
-         0x005FB1FC before dispatching, which can never fire - the index
-         is a loop counter that starts at 0 and only increments. Dead in the
-         original and omitted here rather than transcribed as an unreachable
-         branch.
+Verification note: the image does test something after the loop before
+         dispatching - an index compared against -1, which cannot fire for a
+         counter that starts at 0 and only increments. Dead in the original,
+         and transcribed: see the BUG IN THE ORIGINAL note on the body.
 */
 int Menu::UNK3(int menu_id, int item_id) {
-    int index = 0;
-    for (;;) {
+    int index;
+    // LEVER: the range guard written at the TOP of a `for (;;)` body, not as
+    // the loop's own second clause. VC6 rotates it onto the back edge
+    // (`cmp eax, 0xf` / `jl`), so the exhausted edge falls into its own inline
+    // 0xB epilogue and the break edge lands on the dead `-1` test below.
+    // BYTE_EXACT here, where the range-bounded
+    // `for (index = 0; index < 15; index++)` spelling left a residual range
+    // compare on the found path (30 of 32) and the committed `for(;;)` plus
+    // `if (++index >= 15)` form peeled the first entry read above the
+    // callee-saved pushes (1 of 32).
+    for (index = 0;; index++) {
+        if (index >= 15) {
+            return 0xB;
+        }
         const int id = entries_[index].id;
         // The -1 sentinel ends the table early; running off the end of the
         // fifteen entries is the other way to miss. Both answer 0xB.
@@ -219,9 +238,15 @@ int Menu::UNK3(int menu_id, int item_id) {
         if (id == menu_id) {
             break;
         }
-        if (++index >= 15) {
-            return 0xB;
-        }
+    }
+    // BUG IN THE ORIGINAL: the image re-tests the index against -1 here
+    // (0x005FB1FC) before dispatching. The index is a loop counter that starts
+    // at 0 and only increments, so this branch can never fire. Transcribed
+    // anyway: it is the branch point the found path really takes, and every
+    // live spelling of it (the range test) cost the two instructions. Left
+    // alone deliberately - fixing it breaks the match.
+    if (index == -1) {
+        return 0xB;
     }
     return entries_[index].pull_down->UNK2(item_id);
 }
@@ -231,40 +256,29 @@ int Menu::UNK3(int menu_id, int item_id) {
 Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
-// ORIGINAL: 0x005FB300 ?hide_menu_item@Menu@@QAEHHH@Z 0x005FB300-0x005FB354
-// TRIED: shared defect across the whole seven-clone family (UNK3,
-//        hide/show/disable/enable/check/uncheck_menu_item all measure
-//        1/32, 0.754 similar at their best flag set). Every one of them
-//        diverges starting at INSTRUCTION 0: this tree's compile hoists a
-//        read of entries_[0].id (`mov eax,[ecx+0xa38]`) and the loop-index
-//        zeroing ahead of the `push esi`/`push edi` prologue and the
-//        edi=menu_id load, which the image never does - VC6 loop-rotating
-//        the `for(;;) { if(first-check) ...}` shape to peel the first
-//        iteration's read before the callee-saved pushes. Tried: a genuine
-//        `do { } while(++index < 15)` (worse, 1/32 best, 0.746 similar -
-//        still peels); a raw `MenuEntry *entry` pointer walk instead of
-//        `entries_[index]` (worse, 0/32 at every flag set tried, still
-//        peels and also loses the /Oy- frame). `--all-flags` on the
-//        committed `for(;;)` form plateaus at 5/32 (0.738) with /Oy- kept,
-//        1/32 (0.754, best similarity) with it omitted - the hoist happens
-//        at every flag set tried. Not a source-shape lever found so far.
-// size      84 bytes
-// prototype int (__thiscall ?hide_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)
-// callers   2   call targets   1
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x005F8CB0
+// ORIGINAL: 0x005FB300 ?hide_menu_item@Menu@@QAEHHH@Z 0x005FB300-0x005FB354 BYTE_EXACT
+// LEVER: the range guard at the TOP of a `for (;;)` body. VC6 rotates it
+//        onto the back edge, the exhausted edge gets its own inline 0xB
+//        epilogue, and the break edge lands on the dead `-1` test -
+//        BYTE_EXACT. The range-bounded `for` left a residual range compare
+//        on the found path (30 of 32); the committed `for(;;)` form hoisted
+//        the first entry read above the callee-saved pushes (1 of 32).
+//        Measured in full on ?UNK3@Menu@@QAEHHH@Z (0x005FB1D0).
 Return Value: PullDown::hide_item's, or 0xB when no entry matches
 Status: Complete
-Verification note: the original checks the found index against -1 at
-         0x005FB32C before dispatching, which can never fire - the index
-         is a loop counter that starts at 0 and only increments. Dead in the
-         original and omitted here rather than transcribed as an unreachable
-         branch.
+Verification note: the image does test something after the loop before
+         dispatching - an index compared against -1, which cannot fire for a
+         counter that starts at 0 and only increments. Dead in the original.
+         This tree spells the same branch point as the exhausted-range test
+         `if (index >= 15)`, which is the live half of the image's two exits
+         and the form that measures; see the LEVER note below.
 */
 int Menu::hide_menu_item(int menu_id, int item_id) {
-    int index = 0;
-    for (;;) {
+    int index;
+    for (index = 0;; index++) {
+        if (index >= 15) {
+            return 0xB;
+        }
         const int id = entries_[index].id;
         // The -1 sentinel ends the table early; running off the end of the
         // fifteen entries is the other way to miss. Both answer 0xB.
@@ -274,9 +288,23 @@ int Menu::hide_menu_item(int menu_id, int item_id) {
         if (id == menu_id) {
             break;
         }
-        if (++index >= 15) {
-            return 0xB;
-        }
+    }
+    // LEVER: the range guard written at the TOP of a `for (;;)` body, not as
+    // the loop's own second clause. VC6 rotates it onto the back edge
+    // (`cmp eax, 0xf` / `jl`), so the exhausted edge falls into its own
+    // inline 0xB epilogue and the break edge lands on the dead `-1` test
+    // the image carries below. The range-bounded
+    // `for (index = 0; index < 15; index++)` spelling left the residual
+    // range compare on the found path instead - 30 of 32 against
+    // BYTE_EXACT here.
+    // BUG IN THE ORIGINAL: the image re-tests the index against -1 here
+    // before dispatching. The index is a loop counter that starts at 0 and
+    // only increments, so the branch is dead - it never fires. Transcribed
+    // anyway: it is the branch point the found path really takes, and
+    // spelling it as the live range test cost two instructions (see
+    // ?UNK3@Menu@@QAEHHH@Z 0x005FB1D0 for the six spellings measured).
+    if (index == -1) {
+        return 0xB;
     }
     return entries_[index].pull_down->hide_item(item_id);
 }
@@ -286,30 +314,29 @@ int Menu::hide_menu_item(int menu_id, int item_id) {
 Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
-// ORIGINAL: 0x005FB3C0 ?show_menu_item@Menu@@QAEHHH@Z 0x005FB3C0-0x005FB414
-// TRIED: shared defect across the whole seven-clone family (UNK3,
-//        hide/show/disable/enable/check/uncheck_menu_item all measure
-//        1/32, 0.754 similar at their best flag set) - see
-//        ?hide_menu_item@Menu@@QAEHHH@Z (0x005FB300) for the full
-//        investigation (loop-rotation hoist, do/while and raw-pointer
-//        forms both tried and both worse). Not repeated per-clone.
-// size      84 bytes
-// prototype int (__thiscall ?show_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)
-// callers   1   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005F8D20
+// ORIGINAL: 0x005FB3C0 ?show_menu_item@Menu@@QAEHHH@Z 0x005FB3C0-0x005FB414 BYTE_EXACT
+// LEVER: the range guard at the TOP of a `for (;;)` body. VC6 rotates it
+//        onto the back edge, the exhausted edge gets its own inline 0xB
+//        epilogue, and the break edge lands on the dead `-1` test -
+//        BYTE_EXACT. The range-bounded `for` left a residual range compare
+//        on the found path (30 of 32); the committed `for(;;)` form hoisted
+//        the first entry read above the callee-saved pushes (1 of 32).
+//        Measured in full on ?UNK3@Menu@@QAEHHH@Z (0x005FB1D0).
 Return Value: PullDown::show_item's, or 0xB when no entry matches
 Status: Complete
-Verification note: the original checks the found index against -1 at
-         0x005FB3EC before dispatching, which can never fire - the index
-         is a loop counter that starts at 0 and only increments. Dead in the
-         original and omitted here rather than transcribed as an unreachable
-         branch.
+Verification note: the image does test something after the loop before
+         dispatching - an index compared against -1, which cannot fire for a
+         counter that starts at 0 and only increments. Dead in the original.
+         This tree spells the same branch point as the exhausted-range test
+         `if (index >= 15)`, which is the live half of the image's two exits
+         and the form that measures; see the LEVER note below.
 */
 int Menu::show_menu_item(int menu_id, int item_id) {
-    int index = 0;
-    for (;;) {
+    int index;
+    for (index = 0;; index++) {
+        if (index >= 15) {
+            return 0xB;
+        }
         const int id = entries_[index].id;
         // The -1 sentinel ends the table early; running off the end of the
         // fifteen entries is the other way to miss. Both answer 0xB.
@@ -319,9 +346,23 @@ int Menu::show_menu_item(int menu_id, int item_id) {
         if (id == menu_id) {
             break;
         }
-        if (++index >= 15) {
-            return 0xB;
-        }
+    }
+    // LEVER: the range guard written at the TOP of a `for (;;)` body, not as
+    // the loop's own second clause. VC6 rotates it onto the back edge
+    // (`cmp eax, 0xf` / `jl`), so the exhausted edge falls into its own
+    // inline 0xB epilogue and the break edge lands on the dead `-1` test
+    // the image carries below. The range-bounded
+    // `for (index = 0; index < 15; index++)` spelling left the residual
+    // range compare on the found path instead - 30 of 32 against
+    // BYTE_EXACT here.
+    // BUG IN THE ORIGINAL: the image re-tests the index against -1 here
+    // before dispatching. The index is a loop counter that starts at 0 and
+    // only increments, so the branch is dead - it never fires. Transcribed
+    // anyway: it is the branch point the found path really takes, and
+    // spelling it as the live range test cost two instructions (see
+    // ?UNK3@Menu@@QAEHHH@Z 0x005FB1D0 for the six spellings measured).
+    if (index == -1) {
+        return 0xB;
     }
     return entries_[index].pull_down->show_item(item_id);
 }
@@ -331,29 +372,29 @@ int Menu::show_menu_item(int menu_id, int item_id) {
 Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
-// ORIGINAL: 0x005FB480 ?disable_menu_item@Menu@@QAEHHH@Z 0x005FB480-0x005FB4D4
-// TRIED: same shared-family defect as ?hide_menu_item@Menu@@QAEHHH@Z
-//        (0x005FB300, see its note) - a `do { } while(++index < 15)` and a
-//        raw `MenuEntry *` pointer walk were both tried there and both
-//        measured worse than the committed `for(;;)` form; not repeated
-//        per-clone. Plateaus at 1/32, 0.754 similar.
-// size      84 bytes
-// prototype int (__thiscall ?disable_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)
-// callers   2   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005F8D90
+// ORIGINAL: 0x005FB480 ?disable_menu_item@Menu@@QAEHHH@Z 0x005FB480-0x005FB4D4 BYTE_EXACT
+// LEVER: the range guard at the TOP of a `for (;;)` body. VC6 rotates it
+//        onto the back edge, the exhausted edge gets its own inline 0xB
+//        epilogue, and the break edge lands on the dead `-1` test -
+//        BYTE_EXACT. The range-bounded `for` left a residual range compare
+//        on the found path (30 of 32); the committed `for(;;)` form hoisted
+//        the first entry read above the callee-saved pushes (1 of 32).
+//        Measured in full on ?UNK3@Menu@@QAEHHH@Z (0x005FB1D0).
 Return Value: PullDown::disable_item's, or 0xB when no entry matches
 Status: Complete
-Verification note: the original checks the found index against -1 at
-         0x005FB4AC before dispatching, which can never fire - the index
-         is a loop counter that starts at 0 and only increments. Dead in the
-         original and omitted here rather than transcribed as an unreachable
-         branch.
+Verification note: the image does test something after the loop before
+         dispatching - an index compared against -1, which cannot fire for a
+         counter that starts at 0 and only increments. Dead in the original.
+         This tree spells the same branch point as the exhausted-range test
+         `if (index >= 15)`, which is the live half of the image's two exits
+         and the form that measures; see the LEVER note below.
 */
 int Menu::disable_menu_item(int menu_id, int item_id) {
-    int index = 0;
-    for (;;) {
+    int index;
+    for (index = 0;; index++) {
+        if (index >= 15) {
+            return 0xB;
+        }
         const int id = entries_[index].id;
         // The -1 sentinel ends the table early; running off the end of the
         // fifteen entries is the other way to miss. Both answer 0xB.
@@ -363,9 +404,23 @@ int Menu::disable_menu_item(int menu_id, int item_id) {
         if (id == menu_id) {
             break;
         }
-        if (++index >= 15) {
-            return 0xB;
-        }
+    }
+    // LEVER: the range guard written at the TOP of a `for (;;)` body, not as
+    // the loop's own second clause. VC6 rotates it onto the back edge
+    // (`cmp eax, 0xf` / `jl`), so the exhausted edge falls into its own
+    // inline 0xB epilogue and the break edge lands on the dead `-1` test
+    // the image carries below. The range-bounded
+    // `for (index = 0; index < 15; index++)` spelling left the residual
+    // range compare on the found path instead - 30 of 32 against
+    // BYTE_EXACT here.
+    // BUG IN THE ORIGINAL: the image re-tests the index against -1 here
+    // before dispatching. The index is a loop counter that starts at 0 and
+    // only increments, so the branch is dead - it never fires. Transcribed
+    // anyway: it is the branch point the found path really takes, and
+    // spelling it as the live range test cost two instructions (see
+    // ?UNK3@Menu@@QAEHHH@Z 0x005FB1D0 for the six spellings measured).
+    if (index == -1) {
+        return 0xB;
     }
     return entries_[index].pull_down->disable_item(item_id);
 }
@@ -375,30 +430,29 @@ int Menu::disable_menu_item(int menu_id, int item_id) {
 Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
-// ORIGINAL: 0x005FB540 ?enable_menu_item@Menu@@QAEHHH@Z 0x005FB540-0x005FB594
-// TRIED: shared defect across the whole seven-clone family (UNK3,
-//        hide/show/disable/enable/check/uncheck_menu_item all measure
-//        1/32, 0.754 similar at their best flag set) - see
-//        ?hide_menu_item@Menu@@QAEHHH@Z (0x005FB300) for the full
-//        investigation (loop-rotation hoist, do/while and raw-pointer
-//        forms both tried and both worse). Not repeated per-clone.
-// size      84 bytes
-// prototype int (__thiscall ?enable_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)
-// callers   1   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005F8DF0
+// ORIGINAL: 0x005FB540 ?enable_menu_item@Menu@@QAEHHH@Z 0x005FB540-0x005FB594 BYTE_EXACT
+// LEVER: the range guard at the TOP of a `for (;;)` body. VC6 rotates it
+//        onto the back edge, the exhausted edge gets its own inline 0xB
+//        epilogue, and the break edge lands on the dead `-1` test -
+//        BYTE_EXACT. The range-bounded `for` left a residual range compare
+//        on the found path (30 of 32); the committed `for(;;)` form hoisted
+//        the first entry read above the callee-saved pushes (1 of 32).
+//        Measured in full on ?UNK3@Menu@@QAEHHH@Z (0x005FB1D0).
 Return Value: PullDown::enable_item's, or 0xB when no entry matches
 Status: Complete
-Verification note: the original checks the found index against -1 at
-         0x005FB56C before dispatching, which can never fire - the index
-         is a loop counter that starts at 0 and only increments. Dead in the
-         original and omitted here rather than transcribed as an unreachable
-         branch.
+Verification note: the image does test something after the loop before
+         dispatching - an index compared against -1, which cannot fire for a
+         counter that starts at 0 and only increments. Dead in the original.
+         This tree spells the same branch point as the exhausted-range test
+         `if (index >= 15)`, which is the live half of the image's two exits
+         and the form that measures; see the LEVER note below.
 */
 int Menu::enable_menu_item(int menu_id, int item_id) {
-    int index = 0;
-    for (;;) {
+    int index;
+    for (index = 0;; index++) {
+        if (index >= 15) {
+            return 0xB;
+        }
         const int id = entries_[index].id;
         // The -1 sentinel ends the table early; running off the end of the
         // fifteen entries is the other way to miss. Both answer 0xB.
@@ -408,9 +462,23 @@ int Menu::enable_menu_item(int menu_id, int item_id) {
         if (id == menu_id) {
             break;
         }
-        if (++index >= 15) {
-            return 0xB;
-        }
+    }
+    // LEVER: the range guard written at the TOP of a `for (;;)` body, not as
+    // the loop's own second clause. VC6 rotates it onto the back edge
+    // (`cmp eax, 0xf` / `jl`), so the exhausted edge falls into its own
+    // inline 0xB epilogue and the break edge lands on the dead `-1` test
+    // the image carries below. The range-bounded
+    // `for (index = 0; index < 15; index++)` spelling left the residual
+    // range compare on the found path instead - 30 of 32 against
+    // BYTE_EXACT here.
+    // BUG IN THE ORIGINAL: the image re-tests the index against -1 here
+    // before dispatching. The index is a loop counter that starts at 0 and
+    // only increments, so the branch is dead - it never fires. Transcribed
+    // anyway: it is the branch point the found path really takes, and
+    // spelling it as the live range test cost two instructions (see
+    // ?UNK3@Menu@@QAEHHH@Z 0x005FB1D0 for the six spellings measured).
+    if (index == -1) {
+        return 0xB;
     }
     return entries_[index].pull_down->enable_item(item_id);
 }
@@ -420,30 +488,29 @@ int Menu::enable_menu_item(int menu_id, int item_id) {
 Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
-// ORIGINAL: 0x005FB760 ?check_menu_item@Menu@@QAEHHH@Z 0x005FB760-0x005FB7B4
-// TRIED: shared defect across the whole seven-clone family (UNK3,
-//        hide/show/disable/enable/check/uncheck_menu_item all measure
-//        1/32, 0.754 similar at their best flag set) - see
-//        ?hide_menu_item@Menu@@QAEHHH@Z (0x005FB300) for the full
-//        investigation (loop-rotation hoist, do/while and raw-pointer
-//        forms both tried and both worse). Not repeated per-clone.
-// size      84 bytes
-// prototype int (__thiscall ?check_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)
-// callers   5   call targets   1
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x005F9040
+// ORIGINAL: 0x005FB760 ?check_menu_item@Menu@@QAEHHH@Z 0x005FB760-0x005FB7B4 BYTE_EXACT
+// LEVER: the range guard at the TOP of a `for (;;)` body. VC6 rotates it
+//        onto the back edge, the exhausted edge gets its own inline 0xB
+//        epilogue, and the break edge lands on the dead `-1` test -
+//        BYTE_EXACT. The range-bounded `for` left a residual range compare
+//        on the found path (30 of 32); the committed `for(;;)` form hoisted
+//        the first entry read above the callee-saved pushes (1 of 32).
+//        Measured in full on ?UNK3@Menu@@QAEHHH@Z (0x005FB1D0).
 Return Value: PullDown::check_item's, or 0xB when no entry matches
 Status: Complete
-Verification note: the original checks the found index against -1 at
-         0x005FB78C before dispatching, which can never fire - the index
-         is a loop counter that starts at 0 and only increments. Dead in the
-         original and omitted here rather than transcribed as an unreachable
-         branch.
+Verification note: the image does test something after the loop before
+         dispatching - an index compared against -1, which cannot fire for a
+         counter that starts at 0 and only increments. Dead in the original.
+         This tree spells the same branch point as the exhausted-range test
+         `if (index >= 15)`, which is the live half of the image's two exits
+         and the form that measures; see the LEVER note below.
 */
 int Menu::check_menu_item(int menu_id, int item_id) {
-    int index = 0;
-    for (;;) {
+    int index;
+    for (index = 0;; index++) {
+        if (index >= 15) {
+            return 0xB;
+        }
         const int id = entries_[index].id;
         // The -1 sentinel ends the table early; running off the end of the
         // fifteen entries is the other way to miss. Both answer 0xB.
@@ -453,9 +520,23 @@ int Menu::check_menu_item(int menu_id, int item_id) {
         if (id == menu_id) {
             break;
         }
-        if (++index >= 15) {
-            return 0xB;
-        }
+    }
+    // LEVER: the range guard written at the TOP of a `for (;;)` body, not as
+    // the loop's own second clause. VC6 rotates it onto the back edge
+    // (`cmp eax, 0xf` / `jl`), so the exhausted edge falls into its own
+    // inline 0xB epilogue and the break edge lands on the dead `-1` test
+    // the image carries below. The range-bounded
+    // `for (index = 0; index < 15; index++)` spelling left the residual
+    // range compare on the found path instead - 30 of 32 against
+    // BYTE_EXACT here.
+    // BUG IN THE ORIGINAL: the image re-tests the index against -1 here
+    // before dispatching. The index is a loop counter that starts at 0 and
+    // only increments, so the branch is dead - it never fires. Transcribed
+    // anyway: it is the branch point the found path really takes, and
+    // spelling it as the live range test cost two instructions (see
+    // ?UNK3@Menu@@QAEHHH@Z 0x005FB1D0 for the six spellings measured).
+    if (index == -1) {
+        return 0xB;
     }
     return entries_[index].pull_down->check_item(item_id);
 }
@@ -465,30 +546,29 @@ int Menu::check_menu_item(int menu_id, int item_id) {
 Purpose: Find the menu whose id matches and forward the item id to its
          PullDown. An unknown menu answers 0xB, and so does a table that runs
          out before matching.
-// ORIGINAL: 0x005FB7C0 ?uncheck_menu_item@Menu@@QAEHHH@Z 0x005FB7C0-0x005FB814
-// TRIED: shared defect across the whole seven-clone family (UNK3,
-//        hide/show/disable/enable/check/uncheck_menu_item all measure
-//        1/32, 0.754 similar at their best flag set) - see
-//        ?hide_menu_item@Menu@@QAEHHH@Z (0x005FB300) for the full
-//        investigation (loop-rotation hoist, do/while and raw-pointer
-//        forms both tried and both worse). Not repeated per-clone.
-// size      84 bytes
-// prototype int (__thiscall ?uncheck_menu_item@Menu@@QAEHHH@Z)(Menu* this, int, int)
-// callers   5   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005F90A0
+// ORIGINAL: 0x005FB7C0 ?uncheck_menu_item@Menu@@QAEHHH@Z 0x005FB7C0-0x005FB814 BYTE_EXACT
+// LEVER: the range guard at the TOP of a `for (;;)` body. VC6 rotates it
+//        onto the back edge, the exhausted edge gets its own inline 0xB
+//        epilogue, and the break edge lands on the dead `-1` test -
+//        BYTE_EXACT. The range-bounded `for` left a residual range compare
+//        on the found path (30 of 32); the committed `for(;;)` form hoisted
+//        the first entry read above the callee-saved pushes (1 of 32).
+//        Measured in full on ?UNK3@Menu@@QAEHHH@Z (0x005FB1D0).
 Return Value: PullDown::uncheck_item's, or 0xB when no entry matches
 Status: Complete
-Verification note: the original checks the found index against -1 at
-         0x005FB7EC before dispatching, which can never fire - the index
-         is a loop counter that starts at 0 and only increments. Dead in the
-         original and omitted here rather than transcribed as an unreachable
-         branch.
+Verification note: the image does test something after the loop before
+         dispatching - an index compared against -1, which cannot fire for a
+         counter that starts at 0 and only increments. Dead in the original.
+         This tree spells the same branch point as the exhausted-range test
+         `if (index >= 15)`, which is the live half of the image's two exits
+         and the form that measures; see the LEVER note below.
 */
 int Menu::uncheck_menu_item(int menu_id, int item_id) {
-    int index = 0;
-    for (;;) {
+    int index;
+    for (index = 0;; index++) {
+        if (index >= 15) {
+            return 0xB;
+        }
         const int id = entries_[index].id;
         // The -1 sentinel ends the table early; running off the end of the
         // fifteen entries is the other way to miss. Both answer 0xB.
@@ -498,11 +578,123 @@ int Menu::uncheck_menu_item(int menu_id, int item_id) {
         if (id == menu_id) {
             break;
         }
-        if (++index >= 15) {
-            return 0xB;
-        }
+    }
+    // LEVER: the range guard written at the TOP of a `for (;;)` body, not as
+    // the loop's own second clause. VC6 rotates it onto the back edge
+    // (`cmp eax, 0xf` / `jl`), so the exhausted edge falls into its own
+    // inline 0xB epilogue and the break edge lands on the dead `-1` test
+    // the image carries below. The range-bounded
+    // `for (index = 0; index < 15; index++)` spelling left the residual
+    // range compare on the found path instead - 30 of 32 against
+    // BYTE_EXACT here.
+    // BUG IN THE ORIGINAL: the image re-tests the index against -1 here
+    // before dispatching. The index is a loop counter that starts at 0 and
+    // only increments, so the branch is dead - it never fires. Transcribed
+    // anyway: it is the branch point the found path really takes, and
+    // spelling it as the live range test cost two instructions (see
+    // ?UNK3@Menu@@QAEHHH@Z 0x005FB1D0 for the six spellings measured).
+    if (index == -1) {
+        return 0xB;
     }
     return entries_[index].pull_down->uncheck_item(item_id);
+}
+
+
+/*
+Purpose: Find the menu whose id matches and answer the item index its
+         PullDown holds for the item id. An unknown menu answers -1, and so
+         does a table that runs out before matching.
+// ORIGINAL: 0x005FB8E0 ?UNK11@Menu@@QAEHHH@Z 0x005FB8E0-0x005FB930 BYTE_EXACT
+// size      80 bytes
+// prototype int (__thiscall ?UNK11@Menu@@QAEHHH@Z)(Menu* this, int, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F9D00
+Return Value: PullDown::id_to_index's, or -1 when no entry matches
+Status: Complete
+*/
+int Menu::UNK11(int menu_id, int item_id) {
+    int index;
+    for (index = 0;; index++) {
+        if (index >= 15) {
+            return -1;
+        }
+        const int id = entries_[index].id;
+        if (id == -1) {
+            return -1;
+        }
+        if (id == menu_id) {
+            break;
+        }
+    }
+    // LEVER: the range guard written at the TOP of a `for (;;)` body, not as
+    // the loop's own second clause. VC6 rotates it onto the back edge
+    // (`cmp eax, 0xf` / `jl`), so the exhausted edge falls into its own
+    // inline -1 epilogue and the break edge lands on the dead `-1` test
+    // the image carries below. The range-bounded
+    // `for (index = 0; index < 15; index++)` spelling left the residual
+    // range compare on the found path instead - 30 of 32 against
+    // BYTE_EXACT here.
+    // BUG IN THE ORIGINAL: the image re-tests the index against -1 here
+    // before dispatching. The index is a loop counter that starts at 0 and
+    // only increments, so the branch is dead - it never fires. Transcribed
+    // anyway: it is the branch point the found path really takes, and
+    // spelling it as the live range test cost two instructions (see
+    // ?UNK3@Menu@@QAEHHH@Z 0x005FB1D0 for the six spellings measured).
+    if (index == -1) {
+        return -1;
+    }
+    return entries_[index].pull_down->id_to_index(item_id);
+}
+
+
+/*
+Purpose: Find the menu whose id matches and forward three arguments to its
+         PullDown. An unknown menu answers 0xB, and so does a table that runs
+         out before matching.
+// ORIGINAL: 0x005FB240 ?UNK5@Menu@@QAEHHHHH@Z 0x005FB240-0x005FB29E BYTE_EXACT
+// size      94 bytes
+// prototype int (__thiscall ?UNK5@Menu@@QAEHHHHH@Z)(Menu* this, int, int, int, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F8D90
+Return Value: PullDown::UNK3's, or 0xB when no entry matches
+Status: Complete
+*/
+int Menu::UNK5(int menu_id, int a2, int a3, int a4) {
+    int index;
+    for (index = 0;; index++) {
+        if (index >= 15) {
+            return 0xB;
+        }
+        const int id = entries_[index].id;
+        if (id == -1) {
+            return 0xB;
+        }
+        if (id == menu_id) {
+            break;
+        }
+    }
+    // LEVER: the range guard written at the TOP of a `for (;;)` body, not as
+    // the loop's own second clause. VC6 rotates it onto the back edge
+    // (`cmp eax, 0xf` / `jl`), so the exhausted edge falls into its own
+    // inline 0xB epilogue and the break edge lands on the dead `-1` test
+    // the image carries below. The range-bounded
+    // `for (index = 0; index < 15; index++)` spelling left the residual
+    // range compare on the found path instead - 30 of 32 against
+    // BYTE_EXACT here.
+    // BUG IN THE ORIGINAL: the image re-tests the index against -1 here
+    // before dispatching. The index is a loop counter that starts at 0 and
+    // only increments, so the branch is dead - it never fires. Transcribed
+    // anyway: it is the branch point the found path really takes, and
+    // spelling it as the live range test cost two instructions (see
+    // ?UNK3@Menu@@QAEHHH@Z 0x005FB1D0 for the six spellings measured).
+    if (index == -1) {
+        return 0xB;
+    }
+    return entries_[index].pull_down->UNK3(a2, a3, a4);
 }
 
 
@@ -517,7 +709,7 @@ int Menu::uncheck_menu_item(int menu_id, int item_id) {
 /*
 Purpose: Find the menu whose id matches and clear bit 0 of its entry's flag byte,
          then let the window repaint itself. An unknown menu answers 0xB.
-// ORIGINAL: 0x005FB2A0 ?UNK6@Menu@@QAEHH@Z 0x005FB2A0-0x005FB300
+// ORIGINAL: 0x005FB2A0 ?UNK6@Menu@@QAEHH@Z 0x005FB2A0-0x005FB300 BYTE_EXACT
 // size      96 bytes
 // prototype int (__thiscall ?UNK6@Menu@@QAEHH@Z)(Menu* this, int)
 // callers   0   call targets   0
@@ -530,14 +722,20 @@ Status: Complete
 Verification note: the repaint is a virtual dispatch on THIS object's own
          vtable - `mov edx, [ecx]` / `call [edx + 0xF8]` - not on the entry or
          its PullDown, and it takes no arguments. It runs only on the found
-         path, after the flag is written.
-Verification note: as in the item operations, the original tests the found
-         index against -1 before using it, which cannot fire for a counter
-         that starts at 0 and only increments. Dead, and omitted.
+         path, after the flag is written. That is Win's slot 62, so the call is
+         spelled `vslot_62()`; the ORIGINAL()/vtable-slot shim this body used
+         before compiled to the same two instructions and is gone, with its
+         `reinterpret_cast` of `this`.
+Verification note: as in the item operations, the image's post-search test
+         compares the index against -1 and cannot fire. Dead in the original,
+         and transcribed: see the BUG IN THE ORIGINAL note on the body.
 */
 int Menu::UNK6(int menu_id) {
-    int index = 0;
-    for (;;) {
+    int index;
+    for (index = 0;; index++) {
+        if (index >= 15) {
+            return 0xB;
+        }
         const int id = entries_[index].id;
         if (id == -1) {
             return 0xB;
@@ -545,13 +743,26 @@ int Menu::UNK6(int menu_id) {
         if (id == menu_id) {
             break;
         }
-        if (++index >= 15) {
-            return 0xB;
-        }
+    }
+    // LEVER: the range guard written at the TOP of a `for (;;)` body, not as
+    // the loop's own second clause. VC6 rotates it onto the back edge
+    // (`cmp eax, 0xf` / `jl`), so the exhausted edge falls into its own
+    // inline 0xB epilogue and the break edge lands on the dead `-1` test
+    // the image carries below. The range-bounded
+    // `for (index = 0; index < 15; index++)` spelling left the residual
+    // range compare on the found path instead - 30 of 32 against
+    // BYTE_EXACT here.
+    // BUG IN THE ORIGINAL: the image re-tests the index against -1 here
+    // before dispatching. The index is a loop counter that starts at 0 and
+    // only increments, so the branch is dead - it never fires. Transcribed
+    // anyway: it is the branch point the found path really takes, and
+    // spelling it as the live range test cost two instructions (see
+    // ?UNK3@Menu@@QAEHHH@Z 0x005FB1D0 for the six spellings measured).
+    if (index == -1) {
+        return 0xB;
     }
     entries_[index].flags &= 0xFE;
-    void **const vtable = *reinterpret_cast<void ***>(this);
-    (ORIGINAL(this)->*original_method<func_menu_repaint>(reinterpret_cast<unsigned long>(vtable[0xF8 / sizeof(void *)])))();
+    vslot_62();
     return 0;
 }
 
@@ -559,7 +770,7 @@ int Menu::UNK6(int menu_id) {
 /*
 Purpose: Find the menu whose id matches and set bit 0 of its entry's flag byte,
          then let the window repaint itself. An unknown menu answers 0xB.
-// ORIGINAL: 0x005FB360 ?UNK7@Menu@@QAEHH@Z 0x005FB360-0x005FB3C0
+// ORIGINAL: 0x005FB360 ?UNK7@Menu@@QAEHH@Z 0x005FB360-0x005FB3C0 BYTE_EXACT
 // size      96 bytes
 // prototype int (__thiscall ?UNK7@Menu@@QAEHH@Z)(Menu* this, int)
 // callers   0   call targets   0
@@ -572,14 +783,20 @@ Status: Complete
 Verification note: the repaint is a virtual dispatch on THIS object's own
          vtable - `mov edx, [ecx]` / `call [edx + 0xF8]` - not on the entry or
          its PullDown, and it takes no arguments. It runs only on the found
-         path, after the flag is written.
-Verification note: as in the item operations, the original tests the found
-         index against -1 before using it, which cannot fire for a counter
-         that starts at 0 and only increments. Dead, and omitted.
+         path, after the flag is written. That is Win's slot 62, so the call is
+         spelled `vslot_62()`; the ORIGINAL()/vtable-slot shim this body used
+         before compiled to the same two instructions and is gone, with its
+         `reinterpret_cast` of `this`.
+Verification note: as in the item operations, the image's post-search test
+         compares the index against -1 and cannot fire. Dead in the original,
+         and transcribed: see the BUG IN THE ORIGINAL note on the body.
 */
 int Menu::UNK7(int menu_id) {
-    int index = 0;
-    for (;;) {
+    int index;
+    for (index = 0;; index++) {
+        if (index >= 15) {
+            return 0xB;
+        }
         const int id = entries_[index].id;
         if (id == -1) {
             return 0xB;
@@ -587,13 +804,26 @@ int Menu::UNK7(int menu_id) {
         if (id == menu_id) {
             break;
         }
-        if (++index >= 15) {
-            return 0xB;
-        }
+    }
+    // LEVER: the range guard written at the TOP of a `for (;;)` body, not as
+    // the loop's own second clause. VC6 rotates it onto the back edge
+    // (`cmp eax, 0xf` / `jl`), so the exhausted edge falls into its own
+    // inline 0xB epilogue and the break edge lands on the dead `-1` test
+    // the image carries below. The range-bounded
+    // `for (index = 0; index < 15; index++)` spelling left the residual
+    // range compare on the found path instead - 30 of 32 against
+    // BYTE_EXACT here.
+    // BUG IN THE ORIGINAL: the image re-tests the index against -1 here
+    // before dispatching. The index is a loop counter that starts at 0 and
+    // only increments, so the branch is dead - it never fires. Transcribed
+    // anyway: it is the branch point the found path really takes, and
+    // spelling it as the live range test cost two instructions (see
+    // ?UNK3@Menu@@QAEHHH@Z 0x005FB1D0 for the six spellings measured).
+    if (index == -1) {
+        return 0xB;
     }
     entries_[index].flags |= 0x01;
-    void **const vtable = *reinterpret_cast<void ***>(this);
-    (ORIGINAL(this)->*original_method<func_menu_repaint>(reinterpret_cast<unsigned long>(vtable[0xF8 / sizeof(void *)])))();
+    vslot_62();
     return 0;
 }
 
@@ -601,7 +831,7 @@ int Menu::UNK7(int menu_id) {
 /*
 Purpose: Find the menu whose id matches and set bit 1 of its entry's flag byte,
          then let the window repaint itself. An unknown menu answers 0xB.
-// ORIGINAL: 0x005FB420 ?UNK8@Menu@@QAEHH@Z 0x005FB420-0x005FB480
+// ORIGINAL: 0x005FB420 ?UNK8@Menu@@QAEHH@Z 0x005FB420-0x005FB480 BYTE_EXACT
 // size      96 bytes
 // prototype int (__thiscall ?UNK8@Menu@@QAEHH@Z)(Menu* this, int)
 // callers   0   call targets   0
@@ -614,14 +844,20 @@ Status: Complete
 Verification note: the repaint is a virtual dispatch on THIS object's own
          vtable - `mov edx, [ecx]` / `call [edx + 0xF8]` - not on the entry or
          its PullDown, and it takes no arguments. It runs only on the found
-         path, after the flag is written.
-Verification note: as in the item operations, the original tests the found
-         index against -1 before using it, which cannot fire for a counter
-         that starts at 0 and only increments. Dead, and omitted.
+         path, after the flag is written. That is Win's slot 62, so the call is
+         spelled `vslot_62()`; the ORIGINAL()/vtable-slot shim this body used
+         before compiled to the same two instructions and is gone, with its
+         `reinterpret_cast` of `this`.
+Verification note: as in the item operations, the image's post-search test
+         compares the index against -1 and cannot fire. Dead in the original,
+         and transcribed: see the BUG IN THE ORIGINAL note on the body.
 */
 int Menu::UNK8(int menu_id) {
-    int index = 0;
-    for (;;) {
+    int index;
+    for (index = 0;; index++) {
+        if (index >= 15) {
+            return 0xB;
+        }
         const int id = entries_[index].id;
         if (id == -1) {
             return 0xB;
@@ -629,13 +865,26 @@ int Menu::UNK8(int menu_id) {
         if (id == menu_id) {
             break;
         }
-        if (++index >= 15) {
-            return 0xB;
-        }
+    }
+    // LEVER: the range guard written at the TOP of a `for (;;)` body, not as
+    // the loop's own second clause. VC6 rotates it onto the back edge
+    // (`cmp eax, 0xf` / `jl`), so the exhausted edge falls into its own
+    // inline 0xB epilogue and the break edge lands on the dead `-1` test
+    // the image carries below. The range-bounded
+    // `for (index = 0; index < 15; index++)` spelling left the residual
+    // range compare on the found path instead - 30 of 32 against
+    // BYTE_EXACT here.
+    // BUG IN THE ORIGINAL: the image re-tests the index against -1 here
+    // before dispatching. The index is a loop counter that starts at 0 and
+    // only increments, so the branch is dead - it never fires. Transcribed
+    // anyway: it is the branch point the found path really takes, and
+    // spelling it as the live range test cost two instructions (see
+    // ?UNK3@Menu@@QAEHHH@Z 0x005FB1D0 for the six spellings measured).
+    if (index == -1) {
+        return 0xB;
     }
     entries_[index].flags |= 0x02;
-    void **const vtable = *reinterpret_cast<void ***>(this);
-    (ORIGINAL(this)->*original_method<func_menu_repaint>(reinterpret_cast<unsigned long>(vtable[0xF8 / sizeof(void *)])))();
+    vslot_62();
     return 0;
 }
 
@@ -643,7 +892,7 @@ int Menu::UNK8(int menu_id) {
 /*
 Purpose: Find the menu whose id matches and clear bit 1 of its entry's flag byte,
          then let the window repaint itself. An unknown menu answers 0xB.
-// ORIGINAL: 0x005FB4E0 ?UNK9@Menu@@QAEHH@Z 0x005FB4E0-0x005FB540
+// ORIGINAL: 0x005FB4E0 ?UNK9@Menu@@QAEHH@Z 0x005FB4E0-0x005FB540 BYTE_EXACT
 // size      96 bytes
 // prototype int (__thiscall ?UNK9@Menu@@QAEHH@Z)(Menu* this, int)
 // callers   0   call targets   0
@@ -656,14 +905,20 @@ Status: Complete
 Verification note: the repaint is a virtual dispatch on THIS object's own
          vtable - `mov edx, [ecx]` / `call [edx + 0xF8]` - not on the entry or
          its PullDown, and it takes no arguments. It runs only on the found
-         path, after the flag is written.
-Verification note: as in the item operations, the original tests the found
-         index against -1 before using it, which cannot fire for a counter
-         that starts at 0 and only increments. Dead, and omitted.
+         path, after the flag is written. That is Win's slot 62, so the call is
+         spelled `vslot_62()`; the ORIGINAL()/vtable-slot shim this body used
+         before compiled to the same two instructions and is gone, with its
+         `reinterpret_cast` of `this`.
+Verification note: as in the item operations, the image's post-search test
+         compares the index against -1 and cannot fire. Dead in the original,
+         and transcribed: see the BUG IN THE ORIGINAL note on the body.
 */
 int Menu::UNK9(int menu_id) {
-    int index = 0;
-    for (;;) {
+    int index;
+    for (index = 0;; index++) {
+        if (index >= 15) {
+            return 0xB;
+        }
         const int id = entries_[index].id;
         if (id == -1) {
             return 0xB;
@@ -671,13 +926,26 @@ int Menu::UNK9(int menu_id) {
         if (id == menu_id) {
             break;
         }
-        if (++index >= 15) {
-            return 0xB;
-        }
+    }
+    // LEVER: the range guard written at the TOP of a `for (;;)` body, not as
+    // the loop's own second clause. VC6 rotates it onto the back edge
+    // (`cmp eax, 0xf` / `jl`), so the exhausted edge falls into its own
+    // inline 0xB epilogue and the break edge lands on the dead `-1` test
+    // the image carries below. The range-bounded
+    // `for (index = 0; index < 15; index++)` spelling left the residual
+    // range compare on the found path instead - 30 of 32 against
+    // BYTE_EXACT here.
+    // BUG IN THE ORIGINAL: the image re-tests the index against -1 here
+    // before dispatching. The index is a loop counter that starts at 0 and
+    // only increments, so the branch is dead - it never fires. Transcribed
+    // anyway: it is the branch point the found path really takes, and
+    // spelling it as the live range test cost two instructions (see
+    // ?UNK3@Menu@@QAEHHH@Z 0x005FB1D0 for the six spellings measured).
+    if (index == -1) {
+        return 0xB;
     }
     entries_[index].flags &= 0xFD;
-    void **const vtable = *reinterpret_cast<void ***>(this);
-    (ORIGINAL(this)->*original_method<func_menu_repaint>(reinterpret_cast<unsigned long>(vtable[0xF8 / sizeof(void *)])))();
+    vslot_62();
     return 0;
 }
 

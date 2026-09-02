@@ -43,10 +43,6 @@ static_assert(offsetof(MenuEntry, flags) == 0x8,
  /*
   * Menu class
   */
-// Slot 0xF8 of the Menu's OWN vtable: the repaint the flag operations end on.
-// It takes no arguments and its result is discarded.
-typedef void (OriginalObject::*func_menu_repaint)();
-
 class Menu : public GraphicWin {
  public:
   void on_mouse_move(int a1, int a2);
@@ -56,6 +52,8 @@ class Menu : public GraphicWin {
   void mouse_move(int a1, int a2);
   int requested_height();
   int UNK2(int a);
+  int UNK5(int a, int b, int c, int d);
+  int UNK11(int menu_id, int item_id);
   int UNK6(int menu_id);
   int UNK7(int menu_id);
   int UNK8(int menu_id);

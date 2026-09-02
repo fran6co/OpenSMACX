@@ -162,7 +162,12 @@ SHAPES = [
     # shrank, invisibly. The two regexes classify by what follows on the
     # LINE - the census is line-wise, so a lookahead cannot leak across
     # statements.
-    ("ORIGINAL() vtable-slot dispatch", 34,
+    # 34 -> 30 (2026-09-03, menu batch): Menu's four flag operations
+    # (UNK6-9, 0x005FB2A0/0x005FB360/0x005FB420/0x005FB4E0) call Win slot 62 by
+    # name - `vslot_62()`, which win.h already declares virtual - and their
+    # ORIGINAL()/vtable[] shims with their `reinterpret_cast` of `this` are
+    # gone. Both measured 33/35 before and after.
+    ("ORIGINAL() vtable-slot dispatch", 30,
      re.compile(r"\bORIGINAL\((?=.*vtable\[)"),
      "reads the target out of a vtable slot by hand because the method is not "
      "declared virtual. Declare it - the compiler writes this dispatch."),
@@ -397,7 +402,12 @@ SCAFFOLD_CEILINGS = {
     # 1289 -> 1287 (2026-09-03, boot-callee batch): 00455e80.cpp homed BYTE_EXACT
     # into src/game.cpp and units/004ba220.cpp homed BYTE_EXACT into
     # src/palette.cpp, both files gone with the bodies.
-    "artifact files (recovered/)": 1286,
+    # 1287 -> 1285 (2026-09-03, menu batch): units/005fb8e0.cpp deleted with the
+    # body it drafted - Menu::UNK11 homed in src/menu.cpp (MISMATCH 30/32, the
+    # residual is the shared dead `-1` check the seven-clone family records).
+    # units/005fb930.cpp STAYS: Menu::UNK12 reads PullDown::items_, which
+    # pulldown.h declares private, and this pass did not own that header.
+    "artifact files (recovered/)": 1285,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -432,7 +442,12 @@ SCAFFOLD_CEILINGS = {
     # 1662 -> 1661 (2026-09-03, boot-callee batch): 005c9860.cpp deleted with
     # the MultiDebug::init body it drafted - homed BYTE_EXACT into
     # src/multidebug.cpp as a real member, its GraphicWinInitShim gone with it.
-    "unrecovered files": 1661,
+    # 1661 -> 1660 (2026-09-03, menu batch): 005fb240.cpp deleted with the body
+    # it drafted - Menu::UNK5 homed in src/menu.cpp (MISMATCH 30/32, same
+    # residual). 005fb100/005fb160/005fb700 STAY: they call
+    # PullDown::add_item / add_separator / rename_item, which pulldown.h does
+    # not declare, and this pass did not own that header.
+    "unrecovered files": 1660,
     "hypothesis_layouts.h lines": 2723,
 }
 
