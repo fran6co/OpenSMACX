@@ -17,35 +17,8 @@
 
 
 class StringStructPayload;
+struct StringStructEntry;
 
-struct StringStructEntry {
-  // THE ENTRY'S OWN TWO VTABLE WORDS, not ints: the node's construction
-  // installs them (the primary at +0 and the virtual-base one at +0x14),
-  // and the tearing-down walks treat [child] as a displacement table and
-  // [vtbl+4] as a this-adjustment (spritebox.cpp, leaf_recoveries.cpp).
-  // Nothing in src/ reads or writes either word by name - typing them
-  // honestly changes no byte.
-  const void *entry_vptr;        // 0x00 - the node's primary vtable word
-  int id;
-  // The entry's payload: StringStruct::add's 0x18-byte node, whose +4 is
-  // the string (see StringStructPayload below) - remove_all hands it to the
-  // entry-visitor virtual and destroys it through the virtual-base teardown,
-  // and Caviar's unit-list walks read its text through it. The old int
-  // spelling was the catalogue's H return leaking into the struct.
-  StringStructPayload *payload;
-  StringStructEntry *next;
-  StringStructEntry *previous;
-  const void *vbase_vptr;        // 0x14 - the node's virtual-base vtable word
-  void *allocation_owner;
-};
-
-
-static_assert(sizeof(StringStructEntry) == 0x1C,
-              "StringStructEntry layout must match the original executable");
-static_assert(offsetof(StringStructEntry, id) == 0x4,
-              "StringStructEntry ID offset must match the original executable");
-static_assert(offsetof(StringStructEntry, payload) == 0x8,
-              "StringStructEntry payload offset must match the original executable");
 
 // The legacy close is entered through a virtual-base adjustor, so the redirect
 // receives a pointer 0x1C bytes into the object rather than its base.
@@ -136,6 +109,34 @@ class StringAllocationBase {
   virtual ~StringAllocationBase();
   Heap *allocation_owner_;
 };
+
+// REAL VIRTUAL INHERITANCE, like StringStructPayload below it: the word
+// add's construction installs at +0 is the VBTABLE 0x006693C8, whose two
+// entries read {0, 0x14} - self displacement zero, the StringAllocationBase
+// virtual base at +0x14 - and the base's vftable (0x006693AC, then the
+// derived 0x006693C4 through the vbtable walk) plus the owner capture live
+// inside that subobject. The declaration owns the vbptr and the vbase pair;
+// the raw tearing-down walks (spritebox.cpp, leaf_recoveries.cpp) index the
+// words numerically and are untouched by the spelling.
+struct StringStructEntry : public virtual StringAllocationBase {
+  int id;                        // 0x04
+  // The entry's payload: StringStruct::add's 0x18-byte node, whose +4 is
+  // the string (see StringStructPayload below) - remove_all hands it to the
+  // entry-visitor virtual and destroys it through the virtual-base teardown,
+  // and Caviar's unit-list walks read its text through it. The old int
+  // spelling was the catalogue's H return leaking into the struct.
+  StringStructPayload *payload;  // 0x08
+  StringStructEntry *next;       // 0x0C
+  StringStructEntry *previous;   // 0x10
+};
+
+
+static_assert(sizeof(StringStructEntry) == 0x1C,
+              "StringStructEntry layout must match the original executable");
+static_assert(offsetof(StringStructEntry, id) == 0x4,
+              "StringStructEntry ID offset must match the original executable");
+static_assert(offsetof(StringStructEntry, payload) == 0x8,
+              "StringStructEntry payload offset must match the original executable");
 
 // THE ENTRY PAYLOAD NODE StringStruct::add allocates: what
 // current_entry()/next_entry() hand back. REAL VIRTUAL INHERITANCE, the
