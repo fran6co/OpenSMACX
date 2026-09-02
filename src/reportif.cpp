@@ -405,8 +405,14 @@ void ReportIf::close_energy() {
 // calls     0x0045D380 0x005EE280
 Status: Complete
 */
+// The window whose modal ReportIf::done releases - the image calls
+// release_modal on the fixed Win at 0x00876478; nothing else in the tree
+// names it, so it is modelled as real storage (the WorldClimateWorldWin
+// idiom). Its identity beyond "the window done() un-modals" is unrecovered.
+Win ReportIfModalWindow;
+
 void ReportIf::done() {
-    reinterpret_cast<Win *>(0x00876478)->Win::release_modal();
+    ReportIfModalWindow.Win::release_modal();
     reinterpret_cast<SubInterface *>(this)->release_iface_mode();
 }
 

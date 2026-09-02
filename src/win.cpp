@@ -6846,14 +6846,14 @@ void __cdecl Win::remove_parent(Win* window) {
     }
     int count = WinRootCount;
     for (int i = 0; i < count; i++) {
-        if (reinterpret_cast<Win **>(0x009B6E48)[i] == this) {
+        if (WinRootWindows[i] == this) {
             if (i < count) {
                 count--;
                 WinRootCount = count;
                 this->hide();
                 count = WinRootCount;
                 if (i < count) {
-                    Win **p = reinterpret_cast<Win **>(&reinterpret_cast<Win **>(0x009B6E48)[i]);
+                    Win **p = &WinRootWindows[i];
                     int n = count - i;
                     do {
                         *p = p[1];
@@ -10327,7 +10327,7 @@ void __cdecl Win::update_zorder() {
     int n = WinRootCount;
     WinZOrderCount = 0;
     if (n > 0) {
-        Win **arr = reinterpret_cast<Win **>(0x009B6E48);
+        Win **arr = WinRootWindows;
         Win *target = WinZOrderWindow;
         do {
             if (target != 0 && target == arr[i]) {
@@ -10700,7 +10700,7 @@ void Win::close() {
             count = WinRootCount;
             i = 0;
             if (0 < count) {
-                Win **node = (Win **)reinterpret_cast<Win **>(0x009B6E48);
+                Win **node = WinRootWindows;
                 for (;;) {
                     if (*node == this) {
                         found = true;
@@ -10719,7 +10719,7 @@ void Win::close() {
                 this->hide();
                 if (i < WinRootCount) {
                     int remaining = WinRootCount - i;
-                    int *node2 = (int *)((char *)reinterpret_cast<Win **>(0x009B6E48) + i * 4);
+                    int *node2 = reinterpret_cast<int *>(WinRootWindows + i);
                     do {
                         node2[0] = node2[1];
                         node2 = node2 + 1;

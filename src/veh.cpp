@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "temp.h"
 #include "veh.h"
+#include "lock.h"  // LockMapTable - the map-record table pointer
 #include "alpha.h"
 #include "base.h"
 #include "faction.h"
@@ -2947,7 +2948,7 @@ inline void __cdecl spot_tile(int x, int y, int faction_id) {
           && x >= 0 && x < (int)MapLongitudeBounds)) {
         return;
     }
-    Map *tile = *reinterpret_cast<Map **>(0x0094A30C) + ((x >> 1) + y * MapLongitude);
+    Map *tile = reinterpret_cast<Map *>(LockMapTable) + ((x >> 1) + y * MapLongitude);
     if (faction_id == LocalFaction && !(tile->visibility & (1 << faction_id))
         && !(GameState & STATE_OMNISCIENT_VIEW)
         && !(PlayersData[faction_id].flags & PFLAG_MAP_REVEALED)) {
@@ -2989,7 +2990,7 @@ void __cdecl spot_base(int base_id, int faction_id) {
     // own comment on why synch_bit() has to stay a genuine call.
     if (y >= 0 && y < (int)MapLatitudeBounds
         && x >= 0 && x < (int)MapLongitudeBounds) {
-        Map *tile = *reinterpret_cast<Map **>(0x0094A30C) + ((x >> 1) + y * MapLongitude);
+        Map *tile = reinterpret_cast<Map *>(LockMapTable) + ((x >> 1) + y * MapLongitude);
         if (faction_id == LocalFaction && !(tile->visibility & (1 << faction_id))
             && !(GameState & STATE_OMNISCIENT_VIEW)
             && !(PlayersData[faction_id].flags & PFLAG_MAP_REVEALED)) {
@@ -3058,7 +3059,7 @@ void __cdecl spot_stack(int veh_id, int faction_id) {
         int y = Vehs[veh_id].y;
         if (y >= 0 && y < (int)MapLatitudeBounds
             && x >= 0 && x < (int)MapLongitudeBounds) {
-            Map *tile = *reinterpret_cast<Map **>(0x0094A30C) + ((x >> 1) + y * MapLongitude);
+            Map *tile = reinterpret_cast<Map *>(LockMapTable) + ((x >> 1) + y * MapLongitude);
             if (faction_id == LocalFaction && !(tile->visibility & (1 << faction_id))
                 && !(GameState & STATE_OMNISCIENT_VIEW)
                 && !(PlayersData[faction_id].flags & PFLAG_MAP_REVEALED)) {
