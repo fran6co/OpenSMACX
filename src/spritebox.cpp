@@ -105,22 +105,14 @@ SpriteBox::SpriteBox() {
     // the receiver the old hand walks computed (GraphicWin vbase through the
     // vbtable, then the Buffer base at its +0x444) is what the compiler
     // computes for a Buffer member call from this class.
-    Buffer::set_text_color(*reinterpret_cast<int *>(0x006970AC),
-                           *reinterpret_cast<int *>(0x006970B8),
-                           *reinterpret_cast<int *>(0x006970C4),
-                           *reinterpret_cast<int *>(0x006970D0));
-    Buffer::set_text_color2(*reinterpret_cast<int *>(0x006970B0),
-                            *reinterpret_cast<int *>(0x006970BC),
-                            *reinterpret_cast<int *>(0x006970C8),
-                            *reinterpret_cast<int *>(0x006970D4));
-    Buffer::set_text_color3(*reinterpret_cast<int *>(0x006970B4),
-                            *reinterpret_cast<int *>(0x006970C0),
-                            *reinterpret_cast<int *>(0x006970CC),
-                            *reinterpret_cast<int *>(0x006970D8));
-    Buffer::set_font(*reinterpret_cast<Font **>(0x009B8EC0),
-                     *reinterpret_cast<Font **>(0x009B8EC4),
-                     *reinterpret_cast<Font **>(0x009B8EC8),
-                     0);
+    Buffer::set_text_color(DialogDefaults[24], DialogDefaults[27],
+                           DialogDefaults[30], DialogDefaults[33]);
+    Buffer::set_text_color2(DialogDefaults[25], DialogDefaults[28],
+                            DialogDefaults[31], DialogDefaults[34]);
+    Buffer::set_text_color3(DialogDefaults[26], DialogDefaults[29],
+                            DialogDefaults[32], DialogDefaults[35]);
+    Buffer::set_font(DialogDefaultFonts[0], DialogDefaultFonts[1],
+                     DialogDefaultFonts[2], 0);
 }
 
 /*

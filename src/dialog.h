@@ -210,6 +210,23 @@ static_assert(sizeof(Dialog) == 0xF4, "Dialog layout must match the original exe
 // directly by `set_def_dialog_font`.
 extern Font *DialogDefaultFonts[3];
 
+// THE DIALOG DEFAULTS TABLE, the image's .data run 0x0069704C..0x006970DC
+// (37 dwords, shipped values; index = (address - 0x0069704C) / 4):
+// BaseButton's bevel set at [0..4], the dimmed "..." pair at [17]/[18], the
+// twelve text-color slots at [24]..[35], and the geometry/flag defaults at
+// [19]/[20]/[21]/[22]/[23]/[36] (the last is main.cpp's DialogDefaultStyle).
+extern const uint32_t DialogDefaults[37];
+
+// The zero-init .bss slots the Dialog constructor reads its field defaults
+// from (0x009B8EB4..0x009B8ED8), rebindable like ListBoxCloseDynamicDefault.
+extern uint32_t DialogField30Default;  // 0x009B8EB4
+extern uint32_t DialogField34Default;  // 0x009B8EB8
+extern uint32_t DialogField40Default;  // 0x009B8EBC
+extern uint32_t DialogFieldACDefault;  // 0x009B8ECC
+extern uint32_t DialogFieldB0Default;  // 0x009B8ED0
+extern uint32_t DialogFieldB4Default;  // 0x009B8ED4
+extern uint32_t DialogFieldB8Default;  // 0x009B8ED8
+
 // Every teardown that reaches the still-original Dialog::close (0x00608F50)
 // binds it through this signature; RadioButton/CheckBox/ListBox share it.
 typedef void (OriginalObject::*func_dialog_close)();

@@ -21,6 +21,11 @@
 #include "basebutton.h"
 #include "worldwin.h"
 #include "dialog.h"
+
+// The zero-init .bss slots BaseButton's setup reads its field defaults from
+// (0x009B8E2C/0x009B8E30), rebindable like CheckBoxDefault1/2.
+uint32_t BaseButtonA94Default;  // 0x009B8E2C
+uint32_t BaseButtonA98Default;  // 0x009B8E30
 #include "sounddevice.h"
 #include "spritebox.h"
 #include "replaywin.h"
@@ -108,14 +113,14 @@ BaseButton *BaseButton::construct() {
     // register before indexing element 0, where the image folds every
     // element, including 0, straight into the operand (the same lever that
     // took close() from 2/47 to 41/47).
-    field_A94_ = *reinterpret_cast<const uint32_t *>(0x009B8E2C);
-    color_ = *reinterpret_cast<const uint32_t *>(0x0069704C);
-    bevel_upper_ = *reinterpret_cast<const uint32_t *>(0x00697050);
-    bevel_lower_ = *reinterpret_cast<const uint32_t *>(0x00697054);
-    bevel_thickness_ = *reinterpret_cast<const uint32_t *>(0x00697058);
-    field_A98_ = *reinterpret_cast<const uint32_t *>(0x009B8E30);
+    field_A94_ = BaseButtonA94Default;
+    color_ = DialogDefaults[0];
+    bevel_upper_ = DialogDefaults[1];
+    bevel_lower_ = DialogDefaults[2];
+    bevel_thickness_ = DialogDefaults[3];
+    field_A98_ = BaseButtonA98Default;
     field_AA4_ = 0;
-    field_AA0_ = *reinterpret_cast<const uint32_t *>(0x0069705C);
+    field_AA0_ = DialogDefaults[4];
     return this;
 }
 
@@ -154,14 +159,14 @@ void BaseButton::close() {
     field_AAC_ = 0;
     field_AB0_ = 0;
     field_AB4_ = 0;
-    field_A94_ = *reinterpret_cast<const uint32_t *>(0x009B8E2C);
-    color_ = *reinterpret_cast<const uint32_t *>(0x0069704C);
-    bevel_upper_ = *reinterpret_cast<const uint32_t *>(0x00697050);
-    bevel_lower_ = *reinterpret_cast<const uint32_t *>(0x00697054);
-    bevel_thickness_ = *reinterpret_cast<const uint32_t *>(0x00697058);
-    field_A98_ = *reinterpret_cast<const uint32_t *>(0x009B8E30);
+    field_A94_ = BaseButtonA94Default;
+    color_ = DialogDefaults[0];
+    bevel_upper_ = DialogDefaults[1];
+    bevel_lower_ = DialogDefaults[2];
+    bevel_thickness_ = DialogDefaults[3];
+    field_A98_ = BaseButtonA98Default;
     field_AA4_ = 0;
-    field_AA0_ = *reinterpret_cast<const uint32_t *>(0x0069705C);
+    field_AA0_ = DialogDefaults[4];
 
     if (name_ != nullptr) {
         free(name_);

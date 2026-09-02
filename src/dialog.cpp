@@ -370,6 +370,36 @@ int Dialog::set_def_dialog_font(Font *font1, Font *font2, Font *font3) {
 
 func_dialog_close DialogOriginalClose = original_method<func_dialog_close>(0x00608F50);
 
+// THE DIALOG DEFAULTS TABLE, the image's .data run 0x0069704C..0x006970DC,
+// defined with the shipped values: BaseButton's bevel color set (0x4C..0x5C,
+// which its ctor reads into color_/bevel_upper_/bevel_lower_/
+// bevel_thickness_), the dimmed "..." text color pair (0x90/0x94), the
+// twelve text-color slots (0x9C..0xD8 region - CheckBox/RadioButton/
+// SpriteBox/Dialog read these for their text_color_ members), and the
+// geometry/flag defaults (0x98 and 0xA0..0xDC; main.cpp's DialogDefaultStyle
+// names the last slot). Index = (address - 0x0069704C) / 4.
+const uint32_t DialogDefaults[37] = {
+    247, 7, 248, 2, 125, 0,
+    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+    1, 1, 1, 1, 1, 1,
+    0x002E2E2E, 0x002E2E2E,
+    320, 6, 1, 12, 255, 0,
+    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+    1, 1, 1, 1, 1, 1,
+    3,
+};
+
+// The zero-init .bss slots the Dialog constructor reads its field defaults
+// from (0x009B8EB4..0x009B8ED8): rebindable, same idiom as
+// ListBoxCloseDynamicDefault.
+uint32_t DialogField30Default;  // 0x009B8EB4
+uint32_t DialogField34Default;  // 0x009B8EB8
+uint32_t DialogField40Default;  // 0x009B8EBC
+uint32_t DialogFieldACDefault;  // 0x009B8ECC
+uint32_t DialogFieldB0Default;  // 0x009B8ED0
+uint32_t DialogFieldB4Default;  // 0x009B8ED4
+uint32_t DialogFieldB8Default;  // 0x009B8ED8
+
 /*
 Purpose: Construct a Dialog: construct the embedded Heap and the item list,
          then load every color/font/field default from the process tables.
@@ -387,53 +417,53 @@ Dialog::Dialog() {
     // selected_position_/field_F0_ after field_30_, field_34_ between
     // field_44_ and field_48_, and field_1C_ near the end. The three -1
     // stores are the image's one `or eax,-1` reused.
-    field_20_ = *reinterpret_cast<uint32_t *>(0x006970DC);
+    field_20_ = DialogDefaults[36];
     field_24_ = 0;
     field_28_ = 0;
-    field_2C_ = *reinterpret_cast<uint32_t *>(0x00697098);
-    field_30_ = *reinterpret_cast<uint32_t *>(0x009B8EB4);
+    field_2C_ = DialogDefaults[19];
+    field_30_ = DialogField30Default;
     selected_position_ = 0;
     field_F0_ = -1;
     field_38_ = 0;
     field_3C_ = 0;
-    field_40_ = *reinterpret_cast<uint32_t *>(0x009B8EBC);
-    field_44_ = *reinterpret_cast<uint32_t *>(0x0069709C);
-    field_34_ = *reinterpret_cast<uint32_t *>(0x009B8EB8);
+    field_40_ = DialogField40Default;
+    field_44_ = DialogDefaults[20];
+    field_34_ = DialogField34Default;
     field_48_ = -1;
-    field_4C_ = *reinterpret_cast<uint32_t *>(0x006970A0);
-    field_50_ = *reinterpret_cast<uint32_t *>(0x006970A4);
+    field_4C_ = DialogDefaults[21];
+    field_50_ = DialogDefaults[22];
     field_54_ = 0;
     field_58_ = 0;
     field_5C_ = 0;
     field_60_ = 0;
     field_64_ = 0;
     field_68_ = 0;
-    field_6C_ = *reinterpret_cast<uint32_t *>(0x006970A8);
-    field_AC_ = *reinterpret_cast<uint32_t *>(0x009B8ECC);
-    field_B0_ = *reinterpret_cast<uint32_t *>(0x009B8ED0);
-    field_B4_ = *reinterpret_cast<uint32_t *>(0x009B8ED4);
-    field_B8_ = *reinterpret_cast<uint32_t *>(0x009B8ED8);
-    font1_ = *reinterpret_cast<Font **>(0x009B8EC0);
-    text_color_a_ = *reinterpret_cast<uint32_t *>(0x006970AC);
-    text_color_b_ = *reinterpret_cast<uint32_t *>(0x006970B8);
-    text_color_c_ = *reinterpret_cast<uint32_t *>(0x006970C4);
-    text_color_d_ = *reinterpret_cast<uint32_t *>(0x006970D0);
-    font2_ = *reinterpret_cast<Font **>(0x009B8EC4);
-    text_color_2a_ = *reinterpret_cast<uint32_t *>(0x006970B0);
-    text_color_2b_ = *reinterpret_cast<uint32_t *>(0x006970BC);
-    text_color_2c_ = *reinterpret_cast<uint32_t *>(0x006970C8);
-    text_color_2d_ = *reinterpret_cast<uint32_t *>(0x006970D4);
-    font3_ = *reinterpret_cast<Font **>(0x009B8EC8);
-    text_color_3a_ = *reinterpret_cast<uint32_t *>(0x006970B4);
-    text_color_3b_ = *reinterpret_cast<uint32_t *>(0x006970C0);
-    text_color_3c_ = *reinterpret_cast<uint32_t *>(0x006970CC);
+    field_6C_ = DialogDefaults[23];
+    field_AC_ = DialogFieldACDefault;
+    field_B0_ = DialogFieldB0Default;
+    field_B4_ = DialogFieldB4Default;
+    field_B8_ = DialogFieldB8Default;
+    font1_ = DialogDefaultFonts[0];
+    text_color_a_ = DialogDefaults[24];
+    text_color_b_ = DialogDefaults[27];
+    text_color_c_ = DialogDefaults[30];
+    text_color_d_ = DialogDefaults[33];
+    font2_ = DialogDefaultFonts[1];
+    text_color_2a_ = DialogDefaults[25];
+    text_color_2b_ = DialogDefaults[28];
+    text_color_2c_ = DialogDefaults[31];
+    text_color_2d_ = DialogDefaults[34];
+    font3_ = DialogDefaultFonts[2];
+    text_color_3a_ = DialogDefaults[26];
+    text_color_3b_ = DialogDefaults[29];
+    text_color_3c_ = DialogDefaults[32];
     // RESIDUAL (99 of 103): the image issues text_color_3d_'s default load
     // (mov edx,[0x6970d8]) BEFORE the field_1C_ store; this spelling stores
     // field_1C_ first and loads after. A scheduling nit - the stores land in
     // the same order; TRIED: a named local to pin the load (73/103 - VC6
     // stole ecx for the -1 and re-scheduled the whole block).
     field_1C_ = -1;
-    text_color_3d_ = *reinterpret_cast<uint32_t *>(0x006970D8);
+    text_color_3d_ = DialogDefaults[35];
 }
 
 // The four list-stage constants (DialogListDerived/VirtualBase and

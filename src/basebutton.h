@@ -25,6 +25,11 @@ class Scroll; // forward declaration
  /*
   * BaseButton class
   */
+// The zero-init .bss slots BaseButton's setup reads its field defaults from
+// (0x009B8E2C/0x009B8E30), rebindable like CheckBoxDefault1/2.
+extern uint32_t BaseButtonA94Default;  // 0x009B8E2C
+extern uint32_t BaseButtonA98Default;  // 0x009B8E30
+
 class BaseButton : public GraphicWin {
   friend class ButtonGroup;
   friend class FlatButton;
@@ -102,7 +107,9 @@ static_assert(sizeof(BaseButton) == 0xAB8,
               "BaseButton layout must match the legacy ABI");
 
 uint32_t *const BaseButtonStaticDefaults = (uint32_t *)0x0069704C;
-uint32_t *const BaseButtonDynamicDefaults = (uint32_t *)0x009B8E2C;
+// 0x009B8E2C's two slots are named below (BaseButtonA94Default /
+// BaseButtonA98Default); the old `uint32_t *const BaseButtonDynamicDefaults`
+// pointer binding that stood here had zero users and is gone.
 
 BaseButton *__fastcall base_button_construct_redirect(BaseButton *self, void *);
 uint32_t __fastcall base_button_close_redirect(BaseButton *self, void *);
