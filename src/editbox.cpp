@@ -45,6 +45,54 @@ uint32_t EditBoxDefaultB2C;  // 0x009B90BC
 uint32_t EditBoxDefaultB30 = 1;  // 0x006971E0
 uint32_t EditBoxDefaultB34 = 4;  // 0x006971E4
 
+
+/*
+Purpose: Construct an EditBox: the GraphicWin construct on the flat prefix,
+         the trailing Time, the two EditBox vftables, and the field defaults.
+// ORIGINAL: 0x00614E50 ??0EditBox@@QAE@XZ 0x00614E50-0x00614F2B
+// symbol    ??0EditBox@@QAE@XZ
+// size      220 bytes
+// prototype void (__thiscall ??0EditBox@@QAE@XZ)(EditBox* this)
+// callers   2   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D4CF0 0x006161D0
+Return Value: n/a
+
+The image's `call 0x5D4CF0` is GraphicWin::construct on the flat prefix -
+a construct()-method call, not a real ctor, because EditBox has a FLAT
+GraphicWin-shaped prefix rather than real inheritance. The field stores
+use the same named globals that close() republishes from.
+*/
+EditBox::EditBox() {
+    // The image calls GraphicWin::construct (0x005D4CF0) on the flat prefix
+    // here; our tree removed that method when GraphicWin got its real ctor
+    // and EditBox's flat storage has no inheritance to route through. The
+    // initialization is accepted as a recorded gap (TRIED: placement-new
+    // GraphicWin, a placement-new census site; TRIED: a construct() call,
+    // which was the recursive forwarder to this very ctor).
+    time_.Time::Time();
+
+    *reinterpret_cast<uint32_t *>(graphicWin_) = 0x66A038;
+    *(reinterpret_cast<uint32_t *>(graphicWin_) + 0x111) = 0x66A030;
+
+    field_A14_ = 0;
+    field_B14_ = 0xA;
+    field_B28_ = EditBoxDefaultB28;
+    field_B2C_ = EditBoxDefaultB2C;
+    field_B30_ = EditBoxDefaultB30;
+    field_B34_ = EditBoxDefaultB34;
+    field_B1C_ = EditBoxDefaultB1C;
+    field_B20_ = EditBoxDefaultB20;
+    field_B24_ = EditBoxDefaultB24;
+    field_B38_ = 0;
+    field_B40_ = 0;
+    field_B44_ = 0;
+    field_B48_ = 0;
+    field_B18_ = 0;
+    field_B3C_ = 0;
+}
+
 /*
 Purpose: Reset the edit box - clear its state, republish the seven defaults,
          then close the trailing Time and the GraphicWin prefix.

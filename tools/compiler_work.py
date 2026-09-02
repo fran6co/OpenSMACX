@@ -63,7 +63,10 @@ SHAPES = [
     # 11 -> 10 (batch 2): WorldWin::construct became the real WorldWin()
     # constructor (the image's ??0WorldWin has zero callers, so the conversion
     # cannot break a call site).
-    ("construct", 10,
+    # 10 -> 9 (EditBox ctor): EditBox::construct forwarder retired - the
+    # real EditBox() ctor carries the construction the forwarder delegated
+    # to the image's 0x00614E50.
+    ("construct", 9,
      re.compile(r"^\w[\w :*&]*\b\w+::construct\(\)\s*\{", re.M),
      "a `construct()` method standing in for a constructor. Convert it; put "
      "anything the image writes BEFORE the vfptr store in the member-"
@@ -300,7 +303,7 @@ SCAFFOLD_CEILINGS = {
     # 234 -> 231 (2026-08-30, caviar-voxel batch): the three seams Caviar's
     # homing had declared for sub_639390 / sub_63ad60 / sub_63f9b0 retired -
     # all three bodies now live at the foot of src/caviar.cpp.
-    "PENDING_BODY forwarders": 211,
+    "PENDING_BODY forwarders": 210,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -322,7 +325,7 @@ SCAFFOLD_CEILINGS = {
     # 1677 -> 1675 (sound batch): load_sound_dll homed into
     # src/sound_loader.cpp and its message helper with it; 004c5e50.cpp and
     # 004c9080.cpp deleted.
-    "unrecovered files": 1675,
+    "unrecovered files": 1674,
     "hypothesis_layouts.h lines": 2723,
 }
 

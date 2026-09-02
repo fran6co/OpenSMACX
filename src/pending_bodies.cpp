@@ -284,10 +284,6 @@ void Dialog::construct() {
 
 // ??0EditBox@@QAE@XZ at 0x00614E50 - the EditBox subobject constructor
 // FileWin::FileWin reaches by name. See the note in editbox.h.
-void EditBox::construct() {
-    typedef void(__fastcall *pending)(EditBox *, void *);
-    PENDING_BODY(0x00614E50, pending)(this, nullptr);
-}
 
 // ??0ListBox@@QAE@H@Z at 0x00609DB0 - the ListBox subobject constructor
 // FileWin::FileWin reaches by name. See the note in listbox.h.

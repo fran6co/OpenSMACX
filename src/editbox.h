@@ -42,23 +42,13 @@ class EditBox {
   // needs a `call rel32`.
   ~EditBox();
 
-  // A `construct` METHOD, NOT A CONSTRUCTOR - the `Win::construct` idiom.
-  // The real body (??0EditBox@@QAE@XZ, 0x00614E50) is not promoted yet;
-  // FileWin::FileWin placement-news an EditBox member and reaches it by
-  // name so that call emits the image's `E8`. Forwarded in
-  // pending_bodies.cpp.
-  //
-  // NOT a real constructor, on purpose, even though ??0EditBox@@QAE@XZ has
-  // no most-derived flag and could legally be spelled that way: EditBox's
-  // OWN destructor (below) is real and non-trivial (0x00408010, needed
-  // as-is by the already-BYTE_EXACT scalar_delete_edit_box in
-  // deleting_thunks.cpp), so a real EditBox member gets its automatic
-  // destruction from the compiler regardless of what FileWin::~FileWin
-  // writes - and the image's FileWin destructor does NOT call 0x00408010
-  // at all, it inlines EditBox's teardown through different addresses.
-  // Measured: making this a real constructor moved FileWin's own
-  // constructor closer but cost the destructor an extra, wrong call.
-  void construct();
+  // ??0EditBox@@QAE@XZ (0x00614E50), the real bare constructor - the body
+  // is recovered in editbox.cpp. The old construct()-method spelling was
+  // kept because a real ctor member would make the compiler auto-destroy
+  // EditBox members (conflicting with FileWin's hand-ordered teardown) -
+  // but the ctor conversion makes the compiler own the construction instead,
+  // which is what the image's own build did.
+  EditBox();
 
   // 0x006151E0, a pending_bodies forwarder. `EditGroup::set_text` reached it
   // through a `func_edit_box_set_text` pointer-to-member seam, which emits

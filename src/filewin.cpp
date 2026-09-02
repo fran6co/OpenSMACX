@@ -73,7 +73,7 @@ FileWin::FileWin() {
     // the most-derived flag ListBox cannot get VC6 to synthesise (see the
     // note on CheckBox's constructor) - so its real body is reached
     // explicitly below.
-    edit_box_.construct();
+    // edit_box_ constructs implicitly from the real EditBox() ctor.
     list_box_.construct(1);
 
     field_208_ = 0;
