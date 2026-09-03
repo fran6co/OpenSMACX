@@ -188,6 +188,7 @@ void Palette::set_active_window(Win *) {
 /*
 Purpose: Drop the animation slot registered under the given key.
 // ORIGINAL: 0x005FE950 ?UNK3@Palette@@QAEXH@Z 0x005FE950-0x005FEAC4
+// TRIED: 2026-09-03, the /G6 flag sets added to the ladder after the 2026-08-24 pass give the best INSTRUCTION count here (7/115, 0.757 similar) but score below the plain /c /O2 /Gy /GR- /GX set (5/115, 0.771 similar); the image is not /G6 in this body.
 // TRIED: transcription as a member reading its key normally - the image
 //            opens by reading the key from [esp+4] past a callee-save push
 //            sequence, this tree opens push ecx/mov edx,ecx, diverging at
@@ -301,6 +302,17 @@ the absolute top of the body there did not change the push count. Given six
 spellings already failed here and the sibling's guard-placement experiment
 also failed, this reads as one whole-function register-pressure wall shared
 by both `reserved[256]`-scanning bodies, not two separate puzzles.
+// TRIED: 2026-09-03, the frame size is not source-reachable. The image's frame is
+//   0x414 (five int slots: index, best, end, best_index, one masked channel) and this
+//   tree's is 0x41C, which shifts EVERY esp-relative operand by 8 and is why the raw
+//   agreement is 3/150 - this is the same wall the 2026-08-24 note names, seen as frame
+//   size. Two spellings measured against it: dropping the `distance` local and writing
+//   `dg*dg + dr*dr + db*db` twice (once in the compare, once in the store) reached 5/150
+//   at the SAME 0x41C frame; dropping the three named `want_*` mask locals and writing
+//   `red & 0xFF` at each use (VC6 hoists the loop-invariant `and` itself) reached only
+//   4/150 and shrank the frame just one slot, to 0x418 - so the slots are not the named
+//   locals, they are what the allocator chose to spill. Both edits reverted: the named
+//   forms are the better C++ and the higher agreement of the two was 5/150.
 */
 int Palette::closest(int red, int green, int blue, int start, int count,
                      int skip_animated) {
@@ -393,6 +405,7 @@ int Palette::get_pos(int value) {
 Purpose: Build the process palette and hand it to GDI, replacing whatever
          palette was there before.
 // ORIGINAL: 0x005FEBB0 ?init_palette_class@Palette@@SAXH@Z 0x005FEBB0-0x005FECF0
+// TRIED: 2026-09-03, the /G6 flag sets added to the ladder after the 2026-08-24 pass give the best INSTRUCTION count here (3/99, 0.842 similar) but score below the plain /c /O2 /Gy /GR- /GX set (0/99, 0.881 similar); the image is not /G6 in this body.
 // CORRECTED from ?init_palette_class@Palette@@QAAXH@Z
 //   `QAA` is a public NON-STATIC member declared __cdecl - it takes a `this`
 //   as its first stack argument. The bytes say there is none. This body reads
@@ -766,6 +779,7 @@ void Palette::close_palette_class() {
 }
 
 // ORIGINAL: 0x005FF470 ?get_nearest_palette_index@Palette@@QAEHEEEH@Z 0x005FF470-0x005FF627 FILE
+// TRIED: 2026-09-03, the /G6 flag sets added to the ladder after the 2026-08-24 pass give the best INSTRUCTION count here (4/136, 0.794 similar) but score below the plain /c /O2 /Gy /GR- /GX set (3/136, 0.852 similar); the image is not /G6 in this body.
 // TRIED: separate loops for the a4==0 (linear scan) and a4!=0 (group-reserved scan) paths with a stack reserved[0x100] array; diverges at #1, stack layout order
 // BUG IN THE ORIGINAL SOURCE MODEL, now fixed: this body was missing the
 //   `if (PaletteInitialized == 0) return 7;` guard entirely - the image's
@@ -858,7 +872,7 @@ int Palette::get_nearest_palette_index(unsigned char red, unsigned char green,
 }
 
 // ORIGINAL: 0x005FF1A0 ?UNK5@Palette@@QAEHHHHH@Z 0x005FF1A0-0x005FF21C FILE
-// symbol    ?make_remap_table@Palette@@QAEHHPAEHH@Z
+// symbol    ?make_remap_table@Palette@@QAEHPAV1@PAEHH@Z
 // working copy - scaffold materialised by --work
 // size      124 bytes
 // prototype int (__thiscall ?UNK5@Palette@@QAEHHHHH@Z)(Palette* this, int, int, int, int)
@@ -879,10 +893,32 @@ int Palette::get_nearest_palette_index(unsigned char red, unsigned char green,
 //   0.935 similar, 1/53 with one fewer instruction (54 against 58) - not
 //   worse, not a win either. Left as the pointer-walk plus chained `||`,
 //   which is the higher-scoring of the three shapes measured.
+// LEVER: 2026-09-03, the first parameter is the palette the remap TARGETS, not
+//   an int. The image loads it into ecx as the receiver of
+//   get_nearest_palette_index (`mov ecx,[esp+0x1c]` at 0x005FF1F4, which is
+//   this function's first stack argument once the loop's pushes are counted),
+//   so the call is `source->get_nearest_palette_index(...)` and the parameter
+//   is `Palette *source`. Retyping it took this body 1/53 -> 46/53 (0.937 ->
+//   0.995 similar, best flag set /c /O2 /Gy /GR- /GX): the whole front half -
+//   the `push ecx` spill, the `mov eax,[esp+4]`-before-`push ebp` ordering the
+//   2026-08-24 note chases, and every store in the two identity-fill loops -
+//   was downstream of the tree passing its own `this` where the image passes
+//   the parameter. The shipped mangled name still says `H` for the parameter,
+//   so `symbol` records what this tree emits.
+// TRIED: 2026-09-03, the remaining 7 instructions are ONE register-assignment
+//   choice: the image seeds the second identity-fill loop's counter into eax
+//   (`mov eax,ebx; cmp eax,0x100`), this tree keeps it in ebx coalesced with
+//   `end` (`cmp ebx,0x100; mov eax,ebx`). Giving the loop its own counter
+//   (`for (int fill = end; ...)`) compiles BYTE-IDENTICAL to reusing `i`, and
+//   /G6 - which reorders that mov/cmp pair on general.cpp's add_lf - regresses
+//   to 24/53 here. Not source-reachable; left at 46/53.
 
-// `source` is only ever null-checked; the census types it int and the
-// body proves nothing more. Its real type is an open finding.
-int Palette::make_remap_table(int source, unsigned char *table, int start,
+// `source` is the palette the remap TARGETS, not an int: the image loads it
+// into ecx as the receiver of get_nearest_palette_index at 0x005FF1F4
+// (`mov ecx, [esp+0x1c]`, which is this function's first stack argument), so
+// the call is source->get_nearest_palette_index(...). The shipped mangled name
+// still says `H` for it, so `symbol` carries what this tree emits.
+int Palette::make_remap_table(Palette *source, unsigned char *table, int start,
                               int count) {
     if (source == 0 || table == 0) {
         return 0x10;
@@ -902,8 +938,8 @@ int Palette::make_remap_table(int source, unsigned char *table, int start,
         const PALETTEENTRY *p = &entries_[start];
         int idx = start;
         do {
-            int result = get_nearest_palette_index(p->peRed, p->peGreen,
-                                                   p->peBlue, 1);
+            int result = source->get_nearest_palette_index(
+                p->peRed, p->peGreen, p->peBlue, 1);
             table[idx] = (char)result;
             idx = idx + 1;
             ++p;
@@ -913,6 +949,7 @@ int Palette::make_remap_table(int source, unsigned char *table, int start,
 }
 
 // ORIGINAL: 0x005FE5C0 ?UNK1@Palette@@QAEHHHH@Z 0x005FE5C0-0x005FE646 FILE
+// TRIED: 2026-09-03, the /G6 flag sets added to the ladder after the 2026-08-24 pass give the best INSTRUCTION count here (13/47, 0.860 similar) but score below the plain /c /O2 /Gy /GR- /GX set (11/47, 0.946 similar); the image is not /G6 in this body.
 // symbol    ?set_rgbquad@Palette@@QAEHPBUtagRGBQUAD@@HH@Z
 // working copy - scaffold materialised by --work
 // size      134 bytes
@@ -1695,6 +1732,10 @@ void __cdecl RGB_to_HSV(const PALETTEENTRY *entry, HSV *out) {
 }
 
 // ORIGINAL: 0x005FF630 ?get_nearest_palette_index@Palette@@QAEHPAUHSV@@0H@Z 0x005FF630-0x005FF92D FILE
+// TRIED: 2026-09-03, the /G6 flag sets added to the ladder after the 2026-08-24 pass TIE the plain
+//   /c /O2 /Gy /GR- /GX set on instruction count (both 7/224) and beat it on similarity, 0.462 vs
+//   0.378 - the only body in this file where /G6 is the better set outright. Re-measured over all
+//   26 flag sets; the best figure is still a long way off.
 // symbol    ?get_nearest_palette_index@Palette@@QAEHPBUHSV@@0H@Z
 // TRIED: MISMATCH #5 push/mov - and/sub-esp frame differs because the helper hsv_sq_distance() is a separate function call rather than inlined FPU code sharing one scratch stack slot per the original's single sub-esp-8 staging area reused across both sin/cos call sites in each loop body.
 // LEVER: `static __forceinline` on `hsv_sq_distance` makes VC6 actually inline
@@ -1797,29 +1838,25 @@ int Palette::get_nearest_palette_index(const HSV *query, const HSV *hsv_block,
     return best_index;
 }
 
-// ORIGINAL: 0x005FED40 ?create_table@Palette@@QAEHPAEHHH@Z 0x005FED40-0x005FEE78
-// TRIED: manual dword-by-dword copy loop for the HSV struct (compiler reordered vs. the `rep movsd` struct-assignment form used below); computing `&hsv[0]` at the call site instead of before the loop. Best reached: MISMATCH, edit_count 4/~110 mnemonics, 313 bytes vs 312 - one `fmul qword ptr [addr]` compiled as `mov eax,addr; fmul qword ptr [eax]` instead of the direct absolute form, apparently because `&hsv[0]`'s address happened to occupy eax at that point in the original and not here.
-//            2026-08-23, two more shapes measured from the homed body: spelling the
-//            constant as *(double *)0x0066EB38 lowers byte-identically (0.9626), and
-//            hoisting a &local1 pointer ahead of the loop to busy eax does not compile
-//            as written - the lever is whatever makes VC6 compute the call's argument
-//            addresses BEFORE the v-multiply, which is an ordering this tree has not found.
-// TRIED: 2026-08-24, re-measured against the CURRENT `local1.v = A * B * C` body with
-//   `osmx measure` directly (0.978 similar, 80/93 instructions, best of all ten flag
-//   sets): re-tried `*(const double *)0x0066EB38` for the scale constant - regresses to
-//   59/93, so the 0.9626 figure above was from a different metric or a different body
-//   shape, not reproducible on this one; computing `&hsv[0]` at the call site (no `ref0`
-//   local) - byte-identical to the current form, 80/93, same divergence; `local1.v *= ...`
-//   compound-assign instead of `local1.v = local1.v * ...` - also byte-identical, 80/93.
-//   The plateau is instruction SCHEDULING (the image interleaves the closing `fstp` of
-//   the v-multiply with the call's address computation; every spelling tried here keeps
-//   them as one unbroken FPU sequence), not a data-flow or constant-spelling difference.
+// ORIGINAL: 0x005FED40 ?create_table@Palette@@QAEHPAEHHH@Z 0x005FED40-0x005FEE78 BYTE_EXACT
 // size      312 bytes
 // prototype int (__thiscall ?create_table@Palette@@QAEHPAEHHH@Z)(Palette* this, unsigned int8*, int, int, int)
 // callers   1   call targets   3
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005FF630 0x00628DB0 0x00645550
+// LEVER: 2026-09-03, BYTE_EXACT on ONE source change - the v-multiply is TWO
+//   statements, not one. `local1.v = (double)(brightness_boost + 100) *
+//   local1.v * hsv_percent_scale;` let VC6 commute the two fmul operands, so
+//   the compiled body emitted `fld A; fmul [scale]; rep movsd; fmul [local1.v]`
+//   where the image has `fld A; rep movsd; fmul [local1.v]; fmul [scale]` - the
+//   scale multiply was hoisted above the struct copy because it does not depend
+//   on it, which also reorders the rounding. Splitting it into
+//   `double scaled = (double)(brightness_boost + 100) * local1.v;`
+//   `local1.v = scaled * hsv_percent_scale;` makes the second multiply depend
+//   on the first, and the whole body went 80/93 -> 93/93 at /c /O2 /Gy /GR- /GX
+//   with no other edit. `scaled` costs no stack slot: it lives on the x87
+//   stack, which is why the image has exactly one fstp.
 
 int Palette::create_table(unsigned char *table, int start, int count,
                           int brightness_boost) {
@@ -1852,7 +1889,11 @@ int Palette::create_table(unsigned char *table, int start, int count,
     ref0 = &hsv[0];
     for (i = start; i < upper; i++) {
         local1 = hsv[i];
-        local1.v = (double)(brightness_boost + 100) * local1.v * hsv_percent_scale;
+        // Two statements, not one: the image multiplies the brightness factor
+        // into local1.v FIRST and the percent scale in second, and folding all
+        // three into one expression lets VC6 commute the two fmul operands.
+        double scaled = (double)(brightness_boost + 100) * local1.v;
+        local1.v = scaled * hsv_percent_scale;
         table[i] = (unsigned char)get_nearest_palette_index((HSV *)&local1, (HSV *)ref0, 1);
     }
     return 0;
