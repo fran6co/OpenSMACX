@@ -78,6 +78,17 @@ Purpose: Calculate the base amount of talents and drones for the specified facti
 //            on is_human()'s bit test is the same one already documented at
 //            this file's `TRIED` notes near line 179/223 (register
 //            allocation, not a source shape this tree controls).
+// LEVER (2026-09-03): `static_cast<int>(MapAreaSqRoot)`. map.h declares it
+//            `uint32_t`, so this tree's product was UNSIGNED and the whole
+//            /56 //2 tail compiled to `mul`/`shr` against the image's
+//            `imul`/`sar` - 13 divergent instructions, not a scheduling
+//            difference. The cast (which technology.cpp's cost model already
+//            makes) moved 33/52 -> 36/52. Naming the clamp `weight` before
+//            the multiply tied at 36/52; the last two instructions are the
+//            image forming `drones + 2` with `lea ecx,[eax+2]` where this
+//            tree adds in place (`add eax,2`) - register selection only.
+//            --all-flags: the default /O2 /Gy /GR- /Oy- /GX at 36/52 (0.914)
+//            beats every other set tried (best rival 9/52).
 // symbol    ?psych_check@@YAXHPAH0@Z
 // size      147 bytes
 // prototype void (__cdecl ?psych_check@@YAXHPAHPAH@Z)(int factionID, int* drones, int* talents)
@@ -89,9 +100,18 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl psych_check(int faction_id, int *drones, int *talents) {
-    *drones = 6 - (is_human(faction_id) ? PlayersData[faction_id].diff_level : DLVL_LIBRARIAN);
+    int drones_val = 6 - (is_human(faction_id) ? PlayersData[faction_id].diff_level : DLVL_LIBRARIAN);
+    *drones = drones_val;
     int efficiency = PlayersData[faction_id].soc_effect_pending.efficiency;
-    *talents = (((*drones + 2) * ((efficiency < 0 ? 0 : efficiency) + 4) * MapAreaSqRoot) / 56) / 2;
+    // Naming the clamp ties the inlined spelling at 36/52 - the image's
+    // `lea ecx,[eax+2]` for drones + 2 is not source-reachable either way -
+    // kept because it reads better than the nested ternary inline did.
+    int weight = (efficiency < 0 ? 0 : efficiency) + 4;
+    // MapAreaSqRoot is declared uint32_t in map.h; the image multiplies it as
+    // a SIGNED value (imul/sar all the way through the /56), so the signedness
+    // has to be recovered here or VC6 emits mul/shr and the whole /56 //2
+    // tail changes shape. Same cast technology.cpp's cost model makes.
+    *talents = ((drones_val + 2) * weight * static_cast<int>(MapAreaSqRoot)) / 56 / 2;
 }
 
 /*
@@ -220,6 +240,16 @@ Purpose: Determine if the specified faction is considered a threat based on the 
 //        TRIED: `PlayerData *p = &PlayersData[faction_id];` before the
 //        repeated `.current_num_bases`/`.diff_level` reads - dropped to 4/113;
 //        the image keeps faction_id itself live across the whole body instead.
+//        TRIED (2026-09-03): `bases_threat` was `uint32_t` here while
+//        great_beelzebub's copy of the same arithmetic is `int` - the image's
+//        compares are `jge`/`jle` and this tree emitted `jae`/`jbe`. Made it
+//        `int` with `(int)PlayersData[...].current_num_bases` at its one use
+//        (same lever great_beelzebub records): 23/113 -> 24/113. Splitting the
+//        leading `!is_human || FactionRankings[7]` guard into two `if`s tied
+//        at 24/113 - the image MERGES these two tails - so the chained form
+//        stays. Rest is register selection (ebx vs ecx for TurnCurrentNum,
+//        `lea ecx,[ebx+0x19]` vs `add ecx,0x19`, `mov al,[mem]` vs a dword
+//        load for is_human's byte).
 //        TRIED: the image never materializes an is_minor_threat flag - all
 //        four guard conditions are separate early `return false` sites, no
 //        variable. Rewrote as guard clauses instead of the flag+outer-if; ties
@@ -240,11 +270,14 @@ BOOL __cdecl great_satan(int faction_id, BOOL is_aggressive) {
     if (!is_human(faction_id) || FactionRankings[7] != faction_id) {
         return false;
     }
-    uint32_t bases_threat = (TurnCurrentNum + 25) / 50;
+    // Signed, as great_beelzebub's note records: the image's compares against
+    // both bases_threat and current_num_bases are `jge`/`jle`, so the local is
+    // `int` and the uint32_t field is cast at its one use.
+    int bases_threat = (TurnCurrentNum + 25) / 50;
     if (bases_threat < 4) {
         bases_threat = 4;
     }
-    if (PlayersData[faction_id].current_num_bases <= bases_threat
+    if ((int)PlayersData[faction_id].current_num_bases <= bases_threat
         || !(PlayersData[faction_id].diff_level > DLVL_SPECIALIST
             || GameRules & RULES_INTENSE_RIVALRY || is_aggressive)) {
         return false;
@@ -278,7 +311,7 @@ BOOL __cdecl great_satan(int faction_id, BOOL is_aggressive) {
 Purpose: Check whether the specified faction is nearing the diplomatic victory requirements to be 
          able to call a Supreme Leader vote. Optional 2nd parameter (0/-1 to disable) that specifies
          a faction to skip if they have a pact with faction from the 1st parameter.
-// ORIGINAL: 0x00539D40 ?aah_ooga@@YAHHH@Z 0x00539D40-0x00539E3E
+// ORIGINAL: 0x00539D40 ?aah_ooga@@YAHHH@Z 0x00539D40-0x00539E3E BYTE_EXACT
 // LEVER: the image calls council_votes(player) UNCONDITIONALLY at the top of
 //        each second-loop iteration and stores its result into the recycled
 //        `faction_id` stack slot, before testing `player != pact_faction_id`
@@ -288,12 +321,17 @@ Purpose: Check whether the specified faction is nearing the diplomatic victory r
 //        equality: `test esi,esi; je`, never a signed range check) and made
 //        the loop counters/`votes_total` plain `int` to match the image's
 //        signed `jl` compares (was `uint32_t`, gave `jb`/`jge`->`jae`).
-//        Moved 25/94 -> 34/94 agreeing. Remaining divergence is the image
-//        caching `faction_id` in ebx across the whole function (this tree
-//        re-reads it from the stack each use) and a has_tech/Technology[]
-//        address strength-reduction (lea+shl pointer walk) the image performs
-//        that this tree's O2 does differently - both register-allocation /
-//        instruction-selection only, not chased per the no-register-only rule.
+//        Moved 25/94 -> 34/94 agreeing.
+// LEVER (2026-09-03): `has_tech_call`, not `has_tech`, at all three sites.
+//   technology.h declares has_tech `MEASURED inline`, so this tree's compile
+//   open-coded the whole preq walk three times and the body measured 0/94 -
+//   the image CALLS 0x005B9F20 at 0x00539DC2/0x00539DE3/0x00539DF7, which
+//   makes this a best_specialist-shaped caller. technology.h already carries
+//   the non-inline forwarder for exactly that; switching the three calls took
+//   34/94 -> 94/94 BYTE_EXACT, and the "register allocation / strength
+//   reduction" the earlier note blamed was the inlined walk, not registers.
+//   Measured 20/94 at the default flags and 49/94 under /Ob0 BEFORE the
+//   switch, which is what identified the inline as the defect.
 // symbol    ?aah_ooga@@YAIHH@Z
 // size      254 bytes
 // prototype 
@@ -319,10 +357,14 @@ uint32_t __cdecl aah_ooga(int faction_id, int pact_faction_id) {
             && (!pact_faction_id || !has_treaty(player, pact_faction_id, DTREATY_PACT)
                 || !(GameRules & RULES_VICTORY_COOPERATIVE))) {
             int proposal_preq = Proposal[PROP_UNITE_SUPREME_LEADER].preq_tech;
-            if ((has_tech(proposal_preq, faction_id)
+            // has_tech_call, not has_tech: the image CALLS 0x005B9F20 at all
+            // three of these sites (0x00539DC2/0x00539DE3/0x00539DF7) rather
+            // than open-coding the preq walk, so this is a best_specialist
+            // caller, not one of the 108 genuine inline sites.
+            if ((has_tech_call(proposal_preq, faction_id)
                 || (proposal_preq >= 0
-                    && (has_tech(Technology[proposal_preq].preq_tech_1, faction_id)
-                    || has_tech(Technology[proposal_preq].preq_tech_2, faction_id))))
+                    && (has_tech_call(Technology[proposal_preq].preq_tech_1, faction_id)
+                    || has_tech_call(Technology[proposal_preq].preq_tech_2, faction_id))))
                 && votes * 2 >= votes_total && (!faction_id_ret || player == faction_id)) {
                 faction_id_ret = player;
             }
@@ -333,8 +375,18 @@ uint32_t __cdecl aah_ooga(int faction_id, int pact_faction_id) {
 
 /*
 Purpose: Check if the human controlled player is nearing the endgame.
-// ORIGINAL: 0x00539E40 ?climactic_battle@@YAHXZ 0x00539E40-0x00539EE4
-// LEVER: the image never calls ascending(0) - it is a real 4-caller function
+// ORIGINAL: 0x00539E40 ?climactic_battle@@YAHXZ 0x00539E40-0x00539EE4 BYTE_EXACT
+// LEVER (2026-09-03): two things closed it, 10/56 -> 56/56 BYTE_EXACT.
+//   1. `has_tech_call` at both sites, for the same reason aah_ooga needs it -
+//      the image CALLS 0x005B9F20 here and technology.h's MEASURED inline was
+//      being open-coded three instructions' worth per site.
+//   2. the SECOND loop counts in a signed `int` (named `player`, since VC6's
+//      for-scope leaks forbid a second `i`): the image's `cmp esi,8; jl` is a
+//      signed compare, and this tree's `uint32_t i` emitted `jb` - the one
+//      instruction left after the call fix. The FIRST loop stays `uint32_t`;
+//      the image walks the PlayersData pointer there (`add eax,0x20cc; cmp
+//      eax,0x97f0bc; jl`), so nothing in this tree's loop counter changes it.
+// PREVIOUS: the image never calls ascending(0) - it is a real 4-caller function
 //        elsewhere, but here it inlines to `base_project(SP_VOICE_OF_PLANET)
 //        != SP_Unbuilt` (base_project is already MEASURED inline in base.h).
 //        Swapping the call for that expression moved 14/56 -> 16/56 agreeing.
@@ -343,17 +395,6 @@ Purpose: Check if the human controlled player is nearing the endgame.
 //        incrementing pointer through the first loop; this tree's compile
 //        still indexes by `i` and schedules differently from instruction 0.
 //        Plateaus here after the ascending() fix; not chased further.
-//        TRIED: `PlayerData *player = &PlayersData[1];` walked with
-//        `player++` alongside `i` for the first loop, to mimic the image's
-//        raw pointer walk - dropped to 15/56 (the &-of-array-element address
-//        is not a link-time constant the way `FactionsStatus`/`PlayersData`
-//        base pointers are, so the compiler emits a relocation load instead
-//        of folding the walk); reverted. Re-measured 2026-08-22: `measure`'s
-//        flag-set search now lands on 10/56 (not the 16/56 above - a flag-set
-//        selection drift, not a regression from this pass; re-tried the same
-//        `player++` pointer walk against the current baseline and it still
-//        ties at 10/56). Still capped by the same instruction-0 scheduling
-//        gap; not chased further.
 // size      164 bytes
 // prototype 
 // callers   7   call targets   2
@@ -374,14 +415,29 @@ BOOL __cdecl climactic_battle() {
                      //       been effectively disabled as a design decision rather than a bug.
     }
     if (base_project(SP_VOICE_OF_PLANET) != SP_Unbuilt) {
-        for (uint32_t i = 1; i < MaxPlayerNum; i++) {
-            if (is_human(i) && (has_tech(Facility[FAC_PSI_GATE].preq_tech, i)
-                || has_tech(Facility[FAC_VOICE_OF_PLANET].preq_tech, i))) {
+        // A signed counter this time: the image's `cmp esi,8; jl` on the
+        // second loop is signed where the first loop walks the PlayersData
+        // pointer, and VC6's for-scope leaks mean the two loops cannot both
+        // own an `i`.
+        for (int player = 1; player < MaxPlayerNum; player++) {
+            // has_tech_call: the image CALLS 0x005B9F20 here (see the calls
+            // line) rather than open-coding the preq walk.
+            if (is_human(player) && (has_tech_call(Facility[FAC_PSI_GATE].preq_tech, player)
+                || has_tech_call(Facility[FAC_VOICE_OF_PLANET].preq_tech, player))) {
                 return true; // Human controlled player has tech to build PSI Gates or VoP
             }
         }
     }
     return false;
+}
+
+// Non-inline forwarder to base.h's `MEASURED inline` ascending: at_climax
+// below is one of the image's four real callers of 0x005AC680 (see that
+// marker's `calls` line), where facility_avail (base.cpp) folds it in place
+// instead. Same idiom as technology.h's has_tech_call - the E8 target is a
+// relocation on both sides, so this symbol's own name costs nothing.
+BOOL __cdecl ascending_call(int faction_id) {
+    return ascending(faction_id);
 }
 
 /*
@@ -401,6 +457,16 @@ Purpose: Determine if the specified AI faction is at the game climax based on ce
 //        register swap (image keeps faction_id in edi/loop-i in esi, this
 //        tree the reverse) cascading from instruction 4 - register
 //        allocation only, not chased per the no-register-only rule.
+//        TRIED (2026-09-03): `ascending_call` for both ascending sites - the
+//        image CALLS 0x005AC680 twice here (call_diff said this tree made 2
+//        calls where the image makes 4) and base.h's MEASURED inline was
+//        folding them. Call count now agrees; 17/105 unchanged, and the
+//        cascade's true head is the RECEIVER-SPILL fingerprint the brief
+//        documents: the image pushes edi in its PROLOGUE and then reads
+//        faction_id into it (`push ebx/push esi/push edi/mov edi,[ebp+8]`)
+//        while this tree defers `push edi` past the four early-return guards
+//        and loads faction_id into esi, so every later esi/edi assignment is
+//        mirrored. Not chased further - same wall as the Palette bodies.
 // size      306 bytes
 // prototype 
 // callers   6   call targets   3
@@ -441,7 +507,10 @@ BOOL __cdecl at_climax(int faction_id) {
     }
     for (i = 1; i < MaxPlayerNum; i++) {
         if (i != faction_id) {
-            if (ascending(i) && !ascending(faction_id)) { // both return same so irrelevant check
+            // ascending_call, not ascending: the image CALLS 0x005AC680 at
+            // both of these sites (see the calls line), where base.h's
+            // MEASURED inline would fold base_project in place.
+            if (ascending_call(i) && !ascending_call(faction_id)) { // both return same so irrelevant check
                 return true;
             }
         }
@@ -451,8 +520,16 @@ BOOL __cdecl at_climax(int faction_id) {
 
 /*
 Purpose: Add friction between the two specified factions.
-// ORIGINAL: 0x0053A030 ?cause_friction@@YAXHHH@Z 0x0053A030-0x0053A08D
-// LEVER: `diplo_friction` bound to the ROW (`PlayersData[faction_id].diplo_friction`,
+// ORIGINAL: 0x0053A030 ?cause_friction@@YAXHHH@Z 0x0053A030-0x0053A08D BYTE_EXACT
+// LEVER: the FLAT VIEW, not the row pointer. diplo_friction sits sixteen
+//   dwords past the treaty word, so `int index = faction_id_with
+//   + faction_id * SpyingStatusStride` and `SpyingStatusTable[index + 16]` at
+//   both uses - the same +offset spelling treaty_off uses for the agenda
+//   view - lets VC6 keep ONE unscaled index register that the load and the
+//   store both reach through `[reg*4 + 0x96ca38]`. 21/33 -> 33/33 BYTE_EXACT;
+//   the "register scheduling" the earlier note blamed was the row pointer
+//   forcing the *4 into the pointer instead of into the accesses.
+// PREVIOUS: `diplo_friction` bound to the ROW (`PlayersData[faction_id].diplo_friction`,
 //   the `uint32_t[8]` itself, no `[faction_id_with]` yet) rather than to the single
 //   `&...diplo_friction[faction_id_with]` ELEMENT - indexing with `[faction_id_with]`
 //   at each of the two uses, instead of dereferencing a pointer already advanced past
@@ -463,19 +540,6 @@ Purpose: Add friction between the two specified factions.
 //   subscript). Moved 13/33 -> 21/33 agreeing. Remaining divergence starts at
 //   instruction 5 with push/register-assignment order (esi/edi scheduling), not
 //   chased further this pass.
-// TRIED: direct double array-index instead of a *diplo_friction pointer;
-//            a `new_friction` local holding range()'s result before the store.
-//            Same shape as set_treaty's divergence: the image computes the
-//            PlayersData[faction_id].diplo_friction[faction_id_with] address
-//            via an explicit multiply reused for both the load and the store
-//            (`mov ecx,[edx*4+base]; ...; mov [edx*4+base],ecx`), while this
-//            tree's compile folds the *4 into the addressing mode on the
-//            store and recomputes it with `lea`/`mov` split differently.
-//            Plateaus at 13/33 agreeing across tried flag sets (this was the
-//            ELEMENT-pointer form; see the LEVER above for the ROW-pointer
-//            form that moved past it). A `PlayerData *p = &PlayersData[faction_id]`
-//            wrapper around the existing `*diplo_friction` pointer ties at
-//            13/33, no change.
 // size      93 bytes
 // prototype void (__cdecl ?cause_friction@@YAXHHH@Z)(int factionID, int factionIDWith, int friction)
 // callers   8   call targets   0
@@ -486,8 +550,12 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl cause_friction(int faction_id, int faction_id_with, int friction) {
-    uint32_t *diplo_friction = PlayersData[faction_id].diplo_friction;
-    diplo_friction[faction_id_with] = range(diplo_friction[faction_id_with] + friction, 0, 20);
+    // diplo_friction is the same 2099-stride view sixteen dwords past the
+    // treaty word - SpyingStatusTable[index + 16], exactly the +8 spelling
+    // treaty_off uses for the agenda view. One index local reaches both the
+    // read and the write, which is what the image keeps in a single register.
+    int index = faction_id_with + faction_id * SpyingStatusStride;
+    SpyingStatusTable[index + 16] = range(SpyingStatusTable[index + 16] + friction, 0, 20);
     if (DiploFrictionFactionID == faction_id && DiploFrictionFactionIDWith == faction_id_with) {
         DiploFriction += friction; // not bounded?
     }
@@ -992,6 +1060,22 @@ Purpose: Set or unset the diplomatic treaty for the specified faction with anoth
 //            13/33 -> 21/33. Here it is WORSE, not a tie: drops to 0/36. This is a
 //            single read-modify-write per branch (not cause_friction's read-then-separate-
 //            write of the same element), so there is no shared address to amortise.
+//            TRIED (this pass) three spellings of the `shl eax,2`-once shape,
+//            all measured and rejected: (1) the flat view - `int index` local
+//            plus `SpyingStatusTable[index]` / `SpyingStatusTable[index + 32]`
+//            for the merc store, the treaty_off/agenda_on idiom - falls to
+//            15/36 because with three accesses at one base VC6 folds *4 into
+//            every SIB and never scales eagerly; (2) a byte-granular slot
+//            (`char *treaty_slot`) - ties the 32/36 baseline but the address
+//            materialises as `lea eax,[eax*4+0x96c9f8]`, the full address,
+//            not the image's base-less `shl eax,2`; (3) the byte offset added
+//            inline at the use (`(char *)&SpyingStatusTable[index] + 0x80`)
+//            - 15/36, the whole chain folds into two SIB accesses and the
+//            compile is one instruction SHORTER (35). The image's register
+//            holds 4*index with the table base folded into three separate
+//            displacements, which is a scheduling choice VC6 6.0 does not
+//            reach from any of these source forms; the 32/36 spelling kept
+//            below is the closest of the four.
 // size      104 bytes
 // prototype 
 // callers   24   call targets   0
@@ -1878,6 +1962,12 @@ Purpose: Rescore every faction's power, and optionally publish the ranking order
 // `edx=1` and `ecx=0x9ac598` first) rather than a call-shape or semantic
 // gap. Not chased at the instruction level this pass - 1350 image bytes
 // across likely the largest body in this batch, well outside its budget.
+//        TRIED (2026-09-03): `has_tech_call` in the growth-value loop - the
+//        image CALLS 0x005B9F20 twice (0x005AC779 / 0x005AC823) and
+//        technology.h's MEASURED inline was open-coded, 39 instructions'
+//        worth (compiled 441 vs the image's 425). 5/425 -> 8/425 agreeing
+//        and compiled now 422. Still MISMATCH; the rest is the prologue
+//        scheduling above.
 // size      1350 bytes
 // prototype
 // callers   3   call targets   7
@@ -1984,7 +2074,9 @@ void __cdecl rankings(int apply_ranks) {
             score = (PlayersData[faction_id].pop_total
                 + PlayersData[faction_id].theory_of_everything) * 4;
             for (int tech_id = 0; tech_id < MaxTechnologyNum; tech_id++) {
-                if (has_tech(tech_id, faction_id)) {
+                // has_tech_call: the image CALLS 0x005B9F20 twice from here
+                // (0x005AC779 / 0x005AC823) rather than open-coding the walk.
+                if (has_tech_call(tech_id, faction_id)) {
                     score += (tech_id < MaxTechnologyNum)
                         ? Technology[tech_id].growth_value + Technology[tech_id].tech_value
                             + Technology[tech_id].wealth_value + Technology[tech_id].power_value
@@ -2326,6 +2418,19 @@ BOOL __cdecl society_avail(int soc_category, int soc_model, int faction_id) {
 /*
 Purpose: Calculate an AI faction's social engineering.
 // ORIGINAL: 0x005B4790 ?social_ai@@YAXHHHHHPAH@Z 0x005B4790-0x005B5612
+// LEVER (2026-09-03): `has_tech_call` at the loop site (0x005B4AA1 in the
+//        image's own calls list) - 22/1353 -> 50/1353. Still MISMATCH, and
+//        call_diff still says MORE (9 vs 7), for two reasons this file cannot
+//        reach: do_all_non_input is MEASURED inline in temp.h, so the image's
+//        single `call 0x005FCB20` arrives here as its do_non_input/do_net/
+//        check_net expansion - the same ceiling the brief records on
+//        Path::continent - and the social_calc call both sides make resolves
+//        to DIFFERENT SYMBOLS (the image's `?social_calc@@YAXPAHPAHHHH@Z`
+//        spells both pointers `PAH`/char *, this tree's spells the class
+//        pointers), so call_diff pairs neither. Measured and rejected:
+//        `#pragma auto_inline(off)` around social_calc's definition changes
+//        nothing at all (compiled stays 1308 instructions, same call set) -
+//        VC6 was never folding it into social_ai.
 // LEVER: call_diff showed 9 vs the image's 7 - this body's two calls to
 //        social_upheaval() are not in the image's own `calls` list below
 //        (no 0x005B4550), so both are inlined there even though 0x005B4550
@@ -2456,7 +2561,10 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
             if (model) {
                 if (Players[faction_id].soc_anti_ideology_category == j
                     || Players[faction_id].soc_anti_ideology_model == model
-                    || !has_tech(SocialCategories[model].preq_tech[j], faction_id)) {
+                    // has_tech_call: the image CALLS 0x005B9F20 once here
+                    // (0x005B4AA1, see the calls line) instead of open-coding
+                    // the preq walk inside this loop.
+                    || !has_tech_call(SocialCategories[model].preq_tech[j], faction_id)) {
                     break;
                 }
             }
@@ -2891,6 +2999,19 @@ Purpose: Calculate specified faction's best available weapon and armor ratings a
 //        for all four DTREATY_* bit tests plus a `+=4`-per-j pointer walk;
 //        this tree's O2 recomputes the address per has_treaty() call site -
 //        register/CSE allocation, not chased per the no-register-only rule.
+// LEVER (2026-09-03): both of those "register/CSE" residuals were the two
+//        inlined helpers, and both closed. 18/210 (0.711 at the recorded
+//        /O1 set) -> 133/210 at the DEFAULT /O2 /Gy /GR- /Oy- /GX:
+//        (1) has_tech_call in all three loops - the image CALLS 0x005B9F20
+//        three times, and technology.h's MEASURED inline was open-coded at
+//        every site (measured 133/210 under /Ob0 /O2 BEFORE the switch,
+//        which is what named the inline as the defect); (2) the closing
+//        loop's four has_treaty() calls are now ONE read of
+//        `PlayersData[i].diplo_treaties[j]` into a local with the DTREATY_*
+//        tests applied to it, which is exactly what the image's single load
+//        and byte reuse is. First divergence moved from instruction 4 to
+//        126. Remaining: the closing loop's register roles and the
+//        `+=4`-per-j pointer walk.
 // size      678 bytes
 // prototype void (__cdecl ?enemy_capabilities@@YAXH@Z)(int factionID)
 // callers   3   call targets   4
@@ -2904,8 +3025,13 @@ void __cdecl enemy_capabilities(int faction_id) {
     PlayersData[faction_id].best_psi_offense = veh_avail(BSC_MIND_WORMS, faction_id, -1)
         ? weap_strat(WPN_PSI_ATTACK, faction_id) : 0;
     PlayersData[faction_id].best_weapon_value = 1;
+    // has_tech_call, not has_tech, in all three loops: the image CALLS
+    // 0x005B9F20 at 0x00560E2F / 0x00560EC1 / 0x00560F20 rather than
+    // open-coding the preq walk, so /Ob0 (which stops technology.h's
+    // MEASURED inline) agrees with the image on 133 of 210 instructions
+    // where plain /O2 manages 33.
     for (int i = 0; i < MaxWeaponNum; i++) {
-        if (has_tech(Weapon[i].preq_tech, faction_id) && Weapon[i].offense_rating < 99) {
+        if (has_tech_call(Weapon[i].preq_tech, faction_id) && Weapon[i].offense_rating < 99) {
             int weap_val = weap_strat(i, faction_id);
             if (Weapon[i].offense_rating < 0 && weap_val
                 >= PlayersData[faction_id].best_psi_offense) {
@@ -2920,7 +3046,7 @@ void __cdecl enemy_capabilities(int faction_id) {
         ? arm_strat(ARM_PSI_DEFENSE, faction_id) : 0;
     PlayersData[faction_id].best_armor_value = 1;
     for (i = 0; i < MaxArmorNum; i++) {
-        if (has_tech(Armor[i].preq_tech, faction_id)) {
+        if (has_tech_call(Armor[i].preq_tech, faction_id)) {
             int arm_val = arm_strat(i, faction_id);
             if (Armor[i].defense_rating < 0 && arm_val >= PlayersData[faction_id].best_psi_defense) {
                 PlayersData[faction_id].best_psi_defense = arm_val;
@@ -2932,7 +3058,7 @@ void __cdecl enemy_capabilities(int faction_id) {
     }
     PlayersData[faction_id].best_land_speed = 1;
     for (i = 0; i < MaxChassisNum; i++) {
-        if (has_tech(Chassis[i].preq_tech, faction_id) && Chassis[i].triad == TRIAD_LAND) {
+        if (has_tech_call(Chassis[i].preq_tech, faction_id) && Chassis[i].triad == TRIAD_LAND) {
             if (Chassis[i].speed >= PlayersData[faction_id].best_land_speed) {
                 PlayersData[faction_id].best_land_speed = Chassis[i].speed;
             }
@@ -2949,13 +3075,19 @@ void __cdecl enemy_capabilities(int faction_id) {
         // 3rd pass: has commlink
         // 4th pass: any non-pact faction
         for (uint32_t j = 1; j < MaxPlayerNum; j++) {
+            // The pair's treaty word is read ONCE and the bit tests all reuse
+            // it - the image loads PlayersData[i].diplo_treaties[j] a single
+            // time per j and reaches every DTREATY_* test off that byte,
+            // where one has_treaty() call per bit recomputes the address.
+            // Same value, same tests: has_treaty is exactly `word & treaty`.
+            uint32_t treaties = PlayersData[i].diplo_treaties[j];
             if (j != faction_id
-                && !has_treaty(i, j, DTREATY_PACT)
-                && ((!i && has_treaty(i, j, DTREATY_VENDETTA) && !has_treaty(i, j, DTREATY_TREATY)
-                    && has_treaty(i, j, DTREATY_COMMLINK)) 
-                    || (i == 1 && !has_treaty(i, j, DTREATY_TREATY) 
-                        && has_treaty(i, j, DTREATY_COMMLINK))
-                    || (i == 2 && has_treaty(i, j, DTREATY_COMMLINK)) || (i == 3))) {
+                && !(treaties & DTREATY_PACT)
+                && ((!i && (treaties & DTREATY_VENDETTA) && !(treaties & DTREATY_TREATY)
+                    && (treaties & DTREATY_COMMLINK))
+                    || (i == 1 && !(treaties & DTREATY_TREATY)
+                        && (treaties & DTREATY_COMMLINK))
+                    || (i == 2 && (treaties & DTREATY_COMMLINK)) || (i == 3))) {
                 if (PlayersData[faction_id].enemy_best_weapon_value
                     <= PlayersData[j].best_weapon_value) {
                     PlayersData[faction_id].enemy_best_weapon_value
