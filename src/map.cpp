@@ -210,12 +210,11 @@ Purpose: Take the absolute distance between two points as parameters to calculat
          radiate. This is mainly used to determine proximity or how far away the two points are from
          each other in a rough circle shape (see RadiusOffsetX[]/RadiusOffsetY[]).
 // ORIGINAL: 0x004F8090 ?vector_dist@@YAHHH@Z 0x004F8090-0x004F80CB BYTE_EXACT
-// LEVER: the two `abs()` are `abs_call` - /Oi turns `abs` into the inline
-//            `cdq / xor / sub` form at every site, and this body's image has
-//            two real `call _abs` (0x00644F3A) instead, which is the whole of
-//            the divergence. `abs` is one of the intrinsics VC6 will not let a
-//            TU define (C2169), so no source spelling reaches the call; the
-//            forwarder does. Same root cause as path.cpp's `memset_call`.
+// LEVER: the two `abs()` stay real calls (image: `call _abs` 0x00644F3A
+//            twice) because stdafx.h's project-wide `#pragma function` line
+//            names abs - /Oi would otherwise expand it inline at every site.
+//            An `abs_call` forwarder carried this body before the line was
+//            extended; same root cause as path.cpp's `memset_call`.
 // size      59 bytes
 // prototype int (__cdecl ?vector_dist@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   5   call targets   1
@@ -5250,14 +5249,6 @@ void __cdecl alt_put_detail_call(int x, int y, int detail) {
     alt_put_detail(x, y, detail);
 }
 
-// Non-inline forwarder to `abs`. The reason is /Oi rather than a header inline:
-// `abs` is an intrinsic under /O2, and VC6 refuses to let a TU define it
-// (C2169 "intrinsic function, cannot be defined"), so every `abs()` in source
-// becomes the inline `cdq / xor / sub` form and none of the image's 553
-// `call _abs` sites can be reached. See map.h beside the declaration.
-int __cdecl abs_call(int value) {
-    return abs(value);
-}
 
 // Homed from src/map_color.cpp (2026-09-02): its leaf-test isolation
 // rationale died with the leaf suite, the same retirement that freed

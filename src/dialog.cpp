@@ -20,11 +20,10 @@
 #include "dialog.h"
 #include "stringstruct.h"
 
-// The image CALLS the CRT's abs at 0x00644F3A from get_selected_id and
-// pos_to_id, twice each. Left to the optimiser VC6 expands it as the intrinsic
-// bit trick (cdq; xor; sub) instead, which is a different body - this switch
-// is what keeps it a call whatever the expansion flags say.
-#pragma function(abs)
+// abs is a real call throughout the image (0x00644F3A, called from
+// get_selected_id and pos_to_id twice each); stdafx.h's project-wide
+// `#pragma function(..., abs, ...)` line is what keeps it one - this file
+// carried a local `#pragma function(abs)` before the line was extended.
 
 /*
 Purpose: Set the three fonts used by the dialog.
@@ -179,9 +178,9 @@ Purpose: Restore the selected list position and return its item ID.
 //        `return` instead of the goto makes VC6 inline a second copy of the
 //        epilogue (15/50). The label is the image's own shape, not a
 //        transcription shortcut. Flags need /Oi- so abs stays a real call -
-//        and `#pragma function(abs)` at the top of this file now says the
-//        same thing in the source, so the body reproduces under the plain
-//        pair without that axis.
+//        and stdafx.h's project-wide `#pragma function(..., abs, ...)` line
+//        says the same thing in the source, so the body reproduces under
+//        the plain pair without that axis.
 // size      150 bytes
 // prototype int (__thiscall ?get_selected_id@Dialog@@QAEHXZ)(Dialog* this)
 // callers   15   call targets   1

@@ -342,15 +342,12 @@ int __cdecl whose_territory(int faction_id, int x, int y, int *base_id,
 int __cdecl base_territory(int faction_id, int x, int y);
 int __cdecl crappy(int x, int y);
 int __cdecl vector_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b);
-// Non-inline forwarder to `abs`. /O2 implies /Oi, and `abs` is one of the
-// intrinsics VC6 will not even let a translation unit define ("intrinsic
-// function, cannot be defined"), so a call in the source always expands to the
-// inline `cdq / xor / sub` form. The image never does that: 553 sites emit
-// `call _abs` (0x00644F3A) and not one inlines it, exactly the situation the
-// string routines are in - stdafx.h turns off /Oi's string expansion for the
-// same reason - and `abs` would belong on that list. Routed out of line here
-// so this file's bodies can keep the image's call shape.
-int __cdecl abs_call(int value);
+// NOTE: abs is a real call throughout the image (553 `call _abs` sites, zero
+// inlined) and stdafx.h's project-wide `#pragma function(..., abs, ...)`
+// line keeps it one. This file carried a non-inline `abs_call` forwarder
+// before that line was extended (2026-09-03) - VC6 refuses to let a TU
+// define the intrinsic (C2169), so the forwarder was the only source
+// spelling that reached a call.
 // Non-inline forwarder to `bit_set` below: base_mark (base.cpp) is the one
 // call site where the image emits a real `call 0x591D60` rather than
 // inlining the bit test/set - every other bit_set() caller genuinely
@@ -564,8 +561,8 @@ MEASURED inline int __cdecl x_dist(int x_point_a, int x_point_b) {
 // callers 5) and ALSO inlined whole at the 4-arg vector_dist's call site
 // (0x005A5910) - a .cpp definition can only ever be one of those.
 MEASURED inline int __cdecl vector_dist(int x_distance, int y_distance) {
-    x_distance = abs_call(x_distance);
-    y_distance = abs_call(y_distance);
+    x_distance = abs(x_distance);
+    y_distance = abs(y_distance);
     int largest = x_distance;
     if (x_distance <= y_distance) {
         largest = y_distance;

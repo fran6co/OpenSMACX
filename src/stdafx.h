@@ -48,6 +48,7 @@
 // both: sdkddkver.h selects a target Windows version, already decided for a
 // compiler that shipped in 1998, and <random> is C++11 and is used nowhere in
 // this tree. Removed with the second compiler they existed for.
+#include <math.h>
 #include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,25 +56,43 @@
 #include <windows.h>
 #include <vector>
 
-// THE STRING ROUTINES ARE CALLS IN THE SHIPPED IMAGE, NOT INTRINSICS, and one
-// line here is the whole of reproducing that.
+// THE LIBRARY ROUTINES ON THIS LINE ARE CALLS IN THE SHIPPED IMAGE, NOT
+// INTRINSICS, and one line here is the whole of reproducing that.
 //
 // `/O2` implies `/Oi`, which expands `strcat` into an inlined `repne scasb`
 // walk. The image does not have one: it makes 4,332 direct `call _strcat`,
-// 875 `_strlen`, 339 `_strcpy` and 155 `_strcmp`. It DID inline the block
-// routines - 19 BYTE_EXACT bodies carry a `rep stosd` or `rep movsd` that
-// only `/Oi` produces - and 34 functions call `strcat` and inline a block op
-// in the SAME body, which no per-file compiler flag can produce. So the split
-// is not in the invocation, it is here, and it is the ordinary 1990s move:
-// turn off the string expansion that bloats a binary and keep `memset`.
+// 875 `_strlen`, 339 `_strcpy` and 155 `_strcmp`. The same holds for the
+// two names added 2026-09-03: `call _abs` at 553 sites with not one
+// inlined `cdq / xor / sub`, and `sin` as a real CRT call - `/Oi` would
+// emit `fsin` and drop the `and esp,-8` the stack-passed double needs
+// (trig_init). Gating the whole project on `/Oi-` instead of naming names
+// measures 619 REGRESSED of 2,385 claims against the settled pair's 3 -
+// the intrinsic machinery is load bearing, only these names are off.
 //
-// It has to follow <string.h> (via <windows.h> above), which declares the
-// four; `#pragma function` on an undeclared name is C4163. The scaffold the
-// byte match compiles carries the same line in `PRELUDE`
-// (tools/emit_translation_unit.py), so the measured unit and the built one
-// agree about it.
+// `memcpy` IS MIXED AND STAYS OFF THE LIST, measured 2026-09-03: adding it
+// here flipped 33 verified claims whose small constant-size copies
+// (`memcpy(&v, p, sizeof(v))` - Random::get's 4-byte copy is the named one,
+// folded into a body the image spells with no call at all) inline as plain
+// `mov` pairs the image has, while the large copy (Palette::copy_from's
+// constant 0x400) is a real `call _memcpy` in the image. Per-site
+// forwarders carry the called minority, the same device path.cpp's
+// `memset_call` already is. `memset` is the same story from the start: 19
+// BYTE_EXACT bodies carry a `rep stosd`/`rep movsd` that only `/Oi`
+// produces (??0ButtonGroup's constant-size `memset` is one, verified at
+// the instruction level - `/Oi-` turns it into `call` + `add esp`, the
+// image has the `rep stosd`), 34 functions call `strcat` and inline a
+// block op in the SAME body, and no per-file compiler flag can produce
+// that mix. So the split is not in the invocation, it is here, and it is
+// the ordinary 1990s move: turn off the expansion that bloats a binary,
+// keep the block routines.
+//
+// It has to follow the headers that declare the names - <string.h> and
+// <stdlib.h> are above (<windows.h> and directly), <math.h> was added for
+// `sin`; `#pragma function` on an undeclared name is C4163. The byte-match
+// scaffold compiles through this same stdafx.h (build/compile_commands),
+// so the measured unit and the built one agree about it.
 #if defined(_MSC_VER) && _MSC_VER <= 1200
-#pragma function(strcat, strcpy, strlen, strcmp)
+#pragma function(strcat, strcpy, strlen, strcmp, abs, sin)
 #endif
 
 // Marks a parameter as deliberately unused. Expands to NOTHING, which

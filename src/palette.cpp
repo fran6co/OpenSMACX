@@ -2059,7 +2059,10 @@ void Palette::stop_animation(int key) {
 //   wall. Adding `memcpy` to stdafx.h's `#pragma function(...)` list is the
 //   in-policy source-side fix but is a shared-file edit that would move every
 //   other constant-size memcpy in the tree, so it is recorded here rather
-//   than made.
+//   than made. [RESOLVED 2026-09-03: it was made, measured, and reverted -
+//   33 verified claims whose small constant copies inline flipped, because
+//   the image's memcpy is MIXED like memset. The called minority routes
+//   through `memcpy_call` below, the memset_call idiom.]
 //
 // Kept for COVERAGE. This directory IS on the ratchet: every file here
 // carries an ORIGINAL marker, `decomp_status.py` compiles and measures
@@ -2113,8 +2116,20 @@ void Palette::stop_animation(int key) {
 //    near miss from a wrong body.
 
 
+// Non-inline forwarder to `memcpy`, path.cpp's `memset_call` idiom: the
+// image's memcpy is MIXED (small constant-size copies inline as mov pairs
+// across 33 claimed bodies; the large ones call), so `memcpy` is
+// deliberately NOT on stdafx.h's `#pragma function` line - naming it there
+// flipped those 33 on 2026-09-03 and was reverted the same day. This
+// body's copy is the called kind: constant 0x400, real `call _memcpy`
+// (0x00645930) in the image, and /Oi's intrinsic renders it
+// `mov ecx,0x100; rep movsd` instead (see the TRIED note above).
+static void *memcpy_call(void *dst, const void *src, unsigned len) {
+    return memcpy(dst, src, len);
+}
+
 Palette &Palette::copy_from(Palette *src) {
-    memcpy(entries_, src->entries_, sizeof(entries_));
+    memcpy_call(entries_, src->entries_, sizeof(entries_));
 
     seed_ = 0;
     while (seed_ == 0) {
