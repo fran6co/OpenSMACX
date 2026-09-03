@@ -11228,7 +11228,7 @@ void Win::screen_to_client(RECT * rect) {
 }
 
 // ===== homed from src/recovered/units/005f4cc0.cpp =====
-// ORIGINAL: 0x005F4CC0 ?redraw@Win@@QAAXXZ 0x005F4CC0-0x005F4CF1 FILE BYTE_EXACT
+// ORIGINAL: 0x005F4CC0 ?redraw@Win@@QAAXXZ 0x005F4CC0-0x005F4CF1 FILE
 // size      49 bytes
 // prototype 
 // callers   0   call targets   1

@@ -1,4 +1,4 @@
-// ORIGINAL: 0x005EB32F ?kill_entry@SpriteList@@QAEHPAUSpriteStruct@@@Z 0x005EB32F-0x005EB34B FILE BYTE_EXACT
+// ORIGINAL: 0x005EB32F ?kill_entry@SpriteList@@QAEHPAUSpriteStruct@@@Z 0x005EB32F-0x005EB34B FILE
 // size      28 bytes
 // prototype int (__thiscall ?kill_entry@SpriteList@@QAEHPAUSpriteStruct@@@Z)(SpriteList* this, SpriteStruct*)
 // callers   0   call targets   1

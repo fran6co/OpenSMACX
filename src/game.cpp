@@ -477,7 +477,7 @@ Status: Complete
 
 /*
 Purpose: Craft game year string. Assume buffer of at least 80. Revisit and convert to std::string.
-// ORIGINAL: 0x005C89B0 ?say_year@@YAXPAD@Z 0x005C89B0-0x005C89E4 BYTE_EXACT
+// ORIGINAL: 0x005C89B0 ?say_year@@YAXPAD@Z 0x005C89B0-0x005C89E4
 // size      52 bytes
 // prototype 
 // callers   19   call targets   2
@@ -1198,14 +1198,14 @@ void __cdecl close_opening() {
 /*
 Purpose: Shut the game state down: timers, label strings, then the string
          table. The mode parameter is read by none of it.
-// ORIGINAL: 0x0058F430 ?game_close@@YAXH@Z 0x0058F430-0x0058F444 FILE BYTE_EXACT
+// ORIGINAL: 0x0058F430 ?game_close@@YAXH@Z 0x0058F430-0x0058F444 FILE
 // size      20 bytes
 // prototype
 // callers   1   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x0050F440 0x006169D0
-// LEVER: byte-exact on promotion. StringTable is strings.h's header binding,
+// TRIED: byte-exact on promotion. StringTable is strings.h's header binding,
 //   so the receiver folds to `mov ecx, 0x9b90d8`; the image's closing `jmp`
 //   into Strings::shutdown comes free from the call being the last statement
 //   of a void function, and the discarded int result costs nothing.
@@ -1467,8 +1467,8 @@ Purpose: Restart the game state: tear the desktop down (mode-gated, the same
          closer sequence desktop_close runs), stop the timers, drop the label
          and string tables, re-init the game, and re-init the desktop when the
          caller asked for it. Always clears the climate skip flag.
-// ORIGINAL: 0x0058F450 ?game_reload@@YAHHH@Z 0x0058F450-0x0058F4E7 BYTE_EXACT
-// LEVER: byte-exact on promotion from the 0058f450 archive unit. The
+// ORIGINAL: 0x0058F450 ?game_reload@@YAHHH@Z 0x0058F450-0x0058F4E7
+// TRIED: byte-exact on promotion from the 0058f450 archive unit. The
 //   closer block is desktop_close's own sequence spelled the same way, so
 //   every receiver folds to its `mov ecx, imm32` and every call lands on the
 //   image's E8 target; `mode` is read into esi once at entry (the image's

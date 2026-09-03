@@ -162,7 +162,7 @@ LPVOID Filemap::open(LPCSTR file_name, BOOL is_sequential) {
 
 /*
 Purpose: Create a new file or overwrite an existing one with the specified size filled with zeros.
-// ORIGINAL: 0x00628650 ?create@Filemap@@QAEHPADKH@Z 0x00628650-0x006287B3 BYTE_EXACT
+// ORIGINAL: 0x00628650 ?create@Filemap@@QAEHPADKH@Z 0x00628650-0x006287B3
 // symbol    ?create@Filemap@@QAEPAXPBDIH@Z
 // size      355 bytes
 // prototype int (__thiscall ?create@Filemap@@QAEHPADKH@Z)(Filemap* this, int8* lpFileName, ULONG lDistanceToMove, int)

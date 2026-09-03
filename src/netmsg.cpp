@@ -61,7 +61,7 @@ NetMsg::NetMsg(int a1, int a2, int a3) {
 /*
 Purpose: Close an outstanding network message - stop its timer and hide the
          popup - doing nothing when none is showing.
-// ORIGINAL: 0x0047A7D0 ?close@NetMsg@@QAEXXZ 0x0047A7D0-0x0047A7FB BYTE_EXACT
+// ORIGINAL: 0x0047A7D0 ?close@NetMsg@@QAEXXZ 0x0047A7D0-0x0047A7FB
 // size      43 bytes
 // prototype void (__thiscall ?close@NetMsg@@QAEXXZ)(NetMsg* this)
 // callers   20   call targets   2

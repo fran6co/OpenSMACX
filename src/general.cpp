@@ -76,7 +76,10 @@ Status: Complete
 
 /*
 Purpose: Trim the leading spaces in-line from the start of the string.
-// ORIGINAL: 0x00600760 ?purge_leading@@YAXPAD@Z 0x00600760-0x00600773 BYTE_EXACT
+// ORIGINAL: 0x00600760 ?purge_leading@@YAXPAD@Z 0x00600760-0x00600773
+  // CLAIM CLEARED 2026-09-03: held only under a tail flag set (not emitted
+  // under either build set); the marker keeps its notes for the normalization
+  // pass, which re-banks it under the pair or names the third set.
 // symbol    ?purge_leading@@YAPADPAD@Z
 // size      19 bytes
 // prototype 
@@ -160,8 +163,8 @@ void __cdecl kill_nl(LPSTR str) {
 /*
 Purpose: Add a line feed (LF) to the end of a string. This assumes the buffer has an extra byte and 
          doesn't take into account a carriage return (CR).
-// ORIGINAL: 0x00600840 ?add_lf@@YAXPAD@Z 0x00600840-0x00600859 BYTE_EXACT
-// LEVER (2026-09-03, measured BYTE_EXACT 10/10): the image's order IS
+// ORIGINAL: 0x00600840 ?add_lf@@YAXPAD@Z 0x00600840-0x00600859
+// TRIED (2026-09-03, measured BYTE_EXACT 10/10): the image's order IS
 //   reachable - it is the /G6 (Pentium Pro) instruction SCHEDULING, not a
 //   source shape. `uv run tools/osmx.py measure 0x00600840 --flags "/c /O2
 //   /G6 /Gy /GR- /GX"` on this exact body gives 10 of 10 instructions, 21
@@ -923,7 +926,7 @@ int __cdecl filefind_cd_drive_letter() { return FilefindPath.cd_path[0]; }
 
 /*
 Purpose: Set an alternative path for the Filefind checks.
-// ORIGINAL: 0x006003B0 ?filefind_set_alternate@@YAXPAD@Z 0x006003B0-0x006003F6 BYTE_EXACT
+// ORIGINAL: 0x006003B0 ?filefind_set_alternate@@YAXPAD@Z 0x006003B0-0x006003F6
 // symbol    ?filefind_set_alternative@@YAXPBD@Z
 // size      70 bytes
 // prototype 
@@ -2354,8 +2357,8 @@ Purpose: Fill SinTable, the 256-entry fixed-point sine table the game's own
          to int by the CRT's __ftol. The two trailing calls pass angle 2.0
          and 0xe02d82d7 with scale 100; the first result is overwritten by
          the second, which stays in eax as this function's return.
-// ORIGINAL: 0x0063B940 ?trig_init@@YAHXZ 0x0063B940-0x0063B9AE FILE BYTE_EXACT
-// LEVER: index the table (`SinTable[sample]`) and test the int counter signed;
+// ORIGINAL: 0x0063B940 ?trig_init@@YAHXZ 0x0063B940-0x0063B9AE FILE
+// TRIED: index the table (`SinTable[sample]`) and test the int counter signed;
 // a separate `int *entry` cursor makes VC6 compare the pointer unsigned
 // (`jb` where the image has `jl`) and hold the counter in ecx instead of edx.
 // The loop is a plain `for` - VC6 bottom-tests it itself.

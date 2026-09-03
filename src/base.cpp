@@ -854,7 +854,7 @@ int __cdecl base_lose_minerals(int base_id, int UNUSED(production_id)) {
 
 /*
 Purpose: Set or unset the specified base's facility.
-// ORIGINAL: 0x004E48B0 ?set_fac@@YAXHHH@Z 0x004E48B0-0x004E48FA BYTE_EXACT
+// ORIGINAL: 0x004E48B0 ?set_fac@@YAXHHH@Z 0x004E48B0-0x004E48FA
 // size      74 bytes
 // prototype void (__cdecl ?set_fac@@YAXHHH@Z)(int facilityID, int baseID, BOOL set)
 // callers   10   call targets   1
@@ -877,8 +877,8 @@ void __cdecl set_fac(int facility_id, int base_id, BOOL set) {
 
 /*
 Purpose: Check whether the facility audio blurb announcement has played for the faction.
-// ORIGINAL: 0x004E4900 has_fac_announced 0x004E4900-0x004E4952 BYTE_EXACT
-// LEVER: signedness. `facility_id` is uint32_t, so `facility_id > FacilitySPStart` forced an unsigned `jbe`; casting to `(int)facility_id` before the compare, without changing the parameter's mangled type, restores the image's signed `jle`. BYTE_EXACT.
+// ORIGINAL: 0x004E4900 has_fac_announced 0x004E4900-0x004E4952
+// TRIED: signedness. `facility_id` is uint32_t, so `facility_id > FacilitySPStart` forced an unsigned `jbe`; casting to `(int)facility_id` before the compare, without changing the parameter's mangled type, restores the image's signed `jle`. BYTE_EXACT.
 // symbol    ?has_fac_announced@@YAHII@Z
 // size      82 bytes
 // prototype int (__cdecl has_fac_announced)(int factionID, int facilityID)
@@ -900,7 +900,7 @@ BOOL __cdecl has_fac_announced(uint32_t faction_id, uint32_t facility_id) {
 
 /*
 Purpose: Set or unset whether a particular facility audio blurb has played for specified faction.
-// ORIGINAL: 0x004E4960 set_fac_announced 0x004E4960-0x004E49CA BYTE_EXACT
+// ORIGINAL: 0x004E4960 set_fac_announced 0x004E4960-0x004E49CA
 // symbol    ?set_fac_announced@@YAXIIH@Z
 // size      106 bytes
 // prototype int (__cdecl set_fac_announced)(int factionID, int facilityID, int set)
@@ -2396,9 +2396,9 @@ void __cdecl base_psych() {
 
 /*
 Purpose: Determine the faction's base with the specified position sorted by the most energy output.
-// ORIGINAL: 0x004EB490 ?base_rank@@YAHHH@Z 0x004EB490-0x004EB551 BYTE_EXACT
-// LEVER: the image never calls sort_descending() - it inlines the bubble sort loop directly (two swap() calls, matching general.cpp's body). Writing that loop out here instead of calling sort_descending() took the call set from {sort_descending, __alloca_probe} to {swap x2, __alloca_probe}, matching the image's (call_diff now agrees). Best flag set moved from 0.645 to 0.847 similar. Remaining divergence is instruction-order/register-scheduling around the parameter loads, not chased further.
-// LEVER: branch polarity. Deleted the two added bounds-check guards (`rank_position < 0` and `!bases_found`) and replaced them with the image's single guard clause `if (rank_position >= bases_found) return -1;` written immediately after the collection loop - VC6 compiles a guard clause by testing the ORIGINAL condition and jumping forward to the work (jl to the sort), falling through into the early return, which is what the image does; the equivalent `if (rank_position < bases_found) {work} return -1;` form emits the opposite polarity (jge past the work) and does not match. Also reproduces the original's lack of a `rank_position < 0` bounds check - see the BUG IN THE ORIGINAL comment below. Took this body to BYTE_EXACT (70/70), from 4/70.
+// ORIGINAL: 0x004EB490 ?base_rank@@YAHHH@Z 0x004EB490-0x004EB551
+// TRIED: the image never calls sort_descending() - it inlines the bubble sort loop directly (two swap() calls, matching general.cpp's body). Writing that loop out here instead of calling sort_descending() took the call set from {sort_descending, __alloca_probe} to {swap x2, __alloca_probe}, matching the image's (call_diff now agrees). Best flag set moved from 0.645 to 0.847 similar. Remaining divergence is instruction-order/register-scheduling around the parameter loads, not chased further.
+// TRIED: branch polarity. Deleted the two added bounds-check guards (`rank_position < 0` and `!bases_found`) and replaced them with the image's single guard clause `if (rank_position >= bases_found) return -1;` written immediately after the collection loop - VC6 compiles a guard clause by testing the ORIGINAL condition and jumping forward to the work (jl to the sort), falling through into the early return, which is what the image does; the equivalent `if (rank_position < bases_found) {work} return -1;` form emits the opposite polarity (jge past the work) and does not match. Also reproduces the original's lack of a `rank_position < 0` bounds check - see the BUG IN THE ORIGINAL comment below. Took this body to BYTE_EXACT (70/70), from 4/70.
 // size      193 bytes
 // prototype int (__cdecl ?base_rank@@YAHHH@Z)(int factionID, int minBasesToRank)
 // callers   1   call targets   2

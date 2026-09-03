@@ -834,7 +834,7 @@ void __cdecl start_timers() {
 
 /*
 Purpose: Stop global timers.
-// ORIGINAL: 0x0050F440 ?stop_timers@@YAXXZ 0x0050F440-0x0050F45E BYTE_EXACT
+// ORIGINAL: 0x0050F440 ?stop_timers@@YAXXZ 0x0050F440-0x0050F45E
 // size      30 bytes
 // prototype 
 // callers   6   call targets   1

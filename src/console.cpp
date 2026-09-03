@@ -836,8 +836,8 @@ void Console::editor_diplomacy() {
 Purpose: Reset the console - clear the message ring, the two 0x20-entry tables,
          and the trailing state, then close the Buffer, Time and GraphicWin
          subobjects and clear the map.
-// ORIGINAL: 0x0051D7D0 ?close@Console@@QAEXXZ 0x0051D7D0-0x0051D88E BYTE_EXACT
-// LEVER: PROMOTED out of src/unrecovered/0051d7d0.cpp, whose claim proved the ARTIFACT reproduced while the program held a pending_bodies forwarder. `void close()` was not declared on Console at all - that, not the body, is what kept it in an artifact.
+// ORIGINAL: 0x0051D7D0 ?close@Console@@QAEXXZ 0x0051D7D0-0x0051D88E
+// TRIED: PROMOTED out of src/unrecovered/0051d7d0.cpp, whose claim proved the ARTIFACT reproduced while the program held a pending_bodies forwarder. `void close()` was not declared on Console at all - that, not the body, is what kept it in an artifact.
 // symbol    ?close@Console@@QAEXXZ
 // size      190 bytes
 // kind      game

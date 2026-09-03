@@ -64,7 +64,7 @@ BOOL Strings::init(size_t mem_size) {
 
 /*
 Purpose: Shutdown the class instance.
-// ORIGINAL: 0x00616950 ?shutdown@Strings@@QAEHXZ 0x00616950-0x00616963 BYTE_EXACT
+// ORIGINAL: 0x00616950 ?shutdown@Strings@@QAEHXZ 0x00616950-0x00616963
 // size      19 bytes
 // prototype int (__thiscall ?shutdown@Strings@@QAEHXZ)(Strings* this)
 // callers   4   call targets   1
@@ -88,7 +88,7 @@ int Strings::shutdown() {
 
 /*
 Purpose: Put the input string into the string table.
-// ORIGINAL: 0x00616970 ?put@Strings@@QAEHPAD@Z 0x00616970-0x0061699D BYTE_EXACT
+// ORIGINAL: 0x00616970 ?put@Strings@@QAEHPAD@Z 0x00616970-0x0061699D
 // symbol    ?put@Strings@@QAEPADPBD@Z
 // size      45 bytes
 // prototype int (__thiscall ?put@Strings@@QAEHPAD@Z)(Strings* this, int8*)
@@ -159,7 +159,7 @@ LPSTR Strings::get(int address) {
 */
 
 /*
-// ORIGINAL: 0x006169C0 ??1Strings@@QAE@XZ 0x006169C0-0x006169C5 BYTE_EXACT
+// ORIGINAL: 0x006169C0 ??1Strings@@QAE@XZ 0x006169C0-0x006169C5
 // body      src/strings.h
 // size      5 bytes
 // prototype void (__thiscall ??1Strings@@QAE@XZ)(Strings* this)

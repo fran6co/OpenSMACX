@@ -1823,7 +1823,10 @@ void __fastcall buffer_destructor_redirect(Buffer *self, void *) {
 
 /*
 Purpose: Acquire the device context, taking one reference on the shared handle.
-// ORIGINAL: 0x005E3503 ?get_hdc@Buffer@@QAEHXZ 0x005E3503-0x005E355C BYTE_EXACT
+// ORIGINAL: 0x005E3503 ?get_hdc@Buffer@@QAEHXZ 0x005E3503-0x005E355C
+  // CLAIM CLEARED 2026-09-03: held only under a tail flag set (not emitted
+  // under either build set); the marker keeps its notes for the normalization
+  // pass, which re-banks it under the pair or names the third set.
 // symbol    ?get_hdc@Buffer@@QAEPAUHDC__@@XZ
 // size      89 bytes
 // prototype int (__thiscall ?get_hdc@Buffer@@QAEHXZ)(Buffer* this)
@@ -1839,7 +1842,10 @@ Status: Complete
 /*
 Purpose: Drop the given number of device-context references, releasing the
          handle once the last one is gone.
-// ORIGINAL: 0x005E3563 ?release_hdc@Buffer@@QAEXH@Z 0x005E3563-0x005E35C3 BYTE_EXACT
+// ORIGINAL: 0x005E3563 ?release_hdc@Buffer@@QAEXH@Z 0x005E3563-0x005E35C3
+  // CLAIM CLEARED 2026-09-03: held only under a tail flag set (not emitted
+  // under either build set); the marker keeps its notes for the normalization
+  // pass, which re-banks it under the pair or names the third set.
 // size      96 bytes
 // prototype void (__thiscall ?release_hdc@Buffer@@QAEXH@Z)(Buffer* this, int)
 // callers   8   call targets   0

@@ -32,7 +32,7 @@
 /*
 Purpose: Build a map window - attach its embedded GraphicWin virtual base,
          then its own TextureStore/Buffer/Font/ImageButton members.
-// ORIGINAL: 0x004626E0 ??0MapWin@@QAE@H@Z 0x004626E0-0x00462868;0x00655860-0x00655920 BYTE_EXACT
+// ORIGINAL: 0x004626E0 ??0MapWin@@QAE@H@Z 0x004626E0-0x00462868;0x00655860-0x00655920
 // symbol    ??0MapWin@@QAE@XZ
 // size      584 bytes
 // prototype void (__thiscall ??0MapWin@@QAE@H@Z)(MapWin* this, int)
@@ -64,7 +64,7 @@ MapWin::MapWin() {
 /*
 Purpose: Tear down a map window's own members. Nothing here calls
          MapWin::clear as MapWin - it is reached by name.
-// ORIGINAL: 0x00420F90 ??1MapWin@@QAE@XZ 0x00420F90-0x004210CB;0x00651190-0x00651250 BYTE_EXACT
+// ORIGINAL: 0x00420F90 ??1MapWin@@QAE@XZ 0x00420F90-0x004210CB;0x00651190-0x00651250
 // symbol    ??1MapWin@@UAE@XZ
 // body      src/mapwin.h
 // size      315 bytes

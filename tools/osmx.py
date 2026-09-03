@@ -454,129 +454,22 @@ def _print_record(entry: dict) -> None:
                     fg=typer.colors.YELLOW)
 
 
-# The invocations this image was built with, crossed: `/O2` implies `/Oy`,
-# which omits the frame pointer, and the shipped image is MIXED - 1,518
-# functions open with `push ebp; mov ebp, esp` and 1,544 do not. Asking one
-# answers about half the image. They live here and not in `decomp` because
-# they are a fact about this build, and they are not in the CMake
-# configuration either: that is a Debug database of `/Od /Ob0`.
-# THE TWO-COMPILATION MODEL, 2026-09-03, and these two come FIRST. The
-# image's prologues are bimodal by TU: the jackal UI cluster (win/menu/
-# pulldown/checkbox/... ) is ~0% framed - plain /O2 - and the game-logic
-# group (tech/veh/base/faction/map/midi/netdaemon/xpops) is ~100% framed -
-# /O2 with /Oy-. The census pair over every claimed body: the two sets
-# cover 96.1% (1,541/1,603); the 62 exceptions (add_lf's /G6,
-# textcolor_init and ??0MapWin's /Ob0, and others whose winners compensate
-# for source shapes the normalization program is retiring) still need the
-# tail, so it stays - but every body that can resolve in two compiles now
-# does, and the tail sets are deleted one by one as their last claim
-# normalizes onto the pair.
+# THE TWO SETS, per direction 2026-09-03: the image is two compilations -
+# the jackal UI cluster at plain /O2 and the game-logic group at /O2 with
+# /Oy- - and the ladder is exactly their flags. History, so the axes are
+# not re-derived: the image is mixed on frame pointers (1,518 framed /
+# 1,544 frameless catalogued functions) because the two groups differ, not
+# because /Oy- was per-file; inline expansion (/Ob0) and intrinsics (/Oi-)
+# and Pentium-Pro scheduling (/G6) each reproduced exactly one or two
+# bodies (textcolor_init, ??0MapWin, add_lf) - compensation for source
+# shapes the normalization program retires onto this pair, and their
+# claims are demoted rather than carried by tail flags; /O1 reproduced
+# nothing the pair did not. The old 24-set ladder and the per-TU group
+# table both exist in git history if a diagnosis ever needs them.
 FLAG_SETS = (
     "/c /O2 /Gy /GR- /GX",
     "/c /O2 /Gy /GR- /Oy- /GX",
-    "/c /O1 /Gy /GR- /Oy- /GX",
-    "/c /O1 /Gy /GR- /GX",
-    # AND INLINE EXPANSION IS THE THIRD AXIS, for the same reason as the
-    # frame pointer: it is a property of the FUNCTION, and this image is
-    # mixed. `??1TextIndex` tail-calls its member's destructor where /O2
-    # inlines it - 4 instructions against 21 - and `??1Text` needs the
-    # opposite, because `??__ETxt` only reproduces with the constructor
-    # folded in. Neither answer is right for the whole image, which is
-    # exactly why the caller searches instead of choosing.
-    "/c /O2 /Ob0 /Gy /GR- /Oy- /GX",
-    "/c /O2 /Ob0 /Gy /GR- /GX",
-    "/c /O1 /Ob0 /Gy /GR- /Oy- /GX",
-    "/c /O1 /Ob0 /Gy /GR- /GX",
-    # AND INTRINSICS ARE THE FOURTH, which a previous measurement retired
-    # for the wrong reason: `/O2 /Oi-` reproduces the same bodies as `/O2`
-    # for bodies that never call the CRT's block functions, and that was most
-    # of the sample. It is decisive for the ones that do. `Buffer::init`
-    # measures 121 of 286 instructions with intrinsics on - VC6 expands its
-    # `memset` to `rep stosd` - and 280 of 286 with them off, because the
-    # image CALLS memset at 0x006465F0. The alternative was
-    # `#pragma function(memset)` in the source, which is a compiler switch
-    # written into the program.
-    "/c /O2 /Oi- /Gy /GR- /Oy- /GX",
-    "/c /O2 /Oi- /Gy /GR- /GX",
-    # AND EXCEPTION HANDLING IS THE FIFTH, found the same way /Oi- was: the
-    # axis was retired on a sample that could not show it. Every set above
-    # carried /GX, so no body was ever measured without it - and /GX is what
-    # makes a constructor whose BASE has a destructor open with an EH frame
-    # (`mov eax, 0; call __EH_prolog`). ??0Win@@QAE@XZ constructing its
-    # AutoSound base is 0 of 107 with /GX and 12 of 107 without, because the
-    # image's constructor has no EH frame at all. So each set above gets its
-    # no-/GX twin rather than a flag being chosen for the whole image.
-    "/c /O2 /Gy /GR- /Oy-",
-    "/c /O2 /Gy /GR-",
-    "/c /O1 /Gy /GR- /Oy-",
-    "/c /O1 /Gy /GR-",
-    "/c /O2 /Ob0 /Gy /GR- /Oy-",
-    "/c /O2 /Ob0 /Gy /GR-",
-    "/c /O1 /Ob0 /Gy /GR- /Oy-",
-    "/c /O1 /Ob0 /Gy /GR-",
-    "/c /O2 /Oi- /Gy /GR- /Oy-",
-    "/c /O2 /Oi- /Gy /GR-",
-    # AND THE PROCESSOR SCHEDULER IS THE SIXTH, found 2026-09-03 on
-    # general.cpp's add_lf: its `add eax,esi` / `add esp,4` order is
-    # Pentium-Pro scheduling, and /G6 reproduces it BYTE_EXACT where every
-    # /G5-default set leaves the swap (8/10). EXTRA SETS, NOT SUBSTITUTES -
-    # measured the same day on the neighbours, /G6 makes the REST of
-    # general.cpp worse (parse_string 7/490, memrchr 1/27, checksum 0/19,
-    # sort 3/47), so the image is mixed on this axis exactly as it is on
-    # frame pointers and inline expansion.
-    "/c /O2 /G6 /Gy /GR- /Oy- /GX",
-    "/c /O2 /G6 /Gy /GR- /GX",
-    "/c /O1 /G6 /Gy /GR- /Oy- /GX",
-    "/c /O1 /G6 /Gy /GR- /GX",
 )
-
-
-# THE TWO COMPILATION GROUPS BY TU, read off the image prologue census
-# 2026-09-03 (every catalogued function classified push-ebp vs frameless,
-# aggregated per file). The game-logic group is ~100% framed in the image -
-# /O2 with /Oy-; the jackal UI cluster is ~0% framed - plain /O2. A body in
-# a confident TU is measured against ITS GROUP'S ONE SET FIRST, so a typical
-# claim costs a single compile; the other half of the pair follows before
-# any `not in this compilation` verdict is believed, and the tail stays for
-# the 62 census exceptions. The middle TUs (alpha, game, general, mapwin,
-# console, datalink, wave, sound, wave_device: 27-74% framed) keep the
-# plain ladder - their framing is plain-/O2 judgment, mixed per function.
-JACKAL_O2 = ("/c /O2 /Gy /GR- /GX",)
-GAME_OY = ("/c /O2 /Gy /GR- /Oy- /GX",)
-GROUP_TU_FLAGS = {
-    # game-logic compilation, /Oy-
-    "base.cpp": GAME_OY, "faction.cpp": GAME_OY, "map.cpp": GAME_OY,
-    "midi.cpp": GAME_OY, "netdaemon.cpp": GAME_OY,
-    "technology.cpp": GAME_OY, "veh.cpp": GAME_OY, "xpops.cpp": GAME_OY,
-    # jackal UI cluster, plain /O2
-    "ambience.cpp": JACKAL_O2, "basebutton.cpp": JACKAL_O2,
-    "basepop.cpp": JACKAL_O2, "buffer.cpp": JACKAL_O2,
-    "caviar.cpp": JACKAL_O2, "checkbox.cpp": JACKAL_O2,
-    "councwin.cpp": JACKAL_O2, "dialogs.cpp": JACKAL_O2,
-    "diplowin.cpp": JACKAL_O2, "font.cpp": JACKAL_O2,
-    "global_arith.cpp": JACKAL_O2, "log.cpp": JACKAL_O2,
-    "menu.cpp": JACKAL_O2, "net_class.cpp": JACKAL_O2,
-    "palette.cpp": JACKAL_O2, "pulldown.cpp": JACKAL_O2,
-    "reportif.cpp": JACKAL_O2, "scroll.cpp": JACKAL_O2,
-    "socialwin.cpp": JACKAL_O2, "sounddevice.cpp": JACKAL_O2,
-    "spritebox.cpp": JACKAL_O2, "text.cpp": JACKAL_O2,
-    "time.cpp": JACKAL_O2, "win.cpp": JACKAL_O2,
-}
-
-
-def sets_for(record) -> tuple:
-    """The flag sets to try for this record's piece, group-restricted.
-
-    A confident TU's group set leads, the other half of the pair follows,
-    and the tail stays behind them - one compile for a typical claim, with
-    nothing silently impossible to find.
-    """
-    name = record.path.name if getattr(record, "path", None) else ""
-    first = GROUP_TU_FLAGS.get(name)
-    if first is None:
-        return FLAG_SETS
-    return tuple(first) + tuple(
-        f for f in FLAG_SETS[:2] if f not in first) + FLAG_SETS[2:]
 
 
 # THE CEILING IS THE WINE PREFIX, not the machine. Every VC6 compile runs
@@ -624,18 +517,7 @@ def measure(
         "--reconfigure",
         help="Clear the cmake cache and regenerate the build database "
              "first, whether or not it looks stale.")] = False,
-    every_flag_set: Annotated[bool, typer.Option(
-        "--all-flags",
-        help="Score EVERY flag set instead of reporting the best. A source "
-             "change can improve one set while the winner comes from "
-             "another; this is where that shows.")] = False,
-    pin_flags: Annotated[str, typer.Option(
-        "--flags",
-        help="Score ONLY this flag set (e.g. \"/c /O2 /Gy /GR- /Oy- /GX\"). "
-             "For edit-measure loops on a body whose winning set the last "
-             "verdict already printed: the ladder searches 20 sets and only "
-             "stops early on BYTE_EXACT, so a mismatched body pays all 20 "
-             "compiles - pinned, it pays one.")] = "",
+
     as_json: Annotated[bool, typer.Option("--json")] = False,
 ) -> None:
     """Does this body reproduce the shipped bytes?
@@ -682,53 +564,9 @@ def measure(
         return
 
     source = body if body is not None else record.path
-    if pin_flags and every_flag_set:
-        typer.secho("--flags and --all-flags answer different questions: "
-                    "one set, or every one of them. Pick one.",
-                    fg=typer.colors.RED)
-        raise typer.Exit(2)
-    if pin_flags:
-        # ONE COMPILE, ON DEMAND. The ladder's early exit fires only on
-        # BYTE_EXACT, so iterating on a not-yet-exact body costs twenty
-        # wine compiles of the TU per edit - and the wineserver serialises
-        # them behind anything else compiling. The previous verdict names
-        # the set that won, and this turns the loop into one compile.
-        try:
-            result = compare_source(record, exe, source, command,
-                                    (pin_flags,), shared)
-        except (ValueError, CompileFailed) as problem:
-            typer.secho(f"{record.address_hex}: {problem}",
-                        fg=typer.colors.RED)
-            raise typer.Exit(2) from None
-        if as_json:
-            typer.echo(json.dumps(
-                {"source": str(source), **_verdict_row(record, result)},
-                indent=2))
-        else:
-            _print_verdict(record, result, source)
-        raise typer.Exit(0 if str(result.verdict) == "BYTE_EXACT" else 1)
-    if every_flag_set:
-        # EVERY SET, NOT THE WINNER. `compare_source` ranks on similarity
-        # first and agreement second, across flag sets that answer different
-        # questions - so a source change can improve the set where the image's
-        # helpers are inlined while the winner comes from the set where they
-        # are not, and the verdict does not move. That reads as "nothing
-        # happened" when something did.
-        for flags in FLAG_SETS:
-            try:
-                one = compare_source(record, exe, source, command, (flags,),
-                                     shared)
-            except (ValueError, CompileFailed) as problem:
-                typer.echo(f"  {flags:34s} {str(problem).splitlines()[0][:60]}")
-                continue
-            typer.echo(f"  {flags:34s} {str(one.verdict):14s} "
-                       f"{one.matching_instructions}/"
-                       f"{one.original_instructions} instructions, "
-                       f"{one.mnemonic_similarity:.3f} similar")
-        raise typer.Exit(0)
     try:
-        result = compare_source(record, exe, source, command,
-                                sets_for(record), shared)
+        result = compare_source(record, exe, source, command, FLAG_SETS,
+                                shared)
     except (ValueError, CompileFailed) as problem:
         typer.secho(f"{record.address_hex}: {problem}", fg=typer.colors.RED)
         raise typer.Exit(2) from None
@@ -1061,8 +899,7 @@ def _record_one(job: tuple) -> tuple:
     """Measure one piece in a worker. Returns (piece, result) or (piece, None)."""
     piece, exe, command, shared = job
     try:
-        return piece, compare_record(piece, exe, command,
-                                     sets_for(piece), shared)
+        return piece, compare_record(piece, exe, command, FLAG_SETS, shared)
     except (ValueError, CompileFailed) as problem:
         return piece, str(problem)
 
@@ -1894,7 +1731,7 @@ def check(
     work = []
     for path, mine in grouped.items():
         command = _command_for(compile_commands, path, borrow)
-        work.append((path, mine, exe, command, FLAG_SETS))  # per-piece sets applied in _record_one
+        work.append((path, mine, exe, command, FLAG_SETS))
 
     # THE CACHE IS A MEMO, NOT A LEDGER: it never adds, clears, or counts a
     # claim - it only skips re-measuring a file whose every input is

@@ -177,7 +177,7 @@ TextIndex::TextIndex() {
 }
 
 /*
-// ORIGINAL: 0x005FDF60 ??1TextIndex@@QAE@XZ 0x005FDF60-0x005FDF78 BYTE_EXACT
+// ORIGINAL: 0x005FDF60 ??1TextIndex@@QAE@XZ 0x005FDF60-0x005FDF78
 // size      24 bytes
 // prototype void (__thiscall ??1TextIndex@@QAE@XZ)(TextIndex* this)
 // callers   0   call targets   0

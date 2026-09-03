@@ -2035,7 +2035,7 @@ void __cdecl prefs_put(LPCSTR key_name, LPCSTR value) {
 
 /*
 Purpose: Write the value as either an integer or a binary string to the pref key inside the ini.
-// ORIGINAL: 0x0059E530 ?prefs_put@@YAXPADHH@Z 0x0059E530-0x0059E5CD BYTE_EXACT
+// ORIGINAL: 0x0059E530 ?prefs_put@@YAXPADHH@Z 0x0059E530-0x0059E5CD
 // symbol    ?prefs_put@@YAXPBDHH@Z
 // size      157 bytes
 // prototype void (__cdecl ?prefs_put@@YAXPADHH@Z)(int8* lpKeyName, int, int)

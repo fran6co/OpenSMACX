@@ -210,7 +210,10 @@ void __cdecl log_set_state(BOOL state) { Logging.set_state(state); }
 */
 
 /*
-// ORIGINAL: 0x00625FC0 ??0Log@@QAE@PAD@Z 0x00625FC0-0x00626016 BYTE_EXACT
+// ORIGINAL: 0x00625FC0 ??0Log@@QAE@PAD@Z 0x00625FC0-0x00626016
+  // CLAIM CLEARED 2026-09-03: held only under a tail flag set (not emitted
+  // under either build set); the marker keeps its notes for the normalization
+  // pass, which re-banks it under the pair or names the third set.
 // LEVER: not a constructor - see the "NOT a constructor" note in log.h. `Logging.construct(input)` is an ordinary method (`??__ELogging` reaches it that way, not through a `new`-expression), which drops the SEH frame VC6 wraps around a placement-new'd non-trivial destructor. Inlines env_open/fclose directly on `input` rather than calling `reset()`, because the image keeps the incoming pointer live in edi and reopens THAT, not a reload of log_file_.
 // body      src/log.h
 // symbol    ?construct@Log@@QAEPAV1@PBD@Z

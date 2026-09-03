@@ -209,7 +209,7 @@ int __cdecl crappy(int x, int y) {
 Purpose: Take the absolute distance between two points as parameters to calculate how far out they
          radiate. This is mainly used to determine proximity or how far away the two points are from
          each other in a rough circle shape (see RadiusOffsetX[]/RadiusOffsetY[]).
-// ORIGINAL: 0x004F8090 ?vector_dist@@YAHHH@Z 0x004F8090-0x004F80CB BYTE_EXACT
+// ORIGINAL: 0x004F8090 ?vector_dist@@YAHHH@Z 0x004F8090-0x004F80CB
 // size      59 bytes
 // prototype int (__cdecl ?vector_dist@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   5   call targets   1
@@ -257,7 +257,7 @@ int __cdecl vector_dist(int x_point_a, int y_point_a, int x_point_b, int y_point
 /*
 Purpose: Check whether there is a path between two regions. It seems to only take into account land
          destinations. TODO: Revisit in the future when Continent/Path is complete.
-// ORIGINAL: 0x0050DDC0 ?sea_coast@@YAHHH@Z 0x0050DDC0-0x0050DE00 BYTE_EXACT
+// ORIGINAL: 0x0050DDC0 ?sea_coast@@YAHHH@Z 0x0050DDC0-0x0050DE00
 // size      64 bytes
 // prototype int (__cdecl ?sea_coast@@YAHHH@Z)(int regionDst, int regionSrc)
 // callers   2   call targets   1
