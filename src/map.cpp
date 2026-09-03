@@ -171,6 +171,16 @@ int __cdecl base_territory(int faction_id, int x, int y) {
 /*
 Purpose: For the specified tile, calculate the quality of the terrain.
 // ORIGINAL: 0x004ECB90 ?crappy@@YAHHH@Z 0x004ECB90-0x004ECBE1
+// TRIED (2026-09-03): the two tile reads as `uint8_t` locals (the image's
+//            `and dl,0x18` / `and al,0xc0` are BYTE forms, and a `uint32_t`
+//            local turns them into dword `and edx,0x18` / `and ecx,0xc0`) -
+//            kept, though the agreeing count does not move. Also measured:
+//            `int` poor_quality, both reads up front, `register`, explicit
+//            `poor_quality = poor_quality + 1`, and binding `poor_quality`
+//            from the first comparison - all 4/32 or worse. The image holds
+//            `poor_quality` in ESI (`push esi` in the prologue) with the
+//            rainfall byte in dl and the rocky byte in al; this tree keeps
+//            it in eax and cannot be pushed onto the callee-saved register.
 // size      81 bytes
 // prototype int (__cdecl ?crappy@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   0   call targets   0
@@ -758,6 +768,10 @@ Purpose: Calculate the elevation of the specified tile.
 //            regardless of source statement order - tried an intermediate
 //            `diff` local isolating the two subtractions, no effect. Same
 //            instruction count (67/67) either way, just one load's position.
+// TRIED (2026-09-03): `contour - MapSeaLevel - ElevDetail[3]` operand order,
+//            a `int sea = MapSeaLevel` local used for both subterms, and
+//            computing `elev` inside each branch - all exactly 57/67, the
+//            load's slot does not follow from any of them.
 // size      183 bytes
 // prototype int (__cdecl ?elev_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   1   call targets   0
@@ -1128,6 +1142,13 @@ Purpose: Set the rockiness for the specified tile.
 //            AFTER (matching the image's load-then-store-val3-then-or-store-bit2 order exactly) -
 //            forced a fourth callee-saved register (`push esi`), which shifts every subsequent
 //            offset and drops it to 8/25. Confirms the plateau is a spill-slot ceiling, not order.
+// TRIED (2026-09-03): `tile->bit2 |= 0x400000` written BEFORE the `val3`
+//            store (16/25); `uint32_t bit2 = tile->bit2 | 0x400000` local,
+//            stored after (15/25); `tile->bit2 = tile->bit2 | 0x400000` then
+//            the `val3` store (15/25). The image's 2-instruction interleave
+//            (bit2 load+or, val3 store, bit2 store) is VC6 scheduling a load
+//            above an independent store, not a source order this tree can
+//            name. Left at 22/25.
 // size      78 bytes
 // prototype void (__cdecl ?rocky_set@@YAXHHH@Z)(int xCoord, int yCoord, int rocky)
 // callers   11   call targets   0
@@ -1483,13 +1504,19 @@ Status: Complete
 
 /*
 Purpose: Set up a new landmark with the provided name at the specified tile.
-// ORIGINAL: 0x00592600 ?new_landmark@@YAHHHPAD@Z 0x00592600-0x0059264B
-// TRIED: strcpy_s(dst,32,src) vs strcpy(dst,src) - vc6_compat.h's strcpy_s already
-//            inlines to a plain strcpy call, so this was a source-clarity change only; both
-//            spellings already made the single call the image makes (osmx calls confirms 1
-//            call to 0x00645460 either way). call_diff's "0 vs 1" was a false positive.
-// TRIED: remaining mismatch is esi vs eax register allocation for MapLandmarkCount, a
-//            stack-frame plateau per prior pass's note, not a source shape
+// ORIGINAL: 0x00592600 ?new_landmark@@YAHHHPAD@Z 0x00592600-0x0059264B BYTE_EXACT
+// LEVER (2026-09-03): two fixes, 3/28 -> BYTE_EXACT 28/28. (1) The guard
+//            tests the GLOBAL, and the local is only bound afterwards -
+//            `int landmark_offset = MapLandmarkCount++`, not a local read
+//            hoisted above the guard. Reading the count into a local first
+//            made VC6 push esi ahead of the early return and run the guard
+//            in it. (2) The three writes index `MapLandmark[landmark_offset]`
+//            directly instead of going through a `Landmark *lm`: the image
+//            folds the array base into each access's own displacement
+//            (`mov [eax + 0x949894], ecx` / `lea edx, [eax + 0x94989c]`),
+//            where a pointer materialises base + offset once and pays
+//            `add eax, 8` for the name. Mirror of lever 7 - here the
+//            array form is what the image has, not the pointer form.
 // symbol    ?new_landmark@@YAHHHPBD@Z
 // size      75 bytes
 // prototype int (__cdecl ?new_landmark@@YAHHHPAD@Z)(int xCoord, int yCoord, int8* name)
@@ -1501,15 +1528,13 @@ Return Value: Landmark offset or -1 if max landmark count is reached
 Status: Complete
 */
 int __cdecl new_landmark(int x, int y, LPCSTR name) {
-    int landmark_offset = MapLandmarkCount;
-    if (landmark_offset >= MaxLandmarkNum) {
+    if (MapLandmarkCount >= MaxLandmarkNum) {
         return -1;
     }
-    MapLandmarkCount += 1;
-    Landmark *lm = &MapLandmark[landmark_offset];
-    lm->x = x;
-    lm->y = y;
-    strcpy(lm->name, name);
+    int landmark_offset = MapLandmarkCount++;
+    MapLandmark[landmark_offset].x = x;
+    MapLandmark[landmark_offset].y = y;
+    strcpy(MapLandmark[landmark_offset].name, name);
     return landmark_offset;
 }
 
@@ -2466,6 +2491,12 @@ Purpose: Check if faction controls the initial tile (code offset 0) of the Manif
 //        differing run (`map_loc(x, y)->visibility & (1 << faction_id)`,
 //        register choice only: esi/edx/eax vs image's eax/ecx/edx for the
 //        same three values) did not move under either.
+// TRIED (2026-09-03): hoisting `int mask = 1 << faction_id` ahead of the
+//            loop, dropping the `bit2` local in favour of two inline
+//            accessor calls (51/70, worse), and swapping the `&` operands -
+//            all still 65/70. The image keeps the tile index in eax across
+//            the whose_territory call and puts the mask in edx; this tree
+//            puts the index in esi and the mask in eax.
 // size      190 bytes
 // prototype int (__cdecl ?has_temple@@YAHH@Z)(int factionID)
 // callers   1   call targets   1
@@ -3455,31 +3486,80 @@ Status: Complete
 
 /*
 Purpose: Set up the world polar caps.
-// ORIGINAL: 0x005C58E0 ?world_polar_caps@@YAXXZ 0x005C58E0-0x005C5A2F
+// ORIGINAL: 0x005C58E0 ?world_polar_caps@@YAXXZ 0x005C58E0-0x005C5A2F BYTE_EXACT
+// BUG IN THE RECOVERY: the second pole write was `x - 1` where the image
+//            computes `x + 1` (`lea eax, [esi + 1]` at 0x5C590A) - the image
+//            pairs (x, 0) with (x+1, MapLatitudeBounds-1), so x=0 wrote
+//            (-1, MapLatitudeBounds-1), wrapping to the far column, and every
+//            pair was one tile out. `x + 1` is also what makes this
+//            BYTE_EXACT.
+// LEVER: three call-shape fixes, 1/128 -> BYTE_EXACT 128/128. (1) The six
+//            pole writes go through the non-inline forwarder
+//            `alt_put_detail_call` (bottom of this file): the image calls
+//            alt_put_detail (0x00591260) for real and call_diff named the
+//            inlined `world_alt_put_detail` a WRONG CALLEE; the header
+//            inline definition folds those six sites away. (2) The four
+//            random columns are `rnd(MapLongitudeBounds / 2, NULL)` written
+//            out as its own body (guard clause + `rand() % seed`) - the
+//            image calls rand() directly, never rnd(), and it computes the
+//            halving from MapLongitudeBounds itself rather than reading the
+//            pre-halved MapLongitude. (3) The second loop's bound is the
+//            expression, not a local: `uint32_t bounds =
+//            MapLongitudeBounds / 16` lets VC6 hoist the bound and count
+//            down (`dec edi / jne`), where the image re-evaluates it every
+//            iteration and counts up (`inc edi / cmp / jl`). Loop variable
+//            is `int`, not `uint8_t` (the image's `x` lives in esi as a
+//            dword), and the AltNatural[3] argument is not cast to
+//            uint8_t - the image pushes the full dword.
 // size      335 bytes
 // prototype 
 // callers   2   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00591260 0x0064601D
-// TRIED: call_diff's "4 vs 10" undercounts by excluding rand() as hidden; `osmx calls
-//            --all` already shows 6 alt_put_detail + 4 rand = 10, matching the image. The
-//            remaining mismatch is the image omitting the ebp frame this tree keeps under
-//            every flag set tried - a stack-frame plateau, not a source shape.
 Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl world_polar_caps() {
-    for (uint8_t x = 0; x < MapLongitudeBounds; x += 2) {
-        world_alt_put_detail(x, 0);
-        world_alt_put_detail(x - 1, MapLatitudeBounds - 1);
+    // world_alt_put_detail(x, y) written out at every site: the image calls
+    // alt_put_detail (0x00591260) directly from all six - `call_diff` names
+    // the wrapper as a WRONG CALLEE - and calls rand() rather than rnd().
+    for (int x = 0; x < MapLongitudeBounds; x += 2) {
+        alt_put_detail_call(x, 0, AltNatural[3]);
+        alt_put_detail_call(x + 1, MapLatitudeBounds - 1, AltNatural[3]);
     }
-    uint32_t bounds = MapLongitudeBounds / 16;
-    for (uint32_t i = 0; i < bounds; i++) {
-        world_alt_put_detail(rnd(MapLongitude, NULL) * 2, 0);
-        world_alt_put_detail(rnd(MapLongitude, NULL) * 2 + 1, 1);
-        world_alt_put_detail(rnd(MapLongitude, NULL) * 2 + 1, MapLatitudeBounds - 1);
-        world_alt_put_detail(rnd(MapLongitude, NULL) * 2, MapLatitudeBounds - 2);
+    for (int i = 0; i < MapLongitudeBounds / 16; i++) {
+        // rnd(MapLongitude, NULL)'s own body (0x00579770): the image has no
+        // call to rnd here, only to rand().
+        int seed = MapLongitudeBounds / 2;
+        int x_rand;
+        if (seed - 1 <= 0) {
+            x_rand = 0;
+        } else {
+            x_rand = rand() % seed;
+        }
+        alt_put_detail_call(x_rand * 2, 0, AltNatural[3]);
+        seed = MapLongitudeBounds / 2;
+        if (seed - 1 <= 0) {
+            x_rand = 0;
+        } else {
+            x_rand = rand() % seed;
+        }
+        alt_put_detail_call(x_rand * 2 + 1, 1, AltNatural[3]);
+        seed = MapLongitudeBounds / 2;
+        if (seed - 1 <= 0) {
+            x_rand = 0;
+        } else {
+            x_rand = rand() % seed;
+        }
+        alt_put_detail_call(x_rand * 2 + 1, MapLatitudeBounds - 1, AltNatural[3]);
+        seed = MapLongitudeBounds / 2;
+        if (seed - 1 <= 0) {
+            x_rand = 0;
+        } else {
+            x_rand = rand() % seed;
+        }
+        alt_put_detail_call(x_rand * 2, MapLatitudeBounds - 2, AltNatural[3]);
     }
 }
 
@@ -4403,6 +4483,15 @@ void __cdecl world_unity(int x, int y) {
 /*
 Purpose: Setup the 'Fossil Ridge' landmark (SMACX only).
 // ORIGINAL: 0x005C7A80 ?world_fossil@@YAXHH@Z 0x005C7A80-0x005C7CA1
+// KNOWN DIVERGENCE (documented, left alone): the `if (ExpansionEnabled)`
+//            guard at the top of this body has no counterpart in the image -
+//            0x005C7A80 goes straight into the site search, and the only
+//            guard is in world_landmarks (0x005C8629). It is this tree's own
+//            "added check similar to Unity Wreckage", so calling world_fossil
+//            from anywhere but world_landmarks (Console::editor_natural does)
+//            behaves differently from the shipped image with the expansion
+//            disabled. Removing it is a behaviour change, not a spelling
+//            fix, and needs a decision before the body can be chased.
 // size      545 bytes
 // prototype void (__cdecl ?world_fossil@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   6
@@ -4708,6 +4797,19 @@ void __cdecl world_geothermal(int x, int y) {
 /*
 Purpose: Set up all the landmarks.
 // ORIGINAL: 0x005C8630 ?world_landmarks@@YAXXZ 0x005C8630-0x005C86DC
+// BUG IN THE RECOVERY: the two ExpansionEnabled guards were dropped from here
+//            ("removed redundant check") but the image performs BOTH -
+//            `mov eax,[0x9a6488]; test eax,eax; je` before world_unity and
+//            again before world_fossil (0x5C8622 and 0x5C8629). world_unity
+//            re-tests it internally (0x5C7756); world_fossil does NOT, so the
+//            caller's guard is the only thing that keeps the Fossil Field off
+//            a non-expansion map. Restoring them took 30/57 -> 55/57.
+// TRIED: the last 5 instructions are the deliberate `world_canyon(-1, -1)`
+//            this tree adds after world_geothermal ("Change: add Nessus
+//            Canyon"): it is one more `push -1 / push -1 / call` block plus
+//            8 bytes of stack the image's `add esp, 0x30` does not account
+//            for, so no byte-exact match is reachable while that landmark is
+//            generated. Left as a documented behaviour change.
 // size      172 bytes
 // prototype 
 // callers   0   call targets   15
@@ -4725,8 +4827,12 @@ void __cdecl world_landmarks() {
     world_ridge(-1, -1);
     world_diamond(-1, -1);
     world_ruin(-1, -1);
-    world_unity(-1, -1); // removed redundant ExpansionEnabled check
-    world_fossil(-1, -1); // moved ExpansionEnabled check to inside function
+    if (ExpansionEnabled) {
+        world_unity(-1, -1);
+    }
+    if (ExpansionEnabled) {
+        world_fossil(-1, -1);
+    }
     world_temple(-1, -1);
     world_borehole(-1, -1);
     world_sargasso(-1, -1);
@@ -4740,9 +4846,20 @@ void __cdecl world_landmarks() {
 /*
 Purpose: Check for any type of zone of control conflicts (base and/or unit).
 // ORIGINAL: 0x005C89F0 ?zoc_any@@YAHHHH@Z 0x005C89F0-0x005C8AC0
+// LEVER (2026-09-03): anything_at (0x005798E0) written out inline - the image
+//            makes ZERO calls here and `call_diff` flagged the real call as
+//            MORE-by-one; 3/82 -> 12/82 and call_diff is now clean. The
+//            occupant test, the owner<MaxPlayerNum bound and the owner>=0
+//            test are the three the image emits in that order, so the
+//            `owner >= 0` that looks redundant after `val2 & 0xF` is
+//            zoc_any's own test on anything_at's return, kept deliberately.
 // TRIED: same xrange/on_map-loop family ceiling as zoc_veh (0x005C8AC0,
-//            right below) and base_on_sea - best 3/82, 0.786 similar across
-//            every flag set. Not chased further.
+//            right below) and base_on_sea. Remaining gap is one register
+//            choice, twice: the image holds the hoisted `MapIsFlat & 1` in
+//            ECX (spilled to [ebp-4]) and the radius temp in EAX, this tree
+//            the other way round - measured, not chased. Hoisting the flat
+//            test into a named local before the loop compiles to the same
+//            12/82, so the hoist is not the difference either.
 // size      208 bytes
 // prototype int (__cdecl ?zoc_any@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   5   call targets   0
@@ -4757,10 +4874,16 @@ int __cdecl zoc_any(int x, int y, int faction_id) {
         int x_radius = xrange(x + RadiusBaseX[i]);
         int y_radius = y + RadiusBaseY[i];
         if (on_map(x_radius, y_radius)) {
-            int owner = anything_at(x_radius, y_radius);
-            if (owner >= 0 && (uint32_t)owner != faction_id
-                && !has_treaty(faction_id, owner, DTREATY_PACT)) {
-                return owner + 1;
+            // Inlined anything_at(x_radius, y_radius): the image writes its
+            // body out at this call site rather than calling 0x005798E0.
+            Map *tile = map_loc(x_radius, y_radius);
+            if (tile->bit & (BIT_VEH_IN_TILE | BIT_BASE_IN_TILE)) {
+                int owner = tile->val2 & 0xF;
+                if (owner < MaxPlayerNum
+                    && owner >= 0 && (uint32_t)owner != faction_id
+                    && !has_treaty(faction_id, owner, DTREATY_PACT)) {
+                    return owner + 1;
+                }
             }
         }
     }
@@ -5103,6 +5226,14 @@ int __cdecl alt_get_ocean_detail(int x, int y, int corner, int point) {
 // symbol's own name costs nothing.
 void __cdecl bit_set_call(int x, int y, int bit, BOOL set) {
     bit_set(x, y, bit, set);
+}
+
+// Non-inline forwarder to `alt_put_detail` (map.h), for the same reason as
+// `bit_set_call` above: world_polar_caps (0x005C58E0) is where the image makes
+// six real `call 0x591260`s, and an inline definition in the header gets those
+// six sites folded away instead.
+void __cdecl alt_put_detail_call(int x, int y, int detail) {
+    alt_put_detail(x, y, detail);
 }
 
 // Homed from src/map_color.cpp (2026-09-02): its leaf-test isolation
