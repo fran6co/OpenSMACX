@@ -1794,15 +1794,23 @@ void Buffer::close() {
 Purpose: Destroy a Buffer by installing its virtual table, releasing every
          owned resource, and destroying the trailing Spot subobject.
 
-         THE BODY IS `~Buffer() { close(); }` IN THE HEADER, and those three
-         tokens are the whole function. The vtable store, the `Spot` at
-         +0x4B0 and the EH frame that unwinds it are all things the compiler
-         emits around a virtual destructor with a member of class type; the
-         image's 20 instructions are what VC6 writes for that source, so
-         spelling any of them out by hand - as the stand-in here used to,
-         through a volatile pointer and a raw 0x4B0 - both missed the match
-         and described the layout twice.
+         THE BODY IS `~Buffer() { close(); }`, and those three tokens are the
+         whole function. The vtable store, the `Spot` at +0x4B0 and the EH
+         frame that unwinds it are all things the compiler emits around a
+         virtual destructor with a member of class type; the image's 20
+         instructions are what VC6 writes for that source, so spelling any of
+         them out by hand - as the stand-in here used to, through a volatile
+         pointer and a raw 0x4B0 - both missed the match and described the
+         layout twice.
 // ORIGINAL: 0x005D7410 ??1Buffer@@QAE@XZ 0x005D7410-0x005D7463;0x00662B68-0x00662B80 BYTE_EXACT
+// LEVER: THE BODY STAYS IN buffer.h. Measured 2026-09-03 chasing MapWin's
+//            destructor (0x00420F90), which the image spells as three
+//            `call ??1Buffer`s where this tree expands the inline: defining
+//            it here, out of line, did make 0x00420F90 byte-exact - and
+//            silenced the compiler's deleting-destructor emission in every
+//            other TU, costing deleting_thunks.cpp its ??_GBuffer claim at
+//            0x005E3610 (UNRESOLVED). Same body either way; the difference
+//            is which call sites the compiler is willing to build it in.
 // symbol    ??1Buffer@@UAE@XZ
 // body      src/buffer.h
 // size      107 bytes

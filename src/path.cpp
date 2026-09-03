@@ -43,9 +43,27 @@ void __cdecl abstract_set_call(int x, int y, uint8_t region) {
     abstract_set(x, y, region);
 }
 
+// And again, for memset. /Oi expands the intrinsic into `rep stosd` at every
+// site, and init (0x0059A220) is one of the image's 73 `call memset` sites -
+// `push <MapArea * 4> / push 0 / push <table> / call 0x6465F0` - so the
+// expansion cost this body its own `push esi` shape along with the whole
+// register allocation after it. stdafx.h keeps the block routines intrinsic
+// on purpose, so the call is routed the same way the file's other out-of-line
+// helpers are.
+void *__cdecl memset_call(void *dst, int val, unsigned len) {
+    return memset(dst, val, len);
+}
+
 /*
 Purpose: Initialize an instance of the class.
 // ORIGINAL: 0x0059A220 ?init@Path@@QAEXXZ 0x0059A220-0x0059A2C3 BYTE_EXACT
+// LEVER: the final clear is `memset_call`, not ZeroMemory - /Oi expands the
+//            intrinsic into `rep stosd` and burns edi for it, which is where
+//            this body's `push edi` / `xor edi, edi` / `cmp eax, edi` came
+//            from: the zero register reached all the way back up into
+//            shutdown's three null tests. One real `call memset` (the image's
+//            0x006465F0) and every one of those goes back to the image's own
+//            shape. See the forwarder above.
 // size      163 bytes
 // prototype void (__thiscall ?init@Path@@QAEXXZ)(Path* this)
 // callers   6   call targets   3
@@ -62,7 +80,7 @@ void Path::init() {
     map_table_ = (int *)mem_get(MapArea * 4);
     x_table_ = (int16_t *)mem_get(MapArea * 2);
     y_table_ = (int16_t *)mem_get(MapArea * 2);
-    ZeroMemory(map_table_, MapArea * 4);
+    memset_call(map_table_, 0, MapArea * 4);
 }
 
 /*

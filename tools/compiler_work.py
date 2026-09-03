@@ -69,7 +69,10 @@ SHAPES = [
     # 9 -> 8 (Dialog ctor): 0x00608C10 is homed and BYTE_EXACT in dialog.cpp,
     # so the Dialog::construct seam and its pending forwarder are gone - the
     # real constructor IS the body the seam used to delegate to.
-    ("construct", 8,
+    # 8 -> 7 (2026-09-03, mapwin batch): TextureStore::construct retired for a
+    # real out-of-line TextureStore() constructor - independent of the Dialog
+    # retirement above, which landed on the other side of this merge.
+    ("construct", 7,
      re.compile(r"^\w[\w :*&]*\b\w+::construct\(\)\s*\{", re.M),
      "a `construct()` method standing in for a constructor. Convert it; put "
      "anything the image writes BEFORE the vfptr store in the member-"

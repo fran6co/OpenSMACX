@@ -210,6 +210,12 @@ Purpose: Take the absolute distance between two points as parameters to calculat
          radiate. This is mainly used to determine proximity or how far away the two points are from
          each other in a rough circle shape (see RadiusOffsetX[]/RadiusOffsetY[]).
 // ORIGINAL: 0x004F8090 ?vector_dist@@YAHHH@Z 0x004F8090-0x004F80CB BYTE_EXACT
+// LEVER: the two `abs()` are `abs_call` - /Oi turns `abs` into the inline
+//            `cdq / xor / sub` form at every site, and this body's image has
+//            two real `call _abs` (0x00644F3A) instead, which is the whole of
+//            the divergence. `abs` is one of the intrinsics VC6 will not let a
+//            TU define (C2169), so no source spelling reaches the call; the
+//            forwarder does. Same root cause as path.cpp's `memset_call`.
 // size      59 bytes
 // prototype int (__cdecl ?vector_dist@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   5   call targets   1
@@ -258,6 +264,15 @@ int __cdecl vector_dist(int x_point_a, int y_point_a, int x_point_b, int y_point
 Purpose: Check whether there is a path between two regions. It seems to only take into account land
          destinations. TODO: Revisit in the future when Continent/Path is complete.
 // ORIGINAL: 0x0050DDC0 ?sea_coast@@YAHHH@Z 0x0050DDC0-0x0050DE00 BYTE_EXACT
+// LEVER: two spellings, both visible in the image's own body. (1) the
+//            offset out-param is the PARAMETER ITSELF - `bitmask_call(...,
+//            &region_src, &mask)`, then `sea_coasts[region_src]` reads it
+//            back - not a separate `int offset` local. The image's
+//            `lea ecx, [ebp + 0xc]` is `&region_src`, and its second read of
+//            [ebp+0xc] at 0x0050DDB is the offset coming back out of
+//            bitmask. (2) the call is `bitmask_call`, the real E8 - at /Ob2
+//            the header `inline bitmask` expands at this site and the whole
+//            body collapses to 24 instructions with no call at all.
 // size      64 bytes
 // prototype int (__cdecl ?sea_coast@@YAHHH@Z)(int regionDst, int regionSrc)
 // callers   2   call targets   1
@@ -268,10 +283,9 @@ Return Value: Is there a path? true/false
 Status: Complete
 */
 BOOL __cdecl sea_coast(int region_dst, int region_src) {
-    int offset;
     int mask;
-    bitmask(region_src & RegionBounds, &offset, &mask);
-    return (Continents[region_dst].sea_coasts[offset] & mask) != 0;
+    bitmask_call(region_src & RegionBounds, &region_src, &mask);
+    return (Continents[region_dst].sea_coasts[region_src] & mask) != 0;
 }
 
 /*
@@ -5234,6 +5248,15 @@ void __cdecl bit_set_call(int x, int y, int bit, BOOL set) {
 // six sites folded away instead.
 void __cdecl alt_put_detail_call(int x, int y, int detail) {
     alt_put_detail(x, y, detail);
+}
+
+// Non-inline forwarder to `abs`. The reason is /Oi rather than a header inline:
+// `abs` is an intrinsic under /O2, and VC6 refuses to let a TU define it
+// (C2169 "intrinsic function, cannot be defined"), so every `abs()` in source
+// becomes the inline `cdq / xor / sub` form and none of the image's 553
+// `call _abs` sites can be reached. See map.h beside the declaration.
+int __cdecl abs_call(int value) {
+    return abs(value);
 }
 
 // Homed from src/map_color.cpp (2026-09-02): its leaf-test isolation
