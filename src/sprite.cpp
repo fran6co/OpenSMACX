@@ -223,9 +223,17 @@ void Sprite::UNK4(int, int) {
 
 
 /*
-// ORIGINAL: 0x0063CE20 sub_63ce20 0x0063CE20-0x0063CEE7;0x00663998-0x006639AD
+// ORIGINAL: 0x0063CE20 sub_63ce20 0x0063CE20-0x0063CEE7;0x00663998-0x006639AD BYTE_EXACT
 // symbol    ?init_class@Sprite@@SAHXZ
-// TRIED: the original wraps the local Buffer in an fs:[0] SEH frame; no swept flag set reproduces that prologue/epilogue or the secondary 0x663998 span, so the SEH shape stays unmatched.
+// LEVER 2026-09-03: two things, and the first one is worth stating because
+//   this body carried a TRIED note for two passes claiming otherwise. The /GX
+//   SEH frame over the local Buffer IS reproduced by the plain /O2 /Ob0 /GX
+//   build - `sub esp, 0x588`, the fs:[0] swap and the `mov dword ptr
+//   [esp+0x594], -1` state stores are all there - so the frame was never the
+//   wall. What was missing was the return shape: two SEPARATE epilogues,
+//   `if (result != 0) return result;` then `return 0;`, which is the
+//   split-epilogue lever. 34/53 -> 53/53 BYTE_EXACT. The SEH span at 0x663998
+//   stays cold code the image lays elsewhere.
 // size      220 bytes
 // prototype
 // callers   1   call targets   5
@@ -263,7 +271,16 @@ int Sprite::init_class() {
     } else {
         result = g_BLANK_SPRITE.extract(&buf, 9, 1, 0x12, 0x10, 0x10, 0);
     }
-    return result;
+    // TWO RETURNS, not one: the image does not share the Buffer destructor
+    // between the two exits, so a single `return result` costs nine
+    // instructions (34/53) - a guard clause for the failure value puts the
+    // `mov eax,esi` epilogue first and the `xor eax,eax` one second, exactly
+    // the image's order, and the state store lands between `mov esi,eax` and
+    // the destructor receiver's `lea` where the image has it.
+    if (result != 0) {
+        return result;
+    }
+    return 0;
 }
 
 // THE SHEET HEAP, completed here because the class has no other home in the
@@ -283,6 +300,23 @@ struct TexHeap {
 Purpose: Take `size` bytes of sheet memory: walk the heap's block table and
          allocate from the first block whose free tail is large enough.
 // ORIGINAL: 0x006353C0 ?get_mem@TexHeap@@QAEHH@Z 0x006353C0-0x00635402 FILE SEMANTIC
+// TRIED 2026-09-03, two batches of four: count declared before index, both
+//   for-loop forms (initialiser inside the `for`, index declared outside it),
+//   a named `Heap *block` local instead of the double `blocks[index]` access,
+//   `count_ + 1` without the static_cast, `1 + static_cast<int>(count_)`, an
+//   empty-initialiser `for` over the same pair, and `blocks` hoisted above
+//   the count guard. All eight: 26 of 33 or worse. `blocks` above the guard
+//   is 18 of 33 and the four restructurings are 5 of 33 with 35 instructions
+//   - two MORE than the image, because moving index's initialiser inside the
+//   guard makes VC6 emit a second `xor`.
+// LEVER (not enough): the committed spelling is the only one at the image's
+//   33 instructions, and it is 26 of 33 with MNEMONIC_ONLY 1.000 - the four
+//   divergences are ALL the same register swap, the loop index in eax and
+//   `count_ + 1` in edx where this tree has them the other way round
+//   (`blocks`, `size`, the walking pointer and the block load all agree).
+//   Also swept --all-flags: /O2 /Ob0 /GX and /O2 /Gy /GR- all tie at 26 of
+//   33; /G6 is 2 of 33. Plateau: a pure allocator coin flip on a 66-byte
+//   body, no source relationship left to name.
 // size      66 bytes
 // prototype int (__thiscall ?get_mem@TexHeap@@QAEHH@Z)(#120* this, int)
 // callers   1   call targets   1
@@ -329,6 +363,12 @@ Purpose: Cut the width x height rectangle at (left, top) out of a locked
 //   Flag sets scored by measure --all-flags: /c /O2 /Ob0 /Gy /GR- /GX is the
 //   best at 44/397; every non-/Ob0 set is 7/397 or worse because the in-class
 //   `get_data()` then inlines and its E8 disappears. /Ob0 is load-bearing.
+// TRIED 2026-09-03, re-swept after sprite.h retyped cTransparentIndex_ to
+//   unsigned char: the committed body is 17 of 397 (0.415 similar) at /O2
+//   /Ob0 /GX, the same best set as before. The fold
+//   `cTransparentIndex_ = transparent & 0xff` scores 12 of 397; the nested
+//   two-`if` guard scores the same 17; the volatile-punned byte store scores
+//   18 and was refused as source. The retype neither helped nor hurt here.
 // TRIED: the receiver-spill fingerprint, not reached. The image never
 //   enregisters `buffer`: it loads it fresh into volatile ecx at each of its
 //   ten uses (`mov ecx, [esp+0x1c]`) and spends the callee-saved registers on
@@ -585,38 +625,21 @@ int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
 
 /*
 Purpose: Turn the sprite into a one-pixel placeholder of the given extent.
-// ORIGINAL: 0x005EAF3F ?create_blank@Sprite@@QAEHHHH@Z 0x005EAF3F-0x005EAF86
-// TRIED 2026-09-03: `osmx semantic` REFUSED this body - "instruction 14: mov
-// displacement 0x1c against 0x8", the height/depth store pair the LEVER
-// below describes. Same count, 1.000 similarity, but the store swap is a
-// value difference the tier will not cover, so MNEMONIC_ONLY is as far as
-// this spelling goes.
-// LEVER: the two `1` stores go BEFORE the two zero stores, and the depth
-//   store goes BEFORE the height store. Field order alone moved this from
-// LEVER: the two `1` stores go BEFORE the two zero stores, and the depth
-//   store goes BEFORE the height store. Field order alone moved this from
-//   16 of 25 to 23 of 25 (similarity 1.000, every instruction present):
-//   putting the zeros first schedules `mov eax, 1` after the `xor eax, eax`
-//   and costs the shared `mov ecx, 1` the image materialises up front.
-// TRIED: the `const int one = 1;` local the promoted transcription used.
-//   It is not what shares the constant - a plain literal `1` at all three
-//   uses scores the same, and `const size_t one` / `mem_get(iSpriteWidth_)`
-//   score no better either (all 16 of 25 at the old field order).
-// TRIED: reaching 25 of 25. The last two stores are `[esi+0x1c]` (height)
-//   and `[esi+8]` (depth) and the image emits them in that order while
-//   loading height EARLY into edx and depth LATE into al. VC6 here ties the
-//   two together: stores follow source order and the loads come out in the
-//   REVERSE of it, so `height; depth` buys the store order and loses the
-//   registers (21 of 25) while `depth; height` buys the registers and loses
-//   the store order (23 of 25). Nine spellings measured - chained zeros,
-//   swapped 1-stores, swapped width stores, swapped zero stores, a raw
-//   `char *` store, temps for either parameter - and none decouples them.
+// ORIGINAL: 0x005EAF3F ?create_blank@Sprite@@QAEHHHH@Z 0x005EAF3F-0x005EAF86 BYTE_EXACT
+// LEVER: `iHeight_ = height` sits BETWEEN the two zero stores, not after
+//   them. The image loads height into edx at the function's second
+//   instruction and keeps it live across the whole body, so height's first
+//   source use has to be early; but its STORE is the second-to-last. Slotting
+//   the statement between `iLeftOffset_ = 0` and `iTopOffset_ = 0` does both
+//   at once - the load hoists to the top and the store schedules down to
+//   0x005EAF68, immediately before the depth byte store. Statement order
+//   alone, no temps: 23/25 -> 25/25.
 // size      71 bytes
 // prototype int (__thiscall ?create_blank@Sprite@@QAEHHHH@Z)(Sprite* this, int, int, int)
 // kind      game
 // calls     0x005D4510
 Return Value: No errors (0); allocation failed (4)
-Status: Semantics transcribed from the image
+Status: Complete
 
 PROMOTED FROM src/recovered/units/005eaf3f.cpp, which wrote every field as
 `iWidth_`.
@@ -632,9 +655,9 @@ int Sprite::create_blank(int width, int height, int depth) {
     iSpriteWidth_ = 1;
     iSpriteHeight_ = 1;
     iLeftOffset_ = 0;
+    iHeight_ = height;
     iTopOffset_ = 0;
     cTransparentIndex_ = static_cast<unsigned char>(depth);
-    iHeight_ = height;
     pcBits_ = static_cast<char *>(mem_get(1));
     return pcBits_ ? 0 : 4;
 }
