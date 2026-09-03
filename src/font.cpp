@@ -68,6 +68,23 @@ Purpose: Initialize the class using the font name, height and style.
 //        store sequence, both compile to the identical 112/130: this is
 //        the optimizer's instruction scheduling, not a source-shape choice
 //        reachable from here.
+// LEVER: the trailing SelectObject moves BETWEEN `height_ = ...` and
+//        `internal_leading_ = ...`. That is the one source-shape choice the
+//        earlier pass missed: it makes VC6 hoist the `push 0xd`
+//        (GetStockObject's SYSTEM_FONT argument) above the two remaining
+//        member stores, which is exactly where the image has it -
+//        0x006190A0 sits between `sub edx, ecx` and `mov [esi+0x10], edx`.
+//        112/130 -> 117/130, and the compiled count now equals the image's
+//        (130). The two member stores the statement jumps over are still
+//        ordered height_ then internal_leading_ then descent_ in the image,
+//        so the reordering is a scheduling nudge, not a semantic change.
+// TRIED: the last 13 - the image reads tmDescent BEFORE it computes height_
+//        (its `mov edx, eax` copy of tmAscent exists only because eax is
+//        already spoken for), so spelling that with an `int descent` local
+//        was the obvious next move. It SPILLS: hoisting the read to just
+//        before `height_` or to the top of the block both compile to
+//        97/130 (compiled 132 - two extra spills). `int leading` alone
+//        stays at 117/130 and is what is here.
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -146,18 +163,28 @@ int Font::init(LPCSTR font_name, int height, int style) {
     // `internal_leading_`-first source order and a reordered one matching
     // the image's store sequence compile to the identical 112/130; this is
     // the optimizer's own instruction scheduling, not a source-shape one.
-    internal_leading_ = tm.tmInternalLeading;
+    // The trailing SelectObject sits BETWEEN the height_ store and the
+    // internal_leading_/descent_ stores. That is what makes VC6 hoist the
+    // `push 0xd` for GetStockObject above the two remaining member stores,
+    // which is where the image has it (0x006190A0, between `sub edx, ecx`
+    // and `mov [esi + 0x10], edx`) - 112/130 with SelectObject last,
+    // 117/130 with it here. Everything else about the block is scheduling:
+    // TRIED below.
+    int leading = tm.tmInternalLeading;
     line_height_ = tm.tmHeight + tm.tmExternalLeading;
     ascent_ = tm.tmAscent;
-    height_ = ascent_ - internal_leading_;
+    height_ = ascent_ - leading;
+    SelectObject(FontHDC, GetStockObject(SYSTEM_FONT));
+    internal_leading_ = leading;
     descent_ = tm.tmDescent;
+    return 0;
     SelectObject(FontHDC, GetStockObject(SYSTEM_FONT));
     return 0;
 }
 
 /*
 Purpose: Initialize the class using the file, font name, height and style.
-// ORIGINAL: 0x006190D0 ?init@Font@@QAEHPADPADHH@Z 0x006190D0-0x0061922C
+// ORIGINAL: 0x006190D0 ?init@Font@@QAEHPADPADHH@Z 0x006190D0-0x0061922C BYTE_EXACT
 // symbol    ?init@Font@@QAEHPBD0HH@Z
 // size      348 bytes
 // prototype int (__thiscall ?init@Font@@QAEHPADPADHH@Z)(Font* this, int8* lpszFile, int8* fontName, int height, int style)
@@ -171,23 +198,34 @@ Purpose: Initialize the class using the file, font name, height and style.
 //        strlen (0x006453E0), never the bounded `_s` forms, which this
 //        tree's `_s` calls were compiling as an inlined `rep movsd` copy
 //        the image does not have. Took this from 10/119 to 49/119.
-// TRIED: `if (!file || !font_name)` vs `if (!font_name || !file)` -
-//        both compile identically (VC6 canonicalises the `||`), so the
-//        residual gap is not this guard's operand order. Splitting the
-//        guard into two separate `if`s (the usual chained-condition lever)
-//        measured WORSE, 29/119 - reverted. Not chased further; the image
-//        also caches `font_name` into a register across the whole function
-//        where this body re-reads it, which is the likely next lever.
+// LEVER: THREE shapes closed the last 49 -> 119. (1) `char path[MAX_PATH]`,
+//        not MAX_PATH + 1 - the image's `sub esp, 0x104` is 260 bytes of
+//        local and nothing else, so the array is exactly MAX_PATH wide and
+//        GetCurrentDirectoryA(MAX_PATH, path) can write 261 into it (BUG IN
+//        THE ORIGINAL, left alone deliberately). (2) The `len` local leaves:
+//        the image measures the COPY it just built - `call strlen` on
+//        fot_file_name_ at 0x00619179 before `mov [eax + edx - 4]` - so the
+//        truncation index is `strlen(fot_file_name_) - 4`, and carrying
+//        `strlen(file) + 1` in a register cost the image's bare
+//        `inc eax; push eax` on the mem_get size. (3) The guard tests
+//        `file` FIRST - 0x00619122 loads [esp+0x118] (the first stack arg)
+//        before 0x00619131 loads [esp+0x11c] - see the TRIED line below.
+// TRIED: STALE, superseded by lever (3) above. "`if (!file || !font_name)`
+//        vs `if (!font_name || !file)` - both compile identically (VC6
+//        canonicalises the `||`)" is WRONG: measured 2026-09-03, the
+//        font_name-first spelling read [esp+0x11c] at instruction 30 where
+//        the image reads [esp+0x118], and swapping the operands was part of
+//        the 51 -> 119 move. The note's other claim stands - splitting the
+//        guard into two separate `if`s is still worse.
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
 int Font::init(LPCSTR file, LPCSTR font_name, int height, int style) {
     close();
-    if (!font_name || !file) {
+    if (!file || !font_name) {
         return 16;
     }
-    size_t len = strlen(file) + 1;
-    fot_file_name_ = (LPSTR)mem_get(len);
+    fot_file_name_ = (LPSTR)mem_get(strlen(file) + 1);
     if (!fot_file_name_) {
         return 4;
     }
@@ -196,9 +234,17 @@ int Font::init(LPCSTR file, LPCSTR font_name, int height, int style) {
     // zero-then-strcat idiom as Font::init(name,height,style) above.
     fot_file_name_[0] = 0;
     strcat(fot_file_name_, file);
-    fot_file_name_[len - 5] = 0; // font extension length + 1
+    // The image measures the COPY it just built (`call strlen` on
+    // fot_file_name_ at 0x00619179, then `mov [eax + edx - 4]`), not the
+    // source string - so there is no `len` local carried from the
+    // allocation, and caching one costs the image's bare `inc eax; push eax`
+    // on the mem_get size.
+    fot_file_name_[strlen(fot_file_name_) - 4] = 0; // font extension length
     strcat(fot_file_name_, ".fot");
-    char path[MAX_PATH + 1];
+    // MAX_PATH, not MAX_PATH + 1: the image's frame is 0x104, which is 260
+    // bytes of local and nothing else. GetCurrentDirectoryA(MAX_PATH, path)
+    // can write 261 into it - BUG IN THE ORIGINAL, left alone deliberately.
+    char path[MAX_PATH];
     GetCurrentDirectoryA(MAX_PATH, path);
     CreateScalableFontResourceA(0, fot_file_name_, file, path);
     if (!AddFontResourceA(fot_file_name_)) {
@@ -252,7 +298,7 @@ int Font::width(LPSTR input) {
 
 /*
 Purpose: Get the width for the input text with a maximum length.
-// ORIGINAL: 0x006192F0 ?width@Font@@QAEHPADH@Z 0x006192F0-0x0061936B
+// ORIGINAL: 0x006192F0 ?width@Font@@QAEHPADH@Z 0x006192F0-0x0061936B BYTE_EXACT
 // body      src/font.h
 // symbol    ?width@Font@@QAEHPADI@Z
 // MOVED IN-CLASS: `find_line_break_l` (0x00619370) inlines this twice -
@@ -262,13 +308,23 @@ Purpose: Get the width for the input text with a maximum length.
 //   call strlen` at 0x0061930B and 0x0061931C - so caching it in a local
 //   collapses six instructions into three. `jl` not `jbe`, because both
 //   operands are `int` there; a `size_t` comparison emits the unsigned branch.
-// TRIED: as a standalone body, the remaining 20 of 48 were register
-//   allocation in the prologue (image saves esi/edi and keeps `this` in
-//   edi; this saved ebx as well and kept `this` there). Three spellings
-//   measured with tools/try_spellings.py before the move - the clamp as an
-//   inline min expression with no named local (4/48), the local computed
-//   after the first SelectObject (4/48), and the null guard inverted so the
-//   body is inside `if (input)` (8/48) - all worse than 28/48.
+// LEVER: THE CLAMP IS SPELLED AS THE MACRO, and that is what closes the last
+//   20 of 48. `int len = FONT_MIN(static_cast<int>(max_len),
+//   static_cast<int>(strlen(input)));` with
+//   `#define FONT_MIN(a, b) ((a) < (b) ? (a) : (b))` in font.h went 28/48 ->
+//   BYTE_EXACT 48/48 in one change (the macro is defined just above the
+//   class and #undef'd straight after, so it leaks nowhere). The
+//   `if (len >= strlen) len = strlen` spelling computes `len` BEFORE the
+//   first `strlen`, and that is what pushed VC6 into saving ebx for `this`
+//   and edi for `len`; the macro reads `a` only for the comparison and
+//   re-reads the parameter in the `b` arm, which hands `this` edi and `len`
+//   ebx exactly as the image has them. An earlier pass had the right
+//   diagnosis and the right 4/48 and 8/48 readings for the inline forms and
+//   stopped one step short of writing the macro down.
+// TRIED: the register allocation the previous refusal blamed was a symptom,
+//   not the wall - measured 2026-09-03, same instruction count (48) on both
+//   sides with only ebx/edi swapped, and no reordering of the `if` form
+//   reaches the image's assignment.
 // size      123 bytes
 // prototype int (__thiscall ?width@Font@@QAEHPADH@Z)(Font* this, int8* lpString, int max)
 // callers   3   call targets   1
@@ -298,22 +354,49 @@ Purpose: Find a space in the input string that can be used as a natural line bre
 //        is why one `0x006453E0` covers strlen from both inlined copies.
 //        Moved compiled-instruction count from 107 to 174 against an image
 //        of 208, much closer to the right shape.
-// TRIED: not chased to a match this pass - the inlined `memchr` call
-//        (0x006473F0, matched at instruction ~9) is followed by a large
-//        divergent run inside the inlined `width()` bodies; this tree also
-//        opens with a `push ebp; mov ebp, esp` frame the image does not
-//        have. Left at 3/208 for a pass that can afford the register/frame
-//        search on top of the now-correct call shape.
+// LEVER: the `len` guard is `if (len) { do ... }`, not `if (!len) return
+//        NULL; do ...`. Measured 2026-09-03 from the listing: the image's
+//        `je 0x619456` on `len == 0` lands INSIDE the shared loop-exit
+//        epilogue, one instruction after the `mov eax, [esp+0x28]` that the
+//        fall-out path needs and the guard path does not (eax still holds
+//        break_len from instruction 1). A bare `return NULL` in the guard
+//        emits a separate `xor eax,eax; ret 0xc` instead, which is a
+//        different program shape for identical behaviour. The image's
+//        back-edge is `jne 0x61939b`, i.e. into the body, not the `test` -
+//        which is the do-while-inside-an-if shape, and the `jne` takes its
+//        flags from the `add eax, esi` that writes `len` back.
+// TRIED: the frame part of the old refusal is GONE - under the file's
+//        `/c /O2 /Gy /GR- /GX` set this tree now opens `sub esp, 0x10` with
+//        no `push ebp; mov ebp, esp`, and the first three instructions agree
+//        with the image. What still diverges is instruction 3: the image
+//        keeps `len` in MEMORY (it is written back to its own argument slot
+//        at 0x00619448 and re-read at 0x0061937D/0x0061939B/0x00619476) and
+//        spends its registers on `this` spilled to [esp+4], `search_brk`
+//        spilled to [esp], `search_str` in esi, `space` in ebx and the
+//        SelectObject import address hoisted into ebp at 0x00619395; this
+//        tree register-allocates `len` (ebx) instead and re-loads the
+//        SelectObject address at each call. That one allocation decision
+//        desynchronises everything after it, so the scored agreement stays
+//        at 4/208 although the two bodies are the same ~175 instructions.
+//        Not reachable by reordering statements - `len` is a by-value
+//        parameter modified once in the loop, and no source shape tried
+//        makes VC6 leave it in its slot.
 Return Value: Pointer to string section after the line break or NULL if not found
 Status: Complete
 */
 LPSTR Font::find_line_break_l(LPSTR input, int *break_len, size_t len) {
     int search_brk = *break_len;
     LPSTR search_str = input;
-    if (!len) {
-        return NULL;
-    }
-    do {
+    // `if (len) { do ... }`, not `if (!len) return NULL; do ...`. The image
+    // tests `len` once at the top and, when it is zero, jumps to the SAME
+    // shared epilogue the loop falls out of (0x00619456, reached again from
+    // 0x00619452) - `BufferStrHeight += *break_len - search_brk` with a zero
+    // delta, `*break_len = search_brk`, return NULL. A bare `return NULL`
+    // skips that epilogue and is a different program shape for the same
+    // behaviour; it also costs the image's back-edge into 0x0061939B, which
+    // is where the loop re-enters rather than the `test`.
+    if (len) {
+        do {
         LPSTR space = (LPSTR)memchr(search_str + 1, ' ', len);
         if (!space) {
             search_brk -= width(search_str, len);
@@ -336,7 +419,8 @@ LPSTR Font::find_line_break_l(LPSTR input, int *break_len, size_t len) {
         }
         len += search_str - space;
         search_str = space;
-    } while (len);
+        } while (len);
+    }
     BufferStrHeight += *break_len - search_brk;
     *break_len = search_brk;
     return NULL;

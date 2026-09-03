@@ -17,6 +17,11 @@
  */
 #pragma once
 
+// The clamp in Font::width(LPSTR, size_t) is a MACRO, not an `if`: a macro
+// re-evaluates its argument, and the image calls `strlen` twice because of
+// it. Kept next to the only body that uses it and undefined straight after.
+#define FONT_MIN(a, b) ((a) < (b) ? (a) : (b))
+
  /*
   * Font class
   */
@@ -68,15 +73,14 @@ class Font {
     if (!input) {
       return 0;
     }
-    // `strlen` TWICE, and SIGNED. The image's clamp is a min MACRO that
-    // re-evaluates its argument - `call strlen; cmp ebx, eax; jl;
-    // call strlen` - so caching it in a local collapses six instructions
-    // into three. `jl`, not `jbe`, because both operands are int there; a
-    // `size_t` comparison emits the unsigned branch.
-    int len = static_cast<int>(max_len);
-    if (len >= static_cast<int>(strlen(input))) {
-      len = static_cast<int>(strlen(input));
-    }
+    // `strlen` TWICE, and SIGNED. The clamp is a min MACRO that re-evaluates
+    // its argument - `call strlen; cmp ebx, eax; jl; call strlen` - so the
+    // macro form (which evaluates `b` once for the test and once for the
+    // value) is what produces the image's two calls. `jl`, not `jbe`, because
+    // both operands are int there; a `size_t` comparison emits the unsigned
+    // branch.
+    int len = FONT_MIN(static_cast<int>(max_len),
+                       static_cast<int>(strlen(input)));
     SelectObject(FontHDC, font_obj_);
     SIZE size;
     GetTextExtentPoint32A(FontHDC, input, len, &size);
@@ -123,6 +127,10 @@ class Font {
   int pad_; // padding? no references
   LPSTR fot_file_name_;
 };
+
+// The macro is only spelled inside the class above, so it stops here rather
+// than leaking into every TU that includes this header.
+#undef FONT_MIN
 
 // 0x28, and statuswin.h is the evidence rather than a count of members:
 // it embeds three consecutive Fonts at 0x1530, 0x1558 and 0x1580, so the
