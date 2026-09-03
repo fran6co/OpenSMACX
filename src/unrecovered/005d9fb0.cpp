@@ -1503,20 +1503,20 @@ class Buffer { public:
     uint32_t field_10_;
     uint32_t field_14_;
     uint32_t field_18_;
-    uint32_t field_1C_;
+    uint32_t init_flags_;
     RECT rect1_;
     RECT rect2_;
     uint32_t field_40_[4];
-    uint32_t field_50_;
+    uint32_t locked_bits_;
     LPVOID * ppv_bits_;
-    uint32_t field_58_;
-    uint32_t field_5C_;
+    uint32_t surface_;
+    uint32_t clipper_;
     HDC hdc2_;
     HDC hdc_;
-    uint32_t field_68_;
-    uint32_t field_6C_;
-    HRGN field_70_;
-    uint32_t field_74_;
+    uint32_t hdc_lock_count_;
+    uint32_t surface_lock_count_;
+    HRGN clip_region_;
+    uint32_t previous_bitmap_;
     HBITMAP bitmap_handle_;
     const BITMAPINFO * bitmap_info_;
     uint32_t width_;
@@ -1530,18 +1530,18 @@ class Buffer { public:
     uint32_t field_9C_;
     uint32_t field_A0_;
     int32_t dib_[256];
-    uint32_t field_4A4_;
-    uint32_t field_4A8_;
-    uint32_t field_4AC_;
+    uint32_t palette_seed_;
+    uint32_t stride_;
+    uint32_t link_count_;
     Spot spot_;
     uint32_t field_4BC_;
     uint8_t field_4C0_[0x4C];
     uint32_t field_50C_;
-    uint32_t field_510_;
+    uint32_t write_font_slot_;
     uint32_t field_514_;
-    uint32_t field_518_;
-    uint32_t field_51C_;
-    uint32_t field_520_;
+    uint32_t font_slot_;
+    uint32_t markup_pending_;
+    uint32_t markup_enabled_;
     uint32_t field_524_;
     uint32_t field_528_;
     Font * font1_;
@@ -1564,9 +1564,9 @@ class Buffer { public:
     uint32_t color_2_val_4_;
     uint32_t color_3_val_4_;
     uint32_t color_hyper_val_4_;
-    uint32_t field_57C_;
+    uint32_t has_palette_;
     int8_t field_580_;
-    uint32_t field_584_;
+    uint32_t palette_;
     int get_data();
     int get_hdc();
     int init_class();
@@ -1758,13 +1758,13 @@ class Palette { public:
         void * field_C;
     };
     uint32_t field_0_;
-    uint32_t field_4_;
+    uint32_t poOwner_;
     uint32_t field_8_;
     uint32_t field_C_;
     uint32_t field_10_;
     uint32_t field_14_;
     uint32_t field_18_;
-    uint32_t field_1C_;
+    uint32_t init_flags_;
     uint32_t field_20_;
     uint32_t field_24_;
     uint32_t field_28_;
@@ -1777,18 +1777,18 @@ class Palette { public:
     uint32_t field_44_;
     uint32_t field_48_;
     uint32_t field_4C_;
-    uint32_t field_50_;
-    uint32_t field_54_;
-    uint32_t field_58_;
-    uint32_t field_5C_;
-    uint32_t field_60_;
-    uint32_t field_64_;
-    uint32_t field_68_;
-    uint32_t field_6C_;
-    uint32_t field_70_;
-    uint32_t field_74_;
-    uint32_t field_78_;
-    uint32_t field_7C_;
+    uint32_t locked_bits_;
+    uint32_t dib_bits_;
+    uint32_t surface_;
+    uint32_t clipper_;
+    uint32_t hdc2_;
+    uint32_t hdc_;
+    uint32_t hdc_lock_count_;
+    uint32_t surface_lock_count_;
+    uint32_t clip_region_;
+    uint32_t previous_bitmap_;
+    uint32_t bitmap_handle_;
+    uint32_t dib_;
     uint32_t field_80_;
     uint32_t field_84_;
     uint32_t field_88_;
@@ -2195,7 +2195,7 @@ typedef int (__stdcall *SetDIBColorTableFn)(void *, unsigned int, unsigned int, 
 // duplicated-shape strongly implies the original source did too (small
 // callee, inlined at every call site).
 int Buffer::blit_to_window(Win *targetWin, RECT *destRectIn, int *srcRectIn) {
-    if (field_58_ != 0) {
+    if (surface_ != 0) {
         return 0x12;
     }
     if (ppv_bits_ == 0) {
@@ -2231,8 +2231,8 @@ int Buffer::blit_to_window(Win *targetWin, RECT *destRectIn, int *srcRectIn) {
 
     if (nonEmpty != 0) {
         if (ppv_bits_ != 0 && activePalette != 0) {
-            if (field_4A4_ != activePalette->seed_) {
-                field_4A4_ = activePalette->seed_;
+            if (palette_seed_ != activePalette->seed_) {
+                palette_seed_ = activePalette->seed_;
                 RGBQUAD *table = reinterpret_cast<RGBQUAD *>(dib_);
                 activePalette->get_rgbquad(table, 0, 0x100);
                 int device = get_hdc();
@@ -2242,8 +2242,8 @@ int Buffer::blit_to_window(Win *targetWin, RECT *destRectIn, int *srcRectIn) {
                     release_hdc(1);
                 }
             }
-            field_57C_ = 1;
-            field_584_ = reinterpret_cast<uint32_t>(activePalette);
+            has_palette_ = 1;
+            palette_ = reinterpret_cast<uint32_t>(activePalette);
         }
         targetWin->sync_palette();
         activePalette->set();

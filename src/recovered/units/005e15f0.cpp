@@ -150,20 +150,20 @@ class Buffer { public:
     uint32_t field_10_;
     uint32_t field_14_;
     uint32_t field_18_;
-    uint32_t field_1C_;
+    uint32_t init_flags_;
     RECT rect1_;
     RECT rect2_;
     uint32_t field_40_[4];
-    uint32_t field_50_;
+    uint32_t locked_bits_;
     LPVOID * ppv_bits_;
-    uint32_t field_58_;
-    uint32_t field_5C_;
+    uint32_t surface_;
+    uint32_t clipper_;
     HDC hdc2_;
     HDC hdc_;
-    uint32_t field_68_;
-    uint32_t field_6C_;
-    HRGN field_70_;
-    uint32_t field_74_;
+    uint32_t hdc_lock_count_;
+    uint32_t surface_lock_count_;
+    HRGN clip_region_;
+    uint32_t previous_bitmap_;
     HBITMAP bitmap_handle_;
     const BITMAPINFO * bitmap_info_;
     uint32_t width_;
@@ -177,17 +177,17 @@ class Buffer { public:
     uint32_t field_9C_;
     uint32_t field_A0_;
     int32_t dib_[256];
-    uint32_t field_4A4_;
-    uint32_t field_4A8_;
-    uint32_t field_4AC_;
+    uint32_t palette_seed_;
+    uint32_t stride_;
+    uint32_t link_count_;
     Spot spot_;
     uint8_t field_4BC_[80];
     uint32_t field_50C_;
-    uint32_t field_510_;
+    uint32_t write_font_slot_;
     uint32_t field_514_;
-    uint32_t field_518_;
-    uint32_t field_51C_;
-    uint32_t field_520_;
+    uint32_t font_slot_;
+    uint32_t markup_pending_;
+    uint32_t markup_enabled_;
     uint32_t field_524_;
     uint32_t field_528_;
     Font * font1_;
@@ -210,16 +210,16 @@ class Buffer { public:
     uint32_t color_2_val_4_;
     uint32_t color_3_val_4_;
     uint32_t color_hyper_val_4_;
-    uint32_t field_57C_;
+    uint32_t has_palette_;
     int8_t field_580_;
-    uint32_t field_584_;
+    uint32_t palette_;
 
     void hline(int, int, int, int);
     void vline(int, int, int, int);
     void line(int, int, int, int, int);
 };
 
-// The buffer's `field_58_` holds a DirectDraw surface interface pointer.
+// The buffer's `surface_` holds a DirectDraw surface interface pointer.
 // `Lock` on that COM vtable is __stdcall with an EXPLICIT `this` (the COM
 // ABI, not the compiler's own thiscall), so it is called through a plain
 // function pointer read out of the vtable rather than the VCall shim (which
@@ -227,8 +227,7 @@ class Buffer { public:
 typedef int32_t(__stdcall *DDLockFn)(void *, void *, void *, int32_t, void *);
 
 void Buffer::line(int x1, int y1, int x2, int y2, int color) {
-    char *self = reinterpret_cast<char *>(this);
-
+    
     if (*reinterpret_cast<int32_t *>(self + 0x54) == 0 &&
         *reinterpret_cast<int32_t *>(self + 0x58) == 0)
         return;

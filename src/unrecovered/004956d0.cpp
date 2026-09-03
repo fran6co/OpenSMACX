@@ -1542,20 +1542,20 @@ class Buffer { public:
     uint32_t field_10_;
     uint32_t field_14_;
     uint32_t field_18_;
-    uint32_t field_1C_;
+    uint32_t init_flags_;
     RECT rect1_;
     RECT rect2_;
     uint32_t field_40_[4];
-    uint32_t field_50_;
+    uint32_t locked_bits_;
     LPVOID * ppv_bits_;
-    uint32_t field_58_;
-    uint32_t field_5C_;
+    uint32_t surface_;
+    uint32_t clipper_;
     HDC hdc2_;
     HDC hdc_;
-    uint32_t field_68_;
-    uint32_t field_6C_;
-    HRGN field_70_;
-    uint32_t field_74_;
+    uint32_t hdc_lock_count_;
+    uint32_t surface_lock_count_;
+    HRGN clip_region_;
+    uint32_t previous_bitmap_;
     HBITMAP bitmap_handle_;
     const BITMAPINFO * bitmap_info_;
     uint32_t width_;
@@ -1569,18 +1569,18 @@ class Buffer { public:
     uint32_t field_9C_;
     uint32_t field_A0_;
     int32_t dib_[256];
-    uint32_t field_4A4_;
-    uint32_t field_4A8_;
-    uint32_t field_4AC_;
+    uint32_t palette_seed_;
+    uint32_t stride_;
+    uint32_t link_count_;
     Spot spot_;
     uint32_t field_4BC_;
     uint8_t field_4C0_[0x4C];
     uint32_t field_50C_;
-    uint32_t field_510_;
+    uint32_t write_font_slot_;
     uint32_t field_514_;
-    uint32_t field_518_;
-    uint32_t field_51C_;
-    uint32_t field_520_;
+    uint32_t font_slot_;
+    uint32_t markup_pending_;
+    uint32_t markup_enabled_;
     uint32_t field_524_;
     uint32_t field_528_;
     Font * font1_;
@@ -1603,9 +1603,9 @@ class Buffer { public:
     uint32_t color_2_val_4_;
     uint32_t color_3_val_4_;
     uint32_t color_hyper_val_4_;
-    uint32_t field_57C_;
+    uint32_t has_palette_;
     int8_t field_580_;
-    uint32_t field_584_;
+    uint32_t palette_;
     Buffer();
     HDC get_hdc();
     int copy(Buffer *, int, int, int, int, int, int);
@@ -1724,7 +1724,7 @@ class Dialog { public:
     LPVOID vtable_;
     Heap heap_;
     Heap * heap_ptr_;
-    uint32_t field_1C_;
+    uint32_t init_flags_;
     uint32_t field_20_;
     uint32_t field_24_;
     uint32_t field_28_;
@@ -1737,14 +1737,14 @@ class Dialog { public:
     uint32_t field_44_;
     uint32_t field_48_;
     uint32_t field_4C_;
-    uint32_t field_50_;
-    uint32_t field_54_;
-    uint32_t field_58_;
-    uint32_t field_5C_;
-    uint32_t field_60_;
-    uint32_t field_64_;
-    uint32_t field_68_;
-    uint32_t field_6C_;
+    uint32_t locked_bits_;
+    uint32_t dib_bits_;
+    uint32_t surface_;
+    uint32_t clipper_;
+    uint32_t hdc2_;
+    uint32_t hdc_;
+    uint32_t hdc_lock_count_;
+    uint32_t surface_lock_count_;
     Font * font1_;
     Font * font2_;
     Font * font3_;
@@ -1856,13 +1856,13 @@ class Font { public:
 
 class ListBox { public:
     uint32_t vbtable_pointer_;
-    uint32_t field_4_;
+    uint32_t poOwner_;
     uint32_t field_8_;
     uint32_t field_C_;
     uint32_t field_10_;
     uint32_t field_14_;
     uint32_t field_18_;
-    uint32_t field_1C_;
+    uint32_t init_flags_;
     uint32_t field_20_;
     uint32_t field_24_;
     uint32_t field_28_;
@@ -1916,13 +1916,13 @@ class Palette { public:
         void * field_C;
     };
     uint32_t field_0_;
-    uint32_t field_4_;
+    uint32_t poOwner_;
     uint32_t field_8_;
     uint32_t field_C_;
     uint32_t field_10_;
     uint32_t field_14_;
     uint32_t field_18_;
-    uint32_t field_1C_;
+    uint32_t init_flags_;
     uint32_t field_20_;
     uint32_t field_24_;
     uint32_t field_28_;
@@ -1935,18 +1935,18 @@ class Palette { public:
     uint32_t field_44_;
     uint32_t field_48_;
     uint32_t field_4C_;
-    uint32_t field_50_;
-    uint32_t field_54_;
-    uint32_t field_58_;
-    uint32_t field_5C_;
-    uint32_t field_60_;
-    uint32_t field_64_;
-    uint32_t field_68_;
-    uint32_t field_6C_;
-    uint32_t field_70_;
-    uint32_t field_74_;
-    uint32_t field_78_;
-    uint32_t field_7C_;
+    uint32_t locked_bits_;
+    uint32_t dib_bits_;
+    uint32_t surface_;
+    uint32_t clipper_;
+    uint32_t hdc2_;
+    uint32_t hdc_;
+    uint32_t hdc_lock_count_;
+    uint32_t surface_lock_count_;
+    uint32_t clip_region_;
+    uint32_t previous_bitmap_;
+    uint32_t bitmap_handle_;
+    uint32_t dib_;
     uint32_t field_80_;
     uint32_t field_84_;
     uint32_t field_88_;
@@ -2334,7 +2334,7 @@ static int *const g_006698c0 = (int *)0x006698C0;
 static int *const g_006698c4 = (int *)0x006698C4;
 static int *const g_0066b0ec = (int *)0x0066B0EC;
 static int *const g_006783c0 = (int *)0x006783C0;
-static int *const g_00682820 = (int *)0x00682820;
+static int *const SpaceText = (int *)0x00682820;
 static int *const g_00686e20 = (int *)0x00686E20;
 static int *const g_00686e2c = (int *)0x00686E2C;
 static int *const g_00686e38 = (int *)0x00686E38;
@@ -2368,7 +2368,7 @@ static int *const g_009b90d8 = (int *)0x009B90D8;
 static int *const g_009b90f8 = (int *)0x009B90F8;
 static int *const g_009bbfec = (int *)0x009BBFEC;
 static int *const g_009bbff0 = (int *)0x009BBFF0;
-static int *const g_009bc054 = (int *)0x009BC054;
+static int *const Language = (int *)0x009BC054;
 
 class QuayleWin { public:
     uint8_t pad_0_[0x2144];
@@ -2377,8 +2377,7 @@ class QuayleWin { public:
     void on_redraw();
 };
 void QuayleWin::on_redraw() {
-    char *self = reinterpret_cast<char *>(this);
-
+    
     int savedActive = *g_009b3374;
     *g_009b3374 = 0;
 
@@ -2443,7 +2442,7 @@ void QuayleWin::on_redraw() {
                 canvas->wrap_cent(reinterpret_cast<char *>(g_009b86a0), a74, a78, a7c - a74);
             }
 
-            if (*g_009bc054 == 0) {
+            if (*Language == 0) {
                 canvas->set_clip(reinterpret_cast<RECT *>(self + 0x474));
                 Font *f0 = *reinterpret_cast<Font **>(g_008a40e0);
                 canvas->set_font(f0, f0, f0, 0);
@@ -2582,8 +2581,8 @@ void QuayleWin::on_redraw() {
                 strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(ratingStrPtr));
             }
             strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(g_00686ec8));
-            strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(g_00682820));
-            strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(g_00682820));
+            strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(SpaceText));
+            strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(SpaceText));
             {
                 int ratingVal = get_rating(bookIdx, *reinterpret_cast<int *>(reinterpret_cast<char *>(g_0096ea7c) + bookIdx * 0x20cc));
                 _itoa(ratingVal, numStr, 10);
@@ -2606,7 +2605,7 @@ void QuayleWin::on_redraw() {
             canvas->set_clip(reinterpret_cast<RECT *>(self + 0xa74));
 
             int a74, a78v, diff;
-            if (*g_009bc054 == 0) {
+            if (*Language == 0) {
                 parse_it(reinterpret_cast<char *>(g_00686e44), reinterpret_cast<char *>(g_00686e38));
                 a74 = *reinterpret_cast<int *>(self + 0xa74);
                 a78v = *reinterpret_cast<int *>(self + 0xa78);
@@ -2662,7 +2661,7 @@ void QuayleWin::on_redraw() {
                     *g_009bbfec = tblVal;
                     *g_009bbff0 = 0;
                     strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(g_00946a9c) + tableOffset);
-                    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(g_00682820));
+                    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(SpaceText));
                     *g_009bbff0 = 0;
                     *g_009bbfec = tblVal;
                     strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(g_00946a84) + tableOffset);
@@ -2690,7 +2689,7 @@ void QuayleWin::on_redraw() {
                     *g_009bbfec = tblVal;
                     *g_009bbff0 = 0;
                     strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(g_00946a9c) + tableOffset);
-                    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(g_00682820));
+                    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(SpaceText));
                     *g_009bbff0 = 0;
                     *g_009bbfec = tblVal;
                     strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(g_00946a84) + tableOffset);
@@ -2718,7 +2717,7 @@ void QuayleWin::on_redraw() {
                     *g_009bbfec = tblVal;
                     *g_009bbff0 = 0;
                     strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(g_00946a9c) + tableOffset);
-                    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(g_00682820));
+                    strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(SpaceText));
                     *g_009bbff0 = 0;
                     *g_009bbfec = tblVal;
                     strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(g_00946a84) + tableOffset);

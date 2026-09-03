@@ -147,20 +147,20 @@ class Buffer { public:
     uint32_t field_10_;
     uint32_t field_14_;
     uint32_t field_18_;
-    uint32_t field_1C_;
+    uint32_t init_flags_;
     RECT rect1_;
     RECT rect2_;
     uint32_t field_40_[4];
-    uint32_t field_50_;
+    uint32_t locked_bits_;
     LPVOID * ppv_bits_;
-    uint32_t field_58_;
-    uint32_t field_5C_;
+    uint32_t surface_;
+    uint32_t clipper_;
     HDC hdc2_;
     HDC hdc_;
-    uint32_t field_68_;
-    uint32_t field_6C_;
-    HRGN field_70_;
-    uint32_t field_74_;
+    uint32_t hdc_lock_count_;
+    uint32_t surface_lock_count_;
+    HRGN clip_region_;
+    uint32_t previous_bitmap_;
     HBITMAP bitmap_handle_;
     const BITMAPINFO * bitmap_info_;
     uint32_t width_;
@@ -174,17 +174,17 @@ class Buffer { public:
     uint32_t field_9C_;
     uint32_t field_A0_;
     int32_t dib_[256];
-    uint32_t field_4A4_;
-    uint32_t field_4A8_;
-    uint32_t field_4AC_;
+    uint32_t palette_seed_;
+    uint32_t stride_;
+    uint32_t link_count_;
     Spot spot_;
     uint8_t field_4BC_[80];
     uint32_t field_50C_;
-    uint32_t field_510_;
+    uint32_t write_font_slot_;
     uint32_t field_514_;
-    uint32_t field_518_;
-    uint32_t field_51C_;
-    uint32_t field_520_;
+    uint32_t font_slot_;
+    uint32_t markup_pending_;
+    uint32_t markup_enabled_;
     uint32_t field_524_;
     uint32_t field_528_;
     Font * font1_;
@@ -207,15 +207,15 @@ class Buffer { public:
     uint32_t color_2_val_4_;
     uint32_t color_3_val_4_;
     uint32_t color_hyper_val_4_;
-    uint32_t field_57C_;
+    uint32_t has_palette_;
     int8_t field_580_;
-    uint32_t field_584_;
+    uint32_t palette_;
 
     void hline(int, int, int, int, int, int, int, int);
 };
 
 // Vtable shim just for this body's two call sites (DirectDraw-style
-// Lock/Unlock through the object at field_58_): only declaration order
+// Lock/Unlock through the object at surface_): only declaration order
 // matters, so the untouched slots are left nullary.
 class VCallHline { public:
     virtual void slot000();
@@ -254,7 +254,7 @@ class VCallHline { public:
 };
 
 void Buffer::hline(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8) {
-    if ((ppv_bits_ != 0 || field_58_ != 0) &&
+    if ((ppv_bits_ != 0 || surface_ != 0) &&
         rect1_.top <= a3 && a3 < rect1_.bottom &&
         a1 != a2 && (a4 != -1 || a5 != -1)) {
 
@@ -270,23 +270,23 @@ void Buffer::hline(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a
             if (rect1_.right <= a2) a2 = rect1_.right - 1;
 
             if (a1 < static_cast<int>(width_) && a3 < -static_cast<int>(height_)) {
-                if (field_58_ == 0) {
-                    field_50_ = reinterpret_cast<uint32_t>(ppv_bits_);
-                    if (field_50_ == 0) return;
-                    ++field_6C_;
-                } else if (field_50_ == 0) {
+                if (surface_ == 0) {
+                    locked_bits_ = reinterpret_cast<uint32_t>(ppv_bits_);
+                    if (locked_bits_ == 0) return;
+                    ++surface_lock_count_;
+                } else if (locked_bits_ == 0) {
                     struct { uint32_t words[27]; } lockBuf;  // DDSURFACEDESC, 0x6c bytes
                     lockBuf.words[0] = 0x6c;
-                    int rc = reinterpret_cast<VCallHline *>(field_58_)->slot025(0, &lockBuf, 1, 0);
+                    int rc = reinterpret_cast<VCallHline *>(surface_)->slot025(0, &lockBuf, 1, 0);
                     if (rc != 0) return;
-                    ++field_6C_;
-                    field_4A8_ = lockBuf.words[4];   // dwPitch, offset 0x10
-                    field_50_ = lockBuf.words[9];    // lpSurface, offset 0x24
+                    ++surface_lock_count_;
+                    stride_ = lockBuf.words[4];   // dwPitch, offset 0x10
+                    locked_bits_ = lockBuf.words[9];    // lpSurface, offset 0x24
                 } else {
-                    ++field_6C_;
+                    ++surface_lock_count_;
                 }
 
-                unsigned char *bits = reinterpret_cast<unsigned char *>(field_4A8_ * a3 + field_50_ + a1);
+                unsigned char *bits = reinterpret_cast<unsigned char *>(stride_ * a3 + locked_bits_ + a1);
                 if (bits != 0) {
                     int phase = a8 % (a6 + a7);
                     if (phase < a6) phase = phase - a6;
@@ -333,18 +333,18 @@ void Buffer::hline(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a
                         } while (--count != 0);
                     }
 
-                    if (field_58_ == 0) {
-                        --field_6C_;
-                        if (static_cast<int>(field_6C_) < 1) {
-                            field_50_ = 0;
-                            field_6C_ = 0;
+                    if (surface_ == 0) {
+                        --surface_lock_count_;
+                        if (static_cast<int>(surface_lock_count_) < 1) {
+                            locked_bits_ = 0;
+                            surface_lock_count_ = 0;
                         }
                     } else {
-                        --field_6C_;
-                        if (field_50_ != 0 && static_cast<int>(field_6C_) < 1) {
-                            reinterpret_cast<VCallHline *>(field_58_)->slot032(field_50_);
-                            field_50_ = 0;
-                            field_6C_ = 0;
+                        --surface_lock_count_;
+                        if (locked_bits_ != 0 && static_cast<int>(surface_lock_count_) < 1) {
+                            reinterpret_cast<VCallHline *>(surface_)->slot032(locked_bits_);
+                            locked_bits_ = 0;
+                            surface_lock_count_ = 0;
                         }
                     }
                 }

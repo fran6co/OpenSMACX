@@ -1335,20 +1335,20 @@ class Buffer { public:
     uint32_t field_10_;
     uint32_t field_14_;
     uint32_t field_18_;
-    uint32_t field_1C_;
+    uint32_t init_flags_;
     RECT rect1_;
     RECT rect2_;
     uint32_t field_40_[4];
-    uint32_t field_50_;
+    uint32_t locked_bits_;
     LPVOID * ppv_bits_;
-    uint32_t field_58_;
-    uint32_t field_5C_;
+    uint32_t surface_;
+    uint32_t clipper_;
     HDC hdc2_;
     HDC hdc_;
-    uint32_t field_68_;
-    uint32_t field_6C_;
-    HRGN field_70_;
-    uint32_t field_74_;
+    uint32_t hdc_lock_count_;
+    uint32_t surface_lock_count_;
+    HRGN clip_region_;
+    uint32_t previous_bitmap_;
     HBITMAP bitmap_handle_;
     const BITMAPINFO * bitmap_info_;
     uint32_t width_;
@@ -1362,18 +1362,18 @@ class Buffer { public:
     uint32_t field_9C_;
     uint32_t field_A0_;
     int32_t dib_[256];
-    uint32_t field_4A4_;
-    uint32_t field_4A8_;
-    uint32_t field_4AC_;
+    uint32_t palette_seed_;
+    uint32_t stride_;
+    uint32_t link_count_;
     Spot spot_;
     uint32_t field_4BC_;
     uint8_t field_4C0_[0x4C];
     uint32_t field_50C_;
-    uint32_t field_510_;
+    uint32_t write_font_slot_;
     uint32_t field_514_;
-    uint32_t field_518_;
-    uint32_t field_51C_;
-    uint32_t field_520_;
+    uint32_t font_slot_;
+    uint32_t markup_pending_;
+    uint32_t markup_enabled_;
     uint32_t field_524_;
     uint32_t field_528_;
     Font * font1_;
@@ -1396,9 +1396,9 @@ class Buffer { public:
     uint32_t color_2_val_4_;
     uint32_t color_3_val_4_;
     uint32_t color_hyper_val_4_;
-    uint32_t field_57C_;
+    uint32_t has_palette_;
     int8_t field_580_;
-    uint32_t field_584_;
+    uint32_t palette_;
     int get_data();
     int get_hdc();
     int init_class();
@@ -1441,13 +1441,13 @@ class Palette { public:
         void * field_C;
     };
     uint32_t field_0_;
-    uint32_t field_4_;
+    uint32_t poOwner_;
     uint32_t field_8_;
     uint32_t field_C_;
     uint32_t field_10_;
     uint32_t field_14_;
     uint32_t field_18_;
-    uint32_t field_1C_;
+    uint32_t init_flags_;
     uint32_t field_20_;
     uint32_t field_24_;
     uint32_t field_28_;
@@ -1460,18 +1460,18 @@ class Palette { public:
     uint32_t field_44_;
     uint32_t field_48_;
     uint32_t field_4C_;
-    uint32_t field_50_;
-    uint32_t field_54_;
-    uint32_t field_58_;
-    uint32_t field_5C_;
-    uint32_t field_60_;
-    uint32_t field_64_;
-    uint32_t field_68_;
-    uint32_t field_6C_;
-    uint32_t field_70_;
-    uint32_t field_74_;
-    uint32_t field_78_;
-    uint32_t field_7C_;
+    uint32_t locked_bits_;
+    uint32_t dib_bits_;
+    uint32_t surface_;
+    uint32_t clipper_;
+    uint32_t hdc2_;
+    uint32_t hdc_;
+    uint32_t hdc_lock_count_;
+    uint32_t surface_lock_count_;
+    uint32_t clip_region_;
+    uint32_t previous_bitmap_;
+    uint32_t bitmap_handle_;
+    uint32_t dib_;
     uint32_t field_80_;
     uint32_t field_84_;
     uint32_t field_88_;
@@ -1811,16 +1811,16 @@ int Buffer::sub_5d98f0(Buffer *srcBuf, RECT *srcRect, RECT *destRect) {
         return 8;
     }
 
-    if (srcBuf->field_50_ != 0) {
+    if (srcBuf->locked_bits_ != 0) {
         ((VCall *)srcBuf)->slot001();
     }
 
     HDC srcHdc;
-    void *srcOwner = (void *)srcBuf->field_58_;
+    void *srcOwner = (void *)srcBuf->surface_;
     if (srcOwner == 0) {
         srcHdc = srcBuf->hdc_;
         srcBuf->hdc2_ = srcHdc;
-        srcBuf->field_68_ = srcBuf->field_68_ + 1;
+        srcBuf->hdc_lock_count_ = srcBuf->hdc_lock_count_ + 1;
     } else {
         srcHdc = (HDC)srcBuf->hdc2_;
         if (srcHdc == 0) {
@@ -1830,9 +1830,9 @@ int Buffer::sub_5d98f0(Buffer *srcBuf, RECT *srcRect, RECT *destRect) {
                 ((VCall *)srcBuf)->slot001();
             }
             srcHdc = (HDC)srcBuf->hdc2_;
-            srcBuf->field_68_ = srcBuf->field_68_ + 1;
+            srcBuf->hdc_lock_count_ = srcBuf->hdc_lock_count_ + 1;
         } else {
-            srcBuf->field_68_ = srcBuf->field_68_ + 1;
+            srcBuf->hdc_lock_count_ = srcBuf->hdc_lock_count_ + 1;
         }
     }
 
@@ -1840,16 +1840,16 @@ int Buffer::sub_5d98f0(Buffer *srcBuf, RECT *srcRect, RECT *destRect) {
         return 8;
     }
 
-    if (field_50_ != 0) {
+    if (locked_bits_ != 0) {
         ((VCall *)this)->slot001();
     }
 
     HDC destHdc;
-    void *destOwner = (void *)field_58_;
+    void *destOwner = (void *)surface_;
     if (destOwner == 0) {
         destHdc = hdc_;
         hdc2_ = destHdc;
-        field_68_ = field_68_ + 1;
+        hdc_lock_count_ = hdc_lock_count_ + 1;
     } else {
         destHdc = (HDC)hdc2_;
         if (destHdc == 0) {
@@ -1858,26 +1858,26 @@ int Buffer::sub_5d98f0(Buffer *srcBuf, RECT *srcRect, RECT *destRect) {
             if (rc != 0) {
                 ((VCall *)this)->slot001();
             }
-            field_68_ = field_68_ + 1;
+            hdc_lock_count_ = hdc_lock_count_ + 1;
             destHdc = (HDC)hdc2_;
         } else {
-            field_68_ = field_68_ + 1;
+            hdc_lock_count_ = hdc_lock_count_ + 1;
         }
     }
 
     if (destHdc == 0) {
-        void *srcOwner2 = (void *)srcBuf->field_58_;
+        void *srcOwner2 = (void *)srcBuf->surface_;
         if (srcOwner2 == 0) {
-            int newCount = (int)srcBuf->field_68_ - 1;
-            srcBuf->field_68_ = (uint32_t)newCount;
+            int newCount = (int)srcBuf->hdc_lock_count_ - 1;
+            srcBuf->hdc_lock_count_ = (uint32_t)newCount;
             if (newCount < 1) {
                 srcBuf->hdc2_ = 0;
-                srcBuf->field_68_ = 0;
+                srcBuf->hdc_lock_count_ = 0;
                 return 8;
             }
         } else {
-            int newCount = (int)srcBuf->field_68_ - 1;
-            srcBuf->field_68_ = (uint32_t)newCount;
+            int newCount = (int)srcBuf->hdc_lock_count_ - 1;
+            srcBuf->hdc_lock_count_ = (uint32_t)newCount;
             HDC cached = (HDC)srcBuf->hdc2_;
             if (cached != 0 && newCount < 1) {
                 ComSlot026 release = (ComSlot026)(*(void ***)srcOwner2)[26];
@@ -1885,7 +1885,7 @@ int Buffer::sub_5d98f0(Buffer *srcBuf, RECT *srcRect, RECT *destRect) {
                 if (rc2 != 0) {
                     ((VCall *)srcBuf)->slot001();
                 }
-                srcBuf->field_68_ = 0;
+                srcBuf->hdc_lock_count_ = 0;
                 srcBuf->hdc2_ = 0;
                 return 8;
             }
@@ -1896,8 +1896,8 @@ int Buffer::sub_5d98f0(Buffer *srcBuf, RECT *srcRect, RECT *destRect) {
     void *palette = *(void **)g_009b8180;
     if (ppv_bits_ != 0 && palette != 0) {
         int generation = *(int *)((char *)palette + 0x400);
-        if (field_4A4_ != (uint32_t)generation) {
-            field_4A4_ = (uint32_t)generation;
+        if (palette_seed_ != (uint32_t)generation) {
+            palette_seed_ = (uint32_t)generation;
             ((Palette *)palette)->get_rgbquad((RGBQUAD *)dib_, 0, 0x100);
             if (get_hdc() != 0) {
                 SetDIBColorTableFn setTable = *(SetDIBColorTableFn *)g_006690b4;
@@ -1905,15 +1905,15 @@ int Buffer::sub_5d98f0(Buffer *srcBuf, RECT *srcRect, RECT *destRect) {
                 release_hdc(1);
             }
         }
-        field_57C_ = 1;
-        field_584_ = (uint32_t)palette;
+        has_palette_ = 1;
+        palette_ = (uint32_t)palette;
     }
 
     palette = *(void **)g_009b8180;
     if (srcBuf->ppv_bits_ != 0 && palette != 0) {
         int generation = *(int *)((char *)palette + 0x400);
-        if (srcBuf->field_4A4_ != (uint32_t)generation) {
-            srcBuf->field_4A4_ = (uint32_t)generation;
+        if (srcBuf->palette_seed_ != (uint32_t)generation) {
+            srcBuf->palette_seed_ = (uint32_t)generation;
             ((Palette *)palette)->get_rgbquad((RGBQUAD *)srcBuf->dib_, 0, 0x100);
             if (srcBuf->get_hdc() != 0) {
                 SetDIBColorTableFn setTable = *(SetDIBColorTableFn *)g_006690b4;
@@ -1921,8 +1921,8 @@ int Buffer::sub_5d98f0(Buffer *srcBuf, RECT *srcRect, RECT *destRect) {
                 srcBuf->release_hdc(1);
             }
         }
-        srcBuf->field_57C_ = 1;
-        srcBuf->field_584_ = (uint32_t)palette;
+        srcBuf->has_palette_ = 1;
+        srcBuf->palette_ = (uint32_t)palette;
     }
 
     StretchBltFn stretchBlt = *(StretchBltFn *)g_0066907c;

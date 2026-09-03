@@ -1428,20 +1428,20 @@ class Buffer { public:
     uint32_t field_10_;
     uint32_t field_14_;
     uint32_t field_18_;
-    uint32_t field_1C_;
+    uint32_t init_flags_;
     RECT rect1_;
     RECT rect2_;
     uint32_t field_40_[4];
-    uint32_t field_50_;
+    uint32_t locked_bits_;
     LPVOID * ppv_bits_;
-    uint32_t field_58_;
-    uint32_t field_5C_;
+    uint32_t surface_;
+    uint32_t clipper_;
     HDC hdc2_;
     HDC hdc_;
-    uint32_t field_68_;
-    uint32_t field_6C_;
-    HRGN field_70_;
-    uint32_t field_74_;
+    uint32_t hdc_lock_count_;
+    uint32_t surface_lock_count_;
+    HRGN clip_region_;
+    uint32_t previous_bitmap_;
     HBITMAP bitmap_handle_;
     const BITMAPINFO * bitmap_info_;
     uint32_t width_;
@@ -1455,18 +1455,18 @@ class Buffer { public:
     uint32_t field_9C_;
     uint32_t field_A0_;
     int32_t dib_[256];
-    uint32_t field_4A4_;
-    uint32_t field_4A8_;
-    uint32_t field_4AC_;
+    uint32_t palette_seed_;
+    uint32_t stride_;
+    uint32_t link_count_;
     Spot spot_;
     uint32_t field_4BC_;
     uint8_t field_4C0_[0x4C];
     uint32_t field_50C_;
-    uint32_t field_510_;
+    uint32_t write_font_slot_;
     uint32_t field_514_;
-    uint32_t field_518_;
-    uint32_t field_51C_;
-    uint32_t field_520_;
+    uint32_t font_slot_;
+    uint32_t markup_pending_;
+    uint32_t markup_enabled_;
     uint32_t field_524_;
     uint32_t field_528_;
     Font * font1_;
@@ -1489,9 +1489,9 @@ class Buffer { public:
     uint32_t color_2_val_4_;
     uint32_t color_3_val_4_;
     uint32_t color_hyper_val_4_;
-    uint32_t field_57C_;
+    uint32_t has_palette_;
     int8_t field_580_;
-    uint32_t field_584_;
+    uint32_t palette_;
 
     void construct();
     void clear_links();
@@ -1515,17 +1515,17 @@ int Buffer::write_bmp(char * a1) {
         return 1;
     }
 
-    void *link = (void *)field_58_;
+    void *link = (void *)surface_;
     if (link == 0) {
         int v = (int)ppv_bits_;
-        field_50_ = (uint32_t)v;
+        locked_bits_ = (uint32_t)v;
         if (v == 0) {
             fclose(file);
             return 3;
         }
-        field_6C_++;
-    } else if (field_50_ != 0) {
-        field_6C_++;
+        surface_lock_count_++;
+    } else if (locked_bits_ != 0) {
+        surface_lock_count_++;
     } else {
         unsigned char info[40];
         *(int *)(info + 0) = 0x6c;
@@ -1535,12 +1535,12 @@ int Buffer::write_bmp(char * a1) {
             fclose(file);
             return 3;
         }
-        field_6C_++;
-        field_4A8_ = *(uint32_t *)(info + 0x10);
-        field_50_ = *(uint32_t *)(info + 0x24);
+        surface_lock_count_++;
+        stride_ = *(uint32_t *)(info + 0x10);
+        locked_bits_ = *(uint32_t *)(info + 0x24);
     }
 
-    if (field_50_ == 0) {
+    if (locked_bits_ == 0) {
         fclose(file);
         return 3;
     }
@@ -1569,7 +1569,7 @@ int Buffer::write_bmp(char * a1) {
 #pragma pack(pop)
 
     int height = (int)height_;
-    int stride = (int)field_4A8_;
+    int stride = (int)stride_;
 
     fileHeader.bfType = *(uint16_t *)g_00696cf8;
     fileHeader.bfSize = (uint32_t)(0x436 - stride * height);
@@ -1593,7 +1593,7 @@ int Buffer::write_bmp(char * a1) {
     _fwrite(&infoHeader, 0x28, 1, file);
     _fwrite(dib_, 0x400, 1, file);
 
-    char *row = (char *)((int)field_50_ - (height + 1) * stride);
+    char *row = (char *)((int)locked_bits_ - (height + 1) * stride);
     int rows = -height;
     if (height != 0 && rows > -1) {
         do {
@@ -1604,20 +1604,20 @@ int Buffer::write_bmp(char * a1) {
     }
 
     if (link == 0) {
-        int newCount = (int)field_6C_ - 1;
-        field_6C_ = (uint32_t)newCount;
+        int newCount = (int)surface_lock_count_ - 1;
+        surface_lock_count_ = (uint32_t)newCount;
         if (newCount <= 0) {
-            field_50_ = 0;
-            field_6C_ = 0;
+            locked_bits_ = 0;
+            surface_lock_count_ = 0;
         }
     } else {
-        int newCount = (int)field_6C_ - 1;
-        field_6C_ = (uint32_t)newCount;
-        if (field_50_ != 0 && newCount <= 0) {
+        int newCount = (int)surface_lock_count_ - 1;
+        surface_lock_count_ = (uint32_t)newCount;
+        if (locked_bits_ != 0 && newCount <= 0) {
             ComSlot032 fn2 = (ComSlot032)(*(void ***)link)[32];
-            fn2(link, field_50_);
-            field_50_ = 0;
-            field_6C_ = 0;
+            fn2(link, locked_bits_);
+            locked_bits_ = 0;
+            surface_lock_count_ = 0;
         }
     }
 

@@ -72,6 +72,15 @@ class Sprite {
                             unsigned char *bits);
   int draw_multi_table_dest(Buffer *buffer, int a, int b, int c, int x, int y,
                             unsigned char *bits);
+  // DECLARED FOR BUFFER::draw_dest_source AND Buffer::draw_mono, homed into
+  // buffer.cpp by the homing pass: those wrappers tail into these two the way
+  // draw_dest tails into draw_dest above. Additive declarations only - no
+  // offset moves, so no body in sprite.cpp changes a byte.
+  int draw_dest_source(Buffer *buffer, int a, int b, int c, int d);
+  int draw_dest_source(Buffer *buffer, int a, int b, int c, int d, int e,
+                       unsigned char *bits);
+  int draw_mono(Buffer *buffer, int a, int b, int c, int d);
+  int draw_mono(Buffer *buffer, int a, int b, int c, int d, int e, int f);
   // Sprite-sheet extraction used by the per-control init_class bodies. The
   // body lives in sprite.cpp beside its marker. `extract`'s last parameter is
   // a texture-heap pointer most callers pass as null.

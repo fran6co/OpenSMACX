@@ -57,8 +57,7 @@ class Buffer { public:
 };
 
 int Buffer::map_colors(int a1, int a2, int a3, int a4, unsigned char* a5) {
-    char *self = reinterpret_cast<char *>(this);
-
+    
     if (!a5) {
         return 0x10;
     }

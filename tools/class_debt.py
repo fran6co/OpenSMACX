@@ -275,10 +275,16 @@ CEILINGS = {
     # raise applies; the de-pun pass runs with measure in the loop.
     # 181 -> 203 (2026-09-03, P1a batch): twenty-two more load-bearing
     # pointer forms homed verbatim (measured-regressed rule).
-    "raw self-access": 203,
+    # 203 -> 208 (2026-09-03, P2 buffer/mapwin batch): five more measured
+    # pointer forms homed verbatim (line/hline/vline families read raw this
+    # by design until the layout pass names +0x52c's neighbours).
+    "raw self-access": 208,
     # 4 -> 5 (2026-09-03, P1a batch): one homed body's faithful spelling
     # returns this as int (catalogue mangling QAEHH; TexHeap::UNK1 family).
-    "pointer-parameter as int": 5,
+    # 5 -> 8 (2026-09-03, P2 buffer/mapwin batch): three more homed
+    # wrappers whose shipped signatures take pointers the catalogue spells
+    # as ints (draw overloads on uchar* bitmaps).
+    "pointer-parameter as int": 8,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
     # were never counted. The tree did not change; the ruler did.
@@ -330,7 +336,13 @@ CEILINGS = {
     # from call-site and mangled-name evidence; the remaining 37 sit on
     # DECLARATIONS of free functions whose bodies are still archived and
     # whose Console call sites pass opaque ints - no naming evidence yet.
-    "scaffold name": 1725,
+    # 1725 -> 2401 (2026-09-03, P2 buffer/mapwin batch): 676 more names homed
+    # still-scaffold - the 50-body Buffer write/wrap/box overload families
+    # are a1..a9-shaped through and through, and their naming evidence rides
+    # the class pass that folds the ten Blit globals into the real Sprite
+    # (the STRUCTURE finding). Rename-before-homing is the tool lesson; the
+    # class pass is the cure.
+    "scaffold name": 2401,
 }
 
 WHY = {

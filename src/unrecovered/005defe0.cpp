@@ -1331,20 +1331,20 @@ class Buffer { public:
     uint32_t field_10_;
     uint32_t field_14_;
     uint32_t field_18_;
-    uint32_t field_1C_;
+    uint32_t init_flags_;
     RECT rect1_;
     RECT rect2_;
     uint32_t field_40_[4];
-    uint32_t field_50_;
+    uint32_t locked_bits_;
     LPVOID * ppv_bits_;
-    uint32_t field_58_;
-    uint32_t field_5C_;
+    uint32_t surface_;
+    uint32_t clipper_;
     HDC hdc2_;
     HDC hdc_;
-    uint32_t field_68_;
-    uint32_t field_6C_;
-    HRGN field_70_;
-    uint32_t field_74_;
+    uint32_t hdc_lock_count_;
+    uint32_t surface_lock_count_;
+    HRGN clip_region_;
+    uint32_t previous_bitmap_;
     HBITMAP bitmap_handle_;
     const BITMAPINFO * bitmap_info_;
     uint32_t width_;
@@ -1358,18 +1358,18 @@ class Buffer { public:
     uint32_t field_9C_;
     uint32_t field_A0_;
     int32_t dib_[256];
-    uint32_t field_4A4_;
-    uint32_t field_4A8_;
-    uint32_t field_4AC_;
+    uint32_t palette_seed_;
+    uint32_t stride_;
+    uint32_t link_count_;
     Spot spot_;
     uint32_t field_4BC_;
     uint8_t field_4C0_[0x4C];
     uint32_t field_50C_;
-    uint32_t field_510_;
+    uint32_t write_font_slot_;
     uint32_t field_514_;
-    uint32_t field_518_;
-    uint32_t field_51C_;
-    uint32_t field_520_;
+    uint32_t font_slot_;
+    uint32_t markup_pending_;
+    uint32_t markup_enabled_;
     uint32_t field_524_;
     uint32_t field_528_;
     Font * font1_;
@@ -1392,9 +1392,9 @@ class Buffer { public:
     uint32_t color_2_val_4_;
     uint32_t color_3_val_4_;
     uint32_t color_hyper_val_4_;
-    uint32_t field_57C_;
+    uint32_t has_palette_;
     int8_t field_580_;
-    uint32_t field_584_;
+    uint32_t palette_;
     HDC get_hdc();
     void release_hdc(int);
     int fill(RECT *, int);
@@ -1593,7 +1593,7 @@ int Buffer::draw_pie(RECT *rect, int a2, int a3, int a4, int a5, int a6, int a7)
     clipRect.top = clipRect.top + a6;
     clipRect.bottom = clipRect.bottom + a6;
 
-    if (field_50_ != 0) {
+    if (locked_bits_ != 0) {
         reinterpret_cast<VCall *>(this)->slot001();
     }
 
@@ -1634,7 +1634,7 @@ int Buffer::draw_pie(RECT *rect, int a2, int a3, int a4, int a5, int a6, int a7)
     // Palette-index remap over the clipped strip, then a pixel-lock/unlock
     // pair (this+0x50/0x58/0x6c, slot32/0x80) distinct from the HDC lock
     // above (this+0x58/0x60/0x64/0x68, get_hdc/release_hdc).
-    if (ppv_bits_ != 0 || field_58_ != 0) {
+    if (ppv_bits_ != 0 || surface_ != 0) {
         RECT ownRect;
         ownRect.left = rect->left;
         ownRect.top = rect->top;
@@ -1645,11 +1645,11 @@ int Buffer::draw_pie(RECT *rect, int a2, int a3, int a4, int a5, int a6, int a7)
             int gotData = this->get_data();
             if (gotData != 0) {
                 unsigned char *rowPtr = reinterpret_cast<unsigned char *>(
-                    field_4A8_ * clipRect.top + clipRect.left + field_50_);
+                    stride_ * clipRect.top + clipRect.left + locked_bits_);
                 if (rowPtr != 0) {
                     int w = clipRect.right - clipRect.left;
                     int h = clipRect.bottom - clipRect.top;
-                    int stride = field_4A8_ - w;
+                    int stride = stride_ - w;
                     unsigned char *p = rowPtr;
                     unsigned char from = static_cast<unsigned char>(colorIdx1);
                     unsigned char to = static_cast<unsigned char>(colorIdx2);
@@ -1667,22 +1667,22 @@ int Buffer::draw_pie(RECT *rect, int a2, int a3, int a4, int a5, int a6, int a7)
                         rows--;
                     } while (rows != 0);
 
-                    void *surface = reinterpret_cast<void *>(field_58_);
+                    void *surface = reinterpret_cast<void *>(surface_);
                     if (surface == 0) {
-                        int depth = field_6C_ - 1;
-                        field_6C_ = depth;
+                        int depth = surface_lock_count_ - 1;
+                        surface_lock_count_ = depth;
                         if (depth <= 0) {
-                            field_50_ = 0;
-                            field_6C_ = 0;
+                            locked_bits_ = 0;
+                            surface_lock_count_ = 0;
                         }
                     } else {
-                        int depth = field_6C_ - 1;
-                        field_6C_ = depth;
-                        if (field_50_ != 0 && depth <= 0) {
+                        int depth = surface_lock_count_ - 1;
+                        surface_lock_count_ = depth;
+                        if (locked_bits_ != 0 && depth <= 0) {
                             ComSlot032 unlockFn = reinterpret_cast<ComSlot032>((*reinterpret_cast<void ***>(surface))[32]);
                             unlockFn(surface);
-                            field_50_ = 0;
-                            field_6C_ = 0;
+                            locked_bits_ = 0;
+                            surface_lock_count_ = 0;
                         }
                     }
                 }
@@ -1708,24 +1708,24 @@ int Buffer::draw_pie(RECT *rect, int a2, int a3, int a4, int a5, int a6, int a7)
     (*reinterpret_cast<DeleteObjectFn *>(g_00669058))(brush1);
     (*reinterpret_cast<DeleteObjectFn *>(g_00669058))(brush2);
 
-    void *surface = reinterpret_cast<void *>(field_58_);
+    void *surface = reinterpret_cast<void *>(surface_);
     if (surface == 0) {
-        int depth = field_68_ - 1;
-        field_68_ = depth;
+        int depth = hdc_lock_count_ - 1;
+        hdc_lock_count_ = depth;
         if (depth < 1) {
-            field_68_ = 0;
+            hdc_lock_count_ = 0;
             hdc2_ = 0;
         }
     } else {
-        int depth = field_68_ - 1;
-        field_68_ = depth;
+        int depth = hdc_lock_count_ - 1;
+        hdc_lock_count_ = depth;
         if (hdc2_ != 0 && depth < 1) {
             ComSlot026 unlockFn = reinterpret_cast<ComSlot026>((*reinterpret_cast<void ***>(surface))[26]);
             int result = unlockFn(surface, hdc2_);
             if (result != 0) {
                 reinterpret_cast<VCall *>(this)->slot001();
             }
-            field_68_ = 0;
+            hdc_lock_count_ = 0;
             hdc2_ = 0;
         }
     }

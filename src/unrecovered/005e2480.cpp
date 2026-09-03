@@ -1255,7 +1255,7 @@ static int *const g_00696bf8 = (int *)0x00696BF8;
 static int *const g_00696cfc = (int *)0x00696CFC;
 static int *const g_00696d04 = (int *)0x00696D04;
 static int *const g_00696d0c = (int *)0x00696D0C;
-static int *const g_009bc054 = (int *)0x009BC054;
+static int *const Language = (int *)0x009BC054;
 
 class Buffer { public:
     LPVOID vtable_;
@@ -1265,20 +1265,20 @@ class Buffer { public:
     uint32_t field_10_;
     uint32_t field_14_;
     uint32_t field_18_;
-    uint32_t field_1C_;
+    uint32_t init_flags_;
     RECT rect1_;
     RECT rect2_;
     uint32_t field_40_[4];
-    uint32_t field_50_;
+    uint32_t locked_bits_;
     LPVOID * ppv_bits_;
-    uint32_t field_58_;
-    uint32_t field_5C_;
+    uint32_t surface_;
+    uint32_t clipper_;
     HDC hdc2_;
     HDC hdc_;
-    uint32_t field_68_;
-    uint32_t field_6C_;
-    HRGN field_70_;
-    uint32_t field_74_;
+    uint32_t hdc_lock_count_;
+    uint32_t surface_lock_count_;
+    HRGN clip_region_;
+    uint32_t previous_bitmap_;
     HBITMAP bitmap_handle_;
     const BITMAPINFO * bitmap_info_;
     uint32_t width_;
@@ -1292,18 +1292,18 @@ class Buffer { public:
     uint32_t field_9C_;
     uint32_t field_A0_;
     int32_t dib_[256];
-    uint32_t field_4A4_;
-    uint32_t field_4A8_;
-    uint32_t field_4AC_;
+    uint32_t palette_seed_;
+    uint32_t stride_;
+    uint32_t link_count_;
     Spot spot_;
     uint32_t field_4BC_;
     uint8_t field_4C0_[0x4C];
     uint32_t field_50C_;
-    uint32_t field_510_;
+    uint32_t write_font_slot_;
     uint32_t field_514_;
-    uint32_t field_518_;
-    uint32_t field_51C_;
-    uint32_t field_520_;
+    uint32_t font_slot_;
+    uint32_t markup_pending_;
+    uint32_t markup_enabled_;
     uint32_t field_524_;
     uint32_t field_528_;
     Font * font1_;
@@ -1326,9 +1326,9 @@ class Buffer { public:
     uint32_t color_2_val_4_;
     uint32_t color_3_val_4_;
     uint32_t color_hyper_val_4_;
-    uint32_t field_57C_;
+    uint32_t has_palette_;
     int8_t field_580_;
-    uint32_t field_584_;
+    uint32_t palette_;
 
     void construct();
     void clear_links();
@@ -1366,8 +1366,8 @@ int __cdecl Buffer::get_pcx_dimensions(const char * a1, int * a2, int * a3) {
     }
     if (!skip_extension) {
         const char *ext;
-        if (*g_009bc054 == 1) ext = reinterpret_cast<const char *>(g_00696cfc);
-        else if (*g_009bc054 == 2) ext = reinterpret_cast<const char *>(g_00696d04);
+        if (*Language == 1) ext = reinterpret_cast<const char *>(g_00696cfc);
+        else if (*Language == 2) ext = reinterpret_cast<const char *>(g_00696d04);
         else ext = reinterpret_cast<const char *>(g_00696d0c);
         strcat(path_buf, ext);
     }

@@ -23,6 +23,7 @@
 #include "sprite.h"
 
 class Palette;
+class StringList;
 
 // A polygon vertex, named by the image rather than invented: every one of the
 // 35 mangled names that mentions it spells `PAUVert@@`, and `U` is MSVC's tag
@@ -126,6 +127,10 @@ static_assert(sizeof(BoxSpriteParams) == 0x28,
               "buffer and a colour");
 
 class Buffer {
+ public:
+  // homed from 005d7b40.cpp
+  int __stdcall load_tga(const char * a1, Palette * a2, int a3, int a4);
+
  public:
   // Blit this buffer into a window's client area. Called by the homed
   // Win painters; its own definition is still an artifact. Arity from
@@ -398,6 +403,86 @@ class Buffer {
   int get_pixel(int x, int y);
 
   int draw(Buffer *source, int index, int x, int y, int flag_a, int flag_b);
+  // __STDCALL, like load_tga: the image's name is QAG, not QAE, so the
+  // loader pair was declared with the explicit convention.
+  int __stdcall load_bmp(const char *filename, Palette *palette, int a3,
+                         int a4);
+  // OVERLOAD BLOCK, homed from the archive in the buffer homing pass. The
+  // catalogue's own prototypes; each body lives beside its marker in
+  // buffer.cpp. The five-int `draw` above is the six-argument form the
+  // sprite-sheet callers use.
+  int draw(Buffer *source, int a, int b, int c);
+  int draw_dest(Buffer *source, int a, int b, int c, int d);
+  int draw_dest(Buffer *source, int a, int b, int c, int d, int e,
+                unsigned char *bits);
+  int draw_dest_source(Buffer *source, int a, int b, int c,
+                       unsigned char *bits);
+  int draw_dest_source(Buffer *source, int a, int b, int c, int d, int e,
+                       unsigned char *bits);
+  int draw_multi_table_dest(Buffer *source, int a, int b, int c, int d);
+  int draw_multi_table_dest(Buffer *source, int a, int b, int c, int d, int e,
+                            unsigned char *bits);
+  int copy(Buffer *source, int x, int y, int w, int h, int sw, int sh,
+           int a8, int a9);
+  int map_colors(int a1, int a2, int a3, int a4, unsigned char *table);
+  int map_colors(RECT *area, unsigned char *table);
+  int write_strings_height(StringList *strings, int a2, int a3);
+  int write_strings(StringList *strings, int a2, int a3, int a4, int a5);
+  int box(int left, int top, int right, int bottom, int color1, int color2);
+  int dotted_box(int left, int top, int right, int bottom, int color);
+  int dotted_box(RECT *area, int color);
+  void dotted_hline(int x1, int x2, int y, int color);
+  void dotted_vline(int x, int y1, int y2, int color);
+  int line(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8,
+           int a9);
+  int line(int a1, int a2, int a3, int a4, int a5);
+  int hline(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8);
+  int vline(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8);
+  int put_pixel(int x, int y, int color);
+  int change_color(int a1, int a2);
+  int change_color(RECT *area, int a2, int a3);
+  int change_color(int a1, int a2, int a3, int a4, int a5, int a6);
+  int get_pcx_dimensions(const char *filename, int *width, int *height);
+  int write_pcx(char *filename);
+  int write_bmp(char *filename);
+  char *find_line_break_l(char *text, int *break_len, int len);
+  int write_l(Font *font, char *text, int x_coord, int y_coord, int len);
+  int write_l(Font *font, char *text, RECT *area, int len);
+  int wrap_cent(Font *font, char *text, RECT *area);
+  int write_cent_l(Font *font, char *text, int x_coord, int y_coord, int width,
+                   int len);
+  int write_cent_l(Font *font, char *text, int x_coord, int y_coord, int len);
+  int write_cent_l(Font *font, char *text, RECT *area, int len);
+  int write_cent_l(Font *font, char *text, int x_coord, int y_coord, int width,
+                   int height, int len);
+  int write_cent_l(char *text, int x_coord, int y_coord, int width, int height, int len);
+  int write_cent_l(char *text, int x_coord, int y_coord, int width);
+  int write_right_l(Font *font, char *text, int x_coord, int y_coord,
+                    int width, int len);
+  int write_right_l(Font *font, char *text, int x_coord, int y_coord, int len);
+  int write_right_l(char *text, int x_coord, int y_coord, int width);
+  int wrap(Font *font, char *text, RECT *area);
+  int wrap(char *text, RECT *area);
+  int wrap(char *text, int x_coord, int y_coord, int width);
+  int wrap_cent(Font *font, char *text, int x_coord, int y_coord, int width);
+  int wrap_cent(Font *font, char *text, int x_coord, int y_coord, int width,
+                int line_step);
+  int wrap_cent(char *text, RECT *area);
+  int wrap_cent(char *text, int x_coord, int y_coord, int width);
+  int wrap_cent(char *text, int x_coord, int y_coord, int width,
+                int line_step);
+  int wrap_right(Font *font, char *text, int x_coord, int y_coord, int width);
+  int wrap_right(Font *font, char *text, int len);
+  int wrap_right(Font *font, char *text, int x_coord, int len);
+  int wrap_right(char *text, int x_coord, int y_coord, int width);
+  int wrap_right(char *text, int x_coord);
+  int wrap_height(char *text, int width);
+  int wrap_height_flying(char *text, int width);
+  int wrap_height_flying(char *text);
+  int wrap_flying(char *text, int x_coord, int y_coord, int width);
+  int wrap_flying(char *text);
+  int wrap_flying_flush();
+  int wrap_height_flying_flush();
   // 0x005DA860 - tile `source` across a destination rectangle, `tile_mask`
   // without the mask. The dimensions stepped by are the source's own.
   int tile(Buffer *source, int src_x, int src_y, int x, int y, int w, int h);
@@ -673,6 +758,19 @@ static_assert(sizeof(Buffer) == 0x588, "Buffer layout must match the original ex
 // and the accesses stay direct rather than pointer-bound.
 extern int TextColourTitleMain;
 extern int TextColourTitleShadow;
+
+// 0x00696C58 / 0x00696C60 / 0x00696C68, and 0x00696C70 / 0x00696C78 behind
+// them - the per-language graphics-file extensions `load_tga` and `load_bmp`
+// append to a stem the caller gave with none. Language 1 gets `.tgf`,
+// language 2 `.tgg`, anything else `.tga`; the same table's second row is the
+// bitmap pair. Read straight out of the image's .rdata: five NUL-padded
+// four-character strings in a row.
+extern const char BufferExtTgf[];
+extern const char BufferExtTgg[];
+extern const char BufferExtTga[];
+extern const char BufferExtBmf[];
+extern const char BufferExtBmg[];
+extern const char BufferExtBmp[];
 
 // ?polygon@@YAHPAUBuffer@@PAUVert@@HH@Z at 0x00626620 is the 736-byte
 // rasteriser Buffer::poly hands its arguments to. YA = __cdecl, H = int, and

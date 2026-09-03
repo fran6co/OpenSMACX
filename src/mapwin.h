@@ -132,6 +132,14 @@ class MapWin : public virtual GraphicWin {
   // 0x0046FD90, not yet recovered - a pending_bodies forwarder.
   // world_climate (src/map.cpp) calls it BY NAME.
   void clear_terrain();
+  // OVERLOAD BLOCK homed from the archive in the mapwin homing pass. Each
+  // body lives beside its marker in mapwin.cpp.
+  int compute_clip(int a1, int a2, int a3, RECT *a4);
+  void draw_tile(int a1, int a2, int a3);
+  void tile_to_pixel(int a1, int a2, int *a3, int *a4);
+  void init_dummy();
+  int get_alt(int a1, int a2, int a3);
+
   // ??0MapWin@@QAE@H@Z at 0x004626E0, spelled as the real constructor it is.
   // ATTEMPT #2. The first try built `MapWin(int a1)`, measured VC6 emitting
   // BOTH the hidden most-derived flag at [ebp+0xc] and a1 at [ebp+8] (every

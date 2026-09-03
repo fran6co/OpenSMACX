@@ -384,10 +384,6 @@ void Buffer::close_class() {
 }
 
 
-
-
-
-
 int __cdecl buffer_init_class_redirect() {
     return 0;
 }
@@ -447,7 +443,6 @@ Purpose: Release acquired references to the buffer's pixel data, unlocking the
 Status: Complete
 */
 // body src/buffer.h
-
 
 
 /*
@@ -811,7 +806,6 @@ int Buffer::copy(Buffer *buffer, RECT *rect) {
     return copy(buffer, left, top, left, top,
                 rect->right - left, rect->bottom - top);
 }
-
 
 
 /*
@@ -1789,7 +1783,6 @@ void Buffer::close() {
 }
 
 
-
 /*
 Purpose: Destroy a Buffer by installing its virtual table, releasing every
          owned resource, and destroying the trailing Spot subobject.
@@ -1865,7 +1858,6 @@ Purpose: Drop the given number of device-context references, releasing the
 // indirect  0x005E35AA 0x005E35B5
 Status: Complete
 */
-
 
 
 /*
@@ -3113,8 +3105,9 @@ int __cdecl polygon(Buffer *buffer, Vert *verts, int a3, int a4) {
 //        own fact about the raster writer says the scalar writers "return
 //        the incoming x". So the second parameter is the x, the third the
 //        y, and the alignment offset lands on x. Two decompiled callers
-//        (src/unrecovered/005ddbb0.cpp, src/recovered/units/004b0410.cpp)
-//        independently name the third argument `y`, which agrees. Swapping
+//        (the homed-from archives 005ddbb0 and 004b0410, both deleted
+//        with their homings) independently named the third argument `y`,
+//        which agrees. Swapping
 //        the two names moves the offset from the third to the second stack
 //        slot, which is the whole of the semantic difference.
 // LEVER: BUFFER_MIN, WHICH EVALUATES BOTH ARGUMENTS. `int w = len; if
@@ -3192,6 +3185,21 @@ int Buffer::write_right_l(char *text, int x_coord, int y_coord, int field_width,
 // transparent index is a BYTE-typed object: the image stores it with
 // `mov byte ptr [0x9b3a58], cl`, which is how VC6 writes a uint8_t global.
 // Every store keeps its folded `[disp32]` form, the displacement relocated.
+// 0x009B3A50 - THE SPRITE THE WHOLE DRAW FAMILY DRAWS THROUGH. Named from
+// the arithmetic, not inferred: Sprite is 0x2C bytes and its fields land at
+// +0x04 pcBits_, +0x08 cTransparentIndex_, +0x0C iSpriteWidth2_, +0x10
+// iSpriteWidth_, +0x14 iSpriteHeight_, +0x18 iWidth_, +0x1C iHeight_, +0x20
+// iLeftOffset_, +0x24 iTopOffset_, +0x28 fObj1Exists_ - which is exactly the
+// ten Blit slots below, in the same order, filled by setup_buff_sprite from
+// the same fields of this buffer. The image's blit descriptor IS a Sprite,
+// and the one slot it never writes (+0x00, the file-name copy) is the one a
+// work sprite never loads from a file.
+// THIS BUILD KEEPS TWO SPELLINGS OF THOSE BYTES: the ten Blit globals above,
+// which the BYTE_EXACT setup_buff_sprite writes and global_arith.cpp reads,
+// and this pointer the draw wrappers call through. In the shipped image they
+// are one object; reproducing that needs the ten globals folded into a real
+// Sprite, which is a class-pass decision because it moves a byte-exact claim.
+static Sprite *const BlitSprite = (Sprite *)0x009B3A50;
 int BlitSourceBits;        // 0x009B3A54
 uint8_t BlitTransparentIndex;  // 0x009B3A58, written one byte wide
 static int BlitSourceField4A8;  // 0x009B3A5C
@@ -3983,6 +3991,16 @@ Sprite g_BUFFER_SPRITE;
 int TextColourTitleMain;
 int TextColourTitleShadow;
 
+// See the declaration in buffer.h. Copied verbatim out of the image's .rdata,
+// four characters plus a NUL each, so the loader families append exactly what
+// the shipped build appends.
+const char BufferExtTgf[] = ".tgf";
+const char BufferExtTgg[] = ".tgg";
+const char BufferExtTga[] = ".tga";
+const char BufferExtBmf[] = ".bmf";
+const char BufferExtBmg[] = ".bmg";
+const char BufferExtBmp[] = ".bmp";
+
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are
 // constructed before WinMain by the CRT's dynamic-initializer walk
@@ -4001,3 +4019,2927 @@ Buffer g_BUFFER;  // 0x009B6080
 // (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
 // Here the same recovered constructors run through this build's own
 // startup, and the matching destructors close them at exit.
+
+// ORIGINAL: 0x005D7B40 ?load_tga@Buffer@@QAGHPBDPAVPalette@@HH@Z 0x005D7B40-0x005D7C78;0x00662B92-0x00662BA7 FILE
+// TRIED: plain `Filemap fm;` with early returns has no SEH prologue at all; wrapping in try{}catch(...){throw;} recovers most of the /GX frame shape but still diverges at #0 push/mov - same wall as 0x005D7A30's Filemap-ctor SEH frame.
+// size      333 bytes
+// prototype 
+// callers   1   call targets   5
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00628380 0x006283E0 0x00628430 0x006453E0 0x00645470
+// indirect  0x005D7C41
+// placeholder - not yet decompiled
+// To start: tools/decomp_status.py --work 0x005D7B40
+
+
+int __stdcall Buffer::load_tga(const char * a1, Palette * a2, int a3, int a4) {
+    try {
+        Filemap fm;
+        if (a1 == 0) {
+            return 3;
+        }
+        char path[260];
+        path[0] = 0;
+        strcat(path, a1);
+        char *end = path + strlen(a1);
+        if (end != path) {
+            do {
+                if (*end == '.') {
+                    if (end != path) goto has_ext;
+                    break;
+                }
+                end--;
+            } while (end != path);
+        }
+        switch (Language) {
+            case 1: strcat(path, BufferExtTgf); break;
+            case 2: strcat(path, BufferExtTgg); break;
+            default: strcat(path, BufferExtTga); break;
+        }
+      has_ext:
+        if (fm.open_read(path, 1) == 0) {
+            return 6;
+        }
+        GetFileSize(fm.get_handle(), 0);
+        return 8;
+    } catch (...) {
+        throw;
+    }
+}
+
+// ORIGINAL: 0x005E3193 ?box@Buffer@@QAEHHHHHHH@Z 0x005E3193-0x005E31FC FILE
+// TRIED: falling off the end without a return (C4716 under the scoring flags, treated as an error); the near-miss is the extra "xor eax,eax" that "return 0" adds versus the original's bare "pop"-chain tail.
+// working copy - scaffold materialised by --work
+// size      105 bytes
+// prototype int (__thiscall ?box@Buffer@@QAEHHHHHHH@Z)(Buffer* this, int, int, int, int, int, int)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E1A80 0x005E1BF0
+
+int Buffer::box(int a1, int a2, int a3, int a4, int a5, int a6) {
+    hline(a1 + 1, a3, a2, a5);
+    hline(a1, a3 - 1, a4, a6);
+    vline(a1, a2, a4 - 1, a5);
+    vline(a3, a2 + 1, a4, a6);
+    return 0;
+}
+
+
+// ====================
+// THE TWO DOTTED PRIMITIVES. Both are HAND-WRITTEN ASSEMBLY IN THE ORIGINAL
+// (`tools/handwritten_asm.py` - the shipped bytes count the run down with the
+// `loop` opcode, which VC6 never emits), so byte-exactness is NOT reachable
+// from C++ and the honest ceiling here is semantic equivalence. Same wall
+// `vline` documented; do not grind spellings here and do not write `__asm`.
+//
+// The lock / unlock in the middle is `get_data` and `free_data`, exactly as
+// the byte-exact `hline` uses them; the only difference is the step.
+
+// ORIGINAL: 0x005E1D70 ?dotted_hline@Buffer@@QAEXHHHH@Z 0x005E1D70-0x005E1EE4 FILE
+// size      372 bytes
+// prototype void (__thiscall ?dotted_hline@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005E1E3B 0x005E1ECF
+// PRESERVED UNIT - measured MISMATCH. Homed from src/recovered/units/ for
+// COVERAGE: the archive could not measure it and this TU can.
+void Buffer::dotted_hline(int x1, int x2, int y, int color) {
+    if (dib_bits_ == nullptr && surface_ == nullptr) {
+        return;
+    }
+    if (y < rect1_.top) {
+        return;
+    }
+    if (y >= rect1_.bottom) {
+        return;
+    }
+    if (x1 == x2) {
+        return;
+    }
+    if (x1 > x2) {
+        x1 ^= x2;
+        x2 ^= x1;
+        x1 ^= x2;
+    }
+    if (x1 >= rect1_.right) {
+        return;
+    }
+    if (x2 < rect1_.left) {
+        return;
+    }
+    if (x1 < rect1_.left) {
+        x1 = rect1_.left;
+    }
+    if (x2 >= rect1_.right) {
+        x2 = rect1_.right - 1;
+    }
+    if (x1 >= dib_.bmiHeader.biWidth) {
+        return;
+    }
+    if (y >= -dib_.bmiHeader.biHeight) {
+        return;
+    }
+    if (get_data() == 0) {
+        return;
+    }
+    // EVERY OTHER BYTE, left to right: the run length is halved and the
+    // destination pointer steps by two. This is what makes it dotted rather
+    // than solid - `hline` memsets the whole run.
+    char *dest = stride_ * y + x1 + static_cast<char *>(locked_bits_);
+    if (dest == nullptr) {
+        return;
+    }
+    unsigned int count = (static_cast<unsigned int>(x2 - x1) + 1) >> 1;
+    do {
+        *dest = static_cast<char>(color);
+        dest += 2;
+    } while (--count != 0);
+    free_data(1);
+}
+
+// ORIGINAL: 0x005E1EF0 ?dotted_vline@Buffer@@QAEXHHHH@Z 0x005E1EF0-0x005E2070 FILE
+// size      384 bytes
+// prototype void (__thiscall ?dotted_vline@Buffer@@QAEXHHHH@Z)(Buffer* this, int, int, int, int)
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005E1FBD 0x005E205B
+// PRESERVED UNIT - measured MISMATCH. Homed from src/recovered/units/ for
+// COVERAGE. The step is a whole ROW - `stride_ * 2` - rather than the two
+// bytes `dotted_hline` steps, which is what makes the dots run downwards.
+void Buffer::dotted_vline(int x, int y1, int y2, int color) {
+    if (dib_bits_ == nullptr && surface_ == nullptr) {
+        return;
+    }
+    if (x < rect1_.left) {
+        return;
+    }
+    if (x >= rect1_.right) {
+        return;
+    }
+    if (y1 == y2) {
+        return;
+    }
+    if (y1 > y2) {
+        y1 ^= y2;
+        y2 ^= y1;
+        y1 ^= y2;
+    }
+    if (y1 >= rect1_.bottom) {
+        return;
+    }
+    if (y2 < rect1_.top) {
+        return;
+    }
+    if (y1 < rect1_.top) {
+        y1 = rect1_.top;
+    }
+    if (y2 >= rect1_.bottom) {
+        y2 = rect1_.bottom - 1;
+    }
+    if (x >= dib_.bmiHeader.biWidth) {
+        return;
+    }
+    if (y1 >= -dib_.bmiHeader.biHeight) {
+        return;
+    }
+    if (get_data() == 0) {
+        return;
+    }
+    char *dest = stride_ * y1 + x + static_cast<char *>(locked_bits_);
+    if (dest == nullptr) {
+        return;
+    }
+    unsigned int count = (static_cast<unsigned int>(y2 - y1) + 1) >> 1;
+    do {
+        *dest = static_cast<char>(color);
+        dest += stride_ * 2;
+    } while (--count != 0);
+    free_data(1);
+}
+
+// ORIGINAL: 0x005E3283 ?dotted_box@Buffer@@QAEHHHHHH@Z 0x005E3283-0x005E32E4 FILE
+// TRIED: nothing beyond the direct four-call transcription; diverges at #44 (pop vs xor), near the epilogue
+// working copy - scaffold materialised by --work
+// size      97 bytes
+// prototype int (__thiscall ?dotted_box@Buffer@@QAEHHHHHH@Z)(Buffer* this, int, int, int, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E1D70 0x005E1EF0
+
+int Buffer::dotted_box(int a1, int a2, int a3, int a4, int a5) {
+    dotted_hline(a1 + 1, a3, a2, a5);
+    dotted_hline(a1, a3 - 1, a4, a5);
+    dotted_vline(a1, a2, a4 - 1, a5);
+    dotted_vline(a3, a2 + 1, a4, a5);
+    return 0;
+}
+
+// ORIGINAL: 0x005E32F3 ?dotted_box@Buffer@@QAEHPAURECT@@H@Z 0x005E32F3-0x005E3370 FILE
+// working copy - scaffold materialised by --work
+// size      125 bytes
+// prototype int (__thiscall ?dotted_box@Buffer@@QAEHPAURECT@@H@Z)(Buffer* this, RECT*, int)
+// callers   2   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E1D70 0x005E1EF0
+
+int Buffer::dotted_box(RECT * a1, int a2) {
+    if (a1 == 0) {
+        return 0x10;
+    }
+    int top = a1->top;
+    int bottom = a1->bottom;
+    int right = a1->right;
+    int left = a1->left;
+    --bottom;
+    --right;
+    dotted_hline(left + 1, right, top, a2);
+    dotted_hline(left, right - 1, bottom, a2);
+    dotted_vline(left, top, bottom - 1, a2);
+    dotted_vline(right, top + 1, bottom, a2);
+    return 0;
+}
+
+// Fixed-slot bindings carried from 005dd450.cpp
+
+// ORIGINAL: 0x005DD450 ?write_right_l@Buffer@@QAEHPADPAURECT@@H@Z 0x005DD450-0x005DD52B FILE
+// TRIED: bare `strlen` (MSVC inlines it as `repne scasb`, needs `#pragma function(strlen)` to force the real call). With the pragma the structure and call sequence match, but the register allocator puts a1/this in different registers than the original (ebp/esi here vs ebx/edi there); not reproduced. 78/85 shared.
+// working copy - scaffold materialised by --work
+// size      219 bytes
+// prototype int (__thiscall ?write_right_l@Buffer@@QAEHPADPAURECT@@H@Z)(Buffer* this, int8*, RECT*, int)
+// callers   18   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DC7C0 0x005DCAE0 0x006453E0
+
+
+int Buffer::write_right_l(char * a1, RECT * a2, int a3) {
+    if (a1 != 0 && a2 != 0) {
+        if (font1_ == 0 || font1_->font_obj_ == 0) {
+            return 3;
+        }
+        int sVar2 = strlen(a1);
+        int sVar3 = a3;
+        if (sVar2 < a3) {
+            sVar3 = strlen(a1);
+        }
+        if (sVar3 >= 0) {
+            sVar3 = strlen(a1);
+            if (sVar3 < a3) {
+                a3 = strlen(a1);
+            }
+            if (a3 != 0) {
+                int width = text_width(a1, a3);
+                if (font1_ == 0) {
+                    font1_ = reinterpret_cast<Font *>(FontDefault);
+                }
+                return write_multi_font_raw_l(a1, a2->right - width,
+                    (a2->bottom - font1_->height_ - a2->top) / 2 + a2->top, a3);
+            }
+        }
+    }
+    return 0;
+}
+
+// ORIGINAL: 0x005DB6C0 ?write_cent_l@Buffer@@QAEHPAVFont@@PADHHHH@Z 0x005DB6C0-0x005DB71E FILE
+// TRIED: direct transcription only tried once; diverges at #0 (push vs mov) in the prologue register-save pattern
+// working copy - scaffold materialised by --work
+// size      94 bytes
+// prototype int (__thiscall ?write_cent_l@Buffer@@QAEHPAVFont@@PADHHHH@Z)(Buffer* this, Font*, int8*, int, int, int, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DD020
+
+int Buffer::write_cent_l(Font * a1, char * a2, int a3, int a4, int a5, int a6) {
+    Font *saved_font1 = font1_;
+    Font *saved_font2 = font2_;
+    Font *saved_font3 = font3_;
+    if (a1 != 0 && a1->font_obj_ != 0) {
+        font1_ = a1;
+        font2_ = 0;
+        font3_ = 0;
+    }
+    int result = write_cent_l(a2, a3, a4, a5, a6);
+    font1_ = saved_font1;
+    font2_ = saved_font2;
+    font3_ = saved_font3;
+    return result;
+}
+
+// ORIGINAL: 0x005DB870 ?write_right_l@Buffer@@QAEHPAVFont@@PADHHHH@Z 0x005DB870-0x005DB8CE FILE
+// TRIED: named-local save/restore and raw-pointer-triple save/restore both match control flow and the call, but VC6 schedules the three register saves (ebx/ebp/esi) differently than the original at #0 (push vs mov) - register allocation, not logic
+// working copy - scaffold materialised by --work
+// size      94 bytes
+// prototype int (__thiscall ?write_right_l@Buffer@@QAEHPAVFont@@PADHHHH@Z)(Buffer* this, Font*, int8*, int, int, int, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DD300
+
+int Buffer::write_right_l(Font * a1, char * a2, int a3, int a4, int a5, int a6) {
+    Font * saved_font1 = font1_;
+    Font * saved_font2 = font2_;
+    Font * saved_font3 = font3_;
+    if (a1 != 0 && a1->font_obj_ != 0) {
+        font1_ = a1;
+        font2_ = 0;
+        font3_ = 0;
+    }
+    int result = write_right_l(a2, a3, a4, a5, a6);
+    font1_ = saved_font1;
+    font2_ = saved_font2;
+    font3_ = saved_font3;
+    return result;
+}
+
+// THE FLYING-TEXT BLOCK, and the two space constants its writer joins lines
+// with. Named bindings, not objects: the image holds them at these fixed
+// data addresses and nothing in this build maps them, so the binding form
+// (the same convention socialwin.cpp's SpaceText uses) keeps the addresses
+// visible without inventing storage for them.
+//
+//   0x009BB484  the process default font - font.h's own FontDefault, which
+//               is why no binding for it is declared here
+//   0x009B33CC  the accumulator `wrap_flying` builds each line in
+//   0x009B3A90  the pen x the next line is written at
+//   0x009B3A94  the pen y the next line is written at
+//   0x009B3A98  the height still available before the next wrap
+//               (0x009B3A9C, the next slot up, is temp.h's BufferStrHeight)
+//   0x00696CD8 / 0x00696CDC  two distinct one-space .rdata strings: the
+//               first is what `wrap_height_flying` measures as the
+//               more-text-follows indicator, the second is what `wrap_flying`
+//               measures for the same purpose on its own path
+static int *const FlyingTextBuf = (int *)0x009B33CC;
+static int *const FlyingTextX = (int *)0x009B3A90;
+static int *const FlyingTextY = (int *)0x009B3A94;
+static int *const FlyingTextHeight = (int *)0x009B3A98;
+// 0x00682820 - the one-space .rdata string, the same constant
+// socialwin.cpp's SpaceText binding names.
+// THE THREE WRITER FONT SLOTS (font1_/font2_/font3_) ARE SAVED AND RESTORED
+// AS ONE BLOCK by every Font*-first wrapper in this file. The struct names the
+// three members without punning them; the save and the restore stay three
+// moves of three named fields, which is what the image has.
+struct BufferFontTriple {
+  Font *primary;
+  Font *second;
+  Font *third;
+};
+
+// 0x009B39D8 - where the length-limited writers leave their return code;
+// `wrap`'s no-font path stores 3 there and reads it straight back.
+static int *const BufferWriteStatus = (int *)0x009B39D8;
+// 0x00696C90 - the "$LINK<" header token, three copies in a row in .rdata;
+// `find_line_break_l` strncmp's the first six bytes of a '$' segment
+// against it to recognise a link.
+static const char *const MarkupLinkToken = (const char *)0x00696C90;
+static int *const SpaceText = (int *)0x00682820;
+static int *const SpaceTextPrompt = (int *)0x00696CD8;
+static int *const SpaceTextTail = (int *)0x00696CDC;
+
+// ORIGINAL: 0x005DD250 ?write_cent_l@Buffer@@QAEHPADHHH@Z 0x005DD250-0x005DD2F3 FILE
+// working copy - scaffold materialised by --work
+// size      163 bytes
+// prototype int (__thiscall ?write_cent_l@Buffer@@QAEHPADHHH@Z)(Buffer* this, int8*, int, int, int)
+// callers   3   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DC7C0 0x005DCAE0 0x006453E0
+
+
+int Buffer::write_cent_l(char * a1, int a2, int a3, int a4) {
+        if (a1 == 0) {
+        return a2;
+    }
+    int font1 = reinterpret_cast<int>(font1_);
+    if (font1 != 0 && *reinterpret_cast<int *>(font1 + 8) != 0) {
+        int len1 = strlen(a1);
+        int len = a4;
+        if (len1 < a4) {
+            len = strlen(a1);
+        }
+        if (len >= 0) {
+            int len2 = strlen(a1);
+            if (len2 < a4) {
+                len = strlen(a1);
+            }
+            if (len != 0) {
+                int width = text_width(a1, len);
+                return write_multi_font_raw_l(a1, a2 - (width >> 1), a3, len);
+            }
+        }
+        return a2;
+    }
+    return 3;
+}
+
+// ORIGINAL: 0x005DDA00 ?wrap_cent@Buffer@@QAEHPADHHHH@Z 0x005DDA00-0x005DDAA2 FILE
+// working copy - scaffold materialised by --work
+// size      162 bytes
+// prototype int (__thiscall ?wrap_cent@Buffer@@QAEHPADHHHH@Z)(Buffer* this, int8* lpString, int, int, int, int)
+// callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DC410 0x005DD020 0x006453E0
+
+int Buffer::wrap_cent(char * a1, int a2, int a3, int a4, int a5) {
+    if (a1 == 0) {
+        return a3;
+    }
+    BufferStrHeight = 0;
+    field_18_ = 0;
+    int total = a3;
+    char *cur = a1;
+    char *brk;
+    do {
+        int width = a4;
+        if (cur == 0) {
+            brk = 0;
+        } else {
+            BufferStrHeight = 0;
+            unsigned int len = strlen(cur);
+            brk = (char *)find_line_break_l(cur, &width, (int)len);
+            if (brk == 0) {
+                len = strlen(cur);
+            } else {
+                len = (unsigned int)(brk - cur);
+            }
+            write_cent_l(cur, a2, total, a4, (int)len);
+        }
+        total = total + a5;
+        field_18_ = field_18_ + 1;
+        cur = brk;
+    } while (brk != 0);
+    return total;
+}
+
+// ORIGINAL: 0x005DD920 ?wrap_cent@Buffer@@QAEHPADHHH@Z 0x005DD920-0x005DD9F2 FILE BYTE_EXACT
+// LEVER: #pragma function(strlen) stops the intrinsic `repne scasb` inlining; write_cent_l's length arg is duplicated per branch (if/else each with its own call) rather than computed into a shared `len` local first - the shared-local form left a spurious "sub" where the original had "mov,mov,mov" building each branch's own push list.
+// working copy - scaffold materialised by --work
+// size      210 bytes
+// prototype int (__thiscall ?wrap_cent@Buffer@@QAEHPADHHH@Z)(Buffer* this, int8*, int, int, int)
+// callers   13   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DC410 0x005DD020 0x006453E0
+
+
+int Buffer::wrap_cent(char * a1, int a2, int a3, int a4) {
+    if (a1 == 0) {
+        return a3;
+    }
+
+    BufferStrHeight = 0;
+    field_18_ = 0;
+
+    int total = a3;
+    char *cur = a1;
+    char *next;
+    do {
+        int width = a4;
+        if (cur == 0) {
+            next = 0;
+        } else {
+            BufferStrHeight = 0;
+            unsigned int len = strlen(cur);
+            next = reinterpret_cast<char *>(find_line_break_l(cur, &width, len));
+            if (next != 0) {
+                write_cent_l(cur, a2, total, a4, next - cur);
+            } else {
+                write_cent_l(cur, a2, total, a4, strlen(cur));
+            }
+        }
+        field_18_ = field_18_ + 1;
+        if (font1_ == 0) {
+            font1_ = FontDefault;
+        }
+        Font *font = font1_;
+        int delta = (font->unk_1_ >= 0) ? (font->height_ + font->unk_1_) : font->line_height_;
+        total += delta;
+        cur = next;
+    } while (next != 0);
+
+    return total;
+}
+
+// ORIGINAL: 0x005DDAB0 ?wrap_cent@Buffer@@QAEHPADPAURECT@@@Z 0x005DDAB0-0x005DDBA6 FILE BYTE_EXACT
+// symbol    ?wrap_cent@Buffer@@QAEHPADPAUtagRECT@@@Z
+//           The one difference from the image's own name: this tree's `RECT`
+//           is windows.h's `typedef struct tagRECT`, so the parameter mangles
+//           with the real tag. Nothing else moves - the bytes are the body
+//           below, and the claim holds.
+// size      246 bytes
+// prototype int (__thiscall ?wrap_cent@Buffer@@QAEHPADPAURECT@@@Z)(Buffer* this, char*, RECT*)
+// callers   ?   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005DC410 0x005DD020 0x006453E0
+//
+// LOAD-BEARING SOURCE FORM - the logic below was already right at MISMATCH
+// #0; four spelling changes, none of them semantic, carried it to BYTE_EXACT.
+// Each was measured on its own, so the next reader can trust the order:
+//
+//   #0  -> #22  `#pragma function(strlen)`.  /O2 expands `strlen` to
+//               `repne scasb`, which burns EDI and ECX inside the loop and
+//               costs the register allocator EBP; the original calls
+//               0x006453E0.
+//   #22 -> #39  `int lineWidth = width;` at the TOP of the loop body rather
+//               than inside the non-null arm.  This is what frees EBP: with
+//               the copy in the arm, /O2 keeps an EBP frame and spills
+//               `width`; hoisted, EBP holds `width` and the frame is the
+//               original's one-slot `push ecx`.
+//   #39 -> #61  the `write_cent_l` CALL DUPLICATED into both arms instead of
+//               a shared call taking a `chunkLen` temporary.  VC6 tail-merges
+//               the common `push str; mov ecx,this; call` suffix and leaves
+//               the four argument pushes duplicated, which is the original's
+//               shape.
+//   #61 -> BYTE_EXACT  real class members (`lineCount_`, `font1_`) instead of
+//               `reinterpret_cast` through `(char *)this + 0x18` / `+ 0x52c`.
+//               Field accesses let VC6 prove the two do not alias, so it
+//               hoists the `font1_` load above the `lineCount_` store the way
+//               the original schedules it.  The cast form cannot express that.
+//
+// Also measured, and NOT levers: locals-at-top, locals-at-first-use, no named
+// locals at all, and declaring `lineWidth` before or after the other locals -
+// all four sat at exactly the divergence of the shape they were built on.
+
+int Buffer::wrap_cent(char * text, RECT * rect) {
+    if (text == 0 || rect == 0) {
+        return rect->top;
+    }
+    BufferStrHeight = 0;
+    field_18_ = 0;
+    int left = rect->left;
+    int width = rect->right - left;
+    char *str = text;
+    int yPos = rect->top;
+    char *nextStr;
+    for (;;) {
+        int lineWidth = width;
+        if (str == 0) {
+            nextStr = 0;
+        } else {
+            BufferStrHeight = 0;
+            unsigned int fullLen = strlen(str);
+            nextStr = reinterpret_cast<char *>(
+                find_line_break_l(str, &lineWidth, static_cast<int>(fullLen)));
+            if (nextStr != 0) {
+                write_cent_l(str, left, yPos, width,
+                             static_cast<int>(nextStr - str));
+            } else {
+                write_cent_l(str, left, yPos, width,
+                             static_cast<int>(strlen(str)));
+            }
+        }
+        field_18_ = field_18_ + 1;
+        if (this->font1_ == 0) {
+            this->font1_ = FontDefault;
+        }
+        Font *font = this->font1_;
+        int advance;
+        if (font->unk_1_ >= 0) {
+            advance = font->height_ + font->unk_1_;
+        } else {
+            advance = font->line_height_;
+        }
+        yPos = yPos + advance;
+        str = nextStr;
+        if (nextStr == 0) {
+            break;
+        }
+    }
+    return yPos;
+}
+
+// ORIGINAL: 0x005DB9E0 ?wrap_cent@Buffer@@QAEHPAVFont@@PADHHH@Z 0x005DB9E0-0x005DBAF5
+// TRIED: only one source-form tried; original starts with `sub esp,0xc` for locals before its register pushes (no frame pointer at all - ebp is a plain callee-saved register here), which this form doesn't reproduce. Landing the closest structural translation (mnemonic_similarity 0.712).
+// size      277 bytes
+// prototype int (__thiscall ?wrap_cent@Buffer@@QAEHPAVFont@@PADHHH@Z)(Buffer* this, Font*, int8*, int, int, int)
+// callers   1   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DC410 0x005DD020 0x006453E0
+
+
+int Buffer::wrap_cent(Font * a1, char * a2, int a3, int a4, int a5) {
+    
+    Font *savedFont = font1_;
+    Font *savedB = font2_;
+    Font *savedC = font3_;
+
+    if (a1 != 0 && a1->font_obj_ != 0) {
+        font1_ = a1;
+        font2_ = 0;
+        font3_ = 0;
+    }
+
+    int y = a4;
+    if (a2 != 0) {
+        BufferStrHeight = 0;
+        field_18_ = 0;
+        char *str = a2;
+        char *breakPos;
+        do {
+            breakPos = 0;
+            int outParam = a5;
+            if (str != 0) {
+                BufferStrHeight = 0;
+                unsigned int len = strlen(str);
+                breakPos = reinterpret_cast<char *>(find_line_break_l(str, &outParam, len));
+                int lineLen;
+                if (breakPos == 0) {
+                    lineLen = strlen(str);
+                }
+                else {
+                    lineLen = static_cast<int>(breakPos - str);
+                }
+                write_cent_l(str, a3, y, outParam, lineLen);
+            }
+            field_18_ += 1;
+            if (font1_ == 0) {
+                font1_ = FontDefault;
+            }
+            Font *font = font1_;
+            int lineHeight;
+            if (font->unk_1_ < 0) {
+                lineHeight = font->line_height_;
+            }
+            else {
+                lineHeight = font->height_ + font->unk_1_;
+            }
+            y += lineHeight;
+            str = breakPos;
+        } while (breakPos != 0);
+    }
+
+    font1_ = savedFont;
+    font2_ = savedB;
+    font3_ = savedC;
+    return y;
+}
+
+// ORIGINAL: 0x005DBB00 ?wrap_cent@Buffer@@QAEHPAVFont@@PADHHHH@Z 0x005DBB00-0x005DBBFA FILE
+// TRIED: `wrapWidth` (the find_line_break_l out-param) reset from `a5` once before the loop instead of every iteration - worse (16 edits vs 15). Kept the per-iteration reset (matches Ghidra's `param_2 = param_6` inside the do/while) even though the raw disassembly's `[esp+0x24]` write reads like a once-only init; the compiled edit count says otherwise. Missing one `push` near the top (2 saved regs where the original has 3) is the dominant remaining difference.
+// size      250 bytes
+// prototype int (__thiscall ?wrap_cent@Buffer@@QAEHPAVFont@@PADHHHH@Z)(Buffer* this, Font*, int8*, int, int, int, int)
+// callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DC410 0x005DD020 0x006453E0
+
+int Buffer::wrap_cent(Font *a1, char *a2, int a3, int a4, int a5, int a6) {
+        Font **const fontSlot = &font1_;
+    Font *savedFont = font1_;
+    Font *savedA = font2_;
+    Font *savedB = font3_;
+
+    if (a1 != 0 && a1->font_obj_ != 0) {
+        *fontSlot = a1;
+        font2_ = 0;
+        font3_ = 0;
+    }
+
+    int y = a4;
+    if (a2 != 0) {
+        *reinterpret_cast<int *>(0x9b3a9c) = 0;
+        field_18_ = 0;
+        char *str = a2;
+        char *brk;
+        int wrapWidth;
+        do {
+            wrapWidth = a5;
+            if (str == 0) {
+                brk = 0;
+            } else {
+                *reinterpret_cast<int *>(0x9b3a9c) = 0;
+                unsigned int len = strlen(str);
+                brk = reinterpret_cast<char *>(find_line_break_l(str, &wrapWidth, len));
+                if (brk == 0) {
+                    len = strlen(str);
+                } else {
+                    len = brk - str;
+                }
+                write_cent_l(str, a3, y, a5, len);
+            }
+            y += a6;
+            field_18_ = field_18_ + 1;
+            str = brk;
+        } while (brk != 0);
+    }
+
+    font1_ = savedFont;
+    font2_ = savedA;
+    font3_ = savedB;
+    return y;
+}
+
+// ORIGINAL: 0x005DC360 ?wrap_height@Buffer@@QAEHPADH@Z 0x005DC360-0x005DC40A FILE
+// TRIED: `if (font->field0 < 0)` compiled to jge with the arms swapped (original is jl, negative-first fallthrough); writing `if (field0 >= 0) {...} else {...}` (arms swapped to match) lifted mnemonic similarity 0.929 -> 0.976. One scheduling-only diff remains (field_14 check's loads reordered around the field_18 increment store, #49) - not chased further.
+// working copy - scaffold materialised by --work
+// size      170 bytes
+// prototype int (__thiscall ?wrap_height@Buffer@@QAEHPADH@Z)(Buffer* this, int8*, int)
+// callers   18   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DC410 0x006453E0
+
+
+int Buffer::wrap_height(char * a1, int a2) {
+        if (a1 == 0) {
+        return 0;
+    }
+    field_18_ = 0;
+    BufferStrHeight = 0;
+    field_14_ = field_10_;
+    int total = 0;
+    int width = a2;
+    char *str = a1;
+    do {
+        int len = strlen(str);
+        int lineWidth = width;
+        str = reinterpret_cast<char *>(find_line_break_l(str, &lineWidth, len));
+        BufferStrHeight = 0;
+        if (font1_ == 0) {
+            font1_ = FontDefault;
+        }
+        Font *font = font1_;
+        int lineHeight;
+        if (font->unk_1_ >= 0) {
+            lineHeight = font->height_ + font->unk_1_;
+        } else {
+            lineHeight = font->line_height_;
+        }
+        total += lineHeight;
+        field_18_ = field_18_ + 1;
+        if (field_14_ != 0) {
+            width -= field_14_;
+            field_14_ = 0;
+        }
+    } while (str != 0);
+    return total;
+}
+
+// ORIGINAL: 0x005DDEF0 ?wrap_height_flying_flush@Buffer@@QAEHXZ 0x005DDEF0-0x005DDF5F FILE BYTE_EXACT
+// size      111 bytes
+// prototype int (__thiscall ?wrap_height_flying_flush@Buffer@@QAEHXZ)(Buffer* this)
+// callers   2   call targets   0
+// kind      
+// flags     
+// calls     (none)
+// working copy - scaffold materialised by --work
+
+int Buffer::wrap_height_flying_flush() {
+    if (BufferStrHeight != 0) {
+        if (font1_ == 0) {
+            font1_ = FontDefault;
+        }
+        Font *font = font1_;
+        int height = (font->unk_1_ >= 0) ? font->height_ + font->unk_1_
+                                          : font->line_height_;
+        *FlyingTextY += height;
+        field_18_++;
+    }
+    *FlyingTextHeight = 0;
+    write_font_slot_ = 0;
+    font_slot_ = 0;
+    field_514_ = 0;
+    markup_pending_ = 0;
+    return *FlyingTextY;
+}
+
+// ORIGINAL: 0x005DDDE0 ?wrap_height_flying@Buffer@@QAEHPAD@Z 0x005DDDE0-0x005DDEEA
+// TRIED: the `_strlen` no-arg-extern + function-pointer-cast idiom (see 0x006141C0) to avoid /O2's strlen intrinsic did not move the divergence - it is register-allocation, not a call shape. The original pushes ebx/esi/edi all in the shared prologue, before the `param_2==0` early return; this source form (an `if` straight after the first branch) defers the `push edi` past that early return since edi is unused on it. Not chased further; landing the closest structural match.
+// size      266 bytes
+// prototype int (__thiscall ?wrap_height_flying@Buffer@@QAEHPAD@Z)(Buffer* this, int8*)
+// callers   3   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DC410 0x005DC7C0 0x006453E0
+
+
+int Buffer::wrap_height_flying(char * a1) {
+    if (*FlyingTextHeight == 0) {
+        return 0;
+    }
+    if (a1 != 0) {
+        if (font1_ == 0) {
+            font1_ = FontDefault;
+        }
+        char *text = a1;
+        if (*text != '\0') {
+            do {
+                int remaining = *FlyingTextHeight - BufferStrHeight;
+                text = (char *)find_line_break_l(text, &remaining, strlen(text));
+                if (text == 0) {
+                    break;
+                }
+                field_18_ = field_18_ + 1;
+                if (font1_ == 0) {
+                    font1_ = FontDefault;
+                }
+                Font *fnt = font1_;
+                int lineAdvance;
+                if (fnt->unk_1_ < 0) {
+                    lineAdvance = fnt->line_height_;
+                } else {
+                    lineAdvance = fnt->height_ + fnt->unk_1_;
+                }
+                BufferStrHeight = 0;
+                *FlyingTextY = *FlyingTextY + lineAdvance;
+                if (field_14_ != 0) {
+                    *FlyingTextHeight = *FlyingTextHeight - field_14_;
+                    field_14_ = 0;
+                }
+            } while (true);
+            char *prompt = (char *)0x00696CD8;
+            if (prompt != 0) {
+                unsigned int len = strlen(prompt);
+                int width = text_width(prompt, (int)len);
+                BufferStrHeight = BufferStrHeight + width;
+            }
+        }
+    }
+    return *FlyingTextY;
+}
+
+// ORIGINAL: 0x005DE1D0 ?wrap_flying_flush@Buffer@@QAEHXZ 0x005DE1D0-0x005DE2DE
+// TRIED: the `_strlen` no-arg-extern lever (0x006141C0) moved the divergence from instruction 0 to instruction 5. The original reads `FlyingTextX`/`FlyingTextY` into ebx/ebp up front, before the text/font-metric checks that guard the call using them; this source form evaluates them only at the call site, which is a hoisting choice VC6 made differently. Not chased further.
+// size      270 bytes
+// prototype int (__thiscall ?wrap_flying_flush@Buffer@@QAEHXZ)(Buffer* this)
+// callers   3   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DCAE0 0x006453E0
+
+
+int Buffer::wrap_flying_flush() {
+    const char *const text = (const char *)FlyingTextBuf;
+    if (text[0] != '\0') {
+        unsigned int len1 = strlen(text);
+        if (font1_ != 0 && font1_->font_obj_ != 0) {
+            unsigned int len2 = strlen(text);
+            unsigned int chosen = len1;
+            if ((int)len2 < (int)len1) {
+                chosen = strlen(text);
+            }
+            if ((int)chosen >= 0) {
+                unsigned int len3 = strlen(text);
+                unsigned int finalLen = len1;
+                if ((int)len3 < (int)len1) {
+                    finalLen = strlen(text);
+                }
+                if (finalLen != 0) {
+                    write_multi_font_raw_l(const_cast<char *>(text), *FlyingTextX, *FlyingTextY, finalLen);
+                }
+            }
+        }
+        if (font1_ == 0) {
+            font1_ = FontDefault;
+        }
+        Font *fnt = font1_;
+        int lineAdvance = (fnt->unk_1_ < 0) ? fnt->line_height_ : fnt->height_ + fnt->unk_1_;
+        *FlyingTextY = *FlyingTextY + lineAdvance;
+        field_18_ = field_18_ + 1;
+    }
+    *FlyingTextBuf = 0;
+    *FlyingTextHeight = 0;
+    write_font_slot_ = 0;
+    font_slot_ = 0;
+    field_514_ = 0;
+    markup_pending_ = 0;
+    return *FlyingTextY;
+}
+
+// ORIGINAL: 0x005DDFB0 ?wrap_flying@Buffer@@QAEHPAD@Z 0x005DDFB0-0x005DE1C8 FILE
+// TRIED: MISMATCH #2 'push' vs 'sub' - the original reserves its EH/this-save slot with `push ecx` before the other pushes; not chased further. Dropped the `mov eax,0x696cdc; test eax,eax; je` guard entirely (Ghidra already resolved it as always-true and folded it away; a compile-time-nonzero address literal risked our own compiler eliding the branch differently).
+// working copy - scaffold materialised by --work
+// size      536 bytes
+// prototype int (__thiscall ?wrap_flying@Buffer@@QAEHPAD@Z)(Buffer* this, int8*)
+// callers   3   call targets   6
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DC410 0x005DC7C0 0x005DCAE0 0x006453E0 0x00645470 0x00645930
+
+int Buffer::wrap_flying(char * a1) {
+    
+    if (*FlyingTextHeight == 0) {
+        return 0;
+    }
+    if (a1 == 0) {
+        return *FlyingTextY;
+    }
+    if (*a1 == 0) {
+        return *FlyingTextY;
+    }
+
+    char *cur = a1;
+    char *buf = (char *)FlyingTextBuf;
+    for (;;) {
+        if (buf[0] != 0) {
+            strcat(buf, (const char *)SpaceText);
+            unsigned int len = strlen((const char *)SpaceTextTail);
+            int w = this->text_width((char *)SpaceTextTail, len);
+            BufferStrHeight += w;
+        }
+
+        char *brk = cur;
+        if (BufferStrHeight < *FlyingTextHeight) {
+            unsigned int len2 = strlen(cur);
+            int avail = *FlyingTextHeight - BufferStrHeight;
+            brk = (char *)this->find_line_break_l(cur, &avail, len2);
+        }
+        if (brk == 0) {
+            break;
+        }
+
+        unsigned int buflen = strlen(buf);
+        memcpy(buf + buflen, cur, brk - cur);
+        buf[buflen + (brk - cur)] = 0;
+
+        int saved_94 = *FlyingTextY;
+        int saved_90 = *FlyingTextX;
+        unsigned int flen = strlen(buf);
+
+        if ((int)font1_ != 0 && *(int *)(reinterpret_cast<int>(font1_) + 8) != 0) {
+            unsigned int a = strlen(buf);
+            unsigned int b = flen;
+            if ((int)a < (int)b) {
+                b = strlen(buf);
+            }
+            if ((int)b >= 0) {
+                unsigned int c = strlen(buf);
+                if ((int)c < (int)flen) {
+                    flen = strlen(buf);
+                }
+                if (flen != 0) {
+                    this->write_multi_font_raw_l(buf, saved_90, saved_94, flen);
+                }
+            }
+        }
+
+        buf[0] = 0;
+        BufferStrHeight = 0;
+        field_18_ += 1;
+        if (font1_ == 0) {
+            font1_ = FontDefault;
+        }
+        Font *rec = font1_;
+        int add;
+        if (rec->unk_1_ < 0) {
+            add = rec->line_height_;
+        } else {
+            add = rec->height_ + rec->unk_1_;
+        }
+        *FlyingTextY += add;
+
+        cur = brk;
+        if (field_14_ != 0) {
+            *FlyingTextHeight -= field_14_;
+            *FlyingTextX += field_14_;
+            field_14_ = 0;
+        }
+    }
+
+    strcat(buf, cur);
+    return *FlyingTextY;
+}
+
+// ORIGINAL: 0x005DB580 ?write_l@Buffer@@QAEHPAVFont@@PADHHH@Z 0x005DB580-0x005DB65F FILE BYTE_EXACT
+// working copy - scaffold materialised by --work
+// size      223 bytes
+// prototype int (__thiscall ?write_l@Buffer@@QAEHPAVFont@@PADHHH@Z)(Buffer* this, Font*, int8*, int, int, int)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DCAE0 0x006453E0
+// LEVER: SAVE THE THREE FONT SLOTS AS ONE BLOCK, not as three locals.
+//        `BufferFontTriple savedFonts = *fonts;` through a pointer to the
+//        slot trio is what makes the image open with
+//        `lea esi,[edi+0x52c]` and load the triple off it - three saves as
+//        separate `Font *` locals fold back into direct member loads and
+//        the register allocation diverges from instruction 2 on (4/83).
+//        Block form: 83/83. The struct names the members; nothing is punned
+//        through a type that is not there.
+
+int Buffer::write_l(Font * font, char * text, int x, int y, int maxLen) {
+    BufferFontTriple *const fonts = reinterpret_cast<BufferFontTriple *>(&font1_);
+    BufferFontTriple savedFonts = *fonts;
+    int result;
+    if (font != 0 && font->font_obj_ != 0) {
+        font1_ = font;
+        font2_ = 0;
+        font3_ = 0;
+    }
+    int len = maxLen;
+
+    if (text == 0) {
+        result = x;
+    } else if (fonts->primary == 0 || fonts->primary->font_obj_ == 0) {
+        result = 3;
+    } else {
+        if (((int)strlen(text) < len ? (int)strlen(text) : len) < 0) {
+            goto nothing_drawn;
+        }
+        len = (int)strlen(text) < len ? (int)strlen(text) : len;
+        if (len == 0) {
+            // Both length exits share one block in the original: the negative
+            // case branches forward into the zero case's assignment.
+nothing_drawn:
+            result = x;
+        } else {
+            result = write_multi_font_raw_l(text, x, y, len);
+        }
+    }
+
+    *fonts = savedFonts;
+    return result;
+}
+
+// ORIGINAL: 0x005DBC50 ?wrap_right@Buffer@@QAEHPAVFont@@PADHHH@Z 0x005DBC50-0x005DBCA9 FILE
+// TRIED: save/swap/restore of the triple at this+0x52c is right (matches Ghidra's field layout and the 4-arg wrap_right overload target); divergence is register-allocation scheduling in the push/pop prologue, not semantics - mnemonic_similarity 0.91, first divergence at insn #0.
+// working copy - scaffold materialised by --work
+// size      89 bytes
+// prototype int (__thiscall ?wrap_right@Buffer@@QAEHPAVFont@@PADHHH@Z)(Buffer* this, Font*, int8*, int, int, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DDBB0
+
+int Buffer::wrap_right(Font * a1, char * a2, int a3, int a4, int a5) {
+        int *const triple = reinterpret_cast<int *>(&font1_);
+    int saved0 = triple[0];
+    int saved1 = triple[1];
+    int saved2 = triple[2];
+    if (a1 != 0 && a1->font_obj_ != 0) {
+        triple[0] = reinterpret_cast<int>(a1);
+        triple[1] = 0;
+        triple[2] = 0;
+    }
+    int result = wrap_right(a2, a3, a4, a5);
+    triple[0] = saved0;
+    triple[1] = saved1;
+    triple[2] = saved2;
+    return result;
+}
+
+// ORIGINAL: 0x005DBCB0 ?wrap_right@Buffer@@QAEHPAVFont@@PADH@Z 0x005DBCB0-0x005DBCFF
+// size      79 bytes
+// prototype int (__thiscall ?wrap_right@Buffer@@QAEHPAVFont@@PADH@Z)(Buffer* this, Font*, int8*, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DDC90
+// 0x005DBCB0  ?wrap_right@Buffer@@QAEHPAVFont@@PADH@Z  ->  ?wrap_right@Buffer@@QAEHPAVFont@@PADH@Z
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+
+
+int Buffer::wrap_right(Font * a1, char * a2, int a3) {
+    Font *savedFont = font1_;
+    Font *savedFont2 = font2_;
+    Font *savedFont3 = font3_;
+    if (a1 != 0 && a1->font_obj_ != 0) {
+        font1_ = a1;
+        font2_ = 0;
+        font3_ = 0;
+    }
+    int result = wrap_right(a2, a3);
+    font1_ = savedFont;
+    font2_ = savedFont2;
+    font3_ = savedFont3;
+    return result;
+}
+
+// ORIGINAL: 0x005DB810 ?write_cent_l@Buffer@@QAEHPAVFont@@PADHHH@Z 0x005DB810-0x005DB869 FILE
+// TRIED: save/override font1_-3_ around the 4-arg overload, then restore
+// working copy - scaffold materialised by --work
+// size      89 bytes
+// prototype int (__thiscall ?write_cent_l@Buffer@@QAEHPAVFont@@PADHHH@Z)(Buffer* this, Font*, int8*, int, int, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DD250
+
+int Buffer::write_cent_l(Font * a1, char * a2, int a3, int a4, int a5) {
+    Font *savedFont1 = font1_;
+    Font *savedFont2 = font2_;
+    Font *savedFont3 = font3_;
+    if (a1 != 0 && a1->font_obj_ != 0) {
+        font1_ = a1;
+        font2_ = 0;
+        font3_ = 0;
+    }
+    int result = write_cent_l(a2, a3, a4, a5);
+    font1_ = savedFont1;
+    font2_ = savedFont2;
+    font3_ = savedFont3;
+    return result;
+}
+
+// ORIGINAL: 0x005DB8D0 ?write_right_l@Buffer@@QAEHPAVFont@@PADHHH@Z 0x005DB8D0-0x005DB929 FILE
+// TRIED: nothing beyond the direct save/swap/delegate/restore transcription; diverges at #0 (push vs mov), likely register/local allocation order
+// working copy - scaffold materialised by --work
+// size      89 bytes
+// prototype int (__thiscall ?write_right_l@Buffer@@QAEHPAVFont@@PADHHH@Z)(Buffer* this, Font*, int8*, int, int, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DD3B0
+
+int Buffer::write_right_l(Font * a1, char * a2, int a3, int a4, int a5) {
+    Font *savedFont1 = font1_;
+    Font *savedFont2 = font2_;
+    Font *savedFont3 = font3_;
+    if (a1 != 0 && a1->font_obj_ != 0) {
+        font1_ = a1;
+        font2_ = 0;
+        font3_ = 0;
+    }
+    int result = write_right_l(a2, a3, a4, a5);
+    font1_ = savedFont1;
+    font2_ = savedFont2;
+    font3_ = savedFont3;
+    return result;
+}
+
+// ORIGINAL: 0x005DB780 ?write_cent_l@Buffer@@QAEHPAVFont@@PADHHHHH@Z 0x005DB780-0x005DB806 FILE
+// working copy - scaffold materialised by --work
+// size      134 bytes
+// prototype int (__thiscall ?write_cent_l@Buffer@@QAEHPAVFont@@PADHHHHH@Z)(Buffer* this, Font*, int8*, int, int, int, int, int)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DD130
+
+int Buffer::write_cent_l(Font * a1, char * a2, int a3, int a4, int a5, int a6, int a7) {
+    Font *saved_font1 = font1_;
+    Font *saved_font2 = font2_;
+    Font *saved_font3 = font3_;
+    if (a1 != 0 && a1->font_obj_ != 0) {
+        font1_ = a1;
+        font2_ = 0;
+        font3_ = 0;
+    }
+    RECT rect;
+    rect.left = a3;
+    rect.top = a4;
+    rect.right = a3 + a5;
+    rect.bottom = a4 + a6;
+    int result = write_cent_l(a2, &rect, a7);
+    font1_ = saved_font1;
+    font2_ = saved_font2;
+    font3_ = saved_font3;
+    return result;
+}
+
+// ORIGINAL: 0x005DD3B0 ?write_right_l@Buffer@@QAEHPADHHH@Z 0x005DD3B0-0x005DD44F FILE
+// TRIED: literal Ghidra-order translation (a1==0 early-return, nested strlen/text_width) - MISMATCH #1 push/mov, original pushes ebx/esi/edi unconditionally before the a1==0 test; register-allocation shape only.
+// working copy - scaffold materialised by --work
+// size      159 bytes
+// prototype int (__thiscall ?write_right_l@Buffer@@QAEHPADHHH@Z)(Buffer* this, int8*, int, int, int)
+// callers   12   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DC7C0 0x005DCAE0 0x006453E0
+
+int Buffer::write_right_l(char * a1, int a2, int a3, int a4) {
+    if (a1 == 0) {
+        return a2;
+    }
+    if ((font1_ != 0) && (font1_->font_obj_ != 0)) {
+        int len1 = strlen(a1);
+        int w = a4;
+        if (len1 < a4) {
+            w = strlen(a1);
+        }
+        if (w >= 0) {
+            int len2 = strlen(a1);
+            if (len2 < a4) {
+                a4 = strlen(a1);
+            }
+            if (a4 != 0) {
+                int tw = text_width(a1, a4);
+                return write_multi_font_raw_l(a1, a2 - tw, a3, a4);
+            }
+        }
+        return a2;
+    }
+    return 3;
+}
+
+// ORIGINAL: 0x005DD0E0 ?write_cent_l@Buffer@@QAEHPADHHHHH@Z 0x005DD0E0-0x005DD123 BYTE_EXACT
+// size      67 bytes
+// prototype int (__thiscall ?write_cent_l@Buffer@@QAEHPADHHHHH@Z)(Buffer* this, int8*, int, int, int, int, int)
+// callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DD130
+// 0x005DD0E0  ?write_cent_l@Buffer@@QAEHPADHHHHH@Z  ->  ?write_cent_l@Buffer@@QAEHPADHHHHH@Z
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+
+
+int Buffer::write_cent_l(char *a1, int a2, int a3, int a4, int a5, int a6) {
+    RECT r;
+    r.left = a2;
+    r.top = a3;
+    r.right = a2 + a4;
+    r.bottom = a3 + a5;
+    return write_cent_l(a1, &r, a6);
+}
+
+
+// ORIGINAL: 0x005DB660 ?write_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z 0x005DB660-0x005DB6B4 FILE
+// size      84 bytes
+// prototype int (__thiscall ?write_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z)(Buffer* this, Font*, int8*, RECT*, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DCF40
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005DB660
+// measured tier  MISMATCH
+// divergence     0
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005db660/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?write_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z  at 0x005DB660  (84 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+
+
+int Buffer::write_l(Font *a1, char *a2, RECT *a3, int a4) {
+        Font *f0 = font1_;
+    Font *f1 = font2_;
+    Font *f2 = font3_;
+    if (a1 != 0 && a1->font_obj_ != 0) {
+        font1_ = a1;
+        font2_ = 0;
+        font3_ = 0;
+    }
+    int result = write_l(a2, a3, a4);
+    font1_ = f0;
+    font2_ = f1;
+    font3_ = f2;
+    return result;
+}
+
+// ORIGINAL: 0x005DB720 ?write_cent_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z 0x005DB720-0x005DB774 FILE
+// size      84 bytes
+// prototype int (__thiscall ?write_cent_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z)(Buffer* this, Font*, char *, RECT*, int)
+// callers   6   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DD130
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005DB720
+// measured tier  MISMATCH
+// divergence     0
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005db720/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?write_cent_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z  at 0x005DB720  (84 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+
+int Buffer::write_cent_l(Font* a1, char * a2, RECT* a3, int a4) {
+    Font **p = reinterpret_cast<Font **>(reinterpret_cast<char *>(this) + 0x52c);
+    Font *old0 = p[0];
+    Font *old1 = p[1];
+    Font *old2 = p[2];
+    if (a1 != 0 && a1->font_obj_ != 0) {
+        p[0] = a1;
+        p[1] = 0;
+        p[2] = 0;
+    }
+    int result = write_cent_l(a2, a3, a4);
+    p[0] = old0;
+    p[1] = old1;
+    p[2] = old2;
+    return result;
+}
+
+// ORIGINAL: 0x005DBC00 ?wrap_cent@Buffer@@QAEHPAVFont@@PADPAURECT@@@Z 0x005DBC00-0x005DBC4F FILE
+// size      79 bytes
+// prototype int (__thiscall ?wrap_cent@Buffer@@QAEHPAVFont@@PADPAURECT@@@Z)(Buffer* this, Font*, char *, RECT*)
+// callers   4   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DDAB0
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005DBC00
+// measured tier  MISMATCH
+// divergence     0
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005dbc00/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?wrap_cent@Buffer@@QAEHPAVFont@@PADPAURECT@@@Z  at 0x005DBC00  (79 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+
+
+int Buffer::wrap_cent(Font* a1, char * a2, RECT* a3) {
+        Font *save0 = font1_;
+    Font *save1 = font2_;
+    Font *save2 = font3_;
+    if (a1 != 0 && a1->font_obj_ != 0) {
+        font1_ = a1;
+        font2_ = 0;
+        font3_ = 0;
+    }
+    int result = wrap_cent(a2, a3);
+    font1_ = save0;
+    font2_ = save1;
+    font3_ = save2;
+    return result;
+}
+
+// ORIGINAL: 0x005DB990 ?wrap@Buffer@@QAEHPAVFont@@PADPAURECT@@@Z 0x005DB990-0x005DB9DF FILE
+// size      79 bytes
+// prototype int (__thiscall ?wrap@Buffer@@QAEHPAVFont@@PADPAURECT@@@Z)(Buffer* this, Font*, int8*, RECT*)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DD530
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005DB990
+// measured tier  MISMATCH
+// divergence     0
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005db990/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?wrap@Buffer@@QAEHPAVFont@@PADPAURECT@@@Z  at 0x005DB990  (79 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+int Buffer::wrap(Font *a1, char *a2, RECT *a3) {
+    Font **p = &font1_;
+    Font *saved0 = *p;
+    Font *saved1 = font2_;
+    Font *saved2 = font3_;
+    if (a1 && a1->font_obj_) {
+        *p = a1;
+        font2_ = 0;
+        font3_ = 0;
+    }
+    int result = wrap(a2, a3);
+    *p = saved0;
+    font2_ = saved1;
+    font3_ = saved2;
+    return result;
+}
+
+// ORIGINAL: 0x005DDDA0 ?wrap_height_flying@Buffer@@QAEHPADH@Z 0x005DDDA0-0x005DDDD2 FILE
+// size      50 bytes
+// prototype int (__thiscall ?wrap_height_flying@Buffer@@QAEHPADH@Z)(Buffer* this, int8*, int)
+// callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DDDE0
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005DDDA0
+// measured tier  MISMATCH
+// divergence     9
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005ddda0/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?wrap_height_flying@Buffer@@QAEHPADH@Z  at 0x005DDDA0  (50 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+
+
+int Buffer::wrap_height_flying(char *a1, int a2) {
+        register char *text = a1;
+    int value = field_10_;
+    field_18_ = 0;
+    field_14_ = value;
+    markup_pending_ = 0;
+    *FlyingTextY = 0;
+    BufferStrHeight = 0;
+    *FlyingTextHeight = a2;
+    return wrap_height_flying(text);
+}
+
+// ORIGINAL: 0x005DDC90 ?wrap_right@Buffer@@QAEHPADH@Z 0x005DDC90-0x005DDD91 FILE
+// TRIED: `int *a2` second parameter - the mangled name is `PADH` (char*, int), not `PADPAH`, so the second argument really is `int` and the disassembly's [eax]/[eax+4]/[eax+8] reads are the body reinterpreting that int as an `int*` internally, not a real pointer parameter.
+// size      257 bytes
+// prototype int (__thiscall ?wrap_right@Buffer@@QAEHPADH@Z)(Buffer* this, char*, int)
+// callers   1   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005DC410 0x005DD3B0 0x006453E0
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?wrap_right@Buffer@@QAEHPADH@Z  at 0x005DDC90  (257 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+
+int Buffer::wrap_right(char * a1, int a2) {
+    int *rec = reinterpret_cast<int *>(a2);
+    if (a1 != 0 && rec != 0) {
+        BufferStrHeight = 0;
+        int oldField10 = field_10_;
+        field_18_ = 0;
+        field_14_ = oldField10;
+        int start = rec[0];
+        int width = rec[2] - start;
+        int total = rec[1];
+        char *cur = a1;
+        char *found;
+        do {
+            if (cur == 0) {
+                found = 0;
+            } else {
+                BufferStrHeight = 0;
+                int localWidth = width;
+                unsigned int len = strlen(cur);
+                found = reinterpret_cast<char *>(find_line_break_l(cur, &localWidth, (int)len));
+                int segLen;
+                if (found == 0) {
+                    segLen = (int)strlen(cur);
+                } else {
+                    segLen = (int)(found - cur);
+                }
+                write_right_l(cur, start, total, segLen);
+            }
+            field_18_ = field_18_ + 1;
+            if (font1_ == 0) {
+                font1_ = FontDefault;
+            }
+            Font *f = font1_;
+            int heightAdd;
+            if (f->unk_1_ < 0) {
+                heightAdd = f->line_height_;
+            } else {
+                heightAdd = f->height_ + f->unk_1_;
+            }
+            total = total + heightAdd;
+            int oldField14 = field_14_;
+            if (oldField14 != 0) {
+                field_14_ = 0;
+                width = width - oldField14;
+            }
+            cur = found;
+        } while (found != 0);
+        return total;
+    }
+    return rec[1];
+}
+
+// ORIGINAL: 0x005DDF60 ?wrap_flying@Buffer@@QAEHPADHHH@Z 0x005DDF60-0x005DDFA6
+// size      70 bytes
+// prototype int (__thiscall ?wrap_flying@Buffer@@QAEHPADHHH@Z)(Buffer* this, int8*, int, int, int)
+// callers   3   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DDFB0
+// 0x005DDF60  ?wrap_flying@Buffer@@QAEHPADHHH@Z  ->  ?wrap_flying@Buffer@@QAEHPADHHH@Z
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+
+
+int Buffer::wrap_flying(char *a1, int a2, int a3, int a4) {
+    uint32_t saved = field_10_;
+    field_18_ = 0;
+    field_14_ = saved;
+    *FlyingTextX = a2;
+    BufferStrHeight = 0;
+    *FlyingTextY = a3;
+    *FlyingTextHeight = a4;
+    markup_pending_ = 0;
+    *reinterpret_cast<uint8_t *>(FlyingTextBuf) = 0;
+    return wrap_flying(a1);
+}
+
+// ORIGINAL: 0x005E2330 ?put_pixel@Buffer@@QAEHHHH@Z 0x005E2330-0x005E2457
+// TRIED: the two indirect calls are DirectDraw surface Lock/Unlock through the surface pointer stored at surface_ - stdcall COM methods, not thiscall members of this class, so they are reached through a plain typed function pointer read from the surface's own vtable rather than a member-pointer shim; this matches the original's own indirect-call instruction shape. Ruled out a named lock-descriptor struct in favour of a raw byte buffer sized 0x6c with the two fields it actually reads (lpSurface at +0x10, pitch at +0x24) addressed by offset, since the real DDSURFACEDESC layout is not declared here. Landing the closest MISMATCH; divergence starts at instruction #5, `push` in the original for the DDraw lock call setup versus `xor` in the rebuilt.
+// size      295 bytes
+// prototype int (__thiscall ?put_pixel@Buffer@@QAEHHHH@Z)(Buffer* this, int, int, int)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005E23C3 0x005E243F
+
+
+int Buffer::put_pixel(int a1, int a2, int a3) {
+  char *local_48;
+  int result;
+  DDSURFACEDESC description;
+  void *surface;
+
+  int cur = reinterpret_cast<int>(dib_bits_);
+  if (cur == 0 && surface_ == 0) {
+    return 7;
+  }
+  if (a1 < 0) {
+    return 0;
+  }
+  if (a2 < 0) {
+    return 0;
+  }
+  if (dib_.bmiHeader.biWidth <= a1) {
+    return 0;
+  }
+  if (-dib_.bmiHeader.biHeight <= a2) {
+    return 0;
+  }
+
+  surface = (void *)surface_;
+  if (surface == 0) {
+    locked_bits_ = (void *)cur;
+    if (cur == 0) {
+      goto after_write;
+    }
+    surface_lock_count_ = surface_lock_count_ + 1;
+    local_48 = (char *)cur;
+  } else if (locked_bits_ == 0) {
+    typedef int(__stdcall * LockFn)(void *, void *, void *, int, int);
+    LockFn lock;
+    description.dwSize = sizeof(description);
+    lock = (LockFn)(*(void ***)surface)[0x64 / 4];
+    result = lock(surface, 0, &description, 1, 0);
+    if (result != 0) {
+      goto after_write;
+    }
+    stride_ = description.lPitch;
+    surface_lock_count_ = surface_lock_count_ + 1;
+    locked_bits_ = description.lpSurface;
+    local_48 = (char *)locked_bits_;
+  } else {
+    surface_lock_count_ = surface_lock_count_ + 1;
+    local_48 = (char *)locked_bits_;
+  }
+
+  if (local_48 != 0) {
+    unsigned char *p = (unsigned char *)(stride_ * a2 + local_48 + a1);
+    if (p != 0) {
+      *p = (unsigned char)a3;
+    }
+  }
+
+after_write:
+  surface = (void *)surface_;
+  if (surface == 0) {
+    int n = surface_lock_count_ - 1;
+    surface_lock_count_ = n;
+    if (n < 1) {
+      locked_bits_ = nullptr;
+      surface_lock_count_ = 0;
+      return 0;
+    }
+  } else {
+    int n = surface_lock_count_ - 1;
+    surface_lock_count_ = n;
+    if (locked_bits_ != 0 && n < 1) {
+      typedef int(__stdcall * UnlockFn)(void *, int);
+      UnlockFn unlock = (UnlockFn)(*(void ***)surface)[0x80 / 4];
+      unlock(surface, (int)(uintptr_t)locked_bits_);
+      locked_bits_ = nullptr;
+      surface_lock_count_ = 0;
+    }
+  }
+  return 0;
+}
+
+// ORIGINAL: 0x005DDBB0 ?wrap_right@Buffer@@QAEHPADHHH@Z 0x005DDBB0-0x005DDC8F FILE
+// TRIED: source order already matches Ghidra's (g=0; field18=0; field14=field10; y=a3); the original's `ebx/ebp` push order ahead of the field writes looks like pure register-scheduling, not reachable by reordering the C statements that produced it.
+// working copy - scaffold materialised by --work
+// size      223 bytes
+// prototype int (__thiscall ?wrap_right@Buffer@@QAEHPADHHH@Z)(Buffer* this, int8*, int, int, int)
+// callers   1   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DC410 0x005DD3B0 0x006453E0
+
+int Buffer::wrap_right(char * a1, int a2, int a3, int a4) {
+        if (a1 == 0) {
+        return a3;
+    }
+    BufferStrHeight = 0;
+    field_18_ = 0;
+    field_14_ = field_10_;
+    int y = a3;
+    char *text = a1;
+    int width = a4;
+    char *brk;
+    do {
+        a3 = width;
+        if (text == 0) {
+            brk = 0;
+        } else {
+            int len;
+            BufferStrHeight = 0;
+            unsigned int slen = strlen(text);
+            brk = reinterpret_cast<char *>(find_line_break_l(text, &a3, slen));
+            if (brk == 0) {
+                len = strlen(text);
+            } else {
+                len = (int)(brk - text);
+            }
+            write_right_l(text, a2, y, len);
+        }
+        field_18_ = field_18_ + 1;
+        if (font1_ == 0) {
+            font1_ = FontDefault;
+        }
+        Font *font = font1_;
+        int lineH;
+        if (font->unk_1_ < 0) {
+            lineH = font->line_height_;
+        } else {
+            lineH = font->height_ + font->unk_1_;
+        }
+        y = y + lineH;
+        int f14 = field_14_;
+        if (f14 != 0) {
+            field_14_ = 0;
+            width = width - f14;
+        }
+        text = brk;
+    } while (brk != 0);
+    return y;
+}
+
+// ORIGINAL: 0x005DD530 ?wrap@Buffer@@QAEHPADPAURECT@@@Z 0x005DD530-0x005DD730 FILE
+// TRIED: MISMATCH #2 'push' vs 'sub' - direct transcription of the Ghidra do-while, using font1_ (0x52C) and its font_obj_ (+8); the entry-block stack-frame allocation shape diverges from the original almost immediately, not chased further.
+// working copy - scaffold materialised by --work
+// size      512 bytes
+// prototype int (__thiscall ?wrap@Buffer@@QAEHPADPAURECT@@@Z)(Buffer* this, int8*, RECT*)
+// callers   7   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DC410 0x005DCAE0 0x006453E0
+
+int Buffer::wrap(char * a1, RECT * a2) {
+    
+    if (a1 != 0 && a2 != 0) {
+        BufferStrHeight = 0;
+        field_18_ = 0;
+        field_14_ = field_10_;
+
+        int x = a2->left;
+        int y = a2->top;
+        int width = a2->right - a2->left;
+        char *str = a1;
+        char *nextStr;
+
+        do {
+            int lineResult;
+            if (str == 0) {
+                nextStr = 0;
+            } else {
+                BufferStrHeight = 0;
+                int breakPos = width;
+                nextStr = reinterpret_cast<char *>(
+                    this->find_line_break_l(str, &breakPos, static_cast<int>(strlen(str))));
+
+                Font *font = font1_;
+                bool hasFont = (font != 0) && (font->font_obj_ != 0);
+
+                if (nextStr == 0) {
+                    unsigned int len = strlen(str);
+                    if (!hasFont) {
+                        lineResult = 3;
+                    } else {
+                        unsigned int a = strlen(str);
+                        unsigned int b = len;
+                        if (static_cast<int>(a) < static_cast<int>(len))
+                            b = strlen(str);
+                        if (static_cast<int>(b) >= 0) {
+                            b = strlen(str);
+                            if (static_cast<int>(b) < static_cast<int>(len))
+                                len = strlen(str);
+                            if (len != 0)
+                                lineResult = this->write_multi_font_raw_l(str, x, y, len);
+                        }
+                    }
+                } else {
+                    unsigned int len = static_cast<unsigned int>(nextStr - str);
+                    if (!hasFont) {
+                        *BufferWriteStatus = 3;
+                        lineResult = *BufferWriteStatus;
+                    } else {
+                        unsigned int a = strlen(str);
+                        unsigned int b = len;
+                        if (static_cast<int>(a) < static_cast<int>(len))
+                            b = strlen(str);
+                        if (static_cast<int>(b) >= 0) {
+                            b = strlen(str);
+                            if (static_cast<int>(b) < static_cast<int>(len))
+                                len = strlen(str);
+                            if (len != 0)
+                                lineResult = this->write_multi_font_raw_l(str, x, y, len);
+                        }
+                    }
+                }
+            }
+
+            *BufferWriteStatus = lineResult;
+
+            if (font1_ == 0)
+                font1_ = reinterpret_cast<Font *>(FontDefault);
+
+            int *fontData = reinterpret_cast<int *>(font1_);
+            int lineHeight;
+            if (*fontData < 0)
+                lineHeight = fontData[3];
+            else
+                lineHeight = fontData[4] + *fontData;
+            y += lineHeight;
+
+            int carry = *reinterpret_cast<int *>(0x14);
+            (*reinterpret_cast<int *>(0x18))++;
+            if (carry != 0) {
+                *reinterpret_cast<int *>(0x14) = 0;
+                width -= carry;
+                x += carry;
+            }
+
+            str = nextStr;
+        } while (str != 0);
+
+        return y;
+    }
+
+    return a2->top;
+}
+
+// ORIGINAL: 0x005DC410 ?find_line_break_l@Buffer@@QAEHPADPAHH@Z 0x005DC410-0x005DC70A FILE
+// TRIED: same bracket-skip/jump-table markup dispatch as Buffer::text_width (0x005DC7C0), verified against the raw jump/byte tables at 0x5dc70c/0x5dc728 (identical shape, different literal token address 0x696c90). The four find-break-then-adjust call sites collapse to one resolve_break() helper (space-before or segment-start keeps the position, else memrchr back to the last space). Reaches MISMATCH, 147/265 mnemonics shared, first divergence at #2 (frame setup, not the parser).
+// working copy - scaffold materialised by --work
+// size      762 bytes
+// prototype int (__thiscall ?find_line_break_l@Buffer@@QAEHPADPAHH@Z)(Buffer* this, int8*, int*, int)
+// callers   15   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00619370 0x00628AF0 0x006458F0 0x00645DD0
+
+
+char *Buffer::find_line_break_l(char * a1, int * a2, int a3) {
+    if (!a2) {
+        return 0;
+    }
+    if (!font1_) {
+        font1_ = FontDefault;
+    }
+    if (!markup_enabled_) {
+        return font1_->find_line_break_l(a1, a2, a3);
+    }
+
+    char *segStart = a1;
+    char *esi;
+    int ebxMode;
+
+scan_loop:
+    {
+        char *p = segStart;
+        int n = a3;
+        while (n != 0) {
+            char c = *p;
+            bool isBreak;
+            if (field_514_ == 3) {
+                isBreak = (c == '{' || c == '}' || c == '[' || c == ']' || c == '$' || c == '=');
+            } else {
+                isBreak = (c == '{' || c == '}' || c == '[' || c == ']' || c == '$');
+            }
+            if (isBreak) {
+                break;
+            }
+            ++p;
+            --n;
+        }
+        a3 = n;
+        esi = p;
+    }
+
+    if (a3 == 0) {
+        goto tail_exit;
+    }
+
+    {
+        unsigned char ch = (unsigned char)*esi;
+        switch (ch) {
+        case '$':
+            if (strncmp(esi, reinterpret_cast<const char *>(MarkupLinkToken), 6) == 0) {
+                markup_pending_ = 1;
+                ebxMode = 3;
+                goto join_compute;
+            }
+            break;
+        case '=':
+            markup_pending_ = 2;
+            break;
+        case '{':
+            if (esi[1] == '{') {
+                goto consume_extra;
+            }
+            ebxMode = 1;
+            goto join_compute;
+        case '}':
+            if (esi[1] == '}') {
+                goto consume_extra;
+            }
+            ebxMode = 0;
+            goto join_compute;
+        case '[':
+            if (esi[1] == '[') {
+                goto consume_extra;
+            }
+            ebxMode = 2;
+            goto join_compute;
+        case ']':
+            if (esi[1] == ']') {
+                goto consume_extra;
+            }
+            ebxMode = 0;
+            goto join_compute;
+        default:
+            break;
+        }
+    }
+    ebxMode = field_514_;
+    goto join_compute;
+
+consume_extra:
+    --a3;
+    ++esi;
+    ebxMode = field_514_;
+    goto join_compute;
+
+join_compute:
+    {
+        int mode = field_514_;
+        Font *const *fontArray = &font1_;
+        Font *segFont = fontArray[mode];
+        int segLen = (int)(esi - segStart);
+        char *found;
+        if (segFont) {
+            found = segFont->find_line_break_l(segStart, a2, segLen);
+        } else {
+            found = font1_->find_line_break_l(segStart, a2, segLen);
+        }
+        if (found != 0) {
+            markup_pending_ = 0;
+            return reinterpret_cast<char *>(found) - segStart + a1;
+        }
+    }
+
+    {
+        int markupKind = markup_pending_;
+        if (markupKind == 1) {
+            a3 -= 5;
+            esi += 5;
+        }
+        ++esi;
+        segStart = esi;
+        if (markupKind == 2) {
+            char *found2 = strchr(esi, '>');
+            ebxMode = 0;
+            if (found2) {
+                a3 = a3 - (int)(found2 - esi) - 1;
+                segStart = found2 + 1;
+            }
+            markup_pending_ = ebxMode;
+        }
+    }
+    field_514_ = ebxMode;
+    --a3;
+    goto scan_loop;
+
+tail_exit:
+    {
+        Font *const *fontArray = &font1_;
+        Font *segFont = fontArray[field_514_];
+        int segLen = (int)(esi - segStart);
+        char *found;
+        if (segFont) {
+            found = segFont->find_line_break_l(segStart, a2, segLen);
+        } else {
+            found = font1_->find_line_break_l(segStart, a2, segLen);
+        }
+        markup_pending_ = 0;
+        if (found == 0) {
+            return 0;
+        }
+        return reinterpret_cast<char *>(found) - segStart + a1;
+    }
+}
+
+// ORIGINAL: 0x005DE580 ?change_color@Buffer@@QAEHHH@Z 0x005DE580-0x005DE721
+// TRIED: MISMATCH #7 xor/mov - get_data()/free_data() logic inlined by hand (raw uint32_t offsets, matching Buffer::get_data's own style) rather than calling the real methods, since neither is a catalogued callee of this address; register allocation differs from the original past that point.
+// size      417 bytes
+// prototype int (__thiscall ?change_color@Buffer@@QAEHHH@Z)(Buffer* this, int, int)
+// callers   12   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005DE5D3 0x005DE642 0x005DE70A
+// To start: tools/decomp_status.py --work 0x005DE580
+
+
+int Buffer::change_color(int a1, int a2) {
+    volatile uint32_t *const ordered = reinterpret_cast<volatile uint32_t *>(this);
+
+    RECT rect;
+    rect.right = dib_.bmiHeader.biWidth;
+    rect.bottom = -dib_.bmiHeader.biHeight;
+    if (ordered[0x54 / 4] == 0 && ordered[0x58 / 4] == 0) {
+        return 7;
+    }
+    rect.left = 0;
+    rect.top = 0;
+    if (!(*reinterpret_cast<int (__stdcall *const *)(RECT *, RECT *, RECT *)>(IntersectRect))(
+            &rect, &rect1_, &rect)) {
+        return 0;
+    }
+    if (rect.left >= dib_.bmiHeader.biWidth || rect.top >= -dib_.bmiHeader.biHeight) {
+        return 7;
+    }
+
+    int pixel_base;
+    void *const surface = reinterpret_cast<void *>(ordered[0x58 / 4]);
+    if (!surface) {
+        const uint32_t storage = ordered[0x54 / 4];
+        ordered[0x50 / 4] = storage;
+        if (!storage) {
+            return 7;
+        }
+        ordered[0x6C / 4] = ordered[0x6C / 4] + 1;
+        pixel_base = static_cast<int>(storage);
+    } else {
+        const uint32_t existing = ordered[0x50 / 4];
+        if (existing) {
+            ordered[0x6C / 4] = ordered[0x6C / 4] + 1;
+            pixel_base = static_cast<int>(existing);
+        } else {
+            uint8_t descriptor[0x6C];
+            *reinterpret_cast<uint32_t *>(descriptor) = 0x6C;
+            void **const vtable = *reinterpret_cast<void ***>(surface);
+            long (__stdcall *const lock)(void *, void *, void *, uint32_t, void *) =
+                reinterpret_cast<long (__stdcall *)(void *, void *, void *, uint32_t, void *)>(
+                    vtable[0x64 / 4]);
+            if (lock(surface, 0, descriptor, 1, 0) != 0) {
+                return 7;
+            }
+            ordered[0x6C / 4] = ordered[0x6C / 4] + 1;
+            uint32_t pitch = *reinterpret_cast<uint32_t *>(descriptor + 0x10);
+            uint32_t data = *reinterpret_cast<uint32_t *>(descriptor + 0x24);
+            ordered[0x4A8 / 4] = pitch;
+            ordered[0x50 / 4] = data;
+            pixel_base = static_cast<int>(data);
+        }
+    }
+
+    if (pixel_base != 0) {
+        char *dest = reinterpret_cast<char *>(
+            static_cast<int32_t>(ordered[0x4A8 / 4]) * rect.top + pixel_base + rect.left);
+        if (dest != 0) {
+            int32_t row_width = rect.right - rect.left;
+            int32_t row_count = rect.bottom - rect.top;
+            int32_t stride_remainder = static_cast<int32_t>(ordered[0x4A8 / 4]) - row_width;
+            char *p = dest;
+            for (int32_t y = row_count; y != 0; --y) {
+                for (int32_t x = row_width; x != 0; --x) {
+                    if (*p == static_cast<char>(a1)) {
+                        *p = static_cast<char>(a2);
+                    }
+                    ++p;
+                }
+                p += stride_remainder;
+            }
+
+            void *const surface2 = reinterpret_cast<void *>(ordered[0x58 / 4]);
+            const int32_t remaining = static_cast<int32_t>(ordered[0x6C / 4]) - 1;
+            ordered[0x6C / 4] = static_cast<uint32_t>(remaining);
+            if (!surface2) {
+                if (remaining <= 0) {
+                    ordered[0x50 / 4] = 0;
+                    ordered[0x6C / 4] = 0;
+                }
+                return 0;
+            }
+            const uint32_t data2 = ordered[0x50 / 4];
+            if (data2 != 0 && remaining <= 0) {
+                void **const vtable2 = *reinterpret_cast<void ***>(surface2);
+                long (__stdcall *const unlock)(void *, void *) =
+                    reinterpret_cast<long (__stdcall *)(void *, void *)>(vtable2[0x80 / 4]);
+                unlock(surface2, reinterpret_cast<void *>(data2));
+                ordered[0x50 / 4] = 0;
+                ordered[0x6C / 4] = 0;
+            }
+            return 0;
+        }
+    }
+    return 7;
+}
+
+// ORIGINAL: 0x005E2070 ?change_color@Buffer@@QAEHHHHHHH@Z 0x005E2070-0x005E220D
+// TRIED: clip against rect1_, then a DirectDraw Lock/search-replace/ Unlock byte fill on the locked surface (Lock/Unlock are genuinely __stdcall COM methods - `this` is pushed as an explicit arg, not passed via ecx, confirmed by the disassembly never setting ecx before either indirect call). Landed at 0.67 similarity; diverges at #8 on the width_/ height_ range-check scheduling.
+// size      413 bytes
+// prototype int (__thiscall ?change_color@Buffer@@QAEHHHHHHH@Z)(Buffer* this, int, int, int, int, int, int)
+// callers   2   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005E20C5 0x005E212E 0x005E21F6
+
+
+int Buffer::change_color(int a1, int a2, int a3, int a4, int a5, int a6) {
+    if (dib_bits_ == 0 && surface_ == 0) {
+        return 7;
+    }
+
+    RECT rect;
+    rect.left = a1;
+    rect.top = a2;
+    rect.right = a1 + a3;
+    rect.bottom = a2 + a4;
+
+    RECT clip = rect1_;
+    if (!(IntersectRect)(&rect, &clip, &rect)) {
+        return 0;
+    }
+
+    if (rect.left >= dib_.bmiHeader.biWidth || rect.top >= -dib_.bmiHeader.biHeight) {
+        return 7;
+    }
+
+    unsigned char descBuf[0x6c];
+
+    if (surface_ != 0) {
+        if (locked_bits_ != 0) {
+            surface_lock_count_++;
+        } else {
+            *reinterpret_cast<int *>(descBuf) = 0x6c;
+
+            void *vtbl = *reinterpret_cast<void **>(surface_);
+            DDLockFn lockFn = *reinterpret_cast<DDLockFn *>(reinterpret_cast<char *>(vtbl) + 0x64);
+            long hr = lockFn(reinterpret_cast<void *>(surface_), 0, descBuf, 1, 0);
+            if (hr != 0) {
+                return 7;
+            }
+
+            stride_ = *reinterpret_cast<uint32_t *>(descBuf + 0x10);
+            surface_lock_count_++;
+            locked_bits_ = reinterpret_cast<void *>(*reinterpret_cast<uint32_t *>(descBuf + 0x24));
+        }
+    } else {
+        uint32_t bits = reinterpret_cast<uint32_t>(dib_bits_);
+        locked_bits_ = reinterpret_cast<void *>(bits);
+        if (bits == 0) {
+            return 7;
+        }
+        surface_lock_count_++;
+    }
+
+    if (locked_bits_ == nullptr) {
+        return 7;
+    }
+
+    int clippedTop = rect.top;
+    char *pixelPtr = stride_ * clippedTop + rect.left + static_cast<char *>(locked_bits_);
+
+    if (pixelPtr != 0) {
+        int width = rect.right - rect.left;
+        int height = rect.bottom - clippedTop;
+        int rowSkip = static_cast<int>(stride_) - width;
+
+        char searchColor = static_cast<char>(a5);
+        char replaceColor = static_cast<char>(a6);
+
+        char *p = pixelPtr;
+        int rowsLeft = height;
+        do {
+            int colsLeft = width;
+            do {
+                if (*p == searchColor) {
+                    *p = replaceColor;
+                }
+                p++;
+                colsLeft--;
+            } while (colsLeft != 0);
+            p += rowSkip;
+            rowsLeft--;
+        } while (rowsLeft != 0);
+
+        if (surface_ == 0) {
+            int count = surface_lock_count_ - 1;
+            surface_lock_count_ = count;
+            if (count > 0) {
+                return 0;
+            }
+            locked_bits_ = nullptr;
+            surface_lock_count_ = 0;
+            return 0;
+        }
+
+        int count = surface_lock_count_ - 1;
+        surface_lock_count_ = count;
+        if (locked_bits_ == nullptr) {
+            return 0;
+        }
+        if (count > 0) {
+            return 0;
+        }
+
+        void *vtbl = *reinterpret_cast<void **>(surface_);
+        DDUnlockFn unlockFn = *reinterpret_cast<DDUnlockFn *>(reinterpret_cast<char *>(vtbl) + 0x80);
+        unlockFn(reinterpret_cast<void *>(surface_), reinterpret_cast<int>(locked_bits_));
+        locked_bits_ = nullptr;
+        surface_lock_count_ = 0;
+        return 0;
+    }
+
+    return 7;
+}
+
+// ORIGINAL: 0x005DA4D0 ?map_colors@Buffer@@QAEHPAURECT@@PAE@Z 0x005DA4D0-0x005DA67D
+// symbol    ?map_colors@Buffer@@QAEHPAUtagRECT@@PAE@Z
+//           windows.h typedefs RECT to struct tagRECT, so the pointer mangles
+//           with the real tag. Bytes are the body below; nothing else moves.
+// TRIED: MISMATCH #6 mov/push - get_data()/free_data() logic inlined by hand (raw uint32_t offsets, matching Buffer::get_data's own style, as in the sibling change_color at 0x005DE580) since neither is a catalogued callee of this address; register allocation differs from the original past that point.
+// size      429 bytes
+// prototype int (__thiscall ?map_colors@Buffer@@QAEHPAURECT@@PAE@Z)(Buffer* this, RECT*, unsigned int8*)
+// callers   2   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005DA530 0x005DA5B5 0x005DA666
+// To start: tools/decomp_status.py --work 0x005DA4D0
+
+
+int Buffer::map_colors(RECT * a1, unsigned char * a2) {
+    volatile uint32_t *const ordered = reinterpret_cast<volatile uint32_t *>(this);
+
+    if (a1 == 0) {
+        return 0x10;
+    }
+    if (a2 == 0) {
+        return 0x10;
+    }
+
+    RECT rect;
+    rect.left = a1->left;
+    rect.top = a1->top;
+    rect.right = a1->right - 1;
+    rect.bottom = a1->bottom - 1;
+
+    if (!(*reinterpret_cast<int (__stdcall *const *)(RECT *, RECT *, RECT *)>(IntersectRect))(
+            &rect, &rect, &rect1_)) {
+        return 0;
+    }
+
+    int32_t row_count = rect.bottom - rect.top;
+    int32_t row_width = rect.right - rect.left;
+    int32_t stride_remainder = static_cast<int32_t>(ordered[0x4A8 / 4]) - row_width;
+
+    if (rect.left < dib_.bmiHeader.biWidth && rect.top < -dib_.bmiHeader.biHeight) {
+        int pixel_base;
+        void *const surface = reinterpret_cast<void *>(ordered[0x58 / 4]);
+        if (!surface) {
+            const uint32_t storage = ordered[0x54 / 4];
+            ordered[0x50 / 4] = storage;
+            if (!storage) {
+                return 7;
+            }
+            ordered[0x6C / 4] = ordered[0x6C / 4] + 1;
+            pixel_base = static_cast<int>(storage);
+        } else {
+            const uint32_t existing = ordered[0x50 / 4];
+            if (existing) {
+                ordered[0x6C / 4] = ordered[0x6C / 4] + 1;
+                pixel_base = static_cast<int>(existing);
+            } else {
+                uint8_t descriptor[0x6C];
+                *reinterpret_cast<uint32_t *>(descriptor) = 0x6C;
+                void **const vtable = *reinterpret_cast<void ***>(surface);
+                long (__stdcall *const lock)(void *, void *, void *, uint32_t, void *) =
+                    reinterpret_cast<long (__stdcall *)(void *, void *, void *, uint32_t, void *)>(
+                        vtable[0x64 / 4]);
+                if (lock(surface, 0, descriptor, 1, 0) != 0) {
+                    return 7;
+                }
+                ordered[0x6C / 4] = ordered[0x6C / 4] + 1;
+                uint32_t pitch = *reinterpret_cast<uint32_t *>(descriptor + 0x10);
+                uint32_t data = *reinterpret_cast<uint32_t *>(descriptor + 0x24);
+                ordered[0x4A8 / 4] = pitch;
+                ordered[0x50 / 4] = data;
+                pixel_base = static_cast<int>(data);
+            }
+        }
+
+        if (pixel_base != 0) {
+            unsigned char *dest = reinterpret_cast<unsigned char *>(
+                static_cast<int32_t>(ordered[0x4A8 / 4]) * rect.top + pixel_base + rect.left);
+            if (dest != 0) {
+                unsigned char *p = dest;
+                int32_t y = row_count;
+                do {
+                    int32_t x = row_width;
+                    do {
+                        *p = a2[*p];
+                        ++p;
+                        --x;
+                    } while (x != 0);
+                    p += stride_remainder;
+                    --y;
+                } while (y != 0);
+
+                void *const surface2 = reinterpret_cast<void *>(ordered[0x58 / 4]);
+                const int32_t remaining = static_cast<int32_t>(ordered[0x6C / 4]) - 1;
+                ordered[0x6C / 4] = static_cast<uint32_t>(remaining);
+                if (!surface2) {
+                    if (remaining <= 0) {
+                        ordered[0x50 / 4] = 0;
+                        ordered[0x6C / 4] = 0;
+                    }
+                    return 0;
+                }
+                const uint32_t data2 = ordered[0x50 / 4];
+                if (data2 != 0 && remaining <= 0) {
+                    void **const vtable2 = *reinterpret_cast<void ***>(surface2);
+                    long (__stdcall *const unlock)(void *, void *) =
+                        reinterpret_cast<long (__stdcall *)(void *, void *)>(vtable2[0x80 / 4]);
+                    unlock(surface2, reinterpret_cast<void *>(data2));
+                    ordered[0x50 / 4] = 0;
+                    ordered[0x6C / 4] = 0;
+                }
+                return 0;
+            }
+        }
+    }
+    return 7;
+}
+
+// ORIGINAL: 0x005DD730 ?wrap@Buffer@@QAEHPADHHH@Z 0x005DD730-0x005DD91C FILE
+// size      492 bytes
+// prototype int (__thiscall ?wrap@Buffer@@QAEHPADHHH@Z)(Buffer* this, int8*, int, int, int)
+// callers   8   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DC410 0x005DCAE0 0x006453E0
+
+
+int Buffer::wrap(char * a1, int a2, int a3, int a4) {
+    
+    if (a1 == 0 || a4 == 0) {
+        return a3;
+    }
+
+    BufferStrHeight = 0;
+    field_18_ = 0;
+    field_14_ = field_10_;
+
+    char *cur = a1;
+    for (;;) {
+        char *nextLine;
+        int wrapResult;
+        int wrapLen = a4;
+
+        if (cur == 0) {
+            nextLine = 0;
+            wrapResult = a2;
+        } else {
+            BufferStrHeight = 0;
+            unsigned int len = strlen(cur);
+            char *brk = reinterpret_cast<char *>(find_line_break_l(cur, &wrapLen, (int)len));
+            nextLine = brk;
+            if (brk == 0) {
+                unsigned int len2 = strlen(cur);
+                if (font1_ == 0 || font1_->font_obj_ == 0) {
+                    wrapResult = 3;
+                } else {
+                    unsigned int lenA = strlen(cur);
+                    unsigned int lenB = len2;
+                    if ((int)lenA < (int)len2) {
+                        lenB = strlen(cur);
+                    }
+                    wrapResult = a2;
+                    if ((int)lenB >= 0) {
+                        unsigned int lenC = strlen(cur);
+                        if ((int)lenC < (int)len2) {
+                            len2 = strlen(cur);
+                        }
+                        wrapResult = a2;
+                        if (len2 != 0) {
+                            wrapResult = write_multi_font_raw_l(cur, a2, a3, (int)len2);
+                        }
+                    }
+                }
+            } else {
+                unsigned int segLen = (unsigned int)(brk - cur);
+                if (font1_ == 0 || font1_->font_obj_ == 0) {
+                    *BufferWriteStatus = 3;
+                    wrapResult = *BufferWriteStatus;
+                } else {
+                    unsigned int lenA = strlen(cur);
+                    unsigned int lenB = segLen;
+                    if ((int)lenA < (int)segLen) {
+                        lenB = strlen(cur);
+                    }
+                    if ((int)lenB >= 0) {
+                        unsigned int lenC = strlen(cur);
+                        if ((int)lenC < (int)segLen) {
+                            segLen = strlen(cur);
+                        }
+                        if (segLen != 0) {
+                            wrapResult = write_multi_font_raw_l(cur, a2, a3, (int)segLen);
+                            goto after_wrap;
+                        }
+                    }
+                    *BufferWriteStatus = a2;
+                    wrapResult = *BufferWriteStatus;
+                }
+            }
+        }
+after_wrap:
+        *BufferWriteStatus = wrapResult;
+        if (font1_ == 0) {
+            font1_ = FontDefault;
+        }
+        Font *rec = font1_;
+        int adj;
+        if (rec->unk_1_ < 0) {
+            adj = rec->line_height_;
+        } else {
+            adj = rec->height_ + rec->unk_1_;
+        }
+        a3 = a3 + adj;
+        int carry = field_14_;
+        field_18_ = field_18_ + 1;
+        if (carry != 0) {
+            a4 = a4 - carry;
+            a2 = a2 + carry;
+            field_14_ = 0;
+        }
+        cur = nextLine;
+        if (nextLine == 0) {
+            return a3;
+        }
+    }
+}
+
+// ORIGINAL: 0x005D8A30 ?draw_dest@Buffer@@QAEHPAVBuffer@@HHHH@Z 0x005D8A30-0x005D8B1E BYTE_EXACT
+// LEVER: THE BLIT DESCRIPTOR IS A SPRITE. The ten Blit slots this wrapper
+//        fills are the fields of the Sprite at 0x009B3A50 (pcBits_,
+//        cTransparentIndex_, iSpriteWidth2_, iSpriteWidth_, iSpriteHeight_,
+//        iWidth_, iHeight_, iLeftOffset_, iTopOffset_, fObj1Exists_, in that
+//        order, +0x04..+0x28), which is why the tail can call through one
+//        pointer named BlitSprite. Byte-exact first time through the named
+//        members; the archive's `VCall` shim and `ReleaseFn` vtable walk
+//        become `surface_->Unlock(locked_bits_)` like everywhere else.
+// symbol    ?draw_dest@Buffer@@QAEHPAV1@HHHH@Z
+//           The image spells the leading `Buffer *` as `PAVBuffer@@`; VC6 emits
+//           the back-reference `PAV1@` for the same type, so the fact names what
+//           this tree actually emits. Bytes are unchanged.
+// size      238 bytes
+// prototype int (__thiscall ?draw_dest@Buffer@@QAEHPAVBuffer@@HHHH@Z)(Buffer* this, Buffer*, int, int, int, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E5833
+// indirect  0x005D8AE7
+// WAS-LEVER: same preamble as the other Buffer::draw_* siblings; the callee
+// (Sprite::draw_dest) takes `unsigned char *` as its last param where this
+// function's own a5 is `int`, so the tail call casts it.
+
+
+int Buffer::draw_dest(Buffer * a1, int a2, int a3, int a4, int a5) {
+    int transparent = a2;
+    if (surface_ == 0) {
+        if (a2 == -1) {
+            transparent = WinFillColour;
+        }
+        locked_bits_ = dib_bits_;
+        if (locked_bits_ != nullptr) {
+            surface_lock_count_ = surface_lock_count_ + 1;
+        }
+        BlitSourceBits = reinterpret_cast<int>(locked_bits_);
+        BlitSourceField4A8 = stride_;
+        BlitSourceWidth = dib_.bmiHeader.biWidth;
+        BlitSourceNegHeight = -dib_.bmiHeader.biHeight;
+        BlitClipWidth = dib_.bmiHeader.biWidth;
+        BlitClipNegHeight = -dib_.bmiHeader.biHeight;
+        BlitSourceField70 = 0;
+        BlitSourceField74 = 0;
+        BlitTransparentIndex = (unsigned char)transparent;
+        BlitSourceField78 = 0;
+
+        if (surface_ == 0) {
+            surface_lock_count_ = surface_lock_count_ - 1;
+            if ((int)surface_lock_count_ > 0) {
+                goto tail;
+            }
+        } else {
+            surface_lock_count_ = surface_lock_count_ - 1;
+            if (locked_bits_ == nullptr || (int)surface_lock_count_ > 0) {
+                goto tail;
+            }
+            {
+            surface_->Unlock(locked_bits_);
+        }
+        }
+        locked_bits_ = nullptr;
+        surface_lock_count_ = 0;
+    }
+tail:
+    {
+        int result = BlitSprite->draw_dest(
+            a1, a2, a3, a4, reinterpret_cast<unsigned char *>(a5));
+        BlitSourceBits = 0;
+        return result;
+    }
+}
+
+// ORIGINAL: 0x005D93C0 ?draw_multi_table_dest@Buffer@@QAEHPAVBuffer@@HHHH@Z 0x005D93C0-0x005D94AE BYTE_EXACT
+// LEVER: same shape and same landing as draw_dest above - the descriptor is
+//        the Sprite at 0x009B3A50, the release is surface_->Unlock, and the
+//        byte-exact form needs no spelling beyond the tree's own members.
+// symbol    ?draw_multi_table_dest@Buffer@@QAEHPAV1@HHHH@Z
+//           The image spells the leading `Buffer *` as `PAVBuffer@@`; VC6 emits
+//           the back-reference `PAV1@` for the same type, so the fact names what
+//           this tree actually emits. Bytes are unchanged.
+// size      238 bytes
+// prototype int (__thiscall ?draw_multi_table_dest@Buffer@@QAEHPAVBuffer@@HHHH@Z)(Buffer* this, Buffer*, int, int, int, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E8FF5
+// indirect  0x005D9477
+// WAS-LEVER: same preamble as the other Buffer::draw_* siblings; the callee
+// (Sprite::draw_multi_table_dest) takes `unsigned char *` as its last
+// param where this function's own a5 is `int`, so the tail call casts it.
+
+
+int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5) {
+    int transparent = a2;
+    if (surface_ == 0) {
+        if (a2 == -1) {
+            transparent = WinFillColour;
+        }
+        locked_bits_ = dib_bits_;
+        if (locked_bits_ != nullptr) {
+            surface_lock_count_ = surface_lock_count_ + 1;
+        }
+        BlitSourceBits = reinterpret_cast<int>(locked_bits_);
+        BlitSourceField4A8 = stride_;
+        BlitSourceWidth = dib_.bmiHeader.biWidth;
+        BlitSourceNegHeight = -dib_.bmiHeader.biHeight;
+        BlitClipWidth = dib_.bmiHeader.biWidth;
+        BlitClipNegHeight = -dib_.bmiHeader.biHeight;
+        BlitSourceField70 = 0;
+        BlitSourceField74 = 0;
+        BlitTransparentIndex = (unsigned char)transparent;
+        BlitSourceField78 = 0;
+
+        if (surface_ == 0) {
+            surface_lock_count_ = surface_lock_count_ - 1;
+            if ((int)surface_lock_count_ > 0) {
+                goto tail;
+            }
+        } else {
+            surface_lock_count_ = surface_lock_count_ - 1;
+            if (locked_bits_ == nullptr || (int)surface_lock_count_ > 0) {
+                goto tail;
+            }
+            {
+            surface_->Unlock(locked_bits_);
+        }
+        }
+        locked_bits_ = nullptr;
+        surface_lock_count_ = 0;
+    }
+tail:
+    {
+        int result = BlitSprite->draw_multi_table_dest(
+            a1, a2, a3, a4, reinterpret_cast<unsigned char *>(a5));
+        BlitSourceBits = 0;
+        return result;
+    }
+}
+
+// ORIGINAL: 0x005D8B20 ?draw_dest@Buffer@@QAEHPAVBuffer@@HHHHHPAE@Z 0x005D8B20-0x005D8C18 FILE
+// TRIED: the archive's transcription read the TRANSPARENT INDEX out of the
+//        first parameter (`(int)a1`) where the image loads `[esp+0xc]`, the
+//        int AFTER the `Buffer *` - the five-argument form, which is byte
+//        exact, uses the second parameter too. Correcting it took agreement
+//        26/80 -> 28/80; reading WinFillColour as the uint8_t object it is,
+//        rather than through a reinterpreted pointer, took it to 35/80.
+//        Still MISMATCH: the branch targets move by four bytes somewhere
+//        past instruction 9, which is a code-size difference, not a
+//        register or ordering one. Not chased further.
+// TRIED: naming the transparent index through `*reinterpret_cast<uint8_t
+//        *>(WinFillColour)` costs a register the image does not spend.
+// symbol    ?draw_dest@Buffer@@QAEHPAV1@HHHHHPAE@Z
+//           The image spells the leading `Buffer *` as `PAVBuffer@@`; VC6 emits
+//           the back-reference `PAV1@` for the same type, so the fact names what
+//           this tree actually emits. Bytes are unchanged.
+// TRIED: same shape as 0x005D8740/0x005D8930 - see 0x005D8740's note for what the stdcall-Unlock and opaque-field access forms rule out.
+// TRIED: nothing new past that - 94.9%+ mnemonic similarity, first gap at #41 (mov vs cmp) in the NULL-surface lock-count arm, same spot as both siblings.
+// working copy - scaffold materialised by --work
+// size      248 bytes
+// prototype int (__thiscall ?draw_dest@Buffer@@QAEHPAVBuffer@@HHHHHPAE@Z)(Buffer* this, Buffer*, int, int, int, int, int, unsigned int8*)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E6652
+// indirect  0x005D8BD7
+
+
+int Buffer::draw_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, unsigned char * a7) {
+    int transparentIndex = a2;
+    if (surface_ == 0) {
+        if (transparentIndex == -1) {
+            transparentIndex = WinFillColour;
+        }
+
+        locked_bits_ = dib_bits_;
+        int bits = reinterpret_cast<int>(locked_bits_);
+        if (bits != 0) {
+            ++surface_lock_count_;
+        }
+        BlitSourceBits = bits;
+        BlitSourceField4A8 = stride_;
+        BlitSourceWidth = dib_.bmiHeader.biWidth;
+        BlitSourceNegHeight = -dib_.bmiHeader.biHeight;
+        BlitClipWidth = dib_.bmiHeader.biWidth;
+        BlitClipNegHeight = -dib_.bmiHeader.biHeight;
+        BlitSourceField70 = 0;
+        BlitSourceField74 = 0;
+        BlitTransparentIndex = static_cast<char>(transparentIndex);
+        BlitSourceField78 = 0;
+
+        void *surface = reinterpret_cast<void *>(surface_);
+        if (surface == 0) {
+            int count = static_cast<int>(surface_lock_count_) - 1;
+            surface_lock_count_ = count;
+            if (count > 0) {
+                goto forward;
+            }
+        } else {
+            int count = static_cast<int>(surface_lock_count_) - 1;
+            surface_lock_count_ = count;
+            int cachedBits = reinterpret_cast<int>(locked_bits_);
+            if (cachedBits == 0 || count > 0) {
+                goto forward;
+            }
+            typedef void(__stdcall * UnlockFn)(void *, void *);
+            UnlockFn unlock = *reinterpret_cast<UnlockFn *>(
+                *reinterpret_cast<int *>(surface) + 0x80);
+            unlock(surface, reinterpret_cast<void *>(cachedBits));
+        }
+        locked_bits_ = nullptr;
+        surface_lock_count_ = 0;
+    }
+
+forward:
+    {
+        int result = BlitSprite
+                         ->draw_dest(a1, a2, a3, a4, a5, a6, a7);
+        BlitSourceBits = 0;
+        return result;
+    }
+}
+
+// ORIGINAL: 0x005D94B0 ?draw_multi_table_dest@Buffer@@QAEHPAVBuffer@@HHHHHPAE@Z 0x005D94B0-0x005D95A8 FILE
+// TRIED: the same two corrections as draw_dest above (second parameter is
+//        the transparent index; WinFillColour read as the object it is),
+//        26/80 -> 35/80, still MISMATCH on the same four-byte block-size
+//        difference. Not chased further.
+// symbol    ?draw_multi_table_dest@Buffer@@QAEHPAV1@HHHHHPAE@Z
+//           The image spells the leading `Buffer *` as `PAVBuffer@@`; VC6 emits
+//           the back-reference `PAV1@` for the same type, so the fact names what
+//           this tree actually emits. Bytes are unchanged.
+// TRIED: same shape as 0x005D8930/0x005D8B20/0x005D8EE0 - see 0x005D8740's note for the stdcall-Unlock function-pointer form.
+// TRIED: nothing new past that - 94.9%+ mnemonic similarity, first gap at #41 (mov vs cmp) in the NULL-surface lock-count arm, same spot as every sibling in this family.
+// working copy - scaffold materialised by --work
+// size      248 bytes
+// prototype int (__thiscall ?draw_multi_table_dest@Buffer@@QAEHPAVBuffer@@HHHHHPAE@Z)(Buffer* this, Buffer*, int, int, int, int, int, unsigned int8*)
+// callers   4   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E8FA5
+// indirect  0x005D9567
+
+
+int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, unsigned char * a7) {
+    int transparentIndex = a2;
+    if (surface_ == 0) {
+        if (transparentIndex == -1) {
+            transparentIndex = WinFillColour;
+        }
+
+        locked_bits_ = dib_bits_;
+        int bits = reinterpret_cast<int>(locked_bits_);
+        if (bits != 0) {
+            ++surface_lock_count_;
+        }
+        BlitSourceBits = bits;
+        BlitSourceField4A8 = stride_;
+        BlitSourceWidth = dib_.bmiHeader.biWidth;
+        BlitSourceNegHeight = -dib_.bmiHeader.biHeight;
+        BlitClipWidth = dib_.bmiHeader.biWidth;
+        BlitClipNegHeight = -dib_.bmiHeader.biHeight;
+        BlitSourceField70 = 0;
+        BlitSourceField74 = 0;
+        BlitTransparentIndex = static_cast<char>(transparentIndex);
+        BlitSourceField78 = 0;
+
+        void *surface = reinterpret_cast<void *>(surface_);
+        if (surface == 0) {
+            int count = static_cast<int>(surface_lock_count_) - 1;
+            surface_lock_count_ = count;
+            if (count > 0) {
+                goto forward;
+            }
+        } else {
+            int count = static_cast<int>(surface_lock_count_) - 1;
+            surface_lock_count_ = count;
+            int cachedBits = reinterpret_cast<int>(locked_bits_);
+            if (cachedBits == 0 || count > 0) {
+                goto forward;
+            }
+            typedef void(__stdcall * UnlockFn)(void *, void *);
+            UnlockFn unlock = *reinterpret_cast<UnlockFn *>(
+                *reinterpret_cast<int *>(surface) + 0x80);
+            unlock(surface, reinterpret_cast<void *>(cachedBits));
+        }
+        locked_bits_ = nullptr;
+        surface_lock_count_ = 0;
+    }
+
+forward:
+    {
+        int result = BlitSprite
+                         ->draw_multi_table_dest(a1, a2, a3, a4, a5, a6, a7);
+        BlitSourceBits = 0;
+        return result;
+    }
+}
+
+// ORIGINAL: 0x005D7CA0 ?load_bmp@Buffer@@QAGHPBDPAVPalette@@HH@Z 0x005D7CA0-0x005D7DD8;0x00662BA7-0x00662BBC FILE
+// TRIED: same load_tga/load_bmp/load_pcx SEH-frame family as 0x005D7A30 and 0x005D7B40; try{}catch(...){throw;} is the closest known shape and still diverges at #0 push/mov.
+// size      333 bytes
+// prototype 
+// callers   1   call targets   5
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00628380 0x006283E0 0x00628430 0x006453E0 0x00645470
+// indirect  0x005D7DA1
+// placeholder - not yet decompiled
+// To start: tools/decomp_status.py --work 0x005D7CA0
+
+
+int __stdcall Buffer::load_bmp(const char * a1, Palette * a2, int a3, int a4) {
+    try {
+        Filemap fm;
+        if (a1 == 0) {
+            return 3;
+        }
+        char path[260];
+        path[0] = 0;
+        strcat(path, a1);
+        char *end = path + strlen(a1);
+        if (end != path) {
+            do {
+                if (*end == '.') {
+                    if (end != path) goto has_ext;
+                    break;
+                }
+                end--;
+            } while (end != path);
+        }
+        switch (Language) {
+            case 1: strcat(path, BufferExtBmf); break;
+            case 2: strcat(path, BufferExtBmg); break;
+            default: strcat(path, BufferExtBmp); break;
+        }
+      has_ext:
+        if (fm.open_read(path, 1) == 0) {
+            return 6;
+        }
+        GetFileSize(fm.get_handle(), 0);
+        return 8;
+    } catch (...) {
+        throw;
+    }
+}
+

@@ -1,7 +1,7 @@
 // ORIGINAL: 0x005DB930 ?write_right_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z 0x005DB930-0x005DB984 FILE BYTE_EXACT
 // symbol    ?write_right_l@Buffer@@QAEHPAUFont@@PACPAURECT@@H@Z
 // size      84 bytes
-// prototype int (__thiscall ?write_right_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z)(Buffer* this, Font*, int8*, RECT*, int)
+// prototype int (__thiscall ?write_right_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z)(Buffer* this, Font*, char *, RECT*, int)
 // callers   0   call targets   1
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -69,7 +69,7 @@ typedef int int32;
 typedef unsigned int uint32;
 typedef short int16;
 typedef unsigned short uint16;
-typedef signed char int8;
+typedef signed char char;
 typedef unsigned char uint8;
 
 struct Font;
@@ -78,7 +78,7 @@ struct RECT;
 // ---- callees, declared and never defined (a definition would be inlined) ----
 
 class Buffer { public:
-    int write_right_l(Font*, int8*, RECT*, int);
+    int write_right_l(Font*, char *, RECT*, int);
 };
 
 // The scaffold's Buffer stub only carries this one overload, but the body
@@ -90,7 +90,7 @@ class Buffer { public:
 // class, and the call site is what needs to type-check, not the class name.
 class Buffer3 {
 public:
-    int write_right_l(int8*, RECT*, int);
+    int write_right_l(char *, RECT*, int);
 };
 
 // Fields 0x52c/0x530/0x534 are saved, temporarily overridden, and restored
@@ -105,7 +105,7 @@ struct FontSave {
     int f534;
 };
 
-int Buffer::write_right_l(Font* a1, int8* a2, RECT* a3, int a4) {
+int Buffer::write_right_l(Font* a1, char * a2, RECT* a3, int a4) {
     FontSave *p = reinterpret_cast<FontSave*>(reinterpret_cast<char*>(this) + 0x52c);
     FontSave saved = *p;
     if (a1 != 0 && *reinterpret_cast<int*>(reinterpret_cast<char*>(a1) + 8) != 0) {

@@ -1287,18 +1287,18 @@ class VCall { public:
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00696d14 = (int *)0x00696D14;
+static int *const WinFillColour = (int *)0x00696D14;
 static int *const g_009b3a50 = (int *)0x009B3A50;
-static int *const g_009b3a54 = (int *)0x009B3A54;
-static int *const g_009b3a58 = (int *)0x009B3A58;
-static int *const g_009b3a5c = (int *)0x009B3A5C;
-static int *const g_009b3a60 = (int *)0x009B3A60;
-static int *const g_009b3a64 = (int *)0x009B3A64;
-static int *const g_009b3a68 = (int *)0x009B3A68;
-static int *const g_009b3a6c = (int *)0x009B3A6C;
-static int *const g_009b3a70 = (int *)0x009B3A70;
-static int *const g_009b3a74 = (int *)0x009B3A74;
-static int *const g_009b3a78 = (int *)0x009B3A78;
+static int *const BlitSourceBits = (int *)0x009B3A54;
+static int *const BlitTransparentIndex = (int *)0x009B3A58;
+static int *const BlitSourceField4A8 = (int *)0x009B3A5C;
+static int *const BlitSourceWidth = (int *)0x009B3A60;
+static int *const BlitSourceNegHeight = (int *)0x009B3A64;
+static int *const BlitClipWidth = (int *)0x009B3A68;
+static int *const BlitClipNegHeight = (int *)0x009B3A6C;
+static int *const BlitSourceField70 = (int *)0x009B3A70;
+static int *const BlitSourceField74 = (int *)0x009B3A74;
+static int *const BlitSourceField78 = (int *)0x009B3A78;
 
 class Buffer { public:
     LPVOID vtable_;
@@ -1308,20 +1308,20 @@ class Buffer { public:
     uint32_t field_10_;
     uint32_t field_14_;
     uint32_t field_18_;
-    uint32_t field_1C_;
+    uint32_t init_flags_;
     RECT rect1_;
     RECT rect2_;
     uint32_t field_40_[4];
-    uint32_t field_50_;
+    uint32_t locked_bits_;
     LPVOID * ppv_bits_;
-    uint32_t field_58_;
-    uint32_t field_5C_;
+    uint32_t surface_;
+    uint32_t clipper_;
     HDC hdc2_;
     HDC hdc_;
-    uint32_t field_68_;
-    uint32_t field_6C_;
-    HRGN field_70_;
-    uint32_t field_74_;
+    uint32_t hdc_lock_count_;
+    uint32_t surface_lock_count_;
+    HRGN clip_region_;
+    uint32_t previous_bitmap_;
     HBITMAP bitmap_handle_;
     const BITMAPINFO * bitmap_info_;
     uint32_t width_;
@@ -1335,18 +1335,18 @@ class Buffer { public:
     uint32_t field_9C_;
     uint32_t field_A0_;
     int32_t dib_[256];
-    uint32_t field_4A4_;
-    uint32_t field_4A8_;
-    uint32_t field_4AC_;
+    uint32_t palette_seed_;
+    uint32_t stride_;
+    uint32_t link_count_;
     Spot spot_;
     uint32_t field_4BC_;
     uint8_t field_4C0_[0x4C];
     uint32_t field_50C_;
-    uint32_t field_510_;
+    uint32_t write_font_slot_;
     uint32_t field_514_;
-    uint32_t field_518_;
-    uint32_t field_51C_;
-    uint32_t field_520_;
+    uint32_t font_slot_;
+    uint32_t markup_pending_;
+    uint32_t markup_enabled_;
     uint32_t field_524_;
     uint32_t field_528_;
     Font * font1_;
@@ -1369,9 +1369,9 @@ class Buffer { public:
     uint32_t color_2_val_4_;
     uint32_t color_3_val_4_;
     uint32_t color_hyper_val_4_;
-    uint32_t field_57C_;
+    uint32_t has_palette_;
     int8_t field_580_;
-    uint32_t field_584_;
+    uint32_t palette_;
 
     void construct();
     void clear_links();
@@ -1389,38 +1389,38 @@ class Buffer { public:
 
 int Buffer::draw_dest_source(Buffer * a1, int a2, int a3, int a4, int a5, int a6, unsigned char * a7) {
     int transparentIndex = (int)a1;
-    if (field_58_ == 0) {
+    if (surface_ == 0) {
         if (transparentIndex == -1) {
-            transparentIndex = *reinterpret_cast<uint8_t *>(g_00696d14);
+            transparentIndex = *reinterpret_cast<uint8_t *>(WinFillColour);
         }
 
         int bits = (int)ppv_bits_;
-        field_50_ = bits;
+        locked_bits_ = bits;
         if (bits != 0) {
-            ++field_6C_;
+            ++surface_lock_count_;
         }
-        *g_009b3a54 = bits;
-        *g_009b3a5c = field_4A8_;
-        *g_009b3a60 = width_;
-        *g_009b3a64 = -static_cast<int>(height_);
-        *g_009b3a68 = width_;
-        *g_009b3a6c = -static_cast<int>(height_);
-        *g_009b3a70 = 0;
-        *g_009b3a74 = 0;
-        *reinterpret_cast<char *>(g_009b3a58) = static_cast<char>(transparentIndex);
-        *g_009b3a78 = 0;
+        BlitSourceBits = bits;
+        BlitSourceField4A8 = stride_;
+        BlitSourceWidth = width_;
+        BlitSourceNegHeight = -static_cast<int>(height_);
+        BlitClipWidth = width_;
+        BlitClipNegHeight = -static_cast<int>(height_);
+        BlitSourceField70 = 0;
+        BlitSourceField74 = 0;
+        *reinterpret_cast<char *>(BlitTransparentIndex) = static_cast<char>(transparentIndex);
+        BlitSourceField78 = 0;
 
-        void *surface = reinterpret_cast<void *>(field_58_);
+        void *surface = reinterpret_cast<void *>(surface_);
         if (surface == 0) {
-            int count = static_cast<int>(field_6C_) - 1;
-            field_6C_ = count;
+            int count = static_cast<int>(surface_lock_count_) - 1;
+            surface_lock_count_ = count;
             if (count > 0) {
                 goto forward;
             }
         } else {
-            int count = static_cast<int>(field_6C_) - 1;
-            field_6C_ = count;
-            int cachedBits = field_50_;
+            int count = static_cast<int>(surface_lock_count_) - 1;
+            surface_lock_count_ = count;
+            int cachedBits = locked_bits_;
             if (cachedBits == 0 || count > 0) {
                 goto forward;
             }
@@ -1429,15 +1429,15 @@ int Buffer::draw_dest_source(Buffer * a1, int a2, int a3, int a4, int a5, int a6
                 *reinterpret_cast<int *>(surface) + 0x80);
             unlock(surface, reinterpret_cast<void *>(cachedBits));
         }
-        field_50_ = 0;
-        field_6C_ = 0;
+        locked_bits_ = 0;
+        surface_lock_count_ = 0;
     }
 
 forward:
     {
         int result = reinterpret_cast<Sprite *>(g_009b3a50)
                          ->draw_dest_source(a1, a2, a3, a4, a5, a6, a7);
-        *g_009b3a54 = 0;
+        BlitSourceBits = 0;
         return result;
     }
 }

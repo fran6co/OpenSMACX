@@ -22,9 +22,7 @@ public:
     typedef int (__cdecl *Slot29Fn)(void *, int, void *);
     typedef int (__cdecl *Slot5Fn)(void *, int, int, int, int, int);
     typedef int (__cdecl *Slot32Fn)(void *, int);
-    char *base = (char *)this;
-    char *abase = (char *)a1;
-    void *piVar1;
+            void *piVar1;
     unsigned int local_8, local_4;
     int result;
     int vt;
@@ -49,23 +47,23 @@ public:
         unsigned int uVar2 = a2;
         int val54;
         if (a2 == (int)0xffffffff) {
-            uVar2 = *(unsigned char *)g_00696d14;
+            uVar2 = *(unsigned char *)WinFillColour;
         }
         val54 = *(int *)(base + 0x54);
-        *g_009b3a54 = val54;
+        BlitSourceBits = val54;
         *(int *)(base + 0x50) = val54;
         if (val54 != 0) {
             *(int *)(base + 0x6c) = *(int *)(base + 0x6c) + 1;
         }
-        *g_009b3a5c = *(int *)(base + 0x4a8);
-        *g_009b3a60 = *(int *)(base + 0x80);
-        *g_009b3a64 = -*(int *)(base + 0x84);
-        *g_009b3a68 = *(int *)(base + 0x80);
-        *g_009b3a6c = -*(int *)(base + 0x84);
-        *g_009b3a70 = 0;
-        *g_009b3a74 = 0;
-        *(unsigned char *)g_009b3a58 = (unsigned char)uVar2;
-        *g_009b3a78 = 0;
+        BlitSourceField4A8 = *(int *)(base + 0x4a8);
+        BlitSourceWidth = *(int *)(base + 0x80);
+        BlitSourceNegHeight = -*(int *)(base + 0x84);
+        BlitClipWidth = *(int *)(base + 0x80);
+        BlitClipNegHeight = -*(int *)(base + 0x84);
+        BlitSourceField70 = 0;
+        BlitSourceField74 = 0;
+        *(unsigned char *)BlitTransparentIndex = (unsigned char)uVar2;
+        BlitSourceField78 = 0;
         piVar1 = *(void **)(base + 0x58);
         if (piVar1 == 0) {
             int newcnt = *(int *)(base + 0x6c) - 1;
@@ -89,6 +87,6 @@ public:
     }
 LAB:
     result = ((SpriteShim *)g_009b3a50)->draw(a1, a2, a3, a4);
-    *g_009b3a54 = 0;
+    BlitSourceBits = 0;
     return result;
 }

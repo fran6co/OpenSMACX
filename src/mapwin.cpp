@@ -25,6 +25,8 @@
 #include "net_class.h"
 #include "texture.h"
 #include "imagebutton.h"
+#include "map.h"       // MapLongitudeBounds / MapLatitudeBounds / MapIsFlat / map_tiles
+#include "general.h"   // mem_get, and the game-state flags the painters read
 #include <cstring>
 #include <stdlib.h>
 
@@ -138,7 +140,6 @@ void MapWin::do_image_buttons() {
 }
 
 
-
 MainInterface MainInterfaceGlobal;  // 0x007AE820
 // AN ARRAY: the image pushes 0x009B86A0 as an immediate. Extent is a
 // floor - nothing recovered bounds the writes.
@@ -233,7 +234,6 @@ void MapWin::on_sys_close() {
 }
 
 
-
 /*
 Purpose: Report a left click on the map, but only when map input is enabled.
          Reached through the GraphicWin virtual base, so `this` points there
@@ -280,7 +280,6 @@ void MapWin::on_right_click(int a, int b) {
 }
 
 
-
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 // ORIGINAL: 0x0046EBD0 ?on_left_double_click@MapWin@@QAEXHH@Z 0x0046EBD0-0x0046EBD3 BYTE_EXACT
@@ -310,7 +309,6 @@ Status: Complete
 */
 void MapWin::on_left_up(int, int) {
 }
-
 
 
 /*
@@ -662,4 +660,548 @@ Status: Complete
 // game_close (game.cpp) documents.
 void MapWin::on_lose_mouse_capture() {
     go_reset();
+}
+
+// ====================
+// 0x0068FAF0 - THE TILE ARRAY'S ROW STRIDE, the multiplier in every
+// `x + stride * y` tile lookup this file does. A named binding rather than an
+// object, the same convention map.h's AltNatural uses for its neighbour at
+// 0x0068FB4C: the image holds it at this fixed address and nothing here maps
+// that storage.
+static int *const MapRowStride = (int *)0x0068FAF0;
+
+// 0x00685684 and the five tables behind it - THE ALTITUDE BONUS LOOKUP
+// `get_alt` walks. 0x00685684 is the direction table (five bytes a direction,
+// the first naming it and the four after it the neighbours it fans out to);
+// the other five are the per-terrain bonus rows that direction's byte is
+// indexed into. Named bindings, not objects, for the same reason as
+// MapRowStride above: the image holds them at these fixed addresses and
+// nothing here maps that storage.
+static const unsigned char *const AltDirectionTable = (const unsigned char *)0x00685684;
+static const unsigned char *const AltBonusArid = (const unsigned char *)0x007D3B74;
+static const unsigned char *const AltBonusMoist = (const unsigned char *)0x007F65D0;
+static const unsigned char *const AltBonusRainy = (const unsigned char *)0x007F655C;
+static const unsigned char *const AltBonusFlat = (const unsigned char *)0x007D3A78;
+static const unsigned char *const AltBonusOcean = (const unsigned char *)0x007F64E8;
+// 0x00685EA0 / 0x00685EE0 - the two coordinate-stride tables the same walk
+// adds to a tile's x and y as it steps outward, indexed by byte offset.
+static const unsigned char *const AltStepX = (const unsigned char *)0x00685EA0;
+// 0x00691E6C / 0x00691E70 - the scale pair the altitude shading divides by:
+// a numerator and a denominator, 1/0 meaning "take the fixed 1/16 step".
+static int *const MapWinCaptionScale = (int *)0x00691E6C;
+static int *const MapWinCaptionDivisor = (int *)0x00691E70;
+static const unsigned char *const AltStepY = (const unsigned char *)0x00685EE0;
+
+// ORIGINAL: 0x00468CD0 ?compute_clip@MapWin@@QAEHHHHPAURECT@@@Z 0x00468CD0-0x00468F8D FILE
+// symbol    ?compute_clip@MapWin@@QAEHHHHPAUtagRECT@@@Z
+//           The same windows.h `typedef struct tagRECT` mangling every other
+//           `RECT *` parameter in this tree carries; the bytes are the body below.
+// TRIED: this->field_1DDC0_ (offset 0x1DDC0, matches self[0x7770] and the class's own field name) and the virtual-base offset table at *(int*)this (vbptr[1] gives the displacement, then +this+0x474 or +0x4c8) reproduce the two IntersectRect-source-rect and default-bottom reads; diverges early (#6) given the function's size (701 bytes, four scan loops) - not chased further.
+// working copy - scaffold materialised by --work
+// size      701 bytes
+// prototype int (__thiscall ?compute_clip@MapWin@@QAEHHHHPAURECT@@@Z)(MapWin* this, int, int, int, RECT*)
+// callers   3   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00462F00
+// indirect  0x00468EF0 0x00468F58
+
+
+int MapWin::compute_clip(int a1, int a2, int a3, RECT * a4) {
+    int *self = reinterpret_cast<int *>(this);
+    RECT rect;
+    int px, py;
+    int count;
+    int row;
+
+    // LEFT edge
+    int leftCol = a1 - a3 * 2;
+    rect.left = 100000;
+    if ((MapIsFlat & 1) == 0) {
+        if (leftCol < 0) {
+            leftCol = MapLongitudeBounds + leftCol;
+        } else if (MapLongitudeBounds <= leftCol) {
+            leftCol = leftCol - MapLongitudeBounds;
+        }
+    }
+    if (a3 >= 0) {
+        row = a2 - a3 * 2;
+        count = a3 * 2 + 1;
+        do {
+            if (row >= 0 && row < MapLatitudeBounds && leftCol >= 0 && leftCol < MapLongitudeBounds) {
+                tile_to_pixel(leftCol, row, &px, &py);
+                if (px < rect.left) {
+                    rect.left = px;
+                }
+            }
+            row += 2;
+            count--;
+        } while (count != 0);
+    }
+
+    // RIGHT edge
+    rect.right = 0;
+    int rightCol = a1 + 2 + a3 * 2;
+    if ((MapIsFlat & 1) == 0) {
+        if (rightCol < 0) {
+            rightCol = MapLongitudeBounds + rightCol;
+        } else if (MapLongitudeBounds <= rightCol) {
+            rightCol = rightCol - MapLongitudeBounds;
+        }
+    }
+    if (a3 >= 0) {
+        row = a2 - a3 * 2;
+        count = a3 * 2 + 1;
+        do {
+            if (row >= 0 && row < MapLatitudeBounds && rightCol >= 0 && rightCol < MapLongitudeBounds) {
+                tile_to_pixel(rightCol, row, &px, &py);
+                if (rect.right < px) {
+                    rect.right = px;
+                }
+            }
+            row += 2;
+            count--;
+        } while (count != 0);
+    }
+
+    // TOP edge
+    int topRow = a2 - a3 * 2;
+    rect.top = 100000;
+    if (topRow < 0 || MapLatitudeBounds <= topRow || a1 < 0 || MapLongitudeBounds <= a1) {
+        rect.top = 0;
+    } else if (a3 >= 0) {
+        int col = a1 - a3 * 2;
+        count = a3 * 2 + 1;
+        do {
+            tile_to_pixel(col, topRow, &px, &py);
+            if (py < rect.top) {
+                rect.top = py;
+            }
+            col += 2;
+            count--;
+        } while (count != 0);
+    }
+
+    // BOTTOM edge
+    rect.bottom = 0;
+    int bottomRow = a2 + 2 + a3 * 2;
+    if (bottomRow < 0 || MapLatitudeBounds <= bottomRow || a1 < 0 || MapLongitudeBounds <= a1) {
+        rect.bottom = -*reinterpret_cast<int *>(*reinterpret_cast<int *>(*self + 4) + 0x4c8 + reinterpret_cast<int>(self));
+    } else if (a3 >= 0) {
+        int col = a1 - a3 * 2;
+        count = a3 * 2 + 1;
+        do {
+            tile_to_pixel(col, bottomRow, &px, &py);
+            if (rect.bottom < py) {
+                rect.bottom = py;
+            }
+            col += 2;
+            count--;
+        } while (count != 0);
+    }
+
+    rect.top = rect.top - self[0x7770];
+
+    RECT *vbaseRect = reinterpret_cast<RECT *>(*reinterpret_cast<int *>(*self + 4) + reinterpret_cast<int>(self) + 0x474);
+    int hit = IntersectRect(a4, &rect, vbaseRect);
+    if (hit != 0) {
+        if (a3 == 0) {
+            int vgrow = (rect.bottom - rect.top) / 4;
+            int hgrow = (rect.right - rect.left) / 4;
+            rect.left = rect.left - hgrow;
+            rect.right = rect.right + hgrow;
+            rect.top = rect.top - vgrow;
+            rect.bottom = rect.bottom + vgrow;
+        }
+        vbaseRect = reinterpret_cast<RECT *>(*reinterpret_cast<int *>(*self + 4) + reinterpret_cast<int>(self) + 0x474);
+        IntersectRect(a4, &rect, vbaseRect);
+    }
+
+    if (a4->right != a4->left && a4->right - a4->left >= 0 && a4->bottom - a4->top > 0) {
+        return 1;
+    }
+    return 0;
+}
+
+// ORIGINAL: 0x0046A4A0 ?draw_tile@MapWin@@QAEXHHH@Z 0x0046A4A0-0x0046A52F FILE
+// working copy - scaffold materialised by --work
+// size      143 bytes
+// prototype void (__thiscall ?draw_tile@MapWin@@QAEXHHH@Z)(MapWin* this, int xCoord, int yCoord, int)
+// callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046A2A0
+
+void MapWin::draw_tile(int a1, int a2, int a3) {
+    char *self = reinterpret_cast<char *>(this);
+    int rowStart = *reinterpret_cast<int *>(self + 0x1dda8);
+    if (a2 >= rowStart &&
+        a2 < *reinterpret_cast<int *>(self + 0x1ddd8) + *reinterpret_cast<int *>(self + 0x1ddd0) + rowStart) {
+        int col = a1;
+        if ((MapIsFlat & 1) == 0) {
+            int colStart = *reinterpret_cast<int *>(self + 0x1dda4);
+            if (a1 < colStart) {
+                col = MapLongitudeBounds + a1;
+            }
+            if (*reinterpret_cast<int *>(self + 0x1ddd4) + *reinterpret_cast<int *>(self + 0x1ddcc) + colStart <= col) {
+                col = col - MapLongitudeBounds;
+            }
+        }
+        int colStart2 = *reinterpret_cast<int *>(self + 0x1dda4);
+        if (col >= colStart2 &&
+            col < *reinterpret_cast<int *>(self + 0x1ddd4) + *reinterpret_cast<int *>(self + 0x1ddcc) + colStart2) {
+            draw_radius(a1, a2, 0, a3);
+        }
+    }
+}
+
+// ORIGINAL: 0x00470ED0 ?init_dummy@MapWin@@QAEXXZ 0x00470ED0-0x00470F68 FILE
+// working copy - scaffold materialised by --work
+// size      152 bytes
+// prototype void (__thiscall ?init_dummy@MapWin@@QAEXXZ)(MapWin* this)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x00644EF2
+
+void MapWin::init_dummy() {
+    unsigned char *base;
+    int count;
+    int offset;
+    int i;
+    int j;
+
+    field_1DD6C_ = 0x19;
+    if (owned_ != 0) {
+        free(owned_);
+        owned_ = 0;
+    }
+    owned_ = mem_get((MapArea + MapArea * 2) << 2);
+    count = MapArea;
+    if (count > 0) {
+        offset = 0;
+        i = 0;
+        do {
+            for (j = 1; j <= 4; j++) {
+                base = (unsigned char *)owned_;
+                base[offset + j - 1] = 0xFF;
+            }
+            for (j = 1; j <= 5; j++) {
+                base = (unsigned char *)owned_;
+                base[offset + j + 3] = 0xFF;
+            }
+            base = (unsigned char *)owned_;
+            base[offset + 9] = 0;
+            base = (unsigned char *)owned_;
+            base[offset + 9] |= (*(unsigned char *)*map_tiles) & 0xD0;
+            offset += 0xC;
+            i++;
+        } while (i < MapArea);
+    }
+}
+
+static int get_alt_ratio(MapWin * w, int count) {
+    if (*MapWinCaptionScale < 1) {
+        int v = ((int)w->field_1DD98_ + 0x10) * count;
+        return (v + ((v >> 0x1f) & 0xf)) >> 4;
+    }
+    return (*MapWinCaptionScale * count) / *MapWinCaptionDivisor;
+}
+
+// ORIGINAL: 0x0046FE70 ?get_alt@MapWin@@QAEHHHH@Z 0x0046FE70-0x00470414 FILE
+// TRIED: get_alt_ratio() helper factoring the repeated scale-ratio computation (4 call sites collapsed to 1 call + reuse); recursive self-call kept inline per original; diverges at insn #3
+// working copy - scaffold materialised by --work
+// size      1444 bytes
+// prototype int (__thiscall ?get_alt@MapWin@@QAEHHHH@Z)(MapWin* this, int, int, int)
+// callers   8   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0046FE70
+
+
+int MapWin::get_alt(int a1, int a2, int a3) {
+    int dirIndex = a3;
+
+    if (a2 < 0 || MapLatitudeBounds <= a2 || a1 < 0 || MapLongitudeBounds <= a1) {
+        return 0;
+    }
+    unsigned char * tile = (unsigned char *)(*map_tiles + (*MapRowStride * a2 + (a1 >> 1)) * 0x2c);
+    unsigned char terrain = *tile;
+    if ((terrain & 0xe0) < 0x60) {
+        return 0;
+    }
+    if (this->owned_ == 0) {
+        return 0;
+    }
+    char * rec = (char *)this->owned_ + ((MapLongitudeBounds >> 1) * a2 + (a1 >> 1)) * 0xc;
+    signed char cached = *(signed char *)(rec + 4 + a3);
+    if (cached != -1) {
+        return (int)cached;
+    }
+
+    unsigned int flags = *(unsigned int *)(tile + 0xc);
+    int bonus = 0;
+    int dirVal = (int)flags >> 0x18;
+    unsigned char byteVal = AltDirectionTable[dirIndex + dirVal * 5];
+    if ((flags & 2) != 0) {
+        bonus = (int)AltBonusArid[byteVal];
+    } else if ((flags & 1) != 0) {
+        bonus = (int)AltBonusMoist[byteVal];
+    } else if ((flags & 0x200) != 0) {
+        bonus = (int)AltBonusRainy[byteVal];
+    } else if ((flags & 0x100) != 0) {
+        bonus = (int)AltBonusFlat[byteVal];
+    } else if ((flags & 0x800) != 0) {
+        bonus = (int)AltBonusOcean[byteVal];
+    }
+
+    if (dirIndex == 0) {
+        int count = this->field_1DD6C_;
+        int ratio = get_alt_ratio(this, count);
+        int val = (((int)(terrain >> 5)) - 3) * ratio;
+        if (bonus < 1) {
+            if (bonus < 0) {
+                int r = get_alt_ratio(this, count);
+                val = val + (r * bonus) / 100;
+                if (val < -0x7e) {
+                    val = -0x7f;
+                }
+            }
+        } else {
+            int r = get_alt_ratio(this, count);
+            val = val + (r * bonus) / 100;
+            if (val > 0x7e) {
+                val = 0x7f;
+            }
+        }
+        int clamped = val;
+        if (clamped > 0x7e) {
+            clamped = 0x7f;
+        }
+        rec[4] = (char)clamped;
+        return val;
+    }
+
+    int iVar9 = dirIndex * 0x10 - 0x10;
+    bool useAltMode = false;
+    int local_c = 0;
+    int local_10 = 0;
+    int local_14 = 0;
+    int iVar6 = iVar9;
+    for (;;) {
+        int nx = *(int32_t *)((char *)AltStepX + iVar6) + a1;
+        if ((*(unsigned char *)MapIsFlat & 1) == 0) {
+            if (nx < 0) {
+                nx = MapLongitudeBounds + nx;
+            } else if (MapLongitudeBounds <= nx) {
+                nx = nx - MapLongitudeBounds;
+            }
+        }
+        int ny = *(int32_t *)((char *)AltStepY + iVar6) + a2;
+        if (ny < 0 || MapLatitudeBounds <= ny || nx < 0 || MapLongitudeBounds <= nx ||
+            (*(unsigned char *)(*map_tiles + (*MapRowStride * ny + (nx >> 1)) * 0x2c) & 0xe0) < 0x60) {
+            break;
+        }
+        int sub = this->get_alt(nx, ny, 0);
+        local_c = local_c + sub;
+        local_10 = local_10 + (*(unsigned char *)(*map_tiles + (*MapRowStride * ny + (nx >> 1)) * 0x2c) >> 5);
+        local_14 = local_14 + 1;
+        iVar6 = iVar6 + 4;
+        if (local_14 > 3) {
+            goto merge;
+        }
+    }
+    local_c = 0;
+    local_10 = 0xc;
+    useAltMode = true;
+
+merge:
+    local_c = local_c >> 2;
+    {
+        int count = this->field_1DD6C_;
+        if (bonus < 1) {
+            if (bonus < 0) {
+                int r = get_alt_ratio(this, count);
+                local_c = local_c + (r * bonus) / 100;
+                if (local_c < -0x7e) {
+                    local_c = -0x7f;
+                }
+            }
+        } else {
+            int r = get_alt_ratio(this, count);
+            local_c = local_c + (r * bonus) / 100;
+            if (local_c > 0x7e) {
+                local_c = 0x7f;
+            }
+        }
+    }
+    dirIndex = -2;
+    {
+        int width = MapLongitudeBounds;
+        int loopCheck;
+        do {
+            int nx = *(int32_t *)((char *)AltStepX + iVar9) + a1;
+            if ((*(unsigned char *)MapIsFlat & 1) == 0) {
+                if (nx < 0) {
+                    nx = nx + width;
+                } else if (width <= nx) {
+                    nx = nx - width;
+                }
+            }
+            int ny = *(int32_t *)((char *)AltStepY + iVar9) + a2;
+            if (ny >= 0 && ny < MapLatitudeBounds && nx >= 0 && nx < width) {
+                nx = nx >> 1;
+                if (this->owned_ != 0) {
+                    int stored = local_c;
+                    if (local_c > 0x7e) {
+                        stored = 0x7f;
+                    }
+                    *((char *)this->owned_ + (dirIndex & 3) + 5 + ((width >> 1) * ny + nx) * 0xc) = (char)stored;
+                }
+                width = MapLongitudeBounds;
+                if (useAltMode) {
+                    int slot = (dirIndex & 3) + 1;
+                    if (this->owned_ != 0 && slot != 0) {
+                        int shift = slot * 4 - 4;
+                        char * cell = (char *)this->owned_ + ((MapLongitudeBounds >> 1) * ny + nx) * 0xc;
+                        unsigned short * dst = (unsigned short *)(cell + 10);
+                        *dst = (unsigned short)((~(0xf << (shift & 0x1f)) & *dst) | (4 << (shift & 0x1f)));
+                        width = MapLongitudeBounds;
+                    }
+                } else {
+                    int slot = (dirIndex & 3) + 1;
+                    if (this->owned_ != 0 && slot != 0) {
+                        int shift = slot * 4 - 4;
+                        char * cell = (char *)this->owned_ + ((MapLongitudeBounds >> 1) * ny + nx) * 0xc;
+                        unsigned short * dst = (unsigned short *)(cell + 10);
+                        unsigned char t = *(unsigned char *)(*map_tiles + (*MapRowStride * ny + nx) * 0x2c);
+                        int v = ((local_10 - ((t >> 3) & 0xfffffffc)) + 4) & 0xf;
+                        *dst = (unsigned short)((~(0xf << (shift & 0x1f)) & *dst) | (v << (shift & 0x1f)));
+                        width = MapLongitudeBounds;
+                    }
+                }
+            }
+            iVar9 = iVar9 + 4;
+            loopCheck = dirIndex + 3;
+            dirIndex = dirIndex + 1;
+        } while (loopCheck < 4);
+    }
+    return local_c;
+}
+
+// ORIGINAL: 0x00462F00 ?tile_to_pixel@MapWin@@QAEXHHPAHPAH@Z 0x00462F00-0x0046303C FILE
+// size      316 bytes
+// prototype void (__thiscall ?tile_to_pixel@MapWin@@QAEXHHPAHPAH@Z)(MapWin* this, int xCoord, int yCoord, int*, int*)
+// callers   18   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046FE70
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x00462F00
+// measured tier  MISMATCH
+// divergence     103
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/00462f00/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?tile_to_pixel@MapWin@@QAEXHHPAHPAH@Z  at 0x00462F00  (316 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+void MapWin::tile_to_pixel(int a1, int a2, int * a3, int * a4) {
+        int wrapped_x = a1;
+    int map_width = MapLongitudeBounds;
+    int y;
+
+    if (a2 < field_1DDA8_ ||
+        a2 >= field_1DDD8_ +
+                  field_1DDD0_ +
+                  field_1DDA8_) {
+        goto out_of_range;
+    }
+
+    {
+        int flag = MapIsFlat & 1;
+        if (flag == 0) {
+            if (a1 < field_1DDA4_) {
+                wrapped_x = map_width + a1;
+            }
+            if (wrapped_x >= *reinterpret_cast<int32_t *>(0x1ddd4) +
+                                  field_1DDCC_ +
+                                  field_1DDA4_) {
+                wrapped_x -= map_width;
+            }
+        }
+
+        int x_min = field_1DDA4_;
+        if (wrapped_x < x_min ||
+            wrapped_x >= *reinterpret_cast<int32_t *>(0x1ddd4) +
+                             field_1DDCC_ + x_min) {
+            goto out_of_range;
+        }
+
+        y = a1 - x_min;
+        if (flag != 0) {
+            goto have_y;
+        }
+        if (y >= 0) {
+            if (y >= map_width) {
+                y -= map_width;
+            }
+            goto have_y;
+        }
+        y += map_width;
+        goto have_y;
+    }
+
+out_of_range:
+    y = a2 - field_1DDA4_;
+    if (y > map_width / 2) {
+        y -= map_width;
+    }
+    if (y >= -(map_width / 2)) {
+        goto have_y;
+    }
+    y += map_width;
+
+have_y:
+    *a3 = field_1DDBC_ * (y - 1) +
+          field_1DDAC_;
+
+    {
+        int sum = get_alt(a1, a2, 4);
+        sum += get_alt(a1, a2, 3);
+        sum += get_alt(a1, a2, 2);
+        sum += get_alt(a1, a2, 1);
+
+        int result_x = a2 - field_1DDA8_;
+        int row_base = field_1DDB0_;
+        sum >>= 2;
+        result_x--;
+        result_x *= field_1DDC0_;
+        result_x += row_base;
+        result_x -= sum;
+        *a4 = result_x;
+    }
 }

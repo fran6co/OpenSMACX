@@ -1279,18 +1279,18 @@ class VCall { public:
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00696d14 = (int *)0x00696D14;
+static int *const WinFillColour = (int *)0x00696D14;
 static int *const g_009b3a50 = (int *)0x009B3A50;
-static int *const g_009b3a54 = (int *)0x009B3A54;
-static int *const g_009b3a58 = (int *)0x009B3A58;
-static int *const g_009b3a5c = (int *)0x009B3A5C;
-static int *const g_009b3a60 = (int *)0x009B3A60;
-static int *const g_009b3a64 = (int *)0x009B3A64;
-static int *const g_009b3a68 = (int *)0x009B3A68;
-static int *const g_009b3a6c = (int *)0x009B3A6C;
-static int *const g_009b3a70 = (int *)0x009B3A70;
-static int *const g_009b3a74 = (int *)0x009B3A74;
-static int *const g_009b3a78 = (int *)0x009B3A78;
+static int *const BlitSourceBits = (int *)0x009B3A54;
+static int *const BlitTransparentIndex = (int *)0x009B3A58;
+static int *const BlitSourceField4A8 = (int *)0x009B3A5C;
+static int *const BlitSourceWidth = (int *)0x009B3A60;
+static int *const BlitSourceNegHeight = (int *)0x009B3A64;
+static int *const BlitClipWidth = (int *)0x009B3A68;
+static int *const BlitClipNegHeight = (int *)0x009B3A6C;
+static int *const BlitSourceField70 = (int *)0x009B3A70;
+static int *const BlitSourceField74 = (int *)0x009B3A74;
+static int *const BlitSourceField78 = (int *)0x009B3A78;
 
 class Buffer { public:
     LPVOID vtable_;
@@ -1300,20 +1300,20 @@ class Buffer { public:
     uint32_t field_10_;
     uint32_t field_14_;
     uint32_t field_18_;
-    uint32_t field_1C_;
+    uint32_t init_flags_;
     RECT rect1_;
     RECT rect2_;
     uint32_t field_40_[4];
-    uint32_t field_50_;
+    uint32_t locked_bits_;
     LPVOID * ppv_bits_;
-    uint32_t field_58_;
-    uint32_t field_5C_;
+    uint32_t surface_;
+    uint32_t clipper_;
     HDC hdc2_;
     HDC hdc_;
-    uint32_t field_68_;
-    uint32_t field_6C_;
-    HRGN field_70_;
-    uint32_t field_74_;
+    uint32_t hdc_lock_count_;
+    uint32_t surface_lock_count_;
+    HRGN clip_region_;
+    uint32_t previous_bitmap_;
     HBITMAP bitmap_handle_;
     const BITMAPINFO * bitmap_info_;
     uint32_t width_;
@@ -1327,18 +1327,18 @@ class Buffer { public:
     uint32_t field_9C_;
     uint32_t field_A0_;
     int32_t dib_[256];
-    uint32_t field_4A4_;
-    uint32_t field_4A8_;
-    uint32_t field_4AC_;
+    uint32_t palette_seed_;
+    uint32_t stride_;
+    uint32_t link_count_;
     Spot spot_;
     uint32_t field_4BC_;
     uint8_t field_4C0_[0x4C];
     uint32_t field_50C_;
-    uint32_t field_510_;
+    uint32_t write_font_slot_;
     uint32_t field_514_;
-    uint32_t field_518_;
-    uint32_t field_51C_;
-    uint32_t field_520_;
+    uint32_t font_slot_;
+    uint32_t markup_pending_;
+    uint32_t markup_enabled_;
     uint32_t field_524_;
     uint32_t field_528_;
     Font * font1_;
@@ -1361,9 +1361,9 @@ class Buffer { public:
     uint32_t color_2_val_4_;
     uint32_t color_3_val_4_;
     uint32_t color_hyper_val_4_;
-    uint32_t field_57C_;
+    uint32_t has_palette_;
     int8_t field_580_;
-    uint32_t field_584_;
+    uint32_t palette_;
 
     void construct();
     void clear_links();
@@ -1413,23 +1413,23 @@ int Buffer::draw(Buffer *a1, int a2, int a3, int a4, int a5, int a6) {
     if (sprite == 0) {
         unsigned int fillColor = static_cast<unsigned int>(a2);
         if (a2 == -1) {
-            fillColor = *reinterpret_cast<unsigned char *>(g_00696d14);
+            fillColor = *reinterpret_cast<unsigned char *>(WinFillColour);
         }
         int savedTint = *reinterpret_cast<int *>(self + 0x54);
         *reinterpret_cast<int *>(self + 0x50) = savedTint;
         if (savedTint != 0) {
             *reinterpret_cast<int *>(self + 0x6c) += 1;
         }
-        *g_009b3a54 = savedTint;
-        *g_009b3a5c = *reinterpret_cast<int *>(self + 0x4a8);
-        *g_009b3a60 = *reinterpret_cast<int *>(self + 0x80);
-        *g_009b3a64 = -*reinterpret_cast<int *>(self + 0x84);
-        *g_009b3a68 = *reinterpret_cast<int *>(self + 0x80);
-        *g_009b3a6c = -*reinterpret_cast<int *>(self + 0x84);
-        *g_009b3a70 = 0;
-        *g_009b3a74 = 0;
-        *reinterpret_cast<unsigned char *>(g_009b3a58) = static_cast<unsigned char>(fillColor);
-        *g_009b3a78 = 0;
+        BlitSourceBits = savedTint;
+        BlitSourceField4A8 = *reinterpret_cast<int *>(self + 0x4a8);
+        BlitSourceWidth = *reinterpret_cast<int *>(self + 0x80);
+        BlitSourceNegHeight = -*reinterpret_cast<int *>(self + 0x84);
+        BlitClipWidth = *reinterpret_cast<int *>(self + 0x80);
+        BlitClipNegHeight = -*reinterpret_cast<int *>(self + 0x84);
+        BlitSourceField70 = 0;
+        BlitSourceField74 = 0;
+        *reinterpret_cast<unsigned char *>(BlitTransparentIndex) = static_cast<unsigned char>(fillColor);
+        BlitSourceField78 = 0;
 
         void *sprite3 = *reinterpret_cast<void **>(self + 0x58);
         if (sprite3 == 0) {
@@ -1455,6 +1455,6 @@ int Buffer::draw(Buffer *a1, int a2, int a3, int a4, int a5, int a6) {
 shared_tail:
     Sprite *const staticSprite = reinterpret_cast<Sprite *>(g_009b3a50);
     int result = staticSprite->draw(a1, a2, a3, a4, a5, a6);
-    *g_009b3a54 = 0;
+    BlitSourceBits = 0;
     return result;
 }
