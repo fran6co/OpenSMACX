@@ -2003,9 +2003,10 @@ Return Value: Did an error occur? true/false
 Status: Complete
 */
 // TRIED: call_diff names the image's target as `__fwrite`
-// (src/recovered/0064603f.cpp, 0x0064603F, a CRT-internal
-// `__lock_file`/`_fwrite`/`__unlock_file` wrapper, already BYTE_EXACT there
-// but NOT a build input) rather than the public `fwrite()`. Neither
+// (src/recovered/0064603f.cpp - deleted 2026-09-03 with the CRT-range
+// demotions - at 0x0064603F, a CRT-internal
+// `__lock_file`/`_fwrite`/`__unlock_file` wrapper, which was BYTE_EXACT
+// there but NOT a build input) rather than the public `fwrite()`. Neither
 // `__fwrite` nor its own callees (`__lock_file`, `__unlock_file`, the raw
 // `_fwrite`) are exported by the linked CRT import libraries - `extern "C"`
 // forward declarations of any of them fail LNK2001, and defining local
