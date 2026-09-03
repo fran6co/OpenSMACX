@@ -174,6 +174,113 @@ int PullDown::uncheck_item(int id) {
 
 
 /*
+Purpose: Append an item, splitting its text at the first '|' into a left half
+         and a right-aligned half, and isolating the mnemonic after '&'.
+         A full table answers 1, a duplicate id answers 1, a missing text or a
+         -1 id answers 3, an occupied slot answers 0xC, and an allocation
+         failure answers 4.
+// ORIGINAL: 0x005F89D0 ?add_item@PullDown@@QAEHHPAD@Z 0x005F89D0-0x005F8BDF BYTE_EXACT
+// LEVER: items_[slot].field with `const int slot = new_count - 1`, NOT a
+//          `PullDownItem *slot = &items_[slot]` pointer. The image keeps
+//          `this + 20*(new_count-1)` in esi and carries items_'s own 0xa18 in
+//          every displacement (`mov [esi+0xa20],ebp` for .id, `[esi+0xa18]`
+//          for .text); a slot pointer emits `[esi+8]` / `[esi+0x10]` instead
+//          and diverges from the very first store. Same shape as the
+//          BYTE_EXACT add_separator beside it. `&items_[slot].mnemonic` is
+//          the one address the image does fold from scratch
+//          (`lea ecx,[edi+edi*4+0x285]; lea ebp,[ebx+ecx*4]`), which is what
+//          spelling the mnemonic through items_[slot] twice lets VC6 CSE.
+// TRIED: the duplicate scan spelled out as a local loop rather than the
+//          shared find_item; the forwarder's Ghidra-derived stack-slot
+//          aliasing reading. find_item is both shorter and the family's
+//          established helper - and `if (duplicate != -1)` is exactly the
+//          constant-propagation shape the image shows (the sentinel-break and
+//          loop-exhaust edges jump straight to the append block because they
+//          carry a known -1, only the dup edge gets a real `cmp eax,-1`).
+// size      527 bytes
+// prototype int (__thiscall ?add_item@PullDown@@QAEHHPAD@Z)(PullDown* this, int, int8*)
+// callers   12   call targets   5
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x005F9D30 0x006453E0 0x00645470 0x00645DD0
+Return Value: 0 when the item was added, else the reason it was not
+Status: Complete
+*/
+int PullDown::add_item(int id, char *text) {
+    const int new_count = ++item_count_;
+    if (new_count > 64) {
+        --item_count_;
+        return 1;
+    }
+    if (text == nullptr || id == -1) {
+        return 3;
+    }
+
+    // A duplicate id is refused; an unused slot is only where the item lands.
+    const int duplicate = find_item(items_, id);
+    if (duplicate != -1) {
+        return 1;
+    }
+
+    const int slot = new_count - 1;
+    items_[slot].id = id;
+    if (items_[slot].text != nullptr) {
+        return 0xC;
+    }
+
+    // Split the text at the '|' first, so both halves are measured from it.
+    char *separator = strchr(text, '|');
+    if (separator != nullptr) {
+        *separator = '\0';
+    }
+
+    items_[slot].text = static_cast<char *>(mem_get(strlen(text) + 1));
+    if (items_[slot].text == nullptr) {
+        items_[slot].id = -1;
+        --item_count_;
+        return 4;
+    }
+    items_[slot].text[0] = '\0';
+    items_[slot].mnemonic = nullptr;
+
+    // '&x' marks the mnemonic; '&&' is an escaped ampersand; '& ' is literal.
+    char *ampersand = strchr(text, '&');
+    if (ampersand != nullptr && ampersand[1] != ' ') {
+        items_[slot].text[0] = '\0';
+        *ampersand = '\0';
+        strcat(items_[slot].text, text);
+        *ampersand = '&';
+        if (ampersand[1] != '&') {
+            items_[slot].mnemonic =
+                items_[slot].text + strlen(items_[slot].text);
+        }
+        strcat(items_[slot].text, ampersand + 1);
+    } else {
+        strcat(items_[slot].text, text);
+    }
+
+    if (separator != nullptr) {
+        items_[slot].right_text =
+            static_cast<char *>(mem_get(strlen(separator + 1) + 1));
+        if (items_[slot].right_text == nullptr) {
+            items_[slot].id = -1;
+            --item_count_;
+            return 4;
+        }
+        items_[slot].right_text[0] = '\0';
+        strcat(items_[slot].right_text, separator + 1);
+        *separator = '|';
+    }
+
+    items_[slot].flags = 1;
+    dirty_ = 1;
+    compute_length(text);
+    ++visible_count_;
+    return 0;
+}
+
+
+/*
 Purpose: Append a separator item to the end of the pull-down, and give it the
          requested ID. A full table answers 1, an unknown ID answers 3, and a
          slot whose text is still allocated answers 0xC.
@@ -214,6 +321,92 @@ int PullDown::add_separator(int id) {
     return 1;
 }
 
+
+/*
+Purpose: Replace the text of the first item carrying the requested ID,
+         splitting and unescaping exactly as add_item does. An empty text
+         answers 3, an unknown ID answers 0xB, and an allocation failure
+         answers 4.
+// ORIGINAL: 0x005F8E50 ?rename_item@PullDown@@QAEHHPAD@Z 0x005F8E50-0x005F903E BYTE_EXACT
+// LEVER: items_[index].field directly, not through a slot pointer - same
+//          lesson as add_item above, and here it is the difference between a
+//          `lea esi,[ebp+eax*4]` with 0xa18 in the displacements and a
+//          `lea esi,[ebp+eax*4]` with the struct offsets there.
+// TRIED: NULL guard on `id` before the scan (add_item has one); rename_item
+//          has no such guard and answers 3 on the text alone - adding it
+//          costs the body its first epilogue.
+// size      494 bytes
+// prototype int (__thiscall ?rename_item@PullDown@@QAEHHPAD@Z)(PullDown* this, int, int8*)
+// callers   2   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x005F9D30 0x00644EF2 0x006453E0 0x00645470 0x00645DD0
+Return Value: 0 when the item was renamed, else the reason it was not
+Status: WIP
+*/
+int PullDown::rename_item(int id, char *text) {
+    if (text == nullptr) {
+        return 3;
+    }
+    const int index = find_item(items_, id);
+    if (index == -1) {
+        return ItemNotFound;
+    }
+
+    // Split the text at the '|' first, so both halves are measured from it.
+    char *separator = strchr(text, '|');
+    if (separator != nullptr) {
+        *separator = '\0';
+    }
+
+    if (items_[index].text != nullptr) {
+        free(items_[index].text);
+        items_[index].text = nullptr;
+    }
+    if (items_[index].right_text != nullptr) {
+        free(items_[index].right_text);
+        items_[index].right_text = nullptr;
+    }
+
+    items_[index].text = static_cast<char *>(mem_get(strlen(text) + 1));
+    if (items_[index].text == nullptr) {
+        return 4;
+    }
+    items_[index].text[0] = '\0';
+    items_[index].mnemonic = nullptr;
+
+    // '&x' marks the mnemonic; '&&' is an escaped ampersand; '& ' is literal.
+    char *ampersand = strchr(text, '&');
+    if (ampersand != nullptr && ampersand[1] != ' ') {
+        items_[index].text[0] = '\0';
+        *ampersand = '\0';
+        strcat(items_[index].text, text);
+        *ampersand = '&';
+        if (ampersand[1] != '&') {
+            items_[index].mnemonic =
+                items_[index].text + strlen(items_[index].text);
+        }
+        strcat(items_[index].text, ampersand + 1);
+    } else {
+        strcat(items_[index].text, text);
+    }
+
+    if (separator != nullptr) {
+        items_[index].right_text =
+            static_cast<char *>(mem_get(strlen(separator + 1) + 1));
+        if (items_[index].right_text == nullptr) {
+            return 4;
+        }
+        items_[index].right_text[0] = '\0';
+        strcat(items_[index].right_text, separator + 1);
+        *separator = '|';
+    }
+
+    compute_length(text);
+    dirty_ = 1;
+    return 0;
+}
+
 /*
 Purpose: Return the selected item index unless that item is disabled.
 // ORIGINAL: 0x005F9F40 ?get_selected@PullDown@@QAEHXZ 0x005F9F40-0x005F9F5C BYTE_EXACT
@@ -248,6 +441,7 @@ int PullDown::get_selected() {
 
 uint32_t PullDownFieldF38Default;  // 0x009B7B58
 uint32_t PullDownFieldF3CDefault;  // 0x009B7B5C
+Font *PullDownDefaultFont;         // 0x009B7B68
 
 /*
 Purpose: Destroy a PullDown by releasing every item's text pair, resetting
@@ -408,6 +602,119 @@ int PullDown::id_to_index(int id) {
         }
     }
     return -1;
+}
+
+
+/*
+Purpose: Resolve width_ to the widest item string, measuring the mnemonically
+         stripped text plus twice the two-space separator plus the right half.
+         A null text re-measures the whole table; a named text measures only
+         that one.
+// ORIGINAL: 0x005F9D30 ?compute_length@PullDown@@QAEHPAD@Z 0x005F9D30-0x005F9F34
+// size      516 bytes
+// prototype int (__thiscall ?compute_length@PullDown@@QAEHPAD@Z)(PullDown* this, int8*)
+// callers   2   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00619280 0x006192F0 0x00645DD0
+// WHAT IT IS: the lazy `PullDownDefaultFont` slot (0x009B7B68, resolved once
+//          from FontDefault) plus the width of the widest item string. Each
+//          arm is the same `width_ = max(width_, <measurement>)` with the max
+//          written OUT as an if that re-evaluates its second operand - 16
+//          calls to Font::width for 8 measurements, because the macro
+//          re-evaluates exactly as Font::width(LPSTR, size_t)'s own documented
+//          min does. The four `push imm32` string arguments are four distinct
+//          instances of the same "  " literal at 0x696E20/24/28/2C, one per
+//          macro expansion in this function.
+// MISMATCH 7 of 162 (compiled 144) - RECEIVER-SPILL WALL, recognised by the
+//          brief's fingerprint and not reached in four measured spellings.
+//          The image opens `push ecx / push ebx / push ebp / mov ebp,ecx /
+//          push esi / push edi / test / mov [esp+0x10],ebp`, so `this` lives
+//          in a reserved stack slot and ebp is free as the accumulator in the
+//          whole-table arm; it reloads it at 0x005F9EE6. This tree keeps
+//          `this` in ebp for the whole body and never spills, so it is 18
+//          instructions short and the accumulator lands in ebx instead.
+// TRIED: `PullDownItem *item = &items_[i]` in the loop -> `items_[i].field`
+//          (the add_item lesson), 5/162 -> 9/162.
+// TRIED: hoisting `width_` into `const int current` before the width() calls
+//          in both arms, matching the image's `mov edi,[ebp+0xf24]` before the
+//          call rather than a folded `cmp [ebp+0xf24],eax` - moved the loop
+//          but not the prologue.
+// TRIED: reordering the summand to `2 * width("  ") + width(text) +
+//          width(right)` to match the image's evaluation order (pipe, text,
+//          right; ours was pipe, right, text) - no movement at all.
+// TRIED: renaming via `PullDown::rename_item`'s shape, which DOES reproduce
+//          the identical `push ecx` + `mov [esp+0x10],ebp` spill and is
+//          BYTE_EXACT - so the spill is reachable from source, this body just
+//          needs one more live register than this spelling supplies. Left
+//          here rather than hand-spelled; see the note on rename_item.
+Status: WIP
+*/
+int PullDown::compute_length(char *text) {
+    if (PullDownDefaultFont == nullptr) {
+        PullDownDefaultFont = FontDefault;
+    }
+
+    if (text != nullptr) {
+        char *separator = strchr(text, '|');
+        if (separator == nullptr) {
+            const int current = width_;
+            int measured = PullDownDefaultFont->width(text);
+            if (current <= measured) {
+                measured = PullDownDefaultFont->width(text);
+            }
+            width_ = measured;
+            return width_;
+        }
+
+        const int previous = width_;
+        if (previous <= 2 * PullDownDefaultFont->width("  ")
+                            + PullDownDefaultFont->width(text, separator - text)
+                            + PullDownDefaultFont->width(separator + 1)) {
+            width_ = 2 * PullDownDefaultFont->width("  ")
+                     + PullDownDefaultFont->width(text, separator - text)
+                     + PullDownDefaultFont->width(separator + 1);
+        } else {
+            width_ = previous;
+            return width_;
+        }
+    } else {
+        width_ = 0;
+        for (int i = 0; i < 64; ++i) {
+            if (items_[i].text == nullptr) {
+                continue;
+            }
+            const int current = width_;
+            if (items_[i].right_text == nullptr) {
+                int measured = PullDownDefaultFont->width(items_[i].text);
+                if (current <= measured) {
+                    measured = PullDownDefaultFont->width(items_[i].text);
+                }
+                width_ = measured;
+            } else {
+                int total = 2 * PullDownDefaultFont->width("  ")
+                            + PullDownDefaultFont->width(items_[i].text)
+                            + PullDownDefaultFont->width(items_[i].right_text);
+                if (current > total) {
+                    total = current;
+                } else {
+                    total = 2 * PullDownDefaultFont->width("  ")
+                            + PullDownDefaultFont->width(items_[i].text)
+                            + PullDownDefaultFont->width(items_[i].right_text);
+                }
+                width_ = total;
+            }
+        }
+    }
+
+    // BUG IN THE ORIGINAL: neither the whole-table walk above nor the
+    // split-text branch falls through to a `return`, though the function is
+    // declared int. The shipped bytes confirm it - the walk's epilogue leaves
+    // EAX holding the exhausted loop counter (so it answers 0) and the split
+    // branch's leaves EAX holding the last width() result - while the two
+    // early exits do return width_ properly. Reproduced as written; adding
+    // the missing return would be a different program.
+    // (add_item and rename_item, its only callers, discard the result.)
 }
 
 

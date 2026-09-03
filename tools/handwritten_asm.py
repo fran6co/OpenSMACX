@@ -55,7 +55,18 @@ STRONG = {"loop", "loope", "loopne", "loopz", "loopnz",
           # helpers - `__powhlp`, `__hypothlp`, `__fpclass` and friends, where
           # Microsoft's own hand-written assembly is not this recovery's
           # problem. They stay weak.
-          "pushf", "pushfd", "popf", "popfd"}
+          "pushf", "pushfd", "popf", "popfd",
+          # THE CARRY-CHAIN BIT COUNT, added 2026-09-03 on general.cpp's
+          # bit_count: its `shr ecx,1 / adc eax,0` loop sums the carry flag
+          # straight into the count, and cl 12.00.8168 CANNOT reach it -
+          # twelve probe spellings all emit `mov edx,ecx; and edx,1; add
+          # eax,edx; shr ecx,1` instead, because C has no name for the flag
+          # register. `adc` with an immediate zero operand is the tell: the
+          # compiler only emits adc with a register or memory operand it
+          # computed itself. Not bare `adc` STRONG - only the immediate-0
+          # form - and `sbb` likewise, so real adds-with-carry in codegen
+          # (multiword arithmetic, `neg/sbb` idioms) are not buried.
+          "adc-eax-0", "sbb-eax-0"}
 WEAK = {"sahf", "lahf",
         "xchg", "bswap", "cbw", "cwde", "cdq", "cwd", "salc", "aaa", "aad"}
 
@@ -71,6 +82,20 @@ def scan(record):
         return (address, record.name, "ERROR", str(error)[:60])
     strong = sorted({m for m in listing.mnemonics if m in STRONG})
     weak = sorted({m for m in listing.mnemonics if m in WEAK})
+    # THE CARRY-CHAIN TELL, whose STRONG entry is a shape rather than a
+    # mnemonic: `adc <anything>, 0` (and `sbb ..., 0`) reads the flag
+    # register C has no name for, so cl 12.00.8168 cannot emit it. The
+    # mnemonics view carries no operands, so this reads the rendered lines.
+    for line in listing.lines:
+        parts = line.split()
+        # THE MNEMONIC SITS AFTER THE ADDRESS AND THE HEX-BYTE TOKENS, which
+        # split into one token each - so index into it by membership, not
+        # position: `adc eax, 0` is ['0xADDR', '83', 'D0', '00', 'adc',
+        # 'eax,', '0'].
+        for carry in ("adc", "sbb"):
+            if carry in parts and parts[-1] == "0":
+                strong.append(carry + " ...,0")
+    strong = sorted(set(strong))
     return (address, record.name, ",".join(strong), ",".join(weak))
 
 

@@ -390,7 +390,7 @@ SCAFFOLD_CEILINGS = {
     # archived with drafted bodies. Their sibling add_separator
     # (0x005F8BE0, 161 bytes) was small enough to home straight into
     # src/pulldown.cpp BYTE_EXACT, so it cost no forwarder. Net +2.
-    "PENDING_BODY forwarders": 229,
+    "PENDING_BODY forwarders": 227,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -487,7 +487,7 @@ SCAFFOLD_CEILINGS = {
     # (PullDown::add_item) and 005f8e50.cpp (rename_item) STAY unrecovered -
     # 527 and 494 bytes, declared and standing as pending_bodies forwarders
     # for the two homed callers that reach them.
-    "unrecovered files": 1656,
+    "unrecovered files": 1653,
     "hypothesis_layouts.h lines": 2723,
 }
 

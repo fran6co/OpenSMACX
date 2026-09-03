@@ -505,6 +505,18 @@ FLAG_SETS = (
     "/c /O1 /Ob0 /Gy /GR-",
     "/c /O2 /Oi- /Gy /GR- /Oy-",
     "/c /O2 /Oi- /Gy /GR-",
+    # AND THE PROCESSOR SCHEDULER IS THE SIXTH, found 2026-09-03 on
+    # general.cpp's add_lf: its `add eax,esi` / `add esp,4` order is
+    # Pentium-Pro scheduling, and /G6 reproduces it BYTE_EXACT where every
+    # /G5-default set leaves the swap (8/10). EXTRA SETS, NOT SUBSTITUTES -
+    # measured the same day on the neighbours, /G6 makes the REST of
+    # general.cpp worse (parse_string 7/490, memrchr 1/27, checksum 0/19,
+    # sort 3/47), so the image is mixed on this axis exactly as it is on
+    # frame pointers and inline expansion.
+    "/c /O2 /G6 /Gy /GR- /Oy- /GX",
+    "/c /O2 /G6 /Gy /GR- /GX",
+    "/c /O1 /G6 /Gy /GR- /Oy- /GX",
+    "/c /O1 /G6 /Gy /GR- /GX",
 
 )
 

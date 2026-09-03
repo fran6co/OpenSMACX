@@ -1784,16 +1784,7 @@ int __cdecl ambience(int ambience_id) {
 
 
 // Menu's add_menu_item (0x005FB100) and rename_menu_item (0x005FB700) - homed
-// into src/menu.cpp - call these two PullDown members. Both are large
-// (527 and 494 bytes) and unrecovered, so they stand as forwarders; their
-// drafted bodies stay in src/unrecovered/005f89d0.cpp and 005f8e50.cpp. Their
-// sibling add_separator (0x005F8BE0, 161 bytes) IS homed in src/pulldown.cpp.
-int PullDown::add_item(int id, char *text) {
-    typedef int(__fastcall *pending)(PullDown *, void *, int, char *);
-    return PENDING_BODY(0x005F89D0, pending)(this, nullptr, id, text);
-}
-
-int PullDown::rename_item(int id, char *text) {
-    typedef int(__fastcall *pending)(PullDown *, void *, int, char *);
-    return PENDING_BODY(0x005F8E50, pending)(this, nullptr, id, text);
-}
+// into src/menu.cpp - call PullDown::add_item (0x005F89D0) and
+// PullDown::rename_item (0x005F8E50). Both are homed in src/pulldown.cpp now,
+// beside their sibling add_separator and their shared helper compute_length,
+// so the forwarders that stood here are gone.
