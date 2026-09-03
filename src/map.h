@@ -347,6 +347,7 @@ int __cdecl vector_dist(int x_point_a, int y_point_a, int x_point_b, int y_point
 // inlining the bit test/set - every other bit_set() caller genuinely
 // inlines it, so `bit_set` itself stays `MEASURED inline`.
 void __cdecl bit_set_call(int x, int y, int bit, BOOL set);
+void __cdecl alt_put_detail_call(int x, int y, int detail);
 BOOL __cdecl sea_coast(int region_dst, int region_src);
 int __cdecl sea_coasts(int region_src);
 BOOL __cdecl base_on_sea(int base_id, int region_sea);
