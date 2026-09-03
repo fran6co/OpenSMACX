@@ -134,7 +134,7 @@ void Time::init(void(__cdecl *callback)(int, int), int param, int param2, uint32
 
 /*
 Purpose: Start an instance of the class with a single parameter callback.
-// ORIGINAL: 0x00616350 ?start@Time@@QAEHP6AXH@ZHHH@Z 0x00616350-0x00616405
+// ORIGINAL: 0x00616350 ?start@Time@@QAEHP6AXH@ZHHH@Z 0x00616350-0x00616405 BYTE_EXACT
 // symbol    ?start@Time@@QAEIP6AXH@ZHII@Z
 // CORRECTED from ?start@Time@@QAEXP6AXH@ZHHH@Z
 //   tail is `and al, 0xfe; add eax, 2; ret 0x10` - a computed return;
@@ -150,17 +150,19 @@ Purpose: Start an instance of the class with a single parameter callback.
 //        out-of-line function) is hand-inlined here: the image writes its
 //        whole body out at this call site (flush_timer(), reached via
 //        stop(), is the only call it keeps), rather than calling
-//        0x00616260. MNEMONIC_ONLY, 65/69, 1.000 similar under /c /O2 /Gy
-//        /GR- /GX - `semantic` REFUSES on a displacement, not a register.
-// TRIED: store_order.py shows the image storing cb_param1_ (offset
-//        0x14) BEFORE oneshot_state_/tick_posted_/unk_2_/callback1_ here -
-//        a DIFFERENT order than the declaration order that keeps init()
-//        itself BYTE_EXACT. Reordering this copy's assignments to match
-//        (cb_param1_ first) made it WORSE (MISMATCH, 57/69, best 0.971
-//        similar) - the compiler's actual scheduling here is driven by
-//        operand availability at this specific inlined call site, not
-//        source order, and is not reachable by reordering the source.
-//        Left in init()'s own declaration order.
+//        0x00616260.
+// LEVER: this copy's store ladder is NOT init()'s. init() keeps
+//        callback1_ first; here the image emits oneshot_state_/
+//        tick_posted_/unk_2_ FIRST and callback1_ fourth
+//        (0x006163A3..0x006163AB), which is what lets VC6 defer the
+//        callback argument's register past the `cmp ecx, ebx` that tests
+//        it at 0x006163A1. Writing the three zero stores before the
+//        callback store took this 65/69 MNEMONIC_ONLY -> 69/69 BYTE_EXACT
+//        in one move.
+// TRIED: cb_param1_ first, as the image's own first store (0x0061639A)
+//        reads - MISMATCH 57/69, so the image's emitted order is its
+//        scheduler's, not the source's; the zeros-first spelling is the
+//        one it reproduces from.
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -168,12 +170,13 @@ uint32_t Time::start(void(__cdecl *callback)(int), int param, uint32_t cnt, uint
     // init() (0x00616260, BYTE_EXACT as its own out-of-line function) is
     // hand-inlined here: the image writes its whole body out at this call
     // site (init() itself inlines stop(), whose flush_timer() call is the
-    // only one that survives), rather than calling 0x00616260.
+    // only one that survives), rather than calling 0x00616260. The store
+    // ladder is this copy's own - see the LEVER above.
     stop();
-    callback1_ = callback;
     oneshot_state_ = 0;
     tick_posted_ = 0;
     unk_2_ = 0;
+    callback1_ = callback;
     callback2_ = 0;
     cb_param2_ = 0;
     cb_param1_ = param;
@@ -184,7 +187,7 @@ uint32_t Time::start(void(__cdecl *callback)(int), int param, uint32_t cnt, uint
     }
     oneshot_state_ = 0;
     if (count_ < 50) {
-        id_event_ = timeSetEvent(count_, resolution_, (LPTIMECALLBACK)MultimediaProc, 
+        id_event_ = timeSetEvent(count_, resolution_, (LPTIMECALLBACK)MultimediaProc,
             (UINT_PTR)this, TIME_PERIODIC);
     } else {
         id_event_ = SetTimer(HandleMain, (UINT_PTR)this, count_, (TIMERPROC)TimerProc);
@@ -194,7 +197,7 @@ uint32_t Time::start(void(__cdecl *callback)(int), int param, uint32_t cnt, uint
 
 /*
 Purpose: Start an instance of the class with a two parameter callback.
-// ORIGINAL: 0x00616410 ?start@Time@@QAEXP6AXHH@ZHHHH@Z 0x00616410-0x006164CA
+// ORIGINAL: 0x00616410 ?start@Time@@QAEXP6AXHH@ZHHHH@Z 0x00616410-0x006164CA BYTE_EXACT
 // symbol    ?start@Time@@QAEIP6AXHH@ZHHII@Z
 // size      186 bytes
 // prototype void (__thiscall ?start@Time@@QAEXP6AXHH@ZHHHH@Z)(Time* this, void (__cdecl *)(int this, int), int, int, int, int)
@@ -208,6 +211,19 @@ Purpose: Start an instance of the class with a two parameter callback.
 //        the image writes its whole body out at this call site (stop()'s
 //        flush_timer() call is the only one that survives), rather than
 //        calling init(), matching the single-parameter `start` sibling above.
+// LEVER: same store ladder as that sibling - oneshot_state_/tick_posted_/
+//        unk_2_ FIRST, then callback1_, then the callback store, then the
+//        two cb_param fields. The image's own emitted order here is
+//        cb_param2_, cb_param1_, the three zeros, callback1_, callback2_
+//        (0x0061645A..0x00616475) - its scheduler hoists the two argument
+//        stores, and the spelling it reproduces that from is the
+//        zeros-first one, not the emitted one. 65/70 MNEMONIC_ONLY ->
+//        70/70 BYTE_EXACT.
+// TRIED: cb_param2_/cb_param1_ first, matching the emitted order literally
+//        - MISMATCH 58/70: the ladder is right but VC6 loads `cnt` instead
+//        of `callback` into its third preload register. The source has to
+//        keep the callback store AFTER callback1_; the rest of the ladder
+//        follows init()'s.
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -219,12 +235,12 @@ uint32_t Time::start(void(__cdecl *callback)(int, int), int param, int param2, u
     // flush_timer() call is the only one that survives), rather than calling
     // it as init(callback, param, param2, cnt, res).
     stop();
-    callback2_ = reinterpret_cast<void(__cdecl *)(int, Palette *)>(callback);
-    cb_param2_ = reinterpret_cast<Palette *>(param2);
     oneshot_state_ = 0;
     tick_posted_ = 0;
     unk_2_ = 0;
     callback1_ = 0;
+    callback2_ = reinterpret_cast<void(__cdecl *)(int, Palette *)>(callback);
+    cb_param2_ = reinterpret_cast<Palette *>(param2);
     cb_param1_ = param;
     count_ = cnt;
     resolution_ = res;
@@ -243,7 +259,7 @@ uint32_t Time::start(void(__cdecl *callback)(int, int), int param, int param2, u
 
 /*
 Purpose: Start a pulse instance of the class with a single parameter callback.
-// ORIGINAL: 0x006164D0 ?pulse@Time@@QAEHP6AXH@ZHHH@Z 0x006164D0-0x00616585
+// ORIGINAL: 0x006164D0 ?pulse@Time@@QAEHP6AXH@ZHHH@Z 0x006164D0-0x00616585 BYTE_EXACT
 // symbol    ?pulse@Time@@QAEIP6AXH@ZHII@Z
 // CORRECTED from ?pulse@Time@@QAEXP6AXH@ZHHH@Z
 //   tail is `and al, 0xfe; add eax, 2; ret 0x10`, the same computed
@@ -256,9 +272,18 @@ Purpose: Start a pulse instance of the class with a single parameter callback.
 // calls     0x005FD370
 // indirect  0x006164EE 0x006164FC 0x00616558 0x0061656D
 // LEVER: WRONG CALLEE - same fix as the `start` sibling immediately above:
-//        init() hand-inlined here. MNEMONIC_ONLY, 63/69, 1.000 similar.
-//        See that note for the store-order TRIED (measured identically
-//        here).
+//        init() hand-inlined here.
+// LEVER: the same store ladder as that sibling - oneshot_state_/tick_posted_/
+//        unk_2_ FIRST, callback1_ fourth - is what took this 63/69
+//        MNEMONIC_ONLY to 69/69 BYTE_EXACT. The image's emitted order here
+//        (0x0061651A..0x0061652B) is cb_param1_, the three zeros, then
+//        callback1_; the spelling VC6 produces that from is zeros-first,
+//        and moving cb_param1_ to the front as the emitted order reads
+//        measures WORSE (see the `start` sibling's TRIED).
+// TRIED: TIME_ONESHOT in the multimedia arm, which the upstream OpenSMACX
+//        "bug fix" comment asks for - 68/69, the one differing instruction
+//        being the image's `push 1` at 0x0061654E. TIME_PERIODIC is what
+//        shipped; see the BUG IN THE ORIGINAL note in the body.
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -268,10 +293,10 @@ uint32_t Time::pulse(void(__cdecl *callback)(int), int param, uint32_t cnt, uint
     // site (init() itself inlines stop(), whose flush_timer() call is the
     // only one that survives), rather than calling 0x00616260.
     stop();
-    callback1_ = callback;
     oneshot_state_ = 0;
     tick_posted_ = 0;
     unk_2_ = 0;
+    callback1_ = callback;
     callback2_ = 0;
     cb_param2_ = 0;
     cb_param1_ = param;
@@ -282,11 +307,16 @@ uint32_t Time::pulse(void(__cdecl *callback)(int), int param, uint32_t cnt, uint
     }
     oneshot_state_ = 0;
     if (count_ < 50) {
-        // Bug fix: Original code had fuEvent param set to TIME_PERIODIC, the same as start().
-        // Based on how the other pulse() functions work, this should be TIME_ONESHOT. It appears
-        // this code branch is never used in the original game.
-        id_event_ = timeSetEvent(count_, resolution_, (LPTIMECALLBACK)MultimediaProc, 
-            (UINT_PTR)this, TIME_ONESHOT);
+        // BUG IN THE ORIGINAL: fuEvent is TIME_PERIODIC here, copy-pasted
+        // from start() - the image pushes 1 at 0x0061654E, not 0. The
+        // two-parameter pulse below and the parameterless pulse both push
+        // TIME_ONESHOT, so this one really is the odd one out and the
+        // multimedia path of this overload is periodic like start()'s.
+        // Reproduced deliberately: TIME_ONESHOT (0) is a different program,
+        // and the upstream OpenSMACX "bug fix" comment that changed it is
+        // not what shipped.
+        id_event_ = timeSetEvent(count_, resolution_, (LPTIMECALLBACK)MultimediaProc,
+            (UINT_PTR)this, TIME_PERIODIC);
     } else {
         id_event_ = SetTimer(HandleMain, (UINT_PTR)this, count_, (TIMERPROC)TimerProc);
     }
@@ -295,7 +325,7 @@ uint32_t Time::pulse(void(__cdecl *callback)(int), int param, uint32_t cnt, uint
 
 /*
 Purpose: Start a pulse instance of the class with a two parameter callback.
-// ORIGINAL: 0x00616590 ?pulse@Time@@QAEXP6AXHH@ZHHHH@Z 0x00616590-0x0061664D
+// ORIGINAL: 0x00616590 ?pulse@Time@@QAEXP6AXHH@ZHHHH@Z 0x00616590-0x0061664D BYTE_EXACT
 // symbol    ?pulse@Time@@QAEIP6AXHH@ZHHII@Z
 // size      189 bytes
 // prototype void (__thiscall ?pulse@Time@@QAEXP6AXHH@ZHHHH@Z)(Time* this, void (__cdecl *)(int this, int), int, int, int, int)
@@ -307,6 +337,17 @@ Purpose: Start a pulse instance of the class with a two parameter callback.
 // LEVER: WRONG CALLEE - init() (the two-parameter-callback overload,
 //        BYTE_EXACT as its own out-of-line function) is hand-inlined here,
 //        matching Time::start's two-parameter-callback overload above.
+// LEVER: and the same store ladder as that overload - oneshot_state_/
+//        tick_posted_/unk_2_ first, then callback1_, THEN the callback
+//        store, then cb_param2_/cb_param1_. Both two-parameter bodies
+//        wanted the callback store in fifth position and refused it
+//        anywhere earlier (58/70 from every spelling that hoisted it); the
+//        parameterless-ladder sibling is the one that named the shape.
+// TRIED: cb_param2_/cb_param1_ hoisted to the front to read like the
+//        emitted order - MISMATCH 58/70, the third preload register going
+//        to `cnt` instead of `callback`. Same wall as the `start`
+//        two-parameter sibling; the zeros-first ladder is the only spelling
+//        of the two that reproduces both.
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -316,12 +357,12 @@ uint32_t Time::pulse(void(__cdecl *callback)(int, int), int param, int param2, u
     // out-of-line function) is hand-inlined here: the image writes its whole
     // body out at this call site, rather than calling it directly.
     stop();
-    callback2_ = reinterpret_cast<void(__cdecl *)(int, Palette *)>(callback);
-    cb_param2_ = reinterpret_cast<Palette *>(param2);
     oneshot_state_ = 0;
     tick_posted_ = 0;
     unk_2_ = 0;
     callback1_ = 0;
+    callback2_ = reinterpret_cast<void(__cdecl *)(int, Palette *)>(callback);
+    cb_param2_ = reinterpret_cast<Palette *>(param2);
     cb_param1_ = param;
     count_ = cnt;
     resolution_ = res;
@@ -329,7 +370,7 @@ uint32_t Time::pulse(void(__cdecl *callback)(int, int), int param, int param2, u
         return 7;
     }
     if (count_ < 50) {
-        id_event_ = timeSetEvent(count_, resolution_, (LPTIMECALLBACK)MultimediaProc, 
+        id_event_ = timeSetEvent(count_, resolution_, (LPTIMECALLBACK)MultimediaProc,
             (UINT_PTR)this, TIME_ONESHOT);
     } else {
         oneshot_state_ = TimeOneShot;
@@ -516,6 +557,32 @@ Purpose: Cancel the go mode: hide the cover window, stop the go timer, then
 //   - same 10/137. The image loads the sprite value once for the two
 //   equality compares (3D imm at 0x0050F097/0x0050F09E) but re-reads the
 //   FIELD for the dead arm (39 at 0x0050F0A5), so the body re-reads it.
+// MEASURED 2026-09-03, after the four start/pulse ladders landed: now
+//   9/137 (0.864) at /O2. Re-derived the ceiling from scratch and it holds,
+//   with one new fact - the image DOES inline other helpers into this body
+//   (`go_cover_window()` folds to `mov ecx, 0x937118` at 0x0050EF57, and
+//   `TutWinBaseWindow.is_visible()` expands inline in every caller), so
+//   VC6's refusal here is specific to `Time::close`, not a general
+//   no-inlining TU. The shape that explains all four sites - close()
+//   inlined into ~Time, called out-of-line from stop_timers AND from here -
+//   is that go_reset's original .cpp never saw close()'s body. This tree
+//   merged the two units into src/time.cpp, so the body is always visible
+//   and VC6 always expands it (+34 instructions, 155 against 137).
+// TRIED: `#pragma inline_depth(0)` ahead of go_reset - it suppressed the
+//   close() expansion all right but is a per-function switch, so it also
+//   un-inlined go_cover_window() (the folded `mov ecx, 0x937118` became a
+//   real call pair) and every is_visible() expansion, landing at 3/137.
+//   Not a per-site lever, and not source. Reverted.
+// TRIED: making close() an out-of-line member defined below go_reset in
+//   this file - would hide the body from go_reset while leaving it visible
+//   to ~Time, but it also hides it from console.cpp:875 and netmsg.cpp:77,
+//   which are not mine to regress, and it does nothing for the prologue
+//   below. Not taken.
+//   The second, independent wall is the prologue: the image opens
+//   `push ebp / mov ebp, esp / push ecx` (catalogue flag `frame`) and this
+//   build's /O2 omits the frame pointer, so instructions 0..1 differ before
+//   anything else. No flag set in the axis reaches both - the /Oy- sets fix
+//   the prologue and lose the body (17/137 best).
 Return Value: n/a
 Status: Complete
 */
