@@ -1,4 +1,11 @@
 // ORIGINAL: 0x005D1B88 sub_5d1b88 0x005D1B88-0x005D2037 FILE
+// TRIED: homed into general.cpp (its real TU) 2026-09-03 and reverted for one reason:
+// its fixed-address bindings have no naming evidence. image_data.py reads
+// 6 of them and every one is zero at load - runtime-filled lookup tables
+// with no .data content, no string, no arithmetic identity beyond 'a table
+// indexed here' - and none is modelled anywhere in src. The homing-first rule
+// does not ask for them to be invented: an unclaimed body with evidence-free
+// bindings waits for the class pass that measures it in context.
 // TRIED: no conventional signature can match - the original has NO prologue/epilogue and reads esi/edi/ebp as inputs set up by the CALLER (Ghidra: unaff_ESI/unaff_EDI/unaff_EBP), which is not a calling convention VC6 can target without __asm/naked (barred). Landed as a 3-pointer __cdecl function with an 8-iteration loop reproducing the exact table math (16 unrolled blocks in the original, all structurally identical) so the algorithm is faithfully documented even though the prologue can never match.
 // working copy - scaffold materialised by --work
 // size      1199 bytes

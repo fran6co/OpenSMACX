@@ -1,4 +1,15 @@
 // ORIGINAL: 0x00589870 sub_589870 0x00589870-0x00589886 FILE BYTE_EXACT
+// TRIED: homed into general.cpp (its real TU) 2026-09-03. Two source forms were
+// measured there and both are archived here verbatim:
+//   * as written (placement new + _atexit) it does not compile in the TU -
+//     libc.lib has no _atexit, and the placement new buys VC6's null guard;
+//   * retyped to a qualified constructor call plus plain atexit it compiles and
+//     measures 5 of 6 instructions, the one divergence being VC6 cleaning the
+//     atexit push with 'add esp,4' where the image has 'pop ecx'. general.cpp
+//     compiles under /Oy- and every cleanup spelling tried kept 'add esp,4';
+//     'pop ecx' is the /Oy form. Reverted so the BYTE_EXACT claim stays live
+//     here rather than reading REGRESSED there. The qualified-ctor + atexit
+//     spelling is the right one; it needs a TU on the /Oy flag set.
 // size      22 bytes
 // prototype 
 // callers   0   call targets   2

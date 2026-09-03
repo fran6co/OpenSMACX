@@ -110,6 +110,10 @@ class GraphicWin : public Win, public Buffer {
   // this is spelled as a method (see the `symbol` fact on its ORIGINAL
   // marker in graphicwin.cpp for why).
   uint32_t close();
+  // 0x00589550, a 5-byte `jmp` to GraphicWin::close, homed into general.cpp.
+  // A plain member: no virtual, so nothing adjusts the receiver and VC6 can
+  // tail-jump it.
+  void j_close();
   int init(int x, int y, int width, int height, LPSTR title, int flags,
            Win *parent, Menu *menu, BorderSizing *border);
   int fill(int x1, int y1, int x2, int y2, int color);

@@ -1,4 +1,11 @@
 // ORIGINAL: 0x005CE640 sub_5ce640 0x005CE640-0x005CE6E3 FILE
+// TRIED: homed into general.cpp (its real TU) 2026-09-03 and reverted for one reason:
+// its fixed-address bindings have no naming evidence. image_data.py reads
+// 1 of them and every one is zero at load - runtime-filled lookup tables
+// with no .data content, no string, no arithmetic identity beyond 'a table
+// indexed here' - and none is modelled anywhere in src. The homing-first rule
+// does not ask for them to be invented: an unclaimed body with evidence-free
+// bindings waits for the class pass that measures it in context.
 // working copy - scaffold materialised by --work
 // size      163 bytes
 // prototype 

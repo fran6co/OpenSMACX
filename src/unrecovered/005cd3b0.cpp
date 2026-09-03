@@ -1,4 +1,11 @@
 // ORIGINAL: 0x005CD3B0 sub_5cd3b0 0x005CD3B0-0x005CD556
+// TRIED: homed into general.cpp (its real TU) 2026-09-03 and reverted for one reason:
+// its fixed-address bindings have no naming evidence. image_data.py reads
+// 0 of them and every one is zero at load - runtime-filled lookup tables
+// with no .data content, no string, no arithmetic identity beyond 'a table
+// indexed here' - and none is modelled anywhere in src. The homing-first rule
+// does not ask for them to be invented: an unclaimed body with evidence-free
+// bindings waits for the class pass that measures it in context.
 // TRIED: MISMATCH #3 push/mov - Ghidra's own decode (6 char params + int* + uint, matching the disassembly's 8 stack slots exactly) used over IDA's 4-char/4-int guess; the four fixed-point multiplies use `__int64` (VC6 has no `long long`) mirroring src/unrecovered/005cd2d0.cpp's established idiom; register allocation for the four fill loops still differs from the original past instruction 3.
 // size      422 bytes
 // prototype

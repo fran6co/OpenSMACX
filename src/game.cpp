@@ -46,6 +46,7 @@
 #include "veh.h"
 #include "wave.h"  // g_WAVE_GENERAL
 #include "worldwin.h"  // world_climate_window
+#include "diplowin.h"  // DiploWin::exec, homed here out of the archive
 
 BOOL ExpansionEnabled;  // 0x009A6488
 uint32_t GamePreferences;  // 0x009A6490
@@ -1543,4 +1544,659 @@ int __cdecl game_reload(int mode, int reload) {
     }
     WorldClimateSkipTerrainClear = 0;
     return 0;
+}
+
+// ORIGINAL: 0x00453F70 ?load_flags@@YAXXZ 0x00453F70-0x00454261;0x0065513A-0x0065515A FILE
+// size      785 bytes
+// prototype 
+// callers   4   call targets   8
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D7470 0x005D7DE0 0x005DE580 0x005E39A0 0x005EAD9F 0x005EAE4F 0x006456E4 0x006457C2
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x00453F70
+// measured tier  MISMATCH
+// divergence     0
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/00453f70/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?load_flags@@YAXXZ  at 0x00453F70  (785 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+// The const-pointer spelling reproduces the original's
+// encoding including the address; `extern T *g` does not.
+static int *const UnitsPcxPath = (int *)0x00685024;
+static int *const FlagsPcxPath = (int *)0x00685030;
+
+void __cdecl load_flags() {
+    return;
+    //
+    // Reach fields by offset - the class is deliberately empty:
+    //     char *self = reinterpret_cast<char *>(this);
+    //     int v = *reinterpret_cast<int *>(self + 0x24);
+
+}
+
+// ORIGINAL: 0x00524210 ?climactic_changes@@YAXXZ 0x00524210-0x005242C0 FILE
+// working copy - scaffold materialised by --work
+// size      176 bytes
+// prototype 
+// callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0046B190 0x0048C0A0 0x005C5A30
+
+// The const-pointer spelling reproduces the original's
+// encoding including the address; `extern T *g` does not.
+static int *const SeaRisingSpritePath = (int *)0x0068B594;
+static int *const SeaRisingSpriteLabel = (int *)0x0068B5A4;
+static int *const SeaFallingSpritePath = (int *)0x0068B5B0;
+static int *const SeaFallingSpriteLabel = (int *)0x0068B5C0;
+static int *const ClimatePopupTitle = (int *)0x00691B0C;
+static int *const ClimateRiseStep = (int *)0x009A67CC;
+static int *const ClimateRiseLimit = (int *)0x009A67D0;
+static int *const ClimateRiseAccum = (int *)0x009A67D4;
+static int *const ClimateSeaLevelDelta = (int *)0x009A67D8;
+void __cdecl climactic_changes() {
+    int sign;
+
+    if (*ClimateSeaLevelDelta != 0) {
+        *ClimateRiseAccum += *ClimateRiseStep;
+        if (*ClimateRiseLimit <= *ClimateRiseAccum) {
+            *ClimateRiseAccum -= *ClimateRiseLimit;
+            if (*ClimateSeaLevelDelta > 0) {
+                sign = 1;
+            } else {
+                sign = (*ClimateSeaLevelDelta >= 0) - 1;
+            }
+            *ClimateSeaLevelDelta -= sign;
+            MapSeaLevel += sign;
+            world_climate();
+            draw_map(1);
+            if (sign > 0) {
+                popp((char *)*ClimatePopupTitle, (const char *)SeaRisingSpriteLabel, 0,
+                     (const char *)SeaRisingSpritePath, 0);
+            } else {
+                popp((char *)*ClimatePopupTitle, (const char *)SeaFallingSpriteLabel, 0,
+                     (const char *)SeaFallingSpritePath, 0);
+            }
+        }
+    }
+}
+
+// ORIGINAL: 0x0052A980 sub_52a980 0x0052A980-0x0052A9A5 FILE
+// size      37 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x0052A980
+// measured tier  MISMATCH
+// divergence     2
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/0052a980/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_52a980  at 0x0052A980  (37 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+
+// The const-pointer spelling reproduces the original's
+// encoding including the address; `extern T *g` does not.
+static int *const VehPrototypeFlagsBase = (int *)0x009AB898;
+static int *const VehPrototypeFlagsEnd = (int *)0x009B2098;
+
+int __cdecl sub_52a980() {
+    int address = reinterpret_cast<int>(VehPrototypeFlagsBase);
+    int8_t all = -1;
+    do {
+        *reinterpret_cast<uint32_t *>(address) &= 0xfffffffe;
+        *reinterpret_cast<int8_t *>(address - 2) = all;
+        address += 0x34;
+    } while (address < reinterpret_cast<int>(VehPrototypeFlagsEnd));
+    VehCurrentCount = 0;
+    BaseCurrentCount = 0;
+    return 0;
+}
+
+// ORIGINAL: 0x0052DB70 sub_52db70 0x0052DB70-0x0052DB9C FILE
+// symbol    ?sub_52db70@@YAHXZ
+// size      44 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x0052DB70
+// measured tier  MISMATCH
+// divergence     14
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/0052db70/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_52db70  at 0x0052DB70  (44 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+
+// The const-pointer spelling reproduces the original's
+// encoding including the address; `extern T *g` does not.
+
+int __cdecl sub_52db70() {
+    // NEAR MISS, recorded so the next agent does not repeat the search.
+    // MISMATCH: #14 original 'ret' vs rebuilt 'mov' (44 vs 45 bytes,
+    // mnemonic similarity 0.9677, exactly one inserted instruction).
+    // The first two guards match byte-for-byte. The final comparison
+    // is the divergence: original is
+    //     mov ecx, [0x9a6820]; mov edx, [0x939284]; xor eax, eax;
+    //     cmp ecx, edx; sete al; ret
+    // (operands land in ecx/edx, eax is reserved for the flag from the
+    // start, no final move). Every spelling of `return a == b;` tried
+    // here instead evaluates the first operand into EAX (regardless of
+    // textual/declaration order), needs a second scratch register for
+    // the flag, and ends with an extra `mov eax, <flag>` before `ret` -
+    // proven in isolation with zero preceding code, so it is not caused
+    // by the two guards above. RULED OUT: direct `return a==b`, ternary,
+    // `!=` with swapped return literals, `!(a^b)`, unsigned casts, an
+    // out-of-line `static` compare helper (does not inline here), bool
+    // return type, a `this`-only `__thiscall` member (dead `this` in
+    // ecx does not get reused for the load). A mutable `int result = 0;
+    // if (a == b) result = 1; return result;` DOES reproduce the
+    // ecx/edx/eax-preclear register roles exactly, but then compiles to
+    // `cmp; jne; mov eax,1; ret` (branch, not `sete`) - 48 bytes. No
+    // form found gets both the register roles and the `sete` tail at
+    // once. Left as the closest candidate (edit_count 1) rather than
+    // reverted, per the "do not throw away a measured near miss" rule.
+    if ((NetTurnFlags & 0x10) == 0) {
+        return 0;
+    }
+    if (*ConsoleControlTurnActive != 0) {
+        return 0;
+    }
+    return NetTurnFaction == NetDaemonLocalFaction;
+}
+
+// ORIGINAL: 0x0052DBF0 ?next_player_turn@@YAHXZ 0x0052DBF0-0x0052DC68 FILE
+// TRIED: do-while loop over i=[NetTurnFaction+1, 8) with hi/lo byte reads hoisted before the loop, matching the Ghidra hypothesis closely; diverges at instr #14 (original 'lea' vs rebuilt 'inc'), a register/addressing-mode choice around the `+1`.
+// working copy - scaffold materialised by --work
+// size      120 bytes
+// prototype 
+// callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00592EE0
+
+// The const-pointer spelling reproduces the original's
+// encoding including the address; `extern T *g` does not.
+static int *const NextTurnReady = (int *)0x0093A950;
+static int *const TurnsAssigned = (int *)0x0093E8C0;
+static int *const LockAliveMask = (int *)0x009A64E9;
+int __cdecl next_player_turn() {
+    if ((NetTurnFlags & 0x10) == 0) {
+        return 0;
+    }
+    if (*TurnsAssigned == 0) {
+        return 0;
+    }
+    int i = NetTurnFaction + 1;
+    if (i < 8) {
+        unsigned int hi_byte = *reinterpret_cast<unsigned char *>(LockAliveMask);
+        unsigned char lo_byte = *reinterpret_cast<unsigned char *>(&LockEnableMask);
+        do {
+            unsigned int bit = 1 << i;
+            if ((bit & hi_byte) != 0 && (static_cast<unsigned char>(bit) & lo_byte) != 0) {
+                message_data(0x4309, 0, i, 0, 0, 0);
+                return 0;
+            }
+            i = i + 1;
+        } while (i < 8);
+    }
+    *NextTurnReady = 1;
+    return 1;
+}
+
+// ORIGINAL: 0x005242C0 sub_5242c0 0x005242C0-0x00524317 BYTE_EXACT
+// symbol    ?sub_5242c0@GraphicWinSub@@QAEXXZ
+// size      87 bytes
+// prototype 
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D5930 0x005E4B4A
+// 0x005242C0  sub_5242c0  ->  _sub_5242c0
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+
+
+class GraphicWinSub : public GraphicWin { public:
+    void sub_5242c0();
+};
+
+void GraphicWinSub::sub_5242c0() {
+    // GraphicWin derives from Buffer, so the Buffer subobject at +0x444 IS the
+    // base-class view of `this` - no pun, no offset.
+    Buffer *buf = this;
+    if (this) {
+    } else {
+        buf = 0;
+    }
+    char *self = reinterpret_cast<char *>(this);
+    int flag = (*reinterpret_cast<int *>(self + 0xa18) == 0);
+    char *rect = self + 0xa44;
+    Sprite *spr = reinterpret_cast<Sprite *>(self + 0xa74 + flag * 0x2c);
+    int p4 = *reinterpret_cast<int *>(self + 0xa48);
+    int p3 = *reinterpret_cast<int *>(rect);
+    int p2 = *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(spr) + 8);
+    spr->draw(buf, p2, p3, p4, 1, 1);
+    this->soft_update(reinterpret_cast<RECT *>(rect));
+}
+
+// ORIGINAL: 0x00524340 Demo::timer_callback 0x00524340-0x00524363 BYTE_EXACT
+// symbol    _fn_00524340
+// size      35 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x0052435B
+// 0x00524340  Demo::timer_callback  ->  _fn_00524340
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+
+
+/*
+Purpose: Toggle the flag and repaint through virtual slot 62.
+Original Offset: 00524340
+Return Value: the slot's result
+Status: Complete
+*/
+// The receiver arrives as an EXPLICIT stack argument here - `mov ecx,[ebp+8]`
+// at entry - unlike the __thiscall sibling at 0x00524320, which never needs
+// that load. Catalogued as taking none.
+class Slot { public: int slot062(); };
+typedef int (Slot::*Slot062Fn)();
+
+extern "C" int __cdecl fn_00524340(void *self) {
+    // ONE statement. Splitting the toggle into a temp and a separate store
+    // hoists the vtable load ahead of the `sete`.
+    *reinterpret_cast<int *>(reinterpret_cast<char *>(self) + 0xa18) =
+        (*reinterpret_cast<int *>(reinterpret_cast<char *>(self) + 0xa18) == 0);
+    return (reinterpret_cast<Slot *>(self)->*(*reinterpret_cast<Slot062Fn *>(
+        reinterpret_cast<char *>(*reinterpret_cast<void **>(self)) + 0xf8)))();
+}
+
+// ORIGINAL: 0x0058F4F0 sub_58f4f0 0x0058F4F0-0x0058F609 FILE BYTE_EXACT
+// LEVER: string-routines-are-calls the body was already right; the scaffold was compiling a string routine the image CALLS into an `/Oi` inline expansion. What was written down here as a tried source form - "VC6 lowers `local_104[0]=0;` as `and byte ptr [buf],0` rather than `mov`, and each branch shares one `lea` instead of recomputing it, both compiler instruction-selection choices at /O1 that plain restatement did not move" - was that expansion changing the register pressure around them. The if/else-if chain matching Ghidra's structure is the right shape and always was.
+// working copy - scaffold materialised by --work
+// size      281 bytes
+// prototype
+// callers   0   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00625880 0x00645470
+
+// The const-pointer spelling reproduces the original's
+// encoding including the address; `extern T *g` does not.
+static int *const SayTokOpen = (int *)0x0068FA70;
+static int *const SayTokMale = (int *)0x0068FA74;
+static int *const SayTokFemale = (int *)0x0068FA78;
+static int *const SayTokNeutral = (int *)0x0068FA7C;
+static int *const SayTokOne = (int *)0x0068FA80;
+static int *const SayTokTwo = (int *)0x0068FA84;
+static int *const SayTokSep = (int *)0x0068FA88;
+static int *const SayTokClose = (int *)0x0068FA8C;
+
+extern "C" char * __cdecl sub_58f4f0(char *a1, int a2, int a3, int a4) {
+    char local_204[256];
+    char local_104[256];
+
+    if (a3 < 0) {
+        a3 = PluralityDefault;
+    }
+    if (a4 < 0) {
+        a4 = GenderDefault;
+    }
+    local_104[0] = 0;
+    strcat(local_104, (char *)SayTokOpen);
+    if (a4 == 0) {
+        strcat(local_104, (char *)SayTokMale);
+    } else if (a4 == 1) {
+        strcat(local_104, (char *)SayTokFemale);
+    } else if (a4 == 2) {
+        strcat(local_104, (char *)SayTokNeutral);
+    }
+    if (a3 == 0) {
+        strcat(local_104, (char *)SayTokOne);
+    } else if (a3 == 1) {
+        strcat(local_104, (char *)SayTokTwo);
+    }
+    strcat(local_104, (char *)SayTokSep);
+    strcat(local_104, Players[a2].adj_name_faction);
+    strcat(local_104, (char *)SayTokClose);
+    parse_string(local_104, local_204);
+    return strcat(a1, local_204);
+}
+
+// ORIGINAL: 0x0058F700 ?say_fac_special@@YAXPADPADH@Z 0x0058F700-0x0058F80A FILE BYTE_EXACT
+// symbol    ?say_fac_special@@YAXPAD0H@Z
+// size      266 bytes
+// prototype 
+// callers   1   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00625880 0x00645470
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x0058F700
+// measured tier  BYTE_EXACT
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/0058f700/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?say_fac_special@@YAXPADPADH@Z  at 0x0058F700  (266 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+// The const-pointer spelling reproduces the original's
+// encoding including the address; `extern T *g` does not.
+static int *const SayFacTokOpen = (int *)0x0068FAB0;
+static int *const SayFacTokMale = (int *)0x0068FAB4;
+static int *const SayFacTokFemale = (int *)0x0068FAB8;
+static int *const SayFacTokNeutral = (int *)0x0068FABC;
+static int *const SayFacTokOne = (int *)0x0068FAC0;
+static int *const SayFacTokTwo = (int *)0x0068FAC4;
+static int *const SayFacTokSep = (int *)0x0068FAC8;
+static int *const SayFacTokClose = (int *)0x0068FACC;
+
+// Indexed table bases: the address itself is added to a computed index, so
+// the const-pointer spelling (which /O2 folds into a literal and loses the
+// add) is wrong here - see "the lever that keeps working" above.
+
+void __cdecl say_fac_special(char *a1, char *a2, int a3) {
+    char buf1[256];
+    char buf2[256];
+
+    int table_b = Players[a3].is_noun_plural;
+    int table_a = Players[a3].noun_gender;
+
+    buf1[0] = 0;
+    strcat(buf1, reinterpret_cast<char *>(SayFacTokOpen));
+
+    if (table_a == 0) {
+        strcat(buf1, reinterpret_cast<char *>(SayFacTokMale));
+    } else if (table_a == 1) {
+        strcat(buf1, reinterpret_cast<char *>(SayFacTokFemale));
+    } else if (table_a == 2) {
+        strcat(buf1, reinterpret_cast<char *>(SayFacTokNeutral));
+    }
+
+    if (table_b == 0) {
+        strcat(buf1, reinterpret_cast<char *>(SayFacTokOne));
+    } else if (table_b == 1) {
+        strcat(buf1, reinterpret_cast<char *>(SayFacTokTwo));
+    }
+
+    strcat(buf1, reinterpret_cast<char *>(SayFacTokSep));
+    strcat(buf1, a2);
+    strcat(buf1, reinterpret_cast<char *>(SayFacTokClose));
+
+    parse_string(buf1, buf2);
+    strcat(a1, buf2);
+}
+
+// ORIGINAL: 0x0052DB40 sub_52db40 0x0052DB40-0x0052DB67 BYTE_EXACT
+// symbol    ?sub_52db40@@YAXXZ
+// size      39 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// 0x0052DB40  sub_52db40  ->  _sub_52db40
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+
+
+static int *const AlphaNetProcessSlotPattern = (int *)0x0093E99E;
+
+void sub_52db40() {
+    char *record = reinterpret_cast<char *>(AlphaNetProcessSlotPattern) - 2;
+    for (int i = 8; i != 0; --i) {
+        record[0] = -1;
+        record[1] = 0;
+        record[2] = 0;
+        record[3] = -1;
+        record[4] = 2;
+        record += 0x19c;
+    }
+}
+
+// ORIGINAL: 0x00524370 sub_524370 0x00524370-0x00524396 BYTE_EXACT
+// symbol    ?on_key@Widget@@QAEHHH@Z
+// size      38 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x00524387
+// 0x00524370  sub_524370  ->  _sub_524370
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+
+
+/*
+Purpose: Activate on Enter, Escape or Space, through virtual slot 58.
+Original Offset: 00524370
+Return Value: one
+Status: Complete
+*/
+// A __thiscall member, not the catalogued `extern "C" int __stdcall`: ecx is
+// used directly with no stack load, and `ret 8` pops the two explicit
+// arguments a thiscall callee cleans up itself. The first is dead.
+class Slot058 { public: int slot058(); };
+typedef int (Slot058::*Slot058Fn)();
+
+class Widget {
+ public:
+    int on_key(int a1, int a2);
+};
+
+int Widget::on_key(int, int a2) {
+    // 0xd, 0x1b, 0x20 are VK_RETURN, VK_ESCAPE and VK_SPACE.
+    if (a2 == 0xd || a2 == 0x1b || a2 == 0x20) {
+        (reinterpret_cast<Slot058 *>(this)->*(*reinterpret_cast<Slot058Fn *>(
+            reinterpret_cast<char *>(*reinterpret_cast<void **>(this))
+            + 0xe8)))();
+    }
+    return 1;
+}
+
+// ORIGINAL: 0x00524320 sub_524320 0x00524320-0x0052433B BYTE_EXACT
+// symbol    ?toggle_and_repaint@Base524320@@QAEHXZ
+// size      27 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready
+// calls     (none)
+// 0x00524320  sub_524320  ->  _sub_524320
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+
+
+/*
+Purpose: Toggle the flag and repaint through virtual slot 62.
+Original Offset: 00524320
+Return Value: the slot's result
+Status: Complete
+*/
+// Catalogued `extern "C" int __cdecl sub_524320()`, and the disassembly
+// disagrees: no stack frame at all, ecx read directly as `this`, and the body
+// ends in `jmp [edx+0xf8]` rather than `ret`.
+//
+// The dispatch goes through a POINTER-TO-MEMBER-FUNCTION rather than a plain
+// function pointer: VC6 rejects an explicit `__thiscall` function-pointer
+// typedef with C4234, while a pointer-to-member is implicitly thiscall and
+// reproduces the tail jump exactly.
+class Slot524320 {
+ public:
+    int slot062();
+};
+typedef int (Slot524320::*Slot062Fn524320)();
+
+// `Base524320` is already in hypothesis_layouts.h (0xA1C bytes, field_a18_ at
+// 0xA18), which game.cpp includes - so the body reaches the flag through that
+// layout instead of declaring a second one.
+int Base524320::toggle_and_repaint() {
+    field_a18_ = (field_a18_ == 0);
+    return (reinterpret_cast<Slot524320 *>(this)
+            ->*(*reinterpret_cast<Slot062Fn524320 *>(
+                reinterpret_cast<char *>(*reinterpret_cast<void **>(this))
+                + 0xf8)))();
 }

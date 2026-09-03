@@ -35,6 +35,11 @@ extern Sprite g_BLANK_SPRITE;
 #include "mapwin.h" // draw_map, promoted out of temp.h
 #include "strings.h"
 #include "text.h"
+// free bodies homed here out of the archive reach these
+#include "map.h"     // zoc_any
+#include "veh.h"     // can_arty
+#include "xpops.h"   // X_pop
+#include "filemap.h" // Filemap::open_read
 // jackal_init_real brings all of these up, in this order.
 #include "palette.h"
 #include "win.h"
@@ -2401,4 +2406,1306 @@ int __cdecl trig_init() {
     }
     sin(0x40000000, 100);
     return sin(static_cast<int>(0xe02d82d7), 100);
+}
+
+// ORIGINAL: 0x00538EC0 ??1JackalVoiceRx@@QAE@XZ 0x00538EC0-0x00538F2E FILE
+// size      110 bytes
+// prototype void (__thiscall ??1JackalVoiceRx@@QAE@XZ)(JackalVoiceRx* this)
+// callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x00538EE2 0x00538EEF 0x00538F0F
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x00538EC0
+// measured tier  MISMATCH
+// divergence     9
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/00538ec0/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ??1JackalVoiceRx@@QAE@XZ  at 0x00538EC0  (110 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+typedef int int32_t;
+typedef unsigned int uint32_t;
+typedef short int16_t;
+typedef unsigned short uint16_t;
+typedef signed char int8_t;
+typedef unsigned char uint8_t;
+typedef int int32;
+typedef unsigned int uint32;
+typedef short int16;
+typedef unsigned short uint16;
+// `char`, NOT `signed char`. They are distinct MSVC types and mangle
+// differently - D against C - and the catalogue's `int8` means the first:
+// counted over every catalogued mangled name, `PAD` appears 508 times and
+// `PAC` once. Spelling it `signed char` made 150 derived prototypes emit a
+// symbol no target object holds. `int8_t` keeps its C meaning below; neither
+// catalogue ever uses it.
+typedef char int8;
+typedef unsigned char uint8;
+
+class JackalVoiceRx;
+
+// Vtable shim. VC6 rejects a free `__thiscall` function pointer
+// (C4234), so an indirect virtual call is spelled by calling the Nth
+// virtual of a class that is never defined and never instantiated.
+// Only DECLARATION ORDER matters - change a slot's signature freely
+// to match the call you need; it will not move.
+// This body dispatches through slot(s): 0, 1, 2
+// A fake vtable for JackalVoiceRx's own dispatch, under a name of our own: the
+// compiler-generated 'VCall' shim idiom is what the census ratchets on, and
+// this one is not scaffolding to retire but the body's real three-slot table.
+class JackalVoiceRxVt { public:
+    virtual void slot000(int);  // <-- used
+    virtual void slot001(void *);  // <-- used
+    virtual void slot002(int);  // <-- used
+};
+
+class JackalVoiceRx { public:
+    ~JackalVoiceRx();
+};
+
+// NOT BYTE_EXACT. Closest reached: 108/110 bytes, mnemonic similarity
+// 0.918, edit_count 4 (verify_recovered_function.py --json / byte_match.py).
+// The loop body's logic and every virtual-dispatch shape match:
+// `slot001` on `this` fed by an adjustor-free vtable read, `slot002`
+// on the freed sub-object, and the vcall-thunk-style adjustor call
+// (`off = *(*node + 4); node[off]->slot000(1)`) for the third all
+// reproduce the original's exact instruction sequence and operands.
+// Divergence is REGISTER ALLOCATION, not logic: the original keeps
+// everything in registers with NO stack frame at all - eax doubles
+// as the reusable "0" constant AND scratch, ebx is dedicated to the
+// loop counter, esi is `this`, edi is the freed sub-object pointer;
+// four roles packed into three callee-saved registers (ebx/esi/edi)
+// plus one caller-saved (eax) reused across the whole body. Every
+// source spelling tried here (naming vs. inlining the freed-node and
+// adjusted-node reads, `!= 0` vs. plain truthy guards, reordering the
+// two reads sharing one base pointer) has the compiler give the loop
+// counter its OWN stack slot instead of reusing a register the way
+// the original's allocator did, adding a `push ecx` alignment filler
+// and an EBP frame the original does not have. Ruled out as a
+// register-allocation wall like the one documented on 0x006339E0's
+// NetFifo destructor: mnemonics and operands agree wherever the
+// register choice does not force it, and no restructuring tried
+// moved the counter off the stack.
+JackalVoiceRx::~JackalVoiceRx() {
+    char *self = reinterpret_cast<char *>(this);
+    if (*reinterpret_cast<void **>(self + 8) != 0) {
+        if (*reinterpret_cast<int *>(self + 0x10) > 0) {
+            int i = 0;
+            do {
+                *reinterpret_cast<char **>(self + 0xc) =
+                    *reinterpret_cast<char **>(*reinterpret_cast<char **>(self + 8) + 0xc);
+                void *sub = *reinterpret_cast<void **>(*reinterpret_cast<char **>(self + 8) + 8);
+                reinterpret_cast<JackalVoiceRxVt *>(self)->slot001(sub);
+                if (sub) {
+                    reinterpret_cast<JackalVoiceRxVt *>(sub)->slot002(1);
+                }
+                *reinterpret_cast<void **>(*reinterpret_cast<char **>(self + 8) + 8) = 0;
+                if (*reinterpret_cast<void **>(self + 8)) {
+                    char *n2 = *reinterpret_cast<char **>(self + 8);
+                    reinterpret_cast<JackalVoiceRxVt *>(
+                        n2 + *reinterpret_cast<int *>(*reinterpret_cast<char **>(n2) + 4))
+                        ->slot000(1);
+                }
+                ++i;
+                *reinterpret_cast<char **>(self + 8) = *reinterpret_cast<char **>(self + 0xc);
+            } while (i < *reinterpret_cast<int *>(self + 0x10));
+        }
+        *reinterpret_cast<void **>(self + 8) = 0;
+        *reinterpret_cast<void **>(self + 0x14) = 0;
+        *reinterpret_cast<int *>(self + 0x10) = 0;
+    }
+}
+
+// ORIGINAL: 0x005D271D sub_5d271d 0x005D271D-0x005D2761 FILE
+// size      68 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005D271D
+// measured tier  MISMATCH
+// divergence     1
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005d271d/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_5d271d  at 0x005D271D  (68 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+typedef int int32_t;
+typedef unsigned int uint32_t;
+typedef short int16_t;
+typedef unsigned short uint16_t;
+typedef signed char int8_t;
+typedef unsigned char uint8_t;
+typedef int int32;
+typedef unsigned int uint32;
+typedef short int16;
+typedef unsigned short uint16;
+// `char`, NOT `signed char`. They are distinct MSVC types and mangle
+// differently - D against C - and the catalogue's `int8` means the first:
+// counted over every catalogued mangled name, `PAD` appears 508 times and
+// `PAC` once. Spelling it `signed char` made 150 derived prototypes emit a
+// symbol no target object holds. `int8_t` keeps its C meaning below; neither
+// catalogue ever uses it.
+typedef char int8;
+typedef unsigned char uint8;
+
+// Each source dword is 4 bytes b0..b3 (little-endian); each byte is
+// written out twice adjacently to the destination (2x horizontal pixel
+// doubling: b0,b0,b1,b1,b2,b2,b3,b3), 4 source bytes producing 8
+// destination bytes per iteration.
+//
+// The original assembles each destination dword in a register via
+// 8/16-bit sub-register moves (mov bl,ah / mov bh,ah / shl ebx,0x10 /
+// mov bl,al / mov bh,al) before a single 32-bit store. Every arithmetic
+// rendering tried here (shift-or splat, multiply-by-0x101 splat) makes
+// VC6 emit `and`/`imul`/extra `shl`+`or` chains instead of reproducing
+// that register shuffle, so this settles for the byte-store form below,
+// which is shorter and closer in instruction count than the arithmetic
+// attempts (26 mnemonics / 0.73 similarity, vs 34-43 / 0.58-0.6 for the
+// splat versions) even though it stores 8 bytes individually rather
+// than 2 dwords.
+extern "C" void __cdecl sub_5d271d(unsigned int *src, unsigned char *dst,
+                                    int count) {
+    do {
+        unsigned int word = *src;
+        ++src;
+        unsigned char b0 = static_cast<unsigned char>(word);
+        unsigned char b1 = static_cast<unsigned char>(word >> 8);
+        dst[0] = b0; dst[1] = b0; dst[2] = b1; dst[3] = b1;
+        word >>= 16;
+        unsigned char b2 = static_cast<unsigned char>(word);
+        unsigned char b3 = static_cast<unsigned char>(word >> 8);
+        dst[4] = b2; dst[5] = b2; dst[6] = b3; dst[7] = b3;
+        dst += 8;
+        count -= 4;
+    } while (count != 0);
+}
+
+// ORIGINAL: 0x005D2B20 sub_5d2b20 0x005D2B20-0x005D2C0A FILE
+// TRIED: BYTE_EXACT is likely structurally unreachable here without `__asm` (banned). The disassembly reads `esi` as an 8-int input array from instruction #1 (`mov ebx,[esi+0x14]`) and NEVER writes esi before that first read anywhere in the function - Ghidra names it `unaff_ESI` for exactly this reason. That means the real calling convention hands this function its input array already sitting in esi, which none of __cdecl/__stdcall/__fastcall/__thiscall can express - every standard convention either uses the stack or ecx/edx for the first argument, never esi with zero setup. This is plausible as a compiler-chosen convention specific to this internal, 2-caller helper (proven safe only in the context of its real callers, which this recovery unit does not see), but nothing in valid VC6 C++ can request it. Landed body takes the input array as a normal second parameter instead (MISMATCH from the very first instruction, since the prologue differs immediately) so the arithmetic shape is on record: an 8-point butterfly (pairwise sum/difference of src[0],src[2],src[4], src[6] and separately src[1],src[3],src[5],src[7]) combining one `__int64` fixed-point multiply-by-IdctSin45Q31 (the `imul dword ptr [addr]` high-dword-times-2 pattern) with float arithmetic against IdctInv2CosPi8/IdctInv2Cos3Pi8/IdctCos3Pi8, each float result added to IdctAanScale and reduced to an int via `fstp qword` followed by reading only the low dword - this looks like the classic "magic-constant" double-to-int rounding idiom (add a bias, read the mantissa's low bits) but a plain `(int)(double)expr` cast was NOT enough to reproduce it; the exact bias/rounding trick was not reverse-engineered.
+// size      234 bytes
+// prototype 
+// callers   2   call targets   0
+// kind      
+// flags     
+// calls     (none)
+// working copy - scaffold materialised by --work
+
+// The const-pointer spelling reproduces the original's
+// encoding including the address; `extern T *g` does not.
+static int *const IdctSin45Q31 = (int *)0x009C9594;
+static int *const IdctInv2CosPi8 = (int *)0x009C9598;
+static int *const IdctInv2Cos3Pi8 = (int *)0x009C959C;
+static int *const IdctCos3Pi8 = (int *)0x009C95A0;
+static int *const IdctAanScale = (int *)0x009C95A4;
+extern "C" void __cdecl sub_5d2b20(int *dst, int *src) {
+    int iVar9 = src[3] + src[5];
+    int iVar8 = src[7] + src[1];
+    float fVar2 = (float)(src[5] - src[3]);
+    float fVar3 = (float)(src[1] - src[7]);
+    float fVar1 = (fVar3 + fVar2) * *(float *)IdctCos3Pi8;
+    int iVar6 = (int)(((__int64)(iVar8 - iVar9) * (__int64)*IdctSin45Q31) >> 32) * 2;
+    int iStack8 = (int)(double)(fVar2 * *(float *)IdctInv2CosPi8 + fVar1 + *(float *)IdctAanScale);
+    int iStack10 = (int)(double)((fVar3 * *(float *)IdctInv2Cos3Pi8 - fVar1) + *(float *)IdctAanScale);
+    int iVar4 = iStack8 + iVar6;
+    iVar6 = iVar6 + iStack10;
+    iStack10 = iStack10 + iVar9 + iVar8;
+    iVar9 = src[4] + src[0];
+    int iVar5 = src[0] - src[4];
+    int iVar7 = (int)(((__int64)(src[2] - src[6]) * (__int64)*IdctSin45Q31) >> 32);
+    iVar8 = iVar7 * 2;
+    int iVar10 = src[6] + src[2] + iVar8;
+    iVar8 = iVar8 + iVar5;
+    iVar5 = iVar5 + iVar7 * -2;
+    iVar7 = iVar10 + iVar9;
+    iVar9 = iVar9 - iVar10;
+    dst[2] = iVar5 + iVar4;
+    dst[5] = iVar5 - iVar4;
+    dst[3] = iVar9 + iStack8;
+    dst[4] = iVar9 - iStack8;
+    dst[0] = iVar7 + iStack10;
+    dst[1] = iVar6 + iVar8;
+    dst[6] = iVar8 - iVar6;
+    dst[7] = iVar7 - iStack10;
+}
+
+// ORIGINAL: 0x005D2C0A sub_5d2c0a 0x005D2C0A-0x005D2D13
+// TRIED: BYTE_EXACT is structurally unreachable here without `__asm` (banned), same finding as the sibling 8-point butterfly at 0x005D2B20 (see the sibling 0x005D2B20 body (homed here)): the disassembly reads `esi` (src) from the very first real instruction and `edi` (dst, saved via `push edi` at entry and reloaded from the stack near the end) with no stack setup for either, which none of __cdecl/__stdcall/__fastcall/__thiscall can request. Landed as `sub_5d2c0a(int *dst, int *src)` (MISMATCH from instruction 0, the prologue) so the arithmetic is on record: identical sum/difference/`__int64` fixed-point-multiply butterfly to the sibling, but every combined pair is additionally scaled by `>> 17` before it is stored, which the sibling's version does not do.
+// size      265 bytes
+// prototype
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+
+extern "C" void __cdecl sub_5d2c0a(int *dst, int *src) {
+    int iVar9 = src[3] + src[5];
+    int iVar8 = src[7] + src[1];
+    float fVar2 = (float)(src[5] - src[3]);
+    float fVar3 = (float)(src[1] - src[7]);
+    float fVar1 = (fVar3 + fVar2) * *(float *)IdctCos3Pi8;
+    int iVar6 = (int)(((__int64)(iVar8 - iVar9) * (__int64)*IdctSin45Q31) >> 32) * 2;
+    int local_1c = (int)(double)(fVar2 * *(float *)IdctInv2CosPi8 + fVar1 + *(float *)IdctAanScale);
+    int local_14 = (int)(double)((fVar3 * *(float *)IdctInv2Cos3Pi8 - fVar1) + *(float *)IdctAanScale);
+    int iVar4 = local_1c + iVar6;
+    iVar6 = iVar6 + local_14;
+    local_14 = local_14 + iVar9 + iVar8;
+    iVar9 = src[4] + src[0];
+    int iVar5 = src[0] - src[4];
+    int iVar7 = (int)(((__int64)(src[2] - src[6]) * (__int64)*IdctSin45Q31) >> 32);
+    iVar8 = iVar7 * 2;
+    int iVar10 = src[6] + src[2] + iVar8;
+    iVar8 = iVar8 + iVar5;
+    iVar5 = iVar5 + iVar7 * -2;
+    iVar7 = iVar10 + iVar9;
+    iVar9 = iVar9 - iVar10;
+    dst[2] = (iVar5 + iVar4) >> 17;
+    dst[5] = (iVar5 - iVar4) >> 17;
+    dst[3] = (iVar9 + local_1c) >> 17;
+    dst[4] = (iVar9 - local_1c) >> 17;
+    dst[0] = (iVar7 + local_14) >> 17;
+    dst[1] = (iVar6 + iVar8) >> 17;
+    dst[6] = (iVar8 - iVar6) >> 17;
+    dst[7] = (iVar7 - local_14) >> 17;
+}
+
+// ORIGINAL: 0x005D2D20 sub_5d2d20 0x005D2D20-0x005D2DF2 FILE
+// TRIED: `extern "C" int __stdcall sub_5d2d20(int a1, int a2, int a3)` per the given def head - `test edx,edx` and `lea eax,[ecx+7]` read both registers with no matching stack loads, so two args (src ptr in ecx, mode in edx) are __fastcall register params, not part of a 3-int __stdcall; changed to `void __fastcall(char*,int,int,char*,char)` with 5 total params (2 register + 3 stack), void return (eax never set). `int step = stride * 4;` hoisted above the `if` (matching the unconditional `lea edi,[eax*4]` before the branch) gets close; best found is 83.6% mnemonic similarity (`--dir` picked /O1 framed over /O2 frameless) - remaining diff is a 4-instruction reorder of which register (edx vs ecx) holds `dst` while `adjust`/`i` are set up, which is register-allocation scheduling, not a control-flow gap.
+// working copy - scaffold materialised by --work
+// size      210 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_5d2d20  at 0x005D2D20  (210 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+typedef int int32_t;
+typedef unsigned int uint32_t;
+typedef short int16_t;
+typedef unsigned short uint16_t;
+typedef signed char int8_t;
+typedef unsigned char uint8_t;
+typedef int int32;
+typedef unsigned int uint32;
+typedef short int16;
+typedef unsigned short uint16;
+// `char`, NOT `signed char`. They are distinct MSVC types and mangle
+// differently - D against C - and the catalogue's `int8` means the first:
+// counted over every catalogued mangled name, `PAD` appears 508 times and
+// `PAC` once. Spelling it `signed char` made 150 derived prototypes emit a
+// symbol no target object holds. `int8_t` keeps its C meaning below; neither
+// catalogue ever uses it.
+typedef char int8;
+typedef unsigned char uint8;
+// `src` (ecx) and `mode` (edx) are __fastcall register args; `stride`,
+// `dst` and `adjust` are the three stack args the `ret 0xc` pops - see
+// TRIED above for the signature evidence.
+extern "C" void __fastcall sub_5d2d20(char *src, int mode, int stride,
+                                      char *dst, char adjust) {
+    int step = stride * 4;
+    char *p;
+    char *q;
+    int i;
+    if (mode != 0) {
+        p = src + 7;
+        q = dst + 6;
+        i = 8;
+        do {
+            q[-4] = p[-5] + adjust;
+            q[0] = p[0] + adjust;
+            q[4] = p[-1] + adjust;
+            q[8] = p[4] + adjust;
+            q[0xc] = p[3] + adjust;
+            q[0x10] = p[8] + adjust;
+            q[0x14] = p[7] + adjust;
+            q[0x18] = p[0xc] + adjust;
+            p = p + step;
+            --i;
+            q = q + 0x40;
+        } while (i != 0);
+        return;
+    }
+    p = src + 2;
+    q = dst + 6;
+    i = 8;
+    do {
+        q[-4] = p[1] + adjust;
+        q[0] = p[0] + adjust;
+        q[4] = p[5] + adjust;
+        q[8] = p[4] + adjust;
+        q[0xc] = p[9] + adjust;
+        q[0x10] = p[8] + adjust;
+        q[0x14] = p[0xd] + adjust;
+        q[0x18] = p[0xc] + adjust;
+        p = p + step;
+        --i;
+        q = q + 0x40;
+    } while (i != 0);
+}
+
+// ORIGINAL: 0x005D3F50 sub_5d3f50 0x005D3F50-0x005D4014 FILE
+// TRIED: signature cdecl() -> fastcall(int *param_1); evidence: ecx read directly at entry (dereferenced once for an object pointer, re-read every loop iteration), no stack access, plain `ret` (no callee-pop). Dropped Ghidra's explicit `& 0x1f` shift masks per the known lever (extra `and`); still MISMATCH at #4, likely register-allocation/prologue shape for the three precomputed shift amounts.
+// working copy - scaffold materialised by --work
+// size      196 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_5d3f50  at 0x005D3F50  (196 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+typedef int int32_t;
+typedef unsigned int uint32_t;
+typedef short int16_t;
+typedef unsigned short uint16_t;
+typedef signed char int8_t;
+typedef unsigned char uint8_t;
+typedef int int32;
+typedef unsigned int uint32;
+typedef short int16;
+typedef unsigned short uint16;
+// `char`, NOT `signed char`. They are distinct MSVC types and mangle
+// differently - D against C - and the catalogue's `int8` means the first:
+// counted over every catalogued mangled name, `PAD` appears 508 times and
+// `PAC` once. Spelling it `signed char` made 150 derived prototypes emit a
+// symbol no target object holds. `int8_t` keeps its C meaning below; neither
+// catalogue ever uses it.
+typedef char int8;
+typedef unsigned char uint8;
+extern "C" void __fastcall sub_5d3f50(int *param_1) {
+    int obj0 = *param_1;
+    unsigned char shiftB = (unsigned char)(8 - *(int *)(obj0 + 0x30));
+    unsigned char shiftC = (unsigned char)(8 - *(int *)(obj0 + 0x2c));
+    unsigned char shiftA = (unsigned char)(8 - *(int *)(obj0 + 0x34));
+
+    int i = 0;
+    int outOff = 0x3b0;
+    do {
+        int obj = *param_1;
+        unsigned int term1 = *(unsigned char *)(obj + 0xb1 + i);
+        term1 = (term1 >> shiftB) << *(int *)(obj + 0x3c);
+
+        unsigned int term2 = *(unsigned char *)(obj + 0xb0 + i);
+        term2 = (term2 >> shiftC) << *(int *)(obj + 0x38);
+
+        unsigned int result = term1 | term2;
+
+        unsigned int term3 = *(unsigned char *)(obj + 0xb2 + i);
+        term3 = (term3 >> shiftA) << *(int *)(obj + 0x40);
+
+        result |= term3;
+
+        if (*(unsigned char *)(obj + 4) & 0x40) {
+            result |= result << 0x10;
+        }
+        *(unsigned int *)(obj + outOff) = result;
+        outOff += 4;
+        i += 3;
+    } while (outOff < 0x7b0);
+}
+
+// ORIGINAL: 0x005D427C sub_5d427c 0x005D427C-0x005D439F
+// TRIED: entry uses pushal/popal (all eight registers saved and restored) around the whole body with cld and only rep movsb/ rep movsd inside, which VC6 never emits for ordinary compiled C++ - this is very likely inline assembly in the original source, which the rules here bar reproducing. Transcribed Ghidra's decompilation (already a faithful read of the byte stream) into plain C++ instead: a byte-oriented decoder that walks a control word one bit at a time, alternating literal dword/byte copies from the source with back-reference copies from already-written output, matching an LZ-style unpacker. No `__asm`; this compiles but will not reach the original's register-saving shape.
+// size      291 bytes
+// prototype
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+
+extern "C" int __cdecl sub_5d427c(unsigned short *samples, unsigned char *steps,
+                                  int a3) {
+  unsigned short *param_3 = samples;
+  unsigned char *param_4 = steps;
+  int param_5 = a3;
+
+  unsigned int uVar4;
+  unsigned int uVar2;
+  int iVar3;
+  signed char cVar5;
+  unsigned char bVar6;
+  unsigned char uVar1;
+  unsigned char *puVar8;
+  unsigned char *puVar9;
+
+  if (param_3 != 0) {
+    unsigned char *puVar7 = (unsigned char *)(param_3 + 1);
+    if (*param_3 & 1) {
+      puVar7 = (unsigned char *)param_3 + 5;
+    }
+    puVar8 = puVar7 + 3;
+    if (param_5 != 0) {
+      do {
+        uVar4 = *(unsigned int *)puVar8;
+        cVar5 = (signed char)uVar4;
+        while (uVar2 = uVar4 & 0xff, cVar5 < 0) {
+          for (;;) {
+            bVar6 = (unsigned char)(uVar4 >> 8);
+            uVar1 = (unsigned char)(uVar4 >> 0x10);
+            if ((signed char)((signed char)uVar2 * 2) >= 0) {
+              break;
+            }
+            if ((signed char)((signed char)uVar2 << 2) < 0) {
+              if ((unsigned char)uVar4 > 0xfb) {
+                unsigned int n = uVar4 & 3;
+                puVar8 = puVar8 + 1;
+                while (n != 0) {
+                  *param_4 = *puVar8;
+                  param_4 = param_4 + 1;
+                  puVar8 = puVar8 + 1;
+                  n = n - 1;
+                }
+                goto label_5d4352;
+              }
+              puVar8 = puVar8 + 1;
+              for (iVar3 = (int)(uVar4 & 0x1f) + 1; iVar3 != 0; iVar3 = iVar3 - 1) {
+                *(unsigned int *)param_4 = *(unsigned int *)puVar8;
+                puVar8 = puVar8 + 4;
+                param_4 = param_4 + 4;
+              }
+              uVar4 = *(unsigned int *)puVar8;
+              cVar5 = (signed char)uVar4;
+            } else {
+              puVar8 = puVar8 + 1;
+              for (uVar2 = uVar4 & 3; uVar2 != 0; uVar2 = uVar2 - 1) {
+                *param_4 = *puVar8;
+                puVar8 = puVar8 + 1;
+                param_4 = param_4 + 1;
+              }
+              {
+                unsigned int bit4 = (uVar4 & 0x10) >> 4;
+                unsigned int dist16 = (unsigned int)((bVar6 << 8) | uVar1);
+                unsigned int distance = (bit4 << 0x10) | dist16;
+                puVar9 = (param_4 - 1) - distance;
+              }
+              iVar3 = (int)((((unsigned char)uVar4 >> 2) << 8) |
+                             (unsigned char)(uVar4 >> 0x18)) &
+                          0x3ff;
+              iVar3 = iVar3 + 5;
+              for (; iVar3 != 0; iVar3 = iVar3 - 1) {
+                *param_4 = *puVar9;
+                puVar9 = puVar9 + 1;
+                param_4 = param_4 + 1;
+              }
+              uVar4 = *(unsigned int *)puVar8;
+              cVar5 = (signed char)uVar4;
+            }
+            uVar2 = uVar4 & 0xff;
+            if (cVar5 >= 0) {
+              goto label_5d42cc;
+            }
+          }
+          puVar8 = puVar8 + 3;
+          for (uVar2 = (unsigned int)(bVar6 >> 6); uVar2 != 0; uVar2 = uVar2 - 1) {
+            *param_4 = *puVar8;
+            puVar8 = puVar8 + 1;
+            param_4 = param_4 + 1;
+          }
+          {
+            unsigned int concat16 = (unsigned int)((bVar6 << 8) | uVar1);
+            unsigned int distance = concat16 & 0xffff3fff;
+            puVar9 = (param_4 - 1) - distance;
+          }
+          for (iVar3 = (int)(uVar4 & 0x3f) + 4; iVar3 != 0; iVar3 = iVar3 - 1) {
+            *param_4 = *puVar9;
+            puVar9 = puVar9 + 1;
+            param_4 = param_4 + 1;
+          }
+          uVar4 = *(unsigned int *)puVar8;
+          cVar5 = (signed char)uVar4;
+        }
+      label_5d42cc:
+        puVar8 = puVar8 + 2;
+        for (uVar2 = uVar2 & 3; uVar2 != 0; uVar2 = uVar2 - 1) {
+          *param_4 = *puVar8;
+          puVar8 = puVar8 + 1;
+          param_4 = param_4 + 1;
+        }
+        {
+          unsigned int concat16 =
+              (unsigned int)((((unsigned char)uVar4 >> 5) << 8) |
+                             (unsigned char)(uVar4 >> 8));
+          puVar9 = (param_4 - 1) - concat16;
+        }
+        for (iVar3 = (int)((uVar4 & 0x1c) >> 2) + 3; iVar3 != 0; iVar3 = iVar3 - 1) {
+          *param_4 = *puVar9;
+          puVar9 = puVar9 + 1;
+          param_4 = param_4 + 1;
+        }
+      } while (true);
+    }
+  }
+label_5d4352:
+  return 0;
+}
+
+// ORIGINAL: 0x005D439F sub_5d439f 0x005D439F-0x005D4448 FILE
+// working copy - scaffold materialised by --work
+// size      169 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_5d439f  at 0x005D439F  (169 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+typedef int int32_t;
+typedef unsigned int uint32_t;
+typedef short int16_t;
+typedef unsigned short uint16_t;
+typedef signed char int8_t;
+typedef unsigned char uint8_t;
+typedef int int32;
+typedef unsigned int uint32;
+typedef short int16;
+typedef unsigned short uint16;
+// `char`, NOT `signed char`. They are distinct MSVC types and mangle
+// differently - D against C - and the catalogue's `int8` means the first:
+// counted over every catalogued mangled name, `PAD` appears 508 times and
+// `PAC` once. Spelling it `signed char` made 150 derived prototypes emit a
+// symbol no target object holds. `int8_t` keeps its C meaning below; neither
+// catalogue ever uses it.
+typedef char int8;
+typedef unsigned char uint8;
+// IDA guessed int __cdecl(int,int,int,int); the tail never sets eax, so the
+// real return type is void, and evidence (only [esp+N] reads, no ecx use)
+// backs the __cdecl free-function shape with 4 stack ints.
+extern "C" void __cdecl sub_5d439f(unsigned int *a1, int a2, int a3, int a4) {
+    unsigned int bitpos;
+    unsigned int mask;
+    unsigned char width;
+    unsigned char shift;
+    unsigned int word;
+
+    bitpos = 0;
+    width = (unsigned char)a4;
+    mask = (1 << (width & 0x1f)) - 1;
+    while (a3 > 3) {
+        shift = (unsigned char)bitpos & 7;
+        word = *(unsigned int *)((bitpos >> 3) + a2);
+        word = (word >> shift) | (word << (0x20 - shift));
+        *a1 = word & mask;
+        a1[1] = ((word >> (width & 0x1f)) | (word << (0x20 - (width & 0x1f)))) & mask;
+
+        shift = (unsigned char)(bitpos + width * 2) & 7;
+        word = *(unsigned int *)(((bitpos + a4 * 2) >> 3) + a2);
+        word = (word >> shift) | (word << (0x20 - shift));
+        a1[2] = word & mask;
+        a1[3] = ((word >> (width & 0x1f)) | (word << (0x20 - (width & 0x1f)))) & mask;
+
+        a1 += 4;
+        bitpos += a4 * 4;
+        a3 -= 4;
+    }
+    if (a3 - 4 > -4) {
+        do {
+            a3--;
+            shift = (unsigned char)bitpos & 7;
+            word = *(unsigned int *)((bitpos >> 3) + a2);
+            *a1 = ((word >> shift) | (word << (0x20 - shift))) & mask;
+            bitpos += a4;
+            a1++;
+        } while (a3 > 0);
+    }
+}
+
+// ORIGINAL: 0x005D4448 sub_5d4448 0x005D4448-0x005D44FC FILE
+// TRIED: byte-exact - `pushal`/`popal` at entry has no C++ spelling (documented wall). Landed the nested do/while-with-goto gather loop structurally instead: 9 stack args, an outer per-run counter reset from a saved [ebp+0x24] and an inner index-table lookup vs a direct 16-byte-stride struct-array fallback.
+// working copy - scaffold materialised by --work
+// size      180 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_5d4448  at 0x005D4448  (180 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+typedef int int32_t;
+typedef unsigned int uint32_t;
+typedef short int16_t;
+typedef unsigned short uint16_t;
+typedef signed char int8_t;
+typedef unsigned char uint8_t;
+typedef int int32;
+typedef unsigned int uint32;
+typedef short int16;
+typedef unsigned short uint16;
+// `char`, NOT `signed char`. They are distinct MSVC types and mangle
+// differently - D against C - and the catalogue's `int8` means the first:
+// counted over every catalogued mangled name, `PAD` appears 508 times and
+// `PAC` once. Spelling it `signed char` made 150 derived prototypes emit a
+// symbol no target object holds. `int8_t` keeps its C meaning below; neither
+// catalogue ever uses it.
+typedef char int8;
+typedef unsigned char uint8;
+extern "C" void __cdecl sub_5d4448(
+    int *p1, int p2, int p3, int p4, int *p5, int p6, int p7, int p8, int p9)
+{
+    int saved_count = p8;
+    int base8 = p6 - (p4 << 4);
+    int base_c = p2 - p3;
+    int stride = p7;
+    int stride3 = stride * 3;
+    int *src = p1;
+    char *dst = reinterpret_cast<char *>(p3);
+    int count;
+
+    do {
+        count = saved_count;
+        for (;;) {
+            int idx = *src;
+            src += 1;
+            if (idx < p4) {
+                do {
+                    int entry = p5[idx] + base_c + reinterpret_cast<int>(dst);
+                    *reinterpret_cast<int *>(dst) = *reinterpret_cast<int *>(entry);
+                    *reinterpret_cast<int *>(dst + stride) = *reinterpret_cast<int *>(entry + stride);
+                    *reinterpret_cast<int *>(dst + stride * 2) = *reinterpret_cast<int *>(entry + stride * 2);
+                    *reinterpret_cast<int *>(dst + stride3) = *reinterpret_cast<int *>(entry + stride3);
+                    dst += 4;
+                    count -= 1;
+                    if (count <= 0) goto end_of_run;
+                    idx = *src;
+                    src += 1;
+                } while (idx < p4);
+            }
+            {
+                int entry2 = base8 + idx * 16;
+                *reinterpret_cast<int *>(dst) = *reinterpret_cast<int *>(entry2);
+                *reinterpret_cast<int *>(dst + stride) = *reinterpret_cast<int *>(entry2 + 4);
+                *reinterpret_cast<int *>(dst + stride * 2) = *reinterpret_cast<int *>(entry2 + 8);
+                *reinterpret_cast<int *>(dst + stride3) = *reinterpret_cast<int *>(entry2 + 0xc);
+                dst += 4;
+                count -= 1;
+            }
+            if (count <= 0) break;
+        }
+    end_of_run:
+        dst += stride3;
+        p9 -= 1;
+    } while (p9 > 0);
+}
+
+// ORIGINAL: 0x00634980 sub_634980 0x00634980-0x00634A50 FILE
+// TRIED: `extern "C" int __stdcall sub_634980(int a1, int a2)` per the given def head - disasm reads *ecx directly as a float* with no matching stack slot (a 3x3 matrix "this"), so the receiver is a __thiscall member, not a 2-arg __stdcall free function; changed to a `Mat3::multiply` member. `dst`/`a` tracked as independent incrementing pointers gives a MISMATCH at the prologue (#4, 87% similarity); an `int off = dst - a` delta recomputed each outer iteration (matching the original's spill of that delta to `[esp+0x14]` and its `add esi, ebx` re-derivation) gets to 89.5% similarity, 7 edits, all register-allocation choices (which callee-saved reg holds which pointer) rather than control-flow shape.
+// working copy - scaffold materialised by --work
+// size      208 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_634980  at 0x00634980  (208 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+typedef int int32_t;
+typedef unsigned int uint32_t;
+typedef short int16_t;
+typedef unsigned short uint16_t;
+typedef signed char int8_t;
+typedef unsigned char uint8_t;
+typedef int int32;
+typedef unsigned int uint32;
+typedef short int16;
+typedef unsigned short uint16;
+// `char`, NOT `signed char`. They are distinct MSVC types and mangle
+// differently - D against C - and the catalogue's `int8` means the first:
+// counted over every catalogued mangled name, `PAD` appears 508 times and
+// `PAC` once. Spelling it `signed char` made 150 derived prototypes emit a
+// symbol no target object holds. `int8_t` keeps its C meaning below; neither
+// catalogue ever uses it.
+typedef char int8;
+typedef unsigned char uint8;
+// A 3x3 row-major float matrix. `this` is the left operand (matches ecx
+// dereferenced directly as a float base, no field offsets), `other` is the
+// right operand, `out` receives the product - see TRIED above for the
+// signature evidence.
+class Mat3 {
+public:
+    // 3x3 row-major, which is the whole object: the image dereferences `this`
+    // directly as a float base and never offsets past nine floats.
+    float v[9];
+    void multiply(float *out, float *other);
+};
+
+void Mat3::multiply(float *out, float *other) {
+    float *a = v;
+    float local[9] = {
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 1.0f
+    };
+    int off = reinterpret_cast<int>(local) - reinterpret_cast<int>(a);
+    int row = 3;
+    do {
+        float *dst = reinterpret_cast<float *>(off + reinterpret_cast<int>(a));
+        float *b = other;
+        int col = 3;
+        do {
+            *dst = 0.0f;
+            float sum = *dst;
+            const float *pa = a;
+            const float *pb = b;
+            int k = 3;
+            do {
+                sum = *pa * *pb + sum;
+                pa = pa + 1;
+                pb = pb + 3;
+                k = k - 1;
+            } while (k != 0);
+            *dst = sum;
+            dst = dst + 1;
+            b = other + (3 - col) + 1;
+            col = col - 1;
+        } while (col != 0);
+        a += 3;
+        --row;
+    } while (row != 0);
+    for (int i = 0; i < 9; ++i) {
+        out[i] = local[i];
+    }
+}
+
+// ORIGINAL: 0x00634A50 sub_634a50 0x00634A50-0x00634AC9 FILE
+// working copy - scaffold materialised by --work
+// size      121 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_634a50  at 0x00634A50  (121 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+typedef int int32_t;
+typedef unsigned int uint32_t;
+typedef short int16_t;
+typedef unsigned short uint16_t;
+typedef signed char int8_t;
+typedef unsigned char uint8_t;
+typedef int int32;
+typedef unsigned int uint32;
+typedef short int16;
+typedef unsigned short uint16;
+// `char`, NOT `signed char`. They are distinct MSVC types and mangle
+// differently - D against C - and the catalogue's `int8` means the first:
+// counted over every catalogued mangled name, `PAD` appears 508 times and
+// `PAC` once. Spelling it `signed char` made 150 derived prototypes emit a
+// symbol no target object holds. `int8_t` keeps its C meaning below; neither
+// catalogue ever uses it.
+typedef char int8;
+typedef unsigned char uint8;
+class Matrix3 { public:
+    float v[9];
+    void transform(float *out, const float *in);
+};
+
+void Matrix3::transform(float *out, const float *in) {
+    float *m = v;
+    out[0] = m[0] * in[0] + m[1] * in[1] + m[2] * in[2];
+    out[1] = m[3] * in[0] + m[4] * in[1] + m[5] * in[2];
+    out[2] = m[6] * in[0] + m[7] * in[1] + m[8] * in[2];
+}
+
+// ORIGINAL: 0x00634AD0 sub_634ad0 0x00634AD0-0x00634B67 FILE
+// TRIED: extern "C" __stdcall(int,int) contract head - disasm reads ecx as an implicit receiver (thiscall) into a 3x3 float matrix, not a stack int; rewrote as Mat3x3::scale_into(float*,float). MISMATCH #1 push/lea, prologue layout only, structure otherwise matches Ghidra's nested-loop scale+copy.
+// working copy - scaffold materialised by --work
+// size      151 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_634ad0  at 0x00634AD0  (151 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+typedef int int32_t;
+typedef unsigned int uint32_t;
+typedef short int16_t;
+typedef unsigned short uint16_t;
+typedef signed char int8_t;
+typedef unsigned char uint8_t;
+typedef int int32;
+typedef unsigned int uint32;
+typedef short int16;
+typedef unsigned short uint16;
+// `char`, NOT `signed char`. They are distinct MSVC types and mangle
+// differently - D against C - and the catalogue's `int8` means the first:
+// counted over every catalogued mangled name, `PAD` appears 508 times and
+// `PAC` once. Spelling it `signed char` made 150 derived prototypes emit a
+// symbol no target object holds. `int8_t` keeps its C meaning below; neither
+// catalogue ever uses it.
+typedef char int8;
+typedef unsigned char uint8;
+class Mat3x3 { public:
+    float m_[9];
+    void scale_into(float *dest, float scale);
+};
+
+void Mat3x3::scale_into(float *dest, float scale) {
+    float tmp[9] = {1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f};
+    float *pf1 = tmp;
+    int base = (int)this - (int)tmp;
+    int i4 = 3;
+    do {
+        int i3 = 3;
+        float *pf2 = pf1;
+        do {
+            pf1 = pf2 + 1;
+            i3 = i3 - 1;
+            *pf2 = scale * *(float *)(base + (int)pf2);
+            pf2 = pf1;
+        } while (i3 != 0);
+        i4 = i4 - 1;
+    } while (i4 != 0);
+    pf1 = tmp;
+    for (i4 = 9; i4 != 0; i4 = i4 - 1) {
+        *dest = *pf1;
+        pf1 = pf1 + 1;
+        dest = dest + 1;
+    }
+}
+
+// ORIGINAL: 0x005D29E1 sub_5d29e1 0x005D29E1-0x005D2B20
+// TRIED: this is not addressable with a normal calling convention - the body reads unaff_ESI/unaff_EDI with no stack access and no register setup of its own (first instruction is `push edi`, `mov ebx,[esi+0x14]` immediately after), so the 3 callers must be pre-loading esi/edi before `call`ing in. That is an interprocedural register-allocation artifact of compiling the 3 call sites and this body together as one translation unit; it cannot be reproduced by compiling this function alone under any ordinary C++ signature, since VC6 only picks a non-standard register ABI for an internal-linkage callee when it can see all of its callers. Declared it as a plain two-pointer __cdecl function instead (src, dst) for a faithful, compiling body. Also not reproduced: the fadd-then- reinterpret-low-dword pattern for double->int (`fstp qword ptr`, then `mov` of the low 4 bytes) is the classic magic- number float truncation trick that avoids calling `_ftol`; mimicked with a raw double-then-reinterpret-cast here. Best reached: MISMATCH, edit_count 7, 455 bytes vs 319 - the whole prologue/epilogue and call sequencing differ because of the calling-convention gap above.
+// size      319 bytes
+// prototype
+// callers   3   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+extern "C" void __cdecl sub_5d29e1(int *src, int *dst) {
+    int iVar2, iVar3, iVar4, iVar5, iVar6, iVar7, iVar8;
+    double d1, d2;
+    int local_1c, local_14;
+    float fVar1;
+
+    iVar7 = src[5];
+    iVar6 = src[3];
+    iVar5 = src[1];
+    iVar3 = src[7];
+    if (src[6] || iVar6 || iVar3 || src[2] || iVar7 || iVar5 || src[4]) {
+        fVar1 = ((float)(iVar5 - iVar3) + (float)(iVar7 - iVar6)) * *(float *)IdctCos3Pi8;
+        iVar4 = (int)(((__int64)(iVar3 + iVar5 - iVar6 - iVar7) * *IdctSin45Q31) >> 32) * 2;
+        d1 = (double)((float)(iVar7 - iVar6) * *(float *)IdctInv2CosPi8 + fVar1) + *(float *)IdctAanScale;
+        local_1c = *(int *)&d1;
+        d2 = (double)((float)(iVar5 - iVar3) * *(float *)IdctInv2Cos3Pi8 - fVar1) + *(float *)IdctAanScale;
+        local_14 = *(int *)&d2;
+        iVar2 = local_1c + iVar4;
+        iVar4 = iVar4 + local_14;
+        local_14 = local_14 + iVar6 + iVar7 + iVar3 + iVar5;
+        iVar7 = src[4] + src[0];
+        iVar3 = src[0] - src[4];
+        iVar5 = (int)(((__int64)(src[2] - src[6]) * *IdctSin45Q31) >> 32);
+        iVar6 = iVar5 * 2;
+        iVar8 = src[6] + src[2] + iVar6;
+        iVar6 = iVar6 + iVar3;
+        iVar3 = iVar3 - iVar5 * 2;
+        iVar5 = iVar8 + iVar7;
+        iVar7 = iVar7 - iVar8;
+        dst[0x12] = iVar3 + iVar2;
+        dst[0x2d] = iVar3 - iVar2;
+        dst[0x1b] = iVar7 + local_1c;
+        dst[0x24] = iVar7 - local_1c;
+        dst[0] = iVar5 + local_14;
+        dst[9] = iVar4 + iVar6;
+        dst[0x36] = iVar6 - iVar4;
+        dst[0x3f] = iVar5 - local_14;
+        return;
+    }
+    iVar7 = src[0];
+    dst[0] = iVar7;
+    dst[9] = iVar7;
+    dst[0x12] = iVar7;
+    dst[0x1b] = iVar7;
+    dst[0x24] = iVar7;
+    dst[0x2d] = iVar7;
+    dst[0x36] = iVar7;
+    dst[0x3f] = iVar7;
+    return;
+}
+
+// ORIGINAL: 0x004243F0 ?clear_council_notify@@YAXXZ 0x004243F0-0x0042440D FILE BYTE_EXACT
+// size      29 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x004243F0
+// measured tier  BYTE_EXACT
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/004243f0/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?clear_council_notify@@YAXXZ  at 0x004243F0  (29 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+
+// The const-pointer spelling reproduces the original's
+// encoding including the address; `extern T *g` does not.
+static int *const CouncilNotifyFormSlots = (int *)0x00703DEC;
+static int *const CouncilNotifyPluralSlots = (int *)0x00703E0C;
+
+void __cdecl clear_council_notify() {
+    memset(CouncilNotifyPluralSlots, 0, 8 * sizeof(int));
+    memset(CouncilNotifyFormSlots, 0, 8 * sizeof(int));
+}
+
+// ORIGINAL: 0x005D2E00 sub_5d2e00 0x005D2E00-0x005D2E6E FILE BYTE_EXACT
+// symbol    ?sub_5d2e00@@YIXPADHH0D@Z
+// working copy - scaffold materialised by --work
+// size      110 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_5d2e00  at 0x005D2E00  (110 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+typedef int int32_t;
+typedef unsigned int uint32_t;
+typedef short int16_t;
+typedef unsigned short uint16_t;
+typedef signed char int8_t;
+typedef unsigned char uint8_t;
+typedef int int32;
+typedef unsigned int uint32;
+typedef short int16;
+typedef unsigned short uint16;
+// `char`, NOT `signed char`. They are distinct MSVC types and mangle
+// differently - D against C - and the catalogue's `int8` means the first:
+// counted over every catalogued mangled name, `PAD` appears 508 times and
+// `PAC` once. Spelling it `signed char` made 150 derived prototypes emit a
+// symbol no target object holds. `int8_t` keeps its C meaning below; neither
+// catalogue ever uses it.
+typedef char int8;
+typedef unsigned char uint8;
+// `lea eax, [ecx+edx]` with no stack access for the first two operands is
+// __fastcall (ecx=a1, edx=a2); three more come off the stack, the last a
+// single byte - matches `ret 0xc` (3 stack slots popped by the callee).
+// a1 and a4 are pointers the census's H was only guessing at; the body adds a
+// byte offset to each, which is the proof.
+void __fastcall sub_5d2e00(char *a1, int a2, int a3, char *a4, char a5) {
+    char *src = a1 + a2;
+    int stride = a3 * 8;
+    char *dst = a4 + 6;
+    int count = 8;
+    do {
+        dst[-4] = src[0] + a5;
+        dst[0] = src[4] + a5;
+        dst[4] = src[8] + a5;
+        dst[8] = src[0xc] + a5;
+        dst[0xc] = src[0x10] + a5;
+        dst[0x10] = src[0x14] + a5;
+        dst[0x14] = src[0x18] + a5;
+        dst[0x18] = src[0x1c] + a5;
+        src = src + stride;
+        count = count - 1;
+        dst = dst + 0x20;
+    } while (count != 0);
+}
+
+// ORIGINAL: 0x004243D0 ?clear_council_notify@@YAXH@Z 0x004243D0-0x004243E8 BYTE_EXACT
+// size      24 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// 0x004243D0  ?clear_council_notify@@YAXH@Z  ->  ?clear_council_notify@@YAXH@Z
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+
+
+void __cdecl clear_council_notify(int a1) {
+    CouncilNotifyFormSlots[a1] = 0;
+    CouncilNotifyPluralSlots[a1] = 0;
+}
+
+// ORIGINAL: 0x0062CD10 sub_62cd10 0x0062CD10-0x0062CD48 BYTE_EXACT
+// symbol    ?sub_62cd10@@YGHPAX0@Z
+// size      56 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// 0x0062CD10  sub_62cd10  ->  _sub_62cd10
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+
+
+static int *const DrawDensityLimit = (int *)0x009BC484;
+
+// a1 and a2 are pointers the census's H was only guessing at; a1 is read
+// through and a2 written through, which is the proof.
+int __stdcall sub_62cd10(void *a1, void *a2) {
+    char *obj = static_cast<char *>(a1);
+    uint32_t density = (*reinterpret_cast<uint32_t *>(obj + 0x14) + 1) *
+                        *reinterpret_cast<uint32_t *>(obj + 0x10) *
+                        *reinterpret_cast<uint32_t *>(obj + 8) * 2;
+    if (density < *DrawDensityLimit) {
+        uint32_t value = *reinterpret_cast<uint32_t *>(obj + 0xc);
+        if (value <= 0x400) {
+            uint32_t *out = static_cast<uint32_t *>(a2);
+            if (value > *out) {
+                *out = value;
+            }
+        }
+    }
+    return 1;
+}
+
+// ORIGINAL: 0x00589550 j_GraphicWin::close 0x00589550-0x00589555 FILE BYTE_EXACT
+// symbol    ?j_close@GraphicWin@@QAEXXZ
+// LEVER: implicit-thiscall member forwarding; explicit __thiscall on a free fn is C4234
+// working copy - scaffold materialised by --work
+// size      5 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      thunk
+// flags     hidden;thunk;sp_ready;purged_ok
+// calls     (none)
+
+
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: j_GraphicWin::close  at 0x00589550  (5 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+typedef int int32_t;
+typedef unsigned int uint32_t;
+typedef short int16_t;
+typedef unsigned short uint16_t;
+typedef signed char int8_t;
+typedef unsigned char uint8_t;
+typedef int int32;
+typedef unsigned int uint32;
+typedef short int16;
+typedef unsigned short uint16;
+// `char`, NOT `signed char`. They are distinct MSVC types and mangle
+// differently - D against C - and the catalogue's `int8` means the first:
+// counted over every catalogued mangled name, `PAD` appears 508 times and
+// `PAC` once. Spelling it `signed char` made 150 derived prototypes emit a
+// symbol no target object holds. `int8_t` keeps its C meaning below; neither
+// catalogue ever uses it.
+typedef char int8;
+typedef unsigned char uint8;
+// GraphicWin is graphicwin.h's real class, which general.cpp already includes -
+// the thunk is a member of it, not of a local shim.
+void GraphicWin::j_close() {
+    close();
 }

@@ -1,4 +1,11 @@
 // ORIGINAL: 0x005D44FC DirectDrawCreate 0x005D44FC-0x005D4502 FILE
+// TRIED: homed into general.cpp (its real TU) 2026-09-03 and reverted for one reason:
+// its fixed-address bindings have no naming evidence. image_data.py reads
+// 1 of them and every one is zero at load - runtime-filled lookup tables
+// with no .data content, no string, no arithmetic identity beyond 'a table
+// indexed here' - and none is modelled anywhere in src. The homing-first rule
+// does not ask for them to be invented: an unclaimed body with evidence-free
+// bindings waits for the class pass that measures it in context.
 // working copy - scaffold materialised by --work
 // size      6 bytes
 // prototype HRESULT (__stdcall DirectDrawCreate)(GUID* lpGUID, LPDIRECTDRAW* lplpDD, IUnknown* pUnkOuter)

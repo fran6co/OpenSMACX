@@ -1,4 +1,11 @@
 // ORIGINAL: 0x005CDB90 sub_5cdb90 0x005CDB90-0x005CDD0C FILE
+// TRIED: homed into general.cpp (its real TU) 2026-09-03 and reverted for one reason:
+// its fixed-address bindings have no naming evidence. image_data.py reads
+// 2 of them and every one is zero at load - runtime-filled lookup tables
+// with no .data content, no string, no arithmetic identity beyond 'a table
+// indexed here' - and none is modelled anywhere in src. The homing-first rule
+// does not ask for them to be invented: an unclaimed body with evidence-free
+// bindings waits for the class pass that measures it in context.
 // TRIED: `extern "C" ... sub_5cdb90()` fallback head; the disasm's no-`push ebp` esp-relative frame with 6 stack reads matches IDA's 6-arg guess, so the signature was changed to (int, int*, int*, int*, int, unsigned int*). #0 mismatch is the `sub esp,0x10` prologue vs the compiler's own frame shape.
 // size      380 bytes
 // prototype 

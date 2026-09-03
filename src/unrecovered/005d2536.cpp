@@ -1,4 +1,11 @@
 // ORIGINAL: 0x005D2536 sub_5d2536 0x005D2536-0x005D271D FILE
+// TRIED: homed into general.cpp (its real TU) 2026-09-03 and reverted for one reason:
+// its fixed-address bindings have no naming evidence. image_data.py reads
+// 1 of them and every one is zero at load - runtime-filled lookup tables
+// with no .data content, no string, no arithmetic identity beyond 'a table
+// indexed here' - and none is modelled anywhere in src. The homing-first rule
+// does not ask for them to be invented: an unclaimed body with evidence-free
+// bindings waits for the class pass that measures it in context.
 // TRIED: no C++ calling convention passes edi/esi/ebp as params with no prologue; __asm is banned, so the register-implicit entry (no push/pop, bare ret) cannot be reproduced byte-exact. Reshaped as three pointer params for a faithful (non-exact) transcription.
 // size      487 bytes
 // prototype 

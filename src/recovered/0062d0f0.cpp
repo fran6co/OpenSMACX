@@ -1,4 +1,8 @@
 // ORIGINAL: 0x0062D0F0 sub_62d0f0 0x0062D0F0-0x0062D0F8 BYTE_EXACT
+// TRIED: homed into general.cpp 2026-09-03 - does not link: the body's only call
+// is sub_62c8e0 at 0x0062C8E0, whose archive body routes to gamma.cpp, not here.
+// A forward declaration without a definition anywhere is LNK2001, so the body
+// stays here until 0x0062C8E0 is homed into gamma.cpp.
 // symbol    ?sub_62d0f0@@YAHXZ
 // size      8 bytes
 // prototype 

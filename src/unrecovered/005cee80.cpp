@@ -1,4 +1,11 @@
 // ORIGINAL: 0x005CEE80 sub_5cee80 0x005CEE80-0x005CEF8A
+// TRIED: homed into general.cpp (its real TU) 2026-09-03 and reverted for one reason:
+// its fixed-address bindings have no naming evidence. image_data.py reads
+// 0 of them and every one is zero at load - runtime-filled lookup tables
+// with no .data content, no string, no arithmetic identity beyond 'a table
+// indexed here' - and none is modelled anywhere in src. The homing-first rule
+// does not ask for them to be invented: an unclaimed body with evidence-free
+// bindings waits for the class pass that measures it in context.
 // TRIED: same unexpressible-convention finding as 0x005D2C0A and its sibling 0x005D2B20 - `esi` (src) is read from the first real instruction with no stack setup, so a normal parameter cannot reproduce the prologue (MISMATCH from instruction 0). Unlike 0x005D2C0A this one does NOT do the final `>> 17` scale (plain sum/difference like 0x005D2B20), and its `dst` comes from a global pointer (`g_009c3004`, a plain load) rather than a second implicit register, with the intermediate values spilled to fixed globals (`g_009c3008`.."14) instead of the stack - landed with a `src` parameter and the global dst load, which the lever note calls out as safe for a plain load.
 // size      266 bytes
 // prototype

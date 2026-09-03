@@ -1,4 +1,10 @@
 // ORIGINAL: 0x00505D60 ??__Eg_BOOM_BUFFERS2@@YAXXZ 0x00505D60-0x00505D77 FILE BYTE_EXACT
+// TRIED: same wall as 0x00505D40 - the body calls the MSVC 'eh vector
+// constructor iterator' at 0x006456E4, whose mangled name no forward declaration
+// can reach. Needs a real global array with a non-trivial ctor and dtor.
+// TRIED: same wall as 0x00505D40 - the body calls the MSVC 'eh vector
+// constructor iterator' at 0x006456E4, whose mangled name no forward declaration
+// can reach. Needs a real global array with a non-trivial ctor and dtor.
 // symbol    ?fn_00505d60@@YAXXZ
 // size      23 bytes
 // prototype 

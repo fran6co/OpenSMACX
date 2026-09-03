@@ -1,4 +1,11 @@
 // ORIGINAL: 0x004450B0 sub_4450b0 0x004450B0-0x0044511C FILE
+// TRIED: homed into game.cpp (its real TU) 2026-09-03 and reverted for one reason:
+// its fixed-address bindings have no naming evidence. image_data.py reads
+// 7 of them and every one is zero at load - runtime-filled lookup tables
+// with no .data content, no string, no arithmetic identity beyond 'a table
+// indexed here' - and none is modelled anywhere in src. The homing-first rule
+// does not ask for them to be invented: an unclaimed body with evidence-free
+// bindings waits for the class pass that measures it in context.
 // TRIED: plain constructor with raw pointer-offset writes (eax=ecx=this, returns this implicitly). Diverges at instr #2: original pushes ecx for a compiler-generated [ebp-4] unwind-context local (a partially-constructed-object marker) that a plain non-throwing body never allocates.
 // working copy - scaffold materialised by --work
 // size      108 bytes

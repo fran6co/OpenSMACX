@@ -1,4 +1,11 @@
 // ORIGINAL: 0x005CD560 sub_5cd560 0x005CD560-0x005CD74D FILE
+// TRIED: homed into general.cpp (its real TU) 2026-09-03 and reverted for one reason:
+// its fixed-address bindings have no naming evidence. image_data.py reads
+// 1 of them and every one is zero at load - runtime-filled lookup tables
+// with no .data content, no string, no arithmetic identity beyond 'a table
+// indexed here' - and none is modelled anywhere in src. The homing-first rule
+// does not ask for them to be invented: an unclaimed body with evidence-free
+// bindings waits for the class pass that measures it in context.
 // TRIED: (none - lands as MISMATCH #2 movsx/mov, likely helper-function extraction changing register scheduling around the sign-extend widen)
 // size      493 bytes
 // prototype 

@@ -38,53 +38,6 @@
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-typedef int int32_t;
-typedef unsigned int uint32_t;
-typedef short int16_t;
-typedef unsigned short uint16_t;
-typedef signed char int8_t;
-typedef unsigned char uint8_t;
-typedef int int32;
-typedef unsigned int uint32;
-typedef short int16;
-typedef unsigned short uint16;
-// `char`, NOT `signed char`. They are distinct MSVC types and mangle
-// differently - D against C - and the catalogue's `int8` means the first:
-// counted over every catalogued mangled name, `PAD` appears 508 times and
-// `PAC` once. Spelling it `signed char` made 150 derived prototypes emit a
-// symbol no target object holds. `int8_t` keeps its C meaning below; neither
-// catalogue ever uses it.
-typedef char int8;
-typedef unsigned char uint8;
-
-// Vtable shim. VC6 rejects a free `__thiscall` function pointer
-// (C4234), so an indirect virtual call is spelled by calling the Nth
-// virtual of a class that is never defined and never instantiated.
-// Only DECLARATION ORDER matters - change a slot's signature freely
-// to match the call you need; it will not move.
-// This body dispatches through slot(s): 17
-class VCall { public:
-    virtual void slot000();
-    virtual void slot001();
-    virtual void slot002();
-    virtual void slot003();
-    virtual void slot004();
-    virtual void slot005();
-    virtual void slot006();
-    virtual void slot007();
-    virtual void slot008();
-    virtual void slot009();
-    virtual void slot010();
-    virtual void slot011();
-    virtual void slot012();
-    virtual void slot013();
-    virtual void slot014();
-    virtual void slot015();
-    virtual void slot016();
-    virtual void slot017();  // <-- used
-};
-
-// ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
 static int *const g_009b3ab0 = (int *)0x009B3AB0;

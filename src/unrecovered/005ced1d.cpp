@@ -1,4 +1,11 @@
 // ORIGINAL: 0x005CED1D sub_5ced1d 0x005CED1D-0x005CEE80 FILE
+// TRIED: homed into general.cpp (its real TU) 2026-09-03 and reverted for one reason:
+// its fixed-address bindings have no naming evidence. image_data.py reads
+// 10 of them and every one is zero at load - runtime-filled lookup tables
+// with no .data content, no string, no arithmetic identity beyond 'a table
+// indexed here' - and none is modelled anywhere in src. The homing-first rule
+// does not ask for them to be invented: an unclaimed body with evidence-free
+// bindings waits for the class pass that measures it in context.
 // TRIED: the function is called with a pre-loaded ESI (no caller in this image, no visible parameter setup - Ghidra's own "unaff_ESI" flags the same thing) and returns void (no eax set at either `ret`); PROPOSAL: void __fastcall sub_5ced1d(int *esiPtr) below. The original also writes an 8-byte `fstp qword` into 0x9c3008/0x9c3010 and rereads the two dwords as plain ints - a manual int-pair packed through one FPU store, not a real float<->int conversion; this transcribes ghidra's already-resolved integer VALUES rather than reproducing the packing trick, so it computes the same result through different instructions. Landed at 0.41 mnemonic similarity - logic and field writes are transcribed directly from the disassembly/ghidra, scheduling is not.
 // working copy - scaffold materialised by --work
 // size      355 bytes

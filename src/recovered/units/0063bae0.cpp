@@ -1,4 +1,6 @@
 // ORIGINAL: 0x0063BAE0 sub_63bae0 0x0063BAE0-0x0063BAF6 FILE BYTE_EXACT
+// TRIED: same finding as 0x00589870 - homed into general.cpp it measures 5 of 6
+// with the atexit push cleaned by 'add esp,4' against the image's 'pop ecx'.
 // size      22 bytes
 // prototype 
 // callers   0   call targets   2

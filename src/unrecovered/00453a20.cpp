@@ -1,11 +1,11 @@
-// ORIGINAL: 0x004243F0 ?clear_council_notify@@YAXXZ 0x004243F0-0x0042440D FILE BYTE_EXACT
-// size      29 bytes
+// ORIGINAL: 0x00453A20 ?load_bases@@YAXXZ 0x00453A20-0x00453A6A FILE
+// size      74 bytes
 // prototype 
-// callers   1   call targets   0
+// callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
-// PRESERVED UNIT - measured BYTE_EXACT.
+// PRESERVED UNIT - measured MISMATCH.
 //
 // Kept for COVERAGE. This directory IS on the ratchet: every file here
 // carries an ORIGINAL marker, `decomp_status.py` compiles and measures
@@ -14,17 +14,18 @@
 // header said "on no ratchet", which stopped being true when the map
 // moved into src/ and was still being written into new files.
 //
-// address        0x004243F0
-// measured tier  BYTE_EXACT
+// address        0x00453A20
+// measured tier  MISMATCH
+// divergence     3
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
 // emitted scaffolding and the body alone will not reproduce the
 // verdict. To resume, copy everything below back over
-//   build/byte-match/004243f0/unit.cpp
+//   build/byte-match/00453a20/unit.cpp
 // and score it with tools/agent_brief.py.
 // GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?clear_council_notify@@YAXXZ  at 0x004243F0  (29 bytes)
+// subject: ?load_bases@@YAXXZ  at 0x00453A20  (74 bytes)
 //
 // A VERIFICATION ARTIFACT, not product source: classes are opaque and
 // globals are bound to fixed addresses, because both are byte-visible
@@ -58,22 +59,42 @@
 //    hard case - the tool reports a similarity ratio so you can tell a
 //    near miss from a wrong body.
 
-typedef int int32_t;
-typedef unsigned int uint32_t;
-typedef short int16_t;
-typedef unsigned short uint16_t;
-typedef signed char int8_t;
-typedef unsigned char uint8_t;
-
-#include <string.h>
-
-// ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_00703dec = (int *)0x00703DEC;
-static int *const g_00703e0c = (int *)0x00703E0C;
+static int *const g_0076e590 = (int *)0x0076E590;
+static int *const g_0076e890 = (int *)0x0076E890;
 
-void __cdecl clear_council_notify() {
-    memset(g_00703e0c, 0, 8 * sizeof(int));
-    memset(g_00703dec, 0, 8 * sizeof(int));
+void __cdecl load_bases() {
+    // MISMATCH: single-instruction divergence at mnemonic #3. The original
+    // materialises the outer accumulator's zero with `xor ebx, ebx`; every
+    // source-form tried here (declaration order, separate decl+assign,
+    // for(;;)+break, swapped operand order in the lea expression, int vs
+    // pointer typing for the walked pointer, `register` hints, and routing
+    // the two table addresses through `extern`/indexed-array globals
+    // instead of these literals) still lowers it to `mov ebx, 0`. `esi`'s
+    // per-outer-iteration reset one loop level in compiles to `xor` either
+    // way, so this is a backend instruction-selection choice for this one
+    // slot, not a shape problem - 25/26 mnemonics agree (similarity 0.9615).
+    int ebx = 0;
+    char **eax = reinterpret_cast<char **>(g_0076e590);
+    do {
+        int esi = 0;
+        do {
+            int edi = 4;
+            do {
+                char *ecx = reinterpret_cast<char *>(0x78e978 + ebx + esi);
+                int edx = 3;
+                do {
+                    *eax = ecx;
+                    ecx += 0x2c;
+                    eax++;
+                    edx--;
+                } while (edx != 0);
+                esi += 0x84;
+                edi--;
+            } while (edi != 0);
+        } while (esi < 0x420);
+        ebx += 0x65c;
+    } while (reinterpret_cast<int>(eax) < reinterpret_cast<int>(g_0076e890));
 }
+

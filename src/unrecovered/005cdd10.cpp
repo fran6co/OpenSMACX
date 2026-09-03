@@ -1,4 +1,11 @@
 // ORIGINAL: 0x005CDD10 sub_5cdd10 0x005CDD10-0x005CDF93 FILE
+// TRIED: homed into general.cpp (its real TU) 2026-09-03 and reverted for one reason:
+// its fixed-address bindings have no naming evidence. image_data.py reads
+// 0 of them and every one is zero at load - runtime-filled lookup tables
+// with no .data content, no string, no arithmetic identity beyond 'a table
+// indexed here' - and none is modelled anywhere in src. The homing-first rule
+// does not ask for them to be invented: an unclaimed body with evidence-free
+// bindings waits for the class pass that measures it in context.
 // TRIED: literal Ghidra-shaped transcription (8 int/ptr params, void return, do/while outer + for inner, saturating clamps) compiles and is logically faithful but MISMATCHes at instruction #0: original has no `push ebp; mov ebp,esp` frame (ebp is a plain register-allocated variable across the whole function, /Oy-style), so register allocation diverges from the very first instruction. Not chased further - large heavily-optimized leaf arithmetic function, register scheduling not source-form.
 // working copy - scaffold materialised by --work
 // size      643 bytes

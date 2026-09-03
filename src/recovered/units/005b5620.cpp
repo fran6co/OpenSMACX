@@ -1,4 +1,8 @@
 // ORIGINAL: 0x005B5620 ?social_select@@YAXH@Z 0x005B5620-0x005B5688 FILE BYTE_EXACT
+// TRIED: homed into general.cpp 2026-09-03 - does not compile: the body calls
+// Console::editor_who(int,int) through a cast to Console*, and console.h declares
+// no such member (console.cpp is a different TU). SocialWin::init/close are also
+// undeclared. Stays here until Console::editor_who is declared and defined.
 // size      104 bytes
 // prototype void (__cdecl ?social_select@@YAXH@Z)(int factionID)
 // callers   4   call targets   5

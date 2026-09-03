@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0062D1A0 sub_62d1a0 0x0062D1A0-0x0062D1D2 BYTE_EXACT
+// TRIED: homed into general.cpp 2026-09-03 - does not link: the body reads and
+// writes a counter at 0x009B3AB0 (extern C int dat_9b3ab0) that nothing in the
+// tree defines. Defining it as a real global gives it a linker-chosen address
+// rather than 0x009B3AB0, which is the layout half of the recovery and is not
+// mine to invent; it stays here until that global is modelled.
 // size      50 bytes
 // prototype 
 // callers   0   call targets   0

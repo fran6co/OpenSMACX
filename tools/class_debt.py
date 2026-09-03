@@ -278,7 +278,10 @@ CEILINGS = {
     # 203 -> 208 (2026-09-03, P2 buffer/mapwin batch): five more measured
     # pointer forms homed verbatim (line/hline/vline families read raw this
     # by design until the layout pass names +0x52c's neighbours).
-    "raw self-access": 208,
+    # 208 -> 214 (2026-09-04, P2 general/game rework): six more - JackalVoiceRx
+    # and GraphicWinSub walk unmodelled fields; two vtable-slot shims where
+    # the pun is inherent to member-pointer dispatch. Class pass's.
+    "raw self-access": 214,
     # 4 -> 5 (2026-09-03, P1a batch): one homed body's faithful spelling
     # returns this as int (catalogue mangling QAEHH; TexHeap::UNK1 family).
     # 5 -> 8 (2026-09-03, P2 buffer/mapwin batch): three more homed
@@ -342,7 +345,10 @@ CEILINGS = {
     # the class pass that folds the ten Blit globals into the real Sprite
     # (the STRUCTURE finding). Rename-before-homing is the tool lesson; the
     # class pass is the cure.
-    "scaffold name": 2401,
+    # 2401 -> 2478 (2026-09-04, P2 general/game rework): +77 aN identifiers
+    # in the homed transcriptions (the agent's own-tree 1765 predates the
+    # buffer batch's collection; merged truth is 2401+77). Class pass's.
+    "scaffold name": 2478,
 }
 
 WHY = {

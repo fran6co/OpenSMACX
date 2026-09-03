@@ -1,4 +1,11 @@
 // ORIGINAL: 0x005CE6E3 sub_5ce6e3 0x005CE6E3-0x005CE85A FILE
+// TRIED: homed into general.cpp (its real TU) 2026-09-03 and reverted for one reason:
+// its fixed-address bindings have no naming evidence. image_data.py reads
+// 5 of them and every one is zero at load - runtime-filled lookup tables
+// with no .data content, no string, no arithmetic identity beyond 'a table
+// indexed here' - and none is modelled anywhere in src. The homing-first rule
+// does not ask for them to be invented: an unclaimed body with evidence-free
+// bindings waits for the class pass that measures it in context.
 // TRIED: original uses `pushal`/`popal` around the whole body (5 stack args, no `this`); no portable C source form reproduces that register-save shape, so #0 mismatches in the prologue.
 // size      375 bytes
 // prototype 

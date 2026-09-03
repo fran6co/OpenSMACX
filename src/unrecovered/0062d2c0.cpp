@@ -1,4 +1,11 @@
 // ORIGINAL: 0x0062D2C0 sub_62d2c0 0x0062D2C0-0x0062D38E FILE
+// TRIED: homed into general.cpp (its real TU) 2026-09-03 and reverted for one reason:
+// its fixed-address bindings have no naming evidence. image_data.py reads
+// 3 of them and every one is zero at load - runtime-filled lookup tables
+// with no .data content, no string, no arithmetic identity beyond 'a table
+// indexed here' - and none is modelled anywhere in src. The homing-first rule
+// does not ask for them to be invented: an unclaimed body with evidence-free
+// bindings waits for the class pass that measures it in context.
 // TRIED: IntersectRect/EqualRect are called through the fixed IAT-style slots (0x669338/0x6692bc) with `this` pushed as an explicit stdcall arg, not via C++ virtual dispatch - modelled with raw `PFN_*` casts. Every early-out in the original shares ONE epilogue (add esp,0x40; ret); separate `if (x) return 0;` statements each get their own inline return instead of jumping to a shared tail, which is most of the 0.82 mnemonic-similarity gap.
 // working copy - scaffold materialised by --work
 // size      206 bytes

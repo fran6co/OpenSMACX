@@ -1,4 +1,11 @@
 // ORIGINAL: 0x005CDAD0 sub_5cdad0 0x005CDAD0-0x005CDB83 FILE
+// TRIED: homed into general.cpp (its real TU) 2026-09-03 and reverted for one reason:
+// its fixed-address bindings have no naming evidence. image_data.py reads
+// 1 of them and every one is zero at load - runtime-filled lookup tables
+// with no .data content, no string, no arithmetic identity beyond 'a table
+// indexed here' - and none is modelled anywhere in src. The homing-first rule
+// does not ask for them to be invented: an unclaimed body with evidence-free
+// bindings waits for the class pass that measures it in context.
 // TRIED: signature changed stdcall(int,int,int) -> fastcall(int*,int*,int,int,int); evidence: ecx/edx read directly at entry with no matching stack loads, `ret 0xc` pops exactly 3 stack dwords. Rebuilt vtable dispatch (slots 6, 0, 2) as void** casts. First divergence at instr #3 mov vs push (prologue register-save order), not chased further.
 // working copy - scaffold materialised by --work
 // size      179 bytes

@@ -1,4 +1,10 @@
 // ORIGINAL: 0x00505D40 ??__Eg_BOOM_BUFFERS1@@YAXXZ 0x00505D40-0x00505D57 FILE BYTE_EXACT
+// TRIED: homed into general.cpp 2026-09-03 - does not compile: the body calls
+// 0x006456E4, which is the MSVC 'eh vector constructor iterator' CRT helper
+// (mangled ??_M@YGXPAXIHP6EX0@Z@Z). Its mangled name is compiler-generated, so
+// a normal forward declaration cannot reach it; the faithful source form is a
+// real global array of a class with a non-trivial ctor and dtor, which is a
+// recovery design for the global-object pass, not a homing. Stays here.
 // symbol    ?fn_00505d40@@YAXXZ
 // size      23 bytes
 // prototype 
