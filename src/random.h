@@ -34,8 +34,12 @@ class Random {
 
   // IN-CLASS so the free wrappers below fold them in, which is what the
   // image does: `random_reseed` is `mov ecx, [Rand]; xor ...` with no call
-  // in it at all. Each still emits its own COMDAT under /Ob0, so each keeps
-  // its own claim.
+  // in it at all. MEASURED, and that is load-bearing here rather than
+  // inherited style: under /Ob2 the optimiser folds reseed into its caller
+  // and /Gy drops the COMDAT, so 0x00625750 was left with nothing to be
+  // measured against. __declspec(dllexport) on the declaration forces the
+  // out-of-line copy out whatever the expansion does - the pin the other
+  // members here already carry.
   // AN XOR-SWAP THROUGH THE PARAMETER'S ADDRESS. The image really does swap
   // `seed_` with the argument - four xors and two stores - and the net effect
   // is only `seed_ = new_seed`, which is why this used to be written that way.
@@ -44,7 +48,7 @@ class Random {
   // three instructions against the image's eight. Reading and writing the
   // parameter through `*b` takes the non-aliasing away from it and the whole
   // chain survives - 0x00625750 and 0x006257E0 are both byte-exact on it.
-  void reseed(uint32_t new_seed) {
+  MEASURED void reseed(uint32_t new_seed) {
       uint32_t *const b = &new_seed;
       seed_ ^= *b;
       *b ^= seed_;

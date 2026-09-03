@@ -178,6 +178,19 @@ TextIndex::TextIndex() {
 
 /*
 // ORIGINAL: 0x005FDF60 ??1TextIndex@@QAE@XZ 0x005FDF60-0x005FDF78 BYTE_EXACT
+// TRIED (2026-09-03, the two-flag-set ladder): the /Ob0 dependency has ONE
+//        root cause and it is not in this file - an in-class MEASURED
+//        base/member constructor or destructor in a HEADER gets EXPANDED
+//        into this body by /Ob2, and because the expansion contains a
+//        non-intrinsic call VC6 wraps the whole thing in the SEH unwind
+//        frame the image does not pay. Here it is the implicit `heap_.~Heap()` - heap.h's `MEASURED inline ~Heap` - expanding to 21 instructions where the image is `add ecx,0x104; jmp` (4).
+//        The fix is to take the relevant definition out of its header and
+//        into its .cpp, the way heap.h already did for Heap's CONSTRUCTOR
+//        ("OUT OF LINE, and that is what Strings needs"); heap.h,
+//        basebutton.h and the member classes' headers are outside this
+//        pass's files. The forwarder idiom that fixed Strings::shutdown
+//        cannot reach an IMPLICIT base/member construction - there is no
+//        source statement to route through it.
 // size      24 bytes
 // prototype void (__thiscall ??1TextIndex@@QAE@XZ)(TextIndex* this)
 // callers   0   call targets   0

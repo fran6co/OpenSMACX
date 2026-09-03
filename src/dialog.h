@@ -113,22 +113,26 @@ class Dialog {
   // 8 bytes `: virtual GraphicWin, virtual Dialog` came up short by on
   // CheckBox/RadioButton/EditGroup/ListBox/SpriteBox/Dialogs - see
   // radiobutton.h, which measured the shortfall and named this as the cause.
-  // A `construct` METHOD, NOT A CONSTRUCTOR - the `Win::construct` idiom.
-  // The real body (??0Dialog@@QAE@XZ, 0x00608C10) is not promoted yet;
-  // classes that hold a Dialog as a virtual-base-shaped subobject (CheckBox,
-  // RadioButton, EditGroup, SpriteBox) reach it by name so their own
-  // constructors emit the image's `E8` here. Forwarded in pending_bodies.cpp.
-  void construct();
+  // A `construct` METHOD is GONE (2026-09-03): it was the seam this header
+  // needed while 0x00608C10 was still a pending forwarder, and the real
+  // ??0Dialog@@QAE@XZ is homed and BYTE_EXACT in dialog.cpp - the forwarder
+  // had no caller left, and a live one would have been a second definition
+  // of the same construction.
 
-  // The recovered complete-object destructor body (0x00608E10); the inline
-  // ~Dialog stays trivial so classes embedding a Dialog keep their layout-only
-  // semantics, exactly as Scroll::destroy does.
+  // The teardown the two runtime redirects reach. ~Dialog (below) is the
+  // image's own 0x00608E10 destructor and carries the body; destroy() spells
+  // the same three steps for the DllMain-installed redirects, which replace
+  // ??1Dialog at runtime rather than calling it.
   void destroy();
   int set_dialog_font(Font *font1, Font *font2, Font *font3);
   void set_dialog_text_color(int color1, int color2, int color3, int color4);
   void set_dialog_text_color2(int color1, int color2, int color3, int color4);
   void set_dialog_text_color3(int color1, int color2, int color3, int color4);
-  int id_to_pos(int id);
+  // MEASURED (see the definition at the end of this header): the image keeps
+  // an out-of-line copy of id_to_pos at 0x00609AF0 AND inlines the same walk
+  // into set_selected_id, which only the explicit `inline` earns - VC6 will
+  // not auto-expand a function containing a loop.
+  MEASURED int id_to_pos(int id);
   void set_selected_id(int id);
   int get_selected_id();
   int pos_to_id(int position);
@@ -273,6 +277,32 @@ extern func_dialog_close DialogOriginalClose;          // default 0x00608F50
 
 // ?init@Dialog@@QAEHH@Z (0x006095F0), the one-int init overload. Unrecovered;
 // SpriteBox forwards to it, so its definition is a seam into the original.
+
+// 0x00609AF0, MEASURED inline. The image INLINES this into set_selected_id
+// (0x006099D0 is the same walk with the return value stored straight into
+// selected_position_) and keeps an out-of-line copy at 0x00609AF0 for the
+// same reason it keeps one for every other helper. VC6's automatic inline
+// expansion (/Ob2) will not take a function containing a loop, so the
+// `inline` keyword is what makes the call site expand - and MEASURED, which
+// is __declspec(dllexport), is what pins the out-of-line COMDAT this body's
+// own claim is measured against. The marker stays in dialog.cpp.
+
+inline int Dialog::id_to_pos(int id) {
+    if (item_list_.head_) {
+        int count = item_list_.entry_count_;
+        item_list_.current_position_ = 0;
+        item_list_.current_ = item_list_.head_;
+        for (int traversed = 0; traversed < count; traversed++) {
+            StringStructEntry *entry = item_list_.current_;
+            if (entry->id == id) {
+                break;
+            }
+            item_list_.current_position_++;
+            item_list_.current_ = entry->next;
+        }
+    }
+    return item_list_.current_position_;
+}
 
 void __fastcall dialog_destructor_redirect(Dialog *self, void *);
 void *__fastcall dialog_scalar_dtor_redirect(

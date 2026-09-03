@@ -34,15 +34,12 @@ Purpose: Update the seed value, by the xor-swap with the argument that the image
 // calls     (none)
 Return Value: n/a
 Status: Complete
-// TRIED: the two TRIED lines that stood here - "VC6 folds any xor-swap
-//        source" and "a /GX frame prologue is a real ceiling for every member of
-//        Random" - were both measured false on 2026-08-22. The first is true only
-//        of the PLAIN spelling (see the LEVER above). The second was read off the
-//        DEFAULT flag pick, `/O2 /Ob0 /Gy /GR- /Oy- /GX`: that `push ebp` is
-//        `/Oy-` asking for a frame pointer, not the class's ctor/dtor, and the
-//        sibling set `/c /O2 /Ob0 /Gy /GR- /GX` - the one the winning
-//        measurement picks - emits `mov eax, dword ptr [esp + 4]` with no
-//        prologue at all.
+// LEVER (2026-09-03, the two-flag-set ladder): `MEASURED` on the in-class
+//        declaration in random.h. Under /Ob2 the optimiser folded reseed into
+//        its one caller and /Gy dropped the COMDAT, so 0x00625750 had nothing
+//        to be measured against; __declspec(dllexport) forces the
+//        out-of-line copy out whatever the expansion does, and the free
+//        wrapper at 0x006257E0 still folds it. The body itself is unchanged.
 */
 
 /*
