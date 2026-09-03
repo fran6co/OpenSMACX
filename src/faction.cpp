@@ -1930,6 +1930,14 @@ Purpose: Validate whether each faction meets the requirements to have the Map re
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x005B9F20
+// LEVER (2026-09-03): `has_tech_call` at the tech loop. 0 of 51 agreeing,
+//   66 instructions against the image's 51, because technology.h's MEASURED
+//   inline was open-coded at the one `has_tech` site in the body. With the
+//   forwarder the whole body dropped to the image's own 51 AND the winning
+//   flag set flipped to `/O2 /Oy- /GX`, which is what supplies the image's
+//   `push ebp / mov ebp, esp` frame - the /O2 build could never match the
+//   prologue, so the bloat was masking the right set, not just the right
+//   size. 51 of 51, BYTE_EXACT.
 Return Value: n/a
 Status: Complete
 */
@@ -1943,8 +1951,11 @@ void __cdecl see_map_check() {
             }
         }
         for (int tech_id = 0; tech_id < MaxTechnologyNum; tech_id++) {
+            // has_tech_call, not has_tech: the image CALLS 0x005B9F20 once
+            // from here (0x005A9718) and technology.h's MEASURED inline was
+            // open-coded into this body.
             if (Technology[tech_id].flags & TFLAG_REVEALS_MAP
-                && has_tech(tech_id, faction_id)) {
+                && has_tech_call(tech_id, faction_id)) {
                 PlayersData[faction_id].flags |= PFLAG_MAP_REVEALED;
             }
         }
@@ -2404,6 +2415,12 @@ Purpose: Check to see whether the faction can utilize a specific social category
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005B9F20
+// LEVER (2026-09-03): `has_tech_call` on the `return`. 0 of 36 agreeing,
+//   53 instructions against the image's 36, all of it technology.h's
+//   MEASURED inline open-coded into a six-line body. With the forwarder the
+//   body is the image's own 36 and the winning set flips to `/O2 /Oy- /GX`,
+//   which is what produces the image's frame. 36 of 36, BYTE_EXACT. Same
+//   shape as see_map_check 0x005A96D0.
 Return Value: Is social category/model available to faction? true/false
 Status: Complete
 */
@@ -2412,7 +2429,10 @@ BOOL __cdecl society_avail(int soc_category, int soc_model, int faction_id) {
         && Players[faction_id].soc_anti_ideology_model == soc_model) {
         return false;
     }
-    return has_tech(SocialCategories[soc_category].preq_tech[soc_model], faction_id);
+    // has_tech_call, not has_tech: the image CALLS 0x005B9F20 once from here
+    // (0x005B477B) and technology.h's MEASURED inline was open-coded into
+    // this body.
+    return has_tech_call(SocialCategories[soc_category].preq_tech[soc_model], faction_id);
 }
 
 /*

@@ -75,7 +75,14 @@ class MCIVideo {
   * methods recovered here are bare returns that touch no field, which is why
   * they can be replaced ahead of that mapping.
   */
-class AlphaMovie : public ConstructedGraphicWin {
+// GraphicWin DIRECTLY, not through ConstructedGraphicWin - same reason
+// StringBox drops the shim (see stringbox.h): ConstructedGraphicWin's inlined
+// implicit constructor stores the shim's own two vftables between the
+// GraphicWin base call and the MCIVideo member construction, a store pair
+// ??0AlphaMovie does not have. The base's real constructor runs implicitly
+// either way, and the shim adds no data and no virtual, so the layout is
+// unchanged.
+class AlphaMovie : public GraphicWin {
  public:
   void update();
   void close();

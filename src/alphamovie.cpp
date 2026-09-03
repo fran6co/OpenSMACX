@@ -70,6 +70,14 @@ Purpose: Construct the GraphicWin base and the embedded MCIVideo, then
 // kind      game
 // flags     hidden;sp_ready;purged_ok;frame
 // calls     0x005D4CF0 0x005FFD80
+// LEVER (2026-09-03): drop the ConstructedGraphicWin shim - AlphaMovie now
+//   derives from GraphicWin directly (see alphamovie.h). 12 of 24 agreeing,
+//   26 instructions against the image's 24: the shim's inlined implicit
+//   constructor stored its OWN two vftables (`mov [esi], 0` /
+//   `mov [esi + 0x444], 0`) between the GraphicWin base call and the MCIVideo
+//   member construction, and the image has no such pair. Identical to the
+//   defect stringbox.h documents for StringBox; the layout is unchanged, the
+//   shim adds no data and no virtual. 24 of 24, BYTE_EXACT.
 Return Value: n/a
 Status: Complete
 */

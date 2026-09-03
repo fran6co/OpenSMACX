@@ -2044,6 +2044,17 @@ Purpose: Write the value as either an integer or a binary string to the pref key
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00645470 0x0064FC88
 // indirect  0x0059E5C3
+// LEVER (2026-09-03): plain `strcat`, not `strcat_s`. 2 of 57 agreeing,
+//   83 instructions against the image's 57: the `strcat_s` shim lives in
+//   vc6_compat.h, which /FI force-includes BEFORE stdafx.h's
+//   `#pragma function(strcat, ...)` line, so inside the shim `strcat` is
+//   still an intrinsic and every one of the three sites expanded into the
+//   29-instruction `repne scasb`/`rep movsd` walk. The image makes three
+//   plain `call strcat` (0x00645470). Writing `strcat` directly in this
+//   .cpp - after the pragma - emits the call. Second effect: with the bloat
+//   gone the winning set flipped to `/O2 /Oy- /GX`, which supplies the
+//   image's `push ebp / mov ebp, esp / sub esp, 0x50` frame. 57 of 57,
+//   BYTE_EXACT. Same lever as say_label 0x005A5880.
 Return Value: n/a
 Status: Complete
 */
@@ -2056,19 +2067,25 @@ void __cdecl prefs_put(LPCSTR key_name, int value, BOOL tgl_binary) {
     // same shape as `prefs_get_binary`, hand-inlined here rather than
     // called (no third call target besides strcat/itoa in the image).
     StringTemp[0] = 0;
+    // PLAIN `strcat`, never `strcat_s`: the shim is defined in
+    // vc6_compat.h, which /FI force-includes BEFORE stdafx.h's
+    // `#pragma function(strcat, ...)` takes effect, so inside the shim
+    // `strcat` is still an intrinsic and expands into the 29-instruction
+    // `repne scasb` walk. The image makes a plain `call strcat`. Same lever
+    // as say_label 0x005A5880.
     if (tgl_binary) {
         for (int non_pad = 0, shift = 31; shift >= 0; shift--) {
             if ((1 << shift) & value) {
                 non_pad = 1;
-                strcat_s(StringTemp, sizeof(StringTemp), "1");
+                strcat(StringTemp, "1");
             } else if (non_pad || shift < 8) {
-                strcat_s(StringTemp, sizeof(StringTemp), "0");
+                strcat(StringTemp, "0");
             }
         }
     } else {
         char num_buf[80];
         _itoa(value, num_buf, 10);
-        strcat_s(StringTemp, sizeof(StringTemp), num_buf);
+        strcat(StringTemp, num_buf);
     }
     WritePrivateProfileStringA(PrefsSection, key_name, StringTemp, PrefsFile);
 }

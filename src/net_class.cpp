@@ -811,10 +811,21 @@ Purpose: Move one slice of voice traffic: ride the level meter to open and
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005FD2B0 0x0062F390 0x0062F8A0
 // indirect  0x00631A7F 0x00631AAB 0x00631AC8 0x00631AD3 0x00631B0A 0x00631B24
+// LEVER (2026-09-03): `voice_sound_call`, a file-local forwarder over
+//   autosound.h's MEASURED inline `do_sound`. The helper is `return 0;`, so
+//   /Ob1 expanded it to nothing and the body was two instructions short of
+//   the image's 78 - the image emits a real `call 0x5FD2B0` as the third
+//   instruction, and with the call back the rest of the body's scheduling
+//   falls into step (`test edi, eax` from a register, not a memory operand).
+//   78 of 78, BYTE_EXACT. Same lever as Win::redraw 0x005F4CC0.
 Return Value: n/a
 */
+static int __cdecl voice_sound_call() {
+    return do_sound();
+}
+
 void Net::process_voice() {
-    do_sound();
+    voice_sound_call();
     if ((voice_flags_D8_ & 0x40000000) != 0) {
         unsigned int level = voice_tx_.get_nbuffers();
         if (level < 0x32) {

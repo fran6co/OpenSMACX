@@ -81,8 +81,12 @@ int SpriteList::kill_entry(SpriteStruct* a1) {
         return v;
     }
     v = *reinterpret_cast<int *>(reinterpret_cast<char *>(a1) + 8);
-    if (!v) {
-        return v;
+    // GUARD, NOT AN EARLY RETURN: `if (!v) return v;` made VC6 emit a second
+    // `ret 4` epilogue and a `jne` over it (12 instructions). The image runs
+    // both exits into ONE `ret 4` at 0x005EB348 - `test eax, eax / je` - so
+    // the free is guarded and the body falls off its end, as it already did
+    // on the free path.
+    if (v) {
+        _free(reinterpret_cast<void *>(v));
     }
-    _free(reinterpret_cast<void *>(v));
 }
