@@ -148,20 +148,19 @@ int __cdecl load_sound_dll();
 // module handle is a separate global above it - neither is a field of the
 // other.
 typedef void *SoundDllProcsTable[11];
-// Returns the table as a plain pointer: VC6 cannot return an array by
-// reference (C2101 '&' on constant on any use that decays or addresses it).
-// AND NO GLOBAL SPELLING WORKS, MEASURED 2026-09-02, not just asserted:
+// The table and the module handle, bound at their image addresses by
+// NAME MACROS - the tree's folding idiom (caviar.cpp's #define'd address
+// constants), and the only non-function spelling that reproduces the
+// image's direct addressing. NO GLOBAL SPELLING WORKS, MEASURED 2026-09-02:
 // `void **const p = (void **)0x0090DB24;` - static or not - double-derefs
 // (`mov eax,[p]; cmp [eax],0` against the image's `mov eax,[0x90DB24]`),
 // the scalar reference `HMODULE &m = *(HMODULE *)0x0090DB78;` double-derefs
-// identically, and the array reference is C2101 at the declaration. Only
-// the inlined return expression folds, which is what makes these
-// accessors - not globals - the tree's fixed-address binding here. The
-// storage cannot move into this tree's .bss either: unrecovered image code
-// in the 0x4C5D8E/0x4C5F68 bands reads the same bytes (see below).
-inline void **SoundDllProcs() {
-  return reinterpret_cast<void **>(0x0090DB24);
-}
+// identically, and the array reference is C2101 at the declaration. The
+// macro text IS the folded expression, so every use addresses
+// ds:[0x0090DB24] directly. The storage cannot move into this tree's .bss
+// either: unrecovered image code in the 0x4C5D8E/0x4C5F68 bands reads the
+// same bytes (see below).
+#define SoundDllProcs (reinterpret_cast<void **>(0x0090DB24))
 typedef unsigned int (__cdecl *func_sound_dll_version)();
 typedef void (__cdecl *func_sound_dll_init)(int, int);
 // The module handle lives at 0x0090DB78, above the Wave_In_Device singleton,
@@ -169,19 +168,14 @@ typedef void (__cdecl *func_sound_dll_init)(int, int);
 // in the 0x4C5D8E and 0x4C5F68 bands (the only .text references, per a byte
 // scan of the pinned image), so real storage here would leave those readers
 // seeing zero while the tree sees the handle.
-inline HMODULE &SoundDllModule() { return *reinterpret_cast<HMODULE *>(0x0090DB78); }
+#define SoundDllModule (*reinterpret_cast<HMODULE *>(0x0090DB78))
 // Two slots of SoundDllProcs, named by role. Index 10 is the version probe
 // load_sound_dll checks the game's sound headers against (the image's other
 // reference, at 0x4C5FEE, reads the same slot through the table); index 2 is
 // the hook init_sound calls once with two zero arguments as soon as the DLL
-// is up, before any device is brought onto it.
-//
-// Both return the raw slot pointer, and the call sites cast it to the
-// function-pointer type in ONE level (object pointer to function pointer).
-// VC6 refuses the two-level form - reinterpret_cast from void** to F** is
-// C2440 "types pointed to are unrelated" - and a call through a returned
-// reference or through a materialized register double-indirects
-// (`mov eax,[slot]; call [eax]`), where the image calls memory-indirect once
-// (`call dword ptr [slot]`).
-inline void **SoundDllVersionSlot() { return SoundDllProcs() + 10; }
-inline void **SoundDllInitSlot() { return SoundDllProcs() + 2; }
+// is up, before any device is brought onto it. A slot is CALLED by casting
+// its address to the function-pointer type in ONE level -
+// `(*reinterpret_cast<F *>(&SoundDllProcs[2]))()` - which is the
+// memory-indirect `call dword ptr [slot]` the image makes; casting the
+// slot's VALUE materializes it into a register first, and
+// reinterpret_cast from void** to F** is C2440.

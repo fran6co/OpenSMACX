@@ -950,21 +950,21 @@ int __cdecl init_sound(void *window, unsigned long backends) {
     if (loadResult != 0) {
         return loadResult;
     }
-    if (SoundDllModule() != 0) {
-        (*reinterpret_cast<func_sound_dll_init *>(SoundDllInitSlot()))(0, 0);
+    if (SoundDllModule != 0) {
+        (*reinterpret_cast<func_sound_dll_init *>(&SoundDllProcs[2]))(0, 0);
     }
     int result = WaveDeviceGlobal.init(window, backends);
     if (result != 0) {
         // THE GUARD IS READ BEFORE THE STORE. The image loads [0x90db78]
         // at 0x004C5D21 and only then writes 0 to [0x90db7c]; the two are
         // different addresses, so the order is free and the image picked one.
-        const HMODULE module = SoundDllModule();
+        const HMODULE module = SoundDllModule;
         WaveDeviceReleaseGuard = 0;
         if (module != 0) {
             FreeLibrary(module);
-            SoundDllModule() = 0;
+            SoundDllModule = 0;
         }
-        memset(SoundDllProcs(), 0, sizeof(SoundDllProcsTable));
+        memset(SoundDllProcs, 0, sizeof(SoundDllProcsTable));
         return result;
     }
     if ((backends & 2) != 0) {

@@ -65,32 +65,32 @@ extern "C" int __cdecl sound_header_version();
 // sound_version_warning is homed below, under its own marker in this file.
 extern "C" void __cdecl sound_version_warning(const char *text, const char *caption);
 
-// The module handle and the version slot are sound.h's SoundDllModule() and
-// SoundDllVersionSlot(). The three kernel32 entrypoints are direct API calls:
+// The module handle and the version slot are sound.h's SoundDllModule and
+// SoundDllProcs[10]. The three kernel32 entrypoints are direct API calls:
 // the image calls them through its own import table, and this tree does the
 // same through its own. The strings are the image's .rdata/.data text,
 // recovered verbatim.
 
 int __cdecl load_sound_dll() {
-    if (SoundDllModule() == 0) {
-        SoundDllModule() = LoadLibraryA(".\\soundx.dll");
-        if (SoundDllModule() == 0) {
+    if (SoundDllModule == 0) {
+        SoundDllModule = LoadLibraryA(".\\soundx.dll");
+        if (SoundDllModule == 0) {
             return 1;
         }
-        void **procs = SoundDllProcs();
+        void **procs = SoundDllProcs;
         void **slot = procs;
         void **procs_end = procs + 11;
         int index = 0;
         do {
             void *proc = reinterpret_cast<void *>(GetProcAddress(
-                SoundDllModule(), MAKEINTRESOURCEA((index + 1) & 0xffff)));
+                SoundDllModule, MAKEINTRESOURCEA((index + 1) & 0xffff)));
             *slot = proc;
             if (proc == 0) {
-                HMODULE handle = SoundDllModule();
+                HMODULE handle = SoundDllModule;
                 WaveDeviceReleaseGuard = 0;
                 if (handle != 0) {
                     FreeLibrary(handle);
-                    SoundDllModule() = 0;
+                    SoundDllModule = 0;
                 }
                 WaveDeviceReleaseGuard = 0;
                 for (int i = 0; i < 0xb; ++i) {
@@ -103,11 +103,11 @@ int __cdecl load_sound_dll() {
         } while ((int)slot < (int)procs_end);
 
         unsigned int version;
-        if (SoundDllModule() == 0) {
+        if (SoundDllModule == 0) {
             version = 0;
         } else {
             version = (*reinterpret_cast<func_sound_dll_version *>(
-                SoundDllVersionSlot()))();
+                &SoundDllProcs[10]))();
         }
         if ((version & 0xff00) != 0x100) {
             sound_version_warning("The sound header files used in the game do not match "
