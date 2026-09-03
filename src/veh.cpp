@@ -5630,3 +5630,62 @@ int __cdecl alien_base(int veh_id, int x, int y) {
     BaseFindDist = best_value;
     return base_id_best;
 }
+
+/*
+Purpose: Kill a vehicle stack by walking the link list to its tail, then
+         unwinding it leaf-first (each kill can free the next link, so the
+         walk takes the low side whenever the branch points upward).
+// ORIGINAL: 0x005B9510 ?stack_kill@@YAXH@Z 0x005B9510-0x005B9577 BYTE_EXACT
+// size      103 bytes
+// prototype void (__cdecl ?stack_kill@@YAXH@Z)(int vehID)
+// callers   5   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005C08C0
+// HOMED from src/recovered/units/005b9510.cpp, 2026-09-03: the claim was
+//            archive-only while a PENDING_BODY forwarder named it - the
+//            address-index landmine. The artifact's two dead g_009528xx
+//            bindings were not carried; the body never reads them.
+Return Value: n/a
+Status: Complete
+*/
+// The vehLinks array: same 0x34-stride vehicle record the stack walkers
+// use, with the two short link fields proven by the disassembly's scaled
+// addressing (lea x2 for i*13, then a *4 SIB scale on the load).
+struct VehLink {
+    uint8_t pad_0_[0x2C];
+    short field_2c_;
+    short field_2e_;
+    uint8_t pad_30_[0x34 - 0x2E - 2];
+};
+
+static VehLink *const g_vehLinks = (VehLink *)0x00952858;
+
+// Declared, never defined here (a definition would be inlined); the editor
+// command family calls it by name.
+void __cdecl veh_kill(int vehID);
+
+void __cdecl stack_kill(int a1) {
+    if (a1 >= 0) {
+        short s = g_vehLinks[a1].field_2e_;
+        while (s >= 0) {
+            a1 = s;
+            s = g_vehLinks[a1].field_2e_;
+        }
+    }
+    if (a1 >= 0) {
+        do {
+            int next;
+            if (a1 < 0) {
+                next = a1;
+            } else {
+                next = g_vehLinks[a1].field_2c_;
+            }
+            veh_kill(a1);
+            if (next > a1) {
+                --next;
+            }
+            a1 = next;
+        } while (a1 >= 0);
+    }
+}

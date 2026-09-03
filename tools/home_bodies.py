@@ -106,19 +106,24 @@ def product_tu(klass: str, records) -> Path | None:
 
 
 def free_definition_span(text: str, ident: str):
-    """(head_end, definition) for a FREE function named `ident`.
+    """(head, definition) for a FREE function named `ident` - the same
+    (marker+facts+prose, definition) pair split_artifact returns for
+    members, so the apply loop treats both shapes alike.
 
     The first brace-opened definition whose name is exactly `ident` -
     declarations end in `;`, so they cannot shadow it, and helpers defined
     above it have their own names.
     """
+    marker = MARKER.search(text)
     for match in re.finditer(rf"\b({re.escape(ident)})\s*\(([^;{{}}]*)\)\s*\{{",
                              text):
         start = text.rfind("\n", 0, match.start()) + 1
         prefix = text[start:match.start()]
         if not re.fullmatch(r"[\w:<>,*&\s]*", prefix):
             continue
-        return start, text[match.start():].rstrip() + "\n"
+        head = (text[marker.start():start].rstrip()
+                if marker else "")
+        return head, text[match.start():].rstrip() + "\n"
     return None
 
 

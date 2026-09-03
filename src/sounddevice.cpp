@@ -748,13 +748,99 @@ Wave_In_Device::~Wave_In_Device() {
 void Midi_Device::unk_slot2() {}
 void Wave_In_Device::unk_slot2() {}
 
-// Unrecovered vftable slots for Midi_Device and Wave_In_Device: the image's
-// create_device / delete_device / release bodies at 0x004C56D0 / 0x004C5710 /
-// 0x004C57F0 and their Wave_In_Device counterparts. Semantic debt until
-// recovered.
-int Midi_Device::create_device(unsigned long) { return 0; }
-int Midi_Device::delete_device() { return 0; }
-void Midi_Device::release() {}
-int Wave_In_Device::create_device(unsigned long) { return 0; }
-int Wave_In_Device::delete_device() { return 0; }
-void Wave_In_Device::release() {}
+// HOMED from src/recovered/004c56d0.cpp, 004c5710.cpp, units/004c57f0.cpp
+// and their Wave_In_Device counterparts: these were the "unrecovered vftable
+// slots" the stubs above stood in for.
+//
+// INT, not void, on release(): the image's own mangling says
+// ?release@Midi_Device@@QAEXXZ, but every one of these bodies ends
+// `xor eax, eax; pop esi; ret` (0x004C581F, 0x004C5A6D) - it returns a zero
+// the callers may read. Left as the image has it; noted rather than fixed.
+// ORIGINAL: 0x004C56D0 ?create_device@Midi_Device@@QAEHK@Z 0x004C56D0-0x004C5706
+// LEVER: the artifact's `char *self = reinterpret_cast<char *>(this); ... self +
+//   0x14` pun became `void **slot = &device_;` - the member form reproduces the
+//   image's `lea eax, [ecx + 0x14]` at 0x004C56D3, which is the address the open
+//   call needs, not a value read.
+// TRIED: all 21 instructions the measurer compares agree; the catalogued span
+//   stops at 0x004C5706, one byte short of the closing `ret 4` at 0x004C5704,
+//   so the compiled body reads one instruction longer and the tier stays
+//   MISMATCH. Same clipping at 0x004C57F0-0x004C5822 (ret at 0x004C5822) and
+//   0x004C59A0-0x004C59C9 (ret 4 at 0x004C59C2). Not fixable from source.
+// symbol    ?create_device@Midi_Device@@UAEHK@Z
+int Midi_Device::create_device(unsigned long flags) {
+    // The image takes `&device_` into eax first (0x004C56D3 `lea eax,
+    // [ecx + 0x14]`), then loads the field for the test - the wrapped device
+    // is opened INTO this slot, so the address outlives the null check.
+    void **slot = &device_;
+    if (device_ == 0) {
+        MidiDeviceOpen *const open = MidiDeviceOpenSlot();
+        if (open != 0) {
+            return open(slot, flags);
+        }
+        return 0x14;
+    }
+    return 0xc;
+}
+
+// ORIGINAL: 0x004C5710 ?delete_device@Midi_Device@@QAEHXZ 0x004C5710-0x004C5738 BYTE_EXACT
+// symbol    ?delete_device@Midi_Device@@UAEHXZ
+int Midi_Device::delete_device() {
+    if (device_ != 0 && MidiDeviceCloseSlot() != 0) {
+        MidiDeviceCloseSlot()();
+        device_ = 0;
+        return 0;
+    }
+    return 0x14;
+}
+
+// ORIGINAL: 0x004C57F0 ?release@Midi_Device@@QAEXXZ 0x004C57F0-0x004C5822
+// symbol    ?release@Midi_Device@@UAEHXZ
+int Midi_Device::release() {
+    if (device_ != 0) {
+        vtable_slot<device_release_fn>(device_, 0x10)(device_);
+        if (device_ != 0) {
+            if (MidiDeviceCloseSlot() != 0) {
+                MidiDeviceCloseSlot()();
+                device_ = 0;
+            }
+        }
+        device_ = 0;
+    }
+    return 0;
+}
+
+// ORIGINAL: 0x004C59A0 ?create_device@Wave_In_Device@@QAEHK@Z 0x004C59A0-0x004C59C9
+// symbol    ?create_device@Wave_In_Device@@UAEHK@Z
+int Wave_In_Device::create_device(unsigned long flags) {
+    void **slot = &device_;
+    if (device_ == 0) {
+        WaveInDeviceOpen *const open = WaveInDeviceOpenSlot();
+        if (open != 0) {
+            return open(slot, flags);
+        }
+        return 0x14;
+    }
+    return 0xc;
+}
+
+// ORIGINAL: 0x004C59E0 ?delete_device@Wave_In_Device@@QAEHXZ 0x004C59E0-0x004C5A08 BYTE_EXACT
+// symbol    ?delete_device@Wave_In_Device@@UAEHXZ
+int Wave_In_Device::delete_device() {
+    if (device_ != 0 && WaveInDeviceCloseSlot() != 0) {
+        WaveInDeviceCloseSlot()();
+        device_ = 0;
+        return 0;
+    }
+    return 0x14;
+}
+
+// ORIGINAL: 0x004C5A50 ?release@Wave_In_Device@@QAEXXZ 0x004C5A50-0x004C5A71 BYTE_EXACT
+// symbol    ?release@Wave_In_Device@@UAEHXZ
+int Wave_In_Device::release() {
+    if (device_ != 0) {
+        vtable_slot<device_release_fn>(device_, 0x10)(device_);
+        delete_device();
+        device_ = 0;
+    }
+    return 0;
+}

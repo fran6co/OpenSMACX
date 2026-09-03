@@ -391,11 +391,11 @@ int Sprite::draw_multi_table_dest(Buffer *buffer, int a, int b, int c,
 // Three __cdecl free functions the editor commands call, still original
 // bodies. Declared at the top of console.cpp beside the bodies that reach
 // them; their natural header home is the class pass that recovers them.
-//             bodies in src/recovered/units/005b9510.cpp,
-//             src/unrecovered/005c1b70.cpp, src/recovered/units/005c32a0.cpp
-void __cdecl stack_kill(int veh_id) {
+//             bodies homed (veh.cpp) or in src/unrecovered/005c1b70.cpp,
+//             src/recovered/units/005c32a0.cpp
+void __cdecl veh_kill(int veh_id) {
     typedef void(__cdecl *pending)(int);
-    PENDING_BODY(0x005B9510, pending)(veh_id);
+    PENDING_BODY(0x005C08C0, pending)(veh_id);
 }
 
 int __cdecl veh_ready(int veh_id) {

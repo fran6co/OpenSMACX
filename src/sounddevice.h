@@ -45,7 +45,7 @@ class Midi_Device {
   virtual int delete_device();                      // slot 1 (0x4C5710)
   virtual void unk_slot2();                         // slot 2 (0x404280 `ret` stub)
   virtual int init(void *window, unsigned long backends);  // slot 3
-  virtual void release();                           // slot 4 (0x4C57F0)
+  virtual int release();                            // slot 4 (0x4C57F0)
   virtual int get_ndevices();                       // slot 5 (0x4C5830)
   virtual int select(unsigned int a1);              // slot 6 (0x4C5840)
   virtual int get_description(unsigned int a1, char *a2, unsigned int a3);  // slot 7
@@ -92,7 +92,7 @@ class Wave_In_Device {
   virtual int delete_device();                      // slot 1 (0x4C59E0)
   virtual void unk_slot2();                         // slot 2 (0x404280 `ret` stub)
   virtual int init(void *window, unsigned long backends);  // slot 3
-  virtual void release();                           // slot 4 (0x4C5A50)
+  virtual int release();                            // slot 4 (0x4C5A50)
   virtual int get_ndevices();                       // slot 5 (0x4C5AC0)
   virtual int select(unsigned int a1);              // slot 6 (0x4C5AD0)
   virtual int get_description(unsigned int a1, char *a2, unsigned int a3);  // slot 7
@@ -135,4 +135,20 @@ Wave_In_Device *const WaveInDeviceGlobal = (Wave_In_Device *)0x0090DB50;
 // the backend-2 path (sound.cpp) - the same convention as WaveInDeviceGlobal
 // above.
 Midi_Device *const MidiDeviceGlobal = (Midi_Device *)0x0090D950;
+
+// THE MIDI AND WAVE-IN BACKEND PROC SLOTS. The sound DLL's proc table lives
+// at 0x0090DB28 in the shipped image and wave.h / wave_device.h already name
+// its wave entries by role; these are the three the device objects use, named
+// the same way. Each accessor is a single dereference of a fixed address -
+// `mov eax, [0x0090DB3C]` - which is exactly what Midi_Device::create_device
+// and friends (0x004C56D0, 0x004C5710, 0x004C57F0) and their Wave_In_Device
+// counterparts perform.
+typedef int(__cdecl MidiDeviceOpen)(void *slot, unsigned long flags);
+typedef void(__cdecl MidiDeviceClose)(void);
+typedef int(__cdecl WaveInDeviceOpen)(void *slot, unsigned long flags);
+typedef void(__cdecl WaveInDeviceClose)(void);
+inline MidiDeviceOpen *&MidiDeviceOpenSlot() { return *reinterpret_cast<MidiDeviceOpen **>(0x0090DB3C); }
+inline MidiDeviceClose *&MidiDeviceCloseSlot() { return *reinterpret_cast<MidiDeviceClose **>(0x0090DB40); }
+inline WaveInDeviceOpen *&WaveInDeviceOpenSlot() { return *reinterpret_cast<WaveInDeviceOpen **>(0x0090DB44); }
+inline WaveInDeviceClose *&WaveInDeviceCloseSlot() { return *reinterpret_cast<WaveInDeviceClose **>(0x0090DB48); }
 

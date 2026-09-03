@@ -72,7 +72,10 @@ CEILINGS = {
     # src/menu.cpp BYTE_EXACT - its menu.h declaration and its definition are
     # the two mentions. Same shape as UNK5/UNK11: search-and-forward, the
     # catalogue name is all the image gives.
-    "unk-method": 169,
+    # 169 -> 171 (2026-09-03, P1b ambience/sounddevice batch): Midi::UNK
+    # and TexHeap-family UNKn homed with their claims - the catalogue name
+    # is the match (the DipEdit UNK1-4 precedent).
+    "unk-method": 171,
     # THE ESCAPE HATCH, RATCHETED. An UNKn whose comment block says
     # EVIDENCE-FREE and names it has been investigated and found unnameable -
     # no caller, no dispatch, no CSV entry. That is a result, not unfinished
@@ -92,7 +95,9 @@ CEILINGS = {
     # string in the shipped binary - and unk-method fell by exactly the same
     # eight mentions in the same edit (170 -> 162), plus one scaffold
     # parameter the excuse now covers. The totals moved against each other.
-    "evidence-free unk": 31,
+    # 31 -> 32 (2026-09-03, P1b ambience/sounddevice batch): one more
+    # investigated-and-unnameable homed body, same escape-hatch terms.
+    "evidence-free unk": 32,
     # 55 -> 54 (2026-08-29, init_thunks batch): destroy_vehdraw_caviar and
     # siblings reached their globals through raw address casts; the real
     # objects need no cast.
@@ -257,7 +262,11 @@ CEILINGS = {
     # field_760_/764_, poll_time_DC_, field_6DC_, field_1C_, self_20_,
     # buffer_24_, thread_id_4_, lock_2C_), which is what the two defects the
     # marker records were hiding behind.
-    "raw self-access": 164,
+    # 164 -> 171 (2026-09-03, P1b ambience batch): seven claimed bodies
+    # homed VERBATIM with their pointer forms load-bearing - de-punning
+    # GAmbience::general was measured and REGRESSED it to MISMATCH, then
+    # reverted. The de-pun pass runs with measure in the loop, not as a sweep.
+    "raw self-access": 171,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
@@ -291,7 +300,13 @@ CEILINGS = {
     # only use of a2/a3/a4 is the argument list of PullDown::UNK3, which is
     # itself a stub that reads none of its three, so a name here would be
     # invented, not inferred.
-    "scaffold name": 1328,
+    # 1328 -> 1341 (2026-09-03, P1 calibration batches): thirteen more names
+    # homed still-scaffold with their bodies (ambience's MAmbience/UAmbience
+    # drafts, VehLink's pad_/field_2x_). Homing-first is the campaign's own
+    # rule - renaming is the class pass's semantic half, done against a
+    # MEASURED body (the home_bodies reconcile comment) - so these ride the
+    # ratchet until their class passes name them from evidence.
+    "scaffold name": 1341,
 }
 
 WHY = {

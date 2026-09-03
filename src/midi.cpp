@@ -663,3 +663,56 @@ int Midi::set_track_ctrl(TrackCtrl *a1) {
     }
     return 0x14;
 }
+
+// ===== HOMED 2026-09-03 out of the archive. Each is one guarded virtual
+// call through the delegate, which is what `delegate_` at 0x3C is for.
+
+// ORIGINAL: 0x004C7780 ?set_volume@Midi@@QAEXH@Z 0x004C7780-0x004C77AC BYTE_EXACT
+void Midi::set_volume(int volume) {
+    if (delegate_ != nullptr) {
+        delegate_->set_volume(volume);
+    }
+    *(int *)&field_0_[4] = volume & 0x7f;
+}
+
+// ORIGINAL: 0x004C77B0 ?switch_state@Midi@@QAEH_N@Z 0x004C77B0-0x004C77D0 BYTE_EXACT
+// NO RETURN on the null path, deliberately: the original leaves eax alone.
+int Midi::switch_state(bool on) {
+    if (delegate_ != nullptr) {
+        return delegate_->switch_state(on);
+    }
+}
+
+// ORIGINAL: 0x004C78C0 ?set_base_path@Midi@@QAEHPBD@Z 0x004C78C0-0x004C78DA BYTE_EXACT
+int Midi::set_base_path(const char *path) {
+    if (delegate_ != nullptr) {
+        return delegate_->set_base_path(path);
+    }
+}
+
+// ORIGINAL: 0x004C7AB0 ?is_trackset_playing@Midi@@QAE_NI@Z 0x004C7AB0-0x004C7ACE
+// TRIED: all 13 instructions the measurer compares agree; the catalogued span
+//   ends at 0x004C7ACE, one byte short of the closing `ret 4`, so the compiled
+//   body reads one longer and the tier stays MISMATCH. Not fixable from source.
+bool Midi::is_trackset_playing(unsigned int trackset) {
+    if (delegate_ != nullptr) {
+        return delegate_->is_trackset_playing(trackset);
+    }
+    return false;
+}
+
+// ORIGINAL: 0x004C8050 ?set_play_type@Midi@@QAEHI@Z 0x004C8050-0x004C8072
+// TRIED: the guarded forwarder is byte-identical for 11 instructions and then
+//   the image has six `nop`s and `mov eax, ecx` - on the null delegate path the
+//   original returns `this` in eax, not an unset eax, so the artifact's "no
+//   return, the original leaves eax untouched" note is wrong about what the
+//   caller sees. Spelling that needs `return (int)this;`, a pointer-as-int
+//   cast the class-debt ratchet holds at zero. Left at 11 of 18.
+// BUG IN THE ORIGINAL: the shipped body leaves eax = `this` on the null path
+      //   because ecx still holds it, so callers read a pointer as the int result.
+//   Reproduced as-is; not corrected.
+int Midi::set_play_type(unsigned int type) {
+    if (delegate_ != nullptr) {
+        return delegate_->set_play_type(type);
+    }
+}

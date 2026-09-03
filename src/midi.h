@@ -46,7 +46,7 @@ class MidiDelegate {
   virtual void slot013();
   virtual void slot014();
   virtual void slot015();
-  virtual void slot016();
+  virtual void set_volume(int volume);                      // slot 0x040
   virtual void slot017();
   virtual void slot018();
   virtual void slot019();
@@ -89,11 +89,11 @@ class MidiDelegate {
   virtual int clear_patch(unsigned long);                    // slot 0xe0
   virtual int set_channel_ctrl(ChannelCtrl *);               // slot 0xe4
   virtual int set_program_ctrl(ProgramCtrl *);               // slot 0xe8
-  virtual void slot059();
+  virtual int set_base_path(const char *path);               // slot 0x0ec
   virtual void slot060();
   virtual int get_control_track();                           // slot 0xf4
   virtual int get_total_track_ticks(unsigned long);          // slot 0xf8
-  virtual void slot063();
+  virtual int switch_state(bool on);                        // slot 0x0fc
   virtual int set_switch_type(unsigned long);                // slot 0x100
   virtual int set_nswitch_threads(unsigned long);            // slot 0x104
   virtual int add_switch_range(unsigned long, unsigned long);   // slot 0x108
@@ -101,7 +101,7 @@ class MidiDelegate {
   virtual int stop_trackset(unsigned int);                   // slot 0x110
   virtual int xpose_trackset(unsigned int, int);             // slot 0x114
   virtual bool is_trackset_playing(unsigned int);            // slot 0x118
-  virtual void slot071();
+  virtual int set_play_type(unsigned int type);             // slot 0x11c
   virtual int load_patch(unsigned int);                      // slot 0x120
   virtual int unload_patch(unsigned int);                    // slot 0x124
   virtual int set_patch(unsigned int, unsigned int);         // slot 0x128
@@ -145,5 +145,15 @@ class Midi {
   int set_channel_ctrl(ChannelCtrl *);
   int set_program_ctrl(ProgramCtrl *);
   int set_track_ctrl(TrackCtrl *);
+
+  // THE NINE remaining Midi methods, homed from src/recovered and
+  // src/unrecovered 2026-09-03. The five forwarders below are one guarded
+  // virtual call each; init/set_fname/load/unload reach 0x4C and 0x54 and so
+  // need the filename pointer and the Sound relationship modelled first.
+  void set_volume(int volume);
+  int switch_state(bool on);
+  int set_base_path(const char *path);
+  bool is_trackset_playing(unsigned int trackset);
+  int set_play_type(unsigned int type);
 };
 
