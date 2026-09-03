@@ -1824,3 +1824,71 @@ int __cdecl vehdraw_construct_reactor(int a1, int a2, int a3, int a4, int a5,
     typedef int(__cdecl *pending)(int, int, int, int, int, Caviar *);
     return PENDING_BODY(0x004C3800, pending)(a1, a2, a3, a4, a5, caviar);
 }
+
+// ---------------------------------------------------------------------------
+// FOURTEEN FREE FUNCTIONS the Console bodies call, none of which src/ had a
+// definition for. Each target is an UNCLAIMED archive body (file / verbatim,
+// no claim), so a forwarder is the safe spelling for it - no address-index
+// landmine. The declarations live at the top of src/console.cpp, beside the
+// callers that needed them; homing any of these into its own TU deletes both
+// the forwarder here and the declaration there.
+
+void __cdecl draw_cursor() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x0046AE00, pending)();
+}
+
+int __cdecl save_game(int a1) {
+    typedef int(__cdecl *pending)(int);
+    return PENDING_BODY(0x005A9EB0, pending)(a1);
+}
+
+void __cdecl base_kill(int base_id) {
+    typedef void(__cdecl *pending)(int);
+    PENDING_BODY(0x004E5250, pending)(base_id);
+}
+
+int __cdecl end_of_game(int a1) {
+    typedef int(__cdecl *pending)(int);
+    return PENDING_BODY(0x00524870, pending)(a1);
+}
+
+int __cdecl load_game(int a1, int a2) {
+    typedef int(__cdecl *pending)(int, int);
+    return PENDING_BODY(0x005AAAB0, pending)(a1, a2);
+}
+
+int __cdecl load_map() {
+    typedef int(__cdecl *pending)();
+    return PENDING_BODY(0x005AB600, pending)();
+}
+
+void __cdecl set_dirty() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x00592A80, pending)();
+}
+
+int __cdecl size_of_planet(int a1) {
+    typedef int(__cdecl *pending)(int);
+    return PENDING_BODY(0x0058CED0, pending)(a1);
+}
+
+int __cdecl supply_options(int a1, int a2) {
+    typedef int(__cdecl *pending)(int, int);
+    return PENDING_BODY(0x00593A00, pending)(a1, a2);
+}
+
+void __cdecl time_controls_dialog(Popup *popup) {
+    typedef void(__cdecl *pending)(Popup *);
+    PENDING_BODY(0x00589330, pending)(popup);
+}
+
+int __cdecl veh_pick(int a1, const char *label, int a3) {
+    typedef int(__cdecl *pending)(int, const char *, int);
+    return PENDING_BODY(0x0048D0D0, pending)(a1, label, a3);
+}
+
+void __cdecl world_build() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x005C86E0, pending)();
+}

@@ -102,12 +102,74 @@ class InfoWin;
   */
 class Console : public MapWin {
  public:
+  // homed from 004e1200.cpp
+  void editor_clear_random();
+
+ public:
+  // homed from 004e1190.cpp
+  void editor_randomize();
+
+ public:
+  // homed from 004e0fd0.cpp
+  void editor_generate();
+
+ public:
+  // homed from 004e0a00.cpp
+  void editor_load();
+
+ public:
+  // homed from 00510ce0.cpp
+  int ready_search(int veh_id);
+
+ public:
+  // homed from 004dbc40.cpp
+  void editor_reset_tech();
+
+ public:
+  // homed from 00516970.cpp
+  void menu_simple();
+
+ public:
+  // homed from 00515ef0.cpp
+  void toggle_patrol();
+
+ public:
+  // homed from 005107e0.cpp
+  void selected();
+
+ public:
+  // 0x00510400 ?cursor_on@Console@@QAEXH@Z, homed from 00510400.cpp - one
+  // cursor shape, broadcast to every live MapWin.
+  void cursor_on(int cursor_shape);
+  // 0x00510490 ?cursor_on@Console@@QAEXHH@Z - the two-argument overload the
+  // vehicle cursor drives: the image carries both, and the homing reconcile
+  // will not add a second declaration for a name it already finds, so the
+  // overload is spelled here.
+  void cursor_on(int cursor_shape, int veh_id);
+  // 0x004E0A50 ?editor_who@Console@@QAEHHH@Z - which faction/personality the
+  // scenario editor is working on. Declared here because its own body is
+  // still blocked on a private-member access its transcription makes.
+  int editor_who(int a1, int a2);
+
+ public:
+  // homed from 004e1300.cpp
+  void editor_clear_vehicles();
+
+ public:
+  // homed from 004dbb40.cpp
+  void editor_reset_faction();
+
+ public:
+  // homed from 004d2ac0.cpp
+  void disband(int veh_id);
+
+ public:
   // homed from 00515740.cpp
   void toggle_dest();
 
  public:
   // 0x0050F960, a pending_bodies forwarder.
-  void on_post_redraw_nc_buffer(void * a1, int a2);
+  void on_post_redraw_nc_buffer(void *a1, int a2);
 
  public:
   // 0x00510110, a pending_bodies forwarder.

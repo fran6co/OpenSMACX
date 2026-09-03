@@ -326,7 +326,11 @@ CEILINGS = {
     # still-scaffold with 41 bodies (the maininterface on_iface_* family,
     # BaseRadiusOffsetX/Y named from the image's own bytes where evidence
     # existed). Renaming is the class pass's semantic half.
-    "scaffold name": 1688,
+    # 1688 -> 1725 (2026-09-03, P2 console batch): 77 of the +114 cleared
+    # from call-site and mangled-name evidence; the remaining 37 sit on
+    # DECLARATIONS of free functions whose bodies are still archived and
+    # whose Console call sites pass opaque ints - no naming evidence yet.
+    "scaffold name": 1725,
 }
 
 WHY = {

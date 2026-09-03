@@ -161,7 +161,11 @@ SHAPES = [
     # modelled; subinterface.h already records the reading, and P1d's
     # +0xA14 finding is the same interface). Homing-first; the class pass
     # retires these.
-    ("VCall shim", 29,
+    # 29 -> 32 (2026-09-03, P2 console batch): three more homed-verbatim
+    # shims; the biggest receiver is the MainInterface object at 0x007B0CB8
+    # (scenario.cpp binds it) - the MainInterface virtual declarations are
+    # that class pass's, not console's. SubInterface pass retires the family.
+    ("VCall shim", 32,
      re.compile(r"\bVCall\b"),
      "dispatches through a fake class because the real function is not "
      "declared virtual. Declare it."),
@@ -440,7 +444,13 @@ SCAFFOLD_CEILINGS = {
     # ?vehdraw_construct_*@@YAH... forwarders, named callees of homed
     # DesignWin bodies - both forwarder and prototype move to a vehdraw TU
     # when one is split out.
-    "PENDING_BODY forwarders": 229,
+    # 229 -> 241 (2026-09-03, P2 console batch): twelve forwarders, every
+    # target an UNCLAIMED archive body (landmine-free, verified): veh_ready,
+    # draw_cursor, save_game, base_kill, end_of_game, load_game, load_map,
+    # set_dirty, size_of_planet, supply_options, time_controls_dialog,
+    # veh_pick, world_build minus the two already forwardered. diplo_unlock
+    # was added and REMOVED - archive-claimed, the landmine rule caught it.
+    "PENDING_BODY forwarders": 241,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -495,7 +505,7 @@ SCAFFOLD_CEILINGS = {
     # 1278 -> 1277 (2026-09-03, the BasePop destructor): units/004064d0.cpp
     # deleted with the verbatim body it preserved - the real chain is the
     # compiler's, from basepop.h's member list, and basepop.cpp claims it.
-    "artifact files (recovered/)": 1171,
+    "artifact files (recovered/)": 1167,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -560,7 +570,7 @@ SCAFFOLD_CEILINGS = {
     # promoted - PushButton::PushButton() homed into src/gamma.cpp BYTE_EXACT
     # 44/44 once BaseButton's constructor went out of line, which is also
     # what took ??0ImageButton and ??0Gamma byte-exact.
-    "unrecovered files": 1305,
+    "unrecovered files": 1295,
     "hypothesis_layouts.h lines": 2717,
 }
 
