@@ -89,18 +89,34 @@ uint32_t redraw_from_vtable(void *self, uint32_t vtable_bits) {
     return result;
 }
 
-__forceinline void set_sprite_triplet(void *object, Sprite *volatile *primary,
+// THE FOUR SPRITE SETTERS' SHARED BODY, BYTE_EXACT in all four (0x00605BE0,
+// 0x00605C30, 0x00605C80, 0x00605CD0). Two facts carry the match, and they
+// only work together:
+//   * THE TRIPLET ALIAS IS NOT `volatile`. A volatile store is a scheduling
+//     barrier, so VC6 loads each argument immediately before its own store
+//     (load/store/load/store) and the image's three loads up front
+//     (`mov eax,[esp+4] / mov edx,[esp+8] / mov esi,[esp+0x14]`) never
+//     appear. Plain stores let those three hoist above them - and the image's
+//     register assignment follows: the three arguments take eax/edx/esi and
+//     the dib pair takes edi/ebx, instead of this tree's exact reverse.
+//   * THE dib READS ARE NAMED MEMBERS read AFTER the three stores. As raw
+//     `read_volatile_bits(object, 0x4C4/0x4C8)` they are loads VC6 hoists
+//     ahead of the stores, which moves the `neg`/`cmp` with them; as
+//     `dib_.bmiHeader.biWidth`/`biHeight` they are loads from `this` itself,
+//     which VC6 will not hoist above stores to `this`, so the compare stays
+//     where the image has it - after the three stores, before the branch.
+// Measured 2026-09-03: 5/21 (volatile alias, raw dib reads) -> 8/21 (named
+// dib reads, volatile alias kept) -> 21/21 with the volatile dropped.
+__forceinline void set_sprite_triplet(Scroll *object, Sprite **primary,
                         size_t button_offset, bool horizontal, Sprite *sprite1,
                         Sprite *sprite2, Sprite *sprite3) {
     primary[0] = sprite1;
     primary[1] = sprite2;
     primary[2] = sprite3;
 
-    const uint32_t height = 0U - read_volatile_bits(object, 0x4C8);
-    const uint32_t width = read_volatile_bits(object, 0x4C4);
-    const bool update_button = horizontal
-        ? long_from_bits(width) > long_from_bits(height)
-        : long_from_bits(width) < long_from_bits(height);
+    const LONG height = -object->dib_.bmiHeader.biHeight;
+    const LONG width = object->dib_.bmiHeader.biWidth;
+    const bool update_button = horizontal ? width > height : width < height;
     if (update_button) {
         write_sprite(object, button_offset, sprite1);
         write_sprite(object, button_offset + 4, sprite2);
@@ -184,6 +200,38 @@ Purpose: Construct a Scroll: run the GraphicWin base construction, install
 //   and subscripting the array by name inside the loop worse again at 75. The
 //   `uint32_t *const` locals reading `&Scroll...Defaults` are the best of the
 //   four spellings measured.
+// WALL, MEASURED TO THE INSTRUCTION (2026-09-03): the whole body is now ONE
+//   instruction from BYTE_EXACT - `mov eax, 0x14` where the image has
+//   `xor eax, eax` (listing_diff reports a single differing run), i.e. the
+//   image's counter is a raw BYTE offset that stays in the register while
+//   the table base sits in each load's displacement, and this tree's counter
+//   is the base-and-offset folded together into the immediate. Four more
+//   loop spellings were compiled OUTSIDE the tree (cl 12.00.8168, /O2 /Gy
+//   /GR- /GX, a standalone probe with the same table-and-cursor shape) and
+//   all four emitted this address-IV form byte for byte: destination
+//   subscripted as well as the source; the source as the ARRAY NAME with a
+//   destination cursor; both subscripted by name; the source reads spelled
+//   `*(dynamic + 2 + index)`. So the loop's own spelling does not choose the
+//   induction form. The two spellings that DO produce a raw byte counter
+//   both cost more than they buy: `for (int offset = 0; offset < 12;
+//   offset += 4)` with `dynamic[2 + offset / 4]` emits `xor esi,esi` /
+//   `add esi,4` / `cmp esi,12` as wanted, but then pays the full signed
+//   division fixup (`cdq` / `and edx,3` / `add eax,edx` / `sar eax,2`) per
+//   read, and a `const char *` view of the table to make the byte offsets
+//   direct needs a pointer pun. Left at 81 of 83.
+// TRIED (2026-09-03) the technology.cpp has_tech/tech_avail lever on this
+//   loop, since this is the same "fold the array base into the displacement"
+//   shape: declared BOTH tables as real arrays at their image extents
+//   (`extern uint32_t ScrollCloseDynamicDefaults[17]`, read as
+//   `ScrollCloseDynamicDefaults[2 + index]`, no `uint32_t *const` local at
+//   all) - 76 of 83, WORSE than the pointer locals' 81. The base lands in
+//   the COUNTER's initial immediate either way (`mov eax, <base>+0x14` /
+//   `add eax,4` / `mov edx,[eax-0xc]`, imm8 displacements), never out in
+//   the displacements as the image has it (`xor eax,eax` /
+//   `mov edx,[eax + <base>+8]`). Reverted; the image's loop is not
+//   strength-reduced and every spelling here that the compiler can see as a
+//   subscript gets reduced. That is the second and last untried shape this
+//   wall had.
 // TRIED: SEH frame divergence at instruction 0, same family as
 //   FlatButton::FlatButton() (flatbutton.cpp) and PullDown::PullDown()
 //   (pulldown.cpp) - a REAL derived-class constructor calling a base's
@@ -279,6 +327,20 @@ Purpose: Reset Scroll-owned state from the process defaults, close the two
 //   loop below already writes. There is no data-mapping defect here; see the
 //   TRIED below and the constructor's own (0x006051D0) matching note for
 //   what the remaining gap actually is.
+// TRIED (2026-09-03) the technology.cpp array-subscript lever here too
+//   (same loop, same induction residual as the ctor at 0x006051D0): both
+//   tables declared as arrays at their image extents and read by name, no
+//   `uint32_t *const` local - the whole body then measures 60 of 71 against
+//   the pointer-local spelling's 65, so reverted. Full detail on the ctor's
+//   own marker; the two bodies share the wall and the refutation.
+// TRIED (2026-09-03) reading the dynamic table through a SECOND, `volatile`
+//   alias (`volatile uint32_t *const src`) used by the whole body, on the
+//   theory that a volatile load would keep VC6 from strength-reducing the
+//   loop's address into a moving pointer and leave the image's
+//   `xor eax,eax` / `[eax + <base>]` form: 51 of 71, far worse - the
+//   volatile loads cost the straight-line copies more than the loop gains.
+//   Refuted. With the array-subscript refutation on the ctor's marker this
+//   exhausts the spellings this wall had.
 // TRIED: the remaining 6-instruction gap is two SEPARATE, already-typed
 //   defects, neither of which yielded to a new spelling (try_spellings,
 //   2026-08-22). (1) The loop's induction variable: the image keeps a plain
@@ -660,6 +722,22 @@ Purpose: Set the scrollbar thickness and reset its thumb rectangle.
 //   than the plain literal's 12/22. VC6 constant-propagates the member read
 //   and emits `mov dword ptr [ecx+0xa4c], 1`. Refuted; what is left is that
 //   one instruction pair and the 3-byte shift it puts in the `je` target.
+// TRIED (2026-09-03) three more spellings of that one pair, all 12/22 (the
+//   compiled listing byte-identical to the committed body's): a named
+//   `uint32_t inset = 0` local zero-ing `left`/`top` and `++inset` in the
+//   branch; the same with the `++inset` moved ahead of the `right` read; and
+//   `const LONG zero = 0` with `thumb->left = zero + 1`. All three fold to
+//   the literal at the source level, so instruction selection never sees a
+//   register-held zero to increment. Also measured the opposite spelling
+//   wholesale: NON-volatile `thumb_rect_` with compound assignments
+//   (`thumb_rect_.left += 1` etc., the form that makes the unconditional
+//   stores live so they cannot be elided) - 0/22 at 16 compiled instructions
+//   against the image's 22, because VC6 then keeps `thickness` in a register
+//   and folds `right`/`bottom` to `lea eax,[edx-1]`, deleting the four
+//   reloads the image performs. So the volatile IS what buys the image's
+//   four memory reloads, and it is also what costs the `mov [mem],1` - the
+//   image's `inc edx` needs a compiler that leaves the zero in a register
+//   past the guard, and no spelling here reaches it. 12/22 is the ceiling.
 // symbol    ?set_bar_thickness@Scroll@@QAEIH@Z
 // size      96 bytes
 // prototype void (__thiscall ?set_bar_thickness@Scroll@@QAEXH@Z)(Scroll* this, int)
@@ -781,12 +859,23 @@ RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical) {
 
 /*
 Purpose: Set the left scrollbar sprites and horizontal button sprites.
-// ORIGINAL: 0x00605BE0 ?set_sprite_left@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z 0x00605BE0-0x00605C2B
+// ORIGINAL: 0x00605BE0 ?set_sprite_left@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z 0x00605BE0-0x00605C2B BYTE_EXACT
 // TRIED     ALL FOUR SPRITE SETTERS SHARE THIS WALL - 0x00605BE0, 0x00605C30, 0x00605C80 and 0x00605CD0 measure 5 of 21 IDENTICALLY, with the instruction counts matching - and it is NOT the helper. Unfactoring set_sprite_triplet into this body verbatim measured 5 of 21 again, unchanged: `__forceinline` already emits exactly what the inline source does, unlike sound.cpp's helpers, where unfactoring took five bodies to BYTE_EXACT. What differs is SCHEDULING: the image loads the argument pair into eax/edx up front (`mov eax, [esp+4]; mov edx, [esp+8]`) and stores both afterwards, where VC6 here interleaves load-store-load-store. offsetof PROVES the layout is right - `offsetof(Scroll, sprite_left1_) == 0xA7C` compiles, matching the image's own `[ecx + 0xa7c]` - so the differing `[ecx + 0xa80]`/`[ecx + 0xa84]` lines are the SECOND and THIRD stores, not a shifted member. I read them as a 4-byte layout error first; they are not.
 // LEVER: marking the shared set_sprite_triplet helper __forceinline removed
 //   the 7-argument push sequence and the E8 call, taking this from 0/21 to
 //   5/21 agreeing (0.905 similar) - same fix as the other three sprite
 //   setters, which share the one helper.
+// LEVER (2026-09-03, BYTE_EXACT 21/21): the two walls this marker's TRIED
+//   above called scheduling were BOTH the helper's volatile/raw spelling, see
+//   the note on set_sprite_triplet itself. Dropping `volatile` from the
+//   `Sprite *volatile *primary` alias unblocked the image's three argument
+//   loads ahead of the three stores, and naming the dib fields
+//   (`dib_.bmiHeader.biWidth`/`biHeight`, read after the stores) instead of
+//   `read_volatile_bits(object, 0x4C4/0x4C8)` kept the `neg`/`cmp` below
+//   them. Measured steps: 5/21 -> 8/21 (named dib reads alone) -> 21/21
+//   (volatile dropped as well). Register assignment follows: the three
+//   arguments take eax/edx/esi and the dib pair edi/ebx, this tree's exact
+//   reverse before.
 // symbol    ?set_sprite_left@Scroll@@QAEXPAVSprite@@00@Z
 // size      75 bytes
 // prototype void (__thiscall ?set_sprite_left@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z)(Scroll* this, Sprite*, Sprite*, Sprite*)
@@ -805,9 +894,12 @@ void Scroll::set_sprite_left(
 
 /*
 Purpose: Set the right scrollbar sprites and horizontal button sprites.
-// ORIGINAL: 0x00605C30 ?set_sprite_right@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z 0x00605C30-0x00605C7B
+// ORIGINAL: 0x00605C30 ?set_sprite_right@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z 0x00605C30-0x00605C7B BYTE_EXACT
 // LEVER: same __forceinline on set_sprite_triplet as 0x00605BE0 - 0/21 to
 //   5/21 agreeing (0.905 similar).
+// LEVER (2026-09-03, BYTE_EXACT 21/21): the same two helper edits as
+//   0x00605BE0 - drop `volatile` from the triplet alias, name the dib fields
+//   after the stores. One fix, four bodies.
 // symbol    ?set_sprite_right@Scroll@@QAEXPAVSprite@@00@Z
 // size      75 bytes
 // prototype void (__thiscall ?set_sprite_right@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z)(Scroll* this, Sprite*, Sprite*, Sprite*)
@@ -826,7 +918,7 @@ void Scroll::set_sprite_right(
 
 /*
 Purpose: Set the upper scrollbar sprites and vertical upper-button sprites.
-// ORIGINAL: 0x00605C80 ?UNK1@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z 0x00605C80-0x00605CCB
+// ORIGINAL: 0x00605C80 ?UNK1@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z 0x00605C80-0x00605CCB BYTE_EXACT
 // NAMING EVIDENCE (2026-08-28) for both UNKs (this and 0x00605CD0): the image
 //   offers nothing - `strings -a terranx_original.exe` has ZERO `Scroll@@`
 //   strings, so UNK1/UNK2 are IDB placeholders, not names the binary carries.
@@ -857,7 +949,7 @@ void Scroll::set_sprite_up(
 
 /*
 Purpose: Set the lower scrollbar sprites and vertical lower-button sprites.
-// ORIGINAL: 0x00605CD0 ?UNK2@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z 0x00605CD0-0x00605D1B
+// ORIGINAL: 0x00605CD0 ?UNK2@Scroll@@QAEXPAUSprite@@PAUSprite@@PAUSprite@@@Z 0x00605CD0-0x00605D1B BYTE_EXACT
 // NAMING EVIDENCE (2026-08-28): see set_sprite_up (0x00605C80) - 0x2108 is
 //   flat_button_right_.sprite1_, the RIGHT button, and horizontal=false makes
 //   this its vertical (down) half. No image name evidence exists either way.
@@ -903,6 +995,21 @@ Purpose: Clamp, optionally reverse, and redraw the scrollbar position.
 //   fallthrough exit - 13/29, similarity 0.933 vs 0.931, two instructions
 //   longer. The polarity gap survives its own new tail; first divergence
 //   remains at instruction 2.
+// LEVER (2026-09-03, 15/29, 0.966): BOTH of those two, together, are the
+//   image's shape and neither is alone. The single-exit `if (parent !=
+//   nullptr) { ... }` wrap is what produces the image's ONE `ret 4` reached
+//   by `je` from the guard (this tree's `if (!parent) return 0U;` emits
+//   `jne` + its own early `ret 4`, a second epilogue the image has no room
+//   for) - and the inner clamp must be an if/else with TWO stores, not the
+//   ternary the old body had: the ternary lets VC6 emit a select
+//   (`mov eax,edx`) and one store where the image has
+//   `mov [ecx+0xa2c],edx / jmp / mov [ecx+0xa2c],eax`. Measured apart, the
+//   if/else clamp ALONE scores 3/29 - it is the combination that agrees.
+//   13/29 -> 15/29. What is left is register naming only: this tree holds
+//   `minimum` in edx where the image holds esi (and so the reversed-position
+//   add uses the other register), loads the `position` argument one slot
+//   earlier (`[esp+4]` before the `push esi`, against the image's `[esp+8]`
+//   after it), and names the vtable pointer eax against the image's edx.
 // symbol    ?set_pos@Scroll@@QAEIH@Z
 // size      106 bytes
 // prototype void (__thiscall ?set_pos@Scroll@@QAEXH@Z)(Scroll* this, int position)
@@ -924,29 +1031,31 @@ Status: Complete
 #pragma warning(disable : 4716 4715)
 uint32_t Scroll::set_pos(int position) {
     ::Win *const parent = win_parent_;
-    if (!parent) {
-        return 0U;
-    }
+    if (parent != nullptr) {
+        ScrollCurrentWin() = parent;
 
-    ScrollCurrentWin() = parent;
-
-    const int minimum = range_minimum_;
-    int *const current = &position_;
-    if (position < minimum) {
-        *current = minimum;
-    } else {
-        const int maximum = range_maximum_;
-        *current = position > maximum ? maximum : position;
+        const int minimum = range_minimum_;
+        int *const current = &position_;
+        if (position < minimum) {
+            *current = minimum;
+        } else {
+            const int maximum = range_maximum_;
+            if (position > maximum) {
+                *current = maximum;
+            } else {
+                *current = position;
+            }
+        }
+        if (range_reversed_ != 0U) {
+            const uint32_t maximum = static_cast<uint32_t>(range_maximum_);
+            const uint32_t clamped = static_cast<uint32_t>(*current);
+            *current = long_from_bits(
+                maximum - clamped + static_cast<uint32_t>(minimum));
+        }
+        // Slot 62 = GraphicWin::redraw (see set_range); the plain virtual call
+        // is the image's two-instruction `mov edx,[ecx]; call [edx+0xf8]`.
+        vslot_62();
     }
-    if (range_reversed_ != 0U) {
-        const uint32_t maximum = static_cast<uint32_t>(range_maximum_);
-        const uint32_t clamped = static_cast<uint32_t>(*current);
-        *current = long_from_bits(
-            maximum - clamped + static_cast<uint32_t>(minimum));
-    }
-    // Slot 62 = GraphicWin::redraw (see set_range); the plain virtual call is
-    // the image's two-instruction `mov edx,[ecx]; call [edx+0xf8]`.
-    vslot_62();
 }
 #pragma warning(pop)
 
