@@ -938,6 +938,70 @@ int __cdecl BasePop::init_class() {
     return PopupInstanceSlotB ? 0 : 4;
 }
 /*
+Purpose: Destroy the popup infrastructure: close the window, then the
+         members in reverse declaration order - Spot at +0x3098, the Dialogs
+         slab at +0x21d0, unit_ids_ and item_ids_, sprite_, the two
+         FlatButtons, heap_ - and finally the GraphicWin base.
+// ORIGINAL: 0x004064D0 ??1BasePop@@QAE@XZ 0x004064D0-0x0040666F;0x006508D0-0x00650978
+// body      src/basepop.h
+// symbol    ??1BasePop@@UAE@XZ
+//           (the class's deleting destructor ??_GBasePop@@UAEPAXI@Z and its
+//           0x444 adjustor are in the image too, so the complete destructor
+//           is emitted `U` - the same rule as flatbutton.h's `MEASURED
+//           ~FlatButton`, whose marker records the same fact)
+// size      583 bytes
+// prototype void (__thiscall ??1BasePop@@QAE@XZ)(BasePop* this)
+// callers   75   call targets   11
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00401060 0x00402970 0x00406910 0x005D45B0 0x005D4DD0 0x005E3820
+//           0x005FA870 0x00600F00 0x00607040 0x00607DA0 0x00608E10
+// MOVED IN-CLASS 2026-09-03 (body: src/basepop.h) - the image CALLS this
+// destructor out of line 75 times and INLINES it at the popup's other
+// destruction sites, and only an in-class definition lets both spellings
+// come out of one source. The expansion is what Caviar::init_class
+// (0x006185A0) lays down at each of its early returns and what
+// sound_version_warning (0x004C9080) lays down at its one scope exit; out
+// of line, those sites can only emit `call ??1BasePop`.
+//
+// The body is `close()` and nothing else. The rest of the image's body - the
+// two vtable installs, the member teardowns in exactly reverse declaration
+// order, and the closing ??1GraphicWin - is the compiler's, generated from
+// the member declarations in basepop.h, the same way ??1DipEdit is generated
+// from dipedit.h. The one thing the member list cannot produce is the image's
+// opening `call ?close@BasePop`, which the body spells.
+//
+// LEVER: in-class `MEASURED ~BasePop() { close(); }`, the ~FlatButton move.
+//   The image's 75 out-of-line calls are the catalogue's own count; the
+//   inlined copies are extra. What moved: Caviar::init_class (0x006185A0)
+//   now reaches 27/392 on `/O2 /Oi-` and 28/392 on `/O2 /G6`, where before
+//   the move NO set in the ladder exceeded 16 - and its compiled body is
+//   475 instructions against the image's 392 instead of 192, so the ~200
+//   instructions the image spends on its per-path teardown chains are now
+//   THERE and divergent rather than absent. The tool's ranked winner is
+//   still 16/392 on the /Ob0 set (similarity ranks first, and the
+//   `call ??1BasePop` shape is closer), so that claim's own verdict does
+//   not move. sound_version_warning (0x004C9080) 3 -> 8 of 122, compiled
+//   36 -> 84. Nothing regressed: ??_GBasePop 0x00406B40 stays BYTE_EXACT
+//   14/14, and `osmx check` holds at 0 REGRESSED, 2,037 verified.
+// TRIED: dropping `MEASURED` (dllexport) to buy the inlining - no effect.
+//   /O2 /Ob2 compiles caviar.cpp to the same 5 expansions of this destructor
+//   with it and without it; what decides whether a site expands is /Ob, not
+//   the storage class. The declaration-only `~BasePop();` plus forwarder is
+//   the spelling that loses: it is why no site could expand.
+// CEILING: the image INLINES the member teardowns one level further - its
+//   body is 95 instructions against our 61, because its ??1BasePop expands
+//   ~StringList (remove_all + close, twice), ~Dialogs (??1Dialogs + ??1Dialog
+//   + ??1GraphicWin) and both ~FlatButtons where this compiler emits
+//   ??_DStringList / ??_DDialogs / ??1FlatButton calls. VC6 will not inline
+//   a destructor into a destructor it is itself generating, so no flag set
+//   in the ladder reaches the image's shape. Second ceiling: with /GX this
+//   destructor opens `mov eax, handler; call __EH_prolog` where the image
+//   opens the explicit `push ebp` frame - the same wall flatbutton.h's
+//   SEH-frame note records for the FlatButton constructor.
+*/
+
+/*
 Purpose: The BasePop constructor. The base GraphicWin and the Heap, two
          FlatButtons and Sprite members come up implicitly, in declaration
          order, which is the image's own order; the Dialogs slab at +0x21d0

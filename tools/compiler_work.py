@@ -396,7 +396,10 @@ SCAFFOLD_CEILINGS = {
     # tile_mask's per-tile blit copy_mask (0x005E2B00) was homed too, from
     # 005e2b00.cpp, and never needed a forwarder: both of its own callees,
     # get_data(2) and free_data, were already homed and BYTE_EXACT.
-    "PENDING_BODY forwarders": 224,
+    # 224 -> 223 (2026-09-03, the BasePop destructor): ??1BasePop@@QAE@XZ
+    # left pending_bodies.cpp for an in-class definition in basepop.h, whose
+    # out-of-line COMDAT basepop.cpp emits and claims against the image.
+    "PENDING_BODY forwarders": 223,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -445,7 +448,10 @@ SCAFFOLD_CEILINGS = {
     # the body it drafted - Effect::init homed into src/wave.cpp
     # (MISMATCH 42/49; the residual is the register-swap plateau the marker
     # records).
-    "artifact files (recovered/)": 1278,
+    # 1278 -> 1277 (2026-09-03, the BasePop destructor): units/004064d0.cpp
+    # deleted with the verbatim body it preserved - the real chain is the
+    # compiler's, from basepop.h's member list, and basepop.cpp claims it.
+    "artifact files (recovered/)": 1277,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
