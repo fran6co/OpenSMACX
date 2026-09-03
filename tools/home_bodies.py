@@ -10,9 +10,11 @@ from unverifiable to measured.
     tools/home_bodies.py --class Palette              # proposals, no writes
     tools/home_bodies.py --class Palette --apply      # unclaimed batch
     tools/home_bodies.py --class Palette --claimed --apply 0x005FE6D0
-    tools/home_bodies.py --tu log.cpp                 # free functions
+    tools/home_bodies.py --into log.cpp               # free functions INTO a TU
+    tools/home_bodies.py --into log.cpp --addr 0x00406120 --apply
+    tools/home_bodies.py --map                        # the campaign burn-down
 
-THE ORDERING RULE, and why it is not a flag you can ignore: 963 BYTE_EXACT
+THE ORDERING RULE, and why it is not a flag you can ignore: 741 BYTE_EXACT
 claims live in these scaffolds. Homing an UNCLAIMED body is free - nothing
 can regress. Homing a CLAIMED one can legitimately turn the gate red: a
 different TU means different includes, and VC6 may lower identical source
@@ -52,6 +54,19 @@ DEFINITION = re.compile(
     r"^[\w:<>,*&\s]*?\b(?P<klass>\w+)::(?P<method>~?\w+)\s*\((?P<params>[^)]*)\)"
     r"(?:\s*const)?\s*\{", re.M)
 
+# NEVER A DESTINATION. These files host markers under their own ratchets
+# (compiler_work.py's SCAFFOLD_MARKERS, address_index.py's KNOWN_SCAFFOLDS)
+# or are the faulting frontier itself - a body homed into one raises that
+# ratchet instead of retiring anything, and the machinery bodies (adjustor
+# and deleting thunks) are EMITTED by VC6 beside a real class, never
+# spelled by hand into a scaffold. The classes become real instead.
+NEVER_HOME = frozenset({
+    "adjustor_thunks.cpp", "deleting_thunks.cpp", "delegation_thunks.cpp",
+    "field_accessors.cpp", "leaf_recoveries.cpp", "nullsub_thunks.cpp",
+    "init_thunks.cpp", "atexit_thunks.cpp", "guarded_teardowns.cpp",
+    "pending_bodies.cpp",
+})
+
 
 def owner_of(record) -> str | None:
     parts = (record.name or "").split("@")
@@ -71,6 +86,8 @@ def product_tu(klass: str, records) -> Path | None:
     """The .cpp defining the most members of `klass`; stem-matched wins ties."""
     counts: dict = collections.Counter()
     for path in sorted(SRC.glob("*.cpp")):
+        if path.name in NEVER_HOME:
+            continue
         if "recovered" in path.parts or "unrecovered" in path.parts:
             continue
         n = len(re.findall(rf"\b{re.escape(klass)}::~?\w+\s*\(",
@@ -173,28 +190,118 @@ def build() -> tuple[bool, str]:
     return done.returncode == 0, error
 
 
+def nearest_product(addr: int, addrs: list, names: list) -> str | None:
+    """The product TU whose nearest marker sits closest to `addr`."""
+    if not addrs:
+        return None
+    import bisect
+    i = bisect.bisect_left(addrs, addr)
+    best = min((c for c in (i - 1, i) if 0 <= c < len(addrs)),
+               key=lambda c: abs(addr - addrs[c]))
+    return names[best]
+
+
+def campaign_map(records) -> int:
+    """Per product TU, every archive body that would land there - the
+    campaign's batch planner and burn-down chart.
+
+    Class-owned bodies go to product_tu(). Free functions are proposed by
+    NEAREST PRODUCT MARKER - a starting point the agent confirms from
+    `osmx show` / `osmx calls`, never a decision: a body homes where the
+    COMDAT emits (the ??_GBaseButton lesson), and only the object file
+    knows that."""
+    import bisect
+    flat = []
+    for r in records:
+        p = str(r.path)
+        if "recovered" in p or "unrecovered" in p:
+            continue
+        if r.path.name in NEVER_HOME:
+            continue
+        flat.append((r.address, r.path.name))
+    flat.sort()
+    addrs = [a for a, _ in flat]
+    names = [n for _, n in flat]
+
+    dest: collections.Counter = collections.Counter()
+    claimed_by: collections.Counter = collections.Counter()
+    blocked: collections.Counter = collections.Counter()
+    tu_cache: dict = {}
+    free = classified = 0
+    for r in records:
+        p = str(r.path)
+        if "recovered" not in p and "unrecovered" not in p:
+            continue
+        is_claim = bool(r.byte_exact or r.semantic)
+        klass = owner_of(r)
+        if klass:
+            if klass not in tu_cache:
+                tu_cache[klass] = product_tu(klass, records)
+            tu = tu_cache[klass]
+            if tu is None:
+                blocked[klass] += 1
+                continue
+            name, classified = tu.name, classified + 1
+        elif flat:
+            near = nearest_product(r.address, addrs, names)
+            name, free = near, free + 1
+        else:
+            continue
+        dest[name] += 1
+        if is_claim:
+            claimed_by[name] += 1
+
+    print(f"campaign map: {sum(dest.values())} routed "
+          f"({classified} class-owned, {free} free by nearest marker), "
+          f"{sum(blocked.values())} blocked on unmodelled classes\n")
+    for name, n in dest.most_common():
+        print(f"  {name:22s} {n:4d} incoming  ({claimed_by[name]} claimed)")
+    if blocked:
+        print("\n  BLOCKED (model the class first):")
+        for klass, n in blocked.most_common():
+            print(f"    {klass:20s} {n} body(ies)")
+    return 0
+
+
 def main() -> int:
     args = sys.argv[1:]
     apply = "--apply" in args
     claimed_flag = "--claimed" in args
+    map_mode = "--map" in args
     wanted_addr = None
+    addr_args = [a for a in args if a.startswith("0x")]
     if claimed_flag:
-        addrs = [a for a in args if a.startswith("0x")]
-        if not addrs:
+        if not addr_args:
             print("--claimed needs the one address to move")
             return 2
-        wanted_addr = int(addrs[0], 16)
+        wanted_addr = int(addr_args[0], 16)
+    elif addr_args:
+        # --addr narrows an UNCLAIMED batch (or a --into selection) to one
+        # body; --claimed remains the only door for a claimed one.
+        wanted_addr = int(addr_args[0], 16)
 
     klass = None
     tu_arg = None
     for flag, value in zip(args, args[1:] + [""]):
         if flag == "--class":
             klass = value
-        if flag == "--tu":
+        if flag in ("--tu", "--into"):
             tu_arg = Path(value)
 
     records = read(SRC)
     built = build_inputs(REPO / "build" / "compile_commands.json")
+
+    if map_mode:
+        return campaign_map(records)
+
+    # The nearest-marker shortlist for --into: without it an agent asking
+    # for its TU's free functions gets all 1,547 of them.
+    flat = sorted((r.address, r.path.name) for r in records
+                  if "recovered" not in str(r.path)
+                  and "unrecovered" not in str(r.path)
+                  and r.path.name not in NEVER_HOME)
+    flat_addrs = [a for a, _ in flat]
+    flat_names = [n for _, n in flat]
 
     population = []
     for record in records:
@@ -203,7 +310,18 @@ def main() -> int:
             continue
         if klass and owner_of(record) != klass:
             continue
-        if tu_arg and record.path.name != tu_arg.name:
+        # --into homes FREE functions into a named TU. The old filter
+        # compared the artifact's FILENAME to the TU's - artifacts are
+        # address-named, so it matched nothing and every dry run came back
+        # empty: the campaign measured 1,547 free bodies as unhomable.
+        if tu_arg and owner_of(record):
+            continue
+        if (tu_arg and wanted_addr is None and flat_names
+                and nearest_product(record.address, flat_addrs, flat_names)
+                != tu_arg.name):
+            continue
+        if wanted_addr is not None and not claimed_flag \
+                and record.address != wanted_addr:
             continue
         population.append(record)
 
@@ -440,8 +558,9 @@ def main() -> int:
               f"{'CLAIMED - gate before committing' if record.byte_exact else ''}")
 
     print(f"\n{kept} homed, {failures} reverted. "
-          f"Next: bare osmx check; orphan_artifacts.py; lower the artifact "
-          f"ceilings this commit made stale.")
+          f"Next: bare osmx check; tools/address_index.py (the orphan and "
+          f"landmine ratchet); lower the artifact ceilings this commit made "
+          f"stale (tools/compiler_work.py --lower-ceilings).")
     return 0
 
 
