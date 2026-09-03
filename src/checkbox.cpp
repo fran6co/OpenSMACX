@@ -374,6 +374,15 @@ Status: Complete
 //
 // Promoted 2026-08-15 from src/unrecovered/0060fc60.cpp to retire its
 // pending_bodies forwarder.
+// LEVER: ~Buffer out of line (buffer.h/buffer.cpp, 2026-09-03). Under /O2's
+//   /Ob1 an in-class `~Buffer() { close(); }` expands into this body's scope
+//   end as vptr store + `close()` + `~Spot()` - 71 instructions and an EBP
+//   frame, against the image's 63 and one `call ??1Buffer@@QAE@XZ` with the
+//   frameless EH form (`sub esp,0x588`, state at [esp+0x594]). Moving the
+//   definition beside ??1Buffer's own marker in buffer.cpp collapsed the
+//   teardown to that one call AND dropped the frame: 24/63 -> 63/63. The
+//   frame was never a separate lever - it is what the expanded teardown
+//   needed a stable pointer for.
 Status: Complete
 */
 int __cdecl CheckBox::init_class() {
