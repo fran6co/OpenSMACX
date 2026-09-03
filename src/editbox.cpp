@@ -98,6 +98,12 @@ Purpose: Reset the edit box - clear its state, republish the seven defaults,
          then close the trailing Time and the GraphicWin prefix.
 // ORIGINAL: 0x00614F30 ?close@EditBox@@QAEXXZ 0x00614F30-0x00614FD1 BYTE_EXACT
 // LEVER: PROMOTED out of src/unrecovered/00614f30.cpp, whose claim proved the ARTIFACT reproduced while the program held a pending_bodies forwarder. src/editbox.cpp did not exist - EditBox was header-only - so this file and its CMakeLists entry are new.
+// LEVER (2026-09-03): time_close_call, not `->close()` on the Time at 0xb4c.
+//        The image CALLS 0x00616780 here (0x00614FC3) where time.h's
+//        in-class `MEASURED close` otherwise expands at this site too -
+//        61 compiled instructions against the image's 31, 2/31 agreeing.
+//        Same forwarder flatbutton.cpp uses for its own Time member, and
+//        netmsg.cpp now carries a static copy of it as well.
 // symbol    ?close@EditBox@@QAEXXZ
 // size      161 bytes
 // kind      game
@@ -106,6 +112,15 @@ Purpose: Reset the edit box - clear its state, republish the seven defaults,
 Return Value: n/a
 Status: Complete
 */
+// A real out-of-line forwarder so this call site gets the `call 0x00616780`
+// the image emits, where a direct `->close()` would inline away under /O2.
+// `Time::close` keeps its own BYTE_EXACT COMDAT at 0x00616780 (time.cpp);
+// this only keeps THIS caller from expanding it. __fastcall so the receiver
+// reaches ECX the way the image's __thiscall call site passes it.
+static void __fastcall time_close_call(Time *timer) {
+    timer->close();
+}
+
 void EditBox::close() {
     char *self = reinterpret_cast<char *>(this);
 
@@ -128,7 +143,7 @@ void EditBox::close() {
     field_B18_ = 0;
     field_B3C_ = 0;
 
-    reinterpret_cast<Time *>(self + 0xb4c)->close();
+    time_close_call(reinterpret_cast<Time *>(self + 0xb4c));
     reinterpret_cast<GraphicWin *>(self)->close();
 }
 /*

@@ -37,6 +37,39 @@ Heap::Heap() {
 }
 
 /*
+// ORIGINAL: 0x005D4580 ??1Heap@@QAE@XZ 0x005D4580-0x005D45AA BYTE_EXACT
+// LEVER (2026-09-03, moved out of heap.h): the in-class `MEASURED ~Heap`
+//        reproduced ITS OWN COMDAT - that claim never moved - but /Ob2 also
+//        EXPANDED it at every implicit base/member teardown site, so
+//        `~Strings` (0x006169C0) and `~TextIndex` (0x005FDF60) compiled to
+//        nineteen- and twenty-one-instruction expansions where the image has
+//        a five-byte `jmp` and a four-instruction tail (and TextIndex's
+//        expansion picked up an SEH unwind frame the image does not pay for,
+//        because it contains a non-intrinsic call). Out of line, each site
+//        emits the single call the image makes. Same edit heap.h already
+//        made for the constructor, and for the same reason.
+// size      42 bytes
+// prototype void (__thiscall ??1Heap@@QAE@XZ)(Heap* this)
+// callers   6   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644EF2
+// notes     Staged hybrid export redirect calls the source-owned destructor
+*/
+Heap::~Heap() {
+    // IMAGE ORDER, and the null goes INSIDE the guard as well as after it.
+    if (base_) {
+        std::free(base_);
+        base_ = nullptr;
+    }
+    err_flags_ = 0;
+    current_ = nullptr;
+    base_ = nullptr;
+    free_size_ = 0;
+    base_size_ = 0;
+}
+
+/*
 Purpose: Shutdown the class instance.
 // ORIGINAL: 0x005D45B0 ?shutdown@Heap@@QAEXXZ 0x005D45B0-0x005D45DA BYTE_EXACT
 // size      42 bytes
@@ -193,28 +226,8 @@ LPVOID Heap::get(size_t req_size) {
 
 
 // ---------------------------------------------------------------------------
-// DEFINED IN THE HEADER, CLAIMED HERE.
-//
-// These pieces are written in-class so the image's own inlining reproduces -
-// a constructor or destructor the compiler is expected to fold into its
-// caller. A marker cannot live beside them: `decomp.reader` globs `*.cpp`
-// and `*.c`, and a comparison compiles a TRANSLATION UNIT, so a marker in a
-// header could be neither read nor measured. VC6 emits each of them into
-// this unit's object as its own COMDAT anyway, which is what the comparison
-// pulls out, and the `body` fact says where to go to edit one.
-//
-// The ratchet still covers the header: this unit includes it, so breaking an
-// in-class body here fails the claim below. Measured, not assumed.
+// NO HEADER BODIES LEFT IN THIS UNIT. `~Heap` was the one, and it moved
+// above on 2026-09-03: an in-class destructor is expanded at every implicit
+// base/member teardown site, which cost `~Strings` and `~TextIndex` their
+// own claims. Nothing in heap.h is defined in-class any more.
 // ---------------------------------------------------------------------------
-
-/*
-// ORIGINAL: 0x005D4580 ??1Heap@@QAE@XZ 0x005D4580-0x005D45AA BYTE_EXACT
-// body      src/heap.h
-// size      42 bytes
-// prototype void (__thiscall ??1Heap@@QAE@XZ)(Heap* this)
-// callers   6   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00644EF2
-// notes     Staged hybrid export redirect calls the source-owned destructor
-*/

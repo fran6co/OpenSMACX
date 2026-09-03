@@ -180,15 +180,16 @@ LPSTR Strings::get(int address) {
 
 /*
 // ORIGINAL: 0x006169C0 ??1Strings@@QAE@XZ 0x006169C0-0x006169C5 BYTE_EXACT
-// TRIED (2026-09-03, the two-flag-set ladder): the five-byte `jmp` is a SIZE
-//        decision, and only the /O1 half of the ladder makes it. Under /O2
-//        VC6 expands heap.h's `MEASURED inline ~Heap` into this destructor -
-//        nineteen instructions where the image is one tail jump - and no
-//        source spelling can ask a void function to tail-call. The forwarder
-//        that fixed Strings::shutdown cannot reach it: the ~Heap call here is
-//        the compiler's IMPLICIT member teardown, not a statement. Taking
-//        ~Heap out of heap.h and into heap.cpp is the fix, and heap.h is
-//        outside this pass's files.
+// LEVER (2026-09-03): taking `~Heap` out of heap.h and into heap.cpp - the
+//        same edit the constructor already had - is what lands this. In-class
+//        it was EXPANDED at this implicit base teardown by /Ob2: nineteen
+//        instructions where the image is the five-byte `jmp` the comment on
+//        strings.h's `~Strings` describes. Out of line, the implicit call is
+//        a real call and VC6 tail-jumps it, exactly the image's shape. The
+//        earlier TRIED note here ("no source spelling can ask a void
+//        function to tail-call") was right about the mechanism and wrong
+//        about the reach: the spelling that changes is the callee's, not
+//        this body's.
 // body      src/strings.h
 // size      5 bytes
 // prototype void (__thiscall ??1Strings@@QAE@XZ)(Strings* this)

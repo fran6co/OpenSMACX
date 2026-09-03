@@ -163,6 +163,14 @@ LPVOID Filemap::open(LPCSTR file_name, BOOL is_sequential) {
 /*
 Purpose: Create a new file or overwrite an existing one with the specified size filled with zeros.
 // ORIGINAL: 0x00628650 ?create@Filemap@@QAEHPADKH@Z 0x00628650-0x006287B3 BYTE_EXACT
+// LEVER (2026-09-03): filemap_memset_call, not memset. /O2 implies /Oi, and
+//        /Oi expands `memset` into `shr ecx, 2 / rep stosd / and ecx, 3 /
+//        rep stosb` at every site - 152 compiled instructions against the
+//        image's 148, and the expansion is also what burned EDI, so the
+//        zero register at the `if (!map_view_addr_)` test came out as
+//        `mov edi, eax / cmp edi, ebx` where the image has `cmp eax, ebx`.
+//        The image's one real `call 0x006465F0` is at 0x00628767. Same
+//        lever as path.cpp's memset_call.
 // symbol    ?create@Filemap@@QAEPAXPBDIH@Z
 // size      355 bytes
 // prototype int (__thiscall ?create@Filemap@@QAEHPADKH@Z)(Filemap* this, int8* lpFileName, ULONG lDistanceToMove, int)
@@ -174,6 +182,16 @@ Purpose: Create a new file or overwrite an existing one with the specified size 
 Return Value: Pointer to the mapped file or NULL on error
 Status: Complete
 */
+// /Oi turns `memset` into the `rep stosd`/`rep stosb` form at every site;
+// the image CALLS it here (0x00628767 -> 0x006465F0) the way it does across
+// the rest of the binary, so the expansion is routed through a real
+// function. __cdecl, like memset itself, so the three arguments reach it as
+// pushes the image's call site also pays. Static, because path.cpp already
+// defines the external `memset_call` for its own callers.
+static void *__cdecl filemap_memset_call(void *dst, int val, unsigned len) {
+    return memset(dst, val, len);
+}
+
 LPVOID Filemap::create(LPCSTR file_name, uint32_t size, BOOL is_sequential) {
     // THE SAME FLAGS SHAPE AS open_read/open, computed first before close().
     const DWORD flags = is_sequential
@@ -212,7 +230,7 @@ LPVOID Filemap::create(LPCSTR file_name, uint32_t size, BOOL is_sequential) {
         close();
         return NULL;
     }
-    memset(map_view_addr_, 0, size);
+    filemap_memset_call(map_view_addr_, 0, size);
     return map_view_addr_;
 }
 
