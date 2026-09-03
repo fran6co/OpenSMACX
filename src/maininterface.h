@@ -28,6 +28,87 @@
   */
 class MainInterface : public GraphicWin {
  public:
+  // homed from 0045c600.cpp
+  void on_scrolled(int a1, int a2);
+
+ public:
+  // homed from 0045d2a0.cpp
+  void set_alert(int a1);
+
+ public:
+  // homed from 0045ca00.cpp
+  void on_selected(int a1, int a2);
+
+ public:
+  // homed from 0045c9c0.cpp
+  void on_mouse_leave(int a1, int a2);
+
+ public:
+  // homed from 0045c940.cpp
+  void on_group_clicked(int a1, int a2, int a3);
+
+ public:
+  // homed from 0045c980.cpp
+  void on_mouse_move(int a1, int a2);
+
+ public:
+  // homed from 0045c8f0.cpp
+  int on_dialog_item_back_draw(GraphicWin* a1, int a2, int a3, RECT* a4);
+
+ public:
+  // homed from 0045c8b0.cpp
+  int on_dialog_back_draw(GraphicWin* a1);
+
+ public:
+  // homed from 0045c870.cpp
+  void on_button_toggled(int a1, int a2);
+
+ public:
+  // homed from 0045c830.cpp
+  int on_button_pressed(int a1);
+
+ public:
+  // homed from 0045c7c0.cpp
+  void on_right_down(int a1, int a2);
+
+ public:
+  // homed from 0045c780.cpp
+  void on_left_down(int a1, int a2);
+
+ public:
+  // homed from 0045c740.cpp
+  void on_right_click(int a1, int a2);
+
+ public:
+  // homed from 0045c700.cpp
+  void on_left_click(int a1, int a2);
+
+ public:
+  // homed from 0045c6c0.cpp
+  void on_left_up(int a1, int a2);
+
+ public:
+  // homed from 0045c680.cpp
+  void on_right_double_click(int a1, int a2);
+
+ public:
+  // homed from 0045c640.cpp
+  void on_left_double_click(int a1, int a2);
+
+ public:
+  // homed from 0045c5c0.cpp
+  void on_scrolling(int a1, int a2);
+
+ public:
+  // homed from 0045c290.cpp
+  void restore_back(int a1);
+
+ public:
+  // 0x0045C180. Time's tick dispatcher: case 0 stops time1_, case 1 steps
+  // the alert counter and unions rect1_ with rect2_.
+  void timer_callback_daemon(int a1);
+
+ public:
   // 0x0045BE80, a pending_bodies forwarder.
   void set_date(char *text);
   MainInterface() { ; }
@@ -55,6 +136,7 @@ class MainInterface : public GraphicWin {
   void on_iface_scrolling(int a1, int a2);
   void on_iface_button_toggled(int a1, int a2);
   void on_iface_right_double_click(int a1, int a2);
+  void on_iface_left_double_click(int a1, int a2);
   int on_iface_button_pressed(int a1);
   // ?on_iface_button_clicked@MainInterface@@QAEXH@Z (0x0045D170), unrecovered.
   // BattleWin::on_iface_button_clicked forwards to it on the fixed-address

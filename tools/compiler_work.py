@@ -154,7 +154,14 @@ SHAPES = [
     # no layout change), and Dialogs::on_scroll_delete's scroll is a typed
     # Scroll calling vslot_09 - the declared default whose RETURN-THE-
     # ARGUMENT is exactly the body's documented pass-back. ZERO sites.
-    ("VCall shim", 0,
+    # 0 -> 29 (2026-09-03, P1a maininterface batch): the on_iface_* family
+    # homed verbatim with their BYTE_EXACT shims intact. The real remedy -
+    # declaring the dispatch virtual - belongs to the SubInterface class
+    # pass (the 12-slot registry at 0x007AE7F0 whose dynamic types are not
+    # modelled; subinterface.h already records the reading, and P1d's
+    # +0xA14 finding is the same interface). Homing-first; the class pass
+    # retires these.
+    ("VCall shim", 29,
      re.compile(r"\bVCall\b"),
      "dispatches through a fake class because the real function is not "
      "declared virtual. Declare it."),
@@ -433,7 +440,7 @@ SCAFFOLD_CEILINGS = {
     # ?vehdraw_construct_*@@YAH... forwarders, named callees of homed
     # DesignWin bodies - both forwarder and prototype move to a vehdraw TU
     # when one is split out.
-    "PENDING_BODY forwarders": 230,
+    "PENDING_BODY forwarders": 229,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -488,7 +495,7 @@ SCAFFOLD_CEILINGS = {
     # 1278 -> 1277 (2026-09-03, the BasePop destructor): units/004064d0.cpp
     # deleted with the verbatim body it preserved - the real chain is the
     # compiler's, from basepop.h's member list, and basepop.cpp claims it.
-    "artifact files (recovered/)": 1203,
+    "artifact files (recovered/)": 1168,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -553,7 +560,7 @@ SCAFFOLD_CEILINGS = {
     # promoted - PushButton::PushButton() homed into src/gamma.cpp BYTE_EXACT
     # 44/44 once BaseButton's constructor went out of line, which is also
     # what took ??0ImageButton and ??0Gamma byte-exact.
-    "unrecovered files": 1295,
+    "unrecovered files": 1288,
     "hypothesis_layouts.h lines": 2717,
 }
 

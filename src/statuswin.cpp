@@ -16,6 +16,9 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+// Homed StatusWin bodies call free helpers the archive binds by address:
+// base_at (base.h). veh.h is excluded - its `range` collides with general.h.
+#include "base.h"
 #include "original_seam.h"
 #include "statuswin.h"
 #include "spritebox.h"
@@ -126,6 +129,9 @@ void StatusWin::reset() {
 
 // Three fixed-address RECTs redraw() unions together, no established
 // identity beyond what this one function shows.
+extern RECT *const StatusWinRedrawRect1;
+extern RECT *const StatusWinRedrawRect2;
+extern RECT *const StatusWinRedrawRect3;
 RECT *const StatusWinRedrawRect1 = (RECT *)0x007AF50C;
 RECT *const StatusWinRedrawRect2 = (RECT *)0x007AF4EC;
 RECT *const StatusWinRedrawRect3 = (RECT *)0x007AF4FC;
@@ -186,3 +192,124 @@ void __fastcall status_win_redraw_redirect(StatusWin *self, void *) {
 // with atexit; here the same recovered constructor runs through this build's
 // own startup and the destructor closes it at exit.
 StatusWin ConsoleStatusWin;  // 0x008C5568
+
+// Fixed-slot bindings carried from 004b6570.cpp
+
+// ORIGINAL: 0x004B6570 ?draw_status@StatusWin@@QAEXHHHHH@Z 0x004B6570-0x004B8825 FILE
+// DEFERRED: genuinely more tractable than this pass reached - frame is only 0xD8 bytes (no embedded C++ objects the way the other six addresses in this batch have; this is plain locals only), and the member map shows this function itself touches exactly ONE StatusWin field (field_15DC_, a plain store at 0x004B6588 - every other offset the tool lists belongs to a SIBLING StatusWin method shown for context, not to draw_status). The remaining size (8885B, 2569 instructions, 829 Ghidra lines) is volume, not structural depth: it is a base-stats HUD renderer, dominated by _strcat(86)/?get@Strings@@(35)/_strlen(28)/?write_l@Buffer@@(15)/ __itoa(12)/?set_text_color@Buffer@@(9) - build a label string, draw it - interleaved with ~25 one-off game-data queries (?mine_yield@@, ?energy_yield@@, ?base_at@@, ?veh_at@@, ?bonus_at@@, ?has_tech@@, ?spying@@, ?base_draw@@, ?kill_type@Spot@@, ...) each needing its own argument set read off the disassembly. Ghidra also reports five "Removing unreachable block" warnings, meaning its own CFG differs from the raw disassembly's in at least five places - a real structural question (dead branches from an inlined constant vs. a genuine goto target this decompile mis-collapsed), not yet checked.
+// UNBLOCKER: because per-call risk is genuinely low here (a wrong string
+//     ID or draw position does not cascade into unrelated fields, unlike
+//     the faction/tech bit arithmetic seen in the other addresses in this
+//     batch), this is the best remaining candidate for a bulk transcribe-
+//     from-Ghidra pass - AFTER first resolving the five "unreachable
+//     block" addresses (0x004B7A25, 0x004B75AE, 0x004B7240, 0x004B731B,
+//     0x004B7BE1) against the raw disassembly, since those are exactly
+//     where a silent control-flow divergence would hide.
+// working copy - scaffold materialised by --work
+// size      8885 bytes
+// prototype void (__thiscall ?draw_status@StatusWin@@QAEXHHHHH@Z)(StatusWin* this, int, int, int, int, int)
+// callers   7   call targets   36
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00421B50 0x004632D0 0x004B4CF0 0x004C9B00 0x004E3A50 0x004E6E50 0x004E7310 0x004E7750 0x005594F0 0x0055AF20 0x0055BC00 0x0057D7D0 0x005882F0 0x005919C0 0x00592030 0x005B8C90 0x005B9F20 0x005BFE90 0x005D5930 0x005D8000 0x005DAC70 0x005DACB0 0x005DCEA0 0x005DD020 0x005DD130 0x005DD3B0 0x005DD530 0x005E2DD3 0x005E3203 0x005FA960 0x005FAA90 0x006169A0 0x00619280 0x006453E0 0x00645470 0x0064FC88
+// indirect  0x004B8246 0x004B8254 0x004B8261 0x004B829D 0x004B82AD
+
+void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
+    // BODY GOES HERE.
+    //
+    // Reach fields by offset - the class is deliberately empty:
+    //     char *self = reinterpret_cast<char *>(this);
+    //     int v = *reinterpret_cast<int *>(self + 0x24);
+
+}
+
+// Fixed-slot bindings carried from 004b4990.cpp
+
+// ORIGINAL: 0x004B4990 ?UNK1@StatusWin@@QAEXXZ 0x004B4990-0x004B4A1E FILE BYTE_EXACT
+// working copy - scaffold materialised by --work
+// size      142 bytes
+// prototype void (__thiscall ?UNK1@StatusWin@@QAEXXZ)(StatusWin* this)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00618F40
+
+void StatusWin::UNK1() {
+    char *self = reinterpret_cast<char *>(this);
+    int size = (WinScreenWidth != 800) ? 12 : 10;
+    if (size != *reinterpret_cast<int *>(self + 0x15ac)) {
+        *reinterpret_cast<int *>(self + 0x15ac) = size;
+        reinterpret_cast<Font *>(self + 0x1530)->init((char *)DefaultFontFace, size, 0);
+        reinterpret_cast<Font *>(self + 0x1558)->init((char *)DefaultFontFace, size, 2);
+        reinterpret_cast<Font *>(self + 0x1580)->init((char *)DefaultFontFace, size, 1);
+    }
+    if (WinScreenWidth != 800) {
+        *reinterpret_cast<int *>(self + 0x1530) = 4;
+        *reinterpret_cast<int *>(self + 0x1558) = 4;
+        *reinterpret_cast<int *>(self + 0x1580) = 4;
+    }
+}
+
+// Fixed-slot bindings carried from 004b8890.cpp. All of them already have
+// names in the tree - DefaultFontFace and WinScreenWidth in font.h/win.h, the
+// three redraw RECTs in statuswin.h, MainInterfaceGlobal in mapwin.h - so the
+// carried lines are dropped and the uses read those instead.
+
+typedef int (__stdcall *UnionRectFn)(RECT *, const RECT *, const RECT *);
+
+// ORIGINAL: 0x004B8890 ?on_redraw@StatusWin@@QAEXXZ 0x004B8890-0x004B896B FILE BYTE_EXACT
+// working copy - scaffold materialised by --work
+// size      219 bytes
+// prototype void (__thiscall ?on_redraw@StatusWin@@QAEXXZ)(StatusWin* this)
+// callers   3   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004B6570 0x005D5930 0x00618F40
+// indirect  0x004B8946 0x004B8955
+
+
+void StatusWin::on_redraw() {
+    char *self = reinterpret_cast<char *>(this);
+    int fontSize = ((WinScreenWidth != 0x320) ? 2 : 0) + 10;
+
+    if (fontSize != *reinterpret_cast<int *>(self + 0x15ac)) {
+        *reinterpret_cast<int *>(self + 0x15ac) = fontSize;
+        reinterpret_cast<Font *>(self + 0x1530)->init(DefaultFontFace, fontSize, 0);
+        reinterpret_cast<Font *>(self + 0x1558)->init(DefaultFontFace, fontSize, 2);
+        reinterpret_cast<Font *>(self + 0x1580)->init(DefaultFontFace, fontSize, 1);
+    }
+
+    if (WinScreenWidth != 0x320) {
+        *reinterpret_cast<int *>(self + 0x1530) = 4;
+        *reinterpret_cast<int *>(self + 0x1558) = 4;
+        *reinterpret_cast<int *>(self + 0x1580) = 4;
+    }
+
+    reinterpret_cast<StatusWin *>(self)->draw_status(-1, -1, -1, -1, 0);
+
+    RECT rect;
+    UnionRect(&rect, StatusWinRedrawRect1, StatusWinRedrawRect2);
+    UnionRect(&rect, &rect, StatusWinRedrawRect3);
+
+    MainInterfaceGlobal.soft_update(&rect);
+}
+
+/*
+// ORIGINAL: 0x004B9E90 ?UNK4@StatusWin@@QAEXXZ 0x004B9E90-0x004B9E97
+// TRIED: the scaffold bound the word as `static int *const g_00939ed8`, which
+//        hid its meaning. Named here as StatusFlagsPtr (statuswin.h).
+// TRIED: 2026-09-03 homing pass, 4 spellings (declared `int` storage, inline
+//        pointer accessor, inline reference accessor, named const-pointer
+//        binding). All four agree with the image on every mnemonic and
+//        operand - `mov eax,[0x939ed8] / or al,0x20 / ...` - and all four
+//        still measure MISMATCH, because in this tree the two address
+//        operands are RELOCATIONS the comparison masks, leaving 0 bytes to
+//        score; the image's bytes carry the literal address. Only the
+//        scaffold's anonymous `g_<address>` spelling scored, and that name is
+//        what the anonymous-global ceiling exists to remove. Demoted as
+//        unverifiable rather than mismatches forever: the body is the
+//        faithful 3 instructions.
+*/
+void StatusWin::UNK4() {
+    *StatusFlagsPtr |= 0x20;
+}

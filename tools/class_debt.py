@@ -77,7 +77,9 @@ CEILINGS = {
     # is the match (the DipEdit UNK1-4 precedent).
     # 171 -> 173 (2026-09-03, P1d batch): two more UNKn catalogue names
     # homed with their claims (DipEdit UNK precedent).
-    "unk-method": 173,
+    # 173 -> 181 (2026-09-03, P1a batch): eight more UNKn catalogue
+    # names homed with claims (DipEdit precedent).
+    "unk-method": 181,
     # THE ESCAPE HATCH, RATCHETED. An UNKn whose comment block says
     # EVIDENCE-FREE and names it has been investigated and found unnameable -
     # no caller, no dispatch, no CSV entry. That is a result, not unfinished
@@ -271,8 +273,12 @@ CEILINGS = {
     # 171 -> 181 (2026-09-03, P1d batch): ten more load-bearing pointer
     # forms homed verbatim - the measured-and-regressed rule from the P1b
     # raise applies; the de-pun pass runs with measure in the loop.
-    "raw self-access": 181,
-    "pointer-parameter as int": 4,
+    # 181 -> 203 (2026-09-03, P1a batch): twenty-two more load-bearing
+    # pointer forms homed verbatim (measured-regressed rule).
+    "raw self-access": 203,
+    # 4 -> 5 (2026-09-03, P1a batch): one homed body's faithful spelling
+    # returns this as int (catalogue mangling QAEHH; TexHeap::UNK1 family).
+    "pointer-parameter as int": 5,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
     # were never counted. The tree did not change; the ruler did.
@@ -316,7 +322,11 @@ CEILINGS = {
     # vehdraw stat blocks, the social tables, the DesignWin drafts. Homing-
     # first stands: renaming is the class pass's semantic half against a
     # measured body.
-    "scaffold name": 1506,
+    # 1506 -> 1688 (2026-09-03, P1a batch): 182 more names homed
+    # still-scaffold with 41 bodies (the maininterface on_iface_* family,
+    # BaseRadiusOffsetX/Y named from the image's own bytes where evidence
+    # existed). Renaming is the class pass's semantic half.
+    "scaffold name": 1688,
 }
 
 WHY = {

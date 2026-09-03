@@ -37,6 +37,26 @@
   */
 class DiploPop : public GraphicWin, public SubInterface {
  public:
+  // 0x004406D0. `poll` is the Win32 modal-pump callback Win::set_modal stores.
+  int set_modal(int flag, int (__cdecl *poll)(), Win *owner);
+  // 0x004406F0
+  void release_modal();
+  // homed from 0043f290.cpp
+  void on_button_clicked(int a1);
+
+ public:
+  // homed from 0043f5c0.cpp
+  void stop();
+
+ public:
+  // homed from 0043f140.cpp
+  void show(int a1);
+
+ public:
+  // homed from 0043f0f0.cpp
+  void close();
+
+ public:
   void hide();
   DiploPop() { ; }
   // 0x00440D50 is not recovered: a

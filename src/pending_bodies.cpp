@@ -591,11 +591,7 @@ void PrefWin::display(int page) {  // 0x0048FA00
 
 // ?draw_status@StatusWin@@QAEXHHHHH@Z at 0x004B6570 - 8885 bytes, still an
 // original body. StatusWin::redraw (src/statuswin.cpp) calls it BY NAME.
-void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
-    typedef void(__fastcall *pending)(StatusWin *, void *, int, int, int, int,
-                                     int);
-    PENDING_BODY(0x004B6570, pending)(this, nullptr, a1, a2, a3, a4, a5);
-}
+
 
 // ?set_title@StatusWin@@QAEXH@Z at 0x004B4A20 - 451 bytes, still an original
 // body. go_reset (src/time.cpp) calls it twice, so it needs a definition the

@@ -36,6 +36,10 @@
 */
 class StatusWin {
  public:
+  // homed from 004b4990.cpp
+  void UNK1();
+
+ public:
   void redraw();
   // 0x004B6570, 8885 bytes - still an original body, a pending_bodies
   // forwarder. redraw() calls it BY NAME.
@@ -47,6 +51,22 @@ class StatusWin {
   void close();
   void set_loc(int x, int y);
   void reset();
+  // The click/redraw family. Declared ahead of their bodies landing so the
+  // homed MainInterface handlers can call them by name - the image reaches
+  // these on the process-wide StatusWin at 0x008C5568.
+  void on_left_click(int x, int y);            // 0x004B8E40
+  void on_right_click(int a1, int a2, int a3); // 0x004B9010
+  void on_left_double_click(int x, int y);     // 0x004B8990
+  void on_redraw();                            // 0x004B8890
+  void draw(int a1, int a2, int a3, int a4, int a5);  // 0x004B8830
+  void reset_active();                         // 0x004B6530
+  void draw_active(int a1, int a2, int a3);    // 0x004B4CF0
+  void arrow_left();                           // 0x004B89C0
+  void arrow_right();                          // 0x004B8BD0
+  void init();                                 // 0x004B9FC0
+  void UNK2();                                 // 0x004B4CD0
+  void UNK3();                                 // 0x004B8DF0
+  void UNK4();                                 // 0x004B9E90
   // 0x004B4A20, 451 bytes - still an original body (an archived artifact in
   // src/recovered/units/004b4a20.cpp), declared here so go_reset's direct
   // `call 0x4b4a20` at 0x0050F020 / 0x0050F150 compiles and links.
@@ -116,3 +136,25 @@ inline SubInterface *sub_interface_global() {
   return reinterpret_cast<SubInterface *>(0x006EEED8);
 }
 
+
+// Three fixed-address RECTs redraw() unions together, no established identity
+// beyond what that one function shows. Declared here rather than left as
+// `const` locals in statuswin.cpp because maininterface's homed click
+// handlers read the same two.
+extern RECT *const StatusWinRedrawRect1;  // 0x007AF50C
+extern RECT *const StatusWinRedrawRect2;  // 0x007AF4EC
+extern RECT *const StatusWinRedrawRect3;  // 0x007AF4FC
+
+// 0x00939ED8, a status word. The corpus shows it cleared (00515430), read-
+// modify-written (00458d60) and tested bit by bit; UNK4 sets bit 0x20 in it
+// and 0x00479F90 sets bit 0x40. The name is the archived body's own local
+// spelling for it, not a recovered symbol.
+//
+// An inline accessor rather than a declared `int`, deliberately: the image
+// reads and writes the word through its LITERAL address (`mov eax, [0x939ed8]`),
+// and a real variable's address is a relocation, which the comparison cannot
+// mask. Same shape as sub_interface_global() below.
+// The address as a CONSTANT, not a pointer variable: the image's
+// `mov eax, [0x939ed8]` is a memory operand at a literal address, and a
+// variable holding the pointer costs the load it does not make.
+int *const StatusFlagsPtr = (int *)0x00939ED8;

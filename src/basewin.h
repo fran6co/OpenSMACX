@@ -45,7 +45,49 @@
   * methods recovered here are bare returns that touch no field, which is why
   * they can be replaced ahead of that mapping.
   */
+// The 21 (dx, dy) steps of a base's own radius - the 5x5 square minus its
+// four corners - walked in ring order. Read out of the shipped image at
+// 0x0066A1A0 / 0x0066A1F4 with tools/image_data.py; the two tables sit
+// back to back, which is how their 21-entry length is known. BaseWin::UNK1
+// is a reverse lookup: given an index into these, find the matching index
+// in map.h's RadiusOffsetX/RadiusOffsetY.
+extern const int BaseRadiusOffsetX[21];  // 0x0066A1A0
+extern const int BaseRadiusOffsetY[21];  // 0x0066A1F4
+
 class BaseWin : public ConstructedGraphicWin, public SubInterface {
+ public:
+  // homed from 00420a40.cpp
+  int on_nc_hittest(int a1, int a2);
+
+ public:
+  // homed from 0041e8b0.cpp
+  void hide();
+
+ public:
+  // homed from 0041e510.cpp
+  void on_iface_button_clicked(int a1);
+
+ public:
+  // homed from 0041de60.cpp
+  void on_iface_left_down(int a1, int a2);
+
+ public:
+  // 0x004090C0. Reverse radius lookup, see the tables above.
+  int UNK1(int a1);
+  // 0x00416540. The catalogue's `PAD` is `char *`; the scaffold spelled the
+  // same parameter `int8 *`, a typedef only it declared.
+  void bubble_me_elmo2(char *text, int x, int y);
+  // homed from 0041b110.cpp
+  void on_left_down(int a1, int a2);
+
+ public:
+  // homed from 0041afd0.cpp
+  void on_left_up(int a1, int a2);
+
+ public:
+  // homed from 00411980.cpp
+  void draw_energy_alloc(int a1);
+
  public:
   // 0x004165D0, a pending_bodies forwarder: the three click handlers
   // below funnel into it and reached it through a pointer.
