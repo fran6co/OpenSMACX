@@ -245,7 +245,13 @@ CEILINGS = {
     # fed - the dispatch is Win's own slot 62, which win.h declares virtual,
     # so the plain call `vslot_62()` compiles the same two instructions.
     # Measured 33/35 before and after on all four.
-    "raw self-access": 168,
+    # 168 -> 165 (2026-09-03, sound batch): ~Sound's `Sound volatile *const
+    # self` view and the two `reinterpret_cast<Sound volatile *>(prev/next)`
+    # receiver puns it fed are gone with it - the plain member spelling
+    # measures the same 0/62 (the body is held at zero by the image's /GX
+    # unwind frame and family-root vtable publish, neither of which a
+    # base-less Sound can produce), so the pun bought nothing.
+    "raw self-access": 165,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
