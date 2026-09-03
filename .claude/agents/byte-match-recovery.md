@@ -58,11 +58,19 @@ Everything is `tools/osmx.py`. There is no other scorer.
 uv run tools/osmx.py show <addr>      # bytes, disassembly, everything known
 uv run tools/osmx.py calls <addr>     # what the image REALLY calls, in order
 uv run tools/osmx.py measure <addr>   # does the current body reproduce?
-uv run tools/osmx.py measure <addr> --all-flags   # score every flag set
 uv run tools/osmx.py record <addr>    # measure, then bank what was measured
 ```
 
 You edit the body **in place in `src/`** — the real file, the one that ships.
+
+**THE FLAG VOCABULARY IS TWO SETS AND NOTHING ELSE** (settled 2026-09-03):
+`/c /O2 /Gy /GR- /GX` and `/c /O2 /Gy /GR- /Oy- /GX` — the jackal UI
+compilation and the game-logic compilation. There is no `--flags`, no
+`--all-flags`, and no trying other combinations under any circumstance; a
+body that will not reproduce under one of the two is fixed by SOURCE FORM
+(the divergence names what is missing), never by shopping for flags. If you
+believe a body provably cannot spell onto the pair, stop and report it —
+a third set is the user's decision, not yours.
 There are no `src/unrecovered/<addr>.cpp` scaffolds to write into; that
 workflow is gone and the tree has zero of its markers left.
 
