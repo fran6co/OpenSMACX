@@ -73,7 +73,11 @@ extern BOOL PluralityDefault;   // 0x009BBFF0
 // LEVER note there.
 // Returns the advanced pointer, which the catalogued name spells `X`
 // (void) - see the body. Callers that ignore it are the image's own.
-LPSTR __cdecl purge_leading(LPSTR input);
+// Declared MEASURED inline to match the definition in general.cpp: the image
+// folds this body into purge_spaces (0x006007B0) AND keeps the standalone
+// copy at 0x00600760, so the /Ob1 inliner has to see `inline` here while the
+// dllexport forces the standalone COMDAT to survive.
+MEASURED inline LPSTR __cdecl purge_leading(LPSTR input);
 void __cdecl purge_spaces(LPSTR input);
 void __cdecl kill_lf(LPSTR str);
 void __cdecl kill_nl(LPSTR str);

@@ -61,8 +61,15 @@ class BasePop : public GraphicWin {
   // 0x00602600, still a pending_bodies forwarder: the two `exec`
   // overloads below call it BY NAME so they emit the image's `E8`.
   int exec(int flags, int(__cdecl *callback)());
-  static int __cdecl set_def_ok_text(LPSTR text);
-  static int __cdecl set_def_cancel_text(LPSTR text);
+  // Declared MEASURED (dllexport) to match the `inline` definitions in
+  // basepop.cpp: the image EXPANDS both of them into init_class (0x00604590)
+  // AND keeps the standalone copies at 0x006018A0 / 0x00601910, so the /Ob1
+  // inliner has to see `inline` while the dllexport keeps that standalone
+  // COMDAT from being dropped once this TU's only caller folds it. game.cpp's
+  // callers never see the definition, so they keep the real `call`s the image
+  // has there.
+  static MEASURED int __cdecl set_def_ok_text(LPSTR text);
+  static MEASURED int __cdecl set_def_cancel_text(LPSTR text);
 
  public:
   static void fallout();

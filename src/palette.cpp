@@ -1983,6 +1983,26 @@ void Palette::reseed() {
 //    near miss from a wrong body.
 
 
+// Non-inline forwarder to `Time::stop` - the same-TU counterpart of
+// technology.h's has_tech_call and veh.cpp's synch_bit_call, with `fastcall`
+// where those are `cdecl`: `stop` is a __thiscall member, VC6 rejects
+// `__thiscall` on a free function (C4234), and for a single pointer argument
+// `fastcall` uses the same register (`ecx`) the thiscall receiver rides in.
+// So the call site loads the Time* into ecx and calls, which is exactly the
+// image's `mov ecx,[eax+0x408]; call 0x616730`.
+//
+// Why a wrapper at all: the image CALLS 0x616730 from here rather than
+// open-coding the teardown, and `Time::stop` is `MEASURED` inline in time.h,
+// so at /O2 the optimiser inlines it into this body and costs it the frame's
+// spare registers (41 instructions against the image's 24, 16 of 24, before
+// the switch). A `cdecl` wrapper was tried first and is WRONG here - it is
+// not a member, so its own call site pushed the Time* on the stack instead of
+// loading ecx, 20 of 24 - `fastcall` is what makes the forwarder's signature
+// match the thiscall it forwards to.
+static void __fastcall stop_animation_stop_call(Time *timer) {
+    timer->stop();
+}
+
 void Palette::stop_animation(int key) {
     int i;
     for (i = 0; i < 5; i++) {
@@ -1995,7 +2015,7 @@ void Palette::stop_animation(int key) {
     // free, i is 5 and the read below is internal_[5].key - the first four
     // bytes PAST the object. The image does exactly this.
     if ((int)internal_[i].key == key) {
-        internal_[i].time->stop();
+        stop_animation_stop_call(internal_[i].time);
     }
 }
 
@@ -2019,6 +2039,27 @@ void Palette::stop_animation(int key) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00625810 0x00645930
 // PRESERVED UNIT - measured BYTE_EXACT.
+// TRIED 2026-09-03 (pair /O2 and /O2 /Oy- only): the body is RIGHT and the
+//   gap is the /Oi axis, which no spelling in this tree reaches. The image
+//   makes a real `call _memcpy` with a CONSTANT `push 0x400`; both allowed
+//   sets imply /Oi, and /Oi turns a constant-size `memcpy` into
+//   `mov ecx,0x100; rep movsd` - compiled 24 instructions against the image's
+//   19, agreeing 0. Twelve source shapes measured dead in isolation probes
+//   under the shipped flags: `sizeof(entries_)`, literal `0x400`, whole
+//   object, `void *`/`char *` casts, `CopyMemory`, a `const int` local, a
+//   file-scope `const int`, an `enum`, a `#define`, a non-constant `int`
+//   (which folds anyway), a `size_t` expression, and a member-function
+//   receiver - every one still emitted `rep movsd`. Measured directly that
+//   `/c /O2 /Oi- /Gy /GR- /GX` on this exact body gives the image's own
+//   prologue byte for byte (`mov eax,[esp+4]` BEFORE `push esi` included), so
+//   it is the intrinsic axis and nothing else. Corroboration: the image holds
+//   130 real `_memcpy` call sites and only THREE `mov ecx,imm32; rep movsd`
+//   in all of .text (counts 6, 11 and 70 dwords), while this tree's
+//   `make_blend_table` and `fade_to` park on the same constant-size-memcpy
+//   wall. Adding `memcpy` to stdafx.h's `#pragma function(...)` list is the
+//   in-policy source-side fix but is a shared-file edit that would move every
+//   other constant-size memcpy in the tree, so it is recorded here rather
+//   than made.
 //
 // Kept for COVERAGE. This directory IS on the ratchet: every file here
 // carries an ORIGINAL marker, `decomp_status.py` compiles and measures
