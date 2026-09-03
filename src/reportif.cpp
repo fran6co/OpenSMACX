@@ -465,3 +465,139 @@ void SubInterface::release_iface_mode() {
 // ListBox's constructor here is the empty inline the tree models, so the
 // object is the zero storage the image leaves until then.
 ListBox ReportIfEnergyListBox;  // 0x0087BE84
+
+/*
+ * Fixed-slot bindings the homed bodies arrived carrying, named from evidence.
+ * The BoxSpriteStyleN numbers are indices into the BoxSpriteParams pool based
+ * at 0x0078D528, on the 0x28 = sizeof(BoxSpriteParams) grid - see the block
+ * comment in socialwin.cpp. InterfaceBuffer (0x007AEC64) is the shared
+ * full-screen drawing Buffer and InterfaceClipRect (0x007AEC94, +0x30) the
+ * RECT every one of those bodies hands to Buffer::set_clip. Each binding is an
+ * `int *const`, which folds to the bare immediate, so the rename moves no byte.
+ */
+static int *const BoxSpriteStyle0 = (int *)0x0078D528;
+static int *const BoxSpriteStyle3 = (int *)0x0078D5A0;
+static int *const BoxSpriteStyle33 = (int *)0x0078DA50;
+static int *const InterfaceBuffer = (int *)0x007AEC64;
+static int *const InterfaceClipRect = (int *)0x007AEC94;
+
+// ORIGINAL: 0x004A3D20 ?reset@ReportIf@@QAEXXZ 0x004A3D20-0x004A3FBF FILE
+// size      671 bytes
+// prototype void (__thiscall ?reset@ReportIf@@QAEXXZ)(ReportIf* this)
+// callers   5   call targets   7
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D8000 0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD10 0x005DEF90 0x005E2DD3
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x004A3D20
+// measured tier  MISMATCH
+// divergence     43
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/004a3d20/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?reset@ReportIf@@QAEXXZ  at 0x004A3D20  (671 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+
+void ReportIf::reset() {
+    char *self = reinterpret_cast<char *>(this);
+    Buffer *buf = reinterpret_cast<Buffer *>(InterfaceBuffer);
+
+    RECT *r1 = reinterpret_cast<RECT *>(self + 0x20);
+    buf->box_sprite(r1, reinterpret_cast<BoxSpriteParams *>(BoxSpriteStyle33));
+    RECT *r2 = reinterpret_cast<RECT *>(self + 0x30);
+    buf->box_sprite(r2, reinterpret_cast<BoxSpriteParams *>(BoxSpriteStyle33));
+    RECT *r3 = reinterpret_cast<RECT *>(self + 0x50);
+    buf->box_sprite(r3, reinterpret_cast<BoxSpriteParams *>(BoxSpriteStyle33));
+    RECT *r4 = reinterpret_cast<RECT *>(self + 0x40);
+    buf->set_clip(r4);
+    r4->left -= 7;
+    buf->box_sprite(r4, reinterpret_cast<BoxSpriteParams *>(BoxSpriteStyle33));
+    r4->left += 7;
+    buf->set_clip(reinterpret_cast<RECT *>(InterfaceClipRect));
+
+    r1->left += 3;
+    r1->right -= 3;
+    r1->top += 3;
+    r1->bottom -= 3;
+    r2->left += 3;
+    r2->top += 3;
+    r2->right -= 3;
+    r2->bottom -= 3;
+    r3->top += 4;
+    r3->left += 4;
+    r3->right -= 4;
+    r3->bottom -= 4;
+    r4->left += 4;
+    r4->top += 4;
+    r4->right -= 4;
+    r4->bottom -= 4;
+    r4->left -= 3;
+
+    buf->box_sprite(r1, reinterpret_cast<BoxSpriteParams *>(BoxSpriteStyle3));
+    buf->box_sprite(r2, reinterpret_cast<BoxSpriteParams *>(BoxSpriteStyle3));
+    buf->box_sprite(r3, reinterpret_cast<BoxSpriteParams *>(BoxSpriteStyle3));
+    buf->box_sprite(r4, reinterpret_cast<BoxSpriteParams *>(BoxSpriteStyle3));
+
+    r3->left += 3;
+    r3->right -= 3;
+    r3->top += 3;
+    r3->bottom -= 3;
+    r4->left += 3;
+    r4->right -= 3;
+    r4->top += 3;
+    r4->bottom -= 3;
+
+    buf->box_sprite(r3, reinterpret_cast<BoxSpriteParams *>(BoxSpriteStyle0));
+    buf->box_sprite(r4, reinterpret_cast<BoxSpriteParams *>(BoxSpriteStyle0));
+
+    r4->left += 3;
+    r1->left -= 3;
+    r1->right += 3;
+    r1->top -= 3;
+    r1->bottom += 3;
+    r2->left -= 3;
+    r2->right += 3;
+    r2->top -= 3;
+    r2->bottom += 3;
+    r3->left -= 7;
+    r3->right += 7;
+    r3->top -= 7;
+    r3->bottom += 7;
+    r4->left -= 7;
+    r4->right += 7;
+    r4->top -= 7;
+    r4->bottom += 7;
+
+    Font *f0 = *reinterpret_cast<Font **>(self + 0x1e180);
+    Font *f1 = *reinterpret_cast<Font **>(self + 0x1e184);
+    buf->set_font(f0, f1, f1, 0);
+    buf->set_text_color(0x99, -1, 1, 1);
+    buf->set_text_color2(0x99, -1, 1, 1);
+    buf->set_text_color3(0xe1, -1, 1, 1);
+    buf->clear_links();
+}
+

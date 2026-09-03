@@ -39,6 +39,18 @@
   */
 class DiploWin : public GraphicWin {
  public:
+  // homed from 00442510.cpp
+  void on_left_click(int a1, int a2);
+
+ public:
+  // homed from 00441490.cpp
+  void add_offer(int a1, int a2, int a3);
+
+ public:
+  // homed from 004413f0.cpp
+  void kill_offer(int a1, int a2);
+
+ public:
   void hide();
   void show(int visible);
   DiploWin() { ; }

@@ -20,6 +20,13 @@
 #include "designwin.h"
 #include "win.h"
 #include "worldwin.h"
+#include "faction.h"
+#include "game.h"
+#include "popup.h"
+#include "basepop.h"
+#include "strings.h"
+#include "technology.h"
+#include "temp.h"
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
@@ -249,6 +256,8 @@ Status: Complete
 namespace {
 
 typedef void (__fastcall *func_design_win_button_close)(void *);
+// Slot 2, the DesignWin front vtable's own second entry.
+typedef void (__fastcall *func_design_win_slot002)(void *);
 
 }
 
@@ -308,3 +317,632 @@ DesignWin TutWinDesWindow;  // 0x0071F2B0
 // (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
 // Here the same recovered constructors run through this build's own
 // startup, and the matching destructors close them at exit.
+
+// ORIGINAL: 0x00439670 ?bubble_me_elmo2@DesignWin@@QAEXPADHH@Z 0x00439670-0x004396B0 FILE
+// size      64 bytes
+// prototype void (__thiscall ?bubble_me_elmo2@DesignWin@@QAEXPADHH@Z)(DesignWin* this, LPCSTR, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005ED240 0x005F83D0
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x00439670
+// measured tier  MISMATCH
+// divergence     12
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/00439670/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?bubble_me_elmo2@DesignWin@@QAEXPADHH@Z  at 0x00439670  (64 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+
+
+void DesignWin::bubble_me_elmo2(char *a1, int a2, int a3) {
+    reinterpret_cast<Win *>(this)->client_to_screen(&a2, &a3);
+    int rc[4];
+    rc[0] = a2;
+    rc[2] = a2;
+    rc[1] = a3;
+    rc[3] = a3;
+    reinterpret_cast<Win *>(this)->set_bubble_text(a1, reinterpret_cast<RECT *>(rc));
+}
+
+// ORIGINAL: 0x00439EB0 ?delete_abil@DesignWin@@QAEXH@Z 0x00439EB0-0x00439F18 FILE
+// size      104 bytes
+// prototype void (__thiscall ?delete_abil@DesignWin@@QAEXH@Z)(DesignWin* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x00439EB0
+// measured tier  MISMATCH
+// divergence     10
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/00439eb0/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?delete_abil@DesignWin@@QAEXH@Z  at 0x00439EB0  (104 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+
+
+void DesignWin::delete_abil(int a1) {
+    char *self = reinterpret_cast<char *>(this);
+    unsigned int *flags = reinterpret_cast<unsigned int *>(self + 0x14208);
+
+    if (a1 & *flags) {
+        // WALL: register allocation. Every one of the 40 mnemonics below
+        // matches the original in order; only WHICH callee-saved register
+        // (esi vs edi) holds `this` versus the `slots` pointer is swapped
+        // throughout (the original saves `this` unconditionally into esi
+        // and the slots pointer conditionally into edi; this compile makes
+        // the opposite choice). No reordering of these declarations changed
+        // which register the backend picked - ruled out as unfixable via
+        // source spelling.
+        int *slots = reinterpret_cast<int *>(self + 0x14218);
+        *flags = ~a1 & *flags;
+        slots[0] = -1;
+        slots[1] = -1;
+        int i = 0;
+        do {
+            if (*flags & (1 << i)) {
+                int j = 0;
+                do {
+                    if (slots[j] < 0) {
+                        slots[j] = i;
+                        break;
+                    }
+                    j++;
+                } while (j < 2);
+            }
+            i++;
+        } while (i < 0x1d);
+    }
+}
+
+// ORIGINAL: 0x0043D0C0 ?show@DesignWin@@QAEXH@Z 0x0043D0C0-0x0043D0E8 BYTE_EXACT
+// symbol    ?show@DesignWin@@UAEXH@Z
+// LEVER: homed from 0043d0c0.cpp; needed the `symbol` fact (the tree emits
+// UAEXH - it overrides Win::show's virtual - where the image has QAEXH) before
+// measure could find it, then held BYTE_EXACT on the idiomatic base calls
+// `is_visible()` / `set_iface_mode()` where the artifact had two
+// reinterpret_casts of `this`.
+// size      40 bytes
+// prototype void (__thiscall ?show@DesignWin@@QAEXH@Z)(DesignWin* this, int)
+// callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00446B40 0x0045D310 0x005F7E90
+// 0x0043D0C0  ?show@DesignWin@@QAEXH@Z  ->  ?show@DesignWin@@QAEXH@Z
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+
+
+void DesignWin::show(int a1) {
+    if (!is_visible()) {
+        ambience(0xD3);
+        set_iface_mode();
+    }
+}
+
+// ORIGINAL: 0x0043D0F0 ?hide@DesignWin@@QAEXXZ 0x0043D0F0-0x0043D116 BYTE_EXACT
+// size      38 bytes
+// prototype void (__thiscall ?hide@DesignWin@@QAEXXZ)(DesignWin* this)
+// callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00446B40 0x0045D380 0x005F7E90
+// symbol    ?hide@DesignWin@@UAEXXZ
+// LEVER: homed from 0043d0f0.cpp; same `symbol` fact as show - the tree emits
+// the virtual UAEXX form that overrides Win::hide. Idiomatic base calls held
+// BYTE_EXACT on the first measure.
+// 0x0043D0F0  ?hide@DesignWin@@QAEXXZ  ->  ?hide@DesignWin@@QAEXXZ
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+
+
+void DesignWin::hide() {
+    if (is_visible()) {
+        release_iface_mode();
+        ambience(0xd4);
+    }
+}
+
+// ORIGINAL: 0x0043C070 ?construct_chassis@DesignWin@@QAEXXZ 0x0043C070-0x0043C09E BYTE_EXACT
+// size      46 bytes
+// prototype void (__thiscall ?construct_chassis@DesignWin@@QAEXXZ)(DesignWin* this)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004C2470
+// 0x0043C070  ?construct_chassis@DesignWin@@QAEXXZ  ->  ?construct_chassis@DesignWin@@QAEXXZ
+// LEVER: homed from 0043c070.cpp. The named fields (factionID_ 0x141F4,
+// protoChassisType_ 0x141FC, protoWeaponType_ 0x14200, protoReactorType_
+// 0x1420C, caviar_ 0x1279C) replaced the artifact's five
+// reinterpret_casts of `this` and held BYTE_EXACT first measure; the callee
+// needed a pending_bodies forwarder plus the prototype now at the end of
+// designwin.h.
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+
+
+void DesignWin::construct_chassis() {
+    vehdraw_construct_chassis(factionID_, protoChassisType_, protoWeaponType_, 0,
+                              protoReactorType_, &caviar_);
+}
+
+// Fixed-slot bindings carried from 0043c0a0.cpp
+// DesignWin's auto-build latch, 0x00733974. The image holds the int directly;
+// a file-scope `int *const` folds to the bare immediate at every read.
+// Name is the ROLE, read off the three sites that touch it: DesignWin::
+// construct_vehicle sets it to 1 around its construct_weapon call and back to
+// 0 after, while construct_weapon (0x0043C0A0) and draw_weapon (0x00434F40)
+// read it to decide whether the chassis slot is authoritative or should be
+// passed as -1. No catalogue name for the slot.
+static int *const DesignAutoBuildActive = (int *)0x00733974;
+
+// ORIGINAL: 0x0043C0A0 ?construct_weapon@DesignWin@@QAEXXZ 0x0043C0A0-0x0043C0EF FILE BYTE_EXACT
+// size      79 bytes
+// prototype void (__thiscall ?construct_weapon@DesignWin@@QAEXXZ)(DesignWin* this)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004C2CF0
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x0043C0A0
+// measured tier  BYTE_EXACT
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/0043c0a0/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?construct_weapon@DesignWin@@QAEXXZ  at 0x0043C0A0  (79 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+
+
+void DesignWin::construct_weapon() {
+    int weapon_id = protoWeaponType_;
+    if (weapon_id == 0x15 && *DesignAutoBuildActive == 0) {
+        vehdraw_construct_weapon(factionID_, -1, 0x15, &caviar_);
+        return;
+    }
+    vehdraw_construct_weapon(factionID_, protoChassisType_, weapon_id, &caviar_);
+}
+
+// Fixed-slot bindings carried from 0043c0f0.cpp
+
+// ORIGINAL: 0x0043C0F0 ?construct_armor@DesignWin@@QAEXH@Z 0x0043C0F0-0x0043C126 FILE BYTE_EXACT
+// size      54 bytes
+// prototype void (__thiscall ?construct_armor@DesignWin@@QAEXH@Z)(DesignWin* this, int)
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004C3090
+// PRESERVED UNIT - measured NO_COMPILE.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x0043C0F0
+// measured tier  NO_COMPILE
+// refusal        u0043c0f0.cpp(44) : error C2061: syntax error : identifier 'Caviar' u0043c0f0.cpp(63) : error C2061: syntax error : identifier 'Caviar'
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/0043c0f0/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?construct_armor@DesignWin@@QAEXH@Z  at 0x0043C0F0  (54 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?construct_armor@DesignWin@@QAEXH@Z  at 0x0043C0F0  (54 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+
+void DesignWin::construct_armor(int a1) {
+    vehdraw_construct_armor(LocalFaction, protoChassisType_, protoWeaponType_,
+                            protoArmorType_, a1, &caviar_);
+}
+
+// ORIGINAL: 0x0043C130 ?construct_reactor@DesignWin@@QAEXXZ 0x0043C130-0x0043C163 BYTE_EXACT
+// size      51 bytes
+// prototype void (__thiscall ?construct_reactor@DesignWin@@QAEXXZ)(DesignWin* this)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004C3800
+// 0x0043C130  ?construct_reactor@DesignWin@@QAEXXZ  ->  ?construct_reactor@DesignWin@@QAEXXZ
+// LEVER: homed from 0043c130.cpp. Same named-field lever as construct_armor.
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+
+
+void DesignWin::construct_reactor() {
+    vehdraw_construct_reactor(LocalFaction, protoChassisType_, protoWeaponType_,
+                              protoReactorType_, protoAbilityFlags_, &caviar_);
+}
+
+// Fixed-slot bindings carried from 00434650.cpp
+// The vehdraw stat block the design-window renderer reads back: the four
+// chosen component types as BYTES at 0x009AC558..0x009AC55B, the ability flag
+// word at 0x009AC554 and a byte at 0x009AC562 whose only writer is this
+// function's 0xFF. Each is an `int *const` / `uint8_t *const` at file scope,
+// which folds to the bare immediate, so the image's
+// `mov [0x9ac558], al` shape survives. No catalogue name for any of them;
+// these are the roles, read off the three sites that touch the block
+// (UNK3 here, draw_vehicle and draw_flash, both still unrecovered).
+static int *const VehDrawAbilityFlags = (int *)0x009AC554;
+static unsigned char *const VehDrawChassis = (unsigned char *)0x009AC558;
+static unsigned char *const VehDrawWeapon = (unsigned char *)0x009AC559;
+static unsigned char *const VehDrawArmor = (unsigned char *)0x009AC55A;
+static unsigned char *const VehDrawReactor = (unsigned char *)0x009AC55B;
+static unsigned char *const VehDrawComponentTail = (unsigned char *)0x009AC562;
+
+// ORIGINAL: 0x00434650 ?UNK3@DesignWin@@QAEXXZ 0x00434650-0x00434691 FILE BYTE_EXACT
+// size      65 bytes
+// prototype void (__thiscall ?UNK3@DesignWin@@QAEXXZ)(DesignWin* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// LEVER: homed from units/00434650.cpp. The vehdraw stat block's six raw
+// bindings renamed (VehDrawChassis/Weapon/Armor/Reactor/AbilityFlags/
+// ComponentTail) and the named DesignWin fields put in their place; the
+// byte-width of each target is carried by the binding's own type, so no
+// reinterpret_cast of `this` survives.
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x00434650
+// measured tier  BYTE_EXACT
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/00434650/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?UNK3@DesignWin@@QAEXXZ  at 0x00434650  (65 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+
+
+void DesignWin::UNK3() {
+    *VehDrawChassis = (unsigned char)protoChassisType_;
+    *VehDrawWeapon = (unsigned char)protoWeaponType_;
+    *VehDrawArmor = (unsigned char)protoArmorType_;
+    *VehDrawReactor = (unsigned char)protoReactorType_;
+    *VehDrawAbilityFlags = (int)protoAbilityFlags_;
+    *VehDrawComponentTail = 0xFF;
+}
+
+// Fixed-slot bindings carried from 0043e960.cpp. 0x0073396C is the tutor
+// state byte the exec/tutor path sets to 1/2 and clears here; 0x00733970 is
+// the DesignWin *exec stores so timer_function can find the window again.
+static int *const DesignTutorState = (int *)0x0073396C;
+static DesignWin **const DesignWindowSelf = (DesignWin **)0x00733970;
+
+// ORIGINAL: 0x0043E960 ?shut_that_badboy_down@DesignWin@@QAEXXZ 0x0043E960-0x0043E99D FILE
+// size      61 bytes
+// prototype void (__thiscall ?shut_that_badboy_down@DesignWin@@QAEXXZ)(DesignWin* this)
+// callers   2   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FCBB0 0x00616730 0x00616870
+// indirect  0x0043E96F
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x0043E960
+// measured tier  MISMATCH
+// divergence     8
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/0043e960/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?shut_that_badboy_down@DesignWin@@QAEXXZ  at 0x0043E960  (61 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+
+
+void DesignWin::shut_that_badboy_down() {
+    if (*DesignTutorState != 1) {
+        vtable_slot<func_design_win_slot002>(this, 0x8)(this);
+        do_all_draws();
+        Time *modal = &time_;
+        *DesignWindowSelf = 0;
+        modal->stop();
+        modal->release_modal();
+    }
+    *DesignTutorState = 0;
+}
+
+// MISMATCH, ruled out (mnemonic_similarity 0.875, 65 vs 61 bytes):
+// divergence #8, original 'lea' vs rebuilt 'add'+'mov', plus one inserted
+// 'mov' before the second call. The original computes `this + 0x12774` ONCE
+// into ecx (`lea ecx,[esi+0x12774]`) and reuses that same ecx, UNRELOADED,
+// as the receiver for BOTH `modal->stop()` and `modal->release_modal()` -
+// two back-to-back thiscall calls with a global store in between that does
+// not touch ecx. Every VC6 phrasing tried here (named pointer local, named
+// reference local, and the un-named expression repeated verbatim at both
+// call sites, which CSEs to the same code) makes /O2 instead promote the
+// address into esi (destructively overwriting `this`, which is dead by
+// this point) and reload ecx with a 2-byte `mov ecx,esi` before EACH call -
+// the textbook-safe thing to do, since a compiler that only sees `Time`
+// as an opaque extern declaration cannot prove `Time::stop()` (66 bytes,
+// calls timeKillEvent/KillTimer/flush_timer - genuinely not a leaf) leaves
+// ecx holding the caller's value on return. src/time.h's
+// `release_modal` declaration (00616870) is what this tree calls; the unit that
+// carried that body was folded away (commit 619631a0), and it showed
+// `Time::release_modal()` never touches `this` (`TimeModal =
+// nullptr;`), so the no-reload choice the original compiler made is only
+// explainable by whole-translation-unit visibility into that callee's body
+// - something this scaffold's opaque-class model structurally cannot give
+// it. Ruled out rather than re-derive: this is a same-shape sibling of the
+// documented INSTRUCTION SCHEDULING wall, but for cross-call register
+// liveness instead of instruction order.
+

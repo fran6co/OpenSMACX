@@ -33,6 +33,10 @@
   */
 class ReportIf : public SubInterface {
  public:
+  // homed from 004a3d20.cpp
+  void reset();
+
+ public:
   void done();
   ReportIf();
   ~ReportIf();

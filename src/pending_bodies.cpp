@@ -1799,3 +1799,32 @@ int __cdecl ambience(int ambience_id) {
 // PullDown::rename_item (0x005F8E50). Both are homed in src/pulldown.cpp now,
 // beside their sibling add_separator and their shared helper compute_length,
 // so the forwarders that stood here are gone.
+
+// The four ?vehdraw_construct_*@@YAH...@Z free functions DesignWin's
+// construct_chassis / construct_weapon / construct_armor / construct_reactor
+// (designwin.cpp) call. All four bodies are still unrecovered
+// (src/unrecovered/004c2470.cpp, 004c2cf0.cpp, 004c3090.cpp, 004c3800.cpp);
+// the prototypes they are declared with live at the end of designwin.h, and
+// both move to a vehdraw translation unit when this tree splits one out.
+int __cdecl vehdraw_construct_chassis(int a1, int a2, int a3, int a4, int a5,
+                                      Caviar *caviar) {
+    typedef int(__cdecl *pending)(int, int, int, int, int, Caviar *);
+    return PENDING_BODY(0x004C2470, pending)(a1, a2, a3, a4, a5, caviar);
+}
+
+int __cdecl vehdraw_construct_weapon(int a1, int a2, int a3, Caviar *caviar) {
+    typedef int(__cdecl *pending)(int, int, int, Caviar *);
+    return PENDING_BODY(0x004C2CF0, pending)(a1, a2, a3, caviar);
+}
+
+int __cdecl vehdraw_construct_armor(int a1, int a2, int a3, int a4, int a5,
+                                    Caviar *caviar) {
+    typedef int(__cdecl *pending)(int, int, int, int, int, Caviar *);
+    return PENDING_BODY(0x004C3090, pending)(a1, a2, a3, a4, a5, caviar);
+}
+
+int __cdecl vehdraw_construct_reactor(int a1, int a2, int a3, int a4, int a5,
+                                      Caviar *caviar) {
+    typedef int(__cdecl *pending)(int, int, int, int, int, Caviar *);
+    return PENDING_BODY(0x004C3800, pending)(a1, a2, a3, a4, a5, caviar);
+}

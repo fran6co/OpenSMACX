@@ -40,6 +40,22 @@
   */
 class SocialWin : public GraphicWin, public SubInterface {
  public:
+  // homed from 004b1ff0.cpp
+  void allocate_energy(int a1, int a2);
+
+ public:
+  // homed from 004b0d50.cpp
+  void draw_psych_alloc();
+
+ public:
+  // homed from 004af310.cpp
+  void draw_social(int a1);
+
+ public:
+  // homed from 004b1b30.cpp
+  void bubble_me_elmo2(char * a1, int a2, int a3);
+
+ public:
   void hide();
   void show(int visible);
   SocialWin();

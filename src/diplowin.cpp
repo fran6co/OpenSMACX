@@ -18,6 +18,14 @@
 #include "stdafx.h"
 #include "diplowin.h"
 #include "vtable_shim.h"
+#include "netdaemon.h"
+#include "basepop.h"
+
+// Slot 62, 0xF8 - the DiploWin front vtable's update entry, the one
+// done_deal tails into with the image's own `jmp dword ptr [eax + 0xf8]`.
+namespace {
+typedef void (__fastcall *func_diplo_win_slot062)(void *);
+}
 // DiploWin::show reaches the SubInterface subobject the original places at
 // +0xA14 by casting a hand-computed address, so the type must be complete.
 #include "subinterface.h"
@@ -350,3 +358,224 @@ void DiploWin::hide() {
         release_modal();
     }
 }
+
+// DiploOffersDirty (0x007492D0) - the diplomacy-window redraw latch. add_offer,
+// kill_offer, new_chat and on_button_clicked all set it to 1 as they change the
+// offer lists; exec (0x00443F10) tests it and clears it. `int *const` folds to
+// the bare immediate, so the rename moves no byte.
+static int *const DiploOffersDirty = (int *)0x007492D0;
+
+// ORIGINAL: 0x004413F0 ?kill_offer@DiploWin@@QAEXHH@Z 0x004413F0-0x0044148C FILE
+// TRIED: `int idx = a2;` declared inside the inner `if (a2 < count - 1)` (mismatch, idx assign shifted 5 instructions late) and hoisted above it with a separate `countMinus1` temp (MNEMONIC_ONLY, worse). Landed the inner-if placement: MISMATCH #23, mnemonic similarity 0.98, same byte count (156/156).
+// working copy - scaffold materialised by --work
+// size      156 bytes
+// prototype void (__thiscall ?kill_offer@DiploWin@@QAEXHH@Z)(DiploWin* this, int, int)
+// callers   3   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00592EE0
+// indirect  0x0044147F
+
+void DiploWin::kill_offer(int a1, int a2) {
+    char *self = reinterpret_cast<char *>(this);
+    if (a1 == 0) {
+        message_data(0x1507, *reinterpret_cast<int *>(self + 0xAB8), a2, 0, 0, 0);
+    }
+    int count = *reinterpret_cast<int *>(self + 0xA1C + a1 * 4);
+    if (a2 < count) {
+        if (a2 < count - 1) {
+            char *rec = self + 0xA2C + a1 * 32 + a2 * 4;
+            int idx = a2;
+            do {
+                idx = idx + 1;
+                *reinterpret_cast<int *>(rec) = *reinterpret_cast<int *>(rec + 4);
+                *reinterpret_cast<int *>(rec + 0x40) = *reinterpret_cast<int *>(rec + 0x44);
+                rec += 4;
+                count = *reinterpret_cast<int *>(self + 0xA1C + a1 * 4);
+            } while (idx < count - 1);
+        }
+        count = *reinterpret_cast<int *>(self + 0xA1C + a1 * 4) - 1;
+        *reinterpret_cast<int *>(self + 0xA1C + a1 * 4) = count;
+        *DiploOffersDirty = 1;
+        *reinterpret_cast<int *>(self + 0xA24) = 0;
+        *reinterpret_cast<int *>(self + 0xA28) = 0;
+        vtable_slot<func_diplo_win_slot062>(this, 0xf8)(this);
+    }
+
+}
+
+// ORIGINAL: 0x00441490 ?add_offer@DiploWin@@QAEXHHH@Z 0x00441490-0x004415B9 FILE
+// size      297 bytes
+// prototype void (__thiscall ?add_offer@DiploWin@@QAEXHHH@Z)(DiploWin* this, int, int, int)
+// callers   3   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004413F0 0x00592EE0
+// indirect  0x00441598
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x00441490
+// measured tier  MISMATCH
+// divergence     2
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/00441490/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?add_offer@DiploWin@@QAEXHHH@Z  at 0x00441490  (297 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+
+void DiploWin::add_offer(int a1, int a2, int a3) {
+    char *self = reinterpret_cast<char *>(this);
+    int *count_arr = reinterpret_cast<int *>(self + 0xa1c);
+    int *type_arr = reinterpret_cast<int *>(self + 0xa2c);
+    int *val_arr = reinterpret_cast<int *>(self + 0xa6c);
+
+    *DiploOffersDirty = 1;
+
+    int i;
+    for (i = 0; i < count_arr[a1]; i++) {
+        if (a2 == 4 || a2 == 2 || a2 == 3) {
+            int existing = type_arr[i + a1 * 8];
+            if (existing == 4 || existing == 2 || existing == 3) {
+                goto found;
+            }
+        } else if (a2 == 1) {
+            if (type_arr[i + a1 * 8] == 1) {
+                if (a3 <= 0) {
+                    kill_offer(a1, i);
+                    return;
+                }
+                goto found;
+            }
+        } else if (a2 == 0) {
+            if (type_arr[i + a1 * 8] == 0 && val_arr[i + a1 * 8] == a3) {
+                return;
+            }
+        } else if (a2 == 5) {
+            if (type_arr[i + a1 * 8] == 5 && val_arr[i + a1 * 8] == a3) {
+                return;
+            }
+        }
+    }
+
+    {
+        int count = count_arr[a1];
+        if (count >= 8) {
+            return;
+        }
+        count_arr[a1] = count + 1;
+        i = count;
+    }
+
+found:
+    {
+        int slot = i + a1 * 8;
+        type_arr[slot] = a2;
+        val_arr[slot] = a3;
+        *reinterpret_cast<int *>(self + 0xa24) = 0;
+        *reinterpret_cast<int *>(self + 0xa28) = 0;
+        if (a1 == 0) {
+            message_data(0x1506, *reinterpret_cast<int *>(self + 0xab8),
+                        a2, a3, a1, a1);
+        }
+        vtable_slot<func_diplo_win_slot062>(this, 0xf8)(this);
+    }
+}
+
+// ORIGINAL: 0x00442510 ?on_left_click@DiploWin@@QAEXHH@Z 0x00442510-0x00442558 FILE BYTE_EXACT
+// LEVER: homed from units/00442510.cpp once kill_offer (0x004413F0) landed in
+// this TU - the call was the only thing blocking it. The declared `spot_`
+// member at 0xED0 and the same vtable_slot dispatch done_deal uses replaced
+// the artifact's cast of `this` and its VCall shim.
+// size      72 bytes
+// prototype void (__thiscall ?on_left_click@DiploWin@@QAEXHH@Z)(DiploWin* this, int xCoord, int yCoord)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004413F0 0x005FAB00
+// indirect  0x0044254D
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x00442510
+// measured tier  BYTE_EXACT
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/00442510/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?on_left_click@DiploWin@@QAEXHH@Z  at 0x00442510  (72 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+
+
+void DiploWin::on_left_click(int a1, int a2) {
+    // `check`'s two int* out-params reuse the parameter slots, so the same
+    // names come back carrying the spot position and the button kind.
+    if (spot_.check(a1, a2, &a1, &a2) >= 0 && a2 == 0) {
+        kill_offer(0, a1);
+        vtable_slot<func_diplo_win_slot062>(this, 0xf8)(this);
+    }
+}
+

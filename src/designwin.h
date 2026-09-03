@@ -45,6 +45,46 @@
   */
 class DesignWin : public GraphicWin, public SubInterface {
  public:
+  // homed from 0043e960.cpp
+  void shut_that_badboy_down();
+
+ public:
+  // homed from 00434650.cpp
+  void UNK3();
+
+ public:
+  // homed from 0043c130.cpp
+  void construct_reactor();
+
+ public:
+  // homed from 0043c0f0.cpp
+  void construct_armor(int a1);
+
+ public:
+  // homed from 0043c0a0.cpp
+  void construct_weapon();
+
+ public:
+  // homed from 0043c070.cpp
+  void construct_chassis();
+
+ public:
+  // homed from 0043d0f0.cpp
+  void hide();
+
+ public:
+  // homed from 0043d0c0.cpp
+  void show(int a1);
+
+ public:
+  // homed from 00439eb0.cpp
+  void delete_abil(int a1);
+
+ public:
+  // homed from 00439670.cpp
+  void bubble_me_elmo2(char *a1, int a2, int a3);
+
+ public:
   // The shared body both select_special_N thunks tail into:
   // ?select_special@DesignWin@@QAEXH@Z at 0x0043AC70, still an original body,
   // so this is a declaration only, resolved at link time.
@@ -397,3 +437,25 @@ class DesignWin : public GraphicWin, public SubInterface {
 // the class is no longer `__declspec(dllexport)`. The `H` in
 // ?select_special@DesignWin@@QAEXH@Z is the one int both select_special_N
 // thunks pass.
+
+/*
+ * The vehdrawConstruct family - the four ?vehdraw_construct_*@@YAHHH...@
+ * free functions DesignWin's construct_chassis / construct_weapon /
+ * construct_armor / construct_reactor call. All four are still
+ * unrecovered bodies (src/unrecovered/004c2470.cpp, 004c2cf0.cpp,
+ * 004c3090.cpp, 004c3800.cpp) reached through pending_bodies forwarders;
+ * their real home is a vehdraw translation unit this tree has not split
+ * out yet, so the prototypes stand here where their only homed callers
+ * see them. HANDOFF: move these declarations when that TU exists.
+ *
+ * `Caviar &`, not `Caviar *` - the mangled `PAUCaviar@@` says pointer, and
+ * a reference spells the same call site without the caller taking an
+ * address by hand.
+ */
+int __cdecl vehdraw_construct_chassis(int a1, int a2, int a3, int a4, int a5,
+                                      Caviar *caviar);
+int __cdecl vehdraw_construct_weapon(int a1, int a2, int a3, Caviar *caviar);
+int __cdecl vehdraw_construct_armor(int a1, int a2, int a3, int a4, int a5,
+                                    Caviar *caviar);
+int __cdecl vehdraw_construct_reactor(int a1, int a2, int a3, int a4, int a5,
+                                      Caviar *caviar);

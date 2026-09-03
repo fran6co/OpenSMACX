@@ -75,7 +75,9 @@ CEILINGS = {
     # 169 -> 171 (2026-09-03, P1b ambience/sounddevice batch): Midi::UNK
     # and TexHeap-family UNKn homed with their claims - the catalogue name
     # is the match (the DipEdit UNK1-4 precedent).
-    "unk-method": 171,
+    # 171 -> 173 (2026-09-03, P1d batch): two more UNKn catalogue names
+    # homed with their claims (DipEdit UNK precedent).
+    "unk-method": 173,
     # THE ESCAPE HATCH, RATCHETED. An UNKn whose comment block says
     # EVIDENCE-FREE and names it has been investigated and found unnameable -
     # no caller, no dispatch, no CSV entry. That is a result, not unfinished
@@ -266,7 +268,10 @@ CEILINGS = {
     # homed VERBATIM with their pointer forms load-bearing - de-punning
     # GAmbience::general was measured and REGRESSED it to MISMATCH, then
     # reverted. The de-pun pass runs with measure in the loop, not as a sweep.
-    "raw self-access": 171,
+    # 171 -> 181 (2026-09-03, P1d batch): ten more load-bearing pointer
+    # forms homed verbatim - the measured-and-regressed rule from the P1b
+    # raise applies; the de-pun pass runs with measure in the loop.
+    "raw self-access": 181,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
@@ -306,7 +311,12 @@ CEILINGS = {
     # rule - renaming is the class pass's semantic half, done against a
     # MEASURED body (the home_bodies reconcile comment) - so these ride the
     # ratchet until their class passes name them from evidence.
-    "scaffold name": 1341,
+    # 1341 -> 1506 (2026-09-03, P1d designwin/diplowin/socialwin/reportif
+    # batch): 165 more names homed still-scaffold with 18 bodies - the
+    # vehdraw stat blocks, the social tables, the DesignWin drafts. Homing-
+    # first stands: renaming is the class pass's semantic half against a
+    # measured body.
+    "scaffold name": 1506,
 }
 
 WHY = {
