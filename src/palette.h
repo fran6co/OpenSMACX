@@ -94,7 +94,10 @@ class Palette {
 
  public:
   // homed from 005ff1a0.cpp
-  int make_remap_table(int source, unsigned char *table, int start,
+  // The first parameter is the palette the remap targets: the image loads it
+  // into ecx as the receiver of get_nearest_palette_index (0x005FF1F4), so it
+  // is a Palette* and not the int the shipped mangled name's `H` claims.
+  int make_remap_table(Palette *source, unsigned char *table, int start,
                        int count);
 
  public:
