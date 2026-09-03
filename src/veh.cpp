@@ -3174,6 +3174,12 @@ Purpose: Determine if the specified unit wants to wake up based on certain condi
          preferences. Optional parameter for spotted veh_id (-1 to skip).
 // ORIGINAL: 0x005B5EA0 ?want_to_wake@@YAHHHH@Z 0x005B5EA0-0x005B6060
 // TRIED: image never reads Vehs[veh_id].faction_id eagerly - it re-reads it at each conditional use, and never caches it across the early return. Un-caching it into `Vehs[veh_id].faction_id` at every site (instead of a hoisted `veh_faction_id` local) let the compiler pick a plain ebp-frame prologue matching the image's, where the hoisted local forced a param-less-locals, esp-relative frame from instruction 0. Also restored the `veh_id >= 0 &&` half of the trailing guard - the image's `test edi, edi; jl` tests veh_id, not just spotted_veh_id, contradicting this body's own comment that it was safe to drop. Residual divergence past this is register allocation (esi/edi/ebx/ebp swapped throughout) and one 16-bit shift-then-extend vs extend-then-shift on `waypoint_x[0] >> 1`; an explicit `(int)` cast on the base_who() arguments did not change the codegen. Best flag set /O2 /Gy /GR- /Oy- /GX, 0.793 similar.
+// TRIED 2026-09-03: `uint8_t triad = get_triad(veh_id);` (the field's own
+//        width, against the usual width lever) - the image keeps the byte in
+//        `al` and compares `cmp al, 2`, but the narrower local measured WORSE:
+//        0.790 against 0.793, because the byte local forces a second
+//        zero-extension at the `triad != triad_spotted` compare further down.
+//        Reverted.
 // size      448 bytes
 // prototype int (__cdecl ?want_to_wake@@YAHHHH@Z)(unsigned int factionID, unsigned int vehID, int vehID2)
 // callers   1   call targets   0
