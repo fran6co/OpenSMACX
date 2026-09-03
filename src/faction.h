@@ -629,6 +629,193 @@ extern int MultiWindowOpen;  // 0x007FE06C
 // live pact/treaty/truce; nothing homed reads it yet, so the name is the
 // role, not a catalogue label.
 uint32_t *const DiploVendettaTable = (uint32_t *)0x0096CB8C;
+
+// THE FOUR PAIRWISE STATUS VIEWS the diplomacy code walks, all of them
+// PlayerData fields read through the array's own stride. The image reaches
+// each as `PlayersData[a].<field>[b]` - `[reg*4 + 0x96C9E0 + <offsetof>]`,
+// where `reg` is the pair index `a * 2099 + b` and 2099 * 4 == 0x20CC ==
+// sizeof(PlayerData) - and the addresses below are just the field's byte
+// offset past the array front at 0x0096C9E0. They are recorded as addresses
+// rather than spelled `PlayersData[a].field[b]` at every site because most
+// callers compute one pair index and reuse it across several views, which
+// the array spelling cannot share.
+//
+//   0x0096C9F8  +0x018  diplo_treaties[0]  - the treaty/agenda word; this
+//                         is spying_recovery.h's SpyingStatusTable, which is
+//                         the binding the bodies here use
+//   0x0096CA18  +0x038  diplo_agenda[0]    - eight dwords in, per agenda_on
+//   0x0096CA58  +0x078  diplo_spoke[0]     - turn of the last contact
+//   0x0096CA78  +0x098  diplo_merc[0]
+//   0x0096CAA4  +0x0C4  loan_balance[0]
+//   0x0096CAC4  +0x0E4  loan_payment[0]
+//   0x0096CC00  +0x220  energy_reserves
+uint32_t *const DiploSpokeTable = (uint32_t *)0x0096CA58;
+uint32_t *const DiploMercTable = (uint32_t *)0x0096CA78;
+uint32_t *const DiploLoanBalanceTable = (uint32_t *)0x0096CAA4;
+uint32_t *const DiploLoanPaymentTable = (uint32_t *)0x0096CAC4;
+
+// Raised by pop_wait and pop_expire around their call to wait_loop, and
+// dropped again when it returns. Nothing this tree has recovered reads it -
+// whatever consults it lives in a body still unrecovered - so the name is the
+// observable behaviour, not a catalogue label.
+extern int PopupWaitActive;  // 0x0093FAC4
+
+// THE SQUARE THE DIPLOMACY SCREEN CENTRES ON, both -1 in the shipped image
+// (meaning "none") and both reset to -1 when the screen comes down.
+// wants_to_speak bounds X against MapLongitudeBounds and Y against
+// MapLatitudeBounds before handing them to Console::focus, which is what
+// says which is which.
+int *const DiploFocusX = (int *)0x0068D43C;
+int *const DiploFocusY = (int *)0x0068D440;
+
+// THE DIPLOMACY STRINGS, read out of the shipped image with
+// tools/image_data.py. Every one is a .rdata literal the diplomacy
+// bodies homed into faction.cpp hand to popup::start or NetMsg::pop as
+// a KEY - the popup resolves it against the script database - or, for
+// the .pcx entries, a sprite file name. Declared here rather than at
+// each use because a namespace-scope `char *const` folds to the
+// immediate the image pushes, and because most are shared by several
+// bodies. The literal is the comment; the address is the evidence.
+char *const DiploLabelSendingTREATYON = (char *)0x0068D444;  // "Sending TREATY ON"
+char *const DiploLabelSendingTREATYOFF = (char *)0x0068D458;  // "Sending TREATY OFF"
+char *const DiploLabelSendingSETTREATY = (char *)0x0068D46C;  // "Sending SET TREATY"
+char *const DiploLabelSendingAGENDAON = (char *)0x0068D480;  // "Sending AGENDA ON"
+char *const DiploLabelSendingAGENDAOFF = (char *)0x0068D494;  // "Sending AGENDA OFF"
+char *const DiploLabelSendingSETAGENDA = (char *)0x0068D4A8;  // "Sending SET AGENDA"
+char *const DiploLabelSendingENERGY = (char *)0x0068D4BC;  // "Sending ENERGY"
+char *const DiploLabelSendingLOAN = (char *)0x0068D4CC;  // "Sending LOAN"
+char *const DiploLabelSendingTRADEMAPS = (char *)0x0068D4DC;  // "Sending TRADE MAPS"
+char *const DiploLabelSendingTECH = (char *)0x0068D4F0;  // "Sending TECH"
+char *const DiploLabelSendingPACTENDS = (char *)0x0068D500;  // "Sending PACT ENDS"
+char *const DiploLabelSendingWITHDRAWAL = (char *)0x0068D514;  // "Sending WITHDRAWAL"
+char *const DiploLabelSendingCEDEBASE = (char *)0x0068D528;  // "Sending CEDE BASE"
+char *const DiploLabelSendingDOUBLECROSS = (char *)0x0068D53C;  // "Sending DOUBLE CROSS"
+char *const DiploLabelGettingDIPLOMATICLOCK = (char *)0x0068D554;  // "Getting DIPLOMATIC LOCK"
+char *const DiploLabelNEEDGLOBAL = (char *)0x0068D56C;  // "NEEDGLOBAL"
+char *const DiploLabelReleasingDIPLOMATICLOCK = (char *)0x0068D578;  // "Releasing DIPLOMATIC LOCK"
+char *const DiploLabelDash = (char *)0x0068D594;  // " - "
+char *const DiploLabelPROTO = (char *)0x0068D598;  // "PROTO"
+char *const DiploLabelPACT = (char *)0x0068D5A0;  // "PACT"
+char *const DiploLabelRIVAL = (char *)0x0068D5A8;  // "RIVAL"
+char *const DiploLabelENDPACT1 = (char *)0x0068D5B0;  // "ENDPACT1"
+char *const DiploLabelENDPACT2 = (char *)0x0068D5BC;  // "ENDPACT2"
+char *const DiploLabelENDPACT3 = (char *)0x0068D5C8;  // "ENDPACT3"
+char *const DiploLabelMAKEPACT = (char *)0x0068D5D4;  // "MAKEPACT"
+char *const DiploLabelHERESTHEMAP = (char *)0x0068D5E0;  // "HERESTHEMAP"
+char *const DiploLabelPACT_5EC = (char *)0x0068D5EC;  // "PACT"
+char *const DiploLabelMAKETREATY = (char *)0x0068D5F4;  // "MAKETREATY"
+char *const DiploLabelCOMMERCE = (char *)0x0068D600;  // "COMMERCE"
+char *const DiploLabelTIMETOLEAVE = (char *)0x0068D60C;  // "TIMETOLEAVE"
+char *const DiploLabelMAKETRUCE = (char *)0x0068D618;  // "MAKETRUCE"
+char *const DiploLabelINTRO = (char *)0x0068D624;  // "INTRO"
+char *const DiploLabelNEW = (char *)0x0068D62C;  // "NEW"
+char *const DiploLabelMAD = (char *)0x0068D630;  // "MAD"
+char *const DiploLabelPLANETBUSTER0 = (char *)0x0068D634;  // "PLANETBUSTER0"
+char *const DiploLabelPLANETBUSTER = (char *)0x0068D644;  // "PLANETBUSTER"
+char *const DiploLabelURGENTCOMM = (char *)0x0068D654;  // "URGENTCOMM"
+char *const DiploLabelURGENTCOMM_660 = (char *)0x0068D660;  // "URGENTCOMM"
+char *const DiploLabelCOMM = (char *)0x0068D66C;  // "COMM"
+char *const DiploLabelWITHSUNWAR = (char *)0x0068D674;  // "WITHSUNWAR"
+char *const DiploLabelWITHSUNNO = (char *)0x0068D680;  // "WITHSUNNO"
+char *const DiploLabelWITHSUNYES = (char *)0x0068D68C;  // "WITHSUNYES"
+char *const DiploLabelBROKEPACT = (char *)0x0068D698;  // "BROKEPACT"
+char *const DiploLabelHIVE = (char *)0x0068D6A4;  // "HIVE"
+char *const DiploLabelBUYNOTALK = (char *)0x0068D6AC;  // "BUYNOTALK"
+char *const DiploLabelBUYPROMISED = (char *)0x0068D6B8;  // "BUYPROMISED"
+char *const DiploLabelBUYALREADY = (char *)0x0068D6C4;  // "BUYALREADY"
+char *const DiploLabelBUYNO = (char *)0x0068D6D0;  // "BUYNO"
+char *const DiploLabelBUYNO_6D8 = (char *)0x0068D6D8;  // "BUYNO"
+char *const DiploLabelBUYVOTE = (char *)0x0068D6E0;  // "BUYVOTE"
+char *const DiploLabelYEA = (char *)0x0068D6E8;  // "YEA"
+char *const DiploLabelNAY = (char *)0x0068D6EC;  // "NAY"
+char *const DiploLabelABSTAIN = (char *)0x0068D6F0;  // "ABSTAIN"
+char *const DiploLabelGOV = (char *)0x0068D6F8;  // "GOV"
+char *const DiploLabel4 = (char *)0x0068D6FC;  // "4"
+char *const DiploLabel3 = (char *)0x0068D700;  // "3"
+char *const DiploLabel2 = (char *)0x0068D704;  // "2"
+char *const DiploLabel1 = (char *)0x0068D708;  // "1"
+char *const DiploLabelA = (char *)0x0068D70C;  // "A"
+char *const DiploLabelBUYVOTEMENU = (char *)0x0068D710;  // "BUYVOTEMENU"
+char *const DiploLabelUNIV = (char *)0x0068D71C;  // "UNIV"
+char *const DiploLabelBUY = (char *)0x0068D724;  // "BUY"
+char *const DiploLabelPROTO_728 = (char *)0x0068D728;  // "PROTO"
+char *const DiploLabelCOMMLINK = (char *)0x0068D730;  // "COMMLINK"
+char *const DiploLabelTECH = (char *)0x0068D73C;  // "TECH"
+char *const DiploLabelHIGH = (char *)0x0068D744;  // "HIGH"
+char *const DiploLabelENERGYFREEBIE = (char *)0x0068D74C;  // "ENERGYFREEBIE"
+char *const DiploLabelMORGAN = (char *)0x0068D75C;  // "MORGAN"
+char *const DiploLabelENERGYLOAN = (char *)0x0068D764;  // "ENERGYLOAN"
+char *const DiploLabelREJENERGY = (char *)0x0068D770;  // "REJENERGY"
+char *const DiploLabelBELIEVE = (char *)0x0068D77C;  // "BELIEVE"
+char *const DiploLabelREJSELLNONE = (char *)0x0068D784;  // "REJSELLNONE"
+char *const DiploLabelREJSELLAFFORD = (char *)0x0068D790;  // "REJSELLAFFORD"
+char *const DiploLabelENERGYTECH = (char *)0x0068D7A0;  // "ENERGYTECH"
+char *const DiploLabel2_7AC = (char *)0x0068D7AC;  // "2"
+char *const DiploLabelHIVE_7B0 = (char *)0x0068D7B0;  // "HIVE"
+char *const DiploLabelUNIV_7B8 = (char *)0x0068D7B8;  // "UNIV"
+char *const DiploLabelSELLSECOND = (char *)0x0068D7C0;  // "SELLSECOND"
+char *const DiploLabelREJSELLSECOND = (char *)0x0068D7CC;  // "REJSELLSECOND"
+char *const DiploLabelUNIV_7DC = (char *)0x0068D7DC;  // "UNIV"
+char *const DiploLabelREJTECHHATE = (char *)0x0068D7E4;  // "REJTECHHATE"
+char *const DiploLabelREJTECHFEAR = (char *)0x0068D7F0;  // "REJTECHFEAR"
+char *const DiploLabelREJTECHFEAR_7FC = (char *)0x0068D7FC;  // "REJTECHFEAR"
+char *const DiploLabelHIVE_808 = (char *)0x0068D808;  // "HIVE"
+char *const DiploLabelREJTECHFEAR1 = (char *)0x0068D810;  // "REJTECHFEAR1"
+char *const DiploLabelREJTECHADVANCED = (char *)0x0068D820;  // "REJTECHADVANCED"
+char *const DiploLabelREJTECHPROJ = (char *)0x0068D830;  // "REJTECHPROJ"
+char *const DiploLabelCOMMLINKFREE = (char *)0x0068D83C;  // "COMMLINKFREE"
+char *const DiploLabelTECHSLAVE = (char *)0x0068D84C;  // "TECHSLAVE"
+char *const DiploLabelTECHFREEBIE = (char *)0x0068D858;  // "TECHFREEBIE"
+char *const DiploLabelREJCOMMLINK = (char *)0x0068D864;  // "REJCOMMLINK"
+char *const DiploLabelREJTECHLATER = (char *)0x0068D870;  // "REJTECHLATER"
+char *const DiploLabelCOMMLINKTECH = (char *)0x0068D880;  // "COMMLINKTECH"
+char *const DiploLabelTRADETECH = (char *)0x0068D890;  // "TRADETECH"
+char *const DiploLabelTRADETECHOPT = (char *)0x0068D89C;  // "TRADETECHOPT"
+char *const DiploLabelREJTECHINSTEAD = (char *)0x0068D8AC;  // "REJTECHINSTEAD"
+char *const DiploLabelHIVE_8BC = (char *)0x0068D8BC;  // "HIVE"
+char *const DiploLabelUNIV_8C4 = (char *)0x0068D8C4;  // "UNIV"
+char *const DiploLabelREJTECHSECOND = (char *)0x0068D8CC;  // "REJTECHSECOND"
+char *const DiploLabelNETMET = (char *)0x0068E5C4;  // "NETMET"
+char *const DiploLabelNETMET_5CC = (char *)0x0068E5CC;  // "NETMET"
+char *const DiploLabelPACTATTACKS = (char *)0x0068E5D4;  // "PACTATTACKS"
+char *const DiploLabelENEMYWAR = (char *)0x0068E5E0;  // "ENEMYWAR"
+char *const DiploLabelPACTUNPACT = (char *)0x0068E604;  // "PACTUNPACT"
+char *const DiploLabelENEMYPACTENDS = (char *)0x0068E610;  // "ENEMYPACTENDS"
+char *const DiploLabelPACTTRUCE = (char *)0x0068E620;  // "PACTTRUCE"
+char *const DiploLabelPACTTREATY = (char *)0x0068E62C;  // "PACTTREATY"
+char *const DiploLabelTEAM = (char *)0x0068E638;  // "TEAM"
+char *const DiploLabelENEMYTRUCE = (char *)0x0068E668;  // "ENEMYTRUCE"
+char *const DiploLabelENEMYTREATY = (char *)0x0068E674;  // "ENEMYTREATY"
+char *const DiploLabelENEMIESTEAMUP = (char *)0x0068E680;  // "ENEMIESTEAMUP"
+char *const DiploLabel1_690 = (char *)0x0068E690;  // "1"
+char *const DiploLabel0 = (char *)0x0068E694;  // "0"
+char *const DiploLabelCARETAKE = (char *)0x0068E698;  // "CARETAKE"
+char *const DiploLabelGUYMEETSAL = (char *)0x0068E6A4;  // "GUYMEETSAL"
+char *const DiploLabelGUYMEETSALNOPSYCH = (char *)0x0068E6B0;  // "GUYMEETSALNOPSYCH"
+char *const DiploLabelALMEETSAL = (char *)0x0068E6C4;  // "ALMEETSAL"
+char *const DiploLabelALMEETSGUY = (char *)0x0068E6D0;  // "ALMEETSGUY"
+char *const DiploLabelALMEETSGUYNOPSYCH = (char *)0x0068E6DC;  // "ALMEETSGUYNOPSYCH"
+char *const DiploLabelGUYMEETSAL_6F0 = (char *)0x0068E6F0;  // "GUYMEETSAL"
+char *const DiploLabelGUYMEETSALNOPSYCH_6FC = (char *)0x0068E6FC;  // "GUYMEETSALNOPSYCH"
+char *const DiploLabelALMEETSAL_710 = (char *)0x0068E710;  // "ALMEETSAL"
+char *const DiploLabelALMEETSGUY_71C = (char *)0x0068E71C;  // "ALMEETSGUY"
+char *const DiploLabelALMEETSGUYNOPSYCH_728 = (char *)0x0068E728;  // "ALMEETSGUYNOPSYCH"
+char *const DiploLabelATROCITYSPOTS = (char *)0x0068E73C;  // "ATROCITYSPOTS"
+char *const DiploLabelATROCIOUSITY = (char *)0x0068E75C;  // "ATROCIOUSITY"
+char *const DiploLabelATROCITY = (char *)0x0068E76C;  // "ATROCITY"
+char *const DiploLabel2_778 = (char *)0x0068E778;  // "2"
+char *const DiploLabel1_77C = (char *)0x0068E77C;  // "1"
+char *const DiploLabelMAJORATROCITY = (char *)0x0068E780;  // "MAJORATROCITY"
+char *const DiploLabelCouncilSmPcx = (char *)0x0068E790;  // "council_sm.pcx"
+char *const DiploLabelBreakSmPcx = (char *)0x0068E7A0;  // "break_sm.pcx"
+char *const DiploLabelBREAKINGPACT = (char *)0x0068E7B0;  // "BREAKINGPACT"
+char *const DiploLabelBreakSmPcx_7C0 = (char *)0x0068E7C0;  // "break_sm.pcx"
+char *const DiploLabelBREAKINGTREATY = (char *)0x0068E7D0;  // "BREAKINGTREATY"
+char *const DiploLabelBreakSmPcx_7E0 = (char *)0x0068E7E0;  // "break_sm.pcx"
+char *const DiploLabelBREAKINGTRUCE = (char *)0x0068E7F0;  // "BREAKINGTRUCE"
+char *const DiploLabelBreakSmPcx_800 = (char *)0x0068E800;  // "break_sm.pcx"
+char *const DiploLabelBEGINVENDETTA = (char *)0x0068E810;  // "BEGINVENDETTA"
+char *const DiploLabelMORGAN_82C = (char *)0x0068E82C;  // "MORGAN"
 // The sound ambience an event asks for by id. Declared here because
 // treaty_on is the homed caller that needs it; the body is still an
 // unrecovered pending_bodies forwarder.
@@ -714,6 +901,72 @@ void __cdecl social_ai(uint32_t faction_id, int growth_val, int tech_val, int we
                                  int power_val, SocialCategory *output);
 void __cdecl enemy_capabilities(int faction_id);
 void __cdecl enemy_capabilities_t(uint32_t faction_id);
+
+// THE AI DIPLOMACY MOVES. Each one is a `?name@@YAXHH@Z`-shaped free
+// function that reads the pair's treaty/agenda state, opens a popup speaking
+// in one faction's voice, and calls the treaty/agenda writers above to make
+// the move stick. Homed into faction.cpp one at a time from the
+// recovered-units archives; the declarations arrive with each body, so this
+// block grows with the homing rather than speculating about arguments the
+// image's own symbols have not pinned yet.
+void __cdecl pact_attacks(int faction_id, int faction_id_with);
+void __cdecl pact_truce(int faction_id, int faction_id_with);
+void __cdecl pact_unpact(int faction_id, int faction_id_with);
+void __cdecl enemies_team_up(int faction_id, int faction_id_with,
+                             int turncoat_faction);
+
+// The pronoun the diplomacy text needs for a faction's leader - "he", "she"
+// or "they" by the faction's noun gender. 0x0058FCE0, still unrecovered and
+// forwarded in pending_bodies.cpp.
+char *__cdecl get_he_she(int faction_id, int sentence_form);
+char *__cdecl get_his_her(int faction_id, int sentence_form);
+char *__cdecl get_pact_hood(int faction_id, int faction_id_with);
+
+// THE NETWORK MOVES. Every one is a wrapper over the local writer of the same
+// name (treaty_on, set_treaty, agenda_on, ...): in a network game it logs the
+// "Sending <MOVE>" line, broadcasts the move with message_data, and - when the
+// caller's last argument says to - waits on NetDaemon::await_diplo for the
+// receiving side's ack. Out of a network game it just calls the writer, so
+// the two halves of a diplomacy move stay in step whatever the transport.
+void __cdecl net_treaty_on(int faction_id, int faction_id_with, int treaty,
+                           int wait);
+void __cdecl net_treaty_off(int faction_id, int faction_id_with, int treaty,
+                            int wait);
+void __cdecl net_set_treaty(int faction_id, int faction_id_with, int treaty,
+                            int set, int wait);
+void __cdecl net_agenda_on(int faction_id, int faction_id_with, int agenda,
+                           int wait);
+void __cdecl net_agenda_off(int faction_id, int faction_id_with, int agenda,
+                            int wait);
+void __cdecl net_set_agenda(int faction_id, int faction_id_with, int agenda,
+                            int set, int wait);
+void __cdecl net_energy(int faction_id, int amount, int faction_id_with,
+                        int amount_with, int wait);
+void __cdecl net_loan(int faction_id, int faction_id_with, int balance,
+                      int payment);
+void __cdecl net_maps(int faction_id, int faction_id_with, int wait);
+void __cdecl net_tech(int faction_id, int faction_id_with, int tech_id,
+                      int wait);
+void __cdecl net_pact_ends(int faction_id, int faction_id_with, int wait);
+int __cdecl net_withdrawal(int faction_id, int faction_id_with, int wait);
+void __cdecl net_cede_base(int faction_id, int faction_id_with, int wait);
+void __cdecl net_double_cross(int faction_id, int faction_id_with,
+                              int victim,
+                              int wait);
+void __cdecl diplomacy_ends(int faction_id, int faction_id_with);
+
+// Cross-TU helpers the diplomacy bodies reach with the image's `call rel32`
+// and that this tree has not recovered yet - each one is a pending_bodies
+// forwarder.
+void __cdecl trade_maps(int faction_id, int faction_id_with);
+void __cdecl tech_achieved(int faction_id, int faction_id_with, int tech_id,
+                           int give_freebie);
+int __cdecl do_withdrawal(int faction_id, int faction_id_with);
+void __cdecl give_a_base(int faction_id, int faction_id_with);
+void __cdecl double_cross(int faction_id, int faction_id_with,
+                          int victim);
+void __cdecl pact_ends(int faction_id, int faction_id_with);
+void __cdecl wait_loop();
 
 MEASURED inline int __cdecl has_treaty(int faction_id, int faction_id_with, int treaty) {
     return PlayersData[faction_id].diplo_treaties[faction_id_with] & treaty;

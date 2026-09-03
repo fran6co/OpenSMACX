@@ -66,6 +66,17 @@ class NetDaemon : public AlphaNet {
   void process_message(char *message, unsigned long a, int b);
 
  public:
+  // 0x005315C0, a pending_bodies forwarder. The net_* treaty/agenda writers
+  // in faction.cpp wait on this after broadcasting a move, so the receiving
+  // side's ack comes back before play continues.
+  void await_diplo(int opcode);
+  // diplo_lock (0x00539820, not yet homed) also polls add_global
+  // (0x00530AA0) until the diplomacy lock lands; declare it when that body
+  // comes across.
+  void unlock();
+  void close_channel();
+
+ public:
   NetDaemon();
   ~NetDaemon();
   int receive();

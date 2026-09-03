@@ -1892,3 +1892,85 @@ void __cdecl world_build() {
     typedef void(__cdecl *pending)();
     PENDING_BODY(0x005C86E0, pending)();
 }
+
+// Two callees the diplomacy bodies homed into src/faction.cpp reach with the
+// image's `call rel32`, and neither has a product body yet:
+//   ?pop@NetMsg@@QAEXPBDHHPBD@Z   0x0047A890
+//       (src/recovered/units/0047a890.cpp - measured NO_COMPILE there)
+//   ?get_he_she@@YAPADHH@Z        0x0058FCE0
+//       (src/unrecovered/0058fce0.cpp)
+// Both are FILE-only, so these forwarders are the only definitions in the
+// build; neither address carries a claim an extra definition could landmine.
+void NetMsg::pop(const char *label, int duration, int channel,
+                 const char *target) {
+    typedef void(__fastcall *pending)(NetMsg *, void *, const char *, int, int,
+                                      const char *);
+    PENDING_BODY(0x0047A890, pending)(this, nullptr, label, duration, channel,
+                                      target);
+}
+
+char *__cdecl get_he_she(int faction_id, int sentence_form) {
+    typedef char *(__cdecl *pending)(int, int);
+    return PENDING_BODY(0x0058FCE0, pending)(faction_id, sentence_form);
+}
+
+char *__cdecl get_his_her(int faction_id, int sentence_form) {
+    typedef char *(__cdecl *pending)(int, int);
+    return PENDING_BODY(0x0058FBC0, pending)(faction_id, sentence_form);
+}
+
+char *__cdecl get_pact_hood(int faction_id, int faction_id_with) {
+    typedef char *(__cdecl *pending)(int, int);
+    return PENDING_BODY(0x0058FB00, pending)(faction_id, faction_id_with);
+}
+
+// The cross-TU callees faction.h declares for the net_* / diplomacy bodies.
+// All six are FILE-only archive bodies carrying no claim, so none of these
+// forwarders can landmine.
+void __cdecl trade_maps(int faction_id, int faction_id_with) {
+    typedef void(__cdecl *pending)(int, int);
+    PENDING_BODY(0x00543A20, pending)(faction_id, faction_id_with);
+}
+
+void __cdecl tech_achieved(int faction_id, int faction_id_with, int tech_id,
+                           int give_freebie) {
+    typedef void(__cdecl *pending)(int, int, int, int);
+    PENDING_BODY(0x005BB000, pending)(faction_id, faction_id_with, tech_id,
+                                      give_freebie);
+}
+
+int __cdecl do_withdrawal(int faction_id, int faction_id_with) {
+    typedef int(__cdecl *pending)(int, int);
+    return PENDING_BODY(0x00548F80, pending)(faction_id, faction_id_with);
+}
+
+void __cdecl give_a_base(int faction_id, int faction_id_with) {
+    typedef void(__cdecl *pending)(int, int);
+    PENDING_BODY(0x0054CF40, pending)(faction_id, faction_id_with);
+}
+
+void __cdecl double_cross(int faction_id, int faction_id_with, int victim) {
+    typedef void(__cdecl *pending)(int, int, int);
+    PENDING_BODY(0x0050BCC0, pending)(faction_id, faction_id_with, victim);
+}
+
+void __cdecl pact_ends(int faction_id, int faction_id_with) {
+    typedef void(__cdecl *pending)(int, int);
+    PENDING_BODY(0x0053C650, pending)(faction_id, faction_id_with);
+}
+
+void __cdecl wait_loop() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x0051F200, pending)();
+}
+
+void NetDaemon::await_diplo(int opcode) {
+    typedef void(__fastcall *pending)(NetDaemon *, void *, int);
+    PENDING_BODY(0x005315C0, pending)(this, nullptr, opcode);
+}
+
+// ?unlock@NetDaemon@@QAEXXZ (0x00530D00) and ?close_channel@NetDaemon@@QAEXXZ
+// (0x00530600) WERE HERE and are gone: both are homed into src/netdaemon.cpp,
+// whose diplo_unlock and diplomacy_ends callers needed them.
+
+

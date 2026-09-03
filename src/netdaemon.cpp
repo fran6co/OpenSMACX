@@ -541,3 +541,63 @@ uint32_t NetDaemon::unlock_veh() {
 // before WinMain; the recovered NetDaemon constructor here runs through this
 // build's own startup instead.
 NetDaemon NetDaemonNet;  // 0x0093CD90
+
+
+/*
+Purpose: Release the global diplomacy lock this client holds. In a net game,
+         say so on the log and broadcast event 0x2212, then clear the four
+         announce-side fields; out of one there is nothing to release and the
+         body does nothing at all.
+// ORIGINAL: 0x00530D00 ?unlock@NetDaemon@@QAEXXZ 0x00530D00-0x00530D36
+// size      54 bytes
+// prototype void (__thiscall ?unlock@NetDaemon@@QAEXXZ)(NetDaemon* this)
+// callers   10   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00592EE0 0x006262F0
+// Homed 2026-09-03 out of the recovered-units archive: faction.cpp's
+// diplo_unlock calls it, and a pending_bodies forwarder would have landmined
+// this address's archive claim.
+// RESIDUAL: the annotation's span is SHORT, and it is the only reason this is
+//        not BYTE_EXACT. 0x00530D00-0x00530D36 (54 bytes) stops after the
+//        third field store. The shipped bytes run
+//          89 be b0 1b 00 00 / 89 be ac 1b 00 00 / 89 be cc 1b 00 00
+//          89 be c8 1b 00 00 / 5f 5e c3
+//        from 0x00530D35, so the function really ends at 0x00530D3C - 28
+//        instructions, which is exactly what this tree compiles, and all 21
+//        the annotation carries agree. Demoted for the span, not the body.
+Status: Complete
+*/
+void NetDaemon::unlock() {
+    // The four announce-side fields sit inside lock_state_[2] - 0x1BAC, 0x1BB0,
+    // 0x1BC8 and 0x1BCC are that entry's dword_[2], dword_[3], dword_[9] and
+    // dword_[10]. Named through the declared member rather than a raw offset.
+    if (NetDaemonIsMultiplayerNet != 0) {
+        log_say("Client releasing lock", NetDaemonLocalFaction, 0, 0);
+        message_data(0x2212, 0, 0, 0, 0, 0);
+        lock_state_[2].dword_[3] = 0;
+        lock_state_[2].dword_[2] = 0;
+        lock_state_[2].dword_[10] = 0;
+        lock_state_[2].dword_[9] = 0;
+    }
+}
+
+/*
+Purpose: Tell the other clients this client is leaving the diplomacy channel.
+// ORIGINAL: 0x00530600 ?close_channel@NetDaemon@@QAEXXZ 0x00530600-0x0053062F BYTE_EXACT
+// size      47 bytes
+// prototype void (__thiscall ?close_channel@NetDaemon@@QAEXXZ)(NetDaemon* this)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00592EE0
+// Homed 2026-09-03 out of the recovered archive for the same reason.
+Status: Complete
+*/
+void NetDaemon::close_channel() {
+    if (NetDaemonIsMultiplayerNet != 0) {
+        message_data(0x8241, 0, 0, 0, 0, 0);
+        // 0x1BA0 is lock_state_[1].dword_[14].
+        lock_state_[1].dword_[14] = 0;
+    }
+}

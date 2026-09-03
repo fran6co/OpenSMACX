@@ -48,6 +48,13 @@ class NetMsg : public Popup {
   // nothing and the deleting destructor needs a `call rel32`.
   ~NetMsg();
   void close();
+  // 0x0047A890  ?pop@NetMsg@@QAEXPBDHHPBD@Z - still unrecovered
+  // (src/recovered/units/0047a890.cpp, forwarded in pending_bodies.cpp).
+  // Declared so the diplomacy bodies can name it: every one of them reaches
+  // it with `mov ecx, <singleton>; call rel32`, so the receiver has to be a
+  // real NetMsg and the call a real member call.
+  void pop(const char *label, int duration, int channel,
+           const char *target);
 
  private:
   uint32_t field_537C_;  // 0x537C, seeded from the constructor's a1
@@ -60,4 +67,11 @@ class NetMsg : public Popup {
 };
 
 // Popup::hide is not recovered yet.
+
+// THE SINGLETON every NetMsg::pop call site in the image names. Defined here,
+// not in a .cpp, so the receiver folds to the immediate at each call site the
+// way the image's `mov ecx, 0x805338` does - the address is a relocation on
+// both sides, so the fold costs nothing. Read off 0055c730 and 0053e4c0, which
+// both reach pop through it; timer_daemon (0x0047A800) closes the same address.
+NetMsg *const NetMsgPopup = (NetMsg *)0x00805338;
 

@@ -27,6 +27,10 @@
 #include "technology.h"
 #include "veh.h"
 #include "spying_recovery.h"  // SpyingStatusTable, SpyingStatusStride
+#include "netmsg.h"  // NetMsgPopup, which the diplomacy bodies pop through
+#include "netdaemon.h"  // NetDaemonNet, message_data - the net_* writers
+#include "log.h"  // log_say, which the net_* writers announce each move with
+#include "console.h"  // ConsoleGlobal, which net_energy refreshes
 
 extern uint32_t LockEnableMask;  // 0x009A64E8, defined in lock.cpp
 
@@ -3271,5 +3275,679 @@ void __cdecl enemy_capabilities_t(uint32_t faction_id) {
                 }
             }
         }
+    }
+}
+
+/*
+Purpose: Tell the local player that a pact between two factions has turned
+         into a joint attack - the AI announcing that its pact partner is
+         coming for you.
+
+         Every parse_says call here sets the gender/plurality globals the
+         parser reads first; the image stores them one at a time in the order
+         written, and the order differs between the first call and the rest.
+// ORIGINAL: 0x0055C730 ?pact_attacks@@YAXHH@Z 0x0055C730-0x0055C833 BYTE_EXACT
+// size      259 bytes
+// prototype void (__cdecl ?pact_attacks@@YAXHH@Z)(int, int)
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047A890 0x0058FCE0 0x00625EC0
+Status: homed 2026-09-03 out of the recovered-units archive
+*/
+void __cdecl pact_attacks(int faction_id, int faction_id_with) {
+    PluralityDefault = FALSE;
+    GenderDefault = Players[faction_id].is_leader_female;
+    parse_says(0, Players[faction_id].name_leader, -1, -1);
+
+    GenderDefault = Players[faction_id].is_leader_female;
+    PluralityDefault = FALSE;
+    parse_says(1, Players[faction_id].search_key, -1, -1);
+
+    GenderDefault = Players[faction_id].noun_gender;
+    PluralityDefault = Players[faction_id].is_noun_plural;
+    parse_says(2, Players[faction_id].noun_faction, -1, -1);
+
+    parse_says(3, get_he_she(faction_id, 0), -1, -1);
+
+    GenderDefault = Players[faction_id_with].noun_gender;
+    PluralityDefault = Players[faction_id_with].is_noun_plural;
+    parse_says(4, Players[faction_id_with].noun_faction, -1, -1);
+
+    NetMsgPopup->pop(DiploLabelPACTATTACKS, 5000, 0, 0);
+}
+
+/*
+Purpose: Apply a treaty between two factions, or - in a network game - log
+         it, broadcast it and wait for the receiving side's ack instead.
+// ORIGINAL: 0x005391C0 ?net_treaty_on@@YAXHHHH@Z 0x005391C0-0x0053922A BYTE_EXACT
+// size      106 bytes
+// prototype void (__cdecl ?net_treaty_on@@YAXHHHH@Z)(int, int, int, int)
+// callers   4   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005315C0 0x0055B870 0x00592EE0 0x006262F0
+// LEVER: `IsMultiplayerNet` for 0x0093F660 and `NetDaemonNet` for the
+//        0x0093CD90 receiver - the artifact's fixed-address casts lower to
+//        the same two immediates once the names are real objects. Homed
+//        from the recovered archive.
+Status: Complete
+*/
+void __cdecl net_treaty_on(int faction_id, int faction_id_with, int treaty,
+                           int wait) {
+    if (IsMultiplayerNet != 0) {
+        log_say(DiploLabelSendingTREATYON, faction_id, faction_id_with, treaty);
+        message_data(0x2441, 0, faction_id, faction_id_with, treaty, 0);
+        if (wait != 0) {
+            NetDaemonNet.await_diplo(0x441);
+        }
+    } else {
+        treaty_on(faction_id, faction_id_with, treaty);
+    }
+}
+
+/*
+Purpose: net_treaty_on's mirror - clear a treaty, or broadcast the clearing.
+// ORIGINAL: 0x00539230 ?net_treaty_off@@YAXHHHH@Z 0x00539230-0x0053929A BYTE_EXACT
+// size      106 bytes
+// prototype void (__cdecl ?net_treaty_off@@YAXHHHH@Z)(int, int, int, int)
+// callers   2   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005315C0 0x0055B760 0x00592EE0 0x006262F0
+Status: Complete
+*/
+void __cdecl net_treaty_off(int faction_id, int faction_id_with, int treaty,
+                            int wait) {
+    if (IsMultiplayerNet != 0) {
+        log_say(DiploLabelSendingTREATYOFF, faction_id, faction_id_with, treaty);
+        message_data(0x2442, 0, faction_id, faction_id_with, treaty, 0);
+        if (wait != 0) {
+            NetDaemonNet.await_diplo(0x442);
+        }
+    } else {
+        treaty_off(faction_id, faction_id_with, treaty);
+    }
+}
+
+/*
+Purpose: net_treaty_on's five-argument form - set or clear one treaty bit in
+         one move, so the caller does not have to know which direction it is.
+// ORIGINAL: 0x005392A0 ?net_set_treaty@@YAXHHHHH@Z 0x005392A0-0x00539310 BYTE_EXACT
+// size      112 bytes
+// prototype void (__cdecl ?net_set_treaty@@YAXHHHHH@Z)(int, int, int, int, int)
+// callers   2   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005315C0 0x0055BB30 0x00592EE0 0x006262F0
+Status: Complete
+*/
+void __cdecl net_set_treaty(int faction_id, int faction_id_with, int treaty,
+                            int set, int wait) {
+    if (IsMultiplayerNet != 0) {
+        log_say(DiploLabelSendingSETTREATY, faction_id, faction_id_with, treaty);
+        message_data(0x2443, 0, faction_id, faction_id_with, treaty, set);
+        if (wait != 0) {
+            NetDaemonNet.await_diplo(0x443);
+        }
+    } else {
+        set_treaty(faction_id, faction_id_with, treaty, set);
+    }
+}
+
+/*
+Purpose: net_treaty_on's agenda counterpart.
+// ORIGINAL: 0x00539310 ?net_agenda_on@@YAXHHHH@Z 0x00539310-0x0053937A BYTE_EXACT
+// size      106 bytes
+// prototype void (__cdecl ?net_agenda_on@@YAXHHHH@Z)(int, int, int, int)
+// callers   0   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005315C0 0x0055BA80 0x00592EE0 0x006262F0
+Status: Complete
+*/
+void __cdecl net_agenda_on(int faction_id, int faction_id_with, int agenda,
+                           int wait) {
+    if (IsMultiplayerNet != 0) {
+        log_say(DiploLabelSendingAGENDAON, faction_id, faction_id_with, agenda);
+        message_data(0x2444, 0, faction_id, faction_id_with, agenda, 0);
+        if (wait != 0) {
+            NetDaemonNet.await_diplo(0x444);
+        }
+    } else {
+        agenda_on(faction_id, faction_id_with, agenda);
+    }
+}
+
+/*
+Purpose: net_agenda_on's mirror.
+// ORIGINAL: 0x00539380 ?net_agenda_off@@YAXHHHH@Z 0x00539380-0x005393EA BYTE_EXACT
+// size      106 bytes
+// prototype void (__cdecl ?net_agenda_off@@YAXHHHH@Z)(int, int, int, int)
+// callers   1   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005315C0 0x0055B820 0x00592EE0 0x006262F0
+// LEVER: the archive transcription had an early `return` inside the
+//        `wait != 0` branch. The image has none - it falls through to the
+//        shared pop/je tail every other net_* body ends with, and the extra
+//        jump moves the whole tail. Written like net_agenda_on it matches.
+Status: Complete
+*/
+void __cdecl net_agenda_off(int faction_id, int faction_id_with, int agenda,
+                            int wait) {
+    if (IsMultiplayerNet != 0) {
+        log_say(DiploLabelSendingAGENDAOFF, faction_id, faction_id_with, agenda);
+        message_data(0x2445, 0, faction_id, faction_id_with, agenda, 0);
+        if (wait != 0) {
+            NetDaemonNet.await_diplo(0x445);
+        }
+    } else {
+        agenda_off(faction_id, faction_id_with, agenda);
+    }
+}
+
+/*
+Purpose: net_set_treaty's agenda counterpart.
+// ORIGINAL: 0x005393F0 ?net_set_agenda@@YAXHHHHH@Z 0x005393F0-0x00539460 BYTE_EXACT
+// size      112 bytes
+// prototype void (__cdecl ?net_set_agenda@@YAXHHHHH@Z)(int, int, int, int, int)
+// callers   1   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005315C0 0x0055BBA0 0x00592EE0 0x006262F0
+Status: Complete
+*/
+void __cdecl net_set_agenda(int faction_id, int faction_id_with, int agenda,
+                            int set, int wait) {
+    if (IsMultiplayerNet != 0) {
+        log_say(DiploLabelSendingSETAGENDA, faction_id, faction_id_with, agenda);
+        message_data(0x2446, 0, faction_id, faction_id_with, agenda, set);
+        if (wait != 0) {
+            NetDaemonNet.await_diplo(0x446);
+        }
+    } else {
+        set_agenda(faction_id, faction_id_with, agenda, set);
+    }
+}
+
+/*
+Purpose: Hand energy from one faction to another - either by broadcasting the
+         transfer, or out of a network game by applying it straight to both
+         sides' reserves and refreshing the Console's display.
+
+         Note the log_say argument order: the label is followed by faction_id,
+         then the AMOUNT and then the counterparty, which is not the order
+         message_data takes them in.
+// ORIGINAL: 0x00539460 ?net_energy@@YAXHHHHH@Z 0x00539460-0x00539506 BYTE_EXACT
+// size      166 bytes
+// prototype void (__cdecl ?net_energy@@YAXHHHHH@Z)(int, int, int, int, int)
+// callers   3   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00514880 0x005315C0 0x00592EE0 0x006262F0
+// LEVER: 0x0096CC00 is `&PlayersData[0].energy_reserves`, so the image's
+//        `add [reg*4 + 0x96cc00]` is an ordinary field update once the
+//        0x20CC PlayerData stride is named - 2099 dwords per faction.
+Status: Complete
+*/
+void __cdecl net_energy(int faction_id, int amount, int faction_id_with,
+                        int amount_with, int wait) {
+    if (IsMultiplayerNet != 0) {
+        log_say(DiploLabelSendingENERGY, faction_id, faction_id_with, amount);
+        message_data(0x2447, 0, faction_id, amount, faction_id_with, amount_with);
+        if (wait != 0) {
+            NetDaemonNet.await_diplo(0x447);
+            return;
+        }
+    } else {
+        if (faction_id != 0) {
+            PlayersData[faction_id].energy_reserves += amount;
+        }
+        if (faction_id_with != 0) {
+            PlayersData[faction_id_with].energy_reserves += amount_with;
+        }
+        ConsoleGlobal.update_data(1);
+    }
+}
+
+/*
+Purpose: Record what one faction owes another for a trade - the outstanding
+         balance and the per-turn payment - out of a network game, or
+         broadcast the same in.
+// ORIGINAL: 0x00539510 ?net_loan@@YAXHHHH@Z 0x00539510-0x00539578
+// size      99 bytes
+// prototype void (__cdecl ?net_loan@@YAXHHHH@Z)(int, int, int, int)
+// callers   2   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005315C0 0x00592EE0 0x006262F0
+// TRIED: the two tables the archive bound as fixed addresses are
+//        `&PlayersData[0].loan_balance` (0x0096CAA4) and
+//        `&PlayersData[0].loan_payment` (0x0096CAC4) - `a * 0x833` dwords is
+//        the 0x20CC PlayerData stride, so the update is an ordinary field
+//        write per side.
+//        The byte offset has to be materialised in a local: written as an
+//        index at each store VC6 keeps the scale in the SIB byte
+//        (`mov [eax*4 + 0x96caa4]`) where the image does `shl eax, 2` then
+//        `mov [eax + 0x96caa4]`, which is two instructions longer.
+// TRIED: `PlayersData[a].loan_balance[b]` / `loan_payment[b]` - the field
+//        spelling is semantically right but VC6 addresses the member off the
+//        computed base (`[eax + 0xc4]`, `[eax + 0xe4]`), not the image's full
+//        table displacement, and adds three instructions.
+//        Table indexed at each store; index held in one local. All three
+//        forms agree with the image on every instruction the annotation
+//        covers.
+// RESIDUAL: the annotation's span is SHORT. `0x00539510-0x00539578` (and its
+//        own "size 99 bytes", inconsistent with that same end) stops inside
+//        the penultimate store. The shipped bytes run
+//        `89 88 a4 ca 96 00 | 89 90 c4 ca 96 00 | 5d c3` from 0x00539571, so
+//        the function really ends at 0x0053957E - the `mov
+//        [eax + 0x96cac4], edx` and the epilogue are outside the recorded
+//        span and count as this tree's extra instructions. Every instruction
+//        the span does carry agrees (43 of 43). Demoted for the span, not
+//        for the body.
+Status: Complete
+*/
+void __cdecl net_loan(int faction_id, int faction_id_with, int balance,
+                      int payment) {
+    if (IsMultiplayerNet != 0) {
+        log_say(DiploLabelSendingLOAN, faction_id, faction_id_with, balance);
+        message_data(0x244e, 0, faction_id, faction_id_with, balance, payment);
+    } else {
+        // The image materialises the byte offset once (`shl eax, 2`) and
+        // stores through `[eax + <table>]` twice - an index expression at
+        // each store lets VC6 keep the scale in the SIB byte instead, which
+        // is two instructions longer. Same for net_energy's single update.
+        int offset = (faction_id * SpyingStatusStride + faction_id_with)
+                     * static_cast<int>(sizeof(uint32_t));
+        *reinterpret_cast<uint32_t *>(reinterpret_cast<char *>(DiploLoanBalanceTable)
+                                      + offset) = balance;
+        *reinterpret_cast<uint32_t *>(reinterpret_cast<char *>(DiploLoanPaymentTable)
+                                      + offset) = payment;
+    }
+}
+
+/*
+Purpose: Swap world maps with another faction, locally or over the network.
+// ORIGINAL: 0x00539580 ?net_maps@@YAXHHH@Z 0x00539580-0x005395E3 BYTE_EXACT
+// size      99 bytes
+// prototype void (__cdecl ?net_maps@@YAXHHH@Z)(int, int, int)
+// callers   2   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005315C0 0x00543A20 0x00592EE0 0x006262F0
+Status: Complete
+*/
+void __cdecl net_maps(int faction_id, int faction_id_with, int wait) {
+    if (IsMultiplayerNet != 0) {
+        log_say(DiploLabelSendingTRADEMAPS, faction_id, faction_id_with, 0);
+        message_data(0x2448, 0, faction_id, faction_id_with, 0, 0);
+        if (wait != 0) {
+            NetDaemonNet.await_diplo(0x448);
+        }
+    } else {
+        trade_maps(faction_id, faction_id_with);
+    }
+}
+
+/*
+Purpose: Give another faction a technology, locally or over the network.
+// ORIGINAL: 0x005395F0 ?net_tech@@YAXHHHH@Z 0x005395F0-0x0053965C BYTE_EXACT
+// size      108 bytes
+// prototype void (__cdecl ?net_tech@@YAXHHHH@Z)(int, int, int, int)
+// callers   3   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005315C0 0x00592EE0 0x005BB000 0x006262F0
+Status: Complete
+*/
+void __cdecl net_tech(int faction_id, int faction_id_with, int tech_id,
+                      int wait) {
+    if (IsMultiplayerNet != 0) {
+        log_say(DiploLabelSendingTECH, faction_id, faction_id_with, tech_id);
+        message_data(0x244b, 0, faction_id, faction_id_with, tech_id, 0);
+        if (wait != 0) {
+            NetDaemonNet.await_diplo(0x44b);
+        }
+    } else {
+        tech_achieved(faction_id, faction_id_with, tech_id, 0);
+    }
+}
+
+/*
+Purpose: Tell the local player that a pact between two AI factions has ended,
+         and clear it - locally or over the network.
+// ORIGINAL: 0x00539660 ?net_pact_ends@@YAXHHH@Z 0x00539660-0x005396C1 BYTE_EXACT
+// size      97 bytes
+// prototype void (__cdecl ?net_pact_ends@@YAXHHH@Z)(int, int, int)
+// callers   2   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005315C0 0x0053C650 0x00592EE0 0x006262F0
+// LEVER: this one logs the message with a zeroed argument triple - the pact
+//        that ended is named in the message_data payload, not in the log
+//        line, so the log call has nothing to interpolate.
+Status: Complete
+*/
+void __cdecl net_pact_ends(int faction_id, int faction_id_with, int wait) {
+    if (IsMultiplayerNet != 0) {
+        log_say(DiploLabelSendingPACTENDS, 0, 0, 0);
+        message_data(0x244d, 0, faction_id, faction_id_with, 0, 0);
+        if (wait != 0) {
+            NetDaemonNet.await_diplo(0x44d);
+        }
+    } else {
+        pact_ends(faction_id, faction_id_with);
+    }
+}
+
+/*
+Purpose: Withdraw from a base-to-base or faction-level contest. In a network
+         game the announcement is broadcast and the call reports success; out
+         of one, the local withdrawal decides the result.
+// ORIGINAL: 0x005396D0 ?net_withdrawal@@YAXHHH@Z 0x005396D0-0x00539738 BYTE_EXACT
+// size      104 bytes
+// prototype void (__cdecl ?net_withdrawal@@YAXHHH@Z)(int, int, int)
+// callers   0   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005315C0 0x00549270 0x00592EE0 0x006262F0
+// LEVER: the catalogue's `void` return is wrong here and the archive already
+//        said so: both paths put something in EAX (1 on the network path, the
+//        do_withdrawal result otherwise) and neither pops arguments, so this
+//        is `int __cdecl`. That spells `?net_withdrawal@@YAHHHH@Z`, which no
+//        image symbol carries - the catalogue's `X` is what the export table
+//        has - so the `symbol` fact below names the image's spelling and the
+//        body is matched against it anyway.
+// symbol    ?net_withdrawal@@YAHHHH@Z
+Status: Complete
+*/
+int __cdecl net_withdrawal(int faction_id, int faction_id_with, int wait) {
+    if (IsMultiplayerNet) {
+        log_say(DiploLabelSendingWITHDRAWAL, faction_id, faction_id_with, 0);
+        message_data(0x244a, 0, faction_id, faction_id_with, 0, 0);
+        if (wait != 0) {
+            NetDaemonNet.await_diplo(0x44a);
+        }
+        return 1;
+    }
+    return do_withdrawal(faction_id, faction_id_with);
+}
+
+/*
+Purpose: Hand one of your bases to another faction - locally or over the
+         network.
+// ORIGINAL: 0x00539740 ?net_cede_base@@YAXHHH@Z 0x00539740-0x005397A3 BYTE_EXACT
+// size      99 bytes
+// prototype void (__cdecl ?net_cede_base@@YAXHHH@Z)(int, int, int)
+// callers   1   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005315C0 0x0054CF40 0x00592EE0 0x006262F0
+Status: Complete
+*/
+void __cdecl net_cede_base(int faction_id, int faction_id_with, int wait) {
+    if (IsMultiplayerNet != 0) {
+        log_say(DiploLabelSendingCEDEBASE, faction_id, faction_id_with, 0);
+        message_data(0x2449, 0, faction_id, faction_id_with, 0, 0);
+        if (wait != 0) {
+            NetDaemonNet.await_diplo(0x449);
+        }
+    } else {
+        give_a_base(faction_id, faction_id_with);
+    }
+}
+
+/*
+Purpose: Expose a faction that offered to betray its own ally - locally or
+         over the network. Unlike net_withdrawal one address down, this one
+         really is void: neither path leaves a meaningful value in EAX.
+// ORIGINAL: 0x005397B0 ?net_double_cross@@YAXHHHH@Z 0x005397B0-0x0053981A BYTE_EXACT
+// size      106 bytes
+// prototype void (__cdecl ?net_double_cross@@YAXHHHH@Z)(int, int, int, int)
+// callers   0   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005315C0 0x0050BCC0 0x00592EE0 0x006262F0
+Status: Complete
+*/
+void __cdecl net_double_cross(int faction_id, int faction_id_with,
+                              int victim,
+                              int wait) {
+    if (IsMultiplayerNet) {
+        log_say(DiploLabelSendingDOUBLECROSS, faction_id, faction_id_with, victim);
+        message_data(0x2440, 0, faction_id, faction_id_with, victim, 0);
+        if (wait != 0) {
+            NetDaemonNet.await_diplo(0x440);
+        }
+    } else {
+        double_cross(faction_id, faction_id_with, victim);
+    }
+}
+
+/*
+Purpose: Release the diplomacy lock diplo_lock took, and log that it went.
+// ORIGINAL: 0x005398C0 ?diplo_unlock@@YAXXZ 0x005398C0-0x005398DD BYTE_EXACT
+// size      29 bytes
+// prototype void (__cdecl ?diplo_unlock@@YAXXZ)(void)
+// callers   10   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00530D00 0x006262F0
+Status: Complete
+*/
+void __cdecl diplo_unlock() {
+    log_say(DiploLabelReleasingDIPLOMATICLOCK, 0, 0, 0);
+    NetDaemonNet.unlock();
+}
+
+/*
+Purpose: Let a modal popup wait for the network to catch up. Out of a network
+         game there is nothing to wait for and the caller carries on; with the
+         turn loop already exiting there is nothing left to serve either.
+// ORIGINAL: 0x005398E0 ?pop_wait@@YAHXZ 0x005398E0-0x0053991F BYTE_EXACT
+// size      64 bytes
+// prototype int (__cdecl ?pop_wait@@YAHXZ)(void)
+// callers   4   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0051F200
+Status: Complete
+*/
+int __cdecl pop_wait() {
+    if (IsMultiplayerNet == 0) {
+        return 1;
+    }
+    if (ExitTurnLoop != 0) {
+        return 0;
+    }
+    PopupWaitActive = 1;
+    wait_loop();
+    PopupWaitActive = 0;
+    return 1;
+}
+
+/*
+Purpose: pop_wait's expiry check - same wait, but only while the game is
+         still running a network turn, and never once the scenario's
+         bonus-at-end window has opened.
+// ORIGINAL: 0x00539920 ?pop_expire@@YAHXZ 0x00539920-0x0053996F BYTE_EXACT
+// size      79 bytes
+// prototype int (__cdecl ?pop_expire@@YAHXZ)(void)
+// callers   0   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0051F200
+Status: Complete
+*/
+int __cdecl pop_expire() {
+    if (IsMultiplayerNet != 0) {
+        if (ExitTurnLoop != 0) {
+            return 0;
+        }
+        if (GameState & STATE_UNK_800) {
+            return 0;
+        }
+        PopupWaitActive = 1;
+        wait_loop();
+        PopupWaitActive = 0;
+    }
+    return 1;
+}
+
+int PopupWaitActive;  // 0x0093FAC4
+
+/*
+Purpose: Tell the local player that two factions have signed a truce with
+         each other.
+
+         Seven parse_says calls, both factions' leader and faction nouns plus
+         the pronoun the second sentence needs, and the same
+         set-globals-then-speak pattern pact_attacks uses.
+// ORIGINAL: 0x0055D040 ?pact_truce@@YAXHH@Z 0x0055D040-0x0055D18F BYTE_EXACT
+// size      321 bytes
+// prototype void (__cdecl ?pact_truce@@YAXHH@Z)(int, int)
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047A890 0x0058FCE0 0x00625EC0
+Status: homed 2026-09-03 out of the recovered-units archive
+*/
+void __cdecl pact_truce(int faction_id, int faction_id_with) {
+    PluralityDefault = FALSE;
+    GenderDefault = Players[faction_id].is_leader_female;
+    parse_says(0, Players[faction_id].name_leader, -1, -1);
+    GenderDefault = Players[faction_id].is_leader_female;
+    PluralityDefault = FALSE;
+    parse_says(1, Players[faction_id].search_key, -1, -1);
+    GenderDefault = Players[faction_id].noun_gender;
+    PluralityDefault = Players[faction_id].is_noun_plural;
+    parse_says(2, Players[faction_id].noun_faction, -1, -1);
+    parse_says(3, get_he_she(faction_id, 0), -1, -1);
+
+    PluralityDefault = FALSE;
+    GenderDefault = Players[faction_id_with].is_leader_female;
+    parse_says(4, Players[faction_id_with].name_leader, -1, -1);
+    GenderDefault = Players[faction_id_with].is_leader_female;
+    PluralityDefault = FALSE;
+    parse_says(5, Players[faction_id_with].search_key, -1, -1);
+    GenderDefault = Players[faction_id_with].noun_gender;
+    PluralityDefault = Players[faction_id_with].is_noun_plural;
+    parse_says(6, Players[faction_id_with].noun_faction, -1, -1);
+
+    NetMsgPopup->pop(DiploLabelPACTTRUCE, 5000, 0, 0);
+}
+
+/*
+Purpose: Tell the local player that a pact between two factions has been
+         dissolved - the same seven-sentence shape as pact_truce, with the
+         possessive pronoun and the old-pact description added.
+// ORIGINAL: 0x0055CCA0 ?pact_unpact@@YAXHH@Z 0x0055CCA0-0x0055CE1D
+// size      373 bytes
+// prototype void (__cdecl ?pact_unpact@@YAXHH@Z)(int, int)
+// callers   1   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047A890 0x0058FB00 0x0058FBC0 0x0058FCE0 0x00625EC0
+// LEVER: the tail block keeps the record base in ESI across all three
+//        parse_says calls in the image, which the direct `Players[...]`
+//        spelling reproduces (107 of 117) - naming a `Player &` local instead
+//        hoists the base to the top of the block and cost 37 instructions of
+//        agreement.
+// TRIED: a `Player &other` local for the second faction's three calls -
+//        70 of 117, first divergence at instruction 8. Residual: from
+//        instruction 72 the image pushes the two `-1` arguments BEFORE
+//        computing the record base and storing the two globals; this tree
+//        emits the zero for PluralityDefault first. Two sentences of
+//        scheduling, not control flow.
+Status: homed 2026-09-03 out of the recovered-units archive
+*/
+void __cdecl pact_unpact(int faction_id, int faction_id_with) {
+    PluralityDefault = FALSE;
+    GenderDefault = Players[faction_id].is_leader_female;
+    parse_says(0, Players[faction_id].name_leader, -1, -1);
+    GenderDefault = Players[faction_id].is_leader_female;
+    PluralityDefault = FALSE;
+    parse_says(1, Players[faction_id].search_key, -1, -1);
+    GenderDefault = Players[faction_id].noun_gender;
+    PluralityDefault = Players[faction_id].is_noun_plural;
+    parse_says(2, Players[faction_id].noun_faction, -1, -1);
+    parse_says(3, get_he_she(faction_id, 0), -1, -1);
+    parse_says(4, get_his_her(faction_id, 0), -1, -1);
+    parse_says(5, get_pact_hood(faction_id, faction_id_with), -1, -1);
+
+    PluralityDefault = FALSE;
+    GenderDefault = Players[faction_id_with].is_leader_female;
+    parse_says(6, Players[faction_id_with].name_leader, -1, -1);
+    GenderDefault = Players[faction_id_with].is_leader_female;
+    PluralityDefault = FALSE;
+    parse_says(7, Players[faction_id_with].search_key, -1, -1);
+    GenderDefault = Players[faction_id_with].noun_gender;
+    PluralityDefault = Players[faction_id_with].is_noun_plural;
+    parse_says(8, Players[faction_id_with].noun_faction, -1, -1);
+
+    NetMsgPopup->pop(DiploLabelPACTUNPACT, 5000, 0, 0);
+}
+
+/*
+Purpose: Two AI factions that were on the same side turn on each other. The
+         local player only hears about it if neither of them has a commlink to
+         him, and the pact is then dissolved both ways.
+
+         Everything here reads the pairwise status table the treaty writers
+         maintain, indexed `faction * 2099 + faction_with` - that index is
+         SpyingStatusStride, and 2099 dwords is one 0x20CC PlayerData stride.
+// ORIGINAL: 0x0055D2A0 ?enemies_team_up@@YAXHHH@Z 0x0055D2A0-0x0055D444
+// size      389 bytes
+// prototype void (__cdecl ?enemies_team_up@@YAXHHH@Z)(int, int, int)
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00539C00 0x0055B870 0x00625EC0
+// TRIED: computing the second pair index inside the branch (59 of 146) and
+//        hoisting it above the guard (61 of 146) - the image loads
+//        `faction_id` into EDI and `a3` into ESI in its first two instructions
+//        and defers `faction_id_with` to EBX until the second index is built,
+//        which neither order reproduces; this tree never pushes EDI that
+//        early. That is the callee-saved-register-dedication wall, not a
+//        source-shape difference: the archive's own transcription plateaued at
+//        381 of 389 bytes on it.
+// TRIED: `is_human(a3)` for the LockEnableMask test - the image does an 8-bit
+//        `shl edx, cl / test dl, al` against the byte view, where BOOL's
+//        32-bit result costs a widen, so the explicit
+//        `(uint8_t)(1 << a3) & factions_status_byte(0)` is what lands here.
+Status: homed 2026-09-03 out of the recovered-units archive
+*/
+void __cdecl enemies_team_up(int faction_id, int faction_id_with,
+                             int turncoat_faction) {
+    // The image reuses the two parameter slots for the pair indexes it
+    // computes, so these are assignments to the parameters' own locals.
+    int index = turncoat_faction + faction_id * SpyingStatusStride;
+    if (!(SpyingStatusTable[index] & 0x10)
+        && (static_cast<uint8_t>(1 << turncoat_faction) & factions_status_byte(0)) != 0) {
+        int index_with = turncoat_faction + faction_id_with * SpyingStatusStride;
+        if (SpyingStatusTable[index_with] & 0x10) {
+            if (great_satan(turncoat_faction, 0) == 0 && !(SpyingStatusTable[index] & 0x20)) {
+                treaty_on(faction_id, turncoat_faction, 0x2000);
+                return;
+            }
+            if (turncoat_faction == LocalFaction) {
+                PluralityDefault = Players[faction_id].is_noun_plural;
+                GenderDefault = Players[faction_id].noun_gender;
+                parse_says(0, Players[faction_id].noun_faction, -1, -1);
+                NetMsgPopup->pop(DiploLabelTEAM, 5000, 0, 0);
+            }
+            DiploSpokeTable[turncoat_faction * SpyingStatusStride + faction_id_with] = TurnCurrentNum;
+            DiploSpokeTable[turncoat_faction * SpyingStatusStride + faction_id] = TurnCurrentNum;
+            treaty_on(faction_id, turncoat_faction, 0x10);
+            return;
+        }
+        if (great_satan(turncoat_faction, 0) == 0 && !(SpyingStatusTable[index] & 0x20)
+            && !(SpyingStatusTable[index_with] & 0x20)) {
+            treaty_on(faction_id, turncoat_faction, 0x2000);
+            return;
+        }
+        SpyingStatusTable[index] |= 0x400;
     }
 }
