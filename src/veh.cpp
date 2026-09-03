@@ -335,7 +335,7 @@ int __cdecl valid_patrol(int veh_id, int x, int y) {
 
 /*
 Purpose: Calculate maximum range a faction's units can drop (air drops, Drop Pods).
-// ORIGINAL: 0x00500320 ?drop_range@@YAHH@Z 0x00500320-0x0050037C
+// ORIGINAL: 0x00500320 ?drop_range@@YAHH@Z 0x00500320-0x0050037C BYTE_EXACT
 // LEVER: has_project(SP_SPACE_ELEVATOR, faction_id) written out by hand
 //        (base_project's `*(&SecretProject->human_genome_project + id)` then
 //        the owning base's faction) rather than called - at the `/Ob0` flag
@@ -354,14 +354,18 @@ Return Value: Max range
 Status: Complete
 */
 int __cdecl drop_range(int faction_id) {
-    // has_tech() is called for real here (the image's `call 0x5b9f20`), but
+    // has_tech() is a real call here (the image's `call 0x5b9f20`), but
     // has_project() is written out rather than called: at `/Ob0` - needed so
-    // has_tech does NOT auto-inline here, matching the image - a call to the
-    // shared `has_project()` inline does not fold back open, so this repeats
-    // its body (base_project() then the owning base's faction) directly.
+    // has_tech does NOT auto-inline, matching the image - a call to the
+    // shared `has_project()` inline does not fold back open. Written out in
+    // has_project()'s own shape, ternary and BOOL result included: the
+    // negated `base_id < 0 || owner != faction_id` form compiled a bare
+    // `je` where the image materialises the comparison with `sete al` first.
     if (!has_tech(Rules.tech_orb_insert_sans_spc_elev, faction_id)) { // default 'Graviton Theory'
         int base_id = *(&SecretProject.human_genome_project + SP_SPACE_ELEVATOR);
-        if (base_id < 0 || Bases[base_id].faction_id_current != faction_id) {
+        BOOL has_orb_insert = (base_id < 0) ? false
+            : (Bases[base_id].faction_id_current == faction_id);
+        if (!has_orb_insert) {
             return Rules.max_airdrop_sans_orb_insert;
         }
     }
@@ -2021,6 +2025,11 @@ Purpose: Generate stats string for specified prototype. Replaced existing non-sa
 //            inlined as Armor[...].armor_id].defense_rating, made no further
 //            difference; plateaus on the def_rating address computation
 //            (shl 4 + disp vs add const + shl 4), 4 spellings tried.
+// LEVER 2026-09-03: the speed division is SIGNED - `speed_proto(proto_id) /
+//            (int)Rules.move_rate_roads` gives the image's `cdq / idiv`,
+//            where the uncast `uint32_t` field gave `xor edx,edx / div`.
+//            Same cast now at all three say_stats* sites (0x57D7D0,
+//            0x57D8E0, 0x57DAA0).
 // size      259 bytes
 // prototype void (__cdecl ?say_stats_3@@YAXPADH@Z)(int8*, int protoID)
 // callers   13   call targets   5
@@ -2047,7 +2056,7 @@ void __cdecl say_stats_3(LPSTR stat, int proto_id) {
         say_defense(stat, proto_id);
     }
     strcat(stat, "-");
-    _itoa(speed_proto(proto_id) / Rules.move_rate_roads, num_buf, 10);
+    _itoa(speed_proto(proto_id) / (int)Rules.move_rate_roads, num_buf, 10);
     strcat(stat, num_buf);
     uint8_t reactor = VehPrototypes[proto_id].reactor_id;
     if (reactor > RECT_FISSION) {
@@ -2113,7 +2122,7 @@ void __cdecl say_stats_2(LPSTR stat, int proto_id) {
         say_defense(stat, proto_id);
     }
     strcat(stat, "-");
-    _itoa(speed_proto(proto_id) / Rules.move_rate_roads, num_buf, 10);
+    _itoa(speed_proto(proto_id) / (int)Rules.move_rate_roads, num_buf, 10);
     strcat(stat, num_buf);
     uint32_t triad = get_proto_triad(proto_id);
     if (triad == TRIAD_SEA) {
@@ -2212,7 +2221,7 @@ append_defense_tail:
             say_defense(stat, proto_id);
         }
         strcat(stat, custom_spacer ? custom_spacer : "/");
-        _itoa(speed_proto(proto_id) / Rules.move_rate_roads, num_buf, 10);
+        _itoa(speed_proto(proto_id) / (int)Rules.move_rate_roads, num_buf, 10);
         strcat(stat, num_buf);
     } else {
         strcat(stat, StringTable.get((int)PlansFullName[mode]));
@@ -2385,11 +2394,17 @@ int __cdecl weapon_budget(int faction_id, int condition, BOOL check_mode) {
 /*
 Purpose: Check against the faction's available tech for the best available armor meeting the cost 
          requirement.
-// ORIGINAL: 0x0057F150 ?armor_budget@@YAHHH@Z 0x0057F150-0x0057F1CF
+// ORIGINAL: 0x0057F150 ?armor_budget@@YAHHH@Z 0x0057F150-0x0057F1CF BYTE_EXACT
 // LEVER: store order - best_defense=-1 before armor_id=0, opposite of
 //        declaration order (0.9524 -> 0.971 similar). TRIED: remaining
 //        divergence starts at the has_tech() call site (instr 17); not
 //        chased further.
+// LEVER: the non-expansion override is an if/ELSE with the field read in the
+//        else arm, not a load-then-overwrite. `int defense_compare =
+//        Armor[i].defense_rating; if (...) defense_compare = 1;` sign-extends
+//        the byte unconditionally (`movsx eax, al` before the branch, then
+//        overwritten by the true arm); the image extends only in the else arm
+//        and jumps over the movsx in the true arm. 26/53 -> 51/53.
 // size      127 bytes
 // prototype int (__cdecl ?armor_budget@@YAHHH@Z)(int factionID, int maxCost)
 // callers   0   call targets   1
@@ -2405,14 +2420,17 @@ int __cdecl armor_budget(int faction_id, int max_cost) {
     for (int i = 0; i < MaxArmorNum; i++) {
         if (has_tech(Armor[i].preq_tech, faction_id) && Armor[i].cost <= max_cost
             && Armor[i].defense_rating >= 0) { // excludes PSI
-            int defense_compare = Armor[i].defense_rating;
+            int defense_compare;
             if (faction_id >= 0 && !ExpansionEnabled && i > 9) {
                 defense_compare = 1; // Pulse + Resonance in non-expansion mode
-            }                       // This really only affects Pulse 8 Armor (Super Tensile Solids)
+            } else {
+                defense_compare = Armor[i].defense_rating;
+            }
+            // This really only affects Pulse 8 Armor (Super Tensile Solids)
             defense_compare *= 2;
             if (defense_compare >= best_defense) {
-                armor_id = i;
                 best_defense = defense_compare;
+                armor_id = i;
             }
         }
     }
@@ -2872,7 +2890,14 @@ void __cdecl make_proto(int proto_id, int chassis_id, int weapon_id, int armor_i
 
 /*
 Purpose: Search for the 1st prototype (basic + faction specific) that matches the specified plan.
-// ORIGINAL: 0x005AED50 ?get_plan@@YAHHH@Z 0x005AED50-0x005AEDE0
+// ORIGINAL: 0x005AED50 ?get_plan@@YAHHH@Z 0x005AED50-0x005AEDE0 BYTE_EXACT
+// LEVER: proto_id is a signed `int`, not `uint32_t` - the image's
+//        `cmp edi, 0x40 / jge` in front of the has_tech() guard is a SIGNED
+//        test, and `uint32_t` gave `jae`. The parenthesisation
+//        `faction_id * N + (i - N)` matters too: it keeps the shift on
+//        faction_id alone and folds the -N into the following `lea`, where
+//        the unparenthesised form hoists -N into the shift's operand
+//        ((faction + 0x3ffffff) << 6) and pays an extra `add`.
 // size      144 bytes
 // prototype int (__cdecl ?get_plan@@YAHHH@Z)(int factionID, int plan)
 // callers   0   call targets   1
@@ -2884,8 +2909,8 @@ Status: Complete
 */
 int __cdecl get_plan(int faction_id, int plan) {
     for (int i = 0; i < 128; i++) {
-        uint32_t proto_id = (i < MaxVehProtoFactionNum) ? i
-            : (faction_id * MaxVehProtoFactionNum) + i - MaxVehProtoFactionNum;
+        int proto_id = (i < MaxVehProtoFactionNum) ? i
+            : faction_id * MaxVehProtoFactionNum + (i - MaxVehProtoFactionNum);
         if (VehPrototypes[proto_id].flags & PROTO_ACTIVE
             && !(VehPrototypes[proto_id].obsolete_factions & (1 << faction_id))
             && (proto_id >= MaxVehProtoFactionNum
@@ -3033,6 +3058,14 @@ cannot disagree with the first.
 //        now plain `inline` (its only callers are spot_base/spot_stack/
 //        spot_loc, all in this file); the veh_top climb below is
 //        hand-inlined, matching veh_at's precedent.
+// LEVER: the second `calls` defect - this tree made ZERO calls, the image
+//        one - came from synch_bit() itself being folded in. The outer
+//        on_map() guard was the cause: written as a call it kept synch_bit
+//        out-of-line... no, the reverse. Writing on_map()'s four compares
+//        out at BOTH guard sites (this one and spot_tile's own) is what
+//        leaves synch_bit as the single genuine call; both sides now make
+//        exactly one. Body still MISMATCH - the widened x/y loads and the
+//        `push ecx` frame are allocator choices, not structure.
 // TRIED: calling the `inline` spot_tile() directly - the optimiser did
 // NOT fold it away here (unlike in spot_base), so the call to spot_tile
 // survived and call_diff still reported WRONG CALLEE (spot_tile instead of
@@ -3040,7 +3073,14 @@ cannot disagree with the first.
 // precedent, is what removes the call.
 */
 void __cdecl spot_stack(int veh_id, int faction_id) {
-    if (veh_id >= 0 && on_map(Vehs[veh_id].x, Vehs[veh_id].y)) {
+    // The outer on_map() is written out rather than called, as in
+    // spot_tile() itself: the image folds the four compares in here, and a
+    // call to the `MEASURED inline` helper survived the optimiser at this
+    // site. It is still tested twice - once by this guard and once by the
+    // inlined spot_tile() body below.
+    if (veh_id >= 0
+        && Vehs[veh_id].y >= 0 && Vehs[veh_id].y < (int)MapLatitudeBounds
+        && Vehs[veh_id].x >= 0 && Vehs[veh_id].x < (int)MapLongitudeBounds) {
         // spot_tile(), hand-inlined - see spot_base's precedent above; a call
         // to `inline` spot_tile survived the optimiser here.
         int x = Vehs[veh_id].x;
@@ -3824,7 +3864,7 @@ int __cdecl stack_check(int veh_id, int type, int cond1, int cond2, int cond3) {
 /*
 Purpose: Check to see whether provided faction and base can build a specific prototype. Checks are
          included to prevent SMACX specific units from being built in SMAC mode.
-// ORIGINAL: 0x005BA910 ?veh_avail@@YAHHHH@Z 0x005BA910-0x005BAB39
+// ORIGINAL: 0x005BA910 ?veh_avail@@YAHHHH@Z 0x005BA910-0x005BAB39 BYTE_EXACT
 // LEVER: WRONG CALLEE - is_port(base_id, false) hand-inlined to
 //   is_coast(Bases[base_id].x, Bases[base_id].y, false); the image never calls is_port.
 //   Split every `||`-combined early return (PROTO_ACTIVE/obsolete_factions, and the
@@ -4017,6 +4057,12 @@ Purpose: Check the coordinates for units and if at least one is found return the
 //        ONCE and reuses them for both `on_map()` call sites, this tree
 //        re-reads them at the second site) plus esi/edi swaps throughout.
 //        Left as-is per "do not chase register-allocation differences."
+// LEVER 2026-09-03: hoisting the two bounds into locals before the FIRST
+//        on_map() test is what earns the image's single load - a dllexport
+//        inline re-reads its globals at every expansion, so the two sites
+//        were two pairs of loads. Both on_map() calls are now written out
+//        (the image inlines it at both) against those locals: 0.937 -> 0.938
+//        at /Oy-, 0.942 at /GX, agreeing 5/96 -> 44/96.
 // size      270 bytes
 // prototype int (__cdecl ?veh_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   61   call targets   2
@@ -4030,7 +4076,9 @@ Status: Complete
 //   here it is inlined - call_diff flagged the `call veh_top` this tree was making that
 //   the image does not. Inlined the body by hand instead of `return veh_top(veh_id);`.
 int __cdecl veh_at(int x, int y) {
-    if (on_map(x, y) && !(bit_at(x, y) & BIT_VEH_IN_TILE)) {
+    const int lat_bounds = MapLatitudeBounds;
+    const int lon_bounds = MapLongitudeBounds;
+    if (y >= 0 && y < lat_bounds && x >= 0 && x < lon_bounds && !(bit_at(x, y) & BIT_VEH_IN_TILE)) {
         return -1; // not found
     }
     for (int veh_id = 0; veh_id < VehCurrentCount; veh_id++) {
@@ -4045,7 +4093,7 @@ int __cdecl veh_at(int x, int y) {
             return top_veh_id;
         }
     }
-    if (!on_map(x, y)) {
+    if (y < 0 || y >= lat_bounds || x < 0 || x >= lon_bounds) {
         return -1;
     }
     if (!VehBitError) {
@@ -4058,8 +4106,7 @@ int __cdecl veh_at(int x, int y) {
         VehBitError = true;
     }
     rebuild_vehicle_bits();
-    return -1;
-}
+    return -1;}
 
 /*
 Purpose: Check whether the prototype has a specific ability.
@@ -4112,6 +4159,8 @@ Purpose: Temporarily remove the specified unit from its current square and stack
          another action such as interacting with the stack, moving or killing it.
 // ORIGINAL: 0x005BFFA0 ?veh_lift@@YAXH@Z 0x005BFFA0-0x005C007F
 // TRIED: swapping the x/y local declaration order - the remaining gap is which register (eax/ecx/edx) the allocator picks for x, y and the -1 constant at the join point; both orders produced the identical register assignment, so it isn't source-order controlled here. Plateau at 49/60.
+// TRIED 2026-09-03: NO x/y locals at all - `VehLiftX = Vehs[veh_id].x;` after the four -1 stores. The loads then sit AFTER the stores (VC6 will not hoist a load above a store to the same field), where the image hoists them BEFORE the stores, which needs the locals. 54/60 - better than 49/60, kept; the remaining 6 are the two movsx loads plus which register holds the -1 (ours edx, image eax).
+// TRIED 2026-09-03: `VehDropLiftVehID = veh_id;` hoisted ABOVE the x/y reads (so VC6 sees the global store early) - regressed to 49/60, matching the original note's finding that the image assigns it between reading y and zeroing the fields.
 // TRIED: were cached into locals BEFORE the prev/next stack-pointer fixup and the on_map/bit_set branch; the image re-reads `Vehs[veh_id].x`/`.y` fresh at each site (inside the branch, and again at the join point for VehLiftX/Y) instead of hoisting one read to the top. Also `VehDropLiftVehID = veh_id;` moved to AFTER the x/y reads (image assigns it between reading y and zeroing the fields, not before). 4/60 -> 49/60 (0.829 -> 0.983 similar).
 // symbol    ?veh_lift@@YAHH@Z
 // size      223 bytes
@@ -4136,15 +4185,13 @@ int __cdecl veh_lift(int veh_id) {
     } else if (!prev_stack_exists && on_map(Vehs[veh_id].x, Vehs[veh_id].y)) {
         bit_set(Vehs[veh_id].x, Vehs[veh_id].y, BIT_VEH_IN_TILE, false);
     }
-    int x = Vehs[veh_id].x;
-    int y = Vehs[veh_id].y;
     VehDropLiftVehID = veh_id;
     Vehs[veh_id].x = -1;
     Vehs[veh_id].y = -1;
     Vehs[veh_id].next_veh_id_stack = -1;
     Vehs[veh_id].prev_veh_id_stack = -1;
-    VehLiftX = x;
-    VehLiftY = y;
+    VehLiftX = Vehs[veh_id].x;
+    VehLiftY = Vehs[veh_id].y;
     return veh_id;
 }
 
@@ -4887,7 +4934,7 @@ Status: Complete
 
 /*
 Purpose: Activate the specified unit and clear the current action.
-// ORIGINAL: 0x005C1D70 ?veh_wake@@YAHH@Z 0x005C1D70-0x005C1E1F
+// ORIGINAL: 0x005C1D70 ?veh_wake@@YAHH@Z 0x005C1D70-0x005C1E1F BYTE_EXACT
 // size      175 bytes
 // prototype int (__cdecl ?veh_wake@@YAHH@Z)(int vehID)
 // callers   6   call targets   2
@@ -4897,26 +4944,30 @@ Purpose: Activate the specified unit and clear the current action.
 // LEVER: `order` as int8_t, matching Vehs[].order's OWN (signed) field type -
 //        `uint8_t` forces unsigned `jb`/`jae` on the range check below where
 //        the image has signed `jl`/`jge`. Moved 0.903 -> 0.964.
+// LEVER: no `state` local - the image re-reads Vehs[].state from memory at
+//        each use (`test dword ptr [esi+..], 0x4000000`, then
+//        `mov eax,[esi+..] / test ah,2 / test al,4`, then again for the
+//        trailing `and`), and caching it in a local cost a spill slot that
+//        pushed the whole frame onto `push ecx` instead of the image's
+//        `push ebp` frame. Byte-exact 55/55 on removing it alone.
 Return Value: Unit id (doesn't look to be used on return)
 Status: Complete
 */
 int __cdecl veh_wake(int veh_id) {
-    int8_t order = Vehs[veh_id].order;
-    uint32_t state = Vehs[veh_id].state;
-    if (order >= ORDER_FARM && order < ORDER_MOVE_TO && !(state & VSTATE_CRAWLING)) {
+    if (Vehs[veh_id].order >= ORDER_FARM && Vehs[veh_id].order < ORDER_MOVE_TO && !(Vehs[veh_id].state & VSTATE_CRAWLING)) {
         // TODO bug fix: Issue with moves_expended size / speed return, see veh_skip()
         Vehs[veh_id].moves_expended = (uint8_t)(speed(veh_id, false) - Rules.move_rate_roads);
         int terra_turns = Vehs[veh_id].terraforming_turns;
         if (terra_turns) {
-            terra_turns -= contribution(veh_id, order - 4);
+            terra_turns -= contribution(veh_id, Vehs[veh_id].order - 4);
             if (terra_turns < 0) {
                 terra_turns = 0;
             }
             Vehs[veh_id].terraforming_turns = (uint8_t)terra_turns;
         }
     }
-    if (state & VSTATE_UNK_200 && Vehs[veh_id].order_auto_type == ORDERA_ON_ALERT
-        && !(state & VSTATE_UNK_4)) {
+    if (Vehs[veh_id].state & VSTATE_UNK_200 && Vehs[veh_id].order_auto_type == ORDERA_ON_ALERT
+        && !(Vehs[veh_id].state & VSTATE_UNK_4)) {
         Vehs[veh_id].moves_expended = 0;
     }
     Vehs[veh_id].order = ORDER_NONE;
