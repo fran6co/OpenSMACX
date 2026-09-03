@@ -390,7 +390,13 @@ SCAFFOLD_CEILINGS = {
     # archived with drafted bodies. Their sibling add_separator
     # (0x005F8BE0, 161 bytes) was small enough to home straight into
     # src/pulldown.cpp BYTE_EXACT, so it cost no forwarder. Net +2.
-    "PENDING_BODY forwarders": 227,
+    # 227 -> 224 (2026-09-03, the Buffer tile batch): the three tile
+    # forwarders died with the bodies homed into src/buffer.cpp - tile_mask
+    # (0x005DA6C0), tile/Buffer (0x005DA860) and tile/Sprite (0x005DA9F0).
+    # tile_mask's per-tile blit copy_mask (0x005E2B00) was homed too, from
+    # 005e2b00.cpp, and never needed a forwarder: both of its own callees,
+    # get_data(2) and free_data, were already homed and BYTE_EXACT.
+    "PENDING_BODY forwarders": 224,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -479,6 +485,11 @@ SCAFFOLD_CEILINGS = {
     # residual). 005fb100/005fb160/005fb700 STAYED: they call
     # PullDown::add_item / add_separator / rename_item, which pulldown.h did
     # not declare, and that pass did not own the header.
+    # 1653 -> 1649 (2026-09-03, the Buffer tile batch): 005da6c0.cpp,
+    # 005da860.cpp, 005da9f0.cpp and 005e2b00.cpp deleted with the
+    # tile()/tile_mask()/copy_mask() bodies homed into src/buffer.cpp (all
+    # four MISMATCH, now compiling rather than NO_COMPILE - the frame and
+    # register-save-set residual is documented on the markers).
     # 1660 -> 1656 (2026-09-03, the PullDown-declaration batch): the header
     # declares the three members now, so 005fb100.cpp (Menu::add_menu_item)
     # and 005fb700.cpp (Menu::rename_menu_item) are deleted with their
@@ -487,7 +498,7 @@ SCAFFOLD_CEILINGS = {
     # (PullDown::add_item) and 005f8e50.cpp (rename_item) STAY unrecovered -
     # 527 and 494 bytes, declared and standing as pending_bodies forwarders
     # for the two homed callers that reach them.
-    "unrecovered files": 1653,
+    "unrecovered files": 1649,
     "hypothesis_layouts.h lines": 2723,
 }
 
