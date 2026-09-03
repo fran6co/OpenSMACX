@@ -56,6 +56,11 @@ class PullDown : public GraphicWin {
 
   void on_mouse_leave(int a1, int a2);
 
+  // Resolves the widest item into width_. Only add_item (0x005F8BB6) and
+  // rename_item (0x005F9028) reach it in the whole image, so it stays beside
+  // them rather than in the public surface.
+  int compute_length(char *text);
+
   // Menu's item-id probe walks items_ directly (0x005FB930 reads
   // items_[index].id at 0xa20 + index * 0x14 through the entry's PullDown),
   // and a data member has no accessor to grant it - so Menu is a friend, the
@@ -90,6 +95,12 @@ static_assert(sizeof(PullDown) == 0xF40,
 // them at locally mapped storage.
 extern uint32_t PullDownFieldF38Default;
 extern uint32_t PullDownFieldF3CDefault;
+
+// The font every item string is measured with. Zero until the first PullDown
+// needs it, then resolved once from `FontDefault` and cached - the same lazy
+// read `PullDown::init` (0x005F8920) and `PullDown::on_redraw` (0x005F98B0)
+// perform.
+extern Font *PullDownDefaultFont;
 
 
 
