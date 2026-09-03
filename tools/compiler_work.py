@@ -533,7 +533,11 @@ SCAFFOLD_CEILINGS = {
     # process_voice homed into src/net_class.cpp BYTE_EXACT 78/78 - the
     # unsigned level local (the image's `jae`/`jbe` against a getter the
     # catalogue spells `H`) is the lever the marker records.
-    "unrecovered files": 1648,
+    # 1648 -> 1647 (2026-09-03, gamma/imagebutton batch): 0062bf20.cpp
+    # promoted - PushButton::PushButton() homed into src/gamma.cpp BYTE_EXACT
+    # 44/44 once BaseButton's constructor went out of line, which is also
+    # what took ??0ImageButton and ??0Gamma byte-exact.
+    "unrecovered files": 1647,
     "hypothesis_layouts.h lines": 2723,
 }
 

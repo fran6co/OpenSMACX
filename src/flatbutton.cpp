@@ -318,22 +318,9 @@ Return Value: the forwarded call's
 Status: Complete
 */
 
-/*
-Purpose: Step the receiver back to the subobject ??_GBaseButton@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x00607CE0 ??_GBaseButton@@WEEE@AEPAXI@Z 0x00607CE0-0x00607CEB BYTE_EXACT
-// symbol    ??_EBaseButton@@WEEE@AEPAXI@Z
-// CORRECTED from ??3BaseButton@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x00607CC0` into
-//   ??_GBaseButton@@UAEPAXI@Z, which executes `ret 4`; no stack access
-//   and the receiver stays in ECX. `WEEE@` re-demangles to
-//   adjustor{1092} and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
+// ??_GBaseButton@@WEEE@AEPAXI@Z (0x00607CE0) moved to basebutton.cpp,
+// 2026-09-03: this unit emits no BaseButton symbol at all, so the claim
+// measured UNRESOLVED from here. ??_EBaseButton is defined by basebutton.obj
+// alone - that is where ~BaseButton lives - and read from there it is the
+// image's own 11 bytes. A comparison compiles a TRANSLATION UNIT, so the
+// claim has to live where the COMDAT is emitted.
