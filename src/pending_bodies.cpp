@@ -186,16 +186,8 @@ void __cdecl do_video() {
 }
 
 // ?process_voice@Net@@QAEXXZ at 0x00631A60 and ?check_polling@Net@@QAEXXZ at
-// 0x006320E0 - what `do_net` and `check_net` tail jump to.
-void Net::process_voice() {
-    typedef void(__fastcall *pending)(Net *, void *);
-    PENDING_BODY(0x00631A60, pending)(this, nullptr);
-}
-
-void Net::check_polling() {
-    typedef void(__fastcall *pending)(Net *, void *);
-    PENDING_BODY(0x006320E0, pending)(this, nullptr);
-}
+// 0x006320E0 are in src/net_class.cpp now, with bodies - as is drop_player
+// (0x00632350), whose forwarder lives beside its caller check_polling there.
 
 // Six callees `temp.h` bound as pointers. Each one cost its callers the image's
 // `E8`; see the note there.

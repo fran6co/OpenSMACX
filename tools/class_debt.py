@@ -251,7 +251,13 @@ CEILINGS = {
     # measures the same 0/62 (the body is held at zero by the image's /GX
     # unwind frame and family-root vtable publish, neither of which a
     # base-less Sound can produce), so the pun bought nothing.
-    "raw self-access": 165,
+    # 165 -> 164 (2026-09-03, net_class batch): Net::close's
+    # `char *const self = reinterpret_cast<char *>(this)` view is gone - the
+    # eleven offsets it reached are named members now (poll_timeout_E0_,
+    # field_760_/764_, poll_time_DC_, field_6DC_, field_1C_, self_20_,
+    # buffer_24_, thread_id_4_, lock_2C_), which is what the two defects the
+    # marker records were hiding behind.
+    "raw self-access": 164,
     "pointer-parameter as int": 4,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these

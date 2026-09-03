@@ -374,43 +374,58 @@ Purpose: Close the network: stop the voice transmitter, reset the timers
 // symbol    ?close@Net@@QAEXXZ
 // size      736 bytes
 // kind      game
-// PROMOTED from the archived transcription. The DirectPlay import slots
-// (0x66917C/0x669178/0x669174/0x6692C) are the ORIGINAL'S IAT - the whole
-// guarded block only runs once a session has connected, which this tree
-// has not modelled; the slot state and timer resets are the live path.
+// NOT A FULL TRANSCRIPTION, and the old "Status: Complete" was wrong: this is
+// the first 0x2C0-byte head of the body - the voice teardown, the five timer
+// and slot resets, and the whole DirectPlay guard - and stops before the
+// image's critical-section delete, its five CloseHandle calls, the three
+// frees, the player-slot clear, the three NetFifo::close calls and the
+// 0x6EC memset that follow it. Two defects in what was here are fixed:
+// the transmitter dispatch is slot 5 ([vtbl+0x14]), which is VoiceTx::unload
+// (stop AND release AND device detach), not stop; and the fourth helper slot
+// is 0x0066912C, not 0x006692C - a missing digit that read a pointer out of
+// the middle of nowhere.
+// BLOCKED ON LAYOUT, not spelling. The image's remaining 400 bytes reach the
+// receiver at Net+0xB0 as an object whose FIRST DWORD is a vftable it calls
+// through ([this+0xB0] -> call [vtbl+4]), which contradicts the modelled
+// JackalVoiceRx (a virtual StringAllocationBase whose first dword is the
+// VBTABLE, 0x670DCC). Until that object's real shape is known, that walk - and
+// with it the tail of this body - cannot be written without punning this.
+// The DirectPlay helper slots are unnamed: 0x66914C is CloseHandle (same slot
+// Filemap::create calls for its handles), 0x669170 is DeleteCriticalSection
+// (it is called on lock_2C_ under the field_28_ guard that init's
+// InitializeCriticalSection sets), and 0x66917C/0x669174/0x669178/0x66912C
+// are only identifiable by address.
 Return Value: n/a
-Status: Complete
 */
 void Net::close() {
-    char *const self = reinterpret_cast<char *>(this);
-    voice_tx_.stop();
+    voice_tx_.unload();
 
-    *reinterpret_cast<uint32_t *>(self + 0xE0) = 0x4E20;
-    *reinterpret_cast<uint32_t *>(self + 0x760) = 0;
-    *reinterpret_cast<uint32_t *>(self + 0x764) = 0;
-    *reinterpret_cast<uint32_t *>(self + 0xDC) = 0;
-    *reinterpret_cast<uint32_t *>(self + 0x6DC) = 0;
+    poll_timeout_E0_ = 0x4E20;
+    field_760_ = 0;
+    field_764_ = 0;
+    poll_time_DC_ = 0;
+    field_6DC_ = 0;
 
     if (NetDirectPlay != 0) {
         // The DirectPlay release sequence through the original's IAT.
         // Unreached until a session opens.
         typedef void(__cdecl *VisitFn)(void *);
         VisitFn visit = *reinterpret_cast<VisitFn *>(0x0066917C);
-        visit(self + 0x2C);
-        (*reinterpret_cast<void(__cdecl **)(int)>(0x00669178))(
-            *reinterpret_cast<int *>(self + 0x14));
+        visit(&lock_2C_);
+        (*reinterpret_cast<void(__cdecl **)(void *)>(0x00669178))(
+            events_8_[3]);
         typedef void (OriginalObject::*iface_fn)();
         (ORIGINAL(NetDirectPlay)->*vtable_method<iface_fn>(NetDirectPlay, 0x10))();
         (ORIGINAL(NetDirectPlay)->*vtable_method<iface_fn>(NetDirectPlay, 8))();
         NetDirectPlay = 0;
-        *reinterpret_cast<uint32_t *>(self + 0x1C) = 0;
-        (*reinterpret_cast<void(__cdecl **)(void *)>(0x00669174))(self + 0x2C);
-        (*reinterpret_cast<void(__cdecl **)(int)>(0x006692C))(0);
-        visit(self + 0x2C);
-        (*reinterpret_cast<void(__cdecl **)(void *)>(0x00669174))(self + 0x2C);
-        *reinterpret_cast<uint32_t *>(self + 0x20) = 0;
-        *reinterpret_cast<uint32_t *>(self + 0x24) = 0;
-        *reinterpret_cast<uint32_t *>(self + 4) = 0;
+        field_1C_ = 0;
+        (*reinterpret_cast<void(__cdecl **)(void *)>(0x00669174))(&lock_2C_);
+        (*reinterpret_cast<void(__cdecl **)(int)>(0x0066912C))(0);
+        visit(&lock_2C_);
+        (*reinterpret_cast<void(__cdecl **)(void *)>(0x00669174))(&lock_2C_);
+        self_20_ = 0;
+        buffer_24_ = 0;
+        thread_id_4_ = 0;
     }
 }
 
@@ -616,6 +631,221 @@ void Net::stop_voice() {
 
 uint32_t NetGetScratch;  // 0x009BC4BC
 
+// 0x0062F390, unrecovered. In-file forwarder, the same shape NetFifo::~NetFifo
+// carries above: it keeps process_voice's call an `E8` to the image's own body
+// without pulling a second definition into pending_bodies.cpp.
+int Net::sub_62f390(void *data, int mode, unsigned long who, int size,
+                    int flags) {
+    typedef int(__fastcall *pending)(Net *, void *, void *, int, unsigned long,
+                                     int, int);
+    return reinterpret_cast<pending>(static_cast<unsigned long>(0x0062F390))(
+        this, nullptr, data, mode, who, size, flags);
+}
+
+// 0x00632350, unrecovered - in-file forwarder, same shape as sub_62f390's.
+int Net::drop_player(unsigned long key, int reason) {
+    typedef int(__fastcall *pending)(Net *, void *, unsigned long, int);
+    return reinterpret_cast<pending>(static_cast<unsigned long>(0x00632350))(
+        this, nullptr, key, reason);
+}
+
+/*
+Purpose: Keep the session alive and reap the players that have gone quiet:
+         every two seconds send a 0x20 keep-alive packet, then - if the voice
+         flag says this connection tracks its peers at all - walk the player
+         table and cut whoever has not been heard from inside poll_timeout_E0_
+         milliseconds.
+
+         Three shapes of staleness, in the image's order:
+           1. the two timer words agree            - sweep all sixteen slots;
+           2. the first agrees with player 1's stamp - sweep that one player;
+           3. neither                              - look at players 0 and 1,
+             and if both are stale, cut every player at once.
+
+         The clock is the game's imported timeGetTime, reached through its
+         import slot: the image hoists that load into a callee-saved register
+         for the four calls in the first half of the body and falls back to a
+         memory-indirect call for the two after the register is spent, so the
+         source calls through the slot each time rather than copying it.
+// ORIGINAL: 0x006320E0 ?check_polling@Net@@QAEXXZ 0x006320E0-0x00632290
+// symbol    ?check_polling@Net@@QAEXXZ
+// size      432 bytes
+// prototype void (__thiscall ?check_polling@Net@@QAEXXZ)(Net* this)
+// callers   4   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x0062F8A0 0x00632350
+// indirect  0x006320FA 0x00632138 0x006321A1 0x006321BF 0x006321F8 0x0063221A 0x00632244 0x0063226E
+// LEVER: the keep-alive half is a chain of four guard-and-return steps, and
+//        the reap half is one `if (voice_flags_D8_ & 0x40000)` whose three
+//        staleness arms each end in `*NetReapBusy = 0` - the shared clear
+//        block at 0x632280 is the outer if's own fall-through, which is why
+//        four different returns land on it while the sixteen-slot loop's tail
+//        writes its own copy inline.
+// LEVER: branch 3 walks `stamps[checked * 0x16]` from `&players_->stamp_10_`,
+//        NOT `players_[checked].stamp_10_`: the image spills the BASE pointer
+//        to [esp+0x10] before the loop and writes `*stamps` through it after
+//        the drop, which only a pointer local produces. players_[1] is stored
+//        directly beside it - two different base expressions, one value.
+// TRIED: calling the slot through the accessor at each site, no local - VC6
+//        then never hoists the load into a callee-saved register, gives the
+//        function no local slot at all (`push ecx` is missing, so the whole
+//        register assignment cascades) and spends ebx on a zero register
+//        (`cmp reg,ebx` / `push ebx` where the image has `test` / `push 0`);
+//        4 of 135, and compiles 126 instructions against the image's 135.
+// TRIED: spelling the four staleness tests against 0 in the inverted form,
+//        dropping the pointer local for `players_[checked]`, and hoisting the
+//        clock into a `register` local - none of them removes the zero
+//        register, and the pointer-local removal brings back a frame pointer
+//        (`push ebp / mov ebp,esp`), which the image has none of.
+// THE RESIDUAL. MISMATCH 11 of 135, and it is one register-assignment cascade
+// plus one dead-store difference, not a transcription error. The image loads
+// the clock's import slot into EBP once, AFTER the NetEnabled test, and never
+// stores it to its home; this tree loads it before the test and VC6 keeps a
+// home copy (`mov dword ptr [esp+0x10], ebp`) for a local the image does not
+// have. Everything else follows: with EBP spent on the clock the image cannot
+// also spend EBX on a zero register, so it tests and pushes immediates where
+// this tree compares against and pushes the zero register. Six attempts, and
+// the trigger for VC6's hoist-without-home is not in this file's spelling.
+Return Value: n/a
+*/
+void Net::check_polling() {
+    const func_net_time now = NetTimeGetTimeSlot();
+    if (*NetEnabled == 0) {
+        return;
+    }
+    if (now() - poll_time_DC_ <= 2000) {
+        return;
+    }
+    if (*NetKeepAliveBusy != 0) {
+        return;
+    }
+    *NetKeepAliveBusy = 1;
+    send_packet_type(0, 0, 0, 0x20, 0);
+    poll_time_DC_ = now();
+    *NetKeepAliveBusy = 0;
+    if (*NetReapBusy != 0) {
+        return;
+    }
+    *NetReapBusy = 1;
+    if ((voice_flags_D8_ & 0x40000) != 0) {
+        if (field_760_ == field_764_) {
+            // Every slot: a live player who is not the one the timer words
+            // name and whose stamp is older than the threshold is cut, and a
+            // successful cut stamps the time of the cut.
+            int count = 0x10;
+            do {
+                if (players_[0x10 - count].field_0_ != 0
+                    && players_[0x10 - count].field_0_ != field_760_
+                    && players_[0x10 - count].stamp_10_ != 0
+                    && now() - players_[0x10 - count].stamp_10_
+                           > poll_timeout_E0_
+                    && drop_player(players_[0x10 - count].field_0_, 0) == 0) {
+                    players_[0x10 - count].stamp_10_ =
+                        now();
+                }
+                --count;
+            } while (count != 0);
+            *NetReapBusy = 0;
+            return;
+        }
+        if (field_760_ == players_[1].stamp_10_) {
+            if (players_->stamp_10_ == 0) {
+                *NetReapBusy = 0;
+                return;
+            }
+            if (now() - players_->stamp_10_
+                    <= poll_timeout_E0_) {
+                *NetReapBusy = 0;
+                return;
+            }
+            if (drop_player(players_->field_0_, 0) != 0) {
+                *NetReapBusy = 0;
+                return;
+            }
+            players_->stamp_10_ = now();
+            *NetReapBusy = 0;
+            return;
+        }
+        // Neither timer word names a player this table holds, so both leading
+        // slots are stale: cut the lot.
+        uint32_t *stamps = &players_->stamp_10_;
+        for (int checked = 0; checked < 2; ++checked) {
+            if (stamps[checked * 0x16] == 0) {
+                return;
+            }
+            if (now() - stamps[checked * 0x16]
+                    < poll_timeout_E0_) {
+                return;
+            }
+        }
+        if (drop_player(0xFFFFFFFF, 0) == 0) {
+            uint32_t cut = now();
+            players_[1].stamp_10_ = cut;
+            stamps[0] = cut;
+        }
+    }
+    *NetReapBusy = 0;
+}
+
+/*
+Purpose: Move one slice of voice traffic: ride the level meter to open and
+         close the channel, and when it is open, forward whatever the
+         transmitter's capture buffer holds to the session.
+
+             test 0x40000000      -> the channel is closing
+               level <  50        -> clear the closing bit
+             level > 100          -> set the closing bit and stop
+             else                 -> ship the capture buffer
+
+         The two thresholds are UNSIGNED compares in the image (`jae` against
+         0x32, `jbe` against 0x64) over a getter the catalogue spells `H`
+         (int), so the level is held in an unsigned local rather than compared
+         as the getter's own type.
+// ORIGINAL: 0x00631A60 ?process_voice@Net@@QAEXXZ 0x00631A60-0x00631B2E BYTE_EXACT
+// symbol    ?process_voice@Net@@QAEXXZ
+// size      206 bytes
+// prototype void (__thiscall ?process_voice@Net@@QAEXXZ)(Net* this)
+// callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FD2B0 0x0062F390 0x0062F8A0
+// indirect  0x00631A7F 0x00631AAB 0x00631AC8 0x00631AD3 0x00631B0A 0x00631B24
+Return Value: n/a
+*/
+void Net::process_voice() {
+    do_sound();
+    if ((voice_flags_D8_ & 0x40000000) != 0) {
+        unsigned int level = voice_tx_.get_nbuffers();
+        if (level < 0x32) {
+            voice_flags_D8_ &= ~0x40000000u;
+        }
+    } else {
+        unsigned int level = voice_tx_.get_nbuffers();
+        if (level > 100) {
+            voice_flags_D8_ |= 0x40000000;
+            voice_tx_.stop();
+            return;
+        }
+        // The capture buffer: a dword at 0x18 says where the packet starts and
+        // one at 0x20 says where capture has written to.
+        uint32_t *packet =
+            reinterpret_cast<uint32_t *>(voice_tx_.get_next_buffer());
+        if (packet != 0) {
+            if (field_54_ != 0) {
+                sub_62f390(reinterpret_cast<void *>(packet[6]),
+                           static_cast<int>(packet[8] - packet[6]),
+                           voice_key_D4_, 0x100, 0);
+            } else {
+                send_packet_type(reinterpret_cast<void *>(packet[6]),
+                                 static_cast<int>(packet[8] - packet[6]),
+                                 voice_key_D4_, 0x100, 0);
+            }
+            voice_tx_.return_buffer(reinterpret_cast<_MMIOINFO *>(packet));
+        }
+    }
+}
+
 /*
 Purpose: Poll the embedded NetFifo for a message, when net play is enabled
          and a destination is given.
@@ -683,7 +913,12 @@ int Net::init(_GUID *guid, int option_a, int option_b) {
         word[-1] = 0;
         word[0] = 0;
         word[1] = 0;
-        *reinterpret_cast<uint8_t *>(&word[4]) = 0;  // flags_10_
+        // BUG IN THE ORIGINAL: only the FIRST byte of stamp_10_ is cleared.
+        // The field is a dword (check_polling reads and writes all four bytes
+        // as a millisecond timestamp), so three stale high bytes survive a
+        // re-init and a reused slot can look already-heard-from. Reproduced -
+        // a dword store here would not be the image's bytes.
+        *reinterpret_cast<uint8_t *>(&word[4]) = 0;
         word[3] = 0;
         word += 0x58 / sizeof(*word);
         --count;
