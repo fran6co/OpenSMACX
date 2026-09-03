@@ -648,6 +648,16 @@ Purpose: Boot the CAVIAR voxel renderer. Hands the vx_* file-IO callbacks to
 // TRIED: int return on vox_init_callbacks tested `test eax, eax` against the
 //        image's `test al, al`; the forwarder now returns char and the test
 //        agrees (18 -> 19 of 392 at /O2 /GX).
+// LEVER  2026-09-03: the CAVIAR_INVALIDCPU guard is the RANGE form on the
+//        global DIRECTLY - `CaviarVoxelAlgoFlag <= 0 || 5 < CaviarVoxelAlgoFlag`,
+//        no local. The image reads `mov al, byte ptr [0x9c0830]` straight from
+//        storage and branches `76 08` (jbe) - an unsigned `<= 0`. The old
+//        `const uint8_t algo_flag` local both forced a register copy the image
+//        does not have AND made the front end fold `<= 0` back to `== 0`, so
+//        the branch emitted `je`. Measured: the compiled branch is now the
+//        image's own `76 08` byte-for-byte at 0x00618625/0x00618626, one byte
+//        of alignment earlier. vox_init_callbacks (0x6392E0) carries the same
+//        check spelled the same way.
 // TRIED: holding the popup StringList in a named local versus re-deriving
 //        `&pop + 0x2180` at every use - identical scores (19/392, 195
 //        compiled). The image's prologue pushes one register fewer than
@@ -687,8 +697,13 @@ int Caviar::init_class() {
         // preference - or with one above the known range - tell the player
         // this is not a CPU the renderer supports, by listing the popup's
         // entries as one space-separated line in StringTemp.
-        const uint8_t algo_flag = CaviarVoxelAlgoFlag;
-        if (algo_flag == 0 || 5 < algo_flag) {
+        // RANGE form on the global DIRECTLY - no local, and not `== 0`. The
+        // image reads `mov al, byte ptr [0x9c0830]` straight from storage and
+        // branches `cmp al,bl; jbe`, which is an unsigned `<= 0`; a
+        // `const uint8_t algo_flag` local makes the front end fold `<= 0`
+        // back to `== 0` and the branch becomes `je`. Same rule as
+        // vox_init_callbacks' copy of this check.
+        if (CaviarVoxelAlgoFlag <= 0 || 5 < CaviarVoxelAlgoFlag) {
             pop.start("jackal", "CAVIAR_INVALIDCPU", -1, 0, 0, 0);
 
             // The popup's unit-name list, which start() filled.
@@ -809,6 +824,19 @@ Purpose: The engine's allocation callback - mem_get with the engine's
 //        with `add esp, 4` where this tree's VC6 emits `pop ecx` - the same
 //        stack-cleanup heuristic auto_save's marker documents as not a
 //        source-form lever (src/general.cpp, 0x005ABD20).
+//        RE-READ 2026-09-03 and the rule is narrower than "heuristic": the
+//        image uses `pop ecx` for exactly ONE of this file's three 1-argument
+//        __cdecl cleanups - vx_free's, whose callee `free` returns VOID - and
+//        `add esp, 4` for this one and vx_tell's, whose callees (mem_get,
+//        _tell) both return a value that the body discards. So the branch the
+//        image took is conditioned on the callee's return type, and this
+//        tree's VC6 always picks `pop ecx` at a function's last statement.
+//        Reaching `add esp, 4` therefore needs a VOID-returning declaration
+//        for 0x005D4510, which would be a forwarder at an address the image
+//        does not call (call_diff resolves E8 targets by address). Four body
+//        spellings measured, all 4 of 5: `(void)mem_get(size)`, an explicit
+//        `return;`, a discarded `const void *block` local, and
+//        `static_cast<size_t>` on the argument - identical bytes every time.
 */
 void Caviar::vx_malloc(unsigned long size) {
     mem_get(size);
@@ -1011,12 +1039,25 @@ Purpose: Install the six vx_* file-IO callbacks and vet the machine's CPU rank.
 //        `mov edi, dword ptr [var]` where the image folds `mov edi, 0x9c0b80`
 //        (listing_diff, /O2 /GX). Macros, not const variables, for the slots.
 // TRIED: `algo_flag == 0 || 5 < algo_flag` compiles `test al,al; je` against
-//        the image's `test al,al; jbe` - same condition, one-byte encoding;
-//        the six-way && chain and both shared error tails match.
-// TRIED: the image pushes edi in the prologue; this tree's memcpy intrinsic
-//        push/pops edi around its own rep movsd (8 instruction slots), and no
-//        source spelling tried made VC6 dedicate edi as a callee-saved
-//        register here.
+//        the image's `test al,al; jbe` - SOLVED 2026-09-03: the test is the
+//        RANGE form `CaviarVoxelAlgoFlag <= 0 || 5 < CaviarVoxelAlgoFlag` on
+//        the global directly (init_class's copy of the same check reads
+//        `cmp al,bl; jbe`, also an unsigned `<= 0`). With the old
+//        `const uint8_t algo_flag` local the front end folded `<= 0` back to
+//        `== 0`; testing the global does not. Remaining after that: ONLY the
+//        edi save placement (6 differing runs, all edi).
+// TRIED: the image pushes edi in the save block (instruction 3, hoisted above
+//        the first `jne` by scheduling) and pops it on all four return paths,
+//        while this tree's memcpy intrinsic push/pops edi around its own
+//        rep movsd - image 58 instructions, this tree 55. No spelling tried
+//        made VC6 dedicate edi as a callee-saved register here: caching the
+//        table pointer in a local (`void *table = vox_callback_table;`)
+//        folds away and changes nothing.
+// TRIED: at the frameless sets this body is 8 of 58 with only those edi runs
+//        differing, against 1 of 58 at the /Oy- sets - but the /Oy- variant
+//        scores 0.941 similar against 0.920 and `measure` picks it, so the
+//        banked tier reads worse than the body is. Same pattern on 0x63AF60
+//        (7 of 96 frameless, 0 of 96 /Oy-).
 */
 char __cdecl vox_init_callbacks(unsigned long *callbacks, int flag) {
     if (callbacks == 0) {
@@ -1027,8 +1068,11 @@ char __cdecl vox_init_callbacks(unsigned long *callbacks, int flag) {
         callbacks[3] != 0 && callbacks[4] != 0 && callbacks[5] != 0) {
         memcpy(vox_callback_table, callbacks, 6 * sizeof(unsigned long));
         vox_detect_cpu();
-        const uint8_t algo_flag = CaviarVoxelAlgoFlag;
-        if (algo_flag == 0 || 5 < algo_flag) {
+        // The RANGE form, not `== 0`: the image branches `test al,al; jbe`
+        // here and `cmp al,bl; jbe` in init_class - an unsigned `<= 0`
+        // comparison, not an equality test. Spelled `== 0`, VC6 emits `je`
+        // and the byte differs.
+        if (CaviarVoxelAlgoFlag <= 0 || 5 < CaviarVoxelAlgoFlag) {
             vox_stage_error(vox_msg_cpu_unsupported);
             return 1;
         }
@@ -1058,6 +1102,14 @@ Purpose: Fill a destination with a 16-bit colour repeated `count` times. The
 //        its `and eax, 0xffff` DEFERRED to the fold is not reachable from
 //        ANSI C++: an `unsigned short` parameter movzx's (prior artifact
 //        note), and a pun through the parameter's address widened anyway.
+//        MEASURED 2026-09-03 and still not reachable: narrowing the parameter
+//        through an `unsigned short` local (`unsigned short v = (unsigned
+//        short)value;` then `(v << 16) + v`, the promotion supplying the mask
+//        the image's `and eax,0xffff` performs) - const and non-const both -
+//        still compiles `mov ecx, dword ptr [esp+8]; and ecx,0xffff`, a FULL
+//        dword load with the mask folded in. VC6 narrows the mask, not the
+//        load. It did cut the /O2 body 106 -> 102 instructions, so the fold
+//        is a shade closer, but the 16-bit load itself stays out of reach.
 // TRIED: the odd-path dword loop as a plain `while` and as a guarded
 //        `do/while` both drift from the image's shr/je + dec/jne loop - VC6
 //        converts the store loop to rep stosd (+ push/pop edi) or lea forms,
