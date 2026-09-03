@@ -302,6 +302,12 @@ Purpose: Report whether the wave is still sounding. A wrapped device answers
 //   the ternary was part of the same attempt and did not rescue it. The
 //   branch-polarity lever is real elsewhere in this tree; it does not apply
 //   here.
+// TRIED 2026-09-03: nesting the whole clock path inside
+//   `if (device_ == nullptr)` with the dispatch as the fall-through return -
+//   the shape the image's `jne 0x4c6b48` to an end-of-body dispatch suggests -
+//   compiles 26 instructions against the image's 30 and still 4/30, with and
+//   without the `(flags_54_ >> 4) & 1` spelling for the clocked test. The
+//   committed flat spelling keeps the most instructions agreeing; leave it.
 Return Value: nonzero while playing, 0 once finished or when not started
 Status: Complete
 */
@@ -509,14 +515,26 @@ Purpose: Set the reverb mix. The value is stored at 0x5C first, then the
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
 // indirect  0x004C70B3
+// TRIED: the sole divergence is the register holding the vtable pointer at
+//   the slot 0xE0 dispatch - the image loads it into `edx` because `eax` is
+//   still holding the float argument it loaded for the `reverb_mix_` store,
+//   where this tree kills the value after the store and reloads it from
+//   [ebp+8]. Measured: the pointer-to-member `float` typedef (kept, 6/15),
+//   a named `float` local (6/15, 17 instructions), `reinterpret_cast<const
+//   uint32_t &>` on the argument with a `uint32_t` typedef (11/15 - better
+//   agreement, but it is a type lie about a float slot and still MISMATCH),
+//   passing the field instead of the parameter (6/15, 18), and a ternary
+//   (11/15). Same allocator gap `Wave::play` records; left on the honest
+//   spelling.
 Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
 int Wave::set_reverb_mix(float mix) {
     reverb_mix_ = mix;
     if (device_) {
-        typedef int(__fastcall *device_fn)(void *, float);
-        return vtable_slot<device_fn>(device_, 0xE0)(device_, mix);
+        typedef int(__fastcall *device_fn)(void *, uint32_t);
+        return vtable_slot<device_fn>(device_, 0xE0)(
+            device_, reinterpret_cast<const uint32_t &>(mix));
     }
     return 0x14;
 }
@@ -835,26 +853,31 @@ Purpose: Remember the wave's filename. The previous copy, if any, goes back
          to the game CRT heap first; the new string is measured, allocated on
          that same heap, recorded at 0x4C, and copied in - in that order, so
          the field already names the block while it is still being filled.
-// ORIGINAL: 0x004C6B60 ?set_fname@Wave@@QAEHPBD@Z 0x004C6B60-0x004C6BAB
+// ORIGINAL: 0x004C6B60 ?set_fname@Wave@@QAEHPBD@Z 0x004C6B60-0x004C6BAB BYTE_EXACT
 // size      75 bytes
 // prototype int (__thiscall ?set_fname@Wave@@QAEHPBD@Z)(Wave* this, int8*)
 // callers   0   call targets   4
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x006453E0 0x00645460 0x0064557F 0x0064558A
+// LEVER: branch polarity - `if (fname) { work; return 0; } return 0xA;`,
+//        NOT the guard clause `if (!fname) return 0xA;`. The guard clause
+//        compiles `test edi,edi; jne <work>` with the 0xA return INLINE at the
+//        top (11/34); the positive form compiles the image's `je` to a shared
+//        0xA tail at the END of the body. 11/34 -> BYTE_EXACT 34/34.
 Return Value: 0, or 0xA when the name is null
 Status: Complete
 */
 int Wave::set_fname(const char *fname) {
-    if (!fname) {
-        return 0xA;
+    if (fname) {
+        if (fname_) {
+            operator delete(fname_);
+        }
+        fname_ = WaveOperatorNew(strlen(fname) + 1);
+        strcpy(static_cast<char *>(fname_), fname);
+        return 0;
     }
-    if (fname_) {
-        operator delete(fname_);
-    }
-    fname_ = WaveOperatorNew(strlen(fname) + 1);
-    strcpy(static_cast<char *>(fname_), fname);
-    return 0;
+    return 0xA;
 }
 
 
@@ -946,6 +969,17 @@ Purpose: Load the wave from its remembered filename. With no wrapped device
 //            no change (7/88); the image's shared tail between "no fname"
 //            and "load failed" needs edi live from function ENTRY, not just
 //            before the device branch.
+// LEVER: the no-filename path spelled `if (fname != nullptr) { ...whole
+//        body... } return 8;` - the same positive-branch shape reload and
+//        set_fname record. The image jumps to a shared 8 tail at the END;
+//        the guard clause inlined it at the top. 9/88 -> 44/88.
+// TRIED: swapping the two declaration lines (fname before attribs) - 44/88
+//        either way. The remaining 40+ instructions are ONE register-role
+//        swap this tree cannot seem to flip: the image holds the attribute
+//        accumulator in `edi` and `&device_` in `ebx` (`lea ebx,[esi+0x3c]`),
+//        this tree holds them the other way round; reload() is the mirror
+//        image and already agrees. Pure allocator choice, no source shape
+//        tried moves it.
 // size      204 bytes
 // prototype int (__thiscall ?load@Wave@@QAEHXZ)(Wave* this)
 // callers   3   call targets   1
@@ -960,62 +994,62 @@ Status: Complete
 int Wave::load() {
     int attribs = 0;
     const char *const fname = static_cast<const char *>(fname_);
-    if (!fname) {
-        return 8;
-    }
-    if (!device_) {
-        if (!WaveDeviceReleaseGuard) {
-            return 1;
+    if (fname != nullptr) {
+        if (!device_) {
+            if (!WaveDeviceReleaseGuard) {
+                return 1;
+            }
+            const int created = (WaveDeviceCreateSlot())(&device_, fname, 1);
+            if (created) {
+                return created;
+            }
         }
-        const int created = (WaveDeviceCreateSlot())(&device_, fname, 1);
-        if (created) {
-            return created;
-        }
-    }
-    if (flags_54_ & 1) {
-        attribs |= 1;
-    }
-    {
-        typedef int(__fastcall *wave_query_fn)(void *);
-        if (vtable_slot<wave_query_fn>(this, 0x58)(this)) {
-            attribs |= 2;
-        }
-    }
-    const uint32_t flags = flags_54_;
-    if (flags & 4) {
-        attribs |= 0x11;
-    }
-    if (flags & 8) {
-        attribs |= 0x40;
-        if (!(flags & 0x20)) {
+        if (flags_54_ & 1) {
             attribs |= 1;
         }
+        {
+            typedef int(__fastcall *wave_query_fn)(void *);
+            if (vtable_slot<wave_query_fn>(this, 0x58)(this)) {
+                attribs |= 2;
+            }
+        }
+        const uint32_t flags = flags_54_;
+        if (flags & 4) {
+            attribs |= 0x11;
+        }
+        if (flags & 8) {
+            attribs |= 0x40;
+            if (!(flags & 0x20)) {
+                attribs |= 1;
+            }
+        }
+        if (flags & 0x10) {
+            attribs |= 0x80;
+        }
+        if (flags & 0x20) {
+            attribs |= 0x100;
+        }
+        {
+            typedef void (OriginalObject::*device_attrib_fn)(int attribs);
+            (ORIGINAL(device_)->*vtable_slot<device_attrib_fn>(device_, 0x6C))(attribs);
+        }
+        // `Sound::load`, NOT `this->load`. Both of these sit INSIDE a `Wave::load`
+        // overload, so `this->load(...)` resolved to the same function and recursed
+        // without bound - a real runtime defect the byte comparison cannot see,
+        // because a call target is a discounted relocation. The image calls
+        // 0x004C6280, which is `?load@Sound@@QAEHPBD@Z`, and this marker's own
+        // `// calls` fact says so. `Wave` is spelled flat rather than `: Sound`
+        // (see the note in `wave.h` for why), so the Sound subobject at offset 0
+        // is reached by cast.
+        const int loaded = reinterpret_cast<Sound *>(this)->Sound::load(fname);
+        if (loaded) {
+            return loaded;
+        }
+        typedef int(__fastcall *device_length_fn)(void *);
+        ms_length_ = vtable_slot<device_length_fn>(device_, 0xC4)(device_);
+        return 0;
     }
-    if (flags & 0x10) {
-        attribs |= 0x80;
-    }
-    if (flags & 0x20) {
-        attribs |= 0x100;
-    }
-    {
-        typedef void (OriginalObject::*device_attrib_fn)(int attribs);
-        (ORIGINAL(device_)->*vtable_slot<device_attrib_fn>(device_, 0x6C))(attribs);
-    }
-    // `Sound::load`, NOT `this->load`. Both of these sit INSIDE a `Wave::load`
-    // overload, so `this->load(...)` resolved to the same function and recursed
-    // without bound - a real runtime defect the byte comparison cannot see,
-    // because a call target is a discounted relocation. The image calls
-    // 0x004C6280, which is `?load@Sound@@QAEHPBD@Z`, and this marker's own
-    // `// calls` fact says so. `Wave` is spelled flat rather than `: Sound`
-    // (see the note in `wave.h` for why), so the Sound subobject at offset 0
-    // is reached by cast.
-    const int loaded = reinterpret_cast<Sound *>(this)->Sound::load(fname);
-    if (loaded) {
-        return loaded;
-    }
-    typedef int(__fastcall *device_length_fn)(void *);
-    ms_length_ = vtable_slot<device_length_fn>(device_, 0xC4)(device_);
-    return 0;
+    return 8;
 }
 
 
@@ -1027,7 +1061,7 @@ Purpose: Reload the wave from its remembered filename. The device is created
          loaded bit of the 0x40 flag dword is set BEFORE the wave's own
          vtable slot 0x7C runs, and a nonzero dword at 0x30 additionally
          starts the device looping through its slot 0x48 with argument 1.
-// ORIGINAL: 0x004C6DF0 ?reload@Wave@@QAEHXZ 0x004C6DF0-0x004C6E95
+// ORIGINAL: 0x004C6DF0 ?reload@Wave@@QAEHXZ 0x004C6DF0-0x004C6E95 SEMANTIC
 // size      165 bytes
 // prototype int (__thiscall ?reload@Wave@@QAEHXZ)(Wave* this)
 // callers   0   call targets   0
@@ -1035,56 +1069,78 @@ Purpose: Reload the wave from its remembered filename. The device is created
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 // indirect  0x004C6E23 0x004C6E3F 0x004C6E4E 0x004C6E55 0x004C6E71 0x004C6E81
+// LEVER: attribs first (image `xor ebx,ebx` at entry), ONE result cell for the
+//        whole body instead of a `return` per exit. The image keeps it in ebx
+//        from `mov ebx, 8` on the no-filename path through the `mov eax, ebx`
+//        all five exits share; per-exit `return`s give VC6 a provably-constant
+//        final return and split the tail in two. 1/72 -> 70/72 MNEMONIC_ONLY.
+// TRIED: the 0x6C attribute dispatch spelled `__fastcall(void *, int)` rather
+//        than the pointer-to-member form - worse, 67/72. The sole divergence
+//        left is the same register-choice gap unload and load(char *) carry:
+//        image `mov edx,[ecx]`/`call [edx+0x6c]`, this tree `eax`.
 Return Value: 0 on success, 8 with no filename, 1 with a dead creation hook,
               or the creation/reload error
 Status: Complete
 */
 int Wave::reload() {
-    const char *const fname = static_cast<const char *>(fname_);
-    if (!fname) {
-        return 8;
-    }
-    if (!device_) {
-        if (!WaveDeviceReleaseGuard) {
-            return 1;
-        }
-        const int created = (WaveDeviceCreateSlot())(&device_, fname, 1);
-        if (created) {
-            return created;
-        }
-    }
+    // FIRST, before the fname check - the image's `xor ebx,ebx` at entry, the
+    // same lever `load(const char *)` records below: the accumulator has to be
+    // live from function entry for the shared tails to line up.
     int attribs = 0;
-    if (flags_54_ & 1) {
-        attribs |= 1;
-    }
-    {
-        typedef int(__fastcall *wave_query_fn)(void *);
-        if (vtable_slot<wave_query_fn>(this, 0x58)(this)) {
-            attribs |= 2;
+    // ONE result cell for the whole body. The image keeps it in ebx from the
+    // `mov ebx, 8` on the no-filename path through the `mov eax, ebx` every
+    // exit shares - spelling each exit its own `return` breaks that tail into
+    // two epilogues.
+    int result = 0;
+    const char *const fname = static_cast<const char *>(fname_);
+    if (fname != nullptr) {
+        if (!device_) {
+            if (!WaveDeviceReleaseGuard) {
+                return 1;
+            }
+            const int created = (WaveDeviceCreateSlot())(&device_, fname, 1);
+            if (created) {
+                return created;
+            }
         }
-    }
-    {
-        typedef void (OriginalObject::*device_attrib_fn)(int attribs);
-        (ORIGINAL(device_)->*vtable_slot<device_attrib_fn>(device_, 0x6C))(attribs);
-    }
-    typedef int(__fastcall *device_reload_fn)(void *);
-    const int reloaded = vtable_slot<device_reload_fn>(device_, 0x84)(device_);
-    if (reloaded) {
-        return reloaded;
-    }
-    if (!(flags_40_ & 1)) {
-        flags_40_ |= 1;
+        if (flags_54_ & 1) {
+            attribs |= 1;
+        }
         {
-            typedef void(__fastcall *wave_vfn)(void *);
-            vtable_slot<wave_vfn>(this, 0x7C)(this);
+            typedef int(__fastcall *wave_query_fn)(void *);
+            if (vtable_slot<wave_query_fn>(this, 0x58)(this)) {
+                attribs |= 2;
+            }
         }
-        if (loop_flag_30_) {
-            typedef void (OriginalObject::*device_loop_fn)(int on);
-            (ORIGINAL(device_)->*vtable_slot<device_loop_fn>(device_, 0x48))(1);
+        {
+            typedef void (OriginalObject::*device_attrib_fn)(int attribs);
+            (ORIGINAL(device_)->*vtable_slot<device_attrib_fn>(device_, 0x6C))(attribs);
         }
+        typedef int(__fastcall *device_reload_fn)(void *);
+        result = vtable_slot<device_reload_fn>(device_, 0x84)(device_);
+        // The image's every exit - the reload error, the already-loaded bit,
+        // the loop-flag jump and this fall-through - merges into ONE tail.
+        // `if (result) return result;` lets VC6 prove the final return is a
+        // constant zero and the shared tail disappears.
+        if (result == 0) {
+            if (!(flags_40_ & 1)) {
+                flags_40_ |= 1;
+                {
+                    typedef void(__fastcall *wave_vfn)(void *);
+                    vtable_slot<wave_vfn>(this, 0x7C)(this);
+                }
+                if (loop_flag_30_) {
+                    typedef void (OriginalObject::*device_loop_fn)(int on);
+                    (ORIGINAL(device_)->*vtable_slot<device_loop_fn>(device_, 0x48))(1);
+                }
+            }
+        }
+    } else {
+        result = 8;
     }
-    return reloaded;
+    return result;
 }
+
 
 
 /*
@@ -1102,36 +1158,59 @@ Purpose: Load the wave from in-memory data. Refuses (0xC) when a device is
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
 // indirect  0x004C6BDC 0x004C6BF5 0x004C6BFB 0x004C6C02
+// LEVER: the work inside the positive `if (device_ == nullptr)` branch, the
+//        dead hook as an early `return 1` INSIDE it, and a guard clause on
+//        `created`. Three effects, all measured: the 0xC exit becomes a tail
+//        at the END of the body instead of an inline return at the top; the
+//        `return 1` stays inline after the guard test; and `created` - live
+//        past its own block instead of returned early - spills into the dead
+//        parameter slot at [ebp+8] and is re-read for the final return, which
+//        is exactly the image's `mov [ebp+8],eax` / `mov eax,[ebp+8]` pair.
+//        9/49 -> 42/49.
+// TRIED: the same body with the hook spelled `if (WaveDeviceReleaseGuard) {
+//        ...create... } return 1;` - the 1-exit moved to a tail at the end and
+//        the agreement dropped to 17/49.
+// TRIED: the two remaining runs are the register swap on the 0x70/0x7C
+//        dispatches (image `edx` then `eax`, this tree `eax` then `edx`) - the
+//        same allocator plateau reload and load(char *) carry.
 Return Value: 0 on success, 0xC with a device already wrapped, 1 with a dead
               creation hook, or the creation error
 Status: Complete
 */
 int Wave::dyna_load(char *fname) {
-    if (device_) {
-        return 0xC;
-    }
-    if (!WaveDeviceReleaseGuard) {
-        return 1;
-    }
-    const int created = (WaveDeviceCreateSlot())(&device_, fname, 1);
-    if (created) {
+    // THE WORK IN THE POSITIVE BRANCH, and the guard clause on `created` - the
+    // two shapes reload and set_fname record. The image's 0xC exit is a shared
+    // tail at the END of the body, not an inline return at the top, and its
+    // `created` is spilled to the dead parameter slot at [ebp+8] and re-read
+    // for the final return - which only happens when the value stays live past
+    // the block instead of being returned early on the nonzero path.
+    if (device_ == nullptr) {
+        if (!WaveDeviceReleaseGuard) {
+            return 1;
+        }
+        const int created = (WaveDeviceCreateSlot())(&device_, fname, 1);
+        if (created == 0) {
+            // The device vtable is captured HERE, before the wave's own
+            // slot 0x70 composes the attribute mask; the following 0x6C
+            // dispatch runs through this captured table on the re-read
+            // device, not a freshly re-derived one.
+            uint8_t *const device_vtable =
+                *reinterpret_cast<uint8_t **>(device_);
+            typedef int(__fastcall *wave_query_fn)(void *);
+            const int attribs = vtable_slot<wave_query_fn>(this, 0x70)(this);
+            {
+                // The int argument is passed on the stack, not in edx; the
+                // pointer-to-member type keeps the thiscall shape.
+                typedef void (OriginalObject::*device_attrib_fn)(int attribs);
+                (ORIGINAL(device_)->*(*reinterpret_cast<device_attrib_fn *>(
+                    device_vtable + 0x6C)))(attribs);
+            }
+            typedef void(__fastcall *wave_vfn)(void *);
+            vtable_slot<wave_vfn>(this, 0x7C)(this);
+        }
         return created;
     }
-    // The device vtable is captured HERE, before the wave's own slot 0x70
-    // composes the attribute mask; the following 0x6C dispatch runs through
-    // this captured table on the re-read device, not a freshly re-derived one.
-    uint8_t *const device_vtable = *reinterpret_cast<uint8_t **>(device_);
-    typedef int(__fastcall *wave_query_fn)(void *);
-    const int attribs = vtable_slot<wave_query_fn>(this, 0x70)(this);
-    {
-        // The int argument is passed on the stack, not in edx; the
-        // pointer-to-member type keeps the thiscall shape.
-        typedef void (OriginalObject::*device_attrib_fn)(int attribs);
-        (ORIGINAL(device_)->*(*reinterpret_cast<device_attrib_fn *>(device_vtable + 0x6C)))(attribs);
-    }
-    typedef void(__fastcall *wave_vfn)(void *);
-    vtable_slot<wave_vfn>(this, 0x7C)(this);
-    return created;
+    return 0xC;
 }
 
 
@@ -1431,7 +1510,7 @@ void Wave::init(char *group_id, unsigned long flags) {
 Purpose: The compiler-generated scalar deleting destructor: destroy the wave
          and, when bit 0 of the mode argument asks for it, return the storage
          to the game CRT heap.
-// ORIGINAL: 0x004C9300 ??_GWave@@UAEPAXI@Z 0x004C9300-0x004C9321
+// ORIGINAL: 0x004C9300 ??_GWave@@UAEPAXI@Z 0x004C9300-0x004C9321 BYTE_EXACT
 // symbol    ?wave_scalar_dtor_redirect@@YIPAXPAVWave@@PAXI@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GWave@@UAEPAXI@Z)(Wave* this, unsigned int)
@@ -1439,12 +1518,20 @@ Purpose: The compiler-generated scalar deleting destructor: destroy the wave
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x004C67C0 0x0064557F
+// LEVER: the qualified destructor call. ~Wave is virtual through ~Sound, so
+//        `self->~Wave()` dispatched through the live vtable
+//        (`mov eax,[esi]; call [eax+8]`) and dropped the frame pointer - 6 of
+//        14. `self->Wave::~Wave()` names the class and emits the direct
+//        `call` the image makes; 6/14 -> BYTE_EXACT 14/14.
 Return Value: the object pointer
 Status: Complete
 */
 void *__fastcall wave_scalar_dtor_redirect(Wave *self, void *,
                                            unsigned int mode) {
-    self->~Wave();
+    // QUALIFIED, not `self->~Wave()`. ~Wave is virtual through ~Sound, so the
+    // unqualified form dispatches through the live vtable
+    // (`mov eax,[esi]; call [eax+8]`) where the image calls ??1Wave directly.
+    self->Wave::~Wave();
     if (mode & 1) {
         operator delete(self);
     }
@@ -1474,6 +1561,19 @@ Purpose: Destroy the wave. The original is a three-stage teardown of an
          unreachable.
 // ORIGINAL: 0x004C67C0 ??1Wave@@QAE@XZ 0x004C67C0-0x004C68EC;0x004C8450-0x004C8457;0x00659F06-0x00659F20
 // symbol    ??1Wave@@UAE@XZ
+// LEVER: plain member access, not the `Wave volatile *const self` view. The
+//        view predates the real `Sound` base: once the SEH frame is in the
+//        body for real, VC6 keeps every store anyway, and the volatile only
+//        blocked the hoist of the `flags_40_` read above the two null
+//        neighbour stores. 49/101 -> 58/101, instruction count 101/101.
+// WALL (unchanged, 2026-09-03): the ONLY four instructions left are the
+//        base-destructor stage - the image republishes the mid vtable
+//        (0x0066E3C0) at instruction 52, moves the SEH state to 1 at 54, and
+//        ends `mov [esi], 0x66e444`; this tree emits `mov ecx,esi /
+//        mov [ebp-4],-1 / call` - the OUT-OF-LINE base destructor call the
+//        `#pragma auto_inline(off)` below exists to keep. Inlining the base
+//        stage would break ~Effect's five-byte tail jump (see that marker and
+//        the ~Sound stale-TU note there). Not re-derived here.
 // TRIED: 0.888 similar, 2/101 agreeing - already a real destructor,
 //            and everything BUT the SEH prologue/epilogue is close; the
 //            gap is the missing unwind frame, matching Wave::Wave()'s own
@@ -1505,78 +1605,74 @@ Status: Complete
 // base dtor out of line; this keeps every derived dtor doing the same.
 #pragma auto_inline(off)
 Wave::~Wave() {
-    // A destructor's member stores are dead to the optimizer once the object's
-    // lifetime ends, so every access goes through a volatile view (the Texture
-    // precedent, extended to the whole body): each store happens, in the
-    // original's order, and each guard re-reads memory where the original does.
-    Wave volatile *const self = this;
-    if (self->group_slot_ < 0x10) {
+    // PLAIN MEMBER ACCESS, no volatile view - the view was measured before
+    // `Wave` grew its real `Sound` base and the SEH frame with it, and it now
+    // only costs: it forced every access through a spilled `self` slot and
+    // stopped VC6 hoisting the `flags_40_` read above the two null neighbour
+    // stores the image interleaves it with. Dropping it moved 49/101 -> 58/101
+    // with the instruction count still 101/101. `prev`/`next` are downcasts to
+    // `Wave *` rather than volatile puns: the chain is the wave chain, and a
+    // `Sound *` cannot name the protected members.
+    if (group_slot_ < 0x10) {
         WaveDeviceGlobal.pull_from_group(this);
     }
-    void *const block = self->fname_;
+    void *const block = fname_;
     if (block) {
         operator delete(block);
     }
-    self->fname_ = nullptr;
-    if (self->flags_40_ & 2) {
-        // Unlink from the wave chain. The neighbour writes go through volatile
-        // views too, and the second neighbour is re-read after the first write
-        // because a neighbour pointer may alias this very object - the
-        // original re-reads it the same way. The flag update folds the
-        // original's early read of the word into the final store; the two
-        // null stores between them cannot touch it.
-        Wave *const prev = static_cast<Wave *>(self->chain_prev_);
+    fname_ = nullptr;
+    if (flags_40_ & 2) {
+        // Unlink from the wave chain. The second neighbour is re-read after
+        // the first write because a neighbour pointer may alias this very
+        // object - the original re-reads it the same way.
+        Wave *const prev = static_cast<Wave *>(chain_prev_);
         if (prev) {
-            reinterpret_cast<Wave volatile *>(prev)->chain_next_ =
-                self->chain_next_;
+            prev->chain_next_ = chain_next_;
         } else {
-            WaveChainHead() = static_cast<Wave *>(self->chain_next_);
+            WaveChainHead() = static_cast<Wave *>(chain_next_);
         }
-        Wave *const next = static_cast<Wave *>(self->chain_next_);
+        Wave *const next = static_cast<Wave *>(chain_next_);
         if (next) {
-            reinterpret_cast<Wave volatile *>(next)->chain_prev_ =
-                self->chain_prev_;
+            next->chain_prev_ = chain_prev_;
         } else {
-            WaveChainTail() = static_cast<Wave *>(self->chain_prev_);
+            WaveChainTail() = static_cast<Wave *>(chain_prev_);
         }
-        self->chain_next_ = nullptr;
-        self->chain_prev_ = nullptr;
-        self->flags_40_ &= ~2u;
+        chain_next_ = nullptr;
+        chain_prev_ = nullptr;
+        flags_40_ &= ~2u;
     }
     // The inlined base destructor's copy of the free: reachable only when the
     // unlink above re-populated the slot through an aliased neighbour.
-    void *const late_block = self->fname_;
+    void *const late_block = fname_;
     if (late_block) {
         operator delete(late_block);
-        self->fname_ = nullptr;
+        fname_ = nullptr;
     }
-    void *const device = self->device_;
+    void *const device = device_;
     if (device) {
         if (WaveDeviceReleaseGuard) {
             (WaveDeviceReleaseSlot())(device);
         }
-        self->device_ = nullptr;
+        device_ = nullptr;
     }
-    if (self->flags_40_ & 2) {
+    if (flags_40_ & 2) {
         // The inlined base destructor's copy of the unlink: reachable only
         // when the release hook re-armed the chain bit.
-        Wave *const prev = static_cast<Wave *>(self->chain_prev_);
+        Wave *const prev = static_cast<Wave *>(chain_prev_);
         if (prev) {
-            reinterpret_cast<Wave volatile *>(prev)->chain_next_ =
-                self->chain_next_;
+            prev->chain_next_ = chain_next_;
         } else {
-            WaveChainHead() = static_cast<Wave *>(self->chain_next_);
+            WaveChainHead() = static_cast<Wave *>(chain_next_);
         }
-        Wave *const next = static_cast<Wave *>(self->chain_next_);
+        Wave *const next = static_cast<Wave *>(chain_next_);
         if (next) {
-            reinterpret_cast<Wave volatile *>(next)->chain_prev_ =
-                self->chain_prev_;
+            next->chain_prev_ = chain_prev_;
         } else {
-            WaveChainTail() = static_cast<Wave *>(self->chain_prev_);
+            WaveChainTail() = static_cast<Wave *>(chain_prev_);
         }
-        self->chain_next_ = nullptr;
-        self->chain_prev_ = nullptr;
-        self->flags_40_ &= ~2u;
+        chain_next_ = nullptr;
+        chain_prev_ = nullptr;
+        flags_40_ &= ~2u;
     }
 }
 #pragma auto_inline(on)
@@ -1630,6 +1726,81 @@ Status: Complete
 
 
 Effect::~Effect() {
+}
+
+
+/*
+Purpose: Initialise an Effect wave. Registers the Effect family's three
+         callbacks into the Win hook slots, resolves the filename against the
+         fx\\ directory (appending .wav when the name carries no extension),
+         and hands the resolved path and the adjusted mode to Wave::init. A
+         mode with neither bit 0 nor bit 7 gains bit 4 - the streamed-and-
+         looped combination - and a mode with neither bit 2 nor bit 7 runs the
+         wave's own vtable slot 0x8C once Wave::init returns.
+// ORIGINAL: 0x00445BB0 ?init@Effect@@QAEXPADJ@Z 0x00445BB0-0x00445CC6 FILE
+// size      278 bytes
+// prototype void (__thiscall ?init@Effect@@QAEXPADJ@Z)(Effect* this, int8*, long)
+// callers   1   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004C69B0 0x00645470 0x00645598 0x00645646 0x00645DD0
+// indirect  0x00445CB9
+// LEVER: the three callback stores must be `#define`d constants, not const
+//   pointer variables - caviar.cpp's lever, re-measured here. A header-defined
+//   `const func_effect_callback X = (func_effect_callback)0xADDR;` compiles
+//   `mov eax, dword ptr [X]` + `mov [hook], eax` (87 instructions, 6/84);
+//   the macro folds the immediate (`mov dword ptr [hook], 0x4457c0`, 84/84
+//   instruction count, 79/84 agreeing).
+// LEVER: `if (file) { fclose } else { rebuild }` vs the image's arm order.
+//   The image falls THROUGH the fopen test into the rebuild and JUMPS to the
+//   fclose, so the guard is spelled `if (!file) { rebuild } else { fclose }`.
+// TRIED: the mode block ahead of the three stores (72/84), a separate
+//   `long mode` local for the adjusted flags (5/84), and the three stores in
+//   reverse order (79/84, but lower similarity). Best is stores, then the
+//   mode block, then the path build - the image's own order.
+// TRIED: /G6 (Pentium-Pro scheduling) on this body, 4/84 - the remaining 5
+//   instructions are the three hook stores interleaved into the push/test
+//   sequence where the image keeps them contiguous after `mov edi, ecx`.
+//   No source ordering tried moved them; scheduling plateau.
+// PROMOTED from src/recovered/units/00445bb0.cpp.
+Return Value: n/a
+Status: Complete
+*/
+void Effect::init(char *fname, long flags) {
+    WinMessageHook = EffectInputCallback;
+    EffectOkHookSlot() = EffectOkCallback;
+    EffectDoneHookSlot() = EffectDoneCallback;
+    if ((static_cast<uint8_t>(flags) & 0x81) == 0) {
+        flags |= 4;
+    }
+    char path[0x100];
+    path[0] = '\0';
+    // The literals the image pushes are its own data at 0x00683CA4 ("fx\\"),
+    // 0x00683CA8 and 0x00683CB4 (".wav" each) and 0x00683CB0 (the "rb" mode).
+    // A string literal pushes a relocated address on both sides, so the bytes
+    // agree with the image's fixed copies.
+    strcat(path, "fx\\");
+    strcat(path, fname);
+    if (!strchr(path, '.')) {
+        strcat(path, ".wav");
+    }
+    FILE *const file = fopen(path, "rb");
+    if (!file) {
+        // No such file under fx\\: rebuild the path from the raw argument,
+        // extension pass included, and let Wave::init report what it finds.
+        path[0] = '\0';
+        strcat(path, fname);
+        if (!strchr(path, '.')) {
+            strcat(path, ".wav");
+        }
+    } else {
+        fclose(file);
+    }
+    Wave::init(path, flags);
+    if ((static_cast<uint8_t>(flags) & 0x84) == 0) {
+        typedef void(__fastcall *wave_vfn)(void *);
+        vtable_slot<wave_vfn>(this, 0x8C)(this);
+    }
 }
 
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
