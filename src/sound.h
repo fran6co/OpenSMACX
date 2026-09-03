@@ -133,49 +133,37 @@ int __cdecl init_sound(void *window, unsigned long backends);
 int __cdecl load_sound_dll();
 
 // The sound DLL's load state, at the addresses the original gave them.
-// SoundDllProcs is the global instance at 0x0090DB24: eleven export slots
-// load_sound_dll fills in ordinal order (GetProcAddress ordinal 1 lands at
-// index 0) and zeroes as a block when the load fails. The tree reads the
-// slots individually through typed accessors - wave.h's
-// WaveDeviceCreateSlot and WaveDeviceReleaseSlot are indexes 0 and 1,
-// wave_device.h's factory and destroy slots are 4 and 5, and
-// SoundDllVersionSlot below is index 10, the version probe load_sound_dll
-// checks the game's sound headers against. 0x0090DB78 holds the HMODULE
-// LoadLibraryA produces - zero until it runs. Accessors rather than real
-// storage, like those slot bindings: unrecovered image code reads these
-// beside the tree, so they stay image-addressed. The table ends where the
-// Wave_In_Device singleton begins (sounddevice.h, 0x0090DB50), and the
-// module handle is a separate global above it - neither is a field of the
-// other.
+// THE SOUND DLL'S EXPORT TABLE AND MODULE HANDLE - plain global
+// instances, the original's own spelling (per direction 2026-09-03, after
+// accessor-function and name-macro interims both measured wrong-shaped
+// semantically however they measured bytewise). load_sound_dll fills
+// SoundDllModule once (null means the DLL is absent or was unloaded) and
+// keeps the LoadLibraryA reference there; SoundDllProcs is the eleven
+// slots it fills in ordinal order (GetProcAddress ordinal 1 lands at
+// index 0) and zeroes as a block on failure. The tree reads slots
+// individually by role - wave.h's WaveDeviceCreateSlot/ReleaseSlot are
+// indexes 0/1, wave_device.h's factory/destroy slots 4/5, and the version
+// probe init reads at index 10. Definitions in sound_loader.cpp.
+//
+// BYTES: a use is one deref with the address a relocation to our storage -
+// the image's own shape with its own relocation - which is why the natural
+// spelling is also the faithful one (init_sound BYTE_EXACT through it).
+// What measurably does NOT work is any BINDING whose value is the image's
+// address: a const-pointer or reference global double-derefs because VC6
+// never folds it (mov eax,[binding]; cmp [eax],0 against the image's one
+// load), and the array reference is C2101. The image's own readers of the
+// 0x0090DB24/0x0090DB78 words (the unrecovered 0x4C5D8E/0x4C5F68 bands)
+// read the shipped binary's storage until they are recovered.
 typedef void *SoundDllProcsTable[11];
-// The table and the module handle, bound at their image addresses by
-// NAME MACROS - the tree's folding idiom (caviar.cpp's #define'd address
-// constants), and the only non-function spelling that reproduces the
-// image's direct addressing. NO GLOBAL SPELLING WORKS, MEASURED 2026-09-02:
-// `void **const p = (void **)0x0090DB24;` - static or not - double-derefs
-// (`mov eax,[p]; cmp [eax],0` against the image's `mov eax,[0x90DB24]`),
-// the scalar reference `HMODULE &m = *(HMODULE *)0x0090DB78;` double-derefs
-// identically, and the array reference is C2101 at the declaration. The
-// macro text IS the folded expression, so every use addresses
-// ds:[0x0090DB24] directly. The storage cannot move into this tree's .bss
-// either: unrecovered image code in the 0x4C5D8E/0x4C5F68 bands reads the
-// same bytes (see below).
-#define SoundDllProcs (reinterpret_cast<void **>(0x0090DB24))
+extern SoundDllProcsTable SoundDllProcs;
 typedef unsigned int (__cdecl *func_sound_dll_version)();
 typedef void (__cdecl *func_sound_dll_init)(int, int);
-// The module handle lives at 0x0090DB78, above the Wave_In_Device singleton,
-// and STAYS image-addressed: the image reads it from unrecovered functions
-// in the 0x4C5D8E and 0x4C5F68 bands (the only .text references, per a byte
-// scan of the pinned image), so real storage here would leave those readers
-// seeing zero while the tree sees the handle.
-#define SoundDllModule (*reinterpret_cast<HMODULE *>(0x0090DB78))
-// Two slots of SoundDllProcs, named by role. Index 10 is the version probe
-// load_sound_dll checks the game's sound headers against (the image's other
-// reference, at 0x4C5FEE, reads the same slot through the table); index 2 is
-// the hook init_sound calls once with two zero arguments as soon as the DLL
-// is up, before any device is brought onto it. A slot is CALLED by casting
-// its address to the function-pointer type in ONE level -
-// `(*reinterpret_cast<F *>(&SoundDllProcs[2]))()` - which is the
+extern HMODULE SoundDllModule;
+// Two slots read by role: index 10 is the version probe load_sound_dll
+// checks the game's sound headers against; index 2 is the hook init_sound
+// calls once with two zero arguments as soon as the DLL is up. A slot is
+// CALLED by casting its ADDRESS to the function-pointer type in ONE
+// level - `(*reinterpret_cast<F *>(&SoundDllProcs[2]))()` - the
 // memory-indirect `call dword ptr [slot]` the image makes; casting the
-// slot's VALUE materializes it into a register first, and
-// reinterpret_cast from void** to F** is C2440.
+// slot's VALUE materialises a register first, and reinterpret_cast from
+// void** to F** is C2440.

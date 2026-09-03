@@ -71,6 +71,12 @@ extern "C" void __cdecl sound_version_warning(const char *text, const char *capt
 // same through its own. The strings are the image's .rdata/.data text,
 // recovered verbatim.
 
+// The module handle and the eleven export slots, the loader's own
+// storage: SoundDllModule keeps the LoadLibraryA reference once
+// load_sound_dll fills it, and stays null when the DLL is absent.
+HMODULE SoundDllModule;
+SoundDllProcsTable SoundDllProcs;
+
 int __cdecl load_sound_dll() {
     if (SoundDllModule == 0) {
         SoundDllModule = LoadLibraryA(".\\soundx.dll");
