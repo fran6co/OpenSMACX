@@ -209,7 +209,7 @@ Status: Complete
 */
 
 /*
-// ORIGINAL: 0x0060E4D0 ?init_class@RadioButton@@QAAHXZ 0x0060E4D0-0x0060E5C2;0x00662F44-0x00662F59
+// ORIGINAL: 0x0060E4D0 ?init_class@RadioButton@@QAAHXZ 0x0060E4D0-0x0060E5C2;0x00662F44-0x00662F59 BYTE_EXACT
 // symbol    ?init_class@RadioButton@@SAHXZ
 // size      263 bytes
 // prototype int (__cdecl ?init_class@RadioButton@@QAAHXZ)()

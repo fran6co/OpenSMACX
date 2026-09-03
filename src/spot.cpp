@@ -126,10 +126,7 @@ int Spot::add(int position, int type, RECT *rect) {
 
 /*
 Purpose: Remove all spots at a specific position.
-// ORIGINAL: 0x005FA9C0 ?kill_pos@Spot@@QAEXH@Z 0x005FA9C0-0x005FAA04
-  // CLAIM CLEARED 2026-09-03: held only under a tail flag set (not emitted
-  // under either build set); the marker keeps its notes for the normalization
-  // pass, which re-banks it under the pair or names the third set.
+// ORIGINAL: 0x005FA9C0 ?kill_pos@Spot@@QAEXH@Z 0x005FA9C0-0x005FAA04 BYTE_EXACT
 // LEVER: element-assign loop, NOT memcpy_s. The image is a `rep movsd` of 6 dwords per iteration with the bound re-read from `[edx+8]` - that is VC6 inlining `spots_[i] = spots_[i + 1]` for a 24-byte POD. The `memcpy_s(&spots_[position], size, &spots_[position + 1], size)` spelling scored 0/31.
 // LEVER: `add_count_--` goes AFTER the copy loop, and both the pre-guard and the loop bound read `static_cast<int>(add_count_) - 1`. Decrementing first makes the image's `dec ecx` in the loop condition subtract twice.
 // size      68 bytes

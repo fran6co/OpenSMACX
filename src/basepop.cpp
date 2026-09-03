@@ -829,10 +829,7 @@ Win *PopupInstanceSlotB;  // 0x009BC078
 
 /*
 Purpose: Replace the default OK caption with a heap copy of `text`.
-// ORIGINAL: 0x006018A0 ?set_def_ok_text@BasePop@@QAAHPAD@Z 0x006018A0-0x00601902
-  // CLAIM CLEARED 2026-09-03: held only under a tail flag set (not emitted
-  // under either build set); the marker keeps its notes for the normalization
-  // pass, which re-banks it under the pair or names the third set.
+// ORIGINAL: 0x006018A0 ?set_def_ok_text@BasePop@@QAAHPAD@Z 0x006018A0-0x00601902 BYTE_EXACT
 // symbol    ?set_def_ok_text@BasePop@@SAHPAD@Z
 // size      98 bytes
 // callers   2   call targets   4
@@ -868,10 +865,7 @@ __forceinline int __cdecl BasePop::set_def_ok_text(LPSTR text) {
 
 /*
 Purpose: Replace the default Cancel caption with a heap copy of `text`.
-// ORIGINAL: 0x00601910 ?set_def_cancel_text@BasePop@@QAAHPAD@Z 0x00601910-0x00601972
-  // CLAIM CLEARED 2026-09-03: held only under a tail flag set (not emitted
-  // under either build set); the marker keeps its notes for the normalization
-  // pass, which re-banks it under the pair or names the third set.
+// ORIGINAL: 0x00601910 ?set_def_cancel_text@BasePop@@QAAHPAD@Z 0x00601910-0x00601972 BYTE_EXACT
 // symbol    ?set_def_cancel_text@BasePop@@SAHPAD@Z
 // size      98 bytes
 // callers   2   call targets   4

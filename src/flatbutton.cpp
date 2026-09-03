@@ -321,10 +321,7 @@ Status: Complete
 /*
 Purpose: Step the receiver back to the subobject ??_GBaseButton@@UAEPAXI@Z
          expects, then forward unchanged.
-// ORIGINAL: 0x00607CE0 ??_GBaseButton@@WEEE@AEPAXI@Z 0x00607CE0-0x00607CEB
-  // CLAIM CLEARED 2026-09-03: held only under a tail flag set (not emitted
-  // under either build set); the marker keeps its notes for the normalization
-  // pass, which re-banks it under the pair or names the third set.
+// ORIGINAL: 0x00607CE0 ??_GBaseButton@@WEEE@AEPAXI@Z 0x00607CE0-0x00607CEB BYTE_EXACT
 // symbol    ??_EBaseButton@@WEEE@AEPAXI@Z
 // CORRECTED from ??3BaseButton@@SAXPAXI@Z
 //   11 bytes, `sub ecx, 0x444; jmp 0x00607CC0` into

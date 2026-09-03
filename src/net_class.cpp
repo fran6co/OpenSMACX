@@ -802,7 +802,7 @@ Purpose: Move one slice of voice traffic: ride the level meter to open and
          0x32, `jbe` against 0x64) over a getter the catalogue spells `H`
          (int), so the level is held in an unsigned local rather than compared
          as the getter's own type.
-// ORIGINAL: 0x00631A60 ?process_voice@Net@@QAEXXZ 0x00631A60-0x00631B2E
+// ORIGINAL: 0x00631A60 ?process_voice@Net@@QAEXXZ 0x00631A60-0x00631B2E BYTE_EXACT
 // symbol    ?process_voice@Net@@QAEXXZ
 // size      206 bytes
 // prototype void (__thiscall ?process_voice@Net@@QAEXXZ)(Net* this)

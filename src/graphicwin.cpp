@@ -232,7 +232,7 @@ uint32_t GraphicWin::close() {
 Purpose: Destroy a GraphicWin by installing the original virtual tables,
          clearing the trailing field, and destroying the Buffer subobject
          before the Win base.
-// ORIGINAL: 0x005D4DD0 ??1GraphicWin@@QAE@XZ 0x005D4DD0-0x005D4E37;0x00662B22-0x00662B34
+// ORIGINAL: 0x005D4DD0 ??1GraphicWin@@QAE@XZ 0x005D4DD0-0x005D4E37;0x00662B22-0x00662B34 BYTE_EXACT
 // symbol    ??1GraphicWin@@UAE@XZ
 // size      121 bytes
 // prototype void (__thiscall ??1GraphicWin@@QAE@XZ)(GraphicWin* this)

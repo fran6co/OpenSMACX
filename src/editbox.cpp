@@ -96,8 +96,8 @@ EditBox::EditBox() {
 /*
 Purpose: Reset the edit box - clear its state, republish the seven defaults,
          then close the trailing Time and the GraphicWin prefix.
-// ORIGINAL: 0x00614F30 ?close@EditBox@@QAEXXZ 0x00614F30-0x00614FD1
-// TRIED: PROMOTED out of src/unrecovered/00614f30.cpp, whose claim proved the ARTIFACT reproduced while the program held a pending_bodies forwarder. src/editbox.cpp did not exist - EditBox was header-only - so this file and its CMakeLists entry are new.
+// ORIGINAL: 0x00614F30 ?close@EditBox@@QAEXXZ 0x00614F30-0x00614FD1 BYTE_EXACT
+// LEVER: PROMOTED out of src/unrecovered/00614f30.cpp, whose claim proved the ARTIFACT reproduced while the program held a pending_bodies forwarder. src/editbox.cpp did not exist - EditBox was header-only - so this file and its CMakeLists entry are new.
 // symbol    ?close@EditBox@@QAEXXZ
 // size      161 bytes
 // kind      game

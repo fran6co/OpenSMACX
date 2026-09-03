@@ -1921,7 +1921,7 @@ void Palette::reseed() {
     }
 }
 
-// ORIGINAL: 0x005FE900 ?UNK2@Palette@@QAEXH@Z 0x005FE900-0x005FE941 FILE
+// ORIGINAL: 0x005FE900 ?UNK2@Palette@@QAEXH@Z 0x005FE900-0x005FE941 FILE BYTE_EXACT
 // symbol    ?stop_animation@Palette@@QAEXH@Z
 // size      65 bytes
 // prototype void (__thiscall ?UNK2@Palette@@QAEXH@Z)(Palette* this, int)
@@ -1999,7 +1999,7 @@ void Palette::stop_animation(int key) {
     }
 }
 
-// ORIGINAL: 0x005FE2F0 ?__as@Palette@@QAEHQAUPalette@@@Z 0x005FE2F0-0x005FE32F FILE
+// ORIGINAL: 0x005FE2F0 ?__as@Palette@@QAEHQAUPalette@@@Z 0x005FE2F0-0x005FE32F FILE BYTE_EXACT
 // symbol    ?copy_from@Palette@@QAEAAV1@PAV1@@Z
 // CORRECTED from operator= (and before that the census's `__as`): three
 //   pieces of evidence, none of them a name. Both image callers
@@ -2103,14 +2103,14 @@ Purpose: Build the interface's text colours: load text.pcx into a scratch
          palette index 9 (the transparent one), -1 in its place - and the
          eleven groups cover the run from [1] to the end. The last group
          samples three pixels a row and does no index-9 substitution.
-// ORIGINAL: 0x004BA220 ?textcolor_init@@YAXXZ 0x004BA220-0x004BA5B3;0x00659BD0-0x00659BE5
+// ORIGINAL: 0x004BA220 ?textcolor_init@@YAXXZ 0x004BA220-0x004BA5B3;0x00659BD0-0x00659BE5 BYTE_EXACT
 // size      915 bytes
 // prototype void (__cdecl ?textcolor_init@@YAXXZ)(void)
 // callers   1   call targets   5
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005D7210 0x005D7410 0x005D7DE0 0x005E2210 0x005FE460
-// TRIED: byte-exact, promoted from the src/recovered/units/004ba220.cpp
+// LEVER: byte-exact, promoted from the src/recovered/units/004ba220.cpp
 //   archive unit. The bound is compared as an INT - `(int)p < (int)&...` -
 //   because a pointer comparison renders unsigned and VC6 emits `jb` where
 //   the image has `jl`. Every loop is a do-while, not a for: the image tests
@@ -2119,7 +2119,7 @@ Purpose: Build the interface's text colours: load text.pcx into a scratch
 //   array keeps both ends of every walk as `offset` relocations, where a
 //   `static int *const` spelling folds the address into the store and turns
 //   `mov [esi-4], eax` into `mov dword ptr [0x8c6b8c], eax`.
-// TRIED: the verdict is at /c /O2 /Ob0 /Gy /GR- /Oy- /GX, the one set of the
+// LEVER: the verdict is at /c /O2 /Ob0 /Gy /GR- /Oy- /GX, the one set of the
 //   twenty the ladder searches that reproduces the teardown. buffer.h defines
 //   `~Buffer()` in the class - MEASURED there, on ??1Buffer's own claim - so
 //   the /O2 sets expand it into four teardown instructions, `mov

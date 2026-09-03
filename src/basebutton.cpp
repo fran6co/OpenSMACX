@@ -260,7 +260,7 @@ BaseButton *BaseButton::destroy() {
 
 /*
 Purpose: Set the button's bubble text.
-// ORIGINAL: 0x00607550 ?set_bubble_text@BaseButton@@QAEHPAD@Z 0x00607550-0x006075B7
+// ORIGINAL: 0x00607550 ?set_bubble_text@BaseButton@@QAEHPAD@Z 0x00607550-0x006075B7 BYTE_EXACT
 // symbol    ?set_bubble_text@BaseButton@@QAEHPBD@Z
 // size      103 bytes
 // prototype int (__thiscall ?set_bubble_text@BaseButton@@QAEHPAD@Z)(BaseButton* this, int8*)
@@ -296,8 +296,8 @@ int BaseButton::set_bubble_text(LPCSTR input) {
 
 /*
 Purpose: Set the button's name string.
-// ORIGINAL: 0x006074E0 ?set_name@BaseButton@@QAEHPAD@Z 0x006074E0-0x0060754D
-// TRIED: THE CONCAT BLOCK SITS OUTSIDE THE `if (input)`, and that is the whole
+// ORIGINAL: 0x006074E0 ?set_name@BaseButton@@QAEHPAD@Z 0x006074E0-0x0060754D BYTE_EXACT
+// LEVER: THE CONCAT BLOCK SITS OUTSIDE THE `if (input)`, and that is the whole
 //   body. 25/37 -> 26/37 was the empty-then-concatenate spelling; 26/37 ->
 //   37/37 was moving `name_[0] = '\0'; strcat_s(...)` out of the `if (input)`
 //   so the join of the `input == 0` branch and the `allocation != 0` branch is
@@ -664,7 +664,7 @@ Purpose: Reinitialise a button - close whatever it currently holds, take a
          private copy of its name, build the GraphicWin base with the button
          style word, publish the shared default colours and fonts into the
          window buffer, then show it.
-// ORIGINAL: 0x00607210 ?init@BaseButton@@QAEHPADHHHHHPAUWin@@H@Z 0x00607210-0x00607352
+// ORIGINAL: 0x00607210 ?init@BaseButton@@QAEHPADHHHHHPAUWin@@H@Z 0x00607210-0x00607352 BYTE_EXACT
 // symbol    ?init@BaseButton@@QAEHPBDHHHHHPAVWin@@H@Z
 // size      322 bytes
 // prototype int (__thiscall ?init@BaseButton@@QAEHPADHHHHHPAUWin@@H@Z)(BaseButton* this, int8*, int, int, int, int, int, Win*, int)

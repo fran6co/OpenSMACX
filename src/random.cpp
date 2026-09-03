@@ -22,10 +22,7 @@
 
 /*
 Purpose: Update the seed value, by the xor-swap with the argument that the image spells out.
-// ORIGINAL: 0x00625750 ?reseed@Random@@QAEXK@Z 0x00625750-0x00625763
-  // CLAIM CLEARED 2026-09-03: held only under a tail flag set (not emitted
-  // under either build set); the marker keeps its notes for the normalization
-  // pass, which re-banks it under the pair or names the third set.
+// ORIGINAL: 0x00625750 ?reseed@Random@@QAEXK@Z 0x00625750-0x00625763 BYTE_EXACT
 // LEVER: BYTE_EXACT 8/8. The body IS the xor-swap - `seed_ ^= n; n ^= seed_; seed_ ^= n;` - but written PLAINLY, VC6 recognises the idiom and folds the whole thing to the one `mov dword ptr [ecx], eax` the previous `seed_ = new_seed;` already emitted (measured: 3 instructions against the image's 8). Taking the ADDRESS of the parameter and xoring through it, `uint32_t *const b = &new_seed;`, denies VC6 the non-aliasing that algebra needs, and it then emits the image's four xors and two stores exactly. The same one change also took 0x006257E0 byte-exact.
 // body      src/random.h
 // symbol    ?reseed@Random@@QAEXI@Z

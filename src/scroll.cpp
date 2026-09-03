@@ -542,8 +542,8 @@ int Scroll::init_horz_nc(
 
 /*
 Purpose: Set the signed scrollbar range and redraw it at the lower endpoint.
-// ORIGINAL: 0x006059B0 ?set_range@Scroll@@QAEXHH@Z 0x006059B0-0x00605A0D
-// TRIED: replaced the cached-vtable-bits/redraw_from_vtable(__asm helper)
+// ORIGINAL: 0x006059B0 ?set_range@Scroll@@QAEXHH@Z 0x006059B0-0x00605A0D BYTE_EXACT
+// LEVER: replaced the cached-vtable-bits/redraw_from_vtable(__asm helper)
 //   tail with the inline read_volatile_bits/original_slot<func_noarg_virtual>
 //   dispatch 0x00605A10 uses - 15/24 to 17/24 agreeing (best flags /Ob0).
 //   The swap defect above is the remaining structural cause.

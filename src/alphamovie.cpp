@@ -63,7 +63,7 @@ MCIVideo::~MCIVideo() {
 /*
 Purpose: Construct the GraphicWin base and the embedded MCIVideo, then
          install AlphaMovie's own vtables.
-// ORIGINAL: 0x00404010 ??0AlphaMovie@@QAE@XZ 0x00404010-0x00404067;0x006506DC-0x006506EE
+// ORIGINAL: 0x00404010 ??0AlphaMovie@@QAE@XZ 0x00404010-0x00404067;0x006506DC-0x006506EE BYTE_EXACT
 // size      87 bytes
 // prototype void (__thiscall ??0AlphaMovie@@QAE@XZ)(AlphaMovie* this)
 // callers   0   call targets   2

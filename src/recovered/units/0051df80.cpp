@@ -1,4 +1,4 @@
-// ORIGINAL: 0x0051DF80 sub_51df80 0x0051DF80-0x0051DFA4 FILE
+// ORIGINAL: 0x0051DF80 sub_51df80 0x0051DF80-0x0051DFA4 FILE BYTE_EXACT
 // symbol    ?sub_51df80@@YAHXZ
 // size      36 bytes
 // prototype 

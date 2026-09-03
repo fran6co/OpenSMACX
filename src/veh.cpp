@@ -335,8 +335,8 @@ int __cdecl valid_patrol(int veh_id, int x, int y) {
 
 /*
 Purpose: Calculate maximum range a faction's units can drop (air drops, Drop Pods).
-// ORIGINAL: 0x00500320 ?drop_range@@YAHH@Z 0x00500320-0x0050037C
-// TRIED: has_project(SP_SPACE_ELEVATOR, faction_id) written out by hand
+// ORIGINAL: 0x00500320 ?drop_range@@YAHH@Z 0x00500320-0x0050037C BYTE_EXACT
+// LEVER: has_project(SP_SPACE_ELEVATOR, faction_id) written out by hand
 //        (base_project's `*(&SecretProject->human_genome_project + id)` then
 //        the owning base's faction) rather than called - at the `/Ob0` flag
 //        set this needs (so has_tech does NOT auto-inline, matching the
@@ -2255,7 +2255,7 @@ append_defense_tail:
 
 /*
 Purpose: Check against faction's available tech for best available reactor.
-// ORIGINAL: 0x0057EFA0 ?best_reactor@@YAHH@Z 0x0057EFA0-0x0057EFE2
+// ORIGINAL: 0x0057EFA0 ?best_reactor@@YAHH@Z 0x0057EFA0-0x0057EFE2 BYTE_EXACT
 // symbol    ?best_reactor@@YAIH@Z
 // size      66 bytes
 // prototype int (__cdecl ?best_reactor@@YAHH@Z)(int factionID)
@@ -2277,8 +2277,8 @@ uint32_t __cdecl best_reactor(int faction_id) {
 
 /*
 Purpose: Check against faction's available tech for best available chassis meeting requirements.
-// ORIGINAL: 0x0057EFF0 ?pick_chassis@@YAHHHH@Z 0x0057EFF0-0x0057F0A1
-// TRIED: declaration/store order (best_speed before chassis_id); comparison operand
+// ORIGINAL: 0x0057EFF0 ?pick_chassis@@YAHHHH@Z 0x0057EFF0-0x0057F0A1 BYTE_EXACT
+// LEVER: declaration/store order (best_speed before chassis_id); comparison operand
 //   order (`Chassis[i].triad == triad_chk`, not the reverse - the `cmp` LHS follows
 //   source LHS); swapped the `speed_chk > 0`/`speed_chk <= 0` if/else so the `>0`
 //   arm is checked first, matching the image's fallthrough; `continue` in place of
@@ -2349,8 +2349,8 @@ int __cdecl pick_chassis(int faction_id, int triad_chk, int speed_chk) {
 Purpose: Check against faction's available tech for the best available weapon meeting requirements.
          The condition variable has a dual purpose of either max cost or search for 1st instance of
          a particular weapon mode.
-// ORIGINAL: 0x0057F0B0 ?weapon_budget@@YAHHHH@Z 0x0057F0B0-0x0057F142
-// TRIED: declaration/store order (best_offense before weapon_id, mirroring
+// ORIGINAL: 0x0057F0B0 ?weapon_budget@@YAHHHH@Z 0x0057F0B0-0x0057F142 BYTE_EXACT
+// LEVER: declaration/store order (best_offense before weapon_id, mirroring
 //   pick_chassis's best_speed/chassis_id pair); swapped the `condition >= 0`/
 //   `condition < 0` if/else so the `< 0` (break) arm is checked first, matching
 //   the image's fallthrough; and `Weapon[i].mode < 2` spelled as `<= 1` - both
@@ -2394,12 +2394,12 @@ int __cdecl weapon_budget(int faction_id, int condition, BOOL check_mode) {
 /*
 Purpose: Check against the faction's available tech for the best available armor meeting the cost 
          requirement.
-// ORIGINAL: 0x0057F150 ?armor_budget@@YAHHH@Z 0x0057F150-0x0057F1CF
-// TRIED: store order - best_defense=-1 before armor_id=0, opposite of
+// ORIGINAL: 0x0057F150 ?armor_budget@@YAHHH@Z 0x0057F150-0x0057F1CF BYTE_EXACT
+// LEVER: store order - best_defense=-1 before armor_id=0, opposite of
 //        declaration order (0.9524 -> 0.971 similar). TRIED: remaining
 //        divergence starts at the has_tech() call site (instr 17); not
 //        chased further.
-// TRIED: the non-expansion override is an if/ELSE with the field read in the
+// LEVER: the non-expansion override is an if/ELSE with the field read in the
 //        else arm, not a load-then-overwrite. `int defense_compare =
 //        Armor[i].defense_rating; if (...) defense_compare = 1;` sign-extends
 //        the byte unconditionally (`movsx eax, al` before the branch, then
@@ -2890,8 +2890,8 @@ void __cdecl make_proto(int proto_id, int chassis_id, int weapon_id, int armor_i
 
 /*
 Purpose: Search for the 1st prototype (basic + faction specific) that matches the specified plan.
-// ORIGINAL: 0x005AED50 ?get_plan@@YAHHH@Z 0x005AED50-0x005AEDE0
-// TRIED: proto_id is a signed `int`, not `uint32_t` - the image's
+// ORIGINAL: 0x005AED50 ?get_plan@@YAHHH@Z 0x005AED50-0x005AEDE0 BYTE_EXACT
+// LEVER: proto_id is a signed `int`, not `uint32_t` - the image's
 //        `cmp edi, 0x40 / jge` in front of the has_tech() guard is a SIGNED
 //        test, and `uint32_t` gave `jae`. The parenthesisation
 //        `faction_id * N + (i - N)` matters too: it keeps the shift on
@@ -2925,10 +2925,7 @@ int __cdecl get_plan(int faction_id, int plan) {
 /*
 Purpose: Reveal the specified tile to the specified faction and keep the
          faction's remembered copy of the tile's terrain bits in step with it.
-// ORIGINAL: 0x005B5700 sub_5b5700 0x005B5700-0x005B57CA
-  // CLAIM CLEARED 2026-09-03: held only under a tail flag set (not emitted
-  // under either build set); the marker keeps its notes for the normalization
-  // pass, which re-banks it under the pair or names the third set.
+// ORIGINAL: 0x005B5700 sub_5b5700 0x005B5700-0x005B57CA BYTE_EXACT
 // LEVER: FEWER (0 calls vs image's 1: synch_bit) at every flag set that kept a standalone symbol. /Ob0 forces the WHOLE function real, including on_map()/map_loc(), which the image folds in here; without /Ob0 the compiler inlines synch_bit() too, since it is small and `MEASURED inline` in map.h. Writing on_map()/map_loc() as bare expressions (not calls) removes them from the optimiser's inline/no-inline choice entirely, so /Ob0 only has synch_bit() left to force real.
 // symbol    ?spot_tile@@YAXHHH@Z
 // size      202 bytes
@@ -2978,7 +2975,7 @@ inline void __cdecl spot_tile(int x, int y, int faction_id) {
 /*
 Purpose: Reveal the specified base, and the tile it stands on, to the specified
          faction.
-// ORIGINAL: 0x005B57D0 ?spot_base@@YAXHH@Z 0x005B57D0-0x005B58D2
+// ORIGINAL: 0x005B57D0 ?spot_base@@YAXHH@Z 0x005B57D0-0x005B58D2 BYTE_EXACT
 // size      258 bytes
 // prototype void (__cdecl ?spot_base@@YAXHH@Z)(int baseID, int factionID)
 // callers   8   call targets   1
