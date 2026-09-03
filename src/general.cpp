@@ -1890,6 +1890,17 @@ void __cdecl header_write(LPCSTR header, FILE *file) {
 /*
 Purpose: For the count, sort both id and value arrays by the least to greatest value (ascending).
 // ORIGINAL: 0x005B5690 ?sort@@YAXHPAHPAH@Z 0x005B5690-0x005B56F5
+// TRIED (2026-09-03): dropping this body's `int bounds = count - 1` local
+//   and writing `i < count - 1` inline, because the image reloads `count`
+//   from its argument slot at the top of every pass iteration
+//   (`mov ecx, [ebp+8]` at 0x005B56A9, then `dec ecx`) and so cannot have a
+//   `bounds` variable. Measured 5/47 before and after - the compiler keeps
+//   `count - 1` in a register either way - so the inline spelling is kept
+//   only because it stops declaring a local the image has not got; the
+//   unreproduced shape is the memory-homed `i` (`push ecx` slot at [ebp-4],
+//   written and re-read around the swap) plus the running pointers
+//   `esi`/`edi`/`ebx`, which is a strength-reduction choice, not a source
+//   one. Left at the plateau.
 // TRIED: byte-match plateau at 5/47 across every flag set tried,
 //            before and after the `goto`/bug fix below - the image
 //            interleaves a SEARCH for the first out-of-order pair with the
@@ -1912,7 +1923,6 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl sort(int count, int *id, int *value) {
-    int bounds = count - 1;
     // BUG IN THE ORIGINAL (reproduced): `test eax,eax` right after every
     // swap jumps straight back to the function's own top (0x5b5697) the
     // moment a swap happens, abandoning the rest of this pass instead of
@@ -1921,7 +1931,7 @@ void __cdecl sort(int count, int *id, int *value) {
     // which is why there is no `has_swapped` flag left to track here - the
     // loop completing on its own IS the "nothing left to swap" signal.
 restart:
-    for (int i = 0; i < bounds; i++) {
+    for (int i = 0; i < count - 1; i++) {
         if (value[i] > value[i + 1]) {
             swap(&value[i], &value[i + 1]);
             swap(&id[i], &id[i + 1]);
