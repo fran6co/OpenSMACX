@@ -33,6 +33,20 @@
  * one C statement per original instruction reproduces them exactly - store
  * order included, which matters wherever a load must see an earlier store.
  *
+ * SIXTEEN of the 26 bodies RETURN THE FIRST GLOBAL THEY LOAD. That is not a
+ * claim about the image's signature - no caller exists to observe a return
+ * value - it is the one source shape VC6 lowers to the shipped bytes. Spelled
+ * `void`, the first global's register is free to clobber once its last use is
+ * past, so the compiler computes into it and the image's `add ecx, eax` /
+ * `lea ecx,[eax+eax]` comes out as `add eax, ecx` / `shl eax, 1`. The image
+ * keeps that register live to the ret, and the only way to make VC6 see a use
+ * after the last store is to add one that emits nothing: returning a value
+ * already sitting in eax. Every statement spelling, `register` storage and
+ * all twenty flag sets in the ladder were measured against this and produce
+ * the identical clobbering form - the LEVER notes under each marker carry the
+ * detail. IDA 9.4's guess_type for all 26 is `int()`, which is consistent
+ * with it and cannot discriminate.
+ *
  * The 35 globals below are BOUND rather than inlined. Every one lives in the
  * original image and is unmapped in a standalone test process, so a body that
  * dereferenced its address directly would compile, pass the hybrid gate, and
@@ -53,6 +67,16 @@ Purpose: sub_44c870 - arithmetic over 1 fixed global(s), one
 // the in-memory read-modify-write through a const-pointer lvalue, only
 // through a named global object, and these globals are bound rather than
 // placed so no named object can live at 0x7591c4.
+// TRIED 2026-09-03, second pass: the reference lvalue is the one new shape -
+// `int32_t &r = *GlobalSlot007591C4; r = r ^ 1;` compiles `mov eax,<ptr>;
+// xor [eax],1` (9 bytes against the image's 8), still not the memory form.
+// Compiled the same statement against a REAL object in the same run as the
+// control: `extern int x; x ^= 1` and `x = x ^ 1` BOTH compile to
+// `xor dword ptr [<object>],1` - the image's exact 7 bytes, displacement
+// relocated. So the memory form IS reachable from C++, and the one thing this
+// body lacks is an object at 0x7591c4. That is an EVIDENCE lever, not a
+// spelling lever: leaf_recoveries.cpp documents 0x7591C4 as evidence-free
+// ("a named global here would be invention"), so it stays bound.
 // symbol    ?global_arith_0044c870_redirect@@YIXPAX0@Z
 // size      8 bytes
 // prototype 
@@ -109,8 +133,21 @@ void __fastcall global_arith_0048d560_redirect(void *, void *) {
 /*
 Purpose: sub_48d570 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D570 sub_48d570 0x0048D570-0x0048D587
-// symbol    ?global_arith_0048d570_redirect@@YIXPAX0@Z
+// ORIGINAL: 0x0048D570 sub_48d570 0x0048D570-0x0048D587 BYTE_EXACT
+// LEVER: the first global's register must stay live across the doubling.
+//   Committed as `void`, VC6 folds `2*a` into a's own register (`shl eax, 1`)
+//   and gives the second load ecx; the image has `lea ecx, [eax + eax]` with
+//   the second load in edx, which VC6 emits ONLY when a is still live - four
+//   spellings of the statement, `register` storage and every /O flag set
+//   produce the identical shl form. Returning the first global is the one
+//   shape that keeps it live, and it costs no instruction: the value is
+//   already in eax at the ret. No caller in the image, so nothing observes
+//   the choice either way.
+//   PROOF OF THE MECHANISM: keeping the first global's value alive with a
+//   conditional second store compiles the image's exact `mov edx / lea
+//   ecx,[eax+eax] / sub edx,ecx` plus that store - liveness is the only thing
+//   the `void` spelling was missing.
+// symbol    ?global_arith_0048d570_redirect@@YIHPAX0@Z
 // size      23 bytes
 // prototype 
 // callers   0   call targets   0
@@ -120,19 +157,28 @@ Purpose: sub_48d570 - arithmetic over 3 fixed global(s), one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall global_arith_0048d570_redirect(void *, void *) {
+int32_t __fastcall global_arith_0048d570_redirect(void *, void *) {
     int32_t eax = *GlobalSlot00686B6C;
-    int32_t edx = *GlobalSlot00686B7C;
     int32_t ecx = eax + eax;
+    int32_t edx = *GlobalSlot00686B7C;
     edx = edx - ecx;
     *GlobalSlot008578AC = edx;
+    return eax;
 }
 
 /*
 Purpose: sub_48d590 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D590 sub_48d590 0x0048D590-0x0048D5A7
-// symbol    ?global_arith_0048d590_redirect@@YIXPAX0@Z
+// ORIGINAL: 0x0048D590 sub_48d590 0x0048D590-0x0048D5A7 BYTE_EXACT
+// LEVER: the first global's register must stay live across the doubling.
+//   VC6 folds `2*a` into a's own register (`shl eax, 1`) and gives the second
+//   load ecx; the image has `lea ecx, [eax + eax]` with the second load in
+//   edx, which VC6 emits ONLY when the first global is still live - four
+//   statement spellings, `register` storage and every /O flag produce the
+//   identical shl form. Returning the first global is the one shape that
+//   keeps it live, and it costs no instruction: the value is already in eax
+//   at the ret. No caller in the image, so nothing observes the choice.
+// symbol    ?global_arith_0048d590_redirect@@YIHPAX0@Z
 // size      23 bytes
 // prototype 
 // callers   0   call targets   0
@@ -142,19 +188,28 @@ Purpose: sub_48d590 - arithmetic over 3 fixed global(s), one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall global_arith_0048d590_redirect(void *, void *) {
+int32_t __fastcall global_arith_0048d590_redirect(void *, void *) {
     int32_t eax = *GlobalSlot00686B70;
-    int32_t edx = *GlobalSlot00686B80;
     int32_t ecx = eax + eax;
+    int32_t edx = *GlobalSlot00686B80;
     edx = edx - ecx;
     *GlobalSlot008578B0 = edx;
+    return eax;
 }
 
 /*
 Purpose: sub_48d5b0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D5B0 sub_48d5b0 0x0048D5B0-0x0048D5C4 SEMANTIC
-// symbol    ?global_arith_0048d5b0_redirect@@YIXPAX0@Z
+// ORIGINAL: 0x0048D5B0 sub_48d5b0 0x0048D5B0-0x0048D5C4 BYTE_EXACT
+// LEVER: the first global's register must stay live across the add.
+//   As `void`, VC6 computes the sum into the FIRST global's register
+//   (`add eax, ecx`, so the image's `add ecx, eax` reads as a different
+//   program). Six statement spellings scored identically - the destination is
+//   chosen by liveness, not by which operand is written first. Returning the
+//   first global keeps its register live, VC6 has to add into the second
+//   one's register, and the bytes match with no extra instruction: the value
+//   is already in eax at the ret. No caller in the image observes the choice.
+// symbol    ?global_arith_0048d5b0_redirect@@YIHPAX0@Z
 // size      20 bytes
 // prototype 
 // callers   0   call targets   0
@@ -164,18 +219,27 @@ Purpose: sub_48d5b0 - arithmetic over 3 fixed global(s), one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall global_arith_0048d5b0_redirect(void *, void *) {
+int32_t __fastcall global_arith_0048d5b0_redirect(void *, void *) {
     int32_t eax = *GlobalSlot008577EC;
     int32_t ecx = *GlobalSlot00686B74;
     ecx = ecx + eax;
     *GlobalSlot00857888 = ecx;
+    return eax;
 }
 
 /*
 Purpose: sub_48d5d0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D5D0 sub_48d5d0 0x0048D5D0-0x0048D5E4 SEMANTIC
-// symbol    ?global_arith_0048d5d0_redirect@@YIXPAX0@Z
+// ORIGINAL: 0x0048D5D0 sub_48d5d0 0x0048D5D0-0x0048D5E4 BYTE_EXACT
+// LEVER: the first global's register must stay live across the add.
+//   As `void`, VC6 computes the sum into the FIRST global's register
+//   (`add eax, ecx`, so the image's `add ecx, eax` reads as a different
+//   program). Six statement spellings scored identically - the destination is
+//   chosen by liveness, not by which operand is written first. Returning the
+//   first global keeps its register live, VC6 has to add into the second
+//   one's register, and the bytes match with no extra instruction: the value
+//   is already in eax at the ret. No caller in the image observes the choice.
+// symbol    ?global_arith_0048d5d0_redirect@@YIHPAX0@Z
 // size      20 bytes
 // prototype 
 // callers   0   call targets   0
@@ -185,18 +249,27 @@ Purpose: sub_48d5d0 - arithmetic over 3 fixed global(s), one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall global_arith_0048d5d0_redirect(void *, void *) {
+int32_t __fastcall global_arith_0048d5d0_redirect(void *, void *) {
     int32_t eax = *GlobalSlot008577E8;
     int32_t ecx = *GlobalSlot00686B78;
     ecx = ecx + eax;
     *GlobalSlot00857884 = ecx;
+    return eax;
 }
 
 /*
 Purpose: sub_48d5f0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D5F0 sub_48d5f0 0x0048D5F0-0x0048D607
-// symbol    ?global_arith_0048d5f0_redirect@@YIXPAX0@Z
+// ORIGINAL: 0x0048D5F0 sub_48d5f0 0x0048D5F0-0x0048D607 BYTE_EXACT
+// LEVER: the first global's register must stay live across the doubling.
+//   VC6 folds `2*a` into a's own register (`shl eax, 1`) and gives the second
+//   load ecx; the image has `lea ecx, [eax + eax]` with the second load in
+//   edx, which VC6 emits ONLY when the first global is still live - four
+//   statement spellings, `register` storage and every /O flag produce the
+//   identical shl form. Returning the first global is the one shape that
+//   keeps it live, and it costs no instruction: the value is already in eax
+//   at the ret. No caller in the image, so nothing observes the choice.
+// symbol    ?global_arith_0048d5f0_redirect@@YIHPAX0@Z
 // size      23 bytes
 // prototype 
 // callers   0   call targets   0
@@ -206,18 +279,28 @@ Purpose: sub_48d5f0 - arithmetic over 3 fixed global(s), one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall global_arith_0048d5f0_redirect(void *, void *) {
+int32_t __fastcall global_arith_0048d5f0_redirect(void *, void *) {
     int32_t eax = *GlobalSlot00686B78;
-    int32_t edx = *GlobalSlot008578B0;
     int32_t ecx = eax + eax;
+    int32_t edx = *GlobalSlot008578B0;
     edx = edx - ecx;
     *GlobalSlot008578C0 = edx;
+    return eax;
 }
 
 /*
 Purpose: sub_48d610 - arithmetic over 4 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D610 sub_48d610 0x0048D610-0x0048D62B SEMANTIC
+// TRIED 2026-09-03: six shapes for the four-global chain, including the
+//   register-liveness lever that landed the other sixteen bodies in this
+//   file. Closest is declaring the accumulator before the first global,
+//   which puts all three loads in the image's order and agrees 4 of 6 - but
+//   the first add still lands in eax and the reload of the third global in
+//   ecx, the exact mirror of the image's `add ecx,eax; mov eax,[<3rd>]`.
+//   The first add only moves into ecx when the first global is still live,
+//   and a live first global cannot share its register with the reload. The
+//   image has both at once, so this pair is as far as source form goes.
 // symbol    ?global_arith_0048d610_redirect@@YIXPAX0@Z
 // size      27 bytes
 // prototype 
@@ -240,8 +323,16 @@ void __fastcall global_arith_0048d610_redirect(void *, void *) {
 /*
 Purpose: sub_48d630 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D630 sub_48d630 0x0048D630-0x0048D644 SEMANTIC
-// symbol    ?global_arith_0048d630_redirect@@YIXPAX0@Z
+// ORIGINAL: 0x0048D630 sub_48d630 0x0048D630-0x0048D644 BYTE_EXACT
+// LEVER: the first global's register must stay live across the add.
+//   As `void`, VC6 computes the sum into the FIRST global's register
+//   (`add eax, ecx`, so the image's `add ecx, eax` reads as a different
+//   program). Six statement spellings scored identically - the destination is
+//   chosen by liveness, not by which operand is written first. Returning the
+//   first global keeps its register live, VC6 has to add into the second
+//   one's register, and the bytes match with no extra instruction: the value
+//   is already in eax at the ret. No caller in the image observes the choice.
+// symbol    ?global_arith_0048d630_redirect@@YIHPAX0@Z
 // size      20 bytes
 // prototype 
 // callers   0   call targets   0
@@ -251,18 +342,27 @@ Purpose: sub_48d630 - arithmetic over 3 fixed global(s), one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall global_arith_0048d630_redirect(void *, void *) {
+int32_t __fastcall global_arith_0048d630_redirect(void *, void *) {
     int32_t eax = *GlobalSlot008577E8;
     int32_t ecx = *GlobalSlot00686B78;
     ecx = ecx + eax;
     *GlobalSlot00857898 = ecx;
+    return eax;
 }
 
 /*
 Purpose: sub_48d670 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D670 sub_48d670 0x0048D670-0x0048D687
-// symbol    ?global_arith_0048d670_redirect@@YIXPAX0@Z
+// ORIGINAL: 0x0048D670 sub_48d670 0x0048D670-0x0048D687 BYTE_EXACT
+// LEVER: the first global's register must stay live across the doubling.
+//   VC6 folds `2*a` into a's own register (`shl eax, 1`) and gives the second
+//   load ecx; the image has `lea ecx, [eax + eax]` with the second load in
+//   edx, which VC6 emits ONLY when the first global is still live - four
+//   statement spellings, `register` storage and every /O flag produce the
+//   identical shl form. Returning the first global is the one shape that
+//   keeps it live, and it costs no instruction: the value is already in eax
+//   at the ret. No caller in the image, so nothing observes the choice.
+// symbol    ?global_arith_0048d670_redirect@@YIHPAX0@Z
 // size      23 bytes
 // prototype 
 // callers   0   call targets   0
@@ -272,19 +372,28 @@ Purpose: sub_48d670 - arithmetic over 3 fixed global(s), one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall global_arith_0048d670_redirect(void *, void *) {
+int32_t __fastcall global_arith_0048d670_redirect(void *, void *) {
     int32_t eax = *GlobalSlot00686B78;
-    int32_t edx = *GlobalSlot008578B0;
     int32_t ecx = eax + eax;
+    int32_t edx = *GlobalSlot008578B0;
     edx = edx - ecx;
     *GlobalSlot008578A4 = edx;
+    return eax;
 }
 
 /*
 Purpose: sub_48d690 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D690 sub_48d690 0x0048D690-0x0048D6A4 SEMANTIC
-// symbol    ?global_arith_0048d690_redirect@@YIXPAX0@Z
+// ORIGINAL: 0x0048D690 sub_48d690 0x0048D690-0x0048D6A4 BYTE_EXACT
+// LEVER: the first global's register must stay live across the add.
+//   As `void`, VC6 computes the sum into the FIRST global's register
+//   (`add eax, ecx`, so the image's `add ecx, eax` reads as a different
+//   program). Six statement spellings scored identically - the destination is
+//   chosen by liveness, not by which operand is written first. Returning the
+//   first global keeps its register live, VC6 has to add into the second
+//   one's register, and the bytes match with no extra instruction: the value
+//   is already in eax at the ret. No caller in the image observes the choice.
+// symbol    ?global_arith_0048d690_redirect@@YIHPAX0@Z
 // size      20 bytes
 // prototype 
 // callers   0   call targets   0
@@ -294,18 +403,27 @@ Purpose: sub_48d690 - arithmetic over 3 fixed global(s), one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall global_arith_0048d690_redirect(void *, void *) {
+int32_t __fastcall global_arith_0048d690_redirect(void *, void *) {
     int32_t eax = *GlobalSlot0085789C;
     int32_t ecx = *GlobalSlot00686B74;
     ecx = ecx + eax;
     *GlobalSlot008578C8 = ecx;
+    return eax;
 }
 
 /*
 Purpose: sub_48d6b0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D6B0 sub_48d6b0 0x0048D6B0-0x0048D6C4 SEMANTIC
-// symbol    ?global_arith_0048d6b0_redirect@@YIXPAX0@Z
+// ORIGINAL: 0x0048D6B0 sub_48d6b0 0x0048D6B0-0x0048D6C4 BYTE_EXACT
+// LEVER: the first global's register must stay live across the add.
+//   As `void`, VC6 computes the sum into the FIRST global's register
+//   (`add eax, ecx`, so the image's `add ecx, eax` reads as a different
+//   program). Six statement spellings scored identically - the destination is
+//   chosen by liveness, not by which operand is written first. Returning the
+//   first global keeps its register live, VC6 has to add into the second
+//   one's register, and the bytes match with no extra instruction: the value
+//   is already in eax at the ret. No caller in the image observes the choice.
+// symbol    ?global_arith_0048d6b0_redirect@@YIHPAX0@Z
 // size      20 bytes
 // prototype 
 // callers   0   call targets   0
@@ -315,18 +433,27 @@ Purpose: sub_48d6b0 - arithmetic over 3 fixed global(s), one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall global_arith_0048d6b0_redirect(void *, void *) {
+int32_t __fastcall global_arith_0048d6b0_redirect(void *, void *) {
     int32_t eax = *GlobalSlot00857898;
     int32_t ecx = *GlobalSlot00686B78;
     ecx = ecx + eax;
     *GlobalSlot008578C4 = ecx;
+    return eax;
 }
 
 /*
 Purpose: sub_48d6d0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D6D0 sub_48d6d0 0x0048D6D0-0x0048D6E7
-// symbol    ?global_arith_0048d6d0_redirect@@YIXPAX0@Z
+// ORIGINAL: 0x0048D6D0 sub_48d6d0 0x0048D6D0-0x0048D6E7 BYTE_EXACT
+// LEVER: the first global's register must stay live across the doubling.
+//   VC6 folds `2*a` into a's own register (`shl eax, 1`) and gives the second
+//   load ecx; the image has `lea ecx, [eax + eax]` with the second load in
+//   edx, which VC6 emits ONLY when the first global is still live - four
+//   statement spellings, `register` storage and every /O flag produce the
+//   identical shl form. Returning the first global is the one shape that
+//   keeps it live, and it costs no instruction: the value is already in eax
+//   at the ret. No caller in the image, so nothing observes the choice.
+// symbol    ?global_arith_0048d6d0_redirect@@YIHPAX0@Z
 // size      23 bytes
 // prototype 
 // callers   0   call targets   0
@@ -336,19 +463,28 @@ Purpose: sub_48d6d0 - arithmetic over 3 fixed global(s), one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall global_arith_0048d6d0_redirect(void *, void *) {
+int32_t __fastcall global_arith_0048d6d0_redirect(void *, void *) {
     int32_t eax = *GlobalSlot00686B74;
-    int32_t edx = *GlobalSlot008578A8;
     int32_t ecx = eax + eax;
+    int32_t edx = *GlobalSlot008578A8;
     edx = edx - ecx;
     *GlobalSlot008578A0 = edx;
+    return eax;
 }
 
 /*
 Purpose: sub_48d6f0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D6F0 sub_48d6f0 0x0048D6F0-0x0048D704 SEMANTIC
-// symbol    ?global_arith_0048d6f0_redirect@@YIXPAX0@Z
+// ORIGINAL: 0x0048D6F0 sub_48d6f0 0x0048D6F0-0x0048D704 BYTE_EXACT
+// LEVER: the first global's register must stay live across the add.
+//   As `void`, VC6 computes the sum into the FIRST global's register
+//   (`add eax, ecx`, so the image's `add ecx, eax` reads as a different
+//   program). Six statement spellings scored identically - the destination is
+//   chosen by liveness, not by which operand is written first. Returning the
+//   first global keeps its register live, VC6 has to add into the second
+//   one's register, and the bytes match with no extra instruction: the value
+//   is already in eax at the ret. No caller in the image observes the choice.
+// symbol    ?global_arith_0048d6f0_redirect@@YIHPAX0@Z
 // size      20 bytes
 // prototype 
 // callers   0   call targets   0
@@ -358,18 +494,27 @@ Purpose: sub_48d6f0 - arithmetic over 3 fixed global(s), one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall global_arith_0048d6f0_redirect(void *, void *) {
+int32_t __fastcall global_arith_0048d6f0_redirect(void *, void *) {
     int32_t eax = *GlobalSlot00857888;
     int32_t ecx = *GlobalSlot00686B74;
     ecx = ecx + eax;
     *GlobalSlot0085788C = ecx;
+    return eax;
 }
 
 /*
 Purpose: sub_48d710 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D710 sub_48d710 0x0048D710-0x0048D724 SEMANTIC
-// symbol    ?global_arith_0048d710_redirect@@YIXPAX0@Z
+// ORIGINAL: 0x0048D710 sub_48d710 0x0048D710-0x0048D724 BYTE_EXACT
+// LEVER: the first global's register must stay live across the add.
+//   As `void`, VC6 computes the sum into the FIRST global's register
+//   (`add eax, ecx`, so the image's `add ecx, eax` reads as a different
+//   program). Six statement spellings scored identically - the destination is
+//   chosen by liveness, not by which operand is written first. Returning the
+//   first global keeps its register live, VC6 has to add into the second
+//   one's register, and the bytes match with no extra instruction: the value
+//   is already in eax at the ret. No caller in the image observes the choice.
+// symbol    ?global_arith_0048d710_redirect@@YIHPAX0@Z
 // size      20 bytes
 // prototype 
 // callers   0   call targets   0
@@ -379,18 +524,27 @@ Purpose: sub_48d710 - arithmetic over 3 fixed global(s), one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall global_arith_0048d710_redirect(void *, void *) {
+int32_t __fastcall global_arith_0048d710_redirect(void *, void *) {
     int32_t eax = *GlobalSlot00857884;
     int32_t ecx = *GlobalSlot00686B78;
     ecx = ecx + eax;
     *GlobalSlot00857890 = ecx;
+    return eax;
 }
 
 /*
 Purpose: sub_48d730 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D730 sub_48d730 0x0048D730-0x0048D747
-// symbol    ?global_arith_0048d730_redirect@@YIXPAX0@Z
+// ORIGINAL: 0x0048D730 sub_48d730 0x0048D730-0x0048D747 BYTE_EXACT
+// LEVER: the first global's register must stay live across the doubling.
+//   VC6 folds `2*a` into a's own register (`shl eax, 1`) and gives the second
+//   load ecx; the image has `lea ecx, [eax + eax]` with the second load in
+//   edx, which VC6 emits ONLY when the first global is still live - four
+//   statement spellings, `register` storage and every /O flag produce the
+//   identical shl form. Returning the first global is the one shape that
+//   keeps it live, and it costs no instruction: the value is already in eax
+//   at the ret. No caller in the image, so nothing observes the choice.
+// symbol    ?global_arith_0048d730_redirect@@YIHPAX0@Z
 // size      23 bytes
 // prototype 
 // callers   0   call targets   0
@@ -400,12 +554,13 @@ Purpose: sub_48d730 - arithmetic over 3 fixed global(s), one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall global_arith_0048d730_redirect(void *, void *) {
+int32_t __fastcall global_arith_0048d730_redirect(void *, void *) {
     int32_t eax = *GlobalSlot00686B74;
-    int32_t edx = *GlobalSlot00686B84;
     int32_t ecx = eax + eax;
+    int32_t edx = *GlobalSlot00686B84;
     edx = edx - ecx;
     *GlobalSlot00857894 = edx;
+    return eax;
 }
 
 /*
@@ -450,8 +605,16 @@ void __fastcall global_arith_0048d760_redirect(void *, void *) {
 /*
 Purpose: sub_48d770 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D770 sub_48d770 0x0048D770-0x0048D787
-// symbol    ?global_arith_0048d770_redirect@@YIXPAX0@Z
+// ORIGINAL: 0x0048D770 sub_48d770 0x0048D770-0x0048D787 BYTE_EXACT
+// LEVER: the first global's register must stay live across the doubling.
+//   VC6 folds `2*a` into a's own register (`shl eax, 1`) and gives the second
+//   load ecx; the image has `lea ecx, [eax + eax]` with the second load in
+//   edx, which VC6 emits ONLY when the first global is still live - four
+//   statement spellings, `register` storage and every /O flag produce the
+//   identical shl form. Returning the first global is the one shape that
+//   keeps it live, and it costs no instruction: the value is already in eax
+//   at the ret. No caller in the image, so nothing observes the choice.
+// symbol    ?global_arith_0048d770_redirect@@YIHPAX0@Z
 // size      23 bytes
 // prototype 
 // callers   0   call targets   0
@@ -461,12 +624,13 @@ Purpose: sub_48d770 - arithmetic over 3 fixed global(s), one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall global_arith_0048d770_redirect(void *, void *) {
+int32_t __fastcall global_arith_0048d770_redirect(void *, void *) {
     int32_t eax = *GlobalSlot00686B74;
-    int32_t edx = *GlobalSlot008578A8;
     int32_t ecx = eax + eax;
+    int32_t edx = *GlobalSlot008578A8;
     edx = edx - ecx;
     *GlobalSlot008577E4 = edx;
+    return eax;
 }
 
 /*
@@ -495,8 +659,16 @@ void __fastcall global_arith_0048d790_redirect(void *, void *) {
 /*
 Purpose: sub_48d7b0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D7B0 sub_48d7b0 0x0048D7B0-0x0048D7C4 SEMANTIC
-// symbol    ?global_arith_0048d7b0_redirect@@YIXPAX0@Z
+// ORIGINAL: 0x0048D7B0 sub_48d7b0 0x0048D7B0-0x0048D7C4 BYTE_EXACT
+// LEVER: the first global's register must stay live across the add.
+//   As `void`, VC6 computes the sum into the FIRST global's register
+//   (`add eax, ecx`, so the image's `add ecx, eax` reads as a different
+//   program). Six statement spellings scored identically - the destination is
+//   chosen by liveness, not by which operand is written first. Returning the
+//   first global keeps its register live, VC6 has to add into the second
+//   one's register, and the bytes match with no extra instruction: the value
+//   is already in eax at the ret. No caller in the image observes the choice.
+// symbol    ?global_arith_0048d7b0_redirect@@YIHPAX0@Z
 // size      20 bytes
 // prototype 
 // callers   0   call targets   0
@@ -506,18 +678,27 @@ Purpose: sub_48d7b0 - arithmetic over 3 fixed global(s), one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall global_arith_0048d7b0_redirect(void *, void *) {
+int32_t __fastcall global_arith_0048d7b0_redirect(void *, void *) {
     int32_t eax = *GlobalSlot008577D8;
     int32_t ecx = *GlobalSlot00686B74;
     ecx = ecx + eax;
     *GlobalSlot008578B4 = ecx;
+    return eax;
 }
 
 /*
 Purpose: sub_48d7d0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D7D0 sub_48d7d0 0x0048D7D0-0x0048D7E4 SEMANTIC
-// symbol    ?global_arith_0048d7d0_redirect@@YIXPAX0@Z
+// ORIGINAL: 0x0048D7D0 sub_48d7d0 0x0048D7D0-0x0048D7E4 BYTE_EXACT
+// LEVER: the first global's register must stay live across the add.
+//   As `void`, VC6 computes the sum into the FIRST global's register
+//   (`add eax, ecx`, so the image's `add ecx, eax` reads as a different
+//   program). Six statement spellings scored identically - the destination is
+//   chosen by liveness, not by which operand is written first. Returning the
+//   first global keeps its register live, VC6 has to add into the second
+//   one's register, and the bytes match with no extra instruction: the value
+//   is already in eax at the ret. No caller in the image observes the choice.
+// symbol    ?global_arith_0048d7d0_redirect@@YIHPAX0@Z
 // size      20 bytes
 // prototype 
 // callers   0   call targets   0
@@ -527,17 +708,21 @@ Purpose: sub_48d7d0 - arithmetic over 3 fixed global(s), one
 Return Value: n/a
 Status: Complete
 */
-void __fastcall global_arith_0048d7d0_redirect(void *, void *) {
+int32_t __fastcall global_arith_0048d7d0_redirect(void *, void *) {
     int32_t eax = *GlobalSlot008577DC;
     int32_t ecx = *GlobalSlot00686B78;
     ecx = ecx + eax;
     *GlobalSlot008578BC = ecx;
+    return eax;
 }
 
 /*
 Purpose: sub_48d7f0 - arithmetic over 4 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D7F0 sub_48d7f0 0x0048D7F0-0x0048D80B SEMANTIC
+// TRIED 2026-09-03: same six shapes as 0x0048D610, same wall - see that
+//   marker. The image's `add ecx,eax` needs the first global live past the
+//   first add, and its register is the one the third global's reload wants.
 // symbol    ?global_arith_0048d7f0_redirect@@YIXPAX0@Z
 // size      27 bytes
 // prototype 
@@ -578,6 +763,15 @@ Status: Complete
 //   so does the unsigned spelling `eax + 0xFFFFFFFEu`, measured. A
 //   literal negative addend cannot reach that encoding, so whatever
 //   the original wrote, the -2 did not arrive as a constant here.
+// TRIED 2026-09-03, second pass, still 3 of 4: `eax -= 2`, `eax = eax - 2`,
+//   `eax + ~1` (~1 is -2), `eax - 1 - 1`, `eax + 0xFFFFFFFE` and the unsigned
+//   wrap `uint32_t eax + 0xFFFFFFFEu` all compile the identical
+//   `mov/sub/store/ret`; `eax - (-2)` compiles `add eax, 2`, which is the
+//   proof that the sign of the immediate is what VC6 canonicalises away.
+//   /G6 measured too, in the tree's own ladder and directly: identical.
+//   The register-liveness lever that landed the other 24 bodies in this file
+//   does not apply - there is one variable and it is live to the store either
+//   way, so no spelling of the statement changes the encoder's choice.
 */
 void __fastcall global_arith_0048d810_redirect(void *, void *) {
     int32_t eax = *GlobalSlot008578BC;
