@@ -336,6 +336,11 @@ int __cdecl valid_patrol(int veh_id, int x, int y) {
 /*
 Purpose: Calculate maximum range a faction's units can drop (air drops, Drop Pods).
 // ORIGINAL: 0x00500320 ?drop_range@@YAHH@Z 0x00500320-0x0050037C BYTE_EXACT
+// LEVER: has_tech_call, not has_tech - the image CALLS 0x5B9F20 here rather
+//        than open-coding the preq walk, so the `MEASURED inline` in
+//        technology.h has to be reached through the non-inline forwarder or
+//        /Ob1 inlines it and the body doubles (0/36 at /O2, 3/36 at /O2 /Oy-
+//        before the switch; it had held only under the retired /Ob0 set).
 // LEVER: has_project(SP_SPACE_ELEVATOR, faction_id) written out by hand
 //        (base_project's `*(&SecretProject->human_genome_project + id)` then
 //        the owning base's faction) rather than called - at the `/Ob0` flag
@@ -361,7 +366,7 @@ int __cdecl drop_range(int faction_id) {
     // has_project()'s own shape, ternary and BOOL result included: the
     // negated `base_id < 0 || owner != faction_id` form compiled a bare
     // `je` where the image materialises the comparison with `sete al` first.
-    if (!has_tech(Rules.tech_orb_insert_sans_spc_elev, faction_id)) { // default 'Graviton Theory'
+    if (!has_tech_call(Rules.tech_orb_insert_sans_spc_elev, faction_id)) { // default 'Graviton Theory'
         int base_id = *(&SecretProject.human_genome_project + SP_SPACE_ELEVATOR);
         BOOL has_orb_insert = (base_id < 0) ? false
             : (Bases[base_id].faction_id_current == faction_id);
@@ -2256,6 +2261,11 @@ append_defense_tail:
 /*
 Purpose: Check against faction's available tech for best available reactor.
 // ORIGINAL: 0x0057EFA0 ?best_reactor@@YAHH@Z 0x0057EFA0-0x0057EFE2 BYTE_EXACT
+// LEVER: has_tech_call, not has_tech - the image CALLS 0x5B9F20 in the loop,
+//        so the `MEASURED inline` in technology.h must be reached through the
+//        non-inline forwarder; open-coded it cost the body its register
+//        allocation (ebx for the argument) and 25 extra instructions (5/31 at
+//        /O2 /Oy- before the switch).
 // symbol    ?best_reactor@@YAIH@Z
 // size      66 bytes
 // prototype int (__cdecl ?best_reactor@@YAHH@Z)(int factionID)
@@ -2268,7 +2278,7 @@ Status: Complete
 */
 uint32_t __cdecl best_reactor(int faction_id) {
     for (int i = MaxReactorNum - 1; i >= 0; i--) {
-        if (has_tech(Reactor[i].preq_tech, faction_id)) {
+        if (has_tech_call(Reactor[i].preq_tech, faction_id)) {
             return i + 1;
         }
     }
@@ -2278,6 +2288,9 @@ uint32_t __cdecl best_reactor(int faction_id) {
 /*
 Purpose: Check against faction's available tech for best available chassis meeting requirements.
 // ORIGINAL: 0x0057EFF0 ?pick_chassis@@YAHHHH@Z 0x0057EFF0-0x0057F0A1 BYTE_EXACT
+// LEVER: has_tech_call, not has_tech - the image CALLS 0x5B9F20 in the loop,
+//        so the `MEASURED inline` in technology.h must be reached through the
+//        non-inline forwarder or /Ob1 open-codes it (3/70 at /O2 /Oy- before the switch).
 // LEVER: declaration/store order (best_speed before chassis_id); comparison operand
 //   order (`Chassis[i].triad == triad_chk`, not the reverse - the `cmp` LHS follows
 //   source LHS); swapped the `speed_chk > 0`/`speed_chk <= 0` if/else so the `>0`
@@ -2301,7 +2314,7 @@ int __cdecl pick_chassis(int faction_id, int triad_chk, int speed_chk) {
     int best_speed = 0;
     int chassis_id = -1;
     for (int i = 0; i < MaxChassisNum; i++) {
-        if (has_tech(Chassis[i].preq_tech, faction_id) && (triad_chk < 0
+        if (has_tech_call(Chassis[i].preq_tech, faction_id) && (triad_chk < 0
             || Chassis[i].triad == triad_chk) && (!Chassis[i].missile || speed_chk == -1)) {
             int speed_compare = 1;
             // The image reaches the best_speed check below through ONE shared block, from
@@ -2350,6 +2363,9 @@ Purpose: Check against faction's available tech for the best available weapon me
          The condition variable has a dual purpose of either max cost or search for 1st instance of
          a particular weapon mode.
 // ORIGINAL: 0x0057F0B0 ?weapon_budget@@YAHHHH@Z 0x0057F0B0-0x0057F142 BYTE_EXACT
+// LEVER: has_tech_call, not has_tech - the image CALLS 0x5B9F20 in the loop,
+//        so the `MEASURED inline` in technology.h must be reached through the
+//        non-inline forwarder or /Ob1 open-codes it (2/67 at /O2 /Oy- before the switch).
 // LEVER: declaration/store order (best_offense before weapon_id, mirroring
 //   pick_chassis's best_speed/chassis_id pair); swapped the `condition >= 0`/
 //   `condition < 0` if/else so the `< 0` (break) arm is checked first, matching
@@ -2369,7 +2385,7 @@ int __cdecl weapon_budget(int faction_id, int condition, BOOL check_mode) {
     int best_offense = -1;
     int weapon_id = 0;
     for (int i = 0; i < MaxWeaponNum; i++) {
-        if (has_tech(Weapon[i].preq_tech, faction_id)) {
+        if (has_tech_call(Weapon[i].preq_tech, faction_id)) {
             if (condition < 0) {
                 if (Weapon[i].mode == -condition) {
                     weapon_id = i;
@@ -2395,6 +2411,12 @@ int __cdecl weapon_budget(int faction_id, int condition, BOOL check_mode) {
 Purpose: Check against the faction's available tech for the best available armor meeting the cost 
          requirement.
 // ORIGINAL: 0x0057F150 ?armor_budget@@YAHHH@Z 0x0057F150-0x0057F1CF BYTE_EXACT
+// LEVER: has_tech_call, not has_tech - the image CALLS 0x5B9F20 in the loop,
+//        so the `MEASURED inline` in technology.h must be reached through the
+//        non-inline forwarder or /Ob1 open-codes it (5/53 at the exe's own
+//        set). This also retires the "divergence starts at the has_tech() call
+//        site (instr 17); not chased further" TRIED below - the call site was
+//        the defect, and the fix is the forwarder.
 // LEVER: store order - best_defense=-1 before armor_id=0, opposite of
 //        declaration order (0.9524 -> 0.971 similar). TRIED: remaining
 //        divergence starts at the has_tech() call site (instr 17); not
@@ -2418,7 +2440,7 @@ int __cdecl armor_budget(int faction_id, int max_cost) {
     int best_defense = -1;
     int armor_id = 0;
     for (int i = 0; i < MaxArmorNum; i++) {
-        if (has_tech(Armor[i].preq_tech, faction_id) && Armor[i].cost <= max_cost
+        if (has_tech_call(Armor[i].preq_tech, faction_id) && Armor[i].cost <= max_cost
             && Armor[i].defense_rating >= 0) { // excludes PSI
             int defense_compare;
             if (faction_id >= 0 && !ExpansionEnabled && i > 9) {
@@ -2891,6 +2913,9 @@ void __cdecl make_proto(int proto_id, int chassis_id, int weapon_id, int armor_i
 /*
 Purpose: Search for the 1st prototype (basic + faction specific) that matches the specified plan.
 // ORIGINAL: 0x005AED50 ?get_plan@@YAHHH@Z 0x005AED50-0x005AEDE0 BYTE_EXACT
+// LEVER: has_tech_call, not has_tech - the image CALLS 0x5B9F20 at 0x5AEDA1,
+//        so the `MEASURED inline` in technology.h must be reached through the
+//        non-inline forwarder or /Ob1 open-codes it (3/54 at /O2 /Oy- before the switch).
 // LEVER: proto_id is a signed `int`, not `uint32_t` - the image's
 //        `cmp edi, 0x40 / jge` in front of the has_tech() guard is a SIGNED
 //        test, and `uint32_t` gave `jae`. The parenthesisation
@@ -2914,7 +2939,7 @@ int __cdecl get_plan(int faction_id, int plan) {
         if (VehPrototypes[proto_id].flags & PROTO_ACTIVE
             && !(VehPrototypes[proto_id].obsolete_factions & (1 << faction_id))
             && (proto_id >= MaxVehProtoFactionNum
-                || has_tech(VehPrototypes[proto_id].preq_tech, faction_id))
+                || has_tech_call(VehPrototypes[proto_id].preq_tech, faction_id))
             && VehPrototypes[proto_id].plan == plan) {
             return proto_id;
         }
@@ -2926,6 +2951,12 @@ int __cdecl get_plan(int faction_id, int plan) {
 Purpose: Reveal the specified tile to the specified faction and keep the
          faction's remembered copy of the tile's terrain bits in step with it.
 // ORIGINAL: 0x005B5700 sub_5b5700 0x005B5700-0x005B57CA BYTE_EXACT
+// LEVER: synch_bit_call, not synch_bit - see the wrapper below. The image
+//        CALLS 0x591E50 as this body's one genuine call, and at plain /O2 the
+//        optimiser open-coded the `MEASURED inline` from map.h into the tail
+//        (3/66 at /O2 /Oy- before the switch), which is also where the extra register
+//        pressure came from. on_map() and map_loc() stay written out: the
+//        image folds both in here.
 // LEVER: FEWER (0 calls vs image's 1: synch_bit) at every flag set that kept a standalone symbol. /Ob0 forces the WHOLE function real, including on_map()/map_loc(), which the image folds in here; without /Ob0 the compiler inlines synch_bit() too, since it is small and `MEASURED inline` in map.h. Writing on_map()/map_loc() as bare expressions (not calls) removes them from the optimiser's inline/no-inline choice entirely, so /Ob0 only has synch_bit() left to force real.
 // symbol    ?spot_tile@@YAXHHH@Z
 // size      202 bytes
@@ -2951,12 +2982,24 @@ which between them mean it is the interactive map's repaint hint rather than
 game state. `bit2 |= 0x400000` and `UnkBitfield1 |= 1` are the same pair
 climate_set() sets at 00591A80 and carry the same unidentified meaning.
 */
+// LEVER (0x005B5700 spot_tile / 0x005B57D0 spot_base): synch_bit() has to
+//        reach the image's real `call 0x591e50` at plain /O2, where the
+//        optimiser otherwise open-codes the whole `MEASURED inline` body from
+//        map.h into the caller and costs it the frame's spare registers
+//        (spot_base was 5/78, spot_tile 3/66; both BYTE_EXACT through this
+//        wrapper). VC6 declines to auto-inline a wrapper whose own body is the
+//        expansion of another inline, so it stays a genuine call - the
+//        same-TU counterpart of technology.h's has_tech_call, which needed a
+//        different TU.
+static void __cdecl synch_bit_call(int x, int y, int faction_id) {
+    synch_bit(x, y, faction_id);
+}
+
 void __cdecl spot_tile(int x, int y, int faction_id) {
     // on_map() and map_loc() are written out here rather than called: the
-    // real standalone body at 0x005B5700 needs both of them folded in while
-    // synch_bit() stays a genuine call, and a function CALL to an inline
-    // helper is still a call the optimiser can decide to keep - writing the
-    // expressions removes that choice instead of hoping for it.
+    // image folds both of them in, and writing the expressions removes the
+    // optimiser's inline/no-inline choice instead of hoping for it.
+    // synch_bit_call() rather than synch_bit(): see the wrapper above.
     if (!(y >= 0 && y < (int)MapLatitudeBounds
           && x >= 0 && x < (int)MapLongitudeBounds)) {
         return;
@@ -2969,13 +3012,19 @@ void __cdecl spot_tile(int x, int y, int faction_id) {
         UnkBitfield1 |= 1; // TODO: identify global + value
     }
     tile->visibility |= (uint8_t)(1 << faction_id);
-    synch_bit(x, y, faction_id);
+    synch_bit_call(x, y, faction_id);
 }
 
 /*
 Purpose: Reveal the specified base, and the tile it stands on, to the specified
          faction.
 // ORIGINAL: 0x005B57D0 ?spot_base@@YAXHH@Z 0x005B57D0-0x005B58D2 BYTE_EXACT
+// LEVER: synch_bit_call, not synch_bit - see the wrapper above. The
+//        image CALLS 0x591E50 as this body's one genuine call, and open-coding
+//        the `MEASURED inline` from map.h here cost the frame its spare
+//        registers (5/78 at /O2 /Oy- before the switch). The hand-inlined spot_tile
+//        body is also spelled in spot_tile's own guard-clause shape, which is
+//        what the image's four separate `jl`/`jge` to the shared tail are.
 // size      258 bytes
 // prototype void (__cdecl ?spot_base@@YAXHH@Z)(int baseID, int factionID)
 // callers   8   call targets   1
@@ -2998,21 +3047,23 @@ void __cdecl spot_base(int base_id, int faction_id) {
     Bases[base_id].faction_pop_size_intel[faction_id] = Bases[base_id].population_size;
     int x = Bases[base_id].x;
     int y = Bases[base_id].y;
-    // spot_tile(), hand-inlined - a call to an `inline` helper is still a
-    // call the optimiser can fold away, and does here: matching spot_tile's
-    // own comment on why synch_bit() has to stay a genuine call.
-    if (y >= 0 && y < (int)MapLatitudeBounds
-        && x >= 0 && x < (int)MapLongitudeBounds) {
-        Map *tile = reinterpret_cast<Map *>(LockMapTable) + ((x >> 1) + y * MapLongitude);
-        if (faction_id == LocalFaction && !(tile->visibility & (1 << faction_id))
-            && !(GameState & STATE_OMNISCIENT_VIEW)
-            && !(PlayersData[faction_id].flags & PFLAG_MAP_REVEALED)) {
-            tile->bit2 |= 0x400000; // TODO: identify value
-            UnkBitfield1 |= 1; // TODO: identify global + value
-        }
-        tile->visibility |= (uint8_t)(1 << faction_id);
-        synch_bit(x, y, faction_id);
+    // spot_tile(), hand-inlined in spot_tile's OWN shape - guard clause first,
+    // the synch_bit call last - so the hand-inline reads exactly like the body
+    // it duplicates. synch_bit_call() rather than synch_bit(): see the wrapper
+    // above spot_tile.
+    if (!(y >= 0 && y < (int)MapLatitudeBounds
+          && x >= 0 && x < (int)MapLongitudeBounds)) {
+        return;
     }
+    Map *tile = reinterpret_cast<Map *>(LockMapTable) + ((x >> 1) + y * MapLongitude);
+    if (faction_id == LocalFaction && !(tile->visibility & (1 << faction_id))
+        && !(GameState & STATE_OMNISCIENT_VIEW)
+        && !(PlayersData[faction_id].flags & PFLAG_MAP_REVEALED)) {
+        tile->bit2 |= 0x400000; // TODO: identify value
+        UnkBitfield1 |= 1; // TODO: identify global + value
+    }
+    tile->visibility |= (uint8_t)(1 << faction_id);
+    synch_bit_call(x, y, faction_id);
 }
 
 /*
