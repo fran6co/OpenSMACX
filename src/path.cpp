@@ -26,6 +26,23 @@
 
 Path Paths;                                              // 0x00945B00
 
+// Non-inline forwarder to `region_set` (map.h), for the same reason as
+// general.h's bitmask_call: the image makes real `call 0x591B90`s at both
+// region_set sites in continent (0x0059C571, 0x0059C698) and both pole loops
+// in continents, and the inline definition in the header folds those four
+// away. Same-TU forwarders stay out-of-line under /O2 - measured on this
+// file, and on the do_all_non_input forwarder this note in 0x0059C520 tried.
+void __cdecl region_set_call(int x, int y, int region) {
+    region_set(x, y, region);
+}
+
+// Same lever again, for `abstract_set` (map.h): make_abstract (0x0059C200) is
+// the image's only `call 0x00591230`, and this tree was expanding the inline
+// there - `osmx calls 0x0059C200` reported one image call and none here.
+void __cdecl abstract_set_call(int x, int y, uint8_t region) {
+    abstract_set(x, y, region);
+}
+
 /*
 Purpose: Initialize an instance of the class.
 // ORIGINAL: 0x0059A220 ?init@Path@@QAEXXZ 0x0059A220-0x0059A2C3 BYTE_EXACT
@@ -333,6 +350,22 @@ int Path::move(int veh_id, int faction_id) {
     //     indexes a dword table at 0x0097D044 with a stride of 77 elements
     //     that this pass could not name - the only two addresses in this
     //     function it could not resolve against already-recovered src/.
+    //     RESOLVED 2026-09-03, so the next pass does not re-derive it:
+    //     0x0097D044 is `Bases + offsetof(Base, faction_id_current)` (base.h
+    //     puts `Base Bases[MaxBaseNum]` at 0x0097D040 and faction_id_current
+    //     at +4, and spying_recovery.h already binds 0x0097D044 as
+    //     SpyingBaseFactionBytes), and the "77-element stride" is the *4 SIB
+    //     on an index already scaled by 77 - i.e. sizeof(Base) == 308, so the
+    //     access is `Bases[i].faction_id_current`. 0x009A6534 sits INSIDE
+    //     `BaseSecretProject SecretProject` (0x009A6514, 64 ints, and
+    //     GovernorFaction lands exactly at its end, 0x009A6614), at +0x20 =
+    //     field index 8 - the project-built-here id the tree already stores
+    //     as SP_Unbuilt/-1. So the image is:
+    //       project_base = SecretProject.<field 8>;
+    //       if (project_base < 0
+    //           || Bases[project_base].faction_id_current != <ebp-0x0c>)
+    //               flags |= 0x10;
+    //     <ebp-0x0c> is still untraced at the point this was written.
     //   - VehPrototypes[proto_id].chassis_id -> Chassis[chassis_id].triad
     //     (0x94a379 = Chassis base 0x94a330 + offsetof(triad)==0x49, stride
     //     confirmed sizeof(RulesChassis)==0x90 via `lea eax,[eax+eax*8];
@@ -349,7 +382,26 @@ int Path::move(int veh_id, int faction_id) {
 /*
  Purpose: Populate the abstract map with the radial region value.
 // ORIGINAL: 0x0059C200 ?make_abstract@Path@@QAEXXZ 0x0059C200-0x0059C33F
-// TRIED: the divergence is at instruction 2 and it is the FRAME SIZE - the image reserves `sub esp, 0x1c` where this body reserves 0x18, one dword short. Four source shapes measured with tools/try_spellings.py and ALL FOUR compile identically to what is committed, 11/112: hoisting `x * 5` and `y * 5` into their own locals, splitting the `on_map && !is_ocean` guard into nested ifs, both together, and signed loop counters. VC6 emits the same code for every one, so the extra slot is not this body's to allocate - it belongs to one of the four `MEASURED inline` callees here (xrange, on_map, is_ocean, region_at) spilling where ours does not. Same family as the port_to_port/has_tech ceiling; not reachable from path.cpp.
+// LEVER: `abstract_set_call` - the image's ONE call here is a real
+//   `call 0x00591230` at 0x0059C2F6, and this tree was expanding the
+//   `MEASURED inline` abstract_set in its place. A non-inline forwarder (same
+//   lever as general.h's bitmask_call, defined at the top of this file) took
+//   this body from 11/112 and a frame one dword short of the image's
+//   `sub esp,0x1c` to 18/112 with the frame and the instruction count both
+//   matching - the missing slot WAS the expanded callee's spill.
+// LEVER: the two abstract cursors are SIGNED, and the bounds are read as
+//   `(int)`. `uint32_t` against `uint32_t MapAbstractLatBounds` gives `jbe`
+//   where the image closes the loop `jle`; `MapAbstractLongBounds` is already
+//   `int`, so only the cast on the y bound is load-bearing. 0.843 -> 0.879.
+// TRIED: everything past that. The remaining gap is the register schedule of
+//   the inlined `xrange`/`on_map`: the image hoists MapIsFlat,
+//   MapLongitudeBounds and MapLongitude into ebx/esi/ecx at 0x0059C2A0-0x0059C2AC
+//   and this tree re-reads them from memory at each of the four uses inside
+//   the loop. Those reads live in map.h, which this batch does not own - the
+//   same wall zoc_path records below.
+// TRIED: the divergence is at instruction 2 and it is the FRAME SIZE - the image reserves `sub esp, 0x1c` where this body reserves 0x18, one dword short. Four source shapes measured with tools/try_spellings.py and ALL FOUR compile identically to what is committed, 11/112: hoisting `x * 5` and `y * 5` into their own locals, splitting the `on_map && !is_ocean` guard into nested ifs, both together, and signed loop counters. VC6 emits the same code for every one, so the extra slot is not this body's to allocate - it belongs to one of the four `MEASURED inline` callees here (xrange, on_map, is_ocean, region_at) spilling where ours does not. SUPERSEDED 2026-09-03: the missing slot was the expanded abstract_set's spill, and
+//   `abstract_set_call` (LEVER above) freed it. The four spellings above are still
+//   measured-equal to each other, just no longer to the image.
 // size      319 bytes
 // prototype void (__thiscall ?make_abstract@Path@@QAEXXZ)(Path* this)
 // callers   1   call targets   1
@@ -360,8 +412,8 @@ int Path::move(int veh_id, int faction_id) {
  Status: Complete
 */
 void Path::make_abstract() {
-    for (uint32_t y = 0; y < MapAbstractLatBounds; y++) {
-        for (uint32_t x = y & 1; x < MapAbstractLongBounds; x += 2) {
+    for (int y = 0; y < (int)MapAbstractLatBounds; y++) {
+        for (int x = y & 1; x < (int)MapAbstractLongBounds; x += 2) {
             uint8_t region = 0;
             for (int i = 0; i < RadiusRange[1]; i++) {
                 int x_radius = xrange(x * 5 + RadiusOffsetX[i]);
@@ -371,14 +423,28 @@ void Path::make_abstract() {
                     break;
                 }
             }
-            abstract_set(x, y, region);
+            abstract_set_call(x, y, region);
         }
     }
 }
 
 /*
  Purpose: Merge the old region into the new region.
-// ORIGINAL: 0x0059C340 ?merge@Path@@QAEXHH@Z 0x0059C340-0x0059C3B7
+// ORIGINAL: 0x0059C340 ?merge@Path@@QAEXHH@Z 0x0059C340-0x0059C3B7 BYTE_EXACT
+// LEVER: signed cursor + ONE hoisted `Map *tiles = map_tiles()`. `uint32_t i`
+//   against the `uint32_t MapArea` global gives `test eax,eax / jbe`; the
+//   image tests SIGNED (`test edi,edi / jle 0x59c3b0`), so the cursor is
+//   `int` and the bound is read as `(int)MapArea`. And the two
+//   `map_tiles()[i]` calls per iteration compile to `[edi+eax+3]` indexing
+//   against a reloaded base - hoisting the pointer folds it to the image's
+//   running `mov bl,[eax]` / `add eax,0x2c`: 25/39 -> 37/39.
+// LEVER: THE POINTER STEP COMES FIRST IN THE INCREMENT CLAUSE. `for (...
+//   tiles++, i++)` puts `add eax,0x2c` ahead of `inc ecx` at the back edge,
+//   which is the image's order at 0x0059C3A8/0x0059C3AB; `i++, tiles++`
+//   emits the reverse and scores 37/39. 39/39, BYTE_EXACT, on that alone.
+// TRIED: the pointer-walk form (`for (; tiles != tiles_end; tiles++)`) - the
+//   image's own shape, and it drops to 17/39, because it loses the entry
+//   guard `test edi,edi / jle` that the counted loop produces.
 // size      119 bytes
 // prototype void (__thiscall ?merge@Path@@QAEXHH@Z)(Path* this, int regionOld, int regionNew)
 // callers   0   call targets   0
@@ -391,9 +457,13 @@ void Path::make_abstract() {
 void Path::merge(int region_old, int region_new) {
     Continents[region_new].tile_count += Continents[region_old].tile_count;
     Continents[region_old].tile_count = 0;
-    for (uint32_t i = 0; i < MapArea; i++) {
-        if ((uint32_t)map_tiles()[i].region == region_old) {
-            map_tiles()[i].region = (uint8_t)region_new;
+    Map *tiles = map_tiles();
+    // IMAGE ORDER: the pointer step comes FIRST in the increment clause - that
+    // is what puts `add eax, 0x2c` ahead of `inc ecx` at the back edge of the
+    // image's loop, and `i++, tiles++` is the reverse. BYTE_EXACT on it.
+    for (int i = 0; i < (int)MapArea; tiles++, i++) {
+        if (tiles->region == region_old) {
+            tiles->region = (uint8_t)region_new;
         }
     }
 }
@@ -473,6 +543,22 @@ void Path::territory(int x, int y, int UNUSED(region), int faction_id) {
 /*
  Purpose: Populate the continent and path table for the specified tile and region.
 // ORIGINAL: 0x0059C520 ?continent@Path@@QAEXHHH@Z 0x0059C520-0x0059C781
+// LEVER: `region_set_call` - the image calls `region_set` for real at BOTH
+//   sites here (0x0059C571 and 0x0059C698) and this tree was folding the
+//   `MEASURED inline` into both. The non-inline forwarder defined at the top
+//   of this file puts the image's `push/push/push/call` back at each site,
+//   and `call_diff` now reports the call counts AGREEING (4 against 4) for
+//   the first time: similarity 0.6984, from 0.28.
+// LEVER: the `(uint8_t)` casts on BOTH region_set arguments come OFF. The
+//   parameter is `int` and region_set takes `int`, and the image loads the
+//   full dword at 0x0059C568 (`mov ecx,[ebp+0x10]`) where the cast makes this
+//   tree emit `movzx ecx,byte ptr [ebp+0x10]`. 3/206 -> 20/206 byte-matching
+//   at 0.691 similar; the winning set moves to /O2 /Ob0, which leaves
+//   do_all_non_input out-of-line too.
+// LEVER: the winning flag set moved to /O1, where VC6 leaves
+//   `do_all_non_input` as a real out-of-line call instead of expanding it
+//   into do_non_input/do_net/check_net - which is the inline ceiling the
+//   TRIED below records. The call count no longer depends on that ceiling.
 // TRIED: a real out-of-line forwarder for `do_all_non_input`, the `sleep_call`/`base_cost_call` idiom, to answer this body making 5 calls where the image makes 4. MEASURED and REVERTED: it makes things worse in both directions at once. Agreement falls from 16/206 to 1/206, because changing the call target shifts everything after it; and call_diff goes from MORE (5 against 4) to FEWER (2 against 4) rather than agreeing, because it resolves callees by ADDRESS and a forwarder is a different address than the 0x005FCB20 the image calls. The idiom works where the forwarder IS the image's callee; here it cannot be.
 // size      609 bytes
 // prototype void (__thiscall ?continent@Path@@QAEXHHH@Z)(Path* this, int xCoord, int yCoord, int region)
@@ -500,7 +586,7 @@ void Path::continent(int x, int y, int region) {
     uint32_t fresh_water_count = 0;
     x_table_[index1_] = (int16_t)x;
     y_table_[index1_++] = (int16_t)y;
-    region_set(x, y, (uint8_t)region);
+    region_set_call(x, y, region);
     BOOL is_ocean_tile = is_ocean(x, y);
     do {
         int16_t x_it = x_table_[index2_];
@@ -516,7 +602,7 @@ void Path::continent(int x, int y, int region) {
                 if (is_ocean_tile && bit2_at(x_radius, y_radius) & BIT2_FRESH && is_ocean_rad) {
                     fresh_water_count++;
                 }
-                region_set(x_radius, y_radius, (uint8_t)region);
+                region_set_call(x_radius, y_radius, region);
                 x_table_[index1_] = (int16_t)x_radius;
                 y_table_[index1_++] = (int16_t)y_radius;
             }
@@ -539,29 +625,58 @@ void Path::continent(int x, int y, int region) {
 /*
  Purpose: Populate and set up all the continents and path tables.
 // ORIGINAL: 0x0059C790 ?continents@Path@@QAEXXZ 0x0059C790-0x0059CC9D
+// LEVER: MERGE IS INLINED HERE, THREE TIMES - this was the whole gap. The
+//   image's own `?merge@Path@@QAEXHH@Z` has zero callers because `continents`
+//   expands all three of its merge calls in place (0x0059C88B-0x0059C9E6),
+//   ~110 of this body's 414 instructions. With merge a plain out-of-line
+//   member this tree compiled to 300 instructions against the image's 414 at
+//   0.106 similar; merge is now `MEASURED inline` in path.h - see the LEVER
+//   on its own marker for why the dllexport is required and plain `inline`
+//   is not - and this tree compiles to 419 at 0.295.
+// LEVER: `bitmask_call`, not `bitmask` (general.h's non-inline forwarder, the
+//   same lever base.h records for breed_mod). The image makes one real
+//   `call 0x50ba00` at 0x0059CC21 and this tree was inlining the fold; the
+//   inlined `and/cdq/sar/shl` block is gone and the call count now agrees.
+// LEVER: `region_set_call` at BOTH pole loops. The image calls `region_set`
+//   for real at 0x0059CA49 and 0x0059CAC3 and this tree was folding the
+//   `MEASURED inline` away there; the forwarder defined at the top of this
+//   file restores them. 18/414 -> 76/414 byte-matching, 0.295 -> 0.327,
+//   on the two forwarders together.
+// LEVER: the region-zeroing cursor is `int`, and `land_region`/`ocean_region`
+//   are initialised BEFORE that loop, `y_south_pole` after it. `uint32_t`
+//   against the `uint32_t MapArea` global gives `test/jbe` where the image
+//   tests SIGNED, and the old declaration order (`y_south_pole` first) put
+//   all three frame stores after the loop where the image lands them before
+//   and around it. The frame size now matches too (`sub esp, 0x28`).
+// TRIED: hoisting `Map *tiles = map_tiles()` ahead of that loop, the spelling
+//   that took merge's own loop to 37/39. Here it costs - the image loads
+//   `map_tiles()` INSIDE the guarded region at 0x0059C7AF, and the hoist
+//   drags the load (and the register pressure) above the `jle`. Left in the
+//   loop.
+// TRIED: everything past this point, and the wall is the frame schedule, not
+//   a statement. The image spills this/land_region/ocean_region/y/x/
+//   region_current into [ebp-N] slots and pushes ebx/esi/edi only after the
+//   zeroing loop; this tree computes them eagerly in registers (or [esp+N]
+//   under /Oy). That is the receiver-spill wall the brief documents on seven
+//   Palette bodies, at 414-instruction scale. Best 0.2786 with /Oy- and
+//   0.2953 without; 23 and 16 instructions agreeing respectively.
 // size      1293 bytes
 // prototype void (__thiscall ?continents@Path@@QAEXXZ)(Path* this)
 // callers   3   call targets   5
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x0050BA00 0x00591B90 0x0059C200 0x0059C520 0x005FCB20
-// TRIED: `call_diff` reports NO call-count disagreement here (unlike
-//   the sibling `continent` a few lines up, where the same `do_all_non_input`
-//   call gets inlined) - this function is large enough that VC6 keeps it as
-//   a real out-of-line call, matching the image's 0x005FCB20. The remaining
-//   gap is register/stack-layout noise typical of a 1293-byte function this
-//   size, not a structural difference: best measured 2/414 instructions,
-//   MISMATCH. Not chased further at this size within batch budget.
  Return Value: n/a
  Status: Complete
 */
 void Path::continents() {
-    for (uint32_t i = 0; i < MapArea; i++) {
-        map_tiles()[i].region = 0;
+    int land_region = 0;
+    int ocean_region = 64;
+    Map *tiles = map_tiles();
+    for (int i = 0; i < (int)MapArea; tiles++, i++) {
+        tiles->region = 0;
     }
     int y_south_pole = MapLatitudeBounds - 1;
-    int ocean_region = 64;
-    int land_region = 0;
     for (int y = 1; y < y_south_pole; y++) {
         for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
             if (!region_at(x, y)) {
@@ -601,12 +716,12 @@ void Path::continents() {
     }
     for (int x = 0; x < MapLongitudeBounds; x += 2) { // north pole
         uint8_t pole_region = is_ocean(x, 0) ? 127 : 63;
-        region_set(x, 0, pole_region);
+        region_set_call(x, 0, pole_region);
         Continents[pole_region].tile_count++;
     }
     for (x = y_south_pole & 1; x < MapLongitudeBounds; x += 2) { // south pole
         uint8_t pole_region = is_ocean(x, y_south_pole) ? 127 : 63;
-        region_set(x, y_south_pole, pole_region);
+        region_set_call(x, y_south_pole, pole_region);
         Continents[pole_region].tile_count++;
     }
     int most_tiles = 0;
@@ -635,7 +750,7 @@ void Path::continents() {
                         if (region_rad >= MaxRegionLandNum) {
                             int offset;
                             int mask;
-                            bitmask(region_rad - MaxRegionLandNum, &offset, &mask);
+                            bitmask_call(region_rad - MaxRegionLandNum, &offset, &mask);
                             Continents[region].sea_coasts[offset] |= mask;
                             i += 2 - (i & 1);
                         }
@@ -651,6 +766,13 @@ void Path::continents() {
 /*
  Purpose: TBD
 // ORIGINAL: 0x0059CCA0 ?sensors@Path@@QAEHHPAHPAH@Z 0x0059CCA0-0x0059D22A
+// TRIED: making `get`/`set` `inline` in path.h, on the reasoning that the
+//   image has neither `?get@Path@@QAEHII@Z` nor `?set@Path@@QAEHIIH@Z` so the
+//   `map_table_` accesses here must fold into their callers. MEASURED and
+//   REVERTED: similarity 0.316 -> 0.173 and the compiled body grew 531 -> 540,
+//   so the image reaches the same two sites through something this tree's
+//   out-of-line get/set already mirrors (call_diff reports the counts
+//   agreeing either way). The out-of-line spelling is the better model.
 // LEVER: THE SWEEP IS OVER THE REAL MAP, NOT THE ABSTRACT ONE, and this was
 //   a WRONG PROGRAM rather than a wrong spelling. The body read
 //   `for (uint32_t y = 1; y < MapAbstractLatBounds - 1; y++)` /

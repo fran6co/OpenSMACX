@@ -50,7 +50,15 @@ class Path {
            int unk2);
   int move(int veh_id, int faction_id);
   void make_abstract();
-  void merge(int region_old, int region_new);
+  // MEASURED + INLINE: the image's own `?merge@Path@@QAEXHH@Z` (0x0059C340)
+  // has ZERO callers, because `continents` (0x0059C790) expands all three of
+  // its merge calls in place - that is ~110 of that body's 414 instructions,
+  // and this tree measured 300 compiled against the image's 414 at 0.106
+  // similar with merge left a plain out-of-line member. Plain `inline` alone
+  // is not enough: with every call site expanded, /Gy drops the unused
+  // COMDAT and merge's own marker loses its symbol, so the dllexport is what
+  // pins the standalone copy into the object at the same time.
+  MEASURED inline void merge(int region_old, int region_new);
   void territory(int x, int y, int region, int faction_id);
   void continent(int x, int y, int region);
   void continents();
