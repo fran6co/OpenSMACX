@@ -645,6 +645,64 @@ int Net::get(unsigned long *a, unsigned long *b) {
 }
 
 /*
+Purpose: Initialise the network session: tear whatever is running down, take
+         the 0x2000-byte DirectPlay buffer, the session GUID and the option
+         word, ask the embedded voice transmitter to open its 0x1000-byte
+         device buffer, clear the sixteen player slots, and register this
+         object - its thread, its five events and its queue lock - as live.
+// ORIGINAL: 0x0062D8E0 ?init@Net@@QAEHPAU_GUID@@HH@Z 0x0062D8E0-0x0062D9D8 BYTE_EXACT
+// size      248 bytes
+// prototype int (__thiscall ?init@Net@@QAEHPAU_GUID@@HH@Z)(Net* this, _GUID*, int, int)
+// callers   2   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x0062E010
+// indirect  0x0062D948 0x0062D983 0x0062D996 0x0062D99F 0x0062D9A8 0x0062D9B1 0x0062D9BA 0x0062D9C3
+Return Value: 4 when the buffer cannot be had, else 0
+Status: Complete
+*/
+int Net::init(_GUID *guid, int option_a, int option_b) {
+    close();
+    field_44_ = option_b;
+    field_6E4_ = 0x2000;
+    void *buffer = mem_get(0x2000);
+    buffer_6E0_ = buffer;
+    if (buffer == 0) {
+        return 4;
+    }
+    guid_6E8_ = guid;
+    voice_flags_D8_ = option_a;
+    field_6D8_ = 0xC8;
+    // VoiceTx::init, slot 0x84 of the table at voice_tx_'s front.
+    voice_tx_.init(0x1000, 0, 0);
+    // The cursor sits one word into each slot - image 0x158, clearing the word
+    // behind it first - so it walks field_4_ and reaches field_0_ as [-1].
+    uint32_t *word = &players_->field_4_;
+    int count = 0x10;
+    do {
+        word[-1] = 0;
+        word[0] = 0;
+        word[1] = 0;
+        *reinterpret_cast<uint8_t *>(&word[4]) = 0;  // flags_10_
+        word[3] = 0;
+        word += 0x58 / sizeof(*word);
+        --count;
+    } while (count != 0);
+    self_20_ = this;
+    buffer_24_ = buffer_6E0_;
+    field_1C_ = *NetEnabled;
+    thread_id_4_ = GetCurrentThreadId();
+    events_8_[0] = CreateEventA(0, 0, 0, 0);
+    events_8_[1] = CreateEventA(0, 0, 0, 0);
+    events_8_[2] = CreateEventA(0, 0, 0, 0);
+    events_8_[3] = CreateEventA(0, 0, 0, 0);
+    events_8_[4] = CreateEventA(0, 0, 0, 0);
+    InitializeCriticalSection(&lock_2C_);
+    field_28_ = 1;
+    return 0;
+}
+
+/*
 Purpose: Probe the DirectPlay lobby for a connection the command line asked
          for, and hand it to the session layer when there is one.
 

@@ -150,7 +150,19 @@ FLOORS = {
     # their forwarders and archives are gone with the bodies. What is left is
     # set_agenda (0x0055B820), 0x0062D8E0 and treaty_on (0x0055B870, which holds
     # no claim and is counted only because its archive is in the tree).
-    "archive-only-forwarder": 3,
+    # 3 -> 0 (2026-09-03, the batch the boot-callee one left): the last three
+    # homed - agenda_on (0x0055BA80, BYTE_EXACT 56/56), agenda_off (0x0055B820,
+    # BYTE_EXACT 30/30) into src/faction.cpp and Net::init (0x0062D8E0,
+    # BYTE_EXACT 87/87) into src/net_class.cpp - and treaty_on (0x0055B870)
+    # with them (MISMATCH 94/152, homed for coverage; its archive held no
+    # claim, so it never counted here). Nothing in the tree claims an address
+    # the build does not compile any more.
+    # NOTE ON THE LABEL the comment above carries: the address_index line that
+    # called 0x0055B820 `set_agenda` had the wrong name. 0x0055B820 is
+    # ?agenda_off@@YAXHHH@Z; the catalogue's ?set_agenda@@YAXHHHH@Z is the
+    # four-argument set-or-clear at 0x0055BBA0, already homed BYTE_EXACT in
+    # src/faction.cpp.
+    "archive-only-forwarder": 0,
     "unknown-host-files": 0,
 }
 

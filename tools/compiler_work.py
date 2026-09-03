@@ -369,7 +369,15 @@ SCAFFOLD_CEILINGS = {
     # already compiled and claimed in leaf_recoveries.cpp under the seam name
     # leaf_00455e50_redirect, so it took its own image name instead of a
     # forwarder that would have landed on it as a LANDMINE. Net +3.
-    "PENDING_BODY forwarders": 230,
+    # 230 -> 227 (2026-09-03, the archive-only-forwarder batch): the treaty and
+    # agenda writers plus Net::init homed - treaty_on (0x0055B870, MISMATCH
+    # 94/152), agenda_on (0x0055BA80, BYTE_EXACT 56/56), agenda_off
+    # (0x0055B820, BYTE_EXACT 30/30) into src/faction.cpp and Net::init
+    # (0x0062D8E0, BYTE_EXACT 87/87) into src/net_class.cpp - so their four
+    # forwarders died with the bodies. Net::init hands one back:
+    # ?ambience@@YAHH@Z (0x00446B40) is the event-sound player treaty_on asks
+    # for on a vendetta, and nothing in the build defined it. Net -3.
+    "PENDING_BODY forwarders": 227,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -397,7 +405,13 @@ SCAFFOLD_CEILINGS = {
     # 1289 -> 1287 (2026-09-03, boot-callee batch): 00455e80.cpp homed BYTE_EXACT
     # into src/game.cpp and units/004ba220.cpp homed BYTE_EXACT into
     # src/palette.cpp, both files gone with the bodies.
-    "artifact files (recovered/)": 1286,
+    # 1286 -> 1283 (2026-09-03, the archive-only-forwarder batch): the treaty
+    # and agenda writers' archives gone with their bodies - recovered/
+    # 0055b820.cpp (agenda_off BYTE_EXACT), units/0055b820.cpp (the same body's
+    # preserved-unit twin) and units/0055b870.cpp (treaty_on, whose
+    # preservation was the only reason it was on the index at all - it held no
+    # claim, and its body is homed MISMATCH 94/152 into src/faction.cpp).
+    "artifact files (recovered/)": 1283,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -432,7 +446,11 @@ SCAFFOLD_CEILINGS = {
     # 1662 -> 1661 (2026-09-03, boot-callee batch): 005c9860.cpp deleted with
     # the MultiDebug::init body it drafted - homed BYTE_EXACT into
     # src/multidebug.cpp as a real member, its GraphicWinInitShim gone with it.
-    "unrecovered files": 1661,
+    # 1661 -> 1659 (2026-09-03, the archive-only-forwarder batch): 0055ba80.cpp
+    # (agenda_on BYTE_EXACT 56/56) and 0062d8e0.cpp (Net::init BYTE_EXACT
+    # 87/87) homed into src/faction.cpp and src/net_class.cpp, both files gone
+    # with the bodies they drafted.
+    "unrecovered files": 1659,
     "hypothesis_layouts.h lines": 2723,
 }
 

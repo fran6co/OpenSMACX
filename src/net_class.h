@@ -101,16 +101,18 @@ static_assert(sizeof(VoiceTx) == 0x58,
  /*
   * Net class
   *
-  * Layout not established. "Reach as far as 0x770" stood here and is
-  * withdrawn: the measurement is 0x768 - docs/recovery/access-lower-bounds.csv
-  * records `Net,0x768` from `mov dword ptr [esi + 0x764], ebx` at 0x0062D850
-  * in ??0Net, and no row of docs/recovery/member-accesses.csv attributed to
-  * Net goes higher. A reach is a LOWER bound, so the object is at least
-  * 0x768; tools/derive_class_layout.py finds no size evidence for Net at all,
-  * and the 0x18 that carries the total to 0x780 below is pad, not a
-  * measurement. The stubs recovered here are constant returns touching no
-  * field, so the opaque storage below is only an object for the canary to
-  * seed, not a modelled layout.
+  * Layout partly established, and now partly MODELLED: init (0x0062D8E0) gave
+  * the 0x0..0x50 words their roles - thread id, five events, the DirectPlay
+  * pointer, the self registration at 0x20, the buffer pointer pair and the
+  * queue lock at 0x2C - and the sixteen 0x58-byte player slots at 0x154 are
+  * NetPlayer below. "Reach as far as 0x770" stood here and is withdrawn: the
+  * measurement is 0x768 - docs/recovery/access-lower-bounds.csv records
+  * `Net,0x768` from `mov dword ptr [esi + 0x764], ebx` at 0x0062D850 in
+  * ??0Net, and no row of docs/recovery/member-accesses.csv attributed to Net
+  * goes higher. A reach is a LOWER bound, so the object is at least 0x768;
+  * tools/derive_class_layout.py finds no size evidence for Net at all, and
+  * the 0x18 that carries the total to 0x780 below is pad, not a measurement.
+  * Everything the members above do not name stays opaque storage.
   *
   * That pad is now load-bearing: src/alphanet.h derives AlphaNet from Net, so
   * this size is where AlphaNet's own storage begins. Correcting it will fail
@@ -128,6 +130,21 @@ class NetUnk72C : public virtual StringAllocationBase {
 
  private:
   uint8_t field_8_[0x1C];  // 0x8..0x23, opaque
+};
+
+/* One of the sixteen 0x58-byte player slots at Net+0x154. Two independent
+   reads: init() clears the words at 0x0, 0x4, 0x8 and 0xC and the byte flag
+   at 0x10 (a BYTE store, which is why it is a byte) over sixteen slots of
+   0x58 bytes, 0x154..0x6D4; and get_player_name (0x00631A20) reads the name
+   text at slot + 0x15 - image 0x169 - stride 0x58. */
+class NetPlayer {
+ public:
+  uint32_t field_0_;  // 0x0
+  uint32_t field_4_;  // 0x4
+  uint32_t field_8_;  // 0x8
+  uint32_t field_C_;  // 0xC
+  uint8_t flags_10_;  // 0x10
+  uint8_t field_11_[0x47];  // 0x11..0x57, the name text starts at 0x15
 };
 
 class Net {
@@ -189,17 +206,16 @@ class Net {
 
  private:
   uint32_t field_0_;  // 0x0
-  uint32_t field_4_;  // 0x4
-  uint32_t field_8_;  // 0x8
-  uint32_t field_C_;  // 0xC
-  uint32_t field_10_;  // 0x10
-  uint32_t field_14_;  // 0x14
-  uint32_t field_18_;  // 0x18
-  uint32_t field_1C_;  // 0x1C
-  uint32_t field_20_;  // 0x20
-  uint32_t field_24_;  // 0x24
-  uint32_t field_28_;  // 0x28
-  uint8_t field_2C_[0x18];  // 0x2C
+  // init() fills the next six: the thread that owns the session, five events
+  // it creates, and the DirectPlay interface copied out of 0x009BE600.
+  uint32_t thread_id_4_;  // 0x4, GetCurrentThreadId
+  HANDLE events_8_[5];  // 0x8, 0xC, 0x10, 0x14, 0x18 - CreateEventA(NULL...)
+  uint32_t field_1C_;  // 0x1C, the DirectPlay interface pointer
+  Net *self_20_;  // 0x20, this object's own address: a session is open when
+                  // it is non-null, which is what close() tests
+  void *buffer_24_;  // 0x24, the 0x2000-byte DirectPlay buffer
+  uint32_t field_28_;  // 0x28, set to 1 once the lock below exists
+  CRITICAL_SECTION lock_2C_;  // 0x2C, guards the fifo queue heads
   uint32_t field_44_;  // 0x44
   uint32_t field_48_;  // 0x48
   uint32_t field_4C_;  // 0x4C
@@ -216,19 +232,13 @@ class Net {
   uint32_t voice_flags_D8_;    // 0xD8, 0x20000000 started / 0x60000000 in-flight
   uint8_t field_DC_[0xC];      // 0xDC..0xE7, opaque
   NetFifo netfifo_[3];  // 0xE8, 0x10C, 0x130 - the three message queues
-  uint32_t field_154_;  // 0x154
-  uint32_t field_158_;  // 0x158
-  uint32_t field_15C_;  // 0x15C
-  uint8_t field_160_[0x4];  // 0x160
-  uint32_t field_164_;  // 0x164
-  uint8_t field_168_;  // 0x168
-  uint8_t field_169_[0x56B];  // 0x169
+  NetPlayer players_[16];  // 0x154, sixteen 0x58-byte slots to 0x6D4
   uint32_t field_6D4_;  // 0x6D4
-  uint8_t field_6D8_[0x4];  // 0x6D8
+  uint32_t field_6D8_;  // 0x6D8, init() sets 0xC8 here
   uint32_t field_6DC_;  // 0x6DC
-  uint32_t field_6E0_;  // 0x6E0
-  uint32_t field_6E4_;  // 0x6E4
-  uint32_t field_6E8_;  // 0x6E8
+  void *buffer_6E0_;  // 0x6E0, the same 0x2000-byte buffer as buffer_24_
+  uint32_t field_6E4_;  // 0x6E4, its size
+  _GUID *guid_6E8_;  // 0x6E8, the session GUID init() was handed
   uint8_t field_6EC_[0x10];  // 0x6EC
   uint32_t field_6FC_;  // 0x6FC
   // THE 0x700 FAMILY - a second JackalVoiceRx-shaped receiver at 0x700

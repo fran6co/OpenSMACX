@@ -1567,13 +1567,8 @@ int UV2Player::exec(char *movie_file, int width, int height, int flags) {
 // ?check_for_lobby@Net@@QAEHPADPAU_GUID@@HH@Z at 0x0062D9E0 - homed into
 // net_class.cpp, so the forwarder that stood here is gone.
 
-// ?init@Net@@QAEHPAU_GUID@@HH@Z at 0x0062D8E0 - unrecovered; check_for_lobby
-// opens with it.
-int Net::init(_GUID *guid, int option_a, int option_b) {
-    typedef int(__fastcall *pending)(Net *, void *, _GUID *, int, int);
-    return PENDING_BODY(0x0062D8E0, pending)(this, nullptr, guid, option_a,
-                                             option_b);
-}
+// ?init@Net@@QAEHPAU_GUID@@HH@Z at 0x0062D8E0 - homed into net_class.cpp too;
+// its forwarder is gone with it.
 
 // ?join_session@Net@@QAEHPAUSessionStruct@@PADPAD@Z at 0x0062E540 -
 // unrecovered; check_for_lobby hands the lobby's session to it.
@@ -1773,22 +1768,16 @@ void __cdecl wait_task() {
 }
 
 // The four one-directional treaty/agenda writers DipEdit's checkbox handlers
-// call. treaty_on (0x0055B870) is in src/recovered/units, treaty_off
-// (0x0055B760), agenda_on (0x0055BA80) and agenda_off (0x0055B820) in
-// src/unrecovered - all CLAIMED there, none promoted into the build yet.
-void __cdecl treaty_on(int faction_id, int faction_id_with, int treaty) {
-    typedef void(__cdecl *pending)(int, int, int);
-    PENDING_BODY(0x0055B870, pending)(faction_id, faction_id_with, treaty);
+// call - treaty_on (0x0055B870), treaty_off (0x0055B760), agenda_on
+// (0x0055BA80) and agenda_off (0x0055B820) - are homed into src/faction.cpp
+// now, so the forwarders that stood here are gone.
+
+// ?ambience@@YAHH@Z at 0x00446B40 - the event-sound player treaty_on asks for
+// (0xcc) when it sets a vendetta with the local faction involved.
+int __cdecl ambience(int ambience_id) {
+    typedef int(__cdecl *pending)(int);
+    return PENDING_BODY(0x00446B40, pending)(ambience_id);
 }
 
-void __cdecl agenda_on(int faction_id, int faction_id_with, int agenda) {
-    typedef void(__cdecl *pending)(int, int, int);
-    PENDING_BODY(0x0055BA80, pending)(faction_id, faction_id_with, agenda);
-}
-
-void __cdecl agenda_off(int faction_id, int faction_id_with, int agenda) {
-    typedef void(__cdecl *pending)(int, int, int);
-    PENDING_BODY(0x0055B820, pending)(faction_id, faction_id_with, agenda);
-}
 
 
