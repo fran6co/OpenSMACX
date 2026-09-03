@@ -169,41 +169,26 @@ void __cdecl kill_nl(LPSTR str) {
 Purpose: Add a line feed (LF) to the end of a string. This assumes the buffer has an extra byte and 
          doesn't take into account a carriage return (CR).
 // ORIGINAL: 0x00600840 ?add_lf@@YAXPAD@Z 0x00600840-0x00600859 BYTE_EXACT
-// LEVER (2026-09-03, measured BYTE_EXACT 10/10): the image's order IS
-//   reachable - it is the /G6 (Pentium Pro) instruction SCHEDULING, not a
-//   source shape. `uv run tools/osmx.py measure 0x00600840 --flags "/c /O2
-//   /G6 /Gy /GR- /GX"` on this exact body gives 10 of 10 instructions, 21
-//   bytes, zero divergences: /G6 hoists the independent `add eax, esi` above
-//   the `add esp, 4` cleanup, /G5 (the compiler default, which is what every
-//   set in FLAG_SETS implies) does not. Probed in isolation first: the same
-//   source under /O2 /G5 vs /O2 /G6 differs only in that swap, and
-//   `purge_spaces` in the same probe changes under /G6 while this one does
-//   not, so the axis is per-body rather than per-TU. NOT BANKED because
-//   `osmx record` measures only FLAG_SETS (tools/osmx.py, which I do not
-//   own) and there is no /G axis in it - adding `/c /O2 /G6 /Gy /GR- /GX`
-//   to that tuple makes this a one-measurement claim. Every other body in
-//   this file got WORSE under /G6 (parse_string 7/490, memrchr 1/27,
-//   checksum 0/19, sort 3/47), so the axis belongs as an extra set, not a
-//   replacement.
-// TRIED 2026-09-03 under the pair as it now stands (/O2 and /O2 /Oy- only):
-//   re-measured 8 of 10 MNEMONIC_ONLY, unchanged by the purge_leading
-//   `inline` move above, which touches this file's other claims. Nothing new
-//   tried - the four spellings below plus the /G6 probe stand as the evidence,
-//   and the /G axis is the user's decision, not this pass's.
-// TRIED 2026-09-03: `osmx semantic` REFUSED this body - "instruction 4: add
-// operand is a different KIND". The two instructions that swap are `add
-// eax, esi` (register operand) and `add esp, 4` (immediate), so the swap
-// reads to the tool as an operand-kind difference and the semantic tier
-// will not cover it. 8/10 stands.
-// TRIED     THE ORDERING IS THE ALLOCATOR'S, NOT THE SOURCE'S. Counts match at 10, the instructions match, and one moves: the image puts `add esp, 4` at position 5 and we put it at 4, doing the stack cleanup where the image does one more thing first. Four spellings measured, all 8 of 10 or worse - `end += strlen(str)` split from its declaration, a named `const size_t n` before the addition, indexing `str[n]`/`str[n+1]` instead of a pointer (4/10, the worst), and `*end`/`*(end+1)` instead of `end[0]`/`end[1]`. The pointer form the note above argues for is already the best of them. CHECKED BECAUSE THE WALL MIGHT HAVE BEEN A MISREAD - a low agreement score beside a matching instruction count usually means alignment slip, and three bodies today sat one instruction from BYTE_EXACT while scoring 2-4 of 14. This one is not that: same instructions, same count, one displaced by a single position, which is scheduling and no source order reaches it.
-// TRIED     THE ORDERING IS THE ALLOCATOR'S, NOT THE SOURCE'S. Counts match at 10, the instructions match, and one moves: the image puts `add esp, 4` at position 5 and we put it at 4, doing the stack cleanup where the image does one more thing first. Four spellings measured, all 8 of 10 or worse - `end += strlen(str)` split from its declaration, a named `const size_t n` before the addition, indexing `str[n]`/`str[n+1]` instead of a pointer (4/10, the worst), and `*end`/`*(end+1)` instead of `end[0]`/`end[1]`. The pointer form the note above argues for is already the best of them. CHECKED BECAUSE THE WALL MIGHT HAVE BEEN A MISREAD - a low agreement score beside a matching instruction count usually means alignment slip, and three bodies today sat one instruction from BYTE_EXACT while scoring 2-4 of 14. This one is not that: same instructions, same count, one displaced by a single position, which is scheduling and no source order reaches it.
-// set /O2 /Gy /GR- /GX) across all --all-flags sets and several spellings
-// (strlen(str)+str, non-const end, *end/*(end+1), a separate `int len`
-// local, str[len]/str[len+1], `end += strlen(str)` as a separate
-// increment). Every one still emits `add esp,4` before `add eax,esi`
-// after the `call strlen`; the image has the pointer add before the
-// stack cleanup. Register-allocation-only gap, not a source-shape one
-// found so far.
+// LEVER (2026-09-03, BYTE_EXACT 10/10 under the plain pair): the classic
+//   post-increment walk - `*end++ = '\n'; *end = '\0';` - is the whole
+//   lever. It changes the register allocation enough that VC6's /G5
+//   scheduler puts the dependent `add eax, esi` BEFORE the independent
+//   `add esp, 4` cleanup after `call strlen`, the image's order.
+//
+// HISTORY, kept because the misattribution is the lesson: six spellings
+//   were measured in the other direction first - the index forms
+//   (`str[n]`, 4/10), the pointer-with-subscript forms (`end[0]`/`end[1]`,
+//   8/10), `*end`/`*(end+1)` (8/10), a named `const size_t`, a separate
+//   `end += strlen(str)` increment, and writing through the parameter
+//   (7/10) - and the residual swap was attributed to /G6 Pentium-Pro
+//   scheduling (`/O2 /G6` does give 10/10; every OTHER body in this file
+//   gets worse under it, so it was correctly kept out of FLAG_SETS) and
+//   declared allocator-owned, "no source order reaches it". The sixth
+//   spelling was simply the first idiomatic one. `osmx semantic` had
+//   also refused the 8/10 form ("add operand is a different KIND").
+//   Idiomatic-first, proven a fourth time: the hand-tuned shape was the
+//   hypothesis-stop, and the mismatch was a diagnostic pointing at the
+//   original's spelling.
 // size      25 bytes
 // prototype
 // callers   1   call targets   1
@@ -214,16 +199,19 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl add_lf(LPSTR str) {
-    // A POINTER, not an index. The image adds the length to the base at
-    // 0x0060084B and stores through `[eax]` and `[eax+1]`; indexing keeps
-    // both operands live and stores through `[eax+esi]`.
-    // FIFTH SPELLING, 2026-09-03: writing through the PARAMETER (`str +=
-    // strlen(str)` with no `end` local) measures 7 of 10 - worse, not
-    // better. The four spellings below plus this one close the source
-    // axis; the gap is the /G6 scheduling swap and nothing else.
-    char *const end = str + strlen(str);
-    end[0] = '\n';
-    end[1] = 0;
+    // THE POST-INCREMENT WALK IS THE LEVER. `*end++ = '\n'; *end = '\0';`
+    // is what makes VC6's /G5 scheduler put `add eax, esi` BEFORE the
+    // `add esp, 4` cleanup after `call strlen` - the image's order, 10 of
+    // 10. Six spellings measured before this one: the pointer-with-index
+    // forms all score 8 of 10 with the cleanup first, and writing through
+    // the parameter is 7 of 10. The gap was misattributed to /G6 (Pentium
+    // Pro scheduling - `/O2 /G6` does give 10/10) and declared
+    // allocator-owned; the idiomatic spelling was the answer all along.
+    // Idiomatic-first, again: the byte mismatch was a diagnostic, and the
+    // hand-tuned shape was the hypothesis-stop.
+    LPSTR end = str + strlen(str);
+    *end++ = '\n';
+    *end = '\0';
 }
 
 /*
