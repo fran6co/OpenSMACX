@@ -345,9 +345,12 @@ class Buffer {
   // 0x005DA6C0 - `?tile_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z`. The same
   // rectangle tiled through a mask colour: `box_sprite` paints every frame
   // element twice, once as the sprite and once as its shadow.
-  // DECLARED AND NEVER DEFINED here - the body is still an artifact, and the
-  // pending_bodies forwarder is what gives the call its `E8`.
   int tile_mask(Buffer *mask, int src_x, int src_y, int x, int y, int w, int h,
+                int color);
+  // 0x005E2B00 - `?copy_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z`. `tile_mask`'s
+  // per-tile blit: one source rectangle from this buffer drawn into `mask`,
+  // replacing every pixel already holding the mask colour.
+  int copy_mask(Buffer *mask, int src_x, int src_y, int x, int y, int w, int h,
                 int color);
   // ?box_sprite@Buffer@@QAEHPAURECT@@PAUBoxSpriteParams@@@Z (0x005E2DD3),
   // the image's universal panel drawer. The second argument is one of the
@@ -378,14 +381,12 @@ class Buffer {
   int get_pixel(int x, int y);
 
   int draw(Buffer *source, int index, int x, int y, int flag_a, int flag_b);
-  // Tile `source` across a destination rectangle. Declared here for the same
-  // reason as `draw` above: the homed Win bodies paint with it and its own
-  // body is still an artifact.
+  // 0x005DA860 - tile `source` across a destination rectangle, `tile_mask`
+  // without the mask. The dimensions stepped by are the source's own.
   int tile(Buffer *source, int src_x, int src_y, int x, int y, int w, int h);
   // 0x005DA9F0 - `?tile@Buffer@@QAEHPAVSprite@@HHHHHH@Z`, the SPRITE overload
   // of the tile above: `box_sprite` tiles the frame's four edge strips from
-  // sprites rather than from a buffer. Declared for the same reason - the
-  // body is still an artifact and the pending_bodies forwarder owns the `E8`.
+  // sprites rather than from a buffer.
   int tile(Sprite *sprite, int src_x, int src_y, int x, int y, int w, int h);
   int fill(int color);
   int fill(RECT *area, int color);  // 005DFCD0

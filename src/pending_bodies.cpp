@@ -602,27 +602,9 @@ void BaseButton::timer_callback(int a1) {  // 0x00607B30
 }
 
 
-// ?tile_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z (0x005DA6C0) - the masked tile
-// every `box_sprite` frame element paints its shadow through. Body still an
-// artifact; the forwarder is what keeps box_sprite's call an `E8`.
-int Buffer::tile_mask(Buffer *mask, int src_x, int src_y, int x, int y, int w,
-                      int h, int color) {
-    typedef int(__fastcall *pending)(Buffer *, void *, Buffer *, int, int, int,
-                                     int, int, int, int);
-    return PENDING_BODY(0x005DA6C0, pending)(this, nullptr, mask, src_x, src_y,
-                                             x, y, w, h, color);
-}
-
-// ?tile@Buffer@@QAEHPAVSprite@@HHHHHH@Z (0x005DA9F0) - the SPRITE overload of
-// `tile`, which `box_sprite` tiles the four edge strips through. Body still
-// an artifact.
-int Buffer::tile(Sprite *sprite, int src_x, int src_y, int x, int y, int w,
-                 int h) {
-    typedef int(__fastcall *pending)(Buffer *, void *, Sprite *, int, int, int,
-                                     int, int, int);
-    return PENDING_BODY(0x005DA9F0, pending)(this, nullptr, sprite, src_x,
-                                             src_y, x, y, w, h);
-}
+// ?tile_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z (0x005DA6C0) - homed into
+// src/buffer.cpp, along with both `tile` overloads (0x005DA860/0x005DA9F0)
+// and tile_mask's per-tile blit ?copy_mask@Buffer@@ (0x005E2B00).
 
 // ?set_selected_id@ListBox@@QAEXH@Z - DipEdit::init lands the list selection
 // on the row matching its own faction.
@@ -1728,11 +1710,6 @@ Status: Complete
 int Buffer::draw(Buffer *source, int index, int x, int y, int a, int b) {
     typedef int(__fastcall *pending)(Buffer *, void *, Buffer *, int, int, int, int, int);
     return PENDING_BODY(0x005D8370, pending)(this, nullptr, source, index, x, y, a, b);
-}
-
-int Buffer::tile(Buffer *source, int sx, int sy, int x, int y, int w, int h) {
-    typedef int(__fastcall *pending)(Buffer *, void *, Buffer *, int, int, int, int, int, int);
-    return PENDING_BODY(0x005DA860, pending)(this, nullptr, source, sx, sy, x, y, w, h);
 }
 
 int Buffer::write_right_l(char *text, RECT *area, int len) {

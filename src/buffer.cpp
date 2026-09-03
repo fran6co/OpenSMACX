@@ -2091,6 +2091,18 @@ Purpose: Measure `len` bytes of a string, following the buffer's markup.
 //            `switch` must keep its `static_cast<unsigned char>` - spelled
 //            on the plain `char` the image's `movsx` implies, VC6 emits a
 //            sub/je compare chain instead of the jump table.
+// TRIED: DUPLICATING THE SCAN LOOP IN PLACE, 2026-09-03 - the other way to
+//            get two specialised copies without asking VC6 to inline. Hoisted
+//            the `font_slot_ == 3` test out of the loop and wrote the loop
+//            twice, `=` in the token set of one copy and not the other, so
+//            the image's 0x5DC82C/0x5DC871 pair has a literal source. It
+//            compiles two loops, and the instruction count moves the right
+//            way (149 -> 160 against the image's 201) but under /O2 - the
+//            flag set every BYTE_EXACT body in this file is measured on -
+//            similarity falls from 0.463 to 0.051. The 0.565 that makes the
+//            sweep look like a win is /O1 /G6, a different question. Do not
+//            retry this shape: the duplication is right, the surrounding
+//            register plan is what the helper refusal was already blocking.
 // TRIED: see the "NOT BYTE EXACT" paragraph below - the image drives
 //            this scan through `&len` (a spilled frame slot reloaded every
 //            iteration) and accumulates width in the dead `text` parameter
@@ -3338,6 +3350,412 @@ int Buffer::get_pixel(int x, int y) {
         return 0;
     }
     return *pixel;
+}
+
+/*
+Purpose: Tile a source buffer across a rectangle of this one, stepping the
+         source's own origin backwards by the tiling offset so the seams land
+         where the caller asked for them.
+
+         HOMED from src/unrecovered/005da860.cpp, which held this exact
+         transcription. The rectangle is built, intersected with the buffer's
+         own extent, and the intersection - not the request - is what the
+         tiles are clipped to; the source dimensions come out of the DIB
+         header, and the vertical step is the NEGATED height because a DIB's
+         biHeight is stored negative (see `Buffer::init`).
+// ORIGINAL: 0x005DA860 ?tile@Buffer@@QAEHPAVBuffer@@HHHHHH@Z 0x005DA860-0x005DA9EC
+// symbol    ?tile@Buffer@@QAEHPAV1@HHHHHH@Z
+// size      396 bytes
+// prototype int (__thiscall ?tile@Buffer@@QAEHPAVBuffer@@HHHHHH@Z)(Buffer* this, Buffer*, int, int, int, int, int, int)
+// callers   1   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D8000 0x005DFF00
+// indirect  0x005DA8E4
+// TRIED: straight transcription diverges at #2 (original pushes ebx/ebp/esi/edi as one prologue block; this form only needs three, so the compiler's register save set differs) - 122/144 mnemonics still agree. Landing the closest.
+// TRIED: the residual, re-measured in place 2026-09-03 after homing - the
+//        image's frame is 0x24 with `this` SPILLED into it and edi holding
+//        `this`; this form is 0x28 with `this` in a register and three of the
+//        four callee-saved pushes sunk below the null guards. Spelled and
+//        measured: `const` vs plain locals; `RECT selfRect` declared before
+//        vs after the right/bottom stores (the image's store order is left,
+//        top, the selfRect copy, right, bottom); and the whole body nested
+//        under `if (dib_bits_ != 0 || surface_ != 0)` so the pushes stop
+//        being skippable - box_sprite's own LEVER in this file. All three
+//        leave 3/144 with the same first divergence, and 24 flag sets scored
+//        /O2 as the best at 0.917 similar. Allocator slot preference, not a
+//        source relationship this spelling reaches.
+*/
+int Buffer::tile(Buffer *source, int src_x, int src_y, int x, int y, int w,
+                 int h) {
+    if (dib_bits_ == 0 && surface_ == 0) {
+        return 7;
+    }
+
+    RECT clipRect;
+    clipRect.left = x;
+    clipRect.top = y;
+    RECT selfRect = rect1_;
+    int rectRight = w + x;
+    clipRect.right = rectRight;
+    clipRect.bottom = h + y;
+
+    if (IntersectRect(&clipRect, &clipRect, &selfRect)) {
+        set_clip(&clipRect);
+
+        // The DIB's own dimensions, read out of the header the buffer was
+        // built with - not fields of `Buffer`, fields of its DIB.
+        int tileWidth = source->dib_.bmiHeader.biWidth;
+        int tileHeight = -source->dib_.bmiHeader.biHeight;
+
+        if (tileWidth != 0 && tileHeight != 0) {
+            int tilesX = w / tileWidth;
+            if (tilesX * tileWidth < w) {
+                tilesX++;
+            }
+            int tilesY = h / tileHeight;
+            if (tilesY * tileHeight < h) {
+                tilesY++;
+            }
+
+            int startX = x - src_x % tileWidth;
+            int startY = y - src_y % tileHeight;
+
+            if (tilesX * tileWidth + startX < rectRight) {
+                tilesX++;
+            }
+            if (tilesY * tileHeight + startY < h + y) {
+                tilesY++;
+            }
+
+            int rowsLeft = tilesY;
+            if (rowsLeft > 0) {
+                int rowY = startY;
+                do {
+                    int colsLeft = tilesX;
+                    if (colsLeft > 0) {
+                        int colX = startX;
+                        do {
+                            source->copy(this, 0, 0, colX, rowY, tileWidth,
+                                         tileHeight);
+                            colsLeft--;
+                            colX += tileWidth;
+                        } while (colsLeft != 0);
+                    }
+                    rowY += tileHeight;
+                    rowsLeft--;
+                } while (rowsLeft != 0);
+            }
+
+            set_clip(&selfRect);
+        }
+    }
+
+    return 0;
+}
+
+/*
+Purpose: The same tiling pass with a mask colour: every frame element is
+         painted twice, once as the sprite and once through the mask, which
+         is how a panel's shadow is laid down under its frame.
+
+         HOMED from src/unrecovered/005da6c0.cpp. One argument more than
+         `tile(Buffer *)` and one call different - `copy_mask` for `copy` -
+         everything else is the same walk.
+// ORIGINAL: 0x005DA6C0 ?tile_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z 0x005DA6C0-0x005DA851
+// symbol    ?tile_mask@Buffer@@QAEHPAV1@HHHHHHH@Z
+// size      401 bytes
+// prototype int (__thiscall ?tile_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z)(Buffer* this, Buffer*, int, int, int, int, int, int, int)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D8000 0x005E2B00
+// indirect  0x005DA744
+// TRIED: same shape as 0x005DA860/0x005DA9F0 - straight transcription diverges at #2 on the prologue register-save set (fewer registers stay live in this form than the original chose).
+// TRIED: the same three re-spellings measured on 0x005DA860 above (const, the
+//        selfRect store order, the body nested under the null guards) leave
+//        this at 4/146 with the image's 0x24 frame against 0x28 - the same
+//        allocator slot preference, documented once there.
+*/
+int Buffer::tile_mask(Buffer *mask, int src_x, int src_y, int x, int y, int w,
+                      int h, int color) {
+    if (dib_bits_ == 0 && surface_ == 0) {
+        return 7;
+    }
+
+    RECT clipRect;
+    clipRect.left = x;
+    clipRect.top = y;
+    const int rectRight = w + x;
+    clipRect.right = rectRight;
+    clipRect.bottom = h + y;
+
+    RECT selfRect = rect1_;
+
+    if (IntersectRect(&clipRect, &clipRect, &selfRect)) {
+        set_clip(&clipRect);
+
+        const int tileWidth = mask->dib_.bmiHeader.biWidth;
+        const int tileHeight = -mask->dib_.bmiHeader.biHeight;
+
+        if (tileWidth != 0 && tileHeight != 0) {
+            int tilesX = w / tileWidth;
+            if (tilesX * tileWidth < w) {
+                tilesX++;
+            }
+            int tilesY = h / tileHeight;
+            if (tilesY * tileHeight < h) {
+                tilesY++;
+            }
+
+            const int startX = x - src_x % tileWidth;
+            const int startY = y - src_y % tileHeight;
+
+            if (tilesX * tileWidth + startX < rectRight) {
+                tilesX++;
+            }
+            if (tilesY * tileHeight + startY < h + y) {
+                tilesY++;
+            }
+
+            int rowsLeft = tilesY;
+            if (rowsLeft > 0) {
+                int rowY = startY;
+                do {
+                    int colsLeft = tilesX;
+                    if (colsLeft > 0) {
+                        int colX = startX;
+                        do {
+                            mask->copy_mask(this, 0, 0, colX, rowY, tileWidth,
+                                            tileHeight, color);
+                            colsLeft--;
+                            colX += tileWidth;
+                        } while (colsLeft != 0);
+                    }
+                    rowY += tileHeight;
+                    rowsLeft--;
+                } while (rowsLeft != 0);
+            }
+
+            set_clip(&selfRect);
+        }
+    }
+
+    return 0;
+}
+
+/*
+Purpose: Tile a SPRITE across a rectangle. The sprite overload differs from
+         the buffer one in three ways: the dimensions come off the sprite
+         record rather than a DIB header, the vertical step is NOT negated,
+         and each tile is a `Sprite::draw` at the transparent index rather
+         than a `copy`.
+
+         HOMED from src/unrecovered/005da9f0.cpp. `box_sprite` tiles the four
+         edge strips of every frame through this one.
+// ORIGINAL: 0x005DA9F0 ?tile@Buffer@@QAEHPAVSprite@@HHHHHH@Z 0x005DA9F0-0x005DAB8A
+// symbol    ?tile@Buffer@@QAEHPAVSprite@@HHHHHH@Z
+// size      410 bytes
+// prototype int (__thiscall ?tile@Buffer@@QAEHPAVSprite@@HHHHHH@Z)(Buffer* this, Sprite*, int, int, int, int, int, int)
+// callers   1   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D8000 0x005EFF00
+// indirect  0x005DAB78
+*/
+
+int Buffer::tile(Sprite *sprite, int src_x, int src_y, int x, int y, int w,
+                 int h) {
+    if (dib_bits_ == 0 && surface_ == 0) {
+        return 7;
+    }
+
+    RECT clipRect;
+    clipRect.left = x;
+    clipRect.top = y;
+    const int rectRight = w + x;
+    clipRect.right = rectRight;
+    clipRect.bottom = y + h;
+
+    RECT selfRect = rect1_;
+
+    if (IntersectRect(&clipRect, &clipRect, &selfRect)) {
+        set_clip(&clipRect);
+
+        const int tileWidth = sprite->iWidth_;
+        const int tileHeight = sprite->iHeight_;
+
+        if (tileWidth != 0 && tileHeight != 0) {
+            int tilesX = w / tileWidth;
+            if (tilesX * tileWidth < w) {
+                tilesX++;
+            }
+            int tilesY = h / tileHeight;
+            if (tilesY * tileHeight < h) {
+                tilesY++;
+            }
+
+            const int startX = x - src_x % tileWidth;
+            const int startY = y - src_y % tileHeight;
+
+            if (tilesX * tileWidth + startX < rectRight) {
+                tilesX++;
+            }
+            if (tilesY * tileHeight + startY < y + h) {
+                tilesY++;
+            }
+
+            int rowsLeft = tilesY;
+            if (rowsLeft > 0) {
+                int rowY = startY;
+                do {
+                    int colsLeft = tilesX;
+                    if (colsLeft > 0) {
+                        int colX = startX;
+                        do {
+                            sprite->draw(this, sprite->cTransparentIndex_,
+                                         colX, rowY, 1, 1);
+                            colsLeft--;
+                            colX += tileWidth;
+                        } while (colsLeft != 0);
+                    }
+                    rowY += tileHeight;
+                    rowsLeft--;
+                } while (rowsLeft != 0);
+            }
+
+            set_clip(&selfRect);
+        }
+    }
+
+    return 0;
+}
+
+/*
+Purpose: Blit one rectangle from this buffer into `dest`, replacing every
+         destination pixel whose current colour is the mask colour. The
+         clipping is done in three stages - negative source coordinates are
+         folded into the extent, the extent is clamped to the source's own
+         DIB, and the surviving rectangle is intersected with the
+         destination's clip - which is why the two `get_data` calls below
+         are handed DIFFERENT origins.
+
+         HOMED from src/unrecovered/005e2b00.cpp, which held this
+         transcription. The direction is the non-obvious part and the
+         archive's own note records it: `dest` (the argument) is the buffer
+         WRITTEN and mask-tested, `this` is the one READ.
+// ORIGINAL: 0x005E2B00 ?copy_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z 0x005E2B00-0x005E2DD3 FILE
+// symbol    ?copy_mask@Buffer@@QAEHPAV1@HHHHHHH@Z
+// size      723 bytes
+// prototype int (__thiscall ?copy_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z)(Buffer* this, Buffer*, int, int, int, int, int, int, int)
+// callers   2   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005E33F3 0x005E34A3
+// indirect  0x005E2C27
+// TRIED: plain nested for-loop instead of the Duff's-device-style 4x-unrolled byte-compare-copy the original lowers to; edi/esi roles are swapped from the naive reading - `a1` (the argument) is the one WRITTEN and mask-tested, `this` is the one READ; diverges at instr #0 (prologue shape)
+// TRIED: the residual is the INNER LOOP, not the prologue, and it is a wall
+//        of the same kind as `fill`/`copy` in this file. The image's scan is
+//        a DUFF'S DEVICE - `switch (width & 3)` falling into a do/while that
+//        runs `width / 4 + (width & 3 ? 1 : 0)` times - and it keeps its
+//        state in fixed .data, not in locals: the case counter at 0x009B3A80,
+//        the `this`-side row remainder at 0x009B3A84 and the destination-side
+//        one at 0x009B37D8, all written with `mov dword ptr [abs]` and
+//        incremented inside the dispatch. The dispatch itself is a chain of
+//        `lea edx, <case>` / `jmp edx` computed jumps, which is not how VC6
+//        lowers a switch (it builds a table), so this block is hand-written
+//        assembly in the original and byte-exactness is not reachable from
+//        C++. `handwritten_asm.py` does not flag it because `jmp reg` is not
+//        on its opcode list. The nested loop here is the same program - the
+//        direction was verified against the bytes (`edi` = dest->get_data is
+//        compared and written, `esi` = get_data on `this` is read) - and the
+//        three extra stride/width locals are the image's three globals.
+*/
+int Buffer::copy_mask(Buffer *dest, int src_x, int src_y, int x, int y, int w,
+                      int h, int color) {
+    if (dib_bits_ == 0 && surface_ == 0) {
+        return 7;
+    }
+    if (dest == 0) {
+        return 3;
+    }
+
+    // Fold negative source coordinates into the extent: the part of the
+    // rectangle that falls above/left of the source is not drawn, and the
+    // destination origin moves with it.
+    if (src_x < 0) {
+        w += src_x;
+        x -= src_x;
+        src_x = 0;
+    }
+    if (src_y < 0) {
+        h += src_y;
+        y -= src_y;
+        src_y = 0;
+    }
+
+    const int source_width = dib_.bmiHeader.biWidth;
+    const int source_height = -dib_.bmiHeader.biHeight;
+
+    if (source_width < src_x) {
+        return 0;
+    }
+    if (source_height < src_y) {
+        return 0;
+    }
+
+    if (source_width < src_x + w) {
+        w = source_width - src_x;
+    }
+    if (source_height < src_y + h) {
+        h = source_height - src_y;
+    }
+
+    RECT clipped;
+    clipped.left = x;
+    clipped.top = y;
+    clipped.right = x + w;
+    clipped.bottom = y + h;
+
+    if (!IntersectRect(&clipped, &clipped, &dest->rect1_)) {
+        return 0;
+    }
+
+    // Whatever the intersection took off the left and top edges is taken off
+    // the source origin too, so the two reads stay in step.
+    const int inset_x = clipped.left - x;
+    const int inset_y = clipped.top - y;
+
+    unsigned char *write_ptr =
+        reinterpret_cast<unsigned char *>(dest->get_data(clipped.left, clipped.top));
+    if (write_ptr == 0) {
+        return 3;
+    }
+    unsigned char *read_ptr = reinterpret_cast<unsigned char *>(
+        get_data(src_x + inset_x, src_y + inset_y));
+    if (read_ptr == 0) {
+        return 3;
+    }
+
+    const int write_stride = dest->stride_;
+    const int read_stride = stride_;
+    const int rows = clipped.bottom - clipped.top;
+    const int columns = clipped.right - clipped.left;
+    const unsigned char mask = static_cast<unsigned char>(color);
+
+    for (int row = 0; row < rows; row++) {
+        for (int column = 0; column < columns; column++) {
+            if (write_ptr[column] == mask) {
+                write_ptr[column] = read_ptr[column];
+            }
+        }
+        read_ptr += read_stride - columns;
+        write_ptr += write_stride - columns;
+    }
+
+    free_data(1);
+    dest->free_data(1);
+    return 0;
 }
 
 /*
