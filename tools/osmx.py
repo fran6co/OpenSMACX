@@ -528,8 +528,55 @@ FLAG_SETS = (
     "/c /O2 /G6 /Gy /GR- /GX",
     "/c /O1 /G6 /Gy /GR- /Oy- /GX",
     "/c /O1 /G6 /Gy /GR- /GX",
-
 )
+
+
+# THE TWO COMPILATION GROUPS BY TU, read off the image prologue census
+# 2026-09-03 (every catalogued function classified push-ebp vs frameless,
+# aggregated per file). The game-logic group is ~100% framed in the image -
+# /O2 with /Oy-; the jackal UI cluster is ~0% framed - plain /O2. A body in
+# a confident TU is measured against ITS GROUP'S ONE SET FIRST, so a typical
+# claim costs a single compile; the other half of the pair follows before
+# any `not in this compilation` verdict is believed, and the tail stays for
+# the 62 census exceptions. The middle TUs (alpha, game, general, mapwin,
+# console, datalink, wave, sound, wave_device: 27-74% framed) keep the
+# plain ladder - their framing is plain-/O2 judgment, mixed per function.
+JACKAL_O2 = ("/c /O2 /Gy /GR- /GX",)
+GAME_OY = ("/c /O2 /Gy /GR- /Oy- /GX",)
+GROUP_TU_FLAGS = {
+    # game-logic compilation, /Oy-
+    "base.cpp": GAME_OY, "faction.cpp": GAME_OY, "map.cpp": GAME_OY,
+    "midi.cpp": GAME_OY, "netdaemon.cpp": GAME_OY,
+    "technology.cpp": GAME_OY, "veh.cpp": GAME_OY, "xpops.cpp": GAME_OY,
+    # jackal UI cluster, plain /O2
+    "ambience.cpp": JACKAL_O2, "basebutton.cpp": JACKAL_O2,
+    "basepop.cpp": JACKAL_O2, "buffer.cpp": JACKAL_O2,
+    "caviar.cpp": JACKAL_O2, "checkbox.cpp": JACKAL_O2,
+    "councwin.cpp": JACKAL_O2, "dialogs.cpp": JACKAL_O2,
+    "diplowin.cpp": JACKAL_O2, "font.cpp": JACKAL_O2,
+    "global_arith.cpp": JACKAL_O2, "log.cpp": JACKAL_O2,
+    "menu.cpp": JACKAL_O2, "net_class.cpp": JACKAL_O2,
+    "palette.cpp": JACKAL_O2, "pulldown.cpp": JACKAL_O2,
+    "reportif.cpp": JACKAL_O2, "scroll.cpp": JACKAL_O2,
+    "socialwin.cpp": JACKAL_O2, "sounddevice.cpp": JACKAL_O2,
+    "spritebox.cpp": JACKAL_O2, "text.cpp": JACKAL_O2,
+    "time.cpp": JACKAL_O2, "win.cpp": JACKAL_O2,
+}
+
+
+def sets_for(record) -> tuple:
+    """The flag sets to try for this record's piece, group-restricted.
+
+    A confident TU's group set leads, the other half of the pair follows,
+    and the tail stays behind them - one compile for a typical claim, with
+    nothing silently impossible to find.
+    """
+    name = record.path.name if getattr(record, "path", None) else ""
+    first = GROUP_TU_FLAGS.get(name)
+    if first is None:
+        return FLAG_SETS
+    return tuple(first) + tuple(
+        f for f in FLAG_SETS[:2] if f not in first) + FLAG_SETS[2:]
 
 
 # THE CEILING IS THE WINE PREFIX, not the machine. Every VC6 compile runs
@@ -680,8 +727,8 @@ def measure(
                        f"{one.mnemonic_similarity:.3f} similar")
         raise typer.Exit(0)
     try:
-        result = compare_source(record, exe, source, command, FLAG_SETS,
-                                shared)
+        result = compare_source(record, exe, source, command,
+                                sets_for(record), shared)
     except (ValueError, CompileFailed) as problem:
         typer.secho(f"{record.address_hex}: {problem}", fg=typer.colors.RED)
         raise typer.Exit(2) from None
@@ -1014,7 +1061,8 @@ def _record_one(job: tuple) -> tuple:
     """Measure one piece in a worker. Returns (piece, result) or (piece, None)."""
     piece, exe, command, shared = job
     try:
-        return piece, compare_record(piece, exe, command, FLAG_SETS, shared)
+        return piece, compare_record(piece, exe, command,
+                                     sets_for(piece), shared)
     except (ValueError, CompileFailed) as problem:
         return piece, str(problem)
 
@@ -1846,7 +1894,7 @@ def check(
     work = []
     for path, mine in grouped.items():
         command = _command_for(compile_commands, path, borrow)
-        work.append((path, mine, exe, command, FLAG_SETS))
+        work.append((path, mine, exe, command, FLAG_SETS))  # per-piece sets applied in _record_one
 
     # THE CACHE IS A MEMO, NOT A LEDGER: it never adds, clears, or counts a
     # claim - it only skips re-measuring a file whose every input is
