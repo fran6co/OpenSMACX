@@ -217,6 +217,10 @@ void __cdecl add_lf(LPSTR str) {
     // A POINTER, not an index. The image adds the length to the base at
     // 0x0060084B and stores through `[eax]` and `[eax+1]`; indexing keeps
     // both operands live and stores through `[eax+esi]`.
+    // FIFTH SPELLING, 2026-09-03: writing through the PARAMETER (`str +=
+    // strlen(str)` with no `end` local) measures 7 of 10 - worse, not
+    // better. The four spellings below plus this one close the source
+    // axis; the gap is the /G6 scheduling swap and nothing else.
     char *const end = str + strlen(str);
     end[0] = '\n';
     end[1] = 0;
