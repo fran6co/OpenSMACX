@@ -382,7 +382,15 @@ SCAFFOLD_CEILINGS = {
     # forwarders died with the bodies. Net::init hands one back:
     # ?ambience@@YAHH@Z (0x00446B40) is the event-sound player treaty_on asks
     # for on a vendetta, and nothing in the build defined it. Net -3.
-    "PENDING_BODY forwarders": 227,
+    # 227 -> 229 (2026-09-03, the PullDown-declaration batch): the four menu
+    # bodies homed into src/menu.cpp (all four BYTE_EXACT) needed three
+    # PullDown members pulldown.h had never declared, so declaring them put
+    # the two big ones on the frontier - add_item (0x005F89D0, 527 bytes) and
+    # rename_item (0x005F8E50, 494 bytes), both unrecovered, both already
+    # archived with drafted bodies. Their sibling add_separator
+    # (0x005F8BE0, 161 bytes) was small enough to home straight into
+    # src/pulldown.cpp BYTE_EXACT, so it cost no forwarder. Net +2.
+    "PENDING_BODY forwarders": 229,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -419,9 +427,15 @@ SCAFFOLD_CEILINGS = {
     # 1287 -> 1285 (2026-09-03, menu batch): units/005fb8e0.cpp deleted with the
     # body it drafted - Menu::UNK11 homed in src/menu.cpp (MISMATCH 30/32, the
     # residual is the shared dead `-1` check the seven-clone family records).
-    # units/005fb930.cpp STAYS: Menu::UNK12 reads PullDown::items_, which
-    # pulldown.h declares private, and this pass did not own that header.
-    "artifact files (recovered/)": 1282,
+    # units/005fb930.cpp STAYED: Menu::UNK12 reads PullDown::items_, which
+    # pulldown.h declared private, and that pass did not own the header.
+    # 1285 -> 1282 (2026-09-03, the PullDown-declaration batch): the blocker
+    # is gone - pulldown.h declares the three missing members and grants Menu
+    # friendship over items_ - so units/005fb160.cpp (Menu::add_separator
+    # BYTE_EXACT), units/005fb930.cpp (Menu::UNK12 BYTE_EXACT) and
+    # units/005f8be0.cpp (PullDown::add_separator, homed into pulldown.cpp
+    # BYTE_EXACT 52/52) are deleted with the bodies they drafted.
+    "artifact files (recovered/)": 1279,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -462,10 +476,18 @@ SCAFFOLD_CEILINGS = {
     # with the bodies they drafted.
     # 1661 -> 1660 (2026-09-03, menu batch): 005fb240.cpp deleted with the body
     # it drafted - Menu::UNK5 homed in src/menu.cpp (MISMATCH 30/32, same
-    # residual). 005fb100/005fb160/005fb700 STAY: they call
-    # PullDown::add_item / add_separator / rename_item, which pulldown.h does
-    # not declare, and this pass did not own that header.
-    "unrecovered files": 1658,
+    # residual). 005fb100/005fb160/005fb700 STAYED: they call
+    # PullDown::add_item / add_separator / rename_item, which pulldown.h did
+    # not declare, and that pass did not own the header.
+    # 1660 -> 1656 (2026-09-03, the PullDown-declaration batch): the header
+    # declares the three members now, so 005fb100.cpp (Menu::add_menu_item)
+    # and 005fb700.cpp (Menu::rename_menu_item) are deleted with their
+    # BYTE_EXACT bodies in src/menu.cpp; 005fb160.cpp and 005fb930.cpp sat in
+    # recovered/units/ and are counted on that ceiling. 005f89d0.cpp
+    # (PullDown::add_item) and 005f8e50.cpp (rename_item) STAY unrecovered -
+    # 527 and 494 bytes, declared and standing as pending_bodies forwarders
+    # for the two homed callers that reach them.
+    "unrecovered files": 1656,
     "hypothesis_layouts.h lines": 2723,
 }
 

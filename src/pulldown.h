@@ -48,10 +48,20 @@ class PullDown : public GraphicWin {
   int enable_item(int id);
   int check_item(int id);
   int uncheck_item(int id);
+  int add_item(int id, char *text);
+  int add_separator(int id);
+  int rename_item(int id, char *text);
   int get_selected();
   int id_to_index(int id);
 
   void on_mouse_leave(int a1, int a2);
+
+  // Menu's item-id probe walks items_ directly (0x005FB930 reads
+  // items_[index].id at 0xa20 + index * 0x14 through the entry's PullDown),
+  // and a data member has no accessor to grant it - so Menu is a friend, the
+  // same grant GraphicWin gives Scroll and BaseButton. No offset moves.
+  friend class Menu;
+
  private:
   uint32_t field_A14_;  // 0x0a14
   PullDownItem items_[64];

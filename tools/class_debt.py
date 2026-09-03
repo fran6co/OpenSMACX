@@ -67,7 +67,12 @@ CEILINGS = {
     # bodies are search-and-forward to a PullDown member, so nothing in them
     # says what they are FOR. The homing is coverage; naming them is the
     # class pass's job.
-    "unk-method": 167,
+    # 167 -> 169 (2026-09-03, the PullDown-declaration batch): Menu::UNK12
+    # homed the same way, out of src/recovered/units/005fb930.cpp into
+    # src/menu.cpp BYTE_EXACT - its menu.h declaration and its definition are
+    # the two mentions. Same shape as UNK5/UNK11: search-and-forward, the
+    # catalogue name is all the image gives.
+    "unk-method": 169,
     # THE ESCAPE HATCH, RATCHETED. An UNKn whose comment block says
     # EVIDENCE-FREE and names it has been investigated and found unnameable -
     # no caller, no dispatch, no CSV entry. That is a result, not unfinished
