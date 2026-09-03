@@ -11293,11 +11293,21 @@ void Win::screen_to_client(RECT * rect) {
 // `fn_005f4cc0(Win *a1)`. `a1` is never read in this body, so making it the
 // implicit `this` changes nothing the compiler emits. The body is otherwise
 // byte-for-byte what the claim was measured on.
+//
+// LEVER (2026-09-03): `redraw_sound_call`, a file-local forwarder over
+// autosound.h's MEASURED inline `do_sound`. The helper is `return 0;`, so
+// /Ob1 expanded it to NOTHING here and the body was one instruction short of
+// the image's 19; the image emits a real `call 0x5FD2B0` per iteration. With
+// the forwarder the call is back. 19 of 19, BYTE_EXACT.
+static int __cdecl redraw_sound_call() {
+    return do_sound();
+}
+
 void __cdecl Win::redraw() {
     int i;
     for (i = 0; i < WinZOrderCount; ++i) {
         reinterpret_cast<Win *>(reinterpret_cast<void **>(WinZOrderArray)[i])->vslot_62();
-        do_sound();
+        redraw_sound_call();
     }
 }
 

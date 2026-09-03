@@ -198,9 +198,18 @@ void __cdecl flush_timer();
 // MapWin::on_lose_mouse_capture (0x0046EB90) is a 5-byte tail `jmp` into it.
 void __cdecl go_reset();
 
+// OUT-OF-LINE forwarder over Time::close, defined in flatbutton.cpp. The
+// image CALLS Time::close from stop_timers (0x50F440) and EXPANDS it in the
+// two bodies that inline stop_timers (system_init 0x58F040, game_reload
+// 0x58F450). No single declaration of close() gives both - see the LEVER
+// note under 0x0050F440 in time.cpp - so stop_timers reaches it through a
+// real function the compiler cannot see into, which is the same
+// `sleep_call`/`base_cost_call`/`has_tech_call` idiom used across the tree.
+void __fastcall time_close_call(Time *timer);
+
 MEASURED inline void __cdecl stop_timers() {
-    Blink2Timer.close();
-    BlinkTimer.close();
-    LineTimer.close();
+    time_close_call(&Blink2Timer);
+    time_close_call(&BlinkTimer);
+    time_close_call(&LineTimer);
     // missing MP TurnTimer. TODO: In future determine if timer should be closed on stop
 }

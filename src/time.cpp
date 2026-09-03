@@ -466,6 +466,17 @@ Purpose: Close out an instance of the class.
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005FD370
 // indirect  0x0061679E 0x006167AC
+// TRIED: moving the definition out of the class into this file (declared
+//   MEASURED inline in time.cpp, ahead of ~Time) so that the units that CALL
+//   it - stop_timers 0x50F440, go_reset 0x50EF50, Console::close 0x51D873,
+//   EditBox::close 0x614FC3, NetMsg::close, FlatButton's `time_close_call` -
+//   would stop expanding it. It did not reach stop_timers: this unit still
+//   sees the body, and VC6's inline pass is not order-sensitive, so
+//   stop_timers expanded it exactly as before (0 of 6, 90 instructions both
+//   ways). Reverted, because the in-class body is what game.cpp's two
+//   inlined stop_timers expansions (0x58F040, 0x58F450) need - the image
+//   expands close() THERE and calls it in stop_timers, which no single
+//   declaration can give both. See the LEVER note under 0x0050F440.
 Return Value: n/a
 Status: Complete
 */
@@ -848,6 +859,19 @@ Status: Complete
 // some call sites and calls it at others, and a .cpp definition is only ever
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
+// LEVER: the `time_close_call` forwarder (declared in time.h, defined in
+//   flatbutton.cpp). 0 of 6 agreeing, 90 instructions against the image's 6,
+//   because close()'s in-class body was expanded at all three sites - the
+//   image emits three `mov ecx, <addr>` + `call Time::close`, the last a tail
+//   `jmp`. The body is in a header, so it is the same tokens in time.cpp and
+//   in game.cpp, and the image wants the two OPPOSITE things from those two
+//   units: `call` here, `expand` in system_init 0x58F040 and game_reload
+//   0x58F450. No declaration of close() can give both - moving close()'s
+//   definition out of the class into this .cpp (TRIED, see 0x00616780) left
+//   this unit still able to see it and changed nothing here. A forwarder
+//   whose body lives in a THIRD unit breaks the symmetry: this COMDAT emits
+//   the real `call`, and the two game.cpp sites are unchanged by it (35 of
+//   135 and 19 of 44 agreeing, before and after). 6 of 6, BYTE_EXACT.
 
 
 /*
