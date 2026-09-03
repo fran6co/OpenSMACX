@@ -460,9 +460,20 @@ def _print_record(entry: dict) -> None:
 # answers about half the image. They live here and not in `decomp` because
 # they are a fact about this build, and they are not in the CMake
 # configuration either: that is a Debug database of `/Od /Ob0`.
+# THE TWO-COMPILATION MODEL, 2026-09-03, and these two come FIRST. The
+# image's prologues are bimodal by TU: the jackal UI cluster (win/menu/
+# pulldown/checkbox/... ) is ~0% framed - plain /O2 - and the game-logic
+# group (tech/veh/base/faction/map/midi/netdaemon/xpops) is ~100% framed -
+# /O2 with /Oy-. The census pair over every claimed body: the two sets
+# cover 96.1% (1,541/1,603); the 62 exceptions (add_lf's /G6,
+# textcolor_init and ??0MapWin's /Ob0, and others whose winners compensate
+# for source shapes the normalization program is retiring) still need the
+# tail, so it stays - but every body that can resolve in two compiles now
+# does, and the tail sets are deleted one by one as their last claim
+# normalizes onto the pair.
 FLAG_SETS = (
-    "/c /O2 /Gy /GR- /Oy- /GX",
     "/c /O2 /Gy /GR- /GX",
+    "/c /O2 /Gy /GR- /Oy- /GX",
     "/c /O1 /Gy /GR- /Oy- /GX",
     "/c /O1 /Gy /GR- /GX",
     # AND INLINE EXPANSION IS THE THIRD AXIS, for the same reason as the
