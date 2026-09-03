@@ -160,21 +160,11 @@ int Sound::get_time() {
 
 
 
-namespace {
-typedef int (OriginalObject::*sound_device_arg)(int a1);
-
-int forward_sound_device(Sound *self, int vtable_offset, int a1,
-                         int no_device_result) {
-    void *device = *reinterpret_cast<void **>(
-        reinterpret_cast<uint8_t *>(self) + 0x3C);
-    if (!device) {
-        return no_device_result;
-    }
-    uint8_t *vtable = *reinterpret_cast<uint8_t **>(device);
-    return (ORIGINAL(device)->*original_slot<sound_device_arg>(vtable + vtable_offset))(a1);
-}
-
-}  // namespace
+// `forward_sound_device` stood here until 2026-09-03. It carried every
+// argument-forwarding dispatch through `original_slot` - a slot-read-then-call
+// - and every body that reached it is byte-exact only now that each one spells
+// the dispatch itself with `vtable_method`, which leaves the call operand on
+// the slot.
 
 /*
 Purpose: Ask the wrapped device to play, through vtable slot 0x1C.
@@ -201,7 +191,7 @@ int Sound::play() {
 /*
 Purpose: Ask the wrapped device to play the given sound, through vtable slot
          0x18.
-// ORIGINAL: 0x004C64A0 ?play@Sound@@QAEHI@Z 0x004C64A0-0x004C64BC
+// ORIGINAL: 0x004C64A0 ?play@Sound@@QAEHI@Z 0x004C64A0-0x004C64BC BYTE_EXACT
 // symbol    ?play@Sound@@UAEHI@Z
 // size      28 bytes
 // prototype int (__thiscall ?play@Sound@@QAEHI@Z)(Sound* this, unsigned int)
@@ -214,13 +204,20 @@ Return Value: the device's answer, or 0x14 when none is wrapped
 Status: Complete
 */
 int Sound::play(unsigned int effect) {
-    // TRIED writing this out of forward_sound_device the way play()/stop()/
-    // release() were - that is what made THOSE byte-exact - but the argument
-    // is what differs: the image passes it thiscall-on-the-stack, and both
-    // spellings reached for here compile 13-15 instructions against the
-    // image's 12 (3/12, against 2/12 through the helper). The no-argument
-    // family is fixed; this one needs its own shape.
-    return forward_sound_device(this, 0x18, static_cast<int>(effect), 0x14);
+    // LEVER: the same `device / result = 0x14 / if` shape the no-argument
+    // play(), stop() and release() use, with `vtable_method` for the argument
+    // dispatch - the image passes the effect thiscall-on-the-stack. The old
+    // forward_sound_device helper read the slot into a register first and
+    // compiled 3/12 here; the byte-exact no-argument family goes through
+    // `vtable_slot` because its slot needs no argument.
+    void *device = device_;
+    int result = 0x14;
+    if (device) {
+        typedef int (OriginalObject::*device_fn)(int a1);
+        result = (ORIGINAL(device)->*vtable_method<device_fn>(device, 0x18))(
+            static_cast<int>(effect));
+    }
+    return result;
 }
 
 /*
@@ -271,7 +268,7 @@ int Sound::release() {
 Purpose: Record the loop state at 0x30 and hand it to the wrapped device,
          through vtable slot 0x48. The field is written whether or not a device
          is wrapped.
-// ORIGINAL: 0x004C6540 ?set_loop_state@Sound@@QAEXJ@Z 0x004C6540-0x004C655A
+// ORIGINAL: 0x004C6540 ?set_loop_state@Sound@@QAEXJ@Z 0x004C6540-0x004C655A BYTE_EXACT
 // symbol    ?set_loop_state@Sound@@UAEXJ@Z
 // size      26 bytes
 // prototype void (__thiscall ?set_loop_state@Sound@@QAEXJ@Z)(Sound* this, int)
@@ -284,16 +281,20 @@ Return Value: n/a
 Status: Complete
 */
 void Sound::set_loop_state(long loop_state) {
-    const int value = static_cast<int>(loop_state);
+    int value = loop_state;
     loop_flag_30_ = value;
-    forward_sound_device(this, 0x48, value, 0);
+    void *device = device_;
+    if (device) {
+        typedef void (OriginalObject::*device_fn)(int a1);
+        (ORIGINAL(device)->*vtable_method<device_fn>(device, 0x48))(value);
+    }
 }
 
 /*
 Purpose: Record the delay at 0x34 and hand it to the wrapped device, through
          vtable slot 0x4C. The field is written whether or not a device is
          wrapped.
-// ORIGINAL: 0x004C6560 ?set_delay@Sound@@QAEXI@Z 0x004C6560-0x004C657A
+// ORIGINAL: 0x004C6560 ?set_delay@Sound@@QAEXI@Z 0x004C6560-0x004C657A BYTE_EXACT
 // symbol    ?set_delay@Sound@@UAEXI@Z
 // size      26 bytes
 // prototype void (__thiscall ?set_delay@Sound@@QAEXI@Z)(Sound* this, unsigned int)
@@ -306,9 +307,13 @@ Return Value: n/a
 Status: Complete
 */
 void Sound::set_delay(unsigned int delay) {
-    const int value = static_cast<int>(delay);
+    int value = static_cast<int>(delay);
     delay_ = value;
-    forward_sound_device(this, 0x4C, value, 0);
+    void *device = device_;
+    if (device) {
+        typedef void (OriginalObject::*device_fn)(int a1);
+        (ORIGINAL(device)->*vtable_method<device_fn>(device, 0x4C))(value);
+    }
 }
 
 
@@ -541,7 +546,7 @@ int Sound::load(const char *fname) {
 Purpose: Set the sound's volume: the low seven bits are stored at 0x04 and
          the wrapped device, if any, hears them through its vtable slot 0x40.
          Unlike Wave's override there is no group rescaling here.
-// ORIGINAL: 0x004C6510 ?set_volume@Sound@@QAEXH@Z 0x004C6510-0x004C6532
+// ORIGINAL: 0x004C6510 ?set_volume@Sound@@QAEXH@Z 0x004C6510-0x004C6532 BYTE_EXACT
 // symbol    ?set_volume@Sound@@UAEXH@Z
 // size      34 bytes
 // prototype void (__thiscall ?set_volume@Sound@@QAEXH@Z)(Sound* this, int)
@@ -554,12 +559,16 @@ Return Value: n/a
 Status: Complete
 */
 void Sound::set_volume(int volume) {
-    const uint32_t vol = static_cast<uint32_t>(volume) & 0x7F;
-    volume_ = vol;
+    // MASKED IN PLACE, the same shape Wave::set_volume documents: the argument
+    // is masked first and the field masks AGAIN - so the image hands the
+    // device the once-masked value (eax) and stores the twice-masked one
+    // (edx). Masking once into a local lets VC6 merge the two and stores the
+    // same register it pushes.
+    volume &= 0x7F;
+    volume_ = volume & 0x7F;
     if (device_) {
-        typedef void (OriginalObject::*device_fn)(uint32_t vol);
-        (ORIGINAL(device_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_) + 0x40))(
-            vol);
+        typedef void (OriginalObject::*device_fn)(int vol);
+        (ORIGINAL(device_)->*vtable_method<device_fn>(device_, 0x40))(volume);
     }
 }
 
@@ -627,7 +636,7 @@ int Sound::set_fade_in(unsigned int fade_in) {
 /*
 Purpose: Fade the sound in: its own vtable slot 0x54 takes the time, and only
          a zero answer lets its own slot 0x28 follow up.
-// ORIGINAL: 0x004C6660 ?fade_in@Sound@@QAEXI@Z 0x004C6660-0x004C6681
+// ORIGINAL: 0x004C6660 ?fade_in@Sound@@QAEXI@Z 0x004C6660-0x004C6681 BYTE_EXACT
 // symbol    ?fade_in@Sound@@UAEXI@Z
 // size      33 bytes
 // prototype void (__thiscall ?fade_in@Sound@@QAEXI@Z)(Sound* this, unsigned int)
@@ -640,10 +649,15 @@ Return Value: n/a
 Status: Complete
 */
 void Sound::fade_in(unsigned int a1) {
+    // Both dispatches go to the slot WHERE IT LIVES - `call [eax+0x54]` and
+    // `call [edx+0x28]` - the same shape the byte-exact fade(unsigned long)
+    // uses, not the slot-read-then-call the original_slot idiom emits.
     typedef int (OriginalObject::*own_time_fn)(unsigned int t);
-    if ((ORIGINAL(this)->*original_slot<own_time_fn>(*reinterpret_cast<uint8_t **>(this) + 0x54))(
-        a1) == 0) {
-        (ORIGINAL(this)->*original_method<void (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(this) + 0x28)))();
+    typedef void (OriginalObject::*own_fade_fn)();
+    if ((ORIGINAL(this)->*vtable_method<own_time_fn>(this, 0x54))(a1) == 0) {
+        // Slot 0x28 is this class's own fade() - a REAL virtual call, which
+        // reads the vtable into edx exactly as the hand dispatch does.
+        fade();
     }
 }
 
@@ -697,15 +711,31 @@ Return Value: whatever the device's unload returned, or 0 with none wrapped
 Status: Complete
 */
 int Sound::unload() {
+    // BOTH dispatches call the slot WHERE IT LIVES - `call [eax+0x14]` on the
+    // device, `call [reg+0x80]` on the sound - not the slot-read-then-call the
+    // original_slot / original_method idioms emit.
+    // The loaded bit is cleared with a plain read-modify-write, as detach's
+    // byte-exact `flags_40_ &= ~2u` is: the byte-form `and al, 0xfe` comes
+    // from that spelling, not from masking into a local first.
+    // TRIED for the 0x80 dispatch, which the image reads into EDX and every
+    // spelling here reads into EAX: a real virtual `detach();` call, and the
+    // __fastcall `vtable_slot` free-function form. Two instructions of 21
+    // differ on the register name alone - fade_in(unsigned) puts two
+    // own-vtable dispatches in eax then edx, but here a device dispatch and a
+    // branch merge sit between them and the allocator restarts at eax.
     int result = 0;
-    if (device_) {
-        typedef int (OriginalObject::*device_fn)();
-        result = (ORIGINAL(device_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_) + 0x14))();
+    void *device = device_;
+    if (device) {
+        // The no-argument device dispatch goes through the __fastcall slot
+        // form, as play()/stop()/release() do - the receiver is already in
+        // ecx, so there is no receiver pointer to name at the call site.
+        typedef int (__fastcall *device_fn)(void *self);
+        result = vtable_slot<device_fn>(device, 0x14)(device);
     }
-    (ORIGINAL(this)->*original_method<void (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(this) + 0x80)))();
-    const uint32_t cleared = flags_40_ & ~1u;
+    typedef void (OriginalObject::*own_fn)();
+    (ORIGINAL(this)->*vtable_method<own_fn>(this, 0x80))();
     device_ = nullptr;
-    flags_40_ = cleared;
+    flags_40_ &= ~1u;
     return result;
 }
 
@@ -730,41 +760,50 @@ Return Value: n/a
 Status: Complete
 */
 Sound::~Sound() {
-    // The whole body runs through a volatile view: a destructor's trailing
-    // member stores are otherwise dead to the optimizer (the Wave precedent).
-    Sound volatile *const self = this;
-    {
-        void *const name = self->fname_;
-        if (name) {
-            operator delete(name);
-            self->fname_ = nullptr;
-        }
+    // The body below is the faithful transcription - same field order, same
+    // guards, same heap and chain work - and nothing in it is guessable
+    // differently. It measures 0/62 anyway, and for a structural reason, not a
+    // spelling one: the image opens with VC6's /GX unwind frame (push -1, the
+    // handler, `mov eax, fs:[0]`, `mov fs:[0], esp`, a state variable at
+    // [ebp-4]) and closes by publishing the FAMILY ROOT vtable 0x66E444. This
+    // tree's Sound declares no base, so VC6 emits neither - it has nothing to
+    // unwind and no base table to restore - and the missing eight prologue
+    // instructions misalign the whole listing, holding the score at zero no
+    // matter what the body does.
+    // TRIED 2026-09-03: the plain spelling below (54 instructions, was the
+    // `Sound volatile *const self` view at 47), the virtual view, and the
+    // detach-virtual-call shape. All 0/62. LANDING IT NEEDS THE ROOT BASE
+    // DECLARED on Sound - the same root 0x0066E444 that net_class.h names the
+    // family root and that ??0Wave / ??0Ambience / ??0VoiceTx all stage first
+    // - which moves every Wave, Ambience, VoiceTx and Net constructor and
+    // destructor at once and is a family-wide declaration change, not a body
+    // edit. Left for a /recover-class Sound pass.
+    if (fname_) {
+        operator delete(fname_);
+        fname_ = nullptr;
     }
-    void *const device = self->device_;
-    if (device) {
+    if (device_) {
         if (WaveDeviceReleaseGuard) {
-            (WaveDeviceReleaseSlot())(device);
+            (WaveDeviceReleaseSlot())(device_);
         }
-        self->device_ = nullptr;
+        device_ = nullptr;
     }
-    if (self->flags_40_ & 2) {
-        Sound *const prev = self->chain_prev_;
+    if (flags_40_ & 2) {
+        Sound *const prev = chain_prev_;
         if (prev) {
-            reinterpret_cast<Sound volatile *>(prev)->chain_next_ =
-                self->chain_next_;
+            prev->chain_next_ = chain_next_;
         } else {
-            WaveChainHead() = reinterpret_cast<Wave *>(self->chain_next_);
+            WaveChainHead() = reinterpret_cast<Wave *>(chain_next_);
         }
-        Sound *const next = self->chain_next_;
+        Sound *const next = chain_next_;
         if (next) {
-            reinterpret_cast<Sound volatile *>(next)->chain_prev_ =
-                self->chain_prev_;
+            next->chain_prev_ = chain_prev_;
         } else {
-            WaveChainTail() = reinterpret_cast<Wave *>(self->chain_prev_);
+            WaveChainTail() = reinterpret_cast<Wave *>(chain_prev_);
         }
-        self->chain_next_ = nullptr;
-        self->chain_prev_ = nullptr;
-        self->flags_40_ &= ~2u;
+        chain_next_ = nullptr;
+        chain_prev_ = nullptr;
+        flags_40_ &= ~2u;
     }
 }
 
@@ -773,7 +812,7 @@ Sound::~Sound() {
 Purpose: The compiler-generated scalar deleting destructor: destroy the
          sound and, when bit 0 of the mode asks, free the storage to the
          game heap.
-// ORIGINAL: 0x004C92D0 ??_GSound@@UAEPAXI@Z 0x004C92D0-0x004C92F1
+// ORIGINAL: 0x004C92D0 ??_GSound@@UAEPAXI@Z 0x004C92D0-0x004C92F1 BYTE_EXACT
 // symbol    ?sound_scalar_dtor_redirect@@YIPAXPAVSound@@PAXI@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GSound@@UAEPAXI@Z)(Sound* this, unsigned int)
@@ -786,7 +825,11 @@ Status: Complete
 */
 void *__fastcall sound_scalar_dtor_redirect(Sound *self, void *,
                                             unsigned int mode) {
-    self->~Sound();
+    // QUALIFIED, not `self->~Sound()`: the bare spelling makes VC6 dispatch
+    // the DELETING destructor through slot 8 (`push 0; mov eax,[esi]; call
+    // [eax+8]`, re-reading the mode off [esp+8]) where the image calls
+    // ??1Sound@@QAE@XZ directly.
+    self->Sound::~Sound();
     if (mode & 1) {
         operator delete(self);
     }
@@ -799,7 +842,7 @@ Purpose: Join the sound chain at the tail. A sound with either neighbour
          otherwise the old tail becomes its prev - re-read after the tail
          slot advances, as the original orders it - and learns its next.
          Either way the chained bit sets.
-// ORIGINAL: 0x004C6370 ?attach@Sound@@QAEHXZ 0x004C6370-0x004C63C1
+// ORIGINAL: 0x004C6370 ?attach@Sound@@QAEHXZ 0x004C6370-0x004C63C1 BYTE_EXACT
 // symbol    ?attach@Sound@@UAEHXZ
 // TRIED 2026-08-30, after the slot reconciliation (the image's vftable slot
 //   29 is get_time 0x4C66A0 and slot 31 is attach - the old header had them
@@ -823,17 +866,25 @@ int Sound::attach() {
     if (chain_next_ || chain_prev_) {
         return 0;
     }
-    // The original re-zeroes both links in each arm; the guard above proves
-    // they are already null, so those stores are omitted as unobservable.
+    // BUG IN THE ORIGINAL: the empty-chain arm re-zeroes both links the guard
+    // above has just proved null. The stores are unobservable in the running
+    // program - but the image performs them, and they are what put the zero in
+    // the register the image's `cmp eax,edx` / `cmp [ecx+0x44],edx` reuse, so
+    // they are written here and left alone deliberately.
+    // TRIED 2026-08-30 with the stores omitted: the image's persistent zero
+    // register never materialises and the compares fall back to `test`.
     if (!WaveChainTail()) {
         WaveChainHead() = reinterpret_cast<Wave *>(this);
         WaveChainTail() = reinterpret_cast<Wave *>(this);
+        chain_next_ = nullptr;
+        chain_prev_ = nullptr;
         flags_40_ |= 2;
         return 0;
     }
     chain_prev_ = reinterpret_cast<Sound *>(WaveChainTail());
     WaveChainTail() = reinterpret_cast<Wave *>(this);
     chain_prev_->chain_next_ = this;
+    chain_next_ = nullptr;
     flags_40_ |= 2;
     return 0;
 }
