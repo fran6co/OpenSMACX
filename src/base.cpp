@@ -60,6 +60,14 @@ uint32_t BaseCurrentForcesMaintCount;  // 0x0090EA08
 int TileYieldRestricted;  // 0x0090E998
 
 /*
+ * general.h's swap() is `MEASURED inline`, so VC6 folds it into every caller
+ * in this file - and base_rank (0x004EB490) is a site where the image makes
+ * two real `call 0x628a50`s instead. Same lever as general.h's bitmask_call:
+ * an ordinary out-of-line forwarder the inliner has no definition to fold.
+ */
+static void __cdecl swap_call(int *var1, int *var2) { swap(var1, var2); }
+
+/*
  * energy_yield publishes the clamped energy of a square that contains a base
  * here. Its only other reader in the image is base_terraform (0x004ECCBD).
  */
@@ -855,6 +863,14 @@ int __cdecl base_lose_minerals(int base_id, int UNUSED(production_id)) {
 /*
 Purpose: Set or unset the specified base's facility.
 // ORIGINAL: 0x004E48B0 ?set_fac@@YAXHHH@Z 0x004E48B0-0x004E48FA BYTE_EXACT
+// LEVER: bitmask_call, and the offset out-param is THIS parameter's slot.
+//   The folded `MEASURED inline bitmask` turned the call into a shift/and
+//   pair in place (0/32); general.h's bitmask_call restores the image's
+//   `call 0x50ba00`. And the image passes &facility_id - not a separate
+//   local - as the offset pointer, which puts offset in the dead parameter
+//   slot at [ebp+8] and mask at [ebp-4]. TRIED: `int offset; int mask;`
+//   with `&offset`, the shape has_fac_built_call and sea_coasts use - 3/32,
+//   because offset lands at [ebp-4] and pushes mask out of the frame.
 // size      74 bytes
 // prototype void (__cdecl ?set_fac@@YAXHHH@Z)(int facilityID, int baseID, BOOL set)
 // callers   10   call targets   1
@@ -865,13 +881,17 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl set_fac(int facility_id, int base_id, BOOL set) {
-    int offset;
     int mask;
-    bitmask(facility_id, &offset, &mask);
+    // The image hands bitmask() THIS parameter's own slot as the offset
+    // out-param: facility_id is dead after the call, and its stack slot
+    // holds the offset both subscripts below read. A separate `int offset`
+    // local lands at [ebp-4] instead and pushes mask out of the frame -
+    // measured 3/32 against 32/32 for this spelling.
+    bitmask_call(facility_id, &facility_id, &mask);
     if (set) {
-        Bases[base_id].facilities_built[offset] |= mask;
+        Bases[base_id].facilities_built[facility_id] |= mask;
     } else {
-        Bases[base_id].facilities_built[offset] &= ~mask;
+        Bases[base_id].facilities_built[facility_id] &= ~mask;
     }
 }
 
@@ -879,6 +899,7 @@ void __cdecl set_fac(int facility_id, int base_id, BOOL set) {
 Purpose: Check whether the facility audio blurb announcement has played for the faction.
 // ORIGINAL: 0x004E4900 has_fac_announced 0x004E4900-0x004E4952 BYTE_EXACT
 // LEVER: signedness. `facility_id` is uint32_t, so `facility_id > FacilitySPStart` forced an unsigned `jbe`; casting to `(int)facility_id` before the compare, without changing the parameter's mangled type, restores the image's signed `jle`. BYTE_EXACT.
+// LEVER: bitmask_call with &facility_id as the offset out-param, exactly as set_fac records - the image reuses the dead parameter slot at [ebp+0xc] for the offset and keeps mask at [ebp-4]. The `(int *)` cast is the uint32_t the mangled name (?has_fac_announced@@YAHII@Z) fixes.
 // symbol    ?has_fac_announced@@YAHII@Z
 // size      82 bytes
 // prototype int (__cdecl has_fac_announced)(int factionID, int facilityID)
@@ -893,14 +914,20 @@ BOOL __cdecl has_fac_announced(uint32_t faction_id, uint32_t facility_id) {
     if ((int)facility_id > FacilitySPStart) {
         return true;
     }
-    int offset, mask;
-    bitmask(facility_id, &offset, &mask);
-    return (PlayersData[faction_id].facility_announced[offset] & mask) != 0;
+    int mask;
+    // Same parameter-slot reuse the image shows in set_fac below: bitmask's
+    // offset out-param is this function's own facility_id slot, dead after
+    // the call. The cast is the uint32_t parameter the mangled name fixes
+    // (?has_fac_announced@@YAHII@Z), not a pun of this.
+    bitmask_call(facility_id, (int *)&facility_id, &mask);
+    return (PlayersData[faction_id].facility_announced[facility_id] & mask) != 0;
 }
 
 /*
 Purpose: Set or unset whether a particular facility audio blurb has played for specified faction.
 // ORIGINAL: 0x004E4960 set_fac_announced 0x004E4960-0x004E49CA BYTE_EXACT
+// LEVER: bitmask_call with &facility_id as the offset out-param - set_fac's
+//   note above covers both halves of it. 0/42 -> 42/42.
 // symbol    ?set_fac_announced@@YAXIIH@Z
 // size      106 bytes
 // prototype int (__cdecl set_fac_announced)(int factionID, int facilityID, int set)
@@ -912,13 +939,15 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl set_fac_announced(uint32_t faction_id, uint32_t facility_id, BOOL set) {
-    int offset;
     int mask;
-    bitmask(facility_id, &offset, &mask);
+    // set_fac's parameter-slot reuse again - the image's offset out-param is
+    // this facility_id slot itself. The cast is the uint32_t the mangled
+    // name (?set_fac_announced@@YAXIIH@Z) fixes, not a pun of this.
+    bitmask_call(facility_id, (int *)&facility_id, &mask);
     if (set) {
-        PlayersData[faction_id].facility_announced[offset] |= mask;
+        PlayersData[faction_id].facility_announced[facility_id] |= mask;
     } else {
-        PlayersData[faction_id].facility_announced[offset] &= ~mask;
+        PlayersData[faction_id].facility_announced[facility_id] &= ~mask;
     }
 }
 
@@ -2399,6 +2428,7 @@ Purpose: Determine the faction's base with the specified position sorted by the 
 // ORIGINAL: 0x004EB490 ?base_rank@@YAHHH@Z 0x004EB490-0x004EB551 BYTE_EXACT
 // LEVER: the image never calls sort_descending() - it inlines the bubble sort loop directly (two swap() calls, matching general.cpp's body). Writing that loop out here instead of calling sort_descending() took the call set from {sort_descending, __alloca_probe} to {swap x2, __alloca_probe}, matching the image's (call_diff now agrees). Best flag set moved from 0.645 to 0.847 similar. Remaining divergence is instruction-order/register-scheduling around the parameter loads, not chased further.
 // LEVER: branch polarity. Deleted the two added bounds-check guards (`rank_position < 0` and `!bases_found`) and replaced them with the image's single guard clause `if (rank_position >= bases_found) return -1;` written immediately after the collection loop - VC6 compiles a guard clause by testing the ORIGINAL condition and jumping forward to the work (jl to the sort), falling through into the early return, which is what the image does; the equivalent `if (rank_position < bases_found) {work} return -1;` form emits the opposite polarity (jge past the work) and does not match. Also reproduces the original's lack of a `rank_position < 0` bounds check - see the BUG IN THE ORIGINAL comment below. Took this body to BYTE_EXACT (70/70), from 4/70.
+// LEVER: swap_call, the bitmask_call lever again (base.cpp file scope). general.h's swap() is `MEASURED inline`, so /Ob1 folded it into both swap sites and the bubble sort became an xor chain - 26/70, with the frame's two arrays mirrored (base_id at [ebp-0x1000], base_energy at [ebp-0x800]) against the image's (energy low, id high). Routing both swaps through a plain out-of-line `static void swap_call(int*, int*)` restores the image's two `call 0x628a50`s AND the array order, because an address-taken array is placed when its & is first materialised: with the calls out of line the sort's swap(&base_energy...) first is what puts base_energy at [ebp-0x1000]. TRIED: declaring base_energy before base_id and/or storing it first while swap() stayed folded - all three spellings measured 26/70 with the arrays still mirrored; the frame follows the address-taken order, not declaration or store order.
 // size      193 bytes
 // prototype int (__cdecl ?base_rank@@YAHHH@Z)(int factionID, int minBasesToRank)
 // callers   1   call targets   2
@@ -2415,6 +2445,11 @@ int __cdecl base_rank(int faction_id, int rank_position) {
     // bounds. Reproduced deliberately: the added guard here scored worse
     // (see LEVER below), because the image loads rank_position from memory
     // only once, at the single `cmp .../jl` test after the collection loop.
+    // base_energy lands at [ebp-0x1000] and base_id above it at [ebp-0x800]
+    // once the two swaps go through the out-of-line swap_call: an address-
+    // taken array is placed when its & is first materialised, so the sort's
+    // swap order fixes the frame. Declaring or storing energy first, with
+    // swap() folded, does NOT reach that layout - 26/70.
     int base_id[MaxBaseNum];
     int base_energy[MaxBaseNum];
     int bases_found = 0;
@@ -2436,8 +2471,8 @@ int __cdecl base_rank(int faction_id, int rank_position) {
         for (int i = 0; i < bounds; i++) {
             if (base_energy[i] < base_energy[i + 1]) {
                 has_swapped = true;
-                swap(&base_energy[i], &base_energy[i + 1]);
-                swap(&base_id[i], &base_id[i + 1]);
+                swap_call(&base_energy[i], &base_energy[i + 1]);
+                swap_call(&base_id[i], &base_id[i + 1]);
             }
         }
     } while (has_swapped);

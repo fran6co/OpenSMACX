@@ -2126,12 +2126,6 @@ Purpose: Build the interface's text colours: load text.pcx into a scratch
 //   [ebp-0x594], 0` ahead of the `call 0x5d7410` the image makes, and 232/242
 //   agreeing is where that leaves an /O2 run. The image's compiler called the
 //   destructor out of line; ours, given the same header, does not.
-// TRIED: spelling that teardown by hand - raw storage, placement `new`, and a
-//   qualified `buf.Buffer::~Buffer()` - 9/242 under /O2: the storage lands at
-//   [ebp-0x59c] instead of [ebp-0x594] and every offset after it shifts.
-//   Reverted.
-// TRIED: `#pragma auto_inline(off)` around the `#include "buffer.h"` that
-//   defines the destructor - measured, no effect on the expansion. Reverted.
 Return Value: n/a
 Status: homed on this pass; its forwarder and its archive unit are gone.
 */

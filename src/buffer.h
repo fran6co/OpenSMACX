@@ -167,22 +167,27 @@ class Buffer {
   // pointer there itself and `sizeof` stays 0x588.
   //
   // 0x005D7410, and the body really is this: see the annotation in
-  // buffer.cpp beside the marker.
+  // buffer.cpp beside the marker, where the definition now lives.
   // VIRTUAL, and not negotiable: the image's Buffer-side vftable
   // (0x0066FC48, the one ??1GraphicWin stores at +0x444) opens with a
   // deleting-destructor THUNK (0x005D7160) - a secondary-table thunk only
   // exists when the destructor is virtual. A 2026-08-30 experiment spelled
   // it non-virtual while chasing ??1Console's member-teardown shape; that
   // changed nothing there and would have emptied this slot.
-  // IN-CLASS, and also not negotiable, measured 2026-09-03 chasing MapWin's
-  // destructor (0x00420F90, which calls ??1Buffer three times where the
-  // in-class spelling expands it): moving the definition to buffer.cpp fixed
-  // that body byte-exactly and silenced the compiler's own deleting
-  // destructor in every OTHER translation unit - deleting_thunks.cpp's
-  // ??_GBuffer claim (0x005E3610) went UNRESOLVED, because VC6 emits the
-  // trio only where the inline definition is used. One claim for another;
-  // the trade belongs to whoever owns both files.
-  MEASURED virtual ~Buffer() { close(); }
+  // OUT OF LINE, 2026-09-03, superseding the in-class spelling twice measured.
+  // First measurement (mapwin batch): moving the definition to buffer.cpp fixed
+  // ??1MapWin (0x00420F90, three `call ??1Buffer` where the in-class spelling
+  // expands) and looked like a 1-for-1 trade - deleting_thunks.cpp's
+  // ??_GBuffer claim (0x5E3610) went UNRESOLVED, VC6 emitting the destructor
+  // trio only where the inline definition is used. Second measurement (midi
+  // batch) dissolved the trade: with the stand-in's symbol annotation switched
+  // to ?scalar_delete_buffer@@YIPAXPAX0I@Z the compiler's OWN ??_GBuffer is
+  // emitted in buffer.obj and the stand-in still measures 11/11 - both sides
+  // hold. The in-class definition also let /O2's /Ob1 expand close()+~Spot
+  // into every local Buffer's teardown, where the image makes
+  // `call ??1Buffer@@QAE@XZ` at all 87 of its sites (checkbox, radiobutton,
+  // sprite, palette textcolor_init). Same lever as general.h's bitmask_call.
+  MEASURED virtual ~Buffer();
   // `int`, and returning 0, because that is what the three bytes are:
   // `xor eax, eax; ret`. Declared `void` it compiles to `ret` alone and
   // Buffer's slot 1 stops being the function the image put there.
@@ -286,7 +291,11 @@ class Buffer {
   // times.
   int get_data(int x, int y);
 
-  HDC get_hdc() {
+  // MEASURED on both of these: the class stopped being dllexport'ed as a
+  // side effect of ~Buffer moving out of line (below), and without the
+  // specifier VC6 no longer emits their COMDATs - every caller inlines them,
+  // and the two claims in buffer.cpp have nothing to measure.
+  MEASURED HDC get_hdc() {
       if (locked_bits_ != 0) {
           surface_lost();
       }
@@ -308,7 +317,7 @@ class Buffer {
       ++hdc_lock_count_;
       return hdc2_;
   }
-  void release_hdc(int count) {
+  MEASURED void release_hdc(int count) {
       // THE SURFACE TEST COMES FIRST, and the subtraction is inside each arm.
       // The image reads `[esi + 0x58]` before either `sub`, and has two of
       // them - one per arm - where a single subtraction above the branch

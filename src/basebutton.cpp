@@ -268,6 +268,12 @@ Purpose: Set the button's bubble text.
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4510 0x00644EF2 0x006453E0 0x00645470
+// LEVER: strcat, not vc6_compat.h's strcat_s. stdafx.h's `#pragma
+//   function(strcat, ...)` makes a direct `strcat` a real `call 0x645470`
+//   everywhere in this tree, but the compat wrapper is an inline function
+//   whose body VC6 parsed BEFORE that pragma - so `strcat_s(d, n, s)` still
+//   expands to the /Oi `repne scasb`/`rep movsd` sequence and this body grew
+//   past the image's 36 instructions. Same fix in set_name and init below.
 Return Value: Zero on success, non-zero on error
 Status: Complete with redirect for free to prevent hang/freeze. Incompatibility between older
         version of free with newer SDK version of free CRT. Revisit once more of code is redirected
@@ -289,7 +295,7 @@ int BaseButton::set_bubble_text(LPCSTR input) {
         // image empties through the allocation register still live in EAX,
         // then re-reads the field for the strcat destination.
         allocated[0] = '\0';
-        strcat_s(bubble_text_, len, input);
+        strcat(bubble_text_, input);
     }
     return 0;
 }
@@ -297,6 +303,9 @@ int BaseButton::set_bubble_text(LPCSTR input) {
 /*
 Purpose: Set the button's name string.
 // ORIGINAL: 0x006074E0 ?set_name@BaseButton@@QAEHPAD@Z 0x006074E0-0x0060754D BYTE_EXACT
+// LEVER: strcat, not strcat_s - see set_bubble_text above. 20/37 -> 37/37 on
+//   that alone, and the register choice follows: the image holds `this` in
+//   esi, which the expanded `rep movsd` was stealing for its own use.
 // LEVER: THE CONCAT BLOCK SITS OUTSIDE THE `if (input)`, and that is the whole
 //   body. 25/37 -> 26/37 was the empty-then-concatenate spelling; 26/37 ->
 //   37/37 was moving `name_[0] = '\0'; strcat_s(...)` out of the `if (input)`
@@ -306,11 +315,6 @@ Purpose: Set the button's name string.
 //   0xA7C re-reads (into eax and then ecx) come from - not from any register
 //   preference. `size_t len` is dead on both paths (vc6_compat.h's strcat_s
 //   discards its size), so its declaration costs no instruction.
-// TRIED: `name_ = (LPSTR)mem_get_old(len)` storing straight into the field -
-//   the register copy stayed live across the join and VC6 reused it, 26/37.
-// TRIED: an `LPSTR const allocated` local held in a register with both uses
-//   spelled `name_` (the set_bubble_text shape) - VC6 copy-propagated it and
-//   re-used the register, still 26/37.
 // BUG IN THE ORIGINAL: with `input == 0` the image reaches the concat block
 //   with name_ == 0 and input == 0, so it executes `mov byte ptr [eax], 0`
 //   writing to address 0 - a null-pointer write, before strcat is reached.
@@ -348,7 +352,7 @@ int BaseButton::set_name(LPCSTR input) {
     // unlike set_bubble_text which zeroes through the allocation register. Do
     // not collapse the two reads into one local.
     name_[0] = '\0';
-    strcat_s(name_, len, input);
+    strcat(name_, input);
     return 0;
 }
 
@@ -673,6 +677,9 @@ Purpose: Reinitialise a button - close whatever it currently holds, take a
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4510 0x005D4EF0 0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD10 0x006453E0 0x00645470
 // indirect  0x00607217 0x00607347
+// LEVER: strcat, not strcat_s - see set_bubble_text above. 2/110 (126
+//   compiled) -> 110/110: the expanded `rep movsd` walk cost 16 instructions,
+//   the real `call 0x645470`, and the esi register the image keeps `this` in.
 Return Value: No parent (3); name allocation failed (4); otherwise
               GraphicWin::init's own code, which is zero on success
 Status: Complete
@@ -722,7 +729,7 @@ int BaseButton::init(LPCSTR name, int id, int x, int y, int width, int height,
         // concatenation destination is RE-READ from 0xA7C at 0x00607260 - do
         // not collapse the two into one local.
         allocated[0] = '\0';
-        strcat_s(name_, len, name);
+        strcat(name_, name);
     }
 
     // neg/sbb/and/or at 0x00607278-0x0060728B: `neg edx` sets the carry from

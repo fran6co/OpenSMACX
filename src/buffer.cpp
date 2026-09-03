@@ -1812,7 +1812,6 @@ Purpose: Destroy a Buffer by installing its virtual table, releasing every
 //            0x005E3610 (UNRESOLVED). Same body either way; the difference
 //            is which call sites the compiler is willing to build it in.
 // symbol    ??1Buffer@@UAE@XZ
-// body      src/buffer.h
 // size      107 bytes
 // prototype void (__thiscall ??1Buffer@@QAE@XZ)(Buffer* this)
 // callers   87   call targets   2
@@ -1820,8 +1819,17 @@ Purpose: Destroy a Buffer by installing its virtual table, releasing every
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D7470 0x005FA870
 // notes     Runtime redirect installed by DllMain after byte-signature validation
+// LEVER: OUT OF LINE (2026-09-03, was `MEASURED virtual ~Buffer() { close(); }`
+//   in buffer.h). The in-class definition let /O2's /Ob1 expand the teardown
+//   into every local Buffer's scope end - `close()` then `~Spot()`, plus the
+//   vptr store - where the image makes one `call ??1Buffer@@QAE@XZ` at all 87
+//   of its sites. Same lever as general.h's bitmask_call: the inliner has no
+//   body to fold. checkbox/radiobutton/sprite init_class and palette's
+//   textcolor_init all carry the expansion.
 Status: Complete
 */
+
+MEASURED Buffer::~Buffer() { close(); }
 
 void __fastcall buffer_destructor_redirect(Buffer *self, void *) {
     // QUALIFIED, so it is the direct `call ??1Buffer@@QAE@XZ` the image makes

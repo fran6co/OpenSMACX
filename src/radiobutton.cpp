@@ -222,6 +222,9 @@ Status: Complete
 // pending_bodies forwarder. Sibling of CheckBox::init_class; same
 // placement-new Buffer shape and the same SEH-funclet gap (see that body's
 // TRIED).
+// LEVER: ~Buffer out of line, as in CheckBox::init_class above - 24/63 ->
+//   63/63 on moving the definition from buffer.h into buffer.cpp, and the
+//   same collapse of the EBP frame into the image's frameless EH form.
 Status: Complete
 */
 int __cdecl RadioButton::init_class() {
