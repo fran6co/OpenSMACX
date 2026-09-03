@@ -133,18 +133,22 @@ class NetUnk72C : public virtual StringAllocationBase {
 };
 
 /* One of the sixteen 0x58-byte player slots at Net+0x154. Two independent
-   reads: init() clears the words at 0x0, 0x4, 0x8 and 0xC and the byte flag
-   at 0x10 (a BYTE store, which is why it is a byte) over sixteen slots of
-   0x58 bytes, 0x154..0x6D4; and get_player_name (0x00631A20) reads the name
-   text at slot + 0x15 - image 0x169 - stride 0x58. */
+   reads: init() clears the words at 0x0, 0x4, 0x8 and 0xC and ONE BYTE at
+   0x10 over sixteen slots of 0x58 bytes, 0x154..0x6D4; get_player_name
+   (0x00631A20) reads the name text at slot + 0x15 - image 0x169 - stride
+   0x58; and check_polling (0x006320E0) reads and writes the DWORD at slot +
+   0x10 as a millisecond timestamp (`mov ebx,[edi+0x10]` /
+   `mov dword ptr [edi+0x10],eax`), which is what makes it a dword rather
+   than the byte flag the init store alone would suggest. */
 class NetPlayer {
  public:
   uint32_t field_0_;  // 0x0
   uint32_t field_4_;  // 0x4
   uint32_t field_8_;  // 0x8
   uint32_t field_C_;  // 0xC
-  uint8_t flags_10_;  // 0x10
-  uint8_t field_11_[0x47];  // 0x11..0x57, the name text starts at 0x15
+  uint32_t stamp_10_;  // 0x10, timeGetTime() of the last packet from this
+                       // player - the staleness clock check_polling reaps on
+  uint8_t field_14_[0x44];  // 0x14..0x57, the name text starts at 0x15
 };
 
 class Net {
@@ -163,6 +167,17 @@ class Net {
   // the image's own `E8`.
   int send_packet_type(void *data, int mode, unsigned long who, int size,
                        int flags);
+  // 0x0062F390, still unrecovered (1293 bytes). process_voice routes a voice
+  // packet here instead of send_packet_type whenever field_54_ is set, and it
+  // calls close/check_polling like the rest of the session paths, so it is a
+  // member with the same five arguments. `sub_` is the tree's name for a body
+  // nothing has identified yet; the forwarder that gives its callers the
+  // image's `E8` lives in net_class.cpp beside process_voice.
+  int sub_62f390(void *data, int mode, unsigned long who, int size, int flags);
+  // 0x00632350, still unrecovered (966 bytes, archived). check_polling calls
+  // it to cut a stale player - by key, or 0xFFFFFFFF for everyone - and reads
+  // a zero answer as "cut", which is when it refreshes the player's stamp.
+  int drop_player(unsigned long key, int reason);
   int get(unsigned long *a, unsigned long *b);
 
  public:
@@ -230,7 +245,12 @@ class Net {
   // The voice-transmitter state between the receiver and the fifos.
   uint32_t voice_key_D4_;      // 0xD4, start_voice's key
   uint32_t voice_flags_D8_;    // 0xD8, 0x20000000 started / 0x60000000 in-flight
-  uint8_t field_DC_[0xC];      // 0xDC..0xE7, opaque
+  // The keep-alive pair check_polling drives: the clock reading it last sent
+  // a 0x20 packet at, and the staleness threshold a player stamp is measured
+  // against (close() writes 0x4E20 - twenty seconds - into the latter).
+  uint32_t poll_time_DC_;      // 0xDC, timeGetTime() of the last keep-alive
+  uint32_t poll_timeout_E0_;   // 0xE0, the staleness threshold in ms
+  uint32_t field_E4_;          // 0xE4, opaque - close() writes 1 here
   NetFifo netfifo_[3];  // 0xE8, 0x10C, 0x130 - the three message queues
   NetPlayer players_[16];  // 0x154, sixteen 0x58-byte slots to 0x6D4
   uint32_t field_6D4_;  // 0x6D4
@@ -251,9 +271,13 @@ class Net {
   uint8_t field_724_[0x8];  // 0x724..0x72B, opaque
   NetUnk72C unk_72c_;       // 0x72C (vbase StringAllocationBase at 0x750)
   StringAllocationBase unk_base_758_;  // 0x758
-  // 0x760/0x764 are close()'s timer words and 0x768 the slot count
-  // AlphaNet::close zeroes; the rest is opaque to 0x780.
-  uint8_t field_760_[0x20];  // 0x760..0x77F
+  // 0x760 and 0x764 are the two words check_polling compares to decide
+  // whether the whole player table is stale or only a slice of it - close()
+  // zeroes both - and 0x768 the slot count AlphaNet::close zeroes; the rest
+  // is opaque to 0x780.
+  uint32_t field_760_;       // 0x760
+  uint32_t field_764_;       // 0x764
+  uint8_t field_768_[0x18];  // 0x768..0x77F, opaque
 };
 
 // Pinned by AlphaNet's own assert: AlphaNet = Net + data_[0xD20] = 0x14A0.
@@ -272,6 +296,26 @@ static_assert(sizeof(Net) == 0x780, "Net is the 0x780-byte base AlphaNet pads fr
 // the same form `BaseCurrent()` and `console_map_win()` already use.
 inline Net *&NetCurrent() { return *reinterpret_cast<Net **>(0x009BE608); }
 uint32_t *const NetEnabled = (uint32_t *)0x009BE600;
+
+// THE TWO RE-ENTRANCY GUARDS beside them, each set to 1 while its own pass is
+// inside the code that must not be re-entered and cleared on the way out.
+// check_polling sends its 0x20 keep-alive under the 0x9BE610 flag and reaps
+// stale players under the 0x9BE60C one; the same `uint32_t *const` binding as
+// NetEnabled, so the reads and the stores fold to the image's absolute
+// operand.
+uint32_t *const NetReapBusy = (uint32_t *)0x009BE60C;
+uint32_t *const NetKeepAliveBusy = (uint32_t *)0x009BE610;
+
+// The game's imported timeGetTime, as check_polling reads it: the slot the
+// import table hands over, not the function - `NetTimeGetTimeSlot()` returns
+// the live pointer, so the call goes through it the way the image's
+// `call dword ptr [0x669368]` does. wave.h binds the same slot for its own
+// timing; this file keeps its own typedef so the link closure stays
+// self-contained.
+typedef unsigned long(__stdcall *func_net_time)();
+inline func_net_time &NetTimeGetTimeSlot() {
+    return *reinterpret_cast<func_net_time *>(0x00669368);
+}
 
 // Net::get's scratch destination: passed BY ADDRESS to NetFifo::get as the
 // buffer to fill, and that same address is the "got a message" return value,

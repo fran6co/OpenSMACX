@@ -396,7 +396,12 @@ SCAFFOLD_CEILINGS = {
     # tile_mask's per-tile blit copy_mask (0x005E2B00) was homed too, from
     # 005e2b00.cpp, and never needed a forwarder: both of its own callees,
     # get_data(2) and free_data, were already homed and BYTE_EXACT.
-    "PENDING_BODY forwarders": 224,
+    # 224 -> 222 (2026-09-03, net_class batch): process_voice and
+    # check_polling homed into src/net_class.cpp (BYTE_EXACT and MISMATCH
+    # 11/135); Net::sub_62f390 and Net::drop_player, the two callees the two
+    # bodies needed, took in-file reinterpret_cast forwarders beside their
+    # callers instead of PENDING_BODY ones.
+    "PENDING_BODY forwarders": 222,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -445,7 +450,10 @@ SCAFFOLD_CEILINGS = {
     # the body it drafted - Effect::init homed into src/wave.cpp
     # (MISMATCH 42/49; the residual is the register-swap plateau the marker
     # records).
-    "artifact files (recovered/)": 1278,
+    # 1278 -> 1277 (2026-09-03, net_class batch): units/006320e0.cpp deleted
+    # with the body it drafted - check_polling homed into src/net_class.cpp
+    # (MISMATCH 11/135, the register-assignment plateau the marker records).
+    "artifact files (recovered/)": 1277,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -502,7 +510,11 @@ SCAFFOLD_CEILINGS = {
     # (PullDown::add_item) and 005f8e50.cpp (rename_item) STAY unrecovered -
     # 527 and 494 bytes, declared and standing as pending_bodies forwarders
     # for the two homed callers that reach them.
-    "unrecovered files": 1649,
+    # 1649 -> 1648 (2026-09-03, net_class batch): 00631a60.cpp deleted with
+    # process_voice homed into src/net_class.cpp BYTE_EXACT 78/78 - the
+    # unsigned level local (the image's `jae`/`jbe` against a getter the
+    # catalogue spells `H`) is the lever the marker records.
+    "unrecovered files": 1648,
     "hypothesis_layouts.h lines": 2723,
 }
 
