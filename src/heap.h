@@ -27,18 +27,13 @@ class Heap {
   // opens `push esi; mov esi, ecx; call ?0Heap`, a real call to the base.
   // Defined in-class the compiler inlines it and the caller never matches.
   Heap();   // 005D4560
-  MEASURED ~Heap() {
-    // IMAGE ORDER, and the null goes INSIDE the guard as well as after it.
-    if (base_) {
-      std::free(base_);
-      base_ = nullptr;
-    }
-    err_flags_ = 0;
-    current_ = nullptr;
-    base_ = nullptr;
-    free_size_ = 0;
-    base_size_ = 0;
-  } // 005D4580
+  // OUT OF LINE, like the constructor above - and for the same reason plus
+  // one: an in-class destructor is EXPANDED at every implicit base/member
+  // teardown site, so `~Strings` and `~TextIndex` open-code nineteen
+  // instructions (and, in TextIndex's case, an SEH unwind frame) where the
+  // image's own are a five-byte `jmp` and a four-instruction tail. Defined
+  // in heap.cpp each site emits the one call the image makes.
+  ~Heap();  // 005D4580
 
   void shutdown();
   void squeeze(int UNUSED(toggle) toggle);

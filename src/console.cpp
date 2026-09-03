@@ -838,12 +838,29 @@ Purpose: Reset the console - clear the message ring, the two 0x20-entry tables,
          subobjects and clear the map.
 // ORIGINAL: 0x0051D7D0 ?close@Console@@QAEXXZ 0x0051D7D0-0x0051D88E BYTE_EXACT
 // LEVER: PROMOTED out of src/unrecovered/0051d7d0.cpp, whose claim proved the ARTIFACT reproduced while the program held a pending_bodies forwarder. `void close()` was not declared on Console at all - that, not the body, is what kept it in an artifact.
+// LEVER (2026-09-03): time_close_call, not `->close()` on the Time at
+//        0x22a04. The image CALLS 0x00616780 here (0x0051D873) where
+//        time.h's in-class `MEASURED close` otherwise expands at this site
+//        too - 68 compiled instructions against the image's 40, 22/40
+//        agreeing, the whole extra block being Time's own teardown written
+//        out. Buffer::close and GraphicWin::close needed nothing: both are
+//        declared out-of-line in their headers, so both were already calls.
 // symbol    ?close@Console@@QAEXXZ
 // size      190 bytes
 // kind      game
 Return Value: n/a
 Status: Complete
 */
+// A real out-of-line forwarder so this call site gets the `call 0x00616780`
+// the image emits, where a direct `->close()` would inline away under /O2.
+// `Time::close` keeps its own BYTE_EXACT COMDAT at 0x00616780 (time.cpp);
+// this only keeps THIS caller from expanding it. __fastcall so the receiver
+// reaches ECX the way the image's __thiscall call site passes it. Static
+// because flatbutton.cpp already defines the external one.
+static void __fastcall time_close_call(Time *timer) {
+    timer->close();
+}
+
 void Console::close() {
     char *self = reinterpret_cast<char *>(this);
     field_23BC8_ = 0xffffffff;
@@ -872,7 +889,7 @@ void Console::close() {
     field_23D8C_ = 0;
     field_23D84_ = 0;
     reinterpret_cast<Buffer *>(self + 0x2247c)->close();
-    reinterpret_cast<Time *>(self + 0x22a04)->close();
+    time_close_call(reinterpret_cast<Time *>(self + 0x22a04));
     reinterpret_cast<GraphicWin *>(self + 0x22a2c)->close();
     clear(0);
 }

@@ -324,10 +324,24 @@ Purpose: Step the receiver back to the subobject ??_GBaseButton@@UAEPAXI@Z
 // ORIGINAL: 0x00607CE0 ??_GBaseButton@@WEEE@AEPAXI@Z 0x00607CE0-0x00607CEB BYTE_EXACT
 // symbol    ??_EBaseButton@@WEEE@AEPAXI@Z
 // CORRECTED from ??3BaseButton@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x00607CC0` into
-//   ??_GBaseButton@@UAEPAXI@Z, which executes `ret 4`; no stack access
-//   and the receiver stays in ECX. `WEEE@` re-demangles to
-//   adjustor{1092} and 1092 == 0x444, the constant subtracted
+// TRIED (2026-09-03, two flag sets): this file emits NO BaseButton symbol at
+//        all, so the comparison has nothing to pull out of flatbutton.obj -
+//        the piece is measured as UNRESOLVED, "the fact is stale", not as a
+//        byte divergence. `strings` on the CMake object still shows the
+//        mangled name, but that is an external REFERENCE; only a .text
+//        definition counts, and `tools/compiler_thunks.py` says so.
+//        The COMDAT lives in basebutton.cpp, which is the translation unit
+//        that defines `~BaseButton()` (basebutton.cpp:246) - VC6 emits a
+//        class's destructor family and its adjustor thunks beside that
+//        definition. Read out of basebutton.obj under /O2 /Gy /GR- /GX it is
+//        11 bytes, `81 e9 44 04 00 00 / e9 <rel32>`, the image's own bytes
+//        with only the jmp displacement discounted as a relocation. So the
+//        body IS reproduced; what is wrong is WHERE THE CLAIM LIVES. The fix
+//        is this marker moved to basebutton.cpp, the unit that constructs
+//        nothing but defines the destructor - basebutton.* was outside this
+//        pass's files, and a second annotation here cannot be made to see
+//        another unit's object. FlatButton's own thunk (0x004070E0, above)
+//        needs no such move because `~FlatButton` is defined in THIS file.
 // size      11 bytes
 // prototype 
 // callers   0   call targets   0
