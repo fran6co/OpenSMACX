@@ -58,6 +58,12 @@ class Strings : public Heap {
   // the implicit call to `~Heap` IS the whole destructor, and the linker
   // folded `~Heap` onto `Heap::shutdown`, which is why the disassembly's
   // target reads as the latter.
+  // MEASURED ~Strings (2026-09-03, the two-flag-set ladder): the five-byte
+  //        `jmp` is a SIZE decision. /O1 emits it, /O2 expands ~Heap into
+  //        nineteen instructions of the destructor's own body - same source,
+  //        and no source spelling can ask a void function to tail-call. The
+  //        out-of-line ~Heap that would make /O2 call rather than expand is
+  //        the same single edit Strings::shutdown needs (see its TRIED note).
   MEASURED ~Strings() { }              // 006169C0
 
   BOOL init(size_t mem_size);

@@ -34,7 +34,10 @@ class Log {
   // to run the destructor if construction throws - the image has none, so
   // the original reached this some other way. An ordinary member function
   // is just a call, and drops the frame entirely. // 00625FC0
-  Log *construct(LPCSTR input) {
+  // MEASURED, and load-bearing: ??__ELogging is this body's only caller and
+  // under /Ob2 it expanded the whole thing, so /Gy dropped the COMDAT and
+  // 0x00625FC0 had nothing to be measured against.
+  MEASURED Log *construct(LPCSTR input) {
       log_file_ = nullptr;
       if (input) {
           void *buf = mem_get(strlen(input) + 1);

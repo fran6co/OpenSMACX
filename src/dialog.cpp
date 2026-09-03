@@ -20,6 +20,12 @@
 #include "dialog.h"
 #include "stringstruct.h"
 
+// The image CALLS the CRT's abs at 0x00644F3A from get_selected_id and
+// pos_to_id, twice each. Left to the optimiser VC6 expands it as the intrinsic
+// bit trick (cdq; xor; sub) instead, which is a different body - this switch
+// is what keeps it a call whatever the expansion flags say.
+#pragma function(abs)
+
 /*
 Purpose: Set the three fonts used by the dialog.
 // ORIGINAL: 0x00609C60 ?set_dialog_font@Dialog@@QAEHPAUFont@@PAUFont@@PAUFont@@@Z 0x00609C60-0x00609C8D BYTE_EXACT
@@ -109,6 +115,12 @@ void Dialog::set_dialog_text_color3(int color1, int color2, int color3, int colo
 /*
 Purpose: Find an item ID's bounded position in the dialog string list.
 // ORIGINAL: 0x00609AF0 ?id_to_pos@Dialog@@QAEHH@Z 0x00609AF0-0x00609B4B BYTE_EXACT
+// MEASURED inline: the body lives at the end of dialog.h. The image keeps
+//        this out-of-line copy at 0x00609AF0 AND inlines the same walk into
+//        set_selected_id (0x006099D0); the `inline` keyword is what makes
+//        that site expand (VC6 will not auto-inline a loop body) and
+//        MEASURED/__declspec(dllexport) is what keeps this COMDAT emitted
+//        for its own claim.
 // size      91 bytes
 // prototype int (__thiscall ?id_to_pos@Dialog@@QAEHH@Z)(Dialog* this, int)
 // callers   1   call targets   0
@@ -119,26 +131,25 @@ Purpose: Find an item ID's bounded position in the dialog string list.
 Return Value: Matching position, or the configured entry count on a miss
 Status: Complete
 */
-int Dialog::id_to_pos(int id) {
-    if (item_list_.head_) {
-        int count = item_list_.entry_count_;
-        item_list_.current_position_ = 0;
-        item_list_.current_ = item_list_.head_;
-        for (int traversed = 0; traversed < count; traversed++) {
-            StringStructEntry *entry = item_list_.current_;
-            if (entry->id == id) {
-                break;
-            }
-            item_list_.current_position_++;
-            item_list_.current_ = entry->next;
-        }
-    }
-    return item_list_.current_position_;
-}
 
 /*
 Purpose: Select a dialog item by its bounded list ID.
 // ORIGINAL: 0x006099D0 ?set_selected_id@Dialog@@QAEXH@Z 0x006099D0-0x00609A43
+// LEVER: the body is the whole id_to_pos walk, INLINED - the image never
+//        calls it here. Declaring id_to_pos `MEASURED` + `inline` (definition
+//        at the end of dialog.h) took this from 0 of 36 to 34 of 36: VC6's
+//        /Ob2 will not auto-expand a function holding a loop, so only the
+//        explicit keyword reaches the inline, and `MEASURED`
+//        (__declspec(dllexport) on the in-class declaration) is what keeps
+//        id_to_pos's own out-of-line COMDAT emitted for its 0x00609AF0 claim.
+// RESIDUAL (34 of 36): the image's two duplicated return blocks are laid out
+//        head-null-then-loop-exit; this build emits them loop-exit-then-head-
+//        null, so only the two jump targets swap (`je`/`jle` point at each
+//        other's block). Both blocks are byte-identical and the same two
+//        exits feed each. Not reachable while id_to_pos keeps the single-
+//        return spelling its own 29/29 out-of-line copy needs - a guard
+//        clause would give the inline two explicit returns and cost the
+//        out-of-line body its single epilogue.
 // size      115 bytes
 // prototype void (__thiscall ?set_selected_id@Dialog@@QAEXH@Z)(Dialog* this, int)
 // callers   1   call targets   0
@@ -155,17 +166,22 @@ void Dialog::set_selected_id(int id) {
 
 /*
 Purpose: Restore the selected list position and return its item ID.
-// ORIGINAL: 0x00609A50 ?get_selected_id@Dialog@@QAEHXZ 0x00609A50-0x00609AE6
-// TRIED: 25/50 plateau (0.8+ similar) - the image caches `this` itself
-//            in a register (`mov esi, ecx` at instruction 1) and reads
-//            `entry_head_` through it early; this body's compiled form
-//            instead caches `entry_head_`/`current_entry_` early and keeps
-//            `this` in `ecx` throughout, register-swapped rather than
-//            structurally different. Tried an explicit `Dialog *const self
-//            = this;` local read through everywhere - scores identically
-//            (25/50). Not a source-form lever found on top of the
-//            extensive prior tuning already in this body (see the
-//            instruction-level comments above).
+// ORIGINAL: 0x00609A50 ?get_selected_id@Dialog@@QAEHXZ 0x00609A50-0x00609AE6 BYTE_EXACT
+// LEVER (2026-09-03, 25/50 -> 50/50): the image MERGES the two
+//        current_position_ stores into one instruction and retargets the abs
+//        guard's failure path PAST it to the shared return epilogue. Two
+//        measured facts make that reachable. (1) The store must be written
+//        ONCE, after the if/else - a store inside each arm keeps two separate
+//        stores and scores 25/50. (2) The abs guard must then be INVERTED to
+//        `if (abs(position) > entry_count_) goto restore_done;` - a store
+//        unconditionally after the arms merges (49/50) but PERFORMS the store
+//        on the failed-bound path, which the image does not, and an early
+//        `return` instead of the goto makes VC6 inline a second copy of the
+//        epilogue (15/50). The label is the image's own shape, not a
+//        transcription shortcut. Flags need /Oi- so abs stays a real call -
+//        and `#pragma function(abs)` at the top of this file now says the
+//        same thing in the source, so the body reproduces under the plain
+//        pair without that axis.
 // size      150 bytes
 // prototype int (__thiscall ?get_selected_id@Dialog@@QAEHXZ)(Dialog* this)
 // callers   15   call targets   1
@@ -196,31 +212,39 @@ int Dialog::get_selected_id() {
             // That is a MIN-style macro over `abs(position)`, not a local -
             // and `abs(INT_MIN)` returning INT_MIN is what the hand-rolled
             // ternary here was standing in for.
-            if (abs(position) <= item_list_.entry_count_) {
-                int distance = abs(position);
-                while (distance > 0) {
-                    item_list_.current_ = item_list_.current_->previous;
-                    distance--;
-                }
-                // The member again, not a local - see the note above the
-                // guard. Plain `int` addition: the image is one `add`, and
-                // the uint32 round trip through memcpy is a bit-cast VC6
-                // will not inline away.
-                position += item_list_.entry_count_;
-                // ONE STORE FOR BOTH ARMS. The image's negative arm ends
-                // `add edi, [esi+0xcc]` and jumps STRAIGHT to the store the
-                // positive arm falls into - `jmp` with no `mov` before it.
-                item_list_.current_position_ = position;
+            // INVERTED, and out of the arm by way of the label: the image's
+            // `jg` jumps STRAIGHT to the shared return epilogue, PAST the
+            // store, so a failed bound leaves current_position_ alone. That
+            // is not expressible as a store inside the arm (VC6 then keeps
+            // two stores) nor as a store unconditionally after the arms
+            // (VC6 then performs it on this path), so the label IS the
+            // shape: it is what the image's own bytes say.
+            if (abs(position) > item_list_.entry_count_) {
+                goto restore_done;
             }
+            int distance = abs(position);
+            while (distance > 0) {
+                item_list_.current_ = item_list_.current_->previous;
+                distance--;
+            }
+            // The member again, not a local - see the note above the
+            // guard. Plain `int` addition: the image is one `add`, and
+            // the uint32 round trip through memcpy is a bit-cast VC6
+            // will not inline away.
+            position += item_list_.entry_count_;
         } else {
             int distance = position;
             while (distance > 0) {
                 item_list_.current_ = item_list_.current_->next;
                 distance--;
             }
-            item_list_.current_position_ = position;
         }
+        // ONE STORE FOR BOTH ARMS. The image's negative arm ends
+        // `add edi, [esi+0xcc]` and jumps STRAIGHT to the store the
+        // positive arm falls into - `jmp` with no `mov` before it.
+        item_list_.current_position_ = position;
     }
+restore_done:
     return item_list_.head_ ? item_list_.current_->id : 0;
 }
 
@@ -241,6 +265,30 @@ Purpose: Restore an explicit list position and return its item ID.
 // TRIED: remaining gap under `/Oi-` is a handful of ecx/edx register
 //            swaps around the `current_entry_`/`entry_head_` reads -
 //            plateaued, matching the sibling `get_selected_id` above.
+// FIXED (2026-09-03) A REAL DEFECT the old notes did not name: the store was
+//            written inside the positive arm only, so a bound that failed the
+//            abs test left current_position_ UNWRITTEN where the image writes
+//            it, and the negative arm's own store was missing entirely. The
+//            body now uses the shape that took get_selected_id (0x00609A50)
+//            to BYTE_EXACT - one store after the if/else, the abs guard
+//            inverted over a `goto restore_done` - and the control flow now
+//            matches the image exactly: both guards' failure paths skip the
+//            store and land on the shared return epilogue.
+// TRIED (2026-09-03) the remaining 4 of 51 / 0.970-similar gap, which is ONE
+//            register decision and its cascade: the image loads entry_count_
+//            into ECX and hoists a position copy into EAX (`mov eax,edi`,
+//            instruction 4) that survives to the merged store; this build
+//            loads the count into EAX and never makes the copy. Measured and
+//            rejected: a `int result = position;` local at the top (VC6
+//            copy-propagates it away); `current_position_ = position +
+//            entry_count_` instead of the in-place `+=`, which is the image's
+//            `mov eax,[esi+0xcc]; add eax,edi` shape written out in source
+//            (VC6 folds it back into `add edi,[esi+0xcc]` because position is
+//            dead after); the /Ob0, /O1 and /G6 flag sets. The image's own
+//            get_selected_id has the same source shape and the allocation
+//            THIS build produces, so the two siblings disagree with each
+//            other in the shipped binary; only one of them can be reached
+//            from a shared spelling, and get_selected_id is the one it is.
 // size      154 bytes
 // prototype int (__thiscall ?pos_to_id@Dialog@@QAEHH@Z)(Dialog* this, int)
 // callers   7   call targets   1
@@ -266,31 +314,35 @@ int Dialog::pos_to_id(int position) {
             // That is a MIN-style macro over `abs(position)`, not a local -
             // and `abs(INT_MIN)` returning INT_MIN is what the hand-rolled
             // ternary here was standing in for.
-            if (abs(position) <= item_list_.entry_count_) {
-                int distance = abs(position);
-                while (distance > 0) {
-                    item_list_.current_ = item_list_.current_->previous;
-                    distance--;
-                }
-                // The member again, not a local - see the note above the
-                // guard. Plain `int` addition: the image is one `add`, and
-                // the uint32 round trip through memcpy is a bit-cast VC6
-                // will not inline away.
-                position += item_list_.entry_count_;
-                // ONE STORE FOR BOTH ARMS. The image's negative arm ends
-                // `add edi, [esi+0xcc]` and jumps STRAIGHT to the store the
-                // positive arm falls into - `jmp` with no `mov` before it.
-                item_list_.current_position_ = position;
+            // INVERTED, and out of the arm by way of the label - see the
+            // note at the store below, and get_selected_id above for the
+            // same shape in the sibling.
+            if (abs(position) > item_list_.entry_count_) {
+                goto restore_done;
             }
+            int distance = abs(position);
+            while (distance > 0) {
+                item_list_.current_ = item_list_.current_->previous;
+                distance--;
+            }
+            // The member again, not a local - see the note above the
+            // guard. Plain `int` addition: the image is one `add`, and
+            // the uint32 round trip through memcpy is a bit-cast VC6
+            // will not inline away.
+            position += item_list_.entry_count_;
         } else {
             int distance = position;
             while (distance > 0) {
                 item_list_.current_ = item_list_.current_->next;
                 distance--;
             }
-            item_list_.current_position_ = position;
         }
+        // ONE STORE FOR BOTH ARMS. The image's negative arm ends
+        // `mov eax,[esi+0xcc]; add eax,edi` and jumps STRAIGHT to the store
+        // the positive arm falls into - `jmp` with no `mov` before it.
+        item_list_.current_position_ = position;
     }
+restore_done:
     return item_list_.head_ ? item_list_.current_->id : 0;
 }
 
@@ -403,7 +455,18 @@ uint32_t DialogFieldB8Default;  // 0x009B8ED8
 /*
 Purpose: Construct a Dialog: construct the embedded Heap and the item list,
          then load every color/font/field default from the process tables.
-// ORIGINAL: 0x00608C10 ??0Dialog@@QAE@XZ 0x00608C10-0x00608E09
+// ORIGINAL: 0x00608C10 ??0Dialog@@QAE@XZ 0x00608C10-0x00608E09 BYTE_EXACT
+// LEVER (2026-09-03, 99 of 103 -> 103 of 103): the last two assignments are
+//        the other way round from the order a reader would expect -
+//        `text_color_3d_ = DialogDefaults[35]` comes BEFORE
+//        `field_1C_ = -1`. That is what puts the image's
+//        `mov edx,[0x6970d8]` (the 3d default load) above the
+//        `mov [esi+0x1c],eax` (the field_1C_ store): VC6 knows the two
+//        distinct member offsets of the same object do not alias, so it is
+//        free to hoist the load into the store's shadow, and the textual
+//        order is what decides whether it does. The old RESIDUAL note's
+//        "named local to pin the load" attempt failed because a local is
+//        copy-propagated away here; the statement ORDER is the lever.
 // size      509 bytes
 // prototype void (__thiscall ??0Dialog@@QAE@XZ)(Dialog* this)
 // callers   0   call targets   2
@@ -457,13 +520,12 @@ Dialog::Dialog() {
     text_color_3a_ = DialogDefaults[26];
     text_color_3b_ = DialogDefaults[29];
     text_color_3c_ = DialogDefaults[32];
-    // RESIDUAL (99 of 103): the image issues text_color_3d_'s default load
-    // (mov edx,[0x6970d8]) BEFORE the field_1C_ store; this spelling stores
-    // field_1C_ first and loads after. A scheduling nit - the stores land in
-    // the same order; TRIED: a named local to pin the load (73/103 - VC6
-    // stole ecx for the -1 and re-scheduled the whole block).
-    field_1C_ = -1;
+    // THIS ORDER, 3d_ BEFORE field_1C_: it is what hoists the image's
+    // `mov edx,[0x6970d8]` above the `mov [esi+0x1c],eax` store. See the
+    // LEVER note on the marker above.
     text_color_3d_ = DialogDefaults[35];
+    field_1C_ = -1;
+    field_1C_ = -1;
 }
 
 // The four list-stage constants (DialogListDerived/VirtualBase and
@@ -486,20 +548,34 @@ Purpose: Destroy a Dialog. Install the Dialog table, run Dialog::close, then
          frame targets __CxxFrameHandler and is omitted as unreachable per
          policy.
 // ORIGINAL: 0x00608E10 ??1Dialog@@QAE@XZ 0x00608E10-0x00608F41;0x00662EC0-0x00662EEE
-// TRIED: 0/94 - two stacked gaps, not chased at this budget. (1) the
-//            image carries a real SEH unwind frame, same symptom as
-//            FlatButton::~FlatButton() (flatbutton.cpp) - but unlike that
-//            case the comment above's "unreachable, omitted per policy"
-//            claim is NOT independently re-verified here (write_l's own
-//            font1_-rebind note, buffer.cpp, turned out wrong on the same
-//            kind of claim elsewhere in this pass, so it is flagged, not
-//            trusted). (2) `StringStruct::close_with_tables` is fully
-//            INLINED into this call site in the image (94 instructions
-//            for what compiles to a real 26-instruction call chain here) -
-//            the documented "MEASURED inline ceiling" shape the brief
-//            says a forwarder does not fix. Both would need real
-//            investigation this pass did not have budget for.
-// symbol    ?destroy@Dialog@@QAEXXZ
+// LEVER (2026-09-03): this address is the DESTRUCTOR, and the subject was
+//        repointed from the destroy() helper to what the compiler actually
+//        emits for `~Dialog` - which now carries the body. Three measured
+//        facts, 0 of 94 (13 compiled) -> 7 of 94 (37 compiled, 0.504
+//        similar) with no other edit:
+//        (1) `~Dialog` was `{ ; }`, so the compiler-generated destructor ran
+//            close() never and the 116 derived destructors that the image
+//            sends here tore their Dialog base down without closing it. It
+//            now reads `close();` and the compiler adds the vptr install,
+//            the SEH unwind frame under /GX, and the item_list_/heap_
+//            teardowns - the image's own three opening blocks, in its order.
+//        (2) The image calls close() DIRECTLY (`call 0x608f50`), so the
+//            body says `close()`, the declared member - not the
+//            DialogOriginalClose pointer seam destroy() still uses, which
+//            compiles `call dword ptr [global]`.
+//        (3) The `symbol` fact is `??1Dialog@@UAE@XZ`, U not the image's Q,
+//            because this tree declares the destructor `virtual` (that
+//            declaration is what earns the vfptr the class needs; see
+//            dialog.h). A U-named destructor is the one ABI consequence.
+// TRIED: the remaining 87 instructions are the gap the old note named, and
+//            it stands: the image INLINES the whole StringStruct teardown
+//            (derived stage, base stage, entry walk, virtual-base publish)
+//            where this tree calls ~StringList, and it has no SEH-frame
+//            equivalent to lose. Inlining ~StringList into this site means
+//            moving its body into stringstruct.h - a file this pass does not
+//            own - and the brief documents that a forwarder does not fix an
+//            inlined-here/called-there split.
+// symbol    ??1Dialog@@UAE@XZ
 // size      351 bytes
 // prototype void (__thiscall ??1Dialog@@QAE@XZ)(Dialog* this)
 // callers   116   call targets   3
@@ -541,11 +617,13 @@ void __fastcall dialog_destructor_redirect(Dialog *self, void *) {
 
 // DECLARATION-ONLY IN THE HEADER (2026-09-02): ??1Dialog is called
 // out-of-line 35 times in the image, so the definition must not be
-// inline-visible in other TUs. The body is trivial - the item_list_ teardown
-// below is the same chain the compiler's own generated destructor runs, so
-// this definition only anchors the symbol the 35 callers need. destroy()
-// stays beside it as the recovered-spelling home of the 0x00608E10 marker.
+// inline-visible in other TUs. It is NOT a trivial body: the image's
+// ??1Dialog (0x00608E10) is THIS destructor, and its own work is the one
+// `close()` call - the vptr install at [this] and the item_list_/heap_
+// teardowns are the compiler's, exactly as they are here. destroy() below
+// stays as the spelling the two runtime redirects reach.
 Dialog::~Dialog() {
+    close();
 }
 
 /*

@@ -268,14 +268,6 @@ void MapWin::clear(int a1) {
     PENDING_BODY(0x00462870, pending)(this, nullptr, a1);
 }
 
-// ??0Dialog@@QAE@XZ at 0x00608C10 - the Dialog subobject constructor that
-// CheckBox, RadioButton, EditGroup and SpriteBox each reach by name from
-// their own hand-composed constructors. See the note in dialog.h.
-void Dialog::construct() {
-    typedef void(__fastcall *pending)(Dialog *, void *);
-    PENDING_BODY(0x00608C10, pending)(this, nullptr);
-}
-
 // ??0EditBox@@QAE@XZ at 0x00614E50 - the EditBox subobject constructor
 // FileWin::FileWin reaches by name. See the note in editbox.h.
 

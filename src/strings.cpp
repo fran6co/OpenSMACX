@@ -75,13 +75,22 @@ Return Value: Always zero (the mangled name decorates an `int` return; the
     image's tail is `xor eax, eax; ret`, not a bare `ret`)
 Status: Complete
 */
+// Non-inline forwarder to heap.h's `MEASURED inline` ~Heap. The image CALLS
+// the out-of-line ??1Heap (0x005D4580) here rather than open-coding it, and
+// plain /O2 expands the destructor into this body - 21 instructions against
+// the image's 7. Same idiom as faction.cpp's ascending_call: the E8 target is
+// a relocation on both sides, so this symbol's own name costs nothing.
+static void __fastcall strings_heap_close(Heap *self) {
+    self->~Heap();
+}
+
 int Strings::shutdown() {
     // WRONG CALLEE fix: the image's one call here targets 0x005D4580,
-    // ~Heap (in-class MEASURED body, heap.h), not Heap::shutdown()
-    // (0x005D45B0) - identical logic, different symbol. Explicit
-    // pseudo-destructor call reaches the same COMDAT as a real call rather
-    // than inlining it here.
-    Heap::~Heap();
+    // ~Heap, not Heap::shutdown() (0x005D45B0) - identical logic, different
+    // symbol. The call goes through the forwarder above because the direct
+    // pseudo-destructor spelling only stays a call while the expansion is
+    // off; see the TRIED note on the marker above.
+    strings_heap_close(this);
     is_populated_ = false;
     return 0;
 }
@@ -89,6 +98,13 @@ int Strings::shutdown() {
 /*
 Purpose: Put the input string into the string table.
 // ORIGINAL: 0x00616970 ?put@Strings@@QAEHPAD@Z 0x00616970-0x0061699D BYTE_EXACT
+// LEVER (2026-09-03): strcpy, not strcpy_s, in the OUT-OF-LINE body too -
+//        same callee the hand-inlined copy inside init() reaches. strcpy_s
+//        is an intrinsic under /Ob2 and expanded inline here, which is why
+//        this body needed the intrinsics-off set; the two-argument strcpy
+//        reproduces under the plain pair and names the image's real callee
+//        (0x00645460) instead of a different function whose call target the
+//        comparison was discounting.
 // symbol    ?put@Strings@@QAEPADPBD@Z
 // size      45 bytes
 // prototype int (__thiscall ?put@Strings@@QAEHPAD@Z)(Strings* this, int8*)
@@ -102,7 +118,11 @@ Status: Complete
 LPSTR Strings::put(LPCSTR input) {
     size_t len = strlen(input) + 1;
     LPSTR table_addr = LPSTR(Heap::get(len));
-    strcpy_s(table_addr, len, input);
+    // strcpy, NOT strcpy_s: the image's callee at 0x00645460 is the two-
+    // argument CRT copy, the same one init()'s hand-inlined put() reaches.
+    // strcpy_s expanded inline under /Ob2, which is why this body only
+    // reproduced under the intrinsics-off flag set.
+    strcpy(table_addr, input);
     return table_addr;
 }
 
@@ -160,6 +180,15 @@ LPSTR Strings::get(int address) {
 
 /*
 // ORIGINAL: 0x006169C0 ??1Strings@@QAE@XZ 0x006169C0-0x006169C5 BYTE_EXACT
+// TRIED (2026-09-03, the two-flag-set ladder): the five-byte `jmp` is a SIZE
+//        decision, and only the /O1 half of the ladder makes it. Under /O2
+//        VC6 expands heap.h's `MEASURED inline ~Heap` into this destructor -
+//        nineteen instructions where the image is one tail jump - and no
+//        source spelling can ask a void function to tail-call. The forwarder
+//        that fixed Strings::shutdown cannot reach it: the ~Heap call here is
+//        the compiler's IMPLICIT member teardown, not a statement. Taking
+//        ~Heap out of heap.h and into heap.cpp is the fix, and heap.h is
+//        outside this pass's files.
 // body      src/strings.h
 // size      5 bytes
 // prototype void (__thiscall ??1Strings@@QAE@XZ)(Strings* this)

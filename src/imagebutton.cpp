@@ -22,6 +22,19 @@
 /*
 Purpose: Construct the button on its BaseButton base and clear its one field.
 // ORIGINAL: 0x006252E0 ??0ImageButton@@QAE@XZ 0x006252E0-0x00625306 BYTE_EXACT
+// TRIED (2026-09-03, the two-flag-set ladder): the /Ob0 dependency has ONE
+//        root cause and it is not in this file - an in-class MEASURED
+//        base/member constructor or destructor in a HEADER gets EXPANDED
+//        into this body by /Ob2, and because the expansion contains a
+//        non-intrinsic call VC6 wraps the whole thing in the SEH unwind
+//        frame the image does not pay. Here it is the implicit BaseButton construction expanding to a 28-instruction frame where the image CALLS 0x00606F30 - 9 instructions, no frame.
+//        The fix is to take the relevant definition out of its header and
+//        into its .cpp, the way heap.h already did for Heap's CONSTRUCTOR
+//        ("OUT OF LINE, and that is what Strings needs"); heap.h,
+//        basebutton.h and the member classes' headers are outside this
+//        pass's files. The forwarder idiom that fixed Strings::shutdown
+//        cannot reach an IMPLICIT base/member construction - there is no
+//        source statement to route through it.
 // LEVER: real-base the class derives from BaseButton now, so `call 0x00606F30` and both vtable stores are the compiler's. The old free-function redirect made all three by hand out of a `void *`.
 // symbol    ??0ImageButton@@QAE@XZ
 // size      38 bytes

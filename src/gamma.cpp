@@ -84,6 +84,19 @@ PushButton *PushButton::destroy() {
 /*
 Purpose: Construct the gamma-correction dialog.
 // ORIGINAL: 0x005C8DA0 ??0Gamma@@QAE@XZ 0x005C8DA0-0x005C8E60;0x00662A70-0x00662AC8 BYTE_EXACT
+// TRIED (2026-09-03, the two-flag-set ladder): the /Ob0 dependency has ONE
+//        root cause and it is not in this file - an in-class MEASURED
+//        base/member constructor or destructor in a HEADER gets EXPANDED
+//        into this body by /Ob2, and because the expansion contains a
+//        non-intrinsic call VC6 wraps the whole thing in the SEH unwind
+//        frame the image does not pay. Here the six member constructors at 0xa68/0xebc/0xef0/0x303c/0x3bb0/0x46b0 expand into 64 instructions where the image calls them - 41, one frame.
+//        The fix is to take the relevant definition out of its header and
+//        into its .cpp, the way heap.h already did for Heap's CONSTRUCTOR
+//        ("OUT OF LINE, and that is what Strings needs"); heap.h,
+//        basebutton.h and the member classes' headers are outside this
+//        pass's files. The forwarder idiom that fixed Strings::shutdown
+//        cannot reach an IMPLICIT base/member construction - there is no
+//        source statement to route through it.
 // LEVER: the two vtable stores must come FIRST, before `gamma_ = 1.0`. Written after it the body is SHAPE_EXACT 39/42; written before it, BYTE_EXACT 42/42. The image interleaves them - `[esi+0xee8] = 0`, both vtables, then `[esi+0xeec] = 0x3ff00000` - which reads like the vtable stores landing in the middle of the double and impossible to write as source. It is the other way round: VC6 hoists the double's ZERO half ahead of whatever precedes it and leaves the 0x3ff00000 half in place, so putting the vtable stores first is what produces the image's own order. (This lesson was already written out in full INSIDE the function body, ten lines below the marker, where `decomp.reader` - which reads only the comment run immediately after the marker - could not see it: `osmx show` listed no LEVER for this address at all.)
 // size      280 bytes
 // prototype void (__thiscall ??0Gamma@@QAE@XZ)(Gamma* this)

@@ -66,7 +66,10 @@ SHAPES = [
     # 10 -> 9 (EditBox ctor): EditBox::construct forwarder retired - the
     # real EditBox() ctor carries the construction the forwarder delegated
     # to the image's 0x00614E50.
-    ("construct", 9,
+    # 9 -> 8 (Dialog ctor): 0x00608C10 is homed and BYTE_EXACT in dialog.cpp,
+    # so the Dialog::construct seam and its pending forwarder are gone - the
+    # real constructor IS the body the seam used to delegate to.
+    ("construct", 8,
      re.compile(r"^\w[\w :*&]*\b\w+::construct\(\)\s*\{", re.M),
      "a `construct()` method standing in for a constructor. Convert it; put "
      "anything the image writes BEFORE the vfptr store in the member-"
@@ -401,7 +404,11 @@ SCAFFOLD_CEILINGS = {
     # 11/135); Net::sub_62f390 and Net::drop_player, the two callees the two
     # bodies needed, took in-file reinterpret_cast forwarders beside their
     # callers instead of PENDING_BODY ones.
-    "PENDING_BODY forwarders": 222,
+    # 222 -> 221 (2026-09-03, the dialog batch): Dialog::construct's
+    # forwarder died with 0x00608C10 homed and BYTE_EXACT in dialog.cpp - it
+    # had no caller left, and a live one would have been a second definition
+    # of the same construction.
+    "PENDING_BODY forwarders": 221,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
