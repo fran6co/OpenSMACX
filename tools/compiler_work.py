@@ -441,7 +441,11 @@ SCAFFOLD_CEILINGS = {
     # BYTE_EXACT), units/005fb930.cpp (Menu::UNK12 BYTE_EXACT) and
     # units/005f8be0.cpp (PullDown::add_separator, homed into pulldown.cpp
     # BYTE_EXACT 52/52) are deleted with the bodies they drafted.
-    "artifact files (recovered/)": 1279,
+    # 1279 -> 1278 (2026-09-03, wave batch): units/00445bb0.cpp deleted with
+    # the body it drafted - Effect::init homed into src/wave.cpp
+    # (MISMATCH 42/49; the residual is the register-swap plateau the marker
+    # records).
+    "artifact files (recovered/)": 1278,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).

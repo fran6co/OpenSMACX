@@ -1047,13 +1047,13 @@ struct CWorldbuilder {
 // which the array thunks confirm: `VectorCtorIterator(g_CPU_WAVES, 0x6C, 45,
 // ...)`. So this is layout-neutral and says what the bytes say.
 //
-// NOTE the contrast with `wave.h`, which deliberately keeps Wave FLAT rather
-// than deriving from Sound: there, a real base would make `~Wave` emit a call
-// the image does not have. Here a real base is what PRODUCES the image's jump.
-// The rule is not "prefer flat", it is "match the destructor the image emits".
+// NOTE `wave.h` now spells Wave as a real `: Sound` base too - the flat note
+// this used to contrast with was withdrawn. The rule stands either way.
 class Effect : public Wave {
  public:
   ~Effect();
+  // 0x00445BB0 ?init@Effect@@QAEXPADJ@Z - homed to src/wave.cpp.
+  void init(char *fname, long flags);  // `long` per the J in the mangled name
 };
 
 /* 0x4 bytes, 1 member(s), 0 named. From its own code, which reaches that far. 1 function(s) in the image. */
