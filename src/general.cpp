@@ -161,6 +161,22 @@ void __cdecl kill_nl(LPSTR str) {
 Purpose: Add a line feed (LF) to the end of a string. This assumes the buffer has an extra byte and 
          doesn't take into account a carriage return (CR).
 // ORIGINAL: 0x00600840 ?add_lf@@YAXPAD@Z 0x00600840-0x00600859
+// LEVER (2026-09-03, measured BYTE_EXACT 10/10): the image's order IS
+//   reachable - it is the /G6 (Pentium Pro) instruction SCHEDULING, not a
+//   source shape. `uv run tools/osmx.py measure 0x00600840 --flags "/c /O2
+//   /G6 /Gy /GR- /GX"` on this exact body gives 10 of 10 instructions, 21
+//   bytes, zero divergences: /G6 hoists the independent `add eax, esi` above
+//   the `add esp, 4` cleanup, /G5 (the compiler default, which is what every
+//   set in FLAG_SETS implies) does not. Probed in isolation first: the same
+//   source under /O2 /G5 vs /O2 /G6 differs only in that swap, and
+//   `purge_spaces` in the same probe changes under /G6 while this one does
+//   not, so the axis is per-body rather than per-TU. NOT BANKED because
+//   `osmx record` measures only FLAG_SETS (tools/osmx.py, which I do not
+//   own) and there is no /G axis in it - adding `/c /O2 /G6 /Gy /GR- /GX`
+//   to that tuple makes this a one-measurement claim. Every other body in
+//   this file got WORSE under /G6 (parse_string 7/490, memrchr 1/27,
+//   checksum 0/19, sort 3/47), so the axis belongs as an extra set, not a
+//   replacement.
 // TRIED 2026-09-03: `osmx semantic` REFUSED this body - "instruction 4: add
 // operand is a different KIND". The two instructions that swap are `add
 // eax, esi` (register operand) and `add esp, 4` (immediate), so the swap
@@ -324,7 +340,7 @@ int __cdecl parse_num(int id, int value) {
 
 /*
 Purpose: Use the string table input reference to copy a string into the global message buffer.
-// ORIGINAL: 0x00625E50 ?parse_say@@YAHHHHH@Z 0x00625E50-0x00625EB3
+// ORIGINAL: 0x00625E50 ?parse_say@@YAHHHHH@Z 0x00625E50-0x00625EB3 BYTE_EXACT
 // LEVER: hoisting `StringTable.get(input)` into its own local BEFORE
 // the truncating store moved 17/30 to 20/30 - the image loads the
 // `StringTable` this-pointer (`mov ecx, 0x9b90d8`) right next to the
@@ -363,22 +379,22 @@ int __cdecl parse_say(int id, int input, int gender, int pluralality) {
         pluralality = PluralityDefault;
     }
     ParseStrPlurality[id] = pluralality;
-    char *const dest = ParseStrBuffer[id].str;
-    LPSTR text = StringTable.get(input);
-    dest[0] = 0;
-    strcat(dest, text);
+    // LEVER: NO `dest` LOCAL. Naming one costs the image's `lea` - a pointer
+    // value assigned to a local is computed with `add eax, imm32` and then
+    // copied into its home register, where the same address written out at
+    // BOTH of its uses is one common subexpression off the array and the base
+    // folds into the displacement (`lea esi, [eax + 0x9bb5e8]`). Same lever as
+    // technology.cpp's SUBSCRIPTS note, and it also puts the `mov ecx,
+    // 0x9b90d8` StringTable load back before the `lea`, where the local pushed
+    // it after. 20/30 -> BYTE_EXACT.
+    ParseStrBuffer[id].str[0] = 0;
+    strcat(ParseStrBuffer[id].str, StringTable.get(input));
     return 0;
 }
 
 /*
 Purpose: Copies the input string into the global message buffer.
-// ORIGINAL: 0x00625EC0 ?parse_says@@YAHHPADHH@Z 0x00625EC0-0x00625F1A
-// TRIED: plateaued at 24/27 (0.963 similar) on a single instruction-
-//   selection difference - see the TRIED note at the `dest`/`lea`
-//   pointer add below, inside the body, which lists the five spellings
-//   already tried. Recorded here too (this line only, not moving the body
-//   note) so a marker-position scan finds it - a prior pass left it there,
-//   which is why this address kept showing as untouched.
+// ORIGINAL: 0x00625EC0 ?parse_says@@YAHHPADHH@Z 0x00625EC0-0x00625F1A BYTE_EXACT
 // symbol    ?parse_says@@YAHHPBDHH@Z
 // size      90 bytes
 // prototype int (__cdecl ?parse_says@@YAHHPADHH@Z)(int nID, int8* input, int gender, int pluralality)
@@ -424,9 +440,16 @@ int __cdecl parse_says(int id, LPCSTR input, int gender, int pluralality) {
     // access as `shl edi, 8; add edi, 0x9bb5e8` in parse_string
     // (0x00625BD8), so the lea at 0x00625EFF is VC6 scheduling context,
     // not reachable by the declaration or by any dest spelling measured.
-    char *const dest = ParseStrBuffer[id].str;
-    dest[0] = 0;
-    strcat(dest, input);
+    // LEVER (2026-09-03, 24/27 -> BYTE_EXACT): the "folding the dest local
+    // away" attempt above must have kept a spelling that still named the
+    // member through something other than a subscript. `dest[0] = 0` plus
+    // `strcat(dest, input)` over a `char *const dest` local lowers the address
+    // as `add eax, imm32` + a copy; writing BOTH uses as the array subscript
+    // `ParseStrBuffer[id].str[...]` makes the address one common subexpression
+    // and VC6 folds the base into the displacement:
+    // `lea eax, [eax + 0x9bb5e8]`. Same lever as technology.cpp's SUBSCRIPTS.
+    ParseStrBuffer[id].str[0] = 0;
+    strcat(ParseStrBuffer[id].str, input);
     return 0;
 }
 
@@ -956,6 +979,13 @@ Purpose: Initialize the Filefind global along with a CD check if there isn't a c
 //        (loop back to rescan, `jmp` target is BEFORE the `root_path` reset,
 //        which an outer `for(;;)` with `continue` reproduces), anything else
 //        falls out of the loop.
+// TRIED (2026-09-03): `char root_path[8]` instead of `[5]` - the image's
+//        frame is 0x24c against this tree's 0x248, four bytes, and a
+//        char-array size was the cheapest candidate. The compiled frame does
+//        not move (VC6 was already rounding the 5-byte array up), so the
+//        missing four bytes are a separate 4-byte local the image declares
+//        and this body does not; reverted to [5]. Frame measured after the
+//        edit, 84/154 unchanged.
 // TRIED: not yet byte-exact - the corrected control flow compiles and
 //        reproduces the image's calls in the image's order, but the exact
 //        local-buffer layout (there are at least three untyped stack
@@ -1133,6 +1163,24 @@ LPSTR __cdecl filefind_get(LPCSTR file_name) {
 /*
 Purpose: Count the number of unsigned bits set. Replaced the original code with Brian Kernighan's 
 // ORIGINAL: 0x0050BA30 ?bit_count@@YAHH@Z 0x0050BA30-0x0050BA4E
+// TRIED (2026-09-03, probed against cl 12.00.8168 directly): the image's
+//   `shr ebx, 1 / adc eax, 0` carry-chain fusion is NOT producible from VC6
+//   C++, so this is a second case of hand-written assembly that
+//   `tools/handwritten_asm.py` does not catch - it scans for `loop`, bare
+//   `lodsb`, `xlatb`, `pushf/popf` and has no fingerprint for a shift-carry
+//   accumulator. Twelve spellings compiled to assembly in isolation and
+//   every one emitted `mov edx, ecx; and edx, 1; add eax, edx; shr ecx, 1;
+//   jne`: do-while/while/for, accumulate-before-shift and after, `unsigned`
+//   vs `int` counter, `if (bits & 1) count++`, the shift moved into the loop
+//   CONDITION (`while (bits >>= 1)`), a 64-bit `unsigned __int64` accumulator
+//   (that one does emit `adc`, but only as the HIGH half alongside the
+//   `add eax, esi`, so the shape cannot converge), assignment to the
+//   parameter before `return` to reach the image's
+//   `mov [ebp+8],eax; mov eax,[ebp+8]` tail - which is reachable and is the
+//   one half of the shape worth keeping. The image's loop is also rotated
+//   with a duplicated trailing `adc` that no source form produced. Ceiling is
+//   semantic equivalence, as for `checksum`/`checksum_password` above; 3/15
+//   stands. Worth adding the fingerprint to handwritten_asm.py.
 // size      30 bytes
 // prototype
 // callers   34   call targets   0
@@ -1308,6 +1356,27 @@ Purpose: Reverse string search for the last occurrence of the specified characte
 // the compare to peel the first iteration) and spills `count` back through
 // the `start` parameter's own stack slot instead of a register - the same
 // unreproduced "push ecx" frame-slot pattern as `findnum` just above it.
+// TRIED (2026-09-03, probed against cl 12.00.8168 in isolation): six single-
+// exit shapes meant to reach the image's shared epilogue and its
+// `mov [ebp-4],eax; mov eax,[ebp-4]` store-reload of the return value -
+// a `result` local assigned on every path then returned once, an
+// initialised `result = 0` with `break` out of the loop, a `goto done`
+// past the assignment, a `while (count-- > 0)` form, a ternary for the
+// not-found value, and a `p` local returned from the outer scope - none
+// produced a memory-homed return value; VC6 kept every one in esi/eax and
+// emitted a separate early-return epilogue instead of a shared one. The
+// image also loads BOTH parameters into registers before testing
+// (`mov ebx,[ebp+8]; and ebx,ebx` / `mov ecx,[ebp+0xc]; and ecx,ecx`),
+// packs `value` into `bl` over the dead `start`, and scans with
+// `dec eax; dec ecx; jne` and no peeled compare - none of which any flag
+// set or spelling here reaches. CONTEXT WORTH WEIGHING BEFORE GRINDING:
+// this address sits between `fixed_div` (0x00628AD0, `idiv` on a
+// hand-built edx:eax dividend) and `findnum` (0x00628B30), with
+// `checksum`/`checksum_file`/`checksum_password` (0x00538FE0-0x005390C0,
+// confirmed hand-written by handwritten_asm.py) a screen away - five small
+// utilities whose shipped bytes are all compiler-unreachable idioms. Treat
+// the ceiling here as semantic equivalence and say so, rather than
+// continuing to search source shapes.
 // symbol    ?memrchr@@YAPBDPBD0D@Z
 // size      51 bytes
 // prototype
@@ -1535,6 +1604,25 @@ void __cdecl kill_auto_save() {
 /*
 Purpose: Handle the creation and management of the auto-save game files.
 // ORIGINAL: 0x005ABD20 ?auto_save@@YAXXZ 0x005ABD20-0x005ABE39
+// TRIED (2026-09-03, probed against cl 12.00.8168 in isolation): the
+//   image's split cleanup - a batched `add esp, 0x1c` covering the seven
+//   `remove` calls and then `pop ecx` for the trailing `save_daemon`, so 0x1c
+//   + 4 rather than this tree's single `add esp, 0x20` - is the per-call
+//   cleanup merged by peephole with a size-shaped `pop ecx` on the last one.
+//   Probed with a two-branch function shaped like this one (7 same-callee
+//   calls then a different one-arg callee, then a mixed run): /O2 defers all
+//   eight into one `add esp, 0x20` and elides nothing else; /O1, /O2 /Os and
+//   /O1 /Oy keep the `pop ecx` but replace the pushes with
+//   `mov dword ptr [esp], imm32` argument-slot reuse, which the image does
+//   NOT have (it pushes every argument); /O2 /Os and /O2 /G6 likewise. No
+//   combination of /O1//O2 /Os//Ot /Ob0 /Oi- /Oy- /G5//G6 in FLAG_SETS or
+//   outside them produces fresh pushes, a partial batched `add esp`, AND a
+//   trailing `pop ecx` - which reads as this translation unit having been
+//   compiled with the stack-pop deferral off, a setting the flag space here
+//   does not model. listing_diff agrees the ONLY two differences in the body
+//   are those cleanups (image 66 instructions, this tree 64); 28/66 is the
+//   byte-shift cost of the two bytes they add, not four divergent
+//   instructions.
 // TRIED: 28/66, 0.954 similar - as close as this gets. Both branches'
 //            call sequences end with the image cleaning the LAST call's
 //            single pushed argument via `pop ecx` (1 byte) rather than
@@ -1802,6 +1890,17 @@ void __cdecl header_write(LPCSTR header, FILE *file) {
 /*
 Purpose: For the count, sort both id and value arrays by the least to greatest value (ascending).
 // ORIGINAL: 0x005B5690 ?sort@@YAXHPAHPAH@Z 0x005B5690-0x005B56F5
+// TRIED (2026-09-03): dropping this body's `int bounds = count - 1` local
+//   and writing `i < count - 1` inline, because the image reloads `count`
+//   from its argument slot at the top of every pass iteration
+//   (`mov ecx, [ebp+8]` at 0x005B56A9, then `dec ecx`) and so cannot have a
+//   `bounds` variable. Measured 5/47 before and after - the compiler keeps
+//   `count - 1` in a register either way - so the inline spelling is kept
+//   only because it stops declaring a local the image has not got; the
+//   unreproduced shape is the memory-homed `i` (`push ecx` slot at [ebp-4],
+//   written and re-read around the swap) plus the running pointers
+//   `esi`/`edi`/`ebx`, which is a strength-reduction choice, not a source
+//   one. Left at the plateau.
 // TRIED: byte-match plateau at 5/47 across every flag set tried,
 //            before and after the `goto`/bug fix below - the image
 //            interleaves a SEARCH for the first out-of-order pair with the
@@ -1824,7 +1923,6 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl sort(int count, int *id, int *value) {
-    int bounds = count - 1;
     // BUG IN THE ORIGINAL (reproduced): `test eax,eax` right after every
     // swap jumps straight back to the function's own top (0x5b5697) the
     // moment a swap happens, abandoning the rest of this pass instead of
@@ -1833,7 +1931,7 @@ void __cdecl sort(int count, int *id, int *value) {
     // which is why there is no `has_swapped` flag left to track here - the
     // loop completing on its own IS the "nothing left to swap" signal.
 restart:
-    for (int i = 0; i < bounds; i++) {
+    for (int i = 0; i < count - 1; i++) {
         if (value[i] > value[i + 1]) {
             swap(&value[i], &value[i + 1]);
             swap(&id[i], &id[i + 1]);
