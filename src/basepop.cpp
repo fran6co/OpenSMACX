@@ -846,7 +846,7 @@ THE COPY IS `dst[0] = 0` FOLLOWED BY A STRCAT, which is what the image does
 everywhere it copies a string - two arguments and `add esp, 8`, not the
 bounded three.
 */
-__forceinline int __cdecl BasePop::set_def_ok_text(LPSTR text) {
+int __cdecl BasePop::set_def_ok_text(LPSTR text) {
     if (text == nullptr) {
         return 3;
     }
@@ -879,7 +879,7 @@ PROMOTED FROM src/unrecovered/00601910.cpp. NOTE THE RETURN CODE: this one
 answers 4 where its twin above answers 5 for the same failure. Both are in
 the shipped bytes.
 */
-__forceinline int __cdecl BasePop::set_def_cancel_text(LPSTR text) {
+int __cdecl BasePop::set_def_cancel_text(LPSTR text) {
     if (text == nullptr) {
         return 3;
     }

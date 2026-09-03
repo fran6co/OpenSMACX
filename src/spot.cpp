@@ -138,7 +138,7 @@ Purpose: Remove all spots at a specific position.
 Return Value: n/a
 Status: Complete
 */
-__forceinline void Spot::kill_pos(int position) {
+void Spot::kill_pos(int position) {
     if (position < 0 || position >= static_cast<int>(add_count_)) {
         return;
     }

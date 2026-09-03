@@ -2951,7 +2951,7 @@ which between them mean it is the interactive map's repaint hint rather than
 game state. `bit2 |= 0x400000` and `UnkBitfield1 |= 1` are the same pair
 climate_set() sets at 00591A80 and carry the same unidentified meaning.
 */
-inline void __cdecl spot_tile(int x, int y, int faction_id) {
+void __cdecl spot_tile(int x, int y, int faction_id) {
     // on_map() and map_loc() are written out here rather than called: the
     // real standalone body at 0x005B5700 needs both of them folded in while
     // synch_bit() stays a genuine call, and a function CALL to an inline

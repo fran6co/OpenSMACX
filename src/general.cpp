@@ -87,7 +87,7 @@ Purpose: Trim the leading spaces in-line from the start of the string.
 Return Value: n/a
 Status: Complete
 */
-__forceinline LPSTR __cdecl purge_leading(LPSTR input) {
+LPSTR __cdecl purge_leading(LPSTR input) {
     // IT DOES NOT COPY. The shipped body is eight instructions - advance past
     // the leading spaces and `ret` - with no `strcpy` and nothing written
     // back, so the skipped prefix survives in the caller's buffer and the
