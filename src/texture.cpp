@@ -130,8 +130,15 @@ Purpose: Set the store's two fields to 3 and 0.
          redirect. The 3 is a constant the original writes and is reproduced as
          one; nothing here says what it means.
 // ORIGINAL: 0x006252A0 ??0TextureStore@@QAE@XZ 0x006252A0-0x006252B0 BYTE_EXACT
-// LEVER: a `construct` METHOD returning `TextureStore *`, not a real constructor and not `void`. The image opens `mov eax, ecx` and stores through eax - that is the return of `this`, and a `void construct()` emits the two stores through ecx and never writes eax.
-// symbol    ?construct@TextureStore@@QAEPAV1@XZ
+// LEVER: a real constructor, OUT OF LINE, is what spells `mov eax, ecx` - the
+//            image's opening is VC6's own "return this", which every real
+//            constructor carries and no method needs to fake. It must also be
+//            out of line: the inline `{ ; }` this spot once carried was
+//            trivial to VC6, so MapWin's constructor emitted no call at all
+//            for the lone TextureStore at front+0x1DB0C. The previous
+//            spelling was a `construct` method returning `TextureStore *`,
+//            byte-identical here but invisible to the compiler's member
+//            construction.
 // size      16 bytes
 // prototype void (__thiscall ??0TextureStore@@QAE@XZ)(TextureStore* this)
 // callers   1   call targets   0
@@ -141,10 +148,9 @@ Purpose: Set the store's two fields to 3 and 0.
 Return Value: this
 Status: Complete
 */
-TextureStore *TextureStore::construct() {
+TextureStore::TextureStore() {
     field_0_ = 3;
     iWidth_ = 0;
-    return this;
 }
 
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====

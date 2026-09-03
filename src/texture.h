@@ -54,11 +54,13 @@ static_assert(sizeof(Texture) == 0x70,
   */
 class TextureStore {
  public:
-  TextureStore() { ; }
-  // A method rather than a real constructor, as Cursor::construct is: the
-  // inline TextureStore() above is relied on elsewhere. It answers `this`
-  // because the original's closing value in eax is the object.
-  TextureStore *construct();
+  // REAL AND OUT OF LINE. A body spelled `{ ; }` inline is trivial to VC6 and
+  // MapWin's constructor then emits no call at all for the lone TextureStore
+  // at front+0x1DB0C, which the image does emit (`call ??0TextureStore` there,
+  // its only caller). Out of line, VC6's own constructor - which returns the
+  // object in eax exactly as the image does - is called both there and for
+  // the two arrays through the vector-construction helper.
+  TextureStore();
   ~TextureStore();
 
  private:

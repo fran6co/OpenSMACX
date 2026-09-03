@@ -66,7 +66,7 @@ SHAPES = [
     # 10 -> 9 (EditBox ctor): EditBox::construct forwarder retired - the
     # real EditBox() ctor carries the construction the forwarder delegated
     # to the image's 0x00614E50.
-    ("construct", 9,
+    ("construct", 8,
      re.compile(r"^\w[\w :*&]*\b\w+::construct\(\)\s*\{", re.M),
      "a `construct()` method standing in for a constructor. Convert it; put "
      "anything the image writes BEFORE the vfptr store in the member-"

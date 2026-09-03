@@ -65,6 +65,19 @@ MapWin::MapWin() {
 Purpose: Tear down a map window's own members. Nothing here calls
          MapWin::clear as MapWin - it is reached by name.
 // ORIGINAL: 0x00420F90 ??1MapWin@@QAE@XZ 0x00420F90-0x004210CB;0x00651190-0x00651250 BYTE_EXACT
+// TRIED: the three Buffer teardowns are the only divergence - the image makes
+//            three `call ??1Buffer` (0x005D7410) where the in-class
+//            `MEASURED virtual ~Buffer() { close(); }` in buffer.h expands
+//            into each of them, and the expansion is what carries this body's
+//            `sub esp, 8` for the spare slot, the `mov dword ptr [edi], 0`
+//            vtable-null store and the `call 0x421088` unwind funclet - 93
+//            instructions against the image's 73. Defining ~Buffer out of
+//            line in buffer.cpp made THIS body byte-exact, 73 of 73, and
+//            silenced the compiler's own deleting-destructor trio in every
+//            other TU: deleting_thunks.cpp's ??_GBuffer claim at 0x005E3610
+//            went UNRESOLVED, and that trade is not this file's to make.
+//            Reverted; recorded here because the fix is one move away and
+//            belongs to whoever owns both buffer.h and deleting_thunks.cpp.
 // symbol    ??1MapWin@@UAE@XZ
 // body      src/mapwin.h
 // size      315 bytes

@@ -174,6 +174,14 @@ class Buffer {
   // exists when the destructor is virtual. A 2026-08-30 experiment spelled
   // it non-virtual while chasing ??1Console's member-teardown shape; that
   // changed nothing there and would have emptied this slot.
+  // IN-CLASS, and also not negotiable, measured 2026-09-03 chasing MapWin's
+  // destructor (0x00420F90, which calls ??1Buffer three times where the
+  // in-class spelling expands it): moving the definition to buffer.cpp fixed
+  // that body byte-exactly and silenced the compiler's own deleting
+  // destructor in every OTHER translation unit - deleting_thunks.cpp's
+  // ??_GBuffer claim (0x005E3610) went UNRESOLVED, because VC6 emits the
+  // trio only where the inline definition is used. One claim for another;
+  // the trade belongs to whoever owns both files.
   MEASURED virtual ~Buffer() { close(); }
   // `int`, and returning 0, because that is what the three bytes are:
   // `xor eax, eax; ret`. Declared `void` it compiles to `ret` alone and
