@@ -846,7 +846,7 @@ THE COPY IS `dst[0] = 0` FOLLOWED BY A STRCAT, which is what the image does
 everywhere it copies a string - two arguments and `add esp, 8`, not the
 bounded three.
 */
-int __cdecl BasePop::set_def_ok_text(LPSTR text) {
+inline int __cdecl BasePop::set_def_ok_text(LPSTR text) {
     if (text == nullptr) {
         return 3;
     }
@@ -879,7 +879,7 @@ PROMOTED FROM src/unrecovered/00601910.cpp. NOTE THE RETURN CODE: this one
 answers 4 where its twin above answers 5 for the same failure. Both are in
 the shipped bytes.
 */
-int __cdecl BasePop::set_def_cancel_text(LPSTR text) {
+inline int __cdecl BasePop::set_def_cancel_text(LPSTR text) {
     if (text == nullptr) {
         return 3;
     }
@@ -900,6 +900,16 @@ int __cdecl BasePop::set_def_cancel_text(LPSTR text) {
 // ORIGINAL: 0x00604590 ?init_class@BasePop@@QAAHXZ 0x00604590-0x0060467A BYTE_EXACT
 // LEVER: inline-the-two-setters the body is `set_def_cancel_text("Cancel");` then `set_def_ok_text("OK");` INLINED, not open-coded. Each inlined copy keeps its own `if (text == nullptr) return 3;` and `return 5`/`return 4` failure exits, which is why the image has `mov eax, <caption>; test eax, eax; je` before each block and why both failure paths jump to the START OF THE NEXT BLOCK (0x006045F8, 0x00604650) rather than to a return. The two setters are `__forceinline` here and MUST be defined ABOVE this body: VC6 is single-pass and will not inline a definition it has not seen. Both keep their own out-of-line BYTE_EXACT bodies, which /Gy still emits.
 // LEVER: string-literal-not-address the captions are the LITERALS "Cancel" (0x00697008) and "OK" (0x00697010), read out of the image. Spelled as `(LPSTR)0x00697008` VC6 folds `text == nullptr` to false at compile time and the whole `mov/test/je` triple disappears; a literal's address is a RELOCATION, which VC6 cannot fold and the comparison masks away.
+// LEVER (2026-09-03, pair normalisation): `inline`, not `__forceinline` - the
+//   bare out-of-line definitions the setter-side fixes left here made /Ob1
+//   emit two real `call`s where the image expands both, 21 compiled
+//   instructions against the image's 66. Plain `inline` on the two definitions
+//   above restores the expansion AND still reaches both setters' own
+//   BYTE_EXACT claims, but only once basepop.h declares them MEASURED: with
+//   every use in THIS unit folded, VC6 drops the two COMDATs from basepop.obj
+//   entirely ("the fact is stale"), and the dllexport is what forces them
+//   back. game.cpp's four callers never see the definition, so they keep the
+//   image's real `call`s.
 // LEVER: no-hook-local `(*reinterpret_cast<FnPtr *>(g_00696ecc))()` written out at BOTH call sites. Binding it to a local `FnPtr *const` costs a callee-saved esi, a push/pop pair, and `call dword ptr [esi]` where the image has `call dword ptr [0x696ECC]`.
 // LEVER: shared-load `const Font *base = FontDefault;` for both stores - the image loads 0x009BB484 ONCE (0x00604590) and stores eax twice. Written as two assignments straight from the global, VC6 must re-read it because the first store may alias.
 // LEVER: guard-clause-tail `if (!r1) { return 4; }` then the second hook call. The image falls through to `mov eax, 4; ret` and jumps FORWARD to the second call, which is a guard clause and not an `if (r1) {...} return 4;`. The final `return r2 ? 0 : 4;` is VC6's `neg/sbb/and al,0xFC/add` select; spelling it as arithmetic on `(r2 != 0)` emits setne instead.

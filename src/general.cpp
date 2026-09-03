@@ -87,7 +87,15 @@ Purpose: Trim the leading spaces in-line from the start of the string.
 Return Value: n/a
 Status: Complete
 */
-LPSTR __cdecl purge_leading(LPSTR input) {
+// `MEASURED inline`, not a bare definition: the image expands this body in
+// place at its same-TU caller (purge_spaces 0x006007B0 folds the leading scan
+// straight into its own frame, 19 of 39 agreeing with the `call` spelling),
+// so the /Ob1 auto-inliner has to see the keyword - AND it still keeps the
+// standalone copy at 0x00600760, which the bare `inline` dropped entirely once
+// both of this unit's callers folded it and left the COMDAT unreferenced.
+// dllexport forces the emission; nothing about the body changes. Declared
+// MEASURED inline in general.h to match, which VC6 requires (C2375 otherwise).
+MEASURED inline LPSTR __cdecl purge_leading(LPSTR input) {
     // IT DOES NOT COPY. The shipped body is eight instructions - advance past
     // the leading spaces and `ret` - with no `strcpy` and nothing written
     // back, so the skipped prefix survives in the caller's buffer and the
@@ -177,6 +185,11 @@ Purpose: Add a line feed (LF) to the end of a string. This assumes the buffer ha
 //   this file got WORSE under /G6 (parse_string 7/490, memrchr 1/27,
 //   checksum 0/19, sort 3/47), so the axis belongs as an extra set, not a
 //   replacement.
+// TRIED 2026-09-03 under the pair as it now stands (/O2 and /O2 /Oy- only):
+//   re-measured 8 of 10 MNEMONIC_ONLY, unchanged by the purge_leading
+//   `inline` move above, which touches this file's other claims. Nothing new
+//   tried - the four spellings below plus the /G6 probe stand as the evidence,
+//   and the /G axis is the user's decision, not this pass's.
 // TRIED 2026-09-03: `osmx semantic` REFUSED this body - "instruction 4: add
 // operand is a different KIND". The two instructions that swap are `add
 // eax, esi` (register operand) and `add esp, 4` (immediate), so the swap
@@ -937,10 +950,16 @@ Status: Complete
 void __cdecl filefind_set_alternative(LPCSTR path) {
     FilefindPath.alt_path[0] = 0;
     if (path) {
+        // Plain `strcat`, not `strcat_s`: the image calls 0x645470 at both
+        // sites, and the `_s` spelling reaches `strcat` through the inline in
+        // vc6_compat.h, which the optimiser then folds in WITH strcat's own
+        // `repne scasb` + `rep movsd` block expansion. Naming `strcat`
+        // directly keeps it a real call - the same idiom as the sibling
+        // `filefind_init` and `Font::init`.
         if (!strchr(path, ':') && path[0] != '\\') {
-            strcat_s(FilefindPath.alt_path, 256, FilefindPath.exe_dir);
+            strcat(FilefindPath.alt_path, FilefindPath.exe_dir);
         }
-        strcat_s(FilefindPath.alt_path, 256, path);
+        strcat(FilefindPath.alt_path, path);
     }
 }
 
@@ -2355,6 +2374,21 @@ Purpose: Fill SinTable, the 256-entry fixed-point sine table the game's own
          and 0xe02d82d7 with scale 100; the first result is overwritten by
          the second, which stays in eax as this function's return.
 // ORIGINAL: 0x0063B940 ?trig_init@@YAHXZ 0x0063B940-0x0063B9AE FILE BYTE_EXACT
+// TRIED 2026-09-03 (pair /O2 and /O2 /Oy- only; STOPPED, evidence recorded):
+//   the body is RIGHT and the gap is the /Oi intrinsic axis, which no source
+//   spelling reaches. The image CALLS the CRT `sin` (0x006463E4); both allowed
+//   sets imply /Oi, and /Oi turns `sin(double)` into the x87 `fsin` - which
+//   also deletes the image's `and esp, 0xfffffff8`, because that alignment
+//   exists only to receive the stack-passed double the CRT call needs. 3 of 33
+//   agreeing, compiled 29 against the image's 33. Measured directly that
+//   `/c /O2 /Oi- /Gy /GR- /GX` on this exact body gives the image's
+//   instruction sequence back byte for byte, `and esp` and the separate
+//   `call _sin` / `call __ftol` included, so it is the intrinsic axis and
+//   nothing else. `#pragma function(sin)` beside the `strcat`/`strcpy`/
+//   `strlen`/`strcmp` list in stdafx.h is the source-side fix, and
+//   src/recovered/00634f20.cpp and 00627440.cpp both show per-file
+//   `#pragma function` is an established device in this tree - but it is
+//   either a shared-file edit or a pragma, and this pass is barred from both.
 // LEVER: index the table (`SinTable[sample]`) and test the int counter signed;
 // a separate `int *entry` cursor makes VC6 compare the pointer unsigned
 // (`jb` where the image has `jl`) and hold the counter in ecx instead of edx.

@@ -478,6 +478,8 @@ Status: Complete
 /*
 Purpose: Craft game year string. Assume buffer of at least 80. Revisit and convert to std::string.
 // ORIGINAL: 0x005C89B0 ?say_year@@YAXPAD@Z 0x005C89B0-0x005C89E4 BYTE_EXACT
+// LEVER (2026-09-03, pair normalisation): plain `strcat`, not `strcat_s` - see
+//   the note on the body. 5 of 20 -> 20 of 20 on that one word.
 // size      52 bytes
 // prototype 
 // callers   19   call targets   2
@@ -490,7 +492,13 @@ Status: Complete
 void __cdecl say_year(LPSTR output) {
     char year[80];
     _itoa_s(game_year(TurnCurrentNum), year, 80, 10);
-    strcat_s(output, 80, year);
+    // Plain `strcat`, not `strcat_s`: the image calls 0x645470 here, and the
+    // `_s` spelling reaches `strcat` through the inline in vc6_compat.h, which
+    // the optimiser then folds in WITH strcat's own `repne scasb` +
+    // `rep movsd` block expansion - 37 instructions against the image's 20.
+    // Naming `strcat` directly is what keeps it a real call; see the same
+    // finding on Font::init.
+    strcat(output, year);
 }
 
 // Out-of-line forwarders for repair_phase's three helpers that the image
@@ -1195,6 +1203,22 @@ void __cdecl close_opening() {
     }
 }
 
+// Out-of-line forwarders for game_close and game_reload: the image CALLS
+// stop_timers (0x0050F440) and labels_shutdown (0x006169D0) at both sites, and
+// both helpers are `MEASURED inline` in time.h and alpha.h, so at /O2 the
+// optimiser folds them - and the Time::close runs and the Labels free that
+// they carry - straight into the caller. `#pragma auto_inline(off)` is what
+// VC6 6.0 has instead of `__declspec(noinline)`; see repair_phase's three
+// forwarders below for the same device.
+#pragma auto_inline(off)
+static void __cdecl stop_timers_call() {
+    stop_timers();
+}
+static void __cdecl labels_shutdown_call() {
+    labels_shutdown();
+}
+#pragma auto_inline(on)
+
 /*
 Purpose: Shut the game state down: timers, label strings, then the string
          table. The mode parameter is read by none of it.
@@ -1209,12 +1233,20 @@ Purpose: Shut the game state down: timers, label strings, then the string
 //   so the receiver folds to `mov ecx, 0x9b90d8`; the image's closing `jmp`
 //   into Strings::shutdown comes free from the call being the last statement
 //   of a void function, and the discarded int result costs nothing.
+// LEVER (2026-09-03, pair normalisation): `stop_timers_call` and
+//   `labels_shutdown_call`, not the helpers directly - the image CALLS
+//   0x0050F440 and 0x006169D0 here and both are `MEASURED inline` in time.h
+//   and alpha.h, so at /O2 the optimiser folded them (and the Time::close runs
+//   and the Labels free they carry) straight into this 4-instruction body,
+//   which became 67. Same-TU forwarders under `#pragma auto_inline(off)`, the
+//   device repair_phase's three helpers already use; game_reload shares them.
+//   0 of 4 -> 4 of 4.
 Return Value: n/a
 Status: Complete
 */
 void __cdecl game_close(int mode) {
-    stop_timers();
-    labels_shutdown();
+    stop_timers_call();
+    labels_shutdown_call();
     StringTable.shutdown();
 }
 
@@ -1468,6 +1500,10 @@ Purpose: Restart the game state: tear the desktop down (mode-gated, the same
          and string tables, re-init the game, and re-init the desktop when the
          caller asked for it. Always clears the climate skip flag.
 // ORIGINAL: 0x0058F450 ?game_reload@@YAHHH@Z 0x0058F450-0x0058F4E7 BYTE_EXACT
+// LEVER (2026-09-03, pair normalisation): the same two forwarders game_close
+//   uses - the image CALLS 0x0050F440 and 0x006169D0 in this body too, and
+//   with the `MEASURED inline` helpers folded in it was 107 compiled
+//   instructions against the image's 44, 12 of 44. 44 of 44 after the switch.
 // LEVER: byte-exact on promotion from the 0058f450 archive unit. The
 //   closer block is desktop_close's own sequence spelled the same way, so
 //   every receiver folds to its `mov ecx, imm32` and every call lands on the
@@ -1496,8 +1532,8 @@ int __cdecl game_reload(int mode, int reload) {
         reinterpret_cast<GraphicWin *>(&MultiWindow)->close();
         MainInterfaceGlobal.Win::hide();
     }
-    stop_timers();
-    labels_shutdown();
+    stop_timers_call();
+    labels_shutdown_call();
     StringTable.shutdown();
     if (game_init(1, reload) != 0) {
         return 1;
