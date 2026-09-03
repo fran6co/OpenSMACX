@@ -283,19 +283,6 @@ int Sprite::init_class() {
     return 0;
 }
 
-// THE SHEET HEAP, completed here because the class has no other home in the
-// tree: 0x10 bytes, four uint32 members, the IDB's layout (it used to live in
-// hypothesis_layouts.h, whose line ceiling has no room for a method). The
-// blocks it hands out are Heap objects - `get_mem` walks the block table and
-// takes the first block whose free tail fits.
-struct TexHeap {
-    uint32_t basePtr_;     // 0x0
-    uint32_t baseSize_;    // 0x4
-    uint32_t currentPtr_;  // 0x8
-    uint32_t count_;       // 0xC
-    int get_mem(int size);
-};
-
 /*
 Purpose: Take `size` bytes of sheet memory: walk the heap's block table and
          allocate from the first block whose free tail is large enough.
@@ -865,3 +852,122 @@ Sprite g_CURSOR_SPRITES[12];  // 0x0093AA70, 0x2c stride
 // (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
 // Here the same recovered constructors run through this build's own
 // startup, and the matching destructors close them at exit.
+
+// ORIGINAL: 0x00634FE0 ?shutdown@TexHeap@@QAEXXZ 0x00634FE0-0x00635046 BYTE_EXACT
+// size      102 bytes
+// prototype void (__thiscall ?shutdown@TexHeap@@QAEXXZ)(TexHeap* this)
+// callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00644EF2
+// 0x00634FE0  ?shutdown@TexHeap@@QAEXXZ  ->  ?shutdown@TexHeap@@QAEXXZ
+//
+// Purpose: cut the whole sheet heap down - the base block, then the block
+// TABLE (count_ + 1 Heap entries, each released before the table itself),
+// then the three counters.
+
+
+void TexHeap::shutdown() {
+    if (basePtr_ != 0) {
+        free(reinterpret_cast<void *>(basePtr_));
+        basePtr_ = 0;
+    }
+
+    if (currentPtr_ != 0) {
+        // The image re-reads count_ for the loop test at every iteration, so
+        // the bound stays an expression over the field rather than a local.
+        for (int index = 0; index < static_cast<int>(count_) + 1; ++index) {
+            Heap *block = reinterpret_cast<Heap **>(currentPtr_)[index];
+            if (block != 0) {
+                free(block);
+                reinterpret_cast<Heap **>(currentPtr_)[index] = 0;
+            }
+        }
+        if (currentPtr_ != 0) {
+            free(reinterpret_cast<void *>(currentPtr_));
+        }
+        currentPtr_ = 0;
+    }
+
+    count_ = 0;
+    baseSize_ = 0;
+}
+
+/*
+Purpose: Draw into a destination buffer at (x, y) by substituting the pair
+         into the class draw origin for the duration of the call, then
+         restoring what was there. The five-argument overload does the work.
+// ORIGINAL: 0x005E6652 ?draw_dest@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z 0x005E6652-0x005E66A2 BYTE_EXACT
+// symbol    ?draw_dest@Sprite@@QAEHPAVBuffer@@HHHHHPAE@Z
+// size      80 bytes
+// prototype int (__thiscall ?draw_dest@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z)(Sprite* this, Buffer*, int, int, int, int, int, unsigned int8*)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E5833
+Status: Complete
+*/
+int Sprite::draw_dest(Buffer *buffer, int a, int b, int c, int x, int y,
+                      unsigned char *bits) {
+    const int saved_x = SpriteDrawOriginX;
+    const int saved_y = SpriteDrawOriginY;
+    SpriteDrawOriginX = x;
+    SpriteDrawOriginY = y;
+    const int result = draw_dest(buffer, a, b, c, bits);
+    SpriteDrawOriginY = saved_y;
+    SpriteDrawOriginX = saved_x;
+    return result;
+}
+
+/*
+Purpose: Draw into a destination buffer through the unk2 worker at (x, y),
+         substituting the pair into the class draw origin for the duration of
+         the call. Byte for byte the same wrapper as draw_dest above.
+// ORIGINAL: 0x005E816C ?draw_dest_unk2@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z 0x005E816C-0x005E81BC BYTE_EXACT
+// symbol    ?draw_dest_unk2@Sprite@@QAEHPAVBuffer@@HHHHHPAE@Z
+// size      80 bytes
+// prototype int (__thiscall ?draw_dest_unk2@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z)(Sprite* this, Buffer*, int, int, int, int, int, unsigned int8*)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E81BC
+Status: Complete
+*/
+int Sprite::draw_dest_unk2(Buffer *buffer, int a, int b, int c, int x, int y,
+                           unsigned char *bits) {
+    const int saved_x = SpriteDrawOriginX;
+    const int saved_y = SpriteDrawOriginY;
+    SpriteDrawOriginX = x;
+    SpriteDrawOriginY = y;
+    const int result = draw_dest_unk2(buffer, a, b, c, bits);
+    SpriteDrawOriginY = saved_y;
+    SpriteDrawOriginX = saved_x;
+    return result;
+}
+
+/*
+Purpose: Draw into a destination buffer through the multi-table worker at
+         (x, y), substituting the pair into the class draw origin for the
+         duration of the call. Byte for byte the same wrapper as draw_dest
+         above.
+// ORIGINAL: 0x005E8FA5 ?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z 0x005E8FA5-0x005E8FF5 BYTE_EXACT
+// symbol    ?draw_multi_table_dest@Sprite@@QAEHPAVBuffer@@HHHHHPAE@Z
+// size      80 bytes
+// prototype int (__thiscall ?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z)(Sprite* this, Buffer*, int, int, int, int, int, unsigned int8*)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E8FF5
+Status: Complete
+*/
+int Sprite::draw_multi_table_dest(Buffer *buffer, int a, int b, int c, int x,
+                                  int y, unsigned char *bits) {
+    const int saved_x = SpriteDrawOriginX;
+    const int saved_y = SpriteDrawOriginY;
+    SpriteDrawOriginX = x;
+    SpriteDrawOriginY = y;
+    const int result = draw_multi_table_dest(buffer, a, b, c, bits);
+    SpriteDrawOriginY = saved_y;
+    SpriteDrawOriginX = saved_x;
+    return result;
+}

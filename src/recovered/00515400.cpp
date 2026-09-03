@@ -7,10 +7,20 @@
 // calls     0x0046B1F0
 // 0x00515400  ?center@Console@@QAEXXZ  ->  ?center@Console@@QAEXXZ
 //
-// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
-// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
-// and rewriting it in the tree's own style is a later phase. See README.md
-// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+// BLOCKED (2026-09-03, P1 calibration) on a mapwin.h declaration this TU does
+// not own: 0x0046B1F0 is ?set_center@MapWin@@QAEXHHH@Z, undeclared. It needs
+// `void set_center(int, int, int);` on MapWin and a pending_bodies forwarder
+// (the body itself is src/recovered/units/0046b1f0.cpp, unclaimed, 275
+// bytes). Everything the body reads is already bound here: CursorLastIndex /
+// CursorLastX / CursorLastY in console.h and the accessor console_map_win()
+// for the single absolute load of 0x007D3C3C the image makes at 0x00515416.
+//
+// The de-punned body, ready to drop in once set_center is declared:
+//
+// void Console::center() {
+//     const int index = CursorLastIndex;
+//     console_map_win()->set_center(CursorLastX[index], CursorLastY[index], 1);
+// }
 
 void Console::center() {
     // BODY GOES HERE.

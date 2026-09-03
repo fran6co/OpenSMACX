@@ -7,10 +7,23 @@
 // calls     0x0041A920 0x004E3C60
 // 0x005169B0  ?base_me@Console@@QAEXXZ  ->  ?base_me@Console@@QAEXXZ
 //
-// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
-// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
-// and rewriting it in the tree's own style is a later phase. See README.md
-// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+// BLOCKED (2026-09-03, P1 calibration) on a basewin.h declaration this TU does
+// not own: 0x0041A920 is BaseWin::zoom, undeclared. It needs a declaration on
+// BaseWin and a pending_bodies forwarder. Everything else is already bound:
+// base_find (base.h:533, the three-int overload), LocalFaction (game.h:865,
+// 0x00939284 - the scaffold's g_00939284), and tutwin.h's
+// TutWinBaseWindow for 0x006A7628.
+//
+// The de-punned body, ready to drop in once zoom is declared:
+//
+// void Console::base_me() {
+//     const int index = CursorLastIndex;
+//     const int result = base_find(CursorLastX[index], CursorLastY[index],
+//                                  LocalFaction);
+//     if (result >= 0) {
+//         TutWinBaseWindow.zoom(result, 0);
+//     }
+// }
 
 void Console::base_me() {
     int idx = *g_009392b8;

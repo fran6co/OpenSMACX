@@ -417,7 +417,14 @@ SCAFFOLD_CEILINGS = {
     # 221 -> 220 (2026-09-03, merge of agent/dialog): the BasePop and dialog
     # forwarder deaths were independent -1s off the same 222 base, one on
     # each side; the merged pending_bodies.cpp carries both.
-    "PENDING_BODY forwarders": 220,
+    # 220 -> 226 (2026-09-03, P1c sprite/pulldown/console batch): six added,
+    # all named by the agent. Three are LOAD-BEARING now - Sprite::draw_dest
+    # ->0x005E5833, draw_dest_unk2->0x005E81BC, draw_multi_table_dest->
+    # 0x005E8FF5, the five-argument workers the homed wrappers call by name
+    # so the E8 survives. Three are frontier-ahead-of-declaration, slack
+    # until the blocked callees' owners declare them: stack_kill->0x005B9510,
+    # veh_ready->0x005C1B70, world_rocky->0x005C32A0.
+    "PENDING_BODY forwarders": 226,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -472,7 +479,7 @@ SCAFFOLD_CEILINGS = {
     # 1278 -> 1277 (2026-09-03, the BasePop destructor): units/004064d0.cpp
     # deleted with the verbatim body it preserved - the real chain is the
     # compiler's, from basepop.h's member list, and basepop.cpp claims it.
-    "artifact files (recovered/)": 1259,
+    "artifact files (recovered/)": 1249,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -538,7 +545,7 @@ SCAFFOLD_CEILINGS = {
     # 44/44 once BaseButton's constructor went out of line, which is also
     # what took ??0ImageButton and ??0Gamma byte-exact.
     "unrecovered files": 1299,
-    "hypothesis_layouts.h lines": 2723,
+    "hypothesis_layouts.h lines": 2717,
 }
 
 

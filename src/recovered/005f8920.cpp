@@ -7,25 +7,34 @@
 // calls     0x005D4EF0
 // 0x005F8920  ?init@PullDown@@QAEXPAUMenu@@@Z  ->  ?init@PullDown@@QAEXPAUMenu@@@Z
 //
-// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
-// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
-// and rewriting it in the tree's own style is a later phase. See README.md
-// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+// Purpose: reset the pull-down to a clean, empty menu bar owned by `menu`,
+//          resolving the class-shared default font on the first use.
+//
+// BLOCKED (2026-09-03, P1 calibration) - error C2248: 'markup_enabled_' :
+// cannot access private member declared in class 'Buffer'.
+//
+// The image's last store is `mov dword ptr [esi+0x964], 0`, and 0x964 is
+// Buffer + 0x520 = `markup_enabled_`: the window body is reaching straight
+// into its own surface subobject, which is how the image reaches it. Buffer's
+// run from 0x4AC to the end of the class is PRIVATE, so a derived window body
+// cannot name it. buffer.h's own comment on the 0x4.. block already states the
+// remedy and the reason - "PROTECTED, NOT PRIVATE: GraphicWin derives from
+// Buffer and the homed window bodies read these directly - access control is
+// compile-time only, so no offset and no emitted byte changes" - it just was
+// never applied to this second half of the class. Widening that one `private:`
+// to `protected:` is the whole fix; this file is pulldown.cpp's, so it was
+// left to the owner of buffer.h rather than poked from here.
+//
+// Everything else in the body is settled: PullDownDefaultFont (0x009B7B68) and
+// FontDefault (0x009BB484) are the two globals the scaffold bound as
+// g_009b7b68/g_009bb484, menu_ is 0xf30, and the qualified GraphicWin::init
+// call is 0x005D4EF0.
 
-void PullDown::init(Menu * a1) {
-    // BODY GOES HERE.
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
-
-    if (*g_009b7b68 == 0) {
-        *g_009b7b68 = *g_009bb484;
+void PullDown::init(Menu *menu) {
+    if (PullDownDefaultFont == nullptr) {
+        PullDownDefaultFont = FontDefault;
     }
-    char *self = reinterpret_cast<char *>(this);
-    *reinterpret_cast<Menu **>(self + 0xf30) = a1;
-    reinterpret_cast<GraphicWin *>(this)->init(0, 0, 0, 0, (char *)0, 0,
-                                               (Win *)0, (Menu *)0,
-                                               (BorderSizing *)0);
-    *reinterpret_cast<int *>(self + 0x964) = 0;
+    menu_ = menu;
+    GraphicWin::init(0, 0, 0, 0, nullptr, 0, nullptr, nullptr, nullptr);
+    markup_enabled_ = 0;
 }

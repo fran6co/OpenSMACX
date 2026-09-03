@@ -102,6 +102,10 @@ class InfoWin;
   */
 class Console : public MapWin {
  public:
+  // homed from 00515740.cpp
+  void toggle_dest();
+
+ public:
   // 0x0050F960, a pending_bodies forwarder.
   void on_post_redraw_nc_buffer(void * a1, int a2);
 

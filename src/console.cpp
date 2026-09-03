@@ -912,3 +912,27 @@ InfoWin ConsoleInfoWin;   // 0x007AD2A0
 // on its own. The old explicit `ConsoleGlobal(1)` was the flag spelled as
 // a real int - the exact doubling Console(int) carried.
 Console ConsoleGlobal;
+
+// ORIGINAL: 0x00515740 ?toggle_dest@Console@@QAEXXZ 0x00515740-0x00515758 BYTE_EXACT
+// size      24 bytes
+// prototype void (__thiscall ?toggle_dest@Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0046B190
+// 0x00515740  ?toggle_dest@Console@@QAEXXZ  ->  ?toggle_dest@Console@@QAEXXZ
+//
+// Purpose: flip the "draw vehicle destinations" bit on the live map window
+//          and repaint it.
+
+
+// LEVER: ::draw_map, not draw_map. The image calls the FREE cdecl draw_map
+//          (0x0046B190, ?draw_map@@YAXH@Z), which cleans its own argument -
+//          the unqualified spelling resolves to the MapWin member this class
+//          inherits, and that thiscall leaves the cleanup to the callee, which
+//          drops the image's trailing `pop ecx` (4 of 6).
+void Console::toggle_dest() {
+    console_map_win()->field_1DD70_ ^= 0x40000;
+    ::draw_map(1);
+}
+

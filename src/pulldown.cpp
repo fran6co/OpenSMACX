@@ -825,3 +825,85 @@ Purpose: Step the receiver back to the subobject ??_GPullDown@@UAEPAXI@Z
 Return Value: the forwarded call's
 Status: Complete
 */
+
+// ORIGINAL: 0x005F9460 ?on_right_down@PullDown@@QAEXHH@Z 0x005F9460-0x005F9472 BYTE_EXACT
+// size      18 bytes
+// prototype void (__thiscall ?on_right_down@PullDown@@QAEXHH@Z)(PullDown* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005F946C
+// 0x005F9460  ?on_right_down@PullDown@@QAEXHH@Z  ->  ?on_right_down@PullDown@@QAEXHH@Z
+//
+// Purpose: Pass a right-button press straight through to Win's virtual slot
+//          20 - the image's `call dword ptr [eax + 0x50]` - where the
+//          pull-down's owner decides what a right click means.
+
+
+void PullDown::on_right_down(int x, int y) {
+    vslot_20(x, y);
+}
+
+// ORIGINAL: 0x005F9570 ?on_right_up@PullDown@@QAEXHH@Z 0x005F9570-0x005F9582 BYTE_EXACT
+// size      18 bytes
+// prototype void (__thiscall ?on_right_up@PullDown@@QAEXHH@Z)(PullDown* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005F957C
+// 0x005F9570  ?on_right_up@PullDown@@QAEXHH@Z  ->  ?on_right_up@PullDown@@QAEXHH@Z
+//
+// Purpose: Pass a right-button release straight through to Win's virtual slot
+//          21 - the image's `call dword ptr [eax + 0x54]` - the counterpart
+//          of on_right_down one slot up.
+
+
+void PullDown::on_right_up(int x, int y) {
+    vslot_21(x, y);
+}
+
+// ORIGINAL: 0x005F9100 ?UNK4@PullDown@@QAEXXZ 0x005F9100-0x005F9165 BYTE_EXACT
+// size      101 bytes
+// prototype void (__thiscall ?UNK4@PullDown@@QAEXXZ)(PullDown* this)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644EF2
+// 0x005F9100  ?UNK4@PullDown@@QAEXXZ  ->  ?UNK4@PullDown@@QAEXXZ
+//
+// Purpose: release every item's text pair and clear the item table, leaving
+//          the pull-down with no items and the redraw latch set.
+
+
+void PullDown::UNK4() {
+    // THE IMAGE BASES ITS WALK POINTER ON THE ITEM'S SECOND MEMBER, not on
+    // the item: `lea esi,[ebp+0xa1c]` is &items_[0].right_text, and every
+    // access in the loop is a displacement off that pointer - [-4] text,
+    // [0] right_text, [+4] id, [+8] flags. Basing a PullDownItem* on the
+    // item instead shifts all four displacements by four bytes (same
+    // mnemonics, wrong bytes), so the walk is spelled over the text slot.
+    // cursor[1] and cursor[2] are the id and flags words that follow the two
+    // owned strings in PullDownItem.
+    char **cursor = &items_->right_text;
+    int count = 0x40;
+    do {
+        if (cursor[-1] != nullptr) {
+            free(cursor[-1]);
+            cursor[-1] = nullptr;
+        }
+        if (cursor[0] != nullptr) {
+            free(cursor[0]);
+            cursor[0] = nullptr;
+        }
+        cursor[1] = reinterpret_cast<char *>(-1);
+        cursor[2] = nullptr;
+        cursor += sizeof(PullDownItem) / sizeof(char *);
+    } while (--count != 0);
+    field_F18_ = 0;
+    item_count_ = 0;
+    visible_count_ = 0;
+    dirty_ = 1;
+}
+

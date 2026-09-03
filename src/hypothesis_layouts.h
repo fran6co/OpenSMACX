@@ -2230,14 +2230,8 @@ struct TTilePos {
   uint8_t field_B_;  // 0xB
 };
 
-/* 0x10 bytes, 4 member(s), 4 named. From the IDB. 6 function(s) in the image. */
-class TexHeap {
- public:
-  uint32_t basePtr_;  // 0x0
-  uint32_t baseSize_;  // 0x4
-  uint32_t currentPtr_;  // 0x8
-  uint32_t count_;  // 0xC
-};
+/* TexHeap PROMOTED to src/sprite.h (2026-09-03): it gained real members there
+   and the duplicate here made every TU that includes both a redefinition. */
 
 /* 0xB0 bytes, 5 member(s), 4 named. From Thinker. */
 struct ThinkerData {

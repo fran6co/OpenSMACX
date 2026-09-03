@@ -20,7 +20,21 @@
 #include "original_seam.h"
 
 class Buffer;  // forward declaration
-struct TexHeap;  // texture-heap handle, only ever passed through as a pointer
+
+// THE SHEET HEAP. 0x10 bytes, four uint32 members, the IDB's layout. It used
+// to be declared beside its only members in sprite.cpp; the header is where a
+// class belongs, and Sprite::extract takes a TexHeap* as its last argument.
+// The blocks it hands out are Heap objects - get_mem walks the block table and
+// takes the first block whose free tail fits.
+struct TexHeap {
+    uint32_t basePtr_;     // 0x0
+    uint32_t baseSize_;    // 0x4
+    uint32_t currentPtr_;  // 0x8
+    uint32_t count_;       // 0xC
+    int get_mem(int size);
+    void shutdown();
+    int UNK1(int size);
+};
 
  /*
   * Sprite class
@@ -42,6 +56,22 @@ class Sprite {
   int UNK2(int a, int b, int c, int d, int e);
   int draw(Buffer *buffer, int a, int b, int c, int x, int y);
   int draw(Buffer *buffer, int a, int b, int c);
+  // The draw_dest family: the five-argument form does the work, and each
+  // wider sibling is a save/set/call/restore wrapper that substitutes a draw
+  // origin or scroll pair for the duration of the call. The five-argument
+  // bodies are still original, so each is reached through a pending_bodies
+  // forwarder - exactly the arrangement draw's own four-argument overload
+  // has, and for the same reason.
+  int draw_dest(Buffer *buffer, int a, int b, int c, unsigned char *bits);
+  int draw_dest(Buffer *buffer, int a, int b, int c, int x, int y,
+                unsigned char *bits);
+  int draw_dest_unk2(Buffer *buffer, int a, int b, int c, unsigned char *bits);
+  int draw_dest_unk2(Buffer *buffer, int a, int b, int c, int x, int y,
+                     unsigned char *bits);
+  int draw_multi_table_dest(Buffer *buffer, int a, int b, int c,
+                            unsigned char *bits);
+  int draw_multi_table_dest(Buffer *buffer, int a, int b, int c, int x, int y,
+                            unsigned char *bits);
   // Sprite-sheet extraction used by the per-control init_class bodies. The
   // body lives in sprite.cpp beside its marker. `extract`'s last parameter is
   // a texture-heap pointer most callers pass as null.

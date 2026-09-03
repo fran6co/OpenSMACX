@@ -29,6 +29,18 @@ static_assert(offsetof(PullDownItem, flags) == 0xC,
 
 class PullDown : public GraphicWin {
  public:
+  // homed from 005f9100.cpp
+  void UNK4();
+
+ public:
+  // homed from 005f9570.cpp
+  void on_right_up(int x, int y);
+
+ public:
+  // homed from 005f9460.cpp
+  void on_right_down(int x, int y);
+
+ public:
   void hide();
   int UNK2(int a);
   int UNK3(int a, int b, int c);

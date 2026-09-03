@@ -352,11 +352,66 @@ int Sprite::draw(Buffer *buffer, int a, int b, int c) {
     return PENDING_BODY(0x005E4B9A, pending)(this, nullptr, buffer, a, b, c);
 }
 
+// The draw_dest family's five-argument workers - 0x005E5833, 0x005E81BC and
+// 0x005E8FF5. Each is still an original body, and each is called by name from
+// its own wider save/set/call/restore wrapper in sprite.cpp.
+//             bodies in src/unrecovered/005e5833.cpp, 005e81bc.cpp,
+//             005e8ff5.cpp
+//
+// NOTE FOR THE NEXT HOMING OF 0x005E5833 ITSELF: tools/home_bodies.py's
+// forwarder sweep keys on `Sprite::draw_dest` and cannot tell this five-word
+// overload from a seven-word one, so homing any other `draw_dest` while this
+// forwarder exists deletes it and the link fails. The three seven-word
+// wrappers are already homed; the next homing that should touch this name is
+// this body's own, which is the one case the sweep is right about.
+int Sprite::draw_dest(Buffer *buffer, int a, int b, int c,
+                      unsigned char *bits) {
+    typedef int(__fastcall *pending)(Sprite *, void *, Buffer *, int, int, int,
+                                     unsigned char *);
+    return PENDING_BODY(0x005E5833, pending)(this, nullptr, buffer, a, b, c,
+                                             bits);
+}
+
+int Sprite::draw_dest_unk2(Buffer *buffer, int a, int b, int c,
+                           unsigned char *bits) {
+    typedef int(__fastcall *pending)(Sprite *, void *, Buffer *, int, int, int,
+                                     unsigned char *);
+    return PENDING_BODY(0x005E81BC, pending)(this, nullptr, buffer, a, b, c,
+                                             bits);
+}
+
+int Sprite::draw_multi_table_dest(Buffer *buffer, int a, int b, int c,
+                                  unsigned char *bits) {
+    typedef int(__fastcall *pending)(Sprite *, void *, Buffer *, int, int, int,
+                                     unsigned char *);
+    return PENDING_BODY(0x005E8FF5, pending)(this, nullptr, buffer, a, b, c,
+                                             bits);
+}
+
+// Three __cdecl free functions the editor commands call, still original
+// bodies. Declared at the top of console.cpp beside the bodies that reach
+// them; their natural header home is the class pass that recovers them.
+//             bodies in src/recovered/units/005b9510.cpp,
+//             src/unrecovered/005c1b70.cpp, src/recovered/units/005c32a0.cpp
+void __cdecl stack_kill(int veh_id) {
+    typedef void(__cdecl *pending)(int);
+    PENDING_BODY(0x005B9510, pending)(veh_id);
+}
+
+int __cdecl veh_ready(int veh_id) {
+    typedef int(__cdecl *pending)(int);
+    return PENDING_BODY(0x005C1B70, pending)(veh_id);
+}
+
+void __cdecl world_rocky() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x005C32A0, pending)();
+}
+
 // ?exec@BasePop@@QAEHHP6AHXZ@Z at 0x00602600 - the modal loop both `exec`
 // overloads wrap.
 //             body in src/unrecovered/00602600.cpp
-int BasePop::exec(int flags, int(__cdecl *callback)()) {
-    typedef int(__fastcall *pending)(BasePop *, void *, int, int(__cdecl *)());
+int BasePop::exec(int flags, int(__cdecl *callback)()) {    typedef int(__fastcall *pending)(BasePop *, void *, int, int(__cdecl *)());
     return PENDING_BODY(0x00602600, pending)(this, nullptr, flags, callback);
 }
 
