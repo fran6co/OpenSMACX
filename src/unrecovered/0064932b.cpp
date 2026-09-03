@@ -1,9 +1,0 @@
-// ORIGINAL: 0x0064932B sub_64932b 0x0064932B-0x00649381;0x0064CBE8-0x0064CBFF EXCLUDED S1
-// size      109 bytes
-// prototype 
-// callers   6   call targets   4
-// kind      library
-// flags     noret;lib;frame;hidden;sp_ready;purged_ok
-// calls     0x00644E10 0x0064932B 0x0064BDF9 0x0064F09F
-// indirect  0x00649364
-// excluded - availability - MSVC 6 CRT and Windows library code; linked, not rewritten (docs/EXCLUSIONS.md section 1)

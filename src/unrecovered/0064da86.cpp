@@ -1,8 +1,0 @@
-// ORIGINAL: 0x0064DA86 __getbuf 0x0064DA86-0x0064DACA EXCLUDED S1
-// size      68 bytes
-// prototype 
-// callers   2   call targets   1
-// kind      library
-// flags     lib;hidden;sp_ready;purged_ok
-// calls     0x006470A6
-// excluded - availability - MSVC 6 CRT and Windows library code; linked, not rewritten (docs/EXCLUSIONS.md section 1)

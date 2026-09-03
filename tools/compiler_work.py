@@ -537,7 +537,7 @@ SCAFFOLD_CEILINGS = {
     # promoted - PushButton::PushButton() homed into src/gamma.cpp BYTE_EXACT
     # 44/44 once BaseButton's constructor went out of line, which is also
     # what took ??0ImageButton and ??0Gamma byte-exact.
-    "unrecovered files": 1647,
+    "unrecovered files": 1303,
     "hypothesis_layouts.h lines": 2723,
 }
 
