@@ -135,17 +135,18 @@ int __cdecl tech_name(LPSTR name) {
 
 /*
 Purpose: Convert the chassis name string to a numeric chassis id.
-// ORIGINAL: 0x00584E40 ?chas_name@@YAHPAD@Z 0x00584E40-0x00584F33
-// TRIED: a `purge_trailing(name)` call - the image hand-inlines a NAIVE trim that recomputes `strlen` on every access (4 calls: check, loop-top compare, store index, continue condition) instead of one cached-length pointer walk. Restoring that shape took the call count from 9 to the image's 12; still MISMATCH on register choice (`mov bl,0x20` vs an immediate compare) and downstream byte offsets - not chased further, see weap_name/arm_name (identical).
+// ORIGINAL: 0x00584E40 ?chas_name@@YAHPAD@Z 0x00584E40-0x00584F33 BYTE_EXACT
+// LEVER: THE COMPARISON STRING GOES THROUGH StringTable.get - the image's lookup loop is
+//   `_stricmp(name, StringTable.get(int(Chassis[chas_id].offsv_1_name)))`: `mov edi,<&Chassis>
+//   / mov eax,[edi] / mov ecx,0x9b90d8 / push eax / call 0x6169a0 / push eax / call _stricmp`.
+//   For any pointer `Strings::put` handed out `Strings::get` is an identity, so the direct
+//   field compare looked equivalent - but it cost the `mov ecx,<receiver>` and the extra call,
+//   and the whole tail of the function sat 43 instructions off for it. 55/98 -> 98/98, and
+//   weap_name and arm_name take the same one-line fix.
 // LEVER: the trim loop was `if (strlen(name) != 0) { do {...} while (strlen(name) != 0); }`,
 //   which VC6 compiles as one copy of the head duplicated at the bottom (+6 instructions past the
 //   image's single `jne` backedge). A plain `while (strlen(name) != 0) { if (...) break; ...; }`
 //   is the image's rotated-while shape with one head. Moved 20/98 -> 55/98 agreeing.
-// TRIED (still open): the chas_id loop's `_stricmp(name, Chassis[chas_id].offsv_1_name)`
-//   diverges at instruction 53 - the image resolves the comparison string through
-//   `StringTable.get(...)` (`call 0x6169a0`, the same idiom say_tech uses for label lookups)
-//   before the ecx pointer switches over; this tree compares the field directly. Not chased -
-//   may mean a different field or a `Strings::get` indirection is missing here.
 // size      243 bytes
 // prototype 
 // callers   1   call targets   5
@@ -176,7 +177,11 @@ int __cdecl chas_name(LPSTR name) {
         return DisabledValue;
     }
     for (int chas_id = 0; chas_id < MaxChassisNum; chas_id++) {
-        if (!_stricmp(name, Chassis[chas_id].offsv_1_name)) {
+        // The image routes the comparison string through StringTable.get - the
+        // `mov ecx, 0x9b90d8` receiver - before the _stricmp. For any pointer
+        // Strings::put handed out that is an identity, which is why the
+        // recovery's direct compare looked equivalent and was not.
+        if (!_stricmp(name, StringTable.get(int(Chassis[chas_id].offsv_1_name)))) {
             return chas_id;
         }
     }
@@ -189,13 +194,13 @@ int __cdecl chas_name(LPSTR name) {
 
 /*
 Purpose: Convert the weapon name string to a numeric weapon id.
-// ORIGINAL: 0x00584F40 ?weap_name@@YAHPAD@Z 0x00584F40-0x00585030
+// ORIGINAL: 0x00584F40 ?weap_name@@YAHPAD@Z 0x00584F40-0x00585030 BYTE_EXACT
+// LEVER: same one-line fix as chas_name - the comparison string goes through
+//   `StringTable.get(int(Weapon[weap_id].name_short))`, not the raw field. 55/98 -> 98/98.
 // LEVER: same as chas_name (0x00584E40) - the naive recomputed-`strlen` trim loop, not `purge_trailing`. Call count 9 -> 12, still MISMATCH (register choice for the space literal).
 // LEVER: same as chas_name - `if (strlen != 0) { do {...} while; }` duplicated the loop head;
 //   a plain `while (strlen(name) != 0) { if (...) break; ...; }` matches the image's single
 //   backedge. Moved 20/98 -> 55/98 agreeing.
-// TRIED (still open): same weap_id-loop StringTable.get() divergence as chas_name, not
-//   chased further this pass.
 // size      240 bytes
 // prototype 
 // callers   1   call targets   5
@@ -221,7 +226,8 @@ int __cdecl weap_name(LPSTR name) {
         return DisabledValue;
     }
     for (int weap_id = 0; weap_id < MaxWeaponNum; weap_id++) {
-        if (!_stricmp(name, Weapon[weap_id].name_short)) {
+        // StringTable.get on the comparison string, as chas_name's loop does.
+        if (!_stricmp(name, StringTable.get(int(Weapon[weap_id].name_short)))) {
             return weap_id;
         }
     }
@@ -234,7 +240,9 @@ int __cdecl weap_name(LPSTR name) {
 
 /*
 Purpose: Convert the armor name string to a numeric armor id.
-// ORIGINAL: 0x00585030 ?arm_name@@YAHPAD@Z 0x00585030-0x00585120
+// ORIGINAL: 0x00585030 ?arm_name@@YAHPAD@Z 0x00585030-0x00585120 BYTE_EXACT
+// LEVER: same one-line fix as chas_name - the comparison string goes through
+//   `StringTable.get(int(Armor[arm_id].name_short))`, not the raw field. 55/98 -> 98/98.
 // LEVER: same as chas_name (0x00584E40) - the naive recomputed-`strlen` trim loop, not `purge_trailing`. Call count 9 -> 12, still MISMATCH (register choice for the space literal).
 // LEVER: same as chas_name - the `if (strlen != 0) { do {...} while; }` duplicated-head shape
 //   became a plain `while (strlen(name) != 0) { if (...) break; ...; }`. PLUS a second, distinct
@@ -243,8 +251,6 @@ Purpose: Convert the armor name string to a numeric armor id.
 //   function's own documented "error (0)" return and chas_name/weap_name's `return 0;`. Because
 //   the old -2 return matched the earlier 'Disable' early return, VC6 had merged the two exits;
 //   fixing the constant also restored the image's separate epilogue. Moved 24/98 -> 55/98.
-// TRIED (still open): same arm_id-loop StringTable.get() divergence as chas_name, not
-//   chased further this pass.
 // size      240 bytes
 // prototype 
 // callers   1   call targets   5
@@ -270,7 +276,8 @@ int __cdecl arm_name(LPSTR name) {
         return DisabledValue;
     }
     for (int arm_id = 0; arm_id < MaxArmorNum; arm_id++) {
-        if (!_stricmp(name, Armor[arm_id].name_short)) {
+        // StringTable.get on the comparison string, as chas_name's loop does.
+        if (!_stricmp(name, StringTable.get(int(Armor[arm_id].name_short)))) {
             return arm_id;
         }
     }
@@ -956,6 +963,38 @@ Purpose: Parse the #BONUSNAMES, #FACTIONS, and #NEWFACTIONS sections inside the 
 //        div and the /7 as an unsigned magic-multiply; the image uses `cdq; idiv` for the
 //        modulo and the signed magic-multiply sequence for /7. Both changed to plain `int`.
 //        Moved 44/214 -> 46/214 agreeing.
+// LEVER: the #BONUSNAMES loop is a PEEL in the image - ONE text_get hoisted ahead of it
+//        (0x00586F50) and then a separate counter that resets at 8 inside the body
+//        (`xor edi,edi` init, `inc edi; cmp edi,8; jl` skip, `xor edi,edi; call text_get`
+//        reset, 0x00586F73 is the second call site), with the array walk on its own pointer
+//        so the loop index is strength-reduced away. TRIED: spelling that out - `text_get();
+//        int line_count = 0; for (int i = 0; i < MaxBonusNameNum; i++) { strcpy_s(...); if
+//        (++line_count >= 8) { line_count = 0; text_get(); } }` - REGRESSED the body to
+//        14/214; the modulo form stays, see the /Oi- note at the bottom for the frame.
+// LEVER: THE FACTION_SET TEST IS A SWITCH, not a nested ternary. The image lowers it as
+//        `sub edx,0; je` / `dec edx; je` / `dec edx; jne` (0x00587084-0x0058708D) with
+//        FACTIONS+NEWFACTIONS tail-merged into the one text_open at 0x0058709B and
+//        CUSTOMFACTIONS on its own at 0x005870C6 - i.e. `switch (faction_set) { case 0: ...
+//        case 1: ... case 2: ... }`. The ternary this body used opened CUSTOMFACTIONS for
+//        EVERY faction_set >= 2, so it also read a section the image never opens at
+//        faction_set >= 3: BUG IN THE ORIGINAL, reproduced. 48/214 -> 75/214 on its own, the
+//        single biggest lever in this body.
+// LEVER: the JENN282 skip loop is the brief's peeled-loop shape: one UNCONDITIONAL text_get
+//        (0x005870E2) then a guard-and-do-while remainder (`test edi,edi; jle` /
+//        `mov esi,edi` / `loop: call; dec esi; jne`, 0x5870ED). Written out literally, which
+//        is also what the image's own `test edi,edi; jle` implies: for faction_id <= 0 the
+//        image still consumes one text_get where `for (j = faction_id; j >= 0; j--)`
+//        consumes none - unreachable in practice because faction_id is `rand_val % 7` at
+//        that point (the `faction_id = -1` assignment is always overwritten by the reroll
+//        before the loop is re-entered). Measured back to back with the switch in place:
+//        peel 75/214, plain for 71/214.
+// TRIED (still open): the extra stack slot. Under the similarity-picked /Oi- set this body
+//        compiles to `sub esp,0xc` against the image's `sub esp,8` - `faction_id` lands in
+//        esi and is spilled to [ebp-0xc] where the image keeps it in edi across the whole
+//        iteration - and every [ebp-N] after that diverges. Present with and without the
+//        peel, so it is not either rewrite; under /O2 the frame is 8 but the body balloons
+//        to 252 instructions against the image's 214 and scores 15/214, so /Oi- is the
+//        better set despite the slot. Not chased further.
 // size      665 bytes
 // prototype 
 // callers   1   call targets   9
@@ -969,6 +1008,13 @@ BOOL __cdecl read_factions() {
     if (text_open(AlphaxFileID, "BONUSNAMES")) {
         return true;
     }
+    // NOT `if (!(i % 8)) text_get();` at the top of the body: the image
+    // hoists ONE text_get ahead of the loop and walks a separate counter
+    // that resets at 8 (`xor edi,edi` ... `inc edi; cmp edi,8; jl`; the
+    // array walk is a separate pointer, so the loop index is
+    // strength-reduced away). 0x00586F50 / 0x00586F73 are the two call
+    // sites that gives - but spelling that out regressed the body, so the
+    // recovery keeps the modulo form (see this marker's LEVER for the score).
     for (uint32_t i = 0; i < MaxBonusNameNum; i++) {
         if (!(i % 8)) { // 8 entries per line
             text_get();
@@ -1010,13 +1056,58 @@ BOOL __cdecl read_factions() {
                 // selection here does not respect `random_reseed`.
                 int rand_val = rand() % faction_count;
                 int faction_set = rand_val / 7; // 0: SMAC; 1: SMACX; 2+: custom
-                if (text_open(AlphaxFileID, !faction_set ? "FACTIONS" : (faction_set == 1)
-                    ? "NEWFACTIONS" : "CUSTOMFACTIONS")) {
-                    return true;
+                // NOT a nested ternary argument: the image lowers this as a
+                // SWITCH - `sub edx,0; je` / `dec edx; je` / `dec edx; jne`,
+                // with FACTIONS+NEWFACTIONS tail-merged into the one call at
+                // 0x0058709B and CUSTOMFACTIONS on its own at 0x005870C6. So
+                // `faction_set` past 2 opens NOTHING here, where the ternary
+                // reading opened CUSTOMFACTIONS for every custom set: BUG IN
+                // THE ORIGINAL, reproduced.
+                switch (faction_set) {
+              case 0:
+                    if (text_open(AlphaxFileID, "FACTIONS")) {
+                        return true;
+                    }
+                    break;
+              case 1:
+                    if (text_open(AlphaxFileID, "NEWFACTIONS")) {
+                        return true;
+                    }
+                    break;
+              case 2:
+                    if (text_open(AlphaxFileID, "CUSTOMFACTIONS")) {
+                        return true;
+                    }
+                    break;
+              default:
+                    break;
                 }
                 faction_id = rand_val % 7;
-                for (int j = faction_id; j >= 0; j--) {
-                    text_get();
+                // The image PEELS this loop: one unconditional text_get
+                // (0x005870E2), then the remainder as a counted do-while
+                // (`test edi,edi; jle` guard, `mov esi,edi`, `loop: call;
+                // dec esi; jne`). Writing the peel as `text_get(); for
+                // (int j = faction_id; j > 0; j--) text_get();` is the same
+                // shape but gives j a stack home and grows the frame to
+                // 0xc against the image's 8 - the guard-then-do-while
+                // spelling below is what keeps the counter in esi.
+                // The image PEELS this loop: one UNCONDITIONAL text_get
+                // (0x005870E2), then the remainder as a guard-and-do-while
+                // (`test edi,edi; jle`, `mov esi,edi`,
+                // `loop: call; dec esi; jne` at 0x5870ED). The image's own
+                // `test edi,edi; jle` implies that for faction_id <= 0 it
+                // still consumes one text_get where the plain
+                // `for (j = faction_id; j >= 0; j--)` spelling below consumes
+                // none - unreachable, since faction_id is `rand_val % 7`
+                // here (the `faction_id = -1` assignment is always overwritten
+                // by the reroll before the loop is re-entered). Peel and plain
+                // for measured back to back: 75/214 against 71/214.
+                text_get();
+                int j = faction_id;
+                if (j > 0) {
+                    do {
+                        text_get();
+                    } while (--j != 0);
                 }
                 strcpy_s(Players[player].filename, 24, text_item());
                 strcpy_s(Players[player].search_key, 24, text_item()); // original copied filename twice
@@ -1758,7 +1849,27 @@ inline int __cdecl prefs_get(LPCSTR key_name, int default_value, BOOL use_defaul
 Purpose: Read the faction filenames and search for keys from the ini file (SMACX only). This has 
          the added effect of forcing the player's search_key to be set to the filename value. 
          Rewrote almost the entire function because of how terrible the original code logic was.
-// ORIGINAL: 0x0059DBD0 ?prefs_fac_load@@YAXXZ 0x0059DBD0-0x0059DCE8
+// ORIGINAL: 0x0059DBD0 ?prefs_fac_load@@YAXXZ 0x0059DBD0-0x0059DCE8 BYTE_EXACT
+// LEVER: THE IMAGE'S SHAPE IS ONE LOOP, not the "separate loop for the old ini format" this
+//        body had. Reading 0x0059DBD0-0x0059DCE8 off the image: the loop head is the
+//        ExpansionEnabled test (`mov eax,[0x9a6488]; test; je <increment>`), so the toggle is
+//        re-tested every iteration and a toggle-off pass costs nothing but the increment; the
+//        "Faction" + " " + say_num(i) build sits inside it; the "Prefs Format" query uses the
+//        GLOBAL TextBufferGetPtr (0x9b7d00) as its buffer rather than a local
+//        `returned_string[256]`; and `Txt.update()` - which is only
+//        `mov ecx,[Txt.buffer_get_]; mov [Txt.current_pos_],ecx` - sits at the branch join
+//        before the two strcpy's. Everything the old two-loop spelling needed was therefore
+//        the wrong control flow, not a detail. 8/83 -> 83/83.
+// LEVER: THE STRCPY IS REVERSED, and the polarity is load-bearing twice. `atoi != 12` pushes
+//        ebx (the Player field) FIRST and TextBufferGetPtr LAST, so arg1 is the BUFFER - the
+//        image stages the existing filename through TextBufferGetPtr so that the two
+//        strcpy's at the join then copy it into filename (no-op) and search_key (the real
+//        copy). Spelled the intuitive way round it costs `jne` instead of `je`, two extra
+//        reloads, and 81/83 instead of 83/83.
+// TRIED: `if (atoi(...) == 12) GetPrivateProfileStringA(...) else strcpy(...)` - branch
+//        polarity backwards (`jne 0x59dc94` against the image's `je 0x59dc82`); inverting the
+//        condition to `!= 12` is what puts the `je` on the query arm and the strcpy on the
+//        fall-through.
 // LEVER: dropped `std::string faction = "Faction "; faction += std::to_string(i);` for the
 //        image's own idiom - `StringTemp[0] = 0; strcat(StringTemp, "Faction "); say_num(i);`
 //        (say_num is the existing `char text[0x50]; _itoa(...); strcat(StringTemp, text);`
@@ -1781,26 +1892,36 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl prefs_fac_load() {
-    if (ExpansionEnabled) {
-        char returned_string[256];
-        GetPrivateProfileStringA(PrefsSection, "Prefs Format", "0", returned_string, 256, 
-            PrefsFile);
-        if (atoi(returned_string) == 12) {
-            for (int i = 1; i < MaxPlayerNum; i++) {
-                StringTemp[0] = 0;
-                strcat(StringTemp, "Faction ");
-                say_num(i);
-                GetPrivateProfileStringA(PrefsSection, StringTemp, Players[i].filename,
-                    returned_string, 256, PrefsFile);
-                strncpy_s(Players[i].filename, returned_string, 24);
-                strncpy_s(Players[i].search_key, returned_string, 24);
-            }
-        } else {
-            // use separate loop rather than check "Prefs Format" value each time in single loop
-            for (int i = 1; i < MaxPlayerNum; i++) {
-                strncpy_s(Players[i].search_key, Players[i].filename, 24);
-            }
+    // The image keeps ONE loop and re-runs both the ExpansionEnabled test and
+    // the "Prefs Format" query inside it (`je` straight to the increment when
+    // the toggle is off), and it uses the global TextBufferGetPtr as the query
+    // buffer - not a local `returned_string[256]`. The `Txt.update()` at the
+    // join is `mov ecx,[Txt.buffer_get_]; mov [Txt.current_pos_],ecx`.
+    for (int i = 1; i < MaxPlayerNum; i++) {
+        if (!ExpansionEnabled) {
+            continue;
         }
+        StringTemp[0] = 0;
+        strcat(StringTemp, "Faction");
+        strcat(StringTemp, " ");
+        say_num(i);
+        GetPrivateProfileStringA(PrefsSection, "Prefs Format", "0", TextBufferGetPtr, 256,
+            PrefsFile);
+        if (atoi(TextBufferGetPtr) != 12) {
+            // NOT `strcpy(Players[i].filename, ...)`: the image pushes ebx
+            // (the Player field) FIRST and TextBufferGetPtr LAST, so arg1 is
+            // the buffer - it stages the existing filename through
+            // TextBufferGetPtr so the two strcpy's at the join copy it into
+            // search_key. The unbounded copy into a char[24] field that
+            // read_factions documents is still here, one call later.
+            strcpy(TextBufferGetPtr, Players[i].filename);
+        } else {
+            GetPrivateProfileStringA(PrefsSection, StringTemp, Players[i].filename,
+                TextBufferGetPtr, 256, PrefsFile);
+        }
+        Txt.update();
+        strcpy(Players[i].filename, TextBufferGetPtr);
+        strcpy(Players[i].search_key, TextBufferGetPtr);
     }
 }
 
