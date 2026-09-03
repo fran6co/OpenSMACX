@@ -401,7 +401,10 @@ SCAFFOLD_CEILINGS = {
     # 11/135); Net::sub_62f390 and Net::drop_player, the two callees the two
     # bodies needed, took in-file reinterpret_cast forwarders beside their
     # callers instead of PENDING_BODY ones.
-    "PENDING_BODY forwarders": 222,
+    # 224 -> 223 (2026-09-03, the BasePop destructor): ??1BasePop@@QAE@XZ
+    # left pending_bodies.cpp for an in-class definition in basepop.h, whose
+    # out-of-line COMDAT basepop.cpp emits and claims against the image.
+    "PENDING_BODY forwarders": 221,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -453,7 +456,10 @@ SCAFFOLD_CEILINGS = {
     # 1278 -> 1277 (2026-09-03, net_class batch): units/006320e0.cpp deleted
     # with the body it drafted - check_polling homed into src/net_class.cpp
     # (MISMATCH 11/135, the register-assignment plateau the marker records).
-    "artifact files (recovered/)": 1277,
+    # 1278 -> 1277 (2026-09-03, the BasePop destructor): units/004064d0.cpp
+    # deleted with the verbatim body it preserved - the real chain is the
+    # compiler's, from basepop.h's member list, and basepop.cpp claims it.
+    "artifact files (recovered/)": 1276,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).

@@ -123,10 +123,25 @@ class BasePop : public GraphicWin {
   // src/*.h has 145 empty inline constructors and destructors across 75
   // classes, so the same question is waiting on most of them.
   BasePop();
-  // 0x004064D0 is not recovered: a
-  // pending_bodies forwarder, because an empty inline stub emits
-  // nothing and the deleting destructor needs a `call rel32`.
-  ~BasePop();
+  // DEFINED IN-CLASS, the ~FlatButton move, because the image INLINES this
+  // destructor at the popup's destruction sites and CALLS it out of line 75
+  // times - and only an in-class definition lets both happen.
+  // ??1BasePop@@QAE@XZ (0x004064D0, claimed in basepop.cpp) keeps being
+  // emitted out-of-line by the MEASURED storage class; the expansion is what
+  // Caviar::init_class (0x006185A0) lays down at each of its early returns
+  // and what sound_version_warning (0x004C9080) lays down at its one scope
+  // exit. Out-of-line here those sites can only emit `call ??1BasePop`, and
+  // init_class measured 16/392 with those 200 instructions of teardown
+  // MISSING outright rather than divergent.
+  //
+  // The body is `close()` and nothing else: the rest of the image's body -
+  // Spot at +0x3098, the Dialogs slab at +0x21d0, unit_ids_ and item_ids_,
+  // sprite_, both FlatButtons, heap_ and the GraphicWin base, in exactly
+  // that reverse-declaration order - is the compiler's, generated from the
+  // member declarations below, the same way ??1DipEdit is generated from
+  // dipedit.h. An empty body produces the identical chain; the one call the
+  // member list cannot produce is the image's opening `call ?close`.
+  MEASURED ~BasePop() { close(); }
   void set_loc(int x, int y);
   void set_width(int width);
   void write_check(long value);

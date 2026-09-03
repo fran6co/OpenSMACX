@@ -802,11 +802,6 @@ AlphaMovie::~AlphaMovie() {  // ??1AlphaMovie@@QAE@XZ at 0x00404310
     PENDING_BODY(0x00404310, pending)(this, nullptr);
 }
 
-BasePop::~BasePop() {  // ??1BasePop@@QAE@XZ at 0x004064D0
-    typedef void(__fastcall *pending)(BasePop *, void *);
-    PENDING_BODY(0x004064D0, pending)(this, nullptr);
-}
-
 BaseWin::~BaseWin() {  // ??1BaseWin@@QAE@XZ at 0x00420A70
     typedef void(__fastcall *pending)(BaseWin *, void *);
     PENDING_BODY(0x00420A70, pending)(this, nullptr);
