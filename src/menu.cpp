@@ -601,6 +601,113 @@ int Menu::uncheck_menu_item(int menu_id, int item_id) {
 
 
 /*
+Purpose: Find the menu whose id matches and add a text item to its PullDown.
+         An unknown menu answers 0xB, and so does a table that runs out before
+         matching.
+// ORIGINAL: 0x005FB100 ?add_menu_item@Menu@@QAEHHHPAD@Z 0x005FB100-0x005FB159 BYTE_EXACT
+Return Value: PullDown::add_item's, or 0xB when no entry matches
+Status: Complete
+*/
+int Menu::add_menu_item(int menu_id, int item_id, char *text) {
+    int index;
+    for (index = 0;; index++) {
+        if (index >= 15) {
+            return 0xB;
+        }
+        const int id = entries_[index].id;
+        // The -1 sentinel ends the table early; running off the end of the
+        // fifteen entries is the other way to miss. Both answer 0xB.
+        if (id == -1) {
+            return 0xB;
+        }
+        if (id == menu_id) {
+            break;
+        }
+    }
+    // LEVER: same body as the seven-clone family - the range guard at the TOP
+    // of a `for (;;)` body, and the dead `-1` test below it. Written straight
+    // from ?UNK3@Menu@@QAEHHH@Z (0x005FB1D0), which holds the six spellings
+    // measured for this shape.
+    // BUG IN THE ORIGINAL: the image re-tests the index against -1 here
+    // before dispatching. The index is a loop counter that starts at 0 and
+    // only increments, so the branch is dead. Left alone deliberately.
+    if (index == -1) {
+        return 0xB;
+    }
+    return entries_[index].pull_down->add_item(item_id, text);
+}
+
+
+/*
+Purpose: Find the menu whose id matches and append a separator to its
+         PullDown. An unknown menu answers 0xB, and so does a table that runs
+         out before matching; a match answers 0 whatever the PullDown said.
+// ORIGINAL: 0x005FB160 ?add_separator@Menu@@QAEHHH@Z 0x005FB160-0x005FB1B6 BYTE_EXACT
+Return Value: 0, or 0xB when no entry matches
+Status: Complete
+*/
+int Menu::add_separator(int menu_id, int item_id) {
+    int index;
+    for (index = 0;; index++) {
+        if (index >= 15) {
+            return 0xB;
+        }
+        const int id = entries_[index].id;
+        if (id == -1) {
+            return 0xB;
+        }
+        if (id == menu_id) {
+            break;
+        }
+    }
+    // BUG IN THE ORIGINAL: the image re-tests the index against -1 here
+    // before dispatching. The index is a loop counter that starts at 0 and
+    // only increments, so the branch is dead. Left alone deliberately - see
+    // ?UNK3@Menu@@QAEHHH@Z (0x005FB1D0).
+    if (index == -1) {
+        return 0xB;
+    }
+    // The image zeroes eax after the call: add_separator's answer is
+    // discarded and this always answers 0.
+    entries_[index].pull_down->add_separator(item_id);
+    return 0;
+}
+
+
+/*
+Purpose: Find the menu whose id matches and rename an item of its PullDown.
+         An unknown menu answers 0xB, and so does a table that runs out before
+         matching.
+// ORIGINAL: 0x005FB700 ?rename_menu_item@Menu@@QAEHHHPAD@Z 0x005FB700-0x005FB759 BYTE_EXACT
+Return Value: PullDown::rename_item's, or 0xB when no entry matches
+Status: Complete
+*/
+int Menu::rename_menu_item(int menu_id, int item_id, char *text) {
+    int index;
+    for (index = 0;; index++) {
+        if (index >= 15) {
+            return 0xB;
+        }
+        const int id = entries_[index].id;
+        if (id == -1) {
+            return 0xB;
+        }
+        if (id == menu_id) {
+            break;
+        }
+    }
+    // BUG IN THE ORIGINAL: the image re-tests the index against -1 here
+    // before dispatching. The index is a loop counter that starts at 0 and
+    // only increments, so the branch is dead. Left alone deliberately - see
+    // ?UNK3@Menu@@QAEHHH@Z (0x005FB1D0).
+    if (index == -1) {
+        return 0xB;
+    }
+    return entries_[index].pull_down->rename_item(item_id, text);
+}
+
+
+/*
 Purpose: Find the menu whose id matches and answer the item index its
          PullDown holds for the item id. An unknown menu answers -1, and so
          does a table that runs out before matching.
@@ -647,6 +754,50 @@ int Menu::UNK11(int menu_id, int item_id) {
     }
     return entries_[index].pull_down->id_to_index(item_id);
 }
+
+
+/*
+Purpose: Find the menu whose id matches and answer the id its PullDown holds
+         in the item slot. An unknown menu answers -1, and so does a table that
+         runs out before matching.
+// ORIGINAL: 0x005FB930 ?UNK12@Menu@@QAEHHH@Z 0x005FB930-0x005FB981 BYTE_EXACT
+Return Value: the entry's PullDown item id, or -1 when nothing matches
+Status: Complete
+*/
+int Menu::UNK12(int menu_id, int item_id) {
+    int index;
+    for (index = 0;; index++) {
+        if (index >= 15) {
+            return -1;
+        }
+        const int id = entries_[index].id;
+        if (id == -1) {
+            return -1;
+        }
+        if (id == menu_id) {
+            break;
+        }
+    }
+    // LEVER: the range guard at the TOP of a `for (;;)` body, as the seven-
+    // clone family (see ?UNK3@Menu@@QAEHHH@Z 0x005FB1D0). What this body adds
+    // is the slot bound, and the image merges its exit with the dead `-1`
+    // test's - ONE -1 epilogue at the loop's exhausted edge, both tests
+    // jumping back to it (`je 0x5fb952`, `jge 0x5fb952`). Three separate
+    // `return -1;` statements did NOT merge: VC6 emitted three epilogues, one
+    // spelled `or eax, eax` for the path where it knows the index is already
+    // -1 (18 of 30 against this). The chained spelling is what reproduces the
+    // image's shared exit - the mirror of the family's "test them separately"
+    // rule, which is a rule about what the image shows, not about `||`.
+    // BUG IN THE ORIGINAL: the image re-tests the index against -1 here
+    // before dispatching. The index is a loop counter that starts at 0 and
+    // only increments, so that half of the test is dead. Left alone
+    // deliberately - fixing it breaks the match.
+    if (index == -1 || item_id >= 64) {
+        return -1;
+    }
+    return entries_[index].pull_down->items_[item_id].id;
+}
+
 
 
 /*

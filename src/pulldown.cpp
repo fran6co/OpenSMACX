@@ -172,6 +172,48 @@ int PullDown::uncheck_item(int id) {
     return 0;
 }
 
+
+/*
+Purpose: Append a separator item to the end of the pull-down, and give it the
+         requested ID. A full table answers 1, an unknown ID answers 3, and a
+         slot whose text is still allocated answers 0xC.
+// ORIGINAL: 0x005F8BE0 ?add_separator@PullDown@@QAEHH@Z 0x005F8BE0-0x005F8C81 BYTE_EXACT
+// size      161 bytes
+// prototype int (__thiscall ?add_separator@PullDown@@QAEHH@Z)(PullDown* this, int)
+// callers   10   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: 0 when the separator was added, else the reason it was not
+Status: Complete
+*/
+int PullDown::add_separator(int id) {
+    const int new_count = ++item_count_;
+    if (new_count > 64) {
+        --item_count_;
+        return 1;
+    }
+    if (id == -1) {
+        return 3;
+    }
+    // Reuse the first free slot if there is one; the append is only where the
+    // new item lands when the table had none.
+    for (int i = 0; i < 64; ++i) {
+        if (items_[i].id == -1) {
+            const int slot = new_count - 1;
+            if (items_[slot].text != nullptr) {
+                return 0xC;
+            }
+            items_[slot].id = id;
+            items_[slot].flags = 5;
+            ++visible_count_;
+            dirty_ = 1;
+            return 0;
+        }
+    }
+    return 1;
+}
+
 /*
 Purpose: Return the selected item index unless that item is disabled.
 // ORIGINAL: 0x005F9F40 ?get_selected@PullDown@@QAEHXZ 0x005F9F40-0x005F9F5C BYTE_EXACT

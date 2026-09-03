@@ -79,6 +79,10 @@ class Menu : public GraphicWin {
   int enable_menu_item(int menu_id, int item_id);
   int check_menu_item(int menu_id, int item_id);
   int uncheck_menu_item(int menu_id, int item_id);
+  int add_menu_item(int menu_id, int item_id, char *text);
+  int add_separator(int menu_id, int item_id);
+  int rename_menu_item(int menu_id, int item_id, char *text);
+  int UNK12(int menu_id, int item_id);
 
  private:
   MenuProc proc_;

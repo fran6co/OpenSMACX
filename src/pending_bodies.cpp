@@ -80,6 +80,7 @@
 #include "newtechwin.h"
 #include "pickwin.h"
 #include "popmenu.h"
+#include "pulldown.h"
 #include "prodpicker.h"
 #include "pushbutton.h"
 #include "socialwin.h"
@@ -1781,3 +1782,18 @@ int __cdecl ambience(int ambience_id) {
 
 
 
+
+// Menu's add_menu_item (0x005FB100) and rename_menu_item (0x005FB700) - homed
+// into src/menu.cpp - call these two PullDown members. Both are large
+// (527 and 494 bytes) and unrecovered, so they stand as forwarders; their
+// drafted bodies stay in src/unrecovered/005f89d0.cpp and 005f8e50.cpp. Their
+// sibling add_separator (0x005F8BE0, 161 bytes) IS homed in src/pulldown.cpp.
+int PullDown::add_item(int id, char *text) {
+    typedef int(__fastcall *pending)(PullDown *, void *, int, char *);
+    return PENDING_BODY(0x005F89D0, pending)(this, nullptr, id, text);
+}
+
+int PullDown::rename_item(int id, char *text) {
+    typedef int(__fastcall *pending)(PullDown *, void *, int, char *);
+    return PENDING_BODY(0x005F8E50, pending)(this, nullptr, id, text);
+}
