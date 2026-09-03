@@ -86,8 +86,37 @@ def scan(record):
     # mnemonic: `adc <anything>, 0` (and `sbb ..., 0`) reads the flag
     # register C has no name for, so cl 12.00.8168 cannot emit it. The
     # mnemonics view carries no operands, so this reads the rendered lines.
-    for line in listing.lines:
+    lines = listing.lines
+    for index, line in enumerate(lines):
         parts = line.split()
+        # THE DUFF'S-DEVICE DISPATCH, found 2026-09-03 on Buffer::copy_mask
+        # (0x005E2B00): a `lea reg, <case>` immediately followed by a jump
+        # through that SAME register is a computed dispatch VC6 never emits
+        # - its switches use jump tables addressed directly, and nothing it
+        # synthesises is a two-instruction computed goto. The shipped
+        # binary carries the FOLDED form: a dead lea of the target with a
+        # direct jmp beside it. copy_mask keeps
+        # its case counter and row remainders in fixed .data beside it. The
+        # lea-then-jmp-through-it window is what keeps ordinary address
+        # arithmetic out.
+        if index + 1 < len(lines):
+            here = lines[index].split()
+            nxt = lines[index + 1].split()
+            if "lea" in here and "jmp" in nxt:
+                # THE FOLDED FORM the shipped binary actually carries: the
+                # lea computes an address and the next instruction jumps to
+                # that SAME address directly - a dead lea VC6 never emits
+                # (its address computations always feed something). The
+                # unfolded `jmp reg` form matches too, for bodies whose
+                # dispatch survived folding.
+                lea_at = here.index("lea")
+                jmp_at = nxt.index("jmp")
+                if (lea_at + 2 < len(here) and jmp_at + 1 < len(nxt)):
+                    target = nxt[jmp_at + 1]
+                    folded = (here[lea_at + 2].lstrip("[").rstrip("]") == target)
+                    through = (here[lea_at + 1].rstrip(",") == target)
+                    if folded or through:
+                        strong.append("lea/jmp-dispatch")
         # THE MNEMONIC SITS AFTER THE ADDRESS AND THE HEX-BYTE TOKENS, which
         # split into one token each - so index into it by membership, not
         # position: `adc eax, 0` is ['0xADDR', '83', 'D0', '00', 'adc',
