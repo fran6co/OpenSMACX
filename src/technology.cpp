@@ -75,54 +75,96 @@ Status: Complete
 // 0x5b9f20` at these 4 sites - fixing it needs has_tech's definition moved
 // out of the header, which has ~108 other call sites across the tree and is
 // out of scope for this body.
+//   (STALE: has_tech_call DOES reproduce the image's four `call 0x5b9f20`
+//   now - call_diff agrees on every call this body makes.)
+// LEVER: one shared failure exit - every one of the nine failure paths leaves
+//   through a single `fail: return false;` at the bottom of the function, and
+//   the two `return true;` sites stay inline. Written as nine `return false;`
+//   statements each guard got its own epilogue (VC6 knows eax is already 0
+//   from the has_tech call it just tested, so it never shares those) and the
+//   body ran 146 instructions against the image's 112; with the goto it is
+//   106 and 96/112 agree, 0.963 similar under /O2 /Oy- (was 26/112).
+// LEVER: indexed loops, not pointer locals - `Reactor[i].preq_tech`,
+//   `Weapon[i].preq_tech`, `Weapon[i].offense_rating`. The image strength-
+//   reduces each into a field pointer and keeps the weapon counter alive
+//   (`shl esi, 4; movsx ecx, byte ptr [esi + 0x94ae68]`) only because the
+//   body indexes the array again; a `RulesWeapon *weapon` local read the
+//   field off the pointer and lost the call/shl/add/movsx order.
+// TRIED: the last 6 instructions - the image duplicates BOTH `return true`
+//   epilogues (0x0057CF4B and 0x0057CF8D) while VC6 tail-merges ours into one
+//   block reached by `jle` back. No honest spelling of two identical
+//   `return true;` statements stops the merge. `int i` had to move above the
+//   loops: a goto over `for (int i ...)` is C2362 under VC6's leaking
+//   for-scope. `ranking` is cast to int at the compare because the image
+//   tests it SIGNED (`jg`, 0x0057CF65) and faction.h is not this file's.
 BOOL __cdecl valid_tech_leap(int tech_id, int faction_id) {
     // EACH `&&` IS TWO SEPARATE EARLY RETURNS, not one combined test: the
     // image tests every has_tech() call on its own `je`, and re-reads
     // Technology[tech_id].preq_tech_1/2 from the array rather than keeping
     // an earlier read live across a has_tech()/weapon_budget() call.
+    //
+    // EVERY failure path leaves through ONE shared `return false` at the bottom
+    // of the function - nine `jmp 0x57cf97` sites over a single
+    // `pop edi; pop esi; xor eax,eax; pop ebx; pop ebp; ret` - and the two
+    // `return true` sites are duplicated inline instead. A `return false;` at
+    // each guard compiles to a private epilogue per site (VC6 knows eax is
+    // already 0 there, so it never shares) and the body runs 30 instructions
+    // long; the goto is what puts the block at the end where the image has it.
     if (Technology[tech_id].preq_tech_1 >= 0) {
         if (!has_tech_call(Technology[Technology[tech_id].preq_tech_1].preq_tech_1, faction_id)) {
-            return false; // doesn't have 1st prerequisite's 1st prerequisite
+            goto fail; // doesn't have 1st prerequisite's 1st prerequisite
         }
         if (!has_tech_call(Technology[Technology[tech_id].preq_tech_1].preq_tech_2, faction_id)) {
-            return false; // doesn't have 1st prerequisite's 2nd prerequisite
+            goto fail; // doesn't have 1st prerequisite's 2nd prerequisite
         }
     }
     if (Technology[tech_id].preq_tech_2 >= 0) {
         if (!has_tech_call(Technology[Technology[tech_id].preq_tech_2].preq_tech_1, faction_id)) {
-            return false; // doesn't have 2nd prerequisite's 1st prerequisite
+            goto fail; // doesn't have 2nd prerequisite's 1st prerequisite
         }
         if (!has_tech_call(Technology[Technology[tech_id].preq_tech_2].preq_tech_2, faction_id)) {
-            return false; // doesn't have 2nd prerequisite's 2nd prerequisite
+            goto fail; // doesn't have 2nd prerequisite's 2nd prerequisite
         }
     }
     if (Technology[tech_id].preq_tech_1 <= TechDisabled) {
-        return false; // disabled
+        goto fail; // disabled
     }
     if (Technology[tech_id].preq_tech_2 <= TechDisabled) {
-        return false; // disabled
+        goto fail; // disabled
     }
-    RulesReactor *reactor = Reactor;
-    for (int i = 0; i < MaxReactorNum; i++, reactor++) {
-        if (tech_id == reactor->preq_tech) {
-            return false; // leap not possible for reactor tech
+    // BOTH of these loops are INDEXED in the image - `Reactor[i].preq_tech`,
+    // `Weapon[i].preq_tech`, `Weapon[i].offense_rating` - and not walked with a
+    // pointer local: the image strength-reduces each into a field pointer
+    // (`[eax + 0x952800]`, `shl esi, 4; movsx ecx, byte ptr [esi + 0x94ae68]`)
+    // and keeps the reactor counter dead. A `RulesWeapon *weapon` local costs
+    // the counter AND reads the field off the pointer instead of the index.
+    // `i` cannot be declared in the first for: a goto that skips its
+    // initialisation is C2362 under VC6's leaking for-scope.
+    int i;
+    for (i = 0; i < MaxReactorNum; i++) {
+        if (tech_id == Reactor[i].preq_tech) {
+            goto fail; // leap not possible for reactor tech
         }
     }
-    RulesWeapon *weapon = Weapon;
-    for (i = 0; i < MaxWeaponNum; i++, weapon++) {
-        if (weapon->preq_tech == tech_id) { // may end early if 2 weapons have the same preq
-            if (PlayersData[faction_id].ranking > 2) { // lowest two ranking factions
-                return false;
+    for (i = 0; i < MaxWeaponNum; i++) {
+        if (Weapon[i].preq_tech == tech_id) { // may end early if 2 weapons have the same preq
+            // `ranking` is declared uint32_t in faction.h, but the image compares it
+            // SIGNED here - `cmp dword ptr [...], 2; jg` at 0x0057CF65, not `ja`. The
+            // cast is the image's own arithmetic; faction.h is not this file's to change.
+            if ((int)PlayersData[faction_id].ranking > 2) { // lowest two ranking factions
+                goto fail;
             }
             // this line is an odd comparison (offensive rating <= best weapon id + 2)
             // however it might be to prevent leaps for later weapon tech
-            if (weapon->offense_rating > weapon_budget(faction_id, 99, false) + 2) {
-                return false;
+            if (Weapon[i].offense_rating > weapon_budget(faction_id, 99, false) + 2) {
+                goto fail;
             }
             return true;
         }
     }
     return true;
+fail:
+    return false;
 }
 
 /*
@@ -142,13 +184,34 @@ Purpose: Craft an output string related to a specific technology. For techIDs ou
 //   `measure` regressed from 12/221 to 7/221 because the differently-shaped body
 //   scores worse elsewhere. Reverted; tech_category is not `MEASURED inline`'able
 //   from within this file without a net loss.
-// UNEXPLORED: left untouched - MISMATCH at instruction 2, compiled body is 133 instructions
-//   against the image's 221, a size gap much bigger than a register-allocation difference
-//   accounts for. The `tech_id < -1` branch here is suspect: the image reads a label id out of
-//   a runtime struct (`mov eax,[0x9b90f8]; mov eax,[eax+0x4d8]`, then an apparent __thiscall
-//   through ecx=0x9b90d8 into 0x6169a0) rather than pushing a literal constant the way
-//   `label_get(310)` compiles to here. Worth checking whether `label_get`'s argument in that
-//   branch should be a field read (e.g. off a Rules-like global) instead of the literal 310.
+// RESOLVED (was UNEXPLORED): the `tech_id < -1` branch was never a fabricated
+//   constant. `mov eax,[0x9b90f8]; mov eax,[eax+0x4d8]; push eax; call
+//   Strings::get` IS `label_get(310)` - `Labels.strings_ptr` (the object at
+//   0x009B90F8) indexed by 310, i.e. 0x4d8/4. Same for label_get(25) = [+0x64]
+//   and label_get(306) = [+0x4c8], and label_get(487) = [+0x79c] and
+//   label_get(185) = [+0x2e4] further down. The body was already faithful; the
+//   `strcat_s(output, 80, ...)` wrappers around those calls were not.
+// LEVER: plain `strcat`, not `strcat_s(output, 80, ...)` - every one of the
+//   image's 19 string appends here is the 2-arg import at 0x00645470
+//   (`push <src>; push <output>; call strcat; add esp, 8`). The bounded
+//   spelling changes the import, the stack cleanup and the merged-tail shape.
+// LEVER: `" ("` is TWO appends - the image calls strcat with 0x00682820 (" ")
+//   and then 0x00682E9C ("(") at 0x005B9D10/0x005B9D1B, and again in the
+//   Language arm at 0x005B9E42/0x005B9E4D. No " (" literal exists in the image
+//   to fold them into. Landed with the two fixes above; 12/221, 0.735 similar.
+// TRIED: guard clauses with an explicit `return;` per branch, to split the
+//   three epilogues the image carries at 0x005B9C78/0x005B9CA3/0x005B9CD4 -
+//   measured identical, 12/221, so reverted to the if/else-if chain (the image
+//   shares its last two tails at 0x005B9ED5/0x005B9EEA, which reads as a chain).
+// TRIED: the remaining 190-vs-221 gap is one thing and it is not reachable from
+//   this file - the image INLINES tech_category here (its four-compare chain at
+//   0x005B9D26-0x005B9D5B) where this tree keeps the out-of-line call, and
+//   holding the extra live value costs us the `push ebx` in the prologue that
+//   the image defers to a push/pop pair inside the category branch
+//   (0x005B9D66/0x005B9DCB). Moving tech_category to technology.h as
+//   `MEASURED inline` would earn the inline, but risks the six other call
+//   sites and the BYTE_EXACT body it already has; left for a pass that owns
+//   the whole tech family.
 // LEVER: the sprintf_s(&output[strlen(output)], 80, ...) calls replaced with the image's
 //   strcat/_itoa idiom (a `char num_buf[80];` local, one strcat per literal/string piece, and
 //   `_itoa(value, num_buf, 10); strcat(output, num_buf);` for the numeric field), and
@@ -168,15 +231,19 @@ Status: Complete
 void __cdecl say_tech(LPSTR output, int tech_id, BOOL category_lvl) {
     char num_buf[80];
     if (tech_id < -1) {
-        strcat_s(output, 80, label_get(310)); // "Not Available"
+        strcat(output, label_get(310)); // "Not Available"
     } else if (tech_id < 0) {
-        strcat_s(output, 80, label_get(25)); // "NONE"
+        strcat(output, label_get(25)); // "NONE"
     } else if (tech_id == 9999) {
-        strcat_s(output, 80, label_get(306)); // "World Map"
+        strcat(output, label_get(306)); // "World Map"
     } else if (tech_id < MaxTechnologyNum) {
-        strcat_s(output, 80, StringTable.get((int)Technology[tech_id].name));
+        strcat(output, StringTable.get((int)Technology[tech_id].name));
         if (category_lvl) {
-            strcat(output, " (");
+            // " " and "(" are TWO separate appends - the image calls strcat
+            // with 0x00682820 (" ") and then 0x00682E9C ("("), and there is no
+            // " (" literal anywhere in it to fold the pair into.
+            strcat(output, " ");
+            strcat(output, "(");
             strcat(output, label_get(629 + tech_category(tech_id))); // 'E#', 'D#', 'B#', 'C#'
             _itoa(tech_recurse(tech_id, 0), num_buf, 10);
             strcat(output, num_buf);
@@ -185,7 +252,8 @@ void __cdecl say_tech(LPSTR output, int tech_id, BOOL category_lvl) {
     } else if (tech_id < 97) {
         if (Language) {
             strcat(output, label_get(487)); // 'Comm Frequency'
-            strcat(output, " (");
+            strcat(output, " ");
+            strcat(output, "(");
             strcat(output, get_noun(tech_id - MaxTechnologyNum));
             strcat(output, ")");
         } else {
@@ -220,14 +288,23 @@ Status: Complete
 
 /*
 Purpose: Check whether faction has a particular tech or not.
-// ORIGINAL: 0x005B9F20 ?has_tech@@YA_NHH@Z 0x005B9F20-0x005B9F89
-// LEVER: `RulesTechnology *tech = &Technology[tech_id];` then `tech->preq_tech_1`/`tech->preq_tech_2`
+// ORIGINAL: 0x005B9F20 ?has_tech@@YA_NHH@Z 0x005B9F20-0x005B9F89 BYTE_EXACT
+// LEVER: (2026-09-03, BYTE_EXACT 46/46) the pointer lever below was HALF right
+//   and the last 14 instructions were the other half: the two preq reads must
+//   be SUBSCRIPTS off the array - `Technology[tech_id].preq_tech_1` into a
+//   local, then `Technology[tech_id].preq_tech_2` read straight from memory -
+//   so the compiler folds the ARRAY BASE into the displacements
+//   (`mov esi, [eax + 0x94f37c]`, `cmp dword ptr [eax + 0x94f380], -1`). A
+//   `RulesTechnology *tech = &Technology[tech_id]` local materialises the
+//   address and puts the base inside the lea chain instead, which costs four
+//   instructions at the first read and the shared tail after it. Full note on
+//   the body in technology.h, where it lives.
+// TRIED: `RulesTechnology *tech = &Technology[tech_id];` then `tech->preq_tech_1`/`tech->preq_tech_2`
 //   forces the compiler to keep BOTH tech_id and faction_id live in callee-saved registers
 //   (matching the image's edi/esi) instead of re-deriving the field address per access;
 //   two direct `Technology[tech_id].field` reads in one condition compile to a completely
-//   different (and much longer) address recomputation. Moved 8/46 -> 32/46 agreeing.
-// TRIED: `== TechDisabled` for the preq checks compiles to `cmp/je -2`; the image is
-//   `cmp/jl -1` (i.e. `< TechNone`), which is what preq_tech_1/preq_tech_2 use now.
+//   different (and much longer) address recomputation. Moved 8/46 -> 32/46 agreeing. The
+//   missing half: the reads were still THROUGH A POINTER, which is what blocked the fold.
 // symbol    ?has_tech@@YAHHH@Z
 // size      105 bytes
 // prototype bool (__cdecl ?has_tech@@YA_NHH@Z)(int techID, int factionID)
@@ -291,6 +368,13 @@ Return Value: Level
 Status: Complete
 */
 // BODY IN technology.h, as `MEASURED inline`: see the LEVER note above.
+// TRIED: (2026-09-03, after the has_tech fold discovery) `int preq_1 =
+//   Technology[tech_id].preq_tech_1; int preq_2 = ...` locals in place of the
+//   pointer - 22/36, WORSE than the pointer's 25/36, because both loads then
+//   happen before the first recursive call where the image reads preq_tech_2
+//   out of [esi + 0x94f380] only after it returns. The image's form wants the
+//   reads at the call sites AND the array base folded into the displacements;
+//   this compiler will not do both at once here. Left at the pointer form.
 
 /*
 Purpose: Determine what category is dominate for tech_id. If there is a tie, the order of precedence
@@ -322,7 +406,16 @@ int __cdecl tech_category(int tech_id) {
 /*
 Purpose: Check to see whether provided faction can research a specific technology. Checks are
          included to prevent SMACX specific Veh from being built in SMAC mode.
-// ORIGINAL: 0x005BAC20 ?tech_avail@@YAHHH@Z 0x005BAC20-0x005BADBF
+// ORIGINAL: 0x005BAC20 ?tech_avail@@YAHHH@Z 0x005BAC20-0x005BADBF BYTE_EXACT
+// LEVER: (2026-09-03, 78/130 -> BYTE_EXACT 130/130) the pointer lever this
+//   marker credits below was the wrong half of the same discovery has_tech
+//   needed: the preq reads here are SUBSCRIPTS read IN ORDER - preq_tech_1
+//   into a local, tested, and only then preq_tech_2 - so the compiler keeps
+//   `44 * tech_id` in a register with the array base folded into both
+//   displacements (`mov eax, [edx + 0x94f37c]`, `mov edi, [edx + 0x94f380]`).
+//   The pointer spelling materialised the address, and reading both preqs up
+//   front put the second load before the first compare, where the image has it
+//   after. Everything else in this body already agreed.
 // LEVER: has_tech marked `__forceinline` (it is defined earlier in the file, so every caller
 //   below it CAN inline it; the image inlines it here and in tech_effects/tech_val, but calls it
 //   for real in valid_tech_leap, which is defined ABOVE has_tech and so cannot see its body -
@@ -345,11 +438,19 @@ BOOL __cdecl tech_avail(int tech_id, int faction_id) {
             || tech_id == TECH_SECMANI || tech_id == TECH_NEWMISS || tech_id == TECH_BFG9000))) {
         return false;
     }
-    RulesTechnology *tech = &Technology[tech_id];
-    int preq_tech_1 = tech->preq_tech_1;
-    int preq_tech_2 = tech->preq_tech_2;
-    if (preq_tech_1 < TechNone || preq_tech_2 < TechNone) {
-        return false; // if either prerequisite tech is set to disabled (-2)
+    // Subscripts, and read IN ORDER: preq_tech_1 into a local, tested, and only
+    // then preq_tech_2. The image keeps `44 * tech_id` in a register with the
+    // array base folded into both displacements ([edx + 0x94f37c] / [edx +
+    // 0x94f380]); a `RulesTechnology *tech` local materialises the address
+    // instead, and reading both preqs up front puts the second load before the
+    // first compare, where the image has it after.
+    int preq_tech_1 = Technology[tech_id].preq_tech_1;
+    if (preq_tech_1 < TechNone) {
+        return false; // prerequisite tech set to disabled (-2)
+    }
+    int preq_tech_2 = Technology[tech_id].preq_tech_2;
+    if (preq_tech_2 < TechNone) {
+        return false; // prerequisite tech set to disabled (-2)
     }
     return (has_tech(preq_tech_1, faction_id) && has_tech(preq_tech_2, faction_id));
 }
@@ -382,6 +483,16 @@ Purpose: Calculate faction's tech related bonuses for commerce and resource prod
 //   moved closer to the image's 133 (149 -> 122). Left in.
 // TRIED: plateau 17/133 under /Oy-; loop register allocation differs from the image -
 //        the same open plateau as has_tech/tech_recurse (MEASURED-inline family ceiling)
+// TRIED: (2026-09-03) 13/133 under /Oy- after has_tech went BYTE_EXACT - the
+//        image's inlined has_tech COPY here is a different compilation than
+//        has_tech's own body: it indexes with `imul ecx, ecx, 0x2c`
+//        (0x005BAEC6) where has_tech's own body uses the lea/shl chain, and it
+//        interleaves the two stride computations (65*faction for PlayersData,
+//        359*faction for Players) with the 0xCC-padded param slot [ebp+8]
+//        reused to spill one of them (0x005BAE87). A shared inline body cannot
+//        be both forms at once, so this is a ceiling, not a defect; the
+//        has_tech edit was still worth it (it is what made has_tech and
+//        tech_avail exact).
 Return Value: n/a
 Status: Complete
 */
@@ -436,12 +547,14 @@ void __cdecl tech_effects(int faction_id) {
 
 /*
 Purpose: Determine if preqTechID is a prerequisite of parentTechID within descending range.
-// ORIGINAL: 0x005BCB60 ?tech_is_preq@@YAHHHH@Z 0x005BCB60-0x005BCBDB
-// TRIED: the `RulesTechnology *tech = &Technology[parent_tech_id];` pointer lever that
-//   helped has_tech/tech_recurse/tech_avail REGRESSES this one (9/63 -> 5/63): it merges the
-//   two early `return false;` guards (preq_tech_id<0, parent_tech_id<0) into one shared
-//   epilogue the image does not use. Left as plain `Technology[parent_tech_id].preq_tech_N`.
-//   Still MISMATCH at 9/63; unexplored beyond that.
+// ORIGINAL: 0x005BCB60 ?tech_is_preq@@YAHHHH@Z 0x005BCB60-0x005BCBDB BYTE_EXACT
+// LEVER: guard-split, in technology.h where the body lives - the first two tests are
+//   TWO separate early returns, each with its own `xor eax,eax / pop ebx / pop ebp / ret`
+//   epilogue, not one `if (preq_tech_id < 0 || parent_tech_id < 0)`. The chained spelling
+//   shares one epilogue, which puts `mov eax,[ebp+0xc]` where the image has the first
+//   guard's `xor eax,eax` and everything after it diverges (5/63). Split: 63/63 BYTE_EXACT.
+//   The earlier TRIED line below blamed the `&Technology[...]` pointer for the same
+//   divergence - the pointer was incidental; both spellings chained the guards.
 // LEVER: `MEASURED inline` in technology.h - the image expands tech_is_preq one recursion
 //   level at each call site (20 tight pairs of calls to this address in tech_val alone); moving
 //   the body out of this .cpp reproduces that without costing tech_is_preq its own out-of-line
@@ -477,6 +590,13 @@ Purpose: Determine how valuable the specified techID is to a faction. This id ei
 //   wants_to_attack/tech_recurse still short by 3 calls total, not chased further this pass -
 //   the divergence starts at instruction 0 (image keeps ebp frame, the picked flag set does not)
 //   and cascades. Moved 26/1361 -> 29/1361 agreeing.
+// TRIED: (2026-09-03) 31/1361 under /O2 /Oy- after tech_is_preq went BYTE_EXACT
+//   (was 22/1361) - its 20 inlined pairs now compile from an exact body. The
+//   remaining wall is the frame: the image allocates 0x20 of locals and loads
+//   tech_id into edx BEFORE the callee-saved pushes (0x005BCBE3-0x005BCBE9),
+//   this tree allocates 0x38 and pushes ebx first, so every displacement after
+//   that is off by one slot. 4133 bytes of body behind that; not reachable in
+//   a source-form pass.
 // size      4133 bytes
 // prototype int (__cdecl ?tech_val@@YAHHHH@Z)(int techID, int factionID, BOOL simpleCalc)
 // callers   14   call targets   5
@@ -728,6 +848,14 @@ Purpose: Determine a tech the specified faction should research.
 //   automatically (i is also used for tech_avail/tech_val/the Formers compare/the return value).
 // TRIED: plateau 10/124 after the tech_recurse inline; the loop's induction variable stays an
 //        int index where the image steps a pointer by 0x2C - strength reduction did not fall out
+// TRIED: (2026-09-03, re-read after the has_tech/tech_avail landings) the image's
+//        strength-reduced pointer lives in a STACK SLOT - `[ebp - 4] = 0x94f380`
+//        at 0x005BDC2F, the address of `Technology[0].preq_tech_2`, re-tested
+//        against both array bounds (0x005BDCB0/0x005BDCB7) as the inlined
+//        tech_recurse's `tech_id < 0 || tech_id >= MaxTechnologyNum`. Same four
+//        locals, but the image spills search/is_human/the pointer while this
+//        tree keeps them in registers. Nothing in the body's spelling chooses
+//        which; measured once more at 10/124 after the header edits, unchanged.
 // size      340 bytes
 // prototype int (__cdecl ?tech_ai@@YAHH@Z)(int factionID)
 // callers   3   call targets   5
@@ -899,6 +1027,14 @@ Purpose: Calculate how much researching a tech will cost the specified faction.
 //   a small mismatch (it never picks /Oy- for this function), so `measure`'s default output does
 //   not show the size of this win. tools/signedness.py now reports 0 remaining pure-signedness
 //   claims on this body. Still deep MISMATCH beyond that; not chased further.
+// TRIED: (2026-09-03, re-read) the instruction COUNT now matches exactly, 234
+//   against 234, and 134 agree under /O2 /Oy-. What is left is register NAMING
+//   and one spilled slot, not shape: the image holds `rule_factor` in edi and
+//   its >>3 divisor in the same register (`shr edi, 3; idiv edi`,
+//   0x005BE7EC-0x005BE7EF) keeping esi for the >>5 copy, where this tree has
+//   the two swapped; and the [ebp-4] slot-reuse noted above. Both spellings of
+//   the source express the same arithmetic, so there is nothing left to
+//   rewrite here.
 // size      641 bytes
 // prototype int (__cdecl ?tech_rate@@YAHH@Z)(int factionID)
 // callers   6   call targets   0

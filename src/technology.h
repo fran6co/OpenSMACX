@@ -226,7 +226,13 @@ MEASURED inline int __cdecl tech_recurse(int tech_id, int base_lvl) {
 }
 
 MEASURED inline BOOL __cdecl tech_is_preq(int preq_tech_id, int parent_tech_id, int range) {
-    if (preq_tech_id < 0 || parent_tech_id < 0) {
+    // EACH of these four guards is its OWN early return with its own epilogue -
+    // the image never shares the `return false` block between two tests, so the
+    // first two must not be chained with `||` (see technology.cpp's LEVER list).
+    if (preq_tech_id < 0) {
+        return false;
+    }
+    if (parent_tech_id < 0) {
         return false;
     }
     if (preq_tech_id == parent_tech_id) {
@@ -244,6 +250,18 @@ MEASURED inline BOOL __cdecl tech_is_preq(int preq_tech_id, int parent_tech_id, 
 // within that one translation unit - callers elsewhere (e.g. facility_avail
 // in base.cpp) got a real out-of-line call, where the image open-codes the
 // whole preq_tech walk at every one of its 109 call sites.
+//
+// LEVER (2026-09-03, 32/46 -> BYTE_EXACT 46/46): the preq reads are SUBSCRIPTS
+//   off the array and not a `RulesTechnology *tech = &Technology[tech_id]`
+//   pointer local, with the first read held in a local. The image computes
+//   `44 * tech_id` once into a register and folds the ARRAY BASE into both
+//   displacements - `mov esi, [eax + 0x94f37c]` / `cmp [eax + 0x94f380], -1` -
+//   which only happens when the field is named off the array; a pointer local
+//   materialises the address and the base ends up inside the lea chain
+//   instead (`mov esi, [edx*4 + 0x24]`, `lea edx, [edx*4]`). `preq_1` is read
+//   once and kept in esi across the third test, and preq_tech_2 is read from
+//   memory a second time. The same lever took tech_avail (which inlines this
+//   body three times) to BYTE_EXACT 130/130.
 MEASURED inline BOOL __cdecl has_tech(int tech_id, int faction_id) {
     if (faction_id <= 0) {
         return false;
@@ -254,10 +272,19 @@ MEASURED inline BOOL __cdecl has_tech(int tech_id, int faction_id) {
     if (tech_id < 0 || tech_id >= (MaxTechnologyNum - 1)) { // excludes 'Transcendent Thought'
         return false;
     }
-    RulesTechnology *tech = &Technology[tech_id];
-    if (tech->preq_tech_1 < TechNone
-        || (tech->preq_tech_2 < TechNone && tech->preq_tech_1 != TechNone)) {
+    // These are SUBSCRIPTS and not a `RulesTechnology *tech = &Technology[tech_id]`
+    // local: the image computes `44 * tech_id` once into a register and folds the
+    // array base into both displacements - `[eax + 0x94f37c]`, `[eax + 0x94f380]` -
+    // which only happens when the field is named off the array. A pointer local
+    // materialises the address and the base ends up inside the lea chain instead.
+    // `preq_1` is read once and held (the image keeps it in esi across the third
+    // test); preq_tech_2 is read from memory a second time.
+    int preq_1 = Technology[tech_id].preq_tech_1;
+    if (preq_1 < TechNone) {
         // "none, disable" ; valid #TECH preq_tech entry
+        return false;
+    }
+    if (Technology[tech_id].preq_tech_2 < TechNone && preq_1 != TechNone) {
         return false;
     }
     return ((1 << faction_id) & GameTechAchieved[tech_id]) != 0;
