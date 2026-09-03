@@ -178,12 +178,18 @@ void InfoWin::right_menu(int a1, int a2) {
 // calls     0x006161D0 0x00618EA0 0x0062BF20
 */
 
-// TRIED: byte-exact is not reachable from this marker alone.
-// PushButton::PushButton() (0x0062BF20, at field_9D0_) is still an
-// unrecovered stub (src/unrecovered/0062bf20.cpp), so the image's third
-// call cannot be reproduced from here; not one of this pass's seven
-// targets. Time (0x006161D0) and Font (0x00618EA0) are both already
-// CLAIMED, so those two placement-new calls should match.
+// LEVER (2026-09-03): the image's third call is reproduced now. PushButton's
+// constructor is homed (gamma.cpp, BYTE_EXACT 44/44 as 0x0062BF20), so all
+// three placement-new sites name a real callee: the divergence was "the third
+// call goes nowhere", it is now the placement-new wall the brief documents.
+// TRIED (measured after that homing): 12 of 26 agreeing, 36 compiled
+// instructions against the image's 26, and every differing run is one of the
+// three `test ecx, ecx / je` null guards a placement new-expression pays -
+// plus the `sub esp, 8` two-slot unwind frame they need, where the image
+// pushes one slot. Recovering the third callee did not move the frame; the
+// guards are the remaining content. Clearing them means declaring Time, Font
+// and PushButton as real members so VC6 builds them implicitly, which is a
+// layout decision for the pass that owns InfoWin, not a body edit here.
 InfoWin::InfoWin() {
     char *const self = reinterpret_cast<char *>(this);
     new (self + 0x30) Time();

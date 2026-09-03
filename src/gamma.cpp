@@ -52,6 +52,54 @@ void Gamma::on_scrolled(int code, int pos) {
 }
 
 
+// The zero-init .bss table PushButton's constructor loads its field defaults
+// from. Zero at load in the image, as here - the same idiom as
+// BaseButtonA94Default (basebutton.cpp) and `Log Logging` (log.cpp).
+uint32_t PushButtonDefaults[18];  // 0x009BC118
+
+
+/*
+Purpose: Construct the BaseButton base, stage both virtual tables, then load
+         the eighteen field defaults from the process table.
+// ORIGINAL: 0x0062BF20 ??0PushButton@@QAE@XZ 0x0062BF20-0x0062C00E BYTE_EXACT
+// PROMOTED from src/unrecovered/0062bf20.cpp, 2026-09-03. That scaffold's
+//        blocker is now gone: `class PushButton` derives from BaseButton for
+//        real and `BaseButton::BaseButton()` is defined OUT OF LINE, so the
+//        implicit base construction is the image's own `call ??0BaseButton`
+//        and the two vtable stores are the compiler's - no `new (this) T()`
+//        and no operator-new call. What remains of the scaffold's
+//        hand-written body is the eighteen field defaults.
+// symbol    ??0PushButton@@QAE@XZ
+// size      238 bytes
+// prototype void (__thiscall ??0PushButton@@QAE@XZ)(PushButton* this)
+// callers   3   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00606F30
+Status: Complete
+*/
+PushButton::PushButton() {
+    field_AB8_ = PushButtonDefaults[0];
+    field_ABC_ = PushButtonDefaults[1];
+    field_AC0_ = PushButtonDefaults[2];
+    field_AC4_ = PushButtonDefaults[3];
+    field_AC8_ = PushButtonDefaults[4];
+    field_ACC_ = PushButtonDefaults[5];
+    field_AD0_ = PushButtonDefaults[6];
+    field_AD4_ = PushButtonDefaults[7];
+    field_AD8_ = PushButtonDefaults[8];
+    field_ADC_ = PushButtonDefaults[9];
+    field_AE0_ = PushButtonDefaults[10];
+    field_AE4_ = PushButtonDefaults[11];
+    field_AE8_ = PushButtonDefaults[12];
+    field_AEC_ = PushButtonDefaults[13];
+    field_AF0_ = PushButtonDefaults[14];
+    field_AF4_ = PushButtonDefaults[15];
+    field_AF8_ = PushButtonDefaults[16];
+    field_AFC_ = PushButtonDefaults[17];
+}
+
+
 /*
 Purpose: Re-install PushButton's two virtual tables, then delegate to
          BaseButton::destroy() (this tree's spelling of BaseButton's real
@@ -84,19 +132,6 @@ PushButton *PushButton::destroy() {
 /*
 Purpose: Construct the gamma-correction dialog.
 // ORIGINAL: 0x005C8DA0 ??0Gamma@@QAE@XZ 0x005C8DA0-0x005C8E60;0x00662A70-0x00662AC8 BYTE_EXACT
-// TRIED (2026-09-03, the two-flag-set ladder): the /Ob0 dependency has ONE
-//        root cause and it is not in this file - an in-class MEASURED
-//        base/member constructor or destructor in a HEADER gets EXPANDED
-//        into this body by /Ob2, and because the expansion contains a
-//        non-intrinsic call VC6 wraps the whole thing in the SEH unwind
-//        frame the image does not pay. Here the six member constructors at 0xa68/0xebc/0xef0/0x303c/0x3bb0/0x46b0 expand into 64 instructions where the image calls them - 41, one frame.
-//        The fix is to take the relevant definition out of its header and
-//        into its .cpp, the way heap.h already did for Heap's CONSTRUCTOR
-//        ("OUT OF LINE, and that is what Strings needs"); heap.h,
-//        basebutton.h and the member classes' headers are outside this
-//        pass's files. The forwarder idiom that fixed Strings::shutdown
-//        cannot reach an IMPLICIT base/member construction - there is no
-//        source statement to route through it.
 // LEVER: the two vtable stores must come FIRST, before `gamma_ = 1.0`. Written after it the body is SHAPE_EXACT 39/42; written before it, BYTE_EXACT 42/42. The image interleaves them - `[esi+0xee8] = 0`, both vtables, then `[esi+0xeec] = 0x3ff00000` - which reads like the vtable stores landing in the middle of the double and impossible to write as source. It is the other way round: VC6 hoists the double's ZERO half ahead of whatever precedes it and leaves the 0x3ff00000 half in place, so putting the vtable stores first is what produces the image's own order. (This lesson was already written out in full INSIDE the function body, ten lines below the marker, where `decomp.reader` - which reads only the comment run immediately after the marker - could not see it: `osmx show` listed no LEVER for this address at all.)
 // size      280 bytes
 // prototype void (__thiscall ??0Gamma@@QAE@XZ)(Gamma* this)
@@ -104,6 +139,16 @@ Purpose: Construct the gamma-correction dialog.
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x005D4CF0 0x005FE2A0 0x006051D0 0x00614E50 0x00618EA0 0x0062BF20
+// LEVER (2026-09-03, the /Ob0 dependency closed): of the six member
+//        constructors this body calls, five were already out of line
+//        (Palette, Font, Scroll, EditBox and the GraphicWin base). The one
+//        that was not - `PushButton() { ; }` in pushbutton.h - was EXPANDED
+//        twice here, and each expansion carried the whole BaseButton chain,
+//        so VC6 paid a second EH spill slot (`sub esp, 8`) plus 22 extra
+//        instructions: 64 compiled against the image's 42, 10 of 42 agreeing.
+//        Out of line (gamma.cpp, 0x0062BF20 BYTE_EXACT) the site is six
+//        `call`s from a one-slot frame, 42 of 42. Nothing in this body
+//        changed; the fix is entirely in the callee's definition.
 Return Value: None
 Status: Complete
 */

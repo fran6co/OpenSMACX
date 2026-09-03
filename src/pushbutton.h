@@ -31,7 +31,15 @@
 
 class PushButton : public BaseButton {
  public:
-  PushButton() { ; }
+  // OUT OF LINE (defined in gamma.cpp beside PushButton::destroy), 2026-09-03,
+  // superseding the in-class `{ ; }`. An in-class constructor is expanded by
+  // /Ob2 at every implicit member construction, and because the expansion
+  // carries the whole BaseButton chain VC6 wrapped each site in a second EH
+  // spill slot the image does not pay: ??0Gamma@@QAE@XZ compiled to 64
+  // instructions where the image makes six `call`s - one per member - from a
+  // one-slot frame. Out of line there is nothing to fold. Same lever as
+  // BaseButton's own constructor (basebutton.h) and ~Buffer (buffer.h).
+  PushButton();
   // A real `~PushButton()` mangles `??1PushButton@@UAE@XZ` here, not the
   // catalogued `@@QAE@XZ`: AutoSound's virtual destructor (autosound.h,
   // added for RadioButton's vbtable layout) cascades virtuality onto every
@@ -67,3 +75,9 @@ class PushButton : public BaseButton {
   uint32_t field_AFC_;  // 0xAFC, the IDB's last member; the class ends 0xB00
 };
 static_assert(sizeof(PushButton) == 0xB00, "probe");
+
+// The zero-init .bss table PushButton's constructor loads its eighteen field
+// defaults from (0x009BC118..0x009BC15C in the image), rebindable like
+// BaseButtonA94Default and DialogField30Default. Defined in gamma.cpp beside
+// PushButton's other bodies.
+extern uint32_t PushButtonDefaults[18];

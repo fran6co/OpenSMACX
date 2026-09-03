@@ -124,6 +124,45 @@ BaseButton *BaseButton::construct() {
     return this;
 }
 
+/*
+Purpose: Construct the GraphicWin base and two Time members, then install the
+         BaseButton tables and process defaults.
+
+         The REAL constructor, defined out of line so the implicit base
+         construction in every derived button compiles to one `call
+         ??0BaseButton@@QAE@XZ` instead of an inline expansion. The bases and
+         the two Time members are the compiler's here, which is why they are
+         not spelled; `construct()` above keeps its own placement-new spelling
+         because it is a method - the object it is handed was built by
+         something else and its members were never implicitly constructed.
+*/
+BaseButton::BaseButton() {
+    field_A74_ = 0;
+    field_A44_ = 0xFFFFFFFFU;
+    field_A48_ = 0xFFFFFFFFU;
+    field_A78_ = 0;
+    field_A9C_ = 0;
+    name_ = nullptr;
+    bubble_text_ = nullptr;
+    group_ = nullptr;
+    field_AAC_ = 0;
+    field_AB0_ = 0;
+    field_AB4_ = 0;
+    // Read each default through its own absolute lvalue rather than a named
+    // pointer alias - the alias materialises the table's base address into a
+    // register before indexing element 0, where the image folds every
+    // element, including 0, straight into the operand (the same lever that
+    // took close() from 2/47 to 41/47).
+    field_A94_ = BaseButtonA94Default;
+    color_ = DialogDefaults[0];
+    bevel_upper_ = DialogDefaults[1];
+    bevel_lower_ = DialogDefaults[2];
+    bevel_thickness_ = DialogDefaults[3];
+    field_A98_ = BaseButtonA98Default;
+    field_AA4_ = 0;
+    field_AA0_ = DialogDefaults[4];
+}
+
 BaseButton *__fastcall base_button_construct_redirect(
         BaseButton *self, void *) {
     self->construct();
@@ -246,6 +285,31 @@ Status: Complete
 BaseButton::~BaseButton() {
     close();
 }
+
+/*
+Purpose: Step the receiver back to the subobject ??_GBaseButton@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x00607CE0 ??_GBaseButton@@WEEE@AEPAXI@Z 0x00607CE0-0x00607CEB BYTE_EXACT
+// MOVED HERE from flatbutton.cpp, 2026-09-03. flatbutton.obj emits no
+//        BaseButton symbol at all, so the claim measured UNRESOLVED from
+//        there; ??_EBaseButton is defined by this object alone, because this
+//        is where ~BaseButton lives. A comparison compiles a TRANSLATION
+//        UNIT, so the claim has to live where the COMDAT is emitted.
+// symbol    ??_EBaseButton@@WEEE@AEPAXI@Z
+// CORRECTED from ??3BaseButton@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x00607CC0` into
+//   ??_GBaseButton@@UAEPAXI@Z, which executes `ret 4`; no stack access
+//   and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/
 
 BaseButton *BaseButton::destroy() {
     volatile uint32_t *const object =

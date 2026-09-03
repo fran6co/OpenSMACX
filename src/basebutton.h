@@ -51,7 +51,15 @@ class BaseButton : public GraphicWin {
   int on_key_click(int a, int b);
   int on_key_down(int a);
   int on_key_up(int a);
-  BaseButton() { ; }
+  // OUT OF LINE (defined in basebutton.cpp), 2026-09-03, superseding the
+  // in-class `{ ; }`. An in-class constructor is expanded by /Ob2 at every
+  // implicit base construction, and because that expansion holds the two
+  // Time member constructions VC6 wraps the whole site in an SEH frame the
+  // image does not pay: ??0ImageButton@@QAE@XZ compiled to 25 instructions
+  // of frame-and-inline where the image makes one `call ??0BaseButton`.
+  // Out of line there is nothing to fold, so the derived site becomes the
+  // call. Same lever as ~Buffer (buffer.h) and Heap's constructor (heap.h).
+  BaseButton();
   ~BaseButton();
 
   BaseButton *construct();
