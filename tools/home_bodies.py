@@ -140,7 +140,12 @@ def free_definition_span(text: str, ident: str):
                     break
                 run_end = line_end + 1
             head = text[marker.start():run_end].rstrip()
-        return head, text[match.start():].rstrip() + "\n"
+        # THE DEFINITION STARTS AT THE LINE, NOT AT THE NAME: match.start()
+        # is the identifier, so returning from there loses the return type -
+        # VC6 then reads an implicit int and mangles YAH where the catalogue
+        # spells YAX (C2556 on every load_*/control_turn/setup_game; the
+        # W4 worldwin batch's diagnosis).
+        return head, text[start:].rstrip() + "\n"
     return None
 
 
