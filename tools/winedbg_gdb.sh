@@ -42,6 +42,15 @@ export WINEPREFIX="${WINEPREFIX:-$HOME/opt/vc6/.wineprefix}"
 
 [ -n "$EXE" ] || die "no exe: pass it as the argument or export WINEDBG_EXE"
 [ -f "$EXE" ] || die "$EXE not found"
+
+# winedbg cannot start a RELATIVE path that has a directory component -
+# "build/OpenSMACX.exe" from the repo root dies with "Couldn't start
+# process" while ./OpenSMACX.exe from inside build/ works - so hand it an
+# absolute, symlink-resolved path. No cd here: the debuggee must inherit
+# the CALLER's working directory for its relative asset paths.
+EXE="$(cd -- "$(dirname -- "$EXE")" && pwd -P)/$(basename -- "$EXE")"
+[ -f "$EXE" ] || die "could not resolve $1 to an absolute path"
+
 [ -d "$WINEPREFIX" ] || die "WINEPREFIX $WINEPREFIX does not exist"
 [ -x "$WINEDBG_BIN" ] || die "winedbg not found on PATH or at /usr/bin/winedbg (set WINEDBG_BIN)"
 
@@ -72,8 +81,41 @@ fi
 
 # Stay in the foreground as the process the caller kills, and take the whole
 # wine tree along on the way out. The caller owns connecting and its retries,
-# so there is no readiness wait.
-trap 'reap_wine' EXIT
+# so there is no readiness wait - but a winedbg that dies before it could
+# serve anything (bad exe path, prefix problems) used to exit this script 0,
+# which reads as success to an IDE profile with no server behind it.
+#
+# wine 10.0's dbghelp page-faults, and then crashes winedbg outright, parsing
+# this PE's lone debug-directory entry (CodeView NB10 -> the VC6 PDB) -
+# deterministic "winedbg: Internal crash" before the stub ever serves. gdb's
+# symbols come from the ELF sidecar, never the PE, so the entry is dead
+# weight: run a scratch copy with the debug data directory zeroed. Code
+# bytes are untouched; WINEDBG_KEEP_PE_DEBUG=1 opts out.
+EXE_TO_RUN="$EXE"
+if [ "${WINEDBG_KEEP_PE_DEBUG:-0}" != 1 ]; then
+    EXE_TO_RUN="$(mktemp --suffix=.exe "${TMPDIR:-/tmp}/winedbg_gdb.XXXXXX")"
+    python3 - "$EXE" "$EXE_TO_RUN" <<'PYEOF'
+import struct, sys
+src, dst = sys.argv[1], sys.argv[2]
+d = bytearray(open(src, "rb").read())
+pe = struct.unpack_from("<I", d, 0x3C)[0]
+opt = pe + 24
+magic = struct.unpack_from("<H", d, opt)[0]
+if magic not in (0x10B, 0x20B):
+    sys.exit(f"not a PE optional header: magic 0x{magic:x}")
+dd = opt + (96 if magic == 0x10B else 112) + 6 * 8  # data dir 6 = debug
+struct.pack_into("<II", d, dd, 0, 0)
+open(dst, "wb").write(d)
+PYEOF
+    [ -s "$EXE_TO_RUN" ] || die "failed to write the scrubbed exe copy"
+fi
+trap 'rm -f -- "$EXE_TO_RUN" 2>/dev/null; reap_wine' EXIT
 trap 'exit 143' TERM INT
-"$WINEDBG_BIN" --gdb --no-start --port "$PORT" "$EXE" &
-wait $! || true
+"$WINEDBG_BIN" --gdb --no-start --port "$PORT" "$EXE_TO_RUN" &
+STUB=$!
+sleep 1
+if ! kill -0 "$STUB" 2>/dev/null; then
+    wait "$STUB" || true
+    die "winedbg exited before serving (see its output above); if it printed 'Couldn't start process', the exe path could not be launched"
+fi
+wait "$STUB" || true
