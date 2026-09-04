@@ -27,7 +27,21 @@ namespace {
 static const uintptr_t TopMenuAddress = 0x0058E360;
 static const uintptr_t OpeningMovieAddress = 0x00403BE0;
 static const uintptr_t LoadFlagsAddress = 0x00453F70;
-static const uintptr_t MainInterfaceAddress = 0x007B0CB8;
+// 0x007B0CB8 is an interface object, but it is NOT the MainInterface: the
+// desktop MainInterface is MainInterfaceGlobal at 0x007AE820 (mapwin.h), and
+// 0x7B0CB8 sits inside no part of it. Every image site that reaches it does
+// the same three things - `mov eax, [0x7b0cb8]` for the vftable,
+// `mov ecx, 0x7b0cb8` for the receiver, then a call through slot 1 or slot 2 -
+// and the same sites first read ActiveInterfaceId (0x007D392C) and the
+// id-to-slot map (0x007AE778) and skip the call when a slot is already taken,
+// which is the interface-registry guard maininterface.cpp's own handlers use.
+// So this is a second interface object under the same registry, one whose
+// slot 1 takes a single int and whose slot 2 is nullary, and the class that
+// owns it is still unidentified: no `mov dword ptr [0x7b0cb8], imm` store
+// exists in .text, so its constructor installs the vftable through a
+// register. Named for what the harness does with it rather than for a class
+// the image has not given us.
+static const uintptr_t InterfaceSingletonAddress = 0x007B0CB8;
 static const uintptr_t ConsoleAddress = 0x009156B0;
 static const uintptr_t CurrentFactionAddress = 0x00939284;
 static const uintptr_t ActionGoToAddress = 0x004CB310;
@@ -183,9 +197,14 @@ void refresh_loaded_game() {
     LoadFlags();
     GameState &= 0xF79FCF16;
 
-    void *object = reinterpret_cast<void *>(MainInterfaceAddress);
+    void *object = reinterpret_cast<void *>(InterfaceSingletonAddress);
     uintptr_t *vtable = *reinterpret_cast<uintptr_t **>(object);
-    InterfaceRefreshFunction refresh = reinterpret_cast<InterfaceRefreshFunction>(vtable[2]);
+    // vftable slot 2 of the interface object - the image's
+    // `mov eax,[0x7b0cb8] / mov ecx,0x7b0cb8 / call dword ptr [eax+8]`, the
+    // same refresh the console's own guard dispatches when no other
+    // interface holds the registry slot.
+    InterfaceRefreshFunction refresh =
+        reinterpret_cast<InterfaceRefreshFunction>(vtable[2]);
     refresh(object, nullptr);
     prefs_use();
 }

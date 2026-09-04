@@ -1,4 +1,18 @@
 // ORIGINAL: 0x0045D110 ?on_iface_mouse_leave@MainInterface@@QAEXHH@Z 0x0045D110-0x0045D13F BYTE_EXACT
+// RESOLVED 2026-09-04, the receiver map is in maininterface.h: the receiver
+//         is the SubInterface subobject at front+0xA14, 0x20CD8 from it is
+//         front+0x216EC (MainInterface's iface_redraw_pending_), and
+//         esi-0xA14 is the front that redraw_complete wants. The image's
+//         secondary vftable 0x66C544 holds the family's RAW addresses, and
+//         there is no `sub ecx,0xA14` adjustor thunk anywhere in .text, so
+//         the family's class has its SubInterface base at its OWN offset 0.
+//         That class is declared as IfaceRegistryEntry in maininterface.h.
+//         STILL UNHOMED: no declaration of ours reaches front+0x216EC
+//         through this receiver, so the byte-exact
+//         `cmp dword ptr [esi+0x20cd8],1` is not spellable yet - a declared
+//         downcast folds the displacement to 0x216EC and costs the match.
+//         Also missing: a definition of StatusWin::reset_active
+//         (0x004B6530) to call by name.
 // BLOCKED 2026-09-04 on the RECEIVER MAP, not on the bindings. The image is
 //         mov esi,ecx / mov ecx,0x8c5568 / call reset_active /
 //         cmp [esi+0x20cd8],1 / jne / lea ecx,[esi-0xa14] /

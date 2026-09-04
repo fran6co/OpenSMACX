@@ -1,4 +1,10 @@
 // ORIGINAL: 0x0045D140 ?on_iface_selected@MainInterface@@QAEXHH@Z 0x0045D140-0x0045D159 BYTE_EXACT
+// HANDOFF 2026-09-04: the body is one line - MessageWin::on_selected(a1, a2)
+//         on the object at 0x007F67F8 - and messagewin.h declares no
+//         on_selected. Add `void on_selected(int index, int a2);` there and
+//         home this as IfaceRegistryEntry::on_iface_selected
+//         (maininterface.h): the receiver is the SubInterface subobject,
+//         which this body never touches, so it is byte-exact either way.
 // size      25 bytes
 // prototype void (__thiscall ?on_iface_selected@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   1

@@ -169,7 +169,7 @@ SHAPES = [
     # dispatch through the existing 0x007B0CB8 shim - the remedy is the
     # virtual declarations on scenario.cpp's MainInterface binding, the
     # receiver-map pass's.
-    ("VCall shim", 34,
+    ("VCall shim", 11,
      re.compile(r"\bVCall\b"),
      "dispatches through a fake class because the real function is not "
      "declared virtual. Declare it."),
@@ -610,7 +610,7 @@ SCAFFOLD_CEILINGS = {
     # fixed-address bindings are the tree's own names) and 005c3f70.cpp homed
     # beside it - the 0x009B22E8 redraw flag is named WorldClimateRedrawRequest
     # in map.cpp from the two measured sites that write and read it.
-    "artifact files (recovered/)": 1037,
+    "artifact files (recovered/)": 1036,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).

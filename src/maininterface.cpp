@@ -119,9 +119,6 @@ void MainInterface::UNK4() {
 }
 
 
-
-
-
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x0045C280 ?UNK1@MainInterface@@QAEXH@Z 0x0045C280-0x0045C283 BYTE_EXACT
@@ -356,36 +353,36 @@ void MainInterface::timer_callback_daemon(int a1) {
     }
 }
 
-// Fixed-slot bindings carried from 0045c5c0.cpp
+// Fixed-slot bindings carried from 0045c5c0.cpp. IfaceRegistry is typed as
+// the registry entry the receiver map in maininterface.h names, so the
+// dispatch is a call by name instead of a shim.
 static int *const IfaceIdToSlot = (int *)0x007AE778;
 static int *const IfaceRegistry = (int *)0x007AE7F0;
 static int *const ActiveIfaceId = (int *)0x007D392C;
 
-class VCall { public:
-    virtual void slot000();
-    virtual void slot001(int, int);  // <-- used
-    virtual void slot002(int, int);  // <-- used
-    virtual void slot003();
-    virtual void slot004(int, int);  // <-- used
-    virtual void slot005(int, int);  // <-- used
-    virtual void slot006(int, int);  // <-- used
-    virtual void slot007();
-    virtual void slot008();
-    virtual void slot009();
-    virtual void slot010(int, int);  // <-- used
-    virtual void slot011(int, int);  // <-- used
-    virtual void slot012(int, int);  // <-- used
-    virtual void slot013();
-    virtual void slot014();
-    virtual void slot015(int, int);  // <-- used
-    virtual void slot016(int, int, int);  // <-- used
-    virtual void slot017();
-    virtual int slot018(GraphicWin *, int, int, RECT *);  // <-- used
-    virtual void slot019();
-    virtual void slot020();
-};
+// The MessageWin the interface events are delivered to. game.cpp's system_init
+// reaches the same object by address when it builds the desktop
+// (messagewin_init(reinterpret_cast<MessageWin *>(0x007F67F8))); the interface
+// handlers reach it by address too - on_iface_selected is
+// `mov ecx, 0x7f67f8` before the call. Bound as a const pointer rather than
+// declared as a real global because the image's object lives at 0x007F67F8 and
+// a definition of ours would live somewhere else; messagewin.h/messagewin.cpp
+// are the files that would own the real thing.
+static MessageWin *const InterfaceMessageWin = (MessageWin *)0x007F67F8;
+
 
 // ORIGINAL: 0x0045C5C0 ?on_scrolling@MainInterface@@QAEXHH@Z 0x0045C5C0-0x0045C5F4 FILE BYTE_EXACT
+// LEVER: 2026-09-04 every dispatch in this file went from a VCall shim to a
+//   named virtual - IfaceRegistryEntry (maininterface.h) declares the
+//   nineteen slots the concrete interface table at 0x66C544 installs, so
+//   `target->on_iface_left_click(a1, a2)` is the image's
+//   `mov edx,[ecx] / call dword ptr [edx+0xNN]` with no shim. All sixteen
+//   bodies that dispatch re-measured BYTE_EXACT through the change. Binding
+//   IfaceRegistry as `IfaceRegistryEntry *const *const` instead of
+//   `int *const` costs the match: VC6 then materialises the table pointer
+//   with its own `mov reg,[imm]` instead of folding the index into the
+//   address, so the binding stays `int *const` and the cast happens at the
+//   use.
 // size      52 bytes
 // prototype void (__thiscall ?on_scrolling@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   0
@@ -435,9 +432,10 @@ class VCall { public:
 //    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
 //    sequential guard clauses, which inline each body instead.
 //  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
-//    an indirect virtual call use the generated VCall shim below; for a
-//    thiscall function POINTER, take a member-function pointer of a
-//    dummy class instead of spelling the convention.
+//    a thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention. An indirect VIRTUAL
+//    call is spelled by the name of the method, which is what makes
+//    `call dword ptr [eax+0xNN]`.
 //  * Loop form is visible: while / do-while / for lower differently,
 //    and so does counting up versus down.
 //  * If the original dedicates a callee-saved register to a constant
@@ -451,27 +449,14 @@ void MainInterface::on_scrolling(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int index = *ActiveIfaceId;
         int subindex = reinterpret_cast<int *>(IfaceIdToSlot)[index];
-        VCall *target = reinterpret_cast<VCall **>(IfaceRegistry)[subindex];
+        IfaceRegistryEntry *target =
+            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[subindex];
         if (target != 0) {
-            target->slot002(a1, a2);
+            target->on_iface_scrolling(a1, a2);
         }
     }
 }
 
-class VCall2 { public:
-    virtual void slot000();
-    virtual void slot001(int, int);
-    virtual void slot002();
-    virtual void slot003();
-    virtual void slot004();
-    virtual void slot005();
-    virtual void slot006();
-    virtual void slot007();
-    virtual void slot008();
-    virtual void slot009();
-    virtual void slot010();
-    virtual void slot011(int, int);
-};
 
 // ORIGINAL: 0x0045C640 ?on_left_double_click@MainInterface@@QAEXHH@Z 0x0045C640-0x0045C674 FILE BYTE_EXACT
 // size      52 bytes
@@ -523,9 +508,10 @@ class VCall2 { public:
 //    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
 //    sequential guard clauses, which inline each body instead.
 //  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
-//    an indirect virtual call use the generated VCall shim below; for a
-//    thiscall function POINTER, take a member-function pointer of a
-//    dummy class instead of spelling the convention.
+//    a thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention. An indirect VIRTUAL
+//    call is spelled by the name of the method, which is what makes
+//    `call dword ptr [eax+0xNN]`.
 //  * Loop form is visible: while / do-while / for lower differently,
 //    and so does counting up versus down.
 //  * If the original dedicates a callee-saved register to a constant
@@ -539,9 +525,10 @@ void MainInterface::on_left_double_click(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int index = *ActiveIfaceId;
         int subindex = reinterpret_cast<int *>(IfaceIdToSlot)[index];
-        VCall2 *target = reinterpret_cast<VCall2 **>(IfaceRegistry)[subindex];
+        IfaceRegistryEntry *target =
+            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[subindex];
         if (target != 0) {
-            target->slot011(a1, a2);
+            target->on_iface_left_double_click(a1, a2);
         }
     }
 }
@@ -596,9 +583,10 @@ void MainInterface::on_left_double_click(int a1, int a2) {
 //    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
 //    sequential guard clauses, which inline each body instead.
 //  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
-//    an indirect virtual call use the generated VCall shim below; for a
-//    thiscall function POINTER, take a member-function pointer of a
-//    dummy class instead of spelling the convention.
+//    a thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention. An indirect VIRTUAL
+//    call is spelled by the name of the method, which is what makes
+//    `call dword ptr [eax+0xNN]`.
 //  * Loop form is visible: while / do-while / for lower differently,
 //    and so does counting up versus down.
 //  * If the original dedicates a callee-saved register to a constant
@@ -611,9 +599,10 @@ void MainInterface::on_left_double_click(int a1, int a2) {
 void MainInterface::on_right_double_click(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int interface_index = IfaceIdToSlot[*ActiveIfaceId];
-        VCall *target = reinterpret_cast<VCall **>(IfaceRegistry)[interface_index];
+        IfaceRegistryEntry *target =
+            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[interface_index];
         if (target != 0) {
-            target->slot012(a1, a2);
+            target->on_iface_right_double_click(a1, a2);
         }
     }
 }
@@ -668,9 +657,10 @@ void MainInterface::on_right_double_click(int a1, int a2) {
 //    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
 //    sequential guard clauses, which inline each body instead.
 //  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
-//    an indirect virtual call use the generated VCall shim below; for a
-//    thiscall function POINTER, take a member-function pointer of a
-//    dummy class instead of spelling the convention.
+//    a thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention. An indirect VIRTUAL
+//    call is spelled by the name of the method, which is what makes
+//    `call dword ptr [eax+0xNN]`.
 //  * Loop form is visible: while / do-while / for lower differently,
 //    and so does counting up versus down.
 //  * If the original dedicates a callee-saved register to a constant
@@ -683,19 +673,14 @@ void MainInterface::on_right_double_click(int a1, int a2) {
 void MainInterface::on_left_up(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int group = IfaceIdToSlot[*ActiveIfaceId];
-        VCall *target = reinterpret_cast<VCall *>(IfaceRegistry[group]);
+        IfaceRegistryEntry *target =
+            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[group];
         if (target) {
-            target->slot006(a1, a2);
+            target->vslot_06(a1, a2);
         }
     }
 }
 
-class VCallLeftClick { public:
-    virtual void slot00();
-    virtual void slot01();
-    virtual void slot02();
-    virtual void slot03(int, int);
-};
 
 // ORIGINAL: 0x0045C700 ?on_left_click@MainInterface@@QAEXHH@Z 0x0045C700-0x0045C734 FILE BYTE_EXACT
 // size      52 bytes
@@ -747,9 +732,10 @@ class VCallLeftClick { public:
 //    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
 //    sequential guard clauses, which inline each body instead.
 //  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
-//    an indirect virtual call use the generated VCall shim below; for a
-//    thiscall function POINTER, take a member-function pointer of a
-//    dummy class instead of spelling the convention.
+//    a thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention. An indirect VIRTUAL
+//    call is spelled by the name of the method, which is what makes
+//    `call dword ptr [eax+0xNN]`.
 //  * Loop form is visible: while / do-while / for lower differently,
 //    and so does counting up versus down.
 //  * If the original dedicates a callee-saved register to a constant
@@ -763,9 +749,10 @@ void MainInterface::on_left_click(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int index = *ActiveIfaceId;
         int subindex = reinterpret_cast<int *>(IfaceIdToSlot)[index];
-        VCallLeftClick *target = reinterpret_cast<VCallLeftClick **>(IfaceRegistry)[subindex];
+        IfaceRegistryEntry *target =
+            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[subindex];
         if (target != 0) {
-            target->slot03(a1, a2);
+            target->on_iface_left_click(a1, a2);
         }
     }
 }
@@ -820,9 +807,10 @@ void MainInterface::on_left_click(int a1, int a2) {
 //    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
 //    sequential guard clauses, which inline each body instead.
 //  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
-//    an indirect virtual call use the generated VCall shim below; for a
-//    thiscall function POINTER, take a member-function pointer of a
-//    dummy class instead of spelling the convention.
+//    a thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention. An indirect VIRTUAL
+//    call is spelled by the name of the method, which is what makes
+//    `call dword ptr [eax+0xNN]`.
 //  * Loop form is visible: while / do-while / for lower differently,
 //    and so does counting up versus down.
 //  * If the original dedicates a callee-saved register to a constant
@@ -835,9 +823,10 @@ void MainInterface::on_left_click(int a1, int a2) {
 void MainInterface::on_right_click(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int interface_index = IfaceIdToSlot[*ActiveIfaceId];
-        VCall *target = reinterpret_cast<VCall **>(IfaceRegistry)[interface_index];
+        IfaceRegistryEntry *target =
+            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[interface_index];
         if (target != 0) {
-            target->slot004(a1, a2);
+            target->on_iface_right_click(a1, a2);
         }
     }
 }
@@ -892,9 +881,10 @@ void MainInterface::on_right_click(int a1, int a2) {
 //    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
 //    sequential guard clauses, which inline each body instead.
 //  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
-//    an indirect virtual call use the generated VCall shim below; for a
-//    thiscall function POINTER, take a member-function pointer of a
-//    dummy class instead of spelling the convention.
+//    a thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention. An indirect VIRTUAL
+//    call is spelled by the name of the method, which is what makes
+//    `call dword ptr [eax+0xNN]`.
 //  * Loop form is visible: while / do-while / for lower differently,
 //    and so does counting up versus down.
 //  * If the original dedicates a callee-saved register to a constant
@@ -907,9 +897,10 @@ void MainInterface::on_right_click(int a1, int a2) {
 void MainInterface::on_left_down(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int group = IfaceIdToSlot[*ActiveIfaceId];
-        VCall *target = reinterpret_cast<VCall *>(IfaceRegistry[group]);
+        IfaceRegistryEntry *target =
+            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[group];
         if (target) {
-            target->slot005(a1, a2);
+            target->on_iface_left_down(a1, a2);
         }
     }
 }
@@ -964,9 +955,10 @@ void MainInterface::on_left_down(int a1, int a2) {
 //    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
 //    sequential guard clauses, which inline each body instead.
 //  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
-//    an indirect virtual call use the generated VCall shim below; for a
-//    thiscall function POINTER, take a member-function pointer of a
-//    dummy class instead of spelling the convention.
+//    a thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention. An indirect VIRTUAL
+//    call is spelled by the name of the method, which is what makes
+//    `call dword ptr [eax+0xNN]`.
 //  * Loop form is visible: while / do-while / for lower differently,
 //    and so does counting up versus down.
 //  * If the original dedicates a callee-saved register to a constant
@@ -979,32 +971,16 @@ void MainInterface::on_right_down(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int index = *ActiveIfaceId;
         int subindex = reinterpret_cast<int *>(IfaceIdToSlot)[index];
-        VCall *target = reinterpret_cast<VCall **>(IfaceRegistry)[subindex];
+        IfaceRegistryEntry *target =
+            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[subindex];
         if (target != 0) {
-            target->slot004(a1, a2);
+            target->on_iface_right_click(a1, a2);
         }
     }
 }
 
 // Fixed-slot bindings carried from 0045c830.cpp
 
-class VCallRet { public:
-    virtual void slot000();
-    virtual void slot001();
-    virtual void slot002();
-    virtual void slot003();
-    virtual void slot004();
-    virtual void slot005();
-    virtual void slot006();
-    virtual void slot007();
-    virtual void slot008();
-    virtual void slot009();
-    virtual void slot010();
-    virtual void slot011();
-    virtual void slot012();
-    virtual void slot013();
-    virtual int slot014(int a);
-};
 
 // ORIGINAL: 0x0045C830 ?on_button_pressed@MainInterface@@QAEHH@Z 0x0045C830-0x0045C866 FILE BYTE_EXACT
 // size      54 bytes
@@ -1056,9 +1032,10 @@ class VCallRet { public:
 //    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
 //    sequential guard clauses, which inline each body instead.
 //  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
-//    an indirect virtual call use the generated VCall shim below; for a
-//    thiscall function POINTER, take a member-function pointer of a
-//    dummy class instead of spelling the convention.
+//    a thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention. An indirect VIRTUAL
+//    call is spelled by the name of the method, which is what makes
+//    `call dword ptr [eax+0xNN]`.
 //  * Loop form is visible: while / do-while / for lower differently,
 //    and so does counting up versus down.
 //  * If the original dedicates a callee-saved register to a constant
@@ -1072,9 +1049,10 @@ int MainInterface::on_button_pressed(int a1) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int index1 = *ActiveIfaceId;
         int index2 = IfaceIdToSlot[index1];
-        int *obj = reinterpret_cast<int *>(IfaceRegistry[index2]);
+        IfaceRegistryEntry *obj =
+            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[index2];
         if (obj != 0) {
-            return reinterpret_cast<VCallRet *>(obj)->slot014(a1);
+            return obj->on_iface_button_pressed(a1);
         }
     }
     return 0;
@@ -1130,9 +1108,10 @@ int MainInterface::on_button_pressed(int a1) {
 //    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
 //    sequential guard clauses, which inline each body instead.
 //  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
-//    an indirect virtual call use the generated VCall shim below; for a
-//    thiscall function POINTER, take a member-function pointer of a
-//    dummy class instead of spelling the convention.
+//    a thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention. An indirect VIRTUAL
+//    call is spelled by the name of the method, which is what makes
+//    `call dword ptr [eax+0xNN]`.
 //  * Loop form is visible: while / do-while / for lower differently,
 //    and so does counting up versus down.
 //  * If the original dedicates a callee-saved register to a constant
@@ -1145,34 +1124,14 @@ int MainInterface::on_button_pressed(int a1) {
 void MainInterface::on_button_toggled(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int interface_index = IfaceIdToSlot[*ActiveIfaceId];
-        VCall *target = reinterpret_cast<VCall **>(IfaceRegistry)[interface_index];
+        IfaceRegistryEntry *target =
+            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[interface_index];
         if (target != 0) {
-            target->slot015(a1, a2);
+            target->on_iface_button_toggled(a1, a2);
         }
     }
 }
 
-class ADBackDrawVCall {
-public:
-    virtual void slot00();
-    virtual void slot01();
-    virtual void slot02();
-    virtual void slot03();
-    virtual void slot04();
-    virtual void slot05();
-    virtual void slot06();
-    virtual void slot07();
-    virtual void slot08();
-    virtual void slot09();
-    virtual void slot10();
-    virtual void slot11();
-    virtual void slot12();
-    virtual void slot13();
-    virtual void slot14();
-    virtual void slot15();
-    virtual void slot16();
-    virtual int slot17(GraphicWin *);
-};
 
 // ORIGINAL: 0x0045C8B0 ?on_dialog_back_draw@MainInterface@@QAEHPAUGraphicWin@@@Z 0x0045C8B0-0x0045C8E6 FILE BYTE_EXACT
 // symbol    ?on_dialog_back_draw@MainInterface@@QAEHPAVGraphicWin@@@Z
@@ -1225,9 +1184,10 @@ public:
 //    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
 //    sequential guard clauses, which inline each body instead.
 //  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
-//    an indirect virtual call use the generated VCall shim below; for a
-//    thiscall function POINTER, take a member-function pointer of a
-//    dummy class instead of spelling the convention.
+//    a thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention. An indirect VIRTUAL
+//    call is spelled by the name of the method, which is what makes
+//    `call dword ptr [eax+0xNN]`.
 //  * Loop form is visible: while / do-while / for lower differently,
 //    and so does counting up versus down.
 //  * If the original dedicates a callee-saved register to a constant
@@ -1240,9 +1200,10 @@ public:
 int MainInterface::on_dialog_back_draw(GraphicWin* a1) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int index2 = IfaceIdToSlot[*ActiveIfaceId];
-        int ptr_val = IfaceRegistry[index2];
-        if (ptr_val != 0) {
-            return reinterpret_cast<ADBackDrawVCall *>(ptr_val)->slot17(a1);
+        IfaceRegistryEntry *obj =
+            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[index2];
+        if (obj != 0) {
+            return obj->on_dialog_back_draw(a1);
         }
     }
     return 0;
@@ -1299,9 +1260,10 @@ int MainInterface::on_dialog_back_draw(GraphicWin* a1) {
 //    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
 //    sequential guard clauses, which inline each body instead.
 //  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
-//    an indirect virtual call use the generated VCall shim below; for a
-//    thiscall function POINTER, take a member-function pointer of a
-//    dummy class instead of spelling the convention.
+//    a thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention. An indirect VIRTUAL
+//    call is spelled by the name of the method, which is what makes
+//    `call dword ptr [eax+0xNN]`.
 //  * Loop form is visible: while / do-while / for lower differently,
 //    and so does counting up versus down.
 //  * If the original dedicates a callee-saved register to a constant
@@ -1315,26 +1277,15 @@ int MainInterface::on_dialog_item_back_draw(GraphicWin* a1, int a2, int a3, RECT
     if (WorldClimateSkipTerrainClear != 1u) {
         int idx1 = *ActiveIfaceId;
         int idx2 = IfaceIdToSlot[idx1];
-        VCall *obj = reinterpret_cast<VCall *>(IfaceRegistry[idx2]);
+        IfaceRegistryEntry *obj =
+            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[idx2];
         if (obj != 0) {
-            return obj->slot018(a1, a2, a3, a4);
+            return obj->on_dialog_item_back_draw(a1, a2, a3, a4);
         }
     }
     return 0;
 }
 
-class OnMouseMoveVCall {
- public:
-  virtual void slot000();
-  virtual void slot001();
-  virtual void slot002();
-  virtual void slot003();
-  virtual void slot004();
-  virtual void slot005();
-  virtual void slot006();
-  virtual void slot007();
-  virtual void slot008(int, int);
-};
 
 // ORIGINAL: 0x0045C980 ?on_mouse_move@MainInterface@@QAEXHH@Z 0x0045C980-0x0045C9B4 BYTE_EXACT
 // size      52 bytes
@@ -1355,9 +1306,9 @@ class OnMouseMoveVCall {
 void MainInterface::on_mouse_move(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int mid = IfaceIdToSlot[*ActiveIfaceId];
-        int obj = IfaceRegistry[mid];
+        IfaceRegistryEntry *obj = reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[mid];
         if (obj != 0) {
-            reinterpret_cast<OnMouseMoveVCall *>(obj)->slot008(a1, a2);
+            obj->on_iface_mouse_move(a1, a2);
         }
     }
 }
@@ -1412,9 +1363,10 @@ void MainInterface::on_mouse_move(int a1, int a2) {
 //    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
 //    sequential guard clauses, which inline each body instead.
 //  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
-//    an indirect virtual call use the generated VCall shim below; for a
-//    thiscall function POINTER, take a member-function pointer of a
-//    dummy class instead of spelling the convention.
+//    a thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention. An indirect VIRTUAL
+//    call is spelled by the name of the method, which is what makes
+//    `call dword ptr [eax+0xNN]`.
 //  * Loop form is visible: while / do-while / for lower differently,
 //    and so does counting up versus down.
 //  * If the original dedicates a callee-saved register to a constant
@@ -1426,25 +1378,14 @@ void MainInterface::on_mouse_move(int a1, int a2) {
 
 void MainInterface::on_group_clicked(int a1, int a2, int a3) {
     if (WorldClimateSkipTerrainClear != 1u) {
-        VCall *target = reinterpret_cast<VCall *>(IfaceRegistry[IfaceIdToSlot[*ActiveIfaceId]]);
+        IfaceRegistryEntry *target = reinterpret_cast<IfaceRegistryEntry **>(
+            IfaceRegistry)[IfaceIdToSlot[*ActiveIfaceId]];
         if (target != 0) {
-            target->slot016(a1, a2, a3);
+            target->on_iface_group_clicked(a1, a2, a3);
         }
     }
 }
 
-class VCallII { public:
-    virtual void slot000();
-    virtual void slot001();
-    virtual void slot002();
-    virtual void slot003();
-    virtual void slot004();
-    virtual void slot005();
-    virtual void slot006();
-    virtual void slot007();
-    virtual void slot008();
-    virtual void slot009(int, int);
-};
 
 // ORIGINAL: 0x0045C9C0 ?on_mouse_leave@MainInterface@@QAEXHH@Z 0x0045C9C0-0x0045C9F4 BYTE_EXACT
 // symbol    ?on_mouse_leave@MainInterface@@UAEXHH@Z
@@ -1467,9 +1408,10 @@ void MainInterface::on_mouse_leave(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int index = *ActiveIfaceId;
         int subindex = reinterpret_cast<int *>(IfaceIdToSlot)[index];
-        VCallII *target = reinterpret_cast<VCallII **>(IfaceRegistry)[subindex];
+        IfaceRegistryEntry *target =
+            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[subindex];
         if (target != 0) {
-            target->slot009(a1, a2);
+            target->on_iface_mouse_leave(a1, a2);
         }
     }
 }
@@ -1524,9 +1466,10 @@ void MainInterface::on_mouse_leave(int a1, int a2) {
 //    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
 //    sequential guard clauses, which inline each body instead.
 //  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
-//    an indirect virtual call use the generated VCall shim below; for a
-//    thiscall function POINTER, take a member-function pointer of a
-//    dummy class instead of spelling the convention.
+//    a thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention. An indirect VIRTUAL
+//    call is spelled by the name of the method, which is what makes
+//    `call dword ptr [eax+0xNN]`.
 //  * Loop form is visible: while / do-while / for lower differently,
 //    and so does counting up versus down.
 //  * If the original dedicates a callee-saved register to a constant
@@ -1539,9 +1482,10 @@ void MainInterface::on_mouse_leave(int a1, int a2) {
 void MainInterface::on_selected(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int interface_index = IfaceIdToSlot[*ActiveIfaceId];
-        VCall *target = reinterpret_cast<VCall **>(IfaceRegistry)[interface_index];
+        IfaceRegistryEntry *target =
+            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[interface_index];
         if (target != 0) {
-            target->slot010(a1, a2);
+            target->on_iface_selected(a1, a2);
         }
     }
 }
@@ -1623,9 +1567,10 @@ void MainInterface::set_alert(int a1) {
 //    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
 //    sequential guard clauses, which inline each body instead.
 //  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
-//    an indirect virtual call use the generated VCall shim below; for a
-//    thiscall function POINTER, take a member-function pointer of a
-//    dummy class instead of spelling the convention.
+//    a thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention. An indirect VIRTUAL
+//    call is spelled by the name of the method, which is what makes
+//    `call dword ptr [eax+0xNN]`.
 //  * Loop form is visible: while / do-while / for lower differently,
 //    and so does counting up versus down.
 //  * If the original dedicates a callee-saved register to a constant
@@ -1638,9 +1583,10 @@ void MainInterface::set_alert(int a1) {
 void MainInterface::on_scrolled(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int group = IfaceIdToSlot[*ActiveIfaceId];
-        VCall *target = reinterpret_cast<VCall *>(IfaceRegistry[group]);
+        IfaceRegistryEntry *target =
+            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[group];
         if (target) {
-            target->slot001(a1, a2);
+            target->on_iface_scrolled(a1, a2);
         }
     }
 }
@@ -1680,5 +1626,41 @@ void __cdecl timer_callback_daemon(int a1, int a2) {
         reinterpret_cast<GraphicWin *>(self)->soft_update(&rc);
         break;
     }
+    }
+}
+
+/*
+Purpose: Hand the clicked button id to whichever interface mode is active.
+// ORIGINAL: 0x0045C800 ?on_button_clicked@MainInterface@@QAEXH@Z 0x0045C800-0x0045C830 BYTE_EXACT
+// size      48 bytes
+// prototype void (__thiscall ?on_button_clicked@MainInterface@@QAEXH@Z)(MainInterface* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x0045C829
+// LEVER: homed 2026-09-04 by the receiver map. The receiver is never touched,
+//   so the body is the two guards and the dispatch - and the dispatch is now
+//   a call by name: IfaceRegistryEntry declares the nineteen slots the
+//   concrete table at 0x66C544 installs, slot 13 (offset 0x34) being
+//   on_iface_button_clicked, so `target->on_iface_button_clicked(a1)` is the
+//   image's `mov edx,[ecx] / call dword ptr [edx+0x34]` and the VCall shim
+//   that used to stand in for it is gone. receiver stays unspelled because
+//   the registry entries are SubInterface subobjects (front+0xA14), not
+//   windows, and this method's own `this` never reaches the body.
+// symbol    ?on_button_clicked@MainInterface@@QAEXH@Z - unchanged; this one
+//   is a MainInterface member and stays one.
+Return Value: n/a
+Status: homed from src/recovered/0045c800.cpp on this pass.
+*/
+void MainInterface::on_button_clicked(int a1) {
+    if (WorldClimateSkipTerrainClear != 1u) {
+        int index = *ActiveIfaceId;
+        int subindex = IfaceIdToSlot[index];
+        IfaceRegistryEntry *target =
+            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[subindex];
+        if (target != 0) {
+            target->on_iface_button_clicked(a1);
+        }
     }
 }

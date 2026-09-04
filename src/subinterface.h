@@ -95,9 +95,13 @@ class SubInterface {
 
   // Slot 0 of the image's SubInterface vftable (0x66A6E4, all-pure). The
   // base declares it so the compiler emits the vptr at offset 0 and the
-  // all-pure base vftable, replacing the hand-installed vtable_. The real
-  // method names are unrecovered; this is semantic debt.
-  virtual void unk_slot0() {}
+  // all-pure base vftable, replacing the hand-installed vtable_. Named
+  // 2026-09-04 out of MainInterface's concrete table at 0x66C544, whose slot
+  // 0 is ?on_status@MainInterface@@QAEXH@Z (0x0045CA40, 568 bytes) - the
+  // interface table has nineteen entries and this is the first of them, so
+  // the slot indices of a class derived from SubInterface line up with the
+  // image's own table exactly.
+  virtual void on_status(int mode) {}
 
  protected:
   uint32_t field_4_;  // 0x4  PROVED: set_iface_mode and release_iface_mode

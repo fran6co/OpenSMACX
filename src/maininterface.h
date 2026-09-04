@@ -21,7 +21,101 @@
 #include "flic.h"
 #include "graphicwin.h"
 #include "stringbox.h"
+#include "subinterface.h"
 #include "time.h"
+
+/*
+ * THE RECEIVER MAP
+ * ================
+ *
+ * MainInterface is ONE object with TWO receivers, and which one a method
+ * gets decides every offset in its body. Measured out of the image, not
+ * inferred:
+ *
+ *   The OUTER receiver is the window front. MainInterface's constructor
+ *   (0x0045EF20, `mov esi, ecx` at entry) builds flat_button_[42] at
+ *   esi+0xE00, button_group_[4] at esi+0x1E878, string_box_ at esi+0x1EACC,
+ *   the three fonts at esi+0x2166C/94/BC, the sprite arrays from
+ *   esi+0x216F4, and closes with three vftable stores - esi+0x0 (0x66C598),
+ *   esi+0x444 (0x66C590) and esi+0xA14 (0x66C544). Every field in the class
+ *   below is named from that front, and every BYTE_EXACT body in
+ *   maininterface.cpp uses it: redraw_complete (0x0045C3A0) reaches spot_
+ *   with `lea ecx, [esi + 0x25034]`, which is exactly where the member map
+ *   puts Spot.
+ *
+ *   The INNER receiver is the SubInterface subobject at front+0xA14, which
+ *   is where subinterface.h puts it for the eight window classes and which
+ *   is the type the 12-slot registry at 0x007AE7F0 holds. It OVERLAPS the
+ *   two dwords field_A14_ and field_A18_ that stand in the class below:
+ *   SubInterface is vptr plus one dword, exactly eight bytes, so declaring
+ *   the base instead of the two members would move nothing after them.
+ *   redraw_complete proves the overlap from the other side - it compares
+ *   `dword ptr [0x7AF238]` against 0xA, and 0x7AF238 is front+0xA18, the
+ *   SubInterface dword the interface-mode methods read and write.
+ *
+ *   The on_iface_* family takes the INNER receiver. on_iface_mouse_leave
+ *   (0x0045D110) is `mov esi, ecx` then `cmp [esi+0x20CD8], 1` then
+ *   `lea ecx, [esi-0xA14]` before calling redraw_complete: esi is the
+ *   subobject, esi+0x20CD8 is front+0x216EC (field_216EC_), and esi-0xA14 is
+ *   the front. The MainInterface secondary vftable at 0x66C544 holds the
+ *   family's RAW addresses - on_iface_button_clicked (0x0045D170) at slot 13,
+ *   offset 0x34, which is exactly the slot the registry dispatch reads - and
+ *   a raw body in that slot means no adjustor thunk. There is no
+ *   `sub ecx, 0xA14` adjustor thunk anywhere in the image (scanned over every
+ *   `81 E9 / 83 E9 / 2B 49` + `E9` shape in .text), so the family was never
+ *   reached through a base subobject that needed adjusting. That is what says
+ *   it belongs to a class whose SubInterface base is at its OWN offset 0 -
+ *   IfaceRegistryEntry below - and not to MainInterface, whose SubInterface
+ *   base sits at 0xA14. CouncWin's table at 0x66AA94 holds the same kind of
+ *   entry (slot 3 is ?on_iface_left_click@CouncWin@@QAEXHH@Z at 0x00427060, a
+ *   bare `ret 8`), and slots 6, 17 and 18 are the same three shared no-ops
+ *   (0x404260, 0x404250, 0x404240) in every window's table.
+ *
+ * WHAT IS DECLARED HERE AND WHY NOT MORE. IfaceRegistryEntry below carries
+ * the nineteen slots, so the registry dispatch - the image's
+ * `mov edx,[ecx] / call dword ptr [edx+0x34]` - is a call by name and the
+ * VCall shims it stood in for are gone. Making MainInterface derive from it
+ * was MEASURED and reverted: see the note on field_A14_ in the class. Until
+ * the class that owns the fields the family reads through the subobject
+ * receiver is modelled, the family's bodies stay in their archives - homing
+ * them on MainInterface would point every one of those reads at the wrong
+ * dword, and homing them here would leave nothing for `this` to reach.
+ */
+class IfaceRegistryEntry : public SubInterface {
+ public:
+  // Slots 1..18 of the interface table. Slot 0 is SubInterface's. The names
+  // are the MainInterface methods the table at 0x66C544 points at, slot for
+  // slot. The three bodies that ARE defined here are the shared no-ops every
+  // window's table carries at those slots (0x404260, 0x404250, 0x404240) - a
+  // window that does not implement the event gets exactly these.
+  virtual void on_status(int mode);              // slot 0  0x45CA40
+  virtual void on_iface_scrolled(int, int);      // slot 1  0x45CC80
+  virtual void on_iface_scrolling(int, int);     // slot 2  0x45CC90
+  virtual void on_iface_left_click(int, int);    // slot 3  0x45CDC0
+  virtual void on_iface_right_click(int, int);   // slot 4  0x45CE80
+  virtual void on_iface_left_down(int, int);     // slot 5  0x45CF40
+  virtual void vslot_06(int, int) {}             // slot 6  0x404260, shared ret 8
+  virtual void on_iface_right_down(int, int);    // slot 7  0x45CF80
+  virtual void on_iface_mouse_move(int, int);    // slot 8  0x45D000
+  virtual void on_iface_mouse_leave(int, int);   // slot 9  0x45D110
+  virtual void on_iface_selected(int, int);      // slot 10 0x45D140
+  virtual void on_iface_left_double_click(int, int);   // slot 11 0x45CD80
+  virtual void on_iface_right_double_click(int, int);  // slot 12 0x45CDB0
+  virtual void on_iface_button_clicked(int button_id); // slot 13 0x45D170, 0x34
+  virtual int on_iface_button_pressed(int button_id);  // slot 14 0x45D160
+  virtual void on_iface_button_toggled(int, int);      // slot 15 0x45CCA0
+  virtual void on_iface_group_clicked(int, int, int);  // slot 16 0x45CCB0
+  virtual int on_dialog_back_draw(GraphicWin *a1) { return 0; }  // slot 17 0x404250
+  virtual int on_dialog_item_back_draw(GraphicWin *, int, int, RECT *) { return 0; }  // 18
+};
+
+// The 12 interface-mode slots at 0x007AE7F0, each either null or a live
+// SubInterface subobject; delete_iface_mode (0x0045D2E0) walks the table
+// zeroing the slot that matches its own `this`. The registry, the id-to-slot
+// map at 0x007AE778 and the active id at 0x007D392C are bound in
+// maininterface.cpp - as IfaceRegistry, IfaceIdToSlot and ActiveIfaceId -
+// because this header is included by every TU that names a MainInterface and
+// a second name per address is a duplicate the gate counts.
 
  /*
   * MainInterface class
@@ -104,6 +198,13 @@ class MainInterface : public GraphicWin {
   void restore_back(int a1);
 
  public:
+  // 0x0045C800. Looks the active interface up in the registry and hands the
+  // button id to its slot 13. The window event handlers dispatch the same way
+  // - on_left_click, on_button_pressed and friends all read ActiveIfaceId,
+  // then IfaceIdToSlot, then IfaceRegistry.
+  void on_button_clicked(int a1);
+
+ public:
   // 0x0045C180. Time's tick dispatcher: case 0 stops time1_, case 1 steps
   // the alert counter and unions rect1_ with rect2_.
   void timer_callback_daemon(int a1);
@@ -126,6 +227,10 @@ class MainInterface : public GraphicWin {
   // 0x0045C3A0, a pending_bodies forwarder. blink2_timer (time.cpp) reaches
   // it on the fixed MainInterface at 0x007AE820 as its whole tick body.
   void redraw_complete();
+  // front+0x216EC. on_iface_mouse_leave tests it against 1, clears it and
+  // redraws when it is set, through the SubInterface subobject, where the
+  // same dword is subobject+0x20CD8.
+  uint32_t iface_redraw_pending_;
   void UNK2();
   void UNK3();
   void UNK4();
@@ -147,6 +252,16 @@ class MainInterface : public GraphicWin {
   // MainInterface singleton at 0x007AF234.
   void on_iface_button_clicked(int a1);
  private:
+  // field_A14_ and field_A18_ are the SubInterface subobject - its vptr and
+  // its one dword - and are held as opaque dwords rather than as a declared
+  // base. Making MainInterface derive from IfaceRegistryEntry was MEASURED
+  // and reverted 2026-09-04: it keeps every offset (0xA14 + 8 == 0xA1C) but
+  // turns the five on_iface_* bodies already homed on MainInterface into
+  // overrides, which (a) makes VC6 want the base's own vtable and therefore
+  // definitions for all nineteen slots, and (b) is what would put adjustor
+  // thunks in the table the image holds raw bodies in. Declaring the entry
+  // class on its own - below - is what the registry dispatch needs, and it
+  // costs none of that.
   uint32_t field_A14_;
   uint32_t field_A18_;
   uint32_t field_A1C_;
@@ -395,7 +510,8 @@ class MainInterface : public GraphicWin {
   Font font3_;
   uint32_t field_216E4_;
   uint32_t field_216E8_;
-  uint32_t field_216EC_;
+  // the dword that was field_216EC_ stands beside redraw_complete above, as
+  // iface_redraw_pending_; nothing after it moved.
   uint32_t alert_;
   Sprite sprites1_[4];
   Sprite sprites2_[4];
@@ -419,6 +535,3 @@ class MainInterface : public GraphicWin {
 
 void __cdecl desktop_update();
 
-// The click handler noted on the declaration above is not recovered; it
-// forwards to the original image. ?on_iface_button_clicked@MainInterface@@QAEXH@Z
-// is public, __thiscall, void(int).

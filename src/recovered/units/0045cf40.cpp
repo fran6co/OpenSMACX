@@ -1,4 +1,10 @@
 // ORIGINAL: 0x0045CF40 ?on_iface_left_down@MainInterface@@QAEXHH@Z 0x0045CF40-0x0045CF75 FILE BYTE_EXACT
+// BLOCKED 2026-09-04 on the receiver map, now read (maininterface.h): the
+//         Spot it checks is reached as `add ecx, 0x24620` - subobject plus
+//         0x24620, which is front+0x25034, MainInterface's spot_. A declared
+//         downcast folds the displacement to 0x25034 and costs the byte. It
+//         also needs the Console method at 0x005169F0 declared in console.h
+//         before the hit path can call it by name.
 // size      53 bytes
 // prototype void (__thiscall ?on_iface_left_down@MainInterface@@QAEXHH@Z)(MainInterface* this, int xCoord, int yCoord)
 // callers   0   call targets   2

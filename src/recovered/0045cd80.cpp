@@ -1,4 +1,9 @@
 // ORIGINAL: 0x0045CD80 ?on_iface_left_double_click@MainInterface@@QAEXHH@Z 0x0045CD80-0x0045CDB0 BYTE_EXACT
+// HANDOFF 2026-09-04: same shape as 0045d140 - the receiver never enters the
+//         body (StatusWinRedrawRect1 at 0x007AF50C is pushed as an absolute)
+//         but it needs StatusWin::on_left_double_click (0x004B8990) defined
+//         to call by name, and statuswin.h is not this batch's file. Home it
+//         as IfaceRegistryEntry::on_iface_left_double_click.
 // size      48 bytes
 // prototype void (__thiscall ?on_iface_left_double_click@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   2
