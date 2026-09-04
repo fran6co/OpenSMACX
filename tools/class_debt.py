@@ -295,7 +295,7 @@ CEILINGS = {
     # 5 -> 8 (2026-09-03, P2 buffer/mapwin batch): three more homed
     # wrappers whose shipped signatures take pointers the catalogue spells
     # as ints (draw overloads on uchar* bitmaps).
-    "pointer-parameter as int": 8,
+    "pointer-parameter as int": 5,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
     # were never counted. The tree did not change; the ruler did.
