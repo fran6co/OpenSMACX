@@ -1089,6 +1089,72 @@ Purpose: The BasePop constructor. The base GraphicWin and the Heap, two
 //        is `sub esp, 0x10` where the image has `sub esp, 8`; the old
 //        spelling was +4, this one +8. Register colouring (image ebp=this /
 //        ebx=0, ours swapped) still dominates the remaining disagreement.
+// STRUCTURE BasePop ctor | the 27 dwords at 0x31b8 are a COPY of
+//        BasePopDefaultBlock31B8, not a transpose | image loads
+//        0x9b8d10+4*column+0xC*row and stores 0x31b8+4*column+0xC*row - the
+//        SAME index on both sides, nine rows of three dwords, three turns.
+//        The spelling this replaces walked row*3+column against column*8+row
+//        over EIGHT rows: 24 of the 27 slots, scrambled, one never written -
+//        a divergence from the shipped code, not a spelling problem. Fixed
+//        2026-09-04: dst[0/3/6/.../24] = table[column + 0/3/.../24], one turn
+//        per column, which is what took this body 41 -> 105 of 321 together
+//        with the memset below.
+// LEVER: eight-dword-block the eight contiguous dwords at 0x20f8 are ONE
+//        `rep stosd` in the image (`lea edi,[ebp+0x20f8]; mov ecx,8; xor
+//        eax,eax`), so the body says `memset(&field_20F8_, 0, 8 *
+//        sizeof(uint32_t))`. Eight separate `= 0` member stores compile to
+//        eight movs and cost the block. Measured 46/321 vs 41/321 alone,
+//        105/321 with the copy above.
+// TRIED: register-colouring the residual is still the swap, and the four
+//        callee-saved registers hold the SAME FOUR VALUES in both listings in
+//        the SAME first-use order - this (prologue), 0 (the SEH state store),
+//        the StringList vftable pointer, the staging cursor. Image: ebp=this,
+//        ebx=0, esi, edi. Ours: ebx=this, ebp=0, esi, edi. The frames are
+//        byte-identical (`sub esp, 8`, two dead home stores, state byte at
+//        [esp+0x20]), so the swap is the allocator's register CHOICE alone.
+//        Census: 27 image bodies keep `this` in ebp and 137 in ebx; the 27
+//        are every shape but this one is the ONLY constructor among them -
+//        every other SEH-framed ctor in the image (55 of them, Dialogs'
+//        included) takes `mov esi, ecx`. The four byte-exact ebp bodies
+//        (Caviar::close, EditGroup::close, PullDown::UNK4, rename_item) all
+//        park an early CONSTANT in ebx and `this` in ebp; ours parks `this`
+//        in ebx and the constant in ebp, i.e. exactly crossed.
+// TRIED: zero-as-named-local `const int zero_ = 0;` used for 27 of the
+//        uint32_t zero stores, to give the constant a source-level symbol and
+//        a memory home ahead of `this` - measured 105/321, IDENTICAL to the
+//        tree, no flip (a wrong order costs instead: hoisting
+//        `field_21C8_ = 0` to the body's first statement measures 35/321).
+// TRIED: transpose-mirror the copy loop spelled with a walking source pointer
+//        and a fixed destination, to see whether the allocator's choice of
+//        which pointer walks feeds the colouring - it does not; and the image
+//        walks the DESTINATION (`add ecx,4`, source as counter+displacement)
+//        where this body walks the source and displaces the destination
+//        (`mov eax,0xc` against the image's `xor eax,eax`). Two instructions
+//        of residual, invisible while the colouring stands.
+// LEVER: field-typing field_A3C_ became `void *field_A3C_` (basepop.h) and
+//        the store became `field_A3C_ = this;` - the value is proved (image
+//        `mov [ebp+0xa3c], ebp`, 0x00600ab0) even though no code in the tree
+//        ever reads the slot back, and the bytes do not move: 105 of 321
+//        before and after. The NAME stays neutral on purpose; the earlier
+//        `self_` asserted a role nobody has evidenced.
+// LEVER: member-recovery four more members named from their own use, all
+//        byte-neutral (34 BYTE_EXACT claims in this file held): field_A18_ /
+//        field_A1C_ -> default_loc_a_ / default_loc_b_ (the ctor's tail
+//        copies them over loc_a_/loc_b_ unless they carry the 0x2000
+//        keep-current sentinel set_loc tests), and field_A20_ / field_A24_ ->
+//        dialog_width_ / dialog_height_ (the file-backed {100, 100} table the
+//        tail writes into the embedded Dialog's width/height slots). Renames
+//        of members are value-neutral and change no mangled name. Still
+//        offset-named: the ~430 dwords of 0x0a40..0x20f4, 0x2144..0x214c,
+//        0x2168..0x21cc, 0x2e64..0x3230 whose owning type nobody has read off
+//        the image - notably the two 0x118 blocks at 0x2e64 / 0x2f7c, which
+//        are ten DialogEntry records each and are the obvious next typing.
+// TRIED: dialogs-tail the image's tail (~30 instructions, 0x00600e8c..) walks//        the Dialogs slab by raw offset - `mov ecx,[ebp+0x21d0]; mov
+//        edx,[ecx+8]; mov [edx+ebp+0x21fc],eax` - and Dialogs declares NO own
+//        data (0xC94 is five base subobjects), so there is no member to reach
+//        it through and a fresh raw self-access is ratchet-blocked at the
+//        ceiling. Absent on purpose, as the note above says; it is also ~30
+//        more `this`-relative uses, so it may be the colouring's trigger.
 Return Value: n/a
 Status: Complete
 */
@@ -1119,8 +1185,22 @@ Status: Complete
 // run time before the first popup is built; the values here are the load
 // state. Everything below this table - all the 0x009B8xxx slots - is past
 // that end: zero at load, and left zero-initialized here on purpose.
+//
+// WHO FILLS THE 0x009B8xxx SLOTS (image .text scan for the raw address, done
+// 2026-09-04). The fonts and colours are written by THIS class's own static
+// setters - set_def_string_font / set_def_string_color / set_def_button_font
+// / set_def_button_color - which popups_normal calls before the first popup.
+// Of the slots with no setter, three are written by OTHER modules' init
+// paths: 0x009B8CF8 (BasePopDefaultField3094) and 0x009B8AB8
+// (BasePopDefaultBlock2E64) by FX::init (0x00445CE8 / 0x00445CFA), and
+// 0x009B8DD0 (BasePopDefaultField322C) by Console::init (0x0051D9B5). The
+// rest - BasePopDefaultField30A4, BasePopDefaultLayout, BasePopDefaultBlock31B8
+// - have no immediate reference anywhere in .text below 0x5C1000, so their
+// writer is either a body the tree has not recovered or an indexed store.
+// Until it is found, the ctor here copies ZEROS into those fields where the
+// shipped game copies whatever its init paths left there.
 
-// {100, 100}: the defaults the ctor's tail sends through field_A20_/A24_
+// {100, 100}: the defaults the ctor's tail sends through dialog_width_/A24_
 // into the embedded Dialog's width/height slots.
 const uint32_t BasePopDefaultDialogSize[2] = {100, 100};  // 0x00696EC4
 
@@ -1144,7 +1224,7 @@ uint32_t BasePopDefaultBlock2F7C[70];  // 0x009B8BD0
 uint32_t BasePopDefaultField3094;  // 0x009B8CF8
 
 // The defaults for field_A14_ (the high-res-scaling opt-out set_width tests)
-// and field_A18_/field_A1C_ (the starting loc_a_/loc_b_; 0x2000 keeps the
+// and default_loc_a_/default_loc_b_ (the starting loc_a_/loc_b_; 0x2000 keeps the
 // current value, so zero here means "location 0,0").
 uint32_t BasePopDefaultLayout[3];  // 0x009B8D04
 
@@ -1168,14 +1248,6 @@ uint32_t BasePopDefaultField30A4;  // 0x009B8DCC
 // The image references this slot from 13 sites, all outside this file.
 uint32_t BasePopDefaultField322C;  // 0x009B8DD0
 
-namespace {
-// The register-transcription helper for the list-node walks: its arguments
-// are local ints the body derived from named fields, never `this`.
-int &RD(int address) {
-    return *reinterpret_cast<int *>(address);
-}
-}  // namespace
-
 BasePop::BasePop() {
 
     // GraphicWin(), heap_(), flat_button1_(), flat_button2_(), sprite_(),
@@ -1195,20 +1267,25 @@ BasePop::BasePop() {
     memcpy(&field_2E64_, BasePopDefaultBlock2E64, 0x118);
     memcpy(&field_2F7C_, BasePopDefaultBlock2F7C, 0x118);
     {
-        // The image fills eight 3-dword records at field_31B8_ from a
-        // column-major 0x30-byte table: column c's eight dwords land at
-        // record stride 0xC. One turn per column, eight dwords per turn -
-        // the same three-sources-per-turn shape the register transcription
-        // spelled with eaxIdx.
-        uint32_t *const records = reinterpret_cast<uint32_t *>(&field_31C4_) - 3;
-        const uint32_t *const table = BasePopDefaultBlock31B8;
+        // A STRAIGHT COPY OF ALL 27 DWORDS, not a transpose. The image's loop
+        // loads 0x9b8d10 + 4*column + 0xC*row and stores 0x31b8 + 4*column +
+        // 0xC*row - the SAME index on both sides, nine rows of three dwords,
+        // one turn per column. The earlier spelling here walked row*3+column
+        // against column*8+row over eight rows: twenty-four of the twenty-
+        // seven slots, scrambled, and the last one never written.
+        uint32_t *dst = &field_31B8_;
         int column = 0;
         do {
-            int row = 0;
-            do {
-                records[row * 3 + column] = table[column * 8 + row];
-                row += 1;
-            } while (row < 8);
+            dst[0] = BasePopDefaultBlock31B8[column];
+            dst[3] = BasePopDefaultBlock31B8[column + 3];
+            dst[6] = BasePopDefaultBlock31B8[column + 6];
+            dst[9] = BasePopDefaultBlock31B8[column + 9];
+            dst[12] = BasePopDefaultBlock31B8[column + 12];
+            dst[15] = BasePopDefaultBlock31B8[column + 15];
+            dst[18] = BasePopDefaultBlock31B8[column + 18];
+            dst[21] = BasePopDefaultBlock31B8[column + 21];
+            dst[24] = BasePopDefaultBlock31B8[column + 24];
+            dst += 1;
             column += 1;
         } while (column < 3);
     }
@@ -1217,20 +1294,14 @@ BasePop::BasePop() {
     field_21CC_ = -1;
     ok_text_ = 0;
     cancel_text_ = 0;
-    field_A3C_ = reinterpret_cast<int>(this);
+    field_A3C_ = this;
     field_20F4_ = 0;
     field_A40_ = 0;
     field_30A8_ = 0;
     field_30AC_ = 0;
     field_A44_ = -1;
-    field_20F8_ = 0;
-    field_20FC_ = 0;
-    field_2100_ = 0;
-    field_2104_ = 0;
-    field_2108_ = 0;
-    field_210C_ = 0;
-    field_2110_ = 0;
-    field_2114_ = 0;
+    // Eight contiguous dwords: the image fills them with one `rep stosd`.
+    memset(&field_20F8_, 0, 8 * sizeof(uint32_t));
     field_A48_ = 0;
     field_21B8_ = BasePopDefaultField21B0[3];
     field_21BC_ = BasePopDefaultField21B0[2];
@@ -1315,25 +1386,25 @@ BasePop::BasePop() {
     field_322C_ = 0;
     field_322C_ = BasePopDefaultField322C;
     field_A14_ = BasePopDefaultLayout[0];
-    field_A18_ = BasePopDefaultLayout[1];
-    field_A1C_ = BasePopDefaultLayout[2];
-    field_A20_ = BasePopDefaultDialogSize[0];
-    field_A24_ = BasePopDefaultDialogSize[1];
+    default_loc_a_ = BasePopDefaultLayout[1];
+    default_loc_b_ = BasePopDefaultLayout[2];
+    dialog_width_ = BasePopDefaultDialogSize[0];
+    dialog_height_ = BasePopDefaultDialogSize[1];
 
     if (field_A14_ != 0) {
         // The image's tail here walks the Dialogs subobject at +0x21d0 (see
         // the STRUCTURE note under the marker): [dialogs+8] selects two
-        // slots that receive field_A20_/field_A24_ (the latter grown 3/2 for
-        // wide screens), and field_A18_/field_A1C_ overwrite loc_a_/loc_b_
+        // slots that receive dialog_width_/dialog_height_ (the latter grown 3/2 for
+        // wide screens), and default_loc_a_/default_loc_b_ overwrite loc_a_/loc_b_
         // unless they equal 0x2000. Not spelled: this body neither constructs
         // the Dialogs subobject nor may take a fresh raw pointer to it (the
         // raw self-access ratchet sits at its ceiling), so the reads would
         // consume garbage. Absent on purpose.
-        if (field_A18_ != 0x2000) {
-            loc_a_ = field_A18_;
+        if (default_loc_a_ != 0x2000) {
+            loc_a_ = default_loc_a_;
         }
-        if (field_A1C_ != 0x2000) {
-            loc_b_ = field_A1C_;
+        if (default_loc_b_ != 0x2000) {
+            loc_b_ = default_loc_b_;
         }
     }
 

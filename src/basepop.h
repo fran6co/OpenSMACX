@@ -158,12 +158,22 @@ class BasePop : public GraphicWin {
 
  private:
   uint32_t field_A14_;  // 0x0a14
-  uint32_t field_A18_;
-  uint32_t field_A1C_;
-  uint32_t field_A20_;
-  uint32_t field_A24_;
+  // The STARTING loc_a_/loc_b_ pair: copied over them unless the value is
+  // 0x2000, the keep-current sentinel set_loc uses too.
+  uint32_t default_loc_a_;  // 0x0a18
+  uint32_t default_loc_b_;  // 0x0a1c
+  // The DEFAULT dialog width/height, seeded from the file-backed
+  // 0x00696EC4 table; the ctor's tail writes them into the embedded
+  // Dialog's width/height slots (the height grown 3/2 for wide screens).
+  uint32_t dialog_width_;   // 0x0a20
+  uint32_t dialog_height_;  // 0x0a24
   Heap heap_;
-  uint32_t field_A3C_;
+  // TYPED AS THE POINTER IT HOLDS, but nothing more is claimed: the ctor
+  // stores `this` here (image `mov [ebp+0xa3c], ebp` at 0x00600ab0) and
+  // NOTHING in the tree reads it back, so the slot's purpose - owner? list
+  // link? handle? - is unknown. Named by its offset until someone can say
+  // what the popup uses it for.
+  void *field_A3C_;  // 0x0a3c
   uint32_t field_A40_;
   uint32_t field_A44_;
   uint32_t field_A48_;
