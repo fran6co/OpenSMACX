@@ -48,6 +48,8 @@
 #include "technology.h"  // has_tech - editor_tech and the tech orders gate on it
 #include "random.h"  // random - the editor's randomizer and the AI orders
 #include "alpha.h"  // AlphaIniPrefs - the toggles mirror the prefs into it
+#include "worldwin.h"  // WorldClimateWorldWin - editor_flat / editor_clear redraw it
+#include "buttongroup.h"  // ButtonGroup::set - the editor brush/paint selectors
 #include <cstring>
 
 // FREE FUNCTIONS THE CONSOLE BODIES CALL that no header in src/ declares yet.
@@ -69,6 +71,10 @@ void __cdecl base_kill(int base_id);                      // 0x004E5250 ?base_ki
 int __cdecl end_of_game(int victory_kind);                          // 0x00524870 ?end_of_game@@YAHH@Z
 int __cdecl load_game(int save_slot, int faction_id);                    // 0x005AAAB0 ?load_game@@YAHHH@Z
 int __cdecl load_map();                                   // 0x005AB600 ?load_map@@YAHXZ
+void __cdecl save_map();                                  // 0x005ABB90 ?save_map@@YAXXZ
+// a2 is 0 at all three call sites and a3 is -1 at two of them; nothing in
+// the tree names either, so the forward declaration leaves them unnamed.
+int __cdecl tech_pick(int, int, int, LPCSTR);            // 0x005BEB70 ?tech_pick@@YAHHHHPAD@Z
 void __cdecl set_dirty();                                 // 0x00592A80 ?set_dirty@@YAXXZ
 int __cdecl size_of_planet(int planet_size);                       // 0x0058CED0 ?size_of_planet@@YAHH@Z
 int __cdecl supply_options(int base_id, int flags);               // 0x00593A00 ?supply_options@@YAHHH@Z
@@ -124,6 +130,14 @@ int MapLongitudeSpan = 1;  // 0x0068FAF0, defined here; the image's .data holds 
 // 0x007AD330 is the dword Console::editor_load writes 7 into so the InfoWin
 // at 0x007AD2A0 repaints its panel.
 int InfoWinRedrawPhase = 0;  // 0x007AD330, defined here
+
+// HANDOFF: the process-wide WorldWin at 0x008E9F60 is map.cpp's
+// WorldClimateWorldWin - that file defines it and world_climate clears its
+// terrain. The shared extern belongs in worldwin.h, which this TU does not
+// own, so it is declared here until that row lands; delete the line when it
+// does. editor_flat and editor_clear reach it as `mov ecx, 0x8e9f60` and tail
+// into GraphicWin::redraw.
+extern WorldWin WorldClimateWorldWin;  // 0x008E9F60
 
 // THE CURSOR SPRITE ARRAY sprite.cpp owns. Declared here because
 // Console::cursor_on hands its elements to Win::set_cursor by address; the
@@ -1117,6 +1131,15 @@ static const char *const StrFungmotize = (const char *)0x00689168;   // "FUNGMOT
 static const char *const StrProtectOff = (const char *)0x00689198;   // "PROTECTOFF"
 static const char *const StrProtectOn = (const char *)0x006891A4;    // "PROTECTON"
 static const char *const StrTerraSurvey2 = (const char *)0x0068A8E0; // "TERRASURVEY2"
+static const char *const StrTechChange = (const char *)0x0068A8D4;   // "TECHCHANGE"
+static const char *const StrAcLogoSm = (const char *)0x0068AA7C;     // "ac_logo_sm.pcx"
+static const char *const StrVersionControlX = (const char *)0x0068AA8C;  // "VERSIONCONTROLX"
+static const char *const StrDesignated = (const char *)0x00688E44;   // "DESIGNATED"
+static const char *const StrUndesignated = (const char *)0x00688E50; // "UNDESIGNATED"
+// show_version reads two more .data slots that hold POINTERS to strings:
+// 0x00691870 -> "RELEASE 2.0" and 0x00691874 -> "20-Dec-1999".
+static int *const VersionReleaseTextSlot = (int *)0x00691870;
+static int *const VersionBuildDateSlot = (int *)0x00691874;
 
 typedef int (__cdecl *NullCallback)(void);
 
@@ -2700,6 +2723,377 @@ void Console::set_view(int force_update) {
         ConsoleStatusWin.redraw();
         console_map_win()->main_caption();
         alpha_menu_.check(field_23BDC_);
+    }
+}
+
+// ORIGINAL: 0x004E09E0 ?editor_save@Console@@QAEXXZ 0x004E09E0-0x004E09F9 BYTE_EXACT
+// size      25 bytes
+// prototype void (__thiscall ?editor_save@Console@@QAEXXZ)(Console* this)
+// callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ABB90
+// 0x004E09E0  ?editor_save@Console@@QAEXXZ  ->  ?editor_save@Console@@QAEXXZ
+//
+// The earlier BLOCKED note here named two things, and homing cleared both:
+//   1. 0x007AD330 is ConsoleInfoWin's field at +0x90 in the image, but this
+//      tree binds that dword as console.cpp's own `InfoWinRedrawPhase`
+//      (defined there, 2026-08-29, for editor_load - the same store). The
+//      object-overlap finding stands; only the spelling moved.
+//   2. `save_map` (0x005ABB90 ?save_map@@YAXXZ) is now declared in
+//      console.cpp's handoff block beside load_map.
+//
+// The image reaches the redraw with `mov ecx, 0x7ad2a0; jmp 0x458910` - a
+// tail call on the fixed InfoWin, which is why the C++ is the plain statement
+// sequence below rather than anything returning.
+
+
+void Console::editor_save() {
+    save_map();
+    InfoWinRedrawPhase = 7;
+    ConsoleInfoWin.on_redraw();
+}
+
+// ORIGINAL: 0x004E0F30 ?editor_flat@Console@@QAEXXZ 0x004E0F30-0x004E0F7D FILE BYTE_EXACT
+// size      77 bytes
+// prototype void (__thiscall ?editor_flat@Console@@QAEXXZ)(Console* this)
+// callers   1   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0046B190 0x005ABF20 0x005BF310 0x005D5A70
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Homed 2026-09-04. The bindings this body needed were already named in the
+// tree: 0x0094988C is map.cpp's MapIsFlat, 0x00689148/0x00689150 are
+// console.cpp's StrMapFlat/StrMapRound, and 0x008E9F60 is map.cpp's
+// WorldClimateWorldWin (declared here as a HANDOFF row until the shared
+// extern lands in worldwin.h).
+
+
+void Console::editor_flat() {
+    auto_undo();
+    MapIsFlat ^= 1;
+    ::draw_map(1);
+    WorldClimateWorldWin.GraphicWin::redraw();
+    if (MapIsFlat & 1) {
+        X_pop(StrMapFlat, (NullCallback)0);
+        return;
+    }
+    X_pop(StrMapRound, (NullCallback)0);
+}
+
+// ORIGINAL: 0x004E10C0 ?editor_fast@Console@@QAEXXZ 0x004E10C0-0x004E118D FILE BYTE_EXACT
+// size      205 bytes
+// prototype void (__thiscall ?editor_fast@Console@@QAEXXZ)(Console* this)
+// callers   1   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0046B190 0x005ABF20 0x005C86E0
+// LEVER      reread-global-in-loop-condition  leave the loop bound as a fresh read of the global on every iteration instead of hoisting it into a cached local. This was recorded as a TRIED - the thing that did NOT work - and the body then reached BYTE_EXACT with the opposite spelling, which is exactly the refutation the grammar exists to force. /O2 will not re-read a global it has already loaded unless the source asks again, so caching the bound is a one-instruction difference that persists through the whole loop.
+//
+// Homed 2026-09-04. The emitter's seven anonymous externs all had names in
+// the tree already: editor_state is game.cpp's GameState (0x009A64C0),
+// veh_count is map.cpp's MapArea (0x00949884), veh_array is map.h's
+// map_tiles() (0x0094A30C), editor_undo_a/b are VehCurrentCount
+// (0x009A64C8) and BaseCurrentCount (0x009A64CC), and editor_flag_a/b are
+// console.cpp's own CursorVehActive (0x00939288) and CursorVehIndex
+// (0x0093928C). 0x007B0CB8 is the same singleton editor_generate dispatches
+// through, so the body reuses console.cpp's file-scope VCall shim rather
+// than carrying a second copy of it.
+// LEVER: the loop bound is `static_cast<int>(MapArea)` and not MapArea
+// itself. MapArea is uint32_t (map.h) and the emitter's `veh_count` was
+// int, so the plain spelling compiled `jbe` against the image's `jl` -
+// signedness, not scheduling, and the only divergence in the body.
+
+
+void Console::editor_fast() {
+    auto_undo();
+    unsigned int state = GameState | 4;
+    unsigned char *base = reinterpret_cast<unsigned char *>(map_tiles());
+    VehCurrentCount = 0;
+    BaseCurrentCount = 0;
+    CursorVehActive = 0;
+    CursorVehIndex = -1;
+    GameState = state;
+    for (int i = 0; i < static_cast<int>(MapArea); i++) {
+        *reinterpret_cast<unsigned int *>(base + i * 0x2c + 8) &= 0xfffffffc;
+    }
+    unsigned int flag80 = GameState & 0x80;
+    GameState = GameState & 0xffffff7f;
+    world_build();
+    if (flag80 != 0) {
+        GameState = GameState | 0x80;
+    }
+    unsigned char al = *reinterpret_cast<unsigned char *>(&GameState);
+    if ((al & 0x80) != 0 && (al & 0x40) != 0) {
+        reinterpret_cast<VCall *>(0x007B0CB8)->slot001(0);
+    } else {
+        reinterpret_cast<VCall *>(0x007B0CB8)->slot002();
+    }
+    ::draw_map(1);
+}
+
+// ORIGINAL: 0x00510520 ?cursor_off@Console@@QAEXXZ 0x00510520-0x005105BE FILE BYTE_EXACT
+// size      158 bytes
+// prototype void (__thiscall ?cursor_off@Console@@QAEXXZ)(Console* this)
+// callers   8   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0046A550 0x005EC7C0 0x005FCA30
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Homed 2026-09-04. The two raw slots the emitter bound - 0x007D3C3C and the
+// exclusive 0x007D3C5C - are mapwin.h's MapWinTable and MapWinTableSlots,
+// and 0x1DD74 inside the loop is the same header's MapWinActiveOffset. The
+// walk is the one selected() and cursor_on() already spell in this TU.
+// LEVER: the loop tail compares the CASTED ints, not the pointers -
+// `reinterpret_cast<int>(entry) < reinterpret_cast<int>(...)`. A pointer
+// comparison compiles `jb` where the image has `jl`, and that one byte was
+// the whole divergence (39/40 -> 40/40). Runs under the /Oy- set.
+
+
+void Console::cursor_off() {
+    field_23D10_ = 0;
+    int *entry = reinterpret_cast<int *>(MapWinTable);
+    do {
+        int obj = *entry;
+        if (obj != 0 && (entry == reinterpret_cast<int *>(MapWinTable) ||
+                          *reinterpret_cast<int *>(obj + MapWinActiveOffset) != 0)) {
+            if (*reinterpret_cast<int *>(obj + 0x1ef4c) != 0 ||
+                *reinterpret_cast<int *>(obj + 0x1ef50) != 0x7f00) {
+                int vt = *reinterpret_cast<int *>(obj);
+                int adjusted = obj + *reinterpret_cast<int *>(vt + 4);
+                reinterpret_cast<Win *>(adjusted)->set_cursor(0x7f00);
+                *reinterpret_cast<int *>(obj + 0x1ef50) = 0x7f00;
+                *reinterpret_cast<int *>(obj + 0x1ef4c) = 0;
+            }
+            unsigned int flags = *reinterpret_cast<unsigned int *>(*entry + 0x1dd70);
+            if ((flags & 0xc40000) != 0) {
+                *reinterpret_cast<unsigned int *>(*entry + 0x1dd70) = flags & 0xff3bffff;
+                reinterpret_cast<MapWin *>(*entry)->draw_map(1);
+            }
+            do_non_input();
+        }
+        ++entry;
+    } while (reinterpret_cast<int>(entry) <
+             reinterpret_cast<int>(MapWinTable + MapWinTableSlots));
+}
+
+// ORIGINAL: 0x00515010 ?set_tech@Console@@QAEXH@Z 0x00515010-0x005150C2 FILE BYTE_EXACT
+// size      178 bytes
+// prototype void (__thiscall ?set_tech@Console@@QAEXH@Z)(Console* this, int factionID)
+// callers   2   call targets   5
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00593340 0x005BEB70 0x005BF310 0x00625E30 0x00625E50
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Homed 2026-09-04. The two slots the emitter bound at 0x0096CDA8 and
+// 0x0096CDAC are PlayersData[faction].tech_accumulated (0x3C8) and
+// .tech_id_researching (0x3CC) - faction.h declares both, and
+// technology.cpp already reads the 0x3D0 sibling. `g_0094f35c[n * 11]` is
+// Technology[n].name: Technology is at 0x0094F358, name sits at +4, and
+// sizeof(RulesTechnology) is 0x2C, so 11 * 4 lands on the name. The label at
+// 0x0068A8D4 reads "TECHCHANGE" out of the image's .data.
+
+
+void Console::set_tech(int faction_id) {
+    int *research = &PlayersData[faction_id].tech_accumulated;
+    int *researching = &PlayersData[faction_id].tech_id_researching;
+    if (*research != 0 && *researching >= 0) {
+        parse_say(0, (int)Technology[*researching].name, -1, -1);
+        parse_num(0, *research);
+        if (X_pop(StrTechChange, (NullCallback)0) == 0) {
+            return;
+        }
+    }
+    int picked = tech_pick(faction_id, 0, -1, 0);
+    if (picked >= 0) {
+        if (*researching >= 0 && picked != *researching) {
+            *research = *research / 2;
+        }
+        *researching = picked;
+    }
+    synch_research(faction_id);
+}
+
+// ORIGINAL: 0x00517180 ?show_version@Console@@QAEXXZ 0x00517180-0x005171C1 FILE BYTE_EXACT
+// size      65 bytes
+// prototype void (__thiscall ?show_version@Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0048C0A0 0x00625EC0
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Homed 2026-09-04. The unit here measured NO_COMPILE, not MISMATCH: the
+// body only ever needed names this tree already had. The caption slot at
+// 0x00691B0C is game.h's ClimatePopupTitle - the same address, so the body
+// reuses it rather than binding a second name. The two parse_says inputs are
+// .data slots holding char* (0x00691870 -> "RELEASE 2.0", 0x00691874 ->
+// "20-Dec-1999"), and the two literals popp takes read straight out of the
+// image: "ac_logo_sm.pcx" at 0x0068AA7C, "VERSIONCONTROLX" at 0x0068AA8C.
+
+
+void Console::show_version() {
+    parse_says(0, (LPCSTR)*VersionReleaseTextSlot, -1, -1);
+    parse_says(1, (LPCSTR)*VersionBuildDateSlot, -1, -1);
+    popp((LPCSTR)*ClimatePopupTitle, StrVersionControlX, 0, StrAcLogoSm,
+         (NullCallback)0);
+}
+
+// Fixed-slot bindings carried from 004e0a50.cpp
+// EditorPaintId: use-site evidence, see editor_paints
+static int *const EditorPaintId = (int *)0x00945AE0;
+// EditorPaintSlotsLow: use-site evidence, see editor_paints
+static int *const EditorPaintSlotsLow = (int *)0x00691888;
+// EditorPaintSlotsHigh: use-site evidence, see editor_paints
+static int *const EditorPaintSlotsHigh = (int *)0x00691AE8;
+// PaintCycleGroup: use-site evidence, see editor_paints
+static ButtonGroup *const PaintCycleGroup = (ButtonGroup *)0x007CD1C0;
+// PaintCycleSelection: use-site evidence, see editor_paints
+static int *const PaintCycleSelection = (int *)0x007CD244;
+
+// ORIGINAL: 0x004E0A50 ?editor_paints@Console@@QAEXH@Z 0x004E0A50-0x004E0ACF FILE
+// TRIED: `a1 > 5` (jl/jle flip at #12, fixed by `a1 >= 6`); `counter = a1 - 6` as one expression (lea vs sub at #15, tried splitting into `counter=a1; counter-=6;`, no change). Same size as original (127/127), mismatch only at #15.
+// size      127 bytes
+// prototype void (__thiscall ?editor_paints@Console@@QAEXH@Z)(Console* this, int)
+// callers   5   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00458910 0x0045B550 0x0062B870
+//
+// Homed 2026-09-04. Three of the eight slots the emitter bound already had
+// names in the tree: 0x007AD330 is console.cpp's own InfoWinRedrawPhase,
+// 0x007AD2A0 is ConsoleInfoWin and 0x007AE820 is MainInterfaceGlobal. The
+// five without one are carried as the emitter bound them.
+
+
+// TRIED: hoisting the receiver into `InfoWin *const win = &ConsoleInfoWin;`
+//   above the first store - the image loads `mov ecx, 0x7ad2a0` at
+//   instruction 4, before both stores. No change: &ConsoleInfoWin is a
+//   RELOCATION, so VC6 will not fold and hoist it, where the archive's
+//   `static int *const g_007ad2a0` was internal and folded. Second wall, at
+//   #15: the image `sub esi, 6` reuses the parameter register for the loop
+//   counter where this tree `lea edx, [esi - 6]`; splitting the expression
+//   did not reach it either (also tried against the archive, see its TRIED).
+//   30 of 38 agree; both remaining runs are these two.
+void Console::editor_paints(int paint_id) {
+    // Use-site names (the census rule): 0x00945AE0 is written here and read
+    // by every editor_* painter as the current paint id; 0x00691AE8..0x00691888
+    // is the paint-availability walk's table (8-int stride, high end down);
+    // 0x007CD1C0/0x007CD244 are the map-paint cycle ButtonGroup and its
+    // selected-slot int (set(result, 1) only when different).
+    InfoWin *const win = &ConsoleInfoWin;
+    *EditorPaintId = paint_id;
+    InfoWinRedrawPhase = 7;
+    win->on_redraw();
+    MainInterfaceGlobal.draw_edit_pane();
+    int result = paint_id + 0x3f3;
+    if (paint_id >= 6 && paint_id < 0x1a) {
+        int counter = paint_id - 6;
+        int limit = 0x13;
+        int *p = EditorPaintSlotsHigh;
+        do {
+            if (*p == 0 && limit <= counter) {
+                --counter;
+            }
+            p -= 8;
+            --limit;
+        } while (p >= EditorPaintSlotsLow);
+        result = counter + 0x3f9;
+    }
+    if (*PaintCycleSelection != result) {
+        PaintCycleGroup->set(result, 1);
+    }
+}
+
+// ORIGINAL: 0x004E0AD0 ?editor_minor@Console@@QAEXXZ 0x004E0AD0-0x004E0AF5 FILE BYTE_EXACT
+// size      37 bytes
+// prototype void (__thiscall ?editor_minor@Console@@QAEXXZ)(Console* this)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004E0A50 0x005BF3F0
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Homed 2026-09-04. The scaffold's three-argument `X_pop(label, 0x40, 0)` is
+// this tree's x_pop_short (0x005BF3F0), the misnaming editor_rockiness
+// already documented in console.cpp; the label is console.cpp's own
+// StrEditorMinor.
+
+
+void Console::editor_minor() {
+    int paint = x_pop_short(StrEditorMinor, 0x40, (NullCallback)0);
+    if (paint >= 0) {
+        editor_paints(paint + 0x1a);
+    }
+}
+
+// ORIGINAL: 0x004D8F40 ?explore@Console@@QAEXH@Z 0x004D8F40-0x004D8FA0 FILE BYTE_EXACT
+// size      96 bytes
+// prototype void (__thiscall ?explore@Console@@QAEXH@Z)(Console* this, int)
+// callers   2   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00531020 0x005310F0 0x00531480 0x00593220
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Homed 2026-09-04. The emitter's VehRecord shim existed only because it
+// indexed the records from 0x0095282C - &Vehs[0].state - rather than from the
+// array front veh.h already declares. Read from Vehs, the two fields are
+// Veh::order (+0x11, the byte the shim called byte_d_) and Veh::state (+4,
+// the dword it called flags_). The daemon at 0x0093CD90 is netdaemon.h's
+// NetDaemonNet.
+
+
+void Console::explore(int veh_id) {
+    int result = NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0);
+    if (result == 0) {
+        Vehs[veh_id].order = 0;
+        Vehs[veh_id].state |= 0x4000;
+        synch_veh(veh_id);
+        NetDaemonNet.await_synch();
+        NetDaemonNet.unlock_veh();
+    }
+}
+
+// ORIGINAL: 0x004D7CF0 ?designate@Console@@QAEXH@Z 0x004D7CF0-0x004D7DD8 FILE BYTE_EXACT
+// size      232 bytes
+// prototype void (__thiscall ?designate@Console@@QAEXH@Z)(Console* this, int)
+// callers   1   call targets   5
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00531020 0x005310F0 0x00593220 0x00625EC0 0x0062B870
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Homed 2026-09-04. The emitter's five `tbl_ADDR + a1 * 0x34` byte-offset
+// tables are all typed arrays the tree already declares: 0x00952832 is
+// &Vehs[a1].proto_id, 0x0095282C is &Vehs[a1].state, 0x009AB868 is
+// veh.h's VehPrototypes (whose +0x25 byte is VehPrototype::weapon_id) and
+// 0x0094AE68 is Weapon[0].offense_rating. The daemon is NetDaemonNet, the
+// popup is netmsg.h's NetMsgPopup, and the two labels read DESIGNATED /
+// UNDESIGNATED out of the image.
+
+
+void Console::designate(int veh_id) {
+    int16_t proto_id = Vehs[veh_id].proto_id;
+    uint8_t weapon_id = VehPrototypes[proto_id].weapon_id;
+    uint8_t offense = static_cast<uint8_t>(Weapon[weapon_id].offense_rating);
+    if (offense != 0) {
+        int lockResult = NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0);
+        if (lockResult == 0) {
+            Vehs[veh_id].state ^= 0x80;
+            synch_veh(veh_id);
+            NetDaemonNet.unlock_veh();
+            int16_t proto = Vehs[veh_id].proto_id;
+            parse_says(0, VehPrototypes[proto].veh_name, -1, -1);
+            if ((Vehs[veh_id].state & 0x80) != 0) {
+                NetMsgPopup->pop(StrDesignated, 5000, 0, 0);
+                return;
+            }
+            NetMsgPopup->pop(StrUndesignated, 5000, 0, 0);
+        }
     }
 }
 

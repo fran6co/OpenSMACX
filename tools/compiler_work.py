@@ -165,7 +165,11 @@ SHAPES = [
     # shims; the biggest receiver is the MainInterface object at 0x007B0CB8
     # (scenario.cpp binds it) - the MainInterface virtual declarations are
     # that class pass's, not console's. SubInterface pass retires the family.
-    ("VCall shim", 32,
+    # 32 -> 34 (2026-09-04, W4 console editor batch): editor_fast's
+    # dispatch through the existing 0x007B0CB8 shim - the remedy is the
+    # virtual declarations on scenario.cpp's MainInterface binding, the
+    # receiver-map pass's.
+    ("VCall shim", 34,
      re.compile(r"\bVCall\b"),
      "dispatches through a fake class because the real function is not "
      "declared virtual. Declare it."),
@@ -503,7 +507,11 @@ SCAFFOLD_CEILINGS = {
     # world_shorelines (0x005C3F70) forwarder went with the body homed into
     # src/map.cpp - the archive unit's five fixed-address bindings are the
     # tree's own names, so the definition needed no new declarations.
-    "PENDING_BODY forwarders": 258,
+    # 258 -> 260 (2026-09-04, W4 console editor batch): save_map (0x5ABB90)
+    # and tech_pick (0x5BEB70) stand-ins, FILE-only targets, landmine-free;
+    # tech_pick's a2/a3 left unnamed on purpose (0/-1 at every call site,
+    # nothing names them).
+    "PENDING_BODY forwarders": 260,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -602,7 +610,7 @@ SCAFFOLD_CEILINGS = {
     # fixed-address bindings are the tree's own names) and 005c3f70.cpp homed
     # beside it - the 0x009B22E8 redraw flag is named WorldClimateRedrawRequest
     # in map.cpp from the two measured sites that write and read it.
-    "artifact files (recovered/)": 1043,
+    "artifact files (recovered/)": 1038,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -689,7 +697,7 @@ SCAFFOLD_CEILINGS = {
     # 1183 -> 1180 (2026-09-04, console claimed wave): 004ba5f0.cpp and
     # 004ba650.cpp homed into src/tutwin.cpp (the tutorial gates, with their
     # two shown-bit words named), 00511480.cpp into src/console.cpp.
-    "unrecovered files": 1168,
+    "unrecovered files": 1163,
     # 2717 -> 2748 (2026-09-04, P2 net batch): NetFifo promoted with
     # close/add/get/get, NetFifoNode, head_/tail_/count_ - the deliberate
     # raise this ceiling exists for (class modelling grows it; the class

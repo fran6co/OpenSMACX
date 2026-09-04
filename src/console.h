@@ -102,6 +102,46 @@ class InfoWin;
   */
 class Console : public MapWin {
  public:
+  // homed from 004d7cf0.cpp
+  void designate(int veh_id);
+
+ public:
+  // homed from 004d8f40.cpp
+  void explore(int veh_id);
+
+ public:
+  // homed from 004e0ad0.cpp
+  void editor_minor();
+
+ public:
+  // homed from 004e0a50.cpp
+  void editor_paints(int paint_id);
+
+ public:
+  // homed from 00517180.cpp
+  void show_version();
+
+ public:
+  // homed from 00515010.cpp
+  void set_tech(int faction_id);
+
+ public:
+  // homed from 00510520.cpp
+  void cursor_off();
+
+ public:
+  // homed from 004e10c0.cpp
+  void editor_fast();
+
+ public:
+  // homed from 004e0f30.cpp
+  void editor_flat();
+
+ public:
+  // homed from 004e09e0.cpp
+  void editor_save();
+
+ public:
   // homed from 004e1380.cpp
   void editor_clear_terrain();
 
