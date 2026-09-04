@@ -121,8 +121,25 @@ def free_definition_span(text: str, ident: str):
         prefix = text[start:match.start()]
         if not re.fullmatch(r"[\w:<>,*&\s]*", prefix):
             continue
-        head = (text[marker.start():start].rstrip()
-                if marker else "")
+        # THE HEAD IS THE COMMENT RUN ONLY, exactly like split_artifact's:
+        # the scaffold preamble between marker and definition is CODE
+        # (typedefs, `struct BITMAPINFO;` forward-declarations, bindings),
+        # and carrying it collides with windows.h's real typedefs - C2371
+        # on 993 archive files, which is why map.cpp's --into board landed
+        # 0 of 32 (the terrain batch's finding).
+        head = ""
+        if marker and marker.start() < start:
+            idx = marker.start()
+            run_end = idx
+            while run_end < start:
+                line_end = text.find("\n", run_end)
+                if line_end == -1 or line_end > start:
+                    break
+                line = text[run_end:line_end]
+                if not (line.startswith("//") or line.strip() == ""):
+                    break
+                run_end = line_end + 1
+            head = text[marker.start():run_end].rstrip()
         return head, text[match.start():].rstrip() + "\n"
     return None
 
