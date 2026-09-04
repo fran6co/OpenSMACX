@@ -46,7 +46,7 @@
 #include "tutwin.h"  // TutWinDesWindow, TutWinBaseWindow, TutWinIfaceWindow
 #include "veh.h"
 #include "wave.h"  // g_WAVE_GENERAL
-#include "worldwin.h"  // world_climate_window
+#include "worldwin.h"  // WorldClimateWorldWin
 #include "diplowin.h"  // DiploWin::exec, homed here out of the archive
 
 BOOL ExpansionEnabled;  // 0x009A6488
@@ -1108,14 +1108,6 @@ close_game:
 // pending_bodies.cpp are gone; these definitions own the symbols now.
 // ---------------------------------------------------------------------------
 
-// map.cpp binds this window as WorldClimateWorldWin with internal linkage,
-// which game.cpp cannot name; the same fixed address, returned by value. The
-// image closes its GraphicWin base directly (`call 0x5d4e40` on
-// `mov ecx, 0x8e9f60`).
-inline WorldWin *world_climate_window() {
-    return (WorldWin *)0x008E9F60;
-}
-
 /*
 Purpose: Tear the desktop down at the end of each main-loop pass.
 // ORIGINAL: 0x0058EFF0 ?desktop_close@@YAXXZ 0x0058EFF0-0x0058F031 FILE BYTE_EXACT
@@ -1132,9 +1124,10 @@ Purpose: Tear the desktop down at the end of each main-loop pass.
 //   relocated; `Win::hide` is qualified to keep the slot-2 virtual a direct
 //   tail `jmp`, and `GraphicWin::close` on the WorldWin and on MultiWindow's
 //   front is qualified so a later base-class declaration cannot steal the
-//   call from the direct E8 the image has. WorldClimateWorldWin is
-//   map.cpp-internal, hence the by-value world_climate_window() helper -
-//   same fold, no second binding name.
+//   call from the direct E8 the image has. WorldClimateWorldWin is declared
+//   in worldwin.h and defined in map.cpp, so both bodies name the object -
+//   same fold as the old by-value world_climate_window() helper, one binding
+//   name instead of two.
 Return Value: n/a
 Status: Complete
 */
@@ -1143,7 +1136,7 @@ void __cdecl desktop_close() {
     TutWinBaseWindow.close();
     mapwin_system_shutdown();
     ConsoleStatusWin.close();
-    world_climate_window()->GraphicWin::close();
+    WorldClimateWorldWin.GraphicWin::close();
     // The MultiWin object's GraphicWin front - the image closes that base
     // directly (`call 0x5d4e40` on `mov ecx, 0x7fd648`).
     reinterpret_cast<GraphicWin *>(&MultiWindow)->close();
@@ -1527,10 +1520,8 @@ int __cdecl game_reload(int mode, int reload) {
         TutWinBaseWindow.close();
         mapwin_system_shutdown();
         ConsoleStatusWin.close();
-        // The world-climate window, spelled as the literal rather than through
-        // world_climate_window(): this body's best flag set is /Ob0, where the
-        // helper is a real call the image does not make.
-        reinterpret_cast<WorldWin *>(0x008E9F60)->GraphicWin::close();
+        // The world-climate window, named through worldwin.h's declaration.
+        WorldClimateWorldWin.GraphicWin::close();
         reinterpret_cast<GraphicWin *>(&MultiWindow)->close();
         MainInterfaceGlobal.Win::hide();
     }

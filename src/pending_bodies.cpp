@@ -1447,12 +1447,6 @@ void __cdecl do_checksums(int type) {
     PENDING_BODY(0x0051E760, pending)(type);
 }
 
-// ?world_shorelines@@YAXXZ at 0x005C3F70
-void __cdecl world_shorelines() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x005C3F70, pending)();
-}
-
 // ?world_rivers@@YAXXZ at 0x005C38B0
 void __cdecl world_rivers() {
     typedef void(__cdecl *pending)();

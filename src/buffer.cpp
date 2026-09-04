@@ -5700,7 +5700,7 @@ int Buffer::wrap_right(char * a1, int a2) {
     return rec[1];
 }
 
-// ORIGINAL: 0x005DDF60 ?wrap_flying@Buffer@@QAEHPADHHH@Z 0x005DDF60-0x005DDFA6
+// ORIGINAL: 0x005DDF60 ?wrap_flying@Buffer@@QAEHPADHHH@Z 0x005DDF60-0x005DDFA6 BYTE_EXACT
 // size      70 bytes
 // prototype int (__thiscall ?wrap_flying@Buffer@@QAEHPADHHH@Z)(Buffer* this, int8*, int, int, int)
 // callers   3   call targets   1

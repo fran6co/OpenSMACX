@@ -3431,10 +3431,109 @@ void __cdecl world_analysis() {
 // beyond what this one function shows.
 uint32_t WorldClimateSkipTerrainClear = 1;  // 0x0068F21C
 uint32_t WorldClimateSkipTerritoryReset;  // 0x009B22EC
+// The map-refresh request the regeneration steps honour. world_build raises
+// it alongside WorldClimateSkipTerritoryReset while it is regenerating the
+// terrain and clears it again immediately before world_climate; every
+// world_* step between the two (`world_shorelines`, and world_build's own
+// inner loops) reads it as "the visible map windows may be refreshed":
+// `if ((GameState & 0x80) != 0 && WorldClimateRedrawRequest != 0)
+//      console_map_win()->clear_terrain(), draw_map(1);`
+uint32_t WorldClimateRedrawRequest;  // 0x009B22E8
 // The process-wide WorldWin, torn down/built at this same fixed address
 // elsewhere (the retired atexit_thunks.cpp / init_thunks.cpp).
-// THE WORLD-CLIMATE WINDOW - real storage; the image's 0x008E9F60.
+// THE WORLD-CLIMATE WINDOW - the one definition; worldwin.h declares it, so
+// game.cpp names this object instead of casting the address.
 WorldWin WorldClimateWorldWin;
+
+/*
+Purpose: Re-cut every land tile's altitude bands from the shore-to-peak
+         threshold table, then walk the map six more times spreading each
+         natural altitude level one step outwards; refresh the visible map
+         windows as it goes when the omniscient view is on and the
+         regeneration is allowed to redraw.
+// ORIGINAL: 0x005C3F70 ?world_shorelines@@YAXXZ 0x005C3F70-0x005C40E3 FILE
+// size      371 bytes
+// prototype void (__cdecl ?world_shorelines@@YAXXZ)()
+// callers   3   call targets   7
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0046AF40 0x0046B190 0x0046FD90 0x00591290 0x00591AD0 0x005C2020 0x005FCB20
+// LEVER: homed from src/recovered/units/005c3f70.cpp on this pass. Its five
+//   fixed-address bindings are the tree's names - MapLatitudeBounds,
+//   MapLongitudeBounds, MapLongitude (the tile row stride), MapSeaLevel,
+//   AltNatural (the threshold table the closing walk steps down), the
+//   LockMapTable slot for the tile records themselves - so nothing is bound
+//   twice. The byte read of GameState's omniscient bit is spelled as the
+//   dword test the rest of this TU uses.
+// TRIED: byte-exactness is capped by the same ceiling AGENT_BRIEF records for
+//   Path::continent - the image CALLS 0x005FCB20 (do_all_non_input) twice and
+//   this tree's `MEASURED inline` in temp.h expands each site into
+//   check_net/do_net/do_non_input, 14 calls against the image's 8 and 167
+//   instructions against 131 (call_diff MORE). The call sequence itself is
+//   the image's: alt_set, temp_set, draw_tile, do_all_non_input,
+//   world_alt_set, do_all_non_input, MapWin::clear_terrain, draw_map.
+Status: homed, not yet byte-exact.
+*/
+void __cdecl world_shorelines() {
+    for (int y = 0; y < MapLatitudeBounds; y++) {
+        for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
+            int tile_index = MapLongitude * y + (x >> 1);
+            int altitude = 0;
+            uint8_t *tile = reinterpret_cast<uint8_t *>(map_tiles()) + tile_index * 44;
+            int depth = tile[1] - MapSeaLevel;
+
+            int *threshold = (int *)AltNatural + 6;
+            int natural_index = 6;
+            do {
+                if (depth >= *threshold) {
+                    altitude = natural_index;
+                    break;
+                }
+                threshold--;
+                natural_index--;
+            } while (reinterpret_cast<int>(threshold)
+                     >= reinterpret_cast<int>(AltNatural));
+
+            alt_set(x, y, altitude);
+
+            if ((GameState & STATE_OMNISCIENT_VIEW) != 0
+                && WorldClimateRedrawRequest != 0) {
+                if (altitude >= 3) {
+                    int temperature = altitude - 3;
+                    if (temperature < 0) {
+                        temperature = 0;
+                    } else if (temperature > 2) {
+                        temperature = 2;
+                    }
+                    temp_set(x, y, temperature);
+                }
+                draw_tile(x, y, 2);
+            }
+        }
+        do_all_non_input();
+    }
+
+    for (int natural = 6; natural >= 2; natural--) {
+        for (int y = 0; y < MapLatitudeBounds; y++) {
+            for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
+                int tile_index = MapLongitude * y + (x >> 1);
+                uint8_t *tile = reinterpret_cast<uint8_t *>(map_tiles())
+                                + tile_index * 44;
+                int rocky = tile[0] >> 5;
+                if (rocky == natural) {
+                    world_alt_set(x, y, rocky, 1);
+                }
+            }
+            do_all_non_input();
+        }
+    }
+
+    if ((GameState & STATE_OMNISCIENT_VIEW) != 0
+        && WorldClimateRedrawRequest != 0) {
+        MapWinTable[0]->clear_terrain();
+        draw_map(1);
+    }
+}
 
 /*
 Purpose: Regenerate the world's climate: shorelines, temperature, rivers,
@@ -5925,4 +6024,33 @@ trailer:
         }
     }
 }
+
+// ORIGINAL: 0x00592AF0 ?clear_dirty@@YAXXZ 0x00592AF0-0x00592B3C FILE BYTE_EXACT
+// size      76 bytes
+// prototype 
+// callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+
+void __cdecl clear_dirty() {
+    int i = 0;
+    char *record = *reinterpret_cast<char **>(&LockMapTable);
+    if (MapLatitudeBounds > 0) {
+        int threshold = MapLongitudeBounds;
+        do {
+            int j = i & 1;
+            if (j < threshold) {
+                do {
+                    *reinterpret_cast<unsigned int *>(record + 0xc) |= 0x400000;
+                    j += 2;
+                    record += 0x2c;
+                    threshold = MapLongitudeBounds;
+                } while (j < threshold);
+            }
+            i++;
+        } while (i < MapLatitudeBounds);
+    }
+}
+
 

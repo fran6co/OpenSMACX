@@ -499,7 +499,11 @@ SCAFFOLD_CEILINGS = {
     # definition of each went with them.
     # (union-collected: the terrain batch's MapWin::clear retirement and the
     # veh action stand-ins fold into this trail; live census sets the number)
-    "PENDING_BODY forwarders": 259,
+    # 259 -> 258 (2026-09-04, P2/P3 worldwin/game/map homing wave): the free
+    # world_shorelines (0x005C3F70) forwarder went with the body homed into
+    # src/map.cpp - the archive unit's five fixed-address bindings are the
+    # tree's own names, so the definition needed no new declarations.
+    "PENDING_BODY forwarders": 258,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -593,7 +597,12 @@ SCAFFOLD_CEILINGS = {
     # homed BYTE_EXACT 30/30. Both this and survey above are whole-tile walks
     # over MapTiles, and both wanted the stride advance in the for-increment
     # clause rather than at the end of the body.
-    "artifact files (recovered/)": 1045,
+    # 1045 -> 1043 (2026-09-04, P2/P3 worldwin/game/map homing wave):
+    # 00592af0.cpp homed BYTE_EXACT 28/28 into src/map.cpp (its three
+    # fixed-address bindings are the tree's own names) and 005c3f70.cpp homed
+    # beside it - the 0x009B22E8 redraw flag is named WorldClimateRedrawRequest
+    # in map.cpp from the two measured sites that write and read it.
+    "artifact files (recovered/)": 1043,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).

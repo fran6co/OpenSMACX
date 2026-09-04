@@ -1480,7 +1480,7 @@ void __cdecl message_veh(int opcode, int payload_10, int payload_14,
     NetBusyCount--;
 }
 
-// ORIGINAL: 0x00592E70 ?message_base@@YAXHHPADH@Z 0x00592E70-0x00592EDA
+// ORIGINAL: 0x00592E70 ?message_base@@YAXHHPADH@Z 0x00592E70-0x00592EDA BYTE_EXACT
 // size      106 bytes
 // prototype void (__cdecl ?message_base@@YAXHHPADH@Z)(int, int, char *, int)
 // callers   1   call targets   1
@@ -1677,7 +1677,7 @@ void __cdecl message_landmark(int opcode, int target, char *text,
     NetBusyCount--;
 }
 
-// ORIGINAL: 0x00593190 ?message_chat@@YAXHHPAD@Z 0x00593190-0x00593215
+// ORIGINAL: 0x00593190 ?message_chat@@YAXHHPAD@Z 0x00593190-0x00593215 BYTE_EXACT
 // size      133 bytes
 // prototype void (__cdecl ?message_chat@@YAXHHPAD@Z)(int, int, char *)
 // callers   3   call targets   2
