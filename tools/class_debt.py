@@ -289,7 +289,7 @@ CEILINGS = {
     # alpha_menu_.check(field_23BDC_) on the declared member and neither walks
     # this+0x22A2C by hand. Both claims held BYTE_EXACT, and menu_simple came
     # up from MNEMONIC_ONLY on the same edit.
-    "raw self-access": 213,
+    "raw self-access": 211,
     # 4 -> 5 (2026-09-03, P1a batch): one homed body's faithful spelling
     # returns this as int (catalogue mangling QAEHH; TexHeap::UNK1 family).
     # 5 -> 8 (2026-09-03, P2 buffer/mapwin batch): three more homed

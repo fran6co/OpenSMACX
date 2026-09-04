@@ -207,7 +207,7 @@ SHAPES = [
     # 0x531780 2485B archived, atrocity 0x55EEE0 1391B); GraphicWin::redraw
     # came back for free - a plain non-virtual member. Homing each callee
     # retires its seam.
-    ("ORIGINAL() named-pointer seam", 99,
+    ("ORIGINAL() named-pointer seam", 96,
      re.compile(r"\bORIGINAL\((?!.*vtable\[)"),
      "reaches a member through a function-pointer slot, which compiles "
      "`FF 15` where the image has `E8`. Call it by name once its body lands."),
@@ -610,7 +610,7 @@ SCAFFOLD_CEILINGS = {
     # fixed-address bindings are the tree's own names) and 005c3f70.cpp homed
     # beside it - the 0x009B22E8 redraw flag is named WorldClimateRedrawRequest
     # in map.cpp from the two measured sites that write and read it.
-    "artifact files (recovered/)": 1038,
+    "artifact files (recovered/)": 1037,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).

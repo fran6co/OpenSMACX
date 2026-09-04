@@ -26,6 +26,7 @@
 #include "stringstruct.h"  // StringAllocationHeap - the 0x009B3374 hand-off
 #include "netmsg.h"        // NetMsgPopup, which the lock/wait bodies pop through
 #include "basepop.h"       // NetMsg's base, which process_message reaches
+#include "netwin.h"        // NetWinDialog - the setup dialog process_message dispatches into
 #include "veh.h"           // Vehs / VehCurrentCount, which game_checksum walks
 #include "map.h"           // the map bounds, PlayersData and Bases it sums
 #include "technology.h"    // GameTechAchieved
@@ -551,6 +552,13 @@ Purpose: Release the vehicle lock this client is holding. In a net game, tell
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00592EE0 0x006262F0
+// LEVER: the six raw `object[0x1B.. / 4]` stores came out and the named
+//        lock_state_ members went in - 0x1BAC/0x1BB0/0x1BC8/0x1BCC are
+//        lock_state_[2].dword_[2/3/9/10], 0x1B78 is lock_state_[1].dword_[4]
+//        and 0x1BC4 is lock_state_[2].dword_[8]. BYTE_EXACT held, so the
+//        member run is pinned by a body that was already exact, and the
+//        `reinterpret_cast<volatile uint32_t *>(this)` the raw spelling
+//        needed is gone with it.
 Return Value: EAX residue. The original is ?unlock_veh@NetDaemon@@QAEXXZ, but
               EAX is live at its ret: on the non-net path it is the loaded
               transport flag, which is zero exactly because that path was
@@ -559,27 +567,23 @@ Return Value: EAX residue. The original is ?unlock_veh@NetDaemon@@QAEXXZ, but
 Status: Complete with temporary message_data original dependency
 */
 uint32_t NetDaemon::unlock_veh() {
-    // The layout past the AlphaNet base is not established, so the six fields
-    // are written through raw volatile offsets - the ListBox::close idiom -
-    // which also preserves the original's deliberately non-monotonic store
-    // order (B0, AC, CC, C8, then the shared 78, C4) under optimization.
-    volatile uint32_t *const object =
-        reinterpret_cast<volatile uint32_t *>(this);
-
     // Loaded exactly once, and it is also the EAX the non-net path returns.
     uint32_t residue = static_cast<uint32_t>(NetDaemonIsMultiplayerNet);
     if (residue != 0) {
         // `cmp eax, edi` against a zeroed edi: any nonzero flag announces.
         log_say("Client releasing lock", NetDaemonLocalFaction, 0, 0);
         residue = message_data(0x2212, 0, 0, 0, 0, 0);
-        object[0x1BB0 / 4] = 0;
-        object[0x1BAC / 4] = 0;
-        object[0x1BCC / 4] = 0;
-        object[0x1BC8 / 4] = 0;
+        // The four announce-side fields, in the original's deliberately
+        // non-monotonic order: 1BB0, 1BAC, 1BCC, 1BC8.
+        lock_state_[2].dword_[3] = 0;
+        lock_state_[2].dword_[2] = 0;
+        lock_state_[2].dword_[10] = 0;
+        lock_state_[2].dword_[9] = 0;
     }
-    // Shared tail; 0x1B78 is the vehicle record lock_veh (0x00531020) stores.
-    object[0x1B78 / 4] = 0;
-    object[0x1BC4 / 4] = 0;
+    // Shared tail: 0x1B78 is the vehicle record lock_veh (0x00531020) stores
+    // and 0x1BC4 its held flag.
+    lock_state_[1].dword_[4] = 0;
+    lock_state_[2].dword_[8] = 0;
     return residue;
 }
 
@@ -596,7 +600,7 @@ Purpose: Release the global diplomacy lock this client holds. In a net game,
          say so on the log and broadcast event 0x2212, then clear the four
          announce-side fields; out of one there is nothing to release and the
          body does nothing at all.
-// ORIGINAL: 0x00530D00 ?unlock@NetDaemon@@QAEXXZ 0x00530D00-0x00530D3C
+// ORIGINAL: 0x00530D00 ?unlock@NetDaemon@@QAEXXZ 0x00530D00-0x00530D4E BYTE_EXACT
 // size      54 bytes
 // prototype void (__thiscall ?unlock@NetDaemon@@QAEXXZ)(NetDaemon* this)
 // callers   10   call targets   2
@@ -607,7 +611,7 @@ Purpose: Release the global diplomacy lock this client holds. In a net game,
 // diplo_unlock calls it, and a pending_bodies forwarder would have landmined
 // this address's archive claim.
 // RESIDUAL: the annotation's span is SHORT, and it is the only reason this is
-//        not BYTE_EXACT. 0x00530D00-0x00530D3C (54 bytes) stops after the
+//        not BYTE_EXACT. 0x00530D00-0x00530D4E (54 bytes) stops after the
 //        third field store. The shipped bytes run
 //          89 be b0 1b 00 00 / 89 be ac 1b 00 00 / 89 be cc 1b 00 00
 //          89 be c8 1b 00 00 / 5f 5e c3
@@ -1449,13 +1453,18 @@ int NetDaemon::end_of_event(int faction_id, int turn_value) {
 // the one thing about them the bodies prove.
 // ---------------------------------------------------------------------------
 
-// ORIGINAL: 0x00592E10 ?message_veh@@YAXHHHH@Z 0x00592E10-0x00592E70
+// ORIGINAL: 0x00592E10 ?message_veh@@YAXHHHH@Z 0x00592E10-0x00592E70 BYTE_EXACT
 // size      96 bytes
 // prototype void (__cdecl ?message_veh@@YAXHHHH@Z)(int, int, int, int)
 // callers   12   call targets   1
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00532940
+// LEVER: the two payload stores were written field_14_ first; the struct
+//        declares field_10_ before field_14_, and VC6 evaluates assignments in
+//        source order, so the loads came out swapped - the image reads
+//        [ebp+0x10] then [ebp+0xC]. Declaration order for the stores took it
+//        SHAPE_EXACT to BYTE_EXACT.
 void __cdecl message_veh(int opcode, int payload_10, int payload_14,
                          int target) {
     struct Message {
@@ -1471,8 +1480,8 @@ void __cdecl message_veh(int opcode, int payload_10, int payload_14,
     message.faction_ = NetDaemonLocalFaction;
     message.time_ = NetTimeGetTimeSlot()();
     message.turn_ = NetDaemonNet.lock_state_[0].dword_[0];
-    message.field_14_ = payload_14;
     message.field_10_ = payload_10;
+    message.field_14_ = payload_14;
 
     NetBusyCount++;
     NetDaemonNet.send_message(reinterpret_cast<char *>(&message), 0x18,
@@ -1562,6 +1571,15 @@ void __cdecl send_raw_data(int opcode, int target, int payload_10,
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00532940
+// TRIED: assigning `filled = count` AFTER the copy loop instead of before it -
+//        the image emits `mov eax,edx` before `pop esi`, which the assignment
+//        at the top of the block reproduces, and moving it back agreed on
+//        FEWER instructions (25 of 47 against 27). Leave it where it is.
+// TRIED: naming a `fill_count` local for the zero-fill (`0x20 - filled`) and
+//        spelling the bound inline - both leave VC6 guarding its own
+//        `rep stosd` with `test ecx,ecx / jle 0x593058`, two instructions the
+//        image does not have because it never re-tests. That test is the
+//        residual: 27 of 47 agree, and no spelling of the loop took it out.
 void __cdecl message_big_data(int opcode, int target, int *payload,
                               int count) {
     struct Message {
@@ -1574,7 +1592,6 @@ void __cdecl message_big_data(int opcode, int target, int *payload,
     int filled;
     int i;
     int *dst;
-    int fill_count;
 
     message.opcode_ = static_cast<short>(opcode);
     message.faction_ = NetDaemonLocalFaction;
@@ -1583,16 +1600,19 @@ void __cdecl message_big_data(int opcode, int target, int *payload,
 
     filled = 0;
     if (count > 0) {
+        filled = count;
         dst = message.data_;
         for (i = 0; i < count; i++) {
             dst[i] = payload[i];
         }
-        filled = count;
     }
     if (filled < 0x20) {
         dst = message.data_ + filled;
-        fill_count = 0x20 - filled;
-        for (i = 0; i < fill_count; i++) {
+        // No named `fill_count` local: the image computes `0x20 - filled`
+        // straight into the rep count (`mov ecx,0x20 / sub ecx,eax`), and a
+        // local made VC6 test it separately - two instructions the image does
+        // not have.
+        for (i = 0; i < 0x20 - filled; i++) {
             dst[i] = 0;
         }
     }
@@ -1603,18 +1623,23 @@ void __cdecl message_big_data(int opcode, int target, int *payload,
     NetBusyCount--;
 }
 
-// ORIGINAL: 0x00593090 ?message_lock@@YAXHHHHHHHH@Z 0x00593090-0x00593108
+// ORIGINAL: 0x00593090 ?message_lock@@YAXHHHHHHHH@Z 0x00593090-0x00593108 BYTE_EXACT
 // size      120 bytes
 // prototype void (__cdecl ?message_lock@@YAXHHHHHHHH@Z)(int, int, int, int, int, int, int, int)
 // callers   2   call targets   1
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00532940
-// The record's payload arrives already permuted: parameter order is opcode,
-// target, then the six payload words in the order the record wants them.
+// LEVER: the payload-to-slot mapping, not the store order - the image puts the
+//        SECOND parameter into the record at 0x18 and the FIFTH into 0x24, and
+//        hands the EIGHTH to send_message as the network destination. The old
+//        body sent `target` instead: the image broadcasts a lock request and
+//        records the target in the record at 0x18, while this tree was
+//        addressing it. Faithful to the shipped code, which is what is
+//        reproduced here.
 void __cdecl message_lock(int opcode, int target, int payload_10,
                           int payload_14, int payload_18, int payload_1C,
-                          int payload_20, int payload_24) {
+                          int payload_20, int send_target) {
     struct Message {
         short opcode_;
         int faction_;
@@ -1634,14 +1659,14 @@ void __cdecl message_lock(int opcode, int target, int payload_10,
     message.turn_ = NetDaemonNet.lock_state_[0].dword_[0];
     message.field_10_ = payload_10;
     message.field_14_ = payload_14;
-    message.field_18_ = payload_18;
+    message.field_18_ = target;
     message.field_1C_ = payload_1C;
     message.field_20_ = payload_20;
-    message.field_24_ = payload_24;
+    message.field_24_ = payload_18;
 
     NetBusyCount++;
     NetDaemonNet.send_message(reinterpret_cast<char *>(&message),
-                              sizeof(message), target);
+                              sizeof(message), send_target);
     NetBusyCount--;
 }
 
@@ -3233,8 +3258,11 @@ class Filemap { public:
 void NetDaemon::process_message(char * message, unsigned long sender, int channel) {
     Popup popup;
     Filemap filemap;
-    // process_message reaches three daemon fields by offset (0x1B30, 0x1B74,
-    // 0x1BB8) and one per-slot byte table at 0x794; both stay raw here.
+    // process_message reaches three daemon fields by offset - 0x1B30 is
+    // lock_state_[0].dword_[1], named below; 0x1B74 is lock_state_[1].dword_[3]
+    // and 0x1BB8 is lock_state_[2].dword_[5], both in parts of the dispatcher
+    // this transcription does not reach - and one per-slot byte table at
+    // 0x794, AlphaNet's slot_region_[8].
 
     unsigned char *msg = reinterpret_cast<unsigned char *>(message);
     unsigned short type = *reinterpret_cast<unsigned short *>(message);
@@ -3267,22 +3295,18 @@ void NetDaemon::process_message(char * message, unsigned long sender, int channe
         unsigned int idx = (unsigned int)(type - 0xf05);
         if (idx <= 0xa) {
             switch (idx) {
-                case 0: {
-                    typedef void (OriginalObject::*FnV1)(void *);
-                    FnV1 fn = original_method<FnV1>(0x481fd0);
-                    (ORIGINAL((void *)0x80a6f8)->*fn)(message);
+                case 0:
+                    // The raw message IS the faction-data record; the cast is
+                    // the image's own, which hands the same pointer along
+                    // unchanged.
+                    NetWinDialog.setup_faction_data(
+                        reinterpret_cast<MessageFactionData *>(message));
                     return;
-                }
-                case 1: {
-                    typedef int (OriginalObject::*FnVisible)();
-                    typedef int (OriginalObject::*FnPick)(int);
-                    FnVisible isVisible = original_method<FnVisible>(0x5f7e90);
-                    if ((ORIGINAL((void *)0x80a6f8)->*isVisible)()) {
-                        FnPick pickPass = original_method<FnPick>(0x47c970);
-                        (ORIGINAL((void *)0x80a6f8)->*pickPass)(1);
+                case 1:
+                    if (NetWinDialog.is_visible()) {
+                        NetWinDialog.pick_pass(1);
                     }
                     return;
-                }
                 case 2:
                 case 3:
                 case 4:

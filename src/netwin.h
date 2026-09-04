@@ -24,6 +24,24 @@
 #include "checkbox.h"
 
  /*
+  * MessageFactionData
+  *
+  * The record setup_faction_data (0x00481FD0) clones whole into the
+  * 0x772C block. Only three things about it are proven, all from that one
+  * body: the record block it copies starts at 0x10 (`memcpy` from
+  * message + 0x10), the block's own LEADING byte is the record type
+  * (setup_faction_data writes 7 there when it rebuilds the block itself),
+  * and the block's SECOND byte is the record count, read as a byte and
+  * floored at 8. Nothing pins its sizeof.
+  */
+struct MessageFactionData {
+  uint8_t field_0_[0x10];  // 0x00..0x0F - nothing recovered reads these
+  uint8_t record_type_;    // 0x10
+  uint8_t record_count_;   // 0x11
+  uint8_t field_12_[1];    // 0x12 - the rest of the cloned block
+};
+
+ /*
   * NetWin class
   *
   * Derives from GraphicWin in the original by ordinary single inheritance -
@@ -269,10 +287,45 @@ class NetWin : public ConstructedGraphicWin {
   uint32_t field_7620_;  // 0x7620
   uint8_t field_7624_[0x104];  // 0x7624
   uint32_t field_7728_;  // 0x7728
-  uint32_t field_772C_;  // 0x772C
+  // 0x772C and 0x7730 are the two faction-record blocks setup_faction_data
+  // (0x00481FD0) allocates with mem_get and frees again: the second is a
+  // memcpy of the first, and every reader in the image re-loads the slot it
+  // wants rather than caching it. Renamed from field_772C_/field_7730_ on
+  // that body's evidence - they were the only two unnamed dwords the body
+  // touched, and both were 4 bytes, so the extent is unchanged.
+  void *faction_records_;        // 0x772C
+  void *faction_records_copy_;   // 0x7730
 
-  // Storage the image proves is here: its own methods reach 0x7734.
-  // Extent only - this class carries no size assertion, and the bound is a floor.
-  uint8_t field_7730_[0x4];
+  // 0x00481FD0. Rebuilds the two faction-record blocks at 0x772C/0x7730 -
+  // one cloned from the network message the caller hands in, one rebuilt
+  // from the localized faction text table. `message_data` is what hands the
+  // daemon's received record here.
+  void setup_faction_data(MessageFactionData *message_faction_data);
+  // 0x0047C970. The password prompt the setup dialog ends with; 1 is what
+  // process_message's 0xF06 case passes it after is_visible agrees.
+  int pick_pass(int payload);
 };
+
+// THE MULTIPLAYER SETUP DIALOG - the single NetWin instance in the image, at
+// 0x0080A6F8, REAL STORAGE defined in netwin.cpp. process_message
+// (0x00534400) dispatches into it by loading that address into ecx for
+// setup_faction_data / Win::is_visible / pick_pass, and so do string_callback,
+// hang_up, new_game_setup and the rest of the 21 sites in the image that read
+// it - `mov ecx, 0x80a6f8` at every one, always unrelated to the receiver the
+// enclosing function was handed (see docs/recovery/
+// agent-structure-observations.csv, 0x004832D0). It was a raw
+// `(NetWin *)0x0080A6F8` binding reading terranx.exe data that is unmapped in
+// a standalone build; `->` becomes `.` and the folded `mov ecx, imm32` keeps
+// its form with the displacement relocated, exactly as NetDaemonNet does.
+extern NetWin NetWinDialog;  // 0x0080A6F8
+
+// THE TWO PLAYER-ID SLOTS the setup dialog reads. No store in .text writes
+// either one - the NetWin code at 0x0047B020..0x00482500 reads them 36 and 30
+// times and never writes them, so they are filled in from outside this image.
+// What names them as ids: setup_faction_data (0x00481FD0) returns early when
+// they are equal, and pick_pass (0x0047C970) hands 0x0093D4F0 to
+// AlphaNet::pid_2_idx, which walks the eight per-slot records looking for it.
+// Rebindable for tests, like NetDaemonLocalFaction.
+extern int NetWinPlayerId;       // 0x0093D4F0, defined in netwin.cpp
+extern int NetWinOtherPlayerId;  // 0x0093D4F4, defined in netwin.cpp
 

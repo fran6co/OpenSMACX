@@ -51,6 +51,37 @@ struct LockTableEntry {
 };
 static_assert(sizeof(LockTableEntry) == 0x3C, "lock table stride");
 
+// ONE LOCK-STATE ENTRY, 0x3C bytes. Which entry and which dword a NetDaemon
+// offset names: lock_state_ starts at 0x1B2C, so
+// `offset - 0x1B2C` / 0x3C picks the entry and the remainder / 4 picks the
+// dword. THE MAP, as far as the recovered bodies pin it -
+//
+//   0x1B2C  [0].dword_[0]   the shared checksum sequence, incremented per
+//                           forwarded message and stamped into message+0xC
+//   0x1B30  [0].dword_[1]   the diplomacy/wait marker hang_up, end_of_event
+//                           and process_message's modal guard all test
+//   0x1B3C  [0].dword_[4]   add_global's "one global lock is held" flag
+//   0x1B60  [0].dword_[13]  cleared by the constructor
+//   0x1BA0  [1].dword_[14]  the diplomacy-channel flag close_channel clears
+//   0x1B68  [1].dword_[0]   cleared by the constructor
+//   0x1B74  [1].dword_[3]   cleared by the constructor; process_message reads
+//   0x1B78  [1].dword_[4]   THE VEHICLE RECORD - lock_veh stores the unit
+//                           this client holds, unlock_veh clears it
+//   0x1B7C  [1].dword_[5]   the per-faction mask hang_up ANDs against
+//   0x1B80  [1].dword_[6..9] one mask per faction, indexed by faction id
+//   0x1BAC  [2].dword_[2]   \ the four announce-side fields unlock and
+//   0x1BB0  [2].dword_[3]   \ unlock_veh clear in the order 3, 2, 10, 9
+//   0x1BB8  [2].dword_[5]   / (process_message reads dword_[5])
+//   0x1BC0  [2].dword_[7]   end_of_event tests and clears
+//   0x1BC4  [2].dword_[8]   unlock_veh clears with the vehicle record
+//   0x1BC8  [2].dword_[9]   / see 0x1BAC
+//   0x1BCC  [2].dword_[10]  / maybe_lock counts repeat requests here
+//   0x1BD0  [2].dword_[11]  the ctor sets this one to 0xFF, the only byte it
+//                           does not zero
+//
+// Entries 3..23 are reached by no recovered body. The console's bodies read
+// the same run through `NetDaemonNet.lock_state_` - it is the 0x0093E8BC run
+// in the image - which is why the struct and the member are public.
 struct LockStateEntry {
   uint32_t dword_[15];
 };
@@ -181,7 +212,8 @@ class NetDaemon : public AlphaNet {
   // bytes later), which is why the ctor's merged loop writes [entry+0x5A0]
   // alongside [entry] and [entry+8] with one pointer. Entries e0..e2
   // carry the named dwords the constructor clears; e3..e23 are unreached by
-  // any recovered body. Spans 0x1B2C..0x20CC.
+  // any recovered body - the per-entry map is on LockStateEntry above.
+  // Spans 0x1B2C..0x20CC, which is the image's 0x0093E8BC..0x009C0BFC run.
   LockStateEntry lock_state_[24];  // 0x1B2C
 
   // Storage the image proves is here: its own methods reach 0x1BDC.
