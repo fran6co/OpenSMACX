@@ -197,7 +197,13 @@ SHAPES = [
     # 91 -> 94 (2026-09-04, P2 net batch): three dispatches through the
     # NetWin singleton at 0x0080A6F8 (setup_faction_data, is_visible,
     # pick_pass) - netwin.h's owner clears them.
-    ("ORIGINAL() named-pointer seam", 94,
+    # 94 -> 99 (2026-09-04, P3 veh action batch): five more, each a
+    # genuinely-unrecovered callee reached by a homed body (BaseWin::
+    # check_veh 0x41A8B0, TutWin::tut_map 0x4BE650, NetDaemon::order_veh
+    # 0x531780 2485B archived, atrocity 0x55EEE0 1391B); GraphicWin::redraw
+    # came back for free - a plain non-virtual member. Homing each callee
+    # retires its seam.
+    ("ORIGINAL() named-pointer seam", 99,
      re.compile(r"\bORIGINAL\((?!.*vtable\[)"),
      "reaches a member through a function-pointer slot, which compiles "
      "`FF 15` where the image has `E8`. Call it by name once its body lands."),
@@ -478,7 +484,10 @@ SCAFFOLD_CEILINGS = {
     # 256 -> 255 (2026-09-04, P2/P3 wave 3, general/game): current_server's
     # forwarder retired - the body is homed into src/game.cpp with all five of
     # its fixed-address bindings renamed to models the tree already held.
-    "PENDING_BODY forwarders": 255,
+    # 255 -> 257 (2026-09-04, P3 veh action batch): NetDaemon::order_veh
+    # and atrocity stand-ins, both FILE-only targets (landmine-free, the
+    # loud-fault spelling).
+    "PENDING_BODY forwarders": 257,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -544,7 +553,7 @@ SCAFFOLD_CEILINGS = {
     # 0058fa20.cpp, 0052dba0.cpp and 0058f8b0.cpp homed into src/game.cpp -
     # say_special's markup literals named out of the image, the rest against
     # Players/StringTable/Labels/TextBufferGetPtr.
-    "artifact files (recovered/)": 1061,
+    "artifact files (recovered/)": 1058,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -618,7 +627,7 @@ SCAFFOLD_CEILINGS = {
     # src/caviar.cpp, SHAPE_EXACT 40/44 on a TU-local pragma function(cos).
     # 1189 -> 1185 (2026-09-04, P2/P3 wave 3, general/game): 0058f610.cpp,
     # 0058f810.cpp, 0058f8b0.cpp, 0052dba0.cpp homed into src/game.cpp.
-    "unrecovered files": 1185,
+    "unrecovered files": 1181,
     # 2717 -> 2748 (2026-09-04, P2 net batch): NetFifo promoted with
     # close/add/get/get, NetFifoNode, head_/tail_/count_ - the deliberate
     # raise this ceiling exists for (class modelling grows it; the class

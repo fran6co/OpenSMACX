@@ -630,6 +630,18 @@ void NetDaemon::synch(int16_t opcode, int a, int b, int c, char *text, int d, in
     PENDING_BODY(0x00532E00, pending)(this, nullptr, opcode, a, b, c, text, d, flags);
 }
 
+// ?order_veh@NetDaemon@@QAEHHHH@Z at 0x00531780 - the client-side half of a
+// move, still archived (2485 bytes, src/unrecovered/00531780.cpp). Not claimed,
+// so this forwarder is honest: it is the only definition and it faults loudly
+// if the body is ever reached before that archive is homed. The veh.cpp action
+// family (action_go_to, action_road_to) calls it directly, which is what
+// forced the declaration onto the class.
+int NetDaemon::order_veh(int veh_id, int payload_10, int payload_1C) {
+    typedef int(__fastcall *pending)(NetDaemon *, void *, int, int, int);
+    return PENDING_BODY(0x00531780, pending)(this, nullptr, veh_id, payload_10,
+                                             payload_1C);
+}
+
 void FX::play(int effect) {  // 0x00446A00
     typedef void(__fastcall *pending)(FX *, void *, int);
     PENDING_BODY(0x00446A00, pending)(this, nullptr, effect);
@@ -2084,3 +2096,12 @@ int AlphaNet::setup(int option) {  // ?setup@AlphaNet@@QAEHH@Z at 0x004E31E0
 }
 
 
+
+void __cdecl atrocity(int faction_id, int faction_id_victim, int kind, int unk) {
+    // ?atrocity@@YAXHHHH@Z at 0x0055EEE0, still archived (1391 bytes,
+    // src/recovered/units/0055eee0.cpp). Not claimed, so this forwarder is the
+    // only definition and faults loudly if reached before that archive is
+    // homed. action_oblit commits the atrocity the obliteration of a base is.
+    typedef void(__cdecl *pending)(int, int, int, int);
+    PENDING_BODY(0x0055EEE0, pending)(faction_id, faction_id_victim, kind, unk);
+}

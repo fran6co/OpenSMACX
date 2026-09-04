@@ -676,6 +676,12 @@ int __cdecl veh_cost(int proto_id, int base_id, BOOL *has_proto_cost);
 BOOL __cdecl veh_jail(int veh_id);
 int __cdecl veh_wake(int veh_id);
 int __cdecl action_home(int veh_id, int flags);
+void __cdecl add_abil(int *ability_flags, int ability, int faction_id);
+void __cdecl action_go_to(int veh_id);
+void __cdecl action_road_to(int veh_id);
+int __cdecl action_terraform(int veh_id, int order, int flags);
+void __cdecl say_loc(char *text, int x, int y, int want_name,
+                               int trailer_mode, int want_coords);
 int __cdecl compute_odds(int odds, int faction_id, int veh_id_atk, int veh_id_def,
                                   int base_id);
 int __cdecl alien_base(int veh_id, int x, int y);

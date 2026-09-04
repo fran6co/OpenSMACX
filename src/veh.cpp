@@ -33,6 +33,8 @@
 #include "tutwin.h"  // TutWinBaseWindow - every removal's check_base/check_loc
 #include "mapwin.h"  // draw_tile - the free single-tile redraw the removals end on
 #include "netmsg.h"  // NetMsgPopup - the promote family reports through it
+#include "netdaemon.h"  // NetDaemonNet, synch_veh / order_veh - the action family's net half
+#include "path.h"  // Paths - the move cost table the go-to verbs consult
 #include "console.h"  // ConsoleGlobal - action_gate re-focuses the Console
 #include "original_seam.h"  // ORIGINAL / original_method - the two BaseWin repaint seams
 
@@ -6802,3 +6804,1085 @@ int __cdecl battle_fight(int veh_id, int dir, int mode, int allow_interceptor,
 }
 
 
+/*
+Purpose: Grant a prototype an ability, if the faction has researched it.
+// ORIGINAL: 0x00581190 ?add_abil@@YAXPAHHH@Z 0x00581190-0x00581259
+// size      201 bytes
+// prototype void (__cdecl ?add_abil@@YAXPAHHH@Z)(int *ability_flags, int ability, int faction_id)
+// callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005B9F20
+// HOMED from src/unrecovered/00581190.cpp, 2026-09-04. Its `g_009ab550`
+// short table is Ability[].preq_tech - 0x009AB550 is 0x18 into RulesAbility
+// (0x009AB538, 0x1C stride) and the index step is 14 shorts = 0x1C. Its
+// `g_00946f5c` / `g_00946f80` pair is Players[].faction_bonus_count
+// (0x50C) and Players[].faction_bonus_val1 (0x530) - 0x00946A50, 0x59C
+// stride - and `rec[-8]` is therefore faction_bonus_id, 0x20 bytes back.
+// 0x0F is the "free ability" bonus id: a faction already carrying one gets
+// no second.
+// LEVER: has_tech_call, not has_tech - the image CALLS 0x005B9F20 here and
+//        technology.h's `MEASURED inline` would fold the whole preq walk in.
+// TRIED: 2/72, first divergence at instruction 2. The image needs NO local
+//        slot: `bit` lands in the dead `ability` parameter slot [ebp+0xc] and
+//        `i` in the dead `faction_id` slot [ebp+0x10]. This tree takes ONE
+//        `push ecx` for `bit` and puts `i` in the ability slot, and the extra
+//        slot costs a matching `mov esp, ebp`. Scored the do-while latch
+//        hoisted from the archive and an `ability = bit` aliasing spelling -
+//        both 2/72, the same slot assignment. The two dead slots are used and
+//        dead identically on both sides; which dead parameter each counter
+//        inherits is the allocator's choice and nothing in the source names it.
+Return Value: n/a
+Status: MISMATCH.
+*/
+void __cdecl add_abil(int *ability_flags, int ability, int faction_id) {
+    if (*ability_flags != 0) {
+        return;
+    }
+
+    int bit = 0;
+    while ((ability & 1) == 0) {
+        ability >>= 1;
+        ++bit;
+    }
+
+    if (has_tech_call(Ability[bit].preq_tech, faction_id) == 0) {
+        return;
+    }
+
+    // A faction bonus of id 0x0F grants one ability free; refuse a second.
+    for (int i = 0; i < Players[faction_id].faction_bonus_count; ++i) {
+        if (Players[faction_id].faction_bonus_id[i] == 0x0F
+            && has_tech_call(Ability[Players[faction_id].faction_bonus_val1[i]].preq_tech,
+                             faction_id) != 0
+            && bit == Players[faction_id].faction_bonus_val1[i]) {
+            return;
+        }
+    }
+
+    *ability_flags |= 1 << bit;
+}
+
+
+
+// ===== veh.cpp, P2 wave 3: the action family =====
+//
+// The order verbs the unit's `order` byte dispatches to. All of them start the
+// same way: under multiplayer, and while this client is not the one playing
+// the turn out, they publish the address of their own veh_id parameter into
+// VehSelectionFollow so the daemon's lock bookkeeping names the unit they are
+// about to move - which is why every one of them reloads veh_id off the stack
+// after its first call, and why the source spells the publish as `&veh_id`.
+
+/*
+Purpose: Move a unit along its path, one ORDER_MOVE / ORDER_MOVE_TO leg.
+// ORIGINAL: 0x004CB310 ?action_go_to@@YAXH@Z 0x004CB310-0x004CB57F
+// size      623 bytes
+// prototype void (__cdecl ?action_go_to@@YAXH@Z)(int veh_id)
+// callers   2   call targets   8
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005310F0 0x00531300 0x00531480 0x00531780 0x00593220 0x005947C0 0x0059BC10 0x005C1D20
+// HOMED from src/recovered/units/004cb310.cpp, 2026-09-04. Its `g_00952839`
+// byte is Vehs[].order (+0x11), `g_0095283c` the waypoint_x[] run (+0x14),
+// `g_00952836` faction_id (+0x0E) and `g_009ab88c` VehPrototypes[].chassis_id
+// (+0x24); `g_0094a37b` is Chassis[].cargo (+0x4B, 0x90 stride) - the unit
+// has to be a transport for the arrival skip to apply.
+// symbol    the free order_veh (0x005947C0) is the host-side move; the
+//           member NetDaemon::order_veh (0x00531780) is the client's lock
+//           request. Both appear here, spelled by their own names.
+// TRIED: 2/175, first divergence at instruction 2. The image opens
+//        `push esi / mov esi,[0x93f660] / push edi / mov edi,[0x93a938]` - it
+//        loads BOTH net globals into callee-saved registers before testing
+//        either, then tests `esi` and `edi`. Spelled as two `const int` locals
+//        ahead of the `&&`, this tree still sinks the second load behind the
+//        first test (`mov eax,[0x93f660] / test / je / mov eax,[0x93a938]`), so
+//        it reads the transport flag at all three guard sites instead of two
+//        loads plus the one reload after Paths::move. The globals-read-at-each-
+//        site spelling scores the same. Reverting to the plain spelling.
+Return Value: n/a
+Status: MISMATCH.
+*/
+void __cdecl action_go_to(int veh_id) {
+    const int net = NetDaemonIsMultiplayerNet;
+    const int turn_active = *ConsoleControlTurnActive;
+    if (net != 0 && turn_active == 0) {
+        *VehSelectionFollow = (int *)&veh_id;
+    }
+
+    int move_result;
+    {
+        const uint8_t order = Vehs[veh_id].order;
+        if (order == ORDER_MOVE) {
+            move_result = Vehs[veh_id].waypoint_x[0];
+        } else {
+            move_result = Paths.move(
+                veh_id, (order & 0x40) != 0 ? -1 : Vehs[veh_id].faction_id);
+        }
+    }
+
+    if (move_result < 0) {
+        Vehs[veh_id].order = ORDER_NONE;
+        if (NetDaemonIsMultiplayerNet != 0 && *ConsoleControlTurnActive == 0) {
+            synch_veh(veh_id);
+            NetDaemonNet.await_synch();
+            NetDaemonNet.unlock_veh();
+        }
+        return;
+    }
+
+    if (NetDaemonIsMultiplayerNet != 0 && *ConsoleControlTurnActive == 0) {
+        if (NetDaemonNet.order_veh(veh_id, move_result, 1) != 0) {
+            NetDaemonNet.await_exec(1);
+        }
+        return;
+    }
+
+    if (order_veh(veh_id, move_result, 3) == 0) {
+        return;
+    }
+
+    const uint8_t order = Vehs[veh_id].order;
+    if (order == ORDER_MOVE) {
+        if (Vehs[veh_id].x == Vehs[veh_id].waypoint_x[1]
+            && Vehs[veh_id].y == Vehs[veh_id].waypoint_y[1]) {
+            Vehs[veh_id].order = ORDER_NONE;
+            return;
+        }
+    } else if (order == ORDER_MOVE_TO) {
+        if (Vehs[veh_id].x == Vehs[veh_id].waypoint_x[0]
+            && Vehs[veh_id].y == Vehs[veh_id].waypoint_y[0]) {
+            Vehs[veh_id].order = ORDER_NONE;
+
+            if ((Vehs[veh_id].state & 0x2000200) == 0x2000200
+                && Vehs[veh_id].patrol_current_point < Vehs[veh_id].waypoint_count) {
+                for (int i = 0; i < Vehs[veh_id].waypoint_count; ++i) {
+                    Vehs[veh_id].waypoint_x[i] = Vehs[veh_id].waypoint_x[i + 1];
+                    Vehs[veh_id].waypoint_y[i] = Vehs[veh_id].waypoint_y[i + 1];
+                }
+                Vehs[veh_id].order = ORDER_MOVE_TO;
+                Vehs[veh_id].waypoint_count -= 1;
+                if (Vehs[veh_id].waypoint_count == 0) {
+                    Vehs[veh_id].state &= 0xfdfefdff;
+                }
+            }
+
+            if (!(LockEnableMask & (1 << Vehs[veh_id].faction_id))
+                && Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].cargo != 0) {
+                Map *tile = reinterpret_cast<Map *>(LockMapTable)
+                    + ((Vehs[veh_id].x >> 1) + Vehs[veh_id].y * MapLongitude);
+                if (tile->bit & BIT_BASE_IN_TILE) {
+                    const int rockiness = tile->val2 & 0xf;
+                    if (rockiness >= 0 && rockiness < 8) {
+                        veh_skip(veh_id);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// 0x0094977C is Rules.tech_build_roads_fungus (Rules + 0x44): the tech that
+// lets a unit road a fungus tile instead of clearing it first.
+// 0x006919C0 is Terraforming[TERRA_REMOVE_FUNGUS].preq_tech and 0x00691940
+// Terraforming[TERRA_MAGTUBE].preq_tech (base 0x00691878, 0x20 stride).
+// 0x00687E20 / 0x00687E2C are the two phrase keys the arrival popup is titled
+// with, "ROAD" and "TUBE" - which one depends on the order the unit was given.
+char *const VehLabelROAD = (char *)0x00687E20;  // "ROAD"
+char *const VehLabelTUBE = (char *)0x00687E2C;  // "TUBE"
+
+/*
+Purpose: Walk a unit toward its goal, roading or tubing the tiles it crosses.
+// ORIGINAL: 0x004CB580 ?action_road_to@@YAXH@Z 0x004CB580-0x004CBA98
+// size      1304 bytes
+// prototype void (__cdecl ?action_road_to@@YAXH@Z)(int veh_id)
+// callers   2   call targets   8
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005310F0 0x00531300 0x00531480 0x00531780 0x00592250 0x005947C0 0x0059A530 0x005B9F20 0x00592EE0 0x00593220 0x004C9B00 0x0047A890 0x00625EC0
+// HOMED from src/recovered/units/004cb580.cpp, 2026-09-04. Its `g_00952828`
+// short views are Vehs[].x / .y / .waypoint_x[] / .waypoint_y[], its byte
+// views Vehs[].faction_id (+0x0E) and Vehs[].order (+0x11) and its dword view
+// Vehs[].state (+0x04).
+//
+// BUG IN THE ORIGINAL (and left as written): the archive this came from put
+// the "is there a base on the fungus tile and it is rockiness <= 7" case on
+// the SKIP side of the fungus clearing, which would drop the tile walk
+// entirely. The image jumps from that test into the tile walk (0x004CB6C0
+// `test eax,eax / jge 0x004CB7DF`, and eax is 0..7 after `and eax,0xf`, so
+// the branch is always taken). The guard is dead on its <= 7 side - the
+// compiler emitted `test eax,eax` after a mask that cannot set the sign flag -
+// and the source below spells the fall-through the image actually takes.
+Return Value: n/a
+Status: MISMATCH.
+*/
+void __cdecl action_road_to(int veh_id) {
+    if (NetDaemonIsMultiplayerNet != 0 && *ConsoleControlTurnActive == 0) {
+        *VehSelectionFollow = (int *)&veh_id;
+    }
+
+    const unsigned owner = Vehs[veh_id].faction_id;
+    const int goal_x = Vehs[veh_id].waypoint_x[0];
+    const int y = Vehs[veh_id].y;
+    const int goal_y = Vehs[veh_id].waypoint_y[0];
+    const int x = Vehs[veh_id].x;
+
+    Map *tile = reinterpret_cast<Map *>(LockMapTable)
+        + ((x >> 1) + y * MapLongitude);
+    const uint8_t altitude = tile->climate & 0xE0;
+    int net_flag;
+
+    if (altitude < ALT_BIT_SHORE_LINE || goal_y < 0
+        || goal_y >= MapLatitudeBounds || goal_x < 0
+        || goal_x >= MapLongitudeBounds) {
+        Vehs[veh_id].order = ORDER_NONE;
+        net_flag = NetDaemonIsMultiplayerNet;
+    } else {
+        if ((tile->bit & BIT_FUNGUS) != 0 && altitude >= ALT_BIT_SHORE_LINE
+            && !has_tech_call(Rules.tech_build_roads_fungus, owner)
+            && has_tech_call(Terraforming[TERRA_REMOVE_FUNGUS].preq_tech, owner)) {
+            if (!(tile->bit & BIT_BASE_IN_TILE) || (tile->val2 & 0xf) > 7) {
+                if (NetDaemonIsMultiplayerNet == 0
+                    || *ConsoleControlTurnActive != 0) {
+                    const uint8_t saved_order = Vehs[veh_id].order;
+                    action_terraform(veh_id, ORDER_REMOVE_FUNGUS, 1);
+                    Vehs[veh_id].order = saved_order;
+                    return;
+                }
+                const int saved_order = Vehs[veh_id].order;
+                message_data(0x2405, 0, veh_id, ORDER_REMOVE_FUNGUS,
+                             saved_order, 0);
+                NetDaemonNet.await_exec(1);
+                return;
+            }
+        }
+
+        if ((tile->bit & BIT_FUNGUS) == 0 || altitude < ALT_BIT_SHORE_LINE
+            || has_tech_call(Rules.tech_build_roads_fungus, owner)) {
+            if (!(tile->bit & BIT_BASE_IN_TILE) || (tile->val2 & 0xf) > 7) {
+                if (!(tile->bit & BIT_ROAD)) {
+                    if (NetDaemonIsMultiplayerNet == 0
+                        || *ConsoleControlTurnActive != 0) {
+                        const uint8_t saved_order = Vehs[veh_id].order;
+                        action_terraform(veh_id, ORDER_ROAD, 1);
+                        Vehs[veh_id].order = saved_order;
+                        return;
+                    }
+                    const int saved_order = Vehs[veh_id].order;
+                    message_data(0x2405, 0, veh_id, ORDER_ROAD, saved_order, 0);
+                    NetDaemonNet.await_exec(1);
+                    return;
+                }
+                if (Vehs[veh_id].order == ORDER_MAGTUBE_TO
+                    && !(tile->bit & BIT_MAGTUBE)
+                    && has_tech_call(Terraforming[TERRA_MAGTUBE].preq_tech, owner)) {
+                    if (NetDaemonIsMultiplayerNet == 0
+                        || *ConsoleControlTurnActive != 0) {
+                        action_terraform(veh_id, ORDER_ROAD, 1);
+                        Vehs[veh_id].order = ORDER_MAGTUBE_TO;
+                        return;
+                    }
+                    message_data(0x2405, 0, veh_id, ORDER_ROAD,
+                                 ORDER_MAGTUBE_TO, 0);
+                    NetDaemonNet.await_exec(1);
+                    return;
+                }
+            }
+        }
+
+        if (x == goal_x && y == goal_y) {
+            const uint8_t order = Vehs[veh_id].order;
+            Vehs[veh_id].order = ORDER_NONE;
+            if (NetDaemonIsMultiplayerNet != 0
+                && *ConsoleControlTurnActive == 0) {
+                synch_veh(veh_id);
+                NetDaemonNet.await_synch();
+                NetDaemonNet.unlock_veh();
+            }
+            if (Vehs[veh_id].state & VSTATE_UNK_200) {
+                return;
+            }
+            if (owner != (unsigned)LocalFaction) {
+                return;
+            }
+            StringTemp[0] = 0;
+            say_loc(StringTemp, goal_x, goal_y, 0, 2, 0);
+            parse_says(0, StringTemp, -1, -1);
+            if (order == ORDER_ROAD_TO) {
+                NetMsgPopup->pop(VehLabelROAD, 5000, 0, 0);
+            } else {
+                NetMsgPopup->pop(VehLabelTUBE, 5000, 0, 0);
+            }
+            return;
+        }
+
+        const int min_speed = has_tech_call(Rules.tech_build_roads_fungus, owner)
+            ? 0 : 0x10;
+        const int found = Paths.find(x, y, goal_x, goal_y, 0, -1, min_speed, -1);
+        net_flag = NetDaemonIsMultiplayerNet;
+        if (found >= 0 && found < 8) {
+            if (NetDaemonIsMultiplayerNet != 0
+                && *ConsoleControlTurnActive == 0) {
+                if (NetDaemonNet.order_veh(veh_id, found, 1) == 0) {
+                    return;
+                }
+                NetDaemonNet.await_exec(1);
+                return;
+            }
+            order_veh(veh_id, found, 3);
+            return;
+        }
+        Vehs[veh_id].order = ORDER_NONE;
+    }
+
+    if (net_flag != 0 && *ConsoleControlTurnActive == 0) {
+        synch_veh(veh_id);
+        NetDaemonNet.await_synch();
+        NetDaemonNet.unlock_veh();
+    }
+}
+
+// ===== bindings the terraform verb needs =====
+
+// 0x009A64B4, two dwords: the TERRA_* bits the local player has already been
+// shown a first-time popup for, [0] land and [1] sea - indexed by the same
+// not-ocean test that picks Terraforming[]'s preq_tech from its _sea twin.
+uint32_t TerraformAnnouncedMask[2];  // 0x009A64B4
+
+// 0x009B22DC and 0x009B22E0 close the run map.cpp binds as
+// MapBaseIdClosestSubmergedVeh[8] (0x009B22BC) and hold two ids the terraform
+// epilogue reads: the faction whose territory the tile sits in, and the base
+// that lost land to the raise/lower. Both are -1 when nobody is involved.
+int TerraformTileFaction;    // 0x009B22DC
+int TerraformDrownedBaseId;  // 0x009B22E0
+
+// 0x0090DB84. A latch: the first terraform a unit completes with no order
+// queued raises it and plays the unit-improvement sting, and nothing here
+// clears it.
+uint32_t VehTerraformStingLatch;  // 0x0090DB84
+
+// Two slots of BaseSecretProject (0x009A6514, 64 ints) that this body reads as
+// BASE IDS: >= 0 tests "built", and the value indexes Bases[]. All are stored
+// as SP_Unbuilt/-1 until the project lands. Bound by address the way
+// spying_recovery.h binds interior offsets of PlayersData, because the struct
+// spells the 64 ints as project names and these are the three the image reads
+// as a base.
+int *const SecretProjectBoreholeBase = (int *)0x009A651C;      // +0x08
+int *const SecretProjectXenoempathyBase = (int *)0x009A6534;   // +0x20
+int *const SecretProjectAirdropBase = (int *)0x009A6580;       // +0x6C
+
+// The phrase keys the terraform popups and the tutorial map call are titled
+// with. All are file-backed .data, all read only here.
+char *const VehLabelBOREHOLEMINE = (char *)0x00687B80;   // "BOREHOLEMINE"
+char *const VehLabelHARVESTFOREST = (char *)0x00687B90;  // "HARVESTFOREST"
+char *const VehLabelTERRAMINE = (char *)0x00687BA0;      // "TERRAMINE"
+char *const VehLabelTERRAYOURS = (char *)0x00687BAC;     // "TERRAYOURS"
+char *const VehLabelDROWNMINE = (char *)0x00687BB8;      // "DROWNMINE"
+char *const VehLabelDROWNYOURS = (char *)0x00687BC4;     // "DROWNYOURS"
+char *const VehLabelMADEFARM = (char *)0x00687BD0;       // "MADEFARM"
+char *const VehLabelMADESOIL = (char *)0x00687BDC;       // "MADESOIL"
+char *const VehLabelMADEMINE = (char *)0x00687BE8;       // "MADEMINE"
+char *const VehLabelMADESOLAR = (char *)0x00687BF4;      // "MADESOLAR"
+char *const VehLabelMADEFOREST = (char *)0x00687C00;     // "MADEFOREST"
+char *const VehLabelMADEROAD = (char *)0x00687C0C;       // "MADEROAD"
+char *const VehLabelMADETUBE = (char *)0x00687C18;       // "MADETUBE"
+char *const VehLabelMADESENSOR = (char *)0x00687C24;     // "MADESENSOR"
+char *const VehLabelMADEAQUIFER = (char *)0x00687C30;    // "MADEAQUIFER"
+char *const VehLabelMADECONDENSER = (char *)0x00687C3C;  // "MADECONDENSER"
+char *const VehLabelMADEBOREHOLE = (char *)0x00687C4C;   // "MADEBOREHOLE"
+char *const VehLabelMADESEAFARM = (char *)0x00687C5C;    // "MADESEAFARM"
+char *const VehLabelMADESEAMINE = (char *)0x00687C68;    // "MADESEAMINE"
+char *const VehLabelMADESEASOLAR = (char *)0x00687C74;   // "MADESEASOLAR"
+
+// The four facility sprites the first-time tutorial popup draws beside its
+// text. sprite.cpp owns the objects: the farm and soil enricher runs are five
+// 0x2C-stride Sprites and the image hands the tutorial the COMPLETED tile,
+// which is element [3] of each run (0x00791FC8 / 0x0079A710 + 3 * 0x2C); the
+// mine and solar collector are single Sprites of their own.
+extern Sprite g_TER1_FARM_SPRITES[5];             // 0x00791FC8, sprite.cpp
+extern Sprite g_TER1_SOIL_ENRICHER_SPRITES[5];    // 0x0079A710, sprite.cpp
+extern Sprite g_TER1_MINE_SPRITE;                 // 0x00776A50, sprite.cpp
+extern Sprite g_TER1_SOLAR_COLLECTOR_SPRITE;      // 0x007991F8, sprite.cpp
+static Sprite *const VehSpriteFARM = &g_TER1_FARM_SPRITES[3];
+static Sprite *const VehSpriteSOIL = &g_TER1_SOIL_ENRICHER_SPRITES[3];
+static Sprite *const VehSpriteMINE = &g_TER1_MINE_SPRITE;
+static Sprite *const VehSpriteSOLAR = &g_TER1_SOLAR_COLLECTOR_SPRITE;
+
+// The third BaseWin repaint hook, beside check_base / check_loc above:
+// recompute the one vehicle's defenders and garrison after its tile changed.
+typedef void (OriginalObject::*func_base_win_check_veh)(int veh_id);
+func_base_win_check_veh BaseWinOriginalCheckVeh =
+    original_method<func_base_win_check_veh>(0x0041A8B0);
+
+// TutWin::tut_map (0x004BE650) is not recovered and tutwin.h declares no such
+// member; the terraform epilogue is the tree's first caller. Same seam as the
+// BaseWin pair - a member-pointer call into the original at the image's own
+// address, receiver TutWinGlobal.
+typedef void (OriginalObject::*func_tut_win_tut_map)(const char *msg, int x,
+                                                    int y, int noun,
+                                                    void *sprite,
+                                                    int tut_win_arg6,
+                                                    int arrow_x, int arrow_y);
+func_tut_win_tut_map TutWinOriginalTutMap =
+    original_method<func_tut_win_tut_map>(0x004BE650);
+
+/*
+Purpose: Perform one terraforming action on a unit's tile, over its stack.
+// ORIGINAL: 0x004C9B00 ?action_terraform@@YAHHHH@Z 0x004C9B00-0x004CA76B
+// size      3179 bytes
+// prototype int (__cdecl ?action_terraform@@YAHHHH@Z)(int veh_id, int action, int do_it)
+// callers   8   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// HOMED from src/unrecovered/004c9b00.cpp, 2026-09-04. `action` is the TERRA_*
+// index (the order byte stores action + 4); `do_it` distinguishes the query
+// pass, which only totals the stack's progress, from the pass that spends it.
+// Its `g_0095284d` byte is Vehs[].terraforming_turns (+0x25), `g_00952850`
+// Vehs[].moves_expended (+0x28), `g_00952856` Vehs[].home_base_id (+0x2E) and
+// `g_0095285a`/`g_00952858` prev/next_veh_id_stack (+0x32/+0x30). Its
+// `g_0069188x` triple is Terraforming[].bit / .bit_incompatible / .rate
+// (0x10/0x14/0x18, 0x20 stride off 0x00691878).
+//
+// BUG IN THE ORIGINAL: the drowned-base epilogue gates on
+// MapBaseIdClosestSubmergedVeh[LocalFaction] (0x004CA466) but then reads
+// MapBaseIdClosestSubmergedVeh[faction] (0x004CA47E). For the local player the
+// two are the same slot and the slip is invisible; for any other faction the
+// guard answers a different slot than the one used. Transcribed as written -
+// both sides are the image's.
+Return Value: 1 when the action ran, 0 when it only reported progress.
+Status: MISMATCH.
+*/
+int __cdecl action_terraform(int veh_id, int action, int do_it) {
+    const int veh_count_before = VehCurrentCount;
+    const int y = Vehs[veh_id].y;
+    const int x = Vehs[veh_id].x;
+    const uint8_t faction = Vehs[veh_id].faction_id;
+    Map *tile = reinterpret_cast<Map *>(LockMapTable)
+        + ((x >> 1) + y * MapLongitude);
+    const int not_ocean = (tile->climate & 0xE0) < ALT_BIT_SHORE_LINE;
+
+    if (action == TERRA_ROAD) {
+        if (tile->bit & BIT_ROAD) {
+            if (has_tech_call(not_ocean != 0
+                                  ? Terraforming[TERRA_MAGTUBE].preq_tech_sea
+                                  : Terraforming[TERRA_MAGTUBE].preq_tech,
+                              faction)) {
+                action = TERRA_MAGTUBE;
+            }
+        }
+    } else if (action == TERRA_FARM && (tile->bit & BIT_FARM) != 0
+               && (tile->climate & 0xE0) > 0x5F) {
+        if (has_tech_call(not_ocean != 0
+                              ? Terraforming[TERRA_FARM].preq_tech_sea
+                              : Terraforming[TERRA_FARM].preq_tech,
+                          faction)) {
+            action = TERRA_SOIL_ENR;
+        }
+    }
+
+    if (do_it != 0) {
+        Vehs[veh_id].order = (uint8_t)(action + 4);
+    }
+
+    int base_time = Terraforming[action].rate;
+    switch (action) {
+    case TERRA_MINE: {
+        const uint32_t bonus = ((uint32_t)(tile->val3 >> 6) * base_time) / 2;
+        base_time = base_time + bonus;
+        break;
+    }
+    case TERRA_ROAD:
+    case TERRA_MAGTUBE: {
+        const uint32_t flags = tile->bit;
+        base_time = Terraforming[(flags & BIT_ROAD ? 1 : 0) + 5].rate;
+        if (flags & BIT_RIVER) {
+            base_time++;
+        }
+        if ((flags & BIT_FUNGUS) && (tile->climate & 0xE0) > 0x3F) {
+            base_time += 2;
+        }
+        if ((flags & BIT_FOREST) == 0) {
+            const uint32_t bonus = (uint32_t)(tile->val3 >> 6);
+            base_time = base_time + bonus;
+        } else {
+            base_time += 2;
+        }
+        break;
+    }
+    case TERRA_REMOVE_FUNGUS:
+        if (has_abil(Vehs[veh_id].proto_id, 0x2000)) {
+            base_time = base_time / 2;
+        }
+        break;
+    default:
+        break;
+    }
+
+    const uint8_t faction_bit = (uint8_t)(1 << (faction & 0x1F));
+    if (!(LockEnableMask & faction_bit) && DiffLevelCurrent > 3
+        && base_time > 3) {
+        base_time--;
+    }
+
+    int turns_accum = 0;
+    int progress_accum = 0;
+    if (veh_id >= 0) {
+        int stack_bottom = veh_id;
+        int16_t prev = Vehs[stack_bottom].prev_veh_id_stack;
+        while (prev >= 0) {
+            stack_bottom = prev;
+            prev = Vehs[stack_bottom].prev_veh_id_stack;
+        }
+        for (int v = stack_bottom; v >= 0; v = Vehs[v].next_veh_id_stack) {
+            if (v != veh_id && (int8_t)Vehs[v].order == (int8_t)(action + 4)) {
+                if (do_it == 0) {
+                    const int8_t v_faction = (int8_t)Vehs[v].faction_id;
+                    uint32_t base = 2;
+                    uint32_t weight;
+                    if (has_abil(Vehs[v].proto_id, 1) == 0) {
+                        weight = 2;
+                    } else {
+                        weight = 4;
+                        base = 4;
+                    }
+                    if (action == TERRA_REMOVE_FUNGUS
+                        || action == TERRA_PLANT_FUNGUS) {
+                        if (*SecretProjectXenoempathyBase >= 0
+                            && Bases[*SecretProjectXenoempathyBase]
+                                   .faction_id_current
+                                == (uint8_t)v_faction) {
+                            weight = base * 2;
+                        }
+                    } else if (*SecretProjectBoreholeBase >= 0
+                               && Bases[*SecretProjectBoreholeBase]
+                                      .faction_id_current
+                                   == (uint8_t)v_faction) {
+                        weight = (base * 3) / 2;
+                    }
+                    turns_accum += weight;
+                    progress_accum += Vehs[v].terraforming_turns;
+                } else {
+                    Vehs[veh_id].terraforming_turns =
+                        Vehs[veh_id].terraforming_turns
+                        + Vehs[v].terraforming_turns;
+                    Vehs[v].terraforming_turns = 0;
+                }
+            }
+        }
+    }
+
+    {
+        const int8_t my_faction = (int8_t)Vehs[veh_id].faction_id;
+        uint32_t base = 2;
+        uint32_t weight;
+        if (has_abil(Vehs[veh_id].proto_id, 1) == 0) {
+            weight = 2;
+        } else {
+            weight = 4;
+            base = 4;
+        }
+        if (action == TERRA_REMOVE_FUNGUS || action == TERRA_PLANT_FUNGUS) {
+            if (*SecretProjectXenoempathyBase >= 0
+                && Bases[*SecretProjectXenoempathyBase].faction_id_current
+                    == (uint8_t)my_faction) {
+                weight = base * 2;
+            }
+        } else if (*SecretProjectBoreholeBase >= 0
+                   && Bases[*SecretProjectBoreholeBase].faction_id_current
+                       == (uint8_t)my_faction) {
+            weight = (base * 3) / 2;
+        }
+        turns_accum += weight;
+        progress_accum += Vehs[veh_id].terraforming_turns;
+    }
+
+    if (do_it == 0) {
+        const int cur_speed = speed(veh_id, 0);
+        const int since_move = cur_speed - Vehs[veh_id].moves_expended;
+        if (since_move >= 0
+            && (since_move > 999 || cur_speed != Vehs[veh_id].moves_expended)) {
+            progress_accum += turns_accum;
+        }
+        progress_accum = base_time * 2 - progress_accum;
+        if (turns_accum < 1) {
+            turns_accum = 1;
+        } else if (turns_accum > 0xFF) {
+            return (progress_accum + 0xFE) / 0xFF;
+        }
+        return (progress_accum - 1 + turns_accum) / turns_accum;
+    }
+
+    veh_skip(veh_id);
+    const uint8_t progress_before = Vehs[veh_id].terraforming_turns;
+    Vehs[veh_id].terraforming_turns = progress_before + (uint8_t)turns_accum;
+    if ((tile->bit & BIT_BASE_IN_TILE) != 0 && (tile->val2 & 0xF) < 8) {
+        Vehs[veh_id].order = ORDER_NONE;
+        return 0;
+    }
+    if ((int)(uint8_t)(progress_before + (uint8_t)turns_accum) < base_time * 2) {
+        draw_tile(x, y, 2);
+        (ORIGINAL(&TutWinBaseWindow)->*BaseWinOriginalCheckVeh)(veh_id);
+        return 0;
+    }
+    Vehs[veh_id].terraforming_turns = 0;
+    if (veh_id >= 0) {
+        int stack_bottom = veh_id;
+        int16_t prev = Vehs[stack_bottom].prev_veh_id_stack;
+        while (prev >= 0) {
+            stack_bottom = prev;
+            prev = Vehs[stack_bottom].prev_veh_id_stack;
+        }
+        for (int v = stack_bottom; v >= 0; v = Vehs[v].next_veh_id_stack) {
+            if ((int8_t)Vehs[v].order == (int8_t)(action + 4)) {
+                Vehs[v].order = ORDER_NONE;
+            }
+        }
+    }
+
+    const uint32_t tile_flags = tile->bit;
+    bit_set(x, y, Terraforming[action].bit_incompatible, 0);
+    bit_set(x, y, Terraforming[action].bit, 1);
+    synch_bit(x, y, faction);
+    switch (action) {
+    case TERRA_REMOVE_FUNGUS:
+    case TERRA_PLANT_FUNGUS:
+        site_radius(x, y, 0);
+        break;
+    case TERRA_CONDENSER:
+    case TERRA_THERMAL_BORE:
+        site_radius(x, y, 0);
+        world_climate();
+        draw_map(1);
+        break;
+    case TERRA_AQUIFER:
+        bit_set(x, y, 0x100, 1);
+        world_climate();
+        draw_map(1);
+        break;
+    case TERRA_RAISE_LAND:
+        world_raise_alt(x, y);
+        world_climate();
+        draw_map(1);
+        break;
+    case TERRA_LOWER_LAND:
+        world_lower_alt(x, y);
+        world_climate();
+        draw_map(1);
+        break;
+    case TERRA_LEVEL_TERRAIN: {
+        uint8_t rocky = tile->val3;
+        if (rocky & 0xC0) {
+            rocky_set(x, y, (rocky >> 6) - 1);
+            site_radius(x, y, 0);
+        }
+        break;
+    }
+    default:
+        break;
+    }
+
+    int base_idx = -1;
+    if ((Terraforming[action].bit & 0x1208050) != 0) {
+        base_idx = base_find(x, y, faction);
+        if (base_idx >= 0 && BaseFindDist < 3) {
+            Bases[base_idx].state |= 0x100;
+        }
+        if (action == TERRA_THERMAL_BORE && faction == LocalFaction
+            && base_idx >= 0 && Bases[base_idx].faction_id_current == faction) {
+            parse_says(0, Bases[base_idx].name_string, -1, -1);
+            NetMsgPopup->pop(VehLabelBOREHOLEMINE, 5000, 0, 0);
+        }
+    }
+
+    if ((tile_flags & BIT_FOREST) == 0
+        || ((reinterpret_cast<Map *>(LockMapTable)
+             + ((x >> 1) + y * MapLongitude))
+                ->bit
+            & BIT_FOREST)
+            != 0
+        || ((reinterpret_cast<Map *>(LockMapTable)
+             + ((x >> 1) + y * MapLongitude))
+                ->climate
+            & 0xE0)
+            < ALT_BIT_SHORE_LINE) {
+        if (action == TERRA_RAISE_LAND || action == TERRA_LOWER_LAND
+            || action == TERRA_CONDENSER) {
+            goto forest_shared;
+        }
+    } else if (action != TERRA_RAISE_LAND) {
+        int near_base = Vehs[veh_id].home_base_id;
+        if (near_base < 0) {
+            near_base = base_find(x, y, faction);
+        }
+        if (near_base >= 0) {
+            const int forest_val = Bases[near_base].minerals_accumulated
+                + Rules.minerals_harvesting_forest;
+            Bases[near_base].minerals_accumulated = forest_val;
+            Bases[near_base].minerals_accumulated_2 = forest_val;
+            Bases[near_base].production_id_last =
+                Bases[near_base].queue_production_id[0];
+            if (faction == LocalFaction && (faction_bit & LockEnableMask) != 0
+                && Rules.minerals_harvesting_forest != 0) {
+                parse_says(0, Bases[near_base].name_string, -1, -1);
+                parse_num(0, Rules.minerals_harvesting_forest);
+                NetMsgPopup->pop(VehLabelHARVESTFOREST, 5000, 0, 0);
+            }
+            (ORIGINAL(&TutWinBaseWindow)->*BaseWinOriginalCheckBase)(near_base);
+        }
+        goto forest_shared;
+    } else {
+        if (TerraformTileFaction >= 0
+            && !(LockEnableMask & (uint8_t)(1 << (TerraformTileFaction & 0x1F)))
+            && (faction_bit & LockEnableMask) != 0
+            && (PlayersData[TerraformTileFaction].diplo_treaties[faction]
+                & 0x11)
+                == 0) {
+            if ((PlayersData[faction].diplo_treaties[TerraformTileFaction]
+                 & 0x20)
+                == 0) {
+                cause_friction(TerraformTileFaction, faction, 5);
+            } else {
+                set_treaty(TerraformTileFaction, faction, 0x400, 1);
+            }
+        }
+        if (TerraformDrownedBaseId >= 0) {
+            parse_says(0, Bases[TerraformDrownedBaseId].name_string, -1, -1);
+            parse_says(1, Players[faction].adj_name_faction, -1, -1);
+            const char *msg = faction == LocalFaction ? VehLabelTERRAMINE
+                                                      : VehLabelTERRAYOURS;
+            NetMsgPopup->pop(msg, 5000, 0, 0);
+        }
+        if (MapBaseIdClosestSubmergedVeh[LocalFaction] >= 0) {
+            const int drown_base = MapBaseIdClosestSubmergedVeh[faction];
+            parse_says(0, Bases[drown_base].name_string, -1, -1);
+            parse_says(1, Players[faction].adj_name_faction, -1, -1);
+            const char *msg = faction == LocalFaction ? VehLabelDROWNMINE
+                                                      : VehLabelDROWNYOURS;
+            NetMsgPopup->pop(msg, 5000, 0, 0);
+        }
+    }
+
+forest_shared:
+    synch_bit(x, y, faction);
+    draw_tiles(x, y, 2);
+    if (veh_count_before == VehCurrentCount) {
+        (ORIGINAL(&TutWinBaseWindow)->*BaseWinOriginalCheckVeh)(veh_id);
+        (ORIGINAL(&TutWinBaseWindow)->*BaseWinOriginalCheckLoc)(x, y, 2);
+    } else {
+        TutWinBaseWindow.redraw();
+    }
+
+    if (faction != LocalFaction) {
+        return 1;
+    }
+
+    if ((Vehs[veh_id].state & VSTATE_UNK_200) != 0
+        && (GamePreferences & 0x20) != 0 && NetDaemonIsMultiplayerNet == 0) {
+        const uint32_t bit = 1 << (action & 0x1F);
+        uint32_t seen = TerraformAnnouncedMask[not_ocean];
+        if ((bit & seen) == 0) {
+            const uint32_t new_mask = seen | bit;
+            TerraformAnnouncedMask[not_ocean] = new_mask;
+            const void *sprite = 0;
+            const char *msg = 0;
+            int noun = veh_id;
+            bool do_popup = true;
+            if (not_ocean == 0) {
+                switch (action) {
+                case TERRA_FARM:
+                    sprite = VehSpriteFARM;
+                    noun = -1;
+                    msg = VehLabelMADEFARM;
+                    break;
+                case TERRA_SOIL_ENR:
+                    sprite = VehSpriteSOIL;
+                    noun = -1;
+                    msg = VehLabelMADESOIL;
+                    break;
+                case TERRA_MINE:
+                    sprite = VehSpriteMINE;
+                    noun = -1;
+                    msg = VehLabelMADEMINE;
+                    break;
+                case TERRA_SOLAR_TIDAL:
+                    sprite = VehSpriteSOLAR;
+                    noun = -1;
+                    msg = VehLabelMADESOLAR;
+                    break;
+                case TERRA_FOREST:
+                    msg = VehLabelMADEFOREST;
+                    break;
+                case TERRA_ROAD:
+                    msg = VehLabelMADEROAD;
+                    break;
+                case TERRA_MAGTUBE:
+                    msg = VehLabelMADETUBE;
+                    break;
+                case TERRA_SENSOR:
+                    msg = VehLabelMADESENSOR;
+                    break;
+                case TERRA_CONDENSER:
+                    msg = VehLabelMADECONDENSER;
+                    break;
+                case TERRA_THERMAL_BORE:
+                    msg = VehLabelMADEBOREHOLE;
+                    break;
+                case TERRA_AQUIFER:
+                    msg = VehLabelMADEAQUIFER;
+                    break;
+                default:
+                    TerraformAnnouncedMask[not_ocean] = ~bit & new_mask;
+                    do_popup = false;
+                    break;
+                }
+            } else if (action == TERRA_FARM) {
+                sprite = VehSpriteFARM;
+                msg = VehLabelMADESEAFARM;
+                noun = -1;
+            } else if (action == TERRA_MINE) {
+                sprite = VehSpriteMINE;
+                msg = VehLabelMADESEAMINE;
+                noun = -1;
+            } else if (action == TERRA_SOLAR_TIDAL) {
+                sprite = VehSpriteSOLAR;
+                msg = VehLabelMADESEASOLAR;
+                noun = -1;
+            } else {
+                TerraformAnnouncedMask[not_ocean] = ~bit & new_mask;
+                do_popup = false;
+            }
+            if (do_popup) {
+                (ORIGINAL(TutWinGlobal)->*TutWinOriginalTutMap)(
+                    msg, x, y, noun, const_cast<void *>(sprite), 1, -1, -1);
+            }
+        }
+    }
+
+    if (faction == LocalFaction && Vehs[veh_id].order == ORDER_NONE
+        && !(Vehs[veh_id].state & VSTATE_UNK_200)
+        && VehTerraformStingLatch == 0) {
+        VehTerraformStingLatch = 1;
+        wave_it(0x14);
+        ambience(0xCF);
+    }
+    return 1;
+}
+
+/*
+Purpose: Dispatch a unit's order byte to the verb that carries it out.
+// ORIGINAL: 0x004CF740 ?action@@YAHH@Z 0x004CF740-0x004CF7B4 BYTE_EXACT
+// size      116 bytes
+// prototype int (__cdecl ?action@@YAHH@Z)(int veh_id)
+// callers   3   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004C9B00 0x004CB310 0x004CB580
+// HOMED from src/unrecovered/004cf740.cpp, which carried the archive's own
+// FILE BYTE_EXACT claim for these 116 bytes; re-earned in the TU 2026-09-04.
+// Its `g_00952839` byte view is Vehs[].order (+0x11) - the whole body is a
+// dispatch on it. The three arms cover every order the AI and the interface
+// can queue: the terraforming range ORDER_FARM..ORDER_MOVE_TO-1 (4..0x17) goes
+// to action_terraform with the order's TERRA_* index, the two road verbs go to
+// their walkers, and everything in the move family goes to action_go_to.
+// LEVER: the order byte is `int8_t`, not `int` and not `uint8_t`. The image
+//        keeps it in `al` and compares SIGNED (`cmp al,4 / jl`, `cmp al,0x18 /
+//        jge`) - `int` widened it to `movsx eax` and cost the byte form, and
+//        `uint8_t` turned the branch unsigned (`jb`/`jae`). Naming it after
+//        the field it reads, which veh.h declares `int8_t order`, is what
+//        closed the last instruction.
+// LEVER: the terraforming arm's upper bound is ORDER_MOVE_TO (0x18), not
+//        ORDER_PLACE_MONOLITH - the archive's own `state < 0x18` is the
+//        half-open end of the range, and I first transcribed it as the
+//        symbolic name the value 0x17 would have had.
+Return Value: 1 when an arm ran and the order was cleared, 0 otherwise.
+Status: BYTE_EXACT.
+*/
+int __cdecl action(int veh_id) {
+    const int8_t order = Vehs[veh_id].order;
+    if (order >= ORDER_FARM && order < ORDER_MOVE_TO) {
+        action_terraform(veh_id, order - 4, 1);
+    } else if (order == ORDER_ROAD_TO || order == ORDER_MAGTUBE_TO) {
+        action_road_to(veh_id);
+    } else if (order == ORDER_MOVE_TO || order == ORDER_AI_MOVE_TO
+               || order == ORDER_MOVE) {
+        action_go_to(veh_id);
+    } else {
+        return 0;
+    }
+    if (Vehs[veh_id].order & 0x40) {
+        Vehs[veh_id].order = ORDER_NONE;
+    }
+    return 1;
+}
+
+/*
+Purpose: Find whether a faction can airdrop a unit onto a tile.
+// ORIGINAL: 0x00500380 sub_500380 0x00500380-0x005004EA
+// size      362 bytes
+// prototype void (__cdecl sub_500380)(int faction_id, int x, int y)
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005B9F20 0x005BF1F0 0x00644F3A
+// symbol    ?sub_500380@@YAXHHH@Z
+//           The image's catalogue name is an uninformative `sub_` with no
+//           prototype and no callers; the body names it, not the catalogue.
+//           This tree spells it as an ordinary C++ free function, which
+//           decorates to that symbol - the image's own object carries none.
+// HOMED from src/unrecovered/00500380.cpp, 2026-09-04. Its `g_009497c8` is
+// Rules.tech_orb_insert_sans_spc_elev (Rules + 0x90) and `g_00949740` is
+// Rules.max_airdrop_sans_orb_insert (Rules + 0x08) - the pair that decides
+// whether the drop range is the whole map or the airdrop limit. Its `g_00952832`
+// short view is Vehs[].proto_id (+0x0A), so `rec - 0xa` / `rec - 8` are the
+// Vehs[].x/.y of the record being walked and `rec - 6` its state byte.
+Return Value: n/a - the image discards the result; the walk is the effect.
+Status: MISMATCH.
+*/
+void __cdecl sub_500380(int faction_id, int x, int y) {
+    bool anywhere;
+    if (has_tech_call(Rules.tech_orb_insert_sans_spc_elev, faction_id)) {
+        anywhere = true;
+    } else if (*SecretProjectAirdropBase >= 0) {
+        anywhere = Bases[*SecretProjectAirdropBase].faction_id_current
+            == (uint8_t)faction_id;
+    } else {
+        anywhere = false;
+    }
+
+    int threshold;
+    if (anywhere) {
+        threshold = MapLongitudeBounds;
+        if (threshold <= MapLatitudeBounds) {
+            threshold = MapLatitudeBounds;
+        }
+    } else {
+        threshold = Rules.max_airdrop_sans_orb_insert;
+    }
+
+    const int count = VehCurrentCount;
+    for (int i = 0; i < count; ++i) {
+        if (Vehs[i].faction_id != faction_id) {
+            continue;
+        }
+        if (!has_abil(Vehs[i].proto_id, 0x10)) {
+            continue;
+        }
+        if (Vehs[i].state & VSTATE_MADE_AIRDROP) {
+            continue;
+        }
+        if (Vehs[i].moves_expended != 0) {
+            continue;
+        }
+        int dx = abs(x - Vehs[i].x);
+        if (!(MapIsFlat & 1) && dx > (int)MapLongitude) {
+            dx = MapLongitudeBounds - dx;
+        }
+        const int dy = abs(y - Vehs[i].y);
+        if ((dy + dx) >> 1 > threshold) {
+            continue;
+        }
+        Map *tile = reinterpret_cast<Map *>(LockMapTable)
+            + ((Vehs[i].x >> 1) + Vehs[i].y * MapLongitude);
+        if (tile->bit & BIT_BASE_IN_TILE) {
+            if ((tile->val2 & 0xf) < 8) {
+                return;
+            }
+        }
+        if (tile->bit & BIT_AIRBASE) {
+            return;
+        }
+    }
+}
+
+// 0x00691B0C holds the address of the popup title the obliteration report
+// shares with the climate popup - game.h binds the same slot as
+// ClimatePopupTitle, so this body reads the title through it.
+// The other four are the phrase keys and the portrait the two report popups
+// take: the obliterator's own faction gets the plain pair, everyone else the
+// "2" pair the game uses for a faction hearing about another faction's act.
+char *const VehIconBASEOBL_SM_PCX = (char *)0x00687FFC;   // "baseobl_sm.pcx"
+char *const VehLabelOBLITTED = (char *)0x0068800C;        // "OBLITTED"
+char *const VehIconBASEOBL2_SM_PCX = (char *)0x00688018;  // "baseobl_sm.pcx"
+char *const VehLabelOBLITTED2 = (char *)0x00688028;       // "OBLITTED2"
+
+// Still archived, so veh.cpp cannot link to a definition: 0x0055EEE0 carries
+// the atrocity the obliteration commits and is forwarded like the other
+// unrecovered callees in this file.
+void __cdecl atrocity(int faction_id, int faction_id_victim, int kind,
+                      int unk);
+// base_kill's forwarder lives in pending_bodies.cpp beside the other
+// unrecovered callees; no header claims it yet, so this file declares it.
+void __cdecl base_kill(int base_id);
+
+/*
+Purpose: Obliterate a base and report it to every faction that can hear.
+// ORIGINAL: 0x004CD4E0 ?action_oblit@@YAXHH@Z 0x004CD4E0-0x004CD6F9
+// size      537 bytes
+// prototype void (__cdecl ?action_oblit@@YAXHH@Z)(int veh_id, int base_id)
+// callers   1   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0048C0A0 0x0046B190 0x004E5250 0x0055EEE0 0x00625E30 0x00625EC0
+// symbol    ?action_oblit@@YAXHH@Z
+// HOMED from src/recovered/units/004cd4e0.cpp, 2026-09-04. Its indexed table
+// bases are Vehs[].faction_id (0x00952836, 0x34 stride), Bases[]
+// .faction_id_current / .faction_id_former / .population_size / .visibility /
+// .name_string (0x0097D044/45/46/4A/53, 0x134 stride), and Rules.
+// tgl_oblit_base_atrocity (0x00949860 = Rules + 0x128) gating the atrocity.
+// The three Player rows it walks are name_leader (+0x34), title_leader
+// (+0x4C) and faction_bonus_count (+0x50C, read as GenderDefault's value) -
+// 0x00946A50 is Players itself, so a row index of n * 0x167 is the n-th
+// record's dword at that offset.
+//
+// BUG IN THE ORIGINAL: the owner's name row is computed once into a local and
+// then reused for BOTH the fourth and the fifth parse_says, so the fifth call
+// prints from a row it never recomputed for. Transcribed as written.
+//
+// TRIED (the units archive, which measured 0.90 similarity / 15 of 138 edits
+//        at 445 bytes both sides): the remaining divergence is the prologue's
+//        register-save ORDER - the image loads the veh_id argument into eax
+//        before saving ebx/esi/edi, this tree saves a callee-saved register
+//        first. Register allocation, not control flow.
+Return Value: n/a
+Status: MISMATCH.
+*/
+void __cdecl action_oblit(int veh_id, int base_id) {
+    const unsigned veh_faction = Vehs[veh_id].faction_id;
+    const unsigned base_former = Bases[base_id].faction_id_former;
+    parse_num(0, (int)Bases[base_id].population_size * 10);
+    veh_id = base_former;
+    parse_says(0, Bases[base_id].name_string, -1, -1);
+
+    PluralityDefault = 0;
+    GenderDefault = Players[LocalFaction].faction_bonus_count;
+    parse_says(1, Players[LocalFaction].name_leader, -1, -1);
+
+    parse_says(2, Players[base_former].adj_name_faction, -1, -1);
+
+    PluralityDefault = 0;
+    GenderDefault = Players[veh_faction].faction_bonus_count;
+    parse_says(3, Players[veh_faction].title_leader, -1, -1);
+
+    GenderDefault = Players[veh_faction].faction_bonus_count;
+    PluralityDefault = 0;
+    parse_says(4, Players[veh_faction].name_leader, -1, -1);
+
+    const bool audible = Bases[base_id].faction_id_current == LocalFaction
+        || (Bases[base_id].visibility & (1 << (LocalFaction & 0x1f))) != 0;
+
+    base_kill(base_id);
+    draw_map(1);
+
+    if ((int)veh_faction == LocalFaction) {
+        popp((char *)*ClimatePopupTitle, VehLabelOBLITTED, 0,
+             VehIconBASEOBL_SM_PCX, 0);
+    } else if ((int)base_former == LocalFaction || audible) {
+        popp((char *)*ClimatePopupTitle, VehLabelOBLITTED2, 0,
+             VehIconBASEOBL2_SM_PCX, 0);
+    }
+
+    if (Rules.tgl_oblit_base_atrocity != 0) {
+        atrocity(veh_faction, base_former, 2, 0);
+    }
+}

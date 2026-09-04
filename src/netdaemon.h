@@ -159,6 +159,11 @@ class NetDaemon : public AlphaNet {
   NetDaemon();
   ~NetDaemon();
   int receive();
+  // 0x00531780. The client-side half of a move: lock_veh the unit under the
+  // same bookkeeping the free order_veh (0x005947C0) does host-side, and
+  // report whether the lock landed. Declared for the veh.cpp action family,
+  // which calls it directly at 0x004CB399 / 0x004CB9FD.
+  int order_veh(int veh_id, int payload_10, int payload_1C);
   uint32_t unlock_veh();
 
   // Storage the image proves is here: its own methods reach 0x1BD0.
