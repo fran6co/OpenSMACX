@@ -596,7 +596,7 @@ Purpose: Release the global diplomacy lock this client holds. In a net game,
          say so on the log and broadcast event 0x2212, then clear the four
          announce-side fields; out of one there is nothing to release and the
          body does nothing at all.
-// ORIGINAL: 0x00530D00 ?unlock@NetDaemon@@QAEXXZ 0x00530D00-0x00530D36
+// ORIGINAL: 0x00530D00 ?unlock@NetDaemon@@QAEXXZ 0x00530D00-0x00530D3C
 // size      54 bytes
 // prototype void (__thiscall ?unlock@NetDaemon@@QAEXXZ)(NetDaemon* this)
 // callers   10   call targets   2
@@ -607,7 +607,7 @@ Purpose: Release the global diplomacy lock this client holds. In a net game,
 // diplo_unlock calls it, and a pending_bodies forwarder would have landmined
 // this address's archive claim.
 // RESIDUAL: the annotation's span is SHORT, and it is the only reason this is
-//        not BYTE_EXACT. 0x00530D00-0x00530D36 (54 bytes) stops after the
+//        not BYTE_EXACT. 0x00530D00-0x00530D3C (54 bytes) stops after the
 //        third field store. The shipped bytes run
 //          89 be b0 1b 00 00 / 89 be ac 1b 00 00 / 89 be cc 1b 00 00
 //          89 be c8 1b 00 00 / 5f 5e c3
