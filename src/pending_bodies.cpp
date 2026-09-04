@@ -31,6 +31,7 @@
 #include "dialogs.h"
 #include "listbox.h"
 #include "tutwin.h"
+#include "deletionlist.h"
 #include "maininterface.h"
 #include "basewin.h"
 #include "cursor.h"
@@ -412,22 +413,53 @@ int Sprite::draw_multi_table_dest(Buffer *buffer, int a, int b, int c,
                                              bits);
 }
 
-// Three __cdecl free functions the editor commands call, still original
+// Two __cdecl free functions the editor commands call, still original
 // bodies. Declared at the top of console.cpp beside the bodies that reach
 // them; their natural header home is the class pass that recovers them.
-//             bodies homed (veh.cpp) or in src/unrecovered/005c1b70.cpp;
-//             0x005C32A0 world_rocky is homed in map.cpp now
-void __cdecl veh_kill(int veh_id) {
-    typedef void(__cdecl *pending)(int);
-    PENDING_BODY(0x005C08C0, pending)(veh_id);
+//             all three bodies homed now: veh_kill and veh_ready in
+//             src/veh.cpp (the TU their every other caller compiles from),
+//             world_rocky in src/map.cpp - the forwarders are gone rather
+//             than duplicated beside the real definitions.
+
+// DeletionList::add_deletion (0x0052DE70) - FILE-tier in
+// src/unrecovered/0052de70.cpp. veh_kill (veh.cpp) is its first caller, so the
+// declaration in deletionlist.h needs a definition to link against; the
+// DeletionList pass should replace this forwarder with the homed body.
+//
+// THE PENDING_BODY CEILING: 252 -> 253, this batch. Three forwarders added -
+// battle_kill (0x00505D80), battle_fight's seven-parameter overload
+// (0x00506AF0) and the add_deletion below - and two retired, veh_kill
+// (0x005C08C0) and veh_ready (0x005C1B70), whose bodies the P2 veh homing
+// moved into src/veh.cpp. All three new targets are FILE-tier in the archives
+// (no claim, so address_index's archive-only floor stays at 0); tools/
+// address_index.py --check reports 0 landmines.
+void DeletionList::add_deletion(int veh_id) {
+    typedef void(__fastcall *pending)(DeletionList *, void *, int);
+    PENDING_BODY(0x0052DE70, pending)(this, nullptr, veh_id);
 }
 
-int __cdecl veh_ready(int veh_id) {
-    typedef int(__cdecl *pending)(int);
-    return PENDING_BODY(0x005C1B70, pending)(veh_id);
+// ?battle_kill@@YAHHPAHPAHPAHHH@Z at 0x00505D80, 938 bytes, FILE-tier in
+// src/unrecovered/00505d80.cpp. battle_kill_chaff (veh.cpp) is its one caller
+// this batch reached; the declaration is local to veh.cpp, so retiring this
+// forwarder when the body is homed cannot strand a stale one.
+int __cdecl battle_kill(int cur, int *attacker_out, int *defender_out,
+                        int *odds_out, int killer_id, int credit_faction) {
+    typedef int(__cdecl *pending)(int, int *, int *, int *, int, int);
+    return PENDING_BODY(0x00505D80, pending)(cur, attacker_out, defender_out,
+                                             odds_out, killer_id,
+                                             credit_faction);
 }
 
-
+// The seven-parameter ?battle_fight@@YAHHHHHHPAH@Z at 0x00506AF0, 19,875
+// bytes - the largest body in the veh family - still FILE-tier in
+// src/unrecovered/00506af0.cpp. Its five-parameter overload is homed in
+// veh.cpp and tail-calls it, so this forwarder is what makes that call link.
+int __cdecl battle_fight(int veh_id, int dir, int x, int y, int src_mode,
+                         int allow_interceptor, int *odds_out) {
+    typedef int(__cdecl *pending)(int, int, int, int, int, int, int *);
+    return PENDING_BODY(0x00506AF0, pending)(veh_id, dir, x, y, src_mode,
+                                             allow_interceptor, odds_out);
+}
 
 // ?exec@BasePop@@QAEHHP6AHXZ@Z at 0x00602600 - the modal loop both `exec`
 // overloads wrap.

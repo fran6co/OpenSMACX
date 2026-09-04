@@ -30,6 +30,10 @@ class DeletionList {
   DeletionList() { ; }
   ~DeletionList() { ; }
   void clear(int index);
+  // 0x0052DE70 ?add_deletion@@QAEHH@Z. veh_kill (0x005C08C0) enqueues every
+  // multiplayer deletion here before it compacts Vehs; still an original body
+  // (src/unrecovered/0052de70.cpp), so the declaration is all veh.cpp needs.
+  void add_deletion(int veh_id);
 
   // Storage the image proves is here: its own methods reach 0x5A4.
   // Extent only - this class carries no size assertion, and the bound is a floor.

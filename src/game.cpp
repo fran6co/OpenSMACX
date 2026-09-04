@@ -1615,11 +1615,11 @@ static int *const SeaRisingSpritePath = (int *)0x0068B594;
 static int *const SeaRisingSpriteLabel = (int *)0x0068B5A4;
 static int *const SeaFallingSpritePath = (int *)0x0068B5B0;
 static int *const SeaFallingSpriteLabel = (int *)0x0068B5C0;
-static int *const ClimatePopupTitle = (int *)0x00691B0C;
 static int *const ClimateRiseStep = (int *)0x009A67CC;
 static int *const ClimateRiseLimit = (int *)0x009A67D0;
 static int *const ClimateRiseAccum = (int *)0x009A67D4;
 static int *const ClimateSeaLevelDelta = (int *)0x009A67D8;
+
 void __cdecl climactic_changes() {
     int sign;
 

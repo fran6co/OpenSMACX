@@ -29,8 +29,21 @@
 #include "strings.h"
 #include "technology.h"
 #include "terraforming.h"
+#include "deletionlist.h"  // VehDeletionList - the multiplayer deletion queue
+#include "tutwin.h"  // TutWinBaseWindow - every removal's check_base/check_loc
+#include "mapwin.h"  // draw_tile - the free single-tile redraw the removals end on
+#include "netmsg.h"  // NetMsgPopup - the promote family reports through it
+#include "console.h"  // ConsoleGlobal - action_gate re-focuses the Console
+#include "original_seam.h"  // ORIGINAL / original_method - the two BaseWin repaint seams
 
 extern uint32_t LockEnableMask;  // 0x009A64E8, defined in lock.cpp
+
+// Two id slots the vehicle verbs re-point when a vehicle id disappears. Both
+// are defined in other TUs (console.cpp and game.cpp); neither has a header
+// home yet, which is the same HANDOFF shape console.cpp's forwarder block
+// records - the declarations move into console.h / game.h when those passes
+// recover them.
+extern int CursorVehIndex;  // 0x0093928C, defined in console.cpp
 
 
 int VehCurrentCount;  // 0x009A64C8
@@ -5689,3 +5702,1103 @@ void __cdecl stack_kill(int a1) {
         } while (a1 >= 0);
     }
 }
+
+// ===== veh.cpp, P2 wave 2: the vehicle removal / query verbs =====
+
+// ---- the .data slots veh_kill compacts when a vehicle id disappears ----
+// 0x008C6B2C is the vehicle id the map cursor is hovering: MainInterface::
+// on_iface_mouse_move (0x0045D000) writes it and clears the base id beside it
+// before handing the pair to StatusWin::draw_active. 0x008C6B34 sits in the
+// same run; the whole tree reaches it exactly once, here, and re-points it
+// exactly as it re-points the hover slot, so the name records the role.
+int *const StatusHoverVehId = (int *)0x008C6B2C;
+int *const StatusHoverVehIdAlt = (int *)0x008C6B34;
+
+// 0x0093E31C. The queue the multiplayer deletion path parks a dying vehicle on
+// until the next turn boundary, guarded by IsMultiplayerNet.
+DeletionList VehDeletionList;  // 0x0093E31C
+
+// 0x0093E908. A dword * holding the address of one of the vehicle-id slots
+// above: the interface keeps it pointing at whichever selection it wants to
+// follow, and veh_kill walks the dereference so a deletion the pointer names is
+// re-pointed rather than left dangling. It skips three slots by identity -
+// CursorVehIndex, FocusVehId and VehSelectionFollowLimit - which is how the
+// image says "the ones already handled above".
+int **const VehSelectionFollow = (int **)0x0093E908;
+
+// 0x009A64DC. Another vehicle-id slot, and one with its own extra rule: it is
+// also decremented when it EQUALS the deleted id, which the three above do not
+// do. Only veh_kill touches it in the tree.
+int *const VehSelectionFollowLimit = (int *)0x009A64DC;
+
+// 0x00691DC0, the log_say title. The image logs every vehicle removal with the
+// vehicle id, its owner and its prototype as the three substitutions.
+char *const LogKillingVehicle = (char *)0x00691DC0;  // "Killing vehicle (v,who,v2)"
+
+// 0x009B227C, the slot veh_find reports its winning distance into. It sits in
+// the VehLiftX (0x009B2278) / VehDropLiftVehID (0x009B2280) run and is named by
+// what writes it - nothing else in the tree reads or writes it.
+int *const VehFindBestDist = (int *)0x009B227C;
+
+// Two PlayerData fields the image reaches by the array's own 0x20CC stride:
+// 0x0096DA38 is +0x1058 into the record and 0x0096D238 is +0x0858. The
+// diplomacy views in faction.h are bound the same way (DiploVendettaTable and
+// friends) - one address per view, the array spelling cannot share the single
+// pair index these compute first. +0x1058 is a dword counter of the faction's
+// living non-worm units (decremented only when VehPrototypes[proto].plan <= 7)
+// and +0x0858 is the per-prototype byte run beside it.
+uint32_t *const FactionAliveUnitCount = (uint32_t *)0x0096DA38;
+uint8_t *const FactionProtoSeenCount = (uint8_t *)0x0096D238;
+
+// The two BaseWin repaint hooks every vehicle and base removal lands on.
+// Both are still archive bodies - check_base (0x0041A7A0) is BYTE_EXACT there
+// and check_loc (0x0041A7E0) is MISMATCH - and veh.cpp is the first TU to call
+// either. Homing check_base would drag base_compute (0x004EC3B0, itself
+// archive-claimed) and base_yield / base_energy with it, so until BaseWin's
+// pass homes the family these go through the same original-body seam
+// mapwin.cpp uses for MapWin::draw_radius. `radius` is named from check_loc's
+// own body, which computes the hex distance from Bases[focusedBaseID_] and
+// repaints only when it is <= that third argument; veh_kill passes 0.
+typedef void (OriginalObject::*func_base_win_check_base)(int base_id);
+typedef void (OriginalObject::*func_base_win_check_loc)(int x, int y, int radius);
+func_base_win_check_base BaseWinOriginalCheckBase =
+    original_method<func_base_win_check_base>(0x0041A7A0);
+func_base_win_check_loc BaseWinOriginalCheckLoc =
+    original_method<func_base_win_check_loc>(0x0041A7E0);
+
+
+/*
+Purpose: Remove a vehicle from the game entirely.
+// ORIGINAL: 0x005C08C0 ?veh_kill@@YAXH@Z 0x005C08C0-0x005C0AF4
+// size      564 bytes
+// prototype void (__cdecl ?veh_kill@@YAXH@Z)(int vehID)
+// callers   15   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0041A7A0 0x0041A7E0 0x0052DE70 0x005BFFA0 0x006262F0 0x00645930
+// HOMED from src/recovered/units/005c08c0.cpp, 2026-09-04, which carried 14
+// anonymous address bindings; every one is named or modelled above, and the
+// pending_bodies.cpp forwarder of the same name is gone (this definition
+// replaces it). The 0x952858 walk is over Vehs[] itself, not a second array:
+// eax starts at Vehs + 0x30 and advances 0x34, so `word [eax]`/`word [eax+2]`
+// are next_veh_id_stack/prev_veh_id_stack and `byte [eax - 0x1f]`/`word
+// [eax - 0x1c]` are the PREVIOUS record's order and waypoint_x[0]. The
+// g_vehLinks spelling stack_kill keeps is the same memory shifted by 0x30.
+Return Value: n/a
+Status: MISMATCH #15 - the `xor edx,edx` zero-extending faction_id for log_say
+        lands one slot away from the image's; every call, table stride and
+        indirect target matches (0.79 past it).
+*/
+void __cdecl veh_kill(int veh_id) {
+    if (veh_id < 0) {
+        return;
+    }
+
+    if (IsMultiplayerNet != 0) {
+        VehDeletionList.add_deletion(veh_id);
+    }
+
+    log_say(LogKillingVehicle, veh_id, Vehs[veh_id].faction_id,
+            Vehs[veh_id].proto_id);
+
+    const int x = Vehs[veh_id].x;
+    const int home_base_id = Vehs[veh_id].home_base_id;
+    const int y = Vehs[veh_id].y;
+    const int proto_id = Vehs[veh_id].proto_id;
+    const int faction_id = Vehs[veh_id].faction_id;
+
+    if (VehPrototypes[proto_id].plan <= 7) {
+        --FactionAliveUnitCount[faction_id * 2099];
+    }
+    --FactionProtoSeenCount[faction_id * 2099 + proto_id];
+
+    veh_lift(veh_id);
+
+    if (veh_id < VehCurrentCount - 1) {
+        memcpy(&Vehs[veh_id], &Vehs[veh_id + 1],
+               (VehCurrentCount - veh_id - 1) * sizeof(Veh));
+    }
+    if (veh_id < 0x800) {
+        --VehCurrentCount;
+    }
+    if (VehCurrentCount > 0) {
+        int count = VehCurrentCount;
+        Veh *rec = &Vehs[0];
+        do {
+            if (veh_id < rec->prev_veh_id_stack) {
+                --rec->prev_veh_id_stack;
+            }
+            if (veh_id < rec->next_veh_id_stack) {
+                --rec->next_veh_id_stack;
+            }
+            if (rec->order == 1) {
+                const short transport = rec->waypoint_x[0];
+                if (transport == veh_id) {
+                    rec->order = 0;
+                } else if (veh_id < transport) {
+                    rec->waypoint_x[0] = transport - 1;
+                }
+            }
+            ++rec;
+        } while (--count != 0);
+    }
+
+    if (CursorVehIndex == veh_id) {
+        CursorVehIndex = -1;
+    } else if (veh_id < CursorVehIndex) {
+        --CursorVehIndex;
+    }
+    if (FocusVehId == veh_id) {
+        FocusVehId = -1;
+    } else if (veh_id < FocusVehId) {
+        --FocusVehId;
+    }
+    if (*StatusHoverVehId == veh_id) {
+        *StatusHoverVehId = -1;
+    } else if (veh_id < *StatusHoverVehId) {
+        --*StatusHoverVehId;
+    }
+    if (*StatusHoverVehIdAlt == veh_id) {
+        *StatusHoverVehIdAlt = -1;
+    } else if (veh_id < *StatusHoverVehIdAlt) {
+        --*StatusHoverVehIdAlt;
+    }
+    if (*VehSelectionFollowLimit != 0 && veh_id <= *VehSelectionFollowLimit) {
+        --*VehSelectionFollowLimit;
+    }
+    if (IsMultiplayerNet != 0) {
+        int *slot = *VehSelectionFollow;
+        if (slot != 0 && slot != &CursorVehIndex && slot != VehSelectionFollowLimit &&
+            slot != &FocusVehId) {
+            if (veh_id <= *slot) {
+                --*slot;
+            }
+        }
+    }
+
+    (ORIGINAL(&TutWinBaseWindow)->*BaseWinOriginalCheckLoc)(x, y, 0);
+    (ORIGINAL(&TutWinBaseWindow)->*BaseWinOriginalCheckBase)(home_base_id);
+}
+
+/*
+Purpose: Kill a vehicle, or strip it down to a transport's cargo first.
+// ORIGINAL: 0x005C0B00 ?kill@@YAXH@Z 0x005C0B00-0x005C0CB0
+// size      432 bytes
+// prototype void (__cdecl ?kill@@YAXH@Z)(int vehID)
+// callers   25   call targets   9
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0041A7A0 0x0046AEF0 0x0046AF40 0x005B8EE0 0x005B9510 0x005B9580 0x005BF1F0 0x005BFE90 0x005C08C0
+// HOMED from src/recovered/units/005c0b00.cpp, 2026-09-04. Its `g_tbl1` /
+// `g_tbl2` / `g_tbl3` scaffolding is Vehs[] / VehPrototypes[] / Weapon[]:
+// `base2[0]` is VehPrototypes[p].weapon_id (0x9AB88D = the array front +
+// 0x25) and `base2[3]` is VehPrototypes[p].carry_capacity (+0x28).
+Return Value: n/a
+Status: HOMED, unmeasured tier.
+*/
+void __cdecl kill(int veh_id) {
+    const int x = Vehs[veh_id].x;
+    const int y = Vehs[veh_id].y;
+    const int proto_id = Vehs[veh_id].proto_id;
+    const int faction_id = Vehs[veh_id].faction_id;
+    const int home_base_id = Vehs[veh_id].home_base_id;
+
+    const int worm_abil = has_abil(proto_id, 2);
+
+    const int carry_capacity = VehPrototypes[proto_id].carry_capacity;
+    int passengers;
+    if (carry_capacity == 0 || proto_id > 0x3f ||
+        (Weapon[VehPrototypes[proto_id].weapon_id].offense_rating >= 0 &&
+         proto_id != 0xf)) {
+        passengers = carry_capacity;
+    } else {
+        passengers = Vehs[veh_id].morale + 1;
+    }
+
+    if (passengers == 0) {
+        veh_kill(veh_id);
+    } else {
+        if (y >= 0 && y < MapLatitudeBounds && x >= 0 && x < MapLongitudeBounds) {
+            // `[+0]` read as a byte and masked 0xE0 is `climate`'s altitude
+            // bits - see map.h's note on the 0x2C stride. 0x60 and above is
+            // ocean, and a vehicle that cannot carry passengers drowns there
+            // rather than sitting in the stack.
+            if ((map_loc(x, y)->climate & 0xe0) >= 0x60) {
+                veh_kill(veh_id);
+                (ORIGINAL(&TutWinBaseWindow)->*BaseWinOriginalCheckBase)(
+                    home_base_id);
+                return;
+            }
+        } else if (x == -2) {
+            stack_kill(veh_id);
+            return;
+        }
+
+        stack_veh(veh_id, 2);
+        stack_kill(veh_id);
+    }
+
+    (ORIGINAL(&TutWinBaseWindow)->*BaseWinOriginalCheckBase)(home_base_id);
+
+    if (VehBattleUnkTgl[0] == 0 && y >= 0 && y < MapLatitudeBounds && x >= 0 &&
+        x < MapLongitudeBounds) {
+        if (faction_id == LocalFaction) {
+            const int at = veh_at(x, y);
+            const int checked = stack_check(at, 1, faction_id, -1, -1);
+            if (checked == 0 || worm_abil != 0) {
+                draw_radius(x, y, 2, 2);
+                return;
+            }
+        }
+        draw_tile(x, y, 2);
+    }
+}
+
+/*
+Purpose: Report the vehicle the map cursor is nearest to.
+// ORIGINAL: 0x005C0CB0 ?veh_find@@YAHHHHH@Z 0x005C0CB0-0x005C0DA9
+// size      249 bytes
+// prototype int (__cdecl ?veh_find@@YAHHHHH@Z)(int xCoord, int yCoord, int factionID, int skipVehID)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+// HOMED from src/unrecovered/005c0cb0.cpp, 2026-09-04. Its mangled name
+// decodes as return int + FOUR int parameters - the return type is the first H
+// - and the body reads exactly four stack slots, so the archive's
+// four-argument body was right and its five-argument prototype line was not.
+// TRIED: `extern "C" int abs(int);` + a local `#pragma function(abs)` (the
+//        archive's device for a real `call _abs`). stdafx.h's pragma line
+//        already carries abs, so the plain `abs()` here compiles to the same
+//        call; the extra local pragma is dead weight and is not carried.
+// TRIED: the archive's own spelling - `best_idx` initialised in a declaration
+//        and `or eax,0FFFFFFFFh` vs `mov eax,-1` left as the residual
+//        MISMATCH; named `int best_idx = -1;` here and the divergence is the
+//        same one instruction.
+Return Value: the nearest vehicle's id, -1 when nothing qualified.
+Status: MISMATCH.
+*/
+int __cdecl veh_find(int x, int y, int faction_id, int skip_veh_id) {
+    int best_dist = 9999;
+    *VehFindBestDist = 9999;
+    int best_idx = -1;
+    int i = 0;
+    if (VehCurrentCount > 0) {
+        do {
+            if ((faction_id < 0 || Vehs[i].faction_id == (unsigned)faction_id) &&
+                i != skip_veh_id) {
+                int d1 = abs(x - Vehs[i].x);
+                if (!(MapIsFlat & 1) && d1 > (int)MapLongitude) {
+                    d1 = MapLongitudeBounds - d1;
+                }
+                const int d2 = abs(y - Vehs[i].y);
+                const int ad1 = abs(d1);
+                const int ad2 = abs(d2);
+                const int mx = ad1 <= ad2 ? ad2 : ad1;
+                const int mn = ad2 <= ad1 ? ad2 : ad1;
+                const int dist = mx - ((ad1 + ad2 >> 1) - mn + 1 >> 1);
+                if (dist <= best_dist) {
+                    best_idx = i;
+                    best_dist = dist;
+                }
+            }
+            ++i;
+        } while (i < VehCurrentCount);
+        if (best_idx >= 0) {
+            *VehFindBestDist = best_dist;
+        }
+    }
+    return best_idx;
+}
+
+/*
+Purpose: Can this vehicle act this turn?
+// ORIGINAL: 0x005C1B70 ?veh_ready@@YAHH@Z 0x005C1B70-0x005C1C38
+// size      200 bytes
+// prototype int (__cdecl ?veh_ready@@YAHH@Z)(int vehID)
+// callers   14   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005C1540 0x005C1C40
+// HOMED from src/unrecovered/005c1b70.cpp, 2026-09-04, and its
+// pending_bodies.cpp forwarder removed - this definition replaces it. The
+// archive's `extern char g_952828_arr[]` scaffolding is Vehs[].
+// TRIED: separate `if (cond) return 0;` per check - duplicated the epilogue
+//        (245 vs 200 bytes); the nested && chain sharing one `return 0` is
+//        what the image has.
+Return Value: 1 when the vehicle has moves left and is not jailed.
+Status: MISMATCH #9 - the veh_id * 0x34 multiply lowers through a different
+        lea/shl chain than the image's.
+*/
+int __cdecl veh_ready(int veh_id) {
+    if (veh_id >= 0 && Vehs[veh_id].y >= 0 && Vehs[veh_id].y < MapLatitudeBounds &&
+        Vehs[veh_id].x >= 0 && Vehs[veh_id].x < MapLongitudeBounds &&
+        Vehs[veh_id].faction_id == (uint8_t)LocalFaction &&
+        ((Vehs[veh_id].flags & 0x40) == 0 || (Vehs[veh_id].flags & 0x400) == 0) &&
+        veh_jail(veh_id) == 0 &&
+        ((Vehs[veh_id].state & 0x4200) != 0 || Vehs[veh_id].order < 1 ||
+         Vehs[veh_id].order > 3)) {
+        const int diff = speed(veh_id, 0) - Vehs[veh_id].moves_expended;
+        if (diff >= 0 && (diff > 0x3e7 || diff != 0)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/*
+Purpose: May the player select this vehicle?
+// ORIGINAL: 0x005C1A20 ?veh_selectable@@YAHH@Z 0x005C1A20-0x005C1AAA
+// size      138 bytes
+// prototype int (__cdecl ?veh_selectable@@YAHH@Z)(int vehID)
+// callers   11   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005C1C40
+// HOMED from src/unrecovered/005c1a20.cpp, 2026-09-04.
+// TRIED: nesting the veh_id < 0 guard as `if (veh_id >= 0) { ... }` with a
+//        single fall-through return - same jl polarity either way, /O2
+//        canonicalises both to the same CFG.
+Return Value: 1 when the vehicle is on the map, ours, and not jailed.
+Status: MISMATCH.
+*/
+int __cdecl veh_selectable(int veh_id) {
+    if (veh_id < 0) {
+        return 0;
+    }
+    if (Vehs[veh_id].y < 0 || Vehs[veh_id].y >= MapLatitudeBounds ||
+        Vehs[veh_id].x < 0 || Vehs[veh_id].x >= MapLongitudeBounds) {
+        return 0;
+    }
+    if (Vehs[veh_id].faction_id != (uint8_t)LocalFaction) {
+        return 0;
+    }
+    if ((Vehs[veh_id].flags & 0x40) != 0 && (Vehs[veh_id].flags & 0x400) != 0) {
+        return 0;
+    }
+    return veh_jail(veh_id) == 0;
+}
+
+/*
+Purpose: Has this vehicle any moves left?
+// ORIGINAL: 0x005C1AB0 ?veh_unmoved@@YAHH@Z 0x005C1AB0-0x005C1B6F
+// size      191 bytes
+// prototype int (__cdecl ?veh_unmoved@@YAHH@Z)(int vehID)
+// callers   1   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005C1540 0x005C1C40
+// HOMED from src/unrecovered/005c1ab0.cpp, 2026-09-04.
+Return Value: 1 when the vehicle cannot move again this turn.
+Status: MISMATCH.
+*/
+int __cdecl veh_unmoved(int veh_id) {
+    if (veh_id < 0 || Vehs[veh_id].y < 0 || Vehs[veh_id].y >= MapLatitudeBounds ||
+        Vehs[veh_id].x < 0 || Vehs[veh_id].x >= MapLongitudeBounds ||
+        Vehs[veh_id].faction_id != (uint8_t)LocalFaction ||
+        ((Vehs[veh_id].flags & 0x40) != 0 && (Vehs[veh_id].flags & 0x400) != 0) ||
+        veh_jail(veh_id) != 0) {
+        return 0;
+    }
+    if ((Vehs[veh_id].state & 0x4000000) == 0 && Vehs[veh_id].order >= 4 &&
+        Vehs[veh_id].order < 0x18) {
+        return 1;
+    }
+    const int diff = speed(veh_id, 0) - Vehs[veh_id].moves_expended;
+    if (diff < 0) {
+        return 0;
+    }
+    if (diff > 0x3e7 || diff != 0) {
+        return 1;
+    }
+    return 0;
+}
+
+// ===== veh.cpp, P2 wave 2: the prototype-design and battle families =====
+
+// One byte of RulesChassis, at +0x4D. Nonzero suppresses promotion of every
+// unit on that chassis outright - promote (0x005062B0) returns before touching
+// morale when it is set. RulesChassis models no member at 0x4D: its BOOL run
+// covers 0x48..0x5F and the sprite offsets start at 0x66, so the field list in
+// veh.h is missing something between the genders and the plurals. That is a
+// LAYOUT finding for whichever pass recovers Chassis, and this binding is the
+// record of it.
+uint8_t *const ChassisNoPromoteFlag = (uint8_t *)0x0094A37D;
+
+// The faction prototype-design list. 0x0094B558, eight factions x 64 entries x
+// 8 bytes - one entry is VehPrototype's ability_flags dword followed by its
+// chassis/weapon/armor/reactor bytes, which is exactly the 8 bytes
+// 0x0057DF30 copies in. clear_bunglist (0x0057DF00) fills a faction's 64 with
+// -1 then 0xFF, which is why the comparison bytes sit at +4..+7 and the dword
+// at +0.
+struct ProtoBung {
+    uint32_t ability_flags;
+    uint8_t chassis_id;
+    uint8_t weapon_id;
+    uint8_t armor_id;
+    uint8_t reactor_id;
+};
+static ProtoBung *const BungList = (ProtoBung *)0x0094B558;
+
+// 0x0096EA6C - PlayersData[faction] + 0x208C, the write cursor into that
+// faction's 64-entry run: 0x0057DF30 stores `(v + 1) % 64` back into it, and
+// 0x200 is 64 * 8.
+uint32_t *const BungListCursor = (uint32_t *)0x0096EA6C;
+
+// 0x009AB888 - the ability_flags dword each 0x34 VehPrototype record opens
+// with at +0x20, bound as a byte view because 0x0057DF30 walks it by pointer.
+uint8_t *const ProtoAbilityFlags = (uint8_t *)0x009AB888;
+
+// The battle-resolution messages. Each is the (label, icon) pair a
+// NetMsgPopup->pop takes: the label is the phrase id key, the icon the small
+// portrait drawn beside the line.
+char *const VehLabelMORALE = (char *)0x0068A0A8;      // "MORALE"
+char *const VehIconBATWON_SM_PCX = (char *)0x0068A098;   // "batwon_sm.pcx"
+char *const VehLabelMORALE2 = (char *)0x0068A0C0;     // "MORALE2"
+char *const VehIconBATWON2_SM_PCX = (char *)0x0068A0B0;  // "batwon_sm.pcx"
+
+int __cdecl battle_kill(int cur, int *attacker_out, int *defender_out,
+                        int *odds_out, int killer_id, int credit_faction);
+
+/*
+Purpose: Hide a whole stack from the faction that spotted it.
+// ORIGINAL: 0x005B5A70 ?unspot_stack@@YAXH@Z 0x005B5A70-0x005B5AC5 BYTE_EXACT
+// size      85 bytes
+// prototype void (__cdecl ?unspot_stack@@YAXH@Z)(int vehID)
+// callers   2   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// HOMED from src/recovered/005b5a70.cpp, 2026-09-04. The archive's
+// `g_0095284f[a1 * 0x34] = 0` is Vehs[id].visibility (+0x27) and its two short
+// walks are Vehs[].prev_veh_id_stack (+0x32) and Vehs[].next_veh_id_stack
+// (+0x30) - the same climb-and-descend spot_stack does.
+Return Value: n/a
+Status: BYTE_EXACT.
+*/
+void __cdecl unspot_stack(int veh_id) {
+    if (veh_id >= 0) {
+        short next = Vehs[veh_id].prev_veh_id_stack;
+        while (next >= 0) {
+            veh_id = next;
+            next = Vehs[veh_id].prev_veh_id_stack;
+        }
+        for (; veh_id >= 0; veh_id = Vehs[veh_id].next_veh_id_stack) {
+            Vehs[veh_id].visibility = 0;
+        }
+    }
+}
+
+/*
+Purpose: Add the special sites visible from a tile's eight neighbours.
+// ORIGINAL: 0x00579FF0 sub_579ff0 0x00579FF0-0x0057A042 BYTE_EXACT
+// size      82 bytes
+// prototype void (__cdecl sub_579ff0)(int xCoord, int yCoord)
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00579B70
+// symbol    ?veh_site_scan@@YAXHH@Z
+//           The image's catalogue name is an uninformative `sub_`; this tree
+//           names what the body does. Renames update this fact, not the bytes.
+// HOMED from src/recovered/00579ff0.cpp, 2026-09-04. The archive's raw
+// `base + 0xc + offset * 4` is the map tile's bit_visible run: +0x0C is
+// Map::bit2, so +0x0C + i * 4 for i in 1..7 is bit_visible[0..6], and 0x2000
+// is the special-site bit. `11 ints` is the 0x2C tile stride spelled as a
+// multiply.
+Return Value: n/a
+Status: BYTE_EXACT.
+*/
+void __cdecl veh_site_scan(int x, int y) {
+    const int half = x >> 1;
+    for (int i = 1; i < 8; i++) {
+        const Map *tile = map_loc(x, y);
+        if (tile->bit_visible[i - 1] & 0x2000) {
+            add_site(i, 0, 2, x, y);
+        }
+    }
+}
+int __cdecl morale_veh_call(int veh_id, int check_drone_riot, int faction_id);
+/*
+Purpose: Bump a vehicle up a morale step, and say so.
+// ORIGINAL: 0x005062B0 ?promote@@YAXH@Z 0x005062B0-0x0050648B
+// size      475 bytes
+// prototype void (__cdecl ?promote@@YAXH@Z)(int vehID)
+// callers   1   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047A890 0x005C0E40 0x00625E50 0x00625EC0 0x0064601D
+// HOMED from src/recovered/units/005062b0.cpp, 2026-09-04. Its `g_tbl1` /
+// `g_tbl2` scaffolding is Vehs[] / VehPrototypes[] and its `g_9ab88x` byte
+// views are VehPrototype members at +0x24 (chassis_id), +0x25 (weapon_id),
+// +0x26 (armor_id), +0x2A (plan).
+Return Value: n/a
+Status: MISMATCH.
+*/
+void __cdecl promote(int veh_id) {
+    const int proto_id = Vehs[veh_id].proto_id;
+
+    if (*reinterpret_cast<const uint8_t *>(
+            ChassisNoPromoteFlag + VehPrototypes[proto_id].chassis_id * 0x90) != 0) {
+        return;
+    }
+
+    if (!(VehPrototypes[proto_id].plan < 8 ||
+          Armor[VehPrototypes[proto_id].armor_id].defense_rating > 1)) {
+        return;
+    }
+    if (morale_veh(veh_id, 1, 0) >= 6) {
+        return;
+    }
+    if (Vehs[veh_id].morale >= 6) {
+        return;
+    }
+
+    if (morale_veh(veh_id, 1, 0) > 2) {
+        if (rand() % 2 != 0) {
+            return;
+        }
+    }
+
+    const int morale_before = morale_veh(veh_id, 1, 0);
+    ++Vehs[veh_id].morale;
+    if (Vehs[veh_id].faction_id != (uint8_t)LocalFaction) {
+        return;
+    }
+    if (!((1 << Vehs[veh_id].faction_id) & LockEnableMask)) {
+        return;
+    }
+    if (morale_before == morale_veh(veh_id, 1, 0)) {
+        return;
+    }
+
+    parse_says(1, VehPrototypes[proto_id].veh_name, -1, -1);
+
+    if (proto_id < 0x40) {
+        if (Weapon[VehPrototypes[proto_id].weapon_id].offense_rating < 0) {
+            parse_say(0, (int)Morale[morale_veh(veh_id, 1, 0)].name, -1, -1);
+            NetMsgPopup->pop(VehLabelMORALE2, 0xffffec78, 0,
+                             VehIconBATWON2_SM_PCX);
+            return;
+        }
+    }
+
+    parse_say(0, (int)Morale[morale_veh(veh_id, 1, 0)].name, -1, -1);
+    NetMsgPopup->pop(VehLabelMORALE, 0xffffec78, 0, VehIconBATWON_SM_PCX);
+}
+
+/*
+Purpose: Resolve a stack's worth of chaff deaths after a battle.
+// ORIGINAL: 0x005061B0 ?battle_kill_chaff@@YAXHPAHPAHPAHHH@Z 0x005061B0-0x005062A2
+// size      242 bytes
+// prototype void (__cdecl ?battle_kill_chaff@@YAXHPAHPAHPAHHH@Z)(int vehID, int*, int*, int*, int, int)
+// callers   ?   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00505D80
+// symbol    ?battle_kill_chaff@@YAXHPAH00HH@Z
+//           The image spells its three int * parameters out; VC6 12.00.8168
+//           back-references the repeats to PAH00 for the identical source.
+// HOMED from src/unrecovered/005061b0.cpp, 2026-09-04. Its `g_9528xx` short
+// views are Vehs[] members: +0x32 prev_veh_id_stack, +0x30 next_veh_id_stack,
+// +0x0A proto_id, +0x0E faction_id, +0x10 dmg_incurred. Its `g_9ab89x` byte
+// views are VehPrototype members at +0x2A (plan) and +0x27 (reactor_id).
+// TRIED: the direct transcription, landed at first compiling candidate given
+//        batch size - mnemonic similarity 0.93, first divergence a `movsx` the
+//        rebuilt body splits into two `mov`s around the record base (#25).
+Return Value: n/a
+Status: MISMATCH.
+*/
+void __cdecl battle_kill_chaff(int veh_id, int *attacker_out,
+                               int *defender_out, int *odds_out, int killer_id,
+                               int credit_faction) {
+    if (veh_id < 0) {
+        return;
+    }
+    int idx = veh_id;
+    short next = Vehs[idx].prev_veh_id_stack;
+    while (next >= 0) {
+        idx = next;
+        next = Vehs[idx].prev_veh_id_stack;
+    }
+    if (idx < 0) {
+        return;
+    }
+    int cur = idx;
+    for (;;) {
+        const short proto_id = Vehs[cur].proto_id;
+        short next_id = Vehs[cur].next_veh_id_stack;
+        int pct;
+        if (VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT) {
+            pct = 1;
+        } else {
+            int clamped = VehPrototypes[proto_id].reactor_id;
+            if (clamped < 1) {
+                clamped = 1;
+            } else if (clamped > 0x64) {
+                clamped = 0x64;
+            }
+            pct = clamped * 10;
+        }
+        const int left = pct - Vehs[cur].dmg_incurred;
+        if (left < 0 || (left <= 0x270f && left <= 0) ||
+            Vehs[cur].faction_id == 0) {
+            if (battle_kill(cur, attacker_out, defender_out, odds_out,
+                            killer_id, credit_faction) != 0) {
+                if (killer_id > cur) {
+                    --killer_id;
+                }
+                if (next_id > cur) {
+                    --next_id;
+                }
+            }
+        }
+        cur = next_id;
+        if (next_id < 0) {
+            break;
+        }
+    }
+}
+
+/*
+Purpose: Was this exact prototype design already recorded for this faction?
+// ORIGINAL: 0x0057DFC0 ?is_bunged@@YA_NHHHHHH@Z 0x0057DFC0-0x0057E037
+// size      119 bytes
+// prototype bool (__cdecl ?is_bunged@@YA_NHHHHHH@Z)(int factionID, int chassisID, int weaponID, int armorID, int abilityFlags, int reactorID)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// HOMED from src/unrecovered/0057dfc0.cpp, 2026-09-04.
+Return Value: 1 when the faction's design run already holds the tuple.
+Status: MISMATCH.
+*/
+bool __cdecl is_bunged(int faction_id, int chassis_id, int weapon_id,
+                       int armor_id, int ability_flags, int reactor_id) {
+    if ((1 << (faction_id & 0x1f)) & (uint8_t)LockEnableMask) {
+        const ProtoBung *entry = BungList + faction_id * 0x40;
+        for (int i = 0; i < 0x40; ++i) {
+            if (entry->chassis_id == chassis_id && entry->weapon_id == weapon_id &&
+                entry->armor_id == armor_id &&
+                entry->ability_flags == (uint32_t)ability_flags &&
+                entry->reactor_id == reactor_id) {
+                return true;
+            }
+            ++entry;
+        }
+    }
+    return false;
+}
+
+/*
+Purpose: Empty one faction's prototype-design run.
+// ORIGINAL: 0x0057DF00 ?clear_bunglist@@YAXH@Z 0x0057DF00-0x0057DF2F BYTE_EXACT
+// size      47 bytes
+// prototype void (__cdecl ?clear_bunglist@@YAXH@Z)(int factionID)
+// callers   3   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// HOMED from src/recovered/0057df00.cpp, 2026-09-04 - the first of this
+// file's archive-only claims to move into the build. The scaffold's
+// `entry[-5]` / `entry[-1]` byte arithmetic is a ProtoBung record walked
+// one byte too far in, and the -1 / 0xFF pair is ability_flags = -1 with
+// the four component bytes above it.
+Return Value: n/a
+Status: MISMATCH - the 8-byte stride does not reproduce from a typed
+        ProtoBung walk; the archive's byte-pointer form was measured exact.
+*/
+void __cdecl clear_bunglist(int faction_id) {
+    uint8_t *entry = reinterpret_cast<uint8_t *>(BungList) + faction_id * 0x200;
+    int count = 0x40;
+    do {
+        *reinterpret_cast<int *>(entry - 5) = -1;
+        entry[-1] = 0xff;
+        entry[0] = 0xff;
+        entry[1] = 0xff;
+        entry[2] = 0xff;
+        entry += 8;
+    } while (--count);
+}
+
+/*
+Purpose: Record a prototype design in the faction's run.
+// ORIGINAL: 0x0057DF30 sub_57df30 0x0057DF30-0x0057DFB2
+// size      130 bytes
+// prototype void (__cdecl sub_57df30)(int factionID, int protoID)
+// symbol    ?proto_bung_put@@YAXHH@Z
+//           The image's catalogue name is an uninformative `sub_`; this tree
+//           names what the body does. Renames update this fact, not the bytes.
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// HOMED from src/unrecovered/0057df30.cpp, 2026-09-04.
+// TRIED: a separate pointer variable for the RMW counter slot ('mov' then a
+//        stray 'lea' to materialise the address) - indexing the array
+//        directly drops the divergence from #10 to #22. MISMATCH remains open.
+Return Value: n/a
+Status: MISMATCH.
+*/
+void __cdecl proto_bung_put(int faction_id, int proto_id) {
+    const int slot = *reinterpret_cast<int *>(
+        reinterpret_cast<uint8_t *>(BungListCursor) + faction_id * 0x20CC);
+    *reinterpret_cast<int *>(reinterpret_cast<uint8_t *>(BungListCursor) +
+                             faction_id * 0x20CC) = (slot + 1) % 64;
+
+    const uint8_t *src = ProtoAbilityFlags + proto_id * 0x34;
+    uint8_t *dst = reinterpret_cast<uint8_t *>(BungList) +
+                   (faction_id * 0x40 + slot) * 8;
+
+    *reinterpret_cast<int32_t *>(dst) = *reinterpret_cast<const int32_t *>(src);
+    dst[4] = src[4];
+    dst[5] = src[5];
+    dst[6] = src[6];
+    dst[7] = src[7];
+}
+
+/*
+Purpose: Can this vehicle leave the stack on its own?
+// ORIGINAL: 0x005B61A0 sub_5b61a0 0x005B61A0-0x005B6259
+// size      185 bytes
+// prototype int (__cdecl sub_5B61A0)(int vehID)
+// symbol    ?veh_can_leave_stack@@YAHH@Z
+//           The image's catalogue name is an uninformative `sub_`; this tree
+//           names what the body does. Renames update this fact, not the bytes.
+// callers   0   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005BF1F0
+// HOMED from src/unrecovered/005b61a0.cpp, 2026-09-04.
+Return Value: 0 no, 1 yes by ability or order, 2 yes - sea/peach tile.
+Status: MISMATCH.
+*/
+int __cdecl veh_can_leave_stack(int veh_id) {
+    if (has_abil(Vehs[veh_id].proto_id, 0x40) != 0) {
+        return 1;
+    }
+    if (has_abil(Vehs[veh_id].proto_id, 4) != 0) {
+        return 1;
+    }
+    if ((Vehs[veh_id].flags & 0x400) != 0) {
+        return 1;
+    }
+    const Map *tile = map_loc(Vehs[veh_id].x, Vehs[veh_id].y);
+    if (tile->visibility & 0x20) {
+        if ((tile->climate & 0xE0) >= 0x40 && Vehs[veh_id].proto_id != 0x13) {
+            return 2;
+        }
+    }
+    return 0;
+}
+
+// ===== veh.cpp, P2 wave 2: the order verbs =====
+
+// 0x00687FDC, the NetMsg label action_feature pops: the image's .data holds
+// the phrase key the message table looks up.
+char *const VehLabelFEATURE = (char *)0x00687FDC;  // "FEATURE"
+
+/*
+Purpose: Open a popup with the climate title and a body, no buttons.
+// ORIGINAL: 0x0050B970 ?popp@@YAHPBDPBDP6AHXZ@Z 0x0050B970-0x0050B991 BYTE_EXACT
+// size      33 bytes
+// prototype int (__cdecl ?popp@@YAHPBDPBDP6AHXZ@Z)(const char *label, const char *body, int (__cdecl *callback)())
+// callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0048C0A0
+// HOMED from src/recovered/0050b970.cpp, 2026-09-04 - its archive-only
+// BYTE_EXACT claim re-earned in the TU. A third popp overload beside temp.h's
+// five-argument one; C++ overloading gives the pair the two symbols the image
+// carries. `ClimatePopupTitle` is the title the image reads at 0x00691B0C and
+// lives in game.h for exactly that reason.
+// symbol    ?popp@@YAHPBD0P6AHXZ@Z
+//           The image spells its two const char * parameters out; VC6
+//           12.00.8168 back-references the repeat to PBD0 for the identical
+//           source. The archive's `char *` return was also wrong - the first H
+//           in YAHPBD... is the return type, so this returns int.
+Return Value: whatever the five-argument popp returns.
+Status: BYTE_EXACT.
+*/
+int __cdecl popp(const char *label, const char *body, int(__cdecl *callback)()) {
+    return popp((char *)*ClimatePopupTitle, label, 0, body, callback);
+}
+
+/*
+Purpose: Pop a battle message with its portrait.
+// ORIGINAL: 0x0050B9C0 sub_50b9c0 0x0050B9C0-0x0050B9DE BYTE_EXACT
+// size      30 bytes
+// prototype void (__cdecl sub_50b9c0)(char *label, char *icon)
+// callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047A890
+// symbol    ?veh_battle_msg@@YAXPAD0@Z
+//           The image's catalogue name is an uninformative `sub_`; this tree
+//           names what the body does. Renames update this fact, not the bytes.
+// HOMED from src/recovered/0050b9c0.cpp, 2026-09-04. Its `g_00805338` is
+// netmsg.h's NetMsgPopup; 5000 is the message lifetime in ticks.
+Return Value: n/a
+Status: BYTE_EXACT.
+*/
+void __cdecl veh_battle_msg(char *label, char *icon) {
+    NetMsgPopup->pop(label, 5000, 0, icon);
+}
+
+// The eight per-direction map deltas battle_fight adds to a vehicle's x and y
+// before wrapping the result into the map. Which pair applies is chosen by the
+// caller's triad/mode flag - the two Alt runs are its alternate - and the x
+// result is wrapped by MapLongitudeBounds exactly as an x coordinate is, which
+// is what makes them coordinate deltas rather than costs. All four are
+// file-backed .data, not .bss: the eight ints of each are the compass deltas
+// (X runs +1,+2,+1,0,-1,-2,-1,0; the Alt runs are the same wheel turned one
+// step), which is why they are initialised here rather than left to a loader.
+int VehMoveDeltaX[8] = {1, 2, 1, 0, -1, -2, -1, 0};        // 0x0066EF50
+int VehMoveDeltaY[8] = {-1, 0, 1, 2, 1, 0, -1, -2};        // 0x0066EF74
+int VehMoveDeltaXAlt[8] = {0, 1, 2, 1, 0, -1, -2, -1};     // 0x0066EFBC
+int VehMoveDeltaYAlt[8] = {0, -1, 0, 1, 2, 1, 0, -1};      // 0x0066F440
+
+/*
+Purpose: Report the feature at a site, multiplayer only.
+// ORIGINAL: 0x004CD060 ?action_feature@@YAXXZ 0x004CD060-0x004CD082 BYTE_EXACT
+// size      34 bytes
+// prototype void (__cdecl ?action_feature@@YAXXZ)()
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0047A890
+// HOMED from src/recovered/004cd060.cpp, 2026-09-04 - its archive-only
+// BYTE_EXACT claim re-earned in the TU that owns the rest of the action
+// family. The scaffold's `g_0093f660` is IsMultiplayerNet and
+// `g_00805338` is netmsg.h's NetMsgPopup.
+Return Value: n/a
+Status: BYTE_EXACT.
+*/
+void __cdecl action_feature() {
+    if (IsMultiplayerNet) {
+        NetMsgPopup->pop(VehLabelFEATURE, 0x1388, 0, 0);
+    }
+}
+
+/*
+Purpose: Clear a vehicle's move state at the end of its stack walk.
+// ORIGINAL: 0x005B5E10 sub_5b5e10 0x005B5E10-0x005B5EA0 BYTE_EXACT
+// size      144 bytes
+// prototype void (__cdecl sub_5b5e10)(int vehID)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// symbol    ?veh_move_end@@YAXH@Z
+//           The image's catalogue name is an uninformative `sub_`; this tree
+//           names what the body does. Renames update this fact, not the bytes.
+// HOMED from src/unrecovered/005b5e10.cpp, 2026-09-04. Its `g_95282c` byte
+// view is Vehs[]: +0x04 state, +0x0D nothing in the tree's Veh (see the note
+// below), +0x0E faction_id, +0x0F year_end_lurking, +0x11 order.
+// BUG IN THE ORIGINAL: the two bytes the body tests against each other,
+// 0x95282c + veh_id * 0x34 + 0xD and + 0xE, are `unk_1` and `faction_id` in
+// the tree's Veh - the low half of `flags` and the state dword's high byte, so
+// `+ 0xD` is one byte *below* the field the comparison reads. The arithmetic
+// is reproduced exactly as shipped; a reader who "fixes" the offset changes
+// the program.
+Return Value: n/a
+Status: BYTE_EXACT.
+*/
+void __cdecl veh_move_end(int veh_id) {
+    const int offset = veh_id * 0x34;
+    unsigned int *flags = reinterpret_cast<unsigned int *>(
+        reinterpret_cast<uint8_t *>(Vehs) + offset + 4);
+    uint8_t *byte_d = reinterpret_cast<uint8_t *>(Vehs) + offset + 0xD;
+    uint8_t *byte_e = reinterpret_cast<uint8_t *>(Vehs) + offset + 0xE;
+    uint8_t *byte_f = reinterpret_cast<uint8_t *>(Vehs) + offset + 0xF;
+    if ((*flags & 0x2000200) == 0x2000200 && *byte_f < *byte_e) {
+        *flags &= 0xfdfffdff;
+    }
+    if ((*flags & 0x1000200) == 0x1000200) {
+        *flags &= 0xfefffdff;
+    }
+    *flags &= 0xffffbfff;
+    if (*byte_d == 0x18) {
+        *byte_d = 0;
+    }
+}
+
+/*
+Purpose: Kill every vehicle in a stack after a battle.
+// ORIGINAL: 0x00506130 ?battle_kill_stack@@YAXHPAHPAHPAHHH@Z 0x00506130-0x005061AE BYTE_EXACT
+// size      126 bytes
+// prototype void (__cdecl ?battle_kill_stack@@YAXHPAHPAHPAHHH@Z)(int vehID1, int*, int*, int*, int vehID2, int)
+// callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00505D80
+// symbol    ?battle_kill_stack@@YAXHPAH00HH@Z
+//           The image spells its three int * parameters out; VC6 12.00.8168
+//           back-references the repeats to PAH00 for the identical source.
+// `credit_faction` is named from battle_kill's own body: at 0x00505F74 it is
+// tested >= 0 and then scaled by the 0x20CC PlayerData stride to increment a
+// per-faction counter at 0x0096EA64 - the faction credited with the kill.
+// HOMED from src/unrecovered/00506130.cpp, 2026-09-04. Its `g_0095285a` /
+// `g_00952858` short views are Vehs[].prev_veh_id_stack (+0x32) and
+// Vehs[].next_veh_id_stack (+0x30).
+Return Value: n/a
+Status: BYTE_EXACT.
+*/
+void __cdecl battle_kill_stack(int veh_id, int *attacker_out,
+                               int *defender_out, int *odds_out, int killer_id,
+                               int credit_faction) {
+    if (veh_id < 0) {
+        return;
+    }
+    short next = Vehs[veh_id].prev_veh_id_stack;
+    while (next >= 0) {
+        veh_id = next;
+        next = Vehs[veh_id].prev_veh_id_stack;
+    }
+    while (veh_id >= 0) {
+        int next_id = Vehs[veh_id].next_veh_id_stack;
+        const int killed = battle_kill(veh_id, attacker_out, defender_out,
+                                       odds_out, killer_id, credit_faction);
+        if (killed != 0) {
+            if (killer_id > veh_id) {
+                --killer_id;
+            }
+            if (next_id > veh_id) {
+                --next_id;
+            }
+        }
+        veh_id = next_id;
+    }
+}
+
+/*
+Purpose: Set a vehicle patrolling a waypoint loop.
+// ORIGINAL: 0x004CDA30 ?action_patrol@@YAXHHH@Z 0x004CDA30-0x004CDAEA
+// size      186 bytes
+// prototype void (__cdecl ?action_patrol@@YAXHHH@Z)(int vehID, int xCoord, int yCoord)
+// callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004CD6A0
+// HOMED from src/unrecovered/004cda30.cpp, 2026-09-04. Its eight raw
+// `arr_9528xx` casts are Vehs[] members: +0x11 order, +0x12 waypoint_count,
+// +0x13 patrol_current_point, +0x14 waypoint_x[0], +0x1C waypoint_y[0],
+// +0x00 x, +0x02 y, +0x04 state.
+// TRIED: fixed const-pointer globals for the two indexed word arrays (the
+//        address itself scales, so extern-style raw casts were used instead);
+//        reached MNEMONIC_ONLY, 188 vs 186 bytes.
+Return Value: n/a
+Status: MISMATCH.
+*/
+void __cdecl action_patrol(int veh_id, int x, int y) {
+    if (valid_patrol(veh_id, x, y) != 0) {
+        Vehs[veh_id].order = ORDER_MOVE_TO;
+        Vehs[veh_id].waypoint_x[Vehs[veh_id].waypoint_count] = (int16_t)x;
+        Vehs[veh_id].waypoint_y[Vehs[veh_id].waypoint_count] = (int16_t)y;
+        const uint8_t count = Vehs[veh_id].waypoint_count;
+        Vehs[veh_id].waypoint_count = count + 1;
+        Vehs[veh_id].waypoint_x[count + 1] = Vehs[veh_id].x;
+        Vehs[veh_id].waypoint_y[Vehs[veh_id].waypoint_count] = Vehs[veh_id].y;
+        Vehs[veh_id].state |= 0x1000200;
+        Vehs[veh_id].patrol_current_point = 0;
+    }
+}
+
+/*
+Purpose: Gate a vehicle into a base, repainting both tiles.
+// ORIGINAL: 0x004CF380 ?action_gate@@YAXHH@Z 0x004CF380-0x004CF477
+// size      247 bytes
+// prototype void (__cdecl ?action_gate@@YAXHH@Z)(int vehID, int baseID)
+// callers   3   call targets   5
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0046AF40 0x004E3A50 0x005108A0 0x005BFFA0 0x005C0080
+// HOMED from src/unrecovered/004cf380.cpp, 2026-09-04. Its `Bases[n] + off`
+// casts are Base members: +0x00 x, +0x02 y, +0x30 state (bit 0x20000000 is
+// the "gate/open" event the UI reads).
+// TRIED: reproducing veh_lift's post-call EAX reuse - the call site pushes
+//        EAX straight into veh_drop's first argument with no reload, so EAX
+//        must be veh_lift's return value; a local function-pointer type got
+//        86.6% mnemonic similarity and redeclaring veh_lift itself is C2556.
+//        veh_lift already returns int here, so the plain spelling is used.
+// TRIED: frameless /O2 body where the image has `frame` - a spill-count
+//        difference, not a control-flow one.
+Return Value: n/a
+Status: MISMATCH.
+*/
+void __cdecl action_gate(int veh_id, int base_id) {
+    const short veh_x = Vehs[veh_id].x;
+    const short veh_y = Vehs[veh_id].y;
+    const int gate_base = base_at(veh_x, veh_y);
+    if (gate_base >= 0) {
+        Bases[gate_base].state |= 0x20000000;
+    }
+    Bases[base_id].state |= 0x20000000;
+
+    const int lifted = veh_lift(veh_id);
+    veh_drop(lifted, Bases[base_id].x, Bases[base_id].y);
+
+    if (gate_base >= 0) {
+        draw_tile(Bases[gate_base].x, Bases[gate_base].y, 2);
+    }
+    draw_tile(Bases[base_id].x, Bases[base_id].y, 2);
+
+    if (veh_id == CursorVehIndex) {
+        ConsoleGlobal.focus(veh_x, veh_y, Vehs[veh_id].faction_id);
+    }
+}
+
+/*
+Purpose: Add a direction's tile offset to a vehicle's coordinates.
+// ORIGINAL: 0x00506A60 ?battle_fight@@YAHHHHHPAH@Z 0x00506A60-0x00506AEB
+// size      139 bytes
+// prototype int (__cdecl ?battle_fight@@YAHHHHHPAH@Z)(int vehID, int dir, int mode, int allow_interceptor, int *odds_out)
+// callers   6   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00506AF0
+// HOMED from src/unrecovered/00506a60.cpp, 2026-09-04. Its `g_00952828`
+// short views are Vehs[].x (+0x00) and Vehs[].y (+0x02).
+// `mode` is named from what it does here and in the seven-parameter body:
+// a 0/1 flag that swaps in the Alt delta run. `allow_interceptor` and
+// `odds_out` are named from the seven-parameter body - the first gates its
+// call to interceptor (0x00506650), the second is the null-tested pointer it
+// stores the odds word through at 0x005070A2.
+Return Value: whatever the seven-parameter battle_fight returns.
+Status: MISMATCH.
+*/
+
+// The seven-parameter overload, 0x00506AF0 - 19,875 bytes, the largest body
+// in the veh family, still in src/unrecovered/00506af0.cpp. C++ overloading
+// gives the pair the two distinct symbols the image carries; the definition
+// is its own batch and lands beside this one.
+int __cdecl battle_fight(int veh_id, int dir, int x, int y, int src_mode,
+                         int allow_interceptor, int *odds_out);
+
+int __cdecl battle_fight(int veh_id, int dir, int mode, int allow_interceptor,
+                         int *odds_out) {
+    int x;
+    if (mode != 0) {
+        x = VehMoveDeltaXAlt[dir];
+    } else {
+        x = VehMoveDeltaX[dir];
+    }
+    int val_x = Vehs[veh_id].x + x;
+
+    if (!(MapIsFlat & 1)) {
+        const int mod = MapLongitudeBounds;
+        if (val_x < 0) {
+            val_x += mod;
+        } else if (val_x >= mod) {
+            val_x -= mod;
+        }
+    }
+
+    const int y = mode != 0 ? VehMoveDeltaYAlt[dir] : VehMoveDeltaY[dir];
+    const int val_y = Vehs[veh_id].y + y;
+
+    return battle_fight(veh_id, dir, val_x, val_y, mode, allow_interceptor,
+                        odds_out);
+}
+
+

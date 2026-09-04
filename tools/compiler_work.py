@@ -189,7 +189,12 @@ SHAPES = [
      "reads the target out of a vtable slot by hand because the method is not "
      "declared virtual. Declare it - the compiler writes this dispatch."),
 
-    ("ORIGINAL() named-pointer seam", 87,
+    # 87 -> 91 (2026-09-04, P2 veh batch): four more, documented at the
+    # seams in veh.cpp - the check_base/check_loc/base_compute cascade is
+    # reached through original_method the way mapwin.cpp reaches
+    # MapWin::draw_radius; the class pass that homes the base.cpp cascade
+    # retires them.
+    ("ORIGINAL() named-pointer seam", 91,
      re.compile(r"\bORIGINAL\((?!.*vtable\[)"),
      "reaches a member through a function-pointer slot, which compiles "
      "`FF 15` where the image has `E8`. Call it by name once its body lands."),
@@ -458,7 +463,12 @@ SCAFFOLD_CEILINGS = {
     # callees a homed body reaches but whose own bodies are still archived -
     # vox_load_record (0x006381F0) for CaviarData::init and Caviar::render
     # (0x00617230) for Caviar::UNK2, which homed BYTE_EXACT around them.
-    "PENDING_BODY forwarders": 250,
+    # 250 -> 251 (2026-09-04, P2 veh batch, net +1 after the union): three
+    # added (battle_kill, battle_fight's 7-arg overload, DeletionList::
+    # add_deletion - all FILE-tier, landmine-free) against three retired in
+    # the merge (veh_kill/veh_ready into veh.cpp, world_rocky into map.cpp)
+    # and one stand-in that pre-dates this collection.
+    "PENDING_BODY forwarders": 251,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -520,7 +530,7 @@ SCAFFOLD_CEILINGS = {
     # 00618520.cpp, 00618560.cpp, 00618430.cpp homed into src/caviar.cpp.
     # 1124 -> 1123 (same wave, set_buffer): 006183d0.cpp homed into
     # src/caviar.cpp.
-    "artifact files (recovered/)": 1097,
+    "artifact files (recovered/)": 1087,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -592,7 +602,7 @@ SCAFFOLD_CEILINGS = {
     # src/caviar.cpp; 0063b072.cpp homed into src/caviar.cpp.
     # 1245 -> 1244 (same wave, set_shadow_vector): 006181d0.cpp homed into
     # src/caviar.cpp, SHAPE_EXACT 40/44 on a TU-local pragma function(cos).
-    "unrecovered files": 1223,
+    "unrecovered files": 1210,
     "hypothesis_layouts.h lines": 2717,
 }
 

@@ -330,3 +330,12 @@ MEASURED inline uint32_t __cdecl game_year(int turn) {
 MEASURED inline int __cdecl energy_limit(int) {
     return 10;
 }
+
+// 0x00691B0C, the front of the climate popup's title-pointer run. It holds a
+// `char *`, so read it through the cast at the point of use. DEFINED HERE, not
+// as a game.cpp static, because two TUs need it (game.cpp's climate popups and
+// veh.cpp's three-argument popp): a namespace-scope const has internal
+// linkage, so a header definition gives each TU its own copy that folds to the
+// immediate - the same lever netmsg.h's NetMsgPopup uses. Making it an extern
+// instead costs every caller a load of the pointer before the load it names.
+int *const ClimatePopupTitle = (int *)0x00691B0C;
