@@ -140,6 +140,54 @@ class Sprite {
 
 static_assert(sizeof(Sprite) == 0x2C, "Sprite layout must match the legacy ABI");
 
+/*
+ * THE TERRAIN-ART SHEET, the band of Sprite storage 0x0075B098..0x007AD1B0
+ * that `load_terrain` (0x00451C50) fills and the map renderer draws through.
+ * Declared here because `gen_terrain_poly` (0x004632D0), `gen_tile`,
+ * `gen_radius` and their neighbours reach every one of them by absolute
+ * address from a different TU; the definitions and the 0x2c-stride comments
+ * live in sprite.cpp beside the extract calls that size them.
+ *
+ * HOW THE RENDERER READS THEM, which is why the addresses below come in
+ * +8 pairs. A Sprite is 0x2C bytes and its `cTransparentIndex_` is the byte
+ * at +8, so a painter that has to hand a blitter the transparent colour
+ * alongside the sprite reads exactly two things:
+ *
+ *     mov  ecx, 0x776a50                    ; &sprite           (the object)
+ *     mov  ecx, dword ptr [0x776a58]        ; sprite.cTransparentIndex_
+ *     and  ecx, 0xff
+ *
+ * and the indexed form over an array is the same pair with the 0x2c stride
+ * folded in (`mov al, byte ptr [edx*4 + 0x77b000]` beside
+ * `lea ecx, [edx*4 + 0x77aff8]`, edx = index * 11). Both spellings are
+ * `&name[k].cTransparentIndex_` in source - no new name is needed for the
+ * +8 address, which is why the list below is of OBJECTS only.
+ */
+extern Sprite g_TER1_WHITE_ORG_YEL_TILE_SPRITES[6];   // 0x00791C58
+extern Sprite g_TER1_BOTTOM_LEFT_TILE_SPRITES[9];     // 0x007A99A0
+extern Sprite g_TER1_MINE_SPRITE;                     // 0x00776A50
+extern Sprite g_TER1_SOLAR_COLLECTOR_SPRITE;          // 0x007991F8
+extern Sprite g_TER1_TIDAL_HARNESS_SPRITE;            // 0x0078A5B0
+extern Sprite g_TER1_MINING_PLATFORM_SPRITE;          // 0x00789B68
+extern Sprite g_TER1_KELP_FARM_SPRITE;                // 0x007A6860
+extern Sprite g_TER1_CONDENSER_SPRITE;                // 0x00779390
+extern Sprite g_TER1_ECHELON_MIRROR_SPRITE;           // 0x007ABF60
+extern Sprite g_TER1_BOREHOLE_SPRITE;                 // 0x0078DD20
+extern Sprite g_TER1_BOREHOLE_CLUSTER_SPRITE;         // 0x007ACB88
+extern Sprite g_TER1_MANIFOLD_NEXUS_SPRITES[6];       // 0x007AC098
+extern Sprite g_TER1WRECK_UNITY_WRECKAGE_SPRITES[15];  // 0x00776758
+extern Sprite g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES[4];  // 0x00799658
+extern Sprite g_FOSSIL_FIELD_RIDGE_SPRITES[6];        // 0x007ACD70
+extern Sprite g_TER1_FARM_SPRITES[5];                 // 0x00791FC8
+extern Sprite g_TER1_SOIL_ENRICHER_SPRITES[5];        // 0x0079A710
+extern Sprite g_TER1_SEA_LAND_RESOURCE_SPRITES[12];   // 0x0075B230
+extern Sprite g_TER1_LANDMARK_RESOURCE_SPRITES[6];    // 0x0078A650
+extern Sprite g_TER1_UNITY_POD_SPRITES[6];            // 0x0077AFF8
+extern Sprite g_TER1_MONOLITH_SPRITE;                 // 0x0075B098
+extern Sprite g_TER1_BUNKER_SPRITE;                   // 0x007AD010
+extern Sprite g_TER1_AIRBASE_SPRITE;                  // 0x007ACC60
+extern Sprite g_TER1_SENSOR_ARRAY_SPRITE;             // 0x007A6830
+
 // Running total of Sprite-owned bytes. The constructor adds one object; the
 // release paths subtract the object plus its pixel buffer. The image holds
 // the counter in .bss at 0x009B6618 - zero at load - so the tree owns it as

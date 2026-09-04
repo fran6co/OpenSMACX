@@ -1,4 +1,45 @@
 // ORIGINAL: 0x004632D0 ?gen_terrain_poly@MapWin@@QAAHPAUBuffer@@PAUMapWin@@HHHHHHHH@Z 0x004632D0-0x00466C92;0x00655920-0x00655932 FILE
+// BLOCKED 2026-09-04, map/mapwin homing pass - NOT homable from this
+// transcription, and the reason is the callees, not the body's own 1649 lines.
+// All twelve Texture/Sprite blitters it reaches ARE catalogued (0x0061B1F0 is
+// ?draw@Texture@@QAEXPAUBuffer@@PAUVert@@PAHHPAUVert@@@Z, 0x0061C090
+// ?draw_trans@Texture@@..., 0x005E4B9A ?draw@Sprite@@QAEHPAUBuffer@@HHH@Z, and
+// the ten siblings named in the `calls` line below) - but this scaffold calls
+// every one of them as a FREE function with the Buffer* as its first argument
+// and NO RECEIVER AT ALL, because the emitter only recovers the stack
+// arguments and throws the __thiscall `this` in ECX away. E.g.
+//
+//     FUN_0061b1f0(a1, g_007d3af0 + local_38, &local_12c, 4, ...);
+//
+// is really `someTexture->draw(a1, (Vert *)(g_007d3af0 + local_38),
+// &local_12c, (Vert *)...)`, and WHICH texture `someTexture` is was in ECX and
+// is now gone: re-deriving it means re-reading the disassembly at each of the
+// 56 call sites to recover the register that held the receiver. That, not the
+// body, is the work. Until it is done the calls cannot become member calls,
+// and a member call is the only spelling that emits `mov ecx, ...` - the
+// ellipsis form this file uses emits a __cdecl push sequence that would
+// corrupt the stack at runtime if it were ever linked.
+//
+// What the homing pass DID establish for this body, so it is not re-derived:
+//  * the 113 fixed globals it reads are named in src/sprite.h and
+//    src/texture.h now (the terrain Sprite/Texture band, 0x0075B098..0x007AD1B0),
+//    plus the how-the-renderer-reads-them note on each: ~50 of them are the
+//    +8 `&name[k].cTransparentIndex_` companion of a named array, not new
+//    objects. The remaining .rdata/BSS addresses (0x00684730, 0x00685478..,
+//    0x00685A98.., 0x00686090.., 0x006861F0, 0x00686354, 0x0068E564..,
+//    0x00952832.., 0x0096C9E1, 0x0097D04A, 0x009A6490.., 0x009AB88C,
+//    0x009BB548) still have no name - name them from load_terrain's writes
+//    before touching this body again.
+//  * CornerOffsetX/Y (0x00685EA0/0x00685EE0), CornerLightTable (0x007F6680),
+//    AltLightBit1/2/200 (0x00685A24/0x00685B60/0x007F6750) and
+//    AltDirectionTable (0x00685684) are bound and commented in mapwin.cpp -
+//    get_brighting and get_point_light are homed and measurable, so the
+//    lighting half of this function's job already runs from the tree.
+//  * the mangled name says the eight trailing parameters are ALL `H` (int):
+//    a4 and a5 are ints, and the pointer uses below are the scaffold's guess.
+//    Keeping them `int` and casting at use is what matches the symbol; typing
+//    them `int *` / `uint32_t *` changes the mangled name and the claim.
+//
 // TRIED: SEH prologue vanished entirely by declaring a real `Random local_rand;` local (ctor/dtor already recovered in random.h) and deleting every explicit ctor/dtor call the Ghidra hypothesis showed - the compiler emits the frame and every return path's implicit destructor call itself, exactly as the brief predicted.
 // TRIED: contract typed a4/a5 as plain int; Ghidra uses both as real int*/uint32_t* throughout (dereferenced, compared, walked) - retyping them (and the MapWin class prototype) cleared ~70 of the ~90 initial C2440/C2446 errors in one pass. `a1` (really Buffer*) and the pre-fix `param_2`->`a2` (MapWin*) both get reused mid-function as a plain int/byte scratch slot after their last pointer use (matches the loop_base_idx pattern found in base_terraform) - split into fresh locals (`crop_diff`) rather than fighting the parameter's type. Twelve callees (Texture-family scanline/Duff's-device blitters) have no recovered name or signature anywhere in the tree, and their own dedicated scaffolds are themselves TRIED approximations (ESP used as live data, no C construct reaches that) - declared `extern "C" void FUN_xxxxxxxx(...);` (ellipsis, no fixed params) so every call site's argument values/order are preserved without guessing a per-position type. Diverges at #1 (frame size / prologue), same shape as the four-of-seven-bodies prologue note - some combination of the extra `crop_diff` local and the RAII frame's own layout shifts `sub esp` versus the original.
 // working copy - scaffold materialised by --work

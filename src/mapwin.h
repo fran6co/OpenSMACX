@@ -60,6 +60,15 @@
   */
 class MapWin : public virtual GraphicWin {
  public:
+  // homed from 00463040.cpp
+  int pixel_to_tile(int x_pixel, int y_pixel, int *out_tile_x,
+                    int *out_tile_y);
+
+ public:
+  // homed from 00462980.cpp
+  void calculate_dimensions();
+
+ public:
   // homed from 0046fe00.cpp
   int get_relative_alt(int x, int y, int detail);
 
@@ -92,7 +101,7 @@ class MapWin : public virtual GraphicWin {
 
  public:
   // 0x0046F700, a pending_bodies forwarder.
-  void on_nc_left_down(int a1, int a2);
+  void on_nc_left_down(int x_coord, int y_coord);
 
  public:
   // 0x0046F660, a pending_bodies forwarder.
@@ -147,6 +156,17 @@ class MapWin : public virtual GraphicWin {
   void tile_to_pixel(int a1, int a2, int *a3, int *a4);
   void init_dummy();
   int get_alt(int a1, int a2, int a3);
+  // 0x00470550 and 0x00470790, homed from the archive in the mapwin homing
+  // pass. get_brighting returns one corner's cached brightness in the
+  // 0xC-stride visibility record owned_ points at (0 means "uncached"; the
+  // stored byte is the value biased by 0x80), computing it from the two
+  // altitude-detail nibbles get_alt has just filled and the corner's run of
+  // CornerLightTable. get_point_light walks those corners for a tile: corner
+  // 0 averages all four, the rest sum the two neighbours the tile shares with
+  // that corner, and both add the per-flag point-light delta the tile's
+  // `bit2` byte and code select from AltDirectionTable.
+  int get_brighting(int x, int y, int corner);
+  int get_point_light(int x, int y, int corner);
 
   // ??0MapWin@@QAE@H@Z at 0x004626E0, spelled as the real constructor it is.
   // ATTEMPT #2. The first try built `MapWin(int a1)`, measured VC6 emitting
@@ -224,7 +244,10 @@ class MapWin : public virtual GraphicWin {
   uint32_t field_1DD70_;  // 0x1DD70
   uint32_t field_1DD74_;  // 0x1DD74
   uint32_t field_1DD78_;  // 0x1DD78
-  uint8_t field_1DD7C_[0x4];  // 0x1DD7C
+  // DWORD, not uint8_t[4]: the image writes it whole
+  // (`mov dword ptr [entered - 0x3cf0], 0` in on_right_down), and the
+  // byte-array form made that a member pun.
+  uint32_t field_1DD7C_;  // 0x1DD7C
   uint32_t field_1DD80_;  // 0x1DD80
   uint32_t field_1DD84_;  // 0x1DD84
   uint32_t field_1DD88_;  // 0x1DD88

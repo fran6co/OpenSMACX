@@ -260,13 +260,10 @@ void __fastcall sub_633010(void *self) {
     PENDING_BODY(0x00633010, pending)(self);
 }
 
-// ?clear@MapWin@@QAEXH@Z at 0x00462870 - not this batch's address (still
-// TRIED at 97.7% in `src/unrecovered/00462870.cpp`), but MapWin's own
+// ?clear@MapWin@@QAEXH@Z at 0x00462870 - HOMED into src/mapwin.cpp
+// 2026-09-04, so this file no longer carries it. MapWin's own
 // destructor and PlanWin's/Console's each reach it directly.
-void MapWin::clear(int a1) {
-    typedef void(__fastcall *pending)(MapWin *, void *, int);
-    PENDING_BODY(0x00462870, pending)(this, nullptr, a1);
-}
+
 
 // ??0EditBox@@QAE@XZ at 0x00614E50 - the EditBox subobject constructor
 // FileWin::FileWin reaches by name. See the note in editbox.h.
@@ -1275,15 +1272,9 @@ int MapWin::on_nc_hittest(int x, int y) {  // 0x0046F660
     return PENDING_BODY(0x0046F660, pending)(this, nullptr, x, y);
 }
 
-void MapWin::on_nc_left_down(int a1, int a2) {  // 0x0046F700
-    typedef void(__fastcall *pending)(MapWin *, void *, int, int);
-    PENDING_BODY(0x0046F700, pending)(this, nullptr, a1, a2);
-}
 
-void MapWin::on_right_down(int a1, int a2) {  // 0x0046EC10
-    typedef void(__fastcall *pending)(MapWin *, void *, int, int);
-    PENDING_BODY(0x0046EC10, pending)(this, nullptr, a1, a2);
-}
+
+
 
 // MapWin::on_sys_close WAS HERE, forwarding to 0x0046F880. Homed into
 // mapwin.cpp 2026-08-29.
@@ -1411,10 +1402,7 @@ void Caviar::close_class() {
 
 // world_climate's own not-yet-recovered callees (src/map.cpp).
 // ?clear_terrain@MapWin@@QAEXXZ at 0x0046FD90
-void MapWin::clear_terrain() {
-    typedef void(__fastcall *pending)(MapWin *, void *);
-    PENDING_BODY(0x0046FD90, pending)(this, nullptr);
-}
+
 
 // ?do_checksums@@YAXH@Z at 0x0051E760
 void __cdecl do_checksums(int type) {

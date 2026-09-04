@@ -45,6 +45,35 @@ class Texture {
 static_assert(sizeof(Texture) == 0x70,
               "Texture layout must match the original executable");
 
+/*
+ * THE TERRAIN TEXTURES, the 0x70-stride band 0x0076E8A0..0x007AD010 that
+ * `load_terrain` (0x00451C50) extracts out of the terrain PCX sheets.
+ * Declared here because the map renderer - gen_terrain_poly (0x004632D0) and
+ * the gen_radius / gen_tile family - reaches them from another TU by absolute
+ * address; the definitions and the stride comments live in texture.cpp beside
+ * the extract calls that size them. Unlike the Sprite band there is no +8
+ * companion read: a Texture carries no transparent index, so the renderer
+ * passes the address of the object itself to every draw_* variant.
+ */
+extern Texture g_RAINFALL_SINGLE_TILE_TEXTURES[2];  // 0x0076E8A0
+extern Texture g_ROCKY_TEXTURES[4];                 // 0x0076E9E0
+extern Texture g_FUNGUS_TEXTURES[30];               // 0x00776A80
+extern Texture g_SUNNY_MESA_TEXTURES[8];            // 0x007797F8
+extern Texture g_GARLAND_CRATER_TEXTURES[3];        // 0x00788100
+extern Texture g_JUNGLE_LAND_TEXTURES[15];          // 0x00789C28
+extern Texture g_MOUNT_PLANET_TEXTURES[3];          // 0x0078A340
+extern Texture g_FOREST_TEXTURES[16];               // 0x0078A758
+extern Texture g_RAINFALL_SINGLE_TILE_TEXTURE;      // 0x0078DD80
+extern Texture g_ROAD_TEXTURES[9];                  // 0x00792218
+extern Texture g_MAGTUBE_TEXTURES[9];               // 0x00798E08
+extern Texture g_FARM_TEXTURES[9];                  // 0x00799238
+extern Texture g_RAINY_LAND_TEXTURES[16];           // 0x00799738
+extern Texture g_FLAT_ARID_LAND_TEXTURE;            // 0x00799E48
+extern Texture g_MOIST_LAND_TEXTURES[16];           // 0x00799EB8
+extern Texture g_OCEAN_TEXTURES[2];                 // 0x007A7820
+extern Texture g_RIVER_TEXTURES[16];                // 0x007A7AA0
+extern Texture g_DUNE_LAND_TEXTURE;                 // 0x007AC220
+
  /*
   * TextureStore class
   *

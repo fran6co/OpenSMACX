@@ -672,6 +672,57 @@ void MapWin::on_lose_mouse_capture() {
 // that storage.
 static int *const MapRowStride = (int *)0x0068FAF0;
 
+// 0x00939E5C - the main interface's own copy of the screen width, taken when
+// the main window is sized: the setter at 0x0051D760 does
+// `*this_screen_width_ = WinScreenWidth; this_dword_ = WinScreenWidth;` in
+// that order, and `*g_00939EF0 = *this` copies it back out. Every reader
+// tests it against 1000 to pick between the two fixed layouts - 550x300
+// below, 704x384 at and above (0x00589760), 200x180 / 250x212 in
+// InfoWin::UNK4 - which is 0.6875 of 800 and of 1024 alike, so the threshold
+// is "is the desktop the wide one". A named binding, not an object, for the
+// same reason as MapRowStride below: the image holds the dword at this fixed
+// address and nothing here maps that storage.
+static int *const IfaceScreenWidth = (int *)0x00939E5C;
+
+// THE POINT-LIGHT TABLES. Three parallel signed-byte tables, one per tile
+// flag, each indexed by the byte `AltDirectionTable` picks for the tile's
+// code and the corner being lit - exactly the indexing the AltBonus* family
+// below gets, so they are the same shape of table in the same family:
+//
+//     mov cl, byte ptr [eax + edx + 0x685684]   ; AltDirectionTable[code*5 + corner]
+//     movsx edx, byte ptr [ecx + 0x685a24]      ; -> one of the three here
+//
+// `get_point_light` (0x00470790) picks between them on three low bits of the
+// tile's `bit2` dword - 0x1, 0x2 and 0x200 - and nothing else in the tree
+// names what those flags mean, so the names carry the selecting bit rather
+// than a guessed terrain class. 0x00685A24 and 0x00685B60 are in the file
+// image's .data and their bytes read as small signed deltas (-3..+3); the
+// third, 0x007F6750, is past the bytes the file carries and is zero until
+// something fills it.
+static const signed char *const AltLightBit1 = (const signed char *)0x00685A24;
+static const signed char *const AltLightBit2 = (const signed char *)0x00685B60;
+static const signed char *const AltLightBit200 = (const signed char *)0x007F6750;
+
+// 0x007F6680 - THE CORNER SLOPE-LIGHT TABLES. Four 0x31-byte 7x7 runs, one
+// per tile corner, each read as
+//
+//     lea ebx, [eax*8] / sub ebx, eax            ; v * 7
+//     movsx ebx, byte ptr [ebx + eax + 0x7f6680] ; [v*7 + w]
+//
+// where v and w are the two altitude-detail nibbles the visibility record
+// holds for the two tiles that meet at that corner. `get_brighting`
+// (0x00470550) indexes the four runs with the constants 0x7F6680, 0x7F66B1,
+// 0x7F66E2 and 0x7F6713, so the stride is 0x31 = 49 = 7*7 and this one base
+// serves all four.
+//
+// NOT the table `compute_lighting_table` (0x00470420) builds: that one walks
+// `lea eax, [eax + ebx + 0x7f6688]` with eax = 0x30*q - the same 4 x 49 shape
+// built from `-3*(x+y)/sqrt(x*x+y*y)` over a 7x7 slope grid, but starting
+// EIGHT BYTES HIGHER. The two runs overlap for 188 of their 196 bytes, so
+// they are not the same storage, and only the 0x7F6688 one has a recovered
+// writer. Bound here at the address `get_brighting` actually reads.
+static const signed char *const CornerLightTable = (const signed char *)0x007F6680;
+
 // 0x00685684 and the five tables behind it - THE ALTITUDE BONUS LOOKUP
 // `get_alt` walks. 0x00685684 is the direction table (five bytes a direction,
 // the first naming it and the four after it the neighbours it fans out to);
@@ -690,9 +741,61 @@ static const unsigned char *const AltBonusOcean = (const unsigned char *)0x007F6
 static const unsigned char *const AltStepX = (const unsigned char *)0x00685EA0;
 // 0x00691E6C / 0x00691E70 - the scale pair the altitude shading divides by:
 // a numerator and a denominator, 1/0 meaning "take the fixed 1/16 step".
+// THE VIRTUAL-BASE DISPLACEMENT the compiler lays MapWin down with: the
+// vbtable it emits holds {0, 0x21A6C} (mapwin.h), so every handler the
+// image enters on the GraphicWin base walks `entered - 0x21A6C` to get to
+// the front, and every vbase-relative field sits at front + 0x21A6C + N.
+// Held as a constant rather than read back out of the vbtable: the table
+// is the compiler's, and reading it costs a this-pun at each site.
+static const int32_t MapWinEnteredOffset = 0x21A6C;
+
+// The receiver the image hands every Q-spelled MapWin handler: the GraphicWin
+// virtual base, not the front. Named once here because four recovered bodies
+// walk it once by name rather than re-deriving the displacement at each
+// call site, where it reads as four unrelated puns instead of the one
+// documented walk.
+static char *entered_receiver(MapWin *window) {
+    return reinterpret_cast<char *>(window) + MapWinEnteredOffset;
+}
+
 static int *const MapWinCaptionScale = (int *)0x00691E6C;
 static int *const MapWinCaptionDivisor = (int *)0x00691E70;
 static const unsigned char *const AltStepY = (const unsigned char *)0x00685EE0;
+
+// 0x007D3C28..0x007D3C34 - FOUR CONSECUTIVE INTS the primary window publishes
+// about itself. `calculate_dimensions` writes them only when `this` is
+// ConsoleGlobal, and only here: first the window's centre tile
+// (field_1DD9C_ / field_1DDA0_, i.e. x then y), then the same two again with
+// the tile-step counts folded in -
+//
+//     [0] = (x_centre - tiles_across) + 4
+//     [1] = (y_centre - tiles_down ) + 4
+//     [2] = (tiles_across + x_centre) - 4
+//     [3] = (tiles_down  + y_centre) - 6
+//
+// which reads as the west, north, east and south limits of the region the
+// primary window is currently drawing. They sit immediately below the map
+// window slot table at 0x007D3C3C, and nothing else in the recovered tree
+// reads or writes them, so the "corner limits of the primary window" reading
+// is what the arithmetic says and no more.
+static int *const MapWinPrimaryCorner = (int *)0x007D3C28;
+
+// 0x009393C0 - in the Console state block beside CursorLastIndex/CursorLastX.
+// on_nc_left_down reads it once and returns without touching the keyboard when
+// it is nonzero, and otherwise polls and writes the modifier-key state, so the
+// nonzero value is "do not refresh the modifier state". Bound here because
+// nothing in the tree names it; the Console side owns the address.
+static int *const KeyStatePollSuppressed = (int *)0x009393C0;
+
+// 0x0066932C / 0x00669330 - the USER32 import-table slots the tree reads as
+// `int (__stdcall *)(int)` and calls with a virtual key:
+//   GetKeyState(0x91)     (VK_SCROLL) - is Scroll Lock latched
+//   GetAsyncKeyState(0x10)(VK_SHIFT)  - the high byte is the pressed bit
+// Named for the import `iat_names.py` resolves each address to, because a
+// fixed-address binding to an IAT slot is a function pointer and the tree has
+// no other spelling for one.
+static int *const IAT_GetKeyState = (int *)0x0066932C;
+static int *const IAT_GetAsyncKeyState = (int *)0x00669330;
 
 // ORIGINAL: 0x00468CD0 ?compute_clip@MapWin@@QAEHHHHPAURECT@@@Z 0x00468CD0-0x00468F8D FILE
 // symbol    ?compute_clip@MapWin@@QAEHHHHPAUtagRECT@@@Z
@@ -836,22 +939,22 @@ int MapWin::compute_clip(int a1, int a2, int a3, RECT * a4) {
 
 void MapWin::draw_tile(int a1, int a2, int a3) {
     char *self = reinterpret_cast<char *>(this);
-    int rowStart = *reinterpret_cast<int *>(self + 0x1dda8);
+    int rowStart = field_1DDA8_;
     if (a2 >= rowStart &&
-        a2 < *reinterpret_cast<int *>(self + 0x1ddd8) + *reinterpret_cast<int *>(self + 0x1ddd0) + rowStart) {
+        a2 < field_1DDD8_ + field_1DDD0_ + rowStart) {
         int col = a1;
         if ((MapIsFlat & 1) == 0) {
-            int colStart = *reinterpret_cast<int *>(self + 0x1dda4);
+            int colStart = field_1DDA4_;
             if (a1 < colStart) {
                 col = MapLongitudeBounds + a1;
             }
-            if (*reinterpret_cast<int *>(self + 0x1ddd4) + *reinterpret_cast<int *>(self + 0x1ddcc) + colStart <= col) {
+            if (field_1DDD4_ + field_1DDCC_ + colStart <= col) {
                 col = col - MapLongitudeBounds;
             }
         }
-        int colStart2 = *reinterpret_cast<int *>(self + 0x1dda4);
+        int colStart2 = field_1DDA4_;
         if (col >= colStart2 &&
-            col < *reinterpret_cast<int *>(self + 0x1ddd4) + *reinterpret_cast<int *>(self + 0x1ddcc) + colStart2) {
+            col < field_1DDD4_ + field_1DDCC_ + colStart2) {
             draw_radius(a1, a2, 0, a3);
         }
     }
@@ -1462,3 +1565,954 @@ void __cdecl draw_cursor() {
     }
     TutWinGlobal->draw_arrow();
 }
+
+// Fixed-slot bindings carried from 00462870.cpp
+
+// ORIGINAL: 0x00462870 ?clear@MapWin@@QAEXH@Z 0x00462870-0x00462959 FILE
+// HOMED 2026-09-04 from the 0x00462870 artifact; the artifact's
+// `g_9392c0`/`g_939340`/`g_009392b8`/`g_00949870`/`g_00949874` are the
+// tree's CursorLastX / CursorLastY / CursorLastIndex (console.h) and
+// MapLongitudeBounds / MapLatitudeBounds (map.h), and `g_00939e5c` is the new
+// IfaceScreenWidth binding above. Measured in the tree: 8/65.
+// TRIED: `g_939340`/`g_9392c0` as the scaffold's `int *const` globals - the address does work (indexed by `*g_009392b8`), so switched to `extern int name[]`. Landed at 97.7%: the original loads `*g_00939e5c` into a register before comparing it to 1000, where this source's compiler folds the load into `cmp dword ptr[addr],1000` directly - tried both an inline dereference and a named local holding the read first; the compiler made the same choice either way. The `((t<1000)-1)&6` then `-6` also comes out as `sub eax,6` here against the original's `add eax,-6` (same value, different opcode).
+// TRIED: `int *volatile const IfaceScreenWidth` - volatile on the pointee to
+// force the image's `mov edx,[0x939e5c]` ahead of the `cmp` - measured no
+// change at all (still 8/65, still the folded memory-operand `cmp`): VC6
+// folds a volatile read into a compare operand just as it folds a plain one,
+// so volatile buys nothing at this site. Reverted.
+// working copy - scaffold materialised by --work
+// size      233 bytes
+// prototype void (__thiscall ?clear@MapWin@@QAEXH@Z)(MapWin* this, int)
+// callers   12   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00644EF2
+
+void MapWin::clear(int index) {
+    field_1DD78_ = index;
+    field_1DD70_ = 0;
+    field_1DD98_ = (((*IfaceScreenWidth < 1000) - 1) & 6) - 6;
+    field_1DD74_ = (index == 0);
+
+    int halfHeight = MapLatitudeBounds / 2;
+    field_1DDA0_ = halfHeight;
+    int halfWidth = MapLongitudeBounds / 2;
+    field_1DD9C_ = (halfWidth ^ halfHeight) & 1 ^ halfWidth;
+
+    if (index == 0) {
+        int player = CursorLastIndex;
+        int cy = CursorLastY[player];
+        int cx = CursorLastX[player];
+        if (cy >= 0 && cy < MapLatitudeBounds && cx >= 0 && cx < MapLongitudeBounds) {
+            field_1DD9C_ = cx;
+            field_1DDA0_ = CursorLastY[CursorLastIndex];
+        }
+    }
+
+    field_1EF50_ = 0x7f00;
+    field_1EF4C_ = 0;
+    if (owned_ != 0) {
+        free(owned_);
+        owned_ = 0;
+    }
+}
+
+
+// THE VISIBILITY RECORD, one 0xC-byte slot per half-map column and row, that
+// `owned_` points at. Bytes 0..3 hold the four cached corner brightnesses
+// (0 = "not computed", otherwise the value biased by 0x80) and bytes 10 and 11
+// hold the four altitude-detail nibbles `get_alt` leaves behind for the same
+// four corners. get_brighting walks it, so the helper is spelled once here and
+// expanded at every site - the image computes the address inline at each of
+// them, and a plain .cpp function would cost a `call` the image does not make.
+static __forceinline char *brighting_tile(void *owned, int row, int col_half) {
+    return (char *)owned + ((MapLongitudeBounds >> 1) * row + col_half) * 0xC;
+}
+
+// Fixed-slot bindings carried from 00470550.cpp
+
+// ORIGINAL: 0x00470550 ?get_brighting@MapWin@@QAEHHHH@Z 0x00470550-0x00470776 FILE
+// HOMED 2026-09-04 from the 0x00470550 artifact. 16/202 in the tree. The
+// four absolute table constants 0x7F6680/0x7F66B1/0x7F66E2/0x7F6713 are
+// spelled as ONE binding, CornerLightTable, plus the stride 0x31 - the image's
+// four displacements are that base plus corner*0x31, and the scorer discounts
+// relocations so the single base reproduces the `[reg+reg+disp]` shape.
+// TRIED: chained-OR bounds check vs nested ifs, and caching `this` in a named local before the owned_==0 check - none change when the compiler spills `this` to [ebp-4] relative to the row/col bound-check jumps (MISMATCH #6 'push' vs 'mov'); not chased further. Switch-table index math (v1..v4 nibble packing, per-case table*7 stride) is a faithful transcription.
+// working copy - scaffold materialised by --work
+// size      550 bytes
+// prototype int (__thiscall ?get_brighting@MapWin@@QAEHHHH@Z)(MapWin* this, int, int, int)
+// callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0046FE70
+
+
+int MapWin::get_brighting(int x, int y, int corner) {
+    int row = y;
+    int col = x;
+    if (row < 0 || row >= MapLatitudeBounds || col < 0 || col >= MapLongitudeBounds) {
+        return 0;
+    }
+    if (owned_ == 0) {
+        return -0x80;
+    }
+    int colHalf = col >> 1;
+    char *tile = brighting_tile(owned_, row, colHalf);
+    unsigned int v0 = (unsigned char)tile[corner];
+    char *tileByteAddr = tile + corner;
+    if (v0 != 0xff) {
+        return (int)v0 - 0x80;
+    }
+    unsigned char terrain = *(unsigned char *)map_loc(col, row);
+    if ((terrain & 0xe0) < 0x60) {
+        *tileByteAddr = (char)0x80;
+        return 0;
+    }
+    get_alt(col, row, 1);
+    int v1;
+    if (owned_ == 0) {
+        v1 = 0;
+    } else {
+        char *t = brighting_tile(owned_, row, colHalf);
+        v1 = (unsigned char)t[10] & 0xf;
+    }
+    get_alt(col, row, 2);
+    int v2;
+    if (owned_ == 0) {
+        v2 = 0;
+    } else {
+        char *t = brighting_tile(owned_, row, colHalf);
+        v2 = ((unsigned char)t[10] >> 4) & 0xf;
+    }
+    get_alt(col, row, 3);
+    int v3;
+    if (owned_ == 0) {
+        v3 = 0;
+    } else {
+        char *t = brighting_tile(owned_, row, colHalf);
+        v3 = (unsigned char)t[11] & 0xf;
+    }
+    get_alt(col, row, 4);
+    int v4;
+    if (owned_ == 0) {
+        v4 = 0;
+    } else {
+        char *t = brighting_tile(owned_, row, colHalf);
+        v4 = (unsigned char)t[11] >> 4;
+    }
+    int result;
+    switch (corner) {
+    case 0:
+        result = CornerLightTable[v1 * 7 + v2];
+        break;
+    case 1:
+        result = CornerLightTable[0x31 + v2 * 7 + v3];
+        break;
+    case 2:
+        result = CornerLightTable[0x62 + v3 * 7 + v4];
+        break;
+    case 3:
+        result = CornerLightTable[0x93 + v4 * 7 + v1];
+        break;
+    default:
+        result = (int)v0;
+        break;
+    }
+    char *finalTile = brighting_tile(owned_, row, colHalf);
+    finalTile[corner] = (char)(result + 0x80);
+    return result;
+}
+
+// Fixed-slot bindings carried from 00470790.cpp
+// ORIGINAL: 0x00470790 ?get_point_light@MapWin@@QAEHHHH@Z 0x00470790-0x00470917 FILE
+// HOMED 2026-09-04 from the 0x00470790 artifact. 22/139 under /O2 /GX.
+// The scaffold's seven fixed globals all have names in this file now:
+// g_00685684 = AltDirectionTable, g_00685A24/g_00685B60/g_007F6750 =
+// AltLightBit1/AltLightBit2/AltLightBit200, g_00685EA0/g_00685EE0 = the two
+// CornerOffset tables map.h defines, g_0094988C = MapIsFlat (map.h), and the
+// tile read is `*map_tiles`/`*MapRowStride`. Two spellings measured:
+// TRIED: `map_loc(a1, a2)->bit2` for the tile read - 6/139, and the image's
+//            `mov eax,[0x68faf0]` came out relocation-masked to `[0]`; the
+//            explicit `*map_tiles` + `*MapRowStride` form reads the same two
+//            globals in the image's order and scored 9/139.
+// LEVER: the neighbour walk as an up-counting `for (j = 0; j < 4; ++j)` over
+//            `CornerOffsetX[a3-1]` / `CornerOffsetY[a3-1]` with the corner
+//            arguments `(j+1)&3` and `(j+2)&3`, instead of the do/while that
+//            carries a down-counting 0xfffffffe counter and its `check` temp
+//            - 9/139 -> 22/139, and the frame drops two slots.
+// TRIED: none confirmed byte-exact; MISMATCH #4 'mov' vs 'push' - the do/while neighbour-sum loop's register pressure does not reproduce the original's ebp-frame local layout.
+// size      391 bytes
+// prototype int (__thiscall ?get_point_light@MapWin@@QAEHHHH@Z)(MapWin* this, int, int, int)
+// callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00470550
+
+int MapWin::get_point_light(int x, int y, int corner) {
+    int total = 0;
+    int localLight = 0;
+
+    unsigned int rec =
+        *reinterpret_cast<const unsigned int *>(reinterpret_cast<const uint8_t *>(*map_tiles) +
+            (*MapRowStride * y + (x >> 1)) * 0x2c + 0xc);
+    int shade = static_cast<int>(rec) >> 0x18;
+
+    if ((rec & 1) == 0) {
+        if ((rec & 2) == 0) {
+            if ((rec & 0x200) != 0 && shade >= 0) {
+                unsigned char idx = AltDirectionTable[corner + shade * 5];
+                localLight = AltLightBit200[idx];
+            }
+        } else if (shade >= 0) {
+            unsigned char idx = AltDirectionTable[corner + shade * 5];
+            localLight = AltLightBit2[idx];
+        }
+    } else if (shade >= 0) {
+        unsigned char idx = AltDirectionTable[corner + shade * 5];
+        localLight = AltLightBit1[idx];
+    }
+
+    if (corner == 0) {
+        for (int i = 0; i < 4; ++i) {
+            total += get_brighting(x, y, i);
+        }
+        return (total >> 2) + localLight;
+    }
+
+    const int (*corner_x)[4] = CornerOffsetX + corner - 1;
+    const int (*corner_y)[4] = CornerOffsetY + corner - 1;
+    for (int j = 0; j < 4; ++j) {
+        int px = x + (*corner_x)[j];
+        if ((MapIsFlat & 1) == 0) {
+            if (px < 0) {
+                px += MapLongitudeBounds;
+            } else if (px >= MapLongitudeBounds) {
+                px -= MapLongitudeBounds;
+            }
+        }
+        int py = y + (*corner_y)[j];
+        total += get_brighting(px, py, (j + 1) & 3);
+
+        px = x + (*corner_x)[j];
+        if ((MapIsFlat & 1) == 0) {
+            if (px < 0) {
+                px += MapLongitudeBounds;
+            } else if (px >= MapLongitudeBounds) {
+                px -= MapLongitudeBounds;
+            }
+        }
+        total += get_brighting(px, py, (j + 2) & 3);
+    }
+
+    return (total >> 3) + localLight;
+}
+
+// Fixed-slot bindings carried from 00462980.cpp
+
+// ORIGINAL: 0x00462980 ?calculate_dimensions@MapWin@@QAEXXZ 0x00462980-0x00462EFA FILE
+// size      1402 bytes
+// prototype void (__thiscall ?calculate_dimensions@MapWin@@QAEXXZ)(MapWin* this)
+// callers   3   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00618F40
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x00462980
+// measured tier  MISMATCH
+// divergence     1
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/00462980/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?calculate_dimensions@MapWin@@QAEXXZ  at 0x00462980  (1402 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+
+void MapWin::calculate_dimensions() {
+    field_1DDAC_ = 0;
+    field_1DDB0_ = 0;
+
+    int32_t v;
+    if (*MapWinCaptionScale > 0) {
+        v = (*MapWinCaptionScale * 50) / *MapWinCaptionDivisor;
+    } else {
+        v = ((field_1DD98_ + 0x10) * 50) / 16;
+    }
+    v = (v + 1) / 4;
+    field_1DDC8_ = v;
+    if (v < 1) {
+        field_1DDC8_ = 1;
+    }
+    int32_t T = field_1DDC8_;
+    int32_t c2 = T * 2;
+    field_1DDC4_ = c2;
+    int32_t c4a = c2 * 2;
+    int32_t c8 = c2 * 4;
+    field_1DDBC_ = c4a;
+    field_1DDC0_ = c2;
+    field_1DDB4_ = c8;
+    field_1DDB8_ = T * 4;
+
+    char *const entered = entered_receiver(this);
+    int32_t w = *reinterpret_cast<int32_t *>(entered + 0x4c4);
+    int32_t h = *reinterpret_cast<int32_t *>(entered + 0x4c8);
+
+    field_1DDCC_ = (w + c8 - 1) / c8;
+    field_1DDD0_ = ((T * 4 - h) + c2 - 1) / (T * 4);
+    field_1DDD4_ = (w + T * 4 + c8 - 1) / c8;
+    field_1DDD8_ = ((T * 4 - h) + c2 - 1) / (T * 4);
+
+    if (this == reinterpret_cast<MapWin *>(&ConsoleGlobal)) {
+        int32_t a = field_1DDA0_;
+        int32_t b = field_1DD9C_;
+        MapWinPrimaryCorner[0] = b;
+        MapWinPrimaryCorner[1] = a;
+        MapWinPrimaryCorner[2] = b;
+        MapWinPrimaryCorner[3] = a;
+        int32_t f73 = field_1DDCC_;
+        int32_t f74 = field_1DDD0_;
+        int32_t e1 = (b - f73) + 4;
+        int32_t e2 = (f73 + b) - 4;
+        int32_t e3 = (a - f74) + 4;
+        int32_t e4 = (a + f74) - 6;
+        MapWinPrimaryCorner[0] = e1;
+        MapWinPrimaryCorner[2] = e2;
+        MapWinPrimaryCorner[1] = e3;
+        MapWinPrimaryCorner[3] = e4;
+    }
+
+    int32_t halfW = MapLongitudeBounds / 2;
+    if (field_1DDCC_ > halfW) {
+        field_1DDCC_ = halfW;
+        int32_t tileProduct = field_1DDCC_ * field_1DDB4_;
+        field_1DDD4_ = halfW + 1;
+        field_1DDAC_ = (w - tileProduct) / 2;
+    }
+    int32_t halfH = MapLatitudeBounds / 2;
+    if (field_1DDD0_ > halfH) {
+        field_1DDD0_ = halfH;
+        int32_t tileProduct2 = field_1DDD0_ * field_1DDB8_;
+        field_1DDD8_ = halfH + 1;
+        field_1DDB0_ = -((h + tileProduct2) / 2);
+    }
+
+    int32_t halfW2 = MapLongitudeBounds / 2;
+    field_1DDCC_ = (field_1DDCC_ < halfW2) ? field_1DDCC_ : halfW2;
+    int32_t halfW3 = MapLongitudeBounds / 2;
+    field_1DDD4_ = (field_1DDD4_ < halfW3) ? field_1DDD4_ : halfW3;
+
+    int32_t f74_ = field_1DDD0_;
+    int32_t aVal = field_1DDA0_;
+    int32_t panYinit = aVal - f74_;
+    field_1DDA8_ = panYinit;
+    int32_t altY = MapLatitudeBounds + (2 - f74_) * 2;
+    int32_t panY;
+    if (panYinit < -2 || altY < -2) {
+        panY = -2;
+    } else if (altY < panYinit) {
+        panY = altY;
+    } else {
+        panY = panYinit;
+    }
+    field_1DDA8_ = panY;
+
+    int32_t f73_ = field_1DDCC_;
+    int32_t bVal = field_1DD9C_;
+    int32_t panXinit = bVal - f73_;
+    uint8_t wrapFlag = *reinterpret_cast<uint8_t *>(&MapIsFlat);
+    int32_t panX;
+    if ((wrapFlag & 1) == 0) {
+        int32_t screenW = MapLongitudeBounds;
+        if (panXinit < 0) {
+            panX = panXinit + screenW;
+        } else if (panXinit >= screenW) {
+            panX = panXinit - screenW;
+        } else {
+            panX = panXinit;
+        }
+    } else {
+        panX = panXinit;
+    }
+    field_1DDA4_ = panX;
+
+    if ((wrapFlag & 1) != 0) {
+        int32_t altX = MapLongitudeBounds + (2 - f73_) * 2;
+        if (panX < -4 || altX < -4) {
+            panX = -4;
+        } else if (altX < panX) {
+            panX = altX;
+        }
+        field_1DDA4_ = panX;
+    }
+
+    field_1DDA4_ = ((field_1DDA4_ ^ field_1DDA8_) & 1) ^ field_1DDA4_;
+
+    int32_t fogW;
+    if ((field_1DD70_ & 2) == 0 || field_1DD98_ < -10) {
+        fogW = 0;
+    } else if (*MapWinCaptionScale < 1) {
+        fogW = ((field_1DD98_ * 3 + 0x30) * 4) / 16;
+    } else {
+        fogW = (*MapWinCaptionScale * 12) / *MapWinCaptionDivisor;
+    }
+    field_1DDDC_ = fogW;
+
+    int32_t fogH;
+    if ((field_1DD70_ & 2) == 0 || field_1DD98_ < -10) {
+        fogH = 0;
+    } else if (*MapWinCaptionScale < 1) {
+        fogH = (field_1DD98_ * 4 + 0x40) / 16;
+    } else {
+        fogH = (*MapWinCaptionScale * 4) / *MapWinCaptionDivisor;
+    }
+    field_1DDE0_ = fogH;
+
+    field_1DD6C_ = 0x19;
+    if ((GameMorePreferences & 0x10000) != 0) {
+        field_1DD6C_ = 8;
+        field_1DDDC_ = fogW / 3;
+        field_1DDE0_ = fogH / 3;
+    }
+
+    if (field_1DD6C_ != field_1EEC4_) {
+        field_1EEC4_ = field_1DD6C_;
+        if ((int)(intptr_t)owned_ != 0) {
+            int32_t count = (int32_t)MapArea;
+            char *base = reinterpret_cast<char *>(owned_);
+            for (int32_t ia = 0; ia < count; ++ia) {
+                for (int32_t ja = 0; ja < 5; ++ja) {
+                    base[ia * 0xc + ja + 4] = static_cast<char>(0xff);
+                }
+            }
+        }
+    }
+
+    if (field_1DD98_ != field_1EEC0_) {
+        if ((int)(intptr_t)owned_ != 0) {
+            int32_t count = (int32_t)MapArea;
+            char *base = reinterpret_cast<char *>(owned_);
+            for (int32_t ib = 0; ib < count; ++ib) {
+                for (int32_t jb = 0; jb < 4; ++jb) {
+                    base[ib * 0xc + jb] = static_cast<char>(0xff);
+                }
+            }
+            count = (int32_t)MapArea;
+            base = reinterpret_cast<char *>(owned_);
+            for (int32_t ic = 0; ic < count; ++ic) {
+                for (int32_t jc = 0; jc < 5; ++jc) {
+                    base[ic * 0xc + jc + 4] = static_cast<char>(0xff);
+                }
+            }
+        }
+        field_1EEC0_ = field_1DD98_;
+
+        int32_t fs1 = (field_1DDB8_ * 5) / 16;
+        if (fs1 > 0xc) {
+            fs1 = 0xc;
+        }
+        if (field_1EEF0_ != fs1) {
+            field_1EEF0_ = fs1;
+            font_a_.init(reinterpret_cast<char *>(*DefaultFontFace), fs1, 0);
+        }
+        int32_t fs2 = (field_1DDB8_ * 5) / 16;
+        if (fs2 > 0xc) {
+            fs2 = 0xc;
+        }
+        if (field_1EF48_ != fs2) {
+            field_1EF48_ = fs2;
+            font_c_.init(reinterpret_cast<char *>(*DefaultFontFace), fs2, 2);
+        }
+        int32_t fs3 = (field_1DDB8_ * 2) / 5;
+        if (fs3 > 0xc) {
+            fs3 = 0xc;
+        }
+        if (field_1EF1C_ != fs3) {
+            field_1EF1C_ = fs3;
+            font_b_.init(reinterpret_cast<char *>(*DefaultFontFace), fs3, 1);
+        }
+    }
+
+#undef I32
+}
+
+// ORIGINAL: 0x00463040 ?pixel_to_tile@MapWin@@QAEHHHPAHPAH@Z 0x00463040-0x004632CC FILE
+// symbol    ?pixel_to_tile@MapWin@@QAEHHHPAH0@Z
+//           VC6 merges the two identical `int *` argument types into the
+//           back-reference `0`, so the definition emits `PAH0` where the
+//           catalogue spells `PAHPAH`. Same two pointers, one mangling.
+// TRIED: MISMATCH #10 'lea' vs 'cmp' - transcribed the Ghidra pseudocode almost verbatim (including the vbtable-indirected bounds check via *(int*)(*this+4)); the entry sequence loading eax/ecx from [edi] and [eax+4] diverges around instruction 10, not chased further.
+// working copy - scaffold materialised by --work
+// size      652 bytes
+// prototype int (__thiscall ?pixel_to_tile@MapWin@@QAEHHHPAHPAH@Z)(MapWin* this, int, int, int*, int*)
+// callers   7   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046FE70
+
+int MapWin::pixel_to_tile(int x_pixel, int y_pixel, int *out_tile_x,
+                          int *out_tile_y) {
+    // The GraphicWin virtual base's client width (0x4C4) and height (0x4C8).
+    char *const entered = entered_receiver(this);
+    if ((x_pixel < *reinterpret_cast<int *>(entered + 0x4C4)) &&
+        (y_pixel < -*reinterpret_cast<int *>(entered + 0x4C8))) {
+        x_pixel = x_pixel - field_1DDAC_;
+        y_pixel = y_pixel - field_1DDB0_;
+        if ((-1 < x_pixel) && (-1 < y_pixel)) {
+            int iVar1;
+            int iVar2;
+            int iVar3;
+            int iVar4;
+            int iVar5;
+            unsigned int uVar6;
+            int iVar7;
+            int iVar8;
+            bool bVar9;
+            int local_8;
+
+            iVar5 = field_1DDA4_;
+            iVar3 = iVar5 + 1 + (x_pixel / field_1DDB4_) * 2;
+            uVar6 = MapIsFlat & 1;
+            if (uVar6 == 0) {
+                if (iVar3 < 0) {
+                    iVar3 = MapLongitudeBounds + iVar3;
+                } else if (MapLongitudeBounds <= iVar3) {
+                    iVar3 = iVar3 - MapLongitudeBounds;
+                }
+            }
+            iVar1 = field_1DDBC_;
+            iVar2 = iVar5 + 1 + ((x_pixel - iVar1) / field_1DDB4_) * 2;
+            if (uVar6 == 0) {
+                if (iVar2 < 0) {
+                    iVar2 = iVar2 + MapLongitudeBounds;
+                } else if (MapLongitudeBounds <= iVar2) {
+                    iVar2 = iVar2 - MapLongitudeBounds;
+                }
+            }
+            bVar9 = iVar2 != iVar3;
+            if (bVar9) {
+                local_8 = iVar3 - 1;
+            } else {
+                iVar3 = iVar3 + 1;
+                local_8 = iVar3;
+            }
+            bVar9 = !bVar9;
+            iVar3 = iVar3 - iVar5;
+            iVar5 = iVar3 - 1;
+            if (uVar6 == 0) {
+                if (iVar5 < 0) {
+                    iVar5 = iVar5 + MapLongitudeBounds;
+                } else if (MapLongitudeBounds <= iVar5) {
+                    iVar5 = iVar5 - MapLongitudeBounds;
+                }
+            }
+            if (uVar6 == 0) {
+                if (iVar3 < 0) {
+                    iVar3 = iVar3 + MapLongitudeBounds;
+                } else if (MapLongitudeBounds <= iVar3) {
+                    iVar3 = iVar3 - MapLongitudeBounds;
+                }
+            }
+            iVar2 = field_1DDA8_ + (y_pixel / field_1DDB8_) * 2;
+            do {
+                iVar8 = iVar2;
+                bVar9 = (bVar9 == false);
+                if (bVar9) {
+                    iVar2 = this->get_alt(local_8, iVar8, 2);
+                    iVar2 = ((iVar8 - field_1DDA8_) - 1) * field_1DDC0_ - iVar2;
+                    iVar4 = this->get_alt(local_8, iVar8, 3);
+                    iVar4 = (iVar8 - field_1DDA8_) * field_1DDC0_ - iVar4;
+                    local_8 = local_8 + 1;
+                } else {
+                    iVar2 = this->get_alt(local_8, iVar8, 1);
+                    iVar2 = (iVar8 - field_1DDA8_) * field_1DDC0_ - iVar2;
+                    iVar4 = this->get_alt(local_8, iVar8, 2);
+                    iVar4 = ((iVar8 - field_1DDA8_) - 1) * field_1DDC0_ - iVar4;
+                    local_8 = local_8 - 1;
+                }
+                iVar4 = (iVar4 - iVar2) * (x_pixel - iVar1 * iVar5);
+                iVar7 = (y_pixel - iVar2) * (iVar1 * iVar3 - iVar1 * iVar5);
+                iVar2 = iVar8 + 1;
+            } while (iVar4 - iVar7 == 0 || iVar4 < iVar7);
+            iVar8 = iVar8 - 1;
+            if ((MapIsFlat & 1) == 0) {
+                if (local_8 < 0) {
+                    local_8 = local_8 + MapLongitudeBounds;
+                } else if (MapLongitudeBounds <= local_8) {
+                    local_8 = local_8 - MapLongitudeBounds;
+                }
+            }
+            *out_tile_x = local_8;
+            *out_tile_y = iVar8;
+            if ((-1 < iVar8) && (iVar8 < MapLatitudeBounds) && (-1 < *out_tile_x) && (*out_tile_x < MapLongitudeBounds)) {
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
+// Fixed-slot bindings carried from 0046ec10.cpp
+
+typedef short (__stdcall *KeyStateFn)(int);
+
+class Slot17Shim { public:
+    virtual void slot00(); virtual void slot01(); virtual void slot02();
+    virtual void slot03(); virtual void slot04(); virtual void slot05();
+    virtual void slot06(); virtual void slot07(); virtual void slot08();
+    virtual void slot09(); virtual void slot10(); virtual void slot11();
+    virtual void slot12(); virtual void slot13(); virtual void slot14();
+    virtual void slot15(); virtual void slot16();
+    virtual void slot17(int, int);  // <-- used, offset 0x44
+};
+
+// ORIGINAL: 0x0046EC10 ?on_right_down@MapWin@@QAEXHH@Z 0x0046EC10-0x0046ED21 FILE
+// size      273 bytes
+// prototype void (__thiscall ?on_right_down@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004B4A20
+// indirect  0x0046EC76 0x0046EC82 0x0046EC91 0x0046EC9D 0x0046ED0C 0x0046ED18
+// PRESERVED UNIT - measured MNEMONIC_ONLY.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x0046EC10
+// measured tier  MNEMONIC_ONLY
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/0046ec10/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?on_right_down@MapWin@@QAEXHH@Z  at 0x0046EC10  (273 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+
+void MapWin::on_right_down(int x_coord, int y_coord) {
+    if (*MapWinInputEnabled == 0) {
+        return;
+    }
+
+    if (this->field_1DD80_ != 0) {
+        ConsoleStatusWin.set_title(0);
+    }
+
+    this->field_1DD7C_ = 0;
+    this->field_1DD80_ = 0;
+    this->field_1DD8C_ = 0;
+    this->field_1DD84_ = 0;
+    this->field_1DE0C_ = -1;
+    this->field_1DD88_ = 0;
+
+    if (*KeyStatePollSuppressed != 0) {
+        return;
+    }
+
+    KeyStateFn get_key_state = *reinterpret_cast<KeyStateFn *>(IAT_GetAsyncKeyState);
+
+    uint8_t shift_down = 0;
+    shift_down = static_cast<uint8_t>(static_cast<uint16_t>(get_key_state(0x10)) >> 8);
+    if (shift_down) {
+        uint8_t ctrl_down = 0;
+        ctrl_down = static_cast<uint8_t>(static_cast<uint16_t>(get_key_state(0x11)) >> 8);
+        if (ctrl_down) {
+            goto check_flag;
+        }
+    }
+
+    if (!((*reinterpret_cast<KeyStateFn *>(IAT_GetKeyState))(0x91) & 1)) {
+        goto abort;
+    }
+
+    {
+        uint8_t ctrl_down2 = 0;
+        ctrl_down2 = static_cast<uint8_t>(static_cast<uint16_t>(get_key_state(0x11)) >> 8);
+        if (ctrl_down2) {
+            goto abort;
+        }
+    }
+
+check_flag:
+    if (GameState & 0x40) {
+        this->field_1DD8C_ = 2;
+        this->field_1DD94_ = -1;
+        this->field_1DD90_ = -1;
+
+        char *const entered = entered_receiver(this);
+
+        if (WinPointerOwner3 == 0) {
+            WinPointerOwner4 = 0;
+            WinPointerOwner3 = reinterpret_cast<Win *>(
+                *reinterpret_cast<int32_t *>(entered) + entered);
+        }
+
+        {
+            int32_t offset =
+                *reinterpret_cast<int32_t *>(entered + MapWinEnteredOffset);
+            reinterpret_cast<Slot17Shim *>(entered + offset)->slot17(x_coord, y_coord);
+        }
+        return;
+    }
+
+abort:
+    get_key_state(0x11);
+}
+
+class VCallI { public:
+    virtual void slot000();
+    virtual void slot001();
+    virtual void slot002();
+    virtual void slot003();
+    virtual void slot004();
+    virtual void slot005();
+    virtual void slot006();
+    virtual void slot007();
+    virtual void slot008();
+    virtual void slot009();
+    virtual void slot010();
+    virtual void slot011();
+    virtual void slot012();
+    virtual void slot013();
+    virtual void slot014();
+    virtual void slot015();
+    virtual void slot016();
+    virtual void slot017();
+    virtual void slot018();
+    virtual void slot019();
+    virtual void slot020();
+    virtual void slot021();
+    virtual void slot022();
+    virtual void slot023();
+    virtual void slot024();
+    virtual void slot025();
+    virtual void slot026();
+    virtual void slot027();
+    virtual void slot028();
+    virtual void slot029();
+    virtual void slot030();
+    virtual void slot031();
+    virtual void slot032();
+    virtual void slot033();
+    virtual void slot034();
+    virtual void slot035();
+    virtual void slot036();
+    virtual void slot037();
+    virtual void slot038();
+    virtual void slot039();
+    virtual void slot040();
+    virtual void slot041();
+    virtual void slot042();
+    virtual void slot043();
+    virtual void slot044(int);  // <-- used, takes the region id
+};
+
+// ORIGINAL: 0x0046F700 ?on_nc_left_down@MapWin@@QAEXHH@Z 0x0046F700-0x0046F880 FILE
+// size      384 bytes
+// prototype void (__thiscall ?on_nc_left_down@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005FA7E0
+// indirect  0x0046F784 0x0046F7D3 0x0046F822 0x0046F871
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x0046F700
+// measured tier  MISMATCH
+// divergence     11
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/0046f700/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?on_nc_left_down@MapWin@@QAEXHH@Z  at 0x0046F700  (384 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+
+void MapWin::on_nc_left_down(int x_coord, int y_coord) {
+    RECT rect = {0, 0xe, 0x11, 0x1f};
+
+    // `entered` is the GraphicWin virtual base the image hands this
+    // handler: front + 0x21A6C. Every offset below is relative to it.
+    char *const entered = entered_receiver(this);
+
+    int32_t t1 = *reinterpret_cast<int32_t *>(
+        *reinterpret_cast<int32_t *>(entered - 0x21A6C) + 4);
+    int32_t fA = *reinterpret_cast<int32_t *>(entered + t1 - 0x21918);
+    int32_t fB = *reinterpret_cast<int32_t *>(entered + t1 - 0x21920);
+    int32_t diff = fA - fB;
+    diff -= 0x5b;
+    rect.left = diff;
+    rect.right = diff + 0x11;
+    if (in_box(x_coord, y_coord, &rect)) {
+        reinterpret_cast<VCallI *>(
+            entered + *reinterpret_cast<int32_t *>(*reinterpret_cast<int32_t *>(entered - 0x21A6C) + 4) -
+            0x21a6c)
+            ->slot044(3);
+        return;
+    }
+
+    rect.left = rect.left + 0x15;
+    rect.right = rect.right + 0x15;
+    if (in_box(x_coord, y_coord, &rect)) {
+        reinterpret_cast<VCallI *>(
+            entered + *reinterpret_cast<int32_t *>(*reinterpret_cast<int32_t *>(entered - 0x21A6C) + 4) -
+            0x21a6c)
+            ->slot044(2);
+        return;
+    }
+
+    rect.right = rect.right + 0x15;
+    rect.left = rect.left + 0x15;
+    if (in_box(x_coord, y_coord, &rect)) {
+        reinterpret_cast<VCallI *>(
+            entered + *reinterpret_cast<int32_t *>(*reinterpret_cast<int32_t *>(entered - 0x21A6C) + 4) -
+            0x21a6c)
+            ->slot044(1);
+        return;
+    }
+
+    rect.left = rect.left + 0x15;
+    rect.right = rect.right + 0x15;
+    if (in_box(x_coord, y_coord, &rect)) {
+        reinterpret_cast<VCallI *>(
+            entered + *reinterpret_cast<int32_t *>(*reinterpret_cast<int32_t *>(entered - 0x21A6C) + 4) -
+            0x21a6c)
+            ->slot044(0);
+    }
+}
+
+// ORIGINAL: 0x0046FD90 ?clear_terrain@MapWin@@QAEXXZ 0x0046FD90-0x0046FDFE FILE
+// size      110 bytes
+// prototype void (__thiscall ?clear_terrain@MapWin@@QAEXXZ)(MapWin* this)
+// callers   4   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x0046FD90
+// measured tier  MISMATCH
+// divergence     0
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/0046fd90/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?clear_terrain@MapWin@@QAEXXZ  at 0x0046FD90  (110 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+void MapWin::clear_terrain() {
+    unsigned char *field4 = *reinterpret_cast<unsigned char **>(owned_);
+    if (field4 != 0) {
+        if (0 < (int32_t)MapArea) {
+            int count = 0;
+            int base = 0;
+            do {
+                int i = 0;
+                do {
+                    int idx = base + i;
+                    ++i;
+                    field4[idx] = 0xFF;
+                } while (i < 4);
+                ++count;
+                base += 0xC;
+            } while (count < (int32_t)MapArea);
+        }
+        field4 = *reinterpret_cast<unsigned char **>(owned_);
+        if (field4 != 0 && 0 < (int32_t)MapArea) {
+            int count = 0;
+            int base = 0;
+            do {
+                int i = 0;
+                do {
+                    int idx = base + i;
+                    ++i;
+                    field4[idx + 4] = 0xFF;
+                } while (i < 5);
+                ++count;
+                base += 0xC;
+            } while (count < (int32_t)MapArea);
+        }
+    }
+}
+

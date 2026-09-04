@@ -351,7 +351,7 @@ CEILINGS = {
     # 2401 -> 2478 (2026-09-04, P2 general/game rework): +77 aN identifiers
     # in the homed transcriptions (the agent's own-tree 1765 predates the
     # buffer batch's collection; merged truth is 2401+77). Class pass's.
-    "scaffold name": 2470,
+    "scaffold name": 2458,
 }
 
 WHY = {
