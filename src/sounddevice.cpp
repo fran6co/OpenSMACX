@@ -756,16 +756,11 @@ void Wave_In_Device::unk_slot2() {}
 // ?release@Midi_Device@@QAEXXZ, but every one of these bodies ends
 // `xor eax, eax; pop esi; ret` (0x004C581F, 0x004C5A6D) - it returns a zero
 // the callers may read. Left as the image has it; noted rather than fixed.
-// ORIGINAL: 0x004C56D0 ?create_device@Midi_Device@@QAEHK@Z 0x004C56D0-0x004C5706
+// ORIGINAL: 0x004C56D0 ?create_device@Midi_Device@@QAEHK@Z 0x004C56D0-0x004C5707 BYTE_EXACT
 // LEVER: the artifact's `char *self = reinterpret_cast<char *>(this); ... self +
 //   0x14` pun became `void **slot = &device_;` - the member form reproduces the
 //   image's `lea eax, [ecx + 0x14]` at 0x004C56D3, which is the address the open
 //   call needs, not a value read.
-// TRIED: all 21 instructions the measurer compares agree; the catalogued span
-//   stops at 0x004C5706, one byte short of the closing `ret 4` at 0x004C5704,
-//   so the compiled body reads one instruction longer and the tier stays
-//   MISMATCH. Same clipping at 0x004C57F0-0x004C5822 (ret at 0x004C5822) and
-//   0x004C59A0-0x004C59C9 (ret 4 at 0x004C59C2). Not fixable from source.
 // symbol    ?create_device@Midi_Device@@UAEHK@Z
 int Midi_Device::create_device(unsigned long flags) {
     // The image takes `&device_` into eax first (0x004C56D3 `lea eax,
@@ -793,7 +788,7 @@ int Midi_Device::delete_device() {
     return 0x14;
 }
 
-// ORIGINAL: 0x004C57F0 ?release@Midi_Device@@QAEXXZ 0x004C57F0-0x004C5822
+// ORIGINAL: 0x004C57F0 ?release@Midi_Device@@QAEXXZ 0x004C57F0-0x004C5823 BYTE_EXACT
 // symbol    ?release@Midi_Device@@UAEHXZ
 int Midi_Device::release() {
     if (device_ != 0) {
@@ -809,7 +804,7 @@ int Midi_Device::release() {
     return 0;
 }
 
-// ORIGINAL: 0x004C59A0 ?create_device@Wave_In_Device@@QAEHK@Z 0x004C59A0-0x004C59C9
+// ORIGINAL: 0x004C59A0 ?create_device@Wave_In_Device@@QAEHK@Z 0x004C59A0-0x004C59C5 BYTE_EXACT
 // symbol    ?create_device@Wave_In_Device@@UAEHK@Z
 int Wave_In_Device::create_device(unsigned long flags) {
     void **slot = &device_;

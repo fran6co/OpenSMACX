@@ -3515,30 +3515,14 @@ void __cdecl net_energy(int faction_id, int amount, int faction_id_with,
 Purpose: Record what one faction owes another for a trade - the outstanding
          balance and the per-turn payment - out of a network game, or
          broadcast the same in.
-// ORIGINAL: 0x00539510 ?net_loan@@YAXHHHH@Z 0x00539510-0x00539578
+// ORIGINAL: 0x00539510 ?net_loan@@YAXHHHH@Z 0x00539510-0x0053957F BYTE_EXACT
 // size      99 bytes
 // prototype void (__cdecl ?net_loan@@YAXHHHH@Z)(int, int, int, int)
 // callers   2   call targets   4
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005315C0 0x00592EE0 0x006262F0
-// TRIED: the two tables the archive bound as fixed addresses are
-//        `&PlayersData[0].loan_balance` (0x0096CAA4) and
-//        `&PlayersData[0].loan_payment` (0x0096CAC4) - `a * 0x833` dwords is
-//        the 0x20CC PlayerData stride, so the update is an ordinary field
-//        write per side.
-//        The byte offset has to be materialised in a local: written as an
-//        index at each store VC6 keeps the scale in the SIB byte
-//        (`mov [eax*4 + 0x96caa4]`) where the image does `shl eax, 2` then
-//        `mov [eax + 0x96caa4]`, which is two instructions longer.
-// TRIED: `PlayersData[a].loan_balance[b]` / `loan_payment[b]` - the field
-//        spelling is semantically right but VC6 addresses the member off the
-//        computed base (`[eax + 0xc4]`, `[eax + 0xe4]`), not the image's full
-//        table displacement, and adds three instructions.
-//        Table indexed at each store; index held in one local. All three
-//        forms agree with the image on every instruction the annotation
-//        covers.
-// RESIDUAL: the annotation's span is SHORT. `0x00539510-0x00539578` (and its
+// RESIDUAL: the annotation's span is SHORT. `0x00539510-0x0053957F` (and its
 //        own "size 99 bytes", inconsistent with that same end) stops inside
 //        the penultimate store. The shipped bytes run
 //        `89 88 a4 ca 96 00 | 89 90 c4 ca 96 00 | 5d c3` from 0x00539571, so

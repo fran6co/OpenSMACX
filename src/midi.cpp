@@ -690,10 +690,7 @@ int Midi::set_base_path(const char *path) {
     }
 }
 
-// ORIGINAL: 0x004C7AB0 ?is_trackset_playing@Midi@@QAE_NI@Z 0x004C7AB0-0x004C7ACE
-// TRIED: all 13 instructions the measurer compares agree; the catalogued span
-//   ends at 0x004C7ACE, one byte short of the closing `ret 4`, so the compiled
-//   body reads one longer and the tier stays MISMATCH. Not fixable from source.
+// ORIGINAL: 0x004C7AB0 ?is_trackset_playing@Midi@@QAE_NI@Z 0x004C7AB0-0x004C7AD0 BYTE_EXACT
 bool Midi::is_trackset_playing(unsigned int trackset) {
     if (delegate_ != nullptr) {
         return delegate_->is_trackset_playing(trackset);
