@@ -60,6 +60,14 @@
   */
 class MapWin : public virtual GraphicWin {
  public:
+  // homed from 0046fe00.cpp
+  int get_relative_alt(int x, int y, int detail);
+
+ public:
+  // homed from 0046fce0.cpp
+  void UNK7();
+
+ public:
   // 0x0046F880, a pending_bodies forwarder.
   void on_sys_close();
 
@@ -169,6 +177,12 @@ class MapWin : public virtual GraphicWin {
   MEASURED ~MapWin() { clear(0); }
   int UNK1();
   void UNK3();
+  // 0x0046FC80, homed from the archive. Walks RadiusRange/RadiusOffsetX/Y
+  // (map.h) clearing the altitude/contour record each tile owns.
+  void UNK6(int UNUSED(x) x, int UNUSED(y) y, int radius);
+  // 0x0046FB90, homed from the archive. Same three radius tables, walked to
+  // reset the 0xC-stride visibility record `owned_` points at.
+  void clear_alt(int x, int y, int radius);
   void do_image_buttons();
   void main_caption();
   void on_left_click(int a1, int a2);

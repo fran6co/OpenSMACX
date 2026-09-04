@@ -494,3 +494,36 @@ Purpose: Step the receiver back to the subobject ??_GTutWin@@UAEPAXI@Z expects,
 Return Value: the forwarded call's
 Status: Complete
 */
+
+// THE COLOUR INDEX the tutorial arrow's two lines are drawn in: 0x0068A5A0
+// holds 98 in the shipped image, read as a load there rather than folded, so
+// it is a variable in the original and a binding here.
+int *const TutWinArrowColour = (int *)0x0068A5A0;
+
+/*
+Purpose: Draw the tutorial's pointing arrow: its shaft across the rectangle the
+         window records, then its head from the recorded corner, both in the one
+         colour index and only when the window says it is on screen at all.
+// ORIGINAL: 0x004BDEA0 ?draw_arrow@TutWin@@QAEXXZ 0x004BDEA0-0x004BDF16 FILE BYTE_EXACT
+// LEVER: the two calls are Win::window_line_raw on the Win-family object at
+//   0x53D4, and the second only fires when field_539C_ is non-negative - the
+//   arrow's head, drawn from a different corner of the same rectangle.
+// size      118 bytes
+// callers   3   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F2AC0
+Return Value: n/a
+Status: Complete
+*/
+void TutWin::draw_arrow() {
+    if (field_53A4_ != 0) {
+        field_53D4_->window_line_raw(field_538C_, field_5390_, field_5384_,
+                                     field_5388_, *TutWinArrowColour, 2, 2);
+        int head = field_539C_;
+        if (head >= 0) {
+            field_53D4_->window_line_raw(head, field_53A0_, field_5394_,
+                                         field_5398_, *TutWinArrowColour, 2, 2);
+        }
+    }
+}

@@ -204,10 +204,7 @@ void __cdecl fixup_landmarks() {
 // ?terrain_fixup@@YAXPAUMapWin@@@Z at 0x004711A0 - mapwin_terrain_fixup
 // (src/mapwin.cpp) calls it BY NAME, once per live MapWin slot and once
 // more for each of three fixed-address windows.
-void __cdecl terrain_fixup(MapWin *window) {
-    typedef void(__cdecl *pending)(MapWin *);
-    PENDING_BODY(0x004711A0, pending)(window);
-}
+
 
 void __cdecl world_rainfall() {
     typedef void(__cdecl *pending)();
@@ -391,8 +388,8 @@ int Sprite::draw_multi_table_dest(Buffer *buffer, int a, int b, int c,
 // Three __cdecl free functions the editor commands call, still original
 // bodies. Declared at the top of console.cpp beside the bodies that reach
 // them; their natural header home is the class pass that recovers them.
-//             bodies homed (veh.cpp) or in src/unrecovered/005c1b70.cpp,
-//             src/recovered/units/005c32a0.cpp
+//             bodies homed (veh.cpp) or in src/unrecovered/005c1b70.cpp;
+//             0x005C32A0 world_rocky is homed in map.cpp now
 void __cdecl veh_kill(int veh_id) {
     typedef void(__cdecl *pending)(int);
     PENDING_BODY(0x005C08C0, pending)(veh_id);
@@ -403,10 +400,7 @@ int __cdecl veh_ready(int veh_id) {
     return PENDING_BODY(0x005C1B70, pending)(veh_id);
 }
 
-void __cdecl world_rocky() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x005C32A0, pending)();
-}
+
 
 // ?exec@BasePop@@QAEHHP6AHXZ@Z at 0x00602600 - the modal loop both `exec`
 // overloads wrap.
@@ -1823,17 +1817,12 @@ int __cdecl vehdraw_construct_reactor(int a1, int a2, int a3, int a4, int a5,
 }
 
 // ---------------------------------------------------------------------------
-// FOURTEEN FREE FUNCTIONS the Console bodies call, none of which src/ had a
-// definition for. Each target is an UNCLAIMED archive body (file / verbatim,
+// THIRTEEN FREE FUNCTIONS the Console bodies call, none of which src/ had a
+// definition for. draw_cursor left for mapwin.cpp, where its body now lives. Each target is an UNCLAIMED archive body (file / verbatim,
 // no claim), so a forwarder is the safe spelling for it - no address-index
 // landmine. The declarations live at the top of src/console.cpp, beside the
 // callers that needed them; homing any of these into its own TU deletes both
 // the forwarder here and the declaration there.
-
-void __cdecl draw_cursor() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x0046AE00, pending)();
-}
 
 int __cdecl save_game(int a1) {
     typedef int(__cdecl *pending)(int);
@@ -1860,10 +1849,7 @@ int __cdecl load_map() {
     return PENDING_BODY(0x005AB600, pending)();
 }
 
-void __cdecl set_dirty() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x00592A80, pending)();
-}
+
 
 int __cdecl size_of_planet(int a1) {
     typedef int(__cdecl *pending)(int);
@@ -1969,5 +1955,3 @@ void NetDaemon::await_diplo(int opcode) {
 // ?unlock@NetDaemon@@QAEXXZ (0x00530D00) and ?close_channel@NetDaemon@@QAEXXZ
 // (0x00530600) WERE HERE and are gone: both are homed into src/netdaemon.cpp,
 // whose diplo_unlock and diplomacy_ends callers needed them.
-
-

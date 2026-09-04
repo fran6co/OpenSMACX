@@ -79,7 +79,10 @@ CEILINGS = {
     # homed with their claims (DipEdit UNK precedent).
     # 173 -> 181 (2026-09-03, P1a batch): eight more UNKn catalogue
     # names homed with claims (DipEdit precedent).
-    "unk-method": 181,
+    # 181 -> 185 (2026-09-04, P2 map/mapwin batch): MapWin::UNK6 and UNK7
+    # homed with claims under the DipEdit precedent; both EVIDENCE-FREE by
+    # every census (callers 0, no CSV, Ghidra FUN_/IDA sub_ spellings).
+    "unk-method": 185,
     # THE ESCAPE HATCH, RATCHETED. An UNKn whose comment block says
     # EVIDENCE-FREE and names it has been investigated and found unnameable -
     # no caller, no dispatch, no CSV entry. That is a result, not unfinished

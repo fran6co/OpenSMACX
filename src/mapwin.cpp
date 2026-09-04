@@ -18,7 +18,9 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "mapwin.h"
+#include "lock.h"      // LockMapTable - terrain_fixup walks its records
 #include "console.h"
+#include "tutwin.h"    // TutWinGlobal - draw_cursor ends on its draw_arrow
 #include "statuswin.h"
 #include "worldwin.h"
 #include "spritebox.h"
@@ -1204,4 +1206,259 @@ have_y:
         result_x -= sum;
         *a4 = result_x;
     }
+}
+
+// ORIGINAL: 0x004711A0 ?terrain_fixup@@YAXPAUMapWin@@@Z 0x004711A0-0x0047123B FILE
+// symbol    ?terrain_fixup@@YAXPAVMapWin@@@Z
+// MapWin is a class here and a struct in the image, so the tag differs.
+// TRIED: hoisting `base = owned_+offset` into its own statement before the `j = j+1` increment, to force add-before-inc ordering - same MISMATCH #30 'add' vs 'inc' either way (/O2 schedules inc first regardless of source order). similarity 0.9667, rebuilt_bytes == original_bytes (155).
+// working copy - scaffold materialised by --work
+// size      155 bytes
+// prototype 
+// callers   1   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x00644EF2
+void __cdecl terrain_fixup(MapWin * window) {
+    int count2 = 0;
+    if (window != 0) {
+        if (window->owned_ != 0) {
+            free(window->owned_);
+            window->owned_ = 0;
+        }
+        window->owned_ = mem_get(MapArea * 0xc);
+        if (MapArea > 0) {
+            int offset = 0;
+            do {
+                int j = 0;
+                do {
+                    j = j + 1;
+                    *(reinterpret_cast<unsigned char *>(window->owned_) + offset - 1 + j) = 0xff;
+                } while (j < 4);
+                j = 0;
+                do {
+                    j = j + 1;
+                    *(reinterpret_cast<unsigned char *>(window->owned_) + offset + 3 + j) = 0xff;
+                } while (j < 5);
+                *(reinterpret_cast<unsigned char *>(window->owned_) + 9 + offset) = 0;
+                unsigned char *record = reinterpret_cast<unsigned char *>(window->owned_) + 9 + offset;
+                offset = offset + 0xc;
+                *record = *record | (*LockMapTable & 0xd0);
+                count2 = count2 + 1;
+            } while (count2 < MapArea);
+        }
+    }
+}
+
+// ORIGINAL: 0x0046FC80 ?UNK6@MapWin@@QAEXHHH@Z 0x0046FC80-0x0046FCD3 FILE
+// TRIED: naming the three tables `static int *const` - /O2 then folds the
+//   0x66F440-0x66EFBC pair into one walking pointer with an `add`, which the
+//   image never does: it keeps each table as its own SIB-indexed base. Spelled
+//   `extern int NAME[]` (map.h's arrays) the addresses stay unknown at compile
+//   time and the folding cannot happen. MISMATCH #23.
+// size      83 bytes
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// TRIED: `reinterpret_cast<int *>(owned_)[idx * 3]` (one load, the image's
+//   shape) versus `(*reinterpret_cast<int **>(owned_))[idx * 3]` (two) - the
+//   second scores 26 of 30, the first 21 of 30, because with it VC6 folds
+//   `RadiusRange[a3 + 1]` into `[eax*4 + 4]` where the image holds
+//   `[eax*4 + 0x66f8c8]`: map.h's RadiusRange is a const header array, so its
+//   address is a per-TU constant and the +1 becomes a displacement instead of
+//   part of an absolute base. An `extern` RadiusRange would give the image's
+//   disp32 shape but moves the array's linkage in every TU that uses it.
+void MapWin::UNK6(int UNUSED(x) x, int UNUSED(y) y, int radius) {
+    if (owned_ != 0) {
+        int i = 0;
+        int count = RadiusRange[radius + 1];
+        if (count > 0) {
+            do {
+                // the abstract-map index: y halved-width rows, x halved
+                int idx = RadiusOffsetY[i] * (static_cast<int>(MapLongitude) >> 1)
+                        + (RadiusOffsetX[i] >> 1);
+                i++;
+                (*reinterpret_cast<int **>(owned_))[idx * 3] = -1;
+            } while (i < count);
+        }
+    }
+}
+
+// ORIGINAL: 0x0046FB90 ?clear_alt@MapWin@@QAEXHHH@Z 0x0046FB90-0x0046FC29 FILE
+// TRIED: 153/153 bytes (edit distance 1 pair, same total size).
+// Original writes the -1 fill via `or edx,0xffffffff` into a register
+// it already holds, then stores that register (2 ops); every source
+// form tried here - a direct `*rec = -1`, a named `fill` temp shared
+// between the int32 and byte stores, writing the byte store before the
+// int32 store - still lowers to a single fused `mov dword ptr[rec],-1`
+// (equal cost, different bytes). ~10 tries; not found.
+// size      153 bytes
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+void MapWin::clear_alt(int x, int y, int radius) {
+    if (owned_ != 0) {
+        int i = 0;
+        int count = RadiusRange[radius + 1];
+        if (count > 0) {
+            int width = MapLongitude;
+            do {
+                int dx = RadiusOffsetX[i] + x;
+                if ((MapIsFlat & 1) == 0) {
+                    if (dx < 0) {
+                        dx += width;
+                    } else if (dx >= width) {
+                        dx -= width;
+                    }
+                }
+                int dy = RadiusOffsetY[i] + y;
+                if (dy >= 0 && dy < MapLatitudeBounds && dx >= 0 && dx < width) {
+                    char *rec = reinterpret_cast<char *>(owned_)
+                                + ((width >> 1) * dy + (dx >> 1)) * 0xc + 4;
+                    *reinterpret_cast<int32_t *>(rec) = -1;
+                    *reinterpret_cast<uint8_t *>(rec + 4) = 0xff;
+                    width = MapLongitude;
+                }
+                i++;
+            } while (i < count);
+        }
+    }
+}
+
+// ORIGINAL: 0x0046FCE0 ?UNK7@MapWin@@QAEXXZ 0x0046FCE0-0x0046FD1A FILE BYTE_EXACT
+// size      58 bytes
+// prototype void (__thiscall ?UNK7@MapWin@@QAEXXZ)(MapWin* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// PRESERVED UNIT - measured NO_COMPILE.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x0046FCE0
+// measured tier  NO_COMPILE
+// refusal        u0046fce0.cpp(1) : error C2653: 'MapWin' : is not a class or namespace name u0046fce0.cpp(2) : error C2065: 'owned_' : undeclared identifier u0046fce0.cpp(3) : 
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/0046fce0/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?UNK7@MapWin@@QAEXXZ  at 0x0046FCE0  (58 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+
+void MapWin::UNK7() {
+    if (owned_ != 0) {
+        for (int i = 0; i < static_cast<int>(MapArea); ++i) {
+            for (int j = 0; j < 4; ++j) {
+                reinterpret_cast<char *>(owned_)[i * 0xC + j] = static_cast<char>(0xFF);
+            }
+        }
+    }
+}
+
+// ORIGINAL: 0x0046FE00 ?get_relative_alt@MapWin@@QAEHHHH@Z 0x0046FE00-0x0046FE67 FILE BYTE_EXACT
+// working copy - scaffold materialised by --work
+// size      103 bytes
+// prototype int (__thiscall ?get_relative_alt@MapWin@@QAEHHHH@Z)(MapWin* this, int, int, int)
+// callers   4   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046FE70
+
+int MapWin::get_relative_alt(int x, int y, int detail) {
+    get_alt(x, y, detail);
+    if (owned_ == 0) {
+        return 0;
+    }
+    if (detail == 0) {
+        return 4;
+    }
+    int row = (static_cast<int>(MapLongitude) >> 1) * y + (x >> 1);
+    unsigned short val = *reinterpret_cast<unsigned short *>((char *)owned_ + 10 + row * 12);
+    int shift = (detail - 1) * 4;
+    return (val >> shift) & 0xf;
+}
+
+// ORIGINAL: 0x0046AE00 ?draw_cursor@@YAXXZ 0x0046AE00-0x0046AEED FILE
+// NOTE ON THE HANDOFF: this was queued as "declare it on MapWin", but the
+// image's mangled name is ?draw_cursor@@YAXXZ - a FREE function taking
+// nothing, not a member. It walks every slot of the map-window table rather
+// than acting on one window, which is what the name is hiding. So it lives at
+// file scope beside the other free drawing helpers, not on the class.
+//
+// TRIED: MapWinTable spelled as the header's `MapWinSlots &` accessor. The
+// image walks a live cursor (`add ebx,4 / cmp ebx,0x7d3c5c`) and an index loop
+// compares a different thing; the walk is kept, the end bound spelled as the
+// table's own one-past-the-end slot.
+// size      237 bytes
+// callers   2   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0046A2A0 0x004BDEA0
+// The one guard this body reads before drawing anything: zero means the cursor
+// is clear to draw. No other site in the tree names it, and the archive only
+// ever binds it anonymously, so the polarity above is the whole evidence.
+int *const CursorDrawSuppressed = (int *)0x009392B0;
+
+void __cdecl draw_cursor() {
+    if (*CursorDrawSuppressed == 0) {
+        MapWinSlots &table = map_win_table();
+        MapWin **slot = table;
+        do {
+            MapWin *window = *slot;
+            if (window != 0 &&
+                (slot == table ||
+                 window->field_1DD74_ != 0)) {
+                int index = CursorLastIndex;
+                int tile_y = CursorLastY[index];
+                int tile_x = CursorLastX[index];
+                if (window->field_1DDA8_ <= tile_y &&
+                    tile_y < window->field_1DDD8_ +
+                             window->field_1DDD0_ +
+                             window->field_1DDA8_) {
+                    int wrapped_x = tile_x;
+                    if ((MapIsFlat & 1) == 0) {
+                        if (tile_x < window->field_1DDA4_) {
+                            wrapped_x = MapLongitude + tile_x;
+                        }
+                        if (window->field_1DDD4_ +
+                            window->field_1DDCC_ +
+                            window->field_1DDA4_ <= wrapped_x) {
+                            wrapped_x = wrapped_x - MapLongitude;
+                        }
+                    }
+                    if (window->field_1DDA4_ <= wrapped_x &&
+                        wrapped_x < window->field_1DDD4_ +
+                                    window->field_1DDCC_ +
+                                    window->field_1DDA4_) {
+                        window->draw_radius(tile_x, tile_y, 0, 2);
+                    }
+                }
+            }
+            slot++;
+        } while (slot < table + MapWinTableSlots);
+    }
+    TutWinGlobal->draw_arrow();
 }

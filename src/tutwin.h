@@ -76,6 +76,9 @@ class TutWin : public Popup {
   void do_soc(RECT *rect, const char *text, int flag);
   void do_des(RECT *rect, const char *text, int flag);
   void iface_rect(RECT *rect, int *x, int *y);
+  // 0x004BDEA0, homed into tutwin.cpp. draw_cursor (mapwin.cpp) calls it on
+  // the singleton below after every window's turn.
+  void draw_arrow();
   void base_rect(RECT *rect, int *x, int *y);
   void soc_rect(RECT *rect, int *x, int *y);
   void des_rect(RECT *rect, int *x, int *y);
@@ -91,7 +94,7 @@ class TutWin : public Popup {
   uint32_t field_5394_;  // 0x5394
   uint32_t field_5398_;  // 0x5398
   int32_t field_539C_;
-  uint8_t unmapped_53A0_[0x53A4 - 0x53A0];
+  int32_t field_53A0_;  // 0x53A0 - the arrow head's y, read as an int
   int32_t field_53A4_;
   int32_t field_53A8_;
   int32_t field_53AC_;
@@ -143,6 +146,14 @@ extern uint32_t TutWinShownFlag;
 extern BaseWin TutWinBaseWindow;    // 0x006A7628
 extern SocialWin TutWinSocWindow;   // 0x008A6270
 extern DesignWin TutWinDesWindow;   // 0x0071F2B0
+
+// 0x008C6E68, the tutorial window itself, in the zero-initialised .data the
+// constructor fills in. A FIXED-ADDRESS BINDING, not an extern object: it
+// carries no storage of its own here, and TutWin has virtual bases, so a real
+// global of that type would need a constructor this tree does not model. The
+// const spelling folds the receiver to the immediate the image's
+// `mov ecx, 0x8c6e68` uses (draw_cursor is the reader).
+TutWin *const TutWinGlobal = (TutWin *)0x008C6E68;
 
 
 // The shared tail of the four do_* helpers: 0x004BDFE0, still original.

@@ -28,6 +28,8 @@
 #include "technology.h"
 #include "veh.h"
 #include "log.h"
+#include "lock.h"     // LockMapTable - site_at/set_dirty walk its records
+#include "netmsg.h"   // NetMsgPopup - synch_display posts through it
 #include "mapwin.h"
 #include "worldwin.h"
 
@@ -5283,3 +5285,644 @@ int __cdecl mandate_color(int mandate) {
         return static_cast<int>(table[0x18 / 4]);
     }
 }
+
+// ORIGINAL: 0x005797D0 ?site_at@@YAHHHH@Z 0x005797D0-0x00579832 FILE
+// TRIED: single combined expression and explicit temp reads of the first two parameters both match 44 of 46 mnemonics at 98 of 98 bytes; VC6 interleaves the push/mov prologue differently (push, push, mov, mov instead) - register scheduling, not logic
+// working copy - scaffold materialised by --work
+// size      98 bytes
+// prototype 
+// callers   1   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00591B50 0x005C4FD0
+int __cdecl site_at(int x, int y, int is_ocean_site) {
+    Map *tile = map_loc(x, y);
+    if (tile->bit & BIT_BASE_RADIUS) {
+        return 0;
+    }
+    int site = tile->val2 >> 4;
+    if (site == 0) {
+        site = world_site(x, y, is_ocean_site);
+        site_set(x, y, site);
+    }
+    return site;
+}
+
+// ORIGINAL: 0x00592A80 ?set_dirty@@YAXXZ 0x00592A80-0x00592AE6 FILE BYTE_EXACT
+// size      102 bytes
+// prototype 
+// callers   6   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// PRESERVED UNIT - measured MNEMONIC_ONLY.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x00592A80
+// measured tier  MNEMONIC_ONLY
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/00592a80/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?set_dirty@@YAXXZ  at 0x00592A80  (102 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+void __cdecl set_dirty() {
+    int y = 0;
+    Map *tile = map_tiles();
+    if (MapLatitudeBounds > 0) {
+        int limit = MapLongitudeBounds;
+        do {
+            int x = y & 1;
+            if (x < limit) {
+                do {
+                    tile->bit2 |= BIT_CONDENSER;
+                    x += 2;
+                    tile++;
+                    limit = MapLongitudeBounds;
+                } while (x < limit);
+            }
+            y++;
+        } while (y < MapLatitudeBounds);
+        UnkBitfield1 |= 4;
+        return;
+    }
+    UnkBitfield1 |= 4;
+}
+
+// ORIGINAL: 0x005A66E0 ?encrypt_write@@YAHPAXIIPAUFILE@@@Z 0x005A66E0-0x005A67A8 FILE
+// symbol    ?encrypt_write@@YAHPAXIIPAU_iobuf@@@Z
+// this tree's FILE is struct _iobuf, so the tag differs from the image's
+// TRIED: nothing ruled out; the [ebp+0xb]/[ebp+0xf]/[ebp+0x13] scratch bytes are stack-slot reuse of the first three parameters' high byte, not real locals - modelled as plain unsigned char key1/key2/byte1/byte2 instead. MISMATCH #3, push vs mov, whole-function frame order
+// working copy - scaffold materialised by --work
+// size      200 bytes
+// prototype int (__cdecl ?encrypt_write@@YAHPAXIIPAUFILE@@@Z)(void*, unsigned int, unsigned int, FILE* file)
+// callers   3   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x00644EF2 0x0064603F
+int __cdecl encrypt_write(void *data, unsigned int size, unsigned int count,
+                          FILE *file) {
+    unsigned char *src = reinterpret_cast<unsigned char *>(data);
+    unsigned int raw_size = size * count;
+    unsigned int padded = raw_size;
+    if ((raw_size & 1) != 0) {
+        padded = raw_size + 1;
+    }
+    unsigned char *buf = reinterpret_cast<unsigned char *>(mem_get(padded));
+    if (buf != 0) {
+        unsigned char key1 = 0x80;
+        unsigned char key2 = 0x80;
+        unsigned int i = 0;
+        unsigned char *dst = buf;
+        unsigned int pairs = padded >> 1;
+        if (pairs != 0) {
+            do {
+                key2 = key2 + 1;
+                key1 = key1 - 1;
+                unsigned char byte1 = *src;
+                unsigned char byte2;
+                unsigned char *next = src + 1;
+                if (i < raw_size) {
+                    byte2 = *next;
+                    next = src + 2;
+                } else {
+                    byte2 = 0;
+                }
+                unsigned char enc1 = byte1;
+                if (byte1 != 0 && (byte1 ^ key2) != 0) {
+                    enc1 = byte1 ^ key2;
+                }
+                unsigned char enc2 = byte2;
+                if (byte2 != 0) {
+                    unsigned char x = byte2 ^ key1;
+                    if (x != 0) {
+                        enc2 = x;
+                    }
+                }
+                *dst = enc2;
+                dst[1] = enc1;
+                dst += 2;
+                ++i;
+                src = next;
+            } while (i < pairs);
+        }
+        int result = fwrite(buf, padded, 1, file);
+        free(buf);
+        return result;
+    }
+    return 0;
+}
+
+// ORIGINAL: 0x005A67B0 ?encrypt_read@@YAHPAXIIPAUFILE@@@Z 0x005A67B0-0x005A6886 FILE
+// symbol    ?encrypt_read@@YAHPAXIIPAU_iobuf@@@Z
+// this tree's FILE is struct _iobuf, so the tag differs from the image's
+// working copy - scaffold materialised by --work
+// size      214 bytes
+// prototype int (__cdecl ?encrypt_read@@YAHPAXIIPAUFILE@@@Z)(void* buffer, unsigned int block, unsigned int count, FILE* file)
+// callers   3   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x00644EF2 0x00646178
+int __cdecl encrypt_read(void *data, unsigned int size, unsigned int count,
+                         FILE *file) {
+    unsigned int total = size * count;
+    unsigned int allocSize = total;
+    if (allocSize & 1) {
+        allocSize = allocSize + 1;
+    }
+    unsigned char *buf = reinterpret_cast<unsigned char *>(mem_get(allocSize));
+    if (buf == 0) {
+        return 0;
+    }
+    int n = fread(buf, allocSize, 1, file);
+    if (n == 0) {
+        free(buf);
+        return 0;
+    }
+    unsigned char prevA = 0x80;
+    unsigned char prevB = 0x80;
+    unsigned char *src = buf;
+    unsigned char *dst = reinterpret_cast<unsigned char *>(data);
+    unsigned int remaining = total;
+    for (unsigned int pairs = allocSize >> 1; pairs != 0; --pairs) {
+        ++prevB;
+        unsigned char b1 = src[1];
+        --prevA;
+        unsigned char b0 = src[0];
+        src += 2;
+        if (b1 != 0 && (unsigned char)(b1 ^ prevB) != 0) {
+            b1 = b1 ^ prevB;
+        }
+        if (b0 != 0 && (unsigned char)(b0 ^ prevA) != 0) {
+            b0 = b0 ^ prevA;
+        }
+        *dst = b1;
+        unsigned char *next = dst + 1;
+        if (remaining > 1) {
+            *next = b0;
+            next = dst + 2;
+        }
+        remaining -= 2;
+        dst = next;
+    }
+    free(buf);
+    return 1;
+}
+
+// ORIGINAL: 0x005C32A0 ?world_rocky@@YAXXZ 0x005C32A0-0x005C343F FILE
+// size      415 bytes
+// prototype 
+// callers   2   call targets   5
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00591BC0 0x00591D60 0x00591F00 0x005FCB20 0x0064601D
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005C32A0
+// measured tier  MISMATCH
+// divergence     66
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?world_rocky@@YAXXZ  at 0x005C32A0  (415 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+void __cdecl world_rocky() {
+    for (int y = 0; y < MapLatitudeBounds; y++) {
+        for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
+            int half_x = x >> 1;
+            unsigned int *rec = reinterpret_cast<unsigned int *>(
+                LockMapTable + (MapLongitude * y + half_x) * 0x2c);
+            // offset 0xc is the tile's bit2: a landmark code already on the
+            // tile disqualifies it from being re-rolled.
+            unsigned int val3 = *reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(rec) + 0xc);
+
+            bool skip = false;
+            if ((val3 & 0x80000001) == 1 && static_cast<int>(val3 & 0xff000000) < 0x15000000) {
+                skip = true;
+            } else if ((val3 & 0x80004000) == 0x4000) {
+                unsigned int hi = val3 & 0xff000000;
+                if (static_cast<int>(hi) < 0x9000000 || hi == 0xc000000 || hi == 0xa000000 ||
+                    hi == 0x13000000 || hi == 0xf000000 || hi == 0x14000000 || hi == 0x10000000) {
+                    skip = true;
+                }
+            }
+
+            if (skip) {
+                continue;
+            }
+
+            int minerals = minerals_at(x, y);
+            rocky_set(x, y, minerals);
+
+            unsigned char *tile = reinterpret_cast<unsigned char *>(
+                LockMapTable + (MapLongitude * y + half_x) * 0x2c);
+            unsigned int flags = *reinterpret_cast<unsigned int *>(tile + 0xc);
+
+            if ((flags & 0x80) != 0 && (*tile & 0xe0) <= 0x5f) {
+                continue;
+            }
+
+            unsigned int bitval;
+            if ((*tile & 0xe0) < 0x60) {
+                bitval = 0x10000;
+            } else {
+                bool useRandomFlat = false;
+                if ((flags & 0x80000004) == 4) {
+                    unsigned int r = rand();
+                    r &= 0x80000001;
+                    bool zero;
+                    if (static_cast<int>(r) < 0) {
+                        zero = ((r - 1) | 0xfffffffe) == 0xffffffff;
+                    } else {
+                        zero = (r == 0);
+                    }
+                    useRandomFlat = zero;
+                }
+                if (useRandomFlat) {
+                    bitval = 0x10000;
+                } else {
+                    unsigned char b = *tile;
+                    if ((b & 0xe0) < 0x81 && (b & 0x18) < 9) {
+                        continue;
+                    }
+                    bitval = 0x20000;
+                }
+            }
+            bit_set(x, y, bitval, 1);
+        }
+        do_all_non_input();
+    }
+}
+
+// ORIGINAL: 0x005C4410 ?world_UNK1@@YAXHH@Z 0x005C4410-0x005C4467 FILE
+// size      87 bytes
+// prototype void (__cdecl ?world_UNK1@@YAXHH@Z)(int xCoord, int yCoord)
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00591A80
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005C4410
+// measured tier  MISMATCH
+// divergence     18
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005c4410/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?world_UNK1@@YAXHH@Z  at 0x005C4410  (87 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+void __cdecl world_UNK1(int x, int y) {
+    int rainfall = ((map_loc(x, y)->climate >> 3) & 3) + 1;
+    if (rainfall > 2) {
+        climate_set(x, y, 2);
+        return;
+    }
+    climate_set(x, y, rainfall);
+}
+
+// ORIGINAL: 0x00532C30 ?synch_display@@YAXHHHH@Z 0x00532C30-0x00532DA2 FILE BYTE_EXACT
+// size      370 bytes
+// prototype 
+// callers   1   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047A890 0x005FCBB0 0x00625E30
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x00532C30
+// measured tier  MISMATCH
+// divergence     124
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/00532c30/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?synch_display@@YAXHHHH@Z  at 0x00532C30  (370 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+void __cdecl synch_display(int stage, int arg1, int arg2, int arg3) {
+    switch (stage) {
+    case 0:
+        parse_num(0, arg1);
+        parse_num(1, arg2);
+        NetMsgPopup->pop("SYNCHINGGAME2", 0, 1, 0);
+        do_all_draws();
+        return;
+    case 6:
+        parse_num(0, arg1);
+        parse_num(1, arg2);
+        parse_num(2, arg3);
+        NetMsgPopup->pop("SYNCHINGPLAYERS2", 0, 1, 0);
+        do_all_draws();
+        return;
+    case 4:
+        parse_num(0, arg1);
+        parse_num(1, arg2);
+        NetMsgPopup->pop("SYNCHINGWORLD2", 0, 1, 0);
+        do_all_draws();
+        return;
+    case 0x30:
+        parse_num(0, arg1);
+        parse_num(1, arg2);
+        parse_num(2, arg3);
+        NetMsgPopup->pop("SYNCHINGWORLD3", 0, 1, 0);
+        do_all_draws();
+        return;
+    case 0x12:
+        parse_num(0, arg1);
+        parse_num(1, arg2);
+        NetMsgPopup->pop("SYNCHINGVEHICLES2", 0, 1, 0);
+        do_all_draws();
+        return;
+    case 0x14:
+        parse_num(0, arg1);
+        parse_num(1, arg2);
+        NetMsgPopup->pop("SYNCHINGBASES2", 0, 1, 0);
+        do_all_draws();
+        break;
+    }
+}
+
+// ORIGINAL: 0x00590BA0 ?say_vehicles@@YAXPAXHH@Z 0x00590BA0-0x00590C14 FILE
+// size      116 bytes
+// prototype 
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006169A0 0x00645470
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x00590BA0
+// measured tier  MISMATCH
+// divergence     4
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/00590ba0/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?say_vehicles@@YAXPAXHH@Z  at 0x00590BA0  (116 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+void __cdecl say_vehicles(void *text, int chassis_id, int with_height) {
+    char *dst = reinterpret_cast<char *>(text);
+    strcat(dst, VehPrototypes[chassis_id].veh_name);
+    if (with_height != 0) {
+        strcat(dst, " ");
+        strcat(dst, "(");
+        strcat(StringTemp, label_get(0x314 / 4));
+        strcat(dst, StringTemp);
+        strcat(dst, ")");
+    }
+}
+
+// ORIGINAL: 0x00592250 ?say_loc@@YAXPADHHHHH@Z 0x00592250-0x005923FD FILE
+// size      429 bytes
+// prototype void (__cdecl ?say_loc@@YAXPADHHHHH@Z)(int8*, int xCoord, int yCoord, int, int, int)
+// callers   4   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004E3A50 0x004E3D50 0x006169A0 0x00645470 0x0064FC88
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x00592250
+// measured tier  MISMATCH
+// divergence     3
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/00592250/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?say_loc@@YAXPADHHHHH@Z  at 0x00592250  (429 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+void __cdecl say_loc(char *text, int x, int y, int want_name, int trailer_mode,
+                     int want_coords) {
+    char number[80];
+    int base_id = base_at(x, y);
+    if (want_name != 0) {
+        if (base_id < 0) {
+            want_coords = 0;
+            base_id = base_find(x, y, -1, -1, -1, LocalFaction);
+            if (base_id < 0) {
+                goto trailer;
+            }
+            strcat(text, label_get(0xf8 / 4));
+            strcat(text, " ");
+        } else {
+            goto skip_first_check;
+        }
+    }
+    if (base_id < 0) {
+        goto trailer;
+    }
+skip_first_check:
+    if (want_coords != 0) {
+        strcat(text, label_get(0x20 / 4));
+        strcat(text, " ");
+    }
+    strcat(text, Bases[base_id].name_string);
+    if (trailer_mode != 0) {
+        strcat(text, " ");
+    }
+
+trailer:
+    if (trailer_mode == 1 || (trailer_mode == 2 && base_id < 0)) {
+        strcat(text, "(");
+        _itoa(x, number, 10);
+        strcat(text, number);
+        strcat(text, ", ");
+        _itoa(y, number, 10);
+        strcat(text, number);
+        strcat(text, ")");
+
+        int flags = GameState;
+        if ((flags & 0x40) != 0 && (flags & 0x1000) != 0) {
+            strcat(StringTemp, " ");
+            Map *tile = map_loc(x, y);
+            _itoa(tile->region, number, 10);
+            strcat(StringTemp, number);
+        }
+    }
+}
+

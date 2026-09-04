@@ -454,7 +454,7 @@ SCAFFOLD_CEILINGS = {
     # FILE-only callees of homed bodies (landmine-free, agent-verified) -
     # the diplomacy/net family's check_spock, do_withdrawal, pact partners.
     # Union-collected beside console's fourteen (both blocks appended at EOF).
-    "PENDING_BODY forwarders": 252,
+    "PENDING_BODY forwarders": 248,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -509,7 +509,7 @@ SCAFFOLD_CEILINGS = {
     # 1278 -> 1277 (2026-09-03, the BasePop destructor): units/004064d0.cpp
     # deleted with the verbatim body it preserved - the real chain is the
     # compiler's, from basepop.h's member list, and basepop.cpp claims it.
-    "artifact files (recovered/)": 1116,
+    "artifact files (recovered/)": 1107,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -574,7 +574,7 @@ SCAFFOLD_CEILINGS = {
     # promoted - PushButton::PushButton() homed into src/gamma.cpp BYTE_EXACT
     # 44/44 once BaseButton's constructor went out of line, which is also
     # what took ??0ImageButton and ??0Gamma byte-exact.
-    "unrecovered files": 1237,
+    "unrecovered files": 1230,
     "hypothesis_layouts.h lines": 2717,
 }
 
