@@ -42,9 +42,12 @@
 #include "lock.h"  // LockMapTable - editor_clear_vehicles rewrites its records
 #include "log.h"  // log_say - the chat / message handlers report through it
 #include "netdaemon.h"  // synch_veh - the turn handlers resync vehicles
+#include "netmsg.h"  // NetMsgPopup - the editor's ALREADYDONE/PROTECT* pops
+#include "tutwin.h"  // TutWinGlobal - survey2 raises the map tutorial on it
 #include "spying_recovery.h"  // spying - the espionage order
 #include "technology.h"  // has_tech - editor_tech and the tech orders gate on it
 #include "random.h"  // random - the editor's randomizer and the AI orders
+#include "alpha.h"  // AlphaIniPrefs - the toggles mirror the prefs into it
 #include <cstring>
 
 // FREE FUNCTIONS THE CONSOLE BODIES CALL that no header in src/ declares yet.
@@ -796,9 +799,10 @@ void Console::editor_redo() {
 Status: Complete
 */
 void Console::menu_update() {
-    char *self = reinterpret_cast<char *>(this);
-    int v = field_23BDC_;
-    reinterpret_cast<MainMenu *>(self + 0x22a2c)->MainMenu::check(v);
+    // alpha_menu_ IS the object the image calls 0x00460DD0 on - the member
+    // form replaces the MainMenu pun this body used to carry, and measured
+    // BYTE_EXACT unchanged (2026-09-04).
+    alpha_menu_.check(field_23BDC_);
 }
 
 /*
@@ -1099,6 +1103,21 @@ int CursorVehIndex = -1;  // 0x0093928C, defined here
 // research away.
 static const char *const StrResetAllTech = (const char *)0x00688FA4;
 
+// .rdata strings the editor commands pass to x_pop_short / X_pop, read out of
+// the image. The image PUSHES each address as an immediate, so the binding has
+// to keep the image's address rather than a tree string literal.
+static const char *const EditorRockinessLabel = (const char *)0x00689174;    // "ROCKOSITY"
+static const char *const StrEditorMinor = (const char *)0x00689120;  // "EDITORMINOR"
+static const char *const StrMapFlat = (const char *)0x00689148;      // "MAPFLAT"
+static const char *const StrMapRound = (const char *)0x00689150;     // "MAPROUND"
+static const char *const StrEditorYear = (const char *)0x006890F0;   // "EDITORYEAR"
+static const char *const StrMenuDetail = (const char *)0x0068A9C0;   // "MENUDETAIL"
+static const char *const StrFungosity = (const char *)0x0068915C;    // "FUNGOSITY"
+static const char *const StrFungmotize = (const char *)0x00689168;   // "FUNGMOTIZE"
+static const char *const StrProtectOff = (const char *)0x00689198;   // "PROTECTOFF"
+static const char *const StrProtectOn = (const char *)0x006891A4;    // "PROTECTON"
+static const char *const StrTerraSurvey2 = (const char *)0x0068A8E0; // "TERRASURVEY2"
+
 typedef int (__cdecl *NullCallback)(void);
 
 // ORIGINAL: 0x004DBB40 ?editor_reset_faction@Console@@QAEXXZ 0x004DBB40-0x004DBC32 FILE
@@ -1341,7 +1360,7 @@ void Console::toggle_patrol() {
     } while (p < reinterpret_cast<int *>(MapWinTable + MapWinTableSlots));
 }
 
-// ORIGINAL: 0x00516970 ?menu_simple@Console@@QAEXXZ 0x00516970-0x005169A1 FILE
+// ORIGINAL: 0x00516970 ?menu_simple@Console@@QAEXXZ 0x00516970-0x005169A1 FILE BYTE_EXACT
 // size      49 bytes
 // prototype void (__thiscall ?menu_simple@Console@@QAEXXZ)(Console* this)
 // callers   0   call targets   2
@@ -1423,10 +1442,10 @@ void Console::menu_simple() {
     // project flags - see 0x00624D00's near miss for the same family of
     // issue (fixed register-count/window choices by the scheduler, not
     // reachable from portable source).
-    MainMenu *menu = reinterpret_cast<MainMenu *>(&alpha_menu_);
+    // menu+0x11b0 is field_23BDC_: 0x22A2C + 0x11B0 = 0x23BDC. The member
+    // form replaces the MainMenu pun this body used to carry.
     GameMorePreferences &= 0xffdfffff;
-    int vehicle = *reinterpret_cast<int *>(reinterpret_cast<char *>(menu) + 0x11b0);
-    menu->check(vehicle);
+    alpha_menu_.check(field_23BDC_);
     X_pop(StrMenuSimple, 0);
 }
 
@@ -1892,5 +1911,795 @@ void Console::cursor_on(int cursor_shape, int veh_id) {
         }
     }
     do_non_input();
+}
+
+// ORIGINAL: 0x004E14A0 ?editor_rockiness@Console@@QAEXXZ 0x004E14A0-0x004E14C8 BYTE_EXACT
+// size      40 bytes
+// prototype void (__thiscall ?editor_rockiness@Console@@QAEXXZ)(Console* this)
+// callers   1   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0046B190 0x005ABF20 0x005BF3F0 0x005C32A0
+// 0x004E14A0  ?editor_rockiness@Console@@QAEXXZ  ->  ?editor_rockiness@Console@@QAEXXZ
+//
+// Purpose: editor command - ask for the rocky-terrain density and, if the
+//          prompt is not cancelled, repaint the world that rocky.
+//
+// PREPARED, NOT HOMED (2026-09-03, P1 calibration). Two things are missing,
+// neither of them in this body:
+//   1. `world_rocky` is ?world_rocky@@YAXXZ at 0x005C32A0
+//      (world_rocky - homed into src/map.cpp with the 2026-09-04 map batch),
+//      general.h or map.h look like the home - and a pending_bodies forwarder;
+//      the shape is already written there beside the veh_ready/stack_kill
+//      ones.
+//   2. `EditorRockinessLabel` is the image's .data string "ROCKOSITY" at
+//      0x00689174. Nothing in the tree binds it. HOWEVER this is spelled, note
+//      that the image PUSHES the address as an immediate (`push 0x689174`),
+//      so a tree string literal at a different address will not match byte for
+//      byte the way the `"EDITORWHO"` literal in Console::editor_who does.
+//
+// LEVER (already applied here, unmeasured because of the two blockers): the
+//   image's callee at 0x005BF3F0 is this tree's `x_pop_short`, not X_pop - the
+//   scaffold's `X_pop(label, 0x40, 0)` names a function this tree spells
+//   differently. And it is `::draw_map`, not the inherited MapWin::draw_map:
+//   the free cdecl wrapper cleans its own argument, which is where the image's
+//   trailing `pop ecx` comes from.
+//
+// HOMED 2026-09-04: both blockers cleared. world_rocky is declared in map.h
+// beside its world_* siblings (the definition landed in map.cpp); the string
+// is bound as `EditorRockinessLabel` at 0x00689174. No forwarder was needed -
+// world_rocky is a real definition in map.cpp, not a pending_bodies stub.
+
+
+void Console::editor_rockiness() {
+    auto_undo();
+    if (x_pop_short(EditorRockinessLabel, 0x40, 0) != 0) {
+        world_rocky();
+        ::draw_map(1);
+    }
+}
+
+// ORIGINAL: 0x005148B0 ?move_cursor@Console@@QAEXH@Z 0x005148B0-0x00514990 FILE
+// size      224 bytes
+// prototype void (__thiscall ?move_cursor@Console@@QAEXH@Z)(Console* this, int)
+// callers   0   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046A550 0x0046AD60 0x0046B310 0x004B9EA0 0x005109B0
+// LEVER: the image's two `draw_cursor` calls are MapWin::draw_cursor
+// (0x0046AD60, the per-window member), not the free ::draw_cursor at
+// 0x0046AE00 that mapwin.cpp defines - the archive body named the free one
+// and so was calling a function the image never calls here. Declared on
+// MapWin with a pending_bodies forwarder; VehMoveDeltaX/Y moved to veh.h
+// beside the array definitions so the cursor's own deltas stop being
+// anonymous fixed addresses.
+// TRIED: `const int slot`; operand order `delta + coord` for the x sum. The
+// image loads CursorLastX[slot] BEFORE VehMoveDeltaX[direction] (0x005148BE
+// then 0x005148C6) and the reverse for y, so the x sum is spelled
+// coordinate-first below; neither ordering nor the const moved the first
+// divergence, which is which register holds CursorLastIndex (image: edx,
+// this tree: eax) and follows from the image deferring its `this` spill
+// (0x005148CD `mov edi, ecx`) until after both loads.
+
+
+void Console::move_cursor(int direction) {
+    const int slot = CursorLastIndex;
+    int new_x = CursorLastX[slot] + VehMoveDeltaX[direction];
+    if ((MapIsFlat & 1) == 0) {
+        if (new_x < 0) {
+            new_x = new_x + MapLongitudeBounds;
+        } else if (new_x >= MapLongitudeBounds) {
+            new_x = new_x - MapLongitudeBounds;
+        }
+    }
+    int new_y = VehMoveDeltaY[direction] + CursorLastY[slot];
+    if (new_y >= 0 && new_y < MapLatitudeBounds && new_x >= 0 &&
+        new_x < MapLongitudeBounds) {
+        field_23BF8_ = 0;
+        if (field_23C00_ != 0) {
+            field_23C00_ = 0;
+            console_map_win()->draw_map(1);
+        }
+        console_map_win()->draw_cursor();
+        cursor_next(new_x, new_y);
+        ConsoleStatusWin.redraw();
+        field_23BF8_ = 1;
+        field_23BFC_ = 1;
+        console_map_win()->draw_cursor();
+        console_map_win()->focus(new_x, new_y);
+    }
+}
+
+// ORIGINAL: 0x005147E0 ?set_cursor@Console@@QAEXHH@Z 0x005147E0-0x0051487D FILE
+// TRIED: nesting the last bound check as its own `if` (both alone and after a 3-way `||` early return), and a fully split `&&` chain with success nested two levels deep - all reproduce the same MISMATCH #15 'jl' vs 'jge' on the 4th comparison (a1 < bound2); similarity 0.9091. void return keeps the C2556 declared prototype; the eax=1/xor eax,eax result codes are dropped.
+// size      157 bytes
+// prototype void (__thiscall ?set_cursor@Console@@QAEXHH@Z)(Console* this, int xCoord, int yCoord)
+// callers   6   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046A550 0x0046AD60 0x004B9EA0 0x005109B0
+// symbol    ?set_cursor@Console@@QAEHHH@Z
+// LEVER: the catalogued `void` return is wrong, and the archive body's TRIED
+//        note says exactly where that cost it. Every one of the four bound
+//        failures reaches 0x00514807, which loads eax with 1 before the shared
+//        epilogue, and the success path clears eax at the end - so the body
+//        returns int: 1 for out of bounds, 0 after the repaint. Declared int
+//        (the emitted name above is the legitimately different mangling, the
+//        same fact Console::focus carries) and the four tests reproduce.
+//        13 of 47 -> measured below.
+// TRIED: `void` with a bare `return` on the failure path - that is the
+//        archive's spelling, and its eax=1 / xor eax,eax codes are dropped,
+//        which is what made the 4th comparison's branch target diverge.
+// TRIED: three shapes for the FOURTH bound test, all 17 of 47 with identical
+//        instruction counts: chained as the fourth `||` term (the compiler
+//        emits `jge <failure>`), as its own `if (x_coord >= lon) return 1;`,
+//        and polarised as the in-bounds guard `if (x_coord < lon) { body;
+//        return 0; }` so the source asks for the image's jump-to-the-work
+//        `jl 0x514812`. VC6 inverts all three into the same `jge` and merges
+//        the tails, so the 4th comparison's branch target is not reachable
+//        from source form here. Not chased further.
+
+
+int Console::set_cursor(int x_coord, int y_coord) {
+    if (y_coord < 0 || y_coord >= MapLatitudeBounds || x_coord < 0) {
+        return 1;
+    }
+    // The image's FOURTH test jumps to the body on `jl` (0x00514805 `jl
+    // 0x514812`) and falls through to the failure epilogue, so it is spelled
+    // as the in-bounds guard rather than chained into the rejection above -
+    // the "jumps TO the work" shape, not a fourth `||` term.
+    if (x_coord < MapLongitudeBounds) {
+        field_23BF8_ = 0;
+        if (field_23C00_ != 0) {
+            field_23C00_ = 0;
+            console_map_win()->draw_map(1);
+        }
+        console_map_win()->draw_cursor();
+        cursor_next(x_coord, y_coord);
+        ConsoleStatusWin.redraw();
+        field_23BF8_ = 1;
+        field_23BFC_ = 1;
+        console_map_win()->draw_cursor();
+        return 0;
+    }
+    return 1;
+}
+
+// ORIGINAL: 0x00515530 ?survey2@Console@@QAEXXZ 0x00515530-0x005155F5 FILE BYTE_EXACT
+// size      197 bytes
+// prototype void (__thiscall ?survey2@Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   3
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x0046A550 0x004BA5F0 0x004BE650
+
+
+void Console::survey2() {
+    if (field_23C00_ != 0) {
+        field_23C00_ = 0;
+        console_map_win()->draw_map(1);
+        return;
+    }
+    field_23C00_ = 1;
+    uint32_t saved = console_map_win()->field_1DD70_;
+    console_map_win()->field_1DD70_ = saved & 0xfffff7ff;
+    console_map_win()->field_1DD70_ =
+        console_map_win()->field_1DD70_ | 0x1000;
+    console_map_win()->draw_map(1);
+    console_map_win()->field_1DD70_ = saved;
+    console_map_win()->field_1DD70_ =
+        console_map_win()->field_1DD70_ & 0xffffefff;
+    if (tut_check(0x400) != 0) {
+        const int slot = CursorLastIndex;
+        TutWinGlobal->tut_map(StrTerraSurvey2, CursorLastX[slot],
+                              CursorLastY[slot], -1, nullptr, 0, -1, -1);
+    }
+}
+
+// ORIGINAL: 0x004E13E0 ?editor_fungus@Console@@QAEXXZ 0x004E13E0-0x004E149B FILE
+// LEVER: the FUNGMOTIZE answer is tested directly, not carried in a boolean.
+//        The archive body spelled `plant = (confirmed != 0)` and `if (plant)`,
+//        which compiles a setne/test pair the image does not have - the image
+//        branches on the pop result itself (`je 0x4e1472` at 0x004E141B skips
+//        the plant loop). Seeding `confirmed` with -1 so the answer == 0 path
+//        falls into the loop made one test spell both. 20 -> 23 of 59.
+// LEVER: field_23BD4_ is SIGNED and MapArea is read SIGNED. `uint32_t` on the
+//        field compiled `jb` on the inner back edge where the image has `jl`
+//        (0x004E1461), and an unsigned MapArea gave `jbe` on the guard - the
+//        field is now `int32_t` in console.h and both MapArea reads go through
+//        an int cast. 23 -> 44 of 59.
+// LEVER: MapArea is NOT cached in a local. The image reads [0x949884] for the
+//        guard and again at 0x004E1463 on every outer iteration; holding it in
+//        `const int count` cost a callee-saved register and the extra push that
+//        goes with it. 44 -> 45 of 59.
+// TRIED: the remaining 14 are ordering and register naming only (59 vs 59
+//        instructions): the image schedules the MapArea load, the
+//        map_tiles() load and then `xor ecx, ecx` before the test, where this
+//        tree zeroes i first. Not reached from source form after four
+//        measured spellings.
+
+// size      187 bytes
+// prototype void (__thiscall ?editor_fungus@Console@@QAEXXZ)(Console* this)
+// callers   1   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0046B190 0x005ABF20 0x005BF3F0 0x005C3440
+
+
+void Console::editor_fungus() {
+    auto_undo();
+    const int answer = x_pop_short(StrFungosity, 0x40, 0);
+    if (answer >= 0) {
+        // The image carries no boolean here: it tests the FUNGMOTIZE answer
+        // directly (`je 0x4e1472` at 0x004E141B skips the plant loop) and
+        // falls into the loop on the answer == 0 path, where the second prompt
+        // was never asked. Seeding `confirmed` with -1 makes one test spell
+        // both of those.
+        int confirmed = -1;
+        if (answer > 0) {
+            confirmed = x_pop_short(StrFungmotize, 0x40, 0);
+            if (confirmed < 0) {
+                return;
+            }
+        }
+        if (confirmed != 0) {
+            // MapArea is NOT cached: the image reads [0x949884] for the guard
+            // and again at 0x004E1463 on every outer iteration.
+            // MapArea is NOT cached: the image reads [0x949884] for the guard
+            // and again at 0x004E1463 on every outer iteration. Both compares
+            // are SIGNED in the image (`jle` at 0x004E142C, `jl` at the tail),
+            // so the read goes through an int cast - uint32_t compiles jbe.
+            if (static_cast<int>(MapArea) > 0) {
+                Map *tile = map_tiles();
+                int i = 0;
+                do {
+                    tile->bit &= 0xFFFFFFDFu;
+                    field_23BD4_ = 1;
+                    do {
+                        tile->bit_visible[field_23BD4_ - 1] = tile->bit;
+                        field_23BD4_ = field_23BD4_ + 1;
+                    } while (field_23BD4_ < 8);
+                    i++;
+                    tile++;
+                } while (i < static_cast<int>(MapArea));
+            }
+        }
+        uint32_t saved = MapNativeLifeForms;
+        if (answer > 0) {
+            MapNativeLifeForms = answer - 1;
+            world_fungus();
+        }
+        MapNativeLifeForms = saved;
+        ::draw_map(1);
+    }
+}
+
+// ORIGINAL: 0x004E1F70 ?editor_lock2@Console@@QAEXXZ 0x004E1F70-0x004E1FF6 FILE
+// TRIED: straightforward if/else on the bit-test, reusing the already declared NetMsg::pop / MainInterface::draw_edit_pane / this member set_view(1). MISMATCH #0 'push' vs 'mov' remains open (register allocation for `this`/esi differs from the start).
+// size      134 bytes
+// prototype void (__thiscall ?editor_lock2@Console@@QAEXXZ)(Console* this)
+// callers   2   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0045B550 0x0047A890 0x00511480
+
+
+// TRIED: three spellings for the 0x8000000 mask - the bare immediates
+//        (`flags & 0x8000000` / `& 0xf7ffffff`), `~0x8000000u` for the clear,
+//        and a named `const uint32_t lock_mask` used for both the test and the
+//        `~lock_mask` clear. All three score 1/38. The image materialises the
+//        mask in a register (`mov eax, 0x8000000`, then `test eax, ecx` and
+//        `or edx, eax`) AND spills `this` before anything else (`push esi` /
+//        `mov esi, ecx` at 0x004E1F70/0x004E1F71); this tree keeps the mask
+//        immediate and loads GameState first. That is the receiver-spill wall
+//        palette.cpp documented - the image pays a callee-saved push the source
+//        does not ask for - and neither guard reordering nor the mask's source
+//        form reaches it. Not chased further.
+void Console::editor_lock2() {
+    const uint32_t flags = GameState;
+    const uint32_t lock_mask = 0x8000000;
+    if (flags & lock_mask) {
+        GameState = flags & ~lock_mask;
+        NetMsgPopup->pop(StrProtectOff, 5000, 0, 0);
+        MainInterfaceGlobal.draw_edit_pane();
+        return;
+    }
+    GameState = flags | lock_mask;
+    NetMsgPopup->pop(StrProtectOn, 5000, 0, 0);
+    if (CursorVehActive != 0) {
+        set_view(1);
+    }
+    MainInterfaceGlobal.draw_edit_pane();
+}
+
+// ORIGINAL: 0x00510A60 ?prev_cursor@Console@@QAEXXZ 0x00510A60-0x00510B70 FILE BYTE_EXACT
+// size      272 bytes
+// prototype void (__thiscall ?prev_cursor@Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   10
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00446B40 0x00458900 0x00460DD0 0x0046A550 0x0046AD60 0x0046AE00 0x0046B310 0x0046FB10 0x004B9EA0 0x004B9F90
+//
+// moved into src/ and was still being written into new files.
+//
+// address        0x00510A60
+//
+// emitted scaffolding and the body alone will not reproduce the
+//   build/byte-match/00510a60/unit.cpp
+//
+//
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+
+
+void Console::prev_cursor() {
+    const int had_move = field_23C00_;
+    field_23BF8_ = 0;
+    if (had_move != 0) {
+        field_23C00_ = 0;
+        console_map_win()->draw_map(1);
+    }
+    console_map_win()->draw_cursor();
+    if (CursorVehActive != 0) {
+        ambience(0x1E);
+        const int had_move_now = field_23C00_;
+        field_23BD8_ = 0;
+        field_23BF8_ = 1;
+        field_23BFC_ = 1;
+        if (had_move_now != 0) {
+            field_23C00_ = 0;
+            console_map_win()->draw_map(1);
+        }
+        ::draw_cursor();
+        ConsoleInfoWin.change(0);
+        ConsoleStatusWin.redraw();
+        console_map_win()->main_caption();
+        alpha_menu_.check(field_23BDC_);
+    }
+    const int cursor_timer = field_23C08_ - 1;
+    field_23C08_ = cursor_timer;
+    if (cursor_timer < 0) {
+        field_23C08_ = 0x1F;
+    }
+    const int slot = CursorLastIndex;
+    ConsoleStatusWin.set_loc(CursorLastX[slot], CursorLastY[slot]);
+    const int slot_now = CursorLastIndex;
+    console_map_win()->focus(CursorLastX[slot_now], CursorLastY[slot_now]);
+}
+
+// ORIGINAL: 0x00515600 ?base_names@Console@@QAEXXZ 0x00515600-0x00515638 FILE BYTE_EXACT
+// size      56 bytes
+// prototype void (__thiscall ?base_names@Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0046B190 0x0059E5D0
+//
+// moved into src/ and was still being written into new files.
+//
+// address        0x00515600
+//
+// emitted scaffolding and the body alone will not reproduce the
+//   build/byte-match/00515600/unit.cpp
+//
+//
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+//
+// HOMED 2026-09-04, BYTE_EXACT 18/18 - and the archive's "documented
+// INSTRUCTION SCHEDULING wall" was a scaffold artifact, not a wall. The five
+// spellings it recorded as producing the wrong store order all named
+// g_009a6494 / g_0094b468 as `int *const` fixed-address bindings; naming them
+// GameMorePreferences and AlphaIniPrefs.more_preferences - real globals, so
+// VC6 knows the second store cannot alias the first - lets the compiler keep
+// the image's own order without help. The lesson is the tree's oldest one
+// wearing a third disguise: an opaque binding costs the optimiser the
+// aliasing information the image's own compiler had.
+
+
+void Console::base_names() {
+    // The 0x1000 / 0x2000 pair is the show-base-names / show-production
+    // toggle: setting either forces 0x1000 on, clearing both clears it.
+    const int flags = GameMorePreferences;
+    int new_flags;
+    if (flags & 0x1000) {
+        new_flags = flags & 0xFFFFCFFF;
+    } else if (flags & 0x2000) {
+        new_flags = flags | 0x1000;
+    } else {
+        new_flags = flags | 0x2000;
+    }
+    GameMorePreferences = AlphaIniPrefs.more_preferences = new_flags;
+    prefs_save(0);
+    ::draw_map(1);
+}
+
+// ORIGINAL: 0x00515640 ?toggle_flatten@Console@@QAEXXZ 0x00515640-0x00515691 FILE BYTE_EXACT
+// size      81 bytes
+// prototype void (__thiscall ?toggle_flatten@Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0046B190 0x0059E5D0 0x005FB760 0x005FB7C0
+//
+// moved into src/ and was still being written into new files.
+//
+// address        0x00515640
+//
+// emitted scaffolding and the body alone will not reproduce the
+//   build/byte-match/00515640/unit.cpp
+//
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+
+
+void Console::toggle_flatten() {
+    const int flags = GameMorePreferences ^ 0x10000;
+    GameMorePreferences = flags;
+    if (flags & 0x10000) {
+        alpha_menu_.check_menu_item(2, 0x209);
+    } else {
+        alpha_menu_.uncheck_menu_item(2, 0x209);
+    }
+    AlphaIniPrefs.more_preferences = GameMorePreferences;
+    prefs_save(0);
+    ::draw_map(1);
+}
+
+// ORIGINAL: 0x005156A0 ?toggle_grid@Console@@QAEXXZ 0x005156A0-0x005156EF FILE BYTE_EXACT
+// size      79 bytes
+// prototype void (__thiscall ?toggle_grid@Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0046B190 0x0059E5D0 0x005FB760 0x005FB7C0
+//
+// moved into src/ and was still being written into new files.
+//
+// address        0x005156A0
+//
+// emitted scaffolding and the body alone will not reproduce the
+//   build/byte-match/005156a0/unit.cpp
+//
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+
+
+void Console::toggle_grid() {
+    const int flags = GamePreferences ^ 0x100;
+    GamePreferences = flags;
+    if (flags & 0x100) {
+        alpha_menu_.check_menu_item(2, 0x20A);
+    } else {
+        alpha_menu_.uncheck_menu_item(2, 0x20A);
+    }
+    AlphaIniPrefs.preferences = GamePreferences;
+    prefs_save(0);
+    ::draw_map(1);
+}
+
+// ORIGINAL: 0x005156F0 ?toggle_base_grid@Console@@QAEXXZ 0x005156F0-0x0051573F FILE BYTE_EXACT
+// size      79 bytes
+// prototype void (__thiscall ?toggle_base_grid@Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0046B190 0x0059E5D0 0x005FB760 0x005FB7C0
+//
+// moved into src/ and was still being written into new files.
+//
+// address        0x005156F0
+// refusal        u005156f0.cpp(49) : error C2065: 'BOOL' : undeclared identifier u005156f0.cpp(49) : error C2146: syntax error : missing ')' before identifier 'saveFactions' u00
+//
+// emitted scaffolding and the body alone will not reproduce the
+//   build/byte-match/005156f0/unit.cpp
+//
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+//
+//
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+
+
+void Console::toggle_base_grid() {
+    const int flags = GamePreferences ^ 0x200;
+    GamePreferences = flags;
+    if (flags & 0x200) {
+        alpha_menu_.check_menu_item(2, 0x20B);
+    } else {
+        alpha_menu_.uncheck_menu_item(2, 0x20B);
+    }
+    AlphaIniPrefs.preferences = GamePreferences;
+    prefs_save(0);
+    ::draw_map(1);
+}
+
+// ORIGINAL: 0x00515400 ?center@Console@@QAEXXZ 0x00515400-0x00515423 BYTE_EXACT
+// size      35 bytes
+// prototype void (__thiscall ?center@Console@@QAEXXZ)(Console* this)
+// callers   5   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x0046B1F0
+// 0x00515400  ?center@Console@@QAEXXZ  ->  ?center@Console@@QAEXXZ
+//
+// BLOCKED (2026-09-03, P1 calibration) on a mapwin.h declaration this TU does
+// not own: 0x0046B1F0 is ?set_center@MapWin@@QAEXHHH@Z, undeclared. It needs
+// `void set_center(int, int, int);` on MapWin and a pending_bodies forwarder
+// (the body itself is src/recovered/units/0046b1f0.cpp, unclaimed, 275
+// bytes). Everything the body reads is already bound here: CursorLastIndex /
+// CursorLastX / CursorLastY in console.h and the accessor console_map_win()
+// for the single absolute load of 0x007D3C3C the image makes at 0x00515416.
+//
+// The de-punned body, ready to drop in once set_center is declared:
+//
+// void Console::center() {
+//     const int index = CursorLastIndex;
+//     console_map_win()->set_center(CursorLastX[index], CursorLastY[index], 1);
+// }
+
+
+void Console::center() {
+    const int slot = CursorLastIndex;
+    console_map_win()->set_center(CursorLastX[slot], CursorLastY[slot], 1);
+}
+
+// ORIGINAL: 0x005169B0 ?base_me@Console@@QAEXXZ 0x005169B0-0x005169E6 BYTE_EXACT
+// size      54 bytes
+// prototype void (__thiscall ?base_me@Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   2
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x0041A920 0x004E3C60
+// 0x005169B0  ?base_me@Console@@QAEXXZ  ->  ?base_me@Console@@QAEXXZ
+//
+// BLOCKED (2026-09-03, P1 calibration) on a basewin.h declaration this TU does
+// not own: 0x0041A920 is BaseWin::zoom, undeclared. It needs a declaration on
+// BaseWin and a pending_bodies forwarder. Everything else is already bound:
+// base_find (base.h:533, the three-int overload), LocalFaction (game.h:865,
+// 0x00939284 - the scaffold's g_00939284), and tutwin.h's
+// TutWinBaseWindow for 0x006A7628.
+//
+// The de-punned body, ready to drop in once zoom is declared:
+//
+// void Console::base_me() {
+//     const int index = CursorLastIndex;
+//     const int result = base_find(CursorLastX[index], CursorLastY[index],
+//                                  LocalFaction);
+//     if (result >= 0) {
+//         TutWinBaseWindow.zoom(result, 0);
+//     }
+// }
+
+
+void Console::base_me() {
+    const int slot = CursorLastIndex;
+    const int base_id =
+        base_find(CursorLastX[slot], CursorLastY[slot], LocalFaction);
+    if (base_id >= 0) {
+        TutWinBaseWindow.zoom(base_id, 0);
+    }
+}
+
+// ORIGINAL: 0x00515450 ?survey@Console@@QAEXXZ 0x00515450-0x0051552B FILE BYTE_EXACT
+// LEVER: re-read the fixed global for the `this` of the draw_map() call instead of reusing the pointer already cached for the field save/restore - the original re-reads it too
+// size      219 bytes
+// prototype void (__thiscall ?survey@Console@@QAEXXZ)(Console* this)
+// callers   2   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x0046A550
+
+
+void Console::survey() {
+    // A three-step cycle on the overlay latch: 0 -> 1 -> 2 -> 3 -> 0. Each
+    // step forces one repaint with the map's detail mask pinned to a value
+    // that shows only the layer that step is about, then puts the mask back.
+    const int state = field_23C00_;
+    if (state == 1) {
+        field_23C00_ = 2;
+        const uint32_t saved = console_map_win()->field_1DD70_;
+        console_map_win()->field_1DD70_ = 0x603;
+        console_map_win()->draw_map(1);
+        console_map_win()->field_1DD70_ = saved;
+        return;
+    }
+    if (state == 2) {
+        field_23C00_ = 3;
+        const uint32_t saved = console_map_win()->field_1DD70_;
+        console_map_win()->field_1DD70_ = 0x402;
+        console_map_win()->draw_map(1);
+        console_map_win()->field_1DD70_ = saved;
+        return;
+    }
+    if (state != 0) {
+        field_23C00_ = 0;
+        console_map_win()->draw_map(1);
+        return;
+    }
+    field_23C00_ = 1;
+    const uint32_t saved = console_map_win()->field_1DD70_;
+    console_map_win()->field_1DD70_ = 0x623;
+    console_map_win()->draw_map(1);
+    console_map_win()->field_1DD70_ = saved;
+}
+
+// ORIGINAL: 0x004E1380 ?editor_clear_terrain@Console@@QAEXXZ 0x004E1380-0x004E13D2 FILE BYTE_EXACT
+// size      82 bytes
+// prototype void (__thiscall ?editor_clear_terrain@Console@@QAEXXZ)(Console* this)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0046B190 0x005ABF20
+//
+// moved into src/ and was still being written into new files.
+//
+// address        0x004E1380
+//
+// emitted scaffolding and the body alone will not reproduce the
+//   build/byte-match/004e1380/unit.cpp
+//
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+
+
+void Console::editor_clear_terrain() {
+    auto_undo();
+    // The mask 0x420347A3 is the image's own immediate, kept verbatim - it
+    // clears the rocky/lock/using channels of tile->bit in one go.
+    Map *tile = map_tiles();
+    int i = 0;
+    for (; i < static_cast<int>(MapArea); i++, tile++) {
+        tile->bit &= 0x420347A3u;
+        uint32_t *dst = &tile->bit_visible[0];
+        int j = 7;
+        do {
+            *dst = tile->bit;
+            dst++;
+        } while (--j != 0);
+    }
+    ::draw_map(1);
+}
+
+// ORIGINAL: 0x00511480 ?set_view@Console@@QAEXH@Z 0x00511480-0x00511518 FILE BYTE_EXACT
+// size      152 bytes
+// prototype void (__thiscall ?set_view@Console@@QAEXH@Z)(Console* this, int)
+// callers   8   call targets   7
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00446B40 0x00458900 0x00460DD0 0x0046A550 0x0046AE00 0x0046FB10 0x004B9EA0
+
+
+void Console::set_view(int force_update) {
+    // The vehicle-cursor repaint cycle, guarded two ways: CursorVehActive
+    // says a cursor vehicle exists at all, force_update says the caller wants
+    // the repaint regardless (the editor toggles pass 1 so the view follows
+    // the flag they just flipped even with no vehicle selected).
+    if (CursorVehActive != 0 || force_update != 0) {
+        ambience(0x1E);
+        field_23BD8_ = 0;
+        field_23BF8_ = 1;
+        field_23BFC_ = 1;
+        if (field_23C00_ != 0) {
+            field_23C00_ = 0;
+            console_map_win()->draw_map(1);
+        }
+        ::draw_cursor();
+        ConsoleInfoWin.change(0);
+        ConsoleStatusWin.redraw();
+        console_map_win()->main_caption();
+        alpha_menu_.check(field_23BDC_);
+    }
 }
 

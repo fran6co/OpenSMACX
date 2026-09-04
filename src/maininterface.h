@@ -119,6 +119,10 @@ class MainInterface : public GraphicWin {
 
   int set_bubble_text(uint32_t button_id, LPCSTR text);
   void clear_message();
+  // 0x0045B550. The editor-mode button pane: Console::editor_paints,
+  // editor_lock2, editor_set_brush and set_view all redraw it after turning
+  // an editor flag. Body still unrecovered - a pending_bodies forwarder.
+  void draw_edit_pane();
   // 0x0045C3A0, a pending_bodies forwarder. blink2_timer (time.cpp) reaches
   // it on the fixed MainInterface at 0x007AE820 as its whole tick body.
   void redraw_complete();

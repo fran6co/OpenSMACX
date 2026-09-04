@@ -53,6 +53,14 @@ class AlphaMenu : public Menu {
   // slot-true stub.
   void vslot_17(int x, int y);
   int requested_height();
+  // 0x00460DD0 - the catalogue pins the name ?check@MainMenu@@QAEXH@Z on it,
+  // but the object it runs on is THIS one (??0Console builds a Menu-shaped
+  // object at this+0x22A2C and then calls 0x00460DD0 on it), so the method
+  // lives here rather than on a class the tree would have to invent.
+  // Declared ahead of its own body landing because Console::prev_cursor and
+  // menu_update drive it every turn. Body still unrecovered - a
+  // pending_bodies forwarder.
+  void check(int veh_id);
 
   Buffer buffer_;      // 0xB64, IDB `buffer`, size == sizeof(Buffer)
 

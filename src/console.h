@@ -102,6 +102,69 @@ class InfoWin;
   */
 class Console : public MapWin {
  public:
+  // homed from 004e1380.cpp
+  void editor_clear_terrain();
+
+ public:
+  // homed from 00515450.cpp
+  void survey();
+
+ public:
+  // homed from 005169b0.cpp
+  void base_me();
+
+ public:
+  // homed from 00515400.cpp
+  void center();
+
+ public:
+  // homed from 005156f0.cpp
+  void toggle_base_grid();
+
+ public:
+  // homed from 005156a0.cpp
+  void toggle_grid();
+
+ public:
+  // homed from 00515640.cpp
+  void toggle_flatten();
+
+ public:
+  // homed from 00515600.cpp
+  void base_names();
+
+ public:
+  // homed from 00510a60.cpp
+  void prev_cursor();
+
+ public:
+  // homed from 004e1f70.cpp
+  void editor_lock2();
+
+ public:
+  // homed from 004e13e0.cpp
+  void editor_fungus();
+
+ public:
+  // homed from 00515530.cpp
+  void survey2();
+
+ public:
+  // homed from 005147e0.cpp
+  // 0x005147E0 - catalogued `void`, but EAX is 1 on every out-of-bounds exit
+  // (0x00514807) and 0 after the repaint, so this is an int. The emitted name
+  // is ?set_cursor@Console@@QAEHHH@Z; the marker carries the `// symbol` fact.
+  int set_cursor(int x_coord, int y_coord);
+
+ public:
+  // homed from 005148b0.cpp
+  void move_cursor(int direction);
+
+ public:
+  // homed from 004e14a0.cpp
+  void editor_rockiness();
+
+ public:
   // homed from 004e1200.cpp
   void editor_clear_random();
 
@@ -150,6 +213,10 @@ class Console : public MapWin {
   // scenario editor is working on. Declared here because its own body is
   // still blocked on a private-member access its transcription makes.
   int editor_who(int a1, int a2);
+  // 0x00511480 ?set_view@Console@@QAEXH@Z - the view-mode setter every editor
+  // toggle drives. Declared ahead of its own body landing because
+  // editor_lock2 calls it; the pending_bodies forwarder goes when it homes.
+  void set_view(int force_update);
 
  public:
   // homed from 004e1300.cpp
@@ -294,7 +361,10 @@ class Console : public MapWin {
   uint32_t field_23BC8_;  // 0x23BC8
   uint32_t field_23BCC_;  // 0x23BCC
   uint32_t field_23BD0_;  // 0x23BD0
-  uint32_t field_23BD4_;  // 0x23BD4
+  // SIGNED, and not a spelling choice: editor_fungus runs its tile-copy
+  // counter in this slot and the image's back edge is `jl` (0x004E1461), so
+  // the field is an int - `uint32_t` compiles `jb` and diverges there.
+  int32_t field_23BD4_;  // 0x23BD4
   uint32_t field_23BD8_;  // 0x23BD8
   uint32_t field_23BDC_;  // 0x23BDC
   uint32_t field_23BE0_;  // 0x23BE0

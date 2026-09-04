@@ -566,6 +566,27 @@ void MainInterface::redraw_complete() {                 // 0x0045C3A0
     PENDING_BODY(0x0045C3A0, pending)(this, nullptr);
 }
 
+// ?draw_edit_pane@MainInterface@@QAEXXZ at 0x0045B550. Console's editor
+// commands repaint the pane through it after turning an editor flag.
+//             body in src/unrecovered/0045b550.cpp
+void MainInterface::draw_edit_pane() {                  // 0x0045B550
+    typedef void(__fastcall *pending)(MainInterface *, void *);
+    PENDING_BODY(0x0045B550, pending)(this, nullptr);
+}
+
+// ?tut_map@TutWin@@QAEHPBDHHHPAUSprite@@HHH@Z at 0x004BE650. Console::survey2
+// raises the map-square tutorial popup on the fixed TutWin at 0x008C6E68.
+//             body in src/unrecovered/004be650.cpp
+int TutWin::tut_map(const char *text, int x_coord, int y_coord, int pixel_x,
+                    Sprite *sprite, int forwarded_6, int arrow_x,
+                    int arrow_y) {                      // 0x004BE650
+    typedef int(__fastcall *pending)(TutWin *, void *, const char *, int, int,
+                                    int, Sprite *, int, int, int);
+    return PENDING_BODY(0x004BE650, pending)(this, nullptr, text, x_coord,
+                                             y_coord, pixel_x, sprite,
+                                             forwarded_6, arrow_x, arrow_y);
+}
+
 
 int TutWin::tut_win(void *owner, const char *text, int a3, int a4,
                     Sprite *sprite, int a6, int a7, int a8) {  // 0x004BDFE0
@@ -1286,6 +1307,16 @@ void MapWin::draw_base_dest(int draw_type) {  // 0x00467970
     PENDING_BODY(0x00467970, pending)(this, nullptr, draw_type);
 }
 
+// ?draw_cursor@MapWin@@QAEXXZ at 0x0046AD60 - the per-window cursor repaint,
+// distinct from the free ?draw_cursor@@YAXXZ at 0x0046AE00 that mapwin.cpp
+// defines. Console::set_cursor, move_cursor, prev_cursor and set_view call it
+// on the current map window; its own body is still
+//             body in src/unrecovered/0046ad60.cpp
+void MapWin::draw_cursor() {  // 0x0046AD60
+    typedef void(__fastcall *pending)(MapWin *, void *);
+    PENDING_BODY(0x0046AD60, pending)(this, nullptr);
+}
+
 void PlanWin::on_redraw() {  // 0x0048AF30
     typedef void(__fastcall *pending)(PlanWin *, void *);
     PENDING_BODY(0x0048AF30, pending)(this, nullptr);
@@ -1336,8 +1367,14 @@ void SpriteBox::on_redraw() {  // 0x00611380
     PENDING_BODY(0x00611380, pending)(this, nullptr);
 }
 
-void MainMenu::check(int veh_id) {  // 0x00460DD0
-    typedef void(__fastcall *pending)(MainMenu *, void *, int);
+// ?check@MainMenu@@QAEXH@Z at 0x00460DD0. The catalogue's class name for the
+// object at Console+0x22A2C is MainMenu, but that object is AlphaMenu-shaped
+// (??0Console builds Menu at +0x22A2C, then Buffer, Sprite and Sprite[3]
+// after it - AlphaMenu's own member list), so the method is declared on
+// AlphaMenu and this forwarder carries the tree's emitted name.
+//             body in src/unrecovered/00460dd0.cpp
+void AlphaMenu::check(int veh_id) {  // 0x00460DD0
+    typedef void(__fastcall *pending)(AlphaMenu *, void *, int);
     PENDING_BODY(0x00460DD0, pending)(this, nullptr, veh_id);
 }
 
@@ -2092,4 +2129,37 @@ void __cdecl atrocity(int faction_id, int faction_id_victim, int kind, int unk) 
     // homed. action_oblit commits the atrocity the obliteration of a base is.
     typedef void(__cdecl *pending)(int, int, int, int);
     PENDING_BODY(0x0055EEE0, pending)(faction_id, faction_id_victim, kind, unk);
+}
+
+// --- callees of the console turn/editor bodies, still archived ---
+
+// ?world_fungus@@YAXXZ at 0x005C3440 - the fungus repaint Console::editor_fungus
+// drives under the saved native-life-forms count.
+//             body in src/recovered/units/005c3440.cpp
+void __cdecl world_fungus() {
+    typedef void(__fastcall *pending)(void *, void *);
+    PENDING_BODY(0x005C3440, pending)(nullptr, nullptr);
+}
+
+// ?set_view@Console@@QAEXH@Z at 0x00511480 - Console's own view-mode setter,
+// archived. Console::editor_lock2 calls it when the cursor vehicle is live;
+// the forwarder goes when the claimed body homes.
+//             body homed into src/console.cpp (set_view, BYTE_EXACT)
+
+
+// ?zoom@BaseWin@@QAEXHH@Z at 0x0041A920 - centre the map on a base.
+// Console::base_me asks it for the base under the cursor's last position.
+//             body in src/recovered/units/0041a920.cpp
+void BaseWin::zoom(int base_id, int wait_done) {  // 0x0041A920
+    typedef void(__fastcall *pending)(BaseWin *, void *, int, int);
+    PENDING_BODY(0x0041A920, pending)(this, nullptr, base_id, wait_done);
+}
+
+// ?set_center@MapWin@@QAEXHHH@Z at 0x0046B1F0 - recenter the map.
+//             body in src/recovered/units/0046b1f0.cpp
+void MapWin::set_center(int x_coord, int y_coord,
+                        int draw_type) {  // 0x0046B1F0
+    typedef void(__fastcall *pending)(MapWin *, void *, int, int, int);
+    PENDING_BODY(0x0046B1F0, pending)(this, nullptr, x_coord, y_coord,
+                                     draw_type);
 }

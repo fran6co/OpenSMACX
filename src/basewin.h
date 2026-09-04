@@ -58,6 +58,10 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
  public:
   // homed from 00420a40.cpp
   int on_nc_hittest(int a1, int a2);
+  // 0x0041A920. Centre the map on a base: Console::base_me asks it for the
+  // base under the cursor's last position. Body still unrecovered - a
+  // pending_bodies forwarder.
+  void zoom(int base_id, int wait_done);
 
  public:
   // homed from 0041e8b0.cpp

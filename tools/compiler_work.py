@@ -481,13 +481,25 @@ SCAFFOLD_CEILINGS = {
     # landmine-verified (action_airdrop, order_veh, NetFifo::sub_634200,
     # NetFifo::sub_6340c0, AlphaNet::setup/Net::send/convert family minus
     # those retired beside homed claims).
-    # 256 -> 255 (2026-09-04, map/mapwin homing): MapWin::clear
-    # (0x00462870) homed into src/mapwin.cpp, its forwarder retired.
-    # Consolidated 2026-09-04 across P3 wave-3 collections: the veh action
-    # batch's two stand-ins (NetDaemon::order_veh, atrocity - FILE-only,
-    # landmine-free) and the terrain batch's net are 253 by the live census
-    # (252 invocations + the #define line).
-    "PENDING_BODY forwarders": 253,
+    # 256 -> 257 (2026-09-04, console homing): MapWin::draw_cursor
+    # (0x0046AD60) declared so Console::move_cursor/set_cursor stop calling
+    # the free ::draw_cursor the image does not call at those sites.
+    # 257 -> 263 (2026-09-04, console homing, +6): console.cpp's handoff block
+    # has declared tut_check/tut_check2/world_fungus since an earlier pass with
+    # NO definition anywhere - a landmine that only needed a caller. Six
+    # forwarders arrive with the first bodies that call them: those three plus
+    # MainInterface::draw_edit_pane (0x0045B550), TutWin::tut_map (0x004BE650)
+    # and Console::set_view (0x00511480, goes when its claimed body homes).
+    # 263 -> 265 (2026-09-04, console claimed wave): BaseWin::zoom
+    # (0x0041A920) and MapWin::set_center (0x0046B1F0) declared so
+    # Console::base_me and Console::center could home with their claims.
+    # 265 -> 262 (2026-09-04, console claimed wave): tut_check (0x004BA5F0),
+    # tut_check2 (0x004BA650) and Console::set_view (0x00511480) homed with
+    # their claims, so the three forwarders that had been the only compiled
+    # definition of each went with them.
+    # (union-collected: the terrain batch's MapWin::clear retirement and the
+    # veh action stand-ins fold into this trail; live census sets the number)
+    "PENDING_BODY forwarders": 259,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -553,7 +565,35 @@ SCAFFOLD_CEILINGS = {
     # (say_special's markup literals named out of the image, the rest against
     # Players/StringTable/Labels/TextBufferGetPtr) and the terrain batch's
     # mapwin family; then 1059 -> 1058 by the veh action batch.
-    "artifact files (recovered/)": 1054,
+    # 1063 -> 1062 (2026-09-04, console P2/P3 wave 3): 004e14a0.cpp homed
+    # into src/console.cpp BYTE_EXACT once world_rocky was declared in
+    # map.h and the ROCKOSITY label bound at 0x00689174.
+    # 1062 -> 1061 (2026-09-04, same wave, prev_cursor): 00510a60.cpp homed
+    # with its claim - 63/63 on the first measurement, on the declared member
+    # form and AlphaMenu::check.
+    # 1061 -> 1060 (2026-09-04, same wave, base_names): 00515600.cpp homed
+    # BYTE_EXACT 18/18 once the two preference dwords were named
+    # GameMorePreferences and AlphaIniPrefs.more_preferences.
+    # 1060 -> 1059 (2026-09-04, same wave, toggle_flatten): 00515640.cpp homed
+    # BYTE_EXACT 20/20.
+    # 1059 -> 1058 (2026-09-04, same wave, toggle_grid): 005156a0.cpp homed
+    # BYTE_EXACT 20/20.
+    # 1058 -> 1057 (2026-09-04, same wave, toggle_base_grid): 005156f0.cpp
+    # homed BYTE_EXACT 20/20.
+    # 1057 -> 1056 (2026-09-04, same wave, center): 00515400.cpp homed
+    # BYTE_EXACT 9/9 once MapWin::set_center was declared.
+    # 1056 -> 1055 (2026-09-04, same wave, base_me): 005169b0.cpp homed
+    # BYTE_EXACT 16/16 once BaseWin::zoom was declared.
+    # 1055 -> 1054 (2026-09-04, same wave, survey): 00515450.cpp homed
+    # BYTE_EXACT 47/47 - the overlay-latch state machine on the declared
+    # members, no field carve needed. base_me (005169b0.cpp, BYTE_EXACT 16/16,
+    # unblocked by the BaseWin::zoom declaration) was homed in the same wave
+    # and is counted in the 1055 above, not here.
+    # 1055 -> 1054 (2026-09-04, same wave, editor_clear_terrain): 004e1380.cpp
+    # homed BYTE_EXACT 30/30. Both this and survey above are whole-tile walks
+    # over MapTiles, and both wanted the stride advance in the for-increment
+    # clause rather than at the end of the body.
+    "artifact files (recovered/)": 1045,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -629,6 +669,18 @@ SCAFFOLD_CEILINGS = {
     # by the general/game batch, three into src/mapwin.cpp by the terrain
     # batch (00462870/00470550/00470790), the rest by the veh action batch.
     "unrecovered files": 1177,
+    # 1189 -> 1188 (2026-09-04, console homing): 005148b0.cpp homed into
+    # src/console.cpp as Console::move_cursor, its four fixed addresses all
+    # already named in the tree.
+    # 1188 -> 1184 (2026-09-04, same batch): 005147e0.cpp (set_cursor),
+    # 00515530.cpp (survey2, BYTE_EXACT), 004e13e0.cpp (editor_fungus) and
+    # 004e1f70.cpp (editor_lock2) homed into src/console.cpp.
+    # 1184 -> 1183 (2026-09-04, console claimed wave): 00515450.cpp homed into
+    # src/console.cpp with its claim.
+    # 1183 -> 1180 (2026-09-04, console claimed wave): 004ba5f0.cpp and
+    # 004ba650.cpp homed into src/tutwin.cpp (the tutorial gates, with their
+    # two shown-bit words named), 00511480.cpp into src/console.cpp.
+    "unrecovered files": 1168,
     # 2717 -> 2748 (2026-09-04, P2 net batch): NetFifo promoted with
     # close/add/get/get, NetFifoNode, head_/tail_/count_ - the deliberate
     # raise this ceiling exists for (class modelling grows it; the class

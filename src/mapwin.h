@@ -126,6 +126,10 @@ class MapWin : public virtual GraphicWin {
  public:
   // 0x0046B310, a pending_bodies forwarder.
   int focus(int x_coord, int y_coord);
+  // 0x0046B1F0. Console::center and the editor's goto paths recenter the map
+  // through it on the current window. Body still unrecovered - a
+  // pending_bodies forwarder.
+  void set_center(int x_coord, int y_coord, int draw_type);
 
  public:
   // 0x0046D5D0, a pending_bodies forwarder. The two click handlers reach it
@@ -205,6 +209,13 @@ class MapWin : public virtual GraphicWin {
   void clear_alt(int x, int y, int radius);
   void do_image_buttons();
   void main_caption();
+  // 0x0046AD60, NOT the free ::draw_cursor at 0x0046AE00 that mapwin.cpp
+  // defines. The cursor's own repaint runs per window and reads the shared
+  // CursorLastIndex/CursorLastX/CursorLastY triple plus this window's clip
+  // fields, so it needs the receiver; Console::set_cursor, move_cursor,
+  // prev_cursor and set_view all call it on the current map window. Body
+  // still unrecovered - a pending_bodies forwarder.
+  void draw_cursor();
   void on_left_click(int a1, int a2);
   void on_right_click(int a, int b);
   void on_left_double_click(int, int);

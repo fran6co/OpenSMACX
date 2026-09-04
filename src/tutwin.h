@@ -79,6 +79,17 @@ class TutWin : public Popup {
   // 0x004BDEA0, homed into tutwin.cpp. draw_cursor (mapwin.cpp) calls it on
   // the singleton below after every window's turn.
   void draw_arrow();
+  // 0x004BE650. The map-square tutorial popup: Console::survey2 raises it on
+  // the singleton below with the TERRASURVEY2 label once the survey overlay
+  // has flashed. Body still unrecovered - a pending_bodies forwarder.
+  // Parameter names from the body's own use: x_coord/y_coord are the tile the
+  // tutorial points at (focus and tile_to_pixel eat them), pixel_x is
+  // overwritten by tile_to_pixel's output before it reaches tut_win,
+  // forwarded_6 goes to tut_win untouched, and arrow_x/arrow_y are the
+  // second tile the arrow head is drawn on, longitude-wrapped like a cursor
+  // coordinate.
+  int tut_map(const char *text, int x_coord, int y_coord, int pixel_x,
+              Sprite *sprite, int forwarded_6, int arrow_x, int arrow_y);
   void base_rect(RECT *rect, int *x, int *y);
   void soc_rect(RECT *rect, int *x, int *y);
   void des_rect(RECT *rect, int *x, int *y);

@@ -420,6 +420,7 @@ void __cdecl build_hills(int altitude);
 void __cdecl world_riverbeds();
 BOOL __cdecl world_validate();
 void __cdecl world_temperature();
+void __cdecl world_rocky();
 int __cdecl world_site(int x, int y, BOOL is_ocean_site);
 void __cdecl world_analysis();
 void __cdecl world_polar_caps();

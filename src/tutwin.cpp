@@ -21,10 +21,20 @@
 #include "win.h"
 #include "mapwin.h"
 #include "vtable_shim.h"
+#include "game.h"     // IsMultiplayerNet, GamePreferences - tut_check's gates
+#include "faction.h"  // Players/LocalFaction/RFLAG_ALIEN - the expansion gate
 
 // The tutorial's "already shown" marker, cleared alongside the window's own
 // state. Bound at its canonical address because nothing here owns it yet.
 uint32_t TutWinShownFlag;  // 0x008CC244
+
+// THE TWO TUTORIAL-SHOWN BIT SETS, one per checker. tut_check and tut_check2
+// each OR their argument in and refuse to fire again while the bit is set;
+// the split into two words is what makes them independent hint sequences.
+// Both must be real globals (not const-address bindings) or VC6 caches the
+// word across the table read and the `|=` degrades to a load/or/store.
+int TutorialFlags;   // 0x009A64AC
+int TutorialFlags2;  // 0x009A64B0
 
 /*
 Purpose: Compute a rectangle center with wrapping subtraction and truncation toward zero.
@@ -527,3 +537,64 @@ void TutWin::draw_arrow() {
         }
     }
 }
+
+// ORIGINAL: 0x004BA5F0 ?tut_check@@YAHH@Z 0x004BA5F0-0x004BA64E FILE BYTE_EXACT
+// LEVER: test/push the flag word as a named `extern int`, not a const-address pointer - the pointer spelling lets VC6 prove no alias with the table read, cache it in eax and push/pop esi; a real global may alias, so it reloads and `|=` lowers to load/or/store. Transferred from 0x004BA650, then MEASURED here.
+// size      94 bytes
+// prototype 
+// callers   7   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+
+tut_check(int flag) {
+    // Gates, in the image's order: no tutorial hints in multiplayer, none
+    // unless GamePreferences keeps the hints switch on, none for a hint bit
+    // already shown, and none in an expansion alien faction (bit 0x80 of
+    // rule_flags is RFLAG_ALIEN - the same gate X_pop's mod-caption check
+    // makes). Players is walked by faction because 0x00946F58 is
+    // Players[0].rule_flags and the image scales its index by 0x59C.
+    if (IsMultiplayerNet != 0) {
+        return 0;
+    }
+    if ((GamePreferences & 0x20) == 0) {
+        return 0;
+    }
+    if ((flag & TutorialFlags) != 0) {
+        return 0;
+    }
+    if ((Players[LocalFaction].rule_flags & RFLAG_ALIEN) != 0) {
+        return 0;
+    }
+    TutorialFlags |= flag;
+    return 1;
+}
+
+// ORIGINAL: 0x004BA650 ?tut_check2@@YAHH@Z 0x004BA650-0x004BA6AE FILE BYTE_EXACT
+// LEVER: test/push 0x9A64B0 as a named `extern int`, not a const-address pointer: the pointer spelling let VC6 cache the flag word in eax across the table read and push/pop esi for the parameter; a real global may be aliased by the table pointer, so it reloads, keeps `a1` in scratch edx, and `|=` lowers to load/or/store instead of `or [mem], reg`.
+// size      94 bytes
+// prototype 
+// callers   9   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+
+tut_check2(int flag) {
+    // The second gate, identical in shape to tut_check but with its own
+    // shown-bit word, which is what makes the two hint sequences independent.
+    if (IsMultiplayerNet != 0) {
+        return 0;
+    }
+    if ((GamePreferences & 0x20) == 0) {
+        return 0;
+    }
+    if ((flag & TutorialFlags2) != 0) {
+        return 0;
+    }
+    if ((Players[LocalFaction].rule_flags & RFLAG_ALIEN) != 0) {
+        return 0;
+    }
+    TutorialFlags2 |= flag;
+    return 1;
+}
+
