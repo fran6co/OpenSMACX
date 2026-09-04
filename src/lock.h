@@ -52,7 +52,10 @@ class Lock {
   // same bytes under another name.
   PlayerLock records_[8];
 
- private:
+  // Made public 2026-09-04: NetDaemon::hang_up (src/netdaemon.cpp) reads
+  // 0xE0/E4 through its own object - the image's `[esi + 0x1580]`/`[esi +
+  // 0x1584]` - and private would have forced a this-pun the class_debt
+  // ratchet rightly refuses. Access specifiers change nothing about layout.
   uint32_t field_E0_;  // 0x00e0
   uint32_t field_E4_;
   uint32_t field_E8_;

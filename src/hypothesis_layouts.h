@@ -1654,14 +1654,41 @@ class NetFifo {
   // reach the real bodies with an ordinary call rather than a bound pointer.
   NetFifo();
   ~NetFifo();
-  // 0x00633F70, a pending_bodies forwarder. Net::get (src/net_class.cpp)
-  // reaches it on the NetFifo embedded at its own this+0x10C.
-  int get(void *, unsigned int *, int *, unsigned int *);
+  // 0x00633A50, 0x00633AB0 and the two get overloads 0x00633D90 / 0x00633F70,
+  // all homed into net_class.cpp. The two gets differ only in the fourth
+  // parameter's signedness - `PAH` against `PAI` - which is exactly why the
+  // catalogue can hold both names for one spelling of `get`.
+  // Net::get (src/net_class.cpp) reaches the second overload on the NetFifo
+  // embedded at its own this+0x10C.
+  void close();
+  int add(void *data, unsigned long size, unsigned long key, int type,
+          unsigned long extra);
+  // 0x00634200, a pending_bodies forwarder (archived in 00634200.cpp): the
+  // pop-the-head read the net sender reaches on the same queue.
+  int sub_634200(void *data, int key, int type, int len);
+  // 0x006340C0, a pending_bodies forwarder (archived in 006340c0.cpp) - the
+  // other reader on the same queue, reached by the sender's sibling.
+  int sub_6340c0(void *data, int key, int type, int len);
+  int get(void *data, unsigned int *key, int *type, int *len);
+  int get(void *data, unsigned int *key, int *type, unsigned int *len);
+
+  // The queue entry add() allocates and the two gets free, one 0x18-byte
+  // block - see the note by the bodies in net_class.cpp.
+  struct NetFifoNode {
+    int caller_value_;     // +0x0
+    uint32_t key_;         // +0x4
+    int result_;           // +0x8
+    void *data_;           // +0xC
+    uint32_t data_size_;   // +0x10
+    NetFifoNode *next_;    // +0x14, the intrusive next pointer
+  };
 
  public:
-  uint32_t field_0_;  // 0x0
-  uint32_t field_4_;  // 0x4
-  uint32_t field_8_;  // 0x8
+  // head_, tail_ and count_: the three dwords the bodies reach at +0, +4 and
+  // +8, named for what the queue does with them.
+  NetFifoNode *head_;   // 0x0
+  NetFifoNode *tail_;   // 0x4, the last entry enqueued
+  uint32_t count_;      // 0x8
   // 0xC, and it runs to 0x24. The IDB called this a fourth uint32_t.
   CRITICAL_SECTION lock_;
 };
@@ -2190,6 +2217,10 @@ class SelectPartWin {
 /* 0x24 bytes, 9 member(s), 0 named. From the IDB. 3 function(s) in the image. */
 class ServiceStruct {
  public:
+  // 0x00401760, a pending_bodies forwarder (archived in 00401760.cpp). The
+  // service-provider list append; Net's enumeration callback reaches it.
+  int add(int slot);
+
   uint32_t field_0_;  // 0x0
   uint32_t field_4_;  // 0x4
   uint32_t field_8_;  // 0x8

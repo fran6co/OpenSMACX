@@ -34,6 +34,9 @@ class DeletionList {
   // multiplayer deletion here before it compacts Vehs; still an original body
   // (src/unrecovered/0052de70.cpp), so the declaration is all veh.cpp needs.
   void add_deletion(int veh_id);
+  // 0x0052DDC0, a pending_bodies forwarder (archived in 0052ddc0.cpp) -
+  // rebinds one deletion-list slot to another owner.
+  int convert(int a1, int a2);
 
   // Storage the image proves is here: its own methods reach 0x5A4.
   // Extent only - this class carries no size assertion, and the bound is a floor.

@@ -259,6 +259,17 @@ sub-objects by raw offset, the same way this tree's other unmodelled
 */
 void *NetDirectPlay;  // the image's 0x009BE600 .bss: the DP interface, null until a session connects
 
+// 0x009BE5F0, the dword just below it: poll_services parks the ServiceStruct
+// the enumeration callback fills there for the length of the call, and the
+// callback reads it back out - a hand-off, not a second list.
+void *ServiceEnumTarget;  // 0x009BE5F0
+
+// The service-provider GUID the enumeration keeps: DirectPlayEnumerateA hands
+// each provider's GUID to sub_630bf0, which compares these 16 bytes against it
+// and keeps only the match. Read off the image at 0x00697558.
+static const GUID KeptServiceProviderGuid = {
+    0xD8D29744, 0x208A, 0x11D0, {0xA0, 0x00, 0x9D, 0xBC, 0xB6, 0x67, 0x29, 0x24}};
+
 /*
 Purpose: Build a VoiceTx: full volume, centred pan, cleared regions, a
          1000ms default fade, the "Voice Tx" name on the CRT heap, and
@@ -1240,8 +1251,433 @@ Return Value: `this`, which the image leaves in eax
 Status: Complete
 */
 NetFifo::NetFifo() {
-    field_0_ = 0;
-    field_4_ = 0;
-    field_8_ = 0;
+    head_ = 0;
+    tail_ = 0;
+    count_ = 0;
     InitializeCriticalSection(&lock_);
 }
+
+// ---------------------------------------------------------------------------
+// THE FIFO QUEUE - the four NetFifo bodies. A queue entry is one 0x18-byte
+// allocation: the caller's int at +0, the routing key at +4, the return value
+// at +8, a mem_get buffer at +0xC, its length at +0x10 and the intrusive next
+// pointer at +0x14. head_ is +0, tail_ +4, count_ +8 and the critical section
+// +0xC - the layout hypothesis_layouts.h declares.
+//
+// 0x00669174 and 0x0066917C are the IAT slots for LeaveCriticalSection and
+// EnterCriticalSection, so the bodies below call the real functions; the
+// image's `call dword ptr [0x66917c]` is the same import-table indirection.
+// ---------------------------------------------------------------------------
+
+// ORIGINAL: 0x00633A50 ?close@NetFifo@@QAEXXZ 0x00633A50-0x00633AAB
+// TRIED: all four bodies in this block land MISMATCH at instruction 0-1 with
+//   the same shape, and it is register allocation, not control flow: the
+//   image saves ebx/ebp/esi and dedicates one to the critical-section address
+//   (`lea ebp, [esi+0xc]` in the image is `lea ebp, [esi+0xc]` here too, but
+//   the image got there AFTER three pushes where this tree needs two). The
+//   archive's own transcription of close was 200/229 bytes at best for the
+//   sibling get. Naming head_/tail_/count_ and calling the real
+//   Enter/LeaveCriticalSection is the faithful form; the missing callee-saved
+//   push is not reachable from source form without a dedicated local nobody
+//   needs. 2026-09-04.
+// size      92 bytes
+// prototype void (__thiscall ?close@NetFifo@@QAEXXZ)(NetFifo* this)
+// callers   1   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+void NetFifo::close() {
+  EnterCriticalSection(&lock_);
+  while (head_ != 0) {
+    NetFifoNode *node = head_;
+    NetFifoNode *next = node->next_;
+    void *data = node->data_;
+    if (data != 0) {
+      free(data);
+    }
+    free(head_);
+    head_ = next;
+    if (head_ == 0) {
+      break;
+    }
+  }
+  tail_ = 0;
+  count_ = 0;
+  LeaveCriticalSection(&lock_);
+}
+
+// ORIGINAL: 0x00633AB0 ?add@NetFifo@@QAEHPAXKKHK@Z 0x00633AB0-0x00633B9A
+// size      235 bytes
+// prototype int (__thiscall ?add@NetFifo@@QAEHPAXKKHK@Z)(NetFifo* this, void*, unsigned long, unsigned long, int, unsigned long)
+// callers   2   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0050BA30
+int NetFifo::add(void *data, unsigned long size, unsigned long key, int type,
+                 unsigned long extra) {
+  EnterCriticalSection(&lock_);
+
+  NetFifoNode *node = reinterpret_cast<NetFifoNode *>(mem_get(0x18));
+  if (head_ == 0) {
+    head_ = node;
+    if (node == 0) {
+      LeaveCriticalSection(&lock_);
+      return 4;
+    }
+  } else {
+    NetFifoNode *tail = tail_;
+    tail->next_ = node;
+    if (tail->next_ == 0) {
+      LeaveCriticalSection(&lock_);
+      return 4;
+    }
+  }
+  tail_ = node;
+  node->next_ = 0;
+
+  node->key_ = key;
+  node->caller_value_ = type;
+  node->next_ = reinterpret_cast<NetFifoNode *>(extra);
+
+  if (size != 0) {
+    node->data_ = mem_get(size);
+    if (node->data_ == 0) {
+      LeaveCriticalSection(&lock_);
+      return 4;
+    }
+    if (data != 0) {
+      memcpy(node->data_, data, size);
+    }
+    node->data_size_ = size;
+  }
+
+  ++count_;
+  LeaveCriticalSection(&lock_);
+  return 0;
+}
+
+// ORIGINAL: 0x00633D90 ?get@NetFifo@@QAEHPAXPAIPAH1@Z 0x00633D90-0x00633E75
+// size      229 bytes
+// prototype int (__thiscall ?get@NetFifo@@QAEHPAXPAIPAH1@Z)(NetFifo* this, void*, unsigned int*, int*, int*)
+// callers   1   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// The queue is walked from the head for a matching key, so this is the
+// remove-by-key form; the 0x633F70 overload below pops the head instead.
+int NetFifo::get(void *data, unsigned int *key, int *type, int *len) {
+  EnterCriticalSection(&lock_);
+
+  NetFifoNode *cur = head_;
+  if (cur == 0) {
+    LeaveCriticalSection(&lock_);
+    return 0;
+  }
+
+  NetFifoNode *prev = 0;
+  while (cur->key_ != *key) {
+    NetFifoNode *next = cur->next_;
+    prev = cur;
+    if (next == 0) {
+      LeaveCriticalSection(&lock_);
+      return 0;
+    }
+    cur = next;
+  }
+
+  if (len != 0) {
+    *len = static_cast<int>(cur->data_size_);
+  }
+  if (cur->data_ != 0) {
+    if (data != 0) {
+      memcpy(data, cur->data_, cur->data_size_);
+    }
+    free(cur->data_);
+    cur->data_ = 0;
+  }
+
+  if (prev == 0) {
+    head_ = cur->next_;
+  } else {
+    prev->next_ = cur->next_;
+  }
+
+  if (type != 0) {
+    *type = cur->caller_value_;
+  }
+  int result = cur->result_;
+  free(cur);
+  --count_;
+  LeaveCriticalSection(&lock_);
+  return result;
+}
+
+// ORIGINAL: 0x00633F70 ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z 0x00633F70-0x00634067
+// symbol    ?get@NetFifo@@QAEHPAXPAIPAH2@Z
+// size      248 bytes
+// prototype int (__thiscall ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z)(NetFifo* this, void*, unsigned int*, int*, unsigned int*)
+// callers   1   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// VC6 spells this overload's fourth parameter PAIPAH2 - the backref table
+// numbers PAX 0, PAI 1, PAH 2 - where the catalogue spells the repeat out as
+// PAI. Same argument list, same body; only the encoding of the repeat
+// differs, so the fact stands in for the name.
+// The pop-the-head form: whatever is at the front of the queue goes back, and
+// the key comes out with it.
+int NetFifo::get(void *data, unsigned int *key, int *type,
+                 unsigned int *len) {
+  EnterCriticalSection(&lock_);
+
+  NetFifoNode *node = head_;
+  if (node == 0) {
+    LeaveCriticalSection(&lock_);
+    return 0;
+  }
+
+  if (len != 0) {
+    *len = node->data_size_;
+  }
+  if (node->data_ != 0 && data != 0) {
+    memcpy(data, node->data_, node->data_size_);
+    if (node->data_ != 0) {
+      free(node->data_);
+    }
+    node->data_ = 0;
+  }
+  head_ = node->next_;
+  if (key != 0) {
+    *key = node->key_;
+  }
+  if (type != 0) {
+    *type = node->caller_value_;
+  }
+  int result = node->result_;
+  free(node);
+  --count_;
+  LeaveCriticalSection(&lock_);
+  return result;
+}
+// ---------------------------------------------------------------------------
+// THE DIRECTPLAY GROUP CALLS. All three read the interface pointer out of
+// NetDirectPlay - the image's 0x009BE600 .bss, already modelled above - and
+// dispatch straight through its vtable, which is what vtable_method is for:
+// the call operand stays in memory, so the site keeps the image's single
+// `call dword ptr [vtable + N]`. The catalogue says nothing about which of
+// the two ids is the group and which is the member, so add_to_group's
+// parameters are named for the order the call site sends them in.
+// ---------------------------------------------------------------------------
+
+// ORIGINAL: 0x0062EDB0 ?delete_group@Net@@QAEXH@Z 0x0062EDB0-0x0062EDC7 BYTE_EXACT
+// size      24 bytes
+// prototype void (__thiscall ?delete_group@Net@@QAEXH@Z)(Net* this, int)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+void Net::delete_group(int group) {
+  if (NetDirectPlay != 0) {
+    typedef void(__stdcall *slot_fn)(void *, int);
+    vtable_method<slot_fn>(NetDirectPlay, 0x20)(NetDirectPlay, group);
+  }
+}
+
+// ORIGINAL: 0x0062EDD0 ?add_to_group@Net@@QAEHJK@Z 0x0062EDD0-0x0062EDFA BYTE_EXACT
+// size      43 bytes
+// prototype int (__thiscall ?add_to_group@Net@@QAEHJK@Z)(Net* this, long, unsigned long)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+int Net::add_to_group(long group, unsigned long member) {
+  if (NetDirectPlay == 0) {
+    return 7;
+  }
+  typedef int(__stdcall *slot_fn)(void *, long, unsigned long);
+  return vtable_method<slot_fn>(NetDirectPlay, 0x0c)(NetDirectPlay, group,
+                                                     member) != 0;
+}
+
+// ORIGINAL: 0x0062EE00 sub_62ee00 0x0062EE00-0x0062EE1C BYTE_EXACT
+// symbol    ?sub_62ee00@@YGHHH@Z
+// size      29 bytes
+// prototype int (__stdcall sub_62ee00)(int, int)
+// callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// The catalogue has no name for this one, so the tree keeps the address name
+// and the free __stdcall spelling the call sites use. Its return is the
+// interface POINTER, not slot 7's own answer - EAX is left holding what it
+// loaded, which is what its one caller goes on to test.
+int __stdcall sub_62ee00(int first, int second) {
+  unsigned long obj = reinterpret_cast<unsigned long>(NetDirectPlay);
+  if (obj != 0) {
+    typedef int(__stdcall *slot_fn)(void *, int, int);
+    obj = static_cast<unsigned long>(
+        vtable_method<slot_fn>(NetDirectPlay, 0x1c)(NetDirectPlay, first,
+                                                    second));
+  }
+  return static_cast<int>(obj);
+}
+
+// ORIGINAL: 0x0062DF70 ?start_voice@Net@@QAEHJ@Z 0x0062DF70-0x0062DFBE BYTE_EXACT
+// size      79 bytes
+// prototype int (__thiscall ?start_voice@Net@@QAEHJ@Z)(Net* this, long)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// Gates on the interface, then on the two voice-flag bits at +0xD8: out of an
+// in-flight capture there is nothing to start. The key is remembered at +0xD4
+// so stop_voice can match it, and the started bit is lit only after
+// VoiceTx::start comes back - the order the dispatch proves.
+int Net::start_voice(long key) {
+  if (NetDirectPlay == 0) {
+    return 7;
+  }
+  if ((voice_flags_D8_ & 0x60000000) == 0) {
+    field_54_ = 1;
+    voice_key_D4_ = static_cast<uint32_t>(key);
+    voice_tx_.start();
+    voice_flags_D8_ |= 0x20000000;
+  }
+  return 0;
+}
+
+// ORIGINAL: 0x00630BF0 sub_630bf0 0x00630BF0-0x00630C29 BYTE_EXACT
+// symbol    ?sub_630bf0@@YGHPBXHHHH@Z
+// size      58 bytes
+// prototype int (__stdcall sub_630bf0)(const void*, int, int, int, int)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// DirectPlayEnumerateA's callback. `ret 0x14` pins five stack dwords and
+// stdcall; the catalogue's own head spells them LPGUID/LPSTR/DWORD, which no
+// declaration here can carry, so they are the plain pointer/int they are on
+// the wire. Only the provider whose GUID matches KeptServiceProviderGuid is
+// kept, and its description pointer and id land in the ServiceStruct the
+// caller parked in ServiceEnumTarget.
+int __stdcall sub_630bf0(const void *guid, int name, int unused_a, int unused_b,
+                         int unused_c) {
+  if (memcmp(guid, &KeptServiceProviderGuid, 0x10) != 0) {
+    ServiceStruct *service =
+        reinterpret_cast<ServiceStruct *>(ServiceEnumTarget);
+    service->field_1C_ = static_cast<uint32_t>(name);
+    service->field_20_ = reinterpret_cast<uint32_t>(guid);
+    service->add(0);
+  }
+  return 1;
+}
+
+// ORIGINAL: 0x0062E250 ?poll_services@Net@@QAEHPAUServiceList@@@Z 0x0062E250-0x0062E299 BYTE_EXACT
+// size      74 bytes
+// prototype int (__thiscall ?poll_services@Net@@QAEHPAUServiceList@@@Z)(Net* this, ServiceList*)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// Park the list in ServiceEnumTarget for the length of the call - that is
+// where sub_630bf0 picks it up - then enumerate. The stack is not cleaned
+// after the call, which is what pins DirectPlayEnumerateA as the two-argument
+// stdcall the import table carries; the nullary extern the scaffold invented
+// could not even be called.
+int Net::poll_services(ServiceList *list) {
+  if (list == 0) {
+    return 0x10;
+  }
+  if (guid_6E8_ == 0) {
+    return 7;
+  }
+  ServiceEnumTarget = list;
+  typedef int(__stdcall *enum_fn)(void *, void *);
+  int result = reinterpret_cast<enum_fn>(DirectPlayEnumerateA)(
+      reinterpret_cast<void *>(&sub_630bf0), 0);
+  ServiceEnumTarget = 0;
+  return result != 0;
+}
+
+// ORIGINAL: 0x00630A40 sub_630a40 0x00630A40-0x00630A7D BYTE_EXACT
+// symbol    ?sub_630a40@Net@@QAEHHH@Z
+// size      62 bytes
+// prototype int (__thiscall sub_630a40)(Net* this, int, int)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// Reads one message off the 0x10C queue: NetGetScratch is the buffer, `first`
+// receives the routing key and `second` the caller's int. The answer is the
+// BUFFER's address when the read landed and zero when it did not - the
+// image's `neg/sbb/and eax, 0x9bc4bc` tail, which is why the guard has to be
+// an `extern` object and not a folded literal.
+int Net::sub_630a40(int first, int second) {
+  if (NetDirectPlay == 0) {
+    return 0;
+  }
+  if (first == 0) {
+    return 0;
+  }
+  int got = netfifo_[1].get(&NetGetScratch,
+                            reinterpret_cast<unsigned int *>(first),
+                            reinterpret_cast<int *>(0),
+                            reinterpret_cast<int *>(second));
+  return got != 0 ? reinterpret_cast<int>(&NetGetScratch) : 0;
+}
+
+// ORIGINAL: 0x00630980 sub_630980 0x00630980-0x006309BA BYTE_EXACT
+// symbol    ?sub_630980@Net@@QAEHHH@Z
+// size      59 bytes
+// prototype int (__thiscall sub_630980)(Net* this, int, int)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// The sender's twin of sub_630a40 above: hand the message to the 0x10C queue's
+// own reader and answer the buffer's address on success.
+// LEVER: the two guards SHARE one exit here (`je 0x6309b5` twice, one
+//   xor/ret tail), which is the chained `||` shape - unlike sub_630a40 above,
+//   whose image gives each guard its own inline `ret 8` and so wants two
+//   separate `if`s. Measured both ways: chained 20/20 BYTE_EXACT, separate
+//   guards 2/19 with the branch polarity flipped. 2026-09-04.
+int Net::sub_630980(int first, int second) {
+  if (NetDirectPlay == 0 || first == 0) {
+    return 0;
+  }
+  int got = netfifo_[1].sub_634200(&NetGetScratch, first, 0, second);
+  return got != 0 ? reinterpret_cast<int>(&NetGetScratch) : 0;
+}
+
+// ORIGINAL: 0x006309C0 sub_6309c0 0x006309C0-0x006309FD BYTE_EXACT
+// symbol    ?sub_6309c0@Net@@QAEHHH@Z
+// size      61 bytes
+// prototype int (__thiscall sub_6309c0)(Net* this, int, int)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// LEVER: the mirror image of sub_630980 above, and the guards are the one
+//   thing that differs - HERE the image gives each guard its own inline
+//   `xor/ret 8`, so the two tests stay SEPARATE; chaining them shared one
+//   tail and flipped the polarity (2/19). Same body, opposite branch shape,
+//   on two functions 64 bytes apart. Measured both ways, 2026-09-04.
+int Net::sub_6309c0(int first, int second) {
+  if (NetDirectPlay == 0) {
+    return 0;
+  }
+  if (first == 0) {
+    return 0;
+  }
+  int got = netfifo_[1].sub_6340c0(&NetGetScratch, first, 0, second);
+  return got != 0 ? reinterpret_cast<int>(&NetGetScratch) : 0;
+}
+
+// ORIGINAL: 0x00632300 ?set_polling@Net@@QAEXH@Z 0x00632300-0x0063234F BYTE_EXACT
+// size      80 bytes
+// prototype void (__thiscall ?set_polling@Net@@QAEHH@Z)(Net* this, int)
+// callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// Sixteen per-player polling stamps at 0x164 - players_[i].stamp_10_, 0x58
+// apart - drop to zero; the polling bit in the 0xD8 flag word follows the
+// argument.
+void Net::set_polling(int flag) {
+  for (int i = 0; i < 0x10; ++i) {
+    players_[i].stamp_10_ = 0;
+  }
+  if (flag != 0) {
+    voice_flags_D8_ |= 0x40000;
+  } else {
+    voice_flags_D8_ &= 0xFFFBFFFF;
+  }
+}
+

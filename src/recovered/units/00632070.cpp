@@ -1,4 +1,11 @@
 // ORIGINAL: 0x00632070 ?enable_join@Net@@QAEXXZ 0x00632070-0x006320DA FILE BYTE_EXACT
+// TRIED: homing this into net_class.cpp on 2026-09-04. The transcription
+//   compiles there and measures 5/43 against the image, and the image's own
+//   body is a DIFFERENT program: it makes one call (0x644EF2) behind the two
+//   guards where this body makes three interface dispatches, a mem_get and a
+//   free. So the archive's BYTE_EXACT is against bytes this body does not
+//   describe, and the claim cannot move until the body is re-derived from
+//   0x00632070's own disassembly. Left archived; reverted the homing.
 // size      106 bytes
 // prototype void (__thiscall ?enable_join@Net@@QAEXXZ)(Net* this)
 // callers   1   call targets   2

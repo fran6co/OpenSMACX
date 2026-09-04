@@ -151,6 +151,8 @@ class NetPlayer {
   uint8_t field_14_[0x44];  // 0x14..0x57, the name text starts at 0x15
 };
 
+struct ServiceList;
+
 class Net {
  public:
   // ?start_voice@Net@@QAEHK@Z at 0x0062DF20. `K`, not `I` - the image spells
@@ -158,6 +160,14 @@ class Net {
   // matching. PROMOTED out of src/recovered/0062df20.cpp; its
   // pending_bodies forwarder is gone.
   int start_voice(unsigned long key);
+  // 0x0062DF70, homed into net_class.cpp. `J`, not `K` - the second
+  // start_voice spells its key signed, and the wrong spelling moves the
+  // symbol. It guards on the 0xD8 flag word, remembers the key at 0xD4 and
+  // starts the VoiceTx subobject.
+  int start_voice(long key);
+  // 0x00632300, homed into net_class.cpp: clears the sixteen polling stamps
+  // at 0x164 and sets the 0xD8 polling bit to match.
+  void set_polling(int flag);
   // ?stop_voice@Net@@QAEXXZ at 0x0062DFC0. PROMOTED out of
   // src/recovered/units/0062dfc0.cpp; its pending_bodies forwarder is gone.
   void stop_voice();
@@ -179,6 +189,28 @@ class Net {
   // a zero answer as "cut", which is when it refreshes the player's stamp.
   int drop_player(unsigned long key, int reason);
   int get(unsigned long *a, unsigned long *b);
+  // 0x0062EDB0 and 0x0062EDD0, homed into net_class.cpp: the DirectPlay
+  // group calls. add_to_group's two ids travel in this order; the catalogue
+  // does not say which is the group and which the member.
+  void delete_group(int group);
+  int add_to_group(long group, unsigned long member);
+  // 0x0062E250, homed into net_class.cpp. ServiceList is opaque here - only
+  // the pointer travels - so a forward declaration keeps the catalogue's
+  // `PAUServiceList@@` spelling.
+  int poll_services(ServiceList *list);
+  // 0x00630A40, homed into net_class.cpp: reads one message off the middle
+  // queue. No catalogue name, so the fact records what this tree emits.
+  int sub_630a40(int first, int second);
+  // 0x00630980, homed into net_class.cpp: the sender's twin, answering the
+  // buffer's address through the queue's own reader.
+  int sub_630980(int first, int second);
+  // 0x006309C0, homed into net_class.cpp: the sibling sender on the second
+  // reader of the same queue.
+  int sub_6309c0(int first, int second);
+  // 0x00630080, archived in 00630080.cpp (2232 bytes). send_message hands it
+  // every packet it builds, so the receiver has to be real for that call to
+  // keep the image's `E8`.
+  int send(void *data, int mode, unsigned long who, int size);
 
  public:
   // 0x0062E010, a pending_bodies forwarder.
@@ -276,7 +308,12 @@ class Net {
   // zeroes both - and 0x768 the slot count AlphaNet::close zeroes; the rest
   // is opaque to 0x780.
   uint32_t field_760_;       // 0x760
+  // Read by NetDaemon::send_message (netdaemon.cpp) as the substitution for
+  // an out-of-range target, so it is reachable from the derived class rather
+  // than a this-pun over the offset.
+ public:
   uint32_t field_764_;       // 0x764
+ private:
   uint8_t field_768_[0x18];  // 0x768..0x77F, opaque
 };
 

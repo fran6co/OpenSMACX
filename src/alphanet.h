@@ -99,8 +99,16 @@ class AlphaNet : public Net {
   int who_2_pid(int identity);
   int who_2_idx(int identity);
   void close();
+  // 0x004E31E0, a pending_bodies forwarder (archived in 004e31e0.cpp). It
+  // brings the transport up; NetDaemon::init (netdaemon.cpp) is the one
+  // caller, and it tests the answer to decide whether the daemon came up.
+  int setup(int option);
 
- private:
+ public:
+  // Made public 2026-09-04: NetDaemon::process_message writes one per-slot
+  // status byte at 0x794 (slot_region_[8 + slot * 4]) and private would have
+  // forced a this-pun the class_debt ratchet rightly refuses. Access
+  // specifiers change nothing about layout.
   uint8_t field_780_[0xC];        // 0x780..0x78B, opaque
   // THE SLOT REGION AND THE LEDGER SHARE STORAGE: eight 0x19C process
   // slots run 0x78C..0x146C, and the ledger (0x144C..0x148C) with its Heap

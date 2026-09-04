@@ -45,6 +45,8 @@
 #include "popup.h"
 #include "sound.h"
 #include "netdaemon.h"
+#include "alphanet.h"
+#include "deletionlist.h"
 #include "lock.h"
 #include "fx.h"
 #include "hypothesis_layouts.h"
@@ -308,8 +310,11 @@ void EditBox::set_text(char *text) {
     PENDING_BODY(0x006151E0, pending)(this, nullptr, text);
 }
 
-// ?message_data@@YAXHHHHHH@Z at 0x00592EE0 - broadcasts a game event. Two
-// files bound it as a pointer, with disagreeing return types; one forwarder.
+// ?message_data@@YAXHHHHHH@Z at 0x00592EE0 - broadcasts a game event. It
+// cannot be homed into netdaemon.cpp beside its family: the catalogue spells
+// the return void, but EAX is live at its ret and unlock_veh (BYTE_EXACT)
+// returns that residue, and no body spelled in this tree can pass a callee's
+// EAX through - so the forwarder, which is the one spelling that can, stays.
 uint32_t __cdecl message_data(int a1, int a2, int a3, int a4, int a5, int a6) {
     typedef uint32_t(__cdecl *pending)(int, int, int, int, int, int);
     return PENDING_BODY(0x00592EE0, pending)(a1, a2, a3, a4, a5, a6);
@@ -622,10 +627,7 @@ void GraphicWin::compute_min_size() {  // 0x005D7030
 }
 
 
-void NetDaemon::process_message(char *message, unsigned long a, int b) {  // 0x00534400
-    typedef void(__fastcall *pending)(NetDaemon *, void *, char *, unsigned long, int);
-    PENDING_BODY(0x00534400, pending)(this, nullptr, message, a, b);
-}
+
 
 void NetDaemon::synch(int16_t opcode, int a, int b, int c, char *text, int d, int16_t flags) {  // 0x00532E00
     typedef void(__fastcall *pending)(NetDaemon *, void *, int16_t, int, int, int, char *, int, int16_t);
@@ -850,13 +852,8 @@ int __cdecl X_pop_ask_number(char *caption, const char *label, int value,
     return PENDING_BODY(0x005BFD70, pending)(caption, label, value, callback);
 }
 
-// ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z at 0x00633F70 - Net::get (src/net_class.cpp)
-// reaches it on the NetFifo embedded at its own this+0x10C.
-int NetFifo::get(void *a1, unsigned int *a2, int *a3, unsigned int *a4) {
-    typedef int(__fastcall *pending)(NetFifo *, void *, void *, unsigned int *,
-                                     int *, unsigned int *);
-    return PENDING_BODY(0x00633F70, pending)(this, nullptr, a1, a2, a3, a4);
-}
+// ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z at 0x00633F70 WERE HERE and is gone: the
+// body is homed into net_class.cpp beside the rest of its class.
 
 int BasePop::init(int a1, long a2) {  // 0x006015B0
     typedef int(__fastcall *pending)(BasePop *, void *, int, long);
@@ -1646,6 +1643,19 @@ int Net::join_session(struct SessionStruct *session, char *player_name,
                                              player_name, address);
 }
 
+// ?send@Net@@QAEHPAXHKH@Z at 0x00630080 - 2232 bytes of DirectPlay send with
+// per-peer RTT bookkeeping, still archived (00630080.cpp, FILE-only: no claim
+// to landmine). Its receiver has to be real here because
+// NetDaemon::send_message, homed into netdaemon.cpp, calls it for every
+// packet it builds, and a `T *const` receiver binding would cost that call
+// site the image's `E8`.
+int Net::send(void *data, int mode, unsigned long who, int size) {
+    typedef int(__fastcall *pending)(Net *, void *, void *, int, unsigned long,
+                                     int);
+    return PENDING_BODY(0x00630080, pending)(this, nullptr, data, mode, who,
+                                             size);
+}
+
 // ?init@FX@@QAEXXZ at 0x00445CD0
 void FX::init() {
     typedef void(__fastcall *pending)(FX *, void *);
@@ -2006,11 +2016,75 @@ void __cdecl wait_loop() {
     PENDING_BODY(0x0051F200, pending)();
 }
 
-void NetDaemon::await_diplo(int opcode) {
-    typedef void(__fastcall *pending)(NetDaemon *, void *, int);
-    PENDING_BODY(0x005315C0, pending)(this, nullptr, opcode);
-}
+
+
+// ?lock@NetDaemon@@QAEHHHHHHH@Z at 0x00530630 - 734 bytes: it broadcasts the
+// lock request through message_lock, then polls with the same wait loop
+// unlock_base and await_synch spell out inline. Still archived there
+// (FILE-only, so no claim is landmined); the declaration in netdaemon.h is
+// what lets lock_veh and the Console lock bodies reach it with the image's
+// `E8`.
+
 
 // ?unlock@NetDaemon@@QAEXXZ (0x00530D00) and ?close_channel@NetDaemon@@QAEXXZ
 // (0x00530600) WERE HERE and are gone: both are homed into src/netdaemon.cpp,
 // whose diplo_unlock and diplomacy_ends callers needed them.
+
+// Three forwarders the daemon's lock and synch bodies need. All three
+// targets are FILE-only in the archives, so none of them landmines a claim.
+// (check_spock and help_spock were the other two and are homed into
+// netdaemon.cpp instead - a forwarder beside a compiled BYTE_EXACT claim is
+// the one thing address_index refuses.)
+// check_spock (0x0051F1B0) WERE HERE and is gone: the BYTE_EXACT body is
+// homed into src/netdaemon.cpp, whose wait loops call it, and a forwarder
+// beside a compiled claim is the one thing address_index refuses.
+
+void __cdecl action_airdrop(int faction_id, int x, int y, int mode) {
+    // ?action_airdrop@@YAHHHHH@Z at 0x004CC360, still in veh.cpp's region
+    typedef void(__cdecl *pending)(int, int, int, int);
+    PENDING_BODY(0x004CC360, pending)(faction_id, x, y, mode);
+}
+
+int __cdecl order_veh(int veh_id, int x, int y) {
+    // ?order_veh@@YAHHHH@Z at 0x005947C0
+    typedef int(__cdecl *pending)(int, int, int);
+    return PENDING_BODY(0x005947C0, pending)(veh_id, x, y);
+}
+
+int NetFifo::sub_634200(void *data, int key, int type, int len) {
+    // ?sub_634200@@YGEHPAXHHH@Z-shaped thunk at 0x00634200, archived. Its
+    // receiver is the queue at Net+0x10C, which is why the member has to be
+    // real for the caller's `add ecx, 0x10c` to exist at all.
+    typedef int(__fastcall *pending)(NetFifo *, void *, void *, int, int, int);
+    return PENDING_BODY(0x00634200, pending)(this, nullptr, data, key, type,
+                                             len);
+}
+
+int NetFifo::sub_6340c0(void *data, int key, int type, int len) {
+    // 0x006340C0, archived - the second reader on the queue at Net+0x10C.
+    typedef int(__fastcall *pending)(NetFifo *, void *, void *, int, int, int);
+    return PENDING_BODY(0x006340C0, pending)(this, nullptr, data, key, type,
+                                             len);
+}
+
+int ServiceStruct::add(int slot) {
+    // ?add@ServiceStruct@@QAEHH@Z at 0x00401760, archived beside
+    // stringstruct.cpp's class. Net's enumeration callback appends through it.
+    typedef int(__fastcall *pending)(ServiceStruct *, void *, int);
+    return PENDING_BODY(0x00401760, pending)(this, nullptr, slot);
+}
+
+int DeletionList::convert(int a1, int a2) {
+    // ?convert@DeletionList@@QAEHHH@Z at 0x0052DDC0, archived beside
+    // deletionlist.cpp's class. NetDaemon::fixup_message reaches it through
+    // its lock table at this+0x158C.
+    typedef int(__fastcall *pending)(DeletionList *, void *, int, int);
+    return PENDING_BODY(0x0052DDC0, pending)(this, nullptr, a1, a2);
+}
+
+int AlphaNet::setup(int option) {  // ?setup@AlphaNet@@QAEHH@Z at 0x004E31E0
+    typedef int(__fastcall *pending)(AlphaNet *, void *, int);
+    return PENDING_BODY(0x004E31E0, pending)(this, nullptr, option);
+}
+
+

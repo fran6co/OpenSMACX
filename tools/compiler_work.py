@@ -194,7 +194,10 @@ SHAPES = [
     # reached through original_method the way mapwin.cpp reaches
     # MapWin::draw_radius; the class pass that homes the base.cpp cascade
     # retires them.
-    ("ORIGINAL() named-pointer seam", 91,
+    # 91 -> 94 (2026-09-04, P2 net batch): three dispatches through the
+    # NetWin singleton at 0x0080A6F8 (setup_faction_data, is_visible,
+    # pick_pass) - netwin.h's owner clears them.
+    ("ORIGINAL() named-pointer seam", 94,
      re.compile(r"\bORIGINAL\((?!.*vtable\[)"),
      "reaches a member through a function-pointer slot, which compiles "
      "`FF 15` where the image has `E8`. Call it by name once its body lands."),
@@ -468,7 +471,11 @@ SCAFFOLD_CEILINGS = {
     # add_deletion - all FILE-tier, landmine-free) against three retired in
     # the merge (veh_kill/veh_ready into veh.cpp, world_rocky into map.cpp)
     # and one stand-in that pre-dates this collection.
-    "PENDING_BODY forwarders": 251,
+    # 251 -> 256 (2026-09-04, P2 net batch): five FILE-only stand-ins,
+    # landmine-verified (action_airdrop, order_veh, NetFifo::sub_634200,
+    # NetFifo::sub_6340c0, AlphaNet::setup/Net::send/convert family minus
+    # those retired beside homed claims).
+    "PENDING_BODY forwarders": 256,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -530,7 +537,7 @@ SCAFFOLD_CEILINGS = {
     # 00618520.cpp, 00618560.cpp, 00618430.cpp homed into src/caviar.cpp.
     # 1124 -> 1123 (same wave, set_buffer): 006183d0.cpp homed into
     # src/caviar.cpp.
-    "artifact files (recovered/)": 1087,
+    "artifact files (recovered/)": 1063,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -602,8 +609,12 @@ SCAFFOLD_CEILINGS = {
     # src/caviar.cpp; 0063b072.cpp homed into src/caviar.cpp.
     # 1245 -> 1244 (same wave, set_shadow_vector): 006181d0.cpp homed into
     # src/caviar.cpp, SHAPE_EXACT 40/44 on a TU-local pragma function(cos).
-    "unrecovered files": 1210,
-    "hypothesis_layouts.h lines": 2717,
+    "unrecovered files": 1189,
+    # 2717 -> 2748 (2026-09-04, P2 net batch): NetFifo promoted with
+    # close/add/get/get, NetFifoNode, head_/tail_/count_ - the deliberate
+    # raise this ceiling exists for (class modelling grows it; the class
+    # pass retiring the file deletes it).
+    "hypothesis_layouts.h lines": 2748,
 }
 
 

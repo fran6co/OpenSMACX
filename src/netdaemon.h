@@ -58,6 +58,85 @@ static_assert(sizeof(LockStateEntry) == 0x3C, "lock state stride");
 
 class NetDaemon : public AlphaNet {
  public:
+  // homed from 00534330.cpp
+  int fixup_message(char *message);
+
+ public:
+  // homed from 00531480.cpp
+  void await_synch();
+
+ public:
+  // homed from 00531300.cpp
+  void await_exec(int opcode);
+
+ public:
+  // homed from 00530e50.cpp
+  void unlock_base(int base_id);
+
+ public:
+  // homed from 00530aa0.cpp
+  int add_global();
+
+ public:
+  // homed from 00530920.cpp
+  int add_lock(int target, int x, int y);
+
+ public:
+  // homed from 005304a0.cpp
+  int open_channel(int payload_10, int payload_14);
+
+ public:
+  // homed from 005303b0.cpp
+  int wait(char *message, int *state, int value, int timeout);
+
+ public:
+  // homed from 0052df30.cpp
+  int init(int option);
+
+ public:
+  // 0x00532940. Every message builder in netdaemon.cpp hands its record here.
+  void send_message(char *message, unsigned long length, int target);
+  // 0x00530630, a pending_bodies forwarder (archived in 00530630.cpp). It
+  // broadcasts a lock request, then polls for every client's ack - which is
+  // the wait loop unlock_base and await_synch spell out inline. The three
+  // trailing ints pass through to the record's 0x18/0x1C/0x20 slots.
+  int lock(int target, int x, int y, int payload_18, int payload_1C,
+           int payload_20);
+  // 0x00531020. Takes the vehicle BY POINTER: the pointer itself is what the
+  // daemon stores to remember which unit this client holds. Declaring it here
+  // is what unlocks the eleven Console bodies that lock a unit over the net.
+  int lock_veh(int *veh_id, int target, int payload_1C, int payload_20,
+               int payload_18);
+
+ public:
+  // 0x005328C0, homed from 005328c0.cpp. faction_id names the event's owner;
+  // turn_value is stored into the lock state when no turn is already marked.
+  int end_of_event(int faction_id, int turn_value);
+
+ public:
+  // 0x0052F8E0, homed from 0052f8e0.cpp. Writes the running game's checksum
+  // sequence into the caller's int array.
+  void game_checksum(int *results);
+
+ public:
+  // 0x0052F520, homed from 0052f520.cpp
+  void send_rules();
+
+ public:
+  // 0x0052E900, homed from 0052e900.cpp
+  void send_game();
+
+ public:
+  // 0x0052E050, homed from 0052e050.cpp
+  void hang_up();
+  // 0x00530360, homed from 00530360.cpp - one pump turn of the daemon.
+  void net_tasks();
+  // 0x00531700, homed from 00531700.cpp - the "am I already holding it"
+  // wrapper around lock_veh, counting repeat requests at 0x1BCC.
+  int maybe_lock(int *veh_id, int flag, int payload_1C, int payload_20,
+                 int payload_18, int extra);
+
+ public:
   // 0x00532E00, a pending_bodies forwarder.
   void synch(int16_t opcode, int a, int b, int c, char *text, int d, int16_t flags);
 
@@ -116,6 +195,19 @@ class NetDaemon : public AlphaNet {
 // relocated, and `->` becomes `.`.
 extern NetDaemon NetDaemonNet;  // 0x0093CD90
 
+// The wait-loop callees the daemon's lock and synch bodies poll through, so
+// those bodies can home here without dragging in the whole window stack.
+// Both are forwarders in pending_bodies.cpp; wait_task is the image's
+// ?wait_loop@@YAXXZ, renamed for what this tree's callers do with it.
+void __cdecl wait_task();     // 0x0051F200
+void __cdecl check_spock();   // 0x0051F1B0, defined in netdaemon.cpp
+void __cdecl do_all_draws();  // also declared in temp.h, which this header
+                              // deliberately does not pull in
+// 0x004CC360 and 0x005947C0, both forwarders: the veh.cpp action family is
+// still archived, and the daemon's own veh_drop / order_veh dispatch into it.
+void __cdecl action_airdrop(int faction_id, int x, int y, int mode);
+int __cdecl order_veh(int veh_id, int x, int y);
+
 
 // The multiplayer-transport flag at 0x0093F660 and the local faction id at
 // 0x00939284, both read by unlock_veh. src/game.cpp binds the same two
@@ -126,18 +218,29 @@ extern NetDaemon NetDaemonNet;  // 0x0093CD90
 extern int NetDaemonIsMultiplayerNet;
 extern int NetDaemonLocalFaction;
 
-// message_data at 0x00592EE0 broadcasts one game event; it is still an
-// original dependency (it packs a 0x20-byte record and dispatches
-// NetDaemon::send_message at 0x00532940), so unlock_veh reaches it through a
-// rebindable seam. Declared returning uint32_t even though the original is
-// ?message_data@@YAXHHHHHH@Z: unlock_veh's own EAX residue on the announce
-// path IS this call's EAX, so the value has to be passed through rather than
-// discarded.
-// 0x00592EE0, a pending_bodies forwarder. The catalogued name spells the
-// return `X` - void - but the body leaves a value in EAX that unlock_veh
-// returns, so the forwarder is typed `uint32_t` and callers that do not want
-// it discard it.
-uint32_t __cdecl message_data(int a1, int a2, int a3, int a4, int a5, int a6);
+// The message builders at 0x00592E10..0x00593215, defined in netdaemon.cpp.
+// They pack a record on the stack, stamp it with the local faction, the
+// wall-clock time and the daemon's turn counter, then hand it to
+// NetDaemon::send_message with NetBusyCount held for the duration. Payload
+// parameters are named for the record offset they land at, which is the one
+// thing about them the bodies prove.
+//
+// message_data is NOT here: see netdaemon.cpp's note by the family. Its
+// catalogued return is void, but EAX is live at its ret and unlock_veh
+// returns that residue, so it stays a pending_bodies forwarder.
+void __cdecl message_veh(int opcode, int payload_10, int payload_14,
+                         int target);
+void __cdecl message_base(int opcode, int payload_10, char *text, int target);
+uint32_t __cdecl message_data(int opcode, int target, int payload_10,
+                              int payload_14, int payload_18, int payload_1C);
+void __cdecl message_big_data(int opcode, int target, int *payload, int count);
+void __cdecl message_lock(int opcode, int target, int payload_10,
+                          int payload_14, int payload_18, int payload_1C,
+                          int payload_20, int payload_24);
+void __cdecl message_landmark(int opcode, int target, char *text,
+                              int payload_10, int payload_14, int payload_18,
+                              int payload_1C);
+void __cdecl message_chat(int opcode, int target, char *text);
 
 
 // NetDaemon::synch itself is not recovered - 4,905 bytes with its own call
