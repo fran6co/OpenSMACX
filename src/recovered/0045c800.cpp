@@ -1,4 +1,17 @@
 // ORIGINAL: 0x0045C800 ?on_button_clicked@MainInterface@@QAEXH@Z 0x0045C800-0x0045C830 BYTE_EXACT
+// BLOCKED 2026-09-04, not on the body: the body homes byte-exact (15 of 15
+//         instructions, /c /O2 /Gy /GR- /Oy- /GX) once its four fixed-address
+//         bindings are renamed to the names maininterface.cpp already held -
+//         WorldClimateSkipTerrainClear (map.h, 0x0068F21C), ActiveIfaceId
+//         (0x007D392C), IfaceIdToSlot (0x007AE778), IfaceRegistry
+//         (0x007AE7F0). It was reverted whole for one reason: the dispatch
+//         through the shim class costs two more `VCall` mentions and
+//         compiler_work's VCall-shim ceiling is at its floor (32 of 32).
+//         slot013 is declared nullary in that class and unused; giving it the
+//         int in place is the one-line edit, but the census still counts the
+//         call site. The census's own remedy is 'declare the method virtual',
+//         and the class that owns IfaceRegistry's entries is not modelled -
+//         its pass retires the whole family, this body with it. Re-home then.
 // size      48 bytes
 // prototype void (__thiscall ?on_button_clicked@MainInterface@@QAEXH@Z)(MainInterface* this, int)
 // callers   0   call targets   0

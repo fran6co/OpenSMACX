@@ -1,4 +1,16 @@
 // ORIGINAL: 0x005CE340 sub_5ce340 0x005CE340-0x005CE44B FILE
+// LEVER: THIS IS DIRECTDRAW, NOT DIRECTSOUND - the earlier note's owner
+//         guess was wrong on the API. The four indirect calls are IDirectDraw
+//         vtable slots on the object at [ebx]+0x54: +0x08 Release, +0x10
+//         GetCaps, +0x18 SetCooperativeLevel (push 2 = DDSCL_FULLSCREEN|
+//         DDSCL_EXCLUSIVE, push edi = the HWND at [ebx]+0x9c). The direct call
+//         at 0x5CE376 is 0x6501F0, the import thunk for DDRAW.dll's
+//         DirectDrawCreate (IAT 0x00669018, tools/iat_names.py) - so the
+//         'field at +4' whose 0x800000 bit gates the body is a DirectDraw
+//         capability dword, and [ebx]+0x3cc is the 'DirectDraw is up' flag.
+//         The owner is therefore a video/window object in the Win family, not
+//         a sound one; a naming pass should start from win.h's DDInit, whose
+//         surf_ field holds the same IDirectDraw.
 // TRIED: not chased to byte-exact - a DirectSound setup routine with four indirect (COM vtable, __stdcall) calls through an unidentified owner object (fields at +4, +0x54, +0x58, +0x9c, none matching a class already in src/). MISMATCH from instruction 0 (267 vs 253 bytes); landed for the control flow and call-order shape - each `if`/`else` branch and the shared "zero the slot" merge point match the disassembly's block structure, including the fact that a successful SetCooperativeLevel-equivalent (slot 6) skips both the Release-equivalent (slot 2) call AND the slot zeroing.
 // size      267 bytes
 // prototype

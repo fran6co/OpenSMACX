@@ -94,11 +94,12 @@ extern uint32_t LockEnableMask;   // 0x009A64E8 - byte 0/1 are the faction is_hu
 // SquareLock::lock owns the same map-coordinate logic as unlock and is not
 // recovered; add_lock forwards one record entry to it.
 
-// current_server reports whether this machine is the game server; not
-// recovered. Declared as an ordinary function with a pending_bodies.cpp
-// forwarder to 0x0052DBA0 - LEVER: bound as a `func_current_server *`
-// pointer, this compiled `call dword ptr [...]` where the image's callers
-// emit `call rel32`; an ordinary declaration gets the E8 back.
+// current_server reports whether this machine is the game server. It was a
+// pending_bodies.cpp forwarder; the body is homed now (game.cpp, 0x0052DBA0),
+// and this stays the declaration lock.cpp's three call sites see - LEVER:
+// bound as a `func_current_server *` pointer, this compiled
+// `call dword ptr [...]` where the image's callers emit `call rel32`; an
+// ordinary declaration gets the E8 back.
 int __cdecl current_server();
 
 // message_data broadcasts a game event; not recovered, so check_global

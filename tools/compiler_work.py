@@ -475,7 +475,10 @@ SCAFFOLD_CEILINGS = {
     # landmine-verified (action_airdrop, order_veh, NetFifo::sub_634200,
     # NetFifo::sub_6340c0, AlphaNet::setup/Net::send/convert family minus
     # those retired beside homed claims).
-    "PENDING_BODY forwarders": 256,
+    # 256 -> 255 (2026-09-04, P2/P3 wave 3, general/game): current_server's
+    # forwarder retired - the body is homed into src/game.cpp with all five of
+    # its fixed-address bindings renamed to models the tree already held.
+    "PENDING_BODY forwarders": 255,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -537,7 +540,11 @@ SCAFFOLD_CEILINGS = {
     # 00618520.cpp, 00618560.cpp, 00618430.cpp homed into src/caviar.cpp.
     # 1124 -> 1123 (same wave, set_buffer): 006183d0.cpp homed into
     # src/caviar.cpp.
-    "artifact files (recovered/)": 1063,
+    # 1063 -> 1061 (2026-09-04, P2/P3 wave 3, general/game): 0058f9d0.cpp,
+    # 0058fa20.cpp, 0052dba0.cpp and 0058f8b0.cpp homed into src/game.cpp -
+    # say_special's markup literals named out of the image, the rest against
+    # Players/StringTable/Labels/TextBufferGetPtr.
+    "artifact files (recovered/)": 1061,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -609,7 +616,9 @@ SCAFFOLD_CEILINGS = {
     # src/caviar.cpp; 0063b072.cpp homed into src/caviar.cpp.
     # 1245 -> 1244 (same wave, set_shadow_vector): 006181d0.cpp homed into
     # src/caviar.cpp, SHAPE_EXACT 40/44 on a TU-local pragma function(cos).
-    "unrecovered files": 1189,
+    # 1189 -> 1185 (2026-09-04, P2/P3 wave 3, general/game): 0058f610.cpp,
+    # 0058f810.cpp, 0058f8b0.cpp, 0052dba0.cpp homed into src/game.cpp.
+    "unrecovered files": 1185,
     # 2717 -> 2748 (2026-09-04, P2 net batch): NetFifo promoted with
     # close/add/get/get, NetFifoNode, head_/tail_/count_ - the deliberate
     # raise this ceiling exists for (class modelling grows it; the class

@@ -41,6 +41,7 @@
 #include "netdaemon.h"  // NetDaemonNet
 #include "statuswin.h"  // StatusWin::close
 #include "strings.h"  // StringTable
+#include "text.h"  // text_open/text_get/text_item, TextBufferGetPtr
 #include "time.h"  // stop_timers
 #include "tutwin.h"  // TutWinDesWindow, TutWinBaseWindow, TutWinIfaceWindow
 #include "veh.h"
@@ -1726,7 +1727,7 @@ int __cdecl sub_52a980() {
     return 0;
 }
 
-// ORIGINAL: 0x0052DB70 sub_52db70 0x0052DB70-0x0052DB9C FILE
+// ORIGINAL: 0x0052DB70 sub_52db70 0x0052DB70-0x0052DB9C FILE BYTE_EXACT
 // symbol    ?sub_52db70@@YAHXZ
 // size      44 bytes
 // prototype 
@@ -2199,4 +2200,215 @@ int Base524320::toggle_and_repaint() {
             ->*(*reinterpret_cast<Slot062Fn524320 *>(
                 reinterpret_cast<char *>(*reinterpret_cast<void **>(this))
                 + 0xf8)))();
+}
+
+// ===== homed out of the archive 2026-09-04 =====
+
+// ORIGINAL: 0x0058FA20 ?get_pacts@@YAPADH@Z 0x0058FA20-0x0058FA69
+// LEVER: the carried bindings renamed to the tree's own models - Players
+//         (faction.h, 0x00946A50), Labels (alpha.h, 0x009B90F8), StringTable
+//         (strings.h, 0x009B90D8) and general.h's noun defaults - so no
+//         anonymous g_ binding arrived with the body.
+// TRIED: as `Players[a1].is_leader_female` for the load; the image reads it
+//         as `[players + a1*0x59c]`, so the member form is the same operand.
+// MISMATCH #10 'mov' vs 'mov': the image keeps `add edx, 0xcb` as its own
+//         instruction before `mov ecx, [eax+edx*4]`, where every spelling
+//         tried folds the 0xcb into the addressing displacement
+//         (`[ecx+edx*4+0x32c]`) and hoists the `Labels.strings_ptr` load
+//         above the store. Tried (as 0x0058F9D0, four spellings): inline
+//         expression, a named boolean, a named `off` combining the constant
+//         with the flag, and a `char *` base with a manual `*4` multiply -
+//         all four byte-identical at this divergence.
+char *__cdecl get_pacts(int faction_id) {
+    PluralityDefault = 1;
+    int noun = Players[faction_id].is_leader_female;
+    GenderDefault = noun;
+    LPSTR *labels = (LPSTR *)Labels.strings_ptr;
+    return StringTable.get((int)labels[0xcb + (noun != 0)]);
+}
+
+// ORIGINAL: 0x0058F9D0 ?get_pact@@YAPADH@Z 0x0058F9D0-0x0058FA19
+// MISMATCH #3 'xor' vs 'mov': the original zeroes edx BEFORE storing
+// PluralityDefault = 0, and every source order tried compiles that store
+// first. A second divergence follows: the original keeps `add edx, 0xc9` as
+// its own instruction before `mov ecx, [eax+edx*4]` where every spelling
+// tried folds the 0xc9 into the addressing displacement. Tried: inline
+// expression, a named boolean `flag`, a named `off` combining the constant
+// with the flag, and a `char *` base with a manual `*4` multiply - all four
+// byte-identical at the divergence, so it reads as an optimiser
+// canonicalisation this call shape always hits.
+// TRIED: homed out of the archive once its five fixed-address bindings were
+//         all nameable from models the tree already holds (see get_pacts).
+char *__cdecl get_pact(int faction_id) {
+    PluralityDefault = 0;
+    int noun = Players[faction_id].is_leader_female;
+    GenderDefault = noun;
+    LPSTR *labels = (LPSTR *)Labels.strings_ptr;
+    return StringTable.get((int)labels[0xc9 + (noun != 0)]);
+}
+
+// ORIGINAL: 0x0052DBA0 ?current_server@@YAHXZ 0x0052DBA0-0x0052DBE6
+// MISMATCH #6 'push' vs 'cmp': the original spends TWO push/pop pairs (esi,
+// edi) and a xor/sete/test dance to compare NetTurnFaction against
+// LocalFaction before restoring registers and testing the boolean; every
+// source spelling tried here (direct `==`, named locals for one or both
+// operands, top-level vs nested loads, goto-style vs nested-if for the
+// shared "not active" tail) instead gets a single push/pop esi plus a direct
+// cmp+jne under all four measured flag sets - a strictly shorter encoding
+// the register allocator prefers once it is allowed to. Ruled out: not guard
+// duplication or tail sharing (those match through the merged trailing
+// return); it reads as five live values forcing two callee-saved spills.
+int __cdecl current_server() {
+    int in_transit = *ConsoleControlTurnActive;
+    if ((NetTurnFlags & 0x10) != 0 && in_transit == 0) {
+        if (NetTurnFaction == LocalFaction) {
+            return 1;
+        }
+        return 0;
+    }
+    return *TurnsAssigned;
+}
+
+// ORIGINAL: 0x0058F610 ?say_special@@YAXPADPADH@Z 0x0058F610-0x0058F6F6 BYTE_EXACT
+// LEVER: the eight fixed-address bindings are .rdata STRING LITERALS, read
+//         out of the image with image_data.py and spelled as the text, the
+//         same way netdaemon.cpp's captions went: 0x0068FA90 "$<",
+//         0x0068FA94 "M", 0x0068FA98 "F", 0x0068FA9C "N", 0x0068FAA0 "1",
+//         0x0068FAA8 ":" and 0x0068FAAC ">". 0x0068FAA4 "2" is not read by
+//         this body and is left for whoever homes its caller. The eight
+//         together are the markup the parser consumes: a faction noun of
+//         M/F/N, a noun form digit, then the substituted text.
+// LEVER: the ninth binding is `Players` (faction.h, 0x00946A50); the image
+//         indexes it `a3 * 0x167` dwords, which is `Players[a3]` - the
+//         stride IS sizeof(Player).
+// symbol   ?say_special@@YAXPAD0H@Z
+//         - this tree's name for the same (char *, char *, int) signature.
+//         VC6 folds the two identical `char *` parameters into a
+//         back-reference, where the catalogued name spells the second `PAD`
+//         longhand; `measure` matches by address, and this fact is what lets
+//         it resolve the symbol.
+void __cdecl say_special(char *output, char *text, int faction_id) {
+    char buffer[256];
+    char parsed[256];
+
+    buffer[0] = 0;
+    int noun = Players[faction_id].is_leader_female;
+    strcat(buffer, "$<");
+
+    if (noun == 0) {
+        strcat(buffer, "M");
+    } else if (noun == 1) {
+        strcat(buffer, "F");
+    } else if (noun == 2) {
+        strcat(buffer, "N");
+    }
+
+    strcat(buffer, "1");
+    strcat(buffer, ":");
+    strcat(buffer, text);
+    strcat(buffer, ">");
+
+    parse_string(buffer, parsed);
+    strcat(output, parsed);
+}
+
+// ORIGINAL: 0x0058F810 ?get_phrase@@YAPADHH@Z 0x0058F810-0x0058F8A2
+// LEVER: the faction-table bases at 0x00946A54 and 0x00946A6C are
+//         `Players[a1].filename` and `Players[a1].search_key` - the image
+//         computes `a1 * 0x59c` and adds those two constants, and 0x00946A50
+//         (Players) plus 4 and plus 0x1c are exactly those two fields of
+//         faction.h's Player.
+// LEVER: 0x0068FAD0 is the .rdata literal "PLAYERFILE" (image_data.py), the
+//         popup caption for the section that failed to open.
+// LEVER: 0x009B7D00 is text.h's `TextBufferGetPtr`, already modelled; the
+//         image returns the POINTER stored there (`mov eax, [0x9b7d00]`), so
+//         the binding is a real global, not a buffer.
+char *__cdecl get_phrase(int faction_id, int phrase_id) {
+    char *search_key = Players[faction_id].search_key;
+    char *filename = Players[faction_id].filename;
+    int ok = text_open(filename, search_key);
+    if (ok != 0) {
+        ok = text_open(filename, filename);
+        if (ok != 0) {
+            parse_says(0, search_key, -1, -1);
+            parse_says(1, filename, -1, -1);
+            X_pop("PLAYERFILE", 0);
+            return StringTable.get(0);
+        }
+    }
+    int n = phrase_id + 9;
+    if (n > 0) {
+        do {
+            text_get();
+            n--;
+        } while (n != 0);
+    }
+    // TRIED: the counter as one local driving both the guard and the loop
+    //         (`int n = phrase_id + 9; if (n > 0) { do { text_get(); n--; }`)
+    //         scores 46 of 58 - VC6 folds the add into `lea esi,[eax+9]` and
+    //         tests esi, where the image tests eax and then copies it to esi
+    //         for the loop. Modifying the parameter instead (`phrase_id =
+    //         phrase_id + 9;` with a separate `int i`) moves the whole test
+    //         to esi too: 45 of 58. The image's shape needs the guard value
+    //         and the counter in DIFFERENT registers, which VC6 merges under
+    //         both spellings.
+    return TextBufferGetPtr;
+}
+
+// ORIGINAL: 0x0058F8B0 ?get_noun_phrase@@YAPADHH@Z 0x0058F8B0-0x0058F9C9
+// LEVER: same three bindings as get_phrase - Players' filename/search_key at
+//         0x00946A54/0x00946A6C, the "PLAYERFILE" caption at 0x0068FADC, and
+//         text.h's TextBufferGetPtr at 0x009B7D00.
+// BUG IN THE ARCHIVED TRANSCRIPTION, not in the shipped image: the artifact
+//         returned the ADDRESS of the TextBufferGetPtr variable rather than
+//         the pointer it holds. The image loads `[0x9b7d00]` into eax twice,
+//         once as strcpy's destination and once as the return value, so it
+//         returns the buffer. Fixed here; the two loads are kept separate on
+//         purpose - caching one local would delete the second
+//         `mov eax, [0x9b7d00]`.
+char *__cdecl get_noun_phrase(int faction_id, int phrase_id) {
+    char buffer[256];
+    char *search_key = Players[faction_id].search_key;
+    char *filename = Players[faction_id].filename;
+
+    if ((text_open(filename, search_key) != 0)
+        && (text_open(filename, filename) != 0)) {
+        parse_says(0, search_key, -1, -1);
+        parse_says(1, filename, -1, -1);
+        X_pop("PLAYERFILE", 0);
+        return StringTable.get(0);
+    }
+
+    phrase_id = phrase_id + 9;
+    if (phrase_id > 0) {
+        int i = phrase_id;
+        do {
+            text_get();
+            --i;
+        } while (i != 0);
+    }
+    strcpy(buffer, text_item());
+    char *item = text_item();
+    char c = item[0];
+    int gender = 0;
+    int number = 0;
+    if (c == 'M' || c == 'm') {
+        gender = 0;
+    }
+    if (c == 'F' || c == 'f') {
+        gender = 1;
+    }
+    if (c == 'N' || c == 'n') {
+        gender = 2;
+    }
+    if (item[1] == '1') {
+        number = 0;
+    }
+    if (item[1] == '2') {
+        number = 1;
+    }
+    GenderDefault = gender;
+    PluralityDefault = number;
+    strcpy(TextBufferGetPtr, buffer);
+    return TextBufferGetPtr;
 }

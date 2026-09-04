@@ -339,3 +339,13 @@ MEASURED inline int __cdecl energy_limit(int) {
 // immediate - the same lever netmsg.h's NetMsgPopup uses. Making it an extern
 // instead costs every caller a load of the pointer before the load it names.
 int *const ClimatePopupTitle = (int *)0x00691B0C;
+
+// The faction-pact captions and the "whose turn is it" test the net turn loop
+// asks. All three are homed originals, defined in game.cpp.
+char *__cdecl get_pact(int faction_id);    // 0x0058F9D0
+char *__cdecl get_pacts(int faction_id);   // 0x0058FA20
+char *__cdecl get_phrase(int faction_id, int phrase_id);        // 0x0058F810
+char *__cdecl get_noun_phrase(int faction_id, int phrase_id);   // 0x0058F8B0
+void __cdecl say_special(char *output, char *text, int faction_id);  // 0x0058F610
+// current_server is declared in lock.h, the TU whose three call sites reach
+// it; the definition is here.

@@ -1,4 +1,14 @@
 // ORIGINAL: 0x005D2761 sub_5d2761 0x005D2761-0x005D2834 FILE
+// LEVER: the four tbl_ globals are four of EIGHT 0x400-byte tables laid
+//         end to end at 0x009C672C + k*0x400 for k = 0..7, all ZERO in the
+//         file and filled at run time (image_data.py reads 0 at every one).
+//         0x5CC4E0..0x5CC590 is their builder: a 0x100-iteration loop with
+//         variable-count shifts (sar/shl by cl) writing through
+//         `mov [edi+0x9c7f2c]` - a canonical VLC/Huffman code table
+//         builder, not a cipher S-box. sub_5d2761 consumes four of them by
+//         byte-lane, which is a decode-table lookup, so the whole
+//         0x005CE85C..0x005D4502 span is a block-DCT movie decoder and not
+//         part of the DirectDraw half of this TU.
 // TRIED: original prologue saves 6 registers (ebx,ecx,edx,esi,edi,ebp); plain __cdecl(uint*,uint*,int) body only pressures 1-2, so the reservation never reproduces. Explicit per-register temps for each S-box term didn't move it either.
 // working copy - scaffold materialised by --work
 // size      211 bytes
