@@ -606,7 +606,11 @@ struct CaviarSceneRecord {
   uint32_t width_b_;       // 0x9BB460
   void *record_owner_;     // 0x9BB464
   uint8_t record_flag_;    // 0x9BB468
-  uint8_t pad_[0x40 - 0x31];
+  uint8_t pad_[0x3C - 0x31];
+  // 0x9BB474. The value Caviar::UNK2's fourth argument carries lands here
+  // before it calls render, and nothing else in the scene record writes it -
+  // so the slot is named for that one store rather than left in the pad.
+  uint32_t render_argument_;
   VoxRenderRecord *created_;  // 0x9BB478
 };
 
@@ -927,9 +931,17 @@ namespace {
 // `call dword ptr [0x9c0b80]`).
 typedef unsigned long (__cdecl *vox_alloc_fn)(unsigned long);
 typedef void (__cdecl *vox_free_fn)(unsigned long);
+// The engine's FILE slots, typed as its own readers see them. vx_read and
+// vx_seek are `void` in this tree - each calls the CRT and returns without
+// touching eax - so the count / new offset the CRT left in the return
+// register is exactly what these call sites read.
+typedef long (__cdecl *vox_read_fn)(unsigned long, void *, unsigned long);
+typedef long (__cdecl *vox_seek_fn)(unsigned long, long, int);
 void *vox_callback_slots[6];
 #define vox_alloc_slot (*reinterpret_cast<vox_alloc_fn *>(&vox_callback_slots[0]))
 #define vox_free_slot (*reinterpret_cast<vox_free_fn *>(&vox_callback_slots[1]))
+#define vox_read_slot (*reinterpret_cast<vox_read_fn *>(&vox_callback_slots[2]))
+#define vox_seek_slot (*reinterpret_cast<vox_seek_fn *>(&vox_callback_slots[4]))
 #define vox_callback_table (vox_callback_slots)
 
 // The engine's fixed-address data bindings live at FILE SCOPE, below, as
@@ -985,12 +997,68 @@ static const char vox_msg_no_handler[] = "No room for handler";     // 0x00698B4
 static const char vox_msg_no_colortab[] = "No ColorTab parameter";  // 0x00698B58
 static const char vox_msg_unsupported_pixel[] = "Unsupported pixel size"; // 0x00698AC0
 
+// Three more of the same pool, named 2026-09-04 by reading the image's own
+// pointer table: 0x006989CC..0x006989E0 is ONE run of six message slots -
+// "File seeking", "Bad file format", "Reading file", "No room", "Invalid
+// color buffer depth", "Error reading user data chunk" - and the CVR loader
+// (0x00638620..0x00638DE0) hands the last five of them to vox_stage_error.
+// These three are POINTER VARIABLES, not literals, and that is measured, not
+// stylistic: the image loads the slot then pushes it (`mov edx,
+// [0x6989d8] / push edx`), where a literal array compiles to one `push
+// <address>` and costs vox_alloc_block its match. The eight above stay
+// literals because their callers push the address straight out.
+static const char *const vox_msg_bad_file_format = "Bad file format";  // 0x006989D0
+static const char *const vox_msg_reading_file = "Reading file";        // 0x006989D4
+static const char *const vox_msg_no_room = "No room";                  // 0x006989D8
+
+// The loader's two float constants, .rdata 0x00670FE8 and 0x00670FEC. The
+// first is the chain walk's cut: vox_walk_scaled_chain keeps walking while a
+// node's extent, scaled by the caller's factor, stays below it. 1.4142f is
+// the exact float the image holds (0x3FB50481).
+static const float vox_sqrt_two = 1.4142f;       // 0x00670FE8
+// The 7.0f vox_read_chunks tests the record's float at +0x8 against to
+// choose between loading the 0x1020000 chunk and expanding it in place.
+static const float vox_threshold_seven = 7.0f;   // 0x00670FEC
+
+// The transparent blit's three scratch slots, .data 0x00698B70..0x00698B78,
+// all zero in the image: vox_blit_transparent fills the cursor, writes the
+// scene through it, and steps it by the destination stride per row.
+// The record's clip bounds as the engine hands them to its callers, .data
+// 0x009B96A0..0x009B96AC. Named 2026-09-04 from the two bodies that fill it:
+// all four come off the created VoxRenderRecord's own clip fields
+// (+0x8/+0xc/+0x10/+0x14), the min edges incremented by one.
+uint32_t vox_clip_rect[4];     // 0x009B96A0
+uint32_t vox_blit_cursor;      // 0x00698B70
+uint32_t vox_blit_row_bytes;   // 0x00698B74
+uint32_t vox_blit_dst_stride;  // 0x00698B78
+
 // The three engine callees, all HOMED to the foot of this file. The forward
 // declarations keep the call sites above them compiling; being same-file
 // definitions, the calls stay `call rel32` like the image.
 extern "C" void __cdecl vox_stage_error(const char *message);  // stage a message string
 extern "C" void __cdecl sub_63ad60(unsigned char *record);
 extern "C" char __cdecl sub_63f9b0(unsigned char *record);
+
+// The CVR loader, homed below (0x006385D0..0x00638720, 0x00638CC0, 0x00638DE0,
+// 0x0063B072). Declarations first so the loader's own call graph - which is
+// mutually recursive through the chunk readers - compiles in any order.
+extern "C" unsigned char *__cdecl vox_walk_scaled_chain(unsigned char *node,
+                                                        float scale);
+extern "C" int __cdecl vox_read_exact(int fd, void *buffer, int count);
+extern "C" int __cdecl vox_alloc_block(int size, int *out);
+extern "C" int __cdecl vox_read_length_field(int fd, unsigned char *record,
+                                             int length);
+extern "C" int __cdecl vox_read_chunks(int fd, unsigned char *record, int size);
+extern "C" int __cdecl vox_read_colour_chunks(int fd, int *out, int size);
+// 0x006381F0, the CVR record loader. Not homed yet: pending_bodies.cpp
+// forwards it. C++ linkage, to match that forwarder's definition.
+int __cdecl vox_load_record(int fd);
+extern "C" int __cdecl vox_read_geometry_chunks(int fd, int *slots, int size,
+                                                int count);
+// 0x006391F0, the palette expander vox_read_chunks' 0x1020000 arm reaches for
+// an old-format record. Not homed yet: pending_bodies.cpp forwards it. C++
+// linkage, to match that forwarder's definition.
+int __cdecl vox_expand_palette(int fd, void *palette);
 
 // Defined at the foot of this file, promoted from its artifact.
 void __cdecl sub_63ae20(unsigned char *record);
@@ -1587,4 +1655,986 @@ extern "C" char __cdecl sub_63f9b0(unsigned char *record) {
     }
     memcpy((void *)0x009C0D60, (const void *)0x00698DF0, 27);
     return 1;
+}
+
+/*
+Purpose: Free a CVR record: five plain pointer fields (0xc, 0x10, 0x14, 0x18,
+         0x1c), then four arrays sized by the shared count at +0x24 - a
+         pointer array at +0x28, a 12-byte-element array at +0x30 and an
+         8-byte-element array at +0x2c, and a second 12-byte array at +0x34,
+         each element's leading dwords being pointers - then the record
+         itself. Every release goes through the engine's free slot.
+// ORIGINAL: 0x00638430 sub_638430 0x00638430-0x006385CD
+// TRIED: teardown - frees five plain pointer fields (0xc/0x10/0x14/ 0x18/0x1c), three arrays of small structs at 0x28/0x2c/0x30/ 0x34 sized by a shared count field at 0x24, then the object itself through the free callback at g_009c0b84. Diverges at #6 - the original re-reads each array-base field inside the loop rather than caching it once; landed at 0.64 similarity.
+// symbol    ?caviar_free_record@@YAXPAX@Z
+// size      413 bytes
+// callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// indirect  0x00638447 0x00638458 0x00638469 0x0063847A 0x0063848B 0x006384AB 0x006384C0 0x006384E6 0x006384FB 0x00638510 0x00638528 0x0063854D 0x00638562 0x00638589 0x0063859E 0x006385B6 0x006385C0
+//
+// NAMED 2026-09-04: caviar.h already reached this body by this name through a
+// pending_bodies forwarder, and CaviarData::close is its one caller. The
+// binding it freed through (g_009c0b84) is the engine's free slot, which this
+// file already models as vox_free_slot.
+//
+// HOMED from src/unrecovered/00638430.cpp.
+// LEVER: the array bases (+0x28, +0x30, +0x34) and the count (+0x24) are
+//        RE-READ inside every loop - the image loads [esi+0x30] at 0x6384DB,
+//        0x6384EF and 0x638504 within one iteration - so the loops below
+//        spell those field reads out in full. Caching either in a local is
+//        what the artifact did, and what diverged at instruction 6.
+// BUG IN THE ORIGINAL: the +0x28 pointer array's elements are freed WITHOUT a
+//        null test (image 0x6384A4..0x6384AB pushes whatever it finds) while
+//        the other three arrays' elements are tested first. Reproduced as
+//        written - a NULL element there would fault inside the allocator.
+// DEFECT FIXED 2026-09-04: the scaffold this came from had NO +0x2c array
+//        walk at all - it freed +0x28, +0x30 and +0x34 and silently dropped
+//        the 8-byte-element array between them, so a third of every record's
+//        allocations leaked. The image walks it at 0x638531..0x638568; the
+//        loop is restored here. 55 of 154 -> 102 of 154 with the same
+//        instruction count on both sides.
+// TRIED: flipping the SIB base - `offset + *(int *)(base + 0x30)` against the
+//        image's [edi+eax], where this tree emits [eax+edi] - measured no
+//        change at all; VC6 normalises the sum before register allocation, so
+//        the base/index split is codegen's, not the source's. 6 of the 19
+//        remaining differing runs.
+// TRIED: the image pushes edi at instruction 5 and ebx at 7, inside the first
+//        field test's guard, and pops them in that order at the single exit;
+//        every spelling here saves both at the first array loop instead (and
+//        pops ebx first). The eager-save placement is upstream of the body -
+//        same wall the Palette receivers hit. 8 of the 19 remaining runs.
+//        102 of 154, /c /O2 /Gy /GR- /GX.
+Return Value: n/a
+*/
+void __cdecl caviar_free_record(void *record) {
+    if (record == 0) {
+        return;
+    }
+    unsigned char *base = (unsigned char *)record;
+
+    int first = *(int *)(base + 0xc);
+    if (first != 0) {
+        vox_free_slot((unsigned long)first);
+    }
+    int second = *(int *)(base + 0x10);
+    if (second != 0) {
+        vox_free_slot((unsigned long)second);
+    }
+    int third = *(int *)(base + 0x14);
+    if (third != 0) {
+        vox_free_slot((unsigned long)third);
+    }
+    int fourth = *(int *)(base + 0x18);
+    if (fourth != 0) {
+        vox_free_slot((unsigned long)fourth);
+    }
+    int fifth = *(int *)(base + 0x1c);
+    if (fifth != 0) {
+        vox_free_slot((unsigned long)fifth);
+    }
+
+    if (*(int *)(base + 0x28) != 0) {
+        if (*(int *)(base + 0x24) > 0) {
+            int index = 0;
+            do {
+                // No null test - the image frees the slot's answer whatever
+                // it holds.
+                int element = *(int *)(*(int *)(base + 0x28) + index * 4);
+                vox_free_slot((unsigned long)element);
+                ++index;
+            } while (index < *(int *)(base + 0x24));
+        }
+        vox_free_slot(*(unsigned long *)(base + 0x28));
+    }
+
+    if (*(int *)(base + 0x30) != 0) {
+        if (*(int *)(base + 0x24) > 0) {
+            int index = 0;
+            int offset = 0;
+            do {
+                int lead = *(int *)(*(int *)(base + 0x30) + offset);
+                if (lead != 0) {
+                    vox_free_slot((unsigned long)lead);
+                }
+                int mid = *(int *)(*(int *)(base + 0x30) + offset + 4);
+                if (mid != 0) {
+                    vox_free_slot((unsigned long)mid);
+                }
+                int last = *(int *)(*(int *)(base + 0x30) + offset + 8);
+                if (last != 0) {
+                    vox_free_slot((unsigned long)last);
+                }
+                ++index;
+                offset += 0xc;
+            } while (index < *(int *)(base + 0x24));
+        }
+        vox_free_slot(*(unsigned long *)(base + 0x30));
+    }
+
+    if (*(int *)(base + 0x2c) != 0) {
+        if (*(int *)(base + 0x24) > 0) {
+            int index = 0;
+            do {
+                int lead = *(int *)(*(int *)(base + 0x2c) + index * 8 + 4);
+                if (lead != 0) {
+                    vox_free_slot((unsigned long)lead);
+                }
+                ++index;
+            } while (index < *(int *)(base + 0x24));
+        }
+        vox_free_slot(*(unsigned long *)(base + 0x2c));
+    }
+
+    if (*(int *)(base + 0x34) != 0) {
+        if (*(int *)(base + 0x24) > 0) {
+            int index = 0;
+            int offset = 0;
+            do {
+                int lead = *(int *)(*(int *)(base + 0x34) + offset + 4);
+                if (lead != 0) {
+                    vox_free_slot((unsigned long)lead);
+                }
+                int mid = *(int *)(*(int *)(base + 0x34) + offset + 8);
+                if (mid != 0) {
+                    vox_free_slot((unsigned long)mid);
+                }
+                ++index;
+                offset += 0xc;
+            } while (index < *(int *)(base + 0x24));
+        }
+        vox_free_slot(*(unsigned long *)(base + 0x34));
+    }
+
+    vox_free_slot((unsigned long)record);
+}
+
+/*
+Purpose: Walk a node chain and return the node the walk stops at. Each node
+         is {uint8_t flags; ...; float extent; int next_offset}: bit 0 of the
+         flags byte says a next node exists, +8 is the extent and +0xc the
+         byte offset to it. The walk continues while the extent, scaled by
+         the caller's factor, stays at or under the cut, and stops at the
+         node BEFORE one whose scaled extent is past it.
+// ORIGINAL: 0x006385D0 sub_6385d0 0x006385D0-0x00638611 FILE BYTE_EXACT
+// symbol    _vox_walk_scaled_chain
+// size      65 bytes
+// callers   3   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+//
+// HOMED from src/recovered/units/006385d0.cpp.
+// NAMED 2026-09-04 from the body's own arithmetic: a flags/offset chain walked
+// while a scaled float stays under a constant. Its binding g_00670fe8 is the
+// 1.4142f at 0x00670FE8, vox_sqrt_two here.
+// LEVER: BYTE_EXACT on the FPU operand order. Each extent is read into its
+//        OWN local first and multiplied afterwards - `float extent =
+//        *(float *)(cursor + 8);` then `extent * scale` - which is what makes
+//        VC6 load the node's extent into st(0) and `fmul` the caller's
+//        factor, the image's order. Writing the product as one expression
+//        (`*(float *)(cursor + 8) * scale`, either operand order, named local
+//        or not) loads [esp+8] first and fmul's the node: 15 of 23.
+Return Value: the node the walk stopped at.
+*/
+extern "C" unsigned char *__cdecl vox_walk_scaled_chain(unsigned char *node,
+                                                        float scale) {
+    unsigned char *cursor = node;
+    unsigned char flags = *cursor;
+    while (flags & 1) {
+        // The extent is read into its own local first: the image loads the
+        // node's extent into st(0) and multiplies by the caller's factor, so
+        // the read has to be a statement of its own ahead of the multiply.
+        float extent = *(float *)(cursor + 8);
+        if (!(extent * scale < vox_sqrt_two)) {
+            break;
+        }
+        unsigned char *next = cursor + *(int *)(cursor + 0xc);
+        float next_extent = *(float *)(next + 8);
+        if (!(next_extent * scale <= vox_sqrt_two)) {
+            break;
+        }
+        flags = *next;
+        cursor = next;
+    }
+    return cursor;
+}
+
+/*
+Purpose: Read EXACTLY count bytes through the engine's read slot: loop until
+         the accumulated total reaches the request, and stage "Reading file"
+         the moment the slot answers negative.
+// ORIGINAL: 0x00638650 sub_638650 0x00638650-0x006386A8 FILE
+// symbol    _vox_read_exact
+// size      88 bytes
+// callers   15   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// indirect  0x00638670
+//
+// HOMED from src/recovered/units/00638650.cpp. Its two bindings are named
+// from the image: g_009c0b88 is the read slot - slot 2 of the six vx_*
+// callbacks Caviar::init_class installs, this file's vox_read_slot - and
+// g_006989d4 is the "Reading file" message slot.
+// TRIED: the image dedicates ALL FOUR callee-saved registers here - ebx/ebp
+//        hold the buffer and the fd for the whole loop, esi the running
+//        total, edi the count - and reaches for them in the order
+//        count/total/buffer/fd. Every spelling of this body allocates two
+//        fewer registers and loads the arguments at their use, 39
+//        instructions against the image's 45 at /O2 (17 agreeing, first
+//        divergence at instruction 7, the loop's register set); the /Oy- set
+//        scores a higher SIMILARITY (0.739) with a frame the image does not
+//        have, so `measure` reports 1 of 45. No spelling tried made VC6
+//        dedicate ebp as a callee-saved register - the receiver-spill wall.
+//        /c /O2 /Gy /GR- /GX.
+Return Value: 0 when the full count was read, -1 when the slot went negative.
+*/
+extern "C" int __cdecl vox_read_exact(int fd, void *buffer, int count) {
+    int total = 0;
+    if (count > 0) {
+        do {
+            int read = vox_read_slot((unsigned long)fd,
+                                     (char *)buffer + total, count - total);
+            if (read < 0) {
+                vox_stage_error(vox_msg_reading_file);
+                return -1;
+            }
+            total += read;
+        } while (total < count);
+    }
+    return 0;
+}
+
+/*
+Purpose: Allocate through the engine's alloc slot into *out, staging "No room"
+         and reporting failure when the slot returns nothing.
+// ORIGINAL: 0x00638620 sub_638620 0x00638620-0x0063864E FILE BYTE_EXACT
+// symbol    _vox_alloc_block
+// size      46 bytes
+// callers   8   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// indirect  0x00638625
+//
+// CLAIMED BYTE_EXACT in its scaffold, homed 2026-09-04 and re-measured here.
+// Its two bindings are named from the image: g_009c0b80 is the engine's alloc
+// slot - slot 0 of the six vx_* callbacks, this file's vox_alloc_slot - and
+// g_006989d8 is the "No room" message slot, vox_msg_no_room here.
+//
+// HOMED from src/recovered/units/00638620.cpp.
+Return Value: 0 with *out filled, or -1 with the message staged.
+*/
+extern "C" int __cdecl vox_alloc_block(int size, int *out) {
+    void *block = (void *)vox_alloc_slot((unsigned long)size);
+    *out = (int)block;
+    if (block == 0) {
+        vox_stage_error(vox_msg_no_room);
+        return -1;
+    }
+    return 0;
+}
+
+/*
+Purpose: Allocate (length - 8) + 1 bytes into the record's slot at +0xc, read
+         that many bytes into it and NUL-terminate: the CVR loader's reader
+         for the chunks it keeps as text. Its callers inline it
+         (vox_read_chunks' 0x1010000 case is this body verbatim against
+         +0x10 instead of +0xc).
+// ORIGINAL: 0x006386D0 sub_6386d0 0x006386D0-0x0063871D FILE
+// symbol    _vox_read_length_field
+// size      77 bytes
+// callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+//
+// HOMED from src/recovered/units/006386d0.cpp.
+Return Value: 0 when the field is read and terminated, -1 on either failure.
+*/
+extern "C" int __cdecl vox_read_length_field(int fd, unsigned char *record,
+                                             int length) {
+    // Three statements, in this order. The image reads the record into eax
+    // first (0x6386D0), the payload count into esi second (0x6386D5..DA) and
+    // only then forms the slot address in edi (0x6386DD) - so `base` has to
+    // be its own local or the first load lands on the wrong argument, and
+    // `payload` has to precede `slot` or the two registers swap (measured:
+    // 11 of 36 either way round without the base local).
+    unsigned char *base = record;
+    int payload = length - 8;
+    // The slot lives at +0xc of the record the caller hands over - the same
+    // field caviar_free_record releases first.
+    int *slot = (int *)(base + 0xc);
+    if (vox_alloc_block(payload + 1, slot) != 0) {
+        return -1;
+    }
+    if (vox_read_exact(fd, (void *)*slot, payload) != 0) {
+        return -1;
+    }
+    *(char *)(*slot + payload) = 0;
+    return 0;
+}
+
+/*
+Purpose: Walk a CVR record's chunk list. Each chunk is an 8-byte {tag,
+         length} header followed by length-8 payload bytes, and `size` is the
+         whole block's extent; the walk stops when the remaining count runs
+         out. Three tags are read into the record - 0x1010000 (a NUL-
+         terminated text field, into +0x10), 0x1020000 (the palette, into
+         +0x14, expanded in place when the record's float at +8 is under 7),
+         0x1030000 (into +0x18) - and anything else is seeked past.
+// ORIGINAL: 0x00638720 sub_638720 0x00638720-0x006388B2
+// TRIED: chunked-record reader (tag/length header, three named chunk tags 0x1010000/0x1020000/0x1030000 plus a default skip through the indirect callback at g_009c0b90) - diverges at #3 with the loop-entry `lea` vs `push`, register/stack layout differs from here on; landed at 0.73 similarity.
+// symbol    _vox_read_chunks
+// size      402 bytes
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// indirect  0x0063878D
+//
+// HOMED from src/unrecovered/00638720.cpp. Its bindings are named from the
+// image: g_009c0b90 is the seek slot (slot 4 of the six vx_* callbacks, this
+// file's vox_seek_slot - the payload size and SEEK_CUR's 1 are its two
+// arguments), g_006989d0 the "Bad file format" message slot and g_00670fec
+// the 7.0f at 0x00670FEC.
+// LEVER: the tag dispatch is a switch. The image compares 0x1010000/
+//        0x1020000/0x1030000 with three cmp/je pairs because the values are
+//        not sequential; an if/else-if chain spells the same thing here and
+//        a switch spells it too - the two were measured identical on
+//        0x00638DE0, whose tags ARE sequential and whose chain is sub/dec/je.
+// BUG IN THE ORIGINAL: the 0x1020000 arm's condition is `record->float_at_8
+//        < 7.0` measured against the 7.0f constant, i.e. an OLD file whose
+//        palette has to be expanded; the 7.0 is data, not a limit, and no
+//        overflow is checked. Reproduced as written.
+Return Value: 0 when the walk consumed the block, -1 on any failure.
+// TRIED: the image loads the record pointer (ebx) and the fd (ebp) into
+//        callee-saved registers before the loop; this tree dedicates ebp
+//        only and re-loads the record inside each case, 29 of 144 at /O2
+//        (first divergence at instruction 3). No spelling tried - a local
+//        for the record, a pointer walked by case, per-case casts - made
+//        VC6 dedicate ebx here. /c /O2 /Gy /GR- /GX.
+*/
+extern "C" int __cdecl vox_read_chunks(int fd, unsigned char *record, int size) {
+    struct ChunkHeader {
+        int tag;
+        int length;
+    };
+    int remaining = size - 8;
+    if (remaining == 0) {
+        return 0;
+    }
+    do {
+        ChunkHeader header;
+        if (vox_read_exact(fd, &header, 8) != 0) {
+            return -1;
+        }
+        remaining -= header.length;
+        if (remaining < 0) {
+            vox_stage_error(vox_msg_bad_file_format);
+            return -1;
+        }
+        switch (header.tag) {
+        case 0x1010000:
+            if (vox_alloc_block(header.length - 8 + 1,
+                                (int *)(record + 0x10)) != 0) {
+                return -1;
+            }
+            if (vox_read_exact(fd, (void *)*(int *)(record + 0x10),
+                               header.length - 8) != 0) {
+                return -1;
+            }
+            *(char *)(*(int *)(record + 0x10) + header.length - 8) = 0;
+            break;
+        case 0x1020000:
+            if (*(float *)(record + 8) < vox_threshold_seven) {
+                if (vox_alloc_block(0x1b02, (int *)(record + 0x14)) != 0) {
+                    return -1;
+                }
+                if (vox_expand_palette(fd, (void *)*(int *)(record + 0x14)) != 0) {
+                    return -1;
+                }
+            } else {
+                if (vox_alloc_block(header.length - 8,
+                                    (int *)(record + 0x14)) != 0) {
+                    return -1;
+                }
+                if (vox_read_exact(fd, (void *)*(int *)(record + 0x14),
+                                   header.length - 8) != 0) {
+                    return -1;
+                }
+            }
+            break;
+        case 0x1030000:
+            if (vox_alloc_block(header.length - 8,
+                                (int *)(record + 0x18)) != 0) {
+                return -1;
+            }
+            if (vox_read_exact(fd, (void *)*(int *)(record + 0x18),
+                               header.length - 8) != 0) {
+                return -1;
+            }
+            break;
+        default:
+            if (vox_seek_slot((unsigned long)fd, header.length - 8, 1) < 0) {
+                vox_stage_error(vox_msg_bad_file_format);
+                return -1;
+            }
+            break;
+        }
+    } while (remaining != 0);
+    return 0;
+}
+
+/*
+Purpose: Read a CVR record's colour chunks. Two tags: 0x4040201 is a colour
+         table whose expected size arrives in *out (the caller's slot is
+         {requested size, filled pointer} - an entry of zero means take the
+         chunk's own size), and 0x4040202 is a table read straight into the
+         caller's array. Anything else is seeked past.
+// ORIGINAL: 0x00638CC0 sub_638cc0 0x00638CC0-0x00638DD4
+// TRIED: only one source-form tried; the callee-save register allocation (ebx/ebp/esi/edi across the whole loop) at the prologue diverges early. Landing the closest structural translation (mnemonic_similarity 0.635).
+// symbol    _vox_read_colour_chunks
+// size      276 bytes
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// indirect  0x00638D1B
+//
+// HOMED from src/unrecovered/00638cc0.cpp. Its bindings are named from the
+// image: g_009c0b90 is the seek slot (vox_seek_slot here) and g_006989d0 the
+// "Bad file format" message slot.
+Return Value: 0 when the walk consumed the block, -1 on any failure.
+// TRIED: the image dedicates ebx to the caller's {size, pointer} array for
+//        the whole walk, loaded in the same breath as the fd (0x638CD6 then
+//        0x638CDA); this tree re-loads it inside the 0x4040201 case, and
+//        every spelling tried (a local alias, a subscripted read, a read at
+//        the top of the loop) left it deferred. 53 of 116 at /O2, first
+//        divergence at instruction 8 - the missing ebx load. /c /O2 /Gy
+//        /GR- /GX.
+*/
+extern "C" int __cdecl vox_read_colour_chunks(int fd, int *out, int size) {
+    struct ChunkHeader {
+        int tag;
+        int length;
+    };
+    int remaining = size - 8;
+    if (remaining == 0) {
+        return 0;
+    }
+    do {
+        ChunkHeader header;
+        if (vox_read_exact(fd, &header, 8) != 0) {
+            return -1;
+        }
+        remaining -= header.length;
+        const int payload = header.length - 8;
+        if (remaining < 0) {
+            vox_stage_error(vox_msg_bad_file_format);
+            return -1;
+        }
+        switch (header.tag) {
+        case 0x4040201:
+            if (*out == 0) {
+                if (vox_alloc_block(payload, out + 1) != 0) {
+                    return -1;
+                }
+            } else {
+                if (vox_alloc_block(*out, out + 1) != 0) {
+                    return -1;
+                }
+            }
+            if (vox_read_exact(fd, (void *)*(out + 1), payload) != 0) {
+                return -1;
+            }
+            break;
+        case 0x4040202:
+            if (vox_read_exact(fd, out, payload) != 0) {
+                return -1;
+            }
+            break;
+        default:
+            if (vox_seek_slot((unsigned long)fd, payload, 1) < 0) {
+                vox_stage_error(vox_msg_bad_file_format);
+                return -1;
+            }
+            break;
+        }
+    } while (remaining != 0);
+    return 0;
+}
+
+/*
+Purpose: Read a CVR record's geometry chunks. Three tags name the three
+         arrays the record keeps - 0x4040301 into slots[0] (count bytes),
+         0x4040302 into slots[1] (count*12 bytes, 3 dwords per element) and
+         0x4040303 into slots[2] (count*36 bytes, 9 dwords per element) -
+         and anything else is seeked past. The whole block spans `size`
+         bytes and `count` is the element count the chunk headers repeat.
+// ORIGINAL: 0x00638DE0 sub_638de0 0x00638DE0-0x00638F2A
+// TRIED: calling sub_638620/sub_638650/sub_639390 by name - all three are catalogued unmangled with no CRT_SIGNATURES entry, so declfix leaves them nullary (C2660 direct, C2733 if redeclared); routed through function-pointer casts. The fallback branch's indirect call goes through `*(int*)0x9c0b90`, a stored function pointer value (not a vtable), called the same way. Sharing ONE `sub_638650` call site between the 0x4040302/0x4040303 cases via goto (matching the disassembly's single shared call at 0x638e99) was not attempted - the two branches' locals would cross the jump into each other's scope, which C++ refuses; each case is expanded with its own call instead. Best reached: MISMATCH, edit_count 17, 315 bytes vs 330, mnemonic similarity ~0.67.
+// symbol    _vox_read_geometry_chunks
+// size      330 bytes
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// indirect  0x00638E3E
+//
+// HOMED from src/unrecovered/00638de0.cpp. Its bindings are named from the
+// image: g_009c0b90 is the seek slot (vox_seek_slot here) and g_006989d0 the
+// "Bad file format" message slot.
+// LEVER: the tag dispatch is a switch spelled in ascending order - the
+//        image's 0x4040301/0x4040302/0x4040303 chain is sub eax,0x4040301 /
+//        je / dec eax / je / dec eax / je, which only sequential case values
+//        produce (0x00638720's non-sequential tags compare with cmp/je).
+Return Value: 0 when the walk consumed the block, -1 on any failure.
+// TRIED: the image loads the element count (edi) and the fd (ebp) before
+//        the loop; this tree defers the count to the 0x4040302/0x4040303
+//        arms where it is first used, so the prologue is one load short and
+//        everything after shifts (75 of 134 at /O2, first divergence at
+//        instruction 8). Same callee-save wall as vox_read_chunks and
+//        vox_read_colour_chunks. /c /O2 /Gy /GR- /GX.
+*/
+extern "C" int __cdecl vox_read_geometry_chunks(int fd, int *slots, int size,
+                                                int count) {
+    struct ChunkHeader {
+        int tag;
+        int length;
+    };
+    int remaining = size - 8;
+    if (remaining == 0) {
+        return 0;
+    }
+    do {
+        ChunkHeader header;
+        if (vox_read_exact(fd, &header, 8) != 0) {
+            return -1;
+        }
+        remaining -= header.length;
+        if (remaining < 0) {
+            vox_stage_error(vox_msg_bad_file_format);
+            return -1;
+        }
+        switch (header.tag) {
+        case 0x4040301:
+            if (vox_alloc_block(count, slots) != 0) {
+                return -1;
+            }
+            if (vox_read_exact(fd, (void *)slots[0], count) != 0) {
+                return -1;
+            }
+            break;
+        case 0x4040302:
+            if (vox_alloc_block(count * 0xc, slots + 1) != 0) {
+                return -1;
+            }
+            if (vox_read_exact(fd, (void *)slots[1], count * 0xc) != 0) {
+                return -1;
+            }
+            break;
+        case 0x4040303:
+            if (vox_alloc_block(count * 0x24, slots + 2) != 0) {
+                return -1;
+            }
+            if (vox_read_exact(fd, (void *)slots[2], count * 0x24) != 0) {
+                return -1;
+            }
+            break;
+        default:
+            if (vox_seek_slot((unsigned long)fd, header.length - 8, 1) < 0) {
+                vox_stage_error(vox_msg_bad_file_format);
+                return -1;
+            }
+            break;
+        }
+    } while (remaining != 0);
+    return 0;
+}
+
+/*
+Purpose: Blit a 16-bit source rectangle into the scene, skipping the
+         transparent key. The destination is the framebuffer at
+         framebuffer + (dest_y * dest_width + dest_x) * 2, the source is
+         walked with a 16.16 fixed-point step whose whole part indexes the
+         row (source_width*2 bytes per source row) and whose fraction
+         accumulates in a scratch pair. The three .data slots at
+         0x00698B70..0x00698B78 hold the cursor and the two strides, so the
+         next call resumes where this one stopped.
+// ORIGINAL: 0x0063B072 sub_63b072 0x0063B072-0x0063B11C FILE
+// symbol    _vox_blit_transparent
+// size      170 bytes
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+//
+// HOMED from src/unrecovered/0063b072.cpp. Its three bindings are the scratch
+// slots named from the body's own arithmetic - g_00698b70 is the cursor the
+// inner loop stores through and the outer loop advances by the stride in
+// g_00698b78, and g_00698b74 is the source row length in bytes (the source
+// argument's width, shifted once).
+// NAMED 2026-09-04 from the same arithmetic: the per-pixel `if (value !=
+//        key) store` is a colour-key blit, and the render record's function
+//        slots (vox_size1_aligned_6c and friends) point into this run of
+//        code, so this is one of the engine's inner loops.
+// TRIED: `unsigned int acc_x` / `unsigned acc_y` are the image's own ecx/edx
+//        16.16 accumulators; spelling them `int` emits sar where the image
+//        has shr.
+// TRIED: 0 of 53 - the image pushes ebx/esi/edi/ebp and keeps the row count,
+//        the cursor and both accumulators in them for the whole double loop,
+//        while this tree spills the cursor and re-reads the two stride slots
+//        per iteration (62 instructions against 53). The callee-save wall
+//        again: no spelling - cached stride locals, a cursor advanced without
+//        the global, `short` against `unsigned short` for the pixel read -
+//        made VC6 dedicate the four registers. /c /O2 /Gy /GR- /GX.
+Return Value: n/a
+*/
+extern "C" void __cdecl vox_blit_transparent(
+    int framebuffer, const unsigned short *source, int dest_x, int dest_y,
+    int count_x, int count_y, unsigned source_step, int source_width,
+    int dest_width, short transparent_key) {
+    if (count_x > 0) {
+        if (count_y > 0) {
+            vox_blit_row_bytes = source_width << 1;
+            vox_blit_dst_stride = dest_width << 1;
+            vox_blit_cursor = framebuffer +
+                              (dest_y * dest_width + dest_x) * 2;
+            unsigned acc_y = 0;
+            do {
+                // The cursor is re-read at each row start and the stores run
+                // through the local copy; the global only takes the stride
+                // step at the row's end.
+                unsigned short *destination =
+                    (unsigned short *)vox_blit_cursor;
+                int row = count_x;
+                unsigned acc_x = 0;
+                do {
+                    unsigned short value = source[acc_x >> 16];
+                    if (value != transparent_key) {
+                        *destination = value;
+                    }
+                    ++destination;
+                    acc_x += source_step;
+                    --row;
+                } while (row != 0);
+                vox_blit_cursor += vox_blit_dst_stride;
+                acc_y += source_step;
+                source = (const unsigned short *)((const char *)source +
+                                                  (acc_y >> 16) *
+                                                  vox_blit_row_bytes);
+                acc_y &= 0xffff;
+                --count_y;
+            } while (count_y != 0);
+        }
+    }
+}
+
+/*
+Purpose: Render through the scene record with a colour-table override: store
+         the table into the scene record's slot at +0x3C, set field_4_'s bit
+         4 - the bit object_start tests to decide where a draw reads its
+         colour table from - call render, and drop the bit again. A null
+         table is rejected with 0x10.
+// ORIGINAL: 0x00617670 ?UNK2@Caviar@@QAEHPAUBuffer@@HHHH@Z 0x00617670-0x006176BA BYTE_EXACT
+// symbol    ?render_with_colour_table@Caviar@@QAEHPAVBuffer@@HHHH@Z
+// size      74 bytes
+// prototype int (__thiscall ?UNK2@Caviar@@QAEHPAUBuffer@@HHHH@Z)(Caviar* this, Buffer*, int, int, int, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00617230
+//
+// CLAIMED BYTE_EXACT, homed from src/recovered/00617670.cpp 2026-09-04 and
+// re-measured here. The binding it carried (g_009bb474) is the scene record
+// this file already models as CaviarScene - the slot at +0x3C, named
+// render_argument_ - so the store is a member store, not a fixed address.
+// Caviar::render (0x00617230) is not homed yet; pending_bodies.cpp forwards
+// it and caviar.h declares it, which keeps this call `call rel32`.
+Return Value: 0, or 0x10 when the fourth argument is zero.
+*/
+int Caviar::render_with_colour_table(Buffer *buffer, int centre_x,
+                                     int centre_y, int colour_table,
+                                     int render_flags) {
+    if (colour_table == 0) {
+        return 0x10;
+    }
+    CaviarScene.render_argument_ = colour_table;
+    field_4_ |= 0x10;
+    int result = render(buffer, centre_x, centre_y, render_flags);
+    field_4_ &= 0xffffffef;
+    return result;
+}
+
+/*
+Purpose: Read a single 4-byte field at offset +8 of the caller's block: the
+         CVR loader's fixed-size header reader, vox_read_exact wrapped for one
+         dword.
+// ORIGINAL: 0x006386B0 sub_6386b0 0x006386B0-0x006386CC BYTE_EXACT
+// symbol    _vox_read_dword
+// size      28 bytes
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00638650
+//
+// CLAIMED BYTE_EXACT, homed from src/recovered/006386b0.cpp 2026-09-04 and
+// re-measured here. NAMED from the body: a four-byte read at +8 through
+// vox_read_exact. Its one callee is homed in this file, so the call stays
+// `call rel32`.
+Return Value: 0 when the four bytes were read, -1 otherwise.
+*/
+extern "C" int __cdecl vox_read_dword(int fd, void *block) {
+    return vox_read_exact(fd, (char *)block + 8, 4) ? -1 : 0;
+}
+
+/*
+Purpose: Fill the engine's clip rectangle from the created render record and
+         return its address, or null when no record has been created.
+// ORIGINAL: 0x00618520 ?UNK13@Caviar@@QAEXXZ 0x00618520-0x00618556 BYTE_EXACT
+// symbol    ?clip_rect@Caviar@@QAEPAXXZ
+// size      54 bytes
+// prototype void (__thiscall ?UNK13@Caviar@@QAEXXZ)(Caviar* this)
+// callers   3   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+//
+// CLAIMED BYTE_EXACT, homed from src/recovered/units/00618520.cpp 2026-09-04
+// and re-measured here. Its five bindings are named from the image:
+// g_009bb478 is the created render record, CaviarScene.created_ in the scene
+// record this file models, and the g_009b96a0/a4/a8/ac quad is the engine's
+// clip rectangle, vox_clip_rect here - all four values come off the record's
+// own clip fields, so the name is the body's, not a guess.
+// NOTE the catalogue's `X` (void) return: the body leaves the rectangle's
+// address in eax, so this tree spells the return type it really has.
+Return Value: the clip rectangle, or null.
+*/
+void *Caviar::clip_rect() {
+    VoxRenderRecord *record = CaviarScene.created_;
+    if (record == 0) {
+        return 0;
+    }
+    vox_clip_rect[0] = record->clip_max_a_x_;
+    vox_clip_rect[2] = record->clip_min_a_x_ + 1;
+    vox_clip_rect[1] = record->clip_max_a_y_;
+    vox_clip_rect[3] = record->clip_min_a_y_ + 1;
+    return vox_clip_rect;
+}
+
+/*
+Purpose: Copy the created render record's clip bounds into a caller's array:
+         {max_x, max_y, min_x + 1, min_y + 1}. A null array or a null record
+         leaves the caller's memory alone.
+// ORIGINAL: 0x00618560 ?UNK14@Caviar@@QAEXH@Z 0x00618560-0x0061859F
+// symbol    ?fill_clip_rect@Caviar@@QAEXH@Z
+// size      64 bytes
+// prototype void (__thiscall ?UNK14@Caviar@@QAEXH@Z)(Caviar* this, int)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+//
+// CLAIMED BYTE_EXACT, homed from src/recovered/units/00618560.cpp 2026-09-04
+// and re-measured here. The scene record slot is the same one UNK13 reads,
+// and the four values are vox_clip_rect's, written into the caller's array
+// in the image's own order: max_x, min_x + 1, max_y, min_y + 1.
+// TRIED: the created record is spelled CaviarScene.created_ at EVERY use,
+//        never a cached local - the image reloads 0x9BB478 before each group
+//        (0x618577, 0x618584, 0x618590) because the stores through the
+//        caller's int * may alias it, and a local collapses those reloads
+//        and undersizes the body.
+// TRIED: 19 of 19 instructions agree positionally and the body carries one
+//        instruction the image's listing does not - its own closing
+//        `ret 4`, which the image's span excludes as a shared tail. Nested
+//        guards against `&&` measure identically. Nothing in the source
+//        reaches it; /c /O2 /Gy /GR- /GX.
+Return Value: n/a
+*/
+void Caviar::fill_clip_rect(int destination) {
+    int *out = (int *)destination;
+    if (out != 0) {
+        if (CaviarScene.created_ != 0) {
+            out[0] = CaviarScene.created_->clip_max_a_x_;
+            out[2] = CaviarScene.created_->clip_min_a_x_ + 1;
+            out[1] = CaviarScene.created_->clip_max_a_y_;
+            out[3] = CaviarScene.created_->clip_min_a_y_ + 1;
+        }
+    }
+}
+
+/*
+Purpose: Install a shadow table into the created render record: the record's
+         own 0x54 slot names the 0x100-byte block, and the caller's bytes are
+         copied over it. 7 means no record, 0x10 means the record has no
+         shadow table.
+// ORIGINAL: 0x00618430 ?set_shadow_table@Caviar@@QAEHPAE@Z 0x00618430-0x00618467
+// symbol    ?set_shadow_table@Caviar@@QAEHPAE@Z
+// size      55 bytes
+// prototype int (__thiscall ?set_shadow_table@Caviar@@QAEHPAE@Z)(Caviar* this, unsigned char*)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// indirect  0x0061845B
+//
+// CLAIMED BYTE_EXACT, homed from src/recovered/units/00618430.cpp 2026-09-04
+// and re-measured here. Its binding g_009bb478 is CaviarScene.created_ here,
+// and 0x54 is the record's shadow_table_ slot (caviar.h's VoxRenderRecord).
+// The copy is a real out-of-line call in the image (0x645930), so it is
+// spelled plain `memcpy` - the intrinsic expansion would rep movsd it.
+Return Value: 0 on success, 7 without a record, 0x10 without a shadow table.
+*/
+// TRIED: 17 of 17 instructions agree positionally; the body carries one
+//        instruction the image's listing does not - its own closing
+//        `ret 4`, which falls one byte past the catalogued span - the ret
+//        sits at 0x00618465 and ends at 0x00618468, the span at 0x00618467.
+//        The
+//        intrinsic spelling, this pragma spelling and the scaffold's
+//        `_memcpy` indirection all land identically, so the claim is
+//        demoted rather than carried.
+// TRIED: the image CALLS memcpy here (0x645930) rather than letting it expand, so
+// this one pragma turns the intrinsic back into a call for the rest of the
+// file - which is this body alone, every earlier one being above it. The
+// mirror of vox_stage_error's `#pragma intrinsic(strcpy)` at the foot, which
+// works the other way round.
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+#pragma function(memcpy)
+#endif
+int Caviar::set_shadow_table(unsigned char *table) {
+    if (CaviarScene.created_ == 0) {
+        return 7;
+    }
+    if (CaviarScene.created_->shadow_table_ == 0) {
+        return 0x10;
+    }
+    memcpy(CaviarScene.created_->shadow_table_, table, 0x100);
+    return 0;
+}
+
+/*
+Purpose: Load a .cvr file into this slot: release whatever record it still
+         holds, open the file, hand the descriptor to the loader, and close
+         the descriptor again once the record is built - the slot keeps the
+         record, not the file.
+// ORIGINAL: 0x00616BD0 ?init@CaviarData@@QAEHPAD@Z 0x00616BD0-0x00616C55 FILE BYTE_EXACT
+// symbol    ?init@CaviarData@@QAEHPAD@Z
+// size      133 bytes
+// prototype int (__thiscall ?init@CaviarData@@QAEHPAD@Z)(CaviarData* this, int8*)
+// callers   1   call targets   4
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006381F0 0x00638430 0x006493C6 0x0064CF73
+//
+// CLAIMED BYTE_EXACT, homed from src/unrecovered/00616bd0.cpp 2026-09-04 and
+// re-measured here. Its three helper bindings rename to bodies this file now
+// owns or forwards: caviar_sub_638430 is caviar_free_record, homed above;
+// caviar_sub_6381f0 is vox_load_record (0x006381F0, forwarded from
+// pending_bodies.cpp); caviar_open is the CRT's _open, spelled plainly -
+// 0x8000 is _O_BINARY.
+Return Value: 0, 0x10 without a name, 6 when the open fails, 0x17 when the
+              loader returns no record.
+*/
+int CaviarData::init(char *name) {
+    if (name == 0) {
+        return 0x10;
+    }
+    if (record_) {
+        caviar_free_record(record_);
+        record_ = 0;
+    }
+    int fd = _open(name, 0x8000);
+    fileDescriptor_ = (void *)(unsigned int)fd;
+    if (fd == -1) {
+        return 6;
+    }
+    int record = vox_load_record(fd);
+    record_ = (void *)(unsigned long)record;
+    if (record == 0) {
+        return 0x17;
+    }
+    if (fileDescriptor_ != 0) {
+        _close((int)fileDescriptor_);
+        fileDescriptor_ = 0;
+    }
+    return 0;
+}
+
+/*
+Purpose: Point the renderer at a Buffer and reset the six channel bounds to
+         their defaults {0, 0, 0xff, 0xff, 0x100, 0x100}. 7 means the
+         renderer is not switched on (field_4_'s bit 0 is clear), 0x10 means
+         the caller passed no Buffer.
+// ORIGINAL: 0x006183D0 ?set_buffer@Caviar@@QAEHPAUBuffer@@@Z 0x006183D0-0x00618424 FILE
+// symbol    ?set_buffer@Caviar@@QAEHPAVBuffer@@@Z
+// size      84 bytes
+// prototype int (__thiscall ?set_buffer@Caviar@@QAEHPAUBuffer@@@Z)(Caviar* this, Buffer*)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+//
+// HOMED from src/recovered/units/006183d0.cpp. The raw offsets it wrote are
+// caviar.h's declared members now: 0x14 is buffer_ (named from this very
+// store) and 0xED..0x105 is field_D9_.values_, the six-int group Caviar::init
+// defaults to the same six values.
+// TRIED: the byte test is NOT a problem - through the declared uint32_t
+//        field_4_, VC6 emits the image's own `test byte ptr [ecx+4],1`.
+// TRIED: two assignment orders, the image's own (0xED, 0xF1, 0xF5, 0xF9,
+//        Buffer, 0xFD, 0x101) and the constant-grouped one; both land 10 of
+//        20 because this tree's VC6 hoists the Buffer store and materialises
+//        both constants ahead of the stores they feed, where the image keeps
+//        the source order and reuses edx's zero from the null compare. 10 of
+//        20, /c /O2 /Gy /GR- /GX.
+Return Value: 0, 7 when the renderer is off, 0x10 when the Buffer is null.
+*/
+int Caviar::set_buffer(Buffer *buffer) {
+    if ((field_4_ & 1) == 0) {
+        return 7;
+    }
+    if (buffer == 0) {
+        return 0x10;
+    }
+    // The assignment order is the image's store order (0xED, 0xF1, 0xF5,
+    // 0xF9, then the Buffer, then 0xFD, 0x101): VC6 materialises each
+    // constant into edx/eax as it reaches it and slides the Buffer store
+    // between the two 0xff stores, which is exactly the interleaving the
+    // image shows.
+    field_D9_.values_[0] = 0;
+    field_D9_.values_[1] = 0;
+    field_D9_.values_[2] = 0xff;
+    field_D9_.values_[3] = 0xff;
+    buffer_ = buffer;
+    field_D9_.values_[4] = 0x100;
+    field_D9_.values_[5] = 0x100;
+    return 0;
+}
+
+/*
+Purpose: Set the shadow direction from an elevation and an azimuth: the second
+         column of the rotation becomes {cos(azimuth)*sin(elevation),
+         sin(azimuth)*sin(elevation), cos(elevation)}, the vector a shadow
+         falls along for a light at those angles.
+// ORIGINAL: 0x006181D0 ?set_shadow_vector@Caviar@@QAEXMM@Z 0x006181D0-0x0061824F FILE
+// symbol    ?set_shadow_vector@Caviar@@QAEXMM@Z
+// size      127 bytes
+// prototype void (__thiscall ?set_shadow_vector@Caviar@@QAEXMM@Z)(Caviar* this, float, float)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006463E4 0x00646494
+//
+// HOMED from src/unrecovered/006181d0.cpp. The three offsets it writes are
+// caviar.h's declared floats - 0x6C, 0x70 and 0x74, and 0x74 is a float now
+// because this body is what proves it.
+Return Value: n/a
+*/
+// The image CALLS cos here (0x646494) as it calls sin; stdafx's pragma line
+// turns `sin` into a call but has no entry for `cos`, which this build
+// compiles to the FPU's own `fcos`. One TU-local pragma makes it a call for
+// the rest of the file - nothing after this body uses it.
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+#pragma function(cos)
+#endif
+void Caviar::set_shadow_vector(float elevation, float azimuth) {
+    // The trig names the angles: cos(elevation) is the vector's whole z
+    // component and sin(elevation) scales the in-plane pair, so elevation is
+    // measured off the ground plane and azimuth around it.
+    float sin_elevation = (float)sin(elevation);
+    float sin_azimuth = (float)sin(azimuth);
+    float cos_elevation = (float)cos(elevation);
+    float cos_azimuth = (float)cos(azimuth);
+    field_74_ = cos_elevation;
+    field_6C_ = cos_azimuth * sin_elevation;
+    field_70_ = sin_azimuth * sin_elevation;
 }

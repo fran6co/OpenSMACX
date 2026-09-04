@@ -334,10 +334,37 @@ void MapWin::click(int a1, int a2, int a3) {  // 0x0046D5D0
 }
 
 // sub_638430 at 0x00638430 - the helper that walks a Caviar record and frees
-// its members. A free function, so the forwarder is one too.
-void __cdecl caviar_free_record(void *record) {
-    typedef void(__cdecl *pending)(void *);
-    PENDING_BODY(0x00638430, pending)(record);
+// its members - is HOMED to caviar.cpp as caviar_free_record, which is why
+// this forwarder is gone rather than merely stale.
+
+// sub_6381f0 at 0x006381F0 - the CVR record loader: reads the "CVR\0" header
+// off an open descriptor and builds the record CaviarData::init keeps at +8.
+// caviar.cpp reaches it as vox_load_record. Its own body is still a
+// transcription in the archive, so this forwarder stands in for it.
+int __cdecl vox_load_record(int fd) {
+    typedef int(__cdecl *pending)(int);
+    return PENDING_BODY(0x006381F0, pending)(fd);
+}
+
+// ?render@Caviar@@QAEHPAUBuffer@@HHH@Z at 0x00617230 - the voxel renderer's
+// draw. Its own body is still a transcription in the archive (unclaimed), so
+// this forwarder stands in for it and caviar.h declares the member; Caviar's
+// UNK2 (now homed BYTE_EXACT) is its one caller.
+int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
+    typedef int(__fastcall *pending)(Caviar *, void *, Buffer *, int, int,
+                                     int);
+    return PENDING_BODY(0x00617230, pending)(this, nullptr, buffer, centre_x,
+                                             centre_y, flags);
+}
+
+// sub_6391f0 at 0x006391F0 - the CVR palette expander: an old-format
+// 0x1020000 chunk is read through this instead of straight into the buffer,
+// and caviar.cpp's vox_read_chunks reaches it as vox_expand_palette. Forwarded
+// rather than homed because its body is still a transcription in the archive.
+int __cdecl vox_expand_palette(int fd, void *palette) {
+    typedef int(__cdecl *pending)(int, void *);
+    PENDING_BODY(0x006391F0, pending)(fd, palette);
+    return 0;
 }
 
 // ?draw@Sprite@@QAEHPAUBuffer@@HHH@Z at 0x005E4B9A - 3225 bytes, the blitter

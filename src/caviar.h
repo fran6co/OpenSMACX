@@ -9,6 +9,10 @@
  */
 #pragma once
 
+// caviar.cpp includes buffer.h; this forward declaration is only for the
+// renderer's own Buffer-taking members declared below.
+class Buffer;
+
 struct VOX_Vect {
   float values[3];
 };
@@ -28,6 +32,16 @@ struct CaviarCamera {
 };
 #pragma pack(pop)
 
+// SAME STORY ONE STRUCT LATER: the six-int group lives at 0xED inside
+// `Caviar`, so the block that carries it must have alignment 1 too.
+#pragma pack(push, 1)
+struct CaviarChannelBounds {
+  uint8_t lead_[0x14];   // 0xD9
+  int32_t values_[6];    // 0xED
+  uint8_t tail_[3];      // 0x105
+};
+#pragma pack(pop)
+
 class CaviarData {
  public:
   // IN-CLASS and `MEASURED`, not out-of-line in caviar.cpp: `Caviar::Caviar()`
@@ -37,6 +51,10 @@ class CaviarData {
   // in caviar.cpp with a `// body` fact.
   MEASURED CaviarData() : field_0_(0), fileDescriptor_(0), record_(nullptr) { }
   void close();
+  // 0x00616BD0. Loads a .cvr file into this slot: releases whatever record
+  // it still holds, opens the file, hands the descriptor to the loader and
+  // closes it again once the record is built.
+  int init(char *name);
 
  private:
   // ALL THREE ARE OWNED ALLOCATIONS. `Caviar::close` frees and nulls every one
@@ -71,6 +89,31 @@ class Caviar {
   void set_scaling_bits(uint32_t scaling_bits);
   float get_scaling();
 
+  // 0x00618520 and 0x00618560 - the image's UNK13 and UNK14, named from what
+  // both bodies do: they read the created render record's clip bounds, one to
+  // fill the engine's clip rectangle and return its address, the other to
+  // copy the same four values into a caller's array. The catalogue spells
+  // the first `X` (void) but the body returns the rectangle's address in eax,
+  // so the declaration says so.
+  void *clip_rect();
+  void fill_clip_rect(int destination);
+  // 0x00618430. Copies 0x100 bytes of shadow table into the created record.
+  int set_shadow_table(unsigned char *table);
+  // 0x006183D0. Rejects a draw with no Buffer and resets the six-int group.
+  int set_buffer(Buffer *buffer);
+  // The image's UNK2, named from its own stores: it hands the scene record a
+  // colour table, raises field_4_'s bit 4 - the bit object_start tests to
+  // decide where the next draw reads its colour table from - calls render,
+  // and drops the bit again. centre_x/centre_y are the centre of the box
+  // render builds 0x100 deep around, and render_flags is render's own mask.
+  int render_with_colour_table(Buffer *buffer, int centre_x, int centre_y,
+                               int colour_table, int render_flags);
+  // 0x00617230. The renderer's own draw. Not homed yet - pending_bodies.cpp
+  // forwards it - and the declaration is what keeps the wrapper's call a
+  // plain `call rel32` like the image. centre_x/centre_y are the centre of
+  // the 0x100-deep box it builds (its own body subtracts 0x80 from each) and
+  // flags is its bit mask.
+  int render(Buffer *buffer, int centre_x, int centre_y, int flags);
   int UNK3(int a, int b, int c);
   int UNK4(int a1, int a2, int a3, int a4);
   void UNK5(int a1, int a2);
@@ -81,6 +124,9 @@ class Caviar {
   void UNK8(int menu_id);
   void UNK10(int a1, int a2, int a3);
   void set_scene_rotation(float x, float y, float z);
+  // 0x006181D0. The shadow direction as two angles: the three floats it
+  // writes are the rotation's second column.
+  void set_shadow_vector(float elevation, float azimuth);
 
   // `static`, because the image's own names for these end in `QAA` - a public
   // member declared `__cdecl`, which takes no receiver in ecx and puts every
@@ -115,7 +161,10 @@ class Caviar {
   // the carving did not shift anything.
   uint32_t field_4_;  // 0x4
   uint8_t field_8_[0xC];  // 0x8
-  uint32_t field_14_;  // 0x14
+  // 0x14. The Buffer set_buffer stores and render draws into - named from
+  // the setter that writes it (0x006183F0 `mov dword ptr [ecx + 0x14], eax`
+  // with the Buffer * in eax).
+  Buffer *buffer_;
   uint8_t field_18_[0x4];  // 0x18
   uint32_t field_1C_;  // 0x1C
   uint32_t field_20_;  // 0x20
@@ -139,7 +188,10 @@ class Caviar {
   uint32_t field_68_;  // 0x68
   float field_6C_;  // 0x6C
   float field_70_;  // 0x70
-  uint32_t field_74_;  // 0x74
+  // 0x74. A float: set_shadow_vector stores cos() into it and Caviar::init
+  // seeds it with a rotation component, both `mov dword ptr [ecx + 0x74]`
+  // off a float register.
+  float field_74_;
   uint32_t field_78_;  // 0x78
   uint32_t field_7C_;  // 0x7C
   uint32_t field_80_;  // 0x80
@@ -164,7 +216,10 @@ class Caviar {
   // padding and the class size is unchanged - which the static_assert below
   // checks rather than takes on trust.
   CaviarCamera camera_;      // 0xA5, 52 bytes: vector, matrix, scaling
-  uint8_t field_D9_[0x2F];   // 0xD9
+  // 0xD9..0xED is unnamed. 0xED..0x105 is the six-int group Caviar::init
+  // defaults to {0, 0, 0xff, 0xff, 0x100, 0x100} and set_buffer resets to the
+  // same values - kept as an array because no body names an individual one.
+  CaviarChannelBounds field_D9_;  // 0xD9, 0x2F bytes
   int32_t field_108_;
   uint8_t field_10C_[0x640];  // 0x10C
   // THE OBJECT-DATA ARRAY. The image does NOT memset it - it runs a 200-turn

@@ -454,7 +454,11 @@ SCAFFOLD_CEILINGS = {
     # FILE-only callees of homed bodies (landmine-free, agent-verified) -
     # the diplomacy/net family's check_spock, do_withdrawal, pact partners.
     # Union-collected beside console's fourteen (both blocks appended at EOF).
-    "PENDING_BODY forwarders": 248,
+    # 252 -> 254 (2026-09-04, caviar P2 wave 2): two documented stand-ins for
+    # callees a homed body reaches but whose own bodies are still archived -
+    # vox_load_record (0x006381F0) for CaviarData::init and Caviar::render
+    # (0x00617230) for Caviar::UNK2, which homed BYTE_EXACT around them.
+    "PENDING_BODY forwarders": 250,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -509,7 +513,14 @@ SCAFFOLD_CEILINGS = {
     # 1278 -> 1277 (2026-09-03, the BasePop destructor): units/004064d0.cpp
     # deleted with the verbatim body it preserved - the real chain is the
     # compiler's, from basepop.h's member list, and basepop.cpp claims it.
-    "artifact files (recovered/)": 1107,
+    # 1133 -> 1129 (2026-09-04, caviar P2 wave 2): 00638430.cpp,
+    # 006385d0.cpp, 00638620.cpp, 00638650.cpp, 006386d0.cpp homed into
+    # src/caviar.cpp with their g_ bindings renamed from the image.
+    # 1129 -> 1124 (2026-09-04, same wave): 00617670.cpp, 006386b0.cpp,
+    # 00618520.cpp, 00618560.cpp, 00618430.cpp homed into src/caviar.cpp.
+    # 1124 -> 1123 (same wave, set_buffer): 006183d0.cpp homed into
+    # src/caviar.cpp.
+    "artifact files (recovered/)": 1097,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -574,7 +585,14 @@ SCAFFOLD_CEILINGS = {
     # promoted - PushButton::PushButton() homed into src/gamma.cpp BYTE_EXACT
     # 44/44 once BaseButton's constructor went out of line, which is also
     # what took ??0ImageButton and ??0Gamma byte-exact.
-    "unrecovered files": 1230,
+    # 1251 -> 1247 (2026-09-04, caviar P2 wave 2): 00638430.cpp,
+    # 00638720.cpp, 00638cc0.cpp, 00638de0.cpp homed into src/caviar.cpp as
+    # the CVR loader's teardown and chunk readers.
+    # 1247 -> 1245 (2026-09-04, same wave): 00616bd0.cpp homed into
+    # src/caviar.cpp; 0063b072.cpp homed into src/caviar.cpp.
+    # 1245 -> 1244 (same wave, set_shadow_vector): 006181d0.cpp homed into
+    # src/caviar.cpp, SHAPE_EXACT 40/44 on a TU-local pragma function(cos).
+    "unrecovered files": 1223,
     "hypothesis_layouts.h lines": 2717,
 }
 
