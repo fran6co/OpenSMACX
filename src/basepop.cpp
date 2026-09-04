@@ -528,7 +528,7 @@ Return Value: n/a
 Status: Complete
 */
 void BasePop::write_check(long value) {
-    check_box()->set_state_flag(value);
+    dialogs_.set_state_flag(value);
 }
 
 
@@ -1101,7 +1101,7 @@ Purpose: The BasePop constructor. The base GraphicWin and the Heap, two
 //        with the memset below.
 // LEVER: eight-dword-block the eight contiguous dwords at 0x20f8 are ONE
 //        `rep stosd` in the image (`lea edi,[ebp+0x20f8]; mov ecx,8; xor
-//        eax,eax`), so the body says `memset(&field_20F8_, 0, 8 *
+//        eax,eax`), so the body says `memset(zero_block_, 0, 8 *
 //        sizeof(uint32_t))`. Eight separate `= 0` member stores compile to
 //        eight movs and cost the block. Measured 46/321 vs 41/321 alone,
 //        105/321 with the copy above.
@@ -1145,10 +1145,27 @@ Purpose: The BasePop constructor. The base GraphicWin and the Heap, two
 //        dialog_width_ / dialog_height_ (the file-backed {100, 100} table the
 //        tail writes into the embedded Dialog's width/height slots). Renames
 //        of members are value-neutral and change no mangled name. Still
-//        offset-named: the ~430 dwords of 0x0a40..0x20f4, 0x2144..0x214c,
-//        0x2168..0x21cc, 0x2e64..0x3230 whose owning type nobody has read off
-//        the image - notably the two 0x118 blocks at 0x2e64 / 0x2f7c, which
-//        are ten DialogEntry records each and are the obvious next typing.
+//        offset-named: the dwords of 0x0a40..0x20f4 and 0x2144..0x21cc whose
+//        owning type nobody has read off the image.
+// LEVER: run-typing 2026-09-04, byte-neutral (105 of 321 before and after;
+//        the 34 BYTE_EXACT claims in this file held). Three runs came out of
+//        the anonymous dwords:
+//        * the two 0x118 blocks at 0x2e64 / 0x2f7c -> BasePopTextBlock
+//          text_block_a_ / text_block_b_ (basepop.h). NOT "ten DialogEntry
+//          records each", which the note this replaces asserted: the only
+//          bodies that reach the region, start (0x00601bf0) and close
+//          (0x00600f00), walk them with `idx * 0x118` and strcat into block
+//          +0 - an inline char buffer of 0x104, with five numbers at +0x104
+//          ..+0x114. A DialogEntry head is a vtable pointer and would fault
+//          as a strcat destination. 0x118 / 0x1C = 10 was arithmetic, not
+//          evidence.
+//        * the 27 dwords at 0x31b8 -> default_block_[27] (nine rows of three,
+//          0x6C, ending at ok_text_).
+//        * the eight dwords at 0x20f8 -> zero_block_[8], the ctor's one
+//          `rep stosd`.
+//        All three are single-writer runs; nothing in the tree reads any of
+//        them back, so the fields inside stay offset-named rather than
+//        invented.
 // TRIED: dialogs-tail the image's tail (~30 instructions, 0x00600e8c..) walks//        the Dialogs slab by raw offset - `mov ecx,[ebp+0x21d0]; mov
 //        edx,[ecx+8]; mov [edx+ebp+0x21fc],eax` - and Dialogs declares NO own
 //        data (0xC94 is five base subobjects), so there is no member to reach
@@ -1214,9 +1231,10 @@ const uint32_t BasePopDefaultField3104[3] = {1, 1, 255};  // 0x00696ED8
 // rewrites the first byte; the shipped byte is 0xf7.
 const uint32_t BasePopDefaultField31A0[4] = {247, 7, 248, 2};  // 0x00696F54
 
-// The two 0x118-byte default blocks the ctor copies to +0x2e64 and +0x2f7c.
-// 0x118 is exactly ten sizeof(DialogEntry) records (dialog.h); the entries
-// are all zero until popups_normal and the set_def_* setters fill them.
+// The two 0x118-byte default blocks the ctor copies to +0x2e64 and +0x2f7c,
+// into text_block_a_ / text_block_b_. All zero until popups_normal and the
+// set_def_* setters fill them; BasePop::close (0x00600f00) restores them
+// from here 70 dwords at a time.
 uint32_t BasePopDefaultBlock2E64[70];  // 0x009B8AB8
 uint32_t BasePopDefaultBlock2F7C[70];  // 0x009B8BD0
 
@@ -1264,8 +1282,8 @@ BasePop::BasePop() {
     field_30A4_ = static_cast<int>(BasePopDefaultField30A4);
     field_3094_ = static_cast<int>(BasePopDefaultField3094);
 
-    memcpy(&field_2E64_, BasePopDefaultBlock2E64, 0x118);
-    memcpy(&field_2F7C_, BasePopDefaultBlock2F7C, 0x118);
+    memcpy(&text_block_a_, BasePopDefaultBlock2E64, 0x118);
+    memcpy(&text_block_b_, BasePopDefaultBlock2F7C, 0x118);
     {
         // A STRAIGHT COPY OF ALL 27 DWORDS, not a transpose. The image's loop
         // loads 0x9b8d10 + 4*column + 0xC*row and stores 0x31b8 + 4*column +
@@ -1273,7 +1291,7 @@ BasePop::BasePop() {
         // one turn per column. The earlier spelling here walked row*3+column
         // against column*8+row over eight rows: twenty-four of the twenty-
         // seven slots, scrambled, and the last one never written.
-        uint32_t *dst = &field_31B8_;
+        uint32_t *dst = default_block_;
         int column = 0;
         do {
             dst[0] = BasePopDefaultBlock31B8[column];
@@ -1301,7 +1319,7 @@ BasePop::BasePop() {
     field_30AC_ = 0;
     field_A44_ = -1;
     // Eight contiguous dwords: the image fills them with one `rep stosd`.
-    memset(&field_20F8_, 0, 8 * sizeof(uint32_t));
+    memset(zero_block_, 0, 8 * sizeof(uint32_t));
     field_A48_ = 0;
     field_21B8_ = BasePopDefaultField21B0[3];
     field_21BC_ = BasePopDefaultField21B0[2];

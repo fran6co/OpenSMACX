@@ -884,6 +884,7 @@ static int PopupCloseRectBottom;  // 0x009BC064
 // LEVER (2026-08-29): SAVE THE FLAG, THEN READ THE DEFAULT - `const BOOL winVisible = ...SlotA->is_visible(); Win *win = *SlotB; if (!winVisible) win = *SlotA;` puts the SlotB load AFTER the call like the image (0x006276AE), 98/110 -> 101/110.
 // TRIED (2026-08-29): positive if/else and `c ? B : A` ternary for the win selection - both grow the `jmp` the image does not have (11/110); `if (sprite)` vs `if (sprite != 0)` identical.
 // TRIED (2026-08-29): the last two clusters are scheduler placements no source shape reached. (a) The image tests the sprite pointer BEFORE the two 0x2000 stores (0x00627709); ours stores first - the branch is textually after the stores in every structured spelling. (b) The image computes w+x (into w's register edx) BEFORE the Left store; VC6 here sinks w+x below Left and Bottom, which COMMUTES the add into x's register (`add esi,edx`) because x is dead by then - named sums in the image's compute order rescheduled identically. --all-flags: 101/110 is the best across all 20 sets (the /O2 non-/Oy- family ties).
+// TRIED (2026-09-04): spelling the Right sum `x + w` to give the add x's register as the DESTINATION instead - measured 103 of 110, IDENTICAL to `w + x`, still first-diverging at image instruction 86 on the same `add edx,esi` against our `add esi,edx`. (b) above still stands; 103/110 is today's census of this body, the two notes above were written at 98 and 101.
 // LEVER (2026-08-29, slot conversion): the two instance slots as real `Win *`
 // objects (basepop.h/basepop.cpp) instead of `int *const` bindings into
 // 0x9BC074/78 - the identical folded loads, and 101/110 -> 103/110 (0.982
@@ -935,7 +936,7 @@ int __cdecl pops(char *caption, char *label, int a3, char *a4, int a5,
             pop->field_2144_ = 0;
         }
 
-        if (pop->sprite_box()->sprite(sprite, 0, 0)) {
+        if (pop->dialogs().sprite(sprite, 0, 0)) {
             return -1;
         }
     }

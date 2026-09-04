@@ -723,7 +723,7 @@ void DipEdit::on_button_clicked(int button_id) {
         strcat(StringTemp, number_text);
         // The caption id is read out of the label blob the way the image reads it:
         // `mov eax, ds:0x9b90f8; mov ecx, [eax + 0xdb4]`.
-        popup.edit_group()->edit(StringTable.get(
+        popup.dialogs().edit(StringTable.get(
                                      (int)*((LPSTR *)Labels.strings_ptr + 877)),
             StringTemp, 20);
 
@@ -731,7 +731,7 @@ void DipEdit::on_button_clicked(int button_id) {
         _itoa(SpyingStatusTable[112 + faction_index_ * SpyingStatusStride],
               number_text, 10);
         strcat(StringTemp, number_text);
-        popup.edit_group()->edit(StringTable.get(
+        popup.dialogs().edit(StringTable.get(
                                      (int)*((LPSTR *)Labels.strings_ptr + 878)),
             StringTemp, 20);
 

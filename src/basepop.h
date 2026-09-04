@@ -24,8 +24,27 @@
 #include "flatbutton.h"
 #include "stringstruct.h"
 
-class SpriteBox;  // sprite_box() below returns a pointer only; spritebox.h
-                  // is not included here to avoid pulling in its own chain.
+// ONE OF THE POPUP'S TWO 0x118 TEXT BLOCKS (0x2E64 and 0x2F7C inside the
+// object). 0x104 of string plus five numbers: BasePop::start (0x00601BF0)
+// strcat's into `text` and atoi/atol's into each of the five, and
+// BasePop::close (0x00600F00) restores the whole 0x118 from the file-backed
+// defaults. The five numbers are named by their offsets because nothing in
+// the tree reads them back - see the member comment in the class below.
+struct BasePopTextBlock {
+  char text[0x104];  // 0x0000
+  int field_104_;    // 0x0104
+  int field_108_;    // 0x0108
+  int field_10C_;    // 0x010C
+  int field_110_;    // 0x0110
+  int field_114_;    // 0x0114
+};
+
+static_assert(sizeof(BasePopTextBlock) == 0x118,
+              "BasePopTextBlock layout must match the original executable");
+static_assert(offsetof(BasePopTextBlock, field_104_) == 0x104,
+              "BasePopTextBlock first number must follow the text");
+static_assert(offsetof(BasePopTextBlock, field_114_) == 0x114,
+              "BasePopTextBlock last number must end the block");
 
  /*
   * BasePop class
@@ -184,14 +203,12 @@ class BasePop : public GraphicWin {
   FlatButton flat_button1_;
   FlatButton flat_button2_;
   uint32_t field_20F4_;
-  uint32_t field_20F8_;
-  uint32_t field_20FC_;
-  uint32_t field_2100_;
-  uint32_t field_2104_;
-  uint32_t field_2108_;
-  uint32_t field_210C_;
-  uint32_t field_2110_;
-  uint32_t field_2114_;
+  // EIGHT ZEROED DWORDS at 0x20F8, ONE writer and ONE meaning: the ctor's
+  // `lea edi,[ebp+0x20f8]; mov ecx,8; xor eax,eax` is a single `rep stosd`
+  // (0x006018xx), so this is a block the class clears, not eight separate
+  // flags. Typed 2026-09-04; the eight offset names it replaces said nothing
+  // the memset does not.
+  uint32_t zero_block_[8];  // 0x20F8
   Sprite sprite_;
   uint32_t field_2144_;
   uint32_t field_2148_;
@@ -229,191 +246,68 @@ class BasePop : public GraphicWin {
   uint32_t field_21CC_;
   // Split so `field_2274_` - the flag `pops()` (popup.cpp) tests, right
   // after the SpriteBox call below, to decide whether a caller-supplied
-  // sprite replaces the popup's own - has a name. The CheckBox at +0x2228
-  // and the SpriteBox at +0x2240 both still live in the opaque first span;
-  // neither is carved out as a stored member (see check_box() below).
+  // sprite replaces the popup's own - has a name.
   // THE EMBEDDED DIALOGS, real now: the three spans it replaces
   // (dialogs_[0xA4] + field_2274_ + dialogs_tail_[0xBEC]) total exactly
   // sizeof(Dialogs) = 0xC94 at 0x21D0..0x2E64. Its construction is the
   // compiler's (the image's `push 1; call 0x612830` mid-body), and the
-  // CheckBox at +0x2228 / SpriteBox at +0x2240 are its own subobjects.
+  // CheckBox at 0x2228 (+0x58), SpriteBox at 0x2240 (+0x70) and EditGroup at
+  // 0x22C8 (+0xF8) are its own base subobjects - see dialogs() below.
   Dialogs dialogs_;  // 0x21D0
 
  public:
-  // The CheckBox subobject at 0x2228, which is INSIDE `dialogs_` above. Not
-  // carved out as a member: CheckBox has virtual bases, so declaring one here
-  // would give BasePop a generated constructor writing vbtables the image's
-  // does not write. Until the block is split this is the one place the
-  // address arithmetic lives, and it is typed - the call it feeds compiles
-  // `call rel32` like the image's, which a pointer-to-member could not.
-  CheckBox *check_box() {
-    return reinterpret_cast<CheckBox *>(
-        reinterpret_cast<uint8_t *>(this) + 0x2228);
-  }
-
-  // The SpriteBox subobject at 0x2240, also inside `dialogs_` above and not
-  // carved out as a stored member for the same reason as check_box():
-  // SpriteBox composes its own GraphicWin/Dialog virtual bases by hand (see
-  // spritebox.h), so a real `SpriteBox` member here would give BasePop a
-  // generated constructor the image does not have.
-  SpriteBox *sprite_box() {
-    return reinterpret_cast<SpriteBox *>(
-        reinterpret_cast<uint8_t *>(this) + 0x2240);
-  }
-
-  // The EditGroup subobject at 0x22C8, also inside `dialogs_` above and not
-  // carved out as a stored member for the same reason: EditGroup has virtual
-  // bases, so a real member here would give BasePop a generated constructor
-  // the image does not have. DipEdit::on_button_clicked drives
-  // `edit(...)` on it twice - the two prompt fields of the atrocity popup -
-  // and the image reaches it with the same unadjusted receiver this returns
-  // (`lea ecx, [popup + 0x22c8]` at 0x004DA384 and 0x004DA3ED).
-  EditGroup *edit_group() {
-    return reinterpret_cast<EditGroup *>(
-        reinterpret_cast<uint8_t *>(this) + 0x22C8);
+  // THE POPUP'S SUBOBJECTS ARE REACHED THROUGH THE REAL MEMBER `dialogs_`,
+  // and this returns it - the same type, so no conversion. The three former
+  // offset accessors (check_box 0x2228, sprite_box 0x2240, edit_group
+  // 0x22C8) are GONE: each was `reinterpret_cast<Subclass *>(
+  // reinterpret_cast<uint8_t *>(this) + OFF)`, a self-pun re-deriving by hand
+  // what `dialogs_`'s own base list already states - CheckBox is at
+  // 0x21D0+0x58, SpriteBox at +0x70, EditGroup at +0xF8 (dialogs.h).
+  //
+  // THEY CANNOT COME BACK AS TYPED SUBOBJECT ACCESSORS, measured 2026-09-04
+  // against 0x00601BB0 (image 5 instructions):
+  //
+  //   dialogs_.set_state_flag(value)        BYTE_EXACT 5/5
+  //   CheckBox *p = &dialogs_; p->...       MISMATCH 0/5, compiled 13
+  //   CheckBox &r = dialogs_; r....         MISMATCH 0/5, compiled 13
+  //   check_box() -> CheckBox &, r....      MISMATCH 0/5, compiled 13
+  //
+  // Binding a base SUBOBJECT to a pointer or reference makes VC6 emit its
+  // adjustor's null guard - `test eax,eax / je` with an `xor ecx,ecx` on the
+  // skipped arm - and the two constants stop folding: `lea eax,[ecx+0x21d0]`
+  // then `+0x58` never becomes the image's one `add ecx, 0x2228`. Calling the
+  // INHERITED method straight on the member names no pointer at all, so the
+  // compiler folds the base offset into the receiver itself. Same-type
+  // `dialogs()` costs nothing; `pop->dialogs().sprite(...)`,
+  // `popup.dialogs().edit(...)` and `dialogs_.set_state_flag(...)` are the
+  // three former call sites.
+  Dialogs &dialogs() {
+    return dialogs_;
   }
 
  private:
-  uint32_t field_2E64_;
-  uint32_t field_2E68_;
-  uint32_t field_2E6C_;
-  uint32_t field_2E70_;
-  uint32_t field_2E74_;
-  uint32_t field_2E78_;
-  uint32_t field_2E7C_;
-  uint32_t field_2E80_;
-  uint32_t field_2E84_;
-  uint32_t field_2E88_;
-  uint32_t field_2E8C_;
-  uint32_t field_2E90_;
-  uint32_t field_2E94_;
-  uint32_t field_2E98_;
-  uint32_t field_2E9C_;
-  uint32_t field_2EA0_;
-  uint32_t field_2EA4_;
-  uint32_t field_2EA8_;
-  uint32_t field_2EAC_;
-  uint32_t field_2EB0_;
-  uint32_t field_2EB4_;
-  uint32_t field_2EB8_;
-  uint32_t field_2EBC_;
-  uint32_t field_2EC0_;
-  uint32_t field_2EC4_;
-  uint32_t field_2EC8_;
-  uint32_t field_2ECC_;
-  uint32_t field_2ED0_;
-  uint32_t field_2ED4_;
-  uint32_t field_2ED8_;
-  uint32_t field_2EDC_;
-  uint32_t field_2EE0_;
-  uint32_t field_2EE4_;
-  uint32_t field_2EE8_;
-  uint32_t field_2EEC_;
-  uint32_t field_2EF0_;
-  uint32_t field_2EF4_;
-  uint32_t field_2EF8_;
-  uint32_t field_2EFC_;
-  uint32_t field_2F00_;
-  uint32_t field_2F04_;
-  uint32_t field_2F08_;
-  uint32_t field_2F0C_;
-  uint32_t field_2F10_;
-  uint32_t field_2F14_;
-  uint32_t field_2F18_;
-  uint32_t field_2F1C_;
-  uint32_t field_2F20_;
-  uint32_t field_2F24_;
-  uint32_t field_2F28_;
-  uint32_t field_2F2C_;
-  uint32_t field_2F30_;
-  uint32_t field_2F34_;
-  uint32_t field_2F38_;
-  uint32_t field_2F3C_;
-  uint32_t field_2F40_;
-  uint32_t field_2F44_;
-  uint32_t field_2F48_;
-  uint32_t field_2F4C_;
-  uint32_t field_2F50_;
-  uint32_t field_2F54_;
-  uint32_t field_2F58_;
-  uint32_t field_2F5C_;
-  uint32_t field_2F60_;
-  uint32_t field_2F64_;
-  uint32_t field_2F68_;
-  uint32_t field_2F6C_;
-  uint32_t field_2F70_;
-  uint32_t field_2F74_;
-  uint32_t field_2F78_;
-  uint32_t field_2F7C_;
-  uint32_t field_2F80_;
-  uint32_t field_2F84_;
-  uint32_t field_2F88_;
-  uint32_t field_2F8C_;
-  uint32_t field_2F90_;
-  uint32_t field_2F94_;
-  uint32_t field_2F98_;
-  uint32_t field_2F9C_;
-  uint32_t field_2FA0_;
-  uint32_t field_2FA4_;
-  uint32_t field_2FA8_;
-  uint32_t field_2FAC_;
-  uint32_t field_2FB0_;
-  uint32_t field_2FB4_;
-  uint32_t field_2FB8_;
-  uint32_t field_2FBC_;
-  uint32_t field_2FC0_;
-  uint32_t field_2FC4_;
-  uint32_t field_2FC8_;
-  uint32_t field_2FCC_;
-  uint32_t field_2FD0_;
-  uint32_t field_2FD4_;
-  uint32_t field_2FD8_;
-  uint32_t field_2FDC_;
-  uint32_t field_2FE0_;
-  uint32_t field_2FE4_;
-  uint32_t field_2FE8_;
-  uint32_t field_2FEC_;
-  uint32_t field_2FF0_;
-  uint32_t field_2FF4_;
-  uint32_t field_2FF8_;
-  uint32_t field_2FFC_;
-  uint32_t field_3000_;
-  uint32_t field_3004_;
-  uint32_t field_3008_;
-  uint32_t field_300C_;
-  uint32_t field_3010_;
-  uint32_t field_3014_;
-  uint32_t field_3018_;
-  uint32_t field_301C_;
-  uint32_t field_3020_;
-  uint32_t field_3024_;
-  uint32_t field_3028_;
-  uint32_t field_302C_;
-  uint32_t field_3030_;
-  uint32_t field_3034_;
-  uint32_t field_3038_;
-  uint32_t field_303C_;
-  uint32_t field_3040_;
-  uint32_t field_3044_;
-  uint32_t field_3048_;
-  uint32_t field_304C_;
-  uint32_t field_3050_;
-  uint32_t field_3054_;
-  uint32_t field_3058_;
-  uint32_t field_305C_;
-  uint32_t field_3060_;
-  uint32_t field_3064_;
-  uint32_t field_3068_;
-  uint32_t field_306C_;
-  uint32_t field_3070_;
-  uint32_t field_3074_;
-  uint32_t field_3078_;
-  uint32_t field_307C_;
-  uint32_t field_3080_;
-  uint32_t field_3084_;
-  uint32_t field_3088_;
-  uint32_t field_308C_;
-  uint32_t field_3090_;
+  // THE TWO 0x118 TEXT BLOCKS at 0x2E64 and 0x2F7C, typed 2026-09-04. These
+  // 140 dwords used to be spelled individually; the runs below replace them.
+  // Evidence (all of it from the two bodies that reach the region, neither yet
+  // recovered - src/unrecovered/00601bf0.cpp and 00600f00.cpp):
+  //
+  //   * BasePop::start (0x00601BF0) walks BOTH blocks with `idx * 0x118`,
+  //     writing a STRING at block +0 (`*dst = 0; strcat(dst, v)`) and numbers
+  //     at block +0x104, +0x108, +0x10C, +0x110 and +0x114.
+  //   * BasePop::close (0x00600F00) restores both from the file-backed
+  //     defaults 70 dwords at a time - the same 0x118 the ctor memcpy's.
+  //   * BasePopDefaultBlock2E64 / BasePopDefaultBlock2F7C (basepop.cpp) are
+  //     the 0x118 defaults, and member-accesses.csv records nothing else in
+  //     the image touching either block.
+  //
+  // `text` is 0x104 because the first number sits at +0x104; nothing in the
+  // image bounds what strcat may write into it, so the buffer is the size the
+  // next field forces rather than a capacity the code checks. The five
+  // numbers stay offset-named: start() parses each from its own token with
+  // atoi/atol and nothing reads them back anywhere in the tree, so their
+  // meanings are unknown and naming them would be invention.
+  BasePopTextBlock text_block_a_;  // 0x2E64
+  BasePopTextBlock text_block_b_;  // 0x2F7C
   uint32_t field_3094_;
   Spot spot_;
   uint32_t field_30A4_;
@@ -491,42 +385,18 @@ class BasePop : public GraphicWin {
   uint32_t field_31AC_;
   uint32_t field_31B0_;
   uint32_t field_31B4_;
-  uint32_t field_31B8_;
-  uint32_t field_31BC_;
-  uint32_t field_31C0_;
-  uint32_t field_31C4_;
-  uint32_t field_31C8_;
-  uint32_t field_31CC_;
-  uint32_t field_31D0_;
-  uint32_t field_31D4_;
-  uint32_t field_31D8_;
-  uint32_t field_31DC_;
-  uint32_t field_31E0_;
-  uint32_t field_31E4_;
-  uint32_t field_31E8_;
-  uint32_t field_31EC_;
-  uint32_t field_31F0_;
-  uint32_t field_31F4_;
-  uint32_t field_31F8_;
-  uint32_t field_31FC_;
-  uint32_t field_3200_;
-  uint32_t field_3204_;
-  uint32_t field_3208_;
-  uint32_t field_320C_;
-  uint32_t field_3210_;
-  uint32_t field_3214_;
-  uint32_t field_3218_;
-  uint32_t field_321C_;
-  uint32_t field_3220_;
+  // THE 27 DWORDS COPIED FROM BasePopDefaultBlock31B8 at 0x31B8, ONE writer
+  // and ONE shape: the ctor's copy loop walks 0x9b8d10 + 4*column + 0xC*row
+  // into 0x31b8 + 4*column + 0xC*row - the SAME index both sides, nine rows
+  // of three dwords, 0x6C bytes ending at ok_text_. Typed 2026-09-04; the 27
+  // offset names it replaces are this array. Read back by nothing in the tree
+  // yet, so the rows stay flat rather than pretending to a [9][3] meaning.
+  uint32_t default_block_[27];  // 0x31B8
   LPSTR ok_text_;
   LPSTR cancel_text_;
   uint32_t field_322C_;
 };
 
-
-
-// The two-argument exec these forward to is not recovered.
-typedef int (OriginalObject::*func_base_pop_exec)(int flag, int (__cdecl *callback)());
 
 
 // The screen width the high-resolution scaling switches on, read at a
