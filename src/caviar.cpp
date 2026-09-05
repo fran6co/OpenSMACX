@@ -14,11 +14,28 @@
 #include "general.h"    // mem_get
 #include "stringstruct.h"
 #include "strings.h"    // StringTemp
+#include "vector.h"     // vector_add - the engine's geometry accumulator
 
 #include <io.h>        // _read/_write/_lseek/_tell - the vx_* IO shims
 #include <new>
 
 namespace {
+
+// /O2 implies /Oi, and /Oi expands `memset` into the `rep stosd` form at
+// every site. render_mono's image CALLS it (`push 0x1800 / push <byte> /
+// push 0x9b9c38 / call 0x6465f0`), so the expansion is routed through a real
+// function - path.cpp's `memset_call` idiom, kept file-local here because
+// path.cpp already owns the external name.
+void *__cdecl caviar_memset_call(void *dst, int value, unsigned count) {
+    return memset(dst, value, count);
+}
+
+// 0x00639380, the engine's shutdown hook, is a nullsub - a function whose
+// whole body is one `ret`. close_class calls it, so a body that does nothing
+// is the faithful spelling; kept out of line so the call survives.
+OPENSMACX_NOINLINE
+void vox_engine_close() {
+}
 
 OPENSMACX_NOINLINE
 uint32_t load_scaling_bits(const void *source) {
@@ -302,6 +319,10 @@ void Caviar::UNK8(int menu_id) {
 /*
 Purpose: Store three values into the triplet at 0x2C.
 // ORIGINAL: 0x00618320 ?UNK10@Caviar@@QAEXHHH@Z 0x00618320-0x00618338 BYTE_EXACT
+// symbol    ?UNK10@Caviar@@QAEXMMM@Z
+//           (the three arguments are typed float because the fields they fill
+//           are the floats render subtracts the camera offset from; the
+//           catalogue spells them H, and either way the store is one dword.)
 // size      24 bytes
 // prototype void (__thiscall ?UNK10@Caviar@@QAEXHHH@Z)(Caviar* this, int, int, int)
 // callers   0   call targets   0
@@ -311,10 +332,10 @@ Purpose: Store three values into the triplet at 0x2C.
 Return Value: n/a
 Status: Complete
 */
-void Caviar::UNK10(int a1, int a2, int a3) {
-    field_2C_ = a1;
-    field_30_ = a2;
-    field_34_ = a3;
+void Caviar::UNK10(float offset_x, float offset_y, float offset_z) {
+    field_2C_ = offset_x;
+    field_30_ = offset_y;
+    field_34_ = offset_z;
 }
 
 
@@ -334,7 +355,7 @@ Status: Complete
 */
 void Caviar::set_scene_rotation(float x, float y, float z) {
     float angles[3] = {x, y, z};
-    caviar_apply_rotation(angles, reinterpret_cast<uint8_t *>(this) + 0x38);
+    caviar_apply_rotation(angles, &rotation_);
 }
 
 
@@ -353,7 +374,9 @@ Purpose: Read back the three values at 0x2C, 0x30 and 0x34, skipping any output
          the parameters are typed that way here because that is what the body
          does with them.
 // ORIGINAL: 0x00618340 ?UNK11@Caviar@@QAEXHHH@Z 0x00618340-0x0061836A BYTE_EXACT
-// symbol    ?UNK11@Caviar@@QAEXPAH00@Z
+// symbol    ?UNK11@Caviar@@QAEXPAM00@Z
+//           (the three outputs are typed float*, the same dwords the image
+//           copies - its catalogue spells them H, which no pointer can be.)
 // size      42 bytes
 // prototype void (__thiscall ?UNK11@Caviar@@QAEXHHH@Z)(Caviar* this, int, int, int)
 // callers   0   call targets   0
@@ -363,7 +386,7 @@ Purpose: Read back the three values at 0x2C, 0x30 and 0x34, skipping any output
 Return Value: n/a
 Status: Complete
 */
-void Caviar::UNK11(int *out1, int *out2, int *out3) {
+void Caviar::UNK11(float *out1, float *out2, float *out3) {
     if (out1) {
         *out1 = field_2C_;
     }
@@ -606,7 +629,12 @@ struct CaviarSceneRecord {
   uint32_t width_b_;       // 0x9BB460
   void *record_owner_;     // 0x9BB464
   uint8_t record_flag_;    // 0x9BB468
-  uint8_t pad_[0x3C - 0x31];
+  uint8_t pad_[0x38 - 0x31];
+  // 0x9BB470. The renderer object the engine's per-object callbacks dispatch
+  // through: object_start's own body opens `mov ecx, [0x9bb470]` rather than
+  // using the receiver it was passed. Nothing recovered writes this slot, so
+  // it is null until whatever sets it in the image is recovered.
+  Caviar *renderer_;       // 0x9BB470
   // 0x9BB474. The value Caviar::UNK2's fourth argument carries lands here
   // before it calls render, and nothing else in the scene record writes it -
   // so the slot is named for that one store rather than left in the pad.
@@ -772,10 +800,10 @@ int Caviar::init_class() {
     VoxRenderRecord *const record = CaviarScene.created_;
     record->zero_b_[2] = 0;             // 0x38
     record->zero_b_[3] = 0;             // 0x3C
-    record->width_minus_1_ = 0xff;
-    record->height_minus_1_ = 0xff;
-    record->width_ = 0x100;
-    record->height_ = 0x100;
+    record->draw_right_ = 0xff;
+    record->draw_bottom_ = 0xff;
+    record->draw_width_ = 0x100;
+    record->draw_height_ = 0x100;
     // &Caviar::object_start, still an artifact - the address is the image's
     // own 0x00618DA0, which this build does not map.
     record->field_58_[0] = 0x00618DA0;
@@ -1374,15 +1402,15 @@ VoxRenderRecord *__cdecl vox_create_record(int setup_id, void *setup_data,
     }
 
     const uint8_t *desc = (const uint8_t *)setup_block;
-    record->width_minus_1_ = (int)*(const short *)(desc + 0xc) - 1;
+    record->draw_right_ = (int)*(const short *)(desc + 0xc) - 1;
     const int height_minus_1 = (int)*(const short *)(desc + 0x10) - 1;
-    record->height_minus_1_ = height_minus_1;
-    if (record->width_minus_1_ >= 0 && height_minus_1 >= 0) {
-        record->width_ = record->width_minus_1_ + 1;
-        record->height_ = height_minus_1 + 1;
+    record->draw_bottom_ = height_minus_1;
+    if (record->draw_right_ >= 0 && height_minus_1 >= 0) {
+        record->draw_width_ = record->draw_right_ + 1;
+        record->draw_height_ = height_minus_1 + 1;
     } else {
-        record->width_ = 0;
-        record->height_ = 0;
+        record->draw_width_ = 0;
+        record->draw_height_ = 0;
     }
 
     switch (CaviarVoxelAlgoFlag) {
@@ -2361,6 +2389,883 @@ int Caviar::render_with_colour_table(Buffer *buffer, int centre_x,
 }
 
 /*
+Purpose: Render with the engine's flat monochrome table: fill the shared
+         0x1800-byte colour source with one byte repeated, raise field_4_'s
+         bit 3 so the draw reads its colours from that source, call render,
+         and drop the bit again.
+// ORIGINAL: 0x00617620 ?render_mono@Caviar@@QAEXPAUBuffer@@HHHH@Z 0x00617620-0x0061766F
+// symbol    ?render_mono@Caviar@@QAEXPAVBuffer@@HHHH@Z
+//           (this tree spells Buffer a `class` and the image's own name spells
+//           it `U`, a struct - so the emitted name carries V. Same rule as
+//           render_with_colour_table above, whose symbol fact does the same
+//           thing. Fixing it tree-wide means re-keying `class Buffer` in
+//           buffer.h and every PAVBuffer fact with it, which is not this
+//           file's edit to make.)
+// size      79 bytes
+// prototype void (__thiscall ?render_mono@Caviar@@QAEXPAUBuffer@@HHHH@Z)(Caviar* this, Buffer*, int, int, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006465F0 0x00617230
+//
+// The colour source it fills is this file's CaviarColourSource (0x009B9C38),
+// the same 0x1800 bytes init_class hands vox_create_record as the record's
+// colour table - so the "monochrome" draw is the ordinary draw with every
+// palette entry forced to one value.
+// LEVER: caviar_memset_call, not memset - /Oi expanded the intrinsic into
+//        `rep stosd` (32 instructions against the image's 27) and burned EDI
+//        with it. Same lever as path.cpp's memset_call.
+// TRIED: the last divergence is the bit clear's width. The image's set is a
+//        byte `or al, 8` and its clear a dword `and ecx, 0xfffffff7`; this
+//        tree reproduces the byte or and gives the clear as a byte
+//        `and al, 0xf7` - 27 of 27 instructions, one differing run of three.
+//        Measured `&= 0xfffffff7`, `&= ~0x08`, `= x & ~0x08` and a named
+//        local for the clear, all identical: VC6 proves the mask byte-local
+//        and shrinks it. render_with_colour_table (0x00617670) has the same
+//        pair with masks 0x10/0xef and takes the dword form on both sides,
+//        so the width is the allocator's choice, not the source's.
+Return Value: n/a
+Status: Complete
+*/
+void Caviar::render_mono(Buffer *buffer, int centre_x, int centre_y,
+                         int colour, int flags) {
+    caviar_memset_call(CaviarColourSource, colour & 0xff, 0x1800);
+    field_4_ |= 8;
+    render(buffer, centre_x, centre_y, flags);
+    field_4_ &= ~0x08;
+}
+
+/*
+Purpose: Append every part of one loaded .cvr definition to the renderer's
+         instance table, at the caller's rotation step. Each part contributes
+         one colour byte, one accumulated vector and one matrix, copied out of
+         the part's three parallel arrays at `step % step_count`, and the
+         instance's id and step entry come off the record.
+// ORIGINAL: 0x00617920 ?add_object@Caviar@@QAEHPAUCaviarData@@PAUVOX_Vect@@H@Z 0x00617920-0x00617A9F
+// symbol    ?add_object@Caviar@@QAEHPAUCaviarData@@PAUVOX_Vect@@H@Z
+// size      383 bytes
+// prototype int (__thiscall ?add_object@Caviar@@QAEHPAUCaviarData@@PAUVOX_Vect@@H@Z)(Caviar* this, CaviarData*, VOX_Vect*, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00628150
+Return Value: 0, 1 when the instance table is full, 7 when the definition has
+              no record, 0x10 on a null argument.
+Status: Complete
+*/
+int Caviar::add_object(CaviarData *definition, VOX_Vect *offset, int step) {
+    if (definition == 0 || offset == 0) {
+        return 0x10;
+    }
+    CvrRecord *record = definition->record_;
+    if (record == 0) {
+        return 7;
+    }
+    int count = record->part_count_;
+    int remainder = step % record->step_count_;
+    if (count > 0) {
+        int index = 0;
+        do {
+            if (field_13CC_ == 200) {
+                return 1;
+            }
+            CaviarData &instance = slots_[field_13CC_];
+            CvrPart &part = definition->record_->parts_[index];
+            *instance.instance_colour_ = part.colours_[remainder];
+            // The engine's accumulator is declared over the game's Vector; a
+            // VOX_Vect is the same three floats under the engine's own name,
+            // which is why the image's call site casts.
+            vector_add((Vector *)(part.vectors_ + remainder), (Vector *)offset,
+                       (Vector *)instance.instance_vector_);
+            *instance.instance_matrix_ = part.matrices_[remainder];
+
+            instance_ids_[field_13CC_] = definition->record_->id_ + 0x302;
+            instance_steps_[field_13CC_] = definition->record_->steps_[index];
+            ++index;
+            ++field_13CC_;
+        } while (index < count);
+    }
+    return 0;
+}
+
+/*
+Purpose: Append one .cvr definition's parts to the instance table using a
+         second definition as the geometry source. The count and the step entry
+         come off the first record, the vectors and the rotation step off the
+         second; nothing writes the instance's colour or matrix.
+// ORIGINAL: 0x006176E0 ?add_object@Caviar@@QAEHPAUCaviarData@@PAUCaviarData@@PAUVOX_Vect@@H@Z 0x006176E0-0x006177FE
+// symbol    ?add_object@Caviar@@QAEHPAUCaviarData@@0PAUVOX_Vect@@H@Z
+//           (VC6 back-references a repeated identical argument type to `0`;
+//           the catalogued name spells the second CaviarData out in full,
+//           which is IDA's rendering and not a linker record.)
+// size      286 bytes
+// prototype int (__thiscall ?add_object@Caviar@@QAEHPAUCaviarData@@PAUCaviarData@@PAUVOX_Vect@@H@Z)(Caviar* this, CaviarData*, CaviarData*, VOX_Vect*, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00628150
+Return Value: 0, 1 when the instance table is full, 7 when either definition
+              has no record, 0x10 on a null argument.
+Status: Complete
+*/
+int Caviar::add_object(CaviarData *definition, CaviarData *geometry,
+                       VOX_Vect *offset, int step) {
+    if (definition == 0 || geometry == 0) {
+        return 0x10;
+    }
+    if (definition->record_ == 0 || geometry->record_ == 0) {
+        return 7;
+    }
+    int count = definition->record_->part_count_;
+    int remainder = step % geometry->record_->step_count_;
+    if (count > 0) {
+        int index = 0;
+        do {
+            if (field_13CC_ == 200) {
+                return 1;
+            }
+            CaviarData &instance = slots_[field_13CC_];
+            vector_add(
+                (Vector *)(geometry->record_->parts_[index].vectors_ +
+                           remainder),
+                (Vector *)offset, (Vector *)instance.instance_vector_);
+            instance_ids_[field_13CC_] = definition->record_->id_ + 0x302;
+            instance_steps_[field_13CC_] = definition->record_->steps_[index];
+            ++index;
+            ++field_13CC_;
+        } while (index < count);
+    }
+    return 0;
+}
+
+/*
+Purpose: Append one .cvr definition's parts to the instance table using a
+         second definition as the geometry source and a raw object pointer as
+         the instance's id. The count and the step entry come off the first
+         record, the vectors and the rotation step off the second.
+// ORIGINAL: 0x00617800 ?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUCaviarData@@PAUVOX_Vect@@@Z 0x00617800-0x00617916
+// symbol    ?add_object@Caviar@@QAEHPAUCaviarData@@PAE0PAUVOX_Vect@@H@Z
+//           (the back-reference again, and the fifth argument the image's
+//           own `ret 0x14` admits - see the note above the body.)
+// size      278 bytes
+// prototype int (__thiscall ?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUCaviarData@@PAUVOX_Vect@@@Z)(Caviar* this, CaviarData*, uint8*, CaviarData*, VOX_Vect*, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00628150
+//           The catalogued name has four stack arguments and the body pops
+//           five (`ret 0x14`, and the fifth is read as the rotation step), so
+//           the declaration says five - the artifact reached the same answer
+//           and Ghidra agreed with it.
+Return Value: 0, 1 when the instance table is full, 7 when either definition
+              has no record, 0x10 on a null argument.
+Status: Complete
+*/
+int Caviar::add_object(CaviarData *definition, uint8_t *object,
+                       CaviarData *geometry, VOX_Vect *offset, int step) {
+    if (definition == 0 || geometry == 0) {
+        return 0x10;
+    }
+    if (definition->record_ == 0 || geometry->record_ == 0) {
+        return 7;
+    }
+    int count = definition->record_->part_count_;
+    int remainder = step % geometry->record_->step_count_;
+    if (count > 0) {
+        int index = 0;
+        do {
+            if (field_13CC_ == 200) {
+                return 1;
+            }
+            CaviarData &instance = slots_[field_13CC_];
+            vector_add(
+                (Vector *)(geometry->record_->parts_[index].vectors_ +
+                           remainder),
+                (Vector *)offset, (Vector *)instance.instance_vector_);
+            instance_ids_[field_13CC_] = (uint32_t)object;
+            instance_steps_[field_13CC_] = definition->record_->steps_[index];
+            ++index;
+            ++field_13CC_;
+        } while (index < count);
+    }
+    return 0;
+}
+
+/*
+Purpose: Append one .cvr definition's parts to the instance table in full -
+         colour, accumulated vector, matrix - with a raw object pointer as the
+         instance's id.
+// ORIGINAL: 0x00617AA0 ?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUVOX_Vect@@H@Z 0x00617AA0-0x00617C2E
+// symbol    ?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUVOX_Vect@@H@Z
+// size      398 bytes
+// prototype int (__thiscall ?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUVOX_Vect@@H@Z)(Caviar* this, CaviarData*, uint8*, VOX_Vect*, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00628150
+//
+// THE FAMILY'S WALL, measured on all eight: the image opens
+// `sub esp, 8 / push ebx / push ebp / push esi / push edi` - one 8-byte frame
+// for exactly two locals, all four callee-saved pushes in one block - and its
+// loop RE-READS `definition->record_` off the argument at every use, keeping
+// only the part count and the index in the frame and the remainder in ebp.
+// Every body below opens a bigger frame (0x10 and more) because VC6 hoists
+// the scaled step index (`remainder * 0xc`, `remainder * 0x24`) into frame
+// slots the image does not need, and every stack operand after the prologue
+// therefore disagrees by that difference - which is why the agreement count
+// reads 5 of 111 rather than "everything but the prologue". Measured both
+// ways on 0x00617F20: spelling `definition->record_` out at every use
+// (5 of 111) scores WORSE than a `record` local (7 of 111), so this is not
+// the re-read lever caviar_free_record documented, it is frame shape.
+Return Value: 0, 1 when the instance table is full, 7 when the definition has
+              no record, 0x10 on a null argument.
+Status: Complete
+*/
+int Caviar::add_object(CaviarData *definition, uint8_t *object,
+                       VOX_Vect *offset, int step) {
+    if (definition == 0 || object == 0 || offset == 0) {
+        return 0x10;
+    }
+    CvrRecord *record = definition->record_;
+    if (record == 0) {
+        return 7;
+    }
+    int count = record->part_count_;
+    int remainder = step % record->step_count_;
+    if (count > 0) {
+        int index = 0;
+        do {
+            if (field_13CC_ == 200) {
+                return 1;
+            }
+            CaviarData &instance = slots_[field_13CC_];
+            CvrPart &part = record->parts_[index];
+            *instance.instance_colour_ = part.colours_[remainder];
+            vector_add((Vector *)(part.vectors_ + remainder), (Vector *)offset,
+                       (Vector *)instance.instance_vector_);
+            *instance.instance_matrix_ = part.matrices_[remainder];
+            instance_ids_[field_13CC_] = (uint32_t)object;
+            instance_steps_[field_13CC_] = record->steps_[index];
+            ++index;
+            ++field_13CC_;
+        } while (index < count);
+    }
+    return 0;
+}
+
+/*
+Purpose: Append one .cvr definition's parts to the instance table in full -
+         colour, vector, matrix - using a second definition as the geometry
+         source. The count, the id and the step entry come off the first
+         record, the part arrays and the rotation step off the second.
+// ORIGINAL: 0x00617C30 ?add_object@Caviar@@QAEHPAUCaviarData@@PAUCaviarData@@H@Z 0x00617C30-0x00617DAE
+// symbol    ?add_object@Caviar@@QAEHPAUCaviarData@@0H@Z
+//           (VC6 back-references the repeated CaviarData to `0`; the
+//           catalogued name spells it out in full.)
+// size      382 bytes
+// prototype int (__thiscall ?add_object@Caviar@@QAEHPAUCaviarData@@PAUCaviarData@@H@Z)(Caviar* this, CaviarData*, CaviarData*, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: 0, 1 when the instance table is full, 7 when either definition
+              has no record, 0x10 on a null argument.
+Status: Complete
+*/
+int Caviar::add_object(CaviarData *definition, CaviarData *geometry, int step) {
+    if (definition == 0 || geometry == 0) {
+        return 0x10;
+    }
+    if (definition->record_ == 0 || geometry->record_ == 0) {
+        return 7;
+    }
+    int count = definition->record_->part_count_;
+    int remainder = step % geometry->record_->step_count_;
+    if (count > 0) {
+        int index = 0;
+        do {
+            if (field_13CC_ == 200) {
+                return 1;
+            }
+            CaviarData &instance = slots_[field_13CC_];
+            CvrPart &part = geometry->record_->parts_[index];
+            *instance.instance_colour_ = part.colours_[remainder];
+            *instance.instance_vector_ = part.vectors_[remainder];
+            *instance.instance_matrix_ = part.matrices_[remainder];
+            instance_ids_[field_13CC_] = definition->record_->id_ + 0x302;
+            instance_steps_[field_13CC_] = definition->record_->steps_[index];
+            ++index;
+            ++field_13CC_;
+        } while (index < count);
+    }
+    return 0;
+}
+
+/*
+Purpose: Append one .cvr definition's parts to the instance table in full -
+         colour, vector, matrix - using a second definition as the geometry
+         source and a raw object pointer as the instance's id. The count and
+         the step entry come off the first record, the part arrays and the
+         rotation step off the second.
+// ORIGINAL: 0x00617DB0 ?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUCaviarData@@H@Z 0x00617DB0-0x00617F12
+// symbol    ?add_object@Caviar@@QAEHPAUCaviarData@@PAE0H@Z
+//           (VC6 back-references the repeated CaviarData to `0`.)
+// size      354 bytes
+// prototype int (__thiscall ?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUCaviarData@@H@Z)(Caviar* this, CaviarData*, uint8*, CaviarData*, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: 0, 1 when the instance table is full, 7 when either definition
+              has no record, 0x10 on a null argument.
+Status: Complete
+*/
+int Caviar::add_object(CaviarData *definition, uint8_t *object,
+                       CaviarData *geometry, int step) {
+    if (definition == 0 || geometry == 0) {
+        return 0x10;
+    }
+    if (definition->record_ == 0 || geometry->record_ == 0) {
+        return 7;
+    }
+    int count = definition->record_->part_count_;
+    int remainder = step % geometry->record_->step_count_;
+    if (count > 0) {
+        int index = 0;
+        do {
+            if (field_13CC_ == 200) {
+                return 1;
+            }
+            CaviarData &instance = slots_[field_13CC_];
+            CvrPart &part = geometry->record_->parts_[index];
+            *instance.instance_colour_ = part.colours_[remainder];
+            *instance.instance_vector_ = part.vectors_[remainder];
+            *instance.instance_matrix_ = part.matrices_[remainder];
+            instance_ids_[field_13CC_] = (uint32_t)object;
+            instance_steps_[field_13CC_] = definition->record_->steps_[index];
+            ++index;
+            ++field_13CC_;
+        } while (index < count);
+    }
+    return 0;
+}
+
+/*
+Purpose: Append one .cvr definition's parts to the instance table in full -
+         colour, vector, matrix - the whole record the instance comes from
+         being the caller's first argument.
+// ORIGINAL: 0x00617F20 ?add_object@Caviar@@QAEHPAUCaviarData@@H@Z 0x00617F20-0x0061807D
+// symbol    ?add_object@Caviar@@QAEHPAUCaviarData@@H@Z
+// size      349 bytes
+// prototype int (__thiscall ?add_object@Caviar@@QAEHPAUCaviarData@@H@Z)(Caviar* this, CaviarData*, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: 0, 1 when the instance table is full, 7 when the definition has
+              no record, 0x10 on a null argument.
+Status: Complete
+*/
+int Caviar::add_object(CaviarData *definition, int step) {
+    if (definition == 0) {
+        return 0x10;
+    }
+    CvrRecord *record = definition->record_;
+    if (record == 0) {
+        return 7;
+    }
+    int count = record->part_count_;
+    int remainder = step % record->step_count_;
+    if (count > 0) {
+        int index = 0;
+        do {
+            if (field_13CC_ == 200) {
+                return 1;
+            }
+            CaviarData &instance = slots_[field_13CC_];
+            CvrPart &part = record->parts_[index];
+            *instance.instance_colour_ = part.colours_[remainder];
+            *instance.instance_vector_ = part.vectors_[remainder];
+            *instance.instance_matrix_ = part.matrices_[remainder];
+            instance_ids_[field_13CC_] = record->id_ + 0x302;
+            instance_steps_[field_13CC_] = record->steps_[index];
+            ++index;
+            ++field_13CC_;
+        } while (index < count);
+    }
+    return 0;
+}
+
+/*
+Purpose: Append one .cvr definition's parts to the instance table in full -
+         colour, vector, matrix - with a raw object pointer as the instance's
+         id and the whole record taken from the definition.
+// ORIGINAL: 0x00618080 ?add_object@Caviar@@QAEHPAUCaviarData@@PAEH@Z 0x00618080-0x006181D0
+// symbol    ?add_object@Caviar@@QAEHPAUCaviarData@@PAEH@Z
+// size      336 bytes
+// prototype int (__thiscall ?add_object@Caviar@@QAEHPAUCaviarData@@PAEH@Z)(Caviar* this, CaviarData*, uint8*, int)
+// callers   3   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: 0, 1 when the instance table is full, 7 when the definition has
+              no record, 0x10 on a null argument.
+Status: Complete
+*/
+int Caviar::add_object(CaviarData *definition, uint8_t *object, int step) {
+    if (definition == 0) {
+        return 0x10;
+    }
+    CvrRecord *record = definition->record_;
+    if (record == 0) {
+        return 7;
+    }
+    int count = record->part_count_;
+    int remainder = step % record->step_count_;
+    if (count > 0) {
+        int index = 0;
+        do {
+            if (field_13CC_ == 200) {
+                return 1;
+            }
+            CaviarData &instance = slots_[field_13CC_];
+            CvrPart &part = record->parts_[index];
+            *instance.instance_colour_ = part.colours_[remainder];
+            *instance.instance_vector_ = part.vectors_[remainder];
+            *instance.instance_matrix_ = part.matrices_[remainder];
+            instance_ids_[field_13CC_] = (uint32_t)object;
+            instance_steps_[field_13CC_] = record->steps_[index];
+            ++index;
+            ++field_13CC_;
+        } while (index < count);
+    }
+    return 0;
+}
+
+/*
+Purpose: Clear the two scene surfaces and the shared colour table over the
+         viewport rectangle. The renderer's own surfaces are filled 9 and 0,
+         and when the caller asks for it every row of the shared 16-bit table
+         inside the viewport is filled 0xffff and the viewport state is reset.
+// ORIGINAL: 0x00618470 ?clear_buffers@Caviar@@QAEXH@Z 0x00618470-0x0061851D BYTE_EXACT
+// symbol    ?clear_buffers@Caviar@@QAEXH@Z
+// size      173 bytes
+// prototype void (__thiscall ?clear_buffers@Caviar@@QAEXH@Z)(Caviar* this, int)
+// callers   8   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D8240 0x005DFB50 0x0063AF60
+//
+// Every global it touches is one this file already models: the shared 0x20000
+// -entry table (CaviarSceneMemory, 0x009B9100), the two scene surfaces
+// (CaviarSceneBufferA / CaviarSceneBufferB), the viewport rectangle
+// (CaviarViewportState, 0x009B9690 in the order left, top, right, bottom) and
+// the scene record CaviarScene. The rows it fills are the table's own 0x200
+// -byte rows, so the walk is `row_span` rows of `col_span` 16-bit entries
+// starting at the viewport's top-left corner.
+Return Value: n/a
+Status: Complete
+*/
+void Caviar::clear_buffers(int fill) {
+    if (CaviarSceneMemory != 0) {
+        int height = CaviarViewportState[1];
+        int width = CaviarViewportState[0];
+        int bottom = CaviarViewportState[3];
+        int row_span = bottom - height;
+        uint16_t *row = reinterpret_cast<uint16_t *>(CaviarSceneMemory) +
+                        height * 0x100 + width;
+        int col_span = CaviarViewportState[2] - width;
+        CaviarSceneBufferA.fill(width, height, col_span, row_span, 9);
+        CaviarSceneBufferB.fill(0);
+        if (fill == 0) {
+            if (row_span > 0) {
+                int count = row_span;
+                do {
+                    vox_fill_colour_table(row, 0xffff, col_span);
+                    row += 0x100;
+                    --count;
+                } while (count != 0);
+            }
+            CaviarViewportState[0] = 0;
+            CaviarViewportState[2] = 0;
+            CaviarViewportState[3] = 0;
+            CaviarViewportState[1] = 0;
+            CaviarScene.field_00_ = 0;
+            CaviarScene.field_08_ = 0;
+            CaviarScene.field_0C_ = 0;
+            CaviarScene.field_04_ = 0;
+        }
+    }
+}
+
+/*
+Purpose: Render a scene and blit it into the renderer's own surface as a
+         multi-table destination. Fills surface A with the caller's fill
+         value, draws the scene with bit 3 forced on so it reads the shared
+         monochrome table, blits the 0x100-deep box centred on the caller's
+         coordinates into surface A, frees the draw's surface lock, fills
+         surface A 9 again and clears the buffers the caller asks for.
+// ORIGINAL: 0x006171A0 ?render_multi_table_dest@Caviar@@QAEXPAUBuffer@@HHHPAEH@Z 0x006171A0-0x00617226
+// symbol    ?render_multi_table_dest@Caviar@@QAEXPAVBuffer@@HHHPAEH@Z
+//           (this tree spells Buffer a `class` and the image's own name spells
+//           it `U`, a struct - see the note on render_mono above.)
+// size      134 bytes
+// prototype void (__thiscall ?render_multi_table_dest@Caviar@@QAEXPAUBuffer@@HHHPAEH@Z)(Caviar* this, Buffer*, int, int, int, uint8*, int)
+// callers   0   call targets   6
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DFB50 0x00617230 0x005D94B0 0x005E34A3 0x00618470
+// TRIED: the 23 extra instructions are one inlining. The image CALLS
+//        Buffer::free_data (0x005E34A3, a real COMDAT); this tree's
+//        definition is in-class in buffer.h, so VC6 folds it into this body -
+//        surface_ read, lock count decremented, the surface's own release
+//        through vtable slot 0x80 and both fields nulled, 20 instructions
+//        where the image has one `call`. Measured `buffer->free_data(1)` and
+//        the qualified `buffer->Buffer::free_data(1)`: both inline, 75/76
+//        compiled instructions either way. VC6 has no noinline, so the fix is
+//        moving free_data out of line in buffer.h - a buffer.h edit that
+//        belongs to whoever owns that class, not to this file.
+Return Value: n/a
+Status: Complete
+*/
+void Caviar::render_multi_table_dest(Buffer *buffer, int centre_x, int centre_y,
+                                     int fill, unsigned char *bits, int flags) {
+    CaviarSceneBufferA.fill(fill);
+    if (render(buffer, centre_x, centre_y, flags | 8) != 0) {
+        return;
+    }
+    CaviarSceneBufferA.draw_multi_table_dest(buffer, fill, centre_x - 0x80,
+                                             centre_y - 0x80, 1, 1, bits);
+    buffer->free_data(1);
+    CaviarSceneBufferA.fill(9);
+    clear_buffers(flags & 1);
+}
+
+/*
+Purpose: Release a render record and the four tables it owns, then drop the
+         count of records in existence. The colour and shadow tables and the
+         two ramp pointer arrays are each freed only when non-null; the record
+         itself is freed whatever it holds.
+// ORIGINAL: 0x00639630 sub_639630 0x00639630-0x00639694
+// symbol    ?vox_release_record@@YAXPAUVoxRenderRecord@@@Z
+// size      100 bytes
+// prototype void (__cdecl sub_639630)(int param_1)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// indirect  0x0063963D 0x0063964E 0x0063965F 0x00639670 0x0063967A
+//
+// HOMED 2026-09-05: the record it tears down is the one VoxRenderRecord
+// models and its only caller is Caviar::close_class, so its home is this file
+// beside them. Every release goes through the engine's free slot, the same
+// vox_free_slot binding caviar_free_record walks.
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl vox_release_record(VoxRenderRecord *record) {
+    if (record->colour_table_ != 0) {
+        vox_free_slot((unsigned long)record->colour_table_);
+    }
+    if (record->shadow_table_ != 0) {
+        vox_free_slot((unsigned long)record->shadow_table_);
+    }
+    if (record->ramp_a_ptr_ != 0) {
+        vox_free_slot((unsigned long)record->ramp_a_ptr_);
+    }
+    if (record->ramp_b_ptr_ != 0) {
+        vox_free_slot((unsigned long)record->ramp_b_ptr_);
+    }
+    vox_free_slot((unsigned long)record);
+    if (vox_record_count != 0) {
+        --vox_record_count;
+    }
+}
+
+/*
+Purpose: Tear the scene down: close the two scene surfaces, release the shared
+         scene memory, empty the render record's state and release the record,
+         then run the engine's own shutdown hook.
+// ORIGINAL: 0x00618D20 ?close_class@Caviar@@QAAXXZ 0x00618D20-0x00618D95 BYTE_EXACT
+// symbol    ?close_class@Caviar@@SAXXZ
+//           (the header declares this `static` - the same rule as
+//           init_class above, whose emitted name spells S against the
+//           image's QAA for the same reason: a __cdecl member takes no
+//           receiver, and a static member is how a call site with no
+//           receiver can spell it at all.)
+// size      117 bytes
+// prototype void (__thiscall ?close_class@Caviar@@QAAXXZ)(Caviar* this)
+// callers   2   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D7470 0x00639380 0x00639630 0x00644EF2
+//
+// HOMED 2026-09-05 from the pending_bodies forwarder, whose definition this
+// one replaces. Everything it touches is a real body here: Buffer::close for
+// the two scene surfaces, free for the shared scene memory, vox_release_record
+// for the record the scene's created_ slot points at. The engine's shutdown
+// hook at 0x00639380 is a nullsub - a function whose whole body is a `ret` -
+// so a local empty function stands in for it and the call keeps the shape.
+//
+// The three state fields it empties are reached through the record's own
+// +0x04 descriptor block, not through CaviarScene directly: that block is
+// CaviarScene itself, but the image re-reads the record's pointer for each of
+// the three stores, so the body spells the same path.
+Return Value: n/a
+Status: Complete
+*/
+void Caviar::close_class() {
+    if (CaviarScene.created_ != 0) {
+        CaviarSceneBufferA.close();
+        CaviarSceneBufferB.close();
+        if (CaviarSceneMemory != 0) {
+            free(CaviarSceneMemory);
+            CaviarSceneMemory = 0;
+        }
+        ((uint32_t *)CaviarScene.created_->setup_block_)[0] = 0;
+        ((uint32_t *)CaviarScene.created_->setup_block_)[1] = 0;
+        ((uint32_t *)CaviarScene.created_->setup_block_)[2] = 0;
+        vox_release_record(CaviarScene.created_);
+        CaviarScene.created_ = 0;
+    }
+    vox_engine_close();
+}
+
+// 0x00639E60, the engine's scene draw, is not recovered yet. UNK1 hands it the
+// render record, the viewport state and the camera, and nothing else in this
+// file reaches it, so a file-local stand-in keeps the call a `call rel32`
+// without a pending_bodies entry.
+OPENSMACX_NOINLINE
+void __cdecl vox_draw_scene(void *record, void *viewport, void *camera,
+                            int flags) {
+    typedef void(__cdecl *pending)(void *, void *, void *, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x00639E60))(
+        record, viewport, camera, flags);
+}
+
+/*
+Purpose: Draw the scene. Resets the six channel bounds to their defaults,
+         records the Buffer, the instance count and the draw's flags, hands the
+         render record, the viewport state and the camera to the engine's draw
+         with this renderer published as the callback's object, then unions the
+         clip rectangle the draw produced into the viewport and clears the
+         buffers the caller asks for.
+// ORIGINAL: 0x00617080 ?UNK1@Caviar@@QAEHHH@Z 0x00617080-0x0061719E
+// symbol    ?render_scene@Caviar@@QAEHPAVBuffer@@H@Z
+//           (renamed from the catalogue's UNK1: the body is the renderer's
+//           own top-level draw. The catalogued first argument is `int`, but it
+//           is stored into the same slot set_buffer writes a Buffer* to, so
+//           the declaration says Buffer* and the emitted name carries PAV.)
+// size      286 bytes
+// prototype int (__thiscall ?UNK1@Caviar@@QAEHHH@Z)(Caviar* this, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00618470 0x00639E60
+//
+// The catalogue's second argument is the draw's flags: bit 0 is passed on to
+// clear_buffers, bit 1 says the colour table the draw filled is not to be
+// kept - which is why it lands in field_A4_, the byte init seeds with 1.
+Return Value: 0, 7 when the renderer is switched off (field_4_'s bit 0 is
+              clear), 0x10 on a null Buffer, and nothing further is drawn when
+              no instance has been added.
+Status: Complete
+*/
+int Caviar::render_scene(Buffer *buffer, int flags) {
+    if ((field_4_ & 1) == 0) {
+        return 7;
+    }
+    if (buffer == 0) {
+        return 0x10;
+    }
+    if (field_13CC_ == 0) {
+        return 0;
+    }
+    field_D9_.values_[0] = 0;
+    field_D9_.values_[1] = 0;
+    field_D9_.values_[2] = 0xff;
+    field_D9_.values_[3] = 0xff;
+    field_D9_.values_[4] = 0x100;
+    field_D9_.values_[5] = 0x100;
+    buffer_ = buffer;
+    field_1C_ = field_13CC_;
+    field_20_ = 1;
+    field_7C_ = 0;
+    field_80_ = 0;
+    field_84_ = 0;
+    field_A4_ = (flags & 2) != 0 ? 0 : 1;
+    CaviarScene.renderer_ = this;
+    vox_draw_scene(CaviarScene.created_, &field_18_, &camera_, 0);
+    CaviarScene.renderer_ = 0;
+    RECT drawn;
+    drawn.left = CaviarScene.created_->clip_max_a_x_;
+    drawn.top = CaviarScene.created_->clip_max_a_y_;
+    drawn.right = CaviarScene.created_->clip_min_a_x_ + 1;
+    drawn.bottom = CaviarScene.created_->clip_min_a_y_ + 1;
+    UnionRect(reinterpret_cast<RECT *>(&CaviarViewportState), &drawn,
+              reinterpret_cast<RECT *>(&CaviarViewportState));
+    clear_buffers(flags & 1);
+    return 0;
+}
+
+// 0x0063A6F0, the engine's camera transform, is not recovered yet - 729 bytes
+// that belong with the rest of the 0x63xxxx engine family. render hands it the
+// viewport state, a flag word and two vector outputs, so a file-local stand-in
+// keeps that call a `call rel32` without a pending_bodies entry.
+OPENSMACX_NOINLINE
+void __cdecl vox_transform_camera(void *viewport, int flags, void *position,
+                                  void *extent) {
+    typedef void(__cdecl *pending)(void *, int, void *, void *);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x0063A6F0))(
+        viewport, flags, position, extent);
+}
+
+/*
+Purpose: The renderer's own draw. Rejects a draw with the renderer switched
+         off or no instances, doubles the camera scaling when bit 5 asks for
+         it, resets the channel bounds, clips the 0x100-deep box the caller
+         centred on the scene surface, hands the rectangle to the render
+         record, transforms the camera position by the scene rotation, draws
+         through the engine, unions what was covered into the viewport and the
+         scene rectangle, blits the colour table the draw filled, and clears.
+// ORIGINAL: 0x00617230 ?render@Caviar@@QAEHPAUBuffer@@HHH@Z 0x00617230-0x00617620
+// symbol    ?render@Caviar@@QAEHPAVBuffer@@HHH@Z
+// size      1008 bytes
+// prototype int (__thiscall ?render@Caviar@@QAEHPAUBuffer@@HHH@Z)(Caviar* this, Buffer*, int, int, int)
+// callers   2   call targets   7
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0063A6F0 0x00639E60 0x005D8EE0 0x005E34A3 0x005D84C0 0x00618470
+Return Value: 0, 7 when the renderer is off or the Buffer is null, and 0 when
+              there is nothing to draw.
+Status: Complete
+*/
+int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
+    if ((field_4_ & 1) == 0) {
+        return 7;
+    }
+    if (buffer == 0) {
+        return 7;
+    }
+    if (field_13CC_ == 0) {
+        return 0;
+    }
+    if (field_4_ & 0x20) {
+        camera_.scaling = camera_.scaling + camera_.scaling;
+    }
+
+    field_1C_ = (uint32_t)buffer;
+    field_D9_.values_[0] = 0;
+    field_D9_.values_[1] = 0;
+    field_D9_.values_[2] = 0xff;
+    field_D9_.values_[3] = 0xff;
+    field_D9_.values_[4] = 0x100;
+    field_D9_.values_[5] = 0x100;
+    buffer_ = buffer;
+    field_20_ = 1;
+    field_A4_ = (flags & 2) != 0 ? 0 : 1;
+
+    int left = centre_x - 0x80;
+    int top = centre_y - 0x80;
+    RECT area;
+    area.left = left;
+    area.top = top;
+    area.right = centre_x + 0x80;
+    area.bottom = centre_y + 0x80;
+    IntersectRect(&area, &area, &buffer->rect1_);
+    area.left += 0x80 - centre_x;
+    area.right += 0x80 - centre_x;
+    area.top += 0x80 - centre_y;
+    area.bottom += 0x80 - centre_y;
+
+    // The engine draws in scene coordinates and reports back what it covered,
+    // so the rectangle goes across in the scene's own frame and the extent
+    // follows from it.
+    VoxRenderRecord *record = CaviarScene.created_;
+    record->draw_left_ = area.left;
+    record->draw_top_ = area.top;
+    record->draw_right_ = area.right;
+    record->draw_bottom_ = area.bottom;
+    record->draw_width_ = area.right - area.left;
+    record->draw_height_ = area.bottom - area.top;
+
+    if (flags & 4) {
+        VOX_Matrix saved = rotation_;
+        VOX_Vect position;
+        VOX_Vect extent;
+        vox_transform_camera(&field_18_, (flags & 0x10) != 0 ? flags : 0,
+                             &position, &extent);
+        position.values[0] = (extent.values[0] + position.values[0]) * 0.5f;
+        rotation_ = saved;
+        position.values[1] = (extent.values[1] + position.values[1]) * 0.5f;
+        position.values[2] = (extent.values[2] + position.values[2]) * 0.5f;
+        field_2C_ -= position.values[0];
+        field_30_ -= position.values[1];
+        field_34_ -= position.values[2];
+    }
+
+    CaviarScene.renderer_ = this;
+    vox_draw_scene(CaviarScene.created_, &field_18_, &camera_, 0);
+    CaviarScene.renderer_ = 0;
+
+    RECT covered;
+    covered.left = record->clip_max_a_x_;
+    covered.top = record->clip_max_a_y_;
+    covered.right = record->clip_min_a_x_ + 1;
+    covered.bottom = record->clip_min_a_y_ + 1;
+    UnionRect(reinterpret_cast<RECT *>(&CaviarViewportState), &covered,
+              reinterpret_cast<RECT *>(&CaviarViewportState));
+
+    if (field_A4_ != 0) {
+        RECT scene;
+        scene.left = record->clip_max_b_x_;
+        scene.top = record->clip_max_b_y_;
+        scene.right = record->clip_min_b_x_ + 1;
+        scene.bottom = record->clip_min_b_y_ + 1;
+        UnionRect(reinterpret_cast<RECT *>(&CaviarScene.field_00_), &scene,
+                  reinterpret_cast<RECT *>(&CaviarScene.field_00_));
+        if (field_A4_ != 0) {
+            unsigned char *colour = static_cast<unsigned char *>(record->colour_table_);
+            int mode;
+            int origin_x;
+            int origin_y;
+            if (field_4_ & 0x20) {
+                mode = 2;
+                origin_x = centre_x - 0x40;
+                origin_y = centre_y - 0x40;
+            } else {
+                mode = 1;
+                origin_x = left;
+                origin_y = top;
+            }
+            CaviarSceneBufferB.draw_dest_source(buffer, 0, origin_x, origin_y,
+                                                1, mode, colour);
+        }
+    }
+
+    buffer->free_data(1);
+
+    if ((flags & 8) == 0) {
+        int mode;
+        int origin_x;
+        int origin_y;
+        if (field_4_ & 0x20) {
+            mode = 2;
+            origin_x = centre_x - 0x40;
+            origin_y = centre_y - 0x40;
+        } else {
+            mode = 1;
+            origin_x = left;
+            origin_y = top;
+        }
+        CaviarSceneBufferA.draw(buffer, 9, origin_x, origin_y, 1, mode);
+        buffer->free_data(1);
+        clear_buffers(flags & 1);
+    }
+
+    return 0;
+}
+
+/*
 Purpose: Read a single 4-byte field at offset +8 of the caller's block: the
          CVR loader's fixed-size header reader, vox_read_exact wrapped for one
          dword.
@@ -2540,7 +3445,7 @@ int CaviarData::init(char *name) {
         return 6;
     }
     int record = vox_load_record(fd);
-    record_ = (void *)(unsigned long)record;
+    record_ = (CvrRecord *)(unsigned long)record;
     if (record == 0) {
         return 0x17;
     }
@@ -2549,6 +3454,59 @@ int CaviarData::init(char *name) {
         fileDescriptor_ = 0;
     }
     return 0;
+}
+
+/*
+Purpose: The engine's per-object callback. Fills 0x1800 bytes of the handle's
+         colour table from wherever field_4_'s bits say the next draw reads:
+         the shared monochrome source when bit 3 is on, the table the caller
+         of render_with_colour_table handed over when bit 4 is on, otherwise
+         this renderer's own entry for the instance the engine names.
+// ORIGINAL: 0x00618DA0 ?object_start@Caviar@@QAAXPAUVOX_ScnRenderHnd@@JPAUVOX_Vect@@PAUVOX_Matrix@@PAUVOX_Rect@@PAUVOX_Vect@@@Z 0x00618DA0-0x00618E06 SEMANTIC
+// symbol    ?object_start@Caviar@@QAAXPAUVOX_ScnRenderHnd@@JPAUVOX_Vect@@PAUVOX_Matrix@@PAUVOX_Rect@@1@Z
+//           (VC6 back-references the sixth argument - the same VOX_Vect as
+//           the third - to `1`; the catalogued name spells it out in full.)
+// size      102 bytes
+// prototype void (__thiscall ?object_start@Caviar@@QAAXPAUVOX_ScnRenderHnd@@JPAUVOX_Vect@@PAUVOX_Matrix@@PAUVOX_Rect@@PAUVOX_Vect@@@Z)(Caviar* this, VOX_ScnRenderHnd*, long, VOX_Vect*, VOX_Matrix*, VOX_Rect*, VOX_Vect*)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00645930
+//
+// init_class stores this function's address into the render record's slot at
+// +0x58, so the engine calls it as a plain function and the receiver the
+// __cdecl member name implies is never set up: the body's first instruction
+// loads the renderer from CaviarScene's own slot at 0x9BB470 instead. The
+// third and later arguments are the engine's callback protocol and the body
+// reads none of them.
+//
+// PLACED AFTER set_shadow_table so this file's `#pragma function(memcpy)`
+// reaches it: the image CALLS memcpy here (0x00645930), and /Oi would expand
+// a 0x1800-byte copy inline.
+//
+// NAMED 2026-09-05: the four unread arguments take the roles their types
+// carry in the engine's per-object packet; none of them reaches the table.
+//
+// UNK1 note: the residual on 0x00617080 is register naming only - the image
+// saves esi for `this` and edi for its zero register, this tree saves ebp and
+// esi, so the same 86 instructions disagree on operand spellings throughout
+// and `osmx semantic` refuses at instruction 2 (`mov` against `push`). No
+// source spelling moved it: dropping the record local changed nothing.
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl Caviar::object_start(VOX_ScnRenderHnd *handle, long step,
+                                  VOX_Vect *position, VOX_Matrix *orientation,
+                                  VOX_Rect *bounds, VOX_Vect *direction) {
+    Caviar &self = *CaviarScene.renderer_;
+    if (self.field_4_ & 8) {
+        memcpy(handle->colour_table_, CaviarColourSource, 0x1800);
+    } else if (self.field_4_ & 0x10) {
+        memcpy(handle->colour_table_, (void *)CaviarScene.render_argument_,
+               0x1800);
+    } else {
+        memcpy(handle->colour_table_, (void *)self.instance_ids_[step], 0x1800);
+    }
 }
 
 /*
@@ -2637,4 +3595,169 @@ void Caviar::set_shadow_vector(float elevation, float azimuth) {
     field_74_ = cos_elevation;
     field_6C_ = cos_azimuth * sin_elevation;
     field_70_ = sin_azimuth * sin_elevation;
+}
+
+// 0x00628220, the engine's vector normaliser, is not recovered yet - it is a
+// Vector-family body (its neighbours are vector_add and the Vector methods)
+// and belongs in vector.cpp when it is. Caviar::init normalises the scene's
+// down vector with it, so a file-local stand-in keeps that call a `call rel32`
+// without a pending_bodies entry.
+OPENSMACX_NOINLINE
+void __cdecl vox_normalise_vector(void *vector, void *out) {
+    typedef void(__cdecl *pending)(void *, void *);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x00628220))(vector,
+                                                                      out);
+}
+
+/*
+Purpose: Build the renderer's per-instance table and seed the scene state.
+         Allocates the three destinations each of the 200 instances draws
+         through - one colour byte, one vector, one matrix - seeds the
+         rotation, the clipping defaults and the channel bounds, and marks the
+         renderer switched on.
+// ORIGINAL: 0x00616DE0 ?init@Caviar@@QAEXXZ 0x00616DE0-0x00617013
+// symbol    ?init@Caviar@@QAEXXZ
+// size      563 bytes
+// prototype void (__thiscall ?init@Caviar@@QAEXXZ)(Caviar* this)
+// callers   7   call targets   5
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x00617020 0x00628220 0x006463E4 0x00646494
+//
+// The three allocations per instance are what name the CaviarData union's
+// second view: 1 byte, 0xC bytes and 0x24 bytes are exactly a colour byte, a
+// VOX_Vect and a VOX_Matrix, and they land in the same three dwords the .cvr
+// loader fills with the engine's own handles.
+//
+// PLACED LAST so the file's `#pragma function(cos)` reaches it: the image
+// CALLS sin and cos here, and /Oi would compile cos to the FPU's own `fcos`.
+//
+// LEVER: the seven float seeds are typed float, not uint32_t with a memcpy -
+// this file's `#pragma function(memcpy)` (which set_shadow_table needs) turns
+// every 4-byte memcpy in init into a call, and 254 compiled instructions
+// against the image's 151 was that, not the body. With the fields typed for
+// what they hold the stores fold back to immediates, and the down vector at
+// +0x60 reads back out as the shadow direction with two dword moves, which is
+// what the image does too.
+//
+// TRIED: the residual is store ORDER. The image copies the normalised down
+// vector into +0x6c/+0x70 before it zeroes +0x40..+0x54 and the rotation's
+// off-diagonal elements; this tree schedules that copy last. Same stores,
+// same values, 143 against 151 instructions.
+Return Value: n/a
+Status: Complete
+*/
+void Caviar::init() {
+    close();
+
+    for (int index = 0; index < 200; ++index) {
+        CaviarData &instance = slots_[index];
+        instance.instance_colour_ = static_cast<uint8_t *>(mem_get(1));
+        if (instance.instance_colour_ == 0) {
+            close();
+            return;
+        }
+        instance.instance_vector_ =
+            static_cast<VOX_Vect *>(mem_get(0xC));
+        if (instance.instance_vector_ == 0) {
+            close();
+            return;
+        }
+        instance.instance_matrix_ =
+            static_cast<VOX_Matrix *>(mem_get(0x24));
+        if (instance.instance_matrix_ == 0) {
+            close();
+            return;
+        }
+    }
+
+    field_13CC_ = 0;
+    field_108_ = 0x42C80000;
+
+    float sin_elevation = (float)sin(1.0);
+    float sin_zero = (float)sin(0.0);
+    float cos_elevation = (float)cos(1.0);
+    float cos_azimuth = (float)cos(0.0);
+
+    field_6C_ = cos_azimuth * sin_elevation;
+    field_70_ = sin_zero * sin_elevation;
+    field_74_ = cos_elevation;
+
+    field_2C_ = 0.0f;
+    field_30_ = 0.0f;
+    field_34_ = 0.0f;
+
+    const uint32_t negative_distance_limit = 0xC77FFF00;
+    const uint32_t positive_distance_limit = 0x477FFF00;
+    field_5C_ = 1.0f;
+
+    camera_.scaling = 1.0f;
+
+    field_D9_.lead_[3] = 0;
+    field_D9_.lead_[4] = positive_distance_limit;
+
+    field_D9_.values_[0] = 0;
+    field_D9_.values_[1] = 0;
+    field_D9_.values_[2] = 0xff;
+    field_D9_.values_[3] = 0xff;
+    field_D9_.values_[4] = 0x100;
+    field_D9_.values_[5] = 0x100;
+
+    field_7C_ = 0;
+    field_80_ = 0;
+    field_84_ = 0;
+    field_88_ = 0;
+    field_8C_ = 0;
+    field_90_ = 1.0f;
+    field_94_ = 0;
+    field_98_ = 0;
+    field_9C_ = 1.0f;
+    field_A0_ = 1.0f;
+
+    field_D9_.lead_[0] = 0;
+    field_D9_.lead_[1] = negative_distance_limit;
+    field_D9_.lead_[2] = positive_distance_limit;
+
+    field_1C_ = 0;
+    field_24_ = (uint32_t)&slots_[0];
+    field_20_ = 0;
+    field_28_ = (uint32_t)&instance_steps_[0];
+
+    field_60_ = 0;
+    field_64_ = 0;
+    field_68_ = -1.0f;
+
+    vox_normalise_vector(&field_60_, &field_60_);
+
+    // The normalised down vector is the light: its x and y are the shadow
+    // direction's in-plane pair and its z is the elevation term
+    // set_shadow_vector writes over.
+    field_6C_ = field_60_;
+    field_70_ = field_64_;
+
+    rotation_.values[0][0] = 1.0f;
+    rotation_.values[0][1] = 0;
+    rotation_.values[0][2] = 0;
+    rotation_.values[1][0] = 0;
+    rotation_.values[1][1] = 1.0f;
+    rotation_.values[1][2] = 0;
+    rotation_.values[2][0] = 0;
+    rotation_.values[2][1] = 0;
+    rotation_.values[2][2] = 1.0f;
+    field_78_ = 0;
+
+    camera_.rotation.values[0][0] = 1.0f;
+    camera_.rotation.values[1][1] = 1.0f;
+    camera_.rotation.values[2][2] = 1.0f;
+    camera_.rotation.values[0][1] = 0;
+    camera_.rotation.values[0][2] = 0;
+    camera_.rotation.values[1][0] = 0;
+    camera_.rotation.values[1][2] = 0;
+    camera_.rotation.values[2][0] = 0;
+    camera_.rotation.values[2][1] = 0;
+
+
+    field_A4_ = 1;
+    field_74_ = field_68_;
+    field_4_ |= 1;
 }

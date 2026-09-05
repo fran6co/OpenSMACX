@@ -340,16 +340,8 @@ int __cdecl vox_load_record(int fd) {
     return PENDING_BODY(0x006381F0, pending)(fd);
 }
 
-// ?render@Caviar@@QAEHPAUBuffer@@HHH@Z at 0x00617230 - the voxel renderer's
-// draw. Its own body is still a transcription in the archive (unclaimed), so
-// this forwarder stands in for it and caviar.h declares the member; Caviar's
-// UNK2 (now homed BYTE_EXACT) is its one caller.
-int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
-    typedef int(__fastcall *pending)(Caviar *, void *, Buffer *, int, int,
-                                     int);
-    return PENDING_BODY(0x00617230, pending)(this, nullptr, buffer, centre_x,
-                                             centre_y, flags);
-}
+// ?render@Caviar@@QAEHPAUBuffer@@HHH@Z at 0x00617230 is HOMED into
+// src/caviar.cpp (2026-09-05, caviar class pass), so this forwarder is gone.
 
 // sub_6391f0 at 0x006391F0 - the CVR palette expander: an old-format
 // 0x1020000 chunk is read through this instead of straight into the buffer,
@@ -1436,11 +1428,24 @@ void __cdecl basepop_close_class() {
 // and 0x0063F9B0 sub_63f9b0 are all defined at the foot of src/caviar.cpp
 // beside their callers, so their forwarders are gone as well.
 
-// ?close_class@Caviar@@QAAXXZ at 0x00618D20
-//             body in src/recovered/units/00618d20.cpp
-void Caviar::close_class() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x00618D20, pending)();
+// ?close_class@Caviar@@QAAXXZ at 0x00618D20 is HOMED into src/caviar.cpp
+// (2026-09-05, caviar class pass), so this forwarder is gone - the linker
+// enforces that.
+
+// 0x005D8EE0, the seven-argument Buffer::draw_dest_source. Caviar::render
+// (homed into src/caviar.cpp the same day) is its first caller in this tree,
+// so this stand-in exists for the link; the body in src/unrecovered/005d8ee0.cpp
+// is still the only transcription of it. HANDOFF: whoever homes 0x005D8EE0
+// deletes this forwarder with it.
+int Buffer::draw_dest_source(Buffer *source, int colour, int x, int y, int flag,
+                             int mode, unsigned char *bits) {
+    // __fastcall with a dead second argument is the __thiscall spelling this
+    // file uses throughout: the receiver lands in ECX and the seven real
+    // arguments on the stack, exactly where the image's call site puts them.
+    typedef int(__fastcall *pending)(Buffer *, void *, Buffer *, int, int, int,
+                                     int, int, unsigned char *);
+    return PENDING_BODY(0x005D8EE0, pending)(this, nullptr, source, colour, x,
+                                             y, flag, mode, bits);
 }
 
 // ---------------------------------------------------------------------------

@@ -36,13 +36,66 @@ struct CaviarCamera {
 // `Caviar`, so the block that carries it must have alignment 1 too.
 #pragma pack(push, 1)
 struct CaviarChannelBounds {
-  uint8_t lead_[0x14];   // 0xD9
-  int32_t values_[6];    // 0xED
+  // 0xD9..0xEC, five engine limits init seeds: 0, 0xc77fff00, 0x477fff00, 0,
+  // 0x477fff00 - the outer pair is a float -1e38/+1e38-style clip range.
+  uint32_t lead_[5];     // 0xD9
+  int32_t values_[6];    // 0xED, the six channel bounds init, set_buffer and
+                         // render_scene all reset to {0,0,0xff,0xff,0x100,0x100}
   uint8_t tail_[3];      // 0x105
 };
 #pragma pack(pop)
 
-class CaviarData {
+// ---------------------------------------------------------------------------
+// THE CVR RECORD - the in-memory form one .cvr file loads to. Everything the
+// add_object family reads comes out of one of these, and the offsets below are
+// read off those bodies' own loads (0x006176E0..0x00618080) and confirmed by
+// caviar_free_record (0x00638430), which releases exactly these arrays:
+//
+//   +0x20  step_count_   the rotation count every instance index is taken
+//                        modulo - `a % record->step_count_`
+//   +0x24  part_count_   the length of the three per-part arrays below
+//   +0x28  slots_        an array of part_count_ dwords, each freed
+//   +0x2C  steps_        an array of part_count_ 8-byte entries
+//   +0x30  parts_        an array of part_count_ CvrPart, all three pointers
+//                      of every entry freed
+//   +0x34  shadows_      an array of part_count_ 12-byte entries, +4 and +8
+//                      of each freed
+//
+// A part is three PARALLEL ARRAYS, one entry per rotation step: the colour
+// bytes, the geometry vectors and the matrices. add_object indexes all three
+// with the same step, 1 / 12 / 36 bytes at a time.
+// ---------------------------------------------------------------------------
+struct CvrPart {
+  uint8_t *colours_;     // +0x00, one byte per step
+  VOX_Vect *vectors_;    // +0x04, one 12-byte vector per step
+  VOX_Matrix *matrices_; // +0x08, one 36-byte matrix per step
+};
+
+struct CvrStep {
+  uint32_t lead_;        // +0x00
+  uint32_t trail_;       // +0x04
+};
+
+struct CaviarData;
+struct VOX_ScnRenderHnd;
+struct VOX_Rect;
+
+struct CvrRecord {
+  uint8_t lead_[0x14];   // +0x00, five engine handles the loader fills
+  uint32_t id_;          // +0x14, stored on as `id_ + 0x302` per instance
+  uint8_t mid_[0x8];     // +0x18
+  // BOTH SIGNED, and the division proves it: every add_object takes the step
+  // modulo +0x20 with `idiv` (`cdq` before it), and tests +0x24 with
+  // `test esi, esi / jle`. Unsigned members would give `div` and `jbe`.
+  int32_t step_count_;   // +0x20
+  int32_t part_count_;   // +0x24
+  uint32_t *slot_table_; // +0x28
+  CvrStep *steps_;       // +0x2C
+  CvrPart *parts_;       // +0x30
+  uint8_t *shadows_;     // +0x34
+};
+
+struct CaviarData {
  public:
   // IN-CLASS and `MEASURED`, not out-of-line in caviar.cpp: `Caviar::Caviar()`
   // has to be able to FOLD this into its 200-element array-construction loop,
@@ -62,9 +115,27 @@ class CaviarData {
   // so modelling the first two as `uint32_t` said less than the image does.
   // `CaviarData::close` still only releases `record_`, through the helper;
   // the two teardowns are genuinely different and both are in the image.
-  void *field_0_;
-  void *fileDescriptor_;
-  void *record_;   // 0x8, the renderer record close releases
+  //
+  // TWO ROLES FOR THE SAME 12 BYTES, and the allocations prove both. While a
+  // .cvr definition is loaded the slot holds the loader's three handles, the
+  // third being the renderer record `close` releases. Once `add_object` has
+  // instantiated that definition into the renderer's instance table the same
+  // three dwords hold the per-instance DESTINATIONS a draw writes through:
+  // `Caviar::init` allocates 1 byte, 0xC bytes and 0x24 bytes per instance
+  // and stores the three answers here, which is a colour byte, a VOX_Vect and
+  // a VOX_Matrix.
+  union {
+    struct {
+      void *field_0_;         // +0x0
+      void *fileDescriptor_;  // +0x4
+      CvrRecord *record_;     // +0x8, the renderer record close releases
+    };
+    struct {
+      uint8_t *instance_colour_;    // +0x0
+      VOX_Vect *instance_vector_;   // +0x4
+      VOX_Matrix *instance_matrix_; // +0x8
+    };
+  };
 
   // The renderer owns these slots and tears them down in bulk.
   friend class Caviar;
@@ -73,8 +144,12 @@ class CaviarData {
 class Caviar {
  public:
   void close();   // 0x00617020
-  void UNK11(int *out1, int *out2, int *out3);
+  void UNK11(float *out1, float *out2, float *out3);
   Caviar();
+  // 0x00616DE0. Builds the 200-instance table and seeds the scene state: the
+  // three allocations per instance, the rotation, the clipping defaults and
+  // the channel bounds, then switches the renderer on.
+  void init();
   // No `??1Caviar@@...` is catalogued anywhere in the image; every embedding
   // class's own teardown (StatusWin::~StatusWin, and the still-forwarded
   // BaseWin/DesignWin/ProdPicker destructors) reaches Caviar through
@@ -114,7 +189,44 @@ class Caviar {
   // the 0x100-deep box it builds (its own body subtracts 0x80 from each) and
   // flags is its bit mask.
   int render(Buffer *buffer, int centre_x, int centre_y, int flags);
+  // 0x00617920..0x00618080. The eight add_object overloads append the parts of
+  // one .cvr definition to the renderer's instance table: each part's three
+  // arrays are indexed with the caller's step, the geometry is accumulated
+  // into the instance's own vector and matrix, and the instance's id and step
+  // entry are copied out of the record. Every one returns 0, 1 when the table
+  // is full (200), 7 when a definition carries no record, or 0x10 on a null
+  // argument.
+  int add_object(CaviarData *definition, VOX_Vect *offset, int step);
+  int add_object(CaviarData *definition, CaviarData *geometry,
+                 VOX_Vect *offset, int step);
+  int add_object(CaviarData *definition, uint8_t *object,
+                 CaviarData *geometry, VOX_Vect *offset, int step);
+  int add_object(CaviarData *definition, uint8_t *object, VOX_Vect *offset,
+                 int step);
+  int add_object(CaviarData *definition, CaviarData *geometry, int step);
+  int add_object(CaviarData *definition, uint8_t *object,
+                 CaviarData *geometry, int step);
+  int add_object(CaviarData *definition, int step);
+  int add_object(CaviarData *definition, uint8_t *object, int step);
   int UNK3(int a, int b, int c);
+  // 0x00617620. Renders with the engine's monochrome table: fills the shared
+  // 0x1800-byte colour source with one byte repeated, raises field_4_'s bit 3
+  // - the "read the colour from the shared source" bit - draws, and drops it.
+  // colour is truncated to a byte, the same table index render's own output
+  // goes through.
+  // 0x00617080, the catalogue's UNK1 and the renderer's own top-level draw:
+  // reset the channel bounds, hand the record and the camera to the engine,
+  // union the clip rectangle the draw produced into the viewport, clear.
+  int render_scene(Buffer *buffer, int flags);
+  // 0x00618470. Clears the two scene surfaces and, when the argument is zero,
+  // the viewport's slice of the shared colour table.
+  void clear_buffers(int fill);
+  // 0x006171A0. Renders and blits the result into surface A as a multi-table
+  // destination; the bits pointer is the blit's source table.
+  void render_multi_table_dest(Buffer *buffer, int centre_x, int centre_y,
+                               int fill, unsigned char *bits, int flags);
+  void render_mono(Buffer *buffer, int centre_x, int centre_y, int colour,
+                   int flags);
   int UNK4(int a1, int a2, int a3, int a4);
   void UNK5(int a1, int a2);
   void UNK6(int a1, int a2);
@@ -122,8 +234,23 @@ class Caviar {
   void UNK9(int a1, int a2, int a3);
   void UNK12(int a1, int a2, int a3);
   void UNK8(int menu_id);
-  void UNK10(int a1, int a2, int a3);
+  void UNK10(float offset_x, float offset_y, float offset_z);
   void set_scene_rotation(float x, float y, float z);
+  // 0x00618DA0. The engine's per-object callback: fills the handle's colour
+  // table with 0x1800 bytes chosen by field_4_'s bits - the shared monochrome
+  // source when bit 3 is on, the caller's table when bit 4 is on, otherwise
+  // the instance table's own entry for the step.
+  // `__cdecl` MEMBER, because the image's own name spells `QAA`: a member
+  // declared __cdecl takes no receiver, which is what lets init_class store
+  // its address as the engine's per-object callback. The five engine
+  // arguments are the callback's protocol and the body reads two of them.
+  // The last four arguments are the engine's callback protocol - position,
+  // orientation, bounds, direction, the packet the engine's other per-object
+  // callbacks take - and this body reads none of them; only the handle and
+  // the step reach the colour table.
+  void __cdecl object_start(VOX_ScnRenderHnd *handle, long step,
+                            VOX_Vect *position, VOX_Matrix *orientation,
+                            VOX_Rect *bounds, VOX_Vect *direction);
   // 0x006181D0. The shadow direction as two angles: the three floats it
   // writes are the rotation's second column.
   void set_shadow_vector(float elevation, float azimuth);
@@ -170,22 +297,17 @@ class Caviar {
   uint32_t field_20_;  // 0x20
   uint32_t field_24_;  // 0x24
   uint32_t field_28_;  // 0x28
-  int32_t field_2C_;
-  int32_t field_30_;
-  int32_t field_34_;
-  uint32_t field_38_;  // 0x38
-  uint32_t field_3C_;  // 0x3C
-  uint32_t field_40_;  // 0x40
-  uint32_t field_44_;  // 0x44
-  uint32_t field_48_;  // 0x48
-  uint32_t field_4C_;  // 0x4C
-  uint32_t field_50_;  // 0x50
-  uint32_t field_54_;  // 0x54
-  uint32_t field_58_;  // 0x58
-  uint32_t field_5C_;  // 0x5C
-  uint32_t field_60_;  // 0x60
-  uint32_t field_64_;  // 0x64
-  uint32_t field_68_;  // 0x68
+  float field_2C_;     // 0x2C, the scene offset render adjusts
+  float field_30_;     // 0x30
+  float field_34_;     // 0x34
+  // 0x38, the engine's 3x3 scene rotation, seeded to the identity and filled
+  // by caviar_apply_rotation; render saves and restores it around the
+  // engine's own transform of the camera position.
+  VOX_Matrix rotation_;  // 0x38
+  float field_5C_;     // 0x5C, seeded 1.0f
+  float field_60_;     // 0x60, the scene's down vector, seeded {0, 0, -1}
+  float field_64_;     // 0x64
+  float field_68_;     // 0x68
   float field_6C_;  // 0x6C
   float field_70_;  // 0x70
   // 0x74. A float: set_shadow_vector stores cos() into it and Caviar::init
@@ -198,11 +320,11 @@ class Caviar {
   uint32_t field_84_;  // 0x84
   uint32_t field_88_;  // 0x88
   uint32_t field_8C_;  // 0x8C
-  uint32_t field_90_;  // 0x90
+  float field_90_;     // 0x90, seeded 1.0f
   uint32_t field_94_;  // 0x94
   uint32_t field_98_;  // 0x98
-  uint32_t field_9C_;  // 0x9C
-  uint32_t field_A0_;  // 0xA0
+  float field_9C_;     // 0x9C, seeded 1.0f
+  float field_A0_;     // 0xA0, seeded 1.0f
   uint8_t field_A4_;  // 0xA4
   // NAMED THROUGH A PACKED STRUCT, because 0xA5 is not 4-aligned. The
   // arithmetic is exact: `set_camera_direct` memcpys a `VOX_Vect` to 0xA5 and
@@ -221,7 +343,10 @@ class Caviar {
   // same values - kept as an array because no body names an individual one.
   CaviarChannelBounds field_D9_;  // 0xD9, 0x2F bytes
   int32_t field_108_;
-  uint8_t field_10C_[0x640];  // 0x10C
+  // THE STEP TABLE. Two dwords per drawn instance, copied out of the record's
+  // +0x2C entry the instance was built from; 0x10C + 200*8 is 0x74C, so it is
+  // exactly 200 long and 0x13CC is the count in use.
+  CvrStep instance_steps_[200];  // 0x10C
   // THE OBJECT-DATA ARRAY. The image does NOT memset it - it runs a 200-turn
   // loop writing three zero dwords per element, which is `CaviarData`'s own
   // constructor folded into the implicit array construction. Declaring the
@@ -231,7 +356,10 @@ class Caviar {
   // 0x10AC, and 0x960 + 0x320 is 0xC80, which is what the four fields this
   // replaces occupied (4 + 4 + 4 + 0xC74).
   CaviarData slots_[200];       // 0x74C
-  uint8_t field_10AC_[0x320];   // 0x10AC
+  // THE INSTANCE ID TABLE, in the order add_object appends to it: it stores
+  // `record->id_ + 0x302` per drawn instance. 0x10AC + 200*4 is 0x13CC, so it
+  // is exactly 200 long.
+  uint32_t instance_ids_[200];  // 0x10AC
   uint32_t field_13CC_;  // 0x13CC
 };
 
@@ -288,11 +416,16 @@ struct VoxRenderRecord {
     uint32_t clip_max_b_y_;    // 0x24  0x7fff
     uint32_t clip_min_b_x_;    // 0x28  0xffff8001
     uint32_t clip_min_b_y_;    // 0x2C  0xffff8001
-    uint32_t zero_b_[4];       // 0x30
-    int32_t width_minus_1_;    // 0x40
-    int32_t height_minus_1_;   // 0x44
-    uint32_t width_;           // 0x48 - width, or 0 when a side is negative
-    uint32_t height_;          // 0x4C
+    uint32_t zero_b_[2];       // 0x30
+    int32_t draw_left_;        // 0x38 - the draw rectangle's left and top,
+    int32_t draw_top_;         // 0x3C - both zero until the first draw
+    // 0x40..0x4C: the rectangle the last draw covered and its extent. Created
+    // as {0xff, 0xff, 0x100, 0x100} - a right/bottom one short of the extent,
+    // which is why the body that reads them adds one.
+    int32_t draw_right_;       // 0x40
+    int32_t draw_bottom_;      // 0x44
+    int32_t draw_width_;       // 0x48 - width, or 0 when a side is negative
+    int32_t draw_height_;      // 0x4C
     void *colour_table_;       // 0x50
     void *shadow_table_;       // 0x54
     uint32_t field_58_[2];     // 0x58 - init_class stores &object_start at +0x58
@@ -316,4 +449,16 @@ static_assert(sizeof(VoxRenderRecord) == 0x80,
 
 VoxRenderRecord *__cdecl vox_create_record(int a1, void *a2, void *a3, void *a4,
                                         int a5);
+
+// The scene render handle the engine hands back to the renderer's callbacks.
+// +0x50 is the colour table the next draw reads, which is what object_start
+// fills; the same 0x80-byte block is modelled as VoxRenderRecord just above,
+// where the same slot is colour_table_.
+struct VOX_ScnRenderHnd {
+  uint8_t lead_[0x50];     // +0x00
+  void *colour_table_;     // +0x50
+};
+
+static_assert(sizeof(VOX_ScnRenderHnd) == 0x54,
+              "the render handle must reach its colour table at +0x50");
 

@@ -517,22 +517,15 @@ SCAFFOLD_CEILINGS = {
     # and tech_pick (0x5BEB70) stand-ins, FILE-only targets, landmine-free;
     # tech_pick's a2/a3 left unnamed on purpose (0/-1 at every call site,
     # nothing names them).
-    # 257 -> 258 (2026-09-05, W5 basepop rehome): collected live. The raise is
-    # one forwarder - Buffer::write_strings (0x005DB040), the worker
-    # BasePop::on_redraw reaches; its target is FILE-only in the archive,
-    # landmine-free, and its parameters are now named left/top/width/height
-    # from the two recovered call sites.
-    # 258 -> 259 (2026-09-05, W5b basepop blocked queue): sprite_box_pos_to_id
-    # (0x00611640), which the homed on_redraw calls - spritebox.h has no
-    # pos_to_id declaration yet (HANDOFF on the marker; the declaration also
-    # clears this row).
-    # 259 -> 258 (2026-09-05, W5 map free-function wave, collected): the
-    # fixup_landmarks forwarder went with its body into src/map.cpp.
-    # 258 -> 258 (2026-09-05, W5c basepop closure, collected): composition
-    # changed, count did not - sprite_box_pos_to_id OUT (its body homed as
-    # the real SpriteBox::pos_to_id), ListBox::set_selected_pos IN (the
-    # sanctioned member forwarder, 0x0060A020, landmine-free).
-    "PENDING_BODY forwarders": 258,
+    # 257 -> 256 (2026-09-05, caviar class pass): Caviar::close_class homed
+    # into src/caviar.cpp, its forwarder deleted (linker-enforced); the
+    # Caviar::render forwarder went the same way, and one came in -
+    # Buffer::draw_dest_source (0x005D8EE0), the 7-arg overload render links
+    # against, FILE-only in the archive, landmine-free.
+    # 256 -> 257 (2026-09-05, collected across the parallel waves):
+    # write_strings (+, basepop), sprite_box_pos_to_id (+ then -, closure),
+    # set_selected_pos (+, closure), fixup_landmarks (-, map).
+    "PENDING_BODY forwarders": 257,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -631,17 +624,14 @@ SCAFFOLD_CEILINGS = {
     # fixed-address bindings are the tree's own names) and 005c3f70.cpp homed
     # beside it - the 0x009B22E8 redraw flag is named WorldClimateRedrawRequest
     # in map.cpp from the two measured sites that write and read it.
-    # 1031 -> 1029 (2026-09-05, W5 map free-function wave): 005927d0.cpp is
-    # gone from the archive (its body rewritten into src/map.cpp) and
-    # 00592940.cpp (fixup_landmarks) homed into src/map.cpp. Collected
-    # live with the basepop deletions below.
-    # 1026 -> 1019 (2026-09-05, W5 maininterface unlock chain): eight homed
-    # BYTE_EXACT - IfaceRegistryEntry::on_iface_selected/on_left_double_click,
-    # StatusWin::draw/reset_active/on_left_double_click, MainInterface::chat/
-    # set_message, say_orders.
-    # 1019 -> 1018 (2026-09-05, W5c basepop closure): 00611640.cpp went with
-    # SpriteBox::pos_to_id, homed as the real member on_redraw calls.
-    "artifact files (recovered/)": 1018,
+    # 1031 -> 1014 (2026-09-05, collected live across the parallel waves):
+    # map (-2: 005927d0, 00592940), maininterface (-7:
+    # on_iface_selected/on_left_double_click, StatusWin draw/reset_active/
+    # on_left_double_click, chat, say_orders), basepop closures (-1:
+    # 00611640), caviar (-4: 00617620 render_mono, 00618d20 close_class
+    # BYTE_EXACT 33/33, 00618da0 object_start SHAPE_EXACT 28/32, 00616de0
+    # Caviar::init MISMATCH 48/151).
+    "artifact files (recovered/)": 1014,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -728,17 +718,13 @@ SCAFFOLD_CEILINGS = {
     # 1183 -> 1180 (2026-09-04, console claimed wave): 004ba5f0.cpp and
     # 004ba650.cpp homed into src/tutwin.cpp (the tutorial gates, with their
     # two shown-bit words named), 00511480.cpp into src/console.cpp.
-    # 1180 -> 1153 (2026-09-04, P2/P3 waves 3-4): collected live - the
-    # worldwin/game/map and console editor batches homed the rest.
-    # 1153 -> 1152 (2026-09-05, W5 basepop rehome): 00604ea0.cpp (UNK2)
-    # homed into src/basepop.cpp.
-    # 1152 -> 1148 (2026-09-05, W5 map free-function wave): 00590990.cpp
-    # (say_project), 00591e90.cpp (treaty_using_faction, BYTE_EXACT 39/39),
-    # 004620c0.cpp (is_land_near), 00592480.cpp (fungus_radius, BYTE_EXACT
-    # 72/72) and 005a6270.cpp (proto_sort) homed into src/map.cpp.
-    # 1148 -> 1147 (2026-09-05, W5 maininterface unlock chain): 0045c0f0.cpp
-    # (MainInterface::set_message) homed BYTE_EXACT.
-    "unrecovered files": 1147,
+    # 1153 -> 1135 (2026-09-05, collected live across the parallel waves):
+    # basepop (-1: 00604ea0 UNK2), map (-5: say_project, treaty_using_faction
+    # BYTE_EXACT 39/39, is_land_near, fungus_radius BYTE_EXACT 72/72,
+    # proto_sort), maininterface (-1: set_message BYTE_EXACT), caviar (-11:
+    # the eight add_object overloads, render_mono, clear_buffers,
+    # render_multi_table_dest, object_start, vox_release_record 00639630).
+    "unrecovered files": 1134,
     # 2717 -> 2748 (2026-09-04, P2 net batch): NetFifo promoted with
     # close/add/get/get, NetFifoNode, head_/tail_/count_ - the deliberate
     # raise this ceiling exists for (class modelling grows it; the class

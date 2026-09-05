@@ -294,7 +294,10 @@ CEILINGS = {
     # alpha_menu_.check(field_23BDC_) on the declared member and neither walks
     # this+0x22A2C by hand. Both claims held BYTE_EXACT, and menu_simple came
     # up from MNEMONIC_ONLY on the same edit.
-    "raw self-access": 207,
+    # 207 -> 206 (2026-09-05, caviar class pass): set_scene_rotation reaches
+    # the rotation matrix through &rotation_ now that Caviar declares it, not
+    # through reinterpret_cast<uint8_t *>(this) + 0x38 - BYTE_EXACT either way.
+    "raw self-access": 206,
     # 4 -> 5 (2026-09-03, P1a batch): one homed body's faithful spelling
     # returns this as int (catalogue mangling QAEHH; TexHeap::UNK1 family).
     # 5 -> 8 (2026-09-03, P2 buffer/mapwin batch): three more homed
@@ -367,7 +370,13 @@ CEILINGS = {
     # (value, override_text, flags, pair_value_a/b), start's
     # (text_file, text_label, value, override_text, flags, owner_window),
     # double_click's button_id, string's text.
-    "scaffold name": 2423,
+    # 2427 -> 2418 (2026-09-05, caviar class pass): UNK10's three arguments
+    # named from the fields they fill (offset_x/y/z, the floats render
+    # subtracts the camera offset from), object_start's four unread protocol
+    # arguments named for the roles their types carry, and the draw_dest_source
+    # stand-in's arguments named from Caviar::render's call. (Collected with
+    # the parallel waves' 2423; the caviar renames stand.)
+    "scaffold name": 2414,
 }
 
 WHY = {
