@@ -527,20 +527,6 @@ int SpriteBox::sprite(Sprite *a1, char *a2, int a3) {
     return PENDING_BODY(0x006108E0, pending)(this, nullptr, a1, a2, a3);
 }
 
-// ?pos_to_id@SpriteBox@@QAEXH@Z at 0x00611640 - the position-for-item walk
-// BasePop::on_redraw (0x00604AB0) hands to the popup's redraw callback.
-// FREE FUNCTION, and that is a stand-in rather than a spelling: the method
-// belongs on SpriteBox, and spritebox.h is not a file this pass owns - see
-// the HANDOFF note beside the call in basepop.cpp. The body is FILE-only in
-// src/recovered/units/00611640.cpp, so a forwarder here is landmine-free.
-// HANDOFF (basepop wave 5b): declare `int pos_to_id(int);` on SpriteBox,
-// point this call at `dialogs_.SpriteBox::pos_to_id(0)` the way every other
-// base-subobject call in that body is spelled, and delete this forwarder.
-int sprite_box_pos_to_id(SpriteBox *boxes, int position) {
-    typedef int(__fastcall *pending)(SpriteBox *, void *, int);
-    return PENDING_BODY(0x00611640, pending)(boxes, nullptr, position);
-}
-
 // ?X_pops@@... at 0x005BF930 and ?X_pop@@... at 0x005BF480 - the two full
 // builders every xpops wrapper funnels into.
 int __cdecl X_pops(char *caption, const char *label, int a3, char *a4, int a5,
@@ -733,6 +719,17 @@ void BaseButton::timer_callback(int a1) {  // 0x00607B30
 void ListBox::set_selected_id(int id) {
     typedef void(__fastcall *pending)(ListBox *, void *, int);
     PENDING_BODY(0x00609FA0, pending)(this, nullptr, id);
+}
+
+// ?set_selected_pos@ListBox@@QAEXHH@Z at 0x0060A020 - the sibling of the
+// above. BasePop::calculate_dimensions (0x00603800) calls it BY NAME on the
+// ListBox base of dialogs_, so the member is what that body needs; the
+// address's own claim lives in src/recovered/units/0060a020.cpp, which the
+// build does not compile, so this forwarder is the only definition and is
+// landmine-free.
+void ListBox::set_selected_pos(int position, int notify) {
+    typedef void(__fastcall *pending)(ListBox *, void *, int, int);
+    PENDING_BODY(0x0060A020, pending)(this, nullptr, position, notify);
 }
 
 // ?item@CheckBox@@QAEHPADHH@Z - DipEdit::init adds one item per treaty flag.

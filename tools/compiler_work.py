@@ -528,6 +528,10 @@ SCAFFOLD_CEILINGS = {
     # clears this row).
     # 259 -> 258 (2026-09-05, W5 map free-function wave, collected): the
     # fixup_landmarks forwarder went with its body into src/map.cpp.
+    # 258 -> 258 (2026-09-05, W5c basepop closure, collected): composition
+    # changed, count did not - sprite_box_pos_to_id OUT (its body homed as
+    # the real SpriteBox::pos_to_id), ListBox::set_selected_pos IN (the
+    # sanctioned member forwarder, 0x0060A020, landmine-free).
     "PENDING_BODY forwarders": 258,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
@@ -635,7 +639,9 @@ SCAFFOLD_CEILINGS = {
     # BYTE_EXACT - IfaceRegistryEntry::on_iface_selected/on_left_double_click,
     # StatusWin::draw/reset_active/on_left_double_click, MainInterface::chat/
     # set_message, say_orders.
-    "artifact files (recovered/)": 1019,
+    # 1019 -> 1018 (2026-09-05, W5c basepop closure): 00611640.cpp went with
+    # SpriteBox::pos_to_id, homed as the real member on_redraw calls.
+    "artifact files (recovered/)": 1018,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).

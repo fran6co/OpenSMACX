@@ -99,6 +99,12 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
   SpriteBox();
   ~SpriteBox();
   uint32_t id_to_pos(int id);
+  // 0x00611640 ?pos_to_id@SpriteBox@@QAEHH@Z - the sibling walk to
+  // id_to_pos, and the same shape Dialog::pos_to_id (0x00609B50) is: set
+  // the list cursor from the head, step it `position` entries in either
+  // direction, and return the entry the cursor landed on. Returns int (both
+  // exit paths load EAX), unlike the catalogue's void spelling.
+  int pos_to_id(int position);
   void on_mouse_move(int, int);
   void on_mouse_leave(int, int);
 

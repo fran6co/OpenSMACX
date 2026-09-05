@@ -181,6 +181,15 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   // 0x00609FA0, also a pending_bodies forwarder. DipEdit::init adds one item
   // per rival faction and then lands the selection on the matching one.
   void set_selected_id(int id);
+  // 0x0060A020 ?set_selected_pos@ListBox@@QAEXHH@Z, the sibling of the above
+  // and the only one of the pair BasePop::calculate_dimensions reaches (it
+  // lands the popup's own list selection at two arguments). Still a
+  // pending_bodies member forwarder; the claim in src/recovered/units/ is
+  // archive-only, so the forwarder is the definition the link sees.
+  // The second argument gates the notify dispatches the move ends with:
+  // nonzero makes the body run the item's three notify slots (0x54, 0x53
+  // and the 0x23/0x07 pair) after the scroll position is settled.
+  void set_selected_pos(int position, int notify);
 
  public:
   void on_mouse_leave(int a1, int a2);

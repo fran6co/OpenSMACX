@@ -289,6 +289,84 @@ uint32_t SpriteBox::id_to_pos(int id) {
 
 
 /*
+Purpose: Restore the list entry at an explicit position and return its item
+         ID.
+// ORIGINAL: 0x00611640 ?pos_to_id@SpriteBox@@QAEXH@Z 0x00611640-0x006116B6
+// symbol    ?pos_to_id@SpriteBox@@QAEHH@Z
+// size      118 bytes
+// prototype int (__thiscall ?pos_to_id@SpriteBox@@QAEXH@Z)(SpriteBox* this, int)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644F3A
+// LEVER: the sibling walk. The body is Dialog::pos_to_id (0x00609B50) over
+//        the SpriteBoxList at 0x24 instead of Dialog's item_list_ at 0xBC:
+//        `position <= entry_count_ - 1` (a decremented compare, not
+//        `position < count`), the cursor loaded from head_ before the sign
+//        test, `abs()` CALLED TWICE with the count re-read between the two
+//        calls, one store for both arms, and a shared tail that reads the
+//        entry id only when head_ is non-null.
+// LEVER: `goto restore_done`, not an early return - the image's out-of-range
+//        exit lands on the SAME tail epilogue the success path falls into,
+//        and a `return 0` there emits a second `xor eax,eax` the image does
+//        not have.
+// LEVER: `int pos_to_id(int)`, returning the value, though the catalogue
+//        mangles it void - both exit paths load EAX before `ret 4`, and the
+//        return type does not change a thiscall's stack cleanup.
+// RESIDUAL: one register decision and its cascade, 10 of 51. The image hoists
+//        a copy of `position` into EAX at instruction 4 (`mov eax,edi`) that
+//        survives to the merged store at 0x61169a, keeps `entry_count_` in
+//        ECX, and walks the cursor in EDX; this build loads the count into
+//        EAX, never makes the copy, and decrements EDI in place in the
+//        positive arm. This is the SAME wall the sibling Dialog::pos_to_id
+//        (0x00609B50) documents on its own marker - the two siblings disagree
+//        with each other in the shipped binary, so only one of them can be
+//        reached from a shared spelling, and there Dialog is.
+// TRIED: one `int distance` declared above the sign test instead of one per
+//        arm - identical 4 of 51.
+// TRIED: hoisted `int new_position = position;` storing that after the
+//        if/else, the shape the image's surviving EAX copy implies - identical
+//        4 of 51; VC6 copy-propagates it away exactly as the Dialog note
+//        records.
+// TRIED: `const int count = list_.entry_count_;` cached over the whole body -
+//        5 of 51, one instruction better and one instruction longer (52), and
+//        it hides the image's re-read of the count between its two abs calls,
+//        which is the load-bearing detail. Left as the member read.
+Return Value: the item id at the requested position, or 0 when the list is
+              empty
+Status: Complete
+*/
+int SpriteBox::pos_to_id(int position) {
+    if (position <= list_.entry_count_ - 1) {
+        list_.current_ = list_.head_;
+        if (position < 0) {
+            // `abs` CALLED TWICE, the count re-read between the calls - a
+            // MIN-style macro over abs(position), not a local. See
+            // Dialog::pos_to_id for the same shape.
+            if (abs(position) > list_.entry_count_) {
+                goto restore_done;
+            }
+            int distance = abs(position);
+            while (distance > 0) {
+                list_.current_ = list_.current_->previous;
+                distance--;
+            }
+            position += list_.entry_count_;
+        } else {
+            int distance = position;
+            while (distance > 0) {
+                list_.current_ = list_.current_->next;
+                distance--;
+            }
+        }
+        list_.current_position_ = position;
+    }
+restore_done:
+    return list_.head_ ? list_.current_->id : 0;
+}
+
+
+/*
 // ORIGINAL: 0x00610480 ?init@SpriteBox@@QAEHPAURECT@@H@Z 0x00610480-0x006104A2 BYTE_EXACT
 // symbol    ?init@SpriteBox@@QAEHPAUtagRECT@@H@Z
 // size      34 bytes

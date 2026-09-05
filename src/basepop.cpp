@@ -210,6 +210,39 @@ uint32_t BasePopDefaultButtonColors[4][3] = {
     {0x00000001, 0x00000001, 0x00000001},
     {0x00000001, 0x00000001, 0x00000001}};  // 0x00696F24
 
+// THE TWENTY CONFIG DIRECTIVE KEYWORDS BasePop::start (0x00601BF0) compares
+// each '#' line against, one inline .data literal per keyword at
+// 0x00696F64..0x00696FEC. Read out of the shipped image with image_data.py
+// and verified byte for byte: "x ", "y " and "col " carry their trailing
+// space, and the directive's own name is what each handler then parses -
+// xs/ys/x/y/col seed the popup's default geometry, caption/checkbox/editbox/
+// listbox/active/text/itemlist/button/extra pick the control set, and
+// wave/vol/pitch/fade/pan/sprite are the sound and picture directives.
+// These are the addresses the _strnicmp chain pushes. It compares FEWER
+// characters than several of these strings run - itemlist and text/wave/fade
+// per the start artifact's CORRECTIONS - so a keyword's compare length is NOT
+// its strlen here; take each length off the image's own call site.
+char BasePopKeywordXs[] = "xs";           // 0x00696F64
+char BasePopKeywordYs[] = "ys";           // 0x00696F68
+char BasePopKeywordX[] = "x ";            // 0x00696F6C
+char BasePopKeywordY[] = "y ";            // 0x00696F70
+char BasePopKeywordCol[] = "col ";        // 0x00696F74
+char BasePopKeywordCaption[] = "caption";  // 0x00696F7C
+char BasePopKeywordCheckbox[] = "checkbox";  // 0x00696F84
+char BasePopKeywordEditbox[] = "editbox";   // 0x00696F90
+char BasePopKeywordListbox[] = "listbox";   // 0x00696F98
+char BasePopKeywordActive[] = "active";     // 0x00696FA0
+char BasePopKeywordText[] = "text";         // 0x00696FA8
+char BasePopKeywordItemlist[] = "itemlist";  // 0x00696FB0
+char BasePopKeywordButton[] = "button";     // 0x00696FBC
+char BasePopKeywordExtra[] = "extra";       // 0x00696FC4
+char BasePopKeywordWave[] = "wave";         // 0x00696FCC
+char BasePopKeywordVol[] = "vol";           // 0x00696FD4
+char BasePopKeywordPitch[] = "pitch";       // 0x00696FD8
+char BasePopKeywordFade[] = "fade";         // 0x00696FE0
+char BasePopKeywordPan[] = "pan";           // 0x00696FE8
+char BasePopKeywordSprite[] = "sprite";     // 0x00696FEC
+
 namespace {
 
 }  // namespace
@@ -2653,6 +2686,8 @@ int BasePop::UNK2() {
 //        (0x00611600). `int pos_to_id(int);` is the declaration it needs.
 //        Until it lands, the free forwarder sprite_box_pos_to_id in
 //        pending_bodies.cpp stands in for the call.
+//        CLEARED (wave 5c): spritebox.h declares `int pos_to_id(int);` and
+//        the call below is the qualified member access.
 // TRIED: `Buffer *const buffer = static_cast<Buffer *>(this)` held across the
 //        body, the obvious spelling for the +0x444 surface - VC6 emits its
 //        base-conversion null guard for it (`test esi,esi / je` plus a spill
@@ -2673,8 +2708,6 @@ int BasePop::UNK2() {
 //        wall the brief documents, hit on the stack-slot count rather than on
 //        a callee-saved push.
 typedef int(__fastcall *func_basepop_slot096)(void *);
-// The stand-in for SpriteBox::pos_to_id (0x00611640); HANDOFF above.
-int sprite_box_pos_to_id(SpriteBox *boxes, int position);
 
 void BasePop::on_redraw() {
     // THE INHERITED-MEMBER SPELLING, and it is load-bearing. GraphicWin's
@@ -2730,10 +2763,12 @@ void BasePop::on_redraw() {
     if (caller_sprite_ != 0) {
         BasePopDrawnPopup = this;
         if (redraw_callback_ != 0) {
-            // HANDOFF: see the note on the marker. The image calls
-            // SpriteBox::pos_to_id on the subobject of dialogs_ at +0x2240.
-            const int item_id = sprite_box_pos_to_id(
-                static_cast<SpriteBox *>(&dialogs_), 0);
+            // The image calls SpriteBox::pos_to_id on the subobject of
+            // dialogs_ at +0x2240. QUALIFIED MEMBER ACCESS - naming the
+            // base is what makes VC6 emit the virtual-base subobject walk
+            // natively, the same spelling every other base-subobject call
+            // in this body uses.
+            const int item_id = dialogs_.SpriteBox::pos_to_id(0);
             redraw_callback_(
                 reinterpret_cast<int>(caller_sprite_),
                 reinterpret_cast<int>(owner_window_), item_id, right, bottom);

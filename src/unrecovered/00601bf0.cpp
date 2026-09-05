@@ -34,6 +34,27 @@
 //      Extra / Wave / Vol / Pitch / Fade / Pan / Sprite at 0x00696F64, 68, 6C,
 //      70, 74, 7C, 84, 90, 98, A0, A8, B0, BC, C4, CC, D4, D8, E0, E8, EC.
 //      "x ", "y " and "col " carry their trailing space.
+//      DONE (basepop wave 5c). All twenty now exist as file-scope arrays in
+//      src/basepop.cpp beside the 0x00696EE4/0x00696F24 colour tables, named
+//      exactly as above, each initialiser read out of the shipped image with
+//      image_data.py and checked byte for byte against it. Every `g_00696fxx`
+//      in the transcription below is replaceable by its BasePopKeyword* name
+//      with no other edit. NOT added this pass: the Sprite::init forwarder
+//      from unlock 1 - the note ties it to the commit that homes this body,
+//      and this body is not homed yet (see NOT ATTEMPTED).
+//   4. NOT ATTEMPTED (basepop wave 5c), and recorded as a refusal rather than
+//      left silent. The three CORRECTIONS below are mechanical to apply and
+//      this pass did not apply them; the body was not homed, so the tree
+//      gained no wrong parser and keeps the honest forwarder at 0x00601BF0 in
+//      pending_bodies.cpp. The remaining work is exactly: retarget `tok` at
+//      the buffer's base, fold the per-directive N list into all three of
+//      purge_spaces / purge_leading / atoi, set the text/wave/fade compare
+//      lengths to 4, invert the xs/ys wide-screen test to
+//      `external_window_ == 0` and test it twice, then re-spell the whole
+//      thing through the BasePop members instead of I32()/U8() - which is the
+//      part that has to be done carefully, because 2,569 bytes of parser
+//      transcribed half-way reads as finished while getting every directive
+//      wrong.
 //
 // CORRECTIONS to the transcription below, all read off the image:
 //   * `tok` IS the parse buffer's base, not buf+8. `parse_string` is handed

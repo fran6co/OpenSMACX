@@ -38,6 +38,39 @@
 // are plain `dialogs_.ListBox::set_selected_id(..)` /
 // `dialogs_.ListBox::set_selected_pos(..)`. EditGroup::set_text_limits runs
 // on `dialogs_.EditGroup::` (0x22c8 = 0x21d0 + 0xf8).
+//
+// HANDOFF (basepop wave 5c) - the ONE remaining blocker is now font.h, not a
+// declaration in a BasePop-owned file. 0x00603a4a reads
+//
+//     mov eax, [esi+0x316c]      ; button_font1_
+//     mov edx, [eax+0x10]        ; Font::height_  (0x00 unk_1_, 0x04
+//                                ; is_fot_set_, 0x08 font_obj_,
+//                                ; 0x0c line_height_, 0x10 height_)
+//
+// and the value survives to 0x6040e0 as `spare2`, where it becomes
+// field_30D0_ (`h*8 - h; + (eax%4); >> 2`). Font::height_ is PRIVATE and
+// font.h's friend list is Buffer / Menu / Win - BasePop is not on it, and
+// `src/basepop.cpp` cannot name it. Measured with a one-line probe this pass:
+// `error C2248: 'height_' : cannot access private member declared in class
+// 'Font'`. The fix is the one font.h already made for the same situation:
+// unk_1_ went PUBLIC because StatusWin writes it from outside, with the
+// recorded reasoning "Access control is compile-time only, so nothing about
+// the layout or the emitted bytes moves." Either move height_ under that same
+// public label or add `friend class BasePop;` beside the other three - zero
+// bytes move either way, sizeof(Font) stays 0x28, and nothing that reads
+// font.h re-measures differently. font.h is not a file the BasePop passes own,
+// so this is a handoff and not a cross-edit.
+//
+// Everything else this body needs is now spelled in the tree. Added this pass:
+// `void ListBox::set_selected_pos(int, int);` (listbox.h) with the member
+// forwarder at 0x0060A020 in pending_bodies.cpp - that was the note's item 1.
+// Item 2, the Dialogs::calculate_dimensions forwarder, is NOT added yet: it
+// only earns its PENDING_BODY ceiling row once the body below actually lands,
+// and landing is still blocked on font.h. Add both in the same commit.
+// Still to name, all inside BasePop/Dialog/Dialogs and all already reachable:
+// field_2350_ IS dialogs_.kind_ (see the start note for the arithmetic), the
+// raw function-pointer stores at 0x2210 / 0x2224 / 0x2234 take 0x006044D0 and
+// are the hand-installed-vtable seam, and 0x60407a is a vtable dispatch.
 
 // TRIED: literal per-instruction register transcription (eax/ebx/ecx/edx/ebp/edi + I32()/U8() offset macros on `this`, spare1/spare2 for [esp+0x10]/[esp+0x14], resolved jump-table switch on field_2350_+1); diverges at instr #0 (prologue shape: original does sub esp,8 before the push sequence), not chased further.
 // working copy - scaffold materialised by --work
