@@ -39,6 +39,15 @@ class MessageWin : public Sprite {
   ~MessageWin();
   void UNK1(int a1, int a2, int a3, int a4, int a5);
   void UNK4(int a1);
+  // 0x004718C0 ?on_selected@MessageWin@@QAEXHH@Z. MainInterface's interface
+  // events are delivered here: on_iface_selected (0x0045D140) is
+  // `mov ecx, 0x7f67f8 / call 0x4718c0`, the pop-up-menu handler for a right
+  // click on the map.
+  void on_selected(int code, int mode);
+  // 0x00471530 ?add_message@MessageWin@@QAEXPADH@Z. Appends one line to
+  // listBox_, de-duplicating against the current top line when the item id is
+  // 0; the id is packed with 0x10000000 into Dialog::item.
+  void add_message(char *text, int item_id);
 
   // Storage the image proves is here: its own methods reach 0x68.
   // Extent only - this class carries no size assertion, and the bound is a floor.
@@ -58,4 +67,10 @@ class MessageWin : public Sprite {
 
 static_assert(sizeof(MessageWin) == 0x3758,
               "MessageWin layout must match the original executable");
+
+// 0x007F67F8. The desktop's MessageWin - the same object game.cpp's system_init
+// builds through messagewin_init. MainInterface's interface-event handlers reach
+// it by this address (`mov ecx, 0x7f67f8` at on_iface_selected), and it is a real
+// object with a real constructor in the image, so it is declared as one.
+extern MessageWin InterfaceMessageWin;
 

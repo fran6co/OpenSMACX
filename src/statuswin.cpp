@@ -20,6 +20,7 @@
 // base_at (base.h). veh.h is excluded - its `range` collides with general.h.
 #include "base.h"
 #include "original_seam.h"
+#include "strings.h"  // StringTemp, 0x009B86A0
 #include "statuswin.h"
 #include "spritebox.h"
 #include "font.h"
@@ -128,13 +129,8 @@ void StatusWin::reset() {
 
 
 // Three fixed-address RECTs redraw() unions together, no established
-// identity beyond what this one function shows.
-extern RECT *const StatusWinRedrawRect1;
-extern RECT *const StatusWinRedrawRect2;
-extern RECT *const StatusWinRedrawRect3;
-RECT *const StatusWinRedrawRect1 = (RECT *)0x007AF50C;
-RECT *const StatusWinRedrawRect2 = (RECT *)0x007AF4EC;
-RECT *const StatusWinRedrawRect3 = (RECT *)0x007AF4FC;
+// identity beyond what this one function shows. Now defined in statuswin.h,
+// where the internal linkage folds the address to the immediate in every TU.
 
 /*
 Purpose: Re-init the three status fonts when the screen size changed enough
@@ -221,6 +217,109 @@ void StatusWin::draw_status(int a1, int a2, int a3, int a4, int a5) {
     //     char *self = reinterpret_cast<char *>(this);
     //     int v = *reinterpret_cast<int *>(self + 0x24);
 
+}
+
+// ORIGINAL: 0x004B8830 ?draw@StatusWin@@QAEXHHHHH@Z 0x004B8830-0x004B888A BYTE_EXACT
+// LEVER: 2026-09-05 homed from 004b8830.cpp. UnionRect is spelled as the plain
+//   Win32 call, NOT the archive's local function-pointer variable holding
+//   `*0x669328`: that address is UnionRect's own import slot, VC6 reads it
+//   into esi and calls it twice, and an ordinary call is what builds that.
+//   redraw() (above) already reproduces the identical tail byte-exactly.
+// size      90 bytes
+// prototype void (__thiscall ?draw@StatusWin@@QAEXHHHHH@Z)(StatusWin* this, int, int, int, int, int)
+// callers   1   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004B6570 0x005D5930
+// indirect  0x004B8864 0x004B8873
+void StatusWin::draw(int tile_x, int tile_y, int city_index, int unit_index,
+                     int mode) {
+    RECT localRect;
+    draw_status(tile_x, tile_y, city_index, unit_index, mode);
+    UnionRect(&localRect, StatusWinRedrawRect1, StatusWinRedrawRect2);
+    UnionRect(&localRect, &localRect, StatusWinRedrawRect3);
+    MainInterfaceGlobal.soft_update(&localRect);
+}
+
+// Two StatusWin members the image's click handlers need by name, both still
+// original bodies this build does not own: draw_active (0x004B4CF0, 6203
+// bytes, src/unrecovered/004b4cf0.cpp) and on_left_click (0x004B8E40, 403
+// bytes with a jump table, src/recovered/units/004b8e40.cpp). Neither carries
+// a BYTE_EXACT claim, so a forwarder is allowed; homing them retires these.
+// reset_active and on_left_double_click call them BY NAME.
+
+void StatusWin::draw_active(int first, int second, int flag) {  // 0x004B4CF0
+    typedef void(__fastcall *pending)(StatusWin *, void *, int, int, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x004B4CF0))(
+        this, nullptr, first, second, flag);
+}
+
+void StatusWin::on_left_click(int x, int y) {  // 0x004B8E40
+    typedef void(__fastcall *pending)(StatusWin *, void *, int, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x004B8E40))(
+        this, nullptr, x, y);
+}
+
+// ORIGINAL: 0x004B4970 ?say_orders@@YAXH@Z 0x004B4970-0x004B4987 BYTE_EXACT
+// LEVER: 2026-09-05 homed from 004b4970.cpp. StringTemp (strings.h,
+//   0x009B86A0) is the buffer the image pushes, so `push 0x9b86a0` is the
+//   array's own address rather than a bound pointer's load.
+// size      22 bytes
+// prototype void (__cdecl ?say_orders@@YAXH@Z)(int vehID)
+// callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004B43E0
+void say_orders(int veh_id) {
+    say_orders(StringTemp, veh_id);
+}
+
+// ?say_orders@@YAXPADH@Z at 0x004B43E0, 1421 bytes - still an original body
+// (src/recovered/units/004b43e0.cpp), forwarded here because the int form
+// above calls it by name. It carries no claim, so a forwarder is allowed.
+void say_orders(char *text, int veh_id) {  // 0x004B43E0
+    typedef void(__cdecl *pending)(char *, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x004B43E0))(text,
+                                                                     veh_id);
+}
+
+// ORIGINAL: 0x004B6530 ?reset_active@StatusWin@@QAEXXZ 0x004B6530-0x004B6569 BYTE_EXACT
+// LEVER: 2026-09-05 homed from 004b6530.cpp once field_15C4_/15C8_ became
+//   signed. The guard is `a >= 0 || b >= 0`, tested with the image's own
+//   `jge`/`jl` - unsigned members would give `jae`/`jb` and -1 would stop
+//   meaning "nothing active". field_15CC_ is read into a local BEFORE the
+//   two -1 stores, which is where the image's `mov edx,[ecx+0x15cc]` sits.
+// size      57 bytes
+// prototype void (__thiscall ?reset_active@StatusWin@@QAEXXZ)(StatusWin* this)
+// callers   2   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004B4CF0
+void StatusWin::reset_active() {
+    if (field_15C4_ >= 0 || field_15C8_ >= 0) {
+        int draw_arg = field_15CC_;
+        field_15C8_ = -1;
+        field_15C4_ = -1;
+        draw_active(draw_arg, field_15D0_, 0);
+    }
+}
+
+// ORIGINAL: 0x004B8990 ?on_left_double_click@StatusWin@@QAEXHH@Z 0x004B8990-0x004B89BE BYTE_EXACT
+// LEVER: 2026-09-05 homed from 004b8990.cpp. fInOnClick_ brackets the
+//   on_left_click call, and on_left_click must stay out of line for the
+//   image's `call 0x4b8e40` - it is 403 bytes with a jump table, so it never
+//   inlines, but the forwarder in this file is what makes the call a real
+//   member call rather than a bound pointer.
+// size      46 bytes
+// prototype void (__thiscall ?on_left_double_click@StatusWin@@QAEXHH@Z)(StatusWin* this, int, int)
+// callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004B8E40
+void StatusWin::on_left_double_click(int x, int y) {
+    fInOnClick_ = 1;
+    on_left_click(x, y);
+    fInOnClick_ = 0;
 }
 
 // Fixed-slot bindings carried from 004b4990.cpp

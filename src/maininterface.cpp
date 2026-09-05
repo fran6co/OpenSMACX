@@ -215,6 +215,72 @@ int MainInterface::on_iface_button_pressed(int) {
     return 0;
 }
 
+// ORIGINAL: 0x0045CD80 ?on_iface_left_double_click@MainInterface@@QAEXHH@Z 0x0045CD80-0x0045CDB1 BYTE_EXACT
+// symbol    ?on_iface_left_double_click@IfaceRegistryEntry@@UAEXHH@Z
+// LEVER: 2026-09-05 homed from 0045cd80.cpp, the second of the wave-4
+//   handoffs: it needs StatusWin::on_left_double_click (0x004B8990) as a real
+//   member, which statuswin.cpp now owns. `mov ecx, 0x8c5568` falls out of
+//   naming ConsoleStatusWin (console.h, real storage in statuswin.cpp) and
+//   `push 0x7af50c` out of StatusWinRedrawRect1 (statuswin.h).
+// size      48 bytes
+// prototype void (__thiscall ?on_iface_left_double_click@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004B8990 0x005FA7E0
+void IfaceRegistryEntry::on_iface_left_double_click(int x, int y) {
+    if (in_box(x, y, StatusWinRedrawRect1)) {
+        ConsoleStatusWin.on_left_double_click(x, y);
+    }
+}
+
+// 0x0068FA30, the table chat indexes with its second argument. Twenty-four
+// dwords are visible before the image's own data moves on to something else,
+// so the extent is a floor: the value is handed straight to
+// MessageWin::add_message as the item id, which packs it with 0x10000000 into
+// Dialog::item. Values recovered from the shipped image's .data.
+int ChatItemIdTable[24] = {
+    249, 111, 252, 255, 251, 65, 102, 187,
+    134, 177, 172, 55, 146, 51, 145, 169,
+    15396, 77, 70, 78, 49, 50, 58, 62,
+};
+
+// ORIGINAL: 0x0045C0F0 ?set_message@MainInterface@@QAEXPADHHHH@Z 0x0045C0F0-0x0045C163;0x00655745-0x00655757 BYTE_EXACT
+// LEVER: 2026-09-05 homed from 0045c0f0.cpp, exactly as that record's own
+//   LEVER line says: the LOCAL `Font font;` is what earns the SEH frame
+//   (`push -1 / push 0x65574d / mov fs:[0]`) - a non-trivially-destructible
+//   automatic under /GX - and direct calls to string_box_.add and the real
+//   InterfaceMessageWin reproduce the rest. Nothing names the three ints.
+//   `ret 0x14` pops this plus four arguments, so the signature is four ints
+//   after the text, exactly as the mangled name spells - none of them read.
+// size      114 bytes
+// prototype void (__thiscall ?set_message@MainInterface@@QAEXPADHHHH@Z)(MainInterface* this, int8*, int, int, int)
+// callers   0   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00471530 0x00618EA0 0x00618EE0 0x00629710
+void MainInterface::set_message(char *text, int, int, int, int) {
+    Font font;
+    string_box_.add(text, 0x1388, 2);
+    InterfaceMessageWin.add_message(text, 0);
+}
+
+// ORIGINAL: 0x0045C0B0 ?chat@MainInterface@@QAEXPADH@Z 0x0045C0B0-0x0045C0E6 BYTE_EXACT
+// LEVER: 2026-09-05 homed from 0045c0b0.cpp. No local Font here and so no SEH
+//   frame - the body is one straight line. `mov ecx, 0x7f67f8` is the real
+//   InterfaceMessageWin, and `[eax*4 + 0x68fa30]` is ChatItemIdTable indexed
+//   by the channel, which VC6 folds into the SIB addressing on its own.
+// size      53 bytes
+// prototype void (__thiscall ?chat@MainInterface@@QAEXPADH@Z)(MainInterface* this, int8*, int)
+// callers   1   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00471530 0x00629710
+void MainInterface::chat(char *text, int channel) {
+    string_box_.add(text, 0x2710, 2);
+    InterfaceMessageWin.add_message(text, ChatItemIdTable[channel]);
+}
+
 // Fixed-slot bindings carried from 0045c290.cpp
 static int *const MainInterfaceTileSource = (int *)0x0078D6B0;
 static int *const InterfaceBuffer = (int *)0x007AEC64;
@@ -360,15 +426,33 @@ static int *const IfaceIdToSlot = (int *)0x007AE778;
 static int *const IfaceRegistry = (int *)0x007AE7F0;
 static int *const ActiveIfaceId = (int *)0x007D392C;
 
-// The MessageWin the interface events are delivered to. game.cpp's system_init
-// reaches the same object by address when it builds the desktop
-// (messagewin_init(reinterpret_cast<MessageWin *>(0x007F67F8))); the interface
-// handlers reach it by address too - on_iface_selected is
-// `mov ecx, 0x7f67f8` before the call. Bound as a const pointer rather than
-// declared as a real global because the image's object lives at 0x007F67F8 and
-// a definition of ours would live somewhere else; messagewin.h/messagewin.cpp
-// are the files that would own the real thing.
-static MessageWin *const InterfaceMessageWin = (MessageWin *)0x007F67F8;
+// The MessageWin the interface events are delivered to is now the real global
+// InterfaceMessageWin (messagewin.h / messagewin.cpp) - game.cpp's system_init
+// builds the same object through messagewin_init, and the image's handlers
+// reach it by its address, `mov ecx, 0x7f67f8` before the call.
+
+// ORIGINAL: 0x0045D140 ?on_iface_selected@MainInterface@@QAEXHH@Z 0x0045D140-0x0045D159 BYTE_EXACT
+// symbol    ?on_iface_selected@IfaceRegistryEntry@@UAEXHH@Z
+// LEVER: 2026-09-05 homed from 0045d140.cpp once InterfaceMessageWin became a
+//   real global (messagewin.h / messagewin.cpp). The body is one line - the
+//   handoff to the desktop's MessageWin - and the receiver never touches its
+//   own SubInterface subobject, so it is byte-exact homed on the registry
+//   entry exactly as it was as a MainInterface method. `mov ecx, 0x7f67f8`
+//   falls out of naming the global: a const pointer binding costs the call
+//   its `E8` (the brief's first lever) and a real object restores it. The
+//   `symbol` fact is the mangled name this tree emits - slot 10 of the
+//   interface table maininterface.h declares, hence `U` (virtual) on
+//   IfaceRegistryEntry rather than `Q` on MainInterface - and the `fact`
+//   value is one token by contract, so the explanation lives here.
+// size      25 bytes
+// prototype void (__thiscall ?on_iface_selected@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004718C0
+void IfaceRegistryEntry::on_iface_selected(int code, int mode) {
+    InterfaceMessageWin.on_selected(code, mode);
+}
 
 
 // ORIGINAL: 0x0045C5C0 ?on_scrolling@MainInterface@@QAEXHH@Z 0x0045C5C0-0x0045C5F4 FILE BYTE_EXACT

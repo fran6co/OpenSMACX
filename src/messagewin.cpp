@@ -18,6 +18,36 @@
 #include "stdafx.h"
 #include "messagewin.h"
 
+// 0x007F67F8, declared in messagewin.h.
+MessageWin InterfaceMessageWin;  // 0x007F67F8
+
+// ?on_selected@MessageWin@@QAEXHH@Z at 0x004718C0, 1163 bytes. NOT RECOVERED
+// YET. Its transcription sits in src/recovered/units/004718c0.cpp measured
+// MISMATCH (divergence 30) and cannot be homed until ListBox's virtual-base
+// internals are modelled: the body walks `*(this + 0x64)` - the embedded
+// ListBox - through its vbtable and then removes a node from a doubly linked
+// list it finds there, dispatching on that node's vtable. It is defined here,
+// in the file that owns the class, as the pending jump the tree keeps in
+// pending_bodies.cpp, because the symbol is a member of THIS class and
+// maininterface.cpp's on_iface_selected needs it to link.
+void MessageWin::on_selected(int code, int mode) {
+    typedef void(__fastcall *pending)(MessageWin *, void *, int, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x004718C0))(
+        this, nullptr, code, mode);
+}
+
+// ?add_message@MessageWin@@QAEXPADH@Z at 0x00471530, 612 bytes. NOT RECOVERED
+// YET - its transcription is src/recovered/units/00471530.cpp, measured
+// MISMATCH, and it cannot be homed until the ListBox list walk it does through
+// `*(this + 0x64)`'s vbtable is modelled. Forwarded here, in the file that
+// owns the class, so MainInterface::chat and MainInterface::set_message can
+// call it by name; it carries no claim, so a forwarder is allowed.
+void MessageWin::add_message(char *text, int item_id) {
+    typedef void(__fastcall *pending)(MessageWin *, void *, char *, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x00471530))(
+        this, nullptr, text, item_id);
+}
+
 /*
 Purpose: Construct the Sprite base, then the three plain members in
          declaration order (font_, listBox_, stringBox_) via automatic

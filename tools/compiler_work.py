@@ -631,7 +631,11 @@ SCAFFOLD_CEILINGS = {
     # gone from the archive (its body rewritten into src/map.cpp) and
     # 00592940.cpp (fixup_landmarks) homed into src/map.cpp. Collected
     # live with the basepop deletions below.
-    "artifact files (recovered/)": 1026,
+    # 1026 -> 1019 (2026-09-05, W5 maininterface unlock chain): eight homed
+    # BYTE_EXACT - IfaceRegistryEntry::on_iface_selected/on_left_double_click,
+    # StatusWin::draw/reset_active/on_left_double_click, MainInterface::chat/
+    # set_message, say_orders.
+    "artifact files (recovered/)": 1019,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -726,7 +730,9 @@ SCAFFOLD_CEILINGS = {
     # (say_project), 00591e90.cpp (treaty_using_faction, BYTE_EXACT 39/39),
     # 004620c0.cpp (is_land_near), 00592480.cpp (fungus_radius, BYTE_EXACT
     # 72/72) and 005a6270.cpp (proto_sort) homed into src/map.cpp.
-    "unrecovered files": 1148,
+    # 1148 -> 1147 (2026-09-05, W5 maininterface unlock chain): 0045c0f0.cpp
+    # (MainInterface::set_message) homed BYTE_EXACT.
+    "unrecovered files": 1147,
     # 2717 -> 2748 (2026-09-04, P2 net batch): NetFifo promoted with
     # close/add/get/get, NetFifoNode, head_/tail_/count_ - the deliberate
     # raise this ceiling exists for (class modelling grows it; the class

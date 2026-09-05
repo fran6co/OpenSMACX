@@ -110,10 +110,12 @@ class StatusWin {
   int32_t iTileY_;
   int32_t iUnitIndex_;
   int32_t iCityIndex_;
-  uint32_t field_15C4_;  // 0x15C4
-  uint32_t field_15C8_;  // 0x15C8
-  uint32_t field_15CC_;  // 0x15CC
-  uint32_t field_15D0_;  // 0x15D0
+  // Signed: reset_active tests both against zero with the image's signed
+  // `jge`/`jl`, and -1 is the "nothing active" value they hold between uses.
+  int32_t field_15C4_;  // 0x15C4
+  int32_t field_15C8_;  // 0x15C8
+  int32_t field_15CC_;  // 0x15CC
+  int32_t field_15D0_;  // 0x15D0
   int32_t field_15D4_;
 
   uint32_t fInOnClick_;  // 0x15D8
@@ -124,6 +126,13 @@ class StatusWin {
   Spot spot_;  // 0x15E0
 };
 
+
+// 0x004B4970 ?say_orders@@YAXH@Z. Prints a vehicle's order line into
+// StringTemp and hands it to the text form below, which does the drawing.
+void say_orders(int veh_id);
+// 0x004B43E0 ?say_orders@@YAXPADH@Z, 1421 bytes - not recovered, forwarded in
+// statuswin.cpp so the int form can call it by name.
+void say_orders(char *text, int veh_id);
 
 // SubInterface::release_iface_mode is not recovered, and the interface it
 // acts on is a global the original reaches at a fixed address. Both are
@@ -138,12 +147,14 @@ inline SubInterface *sub_interface_global() {
 
 
 // Three fixed-address RECTs redraw() unions together, no established identity
-// beyond what that one function shows. Declared here rather than left as
-// `const` locals in statuswin.cpp because maininterface's homed click
-// handlers read the same two.
-extern RECT *const StatusWinRedrawRect1;  // 0x007AF50C
-extern RECT *const StatusWinRedrawRect2;  // 0x007AF4EC
-extern RECT *const StatusWinRedrawRect3;  // 0x007AF4FC
+// beyond what that one function shows. DEFINED here rather than in
+// statuswin.cpp on purpose: a namespace-scope const in a header has internal
+// linkage, so every TU that names one folds its address to the immediate the
+// image pushes (`push 0x7af50c`). An `extern` declaration costs maininterface's
+// click handlers a memory load the image does not make.
+RECT *const StatusWinRedrawRect1 = (RECT *)0x007AF50C;
+RECT *const StatusWinRedrawRect2 = (RECT *)0x007AF4EC;
+RECT *const StatusWinRedrawRect3 = (RECT *)0x007AF4FC;
 
 // 0x00939ED8, a status word. The corpus shows it cleared (00515430), read-
 // modify-written (00458d60) and tested bit by bit; UNK4 sets bit 0x20 in it

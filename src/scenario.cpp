@@ -39,8 +39,24 @@ static const uintptr_t LoadFlagsAddress = 0x00453F70;
 // slot 1 takes a single int and whose slot 2 is nullary, and the class that
 // owns it is still unidentified: no `mov dword ptr [0x7b0cb8], imm` store
 // exists in .text, so its constructor installs the vftable through a
-// register. Named for what the harness does with it rather than for a class
-// the image has not given us.
+// register.
+//
+// THE ADDRESS IS UNREACHABLE TO ANY CONSTRUCTOR, measured 2026-09-05 by
+// scanning every section of the shipped image for the four bytes B8 0C 7B 00.
+// .text holds 32, and every one is one of the NINE dispatch sites (0x4D9A46,
+// 0x4DF7DC, 0x4E109C, 0x4E115F, 0x5186CC, 0x51C296, 0x51CEAA, 0x5A9A81,
+// 0x5AADFE) in the forms `b9 b8 0c 7b 00` (mov ecx, imm),
+// `a1 b8 0c 7b 00` (mov eax, [imm]) and `8b 15 b8 0c 7b 00` (mov edx, [imm])
+// - all READS. There is no `89 05`/`89 0d`/`89 15`/`a3` store to the dword and
+// no `b8 b8 0c 7b 00` that would put the address in a register to store
+// through, and _SELFMOD/.rdata/.data hold it not at all. 0x7B0CB8 is past
+// .data's raw data (which ends at 0x6A8000), so it is zero-initialised BSS:
+// the nine sites read a null vftable pointer. 0x51BC1B does `or dword ptr
+// [0x9A64C0], 0xE0`, which is the guard - `test byte [0x9A64C0], 0x80` and
+// `, 0x40` - opening, so the shipped game either never reaches one of these
+// nine sites or faults there. There is therefore no class to model: do not
+// name one from the two slots. Named for what the harness does with it rather
+// than for a class the image has not given us.
 static const uintptr_t InterfaceSingletonAddress = 0x007B0CB8;
 static const uintptr_t ConsoleAddress = 0x009156B0;
 static const uintptr_t CurrentFactionAddress = 0x00939284;

@@ -122,6 +122,7 @@ class IfaceRegistryEntry : public SubInterface {
   */
 class MainInterface : public GraphicWin {
  public:
+
   // homed from 0045c600.cpp
   void on_scrolled(int a1, int a2);
 
@@ -227,10 +228,6 @@ class MainInterface : public GraphicWin {
   // 0x0045C3A0, a pending_bodies forwarder. blink2_timer (time.cpp) reaches
   // it on the fixed MainInterface at 0x007AE820 as its whole tick body.
   void redraw_complete();
-  // front+0x216EC. on_iface_mouse_leave tests it against 1, clears it and
-  // redraws when it is set, through the SubInterface subobject, where the
-  // same dword is subobject+0x20CD8.
-  uint32_t iface_redraw_pending_;
   void UNK2();
   void UNK3();
   void UNK4();
@@ -251,6 +248,15 @@ class MainInterface : public GraphicWin {
   // BattleWin::on_iface_button_clicked forwards to it on the fixed-address
   // MainInterface singleton at 0x007AF234.
   void on_iface_button_clicked(int a1);
+  // 0x0045C0F0 ?set_message@MainInterface@@QAEXPADHHHH@Z. The three ints
+  // after the text are read by no instruction in the body - only the char *
+  // reaches string_box_ and the desktop's MessageWin.
+  void set_message(char *text, int, int, int, int);
+  // 0x0045C0B0 ?chat@MainInterface@@QAEXPADH@Z. The second int selects an
+  // item id out of ChatItemIdTable (maininterface.cpp); the text goes to the
+  // message pane and to the desktop's MessageWin.
+  void chat(char *text, int channel);
+
  private:
   // field_A14_ and field_A18_ are the SubInterface subobject - its vptr and
   // its one dword - and are held as opaque dwords rather than as a declared
@@ -510,8 +516,18 @@ class MainInterface : public GraphicWin {
   Font font3_;
   uint32_t field_216E4_;
   uint32_t field_216E8_;
-  // the dword that was field_216EC_ stands beside redraw_complete above, as
-  // iface_redraw_pending_; nothing after it moved.
+  // 0x216EC. on_iface_mouse_leave tests it against 1, clears it and redraws
+  // when it is set, through the SubInterface subobject, where the same dword
+  // is subobject+0x20CD8. It lived beside redraw_complete in the public
+  // section until 2026-09-05: there it landed at 0xA14 - the SubInterface
+  // vftable slot - and pushed every member from field_A14_ through
+  // string_box_ four bytes past the image's own offsets, which is what
+  // MainInterface::chat was measuring as `add ecx, 0x1ead0` against the
+  // image's `add ecx, 0x1eacc`. Measured by probing the compiled object:
+  // flat_button_ 0xE04, button_group_ 0x1E87C, string_box_ 0x1EAD0,
+  // font1_ 0x21670 - all four the image's offset plus four, and all four
+  // back on the documented values once the dword returns here.
+  uint32_t iface_redraw_pending_;  // 0x216EC
   uint32_t alert_;
   Sprite sprites1_[4];
   Sprite sprites2_[4];
@@ -532,6 +548,9 @@ class MainInterface : public GraphicWin {
   Time time1_;
   Time time2_;
 };
+
+#include <stddef.h>
+
 
 void __cdecl desktop_update();
 
