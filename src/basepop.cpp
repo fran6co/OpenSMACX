@@ -27,6 +27,7 @@
 #include "filewin.h"
 #include "stringstruct.h"  // StringAllocationHeap - the 0x009B3374 hand-off
 #include "popup.h"  // PopupStartCaption - set_def_file's 0x009B8AA8 buffer
+#include "text.h"  // text_open / text_get / text_close - start's script reader
 #include <cstring>
 
 /*
@@ -2654,6 +2655,773 @@ int BasePop::UNK2() {
     }
 
     return max_width;
+}
+
+// ORIGINAL: 0x00603800 ?calculate_dimensions@BasePop@@QAEHXZ 0x00603800-0x006042D2 FILE
+// size      2770 bytes
+// prototype int (__thiscall ?calculate_dimensions@BasePop@@QAEHXZ)(BasePop* this)
+// callers   1   call targets   16
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD10 0x005DAD40 0x005DC360 0x005DCAB0 0x005DDDA0 0x005DDDE0 0x005DDEF0 0x006051A0 0x006099D0 0x00609FA0 0x0060A020 0x006120B0 0x006132A0
+// indirect  0x0060407A
+// LEVER: the popup lays its own dialog out, then hands the result to
+//        Dialogs::calculate_dimensions twice - once before the text walk and
+//        once again after the height moves - and both calls run on the same
+//        `dialogs_` member, which is what the forwarder at 0x006132A0 in
+//        pending_bodies.cpp is for.
+// LEVER: the embedded Dialog virtual base is reached as a QUALIFIED MEMBER
+//        ACCESS, the way set_width and on_redraw do it - the unqualified name
+//        finds ListBox's own field at the same offset and stores there.
+// LEVER: the owner's surface, not the popup's, carries every text call:
+//        `owner_window_->set_text_color(...)` folds the +0x444 into the
+//        receiver the image already holds (`mov ecx,[esi+0xa3c];
+//        add ecx,0x444`), and wrap_height at 0x00603EFD and 0x00603F03 runs
+//        on `this` instead - the one place the popup's own surface is used.
+// TRIED: the eight config slots this body installs into the embedded dialog's
+//        subobjects. They are ListBox::field_40_ (0x2210),
+//        RadioButton::field_10_ (0x2224), CheckBox::field_C_ (0x2234) and
+//        SpriteBox::field_1C_/field_20_/field_64_/field_68_/field_80_
+//        (0x225c/0x2260/0x22a4/0x22a8/0x22c0), and all eight are PRIVATE in
+//        headers the BasePop passes do not own, so the direct member writes
+//        the image has do not compile here (C2248). They are reached from
+//        ListBox::field_2C_ - their one public neighbour, Dialogs+0x2C - at
+//        the fixed strides below, which is why the image's
+//        `mov dword ptr [esi+0x2210], imm32` carries an extra `lea` and
+//        eight shifted displacements here.
+//        HANDOFF (listbox.h, radiobutton.h, checkbox.h, spritebox.h): move
+//        the eight under a public label, as CheckBox::field_10_ already is
+//        for DipEdit::init, and rewrite the eight `dialog_cfg[N]` stores as
+//        the direct qualified member writes - then delete the anchor local.
+//        Access is compile-time only, so nothing else re-measures.
+// RESIDUAL: 138 of 703, first divergence at instruction 0 - the image opens
+//        `sub esp, 8` for TWO spill slots and this tree opens `sub esp, 0xc`
+//        for THREE, the third holding the `dialog_cfg` anchor above. The
+//        image then puts its zero in EBP (`xor ebp,ebp` at 0x00603920) and
+//        its 0x400 in EDI; this tree puts the zero in EBX and the 0x400 in
+//        EDX, and every register assignment after that differs. So this is
+//        the receiver-spill wall in its register-allocation form, and it is
+//        the anchor's fault: the image has no anchor at all, because its
+//        eight writes are direct member stores. Until the four headers grant
+//        access, no spelling of the anchor can win - measured, see TRIED.
+// TRIED: folding the anchor away, each store written
+//        `*(&dialogs_.ListBox::field_2C_ + N) = v` - VC6 does NOT fold it
+//        back into the one store; the body grew past what the FPO path would
+//        take, the scorer switched to /O2 /Oy- /GX, and the frame-pointer
+//        prologue dropped agreement to 10 of 703. Worse in both directions.
+// TRIED: signed-arithmetic sweep on the unsigned fields, which is real and
+//        stays: `(field_21C0_*3)/2` needs `static_cast<int>` or VC6 emits
+//        `shr` where the image has `cdq/sub/sar` (81 -> 138 on that alone);
+//        the two `max(field_30D4_, field_30DC_)` tests and
+//        `edge > field_30D8_` need it for `jle` against `jbe`; and
+//        field_30CC_'s divisor needs it for `idiv` against `div`. They do not
+//        move the score past the register cascade, but they are the image's
+//        arithmetic and they are not optional.
+// TRIED: 2,770 bytes transcribed and the call census agrees with the image
+//        (call_diff reports 0 bodies disagreeing about call count) - the
+//        control flow, the two Dialogs::calculate_dimensions calls, the
+//        sixteen callees and the vtable slot 0x174 are all in the right
+//        order. What is left is allocation, not structure.
+// ORIGINAL: 0x00601BF0 ?start@BasePop@@QAEHPADPBDH0HPAUGraphicWin@@@Z 0x00601BF0-0x006025F9 FILE
+// symbol    ?start@BasePop@@QAEHPADPBDH0HPAVGraphicWin@@@Z
+//           The catalogue spells the sixth parameter `PAUGraphicWin@@` - a
+//           STRUCT - and this tree declares `class GraphicWin`, which mangles
+//           `PAV`. Same type, same layout, same bytes; only the letter moves.
+// size      2569 bytes
+// prototype int (__thiscall ?start@BasePop@@QAEHPADPBDH0HPAUGraphicWin@@@Z)(BasePop* this, char*, const char*, int, char*, int, GraphicWin*)
+// callers   13   call targets   24
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00401100 0x005D4510 0x005E2480 0x005E3890 0x005F7E90 0x005FD530 0x005FD550 0x005FD570 0x00600760 0x006007B0 0x00600F00 0x006015B0 0x00611F80 0x006120D0 0x00612A70 0x00613740 0x00625880 0x00644EF2 0x006453E0 0x00645470 0x00645D1C 0x00645DA7 0x006469A2 0x0064FDF0
+// LEVER: A CONFIG-SCRIPT PARSER, one directive per arm. The image reads the
+//        text table a line at a time; lines that do not start with '#' are
+//        popup items, and a '#' line is matched against the twenty keywords
+//        at 0x00696F64..0x00696FEC (the BasePopKeyword* arrays below) with
+//        _strnicmp(tok + 1, keyword, len) - tok[0] IS the '#'. The lengths
+//        and the token offsets are in the table at the head of the switch.
+// LEVER: VC6 DEFERS THE __CDECL CLEANUP, and the transcription that reads the
+//        arm bodies at face value gets every token offset wrong. Each arm
+//        calls purge_spaces, purge_leading and the converter on the SAME
+//        tok + N, but the two earlier calls' four bytes of stack are not
+//        given back until after the third, so the later `lea`s ride a lower
+//        esp and read as +4 and +8. Measured off the image: xs 3, ys 3, x 2,
+//        y 2, col 4, caption 8, checkbox 9, listbox 8, active 7, button 7,
+//        extra 6, wave 5, vol 4, pitch 6, fade 5, pan 4, sprite 7; editbox,
+//        text and itemlist take no argument.
+// LEVER: THE COMPARE LENGTHS ARE PATH-DEPENDENT CONSTANTS, and reading the
+//        register at the call site is a trap: `mov ebp, 4` sits in the col
+//        arm, so text (0x0060212C), wave (0x0060221E) and fade (0x00602368)
+//        all compare against 4 - and the `mov ebp, 1` in the vol/pitch/fade
+//        arms never executes on the path that reaches a LATER test, because
+//        any arm that matches leaves through `jmp 0x00601D05`. Verified per
+//        site against the image: xs 2, ys 2, x 2, y 2, col 4, caption 7,
+//        checkbox 8, editbox 7, listbox 7, active 6, text 4, itemlist 5,
+//        button 6, extra 5, wave 4, vol 3, pitch 5, fade 4, pan 3, sprite 6.
+// LEVER: the xs/ys wide-screen grow tests `external_window_ == 0` TWICE -
+//        once to skip the converter and once to skip the *3/2 - the same
+//        condition init() and set_width() carry.
+// TRIED: the local declaration order that the image's frame layout spells -
+//        flag, two pointers, the 0xF0 buffer, then four more - which is
+//        exactly the order this body declares. The image's frame is
+//        `sub esp, 0x10c` (0xC of slots, the buffer, then 0x10 of slots
+//        above it); this tree's is `sub esp, 0xfc`, because VC6 coalesces
+//        marks/token/width/height into the three slots below the buffer
+//        rather than giving them the four above it. 47 of 742 either way.
+// RESIDUAL: 47 of 742, and the whole gap is that one `sub`. No esp-relative
+//        displacement after instruction 0 can agree while the frames differ,
+//        and this body is dominated by them - the parse buffer is addressed
+//        off esp in every arm. The call census agrees with the image (78
+//        direct calls, call_diff reports 0 bodies disagreeing about count),
+//        so the structure, the directive order and the twenty keyword
+//        compares are right; what is left is frame layout, and the frame is
+//        the compiler's, not the source's.
+int BasePop::start(char *text_file, const char *text_label, int value,
+                   char *override_text, int flags, GraphicWin *owner_window) {
+    // The parse buffer is 0xF0 bytes at frame 0x1c; `add_as_escaped` is the
+    // dword at frame 0x10, seeded 1 by the `mov ebp, 1` in the prologue.
+    int add_as_escaped = 1;
+    char *line;
+    char *text;
+    char tok[0xf0];
+    int marks;
+    char *token;
+    int width;
+    int height;
+
+    if ((flags & 0x80) == 0) {
+        close();
+    }
+    if ((flags & 1) != 0) {
+        dialogs_.kind_ = 1;
+    } else if ((flags & 2) != 0) {
+        dialogs_.kind_ = 2;
+    } else if ((flags & 4) != 0) {
+        dialogs_.kind_ = 4;
+    } else {
+        dialogs_.kind_ = 0x10;
+    }
+
+    int result = 0;
+    if ((flags & 0x80) != 0 || (result = init(0, flags)) == 0) {
+        if ((flags & 0x100000) == 0) {
+            external_window_ = 0;
+        }
+        if (owner_window != 0) {
+            owner_window->is_visible();
+            owner_window_ = owner_window;
+        }
+        value_ = value;
+        if (text_label == 0) {
+            return 3;
+        }
+        if (override_text != 0) {
+            dialogs_.EditGroup::set_default(override_text, 0);
+        }
+        if (text_open(text_file != 0 ? text_file : (char *)PopupStartCaption,
+                      text_label) == 0) {
+            return result;
+        }
+
+      read_line:
+        for (;;) {
+            line = text_get();
+            if (line == 0) {
+                return 1;
+            }
+            if (*line != '\0') {
+                break;
+            }
+            add_as_escaped = 0;
+        }
+        tok[0] = '\0';
+        parse_string(line, tok);
+
+        if (tok[0] != '#') {
+            // A plain line: an item, an item with the '^' prefix marks, or a
+            // value for the edit box. Which one depends on whether the caller
+            // asked for escaped text at all.
+            if (add_as_escaped) {
+                marks = 0;
+                text = tok;
+                if (tok[0] == '^') {
+                    if (tok[1] == '\0') {
+                        marks = 3;
+                        text = tok + 1;
+                    } else if (tok[1] == '^') {
+                        marks = 2;
+                        text = (tok[2] == '^') ? (tok + 3) : (tok + 2);
+                    } else {
+                        marks = 1;
+                        text = tok + 1;
+                    }
+                }
+                unit_ids_.field_1C_ = reinterpret_cast<uint32_t>(text);
+                unit_ids_.field_20_ = marks;
+                unit_ids_.field_24_ = 0;
+                unit_ids_.add(0);
+            } else if ((field_30A8_ & 4) == 0) {
+                dialogs_.item(tok, 0);
+            } else {
+                if (dialogs_.get_num_items() < 10) {
+                    if (flags == 0 || dialogs_.get_num_items() != 0) {
+                        dialogs_.EditGroup::edit(tok, 0, 0);
+                    } else {
+                        dialogs_.EditGroup::edit(tok, 0, 0);
+                    }
+                } else {
+                    dialogs_.EditGroup::edit(tok, 0, flags);
+                }
+            }
+            goto read_line;
+        }
+
+        // THE DIRECTIVE TABLE. (keyword, compare length, token offset N).
+        // Converter is atoi unless the comment says otherwise.
+        if (_strnicmp(tok + 1, BasePopKeywordXs, 2) == 0) {
+            purge_spaces(tok + 3);
+            purge_leading(tok + 3);
+            int v = atoi(tok + 3);
+            if (external_window_ == 0) {
+                if ((field_30A8_ & 0x400) == 0 && WinScreenWidth > 0x3ff) {
+                    v = (v * 3) / 2;
+                }
+            }
+            dialogs_.Dialog::field_2C_ = v;
+            goto read_line;
+        }
+        if (_strnicmp(tok + 1, BasePopKeywordYs, 2) == 0) {
+            purge_spaces(tok + 3);
+            purge_leading(tok + 3);
+            int v = atoi(tok + 3);
+            if (external_window_ == 0) {
+                if ((field_30A8_ & 0x400) == 0 && WinScreenWidth > 0x3ff) {
+                    v = (v * 3) / 2;
+                }
+            }
+            dialogs_.Dialog::field_30_ = v;
+            goto read_line;
+        }
+        if (_strnicmp(tok + 1, BasePopKeywordX, 2) == 0) {
+            purge_spaces(tok + 2);
+            purge_leading(tok + 2);
+            int v = atoi(tok + 2);
+            if (v != 0x2000) {
+                loc_a_ = v;
+            }
+            goto read_line;
+        }
+        if (_strnicmp(tok + 1, BasePopKeywordY, 2) == 0) {
+            purge_spaces(tok + 2);
+            purge_leading(tok + 2);
+            int v = atoi(tok + 2);
+            if (v != 0x2000) {
+                loc_b_ = v;
+            }
+            goto read_line;
+        }
+        if (_strnicmp(tok + 1, BasePopKeywordCol, 4) == 0) {
+            purge_spaces(tok + 4);
+            purge_leading(tok + 4);
+            dialogs_.Dialog::field_4C_ = atoi(tok + 4);
+            goto read_line;
+        }
+        if (_strnicmp(tok + 1, BasePopKeywordCaption, 7) == 0) {
+            purge_spaces(tok + 8);
+            purge_leading(tok + 8);
+            if (owned_text_ != 0) {
+                free(owned_text_);
+                owned_text_ = 0;
+            }
+            unsigned int len = strlen(tok + 8);
+            owned_text_ = static_cast<char *>(mem_get(len + 1));
+            if (owned_text_ != 0) {
+                *owned_text_ = '\0';
+                strcat(owned_text_, tok + 8);
+            }
+            goto read_line;
+        }
+        if (_strnicmp(tok + 1, BasePopKeywordCheckbox, 8) == 0) {
+            field_30A8_ |= 1;
+            dialogs_.kind_ = 1;
+            purge_spaces(tok + 9);
+            purge_leading(tok + 9);
+            if (atoi(tok + 9) != 0) {
+                dialogs_.Dialog::field_50_ = atoi(tok + 9);
+            }
+            goto read_line;
+        }
+        if (_strnicmp(tok + 1, BasePopKeywordEditbox, 7) == 0) {
+            field_30A8_ |= static_cast<uint32_t>(dialogs_.kind_);
+            goto read_line;
+        }
+        if (_strnicmp(tok + 1, BasePopKeywordListbox, 7) == 0) {
+            field_30A8_ |= 2;
+            dialogs_.kind_ = 2;
+            purge_spaces(tok + 8);
+            purge_leading(tok + 8);
+            if (atoi(tok + 8) != 0) {
+                dialogs_.Dialog::field_50_ = atoi(tok + 8);
+            }
+            goto read_line;
+        }
+        if (_strnicmp(tok + 1, BasePopKeywordActive, 6) == 0) {
+            purge_spaces(tok + 7);
+            purge_leading(tok + 7);
+            value_ = atoi(tok + 7);
+            goto read_line;
+        }
+        if (_strnicmp(tok + 1, BasePopKeywordText, 4) == 0) {
+            add_as_escaped = 1;
+            goto read_line;
+        }
+        if (_strnicmp(tok + 1, BasePopKeywordItemlist, 5) == 0) {
+            add_as_escaped = 0;
+            goto read_line;
+        }
+        if (_strnicmp(tok + 1, BasePopKeywordButton, 6) == 0) {
+            purge_spaces(tok + 7);
+            purge_leading(tok + 7);
+            text = tok + 7;
+            if (*text != '\0') {
+                item_ids_.field_1C_ = reinterpret_cast<uint32_t>(text);
+                item_ids_.field_20_ = 0;
+                item_ids_.field_24_ = 0;
+                if (item_ids_.add(0) == 0) {
+                    field_20F4_ = field_20F4_ + 1;
+                }
+            }
+            goto read_line;
+        }
+        if (_strnicmp(tok + 1, BasePopKeywordExtra, 5) == 0) {
+            purge_spaces(tok + 6);
+            purge_leading(tok + 6);
+            field_30AC_ = atoi(tok + 6);
+            goto read_line;
+        }
+        // The five text-block directives come in a/b pairs: a trailing '2'
+        // on the keyword selects the second 0x118 block, everything else the
+        // first. Both blocks are the same five fields, so the pair is one
+        // reference chosen up front.
+        if (_strnicmp(tok + 1, BasePopKeywordWave, 4) == 0) {
+            BasePopTextBlock &block =
+                (tok[1] == '2') ? text_block_b_ : text_block_a_;
+            token = tok + 5 + ((tok[1] == '2') ? 1 : 0);
+            purge_spaces(token);
+            purge_leading(token);
+            if (isdigit(static_cast<unsigned char>(*token))) {
+                block.field_104_ = atoi(token);
+            }
+            block.text[0] = '\0';
+            strcat(block.text, token);
+            goto read_line;
+        }
+        if (_strnicmp(tok + 1, BasePopKeywordVol, 3) == 0) {
+            BasePopTextBlock &block =
+                (tok[1] == '2') ? text_block_b_ : text_block_a_;
+            token = tok + 4 + ((tok[1] == '2') ? 1 : 0);
+            purge_spaces(token);
+            purge_leading(token);
+            block.field_108_ = atol(token);
+            goto read_line;
+        }
+        if (_strnicmp(tok + 1, BasePopKeywordPitch, 5) == 0) {
+            BasePopTextBlock &block =
+                (tok[1] == '2') ? text_block_b_ : text_block_a_;
+            token = tok + 6 + ((tok[1] == '2') ? 1 : 0);
+            purge_spaces(token);
+            purge_leading(token);
+            block.field_10C_ = atoi(token);
+            goto read_line;
+        }
+        if (_strnicmp(tok + 1, BasePopKeywordFade, 4) == 0) {
+            BasePopTextBlock &block =
+                (tok[1] == '2') ? text_block_b_ : text_block_a_;
+            token = tok + 5 + ((tok[1] == '2') ? 1 : 0);
+            purge_spaces(token);
+            purge_leading(token);
+            block.field_110_ = atol(token);
+            goto read_line;
+        }
+        if (_strnicmp(tok + 1, BasePopKeywordPan, 3) == 0) {
+            BasePopTextBlock &block =
+                (tok[1] == '2') ? text_block_b_ : text_block_a_;
+            token = tok + 4 + ((tok[1] == '2') ? 1 : 0);
+            purge_spaces(token);
+            purge_leading(token);
+            block.field_114_ = atoi(token);
+            goto read_line;
+        }
+        if (_strnicmp(tok + 1, BasePopKeywordSprite, 6) == 0) {
+            purge_spaces(tok + 7);
+            purge_leading(tok + 7);
+            if (owner_window_->get_pcx_dimensions(tok + 7, &width, &height)
+                == 0) {
+                if (sprite_.init(tok + 7, width, height) == 0) {
+                    caller_sprite_ = &sprite_;
+                }
+            }
+            goto read_line;
+        }
+        if (tok[1] == '#') {
+            goto read_line;
+        }
+        text_close();
+        result = 0;
+    }
+    return result;
+}
+
+
+typedef void(__fastcall *func_basepop_slot093)(void *);
+// The notification slot each sub-dialog carries: the four bytes of a
+// single-inheritance member pointer, which is the address of the popup's own
+// double_click. The slots are uint32_t fields, so the store goes through a
+// pointer cast rather than an integer one - VC6 refuses
+// reinterpret_cast<unsigned int>( &BasePop::double_click ) outright.
+typedef void (BasePop::*func_basepop_click)(int);
+
+int BasePop::calculate_dimensions() {
+    // THE OWNER'S SURFACE, for every text call below. GraphicWin's Buffer
+    // base sits 0x444 in, behind its Win base; calling the inherited method
+    // straight on the pointer lets VC6 fold that 0x444 into the receiver it
+    // is already holding.
+    owner_window_->set_text_color(string_color_a_, string_color_b_,
+                                  string_color_c_, string_color_d_);
+    owner_window_->set_text_color2(string_color_2a_, string_color_2b_,
+                                   string_color_2c_, string_color_2d_);
+    owner_window_->set_text_color3(string_color_3a_, string_color_3b_,
+                                   string_color_3c_, string_color_3d_);
+    owner_window_->set_text_color_hyper(string_color_hyper_a_,
+                                        string_color_hyper_b_,
+                                        string_color_hyperc_,
+                                        string_color_hyper_d_);
+    owner_window_->set_font(string_font1_, string_font2_, string_font3_,
+                            string_font4_);
+
+    // THE TWO ROW-COUNT GROWS: one for the fallout bit, one for a popup that
+    // is neither wide-screen-scaled nor hyperlinked.
+    field_30B0_ = field_20F4_;
+    if ((field_30A8_ & 0x40) != 0) {
+        ++field_30B0_;
+    }
+    if ((field_30A8_ & 0x10100) == 0) {
+        ++field_30B0_;
+    }
+
+    // The dialog's inset: the wide-screen 3/2 grow applies only when the
+    // popup draws into itself and the screen is wide.
+    if (external_window_ != 0) {
+        field_30E0_ = 0;
+        field_30E4_ = field_21C4_;
+    } else if ((field_30A8_ & 0x400) == 0 && WinScreenWidth >= 0x400) {
+        // SIGNED: the image's `cdq / sub eax,edx / sar eax,1` is the signed
+        // divide, and the fields are the unsigned dwords they are stored in.
+        field_30E0_ = (static_cast<int>(field_21C0_) * 3) / 2;
+        field_30E4_ = (static_cast<int>(field_21C4_) * 3) / 2;
+    } else {
+        field_30E0_ = field_21C0_;
+        field_30E4_ = field_21C4_;
+    }
+    // The image emits this pair twice, once per arm of the test above, and
+    // with a different register pair each time - so the source branches here
+    // again rather than falling through.
+    if (external_window_ != 0) {
+        field_30E8_ = field_21B8_;
+        field_30EC_ = field_21BC_;
+    } else {
+        field_30E8_ = field_21B8_;
+        field_30EC_ = field_21BC_;
+    }
+
+    field_30F0_ = field_21B0_;
+    field_30F4_ = field_21B4_;
+    const int border_x = field_21B0_;
+    if (caller_sprite_ != 0) {
+        // The caller's picture scales the dialog: its width sets the left
+        // edge, its height the top one, both through the shared pair at
+        // 0x3104/0x3108, and the top one adds the inset when the list is
+        // showing anything.
+        int top_extra = 0;
+        if (unit_ids_.entry_count_ != 0) {
+            top_extra = field_30E4_;
+        }
+        const int scale = field_3104_;
+        const int divide = field_3108_;
+        field_30D8_ = caller_sprite_->iWidth_ * scale / divide + field_30E0_ +
+                      top_extra;
+        field_30DC_ = caller_sprite_->iHeight_ * scale / divide;
+    } else {
+        field_30D8_ = 0;
+        field_30DC_ = 0;
+    }
+
+    // The row pitch comes from the first button font's height, read whether
+    // or not anything below runs - the image loads it before the guard.
+    const int button_height = button_font1_->height_;
+
+    if (external_window_ != 0) {
+        // THE EMBEDDED DIALOG VIRTUAL BASE, as a qualified member access.
+        dialogs_.Dialog::field_2C_ =
+            dialog_width_ - field_30E0_ * 2 - field_21B4_ - border_x;
+        const int shrink = field_30B0_ != 0 ? field_30D0_ : 0;
+        int height = dialog_height_ - shrink - field_30EC_ - field_30E8_;
+        if (external_window_ == 0 && (field_30A8_ & 0x400) == 0 &&
+            WinScreenWidth >= 0x400) {
+            height = (height * 3) / 2;
+        }
+        dialogs_.Dialog::field_30_ = height;
+        if (default_loc_a_ != 0x2000) {
+            loc_a_ = default_loc_a_;
+        }
+        if (default_loc_b_ != 0x2000) {
+            loc_b_ = default_loc_b_;
+        }
+        dialogs_.Dialog::field_20_ |= 1;
+        UNK4(1);
+    }
+
+    int result = dialogs_.calculate_dimensions();
+    if (result != 0) {
+        return result;
+    }
+
+    // THE EIGHT CONFIG SLOTS - see the HANDOFF under the marker above.
+    uint32_t *const dialog_cfg = &dialogs_.ListBox::field_2C_;
+
+    if (external_window_ != 0) {
+        // With a window attached the popup's own edges win outright.
+        int left = dialogs_.Dialog::field_5C_;
+        if (left == 0) {
+            left = dialogs_.Dialog::field_2C_;
+        }
+        field_30BC_ = left;
+        int top = dialogs_.Dialog::field_60_;
+        if (top == 0) {
+            top = dialogs_.Dialog::field_30_;
+        }
+        field_30C0_ = top;
+    } else {
+        // Without one the list's own edge competes with the drawn popup's,
+        // and field_21CC_ offsets it when it is set at all.
+        int edge = dialogs_.Dialog::field_5C_ != 0 ? dialogs_.Dialog::field_5C_
+                                                   : dialogs_.Dialog::field_2C_;
+        if (field_21CC_ == -1) {
+            if (edge > static_cast<int>(field_30D8_)) {
+                edge = dialogs_.Dialog::field_5C_ != 0
+                           ? dialogs_.Dialog::field_5C_
+                           : dialogs_.Dialog::field_2C_;
+            }
+            field_30BC_ = edge + field_30E0_ * 2;
+        } else {
+            if (edge > static_cast<int>(field_30D8_)) {
+                edge = dialogs_.Dialog::field_5C_ != 0
+                           ? dialogs_.Dialog::field_5C_
+                           : dialogs_.Dialog::field_2C_;
+            } else {
+                edge = field_30D8_;
+            }
+            field_30BC_ = field_21CC_ + field_30E0_ + edge;
+        }
+    }
+
+    field_30C4_ = dialogs_.Dialog::field_60_;
+    // The kind decides which sub-dialog this popup configures. `double_click`
+    // is the notification each of the three slots receives.
+    switch (dialogs_.kind_ + 1) {
+      case 0:
+        break;
+      case 2:
+        // 0x2234, CheckBox::field_C_
+        *reinterpret_cast<func_basepop_click *>(dialog_cfg + 0x0e) =
+            &BasePop::double_click;
+        break;
+      case 3:
+        if (value_ != -1) {
+            dialogs_.ListBox::set_selected_id(value_);
+        } else {
+            dialogs_.ListBox::set_selected_pos(0, 1);
+        }
+        // 0x2210, ListBox::field_40_
+        *reinterpret_cast<func_basepop_click *>(dialog_cfg + 0x05) =
+            &BasePop::double_click;
+        break;
+      case 5:
+        if (value_ != -1) {
+            dialogs_.EditGroup::set_text_limits(value_);
+        }
+        break;
+      case 9:
+        dialog_cfg[0x2b] = field_3160_;                            // 0x22a8
+        dialog_cfg[0x31] = field_3164_;                            // 0x22c0
+        dialog_cfg[0x2a] = reinterpret_cast<uint32_t>(redraw_callback_);
+        dialog_cfg[0x19] = field_3108_;                            // 0x2260
+        dialog_cfg[0x18] = field_3104_;                            // 0x225c
+        break;
+      default:
+        if (value_ != -1) {
+            dialogs_.Dialog::set_selected_id(value_);
+        } else {
+            dialogs_.Dialog::selected_position_ = 0;
+        }
+        // 0x2224, RadioButton::field_10_
+        *reinterpret_cast<func_basepop_click *>(dialog_cfg + 0x0a) =
+            &BasePop::double_click;
+        break;
+    }
+
+    // THE TEXT WALK. text_left is the popup's usable width with both insets
+    // and the list offset taken out; the image computes it once, into EBX,
+    // and hands it to every wrap call that follows.
+    const int text_left =
+        field_30BC_ - field_30D8_ - field_21C8_ - field_30E0_ * 2;
+
+    int wrap_kind = 0;
+    if (unit_ids_.head_ != 0) {
+        wrap_kind = unit_ids_.current_->payload->field_8_;
+    }
+    field_30D4_ = 0;
+    if (wrap_kind == 3) {
+        field_30D4_ += owner_window_->text_line_height();
+        owner_window_->wrap_height_flying(static_cast<char *>(0), text_left);
+    } else if (wrap_kind == 2) {
+        char *text = unit_ids_.head_ != 0 ? unit_ids_.current_->payload->text
+                                          : static_cast<char *>(0);
+        field_30D4_ += owner_window_->wrap_height(text, text_left);
+        owner_window_->wrap_height_flying(static_cast<char *>(0), text_left);
+    } else {
+        char *text = unit_ids_.head_ != 0 ? unit_ids_.current_->payload->text
+                                          : static_cast<char *>(0);
+        owner_window_->wrap_height_flying(text, text_left);
+    }
+
+    // The remaining items, each advanced by next_entry() open-coded. The
+    // image re-tests head_ after the calls - it does not trust the register
+    // across them - so the source tests it again too.
+    for (int index = 0; index < unit_ids_.entry_count_ - 1; ++index) {
+        if (unit_ids_.head_ != 0) {
+            ++unit_ids_.current_position_;
+            unit_ids_.current_ = unit_ids_.current_->next;
+            if (unit_ids_.current_position_ == unit_ids_.entry_count_) {
+                unit_ids_.current_position_ = 0;
+            }
+        }
+
+        // StringStruct::current_entry()->text, open-coded. BUG IN THE
+        // ORIGINAL: the middle arm dereferences a null payload and reads
+        // address 4 when the list has a cursor but no head - the image emits
+        // `xor eax,eax / mov ebp,[eax+4]` there. Reproduced as shipped.
+        char *text = unit_ids_.current_ != 0
+                   ? (unit_ids_.head_ != 0 ? unit_ids_.current_->payload
+                                           : static_cast<StringStructPayload *>(0))
+                         ->text
+                   : static_cast<char *>(0);
+
+        int kind = wrap_kind;
+        if (unit_ids_.head_ != 0) {
+            kind = unit_ids_.current_->payload->field_8_;
+        }
+        if (unit_ids_.head_ != 0 && kind != 0) {
+            field_30D4_ += owner_window_->wrap_height_flying_flush();
+            if (kind == 2) {
+                field_30D4_ += wrap_height(text, text_left);
+                owner_window_->wrap_height_flying(static_cast<char *>(0),
+                                                  text_left);
+            } else if (kind == 3) {
+                field_30D4_ += owner_window_->text_line_height();
+                owner_window_->wrap_height_flying(static_cast<char *>(0),
+                                                  text_left);
+            } else {
+                owner_window_->wrap_height_flying(text, text_left);
+            }
+        } else {
+            owner_window_->wrap_height_flying(text);
+        }
+    }
+
+    field_30D4_ += owner_window_->wrap_height_flying_flush();
+    const int text_height = field_30D4_;
+
+    if (field_30B0_ != 0) {
+        // One row of slack per line, rounded to the font's four-byte grid.
+        field_30D0_ = (button_height * 8 - button_height) / 4;
+        // SIGNED: the image divides with `cdq / idiv`, and the fields are
+        // stored as unsigned dwords, so every operand is widened here.
+        field_30CC_ =
+            (static_cast<int>(field_30BC_) - static_cast<int>(field_30E0_) * 2 -
+             (static_cast<int>(field_30B0_) - 1) *
+                 static_cast<int>(field_30E4_)) /
+            static_cast<int>(field_30B0_);
+    } else {
+        field_30D0_ = 0;
+        field_30CC_ = 0;
+    }
+
+    if (external_window_ != 0 && (field_30A8_ & 2) != 0) {
+        // The dialog grew: run the layout a second time with the new height.
+        dialogs_.Dialog::field_30_ = dialog_height_ - field_30E4_ * 2 -
+                                     field_30D0_ - text_height;
+        result = dialogs_.calculate_dimensions();
+        if (result != 0) {
+            return result;
+        }
+    }
+
+    // Slot 0x174 - the popup's own layout hook, run after the dialog settles.
+    vtable_slot<func_basepop_slot093>(this, 0x174)(this);
+
+    if ((field_30A8_ & 0x100) != 0) {
+        field_30D0_ = 0;
+    }
+
+    if (external_window_ != 0) {
+        dialogs_.Dialog::field_2C_ =
+            dialog_width_ - field_30E0_ * 2 - field_30F4_ - field_30F0_;
+        int top = static_cast<int>(field_30D4_) > static_cast<int>(field_30DC_)
+                     ? static_cast<int>(field_30D4_)
+                     : static_cast<int>(field_30DC_);
+        int height = dialog_height_ - (field_30B0_ != 0 ? field_30D0_ : 0) -
+                     top - field_30EC_ - field_30E8_;
+        if (external_window_ == 0 && (field_30A8_ & 0x400) == 0 &&
+            WinScreenWidth >= 0x400) {
+            height = (height * 3) / 2;
+        }
+        dialogs_.Dialog::field_30_ = height;
+        if (default_loc_a_ != 0x2000) {
+            loc_a_ = default_loc_a_;
+        }
+        if (default_loc_b_ != 0x2000) {
+            loc_b_ = default_loc_b_;
+        }
+        dialogs_.Dialog::field_20_ |= 3;
+        if (external_window_ != 0) {
+            field_30BC_ = dialog_width_;
+            field_30C0_ = dialog_height_;
+            if (dialogs_.kind_ == -1) {
+                field_30C4_ = 0;
+                dialogs_.Dialog::field_60_ = 0;
+            }
+        }
+    } else {
+        int top = static_cast<int>(field_30D4_) > static_cast<int>(field_30DC_)
+                     ? static_cast<int>(field_30D4_)
+                     : static_cast<int>(field_30DC_);
+        int inner = field_30C4_ + field_30E0_ * 2 + top + field_30D0_;
+        if (field_30C4_ != 0) {
+            inner += field_30E4_;
+        }
+        if (field_30D0_ != 0) {
+            inner += field_30E4_;
+        }
+        field_30C0_ = inner + field_30EC_ + field_30E8_;
+        field_30BC_ += field_30F4_ + field_30F0_;
+    }
+
+    // THE PUBLISHED EXTENT: the next popup opens below/behind this one.
+    BasePopDrawnRight = (owner_window_ != this ? field_30B4_ : 0) +
+                        field_30F0_ + field_30E0_ + field_30D8_;
+    BasePopDrawnBottom = (owner_window_ != this ? field_30B8_ : 0) +
+                         field_30E0_ + field_30D4_ + field_30E8_;
+    return 0;
 }
 
 // ORIGINAL: 0x00604AB0 ?on_redraw@BasePop@@QAEXXZ 0x00604AB0-0x00604E31 FILE

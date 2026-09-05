@@ -162,7 +162,16 @@ FLOORS = {
     # ?agenda_off@@YAXHHH@Z; the catalogue's ?set_agenda@@YAXHHHH@Z is the
     # four-argument set-or-clear at 0x0055BBA0, already homed BYTE_EXACT in
     # src/faction.cpp.
-    "archive-only-forwarder": 0,
+    # 0 -> 1 (2026-09-05, W5f basepop finisher, collected): the
+    # Dialogs::calculate_dimensions forwarder (0x006132A0) stands in
+    # pending_bodies.cpp so the homed BasePop::calculate_dimensions links,
+    # and its 88-byte archive body carries a BYTE_EXACT claim. Homing it at
+    # collection REVERTED on C2039 - the body calls through the RadioButton
+    # base and that declaration does not exist yet. The unlock: declare
+    # calculate_dimensions on the Dialogs widget bases (or model whatever
+    # the 88 bytes walk), home with --claimed, and this floor returns to 0
+    # with the forwarder.
+    "archive-only-forwarder": 1,
     "unknown-host-files": 0,
 }
 

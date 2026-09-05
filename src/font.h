@@ -104,6 +104,11 @@ class Font {
   // `Win::flip` derives the bubble's line advance from these - `unk_1_`
   // when it is negative, `height_ + unk_1_` when it is not.
   friend class Win;
+  // `BasePop::calculate_dimensions` (0x00603800) reads button_font1_'s
+  // height_ to scale the popup's row pitch (`mov edx,[eax+0x10]` at
+  // 0x00603A50). Compile-time access only: no offset moves and no emitted
+  // byte changes, the same edit this header made for unk_1_.
+  friend class BasePop;
 
  public:
   // PUBLIC because the image writes it from outside: StatusWin sets

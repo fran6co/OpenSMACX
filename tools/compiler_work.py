@@ -525,7 +525,13 @@ SCAFFOLD_CEILINGS = {
     # 256 -> 257 (2026-09-05, collected across the parallel waves):
     # write_strings (+, basepop), sprite_box_pos_to_id (+ then -, closure),
     # set_selected_pos (+, closure), fixup_landmarks (-, map).
-    "PENDING_BODY forwarders": 257,
+    # 257 -> 260 (2026-09-05, W5f basepop finisher, collected): three came
+    # in with the two homed bodies' link needs - Sprite::init (0x005E3890),
+    # EditGroup::set_default (0x006120D0) and Buffer::get_pcx_dimensions
+    # (0x005E2480) - plus Dialogs::calculate_dimensions (0x006132A0) whose
+    # homing reverted on the RadioButton declaration (see address_index's
+    # archive-only raise). All FILE-tier targets, no landmines.
+    "PENDING_BODY forwarders": 260,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -727,7 +733,10 @@ SCAFFOLD_CEILINGS = {
     # proto_sort), maininterface (-1: set_message BYTE_EXACT), caviar (-11:
     # the eight add_object overloads, render_mono, clear_buffers,
     # render_multi_table_dest, object_start, vox_release_record 00639630).
-    "unrecovered files": 1133,
+    # 1133 -> 1131 (2026-09-05, W5f basepop finisher): 00603800.cpp
+    # (calculate_dimensions, homed MISMATCH 138/703) and 00601bf0.cpp
+    # (start, homed MISMATCH 47/742).
+    "unrecovered files": 1131,
     # 2717 -> 2748 (2026-09-04, P2 net batch): NetFifo promoted with
     # close/add/get/get, NetFifoNode, head_/tail_/count_ - the deliberate
     # raise this ceiling exists for (class modelling grows it; the class

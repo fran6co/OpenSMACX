@@ -82,7 +82,11 @@ CEILINGS = {
     # 181 -> 185 (2026-09-04, P2 map/mapwin batch): MapWin::UNK6 and UNK7
     # homed with claims under the DipEdit precedent; both EVIDENCE-FREE by
     # every census (callers 0, no CSV, Ghidra FUN_/IDA sub_ spellings).
-    "unk-method": 185,
+    # 185 -> 186 (2026-09-05, W5f basepop finisher, collected): one added
+    # code line - the UNK4(1) call at image 0x00603B35 inside the homed
+    # BasePop::calculate_dimensions, a reference to an existing BYTE_EXACT
+    # body, not a new unnamed method.
+    "unk-method": 186,
     # THE ESCAPE HATCH, RATCHETED. An UNKn whose comment block says
     # EVIDENCE-FREE and names it has been investigated and found unnameable -
     # no caller, no dispatch, no CSV entry. That is a result, not unfinished
@@ -385,7 +389,11 @@ CEILINGS = {
     # parameters are unnamed in the image (the homed members spell (int,
     # int) because nothing names them). Homing any forwarder lowers this
     # again.
-    "scaffold name": 2478,
+    # 2478 -> 2466 (2026-09-05, W5f basepop finisher, collected): the two
+    # homed bodies' parameter renames - start's directive table and
+    # calculate_dimensions' walk name twelve sites the artifacts spelled
+    # a1/a2.
+    "scaffold name": 2466,
 }
 
 WHY = {

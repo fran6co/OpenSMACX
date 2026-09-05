@@ -353,6 +353,17 @@ int __cdecl vox_expand_palette(int fd, void *palette) {
     return 0;
 }
 
+// ?init@Sprite@@QAEXPADHH@Z at 0x005E3890 - BasePop::start (0x00601BF0)
+// calls it BY NAME on the popup's own `sprite_` for the "sprite" directive,
+// so the call site needs the member's real address to emit the image's `E8`.
+// The claim in src/unrecovered/005e3890.cpp is FILE-only, so this forwarder
+// is the only compiled definition and the landmine check stays clear.
+int Sprite::init(char *filename, int width, int height) {
+    typedef int(__fastcall *pending)(Sprite *, void *, char *, int, int);
+    return PENDING_BODY(0x005E3890, pending)(this, nullptr, filename, width,
+                                             height);
+}
+
 // ?draw@Sprite@@QAEHPAUBuffer@@HHH@Z at 0x005E4B9A - 3225 bytes, the blitter
 // the six-argument overload wraps with a substituted origin. Called by name,
 // so it gets a forwarder rather than a pointer.
@@ -360,6 +371,17 @@ int __cdecl vox_expand_palette(int fd, void *palette) {
 int Sprite::draw(Buffer *buffer, int a, int b, int c) {
     typedef int(__fastcall *pending)(Sprite *, void *, Buffer *, int, int, int);
     return PENDING_BODY(0x005E4B9A, pending)(this, nullptr, buffer, a, b, c);
+}
+
+// ?get_pcx_dimensions@Buffer@@QAEHPBDPAH1@Z at 0x005E2480 - BasePop::start
+// (0x00601BF0) calls it for the "sprite" directive. The image's body never
+// reads the receiver ECX (its first instructions overwrite it), so the call
+// site's `this` is dead either way; the tree types it as a Buffer member and
+// start passes the owner window's.
+int Buffer::get_pcx_dimensions(const char *filename, int *width, int *height) {
+    typedef int(__fastcall *pending)(Buffer *, void *, const char *, int *, int *);
+    return PENDING_BODY(0x005E2480, pending)(this, nullptr, filename, width,
+                                             height);
 }
 
 // The draw_dest family's five-argument workers - 0x005E5833, 0x005E81BC and
@@ -501,15 +523,6 @@ void Popup::start(char *a1, const char *a2, int a3, char *a4, int a5,
     typedef void(__fastcall *pending)(Popup *, void *, char *, const char *,
                                       int, char *, int, GraphicWin *);
     PENDING_BODY(0x00406380, pending)(this, nullptr, a1, a2, a3, a4, a5, owner);
-}
-
-// ?start@BasePop@@QAEHPADPBDH0HPAUGraphicWin@@@Z at 0x00601BF0 - popup.cpp's
-// `pops()` calls it BY NAME so it emits the image's `call rel32`.
-int BasePop::start(char *a1, const char *a2, int a3, char *a4, int a5,
-                   GraphicWin *a6) {
-    typedef int(__fastcall *pending)(BasePop *, void *, char *, const char *,
-                                     int, char *, int, GraphicWin *);
-    return PENDING_BODY(0x00601BF0, pending)(this, nullptr, a1, a2, a3, a4, a5, a6);
 }
 
 // ?sprite@SpriteBox@@QAEHPAUSprite@@PADH@Z at 0x006108E0 - popup.cpp's
@@ -1173,6 +1186,18 @@ void Dialogs::on_dialog_focus(int a1) {  // 0x006130E0
     PENDING_BODY(0x006130E0, pending)(this, nullptr, a1);
 }
 
+// ?calculate_dimensions@Dialogs@@QAEHXZ at 0x006132A0 - the kind dispatcher
+// BasePop::calculate_dimensions (0x00603800) calls BY NAME on `dialogs_`, so
+// the call site needs the member's real address to emit the image's `E8`.
+// The claim in src/recovered/006132a0.cpp is FILE-only (that directory is on
+// no build), so this forwarder is the only compiled definition and the
+// landmine check stays clear. Homing the 88-byte body itself still wants
+// `calculate_dimensions` declared on all five bases first - see dialogs.h.
+int Dialogs::calculate_dimensions() {  // 0x006132A0
+    typedef int(__fastcall *pending)(Dialogs *, void *);
+    return PENDING_BODY(0x006132A0, pending)(this, nullptr);
+}
+
 int Dialogs::on_key_down(int a1) {  // 0x00612CC0
     typedef int(__fastcall *pending)(Dialogs *, void *, int);
     return PENDING_BODY(0x00612CC0, pending)(this, nullptr, a1);
@@ -1207,6 +1232,14 @@ void Dialogs::on_scroll_create() {  // 0x00613220
 void Dialogs::pass_dialog_focus() {  // 0x00613180
     typedef void(__fastcall *pending)(Dialogs *, void *);
     PENDING_BODY(0x00613180, pending)(this, nullptr);
+}
+
+// ?set_default@EditGroup@@QAEHPADH@Z at 0x006120D0 - BasePop::start
+// (0x00601BF0) calls it BY NAME with the caller's override text, so the call
+// site needs the member's real address to emit the image's `E8`.
+int EditGroup::set_default(char *text, int index) {  // 0x006120D0
+    typedef int(__fastcall *pending)(EditGroup *, void *, char *, int);
+    return PENDING_BODY(0x006120D0, pending)(this, nullptr, text, index);
 }
 
 int EditGroup::attach(void * a1, int a2, int a3, int a4) {  // 0x00611AF0

@@ -308,6 +308,9 @@ class BasePop : public GraphicWin {
   MEASURED ~BasePop() { close(); }
   void set_loc(int x, int y);
   void set_width(int width);
+  // 0x00603800, homed from 00603800.cpp beside its marker. Lays the popup's
+  // text out and hands the result to Dialogs::calculate_dimensions twice.
+  int calculate_dimensions();
   void write_check(long value);
   int exec();
   int exec(int (__cdecl *callback)());
