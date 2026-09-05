@@ -376,6 +376,20 @@ def main() -> int:
         print("nothing to home")
         return 0
 
+    # --apply NARROWS OR IT DOES NOT RUN. A bare `--apply` with no --class,
+    # no --into and no --claimed homes the WHOLE TREE's unclaimed set - a
+    # wave-5 agent ran exactly that by mistake and touched three other
+    # agents' files before it was killed. The dry run prints per-class
+    # proposals so the breadth looks harmless; --apply does not honour any
+    # filter that was not passed. Require the operator to spell the scope
+    # twice or say --all on purpose.
+    if apply and not klass and tu_arg is None and not claimed_flag \
+            and "--all" not in args:
+        print("--apply needs --class, --into or --claimed <addr> (or an "
+              "explicit --all for the whole tree) - a bare --apply homes "
+              "every unclaimed body in src/")
+        return 2
+
     if not apply:
         for record in sorted(targets, key=lambda r: r.address):
             state = "CLAIMED" if (record.byte_exact or record.semantic) \

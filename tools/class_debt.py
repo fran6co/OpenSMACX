@@ -376,7 +376,16 @@ CEILINGS = {
     # arguments named for the roles their types carry, and the draw_dest_source
     # stand-in's arguments named from Caviar::render's call. (Collected with
     # the parallel waves' 2423; the caviar renames stand.)
-    "scaffold name": 2414,
+    # 2414 -> 2478 (2026-09-05, W5e basewin/on_iface): the five loud
+    # forwarders that let the registry table link - on_iface_left_down/
+    # left_click/right_click/group_clicked and on_status, each naming its
+    # exact transcription blocker on its marker. The growth is their
+    # pass-through a1/a2/a3 parameters and `pending` typedefs, the same
+    # PENDING_BODY idiom pending_bodies.cpp carries 365 of; the family's
+    # parameters are unnamed in the image (the homed members spell (int,
+    # int) because nothing names them). Homing any forwarder lowers this
+    # again.
+    "scaffold name": 2478,
 }
 
 WHY = {

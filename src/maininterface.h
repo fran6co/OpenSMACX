@@ -56,55 +56,80 @@
  *   The on_iface_* family takes the INNER receiver. on_iface_mouse_leave
  *   (0x0045D110) is `mov esi, ecx` then `cmp [esi+0x20CD8], 1` then
  *   `lea ecx, [esi-0xA14]` before calling redraw_complete: esi is the
- *   subobject, esi+0x20CD8 is front+0x216EC (field_216EC_), and esi-0xA14 is
- *   the front. The MainInterface secondary vftable at 0x66C544 holds the
- *   family's RAW addresses - on_iface_button_clicked (0x0045D170) at slot 13,
- *   offset 0x34, which is exactly the slot the registry dispatch reads - and
- *   a raw body in that slot means no adjustor thunk. There is no
- *   `sub ecx, 0xA14` adjustor thunk anywhere in the image (scanned over every
- *   `81 E9 / 83 E9 / 2B 49` + `E9` shape in .text), so the family was never
- *   reached through a base subobject that needed adjusting. That is what says
- *   it belongs to a class whose SubInterface base is at its OWN offset 0 -
- *   IfaceRegistryEntry below - and not to MainInterface, whose SubInterface
- *   base sits at 0xA14. CouncWin's table at 0x66AA94 holds the same kind of
- *   entry (slot 3 is ?on_iface_left_click@CouncWin@@QAEXHH@Z at 0x00427060, a
- *   bare `ret 8`), and slots 6, 17 and 18 are the same three shared no-ops
- *   (0x404260, 0x404250, 0x404240) in every window's table.
+ *   subobject, esi+0x20CD8 is front+0x216EC (iface_redraw_pending_), and
+ *   esi-0xA14 is the front. The MainInterface secondary vftable at 0x66C544
+ *   holds the family's RAW addresses and there is no `sub ecx, 0xA14`
+ *   adjustor thunk anywhere in .text.
  *
- * WHAT IS DECLARED HERE AND WHY NOT MORE. IfaceRegistryEntry below carries
- * the nineteen slots, so the registry dispatch - the image's
- * `mov edx,[ecx] / call dword ptr [edx+0x34]` - is a call by name and the
- * VCall shims it stood in for are gone. Making MainInterface derive from it
- * was MEASURED and reverted: see the note on field_A14_ in the class. Until
- * the class that owns the fields the family reads through the subobject
- * receiver is modelled, the family's bodies stay in their archives - homing
- * them on MainInterface would point every one of those reads at the wrong
- * dword, and homing them here would leave nothing for `this` to reach.
+ *   RESOLVED 2026-09-05, and the reason is worth keeping: VC6 compiles an
+ *   override of a SECONDARY base's virtual with the BASE SUBOBJECT as `this`.
+ *   The body reads its own members base-relative, the secondary vftable holds
+ *   the override's raw address, and no adjustor thunk is emitted - probed
+ *   against cl 12.00.8168 under /O2 /Gy /GR- /GX. MainInterface therefore
+ *   derives from IfaceRegistryEntry (below), the family overrides its slots,
+ *   and every offset in the class is unchanged: 0xA14 + 8 == 0xA1C, exactly
+ *   where field_A14_ and field_A18_ used to sit. on_iface_mouse_leave is
+ *   BYTE_EXACT homed on it, `iface_redraw_pending_` compiling to
+ *   `[esi+0x20CD8]` and `redraw_complete()` to `lea ecx,[esi-0xA14]`.
+ *   CouncWin's table at 0x66AA94 holds the same kind of entry (slot 3 is
+ *   ?on_iface_left_click@CouncWin@@QAEXHH@Z at 0x00427060, a bare `ret 8`),
+ *   and slots 6, 17 and 18 are the same three shared no-ops (0x404260,
+ *   0x404250, 0x404240) in every window's table - so this is the pattern for
+ *   the other seven windows, not a MainInterface special case.
+ *
+ * WHAT IS DECLARED HERE AND WHY. IfaceRegistryEntry below carries the nineteen
+ * slots, so the registry dispatch - the image's `mov edx,[ecx] / call dword
+ * ptr [edx+0x34]` - is a call by name and the VCall shims it stood in for are
+ * gone. The slots MainInterface implements are pure, which is what the image's
+ * own base table (0x66A6E4, nineteen consecutive __purecall slots) says they
+ * are; slot 13 stays a defined vslot because the image reaches
+ * on_iface_button_clicked DIRECTLY from BattleWin and an override would turn
+ * that rel32 into a dispatch.
  */
 class IfaceRegistryEntry : public SubInterface {
  public:
   // Slots 1..18 of the interface table. Slot 0 is SubInterface's. The names
   // are the MainInterface methods the table at 0x66C544 points at, slot for
-  // slot. The three bodies that ARE defined here are the shared no-ops every
+  // slot. The bodies that ARE defined here are the shared no-ops every
   // window's table carries at those slots (0x404260, 0x404250, 0x404240) - a
-  // window that does not implement the event gets exactly these.
-  virtual void on_status(int mode);              // slot 0  0x45CA40
-  virtual void on_iface_scrolled(int, int);      // slot 1  0x45CC80
-  virtual void on_iface_scrolling(int, int);     // slot 2  0x45CC90
-  virtual void on_iface_left_click(int, int);    // slot 3  0x45CDC0
-  virtual void on_iface_right_click(int, int);   // slot 4  0x45CE80
-  virtual void on_iface_left_down(int, int);     // slot 5  0x45CF40
+  // window that does not implement the event gets exactly these - plus
+  // on_iface_selected and on_iface_left_double_click, whose MainInterface
+  // bodies touch no member and are byte-exact right here.
+  //
+  // The rest are PURE, and that is not a convenience: the image's own base
+  // table (0x66A6E4, the one ten constructors install) is nineteen consecutive
+  // __purecall slots, which is what an abstract interface's vftable is. It
+  // also keeps the linker honest - a window that forgets to implement one of
+  // these does not link, rather than silently inheriting a no-op - and it
+  // keeps VC6's key-function rule from pinning this vtable to a TU that never
+  // defines its key.
+  virtual void on_status(int mode) = 0;          // slot 0  0x45CA40
+  virtual void on_iface_scrolled(int, int) = 0;      // slot 1  0x45CC80
+  virtual void on_iface_scrolling(int, int) = 0;     // slot 2  0x45CC90
+  virtual void on_iface_left_click(int, int) = 0;    // slot 3  0x45CDC0
+  virtual void on_iface_right_click(int, int) = 0;   // slot 4  0x45CE80
+  virtual void on_iface_left_down(int, int) = 0;     // slot 5  0x45CF40
   virtual void vslot_06(int, int) {}             // slot 6  0x404260, shared ret 8
-  virtual void on_iface_right_down(int, int);    // slot 7  0x45CF80
-  virtual void on_iface_mouse_move(int, int);    // slot 8  0x45D000
-  virtual void on_iface_mouse_leave(int, int);   // slot 9  0x45D110
+  virtual void on_iface_right_down(int, int) = 0;    // slot 7  0x45CF80
+  virtual void on_iface_mouse_move(int, int) = 0;    // slot 8  0x45D000
+  virtual void on_iface_mouse_leave(int, int) = 0;   // slot 9  0x45D110
   virtual void on_iface_selected(int, int);      // slot 10 0x45D140
   virtual void on_iface_left_double_click(int, int);   // slot 11 0x45CD80
-  virtual void on_iface_right_double_click(int, int);  // slot 12 0x45CDB0
-  virtual void on_iface_button_clicked(int button_id); // slot 13 0x45D170, 0x34
-  virtual int on_iface_button_pressed(int button_id);  // slot 14 0x45D160
-  virtual void on_iface_button_toggled(int, int);      // slot 15 0x45CCA0
-  virtual void on_iface_group_clicked(int, int, int);  // slot 16 0x45CCB0
+  virtual void on_iface_right_double_click(int, int) = 0;  // 12 0x45CDB0
+  // Slot 13 (0x45D170) is deliberately NOT named on_iface_button_clicked.
+  // MainInterface does implement that method - it is declared below, and
+  // pending_bodies.cpp forwards it to 0x45D170 - but the image reaches it
+  // DIRECTLY, never through this slot: BattleWin::on_iface_button_clicked
+  // (0x00422DC0) ends in `call 0x45d170`, a rel32, not a dispatch. Naming the
+  // slot on_iface_button_clicked makes MainInterface's version an override,
+  // which turns that rel32 into `mov eax,[0x7afc48] / call [eax+..]` and
+  // costs BattleWin its BYTE_EXACT. So the slot keeps the same vslot_N
+  // spelling slot 6 has: present in the table, no MainInterface override, and
+  // the real body reachable the way the image reaches it.
+  virtual void vslot_13(int button_id) {}  // slot 13 0x45D170, 0x34
+  virtual int on_iface_button_pressed(int button_id) = 0;  // 14 0x45D160
+  virtual void on_iface_button_toggled(int, int) = 0;      // 15 0x45CCA0
+  virtual void on_iface_group_clicked(int, int, int) = 0;  // 16 0x45CCB0
   virtual int on_dialog_back_draw(GraphicWin *a1) { return 0; }  // slot 17 0x404250
   virtual int on_dialog_item_back_draw(GraphicWin *, int, int, RECT *) { return 0; }  // 18
 };
@@ -120,7 +145,11 @@ class IfaceRegistryEntry : public SubInterface {
  /*
   * MainInterface class
   */
-class MainInterface : public GraphicWin {
+class MainInterface : public GraphicWin, public IfaceRegistryEntry {
+ public:
+  // homed from 00459680.cpp
+  int init(int a1);
+
  public:
 
   // homed from 0045c600.cpp
@@ -242,12 +271,34 @@ class MainInterface : public GraphicWin {
   void on_iface_scrolling(int a1, int a2);
   void on_iface_button_toggled(int a1, int a2);
   void on_iface_right_double_click(int a1, int a2);
-  void on_iface_left_double_click(int a1, int a2);
+  // on_iface_left_double_click (0x0045CD80) and on_iface_selected
+  // (0x0045D140) are NOT declared here: both bodies touch no member, so they
+  // are byte-exact as IfaceRegistryEntry's own definitions further up this
+  // header, and declaring them here would only move them without changing a
+  // byte. Every other slot MainInterface implements IS declared here, because
+  // an override is what makes the entry's slot link.
+  // 0x0045CA40, slot 0 - 568 bytes, still the image's own body; the
+  // definition in maininterface.cpp is a forwarder.
+  void on_status(int a1);
   int on_iface_button_pressed(int a1);
   // ?on_iface_button_clicked@MainInterface@@QAEXH@Z (0x0045D170), unrecovered.
   // BattleWin::on_iface_button_clicked forwards to it on the fixed-address
-  // MainInterface singleton at 0x007AF234.
+  // MainInterface singleton at 0x007AF234. NOT an override of the entry's
+  // slot 13 - see vslot_13 above: the image calls it directly, and the direct
+  // call is what keeps BattleWin's own body byte-exact.
   void on_iface_button_clicked(int a1);
+  // The rest of the interface table - slots 3, 4, 5, 7, 8, 9 and 16. All
+  // seven take the ENTRY as their receiver, and all seven reach the front's
+  // members through the -0xA14 the compiler emits on its own now that the
+  // entry is a declared base: spot_ is entry+0x24620, iface_redraw_pending_
+  // entry+0x20CD8, and redraw_complete is called on entry-0xA14.
+  void on_iface_left_click(int a1, int a2);       // 0x0045CDC0, slot 3
+  void on_iface_right_click(int a1, int a2);      // 0x0045CE80, slot 4
+  void on_iface_left_down(int a1, int a2);        // 0x0045CF40, slot 5
+  void on_iface_right_down(int a1, int a2);       // 0x0045CF80, slot 7
+  void on_iface_mouse_move(int a1, int a2);       // 0x0045D000, slot 8
+  void on_iface_mouse_leave(int a1, int a2);      // 0x0045D110, slot 9
+  void on_iface_group_clicked(int a1, int a2, int a3);  // 0x0045CCB0, slot 16
   // 0x0045C0F0 ?set_message@MainInterface@@QAEXPADHHHH@Z. The three ints
   // after the text are read by no instruction in the body - only the char *
   // reaches string_box_ and the desktop's MessageWin.
@@ -258,18 +309,22 @@ class MainInterface : public GraphicWin {
   void chat(char *text, int channel);
 
  private:
-  // field_A14_ and field_A18_ are the SubInterface subobject - its vptr and
-  // its one dword - and are held as opaque dwords rather than as a declared
-  // base. Making MainInterface derive from IfaceRegistryEntry was MEASURED
-  // and reverted 2026-09-04: it keeps every offset (0xA14 + 8 == 0xA1C) but
-  // turns the five on_iface_* bodies already homed on MainInterface into
-  // overrides, which (a) makes VC6 want the base's own vtable and therefore
-  // definitions for all nineteen slots, and (b) is what would put adjustor
-  // thunks in the table the image holds raw bodies in. Declaring the entry
-  // class on its own - below - is what the registry dispatch needs, and it
-  // costs none of that.
-  uint32_t field_A14_;
-  uint32_t field_A18_;
+  // 0xA14 is the IfaceRegistryEntry base - its SubInterface vptr and its one
+  // dword, exactly the eight bytes field_A14_ and field_A18_ used to stand
+  // in for. MEASURED 2026-09-05, and the earlier revert's second reason was
+  // WRONG. Probing cl 12.00.8168 (/O2 /Gy /GR- /GX) with a GraphicWin-sized
+  // first base and a secondary base carrying the nineteen slots: a derived
+  // override of a SECONDARY base's virtual is compiled with the BASE
+  // SUBOBJECT as `this` - the body reads its own members base-relative, the
+  // secondary vftable holds the override's RAW address, and no adjustor thunk
+  // is emitted anywhere. That is exactly the image: on_iface_mouse_leave
+  // (0x0045D110) is `cmp dword ptr [esi+0x20cd8],1` with esi the entry, the
+  // table at 0x66C544 holds the raw bodies, and .text has no
+  // `sub ecx,0xA14` thunk. So declaring the base is what makes the family
+  // spellable: `iface_redraw_pending_` compiles to [esi+0x20cd8] and an
+  // unqualified `redraw_complete()` to `lea ecx,[esi-0xa14]`, both of which
+  // the earlier field_A14_/field_A18_ spelling could not produce at any
+  // offset. Every offset after 0xA1C is unchanged, 0xA14 + 8 == 0xA1C.
   uint32_t field_A1C_;
   uint32_t field_A20_;
   uint32_t field_A24_;

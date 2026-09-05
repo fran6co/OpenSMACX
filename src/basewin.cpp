@@ -696,6 +696,17 @@ void BaseWin::on_left_up(int a1, int a2) {
                 *reinterpret_cast<int *>(self + 0x40b4c) = -1;
                 *reinterpret_cast<int *>(self + 0x40b50) = -1;
             } else {
+                // HANDOFF to subinterface.h. The +0xA14 subobject is BaseWin's
+                // own SubInterface base, and slot 3 of its table (offset 0x0C)
+                // is IfaceRegistryEntry::on_iface_left_click - maininterface.h
+                // now carries all nineteen slots, and MainInterface derives
+                // from it, which is what unblocked the on_iface_* family. This
+                // dispatch cannot be spelled without the shim because
+                // SubInterface declares slot 0 only: naming slots 1..18 there
+                // would let this read `SubInterface::on_iface_left_click`.
+                // BaseWin cannot take them from IfaceRegistryEntry instead -
+                // they are pure, and BaseWin is instantiated (TutWinBaseWindow,
+                // basewin.cpp), so deriving from it makes BaseWin abstract.
                 reinterpret_cast<VCall2 *>(self + 0xa14)->slot003(a1, a2);
             }
         } else {

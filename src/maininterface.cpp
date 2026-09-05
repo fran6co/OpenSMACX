@@ -30,6 +30,7 @@
 #include "map.h"  // WorldClimateSkipTerrainClear
 #include "statuswin.h"  // StatusWinRedrawRect1, the redraw rects
 #include "console.h"   // ConsoleStatusWin, 0x008C5568
+#include "alpha.h"     // label_get, the Labels.strings_ptr walk
 
  /*
  Purpose: Set the flat button's bubble text.
@@ -138,6 +139,7 @@ void MainInterface::UNK1(int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x0045CC80 ?on_iface_scrolled@MainInterface@@QAEXHH@Z 0x0045CC80-0x0045CC83 BYTE_EXACT
+// symbol    ?on_iface_scrolled@MainInterface@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_scrolled@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   0
@@ -154,6 +156,7 @@ void MainInterface::on_iface_scrolled(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x0045CC90 ?on_iface_scrolling@MainInterface@@QAEXHH@Z 0x0045CC90-0x0045CC93 BYTE_EXACT
+// symbol    ?on_iface_scrolling@MainInterface@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_scrolling@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   0
@@ -170,6 +173,7 @@ void MainInterface::on_iface_scrolling(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x0045CCA0 ?on_iface_button_toggled@MainInterface@@QAEXHH@Z 0x0045CCA0-0x0045CCA3 BYTE_EXACT
+// symbol    ?on_iface_button_toggled@MainInterface@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_button_toggled@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   0
@@ -186,6 +190,7 @@ void MainInterface::on_iface_button_toggled(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x0045CDB0 ?on_iface_right_double_click@MainInterface@@QAEXHH@Z 0x0045CDB0-0x0045CDB3 BYTE_EXACT
+// symbol    ?on_iface_right_double_click@MainInterface@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_right_double_click@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   0
@@ -202,6 +207,7 @@ void MainInterface::on_iface_right_double_click(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
 // ORIGINAL: 0x0045D160 ?on_iface_button_pressed@MainInterface@@QAEHH@Z 0x0045D160-0x0045D165 BYTE_EXACT
+// symbol    ?on_iface_button_pressed@MainInterface@@UAEHH@Z
 // size      5 bytes
 // prototype int (__thiscall ?on_iface_button_pressed@MainInterface@@QAEHH@Z)(MainInterface* this, int)
 // callers   0   call targets   0
@@ -233,6 +239,251 @@ void IfaceRegistryEntry::on_iface_left_double_click(int x, int y) {
         ConsoleStatusWin.on_left_double_click(x, y);
     }
 }
+
+// THE RECEIVER MAP, RESOLVED. Every body below this line until the next
+// non-iface method takes the IfaceRegistryEntry subobject as `this`, not the
+// window front - so the members it names compile base-relative:
+//
+//     spot_                  ->  [esi + 0x24620]   (front + 0x25034)
+//     iface_redraw_pending_  ->  [esi + 0x20CD8]   (front + 0x216EC)
+//     redraw_complete()      ->  lea ecx,[esi - 0xA14] then call
+//
+// That is not a spelling this tree chose. VC6 12.00.8168 compiles an override
+// of a SECONDARY base's virtual with the base subobject as `this`, puts the
+// override's raw address in the secondary vftable, and emits no adjustor
+// thunk - probed against a GraphicWin-sized first base under /O2 /Gy /GR- /GX
+// on 2026-09-05. The image is the same shape: the handlers read the entry-
+// relative offsets above, the table at 0x66C544 holds the raw bodies, and
+// .text has no `sub ecx,0xA14` thunk anywhere. See maininterface.h.
+
+// Fixed-slot bindings carried from the 0045c* artifacts, read out of the
+// shipped image. The pair 0x008C6B30 / 0x008C6B2C is the status bar's hover
+// state: veh.cpp already names 0x008C6B2C StatusHoverVehId (it is the id the
+// map cursor is over, and veh_kill compacts it), so that name is repeated here
+// rather than a second one being invented for the same dword. 0x008C6B48 is
+// the second Spot the handler tests the cursor against.
+static int *const StatusHoverBaseId = (int *)0x008C6B30;   // hovered base id
+static int *const StatusHoverVehId = (int *)0x008C6B2C;    // hovered vehicle id
+static Spot *const IfaceCursorSpot = (Spot *)0x008C6B48;   // the status Spot
+
+
+// ORIGINAL: 0x0045D110 ?on_iface_mouse_leave@MainInterface@@QAEXHH@Z 0x0045D110-0x0045D13F BYTE_EXACT
+// symbol    ?on_iface_mouse_leave@MainInterface@@UAEXHH@Z
+// LEVER: 2026-09-05 the receiver map. This was the body that named the wall:
+//   as a MainInterface method with field_A14_/field_A18_ standing in for the
+//   SubInterface subobject there was no spelling for `cmp [esi+0x20cd8],1` at
+//   all - a downcast folded the displacement to 0x216EC and cost the match.
+//   Declaring IfaceRegistryEntry as MainInterface's second base is what makes
+//   it fall out: `this` is the entry, iface_redraw_pending_ is entry-relative,
+//   and the unqualified redraw_complete() call is where VC6's own -0xA14 goes.
+//   Neither argument is read. ConsoleStatusWin.reset_active is the real
+//   0x004B6530, homed in statuswin.cpp.
+// size      47 bytes
+// prototype void (__thiscall ?on_iface_mouse_leave@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0045C3A0 0x004B6530
+void MainInterface::on_iface_mouse_leave(int, int) {
+    ConsoleStatusWin.reset_active();
+    if (iface_redraw_pending_ == 1) {
+        iface_redraw_pending_ = 0;
+        redraw_complete();
+    }
+}
+
+// PENDING 0x0045CF40 ?on_iface_left_down@MainInterface@@QAEXHH@Z 0x0045CF40-0x0045CF75
+// symbol    ?on_iface_left_down@MainInterface@@UAEXHH@Z
+// PENDING BODY - the receiver is solved (spot_ is entry+0x24620, so `add ecx,
+//   0x24620` is `spot_.check(...)`) and the body is one line and a guard, but
+//   it ends in Console::end_my_turn (0x005169F0) and console.h does not
+//   declare that method yet. HANDOFF to console.h: name end_my_turn and this
+//   becomes `int result = spot_.check(a1, a2, &a2, 0); if (result != -1 &&
+//   a2 == 5) ConsoleGlobal.end_my_turn();`
+// size      53 bytes
+// prototype void (__thiscall ?on_iface_left_down@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005169F0 0x005FAB00
+void MainInterface::on_iface_left_down(int a1, int a2) {
+    typedef void(__fastcall *pending)(MainInterface *, void *, int, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x0045CF40))(
+        this, nullptr, a1, a2);
+}
+
+// PENDING 0x0045CDC0 ?on_iface_left_click@MainInterface@@QAEXHH@Z 0x0045CDC0-0x0045CE72
+// symbol    ?on_iface_left_click@MainInterface@@UAEXHH@Z
+// PENDING BODY - the shape is four separate in_box tests with a `ret 8` after
+//   each (not one chained condition), the first three on StatusWinRedrawRect
+//   3/1/2 against ConsoleStatusWin.on_left_click, the fourth on the InfoWin
+//   rect gated by `button_group_[0].field_84_ == 0x3e9` - entry+0x1DEE8, so
+//   the entry receiver again. Two names are missing: ButtonGroup::field_84_
+//   is PRIVATE in buttongroup.h and InfoWin has no on_left_click declared
+//   (infowin.h has only on_right_click). HANDOFF to buttongroup.h and
+//   infowin.h; both click handlers land the moment those two land.
+// size      178 bytes
+// prototype void (__thiscall ?on_iface_left_click@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004B8E40 0x005FA7E0
+void MainInterface::on_iface_left_click(int a1, int a2) {
+    typedef void(__fastcall *pending)(MainInterface *, void *, int, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x0045CDC0))(
+        this, nullptr, a1, a2);
+}
+
+// PENDING 0x0045CE80 ?on_iface_right_click@MainInterface@@QAEXHH@Z 0x0045CE80-0x0045CF3A
+// symbol    ?on_iface_right_click@MainInterface@@UAEXHH@Z
+// PENDING BODY - see on_iface_left_click above: same four-test shape, same two
+//   missing names (ButtonGroup::field_84_, InfoWin::on_left_click's left-click
+//   sibling), and so the same HANDOFF.
+// size      186 bytes
+// prototype void (__thiscall ?on_iface_right_click@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004B9010 0x005FA7E0
+void MainInterface::on_iface_right_click(int a1, int a2) {
+    typedef void(__fastcall *pending)(MainInterface *, void *, int, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x0045CE80))(
+        this, nullptr, a1, a2);
+}
+
+// PENDING 0x0045CCB0 ?on_iface_group_clicked@MainInterface@@QAEXHHH@Z 0x0045CCB0-0x0045CD75
+// symbol    ?on_iface_group_clicked@MainInterface@@UAEXHHH@Z
+// PENDING BODY - the receiver is solved and the switch is transcribable, but
+//   its `a1 == 0` arm calls the front's PRIMARY vtable slot 12, which is
+//   on_redraw (0x0045BC50, 2274 lines, unhomed) and the call is
+//   `mov edx,[ecx-0xa14] / add ecx,-0xA14 / call [edx+0x30]` - a dispatch, so
+//   on_redraw would have to be virtual to reproduce it. HANDOFF: home
+//   on_redraw first, decide virtuality second; this then spells directly.
+//   Everything else in the arm is named - ConsoleGlobal.editor_paints,
+//   MainInterfaceGlobal.draw_edit_pane, WorldWin's two map setters.
+// size      197 bytes
+// prototype void (__thiscall ?on_iface_group_clicked@MainInterface@@QAEXHHH@Z)(MainInterface* this, int, int, int)
+// callers   0   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0045BC50 0x0045B550 0x004C3990 0x004C3950 0x004E0A50
+void MainInterface::on_iface_group_clicked(int a1, int a2, int a3) {
+    typedef void(__fastcall *pending)(MainInterface *, void *, int, int, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x0045CCB0))(
+        this, nullptr, a1, a2, a3);
+}
+
+// ORIGINAL: 0x0045CF80 ?on_iface_right_down@MainInterface@@QAEXHH@Z 0x0045CF80-0x0045CFFD
+// SPAN CORRECTED from the catalogue's 0x0045D0F5 (size 0x175): that span runs
+// over on_iface_mouse_move's own record at 0x0045D000 - two catalogue entries
+// cannot overlap, and the image's right_down body ends at 0x0045CFFD with the
+// rest alignment padding into the next function. The old span could never
+// measure BYTE_EXACT because its tail compared against mouse_move's bytes.
+// symbol    ?on_iface_right_down@MainInterface@@UAEXHH@Z
+// LEVER: 2026-09-05 the receiver map. spot_ is entry-relative; the bubble text
+//   goes through the FRONT, which is what `Win *front = this` is for - inside
+//   an override of a secondary base's virtual the conversion emits the
+//   compiler's own -0xA14. Labels [+0xC4C] is the string id, StringTable the
+//   table it indexes.
+// size      373 bytes
+// prototype void (__thiscall ?on_iface_right_down@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005FAB00 0x00617940 0x00617C70
+void MainInterface::on_iface_right_down(int a1, int a2) {
+    // BUG IN THE ORIGINAL: spotType is handed to Spot::check UNINITIALIZED -
+    // the image's `lea eax,[ebp-4]` takes its address before any store, and
+    // only the callee's write makes the `cmp dword ptr [ebp-4],5` below mean
+    // anything. Spelling the `= 0` a natural reading wants adds a store the
+    // image does not have, so it is left exactly as shipped.
+    int spotType;
+    int result = spot_.check(a1, a2, &spotType, 0);
+    if (result != -1 && spotType == 5) {
+        Win::client_to_screen(&a1, &a2);
+        RECT rect;
+        rect.left = a1;
+        rect.top = a2;
+        rect.right = a1;
+        rect.bottom = a2;
+        Win::set_bubble_text(label_get(0x313), &rect);
+    }
+}
+
+// ORIGINAL: 0x0045D000 ?on_iface_mouse_move@MainInterface@@QAEXHH@Z 0x0045D000-0x0045D10F
+// symbol    ?on_iface_mouse_move@MainInterface@@UAEXHH@Z
+// LEVER: 2026-09-05 the receiver map. Both spot_ and iface_redraw_pending_ are
+//   entry-relative and the two redraw_complete calls are the compiler's own
+//   -0xA14. The status bar's two ids are the 0x008C6B2C/0x008C6B30 pair, and
+//   the second Spot is at 0x008C6B48.
+// size      271 bytes
+// prototype void (__thiscall ?on_iface_mouse_move@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
+// callers   0   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005FAB00 0x004B4CF0 0x0045C3A0 0x004B6530
+void MainInterface::on_iface_mouse_move(int a1, int a2) {
+    if (spot_.check(a1, a2, &a2, &a1) != -1 && a2 == 5) {
+        if (iface_redraw_pending_ != 0) {
+            return;
+        }
+        iface_redraw_pending_ = 1;
+        redraw_complete();
+        return;
+    }
+
+    int check2 = IfaceCursorSpot->check(a1, a2, &a2, &a1);
+    if (check2 >= 0 && a1 == 0xb) {
+        if (a2 != *StatusHoverBaseId) {
+            *StatusHoverBaseId = a2;
+            *StatusHoverVehId = -1;
+            ConsoleStatusWin.draw_active(-1, a2, 0);
+        }
+    } else if (check2 >= 0 && a1 == 0) {
+        if (a2 != *StatusHoverVehId) {
+            *StatusHoverBaseId = -1;
+            *StatusHoverVehId = a2;
+            ConsoleStatusWin.draw_active(a2, -1, 0);
+        }
+    } else {
+        ConsoleStatusWin.reset_active();
+    }
+
+    if (iface_redraw_pending_ == 1) {
+        iface_redraw_pending_ = 0;
+        redraw_complete();
+    }
+}
+
+// PENDING 0x0045CA40 ?on_status@MainInterface@@QAEXH@Z 0x0045CA40-0x0045CC78
+// symbol    ?on_status@MainInterface@@UAEXH@Z
+// PENDING BODY - slot 0 of the interface table, 568 bytes, and the reason
+//   IfaceRegistryEntry's slot 0 links at all. It takes the ENTRY as `this`
+//   like the rest of the table: `lea esi,[edi+0x3ec]` is flat_button_[0] and
+//   `lea ecx,[edi-0xa14]` is the front, both read off edi = the subobject.
+//   The artifact at src/recovered/units/0045ca40.cpp is a raw-offset
+//   transcription written against the front, so it cannot be dropped in
+//   until its offsets are rebased onto the entry.
+// size      568 bytes
+// prototype void (__thiscall ?on_status@MainInterface@@QAEXH@Z)(MainInterface* this, int)
+// callers   0   call targets   8
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00403830 0x0045BC50 0x0050F440 0x005D6310 0x00616730
+void MainInterface::on_status(int a1) {
+    typedef void(__fastcall *pending)(MainInterface *, void *, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x0045CA40))(this,
+                                                                      nullptr,
+                                                                      a1);
+}
+
+// 0x0045D170 ?on_iface_button_clicked@MainInterface@@QAEXH@Z stays in
+// pending_bodies.cpp, which already defines the override as a forwarder: the
+// 257-byte switch over the five button ids (0x3EB menu, 0x3EC multiplayer,
+// 0x3F0/0x3F1 demote, 0x3F2 promote) reaches three globals this tree has not
+// named yet (0x009380DC, 0x007FD648, 0x00952858), and veh.h cannot be read
+// here - its `range` collides with general.h's. It touches no member, so the
+// entry-vs-front receiver question does not arise.
 
 // 0x0068FA30, the table chat indexes with its second argument. Twenty-four
 // dwords are visible before the image's own data moves on to something else,
@@ -1218,6 +1469,7 @@ void MainInterface::on_button_toggled(int a1, int a2) {
 
 
 // ORIGINAL: 0x0045C8B0 ?on_dialog_back_draw@MainInterface@@QAEHPAUGraphicWin@@@Z 0x0045C8B0-0x0045C8E6 FILE BYTE_EXACT
+// symbol    ?on_dialog_back_draw@MainInterface@@UAEHPAVGraphicWin@@@Z
 // symbol    ?on_dialog_back_draw@MainInterface@@QAEHPAVGraphicWin@@@Z
 // size      54 bytes
 // prototype int (__thiscall ?on_dialog_back_draw@MainInterface@@QAEHPAUGraphicWin@@@Z)(MainInterface* this, GraphicWin*)
@@ -1294,6 +1546,7 @@ int MainInterface::on_dialog_back_draw(GraphicWin* a1) {
 }
 
 // ORIGINAL: 0x0045C8F0 ?on_dialog_item_back_draw@MainInterface@@QAEHPAUGraphicWin@@HHPAURECT@@@Z 0x0045C8F0-0x0045C932 FILE BYTE_EXACT
+// symbol    ?on_dialog_item_back_draw@MainInterface@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z
 // symbol    ?on_dialog_item_back_draw@MainInterface@@QAEHPAVGraphicWin@@HHPAUtagRECT@@@Z
 // size      66 bytes
 // prototype int (__thiscall ?on_dialog_item_back_draw@MainInterface@@QAEHPAUGraphicWin@@HHPAURECT@@@Z)(MainInterface* this, GraphicWin*, int, int, RECT*)
@@ -1744,7 +1997,7 @@ void MainInterface::on_button_clicked(int a1) {
         IfaceRegistryEntry *target =
             reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[subindex];
         if (target != 0) {
-            target->on_iface_button_clicked(a1);
+            target->vslot_13(a1);
         }
     }
 }

@@ -631,7 +631,10 @@ SCAFFOLD_CEILINGS = {
     # 00611640), caviar (-4: 00617620 render_mono, 00618d20 close_class
     # BYTE_EXACT 33/33, 00618da0 object_start SHAPE_EXACT 28/32, 00616de0
     # Caviar::init MISMATCH 48/151).
-    "artifact files (recovered/)": 1014,
+    # 1014 -> 1012 (2026-09-05, W5e basewin/on_iface): 0045d110.cpp
+    # (on_iface_mouse_leave, BYTE_EXACT 11/11) and 0045cf80.cpp
+    # (on_iface_right_down, homed MISMATCH 33/45 on the corrected span).
+    "artifact files (recovered/)": 1012,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -724,7 +727,7 @@ SCAFFOLD_CEILINGS = {
     # proto_sort), maininterface (-1: set_message BYTE_EXACT), caviar (-11:
     # the eight add_object overloads, render_mono, clear_buffers,
     # render_multi_table_dest, object_start, vox_release_record 00639630).
-    "unrecovered files": 1134,
+    "unrecovered files": 1133,
     # 2717 -> 2748 (2026-09-04, P2 net batch): NetFifo promoted with
     # close/add/get/get, NetFifoNode, head_/tail_/count_ - the deliberate
     # raise this ceiling exists for (class modelling grows it; the class
