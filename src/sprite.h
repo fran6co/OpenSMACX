@@ -87,6 +87,11 @@ class Sprite {
   int extract(Buffer *buffer, int a, int b, int c, int width, int height,
               TexHeap *heap);
   int create_blank(int width, int height, int depth);
+  // 0x005E3890, still FILE-only in src/unrecovered/005e3890.cpp. DECLARED
+  // here because BasePop::start (0x00601BF0) calls it by name on the popup's
+  // own `sprite_` - the access costs nothing and the definition stays where
+  // it is; pending_bodies.cpp carries the forwarder the call links against.
+  int init(char *filename, int width, int height);
   // THE CLASS BRING-UP, named 2026-08-30 from its call site: jackal_init_real
   // runs it in the X::init_class() chain between FileWin::init_class and the
   // font bring-up, and it seeds the class-shared sprite the tree names
@@ -117,6 +122,11 @@ class Sprite {
   // to inset the edges by. Access is compile-time only: no offset moves and
   // no emitted byte changes.
   friend class Buffer;
+  // `BasePop::on_redraw` (0x00604AB0) centres and draws the two popup sprites
+  // the class carries at 0x2148 and 0x214c, reading cTransparentIndex_,
+  // iSpriteWidth_, iSpriteHeight_, iWidth_ and iHeight_ off them. Compile-time
+  // access only.
+  friend class BasePop;
   char *ppszFileName_;  // 0x0000 - heap copy of the source file's name;
                         // released with the CRT free
   char *pcBits_;        // 0x0004 - the pixel block, same allocator

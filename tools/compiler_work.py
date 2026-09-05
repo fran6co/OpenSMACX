@@ -522,7 +522,11 @@ SCAFFOLD_CEILINGS = {
     # BasePop::on_redraw reaches; its target is FILE-only in the archive,
     # landmine-free, and its parameters are now named left/top/width/height
     # from the two recovered call sites.
-    "PENDING_BODY forwarders": 258,
+    # 258 -> 259 (2026-09-05, W5b basepop blocked queue): sprite_box_pos_to_id
+    # (0x00611640), which the homed on_redraw calls - spritebox.h has no
+    # pos_to_id declaration yet (HANDOFF on the marker; the declaration also
+    # clears this row).
+    "PENDING_BODY forwarders": 259,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -621,7 +625,7 @@ SCAFFOLD_CEILINGS = {
     # fixed-address bindings are the tree's own names) and 005c3f70.cpp homed
     # beside it - the 0x009B22E8 redraw flag is named WorldClimateRedrawRequest
     # in map.cpp from the two measured sites that write and read it.
-    "artifact files (recovered/)": 1029,
+    "artifact files (recovered/)": 1028,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).

@@ -1291,6 +1291,31 @@ uint32_t BasePopDefaultBlock2F7C[70];  // 0x009B8BD0
 // Copied to +0x3094, the head of the object's third block-sized region.
 uint32_t BasePopDefaultField3094;  // 0x009B8CF8
 
+// THE LAST POPUP'S SCREEN EXTENT, the three slots immediately below
+// BasePopDefaultField3094. Named 2026-09-05 from the three bodies that touch
+// them - every reference in the image's .text is one of these, and nothing
+// outside BasePop reads either:
+//
+//   * BasePop::on_redraw (0x00604AB0) and BasePop::calculate_dimensions
+//     (0x00603800) PUBLISH the popup's bottom (0x009B8CE8) and right
+//     (0x009B8CEC) edge: the same sum of the popup's border (field_30E0_),
+//     client offsets (field_30F0_/field_30F4_), the external-window position
+//     (field_30B4_/field_30B8_) and the text height (field_30DC_), clamped
+//     against each other.
+//   * BasePop::exec (0x00602600) reads both back as the base it positions the
+//     next popup from - 0x009B8CE8 plus field_30E4_ for the vertical, and
+//     0x009B8CEC as the fallback when field_21CC_ is still -1 for the
+//     horizontal - which is what makes these "the last one drawn" rather than
+//     "this one".
+//
+//   * 0x009B8CF4 holds the popup whose picture is being drawn: on_redraw
+//     stores `this` into it around the caller-sprite draw and writes it back
+//     to zero on the way out. Both writes are in on_redraw and nothing reads
+//     it, so the name says what it holds and no more.
+uint32_t BasePopDrawnBottom;  // 0x009B8CE8
+uint32_t BasePopDrawnRight;   // 0x009B8CEC
+BasePop *BasePopDrawnPopup;   // 0x009B8CF4
+
 // The defaults for external_window_ (the high-res-scaling opt-out set_width tests)
 // and default_loc_a_/default_loc_b_ (the starting loc_a_/loc_b_; 0x2000 keeps the
 // current value, so zero here means "location 0,0").
@@ -1407,8 +1432,8 @@ BasePop::BasePop() {
     sprite_.close();
 
     caller_sprite_ = 0;
-    field_214C_ = BasePopDefaultField2148[1];
-    field_2148_ = BasePopDefaultField2148[0];
+    field_214C_ = reinterpret_cast<Sprite *>(BasePopDefaultField2148[1]);
+    field_2148_ = reinterpret_cast<Sprite *>(BasePopDefaultField2148[0]);
     field_30B0_ = 0;
     field_30B4_ = 0;
     field_30B8_ = 0;
@@ -1455,7 +1480,7 @@ BasePop::BasePop() {
     string_color_hyper_d_ = static_cast<int>(BasePopDefaultStringColors[3][3]);
     field_3160_ = 0;
     field_3164_ = 0;
-    field_3168_ = 0;
+    redraw_callback_ = 0;
     button_font1_ = BasePopDefaultButtonFonts[0];
     button_color_a_ = static_cast<uint8_t>(BasePopDefaultButtonColors[0][0]);
     button_color_b_ = static_cast<int>(BasePopDefaultButtonColors[1][0]);
@@ -2596,4 +2621,165 @@ int BasePop::UNK2() {
     }
 
     return max_width;
+}
+
+// ORIGINAL: 0x00604AB0 ?on_redraw@BasePop@@QAEXXZ 0x00604AB0-0x00604E31 FILE
+// size      897 bytes
+// prototype void (__thiscall ?on_redraw@BasePop@@QAEXXZ)(BasePop* this)
+// callers   0   call targets   12
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D5250 0x005DA9F0 0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD10 0x005DAD40 0x005DB040 0x005DEF90 0x005E4B4A 0x005ED7D0 0x00611640
+// indirect  0x00604B0F 0x00604BE9 0x00604C37
+// LEVER: the popup draws into its OWN surface (this, +0x444) for the two
+//        background pictures and into the OWNER's surface (owner_window_,
+//        +0x444) for every text call - the distinction is the body's spine,
+//        and one `Buffer *` for both put the owner's loads where the image
+//        recomputes them.
+// LEVER: one spilled local. The image reserves a single stack slot (its
+//        prologue is `push ecx`) and it holds own_bottom, the value that is
+//        still live at the clamps; the register copy of it is the one the
+//        external-window offset is added to. Everything else is re-read from
+//        the object at its use - caching field_30E0_ across the text block
+//        cost the second read the image makes there.
+// LEVER: vtable slot 0x180 through `vtable_slot`, the same spelling
+//        double_click (0x006044D0) uses for its own two dispatches. Slot 96
+//        is the redraw hook the image runs on this when no external window is
+//        attached, and its EAX is tested on the first of the two calls only -
+//        one slot, two call sites, not two slots.
+// HANDOFF (spritebox.h, not a file this pass owns): the image reaches
+//        SpriteBox::pos_to_id (0x00611640) on the SpriteBox subobject of
+//        dialogs_ and reads its EAX; spritebox.h declares only id_to_pos
+//        (0x00611600). `int pos_to_id(int);` is the declaration it needs.
+//        Until it lands, the free forwarder sprite_box_pos_to_id in
+//        pending_bodies.cpp stands in for the call.
+// TRIED: `Buffer *const buffer = static_cast<Buffer *>(this)` held across the
+//        body, the obvious spelling for the +0x444 surface - VC6 emits its
+//        base-conversion null guard for it (`test esi,esi / je` plus a spill
+//        slot) and the image has neither; calling the inherited Buffer method
+//        straight on `this` / `owner_window_` folds the 0x444 into the
+//        receiver instead and loses both. Same for a `text_buffer` local over
+//        the owner.
+// TRIED: recomputing the clamp base as `field_30DC_ + field_30E8_ + border`
+//        to avoid holding two names for the same edge - 277 instructions
+//        against the image's 271, worse than the two-local form, because VC6
+//        will not CSE the reload across the calls.
+// TRIED: `const int own_bottom = bottom` (copy after the fact) instead of
+//        `= field_30E8_ + border` - identical 273, no flip.
+// RESIDUAL: the image reserves ONE stack slot for own_bottom (`push ecx`)
+//        and keeps the external-window-adjusted copy of it in ebp; this tree
+//        spills both names (`sub esp, 8`) and works the pair in ebx/ebp.
+//        Every other instruction shape agrees. This is the receiver-spill
+//        wall the brief documents, hit on the stack-slot count rather than on
+//        a callee-saved push.
+typedef int(__fastcall *func_basepop_slot096)(void *);
+// The stand-in for SpriteBox::pos_to_id (0x00611640); HANDOFF above.
+int sprite_box_pos_to_id(SpriteBox *boxes, int position);
+
+void BasePop::on_redraw() {
+    // THE INHERITED-MEMBER SPELLING, and it is load-bearing. GraphicWin's
+    // Buffer base sits 0x444 in, behind its Win base; calling the inherited
+    // Buffer method straight on `this` or on `owner_window_` lets the compiler
+    // fold that 0x444 into the receiver it is already holding
+    // (`lea ecx,[esi+0x444]`, `add ecx,[esi+0xa3c] + 0x444`). Holding the
+    // conversion in a `Buffer *` local instead makes VC6 emit its base-
+    // conversion null guard - `test esi,esi / je` plus a spill slot for the
+    // result - which the image has nowhere in this body.
+    clear_links();
+
+    const int border = field_30E0_;
+    int right = border + field_30F0_ + field_21C8_;
+    // The same edge before the external-window position is folded in - the
+    // pair the clamps at the end measure the text height against. Two names
+    // for it, because the clamps read the base while the draws read the one
+    // the external-window position has been added to.
+    const int own_bottom = field_30E8_ + border;
+    int bottom = own_bottom;
+
+    if (owner_window_ == this) {
+        move(field_30B4_, field_30B8_);
+        if (vtable_slot<func_basepop_slot096>(this, 0x180)(this) == 0) {
+            // The background: tile the popup's own picture when there is one
+            // and the popup is drawing into itself, otherwise a flat fill.
+            if (field_2148_ != 0 && external_window_ == 0) {
+                tile(field_2148_, 0, 0, 0, 0, dib_.bmiHeader.biWidth,
+                     -dib_.bmiHeader.biHeight);
+            } else {
+                GraphicWin::fill(field_310C_);
+            }
+        }
+
+        if (external_window_ == 0 && field_214C_ != 0 &&
+            field_214C_->iSpriteWidth_ < dib_.bmiHeader.biWidth &&
+            field_214C_->iSpriteHeight_ < -dib_.bmiHeader.biHeight) {
+            // Centred on the surface, its height measured against the DIB's
+            // top-down (negative) biHeight.
+            field_214C_->draw(
+                static_cast<Buffer *>(this), field_214C_->cTransparentIndex_,
+                (dib_.bmiHeader.biWidth - field_214C_->iWidth_ - field_21C8_) /
+                        2 +
+                    field_21C8_,
+                -((field_214C_->iHeight_ + dib_.bmiHeader.biHeight) / 2), 1, 1);
+        }
+    } else {
+        vtable_slot<func_basepop_slot096>(this, 0x180)(this);
+        right += field_30B4_;
+        bottom += field_30B8_;
+    }
+
+    if (caller_sprite_ != 0) {
+        BasePopDrawnPopup = this;
+        if (redraw_callback_ != 0) {
+            // HANDOFF: see the note on the marker. The image calls
+            // SpriteBox::pos_to_id on the subobject of dialogs_ at +0x2240.
+            const int item_id = sprite_box_pos_to_id(
+                static_cast<SpriteBox *>(&dialogs_), 0);
+            redraw_callback_(
+                reinterpret_cast<int>(caller_sprite_),
+                reinterpret_cast<int>(owner_window_), item_id, right, bottom);
+        } else {
+            caller_sprite_->draw(
+                owner_window_ != 0 ? static_cast<Buffer *>(owner_window_)
+                                   : static_cast<Buffer *>(0),
+                caller_sprite_->cTransparentIndex_, right, bottom, field_3104_,
+                field_3108_);
+        }
+        BasePopDrawnPopup = 0;
+    }
+
+    right += field_30D8_;
+    if (field_30D4_ == 0) {
+        // No text to lay out: publish the picture's extent and stop.
+        BasePopDrawnRight = right - field_30D8_ - field_21C8_;
+        if (bottom > field_30DC_ + own_bottom) {
+            BasePopDrawnBottom = bottom;
+            return;
+        }
+        BasePopDrawnBottom = field_30DC_ + own_bottom;
+        return;
+    }
+
+    owner_window_->set_text_color(string_color_a_, string_color_b_,
+                                  string_color_c_, string_color_d_);
+    owner_window_->set_text_color2(string_color_2a_, string_color_2b_,
+                                   string_color_2c_, string_color_2d_);
+    owner_window_->set_text_color3(string_color_3a_, string_color_3b_,
+                                   string_color_3c_, string_color_3d_);
+    owner_window_->set_text_color_hyper(string_color_hyper_a_,
+                                        string_color_hyper_b_,
+                                        string_color_hyperc_,
+                                        string_color_hyper_d_);
+    owner_window_->set_font(string_font1_, string_font2_, string_font3_,
+                            string_font4_);
+
+    const int text_left = -(field_30E0_ * 2) - field_30F4_ + field_30BC_ -
+                          field_30D8_ - field_30F0_ - field_21C8_;
+    const int height = owner_window_->write_strings(&unit_ids_, right, bottom,
+                                                    text_left, 0);
+
+    BasePopDrawnRight = right - field_30D8_ - field_21C8_;
+    BasePopDrawnBottom = height;
+    if (height <= field_30DC_ + own_bottom) {
+        BasePopDrawnBottom = field_30DC_ + own_bottom;
+    }
 }

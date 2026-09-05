@@ -1,14 +1,43 @@
 // ORIGINAL: 0x00603800 ?calculate_dimensions@BasePop@@QAEHXZ 0x00603800-0x006042D2 FILE
-// BLOCKED (2026-09-05, rehoming pass): 0x006132A0 Dialogs::calculate_dimensions
-// is now DECLARED on Dialogs (dialogs.h), which was the blocker named last
-// pass. What remains is that the 88-byte Dialogs body cannot itself be homed
-// until `calculate_dimensions` is declared on all five of Dialogs' bases -
-// ListBox, RadioButton, CheckBox, SpriteBox and EditGroup - which spans
-// listbox.h, radiobutton.h, checkbox.h, spritebox.h and editgroup.h. None but
-// editgroup.h is a header the BasePop rehoming owns. Its own callee set also
-// needs 0x006120B0 (EditGroup), 0x006099D0 / 0x00609FA0 / 0x0060A020 (Dialog)
-// and 0x005DC360 / 0x005DDDA0 / 0x005DDDE0 / 0x005DDEF0 (Buffer) declared or
-// forwarded before the 2770-byte body links.
+// BLOCKED (2026-09-05, second rehoming pass) - and the blocker is ONE
+// declaration, not the five-base sweep the previous note described. Every
+// callee is already declared or forwardered:
+//
+//   0x005DAC70/B0/E0/10/40  Buffer::set_font / set_text_color x4   buffer.h
+//   0x005DC360              Buffer::wrap_height(char *, int)       buffer.h
+//   0x005DCAB0              Buffer::text_line_height()             buffer.h
+//   0x005DDDA0 / 0x005DDDE0 Buffer::wrap_height_flying, both overloads
+//   0x005DDEF0              Buffer::wrap_height_flying_flush()     buffer.h
+//   0x006051A0              BasePop::UNK4(int)                     basepop.h
+//   0x006099D0              Dialog::set_selected_id(int)           dialog.h
+//   0x00609FA0              ListBox::set_selected_id(int)          listbox.h
+//   0x006132A0              Dialogs::calculate_dimensions()        dialogs.h
+//   0x006120B0              EditGroup::set_text_limits(int)        editgroup.h
+//
+// The two things still missing:
+//   1. HANDOFF (listbox.h, not a file the BasePop passes own):
+//      `void set_selected_pos(int, int);` for 0x0060A020
+//      ?set_selected_pos@ListBox@@QAEXHH@Z. Nothing else in the tree names it.
+//   2. A pending_bodies forwarder for Dialogs::calculate_dimensions
+//      (0x006132A0), which BasePop::calculate_dimensions calls BY NAME. The
+//      claim in src/recovered/006132a0.cpp is FILE-only, so a forwarder is
+//      landmine-free - and adding one does NOT need `calculate_dimensions`
+//      declared on the five bases, because the forwarder is a jump stub and
+//      not the 88-byte dispatcher. That five-base requirement belongs to
+//      homing 0x006132A0 itself, which is a separate body.
+//
+// HOW THE BODY REACHES ITS BASES (all read off the image, 2026-09-05): the
+// three writes into the embedded Dialog go through the vbtable
+// (`mov ecx,[esi+0x21d0]; mov edx,[ecx+8]; mov [edx+esi+0x21fc],eax`), which
+// is the qualified member access `dialogs_.Dialog::field_2C_` /
+// `::field_30_` / `::field_20_` - the same spelling init(), set_width() and
+// on_redraw() already use. `set_selected_id` on the Dialog virtual base at
+// 0x006099D0 is reached the same way, through `dialogs_.Dialog::
+// set_selected_id(..)`. The two ListBox calls at 0x603c9b run on
+// `&dialogs_` itself (ListBox is Dialogs' first base, no adjustment), so they
+// are plain `dialogs_.ListBox::set_selected_id(..)` /
+// `dialogs_.ListBox::set_selected_pos(..)`. EditGroup::set_text_limits runs
+// on `dialogs_.EditGroup::` (0x22c8 = 0x21d0 + 0xf8).
 
 // TRIED: literal per-instruction register transcription (eax/ebx/ecx/edx/ebp/edi + I32()/U8() offset macros on `this`, spare1/spare2 for [esp+0x10]/[esp+0x14], resolved jump-table switch on field_2350_+1); diverges at instr #0 (prologue shape: original does sub esp,8 before the push sequence), not chased further.
 // working copy - scaffold materialised by --work

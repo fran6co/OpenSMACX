@@ -165,6 +165,10 @@ class BasePop : public GraphicWin {
   int init(int group_id, long flags);
 
  public:
+  // 0x00604AB0, recovered in basepop.cpp beside its marker.
+  void on_redraw();
+
+ public:
   // STATIC, AND THE CATALOGUED NAME IS WRONG. It reads
   // `?set_def_ok_text@BasePop@@QAAHPAD@Z` - QAA, a `__cdecl` MEMBER, which
   // would push `this` as the first argument. The image reads its string from
@@ -331,8 +335,14 @@ class BasePop : public GraphicWin {
   // BasePop::start (0x00601bf0) stores its sixth argument, the
   // `GraphicWin *owner_window` that pops() passes as 0 - so the slot ends up
   // holding whichever window the popup belongs to, defaulting to itself.
-  // Nothing in the tree reads it back yet.
-  Win *owner_window_;  // 0x0a3c
+  // Nothing in the tree read it back until on_redraw (0x00604AB0) did, and
+  // that body is what types it: it takes the OWNER's Buffer (+0x444) for every
+  // text call, and compares the slot against `this` to decide whether the
+  // popup draws into itself or into the window that opened it - so the type is
+  // the one whose +0x444 is a Buffer, which is GraphicWin and not Win. Same
+  // type start's own sixth parameter already carries; the store compiles to
+  // the identical `mov`.
+  GraphicWin *owner_window_;  // 0x0a3c
   // THE SELECTED ENTRY ID. Three writers agree: close() and init() zero it,
   // and both on_key_down (0x00604410) and double_click (0x006044d0) land the
   // embedded Dialog's selected id in it - `get_selected_id()` for the whole
@@ -365,9 +375,19 @@ class BasePop : public GraphicWin {
   // argument here when the popup's own item list is empty and 0 when it is
   // not, so the popup draws the caller's picture instead of its own. A
   // pointer, not the uint32_t it was typed before: it IS a Sprite *.
-  Sprite *caller_sprite_;              // 0x2144
-  uint32_t field_2148_;                // 0x2148
-  uint32_t field_214C_;                // 0x214c
+  Sprite *caller_sprite_;  // 0x2144
+  // THE POPUP'S OWN SECOND PICTURE, typed 2026-09-05 from on_redraw
+  // (0x00604AB0), which is the only reader: it is the sprite `Buffer::tile`
+  // is handed to fill the popup's background with, ahead of the same body's
+  // draw of `field_214C_`. Seeded from BasePopDefaultField2148[0] by the ctor
+  // and close() exactly as `field_214C_` below is from [1].
+  Sprite *field_2148_;  // 0x2148
+  // THE BACKGROUND SPRITE, the partner of field_2148_ above. on_redraw draws
+  // it into the popup's buffer when the popup has no external window, and
+  // reads its iSpriteWidth_/iSpriteHeight_/iWidth_/iHeight_ to centre it -
+  // four Sprite fields, so a Sprite * and not the uint32_t it was typed
+  // before. Seeded from BasePopDefaultField2148[1].
+  Sprite *field_214C_;  // 0x214c
   // The popup's ITEM-TEXT list, carved 2026-08-30 beside unit_ids_ below on
   // the identical evidence: 0x30 = sizeof(StringList), and the ctor's stores
   // for this block are StringList's two-stage construction (the same
@@ -518,11 +538,19 @@ class BasePop : public GraphicWin {
   int string_color_2d_;        // 0x3154 = StringColors[3][1]
   int string_color_3d_;        // 0x3158 = StringColors[3][2]
   int string_color_hyper_d_;   // 0x315c = StringColors[3][3]
-  // Three zeroed dwords between the two colour blocks; nothing in the tree
-  // reads them back.
+  // Three dwords between the two colour blocks. The first two stay
+  // offset-named: nothing in the tree reads them back.
   uint32_t field_3160_;  // 0x3160
   uint32_t field_3164_;  // 0x3164
-  uint32_t field_3168_;  // 0x3168
+  // 0x3168. THE POPUP'S DRAW CALLBACK, typed from its one reader. on_redraw
+  // (0x00604AB0) calls it through the slot with five arguments - the caller
+  // sprite, the owner window, the SpriteBox's position for item 0, and the
+  // popup's right/bottom - and skips it when the slot is null, drawing the
+  // caller sprite itself instead. `__cdecl`, because the image's `add
+  // esp, 0x14` after the indirect call is the caller cleaning five stack
+  // slots. The ctor zeroes it.
+  int (__cdecl *redraw_callback_)(int sprite, int owner, int item_id, int right,
+                                  int bottom);  // 0x3168
   // THE THREE BUTTON FONTS, 0x316c + 4*n, seeded from
   // BasePopDefaultButtonFonts[n] the same way.
   Font *button_font1_;  // 0x316c

@@ -1,15 +1,36 @@
 // ORIGINAL: 0x00602600 ?exec@BasePop@@QAEHHP6AHXZ@Z 0x00602600-0x006037F5;0x00662E02-0x00662E17 FILE
-// BLOCKED (2026-09-05, rehoming pass): the body below is PARTIAL and must not
-// be homed as if it were exec. The event loop the function is named for - the
-// visible-region positioning against 0x009B7B1C/0x009B7B20, the button-group
-// dispatch and the modal message pump through the caller's callback - is not
-// transcribed; the body returns 0 right after the one-time setup. Homed into
-// product source that is a silent success where the image pumps a modal loop,
-// which is worse than the pending_bodies forwarder that stands in for it now:
-// the forwarder faults loudly, this would not. Its three vtable dispatches
-// (slots 0x14, 0x168, 0x16c of the BasePop table) also need the slot model
-// before any spelling of them can be checked. Finish the transcription, then
-// home it and retire the forwarder in the same commit.
+// BLOCKED (2026-09-05, second rehoming pass): the body below is PARTIAL and
+// must not be homed as if it were exec. The event loop the function is named
+// for - the visible-region positioning against 0x009B7B1C/0x009B7B20
+// (WinScreenWidth/WinScreenHeight, win.cpp), the button-group dispatch and the
+// modal message pump through the caller's callback - is not transcribed; the
+// body returns 0 right after the one-time setup. Homed into product source
+// that is a silent success where the image pumps a modal loop, which is worse
+// than the pending_bodies forwarder that stands in for it now: the forwarder
+// faults loudly, this would not.
+//
+// WHAT THE SETUP BLOCK CAN NOW SPELL (established 2026-09-05 by the on_redraw
+// homing in basepop.cpp):
+//   * the two globals it reads at 0x00602B56/0x00602B78 are named:
+//     BasePopDrawnBottom (0x009B8CE8) and BasePopDrawnRight (0x009B8CEC),
+//     published by on_redraw and calculate_dimensions and read here as the
+//     base the next popup is positioned from - 0x009B8CE8 + field_30E4_ for
+//     the vertical, 0x009B8CEC as the fallback when field_21CC_ is -1 for the
+//     horizontal.
+//   * self+0x2350 is `dialogs_.kind_` (EditGroup+0x88; 0x21D0+0xF8+0x88 =
+//     0x2350) - the `cmp dword ptr [esi + 0x2350], -1` at 0x00602B88 is a
+//     plain member read.
+//   * its three vtable dispatches (0x14, 0x168, 0x16c) spell through
+//     `vtable_slot<func_basepop_slotNNN>(this, off)(this)` with the typedef
+//     `int/void (__fastcall *)(void *)`, the form double_click (0x006044D0)
+//     and on_redraw (0x00604AB0) both use. The one at 0x168 is called on
+//     `this` and the 0x14/0x16c pair on the embedded dialogs_ subobject.
+//   * the owner buffer it reads as `[eax + 0x4c8]` is
+//     `owner_window_->dib_.bmiHeader.biHeight` - call the inherited Buffer
+//     member straight on the GraphicWin * so the 0x444 folds into the
+//     receiver; holding the conversion in a `Buffer *` local costs VC6's
+//     base-conversion null guard, which on_redraw measured and this body
+//     does not have either.
 
 // TRIED: covers only the first ~10% of the function - the slot095 entry gate, the field+0x2350/0x2274/0xa14 visibility checks, and the GraphicWin::init + four set_text_color*/set_font + set_caption block (the same mechanical field-read-then-push shape as draw_terraform's color/font setup). Retyped VCall::slot090 and slot095 to `int` since their return value is tested (the emitted shim types every slot `void()`). The event loop this function is named for - FlatButton layout against the 0x9b7b1c/0x9b7b20 visible-region tables, button-hit dispatch, and the modal message pump via the caller-supplied callback - is roughly 4000 of the 4618 bytes and is not reproduced; the body returns 0 right after the one-time setup instead. MISMATCH #0 (prologue: no SEH frame modelled).
 // working copy - scaffold materialised by --work

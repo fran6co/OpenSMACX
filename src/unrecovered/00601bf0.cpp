@@ -1,23 +1,65 @@
 // ORIGINAL: 0x00601BF0 ?start@BasePop@@QAEHPADPBDH0HPAUGraphicWin@@@Z 0x00601BF0-0x006025F9 FILE
-// BLOCKED (2026-09-05, rehoming pass): the transcription below is COMPLETE -
-// it ends `return rc;` and covers the whole directive dispatch - and the two
-// declarations it needed (EditGroup::set_default 0x006120D0,
-// Dialogs::calculate_dimensions 0x006132A0) are now in dialogs.h/editgroup.h.
-// Three things still stop it compiling as a member over the real class, all
-// outside basepop.h:
-//   1. Sprite::init(char *, int, int) (0x005E2480) is not declared on Sprite
-//      - the `sprite` directive needs it, and sprite.h is not this class's.
-//   2. self+0x2350 has no owner in the tree. Dialogs+0x180 lands inside
-//      EditGroup's subobject span (0x22C8..0x2358), so it is spelled
-//      `dialogs_.EditGroup::field_88_` - a fact to establish from the
-//      layout, not a pun to make.
-//   3. The 20 config-script keywords at 0x00696F64..0x00696FEC (xs, ys, x,
-//      y, col, caption, checkbox, editbox, listbox, active, text, itemlist,
-//      button, extra, wave, vol, pitch, fade, pan, sprite) are file-backed
-//      .data named nowhere in the tree; they need defining with their
-//      initialisers before `_strnicmp` can name them.
+// BLOCKED (2026-09-05, second rehoming pass): NO LONGER BLOCKED ON
+// DECLARATIONS. Everything this body needs is spelled in the tree now - what
+// stops it is that the transcription below is wrong in three measured ways,
+// listed under CORRECTIONS, so homing it as-is would ship a parser that reads
+// the wrong bytes of every directive.
+//
+// UNLOCKS CLEARED THIS PASS:
+//   1. Sprite::init(char *, int, int) (0x005E3890 - NOT 0x005E2480, which is
+//      Buffer::get_pcx_dimensions) is DECLARED on Sprite (sprite.h). Its
+//      pending_bodies forwarder is NOT added yet: nothing called it once
+//      start stayed an artifact, and the forwarder ceiling counts it. Add
+//
+//          int Sprite::init(char *filename, int width, int height) {
+//              typedef int(__fastcall *pending)(Sprite *, void *, char *,
+//                                               int, int);
+//              return PENDING_BODY(0x005E3890, pending)(this, nullptr,
+//                                                       filename, width,
+//                                                       height);
+//          }
+//
+//      to pending_bodies.cpp in the same commit that homes this body.
+//   2. self+0x2350 IS `dialogs_.kind_`. EditGroup sits at Dialogs+0xF8 and
+//      kind_ is EditGroup+0x88 (editgroup.h), and 0x21D0 + 0xF8 + 0x88 =
+//      0x2350. BasePop::init (0x006015B0, BYTE_EXACT) writes the same member
+//      from the same flags&1/2/4/else chain that this body's head runs, which
+//      is the arithmetic identity and the use-site census in one.
+//   3. The 20 keywords are inline .data literals, not pointers, and their
+//      bytes are verified against the image. Spell them as file-scope arrays
+//      beside the rest of basepop.cpp's 0x0069xxxx defaults (the convention
+//      caviar.cpp and win.cpp use for literals whose callers push the
+//      address), named BasePopKeywordXs / Ys / X / Y / Col / Caption /
+//      Checkbox / Editbox / Listbox / Active / Text / Itemlist / Button /
+//      Extra / Wave / Vol / Pitch / Fade / Pan / Sprite at 0x00696F64, 68, 6C,
+//      70, 74, 7C, 84, 90, 98, A0, A8, B0, BC, C4, CC, D4, D8, E0, E8, EC.
+//      "x ", "y " and "col " carry their trailing space.
+//
+// CORRECTIONS to the transcription below, all read off the image:
+//   * `tok` IS the parse buffer's base, not buf+8. `parse_string` is handed
+//     `lea ecx,[esp+0x1c]`; the frame is 0x10c, so the buffer is the 0xF0
+//     bytes at frame 0x1c and the `escaped` flag is the dword at frame 0x10.
+//   * THE SUB-OFFSETS BELOW ARE WRONG, and not approximately: every directive
+//     calls purge_spaces, purge_leading and atoi/atol on the SAME offset,
+//     because VC6 defers the __cdecl cleanup (`add esp, 0xc` lands after the
+//     third call) and the later leas ride a lower esp. Measured N = (first
+//     lea after the compare's `add esp,0xc`) - 0x1c, per directive:
+//     xs 3, ys 3, x 2, y 2, col 4, caption 8, checkbox 9, listbox 8,
+//     active 7, button 7, extra 6, wave 5, vol 4, pitch 6, fade 5, pan 4,
+//     sprite 7. text / itemlist / editbox take no argument.
+//   * The compare LENGTHS below are wrong for text / wave / fade: they are
+//     4, 4 and 4 (a `push ebp` fed from `mov ebp, 4` two handlers back), not
+//     1, 1 and 1. The rest measure 2, 2, 2, 2, 4, 7, 8, 7, 7, 6, 5, 6, 5, 3,
+//     5, 3, 6 for xs..sprite.
+//   * The xs/ys wide-screen test is `external_window_ == 0`, not != 0, and it
+//     is tested TWICE (once to skip the atoi, once to skip the *3/2). The
+//     store target is `dialogs_.Dialog::field_2C_` (0x21fc) - the vbtable
+//     walk, so spell it as the qualified member access, the way init() and
+//     set_width() already do. col stores Dialog+0x4C (0x221c), checkbox and
+//     listbox store Dialog+0x50 (0x2220), ys stores Dialog+0x30 (0x2200).
 
 // TRIED: Ghidra's rendering makes the ~20-keyword _strnicmp chain look like it runs on every line; the real control flow (confirmed from raw disasm goto targets) is a config-line reader where non-'#' lines are added as items in an inner loop, and the keyword chain (compared against tok+1, since tok[0]=='#') runs only once per '#'-prefixed directive line, each arm jumping back to the line-read label. Keyword string addresses and compare lengths (2,2,2,2,4,7,8,7,7,6,1,5,6,5,1,3,5,1,3,6) read directly off the 20 _strnicmp call sites. a5/a6 stack-slot mapping cross-checked via the pre-push vs post-push esp delta (both reads at literal offset 0x124 are the same slot: a5). Sub-token byte offsets within the parse buffer (spaces/leading trim, atoi start) are approximate. Compiles; diverges #5.
+// TRIED (2026-09-05, second pass): homing the transcription as it stands - refused, not attempted, because the three CORRECTIONS above are measured off the image and the transcription disagrees with all of them. The compare lengths and per-directive offsets above are the whole of the missing work; the body is otherwise the one below.
 // working copy - scaffold materialised by --work
 // size      2569 bytes
 // prototype int (__thiscall ?start@BasePop@@QAEHPADPBDH0HPAUGraphicWin@@@Z)(BasePop* this, int8* srcFileID, int8* sectionID, int, int8*, int, GraphicWin*)
