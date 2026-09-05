@@ -517,7 +517,12 @@ SCAFFOLD_CEILINGS = {
     # and tech_pick (0x5BEB70) stand-ins, FILE-only targets, landmine-free;
     # tech_pick's a2/a3 left unnamed on purpose (0/-1 at every call site,
     # nothing names them).
-    "PENDING_BODY forwarders": 257,
+    # 257 -> 258 (2026-09-05, W5 basepop rehome): collected live. The raise is
+    # one forwarder - Buffer::write_strings (0x005DB040), the worker
+    # BasePop::on_redraw reaches; its target is FILE-only in the archive,
+    # landmine-free, and its parameters are now named left/top/width/height
+    # from the two recovered call sites.
+    "PENDING_BODY forwarders": 258,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -616,7 +621,7 @@ SCAFFOLD_CEILINGS = {
     # fixed-address bindings are the tree's own names) and 005c3f70.cpp homed
     # beside it - the 0x009B22E8 redraw flag is named WorldClimateRedrawRequest
     # in map.cpp from the two measured sites that write and read it.
-    "artifact files (recovered/)": 1031,
+    "artifact files (recovered/)": 1029,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -703,7 +708,11 @@ SCAFFOLD_CEILINGS = {
     # 1183 -> 1180 (2026-09-04, console claimed wave): 004ba5f0.cpp and
     # 004ba650.cpp homed into src/tutwin.cpp (the tutorial gates, with their
     # two shown-bit words named), 00511480.cpp into src/console.cpp.
-    "unrecovered files": 1153,
+    # 1180 -> 1153 (2026-09-04, P2/P3 waves 3-4): collected live - the
+    # worldwin/game/map and console editor batches homed the rest.
+    # 1153 -> 1152 (2026-09-05, W5 basepop rehome): 00604ea0.cpp (UNK2)
+    # homed into src/basepop.cpp.
+    "unrecovered files": 1152,
     # 2717 -> 2748 (2026-09-04, P2 net batch): NetFifo promoted with
     # close/add/get/get, NetFifoNode, head_/tail_/count_ - the deliberate
     # raise this ceiling exists for (class modelling grows it; the class

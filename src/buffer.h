@@ -427,7 +427,11 @@ class Buffer {
   int map_colors(int a1, int a2, int a3, int a4, unsigned char *table);
   int map_colors(RECT *area, unsigned char *table);
   int write_strings_height(StringList *strings, int a2, int a3);
-  int write_strings(StringList *strings, int a2, int a3, int a4, int a5);
+  // (left, top, width, height) from the two recovered call sites, which pass
+  // `left, top, right - left, 0` - the writer lays a StringList out from that
+  // origin and clips on the height.
+  int write_strings(StringList *strings, int left, int top, int width,
+                    int height);
   int box(int left, int top, int right, int bottom, int color1, int color2);
   int dotted_box(int left, int top, int right, int bottom, int color);
   int dotted_box(RECT *area, int color);
@@ -785,6 +789,12 @@ int polygon(Buffer *buffer, Vert *verts, int a3, int a4);
 static const size_t BufferSurfaceLockSlot = 0x64;
 static const size_t BufferSurfaceUnlockSlot = 0x80;
 
+
+// A scratch Buffer the PCX reader builds a decoded frame into before it is
+// blitted onward. Defined in buffer.cpp (0x00798668); declared here so the
+// maininterface body that reads it back can name it instead of binding the
+// address. Wave-3 handoff, 2026-09-05.
+extern Buffer g_PCX_PARSE_TEMP_BUFFER1;  // 0x00798668
 
 
 void __fastcall buffer_destructor_redirect(Buffer *self, void *);

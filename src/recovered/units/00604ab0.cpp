@@ -1,4 +1,19 @@
 // ORIGINAL: 0x00604AB0 ?on_redraw@BasePop@@QAEXXZ 0x00604AB0-0x00604E31 FILE
+// BLOCKED (2026-09-05, rehoming pass): every callee the body needs IS
+// declared now - Buffer::write_strings (0x005DB040) has a pending_bodies
+// forwarder, and clear_links / tile / set_text_color* / set_font / fill /
+// move / draw all resolve. Three things remain:
+//   1. SpriteBox::pos_to_id (0x00611640, QAEX - a void whose EAX the body
+//      reads) is not declared on SpriteBox. spritebox.h is not this class's.
+//   2. The vtable dispatch `call dword ptr [edx + 0x180]` - slot 96, taken
+//      twice on two paths - needs the Win/GraphicWin slot model or a
+//      `vtable_slot<Fn>(x, N)` spelling from original_seam.h. Nothing in the
+//      chain is declared virtual, by design.
+//   3. The three popup-default slots it writes (0x009B8CE8, 0x009B8CEC,
+//      0x009B8CF4) are named nowhere in the tree; they sit directly below
+//      BasePopDefaultField3094 (0x009B8CF8) and belong in basepop.cpp beside
+//      the rest of that block.
+
 // size      897 bytes
 // prototype void (__thiscall ?on_redraw@BasePop@@QAEXXZ)(BasePop* this)
 // callers   0   call targets   12

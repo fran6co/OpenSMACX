@@ -115,6 +115,11 @@ class EditGroup : public virtual GraphicWin, public virtual Dialog {
   // it twice on the EditGroup subobject BasePop carries at 0x22C8, once per
   // prompt field: (caption, buffer, character limit).
   int edit(char *a1, char *a2, int a3);
+  // 0x006120D0, still FILE-only in src/unrecovered/006120d0.cpp. DECLARATION
+  // ONLY, added because BasePop::start (0x00601BF0) calls it by name on the
+  // EditGroup subobject Dialogs carries - the access costs nothing and the
+  // definition stays where it is.
+  int set_default(char *text, int index);
 
  private:
   // The vbtable pointer is EMITTED by the compiler now.

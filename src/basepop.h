@@ -191,6 +191,26 @@ class BasePop : public GraphicWin {
   // has there.
   static MEASURED int __cdecl set_def_ok_text(LPSTR text);
   static MEASURED int __cdecl set_def_cancel_text(LPSTR text);
+  // 0x006050F0, homed from 006050f0.cpp. `static` for the same reason
+  // fallout() and on_modal() are: the catalogued `QAAX` names a __cdecl
+  // MEMBER, so its hidden `this` would sit at [esp+0x18] past the five
+  // real arguments - and the image reads its five from [esp+4]..[esp+0x14]
+  // and never touches a sixth slot. No receiver exists to pass.
+  static void set_def_external_window(GraphicWin *external_window, int loc_x,
+                                      int loc_y, int width, int height);
+  // 0x006043D0, homed from 006043d0.cpp. `static`, and the measurement that
+  // settled it is on the marker. The catalogued `QAA` names a __cdecl
+  // MEMBER, but the image's only caller (config_popups, 0x00588AEB) pushes
+  // exactly ONE argument before the call and the body ends in `ret` rather
+  // than `ret 4` - one stack slot, callee pops nothing. A __cdecl member
+  // would have `this` at [esp+4] and the string at [esp+8]; the image reads
+  // its string from [esp+4], so there is no receiver to pass. Same case as
+  // set_def_ok_text above, and the `// symbol` fact records the SAH.
+  // MEASURED for the same reason those two carry it: nothing in this TU
+  // calls set_def_file (its one caller is config_popups, 0x00588aa0), and
+  // without the dllexport VC6 drops the unreferenced COMDAT, which makes
+  // the body unmeasurable rather than merely unmatched.
+  static int set_def_file(char *text);
 
  public:
   static void fallout();
@@ -213,6 +233,13 @@ class BasePop : public GraphicWin {
   static int init_class();          // 00604590
   static BasePop *basepop_alloc();
   void on_button_clicked(int button_id);  // 0x00604300, defined in basepop.cpp
+  // 0x00604EA0, UNK2. EVIDENCE-FREE as a name: the image names it nowhere
+  // and no recovered caller reaches it (catalogue callers 0, no CSV entry,
+  // no UNK string in the shipped binary), so the body's own reading has to
+  // carry the meaning - it measures the widest string the popup is going to
+  // draw (the two captions and every item), and answers 0 when the caller
+  // never opened the popup's text at all.
+  int UNK2();
   void UNK3(int a1);
   void UNK4(int a1);
   int on_key_click(int a, int b);

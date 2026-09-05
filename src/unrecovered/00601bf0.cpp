@@ -1,4 +1,22 @@
 // ORIGINAL: 0x00601BF0 ?start@BasePop@@QAEHPADPBDH0HPAUGraphicWin@@@Z 0x00601BF0-0x006025F9 FILE
+// BLOCKED (2026-09-05, rehoming pass): the transcription below is COMPLETE -
+// it ends `return rc;` and covers the whole directive dispatch - and the two
+// declarations it needed (EditGroup::set_default 0x006120D0,
+// Dialogs::calculate_dimensions 0x006132A0) are now in dialogs.h/editgroup.h.
+// Three things still stop it compiling as a member over the real class, all
+// outside basepop.h:
+//   1. Sprite::init(char *, int, int) (0x005E2480) is not declared on Sprite
+//      - the `sprite` directive needs it, and sprite.h is not this class's.
+//   2. self+0x2350 has no owner in the tree. Dialogs+0x180 lands inside
+//      EditGroup's subobject span (0x22C8..0x2358), so it is spelled
+//      `dialogs_.EditGroup::field_88_` - a fact to establish from the
+//      layout, not a pun to make.
+//   3. The 20 config-script keywords at 0x00696F64..0x00696FEC (xs, ys, x,
+//      y, col, caption, checkbox, editbox, listbox, active, text, itemlist,
+//      button, extra, wave, vol, pitch, fade, pan, sprite) are file-backed
+//      .data named nowhere in the tree; they need defining with their
+//      initialisers before `_strnicmp` can name them.
+
 // TRIED: Ghidra's rendering makes the ~20-keyword _strnicmp chain look like it runs on every line; the real control flow (confirmed from raw disasm goto targets) is a config-line reader where non-'#' lines are added as items in an inner loop, and the keyword chain (compared against tok+1, since tok[0]=='#') runs only once per '#'-prefixed directive line, each arm jumping back to the line-read label. Keyword string addresses and compare lengths (2,2,2,2,4,7,8,7,7,6,1,5,6,5,1,3,5,1,3,6) read directly off the 20 _strnicmp call sites. a5/a6 stack-slot mapping cross-checked via the pre-push vs post-push esp delta (both reads at literal offset 0x124 are the same slot: a5). Sub-token byte offsets within the parse buffer (spaces/leading trim, atoi start) are approximate. Compiles; diverges #5.
 // working copy - scaffold materialised by --work
 // size      2569 bytes

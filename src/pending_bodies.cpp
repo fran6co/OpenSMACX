@@ -1377,6 +1377,18 @@ void AlphaMenu::check(int veh_id) {  // 0x00460DD0
 // `write_multi_font_raw_l`, which is promoted; a pointer here would cost that
 // body the `E8` it now emits.
 //             body in src/unrecovered/005dbd00.cpp
+// ?write_strings@Buffer@@QAEHPAUStringList@@HHHH@Z at 0x005DB040, a
+// pending_bodies forwarder. The body is 950 bytes and still FILE-only in
+// src/unrecovered/005db040.cpp; BasePop::on_redraw (0x00604AB0) calls it BY
+// NAME, so a pointer binding there would cost that body the `E8` it needs.
+int Buffer::write_strings(StringList *strings, int left, int top, int width,
+                          int height) {
+    typedef int(__fastcall *pending)(Buffer *, void *, StringList *, int, int,
+                                     int, int);
+    return PENDING_BODY(0x005DB040, pending)(this, nullptr, strings, left, top,
+                                             width, height);
+}
+
 int Buffer::write_raw_l(LPSTR text, int x_coord, int y_coord, int len) {
     typedef int(__fastcall *pending)(Buffer *, void *, LPSTR, int, int, int);
     return PENDING_BODY(0x005DBD00, pending)(this, nullptr, text, x_coord,

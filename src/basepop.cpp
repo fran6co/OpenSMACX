@@ -26,6 +26,7 @@
 #include "dipedit.h"
 #include "filewin.h"
 #include "stringstruct.h"  // StringAllocationHeap - the 0x009B3374 hand-off
+#include "popup.h"  // PopupStartCaption - set_def_file's 0x009B8AA8 buffer
 #include <cstring>
 
 /*
@@ -899,6 +900,51 @@ inline int __cdecl BasePop::set_def_cancel_text(LPSTR text) {
 }
 
 /*
+Purpose: Validate a start caption and install it as the popup's default.
+// ORIGINAL: 0x006043D0 ?set_def_file@BasePop@@QAAHPAD@Z 0x006043D0-0x00604407 FILE BYTE_EXACT
+// symbol    ?set_def_file@BasePop@@SAHPAD@Z
+// size      55 bytes
+// prototype
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006453E0 0x00645470
+// LEVER: real strlen and strcat WITHOUT the pragma. The artefact reached
+//         this pair with `#pragma function(strlen, strcat)`, which is not
+//         available to the tree. The same two calls fall out of the ordinary
+//         source form its twin set_def_ok_text already uses - a
+//         `dst[0] = 0` store followed by `strcat(dst, src)` - because both
+//         strings are arrays of external linkage: PopupStartCaption decays
+//         to the `push 0x9b8aa8` the image emits, and `text` is a parameter
+//         the compiler cannot see the length of. Nothing about /O2's
+//         `repne scasb` expansion survives; measure, not a pragma, is what
+//         keeps the two `call rel32`s.
+// LEVER: the receiver question, settled by measurement. THREE spellings
+//         measured against the image's 20 instructions:
+//           `int __cdecl BasePop::set_def_file(char *)`  19/20 - string lands
+//               at [ebp+0xc], the SECOND stack slot, so the null test
+//               compares the wrong slot and the tail `ret` gains a `4`.
+//               MSVC pushes a __cdecl member's `this` FIRST, not last.
+//           `static int BasePop::set_def_file(char *)`   20/20 BYTE_EXACT
+//           a free `int set_def_file(char *)`    same 20 bytes, wrong symbol
+//         What decides it is the CALLER, not the body: config_popups
+//         (0x00588AEB) pushes exactly ONE argument before the
+//         `call 0x6043d0` and the body ends in `ret` rather than `ret 4`,
+//         so there is one stack slot and no receiver. The artefact's
+//         reading - that the string is `this` itself - was an attempt to
+//         reconcile the QAA with that one slot; `static` reconciles it
+//         without the pun the class rules ban.
+*/
+int BasePop::set_def_file(char *text) {
+    if (text != nullptr && strlen(text) <= 0xC) {
+        PopupStartCaption[0] = 0;
+        strcat(PopupStartCaption, text);
+        return 0;
+    }
+    return 3;
+}
+
+/*
 // ORIGINAL: 0x00604590 ?init_class@BasePop@@QAAHXZ 0x00604590-0x0060467A BYTE_EXACT
 // LEVER: inline-the-two-setters the body is `set_def_cancel_text("Cancel");` then `set_def_ok_text("OK");` INLINED, not open-coded. Each inlined copy keeps its own `if (text == nullptr) return 3;` and `return 5`/`return 4` failure exits, which is why the image has `mov eax, <caption>; test eax, eax; je` before each block and why both failure paths jump to the START OF THE NEXT BLOCK (0x006045F8, 0x00604650) rather than to a return. The two setters are `__forceinline` here and MUST be defined ABOVE this body: VC6 is single-pass and will not inline a definition it has not seen. Both keep their own out-of-line BYTE_EXACT bodies, which /Gy still emits.
 // LEVER: string-literal-not-address the captions are the LITERALS "Cancel" (0x00697008) and "OK" (0x00697010), read out of the image. Spelled as `(LPSTR)0x00697008` VC6 folds `text == nullptr` to false at compile time and the whole `mov/test/je` triple disappears; a literal's address is a RELOCATION, which VC6 cannot fold and the comparison masks away.
@@ -1220,8 +1266,10 @@ Status: Complete
 // shipped game copies whatever its init paths left there.
 
 // {100, 100}: the defaults the ctor's tail sends through dialog_width_/A24_
-// into the embedded Dialog's width/height slots.
-const uint32_t BasePopDefaultDialogSize[2] = {100, 100};  // 0x00696EC4
+// into the embedded Dialog's width/height slots. NOT const, because
+// set_def_external_window (0x006050F0) writes both slots at run time - the
+// file-backed image bytes are the load state, which the initialiser keeps.
+uint32_t BasePopDefaultDialogSize[2] = {100, 100};  // 0x00696EC4
 
 // Copied to +0x21c0/+0x21c4. popups_normal rewrites these to 0 and 4.
 const uint32_t BasePopDefaultField21C0[2] = {10, 4};  // 0x00696ED0
@@ -1247,6 +1295,32 @@ uint32_t BasePopDefaultField3094;  // 0x009B8CF8
 // and default_loc_a_/default_loc_b_ (the starting loc_a_/loc_b_; 0x2000 keeps the
 // current value, so zero here means "location 0,0").
 uint32_t BasePopDefaultLayout[3];  // 0x009B8D04
+
+// ORIGINAL: 0x006050F0 ?set_def_external_window@BasePop@@QAAXPAUGraphicWin@@HHHH@Z 0x006050F0-0x00605121 FILE BYTE_EXACT
+// symbol    ?set_def_external_window@BasePop@@SAXPAVGraphicWin@@HHHH@Z
+// size      49 bytes
+// prototype
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// LEVER: five plain stores in argument order. The image's own instruction
+//         order is the register shuffle VC6 produces for them - it loads
+//         [esp+4]/[esp+8]/[esp+0xc] into eax/ecx/edx BEFORE the first store,
+//         and [esp+0x10]/[esp+0x14] into the two registers just freed, so the
+//         six loads and five stores interleave exactly as written. No source
+//         reordering is needed; the naive body is the match.
+// LEVER: `static` (the `// symbol` fact above records the SAH this tree
+//         emits for the image's QAAX) - the image reads five arguments at
+//         [esp+4]..[esp+0x14] and there is no sixth slot for a hidden `this`.
+void BasePop::set_def_external_window(GraphicWin *external_window, int loc_x,
+                                      int loc_y, int width, int height) {
+    BasePopDefaultLayout[0] = reinterpret_cast<uint32_t>(external_window);
+    BasePopDefaultLayout[1] = loc_x;
+    BasePopDefaultLayout[2] = loc_y;
+    BasePopDefaultDialogSize[0] = width;
+    BasePopDefaultDialogSize[1] = height;
+}
 
 // The 27 dwords the ctor transposes into +0x31b8..+0x3223.
 uint32_t BasePopDefaultBlock31B8[27];  // 0x009B8D10
@@ -2398,4 +2472,128 @@ void BasePop::on_left_down(int x, int y) {
 
 int BasePop::on_modal() {
     return BasePopFalloutFlag == 0;
+}
+
+/*
+Purpose: Measure the widest string the popup will draw.
+// ORIGINAL: 0x00604EA0 ?UNK2@BasePop@@QAEHXZ 0x00604EA0-0x0060500A FILE
+// size      362 bytes
+// prototype int (__thiscall ?UNK2@BasePop@@QAEHXZ)(BasePop* this)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00619280 0x00644F3A
+// LEVER: TERNARY CHAIN AS THE CALL ARGUMENT, not a named local. The image's
+//         three-way caption fallback is `test/je; push; jmp` into ONE shared
+//         `call width` - which is what `f(a ? a : (b ? b : c))` lowers to,
+//         the argument pushed at the end of each arm. A named local (`char
+//         *str = ok_text_; if (str == 0) str = ...`) lowers instead to a
+//         `mov`-into-a-register chain and a single push, which is the
+//         divergence the first transcription stopped at (#16, 0.76).
+// LEVER: THE FIELD NAMES. ok_text_/cancel_text_ at 0x3224/0x3228,
+//         BasePopDefaultOkText/CancelText at 0x009B8D80/84, the literals
+//         "OK"/"Cancel" at 0x00697014/18, button_font1_ at 0x316c, and the
+//         list at 0x2158..0x2164 is item_ids_ (StringList): head_ 0x2158,
+//         current_ 0x215c, entry_count_ 0x2160, current_position_ 0x2164.
+//         The three-way walks in the loop are `next_entry()` and
+//         `current_entry()` OPEN-CODED - both are defined out of line in
+//         stringstruct.cpp, so this TU cannot inline them, which the image
+//         demonstrably does.
+// TRIED: `abs(-1)` for seek_pos's two calls - VC6 folds the intrinsic at
+//         compile time and both calls vanish. The tree's own seek_pos uses
+//         the `AbsFnT abs_fn = &abs` pointer for exactly this reason; that
+//         spelling is what this body carries, and `(*(&abs))(-1)` scores the
+//         same 12/117 as the pointer, so the indirect call is not what is
+//         blocking.
+// CEILING (2026-09-05): 12/117 at first divergence #10, and the wall is not
+//         the string fallbacks this body was stuck on before - those are now
+//         spelled right. Three things, all of them outside this file:
+//           1. The image dedicates EBX to max_width (`push ebx; xor ebx,ebx`
+//              in the prologue, `mov ebx,eax` at each max); this tree hands
+//              the slot to EBP and takes a frame. Register allocation, not
+//              source shape - no local or spelling change reached it in four
+//              measured attempts.
+//           2. The caption fallback still pushes ONCE at the join where the
+//              image pushes in each arm. `f(a ? a : (b ? b : c))` did not
+//              produce it here.
+//           3. The three list walks in the loop are the INLINED bodies of
+//              StringStruct::seek_pos(-1), next_entry() and current_entry(),
+//              all three defined out of line in stringstruct.cpp, so this TU
+//              cannot inline any of them and each has to be open-coded -
+//              which is why the `push -1 / call abs` pair is indirect here
+//              and direct in the image (inlining folds the pointer away).
+//         The unlock is a stringstruct.h change: make those three inline-
+//         able from other TUs without disturbing the BYTE_EXACT
+//         ?seek_pos@StringStruct@@QAEHH@Z at 0x004015B0. Not this file's to
+//         make.
+*/
+// `abs` of a constant folds away under /O2, so seek_pos's two calls can only
+// be reached through a pointer - the same spelling stringstruct.cpp uses.
+typedef int (__cdecl *AbsFnT)(int);
+
+int BasePop::UNK2() {
+    if (field_30B0_ == 0) {
+        return 0;
+    }
+
+    int max_width = 0;
+
+    if ((field_30A8_ & 0x10000) == 0) {
+        int width = button_font1_->width(ok_text_ != 0 ? ok_text_
+                  : (BasePopDefaultOkText != 0 ? BasePopDefaultOkText : "OK"));
+        if (width > 0) {
+            max_width = width;
+        }
+    }
+
+    if ((field_30A8_ & 0x40) != 0) {
+        int width = button_font1_->width(
+                cancel_text_ != 0 ? cancel_text_
+                  : (BasePopDefaultCancelText != 0 ? BasePopDefaultCancelText
+                                                   : "Cancel"));
+        if (width > max_width) {
+            max_width = width;
+        }
+    }
+
+    // StringStruct::seek_pos(-1), open-coded. Its two `abs` calls survive
+    // only through a pointer, because `abs` of a constant folds away.
+    if (item_ids_.entry_count_ - 1 >= -1) {
+        item_ids_.current_ = item_ids_.head_;
+        AbsFnT abs_fn = reinterpret_cast<AbsFnT>(&abs);
+        if (abs_fn(-1) <= item_ids_.entry_count_) {
+            int walked = abs_fn(-1);
+            if (walked > 0) {
+                do {
+                    --walked;
+                    item_ids_.current_ = item_ids_.current_->previous;
+                } while (walked != 0);
+            }
+            item_ids_.current_position_ = item_ids_.entry_count_ - 1;
+        }
+    }
+
+    for (int i = 0; i < item_ids_.entry_count_; ++i) {
+        if (item_ids_.head_ != 0) {
+            // StringStruct::next_entry(), open-coded.
+            item_ids_.current_ = item_ids_.current_->next;
+            int position = item_ids_.current_position_ + 1;
+            item_ids_.current_position_ = position;
+            if (position == item_ids_.entry_count_) {
+                item_ids_.current_position_ = 0;
+            }
+        }
+
+        // StringStruct::current_entry()->text, open-coded.
+        char *text = item_ids_.current_ != 0
+                   ? (item_ids_.head_ != 0 ? item_ids_.current_->payload->text
+                                           : static_cast<char *>(0))
+                   : static_cast<char *>(0);
+        int width = button_font1_->width(text);
+        if (width > max_width) {
+            max_width = width;
+        }
+    }
+
+    return max_width;
 }

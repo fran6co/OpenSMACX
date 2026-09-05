@@ -1,4 +1,15 @@
 // ORIGINAL: 0x00603800 ?calculate_dimensions@BasePop@@QAEHXZ 0x00603800-0x006042D2 FILE
+// BLOCKED (2026-09-05, rehoming pass): 0x006132A0 Dialogs::calculate_dimensions
+// is now DECLARED on Dialogs (dialogs.h), which was the blocker named last
+// pass. What remains is that the 88-byte Dialogs body cannot itself be homed
+// until `calculate_dimensions` is declared on all five of Dialogs' bases -
+// ListBox, RadioButton, CheckBox, SpriteBox and EditGroup - which spans
+// listbox.h, radiobutton.h, checkbox.h, spritebox.h and editgroup.h. None but
+// editgroup.h is a header the BasePop rehoming owns. Its own callee set also
+// needs 0x006120B0 (EditGroup), 0x006099D0 / 0x00609FA0 / 0x0060A020 (Dialog)
+// and 0x005DC360 / 0x005DDDA0 / 0x005DDDE0 / 0x005DDEF0 (Buffer) declared or
+// forwarded before the 2770-byte body links.
+
 // TRIED: literal per-instruction register transcription (eax/ebx/ecx/edx/ebp/edi + I32()/U8() offset macros on `this`, spare1/spare2 for [esp+0x10]/[esp+0x14], resolved jump-table switch on field_2350_+1); diverges at instr #0 (prologue shape: original does sub esp,8 before the push sequence), not chased further.
 // working copy - scaffold materialised by --work
 // size      2770 bytes

@@ -104,7 +104,12 @@ CEILINGS = {
     # parameter the excuse now covers. The totals moved against each other.
     # 31 -> 32 (2026-09-03, P1b ambience/sounddevice batch): one more
     # investigated-and-unnameable homed body, same escape-hatch terms.
-    "evidence-free unk": 34,
+    # 34 -> 36 (2026-09-05, W5 basepop rehome): BasePop::UNK2 (0x00604EA0)
+    # homed MISMATCH 12/117 and classified EVIDENCE-FREE - catalogue callers
+    # 0, no CSV entry, no UNK string in the binary, no recovered caller -
+    # same terms as BaseWin's UNK4-7. The +2 is its declaration and
+    # definition line; another homed body, not a widening over existing code.
+    "evidence-free unk": 36,
     # 55 -> 54 (2026-08-29, init_thunks batch): destroy_vehdraw_caviar and
     # siblings reached their globals through raw address casts; the real
     # objects need no cast.
@@ -362,7 +367,7 @@ CEILINGS = {
     # (value, override_text, flags, pair_value_a/b), start's
     # (text_file, text_label, value, override_text, flags, owner_window),
     # double_click's button_id, string's text.
-    "scaffold name": 2427,
+    "scaffold name": 2423,
 }
 
 WHY = {

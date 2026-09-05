@@ -1,4 +1,16 @@
 // ORIGINAL: 0x00602600 ?exec@BasePop@@QAEHHP6AHXZ@Z 0x00602600-0x006037F5;0x00662E02-0x00662E17 FILE
+// BLOCKED (2026-09-05, rehoming pass): the body below is PARTIAL and must not
+// be homed as if it were exec. The event loop the function is named for - the
+// visible-region positioning against 0x009B7B1C/0x009B7B20, the button-group
+// dispatch and the modal message pump through the caller's callback - is not
+// transcribed; the body returns 0 right after the one-time setup. Homed into
+// product source that is a silent success where the image pumps a modal loop,
+// which is worse than the pending_bodies forwarder that stands in for it now:
+// the forwarder faults loudly, this would not. Its three vtable dispatches
+// (slots 0x14, 0x168, 0x16c of the BasePop table) also need the slot model
+// before any spelling of them can be checked. Finish the transcription, then
+// home it and retire the forwarder in the same commit.
+
 // TRIED: covers only the first ~10% of the function - the slot095 entry gate, the field+0x2350/0x2274/0xa14 visibility checks, and the GraphicWin::init + four set_text_color*/set_font + set_caption block (the same mechanical field-read-then-push shape as draw_terraform's color/font setup). Retyped VCall::slot090 and slot095 to `int` since their return value is tested (the emitted shim types every slot `void()`). The event loop this function is named for - FlatButton layout against the 0x9b7b1c/0x9b7b20 visible-region tables, button-hit dispatch, and the modal message pump via the caller-supplied callback - is roughly 4000 of the 4618 bytes and is not reproduced; the body returns 0 right after the one-time setup instead. MISMATCH #0 (prologue: no SEH frame modelled).
 // working copy - scaffold materialised by --work
 // size      4618 bytes
