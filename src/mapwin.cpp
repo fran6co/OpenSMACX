@@ -730,15 +730,8 @@ static const signed char *const CornerLightTable = (const signed char *)0x007F66
 // indexed into. Named bindings, not objects, for the same reason as
 // MapRowStride above: the image holds them at these fixed addresses and
 // nothing here maps that storage.
-static const unsigned char *const AltDirectionTable = (const unsigned char *)0x00685684;
-static const unsigned char *const AltBonusArid = (const unsigned char *)0x007D3B74;
-static const unsigned char *const AltBonusMoist = (const unsigned char *)0x007F65D0;
-static const unsigned char *const AltBonusRainy = (const unsigned char *)0x007F655C;
-static const unsigned char *const AltBonusFlat = (const unsigned char *)0x007D3A78;
-static const unsigned char *const AltBonusOcean = (const unsigned char *)0x007F64E8;
 // 0x00685EA0 / 0x00685EE0 - the two coordinate-stride tables the same walk
 // adds to a tile's x and y as it steps outward, indexed by byte offset.
-static const unsigned char *const AltStepX = (const unsigned char *)0x00685EA0;
 // 0x00691E6C / 0x00691E70 - the scale pair the altitude shading divides by:
 // a numerator and a denominator, 1/0 meaning "take the fixed 1/16 step".
 // THE VIRTUAL-BASE DISPLACEMENT the compiler lays MapWin down with: the

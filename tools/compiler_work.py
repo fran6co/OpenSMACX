@@ -526,7 +526,9 @@ SCAFFOLD_CEILINGS = {
     # (0x00611640), which the homed on_redraw calls - spritebox.h has no
     # pos_to_id declaration yet (HANDOFF on the marker; the declaration also
     # clears this row).
-    "PENDING_BODY forwarders": 259,
+    # 259 -> 258 (2026-09-05, W5 map free-function wave, collected): the
+    # fixup_landmarks forwarder went with its body into src/map.cpp.
+    "PENDING_BODY forwarders": 258,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -625,7 +627,11 @@ SCAFFOLD_CEILINGS = {
     # fixed-address bindings are the tree's own names) and 005c3f70.cpp homed
     # beside it - the 0x009B22E8 redraw flag is named WorldClimateRedrawRequest
     # in map.cpp from the two measured sites that write and read it.
-    "artifact files (recovered/)": 1028,
+    # 1031 -> 1029 (2026-09-05, W5 map free-function wave): 005927d0.cpp is
+    # gone from the archive (its body rewritten into src/map.cpp) and
+    # 00592940.cpp (fixup_landmarks) homed into src/map.cpp. Collected
+    # live with the basepop deletions below.
+    "artifact files (recovered/)": 1026,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -716,7 +722,11 @@ SCAFFOLD_CEILINGS = {
     # worldwin/game/map and console editor batches homed the rest.
     # 1153 -> 1152 (2026-09-05, W5 basepop rehome): 00604ea0.cpp (UNK2)
     # homed into src/basepop.cpp.
-    "unrecovered files": 1152,
+    # 1152 -> 1148 (2026-09-05, W5 map free-function wave): 00590990.cpp
+    # (say_project), 00591e90.cpp (treaty_using_faction, BYTE_EXACT 39/39),
+    # 004620c0.cpp (is_land_near), 00592480.cpp (fungus_radius, BYTE_EXACT
+    # 72/72) and 005a6270.cpp (proto_sort) homed into src/map.cpp.
+    "unrecovered files": 1148,
     # 2717 -> 2748 (2026-09-04, P2 net batch): NetFifo promoted with
     # close/add/get/get, NetFifoNode, head_/tail_/count_ - the deliberate
     # raise this ceiling exists for (class modelling grows it; the class

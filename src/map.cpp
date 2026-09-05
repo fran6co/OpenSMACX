@@ -1314,6 +1314,55 @@ Status: Complete
 
 
 /*
+Purpose: Name the faction working a tile that this faction may enter by treaty.
+// ORIGINAL: 0x00591E90 sub_591e90 0x00591E90-0x00591EF9 FILE BYTE_EXACT
+// symbol    ?treaty_using_faction@@YAHHHH@Z
+// NO IMAGE CALLER AND NO IMAGE REFERENCE AT ALL (no E8 to it, no 4-byte
+//        image of its address anywhere in the file), so the name is derived
+//        from the body, not from a catalogue entry: it returns the tile's
+//        `using` faction when the two are not the same faction, the tile is
+//        land, and the treaty word says TREATY without PACT - the "right of
+//        passage through an ally's territory" test. Everything it reads was
+//        already named: `val3 & 7` is using_at(), the altitude nibble of
+//        `climate` is the ALT_BIT_* ladder, and the per-faction word is
+//        PlayersData[].diplo_treaties[] - 0x96C9E0 + faction * 0x20CC + the
+//        subject * 4, which is the same arithmetic spying_recovery.h spells
+//        `SpyingStatusTable[faction * 2099 + subject]`.
+// LEVER: (1) ONE exit. The image's five failures all jump to a shared
+//        `or eax,-1`, so the body is a nest whose arms fall through to a
+//        single `return -1` - a `||` chain of early returns gives five
+//        separate epilogues. (2) `& ~0x1F`, not `& 0xE0` - the complement
+//        stops VC6 narrowing the whole test to `and dl,0xe0 / cmp dl,0x60 /
+//        jb`, which is where `xor edx,edx / mov dl,[eax] / and edx,
+//        0xffffffE0 / cmp edx,0x60 / jl` comes from (game.cpp lever 4,
+//        measured again here). 3/39 -> BYTE_EXACT 39/39.
+// size      105 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: The using faction id, or -1
+Status: Complete
+*/
+int __cdecl treaty_using_faction(int x, int y, int faction_id) {
+    if (faction_id > 0) {
+        Map *tile = map_loc(x, y);
+        if ((tile->climate & ~0x1F) >= ALT_BIT_SHORE_LINE) {
+            int using_id = tile->val3 & 7;
+            if (using_id > 0 && using_id != faction_id) {
+                uint32_t treaty = PlayersData[faction_id].diplo_treaties[using_id];
+                if (!(treaty & DTREATY_PACT) && (treaty & DTREATY_TREATY)) {
+                    return using_id;
+                }
+            }
+        }
+    }
+    return -1;
+}
+
+
+/*
 Purpose: Determine the tile's mineral count that translates to rockiness.
 // ORIGINAL: 0x00591F00 ?minerals_at@@YAHHH@Z 0x00591F00-0x00592007
 // LEVER: three fixes, 2/113 -> 13/113 (0.529 similar). (1) SIGNED / 2 IS NOT
@@ -1488,6 +1537,40 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl site_radius(int x, int y, int UNUSED(unk_val)) {
+    for (int i = 0; i < 21; i++) {
+        int x_radius = xrange(x + RadiusOffsetX[i]);
+        int y_radius = y + RadiusOffsetY[i];
+        if (on_map(x_radius, y_radius)) {
+            Map *tile = map_loc(x_radius, y_radius);
+            tile->val2 &= 0x0F;
+        }
+    }
+}
+
+/*
+Purpose: Plant fungus on a tile and take its radius away from every owner.
+// ORIGINAL: 0x00592480 sub_592480 0x00592480-0x00592550 FILE BYTE_EXACT
+// symbol    ?fungus_radius@@YAXHH@Z
+// NO IMAGE CALLER AND NO IMAGE REFERENCE AT ALL, so the name is derived from
+//        the body, not from a catalogue entry: the centre tile gains
+//        BIT_FUNGUS and loses MINE | SOLAR_TIDAL | FOREST | CONDENSER |
+//        ECH_MIRROR | THERMAL_BORE (0x01E00050 - the terraforms fungus
+//        cannot coexist with), and then the same
+//        21-tile walk site_radius() does clears each tile's owner nibble.
+// size      208 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl fungus_radius(int x, int y) {
+    map_loc(x, y)->bit |= BIT_FUNGUS;
+    map_loc(x, y)->bit &= ~(BIT_MINE | BIT_SOLAR_TIDAL | BIT_FOREST
+                            | BIT_CONDENSER | BIT_ECH_MIRROR
+                            | BIT_THERMAL_BORE);
     for (int i = 0; i < 21; i++) {
         int x_radius = xrange(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
@@ -5136,6 +5219,53 @@ __forceinline static int alt_shore_detail(int corner, int west, int north, int e
 }
 
 /*
+Purpose: Is any of the eight tiles a tile's odd-q ring holds land?
+// ORIGINAL: 0x004620C0 sub_4620c0 0x004620C0-0x00462184 FILE
+// symbol    ?is_land_near@@YAHHH@Z
+// NO IMAGE CALLER AND NO IMAGE REFERENCE AT ALL, so the name is derived from
+//        the body, not from a catalogue entry. The eight offsets it walks are
+//        the first eight entries of map.h's RadiusBaseX/RadiusBaseY - the
+//        image's own copies of those tables are 0x0066EF50 and 0x0066EF74,
+//        and the ninth entry is the tile itself, which this skips. "Land" is
+//        the altitude nibble of `climate` reaching ALT_BIT_SHORE_LINE, the
+//        same test is_ocean() inverts.
+// TRIED: nullary contract head (reads [ebp+8]/[ebp+0xc], no ecx use -> 2
+//        plain int args, not __thiscall).
+// TRIED: 3/68 after `!on_map(x, y)` for the guard and `& 0xE0` for the
+//        altitude nibble (this one the image NARROWS to `and al,0xe0 / cmp
+//        eax,0x60`, the opposite of 0x00591E90 next to it, so `& ~0x1F` is
+//        wrong here). The wall is the prologue: the image spends `push ecx`
+//        on a stack slot before its callee-saved pushes and keeps
+//        `MapIsFlat & 1` in it, reloading it every iteration along with the
+//        `x` and `y` parameters, where this tree enregisters the flag in EBX
+//        and the arguments - the receiver-spill wall the brief documents for
+//        the Palette bodies. 68 instructions against 75 and every one after
+//        the slot is register-shifted. Left here.
+// size      196 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Is land within the ring? true/false
+Status: Complete
+*/
+BOOL __cdecl is_land_near(int x, int y) {
+    if (!on_map(x, y)) {
+        return false;
+    }
+    for (int i = 0; i < 8; i++) {
+        int x_radius = xrange(x + RadiusBaseX[i]);
+        int y_radius = y + RadiusBaseY[i];
+        if (on_map(x_radius, y_radius)
+            && (map_loc(x_radius, y_radius)->climate & 0xE0) >= ALT_BIT_SHORE_LINE) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/*
 Purpose: Interpolate the rendered altitude detail at one point of a tile's
          terrain polygon, so that the map renderer can slope the tile towards
          its neighbours and break the contour at the water's edge.
@@ -5864,6 +5994,49 @@ void __cdecl synch_display(int stage, int arg1, int arg2, int arg3) {
     }
 }
 
+/*
+Purpose: Write a secret project's name, and its cost bracket when asked.
+// ORIGINAL: 0x00590990 ?say_project@@YAXPAXHH@Z 0x00590990-0x00590A0E FILE
+// size      126 bytes
+// prototype void (__cdecl ?say_project@@YAXPAXHH@Z)(void*, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006169A0 0x00645470
+// ONE image reference outside its own body, as a raw function pointer in the
+//        file's .data, so the catalogue gives no parameter names; they are
+//        read off the body (an output buffer, a project index, a flag).
+//        SecretProjectRules is the 0x30-stride rules record whose first field
+//        is the Strings id the name comes from - the same record shape as
+//        Facility[] - and 0x2CC into the label block is label_get(179).
+// TRIED: (as 00590990.cpp) the artifact's `strcat(StringTemp, ...)`,
+//        i.e. no append of StringTemp to the output - it is what the image
+//        does, and it is kept here.
+// symbol    ?say_project@@YAXPADHH@Z
+// TRIED: 32/40. Everything left is evaluation order around the first
+//        `StringTable.get`: the image hoists the receiver
+//        (`mov ecx, 0x9b90d8`) to the top of the body, before the
+//        `project_id * 0x30` index arithmetic, and reads the name into EAX;
+//        this tree computes the argument first and reads the name into ECX,
+//        which also costs the receiver load its own instruction. Spelling the
+//        receiver through a local `Strings &`, or the name through a local
+//        `LPSTR`, only adds the store the image does not have. Not chased
+//        further this pass.
+Return Value: n/a
+Status: Complete
+*/
+RulesFacility *const SecretProjectRules = (RulesFacility *)0x009A5888;
+
+void __cdecl say_project(LPSTR output, int project_id, BOOL with_cost) {
+    strcat(output, StringTable.get((int)SecretProjectRules[project_id].name));
+    if (with_cost != 0) {
+        strcat(output, " ");
+        strcat(output, "(");
+        strcat(StringTemp, label_get(179));
+        strcat(output, ")");
+    }
+}
+
 // ORIGINAL: 0x00590BA0 ?say_vehicles@@YAXPAXHH@Z 0x00590BA0-0x00590C14 FILE
 // size      116 bytes
 // prototype 
@@ -6054,3 +6227,140 @@ void __cdecl clear_dirty() {
 }
 
 
+
+/*
+Purpose: Rank the prototypes a faction can build, best first, into ProtoSortIds.
+// ORIGINAL: 0x005A6270 ?proto_sort@@YAXH@Z 0x005A6270-0x005A63C9 FILE
+// size      345 bytes
+// prototype void (__cdecl ?proto_sort@@YAXH@Z)(int factionID)
+// callers   2   call targets   4
+// calls     0x0057D360 0x0057D3F0 0x005B5690 0x005B9F20
+// SYMBOL FACTS. ?proto_sort@@YAXH@Z is the catalogue's name; the two fixed
+//        slots it shares with proto_sort_2 are bound here because nothing
+//        else in the tree names them and the pair is one table - 0x00945B40
+//        is how many entries the sort filled and 0x00945B44 the id list
+//        itself, contiguous, which is why the image writes them 4 bytes
+//        apart. The key's four terms are read straight off the layout:
+//        Chassis[].triad (+0x49), Chassis[].speed (+0x48), and the
+//        prototype's plan / chassis_id / armor_id / flags / preq_tech.
+// symbol    ?proto_sort@@YAXH@Z
+// TRIED: 0/109. `has_tech` is `MEASURED inline` in technology.h, so this body
+//        INLINES it where the image calls it (136 compiled instructions
+//        against 109); `has_tech_call` closes that (115 against 109). The
+//        rest is the frame: the image keeps a frame pointer and allocates
+//        0x204 for the 512-byte key array plus one dword, where this tree
+//        allocates 0x20c and goes frame-less under both flag sets, so
+//        everything from instruction 0 is shifted. Left as a compiling body.
+Return Value: n/a
+Status: Complete
+*/
+int *const ProtoSortCount = (int *)0x00945B40;
+int *const ProtoSortIds = (int *)0x00945B44;
+
+void __cdecl proto_sort(int faction_id) {
+    int sort_keys[128];
+    *ProtoSortCount = 0;
+    int i = 0;
+    do {
+        int proto_id = (i % 64) + (i >= MaxVehProtoFactionNum ? faction_id * 64 : 0);
+        ProtoSortIds[i] = proto_id;
+        int key;
+        if (!(VehPrototypes[proto_id].flags & PROTO_ACTIVE)
+            || (proto_id < MaxVehProtoFactionNum
+                && !has_tech_call(VehPrototypes[proto_id].preq_tech, faction_id))) {
+            if (proto_id < MaxVehProtoFactionNum) {
+                key = 999999999;
+            } else {
+                key = 0x34FB5E38;
+                (*ProtoSortCount)++;
+            }
+        } else {
+            key = (Chassis[VehPrototypes[proto_id].chassis_id].triad
+                   + VehPrototypes[proto_id].plan * 16) << 18;
+            key += (32 - weap_val(proto_id, faction_id)) << 9;
+            key += (8 - Chassis[VehPrototypes[proto_id].chassis_id].speed) << 6;
+            key += 8 - arm_val(VehPrototypes[proto_id].armor_id, faction_id);
+            (*ProtoSortCount)++;
+        }
+        sort_keys[i] = key;
+        i++;
+    } while (i < 128);
+    sort(128, ProtoSortIds, sort_keys);
+}
+
+/*
+Purpose: Rebuild the altitude-bonus tables from the landmarks on the map.
+// ORIGINAL: 0x00592940 ?fixup_landmarks@@YAXXZ 0x00592940-0x00592A74 FILE
+// size      308 bytes
+// prototype void (__cdecl ?fixup_landmarks@@YAXXZ)(void)
+// callers   2   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// LEVER: the five 0x31-byte template runs the memcpy seeds the bonus tables
+//        from are the ones the 0x0066EF28 note in map.h lists - 0x0068577C
+//        (Arid), 0x006857F0 (Moist), 0x00685864 (Flat), 0x0068593C (Rainy),
+//        0x006859B0 (Ocean) - and the tables they seed are the same
+//        AltBonus* bindings mapwin.cpp's get_alt reads, so they moved to
+//        map.h for this body to reach.
+// TRIED: 10/100, every divergence register allocation. The copy loop and the
+//        two bit arms agree; what is left is that the image spends `push ebx`
+//        on a third callee-saved register and keeps `xor ebx,ebx` in it for
+//        the `= 0` stores and the `bit2 == 0` test, where this tree materialises
+//        each zero at its use - the extra-callee-saved-register case the brief
+//        calls a hard ceiling. Its y loop also lives in a second stack slot
+//        (`[ebp-8]`) that this tree does not need. Not chased further.
+// TRIED: as 00592940.cpp the whole body was spelled with a raw
+//        `int32_t *records` on the tile array; `map_loc()` names it and lets
+//        the same `bit2` read through a member.
+// BUG IN THE ORIGINAL: the BIT2_RIDGE arm (flags & 0x800) clears
+//        AltBonusFlat - the SAME table and the SAME five entries the
+//        BIT2_MESA arm (flags & 0x100) just cleared, unconditionally and
+//        with nothing in between. Whatever the second arm was meant to
+//        touch, it is a duplicate today; it is reproduced as written,
+//        because removing it would change the program the image ships.
+Return Value: n/a
+Status: Complete
+*/
+const unsigned char *const AltTemplateArid = (const unsigned char *)0x0068577C;
+const unsigned char *const AltTemplateMoist = (const unsigned char *)0x006857F0;
+const unsigned char *const AltTemplateFlat = (const unsigned char *)0x00685864;
+const unsigned char *const AltTemplateRainy = (const unsigned char *)0x0068593C;
+const unsigned char *const AltTemplateOcean = (const unsigned char *)0x006859B0;
+
+void __cdecl fixup_landmarks() {
+    // 113 bytes each: the image inlines every one as `mov ecx, 0x1c / rep
+    // movsd / movsb`, which is 28 dwords plus the last byte.
+    memcpy(AltBonusOcean, AltTemplateOcean, 113);
+    memcpy(AltBonusFlat, AltTemplateFlat, 113);
+    memcpy(AltBonusRainy, AltTemplateRainy, 113);
+    memcpy(AltBonusArid, AltTemplateArid, 113);
+    memcpy(AltBonusMoist, AltTemplateMoist, 113);
+
+    for (int y = 0; y < MapLatitudeBounds; y++) {
+        for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
+            Map *tile = map_loc(x, y);
+            if (tile->bit2 == 0) {
+                continue;
+            }
+            int type = tile->bit2 >> 24;
+            if (type >= 0) {
+                continue;
+            }
+            type = -1 - type;
+            const unsigned char *digits = AltDirectionTable + type * 5;
+            unsigned char last = 0;
+            if (tile->bit2 & BIT2_VOLCANO) {
+                for (int i = 0; i < 5; i++) {
+                    last = digits[i];
+                    AltBonusArid[last] = 0;
+                }
+            }
+            if (tile->bit2 & BIT2_CRATER) {
+                for (int i = 0; i < 5; i++) {
+                    AltBonusMoist[digits[i]] = last;
+                }
+            }
+        }
+    }
+}

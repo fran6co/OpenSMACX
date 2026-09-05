@@ -232,6 +232,32 @@ static const int MaxRegionLandNum = 64;
 const int RadiusRange[] = { 1, 9, 25, 49, 81, 121, 169, 225, 289 };
 const int RadiusBaseX[] = {  1, 2, 1, 0, -1, -2, -1,  0, 0 };
 const int RadiusBaseY[] = { -1, 0, 1, 2,  1,  0, -1, -2, 0 };
+
+// WHERE THESE TABLES LIVE IN THE SHIPPED IMAGE, read off the .data run at
+// 0x0066EF28 (image_data.py). The world-builder family walks them with a raw
+// index and no symbol, so this is the note that stops the next pass
+// re-deriving the layout from the addressing:
+//
+//   0x0066EF28  RiverStepX[4] = { 1, 1, -1, -1 }
+//   0x0066EF3C  RiverStepY[4] = { -1, 1, 1, -1 }
+//               paired up they are the four diagonals, which is what
+//               world_rivers (0x005C38B0) steps along; the fifth dword at
+//               0x0066EF4C is zero padding.
+//   0x0066EF50  RadiusBaseX (9 ints)
+//   0x0066EF74  RadiusBaseY (9 ints)   <- the two rows below
+//   0x0066EF98  { 9, 6, 3, 2, 1, 4, 7, 8, 5 } - a 9-int permutation of 1..8,
+//               nothing in the tree reads it yet, so it keeps no name.
+//   0x0066EFBC  RadiusOffsetX (289 ints)
+//   0x0066F440  RadiusOffsetY (289 ints) - the second base is exactly
+//               0x484 = 289*4 past the first, which is what says "two
+//               parallel tables" rather than "one big blob".
+//
+// 0x0066EFE0 and 0x0066F464, which world_erosion (0x005C2CB0) walks, are the
+// SAME two tables at index 9 - the ring outside the 9-tile base - not
+// separate tables. And the five 113-byte runs world_* copies its altitude
+// bonus rows out of sit at 0x0068577C, 0x006857F0, 0x00685864, 0x0068593C
+// and 0x006859B0, ahead of the live copies mapwin.cpp binds as AltBonus*.
+
 const int RadiusOffsetX[] = {
      0,  1,  2,  1,  0, -1, -2,  -1,   0,   2,   2,  -2,  -2,   1,   3,   3,   1,  -1,  -3,  -3,
     -1,  4, -4,  0,  0,  1,  2,   3,   4,   5,   5,   4,   3,   2,   1,  -1,  -2,  -3,  -4,  -5,
@@ -426,6 +452,28 @@ void __cdecl world_analysis();
 void __cdecl world_polar_caps();
 // Not yet recovered - pending_bodies forwarders. world_climate calls each
 // BY NAME.
+//
+// THE FIVE world_* BODIES STILL IN THE ARCHIVE (world_erosion 0x005C2CB0,
+// world_fungus 0x005C3440, world_rivers 0x005C38B0, world_rainfall
+// 0x005C4470, world_build 0x005C86E0) all block on one thing: `Fractal`.
+// world_fungus and world_erosion build a 0x2E4-byte one on the stack and call
+// ?init@Fractal@@QAEXXZ (0x005C1E20) and ?UNK1@Fractal@@QAEHHH@Z
+// (0x005C1F20) on it - both archive bodies of their own, so homing any of the
+// five needs the class modelled first (hypothesis_layouts.h's Fractal is a
+// bare 0x2C0-byte byte run with no methods, and 0x2C0 is not the size the
+// call sites reserve). Everything ELSE in them is already named:
+//   0x0094A2A4 / A8 / AC / B4 / B8  MapOceanCoverage / MapLandCoverage /
+//                                   MapErosiveForces / MapCloudCover /
+//                                   MapNativeLifeForms - all map.cpp globals
+//   0x009502E4 / E8 / EC / F0       WorldBuilder.cloudmass_peaks /
+//                                   cloudmass_hills / rainfall_coeff /
+//                                   deep_water   (alpha.h)
+//   0x00950308                      WorldBuilder.fungus
+//   0x0066EF28 / 0x0066EF3C         RiverStepX / RiverStepY (see the
+//                                   RadiusOffset note above)
+//   0x0066EFE0 / 0x0066F464         RadiusOffsetX[9] / RadiusOffsetY[9]
+// Still nameless for lack of any reader that would pin them down:
+// 0x0068FB20, 0x0068FB50, 0x006919EC, 0x00945B00, 0x009A6488.
 void __cdecl do_checksums(int type);           // 0x0051E760
 void __cdecl world_shorelines();                // 0x005C3F70
 void __cdecl world_rivers();                    // 0x005C38B0
@@ -464,6 +512,30 @@ int __cdecl zoc_sea(int x, int y, int faction_id);
 int __cdecl zoc_move(int x, int y, int faction_id);
 int __cdecl mandate_color(int mandate);
 uint32_t *const MandateColors = (uint32_t *)0x008C6DE4;
+
+// THE ALTITUDE-BONUS TABLES the world-builder and the map renderer share.
+// Bound HERE, in the header, rather than as file-scope statics in mapwin.cpp,
+// because map.cpp needs the same five rows (delete_landmark and fixup_landmarks
+// both zero entries in them) and a namespace-scope `const` has internal
+// linkage: every TU folds its own copy to the immediate, which is what the
+// image's `mov cl, byte ptr [eax + edx + 0x685684]` shows. Same binding, same
+// fold, one place.
+// The five bonus rows are WRITABLE (`unsigned char *`, not pointer-to-const):
+// fixup_landmarks memcpy()s 0x31-byte template runs over them and
+// delete_landmark zeroes entries in them, so the const would be a lie the
+// compiler would enforce at exactly the call sites that matter.
+// 0x00685684 is the direction table (five bytes a direction, the first naming
+// it and the four after it the neighbours it fans out to); 0x00685EA0 and
+// 0x00685EE0 are the two coordinate-stride tables the same walk adds to a
+// tile's x and y as it steps outward. The five bonus rows are the live copies
+// the image copies 0x31-byte templates over (see the 0x0066EF28 note above).
+const unsigned char *const AltDirectionTable = (const unsigned char *)0x00685684;
+unsigned char *const AltBonusArid = (unsigned char *)0x007D3B74;
+unsigned char *const AltBonusMoist = (unsigned char *)0x007F65D0;
+unsigned char *const AltBonusRainy = (unsigned char *)0x007F655C;
+unsigned char *const AltBonusFlat = (unsigned char *)0x007D3A78;
+unsigned char *const AltBonusOcean = (unsigned char *)0x007F64E8;
+const unsigned char *const AltStepX = (const unsigned char *)0x00685EA0;
 
 MEASURED inline BOOL __cdecl on_map(int x, int y) {
     return y >= 0 && y < (int)MapLatitudeBounds && x >= 0 && x < (int)MapLongitudeBounds;

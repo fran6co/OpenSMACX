@@ -199,11 +199,6 @@ void __cdecl wave_it(int a1) {
     PENDING_BODY(0x004455F0, pending)(a1);
 }
 
-void __cdecl fixup_landmarks() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x00592940, pending)();
-}
-
 // ?terrain_fixup@@YAXPAUMapWin@@@Z at 0x004711A0 - mapwin_terrain_fixup
 // (src/mapwin.cpp) calls it BY NAME, once per live MapWin slot and once
 // more for each of three fixed-address windows.
