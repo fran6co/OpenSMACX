@@ -340,6 +340,11 @@ class Console : public MapWin {
   // 0x0051D7D0. Not declared before this landed, which is why the body
   // could only live in an artifact.
   void close();
+  // 0x005169F0. The turn handoff auto_play_callback (0x0050E890, console.cpp)
+  // makes once its tick counter reaches 100. The archive body still measures
+  // MISMATCH (88 of 180), so this reaches the image through a
+  // pending_bodies.cpp forwarder rather than a claimed body.
+  void end_my_turn();
   void clear_group();
   void set_preferences();
   void set_auto_preferences();

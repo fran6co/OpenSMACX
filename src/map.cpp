@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "temp.h"
 #include "map.h"
+#include "fractal.h"  // Fractal - world_erosion / world_fungus build one on the stack
 #include "alpha.h"
 #include "base.h"
 #include "faction.h"
@@ -52,6 +53,16 @@ uint32_t MapErosiveForces;  // 0x0094A2AC
 uint32_t MapPlanetaryOrbit;  // 0x0094A2B0
 uint32_t MapCloudCover;  // 0x0094A2B4
 uint32_t MapNativeLifeForms;  // 0x0094A2B8
+
+// The tile-flag mask the fungus pass clears off the Map record it has just
+// given bit 0x20 to: world_fungus does `tile->bit &= ~MapTileFlagClearMask`
+// (0x005C35EB, `not edx` then `and [ecx + eax*4 + 8], edx`), and the same
+// dword is the value argument at four more sites that set tiles through
+// 0x00591D60 (0x004CE6D5 is one). Eight readers in the whole image, all of
+// them reads, and the shipped .data holds 0x00288050 - the same constant the
+// 0x004CE6C9 call site pushes as a literal plus 0xc. No image symbol and no
+// name anywhere in the tree before this.
+uint32_t MapTileFlagClearMask = 0x00288050;  // 0x006919EC, defined here
 // EIGHT OF THEM, one per player: the two sites below clear
 // `sizeof(int) * MaxPlayerNum` bytes, which is what the extent is.
 int MapBaseSubmergedCount[8];  // 0x009B2290
@@ -3528,6 +3539,261 @@ uint32_t WorldClimateRedrawRequest;  // 0x009B22E8
 // game.cpp names this object instead of casting the address.
 WorldWin WorldClimateWorldWin;
 
+// veh_init (0x005C03D0) is still an archived body with no product definition,
+// and world_fungus is its only caller in this file - the same handoff shape
+// console.cpp carries at its head. Its forwarder is in pending_bodies.cpp.
+int __cdecl veh_init(int unit_type, int faction_id, int x_coord, int y_coord);
+
+/*
+Purpose: Fill the fractal's raw 19x19 field with random values, copy it into
+         the smooth field the sampler reads, and wrap both fields' edges.
+// ORIGINAL: 0x005C1E20 ?init@Fractal@@QAEXXZ 0x005C1E20-0x005C1F12 FILE
+// symbol    ?init@Fractal@@QAEXXZ
+// size      242 bytes
+// prototype void (__thiscall ?init@Fractal@@QAEXXZ)(Fractal* this)
+// callers   2   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0064601D  (the C library rand)
+// BUG IN THE ORIGINAL: the weighted pass in the middle sums each grid_[1]
+// byte times 4 against eight RadiusOffsetX neighbours of grid_[1] and then
+// throws the sum away - `mov esi, [ebp-4]` right after the inner loop
+// discards it and reloads the row pointer before the store, which stores the
+// byte it just read. Kept rather than eliminated: VC6 did not eliminate it
+// either, so the dead arithmetic is what the shipped bytes do. Ghidra's own
+// decompilation of this block drops it entirely (leaving a no-op pointer
+// walk), which is the trap; the loop below is written from the raw bytes.
+// LEVER: the same one that took ?sample to BYTE_EXACT - subscript the two
+// fields as `grid_[1][row][col]` rather than walking a flat pointer. 37 of
+// 86, against 7 of 86 for the walked-pointer spelling.
+// TRIED: a walked row pointer for the first loop with a do-while row counter
+// (the shape the image's own registers suggest) - 19 of 86, worse, because it
+// reintroduces the named pointer locals the image does not spill. The image
+// keeps `this` in EBX unspilled, recomputes each loop's pointer from it and
+// reuses ONE stack slot (first the row counter, then the grid_[1] row
+// pointer); this tree still reserves three slots (`sub esp, 0xc` against
+// `push ecx`) and swaps ESI/EDI. Register allocation, not control flow.
+*/
+void Fractal::init() {
+    // grid_[1]: 18 rows of 18 columns of rand() % 16, then the two wraps.
+    for (int row = 0; row < 18; ++row) {
+        for (int col = 0; col < 18; ++col) {
+            int value = rand();
+            value = value & 0x8000000f;
+            if (value < 0) {
+                value = ((value - 1) | 0xfffffff0) + 1;
+            }
+            grid_[1][row][col] = static_cast<char>(value);
+        }
+        grid_[1][row][18] = grid_[1][row][0];
+    }
+    for (int wrap_col = 0; wrap_col < 18; ++wrap_col) {
+        grid_[1][18][wrap_col] = grid_[1][0][wrap_col];
+    }
+
+    // grid_[0][row][col] = grid_[1][row][col] for rows 0..16, cols 0..16.
+    // The dead weighted sum is the image's; see the BUG note above.
+    for (int band_row = 0; band_row <= 16; ++band_row) {
+        for (int band_col = 0; band_col <= 16; ++band_col) {
+            int total = grid_[1][band_row][band_col] * 4;
+            const int *weight = RadiusOffsetX + 1;
+            do {
+                int step = *weight;
+                weight += 1;
+                total += (&grid_[1][0][0])[20 + band_row + step * 20
+                                          + band_col];
+            } while (weight <= RadiusOffsetX + 8);
+            grid_[0][band_row][band_col] = grid_[1][band_row][band_col];
+        }
+    }
+
+    // grid_[0] col 16 = col 0, then row 16 = row 0.
+    for (int dup_row = 0; dup_row <= 16; ++dup_row) {
+        grid_[0][dup_row][16] = grid_[0][dup_row][0];
+    }
+    for (int dup_col = 0; dup_col <= 16; ++dup_col) {
+        grid_[0][16][dup_col] = grid_[0][0][dup_col];
+    }
+}
+
+/*
+Purpose: Blend the four grid_[0] taps around a 0..255 coordinate pair into one
+         0..15 sample. Both world passes call it at two spacings to get two
+         octaves of noise.
+// ORIGINAL: 0x005C1F20 ?UNK1@Fractal@@QAEHHH@Z 0x005C1F20-0x005C1FB9 FILE BYTE_EXACT
+// symbol    ?sample@Fractal@@QAEHHH@Z
+// size      153 bytes
+// prototype int (__thiscall ?UNK1@Fractal@@QAEHHH@Z)(Fractal* this, int, int)
+// callers   3   call targets   0
+// kind      game
+// flags     (none)
+// calls     (none)
+*/
+int Fractal::sample(int x_coord, int y_coord) {
+    // Subtracted IN PLACE - the image loads each argument and `sub`s 0x80,
+    // and reusing the parameter is what puts col_fraction in its stack slot.
+    x_coord -= 0x80;
+    y_coord -= 0x80;
+    int row = (x_coord >> 8) & 0xf;
+    int col = (y_coord >> 8) & 0xf;
+    int col_fraction = (y_coord >> 3) & 0x1f;
+    int row_fraction = (x_coord >> 3) & 0x1f;
+
+    int top = grid_[0][row + 1][col] * row_fraction
+              + grid_[0][row][col] * (32 - row_fraction);
+    int bottom = grid_[0][row][col + 1] * (32 - row_fraction)
+                 + grid_[0][row + 1][col + 1] * row_fraction;
+
+    return (top * (32 - col_fraction) + bottom * col_fraction) >> 5;
+}
+
+/*
+Purpose: Two octaves of sample() reduced to one 0..100 intensity - the value
+         the fungus and erosion passes threshold against. Both callers spell
+         the same arithmetic inline, which is how the name was read off them.
+// ORIGINAL: 0x005C1FC0 ?UNK2@Fractal@@QAEHHHH@Z 0x005C1FC0-0x005C2020 FILE
+// symbol    ?level@Fractal@@QAEHHHH@Z
+// size      96 bytes
+// prototype int (__thiscall ?UNK2@Fractal@@QAEHHHH@Z)(Fractal* this, int, int, int)
+// callers   0   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005C1F20
+// LEVER: both scaled coordinates live in registers ACROSS the first call -
+// the image shifts the same two registers again for the second octave - so
+// the octaves are spelled as `coarse_x` / `coarse_y` locals, and the *5 lands
+// before the second call. 33 of 40.
+// TRIED: `sample(x << 4, y << 4)` then `(x << 4) << shift` inline at the call
+// sites, which re-derives the shift from the argument each time (10 of 40);
+// the clamp as a nested ternary `value < 0 ? 0 : value > 100 ? 100 : value`
+// against two early returns - identical 33 of 40, the zero arm is the only
+// disagreement either way (the image jumps forward to it, this tree inlines
+// it behind a `jns`), so the shape is block placement, not source form.
+*/
+int Fractal::level(int x_coord, int y_coord, int shift) {
+    // Both scaled coordinates live in registers across the first call - the
+    // image shifts the SAME two registers again for the second octave - and
+    // the *5 lands before the second call.
+    int coarse_x = x_coord << 4;
+    int coarse_y = y_coord << 4;
+    int coarse = sample(coarse_x, coarse_y) * 5;
+    int fine = sample(coarse_x << shift, coarse_y << shift);
+    int value = (coarse + fine * 2) * 7 >> 8;
+    if (value < 0) {
+        return 0;
+    }
+    if (value > 100) {
+        return 100;
+    }
+    return value;
+}
+
+/*
+Purpose: Paint xenofungus over the map. A Fractal field is sampled at two
+         spacings per tile to get a 0..100 intensity, the intensity bands and
+         the native-life-forms setting decide whether the tile takes fungus,
+         and tiles that pass get bit 0x20 set in their `bit` dword and every
+         other flag in MapTileFlagClearMask stripped. On a 1-in-40 roll a
+         fungus vehicle is seeded on the tile, which SMACX only (see
+         ExpansionEnabled).
+// ORIGINAL: 0x005C3440 ?world_fungus@@YAXXZ 0x005C3440-0x005C3678 FILE
+// size      568 bytes
+// prototype void (__cdecl ?world_fungus@@YAXXZ)()
+// callers   2   call targets   5
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005C03D0 0x005C1E20 0x005C1F20 0x005FCB20 0x0064601D
+// LEVER: homed 2026-09-05 over src/fractal.h. The image's `sub esp, 0x2e4`
+// is the Fractal object (722 bytes) plus the four int locals - no padding -
+// which is what pinned sizeof(Fractal) to 0x2D2 and settled the class layout.
+// Every fixed address in it is a tree name except MapTileFlagClearMask
+// (0x006919EC, named on this pass - see map.cpp's definition).
+// call_diff MORE is the known `MEASURED inline` do_all_non_input ceiling
+// (AGENT_BRIEF: the image CALLS 0x005FCB20 once per row, this tree expands
+// each site into check_net/do_net/do_non_input).
+// TRIED: the y loop counter wants to live in EDI (the image's first
+// callee-saved push) and lands in EBX here, which shifts every later
+// register. Declaring `int y_coord = 0` BEFORE fungus_level with the rows as
+// a do/while - the image's own statement order, and worth 7 of 183 -> 29 of
+// 183 - is the best of four measured shapes: a for-loop inside the guard
+// (7 of 183), an early `return` instead of the guard (7 of 183), and
+// computing coarse_y/fine_y before the x-loop guard all scored worse. The
+// remaining 154 disagreeing instructions are that one register assignment
+// cascading; the call sequence, both sample spacings and every tile-field
+// offset are the image's.
+*/
+void __cdecl world_fungus() {
+    Fractal fractal;
+    fractal.init();
+
+    int y_coord = 0;
+    int fungus_level = (MapNativeLifeForms - 1) * WorldBuilder.fungus;
+
+    if (MapLatitudeBounds > 0) {
+        do {
+            // Both octaves' scaled coordinates are loop-invariant per row.
+            int coarse_y = y_coord << 4;
+            int fine_y = coarse_y << 4;
+
+            for (int x_coord = y_coord & 1; x_coord < MapLongitudeBounds;
+                 x_coord += 2) {
+                int coarse_x = x_coord << 4;
+                int level = fractal.sample(coarse_x, coarse_y) * 5
+                            + fractal.sample(coarse_x << 4, fine_y) * 2;
+                level = level * 7 >> 8;
+                if (level < 0) {
+                    level = 0;
+                } else if (level > 100) {
+                    level = 100;
+                }
+
+                Map *tile = map_tiles() + MapLongitude * y_coord
+                            + (x_coord >> 1);
+                if ((tile->bit2 & 0x80000002) == 2
+                    && (tile->bit2 & 0xff000000) < 0x9000000) {
+                    continue;
+                }
+
+                if (level < 20 - fungus_level
+                    || level > fungus_level * 2 + 25) {
+                    if (level < 40 - fungus_level
+                        || level > fungus_level * 2 + 45) {
+                        if (level < 60 - fungus_level
+                            || level > fungus_level * 2 + 65) {
+                            // Only the first and last rows fall through here.
+                            if (y_coord != 0
+                                && y_coord != MapLatitudeBounds - 1) {
+                                continue;
+                            }
+                            if (rand() % 2 == 0) {
+                                continue;
+                            }
+                        }
+                    }
+                }
+
+                if ((tile->val3 & ~0x1F) >= 0x80) {
+                    continue;
+                }
+                if ((tile->climate & 0xE0) >= 0x60) {
+                    continue;
+                }
+
+                tile->bit |= 0x20;
+                tile->bit &= ~MapTileFlagClearMask;
+
+                if (rand() % 40 == 0 && (tile->climate & 0xE0) >= 0x60
+                    && ExpansionEnabled != 0) {
+                    veh_init(0x13, 0, x_coord, y_coord);
+                }
+            }
+
+            do_all_non_input();
+            y_coord++;
+        } while (y_coord < MapLatitudeBounds);
+    }
+}
+
 /*
 Purpose: Re-cut every land tile's altitude bands from the shore-to-peak
          threshold table, then walk the map six more times spreading each
@@ -6362,5 +6628,465 @@ void __cdecl fixup_landmarks() {
                 }
             }
         }
+    }
+}
+
+/*
+Purpose: Carve rivers. Every land tile is tried as a source in turn: the
+         walker picks a weighted random direction each step, prefers downhill
+         and existing channels, stops at the sea or after 999 steps, and marks
+         the tiles it ran through. Tiles that stayed dry keep bit 0x200 out of
+         their `bit` dword; bit 0x80 is then set on every tile a river crossed.
+// ORIGINAL: 0x005C38B0 ?world_rivers@@YAXXZ 0x005C38B0-0x005C3F66 FILE
+// size      1718 bytes
+// prototype void (__cdecl ?world_rivers@@YAXXZ)()
+// callers   1   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00591260 0x00591290 0x005FCB20 0x006257E0 0x00625810
+// LEVER: homed 2026-09-05 out of src/unrecovered/005c38b0.cpp (deleted).
+//   Every fixed address was already a tree name once AltContour (0x0068FB20)
+//   landed: RiverStepX / RiverStepY are the paired diagonal tables the
+//   RadiusOffset note in map.h documents, and the rest are MapLongitude /
+//   MapLongitudeBounds / MapLatitudeBounds / MapArea / MapIsFlat /
+//   map_tiles(). Its six calls are random_reseed, random (three sites),
+//   alt_put_detail and do_all_non_input.
+// TRIED: byte-exactness is out of reach on this pass. The image tests
+//   `tile->bit` with byte-width forms (`test ch, 1` for the 0x100 bit) and
+//   interleaves its fourteen stack locals differently from any spelling
+//   measured here; the archived transcription stopped at instruction #15 of
+//   the framed build for the same reason. The control flow, the field offsets
+//   and the call sequence below are the image's, so call_diff and
+//   dead_branches can both check it. The five ways a step can end early are
+//   NOT interchangeable, and this is the part a rewrite gets wrong: hitting
+//   water (bit 0x80) or a three-river junction ABANDONS the whole walk with
+//   to_sea cleared and the head not advanced, while a candidate whose own
+//   eight neighbours disqualify it only drops out of the four-direction loop.
+*/
+void __cdecl world_rivers() {
+    // Every tile: forget that a river ran through it.
+    for (int i = 0; i < static_cast<int>(MapArea); ++i) {
+        map_tiles()[i].bit &= 0xfffffd7f;
+    }
+
+    if (MapLatitudeBounds > 0) {
+        int y_coord = 0;
+        do {
+            for (int x_coord = y_coord & 1; x_coord < MapLongitudeBounds;
+                 x_coord += 2) {
+                Map *source = map_tiles() + MapLongitude * y_coord
+                              + (x_coord >> 1);
+                if (((source->bit & 0x100) == 0)
+                    || ((source->climate & 0xE0) <= 0x5F)) {
+                    continue;
+                }
+
+                // A fresh source: forget every earlier river's path first.
+                for (int i = 0; i < static_cast<int>(MapArea); ++i) {
+                    map_tiles()[i].bit2 &= 0xff7fffff;
+                }
+
+                random_reseed(y_coord * 0x2f + x_coord * 0x1f);
+                int river_dir = random(0, 4);
+
+                int band = source->climate >> 5;
+                int contour = source->contour;
+                source->bit2 |= 0x800000;
+
+                int cur_x = x_coord;
+                int cur_y = y_coord;
+                int joined = 0;      // stepped into an existing river
+                int to_sea = 1;      // the walk has not hit water yet
+                int hill_run = 1;    // tiles climbed at this altitude
+                int step_parity = 1;
+                int steps = 0;
+                uint32_t bits = source->bit;
+
+                while ((bits & 0x1000000) == 0) {
+                    int last_dir = random(0, 2);
+                    int turn = last_dir + (river_dir - (step_parity & 1)) & 3;
+                    int straight = river_dir ^ 2;
+                    int nb_contour = 0;
+                    int nb_climate = 0;
+                    int cand_split[3];
+                    int cand_dir[3];
+                    int cand_weight[3];
+                    int cand_count = 0;
+                    int total_weight = 0;
+                    int weight_base = 8;
+                    int best_contour = 9999;
+                    bool abandon = false;
+
+                    for (int dir = 0; dir < 4; dir++) {
+                        if (dir == straight) {
+                            continue;
+                        }
+                        int next_x = RiverStepX[dir] + cur_x;
+                        int flat = MapIsFlat & 1;
+                        if (flat == 0) {
+                            if (next_x < 0) {
+                                next_x += MapLongitudeBounds;
+                            } else if (MapLongitudeBounds <= next_x) {
+                                next_x -= MapLongitudeBounds;
+                            }
+                        }
+                        int next_y = RiverStepY[dir] + cur_y;
+                        if (next_y < 0 || next_y >= MapLatitudeBounds
+                            || next_x < 0 || next_x >= MapLongitudeBounds) {
+                            continue;
+                        }
+
+                        Map *neighbour = map_tiles()
+                                         + MapLongitude * next_y
+                                         + (next_x >> 1);
+                        if ((neighbour->bit & 0x80) != 0) {
+                            abandon = true;
+                            break;
+                        }
+                        if ((neighbour->bit & 0x100) != 0) {
+                            // A junction, never a source: count this
+                            // neighbour's own river neighbours.
+                            int rivers = 0;
+                            for (int k = 0; k < 4; k++) {
+                                int nx = RiverStepX[k] + next_x;
+                                if (flat == 0) {
+                                    if (nx < 0) {
+                                        nx += MapLongitudeBounds;
+                                    } else if (MapLongitudeBounds <= nx) {
+                                        nx -= MapLongitudeBounds;
+                                    }
+                                }
+                                int ny = RiverStepY[k] + next_y;
+                                if (ny < 0 || ny >= MapLatitudeBounds
+                                    || nx < 0 || nx >= MapLongitudeBounds) {
+                                    continue;
+                                }
+                                if ((map_tiles()[MapLongitude * ny + (nx >> 1)]
+                                         .bit
+                                     & 0x100)
+                                    != 0) {
+                                    rivers++;
+                                }
+                            }
+                            if (rivers > 1) {
+                                abandon = true;
+                                break;
+                            }
+                        }
+
+                        nb_climate = neighbour->climate;
+                        nb_contour = neighbour->contour;
+                        if ((nb_climate >> 5) > band) {
+                            // Downhill or level only.
+                            continue;
+                        }
+
+                        int drop = (contour - nb_contour) + 2;
+                        if (drop < 1) {
+                            drop = 1;
+                        } else if (drop > 9999) {
+                            drop = 9999;
+                        }
+                        int weight = drop * 0x20;
+                        if (dir == turn) {
+                            weight += 0x1f;
+                        }
+                        if (contour < nb_contour) {
+                            if (best_contour < nb_contour) {
+                                continue;
+                            }
+                            weight = weight_base;
+                            weight_base++;
+                            best_contour = nb_contour;
+                        }
+
+                        int next_split = 0;
+                        int climb = 0;
+                        for (int k = 0; k < 4; k++) {
+                            if (k == (dir ^ 2)) {
+                                continue;
+                            }
+                            int kx = RiverStepX[k] + next_x;
+                            if (flat == 0) {
+                                if (kx < 0) {
+                                    kx += MapLongitudeBounds;
+                                } else if (MapLongitudeBounds <= kx) {
+                                    kx -= MapLongitudeBounds;
+                                }
+                            }
+                            int ky = RiverStepY[k] + next_y;
+                            if (ky < 0 || ky >= MapLatitudeBounds || kx < 0
+                                || kx >= MapLongitudeBounds) {
+                                continue;
+                            }
+                            Map *around = map_tiles() + MapLongitude * ky
+                                          + (kx >> 1);
+                            if ((around->climate & 0xE0) < 0x60
+                                && (nb_climate & 0xE0) > 0x5F && hill_run < 5) {
+                                weight /= 2;
+                            }
+                            if (nb_contour < around->contour) {
+                                climb++;
+                                if ((around->bit & 0x80) != 0) {
+                                    break;
+                                }
+                            }
+                            if ((around->bit2 & 0x800000) != 0) {
+                                if (joined != 0
+                                    || (around->climate & 0xE0) < 0x60) {
+                                    break;
+                                }
+                                next_split = 1;
+                                weight = weight / 8;
+                            }
+                        }
+                        if (weight == 0) {
+                            continue;
+                        }
+                        if (climb == 3) {
+                            weight = 1;
+                        }
+                        total_weight += weight;
+                        cand_weight[cand_count] = weight;
+                        cand_split[cand_count] = next_split;
+                        cand_dir[cand_count] = dir;
+                        cand_count++;
+                    }
+
+                    if (abandon) {
+                        to_sea = 0;
+                        break;
+                    }
+                    if (cand_count == 0) {
+                        break;
+                    }
+
+                    int pick = random(0, total_weight);
+                    river_dir = 0;
+                    for (int i = 0; i < cand_count; i++) {
+                        if (pick < cand_weight[i]) {
+                            joined = cand_split[i];
+                            river_dir = cand_dir[i];
+                            break;
+                        }
+                        pick -= cand_weight[i];
+                    }
+
+                    cur_x += RiverStepX[river_dir];
+                    if ((MapIsFlat & 1) == 0) {
+                        if (cur_x < 0) {
+                            cur_x += MapLongitudeBounds;
+                        } else if (MapLongitudeBounds <= cur_x) {
+                            cur_x -= MapLongitudeBounds;
+                        }
+                    }
+                    cur_y += RiverStepY[river_dir];
+
+                    Map *head = map_tiles() + MapLongitude * cur_y
+                                + (cur_x >> 1);
+                    band = head->climate >> 5;
+                    int next_contour = head->contour;
+
+                    if (contour < next_contour) {
+                        // Drop the tile to its band's nominal contour, but
+                        // never below one step under the tile we came from.
+                        int target = AltContour[band];
+                        if (AltContour[band] < contour - 1) {
+                            target = contour - 1;
+                        }
+                        alt_put_detail(cur_x, cur_y, target);
+                        next_contour = target;
+                    }
+
+                    steps++;
+                    contour = next_contour;
+                    if (steps > 999) {
+                        break;
+                    }
+                    head->bit2 |= 0x800000;
+                    step_parity++;
+                    hill_run++;
+                    bits = head->bit;
+                }
+
+                if (band > 2) {
+                    Map *mouth = map_tiles() + MapLongitude * cur_y
+                                 + (cur_x >> 1);
+                    if (((mouth->bit & 0x80) == 0) && (to_sea != 0)
+                        && (((mouth->bit & 3) == 0)
+                            || (7 < (mouth->val2 & 0xf)))) {
+                        mouth->bit |= 0x200;
+                    }
+                }
+
+                // Every tile this river crossed is now a river tile.
+                for (int crossed = 0; crossed < static_cast<int>(MapArea);
+                     ++crossed) {
+                    if ((map_tiles()[crossed].bit2 & 0x800000) != 0) {
+                        map_tiles()[crossed].bit |= 0x80;
+                    }
+                }
+            }
+            do_all_non_input();
+            y_coord++;
+        } while (y_coord < MapLatitudeBounds);
+    }
+
+    for (int swept = 0; swept < static_cast<int>(MapArea); ++swept) {
+        map_tiles()[swept].bit2 &= 0xff7fffff;
+    }
+}
+
+/*
+Purpose: Build the whole planet: reset the altitude table and the Map* rules
+         run, wipe the tiles, raise continents and hills until the land targets
+         are met, then hand the result to erosion, the polar caps, the
+         shorelines and every landmark/terrain pass, and refresh the map
+         windows. Repeats up to four times until world_validate accepts the
+         planet or the omniscient-view bit aborts the retry.
+// ORIGINAL: 0x005C86E0 ?world_build@@YAXXZ 0x005C86E0-0x005C899D FILE
+// size      701 bytes
+// prototype void (__cdecl ?world_build@@YAXXZ)()
+// callers   2   call targets   30
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0046B190 0x0046FD90 0x004C45E0 0x00591040 0x00592940 0x005C28F0
+//           0x005C2B40 0x005C2CB0 0x005C32A0 0x005C3440 0x005C3680 0x005C3F70
+//           0x005C40F0 0x005C4170 0x005C4470 0x005C5A30 0x005C5AE0 0x005C5EF0
+//           ... and the seventeen world_* landmark passes.
+// LEVER: homed 2026-09-05. Every callee was already homed in this file or
+//   declared in map.h, and every fixed address already had a tree name but
+//   three: 0x0068FAF4 and 0x0068FB20 are now AltNaturalDefault and AltContour
+//   (map.h, the two 11-int tables that bracket AltNatural), and 0x009B22EC /
+//   0x009B22E8 are map.cpp's own WorldClimateSkipTerritoryReset /
+//   WorldClimateRedrawRequest, now extern in map.h.
+//   The archived transcription this replaces MISSED the `mov [0x94988c], esi`
+//   at 0x005C8769 - world_build clears MapIsFlat before raising anything,
+//   which is why the flat-map guard at 0x005C8839 tests the same dword.
+// TRIED, all measured: the eleven-int AltNatural reset as a pointer-bump
+//   do/while chasing the image's `rep movsd` (VC6 kept a one-pointer loop
+//   with a +0x58 displacement and the body went frameless, 15 of 215 against
+//   22 of 215 for the plain for-loop); hoisting MapWinTable into a local
+//   reference for the tail walk. call_diff FEWER by one is the map_win_table
+//   accessor: the image folds 0x007D3C3C into `mov esi, imm32` inside the
+//   loop, this tree's `MapWinSlots &map_win_table()` in mapwin.h is a real
+//   CALL at all three sites here, and forcing it inline is a mapwin.h edit
+//   that would touch game.cpp's and time.cpp's walks as well as this body.
+//   The image's register plan (EBX = continent count live across the whole
+//   body, ESI/EDI parked on the copy) is otherwise the wall.
+*/
+void __cdecl world_build() {
+    int continent_count = 0;
+
+    int attempt = 0;
+    do {
+        // TRIED: the pointer-bump do/while spelling of this copy, hoping for
+        // the image's single `rep movsd`; VC6 kept a one-pointer loop with a
+        // +0x58 displacement and the whole body came out frameless (/GX
+        // selected) at 15 of 215 against 22 of 215 for the plain for-loop
+        // below. The `rep movsd` is a counted-copy idiom this tree has not
+        // reached from source yet.
+        for (int i = 0; i < 11; ++i) {
+            AltNatural[i] = AltNaturalDefault[i];
+        }
+
+        WorldClimateRedrawRequest = 1;
+        WorldClimateSkipTerritoryReset = 1;
+
+        for (uint32_t *rules = &MapSizePlanet; rules < &MapNativeLifeForms + 1;
+             ++rules) {
+            if (*rules >= 0) {
+                continue;
+            }
+            *rules = rand() % 3;
+        }
+
+        map_wipe();
+
+        MapIsFlat = 0;
+        int land_target = (2 - MapOceanCoverage) * WorldBuilder.land_mod
+                          + WorldBuilder.land_base;
+        land_target = land_target * MapArea / 3200;
+        int island_target = WorldBuilder.islands * MapArea / 3200;
+        BrushVal1 = 0;
+        WorldBuildVal1 = land_target;
+
+        if ((GameState & 0x80) != 0) {
+            MapWinTable[0]->clear_terrain();
+            draw_map(1);
+        }
+
+        int builds = 0;
+        while ((BrushVal1 < WorldBuildVal1 || continent_count < island_target)
+               && builds < 100) {
+            builds++;
+            continent_count++;
+            build_continent(continent_count);
+        }
+
+        if (MapErosiveForces >= 1) {
+            int hills = (MapErosiveForces - 1) * WorldBuilder.hills_mod
+                        + WorldBuilder.hills_base;
+            hills = hills * MapArea / 3200;
+            if (MapOceanCoverage == 2) {
+                hills = hills / 2;
+            }
+            if (hills > 0) {
+                do {
+                    build_hills(4);
+                    hills--;
+                } while (hills != 0);
+            }
+        }
+
+        world_erosion();
+
+        if ((MapIsFlat & 1) == 0 && MapOceanCoverage < 2
+            && (MapOceanCoverage == 0 || rand() % 3 == 0)) {
+            world_polar_caps();
+        }
+
+        world_shorelines();
+    } while ((GameState & 0x80) == 0 && world_validate() != 0
+             && (++attempt, attempt < 4));
+
+    world_temperature();
+    world_riverbeds();
+    world_fungus();
+    world_monsoon(-1, -1);
+    world_crater(-1, -1);
+    world_volcano(-1, -1, 0);
+    world_mesa(-1, -1);
+    world_ridge(-1, -1);
+    world_diamond(-1, -1);
+    world_ruin(-1, -1);
+    if (ExpansionEnabled != 0) {
+        world_unity(-1, -1);
+        if (ExpansionEnabled != 0) {
+            world_fossil(-1, -1);
+        }
+    }
+    world_temple(-1, -1);
+    world_borehole(-1, -1);
+    world_sargasso(-1, -1);
+    world_dune(-1, -1);
+    world_fresh(-1, -1);
+    world_geothermal(-1, -1);
+
+    fixup_landmarks();
+    world_linearize_contours();
+    WorldClimateRedrawRequest = 0;
+    world_climate();
+    world_rocky();
+    WorldClimateSkipTerritoryReset = 0;
+
+    if (WorldClimateSkipTerrainClear == 0) {
+        MapWinSlots &table = MapWinTable;
+        for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); slot++) {
+            if (table[slot]->field_1DD74_ != 0) {
+                table[slot]->clear_terrain();
+            }
+        }
+        WorldClimateWorldWin.clear_terrain();
     }
 }

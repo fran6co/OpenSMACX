@@ -630,17 +630,17 @@ SCAFFOLD_CEILINGS = {
     # fixed-address bindings are the tree's own names) and 005c3f70.cpp homed
     # beside it - the 0x009B22E8 redraw flag is named WorldClimateRedrawRequest
     # in map.cpp from the two measured sites that write and read it.
-    # 1031 -> 1014 (2026-09-05, collected live across the parallel waves):
+    # 1031 -> 1010 (2026-09-05, collected live across the parallel waves):
     # map (-2: 005927d0, 00592940), maininterface (-7:
     # on_iface_selected/on_left_double_click, StatusWin draw/reset_active/
     # on_left_double_click, chat, say_orders), basepop closures (-1:
-    # 00611640), caviar (-4: 00617620 render_mono, 00618d20 close_class
-    # BYTE_EXACT 33/33, 00618da0 object_start SHAPE_EXACT 28/32, 00616de0
-    # Caviar::init MISMATCH 48/151).
-    # 1014 -> 1012 (2026-09-05, W5e basewin/on_iface): 0045d110.cpp
-    # (on_iface_mouse_leave, BYTE_EXACT 11/11) and 0045cf80.cpp
-    # (on_iface_right_down, homed MISMATCH 33/45 on the corrected span).
-    "artifact files (recovered/)": 1012,
+    # 00611640), caviar (-4: render_mono, close_class BYTE_EXACT 33/33,
+    # object_start SHAPE_EXACT 28/32, Caviar::init MISMATCH 48/151),
+    # basewin/on_iface (-2: on_iface_mouse_leave BYTE_EXACT 11/11,
+    # on_iface_right_down on the corrected span), map/Fractal (-2:
+    # units/005c3440 world_fungus, units/005c86e0 world_build, homed over
+    # src/fractal.h).
+    "artifact files (recovered/)": 1010,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -727,16 +727,15 @@ SCAFFOLD_CEILINGS = {
     # 1183 -> 1180 (2026-09-04, console claimed wave): 004ba5f0.cpp and
     # 004ba650.cpp homed into src/tutwin.cpp (the tutorial gates, with their
     # two shown-bit words named), 00511480.cpp into src/console.cpp.
-    # 1153 -> 1135 (2026-09-05, collected live across the parallel waves):
-    # basepop (-1: 00604ea0 UNK2), map (-5: say_project, treaty_using_faction
-    # BYTE_EXACT 39/39, is_land_near, fungus_radius BYTE_EXACT 72/72,
-    # proto_sort), maininterface (-1: set_message BYTE_EXACT), caviar (-11:
-    # the eight add_object overloads, render_mono, clear_buffers,
-    # render_multi_table_dest, object_start, vox_release_record 00639630).
-    # 1133 -> 1131 (2026-09-05, W5f basepop finisher): 00603800.cpp
-    # (calculate_dimensions, homed MISMATCH 138/703) and 00601bf0.cpp
-    # (start, homed MISMATCH 47/742).
-    "unrecovered files": 1131,
+    # 1153 -> 1126 (2026-09-05, collected live across the parallel waves):
+    # basepop (-1: UNK2; then calculate_dimensions and start with the
+    # finisher), map (-5: say_project, treaty_using_faction BYTE_EXACT,
+    # is_land_near, fungus_radius BYTE_EXACT, proto_sort; then Fractal::init/
+    # sample/level and world_rivers), maininterface (-1: set_message
+    # BYTE_EXACT), caviar (-11: the add_object family, render_mono,
+    # clear_buffers, render_multi_table_dest, object_start,
+    # vox_release_record), console (-1: auto_play_callback BYTE_EXACT).
+    "unrecovered files": 1126,
     # 2717 -> 2748 (2026-09-04, P2 net batch): NetFifo promoted with
     # close/add/get/get, NetFifoNode, head_/tail_/count_ - the deliberate
     # raise this ceiling exists for (class modelling grows it; the class

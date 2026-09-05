@@ -1,5 +1,14 @@
 // ORIGINAL: 0x005C4470 ?world_rainfall@@YAXXZ 0x005C4470-0x005C4FC1 FILE
 // TRIED: no Ghidra hypothesis was available for this address, so this is a from-scratch disassembly transcription (three map passes: windward-hint marking, 2-bit rainfall-class finalization with base_find caching, moderate-rain propagation). Pass 2's middle heuristic (unk_1 bit cascade feeding the 0-3 class value) is a best-effort condensation of ~80 instructions, not a literal register replay - the surrounding loop bounds, byte-merge write and base_find call sites are transcribed directly.
+// NOTE (map pass, 2026-09-05): NOT homed - it stays behind its
+//   pending_bodies.cpp forwarder, and this artifact is a CONDENSATION, not a
+//   register-level transcription, so homing it means re-deriving pass 2's
+//   middle ~80 instructions from the raw bytes first. It does not touch
+//   Fractal at all (its only calls are do_all_non_input x3, base_find x2 and
+//   climate_set) and it names no new globals, so the Fractal class pass that
+//   unblocked world_erosion and world_fungus leaves this one where it was.
+//   Its frame is `sub esp, 0x38` with no stack object.
+
 // working copy - scaffold materialised by --work
 // size      2897 bytes
 // prototype 

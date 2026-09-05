@@ -230,8 +230,15 @@ static const int MaxContinentNum = 128;
 static const int MaxRegionLandNum = 64;
 
 const int RadiusRange[] = { 1, 9, 25, 49, 81, 121, 169, 225, 289 };
+// Both live in the image at 0x0066EF50 / 0x0066EF74 - see the .data walk
+// below. world_erosion (0x005C2CB0) reads them directly as its four- and
+// eight-neighbour erosion steps.
 const int RadiusBaseX[] = {  1, 2, 1, 0, -1, -2, -1,  0, 0 };
 const int RadiusBaseY[] = { -1, 0, 1, 2,  1,  0, -1, -2, 0 };
+// THE FOUR DIAGONALS, at 0x0066EF28 / 0x0066EF3C - what world_rivers
+// (0x005C38B0) steps along when it walks a channel, paired by index.
+const int RiverStepX[4] = { 1, 1, -1, -1 };
+const int RiverStepY[4] = { -1, 1, 1, -1 };
 
 // WHERE THESE TABLES LIVE IN THE SHIPPED IMAGE, read off the .data run at
 // 0x0066EF28 (image_data.py). The world-builder family walks them with a raw
@@ -342,6 +349,11 @@ extern uint32_t MapPlanetaryOrbit; // affects temp
 extern uint32_t MapCloudCover; // affects rainfall, rivers
 extern uint32_t MapNativeLifeForms;
 extern char MapFilePath[80];                   // 0x0094A2BC, the working map-path buffer
+// The tile-flag mask cleared off a Map record's `bit` dword, and the value
+// argument at the four tile-setter sites that hand the mask over rather than
+// applying it. Image .data holds 0x00288050. See map.cpp, which defines it
+// beside the evidence.
+extern uint32_t MapTileFlagClearMask;          // 0x006919EC
 // AN LVALUE AT A FIXED ADDRESS, not a pointer to one. The tile array's base
 // lives AT 0x0094A30C and the image reads it with a single absolute
 // `mov ecx, [0x94a30c]`. Spelled `Map **const MapTiles = (Map **)0x0094A30C`
@@ -359,6 +371,17 @@ extern Continent Continents[MaxContinentNum];  // 0x009AA730
 extern RulesNatural Natural[MaxNaturalNum];    // 0x0094ADE0
 extern uint32_t MapLongitude; // halve of MapLongitudeBounds
 uint32_t *const AltNatural = (uint32_t *)0x0068FB4C; // Default: { 0, 15, 32, 45, 60,  75,  80, 100, 100, 100, 100 };
+// The table AltNatural is RESET from, immediately above it in .data and the
+// same 11 ints: world_build's first statement copies all eleven over
+// AltNatural (`mov ecx, 0xb; rep movsd` from 0x0068FAF4 to 0x0068FB4C) before
+// any altitude band is computed. Shipped values { 0, 20, 40, 60, 80, 100,
+// 120, 140, 160, 180, 200 } - the nominal contour of each altitude band.
+uint32_t *const AltNaturalDefault = (uint32_t *)0x0068FAF4;
+// The one reader is world_rivers, lowering a tile a river is carving through:
+// it indexes this by the tile's altitude band (`climate >> 5`) to pick the
+// contour to drop the tile to, then clamps that to one below the tile it came
+// from (0x005C3F4C).
+uint32_t *const AltContour = (uint32_t *)0x0068FB20;
 
 // `int` throughout, matching both the definition in src/map.cpp and the
 // catalogue's ?whose_territory@@YAHHHHPAHH@Z. The header said `uint32_t`,
@@ -447,33 +470,33 @@ void __cdecl world_riverbeds();
 BOOL __cdecl world_validate();
 void __cdecl world_temperature();
 void __cdecl world_rocky();
+void __cdecl world_erosion();                  // 0x005C2CB0
 int __cdecl world_site(int x, int y, BOOL is_ocean_site);
 void __cdecl world_analysis();
 void __cdecl world_polar_caps();
 // Not yet recovered - pending_bodies forwarders. world_climate calls each
 // BY NAME.
 //
-// THE FIVE world_* BODIES STILL IN THE ARCHIVE (world_erosion 0x005C2CB0,
-// world_fungus 0x005C3440, world_rivers 0x005C38B0, world_rainfall
-// 0x005C4470, world_build 0x005C86E0) all block on one thing: `Fractal`.
-// world_fungus and world_erosion build a 0x2E4-byte one on the stack and call
-// ?init@Fractal@@QAEXXZ (0x005C1E20) and ?UNK1@Fractal@@QAEHHH@Z
-// (0x005C1F20) on it - both archive bodies of their own, so homing any of the
-// five needs the class modelled first (hypothesis_layouts.h's Fractal is a
-// bare 0x2C0-byte byte run with no methods, and 0x2C0 is not the size the
-// call sites reserve). Everything ELSE in them is already named:
-//   0x0094A2A4 / A8 / AC / B4 / B8  MapOceanCoverage / MapLandCoverage /
-//                                   MapErosiveForces / MapCloudCover /
-//                                   MapNativeLifeForms - all map.cpp globals
-//   0x009502E4 / E8 / EC / F0       WorldBuilder.cloudmass_peaks /
-//                                   cloudmass_hills / rainfall_coeff /
-//                                   deep_water   (alpha.h)
-//   0x00950308                      WorldBuilder.fungus
-//   0x0066EF28 / 0x0066EF3C         RiverStepX / RiverStepY (see the
-//                                   RadiusOffset note above)
-//   0x0066EFE0 / 0x0066F464         RadiusOffsetX[9] / RadiusOffsetY[9]
-// Still nameless for lack of any reader that would pin them down:
-// 0x0068FB20, 0x0068FB50, 0x006919EC, 0x00945B00, 0x009A6488.
+// THE WORLD-BUILDER FAMILY, after the 2026-09-05 pass. Homed: world_fungus
+// (0x005C3440) and world_build (0x005C86E0), both in map.cpp over
+// src/fractal.h. Still archived, each with a BLOCKED note on its artifact:
+//   world_erosion (0x005C2CB0) - the last one that needed a class. It calls
+//     ?init@Fractal@@QAEXXZ (0x005C1E20) and ?UNK1@Fractal@@QAEHHH@Z
+//     (0x005C1F20), both homed in map.cpp now, and reserves `sub esp, 0x314`
+//     = the 722-byte Fractal plus its fourteen stack locals.
+//   world_rivers (0x005C38B0) - six calls, no Fractal, nothing left to name.
+//   world_rainfall (0x005C4470) - six calls, no Fractal; its artifact is a
+//     condensation, so its middle pass wants re-deriving from the raw bytes.
+// Names this pass settled, so nothing is re-derived:
+//   0x0068FB20                      AltContour (map.h, below)
+//   0x0068FAF4                      AltNaturalDefault (map.h, below)
+//   0x006919EC                      MapTileFlagClearMask (map.cpp defines it)
+//   0x0068FB50                      &AltNatural[1]
+//   0x00945B00                      Paths (path.cpp)
+//   0x009A6488                      ExpansionEnabled (game.cpp)
+//   0x009502F0..0x00950304          WorldBuilder.deep_water / shelf / plains /
+//                                   beach / hills
+//   0x00950308 / 0x00950320         WorldBuilder.fungus / .islands
 void __cdecl do_checksums(int type);           // 0x0051E760
 void __cdecl world_shorelines();                // 0x005C3F70
 void __cdecl world_rivers();                    // 0x005C38B0
@@ -484,6 +507,10 @@ void __cdecl world_climate();
 // The skip flag world_climate tests (map.cpp defines both of the pair it
 // reads); control_game (game.cpp) sets and clears it around each turn.
 extern uint32_t WorldClimateSkipTerrainClear;  // 0x0068F21C
+// map.cpp defines both. world_build raises the pair while it regenerates the
+// terrain and clears them again at its tail, around world_climate.
+extern uint32_t WorldClimateSkipTerritoryReset;  // 0x009B22EC
+extern uint32_t WorldClimateRedrawRequest;       // 0x009B22E8
 // ?custom_planet@@YAHHH@Z at 0x0058C2A0 - still an original body, behind a
 // forwarder in src/pending_bodies.cpp. It has a second span at
 // 0x006605A5-0x006607D7, which is why it is a long way from being promoted.

@@ -1,5 +1,22 @@
 // ORIGINAL: 0x005C2CB0 ?world_erosion@@YAXXZ 0x005C2CB0-0x005C3299 FILE
 // TRIED: Ghidra-shaped goto/label transcription (verified instruction-by- instruction against the raw disassembly for control flow, push order and branch polarity) compiles and matches through instruction #41; diverges afterward on register-allocation shape (shl vs mov) inside the inner tile loop. Not chased further given the function's size (~500 instructions).
+// BLOCKED (map pass, 2026-09-05): NOT homed - world_build (map.cpp) reaches it
+//   through a pending_bodies.cpp forwarder. Everything this body needs is now
+//   NAMED, which was the only thing missing: Fractal is src/fractal.h
+//   (char grid_[2][19][19], 722 bytes - this body's `sub esp, 0x314` is that
+//   plus its fourteen stack locals), RadiusBaseX/RadiusBaseY are map.h's
+//   tables at 0x0066EF50/0x0066EF74, 0x0066EFE0/0x0066F464 are
+//   RadiusOffsetX[9]/RadiusOffsetY[9], 0x0068FB50 is &AltNatural[1],
+//   0x00945B00 is path.cpp's Paths (Paths.continents() at 0x005C2D0F), and the
+//   WorldBuilder fields at 0x009502F0..0x00950304 are deep_water / shelf /
+//   plains / beach / hills. The rewrite is tree-style only: keep this
+//   artifact's five goto targets distinct - 0x005C2DF6 is "do the level
+//   computation", 0x005C3058 is its band switch, 0x005C30DE is the post-walk
+//   coast clamp, and the two that SETTLE for the tile are 0x005C321F and
+//   0x005C3058's tail - and note that `local_1c` / `local_8` are read before
+//   they are written on the band==2 path (BUG IN THE ORIGINAL, carry-over from
+//   the previous tile; reproduce it, do not fix it).
+
 // working copy - scaffold materialised by --work
 // size      1513 bytes
 // prototype 

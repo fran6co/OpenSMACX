@@ -1270,11 +1270,11 @@ struct FileFindPath {
   uint8_t relative_path_[0x100];  // 0x400
 };
 
-/* 0x2C0 bytes, 1 member(s), 0 named. From its own code, which reaches that far. 3 function(s) in the image. */
-class Fractal {
- public:
-  uint8_t field_0_[0x2C0];  // 0x0
-};
+/* Fractal MOVED to src/fractal.h: the bare 0x2C0-byte run below was both
+   incomplete and the wrong size - the class is two 19x19 byte fields (722
+   bytes) and the call sites reserve 0x2E4 / 0x314 because their other locals
+   share the frame. world_erosion and world_fungus (map.cpp) carry the
+   evidence and the three method bodies. */
 
 // ImageButton MOVED to src/imagebutton.h, where it derives from BaseButton
 // rather than carrying `uint8_t baseButton_[0xAB8]` as raw storage. The

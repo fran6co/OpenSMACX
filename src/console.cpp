@@ -121,15 +121,20 @@ char *__cdecl get_noun_phrase(int phrase_id, int faction_id);            // 0x00
 // does not touch. No image symbol and no other reader in the tree.
 int EditorGenerateUndoDepth = 0;  // 0x009392A8, defined here
 
-// Two single-dword state slots the Console bodies write, neither of which
-// carries a symbol in the image and neither of which src/ names yet.
-// 0x0068FAF0 is the east-west span veh_turn wraps a longitude delta into:
-// turn_hints's caller compares the delta against it and adds
-// MapLongitudeBounds when it exceeds it.
-int MapLongitudeSpan = 1;  // 0x0068FAF0, defined here; the image's .data holds 1
+// One single-dword state slot a Console body writes; it carries no symbol in
+// the image and src/ names it nowhere else.
 // 0x007AD330 is the dword Console::editor_load writes 7 into so the InfoWin
 // at 0x007AD2A0 repaints its panel.
 int InfoWinRedrawPhase = 0;  // 0x007AD330, defined here
+
+// 0x00939FD0, the tick counter auto_play_callback (below) drives: it counts
+// this up once per callback, and when it passes 100 it plays one turn for the
+// current faction through Console::end_my_turn and clears it again. The only
+// references to the address in the whole image are this function's three
+// (increment, compare, clear), and the slot is zero-fill .data, so it starts
+// at 0 and the auto-play never fires until something - Console::on_key_click,
+// which registers the callback - starts it.
+int AutoPlayCounter = 0;  // 0x00939FD0, defined here
 
 // HANDOFF: the process-wide WorldWin at 0x008E9F60 is map.cpp's
 // WorldClimateWorldWin - that file defines it and world_climate clears its
@@ -1583,7 +1588,7 @@ int Console::ready_search(int veh_id) {
                 int vehY = *(short *)(rec - 2);
 
                 int diffX = abs(coordA - vehX);
-                if ((MapIsFlat & 1) == 0 && diffX > MapLongitudeSpan) {
+                if ((MapIsFlat & 1) == 0 && diffX > (int)MapLongitude) {
                     diffX = MapLongitudeBounds - diffX;
                 }
                 int diffY = abs(coordB - vehY);
@@ -3097,3 +3102,83 @@ void Console::designate(int veh_id) {
     }
 }
 
+
+// ORIGINAL: 0x0050E890 ?auto_play_callback@@YAXH@Z 0x0050E890-0x0050E97E BYTE_EXACT
+// size      238 bytes
+// prototype void (__cdecl ?auto_play_callback@@YAXH@Z)(int)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005169F0 0x00625810
+// indirect  0x0050E8FE 0x0050E90F 0x0050E939 0x0050E968 0x0050E978
+// Homed 2026-09-05 from src/unrecovered/0050e890.cpp (deleted). The
+// catalogue's callers-0 is right in spirit: nothing calls it, Console::
+// on_key_click (0x005178C0) takes its ADDRESS at 0x00517987 - it is a timer
+// callback - and on_key_click is not homed yet, so nothing in this build
+// reaches the body either way.
+//
+// Every fixed address in it is a name the tree already owns: AutoPlayCounter
+// (0x00939FD0, above), WinModalDepth (0x009B7AE4), GameState's low byte
+// (0x009A64C0), ConsoleGlobal (0x009156B0), HandleMain (0x009B7B28),
+// WinScreenWidth / WinScreenHeight (0x009B7B1C / 0x009B7B20), and the two
+// USER32 imports reached by name - SetCursorPos (0x00669310) and
+// PostMessageA (0x00669314).
+//
+// LEVER (from the artifact, re-measured there on cl 12.00.8168): the
+// PostMessageA pointer is a LOCAL in the keystroke branch. Spelled inline,
+// VC6 emits `call dword ptr [0x669314]` twice and needs no callee-saved
+// register for it; the image's `mov edi, [0x669314]` plus two `call edi` is
+// a value held across a call, which only a local gets. That is what makes
+// EDI live and puts `push esi; push edi` at 0x0050E8C6 rather than at entry.
+// The packed word is an EXPRESSION written out at both call sites, not a
+// local: naming it costs a whole-branch register home and a stack slot. And
+// `(unsigned short)((y & 0xff) << 8) | (x & 0xff)` - the cast on the high
+// half only, MAKEWORD's own shape - is what frees x to live in ESI and y to
+// take EBX, the image's allocation.
+// TRIED, all measured in the artifact: signed against unsigned x and y
+// (no effect); thirteen pack spellings, of which only the one below reaches
+// mnemonic #64; locals declared at function top; one shared set of locals
+// across both branches; computing the pack before SetCursorPos; `register`,
+// `const`, a nested scope, a function-scope variable assigned in both
+// branches, assignment inside the first call's callee expression, a `void **`
+// read, and a const-qualified or `extern` global for the pointer.
+// CLOSED 2026-09-05: the artifact's last instruction - the image loads the
+// pointer into ESI after the pack and calls `esi` twice in the mouse branch -
+// falls to reaching the import as the DESIGNATOR in the keystroke branch
+// (`PostMessageCallback post = PostMessageA;`, no explicit address read) and
+// BY NAME in the mouse branch. VC6 dllimports both into registers it can
+// reuse for the second pair, `mov esi, [0x669314]` landing after the mask
+// exactly where the image puts it. Reading the IAT slot as data
+// (`*(PostMessageAFn *)0x00669314`), which is every spelling the artifact
+// had, is what forced the load to schedule early. BYTE_EXACT 80 of 80.
+typedef int(__stdcall *PostMessageCallback)(HWND, UINT, WPARAM, LPARAM);
+
+void __cdecl auto_play_callback(int) {
+    AutoPlayCounter = AutoPlayCounter + 1;
+    if (AutoPlayCounter > 100) {
+        if (WinModalDepth == 0) {
+            unsigned char state = *reinterpret_cast<unsigned char *>(&GameState);
+            if ((state & 2) != 0) {
+                ConsoleGlobal.end_my_turn();
+                AutoPlayCounter = 0;
+            }
+        }
+    }
+
+    if (random(0, 2) != 0) {
+        int key = (signed char)random(0, 0xff);
+        PostMessageCallback post = PostMessageA;
+        post(HandleMain, WM_KEYDOWN, key, 0);
+        post(HandleMain, WM_KEYUP, key, 0);
+        return;
+    }
+
+    int x = random(0, WinScreenWidth);
+    int y = random(0, WinScreenHeight);
+    SetCursorPos(x, y);
+
+    PostMessageA(HandleMain, WM_LBUTTONDOWN, 0,
+                 static_cast<unsigned short>((y & 0xff) << 8) | (x & 0xff));
+    PostMessageA(HandleMain, WM_LBUTTONUP, 0,
+                 static_cast<unsigned short>((y & 0xff) << 8) | (x & 0xff));
+}

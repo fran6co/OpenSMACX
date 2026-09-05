@@ -1176,6 +1176,15 @@ void Console::on_post_redraw_nc_buffer(void * a1, int a2) {  // 0x0050F960
     PENDING_BODY(0x0050F960, pending)(this, nullptr, a1, a2);
 }
 
+// ?end_my_turn@Console@@QAEXXZ at 0x005169F0 - the turn handoff
+// auto_play_callback (console.cpp) makes once AutoPlayCounter reaches 100.
+// Its archived transcription still measures MISMATCH 88 of 180, so this is
+// the forwarder and not a homed body.
+void Console::end_my_turn() {
+    typedef void(__fastcall *pending)(Console *, void *);
+    PENDING_BODY(0x005169F0, pending)(this, nullptr);
+}
+
 int Dialogs::attach(void * a1, int a2, int a3, int a4) {  // 0x00612FE0
     typedef int(__fastcall *pending)(Dialogs *, void *, void *, int, int, int);
     return PENDING_BODY(0x00612FE0, pending)(this, nullptr, a1, a2, a3, a4);
@@ -1500,11 +1509,8 @@ void __cdecl do_checksums(int type) {
     PENDING_BODY(0x0051E760, pending)(type);
 }
 
-// ?world_rivers@@YAXXZ at 0x005C38B0
-void __cdecl world_rivers() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x005C38B0, pending)();
-}
+// ?world_rivers@@YAXXZ at 0x005C38B0 - HOMED into src/map.cpp 2026-09-05 (see
+// the marker there), so this file no longer carries it.
 
 // ?custom_planet@@YAHHH@Z at 0x0058C2A0 - body in src/unrecovered/0058c2a0.cpp
 int __cdecl custom_planet(int a, int b) {
@@ -2036,10 +2042,8 @@ int __cdecl veh_pick(int a1, const char *label, int a3) {
     return PENDING_BODY(0x0048D0D0, pending)(a1, label, a3);
 }
 
-void __cdecl world_build() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x005C86E0, pending)();
-}
+// ?world_build@@YAXXZ at 0x005C86E0 - HOMED into src/map.cpp 2026-09-05 (see
+// the marker there), so this file no longer carries it.
 
 // Two callees the diplomacy bodies homed into src/faction.cpp reach with the
 // image's `call rel32`, and neither has a product body yet:
@@ -2196,13 +2200,9 @@ void __cdecl atrocity(int faction_id, int faction_id_victim, int kind, int unk) 
 
 // --- callees of the console turn/editor bodies, still archived ---
 
-// ?world_fungus@@YAXXZ at 0x005C3440 - the fungus repaint Console::editor_fungus
-// drives under the saved native-life-forms count.
-//             body in src/recovered/units/005c3440.cpp
-void __cdecl world_fungus() {
-    typedef void(__fastcall *pending)(void *, void *);
-    PENDING_BODY(0x005C3440, pending)(nullptr, nullptr);
-}
+// ?world_fungus@@YAXXZ at 0x005C3440 - HOMED into src/map.cpp 2026-09-05 over
+// the real Fractal class (src/fractal.h), so this file no longer carries it.
+// Console::editor_fungus still reaches it by name.
 
 // ?set_view@Console@@QAEXH@Z at 0x00511480 - Console's own view-mode setter,
 // archived. Console::editor_lock2 calls it when the cursor vehicle is live;
@@ -2225,4 +2225,23 @@ void MapWin::set_center(int x_coord, int y_coord,
     typedef void(__fastcall *pending)(MapWin *, void *, int, int, int);
     PENDING_BODY(0x0046B1F0, pending)(this, nullptr, x_coord, y_coord,
                                      draw_type);
+}
+
+// ?veh_init@@YAHHHHH@Z at 0x005C03D0 - world_fungus (map.cpp) is its only
+// caller in the product, seeding a fungus vehicle on the tiles it just
+// painted. Archived transcription still measures NOT_MATCHING, so this is
+// the forwarder and not a homed body.
+int __cdecl veh_init(int unit_type, int faction_id, int x_coord, int y_coord) {
+    typedef int(__cdecl *pending)(int, int, int, int);
+    return PENDING_BODY(0x005C03D0, pending)(unit_type, faction_id, x_coord,
+                                             y_coord);
+}
+
+// ?world_erosion@@YAXXZ at 0x005C2CB0 - world_build (map.cpp) calls it between
+// build_hills and the polar-cap pass. Its archived transcription is a
+// goto/label Ghidra shape that has never been rewritten in tree style, so
+// this is the forwarder and not a homed body.
+void __cdecl world_erosion() {
+    typedef void(__cdecl *pending)();
+    PENDING_BODY(0x005C2CB0, pending)();
 }
