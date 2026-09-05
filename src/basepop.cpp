@@ -555,17 +555,18 @@ Return Value: n/a
 Status: Complete
 */
 void BasePop::set_width(int width) {
-    uint8_t *const dialogs = reinterpret_cast<uint8_t *>(this) + 0x21D0;
-    if (field_A14_ == 0 && (field_30A8_ & 0x400) == 0 &&
+    // THE EMBEDDED DIALOG VIRTUAL BASE, reached as a qualified member access.
+    // The qualification matters: unqualified `dialogs_.field_2C_` finds
+    // ListBox's own field at the same offset 0x2C and stores there, while
+    // `Dialog::field_2C_` makes VC6 walk the vbtable at +0x21d0 for the
+    // virtual base's displacement - the image's `mov edx,[ecx+0x21d0];
+    // mov edx,[edx+8]` before the store. dipedit.cpp's
+    // `list_box_.Dialog::field_20_ &= ~4` is the same form.
+    if (external_window_ == 0 && (field_30A8_ & 0x400) == 0 &&
         WinScreenWidth >= 0x400) {
-        *reinterpret_cast<int32_t *>(
-            dialogs + 0x2C +
-            (*reinterpret_cast<const int32_t *const *>(dialogs))[2]) =
-            (width * 3) / 2;
+        dialogs_.Dialog::field_2C_ = (width * 3) / 2;
     } else {
-        *reinterpret_cast<int32_t *>(
-            dialogs + 0x2C +
-            (*reinterpret_cast<const int32_t *const *>(dialogs))[2]) = width;
+        dialogs_.Dialog::field_2C_ = width;
     }
 }
 
@@ -839,8 +840,9 @@ Purpose: Replace the default OK caption with a heap copy of `text`.
 Return Value: No errors (0); null argument (3); allocation failed (5)
 Status: Semantics transcribed from the image
 
-PROMOTED FROM src/unrecovered/006018a0.cpp, which reached the buffer through
-`reinterpret_cast<char **>(g_009b8d80)`.
+PROMOTED FROM src/unrecovered/006018a0.cpp, which reached the default-ok
+buffer through a fixed-address binding where this tree now reads
+BasePopDefaultOkText.
 
 THE COPY IS `dst[0] = 0` FOLLOWED BY A STRCAT, which is what the image does
 everywhere it copies a string - two arguments and `add esp, 8`, not the
@@ -928,9 +930,9 @@ inline int __cdecl BasePop::set_def_cancel_text(LPSTR text) {
 // 0x00696ECC, as the original does.
 // LEVER (2026-08-29, slot conversion): the two slot stores go through the
 // real `Win *PopupInstanceSlotA/B` objects (basepop.h) instead of the
-// g_009bc074/78 bindings - the same `mov dword ptr [addr], eax` folded
-// shape, claim re-measured BYTE_EXACT after, and `pops` (popup.cpp) now
-// reads the same storage.
+// two fixed-address bindings the artifact carried - the same
+// `mov dword ptr [addr], eax` folded shape, claim re-measured BYTE_EXACT
+// after, and `pops` (popup.cpp) now reads the same storage.
 Status: Complete
 */
 int __cdecl BasePop::init_class() {
@@ -1132,7 +1134,7 @@ Purpose: The BasePop constructor. The base GraphicWin and the Heap, two
 //        (`mov eax,0xc` against the image's `xor eax,eax`). Two instructions
 //        of residual, invisible while the colouring stands.
 // LEVER: field-typing field_A3C_ became `void *field_A3C_` (basepop.h) and
-//        the store became `field_A3C_ = this;` - the value is proved (image
+//        the store became `owner_window_ = this;` - the value is proved (image
 //        `mov [ebp+0xa3c], ebp`, 0x00600ab0) even though no code in the tree
 //        ever reads the slot back, and the bytes do not move: 105 of 321
 //        before and after. The NAME stays neutral on purpose; the earlier
@@ -1241,7 +1243,7 @@ uint32_t BasePopDefaultBlock2F7C[70];  // 0x009B8BD0
 // Copied to +0x3094, the head of the object's third block-sized region.
 uint32_t BasePopDefaultField3094;  // 0x009B8CF8
 
-// The defaults for field_A14_ (the high-res-scaling opt-out set_width tests)
+// The defaults for external_window_ (the high-res-scaling opt-out set_width tests)
 // and default_loc_a_/default_loc_b_ (the starting loc_a_/loc_b_; 0x2000 keeps the
 // current value, so zero here means "location 0,0").
 uint32_t BasePopDefaultLayout[3];  // 0x009B8D04
@@ -1312,15 +1314,15 @@ BasePop::BasePop() {
     field_21CC_ = -1;
     ok_text_ = 0;
     cancel_text_ = 0;
-    field_A3C_ = this;
+    owner_window_ = this;
     field_20F4_ = 0;
-    field_A40_ = 0;
+    selected_id_ = 0;
     field_30A8_ = 0;
     field_30AC_ = 0;
-    field_A44_ = -1;
+    value_ = -1;
     // Eight contiguous dwords: the image fills them with one `rep stosd`.
     memset(zero_block_, 0, 8 * sizeof(uint32_t));
-    field_A48_ = 0;
+    owned_text_ = 0;
     field_21B8_ = BasePopDefaultField21B0[3];
     field_21BC_ = BasePopDefaultField21B0[2];
     field_21B0_ = BasePopDefaultField21B0[0];
@@ -1330,7 +1332,7 @@ BasePop::BasePop() {
 
     sprite_.close();
 
-    field_2144_ = 0;
+    caller_sprite_ = 0;
     field_214C_ = BasePopDefaultField2148[1];
     field_2148_ = BasePopDefaultField2148[0];
     field_30B0_ = 0;
@@ -1403,13 +1405,13 @@ BasePop::BasePop() {
     field_31B4_ = BasePopDefaultField31B0[1];
     field_322C_ = 0;
     field_322C_ = BasePopDefaultField322C;
-    field_A14_ = BasePopDefaultLayout[0];
+    external_window_ = (Win *)BasePopDefaultLayout[0];
     default_loc_a_ = BasePopDefaultLayout[1];
     default_loc_b_ = BasePopDefaultLayout[2];
     dialog_width_ = BasePopDefaultDialogSize[0];
     dialog_height_ = BasePopDefaultDialogSize[1];
 
-    if (field_A14_ != 0) {
+    if (external_window_ != 0) {
         // The image's tail here walks the Dialogs subobject at +0x21d0 (see
         // the STRUCTURE note under the marker): [dialogs+8] selects two
         // slots that receive dialog_width_/dialog_height_ (the latter grown 3/2 for
@@ -1426,4 +1428,974 @@ BasePop::BasePop() {
         }
     }
 
+}
+
+// Fixed-slot bindings carried from 00600f00.cpp
+
+// ORIGINAL: 0x00600F00 ?close@BasePop@@QAEXXZ 0x00600F00-0x006015A9 FILE
+// TRIED: calling StringStruct::remove_all() for the two entry walks (the
+//        function the image inlines here - same guard, same do/while, same
+//        three tail stores) instead of the artifact's hand-spelled walks.
+//        Honest, and it crosses VC6's FPO threshold: the body takes a
+//        frame pointer under BOTH flag sets and scores 0 of 388 where the
+//        hand walks scored 12 of 388. The cure is the original's own - a
+//        definition of remove_all visible in this TU, which is a
+//        stringstruct.h handoff (MEASURED inline there, like port_to_port
+//        and has_tech) - not a rewrite of this body.
+// TRIED: no Ghidra hint; straight offset-based transcription (class is effectively opaque past GraphicWin) of ~150 field resets, two `rep movsd` block copies, two `free()` guards, a 3x9 transposed table copy, five sub-object close() calls plus GraphicWin's own, a Sprite close, two identically-shaped "clear a small vector of polymorphic items" loops (multi-inheritance adjustor thunks via pointer-to-member `original_slot`/`ORIGINAL`, not the VCall shim class - the receiver for the inner dispatch is a computed sub-object address, not `this` itself), an 8-iteration destroy-and-null loop, and the closing field batch + Heap destructor. Compiles; diverges at instruction #0 (mov vs push - the local frame shape differs immediately given how many more locals this body declares than the original's bare `push ecx`).
+// working copy - scaffold materialised by --work
+// size      1705 bytes
+// prototype void (__thiscall ?close@BasePop@@QAEXXZ)(BasePop* this)
+// callers   100   call targets   9
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4580 0x005D4E40 0x005E3820 0x00609F20 0x0060D1B0 0x0060E7C0 0x00610280 0x00611A90 0x00644EF2
+// indirect  0x00601070 0x00601082 0x006010B4 0x006010C7 0x006010E3 0x00601133 0x00601148 0x00601163 0x0060119C
+
+// The two vtable slots close() dispatches through: slot 0x168 of each
+// embedded FlatButton's table (a nullary redraw request) and slot 0 of the
+// objects parked in zero_block_ (their one-int destructor, the deleting
+// slot). Neither receiver's type is declarable - the first is a FlatButton
+// whose table belongs to a class this tree keeps non-virtual, the second is
+// whatever the popup stored there - so the slots are read as they live.
+typedef void (__fastcall *func_basepop_slot090)(void *);
+typedef void (OriginalObject::*func_basepop_list_destroy_dtor)(int);
+
+void BasePop::close() {
+    char *self = (char *)this;
+    int i, off;
+
+    *(int *)(self + 0x30a4) = BasePopDefaultField30A4;
+    *(int *)(self + 0x3094) = BasePopDefaultField3094;
+
+    for (i = 0; i < 0x46; i++) {
+        *(int *)(self + 0x2e64 + i * 4) = (int)BasePopDefaultBlock2E64[i / 4];
+    }
+    for (i = 0; i < 0x46; i++) {
+        *(int *)(self + 0x2f7c + i * 4) = (int)BasePopDefaultBlock2F7C[i / 4];
+    }
+
+    if (*(void **)(self + 0x3224) != 0) {
+        free(*(void **)(self + 0x3224));
+        *(void **)(self + 0x3224) = 0;
+    }
+    if (*(void **)(self + 0x3228) != 0) {
+        free(*(void **)(self + 0x3228));
+        *(void **)(self + 0x3228) = 0;
+    }
+
+    *(void **)(self + 0xa3c) = this;
+
+    for (i = 0, off = 0x31c4; i < 0xc; i += 4, off += 4) {
+        *(int *)(self + off - 0xc) = BasePopDefaultBlock31B8[i / 4];
+        *(int *)(self + off) = BasePopDefaultBlock31B8[i / 4 + 2];
+        *(int *)(self + off + 0xc) = BasePopDefaultBlock31B8[i / 4 + 5];
+        *(int *)(self + off + 0x18) = BasePopDefaultBlock31B8[i / 4 + 8];
+        *(int *)(self + off + 0x24) = BasePopDefaultBlock31B8[i / 4 + 11];
+        *(int *)(self + off + 0x30) = BasePopDefaultBlock31B8[i / 4 + 14];
+        *(int *)(self + off + 0x3c) = BasePopDefaultBlock31B8[i / 4 + 17];
+        *(int *)(self + off + 0x48) = BasePopDefaultBlock31B8[i / 4 + 20];
+        *(int *)(self + off + 0x54) = BasePopDefaultBlock31B8[i / 4 + 23];
+    }
+
+    ((ListBox *)(self + 0x21d0))->close();
+    ((CheckBox *)(self + 0x2228))->close();
+    ((RadioButton *)(self + 0x2214))->close();
+    ((SpriteBox *)(self + 0x2240))->close();
+    ((EditGroup *)(self + 0x22c8))->close();
+    ((GraphicWin *)self)->close();
+
+    ((Sprite *)(self + 0x2118))->close();
+    *(int *)(self + 0x20f4) = 0;
+    *(Sprite **)(self + 0x2144) = 0;
+    *(int *)(self + 0xa40) = 0;
+    *(int *)(self + 0xa44) = -1;
+
+    if (owned_text_ != 0) {
+        free(owned_text_);
+        owned_text_ = 0;
+    }
+    *(int *)(self + 0x21c8) = 0;
+    *(int *)(self + 0x21cc) = -1;
+
+    // SLOT 0x168 OF EACH EMBEDDED FLAT BUTTON'S TABLE, called where it lives.
+    // 0xa5c and 0x15a8 are flat_button1_ and flat_button2_.
+    vtable_slot<func_basepop_slot090>(&flat_button1_, 0x168)(&flat_button1_);
+    vtable_slot<func_basepop_slot090>(&flat_button2_, 0x168)(&flat_button2_);
+
+    // THE TWO LIST TEARDOWNS. The image inlines StringStruct::remove_all at
+    // both - same guard on head_, same do/while over entry_count_, same three
+    // tail stores - so the source is the call, and the whole entry walk with
+    // its two virtual dispatches is that one function's body. Inlining it
+    // here needs the definition visible in this TU (stringstruct.cpp holds
+    // it), which is a handoff, not a rewrite.
+    if (unit_ids_.head_ != 0) {
+        unit_ids_.remove_all();
+    }
+    unit_ids_.current_position_ = 0;
+
+    if (item_ids_.head_ != 0) {
+        item_ids_.remove_all();
+    }
+    item_ids_.current_position_ = 0;
+
+
+    for (i = 0; i < 8; i++) {
+        int item = zero_block_[i];
+        if (item != 0) {
+            OriginalObject *entry = reinterpret_cast<OriginalObject *>(item);
+            (entry->*original_method<func_basepop_list_destroy_dtor>(
+                *(unsigned long *)item))(1);
+            zero_block_[i] = 0;
+        }
+    }
+
+    *(int *)(self + 0x21b8) = BasePopDefaultField21B0[3];
+    *(int *)(self + 0x21bc) = BasePopDefaultField21B0[2];
+    *(int *)(self + 0x21b0) = BasePopDefaultField21B0[0];
+    *(int *)(self + 0x21b4) = BasePopDefaultField21B0[1];
+    *(int *)(self + 0x21c0) = BasePopDefaultField21C0[0];
+    *(int *)(self + 0x21c4) = BasePopDefaultField21C0[1];
+
+    *(int *)(self + 0x30b0) = 0;
+    *(int *)(self + 0x30b4) = 0;
+    *(int *)(self + 0x30b8) = 0;
+    *(int *)(self + 0x30bc) = 0;
+    *(int *)(self + 0x30c0) = 0;
+    *(int *)(self + 0x30c4) = 0;
+    *(int *)(self + 0x30c8) = 0;
+    *(int *)(self + 0x30cc) = 0;
+    *(int *)(self + 0x30d0) = 0;
+    *(int *)(self + 0x30d4) = 0;
+    *(int *)(self + 0x30d8) = 0;
+    *(int *)(self + 0x30dc) = 0;
+    *(int *)(self + 0x30e0) = 0;
+    *(int *)(self + 0x30e4) = 0;
+    *(int *)(self + 0x30e8) = 0;
+    *(int *)(self + 0x30ec) = 0;
+    *(int *)(self + 0x30f0) = 0;
+    *(int *)(self + 0x30f4) = 0;
+    *(int *)(self + 0x30a8) = 0;
+    *(int *)(self + 0x30ac) = 0;
+    *(int *)(self + 0x30f8) = 0x1000;
+    *(int *)(self + 0x30fc) = 0x1000;
+    *(int *)(self + 0x3100) = 0;
+
+    *(int *)(self + 0x3104) = BasePopDefaultField3104[0];
+    *(int *)(self + 0x3108) = BasePopDefaultField3104[0];
+    *(int *)(self + 0x310c) = BasePopDefaultField3104[2];
+    *(Font **)(self + 0x3110) = BasePopDefaultStringFonts[0];
+    *(int *)(self + 0x3120) = BasePopDefaultStringColors[0][0];
+    *(int *)(self + 0x3130) = BasePopDefaultStringColors[1][0];
+    *(int *)(self + 0x3140) = BasePopDefaultStringColors[2][0];
+    *(int *)(self + 0x3150) = BasePopDefaultStringColors[3][0];
+    *(Font **)(self + 0x3114) = BasePopDefaultStringFonts[1];
+    *(int *)(self + 0x3124) = BasePopDefaultStringColors[0][1];
+    *(int *)(self + 0x3134) = BasePopDefaultStringColors[1][1];
+    *(int *)(self + 0x3144) = BasePopDefaultStringColors[2][1];
+    *(int *)(self + 0x3154) = BasePopDefaultStringColors[3][1];
+    *(Font **)(self + 0x3118) = BasePopDefaultStringFonts[2];
+    *(int *)(self + 0x3128) = BasePopDefaultStringColors[0][2];
+    *(int *)(self + 0x3138) = BasePopDefaultStringColors[1][2];
+    *(int *)(self + 0x3148) = BasePopDefaultStringColors[2][2];
+    *(int *)(self + 0x3158) = BasePopDefaultStringColors[3][2];
+    *(Font **)(self + 0x311c) = BasePopDefaultStringFonts[3];
+    *(int *)(self + 0x312c) = BasePopDefaultStringColors[0][3];
+    *(int *)(self + 0x313c) = BasePopDefaultStringColors[1][3];
+    *(int *)(self + 0x314c) = BasePopDefaultStringColors[2][3];
+    *(int *)(self + 0x315c) = BasePopDefaultStringColors[3][3];
+    *(int *)(self + 0x3160) = 0;
+    *(int *)(self + 0x3164) = 0;
+    *(int *)(self + 0x3168) = 0;
+    *(Font **)(self + 0x316c) = BasePopDefaultButtonFonts[0];
+
+    *(unsigned char *)(self + 0x3178) = (uint8_t)BasePopDefaultButtonColors[0][0];
+    *(int *)(self + 0x317c) = BasePopDefaultButtonColors[1][0];
+    *(int *)(self + 0x3188) = BasePopDefaultButtonColors[2][0];
+    *(int *)(self + 0x3194) = BasePopDefaultButtonColors[3][0];
+    *(Font **)(self + 0x3170) = BasePopDefaultButtonFonts[1];
+    *(unsigned char *)(self + 0x3179) = (uint8_t)BasePopDefaultButtonColors[0][1];
+    *(int *)(self + 0x3180) = BasePopDefaultButtonColors[1][1];
+    *(int *)(self + 0x318c) = BasePopDefaultButtonColors[2][1];
+    *(int *)(self + 0x3198) = BasePopDefaultButtonColors[3][1];
+    *(Font **)(self + 0x3174) = BasePopDefaultButtonFonts[2];
+    *(unsigned char *)(self + 0x317a) = (uint8_t)BasePopDefaultButtonColors[0][2];
+    *(int *)(self + 0x3184) = BasePopDefaultButtonColors[1][2];
+    *(int *)(self + 0x3190) = BasePopDefaultButtonColors[2][2];
+    *(int *)(self + 0x319c) = BasePopDefaultButtonColors[3][2];
+    *(int *)(self + 0x31a4) = BasePopDefaultField31A0[1];
+    *(int *)(self + 0x31a8) = BasePopDefaultField31A0[2];
+    *(int *)(self + 0x31ac) = BasePopDefaultField31A0[3];
+    *(int *)(self + 0x31b0) = BasePopDefaultField31B0[0];
+    *(int *)(self + 0x31b4) = BasePopDefaultField31B0[1];
+    *(int *)(self + 0x214c) = BasePopDefaultField2148[1];
+    *(int *)(self + 0x2148) = BasePopDefaultField2148[0];
+    *(int *)(self + 0x322c) = BasePopDefaultField322C;
+    *(unsigned char *)(self + 0x31a0) = (uint8_t)BasePopDefaultField31A0[0];
+
+    *(int *)(self + 0xa14) = BasePopDefaultLayout[0];
+    *(int *)(self + 0xa18) = BasePopDefaultLayout[1];
+    *(int *)(self + 0xa1c) = BasePopDefaultLayout[2];
+    *(int *)(self + 0xa20) = BasePopDefaultDialogSize[0];
+    *(int *)(self + 0xa24) = BasePopDefaultDialogSize[1];
+
+    if (*(void **)(self + 0xa14) != 0) {
+        int eax, ecx, edx;
+
+        ecx = *(int *)(self + 0x21d0);
+        eax = *(int *)(self + 0xa20);
+        edx = *(int *)(ecx + 8);
+        *(int *)(self + edx + 0x21fc) = eax;
+
+        ecx = *(int *)(self + 0xa14);
+        eax = *(int *)(self + 0xa24);
+        if (ecx == 0) {
+            edx = *(int *)(self + 0x30a8);
+            if ((edx & 0x400) == 0 && WinScreenWidth >= 0x400) {
+                eax = (eax * 3) / 2;
+            }
+        }
+        ecx = *(int *)(self + 0x21d0);
+        edx = *(int *)(ecx + 8);
+        *(int *)(self + edx + 0x2200) = eax;
+
+        eax = *(int *)(self + 0xa18);
+        ecx = *(int *)(self + 0xa1c);
+        if (eax != 0x2000) {
+            *(int *)(self + 0x30f8) = eax;
+        }
+        if (ecx != 0x2000) {
+            *(int *)(self + 0x30fc) = ecx;
+        }
+
+        eax = *(int *)(self + 0x21d0);
+        ecx = *(int *)(eax + 8);
+        {
+            int base = ecx + (int)self + 0x21d0;
+            int val = *(int *)(self + ecx + 0x21f0);
+            val = val | 3;
+            *(int *)(base + 0x20) = val;
+        }
+    }
+
+    ((Heap *)(self + 0xa28))->~Heap();
+}
+
+// ORIGINAL: 0x00601980 ?string@BasePop@@QAEHPAD@Z 0x00601980-0x006019EE FILE
+// working copy - scaffold materialised by --work
+// size      110 bytes
+// prototype int (__thiscall ?string@BasePop@@QAEHPAD@Z)(BasePop* this, int8*)
+// callers   5   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00401100
+
+int BasePop::string(char *text) {
+    // THE POPUP'S COLOUR-PREFIXED STRING SLOT. `^` opens a colour escape and
+    // the byte run that follows says which: one `^` and a code is colour
+    // `count` 1, `^^x` is 2, `^^` alone is 3. The parsed pair lands in
+    // unit_ids_'s three own fields (StringList field_1C_/field_20_/field_24_,
+    // 0x219c/0x21a0/0x21a4) and the entry is appended with id 0.
+    int count = 0;
+    if (text == 0) {
+        return 3;
+    }
+    char *str = text;
+    if (*text == '^') {
+        if (text[1] == 0) {
+            count = 3;
+            str = text + 1;
+        } else if (text[1] == '^') {
+            count = 2;
+            str = (text[2] == '^') ? (text + 3) : (text + 2);
+        } else {
+            count = 1;
+            str = text + 1;
+        }
+    }
+    // TRIED: advancing the parameter in place (`text += 1` / `text += n`)
+    //         because the image's tail is one shared `inc eax` plus two
+    //         `add eax,N` - it costs the shared increment and scores 3 of 38.
+    // The materialised list pointer is the image's own shape here (`add
+    // ecx,0x2180` ahead of the three stores and the append), and it scores 18
+    // of 38 against 13 for writing the member straight. The residual is the
+    // parse: the image shares one `inc eax` for the two single-step paths while
+    // this spelling hoists a `lea esi,[eax+1]` above the text[1] test.
+    // TRIED: advancing the parameter in place (`text += 1` / `text += n`) to
+    //         earn that shared increment - 3 of 38, the shared increment goes
+    //         with the separate variable.
+    StringList *list = &unit_ids_;
+    list->field_1C_ = reinterpret_cast<uint32_t>(str);
+    list->field_20_ = count;
+    list->field_24_ = 0;
+    return list->add(0) != 0;
+}
+
+// ORIGINAL: 0x00604410 ?on_key_down@BasePop@@QAEHH@Z 0x00604410-0x0060448E FILE
+// TRIED: both int-arithmetic (`off1 + (int)self`) and pointer-arithmetic (`self + off1`) forms for the `[edx+esi]` adjusted base diverge identically at instr #14 (original 'lea' vs rebuilt 'add') - an addressing-mode choice, not a control-flow one. 0x21d0/0x2228/0x2314/0x229c/0x2350 all fall inside the opaque `dialogs_[0xC94]` byte blob, so reached by raw offset.
+// working copy - scaffold materialised by --work
+// size      126 bytes
+// prototype int (__thiscall ?on_key_down@BasePop@@QAEHH@Z)(BasePop* this, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00609A50
+
+int BasePop::on_key_down(int key) {
+    if ((field_30A8_ & 0x4000) != 0) {
+        return 0;
+    }
+    int kind = dialogs_.kind_;
+    selected_id_ = 0;
+    if (kind != -1) {
+        // THE DIALOG VIRTUAL BASE, reached through the member with the
+        // set_width qualification. +0x229c is Dialog::item_list_.entry_count_
+        // (0xbc + 0x10) and +0x2314 is Dialog::selected_position_ (0xec): the
+        // image walks the Dialogs vbtable for the first and the CheckBox's for
+        // the second, both spelling the same shared base.
+        if (dialogs_.Dialog::item_list_.entry_count_ != 0) {
+            if (kind == 1) {
+                // The image walks the CHECKBOX vbtable (+0x2228) for this read
+                // and the Dialogs one (+0x21d0) for entry_count_ above; spelling
+                // both through dialogs_.Dialog:: names the same shared base, so
+                // VC6 reuses the first displacement and folds this read to
+                // `mov eax,[eax+0x22bc]`. TRIED: `CheckBox &box = dialogs_` to
+                // force the second walk - VC6 emits its adjustor's null guard
+                // for a base-subobject reference (test/je/lea/jmp/xor), 10 of
+                // 33. Same wall as the dialogs() accessor note in basepop.h.
+                selected_id_ = dialogs_.Dialog::selected_position_;
+                return 1;
+            }
+            selected_id_ = dialogs_.Dialog::get_selected_id();
+        }
+    }
+    return 1;
+}
+
+// Fixed-slot bindings carried from 006044d0.cpp
+
+
+// ORIGINAL: 0x006044D0 ?double_click@BasePop@@QAEXH@Z 0x006044D0-0x00604581 FILE
+// TRIED: early-return on tab==1 (MSVC folds the later redundant tab==1 check into dead code, collapsing 4 original instrs to 1 lea); lea-vs-add on the (off+base) address computation persists regardless of local-vs-inline pointer arithmetic
+// working copy - scaffold materialised by --work
+// size      177 bytes
+// prototype void (__thiscall ?double_click@BasePop@@QAEXH@Z)(BasePop* this, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00609A50
+// indirect  0x0060455D 0x00604569 0x0060457B
+
+typedef void (__fastcall *func_basepop_slot058)(void *);
+typedef void (__fastcall *func_basepop_slot002)(void *);
+
+void BasePop::double_click(int button_id) {
+    // THE MODAL-FOCUS POPUP, not this one: the handler runs for whichever
+    // window holds modal focus, and every field it touches belongs to that
+    // object. A static downcast from Win * is free - BasePop's front is its
+    // GraphicWin base, so the two types share an address.
+    BasePop *pop = static_cast<BasePop *>(WinModalFocus);
+    if (pop != 0) {
+        int tab = pop->dialogs_.kind_;
+        uint32_t flags = pop->field_30A8_;
+        if (tab != 1) {
+            if (tab != -1) {
+                if (pop->dialogs_.Dialog::item_list_.entry_count_ != 0) {
+                    if (tab == 1) {
+                        pop->selected_id_ =
+                            pop->dialogs_.Dialog::selected_position_;
+                    } else {
+                        pop->selected_id_ =
+                            pop->dialogs_.Dialog::get_selected_id();
+                    }
+                }
+            }
+            pop->field_3100_ = 0;
+            if ((flags & 0x100) == 0) {
+                // The redraw slot runs on the external window when one is
+                // attached and on the popup itself when not - vtable slot 0xe8
+                // either way.
+                if (pop->external_window_ != 0) {
+                    vtable_slot<func_basepop_slot058>(pop->external_window_,
+                                                      0xe8)(pop->external_window_);
+                } else {
+                    vtable_slot<func_basepop_slot058>(pop, 0xe8)(pop);
+                }
+            }
+            if ((flags & 0x4000) != 0) {
+                vtable_slot<func_basepop_slot002>(pop, 0x8)(pop);
+            }
+        }
+    }
+}
+
+// Fixed-slot bindings carried from 00604680.cpp
+
+class VCall1 { public:
+    virtual void slot0(int);
+};
+
+// ORIGINAL: 0x00604680 ?close_class@BasePop@@QAAXXZ 0x00604680-0x006046ED FILE BYTE_EXACT
+// symbol    ?close_class@BasePop@@SAXXZ
+// The image spells QAAX - a receiver - while nothing passes one; this tree
+// declares the method static, so it emits SAX. Same case as fallout().
+// LEVER: the artifact's fixed-address bindings became the real globals -
+//         BasePopDefaultOkText, BasePopDefaultStringFonts[0],
+//         BasePopDefaultButtonFonts[0], PopupInstanceSlotA/B - and the
+//         scheduling came right with them: the null test now sits BEFORE
+//         the two default stores, exactly the image's order. A named
+//         global is one-storage, so VC6 has no alias to second-guess;
+//         through pointer-to-int bindings it hoisted one store above the
+//         compare (32 of 34).
+// size      109 bytes
+// prototype 
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00644EF2
+// indirect  0x006046CD 0x006046E3
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x00604680
+// measured tier  MISMATCH
+// divergence     3
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/00604680/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?close_class@BasePop@@QAAXXZ  at 0x00604680  (109 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+
+void __cdecl BasePop::close_class() {
+    char *ok_text = BasePopDefaultOkText;
+    BasePopDefaultStringFonts[0] = 0;
+    BasePopDefaultButtonFonts[0] = 0;
+
+    if (ok_text != 0) {
+        free(reinterpret_cast<void *>(ok_text));
+        BasePopDefaultOkText = 0;
+    }
+    if (BasePopDefaultCancelText != 0) {
+        free(reinterpret_cast<void *>(BasePopDefaultCancelText));
+        BasePopDefaultCancelText = 0;
+    }
+    if (PopupInstanceSlotA != 0) {
+        reinterpret_cast<VCall1 *>(PopupInstanceSlotA)->slot0(1);
+        PopupInstanceSlotA = 0;
+    }
+    if (PopupInstanceSlotB != 0) {
+        reinterpret_cast<VCall1 *>(PopupInstanceSlotB)->slot0(1);
+        PopupInstanceSlotB = 0;
+    }
+}
+
+// ORIGINAL: 0x00605010 ?set_external_window@BasePop@@QAEXPAUGraphicWin@@HHHH@Z 0x00605010-0x006050E7 FILE
+// symbol    ?set_external_window@BasePop@@QAEXPAVGraphicWin@@HHHH@Z
+// The image spells GraphicWin a struct (U) where this tree declares a class
+// (V); the bytes are identical.
+// TRIED: `flags & 0x400` compiles to a single `test [mem], imm`; original keeps the mask 0x400 in a register and does `test eax,edx`. Named local for the flags read didn't change it.
+// LEVER: the three Dialog virtual-base stores are the set_width form -
+//         `dialogs_.Dialog::field_2C_` etc. Qualified member access walks the
+//         vbtable at +0x21d0 (the image's `mov eax,[ecx+0x21d0];
+//         mov edx,[eax+8]`) with no pointer to the subobject and no raw
+//         self-access; the artifact's hand walk measured 26 of 38.
+// LEVER: parameter names are the fields they land in - (external_window,
+//         loc_x, loc_y, width, height) from the stores at +0xa14/+0xa18/
+//         +0xa1c/+0xa20/+0xa24 and the 0x2000 keep-current tests against
+//         loc_a_/loc_b_.
+// size      215 bytes
+// prototype void (__thiscall ?set_external_window@BasePop@@QAEXPAUGraphicWin@@HHHH@Z)(BasePop* this, GraphicWin*, int, int, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+
+void BasePop::set_external_window(GraphicWin *external_window, int loc_x,
+                                  int loc_y, int width, int height) {
+    external_window_ = external_window;
+    default_loc_a_ = loc_x;
+    default_loc_b_ = loc_y;
+    dialog_width_ = width;
+    dialog_height_ = height;
+    if (external_window != 0) {
+        // The three Dialog virtual-base accesses are the set_width form: a
+        // qualified member access walks the vbtable at +0x21d0, which is the
+        // image's own addressing, and needs no pointer to the subobject.
+        dialogs_.Dialog::field_2C_ = width;
+        if (external_window_ == 0 && (field_30A8_ & 0x400) == 0 &&
+            WinScreenWidth >= 0x400) {
+            dialogs_.Dialog::field_30_ = (height * 3) / 2;
+        } else {
+            dialogs_.Dialog::field_30_ = height;
+        }
+        if (loc_x != 0x2000) {
+            loc_a_ = loc_x;
+        }
+        if (loc_y != 0x2000) {
+            loc_b_ = loc_y;
+        }
+        dialogs_.Dialog::field_20_ |= 3;
+    }
+}
+
+
+// ORIGINAL: 0x006015B0 ?init@BasePop@@QAEHHJ@Z 0x006015B0-0x0060179A FILE
+// size      490 bytes
+// prototype int (__thiscall ?init@BasePop@@QAEHHJ@Z)(BasePop* this, int, int)
+// callers   9   call targets   6
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00402970 0x005D4620 0x005FA8A0 0x00600F00 0x006134A0 0x006136B0
+// LEVER: parameter names - `flags` is the word tested against 0x100000 /
+//         0x40000 / 0x1000 and whose low byte picks dialogs_.kind_;
+//         `heap_base` is the allocation base handed straight to heap_.init.
+// LEVER: the tail is the set_width/set_external_window Dialog virtual-base
+//         form (qualified member access), not a hand walk.
+
+int BasePop::init(int flags, long heap_base) {
+    close();
+
+    if ((flags & 0x100000) == 0) {
+        external_window_ = 0;
+    }
+
+    // The flag's low byte picks the embedded control the popup opens with:
+    // 1, 2 and 4 name a kind outright and anything else is 0x10.
+    if (flags & 1) {
+        dialogs_.kind_ = 1;
+    } else if (flags & 2) {
+        dialogs_.kind_ = 2;
+    } else if (flags & 4) {
+        dialogs_.kind_ = 4;
+    } else {
+        dialogs_.kind_ = 0x10;
+    }
+
+    if (heap_base != 0) {
+        if (heap_.init(heap_base)) {
+            return 4;
+        }
+        if ((flags & 0x40000) == 0) {
+            unit_ids_.remove_all();
+            unit_ids_.current_position_ = 0;
+            unit_ids_.allocator_ = &heap_;
+            item_ids_.remove_all();
+            item_ids_.current_position_ = 0;
+            item_ids_.allocator_ = &heap_;
+            dialogs_.init(&heap_);
+        } else {
+            unit_ids_.remove_all();
+            unit_ids_.current_position_ = 0;
+            unit_ids_.allocator_ = 0;
+            item_ids_.remove_all();
+            item_ids_.current_position_ = 0;
+            item_ids_.allocator_ = 0;
+            dialogs_.init(0);
+        }
+    } else {
+        unit_ids_.remove_all();
+        unit_ids_.current_position_ = 0;
+        unit_ids_.allocator_ = 0;
+        item_ids_.remove_all();
+        item_ids_.current_position_ = 0;
+        item_ids_.allocator_ = 0;
+        dialogs_.init(0);
+    }
+
+    field_30A8_ = flags;
+    if (external_window_ == 0) {
+        dialogs_.Dialog::field_20_ &= ~3u;
+        loc_a_ = 0x1000;
+        loc_b_ = 0x1000;
+    } else {
+        dialogs_.Dialog::field_2C_ = dialog_width_;
+        int height = dialog_height_;
+        if (external_window_ == 0 && (field_30A8_ & 0x400) == 0 &&
+            WinScreenWidth >= 0x400) {
+            height = (height * 3) / 2;
+        }
+        dialogs_.Dialog::field_30_ = height;
+        if (default_loc_a_ != 0x2000) {
+            loc_a_ = default_loc_a_;
+        }
+        if (default_loc_b_ != 0x2000) {
+            loc_b_ = default_loc_b_;
+        }
+        dialogs_.Dialog::field_20_ |= 3;
+    }
+
+    if (flags & 0x1000) {
+        loc_a_ = 0x1000;
+        loc_b_ = 0x1000;
+    }
+
+    spot_.init(0xa);
+    return 0;
+}
+
+
+// ORIGINAL: 0x00604300 ?on_button_clicked@BasePop@@QAEXH@Z 0x00604300-0x006043C8 FILE
+// size      201 bytes
+// prototype void (__thiscall ?on_button_clicked@BasePop@@QAEXH@Z)(BasePop* this, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00609A50 0x00613740
+// indirect  0x006043A1 0x006043AD 0x006043C2
+// LEVER: `button_id` -1 is the window's own close row (field_3100_ = 0, the
+//         same thing double_click does), -2 is the "close no matter what"
+//         row that honours the 0x40 lock bit, anything else is an item id
+//         parked in field_3100_.
+// LEVER: the redraw slot (0xe8) runs on external_window_ when one is
+//         attached, on the popup itself when not - the double_click tail.
+
+
+void BasePop::on_button_clicked(int button_id) {
+    selected_id_ = 0;
+    if (dialogs_.get_num_items() != 0) {
+        if (dialogs_.kind_ == 1) {
+            selected_id_ = dialogs_.Dialog::selected_position_;
+        } else {
+            selected_id_ = dialogs_.Dialog::get_selected_id();
+        }
+    }
+    if (button_id == -2) {
+        if ((field_30A8_ & 0x40) != 0) {
+            selected_id_ = -1;
+        }
+        field_3100_ = 0;
+    } else if (button_id != -1) {
+        field_3100_ = button_id;
+    } else {
+        field_3100_ = 0;
+    }
+    if ((field_30A8_ & 0x100) == 0) {
+        if (external_window_ == 0) {
+            vtable_slot<func_basepop_slot090>(this, 0xe8)(this);
+        } else {
+            vtable_slot<func_basepop_slot090>(external_window_,
+                                              0xe8)(external_window_);
+        }
+    }
+    if ((field_30A8_ & 0x4000) != 0) {
+        vtable_slot<func_basepop_slot002>(this, 0x8)(this);
+    }
+}
+
+// Fixed-slot bindings carried from 00601ac0.cpp
+
+// ORIGINAL: 0x00601AC0 ?set_height@BasePop@@QAEXH@Z 0x00601AC0-0x00601B17 FILE BYTE_EXACT
+// size      87 bytes
+// prototype void (__thiscall ?set_height@BasePop@@QAEXH@Z)(BasePop* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x00601AC0
+// measured tier  BYTE_EXACT
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/00601ac0/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?set_height@BasePop@@QAEXH@Z  at 0x00601AC0  (87 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+
+void BasePop::set_height(int height) {
+    // set_width's twin, and its Dialog virtual-base access: the qualified
+    // member form walks the vbtable at +0x21d0 and folds the rest into the
+    // store. The artifact duplicated its whole tail because a SHARED tail
+    // computation was register-allocated one swap short of exact - with the
+    // member form the two arms are self-contained and the duplication is
+    // gone. Measured BYTE_EXACT here.
+    if (external_window_ == 0 && (field_30A8_ & 0x400) == 0 &&
+        WinScreenWidth >= 0x400) {
+        dialogs_.Dialog::field_30_ = (height * 3) / 2;
+    } else {
+        dialogs_.Dialog::field_30_ = height;
+    }
+}
+
+// ORIGINAL: 0x006019F0 ?button@BasePop@@QAEHPAD@Z 0x006019F0-0x00601A3B FILE BYTE_EXACT
+// symbol    ?button@BasePop@@QAEHPAD@Z
+// size      75 bytes
+// prototype int (__thiscall ?button@BasePop@@QAEHPAD@Z)(BasePop* this, int8*)
+// callers   4   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00401100
+// LEVER: the item-text twin of string() - the parsed pair is (text, 0, 0)
+//         rather than (advance, colour, 0), the append id is 0 all the same,
+//         and a successful add bumps field_20F4_, the popup's item count.
+
+int BasePop::button(char *text) {
+    if (text == 0) {
+        return 3;
+    }
+    // A MATERIALISED LIST POINTER: the image lands on the three stores and the
+    // append call with `mov ecx, this+0x2150` and one zero register shared by
+    // the null test, the two stores and the push. Member access folds the
+    // offset into each store and needs a second zero register instead.
+    StringList *list = &item_ids_;
+    list->field_1C_ = reinterpret_cast<uint32_t>(text);
+    list->field_20_ = 0;
+    list->field_24_ = 0;
+    if (list->add(0) != 0) {
+        return 1;
+    }
+    ++field_20F4_;
+    return 0;
+}
+
+// ORIGINAL: 0x00601A40 ?UNK1@BasePop@@QAEHPAD@Z 0x00601A40-0x00601AB1 FILE BYTE_EXACT
+// size      113 bytes
+// prototype int (__thiscall ?UNK1@BasePop@@QAEHPAD@Z)(BasePop* this, int8*)
+// callers   0   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x00644EF2 0x006453E0 0x00645470
+// EVIDENCE-FREE as a NAME: no caller, no dispatch slot and no data word in
+//         the image points at UNK1, so the catalogue's placeholder stays.
+//         What the body proves is the ROLE - it is owned_text_'s setter: it
+//         frees the old heap string, allocates `strlen(text) + 1`, and
+//         strcat's the new text in.
+
+int BasePop::UNK1(char *text) {
+    if (text == 0) {
+        return 3;
+    }
+    if (owned_text_ != 0) {
+        free(owned_text_);
+        owned_text_ = 0;
+    }
+    owned_text_ = static_cast<char *>(mem_get(strlen(text) + 1));
+    if (owned_text_ == 0) {
+        return 4;
+    }
+    *owned_text_ = 0;
+    strcat(owned_text_, text);
+    return 0;
+}
+
+// ORIGINAL: 0x006017A0 ?set_ok_text@BasePop@@QAEHPAD@Z 0x006017A0-0x00601811 FILE BYTE_EXACT
+// LEVER: UNK1's shape over ok_text_ instead of owned_text_, and its failure
+//         code for a failed allocation is 5 where UNK1's is 4. STATIC DEFAULTS
+//         and INSTANCE COPIES are the pair: set_def_ok_text (0x006018A0)
+//         publishes BasePopDefaultOkText, this one copies the caller's string
+//         into the popup's own ok_text_, and close() frees it and restores the
+//         default.
+// size      113 bytes
+// prototype int (__thiscall ?set_ok_text@BasePop@@QAEHPAD@Z)(BasePop* this, int8*)
+// callers   3   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x00644EF2 0x006453E0 0x00645470
+
+
+int BasePop::set_ok_text(char *text) {
+    if (text == 0) {
+        return 3;
+    }
+    if (ok_text_ != 0) {
+        free(ok_text_);
+        ok_text_ = 0;
+    }
+    ok_text_ = static_cast<LPSTR>(mem_get(strlen(text) + 1));
+    if (ok_text_ == 0) {
+        return 5;
+    }
+    *ok_text_ = 0;
+    strcat(ok_text_, text);
+    return 0;
+}
+
+// ORIGINAL: 0x00601820 ?set_cancel_text@BasePop@@QAEHPAD@Z 0x00601820-0x0060189A FILE BYTE_EXACT
+// size      122 bytes
+// prototype int (__thiscall ?set_cancel_text@BasePop@@QAEHPAD@Z)(BasePop* this, int8*)
+// callers   3   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x00644EF2 0x006453E0 0x00645470
+// LEVER: set_ok_text's twin over cancel_text_. The artifact spelled strlen and
+//         strcat as its own externals because the scaffold had no runtime
+//         library; this tree does, so they are the plain calls the image makes.
+
+int BasePop::set_cancel_text(char *text) {
+    if (text == 0) {
+        return 3;
+    }
+    if (cancel_text_ != 0) {
+        free(cancel_text_);
+        cancel_text_ = 0;
+    }
+    cancel_text_ = static_cast<LPSTR>(mem_get(strlen(text) + 1));
+    if (cancel_text_ == 0) {
+        return 5;
+    }
+    *cancel_text_ = 0;
+    strcat(cancel_text_, text);
+    return 0;
+}
+
+
+// ORIGINAL: 0x00605130 ?on_left_down@BasePop@@QAEXHH@Z 0x00605130-0x00605172 FILE BYTE_EXACT
+// size      66 bytes
+// prototype void (__thiscall ?on_left_down@BasePop@@QAEXHH@Z)(BasePop* this, int xCoord, int yCoord)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005FAB00
+// indirect  0x00605168
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x00605130
+// measured tier  BYTE_EXACT
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/00605130/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?on_left_down@BasePop@@QAEXHH@Z  at 0x00605130  (66 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+
+
+void BasePop::on_left_down(int x, int y) {
+    // SPOT, the member - not the address arithmetic the artifact carried, and
+    // not a pointer to the subobject either (a base-subobject reference makes
+    // VC6 emit its adjustor's null guard). The spot ids land back in x/y, so
+    // `y == 0` is "the click was on the body, not on a spot".
+    if (spot_.check(x, y, &x, &y) != -1) {
+        if (y == 0) {
+            // SLOT 44 (0xb0) - the redraw request. Win declares the slot, so
+            // the call is the ordinary virtual dispatch the image makes
+            // (`mov edx,[esi]; mov ecx,esi; call [edx+0xb0]`) and no shim is
+            // needed.
+            vslot_44(x);
+        }
+    }
+}
+
+// ORIGINAL: 0x00604A80 ?on_modal@BasePop@@QAAHXZ 0x00604A80-0x00604A8E BYTE_EXACT
+// symbol    ?on_modal@BasePop@@SAHXZ
+// size      14 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// LEVER: STATIC, like set_def_ok_text - the QAA the catalogue spells puts a
+//         receiver on the stack that nothing passes (no caller at all), and
+//         the body reads only BasePopFalloutFlag.
+// LEVER: THE POPUP IS MODAL WHEN THE FALLOUT FLAG IS CLEAR. One load and one
+//         test, and the flag it reads is the fallout flag fallout() raises
+//         under BasePopFalloutGate - the same word, not a second state.
+
+int BasePop::on_modal() {
+    return BasePopFalloutFlag == 0;
 }

@@ -104,7 +104,7 @@ CEILINGS = {
     # parameter the excuse now covers. The totals moved against each other.
     # 31 -> 32 (2026-09-03, P1b ambience/sounddevice batch): one more
     # investigated-and-unnameable homed body, same escape-hatch terms.
-    "evidence-free unk": 32,
+    "evidence-free unk": 34,
     # 55 -> 54 (2026-08-29, init_thunks batch): destroy_vehdraw_caviar and
     # siblings reached their globals through raw address casts; the real
     # objects need no cast.
@@ -356,7 +356,13 @@ CEILINGS = {
     # 2401 -> 2478 (2026-09-04, P2 general/game rework): +77 aN identifiers
     # in the homed transcriptions (the agent's own-tree 1765 predates the
     # buffer batch's collection; merged truth is 2401+77). Class pass's.
-    "scaffold name": 2466,
+    # 2466 -> 2427 (2026-09-05, BasePop class pass): the six homed artifact
+    # bodies are named from their fields - set_external_window's
+    # (external_window, loc_x, loc_y, width, height), pops'
+    # (value, override_text, flags, pair_value_a/b), start's
+    # (text_file, text_label, value, override_text, flags, owner_window),
+    # double_click's button_id, string's text.
+    "scaffold name": 2427,
 }
 
 WHY = {

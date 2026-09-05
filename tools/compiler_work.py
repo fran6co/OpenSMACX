@@ -127,7 +127,13 @@ SHAPES = [
     # every one measures BYTE_EXACT as plain member forms. The remaining
     # sites are the Q-spelled entered-receiver handlers (ListBox's three,
     # demoted with the finding) and mapwin's helper.
-    ("hand-walked vbtable", 2,
+    # 2 -> 0 (2026-09-05, BasePop class pass): homing close_class, string,
+    # on_key_down, double_click, set_external_window and close into
+    # src/basepop.cpp retired the last two artifact copies of the hand walk
+    # - the Dialog virtual base is reached as a qualified member access
+    # (`dialogs_.Dialog::field_2C_`), which is what makes the compiler
+    # write it.
+    ("hand-walked vbtable", 0,
      re.compile(r"\*reinterpret_cast<(?:const )?int32_t \*(?:const )?\*>\([^)]*\)\)\[[12]\]"),
      "reads a virtual-base displacement out of the vbtable by hand. That is "
      "what `public virtual` makes the compiler do."),
@@ -511,7 +517,7 @@ SCAFFOLD_CEILINGS = {
     # and tech_pick (0x5BEB70) stand-ins, FILE-only targets, landmine-free;
     # tech_pick's a2/a3 left unnamed on purpose (0/-1 at every call site,
     # nothing names them).
-    "PENDING_BODY forwarders": 260,
+    "PENDING_BODY forwarders": 257,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -610,7 +616,7 @@ SCAFFOLD_CEILINGS = {
     # fixed-address bindings are the tree's own names) and 005c3f70.cpp homed
     # beside it - the 0x009B22E8 redraw flag is named WorldClimateRedrawRequest
     # in map.cpp from the two measured sites that write and read it.
-    "artifact files (recovered/)": 1036,
+    "artifact files (recovered/)": 1031,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -697,7 +703,7 @@ SCAFFOLD_CEILINGS = {
     # 1183 -> 1180 (2026-09-04, console claimed wave): 004ba5f0.cpp and
     # 004ba650.cpp homed into src/tutwin.cpp (the tutorial gates, with their
     # two shown-bit words named), 00511480.cpp into src/console.cpp.
-    "unrecovered files": 1163,
+    "unrecovered files": 1153,
     # 2717 -> 2748 (2026-09-04, P2 net batch): NetFifo promoted with
     # close/add/get/get, NetFifoNode, head_/tail_/count_ - the deliberate
     # raise this ceiling exists for (class modelling grows it; the class

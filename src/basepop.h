@@ -50,12 +50,114 @@ static_assert(offsetof(BasePopTextBlock, field_114_) == 0x114,
   * BasePop class
   */
 class BasePop : public GraphicWin {
-  // `pops()` (popup.cpp) reaches BasePop's fields directly - field_2144_,
-  // field_2274_, field_A14_, field_30B4_..field_30C0_, field_3100_,
-  // field_3104_, field_3108_ - the way the image's own free function does,
-  // through the same object rather than through an accessor per field.
-  friend int __cdecl pops(char *caption, char *label, int a3, char *a4,
-                          int a5, Sprite *sprite, int a7, int a8,
+ public:
+  // homed from 00605130.cpp
+  void on_left_down(int x, int y);
+
+ public:
+  // homed from 006017a0.cpp
+  int set_ok_text(char *text);
+
+ public:
+  // homed from 00601ac0.cpp
+  void set_height(int height);
+
+ public:
+  // homed from 00605010.cpp
+  void set_external_window(GraphicWin *external_window, int loc_x, int loc_y,
+                           int width, int height);
+
+ public:
+  // homed from 00604680.cpp
+  // STATIC, and the `QAAX` the catalogue spells is a receiver nothing sets
+  // up: jackal_close reaches 0x00604680 with ecx untouched (see the
+  // basepop_close_class stand-in in pending_bodies.cpp), so the body reads
+  // no `this` and the image's own bytes agree. Same case as fallout() and
+  // set_def_ok_text above - the `// symbol` fact on the marker records the
+  // SAX this tree emits.
+  static void __cdecl close_class();
+
+ public:
+  // homed from 006044d0.cpp
+  void double_click(int button_id);
+
+ public:
+  // homed from 00604410.cpp
+  int on_key_down(int key);
+
+ public:
+  // homed from 00601980.cpp
+  int string(char *text);
+  // 0x006019F0, homed from 006019f0.cpp: the item-text twin of string().
+  int button(char *text);
+  // EVIDENCE-FREE as a name, for the same reason the marker on
+  // BasePop::UNK1 gives: the image names it nowhere.
+  int UNK1(char *text);  int set_cancel_text(char *text);  // 0x00601820, set_ok_text's twin
+  // 0x00601A40, owned_text_'s setter
+
+  /* THE OBJECT, 0x3230 BYTES, as the recovered bodies now read it. Every
+   * region below is named by a member; the offsets are the image's.
+   *
+   *   0x0000  GraphicWin (Win + Buffer + the canvas pointers) - the base
+   *   0x0A14  external_window_   the window the popup draws its dialog into
+   *   0x0A18  default_loc_a_ / default_loc_b_ (0x0a1c)   start-up position
+   *   0x0A20  dialog_width_ / dialog_height_ (0x0a24)    default dialog size
+   *   0x0A28  heap_                    the popup's own allocation heap
+   *   0x0A3C  owner_window_            the window the popup was opened for
+   *   0x0A40  selected_id_             the entry the popup settled on
+   *   0x0A44  value_                   the popup's value (start's 3rd argument)
+   *   0x0A48  owned_text_              one heap string from the config script
+   *   0x0A4C..0x0A58  four dwords no body in the tree reaches
+   *   0x0A5C  flat_button1_ (0xB4C) / 0x15A8 flat_button2_  the two rows
+   *   0x20F4  a dword close() zeroes beside sprite_
+   *   0x20F8  zero_block_[8]           eight slots the ctor rep-stosd's clear
+   *   0x2118  sprite_ (0x2C)           the popup's own picture
+   *   0x2144  caller_sprite_           pops()' sprite argument, or 0
+   *   0x2148  two dwords from BasePopDefaultField2148
+   *   0x2150  item_ids_ (0x30)         the item-text list
+   *   0x2180  unit_ids_ (0x30)         the unit-name list
+   *   0x21B0..0x21CC  seven dwords: four from BasePopDefaultField21B0, two
+   *           from BasePopDefaultField21C0, and the pair close() resets to
+   *           0 / -1 (0x21c8/0x21cc)
+   *   0x21D0  dialogs_ (0xC94)         ListBox + RadioButton + CheckBox +
+   *           SpriteBox + EditGroup over one GraphicWin and one Dialog base
+   *           - see dialogs.h for the prefixes, and `THE DIALOG VIRTUAL
+   *           BASE` below for how these bodies reach into it
+   *   0x2E64  text_block_a_ (0x118) / 0x2F7C text_block_b_ (0x118)
+   *   0x3094  two dwords from BasePopDefaultField3094
+   *   0x3098  spot_                    the click spots
+   *   0x30A4..0x30F4  twenty-two dwords of state close() zeroes (see below)
+   *   0x30F8  loc_a_ / loc_b_ (0x30fc)      the popup's position
+   *   0x3100  the at-key poll flag pops() publishes, then the 0x3104 triple
+   *   0x3110  the four string fonts, the four colour slots x four tiers
+   *           (0x3120..0x315c), three spare dwords, the three button fonts
+   *           and the button colour slots (0x3178..0x319c)
+   *   0x31A0  the BasePopDefaultField31A0 row, then two more defaults
+   *   0x31B8  default_block_[27]       nine rows of three, ending 0x3224
+   *   0x3224  ok_text_ / cancel_text_ (0x3228)   heap captions
+   *   0x322C  the dword BasePopDefaultField322C is published into
+   *
+   * THE DIALOG VIRTUAL BASE. Dialogs carries Dialog as a virtual base at
+   * +0xBA0, so the popup's three writes into it - the default width at
+   * Dialog+0x2C, the height at +0x30, and the two show-state bits at +0x20 -
+   * are spelled as a QUALIFIED MEMBER ACCESS on the member:
+   *
+   *       dialogs_.Dialog::field_2C_ = width;
+   *
+   * VC6 walks the vbtable at +0x21d0 for the base's displacement and folds
+   * the rest into the store, which is exactly the image's addressing
+   * (`mov eax,[ecx+0x21d0]; mov edx,[eax+8]; mov [edx+ecx+0x21fc],..`).
+   * set_width, set_external_window, init, close and the two click handlers
+   * all use it; the unqualified spelling is a different field (ListBox has
+   * its own field_2C_ at the same offset) and binds there silently.
+   */
+  // `pops()` (popup.cpp) reaches BasePop's fields directly - caller_sprite_,
+  // external_window_, field_30B4_..field_30C0_, field_3100_, field_3104_,
+  // field_3108_ - the way the image's own free function does, through the
+  // same object rather than through an accessor per field.
+  friend int __cdecl pops(char *caption, char *label, int value,
+                          char *override_text, int flags, Sprite *sprite,
+                          int pair_value_a, int pair_value_b,
                           int (__cdecl *callback)());
 
  public:
@@ -75,8 +177,8 @@ class BasePop : public GraphicWin {
   void close();
   // 0x00601BF0, still a pending_bodies forwarder: `pops()` (popup.cpp) calls
   // it BY NAME so it emits the image's `call rel32`.
-  int start(char *a1, const char *a2, int a3, char *a4, int a5,
-           GraphicWin *a6);
+  int start(char *text_file, const char *text_label, int value,
+            char *override_text, int flags, GraphicWin *owner_window);
   // 0x00602600, still a pending_bodies forwarder: the two `exec`
   // overloads below call it BY NAME so they emit the image's `E8`.
   int exec(int flags, int(__cdecl *callback)());
@@ -92,6 +194,10 @@ class BasePop : public GraphicWin {
 
  public:
   static void fallout();
+  // EVIDENCE-FREE as a name is NOT the case here - the body is one load of
+  // the fallout flag - but the catalogue's QAA still names a receiver
+  // nothing passes, so it is static like fallout() and set_def_ok_text.
+  static int on_modal();  // 0x00604A80
 
   // `static`, because the receiver its catalogued name claims is a receiver
   // NOTHING PASSES AND NOTHING READS. The body at 0x00604E40 is a factory -
@@ -106,6 +212,7 @@ class BasePop : public GraphicWin {
   // - which is the only thing WinMain does with it.
   static int init_class();          // 00604590
   static BasePop *basepop_alloc();
+  void on_button_clicked(int button_id);  // 0x00604300, defined in basepop.cpp
   void UNK3(int a1);
   void UNK4(int a1);
   int on_key_click(int a, int b);
@@ -176,7 +283,12 @@ class BasePop : public GraphicWin {
   int set_string_font(Font *font1, Font *font2, Font *font3, Font *font4);
 
  private:
-  uint32_t field_A14_;  // 0x0a14
+  // THE EXTERNAL WINDOW THE POPUP DRAWS ITS DIALOG INTO, set by
+  // set_external_window (0x00605010, whose first parameter is the
+  // GraphicWin * stored here) and dispatched through by double_click's
+  // vtable call. A pointer, not the uint32_t it was typed before: the
+  // image calls its vtable slot 0xe8 with this slot as the receiver.
+  Win *external_window_;  // 0x0a14
   // The STARTING loc_a_/loc_b_ pair: copied over them unless the value is
   // 0x2000, the keep-current sentinel set_loc uses too.
   uint32_t default_loc_a_;  // 0x0a18
@@ -187,15 +299,27 @@ class BasePop : public GraphicWin {
   uint32_t dialog_width_;   // 0x0a20
   uint32_t dialog_height_;  // 0x0a24
   Heap heap_;
-  // TYPED AS THE POINTER IT HOLDS, but nothing more is claimed: the ctor
-  // stores `this` here (image `mov [ebp+0xa3c], ebp` at 0x00600ab0) and
-  // NOTHING in the tree reads it back, so the slot's purpose - owner? list
-  // link? handle? - is unknown. Named by its offset until someone can say
-  // what the popup uses it for.
-  void *field_A3C_;  // 0x0a3c
-  uint32_t field_A40_;
-  uint32_t field_A44_;
-  uint32_t field_A48_;
+  // THE WINDOW THE POPUP WAS OPENED FOR. Two writers, both windows: the ctor
+  // stores `this` (image `mov [ebp+0xa3c], ebp` at 0x00600ab0) and
+  // BasePop::start (0x00601bf0) stores its sixth argument, the
+  // `GraphicWin *owner_window` that pops() passes as 0 - so the slot ends up
+  // holding whichever window the popup belongs to, defaulting to itself.
+  // Nothing in the tree reads it back yet.
+  Win *owner_window_;  // 0x0a3c
+  // THE SELECTED ENTRY ID. Three writers agree: close() and init() zero it,
+  // and both on_key_down (0x00604410) and double_click (0x006044d0) land the
+  // embedded Dialog's selected id in it - `get_selected_id()` for the whole
+  // Dialogs, `Dialog::selected_position_` when the kind is 1.
+  int selected_id_;  // 0x0a40
+  // THE POPUP'S VALUE. start (0x00601bf0) stores its third argument here and
+  // its config reader overwrites it with `atoi` of a directive's number;
+  // close() resets it to -1. popup.h's gloss for pops() calls that argument
+  // the value.
+  int value_;  // 0x0a44
+  // ONE OWNED HEAP STRING, installed by start's config reader: freed, then
+  // `mem_get(len + 1)` and a `strcat` of the directive's text. close() frees
+  // it and nulls the slot. Nothing reads it back in the tree yet.
+  char *owned_text_;  // 0x0a48
   uint32_t field_A4C_;
   uint32_t field_A50_;
   uint32_t field_A54_;
@@ -210,9 +334,13 @@ class BasePop : public GraphicWin {
   // the memset does not.
   uint32_t zero_block_[8];  // 0x20F8
   Sprite sprite_;
-  uint32_t field_2144_;
-  uint32_t field_2148_;
-  uint32_t field_214C_;
+  // THE CALLER'S SPRITE, or 0. pops() (popup.cpp) stores its `Sprite *`
+  // argument here when the popup's own item list is empty and 0 when it is
+  // not, so the popup draws the caller's picture instead of its own. A
+  // pointer, not the uint32_t it was typed before: it IS a Sprite *.
+  Sprite *caller_sprite_;              // 0x2144
+  uint32_t field_2148_;                // 0x2148
+  uint32_t field_214C_;                // 0x214c
   // The popup's ITEM-TEXT list, carved 2026-08-30 beside unit_ids_ below on
   // the identical evidence: 0x30 = sizeof(StringList), and the ctor's stores
   // for this block are StringList's two-stage construction (the same
@@ -337,54 +465,74 @@ class BasePop : public GraphicWin {
   uint32_t field_3104_;
   uint32_t field_3108_;
   uint32_t field_310C_;
-  Font *string_font1_;
-  Font *string_font2_;
-  Font *string_font3_;
-  Font *string_font4_;
-  int string_color_a_;
-  int string_color_2a_;
-  int string_color_3a_;
-  int string_color_hyper_a_;
-  int string_color_b_;
-  int string_color_2b_;
-  int string_color_3b_;
-  int string_color_hyper_b_;
-  int string_color_c_;
-  int string_color_2c_;
-  int string_color_3c_;
-  int string_color_hyperc_;
-  int string_color_d_;
-  int string_color_2d_;
-  int string_color_3d_;
-  int string_color_hyper_d_;
-  uint32_t field_3160_;
-  uint32_t field_3164_;
-  uint32_t field_3168_;
-  Font *button_font1_;
-  Font *button_font2_;
-  Font *button_font3_;
-  uint8_t button_color_a_;
-  uint8_t button_color_2a_;
-  uint8_t button_color_3a_;
-  uint8_t field_317B_;
-  uint32_t button_color_b_;
-  uint32_t button_color_2b_;
-  uint32_t button_color_3b_;
-  uint32_t button_color_c_;
-  uint32_t button_color_2c_;
-  uint32_t button_color_3c_;
-  uint32_t button_color_d_;
-  uint32_t button_color_2d_;
-  uint32_t button_color_3d_;
-  uint8_t field_31A0_;
-  uint8_t field_31A1_;
-  uint8_t field_31A2_;
-  uint8_t field_31A3_;
-  uint32_t field_31A4_;
-  uint32_t field_31A8_;
-  uint32_t field_31AC_;
-  uint32_t field_31B0_;
-  uint32_t field_31B4_;
+  // THE FOUR STRING FONTS, 0x3110 + 4*n: close() and init() seed them from
+  // BasePopDefaultStringFonts[n] and set_string_font installs a caller's four.
+  Font *string_font1_;  // 0x3110
+  Font *string_font2_;  // 0x3114
+  Font *string_font3_;  // 0x3118
+  Font *string_font4_;  // 0x311c
+  // THE FOUR COLOUR SLOTS x FOUR TIERS, 0x3120 + 0x10*slot + 4*tier: slot is
+  // the a/b/c/d below (0x3120, 0x3130, 0x3140, 0x3150) and the tier stride is
+  // 4, which is the same [slot][tier] shape as BasePopDefaultStringColors -
+  // close() and init() copy the table straight across, one dword at a time.
+  int string_color_a_;         // 0x3120 = StringColors[0][0]
+  int string_color_2a_;        // 0x3124 = StringColors[0][1]
+  int string_color_3a_;        // 0x3128 = StringColors[0][2]
+  int string_color_hyper_a_;   // 0x312c = StringColors[0][3]
+  int string_color_b_;         // 0x3130 = StringColors[1][0]
+  int string_color_2b_;        // 0x3134 = StringColors[1][1]
+  int string_color_3b_;        // 0x3138 = StringColors[1][2]
+  int string_color_hyper_b_;   // 0x313c = StringColors[1][3]
+  int string_color_c_;         // 0x3140 = StringColors[2][0]
+  int string_color_2c_;        // 0x3144 = StringColors[2][1]
+  int string_color_3c_;        // 0x3148 = StringColors[2][2]
+  int string_color_hyperc_;    // 0x314c = StringColors[2][3]
+  int string_color_d_;         // 0x3150 = StringColors[3][0]
+  int string_color_2d_;        // 0x3154 = StringColors[3][1]
+  int string_color_3d_;        // 0x3158 = StringColors[3][2]
+  int string_color_hyper_d_;   // 0x315c = StringColors[3][3]
+  // Three zeroed dwords between the two colour blocks; nothing in the tree
+  // reads them back.
+  uint32_t field_3160_;  // 0x3160
+  uint32_t field_3164_;  // 0x3164
+  uint32_t field_3168_;  // 0x3168
+  // THE THREE BUTTON FONTS, 0x316c + 4*n, seeded from
+  // BasePopDefaultButtonFonts[n] the same way.
+  Font *button_font1_;  // 0x316c
+  Font *button_font2_;  // 0x3170
+  Font *button_font3_;  // 0x3174
+  // THE BUTTON COLOUR SLOTS. Slot a is FOUR BYTES at 0x3178 (its tiers are
+  // the bytes 0x3178/0x3179/0x317a and the spare 0x317b), slots b/c/d are
+  // dwords at 0x317c/0x3188/0x3194 - the same four slots x four tiers as the
+  // string block, at the button table's 0xC tier stride. close() and init()
+  // copy BasePopDefaultButtonColors across: slot a from the table's low
+  // bytes, tiers 1-3 as whole dwords.
+  uint8_t button_color_a_;    // 0x3178 = ButtonColors[0][0]
+  uint8_t button_color_2a_;   // 0x3179 = ButtonColors[0][1]
+  uint8_t button_color_3a_;   // 0x317a = ButtonColors[0][2]
+  uint8_t field_317B_;        // 0x317b, the fourth byte of slot a
+  uint32_t button_color_b_;   // 0x317c = ButtonColors[1][0]
+  uint32_t button_color_2b_;  // 0x3180 = ButtonColors[1][1]
+  uint32_t button_color_3b_;  // 0x3184 = ButtonColors[1][2]
+  uint32_t button_color_c_;   // 0x3188 = ButtonColors[2][0]
+  uint32_t button_color_2c_;  // 0x318c = ButtonColors[2][1]
+  uint32_t button_color_3c_;  // 0x3190 = ButtonColors[2][2]
+  uint32_t button_color_d_;   // 0x3194 = ButtonColors[3][0]
+  uint32_t button_color_2d_;  // 0x3198 = ButtonColors[3][1]
+  uint32_t button_color_3d_;  // 0x319c = ButtonColors[3][2]
+  // THE 0x31A0 ROW, from BasePopDefaultField31A0 = {247, 7, 248, 2} at
+  // 0x00696F54: the first dword's low byte lands at 0x31a0 and the other
+  // three dwords at 0x31a4/0x31a8/0x31ac. The three bytes 0x31a1..0x31a3 are
+  // never written, so they stay zero from the ctor.
+  uint8_t field_31A0_;   // 0x31a0 = (uint8_t)Field31A0[0] = 247
+  uint8_t field_31A1_;   // 0x31a1
+  uint8_t field_31A2_;   // 0x31a2
+  uint8_t field_31A3_;   // 0x31a3
+  uint32_t field_31A4_;  // 0x31a4 = Field31A0[1] = 7
+  uint32_t field_31A8_;  // 0x31a8 = Field31A0[2] = 248
+  uint32_t field_31AC_;  // 0x31ac = Field31A0[3] = 2
+  uint32_t field_31B0_;  // 0x31b0 = BasePopDefaultField31B0[0]
+  uint32_t field_31B4_;  // 0x31b4 = BasePopDefaultField31B0[1]
   // THE 27 DWORDS COPIED FROM BasePopDefaultBlock31B8 at 0x31B8, ONE writer
   // and ONE shape: the ctor's copy loop walks 0x9b8d10 + 4*column + 0xC*row
   // into 0x31b8 + 4*column + 0xC*row - the SAME index both sides, nine rows

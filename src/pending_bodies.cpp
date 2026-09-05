@@ -507,10 +507,7 @@ void ListBox::on_mousewheel(int a) {
 // ?close@BasePop@@QAEXXZ at 0x00600F00 and
 // ?start@Popup@@QAEXPADPBDHPADHPAUGraphicWin@@@Z at 0x00406380 - the two
 // bodies popup.cpp used to reach through pointers.
-void BasePop::close() {
-    typedef void(__fastcall *pending)(BasePop *, void *);
-    PENDING_BODY(0x00600F00, pending)(this, nullptr);
-}
+
 
 void Popup::start(char *a1, const char *a2, int a3, char *a4, int a5,
                   GraphicWin *owner) {
@@ -881,10 +878,7 @@ int __cdecl X_pop_ask_number(char *caption, const char *label, int value,
 // ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z at 0x00633F70 WERE HERE and is gone: the
 // body is homed into net_class.cpp beside the rest of its class.
 
-int BasePop::init(int a1, long a2) {  // 0x006015B0
-    typedef int(__fastcall *pending)(BasePop *, void *, int, long);
-    return PENDING_BODY(0x006015B0, pending)(this, nullptr, a1, a2);
-}
+// ?init@BasePop@@QAEHHJ@Z at 0x006015B0 is HOMED into src/basepop.cpp.
 
 uint32_t __cdecl save_daemon(LPCSTR save_path) {  // 0x005A94F0
     typedef uint32_t(__cdecl *pending)(LPCSTR);
@@ -1406,10 +1400,13 @@ void __cdecl filewin_close_class() {
     reinterpret_cast<FileWin *>(0)->close_class();
 }
 
-// ?close_class@BasePop@@QAAXXZ at 0x00604680
+// ?close_class@BasePop@@QAAXXZ at 0x00604680 - HOMED into src/basepop.cpp,
+// so this free stand-in now reaches the real member instead of the raw
+// address. It stays a free function because jackal_close calls it with no
+// receiver set up, which no member call can spell (filewin_close_class
+// above is the same case).
 void __cdecl basepop_close_class() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x00604680, pending)();
+    BasePop::close_class();
 }
 
 // ?init_class@Caviar@@QAAHXZ at 0x006185A0 is HOMED into src/caviar.cpp

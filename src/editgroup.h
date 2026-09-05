@@ -127,7 +127,10 @@ class EditGroup : public virtual GraphicWin, public virtual Dialog {
   uint32_t field_84_;  // 0x84
   // 0x88. Dialogs dispatches on this - at 0xF8 + 0x88 == 0x180, which that
   // header called `kind_` while it could not name the base it belongs to.
- protected:
+  // PUBLIC (was protected) so BasePop::on_key_down and BasePop::double_click
+  // can read it through their embedded Dialogs member the same way Dialogs'
+  // own dispatch does; access changes no offset and no mangled name.
+ public:
   int32_t kind_;  // 0x88
  private:
   // GraphicWin and Dialog are VIRTUAL BASES, appended by the compiler.

@@ -59,8 +59,9 @@ Purpose: The five-argument start form, forwarding to the six-argument one with
 Return Value: n/a
 Status: Complete
 */
-void Popup::start(char *a1, const char *a2, int a3, char *a4, int a5) {
-    start(a1, a2, a3, a4, a5, nullptr);
+void Popup::start(char *text_file, const char *text_label, int value,
+                  char *override_text, int flags) {
+    start(text_file, text_label, value, override_text, flags, nullptr);
 }
 
 
@@ -901,8 +902,9 @@ static int PopupCloseRectBottom;  // 0x009BC064
 //           0x005FCBB0 0x00601BD0 0x00600F00
 Status: Complete - testing
 */
-int __cdecl pops(char *caption, char *label, int a3, char *a4, int a5,
-                 Sprite *sprite, int a7, int a8, int (__cdecl *callback)()) {
+int __cdecl pops(char *caption, char *label, int value, char *override_text,
+                 int flags, Sprite *sprite, int pair_value_a, int pair_value_b,
+                 int (__cdecl *callback)()) {
     // SAVE THE FLAG, THEN READ THE DEFAULT: the image's order is
     // `mov ecx,[SlotA]; call is_visible; mov esi,[SlotB]; test eax,eax;
     // jne +6; mov esi,[SlotA]` - the SlotB default load sits AFTER the call,
@@ -917,7 +919,7 @@ int __cdecl pops(char *caption, char *label, int a3, char *a4, int a5,
     }
     BasePop *pop = reinterpret_cast<BasePop *>(win);
 
-    if (pop->start(caption, label, a3, a4, a5, 0)) {
+    if (pop->start(caption, label, value, override_text, flags, 0)) {
         return -1;
     }
 
@@ -926,14 +928,14 @@ int __cdecl pops(char *caption, char *label, int a3, char *a4, int a5,
     PopupSavedLocX = 0x2000;
 
     if (sprite) {
-        if (a7 != a8) {
-            pop->field_3104_ = a7;
-            pop->field_3108_ = a8;
+        if (pair_value_a != pair_value_b) {
+            pop->field_3104_ = pair_value_a;
+            pop->field_3108_ = pair_value_b;
         }
         if (pop->dialogs_.list_.entry_count_ == 0) {
-            pop->field_2144_ = reinterpret_cast<uint32_t>(sprite);
+            pop->caller_sprite_ = sprite;
         } else {
-            pop->field_2144_ = 0;
+            pop->caller_sprite_ = 0;
         }
 
         if (pop->dialogs().sprite(sprite, 0, 0)) {
@@ -944,11 +946,11 @@ int __cdecl pops(char *caption, char *label, int a3, char *a4, int a5,
     pop->write_check(PopupWriteCheckState);
     int execResult = pop->exec(0, callback);
 
-    if (pop->field_A14_ == 0) {
+    if (pop->external_window_ == 0) {
         do_all_draws();
     }
 
-    if (a5 & 0x8000) {
+    if (flags & 0x8000) {
         int h = pop->field_30C0_;
         int w = pop->field_30BC_;
         int y = pop->field_30B8_;
@@ -969,7 +971,7 @@ int __cdecl pops(char *caption, char *label, int a3, char *a4, int a5,
 
     PopupWriteCheckState = pop->read_check();
     BaseAtKeyPollFlag = pop->field_3100_;
-    if ((a5 & 0x300) == 0) {
+    if ((flags & 0x300) == 0) {
         pop->close();
     }
     return execResult;
