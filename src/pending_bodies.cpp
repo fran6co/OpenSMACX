@@ -194,11 +194,9 @@ void __cdecl do_video() {
 // (0x00632350), whose forwarder lives beside its caller check_polling there.
 
 // Six callees `temp.h` bound as pointers. Each one cost its callers the image's
-// `E8`; see the note there.
-void __cdecl wave_it(int a1) {
-    typedef void(__cdecl *pending)(int);
-    PENDING_BODY(0x004455F0, pending)(a1);
-}
+// `E8`; see the note there. wave_it's forwarder is gone - the body is homed
+// in popup.cpp (2026-09-06), and free functions have no class for
+// home_bodies.py to clear the forwarder against, so it came out by hand.
 
 // ?terrain_fixup@@YAXPAUMapWin@@@Z at 0x004711A0 - mapwin_terrain_fixup
 // (src/mapwin.cpp) calls it BY NAME, once per live MapWin slot and once
@@ -512,12 +510,7 @@ void ListBox::on_mousewheel(int a) {
 // bodies popup.cpp used to reach through pointers.
 
 
-void Popup::start(char *a1, const char *a2, int a3, char *a4, int a5,
-                  GraphicWin *owner) {
-    typedef void(__fastcall *pending)(Popup *, void *, char *, const char *,
-                                      int, char *, int, GraphicWin *);
-    PENDING_BODY(0x00406380, pending)(this, nullptr, a1, a2, a3, a4, a5, owner);
-}
+
 
 // ?sprite@SpriteBox@@QAEHPAUSprite@@PADH@Z at 0x006108E0 - popup.cpp's
 // `pops()` calls it BY NAME so it emits the image's `call rel32`.
@@ -857,10 +850,7 @@ void ReplayWin::timer_callback() {  // 0x005AD9E0
 }
 
 
-void Popup::hide() {  // 0x00404A80
-    typedef void(__fastcall *pending)(Popup *, void *);
-    PENDING_BODY(0x00404A80, pending)(this, nullptr);
-}
+
 
 // ?edit@EditGroup@@QAEHPADPADH@Z at 0x00611F80 - DipEdit::on_button_clicked
 // drives it twice on BasePop's EditGroup subobject at 0x22C8 (see

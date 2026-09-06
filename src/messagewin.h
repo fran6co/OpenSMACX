@@ -48,6 +48,10 @@ class MessageWin : public Sprite {
   // listBox_, de-duplicating against the current top line when the item id is
   // 0; the id is packed with 0x10000000 into Dialog::item.
   void add_message(char *text, int item_id);
+  // 0x004713B0, declared for Popup::on_exec (0x00405910), which hands the
+  // desktop window the text it built from the unit-history list. The first
+  // parameter is base.cpp's BaseIDCurrentSelected read at the call site.
+  void add_base(int base_id, char *text, int flag);
 
   // Storage the image proves is here: its own methods reach 0x68.
   // Extent only - this class carries no size assertion, and the bound is a floor.

@@ -127,3 +127,21 @@ Status: Complete
 void MessageWin::UNK4(int) {
 }
 
+
+/*
+ * Forwarder, not a recovery: 0x004713B0 ?add_base@MessageWin@@QAEXHPADH@Z is
+ * still an archive copy (src/unrecovered/004713b0.cpp) the build does not
+ * compile, so no ORIGINAL line marks it here - that would be a second
+ * annotation on an address the archive already owns. Declared in messagewin.h
+ * for Popup::on_exec, which reaches it by name just as the image's own
+ * `call rel32` does.
+ */
+void MessageWin::add_base(int base_id, char *text, int flag) {
+    // VC6 rejects `__thiscall` on a function pointer (C4234), so the receiver
+    // travels as __fastcall's first argument with a dummy second - the same
+    // shape councwin.cpp's vslot forwarders use; the three real arguments are
+    // the stack args the __thiscall callee expects.
+    typedef void(__fastcall *pending)(MessageWin *, void *, int, char *, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x004713B0))(
+        this, nullptr, base_id, text, flag);
+}

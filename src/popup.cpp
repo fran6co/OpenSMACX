@@ -24,6 +24,20 @@
 #include "spritebox.h"
 #include "net_class.h"
 #include "temp.h"
+#include "strings.h"    // StringTemp - the shared 0x1032 scratch buffer at 0x009B86A0
+#include "mapwin.h"     // MainInterfaceGlobal - the iface window at 0x007AE820
+#include "messagewin.h" // InterfaceMessageWin - the desktop window at 0x007F67F8
+#include "base.h"       // BaseIDCurrentSelected - the base the exec result goes to
+
+// Two of the popup's hide-path helpers are still original bodies (0x0045D970 /
+// 0x0045E540, archive copies the build does not compile). They are __cdecl
+// free functions the image reaches with a plain `call rel32`, so they are
+// declared here; slide_hide is defined as a forwarder at the foot of
+// councwin.cpp and scroll_hide has no home yet.
+void __cdecl slide_hide(GraphicWin *window, int mode);   // 0x0045D970
+void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll);  // 0x0045E540
+void __cdecl scroll_show(GraphicWin *window, Scroll *scroll);  // 0x0045DEA0
+void __cdecl scroll_normal();                            // 0x00588340
 
 
 /*
@@ -73,9 +87,43 @@ void Popup::start(char *text_file, const char *text_label, int value,
 // 256 is this tree's usual caption size rather than a measured one.
 char PopupStartCaption[256];  // 0x009B8AA8
 
+// Start's mod-redirection data (popup.h has the role note). As with the link
+// strings, the image's packed copies carry text this build does not ship.
+// INITIAL VALUES FROM THE IMAGE (image_data.py): these are the mod-
+// redirection defaults the fopen probe falls back to, and the link
+// handler's match/verb/target triple - declared zero at first landing,
+// the data_values census caught all ten.
+char PopupStartModTag[32] = "SCRIPT.txt";        // 0x006827E4
+char PopupStartModFile1[32] = "alienIscript.txt"; // 0x006827F4
+char PopupStartModMode1[8] = "rb";                // 0x006827F0
+char PopupStartModFile2[32] = "alienuscript.txt"; // 0x0068280C
+char PopupStartModMode2[8] = "rb";                // 0x00682808
+char *PopupStartAltFile1 = (char *)0x00691BA4;    // 0x00691B20
+char *PopupStartAltFile2 = (char *)0x00691BB4;    // 0x00691B24
+
+// The separator between the unit-history entries, the same image .data string
+// buffer.cpp and socialwin.cpp bind as SpaceText - it reads " ". Static, so
+// each TU folds its own copy to the immediate the way theirs do.
+static int *const SpaceText = (int *)0x00682820;
+
+// The list-geometry metrics (popup.h has the role note).
+int PopupScrollAreaTop;    // 0x007CFF88
+int PopupScrollAreaGap;    // 0x007CFF30
+int PopupScrollRowHeight;  // 0x007CFF5C
+
 // 0x006A721C, the modal-popup flag every popup driver parks 6 in while its
 // popup runs and clears the moment exec comes back. See the note in popup.h.
 int PopupModalState;  // 0x006A721C
+
+// The link handler's storage (popup.h has the role note). The image's copies
+// of the three strings carry text this packed build does not ship, so ours
+// initialise empty: the link branch compares against "" and opens nothing
+// until something writes them.
+char PopupLinkMatchText[64] = "homelink";              // 0x006827B8
+char PopupLinkOpenVerb[16] = "open";                    // 0x006827DC
+char PopupLinkTarget[128] = "http:\\\\www.firaxis.com"; // 0x006827C4
+char PopupPendingLink[256];    // 0x007591C8
+int PopupPendingLinkFlag;      // 0x007592C8
 
 /*
 Purpose: Start a popup from just a label, defaulting the rest.
@@ -996,3 +1044,541 @@ Purpose: Step the receiver back to the subobject ??_GPopup@@UAEPAXI@Z expects,
 Return Value: the forwarded call's
 Status: Complete
 */
+
+// The scroll hide helper is still an original body (0x0045E540, an archive
+// copy the build does not compile). Same pattern as councwin.cpp's
+// slide_show/slide_hide forwarders: declared above, defined here as the
+// __cdecl call the image's own `call rel32` reaches. Retire this definition
+// the moment 0045e540.cpp is homed - a forwarder left standing over a real
+// body is exactly the landmine address_index.py gates on.
+void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll) {
+    typedef void(__cdecl *pending)(GraphicWin *, Scroll *);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x0045E540))(window,
+                                                                      scroll);
+}
+
+void __cdecl scroll_show(GraphicWin *window, Scroll *scroll) {
+    typedef void(__cdecl *pending)(GraphicWin *, Scroll *);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x0045DEA0))(window,
+                                                                      scroll);
+}
+
+void __cdecl scroll_normal() {
+    typedef void(__cdecl *pending)();
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x00588340))();
+}
+
+// ORIGINAL: 0x00404A80 ?hide@Popup@@QAEXXZ 0x00404A80-0x00404AFF FILE
+// symbol    ?hide@Popup@@UAEXXZ
+// size      127 bytes
+// prototype void (__thiscall ?hide@Popup@@QAEXXZ)(Popup* this)
+// callers   4   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0045D970 0x0045E540 0x005EDCD0 0x005F7E90
+//
+// The catalogue spells Q (a non-virtual member), but Win::hide is virtual at
+// slot 2 and this has the same signature, so VC6 has no way to emit a
+// non-virtual same-signature member of the same name - it is an override and
+// demangles U. on_nc_hittest below carries the same catalogue-Q versus
+// emitted-U gap. The tail call is `this->Win::hide()` qualified for exactly
+// the reason the virtual-ness would otherwise break: unqualified `hide()`
+// would dispatch through the vtable the image reaches with `call 0x5edcd0`.
+// LEVER: field_30AC_ is uint32_t, so the naive `/ 1000` lowers to an unsigned
+//   `mul`/`shr` pair where the image has `imul`/`sar` - reading it as
+//   `static_cast<int>` first is the whole signedness story (35/45 -> 45
+//   instructions on both sides).
+// TRIED: plain `int` over `const int`, `register int`, and one-exit
+//   `&&`-chained guards for the four-test nest - none moved the remaining
+//   divergence, which is one instruction: the image pushes edi in the
+//   prologue (its callee-saved home for `seconds`) while this tree pushes it
+//   at first use, eleven slots in. Same register-allocation placement wall
+//   pops() records below; 35/45 agreeing is this body's census.
+
+void Popup::hide() {
+    if (is_visible()) {
+        const int seconds = static_cast<int>(field_30AC_) / 1000;
+        if (seconds != 1000) {
+            if (external_window_ == 0) {
+                if (MainInterfaceGlobal.is_visible()) {
+                    if (seconds == 0 || seconds == 5) {
+                        if (scroll_.is_visible()) {
+                            scroll_hide(this, &scroll_);
+                        }
+                        slide_hide(this, 0);
+                    }
+                }
+            }
+        }
+        this->Win::hide();
+    }
+}
+
+// ORIGINAL: 0x004455F0 ?wave_it@@YAXH@Z 0x004455F0-0x0044564D FILE
+// size      93 bytes
+// prototype
+// callers   7   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004C6920 0x004C6B10 0x004C6CE0
+//
+// PRESERVED UNIT - measured MNEMONIC_ONLY. Scaffold preamble stripped by hand
+// 2026-09-06: the body below is spelled against the real Wave / GamePreferences
+// / PopupWaveLastIndex declarations, so the homing carries no fixed-slot
+// bindings and no cast.
+//
+// The old forwarder in pending_bodies.cpp came out by hand: home_bodies.py
+// clears a forwarder against the CLASS it names, and a free function has
+// none, so the tool never saw this one.
+// TRIED: computing `wave` before the store, `g_CPU_WAVES[n]` subscript over
+//   `g_CPU_WAVES + n`, and a `const int chosen` copy of the argument - all
+//   three compile to the same 29 instructions. The two that disagree with the
+//   image are the second `lea` of the index chain landing in ecx where the
+//   image keeps it in eax (a register-allocation placement, the same family
+//   hide() records above), and the `mov [PopupWaveLastIndex], eax` store,
+//   whose absolute operand is a relocation on this side and a fixed address
+//   on the image's.
+
+void __cdecl wave_it(int wave_id) {
+    if (GamePreferences & 0x400) {
+        if (!g_WAVE_GENERAL.Wave::is_playing()) {
+            if (!(g_CPU_WAVES + PopupWaveLastIndex)->Wave::is_playing()) {
+                PopupWaveLastIndex = wave_id;
+                Wave *const wave = g_CPU_WAVES + wave_id;
+                wave->Wave::load();
+                wave->Wave::play();
+            }
+        }
+    }
+}
+
+// ORIGINAL: 0x00627910 ?pop_ask@@YAHPADPADHPADP6AHXZH@Z 0x00627910-0x006279B7 FILE BYTE_EXACT
+// symbol    ?pop_ask@@YAHPAD0H0P6AHXZH@Z
+// working copy - scaffold materialised by --work
+// size      167 bytes
+// prototype int (__cdecl ?pop_ask@@YAHPADHPADP6AHXZH@Z)(int8* srcFileID, int8* sectionID, int, int8*, int (__cdecl *)(), int)
+// callers   6   call targets   6
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F7E90 0x005FCBB0 0x00600F00 0x00601BB0 0x00601BF0 0x00602600
+//
+// PRESERVED UNIT - scaffold preamble stripped by hand 2026-09-06: the body
+// below is spelled against the real BasePop / Popup declarations and the
+// tree's own named globals, so the homing carries no fixed-slot bindings and
+// no cast. The +0x229c read is Dialogs' Dialog virtual base's
+// item_list_.entry_count_, reached through the member the way
+// BasePop::on_key_down reaches it.
+// symbol    (above) the catalogue spells every PAD out; VC6 emits the `0`
+//   back-reference for the repeated char * and that is the name this tree's
+//   object really carries. Nothing about the parameters differs.
+
+int __cdecl pop_ask(char *text_file, char *text_label, int value,
+                    char *override_text, int (__cdecl *callback)(),
+                    int flags) {
+    const BOOL winVisible = PopupInstanceSlotA->is_visible();
+    Win *win = PopupInstanceSlotB;
+    if (!winVisible) {
+        win = PopupInstanceSlotA;
+    }
+    BasePop *pop = reinterpret_cast<BasePop *>(win);
+
+    if (pop->start(text_file, text_label, value, override_text, flags | 0x44,
+                   0)) {
+        return -1;
+    }
+
+    pop->write_check(PopupWriteCheckState);
+    if (pop->dialogs().Dialog::item_list_.entry_count_ == 0) {
+        return -1;
+    }
+
+    int execResult = pop->exec(0, callback);
+    if (pop->external_window_ == 0) {
+        do_all_draws();
+    }
+    BaseAtKeyPollFlag = pop->field_3100_;
+    pop->close();
+    return execResult;
+}
+
+// ORIGINAL: 0x006279C0 ?pop_ask_number@@YAHPADHP6AHXZ@Z 0x006279C0-0x00627A8B FILE BYTE_EXACT
+// working copy - scaffold materialised by --work
+// size      203 bytes
+// prototype int (__cdecl ?pop_ask_number@@YAHPADHP6AHXZ@Z)(int8* sectionID, int, int (__cdecl *)())
+// callers   0   call targets   9
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005FCBB0 0x00600F00 0x00601BB0 0x00601BF0 0x00602600 0x00645470
+//           0x0064FC88
+//
+// PRESERVED UNIT - measured MISMATCH. Scaffold preamble stripped by hand
+// 2026-09-06: the body below is spelled against the real BasePop / Popup
+// declarations and the tree's own named globals, so the homing carries no
+// fixed-slot bindings and no cast.
+
+int __cdecl pop_ask_number(char *label, int initial, int (__cdecl *callback)()) {
+    char number_text[80];
+    const BOOL winVisible = PopupInstanceSlotA->is_visible();
+    Win *win = PopupInstanceSlotB;
+    if (!winVisible) {
+        win = PopupInstanceSlotA;
+    }
+    BasePop *pop = reinterpret_cast<BasePop *>(win);
+
+    StringTemp[0] = 0;
+    _itoa(initial, number_text, 10);
+    strcat(StringTemp, number_text);
+
+    if (pop->start(PopupStartCaption, label, 9, StringTemp, 0x44, 0)) {
+        return -1;
+    }
+
+    pop->write_check(PopupWriteCheckState);
+    int execResult = pop->exec(0, callback);
+    if (pop->external_window_ == 0) {
+        do_all_draws();
+    }
+    BaseAtKeyPollFlag = pop->field_3100_;
+    ParseNumTable[0] = atoi(ParseStrBuffer[0].str);
+    pop->close();
+    return execResult;
+}
+
+// ORIGINAL: 0x00627B60 ?pop_ask_number@@YAHPADP6AHXZ@Z 0x00627B60-0x00627C28 FILE BYTE_EXACT
+// size      200 bytes
+// prototype
+// callers   2   call targets   7
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005FCBB0 0x00600F00 0x00601BB0 0x00601BF0 0x00602600 0x00645470
+//           0x0064FC88
+//
+// PRESERVED UNIT - measured MISMATCH. Scaffold preamble stripped by hand
+// 2026-09-06: the body below is spelled against the real BasePop / Popup
+// declarations and the tree's own named globals (StringTemp, ParseNumTable,
+// ParseStrBuffer, PopupWriteCheckState, BaseAtKeyPollFlag), so the homing
+// carries no fixed-slot bindings and no cast. The artifact transcription this
+// replaces passed the CALLBACK as start's label argument; the image reads the
+// label from [esp+0x6c], which is the first parameter, so a1 it is.
+
+int __cdecl pop_ask_number(char *label, int (__cdecl *callback)()) {
+    char number_text[80];
+    const BOOL winVisible = PopupInstanceSlotA->is_visible();
+    Win *win = PopupInstanceSlotB;
+    if (!winVisible) {
+        win = PopupInstanceSlotA;
+    }
+    BasePop *pop = reinterpret_cast<BasePop *>(win);
+
+    StringTemp[0] = 0;
+    _itoa(0, number_text, 10);
+    strcat(StringTemp, number_text);
+
+    if (pop->start(PopupStartCaption, label, 9, StringTemp, 0x44, 0)) {
+        return -1;
+    }
+
+    pop->write_check(PopupWriteCheckState);
+    int execResult = pop->exec(0, callback);
+    if (pop->external_window_ == 0) {
+        do_all_draws();
+    }
+    BaseAtKeyPollFlag = pop->field_3100_;
+    ParseNumTable[0] = atoi(ParseStrBuffer[0].str);
+    pop->close();
+    return execResult;
+}
+
+// ORIGINAL: 0x00404EF0 ?on_post_window_init@Popup@@QAEXXZ 0x00404EF0-0x00404F7A FILE
+// working copy - scaffold materialised by --work
+// size      138 bytes
+// prototype void (__thiscall ?on_post_window_init@Popup@@QAEXXZ)(Popup* this)
+// callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F0580 0x005F05D0 0x005F0610
+//
+// Scaffold preamble stripped by hand 2026-09-06. The two zeroed dwords are the
+// push-button kind's state inside the RadioButton subobject of dialogs_
+// (0x2218 / 0x221c, i.e. RadioButton+4 and +8), spelled through the member the
+// way BasePop::calculate_dimensions spells its write into field_10_.
+// TRIED: the image reads field_30B0_ (0x30b0) and `test`s it immediately
+//   before the closing `call set_bottom_border_thickness(0)`, with no branch
+//   anywhere near - a load and a flag store whose result nothing reads. Two
+//   spellings aimed at it, `field_30B0_ != 0 ? 0 : 0` as the argument and a
+//   `const int bottom = field_30B0_` local feeding `bottom - bottom`; VC6
+//   folds both away and the pair stays missing. 25 of 36 agreeing, and the
+//   remaining two are that dead read.
+
+void Popup::on_post_window_init() {
+    if (external_window_ == 0
+        && static_cast<int>(field_30AC_) / 10000 != 1000) {
+        dialogs_.RadioButton::field_4_ = 0;
+        dialogs_.RadioButton::field_8_ = 0;
+        set_border_thickness(0);
+        set_caption_height(0);
+        if (owned_text_ != 0) {
+            field_16C_ = 0x1a;
+            iFlags_ |= WinFlagHitTestIndirect;
+        }
+        set_bottom_border_thickness(0);
+    }
+}
+
+// ORIGINAL: 0x004050A0 ?on_link_clicked@Popup@@QAEHHPAD@Z 0x004050A0-0x00405131 FILE BYTE_EXACT
+// size      145 bytes
+// prototype int (__thiscall ?on_link_clicked@Popup@@QAEHHPAD@Z)(Popup* this, int, int8*)
+// callers   0   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00604A90 0x00645470 0x0064FD20
+// indirect  0x004050DE 0x004050F6
+//
+// Scaffold preamble stripped by hand 2026-09-06: the body below is spelled
+// against the tree's own names (ExitTurnLoop, HandleMain, BasePop::fallout,
+// _stricmp, strcat) plus the four link strings named by their role at the call
+// site - see the block by that name in popup.cpp.
+
+int Popup::on_link_clicked(int id, char *link) {
+    if (link == 0) {
+        return 1;
+    }
+    if (_stricmp(link, PopupLinkMatchText) == 0) {
+        ExitTurnLoop = 1;
+        fallout();
+        ShowWindow(HandleMain, 0);
+        PopupShellExecuteSlot()(0, PopupLinkOpenVerb, PopupLinkTarget, 0, 0,
+                               1);
+        return 1;
+    }
+    PopupPendingLink[0] = 0;
+    strcat(PopupPendingLink, link);
+    PopupPendingLinkFlag = 1;
+    fallout();
+    return 0;
+}
+
+// ORIGINAL: 0x00406380 ?start@Popup@@QAEXPADPBDHPADHPAUGraphicWin@@@Z 0x00406380-0x004064CC FILE
+// size      332 bytes
+// prototype void (__thiscall ?start@Popup@@QAEXPADPBDHPADHPAUGraphicWin@@@Z)(Popup* this, int8* srcFileID, int8* sectionID, int, int8*, int, GraphicWin*)
+// callers   84   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00601BF0 0x00645598 0x00645646 0x00645660
+//
+// PRESERVED UNIT - measured MISMATCH. Scaffold preamble stripped by hand
+// 2026-09-06: the body below is spelled against the real BasePop / Player
+// declarations and the tree's own names - ClimatePopupTitle, LocalFaction,
+// ExpansionEnabled, PopupDialogFactionID, Players[].rule_flags - so the homing
+// carries no fixed-slot bindings and no cast of this. It is the member twin of
+// X_pop (xpops.cpp), which identified the same gate: only an expansion alien
+// faction redirects these text files, hence the RFLAG_ALIEN probe and the two
+// fopen-and-close existence tests. The seven strings and the two substitute
+// pointers are the packed image's data; popup.h names each by its role.
+// symbol    ?start@Popup@@QAEXPADPBDH0HPAVGraphicWin@@@Z
+//   The catalogue spells both `PAD`s out and calls GraphicWin a struct (`PAU`);
+//   VC6 emits the `0` back-reference for the repeated char * and `PAV` for a
+//   class - and this tree's GraphicWin is a class. Same convention as the
+//   five-argument overload above.
+// TRIED: the frame. The image opens `push ebp / mov ebp,esp / push ecx` and
+//   reads its six arguments off ebp, while this tree's version addresses them
+//   off esp and lands 115 instructions against the image's 131 - the call
+//   sets agree exactly (call_diff: 0 disagreements), so the gap is the frame
+//   and the register homes, not the work. Structuring the same logic as one
+//   exit over a hoisted `alternative` local, and splitting the two fopen
+//   probes into separate scopes, both still lower without the frame.
+
+void Popup::start(char *text_file, const char *text_label, int value,
+                  char *override_text, int flags, GraphicWin *owner_window) {
+    if (strcmp(text_file, *reinterpret_cast<char *const *>(ClimatePopupTitle)) == 0
+        || strcmp(text_file, PopupStartModTag) == 0) {
+        if ((Players[LocalFaction].rule_flags & RFLAG_ALIEN) != 0) {
+            if (ExpansionEnabled == 0) {
+                goto fallback;
+            }
+            FILE *const fp = fopen(PopupStartModFile1, PopupStartModMode1);
+            if (fp == 0) {
+                goto fallback;
+            }
+            fclose(fp);
+            BasePop::start(*reinterpret_cast<char *const *>(PopupStartAltFile1),
+                           text_label, value, override_text, flags,
+                           owner_window);
+            return;
+        }
+
+        if (ExpansionEnabled == 0) {
+            goto fallback;
+        }
+        if (PopupDialogFactionID <= 0 || PopupDialogFactionID >= 8) {
+            goto fallback;
+        }
+        if ((Players[PopupDialogFactionID].rule_flags & RFLAG_ALIEN) == 0) {
+            goto fallback;
+        }
+        {
+            FILE *const fp = fopen(PopupStartModFile2, PopupStartModMode2);
+            if (fp == 0) {
+                goto fallback;
+            }
+            fclose(fp);
+            if (BasePop::start(
+                    *reinterpret_cast<char *const *>(PopupStartAltFile2),
+                    text_label, value, override_text, flags,
+                    owner_window) != 0) {
+                goto fallback;
+            }
+            return;
+        }
+    }
+
+fallback:
+    BasePop::start(text_file, text_label, value, override_text, flags,
+                   owner_window);
+}
+
+// ORIGINAL: 0x00406260 ?on_listbox_scroll_create@Popup@@QAEHXZ 0x00406260-0x00406323 FILE
+// size      195 bytes
+// prototype int (__thiscall ?on_listbox_scroll_create@Popup@@QAEHXZ)(Popup* this)
+// callers   0   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0045DEA0 0x00588340 0x005F7E90 0x006054D0
+// indirect  0x00406302
+//
+// Scaffold preamble stripped by hand 2026-09-06: the body below is spelled
+// against the real Popup/Scroll declarations. The 0x474 rectangle is the
+// popup's own Buffer subobject's rect2_ (0x444 + 0x30) and the 0x4c4 width is
+// the same buffer's DIB header width (0x444 + 0x7c + sizeof(BITMAPINFOHEADER))
+// - reached as qualified base members, no raw offsets. The three 0x7CFF globals are screen
+// metrics no dump in this tree names; popup.cpp names them by their role in
+// this arithmetic.
+// TRIED: taking the rectangle as a `const RECT *const` pointer to
+//   `Buffer::rect2_` - the image walks it through a register (`lea
+//   ecx,[esi+0x474]; mov edx,ecx`) - and copying it into a `RECT` local
+//   instead; the pointer form drops to 21 of 73 and the copy keeps the
+//   committed 25, so the direct qualified reads stay. What is left is
+//   register homing: the image loads the two inset globals into ebx/edx ahead
+//   of the rectangle walk while this tree loads them at first use.
+
+int Popup::on_listbox_scroll_create() {
+    if (static_cast<int>(field_30AC_) / 10000 == 1000) {
+        return 0;
+    }
+    scroll_normal();
+
+    const RECT area = this->Buffer::rect2_;
+    const int inset_top = PopupScrollAreaTop;
+    const int row_height = PopupScrollRowHeight;
+    const int rows = (area.bottom - inset_top - PopupScrollAreaGap
+                      - (area.top + 0xd) - 0x2c) / row_height;
+    const int top = rows * row_height + inset_top + PopupScrollAreaGap - 0xa;
+    const int left = this->Buffer::dib_.bmiHeader.biWidth - 0x2b;
+
+    scroll_.init(left, 0x15, 0x18, top, this, -1, 1);
+    scroll_.hide();
+
+    if (is_visible()) {
+        scroll_show(this, &scroll_);
+    }
+    return reinterpret_cast<int>(&scroll_);
+}
+
+// ORIGINAL: 0x00405910 ?on_exec@Popup@@QAEHXZ 0x00405910-0x00405B01 FILE
+// TRIED: extra named locals (list_head/msg/next_idx) force `sub esp,N` frame vs original's single [ebp-4] slot + ebx/esi/edi pushes.
+// working copy - scaffold materialised by --work
+// size      497 bytes
+// prototype int (__thiscall ?on_exec@Popup@@QAEHXZ)(Popup* this)
+// callers   0   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0045C0F0 0x004713B0 0x00644F3A 0x00645470
+//
+// Scaffold preamble stripped by hand 2026-09-06: the body below is spelled
+// against the real Popup / StringList / MainInterface / MessageWin
+// declarations and the tree's own names - StringTemp, the unit_ids_ list
+// LEVER: the image's two opening guards share ONE `return 1` epilogue
+//   (`je 0x405a5a` twice), which only the merged `||` spelling gives VC6 -
+//   separate guard clauses each grow their own epilogue and the body starts
+//   by disagreeing at instruction 14 (14/158 -> 68/158).
+// TRIED: reordering the switch's case labels into numeric order (1, 2, 0x3ea,
+//   3, 4) to follow the image's `jg 3 / je / je 1 / je 2` test ladder, and
+//   spelling the position bump as `++current_position_` instead of a `next`
+//   temp - 67 and 67 of 158 against 68, so the committed form stays.
+// TRIED: the residual is register homing inside the walk (the image keeps the
+//   entry pointer in eax and the count in edx while this tree walks it through
+//   edx) and the message ternary's zero arms, which the image lays out of line
+//   and this tree in line.
+// fields, field_30A8_, field_3094_, text_block_a_, MainInterfaceGlobal,
+// InterfaceMessageWin, BaseIDCurrentSelected - so the homing carries no
+// fixed-slot bindings and no cast of this.
+
+int Popup::on_exec() {
+    const int value = static_cast<int>(field_30AC_);
+    if (value / 10000 == 1000 || value % 10000 == 0) {
+        return 1;
+    }
+    const int code = value % 10000;
+
+    const int total = unit_ids_.entry_count_;
+    StringTemp[0] = 0;
+
+    if (unit_ids_.entry_count_ - 1 >= -1) {
+        unit_ids_.current_ = unit_ids_.head_;
+        if (abs(-1) <= unit_ids_.entry_count_) {
+            int n = abs(-1);
+            if (n > 0) {
+                do {
+                    n--;
+                    unit_ids_.current_ = unit_ids_.current_->previous;
+                } while (n != 0);
+            }
+            unit_ids_.current_position_ = unit_ids_.entry_count_ - 1;
+        }
+    }
+
+    for (int i = 0; i < total; i++) {
+        if (i != 0) {
+            strcat(StringTemp, reinterpret_cast<const char *>(SpaceText));
+        }
+
+        const uint32_t head = reinterpret_cast<uint32_t>(unit_ids_.head_);
+        if (head != 0) {
+            unit_ids_.current_ = unit_ids_.current_->next;
+            const int next = unit_ids_.current_position_ + 1;
+            unit_ids_.current_position_ = next;
+            if (next == unit_ids_.entry_count_) {
+                unit_ids_.current_position_ = 0;
+            }
+        }
+
+        const char *msg = unit_ids_.current_ == 0
+            ? 0
+            : *(const char **)((head == 0
+                                ? 0
+                                : reinterpret_cast<uint32_t>(
+                                      unit_ids_.current_->payload)) + 4);
+        strcat(StringTemp, msg);
+    }
+
+    switch (code) {
+    case 3:
+    case 4:
+        return 1;
+    case 1:
+        MainInterfaceGlobal.set_message(StringTemp, 0x5f, 0, 1, 1);
+        if ((field_30A8_ & 0x400000) == 0 && field_3094_ != 0) {
+            field_3094_(reinterpret_cast<char *>(&text_block_a_), 1);
+        }
+        return 0;
+    case 2:
+    case 0x3ea:
+        InterfaceMessageWin.add_base(BaseIDCurrentSelected, StringTemp, 0);
+        if ((field_30A8_ & 0x400000) == 0 && field_3094_ != 0) {
+            field_3094_(reinterpret_cast<char *>(&text_block_a_), 1);
+        }
+        return code == 0x3ea;
+    default:
+        return 1;
+    }
+}

@@ -563,7 +563,7 @@ SCAFFOLD_CEILINGS = {
     # 264 -> 265 (2026-09-06, W5x base board): the upgrade_prototype
     # 4-arg forwarder (0x4EFE80) - the homed upgrade_prototypes calls it,
     # nothing else defines it, FILE-only target.
-    "PENDING_BODY forwarders": 265,
+    "PENDING_BODY forwarders": 262,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -712,7 +712,7 @@ SCAFFOLD_CEILINGS = {
     # color homed BYTE_EXACT 15/15 - and the catalogue's QAAX __thiscall
     # member is really a __cdecl free function (all five args at
     # [esp+4..0x14], ecx never touched, ends ret).
-    "artifact files (recovered/)": 954,
+    "artifact files (recovered/)": 952,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -846,7 +846,7 @@ SCAFFOLD_CEILINGS = {
     # 0x0052A9B0 BYTE_EXACT 49/49 (the `int result = 0` at the TOP of the
     # body lever), current_server's ternary family and the PCX head
     # reader measured.
-    "unrecovered files": 1043,
+    "unrecovered files": 1035,
     # 2717 -> 2748 (2026-09-04, P2 net batch): NetFifo promoted with
     # close/add/get/get, NetFifoNode, head_/tail_/count_ - the deliberate
     # raise this ceiling exists for (class modelling grows it; the class

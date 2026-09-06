@@ -37,7 +37,19 @@
   // seam that stood in for them cost the caller `call [ptr]`.
 class Popup : public BasePop {
  public:
-  // 0x00404A80, a pending_bodies forwarder.
+  // homed from 00405910.cpp
+  int on_exec();
+
+ public:
+  // homed from 00406260.cpp
+  int on_listbox_scroll_create();
+
+ public:
+  // homed from 00404ef0.cpp
+  void on_post_window_init();
+
+ public:
+  // 0x00404A80, homed in popup.cpp.
   void hide();
 
  public:
@@ -66,6 +78,9 @@ class Popup : public BasePop {
   void start(const char *label);
   void start(const char *label, int value);
   int on_dialog_back_draw(::GraphicWin *window);
+  // 0x004050A0. The `H` the catalogue carries between the two parameters is
+  // this receiver's `int id`, kept even though nothing in the body reads it.
+  int on_link_clicked(int id, char *link);
   // PAURECT@@H: the first parameter is a RECT *, per
   // ?on_redraw_nc@Popup@@QAEXPAURECT@@H@Z. The body is `ret 8` either way,
   // so only the decorated name moves - toward the one the catalogue states.
@@ -106,6 +121,55 @@ static_assert(sizeof(Popup) == 0x537C,
 
 // The two short start forms share the caption buffer at a fixed address.
 extern char PopupStartCaption[256];
+
+// START'S MOD-REDIRECTION DATA. Popup::start (0x00406380) compares the text
+// file it was handed against the climate popup's title pointer (game.h's
+// ClimatePopupTitle) and against PopupStartModTag, and on a match - and only
+// for an expansion alien faction, the gate X_pop makes on the sister body -
+// probes a mod-key file with fopen and substitutes one of the two fixed
+// alternative text files. The image is packed: the strings and the substitute
+// pointers are data no file in this tree carries, so each is named by its role
+// at the call site and the extents are floors, not measurements.
+extern char PopupStartModTag[32];      // 0x006827E4
+extern char PopupStartModFile1[32];    // 0x006827F4
+extern char PopupStartModMode1[8];     // 0x006827F0
+extern char PopupStartModFile2[32];    // 0x0068280C
+extern char PopupStartModMode2[8];     // 0x00682808
+extern char *PopupStartAltFile1;       // 0x00691B20
+extern char *PopupStartAltFile2;       // 0x00691B24
+
+// THREE SCREEN METRICS the popup's list geometry is laid out from, read
+// straight out of the image's data at 0x007CFF88 / 0x007CFF30 / 0x007CFF5C by
+// on_listbox_scroll_create. Nothing in this tree writes them, so their names
+// are their role in that arithmetic - a top inset the row band is inset by and
+// then shifted back down by, a second gap taken out alongside it, and the row
+// height the band is rounded to whole rows of.
+extern int PopupScrollAreaTop;    // 0x007CFF88
+extern int PopupScrollAreaGap;    // 0x007CFF30
+extern int PopupScrollRowHeight;  // 0x007CFF5C
+
+// THE LINK HANDLER'S STRINGS (0x006827B8, 0x006827DC, 0x006827C4) and the
+// pending-link pair (0x007591C8, 0x007592C8). on_link_clicked compares the
+// clicked text against the first, opens the second through the third with
+// ShellExecuteA, and on a non-match copies the text into the buffer and
+// raises the flag. The image is packed - those addresses are in data no file
+// in this tree carries - so each is named by its role at the call site and
+// its extent is the tree's usual floor rather than a measurement.
+extern char PopupLinkMatchText[64];   // 0x006827B8
+extern char PopupLinkOpenVerb[16];    // 0x006827DC
+extern char PopupLinkTarget[128];     // 0x006827C4
+extern char PopupPendingLink[256];    // 0x007591C8
+extern int PopupPendingLinkFlag;      // 0x007592C8
+
+// shell32 is not in this build's link set, so the one ShellExecuteA call
+// stays a seam over its own import slot - the same non-binding shape as
+// PopupWaveTimeSlot below.
+typedef long (__stdcall *func_popup_shell_execute)(void *, const char *,
+                                                   const char *, const char *,
+                                                   const char *, int);
+inline func_popup_shell_execute &PopupShellExecuteSlot() {
+    return *reinterpret_cast<func_popup_shell_execute *>(0x00669268);
+}
 
 // 0x006A721C. Set to 6 before a popup is started or exec'd and cleared to 0
 // as soon as exec returns, on every site that drives a modal popup

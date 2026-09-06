@@ -111,9 +111,16 @@ class RadioButton : public virtual GraphicWin, public virtual Dialog {
   virtual ~RadioButton() { ; }
   uint32_t close();
 
- private:
+ public:
+  // PUBLIC, like field_10_ below: Popup::on_post_window_init zeroes field_4_
+  // and field_8_ straight into the Dialogs subobject (0x2218/0x221c, i.e.
+  // RadioButton+4 and +8) with no call in between, so the access has to be
+  // spelled from outside the class. Access is compile-time only; the
+  // declaration ORDER - field_4_, field_8_, then the private field_C_ - is
+  // the layout and is unchanged.
   uint32_t field_4_;  // 0x0004
   uint32_t field_8_;
+ private:
   uint32_t field_C_;
  public:
   // PUBLIC, like CheckBox::field_10_ for DipEdit::init: BasePop

@@ -444,7 +444,7 @@ CEILINGS = {
     # across the blit family in texture.h.
     # 3058 -> 3029 (2026-09-06, W5q basewin derivation): the iface click
     # family's one-line bodies carry no scaffold names.
-    "scaffold name": 3029,
+    "scaffold name": 3005,
 }
 
 WHY = {

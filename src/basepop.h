@@ -159,6 +159,22 @@ class BasePop : public GraphicWin {
                           char *override_text, int flags, Sprite *sprite,
                           int pair_value_a, int pair_value_b,
                           int (__cdecl *callback)());
+  // Popup is the derived class, and its own bodies reach this state directly -
+  // hide() reads field_30AC_ (the auto-hide seconds) and external_window_ the
+  // way the image reads them, `mov ecx,[esi+0x30ac]` / `[esi+0xa14]`, with no
+  // accessor call anywhere in the frame. Friendship is access only: it moves
+  // no byte of layout and no line of codegen.
+  friend class Popup;
+  // The image's own free popup drivers do the same - read external_window_,
+  // field_3100_ and the dialogs_ member straight off the instance they exec.
+  // pop_ask additionally walks dialogs_' Dialog virtual base for the item
+  // count, which is what the public dialogs() accessor would cost a call for.
+  friend int __cdecl pop_ask(char *text_file, char *text_label, int value,
+                             char *override_text, int (__cdecl *callback)(),
+                             int flags);
+  friend int __cdecl pop_ask_number(char *label, int initial,
+                                    int (__cdecl *callback)());
+  friend int __cdecl pop_ask_number(char *label, int (__cdecl *callback)());
 
  public:
   // 0x006015B0, a pending_bodies forwarder.
