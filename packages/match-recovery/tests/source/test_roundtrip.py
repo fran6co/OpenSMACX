@@ -1,12 +1,7 @@
 """The read -> write -> read loop.
 
-Fixtures exercise every feature of the annotation grammar, and the last
-test closes the loop over the whole tree. Everything is proved against
-`src/` and purpose-built text alone - the package is NOT compared against
-the `tools/` copies here; that comparison is the drift check in
-`python -m decomp`.
-
-Run with `uv run pytest decomp/tests`.
+Synthetic fixtures exercise the annotation grammar without a project checkout.
+The application's integration suite separately checks its complete source tree.
 """
 
 from pathlib import Path
@@ -17,15 +12,13 @@ import sys
 
 import pytest
 
-import decomp
+from match_recovery import source as source_records
 
-from decomp import (DecompilationState, Mode, State, function_line, grammar,
+from match_recovery.source import (DecompilationState, Mode, State, function_line, grammar,
                     read,
                     read_file, read_text, reader, remove, remove_file,
                     write, write_file)
 
-# This checkout, answered by the test rather than by the package.
-REPO_ROOT = Path(__file__).resolve().parents[2]
 
 FIXTURE = Path("fixture.cpp")
 
@@ -488,18 +481,6 @@ def test_annotate_by_name_end_to_end(tmp_path):
 # ------------------------------------------------------------- the loop
 
 
-def test_tree_roundtrip():
-    """Every annotated file in src/ survives read -> write -> read.
-
-    Measured zero skips when this landed: a new skip is an event worth
-    investigating - the writer and the reader disagreeing about what an
-    annotation owns.
-    """
-    looped, skipped = roundtrip_tree(REPO_ROOT / "src")
-    expected = {path for path, _, _ in _raw_marker_sites(REPO_ROOT / "src")}
-    assert expected, "the source inventory unexpectedly contains no annotations"
-    assert looped == len(expected), (looped, len(expected))
-    assert skipped == 0, skipped
 
 
 # ------------------------------------------------------- the layering check
@@ -554,26 +535,6 @@ def test_reading_a_text_and_reading_a_path_are_different_calls(tmp_path):
 # own checks, which is the wrong way round. There is one way to run the
 # package's checks now, and it is the one that was always running them.
 
-def test_the_tree_parses_to_the_shape_consumers_read():
-    """The floor, and the failure this package can actually have in
-    isolation: SILENCE. A reader that finds nothing returns `[]`, and every
-    count computed from it comes out zero looking like an answer.
-    """
-    records = read(REPO_ROOT / "src")
-    expected = _raw_marker_sites(REPO_ROOT / "src")
-    assert expected, "the source inventory unexpectedly contains no annotations"
-    actual = {(record.path, record.line, record.address) for record in records}
-    assert len(actual) == len(records), "the parser duplicated an annotation"
-    assert actual == expected, {"missing": expected - actual, "unexpected": actual - expected}
-    assert any(record.state is State.IMPLEMENTED for record in records)
-    assert all(isinstance(record.path, Path) and record.path.is_absolute()
-               for record in records)
-    # A marker names the piece it carries: the migration put a name and
-    # image spans on every one, and a fresh annotation must supply both.
-    unnamed = [r for r in records if not r.name or not r.image_spans]
-    assert not unnamed, \
-        f"{len(unnamed)} records without name/spans, first at " \
-        f"{unnamed[0].path}:{unnamed[0].line}"
 
 
 def _raw_marker_sites(root: Path) -> set[tuple[Path, int, int]]:
@@ -727,7 +688,7 @@ def layering(root: Path | None = None) -> int:
     are imported like anything else.
     """
     checked = 0
-    root = root or Path(decomp.__file__).resolve().parent
+    root = root or Path(source_records.__file__).resolve().parent
     for path in sorted(root.glob("*.py")):
         module = path.stem
         if module == "__main__":
@@ -801,7 +762,7 @@ def test_a_body_fact_must_name_a_path_not_a_word():
     ("sub_628180", "sub_628180"),
 ])
 def test_qualified_name_reads_the_scope_chain(mangled, expected):
-    from decomp.mangled import qualified_name
+    from match_recovery.source.mangled import qualified_name
     assert qualified_name(mangled) == expected
 
 
@@ -814,5 +775,5 @@ def test_qualified_name_says_it_cannot_tell(mangled):
     """The module's contract everywhere: "" rather than a guess. MSVC's
     operator table is real and simply does not appear in this image, so
     inventing entries for it would be untested code that reads as fact."""
-    from decomp.mangled import qualified_name
+    from match_recovery.source.mangled import qualified_name
     assert qualified_name(mangled) == ""

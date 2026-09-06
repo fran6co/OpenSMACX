@@ -88,11 +88,11 @@ def _origin_blind() -> None:
     spelling` below is what keeps this honest by proving the check still
     reads the tree.
     """
-    base = _snap("decomp/writer.py")
+    base = _snap("packages/match-recovery/src/match_recovery/source/writer.py")
     found = re.search(r"    if record\.origin is None:\n        return False",
                       base)
     assert found, "writer.py no longer guards on record.origin"
-    _patch("decomp/writer.py", found.group(0),
+    _patch("packages/match-recovery/src/match_recovery/source/writer.py", found.group(0),
            "    if True:\n        return False")
 
 
@@ -143,7 +143,7 @@ CASES = [
 
     # THE RULER ITSELF. P0.8 pinned the image's sha256 and wired the compare
     # into `check`, but shipped no control - and the pin also turned fifteen
-    # of decomp/tests red, unnoticed, because nothing runs pytest. This
+    # of recovery/tests red, unnoticed, because nothing runs pytest. This
     # asserts the compare can still fail now that a missing image no longer
     # trips it.
     ("image pin",

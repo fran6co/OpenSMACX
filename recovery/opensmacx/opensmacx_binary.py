@@ -17,7 +17,7 @@ from match_recovery.pe_coff import Coff, PeImage
 from match_recovery.tasks import TaskStore
 from .opensmacx_project import project_view
 from recovery.environment.compile import FLAG_SETS, compile_object
-from recovery.environment.generated import check_generated
+from match_recovery.generated_binary import check_generated
 
 
 def select_bindings(view: dict, selected: frozenset[str]) -> tuple[list, list, dict]:
@@ -72,9 +72,13 @@ def select_bindings(view: dict, selected: frozenset[str]) -> tuple[list, list, d
 def _inputs(root: Path) -> tuple[str, ...]:
     # Deliberately broad until the dependency-cache cutover. Include newly added
     # files in the after-check too; a fixed list would miss a new shadowing header.
-    paths = [path.relative_to(root).as_posix() for directory in ("src", "cmake")
-             for path in (root / directory).rglob("*") if path.is_file()]
-    return tuple(sorted(set(paths) | {"build/compile_commands.json", "tools/vc6_cl.py", "tools/vc6-cl"}))
+    paths = [path.relative_to(root).as_posix() for directory in
+             ("src", "cmake", "recovery/environment", "recovery/opensmacx")
+             for path in (root / directory).rglob("*")
+             if path.is_file() and (not directory.startswith("recovery/") or path.suffix == ".py")]
+    return tuple(sorted(set(paths) | {"build/compile_commands.json", "tools/vc6_cl.py", "tools/vc6-cl",
+                                     "CMakeLists.txt", "recovery/adapter.py", "recovery/project.json",
+                                     "recovery/driver.json", "pyproject.toml", "uv.lock"}))
 
 
 def verify_task(root: Path, task_name: str, image_path: Path, *,
@@ -108,7 +112,7 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
     if {item.symbol for item in generated_bindings} & (set(externals) | {item.symbol for item in object_bindings}):
         raise ValueError("generated symbol also has a function/object binding")
     if command_for is None:
-        from decomp.asm import build_command
+        from match_recovery.source.asm import build_command
         command_for = lambda path: tuple(build_command(root / "build/compile_commands.json", path))
     units = sorted({item.unit for item in bindings})
     commands, command_errors = {}, {}

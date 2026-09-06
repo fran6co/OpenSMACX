@@ -1,7 +1,7 @@
-"""Strict direct-member layout observations from standalone VC6 /Z7 objects.
+"""Strict direct-member layout observations from standalone CodeView 5 objects.
 
-The CV5 shapes are shared with the project's debugger reader, but no type-base
-voting, partial field lists, silent numeric defaults or PCH inheritance is used.
+No type-base voting, partial field lists, silent numeric defaults or PCH
+inheritance is used.
 An unsupported class is unmeasurable, not an empty or partially verified class.
 This proves compiler placement only; original layout expectations need evidence.
 """

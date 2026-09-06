@@ -1,65 +1,82 @@
-# OpenSMACX agent handoff
+# OpenSMACX recovery handoff
 
-OpenSMACX recovers Sid Meier's Alpha Centauri (SMACX) as C++ by MATCH
-DECOMPILATION. Every mapped function carries an `ORIGINAL: 0x...` annotation
-in `src/` naming the piece, its image spans, and its measured facts. A body is
-done when VC6 (`cl 12.00.8168`) lowers it to the exact shipped bytes;
-`BYTE_EXACT` on an annotation is a ratchet claim the gate re-proves on every
-run. There is no second ledger - `src/` is the record.
+Recover Alpha Centauri as genuine C++, using the installed `match_recovery`
+framework. Work units are ownership groups; functions and original spans are
+measurement units. Byte-exact code can still have wrong hierarchy, lifetime or
+references. Do not preserve those defects to protect a local similarity score.
 
 ## Read next
 
-- `docs/DECOMP_MAP.md` - the annotation grammar, LEVER/TRIED rules, what state means
-- `.claude/commands/recover-batch.md` - the batch loop a coordinator runs
-- `.claude/agents/byte-match-recovery.md` - the worker loop, also every dispatched subagent's system prompt
-- `docs/recovery/AGENT_BRIEF.md` - measured levers; read before attacking a body
-- `docs/EXCLUSIONS.md` - declared out of scope, with populations
-- `docs/RETIRED_ROUTES.md` - retired routes and why; do not rebuild one without new evidence
+- `recovery/WORKFLOW.md`: active coordinator, worker and review workflow.
+- `recovery/README.md`: available commands, protocols and explicit limitations.
+- `docs/DECOMP_MAP.md`: current source annotation grammar and transitional writer.
+- `recovery/COMPILER_EVIDENCE.md`: relevant historical compiler observations,
+  not an overriding prompt or a list of current measurements.
+- `docs/EXCLUSIONS.md`: declared scope; difficulty alone is not an exclusion.
+- `docs/RETIRED_ROUTES.md`: historical evidence; do not rebuild a retired route
+  without new evidence.
 
-## The command line
+## Architecture
 
-Everything runs through `uv run`; never a bare `python3`.
+`src/` owns C++ and load-bearing original mappings. The root `CMakeLists.txt`
+owns the application build. `packages/match-recovery/` owns reusable recovery
+APIs and all public recovery CLI definitions. `recovery/` holds local
+configuration, project integration, task decisions and compiler interaction.
+Format/ABI parsing and verification belong in the library, not project scripts.
 
-    uv run tools/osmx.py status            # map census; report, always exit 0
-    uv run tools/osmx.py show <addr|name> [--in src/text.cpp|unrecovered]
-    uv run tools/osmx.py calls <addr>      # call sites in image order
-    uv run tools/osmx.py measure <addr | --body F | --dir D>   # exit 0 only BYTE_EXACT
-    uv run tools/osmx.py record <addrs...> # measure AND stamp annotations
-    uv run tools/osmx.py semantic <addr> [--withdraw]          # equivalence claim
-    uv run tools/osmx.py configure         # regenerate the build database
-    uv run tools/osmx.py check             # THE GATE
+There is no separate `decomp` package. Read and write annotations through
+`match_recovery.source`. Its legacy masked-byte comparison remains distinct
+from the strict reference-aware comparator. Root `tools/` is transitional:
+retire each implementation only after its live consumers and checks are replaced.
+Do not add another ad hoc CLI or compatibility layer.
 
-The seam/global instruments:
+## Commands and current acceptance boundary
 
-    uv run tools/bound_callees.py   # function-typed pointer bindings that cost call sites their E8
-    uv run tools/fold_globals.py    # object-pointer bindings that cost data references their immediate
+Everything Python runs through `uv run`, never bare `python3`.
 
-## The gate
+```sh
+uv run recover inventory
+uv run recover partition
+uv run recover tasks context <task>
+uv run recover tasks obligations <task>
+uv run recover tasks check <task> --image <image> --summary
+uv run recover run <task> --worker <config> --reviewer <config>
+uv run pytest packages/match-recovery/tests recovery/tests
+cmake --build build
+uv run tools/osmx.py check
+```
 
-`osmx check` compiles every BYTE_EXACT claim against the pinned image, links
-the tree, and runs the `compiler_work.py` census of hand-done compiler work.
-Exit 0 clean; 1 = a claim REGRESSED; 3 = something could not be measured,
-which is NOT green. NEVER PIPE IT: `cmd | tail` reports tail's exit status,
-and that has called a red gate green.
+The last command is the retained full legacy gate: never pipe it. Exit 0 is
+clean, 1 a failure, 3 unmeasurable—not green. This project's strict full
+acceptance and migration-check adapters are unfinished. Scoped checks and
+reviews do not establish full acceptance or a working game.
+
+Until the stamping command migrates, only `uv run tools/osmx.py record <addrs>`
+banks measured legacy claims. Never hand-edit an `ORIGINAL:` marker or type a
+`BYTE_EXACT` token. Those claims retain restoration obligations; they are not
+proof of current structure or relocation-target correctness.
 
 ## Working rules
 
-- One commit per step or batch; the tree is the log.
-- Only `osmx record` banks BYTE_EXACT, and it stamps only what it measured.
-  Never hand-type the token; never edit an `ORIGINAL:` marker line by hand.
-- Parameters are `int`, never `uint32_t`: MSVC decorates them `H` versus `I`,
-  and the wrong spelling stops the symbol matching.
-- No `__asm`, no `_emit`, no copied machine code. A body that does not match
-  is unfinished work, never excluded for difficulty.
-- State is measured, not claimed: `TRIED:` notes belong under markers of
-  bodies that do not yet match, `LEVER:` notes on bodies that do. Grammar in
-  `docs/DECOMP_MAP.md`.
-- Subagents work in their own worktrees (`tools/agent_setup.sh`); the
-  coordinator alone runs git, collection (`tools/collect_agent.py`), and
-  reaping (`tools/reap_worktrees.py`).
-- Proprietary bytes and derived artifacts stay in ignored `.opensmacx/` and
-  `build/`. Never commit objects, listings, or fixtures derived from the
-  original executable.
-- Measure with existing tools before writing a new one.
-- Docs name only paths that exist: `tools/stale_references.py`, wired into
-  the gate, fails any live instruction naming a missing file.
+- Prefer real bases, members, globals, virtual methods and lifecycle code over
+  vtable arrays, fixed executable addresses, raw self-offset access or stand-ins.
+  No `__asm`, `_emit` or copied machine code. Names/types require evidence.
+- Preserve cross-function/class discoveries and request scope expansion before
+  editing outside the authorized task. Do not discard a discovery as unrelated.
+- Do not automatically revert a justified structural migration on a byte
+  regression. Preserve its source work and historical obligations for reviewed
+  restoration; do not demote claims, weaken gates or label it accepted.
+- Source owns essential bindings and structural evidence. Versioned task JSON
+  owns non-derivable scope/review/discovery decisions; Git messages explain
+  completed changes. Recompute reports or cache them in ignored locations.
+  Existing LEVER/TRIED comments are seed history, not new run-log destinations.
+- Workers use isolated, coordinator-prepared worktrees/builds/compiler prefixes.
+  Only the coordinator runs Git mutations, integration and cleanup. No shared
+  stash, unapproved scope changes, or automatic worker fast-forwards.
+- One commit per verified step. Preserve other agents' edits and recheck after
+  integration. Never discard or reap work that has not been safely preserved.
+- Keep proprietary bytes and derivatives in ignored `.opensmacx/` or `build/`.
+  Retain dependency licenses/provenance; recognized libraries are verification
+  dependencies, not application-function recovery targets.
+- Measure with existing facilities first. Remove replaced tools, prompts and
+  stale instructions together; retain useful lessons, not obsolete workflows.

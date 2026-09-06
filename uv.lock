@@ -5,7 +5,7 @@ requires-python = ">=3.12"
 [manifest]
 members = [
     "match-recovery",
-    "opensmacx-decomp",
+    "opensmacx-recovery",
 ]
 
 [[package]]
@@ -70,6 +70,15 @@ name = "match-recovery"
 version = "0.1.0"
 source = { editable = "packages/match-recovery" }
 
+[package.optional-dependencies]
+x86 = [
+    { name = "capstone" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "capstone", marker = "extra == 'x86'", specifier = "==5.0.6" }]
+provides-extras = ["x86"]
+
 [[package]]
 name = "mdurl"
 version = "0.1.2"
@@ -80,11 +89,11 @@ wheels = [
 ]
 
 [[package]]
-name = "opensmacx-decomp"
+name = "opensmacx-recovery"
 version = "0.1.0"
-source = { editable = "." }
+source = { virtual = "." }
 dependencies = [
-    { name = "capstone" },
+    { name = "match-recovery", extra = ["x86"] },
 ]
 
 [package.dev-dependencies]
@@ -92,19 +101,15 @@ test = [
     { name = "pytest" },
 ]
 tools = [
-    { name = "match-recovery" },
     { name = "typer" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "capstone", specifier = "==5.0.6" }]
+requires-dist = [{ name = "match-recovery", extras = ["x86"], editable = "packages/match-recovery" }]
 
 [package.metadata.requires-dev]
 test = [{ name = "pytest", specifier = "==8.4.1" }]
-tools = [
-    { name = "match-recovery", editable = "packages/match-recovery" },
-    { name = "typer", specifier = ">=0.16" },
-]
+tools = [{ name = "typer", specifier = ">=0.16" }]
 
 [[package]]
 name = "packaging"

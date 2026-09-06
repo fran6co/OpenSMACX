@@ -3,16 +3,16 @@
 One call answers the recovery's central question for one record:
 
     from pathlib import Path
-    from decomp import read_file
-    from decomp.asm import compare_record
+    from match_recovery.source import read_file
+    from match_recovery.source.asm import compare_record
 
     records = read_file(Path("src/buffer.cpp"))
     record = next(r for r in records if r.address == 0x005DAC70)
-    from decomp.asm import build_command
+    from match_recovery.source.asm import build_command
     command = build_command(Path("build/compile_commands.json"),
                             record.path)
     compare_record(record,
-                   Path(".opensmacx/game/terranx_original.exe"),
+                   Path("/path/to/original.exe"),
                    command, FLAG_SETS).verdict
 
 and the two sides are still available separately, as `original_asm` and
@@ -48,8 +48,8 @@ belonging to several functions, a span that rewrites itself at run time -
 and keeping them apart from the misses is what lets a reader tell a wall
 from a body nobody has written. See `model.Tier`.
 
-WHAT IS STILL ELSEWHERE: the EH funclet classification, jump-table
-clipping, batching, caching and the ledger.
+This legacy comparer masks relocations. It cannot establish reference identity
+or replace the framework's strict comparison and full acceptance checks.
 
 CAPSTONE is imported like anything else. It is a declared dependency, so a
 lazy import bought nothing but a failure that arrives halfway through a

@@ -16,7 +16,7 @@ from .opensmacx import legacy_snapshot
 
 
 def class_hint(symbol: str) -> str | None:
-    from decomp.mangled import qualified_name
+    from match_recovery.source.mangled import qualified_name
 
     # Initializers/deleting thunks need ownership analysis, not an invented
     # class based on a quoted demangler description or an encoded variable name.

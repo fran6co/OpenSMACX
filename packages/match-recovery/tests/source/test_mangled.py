@@ -2,7 +2,7 @@
 
 import pytest
 
-from decomp.mangled import arity
+from match_recovery.source.mangled import arity
 
 # The real overload sets this exists for: in each pair the catalogue's
 # spelling and what CL emits disagree about the return type, the constness,

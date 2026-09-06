@@ -27,8 +27,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import capstone.x86 as x86
 
-from decomp import read
-from decomp.asm import (build_command, compile_unit, original_asm,
+from match_recovery.source import read
+from match_recovery.source.asm import (build_command, compile_unit, original_asm,
                         shared_spans, span_refusal, subject_asm)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent

@@ -12,11 +12,11 @@ first place, since the image carries no symbols - and each fact now travels
 with the annotation that needs it, so nothing else has to be consulted to
 read the map.
 
-Reader: the `decomp` package (`uv sync` installs it editable, so
-`from decomp import read` works anywhere). Driver: `tools/osmx.py`, the
-command line over it. Offline tests: `uv run pytest decomp/tests` - the
-parse, the read -> write -> read loop over every annotated file, and what
-each module may import.
+Reader/writer: `match_recovery.source`, installed with `match-recovery`.
+Portable tests: `uv run pytest packages/match-recovery/tests`; whole-source and
+build controls: `uv run pytest recovery/tests`. The legacy `tools/osmx.py`
+measurement/stamping/gate command remains during cutover. The active task and
+structural-migration workflow is `recovery/WORKFLOW.md`, not this format reference.
 
 ## The grammar
 
@@ -46,7 +46,7 @@ from the object rather than guessed, and its value is a single token — the
 key alone cannot be trusted, because `src/` carries 2,037 prose lines that
 begin `// symbol ` and every one of them is a sentence. 1,543 were written
 on 2026-08-19 for the records the build compiles. Every reader goes through
-`decomp`, which reads this fact, and an annotation without one is simply a
+`match_recovery.source`, which reads this fact, and an annotation without one is simply a
 piece whose emitted name is its `name`.
 
 ```
@@ -70,14 +70,21 @@ ORIGINAL: 0x0046FB10 ?g@@YAXXZ 0x0046FB10-0x0046FB40 BYTE_EXACT
 ever written into the tree. It is a claim, not a status field: every other
 tier — MISMATCH, NO_COMPILE, MNEMONIC_ONLY — is measured on demand and
 recorded nowhere, because a status field in a comment goes stale the moment
-someone edits the body and is believed anyway. `--record-matches` adds the
-token for everything a run proves and never removes one, so losing a claim is
-a deliberate source edit visible in the diff.
+someone edits the body and is believed anyway. The retained `osmx record`
+command adds a token only for a body it measures; `--record-matches` belongs to
+a retired command. Existing tokens preserve restoration obligations even when
+structural work temporarily stops reproducing them.
 
 The lookbehind matters: `PROVEN-AGAINST-ORIGINAL: 0x...` provenance
 comments end in this spelling and are not map entries.
 
-## What was learned, beside the body it was learned on
+## Historical lesson syntax (read-only seed context)
+
+The reader preserves existing LEVER/TRIED notes losslessly. The convention below
+describes those historical comments, not instructions to add new run logs to
+source. Current discoveries and decisions use task history; reproducible scores,
+listings and attempts are recomputed or cached. Essential accepted structural
+facts belong in source. See `recovery/WORKFLOW.md` for that boundary.
 
 Two tokens, read only from the comment run immediately after a marker, so the
 same words in prose further down a file are not a claim:
@@ -110,10 +117,8 @@ or it is a long `TRIED` list, and nothing in between. One marker carrying
 both "I stopped" and "nobody should try" is the trap that got a `static_assert`
 migration reverted.
 
-No automated check enforces LEVER/TRIED placement today; the rule lives here
-and in the worker prompt. The convention that does the work: an agent whose
-attempt does not match writes what it tried under the body's own marker in
-`src/`, so the next attempt starts from what failed instead of from zero.
+No automated check enforces historical LEVER/TRIED placement. A stale historical
+note is not a refusal to recover the body or a current measurement.
 
 `// EXTERN-SYMBOL LEVER:` is a different, older convention that appears inside
 recovered bodies; the anchored grammar above does not read it.
@@ -133,8 +138,9 @@ construction.
 
 `src/unrecovered/` holds working-copy units materialised by the retired
 scaffold route; they are verification artifacts, not product source, and are
-not build inputs. New work happens IN PLACE: the worker edits the body under
-its own marker in the `src/` file that claims it.
+not build inputs. They are seeds for ownership-scoped recovery, not a mandatory
+source form. Reconcile mappings and callers when establishing a product home;
+do not copy a scaffold merely because the old workflow did so.
 `uv run tools/osmx.py show <addr> --in unrecovered` still reads an old copy
 when it is the best starting point.
 
@@ -150,11 +156,15 @@ uv run tools/osmx.py semantic <addr> [--withdraw]          # equivalence claim
 uv run tools/osmx.py configure         # regenerate the build database
 ```
 
-Measurement goes through `decomp.asm`: the pinned image on one side, the
+Legacy measurement goes through `match_recovery.source.asm`: the pinned image on one side, the
 record's unit compiled by VC6 on the other, several flag sets compared, and
 the best answer kept. `--dir` scores a whole directory of candidate bodies
 best-first in one pass. Without VC6, Wine, or the pinned image the commands
-print the reason instead of guessing.
+print the reason instead of guessing. This comparer masks relocations and does
+not prove target identity or C++ structure; the strict framework checks remain
+separate until full-gate cutover. Claims retain restoration obligations during
+structural work. Never hand-edit them or automatically revert a justified
+structural change merely to avoid a temporary regression.
 
 **THE RATCHET IS `osmx check`.** It reads the claims in `src/`, recompiles
 every one against the pinned image, links the tree, and fails by address and
@@ -170,7 +180,7 @@ map, so drift is checked by re-measurement rather than by comparison with an
 export. `osmx status` reports how many records the build can compile today;
 records in non-build directories are counted separately, and an address
 claimed by both product source and a leftover artifact is what
-`tools/orphan_artifacts.py` exists to catch.
+`tools/address_index.py` reports alongside the gate's artifact checks.
 
 ## Migration — done 2026-08-09
 

@@ -12,7 +12,7 @@ from .opensmacx import image_pin, legacy_snapshot
 from .opensmacx_binary import _inputs
 from .opensmacx_project import class_hint
 from recovery.environment.compile import FLAG_SETS, compile_object
-from recovery.environment.layout import ClassNotEmitted, class_layout
+from match_recovery.codeview import ClassNotEmitted, class_layout
 
 
 def verify_layout(root: Path, task_name: str, *, compiler=compile_object, command_for=None) -> dict:
@@ -41,7 +41,7 @@ def verify_layout(root: Path, task_name: str, *, compiler=compile_object, comman
             hints[item["path"]].setdefault(name, set()).add(item["entity_id"])
     required_classes = {item.class_name for item in (*expected, *expected_bases)}
     if command_for is None:
-        from decomp.asm import build_command
+        from match_recovery.source.asm import build_command
         command_for = lambda path: tuple(build_command(root / "build/compile_commands.json", path))
     rows, observations, attempts = [], [], 0
     base_rows = []

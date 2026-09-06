@@ -19,7 +19,7 @@ from .opensmacx import _sources, image_pin, legacy_snapshot
 
 
 def task_obligations(root: Path, name: str) -> dict:
-    from decomp.reader import read_text
+    from match_recovery.source.reader import read_text
 
     root = root.resolve()
     store = TaskStore(root)

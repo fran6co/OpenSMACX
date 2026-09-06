@@ -36,8 +36,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from decomp import read
-from decomp.asm import build_inputs
+from match_recovery.source import read
+from match_recovery.source.asm import build_inputs
 
 REPO = Path(__file__).resolve().parent.parent
 SRC = REPO / "src"

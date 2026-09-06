@@ -22,7 +22,7 @@ annotations already said.
   IV  clearing a record's lessons deletes exactly the lines `origin`
       attributes to them - no more, no fewer
 
-II and III derive their edits from `decomp.record.stamped` rather than
+II and III derive their edits from `match_recovery.source.record.stamped` rather than
 re-spelling its rule, because a checker carrying its own copy of the rule
 it checks is the defect it exists to catch.
 
@@ -40,9 +40,9 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
-from decomp import read, write                        # noqa: E402
-from decomp.asm import AsmComparison, Tier            # noqa: E402
-from decomp.record import stamped                     # noqa: E402
+from match_recovery.source import read, write                        # noqa: E402
+from match_recovery.source.asm import AsmComparison, Tier            # noqa: E402
+from match_recovery.source.record import stamped                     # noqa: E402
 
 
 def by_file(root: Path) -> dict:
@@ -135,7 +135,7 @@ def census(root: Path):
 
 def _reread(text: str, line: int):
     """The record at `line` in `text`, read back from the text itself."""
-    from decomp.reader import _read_text
+    from match_recovery.source.reader import _read_text
     for candidate in _read_text(text, REPO / "src" / "reread.cpp"):
         if candidate.line == line:
             return candidate

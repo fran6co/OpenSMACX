@@ -10,9 +10,9 @@ from pathlib import Path
 
 import pytest
 
-from decomp import Tier, read_file
-from decomp.asm import AsmComparison
-from decomp.record import record_match, stamped
+from match_recovery.source import Tier, read_file
+from match_recovery.source.asm import AsmComparison
+from match_recovery.source.record import record_match, stamped
 
 MARKED = """// ORIGINAL: 0x00401000 ?f@C@@QAEXXZ 0x00401000-0x00401008
 // LEVER: jl/jge  flipped the condition and swapped the arms
@@ -106,7 +106,7 @@ def test_no_tier_lowers_a_claim_on_its_own(tmp_path, tier):
 
 
 def test_record_match_writes_the_claim_it_measured(tmp_path, monkeypatch):
-    import decomp.record as module
+    import match_recovery.source.record as module
     record = record_in(tmp_path, MARKED)
     monkeypatch.setattr(module, "compare_record",
                         lambda *a, **k: verdict(Tier.BYTE_EXACT))
@@ -118,7 +118,7 @@ def test_record_match_writes_the_claim_it_measured(tmp_path, monkeypatch):
 def test_record_match_touches_nothing_when_nothing_changed(tmp_path,
                                                            monkeypatch):
     """A run over a tree that has not moved must not rewrite it."""
-    import decomp.record as module
+    import match_recovery.source.record as module
     record = record_in(tmp_path, MATCHED)
     before = (tmp_path / "x.cpp").stat().st_mtime_ns
     monkeypatch.setattr(module, "compare_record",
@@ -134,7 +134,7 @@ def test_a_claim_that_stopped_reproducing_is_kept_for_a_human(tmp_path,
     how a ratchet quietly stops being one. `docs/DECOMP_MAP.md`: either a
     tooling change or a lost scaffolding, and both need a human.
     """
-    import decomp.record as module
+    import match_recovery.source.record as module
     record = record_in(tmp_path, MATCHED)
     monkeypatch.setattr(module, "compare_record",
                         lambda *a, **k: verdict(Tier.MISMATCH))
@@ -145,7 +145,7 @@ def test_a_claim_that_stopped_reproducing_is_kept_for_a_human(tmp_path,
 def test_the_lesson_still_moves_when_the_claim_is_kept(tmp_path, monkeypatch):
     """A `LEVER` the measurement contradicts is wrong whether or not anyone
     has decided what to do about the claim; lessons are not a floor."""
-    import decomp.record as module
+    import match_recovery.source.record as module
     record = record_in(tmp_path, MATCHED)
     monkeypatch.setattr(module, "compare_record",
                         lambda *a, **k: verdict(Tier.MISMATCH))
@@ -159,7 +159,7 @@ def test_the_lesson_still_moves_when_the_claim_is_kept(tmp_path, monkeypatch):
 
 
 def test_demote_is_how_a_caller_says_it_has_looked(tmp_path, monkeypatch):
-    import decomp.record as module
+    import match_recovery.source.record as module
     record = record_in(tmp_path, MATCHED)
     monkeypatch.setattr(module, "compare_record",
                         lambda *a, **k: verdict(Tier.MISMATCH))
@@ -169,7 +169,7 @@ def test_demote_is_how_a_caller_says_it_has_looked(tmp_path, monkeypatch):
 
 def test_a_claim_gained_is_written_without_asking(tmp_path, monkeypatch):
     """Only losing one needs a decision; proving one is the point."""
-    import decomp.record as module
+    import match_recovery.source.record as module
     record = record_in(tmp_path, MARKED)
     monkeypatch.setattr(module, "compare_record",
                         lambda *a, **k: verdict(Tier.BYTE_EXACT))

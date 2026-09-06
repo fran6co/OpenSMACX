@@ -5,7 +5,7 @@ one away, and it may move a lesson between the two vocabularies the grammar
 allows - but it never invents prose. What a body was matched BY is something
 a person writes; what a measurement knows is whether it still matches.
 
-    from decomp.record import stamped, record_match
+    from match_recovery.source.record import stamped, record_match
 
     stamped(record, verdict)      # the record the measurement implies
     record_match(record, exe, command, flags)   # measure, then write it

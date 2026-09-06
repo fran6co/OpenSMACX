@@ -28,8 +28,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from decomp import read
-from decomp.asm import (build_command, build_inputs, compiled_asm,
+from match_recovery.source import read
+from match_recovery.source.asm import (build_command, build_inputs, compiled_asm,
                         original_asm, shared_spans, span_refusal)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent

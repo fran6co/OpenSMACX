@@ -32,8 +32,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from decomp import read
-from decomp.asm import original_asm
+from match_recovery.source import read
+from match_recovery.source.asm import original_asm
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 IMAGE = Path(os.environ.get(

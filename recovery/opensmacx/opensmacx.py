@@ -47,8 +47,8 @@ def _lifetime_binding_hint(record) -> dict | None:
     This is a candidate to measure, not permission to change a mapping. A real
     constructor/destructor may still be wrong; never silently select it instead.
     """
-    from decomp.mangled import qualified_name
-    from decomp.reader import function_line
+    from match_recovery.source.mangled import qualified_name
+    from match_recovery.source.reader import function_line
 
     prefix = record.name[:3]
     if prefix not in ("??0", "??1") or not record.symbol or record.symbol.startswith(prefix):
@@ -66,7 +66,7 @@ def _lifetime_binding_hint(record) -> dict | None:
 
 
 def _parse_file(raw: bytes, path: Path, root: Path, pin: str) -> dict:
-    from decomp.reader import read_text
+    from match_recovery.source.reader import read_text
 
     records, obligations = [], []
     file_digest = hashlib.sha256(raw).hexdigest()
@@ -112,10 +112,10 @@ def _parse_file(raw: bytes, path: Path, root: Path, pin: str) -> dict:
 
 
 def _parser_key() -> str:
-    # Lazy import keeps the portable core independent of the legacy parser.
-    import decomp
+    # Include the installed source parser implementation in disposable memo keys.
+    from match_recovery import source as source_records
 
-    package = Path(decomp.__file__).parent
+    package = Path(source_records.__file__).parent
     inputs = {path.relative_to(package).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
               for path in sorted(package.rglob("*.py"))}
     import match_recovery

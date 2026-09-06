@@ -1,4 +1,4 @@
-"""Tests for decomp.asm.
+"""Tests for match_recovery.source.asm.
 
 The hermetic half runs anywhere: fact reading, span extraction, the COFF
 reader against a hand-built object, and the clear refusals. The other half
@@ -7,39 +7,19 @@ and skips itself on a box without it; the end-to-end agreement check is a
 smoke test, with the ratchet in tools/ keeping the strict machinery.
 """
 
-import shutil
 import struct
 import subprocess
 from pathlib import Path
 
 import pytest
 
-from decomp import read_file
-from decomp import asm
-from decomp.asm import (build_command, compare_asm, compiled_asm,
+from match_recovery.source import read_file
+from match_recovery.source import asm
+from match_recovery.source.asm import (build_command, compare_asm, compiled_asm,
                         original_asm)
 
-# The environment's facts live HERE, not in the package: where this checkout
-# is, and where the pinned image and the build database are on this box. The
-# compiler itself is the build's own business - the compile command names it.
-# `reader` used to export the repository root and this file imported it, which
-# said the exact opposite of the sentence above.
-REPO_ROOT = Path(__file__).resolve().parents[2]
-EXE = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe"
-COMPILE_COMMANDS = REPO_ROOT / "build" / "compile_commands.json"
-# THE FLAG SETS BELONG TO THE CALLER, and these tests are one. `/O2` implies
-# `/Oy`, which omits the frame pointer, and the shipped image is mixed - so
-# which invocation reproduces a given function is a property of the function,
-# and asking only the first of these answers about half the image. They are
-# not a build setting either: `/Oy-` appears nowhere in this tree's CMake
-# configuration, which is a Debug database of `/Od /Ob0`.
+# A synthetic caller-supplied flag set; the library selects no environment.
 FLAGS = "/c /O2 /Gy /GR- /Oy- /GX"
-FRAMELESS_FLAGS = "/c /O2 /Gy /GR- /GX"
-FLAG_SETS = (FLAGS, FRAMELESS_FLAGS,
-             "/c /O1 /Gy /GR- /Oy- /GX", "/c /O1 /Gy /GR- /GX")
-
-HAVE_EXE = EXE.is_file()
-HAVE_BUILD = COMPILE_COMMANDS.is_file() and shutil.which("wine") is not None
 
 MARKED = """// ORIGINAL: 0x00401000 ?f@C@@QAEXXZ 0x00401000-0x00401008
 // size      8 bytes
@@ -211,32 +191,8 @@ def test_compare_length_difference():
 # ------------------------------------------------------- the real thing
 
 
-@pytest.mark.skipif(not HAVE_EXE, reason="no pinned executable")
-def test_original_asm_on_a_known_record():
-    records = read_file(REPO_ROOT / "src" / "buffer.cpp")
-    record = next(r for r in records if r.address == 0x005D7210)
-    lines = original_asm(record, EXE).lines
-    assert lines
-    assert lines[0].startswith("0x005D7210")
 
 
-@pytest.mark.skipif(not (HAVE_EXE and HAVE_BUILD),
-                    reason="no build environment")
-def test_byte_exact_body_compiles_to_the_same_shape():
-    """Smoke: a BYTE_EXACT claim reproduces byte for byte. The strict
-    multi-flag machinery stays with the ratchet in tools/byte_match.py;
-    this is the single-flag comparison the package offers."""
-    records = read_file(REPO_ROOT / "src" / "caviar.cpp")
-    record = next(r for r in records if r.address == 0x00616BC0)
-    assert record.byte_exact
-    original = original_asm(record, EXE)
-    command = build_command(COMPILE_COMMANDS, record.path)
-    compiled = compiled_asm(record, command, FLAGS)
-    result = compare_asm(original, compiled)
-    assert result.verdict == "BYTE_EXACT", \
-        f"{result.verdict}: {result.matching_instructions}/{result.original_instructions} " \
-        f"lines match, similarity {result.mnemonic_similarity:.2f}"
-    assert result.matching_instructions == result.original_instructions
 
 
 # ------------------------------------------- naming the subject in an object
@@ -323,7 +279,7 @@ def test_region_identifiers_reads_the_definition_head(tmp_path):
     """The migration aid that WRITES the fact above, kept out of the
     measurement path on purpose."""
     record = record_in(tmp_path, SHIM)
-    from decomp.reader import region_identifiers
+    from match_recovery.source.reader import region_identifiers
     assert "base_win_on_scrolling_redirect" in region_identifiers(record)
 
 
@@ -486,81 +442,21 @@ void f() {
 """
 
 
-@pytest.mark.skipif(not HAVE_EXE, reason="no pinned executable")
-def test_the_image_says_which_of_its_code_can_rewrite_itself():
-    """This was `SELFMOD_RANGE = (0x00664000, 0x00669000)` in the source -
-    the bounds of one section of one image, transcribed where nothing could
-    keep them true. The image states the PROPERTY in its own section
-    characteristics: exactly one section here is executable and writable."""
-    assert asm.rewrites_itself(EXE, 0x00666F68)
-    assert not asm.rewrites_itself(EXE, 0x005DAC70)     # .text: exec, not write
-    assert not asm.rewrites_itself(EXE, 0x00682100)     # .data: write, not exec
-    assert not asm.rewrites_itself(EXE, 0x00000010)     # in no section at all
-    writable_code = [n for n, _lo, _hi, c in asm._sections(EXE)
-                     if c & asm.IMAGE_SCN_MEM_EXECUTE
-                     and c & asm.IMAGE_SCN_MEM_WRITE]
-    assert writable_code == ["_SELFMOD"], writable_code
-    assert asm.section_of(EXE, 0x005DAC70) == ".text"
 
 
-@pytest.mark.skipif(not HAVE_EXE, reason="no pinned executable")
-def test_a_self_modifying_span_is_refused_before_a_compiler(tmp_path):
-    record = record_in(tmp_path, SELFMOD)
-    assert asm.span_refusal(record, EXE) == "REFUSED"
 
 
-def test_a_folded_tail_belongs_to_no_single_body(tmp_path):
-    a = record_in(tmp_path, MARKED)
-    shared = asm.shared_spans([a, a.__class__(**{**a.__dict__,
-                                                "address": 0x00402000})])
-    assert a.image_spans[0] in shared
-    assert asm.span_refusal(a, EXE, shared) == "SHARED_TAIL"
 
 
-def test_an_ordinary_span_is_not_refused(tmp_path):
-    assert asm.span_refusal(record_in(tmp_path, MARKED), EXE) is None
 
 
 # --------------------------------------------- a command, not a permission
 
 
-@pytest.mark.skipif(not HAVE_BUILD, reason="no build database")
-def test_build_command_reads_the_builds_own_invocation():
-    command = build_command(COMPILE_COMMANDS, REPO_ROOT / "src" / "buffer.cpp")
-    assert command[0].endswith("vc6-cl")
-    assert any(w.startswith("/I") for w in command)
-    # NOT the optimisation flags: those are a property of the function being
-    # matched, and belong to whoever is asking.
-    assert not any(w.startswith(("/O", "/Gy", "/Oy")) for w in command)
 
 
-@pytest.mark.skipif(not HAVE_BUILD, reason="no build database")
-def test_a_file_the_build_does_not_name_is_refused_not_guessed():
-    """3,315 records live in files CMake has no reason to build, and most
-    are FILE-mode - already a translation unit, wanting only an invocation.
-    Which invocation is a judgement about include paths that the caller
-    holds, so this refuses and says what to pass instead of picking one."""
-    with pytest.raises(ValueError, match="pass the command of a file that is"):
-        build_command(COMPILE_COMMANDS,
-                      REPO_ROOT / "src" / "recovered" / "units" / "x.cpp")
 
 
-@pytest.mark.skipif(not HAVE_BUILD, reason="no build database")
-def test_a_borrowed_command_compiles_a_file_the_build_never_names():
-    """The borrow is the caller's to make, and it works: the same command
-    that builds `buffer.cpp` builds a unit CMake never sees."""
-    from decomp import read
-    from decomp.asm import compare_record
-    units = REPO_ROOT / "src" / "recovered" / "units"
-    if not units.is_dir():
-        pytest.skip("no proved-unit store in this checkout")
-    record = next((r for r in read(units) if r.symbol or r.name), None)
-    if record is None:
-        pytest.skip("no annotated unit to try")
-    command = build_command(COMPILE_COMMANDS, REPO_ROOT / "src" / "buffer.cpp")
-    verdict = compare_record(record, EXE, command, FLAGS)
-    assert verdict.verdict in tuple(str(t) for t in __import__(
-        "decomp").Tier)
 
 
 def test_one_instruction_of_another_size_does_not_disable_the_mask():
@@ -751,3 +647,32 @@ def test_a_subject_no_invocation_emits_is_still_an_error(tmp_path,
     monkeypatch.setattr(asm, "span_refusal", lambda *a, **k: None)
     with pytest.raises(ValueError, match="stale"):
         asm.compare_record(record, "exe", ["cl"], ("/O2", "/O2 /Ob0"))
+
+
+def section_image(tmp_path):
+    """Synthetic PE section metadata; no application image or compiler needed."""
+    data = bytearray(0x200)
+    data[:2] = b"MZ"
+    struct.pack_into("<I", data, 0x3C, 0x80)
+    data[0x80:0x84] = b"PE\0\0"
+    struct.pack_into("<HHIIIHH", data, 0x84, 0x14C, 1, 0, 0, 0, 0xE0, 0)
+    struct.pack_into("<H", data, 0x98, 0x10B)
+    struct.pack_into("<I", data, 0x98 + 28, 0x400000)
+    struct.pack_into("<8sIIIIIIHHI", data, 0x178, b".text", 0x1000, 0x1000,
+                     0x1000, 0x200, 0, 0, 0, 0, 0x60000020)
+    path = tmp_path / "synthetic.exe"
+    path.write_bytes(data)
+    return path
+
+
+def test_a_folded_tail_belongs_to_no_single_body(tmp_path):
+    a = record_in(tmp_path, MARKED)
+    shared = asm.shared_spans([a, a.__class__(**{**a.__dict__,
+                                                "address": 0x00402000})])
+    assert a.image_spans[0] in shared
+    assert asm.span_refusal(a, section_image(tmp_path), shared) == "SHARED_TAIL"
+
+
+
+def test_an_ordinary_span_is_not_refused(tmp_path):
+    assert asm.span_refusal(record_in(tmp_path, MARKED), section_image(tmp_path)) is None

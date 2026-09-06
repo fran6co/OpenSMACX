@@ -22,8 +22,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from decomp import read
-from decomp.asm import (build_command, compare_record,
+from match_recovery.source import read
+from match_recovery.source.asm import (build_command, compare_record,
                         compiled_asm, original_asm)
 from osmx import FLAG_SETS
 

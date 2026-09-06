@@ -40,8 +40,8 @@ import sys
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from decomp.reader import read  # noqa: E402
-from decomp.asm import original_asm  # noqa: E402
+from match_recovery.source.reader import read  # noqa: E402
+from match_recovery.source.asm import original_asm  # noqa: E402
 
 IMAGE = pathlib.Path(
     os.environ.get("OPENSMACX_IMAGE",

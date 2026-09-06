@@ -1,39 +1,28 @@
 [project]
-name = "opensmacx-decomp"
+name = "opensmacx-recovery"
 version = "0.1.0"
-description = "The source map: what src/ says about the shipped SMACX image."
+description = "Project configuration for recovering the shipped SMACX image."
 requires-python = ">=3.12"
-# THE READERS ARE STDLIB; THE COMPARISON IS NOT. `decomp/asm.py` disassembles
-# both sides of a byte match, so capstone is a real dependency rather than a
-# lazy import that may or may not resolve - a package whose central function
-# raises ImportError on a fresh install is not installed.
-#
-# The narrower invariant is the one worth keeping, and it is CHECKED rather
-# than promised here: `model`, `grammar`, `reader` and `writer` import nothing
-# outside the standard library, so reading an annotation still costs nothing.
-# z3, pefile and the rest belong to the tools that solve and export, and stay
-# in the group below.
-dependencies = ["capstone==5.0.6"]
+# The application is not a Python package. The installed framework owns the
+# source readers; this project's legacy i386 measurement also needs its extra.
+dependencies = ["match-recovery[x86]"]
 
 [dependency-groups]
-# The command line built on `decomp`. A group rather than a project
-# dependency: importing the package must not require the thing that wraps
-# it, and `decomp` itself uses none of this.
+# Temporary legacy command dependencies; removed as those commands migrate.
 tools = [
-    "match-recovery",
     # typer 0.15.1 calls `Parameter.make_metavar()` without the `ctx` that
     # click 8.2 made required, so `--help` raises. Newer typer fixed it;
     # pinning the pair is what keeps `--help` from being the one command
     # nobody runs until it matters.
     "typer>=0.16",
 ]
-# The decomp package's own tests. A group for the same reason: the package
-# RUNTIME stays free of them, and only decomp/tests/ imports this.
+# Test runners are not package runtime dependencies.
 test = [
     "pytest==8.4.1",
 ]
 
 [tool.uv]
+package = false
 # So a bare `uv sync` reproduces the environment every tool already runs on,
 # without anyone having to remember a group name.
 default-groups = ["tools", "test"]
@@ -44,17 +33,6 @@ members = ["packages/match-recovery"]
 [tool.uv.sources]
 match-recovery = { workspace = true }
 
-[build-system]
-requires = ["uv_build>=0.9,<0.10"]
-build-backend = "uv_build"
-
-[tool.uv.build-backend]
-# NOT the default `src` - that directory is 3,478 C++ files. The package sits
-# at the repository root, which an editable install turns into the one .pth
-# entry: `import decomp` from anywhere, and nothing else exposed.
-#
-# It briefly lived at `tools/decomp` so that the .pth would put `tools/` on
-# sys.path and let the package import the scripts beside it. The package is
-# self-contained now, so that reason is gone and it moved back out.
-module-root = ""
-module-name = "decomp"
+[tool.pytest.ini_options]
+# Project integration imports stay test-local, not an editable root package.
+pythonpath = ["."]

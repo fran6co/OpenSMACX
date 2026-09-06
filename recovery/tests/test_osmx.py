@@ -1,4 +1,4 @@
-"""The command line over `decomp`.
+"""Transitional command semantics over the installed source API.
 
 Tested through typer's runner rather than a subprocess: the point is what
 the command decides, and a subprocess would mostly be testing that Python
@@ -19,6 +19,28 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
 import osmx                                                  # noqa: E402
 
 runner = CliRunner()
+
+
+@pytest.fixture(autouse=True)
+def project_audits(monkeypatch):
+    """Synthetic command tests must not build/audit the actual application.
+
+    The full gate and its damage suite exercise those processes separately.
+    Keep their exit codes controllable here so refusal propagation is tested.
+    """
+    failures = set()
+    actual = subprocess.run
+    def invoke(argv, *args, **kwargs):
+        command = [str(word) for word in argv]
+        audit = (len(command) > 1 and command[0] == sys.executable
+                 and Path(command[1]).parent == osmx.REPO_ROOT / "tools")
+        build = command[:2] == ["cmake", "--build"]
+        if audit or build:
+            key = Path(command[1]).name if audit else "build"
+            return subprocess.CompletedProcess(argv, int(key in failures), "", "")
+        return actual(argv, *args, **kwargs)
+    monkeypatch.setattr(osmx.subprocess, "run", invoke)
+    return failures
 
 ANNOTATED = """// ORIGINAL: 0x00401000 ?a@@YAXXZ 0x00401000-0x00401040 BYTE_EXACT
 void a() {
@@ -217,8 +239,8 @@ def test_measure_names_exactly_one_piece(named):
 def test_measure_exits_zero_only_for_byte_exact(named, monkeypatch):
     """The contract every other tier is measured against, and what lets
     this be a shell loop condition."""
-    from decomp import Tier
-    from decomp.asm import AsmComparison
+    from match_recovery.source import Tier
+    from match_recovery.source.asm import AsmComparison
 
     for tier in Tier:
         monkeypatch.setattr(
@@ -231,7 +253,7 @@ def test_measure_exits_zero_only_for_byte_exact(named, monkeypatch):
 
 def test_measure_reports_a_compile_failure_rather_than_crashing(named,
                                                                 monkeypatch):
-    from decomp.asm import CompileFailed
+    from match_recovery.source.asm import CompileFailed
 
     def refuse(*args, **kwargs):
         raise CompileFailed("x.cpp(3) : error C2065: 'g_x' : undeclared")
@@ -245,8 +267,8 @@ def test_measure_reports_a_compile_failure_rather_than_crashing(named,
 def test_measure_writes_nothing(named, monkeypatch):
     """`record` is the one that stamps a claim. Keeping them apart is what
     lets an agent be given this and not that."""
-    from decomp import Tier
-    from decomp.asm import AsmComparison
+    from match_recovery.source import Tier
+    from match_recovery.source.asm import AsmComparison
     before = (named / "n.cpp").read_text()
     monkeypatch.setattr(osmx, "compare_source",
                         lambda *a, **k: AsmComparison(verdict=Tier.BYTE_EXACT))
@@ -258,13 +280,13 @@ def test_measure_writes_nothing(named, monkeypatch):
 
 
 def a_verdict(tier):
-    from decomp.asm import AsmComparison
+    from match_recovery.source.asm import AsmComparison
     return AsmComparison(verdict=tier)
 
 
 def test_body_scores_the_file_it_is_given(named, tmp_path, monkeypatch):
     """The whole point: pose the question without editing `src/`."""
-    from decomp import Tier
+    from match_recovery.source import Tier
     candidate = tmp_path / "candidate.cpp"
     candidate.write_text("void f() {}\n")
     asked = []
@@ -281,7 +303,7 @@ def test_body_scores_the_file_it_is_given(named, tmp_path, monkeypatch):
 def test_without_a_candidate_the_tree_is_the_candidate(named, monkeypatch):
     """`measure` with no `--body` must still ask about the committed body,
     or the plain form silently starts answering about something else."""
-    from decomp import Tier
+    from match_recovery.source import Tier
     asked = []
     monkeypatch.setattr(
         osmx, "compare_source",
@@ -292,7 +314,7 @@ def test_without_a_candidate_the_tree_is_the_candidate(named, monkeypatch):
 
 
 def test_scoring_a_candidate_writes_nothing(named, tmp_path, monkeypatch):
-    from decomp import Tier
+    from match_recovery.source import Tier
     candidate = tmp_path / "candidate.cpp"
     candidate.write_text("void f() {}\n")
     before = (named / "n.cpp").read_text()
@@ -313,7 +335,7 @@ def test_a_directory_ranks_best_first_against_the_tree(named, tmp_path,
                                                        monkeypatch):
     """"Best" with no baseline is not an answer anyone can act on: what a
     candidate has to beat is what is committed."""
-    from decomp import Tier
+    from match_recovery.source import Tier
     variants = tmp_path / "variants"
     variants.mkdir()
     for name in ("a.cpp", "b.cpp"):
@@ -336,7 +358,7 @@ def test_a_directory_ranks_best_first_against_the_tree(named, tmp_path,
 
 
 def test_a_directory_with_no_best_exits_one(named, tmp_path, monkeypatch):
-    from decomp import Tier
+    from match_recovery.source import Tier
     variants = tmp_path / "variants"
     variants.mkdir()
     (variants / "a.cpp").write_text("void f() {}\n")
@@ -359,8 +381,8 @@ def test_an_empty_directory_says_so(named, tmp_path):
 def test_a_candidate_that_misses_the_subject_is_a_row_not_a_crash():
     """Half the point of ranking a directory is that some of it is wrong; a
     misnamed subject would otherwise take the other answers down with it."""
-    from decomp import Tier
-    import decomp.asm as asm
+    from match_recovery.source import Tier
+    import match_recovery.source.asm as asm
 
     def refuse(*args, **kwargs):
         raise ValueError("?f@@YAXXZ not found among the object's .text")
@@ -381,8 +403,8 @@ def test_a_candidate_that_misses_the_subject_is_a_row_not_a_crash():
 
 
 def test_record_writes_a_claim_it_proved(named, monkeypatch):
-    from decomp import Tier
-    from decomp.asm import AsmComparison
+    from match_recovery.source import Tier
+    from match_recovery.source.asm import AsmComparison
     monkeypatch.setattr(osmx, "compare_record",
                         lambda *a, **k: AsmComparison(verdict=Tier.BYTE_EXACT))
     result = run("record", "WinMain", "--src", str(named))
@@ -396,8 +418,8 @@ def test_record_keeps_a_claim_that_stopped_and_exits_one(tmp_path,
                                                           monkeypatch):
     """The floor is the number of claims. Clearing one lowers the floor and
     the gate then has nothing to fail on, so this reports and keeps."""
-    from decomp import Tier
-    from decomp.asm import AsmComparison
+    from match_recovery.source import Tier
+    from match_recovery.source.asm import AsmComparison
     (tmp_path / "x.cpp").write_text(
         "// ORIGINAL: 0x00401000 ?f@@YAXXZ 0x00401000-0x00401008 BYTE_EXACT\n"
         "void f() {\n}\n")
@@ -410,8 +432,8 @@ def test_record_keeps_a_claim_that_stopped_and_exits_one(tmp_path,
 
 
 def test_demote_clears_it_once_someone_has_looked(tmp_path, monkeypatch):
-    from decomp import Tier
-    from decomp.asm import AsmComparison
+    from match_recovery.source import Tier
+    from match_recovery.source.asm import AsmComparison
     (tmp_path / "x.cpp").write_text(
         "// ORIGINAL: 0x00401000 ?f@@YAXXZ 0x00401000-0x00401008 BYTE_EXACT\n"
         "void f() {\n}\n")
@@ -423,8 +445,8 @@ def test_demote_clears_it_once_someone_has_looked(tmp_path, monkeypatch):
 
 
 def test_record_touches_nothing_when_nothing_moved(named, monkeypatch):
-    from decomp import Tier
-    from decomp.asm import AsmComparison
+    from match_recovery.source import Tier
+    from match_recovery.source.asm import AsmComparison
     monkeypatch.setattr(osmx, "compare_record",
                         lambda *a, **k: AsmComparison(verdict=Tier.MISMATCH))
     before = (named / "n.cpp").read_text()
@@ -437,8 +459,8 @@ def test_record_writes_several_in_one_file_at_once(named, monkeypatch):
     """Writing one at a time re-reads the file, and a first write that
     canonicalises a wrapped lesson moves every line below it - leaving the
     records read before it pointing at the wrong lines."""
-    from decomp import Tier, read
-    from decomp.asm import AsmComparison
+    from match_recovery.source import Tier, read
+    from match_recovery.source.asm import AsmComparison
     monkeypatch.setattr(osmx, "compare_record",
                         lambda *a, **k: AsmComparison(verdict=Tier.BYTE_EXACT))
     result = run("record", "WinMain", "Buffer::set_font", "Alpha::init",
@@ -480,6 +502,9 @@ def fake_file_result(verdicts):
 
 
 def check(tree, *extra):
+    # These fixtures predate the source-owned floor. Establish the synthetic
+    # baseline explicitly; floor-damage cases below invoke the CLI without this.
+    osmx._refresh_floor(tree)
     # `--jobs 1` runs the worker inline: a pool cannot take the local
     # function these tests substitute for it, and a serial run is what any
     # failure here would be debugged with anyway.
@@ -492,7 +517,7 @@ def test_check_measures_only_claims(claimed, monkeypatch):
     about it - the floor is the number of claims."""
     monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
     result = check(claimed, "--json")
-    assert json.loads(result.output)["claims"] == 2
+    assert json.loads(result.stdout)["claims"] == 2
 
 
 def test_check_passes_when_every_claim_holds(claimed, monkeypatch):
@@ -632,7 +657,28 @@ def test_check_writes_nothing(claimed, monkeypatch):
 
 def test_json_is_only_json(claimed, monkeypatch):
     monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
-    json.loads(check(claimed, "--json").output)
+    result = check(claimed, "--json")
+    json.loads(result.stdout)
+    assert "pin was not verified" in result.stderr
+
+
+@pytest.mark.parametrize("audit", ["build", "compiler_work.py", "stale_references.py",
+    "marker_symbols.py", "address_index.py", "class_debt.py", "duplicate_globals.py",
+    "data_values.py", "pointer_scale.py", "annotation_identity.py", "header_offsets.py"])
+def test_failed_project_audit_prevents_acceptance(claimed, monkeypatch, project_audits, audit):
+    monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
+    project_audits.add(audit)
+    assert check(claimed).exit_code == 1
+
+
+@pytest.mark.parametrize("floor", [None, 1, 3])
+def test_missing_or_changed_floor_still_fails(claimed, monkeypatch, floor):
+    monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
+    if floor is not None:
+        osmx._floor_path(claimed).write_text(f"claims {floor}\n")
+    result = run("check", "--src", str(claimed), "--exe", "/nonexistent", "--jobs", "1")
+    assert result.exit_code == 1
+    assert "claim floor" in result.output.lower()
 
 
 def test_a_tree_with_no_claims_says_so(tmp_path):
@@ -771,7 +817,7 @@ def test_a_marker_with_no_definition_says_where_the_body_is(tmp_path):
 
 
 def test_the_body_fact_reaches_the_record(tmp_path):
-    from decomp import read
+    from match_recovery.source import read
     (tmp_path / "thing.cpp").write_text(HEADER_BODIED)
     record = read(tmp_path)[0]
     assert record.body == "src/thing.h"
@@ -795,7 +841,7 @@ def test_the_most_specific_in_fragment_wins(tmp_path):
     kept = tmp_path / "unrecovered"
     kept.mkdir()
     (kept / "00402000.cpp").write_text(marker)
-    from decomp import read
+    from match_recovery.source import read
     records = read(tmp_path)
     assert len(osmx._in_file(records, "unrecovered")) == 1
     assert len(osmx._in_file(records, "body.cpp")) == 1
@@ -864,7 +910,7 @@ def test_a_scoped_name_finds_a_constructor_and_a_destructor(tmp_path):
     with no member name at all - the two spellings a person is most likely
     to type for a header-defined piece found nothing."""
     (tmp_path / "x.cpp").write_text(CTORS)
-    from decomp import read
+    from match_recovery.source import read
     records = read(tmp_path)
     assert [r.address for r in osmx._matching(records, "Thing::Thing")] == [
         0x00407000]
@@ -933,10 +979,10 @@ def test_the_same_address_in_two_files_is_allowed(tmp_path, monkeypatch):
 def test_a_subject_one_flag_set_does_not_emit_stays_outstanding(tmp_path,
                                                                  monkeypatch):
     """`check` keeps its own copy of the flag-set loop for the per-file
-    compile, and only `decomp.asm` learned this: an `inline` function is
+    compile, and only `match_recovery.source.asm` learned this: an `inline` function is
     folded under /O2 and emitted under /Ob0, so giving up on the first set
     took `say_num` from BYTE_EXACT to unverifiable between two sweeps."""
-    from decomp import read
+    from match_recovery.source import read
     (tmp_path / "x.cpp").write_text(
         "// ORIGINAL: 0x00402000 ?f@@YAXXZ 0x00402000-0x00402010 BYTE_EXACT\n"
         "void f() {\n}\n")
@@ -950,8 +996,8 @@ def test_a_subject_one_flag_set_does_not_emit_stays_outstanding(tmp_path,
             raise got
         return got
     monkeypatch.setattr(osmx, "subject_asm", maybe)
-    from decomp import Tier
-    from decomp.asm import AsmComparison
+    from match_recovery.source import Tier
+    from match_recovery.source.asm import AsmComparison
     monkeypatch.setattr(osmx, "compare_subject",
                         lambda *a, **k: AsmComparison(verdict=Tier.BYTE_EXACT))
     out = osmx._check_one_file((tmp_path / "x.cpp", records, "exe", ["cl"],

@@ -60,7 +60,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from decomp import read
+from match_recovery.source import read
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 ARTIFACT = ("/recovered/", "/unrecovered/")

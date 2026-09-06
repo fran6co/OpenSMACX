@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from decomp.asm import Listing
-from decomp.calls import call_sites, imported_names
+from match_recovery.source.asm import Listing
+from match_recovery.source.calls import call_sites, imported_names
 
 BASE = 0x00401000
 
@@ -69,22 +69,10 @@ def test_the_code_data_boundary_is_respected():
 
 # ------------------------------------------------------- against the image
 
-EXE = Path(__file__).resolve().parents[2] / ".opensmacx/game/terranx_original.exe"
 
 
-@pytest.mark.skipif(not EXE.is_file(), reason=f"no image at {EXE}")
-def test_the_import_table_names_the_slots_the_code_calls_through():
-    """An `FF 15` through one of these leaves the program, so it is never a
-    recovery target - and saying which one it leaves through is most of what
-    a reader wants from an indirect call."""
-    imports = imported_names(EXE)
-    assert imports[0x00669058] == "GDI32.dll!DeleteObject"
-    assert imports[0x0066927C] == "USER32.dll!GetDC"
-    assert imports[0x00669368] == "WINMM.dll!timeGetTime"
-    assert len(imports) > 200
 
 
-@pytest.mark.skipif(not EXE.is_file(), reason=f"no image at {EXE}")
 def test_a_file_that_is_not_a_pe_says_so(tmp_path):
     not_pe = tmp_path / "x.bin"
     not_pe.write_bytes(b"\x00" * 0x200)

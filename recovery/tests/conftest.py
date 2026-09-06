@@ -5,6 +5,7 @@ import sys
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "packages/match-recovery/tests"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "packages/match-recovery/tests/source"))
 
 
 @pytest.fixture(autouse=True)

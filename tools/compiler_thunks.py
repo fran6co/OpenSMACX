@@ -32,7 +32,7 @@ import argparse, collections, pathlib, re, subprocess, sys
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
-from decomp.asm import text_symbols
+from match_recovery.source.asm import text_symbols
 OBJS = REPO / "build/CMakeFiles/OpenSMACX.dir/src"
 THUNK = re.compile(
     rb'\?[?$A-Za-z_0-9]{1,40}@(?:[A-Za-z_0-9]+@)?@'

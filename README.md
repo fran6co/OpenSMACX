@@ -9,11 +9,15 @@ induktio) has been removed in favour of the CMake build below, which is what the
 
 ## CMake build
 
-OpenSMACX is being recovered by MATCHING DECOMPILATION: a function is done when
+OpenSMACX is being recovered by MATCHING DECOMPILATION: we check whether
 MSVC 6 (`cl 12.00.8168`) lowers our C++ to the exact bytes the shipped
 `terranx.exe` contains. `src/` is the single record of that work - every mapped
 function carries an `ORIGINAL: 0x...` annotation, and `BYTE_EXACT` on one is a
 claim a gate re-proves on every run.
+
+Matching bytes alone does not establish correct C++ structure or references.
+The active ownership-first workflow is [recovery/WORKFLOW.md](recovery/WORKFLOW.md),
+driven by the installable [match-recovery package](packages/match-recovery/README.md).
 
 ## Building
 
@@ -27,7 +31,7 @@ cmake --build build
 
 `uv sync` builds `.venv` from `pyproject.toml` and the committed `uv.lock` -
 the pinned tool dependencies, the interpreter named in `.python-version`, and
-the `decomp` package - and every tool runs through `uv run`, never a bare
+the `match-recovery` package - and every tool runs through `uv run`, never a bare
 `python3`.
 
 The VC6 toolchain defaults in from `cmake/toolchains/vc6.cmake` - no
@@ -51,15 +55,15 @@ isolation and cannot resolve its callees. It is not the game.
 RUNNING THE GAME IS RETIRED FOR NOW. The DLL that injected into the original
 executable, the staged hybrid image, and the runtime oracles are all recorded in
 `docs/RETIRED_ROUTES.md` with the measurements that justified each. They come
-back if byte-exact recovery cannot reach the whole image; until then the byte
-comparison IS the verification, and a route that only existed to observe a
-running process was costing more than it proved.
+back only with new evidence. The current framework requires separate structural,
+reference and runtime acceptance; that full application verifier is not complete.
+Byte comparison alone must not be described as proving a working reconstruction.
 
 ## Verifying a checkout
 
 ```sh
-uv sync                                   # .venv: capstone, typer, pytest, decomp
-uv run pytest decomp/tests                # the annotation parse + read/write roundtrip
+uv sync                                  # framework, comparison extra and test tools
+uv run pytest packages/match-recovery/tests recovery/tests
 cmake -S . -B build -G Ninja && cmake --build build
 uv run tools/osmx.py check                # THE GATE (never pipe it)
 ```

@@ -3,7 +3,7 @@ r"""Which IMPORT does each body call - the image's answer against this tree's.
 
 WHY THE BYTE RATCHET CANNOT DO THIS. `call dword ptr [0x669310]` and
 `call dword ptr [0x669284]` differ only in a relocation, and
-`decomp/asm.py` masks relocation-determined bytes out of the comparison.
+`match_recovery.source.asm` masks relocation-determined bytes out of the comparison.
 So a body that calls SetCursorPos where the image calls GetCursorPos is
 BYTE_EXACT. Measured 2026-08-25: win.cpp reached through one binding named
 `g` for EIGHT different Win32 imports, and every caller was and stayed
@@ -13,7 +13,7 @@ BYTE_EXACT.
 DIRECT calls only, because "an indirect call through a vtable or a bound
 slot is a runtime fact neither side can resolve". That is true of a vtable
 dispatch. It is NOT true of an import slot: `call dword ptr [0x669310]`
-names an absolute address, `decomp/calls.py` already records it as
+names an absolute address, `match_recovery.source.calls` already records it as
 `form="indirect", slot=...`, and the PE import table says what lives there.
 
 So this compares the SET OF IMPORT SLOTS each side calls, and names them.
@@ -34,10 +34,10 @@ import sys
 REPO = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
-from decomp import read                                        # noqa: E402
-from decomp.asm import (build_command, original_asm,           # noqa: E402
+from match_recovery.source import read                                        # noqa: E402
+from match_recovery.source.asm import (build_command, original_asm,           # noqa: E402
                         compiled_asm)
-from decomp.calls import call_sites                            # noqa: E402
+from match_recovery.source.calls import call_sites                            # noqa: E402
 from tools.iat_names import imports                            # noqa: E402
 
 IMAGE = REPO / ".opensmacx/game/terranx_original.exe"

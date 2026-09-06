@@ -38,11 +38,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from decomp import read
-from decomp.asm import (build_command, build_inputs, call_symbols,
+from match_recovery.source import read
+from match_recovery.source.asm import (build_command, build_inputs, call_symbols,
                         compile_unit, original_asm, shared_spans,
                         span_refusal, subject_asm)
-from decomp.calls import call_sites
+from match_recovery.source.calls import call_sites
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 # HONOURS `OPENSMACX_IMAGE`, because `.opensmacx/` is gitignored and a

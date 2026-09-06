@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from recovery.environment.generated import check_generated
+from match_recovery.generated_binary import check_generated
 from match_recovery.generated_source import GeneratedBinding, read_generated
 from match_recovery.model import Origin, Span
 from match_recovery.pe_coff import PeImage, Section, Symbol

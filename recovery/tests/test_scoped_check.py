@@ -53,7 +53,7 @@ def test_failed_adapter_does_not_discard_other_dimension(project):
     assert report["checks"]["layout"]["result"] == "fail"
 
 
-@pytest.mark.parametrize("change", ["source", "image", "new_header", "task"])
+@pytest.mark.parametrize("change", ["source", "image", "new_header", "task", "compiler_script", "compiler_config"])
 def test_joint_results_cannot_mix_different_input_snapshots(project, change):
     root, task = project
     image = root / "image.bin"
@@ -67,7 +67,10 @@ def test_joint_results_cannot_mix_different_input_snapshots(project, change):
             target.write_text(json.dumps(data))
         else:
             target = {"source": root / "src/f.cpp", "image": image,
-                      "new_header": root / "src/new.h"}[change]
+                      "new_header": root / "src/new.h",
+                      "compiler_script": root / "recovery/environment/compiler.py",
+                      "compiler_config": root / "recovery/project.json"}[change]
+            target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text("changed input")
         return {"task_id": task.task_id, "result": "pass"}
 

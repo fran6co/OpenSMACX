@@ -2,8 +2,18 @@
 
 Project-owned integration for the independently installed `match-recovery`
 engine. Code in `recovery/opensmacx/` is not shipped in the library. It uses this
-repository's source grammar, build tools and `decomp` package. See
+repository's source grammar and build tools through `match_recovery.source`. See
 [the portable package](../packages/match-recovery/README.md) for starting an unrelated project.
+
+The active agent/coordinator contract is [WORKFLOW.md](WORKFLOW.md). Historical
+compiler observations are in [COMPILER_EVIDENCE.md](COMPILER_EVIDENCE.md); they do
+not override task scope, structural evidence or acceptance policy.
+
+Source records, strict CodeView parsing (`class_layout`) and emitted-table checks
+(`check_generated`) now live in the installed library. These are format/ABI
+capabilities, not project/compiler-environment adapters. `environment/` contains
+only the local compiler interaction. The old command/gate and remaining reusable
+project-bridge orchestration still need absorption before `tools/` can disappear.
 
 ## Available now
 

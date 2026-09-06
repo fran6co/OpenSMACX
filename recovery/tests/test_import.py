@@ -133,13 +133,13 @@ def test_cli_errors_are_not_green_or_json_contamination(tmp_path, capsys):
 
 
 def test_parse_memo_hit_and_disabled_identity(project, monkeypatch):
-    import decomp.reader
+    from match_recovery.source import reader as source_reader
 
     expected = legacy_snapshot(project)
-    parser = decomp.reader.read_text
-    monkeypatch.setattr(decomp.reader, "read_text", lambda *args: pytest.fail("cache miss"))
+    parser = source_reader.read_text
+    monkeypatch.setattr(source_reader, "read_text", lambda *args: pytest.fail("cache miss"))
     assert legacy_snapshot(project) == expected
-    monkeypatch.setattr(decomp.reader, "read_text", parser)
+    monkeypatch.setattr(source_reader, "read_text", parser)
     monkeypatch.setenv("RECOVERY_PARSE_CACHE", "off")
     assert legacy_snapshot(project) == expected
 
@@ -172,7 +172,7 @@ def test_parse_memo_content_pin_and_parser_invalidation(project, monkeypatch):
 
 
 def test_parse_memo_portable_and_rename_invalidates(project, tmp_path, monkeypatch):
-    import decomp.reader
+    from match_recovery.source import reader as source_reader
 
     expected = legacy_snapshot(project)
     other = tmp_path / "other-worktree"
@@ -180,10 +180,10 @@ def test_parse_memo_portable_and_rename_invalidates(project, tmp_path, monkeypat
     shutil.copytree(project / "build", other / "build")
     subprocess.run(["git", "init", "-q", str(other)], check=True)
     (other / ".gitignore").write_text("build/\n")
-    parser = decomp.reader.read_text
-    monkeypatch.setattr(decomp.reader, "read_text", lambda *args: pytest.fail("cache miss"))
+    parser = source_reader.read_text
+    monkeypatch.setattr(source_reader, "read_text", lambda *args: pytest.fail("cache miss"))
     assert legacy_snapshot(other) == expected
-    monkeypatch.setattr(decomp.reader, "read_text", parser)
+    monkeypatch.setattr(source_reader, "read_text", parser)
     seeds = other / "src/unrecovered"
     seeds.mkdir()
     (other / "src/a.cpp").rename(seeds / "a.cpp")

@@ -11,7 +11,7 @@ bytes WERE exact - the lies live in the source model, not the object file.
 Five shapes, counted like compiler_work.py: line-wise over the product tree
 (src/*.cpp + *.h; the artifact archives are excluded - they die by homing,
 not by cleanup), comment lines skipped, a ceiling per shape that only falls.
-`--check` is wired into the gate; the class pass (recover-class.md pass 6)
+`--check` is wired into the gate; the ownership workflow (recovery/WORKFLOW.md)
 is what lowers the numbers, and a class is DONE only at debt 0.
 
     uv run tools/class_debt.py            # the census, with what to do
@@ -30,7 +30,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
-from decomp import read  # noqa: E402
+from match_recovery.source import read  # noqa: E402
 
 # Measured 2026-08-24 on a clean tree at 09c18640. Lower a ceiling when its
 # count falls - the gate fails on slack, same as compiler_work. The zero is

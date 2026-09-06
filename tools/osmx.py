@@ -30,11 +30,12 @@ import typer
 
 from dataclasses import replace
 
-from decomp import DecompilationState, State, mangled, read, write_file
-from decomp.mangled import qualified_name
-from decomp.calls import CallSite, call_sites, imported_names
-from decomp.record import stamped
-from decomp.asm import (AsmComparison, CompileFailed, build_command,
+from match_recovery.source import DecompilationState, State, mangled, read, write_file
+from match_recovery import source as source_records
+from match_recovery.source.mangled import qualified_name
+from match_recovery.source.calls import CallSite, call_sites, imported_names
+from match_recovery.source.record import stamped
+from match_recovery.source.asm import (AsmComparison, CompileFailed, build_command,
                         build_inputs, compare_record, compare_source,
                         compare_subject, compile_unit, flag_dependent,
                         original_asm, shared_spans, span_refusal,
@@ -1144,7 +1145,7 @@ def _not_semantic(result) -> str:
     if str(result.verdict) == "BYTE_EXACT":
         return ("it is BYTE_EXACT - claim that instead, a weaker claim would "
                 "cover for a stronger one")
-    # `decomp.asm.allocation_only` IS the test, and it is stricter than any
+    # `match_recovery.source.asm.allocation_only` IS the test, and it is stricter than any
     # tier: SHAPE_EXACT means a VALUE is wrong, which is a semantic difference
     # and not an allocation. An earlier version of this asked for mnemonic
     # similarity of 1.000 instead, and would have granted the claim to a body
@@ -1465,7 +1466,7 @@ def _rank(verdict: str) -> int:
 def _semantic_note_holds(note: str) -> bool:
     """Whether a scorer's note still supports a SEMANTIC claim.
 
-    The scorer stamps `[allocation-only]` when `decomp.asm.allocation_only`
+    The scorer stamps `[allocation-only]` when `match_recovery.source.asm.allocation_only`
     found nothing but register numbers between the two listings. That is the
     whole test, and it is the same one `osmx semantic` applies when granting.
     """
@@ -1539,7 +1540,7 @@ def _check_one_file(job: tuple) -> list[tuple[tuple, str, str]]:
             obj = compile_unit(path, command, flags)
         except CompileFailed as failed:
             # A UNIT THAT WILL NOT PARSE WILL NOT PARSE SEVEN MORE TIMES.
-            # See `decomp.asm.flag_dependent`, and the measurement behind it.
+            # See `match_recovery.source.asm.flag_dependent`, and the measurement behind it.
             diagnostic = diagnostic or str(failed)
             if flag_dependent(str(failed)):
                 continue
@@ -1553,7 +1554,7 @@ def _check_one_file(job: tuple) -> list[tuple[tuple, str, str]]:
                 # and emitted as its own COMDAT under /Ob0, so the record
                 # stays outstanding and the next flag set gets its turn;
                 # UNRESOLVED is only true if NONE of them emitted it.
-                # `decomp.asm.compare_source` learned this first and this
+                # `match_recovery.source.asm.compare_source` learned this first and this
                 # copy of the loop did not, which is how `say_num` went from
                 # BYTE_EXACT to unverifiable between two sweeps.
                 unresolved[_claim_key(record)] = str(problem)
@@ -1601,7 +1602,7 @@ def _image_pin(src: Path, exe: Path) -> str:
     THE RULER IS CHECKED BEFORE ANYTHING IS MEASURED WITH IT.
     """
     # NO IMAGE, NO RULER TO VERIFY. `check --exe /nonexistent` with the
-    # measurement stubbed is how decomp/tests drives this command, and the
+    # measurement stubbed is how recovery/tests drives this command, and the
     # pin landed without noticing: fifteen tests went red and stayed red,
     # because nothing runs pytest. A tree that HAS an image still must
     # match its pin - that is the case the positive control exercises - but
@@ -1613,7 +1614,7 @@ def _image_pin(src: Path, exe: Path) -> str:
         # vacuous, so the run says the ruler was never checked.
         typer.secho(f"  no image at {exe}: the pin was not verified, and "
                     f"nothing here was measured against it",
-                    fg=typer.colors.YELLOW)
+                    fg=typer.colors.YELLOW, err=True)
         return ""
     pin = src / "IMAGE_PIN"
     try:
@@ -1745,7 +1746,7 @@ def check(
     cache_path = compile_commands.parent / "osmx_check_cache.json"
     salt = hashlib.sha256(
         b"".join(p.read_bytes() for p in
-                 sorted((REPO_ROOT / "decomp").glob("*.py")))
+                 sorted(Path(source_records.__file__).parent.glob("*.py")))
         + Path(__file__).read_bytes()
         + b"".join(p.read_bytes() for p in sorted(
             (REPO_ROOT / "recovery/environment").glob("*.py")))

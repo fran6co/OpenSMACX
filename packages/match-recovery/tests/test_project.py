@@ -57,16 +57,33 @@ def test_setup_does_not_follow_a_recovery_directory_symlink(tmp_path):
     assert list(outside.iterdir()) == []
 
 
-def test_installed_cli_has_no_project_dispatch_or_adapter_imports():
-    import match_recovery
-    package = Path(match_recovery.__file__).parent
-    assert not (package / "adapters").exists()
-    for path in package.rglob("*.py"):
-        source = path.read_text().lower()
-        assert "opensmacx" not in source and "import decomp" not in source
+def test_public_cli_exposes_workflow_and_source_commands():
     help_text = parser().format_help()
     assert "init" in help_text and "run" in help_text
     assert "inventory" in help_text and "partition" in help_text
+
+
+def test_base_api_and_cli_run_without_site_packages(tmp_path):
+    """Isolation tests dependencies, not the spelling of comments or modules."""
+    import match_recovery
+    package_root = Path(match_recovery.__file__).resolve().parent.parent
+    script = '''import sys
+sys.path.insert(0, sys.argv[1])
+from pathlib import Path
+from match_recovery.source import read_text, write
+from match_recovery.codeview import class_layout
+from match_recovery.generated_binary import check_generated
+from match_recovery.cli import main
+text = "// ORIGINAL: 0x00401000 ?f@@YAXXZ 0x00401000-0x00401001\\nvoid f() {}\\n"
+records = read_text(text, Path("unit.cc"))
+assert len(records) == 1 and records[0].address == 0x401000
+assert write(text, records) == text
+raise SystemExit(main(["init", "--target", "isolated-target", "--root", sys.argv[2]]))
+'''
+    result = subprocess.run([sys.executable, "-I", "-S", "-c", script, str(package_root), str(tmp_path)],
+                            cwd=tmp_path, capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout)["ready_for_recovery"] is False
 
 
 LOCAL_ADAPTER = '''import json, sys

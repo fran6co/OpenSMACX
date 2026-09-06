@@ -38,7 +38,7 @@ spelled the way `grammar.LESSON_*` accept them. That is what makes the
 read -> write -> read loop closed by construction. What MEASURES that over
 the whole tree is `tools/annotation_identity.py`, wired into `osmx check`;
 `python -m decomp` has not existed since `__main__.py` was folded into
-`decomp/tests/test_roundtrip.py`, and naming a dead entry point is how this
+the source roundtrip tests, and naming a dead entry point is how this
 module's central claim went unenforced long enough to reflow 434 records.
 
 STATE IS NEVER WRITTEN. It is derived from the region on read, which is

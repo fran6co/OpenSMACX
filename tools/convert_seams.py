@@ -21,7 +21,7 @@ stated, and reports the rest rather than guessing:
 
   * the typedef must be `RET (OriginalObject::*NAME)(PARAMS)` - the parameter
     spelling comes from there, never from the mangled name, because the
-    catalogue's return types are known to be wrong (see decomp/mangled.py).
+    catalogue's return types are known to be wrong (see match_recovery.source.mangled).
   * the address must resolve to a `Class::method` the file's class owns.
   * every use of the pointer must be a `(ORIGINAL(expr)->*NAME)(...)` call.
     A bare mention - passing the pointer, comparing it - is left alone.
@@ -42,8 +42,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from decomp import read
-from decomp.mangled import qualified_name
+from match_recovery.source import read
+from match_recovery.source.mangled import qualified_name
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PENDING = (REPO_ROOT / "src" / "pending_bodies.cpp").resolve()

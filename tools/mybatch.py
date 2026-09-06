@@ -6,7 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from decomp import read
+from match_recovery.source import read
 import home_bodies as hb
 
 SRC = Path(__file__).resolve().parent.parent / "src"

@@ -44,11 +44,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from decomp import read
-from decomp.asm import build_inputs
-from decomp.asm import original_asm, shared_spans, span_refusal
-from decomp.calls import call_sites
-from decomp.model import State
+from match_recovery.source import read
+from match_recovery.source.asm import build_inputs
+from match_recovery.source.asm import original_asm, shared_spans, span_refusal
+from match_recovery.source.calls import call_sites
+from match_recovery.source.model import State
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent

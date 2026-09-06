@@ -18,7 +18,7 @@ def check_generated(bindings, objects, image, external_targets):
         if binding.origin.image_sha256 != pin or binding.origin.address_space != "pe:va":
             raise ValueError("generated binding belongs to another image")
         if not binding.symbol.startswith("??_7"):
-            raise ValueError("VC6 vtable binding requires an exact compiler vftable symbol")
+            raise ValueError("MSVC vtable binding requires an exact compiler vftable symbol")
         image.read(Span(binding.origin.address, binding.origin.address + 4))
         found = []
         for unit, obj in objects.items():

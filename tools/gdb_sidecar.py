@@ -39,7 +39,7 @@ sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import codeview  # noqa: E402
-from decomp.mangled import qualified_name  # noqa: E402
+from match_recovery.source.mangled import qualified_name  # noqa: E402
 
 
 # ----------------------------------------------------------------- the image

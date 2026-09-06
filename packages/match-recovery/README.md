@@ -1,6 +1,6 @@
 # Match recovery
 
-An independently installable, standard-library-only Python package for
+An independently installable Python package with a standard-library-only core for
 structure-led matching decompilation. It does not register projects, import a
 project's Python code or bundle a game's adapters. Project integration is local
 configuration plus commands exchanging JSON. Those commands can use any language.
@@ -123,6 +123,15 @@ The package contains workflow/policy, strict JSON decisions, disposable cache
 utilities, process supervision and reusable comparison/format helpers. Optional
 i386 PE/COFF helpers do not impose that format on the driver. Recomputable reports
 are not persisted as authority; no SQLite database is used.
+
+`match_recovery.source` owns the annotation grammar, reader and writer. Its
+read/write APIs need no optional dependencies. Legacy i386 disassembly and
+masked-byte measurement in `source.asm`, `source.calls` and `source.record`
+require the `x86` extra. They do not replace strict relocation-target verification
+or prove structure; use the strict comparison APIs for those obligations.
+`codeview.class_layout` and `generated_binary.check_generated` provide reusable
+CodeView 5 and MSVC PE/COFF table verification, with unsupported cases explicit.
+No compiler installation, executable location or flag policy is selected there.
 
 All public recovery commands, including `inventory`, `partition`, `components`
 and task commands, belong to this package. Source operations use the command in

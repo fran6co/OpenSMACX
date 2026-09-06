@@ -152,16 +152,14 @@ establish completion of this program.
 
 ## Isolation and integration
 
-Work on `framework/structure-led-recovery` in the locked sibling worktree, not
-the live rehoming checkout. Use separate build outputs, caches and Wine prefixes;
-only the pinned image and immutable toolchain inputs may be shared read-only.
-Do not run the old automatic fast-forward setup against this divergent branch.
-
-At clean commit checkpoints, inspect and rebase on local `master` to incorporate
-other agents' committed changes. Never stash or discard work to force a rebase.
-Resolve integration conflicts explicitly, rederive affected inventories/context,
-and rerun applicable tests. Do not collect/reap other agents or merge this work
-back into `master` automatically.
+The user authorized integration and continuing framework work on `master` after
+the interrupted rehoming merge was resolved. Inspect concurrent changes at clean
+checkpoints; preserve other agents' work. Recovery workers still need isolated
+worktrees, build outputs, caches and compiler prefixes. The pinned image and
+immutable toolchain inputs may be shared read-only. The coordinator owns branch
+updates and integration; never stash, discard work or run automatic fast-forward
+setup against an established task baseline. Rebuild context and rerun checks
+after integrating changes. Do not collect/reap another agent's work unasked.
 
 ## Initial evidence (2026-09-06, base 815433a4)
 

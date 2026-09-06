@@ -77,6 +77,6 @@ def zlib_manifest(root: Path, archive: Path) -> VendorManifest:
 
 
 def compile_vendor(root: Path, source: Path, flags: tuple[str, ...]) -> bytes:
-    """Use the installed environment, not a project-owned compiler launcher."""
-    return compile_object(source, (sys.executable, "-m", "recovery.environment.wine",
+    """Invoke the project-owned compiler script from any compilation directory."""
+    return compile_object(source, (sys.executable, str(root / "recovery/environment/wine.py"),
                                    "--tool=cl", "/nologo"), flags)

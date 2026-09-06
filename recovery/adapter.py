@@ -6,7 +6,10 @@ import subprocess
 import sys
 import tarfile
 
-from opensmacx.operations import execute
+# Executing this local script exposes recovery/, not the project root. The
+# application is not an installed Python package; keep that path choice local.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from recovery.opensmacx.operations import execute
 
 
 def main():

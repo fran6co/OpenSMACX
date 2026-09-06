@@ -7,7 +7,7 @@
 
 A refusal only counts if it is a `// TRIED:` LESSON LINE. Written as
 ordinary prose inside the comment block - "cannot reach byte-exact", "not
-chased further", "gives up" - it is invisible to `decomp.reader`, so
+chased further", "gives up" - it is invisible to `match_recovery.source.reader`, so
 `frontier.py --untouched` keeps offering the body as unworked and each new
 pass re-derives the same wall.
 
@@ -27,7 +27,7 @@ import sys
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from decomp.reader import read  # noqa: E402
+from match_recovery.source.reader import read  # noqa: E402
 
 # Phrases this tree actually uses when it is giving up on a body.
 REFUSAL = re.compile(
