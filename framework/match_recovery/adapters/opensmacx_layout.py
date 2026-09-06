@@ -8,8 +8,9 @@ from ..layout_source import read_members
 from ..model import Result, digest
 from ..pe_coff import Coff
 from ..tasks import TaskStore
-from .opensmacx import image_pin
+from .opensmacx import image_pin, legacy_snapshot
 from .opensmacx_binary import _inputs
+from .opensmacx_project import class_hint
 from .vc6 import FLAG_SETS, compile_object
 from .vc6_layout import ClassNotEmitted, class_layout
 
@@ -20,7 +21,7 @@ def verify_layout(root: Path, task_name: str, *, compiler=compile_object, comman
     task, decisions = store.read(task_name), store.decisions(task_name)
     if task.target != "opensmacx":
         raise ValueError("layout adapter requires an OpenSMACX task")
-    _, files = store._scope(task, decisions)
+    selected, files = store._scope(task, decisions)
     before = input_snapshot(root, _inputs(root), {"flags": FLAG_SETS, "debug": "/Z7"})
     pin = image_pin(root)
     if any(subject.image_sha256 != pin or subject.address_space != "pe:va" for subject in task.subjects):
@@ -28,11 +29,24 @@ def verify_layout(root: Path, task_name: str, *, compiler=compile_object, comman
     expected = [item for item in read_members(root, pin) if item.path in files]
     units = sorted(name for name in files if Path(name).suffix == ".cpp"
                    and not any(part in ("recovered", "unrecovered") for part in Path(name).parts))
+    # Method mappings are search hints, not proof that an original class existed
+    # or a new requirement to match this candidate's current shape.
+    hints = {unit: {} for unit in units}
+    for item in legacy_snapshot(root)["records"]:
+        if item["entity_id"] not in selected or item["candidate_kind"] != "source" or item["path"] not in hints:
+            continue
+        name = class_hint(item["catalogued_symbol"])
+        if name:
+            hints[item["path"]].setdefault(name, set()).add(item["entity_id"])
+    required_classes = {item.class_name for item in expected}
     if command_for is None:
         from decomp.asm import build_command
         command_for = lambda path: tuple(build_command(root / "build/compile_commands.json", path))
     rows, observations, attempts = [], [], 0
-    for unit in units if expected else []:
+    for unit in units:
+        classes = sorted(required_classes | hints[unit].keys())
+        if not classes:
+            continue
         for flags in FLAG_SETS:
             layouts, errors, missing = {}, {}, set()
             try:
@@ -41,7 +55,7 @@ def verify_layout(root: Path, task_name: str, *, compiler=compile_object, comman
                     raise ValueError("layout checks require standalone compilation without PCH or response files")
                 attempts += 1
                 obj = Coff(compiler(root / unit, command, flags + ("/Z7",)))
-                for name in sorted({item.class_name for item in expected}):
+                for name in classes:
                     try:
                         layouts[name] = class_layout(obj, name)
                     except ClassNotEmitted as error:
@@ -50,13 +64,17 @@ def verify_layout(root: Path, task_name: str, *, compiler=compile_object, comman
                     except ValueError as error:
                         errors[name] = str(error)
             except (OSError, ValueError) as error:
-                errors = {item.class_name: str(error) for item in expected}
-            for name in sorted({item.class_name for item in expected}):
+                errors = {name: str(error) for name in classes}
+            for name in classes:
                 state = "not_emitted" if name in missing else "observed" if name in layouts else "unmeasurable"
                 observations.append({"class_name": name, "unit": unit, "flags": list(flags),
+                                     "basis": "source_expectation" if name in required_classes else "mapped_method_hint",
+                                     "hint_entities": sorted(hints[unit].get(name, [])),
                                      "compiler_layout": layouts.get(name),
                                      "observation": state, "reason": errors.get(name, "complete compiler definition parsed"),
-                                     "next_action": ("establish a layout witness or independently prove this TU irrelevant; do not waive coverage"
+                                     "next_action": ("verify the mapped class name and ownership; this hint is not a layout obligation"
+                                                     if state == "not_emitted" and name not in required_classes else
+                                                     "establish a layout witness or independently prove this TU irrelevant; do not waive coverage"
                                                      if state == "not_emitted" else
                                                      "repair compilation or unsupported debug parsing before checking offsets"
                                                      if state == "unmeasurable" else None)})
@@ -81,4 +99,5 @@ def verify_layout(root: Path, task_name: str, *, compiler=compile_object, comman
             "scope_complete": False, "structure_verification": Result.UNKNOWN, "persisted": False,
             "limitations": ["source expectations are original-layout interpretations, not freshly re-derived image evidence",
                             "direct members only; base hierarchy, member types, full extent and lifetime remain unproved",
+                            "method-derived class hints supply current-code observations, never original-layout expectations",
                             "all scoped product TUs are checked conservatively; missing debug definitions are unknown"]}

@@ -146,6 +146,46 @@ def test_missing_expectations_are_not_a_vacuous_structure_pass(project):
     assert report["result"] == "unknown" and report["compile_attempts"] == 0
 
 
+def test_method_hint_exposes_class_before_any_layout_expectation_exists(project):
+    root, task = project
+    path = root / "src/f.cpp"
+    path.write_text(path.read_text().replace("?f@@YAXXZ", "?method@Widget@@QAEXXZ"))
+    report = verify_layout(root, task.task_id, compiler=lambda *_: coff(), command_for=lambda _: ("compiler",))
+    assert report["compile_attempts"] == 2
+    assert report["result"] == "unknown" and report["members"] == []
+    assert len(report["coverage"]) == 2
+    for observation in report["coverage"]:
+        assert observation["basis"] == "mapped_method_hint"
+        assert observation["compiler_layout"]["class"] == "Widget"
+        assert observation["hint_entities"] == [task.subjects[0].entity_id]
+    assert report["structure_verification"] == "unknown"
+
+
+def test_missing_method_hint_does_not_change_declared_offset_verdict(project):
+    root, task = prepare(project)
+    path = root / "src/f.cpp"
+    path.write_text(path.read_text().replace("?f@@YAXXZ", "?method@Other@@QAEXXZ"))
+    report = verify_layout(root, task.task_id, compiler=lambda *_: coff(), command_for=lambda _: ("compiler",))
+    assert report["result"] == "pass"  # Only declared Widget offsets are requirements.
+    absent = [row for row in report["coverage"] if row["class_name"] == "Other"]
+    assert len(absent) == 2 and all(row["observation"] == "not_emitted" for row in absent)
+    assert all(row["basis"] == "mapped_method_hint" for row in absent)
+
+
+@pytest.mark.parametrize("where", ["seed", "outside_scope"])
+def test_unrelated_or_seed_class_names_do_not_trigger_product_compilation(project, where):
+    root, task = project
+    directory = root / ("src/unrecovered" if where == "seed" else "src")
+    directory.mkdir(exist_ok=True)
+    text = (root / "src/f.cpp").read_text().replace("?f@@YAXXZ", "?method@Widget@@QAEXXZ")
+    if where == "outside_scope":
+        text = text.replace("00401000", "00402000")
+    (directory / "other.cpp").write_text(text)
+    report = verify_layout(root, task.task_id, compiler=lambda *_: pytest.fail("unexpected compilation"),
+                           command_for=lambda _: ("compiler",))
+    assert report["compile_attempts"] == 0 and report["coverage"] == []
+
+
 def test_duplicate_or_malformed_original_expectations_are_refused(project):
     root, task = prepare(project)
     text = (root / "src/widget.h").read_text()

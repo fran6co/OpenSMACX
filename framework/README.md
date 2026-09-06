@@ -427,6 +427,14 @@ have no asserted static base offset. These are observations of the reconstructed
 C++, not independently recovered original hierarchy facts, and do not upgrade
 the direct-offset check to full structural verification. Malformed base references
 remain unmeasurable rather than yielding a partially accepted hierarchy.
+Scoped product method mappings also supply class-name search hints, even before
+any member-offset expectations exist. Their current compiler layouts appear with
+`basis: mapped_method_hint` and the originating entity IDs. This exposes candidate
+bases and embedded members to the recovery worker without inventing original
+layout claims. Missing/incorrect hints stay diagnostic; they cannot weaken declared
+expectations or create a vacuous structural pass. Seeds and unrelated task entities
+do not trigger these product compilations. All classes in one TU/flag set share
+the existing object, including the joint check's in-memory compilation reuse.
 No debugger-style partial field lists or type-index voting supplies gate evidence.
 InfoWin's `redraw_phase_` expectation passes in both Console and InfoWin units.
 This checks declared offsets, **not** completeness of the declarations, original
