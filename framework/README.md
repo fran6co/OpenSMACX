@@ -173,8 +173,50 @@ be implemented.
 At budget exhaustion an optional reviewer can also assess a still-mismatching
 structural checkpoint. Approval preserves its interpretation and source, but
 returns `structural_checkpoint_reviewed`, never collection readiness. Connecting
-the migration policy's protected-obligation admission/restoration checks remains
-required; structural approval alone does not admit or demote a byte obligation.
+this review to migration admission requires the explicit configuration below;
+structural approval alone does not admit or demote a byte obligation.
+
+### Protected migration execution
+
+The optional project `obligations` command returns a source-derived `obligations`
+array (entity id, proof dimension, baseline and validated obligation id; source
+evidence may accompany each row). The driver reads it before worker execution
+and unions subsequent inventories into the protected set. A later smaller
+inventory cannot discard a requirement. Workers receive this set in context;
+full acceptance receives it as `protected`. OpenSMACX configures this reader.
+
+To admit a temporary matching regression, supply `run --migration permission.json`
+and configure a trusted project `migration_check` command. The permission is a
+coordinator decision, suitable for tracked JSON, with exactly these fields:
+
+```json
+{"migration_id":"member-layout","author":"task-coordinator","evidence":["source:layout evidence"],"allowed":[{"entity_id":"entity-<SHA-256>","dimension":"bytes"}]}
+```
+
+Only `bytes` and `instruction_shape` regressions within task scope may be allowed.
+The permission is part of the independent review's snapshot policy. It does not
+copy measurements or grant worker authority to change scope. Actor labels remain
+trusted coordinator attribution, not authentication.
+
+The migration verifier receives the task, reviewed snapshot, protected requirements
+and permission. It returns exit 0 only for a completed report, containing exactly
+`snapshot`, `changed` (original entity ids), `build`, `structure`, `outside_scope`,
+`measurements`, and `current`. Build/structure/outside-scope outcomes must be `pass`.
+Each measurement has `obligation_id`, input `fingerprint`, `result`, and `evidence`;
+`current` maps obligation ids to fresh verifier-computed input fingerprints.
+These are trusted verifier outputs, not worker self-assessments. Missing, stale
+or unknown measurements cannot be admitted as matching regressions.
+
+The driver applies the shared migration policy after independent approval.
+Allowed fresh failures produce `migration_admitted` and CLI exit **2**, preserving
+the source but never collection readiness. A resumed run re-derives obligations
+from source history and rechecks them; only complete restoration plus the full
+acceptance gate can yield readiness/exit 0. Admission itself is a disposable gate
+result, not a stored verdict. Source and review/permission decisions must be
+checkpointed for resumption. OpenSMACX does **not** yet configure a complete
+migration verifier: its scoped binary checker is insufficient to prove layout,
+build and outside-scope preservation. Real-command synthetic tests exercise this
+protocol; they are not evidence of a completed game recovery pilot.
 
 ## Task commands and source bindings
 
@@ -259,8 +301,8 @@ evidence. Image-pin changes or an unavailable/nonancestor baseline are refused.
 No obligation report or measurement is saved. This preserves claims from the
 task baseline onward, not arbitrary earlier history. An uncommitted claim that
 is introduced and removed between runs cannot be reconstructed; banking new
-claims must include a source checkpoint. Driver admission still needs to freeze
-these requirements across worker execution and apply the migration policy.
+claims must include a source checkpoint. The driver freezes these requirements
+across worker execution when its `obligations` command is configured.
 It writes no context file. A coordinator can use the output directly or cache it
 in ignored storage; neither a stale brief nor a resolved hypothesis is a verdict.
 

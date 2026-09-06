@@ -5,7 +5,7 @@ run in an externally sandboxed worktree: scope checks detect violations, they
 are not a security sandbox. This driver never commits, collects or discards work.
 """
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 import hashlib
 import os
 from pathlib import Path
@@ -15,6 +15,8 @@ import subprocess
 import uuid
 
 from .locking import file_lock
+from .migration import GateExit
+from .migration_protocol import admit, extend_inventory, permissions
 from .model import canonical, require_text
 from .records import parse_json
 from .reviews import ReviewStore, acceptance_result, validate_review
@@ -107,12 +109,13 @@ def changes(before: dict, after: dict) -> set[str]:
 
 
 def drive(root: Path, task_name: str, configuration: dict, worker_configuration: dict, *,
-          iterations: int, reviewer_configuration: dict | None = None, execute=invoke) -> dict:
+          iterations: int, reviewer_configuration: dict | None = None,
+          migration_configuration: dict | None = None, execute=invoke) -> dict:
     """Recompute context/checks, edit, recheck, repeat; discoveries stop for review."""
     if type(iterations) is not int or not 1 <= iterations <= 100:
         raise ValueError("iterations must be 1..100")
     required = {"schema_version", "target", "context", "check"}
-    if (not required <= set(configuration) or set(configuration) - required - {"acceptance"}
+    if (not required <= set(configuration) or set(configuration) - required - {"acceptance", "obligations", "migration_check"}
             or type(configuration["schema_version"]) is not int or configuration["schema_version"] != 1):
         raise ValueError("invalid driver configuration")
     if set(worker_configuration) != {"author", "command"}:
@@ -130,6 +133,10 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             raise ValueError("reviewer must be independent of the worker")
         reviewer_command = Command.read(reviewer_configuration["command"])
     acceptance = Command.read(configuration["acceptance"]) if "acceptance" in configuration else None
+    inventory_command = Command.read(configuration["obligations"]) if "obligations" in configuration else None
+    migration_command = Command.read(configuration["migration_check"]) if "migration_check" in configuration else None
+    if migration_configuration is not None and (inventory_command is None or migration_command is None):
+        raise ValueError("migration requires source obligations and migration-check adapters")
     root = root.resolve()
     store = TaskStore(root)
     with file_lock(root / "build/recovery/driver.lock", timeout=0):
@@ -137,9 +144,13 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
         if task.target != configuration["target"]:
             raise ValueError("task target disagrees with configured target adapter")
         selected, editable = store.scope(task_name)
+        permission = permissions(migration_configuration, task, selected) if migration_configuration is not None else None
+        protected = {}
         initial_decisions = store.decisions(task_name)
         reviews = ReviewStore(root, task_name)
         policy = {"project": configuration, "worker": worker_configuration, "reviewer": reviewer_configuration}
+        if permission is not None:
+            policy["migration"] = permission
         review_feedback = None
         # Existing scoped edits are resumable. Unrelated dirty work is not the
         # runner's property and must be checkpointed before dispatch.
@@ -161,6 +172,13 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                 if changes(before, working_state(root)):
                     raise ValueError("read-only adapter edited the worktree; preserve work and inspect manually")
             return code, output
+        def refresh_obligations():
+            if inventory_command is not None:
+                code, inventory = readonly(inventory_command, {"task": task.to_dict()})
+                if code != 0:
+                    raise ValueError("source restoration inventory unavailable")
+                extend_inventory(protected, inventory, selected)
+            return [{**asdict(item), "obligation_id": key} for key, item in sorted(protected.items())]
         def review_candidate(context, check, round_index):
             nonlocal review_feedback
             if reviewer_command is None:
@@ -191,6 +209,18 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             review_feedback = decision
             if decision["decision"] == "request_changes":
                 return None  # Feed the independent findings to the next worker round.
+            migration_report = None
+            if permission is not None:
+                obligations = refresh_obligations()
+                code, measured = readonly(migration_command, {"task": task.to_dict(), "snapshot": snapshot,
+                                                              "protected": obligations, "permission": permission})
+                if reviews.snapshot(working_state(root), policy) != snapshot:
+                    raise ValueError("source changed after migration review")
+                migration_report = admit(permission, tuple(protected.values()), selected, decision, snapshot, code, measured)
+                if migration_report.exit_code == GateExit.TRACKED_REGRESSIONS:
+                    output = finish("migration_admitted", round_index, check)
+                    output.update(review=decision, migration=asdict(migration_report))
+                    return output  # Checkpoint only, never full acceptance or collection.
             if check["result"] != "pass":
                 output = finish("structural_checkpoint_reviewed", round_index, check)
                 output["review"] = decision
@@ -198,7 +228,8 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             if acceptance is None:
                 output = finish("full_acceptance_gate_required", round_index, check)
             else:
-                code, report = readonly(acceptance, {"task": task.to_dict(), "snapshot": snapshot})
+                code, report = readonly(acceptance, {"task": task.to_dict(), "snapshot": snapshot,
+                                                     "protected": refresh_obligations()})
                 if reviews.snapshot(working_state(root), policy) != snapshot:
                     raise ValueError("source changed after review")
                 result = acceptance_result(code, report)
@@ -207,6 +238,8 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                 output["acceptance"] = report
                 output["ready_for_collection"] = result == "pass"
             output["review"] = decision
+            if migration_report is not None:
+                output["migration"] = asdict(migration_report)
             return output
         for round_index in range(iterations + 1):
             state = store.status(task_name, selected)
@@ -216,6 +249,11 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             code, context = readonly(context_command, {"task": task.to_dict()})
             if code != 0:
                 return finish("context_unavailable", round_index)
+            obligations = refresh_obligations()
+            if inventory_command is not None:
+                context = {**context, "protected_obligations": obligations}
+            if permission is not None:
+                context = {**context, "migration_permission": permission}
             code, check = readonly(check_command, {"task": task.to_dict(), "context": context})
             if changes(round_state, working_state(root)):
                 raise ValueError("source changed between context generation and checking")
@@ -269,5 +307,9 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             if response["discoveries"]:
                 return finish(store.status(task_name, selected)["next_action"], round_index + 1, check, current=False)
             if not changed:
+                if permission is not None and reviewer_command is not None:
+                    reviewed = review_candidate(context, check, round_index + 1)
+                    if reviewed is not None:
+                        return reviewed
                 return finish("no_source_progress", round_index + 1, check)
         raise AssertionError("bounded loop did not terminate")

@@ -105,13 +105,17 @@ establish completion of this program.
   Configured independent reviews now feed corrections back to workers and bind
   decisions to source snapshots. A separate full-project acceptance contract is
   required before reporting collection readiness; OpenSMACX does not yet provide
-  that complete verifier. Live provider integrations, protected migration
-  admission/restoration and actual collection remain under construction.
+  that complete verifier. Configured migration checks now apply the protected
+  admission policy after independent review, preserve required matches across
+  worker rounds, and distinguish admitted regressions from collection readiness.
+  Synthetic checkpoint/resumption tests restore obligations before full acceptance.
+  Live provider integrations, the OpenSMACX migration verifier and actual
+  collection remain under construction.
   Task context now derives restoration requirements from baseline, reachable
   source history and the working tree, preserving removed/rehomed claims without
   a copied ledger. This is a migration safety input, not permission to remove
-  current claim annotations; the compact source obligation writer and driver
-  admission wiring remain unfinished.
+  current claim annotations; the compact source obligation writer and production
+  migration verifier remain unfinished.
 - [ ] InfoWin ownership and constructor-family end-to-end structural pilots.
   The redraw slot is now an InfoWin member instead of independent storage;
   its object-start binding lives beside ConsoleInfoWin's definition. Constructor

@@ -1,6 +1,10 @@
 {
   "schema_version": 1,
   "target": "opensmacx",
+  "obligations": {
+    "argv": ["uv", "run", "recover", "tasks", "obligations", "{task}"],
+    "timeout": 120
+  },
   "context": {
     "argv": ["uv", "run", "recover", "tasks", "context", "{task}"],
     "timeout": 120

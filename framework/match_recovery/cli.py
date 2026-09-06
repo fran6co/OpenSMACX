@@ -27,6 +27,7 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("--config", type=Path, required=True)
     run.add_argument("--worker", type=Path, required=True, help="Trusted worker command configuration")
     run.add_argument("--reviewer", type=Path, help="Independent read-only reviewer command configuration")
+    run.add_argument("--migration", type=Path, help="Coordinator permission for scoped temporary matching regressions")
     run.add_argument("--iterations", type=int, default=3)
     inventory = commands.add_parser("inventory", help="Inspect legacy source without altering it")
     inventory.add_argument("--root", type=Path, default=Path.cwd())
@@ -121,9 +122,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             from .driver import drive
             from .records import read_json
             output = drive(args.root, args.task, read_json(args.config), read_json(args.worker), iterations=args.iterations,
-                           reviewer_configuration=read_json(args.reviewer) if args.reviewer else None)
+                           reviewer_configuration=read_json(args.reviewer) if args.reviewer else None,
+                           migration_configuration=read_json(args.migration) if args.migration else None)
             print(json.dumps(output, indent=2, sort_keys=True))
-            return 0 if output["ready_for_collection"] else 3
+            return (0 if output["ready_for_collection"] else
+                    2 if output["stop_reason"] == "migration_admitted" else 3)
         if args.command == "tasks" and args.action == "obligations":
             from .adapters.opensmacx_obligations import task_obligations
             print(json.dumps(task_obligations(args.root, args.task), indent=2, sort_keys=True))

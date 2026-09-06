@@ -130,13 +130,15 @@ def test_review_records_cannot_smuggle_in_current_measurements():
         validate_review({**value, "measurements": {"bytes": "pass"}})
 
 
-@pytest.mark.parametrize("ready, expected", [(True, 0), (False, 3)])
-def test_cli_only_reports_success_after_full_acceptance(project, monkeypatch, ready, expected):
+@pytest.mark.parametrize("ready, reason, expected", [(True, "ready_for_collection", 0),
+                                                    (False, "full_acceptance_gate_required", 3),
+                                                    (False, "migration_admitted", 2)])
+def test_cli_only_reports_success_after_full_acceptance(project, monkeypatch, ready, reason, expected):
     import json
     root, task = project
     (root / "config.json").write_text(json.dumps(CONFIG))
     (root / "worker.json").write_text(json.dumps(WORKER))
-    monkeypatch.setattr("match_recovery.driver.drive", lambda *a, **kw: {"ready_for_collection": ready})
+    monkeypatch.setattr("match_recovery.driver.drive", lambda *a, **kw: {"ready_for_collection": ready, "stop_reason": reason})
     assert main(["run", task.task_id, "--root", str(root), "--config", str(root / "config.json"),
                  "--worker", str(root / "worker.json")]) == expected
 
