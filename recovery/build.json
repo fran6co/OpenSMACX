@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "artifacts": "build/recovery/builds",
+  "commands": [
+    {"argv": ["cmake", "-S", "{root}", "-B", "{build}", "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release"], "timeout": 120},
+    {"argv": ["cmake", "--build", "{build}", "--parallel", "4"], "timeout": 3300}
+  ],
+  "outputs": [{"path": "OpenSMACX.exe", "format": "pe32-i386"}],
+  "inputs": ["CMakeLists.txt", "pyproject.toml", "uv.lock", "tools/vc6-cl", "tools/vc6-link", "tools/vc6-lib", "tools/vc6_cl.py", "tools/gdb_sidecar.py", "tools/codeview.py", "recovery/environment/wine.py"],
+  "input_roots": ["src", "cmake"],
+  "environment": ["VC6_PREFIX", "VC6_ROOT", "VC6_INCLUDE", "VC6_LIB", "WINEARCH", "CL", "_CL_"]
+}

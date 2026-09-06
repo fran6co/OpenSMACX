@@ -36,6 +36,7 @@ From the OpenSMACX workspace:
 
 ```sh
 uv run recover --help
+uv run recover check-build --summary
 uv run recover inventory
 uv run recover partition
 uv run recover partition --group class:InfoWin --details --impact
@@ -270,6 +271,16 @@ next check. The joint report's `compilation` reports actual compiler attempts an
 the subreports count requested trials. Failed compilations are never reused.
 An alternate-target test runs real subprocess worker/check adapters without
 importing the OpenSMACX adapter.
+
+The driver also runs the package-owned `check-build` command each round, using
+`build.json` to configure a fresh Release CMake/Ninja tree under ignored
+`build/recovery/builds/`. Four compiler jobs use the coordinator's isolated Wine
+prefix; this is not a fleet/prefix-pool implementation. Build commands and expected
+`OpenSMACX.exe` format are project data, not Python adapters. The check does not
+reuse `build/`'s incremental objects and cleans its temporary output. Workers get
+`check.build_check`, including compiler/linker diagnostics, and the original scoped
+result in `check.recovery_result`. Full build/structure/outside-scope migration
+admission remains unfinished even though fresh build measurement is now available.
 
 ### Independent review and acceptance
 

@@ -119,6 +119,58 @@ live in `migration.py`, `migration_protocol.py`, `reviews.py` and `tasks.py`.
 
 ## Package boundary and verification
 
+### Fresh build checks
+
+`recover check-build [--root <project>] [--summary]` uses project configuration,
+not a compiler-specific package adapter. Add `"build": "recovery/build.json"`
+to `project.json`. For example:
+
+```json
+{
+  "schema_version": 1,
+  "artifacts": "build/recovery/builds",
+  "commands": [
+    {"argv": ["cmake", "-S", "{root}", "-B", "{build}", "-G", "Ninja"], "timeout": 120},
+    {"argv": ["cmake", "--build", "{build}"], "timeout": 1800}
+  ],
+  "outputs": [{"path": "application", "format": "file"}],
+  "inputs": ["CMakeLists.txt"],
+  "input_roots": ["src", "cmake"],
+  "environment": ["CC", "CXX"]
+}
+```
+
+Commands are normal argument arrays, not shell fragments or JSON adapters.
+`{root}`, `{build}` and `{env:NAME}` substitutions are supported. `{build}` is a
+new empty directory for every invocation, under the verified Git-ignored,
+untracked `artifacts` path. It must be outside input roots. Output paths are
+relative to it; existing outputs elsewhere cannot satisfy the check. All commands
+must succeed and all expected outputs must be nonempty regular files. `file`
+checks only artifact existence/content identity; `pe32-i386` additionally parses
+the PE format. Neither validates application behavior or complete source coverage.
+
+Input roots are re-enumerated and hashed, including headers without extensions.
+Explicit input files may be internal file aliases; their link spelling, target
+and contents are pinned. Directory aliases and external links are refused.
+List build scripts and other inputs outside those roots explicitly. Configured
+environment values and the package implementation contribute to the fingerprint.
+External compiler/SDK installation identity remains project responsibility.
+Source, policy and Git mutations are refused and preserved, never rolled back.
+These are trusted commands with change detection, not a security sandbox.
+
+Results are disposable; the temporary build and outputs are cleaned up even on
+failure. `--summary` omits command stdout/stderr, but keeps exit statuses and
+artifact results. Exit 0 is a successful configured build, 1 a failed command,
+3 unavailable evidence (including timeout or missing/invalid artifacts).
+
+Add a `build` command to `driver.json` to run it alongside scoped checks every
+round. The worker and reviewer receive `check.build_check`; `check.recovery_result`
+preserves the scoped result and `check.result` combines both. Build failures drive
+another edit/recheck round. A reviewed failed/unknown build stops with
+`build_verification_required`; it cannot enter migration or full acceptance.
+Full acceptance still requires independent structure/reference/obligation/runtime
+verification. Build parallelism and isolated compiler resources are project policy.
+
 ### Source-policy audits
 
 `recover audits check <name> [--root <project>] [--summary]` runs natively, with

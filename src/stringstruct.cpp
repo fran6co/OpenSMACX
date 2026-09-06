@@ -204,14 +204,10 @@ Purpose: Release every entry in the list, notifying the owner about each
 //            rebuilding reports the identical 2 against 0.
 Status: Complete
 */
-// inline: sub_4066c0 (0x004066C0) calls this twice through
-// close_with_tables/close and makes NO real calls at all in the image, so
-// this must fold there too. Plain `inline` (not MEASURED/dllexport), since
-// `remove_all` has external linkage as a public member either way - the
-// out-of-line 0x00402970 body stays reachable through the other callers in
-// this file, and `MEASURED` here would force a matching dllexport onto the
-// header declaration this file shares with unrelated translation units.
-inline void StringStruct::remove_all() {
+// The definition is private to this translation unit, while BasePop and
+// Datalink call the public declaration. It must provide an out-of-line symbol;
+// an inline definition here is not available to those translation units.
+void StringStruct::remove_all() {
     if (!head_) {
         return;
     }

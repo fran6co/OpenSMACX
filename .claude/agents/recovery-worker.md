@@ -41,6 +41,11 @@ an old claim missing from current source still needs restoration. Unknown
 references or unsupported structural proof are not permitted byte regressions.
 Use `tasks check-restoration` to remeasure; `tasks obligations` only inventories.
 
+Also read `check.build_check`: the driver performs a fresh configured full build
+each round. A passing scoped byte result (`check.recovery_result`) cannot excuse
+a link failure. Repair authorized build defects, or report the dependency/scope
+discovery; never change build policy to omit a failing unit.
+
 Once the structural interpretation is established, score 3–5 plausible spellings
 with `uv run recover tasks variants <task> --image <image> --deck <ignored-json>`
 before editing product source. Follow the package README's source digest and

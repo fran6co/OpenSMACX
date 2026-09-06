@@ -41,6 +41,21 @@ def _files(root, roots):
     return result
 
 
+def artifact_parent(root: Path, artifacts: str, *, excluded_roots=()) -> Path:
+    """Validate an ignored, untracked artifact root outside explicit inputs."""
+    relative_path(artifacts)
+    parent = root / artifacts
+    if (any(parent.is_relative_to(root / name) for name in excluded_roots)
+            or any(path.is_symlink() for path in (parent, *parent.parents) if path.is_relative_to(root))):
+        raise ValueError("artifacts must be outside source roots and not symlinked")
+    ignored = subprocess.run(["git", "check-ignore", "-q", artifacts + "/"], cwd=root, capture_output=True, timeout=10)
+    tracked = subprocess.run(["git", "ls-files", "--", artifacts + "/"], cwd=root, capture_output=True, timeout=10)
+    if ignored.returncode != 0 or tracked.returncode != 0 or tracked.stdout:
+        raise ValueError("artifact directory must be Git-ignored and contain no tracked files")
+    parent.mkdir(parents=True, exist_ok=True)
+    return parent
+
+
 @contextmanager
 def source_replica(root: Path, roots: tuple[str, ...], replacements: dict[str, bytes], *, artifacts: str | None = None):
     """Yield a private tree, then reject changed originals even on failure.
@@ -58,16 +73,7 @@ def source_replica(root: Path, roots: tuple[str, ...], replacements: dict[str, b
         raise ValueError("source replica requires explicit roots")
     parent = None
     if artifacts is not None:
-        relative_path(artifacts)
-        parent = root / artifacts
-        if (any(parent.is_relative_to(root / name) for name in roots)
-                or any(path.is_symlink() for path in (parent, *parent.parents) if path.is_relative_to(root))):
-            raise ValueError("replica artifacts must be outside source roots and not symlinked")
-        ignored = subprocess.run(["git", "check-ignore", "-q", artifacts + "/"], cwd=root, capture_output=True, timeout=10)
-        tracked = subprocess.run(["git", "ls-files", "--", artifacts + "/"], cwd=root, capture_output=True, timeout=10)
-        if ignored.returncode != 0 or tracked.returncode != 0 or tracked.stdout:
-            raise ValueError("replica artifact directory must be Git-ignored and contain no tracked files")
-        parent.mkdir(parents=True, exist_ok=True)
+        parent = artifact_parent(root, artifacts, excluded_roots=roots)
     for path, contents in replacements.items():
         relative_path(path)
         if not isinstance(contents, bytes):

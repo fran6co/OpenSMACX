@@ -149,6 +149,12 @@ bounded code/references and declared layout. Unknown bindings, missing original
 extents, unsupported CodeView records and incomplete lifetime evidence remain
 unknown. A layout observation only describes what this compiler emitted.
 
+The driver now also runs `uv run recover check-build` each round. Read its
+`check.build_check` report alongside the scoped `candidate` diagnostics. It builds
+a fresh Release tree with the configured isolated compiler; existing incremental
+objects cannot satisfy it. Passing build output is not structural or runtime proof.
+For a standalone build summary, use `uv run recover check-build --summary`.
+
 During cutover, also run `cmake --build build` and the full unpiped
 `uv run tools/osmx.py check`. Exit 3 is unmeasurable, not green; “0 REGRESSED”
 alone is not acceptance. The retained `uv run tools/osmx.py record <addresses>`

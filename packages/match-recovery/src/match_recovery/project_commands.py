@@ -7,6 +7,9 @@ from .records import read_json
 
 
 def register(commands):
+    build = commands.add_parser("check-build", help="Run configured commands in a fresh ignored build directory; not recovery acceptance")
+    build.add_argument("--root", type=Path, default=Path.cwd())
+    build.add_argument("--summary", action="store_true")
     audits = commands.add_parser("audits", help="Recompute configured source-policy ratchets; not structural proof")
     audit_actions = audits.add_subparsers(dest="action", required=True)
     source_audit = audit_actions.add_parser("check")
@@ -120,9 +123,17 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
     """Native configured source operations, otherwise the local JSON boundary."""
     root = root.resolve()
     configuration = read_json(root / "recovery/project.json")
-    if (configuration.keys() - {"schema_version", "adapter", "source", "source_history", "compiler", "measurement", "audits"}
+    if (configuration.keys() - {"schema_version", "adapter", "source", "source_history", "compiler", "measurement", "audits", "build"}
             or type(configuration.get("schema_version")) is not int or configuration["schema_version"] != 1):
         raise ValueError("invalid local project command configuration")
+    if arguments.get("command") == "check-build":
+        from .build_check import check_build
+        output = check_build(root)
+        if arguments.get("summary"):
+            for command in output["commands"]:
+                command.pop("stdout", None)
+                command.pop("stderr", None)
+        return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
     if arguments.get("command") == "audits":
         from .source_audits import audit_source
         output = audit_source(root, arguments["audit"], files=arguments.get("files"))

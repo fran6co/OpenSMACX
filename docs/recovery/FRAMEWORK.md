@@ -9,8 +9,10 @@ The configured loop now uses the package-owned `tasks check-restoration` command
 current strict binary/layout measurements are joined to source-history obligation
 identities, including removed claims. These are disposable measurements, not a
 new ledger. Matching permissions also require a separate passing reference check;
-legacy byte-only history cannot waive wrong or unknown targets. Native build,
-full structure, outside-scope admission and provider integration remain unfinished.
+legacy byte-only history cannot waive wrong or unknown targets. The native
+`check-build` command now supplies fresh configured artifact measurements to each
+driver round, without project checker code or existing incremental outputs.
+Full structure, outside-scope admission and provider integration remain unfinished.
 
 ## Accepted design
 

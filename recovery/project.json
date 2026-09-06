@@ -1,5 +1,6 @@
 {
   "schema_version": 1,
+  "build": "recovery/build.json",
   "audits": "recovery/audits.json",
   "source": {
     "image_pin": "src/IMAGE_PIN",

@@ -92,7 +92,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
     if type(iterations) is not int or not 1 <= iterations <= 100:
         raise ValueError("iterations must be 1..100")
     required = {"schema_version", "target", "context", "check"}
-    if (not required <= set(configuration) or set(configuration) - required - {"acceptance", "obligations", "migration_check"}
+    if (not required <= set(configuration) or set(configuration) - required - {"acceptance", "obligations", "migration_check", "build"}
             or type(configuration["schema_version"]) is not int or configuration["schema_version"] != 1):
         raise ValueError("invalid driver configuration")
     if set(worker_configuration) != {"author", "command"}:
@@ -100,6 +100,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
     require_text(worker_configuration["author"], "worker author")
     context_command = Command.read(configuration["context"])
     check_command = Command.read(configuration["check"])
+    build_command = Command.read(configuration["build"]) if "build" in configuration else None
     worker_command = Command.read(worker_configuration["command"])
     reviewer_command = None
     if reviewer_configuration is not None:
@@ -200,6 +201,10 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                 output.update(review=decision, pending_interpretations=pending)
                 return output  # A generic approval cannot silently discard structural history.
             migration_report = None
+            if build_command is not None and check["build_check"]["result"] != "pass":
+                output = finish("build_verification_required", round_index, check)
+                output["review"] = decision
+                return output  # Review cannot waive an independently failed or unknown build.
             if permission is not None:
                 obligations = refresh_obligations()
                 if reviews.snapshot(working_state(root), policy) != snapshot:
@@ -258,6 +263,17 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             result = check.get("result")
             if result not in ("pass", "fail", "unknown") or code != {"pass": 0, "fail": 1, "unknown": 3}[result]:
                 raise ValueError("checker result and exit code disagree")
+            if build_command is not None:
+                build_code, build = readonly(build_command, {"task": task.to_dict(), "context": context})
+                build_result = build.get("result")
+                if build_result not in ("pass", "fail", "unknown") or build_code != {"pass": 0, "fail": 1, "unknown": 3}[build_result]:
+                    raise ValueError("build checker result and exit code disagree")
+                combined = ("unknown" if "unknown" in (result, build_result) else
+                            "fail" if "fail" in (result, build_result) else "pass")
+                check = {**check, "recovery_result": result, "build_check": build, "result": combined}
+                result = combined
+                if changes(round_state, working_state(root)):
+                    raise ValueError("source changed between recovery and build checking")
             if result == "pass":
                 reviewed = review_candidate(context, check, round_index)
                 if reviewed is not None:

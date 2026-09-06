@@ -1,6 +1,10 @@
 {
   "schema_version": 1,
   "target": "opensmacx",
+  "build": {
+    "argv": ["uv", "run", "recover", "check-build"],
+    "timeout": 3600
+  },
   "obligations": {
     "argv": ["uv", "run", "recover", "tasks", "obligations", "{task}"],
     "timeout": 120
