@@ -62,6 +62,30 @@ def test_driver_really_edits_rechecks_and_stops_before_collection(project):
     assert not result["ready_for_collection"]
 
 
+def test_driver_delivers_layout_failures_even_when_binary_passes(project):
+    root, task = project
+    received = []
+
+    def execute(command, root, task_name, payload):
+        if command.argv[0] == "context":
+            return 0, {"source": "src/f.cpp"}
+        if command.argv[0] == "check":
+            fixed = (root / "src/f.cpp").read_text() == "fixed layout\n"
+            return (0 if fixed else 1), {"result": "pass" if fixed else "fail",
+                                        "checks": {"binary": {"result": "pass"},
+                                                   "layout": {"result": "pass" if fixed else "fail"}}}
+        received.append(payload["check"])
+        assert payload["check"]["checks"]["binary"]["result"] == "pass"
+        assert payload["check"]["checks"]["layout"]["result"] == "fail"
+        (root / "src/f.cpp").write_text("fixed layout\n")
+        return 0, {"discoveries": []}
+
+    report = drive(root, task.task_id, CONFIG, WORKER, iterations=2, execute=execute)
+    assert len(received) == 1
+    assert report["stop_reason"] == "independent_review_required"
+    assert not report["ready_for_collection"]
+
+
 def test_multiple_rounds_and_budget_exhaustion_preserve_source(project):
     def worker(root, payload):
         (root / "src/f.cpp").write_text(f"attempt {payload['round']}\n")

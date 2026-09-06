@@ -65,6 +65,11 @@ def parser() -> argparse.ArgumentParser:
     task_binary.add_argument("--root", type=Path, default=Path.cwd())
     task_binary.add_argument("--image", type=Path, required=True)
     task_binary.add_argument("--summary", action="store_true")
+    task_check = task_actions.add_parser("check", help="Joint scoped binary and layout evidence; not full acceptance")
+    task_check.add_argument("task")
+    task_check.add_argument("--root", type=Path, default=Path.cwd())
+    task_check.add_argument("--image", type=Path, required=True)
+    task_check.add_argument("--summary", action="store_true")
     discovery = task_actions.add_parser("discover")
     discovery.add_argument("task")
     discovery.add_argument("--root", type=Path, default=Path.cwd())
@@ -131,6 +136,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(json.dumps(output, indent=2, sort_keys=True))
             return (0 if output["ready_for_collection"] else
                     2 if output["stop_reason"] == "migration_admitted" else 3)
+        if args.command == "tasks" and args.action == "check":
+            from .adapters.opensmacx_check import check_task
+            output = check_task(args.root, args.task, args.image)
+            if args.summary:
+                output["checks"]["binary"].pop("functions", None)
+                output["checks"]["layout"].pop("members", None)
+            print(json.dumps(output, indent=2, sort_keys=True))
+            return {Result.PASS: 0, Result.FAIL: 1, Result.UNKNOWN: 3}[output["result"]]
         if args.command == "tasks" and args.action == "check-layout":
             from .adapters.opensmacx_layout import verify_layout
             output = verify_layout(args.root, args.task)

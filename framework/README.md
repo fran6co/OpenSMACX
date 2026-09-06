@@ -148,6 +148,15 @@ Without independent review and a configured full acceptance gate, driver stops
 return CLI exit 3 and `ready_for_collection:false`. The supplied OpenSMACX
 configuration deliberately has no acceptance command yet: its scoped checker
 cannot stand in for complete reference, structure, obligation and runtime checks.
+The configured check is now `tasks check <task> --image <image>`, which runs both
+binary/reference and declared-layout checks. Workers receive both reports under
+`checks.binary` and `checks.layout`, including coverage gaps, even when the other
+dimension fails. A passing body cannot suppress a layout failure or unknown.
+Both reports must share unchanged source, task decisions, build inputs and image;
+a change between stages refuses the combined result. Unknown evidence keeps the
+combined result unknown. Even two passing scoped checks do not authorize collection.
+The individual `check-binary` and `check-layout` commands remain useful diagnostics;
+the joint command's `--summary` retains both verdicts and layout coverage.
 An alternate-target test runs real subprocess worker/check adapters without
 importing the OpenSMACX adapter.
 
