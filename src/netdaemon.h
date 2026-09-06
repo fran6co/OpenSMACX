@@ -195,6 +195,10 @@ class NetDaemon : public AlphaNet {
   // report whether the lock landed. Declared for the veh.cpp action family,
   // which calls it directly at 0x004CB399 / 0x004CB9FD.
   int order_veh(int veh_id, int payload_10, int payload_1C);
+  // 0x00532570, still the image's own bytes (forwarded in pending_bodies.cpp).
+  // enemy_veh reaches it after its own await_synch, asking the daemon to run
+  // the vehicle's order; mode 1 is the only value any caller passes.
+  int action(int veh_id, int mode);
   uint32_t unlock_veh();
 
   // Storage the image proves is here: its own methods reach 0x1BD0.

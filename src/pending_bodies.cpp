@@ -2269,6 +2269,24 @@ void __cdecl world_erosion() {
     PENDING_BODY(0x005C2CB0, pending)();
 }
 
+// ?enemy_move@@YAHH@Z at 0x0056B5B0 - the AI's per-vehicle move driver, the
+// one callee enemy_veh (general.cpp) was homed without. 56 KB of image span,
+// still the original's own bytes, so this is the forwarder and not a homed
+// body. base_terraform also reaches it by name (terraforming.cpp).
+int __cdecl enemy_move(int veh_id) {
+    typedef int(__cdecl *pending)(int);
+    return PENDING_BODY(0x0056B5B0, pending)(veh_id);
+}
+
+// ?action@NetDaemon@@QAEHHH@Z at 0x00532570 - the daemon's side of running a
+// vehicle's order, reached by enemy_veh (general.cpp) once it has awaited the
+// synch. Still the image's own bytes, so this is the forwarder and not a homed
+// body.
+int NetDaemon::action(int veh_id, int mode) {
+    typedef int(__fastcall *pending)(NetDaemon *, void *, int, int);
+    return PENDING_BODY(0x00532570, pending)(this, nullptr, veh_id, mode);
+}
+
 // 0x00621870 - Texture::sub_621870, 2433 bytes, still the image's own bytes.
 // Its marker in texture.cpp records the wall: an x87 `fdivr st(4)` whose five
 // locals stay live on the FPU stack across roughly 350 instructions and a

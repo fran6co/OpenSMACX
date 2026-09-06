@@ -552,7 +552,11 @@ SCAFFOLD_CEILINGS = {
     # call dword ptr [addr] does not).
     # 265 -> 264 (2026-09-06, W5p basepop exec): the exec forwarder went
     # with its body - BasePop is 7 of 7.
-    "PENDING_BODY forwarders": 264,
+    # 264 -> 266 (2026-09-06, W5r general codec, collected): enemy_move
+    # (0x56B5B0, unlocked enemy_veh/enemy_turn) and NetDaemon::action
+    # (0x532570, exposed by enemy_veh's homing) - both FILE-only in the
+    # archive, landmine-free.
+    "PENDING_BODY forwarders": 266,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -692,7 +696,9 @@ SCAFFOLD_CEILINGS = {
     # window, add/remove_ancestor_origin) plus four unclaimed.
     # 977 -> 976 (2026-09-06, W5q basewin derivation): 0041e530.cpp went
     # with on_iface_button_toggled's homing.
-    "artifact files (recovered/)": 976,
+    # 976 -> 975 (2026-09-06, W5r general codec, collected): MCIVideo::
+    # blit_frame's artifact (and Mat3::equals' preserved unit).
+    "artifact files (recovered/)": 975,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -817,7 +823,9 @@ SCAFFOLD_CEILINGS = {
     # full - all 1,146 image instructions across both spans modelled,
     # MISMATCH 18/1139 (the residual is SEH-frame scheduling: the image
     # opens with mov eax,fs:[0], this tree with push -1).
-    "unrecovered files": 1061,
+    # 1061 -> 1058 (2026-09-06, W5r general codec, collected): enemy_veh
+    # and enemy_turn homed on the forwarder unlock.
+    "unrecovered files": 1058,
     # 2717 -> 2748 (2026-09-04, P2 net batch): NetFifo promoted with
     # close/add/get/get, NetFifoNode, head_/tail_/count_ - the deliberate
     # raise this ceiling exists for (class modelling grows it; the class

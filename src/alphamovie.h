@@ -32,6 +32,10 @@ class MCIVideo {
  public:
   MCIVideo();  // ??0MCIVideo@@QAE@XZ  0x005FFD80
   void close();  // ?close@MCIVideo@@QAEXXZ  0x005FFDB0
+  // 0x00600330, homed into general.cpp: copies the posted frame into the
+  // window's own device context. No catalogue name - `blit_frame` is the
+  // tree's, recorded on the body's `symbol` fact.
+  void blit_frame();
   // ??1MCIVideo@@QAE@XZ at 0x004042C0, a user destructor that calls close();
   // the palette_ member is destroyed by the compiler after the body. The
   // homed definition in alphamovie.cpp is what amovie_project's stack
@@ -48,7 +52,9 @@ class MCIVideo {
   // written through a 16-bit alias there rather than assigned directly -
   // see MCIVideo::MCIVideo() in alphamovie.cpp.
   uint32_t mciId_;  // 0x4
-  uint32_t field_8_;  // 0x8
+  // 0x8, named from 0x00600330: it is the argument to both GetDC and
+  // ReleaseDC, so it is the window the frame is blitted into.
+  HWND field_8_;  // 0x8
   uint32_t field_C_;  // 0xC
   // Sized and pinned: sizeof(Palette) == 0x454 (palette.h), exactly the
   // extent this field already carried as raw bytes. The constructor at
@@ -56,9 +62,16 @@ class MCIVideo {
   // on `this + 0x10`).
   Palette palette_;  // 0x10
   uint32_t field_464_;  // 0x464
-  uint32_t field_468_;  // 0x468
-  uint32_t field_46C_;  // 0x46C
-  uint32_t field_470_;  // 0x470
+  // 0x468, named from 0x00600330: the frame blit returns without touching a
+  // device context when it is clear, so it gates on "a frame is posted".
+  uint32_t frame_posted_;  // 0x468
+  // 0x46C..0x478, named from 0x00600330: BitBlt's destination x, y, width
+  // and height in that order, passed straight through as the four
+  // destination arguments.
+  uint32_t blit_x_;       // 0x46C
+  uint32_t blit_y_;       // 0x470
+  uint32_t blit_width_;   // 0x474
+  uint32_t blit_height_;  // 0x478
 };
 
  /*

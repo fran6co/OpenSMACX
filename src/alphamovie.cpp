@@ -40,7 +40,7 @@ MCIVideo::MCIVideo() {
     *reinterpret_cast<short *>(&mciId_) = 0;
     field_8_ = 0;
     field_C_ = 0;
-    field_468_ = 0;
+    frame_posted_ = 0;
 }
 
 /*

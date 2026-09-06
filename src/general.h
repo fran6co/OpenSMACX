@@ -273,6 +273,13 @@ void __cdecl sub_5ce6e3(unsigned char *param_3, short *param_4, int param_5,
 void __cdecl sub_5ced1d(int *esi_ptr);
 void __cdecl sub_5cee80(int *src);
 int __cdecl enemy_veh(int faction);
+void __cdecl enemy_turn(int faction);
+int __cdecl enemy_move(int veh_id);
+// netdaemon.h owns synch_veh and veh.cpp defines action without declaring it;
+// this TU cannot include netdaemon.h (see general.cpp), so both are restated
+// here. Repeating a free-function declaration is legal, unlike a class's.
+void __cdecl synch_veh(int veh_id);
+int __cdecl action(int veh_id);
 void __cdecl sub_5cef8a(int, int);
 int __cdecl sub_5cf150();
 void __cdecl sub_5cf2f0(const unsigned int *bit_buffer, unsigned int bit_pos,

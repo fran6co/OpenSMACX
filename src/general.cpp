@@ -43,13 +43,20 @@ extern Sprite g_BLANK_SPRITE;
 // free bodies homed here out of the archive reach these
 #include "map.h"     // zoc_any
 #include "veh.h"     // can_arty
-// The AI turn loop stores into NetDaemonNet + 0x1B74 (netdaemon.h:67's
-// queue-1 dword_3). Neither netdaemon.h nor net_class.h can be included here -
-// both declare JackalVoiceRx, which this TU already declares for
-// ??1JackalVoiceRx@@QAE@XZ, and a second definition is C2011 - so the one
-// object this body needs is forward-declared instead. Nothing dereferences a
-// member of it, so the incomplete type is enough.
-class NetDaemon;                 // netdaemon.h
+#include "alphamovie.h"  // MCIVideo - 0x00600330 is one of its members
+// The AI turn loop calls three of NetDaemon's methods and stores into
+// NetDaemonNet + 0x1B74 (netdaemon.h:67's queue-1 dword_3). Neither
+// netdaemon.h nor net_class.h can be included here - both declare
+// JackalVoiceRx, which this TU already declares for ??1JackalVoiceRx@@QAE@XZ,
+// and a second definition is C2011 - so the three members enemy_veh reaches
+// are declared instead. The layout stays in netdaemon.h; nothing here needs
+// it.
+class NetDaemon {
+public:
+    void await_synch();                // ?await_synch@NetDaemon@@QAEXXZ
+    uint32_t unlock_veh();             // netdaemon.h spells the return uint32_t
+    int action(int veh_id, int mode);  // ?action@NetDaemon@@QAEHHH@Z
+};
 extern NetDaemon NetDaemonNet;   // 0x0093CD90
 #include "xpops.h"   // X_pop
 #include "filemap.h" // Filemap::open_read
@@ -3256,6 +3263,10 @@ public:
     // directly as a float base and never offsets past nine floats.
     float v[9];
     void multiply(float *out, float *other);
+    // 0x00634920, homed here beside multiply: the same nine-float walk with
+    // the same receiver-as-a-plain-float-base signature. Elementwise, so it
+    // is the matrix equality and not an epsilon compare.
+    bool equals(const float *other);
 };
 
 void Mat3::multiply(float *out, float *other) {
@@ -3294,6 +3305,25 @@ void Mat3::multiply(float *out, float *other) {
     for (int i = 0; i < 9; ++i) {
         out[i] = local[i];
     }
+}
+
+// ORIGINAL: 0x00634920 sub_634920 0x00634920-0x00634975 BYTE_EXACT
+// symbol    ?equals@Mat3@@QAE_NPBM@Z
+// LEVER: two indexed reads, not a hoisted difference. The image keeps `this`
+//        and `other` apart and re-derives their difference inside the outer
+//        loop (`sub edi, ebp` at 0x634939, one per row); spelling that
+//        difference out as a local lets /O2 prove it loop-invariant and hoist
+//        it past the loop it belongs to, which is 69 bytes against 85.
+bool Mat3::equals(const float *other) {
+    const float *mine = v;
+    for (int row = 0; row < 3; row++) {
+        for (int col = 0; col < 3; col++) {
+            if (mine[row * 3 + col] != other[row * 3 + col]) {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 // ORIGINAL: 0x00634A50 sub_634a50 0x00634A50-0x00634AC9 FILE
@@ -4900,5 +4930,266 @@ void __cdecl sub_5ce6e3(unsigned char *codes, short *samples, int sample_total, 
     } while (iVar2 < sample_total);
     *predictor_pair = ((*AdpcmPredictorRight & 0xffff) << 16) | (*AdpcmPredictorLeft & 0xffff);
     *step_index_pair = ((*AdpcmStepIndexRight & 0xffff) << 16) | (*AdpcmStepIndexLeft & 0xffff);
+}
+
+// ---------------------------------------------------------------------------
+// THE ENEMY AI MOVE DRIVER (0x00579240 / 0x00579510), homed 2026-09-06.
+//
+// enemy_turn sweeps the vehicle table ten times, once per priority band, and
+// hands each of the faction's vehicles to enemy_veh; enemy_veh drives one
+// vehicle's move and reports whether the turn moved on. enemy_move (the
+// per-vehicle mover both of them reach) is still the image's own bytes and is
+// forwarded from pending_bodies.cpp.
+// ---------------------------------------------------------------------------
+
+char *const LogEnemyVehicleDone = (char *)0x0068EAFC;    // "Enemy Vehicle DONE"
+char *const LogEnemyVehicleAction = (char *)0x0068EB10;  // "Enemy Vehicle ACTION"
+char *const LogEnemyVehicle = (char *)0x0068EB28;        // "Enemy Vehicle"
+
+// ORIGINAL: 0x00579240 ?enemy_veh@@YAHH@Z 0x00579240-0x005794C8
+// TRIED: `Veh *veh = &Vehs[veh_id]` - the image never materialises the array
+//        base, it folds 0x9528xx into every access displacement and keeps only
+//        `unit_id * sizeof(Veh)` live in edi; a pointer local puts the base in
+//        the register and the field offset in the displacement instead, so
+//        every member access disagrees. The array spelling `Vehs[unit_id].f`
+//        is what is here.
+// TRIED: reassigning the parameter (the image reuses [ebp+8] for the
+//        local-faction flag, so it must have done) - no change, still 4/208
+//        with the same push/mov order, so the readable named local stays.
+// LEVER: not reproduced - the image's two jump tables on the faction id are
+//        32 instructions that both map 0..7 onto themselves (identity, so no
+//        source computes anything) and this body has nothing where they are.
+//        Everything else is register placement: image `mov ebx,[ebp+8]` /
+//        ours `push esi; push edi; mov edi,[ebp+8]`, and the base-fold above.
+int __cdecl enemy_veh(int veh_id) {
+    // The image keeps the id in ebx for the whole body and reuses the
+    // parameter's own stack slot for the local-faction flag, which is why the
+    // id is held in a local of its own. Every field is read through
+    // `Vehs[unit_id]` rather than through a Veh * local: the image folds
+    // Vehs's address into each access displacement and keeps only
+    // `unit_id * sizeof(Veh)` live in edi, which is what the array spelling
+    // compiles to and what a pointer local does not.
+    const int unit_id = veh_id;
+
+    bool is_local_turn;
+    if (Vehs[unit_id].faction_id == LocalFaction && IsMultiplayerNet != 0) {
+        is_local_turn = true;
+    } else {
+        is_local_turn = false;
+    }
+
+    if (IsMultiplayerNet != 0) {
+        // NetDaemonNet + 0x1B74 is netdaemon.h's lock_state_[1].dword_[3] -
+        // the queue-1 slot the constructor clears and process_message reads.
+        // Neither netdaemon.h nor net_class.h can be included in this TU (see
+        // the declaration above), so the offset stands on the object until
+        // that include is possible.
+        *reinterpret_cast<unsigned int *>(
+            reinterpret_cast<char *>(&NetDaemonNet) + 0x1B74) = 3;
+    }
+
+    do_all_non_input();
+
+    // The image dispatches twice through jump tables on the faction id here,
+    // and both tables map every value 0..7 onto itself: the first loads the
+    // same value it was handed, the second does it again. Nothing observable
+    // is computed, so there is no source to write.
+
+    if (Vehs[unit_id].moves_expended != 0
+            && Vehs[unit_id].order == ORDER_MOVE_TO
+            && VehPrototypes[Vehs[unit_id].proto_id].plan != 7
+            && !(Vehs[unit_id].state & VSTATE_EXPLORE)) {
+        if (zoc_any(Vehs[unit_id].x, Vehs[unit_id].y,
+                    Vehs[unit_id].faction_id)
+            == 0) {
+            goto after_move;  // blocked by a zone of control
+        }
+    }
+
+    if (enemy_move(unit_id) != 0) {
+        return 1;
+    }
+
+    {
+        int moves_left = speed(unit_id, 0) - Vehs[unit_id].moves_expended;
+        if (moves_left < 0 || (moves_left < 1000 && moves_left == 0)) {
+            if (IsMultiplayerNet != 0) {
+                log_say(LogEnemyVehicleDone, unit_id, 0, 0);
+            }
+            if (is_local_turn) {
+                synch_veh(unit_id);
+                NetDaemonNet.await_synch();
+                NetDaemonNet.unlock_veh();
+            }
+            return 1;
+        }
+    }
+
+after_move:
+    if (is_local_turn) {
+        synch_veh(unit_id);
+        NetDaemonNet.await_synch();
+        if (NetDaemonNet.action(unit_id, 1) == 0) {
+            return 0;
+        }
+        return 1;
+    }
+
+    if (IsMultiplayerNet != 0) {
+        char number_text[0x50];
+        char message[8];
+        message[0] = 0;
+        _itoa(unit_id, number_text, 10);
+        strcat(message, number_text);
+        log_say(LogEnemyVehicleAction, message, Vehs[unit_id].order,
+                Vehs[unit_id].waypoint_x[0], Vehs[unit_id].waypoint_y[0]);
+    }
+
+    if (action(unit_id) == 0) {
+        veh_skip(unit_id);
+    }
+
+    if (IsMultiplayerNet != 0) {
+        char state_text[2];
+        state_text[0] = Vehs[unit_id].move_to_ai_type;
+        state_text[1] = 0;
+        log_say(LogEnemyVehicle, state_text, unit_id, Vehs[unit_id].x,
+                Vehs[unit_id].y);
+    }
+
+    return 0;
+}
+
+// ---------------------------------------------------------------------------
+// THE MOVIE FRAME BLIT (0x00600330), homed 2026-09-06.
+//
+// An MCIVideo member, not a Win one: the receiver's +8 is the GetDC/ReleaseDC
+// window and its +0x46C..+0x478 are the four BitBlt destination arguments,
+// which is MCIVideo's field run (alphamovie.h), not Win's (sizeof(Win) is
+// 0x444, short of every offset here). get_hdc/release_hdc ARE Win's - they are
+// static, so any member can call them.
+// ---------------------------------------------------------------------------
+
+// ORIGINAL: 0x00600330 sub_600330 0x00600330-0x00600393 BYTE_EXACT
+// symbol    ?blit_frame@MCIVideo@@QAEXXZ
+// LEVER: the owner is the field run, not the catalogue - the image's span
+//        0x00600320 (is_playing) is the byte before it and MCIVideo is the
+//        only class in the tree whose fields reach 0x478.
+void MCIVideo::blit_frame() {
+    if (frame_posted_ == 0) {
+        return;
+    }
+
+    HDC hdc = GetDC(field_8_);
+    if (hdc == nullptr) {
+        return;
+    }
+
+    // The image pushes the eight BitBlt arguments first, calls get_hdc in the
+    // middle of them and pushes its return as BitBlt's own first argument - a
+    // static call with no arguments of its own, wedged into the argument
+    // build. Spelled as the nested call it is.
+    BitBlt(Win::get_hdc(), blit_x_, blit_y_, blit_width_, blit_height_, hdc, 0,
+           0, SRCCOPY);
+
+    Win::release_hdc();
+    ReleaseDC(field_8_, hdc);
+}
+
+// ORIGINAL: 0x00579510 ?enemy_turn@@YAHH@Z 0x00579510-0x00579769
+// symbol    ?enemy_turn@@YAXH@Z
+// LEVER: void, not the catalogue's int - the body's only `ret` leaves eax
+//        holding whatever the last address calculation left there
+//        (`faction_id * 0x20CC`, from the PlayersData store), not a return
+//        value. See the same recast on 0x00579510's archived transcription.
+// TRIED: `bool matched` locals - the image has no such variable. Each band
+//        ends in two bare jumps (one to the matched point 0x579648, one to the
+//        next-vehicle tail), with no setcc and no store, so a `matched`
+//        local costs a `setne al; test al,al` pair the image does not have.
+//        Faithful source here would be goto-per-band, which this pass did not
+//        spend the budget on: the body is 12/184 on register placement alone.
+// TRIED: `Veh *veh` across the sweep - the image keeps exactly one such
+//        pointer (esi, `sub esi,0x34`), this tree spills a second to
+//        [ebp-0xc], so the frame is 0xc against the image's 8.
+void __cdecl enemy_turn(int faction_id) {
+    for (int priority = 0; priority < 10; priority++) {
+        int veh_id = VehCurrentCount - 1;
+        if (veh_id < 0) {
+            continue;
+        }
+        Veh *veh = &Vehs[veh_id];
+        do {
+            if (veh_id < VehCurrentCount && veh->faction_id == faction_id) {
+                bool matched = false;
+                if (priority == 0) {
+                    matched = can_arty(veh->proto_id, 1) != 0;
+                } else if (priority == 1) {
+                    if (VehPrototypes[veh->proto_id].plan == 2) {
+                        matched = true;
+                    } else if (VehPrototypes[veh->proto_id].plan == 7) {
+                        matched = stack_check(veh_id, 3, 0, -1, -1) != 0;
+                    }
+                } else if (priority == 2) {
+                    if (Chassis[VehPrototypes[veh->proto_id].chassis_id].triad
+                            == priority) {
+                        matched = VehPrototypes[veh->proto_id].plan != 4;
+                    }
+                } else if (priority == 3) {
+                    matched = VehPrototypes[veh->proto_id].plan == 1;
+                } else if (priority == 4) {
+                    matched = veh->dmg_incurred == 0;
+                } else if (priority < 7) {
+                    matched = true;
+                }
+
+                if (matched && !has_abil(veh->proto_id, ABL_DROP_POD)
+                        && VehPrototypes[veh->proto_id].plan != 4
+                        && VehPrototypes[veh->proto_id].unk_1 != 0x15) {
+                    if (priority == 8
+                            && (VehPrototypes[veh->proto_id].plan != 7
+                                   || faction_id == 0)) {
+                        continue;
+                    }
+
+                    if (veh_id >= 0) {
+                        int turns_spent = 0;
+                        while (veh->order != ORDER_SENTRY_BOARD) {
+                            if (priority != 8 || turns_spent != 0) {
+                                int moves_left =
+                                    speed(veh_id, 0) - veh->moves_expended;
+                                if (moves_left < 0
+                                        || (moves_left < 1000
+                                               && moves_left == 0)) {
+                                    break;
+                                }
+                            }
+
+                            const int veh_count_before = VehCurrentCount;
+                            if (enemy_veh(veh_id) != 0
+                                    || veh_count_before != VehCurrentCount) {
+                                break;
+                            }
+
+                            if (veh->order != ORDER_MOVE_TO
+                                    && Chassis[VehPrototypes[veh->proto_id]
+                                                   .chassis_id]
+                                           .triad
+                                       != 2) {
+                                turns_spent++;
+                            }
+                            turns_spent++;
+                            if (turns_spent > 0x20) {
+                                veh_skip(veh_id);
+                            }
+                        }
+                    }
+                }
+            }
+            --veh_id;
+            --veh;
+        } while (veh_id >= 0);
+    }
+
+    PlayersData[faction_id].flags &= ~PFLAG_UNK_10000;
 }
 
