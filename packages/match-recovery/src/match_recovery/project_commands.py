@@ -58,6 +58,12 @@ def register(commands):
     task_check.add_argument("--root", type=Path, default=Path.cwd())
     task_check.add_argument("--image", type=Path, required=True)
     task_check.add_argument("--summary", action="store_true")
+    variants = task_actions.add_parser("variants", help="Score authorized source candidates without editing or banking them")
+    variants.add_argument("task")
+    variants.add_argument("--root", type=Path, default=Path.cwd())
+    variants.add_argument("--image", type=Path, required=True)
+    variants.add_argument("--deck", type=Path, required=True, help="Exact-text replacements with current source digest and a damage control")
+    variants.add_argument("--jobs", type=int, default=1, help="Compiler concurrency; must fit the project's isolated compiler capacity")
     discovery = task_actions.add_parser("discover")
     discovery.add_argument("task")
     discovery.add_argument("--root", type=Path, default=Path.cwd())
@@ -135,6 +141,12 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
         return 0, partition_report(root, group=arguments.get("group"), details=arguments.get("details", False),
                                    impact=arguments.get("impact", False))
     if "source" in configuration and arguments.get("command") == "tasks":
+        if arguments.get("action") == "variants":
+            from .variants import measure_variants
+            paths = {name: Path(arguments[name]) for name in ("image", "deck")}
+            paths = {name: path if path.is_absolute() else root / path for name, path in paths.items()}
+            output = measure_variants(root, arguments["task"], paths["image"], read_json(paths["deck"]), jobs=arguments.get("jobs", 1))
+            return (0 if output["status"] == "scored" else 3), output
         if arguments.get("action") in ("check", "check-layout", "check-binary"):
             from .model import Result
             image = arguments.get("image")

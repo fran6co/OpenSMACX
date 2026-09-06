@@ -69,6 +69,15 @@ def select_bindings(view: dict, selected: frozenset[str]) -> tuple[list, list, d
                                if symbol not in ambiguous}
 
 
+def check_compiled(bindings, object_bindings, generated_bindings, objects, image, externals, *, errors=None):
+    """Same strict target resolution for ordinary measurements and source trials."""
+    data_targets, checked_objects = object_targets(object_bindings, objects)
+    generated_targets, checked_generated = check_generated(generated_bindings, objects, image, {**externals, **data_targets})
+    rows = check_objects(bindings, objects, image,
+                         external_targets={**externals, **data_targets, **generated_targets}, errors=errors)
+    return rows, checked_objects, checked_generated
+
+
 def verify_task(root: Path, task_name: str, image_path: Path, *,
                 compiler: Callable | None = None, command_for: Callable | None = None,
                 debug_types: bool = False) -> dict:
@@ -123,11 +132,11 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
                 objects[unit] = Coff(compiler(root / unit, command, flags))
             except (OSError, ValueError) as error:
                 errors[unit] = str(error)
-        data_targets, checked_objects = object_targets(object_bindings, objects)
+        checked_functions, checked_objects, checked_generated = check_compiled(
+            bindings, object_bindings, generated_bindings, objects, image, externals, errors=errors)
         object_checks.extend({**item, "flags": list(flags)} for item in checked_objects)
-        generated_targets, checked_generated = check_generated(generated_bindings, objects, image, {**externals, **data_targets})
         generated_checks.extend({**item, "flags": list(flags)} for item in checked_generated)
-        for row in check_objects(bindings, objects, image, external_targets={**externals, **data_targets, **generated_targets}, errors=errors):
+        for row in checked_functions:
             variants[row["entity_id"]].append({**row, "flags": list(flags)})
     rows = list(refused)
     for key, candidates in sorted(variants.items()):

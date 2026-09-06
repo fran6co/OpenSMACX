@@ -16,6 +16,20 @@ capabilities, not project/compiler-environment adapters. `environment/` contains
 only the local compiler interaction. The old production command/gate and other
 remaining tools still need absorption or retirement before `tools/` can disappear.
 
+The native `recover tasks variants` command now replaces serial edit-and-restore
+spelling experiments. It reads the source map once, compiles private TU replicas,
+requires unchanged-replica and selected-function damage controls, and reports
+strict reference-aware results without banking a winner. See the package README
+for the deck schema. This project's compiler script supports v3 source overrides
+by copying configured source/build-input roots into verified-ignored
+`build/recovery/variants/` and remapping explicit include
+and forced-include paths. PCH, response files, hidden CL options and custom include
+environment overrides are refused. Copies preserve quote/angle include ordering
+and physical header identity; no absolute `#line` rewrite is injected because
+VC6 can use it to search the original directories and break `#pragma once`.
+Path/time-sensitive differences remain unsupported when the replica control
+cannot agree. Default concurrency is 1; prefix pooling remains unfinished.
+
 ## Available now
 
 From the OpenSMACX workspace:

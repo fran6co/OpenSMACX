@@ -1,0 +1,106 @@
+"""Conservative controls for compiling an unchanged TU through a source replica.
+
+These compare compiler outputs with one another, never against the original
+executable. A control can refuse harmless representation differences; it must
+not turn a candidate's successful compilation into a recovery claim.
+"""
+
+import struct
+
+from .model import digest
+
+
+def _section_keys(obj):
+    """Explicit names and associative ownership, never byte-similarity pairing."""
+    keys = {}
+    for number, section in enumerate(obj.sections, 1):
+        names = sorted((symbol.name, symbol.value, symbol.type, symbol.storage)
+                       for symbol in obj.symbols.values() if symbol.section == number and symbol.storage != 103
+                       and not (symbol.name == section.name and symbol.storage == 3 and symbol.type == 0))
+        if names:
+            keys[number] = "named:" + digest(names)
+
+    def key(number):
+        if number not in keys:
+            section = obj.sections[number - 1]
+            keys[number] = ("associated:" + key(obj.associations[number]) + ":" + section.name
+                            if number in obj.associations else "section:" + section.name)
+        return keys[number]
+
+    for number in range(1, len(obj.sections) + 1):
+        key(number)
+    if len(set(keys.values())) != len(keys):
+        raise ValueError("replica control requires unambiguous section names or associative owners")
+    return keys
+
+
+def _object_evidence(obj):
+    """All sections/relocations/symbols except file and CodeView line records.
+
+    COFF timestamps are already omitted by the parser. Keep type records, BSS
+    sizes, link directives, COMDAT auxiliary metadata and relocation identities.
+    Section/symbol indices are compiler-local. Normalize them only through
+    explicit names and associative ownership. Ambiguous identities are refused.
+
+    Auxiliary layouts follow Microsoft's PE/COFF specification:
+    https://learn.microsoft.com/en-us/windows/win32/debug/pe-format#auxiliary-symbol-records
+    """
+    if any(section.name == ".debug$P" for section in obj.sections):
+        raise ValueError("replica control requires standalone objects, not external precompiled types")
+    keys = _section_keys(obj)
+    debug = {index for index, section in enumerate(obj.sections, 1) if section.name == ".debug$S"}
+
+    def symbol_key(symbol):
+        return (symbol.name, symbol.value, keys[symbol.section] if symbol.section > 0 else str(symbol.section), symbol.type, symbol.storage)
+
+    def auxiliary(index, symbol):
+        raw = obj.auxiliary.get(index, b"")
+        if not raw:
+            return ("none",)
+        if symbol.storage == 105:
+            if len(raw) != 18 or any(raw[8:]):
+                raise ValueError("unsupported weak-external replica metadata")
+            target, mode = struct.unpack_from("<II", raw)
+            if target not in obj.symbols or mode not in (1, 2, 3):
+                raise ValueError("invalid weak-external replica metadata")
+            return ("weak", symbol_key(obj.symbols[target]), mode)
+        if symbol.section > 0 and symbol.storage == 3 and symbol.type == 0 and symbol.name == obj.sections[symbol.section - 1].name:
+            # Coff already validates this section-definition auxiliary record.
+            length, relocs, lines, checksum, parent, selection = struct.unpack_from("<IHHIHB", raw)
+            # ANY and ASSOCIATIVE selection do not select by checksum. VC6 can
+            # change these cached checksums when numbering/reordering symbols.
+            # Compare actual section bytes/references and retain selection/owner;
+            # EXACT_MATCH checksums and other unknown cases stay conservative.
+            if selection in (2, 5):
+                checksum = None
+            return ("section", length, relocs, lines, checksum, keys[parent] if selection == 5 else parent, selection)
+        # Unknown auxiliary forms remain conservative byte comparisons, not
+        # inferred aliases or discarded linker metadata.
+        return ("raw", raw.hex())
+
+    sections = sorted((keys[index], section.name, section.flags, obj.section_sizes[index - 1], section.data.hex(),
+                 [(offset, symbol_key(obj.symbols[target]), kind) for offset, target, kind in section.relocations])
+                for index, section in enumerate(obj.sections, 1) if index not in debug)
+    symbols = sorted((symbol_key(symbol), auxiliary(index, symbol))
+                     for index, symbol in obj.symbols.items() if symbol.section not in debug and symbol.storage != 103)
+    return {"sections": sections, "symbols": symbols,
+            "associations": sorted((keys[child], keys[parent]) for child, parent in obj.associations.items())}
+
+
+def object_signature(obj):
+    return digest(_object_evidence(obj))
+
+
+def function_signature(obj, name):
+    """Selected code and stable external references, not compiler-local IDs.
+
+    Local section/name churn cannot prove that an edit reached this function.
+    A control changing only a local relocation's destination is conservatively
+    refused; use a control with an observable change to the selected code.
+    """
+    symbol = obj.function(name)
+    return digest([{"bytes": obj.sections[number - 1].data.hex(),
+                    "relocations": [(offset, ("external", obj.symbols[target].name)
+                                     if obj.symbols[target].storage == 2 else ("local",), kind)
+                                    for offset, target, kind in obj.sections[number - 1].relocations]}
+                   for number in obj.code_sections(symbol)])

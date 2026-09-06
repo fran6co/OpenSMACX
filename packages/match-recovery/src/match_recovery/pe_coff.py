@@ -95,6 +95,8 @@ class Coff:
             name = _slice(data, at, 8).rstrip(b"\0").decode("ascii")
             sections.append(Section(raw, relocations, flags, name))
         self.symbols, self.sections = symbols, tuple(sections)
+        self.auxiliary = auxiliary
+        self.section_sizes = tuple(_unpack("<I", data, 20 + index * 40 + 16)[0] for index in range(count))
         # Section ownership is explicit COFF metadata, not section order, a
         # compiler-local label spelling or a match against original operands.
         definitions, associations = {}, {}

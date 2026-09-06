@@ -145,6 +145,13 @@ establish completion of this program.
   its object-start binding lives beside ConsoleInfoWin's definition. Constructor
   subobjects, object extent, lifetime, full admission and restoration remain.
 - [ ] Prefix leases, include/parse/measurement caches, candidate decks, benchmarks.
+  Native task-authorized single-TU decks now share strict reference-aware checks,
+  read the map once and compile proposed source without mutating the product tree.
+  Per-flag replica and selected-function damage controls guard the experiments;
+  candidates are ranked, never applied or banked automatically. Generic source
+  copies and compiler protocol belong to the package; VC6 include semantics stay
+  in the project's compiler script. Prefix capacity, include-map invalidation,
+  multi-file overlays and fleet throughput verification remain unfinished.
 - [ ] Quota/interruption recovery and multiple-checkpoint restoration tests.
 - [ ] Tool/documentation cutover, stale-reference audit, removal of superseded live
   workflows, preservation of retirement history and incoming recoveries.

@@ -26,12 +26,30 @@ def _assert_stopped(pid):
     while time.monotonic() < deadline:
         try:
             state = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[0]
-        except FileNotFoundError:
+        except (FileNotFoundError, ProcessLookupError):
+            # procfs can return ESRCH if the process disappears after open but
+            # before read, rather than ENOENT when the path is already absent.
             return
         if state == "Z":
             return
         time.sleep(0.01)
     pytest.fail(f"command descendant {pid} is still running")
+
+
+@pytest.mark.parametrize("error", [FileNotFoundError, ProcessLookupError])
+def test_liveness_probe_accepts_both_disappearance_races(monkeypatch, error):
+    def disappeared(*_):
+        raise error("process disappeared")
+    monkeypatch.setattr(Path, "read_text", disappeared)
+    _assert_stopped(123)
+
+
+def test_liveness_probe_does_not_treat_permission_failure_as_stopped(monkeypatch):
+    def denied(*_):
+        raise PermissionError("cannot inspect process")
+    monkeypatch.setattr(Path, "read_text", denied)
+    with pytest.raises(PermissionError):
+        _assert_stopped(123)
 
 
 @pytest.mark.skipif(sys.platform != "linux", reason="Linux /proc liveness assertions")

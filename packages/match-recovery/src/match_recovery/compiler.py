@@ -57,22 +57,42 @@ class Compiler:
         return result
 
     def __call__(self, source: Path, arguments: tuple[str, ...], flags: tuple[str, ...]) -> bytes:
+        return self._compile(source, arguments, flags)
+
+    def variant(self, source: Path, contents: bytes, arguments: tuple[str, ...], flags: tuple[str, ...]) -> bytes:
+        """Compile proposed whole-TU bytes, never edit the original source.
+
+        Protocol v3 requires explicit support in the configured command. The
+        command owns include/path semantics; callers own replica controls and
+        dependency freshness. An object is not a measurement or a verdict.
+        """
+        if not isinstance(contents, bytes):
+            raise ValueError("compiler variant contents must be bytes")
+        return self._compile(source, arguments, flags, contents=contents)
+
+    def _compile(self, source, arguments, flags, *, contents=None):
         source = source.resolve()
         if not source.is_relative_to(self.root) or not source.is_file():
             raise ValueError("compiler source must be an existing file inside the project")
+        original = source.read_bytes()
         for value in (*arguments, *flags):
             require_text(value, "compiler argument")
         if self.snapshot() != self.initial:
             raise ValueError("compiler inputs changed before compilation")
+        request = {"schema_version": 2, "profile": self.profile, "source": source.relative_to(self.root).as_posix(),
+                   "arguments": list(arguments), "flags": list(flags)}
+        if contents is not None:
+            request.update(schema_version=3, source_sha256=hashlib.sha256(original).hexdigest(),
+                           source_base64=base64.b64encode(contents).decode("ascii"))
         try:
-            code, output = invoke(self.command, self.root, "", {
-                "schema_version": 2, "profile": self.profile, "source": source.relative_to(self.root).as_posix(),
-                "arguments": list(arguments), "flags": list(flags)})
+            code, output = invoke(self.command, self.root, "", request)
         except subprocess.SubprocessError as error:
             raise ValueError("compiler command did not complete") from error
         finally:
             if self.snapshot() != self.initial:
                 raise ValueError("compiler inputs changed during compilation")
+            if not source.is_file() or source.read_bytes() != original:
+                raise ValueError("compiler source changed during compilation")
         if code != 0:
             raise ValueError("compiler command failed: " + str(output.get("error", "no diagnostic"))[:2000])
         if set(output) != {"object_base64"} or not isinstance(output["object_base64"], str):

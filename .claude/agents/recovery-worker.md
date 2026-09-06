@@ -35,6 +35,14 @@ restoration dependencies. Do not erase a claim or call the migration accepted.
 Only configured independent review and migration checks can admit it. Preserve
 unfinished scoped edits for resumption; never stash or silently revert them.
 
+Once the structural interpretation is established, score 3–5 plausible spellings
+with `uv run recover tasks variants <task> --image <image> --deck <ignored-json>`
+before editing product source. Follow the package README's source digest and
+exact-text/dependency controls; do not guess body braces or weaken a failing
+replica control. Default to one compiler job unless the coordinator has measured
+isolated capacity. Rankings are diagnostics, not a winner to apply automatically.
+After a deliberate source edit, rerun task checks and preserve coupled findings.
+
 The configured worker adapter must return the framework's JSON response:
 `{"discoveries":[]}`, or discoveries with `hypothesis`, `affects` (original
 entity ids), and `evidence`. Use stderr for diagnostic prose. The adapter owns

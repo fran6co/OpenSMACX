@@ -1,6 +1,8 @@
 """Real command-protocol controls without a compiler or optional dependencies."""
 
 import json
+import base64
+import hashlib
 import sys
 
 import pytest
@@ -104,3 +106,46 @@ def test_compiler_rejects_unsupported_configuration_schema(compiler_project, ver
     path.write_text(json.dumps(value))
     with pytest.raises(ValueError, match="configuration version"):
         Compiler(compiler_project)
+
+
+def test_source_override_protocol_keeps_original_identity_and_bytes(compiler_project):
+    root = compiler_project
+    source = root / "code/unit.cc"
+    original, candidate = source.read_bytes(), b"int example() { return 7; }\n\xff"
+    request = {"schema_version": 3, "profile": "application", "source": "code/unit.cc",
+               "arguments": [], "flags": ["-O2"], "source_sha256": hashlib.sha256(original).hexdigest(),
+               "source_base64": base64.b64encode(candidate).decode()}
+    (root / "recovery/compiler.py").write_text(
+        'import json, sys\nfrom pathlib import Path\nr = json.load(sys.stdin)\n'
+        f'assert r == {request!r}\nassert Path(r["source"]).read_bytes() == {original!r}\n'
+        'print(json.dumps({"object_base64": "b2JqZWN0"}))\n')
+    before = {p.relative_to(root): p.read_bytes() for p in root.rglob("*") if p.is_file()}
+    assert Compiler(root, profile="application").variant(source, candidate, (), ("-O2",)) == b"object"
+    assert {p.relative_to(root): p.read_bytes() for p in root.rglob("*") if p.is_file()} == before
+
+
+@pytest.mark.parametrize("candidate", ["not bytes", bytearray(b"not immutable"), None])
+def test_source_override_requires_bytes(compiler_project, candidate):
+    with pytest.raises(ValueError, match="must be bytes"):
+        Compiler(compiler_project).variant(compiler_project / "code/unit.cc", candidate, (), ())
+
+
+@pytest.mark.parametrize("variant", [False, True])
+def test_compiler_cannot_edit_original_source_and_return_evidence(compiler_project, variant):
+    root = compiler_project
+    (root / "recovery/compiler.py").write_text(
+        'from pathlib import Path\nPath("code/unit.cc").write_bytes(b"concurrent change")\n'
+        'print(\'{"object_base64":"b2JqZWN0"}\')\n')
+    compiler = Compiler(root)
+    with pytest.raises(ValueError, match="source changed during"):
+        if variant:
+            compiler.variant(root / "code/unit.cc", b"candidate", (), ())
+        else:
+            compiler(root / "code/unit.cc", (), ())
+    # Never restore over the newer write, even if it came from a bad command.
+    assert (root / "code/unit.cc").read_bytes() == b"concurrent change"
+
+
+def test_old_compiler_protocol_does_not_silently_score_original_as_candidate(compiler_project):
+    with pytest.raises(ValueError):
+        Compiler(compiler_project).variant(compiler_project / "code/unit.cc", b"candidate", ("compile",), ("-O2",))
