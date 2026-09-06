@@ -23,8 +23,13 @@
     "inputs": ["recovery/environment/adapter.py", "recovery/environment/compile.py", "recovery/environment/wine.py"],
     "environment": ["VC6_PREFIX", "VC6_ROOT", "VC6_INCLUDE", "VC6_LIB", "WINEARCH", "CL", "_CL_"]
   },
-  "adapter": {
-    "argv": ["uv", "run", "python", "recovery/adapter.py"],
-    "timeout": 3600
+  "measurement": {
+    "backend": "pe-coff-i386",
+    "compiler_profile": "application",
+    "flag_sets": [["/c", "/O2", "/Gy", "/GR-", "/GX"], ["/c", "/O2", "/Gy", "/GR-", "/Oy-", "/GX"]],
+    "layout_flags": ["/Z7"],
+    "unit_extensions": [".cpp", ".c"],
+    "input_roots": ["cmake"],
+    "inputs": ["CMakeLists.txt", "build/compile_commands.json", "tools/vc6_cl.py", "tools/vc6-cl", "recovery/driver.json", "pyproject.toml", "uv.lock"]
   }
 }

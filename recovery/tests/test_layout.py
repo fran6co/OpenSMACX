@@ -2,7 +2,7 @@ import struct
 
 import pytest
 
-from recovery.opensmacx.opensmacx_layout import verify_layout
+from match_recovery.application_layout import verify_layout
 from test_codeview import coff, debug_types, hierarchy_types, record
 from match_recovery.cli import main
 from match_recovery.layout_source import parse_bases, parse_members, read_bases, read_members
@@ -232,7 +232,7 @@ def test_coverage_distinguishes_missing_types_without_waiving_checks(project, ot
 def test_layout_summary_preserves_result_and_coverage(monkeypatch, capsys, result, code):
     import json
 
-    monkeypatch.setattr("recovery.opensmacx.opensmacx_layout.verify_layout",
+    monkeypatch.setattr("match_recovery.application_layout.verify_layout",
                         lambda *_: {"result": result, "members": ["verbose observations"],
                                     "coverage": ["required coverage"], "structure_verification": "unknown"})
     assert main(["tasks", "check-layout", "fixture", "--summary"]) == code

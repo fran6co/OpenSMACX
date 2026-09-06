@@ -7,8 +7,8 @@ import subprocess
 
 import pytest
 
-from recovery.opensmacx.opensmacx_binary import select_bindings, verify_task
-from recovery.environment.compile import FLAG_SETS, compile_object
+from match_recovery.application_binary import select_bindings, verify_task
+from recovery.environment.compile import compile_object
 from match_recovery.bound_objects import FunctionBinding, check_objects
 from match_recovery.cli import main
 from match_recovery.model import Origin, Result, Span
@@ -17,6 +17,9 @@ from match_recovery.pe_coff import Coff, PeImage
 from match_recovery.tasks import Task, TaskStore
 
 from test_binary import coff_fixture, pe_fixture
+
+FLAG_SETS = (("/c", "/O2", "/Gy", "/GR-", "/GX"),
+             ("/c", "/O2", "/Gy", "/GR-", "/Oy-", "/GX"))
 
 
 @pytest.fixture
@@ -63,7 +66,7 @@ def test_task_runs_fresh_trials_without_banking_or_claiming_collection(project):
 
 @pytest.mark.parametrize("content", ["unknown", "fail"])
 def test_passing_functions_cannot_hide_unverified_generated_tables(project, monkeypatch, content):
-    monkeypatch.setattr("recovery.opensmacx.opensmacx_binary.check_generated",
+    monkeypatch.setattr("match_recovery.application_binary.check_generated",
                         lambda *_: ({}, [{"symbol": "??_7Widget@@6B@", "definition": "pass", "content": content}]))
     result = verify(project)
     assert result["counts"] == {"pass": 1}
@@ -190,7 +193,7 @@ def test_timeout_is_unmeasurable_not_a_lost_task(monkeypatch, tmp_path):
 
 @pytest.mark.parametrize("result, expected", [(Result.PASS, 0), (Result.FAIL, 1), (Result.UNKNOWN, 3)])
 def test_cli_preserves_check_exit_semantics(monkeypatch, capsys, result, expected):
-    monkeypatch.setattr("recovery.opensmacx.opensmacx_binary.verify_task",
+    monkeypatch.setattr("match_recovery.application_binary.verify_task",
                         lambda *args: {"result": result, "functions": [], "ready_for_collection": False})
     assert main(["tasks", "check-binary", "widget", "--image", "fixture.exe", "--summary"]) == expected
     assert '"ready_for_collection": false' in capsys.readouterr().out

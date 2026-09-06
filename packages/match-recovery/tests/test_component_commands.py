@@ -35,7 +35,7 @@ def component_project(tmp_path):
     obj = coff_fixture(b"\xe8\0\0\0\0\xc3", relocation=(1, 0, 20))
     (tmp_path / "recovery/compiler.py").write_text(
         'import json, sys\nr = json.load(sys.stdin)\n'
-        'assert r == {"schema_version": 1, "source": "vendor/f.c", "arguments": [], "flags": ["/Gy"]}\n'
+        'assert r == {"schema_version": 2, "profile": "default", "source": "vendor/f.c", "arguments": [], "flags": ["/Gy"]}\n'
         'print(' + repr(json.dumps({"object_base64": base64.b64encode(obj).decode()})) + ')\n')
     (tmp_path / "recovery/project.json").write_text(json.dumps({"schema_version": 1,
         "source": {"image_pin": "code/PIN", "address_space": "pe:va", "roots": ["code", "hints"], "seed_roots": ["hints"]},

@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from recovery.opensmacx.opensmacx_check import check_task
+from match_recovery.application_check import check_task
 from match_recovery.cli import main
 from test_obligations import project
 from test_application_binary import project as binary_project
@@ -81,7 +81,7 @@ def test_joint_results_cannot_mix_different_input_snapshots(project, change):
 
 @pytest.mark.parametrize("result, expected", [("pass", 0), ("fail", 1), ("unknown", 3)])
 def test_joint_cli_summary_keeps_both_verdicts(monkeypatch, capsys, result, expected):
-    monkeypatch.setattr("recovery.opensmacx.opensmacx_check.check_task",
+    monkeypatch.setattr("match_recovery.application_check.check_task",
                         lambda *_: {"result": result, "ready_for_collection": False,
                                     "checks": {"binary": {"result": result, "functions": []},
                                                "layout": {"result": "unknown", "members": [], "coverage": []}}})
@@ -143,7 +143,7 @@ def test_different_commands_do_not_share_objects(binary_project):
 
 
 def test_changed_header_prevents_cached_object_reuse(binary_project, monkeypatch):
-    from recovery.opensmacx import opensmacx_check
+    from match_recovery import application_check as opensmacx_check
 
     root, task = prepare_shared(binary_project)
     original = opensmacx_check.verify_layout

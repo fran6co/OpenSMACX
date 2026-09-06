@@ -20,8 +20,10 @@ from .records import read_json
 
 
 class Compiler:
-    def __init__(self, root: Path):
+    def __init__(self, root: Path, *, profile: str = "default"):
         self.root = root.resolve()
+        require_text(profile, "compiler profile")
+        self.profile = profile
         project = read_json(local_path(self.root, "recovery/project.json"))
         if type(project.get("schema_version")) is not int or project["schema_version"] != 1:
             raise ValueError("unsupported project configuration version")
@@ -49,7 +51,7 @@ class Compiler:
         environment = {name: hashlib.sha256(os.environ[name].encode()).hexdigest()
                        if name in os.environ else None for name in sorted(self.environment)}
         result = input_snapshot(self.root, ["recovery/project.json", *self.configuration["inputs"]],
-                                {"command": asdict(self.command), "environment": environment})
+                                {"command": asdict(self.command), "profile": self.profile, "environment": environment})
         if any(value is None for value in result["inputs"].values()):
             raise ValueError("declared compiler input is missing")
         return result
@@ -64,7 +66,7 @@ class Compiler:
             raise ValueError("compiler inputs changed before compilation")
         try:
             code, output = invoke(self.command, self.root, "", {
-                "schema_version": 1, "source": source.relative_to(self.root).as_posix(),
+                "schema_version": 2, "profile": self.profile, "source": source.relative_to(self.root).as_posix(),
                 "arguments": list(arguments), "flags": list(flags)})
         except subprocess.SubprocessError as error:
             raise ValueError("compiler command did not complete") from error

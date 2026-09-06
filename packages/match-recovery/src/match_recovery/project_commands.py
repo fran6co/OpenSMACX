@@ -102,7 +102,7 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
     """Native configured source operations, otherwise the local JSON boundary."""
     root = root.resolve()
     configuration = read_json(root / "recovery/project.json")
-    if (configuration.keys() - {"schema_version", "adapter", "source", "source_history", "compiler"}
+    if (configuration.keys() - {"schema_version", "adapter", "source", "source_history", "compiler", "measurement"}
             or type(configuration.get("schema_version")) is not int or configuration["schema_version"] != 1):
         raise ValueError("invalid local project command configuration")
     if "source" in configuration and arguments.get("command") == "components":
@@ -120,6 +120,31 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
         return 0, partition_report(root, group=arguments.get("group"), details=arguments.get("details", False),
                                    impact=arguments.get("impact", False))
     if "source" in configuration and arguments.get("command") == "tasks":
+        if arguments.get("action") in ("check", "check-layout", "check-binary"):
+            from .model import Result
+            image = arguments.get("image")
+            if image is not None:
+                image = Path(image)
+                image = image if image.is_absolute() else root / image
+            action = arguments["action"]
+            if action == "check":
+                from .application_check import check_task
+                output = check_task(root, arguments["task"], image)
+                summaries = ((output["checks"]["binary"], ("functions",)),
+                             (output["checks"]["layout"], ("members", "bases")))
+            elif action == "check-layout":
+                from .application_layout import verify_layout
+                output = verify_layout(root, arguments["task"])
+                summaries = ((output, ("members", "bases")),)
+            else:
+                from .application_binary import verify_task
+                output = verify_task(root, arguments["task"], image)
+                summaries = ((output, ("functions",)),)
+            if arguments.get("summary"):
+                for report, fields in summaries:
+                    for field in fields:
+                        report.pop(field, None)
+            return {Result.PASS: 0, Result.FAIL: 1, Result.UNKNOWN: 3}[output["result"]], output
         if arguments.get("action") in ("obligations", "context"):
             from .source_obligations import task_obligations
             if arguments["action"] == "obligations":

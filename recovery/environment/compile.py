@@ -7,10 +7,6 @@ import tempfile
 from match_recovery.processes import run_bounded
 
 
-FLAG_SETS = (("/c", "/O2", "/Gy", "/GR-", "/GX"),
-             ("/c", "/O2", "/Gy", "/GR-", "/Oy-", "/GX"))
-
-
 def compile_object(source: Path, command: tuple[str, ...], flags: tuple[str, ...]) -> bytes:
     """Objects are disposable; a nonzero compiler exit never supplies evidence."""
     with tempfile.TemporaryDirectory(prefix="recover-vc6-") as temporary:

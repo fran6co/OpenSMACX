@@ -15,7 +15,7 @@ def compiler_project(tmp_path):
     (tmp_path / "code/unit.cc").write_text("synthetic source\n")
     adapter = tmp_path / "recovery/compiler.py"
     adapter.write_text('import json, sys\nr = json.load(sys.stdin)\n'
-                       'assert r == {"schema_version": 1, "source": "code/unit.cc", "arguments": ["compile"], "flags": ["-O2"]}\n'
+                       'assert r == {"schema_version": 2, "profile": "default", "source": "code/unit.cc", "arguments": ["compile"], "flags": ["-O2"]}\n'
                        'print(json.dumps({"object_base64": "b2JqZWN0"}))\n')
     configuration = {"schema_version": 1, "compiler": {
         "command": {"argv": [sys.executable, "recovery/compiler.py"], "timeout": 5},

@@ -9,15 +9,15 @@ from pathlib import Path
 from typing import Callable
 
 from match_recovery.bound_objects import FunctionBinding, check_objects
-from match_recovery.fingerprint import input_snapshot
 from match_recovery.generated_source import read_generated
 from match_recovery.model import Origin, Result, Span, digest
 from match_recovery.object_source import read_objects, object_targets
 from match_recovery.pe_coff import Coff, PeImage
 from match_recovery.tasks import TaskStore
 from match_recovery.ownership_source import project_view
-from recovery.environment.compile import FLAG_SETS, compile_object
 from match_recovery.generated_binary import check_generated
+from .compiler import Compiler
+from .measurement import Measurement
 
 
 def select_bindings(view: dict, selected: frozenset[str]) -> tuple[list, list, dict]:
@@ -69,51 +69,41 @@ def select_bindings(view: dict, selected: frozenset[str]) -> tuple[list, list, d
                                if symbol not in ambiguous}
 
 
-def _inputs(root: Path) -> tuple[str, ...]:
-    # Deliberately broad until the dependency-cache cutover. Include newly added
-    # files in the after-check too; a fixed list would miss a new shadowing header.
-    paths = [path.relative_to(root).as_posix() for directory in
-             ("src", "cmake", "recovery/environment", "recovery/opensmacx")
-             for path in (root / directory).rglob("*")
-             if path.is_file() and (not directory.startswith("recovery/") or path.suffix == ".py")]
-    return tuple(sorted(set(paths) | {"build/compile_commands.json", "tools/vc6_cl.py", "tools/vc6-cl",
-                                     "CMakeLists.txt", "recovery/adapter.py", "recovery/project.json",
-                                     "recovery/driver.json", "pyproject.toml", "uv.lock"}))
-
-
 def verify_task(root: Path, task_name: str, image_path: Path, *,
-                compiler: Callable = compile_object, command_for: Callable | None = None,
+                compiler: Callable | None = None, command_for: Callable | None = None,
                 debug_types: bool = False) -> dict:
-    # Joint layout checks need /Z7. This is an explicit measured configuration,
+    # Joint layout checks need configured debug flags. This is a measured configuration,
     # never an assumption that debug and non-debug objects are interchangeable.
     if type(debug_types) is not bool:
         raise ValueError("debug_types must be a boolean")
-    flag_sets = tuple(flags + (("/Z7",) if debug_types else ()) for flags in FLAG_SETS)
     root = root.resolve()
-    store = TaskStore(root, private=".opensmacx/recovery")
+    settings = Measurement.read(root)
+    flag_sets = tuple(flags + (settings.layout_flags if debug_types else ()) for flags in settings.flag_sets)
+    store = TaskStore(root)
     task = store.read(task_name)
-    if task.target != "opensmacx":
-        raise ValueError("this target adapter only measures OpenSMACX tasks")
     decisions = store.decisions(task_name)
     selected, _ = store._scope(task, decisions)
     if not selected:
         raise ValueError("refusing an empty task measurement")
-    before = input_snapshot(root, _inputs(root), {"flags": flag_sets})
+    before = settings.snapshot(root, {"flags": flag_sets})
     view, snapshot = project_view(root)
     if any(subject.image_sha256 != snapshot["image_sha256"] or subject.address_space != "pe:va"
            for subject in task.subjects):
         raise ValueError("task refers to a different original image/address space")
-    image = PeImage(image_path.read_bytes(), snapshot["image_sha256"])
+    image_data = image_path.read_bytes()
+    image = PeImage(image_data, snapshot["image_sha256"])
     object_bindings = read_objects(root, snapshot["image_sha256"])
     generated_bindings = read_generated(root, snapshot["image_sha256"])
     bindings, refused, externals = select_bindings(view, selected)
+    unsupported = [item for item in bindings if Path(item.unit).suffix not in settings.unit_extensions]
+    refused.extend({"entity_id": item.origin.entity_id, "result": Result.UNKNOWN, "symbol": item.symbol,
+                    "reason": "source definition is not in a configured translation unit"} for item in unsupported)
+    bindings = [item for item in bindings if item not in unsupported]
     if {item.symbol for item in object_bindings} & set(externals):
         raise ValueError("a source symbol is bound as both function and object")
     if {item.symbol for item in generated_bindings} & (set(externals) | {item.symbol for item in object_bindings}):
         raise ValueError("generated symbol also has a function/object binding")
-    if command_for is None:
-        from match_recovery.source.asm import build_command
-        command_for = lambda path: tuple(build_command(root / "build/compile_commands.json", path))
+    command_for = command_for if command_for is not None else lambda path: ()
     units = sorted({item.unit for item in bindings})
     commands, command_errors = {}, {}
     for unit in units:
@@ -128,6 +118,8 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
         for unit, command in commands.items():
             attempts += 1
             try:
+                if compiler is None:
+                    compiler = Compiler(root, profile=settings.compiler_profile)
                 objects[unit] = Coff(compiler(root / unit, command, flags))
             except (OSError, ValueError) as error:
                 errors[unit] = str(error)
@@ -146,7 +138,7 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
                   if Result.UNKNOWN in results else Result.FAIL)
         rows.append({**{name: candidates[0][name] for name in ("entity_id", "address", "symbol", "unit")},
                      "result": result, "variants": candidates})
-    if (input_snapshot(root, _inputs(root), {"flags": flag_sets}) != before
+    if (settings.snapshot(root, {"flags": flag_sets}) != before or image_path.read_bytes() != image_data
             or store.read(task_name) != task or store.decisions(task_name) != decisions):
         raise ValueError("source, build inputs or task decisions changed during measurement; retry")
     counts = Counter(row["result"] for row in rows)

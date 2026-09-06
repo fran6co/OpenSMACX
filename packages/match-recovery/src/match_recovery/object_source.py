@@ -10,6 +10,7 @@ from pathlib import Path
 import re
 
 from match_recovery.model import Origin
+from .source_config import SourceConfiguration
 
 
 PREFIX = "// RECOVERY_OBJECT:"
@@ -25,12 +26,13 @@ class ObjectBinding:
 
 
 def read_objects(root: Path, pin: str) -> tuple[ObjectBinding, ...]:
+    root = root.resolve()
+    configuration = SourceConfiguration.read(root)
     bindings = []
-    for path in sorted((root / "src").rglob("*.cpp")):
-        if path.relative_to(root / "src").parts[0] in ("recovered", "unrecovered"):
+    for path in configuration.files(root):
+        relative = path.relative_to(root).as_posix()
+        if configuration.is_seed(relative):
             continue
-        if not path.resolve().is_relative_to(root.resolve()):
-            raise ValueError("object annotation resolves outside source root")
         for line, text in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             if not text.lstrip().startswith(PREFIX):
                 continue
@@ -38,10 +40,7 @@ def read_objects(root: Path, pin: str) -> tuple[ObjectBinding, ...]:
             if match is None:
                 raise ValueError(f"invalid object annotation at {path}:{line}")
             address = int(match[1], 16)
-            if address > 0xFFFFFFFF:
-                raise ValueError("original PE object address exceeds 32 bits")
-            bindings.append(ObjectBinding(Origin(pin, "pe:va", address), match[2],
-                                          path.relative_to(root).as_posix(), line))
+            bindings.append(ObjectBinding(Origin(pin, configuration.address_space, address), match[2], relative, line))
     if len({item.symbol for item in bindings}) != len(bindings):
         raise ValueError("duplicate original object symbol binding")
     if len({item.origin.entity_id for item in bindings}) != len(bindings):

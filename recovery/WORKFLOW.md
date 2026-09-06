@@ -86,6 +86,9 @@ that behavior; names and a good byte score alone do not establish it.
 With local worker/reviewer command configurations, use
 `uv run recover run <task> --worker <worker-config> --reviewer <reviewer-config>`.
 Set `OPENSMACX_IMAGE` and an isolated `VC6_PREFIX` for this project's check.
+The scoped check itself is a native library command. `measurement` configuration
+selects flag trials and the local application compiler profile; no project
+operation dispatcher is needed.
 Provider commands must implement the package's JSON protocol. The Markdown
 worker/reviewer prompts are guidance, not installed provider integrations.
 

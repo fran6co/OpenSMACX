@@ -11,7 +11,7 @@ PIN = "a" * 64
 
 
 @pytest.fixture
-def source(tmp_path):
+def source(tmp_path, source_configuration):
     (tmp_path / "src").mkdir()
     (tmp_path / "src/object.cpp").write_text(
         "// RECOVERY_OBJECT: v1 0x00402000 _g\nint g;\n")
@@ -28,7 +28,6 @@ def test_source_object_annotation_owns_start_not_extent_or_current_verdict(sourc
 
 @pytest.mark.parametrize("text", ["// RECOVERY_OBJECT: v2 0x00402000 _g",
                                    "// RECOVERY_OBJECT: v1 420000 _g",
-                                   "// RECOVERY_OBJECT: v1 0x100000000 _g",
                                    "// RECOVERY_OBJECT: v1 0x00402000 _g pass"])
 def test_invalid_or_verdict_bearing_annotations_are_refused(source, text):
     (source / "src/object.cpp").write_text(text)

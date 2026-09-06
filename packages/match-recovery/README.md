@@ -217,13 +217,16 @@ The project supplies compiler interaction through `recovery/project.json`:
 ```
 
 The command receives one JSON object on stdin:
-`{"schema_version":1,"source":"vendor/codec.c","arguments":[],"flags":["-O2"]}`.
+`{"schema_version":2,"profile":"default","source":"vendor/codec.c","arguments":[],"flags":["-O2"]}`.
 Paths are project-relative and the working directory is the project root.
 Arguments and flags are arrays, not shell fragments; their meaning belongs to
 the local compiler implementation. It returns only
 `{"object_base64":"<encoded object bytes>"}` with exit 0, or an error diagnostic
 with nonzero exit. Empty/malformed objects, compiler failure and timeouts cannot
 supply evidence. Format parsing and comparison happen in the library afterwards.
+Protocol v2 adds an explicit project-defined compilation profile. The local
+command can resolve an application build entry or choose a dependency invocation;
+there is no profile registry or compiler-command parser to modify in the library.
 
 `inputs` lists local compiler scripts/configuration files; `environment` names
 additional compiler-affecting variables. PATH and command environment placeholders
@@ -234,10 +237,43 @@ No persistent object or verdict cache is introduced here. Component source,
 manifest and original/archive freshness are checked before reporting results.
 Every component report keeps application-recovery accounting at zero and leaves
 unproven structure/runtime behavior unknown.
-The repository's [recovery integration](../../recovery/README.md) still contains
-a transitional legacy bridge and project verification glue. That bridge is not
-the intended minimal configuration for a new project; reusable orchestration
-is still being extracted from it. Integration tests stay outside the core package.
+## Scoped application verification
+
+`tasks check-binary`, `tasks check-layout` and joint `tasks check` are also native
+package operations. They require source/compiler configuration and measurement
+policy, for example this PE/COFF project entry:
+
+```json
+"measurement": {
+  "backend": "pe-coff-i386",
+  "compiler_profile": "application",
+  "flag_sets": [["/c", "/O2", "/Gy"]],
+  "layout_flags": ["/Z7"],
+  "unit_extensions": [".cpp", ".cc"],
+  "inputs": ["build/compile_commands.json"],
+  "input_roots": ["cmake"]
+}
+```
+
+The flags/profile above are project choices, not library defaults. This backend
+currently reads strict i386 PE/COFF and standalone CodeView 5. Unsupported formats
+remain unmeasurable. Source roots, seeds, names and TU suffixes come from config;
+no application identity or branch name is required. Object annotations also use
+configured source selection/address spaces, independently of binary backend limits.
+
+One complete flag trial must match each body; partial trials cannot be combined.
+Declared layouts must agree across every selected TU/trial. Joint checks share
+objects only inside that invocation and still report all unknown/failing evidence.
+Freshness covers re-enumerated source/build inputs, compiler configuration and
+declared files/environment, library implementation, task decisions and original
+image. Fingerprints are diagnostic, not reusable verdict-cache keys. These checks
+do not prove full hierarchy/lifetime, a full application build, or runtime behavior;
+passing them alone never enables collection.
+
+The example project's old operation dispatcher and application adapter modules
+have been removed. Its [recovery integration](../../recovery/README.md) now contains
+configuration, compiler interaction and integration tests. The legacy production
+gate/tools and full acceptance integration remain separate unfinished work.
 
 From this development workspace:
 

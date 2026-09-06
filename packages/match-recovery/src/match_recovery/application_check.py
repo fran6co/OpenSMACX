@@ -3,35 +3,35 @@
 import hashlib
 from pathlib import Path
 
-from match_recovery.fingerprint import input_snapshot
 from match_recovery.model import Result, digest
 from match_recovery.tasks import TaskStore
-from .opensmacx_binary import _inputs, verify_task
-from .opensmacx_layout import verify_layout
-from recovery.environment.compile import FLAG_SETS, compile_object
+from .application_binary import verify_task
+from .application_layout import verify_layout
+from .compiler import Compiler
+from .measurement import Measurement
 
 
 def check_task(root: Path, task_name: str, image: Path, *,
                binary_checker=None, layout_checker=None,
-               compiler=compile_object, command_for=None) -> dict:
+               compiler=None, command_for=None) -> dict:
     root = root.resolve()
     store = TaskStore(root)
     task, decisions = store.read(task_name), store.decisions(task_name)
-    if task.target != "opensmacx":
-        raise ValueError("combined checker requires an OpenSMACX task")
+    settings = Measurement.read(root)
 
     def snapshot():
         with image.open("rb") as stream:
             image_sha = hashlib.file_digest(stream, "sha256").hexdigest()
-        return input_snapshot(root, _inputs(root),
+        return settings.snapshot(root,
                               {"task": store.read(task_name), "decisions": store.decisions(task_name),
-                               "image_sha256": image_sha, "flags": FLAG_SETS, "shared_debug": "/Z7"})
+                               "image_sha256": image_sha})
 
     before = snapshot()
     objects = {}
-    compilation = {"attempts": 0, "reused_objects": 0, "debug": "/Z7", "persistent_cache": False}
+    compilation = {"attempts": 0, "reused_objects": 0, "debug": list(settings.layout_flags), "persistent_cache": False}
 
     def shared_compile(source, command, flags):
+        nonlocal compiler
         # Only this invocation owns these objects. Verify all source/header,
         # command-database, image and task inputs even before an in-memory hit.
         if snapshot() != before:
@@ -41,6 +41,8 @@ def check_task(root: Path, task_name: str, image: Path, *,
             compilation["reused_objects"] += 1
             return objects[key]
         compilation["attempts"] += 1
+        if compiler is None:
+            compiler = Compiler(root, profile=settings.compiler_profile)
         value = compiler(source, command, flags)
         if snapshot() != before:
             raise ValueError("inputs changed during shared compilation")

@@ -1,8 +1,9 @@
 # OpenSMACX recovery integration
 
-Project-owned integration for the independently installed `match-recovery`
-engine. Code in `recovery/opensmacx/` is not shipped in the library. It uses this
-repository's source grammar and build tools through `match_recovery.source`. See
+Project-owned configuration and compiler interaction for the independently
+installed `match-recovery` engine. Source, task, dependency and scoped application
+verification run in the library; the former application operation bridge is
+removed. Local compiler scripts remain in `environment/`. See
 [the portable package](../packages/match-recovery/README.md) for starting an unrelated project.
 
 The active agent/coordinator contract is [WORKFLOW.md](WORKFLOW.md). Historical
@@ -12,8 +13,8 @@ not override task scope, structural evidence or acceptance policy.
 Source records, strict CodeView parsing (`class_layout`) and emitted-table checks
 (`check_generated`) now live in the installed library. These are format/ABI
 capabilities, not project/compiler-environment adapters. `environment/` contains
-only the local compiler interaction. The old command/gate and remaining reusable
-project-bridge orchestration still need absorption before `tools/` can disappear.
+only the local compiler interaction. The old production command/gate and other
+remaining tools still need absorption or retirement before `tools/` can disappear.
 
 ## Available now
 
@@ -35,7 +36,8 @@ uv build --package match-recovery
 Reports are JSON on stdout. Errors go to stderr and return exit 3. Inventory never
 changes source or decisions. Inventory and partition are native package commands
 when `recovery/project.json` supplies `source` configuration; they do not launch
-the project adapter. The source reader preserves all notes, including unparsed
+a project adapter. Task and component commands likewise use the package directly.
+The source reader preserves all notes, including unparsed
 or non-UTF-8 text, without declaring current matches or choosing between
 conflicting candidates. The old bulk legacy-import command is removed: source
 snapshots are already recomputable and the duplicate snapshot store had no
@@ -83,6 +85,15 @@ transient object bytes. Declared compiler scripts, configuration and relevant
 environment variables are rechecked around compilation. Manifests, vendor source
 and original/archive inputs are rechecked around verification. No object response
 or process exit alone constitutes a matching claim.
+
+Application checks additionally use `measurement` configuration: backend, flag
+trials, standalone layout flags, TU suffixes, and build inputs. The `application`
+compiler profile resolves this repository's compile database locally; dependency
+compilation uses the default profile. The library does not select VC6 flags,
+guess a build entry, or import an application adapter. Compiler protocol v2 carries
+the selected profile explicitly. Scoped joint checks retain one-invocation object
+sharing, and recheck source/build/compiler/environment/library inputs plus the
+task and original image. This is not a persistent measurement cache or full gate.
 
 The binary checks currently use the OpenSMACX VC6 launcher. Set `VC6_PREFIX` to
 an isolated prefix before running it alongside other agents. It compiles once per

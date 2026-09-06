@@ -3,60 +3,59 @@
 from dataclasses import asdict
 from pathlib import Path
 
-from match_recovery.fingerprint import input_snapshot
 from match_recovery.layout_source import read_bases, read_members
 from match_recovery.model import Result, digest
 from match_recovery.pe_coff import Coff
 from match_recovery.tasks import TaskStore
 from match_recovery.source_inventory import image_pin, source_snapshot
-from .opensmacx_binary import _inputs
 from match_recovery.ownership_source import class_hint
-from recovery.environment.compile import FLAG_SETS, compile_object
 from match_recovery.codeview import ClassNotEmitted, class_layout
+from .compiler import Compiler
+from .measurement import Measurement
 
 
-def verify_layout(root: Path, task_name: str, *, compiler=compile_object, command_for=None) -> dict:
+def verify_layout(root: Path, task_name: str, *, compiler=None, command_for=None) -> dict:
     root = root.resolve()
     store = TaskStore(root)
     task, decisions = store.read(task_name), store.decisions(task_name)
-    if task.target != "opensmacx":
-        raise ValueError("layout adapter requires an OpenSMACX task")
+    settings = Measurement.read(root)
     selected, files = store._scope(task, decisions)
-    before = input_snapshot(root, _inputs(root), {"flags": FLAG_SETS, "debug": "/Z7"})
+    before = settings.snapshot(root, {})
     pin = image_pin(root)
     if any(subject.image_sha256 != pin or subject.address_space != "pe:va" for subject in task.subjects):
         raise ValueError("task refers to another original image")
     expected = [item for item in read_members(root, pin) if item.path in files]
     expected_bases = [item for item in read_bases(root, pin) if item.path in files]
-    units = sorted(name for name in files if Path(name).suffix == ".cpp"
-                   and not any(part in ("recovered", "unrecovered") for part in Path(name).parts))
+    units = sorted(name for name in files if Path(name).suffix in settings.unit_extensions
+                   and not settings.source.is_seed(name))
     # Method mappings are search hints, not proof that an original class existed
     # or a new requirement to match this candidate's current shape.
     hints = {unit: {} for unit in units}
     for item in source_snapshot(root)["records"]:
         if item["entity_id"] not in selected or item["candidate_kind"] != "source" or item["path"] not in hints:
             continue
-        name = class_hint(item["catalogued_symbol"])
+        name = class_hint(item["catalogued_symbol"]) if settings.source.symbol_format == "msvc" else None
         if name:
             hints[item["path"]].setdefault(name, set()).add(item["entity_id"])
     required_classes = {item.class_name for item in (*expected, *expected_bases)}
-    if command_for is None:
-        from match_recovery.source.asm import build_command
-        command_for = lambda path: tuple(build_command(root / "build/compile_commands.json", path))
+    command_for = command_for if command_for is not None else lambda path: ()
     rows, observations, attempts = [], [], 0
     base_rows = []
     for unit in units:
         classes = sorted(required_classes | hints[unit].keys())
         if not classes:
             continue
-        for flags in FLAG_SETS:
+        for flags in settings.flag_sets:
             layouts, errors, missing = {}, {}, set()
             try:
                 command = tuple(command_for(root / unit))
-                if any(word.lower().startswith(("/yu", "/yc", "/fp", "-yu", "-yc", "-fp", "@")) for word in command):
+                if any(word.lower().startswith(("/yu", "/yc", "/fp", "-yu", "-yc", "-fp", "@"))
+                       for word in (*command, *flags, *settings.layout_flags)):
                     raise ValueError("layout checks require standalone compilation without PCH or response files")
                 attempts += 1
-                obj = Coff(compiler(root / unit, command, flags + ("/Z7",)))
+                if compiler is None:
+                    compiler = Compiler(root, profile=settings.compiler_profile)
+                obj = Coff(compiler(root / unit, command, flags + settings.layout_flags))
                 for name in classes:
                     try:
                         layouts[name] = class_layout(obj, name)
@@ -108,7 +107,7 @@ def verify_layout(root: Path, task_name: str, *, compiler=compile_object, comman
                                                        "ambiguous named base" if len(matches) > 1 else
                                                        "named base absent from complete class definition" if not matches else
                                                        "declared nonvirtual base and offset compared")})
-    if (before != input_snapshot(root, _inputs(root), {"flags": FLAG_SETS, "debug": "/Z7"})
+    if (before != settings.snapshot(root, {})
             or task != store.read(task_name) or decisions != store.decisions(task_name)):
         raise ValueError("source, build inputs or task changed during layout verification")
     # Every requested TU/configuration must agree; never select a passing layout
