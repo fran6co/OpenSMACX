@@ -23,6 +23,7 @@ recovery/
   adapter.py        starter context command; checks deliberately return unknown
   worker.json       your worker command and attribution
   reviewer.json     your independent reviewer command and attribution
+  agents.json       prompt-driven provider commands used by the native bridge
 ```
 
 Initialization refuses to overwrite existing files. The starter interpreter is
@@ -32,9 +33,13 @@ commands for every role. No Python inheritance, plugin registration, package for
 or library modification is required. The package does not supply an agent service,
 compiler installation or project verification policy.
 
-Configure these commands before starting real recovery. Configure an independent
-worker and reviewer by editing their JSON files or setting `RECOVERY_WORKER` and
-`RECOVERY_REVIEWER` to executable paths implementing the protocol below. Add
+Configure these commands before starting real recovery. The generated worker and
+reviewer configs call the package-owned `agent` bridge. Set the prompt-driven
+commands in `agents.json`; its starter commands use `RECOVERY_WORKER` and
+`RECOVERY_REVIEWER` executable paths (not shell strings), consume a prompt on stdin
+and return final response JSON on stdout. You can instead keep a direct JSON
+protocol adapter in `worker.json`/`reviewer.json`. The interpreter selected by
+`--python` must have this package installed to run the bridge. Add
 `build/` to your project's ignore rules for disposable caches/locks. Original
 proprietary images and derived artifacts also need project-owned ignore rules.
 The initializer does not alter your existing ignore rules or run Git mutations.
@@ -76,6 +81,59 @@ are required before it reports ready for collection. Merely installing the packa
 or generating the starter files cannot establish a recovery result.
 
 ## Small integration contract
+
+### Prompt-driven agent commands
+
+`recover agent worker` and `recover agent reviewer` implement the driver protocol
+on stdin/stdout. They translate the request into a prompt, invoke an ordinary
+configured command, and validate its final response. No provider SDK or local
+adapter code is needed. `--root` and `--config` select the project and local
+configuration (default `recovery/agents.json`). A minimal provider configuration:
+
+```json
+{
+  "schema_version": 1,
+  "artifacts": "build/recovery/agents",
+  "worker": {
+    "command": {"argv": ["my-worker-command", "--schema", "{schema}"], "timeout": 3300},
+    "instructions": [],
+    "response": "stdout"
+  },
+  "reviewer": {
+    "command": {"argv": ["my-readonly-reviewer", "--schema", "{schema}"], "timeout": 3300},
+    "instructions": [],
+    "response": "stdout"
+  }
+}
+```
+
+These executable names stand for your chosen commands, not bundled programs.
+`instructions` contains optional project-relative UTF-8 instruction files. The
+bridge passes the prompt on stdin; substitutions include `{root}`, `{task}`,
+`{role}`, `{request}`, `{schema}`, `{response}` and `{env:NAME}`. Request/schema
+files are fresh disposable JSON inputs, not another task ledger. `response: file`
+requires a command using `{response}` to write the final JSON there; stdout is
+then ignored, so progress events cannot be mistaken for a verdict. `stdout`
+requires exactly one JSON object, not fenced Markdown, JSONL or a vendor envelope.
+Both modes use the same authoritative response validators as the driver, even
+when a provider claims to enforce the supplied JSON Schema.
+
+The bridge verifies the task and editing scope before launch, rejects reviewer
+writes, worker scope violations, Git mutations and changed policy, and cleans its
+temporary directory on success or failure. It never reverts source edits. Missing,
+oversized, symlinked, malformed or stale responses, nonzero provider exits and
+timeouts exit 3 with structured error details. The driver reports `agent_error`
+and stops; it does not retry quota failures or invent a reset time. Review schemas
+require `supersessions` and `retractions` arrays; return empty arrays when unused.
+
+Provider sandboxing, authentication, model choice and independent sessions remain
+explicit command configuration. Scope checks are detection, not containment.
+Prepare isolated worktrees/compiler resources before running a real worker.
+The bridge does not authenticate reviewer independence or grant permission for
+nested agents. Completed non-derivable decisions use existing task/review history;
+prompts, response files and run output do not become a versioned ledger.
+
+### Direct JSON command adapters
 
 Each configured command is `{"argv": ["executable", "arg"], "timeout": 300}`.
 Commands run with the project root as their working directory. Arguments support

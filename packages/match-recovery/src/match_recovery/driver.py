@@ -14,13 +14,14 @@ import subprocess
 import uuid
 
 from .locking import file_lock
+from .agent_protocol import validate_reviewer_response, validate_worker_response
 from .migration import GateExit
 from .migration_protocol import admit, extend_inventory, permissions
 from .model import canonical, require_text
 from .records import parse_json
 from .processes import run_bounded
 from .reviews import ReviewStore, acceptance_result, merge_interpretations, pending_interpretations, validate_review, validate_supersessions
-from .tasks import TaskStore, entity_id
+from .tasks import TaskStore
 
 
 @dataclass(frozen=True)
@@ -180,10 +181,10 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                                                                              "Explicitly address every historical review_interpretation using supersessions or evidence-backed retractions; neither waives proof obligations.",
                                                                              "Return reasoning and evidence references, never copied image bytes or disassembly."]})
                 if code != 0:
-                    return finish("review_unavailable", round_index, check)
-                fields = {"snapshot", "decision", "evidence", "feedback"}
-                if not fields <= set(response) or set(response) - fields - {"supersessions", "retractions"}:
-                    raise ValueError("invalid reviewer response")
+                    output = finish("review_unavailable", round_index, check)
+                    output["agent_error"] = response
+                    return output
+                validate_reviewer_response(response, snapshot)
                 decision = {"kind": "review", "author": worker_configuration["author"],
                             "reviewer": reviewer_configuration["author"], **response}
                 validate_review(decision)
@@ -300,20 +301,10 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             if store.read(task_name) != task or store.decisions(task_name) != initial_decisions:
                 raise ValueError("task decisions changed during dispatch; inspect before resuming")
             if code != 0:
-                return finish("worker_interrupted", round_index + 1, check, current=False)
-            if set(response) != {"discoveries"} or not isinstance(response["discoveries"], list):
-                raise ValueError("worker must return a discoveries array, not a verdict")
-            for finding in response["discoveries"]:
-                if not isinstance(finding, dict) or set(finding) != {"hypothesis", "affects", "evidence"}:
-                    raise ValueError("invalid worker discovery")
-                require_text(finding["hypothesis"], "hypothesis")
-                for key in ("affects", "evidence"):
-                    if not isinstance(finding[key], list) or not finding[key]:
-                        raise ValueError("discovery requires affected entities and evidence")
-                for affected in finding["affects"]:
-                    entity_id(affected)
-                for evidence in finding["evidence"]:
-                    require_text(evidence, "discovery evidence")
+                output = finish("worker_interrupted", round_index + 1, check, current=False)
+                output["agent_error"] = response
+                return output
+            validate_worker_response(response)
             for finding in response["discoveries"]:
                 store.discover(task_name, request_id="worker-" + uuid.uuid4().hex,
                                author=worker_configuration["author"], expected_revision=len(store.decisions(task_name)),

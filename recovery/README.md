@@ -207,18 +207,36 @@ wires OpenSMACX's existing context and strict task check into that engine.
 
 ```sh
 uv run recover run infowin-ownership --config recovery/driver.json \
-  --worker /path/to/worker.json --iterations 3
+  --worker recovery/worker.json --reviewer recovery/reviewer.json --iterations 3
 ```
 
 Set `OPENSMACX_IMAGE` and an isolated `VC6_PREFIX` for the supplied project
-configuration. A trusted worker configuration supplies an attribution label and
-an adapter command, for example `{"author":"worker-name","command":{"argv":
-["/path/to/agent-adapter"],"timeout":900}}`. This is a protocol contract, not a
-bundled agent-provider implementation. The worker adapter receives one JSON
+configuration. `worker.json` and `reviewer.json` supply distinct attribution
+labels and invoke the package-owned `recover agent` bridge. `agents.json` contains
+the actual provider argument arrays and role instruction paths, with no local
+Python adapter. The worker bridge receives one JSON
 object on stdin containing the task, authorized files, fresh context and check
 report. It edits source in the provided worktree and returns only
 `{"discoveries":[]}`, or discoveries containing `hypothesis`, `affects` (original
 entity ids) and `evidence`. Worker output never establishes a passing verdict.
+
+The supplied provider commands use Codex's schema-constrained final-message file,
+fresh ephemeral sessions, a workspace-write worker and a read-only reviewer.
+Only the worker is granted the explicit `VC6_PREFIX` directory in addition to its
+worktree; never point that variable at a shared prefix or a broad directory.
+Model selection and authentication use the user's CLI configuration; no model or
+credential is embedded here. This configuration follows the
+[official non-interactive documentation](https://learn.chatgpt.com/docs/non-interactive-mode)
+and was checked against installed `codex exec --help`. No live model task has yet
+validated recovery quality or this machine's nested-provider sandbox behavior.
+Prepare/authorize an isolated run before using these commands. The generic bridge
+also supports a single final JSON object on stdout for other provider commands.
+
+The bridge creates request/schema/response files only under ignored
+`build/recovery/agents/`, validates the response and removes those temporary files.
+It rejects stale reviews, malformed output and source/Git scope violations, while
+preserving edits on interruption. Provider errors reach the driver as `agent_error`;
+there is no automatic quota retry or provider-specific reset-time parser yet.
 
 Each command has an argv array and explicit timeout; no shell interpolation is
 used. Supported placeholders are `{task}`, `{root}` and `{env:VARIABLE}`.

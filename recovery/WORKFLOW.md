@@ -100,8 +100,13 @@ scoped diagnostics with fresh measurements of the historical obligations; its
 `candidate` field contains the joint binary/layout report. `measurement` configuration
 selects flag trials and the local application compiler profile; no project
 operation dispatcher is needed.
-Provider commands must implement the package's JSON protocol. The Markdown
-worker/reviewer prompts are guidance, not installed provider integrations.
+The supplied worker/reviewer configurations now call the package-owned `agent`
+bridge. `recovery/agents.json` supplies prompt-driven Codex commands: separate
+ephemeral invocations, workspace-write worker and read-only reviewer. Existing
+Markdown role instructions are inputs to that bridge, not executable adapters.
+Configure provider authentication/model policy and verify worktree/compiler
+isolation before launching. The installed CLI flags and synthetic subprocess
+handshake have been checked; a live model recovery pilot is not yet verified.
 
 The driver rebuilds context, checks, calls the worker and rechecks bounded rounds.
 A cross-entity finding pauses the loop for coordinator action; it is not discarded

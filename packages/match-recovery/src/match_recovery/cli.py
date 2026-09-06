@@ -19,6 +19,10 @@ def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(prog="recover", description="Structure-led matching recovery")
     result.add_argument("--version", action="version", version=__version__)
     commands = result.add_subparsers(dest="command", required=True)
+    agent = commands.add_parser("agent", help="Bridge a configured prompt-driven command to the worker/reviewer protocol")
+    agent.add_argument("role", choices=("worker", "reviewer"))
+    agent.add_argument("--root", type=Path, default=Path.cwd())
+    agent.add_argument("--config", type=Path, default=Path("recovery/agents.json"))
     init = commands.add_parser("init", help="Create non-overwriting project-local command configuration")
     init.add_argument("--root", type=Path, default=Path.cwd())
     init.add_argument("--target", required=True, help="Project-chosen identity; no registered targets required")
@@ -42,7 +46,16 @@ def parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     args = parser().parse_args(argv)
     try:
-        if args.command == "init":
+        if args.command == "agent":
+            from .agent_command import run_agent
+            from .records import parse_json
+            try:
+                code, output = run_agent(args.root, args.role, args.config, parse_json(sys.stdin.read()))
+            except (OSError, ValueError, subprocess.SubprocessError) as error:
+                code, output = 3, {"error": {"kind": "refused", "message": str(error)}}
+            print(json.dumps(output, indent=2, sort_keys=True))
+            return code
+        elif args.command == "init":
             from .project import initialize
             output = initialize(args.root, args.target, args.python)
         elif args.command == "run":

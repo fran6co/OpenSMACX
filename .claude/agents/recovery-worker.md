@@ -54,8 +54,9 @@ replica control. Default to one compiler job unless the coordinator has measured
 isolated capacity. Rankings are diagnostics, not a winner to apply automatically.
 After a deliberate source edit, rerun task checks and preserve coupled findings.
 
-The configured worker adapter must return the framework's JSON response:
+The configured worker command must return the framework's JSON response:
 `{"discoveries":[]}`, or discoveries with `hypothesis`, `affects` (original
 entity ids), and `evidence`. Use stderr for diagnostic prose. The adapter owns
-provider invocation and protocol formatting; this prompt is not an executable
-provider adapter. Reports and historical measurements are not current proof.
+provider invocation and protocol formatting through the package-owned `recover
+agent` bridge; this Markdown file is its instruction input. Reports and historical
+measurements are not current proof. Do not launch nested agents.

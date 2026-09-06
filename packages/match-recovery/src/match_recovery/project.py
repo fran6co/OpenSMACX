@@ -33,7 +33,7 @@ def initialize(root: Path, target: str, python: str) -> dict:
     require_text(target, "target")
     require_text(python, "Python executable")
     root = root.resolve()
-    files = ("driver.json", "project.json", "worker.json", "reviewer.json", "adapter.py")
+    files = ("driver.json", "project.json", "worker.json", "reviewer.json", "agents.json", "adapter.py")
     directory = root / "recovery"
     if directory.is_symlink() or not directory.resolve().is_relative_to(root):
         raise ValueError("project setup directory must stay inside the project")
@@ -45,14 +45,18 @@ def initialize(root: Path, target: str, python: str) -> dict:
     publish_json(directory / "driver.json", {"schema_version": 1, "target": target,
                  "context": command("context"), "check": command("check")})
     publish_json(directory / "project.json", {"schema_version": 1, "adapter": command("project")})
+    agents = {"schema_version": 1, "artifacts": "build/recovery/agents"}
     for role in ("worker", "reviewer"):
         publish_json(directory / (role + ".json"), {"author": role,
-                     "command": {"argv": ["{env:RECOVERY_" + role.upper() + "}"], "timeout": 3600}})
+                     "command": {"argv": [python, "-m", "match_recovery.cli", "agent", role], "timeout": 3600}})
+        agents[role] = {"command": {"argv": ["{env:RECOVERY_" + role.upper() + "}"], "timeout": 3300},
+                        "instructions": [], "response": "stdout"}
+    publish_json(directory / "agents.json", agents)
     publish_text(directory / "adapter.py", ADAPTER)
     return {"created": ["recovery/" + name for name in files], "target": target,
             "ready_for_recovery": False,
             "next_steps": ["Implement local context and verification commands; missing proof must stay unknown.",
-                           "Configure independent worker/reviewer commands (or RECOVERY_WORKER/RECOVERY_REVIEWER).",
+                           "Configure independent prompt-driven worker/reviewer commands in recovery/agents.json.",
                            "Create a task decision from source-owned original identities with recover tasks create --file.",
                            "Ignore build/ caches and checkpoint configuration/task decisions in Git before recover run.",
                            "Configure obligations and full acceptance before claiming completed recovery."]}

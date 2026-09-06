@@ -60,6 +60,11 @@ proof of current structure or relocation-target correctness.
 
 ## Working rules
 
+`recovery/worker.json` and `recovery/reviewer.json` use the package's native
+agent-command bridge; provider arguments live in `recovery/agents.json`.
+Verify provider access and isolated worktree/compiler resources before launching.
+Synthetic protocol tests are not proof of successful autonomous recovery.
+
 - Prefer real bases, members, globals, virtual methods and lifecycle code over
   vtable arrays, fixed executable addresses, raw self-offset access or stand-ins.
   No `__asm`, `_emit` or copied machine code. Names/types require evidence.

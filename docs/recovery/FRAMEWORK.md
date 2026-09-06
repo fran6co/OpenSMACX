@@ -12,7 +12,9 @@ new ledger. Matching permissions also require a separate passing reference check
 legacy byte-only history cannot waive wrong or unknown targets. The native
 `check-build` command now supplies fresh configured artifact measurements to each
 driver round, without project checker code or existing incremental outputs.
-Full structure, outside-scope admission and provider integration remain unfinished.
+The provider-neutral `agent` bridge now connects configured prompt-driven commands
+to worker/reviewer JSON contracts; local provider arguments remain project data.
+Full structure, outside-scope admission and a live model recovery pilot remain unfinished.
 
 ## Accepted design
 
@@ -118,7 +120,7 @@ establish completion of this program.
   admission policy after independent review, preserve required matches across
   worker rounds, and distinguish admitted regressions from collection readiness.
   Synthetic checkpoint/resumption tests restore obligations before full acceptance.
-  Live provider integrations, the OpenSMACX migration verifier and actual
+  Live model recovery validation, the OpenSMACX migration verifier and actual
   collection remain under construction.
   Task context now derives restoration requirements from baseline, reachable
   source history and the working tree, preserving removed/rehomed claims without
