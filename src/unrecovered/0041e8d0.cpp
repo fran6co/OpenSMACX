@@ -1,5 +1,38 @@
 // ORIGINAL: 0x0041E8D0 ?init@BaseWin@@QAEXXZ 0x0041E8D0-0x00420A3D;0x00652A94-0x00652AA9 FILE
 // TRIED: sim 0.70 (framed /O2 /Oy-), first divergence #9 push-vs-mov in the prologue/Wave-init region; every field store, BaseButton/Sprite/Buffer /Caviar/Time/Spot/Font/Wave call and its receiver was cross-checked against the raw disassembly (not Ghidra's dropped-this renderings), including the trailing 22x1 BaseButton array and the two vtable slot002/slot062 dispatch loops; RECT/float scratch temporaries use fresh locals rather than the original's exact reused stack slots.
+// TRIED (2026-09-06, BaseWin class pass): binding fates. This body IS a full
+//  transcription, so it is the one of the four a rename can home; 66 of the
+//  72 bindings resolve to names the tree already carries or to literals, and
+//  only the ten below need deciding. Reading them is the remaining work:
+//   ALREADY NAMED ELSEWHERE
+//   0x0066931C game.h's function-pointer slot;  0x00669328 console.h's
+//       runtime slot;  0x0066AA40 the float -10000.0f (basewin.h documents it)
+//   0x00682824 "BASENAME";  0x00682830 "INVERTLIST";  0x00682E60
+//       "fx\\menu2.wav";  0x00682E70 "ter1wreck.pcx";  0x00682E80
+//       "interface.pcx"  - .rdata literals, spelled as literals
+//   0x00691B2C DefaultFontFace (font.h);  0x006A7528 InvertEntryTable and
+//       0x006EEE60 InvertEntryCount (basewin.cpp);  0x006EEE68 g_BASEWIN_WAVE
+//   0x0077A5C8..0x0077A8B4  Sprite g_BASEWIN_SPRITES[0..16] - sprite.cpp
+//       names the array at 0x77A5C8 with a 0x2C stride, so these seventeen
+//       are indexes into it, not seventeen bindings
+//   0x0078D5A0 BoxSpriteStyle3;  0x0078D690 BoxSpriteStyle9 (dipedit.cpp);
+//       0x007ACBB8 g_RAINFALL_DOUBLE_TILE_SPRITES[0] (sprite.cpp)
+//   0x007AE820 MainInterfaceGlobal;  0x009156B0 ConsoleGlobal;
+//       0x009B7B1C / 0x009B7B20 WinScreenWidth / WinScreenHeight;
+//       0x009B7D00 TextBufferGetPtr;  0x009B86A0 the string temp;
+//       0x009B90D8 StringTable;  0x009B90F8 Labels;
+//       0x00689370 BaseIDCurrentSelected;  0x0090EA30 BaseCurrent()
+//   0x0041AF40 BaseWin::timer_callback's own address - a function reference
+//       wearing a data binding, so it needs the callee declared, not a name
+//   0x00652A9F and the 0x00652A94-0x00652AA9 span - the EH scope table, the
+//       compiler's
+//   STILL UNNAMED, with what the body does with each
+//   0x006734E0  0x00696D14  0x0078D708  0x007ACBC0  0x007AE7FC
+//       0x007AF59C..0x007AF5DC (a run of 17 dwords whose +0x14 dword, 0x7AF5B0,
+//       is the RECT BaseWin::init insets into its own rects - see
+//       BattleWin::on_status's block in battlewin.cpp, which names 0x7AF5B0
+//       InterfaceScreenRect and proves the four-dword read)
+//       0x008C6C54..0x008C6C68  0x008C6D1C / 0x008C6D20  0x0090D978
 // working copy - scaffold materialised by --work
 // size      8578 bytes
 // prototype void (__thiscall ?init@BaseWin@@QAEXXZ)(BaseWin* this)

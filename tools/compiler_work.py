@@ -175,7 +175,11 @@ SHAPES = [
     # dispatch through the existing 0x007B0CB8 shim - the remedy is the
     # virtual declarations on scenario.cpp's MainInterface binding, the
     # receiver-map pass's.
-    ("VCall shim", 11,
+    # 11 -> 10 (2026-09-06, W5n basewin class pass): on_left_up's two
+    # front-table slots were Win's own vslot_19/vslot_04 all along -
+    # spelled by name, body 86 -> 91/97. The last one is the entry
+    # table's slot003, waiting on the BaseWin derivation pass.
+    ("VCall shim", 10,
      re.compile(r"\bVCall\b"),
      "dispatches through a fake class because the real function is not "
      "declared virtual. Declare it."),
@@ -666,7 +670,12 @@ SCAFFOLD_CEILINGS = {
     # wrappers + ImageButton::init (0x625380, the second overload - the
     # store lands on field_AB8_, exactly sizeof(BaseButton)) all homed
     # BYTE_EXACT.
-    "artifact files (recovered/)": 985,
+    # 985 -> 983 (2026-09-06, W5n basewin class pass): BattleWin::
+    # on_status homed BYTE_EXACT 68/68 (the seven "globals" were
+    # flat_button_[3]/[4]/[6]/[7] at 0xB4C strides, the Buffer's negative
+    # biHeight, and the RECT at front+0xD90) and on_iface_left_down
+    # BYTE_EXACT 19/19; draw_garrison homed for coverage (12/376).
+    "artifact files (recovered/)": 983,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).

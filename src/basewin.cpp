@@ -577,7 +577,7 @@ void BaseWin::draw_energy_alloc(int a1) {
     RECT clipRect = *reinterpret_cast<RECT *>(self + 0x40c3c);
     canvas->set_clip(&clipRect);
 
-    font.init(reinterpret_cast<char *>(*DefaultFontFace), 0xc, 1);
+    font.init(DefaultFontFace, 0xc, 1);
     canvas->set_font(&font, 0, 0, 0);
 
     // Time-boxed: draw_energy_alloc renders the psych/labs/econ
@@ -594,6 +594,97 @@ static int *const InterfaceClipRect = (int *)0x007AEC94;
 static int *const MainInterfaceScreenClipTop = (int *)0x007AEC98;
 static int *const MainInterfaceScreenClipRight = (int *)0x007AEC9C;
 static int *const MainInterfaceScreenClipBottom = (int *)0x007AECA0;
+
+// Fixed-slot bindings carried from 004103b0.cpp, named from their neighbours
+// and from the tree's own names for the same addresses.
+//   MainInterfaceTileSource 0x0078D6B0 - the Buffer draw_garrison tiles the
+//       garrison panel from; maininterface.cpp binds the same address under
+//       this name for its own draw.
+//   BoxSpriteStyle3 0x0078D5A0 - the BoxSpriteParams pool based at
+//       0x0078D528 on the 0x28 grid, pool index 3 (reportif.cpp, socialwin.cpp).
+//   MapWinCaptionScale / MapWinCaptionDivisor 0x00691E6C / 0x00691E70 - the
+//       pair mapwin.cpp names, read here to pitch the garrison rows.
+static int *const MainInterfaceTileSource = (int *)0x0078D6B0;
+static int *const BoxSpriteStyle3 = (int *)0x0078D5A0;
+static int *const MapWinCaptionScale = (int *)0x00691E6C;
+static int *const MapWinCaptionDivisor = (int *)0x00691E70;
+// The shared full-screen drawing Buffer, the same binding maininterface.cpp,
+// reportif.cpp and socialwin.cpp carry; InterfaceClipRect above is its +0x30.
+static int *const InterfaceBuffer = (int *)0x007AEC64;
+
+// ORIGINAL: 0x004103B0 ?draw_garrison@BaseWin@@QAEXH@Z 0x004103B0-0x00410868;0x00651B0D-0x00651B22 FILE
+// size      1208 bytes
+// prototype void (__thiscall ?draw_garrison@BaseWin@@QAEXH@Z)(BaseWin* this, int)
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// TRIED: bodied for COVERAGE up to the vehicle walk. The transcription stops
+//  where the image enters it: a linked-list walk over the vehicle stack (the
+//  0x00952858 / 0x0095285A pair), an idiv-based column layout, a dispatch
+//  through [edx+8] and the veh_draw / write_cent_l / set_text_color labelling
+//  that follows - a long, branch-heavy loop where this tree's register
+//  allocation differs with no source-level lever that pins it. The artifact
+//  this was homed from also read 0x0090EA30 - BaseCurrent's own pointer slot -
+//  as two `short` map coordinates to feed veh_at, which cannot be what the
+//  image does; that line is left out rather than homed as a defect.
+// LEVER: 0x40C2C is one RECT, not the four unnamed dwords the IDB records -
+//  set_clip takes it whole and the tile/frame sizing reads its fields.
+//  0x00691B2C is font.h's DefaultFontFace, passed as the pointer it is; the
+//  artifact's `*DefaultFontFace` through a pointer-to-pointer is two loads
+//  where the image has one.
+void BaseWin::draw_garrison(int) {
+    Buffer *canvas = reinterpret_cast<Buffer *>(InterfaceBuffer);
+
+    RECT clip_rect = garrison_rect_;
+    canvas->set_clip(&clip_rect);
+
+    Font font;
+    font.init(DefaultFontFace, 0xc, 0);
+
+    // The row pitch every garrison line uses: `height_ + unk_1_` when the
+    // font's own ascent adjustment is not negative, `line_height_` when it is.
+    int line_height = (font.unk_1_ >= 0) ? (font.height_ + font.unk_1_)
+                                         : font.line_height_;
+    (void)line_height;
+
+    int left = garrison_rect_.left;
+    int top = garrison_rect_.top;
+    int right = garrison_rect_.right;
+    int width = right - left;
+    int bottom = garrison_rect_.bottom;
+    int height = bottom - top;
+    canvas->tile(reinterpret_cast<Buffer *>(MainInterfaceTileSource), left, top,
+                 left, top, width, height);
+
+    RECT frame_rect;
+    frame_rect.left = left;
+    frame_rect.top = top;
+    frame_rect.right = right;
+    frame_rect.bottom = bottom;
+    canvas->box_sprite(&frame_rect,
+                       reinterpret_cast<BoxSpriteParams *>(BoxSpriteStyle3));
+
+    frame_rect.left += 3;
+    frame_rect.top += 3;
+    frame_rect.right -= 3;
+    frame_rect.bottom -= 3;
+
+    // Type 6 is the garrison's own highlight spot; the panel clears it before
+    // it lays the row spots out again.
+    spot1_.kill_type(6);
+
+    int spacing;
+    if (*MapWinCaptionScale > 0) {
+        spacing = (*MapWinCaptionScale * 20) / *MapWinCaptionDivisor;
+    } else {
+        spacing = 0x38;
+    }
+    (void)spacing;
+
+    // WALL - the vehicle walk described in the TRIED note above starts here,
+    // and it is the part that reads the argument this transcription leaves
+    // unnamed: nothing before it touches it.
+}
 
 class VCall2 { public:
     virtual void slot000();
@@ -735,18 +826,28 @@ class VCall { public:
 void BaseWin::on_left_up(int a1, int a2) {
     char *self = reinterpret_cast<char *>(this);
 
-    RECT rect = rect2_;
+    // 0x474 is Buffer+0x30 - the drawing Buffer's own rect2_, not BaseWin's
+    // rect2_ at 0x40BAC. The base's member has to be named qualified, because
+    // BaseWin declares a `rect2_` of its own that would shadow it.
+    RECT rect = Buffer::rect2_;
     int flag = *reinterpret_cast<int *>(self + 0x40b54);
     if (flag > 0) {
         if (!in_box(a1, a2, &rect)) {
             reinterpret_cast<Win *>(self)->client_to_screen(&a1, &a2);
             MainInterfaceGlobal.screen_to_client(&a1, &a2);
 
-            RECT rect2 = { *InterfaceClipRect, *MainInterfaceScreenClipTop,
-                       *MainInterfaceScreenClipRight,
-                       *MainInterfaceScreenClipBottom };
+            // THE IMAGE REUSES THE FRAME SLOTS: the clip rectangle lands in
+            // the same [ebp-0x10..ebp-4] the Buffer::rect2_ copy used, so a
+            // second named local costs a frame slot the image does not pay -
+            // a shadowed inner `RECT rect = {...}` measured WORSE (88 of 97
+            // against 91), because VC6 gives the aggregate its own slot
+            // instead of reusing the outer one.
+            rect.left = *InterfaceClipRect;
+            rect.top = *MainInterfaceScreenClipTop;
+            rect.right = *MainInterfaceScreenClipRight;
+            rect.bottom = *MainInterfaceScreenClipBottom;
 
-            if (!in_box(a1, a2, &rect2)) {
+            if (!in_box(a1, a2, &rect)) {
                 reinterpret_cast<Win *>(self)->set_cursor(0x7f00);
                 MainInterfaceGlobal.set_cursor(0x7f00);
                 *reinterpret_cast<int *>(self + 0x40b54) = -1;
@@ -767,13 +868,18 @@ void BaseWin::on_left_up(int a1, int a2) {
                 reinterpret_cast<VCall2 *>(self + 0xa14)->slot003(a1, a2);
             }
         } else {
-            reinterpret_cast<VCall2 *>(self)->slot019(a1, a2);
+            // Front vtable slot 19 (0x4C), which in BaseWin's own front table
+            // (0x66A40C) holds on_left_click (0x0041AF70). Win declares the
+            // slot `vslot_19`, so the dispatch spells by name and the shim
+            // with it.
+            vslot_19(a1, a2);
         }
     }
 
     if (WinPointerOwner3 == reinterpret_cast<Win *>(self)) {
         WinPointerOwner3 = 0;
-        reinterpret_cast<VCall *>(self)->slot004();
+        // Front vtable slot 4 (0x10) - Win's vslot_04, the shared no-op.
+        vslot_04();
     }
     if (WinPointerOwner4 == reinterpret_cast<Win *>(self)) {
         WinPointerOwner4 = 0;

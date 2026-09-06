@@ -21,10 +21,26 @@
 #include "maininterface.h"
 #include "subinterface.h"
 #include "time.h"
+#include "console.h"   // ConsoleGlobal, the object at 0x009156B0
+#include "mapwin.h"    // MainInterfaceGlobal, the object at 0x007AE820
+
+// Two of on_status's callees are still original bodies the tree has not homed
+// (0x0045D440 / 0x0045D970). councwin.cpp defines both as forwarders with
+// external linkage; this TU reaches the same addresses through those.
+void __cdecl slide_show(GraphicWin *window, int mode);   // 0x0045D440
+void __cdecl slide_hide(GraphicWin *window, int mode);   // 0x0045D970
+
+// Fixed-slot bindings the homed body arrived needing, named from evidence -
+// see the block on on_status. InterfaceBuffer is the shared full-screen
+// drawing Buffer, bound under the same name in maininterface.cpp,
+// reportif.cpp and socialwin.cpp; InterfaceScreenRect is the RECT at
+// MainInterface+0xD90 that BaseWin::init insets into its own rects.
+static int *const InterfaceBuffer = (int *)0x007AEC64;
+static RECT *const InterfaceScreenRect = (RECT *)0x007AF5B0;
 
 /*
 Purpose: The interface-mode entry point: put the battle up, or take it down.
-// ORIGINAL: 0x00422CC0 ?on_status@BattleWin@@QAEXH@Z 0x00422CC0-0x00422DB9
+// ORIGINAL: 0x00422CC0 ?on_status@BattleWin@@QAEXH@Z 0x00422CC0-0x00422DB9 BYTE_EXACT
 // symbol    ?on_status@BattleWin@@UAEXH@Z
 // size      249 bytes
 // prototype void (__thiscall ?on_status@BattleWin@@QAEXH@Z)(BattleWin* this, int)
@@ -33,23 +49,67 @@ Purpose: The interface-mode entry point: put the battle up, or take it down.
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D8200 0x0045C290 0x0045D440 0x0045D2A0 0x0045BE80 0x005D5890 0x0045D970
 // indirect  0x00422D04 0x00422D13 0x00422D23 0x00422D32 0x00422D72 0x00422D7F 0x00422D8D 0x00422D9A
-PENDING BODY - every instruction is read and the shape is plain: mode nonzero
-   shows the battle and four window globals, mode zero hides the same four in
-   reverse and pulls the interface alert back down. What blocks it is NAMING,
-   not structure: the four objects it shows and hides (0x007B1804, 0x007B2350,
-   0x007B39E8, 0x007B4534) are vptr-bearing Win-derived globals nothing in the
-   tree names yet - each is reached as `mov edx,[g] / mov ecx,g / call
-   [edx+4]`, i.e. show(0) and hide() through their own vtables - and the three
-   arguments of the 0x005D8200 call at 0x00422CC E read 0x007AECE8 and
-   0x007AF5B0, two more unnamed globals. None of the seven is bound anywhere
-   in src/. HANDOFF: name the seven and this body spells directly, with
-   vtable_method for the four dispatch pairs and qualified
-   `MainInterfaceGlobal.set_alert` / `set_date` / `soft_update` for the rest.
+// LEVER: THE SEVEN "UNNAMED GLOBALS" WERE NOT SEVEN GLOBALS. All four
+//   0x007B-prefixed addresses are elements of MainInterfaceGlobal's own
+//   flat_button_ array, and the two 0x007AE-prefixed ones are read off the
+//   interface's drawing Buffer - so the body needs no new binding at all,
+//   only the two member paths, and both fold to the image's `mov ecx, imm32`:
+//
+//   0x007B1804  MainInterfaceGlobal.flat_button_[3]
+//   0x007B2350  MainInterfaceGlobal.flat_button_[4]
+//   0x007B39E8  MainInterfaceGlobal.flat_button_[6]
+//   0x007B4534  MainInterfaceGlobal.flat_button_[7]
+//       The strides give it away: 0x7B2350 - 0x7B1804 and 0x7B4534 - 0x7B39E8
+//       are both exactly 0xB4C == sizeof(FlatButton), and front+0xE00 +
+//       3*0xB4C / 4 / 6 / 7 land on all four addresses exactly. The
+//       `mov edx,[g] / mov ecx,g / call [edx+4]` and `call [edx+8]` pairs are
+//       Win's own show(int) and hide() - FlatButton is
+//       BaseButton : GraphicWin : Win, so its vtable opens with Win's slots.
+//       AlphaMenu::show / hide (0x00403680 / 0x00403830) reach flat_button_[3]
+//       the same way, with the same `movl $1/$0, 0x7b22a0` beside it
+//       (flat_button_[3]+0xA9C), which is the third reader that settles it.
+//
+//   0x007AEC64  the interface's Buffer - MainInterfaceGlobal's own
+//       GraphicWin base subobject at front+0x444, already bound in this tree
+//       as InterfaceBuffer (maininterface.cpp, reportif.cpp, socialwin.cpp).
+//   0x007AECE8  that Buffer's `dib_.bmiHeader.biHeight` at Buffer+0x84, which
+//       `Buffer::init` stores NEGATIVE for a top-down DIB (see the Dib block
+//       in buffer.h) - hence this body's `neg`. slide_show (0x0045D440) and
+//       its three siblings re-init a stack Buffer from the same pair,
+//       `init(biWidth at +0x80, -biHeight at +0x84, 0, 0)`, which is what
+//       confirms the two offsets are the DIB's own width and height.
+//   0x007AF5B0  front+0xD90, the first dword of the RECT MainInterface keeps
+//       beside it; BaseWin::init (0x0041F1AE) reads all four dwords and
+//       insets them into its own rects (left+4/top+4/right-4/bottom-4), which
+//       is the evidence that the four are one RECT. on_status hands its first
+//       dword to Buffer::set_clip as the clip extent.
 */
+// The two slide helpers are still original bodies (0x0045D440 / 0x0045D970);
+// councwin.cpp declares and forwards them, and the definitions are
+// external-linkage so this TU links against those.
 void BattleWin::on_status(int mode) {
-    typedef void(__fastcall *pending)(BattleWin *, void *, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x00422CC0))(
-        this, nullptr, mode);
+    if (mode != 0) {
+        reinterpret_cast<Buffer *>(InterfaceBuffer)->set_clip(
+            0, 0, InterfaceScreenRect->left,
+            -reinterpret_cast<Buffer *>(InterfaceBuffer)
+                 ->dib_.bmiHeader.biHeight);
+        MainInterfaceGlobal.restore_back(0);
+        MainInterfaceGlobal.flat_button_[3].show(0);
+        MainInterfaceGlobal.flat_button_[4].show(0);
+        MainInterfaceGlobal.flat_button_[6].show(0);
+        MainInterfaceGlobal.flat_button_[7].show(0);
+        slide_show(0, 2);
+        MainInterfaceGlobal.set_alert(1);
+        MainInterfaceGlobal.set_date(0);
+        MainInterfaceGlobal.soft_update();
+    } else {
+        MainInterfaceGlobal.flat_button_[6].hide();
+        MainInterfaceGlobal.flat_button_[7].hide();
+        MainInterfaceGlobal.flat_button_[3].hide();
+        MainInterfaceGlobal.flat_button_[4].hide();
+        MainInterfaceGlobal.set_alert(0);
+        slide_hide(0, 2);
+    }
 }
 
 /*
@@ -68,7 +128,7 @@ Status: Complete
 void BattleWin::on_iface_left_click(int, int) {
 }
 
-// PENDING 0x00422E30 ?on_iface_left_down@BattleWin@@QAEXHH@Z 0x00422E30-0x00422E64
+// ORIGINAL: 0x00422E30 ?on_iface_left_down@BattleWin@@QAEXHH@Z 0x00422E30-0x00422E64 BYTE_EXACT
 // symbol    ?on_iface_left_down@BattleWin@@UAEXHH@Z
 // size      52 bytes
 // prototype void (__thiscall ?on_iface_left_down@BattleWin@@QAEXHH@Z)(BattleWin* this, int, int)
@@ -76,23 +136,20 @@ void BattleWin::on_iface_left_click(int, int) {
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005169F0 0x005FAB00
-// PENDING BODY - the shape is one line and a guard, exactly as
-// MainInterface::on_iface_left_down's: `spot.check(a1, a2, &a2, 0)` and on a
-// hit of 5, Console::end_my_turn. The receiver is the SAME Spot MainInterface
-// reaches its own member through - 0x007D3854 is front+0x25034, spot_'s
-// address - and there is no public path to it: spot_ is private in
-// maininterface.h, so `MainInterfaceGlobal.spot_.check(...)` does not compile
-// from here. HANDOFF to maininterface.h: make spot_ public (or add an
-// accessor, which would cost this body a call the image does not make) and
-// this becomes
-//   `int result = MainInterfaceGlobal.spot_.check(a1, a2, &a2, 0);
-//    if (result != -1 && a2 == 5) ConsoleGlobal.end_my_turn();`
-// Console::end_my_turn is already declared (console.h) and ConsoleGlobal is
-// the object at 0x009156B0.
+// LEVER: the receiver is the SAME Spot MainInterface reaches its own member
+//   through - 0x007D3854 is front+0x25034, spot_'s address - so the whole body
+//   is `MainInterfaceGlobal.spot_.check(a1, a2, &a2, 0)` and, on a hit of 5,
+//   ConsoleGlobal.end_my_turn(). spot_ went public in maininterface.h for it;
+//   an accessor would have cost a call the image does not make.
 void BattleWin::on_iface_left_down(int x_coord, int y_coord) {
-    typedef void(__fastcall *pending)(BattleWin *, void *, int, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x00422E30))(
-        this, nullptr, x_coord, y_coord);
+    // The image tests the two conditions against one shared epilogue - a
+    // single `pop ebp / ret 8` both jumps reach - so this is one `&&`, not
+    // two guard clauses. Spot::check writes the hit position back through
+    // `&y_coord`, which is why the second test re-reads the parameter slot.
+    if (MainInterfaceGlobal.spot_.check(x_coord, y_coord, &y_coord, 0) != -1
+        && y_coord == 5) {
+        ConsoleGlobal.end_my_turn();
+    }
 }
 
 

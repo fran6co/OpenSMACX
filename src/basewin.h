@@ -513,10 +513,12 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   uint32_t field_40C20_;  // 0x40C20
   uint32_t field_40C24_;  // 0x40C24
   uint32_t field_40C28_;  // 0x40C28
-  uint32_t field_40C2C_;  // 0x40C2C
-  uint32_t field_40C30_;  // 0x40C30
-  uint32_t field_40C34_;  // 0x40C34
-  uint32_t field_40C38_;  // 0x40C38
+  // 0x40C2C, sixteen bytes that the IDB leaves as four unnamed dwords and
+  // draw_garrison reads as one RECT: it is copied into set_clip's argument
+  // whole, then its left/top/right/bottom are read separately to size the
+  // garrison panel's tile and frame. Four dwords at the same offsets, so no
+  // member after it moves.
+  RECT garrison_rect_;  // 0x40C2C
   uint32_t field_40C3C_;  // 0x40C3C
   uint32_t field_40C40_;  // 0x40C40
   uint32_t field_40C44_;  // 0x40C44

@@ -1,4 +1,39 @@
 // ORIGINAL: 0x0041B790 ?base_editor_fac@BaseWin@@QAEXXZ 0x0041B790-0x0041BBBC;0x0065249C-0x0065255E FILE
+// TRIED (2026-09-06, BaseWin class pass): NAMING IS NOT WHAT BLOCKS THIS BODY
+//  - all 24 fixed-address bindings resolve, and the blocker is the tail.
+//  Binding fates, for the next pass:
+//   0x0090EA30  base.h BaseCurrent(), the Base* slot - a real name, not a
+//               binding
+//   0x006A721C  popup.h PopupModalState
+//   0x009B8AA8  popup.cpp PopupStartCaption[256]
+//   0x009B90D8  strings.h StringTable;  0x009B90F8 alpha.h Labels
+//   0x00689370  base.cpp BaseIDCurrentSelected
+//   0x009B86A0  the string temp (alpha.cpp StringTemp / mapwin.cpp
+//               MapWinMainCaption - the tree carries two names for it)
+//   0x00682D9C "EDITORFAC";  0x00682DA8 / DAC / DB0 "|"  - .rdata literals,
+//               spelled as literals (the load_inverts precedent in basewin.cpp)
+//   0x009A4B98 / 0x009A5798  the Facility table, 64 entries of 0x30, entry [i]
+//               opening with facility i's text id - the walk runs it with
+//               facIdx counting 1..64 against has_fac / facility_avail, and
+//               00484c60.cpp already documents the same table as "Facility
+//               entries (0x9a4b98..0x9a6488), stride 0x30"
+//   0x0097D0CC  Bases + 0x8C, i.e. Base::facilities_built - the read is
+//               g_0097d0cc[base * 0x134 + m_off] with bitmask() splitting the
+//               facility id, which is has_fac_built open-coded
+//   0x006695C0/C8 0x66974C/54 0x6698CC/D4 0x669D50/58  the four vtable pairs
+//               the cleanup hand-installs before each close(); 0x00652554 is
+//               the EH scope table and 0x006730B0 is in the same cold span.
+//               All of these are the COMPILER's work: they disappear when the
+//               stack buffers become real typed locals (Popup, Scroll,
+//               FlatButton x4, Spot, Dialogs, Sprite, Heap) and /GX generates
+//               the frame the image itself pays for - the prologue is
+//               mov eax,fs:[0] / push -1 / push 0x652554 / push eax /
+//               mov fs:[0],esp, an SEH setup, not a body to transcribe.
+//  What is still missing to home it: which of the twelve stack objects the
+//  image constructs out of line and in what order (the calls list holds the
+//  constructors - 0x005FA870, 0x00607040, 0x00607DA0, 0x00612A70, 0x00605370
+//  ... - and this artifact transcribed only the Popup one). Guessing the
+//  order would put a body in the build that looks done and is not.
 // size      1262 bytes
 // prototype void (__thiscall ?base_editor_fac@BaseWin@@QAEXXZ)(BaseWin* this)
 // callers   1   call targets   26

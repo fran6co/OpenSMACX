@@ -562,7 +562,17 @@ class MainInterface : public GraphicWin, public IfaceRegistryEntry {
   uint32_t field_DF4_;
   uint32_t field_DF8_;
   uint32_t field_DFC_;
+ public:
+  // PUBLIC 2026-09-06, the same compile-time-only move spot_ needed below:
+  // the four buttons the interface shows and hides when a battle goes up and
+  // comes down (BattleWin::on_status 0x00422CC0 drives flat_button_[3],
+  // [4], [6] and [7] through Win's own show(int)/hide() slots) are reached as
+  // `mov ecx, <address>` immediates, and only a direct member path folds to
+  // one - a `FlatButton *const` binding costs the load of the binding first,
+  // the indirection the BaseCurrent() note in base.h records. Widening access
+  // moves no offset and no byte.
   FlatButton flat_button_[42];
+ private:
   ButtonGroup button_group_[4];
   uint32_t field_1EAC8_;
   StringBox string_box_;
@@ -599,7 +609,14 @@ class MainInterface : public GraphicWin, public IfaceRegistryEntry {
   Sprite sprites13_[2];
   Flic flics1_[2];
   Flic flic2_;
+
+ public:
+  // PUBLIC 2026-09-06: BattleWin::on_iface_left_down (0x00422E30) reaches this
+  // Spot directly - `mov ecx, 0x7d3854`, which is front+0x25034, spot_'s own
+  // address - and an accessor would cost that body a call the image does not
+  // make. Compile-time only; no offset and no byte moves.
   Spot spot_;
+ private:
   Time time1_;
   Time time2_;
 };

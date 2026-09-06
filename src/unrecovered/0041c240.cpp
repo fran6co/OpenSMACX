@@ -1,5 +1,25 @@
 // ORIGINAL: 0x0041C240 ?base_editor_copy@BaseWin@@QAEXH@Z 0x0041C240-0x0041C798;0x006526E3-0x006527EF FILE
 // TRIED: this is a ~14-object SEH-unwind dialog constructor (Popup/ BasePop/Scroll/2xFlatButton+BaseButton/GraphicWin/Spot/Dialogs/Dialog/ 2x sub_406820/Sprite/Heap on one huge stack frame, cleaned up via a local_8 state index + ___CxxFrameHandler jump table). Declaring real typed C++ locals to let the compiler regenerate that frame (the usual lever) would need ~14 correctly-sized classes; not attempted given the budget. Landed instead as a raw byte frame + original_method thiscall calls (ctor/start/item/get/exec/close/dtor, all in original order with their vtable-stamp writes) replicating the two explicit cleanup sequences and the 9-byte field copy loop (load/save-one/save-all- matching-faction) verbatim from the disassembly. Compiles; diverges at instr #3 because the SEH prologue (fs:[0] chain, alloca) is compiler- generated and not reproduced by a raw buffer. Not chased further.
+// TRIED (2026-09-06, BaseWin class pass): binding fates, for the next pass.
+//  The 28 bindings resolve like base_editor_fac's (0041b790.cpp carries the
+//  full argument for the shared ones) - the .rdata strings become literals:
+//   0x00682DD4 "EDITORBASECOPYTO";  0x00682DE8 "EDITORBASECOPY";
+//   0x00682DF8 "|"
+//   0x0090EA30 BaseCurrent(), 0x006A721C PopupModalState,
+//   0x009B8AA8 PopupStartCaption, 0x009B90D8 StringTable, 0x009B90F8 Labels,
+//   0x009B86A0 the string temp, 0x00689370 BaseIDCurrentSelected
+//   0x009A64CC base.cpp BaseCurrentCount
+//   0x0097D044 Bases + offsetof(Base, faction_id_current) (base.h/path.cpp)
+//   0x0097D0CC Bases + 0x8C = Base::facilities_built
+//   0x00946D34 / 0x00946D4C / 0x00946D50 - the faction record trio the
+//       prefs/faction readers share (four archive TUs bind them, none names
+//       them); 0x009BBFEC / 0x009BBFF0 general.cpp GenderDefault /
+//       PluralityDefault
+//   0x006695C0/C8 0x66974C/54 0x6698CC/D4 0x669D50/58 - the same four vtable
+//       pairs as base_editor_fac, plus 0x006527E5 and 0x00673290 in the cold
+//       EH span: all the compiler's, and they leave with real typed locals.
+//  So the same conclusion as base_editor_fac: the wall is the ~14-object SEH
+//  frame, not the names.
 // working copy - scaffold materialised by --work
 // size      1636 bytes
 // prototype void (__thiscall ?base_editor_copy@BaseWin@@QAEXH@Z)(BaseWin* this, int)
