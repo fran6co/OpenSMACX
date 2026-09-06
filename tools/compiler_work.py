@@ -698,7 +698,10 @@ SCAFFOLD_CEILINGS = {
     # with on_iface_button_toggled's homing.
     # 976 -> 975 (2026-09-06, W5r general codec, collected): MCIVideo::
     # blit_frame's artifact (and Mat3::equals' preserved unit).
-    "artifact files (recovered/)": 975,
+    # 975 -> 957 (2026-09-06, W5s datalink board): the whole set_cat_*
+    # family homed BYTE_EXACT (all/unit/chassis/reactor/weapon/defense/
+    # ability/facility) plus the category jump table decoded.
+    "artifact files (recovered/)": 957,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -825,7 +828,10 @@ SCAFFOLD_CEILINGS = {
     # opens with mov eax,fs:[0], this tree with push -1).
     # 1061 -> 1058 (2026-09-06, W5r general codec, collected): enemy_veh
     # and enemy_turn homed on the forwarder unlock.
-    "unrecovered files": 1058,
+    # 1058 -> 1055 (2026-09-06, W5s datalink board): thirteen more homed
+    # measured (set_cat, project/tech/concept/adv_concept/social/effect/
+    # faction/terraform, show_topic, push/pop_history, on_link_clicked).
+    "unrecovered files": 1055,
     # 2717 -> 2748 (2026-09-04, P2 net batch): NetFifo promoted with
     # close/add/get/get, NetFifoNode, head_/tail_/count_ - the deliberate
     # raise this ceiling exists for (class modelling grows it; the class

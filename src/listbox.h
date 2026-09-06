@@ -190,6 +190,10 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   // nonzero makes the body run the item's three notify slots (0x54, 0x53
   // and the 0x23/0x07 pair) after the scroll position is settled.
   void set_selected_pos(int position, int notify);
+  // 0x0060C9B0 ?update_changes@ListBox@@QAEHXZ, unrecovered. DECLARATION
+  // ONLY: Datalink::set_cat re-reads the entry list through it (and through
+  // StringList::sort) once the category's own filler has run.
+  int update_changes();
   // 0x0060A1E0 ?calculate_dimensions@ListBox@@QAEHXZ, still FILE-only in
   // src/unrecovered/0060a1e0.cpp. DECLARATION ONLY, added because Dialogs
   // ::calculate_dimensions (0x006132A0) tail-calls it for kind 2 - the access
@@ -235,9 +239,18 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   uint32_t field_C_;              // 0x0C
   uint32_t field_10_;             // 0x10
   uint32_t field_14_;             // 0x14
+ public:
+  // PUBLIC for the same reason field_2C_ below is: Datalink::set_cat clears
+  // both straight after emptying the entry list (`mov [esi+0x18], eax` /
+  // `mov [esi+0x20], eax`, 0x0042A3C1..0x0042A3C6), with no ListBox call in
+  // between, so the stores have to be spelled from outside the class. Access
+  // is compile-time only; the static_assert pins the layout.
   uint32_t field_18_;             // 0x18
+ private:
   uint32_t field_1C_;             // 0x1C
+ public:
   uint32_t field_20_;             // 0x20
+ private:
   uint32_t field_24_;             // 0x24
   uint32_t field_28_;             // 0x28
  public:

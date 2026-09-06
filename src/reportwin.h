@@ -51,6 +51,11 @@ class ReportWin : public GraphicWin {
   // __thiscall, void(void); both unrecovered.
   void sat_anim();  // 0x0049FE40  ?sat_anim@ReportWin@@QAEXXZ
   void exp_anim();  // 0x004A0100  ?exp_anim@ReportWin@@QAEXXZ
+  // 0x00496BB0 ?reset@ReportWin@@QAEXXZ, unrecovered. DECLARATION ONLY:
+  // Datalink::set_cat resets the topic panel's report window - the fixed
+  // 0x00876478 object reportif.cpp names ReportIfModalWindow - both before
+  // and after it rewrites the category.
+  void reset();
 
   // Storage the image proves is here: its own methods reach 0xFABC.
   // Extent only - this class carries no size assertion, and the bound is a floor.

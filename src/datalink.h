@@ -20,6 +20,7 @@
 #include "buttongroup.h"
 #include "listbox.h"
 #include "font.h"
+#include "stringbox.h"
 
 #include "original_seam.h"
 #include "graphicwin.h"
@@ -66,6 +67,13 @@ class Datalink : public GraphicWin {
   ~Datalink();
   int UNK1(int a1, int a2);
   void parse_id(int id, DatalinkID *out_id, int *out_remainder);
+  // These three are catalogued ?UNK3@Datalink@@QAEXIH@Z,
+  // ?UNK4@Datalink@@QAEXHH@Z and ?UNK5@Datalink@@QAEXXZ. The names
+  // below are ours, from the measured behaviour; the catalogue names
+  // are carried by `// symbol` facts under the markers in datalink.cpp.
+  void show_topic(unsigned int category, int facility);
+  void push_history(int category, int facility);
+  void pop_history();
   void UNK6();
   void UNK8();
   void UNK9();
@@ -84,6 +92,75 @@ class Datalink : public GraphicWin {
   void on_iface_right_double_click(int a1, int a2);
   void on_iface_button_clicked(int a1);
   void on_iface_button_toggled(int a1, int a2);
+
+  // 0x00429300 ?init@Datalink@@QAEXXZ - the whole-window bring-up.
+  void init();
+  // 0x0042A150 ?on_dialog_item_back_draw@Datalink@@QAEHPAUGraphicWin@@HHPAURECT@@@Z
+  int on_dialog_item_back_draw(GraphicWin *win, int fade, int mode, RECT *rect);
+  // 0x0042A2C0 ?set_cat@Datalink@@QAEXIH@Z - rebuilds the entry list for one
+  // category, then dispatches to the category's own set_cat_* filler.
+  void set_cat(unsigned int category, int index);
+  // 0x0042A4F0 .. 0x0042BAB0 - the fourteen category fillers set_cat calls.
+  void set_cat_all();
+  void set_cat_unit();
+  void set_cat_chassis();
+  void set_cat_reactor();
+  void set_cat_weapon();
+  void set_cat_defense();
+  void set_cat_ability();
+  void set_cat_facility();
+  void set_cat_project();
+  void set_cat_tech();
+  void set_cat_concept();
+  void set_cat_adv_concept();
+  void set_cat_social();
+  void set_cat_effect();
+  void set_cat_faction();
+  void set_cat_terraform();
+  // 0x0042BF10 and the fifteen topic drawers draw_entry dispatches to.
+  void draw_concept();
+  void draw_adv_concept();
+  void draw_unit();
+  void draw_chassis();
+  void draw_reactor();
+  void draw_weapon();
+  void draw_defense();
+  void draw_ability();
+  void draw_facility();
+  void draw_project();
+  void draw_social();
+  void draw_effect();
+  void draw_tech();
+  void draw_faction();
+  void draw_terraform();
+  // 0x00431DC0 ?on_link_clicked@Datalink@@QAEHHPAD@Z
+  int on_link_clicked(int, char *link);
+  void on_redraw();
+  void on_button_passover(int, int);
+  // VOID, not int: the catalogue spells ?on_button_clicked@Datalink@@QAEXH@Z
+  // (0x00431EC0), and Win's slot-44 virtual - renamed on_button_clicked by
+  // the win-cluster the same day - is QAEXH too. The int spelling collided
+  // C2555 at collection; this is the merge-order fix.
+  void on_button_clicked(int button_id);
+  int on_key_click(int, int);
+  void on_status(int visible);
+  void on_iface_group_clicked(int, int, int);
+  void construct_id(char *out, int index, int suffix);
+  void set_index(int, int);
+  // 0x0042A100 ?on_dialog_back_draw@Datalink@@QAEHPAUGraphicWin@@@Z
+  void on_dialog_back_draw(GraphicWin *win);
+
+  // EVERY TOPIC CHANGE ENDS WITH THE SAME CALL, and the image inlines it at
+  // all five sites: the GraphicWin-part virtual at vtable offset 0xF8 of the
+  // entry list's GraphicWin virtual base, which is the repaint. The walk is
+  // spelled by hand because no GraphicWin virtual table this deep is modelled
+  // anywhere in the tree - see the note on vtable_shim.h - and spelling it
+  // here keeps the vbtable-relative addressing the image has: calling Win's
+  // own vslot_62 through the ListBox member makes the compiler read the
+  // GraphicWin displacement out of the list's vbtable at run time, never baked
+  // in. Defined in datalink.cpp, whose /Ob2 re-inlines it at each caller.
+  void repaint_slot();
+
 
  private:
   // GraphicWin is pinned at 0xA14, which fixes the origin. Everything between
@@ -110,12 +187,14 @@ class Datalink : public GraphicWin {
   uint32_t field_28D8_;  // 0x28D8
   uint8_t field_28DC_[0x100];  // 0x28DC
   uint32_t field_29DC_;  // 0x29DC
-  int32_t facilityID_;
-  uint32_t field_29E4_;  // 0x29E4
-  uint32_t field_29E8_;  // 0x29E8
-  uint8_t field_29EC_[0x48];  // 0x29EC
-  int32_t field_2A34_;
-  int32_t field_2A38_;
+  // 0x29E0 .. 0x2A34: the twenty-one slot "where have I been" ring that UNK4
+  // pushes and UNK5 pops. Slot 0 doubles as the id of the facility currently
+  // on show - close() clears it and UNK3 writes it - which is why UNK4's own
+  // duplicate test reads `0x29e0 + count*4`, the slot AFTER the last one it
+  // pushed, while its store writes `0x29e4 + count*4`.
+  int32_t history_[21];  // 0x29E0, slot 0 is the facility id
+  int32_t field_2A34_;   // 0x2A34, how many slots are filled
+  int32_t field_2A38_;   // 0x2A38
 
   // Storage the image proves is here: its own methods reach 0xF62C.
   // Extent only - this class carries no size assertion, and the bound is a floor.
@@ -194,10 +273,10 @@ class Datalink : public GraphicWin {
   uint32_t field_103C8_;  // 0x103C8
   uint32_t field_103CC_;  // 0x103CC
   uint32_t field_103D0_;  // 0x103D0
-  uint32_t field_103D4_;  // 0x103D4
-  uint32_t field_103D8_;  // 0x103D8
-  uint32_t field_103DC_;  // 0x103DC
-  uint32_t field_103E0_;  // 0x103E0
+  // 0x103D4: the entry-list rectangle every set_cat_* filler frames and every
+  // draw_* topic drawer paints into - four dwords in the image, read as
+  // left/top/right/bottom.
+  RECT category_rect_;    // 0x103D4
   uint32_t field_103E4_;  // 0x103E4
   uint32_t field_103E8_;  // 0x103E8
   uint32_t field_103EC_;  // 0x103EC
@@ -238,12 +317,13 @@ class Datalink : public GraphicWin {
   uint8_t field_1609C_[0x2750];  // 0x1609C
   uint32_t field_187EC_;  // 0x187EC
   uint32_t field_187F0_;  // 0x187F0
-  uint32_t field_187F4_;  // 0x187F4
-  uint8_t field_187F8_[0x440];  // 0x187F8
-  uint32_t field_18C38_;  // 0x18C38
-  uint8_t field_18C3C_[0x2750];  // 0x18C3C
-  uint32_t field_1B38C_;  // 0x1B38C
-  uint32_t field_1B390_;  // 0x1B390
+
+  // 0x187F4, sizeof(StringBox) 0x2BA0, ends 0x1B394 = the end of the object.
+  // exec (0x00429180) inits it with a rectangle and two fonts and draws the
+  // topic text through it; draw_concept and draw_faction read 0x187F4 too.
+  // Its own Buffer base therefore lands at 0x18C38, which the placeholder
+  // words below used to stand in for.
+  StringBox stringBox_;  // 0x187F4, sizeof(StringBox), ends 0x1B394
 };
 
 static_assert(sizeof(Datalink) == 0x1B394,

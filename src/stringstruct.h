@@ -234,6 +234,9 @@ static_assert(sizeof(StringStruct) == 0x24,
 
 class StringList : public StringStruct {
  public:
+  // 0x006087A0 ?sort@StringList@@QAEXH@Z, unrecovered. DECLARATION ONLY:
+  // Datalink::set_cat tail-calls it on the entry list it has just emptied.
+  void sort(int key);
   // ~StringList is a void destructor in the original, but EAX at its ret
   // still holds the saved owner value; modelled as uint32_t to preserve the
   // residue, as GraphicWin::close, Scroll::destroy and ListBox::close do.
