@@ -24,6 +24,54 @@ def parser() -> argparse.ArgumentParser:
     inventory = commands.add_parser("inventory", help="Inspect legacy source without altering it")
     inventory.add_argument("--root", type=Path, default=Path.cwd())
     inventory.add_argument("--image", type=Path, help="Verify the original against its pin")
+    grouping = commands.add_parser("partition", help="Derive provisional ownership units, not historical TU claims")
+    grouping.add_argument("--root", type=Path, default=Path.cwd())
+    grouping.add_argument("--group", help="For example class:InfoWin or component:zlib")
+    grouping.add_argument("--details", action="store_true", help="Include individual source candidates")
+    grouping.add_argument("--impact", action="store_true", help="Include conservative structural recheck scope")
+    tasks = commands.add_parser("tasks", help="Scope recovery work and preserve structural discoveries")
+    task_actions = tasks.add_subparsers(dest="action", required=True)
+    create = task_actions.add_parser("create")
+    create.add_argument("task")
+    create.add_argument("--root", type=Path, default=Path.cwd())
+    create.add_argument("--group", required=True)
+    create.add_argument("--intent", required=True)
+    create.add_argument("--author", required=True)
+    create.add_argument("--evidence", action="append", required=True)
+    create.add_argument("--edit-file", action="append", help="Explicit additional source editing scope")
+    status = task_actions.add_parser("status")
+    status.add_argument("task")
+    status.add_argument("--root", type=Path, default=Path.cwd())
+    context = task_actions.add_parser("context", help="Rebuild a source-first task brief; no stored context ledger")
+    context.add_argument("task")
+    context.add_argument("--root", type=Path, default=Path.cwd())
+    discovery = task_actions.add_parser("discover")
+    discovery.add_argument("task")
+    discovery.add_argument("--root", type=Path, default=Path.cwd())
+    discovery.add_argument("--request-id", required=True)
+    discovery.add_argument("--author", required=True)
+    discovery.add_argument("--hypothesis", required=True)
+    discovery.add_argument("--affects", action="append", required=True, help="Original entity id, not a mutable name")
+    discovery.add_argument("--evidence", action="append", required=True)
+    discovery.add_argument("--expected-revision", type=int, required=True)
+    expand = task_actions.add_parser("expand")
+    expand.add_argument("task")
+    expand.add_argument("--root", type=Path, default=Path.cwd())
+    expand.add_argument("--request-id", required=True)
+    expand.add_argument("--author", required=True)
+    expand.add_argument("--subject", action="append", default=[], help="Additional original entity id")
+    expand.add_argument("--edit-file", action="append", default=[])
+    expand.add_argument("--evidence", action="append", required=True)
+    expand.add_argument("--expected-revision", type=int, required=True)
+    resolve = task_actions.add_parser("resolve")
+    resolve.add_argument("task")
+    resolve.add_argument("--root", type=Path, default=Path.cwd())
+    resolve.add_argument("--discovery-id", required=True)
+    resolve.add_argument("--request-id", required=True)
+    resolve.add_argument("--author", required=True)
+    resolve.add_argument("--disposition", choices=("incorporated", "rejected"), required=True)
+    resolve.add_argument("--source-evidence", action="append", required=True)
+    resolve.add_argument("--expected-revision", type=int, required=True)
     importing = commands.add_parser("import", help="Import mappings or cache a legacy parse")
     providers = importing.add_subparsers(dest="provider", required=True)
     legacy = providers.add_parser("legacy", help="Import old OpenSMACX annotations as evidence")
@@ -54,6 +102,90 @@ def parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     args = parser().parse_args(argv)
     try:
+        if args.command in ("partition", "tasks"):
+            from .adapters.opensmacx_project import project_view, structural_impact
+            from .model import Origin
+            from .partition import select_group
+            from .tasks import Task, TaskStore
+            store = TaskStore(args.root, private=".opensmacx/recovery")
+            if args.command == "tasks" and args.action == "discover":
+                output = store.discover(args.task, request_id=args.request_id, author=args.author,
+                                        hypothesis=args.hypothesis, affects=args.affects, evidence=args.evidence,
+                                        expected_revision=args.expected_revision)
+            elif args.command == "tasks" and args.action == "resolve":
+                output = store.resolve(args.task, discovery_id=args.discovery_id, request_id=args.request_id,
+                                       author=args.author, disposition=args.disposition,
+                                       source_evidence=args.source_evidence, expected_revision=args.expected_revision)
+            else:
+                view, snapshot = project_view(args.root)
+                if args.command == "tasks" and args.action == "expand":
+                    entities = {entity["entity_id"]: entity for group in view["groups"] for entity in group["entities"]}
+                    if not set(args.subject) <= entities.keys():
+                        raise ValueError("scope expansion names an entity missing from current source")
+                    output = store.expand(args.task, request_id=args.request_id, author=args.author,
+                                          subjects=(Origin(**entities[subject]["origin"]) for subject in args.subject),
+                                          editable_files=args.edit_file, evidence=args.evidence,
+                                          expected_revision=args.expected_revision)
+                elif args.command == "tasks" and args.action == "status":
+                    output = store.status(args.task, (entity["entity_id"] for group in view["groups"]
+                                                     for entity in group["entities"]))
+                elif args.command == "tasks" and args.action == "context":
+                    scope, files = store.scope(args.task)
+                    selected = [entity for group in view["groups"] for entity in group["entities"]
+                                if entity["entity_id"] in scope]
+                    group = {"entities": selected, "source_homes": sorted(files)}
+                    output = {"task": store.read(args.task).to_dict(), "subjects": selected,
+                              "decision_state": store.status(args.task, (entity["entity_id"] for entity in selected)),
+                              "impact": structural_impact(snapshot, group),
+                              "instructions": ["Read source declarations, definitions and evidence before editing.",
+                                               "Treat archived bodies and class/name labels as seeds, not mandatory source form.",
+                                               "Report structural discoveries even when they affect other functions or units.",
+                                               "Do not edit beyond authorized scope or discard matching obligations.",
+                                               "A scope decision does not approve a regression; migration review and fresh checks are separate."],
+                              "persisted": False}
+                else:
+                    groups = [select_group(view, args.group)] if args.group else view["groups"]
+                    if args.command == "tasks":
+                        group = groups[0]
+                        if group["next_action"] != "review_ownership_and_structure":
+                            raise ValueError("structural recovery tasks require an unambiguous source/class group")
+                        changes = subprocess.run(["git", "status", "--porcelain", "--untracked-files=all", "--", "src"],
+                                                 cwd=args.root, capture_output=True, text=True, check=True)
+                        if changes.stdout.strip():
+                            raise ValueError("checkpoint source changes before fixing a task's committed baseline")
+                        roots = sorted(set(structural_impact(snapshot, group)["root_files"])
+                                       | set(args.edit_file or []))
+                        baseline = snapshot["revision"]
+                        upstream = subprocess.run(["git", "merge-base", "HEAD", "master"], cwd=args.root,
+                                                  capture_output=True, text=True, check=False)
+                        if upstream.returncode == 0:
+                            upstream_revision = upstream.stdout.strip()
+                            scope_paths = sorted(set(roots) | {item["path"] for entity in group["entities"]
+                                                             for item in entity["candidates"]})
+                            equivalent = subprocess.run(["git", "diff", "--quiet", upstream_revision, "HEAD", "--", *scope_paths],
+                                                        cwd=args.root, capture_output=True, check=False)
+                            if equivalent.returncode == 0:
+                                # Prefer an upstream ancestor when it contains the
+                                # exact same scoped source: rebasing tooling commits
+                                # must not strand the task's baseline reference.
+                                baseline = upstream_revision
+                            elif equivalent.returncode != 1:
+                                raise ValueError("could not verify the task baseline source")
+                        task = Task(args.task, "opensmacx", args.author, args.intent, baseline,
+                                    tuple(Origin(**entity["origin"]) for entity in group["entities"]),
+                                    tuple(roots), tuple(args.evidence))
+                        output = {"created": store.create(task), "task": task.to_dict(),
+                                  "verification": "not_measured"}
+                    else:
+                        if args.impact and not args.group:
+                            raise ValueError("--impact needs one --group")
+                        if args.impact:
+                            groups[0]["impact"] = structural_impact(snapshot, groups[0])
+                        if not args.details:
+                            groups = [{key: value for key, value in group.items() if key != "entities"} for group in groups]
+                        output = {**view, "groups": groups}
+            print(json.dumps(output, indent=2, sort_keys=True))
+            return 0
         if args.command == "components":
             from .components import source_integrity
             from .component_source import read_components

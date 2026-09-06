@@ -10,6 +10,11 @@ Their continued presence during construction is not a compatibility promise.
 - Identify application, third-party, runtime, system, generated, and unknown
   components before dispatching recovery. Reuse pinned upstream code and system
   bindings; verify dependencies without counting them as application recovery.
+- Begin with an ownership/partition pass. Distinguish historical compilation
+  units (only when supported by evidence), current source homes, and structural
+  task scope. A unit owns a collection of original code/data spans, not a single
+  contiguous executable range. Propose units from source/class/component evidence;
+  leave uncertain assignments open instead of inventing a file per function.
 - Use classes, object ownership and dependent functions as work units; use
   functions/spans as measurement units. Real C++ structure takes priority over
   locally convenient source forms. VC6 remains the OpenSMACX compiler target.
@@ -90,6 +95,10 @@ establish completion of this program.
   and the zlib integration run; application-gate cutover and ownership checks remain.
 - [ ] Declarative scheduler, discovery consumers, context bundles, agent adapters,
   independent review, safe collection and resumable migrations.
+  Ownership partitions and conservative include-impact views are derived live;
+  task scope, cross-function discoveries, coordinator expansion and explicit
+  resolution are versioned decisions. Dispatch, proof-driven stage transitions,
+  independent review execution and collection remain under construction.
 - [ ] InfoWin ownership and constructor-family end-to-end structural pilots.
 - [ ] Prefix leases, include/parse/measurement caches, candidate decks, benchmarks.
 - [ ] Quota/interruption recovery and multiple-checkpoint restoration tests.

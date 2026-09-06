@@ -12,6 +12,8 @@ From the OpenSMACX workspace:
 ```sh
 uv run recover --help
 uv run recover inventory
+uv run recover partition
+uv run recover partition --group class:InfoWin --details --impact
 uv run recover import legacy --image /path/to/the/pinned/original.exe
 uv run recover components list
 uv run recover components check-source zlib --archive /path/to/zlib-1.0.2.tar.gz
@@ -71,6 +73,45 @@ return 1; explicitly admitted matching regressions return 2, never green.
 An independent review of the exact migration snapshot and passing build and
 structural checks are prerequisites for admission. Closing requires restoration
 of every protected obligation.
+
+## Ownership-first tasks
+
+`partition` derives candidate class families, existing source homes and declared
+dependencies from source. Seeds contribute evidence without replacing product
+definitions. Conflicting names/extents/homes remain explicit, and address
+adjacency never proves a translation-unit boundary. These reports are not stored.
+`--impact` adds a conservative include-based recheck scope, not a completeness
+claim about object ownership or dynamic calls. Unresolved includes widen the
+scope; this view is not yet used to narrow the production check cache.
+
+```sh
+uv run recover tasks create example-layout --group class:InfoWin --author coordinator \
+  --intent "Recover InfoWin storage ownership" --evidence "source:src/infowin.h"
+uv run recover tasks status example-layout
+uv run recover tasks context example-layout
+uv run recover tasks discover --help
+uv run recover tasks expand --help
+uv run recover tasks resolve --help
+```
+
+Task files fix the coordinator's chosen subjects, edit permissions, intent and
+committed source baseline. They do not duplicate function mappings or current
+match results. Discoveries are hypotheses with affected original identities and
+evidence. An out-of-scope discovery remains pending and requests scope review;
+expanding editing permission does not resolve it or authorize a matching
+regression. Resolution records incorporation into source or an evidence-backed
+rejection. Fresh build/structure/reference/matching checks and independent review
+are still required; these commands cannot declare a task verified or collect it.
+
+Decisions use revision-checked, idempotent JSON events. A fresh checkout can resume
+them; deleting private caches loses no scope decision or pending discovery. Actor
+names are attribution within the trusted coordinator API, not authentication for
+untrusted worker processes. Agent isolation and execution are not implemented yet.
+
+`tasks context` rebuilds the brief from current source and decisions, including
+seed locations, source homes, pending discoveries and conservative recheck paths.
+It writes no context file. A coordinator can use the output directly or cache it
+in ignored storage; neither a stale brief nor a resolved hypothesis is a verdict.
 
 ## Still under construction
 

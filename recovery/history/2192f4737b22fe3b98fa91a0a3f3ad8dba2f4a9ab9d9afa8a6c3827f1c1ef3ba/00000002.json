@@ -1,0 +1,35 @@
+{
+  "event_id": "596d6eabcad7c9f79fbad7ffc0d00147e9dff08d714cc6b2dc1b8c8b7d70a77a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/console.cpp"
+    ],
+    "evidence": [
+      "source:src/console.cpp:editor_save/editor_load/editor_paints write the overlapping redraw slot"
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5114336,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5114368,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5114448,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "0a6de171e95aa95bef8bb66426a082818e3ea7217288794276754f9870ad4480",
+  "request_id": "infowin-console-editors",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:infowin-ownership"
+}
