@@ -190,6 +190,11 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   // nonzero makes the body run the item's three notify slots (0x54, 0x53
   // and the 0x23/0x07 pair) after the scroll position is settled.
   void set_selected_pos(int position, int notify);
+  // 0x0060A1E0 ?calculate_dimensions@ListBox@@QAEHXZ, still FILE-only in
+  // src/unrecovered/0060a1e0.cpp. DECLARATION ONLY, added because Dialogs
+  // ::calculate_dimensions (0x006132A0) tail-calls it for kind 2 - the access
+  // costs nothing and the definition stays where it is.
+  int calculate_dimensions();
 
  public:
   void on_mouse_leave(int a1, int a2);
@@ -247,7 +252,14 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   uint32_t field_34_;             // 0x34
   uint32_t field_38_;             // 0x38
   uint32_t field_3C_;             // 0x3C
+ public:
+  // PUBLIC, like field_2C_ above: BasePop::calculate_dimensions installs the
+  // popup's double-click handler straight into it (Dialogs+0x2210, the list
+  // kind's notification slot) with no call in between, so the access has to
+  // be spelled from outside the class. Access is compile-time only; the
+  // static_assert below pins the layout.
   uint32_t field_40_;             // 0x40
+ private:
   // 0x44 is GraphicWin's VTORDISP and 0x48 the base itself - both the
   // compiler's now, as is the Dialog base that follows.
 };

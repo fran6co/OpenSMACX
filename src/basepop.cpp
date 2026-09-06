@@ -2704,6 +2704,17 @@ int BasePop::UNK2() {
 //        the anchor's fault: the image has no anchor at all, because its
 //        eight writes are direct member stores. Until the four headers grant
 //        access, no spelling of the anchor can win - measured, see TRIED.
+// TRIED: THE HANDOFF ABOVE IS MEASURED AND FALSE (2026-09-06). With all eight
+//        subobject fields public (listbox.h, radiobutton.h, checkbox.h,
+//        spritebox.h) the eight `dialog_cfg[N]` stores were rewritten as the
+//        direct qualified member writes the image has and the anchor deleted:
+//        138 of 703 -> 10 of 703, and the scorer moved from /O2 (FPO) to
+//        /O2 /Oy- /GX, so the frame pointer came back. The direct writes each
+//        need their own `lea`, and VC6 no longer has the one anchor register
+//        to hold them against - the anchor is what buys the FPO frame here,
+//        not what costs it. The anchor form stays. Same result as the earlier
+//        `*(&field_2C_ + N)` spelling, which is the same experiment reached
+//        through a public label instead of a private one.
 // TRIED: folding the anchor away, each store written
 //        `*(&dialogs_.ListBox::field_2C_ + N) = v` - VC6 does NOT fold it
 //        back into the one store; the body grew past what the FPO path would
@@ -2722,6 +2733,13 @@ int BasePop::UNK2() {
 //        control flow, the two Dialogs::calculate_dimensions calls, the
 //        sixteen callees and the vtable slot 0x174 are all in the right
 //        order. What is left is allocation, not structure.
+// NOTE: the blank line below is load-bearing. This block's comment run runs
+//        straight into start's marker otherwise, and the reader's fact window
+//        then reads START's `// symbol` as this body's - `_coff_function_masked`
+//        takes the emitted symbol over the catalogued name, so measurement
+//        pulled start's body out of the object and scored it against these
+//        703 bytes. 4 of 703 was start, not this function.
+
 // ORIGINAL: 0x00601BF0 ?start@BasePop@@QAEHPADPBDH0HPAUGraphicWin@@@Z 0x00601BF0-0x006025F9 FILE
 // symbol    ?start@BasePop@@QAEHPADPBDH0HPAVGraphicWin@@@Z
 //           The catalogue spells the sixth parameter `PAUGraphicWin@@` - a

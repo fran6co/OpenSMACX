@@ -660,3 +660,48 @@ void Dialogs::on_left_click(int a, int b) {
         break;
     }
 }
+
+// ORIGINAL: 0x006132A0 ?calculate_dimensions@Dialogs@@QAEHXZ 0x006132A0-0x006132F8 BYTE_EXACT
+// size      88 bytes
+// prototype int (__thiscall ?calculate_dimensions@Dialogs@@QAEHXZ)(Dialogs* this)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// 0x006132A0  ?calculate_dimensions@Dialogs@@QAEHXZ  ->  ?calculate_dimensions@Dialogs@@QAEHXZ
+//
+// Re-derived in this tree's own style (2026-09-06) ahead of homing into
+// dialogs.cpp. The kind at EditGroup::kind_ (Dialogs+0x180) selects which of
+// the five base subobjects lays itself out, and the dispatcher is a tail
+// jump per arm: `add ecx, <base offset>` then `jmp` the base's own
+// calculate_dimensions, because the caller has nothing on the stack to
+// unwind and the callee's `ret` is the caller's.
+//
+// The default arm is the no-kind case and it does NOT dispatch: it zeroes
+// the embedded Dialog virtual base's two edge fields, reached as a QUALIFIED
+// MEMBER ACCESS so VC6 walks the vbtable for the virtual base's offset
+// (`mov eax,[ecx] / mov edx,[eax+8] / mov [edx+ecx+0x5c], eax`). It re-walks
+// for the second store rather than keeping the offset, which is what two
+// independent member writes compile to - do not hoist either field into a
+// local.
+
+
+int Dialogs::calculate_dimensions() {
+    switch (kind_) {
+      case 0x10:
+        return RadioButton::calculate_dimensions();
+      case 2:
+        return ListBox::calculate_dimensions();
+      case 1:
+        return CheckBox::calculate_dimensions();
+      case 8:
+        return SpriteBox::calculate_dimensions();
+      case 4:
+        return EditGroup::calculate_dimensions();
+      default:
+        Dialog::field_5C_ = 0;
+        Dialog::field_60_ = 0;
+        return 0;
+    }
+}
+

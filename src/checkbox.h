@@ -160,6 +160,11 @@ class CheckBox : public virtual GraphicWin, public virtual Dialog {
   // `int`, not `bool`: DipEdit::read_check tests the result with
   // `test eax, eax`, which is the dword-wide form.
   int get_state_id(int id);
+  // 0x0060ED10 ?calculate_dimensions@CheckBox@@QAEHXZ, still FILE-only in
+  // src/unrecovered/0060ed10.cpp. DECLARATION ONLY, added because Dialogs
+  // ::calculate_dimensions (0x006132A0) tail-calls it for kind 1 - the access
+  // costs nothing and the definition stays where it is.
+  int calculate_dimensions();
   // ?item@CheckBox@@QAEHPADHH@Z at 0x0060E980, still a pending_bodies
   // forwarder. Adds `text` to the box's item list for `id` and sets or clears
   // the box's own state bit from `state`. DipEdit::init calls it once per
@@ -170,6 +175,12 @@ class CheckBox : public virtual GraphicWin, public virtual Dialog {
   // The vbtable pointer is EMITTED by the compiler now.
   uint32_t field_4_;  // 0x0004
   uint32_t field_8_;
+ public:
+  // PUBLIC, like field_10_ below: BasePop::calculate_dimensions installs the
+  // popup's double-click handler straight into it (Dialogs+0x2234, the check
+  // box kind's notification slot) with no call in between, so the access has
+  // to be spelled from outside the class. Access is compile-time only; the
+  // static_assert below pins the layout.
   uint32_t field_C_;
  public:
   // PUBLIC, like Dialog's carved-out fields: DipEdit::init stores the two

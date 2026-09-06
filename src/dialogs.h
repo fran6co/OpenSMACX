@@ -104,13 +104,13 @@ class Dialogs : public ListBox,
   uint32_t destroy();
   int item(char *text, int index);
   int get_num_items();
-  // 0x006132A0, still a CLAIMED artifact in src/recovered/006132a0.cpp. It
-  // dispatches on the Dialog kind at +0x180 to the same-named method of
-  // whichever base subobject the kind selects. DECLARED here because
-  // BasePop::calculate_dimensions (0x00603800) calls it; homing the 88-byte
-  // body needs `calculate_dimensions` declared on all five bases first -
-  // ListBox, RadioButton, CheckBox, SpriteBox and EditGroup - which spans
-  // four headers this pass does not own.
+  // 0x006132A0, homed in dialogs.cpp (BYTE_EXACT 24 of 24). It dispatches on
+  // the Dialog kind at +0x180 to the same-named method of whichever base
+  // subobject the kind selects, and zeroes the two embedded Dialog edge
+  // fields when the kind is none of the five. BasePop::calculate_dimensions
+  // (0x00603800) calls it; the five base declarations it tail-calls are in
+  // their own headers, and their bodies are still FILE-only in
+  // src/unrecovered/, so pending_bodies.cpp carries their forwarders.
   int calculate_dimensions();
   void on_right_down(int a, int b);
   void on_right_double_click(int a, int b);

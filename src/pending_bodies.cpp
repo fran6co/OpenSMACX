@@ -1120,6 +1120,14 @@ int MapWin::focus(int x_coord, int y_coord) {  // 0x0046B310
     return PENDING_BODY(0x0046B310, pending)(this, nullptr, x_coord, y_coord);
 }
 
+// ?calculate_dimensions@CheckBox@@QAEHXZ at 0x0060ED10 - Dialogs
+// ::calculate_dimensions (0x006132A0) tail-calls it for kind 1. The body is
+// still FILE-only in src/unrecovered/0060ed10.cpp.
+int CheckBox::calculate_dimensions() {  // 0x0060ED10
+    typedef int(__fastcall *pending)(CheckBox *, void *);
+    return PENDING_BODY(0x0060ED10, pending)(this, nullptr);
+}
+
 int CheckBox::attach(void * a1, int a2, int a3, int a4) {  // 0x0060E800
     typedef int(__fastcall *pending)(CheckBox *, void *, void *, int, int, int);
     return PENDING_BODY(0x0060E800, pending)(this, nullptr, a1, a2, a3, a4);
@@ -1195,18 +1203,6 @@ void Dialogs::on_dialog_focus(int a1) {  // 0x006130E0
     PENDING_BODY(0x006130E0, pending)(this, nullptr, a1);
 }
 
-// ?calculate_dimensions@Dialogs@@QAEHXZ at 0x006132A0 - the kind dispatcher
-// BasePop::calculate_dimensions (0x00603800) calls BY NAME on `dialogs_`, so
-// the call site needs the member's real address to emit the image's `E8`.
-// The claim in src/recovered/006132a0.cpp is FILE-only (that directory is on
-// no build), so this forwarder is the only compiled definition and the
-// landmine check stays clear. Homing the 88-byte body itself still wants
-// `calculate_dimensions` declared on all five bases first - see dialogs.h.
-int Dialogs::calculate_dimensions() {  // 0x006132A0
-    typedef int(__fastcall *pending)(Dialogs *, void *);
-    return PENDING_BODY(0x006132A0, pending)(this, nullptr);
-}
-
 int Dialogs::on_key_down(int a1) {  // 0x00612CC0
     typedef int(__fastcall *pending)(Dialogs *, void *, int);
     return PENDING_BODY(0x00612CC0, pending)(this, nullptr, a1);
@@ -1251,6 +1247,14 @@ int EditGroup::set_default(char *text, int index) {  // 0x006120D0
     return PENDING_BODY(0x006120D0, pending)(this, nullptr, text, index);
 }
 
+// ?calculate_dimensions@EditGroup@@QAEHXZ at 0x00612150 - Dialogs
+// ::calculate_dimensions (0x006132A0) tail-calls it for kind 4. The body is
+// still FILE-only in src/unrecovered/00612150.cpp.
+int EditGroup::calculate_dimensions() {  // 0x00612150
+    typedef int(__fastcall *pending)(EditGroup *, void *);
+    return PENDING_BODY(0x00612150, pending)(this, nullptr);
+}
+
 int EditGroup::attach(void * a1, int a2, int a3, int a4) {  // 0x00611AF0
     typedef int(__fastcall *pending)(EditGroup *, void *, void *, int, int, int);
     return PENDING_BODY(0x00611AF0, pending)(this, nullptr, a1, a2, a3, a4);
@@ -1266,6 +1270,15 @@ void EditGroup::pass_dialog_focus() {  // 0x006126C0
     PENDING_BODY(0x006126C0, pending)(this, nullptr);
 }
 
+
+// ?calculate_dimensions@ListBox@@QAEHXZ at 0x0060A1E0 - Dialogs
+// ::calculate_dimensions (0x006132A0) tail-calls it for kind 2. The body is
+// still FILE-only in src/unrecovered/0060a1e0.cpp, so this forwarder is the
+// only compiled definition and the landmine check stays clear.
+int ListBox::calculate_dimensions() {  // 0x0060A1E0
+    typedef int(__fastcall *pending)(ListBox *, void *);
+    return PENDING_BODY(0x0060A1E0, pending)(this, nullptr);
+}
 
 int ListBox::attach(void * a1, int a2, int a3, int a4) {  // 0x0060A670
     typedef int(__fastcall *pending)(ListBox *, void *, void *, int, int, int);
@@ -1356,6 +1369,14 @@ void PlanWin::on_redraw() {  // 0x0048AF30
     PENDING_BODY(0x0048AF30, pending)(this, nullptr);
 }
 
+// ?calculate_dimensions@RadioButton@@QAEHXZ at 0x0060D380 - Dialogs
+// ::calculate_dimensions (0x006132A0) tail-calls it for kind 0x10. The body
+// is still FILE-only in src/unrecovered/0060d380.cpp.
+int RadioButton::calculate_dimensions() {  // 0x0060D380
+    typedef int(__fastcall *pending)(RadioButton *, void *);
+    return PENDING_BODY(0x0060D380, pending)(this, nullptr);
+}
+
 int RadioButton::attach(void * a1, int a2, int a3, int a4) {  // 0x0060D1F0
     typedef int(__fastcall *pending)(RadioButton *, void *, void *, int, int, int);
     return PENDING_BODY(0x0060D1F0, pending)(this, nullptr, a1, a2, a3, a4);
@@ -1379,6 +1400,14 @@ void RadioButton::on_mouse_move(int a1, int a2) {  // 0x0060E320
 void RadioButton::on_redraw() {  // 0x0060E220
     typedef void(__fastcall *pending)(RadioButton *, void *);
     PENDING_BODY(0x0060E220, pending)(this, nullptr);
+}
+
+// ?calculate_dimensions@SpriteBox@@QAEHXZ at 0x00610970 - Dialogs
+// ::calculate_dimensions (0x006132A0) tail-calls it for kind 8. The body is
+// still FILE-only in src/unrecovered/00610970.cpp.
+int SpriteBox::calculate_dimensions() {  // 0x00610970
+    typedef int(__fastcall *pending)(SpriteBox *, void *);
+    return PENDING_BODY(0x00610970, pending)(this, nullptr);
 }
 
 int SpriteBox::attach(void * a1, int a2, int a3, int a4) {  // 0x00610540

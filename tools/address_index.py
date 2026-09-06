@@ -171,7 +171,11 @@ FLOORS = {
     # calculate_dimensions on the Dialogs widget bases (or model whatever
     # the 88 bytes walk), home with --claimed, and this floor returns to 0
     # with the forwarder.
-    "archive-only-forwarder": 1,
+    # 1 -> 0 (2026-09-06, W5h widget labels): Dialogs::calculate_dimensions
+    # (0x6132A0) homed BYTE_EXACT 24/24 into src/dialogs.cpp with its claim -
+    # the forwarder and the archive went with it, exactly as this floor's
+    # raise note said they would.
+    "archive-only-forwarder": 0,
     "unknown-host-files": 0,
 }
 

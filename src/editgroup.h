@@ -120,6 +120,11 @@ class EditGroup : public virtual GraphicWin, public virtual Dialog {
   // EditGroup subobject Dialogs carries - the access costs nothing and the
   // definition stays where it is.
   int set_default(char *text, int index);
+  // 0x00612150 ?calculate_dimensions@EditGroup@@QAEHXZ, still FILE-only in
+  // src/unrecovered/00612150.cpp. DECLARATION ONLY, added because Dialogs
+  // ::calculate_dimensions (0x006132A0) tail-calls it for kind 4 - the access
+  // costs nothing and the definition stays where it is.
+  int calculate_dimensions();
 
  private:
   // The vbtable pointer is EMITTED by the compiler now.

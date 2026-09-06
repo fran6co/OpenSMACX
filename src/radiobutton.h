@@ -91,6 +91,11 @@ class RadioButton : public virtual GraphicWin, public virtual Dialog {
   static int init_class();   // 0060E4D0
   void on_mouse_leave(int a1, int a2);
   void on_dialog_focus(int a1);
+  // 0x0060D380 ?calculate_dimensions@RadioButton@@QAEHXZ, still FILE-only in
+  // src/unrecovered/0060d380.cpp. DECLARATION ONLY, added because Dialogs
+  // ::calculate_dimensions (0x006132A0) tail-calls it for kind 0x10 - the
+  // access costs nothing and the definition stays where it is.
+  int calculate_dimensions();
   // ??0RadioButton@@QAE@H@Z at 0x0060D0E0. The `int` is NOT a user
   // parameter - RadioButton's layout is composed by hand (see the class
   // comment above), so VC6 cannot inject the most-derived flag the way it
@@ -110,6 +115,13 @@ class RadioButton : public virtual GraphicWin, public virtual Dialog {
   uint32_t field_4_;  // 0x0004
   uint32_t field_8_;
   uint32_t field_C_;
+ public:
+  // PUBLIC, like CheckBox::field_10_ for DipEdit::init: BasePop
+  // ::calculate_dimensions installs the popup's double-click handler straight
+  // into it (Dialogs+0x2224, the push-button kind's notification slot) with
+  // no call in between, so the access has to be spelled from outside the
+  // class. Access is compile-time only; the static_assert below pins the
+  // layout.
   uint32_t field_10_;
   // NO GAP MEMBER: those four bytes are GraphicWin's VTORDISP and the compiler
   // emits them, because this class overrides GraphicWin's on_dialog_focus and

@@ -531,7 +531,12 @@ SCAFFOLD_CEILINGS = {
     # (0x005E2480) - plus Dialogs::calculate_dimensions (0x006132A0) whose
     # homing reverted on the RadioButton declaration (see address_index's
     # archive-only raise). All FILE-tier targets, no landmines.
-    "PENDING_BODY forwarders": 260,
+    # 260 -> 264 (2026-09-06, W5h widget labels, collected): five base
+    # calculate_dimensions forwarders came in (ListBox/RadioButton/CheckBox/
+    # SpriteBox/EditGroup - the homed Dialogs dispatcher tail-calls all five
+    # and their bodies are FILE-only in the archive), one retired with the
+    # dispatcher's own.
+    "PENDING_BODY forwarders": 264,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -640,7 +645,9 @@ SCAFFOLD_CEILINGS = {
     # on_iface_right_down on the corrected span), map/Fractal (-2:
     # units/005c3440 world_fungus, units/005c86e0 world_build, homed over
     # src/fractal.h).
-    "artifact files (recovered/)": 1010,
+    # 1010 -> 1009 (2026-09-06, W5h widget labels): 006132a0.cpp went with
+    # the Dialogs::calculate_dimensions homing, BYTE_EXACT 24/24.
+    "artifact files (recovered/)": 1009,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -740,7 +747,11 @@ SCAFFOLD_CEILINGS = {
     # close/add/get/get, NetFifoNode, head_/tail_/count_ - the deliberate
     # raise this ceiling exists for (class modelling grows it; the class
     # pass retiring the file deletes it).
-    "hypothesis_layouts.h lines": 2748,
+    # 2748 -> 2752 (2026-09-06, W5h widget labels): four comment lines on
+    # PrefWin's graphicWin_ run - the VC6 probe note that sizeof(GraphicWin)
+    # is 0xA14 and display/destroy pass this unadjusted, the Popup::show
+    # pattern. Documentation, not new layout debt.
+    "hypothesis_layouts.h lines": 2752,
 }
 
 

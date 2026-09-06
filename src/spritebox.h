@@ -107,6 +107,11 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
   int pos_to_id(int position);
   void on_mouse_move(int, int);
   void on_mouse_leave(int, int);
+  // 0x00610970 ?calculate_dimensions@SpriteBox@@QAEHXZ, still FILE-only in
+  // src/unrecovered/00610970.cpp. DECLARATION ONLY, added because Dialogs
+  // ::calculate_dimensions (0x006132A0) tail-calls it for kind 8 - the access
+  // costs nothing and the definition stays where it is.
+  int calculate_dimensions();
 
  private:
   // 0x0 is this object's own vbtable pointer, EMITTED by the compiler.
@@ -118,8 +123,15 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
   // stays exactly where the disassembly puts it rather than moving into
   // the compiler's own implicit member-init prologue.
   uint8_t spot_storage_[0xC];  // 0x10, sizeof(Spot)
+ public:
+  // PUBLIC, like CheckBox::field_10_ for DipEdit::init: BasePop
+  // ::calculate_dimensions stores the popup's two text-limits straight into
+  // them (Dialogs+0x225c/0x2260) with no call in between, so the access has
+  // to be spelled from outside the class. Access is compile-time only; the
+  // static_assert below pins the layout.
   uint32_t field_1C_;  // 0x1C
   uint32_t field_20_;  // 0x20
+ private:
   // THE EMBEDDED SPRITE LIST, carved 2026-09-01 from what was field_24_ ..
   // field_50_: exactly 0x30 = sizeof(StringList) - the two ABI words at its
   // front, the four list fields (head 0x2C, cursor 0x30, signed count 0x34,
@@ -141,14 +153,21 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
   uint32_t field_58_;  // 0x58
   uint32_t field_5C_;  // 0x5C
   uint32_t field_60_;  // 0x60
+ public:
+  // PUBLIC: BasePop::calculate_dimensions stores the sprite redraw callback
+  // (Dialogs+0x22a4) and its two config slots (0x22a8/0x22c0) straight into
+  // these, with no call in between. Access is compile-time only.
   uint32_t field_64_;  // 0x64
   uint32_t field_68_;  // 0x68
+ private:
   uint32_t field_6C_;  // 0x6C
   uint32_t field_70_;  // 0x70
   uint32_t field_74_;  // 0x74
   uint32_t field_78_;  // 0x78
   uint32_t field_7C_;  // 0x7C
+ public:
   uint32_t field_80_;  // 0x80
+ private:
   uint32_t field_84_;  // 0x84
   // 0x88 IS GRAPHICWIN'S VTORDISP, not a field. The compiler emits it because
   // this class overrides GraphicWin's on_dialog_focus and on_mouse_leave;
