@@ -1,0 +1,23 @@
+{
+  "event_id": "6afecabee113b7814eca7fb6ff15b4ff4a9a71ea44a71b34641c2ab2155a9dc7",
+  "payload": {
+    "affects": [
+      "entity-1db3390ffd5cf6a2830b819be36455d9a20b0c894997eb70fe29f0023d9b60ce",
+      "entity-766b5f7c4931a0e8e6fc20304a9edee0d30b606337efb8b6a123e9f568ffc023",
+      "entity-f4e4fbcc60646599ffd58d0a6d5911911d7ce4ba10fa8799b575f5eb20ba20d1"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "button-original-bindings",
+    "evidence": [
+      "source:src/basebutton.cpp original 0x00606F30 and 0x00607040 symbol facts select wrappers beside real constructor/destructor definitions",
+      "source:src/gamma.cpp real PushButton destructor delegates to the compiler-owned BaseButton teardown; original generated table identities remain separate from hand-coded tables"
+    ],
+    "hypothesis": "BaseButton original constructor/destructor mappings still select construct/destroy wrapper symbols instead of the real C++ constructor/destructor reached by PushButton. Recover correct emitted-symbol bindings and generated vtable identities without reintroducing manual vptr writes.",
+    "kind": "discovery"
+  },
+  "previous_event": "b4a7d95f45aadda592b7c11fad90aa656ae34f6bcf84370c13f107627c5ae6a9",
+  "request_id": "button-original-bindings",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:infowin-ownership"
+}

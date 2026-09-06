@@ -1,0 +1,18 @@
+{
+  "event_id": "b4a7d95f45aadda592b7c11fad90aa656ae34f6bcf84370c13f107627c5ae6a9",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "infowin-pushbutton-teardown",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "source:src/pushbutton.h real out-of-line destructor declaration replaces destroy wrapper",
+      "source:src/gamma.cpp empty PushButton destructor delegates base lifetime and vptr staging to C++; source:src/infowin.cpp ordinary member teardown retained"
+    ]
+  },
+  "previous_event": "35c1c86e332ccc9918789d6dba5baa770de540203236967f7b975130071b3c3e",
+  "request_id": "infowin-pushbutton-teardown-incorporated",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:infowin-ownership"
+}

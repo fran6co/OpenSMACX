@@ -31,7 +31,7 @@
 
 class PushButton : public BaseButton {
  public:
-  // OUT OF LINE (defined in gamma.cpp beside PushButton::destroy), 2026-09-03,
+  // OUT OF LINE (defined in gamma.cpp beside the destructor), 2026-09-03,
   // superseding the in-class `{ ; }`. An in-class constructor is expanded by
   // /Ob2 at every implicit member construction, and because the expansion
   // carries the whole BaseButton chain VC6 wrapped each site in a second EH
@@ -40,19 +40,12 @@ class PushButton : public BaseButton {
   // one-slot frame. Out of line there is nothing to fold. Same lever as
   // BaseButton's own constructor (basebutton.h) and ~Buffer (buffer.h).
   PushButton();
-  // A real `~PushButton()` mangles `??1PushButton@@UAE@XZ` here, not the
-  // catalogued `@@QAE@XZ`: AutoSound's virtual destructor (autosound.h,
-  // added for RadioButton's vbtable layout) cascades virtuality onto every
-  // Win-derived destructor, and VC6's complete-object form for a virtual
-  // destructor installs the vtable pointer and unwinds bases through a
-  // ~15-instruction sequence where the image's body is 3 (two `mov`s and a
-  // tail `jmp`). `destroy()` below is an ordinary method, never a
-  // destructor override, so it is never cascaded into virtual - the same
-  // BaseButton::destroy()/Scroll::destroy() idiom used everywhere else in
-  // this tree for exactly this shape of problem.
-  ~PushButton() { destroy(); }
-
-  PushButton *destroy();
+  // Out of line so owners invoke one destructor, not an expanded wrapper
+  // plus another automatic BaseButton teardown. The compiler owns base
+  // destruction and vptr staging. The source's inherited virtuality emits
+  // UAE rather than the catalogue's QAE; gamma.cpp binds that symbol
+  // explicitly instead of treating the catalogue spelling as class evidence.
+  ~PushButton();
 
  private:
   uint32_t field_AB8_;  // 0xAB8

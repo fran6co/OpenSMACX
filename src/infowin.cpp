@@ -178,7 +178,7 @@ InfoWin::InfoWin() {
 /*
 Purpose: Tear down an InfoWin: destroy the PushButton, Font and Time
          subobjects in reverse construction order.
-// ORIGINAL: 0x004594A0 ??1InfoWin@@QAE@XZ 0x004594A0-0x004594FB;0x00655240-0x00655260
+// ORIGINAL: 0x004594A0 ??1InfoWin@@QAE@XZ 0x004594A0-0x004594FB;0x00655240-0x00655260 BYTE_EXACT
 // size      123 bytes
 // prototype void (__thiscall ??1InfoWin@@QAE@XZ)(InfoWin* this)
 // callers   0   call targets   3

@@ -1,0 +1,57 @@
+{
+  "event_id": "35c1c86e332ccc9918789d6dba5baa770de540203236967f7b975130071b3c3e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/gamma.cpp",
+      "src/pushbutton.h"
+    ],
+    "evidence": [
+      "source:src/pushbutton.h destructor wrapper delegates to BaseButton before automatic base teardown",
+      "source:src/gamma.cpp contains the PushButton definition and dependent Gamma member construction"
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6067216,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6067088,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6471456,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6471696,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6065568,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4547248,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6473808,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "58f63578d577fc3aa447f9a452770eac48ba62e5677c6d60e53ae20163a08775",
+  "request_id": "infowin-pushbutton-scope",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:infowin-ownership"
+}

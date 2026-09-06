@@ -124,9 +124,12 @@ establish completion of this program.
   InfoWin now owns actual Time, Font and PushButton members instead of placement
   construction into raw storage. Its constructor re-earned an old-gate byte
   claim through the recorder; four member offsets agree in both scoped TUs and
-  flag sets. The destructor remains unfinished. The task records a pending
-  cross-class finding about PushButton's destroy-wrapper/base-destructor chain;
-  the structure is retained, not reverted to improve a local score.
+  flag sets. Following the cross-class finding, PushButton now has a real
+  out-of-line destructor rather than a destroy wrapper plus automatic base
+  teardown. Both InfoWin and PushButton destructors then matched through the
+  old recorder without manual vptr writes. The strict verifier still reports
+  unresolved real BaseButton and generated-table bindings; those remain a task
+  finding, not an excuse to claim full reference or structural verification.
   The redraw slot is now an InfoWin member instead of independent storage;
   its object-start binding lives beside ConsoleInfoWin's definition. Constructor
   subobjects, object extent, lifetime, full admission and restoration remain.
