@@ -1889,6 +1889,10 @@ class PrefWin {
   void display(int page);
 
  public:
+  // The GraphicWin base, at an unadjusted `this`: sizeof(GraphicWin) is
+  // 0xA14 by a VC6 probe against the product headers, and display's and
+  // destroy's bodies pass `this` unadjusted to slide_show's and
+  // slide_hide's GraphicWin* formals - the pattern Popup::show uses.
   uint8_t graphicWin_[0xA14];  // 0x0
   uint32_t field_A14_;  // 0xA14
   uint32_t field_A18_;  // 0xA18
