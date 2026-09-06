@@ -29,6 +29,7 @@ uv run recover inventory --image /path/to/the/pinned/original.exe
 uv run recover components list
 uv run recover components check-source zlib --archive /path/to/zlib-1.0.2.tar.gz
 uv run recover components check-binary zlib --image /path/to/the/pinned/original.exe --summary
+uv run recover audits check compiler-work --summary
 uv run pytest packages/match-recovery/tests recovery/tests
 uv build --package match-recovery
 ```
@@ -37,6 +38,18 @@ Reports are JSON on stdout. Errors go to stderr and return exit 3. Inventory nev
 changes source or decisions. Inventory and partition are native package commands
 when `recovery/project.json` supplies `source` configuration; they do not launch
 a project adapter. Task and component commands likewise use the package directly.
+
+The compiler-work audit is also native. Its reusable pattern rules live in the
+package; `audits.json` holds this project's explicit ceilings and scaffold counter
+scopes. These numbers are policy limits, not cached measurements or another
+function ledger. All 24 ceilings and per-file pattern counts were preserved on
+cutover. The former compiler-work tool is removed; its change explanations remain
+in Git. The legacy full gate invokes the installed audit command directly.
+Both growth and slack return failure (exit 1); missing/malformed inputs return 3.
+The report's `lowerings` gives only downward edits to apply to `audits.json` in the
+same commit as the improvement. There is no self-rewriting Python ceiling table.
+Neither this heuristic audit nor a zero count proves correct hierarchy or lifetime.
+
 The source reader preserves all notes, including unparsed
 or non-UTF-8 text, without declaring current matches or choosing between
 conflicting candidates. The old bulk legacy-import command is removed: source

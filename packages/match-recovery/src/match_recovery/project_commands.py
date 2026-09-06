@@ -7,6 +7,12 @@ from .records import read_json
 
 
 def register(commands):
+    audits = commands.add_parser("audits", help="Recompute configured source-policy ratchets; not structural proof")
+    audit_actions = audits.add_subparsers(dest="action", required=True)
+    source_audit = audit_actions.add_parser("check")
+    source_audit.add_argument("audit")
+    source_audit.add_argument("--root", type=Path, default=Path.cwd())
+    source_audit.add_argument("--summary", action="store_true")
     inventory = commands.add_parser("inventory", help="Inspect configured source and seed annotations without altering them")
     inventory.add_argument("--root", type=Path, default=Path.cwd())
     inventory.add_argument("--image", type=Path, help="Verify the original against its pin")
@@ -102,9 +108,16 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
     """Native configured source operations, otherwise the local JSON boundary."""
     root = root.resolve()
     configuration = read_json(root / "recovery/project.json")
-    if (configuration.keys() - {"schema_version", "adapter", "source", "source_history", "compiler", "measurement"}
+    if (configuration.keys() - {"schema_version", "adapter", "source", "source_history", "compiler", "measurement", "audits"}
             or type(configuration.get("schema_version")) is not int or configuration["schema_version"] != 1):
         raise ValueError("invalid local project command configuration")
+    if arguments.get("command") == "audits":
+        from .source_audits import audit_source
+        output = audit_source(root, arguments["audit"])
+        if arguments.get("summary"):
+            output.pop("per_file")
+            output.pop("explanations")
+        return (0 if output["result"] == "pass" else 1), output
     if "source" in configuration and arguments.get("command") == "components":
         from .component_commands import execute
         return execute(root, arguments)

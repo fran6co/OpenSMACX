@@ -586,8 +586,8 @@ def convert(source: Path, apply: bool) -> int:
         # the survivors of this tool's other refusals are SKEWED toward
         # lifecycle seams, because ordinary methods with a live wrapper get
         # refused on the wrapper and lifecycle ones often kept none. The
-        # remedy is a REAL constructor/destructor, which is `compiler_work.py`
-        # 'construct' shape work, not a declaration this tool can write.
+        # remedy is a REAL constructor/destructor: the compiler-work audit's
+        # 'construct' shape, not a declaration this tool can write.
         # Destructor seams have their own narrower door: `--dtors`.
         if seam.method == seam.klass or seam.method.startswith("~"):
             print(f"  - {seam.pointer} -> {seam.klass}::{seam.method}")

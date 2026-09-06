@@ -249,15 +249,15 @@ def file_compiler_work_sites() -> dict:
     project cares most about - vtable-as-member, vtable-initialiser store,
     vtable address constant, anonymous fixed-address global - 320 sites
     across 50 files, 34 of them in win.cpp. A class could be tagged [DONE]
-    while still carrying vtables as data. `compiler_work.census_by_file`
-    is now the single walk both consumers read.
+    while still carrying vtables as data. The package source audit now owns
+    the single walk both consumers read.
     """
-    sys.path.insert(0, str(Path(__file__).resolve().parent))
-    import compiler_work
-    return {name: sum(per_shape.values())
-            for name, per_shape
-            in compiler_work.census_by_file(REPO_ROOT / "src").items()
-            if sum(per_shape.values())}
+    from collections import Counter
+    from match_recovery.source_audits import audit_source
+    counts = Counter()
+    for path, per_shape in audit_source(REPO_ROOT, "compiler-work")["per_file"].items():
+        counts[Path(path).name] += sum(per_shape.values())
+    return dict(counts)
 
 
 def by_class(records, order, built, visible) -> None:

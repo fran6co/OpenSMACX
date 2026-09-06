@@ -119,6 +119,43 @@ live in `migration.py`, `migration_protocol.py`, `reviews.py` and `tasks.py`.
 
 ## Package boundary and verification
 
+### Source-policy audits
+
+`recover audits check <name> [--root <project>] [--summary]` runs natively, with
+no project Python or compiler. Add `"audits": "recovery/audits.json"` to the
+project configuration. That file has `schema_version: 1` and an `audits` object
+keyed by project-chosen audit names. Each audit specifies:
+
+- `ruleset: "cpp-recovery-v1"`: an opt-in set of conventional C++ decompiler
+  smells, such as manual dispatch, lifecycle seams and address-derived names.
+- `unit_extensions`, `interface_extensions`: disjoint subsets of configured
+  source suffixes. Some patterns apply only to units, avoiding declaration counts.
+- `exclude_roots`: explicit paths within configured source roots. Pattern scans
+  also omit the configured seed roots; no directory basename is globally special.
+- `ceilings`: nonnegative integer policy limits for every selected rule/counter.
+  The rule names are exported by `match_recovery.cpp_audit_rules.CPP_RECOVERY_V1`.
+- `counters`: additional project-owned scopes. Each has `name`, `path`, and
+  `kind`: `text` also requires a regex `pattern`; `files` requires `extension`
+  and boolean `recursive`; `lines` counts physical lines. These explicit scopes
+  are observed even within seeds/exclusions. Missing scopes are errors, not zero.
+
+Exit 0 means every policy ceiling equals its fresh count; growth or slack exits 1,
+and unavailable/malformed inputs exit 3. Reports include full relative paths and
+downward-only `lowerings` to apply with the source change. Commands never edit
+source, policy, or claims, and never cache a verdict. Policy limits are deliberate
+constraints, not a stored census; original bindings remain source-owned.
+
+This version preserves a line-wise regex lens, not a C++ lexer: literals, inline
+block comments and conditional compilation are not interpreted. Hits require
+investigation; legitimate indirect calls and placement construction exist. A zero
+count does not prove recovered structure, behavior or absence of disguised debt.
+Input files, configuration and detector implementation are checked for changes
+around each census. Directory/dangling symlinks in source scope are refused instead
+of silently hiding files from enumeration. No project-specific ceiling is in the
+package.
+
+### Verification APIs
+
 The package contains workflow/policy, strict JSON decisions, disposable cache
 utilities, process supervision and reusable comparison/format helpers. Optional
 i386 PE/COFF helpers do not impose that format on the driver. Recomputable reports

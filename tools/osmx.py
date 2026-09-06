@@ -2065,7 +2065,10 @@ def check(
 
     link_job = audits.submit(subprocess.run, ["cmake", "--build", "build"],
                              cwd=REPO_ROOT, capture_output=True, text=True)
-    vtables_job = _audit("compiler_work.py", "--check")
+    vtables_job = audits.submit(
+        subprocess.run,
+        [sys.executable, "-m", "match_recovery.cli", "audits", "check", "compiler-work", "--summary"],
+        cwd=REPO_ROOT, capture_output=True, text=True)
     stale_job = _audit("stale_references.py")
 
     def _symbols_after_link():
@@ -2114,10 +2117,35 @@ def check(
     # is why they cost bytes rather than taste. Every large gain on 2026-08-22
     # came from deleting one. Ratcheted per shape; none may grow.
     vtables = vtables_job.result()
+    audit_report = None
+    if vtables.stdout.strip():
+        try:
+            audit_report = json.loads(vtables.stdout)
+            if (not isinstance(audit_report, dict) or audit_report.get("audit") != "compiler-work"
+                    or audit_report.get("result") not in ("pass", "fail")
+                    or type(audit_report.get("total")) is not int
+                    or not isinstance(audit_report.get("rules"), list)
+                    or vtables.returncode != (0 if audit_report["result"] == "pass" else 1)
+                    or any(not isinstance(row, dict) or not {"name", "status", "count", "ceiling"} <= row.keys()
+                           for row in audit_report["rules"])):
+                raise ValueError("malformed source audit report or exit/result disagreement")
+        except (ValueError, TypeError) as error:
+            vtables = subprocess.CompletedProcess(vtables.args, 3, "", str(error))
+            audit_report = None
+    elif not vtables.returncode:
+        vtables = subprocess.CompletedProcess(vtables.args, 3, "", "source audit returned no report")
     if not as_json:
-        typer.secho("  " + vtables.stdout.strip(),
+        message = (f"compiler work: {audit_report['total']} site(s), "
+                   + ("every ceiling exact" if not vtables.returncode else "ratchet failed")
+                   if audit_report is not None else vtables.stderr.strip())
+        typer.secho("  " + message,
                     fg=typer.colors.RED if vtables.returncode
                     else typer.colors.WHITE)
+        if audit_report is not None:
+            for row in audit_report["rules"]:
+                if row["status"] != "exact":
+                    typer.secho(f"  {row['status']}: {row['name']} {row['count']}/{row['ceiling']}",
+                                fg=typer.colors.RED)
 
     # PROSE THAT TELLS THE READER TO RUN SOMETHING THAT IS NOT THERE, held to
     # zero the same way. This failure is invisible from inside the instruction:
@@ -2282,7 +2310,7 @@ def check(
                if annotations.returncode
                else "FAILED: the claim floor does not match the tree" if floor_broken
                else "FAILED: regressed, dangling or unread claims" if code == 1
-               else "OK, with unverifiable claims present" if code == 3
+               else "INCOMPLETE: unverifiable claims present (not green)" if code == 3
                else "CLEAN")
 
     if as_json:

@@ -55,7 +55,7 @@ DEFINITION = re.compile(
     r"(?:\s*const)?\s*\{", re.M)
 
 # NEVER A DESTINATION. These files host markers under their own ratchets
-# (compiler_work.py's SCAFFOLD_MARKERS, address_index.py's KNOWN_SCAFFOLDS)
+# (recovery/audits.json counters, address_index.py's KNOWN_SCAFFOLDS)
 # or are the faulting frontier itself - a body homed into one raises that
 # ratchet instead of retiring anything, and the machinery bodies (adjustor
 # and deleting thunks) are EMITTED by VC6 beside a real class, never
@@ -606,7 +606,8 @@ def main() -> int:
     print(f"\n{kept} homed, {failures} reverted. "
           f"Next: bare osmx check; tools/address_index.py (the orphan and "
           f"landmine ratchet); lower the artifact ceilings this commit made "
-          f"stale (tools/compiler_work.py --lower-ceilings).")
+          f"stale (recover audits check compiler-work reports lowerings; "
+          f"apply them to recovery/audits.json).")
     return 0
 
 

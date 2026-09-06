@@ -46,10 +46,10 @@ def run_gate() -> tuple[int, str]:
 
 def _slack_damage() -> None:
     """Raise one scaffold ceiling above its live count, whatever it is."""
-    base = _snap("tools/compiler_work.py")
+    base = _snap("recovery/audits.json")
     found = re.search(r'("artifact files \(recovered/\)": )(\d+)', base)
-    assert found, "scaffold ceiling line missing from compiler_work.py"
-    _patch("tools/compiler_work.py", found.group(0),
+    assert found, "scaffold ceiling missing from recovery/audits.json"
+    _patch("recovery/audits.json", found.group(0),
            f"{found.group(1)}{int(found.group(2)) + 5}")
 
 

@@ -34,10 +34,13 @@ def project_audits(monkeypatch):
         command = [str(word) for word in argv]
         audit = (len(command) > 1 and command[0] == sys.executable
                  and Path(command[1]).parent == osmx.REPO_ROOT / "tools")
+        native_audit = command[:6] == [sys.executable, "-m", "match_recovery.cli", "audits", "check", "compiler-work"]
         build = command[:2] == ["cmake", "--build"]
-        if audit or build:
-            key = Path(command[1]).name if audit else "build"
-            return subprocess.CompletedProcess(argv, int(key in failures), "", "")
+        if audit or native_audit or build:
+            key = "compiler-work" if native_audit else Path(command[1]).name if audit else "build"
+            output = (json.dumps({"audit": "compiler-work", "result": "fail" if key in failures else "pass",
+                                  "total": 0, "rules": []}) if native_audit else "")
+            return subprocess.CompletedProcess(argv, int(key in failures), output, "")
         return actual(argv, *args, **kwargs)
     monkeypatch.setattr(osmx.subprocess, "run", invoke)
     return failures
@@ -544,6 +547,7 @@ def test_an_unverifiable_claim_is_not_a_regression(claimed, monkeypatch):
     assert "REGRESSED 0x" not in result.output, "nothing is blamed on a body"
     assert "0 REGRESSED" in result.output
     assert "1 NO_COMPILE" in result.output
+    assert "INCOMPLETE: unverifiable claims present (not green)" in result.output
 
 
 def test_no_compile_in_a_build_input_is_a_regression(claimed, monkeypatch,
@@ -662,13 +666,28 @@ def test_json_is_only_json(claimed, monkeypatch):
     assert "pin was not verified" in result.stderr
 
 
-@pytest.mark.parametrize("audit", ["build", "compiler_work.py", "stale_references.py",
+@pytest.mark.parametrize("audit", ["build", "compiler-work", "stale_references.py",
     "marker_symbols.py", "address_index.py", "class_debt.py", "duplicate_globals.py",
     "data_values.py", "pointer_scale.py", "annotation_identity.py", "header_offsets.py"])
 def test_failed_project_audit_prevents_acceptance(claimed, monkeypatch, project_audits, audit):
     monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
     project_audits.add(audit)
     assert check(claimed).exit_code == 1
+
+
+@pytest.mark.parametrize("report", ["", "not JSON", "{}", '{"audit":"wrong"}',
+                                    '{"audit":"compiler-work","result":"fail","total":0,"rules":[]}'])
+def test_invalid_native_audit_report_cannot_pass_the_gate(claimed, monkeypatch, report):
+    actual = osmx.subprocess.run
+    def invoke(argv, *args, **kwargs):
+        if list(argv)[:6] == [sys.executable, "-m", "match_recovery.cli", "audits", "check", "compiler-work"]:
+            return subprocess.CompletedProcess(argv, 0, report, "")
+        return actual(argv, *args, **kwargs)
+    monkeypatch.setattr(osmx.subprocess, "run", invoke)
+    monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
+    result = check(claimed)
+    assert result.exit_code == 1
+    assert "FAILED: the tree does more of the compiler's work" in result.output
 
 
 @pytest.mark.parametrize("floor", [None, 1, 3])

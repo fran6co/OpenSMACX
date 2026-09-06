@@ -8,7 +8,7 @@ wrapper nothing calls, a function address smuggled through a `void *` data
 global. All of it measured exact in palette.cpp on 2026-08-24, because the
 bytes WERE exact - the lies live in the source model, not the object file.
 
-Five shapes, counted like compiler_work.py: line-wise over the product tree
+Nine shapes, counted like the package compiler-work audit: line-wise over the product tree
 (src/*.cpp + *.h; the artifact archives are excluded - they die by homing,
 not by cleanup), comment lines skipped, a ceiling per shape that only falls.
 `--check` is wired into the gate; the ownership workflow (recovery/WORKFLOW.md)

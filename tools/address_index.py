@@ -43,7 +43,7 @@ REPO = Path(__file__).resolve().parent.parent
 SRC = REPO / "src"
 PENDING = SRC / "pending_bodies.cpp"
 
-# Files whose markers are RATCHETED as scaffolds (compiler_work.py owns the
+# Files whose markers are RATCHETED as scaffolds (recovery/audits.json owns the
 # ceilings); plus the two archive families. Anything else hosting markers
 # outside the build is this check's third finding.
 KNOWN_SCAFFOLDS = ("init_thunks.cpp", "atexit_thunks.cpp",
@@ -132,7 +132,7 @@ FLOORS = {
     # this floor, so it had been stale before that too.
     # 4 -> 5 (2026-09-03, boot-sequence batch): system_init and game_init homed
     # into src/game.cpp and the eleven callees they drive brought onto the
-    # frontier (see the PENDING_BODY note in compiler_work.py). Three of them
+    # frontier (see the configured PENDING_BODY counter). Three of them
     # already hold archive claims the build does not compile - load_fixed
     # _sprites (0x00455E80, CLAIMED), textcolor_init (0x004BA220, CLAIMED) and
     # MultiDebug::init (0x005C9860, CLAIMED) - so their forwarders now shadow

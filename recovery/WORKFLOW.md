@@ -131,6 +131,12 @@ alone is not acceptance. The retained `uv run tools/osmx.py record <addresses>`
 is the only current claim-stamping entry point and proves legacy masked-byte
 agreement, not full structural/reference correctness. Never hand-edit markers.
 
+The gate's compiler-work ratchet is the native `uv run recover audits check
+compiler-work` command. Its report identifies exact, grown and slack ceilings.
+Apply justified downward `lowerings` to `recovery/audits.json` in the same commit;
+do not alter detector rules or exclusions to hide unfinished work. These are
+heuristic policy checks, separate from the original-layout evidence and review.
+
 Full acceptance requires the independent review plus current build, structure,
 references, protected obligations and required runtime checks. The OpenSMACX
 acceptance adapter is not complete. A scoped pass, legacy claim or approved
