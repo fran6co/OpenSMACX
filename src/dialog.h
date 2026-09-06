@@ -97,15 +97,14 @@ class Dialog {
   // identical-COMDAT folding merged it with BasePop's own identical body,
   // keeping one name.
   //
-  // HANDOFF (dialog.cpp and basepop.cpp, neither of which is this pass's):
-  //        landing these needs (1) an OUT-OF-LINE definition in dialog.cpp -
-  //        an in-class or inline body is two instructions of `or`/`and` that
-  //        VC6 will expand at the call site, where the image makes a real
-  //        `call rel32`, so the header-only spellings this tree uses for
-  //        id_to_pos cannot produce the image's shape here - and (2) exec's
-  //        two `dialogs_.Dialog::field_20_ |= 1U / |= 2U` statements swapped
-  //        for the two calls. Declared and left undefined on purpose: the
-  //        definitions move no layout and no claim of this file's.
+  // LANDED (2026-09-06, dialogs finisher): both are defined OUT OF LINE in
+  //        dialog.cpp - an in-class body is two instructions VC6 expands at
+  //        the call site, where the image makes a real `call rel32` - and
+  //        BasePop::exec makes the two real calls. The claim stays with the
+  //        folded twin in basepop.cpp; the receiver at the call site is bound
+  //        ONCE (`Dialog &dialog = dialogs_;`) because two qualified
+  //        recomputations of the vbtable walk cost exec 22 -> 15 agreeing
+  //        instructions where the image holds the subobject in one register.
   void set_style_bit_0(int on);
   void set_style_bit_1(int on);
   // TRIED (2026-09-02, phase B): `virtual uint32_t close()` - the four
@@ -172,6 +171,29 @@ class Dialog {
   // being integrated out of src/recovered/.
   int init(int a1, int a2, int a3, int a4, Heap *a5);
   // ?init@Dialog@@QAEHHHHHPAUHeap@@@Z  0x00609730
+  //
+  // WHY NONE OF THE SEVEN ARE HOMED YET (2026-09-06, dialogs finisher - the
+  //        artifacts are still in src/unrecovered/ and src/recovered/units/).
+  //        Every one of them tears the item list down through TWO virtual
+  //        dispatches the image makes and this tree cannot spell:
+  //          `call dword ptr [edx + 4]` on the list itself, with the entry's
+  //            payload as the one argument - StringStruct's table 0x006693A4
+  //            slot 1, which is 0x00404270 `ret 4`, a no-op the original
+  //            called anyway;
+  //          `call dword ptr [edx]` on `payload + payload->vbtable[1]` - the
+  //            virtual base's own table 0x006693AC slot 0, 0x00401520, the
+  //            final-table install and owner republish.
+  //        stringstruct.h declares only slot 0 (`unk_slot00`, no arguments)
+  //        plus a virtual destructor, so this tree's StringStruct vtable does
+  //        not lay out like the image's three-dword table: a raw
+  //        `vtable_slot<Fn>(&item_list_, 4)` here would reach the compiler's
+  //        COMPLETE DESTRUCTOR, not the image's no-op, and calling it would
+  //        tear the list down N times. The fix is a stringstruct.h decision -
+  //        declare the three slots with the image's signatures - and it moves
+  //        ??0Dialog, ??1Dialog and every list walk, so it is not this file's
+  //        to make alone. The same wall stops 0x00608F50 close() (whose list
+  //        teardown is the same two dispatches) and the five Dialogs::init
+  //        overloads that forward here.
 
  private:
   // The vfptr is EMITTED by the compiler now - see the virtual destructor
@@ -274,7 +296,16 @@ extern Font *DialogDefaultFonts[3];
 // BaseButton's bevel set at [0..4], the dimmed "..." pair at [17]/[18], the
 // twelve text-color slots at [24]..[35], and the geometry/flag defaults at
 // [19]/[20]/[21]/[22]/[23]/[36] (the last is main.cpp's DialogDefaultStyle).
-extern const uint32_t DialogDefaults[37];
+// NOT CONST: the image's set_def_dialog_text_color (0x00609D50, homed in
+// dialog.cpp) writes the twelve text-color slots at runtime.
+extern uint32_t DialogDefaults[37];
+
+// 0x00609D50, homed in dialog.cpp. The catalogued name spells a __thiscall
+// member; the body is a __cdecl free function over the defaults table, so
+// the emitted name is the extern "C" one and the `// symbol` fact under the
+// marker carries it.
+extern "C" MEASURED void __cdecl dialog_set_def_dialog_text_color(
+    int color_a, int color_b, int color_c, int color_d, int slot);
 
 // The zero-init .bss slots the Dialog constructor reads its field defaults
 // from (0x009B8EB4..0x009B8ED8), rebindable like ListBoxCloseDynamicDefault.

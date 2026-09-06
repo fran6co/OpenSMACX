@@ -705,7 +705,11 @@ SCAFFOLD_CEILINGS = {
     # 975 -> 957 (2026-09-06, W5s datalink board): the whole set_cat_*
     # family homed BYTE_EXACT (all/unit/chassis/reactor/weapon/defense/
     # ability/facility) plus the category jump table decoded.
-    "artifact files (recovered/)": 957,
+    # 957 -> 956 (2026-09-06, W5v dialogs finisher): set_def_dialog_text_
+    # color homed BYTE_EXACT 15/15 - and the catalogue's QAAX __thiscall
+    # member is really a __cdecl free function (all five args at
+    # [esp+4..0x14], ecx never touched, ends ret).
+    "artifact files (recovered/)": 956,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).

@@ -62,6 +62,24 @@ class Dialogs : public ListBox,
 
  public:
   // 0x00612AE0, a pending_bodies forwarder.
+  //
+  // WHY THE KIND-SWITCH EVENT FAMILY HERE IS STILL A FORWARDER (2026-09-06,
+  //        dialogs finisher, measured on the artifacts): on_redraw
+  //        (0x00612E00), on_mouse_leave (0x00612AE0), on_left_down
+  //        (0x00612C20), on_left_double_click (0x00612D60), on_key_down
+  //        (0x00612CC0), on_dialog_focus (0x006130E0) and on_scroll_create
+  //        (0x00613220) all open on a receiver that is NOT the Dialogs
+  //        object - they read a kind tag at `this - 8` and then call the
+  //        widget's method at `this - 0x11C` (CheckBox), `this - 0x148`
+  //        (ListBox), `this - 0x8C` (SpriteBox), `this - 0x12C`
+  //        (RadioButton) and `this - 4` (EditGroup). Those are the widgets'
+  //        DIALOG-PART views - the same adjusted receivers the vtordisp
+  //        thunks enter on - and no member of this class names them, so the
+  //        honest spelling needs a `char *self = (char *)this` walk, which
+  //        class_debt counts and this tree holds at its measured ceiling.
+  //        Naming the five views (a per-widget constant like
+  //        StringStructCloseAdjustment, or a base-relative accessor) is the
+  //        unlock; until then the forwarders stay.
   void on_mouse_leave(int a1, int a2);
 
  public:

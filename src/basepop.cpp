@@ -683,13 +683,15 @@ Purpose: Run the popup modally: size and position it, lay out its two caption
 //        `struct BorderSizing { int caption_height; int border_thickness; int
 //        bottom_border_thickness; };` in win.h lets the local below lose its
 //        int[3] spelling.
-// HANDOFF (dialog.h): the image calls UNK3(1) and UNK4(1) here with the
-//        Dialog virtual base as the receiver (0x0060276C / 0x00602775, ecx =
-//        the vbtable-adjusted subobject), i.e. they are Dialog's show-bit
-//        setters that BasePop happens to carry the claim for. Declared on
-//        Dialog, this body makes the two real calls; until then the same
-//        effect is spelled as the two field updates below, which is what
-//        init (0x00601160) already does with the combined `|= 3`.
+// LANDED (2026-09-06, dialogs finisher): the two show-bit setters are Dialog's
+//        set_style_bit_0/1, defined out of line in dialog.cpp (the claim stays
+//        with BasePop's folded twin, 0x00605180/0x006051A0 below), and this
+//        body makes the two real calls - call_diff 39 of 42 -> 41 of 42.
+//        LEVER: the receiver is bound ONCE, `Dialog &dialog = dialogs_;`, not
+//        spelled twice as `dialogs_.Dialog::set_style_bit_N(1)` - the double
+//        qualified spelling recomputed the vbtable walk for the second call
+//        where the image keeps it in edi, and cost 22 -> 15 agreeing
+//        instructions; the single binding took it to 29.
 //
 // HANDOFF (flatbutton.h / basebutton.h, not files this pass owns): the
 //        button's last 0x6C bytes (+0xAE0..+0xB48) are the 27 config dwords
@@ -740,21 +742,19 @@ Purpose: Run the popup modally: size and position it, lay out its two caption
 //        stringstruct move DID: seek_pos and next_entry are MEASURED inline in
 //        stringstruct.h now, exec inlines both, and this body went 18/1139 ->
 //        22/1139 (1021 -> 1059 compiled) with call_diff 37 -> 39 of 42.
-// RESIDUAL: MISMATCH 22 of 1139 at /c /O2 /Gy /GR- /GX, first divergence at
-//        instruction 0. The image opens the frame `mov eax, fs:[0]` and this
-//        tree opens it `push -1` - the SEH registration and the fs reload are
-//        scheduled the other way round - so the whole 1139-instruction
-//        listing is shifted before its first real statement. Everything after
-//        that is the same program at a different register colour: the image
-//        walks the embedded Dialog's vbtable in ecx/edx where this tree uses
-//        eax/ecx, and no source spelling names a register. GraphicWin::init
-//        (0x005D4EF0) records the same shape at 2 of 112 on a body a quarter
-//        of this size. Not chased further: 1059 compiled instructions against
-//        the image's 1139, the 80 missing being the three calls call_diff
-//        still counts - the two UNK3/UNK4 show-bit setters of the dialog.h
-//        HANDOFF (declared there now; the out-of-line definitions dialog.cpp
-//        owes are the only thing between this body and them) and the one abs
-//        inside the inlined seek_pos.
+// RESIDUAL: MISMATCH 29 of 1139 at /c /O2 /Gy /GR- /GX (2026-09-06, was 22),
+//        first divergence at instruction 0. The image opens the frame
+//        `mov eax, fs:[0]` and this tree opens it `push -1` - the SEH
+//        registration and the fs reload are scheduled the other way round - so
+//        the whole 1139-instruction listing is shifted before its first real
+//        statement. Everything after that is the same program at a different
+//        register colour: the image walks the embedded Dialog's vbtable in
+//        ecx/edx where this tree uses eax/ecx, and no source spelling names a
+//        register. GraphicWin::init (0x005D4EF0) records the same shape at 2 of
+//        112 on a body a quarter of this size. Not chased further: 1067
+//        compiled instructions against the image's 1139, the 60 missing being
+//        the ONE call call_diff still counts - the abs inside the inlined
+//        seek_pos, which is a stringstruct.h question (the HANDOFF above).
 // TRIED: apply_button_config / apply_button_bevel as out-of-line definitions
 //        in basepop.cpp - call_diff went to 43 calls against the image's 42,
 //        the three sites the image has inline became real calls. In-class
@@ -821,10 +821,15 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
         if (default_loc_b_ != 0x2000) {
             loc_b_ = default_loc_b_;
         }
-        // UNK3(1) and UNK4(1) on the Dialog base - the two show bits. See the
-        // HANDOFF on dialog.h above.
-        dialogs_.Dialog::field_20_ |= 1U;
-        dialogs_.Dialog::field_20_ |= 2U;
+        // UNK3(1) and UNK4(1) on the Dialog base - the two show bits. The
+        // image calls them (0x0060276C / 0x00602775) with the vbtable-adjusted
+        // `&dialogs_.Dialog` as the receiver, computed ONCE into a register and
+        // reused for both calls; the definitions are in dialog.cpp and the
+        // claim is BasePop's folded twin (0x00605180 / 0x006051A0 in
+        // basepop.cpp). See the HANDOFF on dialog.h above.
+        Dialog &dialog = dialogs_;
+        dialog.set_style_bit_0(1);
+        dialog.set_style_bit_1(1);
     } else {
         external_window_ = 0;
         field_30A8_ &= 0xffefffff;
@@ -2608,7 +2613,7 @@ void __cdecl BasePop::close_class() {
     }
 }
 
-// ORIGINAL: 0x00605010 ?set_external_window@BasePop@@QAEXPAUGraphicWin@@HHHH@Z 0x00605010-0x006050E7 FILE
+// ORIGINAL: 0x00605010 ?set_external_window@BasePop@@QAEXPAUGraphicWin@@HHHH@Z 0x00605010-0x006050E7 FILE SEMANTIC
 // symbol    ?set_external_window@BasePop@@QAEXPAVGraphicWin@@HHHH@Z
 // The image spells GraphicWin a struct (U) where this tree declares a class
 // (V); the bytes are identical.
@@ -2622,6 +2627,18 @@ void __cdecl BasePop::close_class() {
 //         loc_x, loc_y, width, height) from the stores at +0xa14/+0xa18/
 //         +0xa1c/+0xa20/+0xa24 and the 0x2000 keep-current tests against
 //         loc_a_/loc_b_.
+// RESIDUAL (51 of 54, 2026-09-06): the tail `|= 3` read-modify-write. The
+//        image reads the style word through the folded form
+//        (`mov ecx,[edx+ecx+0x21f0]`) and stores through the base
+//        (`lea eax,[edx+ecx+0x21d0]` / `mov [eax+0x20],ecx`); this tree folds
+//        the +0x20 into the one address and lands the store at [reg], which
+//        is also what moves the closing `je` target one byte. Equivalent
+//        program, one addressing split.
+// TRIED (2026-09-06): `Dialog &dialog = dialogs_; dialog.field_20_ |= 3;` -
+//        the reference makes VC6 re-plan the whole body, 51 of 54 -> 7 of 54
+//        with 66 compiled instructions against the image's 54. The qualified
+//        member access is what the other three Dialog stores already use and
+//        stays.
 // size      215 bytes
 // prototype void (__thiscall ?set_external_window@BasePop@@QAEXPAUGraphicWin@@HHHH@Z)(BasePop* this, GraphicWin*, int, int, int, int)
 // callers   0   call targets   0

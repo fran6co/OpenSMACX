@@ -112,6 +112,39 @@ void Dialog::set_dialog_text_color3(int color1, int color2, int color3, int colo
 }
 
 /*
+Purpose: Set the dialog's two show bits in the style word at this+0x20 - the
+         first clearing the bit when the argument is zero, the second the same
+         over bit 1. The image's one body for each is the 27-byte
+         `if (v) f |= bit; else f &= ~bit;` pair the catalogue carries as
+         ?UNK3@BasePop@@QAEXH@Z (0x00605180) and ?UNK4@BasePop@@QAEXH@Z
+         (0x006051A0), both BYTE_EXACT in basepop.cpp.
+
+         The receiver BasePop::exec (0x0060276C / 0x00602775) hands them is NOT
+         a BasePop: it is `&dialogs_.Dialog` computed through the vbtable
+         (`mov eax,[esi+0x21d0] / mov ecx,[eax+8] / lea edi,[ecx+esi+0x21d0]`),
+         i.e. the Dialog virtual base of the embedded Dialogs. These two are
+         Dialog's own setters, and the catalogue's BasePop owner is the folded
+         twin - VC6's identical-COMDAT folding kept one 27-byte body and one
+         name for what the original spelled twice. Claimed where the catalogue
+         puts it (basepop.cpp); this file owns the definitions exec calls.
+*/
+void Dialog::set_style_bit_0(int on) {
+    if (on) {
+        field_20_ |= 1U;
+    } else {
+        field_20_ &= ~1U;
+    }
+}
+
+void Dialog::set_style_bit_1(int on) {
+    if (on) {
+        field_20_ |= 2U;
+    } else {
+        field_20_ &= ~2U;
+    }
+}
+
+/*
 Purpose: Find an item ID's bounded position in the dialog string list.
 // ORIGINAL: 0x00609AF0 ?id_to_pos@Dialog@@QAEHH@Z 0x00609AF0-0x00609B4B BYTE_EXACT
 // MEASURED inline: the body lives at the end of dialog.h. The image keeps
@@ -149,6 +182,11 @@ Purpose: Select a dialog item by its bounded list ID.
 //        return spelling its own 29/29 out-of-line copy needs - a guard
 //        clause would give the inline two explicit returns and cost the
 //        out-of-line body its single epilogue.
+// TRIED (2026-09-06): the guard clause, MEASURED - `if (!head_) return
+//        current_position_;` ahead of the loop in the shared inline cost BOTH
+//        bodies at once: this one 34 of 36 -> 2 of 36, and id_to_pos's own
+//        0x00609AF0 BYTE_EXACT 29 of 29 -> 2 of 29. The single-return spelling
+//        is load-bearing for the pair, and the swapped blocks stay.
 // size      115 bytes
 // prototype void (__thiscall ?set_selected_id@Dialog@@QAEXH@Z)(Dialog* this, int)
 // callers   1   call targets   0
@@ -429,7 +467,12 @@ func_dialog_close DialogOriginalClose = original_method<func_dialog_close>(0x006
 // SpriteBox/Dialog read these for their text_color_ members), and the
 // geometry/flag defaults (0x98 and 0xA0..0xDC; main.cpp's DialogDefaultStyle
 // names the last slot). Index = (address - 0x0069704C) / 4.
-const uint32_t DialogDefaults[37] = {
+//
+// WRITABLE, and the const it used to carry was a modelling lie: the image's
+// set_def_dialog_text_color (0x00609D50, homed just below) STORES the twelve
+// text-color slots 24..35 at runtime. Reads elsewhere are unchanged by the
+// missing const; the ctor's BYTE_EXACT claim re-measured clean on it.
+uint32_t DialogDefaults[37] = {
     247, 7, 248, 2, 125, 0,
     0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
     1, 1, 1, 1, 1, 1,
@@ -439,6 +482,49 @@ const uint32_t DialogDefaults[37] = {
     1, 1, 1, 1, 1, 1,
     3,
 };
+
+/*
+Purpose: Set the default dialog text colour for one of the four colour
+         slots: the argument lands at index 24+slot of the defaults table
+         (the a group - text_color_a_'s own default), and the same index of
+         the b, c and d groups 12/24/36 bytes on. Slots outside 0..3 clamp
+         to 0, which is what the image's signed `jl`/`jle` pair does.
+
+         THE CATALOGUED NAME IS A LIE, and the `symbol` fact is why: it
+         spells ?set_def_dialog_text_color@Dialog@@QAAXHHHHH@Z, a __thiscall
+         member, while the body reads all five arguments off the stack
+         ([esp+4]..[esp+0x14]), never touches ecx, and returns with a bare
+         `ret` - a __cdecl free function with no receiver. The artifact this
+         was transcribed from proved the same thing the hard way: spelled as
+         a member, every stack read compiled four bytes too high. The four
+         stores go through the defaults table BY NAME, which keeps the
+         image's `[eax*4 + 0x6970ac]` single-operand form (an extern array
+         binding folds the same way; a `static T *const` binding does not -
+         it costs the extra base add the image does not have).
+// ORIGINAL: 0x00609D50 ?set_def_dialog_text_color@Dialog@@QAAXHHHHH@Z 0x00609D50-0x00609D8C BYTE_EXACT
+// symbol    _dialog_set_def_dialog_text_color
+// size      60 bytes
+// prototype
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// MEASURED: the image's one caller is not recovered, so nothing here
+//        references the body and /Gy would drop the COMDAT; dllexport is
+//        what keeps it emitted for its own claim.
+Return Value: n/a
+Status: Complete
+*/
+MEASURED void __cdecl dialog_set_def_dialog_text_color(
+    int color_a, int color_b, int color_c, int color_d, int slot) {
+    if (slot < 0 || slot > 3) {
+        slot = 0;
+    }
+    DialogDefaults[24 + slot] = color_a;
+    DialogDefaults[27 + slot] = color_b;
+    DialogDefaults[30 + slot] = color_c;
+    DialogDefaults[33 + slot] = color_d;
+}
 
 // The zero-init .bss slots the Dialog constructor reads its field defaults
 // from (0x009B8EB4..0x009B8ED8): rebindable, same idiom as
