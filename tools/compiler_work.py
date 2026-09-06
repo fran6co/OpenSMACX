@@ -1010,6 +1010,14 @@ def main():
         return 1
 
     counts, files = census(args.root)
+    # SCAFFOLD KEYS TOO, or --lower-ceilings starves them: census() counts
+    # only the SHAPES/HEADER_SHAPES regexes, so every SCAFFOLD_CEILINGS key
+    # read `counts.get(name) is None` and was skipped - the flag reported
+    # "0 lowered" while the gate demanded hand edits every collection (the
+    # game-board agent measured this; every scaffold lowering this campaign
+    # was by hand).
+    for k, v in scaffold_census().items():
+        counts.setdefault(k, v)
 
     if args.lower_ceilings:
         # Same workflow defect class_debt had: a pass that empties four
