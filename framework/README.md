@@ -315,6 +315,23 @@ in ignored storage; neither a stale brief nor a resolved hypothesis is a verdict
 
 ## Still under construction
 
+Compiler-generated vtables can carry source-owned original identities without
+defining any tables or writing vptrs in C++:
+
+```cpp
+// RECOVERY_GENERATED: v1 vtable 0x00670C60 ? ??_7PushButton@@6BWin@@@ 0x0062C010
+```
+
+The fields are original start, exclusive end (`?` when unestablished), exact
+emitted symbol, and original evidence address, qualified by the source image pin.
+The application verifier requires a compiled, isolated read-only data COMDAT
+before using a binding to resolve table references. It separately reports table
+contents: unknown extents stay unknown; declared extents compare all bytes and
+slot relocations against independently mapped targets. A candidate's size cannot
+invent the original boundary, and one passing emitted copy cannot hide another
+copy's disagreement. PushButton's two table starts now resolve while their
+contents remain unverified. Full class/hierarchy proof is still separate.
+
 Direct-member expectations are load-bearing source comments beside declarations:
 
 ```cpp

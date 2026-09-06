@@ -61,6 +61,16 @@ def test_task_runs_fresh_trials_without_banking_or_claiming_collection(project):
     assert verify(project) == result
 
 
+@pytest.mark.parametrize("content", ["unknown", "fail"])
+def test_passing_functions_cannot_hide_unverified_generated_tables(project, monkeypatch, content):
+    monkeypatch.setattr("match_recovery.adapters.opensmacx_binary.check_generated",
+                        lambda *_: ({}, [{"symbol": "??_7Widget@@6B@", "definition": "pass", "content": content}]))
+    result = verify(project)
+    assert result["counts"] == {"pass": 1}
+    assert result["result"] == content
+    assert len(result["generated_tables"]) == len(FLAG_SETS)
+
+
 def test_many_subjects_share_one_compile_per_tu_and_flag_set(project):
     root, task = project
     other = replace(task.subjects[0], address=0x401010)

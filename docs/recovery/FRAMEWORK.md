@@ -136,6 +136,11 @@ establish completion of this program.
   refuses missing generated-table/data/runtime identities. Task context now
   flags real lifetime definitions hidden by wrapper mappings before agents spend
   iterations optimizing the wrong function.
+  Generated vtable identities now live beside the owning source class, not in
+  hand-written tables. Strict checks require emitted read-only data COMDATs and
+  keep table-reference resolution separate from full table-content verification.
+  PushButton's two starts resolve; original extents and slot targets still need
+  recovery, and unknown table contents keep the overall check unverified.
   The redraw slot is now an InfoWin member instead of independent storage;
   its object-start binding lives beside ConsoleInfoWin's definition. Constructor
   subobjects, object extent, lifetime, full admission and restoration remain.

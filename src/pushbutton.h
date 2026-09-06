@@ -30,6 +30,11 @@
 // The two virtual tables the destructor stages before delegating to
 
 class PushButton : public BaseButton {
+  // Original destructor 0x0062C010 stages these two compiler-owned tables.
+  // Starts are known; their complete original extents remain unestablished.
+  // These mappings do not define tables or claim their contents match.
+  // RECOVERY_GENERATED: v1 vtable 0x00670C60 ? ??_7PushButton@@6BWin@@@ 0x0062C010
+  // RECOVERY_GENERATED: v1 vtable 0x00670C58 ? ??_7PushButton@@6BBuffer@@@ 0x0062C010
  public:
   // OUT OF LINE (defined in gamma.cpp beside the destructor), 2026-09-03,
   // superseding the in-class `{ ; }`. An in-class constructor is expanded by
