@@ -121,6 +121,12 @@ establish completion of this program.
   checks. InfoWin's redraw_phase_ is measured at +0x90 in Console and InfoWin under
   both flag sets; damaged offsets and partial debug records are refused. This does
   not establish hierarchy, complete object size, member types or lifetime.
+  InfoWin now owns actual Time, Font and PushButton members instead of placement
+  construction into raw storage. Its constructor re-earned an old-gate byte
+  claim through the recorder; four member offsets agree in both scoped TUs and
+  flag sets. The destructor remains unfinished. The task records a pending
+  cross-class finding about PushButton's destroy-wrapper/base-destructor chain;
+  the structure is retained, not reverted to improve a local score.
   The redraw slot is now an InfoWin member instead of independent storage;
   its object-start binding lives beside ConsoleInfoWin's definition. Constructor
   subobjects, object extent, lifetime, full admission and restoration remain.

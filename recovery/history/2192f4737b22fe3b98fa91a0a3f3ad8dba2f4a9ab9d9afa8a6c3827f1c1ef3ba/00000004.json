@@ -1,0 +1,22 @@
+{
+  "event_id": "31db2dfc2cd3f11128bce937ac5e99ffa1dde5ec2fa7c0548d6bcdd7fdda5798",
+  "payload": {
+    "affects": [
+      "entity-3070f07825a5fed3210362352005c72f9542e373b35aea9c91ee54b19c218ed9",
+      "entity-3578be3652b278b3e601dda1f1395b45db9fc206e275dd0c51ac3de30074bcac"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "infowin-typed-subobjects",
+    "evidence": [
+      "original:0x0045951F,0x00459527,0x00459536 adjusted receivers to Time/Font/PushButton constructors",
+      "original:0x004594CC,0x004594D8,0x004594E7 reverse-order member destruction"
+    ],
+    "hypothesis": "InfoWin owns Time, Font and PushButton members at +0x30, +0x58 and +0x9D0; four bytes of PushButton storage and placement construction do not model its lifetime or extent.",
+    "kind": "discovery"
+  },
+  "previous_event": "c60f4f3541d60913d8190892d10d0e71cd3a39d97bfa094bc540bc62372f417d",
+  "request_id": "infowin-typed-subobjects",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:infowin-ownership"
+}

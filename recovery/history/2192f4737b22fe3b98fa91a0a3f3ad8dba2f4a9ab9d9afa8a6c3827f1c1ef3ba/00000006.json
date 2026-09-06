@@ -1,0 +1,22 @@
+{
+  "event_id": "58f63578d577fc3aa447f9a452770eac48ba62e5677c6d60e53ae20163a08775",
+  "payload": {
+    "affects": [
+      "entity-3578be3652b278b3e601dda1f1395b45db9fc206e275dd0c51ac3de30074bcac",
+      "entity-766b5f7c4931a0e8e6fc20304a9edee0d30b606337efb8b6a123e9f568ffc023"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "infowin-pushbutton-teardown",
+    "evidence": [
+      "source:src/pushbutton.h inline ~PushButton calls destroy; source:src/gamma.cpp PushButton::destroy delegates to BaseButton::destroy",
+      "source:src/basebutton.cpp real ~BaseButton closes then automatically destroys members/base; original:0x004594CC calls the original PushButton destructor"
+    ],
+    "hypothesis": "InfoWin member teardown reaches PushButton whose destructor currently calls a destroy wrapper before automatic BaseButton destruction. Its wrapper also delegates to BaseButton::destroy. Resolve the real destructor ownership and inherited virtuality across that chain rather than reverting InfoWin to raw storage.",
+    "kind": "discovery"
+  },
+  "previous_event": "51ba6eadc26b5328fd5642dc9e7b8d7ca1f2d0757a446bf7129290b00aa4b4d6",
+  "request_id": "infowin-pushbutton-teardown",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:infowin-ownership"
+}

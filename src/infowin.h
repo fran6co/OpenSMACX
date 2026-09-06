@@ -18,6 +18,9 @@
 #pragma once
 
 #include "original_seam.h"
+#include "time.h"
+#include "font.h"
+#include "pushbutton.h"
 
  /*
   * InfoWin class
@@ -93,9 +96,9 @@ class InfoWin {
   void init();                                        // 0x004592A0
 
  private:
-  // Not a base class: the constructor builds a Time at +0x30 on an offset
-  // `this`. The constructor reaches 0x9D0, so the object is at least that
-  // large; nothing else about it is established.
+  // Owned subobjects are constructed in declaration order by 0x00459500
+  // and destroyed in reverse order by 0x004594A0. Gaps remain unnamed;
+  // these offsets do not by themselves prove the complete original extent.
   uint8_t field_0_[0x10];  // 0x0
   uint32_t field_10_;  // 0x10
   uint32_t field_14_;  // 0x14
@@ -105,12 +108,10 @@ class InfoWin {
   uint32_t field_24_;  // 0x24
   uint32_t field_28_;  // 0x28
   uint32_t field_2C_;  // 0x2C
-  uint8_t field_30_[0x28];  // 0x30
-  uint32_t field_58_;  // 0x58
-  uint8_t field_5C_[0x8];  // 0x5C
-  uint32_t field_64_;  // 0x64
-  uint32_t field_68_;  // 0x68
-  uint8_t field_6C_[0x14];  // 0x6C
+  // RECOVERY_MEMBER: v1 InfoWin timer_ 0x30 0x00459500
+  Time timer_;
+  // RECOVERY_MEMBER: v1 InfoWin font_ 0x58 0x00459500
+  Font font_;
   uint32_t field_80_;  // 0x80
   uint32_t field_84_;  // 0x84
   uint32_t field_88_;  // 0x88
@@ -140,7 +141,8 @@ class InfoWin {
   uint32_t field_9C4_;  // 0x9C4
   uint32_t field_9C8_;  // 0x9C8
   uint32_t field_9CC_;  // 0x9CC
-  uint8_t field_9D0_[0x4];  // 0x9D0
+  // RECOVERY_MEMBER: v1 InfoWin button_ 0x9D0 0x00459500
+  PushButton button_;
 };
 
 

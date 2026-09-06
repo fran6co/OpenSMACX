@@ -26,7 +26,6 @@
 #include "font.h"
 #include "pushbutton.h"
 #include <cstring>
-#include <new>
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
@@ -161,7 +160,7 @@ void InfoWin::right_menu(int a1, int a2) {
 // ---------------------------------------------------------------------------
 
 /*
-// ORIGINAL: 0x00459500 ??0InfoWin@@QAE@XZ 0x00459500-0x00459556;0x00655260-0x00655280
+// ORIGINAL: 0x00459500 ??0InfoWin@@QAE@XZ 0x00459500-0x00459556;0x00655260-0x00655280 BYTE_EXACT
 // size      118 bytes
 // prototype void (__thiscall ??0InfoWin@@QAE@XZ)(InfoWin* this)
 // callers   1   call targets   3
@@ -170,37 +169,16 @@ void InfoWin::right_menu(int a1, int a2) {
 // calls     0x006161D0 0x00618EA0 0x0062BF20
 */
 
-// LEVER (2026-09-03): the image's third call is reproduced now. PushButton's
-// constructor is homed (gamma.cpp, BYTE_EXACT 44/44 as 0x0062BF20), so all
-// three placement-new sites name a real callee: the divergence was "the third
-// call goes nowhere", it is now the placement-new wall the brief documents.
-// TRIED (measured after that homing): 12 of 26 agreeing, 36 compiled
-// instructions against the image's 26, and every differing run is one of the
-// three `test ecx, ecx / je` null guards a placement new-expression pays -
-// plus the `sub esp, 8` two-slot unwind frame they need, where the image
-// pushes one slot. Recovering the third callee did not move the frame; the
-// guards are the remaining content. Clearing them means declaring Time, Font
-// and PushButton as real members so VC6 builds them implicitly, which is a
-// layout decision for the pass that owns InfoWin, not a body edit here.
+// Time, Font and PushButton are owned members. Their adjusted receivers
+// (+0x30, +0x58, +0x9D0) are explicit in the original construction sequence.
+// Ordinary member initialization supplies construction and unwind cleanup.
 InfoWin::InfoWin() {
-    char *const self = reinterpret_cast<char *>(this);
-    new (self + 0x30) Time();
-    new (self + 0x58) Font();
-    new (self + 0x9D0) PushButton();
 }
 
 /*
 Purpose: Tear down an InfoWin: destroy the PushButton, Font and Time
          subobjects in reverse construction order.
 // ORIGINAL: 0x004594A0 ??1InfoWin@@QAE@XZ 0x004594A0-0x004594FB;0x00655240-0x00655260
-// TRIED: MEASURED 0/26 agreeing. The image opens `push ebp; mov
-//            ebp,esp; push -1; push 0x655256` - a real SEH frame - which
-//            this straight-line body does not reproduce; every instruction
-//            is offset from #0. Time/Font/PushButton here are all raw
-//            offsets (not real typed members, per the constructor's own
-//            `new (self+off) T()` shape), so there is no member for the
-//            compiler to hang automatic unwind protection on the way
-//            UV2Player::~UV2Player's real `Buffer buffer_` member does.
 // size      123 bytes
 // prototype void (__thiscall ??1InfoWin@@QAE@XZ)(InfoWin* this)
 // callers   0   call targets   3
@@ -211,10 +189,6 @@ Return Value: n/a
 Status: Complete
 */
 InfoWin::~InfoWin() {
-    char *const self = reinterpret_cast<char *>(this);
-    reinterpret_cast<PushButton *>(self + 0x9D0)->~PushButton();
-    reinterpret_cast<Font *>(self + 0x58)->~Font();
-    reinterpret_cast<Time *>(self + 0x30)->~Time();
 }
 
 // ORIGINAL: 0x00459420 ?UNK5@InfoWin@@QAEXHHHHH@Z 0x00459420-0x0045949B;0x00655295-0x006552BA FILE
@@ -263,4 +237,3 @@ void InfoWin::UNK5(int, int, int, int, int) {
 void __cdecl help_any() {
     DatalinkMain.exec(0, 0);
 }
-
