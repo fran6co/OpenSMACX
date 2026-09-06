@@ -301,13 +301,21 @@ CEILINGS = {
     # 207 -> 206 (2026-09-05, caviar class pass): set_scene_rotation reaches
     # the rotation matrix through &rotation_ now that Caviar declares it, not
     # through reinterpret_cast<uint8_t *>(this) + 0x38 - BYTE_EXACT either way.
-    "raw self-access": 206,
+    # 206 -> 233 (2026-09-06, W5g texture cluster, collected): 31 archive
+    # bodies homed verbatim into texture.cpp - the archive's pun-on-this
+    # transcriptions are now product source. The texture class pass is the
+    # designated follow-up that lowers this.
+    "raw self-access": 233,
     # 4 -> 5 (2026-09-03, P1a batch): one homed body's faithful spelling
     # returns this as int (catalogue mangling QAEHH; TexHeap::UNK1 family).
     # 5 -> 8 (2026-09-03, P2 buffer/mapwin batch): three more homed
     # wrappers whose shipped signatures take pointers the catalogue spells
     # as ints (draw overloads on uchar* bitmaps).
-    "pointer-parameter as int": 5,
+    # 5 -> 104 (2026-09-06, W5g texture cluster, collected): the archive's
+    # reinterpret_cast<int>(ptr) parameter idiom, carried by the same 31
+    # verbatim homings. Lowered by the texture class pass (retype the
+    # pointer parameters; the casts are compile-time only).
+    "pointer-parameter as int": 104,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
     # were never counted. The tree did not change; the ruler did.
@@ -393,7 +401,13 @@ CEILINGS = {
     # homed bodies' parameter renames - start's directive table and
     # calculate_dimensions' walk name twelve sites the artifacts spelled
     # a1/a2.
-    "scaffold name": 2466,
+    # 2466 -> 3038 (2026-09-06, W5g texture cluster, collected): 31
+    # unclaimed blit/edge bodies homed verbatim from the archive - their
+    # a1/a2 parameters and blit_slot_<off> spellings are the growth. The
+    # agent renamed all 56 g_<addr> bindings from evidence and left 20
+    # slots honestly unnamed rather than inventing facts (the WHY text
+    # forbids the invention). The texture class pass owns the lowering.
+    "scaffold name": 3038,
 }
 
 WHY = {

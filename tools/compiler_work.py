@@ -647,7 +647,12 @@ SCAFFOLD_CEILINGS = {
     # src/fractal.h).
     # 1010 -> 1009 (2026-09-06, W5h widget labels): 006132a0.cpp went with
     # the Dialogs::calculate_dimensions homing, BYTE_EXACT 24/24.
-    "artifact files (recovered/)": 1009,
+    # 1009 -> 1000 (2026-09-06, W5g texture cluster): nine claimed/units
+    # artifacts homed - three BYTE_EXACT (0x6239B0 the missing 5-arg
+    # draw_trans declaration, 0x623F50 and 0x624CA0 transcribed from the
+    # image because the archive copies were BODY GOES HERE stubs over a
+    # nonexistent Subject class) and six unclaimed with them.
+    "artifact files (recovered/)": 1000,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -742,7 +747,10 @@ SCAFFOLD_CEILINGS = {
     # BYTE_EXACT), caviar (-11: the add_object family, render_mono,
     # clear_buffers, render_multi_table_dest, object_start,
     # vox_release_record), console (-1: auto_play_callback BYTE_EXACT).
-    "unrecovered files": 1126,
+    # 1126 -> 1096 (2026-09-06, W5g texture cluster): 30 unclaimed texture
+    # blit/edge bodies homed verbatim into src/texture.cpp - unverifiable
+    # to measured MISMATCH, the campaign's coverage move.
+    "unrecovered files": 1096,
     # 2717 -> 2748 (2026-09-04, P2 net batch): NetFifo promoted with
     # close/add/get/get, NetFifoNode, head_/tail_/count_ - the deliberate
     # raise this ceiling exists for (class modelling grows it; the class

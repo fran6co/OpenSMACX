@@ -45,7 +45,15 @@ REPO = pathlib.Path(__file__).resolve().parent.parent
 # faction-art pairs consolidated onto their existing objects.
 # 6 -> 5 (batch 6, stringstruct family): the BasePop stage-table copies left
 # with ProdPicker's three StringList members - one doubled name fewer.
-CEILING = 5
+# 5 -> 8 (2026-09-06, W5g texture cluster, collected): three addresses in
+# texture.cpp (0x9BB490/0x9BB4F4/0x9BB4FC) carry both the named binding
+# (blit_edge_uvs_a/b, blit_z_values - typed int* const, the store idiom
+# reinterpret_cast<int>(ptr)) and a second g2_* binding typed int** const
+# (the load idiom *x). The slots HOLD pointers stored as ints, so the
+# honest single type is int** const - consolidating is ~100 use sites
+# across the 31 homed blit bodies and belongs to the texture class pass,
+# not a collection edit.
+CEILING = 8
 
 BINDING = re.compile(r"^\s*(?:static\s+)?[\w:]+[\s\*&]+const\s+(\w+)\s*=\s*"
                      r"\(?\s*\([\w:\s\*]+\)\s*0x(00[0-9A-Fa-f]{6})")

@@ -28,11 +28,156 @@
   * therefore reaches at least 0x70; that is a floor, not a size, and the
   * storage below is what the canary seeds rather than a modelled layout.
   */
+// The rasteriser's own types, reached only through pointers here. `Vert`
+// stays opaque everywhere in this tree - the blitters walk it as a raw int
+// stream - so a forward declaration is all the class model has.
+class Buffer;
+struct Vert;
+struct TexHeap;
+
+/*
+ * THE EDGE SCANNER, one per polygon side, and the state `setup_edge` and
+ * `setup_edge_gouraud` fill in for the scanline loop that follows them.
+ *
+ * SIZED BY WHAT THE TWO SETUPS WRITE, and they agree with the callers: the
+ * plain `setup_edge` writes 0x00..0x30 and stops, `setup_edge_gouraud` adds
+ * the two fixed-point colour fields at 0x34 and 0x38 and stops, and the
+ * largest caller (draw at 0x006233C0) declares `int edge[15]` = 0x3C bytes
+ * for the pair of them. Fifteen ints is the superset, to the byte.
+ */
+struct EdgeScan {
+    // ONE EDGE OF THE POLYGON, and the state the two setups leave for the
+    // scanline loop. Named from what `setup_edge`, `setup_edge_gouraud` and
+    // `edge_step` do to each slot; the three read as one DDA once the names
+    // are in - `accumA += deltaA`, and so on down the channels.
+    int f0;           // 0x00 the Y the walk starts from; callers pre-set it
+    int counter;      // 0x04 rows this edge spans, the DDA's divisor
+    int id;           // 0x08 the Y the walk landed on
+    int accumA;       // 0x0c first interpolant, accumulator
+    int accumB;       // 0x10 second interpolant, accumulator
+    int deltaA;       // 0x14 first interpolant's step
+    int deltaB;       // 0x18 second interpolant's step
+    int accumC;       // 0x1c third channel, accumulator
+    int deltaC;       // 0x20 third channel's step
+    int extraDeltaC;  // 0x24 added to accumC when the fraction wraps
+    int fracAccum;    // 0x28 the DDA's fractional accumulator
+    int fracDelta;    // 0x2c its step
+    int fracSub;      // 0x30 what comes back off it on a wrap
+    int accumD;       // 0x34 gouraud light, accumulator
+    int deltaD;       // 0x38 gouraud light, step
+};
+
+/*
+ * THE VERTEX, 8 BYTES, TWO INTS. `setup_edge` indexes the two arrays it is
+ * handed at `[i * 2]` and `[i * 2 + 1]`, and the vertex-array base the
+ * rasterisers read off the texture at 0x9BB490/0x9BB4F4 is stepped by 8, so
+ * this is the shape those arrays hold. It stays a separate type from `Vert`
+ * above because `Vert` is the image's own tag for the polygon vertex the
+ * blitters are passed and this tree has never had to define it.
+ */
+struct EdgePoint {
+    int a;
+    int b;
+};
+
 class Texture {
+ public:
+  // homed from 00622db0.cpp
+  int draw_trans_3(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5, int a6);
+
+ public:
+  // homed from 00619d80.cpp
+  int draw_trans2(Buffer *a1, int *a2, int a3);
+
  public:
   Texture();
   ~Texture();
   void close();
+
+  // ===== THE SOFTWARE BLITTERS =====
+  // Every one of these is a scanline polygon fill over `Buffer`'s pixel
+  // block, differing only in the blend it applies per texel: plain copy,
+  // colour-key transparency, alpha, mask-from-source, mask-from-destination,
+  // and the two gouraud-shaded variants that interpolate a colour along each
+  // edge. `draw_coast` is the coastline overlay, which blends the edge band
+  // of a neighbouring texture. The two `setup_edge` helpers are the shared
+  // DDA edge walker, `static` because it reads and writes no Texture field -
+  // the image's names end `QAA`, a static __cdecl member.
+  int extract(Buffer *buffer, int a2, int a3, int a4, int a5, TexHeap *heap);
+  void draw_trans(Buffer *buffer, Vert *verts, int count, Vert *last);
+  void draw_trans(Buffer *buffer, Vert *verts, int count);
+  void draw_trans(Buffer *buffer, Vert *verts, int a3, Vert *a4, int a5);
+  void draw_upper_threshold_trans(Buffer *buffer, Vert *verts, int *a3,
+                                  int a4);
+  void draw(Buffer *buffer, Vert *verts, int *a3, int a4, Vert *a5);
+  void draw_trans(Buffer *buffer, Vert *verts, int *a3, int a4, Vert *a5);
+  void draw_mask_dest(Buffer *buffer, Vert *verts, uint8_t *a3, uint8_t *a4,
+                      int a5, Vert *a6);
+  void draw_coast(Buffer *buffer, Vert *verts, int *a3, Texture *coast,
+                  uint8_t *a5, int a6, Vert *a7);
+  void draw(Buffer *buffer, Vert *verts, int *a3, int a4, Vert *a5, int a6);
+  void draw_coast(Buffer *buffer, Vert *verts, int *a3, Texture *coast,
+                  uint8_t *a5, int a6, Vert *a7, int a8);
+  static int setup_edge_gouraud(EdgeScan *edge, int index);
+  static int setup_edge(EdgeScan *edge, int index);
+
+  // ===== THE SPAN RASTERISER FAMILY =====
+  // Every one of these opens `mov esi, ecx` (or `mov edi, ecx`) and never
+  // reads a stack slot for the receiver, so each is a __thiscall member -
+  // the archive had them as `__stdcall` free functions or as invented
+  // one-method classes (RasterSrc, RasterSrc2, GouraudSrc, TriRender) before
+  // the prologues settled it. They differ only in the setup they drive and
+  // the blend the inner loop applies:
+  //   * the `setup_edge` group interpolates position only, flat colour;
+  //   * the `setup_edge_gouraud` group adds a per-pixel interpolant
+  //     (u/v, or a light value on top);
+  //   * `sub_625080` is the per-span flat-fill helper the third group hands
+  //     each scanline to.
+  // Names marked with an address are this tree's, not the image's: those
+  // bodies carry no symbol in the shipped binary, so the name says what the
+  // body does and the address is the only handle the catalogue has.
+  void draw(Buffer *buffer, Vert *verts, int *zvals, int count, int a5,
+            int light_thresh);                                   // 0x0061AC60
+  int draw2(Buffer *a1, int *a2, int *a3, int a4, int *a5, int a6,
+            int a7);                                            // 0x00624670
+  // THE SIX THE CATALOGUE NEVER NAMED. Their members keep the address-derived
+  // name the catalogue gave them - it is the only handle the archive has for
+  // them, and homing looks the definition up by it. What they are:
+  //   sub_61b780  gouraud affine rasteriser; `mode` picks the 4- or
+  //               8-vertex vertex-array base at 0x0c / 0x2c
+  //   sub_61c630  per-span fill across two textures with a shade table
+  //   sub_61cb50  setup_edge family, five ints, no Buffer of its own
+  //   sub_61d990  gouraud-lit draw over a second texture's shade table
+  //   sub_61df60  nine ints, gouraud family, depth-tested
+  //   sub_61f0d0  gouraud family, hands each span to sub_620100
+  //   sub_620a10  affine rasteriser, setup_edge family + sub_624eb0
+  //   sub_622200  flat-fill family: four sub_625080 span calls
+  void sub_61b780(Buffer *bufParam, int *verts, int a3, int mode);
+  void sub_61c630(Buffer *bufIn, int *verts, Texture *texB, uint8_t *shadeTable,
+                  int vertCount, int unusedIn);
+  int sub_61cb50(int a1, int a2, int a3, int a4, int a5);
+  int sub_61d990(Buffer *a1, int *vertArray, int a3, Texture *a4,
+                 uint8_t *table, int a6);
+  int sub_61df60(int a1, int a2, int a3, int a4, int a5, int a6, int a7,
+                 int a8, int a9);
+  void sub_61f0d0(Buffer *param_2, int param_3, int param_4, int param_5,
+                  int param_6, uint32_t param_7, int param_8);
+  void sub_620a10(Buffer *bufParam, int vertsParam, int countParam, int a4,
+                  int *outFlag);
+  void sub_622200(int a2, int a3, int a4, int a5, int a6, int a7, int a8,
+                  int a9);
+  // 0x00623F50. Seven ints, the seventh the -1 sentinel that selects the
+  // forward into the span filler - the same idiom `draw2` carries.
+  void sub_623f50(int a1, int a2, int a3, int a4, int a5, int a6, int a7);
+  // 0x00624CA0. Six ints, fifth-arg -1 sentinel, forward into the affine
+  // rasteriser.
+  void sub_624ca0(int a1, int a2, int a3, int a4, int a5, int a6);
+  void sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count, int a5,
+                  int *out_flag);                                // 0x006212B0
+  void sub_622810(Buffer *buf, Vert *verts, int *zvals, int count, int a5,
+                  int light_thresh, int *out_flag);              // 0x00622810
+  void draw_upper_threshold_trans2(Buffer *buf, Vert *verts, int aux,
+                                   int count, int threshold_color);  // 0x006239E0
 
  private:
   void *pixels_;        // 0x00

@@ -22,10 +22,10 @@ int Texture::extract(Buffer * a1, int a2, int a3, int a4, int a5, TexHeap * a6) 
   iHeight_ = 0;
   borrowed_ = 0;
 
-  if (a2 + a4 > (int)a1->width_) {
+  if (a2 + a4 > (int)a1->dib_.bmiHeader.biWidth) {
     return 3;
   }
-  if (a3 + a5 > -(int)a1->height_) {
+  if (a3 + a5 > -(int)a1->dib_.bmiHeader.biHeight) {
     return 3;
   }
 
@@ -37,7 +37,7 @@ int Texture::extract(Buffer * a1, int a2, int a3, int a4, int a5, TexHeap * a6) 
     return 7;
   }
 
-  int stride = a1->field_4A8_;
+  int stride = a1->stride_;
   pixels_ = 0;
   if (a6 != 0) {
     pixels_ = reinterpret_cast<void *>(a6->get_tex_mem(iHeight_ << 8));

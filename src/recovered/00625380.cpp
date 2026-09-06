@@ -11,6 +11,23 @@
 // OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
 // and rewriting it in the tree's own style is a later phase. See README.md
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+//
+// HANDOFF - this body does NOT home to texture.cpp. The nearest-marker
+// shortlist proposed texture.cpp only because 0x00625380 sits immediately
+// after sub_625080 (0x00625080). The COMDAT says otherwise:
+//   * 0x0062539A stores [ecx + 0xAB8]. `sizeof(BaseButton) == 0xAB8`
+//     (src/basebutton.h:114), so `this` is a class whose BaseButton
+//     subobject ENDS at 0xAB8 and the store is that class's own first field
+//     behind it. A Texture is 0x70 bytes.
+//   * 0x006253BD calls 0x00607210, BaseButton::init, with `this` still in
+//     ecx - the receiver is handed straight to the base's initialiser.
+//   * `ret 0x1c` = seven stack dwords, and the null-argument early return
+//     of 3 reads as a `?init@...@@QAEH...` on a BaseButton-derived window
+//     class.
+// The natural home is whichever TU owns that class - basewin.cpp /
+// maininterface.cpp / basebutton.cpp - and the `ButtonInit` receiver below
+// is the fiction standing in for it. The body itself is already
+// transcribed; only the class needs naming.
 
 class ButtonInit { public:
     int sub_625380(int, int, int, int, int, int, int);
