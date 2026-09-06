@@ -5,7 +5,7 @@ import pytest
 
 from match_recovery.driver import drive, working_state
 from match_recovery.cli import main
-from match_recovery.reviews import ReviewStore, acceptance_result, merge_interpretations, validate_review, validate_supersessions
+from match_recovery.reviews import ReviewStore, acceptance_result, merge_interpretations, pending_interpretations, validate_review, validate_supersessions
 from match_recovery.model import digest
 from test_driver import CONFIG, WORKER, project
 
@@ -99,7 +99,8 @@ def supersession(previous, replacement):
             "evidence": ["source:src/f.cpp"], "reason": "Constructor evidence identifies the actual member offset."}
 
 
-def test_reviewed_replacement_reaches_full_gate_without_dropping_obligations(project):
+@pytest.mark.parametrize("retract", [False, True])
+def test_reviewed_replacement_reaches_full_gate_without_dropping_obligations(project, retract):
     from dataclasses import asdict
     from match_recovery.model import Dimension, Obligation
 
@@ -109,6 +110,9 @@ def test_reviewed_replacement_reaches_full_gate_without_dropping_obligations(pro
     obligation = Obligation(entity, Dimension.STRUCTURE, "source interpretation history")
     config = {**GATED, "obligations": {"argv": ["obligations"], "timeout": 10}}
     observed = []
+    disposition = ({"retractions": [{"interpretation": previous["interpretation_id"],
+                                     "evidence": ["source:src/f.cpp"], "reason": "The earlier layout assumption was unsupported."}]}
+                   if retract else {"supersessions": [supersession(previous, replacement)]})
 
     def execute(command, root, task_name, payload):
         if command.argv[0] == "obligations":
@@ -121,7 +125,7 @@ def test_reviewed_replacement_reaches_full_gate_without_dropping_obligations(pro
         if command.argv[0] == "review":
             assert len(payload["context"]["review_interpretations"]) == 2
             return 0, {"snapshot": payload["snapshot"], "decision": "approve", "evidence": ["source:src/f.cpp"],
-                       "feedback": "The new offset is justified.", "supersessions": [supersession(previous, replacement)]}
+                       "feedback": "The new offset is justified.", **disposition}
         assert command.argv[0] == "acceptance"
         observed.append(payload)
         # Reviewed replacement is not current build/runtime/layout proof.
@@ -131,8 +135,85 @@ def test_reviewed_replacement_reaches_full_gate_without_dropping_obligations(pro
                    reviewer_configuration=REVIEWER, execute=execute)
     assert report["stop_reason"] == "acceptance_unknown" and not report["ready_for_collection"]
     assert observed[0]["protected"][0]["obligation_id"] == obligation.obligation_id
-    assert observed[0]["review"]["supersessions"] == [supersession(previous, replacement)]
-    assert ReviewStore(root, task.task_id).decisions()[0]["supersessions"]
+    field = "retractions" if retract else "supersessions"
+    assert observed[0]["review"][field] == disposition[field]
+    assert ReviewStore(root, task.task_id).decisions()[0][field]
+
+
+def test_generic_approval_cannot_skip_removed_interpretation_and_review_can_resume(project):
+    root, task = project
+    previous = interpretation(task.subjects[0].entity_id, 4, False)
+    config = {**GATED, "obligations": {"argv": ["obligations"], "timeout": 10}}
+    calls = []
+    retract = False
+
+    def execute(command, root, task_name, payload):
+        name = command.argv[0]
+        calls.append(name)
+        if name == "obligations":
+            return 0, {"obligations": [], "interpretations": [previous]}
+        if name == "context":
+            return 0, {}
+        if name == "check":
+            return 0, {"result": "pass"}
+        if name == "review":
+            response = {"snapshot": payload["snapshot"], "decision": "approve", "evidence": ["source:src/f.cpp"],
+                        "feedback": "Reviewed current code."}
+            if retract:
+                response["retractions"] = [{"interpretation": previous["interpretation_id"],
+                                             "reason": "Original evidence disproves this field assumption.",
+                                             "evidence": ["source:src/f.cpp"]}]
+            return 0, response
+        assert name == "acceptance"
+        return 3, {**PASS, "result": "unknown", "structure": "unknown"}
+
+    first = drive(root, task.task_id, config, WORKER, iterations=1,
+                  reviewer_configuration=REVIEWER, execute=execute)
+    assert first["stop_reason"] == "interpretation_review_incomplete"
+    assert first["pending_interpretations"] == [previous["interpretation_id"]]
+    assert "acceptance" not in calls and not first["ready_for_collection"]
+    subprocess.run(["git", "add", "recovery"], cwd=root, check=True)
+    subprocess.run(["git", "commit", "-m", "checkpoint incomplete review"], cwd=root, check=True, capture_output=True)
+    retract = True
+    second = drive(root, task.task_id, config, WORKER, iterations=1,
+                   reviewer_configuration=REVIEWER, execute=execute)
+    assert calls.count("review") == 2  # Incomplete approval must not be reused forever.
+    assert second["stop_reason"] == "acceptance_unknown" and not second["ready_for_collection"]
+
+
+def test_retraction_cannot_hide_current_interpretation_or_duplicate_disposition():
+    previous = interpretation("entity-one", 4, False)
+    decision = {"kind": "review", "author": "worker", "reviewer": "reviewer", "snapshot": "a" * 64,
+                "decision": "approve", "evidence": ["source:f.cpp"], "feedback": "Withdraw old interpretation.",
+                "retractions": [{"interpretation": previous["interpretation_id"], "reason": "Disproved assumption.",
+                                  "evidence": ["source:f.cpp"]}]}
+    known = {previous["interpretation_id"]: previous}
+    assert pending_interpretations(decision, known) == []
+    with pytest.raises(ValueError, match="duplicate"):
+        validate_review({**decision, "retractions": decision["retractions"] * 2})
+    previous["current"] = True
+    with pytest.raises(ValueError, match="historical"):
+        validate_supersessions(decision, known)
+
+
+def test_new_historical_interpretation_after_review_stops_before_acceptance(project):
+    root, task = project
+    base_execute, calls = execution(project)
+    reads = 0
+    old = interpretation(task.subjects[0].entity_id, 4, False)
+    config = {**GATED, "obligations": {"argv": ["obligations"], "timeout": 10}}
+
+    def execute(command, root, task_name, payload):
+        nonlocal reads
+        if command.argv[0] == "obligations":
+            reads += 1
+            return 0, {"obligations": [], "interpretations": [] if reads == 1 else [old]}
+        return base_execute(command, root, task_name, payload)
+
+    with pytest.raises(ValueError, match="inventory changed after review"):
+        drive(root, task.task_id, config, WORKER, iterations=1,
+              reviewer_configuration=REVIEWER, execute=execute)
+    assert "review" in calls and "acceptance" not in calls
 
 
 @pytest.mark.parametrize("bad", ["unknown", "still_current", "not_current", "other_anchor"])

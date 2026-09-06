@@ -13,7 +13,7 @@ from .tasks import task_name
 
 def validate_review(value: dict) -> None:
     required = {"kind", "author", "reviewer", "snapshot", "decision", "evidence", "feedback"}
-    if not isinstance(value, dict) or not required <= set(value) or set(value) - required - {"supersessions"}:
+    if not isinstance(value, dict) or not required <= set(value) or set(value) - required - {"supersessions", "retractions"}:
         raise ValueError("invalid review decision fields")
     if value["kind"] != "review" or value["decision"] not in ("approve", "request_changes"):
         raise ValueError("invalid review disposition")
@@ -45,6 +45,23 @@ def validate_review(value: dict) -> None:
             require_text(evidence, "supersession evidence")
     if supersessions and value["decision"] != "approve":
         raise ValueError("only an approved review can supersede an interpretation")
+    retractions = value.get("retractions", [])
+    if not isinstance(retractions, list):
+        raise ValueError("review retractions must be an array")
+    for item in retractions:
+        if not isinstance(item, dict) or set(item) != {"interpretation", "evidence", "reason"}:
+            raise ValueError("invalid interpretation retraction")
+        require_digest(item["interpretation"])
+        if item["interpretation"] in seen:
+            raise ValueError("duplicate interpretation disposition")
+        seen.add(item["interpretation"])
+        require_text(item["reason"], "retraction reason")
+        if not isinstance(item["evidence"], list) or not item["evidence"]:
+            raise ValueError("retraction needs evidence")
+        for evidence in item["evidence"]:
+            require_text(evidence, "retraction evidence")
+    if retractions and value["decision"] != "approve":
+        raise ValueError("only an approved review can retract an interpretation")
 
 
 def merge_interpretations(known: dict, rows: list, scope: frozenset[str]) -> None:
@@ -78,6 +95,18 @@ def validate_supersessions(review: dict, interpretations: dict) -> None:
             raise ValueError("supersession must replace a historical interpretation with a current one")
         if previous["entity_id"] != replacement["entity_id"]:
             raise ValueError("supersession must preserve the original evidence anchor")
+    for item in review.get("retractions", []):
+        previous = interpretations.get(item["interpretation"])
+        if previous is None or previous["current"]:
+            raise ValueError("retraction requires a known historical interpretation")
+
+
+def pending_interpretations(review: dict, interpretations: dict) -> list[str]:
+    """Removed/revised interpretations need explicit disposition before admission."""
+    validate_supersessions(review, interpretations)
+    addressed = {item["previous"] for item in review.get("supersessions", [])}
+    addressed.update(item["interpretation"] for item in review.get("retractions", []))
+    return sorted(key for key, item in interpretations.items() if not item["current"] and key not in addressed)
 
 
 class ReviewStore:

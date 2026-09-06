@@ -19,7 +19,7 @@ from .migration_protocol import admit, extend_inventory, permissions
 from .model import canonical, require_text
 from .records import parse_json
 from .processes import run_bounded
-from .reviews import ReviewStore, acceptance_result, merge_interpretations, validate_review, validate_supersessions
+from .reviews import ReviewStore, acceptance_result, merge_interpretations, pending_interpretations, validate_review, validate_supersessions
 from .tasks import TaskStore, entity_id
 
 
@@ -167,7 +167,8 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             decisions = reviews.decisions()
             current = [value for value in decisions if value["snapshot"] == snapshot
                        and value["author"] == worker_configuration["author"]
-                       and value["reviewer"] == reviewer_configuration["author"]]
+                       and value["reviewer"] == reviewer_configuration["author"]
+                       and (value["decision"] != "approve" or not pending_interpretations(value, interpretations))]
             if current:
                 decision = current[-1]
             else:
@@ -175,12 +176,12 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                                                             "check": check, "snapshot": snapshot,
                                                             "instructions": ["Review structure and source evidence independently.",
                                                                              "Do not edit files, stamp claims or infer correctness from a byte match.",
-                                                                             "Use optional supersessions to justify replacing historical interpretations with current ones from review_interpretations.",
+                                                                             "Explicitly address every historical review_interpretation using supersessions or evidence-backed retractions; neither waives proof obligations.",
                                                                              "Return reasoning and evidence references, never copied image bytes or disassembly."]})
                 if code != 0:
                     return finish("review_unavailable", round_index, check)
                 fields = {"snapshot", "decision", "evidence", "feedback"}
-                if not fields <= set(response) or set(response) - fields - {"supersessions"}:
+                if not fields <= set(response) or set(response) - fields - {"supersessions", "retractions"}:
                     raise ValueError("invalid reviewer response")
                 decision = {"kind": "review", "author": worker_configuration["author"],
                             "reviewer": reviewer_configuration["author"], **response}
@@ -193,9 +194,16 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             review_feedback = decision
             if decision["decision"] == "request_changes":
                 return None  # Feed the independent findings to the next worker round.
+            pending = pending_interpretations(decision, interpretations)
+            if pending:
+                output = finish("interpretation_review_incomplete", round_index, check)
+                output.update(review=decision, pending_interpretations=pending)
+                return output  # A generic approval cannot silently discard structural history.
             migration_report = None
             if permission is not None:
                 obligations = refresh_obligations()
+                if reviews.snapshot(working_state(root), policy) != snapshot:
+                    raise ValueError("source or interpretation inventory changed after review")
                 code, measured = readonly(migration_command, {"task": task.to_dict(), "snapshot": snapshot,
                                                               "protected": obligations, "permission": permission,
                                                               "review": decision, "interpretations": policy.get("interpretations", [])})
@@ -213,8 +221,11 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             if acceptance is None:
                 output = finish("full_acceptance_gate_required", round_index, check)
             else:
+                obligations = refresh_obligations()
+                if reviews.snapshot(working_state(root), policy) != snapshot:
+                    raise ValueError("source or interpretation inventory changed after review")
                 code, report = readonly(acceptance, {"task": task.to_dict(), "snapshot": snapshot,
-                                                     "protected": refresh_obligations(), "review": decision,
+                                                     "protected": obligations, "review": decision,
                                                      "interpretations": policy.get("interpretations", [])})
                 if reviews.snapshot(working_state(root), policy) != snapshot:
                     raise ValueError("source changed after review")

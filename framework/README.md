@@ -192,6 +192,15 @@ and acceptance adapters receive it with the complete protected obligations and
 interpretation inventory; supersession does not remove a proof obligation or waive
 fresh structural/build/reference/runtime checks. Target-specific verification of
 the review's reasoning and full structural admission remain unfinished.
+If an interpretation was wrong and has no replacement, an approved response may
+instead supply `retractions` entries with `interpretation` (its digest), `evidence`
+and `reason`. Retraction is allowed only for a historical interpretation; it does
+not delete history or its original-address structural obligation. Every historical
+interpretation must have one explicit supersession or retraction before migration
+or acceptance is invoked. A generic approval leaves the driver stopped at
+`interpretation_review_incomplete`, listing the pending IDs. After checkpointing
+that review, a later run asks the reviewer again rather than endlessly reusing
+the incomplete approval. These dispositions remain judgments, not measured proof.
 
 `request_changes` feeds the review back to another worker round within the same
 budget. Source changes require a new review. Evidence-backed decisions are kept
