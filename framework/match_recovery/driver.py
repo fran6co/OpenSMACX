@@ -17,6 +17,7 @@ import uuid
 from .locking import file_lock
 from .model import canonical, require_text
 from .records import parse_json
+from .reviews import ReviewStore, acceptance_result, validate_review
 from .tasks import TaskStore, entity_id
 
 
@@ -106,11 +107,12 @@ def changes(before: dict, after: dict) -> set[str]:
 
 
 def drive(root: Path, task_name: str, configuration: dict, worker_configuration: dict, *,
-          iterations: int, execute=invoke) -> dict:
+          iterations: int, reviewer_configuration: dict | None = None, execute=invoke) -> dict:
     """Recompute context/checks, edit, recheck, repeat; discoveries stop for review."""
     if type(iterations) is not int or not 1 <= iterations <= 100:
         raise ValueError("iterations must be 1..100")
-    if (set(configuration) != {"schema_version", "target", "context", "check"}
+    required = {"schema_version", "target", "context", "check"}
+    if (not required <= set(configuration) or set(configuration) - required - {"acceptance"}
             or type(configuration["schema_version"]) is not int or configuration["schema_version"] != 1):
         raise ValueError("invalid driver configuration")
     if set(worker_configuration) != {"author", "command"}:
@@ -119,6 +121,15 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
     context_command = Command.read(configuration["context"])
     check_command = Command.read(configuration["check"])
     worker_command = Command.read(worker_configuration["command"])
+    reviewer_command = None
+    if reviewer_configuration is not None:
+        if set(reviewer_configuration) != {"author", "command"}:
+            raise ValueError("reviewer configuration needs author and command")
+        require_text(reviewer_configuration["author"], "reviewer author")
+        if reviewer_configuration["author"] == worker_configuration["author"]:
+            raise ValueError("reviewer must be independent of the worker")
+        reviewer_command = Command.read(reviewer_configuration["command"])
+    acceptance = Command.read(configuration["acceptance"]) if "acceptance" in configuration else None
     root = root.resolve()
     store = TaskStore(root)
     with file_lock(root / "build/recovery/driver.lock", timeout=0):
@@ -127,6 +138,9 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             raise ValueError("task target disagrees with configured target adapter")
         selected, editable = store.scope(task_name)
         initial_decisions = store.decisions(task_name)
+        reviews = ReviewStore(root, task_name)
+        policy = {"project": configuration, "worker": worker_configuration, "reviewer": reviewer_configuration}
+        review_feedback = None
         # Existing scoped edits are resumable. Unrelated dirty work is not the
         # runner's property and must be checkpointed before dispatch.
         dirty = subprocess.run(["git", "diff", "--name-only", "HEAD", "-z"], cwd=root,
@@ -147,26 +161,83 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                 if changes(before, working_state(root)):
                     raise ValueError("read-only adapter edited the worktree; preserve work and inspect manually")
             return code, output
+        def review_candidate(context, check, round_index):
+            nonlocal review_feedback
+            if reviewer_command is None:
+                return finish("independent_review_required", round_index, check)
+            snapshot = reviews.snapshot(working_state(root), policy)
+            decisions = reviews.decisions()
+            current = [value for value in decisions if value["snapshot"] == snapshot
+                       and value["author"] == worker_configuration["author"]
+                       and value["reviewer"] == reviewer_configuration["author"]]
+            if current:
+                decision = current[-1]
+            else:
+                code, response = readonly(reviewer_command, {"task": task.to_dict(), "context": context,
+                                                            "check": check, "snapshot": snapshot,
+                                                            "instructions": ["Review structure and source evidence independently.",
+                                                                             "Do not edit files, stamp claims or infer correctness from a byte match.",
+                                                                             "Return reasoning and evidence references, never copied image bytes or disassembly."]})
+                if code != 0:
+                    return finish("review_unavailable", round_index, check)
+                if set(response) != {"snapshot", "decision", "evidence", "feedback"}:
+                    raise ValueError("invalid reviewer response")
+                decision = {"kind": "review", "author": worker_configuration["author"],
+                            "reviewer": reviewer_configuration["author"], **response}
+                validate_review(decision)
+                if decision["snapshot"] != snapshot or reviews.snapshot(working_state(root), policy) != snapshot:
+                    raise ValueError("review refers to stale source")
+                reviews.append(decision, expected_revision=len(decisions))
+            review_feedback = decision
+            if decision["decision"] == "request_changes":
+                return None  # Feed the independent findings to the next worker round.
+            if check["result"] != "pass":
+                output = finish("structural_checkpoint_reviewed", round_index, check)
+                output["review"] = decision
+                return output  # Approval does not admit a matching regression.
+            if acceptance is None:
+                output = finish("full_acceptance_gate_required", round_index, check)
+            else:
+                code, report = readonly(acceptance, {"task": task.to_dict(), "snapshot": snapshot})
+                if reviews.snapshot(working_state(root), policy) != snapshot:
+                    raise ValueError("source changed after review")
+                result = acceptance_result(code, report)
+                output = finish("ready_for_collection" if result == "pass" else "acceptance_" + result,
+                                round_index, check)
+                output["acceptance"] = report
+                output["ready_for_collection"] = result == "pass"
+            output["review"] = decision
+            return output
         for round_index in range(iterations + 1):
             state = store.status(task_name, selected)
             if state["pending_discoveries"]:
                 return finish(state["next_action"], round_index)
+            round_state = working_state(root)
             code, context = readonly(context_command, {"task": task.to_dict()})
             if code != 0:
                 return finish("context_unavailable", round_index)
             code, check = readonly(check_command, {"task": task.to_dict(), "context": context})
+            if changes(round_state, working_state(root)):
+                raise ValueError("source changed between context generation and checking")
             result = check.get("result")
             if result not in ("pass", "fail", "unknown") or code != {"pass": 0, "fail": 1, "unknown": 3}[result]:
                 raise ValueError("checker result and exit code disagree")
             if result == "pass":
-                return finish("independent_review_required", round_index, check)
+                reviewed = review_candidate(context, check, round_index)
+                if reviewed is not None:
+                    return reviewed
             if round_index == iterations:
+                if result != "pass" and reviewer_command is not None:
+                    reviewed = review_candidate(context, check, round_index)
+                    if reviewed is not None:
+                        return reviewed
                 return finish("iteration_budget_exhausted", round_index, check)
             before = working_state(root)
             try:
                 code, response = execute(worker_command, root, task_name,
                                          {"task": task.to_dict(), "editable_files": sorted(editable),
                                           "context": context, "check": check, "round": round_index + 1,
+                                          "review_feedback": review_feedback,
                                           "instructions": ["Edit only authorized files; never run Git mutations.",
                                                            "Report structural discoveries even outside task scope.",
                                                            "Do not erase source mappings or restoration obligations."]})

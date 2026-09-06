@@ -102,8 +102,11 @@ establish completion of this program.
   selected TU/flag set without stamping claims. A configured command driver now
   runs bounded context/check/worker/recheck rounds, preserves discoveries and
   detects scope violations. An alternate target exercises real subprocesses.
-  Provider integrations, independent review execution, migration admission and
-  collection remain under construction; the driver never declares collection ready.
+  Configured independent reviews now feed corrections back to workers and bind
+  decisions to source snapshots. A separate full-project acceptance contract is
+  required before reporting collection readiness; OpenSMACX does not yet provide
+  that complete verifier. Live provider integrations, protected migration
+  admission/restoration and actual collection remain under construction.
 - [ ] InfoWin ownership and constructor-family end-to-end structural pilots.
   The redraw slot is now an InfoWin member instead of independent storage;
   its object-start binding lives beside ConsoleInfoWin's definition. Constructor

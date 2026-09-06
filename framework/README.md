@@ -127,11 +127,54 @@ externally sandbox workers; ignored files and writes outside this worktree are
 not protected by these checks. POSIX timeout cleanup kills the command process
 group; Windows descendant isolation must be provided by the worker adapter.
 
-All current driver stops return CLI exit 3 and `ready_for_collection:false`:
-independent review, structural-migration admission, obligation restoration and
-collection execution remain unfinished. The supplied OpenSMACX checker is still
-a scoped diagnostic, not the full acceptance gate. An alternate-target test runs
-real subprocess worker/check adapters without importing the OpenSMACX adapter.
+Without independent review and a configured full acceptance gate, driver stops
+return CLI exit 3 and `ready_for_collection:false`. The supplied OpenSMACX
+configuration deliberately has no acceptance command yet: its scoped checker
+cannot stand in for complete reference, structure, obligation and runtime checks.
+An alternate-target test runs real subprocess worker/check adapters without
+importing the OpenSMACX adapter.
+
+### Independent review and acceptance
+
+`--reviewer /path/to/reviewer.json` supplies a separate read-only command adapter
+using the same `author`/`command` configuration shape as the worker. Its author
+must differ from the worker's. This is trusted coordinator attribution, not
+authentication; independent provider/session isolation belongs to the adapter.
+The reviewer receives the task, context, check and content snapshot, and returns:
+
+```json
+{"snapshot":"<received SHA-256>","decision":"approve","evidence":["source:src/example.cpp"],"feedback":"Explain the structural judgment here."}
+```
+
+`request_changes` feeds the review back to another worker round within the same
+budget. Source changes require a new review. Evidence-backed decisions are kept
+in the `review:<task>` JSON history stream, not as measurements or source comments.
+The snapshot covers tracked/nonignored source, task decisions and configuration;
+only its own review stream is omitted to avoid a circular fingerprint. Committing
+a review alone does not invalidate it. Review history is workflow metadata, not
+an allowed build input. Compiler/image freshness remains the target gate's job.
+
+On a passing scoped check and approved review, the optional project `acceptance`
+command runs afresh. It must implement the actual full-project checks—not echo
+worker claims—and return exactly `scope: "full_project"`, an overall `result`,
+and `build`, `structure`, `references`, `obligations`, `runtime` outcomes. Outcomes
+are `pass`, `fail` or `unknown`; an unknown dimension yields overall unknown/exit
+3, otherwise any failure yields fail/exit 1. Only all passing dimensions with
+exit 0 can produce `ready_for_collection:true` and driver exit 0. Missing fields,
+scoped reports and contradictory exits are refused. The target adapter must
+verify pinned inputs, original boundaries and every preserved obligation; these
+are contracts for trusted verifier code, not proofs obtained by adding JSON keys.
+
+Acceptance is never cached by this driver, even when a source-identical review is
+reused. Readiness is a current output, not a durable status or permission to collect
+a later changed tree. Collection execution and its final revalidation remain to
+be implemented.
+
+At budget exhaustion an optional reviewer can also assess a still-mismatching
+structural checkpoint. Approval preserves its interpretation and source, but
+returns `structural_checkpoint_reviewed`, never collection readiness. Connecting
+the migration policy's protected-obligation admission/restoration checks remains
+required; structural approval alone does not admit or demote a byte obligation.
 
 ## Task commands and source bindings
 

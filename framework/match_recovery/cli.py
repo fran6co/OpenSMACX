@@ -26,6 +26,7 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("--root", type=Path, default=Path.cwd())
     run.add_argument("--config", type=Path, required=True)
     run.add_argument("--worker", type=Path, required=True, help="Trusted worker command configuration")
+    run.add_argument("--reviewer", type=Path, help="Independent read-only reviewer command configuration")
     run.add_argument("--iterations", type=int, default=3)
     inventory = commands.add_parser("inventory", help="Inspect legacy source without altering it")
     inventory.add_argument("--root", type=Path, default=Path.cwd())
@@ -116,9 +117,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.command == "run":
             from .driver import drive
             from .records import read_json
-            output = drive(args.root, args.task, read_json(args.config), read_json(args.worker), iterations=args.iterations)
+            output = drive(args.root, args.task, read_json(args.config), read_json(args.worker), iterations=args.iterations,
+                           reviewer_configuration=read_json(args.reviewer) if args.reviewer else None)
             print(json.dumps(output, indent=2, sort_keys=True))
-            return 3  # No driver stop condition yet constitutes completed admission.
+            return 0 if output["ready_for_collection"] else 3
         if args.command == "tasks" and args.action == "check-binary":
             from .adapters.opensmacx_binary import verify_task
             output = verify_task(args.root, args.task, args.image)
