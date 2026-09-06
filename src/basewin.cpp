@@ -678,7 +678,7 @@ class VCall { public:
 void BaseWin::on_left_up(int a1, int a2) {
     char *self = reinterpret_cast<char *>(this);
 
-    RECT rect = *reinterpret_cast<RECT *>(self + 0x474);
+    RECT rect = rect2_;
     int flag = *reinterpret_cast<int *>(self + 0x40b54);
     if (flag > 0) {
         if (!in_box(a1, a2, &rect)) {

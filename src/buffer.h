@@ -537,6 +537,15 @@ class Buffer {
   // working rectangle, exactly as Win and Caviar do above.
   friend class DipEdit;
 
+  // BaseWin::on_left_up and MapWin::compute_clip read `rect2_` as the clip
+  // rectangle their hit-tests intersect against - the same working-rectangle
+  // read, reached through the GraphicWin base (MapWin's is virtual, so the
+  // member spelling emits the vbptr walk itself). offsetof(GraphicWin,
+  // rect2_) == 0x474, measured; the same offset ten classes' bodies pass to
+  // RECT * formals.
+  friend class BaseWin;
+  friend class MapWin;
+
   // 0x4. The window the surface belongs to - `GraphicWin::init` stores its
   // `this` here before the minimum-size computation, and nothing recovered
   // reads it. `void *` until a reader proves which base pointer the image

@@ -900,8 +900,7 @@ int MapWin::compute_clip(int a1, int a2, int a3, RECT * a4) {
 
     rect.top = rect.top - self[0x7770];
 
-    RECT *vbaseRect = reinterpret_cast<RECT *>(*reinterpret_cast<int *>(*self + 4) + reinterpret_cast<int>(self) + 0x474);
-    int hit = IntersectRect(a4, &rect, vbaseRect);
+    int hit = IntersectRect(a4, &rect, &rect2_);
     if (hit != 0) {
         if (a3 == 0) {
             int vgrow = (rect.bottom - rect.top) / 4;
@@ -911,8 +910,7 @@ int MapWin::compute_clip(int a1, int a2, int a3, RECT * a4) {
             rect.top = rect.top - vgrow;
             rect.bottom = rect.bottom + vgrow;
         }
-        vbaseRect = reinterpret_cast<RECT *>(*reinterpret_cast<int *>(*self + 4) + reinterpret_cast<int>(self) + 0x474);
-        IntersectRect(a4, &rect, vbaseRect);
+        IntersectRect(a4, &rect, &rect2_);
     }
 
     if (a4->right != a4->left && a4->right - a4->left >= 0 && a4->bottom - a4->top > 0) {
