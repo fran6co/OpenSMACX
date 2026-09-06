@@ -69,6 +69,15 @@ For pre-framework task history, document the old source interpretation in
 `source_history` configuration with evidence. Do not reset a task baseline or
 substitute an empty obligations report to bypass missing history inputs.
 
+Context also includes source-model hints from the configured audits, with original
+source line locations and counts for authorized files. Structural questions come
+before naming volume in the bounded preview; omitted findings remain available
+through `uv run recover audits check class-debt --in src/infowin.cpp` (use the
+actual file). Filtering details never narrows reference analysis or the gate.
+These are recomputed clues, not decisions or fresh structural proofs. A textual
+orphan needs reachability evidence before removal; a documented naming refusal
+must not turn into an invented name just to make a count fall.
+
 Recover bases, embedded versus pointed-to objects, construction/destruction,
 virtual slot evidence, globals and caller relationships before optimizing body
 spellings. Ordinary declarations express the structure. Source annotations hold

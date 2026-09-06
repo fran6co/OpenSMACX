@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run python
 r"""Copy parameter names from a class's HEADER onto its definitions.
 
-WHY. `class_debt`'s "scaffold name" shape counts every `aN` identifier left
+WHY. The native class-model audit's "scaffold name" shape counts every `aN` identifier left
 in code: a parameter nobody has examined. Homing imports them by the
 hundred - win.cpp arrived carrying 645 - and naming them one function at a
 time is slow work that mostly re-derives something the tree ALREADY KNOWS.

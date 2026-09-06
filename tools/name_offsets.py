@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run python
 r"""Turn `*reinterpret_cast<T *>(self + 0x13c)` into `outer_rect_.left`.
 
-WHY. `class_debt`'s "raw self-access" shape counts every body that walks its
+WHY. The native class-model audit's "raw self-access" shape counts every body that walks its
 own object through `reinterpret_cast<char *>(this)` and a raw offset while
 the class DECLARES the member. Homing imports the form by the hundred, and
 the remedy is not style: a divergence after the rewrite is a LAYOUT finding,

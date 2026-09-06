@@ -128,12 +128,15 @@ keyed by project-chosen audit names. Each audit specifies:
 
 - `ruleset: "cpp-recovery-v1"`: an opt-in set of conventional C++ decompiler
   smells, such as manual dispatch, lifecycle seams and address-derived names.
+  Alternatively, `cpp-model-v1` locates raw member/inheritance access, naming
+  questions, source-mapped function-address casts and textual orphan candidates.
 - `unit_extensions`, `interface_extensions`: disjoint subsets of configured
   source suffixes. Some patterns apply only to units, avoiding declaration counts.
 - `exclude_roots`: explicit paths within configured source roots. Pattern scans
   also omit the configured seed roots; no directory basename is globally special.
 - `ceilings`: nonnegative integer policy limits for every selected rule/counter.
   The rule names are exported by `match_recovery.cpp_audit_rules.CPP_RECOVERY_V1`.
+  Model rule names are exported by `match_recovery.cpp_model_audit.MODEL_RULES`.
 - `counters`: additional project-owned scopes. Each has `name`, `path`, and
   `kind`: `text` also requires a regex `pattern`; `files` requires `extension`
   and boolean `recursive`; `lines` counts physical lines. These explicit scopes
@@ -153,6 +156,21 @@ Input files, configuration and detector implementation are checked for changes
 around each census. Directory/dangling symlinks in source scope are refused instead
 of silently hiding files from enumeration. No project-specific ceiling is in the
 package.
+
+Model findings include one-based source locations, occurrence counts and relevant
+names/addresses, not duplicated function bodies. `--in <relative-source-path>`
+(repeatable) filters details; counts, policy results and reference analysis remain
+whole-product. A reference outside the selected file can disprove an orphan hint.
+Excluded/seed selections are identified explicitly. Orphan rule totals count
+unique names; per-file findings count mentions. A short-claim documentation hint
+describes historical source prose, not a fresh byte or behavioral measurement.
+
+An optional `context` list in the audit policy selects audits for native task
+context. Only authorized-file details are shown, with structural questions ahead
+of naming volume and a 64-location preview per audit. Omitted counts and a detail
+command are explicit; findings are never journaled as decisions. Malformed or
+missing configured policy is an error, not an empty hint list. These hints do not
+change task scope, approve a rewrite or replace historical restoration obligations.
 
 ### Verification APIs
 

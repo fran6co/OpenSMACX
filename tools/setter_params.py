@@ -3,7 +3,7 @@
 
 `set_volume(int a1)` takes a volume. `set_pitch(int a1)` takes a pitch.
 That is evidence already in the tree - the method name - and it is the
-single most common shape left in `class_debt`'s "scaffold name" census once
+single most common shape left in the native class-model audit's "scaffold name" census once
 the mechanical copying passes are exhausted.
 
 DELIBERATELY NARROW, because the convention stops being evidence quickly:

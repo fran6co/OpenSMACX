@@ -163,7 +163,7 @@ CASES = [
      "ADDRESS INDEX GREW: duplicate above their floors",
      lambda: _prepend(_any_artifact(),
                       _first_claim("src/palette.cpp") + "\n")),
-    ("class_debt growth",
+    ("class-model audit growth",
      "SEMANTIC DEBT GREW",
      lambda: _append("src/palette.h", "  void UNK99(int);\n")),
     ("claim floor fell",

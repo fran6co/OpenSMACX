@@ -53,11 +53,11 @@ def project_audits(monkeypatch):
         command = [str(word) for word in argv]
         audit = (len(command) > 1 and command[0] == sys.executable
                  and Path(command[1]).parent == osmx.REPO_ROOT / "tools")
-        native_audit = command[:6] == [sys.executable, "-m", "match_recovery.cli", "audits", "check", "compiler-work"]
+        native_audit = command[:5] == [sys.executable, "-m", "match_recovery.cli", "audits", "check"]
         build = command[:2] == ["cmake", "--build"]
         if audit or native_audit or build:
-            key = "compiler-work" if native_audit else Path(command[1]).name if audit else "build"
-            output = (json.dumps({"audit": "compiler-work", "result": "fail" if key in failures else "pass",
+            key = command[5] if native_audit else Path(command[1]).name if audit else "build"
+            output = (json.dumps({"audit": key, "result": "fail" if key in failures else "pass",
                                   "total": 0, "rules": []}) if native_audit else "")
             return subprocess.CompletedProcess(argv, int(key in failures), output, "")
         return actual(argv, *args, **kwargs)
@@ -697,7 +697,7 @@ def test_json_is_only_json(claimed, monkeypatch):
 
 
 @pytest.mark.parametrize("audit", ["build", "compiler-work", "stale_references.py",
-    "marker_symbols.py", "address_index.py", "class_debt.py", "duplicate_globals.py",
+    "marker_symbols.py", "address_index.py", "class-debt", "duplicate_globals.py",
     "data_values.py", "pointer_scale.py", "annotation_identity.py", "header_offsets.py"])
 def test_failed_project_audit_prevents_acceptance(claimed, monkeypatch, project_audits, audit):
     monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
@@ -707,17 +707,19 @@ def test_failed_project_audit_prevents_acceptance(claimed, monkeypatch, project_
 
 @pytest.mark.parametrize("report", ["", "not JSON", "{}", '{"audit":"wrong"}',
                                     '{"audit":"compiler-work","result":"fail","total":0,"rules":[]}'])
-def test_invalid_native_audit_report_cannot_pass_the_gate(claimed, monkeypatch, report):
+@pytest.mark.parametrize("audit_name", ["compiler-work", "class-debt"])
+def test_invalid_native_audit_report_cannot_pass_the_gate(claimed, monkeypatch, report, audit_name):
     actual = osmx.subprocess.run
     def invoke(argv, *args, **kwargs):
-        if list(argv)[:6] == [sys.executable, "-m", "match_recovery.cli", "audits", "check", "compiler-work"]:
+        if list(argv)[:6] == [sys.executable, "-m", "match_recovery.cli", "audits", "check", audit_name]:
             return subprocess.CompletedProcess(argv, 0, report, "")
         return actual(argv, *args, **kwargs)
     monkeypatch.setattr(osmx.subprocess, "run", invoke)
     monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
     result = check(claimed)
     assert result.exit_code == 1
-    assert "FAILED: the tree does more of the compiler's work" in result.output
+    expected = "FAILED: the tree does more of the compiler's work" if audit_name == "compiler-work" else "FAILED: semantic debt grew"
+    assert expected in result.output
 
 
 @pytest.mark.parametrize("floor", [None, 1, 3])

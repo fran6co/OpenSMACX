@@ -101,6 +101,33 @@
           "path": "src/hypothesis_layouts.h"
         }
       ]
+    },
+    "class-debt": {
+      "ruleset": "cpp-model-v1",
+      "unit_extensions": [
+        ".cpp"
+      ],
+      "interface_extensions": [
+        ".h"
+      ],
+      "exclude_roots": [
+        "src/vendor"
+      ],
+      "ceilings": {
+        "unk-method": 186,
+        "evidence-free unk": 39,
+        "function-address binding": 2,
+        "orphan redirect": 199,
+        "pointer-as-int": 0,
+        "undocumented trivial body": 0,
+        "raw self-access": 214,
+        "pointer-parameter as int": 102,
+        "scaffold name": 3005
+      },
+      "counters": []
     }
-  }
+  },
+  "context": [
+    "class-debt"
+  ]
 }

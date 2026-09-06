@@ -331,17 +331,15 @@ def by_class(records, order, built, visible) -> None:
             continue
         owner_files[owner_of(record)].add(record.path.name)
 
-    # SEMANTIC DEBT per file, from the class_debt census - the shapes a body
+    # Source-model debt per file, from the package audit - the shapes a body
     # can carry while measuring BYTE_EXACT (UNK names, function addresses in
     # data clothes, orphan redirects, pointer-as-int). A class is not done
     # while its files carry any: this column is what re-opens a class the
     # byte ratchet already called finished.
     debt_by_file: dict = collections.Counter()
-    try:
-        debt_json = subprocess.run(
-            [sys.executable, str(REPO_ROOT / "tools" / "class_debt.py"),
-             "--json"], cwd=REPO_ROOT, capture_output=True, text=True)
-        for _shape, per_file in json.loads(debt_json.stdout).items():
+    from match_recovery.source_audits import audit_source
+    for path, counts in audit_source(REPO_ROOT, "class-debt")["per_file"].items():
+        for _shape, count in counts.items():
             # AN INVESTIGATED REFUSAL IS NOT DEBT. `evidence-free unk` counts
             # UNKn methods whose comment block says EVIDENCE-FREE and names
             # them: no caller, no dispatch, no CSV entry, nothing that can
@@ -352,11 +350,7 @@ def by_class(records, order, built, visible) -> None:
             # correct refusal into pressure to invent a name.
             if _shape == "evidence-free unk":
                 continue
-            for name, n in per_file.items():
-                debt_by_file[name] += n
-    except (ValueError, OSError):
-        print("  (class_debt census unavailable - debt column reads 0)",
-              file=sys.stderr)
+            debt_by_file[Path(path).name] += count
 
     print(f"{'first':>5}  {'owner':22s} {'reach':>5} {'built':>5} "
           f"{'artif':>5} {'exact':>9} {'cw':>4} {'scaf':>4} {'debt':>4}"

@@ -13,6 +13,7 @@ def register(commands):
     source_audit.add_argument("audit")
     source_audit.add_argument("--root", type=Path, default=Path.cwd())
     source_audit.add_argument("--summary", action="store_true")
+    source_audit.add_argument("--in", dest="files", action="append", help="Select source detail only; counts and reference analysis remain whole-product")
     inventory = commands.add_parser("inventory", help="Inspect configured source and seed annotations without altering them")
     inventory.add_argument("--root", type=Path, default=Path.cwd())
     inventory.add_argument("--image", type=Path, help="Verify the original against its pin")
@@ -113,10 +114,11 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
         raise ValueError("invalid local project command configuration")
     if arguments.get("command") == "audits":
         from .source_audits import audit_source
-        output = audit_source(root, arguments["audit"])
+        output = audit_source(root, arguments["audit"], files=arguments.get("files"))
         if arguments.get("summary"):
             output.pop("per_file")
             output.pop("explanations")
+            output.pop("findings")
         return (0 if output["result"] == "pass" else 1), output
     if "source" in configuration and arguments.get("command") == "components":
         from .component_commands import execute

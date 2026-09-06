@@ -9,6 +9,13 @@ snapshot handed to you, not a list of isolated addresses. Read the current task
 context, obligations, authorized files and outstanding discoveries before editing.
 Consult `recovery/COMPILER_EVIDENCE.md` only for relevant compiler questions.
 
+Read `source_hints` in the task context. They locate raw self-access, disguised
+references and naming/lifecycle questions in authorized files; they are not proof
+of a defect or permission to rename/delete anything. If findings were omitted,
+use the supplied audit detail command with the source path. Whole-product reference
+analysis still applies when details are filtered to one file. Preserve explicitly
+unresolved naming evidence; never invent names to clear a count.
+
 Use real C++ bases, members, globals, constructors and virtual dispatch supported
 by evidence. Byte agreement does not justify raw vtables, original-address
 bindings, flattened objects or lifecycle stand-ins. Unknown structure is an open

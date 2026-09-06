@@ -11,9 +11,11 @@ from pathlib import Path, PurePosixPath
 import re
 
 from .cpp_audit_rules import CPP_RECOVERY_V1
+from .cpp_model_audit import MODEL_RULES, model_findings
 from .model import digest, require_text
 from .records import parse_json
 from .source_config import SourceConfiguration
+from .source import read_text
 
 
 def code_lines(text):
@@ -22,8 +24,14 @@ def code_lines(text):
     This is not a C++ lexer: inline block comments, literals and preprocessor
     branches are not interpreted. These counts cannot establish absence of defects.
     """
+    for _, line in numbered_code_lines(text):
+        yield line
+
+
+def numbered_code_lines(text):
+    """The same comment lens with original, one-based source locations."""
     in_block = False
-    for line in text.splitlines():
+    for number, line in enumerate(text.splitlines(), 1):
         stripped = line.lstrip()
         if in_block:
             if "*/" in stripped:
@@ -34,14 +42,25 @@ def code_lines(text):
         if stripped.startswith("/*"):
             in_block = "*/" not in stripped
             continue
-        yield line.split("//", 1)[0]
+        yield number, line.split("//", 1)[0]
 
 
 def _text(data):
     return data.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
 
 
-def audit_source(root: Path, name: str) -> dict:
+def _validate_policy(policy):
+    if (not {"schema_version", "audits"} <= policy.keys() or policy.keys() - {"schema_version", "audits", "context"}
+            or type(policy["schema_version"]) is not int or policy["schema_version"] != 1
+            or not isinstance(policy["audits"], dict)):
+        raise ValueError("invalid source audit policy")
+    context = policy.get("context", [])
+    if (not isinstance(context, list) or any(not isinstance(item, str) or item not in policy["audits"] for item in context)
+            or len(context) != len(set(context))):
+        raise ValueError("audit context must name unique configured audits")
+
+
+def audit_source(root: Path, name: str, *, files=None) -> dict:
     root = root.resolve()
     project_path = root / "recovery/project.json"
     if not project_path.resolve().is_relative_to(root):
@@ -54,18 +73,17 @@ def audit_source(root: Path, name: str) -> dict:
     policy_path = source.path(root, project.get("audits"))
     policy_bytes = policy_path.read_bytes()
     policy = parse_json(policy_bytes)
-    if (set(policy) != {"schema_version", "audits"}
-            or type(policy["schema_version"]) is not int or policy["schema_version"] != 1
-            or not isinstance(policy["audits"], dict)):
-        raise ValueError("invalid source audit policy")
+    _validate_policy(policy)
     require_text(name, "audit name")
     if name not in policy["audits"]:
         raise ValueError(f"audit is not configured: {name}")
     config = policy["audits"][name]
     required = {"ruleset", "unit_extensions", "interface_extensions", "exclude_roots", "ceilings", "counters"}
-    if not isinstance(config, dict) or set(config) != required or config["ruleset"] != "cpp-recovery-v1":
+    if (not isinstance(config, dict) or set(config) != required
+            or config["ruleset"] not in ("cpp-recovery-v1", "cpp-model-v1")):
         raise ValueError("invalid or unsupported source audit ruleset")
-    rules = CPP_RECOVERY_V1
+    rules = CPP_RECOVERY_V1 if config["ruleset"] == "cpp-recovery-v1" else {}
+    explanations = {key: why for key, (_, _, why) in rules.items()} if rules else dict(MODEL_RULES)
     for field in ("unit_extensions", "interface_extensions", "exclude_roots"):
         values = config[field]
         if (not isinstance(values, list) or any(not isinstance(value, str) for value in values)
@@ -86,7 +104,7 @@ def audit_source(root: Path, name: str) -> dict:
     counters = config["counters"]
     if not isinstance(counters, list):
         raise ValueError("audit counters must be a list")
-    names = set(rules)
+    names = set(explanations)
     patterns = {}
     for counter in counters:
         if not isinstance(counter, dict):
@@ -138,17 +156,30 @@ def audit_source(root: Path, name: str) -> dict:
                 raise ValueError(f"audit counter file is missing or not a configured source file: {counter['path']}")
         return files
 
-    implementation_paths = (Path(__file__), Path(__file__).with_name("cpp_audit_rules.py"))
-    implementation = {path.name: path.read_bytes() for path in implementation_paths}
+    library = Path(__file__).parent
+    def implementation_snapshot():
+        return {path.relative_to(library).as_posix(): path.read_bytes() for path in sorted(library.rglob("*.py"))}
+    implementation = implementation_snapshot()
     before = snapshot()
+    if files is not None:
+        if not isinstance(files, (list, tuple)) or not files:
+            raise ValueError("audit detail selection must be a nonempty list of source paths")
+        for path in files:
+            checked_path(path)
+            if path not in before:
+                raise ValueError(f"audit detail path is not a configured source file: {path}")
     counts = Counter({key: 0 for key in names})
     per_file = {}
+    findings, product = [], {}
     for relative, data in before.items():
         if source.is_seed(relative) or any(PurePosixPath(relative).is_relative_to(parent)
                                           for parent in config["exclude_roots"]):
             continue
         suffix = PurePosixPath(relative).suffix
         if suffix not in units + interfaces:
+            continue
+        product[relative] = _text(data)
+        if not rules:
             continue
         selected = {key: rx for key, (rx, headers, _) in rules.items() if suffix in units or headers}
         found = Counter()
@@ -160,6 +191,10 @@ def audit_source(root: Path, name: str) -> dict:
         if found:
             per_file[relative] = dict(found)
             counts.update(found)
+    if not rules:
+        records = [(path, record) for path, data in before.items() for record in read_text(_text(data), root / path)]
+        measured, per_file, findings = model_findings(product, records, numbered_code_lines)
+        counts.update(measured)
     for counter in counters:
         relative, key = counter["path"], counter["name"]
         if counter["kind"] == "files":
@@ -173,14 +208,20 @@ def audit_source(root: Path, name: str) -> dict:
     # Detect changed inputs and added/deleted source files, not just mtimes.
     if (before != snapshot() or project_path.read_bytes() != project_bytes
             or policy_path.read_bytes() != policy_bytes
-            or implementation != {path.name: path.read_bytes() for path in implementation_paths}):
+            or implementation != implementation_snapshot()):
         raise ValueError("source or audit policy changed during the census")
     rows = [{"name": key, "count": counts[key], "ceiling": ceilings[key],
              "status": "growth" if counts[key] > ceilings[key] else "slack" if counts[key] < ceilings[key] else "exact"}
             for key in sorted(names)]
+    if files is not None:
+        per_file = {path: values for path, values in per_file.items() if path in files}
+        findings = [item for item in findings if item["path"] in files]
     return {"audit": name, "result": "fail" if any(row["status"] != "exact" for row in rows) else "pass",
             "total": sum(counts.values()), "rules": rows, "per_file": per_file,
-            "explanations": {key: why for key, (_, _, why) in rules.items()},
+            "ruleset": config["ruleset"], "files_scanned": len(product), "findings": findings,
+            "count_basis": {"orphan redirect": "unique textual names; per-file findings count mentions"} if not rules else {},
+            "explanations": explanations,
+            "detail_selection": {path: "scanned" if path in product else "excluded" for path in files} if files is not None else None,
             "lowerings": {key: counts[key] for key in sorted(names) if counts[key] < ceilings[key]},
             "input_fingerprint": digest({"source": {path: sha256(data).hexdigest() for path, data in before.items()},
                                          "project": sha256(project_bytes).hexdigest(), "policy": sha256(policy_bytes).hexdigest(),
@@ -190,3 +231,37 @@ def audit_source(root: Path, name: str) -> dict:
             "limitations": ["heuristic line-wise patterns, not a C++ parser or absence-of-defects proof",
                             "ceilings are explicit policy; slack and growth both fail",
                             "seed and excluded source roots skip patterns; explicit counters still observe them"]}
+
+
+def context_audits(root: Path, files) -> list[dict]:
+    """Fresh hints for authorized files, evaluated with whole-product references."""
+    root = root.resolve()
+    project_path = root / "recovery/project.json"
+    project_bytes = project_path.read_bytes()
+    project = parse_json(project_bytes)
+    if "audits" not in project:
+        return []
+    source = SourceConfiguration.from_dict(project.get("source"))
+    path = source.path(root, project["audits"])
+    before = path.read_bytes()
+    policy = parse_json(before)
+    _validate_policy(policy)
+    context = policy.get("context", [])
+    output = []
+    for name in context:
+        report = audit_source(root, name)
+        scoped = [item for item in report["findings"] if item["path"] in files]
+        priority = ("raw self-access", "function-address binding", "pointer-as-int", "pointer-parameter as int",
+                    "unk-method", "orphan redirect", "undocumented trivial body", "scaffold name", "evidence-free unk")
+        scoped.sort(key=lambda item: (priority.index(item["rule"]) if item["rule"] in priority else len(priority),
+                                      item["path"], item["line"]))
+        output.append({"audit": name, "ruleset": report["ruleset"], "scope": "authorized files",
+                       "per_file": {path: counts for path, counts in report["per_file"].items() if path in files},
+                       "findings": scoped[:64], "finding_count": len(scoped), "omitted_findings": max(0, len(scoped) - 64),
+                       "detail_command": ["recover", "audits", "check", name, "--in", "<source-path>"],
+                       "project_policy_result": report["result"], "input_fingerprint": report["input_fingerprint"],
+                       "count_basis": report["count_basis"], "explanations": report["explanations"],
+                       "structure_verification": "unknown", "persisted": False})
+    if path.read_bytes() != before or project_path.read_bytes() != project_bytes:
+        raise ValueError("audit policy changed during context generation")
+    return output

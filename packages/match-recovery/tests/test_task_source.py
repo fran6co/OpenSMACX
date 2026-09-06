@@ -12,6 +12,7 @@ from match_recovery.model import Origin
 from match_recovery.task_source import task_context
 from match_recovery.tasks import TaskStore
 from test_source_configuration import configured
+from match_recovery.cpp_model_audit import MODEL_RULES
 
 
 def git(root, *args):
@@ -123,6 +124,7 @@ def test_context_preserves_restoration_provider_and_refuses_racing_source(projec
     capsys.readouterr()
     restoration = {"obligations": [{"synthetic": "retained"}], "verification": "not_measured"}
     output = task_context(project, "owner", restoration_for=lambda root, name: restoration)
+    assert output["source_hints"] == []
     assert output["restoration"] is restoration
     assert output["impact"]["root_files"] == ["code/owner.cc", "code/owner.hpp"]
     assert not output["persisted"]
@@ -142,6 +144,30 @@ def test_context_refuses_a_concurrent_scope_decision(project, capsys):
         return {"verification": "not_measured"}
     with pytest.raises(ValueError, match="task decisions changed"):
         task_context(project, "owner", restoration_for=changing)
+
+
+def test_native_task_context_includes_configured_structural_hints(project, capsys):
+    path = project / "recovery/project.json"
+    config = json.loads(path.read_text())
+    config["audits"] = "recovery/policy.json"
+    path.write_text(json.dumps(config))
+    (project / "recovery/policy.json").write_text(json.dumps({"schema_version": 1, "context": ["structure"],
+        "audits": {"structure": {"ruleset": "cpp-model-v1", "unit_extensions": [".cc"], "interface_extensions": [".hpp"],
+                                 "exclude_roots": [], "ceilings": dict.fromkeys(MODEL_RULES, 0), "counters": []}}}))
+    with (project / "code/owner.hpp").open("a") as output:
+        output.write("class Widget { void method() { (char *)this; } };\n")
+    (project / "code/other.cc").write_text("class Other { void method() { (char *)this; } };\n")
+    git(project, "add", ".")
+    git(project, "commit", "-m", "Configure source-model hints")
+    assert create(project, "--target", "unregistered-application") == 0
+    capsys.readouterr()
+    assert main(["tasks", "context", "owner", "--root", str(project)]) == 0
+    output = json.loads(capsys.readouterr().out)
+    hints, = output["source_hints"]
+    assert hints["per_file"] == {"code/owner.hpp": {"raw self-access": 1}}
+    assert hints["findings"][0]["path"] == "code/owner.hpp" and hints["findings"][0]["line"] == 2
+    assert hints["project_policy_result"] == "fail" and hints["structure_verification"] == "unknown"
+    assert output["restoration"]["obligations"]  # Structural hints do not erase historical matching work.
 
 
 def test_context_refuses_another_original_even_with_a_custom_provider(project, capsys):

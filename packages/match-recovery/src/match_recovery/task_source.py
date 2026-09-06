@@ -15,6 +15,7 @@ from .partition import select_group
 from .records import read_json
 from .source_config import SourceConfiguration
 from .source_inventory import assert_snapshot_current
+from .source_audits import context_audits
 from .tasks import Task, TaskStore
 
 
@@ -117,6 +118,7 @@ def task_context(root: Path, name: str, *, restoration_for):
     output = {"task": task.to_dict(), "subjects": selected,
               "decision_state": store.status(name, (entity["entity_id"] for entity in selected)),
               "impact": structural_impact(snapshot, group), "restoration": restoration_for(root, name),
+              "source_hints": context_audits(root, files),
               "binding_hints": [{"entity_id": row["entity_id"], "path": row["path"], **row["binding_hint"]}
                                 for row in snapshot["records"] if row["entity_id"] in scope and row["binding_hint"]],
               "instructions": ["Read source declarations, definitions and evidence before editing.",

@@ -30,6 +30,7 @@ uv run recover components list
 uv run recover components check-source zlib --archive /path/to/zlib-1.0.2.tar.gz
 uv run recover components check-binary zlib --image /path/to/the/pinned/original.exe --summary
 uv run recover audits check compiler-work --summary
+uv run recover audits check class-debt --summary
 uv run pytest packages/match-recovery/tests recovery/tests
 uv build --package match-recovery
 ```
@@ -49,6 +50,25 @@ Both growth and slack return failure (exit 1); missing/malformed inputs return 3
 The report's `lowerings` gives only downward edits to apply to `audits.json` in the
 same commit as the improvement. There is no self-rewriting Python ceiling table.
 Neither this heuristic audit nor a zero count proves correct hierarchy or lifetime.
+
+The class-debt audit now uses the package's `cpp-model-v1` ruleset. The former
+project tool is removed, with all nine ceilings and per-file counts preserved.
+Its 3,747-count cutover baseline is historical, not a current status ledger.
+`audits.json` opts this audit into task context; filtered source hints locate raw
+self-access, pointer-typed parameters, disguised function references and naming
+questions. Counts are recomputed from source, including seed mappings as address
+hints. Seed/vendor bodies are not product cleanup targets. Evidence-free names
+remain explicitly classified, not silently excused or automatically renamed.
+Orphan totals count unique textual names while per-file findings count mentions;
+neither establishes linker reachability. The native audit also corrects interval
+overlap lookup and prevents a naming refusal leaking to another directory or a
+different token such as UNK10 beside UNK1. Those fixes change no current counts.
+The unused global naming queue and text-count orphan-deletion helper are retired
+as well. Their observations are now scoped source hints. A body's availability is
+not naming evidence, and a low textual reference count plus a successful link
+does not establish that deleting a definition preserves behavior. Use scoped,
+reviewed source edits after establishing evidence; historical implementations and
+compiler lessons remain recoverable from Git.
 
 The source reader preserves all notes, including unparsed
 or non-UTF-8 text, without declaring current matches or choosing between

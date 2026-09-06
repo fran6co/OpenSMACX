@@ -1636,6 +1636,30 @@ def _image_pin(src: Path, exe: Path) -> str:
     return ""
 
 
+def _native_audit_result(outcome, name, label):
+    """Read package audit reports during gate cutover; never accept missing proof."""
+    try:
+        report = json.loads(outcome.stdout)
+        if (not isinstance(report, dict) or report.get("audit") != name
+                or report.get("result") not in ("pass", "fail")
+                or type(report.get("total")) is not int
+                or not isinstance(report.get("rules"), list)
+                or outcome.returncode != (0 if report["result"] == "pass" else 1)
+                or any(not isinstance(row, dict) or not {"name", "status", "count", "ceiling"} <= row.keys()
+                       for row in report["rules"])):
+            raise ValueError("malformed source audit report or exit/result disagreement")
+    except (ValueError, TypeError) as error:
+        return subprocess.CompletedProcess(outcome.args, outcome.returncode or 3,
+                                           outcome.stderr.strip() or str(error), outcome.stderr)
+    lines = [f"{label}: {report['total']} site(s), "
+             + ("every ceiling exact" if not outcome.returncode else "ratchet failed")]
+    for row in report["rules"]:
+        if row["status"] != "exact":
+            state = "GREW" if row["status"] == "growth" else "SLACK"
+            lines.append(f"{label.upper()} {state}: {row['name']} {row['count']}/{row['ceiling']}")
+    return subprocess.CompletedProcess(outcome.args, outcome.returncode, "\n".join(lines), outcome.stderr)
+
+
 @app.command()
 def check(
     src: Annotated[Path, typer.Option(
@@ -2082,7 +2106,10 @@ def check(
 
     symbols_job = audits.submit(_symbols_after_link)
     index_job = _audit("address_index.py", "--check")
-    debt_job = _audit("class_debt.py", "--check")
+    debt_job = audits.submit(
+        subprocess.run,
+        [sys.executable, "-m", "match_recovery.cli", "audits", "check", "class-debt", "--summary"],
+        cwd=REPO_ROOT, capture_output=True, text=True)
     dupes_job = _audit("duplicate_globals.py", "--check")
     values_job = _audit("data_values.py", "--check")
     scaling_job = _audit("pointer_scale.py", "--check")
@@ -2116,36 +2143,10 @@ def check(
     # doing VC6's job, and doing it somewhere VC6 would not have put it, which
     # is why they cost bytes rather than taste. Every large gain on 2026-08-22
     # came from deleting one. Ratcheted per shape; none may grow.
-    vtables = vtables_job.result()
-    audit_report = None
-    if vtables.stdout.strip():
-        try:
-            audit_report = json.loads(vtables.stdout)
-            if (not isinstance(audit_report, dict) or audit_report.get("audit") != "compiler-work"
-                    or audit_report.get("result") not in ("pass", "fail")
-                    or type(audit_report.get("total")) is not int
-                    or not isinstance(audit_report.get("rules"), list)
-                    or vtables.returncode != (0 if audit_report["result"] == "pass" else 1)
-                    or any(not isinstance(row, dict) or not {"name", "status", "count", "ceiling"} <= row.keys()
-                           for row in audit_report["rules"])):
-                raise ValueError("malformed source audit report or exit/result disagreement")
-        except (ValueError, TypeError) as error:
-            vtables = subprocess.CompletedProcess(vtables.args, 3, "", str(error))
-            audit_report = None
-    elif not vtables.returncode:
-        vtables = subprocess.CompletedProcess(vtables.args, 3, "", "source audit returned no report")
+    vtables = _native_audit_result(vtables_job.result(), "compiler-work", "compiler work")
     if not as_json:
-        message = (f"compiler work: {audit_report['total']} site(s), "
-                   + ("every ceiling exact" if not vtables.returncode else "ratchet failed")
-                   if audit_report is not None else vtables.stderr.strip())
-        typer.secho("  " + message,
-                    fg=typer.colors.RED if vtables.returncode
-                    else typer.colors.WHITE)
-        if audit_report is not None:
-            for row in audit_report["rules"]:
-                if row["status"] != "exact":
-                    typer.secho(f"  {row['status']}: {row['name']} {row['count']}/{row['ceiling']}",
-                                fg=typer.colors.RED)
+        typer.secho("  " + vtables.stdout.strip(),
+                    fg=typer.colors.RED if vtables.returncode else typer.colors.WHITE)
 
     # PROSE THAT TELLS THE READER TO RUN SOMETHING THAT IS NOT THERE, held to
     # zero the same way. This failure is invisible from inside the instruction:
@@ -2199,7 +2200,7 @@ def check(
     # names, function addresses in data clothes, orphan redirects, pointers
     # travelling as int. The bytes cannot see any of it, which is exactly why
     # a census must: palette.cpp measured clean while carrying all four.
-    debt = debt_job.result()
+    debt = _native_audit_result(debt_job.result(), "class-debt", "semantic debt")
     if not as_json:
         said = debt.stdout.strip().splitlines() or [""]
         typer.secho("  " + said[-1],
