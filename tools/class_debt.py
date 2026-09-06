@@ -325,7 +325,7 @@ CEILINGS = {
     # 233 -> 219 (2026-09-06, W5q basewin derivation): fourteen puns fell
     # - on_left_down, the iface click family and hide all spell through
     # the derived base now.
-    "raw self-access": 216,
+    "raw self-access": 214,
     # 4 -> 5 (2026-09-03, P1a batch): one homed body's faithful spelling
     # returns this as int (catalogue mangling QAEHH; TexHeap::UNK1 family).
     # 5 -> 8 (2026-09-03, P2 buffer/mapwin batch): three more homed

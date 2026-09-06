@@ -38,6 +38,30 @@ def _sources(root: Path) -> list[Path]:
                   if path.is_file() and path.suffix in (".cpp", ".c", ".h"))
 
 
+def _lifetime_binding_hint(record) -> dict | None:
+    """Expose real lifetime definitions hidden by old construct/destroy bindings.
+
+    This is a candidate to measure, not permission to change a mapping. A real
+    constructor/destructor may still be wrong; never silently select it instead.
+    """
+    from decomp.mangled import qualified_name
+    from decomp.reader import function_line
+
+    prefix = record.name[:3]
+    if prefix not in ("??0", "??1") or not record.symbol or record.symbol.startswith(prefix):
+        return None
+    name = qualified_name(record.name)
+    if not name:
+        return None
+    try:
+        line = function_line(record.path, name)
+    except ValueError:
+        return None  # Missing/overloaded definitions require other evidence.
+    return {"kind": "lifetime_wrapper_binding", "measured_symbol": record.symbol,
+            "candidate_definition": name, "candidate_line": line,
+            "next_action": "measure the real lifetime definition before reworking the wrapper or class layout"}
+
+
 def legacy_snapshot(root: Path, image: Path | None = None) -> dict[str, Any]:
     # The standalone package works without `decomp`. Only this one-time adapter
     # needs the old parser, installed by the OpenSMACX workspace.
@@ -88,6 +112,7 @@ def legacy_snapshot(root: Path, image: Path | None = None) -> dict[str, Any]:
                 "levers": [list(item) for item in record.levers],
                 "tried": list(record.ruled_out), "deferred": list(record.deferred),
                 "extract_error": record.extract_error,
+                "binding_hint": _lifetime_binding_hint(record),
             }
             records.append(row)
             for present, dimension, token in (

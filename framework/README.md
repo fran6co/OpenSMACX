@@ -292,6 +292,12 @@ untrusted worker processes. Agent isolation and execution are not implemented ye
 
 `tasks context` rebuilds the brief from current source and decisions, including
 seed locations, source homes, pending discoveries and conservative recheck paths.
+It also flags lifetime annotations bound to ordinary wrappers when a real
+constructor/destructor definition exists in the same source file. These are
+measurement candidates, not automatic symbol corrections: BaseButton's obsolete
+wrapper bindings had hidden already-matching real lifetime functions. Missing or
+ambiguous definitions yield no hint, and the measured symbol remains unchanged
+until an explicit source correction.
 It also includes the restoration inventory exposed by `tasks obligations`.
 That inventory is recomputed from source at the task's committed baseline,
 every subsequent reachable source revision (including merged side histories),

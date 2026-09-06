@@ -105,7 +105,7 @@ SHAPES = [
     # 14 -> 10 (batch 9, family ctor conversion): CheckBox's GraphicWin
     # placement and SpriteBox's GraphicWin/Dialog placements left with the
     # compiler's virtual-base machinery on the bare ctor spellings.
-    ("placement new on a subobject", 10,
+    ("placement new on a subobject", 7,
      re.compile(r"new\s*\(\s*(?:&|static_cast|reinterpret_cast)"),
      "costs a null guard (`test ecx, ecx; je`) the image does not have. A real "
      "base or member is constructed unconditionally."),

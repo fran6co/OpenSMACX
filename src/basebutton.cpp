@@ -37,104 +37,18 @@ uint32_t BaseButtonA98Default;  // 0x009B8E30
 /*
 Purpose: Construct the GraphicWin base and two Time members, then install the
          BaseButton tables and process defaults.
-// ORIGINAL: 0x00606F30 ??0BaseButton@@QAE@XZ 0x00606F30-0x00607033;0x00662E50-0x00662E70
-// LEVER: `construct()` RETURNS `this`. The image closes on `mov eax, esi`,
-//   which a `void` method never emits - the same last-instruction fix that
-//   closed four Ambience constructors. Changing the signature to
-//   `BaseButton *construct()` removed that divergence run (the `// symbol`
-//   fact moves with it, to `?construct@BaseButton@@QAEPAV1@XZ`). Both call
-//   sites - `base_button_construct_redirect` here and
-//   `FlatButton::FlatButton` - ignore the value, so neither changed.
-// TRIED: the two placement-new null guards, which are the whole remaining
-//   difference. `new (&time1_) Time()` makes VC6 test the pointer -
-//   `cmp ecx, edi; je` - twice, and gives the frame TWO spill slots
-//   (`sub esp, 8`) where the image pushes one (`push ecx`): 60 compiled
-//   instructions against 54, agreeing 14. Replacing them with explicit
-//   `time1_.Time::Time()` calls (and the `(&time1_)->Time::Time()` spelling,
-//   same result) removes the guards but ALSO removes the unwind frame the
-//   image has, because a plain method has no partially-built object to
-//   protect: 38 instructions, agreeing 0. The frame is worth more than the
-//   guards cost, so the placement new stays.
-// TRIED: MEASURED 2026-08-28 - the real constructor, now that GraphicWin has
-//   one. The blocker in the next note is STALE: `GraphicWin() { ; }` has been
-//   a real out-of-line constructor since the GraphicWin pass. Spelling
-//   `BaseButton::BaseButton()` over this same body (with `construct()` kept
-//   beside it for its two external callers) DOES emit the frame the image has,
-//   but with `sub esp, 8` - two spill slots - where the image pushes one
-//   (`push ecx`), and it drops to 0/54 at 23 compiled instructions against
-//   this spelling's 10/54 at 64. The one-slot frame is the whole remaining
-//   gap; the placement-new null guards are a symptom of the same spill budget,
-//   not an independent cause. Reverted to `construct()`, which scores better
-//   and does not duplicate the body.
-// TRIED: the real fix is a REAL constructor - the image is one, base
-//   first (`call 0x005D4CF0`), then `time1_` at 0xA1C and `time2_` at 0xA4C
-//   implicitly, then this body, then `mov eax, esi`. It is not reachable from
-//   basebutton.cpp: `GraphicWin` is declared with a hollow inline
-//   `GraphicWin() { ; }`, so a real `BaseButton::BaseButton()` would call
-//   NOTHING where the image calls 0x005D4CF0, and giving GraphicWin a real
-//   constructor is a graphicwin.h edit with every GraphicWin-derived class
-//   downstream of it. [SUPERSEDED by the measurement above: GraphicWin's
-//   constructor is real now, and the real spelling measured WORSE.]
-// symbol    ?construct@BaseButton@@QAEPAV1@XZ
+// ORIGINAL: 0x00606F30 ??0BaseButton@@QAE@XZ 0x00606F30-0x00607033;0x00662E50-0x00662E70 BYTE_EXACT
+// The original initializes GraphicWin and two Time members before these
+// fields. The real constructor owns that lifetime; construct() is only a
+// legacy calling adapter. Bind the original to the compiler constructor,
+// not to the placement-new wrapper's extra checks and duplicated work.
+// symbol    ??0BaseButton@@QAE@XZ
 // size      291 bytes
 // prototype void (__thiscall ??0BaseButton@@QAE@XZ)(BaseButton* this)
 // callers   3   call targets   2
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x005D4CF0 0x006161D0
-// notes     Runtime redirect installed by DllMain after byte-signature validation
-Status: Complete
-Verification note: the surviving swap mutants reorder construction of the
-GraphicWin base against the Time members, which occupy disjoint storage, so
-their order is not observable.
-*/
-BaseButton *BaseButton::construct() {
-    new (static_cast<GraphicWin *>(this)) GraphicWin();
-    new (&time1_) Time();
-    new (&time2_) Time();
-    // The two vfptrs are the one thing a member cannot name: they are the
-    // primary table at 0 and the Buffer subobject's at 0x444, installed by
-    // hand because nothing here is declared virtual. Everything below is an
-    // ordinary field.
-    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
-    field_A74_ = 0;
-    field_A44_ = 0xFFFFFFFFU;
-    field_A48_ = 0xFFFFFFFFU;
-    field_A78_ = 0;
-    field_A9C_ = 0;
-    name_ = nullptr;
-    bubble_text_ = nullptr;
-    group_ = nullptr;
-    field_AAC_ = 0;
-    field_AB0_ = 0;
-    field_AB4_ = 0;
-    // Read each default through its own absolute lvalue rather than a named
-    // pointer alias - the alias materialises the table's base address into a
-    // register before indexing element 0, where the image folds every
-    // element, including 0, straight into the operand (the same lever that
-    // took close() from 2/47 to 41/47).
-    field_A94_ = BaseButtonA94Default;
-    color_ = DialogDefaults[0];
-    bevel_upper_ = DialogDefaults[1];
-    bevel_lower_ = DialogDefaults[2];
-    bevel_thickness_ = DialogDefaults[3];
-    field_A98_ = BaseButtonA98Default;
-    field_AA4_ = 0;
-    field_AA0_ = DialogDefaults[4];
-    return this;
-}
-
-/*
-Purpose: Construct the GraphicWin base and two Time members, then install the
-         BaseButton tables and process defaults.
-
-         The REAL constructor, defined out of line so the implicit base
-         construction in every derived button compiles to one `call
-         ??0BaseButton@@QAE@XZ` instead of an inline expansion. The bases and
-         the two Time members are the compiler's here, which is why they are
-         not spelled; `construct()` above keeps its own placement-new spelling
-         because it is a method - the object it is handed was built by
-         something else and its members were never implicitly constructed.
 */
 BaseButton::BaseButton() {
     field_A74_ = 0;
@@ -161,6 +75,10 @@ BaseButton::BaseButton() {
     field_A98_ = BaseButtonA98Default;
     field_AA4_ = 0;
     field_AA0_ = DialogDefaults[4];
+}
+
+BaseButton *BaseButton::construct() {
+    return new (this) BaseButton();
 }
 
 BaseButton *__fastcall base_button_construct_redirect(
@@ -231,40 +149,12 @@ uint32_t __fastcall base_button_close_redirect(BaseButton *self, void *) {
 /*
 Purpose: Destroy a BaseButton by installing its two virtual tables, closing
          it, destroying Time2 then Time1, and finally destroying GraphicWin.
-// ORIGINAL: 0x00607040 ??1BaseButton@@QAE@XZ 0x00607040-0x006070B9;0x00662E70-0x00662E9E
-// TRIED: this one wants the SEH frame and cannot have it. The image is a
-//   REAL DESTRUCTOR - `push -1 / push 0x662e94 / mov eax, fs:[0] / push eax /
-//   mov fs:[0], esp / push ecx`, then the two vtable stores and `close()`,
-//   then unwind state 1 for `time2_` at 0xA4C, 0 for `time1_` at 0xA1C and -1
-//   for the GraphicWin base at 0x005D4DD0, all three destroyed by the
-//   COMPILER rather than by the body. This tree spells it `destroy()`, a
-//   plain method, so there is no partially-destroyed object to protect and no
-//   frame is emitted: 15 compiled instructions against the image's 27,
-//   agreeing 0. Every instruction of the divergence is that frame.
-// TRIED: converting it to `~BaseButton()`. Two blockers, both outside
-//   this file. (1) `destroy()` is reached BY NAME from dialog.cpp,
-//   listbox.cpp, pulldown.cpp, stringstruct.cpp, dialogs.cpp, radiobutton.cpp,
-//   reportif.cpp, filewin.cpp and leaf_recoveries.cpp - a rename is a
-//   nine-file edit. (2) even after it, the base call would not appear:
-//   `~GraphicWin()` is a hollow inline `{ ; }` in graphicwin.h, so the
-//   compiler-generated tail would call nothing where the image calls
-//   0x005D4DD0. `~Time()` at 0x00616200 is real and would work; GraphicWin is
-//   the one that has to change first, and it is not this pass's file.
-// TRIED: MEASURED 2026-08-28 - blocker (2) above is STALE, `~GraphicWin()` has
-//   been a real destructor since the GraphicWin pass, and `~BaseButton()` is
-//   reachable (keep `destroy()` beside it for the nine external callers, the
-//   way FlatButton keeps `destroy()` under `~FlatButton`). It does not help:
-//   0/27 either way, 16 compiled instructions against the plain method's 16.
-//   The NEW wall is that the compiler-generated base-destructor tail dispatches
-//   VIRTUALLY - `mov eax,[esi] / push 0 / mov ecx,esi / call dword ptr [eax]`,
-//   the hidden most-derived flag included - where the image calls 0x005D4DD0
-//   DIRECTLY, and that no SEH frame is emitted at all. The image's own
-//   `??1GraphicWin@@UAE@XZ` spells the virtual form, so the direct call reads
-//   like an explicit qualified destructor call in the original, which a
-//   destructor body cannot spell without destroying its members twice.
-//  FlatButton's `~FlatButton()` is BYTE_EXACT and unaffected by the swap
-//   (re-measured 24/24), as are ??_GBaseButton and ??_GFlatButton.
-// symbol    ?destroy@BaseButton@@QAEPAV1@XZ
+// ORIGINAL: 0x00607040 ??1BaseButton@@QAE@XZ 0x00607040-0x006070B9;0x00662E70-0x00662E9E BYTE_EXACT
+// The real destructor closes this object and lets C++ destroy its Time
+// members and GraphicWin base. Its inherited virtuality emits UAE instead
+// of the catalogue's QAE. The symbol binding must select this destructor,
+// not the separate destroy() adapter, which has no member-unwind frame.
+// symbol    ??1BaseButton@@UAE@XZ
 // size      167 bytes
 // prototype void (__thiscall ??1BaseButton@@QAE@XZ)(BaseButton* this)
 // callers   134   call targets   3
@@ -312,12 +202,7 @@ Status: Complete
 */
 
 BaseButton *BaseButton::destroy() {
-    volatile uint32_t *const object =
-        reinterpret_cast<volatile uint32_t *>(this);
-    close();
-    time2_.~Time();
-    time1_.~Time();
-    static_cast<GraphicWin *>(this)->~GraphicWin();
+    this->BaseButton::~BaseButton();
     return this;
 }
 
@@ -887,5 +772,3 @@ void __cdecl fn_00607b10(int a1, BaseButton* button) {
         button->timer_callback(a1);
     }
 }
-
-

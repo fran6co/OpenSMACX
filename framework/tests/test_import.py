@@ -83,6 +83,21 @@ def test_empty_import_is_an_error(project):
         legacy_snapshot(project)
 
 
+def test_context_hint_exposes_real_constructor_hidden_by_wrapper_binding(project):
+    path = project / "src/a.cpp"
+    path.write_text("// ORIGINAL: 0x00401000 ??0Widget@@QAE@XZ 0x00401000-0x00401008\n"
+                    "// symbol    ?construct@Widget@@QAEPAV1@XZ\n"
+                    "Widget *Widget::construct() { return this; }\n"
+                    "Widget::Widget() {}\n")
+    snapshot = legacy_snapshot(project)
+    hint = snapshot["records"][0]["binding_hint"]
+    assert hint["candidate_definition"] == "Widget::Widget" and hint["candidate_line"] == 4
+    assert snapshot["records"][0]["emitted_symbol_hint"] == "?construct@Widget@@QAEPAV1@XZ"
+    assert path.read_text().count("// symbol") == 1  # No implicit rebinding or stamping.
+    path.write_text(path.read_text().replace("Widget::Widget() {}", "Widget::Widget();"))
+    assert legacy_snapshot(project)["records"][0]["binding_hint"] is None
+
+
 def test_old_semantic_claims_keep_their_own_obligations(project):
     (project / "src" / "a.cpp").write_bytes(TEXT.replace(b"BYTE_EXACT", b"SEMANTIC"))
     snapshot = legacy_snapshot(project)

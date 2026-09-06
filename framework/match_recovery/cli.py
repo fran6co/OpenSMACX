@@ -183,6 +183,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                               "decision_state": store.status(args.task, (entity["entity_id"] for entity in selected)),
                               "impact": structural_impact(snapshot, group),
                               "restoration": task_obligations(args.root, args.task),
+                              "binding_hints": [{"entity_id": row["entity_id"], "path": row["path"],
+                                                 **row["binding_hint"]} for row in snapshot["records"]
+                                                if row["entity_id"] in scope and row["binding_hint"]],
                               "instructions": ["Read source declarations, definitions and evidence before editing.",
                                                "Treat archived bodies and class/name labels as seeds, not mandatory source form.",
                                                "Report structural discoveries even when they affect other functions or units.",

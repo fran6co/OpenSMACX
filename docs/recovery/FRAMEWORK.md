@@ -130,6 +130,12 @@ establish completion of this program.
   old recorder without manual vptr writes. The strict verifier still reports
   unresolved real BaseButton and generated-table bindings; those remain a task
   finding, not an excuse to claim full reference or structural verification.
+  BaseButton's lifetime bindings now select its real C++ definitions; both match
+  through the old recorder, and legacy adapters delegate instead of duplicating
+  base/member work. The strict checker resolves those two symbols but still
+  refuses missing generated-table/data/runtime identities. Task context now
+  flags real lifetime definitions hidden by wrapper mappings before agents spend
+  iterations optimizing the wrong function.
   The redraw slot is now an InfoWin member instead of independent storage;
   its object-start binding lives beside ConsoleInfoWin's definition. Constructor
   subobjects, object extent, lifetime, full admission and restoration remain.
