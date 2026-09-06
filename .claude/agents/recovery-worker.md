@@ -35,6 +35,12 @@ restoration dependencies. Do not erase a claim or call the migration accepted.
 Only configured independent review and migration checks can admit it. Preserve
 unfinished scoped edits for resumption; never stash or silently revert them.
 
+The configured check includes current historical-obligation measurements in
+`details` and the joint scoped diagnostics in `candidate.checks`. Work from both:
+an old claim missing from current source still needs restoration. Unknown
+references or unsupported structural proof are not permitted byte regressions.
+Use `tasks check-restoration` to remeasure; `tasks obligations` only inventories.
+
 Once the structural interpretation is established, score 3–5 plausible spellings
 with `uv run recover tasks variants <task> --image <image> --deck <ignored-json>`
 before editing product source. Follow the package README's source digest and

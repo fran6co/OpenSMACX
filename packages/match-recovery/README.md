@@ -227,6 +227,25 @@ even without a source configuration. `tasks obligations` and `tasks context`
 also run natively with configured source. Context refuses concurrent source or
 decision changes and incorporates historical restoration requirements.
 
+`tasks check-restoration <task> --image <image>` re-derives those historical
+requirements and runs the native joint binary/layout check. It returns current
+measurements keyed by obligation identity, their input fingerprints, and explicit
+remaining requirements. It neither stamps source nor saves a verdict ledger.
+Removed claims remain protected. Bytes and references must use one complete
+compiler trial; known differences with unresolved targets remain unknown, not an
+admissible matching failure. Strict exact agreement can also discharge a historical
+instruction-shape requirement; non-exact shape and full structural obligations
+currently remain unknown. Declared offsets alone do not establish hierarchy or
+lifetime. `candidate` contains the complete scoped diagnostics; `--summary` omits
+those and fingerprint maps while retaining obligation details and refusals.
+
+This command supplies measurement inputs for a future complete migration gate,
+not an admission report itself. Admission additionally requires fresh independent
+review, build, structural prerequisites, references and outside-scope preservation.
+Migration-check reports must now include `references` with a passing result, even
+when historical source recorded only byte claims. Missing/failed/unknown references
+cannot be waived by a matching-regression permission.
+
 History uses each commit's source roots, suffixes, seed classifications and pin
 location, including merged side histories. Moving/deleting a claim or treating
 its old home as seed does not withdraw an earlier obligation. Member/base/table

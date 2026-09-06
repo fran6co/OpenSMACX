@@ -101,7 +101,7 @@ class Migration:
             raise ValueError("protected entity is outside migration scope")
 
     def admit(self, *, snapshot: str, changed: frozenset[str], review: Review,
-              build: Result, structural_checks: Result,
+              build: Result, structural_checks: Result, references: Result,
               measurements: Sequence[Measurement], current: Mapping[str, str]) -> GateReport:
         require_digest(snapshot)
         if not changed <= self.scope:
@@ -110,8 +110,8 @@ class Migration:
                 or review.snapshot != snapshot or review.result != Result.PASS
                 or not review.evidence):
             raise ValueError("a fresh, independent, evidence-backed review is required")
-        if build != Result.PASS or structural_checks != Result.PASS:
-            raise ValueError("build and declared structural checks must pass before admission")
+        if build != Result.PASS or structural_checks != Result.PASS or references != Result.PASS:
+            raise ValueError("build, declared structural checks and references must pass before admission")
         report = check_obligations(self.protected, measurements, current,
                                    self.allowed_regressions)
         if report.exit_code not in (GateExit.PASSED, GateExit.TRACKED_REGRESSIONS):

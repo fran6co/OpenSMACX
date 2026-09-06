@@ -45,7 +45,7 @@ def setup(project, *, damage=None, disappear=False, restored=False):
         if stage == "migration":
             assert payload["protected"] == [row]
             report = {"snapshot": payload["snapshot"], "changed": [obligation.entity_id],
-                      "build": "pass", "structure": "pass", "outside_scope": "pass",
+                      "build": "pass", "structure": "pass", "references": "pass", "outside_scope": "pass",
                       "measurements": [{"obligation_id": obligation.obligation_id, "fingerprint": "a" * 64,
                                         "result": "pass" if restored else "fail", "evidence": "synthetic comparison"}],
                       "current": {obligation.obligation_id: "a" * 64}}
@@ -110,6 +110,9 @@ def test_resume_must_restore_before_full_acceptance(project):
     lambda r: r["measurements"][0].update(fingerprint="b" * 64),
     lambda r: r.update(build="fail"),
     lambda r: r.update(structure="unknown"),
+    lambda r: r.update(references="fail"),
+    lambda r: r.update(references="unknown"),
+    lambda r: r.pop("references"),
     lambda r: r.update(outside_scope="unknown"),
     lambda r: r.update(snapshot="b" * 64),
 ])
@@ -150,7 +153,7 @@ def test_real_command_adapters_admit_a_checkpoint_without_banking_a_pass(project
               "obligations": command("print(" + repr(json.dumps(inventory)) + ")"),
               "migration_check": command("import json,sys; p=json.load(sys.stdin); "
                   "o=p['protected'][0]['obligation_id']; print(json.dumps({'snapshot':p['snapshot'],"
-                  "'changed':[],'build':'pass','structure':'pass','outside_scope':'pass',"
+                  "'changed':[],'build':'pass','structure':'pass','references':'pass','outside_scope':'pass',"
                   "'measurements':[{'obligation_id':o,'fingerprint':'a'*64,'result':'fail','evidence':'synthetic'}],"
                   "'current':{o:'a'*64}}))")}
     worker = {"author": WORKER["author"], "command": command(

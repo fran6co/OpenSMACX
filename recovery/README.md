@@ -251,21 +251,22 @@ Without independent review and a configured full acceptance gate, driver stops
 return CLI exit 3 and `ready_for_collection:false`. The supplied OpenSMACX
 configuration deliberately has no acceptance command yet: its scoped checker
 cannot stand in for complete reference, structure, obligation and runtime checks.
-The configured check is now `tasks check <task> --image <image>`, which runs both
-binary/reference and declared-layout checks. Workers receive both reports under
-`checks.binary` and `checks.layout`, including coverage gaps, even when the other
+The configured check is now `tasks check-restoration <task> --image <image>`,
+which remeasures historical obligations as well as running both binary/reference
+and declared-layout checks. Workers receive the joint report under `candidate`,
+with `candidate.checks.binary` and `candidate.checks.layout`, including coverage gaps, even when the other
 dimension fails. A passing body cannot suppress a layout failure or unknown.
 Both reports must share unchanged source, task decisions, build inputs and image;
 a change between stages refuses the combined result. Unknown evidence keeps the
 combined result unknown. Even two passing scoped checks do not authorize collection.
-The individual `check-binary` and `check-layout` commands remain useful diagnostics;
+The `check`, `check-binary` and `check-layout` commands remain useful diagnostics;
 the joint command's `--summary` retains both verdicts and layout coverage.
 The joint check measures both dimensions from fresh standalone `/Z7` objects.
 Its binary trial records include that debug flag explicitly; the individual
 `check-binary` command keeps its original non-debug configurations. Identical
 source/command/flag requests reuse object bytes only within that invocation, with
 all project inputs checked before reuse. No objects or verdicts survive into the
-next check. The top-level `compilation` reports actual compiler attempts and reuse;
+next check. The joint report's `compilation` reports actual compiler attempts and reuse;
 the subreports count requested trials. Failed compilations are never reused.
 An alternate-target test runs real subprocess worker/check adapters without
 importing the OpenSMACX adapter.
@@ -359,8 +360,9 @@ trusted coordinator attribution, not authentication.
 
 The migration verifier receives the task, reviewed snapshot, protected requirements
 and permission. It returns exit 0 only for a completed report, containing exactly
-`snapshot`, `changed` (original entity ids), `build`, `structure`, `outside_scope`,
-`measurements`, and `current`. Build/structure/outside-scope outcomes must be `pass`.
+`snapshot`, `changed` (original entity ids), `build`, `structure`, `references`,
+`outside_scope`, `measurements`, and `current`. Build/structure/references/outside-scope
+outcomes must be `pass`, even when historical source protected only byte claims.
 Each measurement has `obligation_id`, input `fingerprint`, `result`, and `evidence`;
 `current` maps obligation ids to fresh verifier-computed input fingerprints.
 These are trusted verifier outputs, not worker self-assessments. Missing, stale

@@ -40,6 +40,7 @@ uv run recover partition
 uv run recover tasks context <task>
 uv run recover tasks obligations <task>
 uv run recover tasks check <task> --image <image> --summary
+uv run recover tasks check-restoration <task> --image <image> --summary
 uv run recover run <task> --worker <config> --reviewer <config>
 uv run pytest packages/match-recovery/tests recovery/tests
 cmake --build build

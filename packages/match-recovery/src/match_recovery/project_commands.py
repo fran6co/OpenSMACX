@@ -58,6 +58,11 @@ def register(commands):
     task_check.add_argument("--root", type=Path, default=Path.cwd())
     task_check.add_argument("--image", type=Path, required=True)
     task_check.add_argument("--summary", action="store_true")
+    restoration = task_actions.add_parser("check-restoration", help="Remeasure historical obligations alongside scoped checks; never waive regressions")
+    restoration.add_argument("task")
+    restoration.add_argument("--root", type=Path, default=Path.cwd())
+    restoration.add_argument("--image", type=Path, required=True)
+    restoration.add_argument("--summary", action="store_true")
     variants = task_actions.add_parser("variants", help="Score authorized source candidates without editing or banking them")
     variants.add_argument("task")
     variants.add_argument("--root", type=Path, default=Path.cwd())
@@ -141,6 +146,15 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
         return 0, partition_report(root, group=arguments.get("group"), details=arguments.get("details", False),
                                    impact=arguments.get("impact", False))
     if "source" in configuration and arguments.get("command") == "tasks":
+        if arguments.get("action") == "check-restoration":
+            from .restoration import measure_restoration
+            image = Path(arguments["image"])
+            output = measure_restoration(root, arguments["task"], image if image.is_absolute() else root / image)
+            if arguments.get("summary"):
+                output.pop("candidate")
+                output.pop("measurements")
+                output.pop("current")
+            return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
         if arguments.get("action") == "variants":
             from .variants import measure_variants
             paths = {name: Path(arguments[name]) for name in ("image", "deck")}

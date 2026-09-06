@@ -112,7 +112,7 @@ def case():
                           ("original-construction-order",))
     checks = dict(snapshot=SNAPSHOT, changed=frozenset({"constructor"}),
                   review=Review("worker", "reviewer", SNAPSHOT, Result.PASS, ("review",)),
-                  build=Result.PASS, structural_checks=Result.PASS,
+                  build=Result.PASS, structural_checks=Result.PASS, references=Result.PASS,
                   measurements=measurements, current=current)
     return migration, checks
 
@@ -144,7 +144,7 @@ def test_regression_allowance_never_hides_missing_or_unexpected_results(case, de
         migration.admit(**checks)
 
 
-@pytest.mark.parametrize("defect", ["self-review", "stale-review", "scope", "build", "structure"])
+@pytest.mark.parametrize("defect", ["self-review", "stale-review", "scope", "build", "structure", "references"])
 def test_migration_admission_checks(case, defect):
     migration, checks = case
     if defect == "self-review":
@@ -155,6 +155,8 @@ def test_migration_admission_checks(case, defect):
         checks["changed"] = frozenset({"unrelated"})
     elif defect == "build":
         checks["build"] = Result.FAIL
+    elif defect == "references":
+        checks["references"] = Result.UNKNOWN
     else:
         checks["structural_checks"] = Result.UNKNOWN
     with pytest.raises(ValueError):

@@ -5,6 +5,13 @@ This is the implementation contract and progress record for the independent
 active until replacement coverage and a measured cutover are demonstrated.
 Their continued presence during construction is not a compatibility promise.
 
+The configured loop now uses the package-owned `tasks check-restoration` command:
+current strict binary/layout measurements are joined to source-history obligation
+identities, including removed claims. These are disposable measurements, not a
+new ledger. Matching permissions also require a separate passing reference check;
+legacy byte-only history cannot waive wrong or unknown targets. Native build,
+full structure, outside-scope admission and provider integration remain unfinished.
+
 ## Accepted design
 
 - Identify application, third-party, runtime, system, generated, and unknown

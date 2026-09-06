@@ -95,7 +95,9 @@ that behavior; names and a good byte score alone do not establish it.
 With local worker/reviewer command configurations, use
 `uv run recover run <task> --worker <worker-config> --reviewer <reviewer-config>`.
 Set `OPENSMACX_IMAGE` and an isolated `VC6_PREFIX` for this project's check.
-The scoped check itself is a native library command. `measurement` configuration
+The configured `tasks check-restoration` is a native library command. It combines
+scoped diagnostics with fresh measurements of the historical obligations; its
+`candidate` field contains the joint binary/layout report. `measurement` configuration
 selects flag trials and the local application compiler profile; no project
 operation dispatcher is needed.
 Provider commands must implement the package's JSON protocol. The Markdown
@@ -115,11 +117,18 @@ every historical restoration obligation; expand to the coupled declarations,
 callers, globals and generated code needed to close the migration.
 
 Admission requires explicit coordinator permission, independent snapshot review,
-and a configured migration check proving its build/structure prerequisites.
+and a configured migration check proving its build/structure/reference prerequisites.
 `recover run --migration <permission>` is not a bypass: this project's supplied
 driver has no migration-check adapter yet, so it cannot currently admit such a
 checkpoint. Park the scoped work for review instead of calling it green or
 merging it as accepted. The generic driver never automatically reverts it.
+
+Use `uv run recover tasks check-restoration <task> --image <image> --summary`
+to identify the protected requirements still needing work. This recomputes
+measurements, not just the inventory. Missing product bindings and unresolved
+references remain unknown; compiler trials cannot lend each other partial passes.
+Full structural and non-exact instruction-shape obligations are not yet supported
+by this native verifier. A successful offset check does not discharge them.
 
 After structure is established, compare a small deck of plausible source forms
 with `uv run recover tasks variants <task> --image <image> --deck <ignored-json>`.

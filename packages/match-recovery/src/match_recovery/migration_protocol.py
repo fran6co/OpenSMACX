@@ -58,7 +58,7 @@ def extend_inventory(frozen: dict[str, Obligation], report: dict, scope: frozens
 
 def admit(permission: dict, protected: tuple[Obligation, ...], scope: frozenset[str],
           decision: dict, snapshot: str, code: int, report: dict):
-    fields = {"snapshot", "changed", "build", "structure", "outside_scope", "measurements", "current"}
+    fields = {"snapshot", "changed", "build", "structure", "references", "outside_scope", "measurements", "current"}
     if not isinstance(report, dict) or set(report) != fields or report["snapshot"] != snapshot:
         raise ValueError("invalid or stale migration check report")
     if code != 0:
@@ -97,4 +97,5 @@ def admit(permission: dict, protected: tuple[Obligation, ...], scope: frozenset[
                     tuple(decision["evidence"]))
     return migration.admit(snapshot=snapshot, changed=frozenset(report["changed"]), review=review,
                            build=Result(report["build"]), structural_checks=Result(report["structure"]),
+                           references=Result(report["references"]),
                            measurements=measurements, current=report["current"])
