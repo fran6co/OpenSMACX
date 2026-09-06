@@ -102,7 +102,7 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
     """Native configured source operations, otherwise the local JSON boundary."""
     root = root.resolve()
     configuration = read_json(root / "recovery/project.json")
-    if (configuration.keys() - {"schema_version", "adapter", "source"}
+    if (configuration.keys() - {"schema_version", "adapter", "source", "source_history"}
             or type(configuration.get("schema_version")) is not int or configuration["schema_version"] != 1):
         raise ValueError("invalid local project command configuration")
     if "source" in configuration and arguments.get("command") in ("inventory", "partition"):
@@ -117,6 +117,12 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
         return 0, partition_report(root, group=arguments.get("group"), details=arguments.get("details", False),
                                    impact=arguments.get("impact", False))
     if "source" in configuration and arguments.get("command") == "tasks":
+        if arguments.get("action") in ("obligations", "context"):
+            from .source_obligations import task_obligations
+            if arguments["action"] == "obligations":
+                return 0, task_obligations(root, arguments["task"])
+            from .task_source import task_context
+            return 0, task_context(root, arguments["task"], restoration_for=task_obligations)
         if arguments.get("action") == "create":
             from .task_source import create_task
             return 0, create_task(root, name=arguments["task"], group=arguments["group"],

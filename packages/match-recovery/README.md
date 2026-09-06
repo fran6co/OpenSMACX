@@ -168,10 +168,24 @@ defaults to `HEAD`; optional `--base` takes a full ancestor revision whose sourc
 and source configuration are unchanged. It does not guess an upstream branch or
 replace an existing task baseline. `--edit-file` explicitly adds editable scope.
 Task discovery, resolution and status operate directly on versioned decisions,
-even without a source configuration. The reusable `task_source.task_context`
-composer takes a restoration-evidence callback and refuses concurrent source or
-decision changes; it does not invent empty historical coverage when no provider
-is available. The supplied project's history provider is still transitional.
+even without a source configuration. `tasks obligations` and `tasks context`
+also run natively with configured source. Context refuses concurrent source or
+decision changes and incorporates historical restoration requirements.
+
+History uses each commit's source roots, suffixes, seed classifications and pin
+location, including merged side histories. Moving/deleting a claim or treating
+its old home as seed does not withdraw an earlier obligation. Member/base/table
+parsers use the configured address space rather than assuming PE or 32-bit
+addresses; format-specific binary checks still enforce their supported formats.
+
+For tasks whose baseline predates source configuration, an optional
+`source_history` section in `recovery/project.json` must explicitly supply
+`before_configuration` (the historical source configuration object) and a
+nonempty `evidence` array explaining that interpretation. New projects do not
+need this section. It cannot excuse later removal of established configuration,
+changed image pins or changed address spaces. Reports and historical blobs are
+derived in memory; no inventory is persisted as authority. Old interpretation
+identities and restoration requirements survive source/configuration migrations.
 
 Unmigrated operations and projects using another source provider use the optional
 `adapter` command in the same file, exchanging versioned arguments and an

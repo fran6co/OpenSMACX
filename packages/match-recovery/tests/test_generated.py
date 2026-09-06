@@ -81,6 +81,10 @@ def test_all_emitted_copies_are_checked_not_just_one_passing_definition():
 
 
 def test_source_binding_keeps_unknown_extent_and_refuses_duplicates(tmp_path):
+    import json
+    (tmp_path / "recovery").mkdir()
+    (tmp_path / "recovery/project.json").write_text(json.dumps({"schema_version": 1, "source": {
+        "image_pin": "src/IMAGE_PIN", "address_space": "pe:va"}}))
     (tmp_path / "src").mkdir()
     path = tmp_path / "src/widget.h"
     text = "// RECOVERY_GENERATED: v1 vtable 0x00401000 ? " + TABLE + " 0x00401020\n"

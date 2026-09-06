@@ -58,6 +58,13 @@ Run `uv run recover tasks context <task>` and `uv run recover tasks obligations
 <task>`. Give workers the task identity, authorized files, current context and
 outstanding discoveries—not just addresses or a copied global brief.
 
+Both commands are native source-configuration operations. Historical source
+roots, pin locations and seed classifications come from the commits being read;
+old claims do not vanish when a directory moves or an attempt becomes a seed.
+For pre-framework task history, document the old source interpretation in
+`source_history` configuration with evidence. Do not reset a task baseline or
+substitute an empty obligations report to bypass missing history inputs.
+
 Recover bases, embedded versus pointed-to objects, construction/destruction,
 virtual slot evidence, globals and caller relationships before optimizing body
 spellings. Ordinary declarations express the structure. Source annotations hold

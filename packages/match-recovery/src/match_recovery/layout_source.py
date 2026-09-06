@@ -10,6 +10,7 @@ import re
 
 from match_recovery.model import Origin
 from match_recovery.components import relative_path
+from .source_config import SourceConfiguration
 
 
 PREFIX = "// RECOVERY_MEMBER:"
@@ -39,18 +40,15 @@ class BaseExpectation:
     line: int
 
 
-def _parse(text, path, pin, prefix, pattern, factory, label):
+def _parse(text, path, pin, prefix, pattern, factory, label, address_space):
     """Parse current or historical source without consulting the filesystem."""
     relative_path(path)
-    parts = Path(path).parts
-    if Path(path).suffix not in (".cpp", ".h") or parts[:2] in (("src", "recovered"), ("src", "unrecovered")):
-        return ()
     rows = []
     for line, source_line in enumerate(text.splitlines(), 1):
         if not source_line.lstrip().startswith(prefix):
             continue
         match = pattern.fullmatch(source_line.strip())
-        if not match or max(int(match["offset"], 16), int(match["evidence"], 16)) > 0xFFFFFFFF:
+        if not match:
             raise ValueError(f"invalid original {label} expectation at {path}:{line}")
         extra = {}
         if label == "member":
@@ -58,29 +56,27 @@ def _parse(text, path, pin, prefix, pattern, factory, label):
                 raise ValueError(f"invalid original member expectation version/type at {path}:{line}")
             extra["class_type"] = match["class_type"]
         rows.append(factory(match["class_name"], match["target"], int(match["offset"], 16),
-                            Origin(pin, "pe:va", int(match["evidence"], 16)), path, line, **extra))
+                            Origin(pin, address_space, int(match["evidence"], 16)), path, line, **extra))
     return tuple(rows)
 
 
-def parse_members(text: str, path: str, pin: str) -> tuple[MemberExpectation, ...]:
-    return _parse(text, path, pin, PREFIX, PATTERN, MemberExpectation, "member")
+def parse_members(text: str, path: str, pin: str, *, address_space: str) -> tuple[MemberExpectation, ...]:
+    return _parse(text, path, pin, PREFIX, PATTERN, MemberExpectation, "member", address_space)
 
 
-def parse_bases(text: str, path: str, pin: str) -> tuple[BaseExpectation, ...]:
-    return _parse(text, path, pin, BASE_PREFIX, BASE_PATTERN, BaseExpectation, "base")
+def parse_bases(text: str, path: str, pin: str, *, address_space: str) -> tuple[BaseExpectation, ...]:
+    return _parse(text, path, pin, BASE_PREFIX, BASE_PATTERN, BaseExpectation, "base", address_space)
 
 
 def _read(root, pin, parser, label, field):
     root = root.resolve()
+    configuration = SourceConfiguration.read(root)
     rows = []
-    for path in sorted((root / "src").rglob("*")):
-        if path.suffix not in (".cpp", ".h") or not path.is_file():
+    for path in configuration.files(root):
+        relative = path.relative_to(root).as_posix()
+        if configuration.is_seed(relative):
             continue
-        if path.relative_to(root / "src").parts[0] in ("recovered", "unrecovered"):
-            continue
-        if not path.resolve().is_relative_to(root):
-            raise ValueError(f"{label} annotation resolves outside source root")
-        rows.extend(parser(path.read_text(encoding="utf-8"), path.relative_to(root).as_posix(), pin))
+        rows.extend(parser(path.read_text(encoding="utf-8"), relative, pin, address_space=configuration.address_space))
     if len({(row.class_name, getattr(row, field)) for row in rows}) != len(rows):
         raise ValueError(f"duplicate original {label} expectation")
     return tuple(rows)

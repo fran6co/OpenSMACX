@@ -118,9 +118,14 @@ defaults to committed `HEAD`. An explicit full `--base` revision must be an
 ancestor with equivalent configured source/configuration. Dirty, ignored or
 Git-hidden source bytes cannot silently enter a committed baseline. No branch
 name is special. Discovery and resolution commands need only the task journal,
-not a source adapter. Context composition is also in the library, but this
-project still supplies historical-restoration collection; that provider has not
-yet been made source-configuration-independent.
+not a source adapter. Context and historical-restoration collection now run in
+the library too. History follows each commit's configured roots, suffixes, seed
+classification and image pin, including merged side histories. Rehoming or
+reclassifying source does not erase prior matching or structural obligations.
+The explicit `source_history` configuration describes the source layout before
+this repository had project configuration, preserving the existing InfoWin
+baseline. A new project configured from its task baseline needs no such fallback.
+There is no remaining project-specific obligation collector.
 
 ## Configured recovery driver
 

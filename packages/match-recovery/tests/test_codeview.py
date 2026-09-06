@@ -95,7 +95,7 @@ def test_cyclic_truncated_or_unsupported_modifiers_are_unknown(options):
 @pytest.mark.parametrize("text", ["v1 Widget slot_ Base 0x4 0x00401000", "v2 Widget slot_ 0x4 0x00401000"])
 def test_member_annotation_version_must_agree_with_type_field(text):
     with pytest.raises(ValueError, match="version/type"):
-        parse_members("// RECOVERY_MEMBER: " + text, "src/widget.h", "a" * 64)
+        parse_members("// RECOVERY_MEMBER: " + text, "src/widget.h", "a" * 64, address_space="pe:va")
 
 
 

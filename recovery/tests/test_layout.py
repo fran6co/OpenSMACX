@@ -90,14 +90,17 @@ def test_declared_base_cannot_be_replaced_by_flattened_fields(project, blob, exp
 def test_base_grammar_supports_qualified_names_and_refuses_duplicate_or_malformed_input(project):
     root, task = project
     text = "// RECOVERY_BASE: v1 UI::Widget UI::Base 0x4 0x00401000\n"
-    row, = parse_bases(text, "src/widget.h", task.subjects[0].image_sha256)
+    row, = parse_bases(text, "src/widget.h", task.subjects[0].image_sha256, address_space="pe:va")
     assert row.class_name == "UI::Widget" and row.base == "UI::Base" and row.offset == 4
     (root / "src/widget.h").write_text(text * 2)
     with pytest.raises(ValueError, match="duplicate original base"):
         read_bases(root, task.subjects[0].image_sha256)
     with pytest.raises(ValueError, match="invalid original base"):
-        parse_bases("// RECOVERY_BASE: unsupported\n", "src/widget.h", task.subjects[0].image_sha256)
-    assert parse_bases(text, "src/unrecovered/seed.cpp", task.subjects[0].image_sha256) == ()
+        parse_bases("// RECOVERY_BASE: unsupported\n", "src/widget.h", task.subjects[0].image_sha256, address_space="pe:va")
+    (root / "src/widget.h").unlink()
+    (root / "src/unrecovered").mkdir()
+    (root / "src/unrecovered/seed.cpp").write_text(text)
+    assert read_bases(root, task.subjects[0].image_sha256) == ()
 
 
 

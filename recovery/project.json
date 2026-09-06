@@ -6,6 +6,18 @@
     "seed_roots": ["src/recovered", "src/unrecovered"],
     "symbol_format": "msvc"
   },
+  "source_history": {
+    "before_configuration": {
+      "image_pin": "src/IMAGE_PIN",
+      "address_space": "pe:va",
+      "seed_roots": ["src/recovered", "src/unrecovered"],
+      "symbol_format": "msvc"
+    },
+    "evidence": [
+      "git:3d8cf9192650ec25460072736e48c03734cf1f0e:src/IMAGE_PIN",
+      "git:3d8cf9192650ec25460072736e48c03734cf1f0e:docs/DECOMP_MAP.md"
+    ]
+  },
   "adapter": {
     "argv": ["uv", "run", "python", "recovery/adapter.py"],
     "timeout": 3600

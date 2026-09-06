@@ -3,7 +3,7 @@ import json
 
 import pytest
 
-from recovery.opensmacx.opensmacx_obligations import task_obligations
+from match_recovery.source_obligations import task_obligations
 from match_recovery.model import Origin
 from match_recovery.source_history import source_versions
 from match_recovery.tasks import Task, TaskStore
@@ -152,7 +152,7 @@ def test_cli_context_exposes_same_requirements(project, capsys):
 
 
 def test_concurrent_working_source_change_is_refused(project, monkeypatch):
-    import recovery.opensmacx.opensmacx_obligations as adapter
+    import match_recovery.source_obligations as adapter
     root, _ = project
     original = adapter.source_snapshot
     def racing_snapshot(*args):

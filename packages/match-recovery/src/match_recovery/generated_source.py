@@ -6,6 +6,7 @@ import re
 
 from match_recovery.components import relative_path
 from match_recovery.model import Origin, Span, require_text
+from .source_config import SourceConfiguration
 
 
 PREFIX = "// RECOVERY_GENERATED:"
@@ -30,12 +31,9 @@ class GeneratedBinding:
             raise ValueError("table evidence belongs to another original")
 
 
-def parse_generated(text: str, path: str, pin: str) -> tuple[GeneratedBinding, ...]:
-    """Parse current or historical source; seed annotations remain hints."""
+def parse_generated(text: str, path: str, pin: str, *, address_space: str) -> tuple[GeneratedBinding, ...]:
+    """Parse supplied source; the configured reader selects product versus seed."""
     relative_path(path)
-    parts = Path(path).parts
-    if Path(path).suffix not in (".cpp", ".h") or parts[:2] in (("src", "recovered"), ("src", "unrecovered")):
-        return ()
     bindings = []
     for line, source_line in enumerate(text.splitlines(), 1):
         if not source_line.lstrip().startswith(PREFIX):
@@ -45,24 +43,21 @@ def parse_generated(text: str, path: str, pin: str) -> tuple[GeneratedBinding, .
             raise ValueError(f"invalid generated binding at {path}:{line}")
         start, evidence = int(match[1], 16), int(match[4], 16)
         span = None if match[2] == "?" else Span(start, int(match[2], 16))
-        if max(start, evidence, span.end - 1 if span else 0) > 0xFFFFFFFF:
-            raise ValueError("generated PE binding exceeds 32 bits")
-        bindings.append(GeneratedBinding(Origin(pin, "pe:va", start), span, match[3],
-                                          Origin(pin, "pe:va", evidence), path, line))
+        bindings.append(GeneratedBinding(Origin(pin, address_space, start), span, match[3],
+                                          Origin(pin, address_space, evidence), path, line))
     return tuple(bindings)
 
 
 def read_generated(root: Path, pin: str) -> tuple[GeneratedBinding, ...]:
     root = root.resolve()
+    configuration = SourceConfiguration.read(root)
     bindings = []
-    for path in sorted((root / "src").rglob("*")):
-        if path.suffix not in (".cpp", ".h") or not path.is_file():
+    for path in configuration.files(root):
+        relative = path.relative_to(root).as_posix()
+        if configuration.is_seed(relative):
             continue
-        if path.relative_to(root / "src").parts[0] in ("recovered", "unrecovered"):
-            continue
-        if not path.resolve().is_relative_to(root):
-            raise ValueError("generated binding resolves outside source root")
-        bindings.extend(parse_generated(path.read_text(encoding="utf-8"), path.relative_to(root).as_posix(), pin))
+        bindings.extend(parse_generated(path.read_text(encoding="utf-8"), relative, pin,
+                                        address_space=configuration.address_space))
     if (len({row.symbol for row in bindings}) != len(bindings)
             or len({row.origin.entity_id for row in bindings}) != len(bindings)):
         raise ValueError("duplicate generated symbol or original table start")
