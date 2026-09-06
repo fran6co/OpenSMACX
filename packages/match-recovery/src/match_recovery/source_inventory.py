@@ -182,6 +182,20 @@ def source_snapshot(root: Path, image: Path | None = None) -> dict[str, Any]:
             "historical_obligations": obligations}
 
 
+def assert_snapshot_current(root: Path, snapshot: dict) -> None:
+    """Recheck source inputs without reparsing or persisting another inventory."""
+    root = root.resolve()
+    configuration = SourceConfiguration.from_dict(snapshot["source_configuration"])
+    if (configuration != SourceConfiguration.read(root)
+            or set(snapshot["files"]) != {path.relative_to(root).as_posix() for path in configuration.files(root)}
+            or snapshot["image_sha256"] != image_pin(root, configuration)
+            or snapshot["revision"] != _revision(root)):
+        raise ValueError("source inventory changed; retry at a checkpoint")
+    for name, row in snapshot["files"].items():
+        if hashlib.sha256(configuration.path(root, name).read_bytes()).hexdigest() != row["sha256"]:
+            raise ValueError(f"source changed since inventory: {name}")
+
+
 def inventory(snapshot: dict[str, Any]) -> dict[str, Any]:
     require_digest(snapshot["image_sha256"])
     records = snapshot["records"]

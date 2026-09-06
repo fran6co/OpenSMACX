@@ -154,7 +154,7 @@ def test_task_cli_keeps_discoveries_through_scope_expansion_and_context_rebuild(
                               cwd=project, capture_output=True, check=True)
 
     git("init", "--initial-branch=master")
-    git("add", "src")
+    git("add", "src", "recovery/project.json")
     git("commit", "-m", "Synthetic source baseline")
     baseline = git("rev-parse", "HEAD").stdout.decode().strip()
     git("switch", "-c", "framework")
@@ -163,7 +163,8 @@ def test_task_cli_keeps_discoveries_through_scope_expansion_and_context_rebuild(
     git("commit", "-m", "Tooling changes must not strand a source baseline")
     common = ["--root", str(project)]
     assert main(["tasks", "create", "widget", *common, "--group", "class:Widget", "--author", "coordinator",
-                 "--intent", "Fix member ownership", "--evidence", "source:src/widget.h"]) == 0
+                 "--intent", "Fix member ownership", "--evidence", "source:src/widget.h",
+                 "--target", "opensmacx", "--base", baseline]) == 0
     assert json.loads(capsys.readouterr().out)["task"]["base_revision"] == baseline
     other = Origin(PIN, "pe:va", 0x402000).entity_id
     assert main(["tasks", "discover", "widget", *common, "--author", "worker", "--request-id", "finding",
@@ -190,5 +191,5 @@ def test_task_cli_keeps_discoveries_through_scope_expansion_and_context_rebuild(
     assert not json.loads(capsys.readouterr().out)["ready_for_collection"]
     (project / "src" / "widget.h").write_text("// uncommitted layout change\n")
     assert main(["tasks", "create", "dirty", *common, "--group", "class:Widget", "--author", "coordinator",
-                 "--intent", "New migration", "--evidence", "source:src/widget.h"]) == 3
+                 "--intent", "New migration", "--evidence", "source:src/widget.h", "--target", "opensmacx"]) == 3
     assert "checkpoint source" in capsys.readouterr().err

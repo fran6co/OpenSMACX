@@ -160,6 +160,19 @@ guessed by name, and missing roots/outside symlinks are refused. `symbol_format`
 defaults to `none`; opt into `msvc` for decorated-class/lifetime search hints.
 Hints are not original-design proof. Include impact remains conservative.
 
+With this source configuration, `tasks create <task> --group <group> --target
+<target> --author <author> --intent <intent> --evidence <evidence>` and `tasks
+expand` also run without adapter code. Target may instead come from
+`recovery/driver.json`. Creation requires committed source/configuration and
+defaults to `HEAD`; optional `--base` takes a full ancestor revision whose source
+and source configuration are unchanged. It does not guess an upstream branch or
+replace an existing task baseline. `--edit-file` explicitly adds editable scope.
+Task discovery, resolution and status operate directly on versioned decisions,
+even without a source configuration. The reusable `task_source.task_context`
+composer takes a restoration-evidence callback and refuses concurrent source or
+decision changes; it does not invent empty historical coverage when no provider
+is available. The supplied project's history provider is still transitional.
+
 Unmigrated operations and projects using another source provider use the optional
 `adapter` command in the same file, exchanging versioned arguments and an
 `output` envelope. This is a JSON protocol, not a second project CLI. The starter

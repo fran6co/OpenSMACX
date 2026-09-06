@@ -1,4 +1,4 @@
-"""Installed target-independent CLI. Project commands live in the project."""
+"""Installed target-independent CLI with a configured project command boundary."""
 
 import argparse
 from dataclasses import asdict
@@ -65,6 +65,15 @@ def main(argv: Sequence[str] | None = None) -> int:
                 output = {**store.status(args.task, scope), "task": store.read(args.task).to_dict(), "decisions": store.decisions(args.task),
                           "authorized_entities": sorted(scope), "editable_files": sorted(files),
                           "source_verification": "not_measured"}
+        elif args.command == "tasks" and args.action in ("discover", "resolve"):
+            store = TaskStore(args.root)
+            common = {key: getattr(args, key) for key in ("request_id", "author", "expected_revision")}
+            if args.action == "discover":
+                output = store.discover(args.task, hypothesis=args.hypothesis, affects=args.affects,
+                                        evidence=args.evidence, **common)
+            else:
+                output = store.resolve(args.task, discovery_id=args.discovery_id, disposition=args.disposition,
+                                       source_evidence=args.source_evidence, **common)
         elif args.command == "history":
             output = [asdict(event) for event in Journal(args.root / "recovery/history").read(args.stream)]
         else:

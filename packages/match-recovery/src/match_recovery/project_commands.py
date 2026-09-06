@@ -21,6 +21,8 @@ def register(commands):
     create.add_argument("task", nargs="?")
     create.add_argument("--root", type=Path, default=Path.cwd())
     create.add_argument("--group")
+    create.add_argument("--target", help="Task target; defaults to recovery/driver.json")
+    create.add_argument("--base", help="Full ancestor revision with equivalent source/configuration; defaults to HEAD")
     create.add_argument("--file", type=Path, help="Explicit generic task decision instead of a source-derived group")
     create.add_argument("--intent")
     create.add_argument("--author")
@@ -76,7 +78,7 @@ def register(commands):
     resolve.add_argument("--disposition", choices=("incorporated", "rejected"), required=True)
     resolve.add_argument("--source-evidence", action="append", required=True)
     resolve.add_argument("--expected-revision", type=int, required=True)
-    importing = commands.add_parser("import", help="Import mappings or cache a legacy parse")
+    importing = commands.add_parser("import", help="Import mappings or external evidence")
     importing.add_argument("provider", help="Configured source/evidence provider")
     importing.add_argument("--root", type=Path, default=Path.cwd())
     importing.add_argument("--image", type=Path)
@@ -114,6 +116,18 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
         from .ownership_source import partition_report
         return 0, partition_report(root, group=arguments.get("group"), details=arguments.get("details", False),
                                    impact=arguments.get("impact", False))
+    if "source" in configuration and arguments.get("command") == "tasks":
+        if arguments.get("action") == "create":
+            from .task_source import create_task
+            return 0, create_task(root, name=arguments["task"], group=arguments["group"],
+                                  author=arguments["author"], intent=arguments["intent"], evidence=arguments["evidence"],
+                                  editable_files=arguments.get("edit_file") or (),
+                                  target=arguments.get("target"), base=arguments.get("base"))
+        if arguments.get("action") == "expand":
+            from .task_source import expand_task
+            return 0, expand_task(root, name=arguments["task"], subjects=arguments["subject"],
+                                  editable_files=arguments["edit_file"],
+                                  **{key: arguments[key] for key in ("request_id", "author", "evidence", "expected_revision")})
     if "adapter" not in configuration:
         raise ValueError("this operation needs a configured project adapter")
     return _invoke_adapter(root, configuration, arguments)

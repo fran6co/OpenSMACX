@@ -112,6 +112,16 @@ adjacency never proves a translation-unit boundary. These reports are not stored
 claim about object ownership or dynamic calls. Unresolved includes widen the
 scope; this view is not yet used to narrow the production check cache.
 
+Source-derived task creation and expansion run in the package, without the local
+adapter. Creation takes the target from `recovery/driver.json` or `--target` and
+defaults to committed `HEAD`. An explicit full `--base` revision must be an
+ancestor with equivalent configured source/configuration. Dirty, ignored or
+Git-hidden source bytes cannot silently enter a committed baseline. No branch
+name is special. Discovery and resolution commands need only the task journal,
+not a source adapter. Context composition is also in the library, but this
+project still supplies historical-restoration collection; that provider has not
+yet been made source-configuration-independent.
+
 ## Configured recovery driver
 
 `recover run` executes a bounded context → check → worker → recheck loop. The

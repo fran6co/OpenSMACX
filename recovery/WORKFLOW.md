@@ -36,6 +36,13 @@ Create a source-derived task with `uv run recover tasks create <task> --group
 Use each command's `--help` for the exact arguments. Checkpoint task/configuration
 decisions before running the driver.
 
+Creation uses the target from `recovery/driver.json` (or explicit `--target`) and
+the current committed `HEAD` as baseline. It never guesses from a branch name.
+To reuse an older checkpoint, pass its full revision with `--base`; it must be
+an ancestor with identical configured source and source configuration. Commit
+source/configuration changes first. Scope expansion is an explicit authorization,
+not a new baseline or permission to discard historical obligations.
+
 The coordinator prepares an isolated worktree with its own build database,
 caches and compiler prefix. Workers must not share writable Wine prefixes or
 overlapping ownership/header scopes. There is no measured fleet size promised
