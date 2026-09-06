@@ -556,7 +556,11 @@ SCAFFOLD_CEILINGS = {
     # (0x56B5B0, unlocked enemy_veh/enemy_turn) and NetDaemon::action
     # (0x532570, exposed by enemy_veh's homing) - both FILE-only in the
     # archive, landmine-free.
-    "PENDING_BODY forwarders": 266,
+    # 266 -> 264 (2026-09-06, W5u game board, collected): the get_pact_
+    # hood/get_his_her/get_he_she/get_him_her forwarders went with their
+    # hand-written bodies (the artifacts failed the build - link duplicate,
+    # syntax error - so the bodies were written fresh, not lifted).
+    "PENDING_BODY forwarders": 264,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -831,7 +835,11 @@ SCAFFOLD_CEILINGS = {
     # 1058 -> 1055 (2026-09-06, W5s datalink board): thirteen more homed
     # measured (set_cat, project/tech/concept/adv_concept/social/effect/
     # faction/terraform, show_topic, push/pop_history, on_link_clicked).
-    "unrecovered files": 1055,
+    # 1055 -> 1049 (2026-09-06, W5u game board, collected): six homed -
+    # 0x0052A9B0 BYTE_EXACT 49/49 (the `int result = 0` at the TOP of the
+    # body lever), current_server's ternary family and the PCX head
+    # reader measured.
+    "unrecovered files": 1049,
     # 2717 -> 2748 (2026-09-04, P2 net batch): NetFifo promoted with
     # close/add/get/get, NetFifoNode, head_/tail_/count_ - the deliberate
     # raise this ceiling exists for (class modelling grows it; the class

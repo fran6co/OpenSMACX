@@ -598,6 +598,10 @@ extern Player Players[MaxPlayerNum];   // Players[0] is AI native life faction (
 extern PlayerData PlayersData[MaxPlayerNum];                    // 0x0096C9E0
 extern uint32_t FactionRankings[MaxPlayerNum];                  // 0x009A64EC
 extern uint32_t LockEnableMask;  // 0x009A64E8 - declared in lock.h too; byte 0 = is_human bytes, byte 1 = is_alive
+// Declared here (not just in general.cpp) because game.cpp's load_bases
+// (0x00453A20) walks this storage directly, 0x2c per Sprite, filling the
+// FactionArtBasePtrTable - and the storage was otherwise reachable by no name.
+extern uint8_t FactionArtGlobal_storage[8 * 0x65C];
 // Per-turn archive of every faction's power score, written by rankings() for the first
 // MaxRankingHistoryTurns turns and indexed faction + turn * MaxPlayerNum. Sixteen bits per
 // entry, which is why a score above 65535 wraps in the graph and not in the ranking.

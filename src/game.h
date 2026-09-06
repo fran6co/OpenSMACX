@@ -298,6 +298,13 @@ void __cdecl amovie_project(char *movie);
 
 class GraphicWin;
 
+// 0x00945838. Uninitialised .data. The use-site census names it: get_his_her
+// (0x0058FBC0), get_him_her (0x0058FC50) and get_he_she (0x0058FCE0) are the
+// only three sites in the image that touch it, and each one strcpy's the
+// pronoun it just fetched from StringTable into it and returns its address.
+// Declared 256 wide as a bound - nothing in the image says how long it is.
+extern char PronounBuffer[256];
+
 // The opening-window slot at 0x00945824. The desktop bring-up at 0x00589B60
 // allocates 0xA14 bytes and constructs a GraphicWin there (ctor 0x005D4CF0);
 // close_opening dispatches its vtable slot 0 - on_dialog_focus - with 1 and

@@ -2089,16 +2089,6 @@ char *__cdecl get_he_she(int faction_id, int sentence_form) {
     return PENDING_BODY(0x0058FCE0, pending)(faction_id, sentence_form);
 }
 
-char *__cdecl get_his_her(int faction_id, int sentence_form) {
-    typedef char *(__cdecl *pending)(int, int);
-    return PENDING_BODY(0x0058FBC0, pending)(faction_id, sentence_form);
-}
-
-char *__cdecl get_pact_hood(int faction_id, int faction_id_with) {
-    typedef char *(__cdecl *pending)(int, int);
-    return PENDING_BODY(0x0058FB00, pending)(faction_id, faction_id_with);
-}
-
 // The cross-TU callees faction.h declares for the net_* / diplomacy bodies.
 // All six are FILE-only archive bodies carrying no claim, so none of these
 // forwarders can landmine.

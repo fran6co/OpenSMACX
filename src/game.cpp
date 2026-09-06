@@ -22,6 +22,8 @@
 #include "alpha.h"
 #include "base.h"
 #include "basepop.h"  // BasePopDefaultField322C
+#include "buffer.h"  // g_PCX_PARSE_TEMP_BUFFER1
+#include "sprite.h"  // Sprite::extract
 #include "basewin.h"  // BaseWin::close
 #include "console.h"  // ConsoleGlobal, ConsoleStatusWin
 #include "designwin.h"  // DesignWin::close
@@ -48,6 +50,9 @@
 #include "wave.h"  // g_WAVE_GENERAL
 #include "worldwin.h"  // WorldClimateWorldWin
 #include "diplowin.h"  // DiploWin::exec, homed here out of the archive
+
+char PronounBuffer[256];  // 0x00945838 - see game.h for the naming evidence
+
 
 BOOL ExpansionEnabled;  // 0x009A6488
 uint32_t GamePreferences;  // 0x009A6490
@@ -2403,3 +2408,237 @@ char *__cdecl get_noun_phrase(int faction_id, int phrase_id) {
     strcpy(TextBufferGetPtr, buffer);
     return TextBufferGetPtr;
 }
+
+// ORIGINAL: 0x00450FB0 sub_450fb0 0x00450FB0-0x00451021 FILE
+// symbol    _extract_sheet_icon
+// LEVER: the fixed-address binding renamed to buffer.h's
+//         g_PCX_PARSE_TEMP_BUFFER1 (0x00798668, defined in buffer.cpp) - the
+//         tree already owns that name, so no anonymous g_ binding arrived.
+// TRIED: signature had 0 params in the scaffold but the disassembly reads 5
+//         stack args - changed to the five below. `-static_cast<int>((x&2)!=0)
+//         &0x1d` for the neg/sbb/and offset mask compiles close but diverges at
+//         instr #17 ('and' vs rebuilt 'shr').
+// TRIED: the image gives this body no direct caller (0 in the image's call
+//         graph), so the parameter names below are read off the body's own
+//         uses - `sprite` is the extract receiver, `sheet_x`/`sheet_y` land in
+//         extract's second and third slots, `quadrant` feeds only the two
+//         &2 masks, `recolor` guards the two change_color calls. Nothing in
+//         the image ties them to a caller-side meaning.
+
+extern "C" int __cdecl extract_sheet_icon(int sprite, int sheet_x, int sheet_y,
+                                         int quadrant, int recolor) {
+    if (recolor != 0) {
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x107, 0x109);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x106, 0x109);
+    }
+    int off_x = (-static_cast<int>(((quadrant + 1) & 2) != 0) & 0x1d) + sheet_x;
+    int off_y = (-static_cast<int>((quadrant & 2) != 0) & 0x1d) + sheet_y;
+    return reinterpret_cast<Sprite *>(sprite)->extract(
+        &g_PCX_PARSE_TEMP_BUFFER1, 0x109, off_x, off_y, 0x1c, 0x1c, 0);
+}
+
+// 0x0076E590 - the 192-entry `Sprite *` table load_bases fills: 8 factions x
+// 24 sprites, 24 = faction.h's FactionArt::base[6][4], and the 0x2c stride is
+// sizeof(Sprite). It ends exactly where caviar.cpp's g_VCTB_CAVIARDATA
+// (0x0076E890) starts, which is what bounds the walk. It is a const POINTER
+// to the table rather than the array itself on purpose: the array spelling
+// moves load_bases's whole register assignment (below).
+static int *const FactionArtBasePtrTable = (int *)0x0076E590;
+
+// ORIGINAL: 0x00453A20 ?load_bases@@YAXXZ 0x00453A20-0x00453A6A FILE
+// LEVER: the two fixed-address bindings renamed off their addresses.
+//         0x0076E890 is caviar.cpp's g_VCTB_CAVIARDATA (now declared in
+//         caviar.h, so the same address does not carry two names), which makes
+//         the table it terminates the 0x300 bytes immediately in front of it.
+//         0x0078E978 is what the table points into - general.cpp's
+//         FactionArtGlobal_storage, 8 FactionArt elements of 0x65c - and the
+//         strides say so: 0x2c per Sprite (24 of them = FactionArt::base[6][4],
+//         the 0x420 row bound), 0x84 per three sprites, 0x65c per faction.
+//         src/recovered/units/00455eb0.cpp (load_sprites) walks the same table
+//         with the same three strides, which corroborates both names
+//         independently of this body.
+// TRIED: the storage base spelled as a one-byte extern symbol, as a const
+//         int, as a const pointer, and as the literal - all four measure the
+//         same 13/26 here. The 25/26 the carried note records was scored
+//         against 00453a20.cpp's OWN translation unit, whose scaffold
+//         declarations differ; in this tree the wall is register ASSIGNMENT,
+//         not the spelling of the binding: the image zeroes the outer
+//         accumulator into EBX and keeps the table in EAX, this tree puts the
+//         table in ECX and the inner 4-counter in EBX, so the accumulator's
+//         `xor ebx, ebx` never appears at all.
+
+void __cdecl load_bases() {
+    int ebx = 0;
+    char **eax = reinterpret_cast<char **>(FactionArtBasePtrTable);
+    do {
+        int esi = 0;
+        do {
+            int edi = 4;
+            do {
+                char *ecx = reinterpret_cast<char *>(
+                    FactionArtGlobal_storage + ebx + esi);
+                int edx = 3;
+                do {
+                    *eax = ecx;
+                    ecx += 0x2c;
+                    eax++;
+                    edx--;
+                } while (edx != 0);
+                esi += 0x84;
+                edi--;
+            } while (edi != 0);
+        } while (esi < 0x420);
+        ebx += 0x65c;
+    } while (reinterpret_cast<int>(eax) < reinterpret_cast<int>(&g_VCTB_CAVIARDATA));
+}
+
+// ORIGINAL: 0x0052A9B0 sub_52a9b0 0x0052A9B0-0x0052AA2D FILE BYTE_EXACT
+// symbol    _directplay_install_is_complete
+// LEVER: the six fixed-address bindings renamed or deleted. Three of them -
+//         0x00669000, 0x0066900C and 0x00669010 - are ADVAPI32 import slots
+//         (tools/iat_names.py: RegQueryValueExA, RegOpenKeyExA, RegCloseKey),
+//         so the dllimport declarations replace them outright. The other three
+//         are .rdata literals, read with tools/image_data.py:
+//         0x0068BE94 is the DirectPlay Applications key for this game,
+//         0x0068BEDC is "Complete" and 0x0068BEE8 is "Yes". String literals
+//         fold to their own addresses, so the pushes come out the same.
+// LEVER: BYTE_EXACT on declaring `int result = 0` at the TOP of the body.
+//         The image zeroes esi before RegOpenKeyExA and then pushes esi twice
+//         as the call's two `0` arguments - which it can only do because the
+//         result local is already live. Declaring `result` after the call
+//         cost VC6 the shared zero, and every `0` argument then materialised
+//         as its own `push 0` (24/49, prologue `lea` where the image has
+//         `push esi`).
+
+extern "C" int __cdecl directplay_install_is_complete() {
+    typedef int (__cdecl *StrcmpiFn)(const char *, const char *);
+    int result = 0;
+    HKEY key;
+    LONG status = RegOpenKeyExA(reinterpret_cast<HKEY>(0x80000002),
+        "SOFTWARE\\Microsoft\\DirectPlay\\Applications\\"
+        "Sid Meier's Alpha Centauri", 0, 0, &key);
+    if (status != 0) {
+        return 0;
+    }
+    DWORD valueType;
+    char valueBuf[12];
+    DWORD valueSize = 10;
+    status = RegQueryValueExA(key, "Complete", 0, &valueType,
+        reinterpret_cast<BYTE *>(valueBuf), &valueSize);
+    if (status == 0) {
+        StrcmpiFn fn = reinterpret_cast<StrcmpiFn>(_strcmpi);
+        if (fn(valueBuf, "Yes") == 0) {
+            result = 1;
+        }
+    }
+    RegCloseKey(key);
+    return result;
+}
+
+// ORIGINAL: 0x0058FA70 ?get_pacts@@YAPADHH@Z 0x0058FA70-0x0058FAFA FILE
+// working copy - scaffold materialised by --work
+// size      138 bytes
+// prototype 
+// callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006169A0
+
+// LEVER: the three fixed-address bindings renamed to the tree's own models -
+//         Players (faction.h), Labels (alpha.h) and StringTable (strings.h), so
+//         no anonymous g_ binding arrived with the body. 0x009BBFEC is
+//         GenderDefault and 0x009BBFF0 is PluralityDefault (general.h).
+// LEVER: `int flag; if (a && b) flag = 1; else flag = 0;` - the two else arms
+//         SHARE one `xor edx,edx` and the true arm jumps over it
+//         (`mov edx,1 / jmp / xor edx,edx`). The ternary and the bare `&&`
+//         both compile the other way (`jne` straight to the store).
+// TRIED: `code` as a ternary, as a nested ternary and with `labels` declared
+//         ahead of it - all three move `mine` off ECX (22/43, 4/43, 12/43)
+//         against 27/43 for the plain `int code = 0xcb; if (...) code = 0xcc;`.
+//         What is left is register ASSIGNMENT: the image keeps `code` in EAX
+//         (reusing the dead `Players[other_id]` load) and `labels` in EDX, and
+//         hoists the third `test ecx,ecx` above the two global stores.
+
+char *__cdecl get_pacts(int faction_id, int other_id) {
+    int mine = Players[faction_id].is_leader_female;
+    int theirs = 0;
+    if (mine != 0) {
+        theirs = Players[other_id].is_leader_female;
+    }
+    int flag;
+    if (mine != 0 && theirs != 0) {
+        flag = 1;
+    } else {
+        flag = 0;
+    }
+    GenderDefault = flag;
+    PluralityDefault = 1;
+    int code = 0xcb;
+    if (mine != 0) {
+        if (Players[other_id].is_leader_female != 0) {
+            code = 0xcc;
+        }
+    }
+    LPSTR *labels = (LPSTR *)Labels.strings_ptr;
+    return StringTable.get((int)labels[code]);
+}
+
+// ORIGINAL: 0x0058FBC0 ?get_his_her@@YAPADHH@Z 0x0058FBC0-0x0058FC4B FILE
+// LEVER: the fixed-address bindings renamed to the tree's own models - Players
+//         (faction.h), Labels (alpha.h), StringTable (strings.h), the CharUpperA
+//         import slot (windows.h) and 0x00945838 as PronounBuffer below. The
+//         use-site census names that buffer: get_his_her (this body),
+//         get_him_her (0x0058FC50) and get_he_she (0x0058FCE0) are the only
+//         three sites in the image that touch it, and each strcpy's its fetched
+//         pronoun into it and hands back its address.
+// TRIED: `LPSTR *labels` read inline in the call instead of as a named local -
+//         20/42 against 21/42, so the local stays. Naming the flag `female`
+//         first, swapping the `+` operands, and the `(x != 0) + 0xcf` form all
+//         score the same 21/42 as what is committed. What is left is register
+//         ASSIGNMENT: the image zeroes the `0xcf +` accumulator into EDX before
+//         the index chain and keeps `Labels.strings_ptr` in EAX; this tree puts
+//         the accumulator in EAX and the label table in ECX.
+
+char *__cdecl get_his_her(int faction_id, int sentence_form) {
+    int code = 0xcf + (Players[faction_id].is_leader_female != 0);
+    LPSTR *labels = (LPSTR *)Labels.strings_ptr;
+    strcpy(PronounBuffer, StringTable.get((int)labels[code]));
+    if (sentence_form != 0) {
+        if (sentence_form == 1) {
+            char buf[2];
+            buf[0] = PronounBuffer[0];
+            buf[1] = 0;
+            CharUpperA(buf);
+            PronounBuffer[0] = buf[0];
+            return PronounBuffer;
+        }
+        CharUpperA(PronounBuffer);
+    }
+    return PronounBuffer;
+}
+
+// ORIGINAL: 0x0058FB00 ?get_pact_hood@@YAPADHH@Z 0x0058FB00-0x0058FB61 FILE
+// LEVER: the five fixed-address bindings renamed to the tree's own models - see
+//         get_pacts above for the address map. No anonymous g_ binding arrived.
+// TRIED: `int code = 0xcd; if (...) code = 0xce;`, the ternary form, and a
+//         named `other_female` local for the second read - all three score the
+//         same 22/29 as the shared-else `if/else`. The image has no upfront
+//         constant store (both arms materialise into EAX), which the
+//         shared-else form is the only one to reproduce. What is left is
+//         register ASSIGNMENT: the image reuses the dead `Players[other_id]`
+//         register in EAX for `code`, this tree puts it in ECX.
+
+char *__cdecl get_pact_hood(int faction_id, int other_id) {
+    GenderDefault = 0;
+    PluralityDefault = 0;
+    int code;
+    if (Players[faction_id].is_leader_female != 0
+        && Players[other_id].is_leader_female != 0) {
+        code = 0xce;
+    } else {
+        code = 0xcd;
+    }
+    LPSTR *labels = (LPSTR *)Labels.strings_ptr;
+    return StringTable.get((int)labels[code]);
+}
+

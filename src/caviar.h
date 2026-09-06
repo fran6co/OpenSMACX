@@ -98,6 +98,12 @@ struct CvrStep {
 };
 
 struct CaviarData;
+
+// 0x0076E890, defined in caviar.cpp. Declared here (not in a game.cpp static)
+// so the 0x300-byte pointer table load_bases (0x00453A20) fills can name its
+// end bound as this object instead of a second name for the same address -
+// the duplicate-globals census counts that as two names for one address.
+extern CaviarData g_VCTB_CAVIARDATA;
 struct VOX_ScnRenderHnd;
 struct VOX_Rect;
 struct VoxRenderRecord;
