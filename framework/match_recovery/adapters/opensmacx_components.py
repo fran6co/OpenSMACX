@@ -6,11 +6,11 @@ from pathlib import Path
 import re
 import subprocess
 import sys
-import tempfile
 
 from ..components import SourceFile, VendorBinding, VendorManifest, source_integrity
 from ..model import Component, Delivery, Origin, Ownership, Result, Span
 from .opensmacx import image_pin
+from .vc6 import compile_object
 
 
 ZLIB_REMOVAL = "f5c72d351c696fd91665a009a6d48a76fed05284"
@@ -78,14 +78,5 @@ def zlib_manifest(root: Path, archive: Path) -> VendorManifest:
 
 def compile_vendor(root: Path, source: Path, flags: tuple[str, ...]) -> bytes:
     """Use the existing VC6 launcher, refusing nonzero exit even if an object exists."""
-    with tempfile.TemporaryDirectory(prefix="recover-vendor-") as temporary:
-        work = Path(temporary)
-        try:
-            result = subprocess.run([sys.executable, str(root.resolve() / "tools" / "vc6_cl.py"),
-                                     "/nologo", *flags, "/Founit.obj", str(source.resolve())],
-                                    cwd=work, capture_output=True, text=True, timeout=300)
-        except subprocess.TimeoutExpired as error:
-            raise ValueError("VC6 compilation exceeded 300 seconds") from error
-        if result.returncode != 0 or not (work / "unit.obj").is_file():
-            raise ValueError("VC6 compilation failed: " + (result.stdout + result.stderr).strip())
-        return (work / "unit.obj").read_bytes()
+    return compile_object(source, (sys.executable, str(root.resolve() / "tools" / "vc6_cl.py"),
+                                   "/nologo"), flags)

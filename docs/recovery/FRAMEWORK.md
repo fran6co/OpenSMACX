@@ -97,7 +97,9 @@ establish completion of this program.
   independent review, safe collection and resumable migrations.
   Ownership partitions and conservative include-impact views are derived live;
   task scope, cross-function discoveries, coordinator expansion and explicit
-  resolution are versioned decisions. Dispatch, proof-driven stage transitions,
+  resolution are versioned decisions. Task-scoped binary checks now execute
+  through a shared strict application/dependency verifier, compiling once per
+  selected TU/flag set without stamping claims. Dispatch, proof-driven stage transitions,
   independent review execution and collection remain under construction.
 - [ ] InfoWin ownership and constructor-family end-to-end structural pilots.
 - [ ] Prefix leases, include/parse/measurement caches, candidate decks, benchmarks.

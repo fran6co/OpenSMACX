@@ -45,6 +45,11 @@ def parser() -> argparse.ArgumentParser:
     context = task_actions.add_parser("context", help="Rebuild a source-first task brief; no stored context ledger")
     context.add_argument("task")
     context.add_argument("--root", type=Path, default=Path.cwd())
+    task_binary = task_actions.add_parser("check-binary", help="Compile task TUs and check bounded code/references; not an admission gate")
+    task_binary.add_argument("task")
+    task_binary.add_argument("--root", type=Path, default=Path.cwd())
+    task_binary.add_argument("--image", type=Path, required=True)
+    task_binary.add_argument("--summary", action="store_true")
     discovery = task_actions.add_parser("discover")
     discovery.add_argument("task")
     discovery.add_argument("--root", type=Path, default=Path.cwd())
@@ -102,6 +107,13 @@ def parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     args = parser().parse_args(argv)
     try:
+        if args.command == "tasks" and args.action == "check-binary":
+            from .adapters.opensmacx_binary import verify_task
+            output = verify_task(args.root, args.task, args.image)
+            if args.summary:
+                output.pop("functions")
+            print(json.dumps(output, indent=2, sort_keys=True))
+            return {Result.PASS: 0, Result.FAIL: 1, Result.UNKNOWN: 3}[output["result"]]
         if args.command in ("partition", "tasks"):
             from .adapters.opensmacx_project import project_view, structural_impact
             from .model import Origin

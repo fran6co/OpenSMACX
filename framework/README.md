@@ -50,7 +50,7 @@ the pinned upstream archive; without that archive it returns unknown (exit 3).
 An altered source or wrong archive returns failure (exit 1). Even a passing source
 check does not establish binary matching or ABI correctness.
 
-The binary check currently uses the OpenSMACX VC6 launcher. Set `VC6_PREFIX` to
+The binary checks currently use the OpenSMACX VC6 launcher. Set `VC6_PREFIX` to
 an isolated prefix before running it alongside other agents. It compiles once per
 selected translation unit and resolves references only from explicit source
 bindings, including STATIC functions and labels within a mapped COMDAT. Missing
@@ -89,10 +89,32 @@ uv run recover tasks create example-layout --group class:InfoWin --author coordi
   --intent "Recover InfoWin storage ownership" --evidence "source:src/infowin.h"
 uv run recover tasks status example-layout
 uv run recover tasks context example-layout
+uv run recover tasks check-binary example-layout --image /path/to/the/pinned/original.exe --summary
 uv run recover tasks discover --help
 uv run recover tasks expand --help
 uv run recover tasks resolve --help
 ```
+
+`tasks check-binary` now executes fresh bounded byte/reference checks, sharing
+the dependency verifier rather than introducing a second matching algorithm.
+It compiles each selected product TU once under each of the two established
+OpenSMACX flag sets, then measures all selected functions from those objects.
+Exact source-owned function symbols can resolve cross-TU calls. Ambiguous names,
+missing build entries, unsupported extents and seed-only subjects remain unknown;
+no compilation command is silently borrowed and no old body is promoted.
+Data/import bindings are not yet imported, so references to those stay unknown.
+
+The command returns 0 only if every selected subject has a complete passing
+trial, 1 if there are failures and no unknown subjects, and 3 if any subject is
+unmeasurable. Failure in one flag set does not erase an unmeasurable alternative.
+It rejects source/build-input or task-decision changes during the run and writes
+neither source claims nor measurement history. Its source fingerprint is a
+diagnostic identifier, not a toolchain-complete reusable cache key.
+
+This command is **not an admission gate**: it does not yet prove dependent-caller
+coverage, layouts, ownership, lifetimes, full linking, runtime behavior or
+independent review. A passing scoped binary result never makes a task ready for
+collection. The existing production gate remains required during cutover.
 
 Task files fix the coordinator's chosen subjects, edit permissions, intent and
 committed source baseline. They do not duplicate function mappings or current
