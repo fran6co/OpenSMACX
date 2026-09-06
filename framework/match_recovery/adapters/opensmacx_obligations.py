@@ -80,12 +80,20 @@ def task_obligations(root: Path, name: str) -> dict:
             or image_pin(root) != pin):
         raise ValueError("source changed during obligation inventory")
     obligations = []
+    interpretations = {}
     for (entity, dimension), evidence in sorted(found.items()):
         obligation = Obligation(entity, dimension, "git-history:" + task.base_revision)
         obligations.append({**asdict(obligation), "obligation_id": obligation.obligation_id,
                             "source_evidence": evidence})
+        for item in evidence:
+            if "interpretation" in item:
+                value = {"entity_id": entity, "value": item["interpretation"]}
+                key = digest(value)
+                current = item["revision"] == "working-tree" or interpretations.get(key, {}).get("current", False)
+                interpretations[key] = {"interpretation_id": key, **value, "current": current}
     return {"schema_version": 1, "task": name, "base_revision": task.base_revision,
             "head": head, "image_sha256": pin, "scope": sorted(scope),
             "input_fingerprint": digest({"task": task, "decisions": decisions, "head": head,
                                          "files": {name: row["sha256"] for name, row in snapshot["files"].items()}}),
-            "obligations": obligations, "verification": "not_measured"}
+            "obligations": obligations, "interpretations": [interpretations[key] for key in sorted(interpretations)],
+            "verification": "not_measured"}

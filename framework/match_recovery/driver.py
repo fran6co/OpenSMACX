@@ -19,7 +19,7 @@ from .migration_protocol import admit, extend_inventory, permissions
 from .model import canonical, require_text
 from .records import parse_json
 from .processes import run_bounded
-from .reviews import ReviewStore, acceptance_result, validate_review
+from .reviews import ReviewStore, acceptance_result, merge_interpretations, validate_review, validate_supersessions
 from .tasks import TaskStore, entity_id
 
 
@@ -129,6 +129,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
         if permission is not None:
             policy["migration"] = permission
         review_feedback = None
+        interpretations = {}
         # Existing scoped edits are resumable. Unrelated dirty work is not the
         # runner's property and must be checkpointed before dispatch.
         dirty = subprocess.run(["git", "diff", "--name-only", "HEAD", "-z"], cwd=root,
@@ -155,6 +156,8 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                 if code != 0:
                     raise ValueError("source restoration inventory unavailable")
                 extend_inventory(protected, inventory, selected)
+                merge_interpretations(interpretations, inventory.get("interpretations", []), selected)
+                policy["interpretations"] = [interpretations[key] for key in sorted(interpretations)]
             return [{**asdict(item), "obligation_id": key} for key, item in sorted(protected.items())]
         def review_candidate(context, check, round_index):
             nonlocal review_feedback
@@ -172,17 +175,21 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                                                             "check": check, "snapshot": snapshot,
                                                             "instructions": ["Review structure and source evidence independently.",
                                                                              "Do not edit files, stamp claims or infer correctness from a byte match.",
+                                                                             "Use optional supersessions to justify replacing historical interpretations with current ones from review_interpretations.",
                                                                              "Return reasoning and evidence references, never copied image bytes or disassembly."]})
                 if code != 0:
                     return finish("review_unavailable", round_index, check)
-                if set(response) != {"snapshot", "decision", "evidence", "feedback"}:
+                fields = {"snapshot", "decision", "evidence", "feedback"}
+                if not fields <= set(response) or set(response) - fields - {"supersessions"}:
                     raise ValueError("invalid reviewer response")
                 decision = {"kind": "review", "author": worker_configuration["author"],
                             "reviewer": reviewer_configuration["author"], **response}
                 validate_review(decision)
+                validate_supersessions(decision, interpretations)
                 if decision["snapshot"] != snapshot or reviews.snapshot(working_state(root), policy) != snapshot:
                     raise ValueError("review refers to stale source")
                 reviews.append(decision, expected_revision=len(decisions))
+            validate_supersessions(decision, interpretations)
             review_feedback = decision
             if decision["decision"] == "request_changes":
                 return None  # Feed the independent findings to the next worker round.
@@ -190,7 +197,8 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             if permission is not None:
                 obligations = refresh_obligations()
                 code, measured = readonly(migration_command, {"task": task.to_dict(), "snapshot": snapshot,
-                                                              "protected": obligations, "permission": permission})
+                                                              "protected": obligations, "permission": permission,
+                                                              "review": decision, "interpretations": policy.get("interpretations", [])})
                 if reviews.snapshot(working_state(root), policy) != snapshot:
                     raise ValueError("source changed after migration review")
                 migration_report = admit(permission, tuple(protected.values()), selected, decision, snapshot, code, measured)
@@ -206,7 +214,8 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                 output = finish("full_acceptance_gate_required", round_index, check)
             else:
                 code, report = readonly(acceptance, {"task": task.to_dict(), "snapshot": snapshot,
-                                                     "protected": refresh_obligations()})
+                                                     "protected": refresh_obligations(), "review": decision,
+                                                     "interpretations": policy.get("interpretations", [])})
                 if reviews.snapshot(working_state(root), policy) != snapshot:
                     raise ValueError("source changed after review")
                 result = acceptance_result(code, report)
@@ -228,7 +237,8 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                 return finish("context_unavailable", round_index)
             obligations = refresh_obligations()
             if inventory_command is not None:
-                context = {**context, "protected_obligations": obligations}
+                context = {**context, "protected_obligations": obligations,
+                           "review_interpretations": policy["interpretations"]}
             if permission is not None:
                 context = {**context, "migration_permission": permission}
             code, check = readonly(check_command, {"task": task.to_dict(), "context": context})

@@ -12,7 +12,8 @@ from .tasks import task_name
 
 
 def validate_review(value: dict) -> None:
-    if not isinstance(value, dict) or set(value) != {"kind", "author", "reviewer", "snapshot", "decision", "evidence", "feedback"}:
+    required = {"kind", "author", "reviewer", "snapshot", "decision", "evidence", "feedback"}
+    if not isinstance(value, dict) or not required <= set(value) or set(value) - required - {"supersessions"}:
         raise ValueError("invalid review decision fields")
     if value["kind"] != "review" or value["decision"] not in ("approve", "request_changes"):
         raise ValueError("invalid review disposition")
@@ -25,6 +26,58 @@ def validate_review(value: dict) -> None:
         raise ValueError("review needs evidence")
     for item in value["evidence"]:
         require_text(item, "review evidence")
+    supersessions = value.get("supersessions", [])
+    if not isinstance(supersessions, list):
+        raise ValueError("review supersessions must be an array")
+    seen = set()
+    for item in supersessions:
+        if not isinstance(item, dict) or set(item) != {"previous", "replacement", "evidence", "reason"}:
+            raise ValueError("invalid interpretation supersession")
+        for key in ("previous", "replacement"):
+            require_digest(item[key])
+        if item["previous"] == item["replacement"] or item["previous"] in seen:
+            raise ValueError("duplicate or self-replacing interpretation")
+        seen.add(item["previous"])
+        require_text(item["reason"], "supersession reason")
+        if not isinstance(item["evidence"], list) or not item["evidence"]:
+            raise ValueError("supersession needs evidence")
+        for evidence in item["evidence"]:
+            require_text(evidence, "supersession evidence")
+    if supersessions and value["decision"] != "approve":
+        raise ValueError("only an approved review can supersede an interpretation")
+
+
+def merge_interpretations(known: dict, rows: list, scope: frozenset[str]) -> None:
+    """Keep encountered interpretations, but refresh which ones are current."""
+    if not isinstance(rows, list):
+        raise ValueError("interpretation inventory must be an array")
+    additions = {}
+    for row in rows:
+        if not isinstance(row, dict) or set(row) != {"interpretation_id", "entity_id", "value", "current"}:
+            raise ValueError("invalid interpretation inventory row")
+        if (not isinstance(row["entity_id"], str) or row["entity_id"] not in scope
+                or not isinstance(row["value"], dict) or not row["value"] or type(row["current"]) is not bool):
+            raise ValueError("invalid interpretation scope, value or current status")
+        key = digest({"entity_id": row["entity_id"], "value": row["value"]})
+        if key != row["interpretation_id"] or key in additions:
+            raise ValueError("invalid or duplicate interpretation identity")
+        additions[key] = row
+    known.update({key: {**row, "current": False} for key, row in known.items()})
+    known.update(additions)
+
+
+def validate_supersessions(review: dict, interpretations: dict) -> None:
+    """A decision can replace an old interpretation, never erase proof duties."""
+    validate_review(review)
+    for item in review.get("supersessions", []):
+        previous = interpretations.get(item["previous"])
+        replacement = interpretations.get(item["replacement"])
+        if previous is None or replacement is None:
+            raise ValueError("supersession names an unknown source interpretation")
+        if previous["current"] or not replacement["current"]:
+            raise ValueError("supersession must replace a historical interpretation with a current one")
+        if previous["entity_id"] != replacement["entity_id"]:
+            raise ValueError("supersession must preserve the original evidence anchor")
 
 
 class ReviewStore:

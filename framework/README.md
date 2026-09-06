@@ -179,6 +179,20 @@ The reviewer receives the task, context, check and content snapshot, and returns
 {"snapshot":"<received SHA-256>","decision":"approve","evidence":["source:src/example.cpp"],"feedback":"Explain the structural judgment here."}
 ```
 
+An approved reviewer response may also contain `supersessions`, an array of
+`{"previous":"<interpretation digest>","replacement":"<interpretation digest>",
+"evidence":["source:..."],"reason":"Why the old interpretation was wrong."}`.
+The trusted inventory supplies content-identified interpretations, exposed to the
+worker/reviewer as `context.review_interpretations`. Replacement requires a known
+historical interpretation and a current one at the same original evidence anchor;
+unknown references, self-replacement, duplicate dispositions and still-current
+old interpretations are refused. Inventory changes are part of review freshness.
+The decision remains snapshot-bound review history, never a measurement. Migration
+and acceptance adapters receive it with the complete protected obligations and
+interpretation inventory; supersession does not remove a proof obligation or waive
+fresh structural/build/reference/runtime checks. Target-specific verification of
+the review's reasoning and full structural admission remain unfinished.
+
 `request_changes` feeds the review back to another worker round within the same
 budget. Source changes require a new review. Evidence-backed decisions are kept
 in the `review:<task>` JSON history stream, not as measurements or source comments.
@@ -402,7 +416,8 @@ This checks declared offsets, **not** completeness of the declarations, original
 evidence interpretation, inheritance, member types, full object size or lifetime.
 The result therefore leaves full structural verification unknown. Layout
 interpretation history now survives in the source-derived restoration inventory;
-reviewed supersession and the full structural admission verifier remain unfinished.
+explicit reviewed supersession is supported, but the full structural admission
+verifier remains unfinished.
 
 The package is not yet the production gate. The durable task runner, target
 verification, complete dependency checking, source annotation migration and performance

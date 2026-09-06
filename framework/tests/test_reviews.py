@@ -5,7 +5,8 @@ import pytest
 
 from match_recovery.driver import drive, working_state
 from match_recovery.cli import main
-from match_recovery.reviews import ReviewStore, acceptance_result, validate_review
+from match_recovery.reviews import ReviewStore, acceptance_result, merge_interpretations, validate_review, validate_supersessions
+from match_recovery.model import digest
 from test_driver import CONFIG, WORKER, project
 
 
@@ -86,6 +87,82 @@ def test_worker_cannot_review_its_own_source(project):
     root, task = project
     with pytest.raises(ValueError, match="independent"):
         drive(root, task.task_id, GATED, WORKER, iterations=1, reviewer_configuration=WORKER)
+
+
+def interpretation(entity, offset, current):
+    value = {"entity_id": entity, "value": {"member": "slot_", "offset": offset}}
+    return {"interpretation_id": digest(value), **value, "current": current}
+
+
+def supersession(previous, replacement):
+    return {"previous": previous["interpretation_id"], "replacement": replacement["interpretation_id"],
+            "evidence": ["source:src/f.cpp"], "reason": "Constructor evidence identifies the actual member offset."}
+
+
+def test_reviewed_replacement_reaches_full_gate_without_dropping_obligations(project):
+    from dataclasses import asdict
+    from match_recovery.model import Dimension, Obligation
+
+    root, task = project
+    entity = task.subjects[0].entity_id
+    previous, replacement = interpretation(entity, 4, False), interpretation(entity, 8, True)
+    obligation = Obligation(entity, Dimension.STRUCTURE, "source interpretation history")
+    config = {**GATED, "obligations": {"argv": ["obligations"], "timeout": 10}}
+    observed = []
+
+    def execute(command, root, task_name, payload):
+        if command.argv[0] == "obligations":
+            return 0, {"obligations": [{**asdict(obligation), "obligation_id": obligation.obligation_id}],
+                       "interpretations": [previous, replacement]}
+        if command.argv[0] == "context":
+            return 0, {}
+        if command.argv[0] == "check":
+            return 0, {"result": "pass"}
+        if command.argv[0] == "review":
+            assert len(payload["context"]["review_interpretations"]) == 2
+            return 0, {"snapshot": payload["snapshot"], "decision": "approve", "evidence": ["source:src/f.cpp"],
+                       "feedback": "The new offset is justified.", "supersessions": [supersession(previous, replacement)]}
+        assert command.argv[0] == "acceptance"
+        observed.append(payload)
+        # Reviewed replacement is not current build/runtime/layout proof.
+        return 3, {**PASS, "result": "unknown", "structure": "unknown"}
+
+    report = drive(root, task.task_id, config, WORKER, iterations=1,
+                   reviewer_configuration=REVIEWER, execute=execute)
+    assert report["stop_reason"] == "acceptance_unknown" and not report["ready_for_collection"]
+    assert observed[0]["protected"][0]["obligation_id"] == obligation.obligation_id
+    assert observed[0]["review"]["supersessions"] == [supersession(previous, replacement)]
+    assert ReviewStore(root, task.task_id).decisions()[0]["supersessions"]
+
+
+@pytest.mark.parametrize("bad", ["unknown", "still_current", "not_current", "other_anchor"])
+def test_supersession_requires_historical_to_current_same_anchor(bad):
+    previous, replacement = interpretation("entity-one", 4, False), interpretation("entity-one", 8, True)
+    if bad == "still_current":
+        previous["current"] = True
+    if bad == "not_current":
+        replacement["current"] = False
+    if bad == "other_anchor":
+        replacement = interpretation("entity-two", 8, True)
+    decision = {"kind": "review", "author": "worker", "reviewer": "reviewer", "snapshot": "a" * 64,
+                "decision": "approve", "evidence": ["source:f.cpp"], "feedback": "Replace interpretation.",
+                "supersessions": [supersession(previous, replacement)]}
+    known = {item["interpretation_id"]: item for item in (previous, replacement)}
+    if bad == "unknown":
+        known.pop(previous["interpretation_id"])
+    with pytest.raises(ValueError, match="supersession"):
+        validate_supersessions(decision, known)
+
+
+def test_interpretation_inventory_retains_seen_values_but_refreshes_current_status():
+    first, second = interpretation("entity-one", 4, True), interpretation("entity-one", 8, True)
+    known = {}
+    merge_interpretations(known, [first], frozenset({"entity-one"}))
+    merge_interpretations(known, [second], frozenset({"entity-one"}))
+    assert not known[first["interpretation_id"]]["current"]
+    assert known[second["interpretation_id"]]["current"]
+    with pytest.raises(ValueError, match="identity"):
+        merge_interpretations(known, [{**second, "interpretation_id": "b" * 64}], frozenset({"entity-one"}))
 
 
 def test_commit_of_review_does_not_stale_source_but_changed_header_does(project):

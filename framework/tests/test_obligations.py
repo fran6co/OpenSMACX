@@ -206,6 +206,10 @@ def test_revised_layout_preserves_interpretations_without_freezing_old_spelling(
         ("Widget", "slot_", 4), ("Owner", "member_", 8)}
     assert report(project)["verification"] == "not_measured"
 
+    indexed = report(project)["interpretations"]
+    assert len(indexed) == 2
+    assert {(item["value"]["offset"], item["current"]) for item in indexed} == {(4, False), (8, True)}
+
 
 def test_layout_hints_in_seeds_and_outside_scope_do_not_become_scoped_obligations(project):
     root, _ = project
