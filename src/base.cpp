@@ -35,6 +35,29 @@ int BaseCurrentCount;  // 0x009A64CC
 int BaseFindDist;  // 0x0090EA04
 uint32_t ScnVictFacilityObj;  // 0x009A6814
 uint32_t BaseUpkeepStage;  // 0x0090EA34
+/*
+ * THE PER-FACTION PROTOTYPE-STATUS BYTE RUN, as the image addresses it:
+ * PlayersData (0x0096C9E0) + 0x858, indexed faction * 0x20CC + prototype id.
+ * veh.cpp names the same address FactionProtoSeenCount (it decrements it when
+ * a vehicle of that prototype dies); upgrade_prototypes reads it as the gate
+ * on whether the faction may still upgrade that prototype at all, which is
+ * the same fact read from the other end. Both are internal-linkage
+ * definitions of one address because base.h's PlayerData puts its
+ * proto_id_active / proto_id_queue arrays at different offsets from this (the
+ * struct's middle and tail are where the image's own layout disagrees), so
+ * neither file can reach the byte through a field name.
+ */
+uint8_t *const FactionProtoSeenCount = (uint8_t *)0x0096D238;
+
+/*
+ * "Don't ask again" latch for the prototype-upgrade confirmation. The automatic
+ * upgrade sweep (0x004F0650) clears it, upgrade_prototype (0x004EFE80) shows
+ * the confirm popup only while it is zero and sets it when the caller answers
+ * "yes to all" (popup result > 1); 0x00583E30, 0x005BB000, 0x005290A0 and
+ * 0x00438460 clear it at the top of their own upgrade passes.
+ */
+uint32_t UpgradePromptAnswered;  // 0x0090EA3C
+
 int BaseCurrentGrowthRate;  // 0x0090E918
 uint32_t BaseCurrentVehPacifismCount;  // 0x0090E980
 uint32_t BaseCurrentForcesSupported;  // 0x0090E8FC
@@ -3767,4 +3790,496 @@ int __cdecl facility_offset(LPCSTR facil_search) {
         }
     }
     return offset;
+}
+
+// ORIGINAL: 0x004E7DC0 ?resource_yield@@YAHHHHHH@Z 0x004E7DC0-0x004E7E34 FILE BYTE_EXACT
+// LEVER: TileYieldRestricted (0x0090E998, already declared in base.h) replaces
+//        the carried `g_0090e998` binding; the scaffold's `g_004e7e34` was the
+//        function's own end address, referenced by nothing, and is dropped.
+// size      116 bytes
+// prototype int (__cdecl ?resource_yield@@YAHHHHHH@Z)(int type, int factionID, int baseID, int xCoord, int yCoord)
+// callers   7   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E6E50 0x004E7310 0x004E7750
+// Purpose: Dispatch one of the three terrain yields for the base's current
+//          square, or - for RSC_PSI (3), which has no per-square yield -
+//          clear TileYieldRestricted and return 0.
+// Status:  transcription homed from src/unrecovered/004e7dc0.cpp
+
+int __cdecl resource_yield(int rsc_type, int faction_id, int base_id, int x,
+                           int y) {
+    switch (rsc_type) {
+        case 0:
+            return crop_yield(faction_id, base_id, x, y, 0);
+        case 1:
+            return mine_yield(faction_id, base_id, x, y, 0);
+        case 2:
+            return energy_yield(faction_id, base_id, x, y, 0);
+        case 3:
+            TileYieldRestricted = 0;
+            break;
+    }
+    return 0;
+}
+
+// ORIGINAL: 0x005AC5A0 ?most_objectives@@YAHPAHPAH@Z 0x005AC5A0-0x005AC62F FILE BYTE_EXACT
+// LEVER: the scaffold's two carried bindings are both modelled names already
+//        in the tree - 0x0096C9F8 is faction.h's PlayersData[0].diplo_treaties
+//        (the array front 0x0096C9E0 + 0x18) and 0x009A649C is game.h's
+//        GameRules - so the raw `[best_idx + off]` indexing over the 0x833
+//        dword stride becomes PlayersData[faction_id].diplo_treaties[best].
+// symbol    ?most_objectives@@YAHPAH0@Z
+// LEVER: the image spells the same two `int *` parameters out in full
+//        (@YAHPAHPAH@Z); VC6 abbreviates the repeat, so this tree's own symbol
+//        is the `0` form. Same type, same address, shorter mangled name.
+// size      143 bytes
+// prototype
+// callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005AC110
+// Purpose: Score the cooperative-victory winner: the faction with the most
+//          current objectives. When RULES_VICTORY_COOPERATIVE is set the
+//          second out-parameter also counts how many factions are tied with
+//          the leader AND hold a pact (DTREATY_PACT) with it; the caller
+//          awards the shared win when that count reaches the tie count.
+// Status:  transcription homed from src/unrecovered/005ac5a0.cpp
+
+int __cdecl most_objectives(int *faction_id_out, int *pact_count_out) {
+    int best_count = 0;
+    int best_faction = 0;
+    if (pact_count_out != 0) {
+        *pact_count_out = 0;
+    }
+    int faction_id = 1;
+    do {
+        int count = num_objectives(faction_id, GameRules & RULES_VICTORY_COOPERATIVE);
+        if (count >= best_count) {
+            if (pact_count_out != 0) {
+                if (count > best_count) {
+                    *pact_count_out = 0;
+                } else if ((PlayersData[faction_id].diplo_treaties[best_faction] & DTREATY_PACT) == 0
+                           || (GameRules & RULES_VICTORY_COOPERATIVE) == 0) {
+                    ++*pact_count_out;
+                }
+            }
+            best_count = count;
+            best_faction = faction_id;
+        }
+        ++faction_id;
+    } while (faction_id < MaxPlayerNum);
+    if (faction_id_out != 0) {
+        *faction_id_out = best_faction;
+    }
+    return best_count;
+}
+
+
+// ORIGINAL: 0x004EFD50 ?upgrade_cost@@YAHHHH@Z 0x004EFD50-0x004EFE7F FILE
+// TRIED: original establishes a true EBP frame (flags: frame) because it spills the reassigned `protoIDInit` parameter to its own stack slot; several transliterations (ternary vs if/else for the augmentation, ternary vs branch for the three clamps, B-then-A vs A-then-B table read order) all landed the value in a GP register (ebp used as scratch, no `mov ebp, esp`) instead. Landed at MISMATCH #3 (first diff is the missing frame prologue); the rest of the instruction stream already lines up closely (same table indices, same clamp-via-mask shape for two of three diffs).
+// LEVER: the four fixed-address tables the artifact bound are modelled rules
+//        records - 0x009AB868+0x29/.30/.25/.26/.24 is VehPrototypes[]
+//        cost/flags/weapon_id/armor_id/chassis_id, 0x0094AE6B is
+//        Weapon[].cost, 0x0094F282 is Armor[].cost, 0x0094A378 is
+//        Chassis[].speed, 0x009A656C is base_project(SP_NANO_FACTORY) and
+//        0x0097D044 is Bases[].faction_id_current - so every `g_9xxxxx`
+//        binding drops out in favour of a member read.
+// TRIED: writing the `proto_id_init = cost` reassignment the archive spells,
+//        to force the image's early store into the dead parameter's home
+//        slot - see the BUG IN THE ORIGINAL note below; the honest form is
+//        what is kept here.
+// TRIED: named `init_slot`/`upg_slot` locals for the two prototype indices, to
+//        break VC6's common-subexpression of `&VehPrototypes[slot]` - the image
+//        keeps `slot * 0x34` in a register with the TABLE BASE as the
+//        displacement (`mov cl, [esi + 0x9ab891]`), where this tree keeps the
+//        record pointer in the register with the FIELD OFFSET as the
+//        displacement (`mov dl, [ecx + 0x29]`). Same bytes modulo the
+//        relocation, different register choice, and the divergence cascades
+//        through all five field reads: 3 of 105 either way. Reproducing the
+//        image's shape needs `slot * 0x34` spelled as a byte offset, which only
+//        a cast of the array base spells; naming `init_slot` scored no better
+//        than using the parameters directly, so the parameter form is kept.
+// size      303 bytes
+// prototype int (__cdecl ?upgrade_cost@@YAHHHH@Z)(int factionID, int protoIDInit, int protoIDUpg)
+// callers   3   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+// Purpose: Price one prototype upgrade for a faction: the base prototype's
+//          mineral cost (augmented 1.5x and squared when the slot is past the
+//          64-slot shared block and carries no VEHFLAG bit 4), plus the
+//          positive deltas of the weapon and armour costs and the chassis
+//          speed, halved when the faction that owns SP_NANO_FACTORY is asking.
+// BUG IN THE ORIGINAL, AS TRANSCRIBED IN THE ARCHIVE: the archive test is
+//          `cost > 0x3f`, because it reuses the parameter slot for the cost
+//          before the test. The image compares EAX - the prototype ID as the
+//          caller passed it, loaded at 0x004EFD53 and never reloaded - against
+//          0x40. A caller passing a cheap prototype in a slot past 0x40 pays
+//          the unaugmented price here. The comparison is spelled against the
+//          prototype ID, which is what the image does; only the parameter
+//          reuse is not reproduced.
+// Status:  transcription homed from src/unrecovered/004efd50.cpp
+
+int __cdecl upgrade_cost(int faction_id, int proto_id_init, int proto_id_upg) {
+    int init_slot = proto_id_init;
+    int upg_slot = proto_id_upg;
+    int cost = VehPrototypes[init_slot].cost;
+    if (init_slot >= 0x40 && (VehPrototypes[init_slot].flags & 4) == 0) {
+        int half = (cost + 1) / 2;
+        int scaled = cost + half;
+        cost = (scaled + 1) * scaled;
+    }
+    int weapon_diff = Weapon[VehPrototypes[upg_slot].weapon_id].cost
+                      - Weapon[VehPrototypes[init_slot].weapon_id].cost;
+    if (weapon_diff < 0) {
+        weapon_diff = 0;
+    }
+    int armor_diff = Armor[VehPrototypes[upg_slot].armor_id].cost
+                     - Armor[VehPrototypes[init_slot].armor_id].cost;
+    if (armor_diff < 0) {
+        armor_diff = 0;
+    }
+    int chassis_diff = Chassis[VehPrototypes[upg_slot].chassis_id].speed
+                       - Chassis[VehPrototypes[init_slot].chassis_id].speed;
+    if (chassis_diff < 0) {
+        chassis_diff = 0;
+    }
+    cost += weapon_diff + armor_diff + chassis_diff;
+    int nano_factory_base = base_project(SP_NANO_FACTORY);
+    if (nano_factory_base >= 0
+        && Bases[nano_factory_base].faction_id_current == faction_id) {
+        cost /= 2;
+    }
+    return cost;
+}
+
+// ORIGINAL: 0x004F0650 ?upgrade_any_prototypes@@YAXH@Z 0x004F0650-0x004F06D3 FILE
+// LEVER: the four carried bindings are all modelled names - 0x0090EA3C is the
+//        upgrade-confirmation flag (see UpgradePromptAnswered below),
+//        0x009A6494 game.h's GameMorePreferences, 0x009A64E8 lock.h's
+//        LockEnableMask read as its byte 0 (the is-human bitfield) and
+//        0x009AB898 VehPrototypes[].flags - so no fixed address survives.
+// TRIED: `int flags`, `uint16_t flags`, `(uint16_t)(flags & 0x100)` and a bare
+//        `flags & 0x100` condition for the third bit test - the image spells it
+//        `and ecx, 0x100 / test cx, cx` (two instructions) and this tree spells
+//        every one of those source forms as `test ch, 1` (one). 46 of 47, one
+//        instruction short, on all four spellings; the 16-bit `and`/`test` pair
+//        is an idiom this source cannot be pushed to.
+// size      131 bytes
+// prototype void (__cdecl ?upgrade_any_prototypes@@YAXH@Z)(int factionID)
+// callers   1   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004F0460
+// Purpose: The turn-start automatic upgrade sweep. Clears the
+//          upgrade-confirmation flag, then - for a faction that is human, or
+//          whose "ask before upgrading" preference is off - walks all 128
+//          prototype slots and upgrades every obsolete one still in service
+//          (flags: in-use, bit 4, and 0x100).
+
+void __cdecl upgrade_any_prototypes(int faction_id) {
+    UpgradePromptAnswered = 0;
+    if (((1 << faction_id) & (int)(unsigned char)LockEnableMask) == 0
+        || (GameMorePreferences & 0x100000) != 0) {
+        int i = 0;
+        do {
+            int proto_id = i;
+            if (proto_id >= 0x40) {
+                proto_id = proto_id % 0x40 + faction_id * 0x40;
+            }
+            uint16_t flags = VehPrototypes[proto_id].flags;
+            if ((flags & 1) != 0 && (flags & 4) != 0 && (flags & 0x100) != 0) {
+                upgrade_prototypes(faction_id, proto_id);
+            }
+            ++i;
+        } while (i < 0x80);
+    }
+}
+
+// ORIGINAL: 0x004F0460 ?upgrade_prototypes@@YAXHH@Z 0x004F0460-0x004F064F FILE
+// LEVER: every table the archive bound by address is a named model record -
+//        0x009AB868+0x24..0x30 is VehPrototypes[] chassis/weapon/armor/plan/
+//        unk_1/obsolete_factions/flags, 0x0094AE68 Weapon[].offense_rating,
+//        0x0094F280 Armor[].defense_rating, 0x0094A378/.9 Chassis[]
+//        .speed/.triad - and 0x0096D238 is veh.cpp's FactionProtoSeenCount.
+// TRIED: spelling the `has_abil` argument as the five ABL_ bits the image's
+//        0x408418 literal is the OR of (POLICE_2X | ARTILLERY | ANTIGRAV_STRUTS
+//        | DROP_POD | AMPHIBIOUS); kept as the explicit OR of the enum.
+// LEVER: the weapon guard is `!= 0` with the rating test INLINE and the
+//        `== 0` weapon-id test as the ELSE arm - the image's `je` jumps
+//        forward over the rating compare to the weapon-id compare. Spelling it
+//        the archive's way (`== 0` first, else the rating test) inverted the
+//        branch and cost four instructions. Swapping the two has_abil calls
+//        (proto_id first, then the slot) fixed the last operand-order
+//        divergence: 130/141 -> SHAPE_EXACT 140/141.
+// TRIED: `flags &= ~0x100` as a word write - the image narrows it to a single
+//        `and byte ptr [.. + 0x9ab899], 0xfe` (the flags field's HIGH byte
+//        only); this tree keeps `and word ptr [.. + 0x30], 0xfeff`. That is
+//        the one instruction between this and BYTE_EXACT, and reaching it
+//        needs a byte-typed view of the field's second byte.
+// size      495 bytes
+// prototype void (__cdecl ?upgrade_prototypes@@YAXHH@Z)(int factionID, int protoID)
+// callers   1   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004EFE80 0x004F0460 0x00625E50
+// Purpose: Upgrade one prototype to its current-era replacement: clear the
+//          prototype's 0x100 "obsolete" marker, then walk the faction's 128
+//          prototype slots for a same-plan, same-chassis successor that is no
+//          worse in weapon, armour, speed or triad, and upgrade every unit of
+//          the old design to it.
+// BUG IN THE ORIGINAL: the image calls the five-parameter
+//          ?upgrade_prototype@@YAHHHHH@Z here with four pushes (add esp, 0x10
+//          at 0x004F0620), so the callee's fifth parameter is read off the
+//          caller's stack. Reproduced as a four-parameter call; see
+//          pending_bodies.cpp for the forwarder that spells it the same way.
+
+void __cdecl upgrade_prototypes(int faction_id, int proto_id) {
+    int self_offset = proto_id * 0x34;
+    VehPrototypes[proto_id].flags &= ~0x100;
+    for (int i = 0; i < 0x80; i++) {
+        int other = i;
+        if (other >= 0x40) {
+            other = other % 0x40 + faction_id * 0x40;
+        }
+        if (other == proto_id) {
+            continue;
+        }
+        if ((VehPrototypes[other].flags & 1) == 0) {
+            continue;
+        }
+        if ((VehPrototypes[other].obsolete_factions & (1 << faction_id)) == 0) {
+            continue;
+        }
+        if (VehPrototypes[other].plan != VehPrototypes[proto_id].plan) {
+            continue;
+        }
+        if (VehPrototypes[other].unk_1 != VehPrototypes[proto_id].unk_1) {
+            continue;
+        }
+        if (Chassis[VehPrototypes[other].chassis_id].triad
+            != Chassis[VehPrototypes[proto_id].chassis_id].triad) {
+            continue;
+        }
+        if (FactionProtoSeenCount[faction_id * 0x20cc + other] == 0) {
+            continue;
+        }
+        int8_t self_weapon = Weapon[VehPrototypes[proto_id].weapon_id].offense_rating;
+        if (self_weapon != 0) {
+            if (self_weapon > Weapon[VehPrototypes[other].weapon_id].offense_rating) {
+                continue;
+            }
+        } else if (VehPrototypes[proto_id].weapon_id != VehPrototypes[other].weapon_id) {
+            continue;
+        }
+        if (has_abil(proto_id, ABL_POLICE_2X | ABL_ARTILLERY | ABL_ANTIGRAV_STRUTS
+                                  | ABL_DROP_POD | ABL_AMPHIBIOUS)
+            != has_abil(other, ABL_POLICE_2X | ABL_ARTILLERY | ABL_ANTIGRAV_STRUTS
+                             | ABL_DROP_POD | ABL_AMPHIBIOUS)) {
+            continue;
+        }
+        if (Armor[VehPrototypes[proto_id].armor_id].defense_rating
+            > Armor[VehPrototypes[other].armor_id].defense_rating) {
+            continue;
+        }
+        if (Chassis[VehPrototypes[proto_id].chassis_id].speed
+            > Chassis[VehPrototypes[other].chassis_id].speed) {
+            continue;
+        }
+        if (VehPrototypes[proto_id].chassis_id != VehPrototypes[other].chassis_id) {
+            continue;
+        }
+        upgrade_prototype(faction_id, proto_id, other, 1);
+    }
+}
+
+/*
+ * THE FOUR BASE-SITE CLAIM POINTS the AI records for a base it is founding.
+ * BaseSiteClaimX[k] / BaseSiteClaimY[k] hold the x,y of the kth site
+ * base_build() picked for the base - Y starts at 999999, meaning "none yet".
+ * base_reset (0x004E5FE0) fills them with the base's state bits
+ * BSTATE_UNK_1000000 / _2000000 / _4000000 / _8000000 set one at a time, and
+ * base_claimed (0x004F8110) tests a tile against them.
+ */
+int BaseSiteClaimX[4];  // 0x0090EA44
+int BaseSiteClaimY[4];  // 0x0090EA54
+
+// ORIGINAL: 0x004F8110 ?base_claimed@@YAHHHHHHH@Z 0x004F8110-0x004F8195 FILE BYTE_EXACT
+// LEVER: the scaffold's eight carried bindings are two four-int runs - the
+//        base-site claim points base_reset writes and this function tests - so
+//        they became the arrays BaseSiteClaimX[4] / BaseSiteClaimY[4] rather
+//        than eight address-named scalars.
+// LEVER: the six `aN` parameters are the tile and its four site-freedom flags;
+//        naming them cleared the last scaffold names this body carried.
+// size      133 bytes
+// prototype int (__cdecl ?base_claimed@@YAHHHHHHH@Z)(int x, int y, int site1_free, int site2_free, int site3_free, int site4_free)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// Purpose: Is this tile one of the four sites the AI has claimed for a base?
+//          A site counts only while its flag is still clear and only at or
+//          below the recorded y - the AI claims southward from the site.
+// Status:  transcription homed from src/unrecovered/004f8110.cpp
+
+int __cdecl base_claimed(int x, int y, int site1_free, int site2_free,
+                         int site3_free, int site4_free) {
+    if (site1_free == 0 && x == BaseSiteClaimX[0] && y >= BaseSiteClaimY[0]) {
+        return 1;
+    }
+    if (site2_free == 0 && x == BaseSiteClaimX[1] && y >= BaseSiteClaimY[1]) {
+        return 1;
+    }
+    if (site3_free == 0 && x == BaseSiteClaimX[2] && y >= BaseSiteClaimY[2]) {
+        return 1;
+    }
+    if (site4_free == 0 && x == BaseSiteClaimX[3] && y >= BaseSiteClaimY[3]) {
+        return 1;
+    }
+    return 0;
+}
+
+// ORIGINAL: 0x005ABFF0 ?get_rating@@YAHHH@Z 0x005ABFF0-0x005AC051 FILE BYTE_EXACT
+// LEVER: the archive's `g_faction_table[a1 * 2099]` is PlayersData's
+//        diff_level - the image loads `[edx*4 + 0x96c9e8]` with edx =
+//        faction * 0x833, which is PlayerData + 0x8 - and its `g_009a649c`
+//        byte test is game.h's GameRules bit 0x40, RULES_INTENSE_RIVALRY.
+//        Both named; nothing new declared.
+// size      97 bytes
+// prototype int (__cdecl ?get_rating@@YAHHH@Z)(int factionID, int)
+// callers   2   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// Purpose: A faction's score weight: its difficulty level plus the triangular
+//          series the higher levels add, one more when RULES_INTENSE_RIVALRY
+//          is on, scaled by arg2 over 0xa0.
+// Status:  transcription homed from src/unrecovered/005abff0.cpp
+
+int __cdecl get_rating(int faction_id, int arg2) {
+    int value = PlayersData[faction_id].diff_level;
+    int rating = value;
+    for (int i = 3; i <= value; i++) {
+        rating += (i - 1) / 2;
+    }
+    if (*(unsigned char *)&GameRules & 0x40) {
+        rating++;
+    }
+    return (rating + 6) * arg2 / 0xa0;
+}
+
+// ORIGINAL: 0x004EFB50 ?do_upgrade@@YAXHHH@Z 0x004EFB50-0x004EFD4A FILE
+// LEVER: every fixed address the archive bound is a named model member -
+//        0x0096D238 is veh.cpp's FactionProtoSeenCount, 0x0096CC00 is
+//        faction.h's PlayersData[].energy_reserves, 0x009A64C8 is console.h's
+//        ConsoleGroupCount, 0x0095284C/.+0x0A/.+0x0E/.+0x24 are Vehs[]
+//        proto_id/faction_id/morale read through the record, 0x0097D08C/.-0x48
+//        are Bases[] queue_size/faction_id_current, 0x009AB898 is
+//        VehPrototypes[].flags, 0x009A64E8 is lock.h's LockEnableMask,
+//        0x00939284 is game.h's LocalFaction and 0x009156B0 is console.h's
+//        ConsoleGlobal. Nothing new declared but draw_map below.
+// size      634 bytes
+// prototype void (__cdecl ?do_upgrade@@YAXHHH@Z)(int factionID, int protoIDNew, int protoIDOld)
+// callers   1   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004EFD50 0x005BF1F0 0x0064601D
+// Purpose: Retire one prototype across the faction: pay energy_reerves for the
+//          upgrade, re-equip every vehicle of the old design (and its entries
+//          in every base's production queue), adjust morale for the Trained
+//          ability moving either way, mark the new design in service and the
+//          old one obsolete, then repaint if a human is watching.
+// TRIED: hoisting the vehicle-loop counter into a named local `count` and
+//        reading ConsoleGroupCount once; the image re-reads [0x9a64c8] at both
+//        the test and the loop latch, so the local cost a second stack slot
+//        (`sub esp, 8` against the image's single `push ecx`) and 80 agreeing
+//        instructions. Reading it at both sites and reordering the prologue to
+//        faction_offset, upgrade_cost, then the tally moved 3/169 -> 101/169.
+// TRIED: reusing the `proto_id_new` parameter slot as the vehicle-loop counter
+//        the way the image does (`mov dword ptr [ebp + 0xc], 0` at instruction
+//        23 zeroes it, so the parameter is the counter and its original value
+//        lives in a register) - the archive spells this as `a2_saved`, and
+//        spelling it here is what is left between this body and the image.
+// BUG IN THE ORIGINAL: the production-queue sweep tests queue_production_id
+//          [0 .. queue_size] INCLUSIVE - one entry past the queue's own count
+//          - because the loop condition is `k <= *countp`. Reproduced
+//          deliberately; see has_fac's note at the top of this file for the
+//          same defect in a different body.
+// ?draw_map@@YAXH@Z (mapwin.h) - declared here rather than included, so this
+// file's include graph and every claim that depends on it stay untouched.
+void __cdecl draw_map(int draw_type);
+
+void __cdecl do_upgrade(int faction_id, int proto_id_new, int proto_id_old) {
+    int faction_offset = faction_id * 0x20cc;
+    int cost = upgrade_cost(faction_id, proto_id_new, proto_id_old);
+    int product = cost * FactionProtoSeenCount[faction_offset + proto_id_old] * 10;
+    PlayersData[faction_id].energy_reserves -= product;
+
+    if (*ConsoleGroupCount > 0) {
+        int i = 0;
+        do {
+            if (Vehs[i].faction_id == faction_id && Vehs[i].proto_id == proto_id_old) {
+                FactionProtoSeenCount[faction_offset + proto_id_old]--;
+                FactionProtoSeenCount[faction_offset + proto_id_new]++;
+                Vehs[i].proto_id = proto_id_new;
+                if (has_abil(proto_id_new, ABL_TRAINED) != 0
+                    && has_abil(proto_id_old, ABL_TRAINED) == 0) {
+                    int morale = Vehs[i].morale + 1;
+                    if (morale < 0) {
+                        morale = 0;
+                    } else if (morale > 6) {
+                        morale = 6;
+                    }
+                    Vehs[i].morale = morale;
+                }
+                if (has_abil(proto_id_new, ABL_TRAINED) == 0
+                    && has_abil(proto_id_old, ABL_TRAINED) != 0) {
+                    int morale = Vehs[i].morale - 1;
+                    if (morale < 0) {
+                        morale = 0;
+                    } else if (morale > 6) {
+                        morale = 6;
+                    }
+                    Vehs[i].morale = morale;
+                }
+            }
+            i++;
+        } while (i < *ConsoleGroupCount);
+    }
+
+    if (BaseCurrentCount > 0) {
+        Base *base = Bases;
+        int j = BaseCurrentCount;
+        do {
+            if (base->faction_id_current == faction_id) {
+                int queue_size = base->queue_size;
+                if (queue_size >= 0) {
+                    int k = 0;
+                    do {
+                        if (base->queue_production_id[k] == proto_id_old) {
+                            base->queue_production_id[k] = proto_id_new;
+                        }
+                        k++;
+                    } while (k <= queue_size);
+                }
+            }
+            base++;
+            j--;
+        } while (j != 0);
+    }
+
+    if (proto_id_new > 0x3f && product != 0) {
+        VehPrototypes[proto_id_new].flags |= 4;
+    }
+    if (proto_id_old > 0x3f) {
+        VehPrototypes[proto_id_old].flags &= 0xfe;
+    }
+
+    if ((*(unsigned char *)&LockEnableMask & (1 << faction_id)) != 0) {
+        draw_map(1);
+    }
+    if (faction_id == LocalFaction) {
+        ConsoleGlobal.update_data(0);
+    }
 }

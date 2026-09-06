@@ -548,6 +548,10 @@ int __cdecl morale_mod(int base_id, int faction_id, int triad);
 int __cdecl worm_mod(int base_id, int faction_id);
 int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
                                  BOOL assume_improved);
+// ?resource_yield@@YAHHHHHH@Z - the three-terrain-yield dispatcher; RSC_PSI
+// (3) falls through to clearing TileYieldRestricted.
+int __cdecl resource_yield(int rsc_type, int faction_id, int base_id, int x,
+                           int y);
 int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
                                  BOOL assume_improved);
 int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
@@ -570,9 +574,22 @@ void __cdecl make_base_unique(int base_id);
 // byte-visible - a bool return clears with `xor al, al` (32 C0) where an int
 // uses `xor eax, eax` (33 C0). The two-argument overload is not catalogued.
 int __cdecl attack_from(int base_id_to_atk, int faction_id);
+// The prototype-upgrade family: do_upgrade drives the queue, upgrade_cost
+// prices one upgrade, upgrade_prototypes runs a faction's whole table and
+// upgrade_any_prototypes gates it on the preferences bit.
+void __cdecl do_upgrade(int base_id, int faction_id, int proto_id);
+int __cdecl upgrade_cost(int faction_id, int proto_id_init, int proto_id_upg);
+void __cdecl upgrade_prototypes(int faction_id, int proto_id);
+// ?upgrade_prototype@@YAHHHHH@Z. The image's own only caller passes four
+// arguments; see pending_bodies.cpp before adding a fifth parameter here.
+int __cdecl upgrade_prototype(int base_id, int faction_id, int proto_id,
+                              int set_flag);
+void __cdecl upgrade_any_prototypes(int faction_id);
 int __cdecl value_of_base(int base_id, uint32_t faction_id_req, uint32_t faction_id_res, 
                                     uint32_t overmatch_deg, BOOL tgl);
 int __cdecl garrison_check(int base_id);
+// ?get_rating@@YAHHH@Z - a faction's score weight from its difficulty level.
+int __cdecl get_rating(int faction_id, int arg2);
 int __cdecl defensive_check(int base_id);
 BOOL __cdecl is_port(int base_id, BOOL is_base_radius);
 int __cdecl vulnerable(int faction_id, int x, int y);

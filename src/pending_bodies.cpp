@@ -2291,3 +2291,17 @@ int Texture::sub_621870(Buffer *buf, Vert *verts, int *zvals, int count,
     return PENDING_BODY(0x00621870, pending)(this, nullptr, buf, verts, zvals,
                                              count, edgeVerts, out_flag);
 }
+
+// ?upgrade_prototype@@YAHHHHH@Z at 0x004EFE80 - the single-prototype upgrade
+// worker, still unrecovered. Its only homed caller is base.cpp's
+// upgrade_prototypes (0x004F0460), which the image calls with FOUR pushes
+// (`add esp, 0x10` at 0x004F0620) against a five-H symbol, so the shipped
+// image's own fifth parameter is read off the caller's stack. Reproduced as
+// four: a fifth declared parameter no caller passes would be a modelled
+// argument the image never sends. See base.cpp's note at the call site.
+int __cdecl upgrade_prototype(int base_id, int faction_id, int proto_id,
+                              int set_flag) {
+    typedef int(__cdecl *pending)(int, int, int, int);
+    return PENDING_BODY(0x004EFE80, pending)(base_id, faction_id, proto_id,
+                                             set_flag);
+}
