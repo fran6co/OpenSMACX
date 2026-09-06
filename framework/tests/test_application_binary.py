@@ -174,8 +174,8 @@ def test_exact_external_targets_are_applied_without_reading_image_operands():
 def test_nonzero_compiler_exit_with_an_object_is_still_unmeasurable(monkeypatch, tmp_path):
     def failed(argv, *, cwd, **kwargs):
         (Path(cwd) / "unit.obj").write_bytes(coff_fixture())
-        return subprocess.CompletedProcess(argv, 1, "partial object", "compiler error")
-    monkeypatch.setattr(subprocess, "run", failed)
+        return subprocess.CompletedProcess(argv, 1, b"partial object", b"compiler error")
+    monkeypatch.setattr("match_recovery.adapters.vc6.run_bounded", failed)
     with pytest.raises(ValueError, match="compiler error"):
         compile_object(tmp_path / "f.cpp", ("cl",), FLAG_SETS[0])
 
@@ -183,7 +183,7 @@ def test_nonzero_compiler_exit_with_an_object_is_still_unmeasurable(monkeypatch,
 def test_timeout_is_unmeasurable_not_a_lost_task(monkeypatch, tmp_path):
     def timeout(argv, **kwargs):
         raise subprocess.TimeoutExpired(argv, 300)
-    monkeypatch.setattr(subprocess, "run", timeout)
+    monkeypatch.setattr("match_recovery.adapters.vc6.run_bounded", timeout)
     with pytest.raises(ValueError, match="exceeded"):
         compile_object(tmp_path / "f.cpp", ("cl",), FLAG_SETS[0])
 

@@ -134,8 +134,15 @@ The driver serializes execution in one worktree and detects tracked/nonignored
 file, index and HEAD changes outside allowed operations, including on command
 failure. **This is detection, not a security sandbox.** Use trusted adapters and
 externally sandbox workers; ignored files and writes outside this worktree are
-not protected by these checks. POSIX timeout cleanup kills the command process
-group; Windows descendant isolation must be provided by the worker adapter.
+not protected by these checks. Driver commands and VC6 compilations share a bounded
+runner. POSIX timeout cleanup requests termination, then kills the command process
+group; a main-thread Python checker using the runner can unwind on termination
+and stop its separately grouped compiler before the driver's forced cleanup.
+Existing custom signal handlers are not replaced. Cleanup waits are bounded even
+if a detached child keeps an output pipe open. Detached services, custom signal
+handlers and Windows descendant isolation require external job/sandbox containment;
+this runner never shuts down a shared Wine server. Compiler timeout/nonzero exit
+never yields a usable object or a successful measurement.
 
 Without independent review and a configured full acceptance gate, driver stops
 return CLI exit 3 and `ready_for_collection:false`. The supplied OpenSMACX

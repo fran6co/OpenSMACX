@@ -10,7 +10,6 @@ import hashlib
 import os
 from pathlib import Path
 import re
-import signal
 import subprocess
 import uuid
 
@@ -19,6 +18,7 @@ from .migration import GateExit
 from .migration_protocol import admit, extend_inventory, permissions
 from .model import canonical, require_text
 from .records import parse_json
+from .processes import run_bounded
 from .reviews import ReviewStore, acceptance_result, validate_review
 from .tasks import TaskStore, entity_id
 
@@ -53,33 +53,10 @@ def invoke(command: Command, root: Path, task: str, payload: dict) -> tuple[int,
         raise ValueError(f"missing command input: {name}")
     argv = [re.sub(r"\{(task|root|env:[A-Za-z_][A-Za-z_0-9]*)\}", expand, argument)
             for argument in command.argv]
-    process = subprocess.Popen(argv, cwd=root, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE, start_new_session=os.name != "nt")
-    try:
-        output, errors = process.communicate(canonical(payload), timeout=command.timeout)
-    except BaseException:
-        # Reap this command's process group, never a shared Wine prefix or an
-        # unrelated agent. Windows process-tree isolation belongs to its adapter.
-        if os.name != "nt":
-            try:
-                os.killpg(process.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-        else:
-            process.kill()
-        try:
-            process.communicate(timeout=5)
-        except subprocess.TimeoutExpired:
-            # A child may have detached from the process group while retaining
-            # a pipe. Do not let teardown defeat the command's time bound.
-            for stream in (process.stdin, process.stdout, process.stderr):
-                if stream is not None:
-                    stream.close()
-            process.wait(timeout=5)
-        raise
-    if process.returncode not in (0, 1, 3):
-        raise ValueError(f"adapter exited {process.returncode}: {errors.decode(errors='replace')[-2000:]}")
-    return process.returncode, parse_json(output)
+    result = run_bounded(argv, cwd=root, input=canonical(payload), timeout=command.timeout)
+    if result.returncode not in (0, 1, 3):
+        raise ValueError(f"adapter exited {result.returncode}: {result.stderr.decode(errors='replace')[-2000:]}")
+    return result.returncode, parse_json(result.stdout)
 
 
 def working_state(root: Path) -> dict:
