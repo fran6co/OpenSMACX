@@ -10,7 +10,6 @@ from match_recovery.cli import main
 from match_recovery.components import (SourceFile, VendorBinding, VendorManifest,
                                        local_path, relative_path, source_integrity)
 from match_recovery.component_source import parse_component, render_component, write_component, read_components
-from recovery.opensmacx.opensmacx_components import historical_binding
 from match_recovery.model import Component, Delivery, Origin, Ownership, Result, Span, canonical
 from match_recovery.records import publish_json, read_json
 
@@ -119,9 +118,14 @@ def test_json_records_refuse_ambiguous_keys_and_do_not_overwrite(tmp_path):
         read_json(path)
 
 
-def test_component_commands_report_scope_and_exit_codes(vendor, capsys, source_configuration):
+def test_component_commands_report_scope_and_exit_codes(vendor, capsys):
     root, manifest, archive = vendor
+    configuration = root / "recovery/project.json"
+    configuration.parent.mkdir()
+    configuration.write_text(json.dumps({"schema_version": 1, "source": {
+        "image_pin": "src/IMAGE_PIN", "address_space": "overlay:1"}}))
     write_component(root / "src" / "codec.recovery.h", manifest)
+    (root / "src/IMAGE_PIN").write_text("sha256 " + "a" * 64 + "\n")
     assert main(["components", "list", "--root", str(root)]) == 0
     assert json.loads(capsys.readouterr().out)[0]["workflow"] == "verify_dependency"
     arguments = ["components", "check-source", "codec", "--root", str(root), "--archive", str(archive)]
@@ -164,30 +168,3 @@ def test_corrupted_source_annotations_fail_closed(vendor, damage):
     _, manifest, _ = vendor
     with pytest.raises(ValueError):
         parse_component(damage(render_component(manifest)))
-
-
-LEGACY_VENDOR = '''// ORIGINAL: 0x00401000 BYTE_EXACT FILE
-// name      _codec
-// spans     0x00401000-0x00401008
-// kind      game
-#include "codec.c"
-'''
-
-
-def test_legacy_vendor_mapping_uses_explicit_historical_name_and_extent():
-    binding = historical_binding(LEGACY_VENDOR, "a" * 64, "git:synthetic")
-    assert binding.symbol == "_codec"
-    assert binding.spans == (Span(0x401000, 0x401008),)
-    assert binding.unit == "codec.c"
-
-
-@pytest.mark.parametrize("text", [
-    LEGACY_VENDOR.replace("// name      _codec\n", ""),
-    LEGACY_VENDOR + "// name      _other\n",
-    LEGACY_VENDOR.replace("0x00401000-0x00401008", "0x00401000-0x00400FFF"),
-    LEGACY_VENDOR.replace("BYTE_EXACT", "UNKNOWN"),
-    LEGACY_VENDOR + '#include "other.c"\n',
-])
-def test_ambiguous_legacy_vendor_import_is_refused(text):
-    with pytest.raises(ValueError):
-        historical_binding(text, "a" * 64, "git:synthetic")

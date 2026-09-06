@@ -195,6 +195,45 @@ Generic source annotation readers stay in the core. Compiler commands, environme
 variables, flag choices and optional interaction scripts belong to the project.
 The example project keeps its VC6/Wine interaction in `recovery/environment/`;
 there is no separate compiler package or per-compiler CLI.
+
+## Compiler interaction and dependency checks
+
+With source configuration, `components list`, `components check-source` and
+`components check-binary` are native commands; no project dispatcher is needed.
+Manifests remain companion source annotations. They must match the configured
+image pin/address space; seed manifests cannot override dependency ownership.
+Source integrity needs the pinned upstream archive and is not binary proof.
+The current strict binary backend supports i386 PE/COFF; unsupported formats or
+unresolved bindings remain unmeasurable, not exemptions from recovery.
+
+The project supplies compiler interaction through `recovery/project.json`:
+
+```json
+"compiler": {
+  "command": {"argv": ["python", "recovery/compiler.py"], "timeout": 300},
+  "inputs": ["recovery/compiler.py"],
+  "environment": ["PROJECT_COMPILER_ROOT"]
+}
+```
+
+The command receives one JSON object on stdin:
+`{"schema_version":1,"source":"vendor/codec.c","arguments":[],"flags":["-O2"]}`.
+Paths are project-relative and the working directory is the project root.
+Arguments and flags are arrays, not shell fragments; their meaning belongs to
+the local compiler implementation. It returns only
+`{"object_base64":"<encoded object bytes>"}` with exit 0, or an error diagnostic
+with nonzero exit. Empty/malformed objects, compiler failure and timeouts cannot
+supply evidence. Format parsing and comparison happen in the library afterwards.
+
+`inputs` lists local compiler scripts/configuration files; `environment` names
+additional compiler-affecting variables. PATH and command environment placeholders
+are included automatically. The library rechecks these inputs around compilation;
+environment values are hashed, not printed. This is a trusted command boundary,
+not a sandbox or a complete fingerprint of an external compiler installation.
+No persistent object or verdict cache is introduced here. Component source,
+manifest and original/archive freshness are checked before reporting results.
+Every component report keeps application-recovery accounting at zero and leaves
+unproven structure/runtime behavior unknown.
 The repository's [recovery integration](../../recovery/README.md) still contains
 a transitional legacy bridge and project verification glue. That bridge is not
 the intended minimal configuration for a new project; reusable orchestration

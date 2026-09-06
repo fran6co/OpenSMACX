@@ -102,9 +102,12 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
     """Native configured source operations, otherwise the local JSON boundary."""
     root = root.resolve()
     configuration = read_json(root / "recovery/project.json")
-    if (configuration.keys() - {"schema_version", "adapter", "source", "source_history"}
+    if (configuration.keys() - {"schema_version", "adapter", "source", "source_history", "compiler"}
             or type(configuration.get("schema_version")) is not int or configuration["schema_version"] != 1):
         raise ValueError("invalid local project command configuration")
+    if "source" in configuration and arguments.get("command") == "components":
+        from .component_commands import execute
+        return execute(root, arguments)
     if "source" in configuration and arguments.get("command") in ("inventory", "partition"):
         if arguments["command"] == "inventory":
             from .source_inventory import inventory, source_snapshot

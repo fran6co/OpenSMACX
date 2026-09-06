@@ -64,13 +64,25 @@ in source. Anything derivable from those inputs is recomputed or cached, never a
 second authority. Raw compiler output and binary derivatives stay ignored.
 
 Vendor mappings live in `*.recovery.h` companion source annotations, leaving the
-upstream files themselves unmodified. The zlib importer recovers original spans,
-symbols and compilation units from the retired wrappers' explicit historical
-metadata, not from the candidate's length. Its 39 bindings are dependency checks,
+upstream files themselves unmodified. Zlib's original spans, symbols and units
+were imported from retired wrappers' explicit historical metadata, not from the
+candidate's length. That one-time importer is now retired; all 39 bindings and
+their Git provenance remain in source and were checked against those wrappers
+before removal. The importer remains recoverable from Git if new migration
+evidence calls for it. These bindings are dependency checks,
 not application recoveries. The source-integrity command derives file hashes from
 the pinned upstream archive; without that archive it returns unknown (exit 3).
 An altered source or wrong archive returns failure (exit 1). Even a passing source
 check does not establish binary matching or ABI correctness.
+
+All component commands now run in the package. Source configuration selects the
+manifest roots and seed exclusions. The `compiler` configuration supplies the
+command protocol implemented locally by `environment/adapter.py`; no project
+component dispatcher remains. It sends source/arguments/flags and receives
+transient object bytes. Declared compiler scripts, configuration and relevant
+environment variables are rechecked around compilation. Manifests, vendor source
+and original/archive inputs are rechecked around verification. No object response
+or process exit alone constitutes a matching claim.
 
 The binary checks currently use the OpenSMACX VC6 launcher. Set `VC6_PREFIX` to
 an isolated prefix before running it alongside other agents. It compiles once per

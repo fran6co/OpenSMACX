@@ -17,6 +17,10 @@ Separate application work from verified third-party, runtime, system and
 compiler-generated components. A suspected upstream version is a hint until
 source, binary and ABI evidence support it; unknown dependencies stay unknown.
 Do not manually decompile a recognized library to increase application coverage.
+Component commands use source configuration and the local compiler protocol;
+there is no dependency-specific project dispatcher. A matching source archive
+alone does not establish ABI or binary compatibility. Preserve unresolved
+references and unsupported object cases as remaining verification work.
 
 Seed material may be old recovered/unrecovered bodies, hand analysis, notes,
 Kuna, Ghidra or IDA evidence. Preserve provenance and contradictions. No native

@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+import tarfile
 from typing import Sequence
 
 from . import __version__
@@ -85,7 +86,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             return code
         print(json.dumps(output, indent=2, sort_keys=True))
         return 0
-    except (OSError, ValueError, ImportError, subprocess.SubprocessError) as error:
+    except (OSError, ValueError, ImportError, subprocess.SubprocessError, tarfile.TarError) as error:
         print(f"recover: {error}", file=sys.stderr)
         return 3
 
