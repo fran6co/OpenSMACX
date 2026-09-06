@@ -78,7 +78,10 @@ FLOORS = {
     # down to the single live one - 0x00428550, CouncWin::~CouncWin - whose
     # defusal belongs to CouncWin's class pass (empty hypothesis-layout
     # destructor; see the long note above).
-    "duplicate": 1,
+    # 1 -> 0 (2026-09-06, W5j iface rollout): 0x00428550 homed as
+    # ~CouncWin BYTE_EXACT 48/48 - the artifact side of the pair died with
+    # its file, and the P0 leftover closes. Zero duplicates, first time.
+    "duplicate": 0,
     # TWO LIVE LANDMINES REMAIN, named so the number cannot become scenery:
     #   0x00428550 - claimed in BOTH 00428550.cpp and councwin.cpp (it is
     #     also a duplicate), so which definition the build links has to be

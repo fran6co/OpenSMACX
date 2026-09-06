@@ -22,6 +22,7 @@
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x004404C0 ?on_iface_left_click@DiploPop@@QAEXHH@Z 0x004404C0-0x004404C3 BYTE_EXACT
+// symbol    ?on_iface_left_click@DiploPop@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_left_click@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
@@ -38,6 +39,7 @@ void DiploPop::on_iface_left_click(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x004404D0 ?on_iface_right_click@DiploPop@@QAEXHH@Z 0x004404D0-0x004404D3 BYTE_EXACT
+// symbol    ?on_iface_right_click@DiploPop@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_right_click@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
@@ -54,6 +56,7 @@ void DiploPop::on_iface_right_click(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x004404E0 ?on_iface_left_down@DiploPop@@QAEXHH@Z 0x004404E0-0x004404E3 BYTE_EXACT
+// symbol    ?on_iface_left_down@DiploPop@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_left_down@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
@@ -70,6 +73,7 @@ void DiploPop::on_iface_left_down(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x004404F0 ?on_iface_right_down@DiploPop@@QAEXHH@Z 0x004404F0-0x004404F3 BYTE_EXACT
+// symbol    ?on_iface_right_down@DiploPop@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_right_down@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
@@ -86,6 +90,7 @@ void DiploPop::on_iface_right_down(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00440500 ?on_iface_mouse_move@DiploPop@@QAEXHH@Z 0x00440500-0x00440503 BYTE_EXACT
+// symbol    ?on_iface_mouse_move@DiploPop@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_mouse_move@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
@@ -102,6 +107,7 @@ void DiploPop::on_iface_mouse_move(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00440510 ?on_iface_mouse_leave@DiploPop@@QAEXHH@Z 0x00440510-0x00440513 BYTE_EXACT
+// symbol    ?on_iface_mouse_leave@DiploPop@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_mouse_leave@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
@@ -118,6 +124,7 @@ void DiploPop::on_iface_mouse_leave(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00440520 ?on_iface_selected@DiploPop@@QAEXHH@Z 0x00440520-0x00440523 BYTE_EXACT
+// symbol    ?on_iface_selected@DiploPop@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_selected@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
@@ -134,6 +141,7 @@ void DiploPop::on_iface_selected(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00440530 ?on_iface_left_double_click@DiploPop@@QAEXHH@Z 0x00440530-0x00440533 BYTE_EXACT
+// symbol    ?on_iface_left_double_click@DiploPop@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_left_double_click@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
@@ -150,6 +158,7 @@ void DiploPop::on_iface_left_double_click(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00440540 ?on_iface_right_double_click@DiploPop@@QAEXHH@Z 0x00440540-0x00440543 BYTE_EXACT
+// symbol    ?on_iface_right_double_click@DiploPop@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_right_double_click@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
@@ -166,6 +175,7 @@ void DiploPop::on_iface_right_double_click(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00440610 ?on_iface_button_toggled@DiploPop@@QAEXHH@Z 0x00440610-0x00440613 BYTE_EXACT
+// symbol    ?on_iface_button_toggled@DiploPop@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_button_toggled@DiploPop@@QAEXHH@Z)(DiploPop* this, int, int)
 // callers   0   call targets   0
@@ -176,6 +186,49 @@ Return Value: n/a
 Status: Complete
 */
 void DiploPop::on_iface_button_toggled(int, int) {
+}
+
+// ---- the interface table's own slots still carrying an original body ------
+
+// PENDING 0x00440380 ?on_status@DiploPop@@QAEXH@Z 0x00440380-0x004404B4
+// symbol    ?on_status@DiploPop@@UAEXH@Z
+// size      308 bytes
+// prototype void (__thiscall ?on_status@DiploPop@@QAEXH@Z)(DiploPop* this, int)
+// callers   0   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+void DiploPop::on_status(int mode) {
+    typedef void(__fastcall *pending)(DiploPop *, void *, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x00440380))(
+        this, nullptr, mode);
+}
+
+// PENDING 0x00440550 ?on_iface_button_clicked@DiploPop@@QAEXH@Z 0x00440550-0x00440604
+// symbol    ?vslot_13@DiploPop@@UAEXH@Z
+// size      180 bytes
+// prototype void (__thiscall ?on_iface_button_clicked@DiploPop@@QAEXH@Z)(DiploPop* this, int)
+// callers   0   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// indirect  0x00440582
+void DiploPop::vslot_13(int button_id) {
+    typedef void(__fastcall *pending)(DiploPop *, void *, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x00440550))(
+        this, nullptr, button_id);
+}
+
+// PENDING 0x00440620 ?on_iface_group_clicked@DiploPop@@QAEXHHH@Z 0x00440620-0x004406CB
+// symbol    ?on_iface_group_clicked@DiploPop@@UAEXHHH@Z
+// size      171 bytes
+// prototype void (__thiscall ?on_iface_group_clicked@DiploPop@@QAEXHHH@Z)(DiploPop* this, int, int, int)
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// indirect  0x00440643
+void DiploPop::on_iface_group_clicked(int group, int x_coord, int y_coord) {
+    typedef void(__fastcall *pending)(DiploPop *, void *, int, int, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x00440620))(
+        this, nullptr, group, x_coord, y_coord);
 }
 
 

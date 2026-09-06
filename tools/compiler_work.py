@@ -652,7 +652,10 @@ SCAFFOLD_CEILINGS = {
     # draw_trans declaration, 0x623F50 and 0x624CA0 transcribed from the
     # image because the archive copies were BODY GOES HERE stubs over a
     # nonexistent Subject class) and six unclaimed with them.
-    "artifact files (recovered/)": 1000,
+    # 1000 -> 994 (2026-09-06, W5j iface rollout): CouncWin ctor/dtor/
+    # on_status, BattleWin ctor/dtor/on_iface_group_clicked, eleven
+    # CouncWin + ten DiploPop on_iface_* overrides homed - all BYTE_EXACT.
+    "artifact files (recovered/)": 994,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -750,7 +753,10 @@ SCAFFOLD_CEILINGS = {
     # 1126 -> 1096 (2026-09-06, W5g texture cluster): 30 unclaimed texture
     # blit/edge bodies homed verbatim into src/texture.cpp - unverifiable
     # to measured MISMATCH, the campaign's coverage move.
-    "unrecovered files": 1096,
+    # 1096 -> 1094 (2026-09-06, W5j iface rollout): the DesignWin slot-13/
+    # slot-14 pair homed BYTE_EXACT (slot 14's catalogue QAEXH is wrong -
+    # the body returns int, UAEHH, symbol fact recorded).
+    "unrecovered files": 1094,
     # 2717 -> 2748 (2026-09-04, P2 net batch): NetFifo promoted with
     # close/add/get/get, NetFifoNode, head_/tail_/count_ - the deliberate
     # raise this ceiling exists for (class modelling grows it; the class

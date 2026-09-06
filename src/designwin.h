@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "maininterface.h"  // IfaceRegistryEntry - the interface-mode base
 #include "time.h"
 #include "spot.h"
 #include "font.h"
@@ -43,7 +44,7 @@
   * methods recovered here touch no field, which is why they could be replaced
   * ahead of the mapping.
   */
-class DesignWin : public GraphicWin, public SubInterface {
+class DesignWin : public GraphicWin, public IfaceRegistryEntry {
  public:
   // homed from 0043e960.cpp
   void shut_that_badboy_down();
@@ -100,14 +101,40 @@ class DesignWin : public GraphicWin, public SubInterface {
   // nothing and the deleting destructor needs a `call rel32`.
   ~DesignWin();
   void UNK1();
-  void on_iface_left_down(int a1, int a2);
+  void on_iface_left_down(int, int);
   void on_mouse_leave(int a1, int a2);
-  void on_iface_right_down(int a1, int a2);
-  void on_iface_selected(int a1, int a2);
-  void on_iface_left_double_click(int a1, int a2);
-  void on_iface_right_double_click(int a1, int a2);
-  void on_iface_button_toggled(int a1, int a2);
-  void on_iface_group_clicked(int a1, int a2, int a3);
+  void on_iface_right_down(int, int);
+  void on_iface_selected(int, int);
+  void on_iface_left_double_click(int, int);
+  void on_iface_right_double_click(int, int);
+  void on_iface_button_toggled(int, int);
+  void on_iface_group_clicked(int, int, int);
+
+  // ---- the interface table, slot for slot against 0x66B0F4 ----------------
+  // Slots 1, 2, 6, 17 and 18 hold the shared no-ops every window carries
+  // (0x00404260 / 0x00404250 / 0x00404240); 6, 17 and 18 are
+  // IfaceRegistryEntry's own definitions and need nothing here, the rest are
+  // pure up there and DesignWin has to name them to be concrete.
+  void on_iface_scrolled(int, int) {}
+  void on_iface_scrolling(int, int) {}
+  void on_status(int mode);
+  void on_iface_left_click(int, int);
+  void on_iface_right_click(int, int);
+  void on_iface_mouse_move(int, int);
+  void on_iface_mouse_leave(int, int);
+  // Slot 13, 0x0043D430. The catalogue names it on_iface_button_clicked; it
+  // keeps the base's `vslot_13` spelling so that it overrides the slot rather
+  // than shadowing it. Nothing in .text calls it directly - only the table.
+  void vslot_13(int button_id);
+  // Slot 14, 0x0043D450 - DesignWin's own, not the shared no-op.
+  int on_iface_button_pressed(int button_id);
+
+  // Slot 44 of the front vtable (0x66B148) - the catalogue's
+  // ?on_button_clicked@DesignWin@@QAEXH@Z, 0x00438460, 4481 bytes,
+  // unrecovered. Both vslot_13 and on_iface_button_pressed dispatch to it
+  // with a live `call dword ptr [eax + 0xb0]`, so the entry has to be
+  // DesignWin's and not Win's shared no-op.
+  void vslot_44(int button_id);
 
   // Storage the image proves is here: its own methods reach 0x14210.
   // Extent only - this class carries no size assertion, and the bound is a floor.

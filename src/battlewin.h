@@ -16,7 +16,9 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "maininterface.h"  // IfaceRegistryEntry - the interface-mode base
 #include "subinterface.h"
+#include "time.h"
 
  /*
   * BattleWin class
@@ -27,23 +29,58 @@
   * only at which constructor ran first and not at whether `this` had been
   * adjusted before it.
   *
-  * The layout is not established and nothing pins its sizeof.
+  * DERIVED 2026-09-06 from IfaceRegistryEntry, and the derivation is what the
+  * constructor's second vftable store was asking for: ??0BattleWin writes the
+  * all-pure base table 0x66A6E4 at +0, builds the Time member, then
+  * overwrites +0 with BattleWin's own nineteen-entry table 0x66AA44 - the
+  * base-then-derived pair only a polymorphic base produces. The interface
+  * base is 8 bytes here rather than at +0xA14, because BattleWin has no
+  * GraphicWin front: it is the registry entry, and the Time follows it.
+  *
+  * The layout is not established beyond the static_assert below.
 */
-class BattleWin : public SubInterface {
+class BattleWin : public IfaceRegistryEntry {
  public:
-  void on_iface_button_clicked(int a1);
+  // The interface table, slot for slot against 0x66AA44. Slots 1, 2, 6, 11,
+  // 12, 14, 15, 17 and 18 hold the shared no-ops every window carries
+  // (0x00404260 / 0x00404250 / 0x00404240); 6, 17 and 18 are
+  // IfaceRegistryEntry's own definitions and need nothing here, the rest are
+  // pure up there and BattleWin has to name them to be concrete.
+  void on_iface_scrolled(int, int) {}
+  void on_iface_scrolling(int, int) {}
+  void on_iface_left_double_click(int, int) {}
+  void on_iface_right_double_click(int, int) {}
+  int on_iface_button_pressed(int) { return 0; }
+  void on_iface_button_toggled(int, int) {}
+
+  void on_status(int mode);
+  void on_iface_left_click(int, int);
+  void on_iface_right_click(int, int);
+  void on_iface_left_down(int x_coord, int y_coord);
+  void on_iface_right_down(int, int);
+  void on_iface_mouse_move(int, int);
+  void on_iface_mouse_leave(int, int);
+  void on_iface_selected(int, int);
+  // (group, x, y): the image tests only the first and forwards the other two.
+  void on_iface_group_clicked(int group, int x_coord, int y_coord);
+  // Slot 13, 0x00422DC0. The catalogue names it on_iface_button_clicked; it
+  // keeps the base's `vslot_13` spelling so that it overrides the slot (the
+  // image's table holds it at 0x34) rather than shadowing it with a new
+  // non-virtual member. BattleWin calls MainInterface's same-named body
+  // DIRECTLY from inside it, which is why MainInterface's own slot 13 cannot
+  // take that name - BattleWin's can, because nothing calls it but the table.
+  void vslot_13(int button_id);
+
   // DEFINED IN battlewin.cpp, not empty: its marker claims 27 image bytes and
   // the body was `{ ; }` - the image installs the SubInterface vtable, builds
   // the Time member at +8, then installs BattleWin's own vtable. Promoted from
   // src/recovered/units/00422ee0.cpp.
   BattleWin();
-  ~BattleWin();
-  void on_iface_left_click(int a1, int a2);
-  void on_iface_right_click(int a1, int a2);
-  void on_iface_right_down(int a1, int a2);
-  void on_iface_mouse_move(int a1, int a2);
-  void on_iface_mouse_leave(int a1, int a2);
-  void on_iface_selected(int a1, int a2);
+  // NO DECLARED DESTRUCTOR: the image's ??1BattleWin is two instructions -
+  // `add ecx, 8` and a tail `jmp` into ~Time - which is the compiler's
+  // IMPLICIT destructor destroying the Time member and nothing else. A
+  // user-written `~BattleWin() {}` also emits the base vptr restore, which
+  // the image does not have; leaving it to the compiler is the whole fix.
 
  private:
   // Not a Time-derived class, and the Time is at +8 rather than at +0.
@@ -59,11 +96,12 @@ class BattleWin : public SubInterface {
   // pinned at 0x28, so 8 + 0x28 == 0x30 and the static_assert below is what
   // checks this split.
   //
-  // Held as STORAGE, not as `SubInterface subIFace_; Time time_;`: a real
-  // Time member would give BattleWin a constructor and destructor the
-  // original inlines, and neither class is named by this header today.
-  // The 8 bytes at 0 are the SubInterface base, above.
-  uint8_t time_storage_[0x28];  // 0x8
+  // A REAL MEMBER, not storage: the image calls ??0Time out of line from the
+  // constructor and tail-jumps into ??1Time from the destructor, which is
+  // exactly what a member of a non-trivial class gets. The old
+  // `uint8_t time_storage_[0x28]` spelling needed both calls written by hand
+  // and cost the destructor its vptr store.
+  Time time_;  // 0x8
 
   // Storage the image proves is here: its own methods reach 0xA0.
   // Extent only - this class carries no size assertion, and the bound is a floor.

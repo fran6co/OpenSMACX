@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "maininterface.h"  // IfaceRegistryEntry - the interface-mode base
 #include "time.h"
 #include "font.h"
 #include "graphicwin.h"
@@ -35,7 +36,7 @@
   * The methods below ignore their arguments and return a constant, which is
   * why they can be replaced ahead of that mapping.
   */
-class DiploPop : public GraphicWin, public SubInterface {
+class DiploPop : public GraphicWin, public IfaceRegistryEntry {
  public:
   // 0x004406D0. `poll` is the Win32 modal-pump callback Win::set_modal stores.
   int set_modal(int flag, int (__cdecl *poll)(), Win *owner);
@@ -63,16 +64,32 @@ class DiploPop : public GraphicWin, public SubInterface {
   // pending_bodies forwarder, because an empty inline stub emits
   // nothing and the deleting destructor needs a `call rel32`.
   ~DiploPop();
-  void on_iface_left_click(int a1, int a2);
-  void on_iface_right_click(int a1, int a2);
-  void on_iface_left_down(int a1, int a2);
-  void on_iface_right_down(int a1, int a2);
-  void on_iface_mouse_move(int a1, int a2);
-  void on_iface_mouse_leave(int a1, int a2);
-  void on_iface_selected(int a1, int a2);
-  void on_iface_left_double_click(int a1, int a2);
-  void on_iface_right_double_click(int a1, int a2);
-  void on_iface_button_toggled(int a1, int a2);
+  void on_iface_left_click(int, int);
+  void on_iface_right_click(int, int);
+  void on_iface_left_down(int, int);
+  void on_iface_right_down(int, int);
+  void on_iface_mouse_move(int, int);
+  void on_iface_mouse_leave(int, int);
+  void on_iface_selected(int, int);
+  void on_iface_left_double_click(int, int);
+  void on_iface_right_double_click(int, int);
+  void on_iface_button_toggled(int, int);
+
+  // ---- the interface table, slot for slot against 0x66B424 ----------------
+  // Slots 1, 2, 6, 14, 17 and 18 hold the shared no-ops every window carries
+  // (0x00404260 / 0x00404250 / 0x00404240); 6, 17 and 18 are
+  // IfaceRegistryEntry's own definitions and need nothing here, the rest are
+  // pure up there and DiploPop has to name them to be concrete.
+  void on_iface_scrolled(int, int) {}
+  void on_iface_scrolling(int, int) {}
+  int on_iface_button_pressed(int) { return 0; }
+  void on_status(int mode);
+  // Slot 13, 0x00440550. The catalogue names it on_iface_button_clicked; it
+  // keeps the base's `vslot_13` spelling so that it overrides the slot rather
+  // than shadowing it. Nothing in .text calls it directly - only the table.
+  void vslot_13(int button_id);
+  // Slot 16, 0x00440620.
+  void on_iface_group_clicked(int group, int x_coord, int y_coord);
 
   // Storage the image proves is here: its own methods reach 0x420C.
   // Extent only - this class carries no size assertion, and the bound is a floor.

@@ -305,7 +305,10 @@ CEILINGS = {
     # bodies homed verbatim into texture.cpp - the archive's pun-on-this
     # transcriptions are now product source. The texture class pass is the
     # designated follow-up that lowers this.
-    "raw self-access": 233,
+    # 233 -> 232 (2026-09-06, W5j iface rollout): the two FlatButton
+    # ORIGINAL() seams fell - the dispatches are Win::show(0)/Win::hide(),
+    # so plain spellings replaced them (on_status still 64/64).
+    "raw self-access": 232,
     # 4 -> 5 (2026-09-03, P1a batch): one homed body's faithful spelling
     # returns this as int (catalogue mangling QAEHH; TexHeap::UNK1 family).
     # 5 -> 8 (2026-09-03, P2 buffer/mapwin batch): three more homed
@@ -407,7 +410,10 @@ CEILINGS = {
     # agent renamed all 56 g_<addr> bindings from evidence and left 20
     # slots honestly unnamed rather than inventing facts (the WHY text
     # forbids the invention). The texture class pass owns the lowering.
-    "scaffold name": 3038,
+    # 3038 -> 3004 (2026-09-06, W5j iface rollout): thirty on_iface_*
+    # overrides now spell through the real bases with symbol facts instead
+    # of scaffold parameter names.
+    "scaffold name": 3004,
 }
 
 WHY = {

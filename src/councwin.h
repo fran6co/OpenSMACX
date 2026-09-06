@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "maininterface.h"  // IfaceRegistryEntry - the interface-mode base
 #include "spot.h"
 #include "font.h"
 #include "flatbutton.h"
@@ -34,7 +35,7 @@
   * The methods below ignore their arguments and return a constant, which is
   * why they can be replaced ahead of that mapping.
   */
-class CouncWin : public GraphicWin, public SubInterface {
+class CouncWin : public GraphicWin, public IfaceRegistryEntry {
  public:
   // 0x00425DB0  ?draw_leader@CouncWin@@QAEXH@Z - public, __thiscall,
   // void(int), unrecovered. Declared so draw_all_leaders and on_mouse_leave,
@@ -43,11 +44,18 @@ class CouncWin : public GraphicWin, public SubInterface {
   void show(int visible);
   void draw_all_leaders();
   void on_mouse_leave(int a1, int a2);
-  CouncWin() { ; }
-  // 0x00428550 is not recovered: a
-  // pending_bodies forwarder, because an empty inline stub emits
-  // nothing and the deleting destructor needs a `call rel32`.
-  ~CouncWin();
+  // 0x00428620, defined out of line at the foot of councwin.cpp: the image
+  // has a real body there (231 bytes) and it is not inlined anywhere.
+  CouncWin();
+  // NO DECLARED DESTRUCTOR, and that is not an omission: the image's
+  // ??1CouncWin (0x00428550) is the compiler's IMPLICIT one - the member
+  // teardown chain (the ??_M walk over buttons_[6], the six Fonts in reverse,
+  // ~Spot, the GraphicWin base) with no vtable-restore stores anywhere. A
+  // user-written `~CouncWin() {}` emits two vptr stores the image does not
+  // have (measured, 48/50); leaving the destructor to the compiler removes
+  // them and the rest of the chain is identical. deleting_thunks.cpp still
+  // reaches it with an explicit `CouncWin::~CouncWin()`, which an implicitly
+  // declared destructor allows.
   void on_group_clicked(int a1, int a2);
   void on_button_passover(int a1, int a2);
   void on_iface_left_click(int a1, int a2);
@@ -61,6 +69,40 @@ class CouncWin : public GraphicWin, public SubInterface {
   void on_iface_right_double_click(int a1, int a2);
   void on_iface_button_toggled(int a1, int a2);
   void on_iface_group_clicked(int a1, int a2, int a3);
+
+  // ---- slots CouncWin leaves at the interface's shared no-ops -------------
+  // Its own table (0x66AA94) holds 0x00404260 - the three-byte `ret 8` every
+  // window shares - at slots 1, 2 and 6, and 0x00404250 / 0x00404240 - the
+  // two constant-return no-ops - at 14, 17 and 18. Slots 6, 17 and 18 are
+  // IfaceRegistryEntry's own definitions and need nothing here; slots 1, 2
+  // and 14 are PURE up there, so CouncWin has to name them to be concrete.
+  // VC6 folds the three bodies to the same bytes the shared COMDATs carry,
+  // which is what the image's single address per shape is.
+  void on_iface_scrolled(int, int) {}
+  void on_iface_scrolling(int, int) {}
+  int on_iface_button_pressed(int) { return 0; }
+
+  // Slot 0 - 0x00426FA0, 180 bytes. The interface-mode entry point: mode
+  // nonzero shows the council pane and mode zero tears it down.
+  void on_status(int mode);
+  // Slot 13 - 0x004270F0, 29 bytes, no caller anywhere in .text: it is only
+  // ever reached through the table. The base names this slot `vslot_13`
+  // because MainInterface's same-named body is reached DIRECTLY by BattleWin
+  // and an override would turn that rel32 into a dispatch; CouncWin has no
+  // such direct caller, so overriding the slot is the faithful spelling and
+  // puts 0x004270F0 at the offset the image's own table has it.
+  void vslot_13(int button_id);
+
+  // ---- slots of the FRONT vtable (0x66AAE8) that CouncWin implements ------
+  // The image's catalogue names them on_redraw / on_button_clicked; the slots
+  // keep the Win vtable's own vslot_N names because that is the name the
+  // override has to carry to land at the right offset. Both are unrecovered,
+  // so both are forwarders - but on_status reaches slot 12 and vslot_13
+  // reaches slot 44 through a live `call dword ptr [eax+N]`, so the entries
+  // have to be CouncWin's and not Win's shared no-ops for those dispatches to
+  // mean what the image's mean.
+  void vslot_12();                 // slot 12, 0x00426AA0 ?on_redraw@CouncWin@@QAEXXZ
+  void vslot_44(int button_id);    // slot 44, 0x00424870 ?on_button_clicked@CouncWin@@QAEXH@Z
   // PAUGraphicWin@@PADH, per
   // ?on_button_text_draw@CouncWin@@QAEHPAUGraphicWin@@PADH@Z. 0x00426F90 is
   // `xor eax, eax; ret 0xc` and touches none of the three.

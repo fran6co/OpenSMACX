@@ -17,9 +17,128 @@
  */
 #include "stdafx.h"
 #include "councwin.h"
+#include "mapwin.h"   // MainInterfaceGlobal - the interface owner on_status drives
 #include "subinterface.h"
+#include "temp.h"     // do_all_draws
 #include "worldwin.h"
 #include "menu.h"
+
+// Two of on_status's callees are still original bodies the tree has not homed
+// (0x0045D440 / 0x0045D970, both archive copies in src/recovered/units, which
+// the build does not compile). They are cdecl free functions the image reaches
+// with a plain `call rel32`, so they are declared here and defined as
+// forwarders at the foot of this file.
+void __cdecl slide_show(GraphicWin *window, int mode);   // 0x0045D440
+void __cdecl slide_hide(GraphicWin *window, int mode);   // 0x0045D970
+
+// The two FlatButton slots on_status drives are Win's own show(int) and
+// hide() - FlatButton is BaseButton : GraphicWin : Win, so its vtable opens
+// with Win's slots, and `button->show(0)` / `button->hide()` are the image's
+// `call dword ptr [edx + 4]` and `[edx + 8]`.
+
+// Slot 12 of the front vtable (0x66AAE8) - the catalogue's
+// ?on_redraw@CouncWin@@QAEXXZ, 0x00426AA0, unrecovered. on_status reaches it
+// with `mov edx,[ecx-0xa14] / call [edx+0x30]`, a live dispatch through the
+// front's own table, so the entry has to be CouncWin's.
+void CouncWin::vslot_12() {
+    typedef void(__fastcall *pending)(CouncWin *, void *);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x00426AA0))(
+        this, nullptr);
+}
+
+// Slot 44 of the front vtable - the catalogue's
+// ?on_button_clicked@CouncWin@@QAEXH@Z, 0x00424870, 1983 bytes, unrecovered.
+void CouncWin::vslot_44(int button_id) {
+    typedef void(__fastcall *pending)(CouncWin *, void *, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x00424870))(
+        this, nullptr, button_id);
+}
+
+/*
+// ORIGINAL: 0x004270F0 ?on_iface_button_clicked@CouncWin@@QAEXH@Z 0x004270F0-0x0042710D BYTE_EXACT
+// symbol    ?vslot_13@CouncWin@@UAEXH@Z
+// size      29 bytes
+// prototype void (__thiscall ?on_iface_button_clicked@CouncWin@@QAEXH@Z)(CouncWin* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x00427103
+Return Value: n/a
+Status: Complete
+*/
+// LEVER: the receiver is the ENTRY (the image's `add ecx,-0xa14` is VC6's own
+//   adjustment to the front) and the dispatch is the front's slot 44, so the
+//   whole body is one unqualified virtual call once the front is named: the
+//   `Win *front = this` conversion is where the -0xa14 comes from, and
+//   `vslot_44(a1)` is the image's `call dword ptr [eax + 0xb0]`.
+void CouncWin::vslot_13(int button_id) {
+    vslot_44(button_id);
+}
+
+/*
+// ORIGINAL: 0x00426FA0 ?on_status@CouncWin@@QAEXH@Z 0x00426FA0-0x00427054 BYTE_EXACT
+// symbol    ?on_status@CouncWin@@UAEXH@Z
+// size      180 bytes
+// prototype void (__thiscall ?on_status@CouncWin@@QAEXH@Z)(CouncWin* this, int)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D56B0 0x005FCBB0 0x0045D440 0x005ED9D0 0x0045D380 0x0045D970 0x005EDCD0
+// indirect  0x00426FBD 0x00426FD3 0x0042701D
+Return Value: n/a
+Status: Complete
+*/
+// LEVER: the receiver is the ENTRY and every front reach goes through VC6's
+//   own -0xA14, so `this` spelled at each use is the whole receiver story -
+//   there is NO `front` local: naming one costs a spill slot and the image
+//   recomputes `lea reg,[edi-0xa14]` at every site. The two button loops are
+//   Win::show(0) / Win::hide() on the council buttons - FlatButton is
+//   BaseButton : GraphicWin : Win, so slots 1 and 2 of its vtable ARE show and
+//   hide, and the plain virtual call is the image's `call [edx+4]` /
+//   `call [edx+8]`. The front's own show and hide are called DIRECTLY
+//   (`call 0x5ed9d0` / `call 0x5edcd0`), so both are qualified to suppress
+//   the virtual dispatch.
+void CouncWin::on_status(int mode) {
+    if (mode != 0) {
+        static_cast<GraphicWin *>(this)->vslot_12();
+        for (int i = 0; i < 6; i++) {
+            if (i != 5) {
+                buttons_[i].show(0);
+            }
+        }
+        MainInterfaceGlobal.update(0);
+        do_all_draws();
+        slide_show(this, 0);
+        this->Win::show(3);
+    } else {
+        FlatButton *button = buttons_;
+        int count = 6;
+        do {
+            button->hide();
+            ++button;
+            --count;
+        } while (count != 0);
+        SubInterface::release_iface_mode();
+        slide_hide(this, 0);
+        this->Win::hide();
+        do_all_draws();
+    }
+}
+
+// The two slide helpers, still original bodies. See the declarations at the
+// top of the file.
+void __cdecl slide_show(GraphicWin *window, int mode) {
+    typedef void(__cdecl *pending)(GraphicWin *, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x0045D440))(window,
+                                                                     mode);
+}
+
+void __cdecl slide_hide(GraphicWin *window, int mode) {
+    typedef void(__cdecl *pending)(GraphicWin *, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x0045D970))(window,
+                                                                     mode);
+}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
@@ -56,6 +175,7 @@ void CouncWin::on_button_passover(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00427060 ?on_iface_left_click@CouncWin@@QAEXHH@Z 0x00427060-0x00427063 BYTE_EXACT
+// symbol    ?on_iface_left_click@CouncWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_left_click@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   0   call targets   0
@@ -72,6 +192,7 @@ void CouncWin::on_iface_left_click(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00427070 ?on_iface_right_click@CouncWin@@QAEXHH@Z 0x00427070-0x00427073 BYTE_EXACT
+// symbol    ?on_iface_right_click@CouncWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_right_click@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   0   call targets   0
@@ -88,6 +209,7 @@ void CouncWin::on_iface_right_click(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00427080 ?on_iface_left_down@CouncWin@@QAEXHH@Z 0x00427080-0x00427083 BYTE_EXACT
+// symbol    ?on_iface_left_down@CouncWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_left_down@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   0   call targets   0
@@ -104,6 +226,7 @@ void CouncWin::on_iface_left_down(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00427090 ?on_iface_right_down@CouncWin@@QAEXHH@Z 0x00427090-0x00427093 BYTE_EXACT
+// symbol    ?on_iface_right_down@CouncWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_right_down@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   0   call targets   0
@@ -120,6 +243,7 @@ void CouncWin::on_iface_right_down(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x004270A0 ?on_iface_mouse_move@CouncWin@@QAEXHH@Z 0x004270A0-0x004270A3 BYTE_EXACT
+// symbol    ?on_iface_mouse_move@CouncWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_mouse_move@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   0   call targets   0
@@ -136,6 +260,7 @@ void CouncWin::on_iface_mouse_move(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x004270B0 ?on_iface_mouse_leave@CouncWin@@QAEXHH@Z 0x004270B0-0x004270B3 BYTE_EXACT
+// symbol    ?on_iface_mouse_leave@CouncWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_mouse_leave@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   0   call targets   0
@@ -152,6 +277,7 @@ void CouncWin::on_iface_mouse_leave(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x004270C0 ?on_iface_selected@CouncWin@@QAEXHH@Z 0x004270C0-0x004270C3 BYTE_EXACT
+// symbol    ?on_iface_selected@CouncWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_selected@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   0   call targets   0
@@ -168,6 +294,7 @@ void CouncWin::on_iface_selected(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x004270D0 ?on_iface_left_double_click@CouncWin@@QAEXHH@Z 0x004270D0-0x004270D3 BYTE_EXACT
+// symbol    ?on_iface_left_double_click@CouncWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_left_double_click@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   0   call targets   0
@@ -184,6 +311,7 @@ void CouncWin::on_iface_left_double_click(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x004270E0 ?on_iface_right_double_click@CouncWin@@QAEXHH@Z 0x004270E0-0x004270E3 BYTE_EXACT
+// symbol    ?on_iface_right_double_click@CouncWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_right_double_click@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   0   call targets   0
@@ -200,6 +328,7 @@ void CouncWin::on_iface_right_double_click(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00427110 ?on_iface_button_toggled@CouncWin@@QAEXHH@Z 0x00427110-0x00427113 BYTE_EXACT
+// symbol    ?on_iface_button_toggled@CouncWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_button_toggled@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   0   call targets   0
@@ -216,6 +345,7 @@ void CouncWin::on_iface_button_toggled(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00427120 ?on_iface_group_clicked@CouncWin@@QAEXHHH@Z 0x00427120-0x00427123 BYTE_EXACT
+// symbol    ?on_iface_group_clicked@CouncWin@@UAEXHHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_group_clicked@CouncWin@@QAEXHHH@Z)(CouncWin* this, int, int, int)
 // callers   0   call targets   0
@@ -332,7 +462,7 @@ void CouncWin::show(int visible) {
 // ---------------------------------------------------------------------------
 
 /*
-// ORIGINAL: 0x00428550 ??1CouncWin@@QAE@XZ 0x00428550-0x00428614;0x00652C40-0x00652CB4
+// ORIGINAL: 0x00428550 ??1CouncWin@@QAE@XZ 0x00428550-0x00428614;0x00652C40-0x00652CB4 BYTE_EXACT
 // symbol    ??1CouncWin@@UAE@XZ
 // size      312 bytes
 // prototype void (__thiscall ??1CouncWin@@QAE@XZ)(CouncWin* this)
@@ -353,15 +483,34 @@ and this build emits the U spelling.
 // 0x00652C40) the non-trivial destructors pull in. The empty body below
 // reproduces ALL of that - except two instructions the tree adds and the
 // image does not have:
-// TRIED: the empty-body/real-members form, measured 48/50 agreeing. VC6
-//        prefixes a polymorphic destructor with vtable-restore stores - here
-//        `mov [esi], ??_7CouncWin@@6BWin@@` and the Buffer-vtable store at
-//        0x444 - and the image's body has NEITHER (nor does the image's
-//        ~PlanWin; the image's ~Win and ~GraphicWin DO carry them and match).
-//        The image compiled this destructor without a vtable to restore, so
-//        the open question is the INHERITANCE EDGE, not the body: whether
-//        the original CouncWin derives the polymorphic Win chain at all.
-//        The forwarder is deleted and the buttons_[6] remodel landed
-//        regardless - this body is the tree's definition now.
-CouncWin::~CouncWin() {
+// RESOLVED 2026-09-06, and the open question above was the wrong one: the
+//        inheritance edge is fine. The vtable stores were the USER-WRITTEN
+//        destructor's. Probing cl 12.00.8168 (/O2 /Gy /GR- /GX) with a
+//        polymorphic base, a member with a non-trivial destructor and an
+//        ARRAY member: a user-written `~D() {}` emits the vptr store, the
+//        IMPLICITLY declared destructor emits none and is otherwise the same
+//        chain (`add ecx,N / jmp ~Member` for BattleWin; the full ??_M walk
+//        here). Dropping the declaration from councwin.h is the whole fix -
+//        deleting_thunks.cpp's explicit `CouncWin::~CouncWin()` still names
+//        it, because an implicitly declared destructor may be called
+//        explicitly. There is no body to write: the definition below is gone
+//        and this marker records the compiler's.
+
+/*
+// ORIGINAL: 0x00428620 ??0CouncWin@@QAE@XZ 0x00428620-0x00428706;0x00652CC0-0x00652D34 BYTE_EXACT
+// size      231 bytes
+// prototype void (__thiscall ??0CouncWin@@QAE@XZ)(CouncWin* this)
+// callers   0   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+Return Value: n/a
+Status: Complete
+*/
+// THE WHOLE BODY IS THE COMPILER'S. Every line the archive transcription
+// needed by hand - `new (self + 0xa48) Spot()`, the six Fonts, the
+// `??_M` array walk over buttons_[6], the three vftable stores at 0, 0x444
+// and 0xA14 - is what VC6 emits for an empty constructor over the members
+// councwin.h declares: bases and members in declaration order, the interface
+// base's all-pure table (0x66A6E4) first and CouncWin's own (0x66AA94) last.
+CouncWin::CouncWin() {
 }

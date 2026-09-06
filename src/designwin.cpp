@@ -47,6 +47,7 @@ void DesignWin::UNK1() {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x0043D330 ?on_iface_left_down@DesignWin@@QAEXHH@Z 0x0043D330-0x0043D333 BYTE_EXACT
+// symbol    ?on_iface_left_down@DesignWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_left_down@DesignWin@@QAEXHH@Z)(DesignWin* this, int, int)
 // callers   0   call targets   0
@@ -63,6 +64,7 @@ void DesignWin::on_iface_left_down(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x0043D340 ?on_iface_right_down@DesignWin@@QAEXHH@Z 0x0043D340-0x0043D343 BYTE_EXACT
+// symbol    ?on_iface_right_down@DesignWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_right_down@DesignWin@@QAEXHH@Z)(DesignWin* this, int, int)
 // callers   0   call targets   0
@@ -79,6 +81,7 @@ void DesignWin::on_iface_right_down(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x0043D400 ?on_iface_selected@DesignWin@@QAEXHH@Z 0x0043D400-0x0043D403 BYTE_EXACT
+// symbol    ?on_iface_selected@DesignWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_selected@DesignWin@@QAEXHH@Z)(DesignWin* this, int, int)
 // callers   0   call targets   0
@@ -95,6 +98,7 @@ void DesignWin::on_iface_selected(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x0043D410 ?on_iface_left_double_click@DesignWin@@QAEXHH@Z 0x0043D410-0x0043D413 BYTE_EXACT
+// symbol    ?on_iface_left_double_click@DesignWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_left_double_click@DesignWin@@QAEXHH@Z)(DesignWin* this, int, int)
 // callers   0   call targets   0
@@ -111,6 +115,7 @@ void DesignWin::on_iface_left_double_click(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x0043D420 ?on_iface_right_double_click@DesignWin@@QAEXHH@Z 0x0043D420-0x0043D423 BYTE_EXACT
+// symbol    ?on_iface_right_double_click@DesignWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_right_double_click@DesignWin@@QAEXHH@Z)(DesignWin* this, int, int)
 // callers   0   call targets   0
@@ -127,6 +132,7 @@ void DesignWin::on_iface_right_double_click(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x0043D470 ?on_iface_button_toggled@DesignWin@@QAEXHH@Z 0x0043D470-0x0043D473 BYTE_EXACT
+// symbol    ?on_iface_button_toggled@DesignWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_button_toggled@DesignWin@@QAEXHH@Z)(DesignWin* this, int, int)
 // callers   0   call targets   0
@@ -143,6 +149,7 @@ void DesignWin::on_iface_button_toggled(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x0043D480 ?on_iface_group_clicked@DesignWin@@QAEXHHH@Z 0x0043D480-0x0043D483 BYTE_EXACT
+// symbol    ?on_iface_group_clicked@DesignWin@@UAEXHHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_group_clicked@DesignWin@@QAEXHHH@Z)(DesignWin* this, int, int, int)
 // callers   0   call targets   0
@@ -153,6 +160,128 @@ Return Value: n/a
 Status: Complete
 */
 void DesignWin::on_iface_group_clicked(int, int, int) {
+}
+
+// ---- the interface table's own slots -------------------------------------
+
+// Slot 44 of the front vtable - the catalogue's
+// ?on_button_clicked@DesignWin@@QAEXH@Z, 0x00438460, 4481 bytes (plus the cold
+// tail at 0x00654010), unrecovered. vslot_13 and on_iface_button_pressed both
+// reach it through a live dispatch, so the entry has to be DesignWin's.
+void DesignWin::vslot_44(int button_id) {
+    typedef void(__fastcall *pending)(DesignWin *, void *, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x00438460))(
+        this, nullptr, button_id);
+}
+
+/*
+// ORIGINAL: 0x0043D430 ?on_iface_button_clicked@DesignWin@@QAEXH@Z 0x0043D430-0x0043D44D BYTE_EXACT
+// symbol    ?vslot_13@DesignWin@@UAEXH@Z
+// size      29 bytes
+// prototype void (__thiscall ?on_iface_button_clicked@DesignWin@@QAEXH@Z)(DesignWin* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x0043D443
+Return Value: n/a
+Status: Complete
+*/
+// LEVER: the receiver is the ENTRY (the image's `add ecx,-0xa14` is VC6's own
+//   adjustment to the front) and the dispatch is the front's slot 44, so the
+//   whole body is one unqualified virtual call - `vslot_44(button_id)` is the
+//   image's `call dword ptr [eax + 0xb0]`.
+void DesignWin::vslot_13(int button_id) {
+    vslot_44(button_id);
+}
+
+/*
+// ORIGINAL: 0x0043D450 ?on_iface_button_pressed@DesignWin@@QAEXH@Z 0x0043D450-0x0043D46F BYTE_EXACT
+// symbol    ?on_iface_button_pressed@DesignWin@@UAEHH@Z
+// size      31 bytes
+// prototype int (__thiscall ?on_iface_button_pressed@DesignWin@@QAEXH@Z)(DesignWin* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x0043D463
+Return Value: 0
+Status: Complete
+*/
+// LEVER: the same slot-44 dispatch as vslot_13 with a constant 0 returned
+//   after it - the interface wants an answer, the design window forwards the
+//   click to the front and reports "not pressed".
+int DesignWin::on_iface_button_pressed(int button_id) {
+    vslot_44(button_id);
+    return 0;
+}
+
+// ---- slots still carrying an original body ------------------------------
+
+// PENDING 0x0043D120 ?on_status@DesignWin@@QAEXH@Z 0x0043D120-0x0043D215
+// symbol    ?on_status@DesignWin@@UAEXH@Z
+// size      245 bytes
+// prototype void (__thiscall ?on_status@DesignWin@@QAEXH@Z)(DesignWin* this, int)
+// callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+void DesignWin::on_status(int mode) {
+    typedef void(__fastcall *pending)(DesignWin *, void *, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x0043D120))(
+        this, nullptr, mode);
+}
+
+// PENDING 0x0043D220 ?on_iface_left_click@DesignWin@@QAEXHH@Z 0x0043D220-0x0043D281
+// symbol    ?on_iface_left_click@DesignWin@@UAEXHH@Z
+// size      97 bytes
+// prototype void (__thiscall ?on_iface_left_click@DesignWin@@QAEXHH@Z)(DesignWin* this, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005FAB00 0x005169F0
+void DesignWin::on_iface_left_click(int a1, int a2) {
+    typedef void(__fastcall *pending)(DesignWin *, void *, int, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x0043D220))(
+        this, nullptr, a1, a2);
+}
+
+// PENDING 0x0043D290 ?on_iface_right_click@DesignWin@@QAEXHH@Z 0x0043D290-0x0043D327
+// symbol    ?on_iface_right_click@DesignWin@@UAEXHH@Z
+// size      151 bytes
+// prototype void (__thiscall ?on_iface_right_click@DesignWin@@QAEXHH@Z)(DesignWin* this, int, int)
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+void DesignWin::on_iface_right_click(int a1, int a2) {
+    typedef void(__fastcall *pending)(DesignWin *, void *, int, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x0043D290))(
+        this, nullptr, a1, a2);
+}
+
+// PENDING 0x0043D350 ?on_iface_mouse_move@DesignWin@@QAEXHH@Z 0x0043D350-0x0043D3B9
+// symbol    ?on_iface_mouse_move@DesignWin@@UAEXHH@Z
+// size      105 bytes
+// prototype void (__thiscall ?on_iface_mouse_move@DesignWin@@QAEXHH@Z)(DesignWin* this, int, int)
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+void DesignWin::on_iface_mouse_move(int a1, int a2) {
+    typedef void(__fastcall *pending)(DesignWin *, void *, int, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x0043D350))(
+        this, nullptr, a1, a2);
+}
+
+// PENDING 0x0043D3C0 ?on_iface_mouse_leave@DesignWin@@QAEXHH@Z 0x0043D3C0-0x0043D3F1
+// symbol    ?on_iface_mouse_leave@DesignWin@@UAEXHH@Z
+// size      49 bytes
+// prototype void (__thiscall ?on_iface_mouse_leave@DesignWin@@QAEXHH@Z)(DesignWin* this, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+void DesignWin::on_iface_mouse_leave(int a1, int a2) {
+    typedef void(__fastcall *pending)(DesignWin *, void *, int, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x0043D3C0))(
+        this, nullptr, a1, a2);
 }
 
 
