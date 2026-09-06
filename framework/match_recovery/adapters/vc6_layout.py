@@ -149,8 +149,17 @@ def class_layout(obj: Coff, name: str) -> dict:
         # Pointers, arrays and unresolved type leaves are NOT called ownership.
         class_members = {member: classes[type_index]["name"] for member, type_index in member_types.items()
                          if type_index in classes}
+        type_kinds = {}
+        for member, type_index in member_types.items():
+            index = type_index - 0x1000
+            type_kinds[member] = ("class_value" if type_index in classes else
+                                  "non_class_value" if 0 < type_index < 0x1000 else
+                                  "pointer" if 0 <= index < len(records) and records[index][0] == 0x1002 else
+                                  "array" if 0 <= index < len(records) and records[index][0] == 0x1003 else
+                                  "unknown")
         definitions.append({"class": name, "size": size, "members": members,
-                            "bases": named_bases, "class_value_members": class_members})
+                            "bases": named_bases, "class_value_members": class_members,
+                            "member_type_kinds": type_kinds})
     if not definitions:
         raise ClassNotEmitted("requires one complete compiler class definition; none emitted")
     if len(definitions) != 1:

@@ -13,9 +13,9 @@ from .components import relative_path
 
 
 PREFIX = "// RECOVERY_MEMBER:"
-PATTERN = re.compile(r"// RECOVERY_MEMBER: v1 ([A-Za-z_]\w*(?:::[A-Za-z_]\w*)*) ([A-Za-z_]\w*) (0x[0-9a-fA-F]+) (0x[0-9a-fA-F]+)")
+PATTERN = re.compile(r"// RECOVERY_MEMBER: v(?P<version>[12]) (?P<class_name>[A-Za-z_]\w*(?:::[A-Za-z_]\w*)*) (?P<target>[A-Za-z_]\w*) (?:(?P<class_type>[A-Za-z_]\w*(?:::[A-Za-z_]\w*)*) )?(?P<offset>0x[0-9a-fA-F]+) (?P<evidence>0x[0-9a-fA-F]+)")
 BASE_PREFIX = "// RECOVERY_BASE:"
-BASE_PATTERN = re.compile(r"// RECOVERY_BASE: v1 ([A-Za-z_]\w*(?:::[A-Za-z_]\w*)*) ([A-Za-z_]\w*(?:::[A-Za-z_]\w*)*) (0x[0-9a-fA-F]+) (0x[0-9a-fA-F]+)")
+BASE_PATTERN = re.compile(r"// RECOVERY_BASE: v1 (?P<class_name>[A-Za-z_]\w*(?:::[A-Za-z_]\w*)*) (?P<target>[A-Za-z_]\w*(?:::[A-Za-z_]\w*)*) (?P<offset>0x[0-9a-fA-F]+) (?P<evidence>0x[0-9a-fA-F]+)")
 
 
 @dataclass(frozen=True)
@@ -26,6 +26,7 @@ class MemberExpectation:
     evidence: Origin
     path: str
     line: int
+    class_type: str | None = None
 
 
 @dataclass(frozen=True)
@@ -49,10 +50,15 @@ def _parse(text, path, pin, prefix, pattern, factory, label):
         if not source_line.lstrip().startswith(prefix):
             continue
         match = pattern.fullmatch(source_line.strip())
-        if not match or max(int(match[3], 16), int(match[4], 16)) > 0xFFFFFFFF:
+        if not match or max(int(match["offset"], 16), int(match["evidence"], 16)) > 0xFFFFFFFF:
             raise ValueError(f"invalid original {label} expectation at {path}:{line}")
-        rows.append(factory(match[1], match[2], int(match[3], 16),
-                                       Origin(pin, "pe:va", int(match[4], 16)), path, line))
+        extra = {}
+        if label == "member":
+            if (match["version"] == "2") != (match["class_type"] is not None):
+                raise ValueError(f"invalid original member expectation version/type at {path}:{line}")
+            extra["class_type"] = match["class_type"]
+        rows.append(factory(match["class_name"], match["target"], int(match["offset"], 16),
+                            Origin(pin, "pe:va", int(match["evidence"], 16)), path, line, **extra))
     return tuple(rows)
 
 

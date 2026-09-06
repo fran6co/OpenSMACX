@@ -171,7 +171,8 @@ def structural(project):
     return [row for row in report(project)["obligations"] if row["dimension"] == "structure"]
 
 
-@pytest.mark.parametrize("annotation", [MEMBER, "// RECOVERY_BASE: v1 Widget Base 0x4 0x00401000\n"])
+@pytest.mark.parametrize("annotation", [MEMBER, "// RECOVERY_BASE: v1 Widget Base 0x4 0x00401000\n",
+                                        "// RECOVERY_MEMBER: v2 Widget slot_ Base 0x4 0x00401000\n"])
 def test_layout_review_obligation_survives_rehome_and_deletion(project, annotation):
     root, task = project
     path = root / "src/widget.h"
@@ -243,3 +244,17 @@ def test_structural_review_requirements_enter_driver_protected_inventory(project
     (root / "src/widget.h").unlink()
     extend_inventory(protected, report(project), frozenset({ONE.entity_id}))
     assert {item.dimension.value for item in protected.values()} == {"bytes", "structure"}
+
+
+def test_strengthening_offset_with_type_preserves_old_interpretation_for_review(project):
+    root, task = project
+    path = root / "src/widget.h"
+    path.write_text(MEMBER)
+    commit(root, "offset interpretation")
+    first = structural(project)[0]["obligation_id"]
+    path.write_text("// RECOVERY_MEMBER: v2 Widget slot_ Base 0x4 0x00401000\n")
+    after = report(project)
+    assert structural(project)[0]["obligation_id"] == first
+    assert len(after["interpretations"]) == 2
+    assert any(item["current"] and item["value"]["class_type"] == "Base" for item in after["interpretations"])
+    assert any(not item["current"] and "class_type" not in item["value"] for item in after["interpretations"])

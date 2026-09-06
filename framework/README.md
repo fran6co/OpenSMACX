@@ -405,6 +405,16 @@ Direct-member expectations are load-bearing source comments beside declarations:
 int redraw_phase_;
 ```
 
+For an embedded class object, `RECOVERY_MEMBER: v2` adds its expected class-value
+type before the offset: `// RECOVERY_MEMBER: v2 InfoWin timer_ Time 0x30 0x00459500`.
+Both offset and class-value type must agree. A pointer, scalar, array or different
+class cannot substitute just because it occupies the same offset; unsupported
+type records remain unknown. This is not full qualifier/array/lifetime analysis.
+The InfoWin pilot now declares `Time`, `Font` and `PushButton` expectations using
+its original constructor calls as evidence. Strengthening or changing a type
+preserves the previous interpretation for independent review; no byte claim is
+banked by these annotations.
+
 Nonvirtual base interpretations use `// RECOVERY_BASE: v1 Derived Base 0x0 0x00401000`
 beside the class declaration: derived class, base class, original subobject offset,
 and original evidence address. This does not infer inheritance from an offset alone.

@@ -5,7 +5,7 @@ import pytest
 from match_recovery.adapters.opensmacx_layout import verify_layout
 from match_recovery.adapters.vc6_layout import ClassNotEmitted, Cursor, class_layout, direct_members
 from match_recovery.cli import main
-from match_recovery.layout_source import parse_bases, read_bases, read_members
+from match_recovery.layout_source import parse_bases, parse_members, read_bases, read_members
 from match_recovery.pe_coff import Coff
 from match_recovery.tasks import TaskStore
 from test_obligations import project
@@ -35,7 +35,8 @@ def test_strict_standalone_class_layout():
     obj = Coff(coff())
     assert obj.sections[0].name == ".debug$T"
     assert class_layout(obj, "Widget") == {"class": "Widget", "size": 16, "members": {"slot_": 4},
-                                          "bases": [], "class_value_members": {}}
+                                          "bases": [], "class_value_members": {},
+                                          "member_type_kinds": {"slot_": "non_class_value"}}
 
 
 def hierarchy_types(*, virtual=False, base_index=0x1002, base_offset=0):
@@ -57,6 +58,52 @@ def test_nonvirtual_base_and_class_value_are_not_confused_with_pointer_members()
     assert layout["bases"] == [{"type_index": 0x1002, "virtual": False, "offset": 0, "class": "Base"}]
     assert layout["class_value_members"] == {"owned": "Base"}
     assert layout["members"] == {"owned": 4, "ptr": 8}
+    assert layout["member_type_kinds"] == {"owned": "class_value", "ptr": "pointer"}
+
+
+@pytest.mark.parametrize("member, expected_type, offset, expected", [
+    ("owned", "Base", 4, "pass"), ("owned", "Other", 4, "fail"),
+    ("owned", "Base", 8, "fail"), ("ptr", "Base", 8, "fail"),
+])
+def test_typed_member_requires_both_offset_and_embedded_class(project, member, expected_type, offset, expected):
+    root, task = prepare(project)
+    (root / "src/widget.h").write_text(f"// RECOVERY_MEMBER: v2 Widget {member} {expected_type} 0x{offset:X} 0x00401000\n")
+    report = verify_layout(root, task.task_id, compiler=lambda *_: coff(hierarchy_types()), command_for=lambda _: ("compiler",))
+    assert report["result"] == expected
+    assert all(row["result"] == expected for row in report["members"])
+    assert report["structure_verification"] == "unknown"
+
+
+def test_scalar_at_correct_offset_cannot_replace_embedded_object(project):
+    root, task = prepare(project)
+    (root / "src/widget.h").write_text("// RECOVERY_MEMBER: v2 Widget slot_ Base 0x4 0x00401000\n")
+    report = verify_layout(root, task.task_id, compiler=lambda *_: coff(), command_for=lambda _: ("compiler",))
+    assert report["result"] == "fail"
+
+
+def test_array_at_correct_offset_cannot_replace_single_embedded_object(project):
+    root, task = prepare(project)
+    (root / "src/widget.h").write_text("// RECOVERY_MEMBER: v2 Widget ptr Base 0x8 0x00401000\n")
+    pointer_record = record(0x1002, struct.pack("<II", 0x1002, 0))
+    array_record = record(0x1003, struct.pack("<IIH", 0x1002, 0x74, 4) + b"\0")
+    blob = hierarchy_types().replace(pointer_record, array_record)
+    report = verify_layout(root, task.task_id, compiler=lambda *_: coff(blob), command_for=lambda _: ("compiler",))
+    assert report["result"] == "fail"
+    assert all(row["member_type_kind"] == "array" for row in report["members"])
+
+
+def test_unsupported_member_type_remains_unknown(project):
+    root, task = prepare(project)
+    (root / "src/widget.h").write_text("// RECOVERY_MEMBER: v2 Widget slot_ Base 0x4 0x00401000\n")
+    blob = debug_types().replace(struct.pack("<I", 0x74), struct.pack("<I", 0x9999))
+    report = verify_layout(root, task.task_id, compiler=lambda *_: coff(blob), command_for=lambda _: ("compiler",))
+    assert report["result"] == "unknown"
+
+
+@pytest.mark.parametrize("text", ["v1 Widget slot_ Base 0x4 0x00401000", "v2 Widget slot_ 0x4 0x00401000"])
+def test_member_annotation_version_must_agree_with_type_field(text):
+    with pytest.raises(ValueError, match="version/type"):
+        parse_members("// RECOVERY_MEMBER: " + text, "src/widget.h", "a" * 64)
 
 
 @pytest.mark.parametrize("blob, expected", [(hierarchy_types(), "pass"),

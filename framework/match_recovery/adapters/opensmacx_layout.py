@@ -84,9 +84,18 @@ def verify_layout(root: Path, task_name: str, *, compiler=compile_object, comman
                 layout = layouts.get(item.class_name)
                 actual = layout["members"].get(item.member) if layout else None
                 result = Result.UNKNOWN if actual is None else Result.PASS if actual == item.offset else Result.FAIL
+                actual_class = layout["class_value_members"].get(item.member) if layout else None
+                type_kind = layout["member_type_kinds"].get(item.member, "unknown") if layout else "unknown"
+                if item.class_type is not None:
+                    type_result = (Result.UNKNOWN if type_kind == "unknown" else
+                                   Result.PASS if actual_class == item.class_type else Result.FAIL)
+                    result = (Result.UNKNOWN if Result.UNKNOWN in (result, type_result) else
+                              Result.FAIL if Result.FAIL in (result, type_result) else Result.PASS)
                 rows.append({"expectation": asdict(item), "unit": unit, "flags": list(flags),
+                             "actual_class_type": actual_class, "member_type_kind": type_kind,
                              "actual_offset": actual, "result": result,
-                             "reason": errors.get(item.class_name, "member absent" if actual is None else "direct member offset compared")})
+                             "reason": errors.get(item.class_name, "member absent" if actual is None else
+                                                  "member offset and class-value type compared" if item.class_type else "direct member offset compared")})
             for item in expected_bases:
                 layout = layouts.get(item.class_name)
                 matches = [base for base in layout["bases"] if base["class"] == item.base] if layout else []

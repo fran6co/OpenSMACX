@@ -45,6 +45,7 @@ def task_obligations(root: Path, name: str) -> dict:
                 {**evidence, "line": item.line,
                  "interpretation": {"kind": "direct_member_offset", "class_name": item.class_name,
                                     "member": item.member, "offset": item.offset,
+                                    **({"class_type": item.class_type} if item.class_type is not None else {}),
                                     "original_evidence": asdict(item.evidence)}})
         for item in parse_bases(text, path, pin):
             add(item.evidence.entity_id, Dimension.STRUCTURE,

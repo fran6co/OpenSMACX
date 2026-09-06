@@ -108,9 +108,9 @@ class InfoWin {
   uint32_t field_24_;  // 0x24
   uint32_t field_28_;  // 0x28
   uint32_t field_2C_;  // 0x2C
-  // RECOVERY_MEMBER: v1 InfoWin timer_ 0x30 0x00459500
+  // RECOVERY_MEMBER: v2 InfoWin timer_ Time 0x30 0x00459500
   Time timer_;
-  // RECOVERY_MEMBER: v1 InfoWin font_ 0x58 0x00459500
+  // RECOVERY_MEMBER: v2 InfoWin font_ Font 0x58 0x00459500
   Font font_;
   uint32_t field_80_;  // 0x80
   uint32_t field_84_;  // 0x84
@@ -141,7 +141,7 @@ class InfoWin {
   uint32_t field_9C4_;  // 0x9C4
   uint32_t field_9C8_;  // 0x9C8
   uint32_t field_9CC_;  // 0x9CC
-  // RECOVERY_MEMBER: v1 InfoWin button_ 0x9D0 0x00459500
+  // RECOVERY_MEMBER: v2 InfoWin button_ PushButton 0x9D0 0x00459500
   PushButton button_;
 };
 
