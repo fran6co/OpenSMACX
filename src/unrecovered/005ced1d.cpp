@@ -1195,7 +1195,7 @@ static int *const g_009c3020 = (int *)0x009C3020;
 static int *const g_009c3024 = (int *)0x009C3024;
 static int *const g_009c3028 = (int *)0x009C3028;
 
-extern "C" void __fastcall sub_5ced1d(int *esiPtr) {
+void __fastcall sub_5ced1d(int *esiPtr) {
   int *piVar3 = reinterpret_cast<int *>(*g_009c3004);
 
   int iVar10 = esiPtr[5];

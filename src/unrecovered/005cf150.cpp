@@ -8,7 +8,7 @@
 // calls     (none)
 // To start: tools/decomp_status.py --work 0x005CF150
 
-extern "C" int __cdecl sub_5cf150() {
+int __cdecl sub_5cf150() {
     unsigned char *pbVar6;
     int iVar7;
     int iVar8;

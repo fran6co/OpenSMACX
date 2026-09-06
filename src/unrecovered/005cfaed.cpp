@@ -1371,7 +1371,7 @@ static int *const g_009c57fc = (int *)0x009C57FC;
 static int *const g_009c5920 = (int *)0x009C5920;
 static int *const g_009c5924 = (int *)0x009C5924;
 static int *const g_009c5928 = (int *)0x009C5928;
-extern "C" int __cdecl sub_5cfaed(unsigned char *param1, int param2, int param3) {
+int __cdecl sub_5cfaed(unsigned char *param1, int param2, int param3) {
     unsigned char firstByte;
     int edi;
 

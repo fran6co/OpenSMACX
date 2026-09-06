@@ -1371,7 +1371,7 @@ static int *const g_009c57fc = (int *)0x009C57FC;
 static int *const g_009c5920 = (int *)0x009C5920;
 static int *const g_009c5924 = (int *)0x009C5924;
 static int *const g_009c5928 = (int *)0x009C5928;
-extern "C" void __cdecl sub_5d02cc(unsigned char *a1, void *a2, int a3) {
+void __cdecl sub_5d02cc(unsigned char *a1, void *a2, int a3) {
     *g_009c5928 = static_cast<unsigned int>(*a1);
     *reinterpret_cast<unsigned char **>(g_009c5920) = a1 + 1;
     *g_009c5924 = 8;

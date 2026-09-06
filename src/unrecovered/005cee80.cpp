@@ -14,7 +14,7 @@
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 
-extern "C" void __cdecl sub_5cee80(int *src) {
+void __cdecl sub_5cee80(int *src) {
     int *dst = *reinterpret_cast<int **>(g_009c3004);
     int iVar9 = src[3] + src[5];
     int iVar8 = src[7] + src[1];

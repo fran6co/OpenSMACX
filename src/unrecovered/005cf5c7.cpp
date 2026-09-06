@@ -1187,7 +1187,7 @@ const int RadiusRange[] = {1, 9, 25, 49, 81, 121, 169, 225, 289};
 static int *const g_009c592c = (int *)0x009C592C;
 static int *const g_009c5b2c = (int *)0x009C5B2C;
 static int *const g_009c5d2c = (int *)0x009C5D2C;
-extern "C" void __cdecl OutputPixelRow(int *pEdi, unsigned int *pEsi, unsigned int *pEbx) {
+void __cdecl OutputPixelRow(int *pEdi, unsigned int *pEsi, unsigned int *pEbx) {
     int t1, t2, t3;
 
     t1 = g_009c592c[(pEsi[1] >> 0x11) & 0x7f];

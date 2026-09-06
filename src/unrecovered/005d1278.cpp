@@ -1177,7 +1177,7 @@ const int RadiusRange[] = {1, 9, 25, 49, 81, 121, 169, 225, 289};
 extern "C" int __cdecl sub_5d0aab();
 extern "C" int __cdecl sub_5d2536();
 
-extern "C" int __cdecl sub_5d1278(int a1, int a2, int *a3) {
+int __cdecl sub_5d1278(int a1, int a2, int *a3) {
     int saved204 = a3[0x81];   // [esi+0x204]
     sub_5d0aab();               // reads/writes via [esi+0x200]/[esi+0x204]
     a3[0x81] = saved204;

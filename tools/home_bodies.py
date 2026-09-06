@@ -119,7 +119,12 @@ def free_definition_span(text: str, ident: str):
                              text):
         start = text.rfind("\n", 0, match.start()) + 1
         prefix = text[start:match.start()]
-        if not re.fullmatch(r"[\w:<>,*&\s]*", prefix):
+        # `extern "C"` travels with the definition: 39 artifacts on the
+        # general board were unhomeable until the prefix was stripped by
+        # hand, because the quotes fail an identifier-only pattern. The
+        # linkage specification is part of the signature, so it has to be
+        # accepted here and carried with the definition.
+        if not re.fullmatch(r'(?:extern\s+"C"\s+)?[\w:<>,*&\s]*', prefix):
             continue
         # THE HEAD IS THE COMMENT RUN ONLY, exactly like split_artifact's:
         # the scaffold preamble between marker and definition is CODE

@@ -1206,7 +1206,7 @@ static int *const g_009c54a0 = (int *)0x009C54A0;
 static int *const g_009c54c0 = (int *)0x009C54C0;
 static int *const g_009c54e0 = (int *)0x009C54E0;
 
-extern "C" int __cdecl sub_5d1a30(int a1, int a2, int a3) {
+int __cdecl sub_5d1a30(int a1, int a2, int a3) {
   int *obj = reinterpret_cast<int *>(a3);
   int saved204 = obj[0x204 / 4];
   sub_5d0aab();

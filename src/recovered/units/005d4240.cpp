@@ -68,18 +68,33 @@ typedef unsigned char uint8;
 // eax-vs-al clear) are unreachable without __asm, which is forbidden.
 // Closest reachable candidate; ruled out reaching BYTE_EXACT for the above
 // reason.
+
+// TRIED: homing to general.cpp 2026-09-06 then failed to LINK, not compile:
+// the linker could not resolve __enable. dos.h declares _disable/_enable as
+// ordinary runtime calls, this CRT ships _disable but not _enable, and VC6
+// 12.00.8168 has no <intrin.h> to declare them as intrinsics - so the cli
+// half links and the sti half does not. The remaining spellings are __asm
+// (barred) or a new pragma (barred). Stays in the artifact; this note is the
+// finding, not unfinished work.
+// TRIED: homing to general.cpp 2026-09-06 then failed to LINK, not compile:
+// . dos.h declares _disable/_enable as
+// ordinary runtime calls, the CRT ships _disable but not _enable, and VC6
+// 12.00.8168 has no <intrin.h> to declare them as intrinsics, so the cli
+// half links and the sti half does not. The remaining spellings are __asm
+// (barred) or a new pragma (barred). Stays in the artifact; the TRIED note
+// is the finding.
 #include <conio.h>
 #include <dos.h>
 
-extern "C" void __cdecl sub_5d4240(unsigned char *a1) {
+void __cdecl sub_5d4240(unsigned char *palette_rgb) {
     _disable();
     _outp(0x3c8, 0);
     int n = 0x100;
     do {
-        _outp(0x3c9, a1[0] >> 2);
-        _outp(0x3c9, a1[1] >> 2);
-        _outp(0x3c9, a1[2] >> 2);
-        a1 += 4;
+        _outp(0x3c9, palette_rgb[0] >> 2);
+        _outp(0x3c9, palette_rgb[1] >> 2);
+        _outp(0x3c9, palette_rgb[2] >> 2);
+        palette_rgb += 4;
         n--;
     } while (n != 0);
     _enable();

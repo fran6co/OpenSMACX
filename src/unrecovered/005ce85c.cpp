@@ -8,7 +8,7 @@
 // calls     (none)
 // To start: tools/decomp_status.py --work 0x005CE85C
 
-extern "C" int __cdecl sub_5ce85c() {
+int __cdecl sub_5ce85c() {
     unsigned short *cursor = *reinterpret_cast<unsigned short **>(g_009c464c);
     unsigned int acc = static_cast<unsigned int>(*g_009c4650) << 8;
     int count = *g_009c4654 - 8;

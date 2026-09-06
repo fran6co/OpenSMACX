@@ -675,7 +675,10 @@ SCAFFOLD_CEILINGS = {
     # flat_button_[3]/[4]/[6]/[7] at 0xB4C strides, the Buffer's negative
     # biHeight, and the RECT at front+0xD90) and on_iface_left_down
     # BYTE_EXACT 19/19; draw_garrison homed for coverage (12/376).
-    "artifact files (recovered/)": 983,
+    # 983 -> 982 (2026-09-06, W5m general board): one claimed body homed
+    # with 16 unclaimed beside it (the blend/colour table family and the
+    # IMA/DirectDraw IAT pair).
+    "artifact files (recovered/)": 982,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -785,7 +788,11 @@ SCAFFOLD_CEILINGS = {
     # 1090 -> 1089 (2026-09-06, W5k texture class pass): Texture::extract
     # homed MISMATCH 11/175 (was NO_COMPILE) with TexHeap::get_tex_mem
     # declared and homed beside it.
-    "unrecovered files": 1089,
+    # 1089 -> 1073 (2026-09-06, W5m general board): 16 unclaimed bodies
+    # homed into src/general.cpp, all bindings named from evidence (the
+    # prior revert note on 0x5CE6E3's five "evidence-free" globals was
+    # wrong - the halves-of-a-dword arithmetic names them).
+    "unrecovered files": 1073,
     # 2717 -> 2748 (2026-09-04, P2 net batch): NetFifo promoted with
     # close/add/get/get, NetFifoNode, head_/tail_/count_ - the deliberate
     # raise this ceiling exists for (class modelling grows it; the class

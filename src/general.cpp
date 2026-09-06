@@ -18,6 +18,11 @@
 #include "stdafx.h"
 #include <math.h> // sin(double), lowered to the CRT's _sin
 #include <ddraw.h>  // IDirectDraw::Release in the DirectDraw teardown stage
+// _disable / _enable for sub_5d4240, the VGA DAC loader - real VC6 intrinsics
+// reproducing the image's cli/sti, not inline assembly.
+#include <dos.h>
+// _outp for the same body's DAC port writes.
+#include <conio.h>
 #include "sprite.h"
 #include "popup.h"
 #include "buffer.h"
@@ -38,6 +43,14 @@ extern Sprite g_BLANK_SPRITE;
 // free bodies homed here out of the archive reach these
 #include "map.h"     // zoc_any
 #include "veh.h"     // can_arty
+// The AI turn loop stores into NetDaemonNet + 0x1B74 (netdaemon.h:67's
+// queue-1 dword_3). Neither netdaemon.h nor net_class.h can be included here -
+// both declare JackalVoiceRx, which this TU already declares for
+// ??1JackalVoiceRx@@QAE@XZ, and a second definition is C2011 - so the one
+// object this body needs is forward-declared instead. Nothing dereferences a
+// member of it, so the incomplete type is enough.
+class NetDaemon;                 // netdaemon.h
+extern NetDaemon NetDaemonNet;   // 0x0093CD90
 #include "xpops.h"   // X_pop
 #include "filemap.h" // Filemap::open_read
 // jackal_init_real brings all of these up, in this order.
@@ -3709,3 +3722,1183 @@ typedef unsigned char uint8;
 void GraphicWin::j_close() {
     close();
 }
+
+// IMA ADPCM nibble -> step-index adjustment, pre-scaled by 64 so the index
+// itself travels as a byte offset: the eight dwords are {-1,-1,-1,-1,2,4,6,8}
+// times 64, and the 0x1600 clamp below is 88 * 64, the IMA step index's own
+// maximum. Image .data at 0x00694DF4.
+static int *const AdpcmIndexAdjust = (int *)0x00694DF4;
+// THE REST OF THE IMA ADPCM DECODER'S STATE, and the delta table. All four
+// state words are zero in the shipped .data (they are decoder state, not
+// data), so the evidence for the names is the arithmetic:
+//   * 0x00694E14 and 0x00694E18 are filled from the two HALVES of one dword
+//     the caller hands in - `(short)*param_6` and `(short)(*param_6 >> 16)` -
+//     are clamped to [-32768, 32767] and written back as the two halves of
+//     the caller's dword. That is a stereo predictor pair.
+//   * 0x00694E1C and 0x00694E20 do the same with the second dword, are
+//     adjusted by AdpcmIndexAdjust and clamped to [0, 0x1600] = [0, 88 * 64],
+//     the IMA step index. That is the matching step-index pair.
+//   * 0x006937B4 is indexed `(nibble * 4) + step_index`, i.e. [code][index],
+//     and its first row reads 0,1,3,4,7,8,10,11 - exactly step 7 split by the
+//     three magnitude bits of an IMA nibble. 88 rows of 8 dwords.
+static int *const AdpcmPredictorLeft = (int *)0x00694E14;
+static int *const AdpcmPredictorRight = (int *)0x00694E18;
+static int *const AdpcmStepIndexLeft = (int *)0x00694E1C;
+static int *const AdpcmStepIndexRight = (int *)0x00694E20;
+static int *const AdpcmDeltaTable = (int *)0x006937B4;
+
+
+// ORIGINAL: 0x005CE640 sub_5ce640 0x005CE640-0x005CE6E3 FILE
+// symbol    ?sub_5ce640@@YAXHHHHPAH0@Z
+// size      163 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// Purpose: Decode `sample_total - first_sample` samples of IMA ADPCM audio
+//          into 16-bit output. `codes` is the packed nibble stream, `samples`
+//          the destination; `predictor` and `step_index` are the caller's two
+//          words of decoder state, both read AND written, so the decode
+//          resumes where the previous block left off. Evidence for the
+//          identification: `predicted` is clamped to [-32768, 32767], the
+//          delta comes out of the 8x88 table at 0x006937B4 whose first row
+//          (0,1,3,4,7,8,10,11) is exactly step 7 scaled by the three
+//          magnitude bits, and the adjustment table is the IMA one.
+// TRIED: homed into general.cpp (its real TU) 2026-09-03 and reverted because
+// its one binding was then thought evidence-free. It is not: image_data.py at
+// 0x00694DF4 reads {-64,-64,-64,-64,128,256,384,512}, which is the IMA index
+// adjustment {-1,-1,-1,-1,2,4,6,8} scaled by 64, and 0x1600 is 88 * 64. Named
+// AdpcmIndexAdjust, 2026-09-06.
+// TRIED: byte-exactness is out of reach here - the image's fourth instruction
+// is `pushal` (0x60), which VC6 never emits for any C++ body; this is a
+// handwritten_asm finding, so the ceiling is semantic equivalence.
+void __cdecl sub_5ce640(int first_sample, int codes, int samples,
+                        int sample_total, int *predictor, int *step_index) {
+    int count;
+    unsigned char *src;
+    short *dst;
+    int step;
+    int predicted;
+    unsigned char nibble;
+
+    count = 0;
+    count += first_sample;
+    sample_total += first_sample;
+    step = *step_index;
+    predicted = (short)*predictor;
+    src = (unsigned char *)codes;
+    dst = (short *)samples;
+
+    do {
+        nibble = *src;
+        if ((count & 1) == 0) {
+            nibble >>= 4;
+        } else {
+            nibble &= 0xF;
+            src++;
+        }
+        predicted += *(int *)(step + nibble * 4 + 0x6937b4);
+        if (predicted > 0x7FFF) {
+            predicted = 0x7FFF;
+        } else if (predicted < (int)0xFFFF8000) {
+            predicted = (int)0xFFFF8000;
+        }
+        *dst = (short)predicted;
+        dst++;
+        count++;
+        nibble &= 7;
+        step += AdpcmIndexAdjust[nibble];
+        if (step > 0x1600) {
+            step = 0x1600;
+        } else if (step < 0) {
+            step = 0;
+        }
+    } while (count < sample_total);
+
+    *predictor = predicted;
+    *step_index = step;
+}
+
+// THE MOVIE CODEC'S RUNTIME-FILLED LOOKUP TABLES. All four are zero in the
+// shipped .data and filled before use, so image_data.py has nothing to read
+// at any of them; the names come from how the bodies index them, which is the
+// evidence the anonymous-global rule asks for.
+//
+// Three 512-entry word tables indexed by three DISJOINT 9-bit fields of one
+// accumulated sum - sub_5d2761 forms `(sum >> 23)`, `(sum >> 11) & 0x1ff` and
+// `sum & 0x1ff` and adds one entry from each - plus a 256-entry byte remap
+// that sub_5ceb12 packs two at a time into each output word.
+static unsigned int *const MovieBlendTableHi = (unsigned int *)0x009C872C;
+static unsigned int *const MovieBlendTableMid = (unsigned int *)0x009C8BF4;
+static unsigned int *const MovieBlendTableLow = (unsigned int *)0x009C900C;
+static unsigned char *const MovieByteRemapLut = (unsigned char *)0x009C5F2C;
+
+// A second tier of the same family, named from the lane each one indexes.
+// sub_5d2834 / sub_5d2901 build a sum and pull one entry per BYTE lane out of
+// it - `[sum >> 0x18]`, `[sum & 0xff]`, `[(sum >> 8) & 0xff]` - so each of
+// these is a 256-entry-per-byte-value contribution table for one lane.
+static unsigned int *const MovieColourTableByte3 = (unsigned int *)0x009C6F2C;
+static unsigned int *const MovieColourTableByte1 = (unsigned int *)0x009C772C;
+static unsigned int *const MovieColourTableByte0 = (unsigned int *)0x009C7F2C;
+// sub_5d1b88 / sub_5d2037 index these three by three DIFFERENT coefficient
+// streams rather than by byte lanes: `data[i]`, `tables[i]` and
+// `tables[0x40 + i]` respectively.
+static unsigned int *const MovieBlendTableData = (unsigned int *)0x009C732C;
+static unsigned int *const MovieBlendTableQuant = (unsigned int *)0x009C7B2C;
+static unsigned int *const MovieBlendTableQuant2 = (unsigned int *)0x009C832C;
+
+// DIRECTDRAW / USER32 IMPORT THUNKS (tools/iat_names.py) and the two
+// DirectDraw surfaces the movie window's redraw path works on.
+//
+// The three USER32 entry points are IAT slots, not function calls: the image
+// reads the slot and calls through it, so the binding has to keep the
+// indirection rather than name a function.
+static int *const EqualRectProc = (int *)0x006692BC;
+static int *const IntersectRectProc = (int *)0x00669338;
+// 0x009BC4A4 sits between DirectDrawPalette (0x009BC4A0) and the pointer the
+// teardown releases (0x009BC4A8). sub_62d1e0 / sub_62d2c0 blit INTO it from
+// the clip rectangle and then hand it to the back buffer's slot-0x70 call
+// (Flip), which is the primary surface's role in a flip chain.
+static int *const DirectDrawPrimarySurface = (int *)0x009BC4A4;
+
+// ORIGINAL: 0x005D0D82 sub_5d0d82 0x005D0D82-0x005D1278 FILE
+// symbol    ?sub_5d0d82@@YAHXZ
+// size      1270 bytes
+// prototype
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D29E1 0x005D2C0A
+// TRIED: judged on its own disassembly (a prior batch-10 note on this file was removed as recorded-on-a-placeholder; this supersedes it with fresh evidence). This is genuinely register-passing on BOTH sides - entry and its two callees - not just parameter count: - entry: `push ecx; push edx; sub esp,0x300` then the body reads `esi` (`mov edx,[esi]` at 0x5D0D8C, later `unaff_ESI[idx]`), `edi` (`unaff_EDI>>5` / `unaff_EDI&0x1f` as a bitstream bit-cursor from the first instruction that touches it, 0x5D0DB4), `ebp` (`[ebp+(edi>>5)*4]` at 0x5D0DBB, a bitstream data base) and `eax` (`imul edx` at 0x5D0D91 multiplies THE INCOMING eax, never loaded from anywhere) - Ghidra's own decompile names all four unaff_EBP/unaff_ESI/unaff_EDI/in_EAX, i.e. its dataflow analysis independently found no definition for them inside this function either. ecx/edx ARE ordinary __fastcall params (pushed to [esp] then reloaded near the tail at 0x5D10D8/0x5D1196), so the two-argument part alone would be expressible - it is the extra four registers that are not. - callees: the eight `call 0x5d29e1` sites (0x5D1057..0x5D10D3) and eight `call 0x5d2c0a` sites (0x5D10E6..0x5D117E) each set up ONLY `esi`/`edi` immediately before the call (`lea esi,[esp+N]; lea edi,[esp+M]; call`) - no ecx/edx/stack push at all. No MSVC convention (cdecl/stdcall/fastcall/thiscall) passes arguments in esi/edi, so even a correct internal transcription of sub_5d0d82 could not legally CALL its own two helpers from standard C++. This is two independent, compounding blockers (the entry contract and the call sites inside it), and both require `__asm`/`_emit` to express, which the rules bar outright regardless of effort spent. Left the compiling placeholder in place (MISMATCH #0, same divergence point any body would hit given the prologue itself can't match) rather than writing an untestable ~150-line transcription whose only achievable tier is identical to what is already there.
+//
+// TABLES this body reads, recorded here because the placeholder does not
+// reference them and so carries no binding (naming them would bind names to
+// nothing): 0x009C9698 a Huffman escape length/value table indexed by a
+// 15-bit code >> 0xd; 0x009C95AC a small index-remap table indexed by a
+// decoded code length, feeding the weight array; plus six short lookup
+// tables selected by leading-zero-count-style range checks
+// (0x800/0x400/0x200/0x100/0x80/0x40/0x20). The whole function is a
+// Huffman/range-coded bitstream decoder over a 64-entry int weight table -
+// the DCT-coefficient stage of the movie codec, to judge by the table shapes
+// and the 64-int output.
+int __cdecl sub_5d0d82() {
+    return 0;
+}
+
+// ORIGINAL: 0x005D3DF0 sub_5d3df0 0x005D3DF0-0x005D3F48 FILE
+// symbol    ?sub_5d3df0@@YIHPAHH@Z
+// size      344 bytes
+// prototype
+// callers   ?   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D427C 0x006470A6 0x00644EF2
+// TRIED: __fastcall(this,a2) signature chosen from the ecx=this / edx=a2 register reads at entry; PROPOSAL below. Landed at 0.88 mnemonic similarity - remaining divergence is prologue register-save scheduling, not logic.
+typedef int (__cdecl *sub5d427c_fn)(int, int, int);
+
+int __fastcall sub_5d3df0(int *thisPtr, int frame_base) {
+  int savedIdx = thisPtr[0x187];
+  int *inner = reinterpret_cast<int *>(thisPtr[0]);
+  unsigned int allocSize = static_cast<unsigned int>(inner[0x19] * inner[0x18] + 0xf) & 0xfffffff0u;
+
+  if (thisPtr[0x18e] != 0) {
+    free(reinterpret_cast<void *>(thisPtr[0x18e]));
+    thisPtr[0x18e] = 0;
+  }
+  if (thisPtr[399] != 0) {
+    free(reinterpret_cast<void *>(thisPtr[399]));
+    thisPtr[399] = 0;
+  }
+  if (thisPtr[0x191] != 0) {
+    free(reinterpret_cast<void *>(thisPtr[0x191]));
+    thisPtr[0x191] = 0;
+  }
+  if (thisPtr[400] != 0) {
+    free(reinterpret_cast<void *>(thisPtr[400]));
+    thisPtr[400] = 0;
+  }
+
+  thisPtr[0x18e] = reinterpret_cast<int>(malloc(allocSize));
+  thisPtr[399] = reinterpret_cast<int>(malloc(allocSize));
+  thisPtr[0x191] = reinterpret_cast<int>(malloc(inner[0x18] << 3));
+  thisPtr[400] = reinterpret_cast<int>(malloc(((allocSize + 0xf) >> 4) << 2));
+
+  if (thisPtr[0x18e] != 0 && thisPtr[399] != 0 && thisPtr[0x191] != 0 && thisPtr[400] != 0) {
+    int stride = inner[0x18];
+    int value = -(inner[0x19] * stride);
+    unsigned int idx = 0;
+    if ((stride & 0x7fffffff) != 0) {
+      do {
+        *reinterpret_cast<int *>(thisPtr[0x191] + idx * 4) = value;
+        value += inner[0x19];
+        idx++;
+      } while (idx < static_cast<unsigned int>(inner[0x18] << 1));
+    }
+    reinterpret_cast<sub5d427c_fn>(sub_5d427c)(frame_base + (savedIdx + 4) * 3, thisPtr[0x18e], 1);
+    return 1;
+  }
+  return 0;
+}
+
+// ORIGINAL: 0x005CEB12 sub_5ceb12 0x005CEB12-0x005CED1D FILE
+// symbol    ?sub_5ceb12@@YAHPBE0PAI@Z
+// TRIED: no C-callable convention passes 3 pointers in esi/edi/ebp with zero prologue and no stack args - the original has no `push ebp`/frame at all and even leaves ecx/edx's high 24 bits as whatever the caller left them (Ghidra's CONCAT31 "uVar1/uVar2" tracking), which only a hand-written leaf/tail-continuation does. Landed as a real 3-pointer function reproducing the LUT-pack arithmetic; first divergence is the (unavoidable) prologue itself.
+// working copy - scaffold materialised by --work
+// size      523 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_5ceb12  at 0x005CEB12  (523 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+int __cdecl sub_5ceb12(const unsigned char *srcA, const unsigned char *srcB, unsigned int *dst) {
+    for (int i = 0; i < 8; ++i) {
+        int aIdx1 = 2 + i * 8;
+        int aIdx2 = aIdx1 + 4;
+        int bIdx1 = 2 + i * 4;
+        int bIdx2 = bIdx1 + 0x100;
+        unsigned int hi = (static_cast<unsigned int>(MovieByteRemapLut[srcA[aIdx1]]) << 8) | MovieByteRemapLut[srcA[aIdx2]];
+        unsigned int lo = (static_cast<unsigned int>(MovieByteRemapLut[srcB[bIdx1]]) << 8) | MovieByteRemapLut[srcB[bIdx2]];
+        dst[i] = (hi << 0x10) | lo;
+    }
+    return 0;
+}
+
+// ORIGINAL: 0x005D2037 sub_5d2037 0x005D2037-0x005D2536 FILE
+// symbol    ?sub_5d2037@@YAXPAH0PAI@Z
+// TRIED: nullary per the contract head - no [esp+N]/[ebp+N] read exists anywhere in the body, but esi/edi/ebp are read from the very first instruction with no prologue and no assignment into them first, so nullary leaves the data unreachable. Proposed a 3-pointer signature (data/tables/out standing in for esi/edi/ebp) so the 8 unrolled DES-style S-box rounds compile and read correctly; this is a PROPOSAL, not decoded evidence - no standard calling convention passes 3 live registers with zero prologue, so BYTE_EXACT is structurally unreachable here short of __asm (refused). MISMATCH #0 is the prologue itself.
+// working copy - scaffold materialised by --work
+// size      1279 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_5d2037  at 0x005D2037  (1279 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+void __cdecl sub_5d2037(int *data, int *tables, unsigned int *out) {
+    for (int i = 0; i < 8; i++) {
+        unsigned int left = MovieBlendTableQuant[tables[i]] + MovieBlendTableData[data[i * 2]] +
+                             MovieBlendTableQuant2[tables[0x40 + i]];
+        unsigned int right = MovieBlendTableData[data[i * 2 + 1]] + MovieBlendTableQuant2[tables[0x40 + i]] +
+                              MovieBlendTableQuant[tables[i]];
+
+        out[i] = ((MovieBlendTableHi[right >> 0x17] | MovieBlendTableLow[right & 0x1ff] |
+                   MovieBlendTableMid[(right & 0xff800) >> 0xb]) &
+                  0xffff0000) |
+                 ((MovieBlendTableMid[(left & 0xff800) >> 0xb] | MovieBlendTableHi[left >> 0x17] |
+                   MovieBlendTableLow[left & 0x1ff]) &
+                  0xffff);
+    }
+}
+
+// ORIGINAL: 0x005D2761 sub_5d2761 0x005D2761-0x005D2834 FILE
+// symbol    ?sub_5d2761@@YAHPAI0H@Z
+// LEVER: the four tbl_ globals are four of EIGHT 0x400-byte tables laid
+//         end to end at 0x009C672C + k*0x400 for k = 0..7, all ZERO in the
+//         file and filled at run time (image_data.py reads 0 at every one).
+//         0x5CC4E0..0x5CC590 is their builder: a 0x100-iteration loop with
+//         variable-count shifts (sar/shl by cl) writing through
+//         `mov [edi+0x9c7f2c]` - a canonical VLC/Huffman code table
+//         builder, not a cipher S-box. sub_5d2761 consumes four of them by
+//         byte-lane, which is a decode-table lookup, so the whole
+//         0x005CE85C..0x005D4502 span is a block-DCT movie decoder and not
+//         part of the DirectDraw half of this TU.
+// TRIED: original prologue saves 6 registers (ebx,ecx,edx,esi,edi,ebp); plain __cdecl(uint*,uint*,int) body only pressures 1-2, so the reservation never reproduces. Explicit per-register temps for each S-box term didn't move it either.
+// working copy - scaffold materialised by --work
+// size      211 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_5d2761  at 0x005D2761  (211 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+int __cdecl sub_5d2761(unsigned int *src, unsigned int *dst, int count) {
+    do {
+        unsigned int w = *src;
+        unsigned int sum1 = MovieColourTableByte1[(w & 0xff00) >> 8] + MovieColourTableByte3[w >> 24] + MovieColourTableByte0[w & 0xff];
+        unsigned int sum2 = MovieColourTableByte3[((unsigned char *)src)[2]] + MovieColourTableByte0[w & 0xff] + MovieColourTableByte1[(w & 0xff00) >> 8];
+        count = count - 1;
+        *dst = ((MovieBlendTableHi[sum2 >> 0x17] + MovieBlendTableLow[sum2 & 0x1ff] + MovieBlendTableMid[(sum2 & 0xff800) >> 0xb]) & 0xffff0000)
+             | ((MovieBlendTableHi[sum1 >> 0x17] + MovieBlendTableMid[(sum1 & 0xff800) >> 0xb] + MovieBlendTableLow[sum1 & 0x1ff]) & 0xffff);
+        dst++;
+        src++;
+    } while (count != 0);
+    return 0;
+}
+
+// Fixed-slot bindings carried from 005d2834.cpp
+
+// ORIGINAL: 0x005D2834 sub_5d2834 0x005D2834-0x005D2901 FILE
+// symbol    ?sub_5d2834@@YAHPAIPAHH@Z
+// TRIED: literal Ghidra-order locals (uVar1/uVar2) and inline expr order both produce a tight 191-byte body without the 6-register push prologue the original has; register pressure not reproduced.
+// working copy - scaffold materialised by --work
+// size      205 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_5d2834  at 0x005D2834  (205 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+int __cdecl sub_5d2834(unsigned int *param_1, int *param_2, int param_3) {
+    unsigned int uVar1;
+    unsigned int uVar2;
+
+    do {
+        uVar2 = *param_1;
+        uVar1 = MovieColourTableByte1[(uVar2 & 0xff00) >> 8] +
+                MovieColourTableByte3[uVar2 >> 0x18] +
+                MovieColourTableByte0[uVar2 & 0xff];
+        uVar2 = MovieColourTableByte3[*(unsigned char *)((int)param_1 + 2)] +
+                MovieColourTableByte0[uVar2 & 0xff] +
+                MovieColourTableByte1[(uVar2 & 0xff00) >> 8];
+        *param_2 = MovieBlendTableHi[uVar1 >> 0x17] + MovieBlendTableMid[(uVar1 & 0xff800) >> 0xb] +
+                   MovieBlendTableLow[uVar1 & 0x1ff];
+        param_3 = param_3 + -1;
+        param_2[1] = MovieBlendTableHi[uVar2 >> 0x17] + MovieBlendTableLow[uVar2 & 0x1ff] +
+                     MovieBlendTableMid[(uVar2 & 0xff800) >> 0xb];
+        param_2 = param_2 + 2;
+        param_1 = param_1 + 1;
+    } while (param_3 != 0);
+    return 0;
+}
+
+// ORIGINAL: 0x005D2901 sub_5d2901 0x005D2901-0x005D29E1 FILE
+// symbol    ?sub_5d2901@@YAHPAH00H@Z
+// TRIED: extern int name[] for the six indexed lookup tables (same tables as the sibling sub_5d2834 at 0x005D2834), not the given `static int *const` - these are used as `table[idx]`, an indexed base. Signature widened to the IDA-guessed 4 params (int*,int*,int*,int) since the given head has none.
+// TRIED: could not reproduce the 6-register push prologue (push ebx,ecx,edx,esi,edi,ebp - ecx/edx pushed as scratch stack slots, not preservation); same wall the sibling function at 0x005D2834 hit. Hoisting the shared table_7f2c+table_772c subexpression into named locals `a`/`b` (to force it live across both blend computations, matching the original's edx reuse) made similarity slightly worse (0.61 -> 0.60), not better.
+// working copy - scaffold materialised by --work
+// size      224 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_5d2901  at 0x005D2901  (224 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+int __cdecl sub_5d2901(int *param_1, int *param_2, int *param_3, int param_4) {
+    unsigned int uVar3;
+    unsigned int uVar4;
+    unsigned int uVar5;
+
+    do {
+        int iVar1 = *param_1;
+        int iVar2 = *param_2;
+        param_1 = param_1 + 1;
+        uVar3 = (unsigned int)(iVar1 + iVar2) >> 1;
+        param_2 = param_2 + 1;
+        uVar4 = uVar3 & 0x7f7f7f7f;
+
+        uVar5 = MovieColourTableByte0[uVar4 & 0xff] + MovieColourTableByte1[(uVar4 >> 8) & 0xff] +
+                MovieColourTableByte3[uVar4 >> 0x18];
+        uVar3 = MovieColourTableByte0[uVar4 & 0xff] + MovieColourTableByte1[(uVar4 >> 8) & 0xff] +
+                MovieColourTableByte3[(uVar4 >> 0x10) & 0xff];
+
+        *param_3 = MovieBlendTableLow[uVar5 & 0x1ff] + MovieBlendTableHi[uVar5 >> 0x17] +
+                   MovieBlendTableMid[(uVar5 >> 0xb) & 0x1ff];
+        param_4 = param_4 - 1;
+        param_3[1] = MovieBlendTableMid[(uVar3 >> 0xb) & 0x1ff] +
+                     MovieBlendTableHi[uVar3 >> 0x17] + MovieBlendTableLow[uVar3 & 0x1ff];
+        param_3 = param_3 + 2;
+    } while (param_4 != 0);
+
+    return 0;
+}
+
+// ORIGINAL: 0x00628B70 ?HSV_to_RGB@@YAXPAUHSV@@PAUPALETTEENTRY@@@Z 0x00628B70-0x00628D92 FILE BYTE_EXACT
+// symbol    ?HSV_to_RGB@@YAXPAUHSV@@PAUtagPALETTEENTRY@@@Z
+// size      546 bytes
+// prototype
+// callers   0   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x006458C8 0x00647851
+// Purpose: Convert one HSV triplet (palette.h's 0x18-byte double record) into
+//          the palette entry the game stores. Parameters named from use:
+//          `hsv_in` is read only, `entry_out` is written only.
+// NOTE: the image's own mangled name spells the second parameter `PALETTEENTRY`;
+// this tree emits `tagPALETTEENTRY` because the type comes from the Windows
+// header rather than a local struct - see the `symbol` fact above.
+void __cdecl HSV_to_RGB(HSV *hsv_in, PALETTEENTRY *entry_out) {
+    if (hsv_in != 0 && entry_out != 0) {
+        HSV hsv = *hsv_in;
+        double r, g, b;
+
+        if (hsv.s == 0.0) {
+            if (hsv.h == -1.0) {
+                r = hsv.v;
+                g = hsv.v;
+                b = hsv.v;
+            }
+        } else {
+            if (hsv.h == 360.0)
+                hsv.h = 0.0;
+            hsv.h *= 0.016666666666666666;
+            int i = (int)floor(hsv.h);
+            double f = hsv.h - i;
+            double p = hsv.v * (1.0 - hsv.s);
+            double q = hsv.v * (1.0 - hsv.s * f);
+            double t = hsv.v * (1.0 - hsv.s * (1.0 - f));
+            switch (i) {
+            case 0: r = hsv.v; g = t; b = p; break;
+            case 1: r = q; g = hsv.v; b = p; break;
+            case 2: r = p; g = hsv.v; b = t; break;
+            case 3: r = p; g = q; b = hsv.v; break;
+            case 4: r = t; g = p; b = hsv.v; break;
+            case 5: r = hsv.v; g = p; b = q; break;
+            }
+        }
+
+        entry_out->peRed = (unsigned char)(r * 256.0);
+        entry_out->peGreen = (unsigned char)(g * 256.0);
+        entry_out->peBlue = (unsigned char)(b * 256.0);
+    }
+}
+
+
+// ORIGINAL: 0x00538FE0 ?checksum_file@@YAEPAD@Z 0x00538FE0-0x0053908F;0x0065E450-0x0065E462 FILE
+// working copy - scaffold materialised by --work
+// size      193 bytes
+// prototype 
+// callers   2   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00628380 0x006283E0 0x00628430 0x006287C0
+// indirect  0x0053904A
+
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?checksum_file@@YAEPAD@Z  at 0x00538FE0  (193 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+unsigned char __cdecl checksum_file(char *file_path) {
+    Filemap fm;
+    char *data = (char *)fm.open_read(file_path, 1);
+    if (data == 0) {
+        return 0;
+    }
+    unsigned int size = GetFileSize(fm.get_handle(), 0);
+    unsigned char sum = 0;
+    do {
+        sum ^= *data;
+        --size;
+        ++data;
+    } while (size != 0);
+    fm.close();
+    return sum;
+}
+
+// ORIGINAL: 0x005D4020 sub_5d4020 0x005D4020-0x005D4231 FILE
+// symbol    ?sub_5d4020@@YIXPAXPAEHH@Z
+// TRIED: not chased past the first instruction (MISMATCH #0 'push' vs 'sub', 62% mnemonic similarity) - __fastcall(this, dest, int, int) reproduces the `ret 8` pop count and the edx-as-second- register-arg evidence (no `mov ebp,esp` frame, `[esp+0x10]` live from entry with no stack spill) but the prologue's register-save order still differs. Structurally follows the raw disassembly's three shapes (mode==8 raw copy via sub_5d271d, else 2-byte-per-pixel CLUT unrolled x8, else 4-byte-per-pixel CLUT unrolled x8).
+// working copy - scaffold materialised by --work
+// size      529 bytes
+// prototype 
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D271D
+
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_5d4020  at 0x005D4020  (529 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+void __fastcall sub_5d4020(void *thisPtr, unsigned char *dest,
+                                       int unusedStackArg, int destStride) {
+    unsigned char *self = (unsigned char *)thisPtr;
+    unsigned char *src = *(unsigned char **)(self + 0x638);
+    unsigned char *info = *(unsigned char **)self;
+    if (*(int *)(info + 0x48) == 8) {
+        if ((*(unsigned char *)(info + 4) & 0x40) != 0) {
+            sub_5d271d((unsigned int *)src, dest, *(int *)(info + 0x64) * *(int *)(info + 0x60));
+            return;
+        }
+        if (*(int *)(info + 0x60) == 0) {
+            return;
+        }
+        {
+            unsigned int rowCount = *(unsigned int *)(info + 0x60);
+            unsigned int rowBytes = *(unsigned int *)(info + 0x64);
+            unsigned int row = 0;
+            unsigned char *s = src;
+            unsigned char *d = dest;
+            do {
+                unsigned char *sp = s;
+                unsigned char *dp = d;
+                unsigned int n4 = rowBytes >> 2;
+                for (; n4 != 0; --n4) {
+                    *(unsigned int *)dp = *(unsigned int *)sp;
+                    sp += 4;
+                    dp += 4;
+                }
+                unsigned int n1 = rowBytes & 3;
+                for (; n1 != 0; --n1) {
+                    *dp = *sp;
+                    ++sp;
+                    ++dp;
+                }
+                info = *(unsigned char **)self;
+                rowBytes = *(unsigned int *)(info + 0x64);
+                d += (destStride >> 2) * 4;
+                s += rowBytes;
+                ++row;
+            } while (row < *(unsigned int *)(info + 0x60));
+        }
+        return;
+    }
+
+    unsigned char *clut = info + 0x3b0;
+    int row = 0;
+    if ((*(unsigned char *)(info + 4) & 0x40) == 0) {
+        if (*(int *)(info + 0x60) == 0) {
+            return;
+        }
+        do {
+            unsigned int col = 0;
+            unsigned char *sp = src;
+            unsigned char *dp = dest;
+            if (*(int *)(info + 0x64) != 0) {
+                do {
+                    col += 8;
+                    src = sp + 8;
+                    dest = dp + 0x10;
+                    for (int k = 0; k < 8; ++k) {
+                        *(unsigned short *)(dp + k * 2) =
+                            *(unsigned short *)(clut + sp[k] * 4);
+                    }
+                    sp = src;
+                    dp = dest;
+                } while (col < *(unsigned int *)(*(unsigned char **)self + 0x64));
+            }
+            info = *(unsigned char **)self;
+            dest = dest + ((destStride - *(int *)(info + 0x64) * 2) & ~1);
+            ++row;
+        } while ((unsigned int)row < *(unsigned int *)(info + 0x60));
+        return;
+    }
+
+    if (*(int *)(info + 0x60) == 0) {
+        return;
+    }
+    do {
+        unsigned int col = 0;
+        unsigned char *sp = src;
+        unsigned char *dp = dest;
+        if (*(int *)(info + 0x64) != 0) {
+            do {
+                col += 8;
+                src = sp + 8;
+                dest = dp + 0x20;
+                for (int k = 0; k < 8; ++k) {
+                    *(unsigned int *)(dp + k * 4) =
+                        *(unsigned int *)(clut + sp[k] * 4);
+                }
+                sp = src;
+                dp = dest;
+            } while (col < *(unsigned int *)(*(unsigned char **)self + 0x64));
+        }
+        info = *(unsigned char **)self;
+        dest = dest + ((destStride - *(int *)(info + 0x64) * 4) & ~3);
+        ++row;
+    } while ((unsigned int)row < *(unsigned int *)(info + 0x60));
+}
+
+// ORIGINAL: 0x005D3980 sub_5d3980 0x005D3980-0x005D3DF0 FILE
+// symbol    ?sub_5d3980@@YIHPAHPAI@Z
+// TRIED: __fastcall(int *, unsigned int *) direct transcription of the Ghidra decompile (malloc/free node-buffer growth, 10-bit signed coefficient unpack, memcpy raw blocks, 2-bit nibble pixel expansion, two helper calls); diverges at insn #4 in the prologue register-save order, not in control flow
+// working copy - scaffold materialised by --work
+// size      1136 bytes
+// prototype 
+// callers   1   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D439F 0x005D4448 0x00644EF2 0x006470A6
+
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_5d3980  at 0x005D3980  (1136 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+int __fastcall sub_5d3980(int *param_1, unsigned int *param_2) {
+    int *piVar1;
+    int iVar2, iVar11, iVar13;
+    unsigned int uVar3, uVar4, uVar5, uVar6, uVar8, uVar9, uVar10, uVar15;
+    void *pvVar7;
+    unsigned int *puVar12, *puVar14, *puVar16, *puVar18;
+    unsigned char *puVar17;
+    int flagOK;
+
+    iVar13 = param_1[399];
+    flagOK = 1;
+    param_1[399] = param_1[0x18e];
+    param_1[0x18e] = iVar13;
+    uVar3 = *(unsigned int *)((int)param_2 + -2) >> 0x10;
+    param_1[0x188] = uVar3;
+    uVar4 = *param_2 >> 0x10;
+    param_1[0x189] = uVar4;
+    uVar5 = *(unsigned int *)((int)param_2 + 2) >> 0x10;
+    param_1[0x18a] = uVar5;
+    uVar6 = param_2[1] >> 0x10;
+    param_1[0x18b] = uVar6;
+    if (uVar3 != 0) {
+        if (param_1[0x18c] < (int)uVar3) {
+            if (param_1[0x193] != 0) {
+                free((void *)param_1[0x193]);
+                param_1[0x193] = 0;
+                param_1[0x18c] = 0;
+            }
+            if (param_1[0x194] != 0) {
+                free((void *)param_1[0x194]);
+                param_1[0x194] = 0;
+            }
+        }
+        if (param_1[0x193] == 0) {
+            pvVar7 = malloc(uVar3 * 8);
+            param_1[0x193] = (int)pvVar7;
+            param_1[0x18c] = uVar3;
+        }
+        if (param_1[0x194] == 0) {
+            pvVar7 = malloc(uVar3 * 4);
+            param_1[0x194] = (int)pvVar7;
+            param_1[0x18c] = uVar3;
+        }
+        flagOK = param_1[0x193] != 0;
+        if (param_1[0x194] == 0) {
+            flagOK = 0;
+        }
+    }
+    iVar13 = uVar5 + uVar4;
+    if (iVar13 != 0) {
+        if ((param_1[0x18d] < iVar13) && (param_1[0x192] != 0)) {
+            free((void *)param_1[0x192]);
+            param_1[0x192] = 0;
+        }
+        if (param_1[0x192] == 0) {
+            pvVar7 = malloc(iVar13 * 0x10);
+            param_1[0x192] = (int)pvVar7;
+            param_1[0x18d] = iVar13;
+        }
+        if (param_1[0x192] == 0) {
+            return 0;
+        }
+    }
+    if (flagOK != 0) {
+        uVar10 = uVar3 * 2;
+        uVar15 = uVar3 * 0x14;
+        puVar12 = (unsigned int *)(param_1[0x193] + uVar3 * 8);
+        uVar8 = uVar3;
+        while (uVar8 != 0) {
+            uVar15 = uVar15 - 10;
+            uVar8 = *(unsigned int *)((int)param_2 + (uVar15 >> 3) + 0xc) >> (uVar15 & 7);
+            uVar9 = uVar8 & 0x3ff;
+            if ((uVar8 & 0x200) != 0) {
+                uVar9 = uVar9 | 0xfffffc00;
+            }
+            puVar12 = puVar12 - 1;
+            *puVar12 = uVar9;
+            uVar10 = uVar10 - 1;
+            uVar8 = uVar10;
+        }
+        iVar13 = *(int *)(*param_1 + 0x60);
+        iVar2 = param_1[0x191];
+        iVar11 = 0;
+        if (uVar3 != 0) {
+            do {
+                piVar1 = (int *)(param_1[0x193] + iVar11 * 8);
+                *(int *)(param_1[0x194] + iVar11 * 4) =
+                    *(int *)(iVar2 + iVar13 * 4 + piVar1[1] * 4) + *piVar1;
+                iVar11 = iVar11 + 1;
+            } while (iVar11 < (int)uVar3);
+        }
+        puVar14 = (unsigned int *)((int)param_2 + (((int)(uVar3 * 0x14 + 0x1f) >> 3) & 0xfffffffc) + 0xc);
+        if (uVar4 != 0) {
+            memcpy((void *)param_1[0x192], puVar14, uVar4 * 0x10);
+        }
+        puVar14 = puVar14 + uVar4 * 4;
+        if (uVar5 != 0) {
+            puVar17 = (unsigned char *)(param_1[0x192] + uVar4 * 0x10);
+            puVar16 = puVar14;
+            for (uVar3 = uVar5; uVar3 != 0; uVar3 = uVar3 - 1) {
+                uVar4 = puVar16[1];
+                puVar17[0xf] = *((unsigned char *)puVar16 + (uVar4 & 3));
+                puVar17[0xe] = *((unsigned char *)puVar16 + (uVar4 >> 2 & 3));
+                puVar17[0xd] = *((unsigned char *)puVar16 + (uVar4 >> 4 & 3));
+                puVar17[0xc] = *((unsigned char *)puVar16 + (uVar4 >> 6 & 3));
+                puVar17[0xb] = *((unsigned char *)puVar16 + (uVar4 >> 8 & 3));
+                puVar17[10] = *((unsigned char *)puVar16 + (uVar4 >> 10 & 3));
+                puVar17[9]  = *((unsigned char *)puVar16 + (uVar4 >> 0xc & 3));
+                puVar17[8]  = *((unsigned char *)puVar16 + (uVar4 >> 0xe & 3));
+                puVar17[7]  = *((unsigned char *)puVar16 + (uVar4 >> 0x10 & 3));
+                puVar17[6]  = *((unsigned char *)puVar16 + (uVar4 >> 0x12 & 3));
+                puVar17[5]  = *((unsigned char *)puVar16 + (uVar4 >> 0x14 & 3));
+                puVar17[4]  = *((unsigned char *)puVar16 + (uVar4 >> 0x16 & 3));
+                puVar17[3]  = *((unsigned char *)puVar16 + (uVar4 >> 0x18 & 3));
+                puVar17[2]  = *((unsigned char *)puVar16 + (uVar4 >> 0x1a & 3));
+                puVar17[1]  = *((unsigned char *)puVar16 + (uVar4 >> 0x1c & 3));
+                puVar17[0]  = *((unsigned char *)puVar16 + (uVar4 >> 0x1e));
+                puVar16 = puVar16 + 2;
+                puVar17 = puVar17 + 0x10;
+            }
+        }
+        uVar3 = (unsigned int)(*(int *)(*param_1 + 100) * *(int *)(*param_1 + 0x60)) >> 4;
+        if ((uVar6 * uVar3 + 0x1f & 0xffffffe0) != 0) {
+            sub_5d439f((unsigned int *)param_1[400], (int)(puVar14 + uVar5 * 2), uVar3, uVar6);
+        }
+        uVar3 = *(unsigned int *)(*param_1 + 100);
+        sub_5d4448((int *)param_1[400], param_1[399], param_1[0x18e], param_1[0x188], (int *)param_1[0x194],
+                    param_1[0x192], uVar3, uVar3 >> 2, *(unsigned int *)(*param_1 + 0x60) >> 2);
+    }
+    return flagOK;
+}
+
+// ORIGINAL: 0x005D1B88 sub_5d1b88 0x005D1B88-0x005D2037 FILE
+// symbol    ?sub_5d1b88@@YAXPAIPAH1@Z
+// TRIED: homed into general.cpp (its real TU) 2026-09-03 and reverted for one reason:
+// its fixed-address bindings have no naming evidence. image_data.py reads
+// 6 of them and every one is zero at load - runtime-filled lookup tables
+// with no .data content, no string, no arithmetic identity beyond 'a table
+// indexed here' - and none is modelled anywhere in src. The homing-first rule
+// does not ask for them to be invented: an unclaimed body with evidence-free
+// bindings waits for the class pass that measures it in context.
+// TRIED: no conventional signature can match - the original has NO prologue/epilogue and reads esi/edi/ebp as inputs set up by the CALLER (Ghidra: unaff_ESI/unaff_EDI/unaff_EBP), which is not a calling convention VC6 can target without __asm/naked (barred). Landed as a 3-pointer __cdecl function with an 8-iteration loop reproducing the exact table math (16 unrolled blocks in the original, all structurally identical) so the algorithm is faithfully documented even though the prologue can never match.
+// working copy - scaffold materialised by --work
+// size      1199 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_5d1b88  at 0x005D1B88  (1199 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+void __cdecl sub_5d1b88(unsigned int *outp, int *srcESI, int *srcEDI) {
+    int i;
+    for (i = 0; i < 8; i++) {
+        int iVar1 = ((int *)MovieBlendTableQuant)[srcEDI[i]];
+        int iVar2 = ((int *)MovieBlendTableQuant2)[srcEDI[0x40 + i]];
+        unsigned int uVar4 = (unsigned int)(iVar1 + ((int *)MovieBlendTableData)[srcESI[2 * i]] + iVar2);
+        outp[2 * i] = ((unsigned int *)MovieBlendTableMid)[(uVar4 & 0xff800) >> 0xb] |
+                      ((unsigned int *)MovieBlendTableHi)[uVar4 >> 0x17] |
+                      ((unsigned int *)MovieBlendTableLow)[uVar4 & 0x1ff];
+        uVar4 = (unsigned int)(((int *)MovieBlendTableData)[srcESI[2 * i + 1]] + iVar2 + iVar1);
+        outp[2 * i + 1] = ((unsigned int *)MovieBlendTableHi)[uVar4 >> 0x17] |
+                          ((unsigned int *)MovieBlendTableLow)[uVar4 & 0x1ff] |
+                          ((unsigned int *)MovieBlendTableMid)[(uVar4 & 0xff800) >> 0xb];
+    }
+}
+
+// Fixed-slot bindings carried from 005d2536.cpp
+static char *const MovieCoeffPackTable = (char *)0x009C672C;
+
+// ORIGINAL: 0x005D2536 sub_5d2536 0x005D2536-0x005D271D FILE
+// symbol    ?sub_5d2536@@YAXPAH00@Z
+// TRIED: homed into general.cpp (its real TU) 2026-09-03 and reverted for one reason:
+// its fixed-address bindings have no naming evidence. image_data.py reads
+// 1 of them and every one is zero at load - runtime-filled lookup tables
+// with no .data content, no string, no arithmetic identity beyond 'a table
+// indexed here' - and none is modelled anywhere in src. The homing-first rule
+// does not ask for them to be invented: an unclaimed body with evidence-free
+// bindings waits for the class pass that measures it in context.
+// TRIED: no C++ calling convention passes edi/esi/ebp as params with no prologue; __asm is banned, so the register-implicit entry (no push/pop, bare ret) cannot be reproduced byte-exact. Reshaped as three pointer params for a faithful (non-exact) transcription.
+// size      487 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_5d2536  at 0x005D2536  (487 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+void __cdecl sub_5d2536(int *coeff_a, int *coeff_b, int *out_words) {
+    out_words[0] = ((*(int *)(MovieCoeffPackTable + coeff_a[0x40] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[1] * 8)) << 0x10)
+           | (*(int *)(MovieCoeffPackTable + coeff_a[0] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[0] * 8));
+    out_words[1] = ((*(int *)(MovieCoeffPackTable + coeff_a[0x41] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[3] * 8)) << 0x10)
+           | (*(int *)(MovieCoeffPackTable + coeff_a[1] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[2] * 8));
+    out_words[2] = ((*(int *)(MovieCoeffPackTable + coeff_a[0x42] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[5] * 8)) << 0x10)
+           | (*(int *)(MovieCoeffPackTable + coeff_a[2] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[4] * 8));
+    out_words[3] = ((*(int *)(MovieCoeffPackTable + coeff_a[0x43] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[7] * 8)) << 0x10)
+           | (*(int *)(MovieCoeffPackTable + coeff_a[3] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[6] * 8));
+    out_words[4] = ((*(int *)(MovieCoeffPackTable + coeff_a[0x44] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[9] * 8)) << 0x10)
+           | (*(int *)(MovieCoeffPackTable + coeff_a[4] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[8] * 8));
+    out_words[5] = ((*(int *)(MovieCoeffPackTable + coeff_a[0x45] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[0xb] * 8)) << 0x10)
+           | (*(int *)(MovieCoeffPackTable + coeff_a[5] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[0xa] * 8));
+    out_words[6] = ((*(int *)(MovieCoeffPackTable + coeff_a[0x46] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[0xd] * 8)) << 0x10)
+           | (*(int *)(MovieCoeffPackTable + coeff_a[6] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[0xc] * 8));
+    out_words[7] = ((*(int *)(MovieCoeffPackTable + coeff_a[0x47] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[0xf] * 8)) << 0x10)
+           | (*(int *)(MovieCoeffPackTable + coeff_a[7] * 8) << 8 | *(int *)(MovieCoeffPackTable + coeff_b[0xe] * 8));
+}
+
+// Fixed-slot bindings carried from 0062d1e0.cpp
+
+typedef int (__stdcall *IntersectRectFn)(RECT *, const RECT *, const RECT *);
+
+typedef int (__stdcall *EqualRectFn)(const RECT *, const RECT *);
+
+typedef int (__stdcall *Fn70)(void *, void *);
+
+struct DrawRegion {
+    int a;
+    int flag1;
+    int flag2;
+    int b;
+    RECT rect1;
+    RECT rect2;
+};
+
+typedef int (__stdcall *Fn1c)(void *, void *, int);
+
+// ORIGINAL: 0x0062D1E0 sub_62d1e0 0x0062D1E0-0x0062D2B1 FILE
+// symbol    ?sub_62d1e0@@YAXPAUtagRECT@@@Z
+// TRIED: 209 vs 204 bytes; struct-literal field order for the 0x30-byte DrawRegion local drifts the compiler's address-of scheduling (lea moves relative to the field stores) versus the original's register reuse. Tried plain field assigns and an early `DrawRegion *preg = &region;` alias; neither matched.
+// working copy - scaffold materialised by --work
+// size      209 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x0062D207 0x0062D21F 0x0062D233 0x0062D297 0x0062D2A9
+
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_62d1e0  at 0x0062D1E0  (209 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+void __cdecl sub_62d1e0(RECT *clip_rect) {
+    if (DirectDrawBackBuffer == 0 || clip_rect == 0) {
+        return;
+    }
+
+    RECT tmp;
+    if (!(reinterpret_cast<IntersectRectFn>(*IntersectRectProc))(
+            &tmp, &DirectDrawClipRect, clip_rect)) {
+        return;
+    }
+
+    if ((reinterpret_cast<EqualRectFn>(*EqualRectProc))(
+            &DirectDrawClipRect, &tmp)) {
+        void *obj = reinterpret_cast<void *>(DirectDrawBackBuffer);
+        void *vtbl = *reinterpret_cast<void **>(obj);
+        Fn70 fn = *reinterpret_cast<Fn70 *>(reinterpret_cast<char *>(vtbl) + 0x70);
+        fn(obj, 0);
+        return;
+    }
+
+    DrawRegion region;
+    region.a = 0x20;
+    region.flag1 = 1;
+    region.flag2 = 1;
+    region.b = 0x10;
+    region.rect1 = tmp;
+    region.rect2 = tmp;
+
+    void *obj2 = reinterpret_cast<void *>(*DirectDrawPrimarySurface);
+    void *vtbl2 = *reinterpret_cast<void **>(obj2);
+    Fn1c fn1c = *reinterpret_cast<Fn1c *>(reinterpret_cast<char *>(vtbl2) + 0x1c);
+    fn1c(obj2, &region, 0);
+
+    void *obj = reinterpret_cast<void *>(DirectDrawBackBuffer);
+    void *vtbl = *reinterpret_cast<void **>(obj);
+    Fn70 fn = *reinterpret_cast<Fn70 *>(reinterpret_cast<char *>(vtbl) + 0x70);
+    fn(obj, obj2);
+}
+
+// ORIGINAL: 0x0062D2C0 sub_62d2c0 0x0062D2C0-0x0062D38E FILE
+// symbol    ?sub_62d2c0@@YAHXZ
+// TRIED: homed into general.cpp (its real TU) 2026-09-03 and reverted for one reason:
+// its fixed-address bindings have no naming evidence. image_data.py reads
+// 3 of them and every one is zero at load - runtime-filled lookup tables
+// with no .data content, no string, no arithmetic identity beyond 'a table
+// indexed here' - and none is modelled anywhere in src. The homing-first rule
+// does not ask for them to be invented: an unclaimed body with evidence-free
+// bindings waits for the class pass that measures it in context.
+// TRIED: IntersectRect/EqualRect are called through the fixed IAT-style slots (0x669338/0x6692bc) with `this` pushed as an explicit stdcall arg, not via C++ virtual dispatch - modelled with raw `PFN_*` casts. Every early-out in the original shares ONE epilogue (add esp,0x40; ret); separate `if (x) return 0;` statements each get their own inline return instead of jumping to a shared tail, which is most of the 0.82 mnemonic-similarity gap.
+// working copy - scaffold materialised by --work
+// size      206 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x0062D2E4 0x0062D2FC 0x0062D310 0x0062D374 0x0062D386
+
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_62d2c0  at 0x0062D2C0  (206 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+int __cdecl sub_62d2c0() {
+    // `RECT` and the Fn* member-pointer types are the ones sub_62d1e0, the
+    // sibling redraw stage, already declares: `SimpleRect` and the PFN_*
+    // names were this artifact's local spellings of the same four types.
+    if (DirectDrawBackBuffer == 0) {
+        return 0;
+    }
+    RECT *src = &DirectDrawClipRect;
+    RECT tmpRect;
+    int ok = (*reinterpret_cast<IntersectRectFn *>(IntersectRectProc))(
+        &tmpRect, src, src);
+    if (ok == 0) {
+        return 0;
+    }
+    int eq = (*reinterpret_cast<EqualRectFn *>(EqualRectProc))(src, &tmpRect);
+    if (eq == 0) {
+        IDirectDrawSurface *obj = DirectDrawBackBuffer;
+        int vt = *reinterpret_cast<int *>(obj);
+        Fn70 fn = *reinterpret_cast<Fn70 *>(vt + 0x70);
+        fn(reinterpret_cast<void *>(obj), 0);
+        return 0;
+    }
+
+    int localBuf[12];
+    localBuf[0] = 0x20;
+    localBuf[1] = 1;
+    localBuf[2] = 1;
+    localBuf[3] = 0x10;
+    localBuf[4] = tmpRect.left;
+    localBuf[5] = tmpRect.top;
+    localBuf[6] = tmpRect.right;
+    localBuf[7] = tmpRect.bottom;
+    localBuf[8] = tmpRect.left;
+    localBuf[9] = tmpRect.top;
+    localBuf[10] = tmpRect.right;
+    localBuf[11] = tmpRect.bottom;
+
+    int obj2 = *DirectDrawPrimarySurface;
+    int vt2 = *reinterpret_cast<int *>(obj2);
+    Fn1c fn7 = *reinterpret_cast<Fn1c *>(vt2 + 0x1c);
+    fn7(reinterpret_cast<void *>(obj2), localBuf, 0);
+
+    IDirectDrawSurface *obj1 = DirectDrawBackBuffer;
+    int vt1 = *reinterpret_cast<int *>(obj1);
+    Fn70 fn28 = *reinterpret_cast<Fn70 *>(vt1 + 0x70);
+    fn28(reinterpret_cast<void *>(obj1), reinterpret_cast<void *>(obj2));
+    return 0;
+}
+
+// ORIGINAL: 0x005CE6E3 sub_5ce6e3 0x005CE6E3-0x005CE85A FILE
+// symbol    ?sub_5ce6e3@@YAXPAEPAFHPAH2@Z
+// TRIED: homed into general.cpp (its real TU) 2026-09-03 and reverted for one reason:
+// its fixed-address bindings have no naming evidence. image_data.py reads
+// 5 of them and every one is zero at load - runtime-filled lookup tables
+// with no .data content, no string, no arithmetic identity beyond 'a table
+// indexed here' - and none is modelled anywhere in src. The homing-first rule
+// does not ask for them to be invented: an unclaimed body with evidence-free
+// bindings waits for the class pass that measures it in context.
+// TRIED: original uses `pushal`/`popal` around the whole body (5 stack args, no `this`); no portable C source form reproduces that register-save shape, so #0 mismatches in the prologue.
+// size      375 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_5ce6e3  at 0x005CE6E3  (375 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+void __cdecl sub_5ce6e3(unsigned char *codes, short *samples, int sample_total, int *predictor_pair, int *step_index_pair) {
+    int iVar2 = 0;
+    *AdpcmStepIndexLeft = (int)(short)*step_index_pair;
+    *AdpcmStepIndexRight = (int)(short)(*reinterpret_cast<unsigned int *>(step_index_pair) >> 16);
+    *AdpcmPredictorLeft = (int)(short)*predictor_pair;
+    *AdpcmPredictorRight = (int)(short)(*reinterpret_cast<unsigned int *>(predictor_pair) >> 16);
+    do {
+        unsigned char bVar1 = *codes;
+        *AdpcmPredictorLeft = *AdpcmPredictorLeft + *reinterpret_cast<int *>(
+            reinterpret_cast<char *>(AdpcmDeltaTable) + (bVar1 >> 4) * 4 + *AdpcmStepIndexLeft);
+        if (*AdpcmPredictorLeft < 0x8000) {
+            if (*AdpcmPredictorLeft < -0x8000) {
+                *AdpcmPredictorLeft = -0x8000;
+            }
+        } else {
+            *AdpcmPredictorLeft = 0x7fff;
+        }
+        *reinterpret_cast<short *>(reinterpret_cast<char *>(samples) + iVar2 * 4) =
+            static_cast<short>(*AdpcmPredictorLeft);
+        *AdpcmStepIndexLeft = *AdpcmStepIndexLeft + *reinterpret_cast<int *>(
+            reinterpret_cast<char *>(AdpcmIndexAdjust) + ((bVar1 >> 4) & 7) * 4);
+        if (*AdpcmStepIndexLeft < 0x1601) {
+            if (*AdpcmStepIndexLeft < 0) {
+                *AdpcmStepIndexLeft = 0;
+            }
+        } else {
+            *AdpcmStepIndexLeft = 0x1600;
+        }
+        bVar1 = *codes;
+        *AdpcmPredictorRight = *AdpcmPredictorRight + *reinterpret_cast<int *>(
+            reinterpret_cast<char *>(AdpcmDeltaTable) + (bVar1 & 0x0f) * 4 + *AdpcmStepIndexRight);
+        if (*AdpcmPredictorRight < 0x8000) {
+            if (*AdpcmPredictorRight < -0x8000) {
+                *AdpcmPredictorRight = -0x8000;
+            }
+        } else {
+            *AdpcmPredictorRight = 0x7fff;
+        }
+        *reinterpret_cast<short *>(reinterpret_cast<char *>(samples) + 2 + iVar2 * 4) =
+            static_cast<short>(*AdpcmPredictorRight);
+        *AdpcmStepIndexRight = *AdpcmStepIndexRight + *reinterpret_cast<int *>(
+            reinterpret_cast<char *>(AdpcmIndexAdjust) + (bVar1 & 0x07) * 4);
+        if (*AdpcmStepIndexRight < 0x1601) {
+            if (*AdpcmStepIndexRight < 0) {
+                *AdpcmStepIndexRight = 0;
+            }
+        } else {
+            *AdpcmStepIndexRight = 0x1600;
+        }
+        iVar2 = iVar2 + 1;
+        codes = codes + 1;
+    } while (iVar2 < sample_total);
+    *predictor_pair = ((*AdpcmPredictorRight & 0xffff) << 16) | (*AdpcmPredictorLeft & 0xffff);
+    *step_index_pair = ((*AdpcmStepIndexRight & 0xffff) << 16) | (*AdpcmStepIndexLeft & 0xffff);
+}
+

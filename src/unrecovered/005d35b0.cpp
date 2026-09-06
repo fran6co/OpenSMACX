@@ -1206,7 +1206,7 @@ static int *const g_009c4550 = (int *)0x009C4550;
 static int *const g_009c464c = (int *)0x009C464C;
 static int *const g_009c4650 = (int *)0x009C4650;
 static int *const g_009c4654 = (int *)0x009C4654;
-extern "C" int __fastcall sub_5d35b0(int *param_1, int param_2, int a1, int a2, int a3) {
+int __fastcall sub_5d35b0(int *param_1, int param_2, int a1, int a2, int a3) {
     if (*g_009b3368 == 0) {
         *g_009b3368 = 1;
         param_1[0x195] = reinterpret_cast<int>(calloc(1,

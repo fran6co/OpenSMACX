@@ -1178,7 +1178,7 @@ const int RadiusRange[] = {1, 9, 25, 49, 81, 121, 169, 225, 289};
 extern "C" int __cdecl sub_5d0aab();
 extern "C" int __cdecl OutputPixelRow16();
 
-extern "C" int __cdecl sub_5d1842(int baseY, int stride, void *ctx) {
+int __cdecl sub_5d1842(int baseY, int stride, void *ctx) {
     char *ctxBytes = (char *)ctx;
     int *field200 = (int *)(ctxBytes + 0x200);
     int *field204 = (int *)(ctxBytes + 0x204);

@@ -1,5 +1,29 @@
 // ORIGINAL: 0x00579240 ?enemy_veh@@YAHH@Z 0x00579240-0x005794C8 FILE
-// TRIED: two chained switch(faction){0..7} jump tables collapsed to a no-op (both map identity onto esi); [ebp+8] repurposed to a bool (faction==current && netflag) after ebx caches a1, used for two later gates instead of a1 itself; diverges at instr #4
+// TRIED: two chained switch(faction){0..7} jump tables collapsed to a no-op (both map identity onto esi); [ebp+8] repurposed to a bool (faction==current && netflag) after ebx caches veh_id, used for two later gates instead of veh_id itself; diverges at instr #4
+// TRIED: homed into general.cpp 2026-09-06, renamed, then reverted for ONE
+// missing declaration: the body calls `enemy_move` (0x0056B5B0,
+// ?enemy_move@@YAHH@Z), which is recovered nowhere in src - no definition, no
+// forwarder, no declaration - so the link fails on ?enemy_move@@YAHH@Z. The
+// remedy is a pending_bodies forwarder for 0x0056B5B0 or homing that body;
+// neither is this body's work.
+//
+// THE NAMING IS DONE AND REUSABLE, and is left in this file on purpose:
+//   * all nine `g_009528NN` bindings are byte offsets into Vehs
+//     (0x00952828, 0x34 stride, veh.h) and are now written
+//     `(char *)Vehs + 0xNN + edi` - 0x00 x, 0x02 y, 0x04 flags, 0x0A proto,
+//     0x0E faction, 0x11 order, 0x14 field_1C, 0x1C field_44, 0x28 status.
+//   * `g_009ab892` / `g_009ab893` / `g_009ab88c` are VehPrototypes
+//     (0x009AB868) + 0x2A / 0x2B / 0x24.
+//   * `g_0094a379` is Chassis (0x0094A330) + 0x49, the sibling of veh.cpp's
+//     own ChassisNoPromoteFlag at +0x4D.
+//   * `g_0093e904` is NetDaemonNet + 0x1B74 (netdaemon.h:67, queue-1
+//     dword_3), expressed as an offset on the real object because neither
+//     netdaemon.h nor net_class.h can be included in general.cpp - both
+//     re-declare JackalVoiceRx and general.cpp already declares it for
+//     ??1JackalVoiceRx@@QAE@XZ, so a second definition is C2011.
+//   * `g_0068eafc` / `g_0068eb10` / `g_0068eb28` are the log strings
+//     'Enemy Vehicle DONE' / 'Enemy Vehicle ACTION' / 'Enemy Vehicle'.
+// Zero anonymous bindings remain in this artifact.
 // working copy - scaffold materialised by --work
 // size      648 bytes
 // prototype int (__cdecl ?enemy_veh@@YAHH@Z)(int vehID)
@@ -1199,34 +1223,20 @@ void veh_skip(int);
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_005794c8 = (int *)0x005794C8;
-static int *const g_005794e8 = (int *)0x005794E8;
-static int *const g_0068eafc = (int *)0x0068EAFC;
-static int *const g_0068eb10 = (int *)0x0068EB10;
-static int *const g_0068eb28 = (int *)0x0068EB28;
-static int *const g_00939284 = (int *)0x00939284;
-static int *const g_0093cd90 = (int *)0x0093CD90;
-static int *const g_0093e904 = (int *)0x0093E904;
-static int *const g_0093f660 = (int *)0x0093F660;
-static int *const g_00952828 = (int *)0x00952828;
-static int *const g_0095282a = (int *)0x0095282A;
-static int *const g_0095282c = (int *)0x0095282C;
-static int *const g_00952832 = (int *)0x00952832;
-static int *const g_00952836 = (int *)0x00952836;
-static int *const g_00952839 = (int *)0x00952839;
-static int *const g_0095283c = (int *)0x0095283C;
-static int *const g_00952844 = (int *)0x00952844;
-static int *const g_00952850 = (int *)0x00952850;
-static int *const g_00952853 = (int *)0x00952853;
-static int *const g_009ab892 = (int *)0x009AB892;
-int __cdecl enemy_veh(int a1) {
-    int edi = a1 * 0x34;  // byte offset into the 0x952828 record array
+int __cdecl enemy_veh(int veh_id) {
+    int edi = veh_id * 0x34;  // byte offset into the 0x952828 record array
 
-    unsigned char faction = *(unsigned char *)((char *)g_00952836 + edi);
-    bool bVar1 = (faction == *g_00939284) && (*g_0093f660 != 0);
+    unsigned char faction = *(unsigned char *)((char *)Vehs + 0x0E + edi);
+    bool bVar1 = (faction == LocalFaction) && (IsMultiplayerNet != 0);
 
-    if (*g_0093f660 != 0) {
-        *g_0093e904 = 3;
+    if (IsMultiplayerNet != 0) {
+        // 0x0093E904 is NetDaemonNet + 0x1B74, the queue-1 dword_3 slot
+    // netdaemon.h:67 records (cleared by the constructor, read by
+    // process_message). NetDaemon models no named member there yet, so
+    // the offset stands on the real object rather than behind an
+    // anonymous global bound to 0x0093E904.
+    *reinterpret_cast<int *>(reinterpret_cast<char *>(&NetDaemonNet) +
+                             0x1B74) = 3;
     }
 
     do_all_non_input();
@@ -1235,71 +1245,71 @@ int __cdecl enemy_veh(int a1) {
     // mapping through both jump tables; the effective value is `faction`
     // unchanged, so they are elided here.
 
-    unsigned char statusFlag = *(unsigned char *)((char *)g_00952850 + edi);
-    unsigned char order = *(unsigned char *)((char *)g_00952839 + edi);
+    unsigned char statusFlag = *(unsigned char *)((char *)Vehs + 0x28 + edi);
+    unsigned char order = *(unsigned char *)((char *)Vehs + 0x11 + edi);
     bool skipMove = false;
     if (statusFlag != 0 && order == 0x18) {
-        int protoId = *(short *)((char *)g_00952832 + edi);
-        if (*(unsigned char *)((char *)g_009ab892 + protoId * 0x34) != 7) {
-            int flags = *(int *)((char *)g_0095282c + edi);
+        int protoId = *(short *)((char *)Vehs + 0x0A + edi);
+        if (*(unsigned char *)((char *)VehPrototypes + 0x2A + protoId * 0x34) != 7) {
+            int flags = *(int *)((char *)Vehs + 0x04 + edi);
             if (!(flags & 0x4000)) {
-                int y = *(short *)((char *)g_0095282a + edi);
-                int x = *(short *)((char *)g_00952828 + edi);
+                int y = *(short *)((char *)Vehs + 0x02 + edi);
+                int x = *(short *)((char *)Vehs + 0x00 + edi);
                 if (zoc_any(x, y, faction) == 0) skipMove = true;
             }
         }
     }
 
     if (!skipMove) {
-        if (enemy_move(a1) != 0) return 1;
+        if (enemy_move(veh_id) != 0) return 1;
 
-        int spd = speed(a1, 0);
+        int spd = speed(veh_id, 0);
         int diff = spd - statusFlag;
         if (diff <= 0) {
-            if (*g_0093f660 != 0) {
-                log_say((char *)g_0068eafc, a1, 0, 0);
+            if (IsMultiplayerNet != 0) {
+                log_say((char *)LogEnemyVehicleDone, veh_id, 0, 0);
             }
             if (bVar1) {
-                synch_veh(a1);
-                reinterpret_cast<NetDaemon *>(g_0093cd90)->await_synch();
-                reinterpret_cast<NetDaemon *>(g_0093cd90)->unlock_veh();
+                synch_veh(veh_id);
+                reinterpret_cast<NetDaemon *>(NetDaemonNet)->await_synch();
+                reinterpret_cast<NetDaemon *>(NetDaemonNet)->unlock_veh();
             }
             return 1;
         }
     }
 
     if (bVar1) {
-        synch_veh(a1);
-        reinterpret_cast<NetDaemon *>(g_0093cd90)->await_synch();
-        if (reinterpret_cast<NetDaemon *>(g_0093cd90)->action(a1, 1) != 0) {
+        synch_veh(veh_id);
+        reinterpret_cast<NetDaemon *>(NetDaemonNet)->await_synch();
+        if (reinterpret_cast<NetDaemon *>(NetDaemonNet)->action(veh_id, 1) != 0) {
             return 1;
         }
         return 0;
     }
 
-    if (*g_0093f660 != 0) {
+    if (IsMultiplayerNet != 0) {
         char numbuf[0x50];
         char msgbuf[16];
         msgbuf[0] = 0;
-        _itoa(a1, numbuf, 10);
+        _itoa(veh_id, numbuf, 10);
         strcat(msgbuf, numbuf);
-        int order2 = *(signed char *)((char *)g_00952839 + edi);
-        int f3c = *(short *)((char *)g_0095283c + edi);
-        int f44 = *(short *)((char *)g_00952844 + edi);
-        log_say((char *)g_0068eb10, msgbuf, order2, f3c, f44);
+        int order2 = *(signed char *)((char *)Vehs + 0x11 + edi);
+        int f3c = *(short *)((char *)Vehs + 0x14 + edi);
+        int f44 = *(short *)((char *)Vehs + 0x1C + edi);
+        log_say((char *)LogEnemyVehicleAction, msgbuf, order2, f3c, f44);
     }
 
-    if (action(a1) == 0) {
-        veh_skip(a1);
+    if (action(veh_id) == 0) {
+        veh_skip(veh_id);
     }
 
-    if (*g_0093f660 != 0) {
-        int y = *(short *)((char *)g_0095282a + edi);
-        int x = *(short *)((char *)g_00952828 + edi);
+    if (IsMultiplayerNet != 0) {
+        int y = *(short *)((char *)Vehs + 0x02 + edi);
+        int x = *(short *)((char *)Vehs + 0x00 + edi);
         char smallbuf[2];
-        smallbuf[0] = *(char *)((char *)g_00952853 + edi);
+        smallbuf[0] = *(char *)((char *)Vehs + 0x2B + edi);
         smallbuf[1] = 0;
-        log_say((char *)g_0068eb28, smallbuf, a1, x, y);
+        log_say((char *)LogEnemyVehicle, smallbuf, veh_id, x, y);
     }
 
     return 0;

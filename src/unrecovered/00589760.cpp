@@ -8,7 +8,7 @@
 // calls     0x005D50A0 0x005D5250 0x005D7210 0x005D7410
 // indirect  0x00589844
 
-extern "C" void __stdcall sub_589760(GraphicWin *self, int a1, int a2) {
+void __stdcall sub_589760(GraphicWin *self, int a1, int a2) {
   class MfpBase {};
   typedef int (MfpBase::*Fn1)(int);
   union Conv1 {

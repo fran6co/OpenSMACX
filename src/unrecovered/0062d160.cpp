@@ -51,7 +51,7 @@ static int *const g_009bc498 = (int *)0x009BC498;
 // pointer of the observed signature does.
 typedef int(__stdcall *Handler17)(int, int *);
 
-extern "C" int __cdecl sub_62d160() {
+int __cdecl sub_62d160() {
     // Register allocation is swapped from the original throughout: the
     // original keeps the counter in ecx (mov ecx,[...]; the general
     // ModRM form) and the flag in eax (the short A1-encoded

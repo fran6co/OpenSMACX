@@ -1,5 +1,12 @@
 // ORIGINAL: 0x00579510 ?enemy_turn@@YAHH@Z 0x00579510-0x00579769 FILE
 // TRIED: `int` return (contract head) - the only `ret` leaves eax holding leftover address-calc garbage (a1*2099), not a deliberate return value, so recast as void; diverges at instr #9
+// TRIED: homed into general.cpp 2026-09-06 and reverted - it calls enemy_veh
+// (0x00579240), whose own homing is blocked on the missing enemy_move
+// declaration; see that artifact's TRIED note. The same naming work is already
+// applied here: g_00952832/Vehs+0x0A, g_009ab88c|892|893 -> VehPrototypes
+// +0x24/0x2A/0x2B, g_0094a379 -> Chassis + 0x49, g_009a64c8 -> the real
+// `extern int VehCurrentCount`, g_0096c9e0 -> PlayersData. Zero anonymous
+// bindings remain.
 // working copy - scaffold materialised by --work
 // size      601 bytes
 // prototype int (__cdecl ?enemy_turn@@YAHH@Z)(int factionID)
@@ -1185,43 +1192,36 @@ void veh_skip(int);
 // ---- fixed globals this body references ----
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const g_0094a379 = (int *)0x0094A379;
-static int *const g_00952832 = (int *)0x00952832;
-static int *const g_0096c9e0 = (int *)0x0096C9E0;
-static int *const g_009a64c8 = (int *)0x009A64C8;
-static int *const g_009ab88c = (int *)0x009AB88C;
-static int *const g_009ab892 = (int *)0x009AB892;
-static int *const g_009ab893 = (int *)0x009AB893;
-void __cdecl enemy_turn(int a1) {
+void __cdecl enemy_turn(int faction_id) {
     int priority = 0;
     int vehId;
     char *rec;
 
     for (;;) {
-        vehId = *g_009a64c8 - 1;
+        vehId = VehCurrentCount - 1;
         while (vehId >= 0) {
-            rec = (char *)g_00952832 + vehId * 0x34;
-            if (vehId < *g_009a64c8) {
+            rec = (char *)Vehs + vehId * 0x34 + 0x0A;
+            if (vehId < VehCurrentCount) {
                 int faction = *(unsigned char *)(rec + 4);
-                if (faction == a1) {
+                if (faction == faction_id) {
                     bool matched = false;
                     if (priority == 0) {
                         int x = *(short *)rec;
                         matched = can_arty(x, 1) != 0;
                     } else if (priority == 1) {
                         int protoId = *(short *)rec;
-                        int mode = *(unsigned char *)((char *)g_009ab892 + protoId * 0x34);
+                        int mode = *(unsigned char *)((char *)VehPrototypes + protoId * 0x34 + 0x2A);
                         if (mode == 2) matched = true;
                         else if (mode == 7) matched = stack_check(vehId, 3, 0, -1, -1) != 0;
                     } else if (priority == 2) {
                         int protoId = *(short *)rec;
-                        unsigned char chassis = *(unsigned char *)((char *)g_009ab88c + protoId * 0x34);
-                        if (*(unsigned char *)((char *)g_0094a379 + chassis * 0x90) == priority) {
-                            matched = *(unsigned char *)((char *)g_009ab892 + protoId * 0x34) != 4;
+                        unsigned char chassis = *(unsigned char *)((char *)VehPrototypes + protoId * 0x34 + 0x24);
+                        if (*(unsigned char *)((char *)Chassis + chassis * 0x90 + 0x49) == priority) {
+                            matched = *(unsigned char *)((char *)VehPrototypes + protoId * 0x34 + 0x2A) != 4;
                         }
                     } else if (priority == 3) {
                         int protoId = *(short *)rec;
-                        matched = *(unsigned char *)((char *)g_009ab892 + protoId * 0x34) == 1;
+                        matched = *(unsigned char *)((char *)VehPrototypes + protoId * 0x34 + 0x2A) == 1;
                     } else if (priority == 4) {
                         matched = *(unsigned char *)(rec + 6) == 0;
                     } else if (priority < 7) {
@@ -1231,16 +1231,16 @@ void __cdecl enemy_turn(int a1) {
                     if (matched && priority < 7) {
                         int protoId = *(short *)rec;
                         if (has_abil(protoId, 0x10)) matched = false;
-                        else if (*(unsigned char *)((char *)g_009ab892 + protoId * 0x34) == 4) matched = false;
-                        else if (*(unsigned char *)((char *)g_009ab893 + protoId * 0x34) == 0x15) matched = false;
+                        else if (*(unsigned char *)((char *)VehPrototypes + protoId * 0x34 + 0x2A) == 4) matched = false;
+                        else if (*(unsigned char *)((char *)VehPrototypes + protoId * 0x34 + 0x2B) == 0x15) matched = false;
                     }
 
                     if (matched || priority >= 7) {
                         bool ok = true;
                         if (priority == 8) {
                             int protoId = *(short *)rec;
-                            if (*(unsigned char *)((char *)g_009ab892 + protoId * 0x34) != 7) ok = false;
-                            else if (a1 == 0) ok = false;
+                            if (*(unsigned char *)((char *)VehPrototypes + protoId * 0x34 + 0x2A) != 7) ok = false;
+                            else if (faction_id == 0) ok = false;
                         }
                         if (ok) {
                             int localC = 0;
@@ -1250,13 +1250,13 @@ void __cdecl enemy_turn(int a1) {
                                     int diff = spd - *(unsigned char *)(rec + 0x1E);
                                     if (diff < 0 || (diff < 1000 && spd == *(unsigned char *)(rec + 0x1E))) break;
                                 }
-                                int vehCountBefore = *g_009a64c8;
+                                int vehCountBefore = VehCurrentCount;
                                 int r = enemy_veh(vehId);
-                                if (r != 0 || vehCountBefore != *g_009a64c8) break;
+                                if (r != 0 || vehCountBefore != VehCurrentCount) break;
                                 if (*(unsigned char *)(rec + 7) != 0x18) {
                                     int protoId2 = *(short *)rec;
-                                    unsigned char chassis2 = *(unsigned char *)((char *)g_009ab88c + protoId2 * 0x34);
-                                    if (*(unsigned char *)((char *)g_0094a379 + chassis2 * 0x90) != 2) {
+                                    unsigned char chassis2 = *(unsigned char *)((char *)VehPrototypes + protoId2 * 0x34 + 0x24);
+                                    if (*(unsigned char *)((char *)Chassis + chassis2 * 0x90 + 0x49) != 2) {
                                         localC++;
                                     }
                                 }
@@ -1275,6 +1275,6 @@ void __cdecl enemy_turn(int a1) {
         if (priority > 9) break;
     }
 
-    int idx = a1 * 0x20CC;
-    *(unsigned int *)((char *)g_0096c9e0 + idx) &= 0xfffeffff;
+    int idx = faction_id * 0x20CC;
+    *(unsigned int *)((char *)PlayersData + idx) &= 0xfffeffff;
 }

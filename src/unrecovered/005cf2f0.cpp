@@ -1345,7 +1345,7 @@ static int decode_and_advance(const unsigned int *bitBuffer, unsigned int &bitPo
 // (six repetitions of the same Huffman-decode-and-advance, unrolled in the
 // original the same way) so the logic is on record even though the
 // prologue can never match.
-extern "C" void __cdecl sub_5cf2f0(const unsigned int *bitBuffer, unsigned int bitPos, char *outStruct) {
+void __cdecl sub_5cf2f0(const unsigned int *bitBuffer, unsigned int bitPos, char *outStruct) {
     int value;
 
     value = decode_and_advance(bitBuffer, bitPos, reinterpret_cast<const unsigned char *>(g_009c9928), 0x19);

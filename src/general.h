@@ -250,3 +250,62 @@ MEASURED inline void __cdecl purge_trailing(LPSTR input) {
         --end;
     }
 }
+
+// ---------------------------------------------------------------------------
+// THE MOVIE CODEC FAMILY (0x005CE340..0x005D44FC), homed 2026-09-06.
+//
+// The image keeps the AVI decoder's own helpers in this range, immediately
+// below `mem_get` (0x005D4510), and they call each other freely - the IDCT
+// butterfly (sub_5d2b20) is called from the macroblock loop (sub_5cfaed), the
+// bitstream reader (sub_5d0d82) from the coefficient shuffler, and so on.
+// Declaring them HERE, ahead of any of the definitions, is what lets each one
+// be homed in its own commit: an artifact whose body calls a sibling that has
+// not been homed yet would otherwise fail the link and be reverted whole.
+// ---------------------------------------------------------------------------
+
+// IMA ADPCM audio. sub_5ce640 decodes a run of 4-bit nibbles; its two state
+// words (the predictor and the step index) live in the caller's frame and are
+// read AND written, so they travel as pointers.
+void __cdecl sub_5ce640(int first_sample, unsigned char *codes, short *samples,
+                        int sample_total, int *predictor, int *step_index);
+void __cdecl sub_5ce6e3(unsigned char *param_3, short *param_4, int param_5,
+                        int *param_6, int *param_7);
+void __cdecl sub_5ced1d(int *esi_ptr);
+void __cdecl sub_5cee80(int *src);
+int __cdecl enemy_veh(int faction);
+void __cdecl sub_5cef8a(int, int);
+int __cdecl sub_5cf150();
+void __cdecl sub_5cf2f0(const unsigned int *bit_buffer, unsigned int bit_pos,
+                        char *out_struct);
+void __cdecl OutputPixelRow(int *pEdi, unsigned int *pEsi, unsigned int *pEbx);
+void __cdecl OutputPixelRow16(short *pEdi, unsigned int *pEsi,
+                              unsigned int *pEbx);
+int __cdecl sub_5cfaed(unsigned char *param1, int param2, int param3);
+void __cdecl sub_5d02cc(unsigned char *, void *, int);
+int __cdecl sub_5d0aab();
+int __cdecl sub_5d0d82();
+int __cdecl sub_5d1278(int, int, int *);
+int __cdecl sub_5d1466(int baseY, int stride, void *ctx);
+int __cdecl sub_5d1654(int baseY, int stride, void *ctx);
+int __cdecl sub_5d1842(int baseY, int stride, void *ctx);
+int __cdecl sub_5d1a30(int, int, int);
+void __cdecl sub_5d1b88(unsigned int *outp, int *srcESI, int *srcEDI);
+void __cdecl sub_5d2037(int *data, int *tables, unsigned int *out);
+void __cdecl sub_5d2536(int *edi, int *esi, int *ebp);
+int __cdecl sub_5d2761(unsigned int *src, unsigned int *dst, int count);
+int __cdecl sub_5d2834(unsigned int *param_1, int *param_2, int param_3);
+int __cdecl sub_5d2901(int *param_1, int *param_2, int *param_3, int param_4);
+void __fastcall sub_5d2e70(int, int, int);
+int __fastcall sub_5d35b0(int *, int, int, int, int);
+int __fastcall sub_5d3980(int *param_1, unsigned int *param_2);
+int __fastcall sub_5d3df0(int *, int);
+void __fastcall sub_5d4020(void *thisPtr, unsigned char *dest,
+                           int unusedStackArg, int destStride);
+void __cdecl sub_5d4240(unsigned char *);
+
+// DirectSound/DirectDraw bring-up and teardown for the movie window.
+int __cdecl sub_62cd50();
+int __cdecl sub_62d160();
+void __cdecl sub_62d1e0(RECT *rect);
+int __cdecl sub_62d2c0();
+void *__fastcall sub_63bb20(void *this_ptr);

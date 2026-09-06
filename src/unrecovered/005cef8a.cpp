@@ -7,7 +7,7 @@
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005CED1D 0x005CEE80
 
-extern "C" void __cdecl sub_5cef8a(int a1, int a2) {
+void __cdecl sub_5cef8a(int a1, int a2) {
     *g_009c3000 = a2 << 2;
 
     *g_009c3004 = reinterpret_cast<int>(g_009c302c);

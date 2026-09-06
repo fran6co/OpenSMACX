@@ -1379,7 +1379,7 @@ static void decode_or_fill(unsigned int flags, unsigned int mask, int *fillBase,
     }
 }
 
-extern "C" void __fastcall sub_5d2e70(int a1, int a2, int a3) {
+void __fastcall sub_5d2e70(int a1, int a2, int a3) {
     unsigned int local_8;
     unsigned int bitCount;
     unsigned int bitBuf;

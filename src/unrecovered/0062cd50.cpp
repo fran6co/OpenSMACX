@@ -1534,7 +1534,7 @@ static int *const g_009bc49c = (int *)0x009BC49C;
 static int *const g_009bc4a0 = (int *)0x009BC4A0;
 static int *const g_009bc4a4 = (int *)0x009BC4A4;
 static int *const g_009bc4a8 = (int *)0x009BC4A8;
-extern "C" int __cdecl sub_62cd50() {
+int __cdecl sub_62cd50() {
     if (*(void **)g_009bc494 != 0) {
         void *old = *(void **)g_009bc494;
         ComSlot002 release = (ComSlot002)(*(void ***)old)[2];

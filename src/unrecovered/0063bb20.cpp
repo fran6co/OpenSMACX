@@ -1863,7 +1863,7 @@ static int *const g_006804b0 = (int *)0x006804B0;
 static int *const g_009b3374 = (int *)0x009B3374;
 inline void *operator new(unsigned int, void *p) { return p; }
 
-extern "C" void *__fastcall sub_63bb20(void *this_ptr) {
+void *__fastcall sub_63bb20(void *this_ptr) {
     char *self = reinterpret_cast<char *>(this_ptr);
 
     new (self) GraphicWin();

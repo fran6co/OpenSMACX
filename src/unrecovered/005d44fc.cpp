@@ -59,7 +59,7 @@ static int *const g_00669018 = (int *)0x00669018;
 
 typedef HRESULT (__stdcall *DirectDrawCreateProc)(GUID*, LPDIRECTDRAW*, IUnknown*);
 
-extern "C" HRESULT __stdcall DirectDrawCreate(GUID* a1, LPDIRECTDRAW* a2, IUnknown* a3) {
+HRESULT __stdcall DirectDrawCreate(GUID* a1, LPDIRECTDRAW* a2, IUnknown* a3) {
     DirectDrawCreateProc fn = *reinterpret_cast<DirectDrawCreateProc *>(g_00669018);
     return fn(a1, a2, a3);
 }

@@ -1221,7 +1221,7 @@ static int sub_5d0aab_decode_step(unsigned char *table, unsigned int tableShift,
     return sub_5d0d82();
 }
 
-extern "C" int __cdecl sub_5d0aab() {
+int __cdecl sub_5d0aab() {
     sub_5d0aab_decode_step((unsigned char *)g_009c9928, 0x19, &s_obj[0x40]);
     sub_5d0aab_decode_step((unsigned char *)g_009c9928, 0x19, &s_obj[0x40]);
     sub_5d0aab_decode_step((unsigned char *)g_009c9928, 0x19, &s_obj[0x40]);
