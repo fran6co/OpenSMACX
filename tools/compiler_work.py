@@ -678,7 +678,11 @@ SCAFFOLD_CEILINGS = {
     # 983 -> 982 (2026-09-06, W5m general board): one claimed body homed
     # with 16 unclaimed beside it (the blend/colour table family and the
     # IMA/DirectDraw IAT pair).
-    "artifact files (recovered/)": 982,
+    # 982 -> 977 (2026-09-06, W5o win board): twelve claimed bodies
+    # re-earned BYTE_EXACT (the 0x5EE4xx-0x5EE9xx dispatcher family,
+    # send_wheel_delta - now the slot-77 virtual - publish_callback_
+    # window, add/remove_ancestor_origin) plus four unclaimed.
+    "artifact files (recovered/)": 977,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -792,7 +796,14 @@ SCAFFOLD_CEILINGS = {
     # homed into src/general.cpp, all bindings named from evidence (the
     # prior revert note on 0x5CE6E3's five "evidence-free" globals was
     # wrong - the halves-of-a-dword arithmetic names them).
-    "unrecovered files": 1073,
+    # 1073 -> 1062 (2026-09-06, W5o win board): DDInit::lock_surface and
+    # flush homed BYTE_EXACT (lock_surface stores the sixth field the
+    # five-offset survey missed - pitch_ at 0x14), set_base_window
+    # MNEMONIC_ONLY 95/96, pump_mouse_messages MISMATCH 39/68 with the
+    # IAT-hoisting lever (the three message imports hoist into the
+    # prologue as *(Fn*)IatX reads; &= &PeekMessageA sinks each to first
+    # use - 21 -> 39 of 68).
+    "unrecovered files": 1062,
     # 2717 -> 2748 (2026-09-04, P2 net batch): NetFifo promoted with
     # close/add/get/get, NetFifoNode, head_/tail_/count_ - the deliberate
     # raise this ceiling exists for (class modelling grows it; the class

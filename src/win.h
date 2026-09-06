@@ -39,6 +39,9 @@ class Scroll; // forward declaration
  /*
   * Win class: Most basic window class.
   */
+// Forward declaration: `Win::set_base_window` takes one, and GraphicWin
+// derives from Win, so the definition has to come after this class.
+class GraphicWin;
 // WIN IS AN AUTOSOUND. The layout said so before the inheritance did: this
 // class held `AutoSound auto_sound_` at offset 0, AutoSound's own first member
 // was the vtable dword, so Win's vtable and AutoSound's were the same four
@@ -66,6 +69,13 @@ class Win : public AutoSound {
   // reads the same private fields the class's own z-order code does;
   // the image treats it as part of Win even though it is not a member.
   friend void __cdecl recurse_zorder(Win *window);
+  // Homed into win.cpp 2026-09-06. Walks the parent chain accumulating each
+  // window's client + outer origin into the caller's pair; reads the same
+  // private fields the class's own coordinate converters do.
+  friend void __cdecl add_ancestor_origin(int *x, int *y, Win *window);
+  // 0x005ED490, homed into win.cpp 2026-09-06. The exact mirror of the one
+  // above: every add is a subtract, the walk and the correction identical.
+  friend void __cdecl remove_ancestor_origin(int *x, int *y, Win *window);
   // The window class's WM_SYSKEY router, homed into win.cpp. It reads
   // poWinBase_, iSomeFlag_ and win_parent_ off whichever window it
   // resolves as active; the image treats it as part of Win even though
@@ -159,6 +169,46 @@ class Win : public AutoSound {
  public:
   // 0x005EBD80, a pending_bodies forwarder.
   int init(int x, int y, int width, int height, LPSTR caption, int flags, Win * parent, Menu * menu, BorderSizing * border);
+
+  // 0x005F4D90, homed into win.cpp 2026-09-06. Installs the window this one
+  // treats as its base display window: resizes the incoming window to the
+  // current base's outer rectangle when the two disagree, records it in
+  // poWinBase_, re-walks the root windows and repaints. The argument is the
+  // GraphicWin whose working rectangle (Buffer::rect2_, 0x474) the comparison
+  // reads - `Win` is a friend of `Buffer`, which is what makes it legal here.
+  int set_base_window(GraphicWin *window);
+
+  // 0x005EE4A0, homed into win.cpp 2026-09-06. The same gates as
+  // send_wheel_delta (slot 77), one value straight through slot 15 or slot 30
+  // with no division in front of it.
+  void send_to_window(int value, int which);
+
+  // 0x005EE460, homed into win.cpp 2026-09-06. Publishes `this` as
+  // WinCallbackWindow, runs the field_404_ hook, raises slot 14, then offers
+  // the window at val_6_ the slot 23 / slot 7 pair.
+  void publish_callback_window();
+
+  // 0x005EE4D0, homed into win.cpp 2026-09-06. The shared dispatcher shape -
+  // input gates, publish WinCallbackWindow, run mouse_move_hook_, raise slot
+  // 17 (slot 31 when the third argument is set), then notify the child.
+  void dispatch_17(int a, int b, int alternate);
+
+  // 0x005EE570 / 0x005EE610, homed into win.cpp 2026-09-06. The same
+  // dispatcher shape around slot 28 (field_40C_ hook, children val_17_ /
+  // val_26_) and slot 29 (field_410_ hook, children val_18_ / val_27_).
+  void dispatch_28(int a, int b, int alternate);
+  void dispatch_29(int a, int b, int alternate);
+
+  // 0x005EE6B0, homed into win.cpp 2026-09-06. The same shape around slot 19
+  // (field_414_ hook, children AutoSound+0x20 / val_20_) - see the layout
+  // note in win.cpp about that 0x20 read.
+  void dispatch_19(int a, int b, int alternate);
+
+  // 0x005EE810 / 0x005EE8B0, homed into win.cpp 2026-09-06. The same shape
+  // around slot 21 (field_41C_ hook, children val_10_ / val_22_) and slot 22
+  // (field_420_ hook, children val_11_ / val_23_).
+  void dispatch_21(int a, int b, int alternate);
+  void dispatch_22(int a, int b, int alternate);
 
   friend class Scroll;
   // BaseButton's colour setters test the parent link before drawing.
@@ -527,16 +577,13 @@ class Win : public AutoSound {
   virtual void on_nc_paint(RECT *area, int flags);  // slot 74  0x005F5810
   virtual int on_nc_hittest(int x, int y);  // slot 75  0x005F5AD0
   virtual int on_query_new_palette();  // slot 76  0x005F1060
-  // slot 77  0x005F62D0. NAMED 2026-08-25 from its only dispatch: the
-  // WM_MOUSEWHEEL arm of Win::window_proc calls it with the wParam key
-  // flags, the wheel delta out of the wParam's high half, the cursor
-  // position and the from-parent flag. The five-argument signature is that
-  // call site; the body at 0x005F62D0 is still unrecovered.
-  // Empty inline, the same placeholder shape the other uncatalogued
-  // slots carry: 0x005F62D0's body is not recovered, so this occupies
-  // the slot without claiming to be it.
-  virtual void on_mouse_wheel(unsigned int keys, unsigned int delta,
-                              int x, int y, int from_parent) {}
+  // slot 77  0x005F62D0. RECOVERED 2026-09-06 and homed into win.cpp as
+  // `send_wheel_delta`, which replaces the empty placeholder that stood here:
+  // the slot divides the packed `short` by 120 - WHEEL_DELTA - and forwards
+  // the notch count through slot 15 / slot 30, behind the class's usual
+  // input gates. The window_proc arm below is its caller.
+  virtual void send_wheel_delta(int key, short delta, int x, int y,
+                                int from_parent);
   virtual void on_key(unsigned int key, long flags, int repeat, unsigned int scan);  // slot 78  0x005F5D10
   // slot 79  0x005F5FB0. NAMED 2026-08-25, and it was declared TWICE: as
   // this placeholder and again as the non-virtual `sub_5f5fb0(char, int)`
@@ -1023,6 +1070,16 @@ class DDInit { public:
   // jackal_close runs it on the global object below.
   void teardown();            // 0x00635750, defined in win.cpp
 
+  // 0x006357D0, homed into win.cpp 2026-09-06. Locks `locked_surface_` and
+  // caches the descriptor's lpSurface in `locked_bits_` and its lPitch in
+  // `pitch_`, returning the bits pointer it already holds on a second call.
+  LPVOID lock_surface();      // 0x006357D0, defined in win.cpp
+
+  // 0x00635840, homed into win.cpp 2026-09-06. Unlocks `locked_surface_` and
+  // clears `locked_bits_` - the lock half of the pair `teardown` runs, as its
+  // own entry point.
+  void flush();               // 0x00635840, defined in win.cpp
+
   // SELF-VERIFYING ANCHOR: DDInit has no base and no virtual, so its first
   // member is at 0 - and field_8_, two members later, states its own offset.
   // Annotating hwnd_ at 0x0 is only correct if the walk lands field_8_ on
@@ -1032,6 +1089,11 @@ class DDInit { public:
   uint32_t field_8_;
   IDirectDrawSurface *locked_surface_;
   LPVOID locked_bits_;
+  // 0x14. The stride `lock_surface` caches out of the descriptor's lPitch,
+  // beside the bits pointer it caches in `locked_bits_`. `lock_surface` is
+  // the only writer and nothing in the recovered tree reads it, which is why
+  // the five-field survey above missed it - 0x006357D0 is what proves it.
+  int pitch_;
 };
 
 // The object itself at 0x009BE618, not a pointer to one.

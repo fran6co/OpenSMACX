@@ -2661,8 +2661,8 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
             if (over == nullptr) {
                 return 0;
             }
-            over->on_mouse_wheel(wparam, static_cast<unsigned int>(wparam) >> 16,
-                                 x, y, WinMouseDirect);
+            over->send_wheel_delta(wparam, static_cast<unsigned int>(wparam) >> 16,
+                                   x, y, WinMouseDirect);
             return 0;
         } else {
             switch (message) {
@@ -11376,3 +11376,663 @@ void __cdecl add_parent(Win * window) {
 
 // ====================
 Buffer g_WIN_BUFFER;
+
+// ===== homed from src/unrecovered/005ed360.cpp =====
+void __cdecl add_ancestor_origin(int *x, int *y, Win *window);
+// ORIGINAL: 0x005ED360 sub_5ed360 0x005ED360-0x005ED3E9 FILE BYTE_EXACT
+// symbol    ?add_ancestor_origin@@YAXPAH0PAVWin@@@Z
+// size      137 bytes
+// prototype
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ED360
+// NAMED from the body: it walks up the parent chain, adding each window's
+// client + outer origin into the caller's pair and taking the outer origin
+// back off again when the parent carries the 0x8000 flag - the same
+// accumulate-then-correct shape `nonclient_to_screen` uses in line, with the
+// recursion the image's own `call 0x5ED360` proves.
+// on a `char *` - raw self-access, and the member spelling below measures
+// the same body, so the pun bought nothing.
+void __cdecl add_ancestor_origin(int *x, int *y, Win *window) {
+    *x += window->client_rect_.left + window->outer_rect_.left;
+    *y += window->client_rect_.top + window->outer_rect_.top;
+    if ((window->iFlags_ & 0x20) != 0 && window->win_parent_ != 0) {
+        add_ancestor_origin(x, y, window->win_parent_);
+        if ((window->iFlags_ & 0x8000) != 0) {
+            *x -= window->win_parent_->outer_rect_.left;
+            *y -= window->win_parent_->outer_rect_.top;
+        }
+    }
+}
+
+// ===== homed from src/unrecovered/006357d0.cpp =====
+// /O2 implies /Oi, and /Oi expands a memset of a plain local into the
+// `rep stosd` form. This body's image CALLS it (0x006465F0), so the clear is
+// routed through a real function - path.cpp's `memset_call` idiom, kept
+// file-local because path.cpp owns the external name.
+static void *__cdecl win_memset_call(void *dst, int value, unsigned count) {
+    return memset(dst, value, count);
+}
+
+// ORIGINAL: 0x006357D0 sub_6357d0 0x006357D0-0x00635835 FILE BYTE_EXACT
+// symbol    ?lock_surface@DDInit@@QAEPAXXZ
+// size      101 bytes
+// prototype
+// callers   0   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x006465F0
+// indirect  0x00635814
+// NAMED from the body and its address: it sits directly after
+// DDInit::teardown (0x00635750) and reads exactly DDInit's own
+// `locked_surface_`/`locked_bits_` pair at 0xC/0x10, so it is DDInit's
+// surface lock - the lock half of the same pair `teardown` unlocks.
+//
+// The descriptor is the SDK's own `DDSURFACEDESC` - 0x6C bytes, `lPitch` at
+// 0x10, `lpSurface` at 0x24, which is where the image reads. 0x21 is
+// DDLOCK_WAIT | DDLOCK_WRITEONLY, left as the literal: no other body here
+// spells that pair, so there is nothing to name it against.
+//
+// LEVER: the pitch is a REAL MEMBER. The scaffold reached it as
+// `*(int *)(self + 0x14)` - the one field the five-offset survey of
+// WinDisplayInit in win.h had not accounted for - and declaring `pitch_`
+// turned the raw store into the image's own `mov [esi+0x14], eax`.
+LPVOID DDInit::lock_surface() {
+    if (locked_surface_ == nullptr) {
+        return nullptr;
+    }
+    if (locked_bits_ != nullptr) {
+        return locked_bits_;
+    }
+    DDSURFACEDESC description;
+    win_memset_call(&description, 0, sizeof(description));
+    description.dwSize = sizeof(description);
+    if (locked_surface_->Lock(nullptr, &description, 0x21, nullptr) != 0) {
+        return nullptr;
+    }
+    pitch_ = description.lPitch;
+    locked_bits_ = description.lpSurface;
+    return locked_bits_;
+}
+
+// ===== homed from src/unrecovered/005fcec0.cpp =====
+// The three USER32 entry points this pump caches, at the signatures the VC6
+// headers themselves declare - `void *` for the window handle, which the
+// older `PeekMessageFn` above spells, does not accept `&PeekMessageA`.
+typedef int(__stdcall *PeekMessageProc)(MSG *, HWND, unsigned int, unsigned int,
+                                       unsigned int);
+typedef int(__stdcall *TranslateMessageProc)(const MSG *);
+typedef LRESULT(__stdcall *DispatchMessageProc)(const MSG *);
+
+// The import-table slots those three live in, read by name rather than left
+// as `g_006693xx`: tools/iat_names.py names each address, and reading the slot
+// through a named pointer is what keeps the loads in the prologue.
+static void *const IatDispatchMessage = (void *) 0x00669340;
+static void *const IatPeekMessage = (void *) 0x00669358;
+static void *const IatTranslateMessage = (void *) 0x0066935C;
+// ORIGINAL: 0x005FCEC0 sub_5fcec0 0x005FCEC0-0x005FCF8C FILE
+// symbol    ?pump_mouse_messages@@YAXXZ
+// size      204 bytes
+// prototype
+// callers   0   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0062D5B0 0x0062D5D0 0x00636300
+// indirect  0x005FCEF5 0x005FCF04 0x005FCF0B 0x005FCF2D 0x005FCF38 0x005FCF3F 0x005FCF63 0x005FCF72 0x005FCF79
+// NAMED from the body: the loop peeks the WM_MOUSEFIRST..WM_MOUSELAST range
+// and then, for a WM_LBUTTONDOWN or WM_RBUTTONDOWN, peeks the matching
+// WM_LBUTTONUP / WM_RBUTTONUP out of the queue before the next round - the
+// mouse-message pump, as `do_char` is the keystroke one at 0x005FCF90.
+//
+// VOID, not the scaffold's `int` + `return 0`: the image's epilogue sets no
+// eax after the do_net call, and an int return would have to zero it.
+//
+// LEVER: the three USER32 entry points are read out of this module's own
+// import table - `*(TranslateMessageProc *) IatTranslateMessage` - which is
+// what makes VC6 hoist all three loads into the prologue, before the
+// do_video/check_net calls, exactly as the image does. Taking the imported
+// names as values (`= &PeekMessageA`) compiles the same instruction but VC6
+// then treats it as rematerialisable and sinks each load to its first use.
+// Slot addresses from tools/iat_names.py; the operands mask as relocations.
+//
+// TRIED: switch over msg.message (37/68), `&&`-chained guards (39/68),
+// `continue` in the second arm as well (39/68), else-if chain (40/68, and it
+// caches msg.message in eax where the image re-reads it). All of them still
+// merge the two translate/dispatch tails into one shared copy - 77
+// instructions against the image's 68, which emits the pair twice. The
+// declaration order is load-bearing instead: reverse of declaration, ebx =
+// translate, esi = peek, edi = dispatch, is what puts the prologue loads on
+// the image's own registers. 39 of 68, similarity 0.910, and the divergence
+// is that merge and nothing else.
+void __cdecl pump_mouse_messages() {
+    TranslateMessageProc translate = *(TranslateMessageProc *) IatTranslateMessage;
+    PeekMessageProc peek = *(PeekMessageProc *) IatPeekMessage;
+    DispatchMessageProc dispatch = *(DispatchMessageProc *) IatDispatchMessage;
+
+    MSG msg;
+    for (;;) {
+        do_video();
+        check_net();
+        if (!peek(&msg, 0, 0x200, 0x209, 1)) {
+            break;
+        }
+        translate(&msg);
+        dispatch(&msg);
+        if (msg.message == 0x201) {
+            if (peek(&msg, msg.hwnd, 0x202, 0x202, 1)) {
+                translate(&msg);
+                dispatch(&msg);
+                continue;
+            }
+        }
+        if (msg.message == 0x204) {
+            if (peek(&msg, msg.hwnd, 0x205, 0x205, 1)) {
+                translate(&msg);
+                dispatch(&msg);
+            }
+        }
+    }
+    do_net();
+}
+
+// ===== homed from src/unrecovered/005f4d90.cpp =====
+// ORIGINAL: 0x005F4D90 sub_5f4d90 0x005F4D90-0x005F4EB1
+// symbol    ?set_base_window@Win@@QAEHPAVGraphicWin@@@Z
+// size      289 bytes
+// prototype
+// callers   0   call targets   1
+// kind       game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F4EC0
+// indirect  0x005F4DC9 0x005F4DFD 0x005F4E10 0x005F4E3B 0x005F4EA3
+// NAMED from the body: it installs `window` as poWinBase_, the field the
+// whole class reads as "the window I am the base of", resizing it to the
+// outgoing base's outer rectangle when the working rectangle has moved on,
+// then re-walking the roots and repainting through slot 63.
+//
+// The argument is a GraphicWin, not a Win: the rect at +0x474 is
+// Buffer::rect2_, which GraphicWin carries through its Buffer base, and
+// `Win` is already Buffer's friend, so the read is a member read here.
+//
+// LEVER: the equal-rects guards are two SEPARATE early-outs arms, not one
+// merged tail - the image re-derives the width/height inside each arm from a
+// different source (poWinBase_ when there is one, `this` when there is not).
+int Win::set_base_window(GraphicWin *window) {
+    if (window == 0) {
+        return 0x10;
+    }
+    if (window == poWinBase_) {
+        return 0;
+    }
+    if (poWinBase_ != 0) {
+        if (!EqualRect(&poWinBase_->outer_rect_, &window->rect2_)) {
+            window->resize(poWinBase_->outer_rect_.right - poWinBase_->outer_rect_.left,
+                           poWinBase_->outer_rect_.bottom - poWinBase_->outer_rect_.top,
+                           1);
+        }
+    } else {
+        if (!EqualRect(&outer_rect_, &window->rect2_)) {
+            window->resize(outer_rect_.right - outer_rect_.left,
+                           outer_rect_.bottom - outer_rect_.top, 1);
+        }
+    }
+    poWinBase_ = window;
+
+    int i = 0;
+    WinZOrderCount = 0;
+    if (WinRootCount > 0) {
+        do {
+            if (WinZOrderWindow != 0 && WinZOrderWindow == WinRootWindows[i]) {
+                WinZOrderCount = 0;
+                WinZOrderFlag = 0;
+            }
+            if (WinRootWindows[i]->iSomeFlag_ & 1) {
+                recurse_zorder(WinRootWindows[i]);
+            }
+            ++i;
+        } while (i < WinRootCount);
+    }
+    vslot_63();
+    return 0;
+}
+
+// ===== homed from src/recovered/00635840.cpp =====
+// ORIGINAL: 0x00635840 sub_635840 0x00635840-0x00635864 BYTE_EXACT
+// symbol    ?flush@DDInit@@QAEXXZ
+// size      36 bytes
+// prototype
+// callers   0   call targets   0
+// kind       game
+// flags     sp_ready;purged_ok
+// calls     (none)
+// indirect  0x00635855
+// NAMED from its address and its fields: it sits between DDInit::teardown
+// (0x00635750) and DDInit::lock_surface (0x006357D0) and reads exactly
+// DDInit's locked_surface_ (0xC) / locked_bits_ (0x10) pair, calling the
+// surface's slot-0x80 Unlock - the unlock half of the pair as its own entry
+// point, which `teardown` repeats inline. The scaffold called the class
+// `Handler` because the scaffold did not know DDInit existed.
+void DDInit::flush() {
+    if (locked_surface_ != nullptr && locked_bits_ != nullptr) {
+        locked_surface_->Unlock(locked_bits_);
+        locked_bits_ = nullptr;
+    }
+}
+
+// ===== homed from src/recovered/005f62d0.cpp =====
+// ORIGINAL: 0x005F62D0 sub_5f62d0 0x005F62D0-0x005F6317 BYTE_EXACT
+// symbol    ?send_wheel_delta@Win@@UAEXHFHHH@Z
+// size      71 bytes
+// prototype
+// callers   0   call targets   0
+// kind       game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005F630B 0x005F6311
+// NAMED from the body: the only value it touches is the `short` argument,
+// divided by 120 - WHEEL_DELTA, the distance Windows packs into one wheel
+// notch - and the quotient is dispatched through slot 15 or slot 30
+// depending on the last argument, behind the same 0x200000 / 0x8 gates every
+// other input hook here tests. a1, a3 and a4 are never read.
+//
+// VOID, `ret 0x14`, and both dispatches are tail calls in the image.
+void Win::send_wheel_delta(int key, short delta, int x, int y, int horizontal) {
+    int notches = delta / 120;
+    if ((iFlags_ & 0x200000) == 0 && (iSomeFlag_ & 8) == 0) {
+        if (horizontal == 0) {
+            vslot_15(notches);
+        } else {
+            vslot_30(notches);
+        }
+    }
+}
+
+// ===== homed from src/unrecovered/005ed490.cpp =====
+// ORIGINAL: 0x005ED490 sub_5ed490 0x005ED490-0x005ED519 FILE BYTE_EXACT
+// symbol    ?remove_ancestor_origin@@YAXPAH0PAVWin@@@Z
+// size      137 bytes
+// prototype
+// callers   1   call targets   1
+// kind       game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ED490
+// NAMED from the body: the exact mirror of `add_ancestor_origin`
+// (0x005ED360) one page up this file - same parent-chain walk, same 0x8000
+// outer-rectangle correction, every add a subtract. Where a window needs the
+// chain's coordinate contribution taken back out, this is the function the
+// image runs.
+void __cdecl remove_ancestor_origin(int *x, int *y, Win *window) {
+    *x -= window->client_rect_.left + window->outer_rect_.left;
+    *y -= window->client_rect_.top + window->outer_rect_.top;
+    if ((window->iFlags_ & 0x20) != 0 && window->win_parent_ != 0) {
+        remove_ancestor_origin(x, y, window->win_parent_);
+        if ((window->iFlags_ & 0x8000) != 0) {
+            *x += window->win_parent_->outer_rect_.left;
+            *y += window->win_parent_->outer_rect_.top;
+        }
+    }
+}
+
+// ===== homed from src/recovered/005ee4a0.cpp =====
+// ORIGINAL: 0x005EE4A0 sub_5ee4a0 0x005EE4A0-0x005EE4D0 BYTE_EXACT
+// symbol    ?send_to_window@Win@@QAEXHH@Z
+// size      48 bytes
+// prototype
+// callers   0   call targets   0
+// kind       game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005EE4C4 0x005EE4CA
+// NAMED from the body: the same 0x200000 / 0x8 input gates as
+// send_wheel_delta above, then one value through slot 15 or slot 30 - the
+// forwarding half of the pair, with the selector in the second argument and
+// no division in front of it.
+void Win::send_to_window(int value, int which) {
+    if ((iFlags_ & 0x200000) == 0 && (iSomeFlag_ & 8) == 0) {
+        if (which == 0) {
+            vslot_15(value);
+        } else {
+            vslot_30(value);
+        }
+    }
+}
+
+// ===== homed from src/recovered/005ee460.cpp =====
+// ORIGINAL: 0x005EE460 sub_5ee460 0x005EE460-0x005EE497 BYTE_EXACT
+// symbol    ?publish_callback_window@Win@@QAEXXZ
+// size      55 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005EE473 0x005EE479 0x005EE487 0x005EE492
+// NAMED from the body: it publishes `this` as WinCallbackWindow, runs the
+// field_404_ hook when one is installed, raises its own slot 14, and then
+// walks the window at val_6_ offering it the same slot 23 / slot 7 pair the
+// other dispatchers here offer their child.
+void Win::publish_callback_window() {
+    WinCallbackWindow = this;
+    typedef void(__cdecl * NullaryCb)();
+    NullaryCb callback = reinterpret_cast<NullaryCb>(field_404_);
+    if (callback != 0) {
+        callback();
+    }
+    vslot_14();
+    Win *second = reinterpret_cast<Win *>(val_6_);
+    if (second != 0) {
+        if (second->vslot_23() == 0) {
+            second->vslot_07();
+        }
+    }
+}
+
+// ===== homed from src/unrecovered/005ee4d0.cpp =====
+// ORIGINAL: 0x005EE4D0 sub_5ee4d0 0x005EE4D0-0x005EE56B FILE BYTE_EXACT
+// symbol    ?dispatch_17@Win@@QAEXHHH@Z
+// size      155 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005EE510 0x005EE51B 0x005EE52B 0x005EE536 0x005EE54B 0x005EE559 0x005EE564
+// NAMED from its slot: the gate / publish / hook / slot / child-notify shape
+// this file's dispatchers share, raising slot 17 - the image offsets are
+// 0x44 (slot 17), 0x7c (slot 31), and the hook is mouse_move_hook_.
+// The child windows come off val_7_ (0x1C) and val_19_ (0x4C), the two
+// AutoSound words already typed `Win *`.
+void Win::dispatch_17(int a, int b, int alternate) {
+    if ((iFlags_ & 0x200000) != 0) {
+        return;
+    }
+    if ((iSomeFlag_ & 8) != 0) {
+        return;
+    }
+    if (alternate == 0) {
+        WinCallbackWindow = this;
+        WinMouseMoveHookFn hook = mouse_move_hook_;
+        if (hook != 0) {
+            hook(a, b);
+        }
+        vslot_17(a, b);
+        Win *child = reinterpret_cast<Win *>(val_7_);
+        if (child != 0) {
+            if (child->vslot_23() == 0) {
+                child->vslot_07();
+            }
+        }
+    } else {
+        vslot_31(a, b);
+        Win *child = reinterpret_cast<Win *>(val_19_);
+        if (child != 0) {
+            if (child->vslot_23() == 0) {
+                child->vslot_07();
+            }
+        }
+    }
+}
+
+// ===== homed from src/unrecovered/005ee570.cpp =====
+// ORIGINAL: 0x005EE570 sub_5ee570 0x005EE570-0x005EE60E FILE BYTE_EXACT
+// symbol    ?dispatch_28@Win@@QAEXHHH@Z
+// working copy - scaffold materialised by --work
+// size      158 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005EE5B0 0x005EE5BB 0x005EE5CB 0x005EE5D6 0x005EE5EB 0x005EE5FC 0x005EE607
+// NAMED from its slot: the dispatcher family again, slot 28 (0x70) with slot
+// 38 (0x98) as the alternate arm, the hook at field_40C_, the children off
+// val_17_ (0x44) and val_26_ (0x68).
+void Win::dispatch_28(int a, int b, int alternate) {
+    if ((iFlags_ & 0x200000) != 0) {
+        return;
+    }
+    if ((iSomeFlag_ & 8) != 0) {
+        return;
+    }
+    if (alternate == 0) {
+        WinCallbackWindow = this;
+        typedef void(__cdecl * TwoArgCb)(int, int);
+        TwoArgCb hook = reinterpret_cast<TwoArgCb>(field_40C_);
+        if (hook != 0) {
+            hook(a, b);
+        }
+        vslot_28(a, b);
+        Win *child = reinterpret_cast<Win *>(val_17_);
+        if (child != 0) {
+            if (child->vslot_23() == 0) {
+                child->vslot_07();
+            }
+        }
+    } else {
+        vslot_38(a, b);
+        Win *child = reinterpret_cast<Win *>(val_26_);
+        if (child != 0) {
+            if (child->vslot_23() == 0) {
+                child->vslot_07();
+            }
+        }
+    }
+}
+
+
+// ===== homed from src/unrecovered/005ee610.cpp =====
+// ORIGINAL: 0x005EE610 sub_5ee610 0x005EE610-0x005EE6AE FILE BYTE_EXACT
+// symbol    ?dispatch_29@Win@@QAEXHHH@Z
+// LEVER: void return (eax never set before ret) + own VCall2 shim for slot023 (int return, tested) and slots 29/39 ((int,int)), not the file's nullary VCall
+// working copy - scaffold materialised by --work
+// size      158 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+// NAMED from its slot: the dispatcher family again, slot 29 (0x74) with slot
+// 39 (0x9c) as the alternate arm, the hook at field_410_, the children off
+// val_18_ (0x48) and val_27_ (0x6c).
+void Win::dispatch_29(int a, int b, int alternate) {
+    if ((iFlags_ & 0x200000) != 0) {
+        return;
+    }
+    if ((iSomeFlag_ & 8) != 0) {
+        return;
+    }
+    if (alternate == 0) {
+        WinCallbackWindow = this;
+        typedef void(__cdecl * TwoArgCb)(int, int);
+        TwoArgCb hook = reinterpret_cast<TwoArgCb>(field_410_);
+        if (hook != 0) {
+            hook(a, b);
+        }
+        vslot_29(a, b);
+        Win *child = reinterpret_cast<Win *>(val_18_);
+        if (child != 0) {
+            if (child->vslot_23() == 0) {
+                child->vslot_07();
+            }
+        }
+    } else {
+        vslot_39(a, b);
+        Win *child = reinterpret_cast<Win *>(val_27_);
+        if (child != 0) {
+            if (child->vslot_23() == 0) {
+                child->vslot_07();
+            }
+        }
+    }
+}
+
+
+// ===== homed from src/unrecovered/005ee6b0.cpp =====
+// ORIGINAL: 0x005EE6B0 sub_5ee6b0 0x005EE6B0-0x005EE74E FILE BYTE_EXACT
+// symbol    ?dispatch_19@Win@@QAEXHHH@Z
+// LEVER: void return (eax never set before ret) + own VCall2 shim for slot023 (int return, tested) and slots 19/32 ((int,int)), not the file's nullary VCall. Same shape as sibling 0x005EE610, offsets 0x414/0x20/0x50 in place of that one's 0x410/0x48/0x6c.
+// working copy - scaffold materialised by --work
+// size      158 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// NAMED from its slot: the dispatcher family again, slot 19 (0x4c) with slot
+// 32 (0x80) as the alternate arm, the hook at field_414_, the children off
+// AutoSound+0x20 and val_20_ (0x50).
+//
+// BUG IN THE ORIGINAL (layout, not behaviour): AutoSound+0x20 is read here as
+// a `Win *` child pointer, and basepop.cpp documents that same word as the
+// flags field BasePop::UNK3/UNK4 set bits 0/1 in. Both cannot be true. The
+// read is left spelled through the declared field rather than an offset so
+// the finding is visible; fixing it means re-modelling AutoSound, not this
+// body.
+void Win::dispatch_19(int a, int b, int alternate) {
+    if ((iFlags_ & 0x200000) != 0) {
+        return;
+    }
+    if ((iSomeFlag_ & 8) != 0) {
+        return;
+    }
+    if (alternate == 0) {
+        WinCallbackWindow = this;
+        typedef void(__cdecl * TwoArgCb)(int, int);
+        TwoArgCb hook = reinterpret_cast<TwoArgCb>(field_414_);
+        if (hook != 0) {
+            hook(a, b);
+        }
+        vslot_19(a, b);
+        Win *child = reinterpret_cast<Win *>(flags_);
+        if (child != 0) {
+            if (child->vslot_23() == 0) {
+                child->vslot_07();
+            }
+        }
+    } else {
+        vslot_32(a, b);
+        Win *child = reinterpret_cast<Win *>(val_20_);
+        if (child != 0) {
+            if (child->vslot_23() == 0) {
+                child->vslot_07();
+            }
+        }
+    }
+}
+
+// ===== homed from src/unrecovered/005EE810.cpp =====
+// ORIGINAL: 0x005EE810 sub_5ee810 0x005EE810-0x005EE8AE FILE BYTE_EXACT
+// symbol    ?dispatch_21@Win@@QAEXHHH@Z
+// working copy - scaffold materialised by --work
+// size      158 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005EE850 0x005EE85B 0x005EE86B 0x005EE876 0x005EE88B 0x005EE89C 0x005EE8A7
+// NAMED from its slot: the dispatcher family again, slot 21 (0x54) with slot
+// 34 (0x88) as the alternate arm, the hook at field_41C_, the children off
+// val_10_ (0x28) and val_22_ (0x58).
+void Win::dispatch_21(int a, int b, int alternate) {
+    if ((iFlags_ & 0x200000) != 0) {
+        return;
+    }
+    if ((iSomeFlag_ & 8) != 0) {
+        return;
+    }
+    if (alternate == 0) {
+        WinCallbackWindow = this;
+        typedef void(__cdecl * TwoArgCb)(int, int);
+        TwoArgCb hook = reinterpret_cast<TwoArgCb>(field_41C_);
+        if (hook != 0) {
+            hook(a, b);
+        }
+        vslot_21(a, b);
+        Win *child = reinterpret_cast<Win *>(val_10_);
+        if (child != 0) {
+            if (child->vslot_23() == 0) {
+                child->vslot_07();
+            }
+        }
+    } else {
+        vslot_34(a, b);
+        Win *child = reinterpret_cast<Win *>(val_22_);
+        if (child != 0) {
+            if (child->vslot_23() == 0) {
+                child->vslot_07();
+            }
+        }
+    }
+}
+
+
+// ===== homed from src/unrecovered/005EE8B0.cpp =====
+// ORIGINAL: 0x005EE8B0 sub_5ee8b0 0x005EE8B0-0x005EE94E FILE BYTE_EXACT
+// symbol    ?dispatch_22@Win@@QAEXHHH@Z
+// working copy - scaffold materialised by --work
+// size      158 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005EE8F0 0x005EE8FB 0x005EE90B 0x005EE916 0x005EE92B 0x005EE93C 0x005EE947
+// NAMED from its slot: the dispatcher family again, slot 22 (0x58) with slot
+// 35 (0x8c) as the alternate arm, the hook at field_420_, the children off
+// val_11_ (0x2c) and val_23_ (0x5c).
+void Win::dispatch_22(int a, int b, int alternate) {
+    if ((iFlags_ & 0x200000) != 0) {
+        return;
+    }
+    if ((iSomeFlag_ & 8) != 0) {
+        return;
+    }
+    if (alternate == 0) {
+        WinCallbackWindow = this;
+        typedef void(__cdecl * TwoArgCb)(int, int);
+        TwoArgCb hook = reinterpret_cast<TwoArgCb>(field_420_);
+        if (hook != 0) {
+            hook(a, b);
+        }
+        vslot_22(a, b);
+        Win *child = reinterpret_cast<Win *>(val_11_);
+        if (child != 0) {
+            if (child->vslot_23() == 0) {
+                child->vslot_07();
+            }
+        }
+    } else {
+        vslot_35(a, b);
+        Win *child = reinterpret_cast<Win *>(val_23_);
+        if (child != 0) {
+            if (child->vslot_23() == 0) {
+                child->vslot_07();
+            }
+        }
+    }
+}
+
+
+// ===== homed from src/recovered/005f2250.cpp =====
+// ORIGINAL: 0x005F2250 sub_5f2250 0x005F2250-0x005F228C BYTE_EXACT
+// symbol    ?dispatch_mouse_wheel@@YAXHHHHH@Z
+// size      60 bytes
+// prototype
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005F6F10
+// indirect  0x005F2285
+// NAMED from the body: it resolves the window under the cursor with
+// `get_mouse_window` - which writes the window-relative coordinates back
+// over the fourth and fifth arguments - and hands those, the key flags and
+// the delta to that window's slot 77, the mouse-wheel handler. The FIRST
+// argument is never read; nothing in the image touches it.
+void __cdecl dispatch_mouse_wheel(int unused, int keys, int delta, int x, int y) {
+    Win *window = Win::get_mouse_window(&x, &y);
+    if (window != 0) {
+        window->send_wheel_delta(keys, delta, x, y, WinMouseDirect);
+    }
+}
