@@ -21,6 +21,12 @@ def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(prog="recover", description="Structure-led matching recovery")
     result.add_argument("--version", action="version", version=__version__)
     commands = result.add_subparsers(dest="command", required=True)
+    run = commands.add_parser("run", help="Drive bounded recovery through configured command adapters")
+    run.add_argument("task")
+    run.add_argument("--root", type=Path, default=Path.cwd())
+    run.add_argument("--config", type=Path, required=True)
+    run.add_argument("--worker", type=Path, required=True, help="Trusted worker command configuration")
+    run.add_argument("--iterations", type=int, default=3)
     inventory = commands.add_parser("inventory", help="Inspect legacy source without altering it")
     inventory.add_argument("--root", type=Path, default=Path.cwd())
     inventory.add_argument("--image", type=Path, help="Verify the original against its pin")
@@ -107,6 +113,12 @@ def parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     args = parser().parse_args(argv)
     try:
+        if args.command == "run":
+            from .driver import drive
+            from .records import read_json
+            output = drive(args.root, args.task, read_json(args.config), read_json(args.worker), iterations=args.iterations)
+            print(json.dumps(output, indent=2, sort_keys=True))
+            return 3  # No driver stop condition yet constitutes completed admission.
         if args.command == "tasks" and args.action == "check-binary":
             from .adapters.opensmacx_binary import verify_task
             output = verify_task(args.root, args.task, args.image)

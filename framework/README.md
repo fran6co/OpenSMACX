@@ -84,6 +84,57 @@ adjacency never proves a translation-unit boundary. These reports are not stored
 claim about object ownership or dynamic calls. Unresolved includes widen the
 scope; this view is not yet used to narrow the production check cache.
 
+## Configured recovery driver
+
+`recover run` executes a bounded context → check → worker → recheck loop. The
+engine imports no OpenSMACX, VC6, executable-format or agent-provider code.
+Project configuration selects JSON command adapters; `recovery/driver.json`
+wires OpenSMACX's existing context and strict task check into that engine.
+
+```sh
+uv run recover run infowin-ownership --config recovery/driver.json \
+  --worker /path/to/worker.json --iterations 3
+```
+
+Set `OPENSMACX_IMAGE` and an isolated `VC6_PREFIX` for the supplied project
+configuration. A trusted worker configuration supplies an attribution label and
+an adapter command, for example `{"author":"worker-name","command":{"argv":
+["/path/to/agent-adapter"],"timeout":900}}`. This is a protocol contract, not a
+bundled agent-provider implementation. The worker adapter receives one JSON
+object on stdin containing the task, authorized files, fresh context and check
+report. It edits source in the provided worktree and returns only
+`{"discoveries":[]}`, or discoveries containing `hypothesis`, `affects` (original
+entity ids) and `evidence`. Worker output never establishes a passing verdict.
+
+Each command has an argv array and explicit timeout; no shell interpolation is
+used. Supported placeholders are `{task}`, `{root}` and `{env:VARIABLE}`.
+Context commands return a JSON object with exit 0. Check commands return a JSON
+object with `result` equal to `pass`, `fail` or `unknown`, and respectively exit
+0, 1 or 3. The complete checker response is supplied to the worker on each round.
+
+The driver stops on a discovery needing evaluation/scope expansion, no source
+change, budget exhaustion, unavailable context, interruption, or a passing check
+needing independent review. Scoped edits remain in place on every stop; nothing
+is automatically reverted, committed or collected. Discoveries enter versioned
+task history; reproducible context/check results do not. Checkpoint new decision
+records before resuming. Existing edits confined to the approved files can be
+resumed; unrelated dirty work is refused.
+
+The driver serializes execution in one worktree and detects tracked/nonignored
+file, index and HEAD changes outside allowed operations, including on command
+failure. **This is detection, not a security sandbox.** Use trusted adapters and
+externally sandbox workers; ignored files and writes outside this worktree are
+not protected by these checks. POSIX timeout cleanup kills the command process
+group; Windows descendant isolation must be provided by the worker adapter.
+
+All current driver stops return CLI exit 3 and `ready_for_collection:false`:
+independent review, structural-migration admission, obligation restoration and
+collection execution remain unfinished. The supplied OpenSMACX checker is still
+a scoped diagnostic, not the full acceptance gate. An alternate-target test runs
+real subprocess worker/check adapters without importing the OpenSMACX adapter.
+
+## Task commands and source bindings
+
 ```sh
 uv run recover tasks create example-layout --group class:InfoWin --author coordinator \
   --intent "Recover InfoWin storage ownership" --evidence "source:src/infowin.h"

@@ -99,8 +99,11 @@ establish completion of this program.
   task scope, cross-function discoveries, coordinator expansion and explicit
   resolution are versioned decisions. Task-scoped binary checks now execute
   through a shared strict application/dependency verifier, compiling once per
-  selected TU/flag set without stamping claims. Dispatch, proof-driven stage transitions,
-  independent review execution and collection remain under construction.
+  selected TU/flag set without stamping claims. A configured command driver now
+  runs bounded context/check/worker/recheck rounds, preserves discoveries and
+  detects scope violations. An alternate target exercises real subprocesses.
+  Provider integrations, independent review execution, migration admission and
+  collection remain under construction; the driver never declares collection ready.
 - [ ] InfoWin ownership and constructor-family end-to-end structural pilots.
   The redraw slot is now an InfoWin member instead of independent storage;
   its object-start binding lives beside ConsoleInfoWin's definition. Constructor
