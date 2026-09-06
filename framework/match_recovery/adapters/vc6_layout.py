@@ -11,6 +11,13 @@ import struct
 from ..pe_coff import Coff
 
 
+class ClassNotEmitted(ValueError):
+    """Valid standalone type stream, but no complete definition of this class.
+
+    This is missing coverage, not evidence that the TU cannot depend on its ABI.
+    """
+
+
 class Cursor:
     def __init__(self, data: bytes):
         self.data, self.at = data, 0
@@ -116,6 +123,8 @@ def class_layout(obj: Coff, name: str) -> dict:
         if any(offset >= size for offset in members.values()):
             raise ValueError("member offset outside compiler class extent")
         definitions.append({"class": name, "size": size, "members": members})
+    if not definitions:
+        raise ClassNotEmitted("requires one complete compiler class definition; none emitted")
     if len(definitions) != 1:
         raise ValueError("requires one complete compiler class definition")
     return definitions[0]

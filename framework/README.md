@@ -363,6 +363,13 @@ compiles scoped product TUs with both VC6 flag sets and standalone `/Z7`, then
 compares strict CodeView direct-member offsets with the scoped source expectations.
 Every requested TU/configuration must agree. PCH use, ambiguous class definitions,
 unsupported/truncated field lists and missing observations are unmeasurable.
+`tasks check-layout <task> --summary` omits repeated per-member details but keeps
+offset verdict counts and per-class/TU/configuration coverage. `not_emitted` means
+the standalone type stream has no complete definition of that class;
+`unmeasurable` means compilation or strict parsing failed. Neither waives that
+TU's required observation. Coverage reports suggest whether the next step is a
+layout witness/relevance investigation or a compiler/parser repair; they are
+fresh diagnostics, not source claims or stored task state.
 No debugger-style partial field lists or type-index voting supplies gate evidence.
 InfoWin's `redraw_phase_` expectation passes in both Console and InfoWin units.
 This checks declared offsets, **not** completeness of the declarations, original

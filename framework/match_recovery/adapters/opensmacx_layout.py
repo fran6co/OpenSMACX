@@ -11,7 +11,7 @@ from ..tasks import TaskStore
 from .opensmacx import image_pin
 from .opensmacx_binary import _inputs
 from .vc6 import FLAG_SETS, compile_object
-from .vc6_layout import class_layout
+from .vc6_layout import ClassNotEmitted, class_layout
 
 
 def verify_layout(root: Path, task_name: str, *, compiler=compile_object, command_for=None) -> dict:
@@ -31,10 +31,10 @@ def verify_layout(root: Path, task_name: str, *, compiler=compile_object, comman
     if command_for is None:
         from decomp.asm import build_command
         command_for = lambda path: tuple(build_command(root / "build/compile_commands.json", path))
-    rows, attempts = [], 0
+    rows, observations, attempts = [], [], 0
     for unit in units if expected else []:
         for flags in FLAG_SETS:
-            layouts, errors = {}, {}
+            layouts, errors, missing = {}, {}, set()
             try:
                 command = tuple(command_for(root / unit))
                 if any(word.lower().startswith(("/yu", "/yc", "/fp", "-yu", "-yc", "-fp", "@")) for word in command):
@@ -44,10 +44,21 @@ def verify_layout(root: Path, task_name: str, *, compiler=compile_object, comman
                 for name in sorted({item.class_name for item in expected}):
                     try:
                         layouts[name] = class_layout(obj, name)
+                    except ClassNotEmitted as error:
+                        errors[name] = str(error)
+                        missing.add(name)
                     except ValueError as error:
                         errors[name] = str(error)
             except (OSError, ValueError) as error:
                 errors = {item.class_name: str(error) for item in expected}
+            for name in sorted({item.class_name for item in expected}):
+                state = "not_emitted" if name in missing else "observed" if name in layouts else "unmeasurable"
+                observations.append({"class_name": name, "unit": unit, "flags": list(flags),
+                                     "observation": state, "reason": errors.get(name, "complete compiler definition parsed"),
+                                     "next_action": ("establish a layout witness or independently prove this TU irrelevant; do not waive coverage"
+                                                     if state == "not_emitted" else
+                                                     "repair compilation or unsupported debug parsing before checking offsets"
+                                                     if state == "unmeasurable" else None)})
             for item in expected:
                 layout = layouts.get(item.class_name)
                 actual = layout["members"].get(item.member) if layout else None
@@ -63,7 +74,9 @@ def verify_layout(root: Path, task_name: str, *, compiler=compile_object, comman
     result = (Result.UNKNOWN if not rows or any(row["result"] == Result.UNKNOWN for row in rows)
               else Result.FAIL if any(row["result"] == Result.FAIL for row in rows) else Result.PASS)
     return {"task_id": task_name, "check": "declared_direct_member_offsets", "result": result,
-            "members": rows, "compile_attempts": attempts, "input_fingerprint": digest(before),
+            "members": rows, "coverage": observations,
+            "counts": {state.value: sum(row["result"] == state for row in rows) for state in Result},
+            "compile_attempts": attempts, "input_fingerprint": digest(before),
             "scope_complete": False, "structure_verification": Result.UNKNOWN, "persisted": False,
             "limitations": ["source expectations are original-layout interpretations, not freshly re-derived image evidence",
                             "direct members only; base hierarchy, member types, full extent and lifetime remain unproved",

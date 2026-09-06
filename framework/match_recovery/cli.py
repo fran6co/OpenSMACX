@@ -59,6 +59,7 @@ def parser() -> argparse.ArgumentParser:
     layout = task_actions.add_parser("check-layout", help="Compile and compare declared member offsets; not full structural verification")
     layout.add_argument("task")
     layout.add_argument("--root", type=Path, default=Path.cwd())
+    layout.add_argument("--summary", action="store_true", help="Keep coverage and verdicts, omit repeated per-member observations")
     task_binary = task_actions.add_parser("check-binary", help="Compile task TUs and check bounded code/references; not an admission gate")
     task_binary.add_argument("task")
     task_binary.add_argument("--root", type=Path, default=Path.cwd())
@@ -133,6 +134,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.command == "tasks" and args.action == "check-layout":
             from .adapters.opensmacx_layout import verify_layout
             output = verify_layout(args.root, args.task)
+            if args.summary:
+                output.pop("members")
             print(json.dumps(output, indent=2, sort_keys=True))
             return {Result.PASS: 0, Result.FAIL: 1, Result.UNKNOWN: 3}[output["result"]]
         if args.command == "tasks" and args.action == "obligations":
