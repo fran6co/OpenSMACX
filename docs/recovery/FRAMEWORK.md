@@ -102,6 +102,9 @@ establish completion of this program.
   selected TU/flag set without stamping claims. Dispatch, proof-driven stage transitions,
   independent review execution and collection remain under construction.
 - [ ] InfoWin ownership and constructor-family end-to-end structural pilots.
+  The redraw slot is now an InfoWin member instead of independent storage;
+  its object-start binding lives beside ConsoleInfoWin's definition. Constructor
+  subobjects, object extent, lifetime, full admission and restoration remain.
 - [ ] Prefix leases, include/parse/measurement caches, candidate decks, benchmarks.
 - [ ] Quota/interruption recovery and multiple-checkpoint restoration tests.
 - [ ] Tool/documentation cutover, stale-reference audit, removal of superseded live

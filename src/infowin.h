@@ -66,6 +66,7 @@ class InfoWin {
   ~InfoWin();
   void UNK1();
   void on_redraw();
+  void set_redraw_phase(int phase) { redraw_phase_ = phase; }
   void reset();
   void change(int a1);
   void UNK3(int menu_id, int item_id);
@@ -114,7 +115,10 @@ class InfoWin {
   uint32_t field_84_;  // 0x84
   uint32_t field_88_;  // 0x88
   uint32_t field_8C_;  // 0x8C
-  uint32_t field_90_;  // 0x90
+  // Original +0x90: Console::editor_save (0x004E09E0) writes 7 here
+  // before redrawing the fixed InfoWin at 0x007AD2A0. This is member
+  // storage, not a separate global at 0x007AD330; other values are unnamed.
+  int redraw_phase_;
   uint32_t field_94_;  // 0x94
   uint8_t field_98_[0x10];  // 0x98
   int32_t field_A8_;
@@ -147,5 +151,4 @@ class InfoWin {
 // substitute a probe.
 typedef void (OriginalObject::*func_info_win_right_menu)(int, int);
 extern func_info_win_right_menu InfoWinOriginalRightMenu;  // 0x004589C0
-
 

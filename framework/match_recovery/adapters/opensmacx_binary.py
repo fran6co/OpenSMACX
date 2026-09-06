@@ -11,6 +11,7 @@ from typing import Callable
 from ..bound_objects import FunctionBinding, check_objects
 from ..fingerprint import input_snapshot
 from ..model import Origin, Result, Span, digest
+from ..object_source import read_objects, object_targets
 from ..pe_coff import Coff, PeImage
 from ..tasks import TaskStore
 from .opensmacx_project import project_view
@@ -91,7 +92,10 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
            for subject in task.subjects):
         raise ValueError("task refers to a different original image/address space")
     image = PeImage(image_path.read_bytes(), snapshot["image_sha256"])
+    object_bindings = read_objects(root, snapshot["image_sha256"])
     bindings, refused, externals = select_bindings(view, selected)
+    if {item.symbol for item in object_bindings} & set(externals):
+        raise ValueError("a source symbol is bound as both function and object")
     if command_for is None:
         from decomp.asm import build_command
         command_for = lambda path: tuple(build_command(root / "build/compile_commands.json", path))
@@ -102,7 +106,7 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
             commands[unit] = tuple(command_for(root / unit))
         except ValueError as error:
             command_errors[unit] = str(error)
-    attempts, variants = 0, defaultdict(list)
+    attempts, variants, object_checks = 0, defaultdict(list), []
     for flags in FLAG_SETS:
         objects, errors = {}, dict(command_errors)
         for unit, command in commands.items():
@@ -111,7 +115,9 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
                 objects[unit] = Coff(compiler(root / unit, command, flags))
             except (OSError, ValueError) as error:
                 errors[unit] = str(error)
-        for row in check_objects(bindings, objects, image, external_targets=externals, errors=errors):
+        data_targets, checked_objects = object_targets(object_bindings, objects)
+        object_checks.extend({**item, "flags": list(flags)} for item in checked_objects)
+        for row in check_objects(bindings, objects, image, external_targets={**externals, **data_targets}, errors=errors):
             variants[row["entity_id"]].append({**row, "flags": list(flags)})
     rows = list(refused)
     for key, candidates in sorted(variants.items()):
@@ -130,6 +136,7 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
     return {"task_id": task_name, "check": "scoped_binary_references", "result": overall,
             "input_fingerprint": digest(before), "functions": rows, "counts": dict(sorted(counts.items())),
             "compile_attempts": attempts, "selected_entities": len(selected), "translation_units": units,
+            "object_definitions": object_checks,
             "unresolved_symbols": sorted({relocation["symbol"] for candidates in variants.values()
                                            for row in candidates for relocation in row.get("relocations", [])
                                            if relocation["result"] == Result.UNKNOWN}),
@@ -137,6 +144,6 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
             "build_verification": Result.UNKNOWN, "structure_verification": Result.UNKNOWN,
             "runtime_verification": Result.UNKNOWN,
             "limitations": ["task subjects only; dependent callers require a wider admission gate",
-                            "legacy function bindings only; data/import ownership needs source annotations",
+                            "object starts require compiled definitions; extents and import bindings remain unproved",
                             "no layout, lifetime, full link or independent review proof",
                             "fresh diagnostic only; fingerprint is not a reusable measurement cache key"]}

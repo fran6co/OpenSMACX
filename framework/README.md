@@ -102,7 +102,8 @@ OpenSMACX flag sets, then measures all selected functions from those objects.
 Exact source-owned function symbols can resolve cross-TU calls. Ambiguous names,
 missing build entries, unsupported extents and seed-only subjects remain unknown;
 no compilation command is silently borrowed and no old body is promoted.
-Data/import bindings are not yet imported, so references to those stay unknown.
+Explicit object-start bindings are read from source; missing data/import bindings
+remain unknown.
 
 The command returns 0 only if every selected subject has a complete passing
 trial, 1 if there are failures and no unknown subjects, and 3 if any subject is
@@ -115,6 +116,27 @@ This command is **not an admission gate**: it does not yet prove dependent-calle
 coverage, layouts, ownership, lifetimes, full linking, runtime behavior or
 independent review. A passing scoped binary result never makes a task ready for
 collection. The existing production gate remains required during cutover.
+
+An original global object's identity belongs beside its definition:
+
+```cpp
+// RECOVERY_OBJECT: v1 0x007AD2A0 ?ConsoleInfoWin@@3VInfoWin@@A
+InfoWin ConsoleInfoWin;
+```
+
+The shared `src/IMAGE_PIN` supplies the original image identity. The annotation
+names the object's start, not a pointer containing an old executable address.
+The target adapter requires that exact data symbol to be defined in the owner's
+compiled TU before using it to resolve references. Member accesses then use the
+compiler's relocation addend; they cannot obtain an offset from the original
+operand to make a check pass. Duplicate object symbols/start addresses and
+function/object symbol conflicts are refused. Seeds do not replace live owners.
+
+This compact mapping asserts no object extent, initialization, lifetime or class
+layout. Those need independent source evidence and checks. The InfoWin pilot
+replaces the independent redraw global with a real member at +0x90, retaining
+the offset evidence beside that member. The remaining raw subobjects and unknown
+object extent are still unfinished structural recovery, not excused by this fix.
 
 Task files fix the coordinator's chosen subjects, edit permissions, intent and
 committed source baseline. They do not duplicate function mappings or current

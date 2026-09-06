@@ -1,0 +1,18 @@
+{
+  "event_id": "c60f4f3541d60913d8190892d10d0e71cd3a39d97bfa094bc540bc62372f417d",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "infowin-redraw-storage",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "source:src/infowin.h:InfoWin::redraw_phase_ and set_redraw_phase",
+      "source:src/console.cpp:ConsoleInfoWin RECOVERY_OBJECT and the three editor setters"
+    ]
+  },
+  "previous_event": "596d6eabcad7c9f79fbad7ffc0d00147e9dff08d714cc6b2dc1b8c8b7d70a77a",
+  "request_id": "infowin-redraw-member-incorporated",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:infowin-ownership"
+}
