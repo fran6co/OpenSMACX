@@ -1,7 +1,7 @@
 # Structure-led recovery implementation
 
 This is the implementation contract and progress record for the independent
-`match-recovery` package in `framework/`. The existing recovery tools remain
+`match-recovery` package in `packages/match-recovery/`. The existing recovery tools remain
 active until replacement coverage and a measured cutover are demonstrated.
 Their continued presence during construction is not a compatibility promise.
 

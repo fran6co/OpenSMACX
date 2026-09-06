@@ -75,7 +75,7 @@ def census():
     # these owners visible during framework cutover; changing annotation syntax
     # must not silently remove a global from this audit.
     from decomp.mangled import qualified_name
-    from match_recovery.adapters.opensmacx import image_pin
+    from recovery.opensmacx.opensmacx import image_pin
     from match_recovery.object_source import read_objects
     for binding in read_objects(REPO, image_pin(REPO)):
         name = qualified_name(binding.symbol)

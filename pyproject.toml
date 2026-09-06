@@ -39,7 +39,7 @@ test = [
 default-groups = ["tools", "test"]
 
 [tool.uv.workspace]
-members = ["framework"]
+members = ["packages/match-recovery"]
 
 [tool.uv.sources]
 match-recovery = { workspace = true }

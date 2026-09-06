@@ -1747,6 +1747,8 @@ def check(
         b"".join(p.read_bytes() for p in
                  sorted((REPO_ROOT / "decomp").glob("*.py")))
         + Path(__file__).read_bytes()
+        + b"".join(p.read_bytes() for p in sorted(
+            (REPO_ROOT / "recovery/environment").glob("*.py")))
         + b"".join(p.read_bytes() for p in sorted(src.rglob("*.h")))
         + (exe.read_bytes() if exe.exists() else b"no-image")).hexdigest()
     try:
