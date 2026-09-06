@@ -157,6 +157,13 @@ a change between stages refuses the combined result. Unknown evidence keeps the
 combined result unknown. Even two passing scoped checks do not authorize collection.
 The individual `check-binary` and `check-layout` commands remain useful diagnostics;
 the joint command's `--summary` retains both verdicts and layout coverage.
+The joint check measures both dimensions from fresh standalone `/Z7` objects.
+Its binary trial records include that debug flag explicitly; the individual
+`check-binary` command keeps its original non-debug configurations. Identical
+source/command/flag requests reuse object bytes only within that invocation, with
+all project inputs checked before reuse. No objects or verdicts survive into the
+next check. The top-level `compilation` reports actual compiler attempts and reuse;
+the subreports count requested trials. Failed compilations are never reused.
 An alternate-target test runs real subprocess worker/check adapters without
 importing the OpenSMACX adapter.
 

@@ -78,7 +78,13 @@ def _inputs(root: Path) -> tuple[str, ...]:
 
 
 def verify_task(root: Path, task_name: str, image_path: Path, *,
-                compiler: Callable = compile_object, command_for: Callable | None = None) -> dict:
+                compiler: Callable = compile_object, command_for: Callable | None = None,
+                debug_types: bool = False) -> dict:
+    # Joint layout checks need /Z7. This is an explicit measured configuration,
+    # never an assumption that debug and non-debug objects are interchangeable.
+    if type(debug_types) is not bool:
+        raise ValueError("debug_types must be a boolean")
+    flag_sets = tuple(flags + (("/Z7",) if debug_types else ()) for flags in FLAG_SETS)
     root = root.resolve()
     store = TaskStore(root, private=".opensmacx/recovery")
     task = store.read(task_name)
@@ -88,7 +94,7 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
     selected, _ = store._scope(task, decisions)
     if not selected:
         raise ValueError("refusing an empty task measurement")
-    before = input_snapshot(root, _inputs(root), {"flags": FLAG_SETS})
+    before = input_snapshot(root, _inputs(root), {"flags": flag_sets})
     view, snapshot = project_view(root)
     if any(subject.image_sha256 != snapshot["image_sha256"] or subject.address_space != "pe:va"
            for subject in task.subjects):
@@ -113,7 +119,7 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
             command_errors[unit] = str(error)
     attempts, variants, object_checks = 0, defaultdict(list), []
     generated_checks = []
-    for flags in FLAG_SETS:
+    for flags in flag_sets:
         objects, errors = {}, dict(command_errors)
         for unit, command in commands.items():
             attempts += 1
@@ -136,7 +142,7 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
                   if Result.UNKNOWN in results else Result.FAIL)
         rows.append({**{name: candidates[0][name] for name in ("entity_id", "address", "symbol", "unit")},
                      "result": result, "variants": candidates})
-    if (input_snapshot(root, _inputs(root), {"flags": FLAG_SETS}) != before
+    if (input_snapshot(root, _inputs(root), {"flags": flag_sets}) != before
             or store.read(task_name) != task or store.decisions(task_name) != decisions):
         raise ValueError("source, build inputs or task decisions changed during measurement; retry")
     counts = Counter(row["result"] for row in rows)
