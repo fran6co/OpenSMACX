@@ -10,7 +10,6 @@ import subprocess
 from types import SimpleNamespace
 
 from match_recovery.model import Result
-from match_recovery.store import ObjectStore
 
 
 def execute(root: Path, arguments: dict):
@@ -28,7 +27,6 @@ def execute(root: Path, arguments: dict):
             output['checks']['binary'].pop('functions', None)
             output['checks']['layout'].pop('members', None)
             output['checks']['layout'].pop('bases', None)
-        output = output
         return ({Result.PASS: 0, Result.FAIL: 1, Result.UNKNOWN: 3}[output['result']], output)
     if args.command == 'tasks' and args.action == 'check-layout':
         from .opensmacx_layout import verify_layout
@@ -36,7 +34,6 @@ def execute(root: Path, arguments: dict):
         if args.summary:
             output.pop('members')
             output.pop('bases', None)
-        output = output
         return ({Result.PASS: 0, Result.FAIL: 1, Result.UNKNOWN: 3}[output['result']], output)
     if args.command == 'tasks' and args.action == 'obligations':
         from .opensmacx_obligations import task_obligations
@@ -47,14 +44,13 @@ def execute(root: Path, arguments: dict):
         output = verify_task(args.root, args.task, args.image)
         if args.summary:
             output.pop('functions')
-        output = output
         return ({Result.PASS: 0, Result.FAIL: 1, Result.UNKNOWN: 3}[output['result']], output)
-    if args.command in ('partition', 'tasks'):
-        from .opensmacx_project import project_view, structural_impact
+    if args.command == 'tasks':
+        from match_recovery.ownership_source import project_view, structural_impact
         from match_recovery.model import Origin
         from match_recovery.partition import select_group
         from match_recovery.tasks import Task, TaskStore
-        store = TaskStore(args.root, private='.opensmacx/recovery')
+        store = TaskStore(args.root)
         if args.command == 'tasks' and args.action == 'discover':
             output = store.discover(args.task, request_id=args.request_id, author=args.author, hypothesis=args.hypothesis, affects=args.affects, evidence=args.evidence, expected_revision=args.expected_revision)
         elif args.command == 'tasks' and args.action == 'resolve':
@@ -96,15 +92,6 @@ def execute(root: Path, arguments: dict):
                             raise ValueError('could not verify the task baseline source')
                     task = Task(args.task, 'opensmacx', args.author, args.intent, baseline, tuple((Origin(**entity['origin']) for entity in group['entities'])), tuple(roots), tuple(args.evidence))
                     output = {'created': store.create(task), 'task': task.to_dict(), 'verification': 'not_measured'}
-                else:
-                    if args.impact and (not args.group):
-                        raise ValueError('--impact needs one --group')
-                    if args.impact:
-                        groups[0]['impact'] = structural_impact(snapshot, groups[0])
-                    if not args.details:
-                        groups = [{key: value for key, value in group.items() if key != 'entities'} for group in groups]
-                    output = {**view, 'groups': groups}
-        output = output
         return (0, output)
     if args.command == 'components':
         from match_recovery.components import source_integrity
@@ -136,11 +123,4 @@ def execute(root: Path, arguments: dict):
         created = write_component(path, manifest)
         output = {'component': 'zlib', 'manifest': str(path.relative_to(args.root)), 'created': created, 'source_integrity': 'pass', 'historical_bindings': len(manifest.bindings), 'binary_verification': 'unknown'}
         return (0, output)
-    from .opensmacx import inventory, legacy_snapshot
-    snapshot = legacy_snapshot(args.root, args.image)
-    result = inventory(snapshot)
-    if args.command == 'import':
-        store = ObjectStore(args.root / '.opensmacx' / 'recovery' / 'objects')
-        result['snapshot_id'] = store.put(snapshot)
-    output = result
-    return (0, output)
+    raise ValueError("unsupported project operation; source inventory and partition belong to the package")

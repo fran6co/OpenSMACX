@@ -1,5 +1,11 @@
 {
   "schema_version": 1,
+  "source": {
+    "image_pin": "src/IMAGE_PIN",
+    "address_space": "pe:va",
+    "seed_roots": ["src/recovered", "src/unrecovered"],
+    "symbol_format": "msvc"
+  },
   "adapter": {
     "argv": ["uv", "run", "python", "recovery/adapter.py"],
     "timeout": 3600

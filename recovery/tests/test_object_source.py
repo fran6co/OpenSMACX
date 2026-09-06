@@ -63,7 +63,7 @@ def test_object_needs_its_owners_actual_compiled_data_definition(source):
     assert not object_targets(bindings, {"src/object.cpp": obj})[0]
 
 
-def test_new_object_mapping_remains_visible_to_legacy_duplicate_audit(source, monkeypatch):
+def test_new_object_mapping_remains_visible_to_legacy_duplicate_audit(source, monkeypatch, source_configuration):
     from tools import duplicate_globals
     (source / "src/IMAGE_PIN").write_text("sha256 " + PIN)
     (source / "src/other.cpp").write_text("int Other; // 0x00402000\n")

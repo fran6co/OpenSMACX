@@ -24,7 +24,7 @@ uv run recover --help
 uv run recover inventory
 uv run recover partition
 uv run recover partition --group class:InfoWin --details --impact
-uv run recover import legacy --image /path/to/the/pinned/original.exe
+uv run recover inventory --image /path/to/the/pinned/original.exe
 uv run recover components list
 uv run recover components check-source zlib --archive /path/to/zlib-1.0.2.tar.gz
 uv run recover components check-binary zlib --image /path/to/the/pinned/original.exe --summary
@@ -33,22 +33,24 @@ uv build --package match-recovery
 ```
 
 Reports are JSON on stdout. Errors go to stderr and return exit 3. Inventory never
-changes source or decisions. Import stores a content-addressed snapshot under the selected root's
-ignored `.opensmacx/recovery/objects/` directory and prints its id. It does not
-rewrite source, declare current matches, or choose between conflicting source
-candidates. Raw files preserve all notes, including unparsed or non-UTF-8 text.
-The legacy adapter also memoizes individual files under ignored
+changes source or decisions. Inventory and partition are native package commands
+when `recovery/project.json` supplies `source` configuration; they do not launch
+the project adapter. The source reader preserves all notes, including unparsed
+or non-UTF-8 text, without declaring current matches or choosing between
+conflicting candidates. The old bulk legacy-import command is removed: source
+snapshots are already recomputable and the duplicate snapshot store had no
+workflow consumer. The package memoizes individual files under ignored
 `build/recovery/parse_cache/`, only when Git confirms that directory is ignored
 and contains no tracked files. Otherwise parsing remains uncached.
 Keys include source bytes, relative/resolved path
-shape, image pin and parser/adapter implementation digests; timestamps are not
+shape, image pin, source configuration and parser implementation digests; timestamps are not
 authority. Entries have integrity checks and atomic publication. Missing, damaged
 or unwritable caches fall back to parsing. Set `RECOVERY_PARSE_CACHE=off` to bypass
 this memo, or delete its directory. Source inventory and content race checks still
 run on every snapshot; no compilation or verification verdict is cached here.
 
-The snapshot is a disposable parse cache, not durable history. Imports do not
-write versioned inventories or measurement reports. No database is required.
+The snapshot is a disposable parse result, not durable history. These operations
+do not write versioned inventories or measurement reports. No database is required.
 
 The text journal uses atomic, revision-checked appends. Concurrent stale writers
 are refused instead of overwriting discoveries, and retrying the same request

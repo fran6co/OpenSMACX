@@ -4,7 +4,7 @@ import subprocess
 
 import pytest
 
-from recovery.opensmacx.opensmacx_project import class_hint, project_view, structural_impact
+from match_recovery.ownership_source import class_hint, project_view, structural_impact
 from match_recovery.cli import main
 from match_recovery.includes import include_graph
 from match_recovery.model import Origin, Span
@@ -112,7 +112,7 @@ def test_comment_spelling_in_a_string_does_not_erase_later_directives():
 
 
 @pytest.fixture
-def project(tmp_path):
+def project(tmp_path, source_configuration):
     src = tmp_path / "src"
     src.mkdir()
     (src / "IMAGE_PIN").write_text("sha256 " + PIN + "\n")

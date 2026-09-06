@@ -7,7 +7,7 @@ from .records import read_json
 
 
 def register(commands):
-    inventory = commands.add_parser("inventory", help="Inspect legacy source without altering it")
+    inventory = commands.add_parser("inventory", help="Inspect configured source and seed annotations without altering them")
     inventory.add_argument("--root", type=Path, default=Path.cwd())
     inventory.add_argument("--image", type=Path, help="Verify the original against its pin")
     grouping = commands.add_parser("partition", help="Derive provisional ownership units, not historical TU claims")
@@ -97,11 +97,29 @@ def register(commands):
 
 
 def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
-    """No target imports: an installed CLI executes only locally configured commands."""
+    """Native configured source operations, otherwise the local JSON boundary."""
     root = root.resolve()
     configuration = read_json(root / "recovery/project.json")
-    if set(configuration) != {"schema_version", "adapter"} or type(configuration["schema_version"]) is not int or configuration["schema_version"] != 1:
+    if (configuration.keys() - {"schema_version", "adapter", "source"}
+            or type(configuration.get("schema_version")) is not int or configuration["schema_version"] != 1):
         raise ValueError("invalid local project command configuration")
+    if "source" in configuration and arguments.get("command") in ("inventory", "partition"):
+        if arguments["command"] == "inventory":
+            from .source_inventory import inventory, source_snapshot
+            image = arguments.get("image")
+            if image is not None:
+                image = Path(image)
+                image = image if image.is_absolute() else root / image
+            return 0, inventory(source_snapshot(root, image))
+        from .ownership_source import partition_report
+        return 0, partition_report(root, group=arguments.get("group"), details=arguments.get("details", False),
+                                   impact=arguments.get("impact", False))
+    if "adapter" not in configuration:
+        raise ValueError("this operation needs a configured project adapter")
+    return _invoke_adapter(root, configuration, arguments)
+
+
+def _invoke_adapter(root: Path, configuration: dict, arguments: dict) -> tuple[int, object]:
     command = Command.read(configuration["adapter"])
     arguments = {key: str(value) if isinstance(value, Path) else value for key, value in arguments.items()}
     code, response = invoke(command, root, arguments.get("task") or "",

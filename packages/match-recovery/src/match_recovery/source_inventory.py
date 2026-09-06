@@ -1,7 +1,7 @@
-"""Read-only import of the old OpenSMACX annotation system.
+"""Lossless snapshots of configured ORIGINAL-comment source and seed evidence.
 
-This is a migration boundary, not the new framework's reader or ledger. All raw
-files are preserved, including comments the old parser cannot interpret. A
+This is a derived view, not another source ledger. All raw files are preserved
+in memory, including comments the annotation parser cannot interpret. A
 legacy match token becomes a historical obligation, never a fresh measurement.
 """
 
@@ -20,13 +20,15 @@ from typing import Any
 
 from match_recovery.model import Dimension, Obligation, Origin, Span, digest, require_digest
 from match_recovery.memo import memoized
+from .source_config import SourceConfiguration
 
 
-def image_pin(root: Path) -> str:
-    text = (root / "src" / "IMAGE_PIN").read_text(encoding="utf-8")
+def image_pin(root: Path, configuration: SourceConfiguration | None = None) -> str:
+    configuration = configuration or SourceConfiguration.read(root)
+    text = configuration.path(root, configuration.image_pin).read_text(encoding="utf-8")
     matches = re.findall(r"^sha256\s+([0-9a-f]{64})\s*$", text, re.MULTILINE)
     if len(matches) != 1:
-        raise ValueError("src/IMAGE_PIN must contain exactly one SHA-256 pin")
+        raise ValueError(f"{configuration.image_pin} must contain exactly one SHA-256 pin")
     return matches[0]
 
 
@@ -36,9 +38,8 @@ def _revision(root: Path) -> str | None:
     return result.stdout.strip() if result.returncode == 0 else None
 
 
-def _sources(root: Path) -> list[Path]:
-    return sorted(path for path in (root / "src").rglob("*")
-                  if path.is_file() and path.suffix in (".cpp", ".c", ".h"))
+def source_files(root: Path, configuration: SourceConfiguration | None = None) -> list[Path]:
+    return (configuration or SourceConfiguration.read(root)).files(root)
 
 
 def _lifetime_binding_hint(record) -> dict | None:
@@ -65,7 +66,7 @@ def _lifetime_binding_hint(record) -> dict | None:
             "next_action": "measure the real lifetime definition before reworking the wrapper or class layout"}
 
 
-def _parse_file(raw: bytes, path: Path, root: Path, pin: str) -> dict:
+def _parse_file(raw: bytes, path: Path, root: Path, pin: str, configuration: SourceConfiguration) -> dict:
     from match_recovery.source.reader import read_text
 
     records, obligations = [], []
@@ -73,14 +74,14 @@ def _parse_file(raw: bytes, path: Path, root: Path, pin: str) -> dict:
     relative = path.relative_to(root).as_posix()
     # Lossless source bytes remain in the snapshot even for invalid UTF-8.
     for record in read_text(raw.decode("utf-8", errors="replace"), path):
-        origin = Origin(pin, "pe:va", record.address)
+        origin = Origin(pin, configuration.address_space, record.address)
         invalid_spans = []
         for low, high in record.image_spans:
             try:
                 Span(low, high)
             except ValueError:
                 invalid_spans.append([low, high])
-        seed = path.relative_to(root / "src").parts[0] in ("recovered", "unrecovered")
+        seed = configuration.is_seed(relative)
         row = {
             "entity_id": origin.entity_id, "origin": asdict(origin),
             "path": relative, "line": record.line, "file_sha256": file_digest,
@@ -97,7 +98,7 @@ def _parse_file(raw: bytes, path: Path, root: Path, pin: str) -> dict:
             "levers": [list(item) for item in record.levers],
             "tried": list(record.ruled_out), "deferred": list(record.deferred),
             "extract_error": record.extract_error,
-            "binding_hint": _lifetime_binding_hint(record),
+            "binding_hint": _lifetime_binding_hint(record) if configuration.symbol_format == "msvc" else None,
         }
         records.append(row)
         for present, dimension, token in (
@@ -122,12 +123,14 @@ def _parser_key() -> str:
     for name in ("model.py", "memo.py", "records.py"):
         inputs["framework/" + name] = hashlib.sha256(
             (Path(match_recovery.__file__).parent / name).read_bytes()).hexdigest()
-    inputs["project/opensmacx.py"] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    inputs["source_inventory.py"] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    inputs["source_config.py"] = hashlib.sha256(Path(__file__).with_name("source_config.py").read_bytes()).hexdigest()
     return digest({"implementation": inputs, "python": sys.version})
 
 
-def legacy_snapshot(root: Path, image: Path | None = None) -> dict[str, Any]:
+def source_snapshot(root: Path, image: Path | None = None) -> dict[str, Any]:
     root = root.resolve()
+    configuration = SourceConfiguration.read(root)
     cache = None
     if os.environ.get("RECOVERY_PARSE_CACHE") != "off":
         # Read-only commands must not create committable derived artifacts.
@@ -136,10 +139,11 @@ def legacy_snapshot(root: Path, image: Path | None = None) -> dict[str, Any]:
                                  cwd=root, capture_output=True, check=False)
         tracked = subprocess.run(["git", "ls-files", "--", relative_cache],
                                  cwd=root, capture_output=True, check=False)
-        if ignored.returncode == 0 and tracked.returncode == 0 and not tracked.stdout:
+        if (ignored.returncode == 0 and tracked.returncode == 0 and not tracked.stdout
+                and (root / relative_cache).resolve().is_relative_to(root)):
             cache = root / relative_cache
     parser_key = _parser_key() if cache is not None else None
-    pin = image_pin(root)
+    pin = image_pin(root, configuration)
     revision = _revision(root)
     if image is not None:
         with image.open("rb") as stream:
@@ -147,7 +151,7 @@ def legacy_snapshot(root: Path, image: Path | None = None) -> dict[str, Any]:
         if actual != pin:
             raise ValueError(f"image digest mismatch: expected {pin}, got {actual}")
     files, records, obligations = {}, [], []
-    paths = _sources(root)
+    paths = source_files(root, configuration)
     for path in paths:
         if not path.resolve().is_relative_to(root):
             raise ValueError(f"source resolves outside the worktree: {path}")
@@ -158,19 +162,21 @@ def legacy_snapshot(root: Path, image: Path | None = None) -> dict[str, Any]:
                            "content_base64": base64.b64encode(raw).decode("ascii")}
         # Resolved path shape affects the legacy proved-store body extraction.
         key = digest({"parser": parser_key, "file": file_digest, "path": relative,
-                      "resolved_path": path.resolve().relative_to(root).as_posix(), "image": pin})
-        parsed = memoized(cache, key, lambda: _parse_file(raw, path, root, pin))
+                      "resolved_path": path.resolve().relative_to(root).as_posix(), "image": pin,
+                      "source_configuration": asdict(configuration)})
+        parsed = memoized(cache, key, lambda: _parse_file(raw, path, root, pin, configuration))
         records.extend(parsed["records"])
         obligations.extend(parsed["obligations"])
     if not records:
         raise ValueError("no legacy annotations found; refusing an empty migration")
     # Refuse a racing import rather than quietly dropping concurrently moved files.
-    if paths != _sources(root) or pin != image_pin(root) or revision != _revision(root):
+    if (configuration != SourceConfiguration.read(root) or paths != source_files(root, configuration)
+            or pin != image_pin(root, configuration) or revision != _revision(root)):
         raise ValueError("source inventory changed during import; retry at a checkpoint")
     for name, info in files.items():
         if hashlib.sha256((root / name).read_bytes()).hexdigest() != info["sha256"]:
             raise ValueError(f"source changed during import: {name}")
-    return {"schema_version": 1, "provider": "opensmacx-legacy",
+    return {"schema_version": 1, "provider": "original-comments", "source_configuration": asdict(configuration),
             "image_sha256": pin, "image_verified": image is not None,
             "revision": revision, "files": files, "records": records,
             "historical_obligations": obligations}

@@ -96,11 +96,17 @@ def write_component(path: Path, manifest: VendorManifest) -> bool:
 
 
 def read_components(source_root: Path) -> list[VendorManifest]:
-    manifests = []
+    sources = {}
     for path in sorted(source_root.rglob("*.recovery.h")):
         if not path.resolve().is_relative_to(source_root.resolve()):
             raise ValueError("component annotation resolves outside source root")
-        manifests.append(parse_component(path.read_text(encoding="utf-8")))
+        sources[path.relative_to(source_root).as_posix()] = path.read_text(encoding="utf-8")
+    return parse_components(sources)
+
+
+def parse_components(sources: dict[str, str]) -> list[VendorManifest]:
+    """Validate one coherent source snapshot, including ownership across roots."""
+    manifests = [parse_component(text) for name, text in sorted(sources.items()) if name.endswith(".recovery.h")]
     ids = [manifest.component.component_id for manifest in manifests]
     if len(ids) != len(set(ids)):
         raise ValueError("duplicate component ids")

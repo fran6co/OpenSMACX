@@ -8,11 +8,12 @@ import base64
 from pathlib import Path
 import re
 
-from match_recovery.component_source import read_components
+from match_recovery.component_source import parse_components
 from match_recovery.includes import include_graph
 from match_recovery.model import Origin, Span
-from match_recovery.partition import Candidate, partition
-from .opensmacx import legacy_snapshot
+from match_recovery.partition import Candidate, partition, select_group
+from match_recovery.source_inventory import source_snapshot
+from .source_config import SourceConfiguration
 
 
 def class_hint(symbol: str) -> str | None:
@@ -31,17 +32,23 @@ def class_hint(symbol: str) -> str | None:
 
 
 def project_view(root: Path, image: Path | None = None) -> tuple[dict, dict]:
-    snapshot = legacy_snapshot(root, image)
+    snapshot = source_snapshot(root, image)
+    configuration = SourceConfiguration.from_dict(snapshot["source_configuration"])
     candidates = []
     for row in snapshot["records"]:
         candidates.append(Candidate(Origin(**row["origin"]),
                                     tuple(Span(*span) for span in row["spans"] if span not in row["invalid_spans"]),
                                     row["path"], row["line"], row["candidate_kind"] == "legacy_seed",
-                                    row["emitted_symbol_hint"], class_hint(row["catalogued_symbol"])))
-    for manifest in read_components(root / "src"):
+                                    row["emitted_symbol_hint"], class_hint(row["catalogued_symbol"])
+                                    if configuration.symbol_format == "msvc" else None))
+    manifests = parse_components({name: base64.b64decode(row["content_base64"]).decode("utf-8")
+                                 for name, row in snapshot["files"].items()
+                                 if name.endswith(".recovery.h") and not configuration.is_seed(name)})
+    for manifest in manifests:
         for binding in manifest.bindings:
-            if binding.origin.image_sha256 != snapshot["image_sha256"]:
-                raise ValueError("component bindings refer to a different original image")
+            if (binding.origin.image_sha256 != snapshot["image_sha256"]
+                    or binding.origin.address_space != configuration.address_space):
+                raise ValueError("component bindings refer to a different original image/address space")
             candidates.append(Candidate(binding.origin, binding.spans,
                                         manifest.source_root + "/" + binding.unit, 1, False,
                                         binding.symbol, component=manifest.component.component_id))
@@ -49,13 +56,14 @@ def project_view(root: Path, image: Path | None = None) -> tuple[dict, dict]:
 
 
 def structural_impact(snapshot: dict, group: dict) -> dict:
+    configuration = SourceConfiguration.from_dict(snapshot["source_configuration"])
     sources = {name: base64.b64decode(record["content_base64"]).decode("utf-8", errors="replace")
                for name, record in snapshot["files"].items()}
-    graph, widened = include_graph(sources, ("src",))
+    graph, widened = include_graph(sources, configuration.include_paths)
     roots = set(group["source_homes"])
     # A source home's own interface is an initial structural-scope candidate.
     # All transitive includes are context; reverse includers are recheck targets.
-    headers = {name.rsplit(".", 1)[0] + ".h" for name in roots}
+    headers = {name.rsplit(".", 1)[0] + suffix for name in roots for suffix in configuration.interface_extensions}
     roots.update(headers & sources.keys())
     impacted = graph.impacted(roots)
     root_ids = {entity["entity_id"] for entity in group["entities"]}
@@ -67,3 +75,16 @@ def structural_impact(snapshot: dict, group: dict) -> dict:
             "scope_complete": False,
             "limitations": ["include impact does not prove class/global ownership",
                             "indirect calls and unmodelled layout relationships still require discovery"]}
+
+
+def partition_report(root: Path, *, group: str | None = None, details: bool = False,
+                     impact: bool = False) -> dict:
+    if impact and not group:
+        raise ValueError("--impact needs one --group")
+    view, snapshot = project_view(root)
+    groups = [select_group(view, group)] if group else view["groups"]
+    if impact:
+        groups[0]["impact"] = structural_impact(snapshot, groups[0])
+    if not details:
+        groups = [{key: value for key, value in item.items() if key != "entities"} for item in groups]
+    return {**view, "groups": groups}

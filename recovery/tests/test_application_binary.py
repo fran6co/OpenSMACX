@@ -20,7 +20,7 @@ from test_binary import coff_fixture, pe_fixture
 
 
 @pytest.fixture
-def project(tmp_path):
+def project(tmp_path, source_configuration):
     raw = pe_fixture()
     pin = hashlib.sha256(raw).hexdigest()
     origin = Origin(pin, "pe:va", 0x401000)

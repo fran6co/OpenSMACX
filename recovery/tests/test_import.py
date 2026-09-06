@@ -7,9 +7,8 @@ import subprocess
 
 import pytest
 
-from recovery.opensmacx.opensmacx import inventory, legacy_snapshot
+from match_recovery.source_inventory import inventory, source_snapshot
 from match_recovery.cli import main
-from match_recovery.store import ObjectStore
 
 
 PIN = "a" * 64
@@ -23,7 +22,7 @@ void f() {}
 
 
 @pytest.fixture
-def project(tmp_path):
+def project(tmp_path, source_configuration):
     subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
     (tmp_path / ".gitignore").write_text("build/\n")
     src = tmp_path / "src"
@@ -37,7 +36,7 @@ def test_import_keeps_exact_source_and_treats_claims_as_historical(project):
     path = project / "src" / "a.cpp"
     path.write_bytes(TEXT + b"// old encoding: \xff\n")
     before = path.read_bytes()
-    snapshot = legacy_snapshot(project)
+    snapshot = source_snapshot(project)
     assert base64.b64decode(snapshot["files"]["src/a.cpp"]["content_base64"]) == before
     assert snapshot["records"][0]["tried"]
     assert snapshot["records"][0]["levers"]
@@ -51,7 +50,7 @@ def test_seeds_do_not_override_product_source(project):
     seeds = project / "src" / "unrecovered"
     seeds.mkdir()
     (seeds / "seed.cpp").write_bytes(TEXT)
-    snapshot = legacy_snapshot(project)
+    snapshot = source_snapshot(project)
     summary = inventory(snapshot)
     assert summary["entities"] == 1
     assert summary["annotations"] == 2
@@ -62,30 +61,30 @@ def test_seeds_do_not_override_product_source(project):
 
 def test_conflicting_product_copies_are_reported_not_selected(project):
     (project / "src" / "b.cpp").write_bytes(TEXT)
-    assert len(inventory(legacy_snapshot(project))["source_conflicts"]) == 1
+    assert len(inventory(source_snapshot(project))["source_conflicts"]) == 1
 
 
 def test_source_names_and_worktree_paths_are_not_identity(project):
-    first = legacy_snapshot(project)["records"][0]["entity_id"]
+    first = source_snapshot(project)["records"][0]["entity_id"]
     original = project / "src" / "a.cpp"
     original.rename(project / "src" / "renamed.cpp")
-    assert legacy_snapshot(project)["records"][0]["entity_id"] == first
+    assert source_snapshot(project)["records"][0]["entity_id"] == first
 
 
 def test_wrong_image_pin_is_rejected(project, tmp_path):
     image = tmp_path / "fixture.bin"
     image.write_bytes(b"synthetic image, not game bytes")
     with pytest.raises(ValueError, match="image digest mismatch"):
-        legacy_snapshot(project, image)
+        source_snapshot(project, image)
     pin = hashlib.sha256(image.read_bytes()).hexdigest()
     (project / "src" / "IMAGE_PIN").write_text("sha256 " + pin)
-    assert legacy_snapshot(project, image)["image_verified"]
+    assert source_snapshot(project, image)["image_verified"]
 
 
 def test_empty_import_is_an_error(project):
     (project / "src" / "a.cpp").write_text("// no annotations\n")
     with pytest.raises(ValueError, match="empty migration"):
-        legacy_snapshot(project)
+        source_snapshot(project)
 
 
 def test_context_hint_exposes_real_constructor_hidden_by_wrapper_binding(project):
@@ -94,35 +93,32 @@ def test_context_hint_exposes_real_constructor_hidden_by_wrapper_binding(project
                     "// symbol    ?construct@Widget@@QAEPAV1@XZ\n"
                     "Widget *Widget::construct() { return this; }\n"
                     "Widget::Widget() {}\n")
-    snapshot = legacy_snapshot(project)
+    snapshot = source_snapshot(project)
     hint = snapshot["records"][0]["binding_hint"]
     assert hint["candidate_definition"] == "Widget::Widget" and hint["candidate_line"] == 4
     assert snapshot["records"][0]["emitted_symbol_hint"] == "?construct@Widget@@QAEPAV1@XZ"
     assert path.read_text().count("// symbol") == 1  # No implicit rebinding or stamping.
     path.write_text(path.read_text().replace("Widget::Widget() {}", "Widget::Widget();"))
-    assert legacy_snapshot(project)["records"][0]["binding_hint"] is None
+    assert source_snapshot(project)["records"][0]["binding_hint"] is None
 
 
 def test_old_semantic_claims_keep_their_own_obligations(project):
     (project / "src" / "a.cpp").write_bytes(TEXT.replace(b"BYTE_EXACT", b"SEMANTIC"))
-    snapshot = legacy_snapshot(project)
+    snapshot = source_snapshot(project)
     assert snapshot["historical_obligations"][0]["dimension"] == "instruction_shape"
     assert inventory(snapshot)["historical_byte_obligations"] == 0
     assert inventory(snapshot)["historical_semantic_claims"] == 1
 
 
-def test_cli_json_is_clean_and_import_goes_to_ignored_storage(project, capsys):
+def test_native_inventory_is_read_only_and_json_is_clean(project, capsys):
+    before = sorted(path.relative_to(project) for path in (project / "recovery").rglob("*"))
     assert main(["inventory", "--root", str(project)]) == 0
     output = capsys.readouterr()
     assert json.loads(output.out)["historical_byte_obligations"] == 1
     assert output.err == ""
     assert not (project / ".opensmacx").exists()
-    assert main(["import", "legacy", "--root", str(project)]) == 0
-    output = json.loads(capsys.readouterr().out)
-    store = ObjectStore(project / ".opensmacx" / "recovery" / "objects")
-    assert store.get(output["snapshot_id"])["records"][0]["legacy_byte_exact"]
-    assert not (project / "recovery").exists()
-    assert "event_sequence" not in output
+    assert sorted(path.relative_to(project) for path in (project / "recovery").rglob("*")) == before
+    assert "event_sequence" not in json.loads(output.out)
 
 
 def test_cli_errors_are_not_green_or_json_contamination(tmp_path, capsys):
@@ -135,67 +131,89 @@ def test_cli_errors_are_not_green_or_json_contamination(tmp_path, capsys):
 def test_parse_memo_hit_and_disabled_identity(project, monkeypatch):
     from match_recovery.source import reader as source_reader
 
-    expected = legacy_snapshot(project)
+    expected = source_snapshot(project)
     parser = source_reader.read_text
     monkeypatch.setattr(source_reader, "read_text", lambda *args: pytest.fail("cache miss"))
-    assert legacy_snapshot(project) == expected
+    assert source_snapshot(project) == expected
     monkeypatch.setattr(source_reader, "read_text", parser)
     monkeypatch.setenv("RECOVERY_PARSE_CACHE", "off")
-    assert legacy_snapshot(project) == expected
+    assert source_snapshot(project) == expected
 
 
 def test_parse_memo_content_pin_and_parser_invalidation(project, monkeypatch):
-    from recovery.opensmacx import opensmacx
+    from match_recovery import source_inventory
 
-    first = legacy_snapshot(project)
+    first = source_snapshot(project)
     path = project / "src/a.cpp"
     stat = path.stat()
     path.write_bytes(TEXT.replace(b"?f@@", b"?g@@"))
     os.utime(path, ns=(stat.st_atime_ns, stat.st_mtime_ns))
-    second = legacy_snapshot(project)
+    second = source_snapshot(project)
     assert second["records"][0]["catalogued_symbol"] == "?g@@YAXXZ"
     assert first != second
     (project / "src/IMAGE_PIN").write_text("sha256 " + "b" * 64)
-    third = legacy_snapshot(project)
+    third = source_snapshot(project)
     assert third["records"][0]["entity_id"] != second["records"][0]["entity_id"]
-    monkeypatch.setattr(opensmacx, "_parser_key", lambda: "new parser implementation")
-    parser = opensmacx._parse_file
+    monkeypatch.setattr(source_inventory, "_parser_key", lambda: "new parser implementation")
+    parser = source_inventory._parse_file
     calls = []
 
     def counting(*args):
         calls.append(True)
         return parser(*args)
 
-    monkeypatch.setattr(opensmacx, "_parse_file", counting)
-    assert legacy_snapshot(project) == third
+    monkeypatch.setattr(source_inventory, "_parse_file", counting)
+    assert source_snapshot(project) == third
     assert calls == [True]
 
 
 def test_parse_memo_portable_and_rename_invalidates(project, tmp_path, monkeypatch):
     from match_recovery.source import reader as source_reader
 
-    expected = legacy_snapshot(project)
+    expected = source_snapshot(project)
     other = tmp_path / "other-worktree"
     shutil.copytree(project / "src", other / "src")
+    shutil.copytree(project / "recovery", other / "recovery")
     shutil.copytree(project / "build", other / "build")
     subprocess.run(["git", "init", "-q", str(other)], check=True)
     (other / ".gitignore").write_text("build/\n")
     parser = source_reader.read_text
     monkeypatch.setattr(source_reader, "read_text", lambda *args: pytest.fail("cache miss"))
-    assert legacy_snapshot(other) == expected
+    assert source_snapshot(other) == expected
     monkeypatch.setattr(source_reader, "read_text", parser)
     seeds = other / "src/unrecovered"
     seeds.mkdir()
     (other / "src/a.cpp").rename(seeds / "a.cpp")
-    moved = legacy_snapshot(other)["records"][0]
+    moved = source_snapshot(other)["records"][0]
     assert moved["path"] == "src/unrecovered/a.cpp"
     assert moved["candidate_kind"] == "legacy_seed"
 
 
 def test_parse_memo_does_not_create_committable_artifacts(project):
     (project / ".gitignore").unlink()
-    legacy_snapshot(project)
+    source_snapshot(project)
     assert not (project / "build").exists()
+
+
+def test_source_configuration_invalidates_memoized_classification_and_identity(project):
+    original = source_snapshot(project)
+    path = project / "recovery/project.json"
+    configuration = json.loads(path.read_text())
+    configuration["source"]["seed_roots"] = ["src"]
+    configuration["source"]["address_space"] = "custom:offset"
+    path.write_text(json.dumps(configuration))
+    updated = source_snapshot(project)
+    assert updated["records"][0]["candidate_kind"] == "legacy_seed"
+    assert updated["records"][0]["entity_id"] != original["records"][0]["entity_id"]
+
+
+def test_external_cache_symlink_is_not_written(project, tmp_path_factory):
+    outside = tmp_path_factory.mktemp("outside-cache")
+    cache_parent = project / "build/recovery"
+    cache_parent.mkdir(parents=True)
+    (cache_parent / "parse_cache").symlink_to(outside, target_is_directory=True)
+    assert source_snapshot(project)["records"]
+    assert list(outside.iterdir()) == []
 
 
 def test_parse_memo_refuses_tracked_cache_directory(project):
@@ -204,6 +222,6 @@ def test_parse_memo_refuses_tracked_cache_directory(project):
     tracked = cache / "user-file"
     tracked.write_text("preserve this")
     subprocess.run(["git", "add", "-f", str(tracked)], cwd=project, check=True)
-    legacy_snapshot(project)
+    source_snapshot(project)
     assert list(cache.iterdir()) == [tracked]
     assert tracked.read_text() == "preserve this"

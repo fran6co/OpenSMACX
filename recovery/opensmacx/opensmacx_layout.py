@@ -8,9 +8,9 @@ from match_recovery.layout_source import read_bases, read_members
 from match_recovery.model import Result, digest
 from match_recovery.pe_coff import Coff
 from match_recovery.tasks import TaskStore
-from .opensmacx import image_pin, legacy_snapshot
+from match_recovery.source_inventory import image_pin, source_snapshot
 from .opensmacx_binary import _inputs
-from .opensmacx_project import class_hint
+from match_recovery.ownership_source import class_hint
 from recovery.environment.compile import FLAG_SETS, compile_object
 from match_recovery.codeview import ClassNotEmitted, class_layout
 
@@ -33,7 +33,7 @@ def verify_layout(root: Path, task_name: str, *, compiler=compile_object, comman
     # Method mappings are search hints, not proof that an original class existed
     # or a new requirement to match this candidate's current shape.
     hints = {unit: {} for unit in units}
-    for item in legacy_snapshot(root)["records"]:
+    for item in source_snapshot(root)["records"]:
         if item["entity_id"] not in selected or item["candidate_kind"] != "source" or item["path"] not in hints:
             continue
         name = class_hint(item["catalogued_symbol"])

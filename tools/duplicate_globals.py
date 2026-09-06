@@ -30,7 +30,6 @@ import re
 import sys
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO))  # Local integration is not an installed package.
 
 # Measured 2026-08-25 after consolidating Win's fifteen.
 # 27 -> 26 (2026-08-29, init_thunks batch): the managed globals became real
@@ -76,7 +75,7 @@ def census():
     # these owners visible during framework cutover; changing annotation syntax
     # must not silently remove a global from this audit.
     from match_recovery.source.mangled import qualified_name
-    from recovery.opensmacx.opensmacx import image_pin
+    from match_recovery.source_inventory import image_pin
     from match_recovery.object_source import read_objects
     for binding in read_objects(REPO, image_pin(REPO)):
         name = qualified_name(binding.symbol)

@@ -9,7 +9,7 @@ import sys
 
 from match_recovery.components import SourceFile, VendorBinding, VendorManifest, source_integrity
 from match_recovery.model import Component, Delivery, Origin, Ownership, Result, Span
-from .opensmacx import image_pin
+from match_recovery.source_inventory import image_pin
 from recovery.environment.compile import compile_object
 
 

@@ -119,7 +119,7 @@ def test_json_records_refuse_ambiguous_keys_and_do_not_overwrite(tmp_path):
         read_json(path)
 
 
-def test_component_commands_report_scope_and_exit_codes(vendor, capsys):
+def test_component_commands_report_scope_and_exit_codes(vendor, capsys, source_configuration):
     root, manifest, archive = vendor
     write_component(root / "src" / "codec.recovery.h", manifest)
     assert main(["components", "list", "--root", str(root)]) == 0

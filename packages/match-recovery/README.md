@@ -19,7 +19,7 @@ This creates only local, editable files:
 ```text
 recovery/
   driver.json       context/check commands and arbitrary target identity
-  project.json      source-operation adapter behind the package's public CLI
+  project.json      native source inputs and optional local operation adapter
   adapter.py        starter context command; checks deliberately return unknown
   worker.json       your worker command and attribution
   reviewer.json     your independent reviewer command and attribution
@@ -134,9 +134,36 @@ CodeView 5 and MSVC PE/COFF table verification, with unsupported cases explicit.
 No compiler installation, executable location or flag policy is selected there.
 
 All public recovery commands, including `inventory`, `partition`, `components`
-and task commands, belong to this package. Source operations use the command in
-local `recovery/project.json`, sending a versioned arguments object and receiving
-an `output` envelope. This is a JSON adapter protocol, not a second project CLI.
+and task commands, belong to this package. `inventory` and `partition` run
+natively when `recovery/project.json` supplies a `source` section. No local Python
+adapter or target registration is needed for those operations. For example:
+
+```json
+{
+  "schema_version": 1,
+  "source": {
+    "image_pin": "original/identity",
+    "address_space": "custom:offset",
+    "roots": ["code", "hints"],
+    "seed_roots": ["hints"],
+    "include_paths": ["code"]
+  }
+}
+```
+
+The pin file contains exactly one `sha256 <64 lowercase hex digits>` line.
+Source files use the ORIGINAL-comment grammar; other analysis formats still need
+an importer. Common C/C++ suffixes are supported, including `.cc` and `.hpp`;
+`extensions` and `interface_extensions` can narrow/customize the scan. All roots
+are explicit worktree-relative paths, seed directories are configured rather than
+guessed by name, and missing roots/outside symlinks are refused. `symbol_format`
+defaults to `none`; opt into `msvc` for decorated-class/lifetime search hints.
+Hints are not original-design proof. Include impact remains conservative.
+
+Unmigrated operations and projects using another source provider use the optional
+`adapter` command in the same file, exchanging versioned arguments and an
+`output` envelope. This is a JSON protocol, not a second project CLI. The starter
+configuration still provides that adapter; add `source` when using native readers.
 Generic source annotation readers stay in the core. Compiler commands, environment
 variables, flag choices and optional interaction scripts belong to the project.
 The example project keeps its VC6/Wine interaction in `recovery/environment/`;

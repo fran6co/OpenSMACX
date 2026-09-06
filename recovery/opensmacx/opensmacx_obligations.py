@@ -15,7 +15,7 @@ from match_recovery.layout_source import parse_bases, parse_members
 from match_recovery.generated_source import parse_generated
 from match_recovery.source_history import git, source_versions
 from match_recovery.tasks import TaskStore
-from .opensmacx import _sources, image_pin, legacy_snapshot
+from match_recovery.source_inventory import source_files, image_pin, source_snapshot
 
 
 def task_obligations(root: Path, name: str) -> dict:
@@ -28,7 +28,7 @@ def task_obligations(root: Path, name: str) -> dict:
     scope, _ = store._scope(task, decisions)
     head = git(root, "rev-parse", "HEAD").decode().strip()
     versions = source_versions(root, task.base_revision, head, required_paths=("src/IMAGE_PIN",))
-    snapshot = legacy_snapshot(root)
+    snapshot = source_snapshot(root)
     pin = snapshot["image_sha256"]
     if any(subject.image_sha256 != pin or subject.address_space != "pe:va" for subject in task.subjects):
         raise ValueError("task original does not match the source image pin")
@@ -92,7 +92,7 @@ def task_obligations(root: Path, name: str) -> dict:
             or task != store.read(name) or decisions != store.decisions(name)):
         raise ValueError("task or source history changed during obligation inventory")
     current_files = {path.relative_to(root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
-                     for path in _sources(root)}
+                     for path in source_files(root)}
     if (current_files != {name: row["sha256"] for name, row in snapshot["files"].items()}
             or image_pin(root) != pin):
         raise ValueError("source changed during obligation inventory")

@@ -15,7 +15,7 @@ from match_recovery.model import Origin, Result, Span, digest
 from match_recovery.object_source import read_objects, object_targets
 from match_recovery.pe_coff import Coff, PeImage
 from match_recovery.tasks import TaskStore
-from .opensmacx_project import project_view
+from match_recovery.ownership_source import project_view
 from recovery.environment.compile import FLAG_SETS, compile_object
 from match_recovery.generated_binary import check_generated
 

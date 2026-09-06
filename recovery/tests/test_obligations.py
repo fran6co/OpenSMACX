@@ -30,7 +30,7 @@ def commit(root, message):
 
 
 @pytest.fixture
-def project(tmp_path):
+def project(tmp_path, source_configuration):
     git(tmp_path, "init", "-b", "main")
     git(tmp_path, "config", "user.name", "Synthetic")
     git(tmp_path, "config", "user.email", "synthetic@example.invalid")
@@ -154,12 +154,12 @@ def test_cli_context_exposes_same_requirements(project, capsys):
 def test_concurrent_working_source_change_is_refused(project, monkeypatch):
     import recovery.opensmacx.opensmacx_obligations as adapter
     root, _ = project
-    original = adapter.legacy_snapshot
+    original = adapter.source_snapshot
     def racing_snapshot(*args):
         snapshot = original(*args)
         (root / "src/f.cpp").write_text(body(claim=""))
         return snapshot
-    monkeypatch.setattr(adapter, "legacy_snapshot", racing_snapshot)
+    monkeypatch.setattr(adapter, "source_snapshot", racing_snapshot)
     with pytest.raises(ValueError, match="source changed"):
         report(project)
 
