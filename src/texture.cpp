@@ -159,6 +159,131 @@ void Texture::close() {
 }
 
 /*
+Purpose: Cut a width x height rectangle at (x, y) out of a locked buffer into
+         this texture, taking the pixel block from the sheet heap when one was
+         passed (in which case the texture is borrowed, not owned) and from the
+         CRT otherwise, then fill in the two per-vertex u/v arrays the
+         rasterisers interpolate across: `corners_` gets the four corners and
+         `cornersAndMids_` those four plus the four edge midpoints.
+// ORIGINAL: 0x00619710 ?extract@Texture@@QAEHPAUBuffer@@HHHHPAUTexHeap@@@Z 0x00619710-0x006198DE
+// symbol    ?extract@Texture@@QAEHPAVBuffer@@HHHHPAUTexHeap@@@Z
+//            the image spells `Buffer` as a struct (PAU) and this tree declares
+//            it `class`, so VC6 decorates PAV. Same bytes, differing name -
+//            the same fact `draw_coast` and `Sprite::extract` record.
+// size      462 bytes
+// prototype int (__thiscall ?extract@Texture@@QAEHPAUBuffer@@HHHHPAUTexHeap@@@Z)(Texture* this, Buffer*, int, int, int, int, TexHeap*)
+// callers   3   call targets   6
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x005E33F3 0x005E34A3 0x00635370 0x00644EF2 0x00645930
+// TRIED (as src/unrecovered/00619710.cpp, the offsets walked as raw ints):
+//   the extra locals this body needs pushed the prologue to a `sub esp`
+//   before the register pushes, so divergence started at instruction #1.
+//   Homed here with the vertex arrays spelled as the members they are (see
+//   texture.h) and the tail's field writes in the image's own order.
+Status: Promoted from src/unrecovered/00619710.cpp.
+*/
+int Texture::extract(Buffer *buffer, int x, int y, int width, int height,
+                     TexHeap *heap) {
+    if (buffer == 0) {
+        return 0x10;
+    }
+
+    if (pixels_ != 0 && borrowed_ == 0) {
+        if (pixels_ != 0) {
+            free(pixels_);
+        }
+        pixels_ = 0;
+    }
+    iWidth_ = 0;
+    iHeight_ = 0;
+    borrowed_ = 0;
+
+    if (x + width > static_cast<int>(buffer->dib_.bmiHeader.biWidth)) {
+        return 3;
+    }
+    if (y + height > -static_cast<int>(buffer->dib_.bmiHeader.biHeight)) {
+        return 3;
+    }
+
+    iHeight_ = height;
+    iWidth_ = width;
+
+    int srcData = buffer->get_data(x, y);
+    if (srcData == 0) {
+        return 7;
+    }
+
+    int stride = buffer->stride_;
+    pixels_ = 0;
+    if (heap != 0) {
+        pixels_ = reinterpret_cast<void *>(heap->get_tex_mem(iHeight_ << 8));
+        if (pixels_ != 0) {
+            borrowed_ = 1;
+        }
+    }
+    if (pixels_ == 0) {
+        pixels_ = mem_get(iHeight_ * iWidth_);
+        if (pixels_ == 0) {
+            iWidth_ = 0;
+            iHeight_ = 0;
+            borrowed_ = 0;
+            buffer->free_data(1);
+            return 4;
+        }
+        borrowed_ = 0;
+    }
+
+    char *dest = reinterpret_cast<char *>(pixels_);
+    int src = srcData;
+    if (height != 0) {
+        int count = height;
+        do {
+            memcpy(dest, reinterpret_cast<void *>(src), iWidth_);
+            if (borrowed_ == 0) {
+                dest += iWidth_;
+            } else {
+                dest += 0x100;
+            }
+            src += stride;
+            --count;
+        } while (count != 0);
+    }
+
+    buffer->free_data(1);
+
+    int widthMinus1 = iWidth_ - 1;
+    int heightMinus1 = iHeight_ - 1;
+    int widthHalfMinus1 = static_cast<int>(iWidth_) / 2 - 1;
+    int heightHalfMinus1 = static_cast<int>(iHeight_) / 2 - 1;
+    corners_[0].a = 0;
+    corners_[0].b = 0;
+    corners_[1].a = widthMinus1;
+    corners_[1].b = 0;
+    corners_[2].a = widthMinus1;
+    corners_[2].b = heightMinus1;
+    corners_[3].a = 0;
+    corners_[3].b = heightMinus1;
+    cornersAndMids_[0].a = 0;
+    cornersAndMids_[0].b = 0;
+    cornersAndMids_[1].a = widthHalfMinus1;
+    cornersAndMids_[1].b = 0;
+    cornersAndMids_[2].a = widthMinus1;
+    cornersAndMids_[2].b = 0;
+    cornersAndMids_[3].a = widthMinus1;
+    cornersAndMids_[3].b = heightHalfMinus1;
+    cornersAndMids_[4].a = widthMinus1;
+    cornersAndMids_[4].b = heightMinus1;
+    cornersAndMids_[5].a = widthHalfMinus1;
+    cornersAndMids_[5].b = heightMinus1;
+    cornersAndMids_[6].a = 0;
+    cornersAndMids_[6].b = heightMinus1;
+    cornersAndMids_[7].a = 0;
+    cornersAndMids_[7].b = heightHalfMinus1;
+    return 0;
+}
+
+/*
 Purpose: Tear down the store, leaving a count of 3 at offset 0 and clearing
          the field at 4. Calls nothing.
 // ORIGINAL: 0x006252B0 ??1TextureStore@@QAE@XZ 0x006252B0-0x006252BE BYTE_EXACT
@@ -2298,6 +2423,21 @@ int Texture::draw_trans_3(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5, int a
 // ORIGINAL: 0x00625080 sub_625080 0x00625080-0x00625294 FILE
 // symbol    ?sub_625080@@YAHPAHHPAE@Z
 // TRIED: verbatim zero-param head - disasm reads [esp+0x10]/[esp+0x14]/ [esp+0x1c] as three stack args before any push (IDA's 3-int guess confirmed by field roles: int*, int, byte*), so the head was widened to those 3 params; prologue order still diverges from the original's odd 2-push-then-arg2 pattern.
+// TRIED: consolidating blit_edge_uvs_a/b + blit_z_values onto ONE `int **const`
+//            binding per address (the duplicate_globals cleanup, 8 -> 5), in
+//            both spellings - keep the `*` (`*(int *)(...)`) and drop it
+//            (`static int *&b = *(int **)0xADDR`). NEITHER is codegen-neutral,
+//            so the pair of bindings is load-bearing, not a spelling slip.
+//            Measured on this body, 10 load sites: `int *const` costs VC6 two
+//            instructions per read (`mov [<binding>],reg` then
+//            `mov (reg),reg` - the binding is NOT folded to the immediate the
+//            way `*blit_vertex_count` is) and `int **const` costs three. This
+//            body went 24/183 -> 6/183, 0x00624EB0 8/160 -> 0/160,
+//            0x00619D80 9/358 -> 3/358; 11 bodies fell in total, 5 rose
+//            (0x0061C630 6->9, 0x0061EAD0 4->6, 0x0061FC90 3->5), net -36
+//            agreeing instructions. The image emits ONE `mov ecx,[0x9bb4f4]`
+//            per read, so the real lever is finding a binding spelling VC6
+//            folds at all - neither form here does. Reverted, duplicates kept.
 // working copy - scaffold materialised by --work
 // size      532 bytes
 // prototype 
@@ -2943,10 +3083,11 @@ cleanup:
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-void Texture::draw(Buffer *buf, Vert *verts, int *zvals, int count, int a5, int light_thresh) {
+void Texture::draw(Buffer *buf, Vert *verts, int *zvals, int count,
+                   int edgeVerts, int light_thresh) {
     *blit_pixel_base = buf->get_data();
     *blit_light_threshold = light_thresh;
-    *blit_edge_uvs_a = a5;
+    *blit_edge_uvs_a = edgeVerts;
     *blit_edge_uvs_b = (int)(long)verts;
     *blit_vertex_count = count;
     *blit_z_values = (int)(long)zvals;
@@ -3131,12 +3272,13 @@ void Texture::draw(Buffer *buf, Vert *verts, int *zvals, int count, int a5, int 
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-void Texture::sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count, int a5, int *out_flag) {
+void Texture::sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count,
+                         int edgeVerts, int *out_flag) {
     out_flag[1] = 0;
 
     *blit_pixel_base = buf->get_data();
     *blit_light_threshold = *blit_light_threshold_2;
-    *blit_edge_uvs_a = a5;
+    *blit_edge_uvs_a = edgeVerts;
     *blit_edge_uvs_b = (int)(long)verts;
     *blit_vertex_count = count;
     *blit_z_values = (int)(long)zvals;
@@ -3330,12 +3472,14 @@ void Texture::sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count, int a5
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-void Texture::sub_622810(Buffer *buf, Vert *verts, int *zvals, int count, int a5, int light_thresh, int *out_flag) {
+void Texture::sub_622810(Buffer *buf, Vert *verts, int *zvals, int count,
+                         int edgeVerts, int light_thresh,
+                         int *out_flag) {
     out_flag[1] = 0;
 
     *blit_pixel_base = buf->get_data();
     *blit_light_threshold = light_thresh;
-    *blit_edge_uvs_a = a5;
+    *blit_edge_uvs_a = edgeVerts;
     *blit_edge_uvs_b = (int)(long)verts;
     *blit_vertex_count = count;
     *blit_z_values = (int)(long)zvals;
@@ -4289,7 +4433,8 @@ static int *const blit_light_accum_b = (int *)0x009BB518;
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-void Texture::sub_61b780(Buffer *bufParam, int *verts, int a3, int mode) {
+void Texture::sub_61b780(Buffer *bufParam, int *verts, int zvals,
+                         int mode) {
     int dataPtr;
     int minY = 0x7fff, maxY = 0xffff8003, minX = 0x7fff, maxX = 0xffff8003;
     int minYIdx = 0;
@@ -4309,7 +4454,7 @@ void Texture::sub_61b780(Buffer *bufParam, int *verts, int a3, int mode) {
         *blit_edge_uvs_a = (int)((char *)this + 0x2c);
         *blit_vertex_count = 8;
     }
-    *blit_z_values = a3;
+    *blit_z_values = zvals;
     *blit_texture_pixels = (int)(long)pixels_;
     *blit_buffer_stride = bufParam->stride_;
     *blit_texture_width = iWidth_;
@@ -4419,7 +4564,8 @@ static int *const blit_slot_51c = (int *)0x009BB51C;
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-void Texture::sub_620a10(Buffer *bufParam, int vertsParam, int countParam, int a4, int *outFlag) {
+void Texture::sub_620a10(Buffer *bufParam, int vertsParam, int countParam,
+                         int edgeVerts, int *outFlag) {
     EdgeScan e1, e2;
     int v80;
     int result;
@@ -4438,7 +4584,7 @@ void Texture::sub_620a10(Buffer *bufParam, int vertsParam, int countParam, int a
     *blit_texture_pixels = (int)(long)pixels_;
     *blit_texture_width2 = iWidth_;
     *blit_texture_height = iHeight_;
-    *blit_edge_uvs_a = a4;
+    *blit_edge_uvs_a = edgeVerts;
     *blit_vertex_count = countParam;
     *blit_light_threshold = *blit_light_threshold_2;
     *blit_buffer_stride = bufParam->stride_;
@@ -6231,7 +6377,7 @@ void Texture::draw_trans(Buffer* a1, Vert* a2, int a3, Vert* a4, int a5) {
 }
 
 // ORIGINAL: 0x00623F50 sub_623f50 0x00623F50-0x00623F7D BYTE_EXACT
-// symbol    ?sub_623f50@Texture@@QAEXHHHHHHH@Z
+// symbol    ?sub_623f50@Texture@@QAEXPAVBuffer@@PAHPAV1@PAEHHH@Z
 // symbol    ?invoke@Subject@@QAEXHHHHHHH@Z
 // size      45 bytes
 // prototype 
@@ -6248,8 +6394,8 @@ void Texture::draw_trans(Buffer* a1, Vert* a2, int a3, Vert* a4, int a5) {
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
 
-void Texture::sub_623f50(int a1, int a2, int a3, int a4, int a5, int a6,
-                         int a7) {
+void Texture::sub_623f50(Buffer *a1, int *a2, Texture *a3, uint8_t *a4,
+                         int a5, int a6, int a7) {
     // 0x00623F50, 45 bytes, `ret 0x1c`. A seven-int wrapper whose seventh is
     // the same -1 sentinel `draw2` carries: when it is -1 the first six are
     // forwarded to the span filler at 0x0061C630, and otherwise the function
@@ -6264,7 +6410,7 @@ void Texture::sub_623f50(int a1, int a2, int a3, int a4, int a5, int a6,
 }
 
 // ORIGINAL: 0x00624CA0 sub_624ca0 0x00624CA0-0x00624CC8 BYTE_EXACT
-// symbol    ?sub_624ca0@Texture@@QAEXHHHHHH@Z
+// symbol    ?sub_624ca0@Texture@@QAEXPAVBuffer@@HHHPAHH@Z
 // symbol    ?invoke@Subject@@QAEXHHHHHH@Z
 // size      40 bytes
 // prototype 
@@ -6281,14 +6427,123 @@ void Texture::sub_623f50(int a1, int a2, int a3, int a4, int a5, int a6,
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
 
-void Texture::sub_624ca0(int a1, int a2, int a3, int a4, int a5, int a6) {
+void Texture::sub_624ca0(Buffer *a1, int a2, int a3, int a4, int *a5,
+                         int a6) {
     // 0x00624CA0, 40 bytes, `ret 0x18`. The sixth int is the -1 sentinel, the
     // same idiom `draw2` and `sub_623f50` carry: when it is -1 the first five
     // are forwarded to the affine rasteriser at 0x00620A10, otherwise the
     // function is a bare `ret 0x18`.
     if (a6 == -1) {
-        sub_620a10(reinterpret_cast<Buffer *>(a1), a2, a3, a4,
-                   reinterpret_cast<int *>(a5));
+        sub_620a10(a1, a2, a3, a4, a5);
     }
 }
 
+
+// ===== THE -1 SENTINEL WRAPPERS =====
+//
+// Five 45-to-60-byte members, all the same shape and all homed from the same
+// reading of the image. Each takes one more argument than the rasteriser it
+// fronts; that last argument is a sentinel, and only when it is -1 does the
+// wrapper forward. The interesting fact is what they do NOT do: not one of
+// them loads ECX before its call, and every callee is a __thiscall member -
+// so the receiver reaches the callee through ECX untouched, which is what
+// makes these members of Texture rather than the __stdcall free functions the
+// archive had them as. Homed as members, the C body is a bare `if` over a
+// forwarding call and VC6 supplies the ECX pass-through itself.
+
+/*
+// ORIGINAL: 0x00624C70 sub_624c70 0x00624C70-0x00624C9D BYTE_EXACT
+// symbol    ?sub_624c70@Texture@@QAEXPAVBuffer@@PAUVert@@PAHHH2H@Z
+// size      45 bytes
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006212B0
+Return Value: whatever sub_6212b0 leaves in EAX
+Status: Complete
+*/
+void Texture::sub_624c70(Buffer *buf, Vert *verts, int *zvals, int count,
+                         int edgeVerts, int *out_flag, int sentinel) {
+    if (sentinel == -1) {
+        sub_6212b0(buf, verts, zvals, count, edgeVerts, out_flag);
+    }
+}
+
+/*
+// ORIGINAL: 0x00624CD0 sub_624cd0 0x00624CD0-0x00624CFD BYTE_EXACT
+// symbol    ?sub_624cd0@Texture@@QAEXPAVBuffer@@PAUVert@@PAHHH2H@Z
+// size      45 bytes
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00621870
+// Byte-identical to sub_624c70 above except for the call target, which is
+// what says the two callees have the same 6-argument shape. VOID, and that is
+// measured: spelling it `int` and `return sub_621870(...)` makes VC6 tail-jmp
+// where the image makes a real call and then returns.
+Return Value: void
+Status: Complete
+*/
+void Texture::sub_624cd0(Buffer *buf, Vert *verts, int *zvals, int count,
+                         int edgeVerts, int *out_flag, int sentinel) {
+    if (sentinel == -1) {
+        sub_621870(buf, verts, zvals, count, edgeVerts, out_flag);
+    }
+}
+
+/*
+// ORIGINAL: 0x00624D00 sub_624d00 0x00624D00-0x00624D37 BYTE_EXACT
+// symbol    ?sub_624d00@Texture@@QAEXHHHHHHHHH@Z
+// size      55 bytes
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00622200
+Return Value: whatever sub_622200 leaves in EAX
+Status: Complete
+*/
+void Texture::sub_624d00(int a1, int a2, int a3, int a4, int a5, int a6,
+                         int a7, int a8, int sentinel) {
+    if (sentinel == -1) {
+        sub_622200(a1, a2, a3, a4, a5, a6, a7, a8);
+    }
+}
+
+/*
+// ORIGINAL: 0x00624D40 sub_624d40 0x00624D40-0x00624D72 BYTE_EXACT
+// symbol    ?sub_624d40@Texture@@QAEXPAVBuffer@@PAUVert@@PAHHHH2H@Z
+// size      50 bytes
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00622810
+Return Value: whatever sub_622810 leaves in EAX
+Status: Complete
+*/
+void Texture::sub_624d40(Buffer *buf, Vert *verts, int *zvals, int count,
+                         int a5, int light_thresh, int *out_flag,
+                         int sentinel) {
+    if (sentinel == -1) {
+        sub_622810(buf, verts, zvals, count, a5, light_thresh, out_flag);
+    }
+}
+
+/*
+// ORIGINAL: 0x00624630 sub_624630 0x00624630-0x0062466C BYTE_EXACT
+// symbol    ?sub_624630@Texture@@QAEXHHHHHHHHHH@Z
+// size      60 bytes
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0061DF60
+// VOID like sub_624cd0 above: `return sub_61df60(...)` is a tail jump and the
+// image makes a real call.
+Return Value: void
+Status: Complete
+*/
+void Texture::sub_624630(int a1, int a2, int a3, int a4, int a5, int a6,
+                         int a7, int a8, int a9, int sentinel) {
+    if (sentinel == -1) {
+        sub_61df60(a1, a2, a3, a4, a5, a6, a7, a8, a9);
+    }
+}

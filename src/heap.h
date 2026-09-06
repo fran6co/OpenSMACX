@@ -46,11 +46,16 @@ class Heap {
  private:
   int8_t err_flags_; // (+0) -> error toggle
   LPVOID base_;      // (+4) -> pointer to base memory address
-  LPVOID current_;   // (+8) -> current memory address position
-  size_t base_size_; // (+12) -> size of total memory
   // PUBLIC, not private: TexHeap::get_mem walks the block table and reads
   // each block's free tail straight off the object - the `+0x10` compare in
-  // the image. Same offset; only the access run changes.
+  // the image - and TexHeap::get_tex_mem reads `current_` the same way for
+  // its low-half alignment test. Same offsets; only the access run changes.
+  // DECLARATION ORDER IS UNCHANGED - moving a member between access sections
+  // moves its offset, and only the section headers move here.
+ public:
+  LPVOID current_;   // (+8) -> current memory address position
+ private:
+  size_t base_size_; // (+12) -> size of total memory
  public:
   size_t free_size_; // (+16) -> size of free available memory
 };

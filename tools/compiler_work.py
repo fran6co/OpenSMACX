@@ -536,7 +536,11 @@ SCAFFOLD_CEILINGS = {
     # SpriteBox/EditGroup - the homed Dialogs dispatcher tail-calls all five
     # and their bodies are FILE-only in the archive), one retired with the
     # dispatcher's own.
-    "PENDING_BODY forwarders": 264,
+    # 264 -> 265 (2026-09-06, W5k texture class pass, collected):
+    # sub_621870's forwarder - intrinsic to landing sub_624cd0 BYTE_EXACT
+    # (a forwarder is the only spelling that emits the image's E8 there;
+    # call dword ptr [addr] does not).
+    "PENDING_BODY forwarders": 265,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -658,7 +662,11 @@ SCAFFOLD_CEILINGS = {
     # 994 -> 992 (2026-09-06, W5i basewin names, bounce collected): the
     # two exact bodies stayed landed - 0x44CB30 (DatalinkMain singleton)
     # and on_iface_left_up's repairs.
-    "artifact files (recovered/)": 992,
+    # 992 -> 985 (2026-09-06, W5k texture class pass): five sentinel
+    # wrappers + ImageButton::init (0x625380, the second overload - the
+    # store lands on field_AB8_, exactly sizeof(BaseButton)) all homed
+    # BYTE_EXACT.
+    "artifact files (recovered/)": 985,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -765,7 +773,10 @@ SCAFFOLD_CEILINGS = {
     # (0x628220), vox_transform_camera (0x63A6F0) and vox_draw_scene
     # (0x639E60) homed into src/caviar.cpp - the last two call_diff clean,
     # every callee in the image's order.
-    "unrecovered files": 1090,
+    # 1090 -> 1089 (2026-09-06, W5k texture class pass): Texture::extract
+    # homed MISMATCH 11/175 (was NO_COMPILE) with TexHeap::get_tex_mem
+    # declared and homed beside it.
+    "unrecovered files": 1089,
     # 2717 -> 2748 (2026-09-04, P2 net batch): NetFifo promoted with
     # close/add/get/get, NetFifoNode, head_/tail_/count_ - the deliberate
     # raise this ceiling exists for (class modelling grows it; the class

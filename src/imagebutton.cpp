@@ -77,3 +77,42 @@ Purpose: Step the receiver back to the subobject ??_GImageButton@@UAEPAXI@Z
 Return Value: the forwarded call's
 Status: Complete
 */
+
+/*
+Purpose: Initialise the button from its definition record. The record goes
+         into field_AB8_ - the same slot the nine-argument init overload fills
+         with its own first argument - and the width and height the base
+         initialiser wants are read back off that record at 0x18 and 0x1c,
+         which is why this form takes no explicit pair.
+// ORIGINAL: 0x00625380 sub_625380 0x00625380-0x006253C6 BYTE_EXACT
+// symbol    ?init@ImageButton@@QAEHPBHPBDHHHPAVWin@@H@Z
+// size      70 bytes
+// prototype int (__thiscall sub_625380)(ImageButton* this, const int*, LPCSTR, int, int, int, Win*, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00607210
+// LEVER: the receiver is an ImageButton, not a Texture and not BaseButton.
+//   Three facts, and the last one is the one the shortlist missed: the store
+//   lands at [this+0xAB8], which is `field_AB8_` - a member BaseButton does
+//   not have, because sizeof(BaseButton) is exactly 0xAB8 and 0xAB8 is
+//   therefore PAST the end of one; 0x00625380 sits immediately after
+//   0x00625340, ?init@ImageButton@@QAEHHPADHHHHHPAUWin@@H@Z, in the image;
+//   and the same slot is what the nine-argument overload stores. Spelled as
+//   a member, the body needs no `this` pun and no ButtonInit stand-in class.
+Return Value: whatever BaseButton::init returns
+Status: Complete
+*/
+int ImageButton::init(const int *imageDef, LPCSTR name, int id, int x, int y,
+                      Win *parent, int style_flag) {
+    if (imageDef == 0) {
+        return 3;
+    }
+    field_AB8_ = reinterpret_cast<uint32_t>(imageDef);
+    // The record's own width and height, at 0x18 and 0x1c, read straight off
+    // it once and then handed to the base.
+    int height = imageDef[7];
+    int width = imageDef[6];
+    return BaseButton::init(name, id, x, y, width, height, parent,
+                            style_flag);
+}

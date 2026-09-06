@@ -83,11 +83,12 @@ struct EdgePoint {
 class Texture {
  public:
   // homed from 00622db0.cpp
-  int draw_trans_3(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5, int a6);
+  int draw_trans_3(Buffer *buffer, Vert *verts, int *zvals, int a4,
+                   Vert *edgeVerts, int a6);
 
  public:
   // homed from 00619d80.cpp
-  int draw_trans2(Buffer *a1, int *a2, int a3);
+  int draw_trans2(Buffer *buffer, int *verts, int a3);
 
  public:
   Texture();
@@ -103,21 +104,38 @@ class Texture {
   // of a neighbouring texture. The two `setup_edge` helpers are the shared
   // DDA edge walker, `static` because it reads and writes no Texture field -
   // the image's names end `QAA`, a static __cdecl member.
-  int extract(Buffer *buffer, int a2, int a3, int a4, int a5, TexHeap *heap);
+  // The parameter names below are read off the bodies, not guessed: every
+  // one of these opens by storing its arguments into the fixed blit slots,
+  // and the slot names say what went there. `zvals` is the per-vertex depth
+  // array the light-threshold scan walks, `remap` is the colour-key table,
+  // and `edgeVerts` is the second vertex-array base - the one that is either
+  // `corners_` or `cornersAndMids_` on the texture itself, or a caller's
+  // array when the polygon is not the whole texture.
+  int extract(Buffer *buffer, int x, int y, int width, int height,
+              TexHeap *heap);
   void draw_trans(Buffer *buffer, Vert *verts, int count, Vert *last);
   void draw_trans(Buffer *buffer, Vert *verts, int count);
-  void draw_trans(Buffer *buffer, Vert *verts, int a3, Vert *a4, int a5);
-  void draw_upper_threshold_trans(Buffer *buffer, Vert *verts, int *a3,
+  // 0x006239B0, the narrowest of the sentinel wrappers: a5 == -1 forwards
+  // straight to the four-argument overload above.
+  void draw_trans(Buffer *buffer, Vert *verts, int count, Vert *last,
+                  int sentinel);
+  // `count` is spelled `int *` because the catalogue said so; the body uses
+  // it purely as a scalar and never dereferences it. `a4` stays `int`: it is
+  // stored into the edge-vertex slot as an integer and no caller passes a
+  // typed pointer, so the evidence does not reach the type.
+  void draw_upper_threshold_trans(Buffer *buffer, Vert *verts, int *count,
                                   int a4);
-  void draw(Buffer *buffer, Vert *verts, int *a3, int a4, Vert *a5);
-  void draw_trans(Buffer *buffer, Vert *verts, int *a3, int a4, Vert *a5);
-  void draw_mask_dest(Buffer *buffer, Vert *verts, uint8_t *a3, uint8_t *a4,
-                      int a5, Vert *a6);
-  void draw_coast(Buffer *buffer, Vert *verts, int *a3, Texture *coast,
-                  uint8_t *a5, int a6, Vert *a7);
-  void draw(Buffer *buffer, Vert *verts, int *a3, int a4, Vert *a5, int a6);
-  void draw_coast(Buffer *buffer, Vert *verts, int *a3, Texture *coast,
-                  uint8_t *a5, int a6, Vert *a7, int a8);
+  void draw(Buffer *buffer, Vert *verts, int *zvals, int a4, Vert *edgeVerts);
+  void draw_trans(Buffer *buffer, Vert *verts, int *zvals, int a4,
+                  Vert *edgeVerts);
+  void draw_mask_dest(Buffer *buffer, Vert *verts, uint8_t *remap,
+                      uint8_t *a4, int count, Vert *edgeVerts);
+  void draw_coast(Buffer *buffer, Vert *verts, int *zvals, Texture *coast,
+                  uint8_t *remap, int count, Vert *edgeVerts);
+  void draw(Buffer *buffer, Vert *verts, int *zvals, int a4, Vert *edgeVerts,
+            int lightThresh);
+  void draw_coast(Buffer *buffer, Vert *verts, int *zvals, Texture *coast,
+                  uint8_t *remap, int count, Vert *edgeVerts, int a8);
   static int setup_edge_gouraud(EdgeScan *edge, int index);
   static int setup_edge(EdgeScan *edge, int index);
 
@@ -136,10 +154,11 @@ class Texture {
   // Names marked with an address are this tree's, not the image's: those
   // bodies carry no symbol in the shipped binary, so the name says what the
   // body does and the address is the only handle the catalogue has.
-  void draw(Buffer *buffer, Vert *verts, int *zvals, int count, int a5,
-            int light_thresh);                                   // 0x0061AC60
-  int draw2(Buffer *a1, int *a2, int *a3, int a4, int *a5, int a6,
-            int a7);                                            // 0x00624670
+  void draw(Buffer *buffer, Vert *verts, int *zvals, int count,
+            int edgeVerts, int light_thresh);                                   // 0x0061AC60
+  int draw2(Buffer *buffer, Vert *verts, int *zvals, int count,
+            int *auxVerts, int zCutoff,
+            int fillColor);                                     // 0x00624670
   // THE SIX THE CATALOGUE NEVER NAMED. Their members keep the address-derived
   // name the catalogue gave them - it is the only handle the archive has for
   // them, and homing looks the definition up by it. What they are:
@@ -152,38 +171,84 @@ class Texture {
   //   sub_61f0d0  gouraud family, hands each span to sub_620100
   //   sub_620a10  affine rasteriser, setup_edge family + sub_624eb0
   //   sub_622200  flat-fill family: four sub_625080 span calls
-  void sub_61b780(Buffer *bufParam, int *verts, int a3, int mode);
+  void sub_61b780(Buffer *bufParam, int *verts, int zvals, int mode);
   void sub_61c630(Buffer *bufIn, int *verts, Texture *texB, uint8_t *shadeTable,
                   int vertCount, int unusedIn);
   int sub_61cb50(int a1, int a2, int a3, int a4, int a5);
-  int sub_61d990(Buffer *a1, int *vertArray, int a3, Texture *a4,
-                 uint8_t *table, int a6);
+  int sub_61d990(Buffer *buffer, int *vertArray, int zvals, Texture *texB,
+                 uint8_t *table, int wideFlag);
   int sub_61df60(int a1, int a2, int a3, int a4, int a5, int a6, int a7,
                  int a8, int a9);
   void sub_61f0d0(Buffer *param_2, int param_3, int param_4, int param_5,
                   int param_6, uint32_t param_7, int param_8);
-  void sub_620a10(Buffer *bufParam, int vertsParam, int countParam, int a4,
-                  int *outFlag);
+  void sub_620a10(Buffer *bufParam, int vertsParam, int countParam,
+                  int edgeVerts, int *outFlag);
   void sub_622200(int a2, int a3, int a4, int a5, int a6, int a7, int a8,
                   int a9);
   // 0x00623F50. Seven ints, the seventh the -1 sentinel that selects the
   // forward into the span filler - the same idiom `draw2` carries.
-  void sub_623f50(int a1, int a2, int a3, int a4, int a5, int a6, int a7);
+  void sub_623f50(Buffer *buffer, int *verts, Texture *texB,
+                  uint8_t *shadeTable, int vertCount, int unusedIn,
+                  int sentinel);
   // 0x00624CA0. Six ints, fifth-arg -1 sentinel, forward into the affine
   // rasteriser.
-  void sub_624ca0(int a1, int a2, int a3, int a4, int a5, int a6);
-  void sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count, int a5,
-                  int *out_flag);                                // 0x006212B0
-  void sub_622810(Buffer *buf, Vert *verts, int *zvals, int count, int a5,
-                  int light_thresh, int *out_flag);              // 0x00622810
+  void sub_624ca0(Buffer *buffer, int verts, int count, int a4,
+                  int *outFlag, int sentinel);
+  void sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count,
+                  int edgeVerts, int *out_flag);                                // 0x006212B0
+  void sub_622810(Buffer *buf, Vert *verts, int *zvals, int count,
+                  int edgeVerts, int light_thresh,
+                  int *out_flag);                                // 0x00622810
   void draw_upper_threshold_trans2(Buffer *buf, Vert *verts, int aux,
                                    int count, int threshold_color);  // 0x006239E0
+
+  // ===== THE -1 SENTINEL WRAPPERS =====
+  // Five thin members that all read the same way: the LAST argument is a
+  // sentinel, and when it is -1 the rest are forwarded to the rasteriser of
+  // the same arity. The image never loads ECX in any of them, and every
+  // callee is a __thiscall member - so the receiver travels through ECX
+  // untouched, which is what makes these members of Texture rather than
+  // __stdcall free functions the archive had them as. The arities below are
+  // read off the image, not the archive: each wrapper's `ret N` is N dwords
+  // and its callee's own `ret` accounts for the N-1 forwarded arguments
+  // (sub_6212b0 ret 0x18 for sub_624c70's 7, sub_622200's 8 for
+  // sub_624d00's 9, and so on), so the two ends agree for the first time.
+  void sub_624c70(Buffer *buf, Vert *verts, int *zvals, int count,
+                  int edgeVerts, int *out_flag,
+                  int sentinel);                                 // 0x00624C70
+  // Forwards to sub_621870, itself a 6-argument member (ret 0x18) and still
+  // an original body - pending_bodies.cpp carries its forwarder.
+  void sub_624cd0(Buffer *buf, Vert *verts, int *zvals, int count,
+                  int edgeVerts, int *out_flag,
+                  int sentinel);                                 // 0x00624CD0
+  void sub_624d00(int a1, int a2, int a3, int a4, int a5, int a6, int a7,
+                  int a8, int sentinel);                         // 0x00624D00
+  void sub_624d40(Buffer *buf, Vert *verts, int *zvals, int count,
+                  int edgeVerts, int light_thresh,
+                  int *out_flag, int sentinel);                  // 0x00624D40
+  void sub_624630(int a1, int a2, int a3, int a4, int a5, int a6, int a7,
+                  int a8, int a9, int sentinel);                 // 0x00624630
+  // 0x00621870. Still the image's own bytes - see the TRIED note beside its
+  // marker in texture.cpp.
+  int sub_621870(Buffer *buf, Vert *verts, int *zvals, int count,
+                 int edgeVerts, int *out_flag);
 
  private:
   void *pixels_;        // 0x00
   uint32_t iWidth_;
   uint32_t iHeight_;
-  uint8_t unmapped_[0x60];
+  // THE TWO VERTEX-ARRAY BASES, 0x0c and 0x2c. Evidenced three ways: the
+  // rasterisers take a base off `this` at one of exactly those two offsets
+  // and index it as EdgePoint[4] or EdgePoint[8] (`sub_61d990` and
+  // `sub_61cb50` both pick `+0xc` with a vertex count of 4 and `+0x2c` with
+  // 8); `extract` fills the whole 0x60 bytes between 0x0c and 0x6c with
+  // exactly 24 ints; and 0x0c + 4*8 is 0x2c, 0x2c + 8*8 is 0x6c, which is
+  // `borrowed_` below. What goes in them is `extract`'s to say: `corners_`
+  // gets the four corners (0,0), (w-1,0), (w-1,h-1), (0,h-1) and the wide
+  // array gets those four plus the four edge midpoints, which is the 8-point
+  // perimeter the gouraud rasterisers interpolate across.
+  EdgePoint corners_[4];        // 0x0c .. 0x2b
+  EdgePoint cornersAndMids_[8];  // 0x2c .. 0x6b
   uint32_t borrowed_;   // 0x6C, nonzero when the pixels are not ours to free
 };
 

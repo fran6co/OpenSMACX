@@ -55,6 +55,7 @@
 #include "buttongroup.h"
 #include "datalink.h"
 #include "gamma.h"
+#include "texture.h"
 #include "infowin.h"
 #include "stringbox.h"
 #include "worldwin.h"
@@ -2273,4 +2274,19 @@ int __cdecl veh_init(int unit_type, int faction_id, int x_coord, int y_coord) {
 void __cdecl world_erosion() {
     typedef void(__cdecl *pending)();
     PENDING_BODY(0x005C2CB0, pending)();
+}
+
+// 0x00621870 - Texture::sub_621870, 2433 bytes, still the image's own bytes.
+// Its marker in texture.cpp records the wall: an x87 `fdivr st(4)` whose five
+// locals stay live on the FPU stack across roughly 350 instructions and a
+// conditional pixel-blit loop, with the two loop paths leaving the stack at
+// different depths. No C spelling carries that. It is reached by name by
+// Texture::sub_624cd0, so this forwarder is the only compiled definition.
+//             body in src/unrecovered/00621870.cpp
+int Texture::sub_621870(Buffer *buf, Vert *verts, int *zvals, int count,
+                        int edgeVerts, int *out_flag) {
+    typedef int(__fastcall *pending)(Texture *, void *, Buffer *, Vert *,
+                                     int *, int, int, int *);
+    return PENDING_BODY(0x00621870, pending)(this, nullptr, buf, verts, zvals,
+                                             count, edgeVerts, out_flag);
 }

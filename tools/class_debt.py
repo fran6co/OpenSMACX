@@ -330,7 +330,10 @@ CEILINGS = {
     # reinterpret_cast<int>(ptr) parameter idiom, carried by the same 31
     # verbatim homings. Lowered by the texture class pass (retype the
     # pointer parameters; the casts are compile-time only).
-    "pointer-parameter as int": 104,
+    # 104 -> 102 (2026-09-06, W5k texture class pass): two parameters
+    # retyped from int to pointers in texture.h, named from the bodies'
+    # own arithmetic.
+    "pointer-parameter as int": 102,
     # CORRECTED 2026-08-26, not raised to absorb a regression: this
     # census skipped every code line starting with `*`, so two of these
     # were never counted. The tree did not change; the ruler did.
@@ -432,7 +435,9 @@ CEILINGS = {
     # (init/base_editor_copy/base_editor_fac/draw_garrison, 220 anonymous
     # bindings between them) took their scaffold names back OUT of product
     # source; naming them is the BaseWin class pass.
-    "scaffold name": 3075,
+    # 3075 -> 3058 (2026-09-06, W5k texture class pass): parameter names
+    # across the blit family in texture.h.
+    "scaffold name": 3058,
 }
 
 WHY = {

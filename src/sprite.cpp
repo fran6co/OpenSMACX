@@ -334,6 +334,48 @@ int TexHeap::get_mem(int size) {
 }
 
 /*
+Purpose: Hand out the first sheet-heap block whose free tail fits `size` and
+         whose `current_` cursor is 16-byte aligned in its low half, returning
+         the block's own address as the handle. The walk is get_mem's, with
+         one more condition in the filter, and `Texture::extract` is its only
+         caller - it takes the returned block as a borrowed texture rather
+         than allocating fresh pixels.
+// ORIGINAL: 0x00635370 ?get_tex_mem@TexHeap@@QAEHH@Z 0x00635370-0x006353BD
+// symbol    ?get_tex_mem@TexHeap@@QAEHH@Z
+// size      77 bytes
+// prototype int (__thiscall ?get_tex_mem@TexHeap@@QAEHH@Z)(TexHeap* this, int)
+// callers   1   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005D4680
+// TRIED (as src/recovered/units/00635370.cpp, raw pointer walks): the
+//   artifact reached MISMATCH at instruction 3 with a push-ebp frame and two
+//   callee-saved pushes where the image has three and no frame, and its note
+//   ruled out a source-form cause. Homed here on the member spelling get_mem
+//   already measures 26/33 with, the low-16 test written through the Heap
+//   members rather than raw offsets; the frame shape is unchanged by that.
+Status: Promoted from src/recovered/units/00635370.cpp.
+*/
+int TexHeap::get_tex_mem(int size) {
+    if (basePtr_ != 0) {
+        int index = 0;
+        int count = static_cast<int>(count_) + 1;
+        if (count > 0) {
+            Heap **blocks = reinterpret_cast<Heap **>(currentPtr_);
+            do {
+                Heap *block = blocks[index];
+                if ((reinterpret_cast<uint32_t>(block->current_) & 0xffff) == 0 &&
+                    static_cast<int>(block->free_size_) >= size) {
+                    return reinterpret_cast<int>(block->get(size));
+                }
+                ++index;
+            } while (index < count);
+        }
+    }
+    return 0;
+}
+
+/*
 Purpose: Cut the width x height rectangle at (left, top) out of a locked
          buffer's pixels into this sprite, trimming the fully transparent
          border on all four sides, then allocate the trimmed pixel block from

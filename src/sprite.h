@@ -32,6 +32,11 @@ struct TexHeap {
     uint32_t currentPtr_;  // 0x8
     uint32_t count_;       // 0xC
     int get_mem(int size);
+    // THE SECOND BLOCK-TABLE WALK, 0x00635370, and the one Texture::extract
+    // asks for. Identical head and stride to get_mem above, one extra test in
+    // the filter: a block only qualifies when the low half of its `current_`
+    // cursor is clear as well as its free tail fitting the request.
+    int get_tex_mem(int size);
     void shutdown();
     int UNK1(int size);
 };
