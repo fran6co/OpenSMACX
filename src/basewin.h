@@ -29,6 +29,7 @@
 
 #include "original_seam.h"
 #include "graphicwin.h"
+#include "maininterface.h"  // IfaceRegistryEntry - the interface-mode base
 #include "subinterface.h"
 
  /*
@@ -39,8 +40,26 @@
   * virtually-derived windows this one is written as the original wrote it and
   * needs no ABI workaround.
   *
-  * The layout is not established. The constructor's own fields begin at 0xA14,
-  * immediately after the base, and where the object ends is unknown, so
+  * DERIVED 2026-09-06 from IfaceRegistryEntry, and the +0xA14 subobject is
+  * what was asking for it. ??0BaseWin@@QAE@XZ writes the all-pure base table
+  * 0x66A6E4 at +0xA14 (0x004084C1) and then overwrites it with BaseWin's own
+  * nineteen-entry interface table 0x66A3B8 - the base-then-derived pair only
+  * a polymorphic base produces - exactly as MainInterface, CouncWin,
+  * BattleWin, DesignWin and DiploPop already do. The base is the SECOND base,
+  * at sizeof(GraphicWin) == 0xA14, and the ProdPicker that follows is
+  * untouched: 0xA14 + 8 == 0xA1C.
+  *
+  * THE PAYLOAD is the on_iface_* family. As an override of a SECONDARY base's
+  * virtual, VC6 compiles each of them with the ENTRY as `this` - members read
+  * base-relative, the secondary vftable holds the raw body address, no
+  * adjustor thunk - which is the receiver the image's own bodies open with
+  * (`cmp dword ptr [esi + 0x40140] ...` in on_iface_left_down, esi the entry)
+  * and what every `self - 0xA14` pun in basewin.cpp was standing in for.
+  * on_left_up and its siblings, which take the FRONT, are unaffected: their
+  * `this` is still the GraphicWin.
+  *
+  * The layout is not established. The constructor's own fields begin at 0xA1C,
+  * immediately after the ProdPicker, and where the object ends is unknown, so
   * nothing pins its sizeof and the fields between are not modelled. The
   * methods recovered here are bare returns that touch no field, which is why
   * they can be replaced ahead of that mapping.
@@ -54,7 +73,7 @@
 extern const int BaseRadiusOffsetX[21];  // 0x0066A1A0
 extern const int BaseRadiusOffsetY[21];  // 0x0066A1F4
 
-class BaseWin : public ConstructedGraphicWin, public SubInterface {
+class BaseWin : public ConstructedGraphicWin, public IfaceRegistryEntry {
  public:
   // homed from 004103b0.cpp
   void draw_garrison(int a1);
@@ -70,10 +89,6 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
  public:
   // homed from 0041e8b0.cpp
   void hide();
-
- public:
-  // homed from 0041e510.cpp
-  void on_iface_button_clicked(int a1);
 
  public:
   // homed from 0041de60.cpp
@@ -169,8 +184,8 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   void base_editor();                                   // 0x0041C7A0
   void on_button_clicked(int a1);                       // 0x0041D500
   void on_iface_left_up(int a1, int a2);                // 0x0041DD10
-  void on_iface_mouse_move(int xCoord, int yCoord);     // 0x0041DF50
-  void on_iface_mouse_leave(int a1, int a2);            // 0x0041E3E0
+  // The two interface-table slots that follow are declared in the slot block
+  // below with the rest of the table: slot 8 0x0041DF50, slot 9 0x0041E3E0.
   void on_redraw();                                     // 0x0041E790
   void init();                                          // 0x0041E8D0
 
@@ -235,6 +250,54 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   void on_iface_left_double_click(int xCoord, int yCoord);
   void on_iface_right_double_click(int xCoord, int yCoord);
   void on_iface_scrolled(int code, int pos);
+
+  // ---- THE INTERFACE TABLE, slot for slot against 0x66A3B8 ----------------
+  // The nineteen slots above and below that carry an on_iface_* name are the
+  // overrides: BaseWin implements them and its table holds its own bodies.
+  // The rest are filled here.
+  //
+  // Slots BaseWin leaves at the interface's shared no-ops, the way
+  // BattleWin's header spells the same situation. Slot 14 is 0x00404250
+  // (`xor eax,eax; ret 4`) and slot 16 is 0x00406B20 (`ret 0xc`) - VC6 folds
+  // both bodies to the shared COMDATs the other windows' tables carry. Slots
+  // 17 and 18 are IfaceRegistryEntry's own definitions and need nothing here;
+  // slot 6 is its definition too, but BaseWin overrides it with
+  // on_iface_left_up above, which is what its own table holds there.
+  int on_iface_button_pressed(int) { return 0; }         // slot 14 0x00404250
+  void on_iface_group_clicked(int, int, int) {}          // slot 16 0x00406B20
+  // Slot 15 - 0x0041E530, 33 bytes. A FORWARDING DISPATCH: `mov eax,[ecx -
+  // 0xa14] / add ecx,-0xa14 / call [eax+0xb4]` is the FRONT vtable's slot 45
+  // with the receiver stepped back to the GraphicWin, and 0x0041B4E0 - the
+  // body that sits there - is the catalogue's on_button_toggled. So the
+  // interface's button-toggled event IS the front's button-toggled event, and
+  // the override spells it as the call it is. `vslot_45` is Win's own name for
+  // that slot; it is what the override has to carry to reach offset 0xb4 (see
+  // the note on vslot_13 below, and CouncWin's vslot_44 for the same finding).
+  void on_iface_button_toggled(int a1, int a2);          // slot 15 0x0041E530
+  // Slot 2 - 0x0041DCB0, 20 bytes: `mov eax,[ecx] / call [eax+4]` forwards
+  // both arguments to this same table's slot 1, on_iface_scrolled. The
+  // interface has no scrolling of its own; it hands the scroll on. The body
+  // was a delegation_thunks redirect before the derivation; it is a member
+  // here now, and the redirect is gone.
+  void on_iface_scrolling(int a1, int a2);               // slot 2  0x0041DCB0
+  // Slot 0 - 0x0041DAD0, 431 bytes, unrecovered. The interface-mode entry
+  // point: mode selects which of the base screen's panels the status bar
+  // paints. Defined out of line in basewin.cpp as a forwarder to the image.
+  void on_status(int mode);                              // slot 0  0x0041DAD0
+  // Slots 8 and 9 - 0x0041DF50 (1164 bytes) and 0x0041E3E0 (224 bytes), both
+  // unrecovered and both forwarders in basewin.cpp. They override PURE slots,
+  // so BaseWin cannot leave them undeclared the way an abstract class could.
+  void on_iface_mouse_move(int xCoord, int yCoord);      // slot 8  0x0041DF50
+  void on_iface_mouse_leave(int a1, int a2);             // slot 9  0x0041E3E0
+  // Slot 13 - 0x0041E510, 29 bytes, no direct caller anywhere in .text: it is
+  // only ever reached through the table. The catalogue names it
+  // on_iface_button_clicked, and it keeps the base's `vslot_13` spelling so
+  // that it overrides the slot (the image's table holds it at 0x34) rather
+  // than shadowing it with a new virtual of its own. Its body dispatches the
+  // FRONT vtable's slot 44 - on_button_clicked - which is the same
+  // interface-delegates-to-front pair slot 15 shows.
+  void vslot_13(int button_id);                          // slot 13 0x0041E510
+
   static void timer_callback(int key, int context);
   void on_left_click(int xCoord, int yCoord);
   void on_right_click(int xCoord, int yCoord);
@@ -469,9 +532,15 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   uint32_t field_40B40_;  // 0x40B40
   uint32_t field_40B44_;  // 0x40B44
   uint32_t field_40B48_;  // 0x40B48
-  uint32_t field_40B4C_;  // 0x40B4C
-  uint32_t field_40B50_;  // 0x40B50
-  uint32_t field_40B54_;  // 0x40B54
+  // SIGNED, and the image says so twice. The trio holds a Spot hit and the
+  // cursor's hover state, and "none" is -1: on_iface_left_down compares the
+  // third with `test eax,eax / jle` (0x0041DE73), which is a signed test, and
+  // all three are reset with the same `or eax,0xffffffff`. Declared `int32_t`
+  // rather than the IDB's `uint32_t`: same four bytes at the same offset, and
+  // an unsigned spelling compiles `jbe` where the image has `jle`.
+  int32_t field_40B4C_;   // 0x40B4C
+  int32_t field_40B50_;   // 0x40B50
+  int32_t field_40B54_;   // 0x40B54
   uint32_t field_40B58_;  // 0x40B58
   uint32_t field_40B5C_;  // 0x40B5C
   uint32_t field_40B60_;  // 0x40B60

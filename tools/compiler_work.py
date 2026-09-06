@@ -179,7 +179,9 @@ SHAPES = [
     # front-table slots were Win's own vslot_19/vslot_04 all along -
     # spelled by name, body 86 -> 91/97. The last one is the entry
     # table's slot003, waiting on the BaseWin derivation pass.
-    ("VCall shim", 10,
+    # 10 -> 9 (2026-09-06, W5q basewin derivation): the LAST entry-table
+    # shim fell - slot003 spells by name through the derived base.
+    ("VCall shim", 9,
      re.compile(r"\bVCall\b"),
      "dispatches through a fake class because the real function is not "
      "declared virtual. Declare it."),
@@ -198,7 +200,9 @@ SHAPES = [
     # name - `vslot_62()`, which win.h already declares virtual - and their
     # ORIGINAL()/vtable[] shims with their `reinterpret_cast` of `this` are
     # gone. Both measured 33/35 before and after.
-    ("ORIGINAL() vtable-slot dispatch", 30,
+    # 30 -> 29 (2026-09-06, W5q basewin derivation): one dispatch spells
+    # through the derived base's own slot now.
+    ("ORIGINAL() vtable-slot dispatch", 29,
      re.compile(r"\bORIGINAL\((?=.*vtable\[)"),
      "reads the target out of a vtable slot by hand because the method is not "
      "declared virtual. Declare it - the compiler writes this dispatch."),
@@ -344,7 +348,9 @@ SCAFFOLD_MARKERS = ("adjustor_thunks.cpp", "deleting_thunks.cpp",
 SCAFFOLD_CEILINGS = {
     "adjustor_thunks.cpp markers": 116,
     "deleting_thunks.cpp markers": 73,
-    "delegation_thunks.cpp markers": 26,
+    # 26 -> 25 (2026-09-06, W5q basewin derivation): on_iface_scrolling's
+    # redirect deleted - the member is real on the derived base now.
+    "delegation_thunks.cpp markers": 25,
     # 42 -> 41 (sound batch): field_accessor_0062d390_redirect retired for the
     # real `sub_62d390` in general.cpp.
     "field_accessors.cpp markers": 41,
@@ -684,7 +690,9 @@ SCAFFOLD_CEILINGS = {
     # re-earned BYTE_EXACT (the 0x5EE4xx-0x5EE9xx dispatcher family,
     # send_wheel_delta - now the slot-77 virtual - publish_callback_
     # window, add/remove_ancestor_origin) plus four unclaimed.
-    "artifact files (recovered/)": 977,
+    # 977 -> 976 (2026-09-06, W5q basewin derivation): 0041e530.cpp went
+    # with on_iface_button_toggled's homing.
+    "artifact files (recovered/)": 976,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).

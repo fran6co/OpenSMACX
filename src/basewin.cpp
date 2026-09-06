@@ -188,6 +188,11 @@ void BaseWin::on_button_toggled(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x0041DF40 ?on_iface_right_down@BaseWin@@QAEXHH@Z 0x0041DF40-0x0041DF43 BYTE_EXACT
+// symbol    ?on_iface_right_down@BaseWin@@UAEXHH@Z
+//           Q->U 2026-09-06, the IfaceRegistryEntry derivation: the body is
+//           now an override of the interface base's slot, so VC6 mangles it
+//           virtual and enters it on the ENTRY, while the image spells the
+//           same body Q and its own table 0x66A3B8 holds the raw address.
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_right_down@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
 // callers   0   call targets   0
@@ -204,6 +209,11 @@ void BaseWin::on_iface_right_down(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x0041E4C0 ?on_iface_selected@BaseWin@@QAEXHH@Z 0x0041E4C0-0x0041E4C3 BYTE_EXACT
+// symbol    ?on_iface_selected@BaseWin@@UAEXHH@Z
+//           Q->U 2026-09-06, the IfaceRegistryEntry derivation: the body is
+//           now an override of the interface base's slot, so VC6 mangles it
+//           virtual and enters it on the ENTRY, while the image spells the
+//           same body Q and its own table 0x66A3B8 holds the raw address.
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_selected@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
 // callers   0   call targets   0
@@ -219,28 +229,40 @@ void BaseWin::on_iface_selected(int, int) {
 
 
 /*
-Purpose: Report a left click on the interface. Reached through the interface
-         subobject at 0xA14, so `this` is adjusted back to the BaseWin.
+Purpose: Report a left click on the interface. An override of the interface base's slot, so `this` IS the entry at 0xA14
+         and the call it makes is unqualified.
 // ORIGINAL: 0x0041DCD0 ?on_iface_left_click@BaseWin@@QAEXHH@Z 0x0041DCD0-0x0041DCEE BYTE_EXACT
+// symbol    ?on_iface_left_click@BaseWin@@UAEXHH@Z
+//           Q->U 2026-09-06, the IfaceRegistryEntry derivation: the body is
+//           now an override of the interface base's slot, so VC6 mangles it
+//           virtual and enters it on the ENTRY, while the image spells the
+//           same body Q and its own table 0x66A3B8 holds the raw address.
 // size      30 bytes
 // prototype void (__thiscall ?on_iface_left_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
 // callers   0   call targets   1
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x004160F0
+// LEVER: 2026-09-06 the derivation deleted the pun. `this` is the entry now,
+//        so the unqualified call is the whole body - the `BaseWin *const base
+//        = reinterpret_cast<...>(this) - 0xA14` local is gone and the bytes
+//        are unchanged (12 of 12 before and after).
 Return Value: n/a
 Status: Complete
 */
 void BaseWin::on_iface_left_click(int xCoord, int yCoord) {
-    BaseWin *const base = reinterpret_cast<BaseWin *>(
-        reinterpret_cast<uint8_t *>(this) - 0xA14);
-    base->iface_click(xCoord, yCoord, 0, 0);
+    iface_click(xCoord, yCoord, 0, 0);
 }
 
 /*
-Purpose: Report a right click on the interface. Reached through the interface
-         subobject at 0xA14, so `this` is adjusted back to the BaseWin.
+Purpose: Report a right click on the interface. An override of the interface base's slot, so `this` IS the entry at 0xA14
+         and the call it makes is unqualified.
 // ORIGINAL: 0x0041DCF0 ?on_iface_right_click@BaseWin@@QAEXHH@Z 0x0041DCF0-0x0041DD0E BYTE_EXACT
+// symbol    ?on_iface_right_click@BaseWin@@UAEXHH@Z
+//           Q->U 2026-09-06, the IfaceRegistryEntry derivation: the body is
+//           now an override of the interface base's slot, so VC6 mangles it
+//           virtual and enters it on the ENTRY, while the image spells the
+//           same body Q and its own table 0x66A3B8 holds the raw address.
 // size      30 bytes
 // prototype void (__thiscall ?on_iface_right_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
 // callers   0   call targets   1
@@ -251,15 +273,18 @@ Return Value: n/a
 Status: Complete
 */
 void BaseWin::on_iface_right_click(int xCoord, int yCoord) {
-    BaseWin *const base = reinterpret_cast<BaseWin *>(
-        reinterpret_cast<uint8_t *>(this) - 0xA14);
-    base->iface_click(xCoord, yCoord, 1, 0);
+    iface_click(xCoord, yCoord, 1, 0);
 }
 
 /*
-Purpose: Report a left double-click on the interface. Reached through the interface
-         subobject at 0xA14, so `this` is adjusted back to the BaseWin.
+Purpose: Report a left double-click on the interface. An override of the interface base's slot, so `this` IS the entry at 0xA14
+         and the call it makes is unqualified.
 // ORIGINAL: 0x0041E4D0 ?on_iface_left_double_click@BaseWin@@QAEXHH@Z 0x0041E4D0-0x0041E4EE BYTE_EXACT
+// symbol    ?on_iface_left_double_click@BaseWin@@UAEXHH@Z
+//           Q->U 2026-09-06, the IfaceRegistryEntry derivation: the body is
+//           now an override of the interface base's slot, so VC6 mangles it
+//           virtual and enters it on the ENTRY, while the image spells the
+//           same body Q and its own table 0x66A3B8 holds the raw address.
 // size      30 bytes
 // prototype void (__thiscall ?on_iface_left_double_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
 // callers   0   call targets   1
@@ -270,15 +295,18 @@ Return Value: n/a
 Status: Complete
 */
 void BaseWin::on_iface_left_double_click(int xCoord, int yCoord) {
-    BaseWin *const base = reinterpret_cast<BaseWin *>(
-        reinterpret_cast<uint8_t *>(this) - 0xA14);
-    base->iface_click(xCoord, yCoord, 0, 1);
+    iface_click(xCoord, yCoord, 0, 1);
 }
 
 /*
-Purpose: Report a right double-click on the interface. Reached through the interface
-         subobject at 0xA14, so `this` is adjusted back to the BaseWin.
+Purpose: Report a right double-click on the interface. An override of the interface base's slot, so `this` IS the entry at 0xA14
+         and the call it makes is unqualified.
 // ORIGINAL: 0x0041E4F0 ?on_iface_right_double_click@BaseWin@@QAEXHH@Z 0x0041E4F0-0x0041E50E BYTE_EXACT
+// symbol    ?on_iface_right_double_click@BaseWin@@UAEXHH@Z
+//           Q->U 2026-09-06, the IfaceRegistryEntry derivation: the body is
+//           now an override of the interface base's slot, so VC6 mangles it
+//           virtual and enters it on the ENTRY, while the image spells the
+//           same body Q and its own table 0x66A3B8 holds the raw address.
 // size      30 bytes
 // prototype void (__thiscall ?on_iface_right_double_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
 // callers   0   call targets   1
@@ -289,9 +317,7 @@ Return Value: n/a
 Status: Complete
 */
 void BaseWin::on_iface_right_double_click(int xCoord, int yCoord) {
-    BaseWin *const base = reinterpret_cast<BaseWin *>(
-        reinterpret_cast<uint8_t *>(this) - 0xA14);
-    base->iface_click(xCoord, yCoord, 1, 1);
+    iface_click(xCoord, yCoord, 1, 1);
 }
 
 
@@ -305,6 +331,11 @@ Purpose: Handle an interface scroll, but only for scroll kind 2 - stash the
          markers. Like the click handlers, `this` arrives at the interface
          subobject and is adjusted back to the BaseWin for that redraw.
 // ORIGINAL: 0x0041DC80 ?on_iface_scrolled@BaseWin@@QAEXHH@Z 0x0041DC80-0x0041DCA5 BYTE_EXACT
+// symbol    ?on_iface_scrolled@BaseWin@@UAEXHH@Z
+//           Q->U 2026-09-06, the IfaceRegistryEntry derivation: the body is
+//           now an override of the interface base's slot, so VC6 mangles it
+//           virtual and enters it on the ENTRY, while the image spells the
+//           same body Q and its own table 0x66A3B8 holds the raw address.
 // size      37 bytes
 // prototype void (__thiscall ?on_iface_scrolled@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
 // callers   0   call targets   1
@@ -313,16 +344,13 @@ Purpose: Handle an interface scroll, but only for scroll kind 2 - stash the
 // calls     0x0040C850
 // LEVER: two moves took this 2/12 -> 12/12. (1) The guard is a SWITCH on one
 //        case, not an `if` - `mov eax,[ebp+8] / sub eax,2 / jne` against the
-//        `cmp dword ptr [ebp+8],2` an `if` emits. (2) The -0xA14 adjustment is
-//        written INLINE on the store, so VC6 folds 0x40B14-0xA14 into the
-//        store's displacement and keeps the raw receiver in ecx until the call.
-// TRIED: `std::memcpy(this+0x40100, &pos, 4)` - the previous spelling, 2/12;
-//        the memcpy call and the missed switch were both divergences.
-// TRIED: one named `BaseWin *const base` local used for BOTH the store and the
-//        call - VC6 materialises `add ecx,-0xA14` before the store, 9/12.
-// TRIED: member store on `this` (`field_40B14_ = pos`) with `base` only for
-//        the call - right schedule, wrong displacement (`[ecx+0x40b14]`),
-//        11/12. The image spells the same address as `[ecx+0x40100]`.
+//        `cmp dword ptr [ebp+8],2` an `if` emits. (2) BEFORE the derivation,
+//        the -0xA14 adjustment had to be written INLINE on the store so VC6
+//        folded 0x40B14-0xA14 into the store's displacement; the member store
+//        on an unadjusted `this` compiled `[ecx+0x40b14]` and scored 11/12.
+//        The IfaceRegistryEntry derivation makes the receiver the entry, so
+//        the plain member store IS 0x40100 now and both the inline adjustment
+//        and the `base` local are gone.
 Return Value: n/a
 Status: Complete
 */
@@ -333,20 +361,17 @@ void BaseWin::on_iface_scrolled(int code, int pos) {
     // sibling on_scrolled below is BYTE_EXACT with. An `if` emits
     // `cmp dword ptr [ebp+8],2` instead.
     switch (code) {
-        case 2: {
-            // The store names the member through the adjusted pointer INLINE,
-            // with no local holding it: 0x40B14 - 0xA14 == 0x40100, and VC6
-            // folds the two constants into the store's own displacement
-            // (`mov [ecx+0x40100], eax`) exactly as the image spells it. A
-            // named `base` local makes VC6 materialise the adjusted pointer
-            // in ecx BEFORE the store instead.
-            reinterpret_cast<BaseWin *>(
-                reinterpret_cast<uint8_t *>(this) - 0xA14)->field_40B14_ = pos;
-            BaseWin *const base = reinterpret_cast<BaseWin *>(
-                reinterpret_cast<uint8_t *>(this) - 0xA14);
-            base->draw_supported(1);
+        case 2:
+            // THE DERIVATION IS WHAT MAKES THIS PLAIN. 0x40B14 read from the
+            // entry is 0x40100, and the image spells the store
+            // `mov [ecx+0x40100], eax` with ecx the receiver - so the member
+            // name is all the spelling there is. The `this - 0xA14` pun this
+            // replaces had to be written INLINE on the store (a named local
+            // made VC6 materialise the adjusted pointer before it) and cost
+            // the body two casts.
+            field_40B14_ = pos;
+            draw_supported(1);
             break;
-        }
     }
 }
 
@@ -567,14 +592,15 @@ BaseWin TutWinBaseWindow;  // 0x006A7628
 // indirect  0x00411D58 0x00411E7B 0x00411FE5 0x0041213C 0x004122C9 0x00412433 0x00412561 0x004126EF 0x00412855 0x0041297F
 
 void BaseWin::draw_energy_alloc(int a1) {
-    char *self = reinterpret_cast<char *>(this);
-
     // Real local matching the single `call ??0Font@@QAE@XZ` in the
     // disassembly; RAII covers its destructor at the return below.
     Font font;
-    Buffer *canvas = reinterpret_cast<Buffer *>(self + 0x444);
 
-    RECT clipRect = *reinterpret_cast<RECT *>(self + 0x40c3c);
+    // The GraphicWin subobject's own Buffer at +0x444 - the front's second
+    // base, reachable as the base it is now that the members are declared.
+    Buffer *canvas = this;
+
+    RECT clipRect = garrison_rect_;
     canvas->set_clip(&clipRect);
 
     font.init(DefaultFontFace, 0xc, 1);
@@ -583,7 +609,7 @@ void BaseWin::draw_energy_alloc(int a1) {
     // Time-boxed: draw_energy_alloc renders the psych/labs/econ
     // allocation-slider bar chart via a long sequence of box_sprite
     // calls, per-slider RECT arithmetic driven by the current
-    // allocation at self+0x474+0xc..0x474+0x30-ish, and a faction
+    // allocation at 0x474+0xc..0x474+0x30-ish, and a faction
     // colour-table lookup (stride 0x59c) - not transcribed beyond the
     // clip/font setup above. See the TRIED note.
     (void)a1;
@@ -686,102 +712,6 @@ void BaseWin::draw_garrison(int) {
     // unnamed: nothing before it touches it.
 }
 
-class VCall2 { public:
-    virtual void slot000();
-    virtual void slot001(int);  // <-- used by draw_facilities: Scroll vtable
-                                // slot 1 dispatched with an int argument.
-    virtual void slot002();
-    virtual void slot003(int, int);  // <-- used
-    virtual void slot004();
-    virtual void slot005();
-    virtual void slot006();
-    virtual void slot007();
-    virtual void slot008();
-    virtual void slot009();
-    virtual void slot010();
-    virtual void slot011();
-    virtual void slot012();
-    virtual void slot013();
-    virtual void slot014();
-    virtual void slot015();
-    virtual void slot016();
-    virtual void slot017();
-    virtual void slot018();
-    virtual void slot019(int, int);  // <-- used
-};
-
-class VCall { public:
-    virtual void slot000();
-    virtual void slot001();
-    virtual void slot002();
-    virtual void slot003();  // <-- used
-    virtual void slot004();  // <-- used
-    virtual void slot005();
-    virtual void slot006();
-    virtual void slot007();
-    virtual void slot008();
-    virtual void slot009();
-    virtual void slot010();
-    virtual void slot011();
-    virtual void slot012();
-    virtual void slot013();
-    virtual void slot014();
-    virtual void slot015();
-    virtual void slot016();
-    virtual void slot017();
-    virtual void slot018();
-    virtual void slot019();  // <-- used
-    // BaseWin::update_gov_buttons, base_editor_fac, base_editor_copy and
-    // init each dispatch through vtable slot 62 of a sub-window. Only
-    // DECLARATION ORDER matters here - VCall is never defined, never
-    // instantiated, and its slot signatures are free to differ between the
-    // VCall/VCall2 spellings - so the run continues to 62 rather than
-    // growing a third class.
-    virtual void slot020();
-    virtual void slot021();
-    virtual void slot022();
-    virtual void slot023();
-    virtual void slot024();
-    virtual void slot025();
-    virtual void slot026();
-    virtual void slot027();
-    virtual void slot028();
-    virtual void slot029();
-    virtual void slot030();
-    virtual void slot031();
-    virtual void slot032();
-    virtual void slot033();
-    virtual void slot034();
-    virtual void slot035();
-    virtual void slot036();
-    virtual void slot037();
-    virtual void slot038();
-    virtual void slot039();
-    virtual void slot040();
-    virtual void slot041();
-    virtual void slot042();
-    virtual void slot043();
-    virtual void slot044();
-    virtual void slot045();
-    virtual void slot046();
-    virtual void slot047();
-    virtual void slot048();
-    virtual void slot049();
-    virtual void slot050();
-    virtual void slot051();
-    virtual void slot052();
-    virtual void slot053();
-    virtual void slot054();
-    virtual void slot055();
-    virtual void slot056();
-    virtual void slot057();
-    virtual void slot058();
-    virtual void slot059();
-    virtual void slot060();
-    virtual void slot061();
-    virtual void slot062();  // <-- used
-};
-
 // ORIGINAL: 0x0041AFD0 ?on_left_up@BaseWin@@QAEXHH@Z 0x0041AFD0-0x0041B10D FILE
 // size      317 bytes
 // prototype void (__thiscall ?on_left_up@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
@@ -823,18 +753,16 @@ class VCall { public:
 // emitter computes declarations; it does not carry lessons.
 
 
-void BaseWin::on_left_up(int a1, int a2) {
-    char *self = reinterpret_cast<char *>(this);
-
+void BaseWin::on_left_up(int xCoord, int yCoord) {
     // 0x474 is Buffer+0x30 - the drawing Buffer's own rect2_, not BaseWin's
     // rect2_ at 0x40BAC. The base's member has to be named qualified, because
     // BaseWin declares a `rect2_` of its own that would shadow it.
     RECT rect = Buffer::rect2_;
-    int flag = *reinterpret_cast<int *>(self + 0x40b54);
+    int flag = field_40B54_;
     if (flag > 0) {
-        if (!in_box(a1, a2, &rect)) {
-            reinterpret_cast<Win *>(self)->client_to_screen(&a1, &a2);
-            MainInterfaceGlobal.screen_to_client(&a1, &a2);
+        if (!in_box(xCoord, yCoord, &rect)) {
+            client_to_screen(&xCoord, &yCoord);
+            MainInterfaceGlobal.screen_to_client(&xCoord, &yCoord);
 
             // THE IMAGE REUSES THE FRAME SLOTS: the clip rectangle lands in
             // the same [ebp-0x10..ebp-4] the Buffer::rect2_ copy used, so a
@@ -847,41 +775,35 @@ void BaseWin::on_left_up(int a1, int a2) {
             rect.right = *MainInterfaceScreenClipRight;
             rect.bottom = *MainInterfaceScreenClipBottom;
 
-            if (!in_box(a1, a2, &rect)) {
-                reinterpret_cast<Win *>(self)->set_cursor(0x7f00);
+            if (!in_box(xCoord, yCoord, &rect)) {
+                set_cursor(0x7f00);
                 MainInterfaceGlobal.set_cursor(0x7f00);
-                *reinterpret_cast<int *>(self + 0x40b54) = -1;
-                *reinterpret_cast<int *>(self + 0x40b4c) = -1;
-                *reinterpret_cast<int *>(self + 0x40b50) = -1;
+                field_40B54_ = -1;
+                field_40B4C_ = -1;
+                field_40B50_ = -1;
             } else {
-                // HANDOFF to subinterface.h. The +0xA14 subobject is BaseWin's
-                // own SubInterface base, and slot 3 of its table (offset 0x0C)
-                // is IfaceRegistryEntry::on_iface_left_click - maininterface.h
-                // now carries all nineteen slots, and MainInterface derives
-                // from it, which is what unblocked the on_iface_* family. This
-                // dispatch cannot be spelled without the shim because
-                // SubInterface declares slot 0 only: naming slots 1..18 there
-                // would let this read `SubInterface::on_iface_left_click`.
-                // BaseWin cannot take them from IfaceRegistryEntry instead -
-                // they are pure, and BaseWin is instantiated (TutWinBaseWindow,
-                // basewin.cpp), so deriving from it makes BaseWin abstract.
-                reinterpret_cast<VCall2 *>(self + 0xa14)->slot003(a1, a2);
+                // The +0xA14 subobject is BaseWin's IfaceRegistryEntry base,
+                // and slot 3 of its table (offset 0x0C) is the override
+                // on_iface_left_click. Spelled by name since the derivation -
+                // `mov edx,[esi+0xa14] / lea ecx,[esi+0xa14] / call [edx+0xc]`
+                // - where a `VCall2` shim stood in because SubInterface
+                // declared slot 0 only.
+                on_iface_left_click(xCoord, yCoord);
             }
         } else {
             // Front vtable slot 19 (0x4C), which in BaseWin's own front table
             // (0x66A40C) holds on_left_click (0x0041AF70). Win declares the
-            // slot `vslot_19`, so the dispatch spells by name and the shim
-            // with it.
-            vslot_19(a1, a2);
+            // slot `vslot_19`, so the dispatch spells by name.
+            vslot_19(xCoord, yCoord);
         }
     }
 
-    if (WinPointerOwner3 == reinterpret_cast<Win *>(self)) {
+    if (WinPointerOwner3 == this) {
         WinPointerOwner3 = 0;
         // Front vtable slot 4 (0x10) - Win's vslot_04, the shared no-op.
         vslot_04();
     }
-    if (WinPointerOwner4 == reinterpret_cast<Win *>(self)) {
+    if (WinPointerOwner4 == this) {
         WinPointerOwner4 = 0;
     }
 }
@@ -889,8 +811,18 @@ void BaseWin::on_left_up(int a1, int a2) {
 // Fixed-slot bindings carried from 0041b110.cpp
 static int *const NetInputLockFlag = (int *)0x0093E8C8;
 
-// ORIGINAL: 0x0041B110 ?on_left_down@BaseWin@@QAEXHH@Z 0x0041B110-0x0041B1D9 FILE
-// TRIED: SHAPE_EXACT (every instruction's mnemonic, size and operand kind match; only immediate/relocated values differ in the diagnostic dump, which is a base-address display artifact for most of them). Grouping the two `Spot::check` out-params into an anonymous `struct { int a; int b; }` stopped VC6 reusing the incoming `a1`/`a2` parameter stack slots as the output locations (which it did when they were two plain `int` locals, since a1/a2 are dead after the call) - matches the original's dedicated `sub esp,8` locals. Store order for the two `DAT_009b7abc`/`DAT_009b7ac0` guard writes had to be flipped from the Ghidra-printed order to match the disassembly's actual order.
+// ORIGINAL: 0x0041B110 ?on_left_down@BaseWin@@QAEXHH@Z 0x0041B110-0x0041B1D9 FILE BYTE_EXACT
+// LEVER: 2026-09-06, the two moves that took this 57/59 to 59/59. (1) Every
+//        raw offset in the body is a declared member (field_40B44_/48/4C/50/54,
+//        spot2_ at 0x40EC0), and `this` is the front, so the members replaced
+//        the `char *self` walk outright - `WinPointerOwner3 = this` included.
+//        (2) The two `Spot::check` out-params went back to two plain `int`
+//        locals named from spot.h's prototype, declared at the TOP of the
+//        function - where VC6 gives them the dedicated `sub esp,8` the image
+//        pays - instead of an anonymous struct. That also fixed a defect: the
+//        struct spelling passed them to check the wrong way round, so
+//        spot_pos landed in field_40B4C_ and spot_type in field_40B50_ where
+//        the image stores the opposite (0x0041B1BA writes [ebp-4] to 0x40b4c).
 // working copy - scaffold materialised by --work
 // size      201 bytes
 // prototype void (__thiscall ?on_left_down@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
@@ -899,29 +831,34 @@ static int *const NetInputLockFlag = (int *)0x0093E8C8;
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005EC7C0 0x005F7E90 0x005FAB00
 
-void BaseWin::on_left_down(int a1, int a2) {
-    char *self = reinterpret_cast<char *>(this);
-    if (*reinterpret_cast<int *>(self + 0x40b54) > 0) {
-        reinterpret_cast<Win *>(self)->set_cursor(0x7f00);
+void BaseWin::on_left_down(int xCoord, int yCoord) {
+    // Declared at the TOP of the function, not where they are used: VC6 gives
+    // two locals it cannot prove are in blocks a dead parameter's stack slot,
+    // and the image pays a dedicated `sub esp,8` for the Spot::check
+    // out-params. (The anonymous-struct spelling the previous transcription
+    // used was a workaround for exactly this, and it also passed the two
+    // out-params to check the wrong way round - see the LEVER note above.)
+    int spot_pos;
+    int spot_type;
+
+    if (field_40B54_ > 0) {
+        set_cursor(0x7f00);
         MainInterfaceGlobal.set_cursor(0x7f00);
     }
-    *reinterpret_cast<int *>(self + 0x40b54) = -1;
-    *reinterpret_cast<int *>(self + 0x40b4c) = -1;
-    *reinterpret_cast<int *>(self + 0x40b50) = -1;
-    *reinterpret_cast<int *>(self + 0x40b44) = a1;
-    *reinterpret_cast<int *>(self + 0x40b48) = a2;
-    if (reinterpret_cast<Win *>(self)->is_visible() != 0 &&
-        (IsMultiplayerNet == 0 || *NetInputLockFlag == 0)) {
+    field_40B54_ = -1;
+    field_40B4C_ = -1;
+    field_40B50_ = -1;
+    field_40B44_ = xCoord;
+    field_40B48_ = yCoord;
+    if (is_visible() != 0 && (IsMultiplayerNet == 0 || *NetInputLockFlag == 0)) {
         if (WinPointerOwner3 == 0) {
-            WinPointerOwner3 = reinterpret_cast<Win *>(self);
+            WinPointerOwner3 = this;
             WinPointerOwner4 = 0;
         }
-        struct { int a; int b; } out;
-        int r = reinterpret_cast<Spot *>(self + 0x40ec0)->check(a1, a2, &out.b, &out.a);
-        if (r >= 0) {
-            *reinterpret_cast<int *>(self + 0x40b4c) = out.b;
-            *reinterpret_cast<int *>(self + 0x40b50) = out.a;
-            *reinterpret_cast<int *>(self + 0x40b54) = 0;
+        if (spot2_.check(xCoord, yCoord, &spot_pos, &spot_type) >= 0) {
+            field_40B4C_ = spot_type;
+            field_40B50_ = spot_pos;
+            field_40B54_ = 0;
         }
     }
 }
@@ -1001,6 +938,11 @@ void __stdcall bubble_me_elmo2(char *text, int x, int y) {
 // Fixed-slot bindings carried from 0041de60.cpp
 
 // ORIGINAL: 0x0041DE60 ?on_iface_left_down@BaseWin@@QAEXHH@Z 0x0041DE60-0x0041DF38 FILE BYTE_EXACT
+// symbol    ?on_iface_left_down@BaseWin@@UAEXHH@Z
+//           Q->U 2026-09-06, the IfaceRegistryEntry derivation: the body is
+//           now an override of the interface base's slot, so VC6 mangles it
+//           virtual and enters it on the ENTRY, while the image spells the
+//           same body Q and its own table 0x66A3B8 holds the raw address.
 // LEVER: locals declared at top of function (not just before use) reproduces `sub esp,8` for two 4-byte slots instead of the optimizer reusing a dead parameter's stack slot for one of them; and the two adjacent global stores (WinPointerOwner3 then WinPointerOwner4) had to be written in that exact order - Ghidra's own pseudocode printed them reversed.
 // working copy - scaffold materialised by --work
 // size      216 bytes
@@ -1010,85 +952,42 @@ void __stdcall bubble_me_elmo2(char *text, int x, int y) {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005EC7C0 0x005F7E90 0x005FAB00
 
-void BaseWin::on_iface_left_down(int a1, int a2) {
-    char *self = reinterpret_cast<char *>(this);
-    int local_c;
-    int local_8;
+void BaseWin::on_iface_left_down(int xCoord, int yCoord) {
+    int spot_type;
+    int spot_pos;
 
-    if (*reinterpret_cast<int *>(self + 0x40140) > 0) {
-        reinterpret_cast<Win *>(self - 0xa14)->set_cursor(0x7f00);
-        reinterpret_cast<Win *>(0x7ae820)->set_cursor(0x7f00);
+    if (field_40B54_ > 0) {
+        set_cursor(0x7f00);
+        MainInterfaceGlobal.set_cursor(0x7f00);
     }
-    *reinterpret_cast<unsigned int *>(self + 0x40140) = 0xffffffff;
-    *reinterpret_cast<unsigned int *>(self + 0x40138) = 0xffffffff;
-    *reinterpret_cast<unsigned int *>(self + 0x4013c) = 0xffffffff;
-    *reinterpret_cast<int *>(self + 0x40130) = a1;
-    *reinterpret_cast<int *>(self + 0x40134) = a2;
+    field_40B54_ = -1;
+    field_40B4C_ = -1;
+    field_40B50_ = -1;
+    field_40B44_ = xCoord;
+    field_40B48_ = yCoord;
 
-    if (reinterpret_cast<Win *>(self - 0xa14)->is_visible() != 0 &&
-        (IsMultiplayerNet == 0 || *NetInputLockFlag == 0)) {
+    if (is_visible() != 0 && (IsMultiplayerNet == 0 || *NetInputLockFlag == 0)) {
         if (WinPointerOwner3 == 0) {
-            WinPointerOwner3 = reinterpret_cast<Win *>(self - 0xa14);
+            WinPointerOwner3 = this;
             WinPointerOwner4 = 0;
         }
-        if (reinterpret_cast<Spot *>(self + 0x404a0)->check(a1, a2, &local_c, &local_8) >= 0) {
-            *reinterpret_cast<int *>(self + 0x40138) = local_8;
-            *reinterpret_cast<int *>(self + 0x4013c) = local_c;
-            *reinterpret_cast<int *>(self + 0x40140) = 0;
+        if (spot1_.check(xCoord, yCoord, &spot_pos, &spot_type) >= 0) {
+            field_40B4C_ = spot_type;
+            field_40B50_ = spot_pos;
+            field_40B54_ = 0;
         }
     }
 }
 
-class VCallArg1 {
- public:
-  virtual void slot000();
-  virtual void slot001();
-  virtual void slot002();
-  virtual void slot003();
-  virtual void slot004();
-  virtual void slot005();
-  virtual void slot006();
-  virtual void slot007();
-  virtual void slot008();
-  virtual void slot009();
-  virtual void slot010();
-  virtual void slot011();
-  virtual void slot012();
-  virtual void slot013();
-  virtual void slot014();
-  virtual void slot015();
-  virtual void slot016();
-  virtual void slot017();
-  virtual void slot018();
-  virtual void slot019();
-  virtual void slot020();
-  virtual void slot021();
-  virtual void slot022();
-  virtual void slot023();
-  virtual void slot024();
-  virtual void slot025();
-  virtual void slot026();
-  virtual void slot027();
-  virtual void slot028();
-  virtual void slot029();
-  virtual void slot030();
-  virtual void slot031();
-  virtual void slot032();
-  virtual void slot033();
-  virtual void slot034();
-  virtual void slot035();
-  virtual void slot036();
-  virtual void slot037();
-  virtual void slot038();
-  virtual void slot039();
-  virtual void slot040();
-  virtual void slot041();
-  virtual void slot042();
-  virtual void slot043();
-  virtual void slot044(int);
-};
 
 // ORIGINAL: 0x0041E510 ?on_iface_button_clicked@BaseWin@@QAEXH@Z 0x0041E510-0x0041E52D BYTE_EXACT
+// symbol    ?vslot_13@BaseWin@@UAEXH@Z
+// LEVER: the derivation deleted this body's shim. The image is one dispatch -
+//        `mov eax,[ecx-0xa14] / add ecx,-0xa14 / call [eax+0xb0]` - and 0xb0
+//        is the FRONT vtable's slot 44, which Win spells vslot_44. Naming it
+//        replaced both the `this - 0xa14` pun and the VCallArg1 class the
+//        pun needed; the interface's button-clicked event is the front's
+//        on_button_clicked, and the source now says so.
 // size      29 bytes
 // prototype void (__thiscall ?on_iface_button_clicked@BaseWin@@QAEXH@Z)(BaseWin* this, int)
 // callers   0   call targets   0
@@ -1097,17 +996,8 @@ class VCallArg1 {
 // calls     (none)
 // indirect  0x0041E523
 // 0x0041E510  ?on_iface_button_clicked@BaseWin@@QAEXH@Z  ->  ?on_iface_button_clicked@BaseWin@@QAEXH@Z
-//
-// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
-// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
-// and rewriting it in the tree's own style is a later phase. See README.md
-// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
-
-
-void BaseWin::on_iface_button_clicked(int a1) {
-    VCallArg1 *const enclosing = reinterpret_cast<VCallArg1 *>(
-        reinterpret_cast<char *>(this) - 0xa14);
-    enclosing->slot044(a1);
+void BaseWin::vslot_13(int button_id) {
+    vslot_44(button_id);
 }
 
 // ORIGINAL: 0x0041E8B0 ?hide@BaseWin@@QAEXXZ 0x0041E8B0-0x0041E8C9 BYTE_EXACT
@@ -1126,9 +1016,11 @@ void BaseWin::on_iface_button_clicked(int a1) {
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
 
 void BaseWin::hide() {
-    if (reinterpret_cast<Win *>(this)->is_visible()) {
-        reinterpret_cast<SubInterface *>(
-            reinterpret_cast<char *>(this) + 0xA14)->release_iface_mode();
+    if (is_visible()) {
+        // The interface-mode registry entry is this class's second base, so
+        // the member call carries the +0xA14 itself - the cast this replaces
+        // was the only way to name it before the derivation.
+        release_iface_mode();
     }
 }
 
@@ -1194,11 +1086,37 @@ void __cdecl load_inverts() {
 
 
 // ORIGINAL: 0x0041DD10 ?on_iface_left_up@BaseWin@@QAEXHH@Z 0x0041DD10-0x0041DE5B FILE
-// LEVER: the artifact's dispatch spells `VCall`, and this TU has two VCall
-// classes - `VCall` whose slot019 takes nothing and `VCall2` whose takes
-// (int, int). Only DECLARATION ORDER is meaningful to the emitted code, so
-// the fix is to name the right shim, not to change a signature: the same
-// slot index is free to carry different arguments in each spelling.
+// symbol    ?on_iface_left_up@BaseWin@@UAEXHH@Z
+//           Q->U 2026-09-06, the IfaceRegistryEntry derivation: the body is
+//           now an override of the interface base's slot, so VC6 mangles it
+//           virtual and enters it on the ENTRY, while the image spells the
+//           same body Q and its own table 0x66A3B8 holds the raw address.
+// LEVER: the artifact's dispatch spelled `VCall`, and the TU it came from had
+// two VCall classes - `VCall` whose slot019 takes nothing and `VCall2` whose
+// takes (int, int). Only DECLARATION ORDER is meaningful to the emitted code,
+// so the fix was to name the right shim, not to change a signature.
+// LEVER: 2026-09-06, the derivation took this 91/97 -> 93/99 and deleted all
+//        three of its shims. `this` now IS the entry, so the three raw
+//        offsets are members (field_40B4C_/40B50_/40B54_, `Buffer::rect2_`
+//        for `self - 0x5a0`), the two cross-object casts are the plain
+//        `vslot_19(...)` / `vslot_04()` the front already spelled, and the
+//        `self + 0xa14` receiver of the old `VCall2::slot004` compare is a
+//        single `static_cast<BaseWin *>(this)` - the adjustment the receiver
+//        already carries, which is what 0x41DE26's one `add esi,0xfffff5ec`
+//        is. Entry slot 3 spells on_iface_left_click by name.
+// TRIED: `local_rect = *IfaceDropRect;` as one aggregate assignment for the
+//        four drop-rect fields - 37 of 99, far WORSE than the four separate
+//        field copies, because the aggregate collapses to a load-all-then-
+//        store-all schedule where the image stores each dword as it loads it.
+//        The FIRST rect copy in the body (`RECT local_rect = Buffer::rect2_`)
+//        is the one place the aggregate IS the image's shape.
+// LEVER: 2026-09-06, the derivation deleted the last of this body's puns.
+//        `this` IS the entry, so field_40B4C_/40B50_/40B54_ and
+//        `Buffer::rect2_` name the four raw offsets, the two cross-object
+//        casts are the front's own `vslot_19(...)` / `vslot_04()`, entry slot
+//        3 spells `on_iface_left_click(...)`, and the capture-slot compare is
+//        one `static_cast<BaseWin *>(this)`. 91/97 before and after - the
+//        remaining six are the drop-rect copy's schedule, see the TRIED note.
 // size      331 bytes
 // prototype void (__thiscall ?on_iface_left_up@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
 // callers   0   call targets   4
@@ -1264,41 +1182,183 @@ static inline void *&IfaceEnterSlot() {
     return *reinterpret_cast<void **>(0x009B7AC0);
 }
 
-void BaseWin::on_iface_left_up(int a1, int a2) {
-    char *self = reinterpret_cast<char *>(this);
-    RECT local_rect = *reinterpret_cast<RECT *>(self - 0x5a0);
+void BaseWin::on_iface_left_up(int xCoord, int yCoord) {
+    // front + 0x474: the drawing Buffer's own rect2_, not this class's
+    // rect2_ at 0x40BAC - hence the qualification.
+    RECT local_rect = Buffer::rect2_;
 
-    if (*reinterpret_cast<int32_t *>(self + 0x40140) > 0) {
-        if (in_box(a1, a2, &local_rect) == 0) {
-            MainInterfaceGlobal.client_to_screen(&a1, &a2);
-            TutWinBaseWindow.screen_to_client(&a1, &a2);
+    if (field_40B54_ > 0) {
+        if (in_box(xCoord, yCoord, &local_rect) == 0) {
+            MainInterfaceGlobal.client_to_screen(&xCoord, &yCoord);
+            TutWinBaseWindow.screen_to_client(&xCoord, &yCoord);
 
+            // Four field copies, and NOT one aggregate assignment: the image
+            // stores each dword as it loads it (`mov ecx,[0x6a7a9c] / mov
+            // [ebp-0x10],ecx`), and the aggregate spelling collapses to a
+            // load-all-then-store-all schedule that measured 37 of 99 against
+            // 93. The first copy - `RECT local_rect = Buffer::rect2_` above -
+            // is the one place the aggregate IS the image's shape.
             local_rect.left = IfaceDropRect->left;
             local_rect.top = IfaceDropRect->top;
             local_rect.right = IfaceDropRect->right;
             local_rect.bottom = IfaceDropRect->bottom;
 
-            if (in_box(a1, a2, &local_rect) == 0) {
-                reinterpret_cast<Win *>(self - 0xa14)->set_cursor(0x7f00);
+            if (in_box(xCoord, yCoord, &local_rect) == 0) {
+                set_cursor(0x7f00);
                 MainInterfaceGlobal.set_cursor(0x7f00);
-                *reinterpret_cast<int32_t *>(self + 0x40140) = -1;
-                *reinterpret_cast<int32_t *>(self + 0x40138) = -1;
-                *reinterpret_cast<int32_t *>(self + 0x4013c) = -1;
+                field_40B54_ = -1;
+                field_40B4C_ = -1;
+                field_40B50_ = -1;
             } else {
-                reinterpret_cast<VCall2 *>(self - 0xa14)->slot019(a1, a2);
+                // Front vtable slot 19 (0x4C) - the front's on_left_click.
+                vslot_19(xCoord, yCoord);
             }
         } else {
-            reinterpret_cast<VCall2 *>(self)->slot003(a1, a2);
+            // This table's own slot 3, dispatched with the entry untouched -
+            // `mov edx,[esi] / call [edx+0xc]`.
+            on_iface_left_click(xCoord, yCoord);
         }
     }
 
-    char *base = self - 0xa14;
-    if (IfaceCaptureSlot() == base) {
+    // The capture slots hold the FRONT, and 0x41DE26 materialises it once
+    // (`add esi, 0xfffff5ec`) before both compares. A static_cast to the
+    // derived class is the same adjustment the receiver is already carrying;
+    // it replaces the `self - 0xa14` pointer arithmetic the pun needed.
+    BaseWin *const self = static_cast<BaseWin *>(this);
+    if (IfaceCaptureSlot() == self) {
         IfaceCaptureSlot() = 0;
-        reinterpret_cast<VCall2 *>(base)->slot004();
+        // Front vtable slot 4 (0x10) - Win's vslot_04, the shared no-op.
+        vslot_04();
     }
-    if (IfaceEnterSlot() == base) {
+    if (IfaceEnterSlot() == self) {
         IfaceEnterSlot() = 0;
     }
 }
 
+
+/*
+Purpose: The interface's mode change. Mode selects which of the base screen's
+         panels the status line paints. Unrecovered - the body is 431 bytes
+         and dispatches its own table's slot 1 and the front's slot 45 among
+         a great many named helpers, so it forwards to the image until it is
+         transcribed.
+// PENDING 0x0041DAD0 ?on_status@BaseWin@@QAEXH@Z 0x0041DAD0-0x0041DC7F
+// symbol    ?on_status@BaseWin@@UAEXH@Z
+// PENDING BODY - the receiver is solved (the artefact at
+//   src/recovered/units/0041dad0.cpp reads `mov edi, ecx` and then steps to
+//   the front with `lea ebx, [edi - 0xa14]`, which is the entry receiver the
+//   derivation supplies) and the mode switch is transcribable, but its arms
+//   reach draw_pop, draw_queue, update_gov_buttons and a dozen more bodies
+//   that are themselves unhomed, so the transcription would forward to the
+//   image at nearly every step. Nothing is gained by homing it before them.
+// size      431 bytes
+// prototype void (__thiscall ?on_status@BaseWin@@QAEXH@Z)(BaseWin* this, int)
+// callers   1   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00415B20 0x00415080 0x0041E560 0x0040D250 0x004C3A40
+*/
+void BaseWin::on_status(int mode) {
+    typedef void(__fastcall *pending)(BaseWin *, void *, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x0041DAD0))(
+        this, nullptr, mode);
+}
+
+/*
+Purpose: The interface's scroll event. The interface has no scrolling of its
+         own: both arguments are handed straight to this table's slot 1,
+         on_iface_scrolled.
+// ORIGINAL: 0x0041DCB0 ?on_iface_scrolling@BaseWin@@QAEXHH@Z 0x0041DCB0-0x0041DCC4 BYTE_EXACT
+// symbol    ?on_iface_scrolling@BaseWin@@UAEXHH@Z
+// LEVER: the derivation deleted this body's redirect. As an override of the
+//        entry's slot 2 the unqualified call to on_iface_scrolled IS the
+//        image's own `mov eax,[ecx] / call [eax+4]`, receiver untouched - the
+//        delegation_thunks spelling needed an ORIGINAL seam and a free
+//        __fastcall wrapper to say the same thing. The redirect and its
+//        declaration are gone from delegation_thunks.{cpp,h}.
+// size      20 bytes
+// prototype void (__thiscall ?on_iface_scrolling@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x0041DCBD
+Return Value: n/a
+Status: Complete
+*/
+void BaseWin::on_iface_scrolling(int a1, int a2) {
+    on_iface_scrolled(a1, a2);
+}
+
+/*
+Purpose: The interface's button-toggled event. It IS the front's
+         on_button_toggled: the body steps the receiver back to the
+         GraphicWin and dispatches the front vtable's slot 45, which is where
+         0x0041B4E0 - the catalogue's on_button_toggled - sits.
+// ORIGINAL: 0x0041E530 ?on_iface_button_toggled@BaseWin@@QAEXHH@Z 0x0041E530-0x0041E551 BYTE_EXACT
+// symbol    ?on_iface_button_toggled@BaseWin@@UAEXHH@Z
+// LEVER: named slot, no shim. `vslot_45(a1, a2)` - Win's own name for front
+//        vtable slot 45 - emits `mov eax,[ecx-0xa14] / add ecx,-0xa14 /
+//        push / push / call [eax+0xb4]`, the image's four instructions and
+//        its order. The VCall2 spelling this replaces put the adjustment on
+//        an explicit pointer and could not fold it into the load.
+// size      33 bytes
+// prototype void (__thiscall ?on_iface_button_toggled@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x0041E547
+Return Value: n/a
+Status: Complete
+*/
+void BaseWin::on_iface_button_toggled(int a1, int a2) {
+    vslot_45(a1, a2);
+}
+
+/*
+Purpose: The interface's mouse-move report. Unrecovered - 1164 bytes of spot
+         hit-testing, queue-panel drag and tool-tip work.
+// PENDING 0x0041DF50 ?on_iface_mouse_move@BaseWin@@QAEXHH@Z 0x0041DF50-0x0041E3DC
+// symbol    ?on_iface_mouse_move@BaseWin@@UAEXHH@Z
+// PENDING BODY - the receiver is solved (`lea ebx, [esi - 0xa14]` at
+//   0x0041DF5B is the front, esi the entry, so `spot1_` and `is_visible()`
+//   both spell directly now) but the body is a long branch-heavy walk over
+//   the queue panel and the artifact it was transcribed from is NOT_MATCHING
+//   on its own terms. Left to the pass that homes it.
+// size      1164 bytes
+// prototype void (__thiscall ?on_iface_mouse_move@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
+// callers   0   call targets   9
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005F7E90 0x005F8500 0x005FAB00 0x005EC7C0 0x004E39D0
+*/
+void BaseWin::on_iface_mouse_move(int a1, int a2) {
+    typedef void(__fastcall *pending)(BaseWin *, void *, int, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x0041DF50))(
+        this, nullptr, a1, a2);
+}
+
+/*
+Purpose: The interface's mouse-leave report. Unrecovered - 224 bytes that
+         clear the queue panel's hover and repaint the status line.
+// PENDING 0x0041E3E0 ?on_iface_mouse_leave@BaseWin@@QAEXHH@Z 0x0041E3E0-0x0041E4C0
+// symbol    ?on_iface_mouse_leave@BaseWin@@UAEXHH@Z
+// PENDING BODY - the receiver is solved (every member in the artifact's
+//   transcription is entry-relative: 0x4011c, 0x400ec, 0x40b0c) and the shape
+//   is MainInterface::on_iface_mouse_leave's - an early test, a guard, a
+//   `draw_queue(0)`, then the redraw. The two `call 0x5f8500` pairs that open
+//   it are unaccounted for in every reading tried so far, which is why the
+//   artifact is NOT_MATCHING and this is a forwarder.
+// size      224 bytes
+// prototype void (__thiscall ?on_iface_mouse_leave@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
+// callers   0   call targets   8
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005F8500 0x00415080 0x004E39D0 0x004EC3B0
+*/
+void BaseWin::on_iface_mouse_leave(int a1, int a2) {
+    typedef void(__fastcall *pending)(BaseWin *, void *, int, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x0041E3E0))(
+        this, nullptr, a1, a2);
+}

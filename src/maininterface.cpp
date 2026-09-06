@@ -1011,7 +1011,7 @@ void MainInterface::on_left_up(int a1, int a2) {
         IfaceRegistryEntry *target =
             reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[group];
         if (target) {
-            target->vslot_06(a1, a2);
+            target->on_iface_left_up(a1, a2);
         }
     }
 }

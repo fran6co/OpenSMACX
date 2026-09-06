@@ -109,7 +109,16 @@ class IfaceRegistryEntry : public SubInterface {
   virtual void on_iface_left_click(int, int) = 0;    // slot 3  0x45CDC0
   virtual void on_iface_right_click(int, int) = 0;   // slot 4  0x45CE80
   virtual void on_iface_left_down(int, int) = 0;     // slot 5  0x45CF40
-  virtual void vslot_06(int, int) {}             // slot 6  0x404260, shared ret 8
+  // Slot 6 carries a NAME, not a vslot_N placeholder, and BaseWin is why.
+  // Its own table (0x66A3B8) holds ?on_iface_left_up@BaseWin@@QAEXHH@Z at
+  // 0x18 - slot 6 - where every other window's table holds the shared `ret 8`
+  // this definition spells. Slot 5 is on_iface_left_down, so the pair is the
+  // interface's left-button press/release, and the name is the image's own.
+  // Renamed from `vslot_06` 2026-09-06: no derived class had ever overridden
+  // the slot (MainInterface, CouncWin, BattleWin, DesignWin and DiploPop all
+  // leave 0x404260 there), so the rename moves no body and gives BaseWin's
+  // override its real name instead of a second spelling of it.
+  virtual void on_iface_left_up(int, int) {}     // slot 6  0x404260, shared ret 8
   virtual void on_iface_right_down(int, int) = 0;    // slot 7  0x45CF80
   virtual void on_iface_mouse_move(int, int) = 0;    // slot 8  0x45D000
   virtual void on_iface_mouse_leave(int, int) = 0;   // slot 9  0x45D110

@@ -52,7 +52,6 @@ typedef int (OriginalObject::*func_delegation_3)(int, int, int);
 
 int __fastcall alpha_movie_on_key_click_redirect(void *self, void *, int a1, int a2);
 void __fastcall base_win_on_scrolling_redirect(void *self, void *, int a1, int a2);
-void __fastcall base_win_on_iface_scrolling_redirect(void *self, void *, int a1, int a2);
 int __fastcall credits_on_key_click_redirect(void *self, void *, int a1, int a2);
 void __fastcall credits_on_left_click_redirect(void *self, void *, int a1, int a2);
 void __fastcall select_part_win_on_scrolling_redirect(void *self, void *, int a1, int a2);

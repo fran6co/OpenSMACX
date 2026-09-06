@@ -146,7 +146,9 @@ CEILINGS = {
     # stays BYTE_EXACT under the rename.
     # 201 -> 200 (2026-09-06, W5l caviar engine): the file-local engine
     # stand-ins fell - their callees are real members now.
-    "orphan redirect": 200,
+    # 200 -> 199 (2026-09-06, W5q basewin derivation): one redirect fell
+    # with the derived base.
+    "orphan redirect": 199,
     "pointer-as-int": 0,
     "undocumented trivial body": 0,
     # 239 IS BELOW WHAT THE TREE CAN REACH TODAY, and this is the only
@@ -320,7 +322,10 @@ CEILINGS = {
     # the body is entered on the SubInterface receiver, so self-0xA14 IS
     # the BaseWin; spelling it without the pun needs the second-base
     # treatment basewin's entry points have not had yet (next pass).
-    "raw self-access": 233,
+    # 233 -> 219 (2026-09-06, W5q basewin derivation): fourteen puns fell
+    # - on_left_down, the iface click family and hide all spell through
+    # the derived base now.
+    "raw self-access": 219,
     # 4 -> 5 (2026-09-03, P1a batch): one homed body's faithful spelling
     # returns this as int (catalogue mangling QAEHH; TexHeap::UNK1 family).
     # 5 -> 8 (2026-09-03, P2 buffer/mapwin batch): three more homed
@@ -437,7 +442,9 @@ CEILINGS = {
     # source; naming them is the BaseWin class pass.
     # 3075 -> 3058 (2026-09-06, W5k texture class pass): parameter names
     # across the blit family in texture.h.
-    "scaffold name": 3058,
+    # 3058 -> 3029 (2026-09-06, W5q basewin derivation): the iface click
+    # family's one-line bodies carry no scaffold names.
+    "scaffold name": 3029,
 }
 
 WHY = {

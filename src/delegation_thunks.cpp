@@ -87,26 +87,6 @@ void __fastcall base_win_on_scrolling_redirect(void *self, void *, int a1, int a
 }
 
 /*
-Purpose: ?on_iface_scrolling@BaseWin@@QAEXHH@Z - dispatch to slot 0x4 of this object's OWN
-         vtable, forwarding 2 argument(s).
-// ORIGINAL: 0x0041DCB0 ?on_iface_scrolling@BaseWin@@QAEXHH@Z 0x0041DCB0-0x0041DCC4 BYTE_EXACT
-// symbol    ?base_win_on_iface_scrolling_redirect@@YIXPAX0HH@Z
-// size      20 bytes
-// prototype void (__thiscall ?on_iface_scrolling@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x0041DCBD
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall base_win_on_iface_scrolling_redirect(void *self, void *, int a1, int a2) {
-    void **const vtable = *reinterpret_cast<void ***>(self);
-    (void)(ORIGINAL(self)->*original_method<func_delegation_2>(reinterpret_cast<unsigned long>(vtable[0x4 / sizeof(void *)])))(a1, a2);
-}
-
-/*
 Purpose: ?on_key_click@Credits@@QAEXHH@Z - dispatch to slot 0xe8 of this object's OWN
          vtable with NO arguments: the original pushes nothing between the
          vtable load and the call, so the parameters this function declares are
