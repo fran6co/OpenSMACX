@@ -50,7 +50,11 @@ Once the structural interpretation is established, score 3–5 plausible spellin
 with `uv run recover tasks variants <task> --image <image> --deck <ignored-json>`
 before editing product source. Follow the package README's source digest and
 exact-text/dependency controls; do not guess body braces or weaken a failing
-replica control. Default to one compiler job unless the coordinator has measured
+replica control. Use a multi-file deck for coupled header/body changes: each
+edited file needs its own compiled damage witness. Inspect all task-TU results
+and outside-task neighbors, not just the primary function's score. Unmeasured
+callers still require scope expansion and preservation checks.
+Default to one compiler job unless the coordinator has measured
 isolated capacity. Rankings are diagnostics, not a winner to apply automatically.
 After a deliberate source edit, rerun task checks and preserve coupled findings.
 

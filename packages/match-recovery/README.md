@@ -412,16 +412,23 @@ Protocol v2 adds an explicit project-defined compilation profile. The local
 command can resolve an application build entry or choose a dependency invocation;
 there is no profile registry or compiler-command parser to modify in the library.
 
-`Compiler.variant(source, contents, arguments, flags)` sends protocol v3: the
-same fields plus `source_sha256` (the original TU digest) and `source_base64`
-(proposed whole-TU bytes). The original `source` still selects the build recipe.
-Commands must explicitly support this version, verify the original digest and
-compile the replacement without overwriting product source. They own compiler
+`Compiler.overlay(source, replacements, arguments, flags)` sends protocol v4:
+the same fields plus `overrides`, a map of project-relative file paths to
+`{"sha256":"<original file digest>","base64":"<proposed whole-file bytes>"}`.
+One request may replace headers and several bodies together. All paths must name
+existing canonical regular files. A single-file proposal is a one-entry overlay;
+the superseded v3 transport and single-file compiler wrappers are removed.
+The original `source` still selects the build recipe.
+Commands must explicitly support this version, verify every original digest and
+compile the complete overlay without overwriting product source. They own compiler
 include/path semantics. `source_replica` supplies a reusable, symlink-refusing
 temporary copy of explicitly declared roots, with input-change checks and no
 hardlinks. Its optional `artifacts` directory must be outside those roots,
 Git-ignored and free of tracked files. Neither an override response nor a replica alone establishes that
 the compiler actually measured the intended candidate. See the controls below.
+Local commands can use `CompilationRequest.read(root, parsed_json)` to validate
+the package-owned protocol and decode/pin overlay bytes before compiler dispatch.
+Only profile selection, compiler options and invocation need local implementation.
 
 `inputs` lists local compiler scripts/configuration files; `environment` names
 additional compiler-affecting variables. PATH and command environment placeholders
@@ -438,56 +445,80 @@ unproven structure/runtime behavior unknown.
 
 After establishing the ownership model, use `recover tasks variants <task>
 --image <image> --deck <deck.json> [--jobs N]`. This is a native package command,
-requiring source/measurement configuration and a v3-capable compiler command,
+requiring source/measurement configuration and a v4-capable compiler command,
 not another project dispatcher. Relative image/deck paths resolve against
-`--root`. The deck names an authorized product TU and task entity:
+`--root`. The deck names a primary task entity/TU, authorized source/header
+anchors, and one compiled damage witness per edited file:
 
 ```json
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "source": "src/widget.cpp",
   "entity_id": "<original entity id from task context>",
-  "source_sha256": "<current SHA-256 of that source file>",
-  "before": "return x + x;",
-  "control": "for (;;) {}",
+  "files": {
+    "src/widget.cpp": {
+      "source_sha256": "<current SHA-256 of widget.cpp>",
+      "before": "return value_;",
+      "control": "for (;;) {}",
+      "entity_id": "<original entity id of this method>"
+    },
+    "src/widget.h": {
+      "source_sha256": "<current SHA-256 of widget.h>",
+      "before": "int value_;",
+      "control": "int damage_padding_; int value_;",
+      "entity_id": "<original entity id of a method reading value_>"
+    }
+  },
   "candidates": {
-    "multiply": "return x * 2;",
-    "explicit-grouping": "return (x + x);"
+    "renamed-member": {"src/widget.cpp": "return count_;", "src/widget.h": "int count_;"},
+    "original": {"src/widget.cpp": "return value_;", "src/widget.h": "int value_;"}
   }
 }
 ```
 
-The UTF-8 `before` text must occur exactly once in the byte-pinned TU. No brace
+The UTF-8 `before` text must occur exactly once in each byte-pinned file. No brace
 parsing or marker edits are inferred. Replacement/control text supplies the
 entire replacement for that anchor, not necessarily a whole function. Keep
 experimental decks in ignored artifact storage; they are not another ledger.
+Every candidate supplies all declared files, including unchanged anchors where
+appropriate. Each file's witness must be a mapped task subject. Schema v2 replaces
+the old single-file deck format; a single-file experiment uses one `files` entry.
+File creation/deletion and experimental remapping of original symbols/spans are
+not supported; measurements use the current source bindings, never inferred ones.
 
-Each configured flag trial first compiles the real TU and an identical-content
-replica. The PE/COFF control compares code, data, relocation identities, types,
+Each configured flag trial first compiles every mapped task TU (plus edited TUs)
+normally and through an identical-content multi-file replica. The PE/COFF control
+compares code, data, relocation identities, types,
 COMDAT policy, BSS extents and link directives. Compiler-local section/symbol
 numbers are normalized through explicit names and associative ownership; ambiguous
 identities are refused. Timestamps, file records and CodeView source/line records
 are ignored. Cached checksums for ANY/ASSOCIATIVE COMDATs are replaced by actual
 content/reference comparison; EXACT_MATCH checksums are retained. This is a
 replica control for scoped measurement, not proof of an identical final link.
-Then the explicit damage control
-must compile and change the selected function's code or relocations. Unsupported
+Then each file's explicit damage control, applied independently with the other
+files unchanged, must compile and change its witness function's code or relocations.
+A body control cannot substitute for a header control. Unsupported
 replicas or unchanged/uncompilable controls prevent scoring under those flags.
 Path/time-sensitive output can make a replica unsupported; never weaken a
 control or compare only the coarse match tier to bypass that refusal.
 
 The source map is read once per deck. Candidates compile at the requested width
 (default 1), with strict byte/boundary/reference checks shared with ordinary task
-measurement. Results include mapped task neighbors in that TU and keep missing
-bindings unknown. Rankings are per flag trial: strict pass/fail/unknown, then
-known differing bytes. They neither combine partial trials nor choose code on
+measurement. Every TU in a candidate sees the same complete file overlay.
+Results include unambiguous mapped neighbors in compiled TUs, tagged by whether
+they are task subjects, and explicitly list unmeasured task entities and other
+mapped product units. These lists are not proof of complete caller/ownership impact.
+Failures in secondary TUs remain visible alongside the primary target's diagnostics.
+Rankings are per flag trial: successful compilation, measured task-wide strict
+pass/fail/unknown, then known differing bytes. They neither combine partial trials nor choose code on
 the worker's behalf. Exit 0 means the deck was scored, not that any candidate
 passed recovery; exit 3 means invalid inputs or an incomplete experiment.
 
 No source is applied or claims stamped. The worker deliberately applies a
 supported source form and reruns task/layout/build/obligation checks. Cross-TU
-structural migrations still use task expansion and review. This first deck
-supports one overridden TU, not a multi-file structural overlay. Concurrency
+structural migrations still use task expansion and review. Multi-file experiments
+are not a baseline/current outside-scope preservation verifier or a migration gate.
+Concurrency
 requires sufficient isolated compiler capacity; the package does not invent a
 safe Wine fleet size. Default serial compilation retains main-thread signal
 cleanup; parallel compiler jobs require coordinator-provided process/job

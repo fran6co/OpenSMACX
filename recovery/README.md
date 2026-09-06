@@ -17,10 +17,11 @@ only the local compiler interaction. The old production command/gate and other
 remaining tools still need absorption or retirement before `tools/` can disappear.
 
 The native `recover tasks variants` command now replaces serial edit-and-restore
-spelling experiments. It reads the source map once, compiles private TU replicas,
-requires unchanged-replica and selected-function damage controls, and reports
+spelling experiments. It reads the source map once and compiles atomic header/body
+overlays across task TUs. Unchanged-replica controls per TU and compiled damage
+witnesses per edited file guard the experiment. It reports
 strict reference-aware results without banking a winner. See the package README
-for the deck schema. This project's compiler script supports v3 source overrides
+for the deck schema. This project's compiler script supports v4 multi-file overrides
 by copying configured source/build-input roots into verified-ignored
 `build/recovery/variants/` and remapping explicit include
 and forced-include paths. PCH, response files, hidden CL options and custom include
@@ -28,7 +29,9 @@ environment overrides are refused. Copies preserve quote/angle include ordering
 and physical header identity; no absolute `#line` rewrite is injected because
 VC6 can use it to search the original directories and break `#pragma once`.
 Path/time-sensitive differences remain unsupported when the replica control
-cannot agree. Default concurrency is 1; prefix pooling remains unfinished.
+cannot agree. Reports include mapped outside-task neighbors in compiled units,
+but do not prove preservation of all other code. Baseline/current preservation,
+file additions/deletions and prefix pooling remain unfinished. Default concurrency is 1.
 
 ## Available now
 

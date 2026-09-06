@@ -5,7 +5,7 @@ this boundary never treats a successful compiler invocation as verification.
 """
 
 import base64
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 import hashlib
 import os
 from pathlib import Path
@@ -17,6 +17,58 @@ from .driver import Command, invoke
 from .fingerprint import input_snapshot
 from .model import require_text
 from .records import read_json
+
+
+@dataclass(frozen=True)
+class CompilationRequest:
+    """Validated compiler-command input; compiler option semantics stay local.
+
+    Use this at the project command boundary, before invoking any compiler.
+    Existing-file digests identify the overlay inputs, not proof that the
+    command used them. Replica and damage controls still belong to measurement.
+    """
+    source: Path
+    profile: str
+    arguments: tuple[str, ...]
+    flags: tuple[str, ...]
+    replacements: dict[str, bytes] | None
+
+    @classmethod
+    def read(cls, root: Path, value: dict):
+        root = root.resolve()
+        if not isinstance(value, dict):
+            raise ValueError("compiler request must be an object")
+        version = value.get("schema_version")
+        fields = {"schema_version", "profile", "source", "arguments", "flags"}
+        if version == 4:
+            fields.add("overrides")
+        if type(version) is not int or version not in (2, 4) or set(value) != fields:
+            raise ValueError("invalid compiler request")
+        require_text(value["profile"], "compiler profile")
+        for name in ("arguments", "flags"):
+            if not isinstance(value[name], list):
+                raise ValueError("compiler arguments and flags must be string arrays")
+            for word in value[name]:
+                require_text(word, "compiler argument")
+        def existing(name):
+            path = local_path(root, name)
+            if path.resolve() != path or not path.is_file():
+                raise ValueError("compiler request requires existing canonical regular files")
+            return path
+        source = existing(value["source"])
+        replacements = None
+        if version == 4:
+            if not isinstance(value["overrides"], dict) or not value["overrides"]:
+                raise ValueError("source overlay requires nonempty file replacements")
+            replacements = {}
+            for name, item in value["overrides"].items():
+                path = existing(name)
+                if (not isinstance(item, dict) or set(item) != {"sha256", "base64"}
+                        or not isinstance(item["base64"], str)
+                        or item["sha256"] != hashlib.sha256(path.read_bytes()).hexdigest()):
+                    raise ValueError("source overlay requires the unchanged original file digest")
+                replacements[name] = base64.b64decode(item["base64"], validate=True)
+        return cls(source, value["profile"], tuple(value["arguments"]), tuple(value["flags"]), replacements)
 
 
 class Compiler:
@@ -59,18 +111,35 @@ class Compiler:
     def __call__(self, source: Path, arguments: tuple[str, ...], flags: tuple[str, ...]) -> bytes:
         return self._compile(source, arguments, flags)
 
-    def variant(self, source: Path, contents: bytes, arguments: tuple[str, ...], flags: tuple[str, ...]) -> bytes:
-        """Compile proposed whole-TU bytes, never edit the original source.
+    def overlay(self, source: Path, replacements: dict[str, bytes], arguments: tuple[str, ...], flags: tuple[str, ...]) -> bytes:
+        """Compile an atomic set of proposed TU/header bytes using protocol v4.
 
-        Protocol v3 requires explicit support in the configured command. The
-        command owns include/path semantics; callers own replica controls and
-        dependency freshness. An object is not a measurement or a verdict.
+        Paths name existing project files. The local command owns include/path
+        semantics; the caller must control replica equivalence and coverage.
+        No successful object response is itself a preservation/recovery proof.
         """
-        if not isinstance(contents, bytes):
-            raise ValueError("compiler variant contents must be bytes")
-        return self._compile(source, arguments, flags, contents=contents)
+        if not isinstance(replacements, dict) or not replacements:
+            raise ValueError("compiler overlay requires nonempty file replacements")
+        originals, overrides = {}, {}
+        for name, data in sorted(replacements.items()):
+            relative_path(name)
+            path = local_path(self.root, name)
+            if path.resolve() != path or not path.is_file():
+                raise ValueError("compiler overlay requires existing canonical regular files")
+            if not isinstance(data, bytes):
+                raise ValueError("compiler overlay contents must be bytes")
+            originals[name] = path.read_bytes()
+            overrides[name] = {"sha256": hashlib.sha256(originals[name]).hexdigest(),
+                               "base64": base64.b64encode(data).decode("ascii")}
+        try:
+            return self._compile(source, arguments, flags, overrides=overrides)
+        finally:
+            for name, original in originals.items():
+                path = self.root / name
+                if path.resolve() != path or not path.is_file() or path.read_bytes() != original:
+                    raise ValueError("compiler overlay input changed during compilation")
 
-    def _compile(self, source, arguments, flags, *, contents=None):
+    def _compile(self, source, arguments, flags, *, overrides=None):
         source = source.resolve()
         if not source.is_relative_to(self.root) or not source.is_file():
             raise ValueError("compiler source must be an existing file inside the project")
@@ -81,9 +150,8 @@ class Compiler:
             raise ValueError("compiler inputs changed before compilation")
         request = {"schema_version": 2, "profile": self.profile, "source": source.relative_to(self.root).as_posix(),
                    "arguments": list(arguments), "flags": list(flags)}
-        if contents is not None:
-            request.update(schema_version=3, source_sha256=hashlib.sha256(original).hexdigest(),
-                           source_base64=base64.b64encode(contents).decode("ascii"))
+        if overrides is not None:
+            request.update(schema_version=4, overrides=overrides)
         try:
             code, output = invoke(self.command, self.root, "", request)
         except subprocess.SubprocessError as error:

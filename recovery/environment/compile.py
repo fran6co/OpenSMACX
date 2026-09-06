@@ -58,8 +58,8 @@ def _variant_arguments(arguments, root, replica, roots):
     return tuple(output)
 
 
-def compile_variant(root: Path, source: Path, contents: bytes, command: tuple[str, ...], flags: tuple[str, ...]) -> bytes:
-    """Compile one overridden TU in a private source/include tree.
+def compile_overlay(root: Path, source: Path, replacements: dict[str, bytes], command: tuple[str, ...], flags: tuple[str, ...]) -> bytes:
+    """Compile a TU with all proposed headers/bodies in one private tree.
 
     An identical-content replica control is still required by the measurement
     caller: unusual includes and path/time-sensitive preprocessing can prevent
@@ -76,7 +76,7 @@ def compile_variant(root: Path, source: Path, contents: bytes, command: tuple[st
     # Do not inject absolute #line filenames: VC6 uses those during quote-include
     # lookup, mixing original and copied headers and defeating #pragma once.
     # __FILE__ data differences must fail the caller's replica control instead.
-    with source_replica(root, roots, {source.relative_to(root).as_posix(): contents}, artifacts="build/recovery/variants") as replica:
+    with source_replica(root, roots, replacements, artifacts="build/recovery/variants") as replica:
         return compile_object(replica / source.relative_to(root),
                               _variant_arguments(command, root, replica, roots),
                               _variant_arguments(flags, root, replica, roots), temporary_parent=replica)

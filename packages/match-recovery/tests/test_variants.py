@@ -42,9 +42,10 @@ def project(tmp_path):
 
 def deck(project):
     root, task = project
-    return {"schema_version": 1, "source": "code/unit.cc", "entity_id": task.subjects[0].entity_id,
-            "source_sha256": hashlib.sha256((root / "code/unit.cc").read_bytes()).hexdigest(),
-            "before": "/* baseline */", "control": "for (;;) {}", "candidates": {"exact": "/* proposed */", "different": "/* different */"}}
+    return {"schema_version": 2, "source": "code/unit.cc", "entity_id": task.subjects[0].entity_id,
+            "files": {"code/unit.cc": {"source_sha256": hashlib.sha256((root / "code/unit.cc").read_bytes()).hexdigest(),
+                                       "before": "/* baseline */", "control": "for (;;) {}", "entity_id": task.subjects[0].entity_id}},
+            "candidates": {"exact": {"code/unit.cc": "/* proposed */"}, "different": {"code/unit.cc": "/* different */"}}}
 
 
 class Compiler:
@@ -54,6 +55,9 @@ class Compiler:
     def variant(self, source, contents, command, flags):
         assert source.read_bytes() != contents or b"baseline" in contents
         return coff_fixture(b"\xeb\xfe" if b"for (;;)" in contents else b"\x90" if b"different" in contents else b"\xc3")
+
+    def overlay(self, source, replacements, command, flags):
+        return self.variant(source, replacements["code/unit.cc"], command, flags)
 
 
 def measure(project, value=None, compiler=None, **kwargs):
@@ -99,9 +103,9 @@ def test_bad_replica_and_wrong_target_control_prevent_scoring(project, damage):
 @pytest.mark.parametrize("damage", ["stale", "absent-anchor", "ambiguous-anchor", "scope", "file", "invalid-schema", "empty"])
 def test_invalid_decks_never_reach_compilation(project, damage):
     value = deck(project)
-    if damage == "stale": value["source_sha256"] = "0" * 64
-    elif damage == "absent-anchor": value["before"] = "absent"
-    elif damage == "ambiguous-anchor": value["before"] = " "
+    if damage == "stale": value["files"]["code/unit.cc"]["source_sha256"] = "0" * 64
+    elif damage == "absent-anchor": value["files"]["code/unit.cc"]["before"] = "absent"
+    elif damage == "ambiguous-anchor": value["files"]["code/unit.cc"]["before"] = " "
     elif damage == "scope": value["entity_id"] = "not-authorized"
     elif damage == "file": value["source"] = "../elsewhere"
     elif damage == "invalid-schema": value["schema_version"] = True
@@ -253,9 +257,154 @@ def test_package_cli_runs_deck_with_only_local_compiler_configuration(project, c
     path.write_text(json.dumps(config))
     (root / "recovery/compiler.py").write_text(
         'import json, sys, base64\nr = json.load(sys.stdin)\n'
-        'data = base64.b64decode(r["source_base64"]) if r["schema_version"] == 3 else b"baseline"\n'
+        'data = base64.b64decode(r["overrides"]["code/unit.cc"]["base64"]) if r["schema_version"] == 4 else b"baseline"\n'
         f'obj = {coff_fixture(b"\xeb\xfe")!r} if b"for (;;)" in data else {coff_fixture(b"\x90")!r} if b"different" in data else {coff_fixture()!r}\n'
         'print(json.dumps({"object_base64":base64.b64encode(obj).decode()}))\n')
     monkeypatch.chdir(root.parent)
     assert main(["tasks", "variants", task.task_id, "--root", str(root), "--image", "image.exe", "--deck", "deck.json", "--jobs", "2"]) == 0
     assert json.loads(capsys.readouterr().out)["status"] == "scored"
+
+
+@pytest.fixture
+def coupled_project(project):
+    root, task = project
+    (root / "code/model.h").write_text("struct Model { int value; };\n")
+    (root / "code/other.cc").write_text("// ORIGINAL: 0x00401010 _h 0x00401010-0x00401011\nvoid h() {}\n")
+    (root / "code/unmeasured.cc").write_text("// ORIGINAL: 0x00401020 _k 0x00401020-0x00401021\nvoid k() {}\n")
+    other = Origin(task.subjects[0].image_sha256, "pe:va", 0x401010)
+    TaskStore(root).expand(task.task_id, request_id="coupled", author=task.author, subjects=(other,),
+                           editable_files=("code/model.h", "code/other.cc"), evidence=("shared member ownership",), expected_revision=0)
+    value = {"schema_version": 2, "source": "code/unit.cc", "entity_id": task.subjects[0].entity_id,
+             "files": {
+                 "code/unit.cc": {"source_sha256": hashlib.sha256((root / "code/unit.cc").read_bytes()).hexdigest(),
+                                  "before": "/* baseline */", "control": "for (;;) {}", "entity_id": task.subjects[0].entity_id},
+                 "code/model.h": {"source_sha256": hashlib.sha256((root / "code/model.h").read_bytes()).hexdigest(),
+                                  "before": "int value;", "control": "int damaged; int value;", "entity_id": other.entity_id}},
+             "candidates": {"coupled": {"code/unit.cc": "/* proposed */", "code/model.h": "int base; int value;"},
+                            "original": {"code/unit.cc": "/* baseline */", "code/model.h": "int value;"}}}
+    return project, value, other
+
+
+class CoupledCompiler:
+    def __init__(self):
+        self.seen = []
+
+    def __call__(self, source, *args):
+        return coff_fixture().replace(b"_f", b"_h") if source.name == "other.cc" else coff_fixture()
+
+    def overlay(self, source, replacements, *args):
+        self.seen.append((source.name, replacements.copy()))
+        code = b"\xc3"
+        if b"for (;;)" in replacements["code/unit.cc"] or b"damaged" in replacements["code/model.h"]:
+            code = b"\xeb\xfe"
+        elif b"base;" in replacements["code/model.h"]:
+            # Both header and body are needed for the proposed model to compile.
+            if b"proposed" not in replacements["code/unit.cc"]:
+                raise ValueError("header and body disagree")
+            code = b"\x90"
+        obj = coff_fixture(code)
+        return obj.replace(b"_f", b"_h") if source.name == "other.cc" else obj
+
+
+def test_multi_file_candidates_are_atomic_and_cover_all_task_units(coupled_project):
+    project, value, other = coupled_project
+    root, _ = project
+    before = {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}
+    compiler = CoupledCompiler()
+    result = measure(project, value, compiler=compiler)
+    assert result["status"] == "scored"
+    assert result["translation_units"] == ["code/other.cc", "code/unit.cc"]
+    assert result["files"] == ["code/model.h", "code/unit.cc"]
+    assert result["compile_attempts"] == 10  # 2 real + 2 replicas + 2 per-file controls + 4 candidates
+    assert len(result["controls"][0]["files"]) == len(result["controls"][0]["replicas"]) == 2
+    assert result["candidates"][0]["neighbors"][0]["entity_id"] == other.entity_id
+    assert result["candidates"][0]["neighbors"][0]["in_task"]
+    assert result["unmeasured_product_units"] == ["code/unmeasured.cc"]
+    assert result["unmeasured_task_entities"] == []
+    assert not result["scope_complete"] and not result["ready_for_collection"]
+    assert all(set(replacements) == set(value["files"]) for _, replacements in compiler.seen)
+    assert {p: p.read_bytes() for p in root.rglob("*") if p.is_file()} == before
+
+
+def test_ignoring_only_the_header_cannot_pass_multi_file_controls(coupled_project):
+    project, value, _ = coupled_project
+    class IgnoresHeader(CoupledCompiler):
+        def overlay(self, source, replacements, *args):
+            return super().overlay(source, {**replacements, "code/model.h": b"int value;"}, *args)
+    result = measure(project, value, compiler=IgnoresHeader())
+    assert result["status"] == "incomplete" and result["candidates"] == []
+    assert "code/model.h" in result["controls"][0]["reason"]
+
+
+def test_failure_in_secondary_tu_does_not_hide_primary_diagnostics(coupled_project):
+    project, value, other = coupled_project
+    class FailsOther(CoupledCompiler):
+        def overlay(self, source, replacements, *args):
+            if source.name == "other.cc" and b"proposed" in replacements["code/unit.cc"]:
+                raise ValueError("dependent caller no longer compiles")
+            return super().overlay(source, replacements, *args)
+    result = measure(project, value, compiler=FailsOther())
+    assert result["status"] == "incomplete"
+    trial = result["candidates"][0]
+    assert trial["target"]["result"] == "fail"
+    assert trial["neighbors"][0]["entity_id"] == other.entity_id and trial["neighbors"][0]["result"] == "unknown"
+    assert trial["compile_errors"] == {"code/other.cc": "dependent caller no longer compiles"}
+    assert result["rankings"][0]["names"][-1] == "coupled"
+
+
+@pytest.mark.parametrize("damage", ["scope", "stale", "missing-control", "bad-witness", "partial-candidate", "extra-file", "seed", "symlink"])
+def test_each_overlay_file_is_validated_before_any_compilation(coupled_project, damage):
+    project, value, _ = coupled_project
+    root, _ = project
+    if damage == "scope":
+        value["files"]["code/unmeasured.cc"] = value["files"].pop("code/model.h")
+    elif damage == "stale": value["files"]["code/model.h"]["source_sha256"] = "0" * 64
+    elif damage == "missing-control": del value["files"]["code/model.h"]["control"]
+    elif damage == "bad-witness": value["files"]["code/model.h"]["entity_id"] = "not-in-scope"
+    elif damage == "partial-candidate": del value["candidates"]["coupled"]["code/model.h"]
+    elif damage == "extra-file": value["candidates"]["coupled"]["code/outside.h"] = "no"
+    elif damage == "seed":
+        path = root / "recovery/project.json"
+        config = json.loads(path.read_text())
+        config["source"]["seed_roots"] = ["code/model.h"]
+        path.write_text(json.dumps(config))
+    else:
+        (root / "code/model.h").unlink()
+        (root / "code/model.h").symlink_to("unit.cc")
+    with pytest.raises(ValueError):
+        measure(project, value, compiler=object())
+
+
+def test_secondary_tu_replica_must_agree_before_scoring(coupled_project):
+    project, value, _ = coupled_project
+    class BadOtherReplica(CoupledCompiler):
+        def overlay(self, source, replacements, *args):
+            if source.name == "other.cc":
+                return coff_fixture(b"\x90").replace(b"_f", b"_h")
+            return super().overlay(source, replacements, *args)
+    result = measure(project, value, compiler=BadOtherReplica())
+    assert result["status"] == "incomplete" and result["candidates"] == []
+    assert "code/other.cc" in result["controls"][0]["reason"]
+
+
+def test_compiled_neighbors_are_reported_even_without_task_authorization(project):
+    root, task = project
+    source = root / "code/unit.cc"
+    source.write_text(source.read_text() + "\n// ORIGINAL: 0x00401010 _h 0x00401010-0x00401011\nvoid h() {}\n")
+    def object_with_neighbor(damaged=False):
+        data = bytearray(object_fixture(selection=2, parent=0))
+        offset = struct.unpack_from("<I", data, 8)[0] + 5 * 18
+        data[offset:offset + 8] = b"_h\0\0\0\0\0\0"
+        struct.pack_into("<H", data, offset + 14, 0x20)
+        data[offset + 16] = 2
+        return bytes(data).replace(b"\xe8\0\0\0\0\xc3", b"\xe9\0\0\0\0\xc3") if damaged else bytes(data)
+    class WithNeighbor(Compiler):
+        def __call__(self, *args):
+            return object_with_neighbor()
+        def variant(self, source, contents, *args):
+            return object_with_neighbor(b"for (;;)" in contents)
+    result = measure(project, compiler=WithNeighbor())
+    neighbor = result["candidates"][0]["neighbors"][0]
+    assert neighbor["entity_id"] == Origin(task.subjects[0].image_sha256, "pe:va", 0x401010).entity_id
+    assert neighbor["in_task"] is False and neighbor["symbol"] == "_h"
+    assert result["status"] == "scored" and not result["scope_complete"]

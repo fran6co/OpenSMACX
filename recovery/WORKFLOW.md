@@ -137,13 +137,17 @@ by this native verifier. A successful offset check does not discharge them.
 
 After structure is established, compare a small deck of plausible source forms
 with `uv run recover tasks variants <task> --image <image> --deck <ignored-json>`.
-The package README documents the exact-text anchor, source digest, original
-entity and deliberately changed control. Score 3–5 plausible candidates together
-before editing product source. Replica and selected-function damage controls
+The package README documents multi-file exact-text anchors, source digests and
+original entities. Header and dependent-body edits can be one atomic candidate;
+all mapped task TUs are compiled with that same overlay. Score 3–5 plausible candidates together
+before editing product source. Every compiled TU needs an unchanged-replica control,
+and every edited file needs its own deliberately changed compiled witness. These controls
 must pass; coarse tier equality is not a valid control. Default `--jobs 1` is
 deliberate until isolated compiler capacity is measured. Review all dimensions
-and the same-TU neighbor rows, apply the chosen spelling deliberately, then rerun
-the task checks. This does not replace multi-file structural work or review.
+and the cross-TU neighbor rows, including outside-task neighbors where available,
+apply the chosen change deliberately, then rerun the task checks. Unmeasured
+callers remain outside this experiment's coverage; it does not replace full
+structural, preservation or review checks.
 A plateau is a resumable finding, not an exclusion. Never fabricate code or
 relax a check to bank a result.
 
