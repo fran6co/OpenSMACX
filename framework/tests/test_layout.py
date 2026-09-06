@@ -5,7 +5,7 @@ import pytest
 from match_recovery.adapters.opensmacx_layout import verify_layout
 from match_recovery.adapters.vc6_layout import ClassNotEmitted, Cursor, class_layout, direct_members
 from match_recovery.cli import main
-from match_recovery.layout_source import read_members
+from match_recovery.layout_source import parse_bases, read_bases, read_members
 from match_recovery.pe_coff import Coff
 from match_recovery.tasks import TaskStore
 from test_obligations import project
@@ -57,6 +57,34 @@ def test_nonvirtual_base_and_class_value_are_not_confused_with_pointer_members()
     assert layout["bases"] == [{"type_index": 0x1002, "virtual": False, "offset": 0, "class": "Base"}]
     assert layout["class_value_members"] == {"owned": "Base"}
     assert layout["members"] == {"owned": 4, "ptr": 8}
+
+
+@pytest.mark.parametrize("blob, expected", [(hierarchy_types(), "pass"),
+                                           (hierarchy_types(base_offset=8), "fail"),
+                                           (hierarchy_types(virtual=True), "fail"),
+                                           (debug_types(), "fail"),
+                                           (debug_types().replace(b"Widget", b"Absent"), "unknown")])
+def test_declared_base_cannot_be_replaced_by_flattened_fields(project, blob, expected):
+    root, task = prepare(project)
+    (root / "src/widget.h").write_text("// RECOVERY_BASE: v1 Widget Base 0x0 0x00401000\n")
+    report = verify_layout(root, task.task_id, compiler=lambda *_: coff(blob), command_for=lambda _: ("compiler",))
+    assert report["result"] == expected
+    assert len(report["bases"]) == 2 and report["members"] == []
+    assert all(row["result"] == expected for row in report["bases"])
+    assert report["structure_verification"] == "unknown"
+
+
+def test_base_grammar_supports_qualified_names_and_refuses_duplicate_or_malformed_input(project):
+    root, task = project
+    text = "// RECOVERY_BASE: v1 UI::Widget UI::Base 0x4 0x00401000\n"
+    row, = parse_bases(text, "src/widget.h", task.subjects[0].image_sha256)
+    assert row.class_name == "UI::Widget" and row.base == "UI::Base" and row.offset == 4
+    (root / "src/widget.h").write_text(text * 2)
+    with pytest.raises(ValueError, match="duplicate original base"):
+        read_bases(root, task.subjects[0].image_sha256)
+    with pytest.raises(ValueError, match="invalid original base"):
+        parse_bases("// RECOVERY_BASE: unsupported\n", "src/widget.h", task.subjects[0].image_sha256)
+    assert parse_bases(text, "src/unrecovered/seed.cpp", task.subjects[0].image_sha256) == ()
 
 
 def test_virtual_base_metadata_never_invents_a_static_base_offset():

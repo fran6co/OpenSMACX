@@ -405,6 +405,17 @@ Direct-member expectations are load-bearing source comments beside declarations:
 int redraw_phase_;
 ```
 
+Nonvirtual base interpretations use `// RECOVERY_BASE: v1 Derived Base 0x0 0x00401000`
+beside the class declaration: derived class, base class, original subobject offset,
+and original evidence address. This does not infer inheritance from an offset alone.
+The checker requires the compiler to emit the named nonvirtual base at that offset;
+a flattened field or virtual base cannot substitute for it. Missing class debug
+information remains unknown, not a pass. Base interpretations participate in the
+same source-history preservation and independent supersession/retraction review
+as member interpretations. The report's `bases` section contains their trials;
+summary mode retains combined verdict counts and coverage. No original base
+interpretation is automatically created from the candidate compiler's layout.
+
 The fields name the owning class, member, original offset, and original evidence
 address (qualified by the source image pin). Surrounding prose explains the
 interpretation; no current compiler result is stamped here. `tasks check-layout`
@@ -437,8 +448,9 @@ do not trigger these product compilations. All classes in one TU/flag set share
 the existing object, including the joint check's in-memory compilation reuse.
 No debugger-style partial field lists or type-index voting supplies gate evidence.
 InfoWin's `redraw_phase_` expectation passes in both Console and InfoWin units.
-This checks declared offsets, **not** completeness of the declarations, original
-evidence interpretation, inheritance, member types, full object size or lifetime.
+This checks declared member offsets and nonvirtual base relationships, **not**
+completeness of the declarations, original evidence interpretation, full hierarchy,
+member types, full object size or lifetime.
 The result therefore leaves full structural verification unknown. Layout
 interpretation history now survives in the source-derived restoration inventory;
 explicit reviewed supersession is supported, but the full structural admission

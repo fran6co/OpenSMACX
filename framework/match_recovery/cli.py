@@ -56,7 +56,7 @@ def parser() -> argparse.ArgumentParser:
     obligations = task_actions.add_parser("obligations", help="Derive restoration requirements from source history; not measurements")
     obligations.add_argument("task")
     obligations.add_argument("--root", type=Path, default=Path.cwd())
-    layout = task_actions.add_parser("check-layout", help="Compile and compare declared member offsets; not full structural verification")
+    layout = task_actions.add_parser("check-layout", help="Check declared member offsets and nonvirtual bases; not full structural verification")
     layout.add_argument("task")
     layout.add_argument("--root", type=Path, default=Path.cwd())
     layout.add_argument("--summary", action="store_true", help="Keep coverage and verdicts, omit repeated per-member observations")
@@ -142,6 +142,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             if args.summary:
                 output["checks"]["binary"].pop("functions", None)
                 output["checks"]["layout"].pop("members", None)
+                output["checks"]["layout"].pop("bases", None)
             print(json.dumps(output, indent=2, sort_keys=True))
             return {Result.PASS: 0, Result.FAIL: 1, Result.UNKNOWN: 3}[output["result"]]
         if args.command == "tasks" and args.action == "check-layout":
@@ -149,6 +150,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             output = verify_layout(args.root, args.task)
             if args.summary:
                 output.pop("members")
+                output.pop("bases", None)
             print(json.dumps(output, indent=2, sort_keys=True))
             return {Result.PASS: 0, Result.FAIL: 1, Result.UNKNOWN: 3}[output["result"]]
         if args.command == "tasks" and args.action == "obligations":

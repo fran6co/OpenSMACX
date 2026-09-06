@@ -171,10 +171,11 @@ def structural(project):
     return [row for row in report(project)["obligations"] if row["dimension"] == "structure"]
 
 
-def test_layout_review_obligation_survives_rehome_and_deletion(project):
+@pytest.mark.parametrize("annotation", [MEMBER, "// RECOVERY_BASE: v1 Widget Base 0x4 0x00401000\n"])
+def test_layout_review_obligation_survives_rehome_and_deletion(project, annotation):
     root, task = project
     path = root / "src/widget.h"
-    path.write_text(MEMBER)
+    path.write_text(annotation)
     introduced = commit(root, "source-owned layout interpretation")
     first = structural(project)[0]
     path.rename(root / "src/renamed.h")

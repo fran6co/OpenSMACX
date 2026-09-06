@@ -11,7 +11,7 @@ from pathlib import Path
 import re
 
 from ..model import Dimension, Obligation, Origin, digest
-from ..layout_source import parse_members
+from ..layout_source import parse_bases, parse_members
 from ..source_history import git, source_versions
 from ..tasks import TaskStore
 from .opensmacx import _sources, image_pin, legacy_snapshot
@@ -45,6 +45,12 @@ def task_obligations(root: Path, name: str) -> dict:
                 {**evidence, "line": item.line,
                  "interpretation": {"kind": "direct_member_offset", "class_name": item.class_name,
                                     "member": item.member, "offset": item.offset,
+                                    "original_evidence": asdict(item.evidence)}})
+        for item in parse_bases(text, path, pin):
+            add(item.evidence.entity_id, Dimension.STRUCTURE,
+                {**evidence, "line": item.line,
+                 "interpretation": {"kind": "nonvirtual_base_offset", "class_name": item.class_name,
+                                    "base": item.base, "offset": item.offset,
                                     "original_evidence": asdict(item.evidence)}})
 
     for version in versions:

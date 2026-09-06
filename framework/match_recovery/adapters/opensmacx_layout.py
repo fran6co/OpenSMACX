@@ -1,10 +1,10 @@
-"""Fresh compiler checks of source-owned original member-offset expectations."""
+"""Fresh compiler checks of source-owned member/base layout interpretations."""
 
 from dataclasses import asdict
 from pathlib import Path
 
 from ..fingerprint import input_snapshot
-from ..layout_source import read_members
+from ..layout_source import read_bases, read_members
 from ..model import Result, digest
 from ..pe_coff import Coff
 from ..tasks import TaskStore
@@ -27,6 +27,7 @@ def verify_layout(root: Path, task_name: str, *, compiler=compile_object, comman
     if any(subject.image_sha256 != pin or subject.address_space != "pe:va" for subject in task.subjects):
         raise ValueError("task refers to another original image")
     expected = [item for item in read_members(root, pin) if item.path in files]
+    expected_bases = [item for item in read_bases(root, pin) if item.path in files]
     units = sorted(name for name in files if Path(name).suffix == ".cpp"
                    and not any(part in ("recovered", "unrecovered") for part in Path(name).parts))
     # Method mappings are search hints, not proof that an original class existed
@@ -38,11 +39,12 @@ def verify_layout(root: Path, task_name: str, *, compiler=compile_object, comman
         name = class_hint(item["catalogued_symbol"])
         if name:
             hints[item["path"]].setdefault(name, set()).add(item["entity_id"])
-    required_classes = {item.class_name for item in expected}
+    required_classes = {item.class_name for item in (*expected, *expected_bases)}
     if command_for is None:
         from decomp.asm import build_command
         command_for = lambda path: tuple(build_command(root / "build/compile_commands.json", path))
     rows, observations, attempts = [], [], 0
+    base_rows = []
     for unit in units:
         classes = sorted(required_classes | hints[unit].keys())
         if not classes:
@@ -85,19 +87,32 @@ def verify_layout(root: Path, task_name: str, *, compiler=compile_object, comman
                 rows.append({"expectation": asdict(item), "unit": unit, "flags": list(flags),
                              "actual_offset": actual, "result": result,
                              "reason": errors.get(item.class_name, "member absent" if actual is None else "direct member offset compared")})
+            for item in expected_bases:
+                layout = layouts.get(item.class_name)
+                matches = [base for base in layout["bases"] if base["class"] == item.base] if layout else []
+                result = (Result.UNKNOWN if layout is None or len(matches) > 1 else
+                          Result.PASS if len(matches) == 1 and not matches[0]["virtual"] and matches[0]["offset"] == item.offset
+                          else Result.FAIL)
+                base_rows.append({"expectation": asdict(item), "unit": unit, "flags": list(flags),
+                                  "observed_bases": matches, "result": result,
+                                  "reason": errors.get(item.class_name,
+                                                       "ambiguous named base" if len(matches) > 1 else
+                                                       "named base absent from complete class definition" if not matches else
+                                                       "declared nonvirtual base and offset compared")})
     if (before != input_snapshot(root, _inputs(root), {"flags": FLAG_SETS, "debug": "/Z7"})
             or task != store.read(task_name) or decisions != store.decisions(task_name)):
         raise ValueError("source, build inputs or task changed during layout verification")
     # Every requested TU/configuration must agree; never select a passing layout
     # from one TU to hide an ABI disagreement in another.
-    result = (Result.UNKNOWN if not rows or any(row["result"] == Result.UNKNOWN for row in rows)
-              else Result.FAIL if any(row["result"] == Result.FAIL for row in rows) else Result.PASS)
-    return {"task_id": task_name, "check": "declared_direct_member_offsets", "result": result,
-            "members": rows, "coverage": observations,
-            "counts": {state.value: sum(row["result"] == state for row in rows) for state in Result},
+    all_rows = rows + base_rows
+    result = (Result.UNKNOWN if not all_rows or any(row["result"] == Result.UNKNOWN for row in all_rows)
+              else Result.FAIL if any(row["result"] == Result.FAIL for row in all_rows) else Result.PASS)
+    return {"task_id": task_name, "check": "declared_member_and_base_offsets", "result": result,
+            "members": rows, "bases": base_rows, "coverage": observations,
+            "counts": {state.value: sum(row["result"] == state for row in all_rows) for state in Result},
             "compile_attempts": attempts, "input_fingerprint": digest(before),
             "scope_complete": False, "structure_verification": Result.UNKNOWN, "persisted": False,
             "limitations": ["source expectations are original-layout interpretations, not freshly re-derived image evidence",
-                            "direct members only; base hierarchy, member types, full extent and lifetime remain unproved",
+                            "declared direct members and nonvirtual bases only; complete hierarchy, types, extent and lifetime remain unproved",
                             "method-derived class hints supply current-code observations, never original-layout expectations",
                             "all scoped product TUs are checked conservatively; missing debug definitions are unknown"]}
