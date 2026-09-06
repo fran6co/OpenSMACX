@@ -98,6 +98,26 @@ def direct_members(data: bytes) -> dict[str, int]:
     return _fields(data)[0]
 
 
+def _unqualified_type(type_index: int, records: list) -> int | None:
+    """Follow only validated const/volatile wrappers, never pointer targets."""
+    visited = set()
+    while type_index not in visited:
+        visited.add(type_index)
+        index = type_index - 0x1000
+        if not 0 <= index < len(records) or records[index][0] != 0x1001:
+            return type_index
+        cursor = Cursor(records[index][1].data[2:])
+        try:
+            target, attributes = cursor.number("<I"), cursor.number("<H")
+            cursor.padding()
+            if attributes & ~3 or cursor.at != len(cursor.data):
+                return None
+        except ValueError:
+            return None
+        type_index = target
+    return None  # A cycle cannot establish an embedded class type.
+
+
 def class_layout(obj: Coff, name: str) -> dict:
     """Caller must compile a standalone /Z7 TU, explicitly without PCH use."""
     sections = [section for section in obj.sections if section.name == ".debug$T"]
@@ -145,12 +165,16 @@ def class_layout(obj: Coff, name: str) -> dict:
             if not base["virtual"] and base["offset"] >= size:
                 raise ValueError("base offset outside compiler class extent")
             named_bases.append({**base, "class": base_class["name"]})
-        # Only direct class-value type references establish embedded objects.
-        # Pointers, arrays and unresolved type leaves are NOT called ownership.
-        class_members = {member: classes[type_index]["name"] for member, type_index in member_types.items()
+        # Qualifiers do not turn a class value into a pointer. Resolve only
+        # validated modifier chains; never follow a pointer/array to its target.
+        resolved_types = {member: _unqualified_type(type_index, records) for member, type_index in member_types.items()}
+        class_members = {member: classes[type_index]["name"] for member, type_index in resolved_types.items()
                          if type_index in classes}
         type_kinds = {}
-        for member, type_index in member_types.items():
+        for member, type_index in resolved_types.items():
+            if type_index is None:
+                type_kinds[member] = "unknown"
+                continue
             index = type_index - 0x1000
             type_kinds[member] = ("class_value" if type_index in classes else
                                   "non_class_value" if 0 < type_index < 0x1000 else

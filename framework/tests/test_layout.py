@@ -61,6 +61,33 @@ def test_nonvirtual_base_and_class_value_are_not_confused_with_pointer_members()
     assert layout["member_type_kinds"] == {"owned": "class_value", "ptr": "pointer"}
 
 
+def modified_member_types(target=0x1002, attributes=1, *, body=None):
+    blob = hierarchy_types().replace(struct.pack("<HHIH", 0x1405, 0, 0x1002, 4),
+                                     struct.pack("<HHIH", 0x1405, 0, 0x1004, 4))
+    return blob + record(0x1001, struct.pack("<IH", target, attributes) if body is None else body)
+
+
+@pytest.mark.parametrize("attributes", [0, 1, 2, 3])
+def test_qualified_class_values_remain_embedded_objects(attributes):
+    layout = class_layout(Coff(coff(modified_member_types(attributes=attributes))), "Widget")
+    assert layout["class_value_members"] == {"owned": "Base"}
+    assert layout["member_type_kinds"]["owned"] == "class_value"
+
+
+def test_qualified_pointer_is_not_unwrapped_into_owned_class():
+    layout = class_layout(Coff(coff(modified_member_types(target=0x1003))), "Widget")
+    assert "owned" not in layout["class_value_members"]
+    assert layout["member_type_kinds"]["owned"] == "pointer"
+
+
+@pytest.mark.parametrize("options", [{"target": 0x1004}, {"target": 0x9999}, {"attributes": 0x80},
+                                     {"body": b"\x02\x10"}, {"body": struct.pack("<IH", 0x1002, 1) + b"bad"}])
+def test_cyclic_truncated_or_unsupported_modifiers_are_unknown(options):
+    layout = class_layout(Coff(coff(modified_member_types(**options))), "Widget")
+    assert "owned" not in layout["class_value_members"]
+    assert layout["member_type_kinds"]["owned"] == "unknown"
+
+
 @pytest.mark.parametrize("member, expected_type, offset, expected", [
     ("owned", "Base", 4, "pass"), ("owned", "Other", 4, "fail"),
     ("owned", "Base", 8, "fail"), ("ptr", "Base", 8, "fail"),

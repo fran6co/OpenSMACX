@@ -410,6 +410,10 @@ type before the offset: `// RECOVERY_MEMBER: v2 InfoWin timer_ Time 0x30 0x00459
 Both offset and class-value type must agree. A pointer, scalar, array or different
 class cannot substitute just because it occupies the same offset; unsupported
 type records remain unknown. This is not full qualifier/array/lifetime analysis.
+Validated `const`/`volatile` type wrappers preserve class-value identity; the
+checker never follows a pointer through to its pointee to claim an embedded
+object. Cyclic, truncated or unsupported modifier records remain unknown. These
+wrappers do not add a claim about the original object's qualifiers.
 The InfoWin pilot now declares `Time`, `Font` and `PushButton` expectations using
 its original constructor calls as evidence. Strengthening or changing a type
 preserves the previous interpretation for independent review; no byte claim is
