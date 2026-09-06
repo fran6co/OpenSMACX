@@ -134,7 +134,7 @@ class DesignWin : public GraphicWin, public IfaceRegistryEntry {
   // unrecovered. Both vslot_13 and on_iface_button_pressed dispatch to it
   // with a live `call dword ptr [eax + 0xb0]`, so the entry has to be
   // DesignWin's and not Win's shared no-op.
-  void vslot_44(int button_id);
+  void on_button_clicked(int button_id);
 
   // Storage the image proves is here: its own methods reach 0x14210.
   // Extent only - this class carries no size assertion, and the bound is a floor.

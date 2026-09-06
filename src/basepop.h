@@ -616,50 +616,46 @@ class BasePop : public GraphicWin {
   // THE TWO BUTTON-ROW HELPERS exec (0x00602600) runs at its three button
   // sites, DEFINED IN-CLASS because the image has all 33 stores inline at all
   // three - an out-of-line definition turns each site into a call the image
-  // does not make. Both reach runs the headers model as private offset names
-  // - see the HANDOFF on flatbutton.h under exec's marker - which is why they
-  // walk the object address rather than name members.
+  // does not make. Both now name their runs through the headers: FlatButton's
+  // public config[27] over 0xAE0..0xB48 and BaseButton's public colour/bevel
+  // run over 0xA84..0xA9C, so the two `reinterpret_cast` walks this used to
+  // carry are gone.
   void apply_button_config(FlatButton *button) {
-    uint32_t *const config =
-        reinterpret_cast<uint32_t *>(button) + 0xAE0 / 4;
-    config[0] = default_block_[0];
-    config[1] = default_block_[1];
-    config[2] = default_block_[2];
-    config[3] = default_block_[3];
-    config[4] = default_block_[4];
-    config[5] = default_block_[5];
-    config[6] = default_block_[6];
-    config[7] = default_block_[7];
-    config[8] = default_block_[8];
-    config[9] = default_block_[9];
-    config[10] = default_block_[10];
-    config[11] = default_block_[11];
-    config[12] = default_block_[12];
-    config[13] = default_block_[13];
-    config[14] = default_block_[14];
-    config[15] = default_block_[15];
-    config[16] = default_block_[16];
-    config[17] = default_block_[17];
-    config[18] = default_block_[18];
-    config[19] = default_block_[19];
-    config[20] = default_block_[20];
-    config[21] = default_block_[21];
-    config[22] = default_block_[22];
-    config[23] = default_block_[23];
-    config[24] = default_block_[24];
-    config[25] = default_block_[25];
-    config[26] = default_block_[26];
+    button->config[0] = default_block_[0];
+    button->config[1] = default_block_[1];
+    button->config[2] = default_block_[2];
+    button->config[3] = default_block_[3];
+    button->config[4] = default_block_[4];
+    button->config[5] = default_block_[5];
+    button->config[6] = default_block_[6];
+    button->config[7] = default_block_[7];
+    button->config[8] = default_block_[8];
+    button->config[9] = default_block_[9];
+    button->config[10] = default_block_[10];
+    button->config[11] = default_block_[11];
+    button->config[12] = default_block_[12];
+    button->config[13] = default_block_[13];
+    button->config[14] = default_block_[14];
+    button->config[15] = default_block_[15];
+    button->config[16] = default_block_[16];
+    button->config[17] = default_block_[17];
+    button->config[18] = default_block_[18];
+    button->config[19] = default_block_[19];
+    button->config[20] = default_block_[20];
+    button->config[21] = default_block_[21];
+    button->config[22] = default_block_[22];
+    button->config[23] = default_block_[23];
+    button->config[24] = default_block_[24];
+    button->config[25] = default_block_[25];
+    button->config[26] = default_block_[26];
   }
-  // THE FLAT BUTTON'S COLOUR AND BEVEL WORDS, +0xA84..+0xA98: basebutton.h
-  // models them as private (color_ and the bevel pair).
   void apply_button_bevel(FlatButton *button) {
-    uint32_t *const words = reinterpret_cast<uint32_t *>(button);
-    words[0xA84 / 4] = 0;
-    words[0xA88 / 4] = field_31A4_;
-    words[0xA8C / 4] = field_31A8_;
-    words[0xA90 / 4] = field_31AC_;
-    words[0xA94 / 4] = field_31B0_;
-    words[0xA98 / 4] = field_31B4_;
+    button->color_ = 0;
+    button->bevel_upper_ = field_31A4_;
+    button->bevel_lower_ = field_31A8_;
+    button->bevel_thickness_ = field_31AC_;
+    button->field_A94_ = field_31B0_;
+    button->field_A98_ = field_31B4_;
   }
 };
 

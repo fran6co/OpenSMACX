@@ -26,9 +26,19 @@
 
 class Menu; // forward declaration
 // The ninth Win::init / GraphicWin::init argument, spelled PAUBorderSizing@@
-// in both mangled names - a struct, hence the tag. Nothing on the recovered
-// surface dereferences it, so it stays incomplete.
-struct BorderSizing;
+// in both mangled names - a struct, hence the tag.
+//
+// TWELVE BYTES, THREE INTS, proved by BasePop::exec (0x00602600): its frame
+// `sub esp, 0x20` holds 8 locals plus exactly one 12-byte object at
+// [esp+0x24] whose three dwords come from this+0x114 / +0x118 / +0x11c, i.e.
+// Win's caption_height_, border_thickness_ and bottom_border_thickness_ in
+// that order. A fourth field would not fit the frame, and no other body
+// reads or writes the struct, so these three are the whole of it.
+struct BorderSizing {
+    int caption_height;
+    int border_thickness;
+    int bottom_border_thickness;
+};
 class Scroll; // forward declaration
 
 // The embedded Win+0xC8 object, in its own TU since 2026-08-26. The class
@@ -523,6 +533,22 @@ class Win : public AutoSound {
   // call, which the image does not emit - measured on 0x005EE750 and
   // 0x005F6320. Twenty-one call sites pass nothing; the one that passed
   // two was the outlier.
+  //
+  // THE ARITY IS NOT SETTLED, and the default body is the evidence against
+  // this nullary spelling: 0x005EE950 (sub_5ee950, `this` reads iFlags_ and
+  // iSomeFlag_ exactly as key_click_event does, so it IS a Win) calls
+  // [vtable+0x5c] = this slot with TWO pushes and no `add esp, 8` before its
+  // own `ret 0xc`, so its callee cleans 8 bytes - `ret 8`. The shared body
+  // the table holds here, 0x00404260, IS `c2 08 00` = `ret 8`, which a
+  // nullary `int ()` cannot produce (a nullary returning 0 is
+  // `xor eax,eax / ret`, and no such COMDAT exists in this run). Yet
+  // 0x005EE750's `call [edx+0x5c]` at 0x005EE7C3 pushes NOTHING and tests
+  // EAX afterwards - a nullary int, on objects whose table is also a Win's.
+  // Both cannot be one virtual. The two sites dispatch objects of different
+  // most-derived types whose tables agree to offset 0x5c and diverge in what
+  // sits there, and modelling that needs the dispatching types separated
+  // first, not a signature edited here - redeclaring this one 2-arg puts
+  // `push 0; push 0` back at 21 byte-exact sites.
   virtual int vslot_23() { return 0; }  // 0x00404260
   virtual void vslot_24(int = 0, int = 0) {}  // 0x00404260
   virtual int vslot_25(int = 0, int = 0) { return 0; }  // 0x00406A80
@@ -544,8 +570,18 @@ class Win : public AutoSound {
   virtual int vslot_41(int = 0) { return 0; }  // 0x00404250
   virtual void vslot_42(int = 0) {}  // 0x00404270
   virtual void vslot_43(int = 0) {}  // 0x00404270
-  virtual void vslot_44(int = 0) {}  // 0x00404270
-  virtual void vslot_45(int = 0, int = 0) {}  // 0x00404260
+  // SLOTS 44 AND 45 HAVE NAMES. BaseWin's front table holds 0x0041D500 and
+  // 0x0041B4E0 at 0x66A4BC/0x66A4C0 and MainInterface's holds 0x0045C800 and
+  // 0x0045C870 at 0x66C648/0x66C64C - and every one of those four catalogue
+  // names spells on_button_clicked / on_button_toggled, as does CouncWin's own
+  // override at 0x00424870 (?on_button_clicked@CouncWin@@QAEXH@Z). That is the
+  // slot's real name, not a coincidence. They were `vslot_44`/`vslot_45` until
+  // the BaseWin derivation proved who owns them: the interface's
+  // button-clicked and button-toggled events both step the receiver back to
+  // the front window and dispatch these two. `vslot_13` on the interface is
+  // this one plus a name.
+  virtual void on_button_clicked(int = 0) {}       // slot 44  0x00404270
+  virtual void on_button_toggled(int = 0, int = 0) {}  // slot 45  0x00404260
   virtual void vslot_46(int = 0, int = 0, int = 0) {}  // 0x00406B20
   virtual void vslot_47(int = 0, int = 0) {}  // 0x00404260
   virtual void vslot_48(int = 0, int = 0) {}  // 0x00404260

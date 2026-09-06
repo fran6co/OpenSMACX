@@ -70,6 +70,12 @@ void Credits::on_mouse_move(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00428DB0 ?on_button_clicked@Credits@@QAEXH@Z 0x00428DB0-0x00428DB3 BYTE_EXACT
+// symbol    ?on_button_clicked@Credits@@UAEXH@Z
+//           Q->U 2026-09-06, Win's front slots 44/45 taking the image's
+//           own names (on_button_clicked / on_button_toggled): the body is
+//           now an override of the window's slot, so VC6 mangles it virtual
+//           and enters it on the front table, while the image spells the
+//           same body Q and its own table holds the raw address.
 // size      3 bytes
 // prototype void (__thiscall ?on_button_clicked@Credits@@QAEXH@Z)(Credits* this, int)
 // callers   0   call targets   0

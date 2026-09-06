@@ -647,10 +647,10 @@ void BaseButton::set(int value) {
     if (!win_parent_) {
         return;
     }
-    // Slot 0xB4 is Win::vslot_45, the parent's value-changed notifier; the
+    // Slot 0xB4 is Win::on_button_toggled, the parent's value-changed notifier; the
     // id goes first and the new value second. Read AFTER the store above, so
     // a redraw that retargeted the button is seen here.
-    win_parent_->vslot_45(static_cast<int>(field_A78_), value);
+    win_parent_->on_button_toggled(static_cast<int>(field_A78_), value);
 }
 
 

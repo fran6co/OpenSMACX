@@ -1394,6 +1394,12 @@ int MainInterface::on_button_pressed(int a1) {
 }
 
 // ORIGINAL: 0x0045C870 ?on_button_toggled@MainInterface@@QAEXHH@Z 0x0045C870-0x0045C8A4 FILE BYTE_EXACT
+// symbol    ?on_button_toggled@MainInterface@@UAEXHH@Z
+//           Q->U 2026-09-06, Win's front slots 44/45 taking the image's
+//           own names (on_button_clicked / on_button_toggled): the body is
+//           now an override of the window's slot, so VC6 mangles it virtual
+//           and enters it on the front table, while the image spells the
+//           same body Q and its own table holds the raw address.
 // size      52 bytes
 // prototype void (__thiscall ?on_button_toggled@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   0
@@ -1985,8 +1991,12 @@ Purpose: Hand the clicked button id to whichever interface mode is active.
 //   that used to stand in for it is gone. receiver stays unspelled because
 //   the registry entries are SubInterface subobjects (front+0xA14), not
 //   windows, and this method's own `this` never reaches the body.
-// symbol    ?on_button_clicked@MainInterface@@QAEXH@Z - unchanged; this one
-//   is a MainInterface member and stays one.
+// symbol    ?on_button_clicked@MainInterface@@UAEXH@Z
+//           was `QAEXH@Z - unchanged; this one is a MainInterface member and
+//           stays one`, until 2026-09-06 when Win's front slots 44/45 took
+//           the image's own names: this body now overrides Win's slot 44, so
+//           VC6 mangles it virtual and enters it on the front table
+//           (0x66C648 holds it) while the image still spells the body Q.
 Return Value: n/a
 Status: homed from src/recovered/0045c800.cpp on this pass.
 */

@@ -17,7 +17,6 @@
  */
 #pragma once
 #include "basebutton.h"
-#include "sprite.h"
 
  /*
   * FlatButton class
@@ -51,33 +50,17 @@ class FlatButton : public BaseButton {
   uint32_t field_AD4_;
   uint32_t field_AD8_;
   uint32_t field_ADC_;
-  Sprite *sprite0_;
-  uint32_t field_AE4_;
-  uint32_t field_AE8_;
-  uint32_t field_AEC_;
-  uint32_t field_AF0_;
-  uint32_t field_AF4_;
-  uint32_t field_AF8_;
-  uint32_t field_AFC_;
-  uint32_t field_B00_;
-  uint32_t field_B04_;
-  uint32_t field_B08_;
-  uint32_t field_B0C_;
-  Sprite *sprite1_;
-  Sprite *sprite2_;
-  Sprite *sprite3_;
-  uint32_t field_B1C_;
-  uint32_t field_B20_;
-  uint32_t field_B24_;
-  uint32_t field_B28_;
-  uint32_t field_B2C_;
-  uint32_t field_B30_;
-  uint32_t field_B34_;
-  uint32_t field_B38_;
-  uint32_t field_B3C_;
-  uint32_t field_B40_;
-  uint32_t field_B44_;
-  uint32_t field_B48_;
+ public:
+  // THE 27 CONFIG DWORDS AT 0xAE0..0xB48, PUBLIC so BasePop::exec's
+  // apply_button_config can name the array instead of walking the object
+  // address. BasePop::default_block_ is the same nine-rows-of-three table and
+  // exec copies all 27 into each of its three button sites; FlatButton::close
+  // and the constructor walk the same run from the defaults table. Typed as
+  // one flat array - nothing in the tree reads back an individual row, and the
+  // Sprite* typing four of these words used to carry came from their offsets
+  // rather than from any access the image makes. The members keep their
+  // offsets (0xAE0 through 0xB48 inclusive); only the spelling moved.
+  uint32_t config[27];  // 0xAE0
 };
 
 static_assert(sizeof(FlatButton) == 0xB4C,

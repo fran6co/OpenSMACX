@@ -102,7 +102,7 @@ class CouncWin : public GraphicWin, public IfaceRegistryEntry {
   // have to be CouncWin's and not Win's shared no-ops for those dispatches to
   // mean what the image's mean.
   void vslot_12();                 // slot 12, 0x00426AA0 ?on_redraw@CouncWin@@QAEXXZ
-  void vslot_44(int button_id);    // slot 44, 0x00424870 ?on_button_clicked@CouncWin@@QAEXH@Z
+  void on_button_clicked(int button_id);    // slot 44, 0x00424870 ?on_button_clicked@CouncWin@@QAEXH@Z
   // PAUGraphicWin@@PADH, per
   // ?on_button_text_draw@CouncWin@@QAEHPAUGraphicWin@@PADH@Z. 0x00426F90 is
   // `xor eax, eax; ret 0xc` and touches none of the three.

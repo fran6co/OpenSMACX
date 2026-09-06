@@ -192,7 +192,7 @@ class StringStruct : public virtual StringAllocationBase {
   // same tables from the declarations instead. Out of line in
   // stringstruct.cpp.
   ~StringStruct();
-  int seek_pos(int a1);
+  MEASURED int seek_pos(int a1);
   int current_id();
   // Both return the entry's payload node - StringStructPayload, whose +4 is
   // the string the entry carries. The catalogue spelled both returns H (int)
@@ -200,7 +200,7 @@ class StringStruct : public virtual StringAllocationBase {
   // names are carried by `// symbol` facts under the markers, which is what
   // resolves the claims.
   StringStructPayload *current_entry();
-  StringStructPayload *next_entry();
+  MEASURED StringStructPayload *next_entry();
   int seek_id(int id);
   void remove_all();
   void close();
@@ -268,4 +268,71 @@ static_assert(sizeof(StringList) == 0x30,
 // this global into the object and clears it; the virtual base's destructors
 // republish it. Rebindable so tests can substitute their own storage: the
 // default address is only mapped inside the game process.
+
+// THE TWO LIST WALKS THE IMAGE BOTH CALLS AND INLINES. Real out-of-line
+// functions at 0x004015B0 (seek_pos, BYTE_EXACT, 2 callers) and 0x00402500
+// (next_entry, BYTE_EXACT, 9 callers), AND expanded whole at other sites -
+// BasePop::exec inlines both (0x00602FC5 and 0x0060305C), Caviar::init_class
+// inlines the pair into its own list walk. A .cpp definition can only ever be
+// one of those, which is why they live here: `inline` is what lets VC6 expand
+// them, `MEASURED` is what keeps the out-of-line COMDAT emitted so their own
+// claims stay measurable. Markers stay in stringstruct.cpp - decomp's reader
+// globs only *.cpp.
+//
+// `seek_pos` calls abs() through a pointer for the same reason vector_dist
+// spells its own two: `abs` of a variable is a real call here and the image
+// makes two, while `abs` of a compile-time constant folds away and the calls
+// vanish.
+
+typedef int (__cdecl *AbsFnT)(int);
+
+MEASURED inline int StringStruct::seek_pos(int a1) {
+    AbsFnT abs_fn = reinterpret_cast<AbsFnT>(&abs);
+    if (a1 > entry_count_ - 1) {
+        return 0;
+    }
+    current_ = head_;
+    if (a1 < 0) {
+        if (abs_fn(a1) > entry_count_) {
+            return 0;
+        }
+        int i = abs_fn(a1);
+        if (i > 0) {
+            do {
+                i--;
+                current_ = reinterpret_cast<StringStructEntry *>(reinterpret_cast<int *>(current_)[4]);
+            } while (i != 0);
+        }
+        current_position_ = a1 + entry_count_;
+        return 1;
+    } else {
+        if (a1 > 0) {
+            int i = a1;
+            do {
+                i--;
+                current_ = reinterpret_cast<StringStructEntry *>(reinterpret_cast<int *>(current_)[3]);
+            } while (i != 0);
+        }
+        current_position_ = a1;
+        return 1;
+    }
+}
+
+MEASURED inline StringStructPayload *StringStruct::next_entry() {
+    if (!head_) {
+        return 0;
+    }
+
+    StringStructEntry *next = current_->next;
+    int position = current_position_;
+    current_ = next;
+    int count = entry_count_;
+    ++position;
+    current_position_ = position;
+    if (position == count) {
+        current_position_ = 0;
+    }
+    return current_->payload;
+}
+
 

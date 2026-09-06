@@ -731,7 +731,16 @@ Purpose: Run the popup modally: size and position it, lay out its two caption
 //        eight items walks past it into sprite_. Reproduced: the loop below
 //        is the image's, unbounded.
 //
-// RESIDUAL: MISMATCH 18 of 1139 at /c /O2 /Gy /GR- /GX, first divergence at
+// LEVER: (2026-09-06, the win-handoff wave) three of the four HANDOFFs on
+//        this marker landed and neither of the two that could have moved this
+//        score did. BorderSizing is now the real 12-byte struct in win.h and
+//        apply_button_config / apply_button_bevel name FlatButton::config[27]
+//        and BaseButton's public colour/bevel run instead of walking the
+//        object address - the score held at instruction 0 through both. The
+//        stringstruct move DID: seek_pos and next_entry are MEASURED inline in
+//        stringstruct.h now, exec inlines both, and this body went 18/1139 ->
+//        22/1139 (1021 -> 1059 compiled) with call_diff 37 -> 39 of 42.
+// RESIDUAL: MISMATCH 22 of 1139 at /c /O2 /Gy /GR- /GX, first divergence at
 //        instruction 0. The image opens the frame `mov eax, fs:[0]` and this
 //        tree opens it `push -1` - the SEH registration and the fs reload are
 //        scheduled the other way round - so the whole 1139-instruction
@@ -740,18 +749,18 @@ Purpose: Run the popup modally: size and position it, lay out its two caption
 //        walks the embedded Dialog's vbtable in ecx/edx where this tree uses
 //        eax/ecx, and no source spelling names a register. GraphicWin::init
 //        (0x005D4EF0) records the same shape at 2 of 112 on a body a quarter
-//        of this size. Not chased further: 1021 compiled instructions against
-//        the image's 1139, of which the 118 missing are the inlined seek_pos
-//        / next_entry pair and the six button-config stores the inlining
-//        folds.
+//        of this size. Not chased further: 1059 compiled instructions against
+//        the image's 1139, the 80 missing being the three calls call_diff
+//        still counts - the two UNK3/UNK4 show-bit setters of the dialog.h
+//        HANDOFF (declared there now; the out-of-line definitions dialog.cpp
+//        owes are the only thing between this body and them) and the one abs
+//        inside the inlined seek_pos.
 // TRIED: apply_button_config / apply_button_bevel as out-of-line definitions
 //        in basepop.cpp - call_diff went to 43 calls against the image's 42,
 //        the three sites the image has inline became real calls. In-class
-//        definitions (what ships) took it to 37 against 42, the missing five
-//        being the two UNK3/UNK4 calls of the dialog.h HANDOFF and the two
-//        abs calls inside the inlined seek_pos. Both spellings measured
-//        MISMATCH at instruction 0 for the reason above, so the in-class
-//        form wins on call fidelity alone.
+//        definitions (what ships) took it to 37 against 42. Both spellings
+//        measured MISMATCH at instruction 0 for the reason above, so the
+//        in-class form wins on call fidelity alone.
 */
 typedef int (__fastcall *func_basepop_slot095)(void *);
 typedef int (__fastcall *func_basepop_exec_slot090)(void *);
@@ -2745,6 +2754,12 @@ int BasePop::init(int flags, long heap_base) {
 
 
 // ORIGINAL: 0x00604300 ?on_button_clicked@BasePop@@QAEXH@Z 0x00604300-0x006043C8 FILE
+// symbol    ?on_button_clicked@BasePop@@UAEXH@Z
+//           Q->U 2026-09-06, Win's front slots 44/45 taking the image's
+//           own names (on_button_clicked / on_button_toggled): the body is
+//           now an override of the window's slot, so VC6 mangles it virtual
+//           and enters it on the front table, while the image spells the
+//           same body Q and its own table holds the raw address.
 // size      201 bytes
 // prototype void (__thiscall ?on_button_clicked@BasePop@@QAEXH@Z)(BasePop* this, int)
 // callers   0   call targets   1
@@ -3064,7 +3079,7 @@ void BasePop::on_left_down(int x, int y) {
             // the call is the ordinary virtual dispatch the image makes
             // (`mov edx,[esi]; mov ecx,esi; call [edx+0xb0]`) and no shim is
             // needed.
-            vslot_44(x);
+            on_button_clicked(x);
         }
     }
 }

@@ -48,7 +48,7 @@ void CouncWin::vslot_12() {
 
 // Slot 44 of the front vtable - the catalogue's
 // ?on_button_clicked@CouncWin@@QAEXH@Z, 0x00424870, 1983 bytes, unrecovered.
-void CouncWin::vslot_44(int button_id) {
+void CouncWin::on_button_clicked(int button_id) {
     typedef void(__fastcall *pending)(CouncWin *, void *, int);
     reinterpret_cast<pending>(static_cast<unsigned long>(0x00424870))(
         this, nullptr, button_id);
@@ -71,9 +71,9 @@ Status: Complete
 //   adjustment to the front) and the dispatch is the front's slot 44, so the
 //   whole body is one unqualified virtual call once the front is named: the
 //   `Win *front = this` conversion is where the -0xa14 comes from, and
-//   `vslot_44(a1)` is the image's `call dword ptr [eax + 0xb0]`.
+//   `on_button_clicked(a1)` is the image's `call dword ptr [eax + 0xb0]`.
 void CouncWin::vslot_13(int button_id) {
-    vslot_44(button_id);
+    on_button_clicked(button_id);
 }
 
 /*

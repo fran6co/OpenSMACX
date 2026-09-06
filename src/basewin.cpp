@@ -172,6 +172,12 @@ void BaseWin::UNK5(int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x0041B4E0 ?on_button_toggled@BaseWin@@QAEXHH@Z 0x0041B4E0-0x0041B4E3 BYTE_EXACT
+// symbol    ?on_button_toggled@BaseWin@@UAEXHH@Z
+//           Q->U 2026-09-06, Win's front slots 44/45 taking the image's
+//           own names (on_button_clicked / on_button_toggled): the body is
+//           now an override of the window's slot, so VC6 mangles it virtual
+//           and enters it on the front table, while the image spells the
+//           same body Q and its own table holds the raw address.
 // size      3 bytes
 // prototype void (__thiscall ?on_button_toggled@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
 // callers   0   call targets   0
@@ -984,7 +990,7 @@ void BaseWin::on_iface_left_down(int xCoord, int yCoord) {
 // symbol    ?vslot_13@BaseWin@@UAEXH@Z
 // LEVER: the derivation deleted this body's shim. The image is one dispatch -
 //        `mov eax,[ecx-0xa14] / add ecx,-0xa14 / call [eax+0xb0]` - and 0xb0
-//        is the FRONT vtable's slot 44, which Win spells vslot_44. Naming it
+//        is the FRONT vtable's slot 44, which Win spells on_button_clicked. Naming it
 //        replaced both the `this - 0xa14` pun and the VCallArg1 class the
 //        pun needed; the interface's button-clicked event is the front's
 //        on_button_clicked, and the source now says so.
@@ -996,8 +1002,36 @@ void BaseWin::on_iface_left_down(int xCoord, int yCoord) {
 // calls     (none)
 // indirect  0x0041E523
 // 0x0041E510  ?on_iface_button_clicked@BaseWin@@QAEXH@Z  ->  ?on_iface_button_clicked@BaseWin@@QAEXH@Z
+// HANDOFF (basewin, not the pass that wrote this): the `// symbol` fact above
+//        is now the only thing keeping 0x0041E510 measurable. Renaming this
+//        method to the image's `on_iface_button_clicked` (which is what the
+//        fact is standing in for) needs MainInterface::vslot_13 decided
+//        first - maininterface.h:130 documents why MainInterface must NOT
+//        override that slot by name, and renaming BaseWin's does not change
+//        that, but the two tables are the same slot index so the rename has
+//        to be checked against BattleWin::on_iface_button_clicked's rel32 to
+//        0x0045D170 on both sides. Measured here, not assumed.
 void BaseWin::vslot_13(int button_id) {
-    vslot_44(button_id);
+    on_button_clicked(button_id);
+}
+
+// HANDOFF (basewin, added by the win.h slot-44/45 rename, 2026-09-06): Win's
+//        slot 44 is now spelled `on_button_clicked`, so BaseWin's own
+//        0x0041D500 - which the image's front table 0x66A4BC holds in that
+//        slot - IS the override of it, and VC6 needs its address for the
+//        vtable it emits. 1388 bytes, unrecovered; the artefact at
+//        src/recovered/units/0041d500.cpp is the transcription to home here.
+//        This forwarder is the on_status idiom and nothing more.
+// PENDING 0x0041D500 ?on_button_clicked@BaseWin@@QAEXH@Z 0x0041D500-0x0041DA6C
+// symbol    ?on_button_clicked@BaseWin@@UAEXH@Z
+//           Q->U 2026-09-06, Win's slot 44 taking the image's name: the body
+//           is now an override of Win's slot, so VC6 mangles it virtual and
+//           enters it on the front table, while the image spells the same
+//           body Q and its own table 0x66A4BC holds the raw address.
+void BaseWin::on_button_clicked(int button_id) {
+    typedef void(__fastcall *pending)(BaseWin *, void *, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x0041D500))(
+        this, nullptr, button_id);
 }
 
 // ORIGINAL: 0x0041E8B0 ?hide@BaseWin@@QAEXXZ 0x0041E8B0-0x0041E8C9 BYTE_EXACT
@@ -1297,7 +1331,7 @@ Purpose: The interface's button-toggled event. It IS the front's
          0x0041B4E0 - the catalogue's on_button_toggled - sits.
 // ORIGINAL: 0x0041E530 ?on_iface_button_toggled@BaseWin@@QAEXHH@Z 0x0041E530-0x0041E551 BYTE_EXACT
 // symbol    ?on_iface_button_toggled@BaseWin@@UAEXHH@Z
-// LEVER: named slot, no shim. `vslot_45(a1, a2)` - Win's own name for front
+// LEVER: named slot, no shim. `on_button_toggled(a1, a2)` - Win's own name for front
 //        vtable slot 45 - emits `mov eax,[ecx-0xa14] / add ecx,-0xa14 /
 //        push / push / call [eax+0xb4]`, the image's four instructions and
 //        its order. The VCall2 spelling this replaces put the adjustment on
@@ -1313,7 +1347,7 @@ Return Value: n/a
 Status: Complete
 */
 void BaseWin::on_iface_button_toggled(int a1, int a2) {
-    vslot_45(a1, a2);
+    on_button_toggled(a1, a2);
 }
 
 /*

@@ -105,22 +105,10 @@ Purpose: Advance the current string-list entry and return its payload.
 Return Value: New current payload, or zero when the list is empty
 Status: Complete
 */
-StringStructPayload *StringStruct::next_entry() {
-    if (!head_) {
-        return 0;
-    }
 
-    StringStructEntry *next = current_->next;
-    int position = current_position_;
-    current_ = next;
-    int count = entry_count_;
-    ++position;
-    current_position_ = position;
-    if (position == count) {
-        current_position_ = 0;
-    }
-    return current_->payload;
-}
+// MEASURED inline, defined at the end of stringstruct.h: the image both
+// calls this (9 callers) and inlines it whole (BasePop::exec 0x0060305C,
+// Caviar::init_class). The definition moved; the claim is unchanged.
 
 /*
 Purpose: Position the string-list cursor at the first matching item ID.
@@ -415,36 +403,7 @@ uint32_t StringList::destroy() {
 // calls     0x00644F3A
 Status: Complete
 */
-typedef int (__cdecl *AbsFnT)(int);
 
-int StringStruct::seek_pos(int a1) {
-    AbsFnT abs_fn = reinterpret_cast<AbsFnT>(&abs);
-    if (a1 > entry_count_ - 1) {
-        return 0;
-    }
-    current_ = head_;
-    if (a1 < 0) {
-        if (abs_fn(a1) > entry_count_) {
-            return 0;
-        }
-        int i = abs_fn(a1);
-        if (i > 0) {
-            do {
-                i--;
-                current_ = reinterpret_cast<StringStructEntry *>(reinterpret_cast<int *>(current_)[4]);
-            } while (i != 0);
-        }
-        current_position_ = a1 + entry_count_;
-        return 1;
-    } else {
-        if (a1 > 0) {
-            int i = a1;
-            do {
-                i--;
-                current_ = reinterpret_cast<StringStructEntry *>(reinterpret_cast<int *>(current_)[3]);
-            } while (i != 0);
-        }
-        current_position_ = a1;
-        return 1;
-    }
-}
+// MEASURED inline, defined at the end of stringstruct.h: the image both
+// calls this (2 callers) and inlines it whole (BasePop::exec 0x00602FC5, abs
+// calls and all). The definition moved; the claim is unchanged.

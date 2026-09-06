@@ -440,6 +440,12 @@ void DiploPop::stop() {
 // Fixed-slot bindings carried from 0043f290.cpp
 
 // ORIGINAL: 0x0043F290 ?on_button_clicked@DiploPop@@QAEXH@Z 0x0043F290-0x0043F2AD FILE BYTE_EXACT
+// symbol    ?on_button_clicked@DiploPop@@UAEXH@Z
+//           Q->U 2026-09-06, Win's front slots 44/45 taking the image's
+//           own names (on_button_clicked / on_button_toggled): the body is
+//           now an override of the window's slot, so VC6 mangles it virtual
+//           and enters it on the front table, while the image spells the
+//           same body Q and its own table holds the raw address.
 // size      29 bytes
 // prototype void (__thiscall ?on_button_clicked@DiploPop@@QAEXH@Z)(DiploPop* this, int)
 // callers   0   call targets   0

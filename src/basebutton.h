@@ -96,12 +96,21 @@ class BaseButton : public GraphicWin {
   uint32_t field_A78_;
   LPSTR name_;
   LPSTR bubble_text_;
+ public:
+  // THE COLOUR-AND-BEVEL RUN AT 0xA84..0xA9C, PUBLIC so BasePop::exec's
+  // apply_button_bevel can name the words instead of walking the object
+  // address. The image writes all six at each of its three button sites
+  // (0x00602EF6, 0x00603291, 0x006035DC), and the constructor seeds them from
+  // DialogDefaults[0..3] and the two BaseButtonA94/A98 defaults. Access is
+  // compile-time only: the members keep their declaration order and offsets,
+  // which is what pins the layout.
   uint32_t color_;
   uint32_t bevel_upper_;
   uint32_t bevel_lower_;
   uint32_t bevel_thickness_;
   uint32_t field_A94_;
   uint32_t field_A98_;
+ private:
   uint32_t field_A9C_;
   uint32_t field_AA0_;
   uint32_t field_AA4_;

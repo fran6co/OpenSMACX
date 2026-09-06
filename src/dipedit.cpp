@@ -583,6 +583,12 @@ Purpose: The handler the diplomatic-edit window's FlatButtons share. The int is
          WITHOUT clearing it, which the image does too (0x004DA45B is on the
          common exit path only).
 // ORIGINAL: 0x004D9DE0 ?on_button_clicked@DipEdit@@QAEXH@Z 0x004D9DE0-0x004DA73F;0x0065B347-0x0065B469
+// symbol    ?on_button_clicked@DipEdit@@UAEXH@Z
+//           Q->U 2026-09-06, Win's front slots 44/45 taking the image's
+//           own names (on_button_clicked / on_button_toggled): the body is
+//           now an override of the window's slot, so VC6 mangles it virtual
+//           and enters it on the front table, while the image spells the
+//           same body Q and its own table holds the raw address.
 // size      2399 bytes
 // prototype void (__thiscall ?on_button_clicked@DipEdit@@QAEXH@Z)(DipEdit* this, int)
 // callers   0   call targets   30

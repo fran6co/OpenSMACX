@@ -168,7 +168,7 @@ void DesignWin::on_iface_group_clicked(int, int, int) {
 // ?on_button_clicked@DesignWin@@QAEXH@Z, 0x00438460, 4481 bytes (plus the cold
 // tail at 0x00654010), unrecovered. vslot_13 and on_iface_button_pressed both
 // reach it through a live dispatch, so the entry has to be DesignWin's.
-void DesignWin::vslot_44(int button_id) {
+void DesignWin::on_button_clicked(int button_id) {
     typedef void(__fastcall *pending)(DesignWin *, void *, int);
     reinterpret_cast<pending>(static_cast<unsigned long>(0x00438460))(
         this, nullptr, button_id);
@@ -189,10 +189,10 @@ Status: Complete
 */
 // LEVER: the receiver is the ENTRY (the image's `add ecx,-0xa14` is VC6's own
 //   adjustment to the front) and the dispatch is the front's slot 44, so the
-//   whole body is one unqualified virtual call - `vslot_44(button_id)` is the
+//   whole body is one unqualified virtual call - `on_button_clicked(button_id)` is the
 //   image's `call dword ptr [eax + 0xb0]`.
 void DesignWin::vslot_13(int button_id) {
-    vslot_44(button_id);
+    on_button_clicked(button_id);
 }
 
 /*
@@ -212,7 +212,7 @@ Status: Complete
 //   after it - the interface wants an answer, the design window forwards the
 //   click to the front and reports "not pressed".
 int DesignWin::on_iface_button_pressed(int button_id) {
-    vslot_44(button_id);
+    on_button_clicked(button_id);
     return 0;
 }
 

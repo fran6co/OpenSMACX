@@ -82,6 +82,32 @@ class Dialog {
   // base. RadioButton::close() has the same `void ()` signature and so
   // overrides this.
   void close();
+  // THE TWO SHOW-BIT SETTERS, proved by BasePop::exec (0x00602758..0x00602775):
+  //   mov eax,[esi+0x21d0]          the embedded Dialogs' vbptr
+  //   mov ecx,[eax+8]               the Dialog virtual base's displacement
+  //   lea edi,[ecx+esi+0x21d0]      = &dialogs_.Dialog, i.e. this+0x2D70
+  //   mov ecx,edi / push 1 / call 0x00605180
+  //   mov ecx,edi / push 1 / call 0x006051A0
+  // Both callees are the 27-byte `if (v) f |= bit; else f &= ~bit;` pair over
+  // the Dialog style word at +0x20 that this tree claims as
+  // ?UNK3@BasePop@@QAEXH@Z / ?UNK4@BasePop@@QAEXH@Z (0x00605180/0x006051A0,
+  // both BYTE_EXACT in basepop.cpp). The receiver the image hands them is a
+  // DIALOG subobject, not a BasePop, so the catalogue's owner is the folded
+  // twin: the original had this pair on Dialog (or on Dialogs) and VC6's
+  // identical-COMDAT folding merged it with BasePop's own identical body,
+  // keeping one name.
+  //
+  // HANDOFF (dialog.cpp and basepop.cpp, neither of which is this pass's):
+  //        landing these needs (1) an OUT-OF-LINE definition in dialog.cpp -
+  //        an in-class or inline body is two instructions of `or`/`and` that
+  //        VC6 will expand at the call site, where the image makes a real
+  //        `call rel32`, so the header-only spellings this tree uses for
+  //        id_to_pos cannot produce the image's shape here - and (2) exec's
+  //        two `dialogs_.Dialog::field_20_ |= 1U / |= 2U` statements swapped
+  //        for the two calls. Declared and left undefined on purpose: the
+  //        definitions move no layout and no claim of this file's.
+  void set_style_bit_0(int on);
+  void set_style_bit_1(int on);
   // TRIED (2026-09-02, phase B): `virtual uint32_t close()` - the four
   // Dialog-part thunks in the image's ListBox table suggested close was a
   // Dialog virtual. REFUTED by the family closes' own bodies: the image's

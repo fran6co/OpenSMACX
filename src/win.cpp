@@ -9240,9 +9240,9 @@ int Win::key_click_event(int key, int flags) {
     {
         void *vtbl = *(void **)self;
         if (flags == 0x1b) {
-            this->vslot_44(-2);
+            this->on_button_clicked(-2);
         } else if (flags == 0xd || flags == 0x1000d) {
-            this->vslot_44(-1);
+            this->on_button_clicked(-1);
         }
     }
 
