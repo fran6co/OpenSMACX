@@ -1958,11 +1958,11 @@ void BaseWin::draw_commerce(int a1) {
         int factionOwner = *(int *)(self + 0x40b0c);
         unsigned char tag = *((unsigned char *)g_0097d044 + factionOwner * 0x134);
         if ((*(int *)((char *)g_00946f58 + tag * 0x59c) & 0x80) == 0) {
-            int v = ((Strings *)g_009b90d8)->get(*(int *)((char *)g_009b90f8 + 0x4e4));
+            char *v = ((Strings *)g_009b90d8)->get(*(int *)((char *)g_009b90f8 + 0x4e4));
             strcat((char *)g_009b86a0, (char *)v);
             (*(char *(__stdcall *)(char *))g_0066931c)((char *)g_009b86a0);
         } else {
-            int v = ((Strings *)g_009b90d8)->get(*(int *)((char *)g_009b90f8 + 0x114c));
+            char *v = ((Strings *)g_009b90d8)->get(*(int *)((char *)g_009b90f8 + 0x114c));
             strcat((char *)g_009b86a0, (char *)v);
         }
     }
@@ -2019,7 +2019,7 @@ void BaseWin::draw_commerce(int a1) {
                     {
                         int rowEnd = *(int *)(self + 0x84) + 1 + rowY;
                         (void)nameW;
-                        int v = ((Strings *)g_009b90d8)->get(*(int *)((char *)g_009b90f8 + 0xa10));
+                        char *v = ((Strings *)g_009b90d8)->get(*(int *)((char *)g_009b90f8 + 0xa10));
                         strcat((char *)g_009b86a0, (char *)v);
                         valW = ((Buffer *)(self + 0x444))
                                    ->write_l((char *)g_009b86a0, valW, rowEnd, strlen((char *)g_009b86a0));
@@ -2061,7 +2061,7 @@ void BaseWin::draw_commerce(int a1) {
     ((Buffer *)(self + 0x444))->set_text_color(*g_008c6cfc, *g_008c6d00, 1, 1);
     *(unsigned char *)g_009b86a0 = 0;
     {
-        int v = ((Strings *)g_009b90d8)->get(*(int *)((char *)g_009b90f8 + 100));
+        char *v = ((Strings *)g_009b90d8)->get(*(int *)((char *)g_009b90f8 + 100));
         strcat((char *)g_009b86a0, (char *)v);
     }
     ((Buffer *)(self + 0x444))

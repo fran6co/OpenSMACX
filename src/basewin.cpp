@@ -28,12 +28,19 @@
 #include "base.h"
 #include "basepop.h"
 #include "console.h"
+#include "council.h"
 #include "datalink.h"
 #include "general.h"
+#include "leaf_recoveries.h"
 #include "map.h"
 #include "popup.h"
+#include "pulldown.h"
 #include "temp.h"
+#include "technology.h"
 #include "text.h"
+#include "tutwin.h"
+#include "veh.h"
+#include "xpops.h"
 #include <cstdint>
 #include <cstring>
 
@@ -590,7 +597,8 @@ static int *const MainInterfaceScreenClipBottom = (int *)0x007AECA0;
 
 class VCall2 { public:
     virtual void slot000();
-    virtual void slot001();
+    virtual void slot001(int);  // <-- used by draw_facilities: Scroll vtable
+                                // slot 1 dispatched with an int argument.
     virtual void slot002();
     virtual void slot003(int, int);  // <-- used
     virtual void slot004();
@@ -632,6 +640,55 @@ class VCall { public:
     virtual void slot017();
     virtual void slot018();
     virtual void slot019();  // <-- used
+    // BaseWin::update_gov_buttons, base_editor_fac, base_editor_copy and
+    // init each dispatch through vtable slot 62 of a sub-window. Only
+    // DECLARATION ORDER matters here - VCall is never defined, never
+    // instantiated, and its slot signatures are free to differ between the
+    // VCall/VCall2 spellings - so the run continues to 62 rather than
+    // growing a third class.
+    virtual void slot020();
+    virtual void slot021();
+    virtual void slot022();
+    virtual void slot023();
+    virtual void slot024();
+    virtual void slot025();
+    virtual void slot026();
+    virtual void slot027();
+    virtual void slot028();
+    virtual void slot029();
+    virtual void slot030();
+    virtual void slot031();
+    virtual void slot032();
+    virtual void slot033();
+    virtual void slot034();
+    virtual void slot035();
+    virtual void slot036();
+    virtual void slot037();
+    virtual void slot038();
+    virtual void slot039();
+    virtual void slot040();
+    virtual void slot041();
+    virtual void slot042();
+    virtual void slot043();
+    virtual void slot044();
+    virtual void slot045();
+    virtual void slot046();
+    virtual void slot047();
+    virtual void slot048();
+    virtual void slot049();
+    virtual void slot050();
+    virtual void slot051();
+    virtual void slot052();
+    virtual void slot053();
+    virtual void slot054();
+    virtual void slot055();
+    virtual void slot056();
+    virtual void slot057();
+    virtual void slot058();
+    virtual void slot059();
+    virtual void slot060();
+    virtual void slot061();
+    virtual void slot062();  // <-- used
 };
 
 // ORIGINAL: 0x0041AFD0 ?on_left_up@BaseWin@@QAEXHH@Z 0x0041AFD0-0x0041B10D FILE
@@ -1028,3 +1085,114 @@ void __cdecl load_inverts() {
         text_close();
     }
 }
+
+
+// ORIGINAL: 0x0041DD10 ?on_iface_left_up@BaseWin@@QAEXHH@Z 0x0041DD10-0x0041DE5B FILE
+// LEVER: the artifact's dispatch spells `VCall`, and this TU has two VCall
+// classes - `VCall` whose slot019 takes nothing and `VCall2` whose takes
+// (int, int). Only DECLARATION ORDER is meaningful to the emitted code, so
+// the fix is to name the right shim, not to change a signature: the same
+// slot index is free to carry different arguments in each spelling.
+// size      331 bytes
+// prototype void (__thiscall ?on_iface_left_up@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
+// callers   0   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005EC7C0 0x005ED240 0x005ED2D0 0x005FA7E0
+// indirect  0x0041DE0D 0x0041DE1E 0x0041DE3E
+// PRESERVED UNIT - measured MNEMONIC_ONLY.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x0041DD10
+// measured tier  MNEMONIC_ONLY
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/0041dd10/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?on_iface_left_up@BaseWin@@QAEXHH@Z  at 0x0041DD10  (331 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+
+// The fixed addresses this body reads are all already named in the tree:
+// 0x007AE820 is mapwin.h's MainInterfaceGlobal and 0x006A7628 is tutwin.h's
+// TutWinBaseWindow - the other window the drag is mapped through, its
+// client_to_screen / screen_to_client pair bracketing the MainInterface one.
+// 0x006A7A9C..0x006A7AA8 are the four dwords of one RECT, so they are one
+// binding, not four. 0x009B7ABC and 0x009B7AC0 are the two slots that hold a
+// BaseWin pointer while the interface has it captured: releasing the first
+// also notifies the window (vtable slot 4), releasing the second only clears
+// it, which is enter/leave tracking against capture.
+static RECT *const IfaceDropRect = (RECT *)0x006A7A9C;
+// Spelled as references to those dwords, not as pointers to them: the image
+// compares and clears the slots in place (`cmp dword ptr [0x9b7abc], esi`),
+// so a binding the compiler has to load first costs an indirection the
+// original does not pay.
+// Accessor spellings, the same idiom base.h's BaseCurrent() uses: the image
+// compares and clears the dwords in place (`cmp dword ptr [0x9b7abc], esi`),
+// and only a folded literal address compiles to that - a pointer or a
+// reference binding costs the load of the binding first, which the original
+// does not pay.
+static inline void *&IfaceCaptureSlot() {
+    return *reinterpret_cast<void **>(0x009B7ABC);
+}
+static inline void *&IfaceEnterSlot() {
+    return *reinterpret_cast<void **>(0x009B7AC0);
+}
+
+void BaseWin::on_iface_left_up(int a1, int a2) {
+    char *self = reinterpret_cast<char *>(this);
+    RECT local_rect = *reinterpret_cast<RECT *>(self - 0x5a0);
+
+    if (*reinterpret_cast<int32_t *>(self + 0x40140) > 0) {
+        if (in_box(a1, a2, &local_rect) == 0) {
+            MainInterfaceGlobal.client_to_screen(&a1, &a2);
+            TutWinBaseWindow.screen_to_client(&a1, &a2);
+
+            local_rect.left = IfaceDropRect->left;
+            local_rect.top = IfaceDropRect->top;
+            local_rect.right = IfaceDropRect->right;
+            local_rect.bottom = IfaceDropRect->bottom;
+
+            if (in_box(a1, a2, &local_rect) == 0) {
+                reinterpret_cast<Win *>(self - 0xa14)->set_cursor(0x7f00);
+                MainInterfaceGlobal.set_cursor(0x7f00);
+                *reinterpret_cast<int32_t *>(self + 0x40140) = -1;
+                *reinterpret_cast<int32_t *>(self + 0x40138) = -1;
+                *reinterpret_cast<int32_t *>(self + 0x4013c) = -1;
+            } else {
+                reinterpret_cast<VCall2 *>(self - 0xa14)->slot019(a1, a2);
+            }
+        } else {
+            reinterpret_cast<VCall2 *>(self)->slot003(a1, a2);
+        }
+    }
+
+    char *base = self - 0xa14;
+    if (IfaceCaptureSlot() == base) {
+        IfaceCaptureSlot() = 0;
+        reinterpret_cast<VCall2 *>(base)->slot004();
+    }
+    if (IfaceEnterSlot() == base) {
+        IfaceEnterSlot() = 0;
+    }
+}
+

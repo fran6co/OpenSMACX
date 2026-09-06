@@ -2074,7 +2074,7 @@ void BaseWin::draw_facilities(int a1) {
         scroll->set_range(0, ownedCount - 1);
         scroll->set_pos(*reinterpret_cast<int *>(self + 0x40b10));
         *reinterpret_cast<int *>(self + 0x41e94) = cols - 1;
-        reinterpret_cast<VCall *>(scroll)->slot001(0);
+        reinterpret_cast<VCall2 *>(scroll)->slot001(0);
         scroll_normal();
     }
 

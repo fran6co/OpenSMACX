@@ -581,7 +581,7 @@ void BaseWin::draw_psych() {
                 int val2 = tableVal + boolMask * 2;
                 int strIdx = ((val2 <= -2) ? 1 : 0) + 0x145;
                 int finalVal = *reinterpret_cast<int *>(reinterpret_cast<char *>(*g_009b90f8) + strIdx * 4);
-                int strPtr = reinterpret_cast<Strings *>(g_009b90d8)->get(finalVal);
+                char *strPtr = reinterpret_cast<Strings *>(g_009b90d8)->get(finalVal);
                 strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(strPtr));
                 goto after_switch;
             }
@@ -591,7 +591,7 @@ void BaseWin::draw_psych() {
             }
 
             {
-                int strPtr = reinterpret_cast<Strings *>(g_009b90d8)->get(uVar3);
+                char *strPtr = reinterpret_cast<Strings *>(g_009b90d8)->get(uVar3);
                 strcat(reinterpret_cast<char *>(g_009b86a0), reinterpret_cast<char *>(strPtr));
             }
         after_switch:

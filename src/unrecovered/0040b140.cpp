@@ -2487,7 +2487,7 @@ L40b586:
         }
         if (showJail) {
             int *menuPtr = *reinterpret_cast<int **>(g_009b90f8);
-            int textId = reinterpret_cast<Strings *>(g_009b90d8)->get(
+            char *textId = reinterpret_cast<Strings *>(g_009b90d8)->get(
                 *reinterpret_cast<int *>(reinterpret_cast<char *>(menuPtr) + 0xb6c));
             pulldown.add_item(1, reinterpret_cast<char *>(textId));
         }
@@ -2495,14 +2495,14 @@ L40b586:
 
     {
         int *menuPtr = *reinterpret_cast<int **>(g_009b90f8);
-        int textId2 = reinterpret_cast<Strings *>(g_009b90d8)->get(
+        char *textId2 = reinterpret_cast<Strings *>(g_009b90d8)->get(
             *reinterpret_cast<int *>(reinterpret_cast<char *>(menuPtr) + 0x958));
         pulldown.add_item(2, reinterpret_cast<char *>(textId2));
     }
 
     if ((*g_009a64c0 & 0x40) != 0) {
         int *menuPtr = *reinterpret_cast<int **>(g_009b90f8);
-        int textId3 = reinterpret_cast<Strings *>(g_009b90d8)->get(
+        char *textId3 = reinterpret_cast<Strings *>(g_009b90d8)->get(
             *reinterpret_cast<int *>(reinterpret_cast<char *>(menuPtr) + 0xdfc));
         pulldown.add_item(0x5a, reinterpret_cast<char *>(textId3));
     }
@@ -2511,19 +2511,19 @@ L40b586:
 
     {
         int *menuPtr = *reinterpret_cast<int **>(g_009b90f8);
-        int textId4 = reinterpret_cast<Strings *>(g_009b90d8)->get(
+        char *textId4 = reinterpret_cast<Strings *>(g_009b90d8)->get(
             *reinterpret_cast<int *>(reinterpret_cast<char *>(menuPtr) + 0xb70));
         pulldown.add_item(0xa, reinterpret_cast<char *>(textId4));
     }
     {
         int *menuPtr = *reinterpret_cast<int **>(g_009b90f8);
-        int textId5 = reinterpret_cast<Strings *>(g_009b90d8)->get(
+        char *textId5 = reinterpret_cast<Strings *>(g_009b90d8)->get(
             *reinterpret_cast<int *>(reinterpret_cast<char *>(menuPtr) + 0xb74));
         pulldown.add_item(0xb, reinterpret_cast<char *>(textId5));
     }
     {
         int *menuPtr = *reinterpret_cast<int **>(g_009b90f8);
-        int textId6 = reinterpret_cast<Strings *>(g_009b90d8)->get(
+        char *textId6 = reinterpret_cast<Strings *>(g_009b90d8)->get(
             *reinterpret_cast<int *>(reinterpret_cast<char *>(menuPtr) + 0xb78));
         pulldown.add_item(0xc, reinterpret_cast<char *>(textId6));
     }
@@ -2537,12 +2537,12 @@ L40b586:
             unsigned char vehOwner = *reinterpret_cast<unsigned char *>(reinterpret_cast<char *>(g_00952836) + recOff);
             if (cur == vehOwner) {
                 int *menuPtr = *reinterpret_cast<int **>(g_009b90f8);
-                int textId7 = reinterpret_cast<Strings *>(g_009b90d8)->get(
+                char *textId7 = reinterpret_cast<Strings *>(g_009b90d8)->get(
                     *reinterpret_cast<int *>(reinterpret_cast<char *>(menuPtr) + 0xb7c));
                 pulldown.add_item(0x14, reinterpret_cast<char *>(textId7));
             }
             int *menuPtr2 = *reinterpret_cast<int **>(g_009b90f8);
-            int textId8 = reinterpret_cast<Strings *>(g_009b90d8)->get(
+            char *textId8 = reinterpret_cast<Strings *>(g_009b90d8)->get(
                 *reinterpret_cast<int *>(reinterpret_cast<char *>(menuPtr2) + 0xb80));
             pulldown.add_item(0x15, reinterpret_cast<char *>(textId8));
         }
@@ -2581,12 +2581,12 @@ L40b586:
             if (showFar) {
                 pulldown.add_separator(0x63);
                 int *menuPtr3 = *reinterpret_cast<int **>(g_009b90f8);
-                int textId9 = reinterpret_cast<Strings *>(g_009b90d8)->get(
+                char *textId9 = reinterpret_cast<Strings *>(g_009b90d8)->get(
                     *reinterpret_cast<int *>(reinterpret_cast<char *>(menuPtr3) + 0xb84));
                 pulldown.add_item(0x1e, reinterpret_cast<char *>(textId9));
             }
             int *menuPtr4 = *reinterpret_cast<int **>(g_009b90f8);
-            int textId10 = reinterpret_cast<Strings *>(g_009b90d8)->get(
+            char *textId10 = reinterpret_cast<Strings *>(g_009b90d8)->get(
                 *reinterpret_cast<int *>(reinterpret_cast<char *>(menuPtr4) + 0x910));
             pulldown.add_item(0x1f, reinterpret_cast<char *>(textId10));
         }

@@ -32,10 +32,23 @@
 */
 class InfoWin {
  public:
+  // homed from 00459420.cpp. EVIDENCE-FREE as a name - see the marker in
+  // infowin.cpp: no caller, no vtable slot, no CSV row, and the body reads
+  // none of its five arguments, so they stay unnamed here too.
+  void UNK5(int, int, int, int, int);
+
+ public:
   // 0x00459150, a pending_bodies forwarder.
   void timer_proc(int a1);
 
  public:
+  // 0x00458930  ?on_left_click@InfoWin@@QAEXHH@Z - public, __thiscall,
+  // void(int, int). Declared, not defined: the body (00458930.cpp) is still an
+  // artifact, so anything that reaches it goes through the pending_bodies
+  // forwarder until it homes. MainInterface's on_iface_left_click /
+  // on_iface_right_click dispatch here.
+  void on_left_click(int xCoord, int yCoord);
+
   void on_right_click(int a, int b);
   // 0x004589C0  ?right_menu@InfoWin@@QAEXHH@Z - public, __thiscall,
   // void(int, int). Still an original body, so the definition at the END of
@@ -56,6 +69,27 @@ class InfoWin {
   void reset();
   void change(int a1);
   void UNK3(int menu_id, int item_id);
+
+  // THE REST OF THE CLASS, declared ahead of their homing. Each of these
+  // calls at least one sibling - draw_text alone is reached by
+  // on_left_click, timer_proc and set_state - so no batch can compile while
+  // a declaration is missing: the homing tool declares only the body it is
+  // moving and reverts the whole batch on the first undeclared name.
+  // Arity and return type come off the image's mangled symbols.
+  void setup_text();                                  // 0x00456300
+  void draw_text(int a1);                             // 0x00458420
+  // UNK4 IS EVIDENCE-FREE AS A NAME. Searched 2026-09-06: the catalogue
+  // records callers 0 and call targets 0 for 0x00458D60, the mangled name is
+  // `QAEX` so it is not virtual and no vtable slot names it, and
+  // docs/recovery/behaviour-member-names.csv has no InfoWin entry. The body
+  // only re-derives the two info-panel sizes (0xc8 x 0xb4 under 1000 px,
+  // 0xfa x 0xd4 at and above) into the same globals InfoWin::init reads, so
+  // its purpose is legible even though its name is not.
+  void UNK4();                                        // 0x00458D60
+  int state_valid(int a1);                            // 0x00458DC0
+  void set_state(int a1, int a2);                     // 0x00458F10
+  void timer_change(int a1);                          // 0x00458FF0
+  void init();                                        // 0x004592A0
 
  private:
   // Not a base class: the constructor builds a Time at +0x30 on an offset
@@ -107,9 +141,11 @@ class InfoWin {
 
 // InfoWin::timer_proc is not recovered yet.
 
-// InfoWin::right_menu is not recovered yet - 911 bytes that build and run the
-// tile context menu. Rebindable so tests can substitute a probe and so the
-// seam can later point at a recovered body.
+// right_menu is still a seam-forwarded body: it calls help_any and
+// GraphicWin::update(RECT *, GraphicWin *), and until that overload is
+// declared and defined the real body cannot home. Rebindable so tests can
+// substitute a probe.
 typedef void (OriginalObject::*func_info_win_right_menu)(int, int);
 extern func_info_win_right_menu InfoWinOriginalRightMenu;  // 0x004589C0
+
 

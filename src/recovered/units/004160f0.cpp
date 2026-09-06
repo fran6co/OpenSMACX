@@ -176,44 +176,44 @@ void BaseWin::iface_click(int xCoord, int yCoord, int a3, int a4) {
                 in_box(xCoord, yCoord, reinterpret_cast<RECT *>(self + 0x40c5c))) {
                 int x = xCoord, y = yCoord;
                 int idx = *reinterpret_cast<int32_t *>(*g_009b90f8 + 0xca4);
-                int str = reinterpret_cast<Strings *>(g_009b90d8)->get(idx);
+                char *str = reinterpret_cast<Strings *>(g_009b90d8)->get(idx);
                 reinterpret_cast<Win *>(g_007ae820)->client_to_screen(&x, &y);
                 int32_t rect[4] = {x, y, x, y};
                 reinterpret_cast<Win *>(g_007ae820)->set_bubble_text(
-                    reinterpret_cast<int8 *>(str),
+                    str,
                     reinterpret_cast<RECT *>(rect));
                 return;
             }
             if (in_box(xCoord, yCoord, reinterpret_cast<RECT *>(self + 0x40b7c))) {
                 int x = xCoord, y = yCoord;
                 int idx = *reinterpret_cast<int32_t *>(*g_009b90f8 + 0xc9c);
-                int str = reinterpret_cast<Strings *>(g_009b90d8)->get(idx);
+                char *str = reinterpret_cast<Strings *>(g_009b90d8)->get(idx);
                 reinterpret_cast<Win *>(g_007ae820)->client_to_screen(&x, &y);
                 int32_t rect[4] = {x, y, x, y};
                 reinterpret_cast<Win *>(g_007ae820)->set_bubble_text(
-                    reinterpret_cast<int8 *>(str),
+                    str,
                     reinterpret_cast<RECT *>(rect));
                 return;
             }
             if (in_box(xCoord, yCoord, reinterpret_cast<RECT *>(self + 0x40c2c))) {
                 int x = xCoord, y = yCoord;
                 int idx = *reinterpret_cast<int32_t *>(*g_009b90f8 + 0xca0);
-                int str = reinterpret_cast<Strings *>(g_009b90d8)->get(idx);
+                char *str = reinterpret_cast<Strings *>(g_009b90d8)->get(idx);
                 reinterpret_cast<Win *>(g_007ae820)->client_to_screen(&x, &y);
                 int32_t rect[4] = {x, y, x, y};
                 reinterpret_cast<Win *>(g_007ae820)->set_bubble_text(
-                    reinterpret_cast<int8 *>(str),
+                    str,
                     reinterpret_cast<RECT *>(rect));
                 return;
             }
             if (in_box(xCoord, yCoord, reinterpret_cast<RECT *>(self + 0x40c6c))) {
                 int idx = *reinterpret_cast<int32_t *>(*g_009b90f8 + 0xcd0);
-                int str = reinterpret_cast<Strings *>(g_009b90d8)->get(idx);
+                char *str = reinterpret_cast<Strings *>(g_009b90d8)->get(idx);
                 int x = xCoord, y = yCoord;
                 reinterpret_cast<Win *>(g_007ae820)->client_to_screen(&x, &y);
                 int32_t rect[4] = {x, y, x, y};
                 reinterpret_cast<Win *>(g_007ae820)->set_bubble_text(
-                    reinterpret_cast<int8 *>(str),
+                    str,
                     reinterpret_cast<RECT *>(rect));
             }
             if (!in_box(xCoord, yCoord, reinterpret_cast<RECT *>(self + 0x40c5c)))

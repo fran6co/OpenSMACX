@@ -56,6 +56,10 @@ extern const int BaseRadiusOffsetY[21];  // 0x0066A1F4
 
 class BaseWin : public ConstructedGraphicWin, public SubInterface {
  public:
+  // homed from 004103b0.cpp
+  void draw_garrison(int a1);
+
+ public:
   // homed from 00420a40.cpp
   int on_nc_hittest(int a1, int a2);
   // 0x0041A920. Centre the map on a base: Console::base_me asks it for the
@@ -117,6 +121,59 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   void on_scrolled(int code, int pos);
   // The four stay scaffold - see the note on the body in basewin.cpp.
   void UNK2(int a1, int a2, int a3, int a4);
+
+  // THE BASE SCREEN'S OWN PANELS AND HANDLERS, declared ahead of their
+  // homing. Every one of these calls at least one sibling (draw_pop calls
+  // draw_production, queue_click calls draw_queue and production,
+  // on_redraw calls the whole draw_* row), so no batch can compile while
+  // the declarations are missing - the homing tool declares only the body
+  // it is moving, and reverts the whole batch on the first undeclared
+  // name. Arity and return type are read off the image's own mangled
+  // symbols, not off the bodies: `QAEH` against `QAEX` is the only
+  // difference between several of these.
+  void psych_row(int a1, int a2, int a3, int a4, int a5, int a6, int a7);  // 0x00408720
+  void draw_psych();                                    // 0x00408B20
+  void draw_support();                                  // 0x00408EB0
+  int farm_get(int a1, int a2);                         // 0x00409100
+  void queue_click(int a1, int a2, int a3, int a4);     // 0x00409200
+  void farm_click(int a1, int a2, int a3);              // 0x0040A1D0
+  void pop_click(int a1, int a2, int a3, int a4);       // 0x0040A880
+  int facilities_click(int a1, int a2, int a3, int a4); // 0x0040C070
+  void draw_flash(int a1);                              // 0x0040D250
+  void draw_production(int a1);                         // 0x0040E360
+  void draw_farm(int a1);                               // 0x0040F0F0
+  void draw_commerce(int a1);                           // 0x00410870
+  void draw_nutrients(int a1);                          // 0x00411240
+  void draw_expenses(int a1);                           // 0x00412AA0
+  void draw_pop(int a1);                                // 0x00414B40
+  void draw_misc(int a1);                               // 0x00415730
+  void draw_info(int a1);                               // 0x00415B20
+  void gov_on(int a1);                                  // 0x00415F70
+  void add_queue(int a1, int a2);                       // 0x00416DE0
+  void delete_queue(int a1);                            // 0x00416FB0
+  void production(int a1, int a2);                      // 0x00417040
+  void hurry();                                         // 0x00418DF0
+  int governor(int a1);                                 // 0x00419A90
+  void prev();                                          // 0x0041A010
+  void next();                                          // 0x0041A160
+  void rename();                                        // 0x0041A2B0
+  void exit();                                          // 0x0041A4C0
+  void base_killed(int baseID);                         // 0x0041A620
+  void check_loc(int a1, int a2, int a3);               // 0x0041A7E0
+  void check_veh(int a1);                               // 0x0041A8B0
+  void on_mouse_move(int xCoord, int yCoord);           // 0x0041B1F0
+  void staple_the_bastards();                           // 0x0041B4F0
+  void base_editor_fac();                               // 0x0041B790
+  void base_editor_proj();                              // 0x0041BBC0
+  void base_editor_copy(int a1);                        // 0x0041C240
+  void base_editor();                                   // 0x0041C7A0
+  void on_button_clicked(int a1);                       // 0x0041D500
+  void on_iface_left_up(int a1, int a2);                // 0x0041DD10
+  void on_iface_mouse_move(int xCoord, int yCoord);     // 0x0041DF50
+  void on_iface_mouse_leave(int a1, int a2);            // 0x0041E3E0
+  void on_redraw();                                     // 0x0041E790
+  void init();                                          // 0x0041E8D0
+
   // Two siblings the recovered bodies above reach with a direct `call rel32`
   // - UNK2 calls garrison_click, on_scrolled calls draw_facilities. Both are
   // unrecovered; pending_bodies.cpp forwards them.
@@ -127,6 +184,15 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   // note on UNK2's body in basewin.cpp.
   void garrison_click(int vehID, int a2, int right, int is_double);  // 0x0040B140
   void draw_facilities(int a1);                            // 0x0040FCC0
+  // 0x0041E560  ?update_gov_buttons@BaseWin@@QAEXXZ - public, __thiscall,
+  // void(). Declared ahead of its own homing because on_redraw reaches it, so
+  // the two cannot land in one batch while the declaration is missing.
+  void update_gov_buttons();
+  // 0x00415080  ?draw_queue@BaseWin@@QAEXH@Z - public, __thiscall, void(int).
+  // The queue panel of the base screen. Declared ahead of its own homing for
+  // the same reason: queue_click, add_queue, on_iface_mouse_move and
+  // on_redraw all call it, so its declaration has to exist first.
+  void draw_queue(int a1);
   void show(int visible);
   BaseWin();
   // 0x00420A70 is not recovered: a

@@ -18,11 +18,14 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "infowin.h"
+#include "council.h"
+#include "datalink.h"
 #include "statuswin.h"
 #include "worldwin.h"
 #include "time.h"
 #include "font.h"
 #include "pushbutton.h"
+#include <cstring>
 #include <new>
 
 /*
@@ -127,25 +130,14 @@ void InfoWin::on_right_click(int a, int b) {
 func_info_win_right_menu InfoWinOriginalRightMenu =
     original_method<func_info_win_right_menu>(0x004589C0);
 
-/*
-Purpose: Build and run the tile context menu.
-Forwards To: 004589C0
-Return Value: n/a
-Status: Original dependency - forwards to the original image.
-
-The auto_inline(off) is load-bearing, and being defined after the caller is
-NOT enough on its own. VC6 at /Ob2 defers codegen to the end of the
-translation unit, so it happily folds a forwarder defined later in the file
-back into a caller defined earlier: measured, on_right_click came out as
-
-    mov eax,[esp+8] / mov edx,[esp+4] / push eax / push edx
-    call dword ptr [InfoWinOriginalRightMenu] / ret 8
-
-which is the seam inlined and the 20-byte BYTE_EXACT match
-(byte-match.csv:3554) gone. With the pragma the caller keeps its
-`push a2; push a1; call rel32` and this body stays a separate `jmp`-shaped
-thunk.
-*/
+// right_menu's own body has NOT homed yet: it calls help_any (0x0044CB30),
+// which this TU now defines, but it also needs GraphicWin::update(RECT *,
+// GraphicWin *), which is neither declared nor defined anywhere in the tree -
+// see the HANDOFF in the report. So the out-of-line forwarder stays until that
+// declaration lands. The auto_inline(off) is load-bearing and being defined
+// after the caller is NOT enough on its own: VC6 at /Ob2 defers codegen to the
+// end of the translation unit and would fold the forwarder back into
+// on_right_click, losing the 20-byte BYTE_EXACT match.
 #pragma auto_inline(off)
 void InfoWin::right_menu(int a1, int a2) {
     (ORIGINAL(this)->*InfoWinOriginalRightMenu)(a1, a2);
@@ -224,3 +216,51 @@ InfoWin::~InfoWin() {
     reinterpret_cast<Font *>(self + 0x58)->~Font();
     reinterpret_cast<Time *>(self + 0x30)->~Time();
 }
+
+// ORIGINAL: 0x00459420 ?UNK5@InfoWin@@QAEXHHHHH@Z 0x00459420-0x0045949B;0x00655295-0x006552BA FILE
+// working copy - scaffold materialised by --work
+// size      160 bytes
+// prototype void (__thiscall ?UNK5@InfoWin@@QAEXHHHHH@Z)(InfoWin* this, int, int, int, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00618EA0 0x00618EE0
+// UNK5 IS EVIDENCE-FREE AS A NAME. Searched 2026-09-05: the catalogue records
+// callers 0 and call targets 0 for 0x00459420, so nothing names it from a call
+// site; the mangled name is `QAE`, so it is not virtual and no vtable slot
+// names it either; docs/recovery/behaviour-member-names.csv has no InfoWin
+// entry; and the body is a stub - it builds three `Font`s, tears them down in
+// reverse order, and returns through `ret 0x14` with all five arguments
+// unread. A name invented to clear the census would be a false statement that
+// outlives whoever wrote it.
+// The five arguments stay unnamed on purpose: the body never reads one, so
+// there is no evidence for any of them, and an unnamed parameter is exactly
+// what the tree already writes for the same situation (BaseWin::UNK5(int),
+// BaseWin::on_button_toggled(int, int)).
+// MISMATCH 17 of 30: the image emits one more EH state store
+// (`mov byte ptr [ebp - 4], 1` twice, not once) around the third Font than
+// VC6 will produce for three flat locals in one scope. Not closed; the shape
+// - three constructed then destroyed in reverse order - is the image's.
+void InfoWin::UNK5(int, int, int, int, int) {
+    Font font_a;
+    Font font_b;
+    Font font_c;
+}
+
+// ORIGINAL: 0x0044CB30 ?help_any@@YAXXZ 0x0044CB30-0x0044CB3F BYTE_EXACT
+// size      15 bytes
+// prototype 
+// callers   5   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00429180
+// 0x0044CB30  ?help_any@@YAXXZ  ->  ?help_any@@YAXXZ
+//
+// HOMING NOTE: the tree names the singleton, so the body spells it the way
+// datalink.h already declares it - `DatalinkMain`, the object at 0x00703EA0 -
+// rather than binding the address again under an anonymous name.
+
+void __cdecl help_any() {
+    DatalinkMain.exec(0, 0);
+}
+

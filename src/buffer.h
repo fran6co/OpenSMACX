@@ -542,7 +542,11 @@ class Buffer {
   // read, reached through the GraphicWin base (MapWin's is virtual, so the
   // member spelling emits the vbptr walk itself). offsetof(GraphicWin,
   // rect2_) == 0x474, measured; the same offset ten classes' bodies pass to
-  // RECT * formals.
+  // RECT * formals. BaseWin's draw_* family saves and restores the target
+  // surface's clip rectangle around its own drawing (`buf->rect1_`, the
+  // working rectangle at +0x0C4C). Compile-time access only: no offset
+  // moves and no emitted byte changes, the same edit this header made for
+  // Win, Caviar and DipEdit.
   friend class BaseWin;
   friend class MapWin;
 

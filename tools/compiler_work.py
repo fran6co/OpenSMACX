@@ -655,7 +655,10 @@ SCAFFOLD_CEILINGS = {
     # 1000 -> 994 (2026-09-06, W5j iface rollout): CouncWin ctor/dtor/
     # on_status, BattleWin ctor/dtor/on_iface_group_clicked, eleven
     # CouncWin + ten DiploPop on_iface_* overrides homed - all BYTE_EXACT.
-    "artifact files (recovered/)": 994,
+    # 994 -> 992 (2026-09-06, W5i basewin names, bounce collected): the
+    # two exact bodies stayed landed - 0x44CB30 (DatalinkMain singleton)
+    # and on_iface_left_up's repairs.
+    "artifact files (recovered/)": 992,
     # 1683 -> 1681 (2026-08-30, caviar-voxel batch): 0063ad60.cpp and
     # 0063f9b0.cpp transcribed into src/caviar.cpp (one BYTE_EXACT, one
     # honest MISMATCH).
@@ -756,7 +759,9 @@ SCAFFOLD_CEILINGS = {
     # 1096 -> 1094 (2026-09-06, W5j iface rollout): the DesignWin slot-13/
     # slot-14 pair homed BYTE_EXACT (slot 14's catalogue QAEXH is wrong -
     # the body returns int, UAEHH, symbol fact recorded).
-    "unrecovered files": 1094,
+    # 1094 -> 1093 (2026-09-06, W5i basewin names, bounce collected): one
+    # body homed with its claim intact.
+    "unrecovered files": 1093,
     # 2717 -> 2748 (2026-09-04, P2 net batch): NetFifo promoted with
     # close/add/get/get, NetFifoNode, head_/tail_/count_ - the deliberate
     # raise this ceiling exists for (class modelling grows it; the class
