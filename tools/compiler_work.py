@@ -544,7 +544,9 @@ SCAFFOLD_CEILINGS = {
     # sub_621870's forwarder - intrinsic to landing sub_624cd0 BYTE_EXACT
     # (a forwarder is the only spelling that emits the image's E8 there;
     # call dword ptr [addr] does not).
-    "PENDING_BODY forwarders": 265,
+    # 265 -> 264 (2026-09-06, W5p basepop exec): the exec forwarder went
+    # with its body - BasePop is 7 of 7.
+    "PENDING_BODY forwarders": 264,
     # 1326 -> 1325 (2026-08-30, caviar-voxel batch): recovered/00639390.cpp
     # homed BYTE_EXACT into src/caviar.cpp.
     # 1325 -> 1294 (2026-08-29, caviar-voxel batch): the six vx_* IO shims
@@ -803,7 +805,11 @@ SCAFFOLD_CEILINGS = {
     # IAT-hoisting lever (the three message imports hoist into the
     # prologue as *(Fn*)IatX reads; &= &PeekMessageA sinks each to first
     # use - 21 -> 39 of 68).
-    "unrecovered files": 1062,
+    # 1062 -> 1061 (2026-09-06, W5p basepop exec): 00602600.cpp homed in
+    # full - all 1,146 image instructions across both spans modelled,
+    # MISMATCH 18/1139 (the residual is SEH-frame scheduling: the image
+    # opens with mov eax,fs:[0], this tree with push -1).
+    "unrecovered files": 1061,
     # 2717 -> 2748 (2026-09-04, P2 net batch): NetFifo promoted with
     # close/add/get/get, NetFifoNode, head_/tail_/count_ - the deliberate
     # raise this ceiling exists for (class modelling grows it; the class

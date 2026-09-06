@@ -486,7 +486,13 @@ class BasePop : public GraphicWin {
   // meanings are unknown and naming them would be invention.
   BasePopTextBlock text_block_a_;  // 0x2E64
   BasePopTextBlock text_block_b_;  // 0x2F7C
-  uint32_t field_3094_;
+  // THE PER-POPUP CONFIG CALLBACK, typed from its only caller. BasePop::exec
+  // (0x00602600) reads the slot twice, tests it against null and calls it
+  // straight (`call eax`, 0x0060369C and 0x00603787) with a text block and a
+  // flag, cleaning eight bytes afterwards - `int (__cdecl *)(char *, int)`.
+  // The image never stores anything but an integer default here, which is why
+  // it was the uint32_t it was; exec is the first body to read it back.
+  int (__cdecl *field_3094_)(char *, int);  // 0x3094
   Spot spot_;
   uint32_t field_30A4_;
   uint32_t field_30A8_;
@@ -600,7 +606,61 @@ class BasePop : public GraphicWin {
   uint32_t default_block_[27];  // 0x31B8
   LPSTR ok_text_;
   LPSTR cancel_text_;
-  uint32_t field_322C_;
+  // THE FALLBACK PARENT WINDOW. Zeroed by the ctor and republished from
+  // BasePopDefaultField322C, which close_opening fills with the Console's
+  // GraphicWin virtual base - so the slot holds a window pointer at run time,
+  // and exec (0x00602600) reads it as the 0x5D4EF0 init call's seventh
+  // argument, whose type is `Win *`. Same typing argument field_A3C_ above
+  // carries; the four bytes do not move.
+  Win *field_322C_;
+  // THE TWO BUTTON-ROW HELPERS exec (0x00602600) runs at its three button
+  // sites, DEFINED IN-CLASS because the image has all 33 stores inline at all
+  // three - an out-of-line definition turns each site into a call the image
+  // does not make. Both reach runs the headers model as private offset names
+  // - see the HANDOFF on flatbutton.h under exec's marker - which is why they
+  // walk the object address rather than name members.
+  void apply_button_config(FlatButton *button) {
+    uint32_t *const config =
+        reinterpret_cast<uint32_t *>(button) + 0xAE0 / 4;
+    config[0] = default_block_[0];
+    config[1] = default_block_[1];
+    config[2] = default_block_[2];
+    config[3] = default_block_[3];
+    config[4] = default_block_[4];
+    config[5] = default_block_[5];
+    config[6] = default_block_[6];
+    config[7] = default_block_[7];
+    config[8] = default_block_[8];
+    config[9] = default_block_[9];
+    config[10] = default_block_[10];
+    config[11] = default_block_[11];
+    config[12] = default_block_[12];
+    config[13] = default_block_[13];
+    config[14] = default_block_[14];
+    config[15] = default_block_[15];
+    config[16] = default_block_[16];
+    config[17] = default_block_[17];
+    config[18] = default_block_[18];
+    config[19] = default_block_[19];
+    config[20] = default_block_[20];
+    config[21] = default_block_[21];
+    config[22] = default_block_[22];
+    config[23] = default_block_[23];
+    config[24] = default_block_[24];
+    config[25] = default_block_[25];
+    config[26] = default_block_[26];
+  }
+  // THE FLAT BUTTON'S COLOUR AND BEVEL WORDS, +0xA84..+0xA98: basebutton.h
+  // models them as private (color_ and the bevel pair).
+  void apply_button_bevel(FlatButton *button) {
+    uint32_t *const words = reinterpret_cast<uint32_t *>(button);
+    words[0xA84 / 4] = 0;
+    words[0xA88 / 4] = field_31A4_;
+    words[0xA8C / 4] = field_31A8_;
+    words[0xA90 / 4] = field_31AC_;
+    words[0xA94 / 4] = field_31B0_;
+    words[0xA98 / 4] = field_31B4_;
+  }
 };
 
 
@@ -657,3 +717,19 @@ extern char *BasePopDefaultCancelText;  // 0x009B8D84
 // holds a window pointer at run time despite the popup-defaults name it
 // carried before that call was recovered.
 extern uint32_t BasePopDefaultField322C;  // 0x009B8DD0
+
+// The shipped value of the dword immediately below the class-defaults table
+// (0x00696EC4): -1. BasePop::exec (0x00602600) reads it as its answer when
+// the modal pump reported a dismissal and the popup is not lockable - so the
+// table's own default is "answer -1", the same value the early-return paths
+// spell literally.
+extern const uint32_t BasePopDefaultExecResult;  // 0x00696EC0
+
+// Where the last modal popup's client area started. exec (0x00602600,
+// 0x00603724) publishes both from this->client_rect_ after the pump returns
+// and the modal focus has been handed back; nothing in the tree reads either
+// yet, so the names say what they hold and no more. Real storage, defined in
+// basepop.cpp; in the image these are the two zero-initialised dwords at
+// 0x009B8DC4 / 0x009B8DC8.
+extern int BasePopModalLeft;  // 0x009B8DC4
+extern int BasePopModalTop;   // 0x009B8DC8

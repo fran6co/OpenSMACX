@@ -640,6 +640,552 @@ int BasePop::exec(int (__cdecl *callback)()) {
 }
 
 
+/*
+Purpose: Run the popup modally: size and position it, lay out its two caption
+         rows (plus one row per item), hand control to the window's modal
+         pump with the caller's completion callback, and report which row the
+         user settled on.
+// ORIGINAL: 0x00602600 ?exec@BasePop@@QAEHHP6AHXZ@Z 0x00602600-0x006037F5;0x00662E02-0x00662E17 FILE
+// size      4618 bytes
+// prototype int (__thiscall ?exec@BasePop@@QAEHHP6AHXZ@Z)(BasePop* this, int, int (__cdecl *)())
+// callers   87   call targets   24
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x005D4EF0 0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD10 0x005DAD40 0x005EDF50 0x005F7E90 0x00605180 0x006051A0 0x00607210 0x00607360 0x006073A0 0x006073E0 0x00607CF0 0x00612060 0x00612970 0x00625EC0 0x00644F3A 0x006453E0 0x00645470 0x0064557F 0x0064558A
+// indirect  0x00602620 0x0060279B 0x0060282E 0x00602954 0x00602B4D 0x00602C18 0x00602C64 0x00602ED5 0x00602F9A 0x00603260 0x00603331 0x006035B2 0x00603677 0x0060369C 0x006036A7 0x00603714 0x00603769 0x00603787
+// TRANSCRIBED IN FULL 2026-09-06, homed from src/unrecovered/00602600.cpp.
+//        Every branch of the image's 1146 instructions is modelled below; the
+//        two captions, the per-item row loop, the modal pump and the fallout
+//        gate are all here. The measurement is a structural one, not a byte
+//        one - see RESIDUAL.
+//
+// THE FIVE VIRTUAL SLOTS this body dispatches on, from BasePop's own table
+// (0x006698D4, the address the ctor stores at [this]):
+//   0x17c -> 0x00406840 `mov eax,1 / ret`          the may-show gate
+//   0x168 -> 0x00603800 calculate_dimensions       its result is the early out
+//   0x16c -> 0x00404280 `ret`                      run before init
+//   0x170 -> 0x00404280 `ret`                      run after init
+//   0x30  -> 0x00604AB0 on_redraw                  after positioning
+//   0x178 -> 0x00406B20 `ret 0xc`                  writes the row origin triple
+//   0xe4  -> 0x005EE190                            THE MODAL PUMP
+//   0x8   -> 0x005EDCD0                            the post-pump refresh
+//   0x4   -> 0x005ED9D0, called with 3
+// None of 0x17c/0x16c/0x170/0x178/0x4/0x8 has a name in this tree yet - the
+// first four are the inherited do-nothing defaults, so no recovered caller
+// has ever had to say what they are for.
+//
+// HANDOFF (win.h, not a file this pass owns): `struct BorderSizing;` is
+//        incomplete. exec is the first body that builds one: the frame puts a
+//        TWELVE-BYTE object at [esp+0x24] whose three dwords are this+0x114 /
+//        +0x118 / +0x11c - caption_height_, border_thickness_ and
+//        bottom_border_thickness_ - and the whole frame is `sub esp, 0x20`,
+//        which is exactly 8 locals + 12, so BorderSizing has NO fourth field.
+//        `struct BorderSizing { int caption_height; int border_thickness; int
+//        bottom_border_thickness; };` in win.h lets the local below lose its
+//        int[3] spelling.
+// HANDOFF (dialog.h): the image calls UNK3(1) and UNK4(1) here with the
+//        Dialog virtual base as the receiver (0x0060276C / 0x00602775, ecx =
+//        the vbtable-adjusted subobject), i.e. they are Dialog's show-bit
+//        setters that BasePop happens to carry the claim for. Declared on
+//        Dialog, this body makes the two real calls; until then the same
+//        effect is spelled as the two field updates below, which is what
+//        init (0x00601160) already does with the combined `|= 3`.
+//
+// HANDOFF (flatbutton.h / basebutton.h, not files this pass owns): the
+//        button's last 0x6C bytes (+0xAE0..+0xB48) are the 27 config dwords
+//        the image copies from BasePop::default_block_ into all three button
+//        sites, and +0xA84..+0xA98 are color_ and the bevel pair. Both headers
+//        model those runs as PRIVATE offset names, so the two helpers below
+//        walk the object address; one public array member over +0xAE0 and one
+//        over +0xA84 remove the walks.
+//
+// HANDOFF (stringstruct.h): the image INLINES seek_pos (0x00602FC5, abs and
+//        all) and next_entry (0x0060305C) into this body, the way it inlines
+//        port_to_port into get_there. This tree defines both out of line in
+//        stringstruct.cpp, so the source calls them and two calls the image
+//        does not have remain. Moving the definitions into the header as
+//        MEASURED inline is the fix, and it is a stringstruct edit.
+//
+// LEVER: the two caption defaults are TWO ARMS, not a ternary - each arm runs
+//        its own strlen + mem_get + zero store and they join on the strcat,
+//        so a `src ? src : "OK"` spelling collapses four calls into three.
+// LEVER: the row origin the slot-0x178 call writes is kept LIVE by the image
+//        across the whole button run and reloaded after the OK row - the
+//        working row value is recomputed from it twice, not carried forward.
+//        Holding one variable for both lost the reload and every row after
+//        the first.
+//
+// BUG IN THE ORIGINAL: the cancel-caption fallback allocates
+//        strlen("Cancel") + 1 and then strcat's "OK" into it (0x006033CE
+//        pushes 0x696ffc, 0x006033EE pushes 0x697004 - two different string
+//        literals). The OK caption's twin pair pushes 0x696ff4/0x696ff8, both
+//        "OK". So a popup with no default cancel caption builds a buffer
+//        sized for "Cancel" containing "OK". Reproduced deliberately: the
+//        fallbacks are spelled separately below, and "fixing" the second one
+//        would be a different program.
+//
+// BUG IN THE ORIGINAL: the per-item row loop bounds itself on the item count
+//        while storing through zero_block_, an EIGHT-dword array the ctor
+//        clears with one rep stosd, and checks no bound (0x0060334C `add
+//        edi,4` against `cmp ebx,eax` at 0x00603351). A popup with more than
+//        eight items walks past it into sprite_. Reproduced: the loop below
+//        is the image's, unbounded.
+//
+// RESIDUAL: MISMATCH 18 of 1139 at /c /O2 /Gy /GR- /GX, first divergence at
+//        instruction 0. The image opens the frame `mov eax, fs:[0]` and this
+//        tree opens it `push -1` - the SEH registration and the fs reload are
+//        scheduled the other way round - so the whole 1139-instruction
+//        listing is shifted before its first real statement. Everything after
+//        that is the same program at a different register colour: the image
+//        walks the embedded Dialog's vbtable in ecx/edx where this tree uses
+//        eax/ecx, and no source spelling names a register. GraphicWin::init
+//        (0x005D4EF0) records the same shape at 2 of 112 on a body a quarter
+//        of this size. Not chased further: 1021 compiled instructions against
+//        the image's 1139, of which the 118 missing are the inlined seek_pos
+//        / next_entry pair and the six button-config stores the inlining
+//        folds.
+// TRIED: apply_button_config / apply_button_bevel as out-of-line definitions
+//        in basepop.cpp - call_diff went to 43 calls against the image's 42,
+//        the three sites the image has inline became real calls. In-class
+//        definitions (what ships) took it to 37 against 42, the missing five
+//        being the two UNK3/UNK4 calls of the dialog.h HANDOFF and the two
+//        abs calls inside the inlined seek_pos. Both spellings measured
+//        MISMATCH at instruction 0 for the reason above, so the in-class
+//        form wins on call fidelity alone.
+*/
+typedef int (__fastcall *func_basepop_slot095)(void *);
+typedef int (__fastcall *func_basepop_exec_slot090)(void *);
+typedef void (__fastcall *func_basepop_slot091)(void *);
+typedef void (__fastcall *func_basepop_slot092)(void *);
+typedef void (__fastcall *func_basepop_slot062)(void *);
+// SLOT 0x178, the row-origin triple. Win declares slots 0..87 only, so this
+// one has no name to call; the __stdcall spelling keeps the receiver as the
+// first stack argument and the call operand in the slot, which is the same
+// shape Net::delete_group (0x0062EDD0) is claimed BYTE_EXACT with.
+typedef void (__stdcall *func_basepop_slot094)(void *, int *, int *, int *);
+
+// THE FLAT BUTTON'S OWN SLOT 1, called with 0 after each button is configured
+// (0x00602F9A, 0x00603331, 0x00603677). The VCall1 shape already in this file.
+class VCallSlot001 {
+ public:
+    virtual void slot000();
+    virtual void slot001(int);
+};
+
+
+int BasePop::exec(int flags, int (__cdecl *callback)()) {
+    int pump_result = 0;
+
+    // THE MAY-SHOW GATE. BasePop's own slot is `mov eax, 1 / ret`, so a plain
+    // popup always passes and only a derived family can refuse.
+    if (vtable_slot<func_basepop_slot095>(this, 0x17c)(this) == 0) {
+        return -1;
+    }
+
+    // No items: no tab. More than one sprite and no external window: the
+    // sprite-picker kind, the 8 Dialogs::calculate_dimensions switches on.
+    if (dialogs_.Dialog::item_list_.entry_count_ == 0) {
+        dialogs_.kind_ = -1;
+    }
+    if (dialogs_.SpriteBox::list_.entry_count_ > 1 && external_window_ == 0) {
+        dialogs_.kind_ = 8;
+    }
+
+    if (external_window_ != 0 && external_window_->is_visible()) {
+        // THE WIDE-SCREEN 3/2 GROW, the pair set_height spells.
+        int width = static_cast<int>(dialog_width_);
+        if (external_window_ == 0 && (field_30A8_ & 0x400) == 0 &&
+            WinScreenWidth >= 0x400) {
+            width = (width * 3) / 2;
+        }
+        dialogs_.Dialog::field_2C_ = width;
+        int height = static_cast<int>(dialog_height_);
+        if (external_window_ == 0 && (field_30A8_ & 0x400) == 0 &&
+            WinScreenWidth >= 0x400) {
+            height = (height * 3) / 2;
+        }
+        dialogs_.Dialog::field_30_ = height;
+
+        if (default_loc_a_ != 0x2000) {
+            loc_a_ = default_loc_a_;
+        }
+        if (default_loc_b_ != 0x2000) {
+            loc_b_ = default_loc_b_;
+        }
+        // UNK3(1) and UNK4(1) on the Dialog base - the two show bits. See the
+        // HANDOFF on dialog.h above.
+        dialogs_.Dialog::field_20_ |= 1U;
+        dialogs_.Dialog::field_20_ |= 2U;
+    } else {
+        external_window_ = 0;
+        field_30A8_ &= 0xffefffff;
+    }
+
+    // Size it. A nonzero answer is exec's own answer.
+    if (vtable_slot<func_basepop_exec_slot090>(this, 0x168)(this) != 0) {
+        return 0;
+    }
+
+    if (flags != 0) {
+        return 0;
+    }
+    if ((field_30A8_ & 0x8000) != 0) {
+        return 0;
+    }
+
+    // THE PARENT AND THE STYLE WORD init is handed.
+    Win *const parent = external_window_ != 0
+                            ? external_window_
+                            : reinterpret_cast<Win *>(field_322C_);
+    int style = static_cast<int>(field_30A4_);
+    if ((field_30A8_ & 0x20) != 0) {
+        style |= 0x20;
+    }
+    if (external_window_ == 0) {
+        style |= 1;
+    } else {
+        style |= 0x400000;
+    }
+    if (GraphicWinInitDefaults[0] != 0) {
+        style |= 0x10000000;
+    }
+    if ((field_30A8_ & 0x4100) != 0) {
+        style |= 0x1000;
+    }
+    if ((field_30A8_ & 0x20000) == 0 && external_window_ == 0) {
+        style |= 0x80000;
+    }
+
+    // The 0x800 bit is exec's own, added at the call and not before.
+    if (owner_window_ == this) {
+        vtable_slot<func_basepop_slot091>(this, 0x16c)(this);
+
+        // THE BORDER, in the window's own three thicknesses. See the HANDOFF
+        // on win.h: BorderSizing is twelve bytes, and this local is what
+        // proves it - the frame has room for exactly three dwords here.
+        int sizing[3];
+        sizing[0] = caption_height_;
+        sizing[1] = border_thickness_;
+        sizing[2] = bottom_border_thickness_;
+        if (GraphicWin::init(0, 0, static_cast<int>(field_30BC_),
+                             static_cast<int>(field_30C0_), owned_text_,
+                             style | 0x800, parent, static_cast<Menu *>(0),
+                             reinterpret_cast<BorderSizing *>(sizing)) != 0) {
+            return 0;
+        }
+
+        set_text_color(string_color_a_, string_color_b_, string_color_c_,
+                       string_color_d_);
+        set_text_color2(string_color_2a_, string_color_2b_, string_color_2c_,
+                        string_color_2d_);
+        set_text_color3(string_color_3a_, string_color_3b_, string_color_3c_,
+                        string_color_3d_);
+        set_text_color_hyper(string_color_hyper_a_, string_color_hyper_b_,
+                             string_color_hyperc_, string_color_hyper_d_);
+        set_font(string_font1_, string_font2_, string_font3_, string_font4_);
+
+        if (owned_text_ != 0) {
+            set_caption(owned_text_);
+        }
+
+        vtable_slot<func_basepop_slot092>(this, 0x170)(this);
+    }
+
+    // THE POPUP'S POSITION, one arm per owner. owner_window_ == this means
+    // the popup is its own surface; otherwise it centres on the window that
+    // opened it. 0x1000 is set_width's "centre on the screen" sentinel and a
+    // negative value is an offset from that centre.
+    if (owner_window_ == this) {
+        if ((iSomeFlag_ & 2) != 0) {
+            if (loc_a_ == 0x1000) {
+                field_30B4_ = (client_rect_.left - client_rect_.right +
+                               WinScreenWidth) /
+                              2;
+            } else if (static_cast<int>(loc_a_) < 0) {
+                field_30B4_ = client_rect_.left - client_rect_.right +
+                              static_cast<int>(loc_a_) + WinScreenWidth;
+            } else {
+                field_30B4_ = loc_a_;
+            }
+            if (loc_b_ == 0x1000) {
+                field_30B8_ = (client_rect_.top - client_rect_.bottom +
+                               WinScreenHeight) /
+                              2;
+            } else if (static_cast<int>(loc_b_) < 0) {
+                field_30B8_ = client_rect_.top - client_rect_.bottom +
+                              static_cast<int>(loc_b_) + WinScreenHeight;
+            } else {
+                field_30B8_ = loc_b_;
+            }
+        } else {
+            if (loc_a_ == 0x1000) {
+                field_30B4_ = (WinScreenWidth -
+                               static_cast<int>(dib_.bmiHeader.biWidth)) /
+                              2;
+            } else if (static_cast<int>(loc_a_) < 0) {
+                field_30B4_ = (static_cast<int>(loc_a_) -
+                               static_cast<int>(dib_.bmiHeader.biWidth) +
+                               WinScreenWidth) /
+                              2;
+            } else {
+                field_30B4_ = loc_a_;
+            }
+            if (loc_b_ == 0x1000) {
+                field_30B8_ = (static_cast<int>(dib_.bmiHeader.biHeight) +
+                               WinScreenHeight) /
+                              2;
+            } else if (static_cast<int>(loc_b_) < 0) {
+                field_30B8_ = static_cast<int>(loc_b_) +
+                              static_cast<int>(dib_.bmiHeader.biHeight) +
+                              WinScreenHeight;
+            } else {
+                field_30B8_ = loc_b_;
+            }
+        }
+    } else {
+        if (loc_a_ == 0x1000) {
+            field_30B4_ = (static_cast<int>(
+                               owner_window_->dib_.bmiHeader.biWidth) -
+                           static_cast<int>(field_30BC_)) /
+                          2;
+        } else if (static_cast<int>(loc_a_) < 0) {
+            field_30B4_ =
+                static_cast<int>(owner_window_->dib_.bmiHeader.biWidth) -
+                static_cast<int>(field_30BC_) + static_cast<int>(loc_a_);
+        } else {
+            field_30B4_ = loc_a_;
+        }
+        if (loc_b_ == 0x1000) {
+            field_30B8_ = -(static_cast<int>(field_30C0_) +
+                            static_cast<int>(
+                                owner_window_->dib_.bmiHeader.biHeight)) /
+                          2;
+        } else if (static_cast<int>(loc_b_) < 0) {
+            field_30B8_ = static_cast<int>(loc_b_) -
+                          static_cast<int>(field_30C0_) -
+                          static_cast<int>(owner_window_->dib_.bmiHeader.biHeight);
+        } else {
+            field_30B8_ = loc_b_;
+        }
+    }
+
+    // DRAW IT. Slot 0x30 - Win::vslot_12, which BasePop's table points at
+    // on_redraw (0x00604AB0).
+    vslot_12();
+
+    // THE ROW ORIGIN. Slot 0x178 hands all three back through pointers, which
+    // is why the three exist before it runs. `origin` is the value it wrote;
+    // `row` is the working copy the rows below consume and advance.
+    int origin = -static_cast<int>(field_30F4_);
+    int row = static_cast<int>(field_30C0_) - static_cast<int>(field_30EC_) -
+              static_cast<int>(field_30E0_) - static_cast<int>(field_30D0_);
+    int row_style = 0;
+    vtable_method<func_basepop_slot094>(this, 0x178)(this, &origin, &row,
+                                                     &row_style);
+
+    // THE ROW PITCH, in the three shapes the image spells it.
+    const int pitch = static_cast<int>(field_30E4_) +
+                      static_cast<int>(field_30CC_);
+
+    // A plain text box (or a popup drawing into another window) runs neither
+    // the item rows nor the second caption: straight to the pump.
+    if ((field_30A8_ & 0x80100) != 0 || owner_window_ != this) {
+        goto pump;
+    }
+    if ((field_30A8_ & 0x10000) != 0) {
+        // The item list is the only body: no OK row, the item rows start one
+        // pitch back when the origin is negative.
+        if (origin < 0) {
+            row = origin - pitch * (static_cast<int>(field_30B0_) - 1);
+        } else {
+            row = origin;
+        }
+        goto rows;
+    }
+    if ((field_30A8_ & 0x40) != 0) {
+        if (origin < 0) {
+            row = origin - pitch;
+        } else {
+            row = origin + pitch * static_cast<int>(field_20F4_);
+        }
+    }
+
+    // THE OK CAPTION, or the default. The two arms join on the strcat - see
+    // the LEVER on the marker above.
+    if (ok_text_ == 0) {
+        const char *source;
+        if (BasePopDefaultOkText != 0) {
+            ok_text_ =
+                static_cast<char *>(mem_get(strlen(BasePopDefaultOkText) + 1));
+            ok_text_[0] = 0;
+            source = BasePopDefaultOkText;
+        } else {
+            ok_text_ = static_cast<char *>(mem_get(strlen("OK") + 1));
+            ok_text_[0] = 0;
+            source = "OK";
+        }
+        strcat(ok_text_, source);
+    }
+
+    // THE FIRST ROW, the window's own OK row.
+    flat_button1_.init(ok_text_, -1, origin, row, static_cast<int>(field_30CC_),
+                       static_cast<int>(field_30D0_), this, row_style);
+    apply_button_config(&flat_button1_);
+    flat_button1_.set_font(button_font1_, button_font2_, button_font3_, 0);
+    vtable_slot<func_basepop_slot062>(&flat_button1_, 0xf8)(&flat_button1_);
+    flat_button1_.set_text_color(button_color_a_, button_color_b_,
+                                 button_color_c_, button_color_d_);
+    flat_button1_.set_text_color2(button_color_2a_, button_color_2b_,
+                                  button_color_2c_, button_color_2d_);
+    flat_button1_.set_text_color3(button_color_3a_, button_color_3b_,
+                                  button_color_3c_, button_color_3d_);
+    apply_button_bevel(&flat_button1_);
+    reinterpret_cast<VCallSlot001 *>(&flat_button1_)->slot001(0);
+
+    // THE ITEM ROWS ALWAYS RESTART FROM THE ORIGIN, never from where the OK
+    // row was left: the image keeps the slot-0x178 value live in a register
+    // across the whole run and reloads it here.
+    if (origin < 0) {
+        row = origin - pitch * (static_cast<int>(field_30B0_) - 1);
+    } else {
+        row = origin;
+    }
+
+rows:
+    // ONE ROW PER ITEM. zero_block_ is the row the ctor clears with its one
+    // rep stosd; the image walks it with the same four-byte step and no bound
+    // of its own.
+    if (item_ids_.entry_count_ > 0) {
+        item_ids_.seek_pos(-1);
+        int index = 0;
+        for (; index < item_ids_.entry_count_; index++) {
+            FlatButton *button = new FlatButton();
+            zero_block_[index] = reinterpret_cast<uint32_t>(button);
+
+            StringStructPayload *payload = item_ids_.next_entry();
+            char *text = payload != 0 ? payload->text : 0;
+            button->init(text, index + 1, origin, row,
+                         static_cast<int>(field_30CC_),
+                         static_cast<int>(field_30D0_), this, row_style);
+            apply_button_config(button);
+            button->set_font(button_font1_, button_font2_, button_font3_, 0);
+            vtable_slot<func_basepop_slot062>(button, 0xf8)(button);
+            button->set_text_color(button_color_a_, button_color_b_,
+                                   button_color_c_, button_color_d_);
+            button->set_text_color2(button_color_2a_, button_color_2b_,
+                                    button_color_2c_, button_color_2d_);
+            button->set_text_color3(button_color_3a_, button_color_3b_,
+                                    button_color_3c_, button_color_3d_);
+            apply_button_bevel(button);
+            reinterpret_cast<VCallSlot001 *>(button)->slot001(0);
+
+            row += pitch;
+        }
+    }
+
+    if ((field_30A8_ & 0x40) == 0) {
+        goto pump;
+    }
+    if (origin >= 0) {
+        row = origin + pitch * (static_cast<int>(field_30B0_) - 1);
+    } else {
+        row = origin;
+    }
+
+    // THE CANCEL CAPTION, or the default. The two fallback strings are the
+    // image's own and they disagree - see BUG IN THE ORIGINAL above.
+    if (cancel_text_ == 0) {
+        // Two DIFFERENT literals, as the image: the allocation sizes for
+        // "Cancel" and the concatenation writes "OK". See BUG IN THE ORIGINAL
+        // under the marker above.
+        if (BasePopDefaultCancelText != 0) {
+            cancel_text_ = static_cast<char *>(
+                mem_get(strlen(BasePopDefaultCancelText) + 1));
+            cancel_text_[0] = 0;
+            strcat(cancel_text_, BasePopDefaultCancelText);
+        } else {
+            cancel_text_ = static_cast<char *>(mem_get(strlen("Cancel") + 1));
+            cancel_text_[0] = 0;
+            strcat(cancel_text_, "OK");
+        }
+    }
+
+    // THE LAST ROW, the window's own Cancel row.
+    flat_button2_.init(cancel_text_, -2, origin, row,
+                       static_cast<int>(field_30CC_),
+                       static_cast<int>(field_30D0_), this, row_style);
+    apply_button_config(&flat_button2_);
+    row -= pitch;
+    flat_button2_.set_font(button_font1_, button_font2_, button_font3_, 0);
+    vtable_slot<func_basepop_slot062>(&flat_button2_, 0xf8)(&flat_button2_);
+    flat_button2_.set_text_color(button_color_a_, button_color_b_,
+                                 button_color_c_, button_color_d_);
+    flat_button2_.set_text_color2(button_color_2a_, button_color_2b_,
+                                  button_color_2c_, button_color_2d_);
+    flat_button2_.set_text_color3(button_color_3a_, button_color_3b_,
+                                  button_color_3c_, button_color_3d_);
+    apply_button_bevel(&flat_button2_);
+    reinterpret_cast<VCallSlot001 *>(&flat_button2_)->slot001(0);
+
+pump:
+    // THE CONFIG CALLBACK, once per caption block, only when the popup has
+    // neither the lock bit nor a callback-free config.
+    if ((field_30A8_ & 0x400000) == 0 && field_3094_ != 0) {
+        field_3094_(text_block_a_.text, 1);
+    }
+    hide();
+
+    if ((field_30A8_ & 0x4100) == 0 && owner_window_ == this) {
+        // THE MODAL PUMP, with the popup holding modal focus. The fallout
+        // gate nests: a popup inside a popup leaves the outer one's count
+        // standing, and the flag only clears when the last one leaves.
+        ++BasePopFalloutGate;
+        Win *const saved_focus = WinModalFocus;
+        WinModalFocus = this;
+
+        // THE MODAL PUMP, Win::set_modal at slot 0xe4. The receiver is the
+        // external window when one is attached and the popup itself when not.
+        const int show_bit = (static_cast<int>(field_30A8_) >> 0x15) & 1;
+        if (external_window_ != 0) {
+            pump_result =
+                external_window_->set_modal(show_bit, callback,
+                                            static_cast<Win *>(0));
+        } else {
+            pump_result = set_modal(show_bit, callback, static_cast<Win *>(0));
+        }
+
+        WinModalFocus = saved_focus;
+        BasePopModalLeft = client_rect_.left;
+        BasePopModalTop = client_rect_.top;
+
+        if ((field_30A8_ & 0x4100) == 0 && owner_window_ == this) {
+            if (--BasePopFalloutGate == 0) {
+                BasePopFalloutFlag = 0;
+            }
+            hide();
+            if ((field_30A8_ & 0x400000) == 0 && field_3094_ != 0) {
+                field_3094_(text_block_b_.text, 0);
+            }
+        }
+    }
+
+    if (dialogs_.kind_ == 4) {
+        // THE TEXT-FIELD KIND: all eight fields go to the parser.
+        int index = 0;
+        for (; index < 8; index++) {
+            parse_says(index, dialogs_.get_text(index), -1, -1);
+        }
+    }
+
+    // THE ANSWER: what the pump said, or the selected item.
+    if (pump_result != 0) {
+        if ((field_30A8_ & 0x40) != 0) {
+            return -1;
+        }
+        return static_cast<int>(BasePopDefaultExecResult);
+    }
+    return selected_id_;
+}
 
 /*
 Purpose: Report whether the popup will accept a key click. Both this and
@@ -1325,6 +1871,14 @@ uint32_t BasePopDefaultBlock2F7C[70];  // 0x009B8BD0
 // Copied to +0x3094, the head of the object's third block-sized region.
 uint32_t BasePopDefaultField3094;  // 0x009B8CF8
 
+// The dword immediately below the class-defaults table, file-backed and
+// shipped as -1. See the note beside the extern in basepop.h.
+const uint32_t BasePopDefaultExecResult = 0xFFFFFFFF;  // 0x00696EC0
+
+// Where the last modal popup's client area started. See basepop.h.
+int BasePopModalLeft;  // 0x009B8DC4
+int BasePopModalTop;   // 0x009B8DC8
+
 // THE LAST POPUP'S SCREEN EXTENT, the three slots immediately below
 // BasePopDefaultField3094. Named 2026-09-05 from the three bodies that touch
 // them - every reference in the image's .text is one of these, and nothing
@@ -1415,7 +1969,8 @@ BasePop::BasePop() {
 
 
     field_30A4_ = static_cast<int>(BasePopDefaultField30A4);
-    field_3094_ = static_cast<int>(BasePopDefaultField3094);
+    field_3094_ = reinterpret_cast<int (__cdecl *)(char *, int)>(
+        BasePopDefaultField3094);
 
     memcpy(&text_block_a_, BasePopDefaultBlock2E64, 0x118);
     memcpy(&text_block_b_, BasePopDefaultBlock2F7C, 0x118);
@@ -1537,7 +2092,7 @@ BasePop::BasePop() {
     field_31B0_ = BasePopDefaultField31B0[0];
     field_31B4_ = BasePopDefaultField31B0[1];
     field_322C_ = 0;
-    field_322C_ = BasePopDefaultField322C;
+    field_322C_ = reinterpret_cast<Win *>(BasePopDefaultField322C);
     external_window_ = (Win *)BasePopDefaultLayout[0];
     default_loc_a_ = BasePopDefaultLayout[1];
     default_loc_b_ = BasePopDefaultLayout[2];

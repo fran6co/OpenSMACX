@@ -469,13 +469,6 @@ int __cdecl battle_fight(int veh_id, int dir, int x, int y, int src_mode,
                                              allow_interceptor, odds_out);
 }
 
-// ?exec@BasePop@@QAEHHP6AHXZ@Z at 0x00602600 - the modal loop both `exec`
-// overloads wrap.
-//             body in src/unrecovered/00602600.cpp
-int BasePop::exec(int flags, int(__cdecl *callback)()) {    typedef int(__fastcall *pending)(BasePop *, void *, int, int(__cdecl *)());
-    return PENDING_BODY(0x00602600, pending)(this, nullptr, flags, callback);
-}
-
 // ?init@Scroll@@QAEHHHHHPAUWin@@HH@Z at 0x006054D0 - the primary scrollbar
 // init every other overload funnels into.
 //             body in src/unrecovered/006054d0.cpp
