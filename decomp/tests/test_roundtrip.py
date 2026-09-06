@@ -12,6 +12,7 @@ Run with `uv run pytest decomp/tests`.
 from pathlib import Path
 
 import ast
+import re
 import sys
 
 import pytest
@@ -495,7 +496,9 @@ def test_tree_roundtrip():
     annotation owns.
     """
     looped, skipped = roundtrip_tree(REPO_ROOT / "src")
-    assert looped > 3000, looped
+    expected = {path for path, _, _ in _raw_marker_sites(REPO_ROOT / "src")}
+    assert expected, "the source inventory unexpectedly contains no annotations"
+    assert looped == len(expected), (looped, len(expected))
     assert skipped == 0, skipped
 
 
@@ -557,7 +560,11 @@ def test_the_tree_parses_to_the_shape_consumers_read():
     count computed from it comes out zero looking like an answer.
     """
     records = read(REPO_ROOT / "src")
-    assert len(records) > 5000, len(records)
+    expected = _raw_marker_sites(REPO_ROOT / "src")
+    assert expected, "the source inventory unexpectedly contains no annotations"
+    actual = {(record.path, record.line, record.address) for record in records}
+    assert len(actual) == len(records), "the parser duplicated an annotation"
+    assert actual == expected, {"missing": expected - actual, "unexpected": actual - expected}
     assert any(record.state is State.IMPLEMENTED for record in records)
     assert all(isinstance(record.path, Path) and record.path.is_absolute()
                for record in records)
@@ -567,6 +574,33 @@ def test_the_tree_parses_to_the_shape_consumers_read():
     assert not unnamed, \
         f"{len(unnamed)} records without name/spans, first at " \
         f"{unnamed[0].path}:{unnamed[0].line}"
+
+
+def _raw_marker_sites(root: Path) -> set[tuple[Path, int, int]]:
+    """Independent inventory: rehoming changes file counts, not parser coverage.
+
+    This intentionally does not use the parser's grammar or `read`. A parser
+    accidentally skipping a file/address must fail even as the historical number
+    of one-function seed files legitimately falls.
+    """
+    marker = re.compile(r"^\s*(?://\s*|/\*\s*|\*\s*)?ORIGINAL:\s*(0x[0-9a-fA-F]+)\b")
+    found = set()
+    for path in root.rglob("*"):
+        if not path.is_file() or path.suffix not in (".cpp", ".c"):
+            continue
+        for line, text in enumerate(path.read_text(errors="replace").splitlines(), 1):
+            if match := marker.match(text):
+                found.add((path.resolve(), line, int(match.group(1), 16)))
+    return found
+
+
+def test_inventory_detects_a_reader_that_drops_a_marker(tmp_path, monkeypatch):
+    path = tmp_path / "unit.cpp"
+    path.write_text(BODY)
+    expected = _raw_marker_sites(tmp_path)
+    assert expected == {(path.resolve(), 1, 0x00401000)}
+    monkeypatch.setattr(reader, "read", lambda root: [])
+    assert expected != {(r.path, r.line, r.address) for r in reader.read(tmp_path)}
 
 
 def _code_only(region: str) -> str:

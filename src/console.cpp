@@ -121,12 +121,6 @@ char *__cdecl get_noun_phrase(int phrase_id, int faction_id);            // 0x00
 // does not touch. No image symbol and no other reader in the tree.
 int EditorGenerateUndoDepth = 0;  // 0x009392A8, defined here
 
-// One single-dword state slot a Console body writes; it carries no symbol in
-// the image and src/ names it nowhere else.
-// 0x007AD330 is the dword Console::editor_load writes 7 into so the InfoWin
-// at 0x007AD2A0 repaints its panel.
-int InfoWinRedrawPhase = 0;  // 0x007AD330, defined here
-
 // 0x00939FD0, the tick counter auto_play_callback (below) drives: it counts
 // this up once per callback, and when it passes 100 it plays one turn for the
 // current faction through Console::end_my_turn and clears it again. The only
@@ -1015,7 +1009,8 @@ Time g_CONSOLE_TIMER;
 // PrefWin and Console carry no constructor in this tree, so those two are
 // the zero storage the image leaves until its own init fills them.
 PrefWin ConsolePrefWin;   // 0x008578D8
-InfoWin ConsoleInfoWin;   // 0x007AD2A0
+// RECOVERY_OBJECT: v1 0x007AD2A0 ?ConsoleInfoWin@@3VInfoWin@@A
+InfoWin ConsoleInfoWin;
 // 0x009156B0 - the bare declaration is what the image has: its ??__E
 // dynamic initialiser pushes the hidden most-derived flag (push 1 at
 // 0x0050E852) and the compiler emits that push for a most-derived global
@@ -1708,7 +1703,7 @@ void Console::editor_load() {
     CursorVehIndex = -1;
     GameState = flags;
     draw_map(1);
-    InfoWinRedrawPhase = 7;
+    ConsoleInfoWin.set_redraw_phase(7);
     ConsoleInfoWin.on_redraw();
 }
 
@@ -2740,13 +2735,8 @@ void Console::set_view(int force_update) {
 // calls     0x005ABB90
 // 0x004E09E0  ?editor_save@Console@@QAEXXZ  ->  ?editor_save@Console@@QAEXXZ
 //
-// The earlier BLOCKED note here named two things, and homing cleared both:
-//   1. 0x007AD330 is ConsoleInfoWin's field at +0x90 in the image, but this
-//      tree binds that dword as console.cpp's own `InfoWinRedrawPhase`
-//      (defined there, 2026-08-29, for editor_load - the same store). The
-//      object-overlap finding stands; only the spelling moved.
-//   2. `save_map` (0x005ABB90 ?save_map@@YAXXZ) is now declared in
-//      console.cpp's handoff block beside load_map.
+// 0x007AD330 is ConsoleInfoWin's redraw member at +0x90, not independent
+// storage. save_map is 0x005ABB90 (?save_map@@YAXXZ).
 //
 // The image reaches the redraw with `mov ecx, 0x7ad2a0; jmp 0x458910` - a
 // tail call on the fixed InfoWin, which is why the C++ is the plain statement
@@ -2755,7 +2745,7 @@ void Console::set_view(int force_update) {
 
 void Console::editor_save() {
     save_map();
-    InfoWinRedrawPhase = 7;
+    ConsoleInfoWin.set_redraw_phase(7);
     ConsoleInfoWin.on_redraw();
 }
 
@@ -2968,10 +2958,9 @@ static int *const PaintCycleSelection = (int *)0x007CD244;
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00458910 0x0045B550 0x0062B870
 //
-// Homed 2026-09-04. Three of the eight slots the emitter bound already had
-// names in the tree: 0x007AD330 is console.cpp's own InfoWinRedrawPhase,
-// 0x007AD2A0 is ConsoleInfoWin and 0x007AE820 is MainInterfaceGlobal. The
-// five without one are carried as the emitter bound them.
+// 0x007AD330 is ConsoleInfoWin's redraw member; 0x007AD2A0 is the owning
+// object and 0x007AE820 is MainInterfaceGlobal. The remaining five slots
+// still need ownership recovery.
 
 
 // TRIED: hoisting the receiver into `InfoWin *const win = &ConsoleInfoWin;`
@@ -2991,7 +2980,7 @@ void Console::editor_paints(int paint_id) {
     // selected-slot int (set(result, 1) only when different).
     InfoWin *const win = &ConsoleInfoWin;
     *EditorPaintId = paint_id;
-    InfoWinRedrawPhase = 7;
+    ConsoleInfoWin.set_redraw_phase(7);
     win->on_redraw();
     MainInterfaceGlobal.draw_edit_pane();
     int result = paint_id + 0x3f3;

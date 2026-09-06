@@ -71,6 +71,19 @@ def census():
                 if found:
                     names[found.group(2).lower()].add(found.group(1))
                     files[found.group(2).lower()].add(path.name)
+    # Compact source object mappings replace trailing-address comments. Keep
+    # these owners visible during framework cutover; changing annotation syntax
+    # must not silently remove a global from this audit.
+    from decomp.mangled import qualified_name
+    from match_recovery.adapters.opensmacx import image_pin
+    from match_recovery.object_source import read_objects
+    for binding in read_objects(REPO, image_pin(REPO)):
+        name = qualified_name(binding.symbol)
+        if not name:
+            raise ValueError(f"cannot identify mapped object {binding.symbol}")
+        address = f"{binding.origin.address:08x}"
+        names[address].add(name)
+        files[address].add(pathlib.Path(binding.unit).name)
     return ({a: n for a, n in names.items() if len(n) > 1}, files)
 
 
