@@ -8,10 +8,9 @@
 0x006A5A60  ' inflate 1.0.2 Copyright 1995-1996 Mark Adler '
 ```
 
-So thirteen catalogued functions in this image are not code anybody here has
-to write. They are code somebody else already wrote, published, and put in
-the public domain, and the recovery for them is **provenance rather than
-authorship**.
+These functions are not application code to reconstruct by hand. They are
+upstream code to reuse and verify under the license notice in `zlib.h`; their
+recovery is provenance and integration rather than authorship.
 
 | | |
 |---|---|
@@ -23,9 +22,10 @@ authorship**.
 
 Every file here is byte-identical to the one in that tarball. Nothing is
 reformatted, no annotation marker is inserted, no `#include` is rewritten.
-`tools/verify_vendor_zlib.py` re-hashes them and fails the gate if one
-differs, because the whole value of this directory is that it is the release
-and not a copy somebody tidied.
+`uv run recover components check-source zlib --archive <tarball>` compares them
+with the SHA-256-pinned archive without extracting it. Missing inputs are unknown,
+not success. This source check is available in the new framework; it is not yet
+wired into the production gate and is not a binary-equivalence verdict.
 
 ## It is BUILT, and it is not a recovery
 
@@ -42,12 +42,15 @@ linked is not code to rewrite - and seven CRT reimplementations were deleted
 the same day for the same reason. The claim count fell 1595 -> 1556, which
 is the honest number.
 
-What is lost with them is a real check: those thirty-nine claims said that
+What was lost with them was a real check: those thirty-nine claims said that
 this release, compiled with these flags, reproduces the image byte for byte,
 which is how the version and the flags were established in the first place.
-That evidence is in the git history and in `.opensmacx/byte-match.csv`, and
-re-deriving it needs the sources and the ledger, not thirty-nine files
-standing in the recovery count.
+The original addresses, independent spans, symbols, compilation units and
+historical evidence references are now in the companion `src/vendor/zlib.recovery.h`.
+Those mappings are live verification obligations, not cached success claims or
+handwritten recoveries. No stale CSV or deleted wrapper is required to navigate
+them. Fresh binary and reference verification remains framework implementation
+work; source provenance alone cannot replace that check.
 
 ## Why it must not be amalgamated
 
@@ -69,10 +72,10 @@ is all it takes for CL to compile as C rather than C++, and these files
 *cannot* be compiled as C++: zlib 1.0.2 uses K&R definitions
 (`local void build_tree(s, desc) deflate_state *s; ...`).
 
-The flags are `/c /O2 /Gy /GR- /GX`, which is `byte_match.FRAMELESS_FLAGS`,
-already one of the project's four. `/Oy-` gives a divergence at instruction 0
-on every one of the thirteen.
+The historically matching flags are `/c /O2 /Gy /GR- /GX`, recorded in the
+companion annotation. Adding `/Oy-` diverged at instruction 0 in the original
+thirteen-function experiment.
 
-`local` is `static` in this release, so none of these functions has an
-external symbol; they are selected out of the object by name among the
-STATIC-class symbols, which `/Gy` still gives their own COMDAT.
+`local` is `static` in this release. Those internal functions must also be
+selected by name from STATIC-class object symbols; `/Gy` gives them their own
+COMDAT sections. Public entry points retain external symbols.

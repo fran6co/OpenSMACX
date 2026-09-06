@@ -13,13 +13,22 @@ Their continued presence during construction is not a compatibility promise.
 - Use classes, object ownership and dependent functions as work units; use
   functions/spans as measurement units. Real C++ structure takes priority over
   locally convenient source forms. VC6 remains the OpenSMACX compiler target.
-- Separate compact source mappings/obligations, dependency manifests, durable
-  knowledge, and ignored run artifacts. Historical observations never become
-  current verdicts merely because they exist. Names and source paths are not ids.
+- Source owns the load-bearing mappings, symbols, obligations, structural
+  decisions and provenance needed to understand its relationship to the image.
+  Ordinary C++ expresses relationships wherever possible; annotations must not
+  duplicate what declarations and definitions already express. Names and source
+  paths are not ids.
+- Recompute anything derivable from the authoritative inputs. Current match
+  verdicts, censuses, call/dependency graphs, parsed mappings, context cards and
+  stale/fresh status are outputs, not durable records. Persist them only as
+  disposable, input-keyed caches; deleting every cache must preserve correctness
+  and obligations. Historical observations never become current verdicts.
 - Keep all lasting recovery information in Git-readable source or text records.
   No SQLite authority: the uncommitted prototype was replaced by hash-chained JSON
   events with atomic publication and ignored kernel-lock files. A fresh checkout
   can read the history without a database or private artifact cache.
+  Versionability alone is not a reason to persist an output: tracked JSON is for
+  non-derivable workflow decisions and checkpoints, not derived reports.
 - Import old source, Kuna/Ghidra/IDA output, notes and prior experiments as seeds
   with provenance, including conflicting interpretations. Do not copy scaffolds
   into production source as a mandatory rehoming step.
@@ -37,6 +46,28 @@ Their continued presence during construction is not a compatibility promise.
 - Preserve original and proprietary derivatives only in ignored artifact storage.
   Preserve upstream license/provenance and keep vendor sources unmodified.
 
+## Persistence boundary
+
+Store inputs and decisions; compute conclusions. Essential image/source bindings,
+accepted layout interpretations and restoration obligations belong beside their
+owning source declarations or definitions. A required match is an obligation,
+not a stored assertion that the current source matches. The gate computes the
+current result, including during an accepted structural migration.
+
+Tracked workflow records may preserve agent/human hypotheses, externally supplied
+hints, approved scope, review decisions and choices needed to resume work. Promote
+accepted load-bearing discoveries into the source instead of leaving JSON as a
+second authority. Use Git messages for completed-change rationale, not as the only
+home of an outstanding obligation. Do not copy source bodies, parsed inventories
+or reproducible measurement summaries into durable history.
+
+Cache keys must cover every relevant source, image, toolchain, configuration and
+analysis-version input. A cache miss triggers recomputation; unavailable required
+inputs produce an explicit unmeasurable result, never a cached claim of success.
+External hints and execution decisions are not reproducible merely because an
+agent could be asked again. Preserve those inputs, not duplicate conclusions that
+can be regenerated from them.
+
 ## Delivery checkpoints
 
 Each unchecked item remains required; passing a narrow unit suite does not
@@ -45,10 +76,13 @@ establish completion of this program.
 - [ ] Reproducible baseline: source census, independent build, full gate, timings,
   existing test failures, component inventory and unknown ownership.
 - [x] Core identity/evidence/dependency/migration model and adversarial tests.
-- [ ] Versioned knowledge and durable run/checkpoint storage, strict schema I/O
-  (immutable storage and durable CAS/idempotent event journal implemented).
+- [ ] Minimal non-derivable knowledge/decision checkpoints and strict schema I/O;
+  derived outputs only in disposable caches (storage primitives implemented;
+  derived import history removed; legacy parse snapshots are ignored caches).
 - [ ] One-time lossless legacy annotation/seed import and compact source writer.
 - [ ] Component manifests and dependency verification; zlib, CRT and system pilot.
+  Zlib's 39 original bindings now live in a source companion header, with pinned
+  archive source verification. Binary/ABI checks and the other components remain.
 - [ ] Relocation-target and original-boundary verification; wrong-global fixture.
 - [ ] Declarative scheduler, discovery consumers, context bundles, agent adapters,
   independent review, safe collection and resumable migrations.

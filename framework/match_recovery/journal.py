@@ -10,13 +10,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
-import os
 from pathlib import Path
-import tempfile
 from typing import Any
 
 from .locking import file_lock
 from .model import canonical, digest, require_text
+from .records import publish_json, read_json
 
 
 class ConcurrentUpdate(ValueError):
@@ -57,8 +56,8 @@ class Journal:
             if path.name != f"{sequence:08d}.json":
                 raise JournalCorruption(f"event stream has missing or extra entries: {stream}")
             try:
-                record = json.loads(path.read_bytes())
-                if not isinstance(record, dict) or record.get("schema_version") != 1:
+                record = read_json(path)
+                if type(record.get("schema_version")) is not int or record["schema_version"] != 1:
                     raise JournalCorruption("unsupported journal schema")
                 expected_fields = {"schema_version", "stream", "sequence", "request_id",
                                    "previous_event", "payload", "event_id"}
@@ -117,22 +116,6 @@ class Journal:
                       "payload": payload}
             event_id = digest(record)
             record["event_id"] = event_id
-            directory.mkdir(parents=True, exist_ok=True)
             target = directory / f"{sequence:08d}.json"
-            fd, temporary = tempfile.mkstemp(prefix=".publish-", dir=directory)
-            try:
-                with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as output:
-                    json.dump(record, output, indent=2, sort_keys=True, ensure_ascii=False, allow_nan=False)
-                    output.write("\n")
-                    output.flush()
-                    os.fsync(output.fileno())
-                os.link(temporary, target)  # publish without overwriting existing history
-                if os.name != "nt":
-                    directory_fd = os.open(directory, os.O_RDONLY)
-                    try:
-                        os.fsync(directory_fd)
-                    finally:
-                        os.close(directory_fd)
-            finally:
-                Path(temporary).unlink(missing_ok=True)
+            publish_json(target, record)
             return Event(stream, sequence, request_id, payload_id, payload, event_id)

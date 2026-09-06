@@ -101,6 +101,8 @@ def test_cli_json_is_clean_and_import_goes_to_ignored_storage(project, capsys):
     output = json.loads(capsys.readouterr().out)
     store = ObjectStore(project / ".opensmacx" / "recovery" / "objects")
     assert store.get(output["snapshot_id"])["records"][0]["legacy_byte_exact"]
+    assert not (project / "recovery").exists()
+    assert "event_sequence" not in output
 
 
 def test_cli_errors_are_not_green_or_json_contamination(tmp_path, capsys):
