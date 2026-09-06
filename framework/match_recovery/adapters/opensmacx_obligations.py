@@ -1,0 +1,75 @@
+"""Derive task restoration requirements from source, including removed claims.
+
+History records the obligation; none of these historical claims is a current
+measurement. The returned report is disposable and never written as a ledger.
+"""
+
+from dataclasses import asdict
+import hashlib
+from pathlib import Path
+import re
+
+from ..model import Dimension, Obligation, Origin, digest
+from ..source_history import git, source_versions
+from ..tasks import TaskStore
+from .opensmacx import _sources, image_pin, legacy_snapshot
+
+
+def task_obligations(root: Path, name: str) -> dict:
+    from decomp.reader import read_text
+
+    root = root.resolve()
+    store = TaskStore(root)
+    task = store.read(name)
+    decisions = store.decisions(name)
+    scope, _ = store._scope(task, decisions)
+    head = git(root, "rev-parse", "HEAD").decode().strip()
+    versions = source_versions(root, task.base_revision, head, required_paths=("src/IMAGE_PIN",))
+    snapshot = legacy_snapshot(root)
+    pin = snapshot["image_sha256"]
+    if any(subject.image_sha256 != pin or subject.address_space != "pe:va" for subject in task.subjects):
+        raise ValueError("task original does not match the source image pin")
+    found: dict[tuple[str, Dimension], list[dict]] = {}
+
+    def add(entity: str, dimension: Dimension, evidence: dict) -> None:
+        if entity in scope:
+            found.setdefault((entity, dimension), []).append(evidence)
+
+    for version in versions:
+        text = version.content.decode("utf-8", errors="replace")
+        if version.path == "src/IMAGE_PIN":
+            pins = re.findall(r"^sha256\s+([0-9a-f]{64})\s*$", text, re.MULTILINE)
+            if pins != [pin]:
+                raise ValueError("source image pin changed within task history")
+            continue
+        for record in read_text(text, root / version.path):
+            entity = Origin(pin, "pe:va", record.address).entity_id
+            for present, dimension in ((record.byte_exact, Dimension.BYTES),
+                                       (record.semantic, Dimension.INSTRUCTION_SHAPE)):
+                if present:
+                    add(entity, dimension, {"revision": version.revision, "path": version.path,
+                                            "blob": version.blob, "line": record.line})
+    for row in snapshot["records"]:
+        for present, dimension in ((row["legacy_byte_exact"], Dimension.BYTES),
+                                   (row["legacy_semantic"], Dimension.INSTRUCTION_SHAPE)):
+            if present:
+                add(row["entity_id"], dimension, {"revision": "working-tree", "path": row["path"],
+                                                 "sha256": row["file_sha256"], "line": row["line"]})
+    if (head != git(root, "rev-parse", "HEAD").decode().strip()
+            or task != store.read(name) or decisions != store.decisions(name)):
+        raise ValueError("task or source history changed during obligation inventory")
+    current_files = {path.relative_to(root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+                     for path in _sources(root)}
+    if (current_files != {name: row["sha256"] for name, row in snapshot["files"].items()}
+            or image_pin(root) != pin):
+        raise ValueError("source changed during obligation inventory")
+    obligations = []
+    for (entity, dimension), evidence in sorted(found.items()):
+        obligation = Obligation(entity, dimension, "git-history:" + task.base_revision)
+        obligations.append({**asdict(obligation), "obligation_id": obligation.obligation_id,
+                            "source_evidence": evidence})
+    return {"schema_version": 1, "task": name, "base_revision": task.base_revision,
+            "head": head, "image_sha256": pin, "scope": sorted(scope),
+            "input_fingerprint": digest({"task": task, "decisions": decisions, "head": head,
+                                         "files": {name: row["sha256"] for name, row in snapshot["files"].items()}}),
+            "obligations": obligations, "verification": "not_measured"}

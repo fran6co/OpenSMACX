@@ -1,0 +1,164 @@
+import subprocess
+import json
+
+import pytest
+
+from match_recovery.adapters.opensmacx_obligations import task_obligations
+from match_recovery.model import Origin
+from match_recovery.source_history import source_versions
+from match_recovery.tasks import Task, TaskStore
+
+
+PIN = "a" * 64
+ONE = Origin(PIN, "pe:va", 0x401000)
+TWO = Origin(PIN, "pe:va", 0x402000)
+
+
+def body(address=0x401000, claim="BYTE_EXACT"):
+    return (f"// ORIGINAL: 0x{address:08X} ?f@@YAXXZ 0x{address:08X}-0x{address + 8:08X} {claim}\n"
+            "void f() {}\n")
+
+
+def git(root, *args):
+    return subprocess.run(["git", *args], cwd=root, capture_output=True, check=True).stdout.decode().strip()
+
+
+def commit(root, message):
+    git(root, "add", ".")
+    git(root, "commit", "-m", message)
+    return git(root, "rev-parse", "HEAD")
+
+
+@pytest.fixture
+def project(tmp_path):
+    git(tmp_path, "init", "-b", "main")
+    git(tmp_path, "config", "user.name", "Synthetic")
+    git(tmp_path, "config", "user.email", "synthetic@example.invalid")
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src/IMAGE_PIN").write_text("sha256 " + PIN + "\n")
+    (tmp_path / "src/f.cpp").write_text(body())
+    base = commit(tmp_path, "synthetic baseline")
+    task = Task("fixture", "opensmacx", "coordinator", "Recover structure", base,
+                (ONE,), ("src/f.cpp",), ("synthetic source evidence",))
+    TaskStore(tmp_path).create(task)
+    commit(tmp_path, "task decision")
+    return tmp_path, task
+
+
+def report(project):
+    root, task = project
+    return task_obligations(root, task.task_id)
+
+
+def test_removed_claim_survives_rehome_and_resume_without_a_ledger(project):
+    root, task = project
+    before = report(project)
+    (root / "src/f.cpp").unlink()
+    (root / "src/new.cpp").write_text(body(claim=""))
+    commit(root, "structural checkpoint, matching not restored")
+    status_before = git(root, "status", "--porcelain")
+    after = report(project)
+    assert len(after["obligations"]) == 1
+    assert after["obligations"][0]["obligation_id"] == before["obligations"][0]["obligation_id"]
+    assert after["obligations"][0]["source_evidence"][0]["revision"] == task.base_revision
+    assert after["verification"] == "not_measured"
+    assert after == report(project)
+    assert git(root, "status", "--porcelain") == status_before == ""
+
+
+def test_new_claim_committed_then_removed_is_still_required(project):
+    root, task = project
+    store = TaskStore(root)
+    store.expand(task.task_id, request_id="expand", author=task.author, subjects=(TWO,),
+                 editable_files=("src/g.cpp",), evidence=("synthetic member relationship",), expected_revision=0)
+    (root / "src/g.cpp").write_text(body(0x402000))
+    introduced = commit(root, "new required match")
+    (root / "src/g.cpp").unlink()
+    commit(root, "later structural checkpoint")
+    rows = {row["entity_id"]: row for row in report(project)["obligations"]}
+    assert set(rows) == {ONE.entity_id, TWO.entity_id}
+    assert any(item["revision"] == introduced for item in rows[TWO.entity_id]["source_evidence"])
+
+
+def test_merged_side_history_cannot_hide_removed_claims(project):
+    root, task = project
+    git(root, "switch", "-c", "side")
+    (root / "src/f.cpp").write_text(body(claim="BYTE_EXACT SEMANTIC"))
+    introduced = commit(root, "side matching evidence")
+    (root / "src/f.cpp").write_text(body())
+    commit(root, "side restores previous spelling")
+    git(root, "switch", "main")
+    git(root, "merge", "--no-ff", "side", "-m", "merge side checkpoint history")
+    rows = report(project)["obligations"]
+    assert {row["dimension"] for row in rows} == {"bytes", "instruction_shape"}
+    semantic = next(row for row in rows if row["dimension"] == "instruction_shape")
+    assert any(item["revision"] == introduced for item in semantic["source_evidence"])
+
+
+def test_seeds_and_duplicate_claim_sites_do_not_duplicate_requirements(project):
+    root, _ = project
+    (root / "src/unrecovered").mkdir()
+    (root / "src/unrecovered/seed.cpp").write_text(body())
+    (root / "src/unrelated.cpp").write_text(body(0x402000))
+    assert len(report(project)["obligations"]) == 1
+    assert any("unrecovered" in item["path"] for item in report(project)["obligations"][0]["source_evidence"])
+
+
+@pytest.mark.parametrize("change", ["replace", "remove"])
+def test_pin_changed_and_restored_in_history_is_refused(project, change):
+    root, _ = project
+    pin = root / "src/IMAGE_PIN"
+    if change == "replace":
+        pin.write_text("sha256 " + "b" * 64 + "\n")
+    else:
+        pin.unlink()
+    commit(root, "wrong original")
+    pin.write_text("sha256 " + PIN + "\n")
+    commit(root, "restore pin")
+    with pytest.raises(ValueError, match="pin|lacks required"):
+        report(project)
+
+
+def test_unreachable_baseline_is_not_silently_replaced(project):
+    root, task = project
+    with pytest.raises(ValueError, match="source history"):
+        source_versions(root, "b" * 40, git(root, "rev-parse", "HEAD"))
+    git(root, "switch", "--orphan", "unrelated")
+    (root / "src").mkdir(exist_ok=True)
+    (root / "src/f.cpp").write_text(body())
+    unrelated = commit(root, "unrelated root")
+    with pytest.raises(ValueError, match="source history"):
+        source_versions(root, task.base_revision, unrelated)
+
+
+def test_current_claim_changes_fingerprint_without_claiming_verification(project):
+    root, _ = project
+    before = report(project)
+    (root / "src/f.cpp").write_text(body(claim="BYTE_EXACT SEMANTIC"))
+    after = report(project)
+    assert before["input_fingerprint"] != after["input_fingerprint"]
+    assert len(after["obligations"]) == 2
+    assert after["verification"] == "not_measured"
+
+
+def test_cli_context_exposes_same_requirements(project, capsys):
+    from match_recovery.cli import main
+    root, task = project
+    assert main(["tasks", "obligations", task.task_id, "--root", str(root)]) == 0
+    standalone = json.loads(capsys.readouterr().out)
+    assert main(["tasks", "context", task.task_id, "--root", str(root)]) == 0
+    context = json.loads(capsys.readouterr().out)
+    assert context["restoration"] == standalone
+
+
+def test_concurrent_working_source_change_is_refused(project, monkeypatch):
+    import match_recovery.adapters.opensmacx_obligations as adapter
+    root, _ = project
+    original = adapter.legacy_snapshot
+    def racing_snapshot(*args):
+        snapshot = original(*args)
+        (root / "src/f.cpp").write_text(body(claim=""))
+        return snapshot
+    monkeypatch.setattr(adapter, "legacy_snapshot", racing_snapshot)
+    with pytest.raises(ValueError, match="source changed"):
+        report(project)

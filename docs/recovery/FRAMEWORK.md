@@ -107,6 +107,11 @@ establish completion of this program.
   required before reporting collection readiness; OpenSMACX does not yet provide
   that complete verifier. Live provider integrations, protected migration
   admission/restoration and actual collection remain under construction.
+  Task context now derives restoration requirements from baseline, reachable
+  source history and the working tree, preserving removed/rehomed claims without
+  a copied ledger. This is a migration safety input, not permission to remove
+  current claim annotations; the compact source obligation writer and driver
+  admission wiring remain unfinished.
 - [ ] InfoWin ownership and constructor-family end-to-end structural pilots.
   The redraw slot is now an InfoWin member instead of independent storage;
   its object-start binding lives beside ConsoleInfoWin's definition. Constructor

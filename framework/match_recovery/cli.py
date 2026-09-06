@@ -52,6 +52,9 @@ def parser() -> argparse.ArgumentParser:
     context = task_actions.add_parser("context", help="Rebuild a source-first task brief; no stored context ledger")
     context.add_argument("task")
     context.add_argument("--root", type=Path, default=Path.cwd())
+    obligations = task_actions.add_parser("obligations", help="Derive restoration requirements from source history; not measurements")
+    obligations.add_argument("task")
+    obligations.add_argument("--root", type=Path, default=Path.cwd())
     task_binary = task_actions.add_parser("check-binary", help="Compile task TUs and check bounded code/references; not an admission gate")
     task_binary.add_argument("task")
     task_binary.add_argument("--root", type=Path, default=Path.cwd())
@@ -121,6 +124,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                            reviewer_configuration=read_json(args.reviewer) if args.reviewer else None)
             print(json.dumps(output, indent=2, sort_keys=True))
             return 0 if output["ready_for_collection"] else 3
+        if args.command == "tasks" and args.action == "obligations":
+            from .adapters.opensmacx_obligations import task_obligations
+            print(json.dumps(task_obligations(args.root, args.task), indent=2, sort_keys=True))
+            return 0
         if args.command == "tasks" and args.action == "check-binary":
             from .adapters.opensmacx_binary import verify_task
             output = verify_task(args.root, args.task, args.image)
@@ -156,6 +163,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     output = store.status(args.task, (entity["entity_id"] for group in view["groups"]
                                                      for entity in group["entities"]))
                 elif args.command == "tasks" and args.action == "context":
+                    from .adapters.opensmacx_obligations import task_obligations
                     scope, files = store.scope(args.task)
                     selected = [entity for group in view["groups"] for entity in group["entities"]
                                 if entity["entity_id"] in scope]
@@ -163,6 +171,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     output = {"task": store.read(args.task).to_dict(), "subjects": selected,
                               "decision_state": store.status(args.task, (entity["entity_id"] for entity in selected)),
                               "impact": structural_impact(snapshot, group),
+                              "restoration": task_obligations(args.root, args.task),
                               "instructions": ["Read source declarations, definitions and evidence before editing.",
                                                "Treat archived bodies and class/name labels as seeds, not mandatory source form.",
                                                "Report structural discoveries even when they affect other functions or units.",

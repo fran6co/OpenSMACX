@@ -183,6 +183,7 @@ uv run recover tasks create example-layout --group class:InfoWin --author coordi
   --intent "Recover InfoWin storage ownership" --evidence "source:src/infowin.h"
 uv run recover tasks status example-layout
 uv run recover tasks context example-layout
+uv run recover tasks obligations example-layout
 uv run recover tasks check-binary example-layout --image /path/to/the/pinned/original.exe --summary
 uv run recover tasks discover --help
 uv run recover tasks expand --help
@@ -248,6 +249,18 @@ untrusted worker processes. Agent isolation and execution are not implemented ye
 
 `tasks context` rebuilds the brief from current source and decisions, including
 seed locations, source homes, pending discoveries and conservative recheck paths.
+It also includes the restoration inventory exposed by `tasks obligations`.
+That inventory is recomputed from source at the task's committed baseline,
+every subsequent reachable source revision (including merged side histories),
+and the working tree. Removing a claim or moving its body cannot erase its
+restoration requirement. Duplicate source/seed claims are one requirement per
+original entity and proof dimension; their source locations remain navigable
+evidence. Image-pin changes or an unavailable/nonancestor baseline are refused.
+No obligation report or measurement is saved. This preserves claims from the
+task baseline onward, not arbitrary earlier history. An uncommitted claim that
+is introduced and removed between runs cannot be reconstructed; banking new
+claims must include a source checkpoint. Driver admission still needs to freeze
+these requirements across worker execution and apply the migration policy.
 It writes no context file. A coordinator can use the output directly or cache it
 in ignored storage; neither a stale brief nor a resolved hypothesis is a verdict.
 
