@@ -20,6 +20,7 @@ dependencies = ["capstone==5.0.6"]
 # dependency: importing the package must not require the thing that wraps
 # it, and `decomp` itself uses none of this.
 tools = [
+    "match-recovery",
     # typer 0.15.1 calls `Parameter.make_metavar()` without the `ctx` that
     # click 8.2 made required, so `--help` raises. Newer typer fixed it;
     # pinning the pair is what keeps `--help` from being the one command
@@ -36,6 +37,12 @@ test = [
 # So a bare `uv sync` reproduces the environment every tool already runs on,
 # without anyone having to remember a group name.
 default-groups = ["tools", "test"]
+
+[tool.uv.workspace]
+members = ["framework"]
+
+[tool.uv.sources]
+match-recovery = { workspace = true }
 
 [build-system]
 requires = ["uv_build>=0.9,<0.10"]

@@ -1,0 +1,17 @@
+[project]
+name = "match-recovery"
+version = "0.1.0"
+description = "Evidence-driven, structure-led matching decompilation workflows"
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+recover = "match_recovery.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.9,<0.10"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-root = ""
+module-name = "match_recovery"
