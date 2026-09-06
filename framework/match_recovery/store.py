@@ -8,6 +8,7 @@ must only be placed in ignored run storage by the target adapter.
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 from pathlib import Path
 import tempfile
@@ -30,7 +31,7 @@ class ObjectStore:
 
     def put(self, value: Any) -> str:
         payload = canonical(value)
-        object_id = digest(value)
+        object_id = hashlib.sha256(payload).hexdigest()
         target = self._path(object_id)
         target.parent.mkdir(parents=True, exist_ok=True)
         if target.exists():

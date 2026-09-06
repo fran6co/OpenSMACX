@@ -16,6 +16,10 @@ Their continued presence during construction is not a compatibility promise.
 - Separate compact source mappings/obligations, dependency manifests, durable
   knowledge, and ignored run artifacts. Historical observations never become
   current verdicts merely because they exist. Names and source paths are not ids.
+- Keep all lasting recovery information in Git-readable source or text records.
+  No SQLite authority: the uncommitted prototype was replaced by hash-chained JSON
+  events with atomic publication and ignored kernel-lock files. A fresh checkout
+  can read the history without a database or private artifact cache.
 - Import old source, Kuna/Ghidra/IDA output, notes and prior experiments as seeds
   with provenance, including conflicting interpretations. Do not copy scaffolds
   into production source as a mandatory rehoming step.
@@ -41,7 +45,8 @@ establish completion of this program.
 - [ ] Reproducible baseline: source census, independent build, full gate, timings,
   existing test failures, component inventory and unknown ownership.
 - [x] Core identity/evidence/dependency/migration model and adversarial tests.
-- [ ] Versioned knowledge and durable run/checkpoint storage, strict schema I/O.
+- [ ] Versioned knowledge and durable run/checkpoint storage, strict schema I/O
+  (immutable storage and durable CAS/idempotent event journal implemented).
 - [ ] One-time lossless legacy annotation/seed import and compact source writer.
 - [ ] Component manifests and dependency verification; zlib, CRT and system pilot.
 - [ ] Relocation-target and original-boundary verification; wrong-global fixture.
@@ -80,4 +85,25 @@ back into `master` automatically.
   were stale population thresholds (>3,000 files, >5,000 records), replaced by
   independent marker-site coverage checks rather than lowered constants.
 - Existing stale-reference audit: exit 0, 286 files scanned.
-- Full isolated compiler/build/gate baseline remains outstanding.
+- The private prefix's empty bootstrap hung and was stopped by its exact owned
+  process id. Its incomplete directory was preserved for diagnosis. A separate
+  copy of the known-working prefix configured successfully; registry hashes
+  agreed and distinct inodes/link counts confirmed no hardlinks to the template.
+
+## Rebase and compiler baseline (2026-09-06)
+
+- Clean-checkpoint rebase incorporated master 8919cb7d (17 functions homed);
+  framework foundation became 12ea6b40. No integration conflict.
+- Independent configure: 127 build inputs. Full unpiped old gate: exit **3**,
+  2,395 total claims, 2,143 byte-verified, 38 instruction-shape matches,
+  0 regressions, 214 unverifiable claims (186 NO_COMPILE, 28 UNRESOLVED).
+  All 214 are artifact-only claims. This is not a green baseline, despite the
+  old tool's final wording `OK, with unverifiable claims present`.
+- The old audits also report 11 symbol-name discrepancies and skip an image-data
+  audit because it does not find the image in this independent worktree. Those
+  integration gaps remain required work; a successful byte sub-check does not
+  stand in for them.
+- Combined foundation/offline coverage tests: 140 passed, 2 skipped. After durable
+  journal and content fingerprint additions: 58 framework tests pass.
+- Runtime task execution, scoped migration checkpoint manifests, current binary
+  verification and tool retirement are not yet complete.

@@ -13,6 +13,7 @@ From the OpenSMACX workspace:
 uv run recover --help
 uv run recover inventory
 uv run recover import legacy --image /path/to/the/pinned/original.exe
+uv run recover history
 uv run pytest framework/tests
 uv build --package match-recovery
 ```
@@ -22,6 +23,18 @@ read-only. Import stores a content-addressed snapshot under the selected root's
 ignored `.opensmacx/recovery/objects/` directory and prints its id. It does not
 rewrite source, declare current matches, or choose between conflicting source
 candidates. Raw files preserve all notes, including unparsed or non-UTF-8 text.
+Each import also publishes a durable, idempotent JSON event under the versioned
+`recovery/history/` directory. `history` reads these events without reparsing
+source; reading absent history creates nothing. No database is required.
+
+The text journal uses atomic, revision-checked appends. Concurrent stale writers
+are refused instead of overwriting discoveries, and retrying the same request
+does not duplicate it. Payload corruption and missing event positions are errors.
+Input fingerprints use file contents and explicit configuration, never timestamps
+alone; equivalent inputs in another worktree produce the same fingerprint.
+Cross-cutting hypotheses, migration checkpoints and dependency manifests belong
+in versioned text alongside source. Raw compiler output and binary derivatives
+stay ignored. An optional future index must be rebuildable from these records.
 
 The policy API distinguishes byte/instruction-shape, reference, structure and
 runtime obligations. `check_obligations` returns 0 only if all required current

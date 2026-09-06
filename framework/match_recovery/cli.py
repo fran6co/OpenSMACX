@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import asdict
 import json
 from pathlib import Path
 import sys
 from typing import Sequence
 
 from . import __version__
+from .journal import Journal
 from .store import ObjectStore
 
 
@@ -24,12 +26,19 @@ def parser() -> argparse.ArgumentParser:
     legacy = providers.add_parser("legacy", help="Import old OpenSMACX annotations as evidence")
     legacy.add_argument("--root", type=Path, default=Path.cwd())
     legacy.add_argument("--image", type=Path)
+    history = commands.add_parser("history", help="Read durable execution events")
+    history.add_argument("--root", type=Path, default=Path.cwd())
+    history.add_argument("--stream", default="imports:opensmacx-legacy")
     return result
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = parser().parse_args(argv)
     try:
+        if args.command == "history":
+            events = Journal(args.root / "recovery" / "history").read(args.stream)
+            print(json.dumps([asdict(event) for event in events], indent=2, sort_keys=True))
+            return 0
         from .adapters.opensmacx import inventory, legacy_snapshot
         snapshot = legacy_snapshot(args.root, args.image)
         result = inventory(snapshot)
@@ -38,6 +47,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             # The durable knowledge importer will separately emit public metadata.
             store = ObjectStore(args.root / ".opensmacx" / "recovery" / "objects")
             result["snapshot_id"] = store.put(snapshot)
+            journal = Journal(args.root / "recovery" / "history",
+                              lock_directory=args.root / ".opensmacx" / "recovery" / "locks")
+            stream = "imports:opensmacx-legacy"
+            event = journal.append(stream, expected_revision=len(journal.read(stream)),
+                                   request_id=result["snapshot_id"],
+                                   payload={"kind": "legacy_imported", "inventory": result})
+            result["event_sequence"] = event.sequence
         print(json.dumps(result, indent=2, sort_keys=True))
         return 0
     except (OSError, ValueError, ImportError) as error:
