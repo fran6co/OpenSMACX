@@ -34,7 +34,41 @@ def coff(blob=None, *, section=b".debug$T"):
 def test_strict_standalone_class_layout():
     obj = Coff(coff())
     assert obj.sections[0].name == ".debug$T"
-    assert class_layout(obj, "Widget") == {"class": "Widget", "size": 16, "members": {"slot_": 4}}
+    assert class_layout(obj, "Widget") == {"class": "Widget", "size": 16, "members": {"slot_": 4},
+                                          "bases": [], "class_value_members": {}}
+
+
+def hierarchy_types(*, virtual=False, base_index=0x1002, base_offset=0):
+    if virtual:
+        base = struct.pack("<HHIIHH", 0x1401, 0, base_index, 0x1003, 4, 2)
+    else:
+        base = struct.pack("<HHIH", 0x1400, 0, base_index, base_offset)
+    value = struct.pack("<HHIH", 0x1405, 0, 0x1002, 4) + b"\x05owned"
+    pointer = struct.pack("<HHIH", 0x1405, 0, 0x1003, 8) + b"\x03ptr"
+    fields = record(0x1203, base + value + pointer)
+    definition = record(0x1005, struct.pack("<HHIIIH", 3, 0, 0x1000, 0, 0, 16) + b"\x06Widget")
+    forward = record(0x1005, struct.pack("<HHIIIH", 0, 0x80, 0, 0, 0, 0) + b"\x04Base")
+    ptr_type = record(0x1002, struct.pack("<II", 0x1002, 0))
+    return struct.pack("<I", 2) + fields + definition + forward + ptr_type
+
+
+def test_nonvirtual_base_and_class_value_are_not_confused_with_pointer_members():
+    layout = class_layout(Coff(coff(hierarchy_types())), "Widget")
+    assert layout["bases"] == [{"type_index": 0x1002, "virtual": False, "offset": 0, "class": "Base"}]
+    assert layout["class_value_members"] == {"owned": "Base"}
+    assert layout["members"] == {"owned": 4, "ptr": 8}
+
+
+def test_virtual_base_metadata_never_invents_a_static_base_offset():
+    base, = class_layout(Coff(coff(hierarchy_types(virtual=True))), "Widget")["bases"]
+    assert base["class"] == "Base" and base["virtual"]
+    assert base["offset"] is None and base["vbptr_offset"] == 4 and base["vbtable_index"] == 2
+
+
+@pytest.mark.parametrize("options", [{"base_index": 0x9999}, {"base_index": 0x1003}, {"base_offset": 16}])
+def test_invalid_base_references_or_extent_do_not_yield_partial_hierarchy(options):
+    with pytest.raises(ValueError, match="base"):
+        class_layout(Coff(coff(hierarchy_types(**options))), "Widget")
 
 
 @pytest.mark.parametrize("blob", [debug_types(tail=b"\xff\x7f"), debug_types(16),

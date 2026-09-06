@@ -52,23 +52,30 @@ class Cursor:
                 raise ValueError("invalid CodeView padding")
 
 
-def direct_members(data: bytes) -> dict[str, int]:
-    cursor, members = Cursor(data), {}
+def _fields(data: bytes) -> tuple[dict, dict, list]:
+    cursor, members, member_types, bases = Cursor(data), {}, {}, []
     while cursor.at < len(data):
         leaf = cursor.number("<H")
         if leaf == 0x1405:  # LF_MEMBER
-            cursor.take(6)  # attributes, type index
+            cursor.take(2)  # attributes
+            member_type = cursor.number("<I")
             offset, name = cursor.numeric(), cursor.name()
             if offset < 0 or name in members:
                 raise ValueError("invalid or duplicate direct member")
             members[name] = offset
+            member_types[name] = member_type
         elif leaf == 0x1400:  # nonvirtual base
-            cursor.take(6)
-            cursor.numeric()
+            cursor.take(2)
+            base_type, offset = cursor.number("<I"), cursor.numeric()
+            if offset < 0:
+                raise ValueError("negative nonvirtual base offset")
+            bases.append({"type_index": base_type, "virtual": False, "offset": offset})
         elif leaf in (0x1401, 0x1402):  # virtual bases: do not claim their offsets
-            cursor.take(10)
-            cursor.numeric()
-            cursor.numeric()
+            cursor.take(2)
+            base_type, vbptr_type = cursor.number("<I"), cursor.number("<I")
+            bases.append({"type_index": base_type, "virtual": True, "offset": None,
+                          "indirect": leaf == 0x1402, "vbptr_type_index": vbptr_type,
+                          "vbptr_offset": cursor.numeric(), "vbtable_index": cursor.numeric()})
         elif leaf == 0x140B:  # one method, optionally introducing virtual
             attribute = cursor.number("<H")
             cursor.take(4)
@@ -84,7 +91,11 @@ def direct_members(data: bytes) -> dict[str, int]:
             # In particular LF_INDEX continuations are not silently skipped.
             raise ValueError(f"unsupported CodeView field leaf {leaf:#x}")
         cursor.padding()
-    return members
+    return members, member_types, bases
+
+
+def direct_members(data: bytes) -> dict[str, int]:
+    return _fields(data)[0]
 
 
 def class_layout(obj: Coff, name: str) -> dict:
@@ -102,8 +113,8 @@ def class_layout(obj: Coff, name: str) -> dict:
             raise ValueError("invalid CodeView type length")
         record = Cursor(cursor.take(size))
         records.append((record.number("<H"), record))
-    definitions = []
-    for leaf, record in records:
+    classes = {}
+    for index, (leaf, record) in enumerate(records):
         if leaf not in (0x1004, 0x1005):
             continue
         record.take(2)  # declared field count includes methods/bases
@@ -114,15 +125,32 @@ def class_layout(obj: Coff, name: str) -> dict:
         record.padding()
         if record.at != len(record.data):
             raise ValueError("unsupported class record tail")
+        classes[index + 0x1000] = {"name": class_name, "properties": properties, "field": field, "size": size}
+    definitions = []
+    for cls in classes.values():
+        class_name, properties, field, size = (cls[key] for key in ("name", "properties", "field", "size"))
         if class_name != name or properties & 0x80:
             continue
         index = field - 0x1000
         if size < 0 or not 0 <= index < len(records) or records[index][0] != 0x1203:
             raise ValueError("invalid standalone class field-list reference")
-        members = direct_members(records[index][1].data[2:])
+        members, member_types, bases = _fields(records[index][1].data[2:])
         if any(offset >= size for offset in members.values()):
             raise ValueError("member offset outside compiler class extent")
-        definitions.append({"class": name, "size": size, "members": members})
+        named_bases = []
+        for base in bases:
+            base_class = classes.get(base["type_index"])
+            if base_class is None:
+                raise ValueError("base type does not reference a standalone class record")
+            if not base["virtual"] and base["offset"] >= size:
+                raise ValueError("base offset outside compiler class extent")
+            named_bases.append({**base, "class": base_class["name"]})
+        # Only direct class-value type references establish embedded objects.
+        # Pointers, arrays and unresolved type leaves are NOT called ownership.
+        class_members = {member: classes[type_index]["name"] for member, type_index in member_types.items()
+                         if type_index in classes}
+        definitions.append({"class": name, "size": size, "members": members,
+                            "bases": named_bases, "class_value_members": class_members})
     if not definitions:
         raise ClassNotEmitted("requires one complete compiler class definition; none emitted")
     if len(definitions) != 1:

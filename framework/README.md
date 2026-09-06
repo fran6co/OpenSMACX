@@ -419,6 +419,14 @@ the standalone type stream has no complete definition of that class;
 TU's required observation. Coverage reports suggest whether the next step is a
 layout witness/relevance investigation or a compiler/parser repair; they are
 fresh diagnostics, not source claims or stored task state.
+Observed definitions also expose the compiler's class size, direct base names
+and nonvirtual base offsets, plus directly class-typed value members. Pointer
+and array members are not mislabeled as embedded objects; this list is not a
+complete type/ownership analysis. Virtual bases retain their debug metadata but
+have no asserted static base offset. These are observations of the reconstructed
+C++, not independently recovered original hierarchy facts, and do not upgrade
+the direct-offset check to full structural verification. Malformed base references
+remain unmeasurable rather than yielding a partially accepted hierarchy.
 No debugger-style partial field lists or type-index voting supplies gate evidence.
 InfoWin's `redraw_phase_` expectation passes in both Console and InfoWin units.
 This checks declared offsets, **not** completeness of the declarations, original

@@ -54,6 +54,7 @@ def verify_layout(root: Path, task_name: str, *, compiler=compile_object, comman
             for name in sorted({item.class_name for item in expected}):
                 state = "not_emitted" if name in missing else "observed" if name in layouts else "unmeasurable"
                 observations.append({"class_name": name, "unit": unit, "flags": list(flags),
+                                     "compiler_layout": layouts.get(name),
                                      "observation": state, "reason": errors.get(name, "complete compiler definition parsed"),
                                      "next_action": ("establish a layout witness or independently prove this TU irrelevant; do not waive coverage"
                                                      if state == "not_emitted" else
