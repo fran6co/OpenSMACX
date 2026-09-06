@@ -343,6 +343,16 @@ task baseline onward, not arbitrary earlier history. An uncommitted claim that
 is introduced and removed between runs cannot be reconstructed; banking new
 claims must include a source checkpoint. The driver freezes these requirements
 across worker execution when its `obligations` command is configured.
+Product-source `RECOVERY_MEMBER` interpretations also create a structural review
+requirement anchored to their original evidence address, when that address is in
+task scope. Their current and historical class/member names, offsets and source
+locations travel as evidence; rehoming, renaming or deleting the annotation does
+not erase the requirement. These are **not historical layout PASS claims**: a
+later interpretation may correctly supersede an earlier one. A future structural
+admission verifier must reconcile that history through evidence and independent
+review, not demand all historical spellings/offsets simultaneously or equate a
+current offset check with a reviewed disposition. Seed annotations remain hints,
+not product structural obligations. No extra ledger is written.
 It writes no context file. A coordinator can use the output directly or cache it
 in ignored storage; neither a stale brief nor a resolved hypothesis is a verdict.
 
@@ -390,9 +400,9 @@ No debugger-style partial field lists or type-index voting supplies gate evidenc
 InfoWin's `redraw_phase_` expectation passes in both Console and InfoWin units.
 This checks declared offsets, **not** completeness of the declarations, original
 evidence interpretation, inheritance, member types, full object size or lifetime.
-The result therefore leaves full structural verification unknown. Historical
-preservation of these new layout expectations and migration-gate integration
-remain to be implemented before this can authorize structural admission.
+The result therefore leaves full structural verification unknown. Layout
+interpretation history now survives in the source-derived restoration inventory;
+reviewed supersession and the full structural admission verifier remain unfinished.
 
 The package is not yet the production gate. The durable task runner, target
 verification, complete dependency checking, source annotation migration and performance

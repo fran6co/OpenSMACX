@@ -162,3 +162,79 @@ def test_concurrent_working_source_change_is_refused(project, monkeypatch):
     monkeypatch.setattr(adapter, "legacy_snapshot", racing_snapshot)
     with pytest.raises(ValueError, match="source changed"):
         report(project)
+
+
+MEMBER = "// RECOVERY_MEMBER: v1 Widget slot_ 0x4 0x00401000\n"
+
+
+def structural(project):
+    return [row for row in report(project)["obligations"] if row["dimension"] == "structure"]
+
+
+def test_layout_review_obligation_survives_rehome_and_deletion(project):
+    root, task = project
+    path = root / "src/widget.h"
+    path.write_text(MEMBER)
+    introduced = commit(root, "source-owned layout interpretation")
+    first = structural(project)[0]
+    path.rename(root / "src/renamed.h")
+    commit(root, "rehome declaration")
+    (root / "src/renamed.h").unlink()
+    commit(root, "remove interpretation during structural work")
+    after = structural(project)
+    assert len(after) == 1 and after[0]["obligation_id"] == first["obligation_id"]
+    evidence = after[0]["source_evidence"]
+    assert any(item["revision"] == introduced and item["path"] == "src/widget.h" for item in evidence)
+    assert any(item["path"] == "src/renamed.h" for item in evidence)
+    assert evidence[0]["interpretation"]["offset"] == 4
+    assert git(root, "status", "--porcelain") == ""
+
+
+def test_revised_layout_preserves_interpretations_without_freezing_old_spelling(project):
+    root, _ = project
+    path = root / "src/widget.h"
+    path.write_text(MEMBER)
+    commit(root, "initial interpretation")
+    first = structural(project)[0]
+    path.write_text(MEMBER.replace("Widget slot_ 0x4", "Owner member_ 0x8"))
+    after = structural(project)
+    # A single structural review obligation per original evidence anchor, not
+    # two immutable and potentially contradictory member-layout claims.
+    assert len(after) == 1 and after[0]["obligation_id"] == first["obligation_id"]
+    interpretations = [item["interpretation"] for item in after[0]["source_evidence"]]
+    assert {(item["class_name"], item["member"], item["offset"]) for item in interpretations} == {
+        ("Widget", "slot_", 4), ("Owner", "member_", 8)}
+    assert report(project)["verification"] == "not_measured"
+
+
+def test_layout_hints_in_seeds_and_outside_scope_do_not_become_scoped_obligations(project):
+    root, _ = project
+    (root / "src/unrecovered").mkdir()
+    (root / "src/unrecovered/seed.cpp").write_text(MEMBER)
+    (root / "src/unrelated.h").write_text(MEMBER.replace("00401000", "00402000"))
+    assert structural(project) == []
+
+
+def test_malformed_historical_layout_cannot_disappear_from_review(project):
+    root, _ = project
+    path = root / "src/widget.h"
+    path.write_text("// RECOVERY_MEMBER: malformed\n")
+    commit(root, "invalid historical interpretation")
+    path.unlink()
+    commit(root, "remove malformed source")
+    with pytest.raises(ValueError, match="invalid original member expectation"):
+        report(project)
+
+
+def test_structural_review_requirements_enter_driver_protected_inventory(project):
+    from match_recovery.migration_protocol import extend_inventory
+
+    root, task = project
+    (root / "src/widget.h").write_text(MEMBER)
+    inventory = report(project)
+    protected = {}
+    extend_inventory(protected, inventory, frozenset({ONE.entity_id}))
+    assert {item.dimension.value for item in protected.values()} == {"bytes", "structure"}
+    (root / "src/widget.h").unlink()
+    extend_inventory(protected, report(project), frozenset({ONE.entity_id}))
+    assert {item.dimension.value for item in protected.values()} == {"bytes", "structure"}

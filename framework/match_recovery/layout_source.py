@@ -9,6 +9,7 @@ from pathlib import Path
 import re
 
 from .model import Origin
+from .components import relative_path
 
 
 PREFIX = "// RECOVERY_MEMBER:"
@@ -25,6 +26,24 @@ class MemberExpectation:
     line: int
 
 
+def parse_members(text: str, path: str, pin: str) -> tuple[MemberExpectation, ...]:
+    """Parse current or historical source without consulting the filesystem."""
+    relative_path(path)
+    parts = Path(path).parts
+    if Path(path).suffix not in (".cpp", ".h") or parts[:2] in (("src", "recovered"), ("src", "unrecovered")):
+        return ()
+    rows = []
+    for line, source_line in enumerate(text.splitlines(), 1):
+        if not source_line.lstrip().startswith(PREFIX):
+            continue
+        match = PATTERN.fullmatch(source_line.strip())
+        if not match or max(int(match[3], 16), int(match[4], 16)) > 0xFFFFFFFF:
+            raise ValueError(f"invalid original member expectation at {path}:{line}")
+        rows.append(MemberExpectation(match[1], match[2], int(match[3], 16),
+                                       Origin(pin, "pe:va", int(match[4], 16)), path, line))
+    return tuple(rows)
+
+
 def read_members(root: Path, pin: str) -> tuple[MemberExpectation, ...]:
     root = root.resolve()
     rows = []
@@ -35,15 +54,7 @@ def read_members(root: Path, pin: str) -> tuple[MemberExpectation, ...]:
             continue
         if not path.resolve().is_relative_to(root):
             raise ValueError("member annotation resolves outside source root")
-        for line, text in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
-            if not text.lstrip().startswith(PREFIX):
-                continue
-            match = PATTERN.fullmatch(text.strip())
-            if not match or max(int(match[3], 16), int(match[4], 16)) > 0xFFFFFFFF:
-                raise ValueError(f"invalid original member expectation at {path}:{line}")
-            rows.append(MemberExpectation(match[1], match[2], int(match[3], 16),
-                                           Origin(pin, "pe:va", int(match[4], 16)),
-                                           path.relative_to(root).as_posix(), line))
+        rows.extend(parse_members(path.read_text(encoding="utf-8"), path.relative_to(root).as_posix(), pin))
     if len({(row.class_name, row.member) for row in rows}) != len(rows):
         raise ValueError("duplicate original member expectation")
     return tuple(rows)
