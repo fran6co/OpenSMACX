@@ -71,14 +71,81 @@ struct CvrPart {
   VOX_Matrix *matrices_; // +0x08, one 36-byte matrix per step
 };
 
+// What one step entry's second dword POINTS AT, named from the engine's own
+// camera transform (0x0063A6F0), which is the only body that dereferences it:
+// it loads a float at +8 (image 0x63A746 `fld dword ptr [esi + 8]`) and six
+// signed 16-bit fields at +0x14..+0x1f (`movsx` off the same register), and
+// multiplies all seven by one scale. The rest of the block belongs to the
+// loader and nothing here reads it.
+struct CvrShape {
+  uint8_t lead_[0x8];  // +0x00
+  float scale_;        // +0x08, the whole-shape scale
+  uint8_t mid_[0x8];   // +0x0C
+  int16_t axis_x_;     // +0x14, the three per-axis extents the AABB is built from
+  int16_t axis_y_;     // +0x16
+  int16_t axis_z_;     // +0x18
+  int16_t offset_x_;   // +0x1A, the three per-axis offsets
+  int16_t offset_y_;   // +0x1C
+  int16_t offset_z_;   // +0x1E
+};
+
+static_assert(sizeof(CvrShape) == 0x20,
+              "CvrShape must reach its six per-axis fields at +0x14..+0x1f");
+
 struct CvrStep {
-  uint32_t lead_;        // +0x00
-  uint32_t trail_;       // +0x04
+  uint32_t lead_;      // +0x00
+  CvrShape *shape_;    // +0x04, the shape the transform scales this part by
 };
 
 struct CaviarData;
 struct VOX_ScnRenderHnd;
 struct VOX_Rect;
+struct VoxRenderRecord;
+struct VoxCameraBlock;
+
+// ---------------------------------------------------------------------------
+// THE RENDERER AS THE ENGINE SEES IT. The engine's own draw (0x00639E60) and
+// camera transform (0x0063A6F0) are handed this block as their first argument,
+// and both call sites pass `this + 0x18` (image 0x61743F
+// `lea eax, [ebp + 0x18]`), so every offset below lands on a Caviar member and
+// the struct is the engine's name for the renderer's own state rather than a
+// second object.
+// ---------------------------------------------------------------------------
+struct VoxSceneState {
+  uint8_t lead_[0x4];          // +0x00  Caviar::field_18_
+  int32_t instance_count_;     // +0x04  Caviar::field_1C_, the count render
+                               //         stores before it draws
+  uint32_t draw_flags_;        // +0x08  Caviar::field_20_
+  CaviarData *instances_;      // +0x0C  Caviar::field_24_, &slots_[0]: the
+                               //         12-byte stride is one CaviarData
+  CvrStep *instance_steps_;    // +0x10  Caviar::field_28_, &instance_steps_[0]
+  VOX_Vect scene_offset_;      // +0x14  Caviar::field_2C_ .. field_34_
+  VOX_Matrix scene_rotation_;  // +0x20  Caviar::rotation_ at 0x38
+  float scale_;                // +0x44  Caviar::field_5C_, seeded 1.0f
+};
+
+static_assert(offsetof(VoxSceneState, instances_) == 0x0C,
+              "VoxSceneState must alias Caviar's instance table at +0x0C");
+static_assert(offsetof(VoxSceneState, scene_rotation_) == 0x20,
+              "VoxSceneState must alias Caviar's rotation at +0x20");
+static_assert(sizeof(VoxSceneState) == 0x48,
+              "VoxSceneState must reach its scale at +0x44");
+
+// THE THIRD BLOCK THE ENGINE IS HANDED. The draw reads the part's clip bounds
+// at +0x48 and +0x58/+0x5c of this one, which are Caviar's six channel-bound
+// ints at 0xED - so this is the camera and the bounds that follow it, passed
+// as `this + 0xA5`.
+#pragma pack(push, 1)
+struct VoxCameraBlock {
+  CaviarCamera camera_;         // +0x00, Caviar::camera_ at 0xA5
+  CaviarChannelBounds bounds_;  // +0x34, Caviar::field_D9_ at 0xD9
+};
+#pragma pack(pop)
+
+static_assert(offsetof(VoxCameraBlock, bounds_) == 0x34,
+              "VoxCameraBlock must reach the channel bounds at +0x34");
+static_assert(offsetof(VoxCameraBlock, bounds_.values_) == 0x48,
+              "the bounds' six ints must start at +0x48 for the draw");
 
 struct CvrRecord {
   uint8_t lead_[0x14];   // +0x00, five engine handles the loader fills
@@ -139,6 +206,17 @@ struct CaviarData {
 
   // The renderer owns these slots and tears them down in bulk.
   friend class Caviar;
+  // The engine's camera transform reads the two per-instance destinations a
+  // draw writes through - the vector at +0x4 and the matrix at +0x8 of the
+  // second view above (image 0x63A740 `[ebp + 4]`, 0x63A786 `[ebp + 8]`).
+  friend void __cdecl vox_transform_camera(VoxSceneState *state, int step,
+                                           VOX_Vect *position,
+                                           VOX_Vect *extent);
+  // The engine's draw reads the same two destinations plus the colour byte
+  // the draw tests bit 0x80 of.
+  friend void __cdecl vox_draw_scene(VoxRenderRecord *record,
+                                     VoxSceneState *state,
+                                     VoxCameraBlock *view, int step);
 };
 
 class Caviar {
@@ -292,19 +370,16 @@ class Caviar {
   // the setter that writes it (0x006183F0 `mov dword ptr [ecx + 0x14], eax`
   // with the Buffer * in eax).
   Buffer *buffer_;
-  uint8_t field_18_[0x4];  // 0x18
-  uint32_t field_1C_;  // 0x1C
-  uint32_t field_20_;  // 0x20
-  uint32_t field_24_;  // 0x24
-  uint32_t field_28_;  // 0x28
-  float field_2C_;     // 0x2C, the scene offset render adjusts
-  float field_30_;     // 0x30
-  float field_34_;     // 0x34
-  // 0x38, the engine's 3x3 scene rotation, seeded to the identity and filled
-  // by caviar_apply_rotation; render saves and restores it around the
-  // engine's own transform of the camera position.
-  VOX_Matrix rotation_;  // 0x38
-  float field_5C_;     // 0x5C, seeded 1.0f
+  // 0x18..0x5F, THE BLOCK THE ENGINE IS HANDED. Both engine entry points -
+  // the draw 0x00639E60 and the camera transform 0x0063A6F0 - take it as
+  // their first argument, and both of this class's own call sites pass
+  // `this + 0x18` (image 0x61743F `lea eax, [ebp + 0x18]`), so the ten
+  // members that used to be carved out one at a time here are one struct:
+  // the instance count render stores, the instance and step tables init
+  // seeds, the scene offset the draw adjusts, the scene rotation
+  // set_scene_rotation fills, and the scale seeded 1.0f. VoxSceneState above
+  // is that block, with each offset's Caviar member named on it.
+  VoxSceneState scene_state_;  // 0x18, 0x48 bytes
   float field_60_;     // 0x60, the scene's down vector, seeded {0, 0, -1}
   float field_64_;     // 0x64
   float field_68_;     // 0x68
@@ -337,11 +412,12 @@ class Caviar {
   // on the group alone gives it alignment 1, so it sits at 0xA5 with no
   // padding and the class size is unchanged - which the static_assert below
   // checks rather than takes on trust.
-  CaviarCamera camera_;      // 0xA5, 52 bytes: vector, matrix, scaling
-  // 0xD9..0xED is unnamed. 0xED..0x105 is the six-int group Caviar::init
-  // defaults to {0, 0, 0xff, 0xff, 0x100, 0x100} and set_buffer resets to the
-  // same values - kept as an array because no body names an individual one.
-  CaviarChannelBounds field_D9_;  // 0xD9, 0x2F bytes
+  // 0xA5, 0x63 bytes: the camera and the channel bounds that follow it, which
+  // is what the engine's draw is handed as its third argument (the call sites
+  // push `this + 0xA5`). CaviarCamera is the first member, so every
+  // `camera_view_.camera_` spelling below lands on the offsets set_camera_direct
+  // measured.
+  VoxCameraBlock camera_view_;
   int32_t field_108_;
   // THE STEP TABLE. Two dwords per drawn instance, copied out of the record's
   // +0x2C entry the instance was built from; 0x10C + 200*8 is 0x74C, so it is
@@ -428,7 +504,10 @@ struct VoxRenderRecord {
     int32_t draw_height_;      // 0x4C
     void *colour_table_;       // 0x50
     void *shadow_table_;       // 0x54
-    uint32_t field_58_[2];     // 0x58 - init_class stores &object_start at +0x58
+    // 0x58, 0x5C. The engine's two per-object callbacks: +0x58 is the one
+    // init_class fills with the renderer's own object_start (0x00618DA0), and
+    // the draw calls both - +0x58 with the part, +0x5C after it with the step.
+    uint32_t object_callback_[2];
     // 0x60, 0x64. The two per-entry ramp pointers. Created zeroed, then
     // owned by sub_63f9b0: it frees each, reallocates count<<2 bytes (count
     // = the descriptor's entry count at setup_block+0x10), and fills ramp A
@@ -441,7 +520,10 @@ struct VoxRenderRecord {
     void **ramp_a_ptr_;  // 0x60
     void **ramp_b_ptr_;  // 0x64
     uint8_t setup_size_code_;  // 0x68 - low byte of the last argument
-    uint8_t field_69_[0x80 - 0x69];
+    uint8_t field_69_[0x7C - 0x69];
+    // 0x7C. The setup hook the draw calls once per frame, before the walk -
+    // the third of the record's three callbacks.
+    void *setup_callback_;
 };
 
 static_assert(sizeof(VoxRenderRecord) == 0x80,
@@ -449,6 +531,13 @@ static_assert(sizeof(VoxRenderRecord) == 0x80,
 
 VoxRenderRecord *__cdecl vox_create_record(int a1, void *a2, void *a3, void *a4,
                                         int a5);
+
+// 0x0063A6F0, the engine's camera transform - homed in caviar.cpp. Takes the
+// renderer's own state block (Caviar::scene_state_, which is what the image's
+// call site passes as `this + 0x18`), the step index, and the two vectors the
+// union of everything drawn is accumulated into.
+void __cdecl vox_transform_camera(VoxSceneState *state, int step,
+                                  VOX_Vect *position, VOX_Vect *extent);
 
 // The scene render handle the engine hands back to the renderer's callbacks.
 // +0x50 is the colour table the next draw reads, which is what object_start

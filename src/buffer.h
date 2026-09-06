@@ -269,26 +269,12 @@ class Buffer {
       return 0;
   }
 
-  MEASURED void free_data(int count) {   // 005E34A3
-      // THE SURFACE TEST COMES FIRST and the subtraction is written out in
-      // both arms - `cmp ecx, edi; jne` at 0x005E34AE before any arithmetic.
-      // Hoisted above the test it lands two instructions early and every jump
-      // after it moves, which is the same shape `Buffer::close` needed.
-      if (surface_ == nullptr) {
-          surface_lock_count_ -= count;
-          if (surface_lock_count_ <= 0) {
-              locked_bits_ = nullptr;
-              surface_lock_count_ = 0;
-          }
-          return;
-      }
-      surface_lock_count_ -= count;
-      if (locked_bits_ != nullptr && surface_lock_count_ <= 0) {
-          surface_->Unlock(locked_bits_);
-          locked_bits_ = nullptr;
-          surface_lock_count_ = 0;
-      }
-  }
+  // 0x005E34A3, OUT OF LINE in buffer.cpp. The image CALLS this at 43 sites
+  // rather than folding it, so an in-class definition - which VC6 inlines
+  // everywhere it can - costs every caller the whole body: render_multi_table_dest
+  // and render_mono in caviar.cpp were +20 instructions each from it. The
+  // definition lives beside its marker in buffer.cpp, like get_data's.
+  void free_data(int count);
   // 0x005E33F3. The two-coordinate form over the no-argument one above: the
   // pixel row at (x, y), bounds-checked against `dib_.bmiHeader.biWidth` and
   // the negated top-down `biHeight` the same way. The body lives in

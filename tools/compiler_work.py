@@ -761,7 +761,11 @@ SCAFFOLD_CEILINGS = {
     # the body returns int, UAEHH, symbol fact recorded).
     # 1094 -> 1093 (2026-09-06, W5i basewin names, bounce collected): one
     # body homed with its claim intact.
-    "unrecovered files": 1093,
+    # 1093 -> 1090 (2026-09-06, W5l caviar engine): vox_normalise_vector
+    # (0x628220), vox_transform_camera (0x63A6F0) and vox_draw_scene
+    # (0x639E60) homed into src/caviar.cpp - the last two call_diff clean,
+    # every callee in the image's order.
+    "unrecovered files": 1090,
     # 2717 -> 2748 (2026-09-04, P2 net batch): NetFifo promoted with
     # close/add/get/get, NetFifoNode, head_/tail_/count_ - the deliberate
     # raise this ceiling exists for (class modelling grows it; the class

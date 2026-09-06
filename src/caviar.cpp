@@ -15,6 +15,7 @@
 #include "stringstruct.h"
 #include "strings.h"    // StringTemp
 #include "vector.h"     // vector_add - the engine's geometry accumulator
+#include "leaf_recoveries.h"  // leaf_006281b0_redirect, 0x006281B0 - the engine's scale
 
 #include <io.h>        // _read/_write/_lseek/_tell - the vx_* IO shims
 #include <new>
@@ -111,7 +112,7 @@ Caviar::Caviar() {
 /*
 Purpose: Copy a camera position and orientation directly into the renderer state.
 // ORIGINAL: 0x006182A0 ?set_camera_direct@Caviar@@QAEXPAUVOX_Vect@@PAUVOX_Matrix@@@Z 0x006182A0-0x0061831F BYTE_EXACT
-// LEVER: TWELVE ELEMENT COPIES, no struct assignment anywhere. Every store in the image is `mov [ecx + disp32], reg` off the incoming `this` - 0xA5, 0xA9, 0xAD for the vector and 0xB1 through 0xD1 for the matrix - so nothing ever takes the address of a subobject. `camera_.position = *camera` (12 bytes) forms `lea edx, [ecx + 0xa5]` and indexes off it, and `camera_.rotation = *matrix` (36 bytes) is over VC6's inline-copy threshold and becomes `rep movsd`, which also costs the EDI/ESI pair and moves the two null tests behind the pushes: 21 compiled instructions against 33, agreeing 0. Assigning the twelve floats one at a time gives 33 of 33, BYTE_EXACT.
+// LEVER: TWELVE ELEMENT COPIES, no struct assignment anywhere. Every store in the image is `mov [ecx + disp32], reg` off the incoming `this` - 0xA5, 0xA9, 0xAD for the vector and 0xB1 through 0xD1 for the matrix - so nothing ever takes the address of a subobject. `camera_view_.camera_.position = *camera` (12 bytes) forms `lea edx, [ecx + 0xa5]` and indexes off it, and `camera_view_.camera_.rotation = *matrix` (36 bytes) is over VC6's inline-copy threshold and becomes `rep movsd`, which also costs the EDI/ESI pair and moves the two null tests behind the pushes: 21 compiled instructions against 33, agreeing 0. Assigning the twelve floats one at a time gives 33 of 33, BYTE_EXACT.
 // TRIED: MEASURED, all with the same 5 of 33 - three 12-byte `memcpy`s for the matrix rows (42 compiled), a `for (row)` loop over three row memcpys (34), splitting `camera && matrix` into two guard clauses (42), and keeping the struct assignment for `position` while spelling the nine matrix floats out (36). It is the struct assignment that costs it, not the copy width and not the chained condition - the image really does test both and share one `ret 8`.
 // TRIED: `record` DROPPED THIS LINE the first time. Re-recording a body whose tier changes rewrites its annotation from the parsed state and keeps only the LEVER; the TRIED text is discarded silently. Re-added after the claim was banked, and verified with `osmx show` rather than by reading the diff.
 // symbol    ?set_camera_direct@Caviar@@QAEXPBUVOX_Vect@@PBUVOX_Matrix@@@Z
@@ -127,18 +128,18 @@ Status: Complete
 */
 void Caviar::set_camera_direct(const VOX_Vect *camera, const VOX_Matrix *matrix) {
     if (camera && matrix) {
-        camera_.position.values[0] = camera->values[0];
-        camera_.position.values[1] = camera->values[1];
-        camera_.position.values[2] = camera->values[2];
-        camera_.rotation.values[0][0] = matrix->values[0][0];
-        camera_.rotation.values[0][1] = matrix->values[0][1];
-        camera_.rotation.values[0][2] = matrix->values[0][2];
-        camera_.rotation.values[1][0] = matrix->values[1][0];
-        camera_.rotation.values[1][1] = matrix->values[1][1];
-        camera_.rotation.values[1][2] = matrix->values[1][2];
-        camera_.rotation.values[2][0] = matrix->values[2][0];
-        camera_.rotation.values[2][1] = matrix->values[2][1];
-        camera_.rotation.values[2][2] = matrix->values[2][2];
+        camera_view_.camera_.position.values[0] = camera->values[0];
+        camera_view_.camera_.position.values[1] = camera->values[1];
+        camera_view_.camera_.position.values[2] = camera->values[2];
+        camera_view_.camera_.rotation.values[0][0] = matrix->values[0][0];
+        camera_view_.camera_.rotation.values[0][1] = matrix->values[0][1];
+        camera_view_.camera_.rotation.values[0][2] = matrix->values[0][2];
+        camera_view_.camera_.rotation.values[1][0] = matrix->values[1][0];
+        camera_view_.camera_.rotation.values[1][1] = matrix->values[1][1];
+        camera_view_.camera_.rotation.values[1][2] = matrix->values[1][2];
+        camera_view_.camera_.rotation.values[2][0] = matrix->values[2][0];
+        camera_view_.camera_.rotation.values[2][1] = matrix->values[2][1];
+        camera_view_.camera_.rotation.values[2][2] = matrix->values[2][2];
     }
 }
 
@@ -156,11 +157,11 @@ Return Value: n/a
 Status: Complete
 */
 void Caviar::set_scaling(float scaling) {
-    memcpy(&camera_.scaling, &scaling, sizeof(scaling));
+    memcpy(&camera_view_.camera_.scaling, &scaling, sizeof(scaling));
 }
 
 void Caviar::set_scaling_bits(uint32_t scaling_bits) {
-    memcpy(&camera_.scaling, &scaling_bits, sizeof(scaling_bits));
+    memcpy(&camera_view_.camera_.scaling, &scaling_bits, sizeof(scaling_bits));
 }
 
 /*
@@ -177,7 +178,7 @@ Return Value: Current scaling factor
 Status: Complete
 */
 float Caviar::get_scaling() {
-    return camera_.scaling;
+    return camera_view_.camera_.scaling;
 }
 
 
@@ -333,9 +334,9 @@ Return Value: n/a
 Status: Complete
 */
 void Caviar::UNK10(float offset_x, float offset_y, float offset_z) {
-    field_2C_ = offset_x;
-    field_30_ = offset_y;
-    field_34_ = offset_z;
+    scene_state_.scene_offset_.values[0] = offset_x;
+    scene_state_.scene_offset_.values[1] = offset_y;
+    scene_state_.scene_offset_.values[2] = offset_z;
 }
 
 
@@ -355,7 +356,7 @@ Status: Complete
 */
 void Caviar::set_scene_rotation(float x, float y, float z) {
     float angles[3] = {x, y, z};
-    caviar_apply_rotation(angles, &rotation_);
+    caviar_apply_rotation(angles, &scene_state_.scene_rotation_);
 }
 
 
@@ -388,13 +389,13 @@ Status: Complete
 */
 void Caviar::UNK11(float *out1, float *out2, float *out3) {
     if (out1) {
-        *out1 = field_2C_;
+        *out1 = scene_state_.scene_offset_.values[0];
     }
     if (out2) {
-        *out2 = field_30_;
+        *out2 = scene_state_.scene_offset_.values[1];
     }
     if (out3) {
-        *out3 = field_34_;
+        *out3 = scene_state_.scene_offset_.values[2];
     }
 }
 
@@ -613,6 +614,68 @@ uint8_t CaviarColourSource[0x1800];  // 0x009B9C38
 // build, and both init_class and the engine's algo dispatch read it.
 uint8_t CaviarVoxelAlgoFlag = 0;
 
+// ---------------------------------------------------------------------------
+// THE ENGINE'S PER-DRAW SCRATCH. Every one of these is written at the top of
+// the engine's own draw (vox_draw_scene, homed at the foot of this file) from
+// the render record and the descriptor block it is handed, and read back by
+// that draw and by the helpers it calls. Their image addresses are named on
+// each; the rebuilt program gives them its own, which is what every other
+// global in this file does too.
+// ---------------------------------------------------------------------------
+
+// 0x009BE6C4. Set to 1 at the draw's entry and cleared on the way out; if the
+// draw is entered while it is set the image spins on `jmp $+0` forever.
+uint8_t vox_scene_busy = 0;
+
+// 0x009BE6A4..0x009BE6BB, six dwords copied out of the descriptor block at
+// the top of the draw. The image writes them in the order +0x18, +0x14, +0x10,
+// +0x04, +0x00, +0x08 - that is, back to front - and each slot's comment names
+// the source offset it takes.
+uint32_t vox_setup_copy_[6];  // [0]=0x009BE6A4, [5]=0x009BE6B8
+
+// 0x009BE6BC. The render record's colour table, copied to where the helpers
+// read it.
+void *vox_active_colour_table_ = 0;  // 0x009BE6BC
+
+// 0x009C09F8. setup_block[0] minus setup_block[4] - the same two dwords the
+// clip rectangle the draw starts from is built out of.
+uint32_t vox_scene_extent_ = 0;  // 0x009C09F8
+
+// 0x009C0A18, 0x009C082C, 0x009C0A1C. The record's two ramp tables and its
+// pixel-size code, copied to where the per-part walkers read them.
+void *vox_active_ramp_a_ = 0;   // 0x009C0A18
+void *vox_active_ramp_b_ = 0;   // 0x009C082C
+uint8_t vox_active_size_code_ = 0;  // 0x009C0A1C
+
+// 0x009C0ACC (a vector) and 0x009C0AD8 (a matrix): the view the instance's
+// own vector and matrix are composed with - the draw adds the one to the
+// scaled vector and multiplies the other through the part's matrix.
+VOX_Vect vox_view_offset_;    // 0x009C0ACC
+VOX_Matrix vox_view_rotation_;  // 0x009C0AD8
+
+// 0x009C0B00. The cut handed to vox_walk_scaled_chain, which walks a node
+// chain while its scaled extent stays under it - the level-of-detail cut.
+float vox_lod_cut_ = 0;  // 0x009C0B00
+
+// 0x009C0B20 (a vector) and 0x009C0B2C (a matrix): the second view, the one
+// the shadow branch of the draw composes the part with.
+VOX_Vect vox_shadow_offset_;     // 0x009C0B20
+VOX_Matrix vox_shadow_rotation_;  // 0x009C0B2C
+
+// 0x009C0B50, 0x009C0B54. The two factors the shadow's clip test inflates the
+// part's radius by, one per axis.
+float vox_shadow_span_x_ = 0;  // 0x009C0B50
+float vox_shadow_span_y_ = 0;  // 0x009C0B54
+
+// 0x00671010. The visibility cut the part's scaled extent is compared against
+// to decide whether it is drawn at all.
+const float vox_visibility_cut_ = 0.0f;  // 0x00671010
+
+// 0x00671014. Scales the walked node's extent into world units for the clip
+// test, and the result is stored and re-read - a real variable, not a
+// folded constant.
+const float vox_radius_scale_ = 0.0f;  // 0x00671014
+
 // The scene render record this function fills and hands to vox_create_record;
 // the created handle lands at the tail (+0x40, 0x009BB478).
 struct CaviarSceneRecord {
@@ -806,7 +869,7 @@ int Caviar::init_class() {
     record->draw_height_ = 0x100;
     // &Caviar::object_start, still an artifact - the address is the image's
     // own 0x00618DA0, which this build does not map.
-    record->field_58_[0] = 0x00618DA0;
+    record->object_callback_[0] = 0x00618DA0;
 
     // The record's two 256-entry ramp tables. Table A's entries are the
     // addresses of successive 0x100-byte shade rows of the colour table;
@@ -2424,6 +2487,11 @@ Purpose: Render with the engine's flat monochrome table: fill the shared
 //        and shrinks it. render_with_colour_table (0x00617670) has the same
 //        pair with masks 0x10/0xef and takes the dword form on both sides,
 //        so the width is the allocator's choice, not the source's.
+// NOTE 2026-09-06: Buffer::free_data moved out of line in buffer.h/buffer.cpp
+//        (see render_multi_table_dest below). This body does not call it, and
+//        the move left it byte-for-byte where it was - one differing run of
+//        three, the mask width above - while taking the tier up to
+//        MNEMONIC_ONLY on the re-measure.
 Return Value: n/a
 Status: Complete
 */
@@ -2915,16 +2983,23 @@ Purpose: Render a scene and blit it into the renderer's own surface as a
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DFB50 0x00617230 0x005D94B0 0x005E34A3 0x00618470
-// TRIED: the 23 extra instructions are one inlining. The image CALLS
+// TRIED: the 23 extra instructions were one inlining. The image CALLS
 //        Buffer::free_data (0x005E34A3, a real COMDAT); this tree's
-//        definition is in-class in buffer.h, so VC6 folds it into this body -
-//        surface_ read, lock count decremented, the surface's own release
+//        definition was in-class in buffer.h, so VC6 folded it into this body
+//        - surface_ read, lock count decremented, the surface's own release
 //        through vtable slot 0x80 and both fields nulled, 20 instructions
 //        where the image has one `call`. Measured `buffer->free_data(1)` and
 //        the qualified `buffer->Buffer::free_data(1)`: both inline, 75/76
 //        compiled instructions either way. VC6 has no noinline, so the fix is
 //        moving free_data out of line in buffer.h - a buffer.h edit that
 //        belongs to whoever owns that class, not to this file.
+// FIXED 2026-09-06 by that move (buffer.cpp, and the declaration in buffer.h
+//        dropped its in-class body): 76 compiled instructions against the
+//        image's 53 became 38 of 53 agreeing, and call_diff now reports the
+//        image's six calls with no disagreement. Measured across the tree
+//        before and after: no claim regressed anywhere in buffer.cpp,
+//        sprite.cpp or texture.cpp, whose free_data call sites re-inlined
+//        nothing they had not already inlined.
 Return Value: n/a
 Status: Complete
 */
@@ -3030,16 +3105,246 @@ void Caviar::close_class() {
     vox_engine_close();
 }
 
-// 0x00639E60, the engine's scene draw, is not recovered yet. UNK1 hands it the
-// render record, the viewport state and the camera, and nothing else in this
-// file reaches it, so a file-local stand-in keeps the call a `call rel32`
-// without a pending_bodies entry.
+// ---------------------------------------------------------------------------
+// The five engine helpers the scene draw reaches that are not recovered yet.
+// Their argument counts are read off the draw's own pushes and stack cleans
+// (0x639E97 `call 0x6396a0` / `add esp, 0x18` and so on); the stand-ins keep
+// the draw's calls `call rel32`, the same device vox_draw_scene uses.
+// ---------------------------------------------------------------------------
+
+// 0x006396A0. Six arguments, two of them the same output buffer - the draw
+// computes one address twice and pushes both. Leaves a float on the FPU stack
+// that the draw discards (`fstp st(0)` at 0x639E9F).
 OPENSMACX_NOINLINE
-void __cdecl vox_draw_scene(void *record, void *viewport, void *camera,
-                            int flags) {
+float __cdecl vox_stage_scene(void *record, void *state, void *view, int step,
+                              void *scratch_a, void *scratch_b) {
+    typedef float(__cdecl *pending)(void *, void *, void *, int, void *,
+                                    void *);
+    return reinterpret_cast<pending>(static_cast<unsigned long>(0x006396A0))(
+        record, state, view, step, scratch_a, scratch_b);
+}
+
+// The three geometry helpers are defined further down, beside the camera
+// transform that shares them; the draw reaches all three.
+void __cdecl vox_matrix_vector_mul(const float *, const float *, float *);
+void __cdecl vox_matrix_matrix_mul(const float *, const float *, float *);
+
+// 0x0063A280. Four arguments, the draw's four.
+OPENSMACX_NOINLINE
+void __cdecl vox_load_scene_view(void *record, void *state, void *view,
+                                 int step) {
     typedef void(__cdecl *pending)(void *, void *, void *, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x00639E60))(
-        record, viewport, camera, flags);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x0063A280))(
+        record, state, view, step);
+}
+
+// 0x006282E0. Three arguments, a byte answer - the draw tests `al` and skips
+// the part when it is non-zero.
+OPENSMACX_NOINLINE
+char __cdecl vox_part_behind(const void *a, const void *b, const void *c) {
+    typedef char(__cdecl *pending)(const void *, const void *, const void *);
+    return reinterpret_cast<pending>(static_cast<unsigned long>(0x006282E0))(
+        a, b, c);
+}
+
+// 0x0063E950. Eight arguments: the record, the walked node, the part's
+// position and its scaled matrix, both callers' clip blocks, the node's extent
+// and the visibility flag the draw computed.
+OPENSMACX_NOINLINE
+void __cdecl vox_draw_part(void *record, const CvrShape *node,
+                           const VOX_Vect *position, const VOX_Matrix *matrix,
+                           void *clip_a, void *clip_b, float extent,
+                           int visible) {
+    typedef void(__cdecl *pending)(void *, const CvrShape *, const VOX_Vect *,
+                                   const VOX_Matrix *, void *, void *, float,
+                                   int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x0063E950))(
+        record, node, position, matrix, clip_a, clip_b, extent, visible);
+}
+
+// 0x0063F000. Five arguments: the shadow branch's counterpart of the above.
+OPENSMACX_NOINLINE
+void __cdecl vox_draw_shadow(void *record, const CvrShape *node,
+                             const VOX_Vect *position,
+                             const VOX_Matrix *matrix, void *clip) {
+    typedef void(__cdecl *pending)(void *, const CvrShape *, const VOX_Vect *,
+                                   const VOX_Matrix *, void *);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x0063F000))(
+        record, node, position, matrix, clip);
+}
+
+/*
+Purpose: Draw the scene. Refuses to re-enter, stages the record and the
+         renderer's state into the engine's scratch, calls the record's setup
+         callback, and walks the instance table: for every part whose byte at
+         the caller's step is not flagged, composes its position and rotation
+         with the view, walks its level-of-detail chain, and either hands the
+         part to the record's per-object callback or, when the shadow byte on
+         the state asks for it, draws the part and its shadow through the
+         second view.
+// ORIGINAL: 0x00639E60 sub_639e60 0x00639E60-0x0063A279 FILE
+// symbol    ?vox_draw_scene@@YAXPAUVoxRenderRecord@@PAUVoxSceneState@@PAUVoxCameraBlock@@H@Z
+// size      1049 bytes
+// callers   2   call targets   9
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00627E20 0x006280E0 0x00628150 0x006282E0 0x006385D0 0x006396A0 0x0063A280 0x0063E950 0x0063F000
+// indirect  0x00639F25 0x0063A0AF 0x0063A0EE
+//
+// HOMED 2026-09-06 from the file-local stand-in this definition replaces.
+//
+// THE FOUR ARGUMENTS ARE THE RENDERER'S OWN BLOCKS. The image's call sites
+// (0x639E8F and 0x63A207) push the created record, `this + 0x18`, `this + 0xA5`
+// and a step, so the three pointers are the render record, the state block
+// VoxSceneState models, and the camera plus the channel bounds that follow it
+// in Caviar - VoxCameraBlock.
+//
+// BUG IN THE ORIGINAL: the re-entrancy guard is `je` over a `jmp $+0` - a
+//        two-byte jump to itself at 0x639E70 - so a second entry SPINS rather
+//        than returning. Reproduced as written: the guard is live whenever
+//        the draw is entered re-entrantly, and returning early would be a
+//        different program.
+// LEVER: 0 to a compiled body, 282 instructions against the image's 332 and
+//        call_diff clean - the same nine callees in the same order, three of
+//        them indirect off the record's own callback slots. The residual is
+//        the FPU scheduler: the image keeps the part's position and its nine
+//        scaled matrix elements in registers across the clip test, and the
+//        spellings here stage them to memory instead.
+*/
+void __cdecl vox_draw_scene(VoxRenderRecord *record, VoxSceneState *state,
+                            VoxCameraBlock *view, int step) {
+    // Scratch the two setup helpers fill. The image computes one address and
+    // pushes it for both of the first helper's trailing arguments.
+    uint8_t staged[0x20];
+
+    if (vox_scene_busy != 0) {
+        for (;;) {
+            // The image's own `jmp 0x639e70`.
+        }
+    }
+    vox_scene_busy = 1;
+
+    vox_stage_scene(record, state, view, step, &staged, &staged);
+    vox_load_scene_view(record, state, view, step);
+
+    vox_active_colour_table_ = record->colour_table_;
+    vox_active_ramp_a_ = record->ramp_a_ptr_;
+    vox_active_ramp_b_ = record->ramp_b_ptr_;
+    vox_active_size_code_ = record->setup_size_code_;
+    vox_scene_extent_ = ((uint32_t *)record->setup_block_)[0] -
+                        ((uint32_t *)record->setup_block_)[1];
+    vox_setup_copy_[3] = ((uint32_t *)record->setup_block_)[5];
+    vox_setup_copy_[4] = ((uint32_t *)record->setup_block_)[6];
+    vox_setup_copy_[5] = ((uint32_t *)record->setup_block_)[7];
+    vox_setup_copy_[1] = ((uint32_t *)record->setup_block_)[0];
+    vox_setup_copy_[0] = ((uint32_t *)record->setup_block_)[1];
+    vox_setup_copy_[2] = ((uint32_t *)record->setup_block_)[2];
+
+    // The record's own setup hook, called once before the walk.
+    typedef void(__cdecl *setup_callback)();
+    if (setup_callback callback =
+            reinterpret_cast<setup_callback>(record->setup_callback_)) {
+        callback();
+    }
+
+    // +0x8c into the state block is Caviar::field_A4_ at 0xA4 - the
+    // "keep the scene rectangle too" byte render sets from bit 1 of its flags.
+    // The state struct models only the 0x48 bytes the transform reads, so the
+    // byte is reached by its offset and named here.
+    uint8_t *const state_bytes = reinterpret_cast<uint8_t *>(state);
+    const int want_shadow = state_bytes[0x8c];
+
+    for (int index = 0; index < state->instance_count_; ++index) {
+        CaviarData &instance = state->instances_[index];
+        if ((instance.instance_colour_[step] & 0x80) != 0) {
+            continue;
+        }
+        const CvrShape *node = reinterpret_cast<const CvrShape *>(
+            vox_walk_scaled_chain(
+                reinterpret_cast<unsigned char *>(
+                    state->instance_steps_[index].shape_),
+                vox_lod_cut_));
+
+        // The part's world position: its own vector through the view's
+        // rotation, plus the view's offset.
+        VOX_Vect position;
+        vox_matrix_vector_mul(vox_view_rotation_.values[0],
+                              instance.instance_vector_[step].values,
+                              position.values);
+        vector_add((Vector *)&position, (Vector *)&vox_view_offset_,
+                   (Vector *)&position);
+
+        // The level-of-detail cut decides whether the part is drawn at all:
+        // the image seeds the flag with 1 and clears it when the walked
+        // node's extent, scaled by the cut, is past the visibility cut.
+        const float extent = node->scale_;
+        int visible = 1;
+        if (vox_lod_cut_ * extent > vox_visibility_cut_) {
+            visible = 0;
+        }
+
+        if (vox_part_behind(&position, &extent, view) != 0) {
+            continue;
+        }
+
+        // The part's rotation is the view's rotation times its own, scaled
+        // by the walked node's extent.
+        VOX_Matrix part;
+        vox_matrix_matrix_mul(vox_view_rotation_.values[0],
+                              instance.instance_matrix_[step].values[0],
+                              part.values[0]);
+        for (int element = 0; element < 9; ++element) {
+            part.values[0][element] *= extent;
+        }
+
+        // The record's per-object callback: object_start, whose protocol is
+        // the handle, the step, the position, the orientation, the bounds and
+        // the direction. The bounds are the channel bounds at view + 0x48 and
+        // the direction is the down vector at state + 0x48.
+        typedef void(__cdecl *object_callback)(void *, int, VOX_Vect *,
+                                               VOX_Matrix *, void *, void *);
+        if (object_callback callback = reinterpret_cast<object_callback>(
+                record->object_callback_[0])) {
+            callback(record, index, &position, &part, &view->bounds_,
+                     state_bytes + 0x48);
+        }
+        vox_draw_part(record, node, &position, &part, state_bytes + 0x48,
+                      &view->bounds_, extent, visible);
+
+        // The shadow pass, when the state asks for it and the record's
+        // descriptor block names a shadow.
+        if (want_shadow != 0 &&
+            ((uint32_t *)record->setup_block_)[2] != 0) {
+            VOX_Vect shadow;
+            vox_matrix_vector_mul(vox_shadow_rotation_.values[0],
+                                  instance.instance_vector_[step].values,
+                                  shadow.values);
+            vector_add((Vector *)&shadow, (Vector *)&vox_shadow_offset_,
+                       (Vector *)&shadow);
+
+            const float radius = extent * vox_radius_scale_;
+            const float span_x = radius * vox_shadow_span_x_;
+            const float span_y = radius * vox_shadow_span_y_;
+            if (-span_x <= shadow.values[0] &&
+                shadow.values[0] <=
+                    static_cast<float>(view->bounds_.values_[4]) + span_x &&
+                -span_y <= shadow.values[1] &&
+                shadow.values[1] <=
+                    static_cast<float>(view->bounds_.values_[5]) + span_y) {
+                VOX_Matrix shadow_part;
+                vox_matrix_matrix_mul(vox_shadow_rotation_.values[0],
+                                      instance.instance_matrix_[step].values[0],
+                                      shadow_part.values[0]);
+                for (int element = 0; element < 6; ++element) {
+                    shadow_part.values[0][element] *= extent;
+                }
+                vox_draw_shadow(record, node, &shadow, &shadow_part,
+                                &view->bounds_);
+            }
+        }
+    }
+
+    vox_scene_busy = 0;
 }
 
 /*
@@ -3080,21 +3385,21 @@ int Caviar::render_scene(Buffer *buffer, int flags) {
     if (field_13CC_ == 0) {
         return 0;
     }
-    field_D9_.values_[0] = 0;
-    field_D9_.values_[1] = 0;
-    field_D9_.values_[2] = 0xff;
-    field_D9_.values_[3] = 0xff;
-    field_D9_.values_[4] = 0x100;
-    field_D9_.values_[5] = 0x100;
+    camera_view_.bounds_.values_[0] = 0;
+    camera_view_.bounds_.values_[1] = 0;
+    camera_view_.bounds_.values_[2] = 0xff;
+    camera_view_.bounds_.values_[3] = 0xff;
+    camera_view_.bounds_.values_[4] = 0x100;
+    camera_view_.bounds_.values_[5] = 0x100;
     buffer_ = buffer;
-    field_1C_ = field_13CC_;
-    field_20_ = 1;
+    scene_state_.instance_count_ = field_13CC_;
+    scene_state_.draw_flags_ = 1;
     field_7C_ = 0;
     field_80_ = 0;
     field_84_ = 0;
     field_A4_ = (flags & 2) != 0 ? 0 : 1;
     CaviarScene.renderer_ = this;
-    vox_draw_scene(CaviarScene.created_, &field_18_, &camera_, 0);
+    vox_draw_scene(CaviarScene.created_, &scene_state_, &camera_view_, 0);
     CaviarScene.renderer_ = 0;
     RECT drawn;
     drawn.left = CaviarScene.created_->clip_max_a_x_;
@@ -3107,16 +3412,182 @@ int Caviar::render_scene(Buffer *buffer, int flags) {
     return 0;
 }
 
-// 0x0063A6F0, the engine's camera transform, is not recovered yet - 729 bytes
-// that belong with the rest of the 0x63xxxx engine family. render hands it the
-// viewport state, a flag word and two vector outputs, so a file-local stand-in
-// keeps that call a `call rel32` without a pending_bodies entry.
+// ---------------------------------------------------------------------------
+// The engine's geometry helpers the camera transform reaches. None of the
+// three is recovered yet - 0x006280E0 and 0x00627E20 sit beside vector_add
+// (0x00628150) and the scale helper (0x006281B0, homed in
+// src/leaf_recoveries.cpp), 0x0063A9D0 is the 900-byte AABB walk the transform
+// hands six vectors to. File-local stand-ins keep their calls `call rel32` the
+// way the image has them, the same device vox_draw_scene uses below.
+// ---------------------------------------------------------------------------
+
+// 0x006280E0. A 3x3 times a vector: three rows of three multiplies and a
+// store, 107 bytes, no calls of its own.
 OPENSMACX_NOINLINE
-void __cdecl vox_transform_camera(void *viewport, int flags, void *position,
-                                  void *extent) {
-    typedef void(__cdecl *pending)(void *, int, void *, void *);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x0063A6F0))(
-        viewport, flags, position, extent);
+void __cdecl vox_matrix_vector_mul(const float *matrix, const float *vector,
+                                  float *out) {
+    typedef void(__cdecl *pending)(const float *, const float *, float *);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x006280E0))(matrix,
+                                                                     vector,
+                                                                     out);
+}
+
+// 0x00627E20. A 3x3 times a 3x3, 303 bytes - nine dot products over the same
+// rows the vector multiply walks.
+OPENSMACX_NOINLINE
+void __cdecl vox_matrix_matrix_mul(const float *left, const float *right,
+                                  float *out) {
+    typedef void(__cdecl *pending)(const float *, const float *, float *);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x00627E20))(left,
+                                                                     right,
+                                                                     out);
+}
+
+// 0x0063A9D0. Builds the axis-aligned box one part covers: the centre, the
+// three scaled axis vectors, and the low and high corners the caller
+// accumulates across the instance table.
+OPENSMACX_NOINLINE
+void __cdecl vox_bounds_from_axes(const float *centre, const float *axis_a,
+                                  const float *axis_b, const float *axis_c,
+                                  float *low, float *high) {
+    typedef void(__cdecl *pending)(const float *, const float *, const float *,
+                                  const float *, float *, float *);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x0063A9D0))(
+        centre, axis_a, axis_b, axis_c, low, high);
+}
+
+/*
+Purpose: The engine's camera transform. Walks the renderer's instance table
+         once, and for every part whose shape it can reach builds the world
+         position (scene rotation, the instance's own vector, the scene
+         offset), the part's own rotation (scene rotation times the instance's
+         matrix), the offset the shape's three per-axis values give, and the
+         axis-aligned box its three scaled axes cover - accumulating the union
+         of all of them into the caller's two vectors. Caviar::render hands it
+         the renderer's state block and the step index, and subtracts the
+         resulting centre from the scene offset when bit 4 asks for it.
+// ORIGINAL: 0x0063A6F0 sub_63a6f0 0x0063A6F0-0x0063A9C9 FILE
+// symbol    ?vox_transform_camera@@YAXPAUVoxSceneState@@HPAUVOX_Vect@@1@Z
+//           (the image carries no name for this address; the fact records
+//           what this tree emits. `VoxSceneState` is a struct, so its pointer
+//           spells PAU - a `class` would spell PAV.)
+// size      729 bytes
+// callers   2   call targets   5
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00627E20 0x006280E0 0x00628150 0x006281B0 0x0063A9D0
+//
+// HOMED 2026-09-06, homed from src/unrecovered/0063a6f0.cpp and from the
+// file-local stand-in this definition replaces. THE FIRST ARGUMENT IS THE
+// RENDERER: the
+// image's call site is `lea eax, [ebp + 0x18]` with `this` in ebp, so the
+// block the body walks is Caviar's own +0x18 on and every offset below lands
+// on a Caviar member - the count, the instance table, the step table, the
+// scene offset, the scene rotation and the scale. VoxSceneState is that
+// binding written out.
+//
+// LEVER: the loop re-reads the count at +0x04 every iteration (image 0x63A9B5
+//        `mov eax, [edi + 4]` at the bottom of the body), so the condition
+//        below spells the field read out in full rather than caching it.
+// TRIED: the artifact's flat-array spelling of the same arithmetic (locals
+//        named centerA/centerB/mat/pivot, every field reached through a
+//        `char *` offset). It compiles and it agrees nowhere near the image -
+//        the 0x7c-byte frame the image fills with named floats is this loop's
+//        own intermediates, and it needs the struct below to be reached with
+//        member names at all. Byte-exactness here is the FPU scheduler's
+//        interleaving of the three axis multiplies, not the source's.
+*/
+void __cdecl vox_transform_camera(VoxSceneState *state, int step,
+                                  VOX_Vect *position, VOX_Vect *extent) {
+    if (state->instance_count_ <= 0) {
+        return;
+    }
+
+    int index = 0;
+    do {
+        CaviarData &instance = state->instances_[index];
+        CvrShape &shape = *state->instance_steps_[index].shape_;
+        float scale = shape.scale_ * state->scale_;
+
+        // The part's world position: its own vector through the scene
+        // rotation, scaled by the scene's scale, then shifted by the scene
+        // offset. The image reuses the rotated vector's buffer for the answer
+        // (0x63A773 re-derives the same local it passed as the multiply's
+        // output), and three separate locals below is the same program.
+        VOX_Vect rotated;
+        VOX_Vect scaled;
+        VOX_Vect centre;
+        vox_matrix_vector_mul(state->scene_rotation_.values[0],
+                              instance.instance_vector_[step].values,
+                              rotated.values);
+        leaf_006281b0_redirect(rotated.values, state->scale_, scaled.values);
+        vector_add((Vector *)&scaled, (Vector *)&state->scene_offset_,
+                       (Vector *)&centre);
+
+        // The part's rotation is the scene rotation times the instance's own.
+        VOX_Matrix part;
+        vox_matrix_matrix_mul(state->scene_rotation_.values[0],
+                              instance.instance_matrix_[step].values[0],
+                              part.values[0]);
+
+        VOX_Vect offset;
+        offset.values[0] = static_cast<float>(shape.offset_x_) * scale;
+        offset.values[1] = static_cast<float>(shape.offset_y_) * scale;
+        offset.values[2] = static_cast<float>(shape.offset_z_) * scale;
+        VOX_Vect pivot;
+        VOX_Vect corner;
+        vox_matrix_vector_mul(part.values[0], offset.values, pivot.values);
+        vector_add((Vector *)&pivot, (Vector *)&centre, (Vector *)&corner);
+
+        // The three axes the box is built from are the part rotation's
+        // COLUMNS - image 0x63A81E takes [esp+0x68], 0x63A835 [esp+0x6c] and
+        // 0x63A88F [esp+0x9c] of the 9-float local, which are elements 0, 1
+        // and 2 of a row-major 3x3, each scaled by its own shape axis.
+        float axis_x = static_cast<float>(shape.axis_x_) * scale;
+        float axis_y = static_cast<float>(shape.axis_y_) * scale;
+        float axis_z = static_cast<float>(shape.axis_z_) * scale;
+        VOX_Vect axes[3];
+        axes[0].values[0] = part.values[0][0] * axis_x;
+        axes[0].values[1] = part.values[1][0] * axis_x;
+        axes[0].values[2] = part.values[2][0] * axis_x;
+        axes[1].values[0] = part.values[0][1] * axis_y;
+        axes[1].values[1] = part.values[1][1] * axis_y;
+        axes[1].values[2] = part.values[2][1] * axis_y;
+        axes[2].values[0] = part.values[0][2] * axis_z;
+        axes[2].values[1] = part.values[1][2] * axis_z;
+        axes[2].values[2] = part.values[2][2] * axis_z;
+
+        VOX_Vect low;
+        VOX_Vect high;
+        vox_bounds_from_axes(corner.values, axes[0].values, axes[1].values,
+                             axes[2].values, low.values, high.values);
+
+        if (index == 0) {
+            *position = low;
+            *extent = high;
+        } else {
+            if (low.values[0] < position->values[0]) {
+                position->values[0] = low.values[0];
+            }
+            if (low.values[1] < position->values[1]) {
+                position->values[1] = low.values[1];
+            }
+            if (low.values[2] < position->values[2]) {
+                position->values[2] = low.values[2];
+            }
+            if (extent->values[0] < high.values[0]) {
+                extent->values[0] = high.values[0];
+            }
+            if (extent->values[1] < high.values[1]) {
+                extent->values[1] = high.values[1];
+            }
+            if (extent->values[2] < high.values[2]) {
+                extent->values[2] = high.values[2];
+            }
+        }
+
+        ++index;
+    } while (index < state->instance_count_);
 }
 
 /*
@@ -3150,18 +3621,25 @@ int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
         return 0;
     }
     if (field_4_ & 0x20) {
-        camera_.scaling = camera_.scaling + camera_.scaling;
+        camera_view_.camera_.scaling = camera_view_.camera_.scaling + camera_view_.camera_.scaling;
     }
 
-    field_1C_ = (uint32_t)buffer;
-    field_D9_.values_[0] = 0;
-    field_D9_.values_[1] = 0;
-    field_D9_.values_[2] = 0xff;
-    field_D9_.values_[3] = 0xff;
-    field_D9_.values_[4] = 0x100;
-    field_D9_.values_[5] = 0x100;
+    // DEFECT FIXED 2026-09-06: this body stored the BUFFER here, where the
+    // image stores the instance count it has just tested - image 0x617266
+    // `mov eax, [ebp + 0x13cc]` and 0x617292 `mov [ebp + 0x1c], eax`. The
+    // count is what the engine's camera transform reads back out of the same
+    // dword (+0x04 of the block it is handed), so the old store handed the
+    // transform a pointer to walk as a loop bound. render_scene (0x00617080)
+    // already spelled it correctly.
+    scene_state_.instance_count_ = field_13CC_;
+    camera_view_.bounds_.values_[0] = 0;
+    camera_view_.bounds_.values_[1] = 0;
+    camera_view_.bounds_.values_[2] = 0xff;
+    camera_view_.bounds_.values_[3] = 0xff;
+    camera_view_.bounds_.values_[4] = 0x100;
+    camera_view_.bounds_.values_[5] = 0x100;
     buffer_ = buffer;
-    field_20_ = 1;
+    scene_state_.draw_flags_ = 1;
     field_A4_ = (flags & 2) != 0 ? 0 : 1;
 
     int left = centre_x - 0x80;
@@ -3189,22 +3667,22 @@ int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
     record->draw_height_ = area.bottom - area.top;
 
     if (flags & 4) {
-        VOX_Matrix saved = rotation_;
+        VOX_Matrix saved = scene_state_.scene_rotation_;
         VOX_Vect position;
         VOX_Vect extent;
-        vox_transform_camera(&field_18_, (flags & 0x10) != 0 ? flags : 0,
+        vox_transform_camera(&scene_state_, (flags & 0x10) != 0 ? flags : 0,
                              &position, &extent);
         position.values[0] = (extent.values[0] + position.values[0]) * 0.5f;
-        rotation_ = saved;
+        scene_state_.scene_rotation_ = saved;
         position.values[1] = (extent.values[1] + position.values[1]) * 0.5f;
         position.values[2] = (extent.values[2] + position.values[2]) * 0.5f;
-        field_2C_ -= position.values[0];
-        field_30_ -= position.values[1];
-        field_34_ -= position.values[2];
+        scene_state_.scene_offset_.values[0] -= position.values[0];
+        scene_state_.scene_offset_.values[1] -= position.values[1];
+        scene_state_.scene_offset_.values[2] -= position.values[2];
     }
 
     CaviarScene.renderer_ = this;
-    vox_draw_scene(CaviarScene.created_, &field_18_, &camera_, 0);
+    vox_draw_scene(CaviarScene.created_, &scene_state_, &camera_view_, 0);
     CaviarScene.renderer_ = 0;
 
     RECT covered;
@@ -3524,7 +4002,7 @@ Purpose: Point the renderer at a Buffer and reset the six channel bounds to
 //
 // HOMED from src/recovered/units/006183d0.cpp. The raw offsets it wrote are
 // caviar.h's declared members now: 0x14 is buffer_ (named from this very
-// store) and 0xED..0x105 is field_D9_.values_, the six-int group Caviar::init
+// store) and 0xED..0x105 is camera_view_.bounds_.values_, the six-int group Caviar::init
 // defaults to the same six values.
 // TRIED: the byte test is NOT a problem - through the declared uint32_t
 //        field_4_, VC6 emits the image's own `test byte ptr [ecx+4],1`.
@@ -3548,13 +4026,13 @@ int Caviar::set_buffer(Buffer *buffer) {
     // constant into edx/eax as it reaches it and slides the Buffer store
     // between the two 0xff stores, which is exactly the interleaving the
     // image shows.
-    field_D9_.values_[0] = 0;
-    field_D9_.values_[1] = 0;
-    field_D9_.values_[2] = 0xff;
-    field_D9_.values_[3] = 0xff;
+    camera_view_.bounds_.values_[0] = 0;
+    camera_view_.bounds_.values_[1] = 0;
+    camera_view_.bounds_.values_[2] = 0xff;
+    camera_view_.bounds_.values_[3] = 0xff;
     buffer_ = buffer;
-    field_D9_.values_[4] = 0x100;
-    field_D9_.values_[5] = 0x100;
+    camera_view_.bounds_.values_[4] = 0x100;
+    camera_view_.bounds_.values_[5] = 0x100;
     return 0;
 }
 
@@ -3597,16 +4075,64 @@ void Caviar::set_shadow_vector(float elevation, float azimuth) {
     field_70_ = sin_azimuth * sin_elevation;
 }
 
-// 0x00628220, the engine's vector normaliser, is not recovered yet - it is a
-// Vector-family body (its neighbours are vector_add and the Vector methods)
-// and belongs in vector.cpp when it is. Caviar::init normalises the scene's
-// down vector with it, so a file-local stand-in keeps that call a `call rel32`
-// without a pending_bodies entry.
-OPENSMACX_NOINLINE
-void __cdecl vox_normalise_vector(void *vector, void *out) {
-    typedef void(__cdecl *pending)(void *, void *);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x00628220))(vector,
-                                                                      out);
+/*
+Purpose: Normalise a vector in place: divide each component by the vector's
+         length. The engine's own normaliser, in the Vector family - its
+         neighbours are vector_add (0x00628150) and the scale helper at
+         0x006281B0 - and six game bodies call it besides Caviar::init, which
+         normalises the scene's down vector with it.
+// ORIGINAL: 0x00628220 sub_628220 0x00628220-0x0062828B FILE
+// symbol    ?vox_normalise_vector@@YAXPBMPAM@Z
+//           (the image carries no name for this address; the fact records
+//           what this tree emits. VC6 spells `const float *` and `float *`
+//           out in full - PBM and PAM - where a repeated IDENTICAL type
+//           would back-reference to `0`.)
+// size      107 bytes
+// callers   10   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+//
+// HOMED 2026-09-06, homed from src/unrecovered/00628220.cpp - which carried
+// five thousand scored spellings - and from the file-local stand-in this
+// definition replaces (Caviar::init reached the image address through it)
+// of the sum without reaching the image's 107 bytes. Nothing in that census
+// is contradicted here; the body below is the faithful reading, not a new
+// spelling of it.
+//
+// THE RECIPROCAL IS REAL. The image divides `1.0f` by the length
+// (`fdivr dword ptr [0x670c08]`, 0x670C08 being a float 1.0f the engine
+// keeps in data) and multiplies all three components by the answer, rather
+// than dividing three times - so `scale` below is a real variable, not a
+// transcription convenience.
+//
+// TRIED (archived census, 5760 scored units): no-locals src[i]*src[i] in every
+//        order/association/operand-order, 69 of 107 bytes; locals x,y,z with
+//        the tail reading source[], 69-76; the tail reading the locals, 85-95
+//        with one stack slot too many; const source, /Oa, an __inline helper,
+//        an aliasing store before the sum, dead stores, the sum in a variable
+//        - none of them reproduce the image's two spill slots. /Op and /O1
+//        both lose fsqrt to a call.
+// TRIED (this pass, all 0-1 of 37 agreeing against the committed body's 1 of
+//        37): `float v[3]` filled from source and read back per term - the
+//        array is not enregistered either, and the frame pointer still comes
+//        out where the image has `push ecx`; `float pair[2]` for y and z with
+//        source[0] direct; y and z as the only locals with the sum's x term
+//        reading source[0]; x,y,z locals with the tail reading the locals
+//        (33 instructions against the image's 37). The two memory slots the
+//        image spills y and z into are one `push ecx` and the CALLER'S OWN
+//        ARGUMENT SLOT - VC6 reusing a dead parameter slot for a local - and
+//        no spelling here produces it.
+*/
+void __cdecl vox_normalise_vector(const float *source, float *out) {
+    float x = source[0];
+    float y = source[1];
+    float z = source[2];
+    float length = (float)sqrt(x * x + y * y + z * z);
+    float scale = 1.0f / length;
+    out[0] = source[0] * scale;
+    out[1] = source[1] * scale;
+    out[2] = source[2] * scale;
 }
 
 /*
@@ -3683,25 +4209,25 @@ void Caviar::init() {
     field_70_ = sin_zero * sin_elevation;
     field_74_ = cos_elevation;
 
-    field_2C_ = 0.0f;
-    field_30_ = 0.0f;
-    field_34_ = 0.0f;
+    scene_state_.scene_offset_.values[0] = 0.0f;
+    scene_state_.scene_offset_.values[1] = 0.0f;
+    scene_state_.scene_offset_.values[2] = 0.0f;
 
     const uint32_t negative_distance_limit = 0xC77FFF00;
     const uint32_t positive_distance_limit = 0x477FFF00;
-    field_5C_ = 1.0f;
+    scene_state_.scale_ = 1.0f;
 
-    camera_.scaling = 1.0f;
+    camera_view_.camera_.scaling = 1.0f;
 
-    field_D9_.lead_[3] = 0;
-    field_D9_.lead_[4] = positive_distance_limit;
+    camera_view_.bounds_.lead_[3] = 0;
+    camera_view_.bounds_.lead_[4] = positive_distance_limit;
 
-    field_D9_.values_[0] = 0;
-    field_D9_.values_[1] = 0;
-    field_D9_.values_[2] = 0xff;
-    field_D9_.values_[3] = 0xff;
-    field_D9_.values_[4] = 0x100;
-    field_D9_.values_[5] = 0x100;
+    camera_view_.bounds_.values_[0] = 0;
+    camera_view_.bounds_.values_[1] = 0;
+    camera_view_.bounds_.values_[2] = 0xff;
+    camera_view_.bounds_.values_[3] = 0xff;
+    camera_view_.bounds_.values_[4] = 0x100;
+    camera_view_.bounds_.values_[5] = 0x100;
 
     field_7C_ = 0;
     field_80_ = 0;
@@ -3714,14 +4240,14 @@ void Caviar::init() {
     field_9C_ = 1.0f;
     field_A0_ = 1.0f;
 
-    field_D9_.lead_[0] = 0;
-    field_D9_.lead_[1] = negative_distance_limit;
-    field_D9_.lead_[2] = positive_distance_limit;
+    camera_view_.bounds_.lead_[0] = 0;
+    camera_view_.bounds_.lead_[1] = negative_distance_limit;
+    camera_view_.bounds_.lead_[2] = positive_distance_limit;
 
-    field_1C_ = 0;
-    field_24_ = (uint32_t)&slots_[0];
-    field_20_ = 0;
-    field_28_ = (uint32_t)&instance_steps_[0];
+    scene_state_.instance_count_ = 0;
+    scene_state_.instances_ = &slots_[0];
+    scene_state_.draw_flags_ = 0;
+    scene_state_.instance_steps_ = &instance_steps_[0];
 
     field_60_ = 0;
     field_64_ = 0;
@@ -3735,26 +4261,26 @@ void Caviar::init() {
     field_6C_ = field_60_;
     field_70_ = field_64_;
 
-    rotation_.values[0][0] = 1.0f;
-    rotation_.values[0][1] = 0;
-    rotation_.values[0][2] = 0;
-    rotation_.values[1][0] = 0;
-    rotation_.values[1][1] = 1.0f;
-    rotation_.values[1][2] = 0;
-    rotation_.values[2][0] = 0;
-    rotation_.values[2][1] = 0;
-    rotation_.values[2][2] = 1.0f;
+    scene_state_.scene_rotation_.values[0][0] = 1.0f;
+    scene_state_.scene_rotation_.values[0][1] = 0;
+    scene_state_.scene_rotation_.values[0][2] = 0;
+    scene_state_.scene_rotation_.values[1][0] = 0;
+    scene_state_.scene_rotation_.values[1][1] = 1.0f;
+    scene_state_.scene_rotation_.values[1][2] = 0;
+    scene_state_.scene_rotation_.values[2][0] = 0;
+    scene_state_.scene_rotation_.values[2][1] = 0;
+    scene_state_.scene_rotation_.values[2][2] = 1.0f;
     field_78_ = 0;
 
-    camera_.rotation.values[0][0] = 1.0f;
-    camera_.rotation.values[1][1] = 1.0f;
-    camera_.rotation.values[2][2] = 1.0f;
-    camera_.rotation.values[0][1] = 0;
-    camera_.rotation.values[0][2] = 0;
-    camera_.rotation.values[1][0] = 0;
-    camera_.rotation.values[1][2] = 0;
-    camera_.rotation.values[2][0] = 0;
-    camera_.rotation.values[2][1] = 0;
+    camera_view_.camera_.rotation.values[0][0] = 1.0f;
+    camera_view_.camera_.rotation.values[1][1] = 1.0f;
+    camera_view_.camera_.rotation.values[2][2] = 1.0f;
+    camera_view_.camera_.rotation.values[0][1] = 0;
+    camera_view_.camera_.rotation.values[0][2] = 0;
+    camera_view_.camera_.rotation.values[1][0] = 0;
+    camera_view_.camera_.rotation.values[1][2] = 0;
+    camera_view_.camera_.rotation.values[2][0] = 0;
+    camera_view_.camera_.rotation.values[2][1] = 0;
 
 
     field_A4_ = 1;

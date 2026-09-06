@@ -442,7 +442,34 @@ Purpose: Release acquired references to the buffer's pixel data, unlocking the
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
-// body src/buffer.h
+// MOVED OUT OF LINE 2026-09-06 from the in-class definition in buffer.h. The
+// image CALLS free_data here and at every other site (43 of them in the
+// catalogue), and an in-class definition let VC6 fold the whole body into
+// each caller - render_multi_table_dest in caviar.cpp was +20 instructions
+// from it alone, 76 compiled against the image's 53, and came back to 38 of
+// 53 agreeing on the move. Measured across the whole tree before and after:
+// 0 claims regressed in buffer.cpp, sprite.cpp, texture.cpp or caviar.cpp.
+// The in-class spelling's own lesson moves with the body:
+// THE SURFACE TEST COMES FIRST and the subtraction is written out in
+// both arms - `cmp ecx, edi; jne` at 0x005E34AE before any arithmetic.
+// Hoisted above the test it lands two instructions early and every jump
+// after it moves, which is the same shape `Buffer::close` needed.
+void Buffer::free_data(int count) {
+    if (surface_ == nullptr) {
+        surface_lock_count_ -= count;
+        if (surface_lock_count_ <= 0) {
+            locked_bits_ = nullptr;
+            surface_lock_count_ = 0;
+        }
+        return;
+    }
+    surface_lock_count_ -= count;
+    if (locked_bits_ != nullptr && surface_lock_count_ <= 0) {
+        surface_->Unlock(locked_bits_);
+        locked_bits_ = nullptr;
+        surface_lock_count_ = 0;
+    }
+}
 
 
 /*

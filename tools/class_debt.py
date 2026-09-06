@@ -144,7 +144,9 @@ CEILINGS = {
     # its image name, load_deswin_sprites, when load_fixed_sprites needed to
     # call it - the seam name was the only thing orphan about it, and the body
     # stays BYTE_EXACT under the rename.
-    "orphan redirect": 201,
+    # 201 -> 200 (2026-09-06, W5l caviar engine): the file-local engine
+    # stand-ins fell - their callees are real members now.
+    "orphan redirect": 200,
     "pointer-as-int": 0,
     "undocumented trivial body": 0,
     # 239 IS BELOW WHAT THE TREE CAN REACH TODAY, and this is the only
