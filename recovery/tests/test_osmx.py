@@ -22,6 +22,25 @@ runner = CliRunner()
 
 
 @pytest.fixture(autouse=True)
+def isolated_build_database(tmp_path, monkeypatch):
+    """Synthetic gate verdicts must never overwrite the real measurement memo.
+
+    The CLI's default database used to point into the application build. A test
+    run replaced its warm cache with mocked results for temporary source paths,
+    forcing the next real gate to remeasure every file. Explicit test databases
+    still override this default; configuration behavior is tested separately.
+    """
+    database = tmp_path / "synthetic-build/compile_commands.json"
+    database.parent.mkdir()
+    # Match the legacy command's explicitly chosen borrowing anchor, without
+    # consulting the real database or providing an executable compiler.
+    database.write_text(json.dumps([{"file": str(osmx.REPO_ROOT / "src/buffer.cpp"),
+                                     "arguments": ["not-a-compiler", "/c", "buffer.cpp"]}]))
+    monkeypatch.setenv("OPENSMACX_COMPILE_COMMANDS", str(database))
+    return database
+
+
+@pytest.fixture(autouse=True)
 def project_audits(monkeypatch):
     """Synthetic command tests must not build/audit the actual application.
 
@@ -521,6 +540,17 @@ def test_check_measures_only_claims(claimed, monkeypatch):
     monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
     result = check(claimed, "--json")
     assert json.loads(result.stdout)["claims"] == 2
+
+
+def test_synthetic_gate_preserves_the_real_measurement_cache(claimed, monkeypatch, isolated_build_database):
+    real_cache = osmx.REPO_ROOT / "build/osmx_check_cache.json"
+    before = real_cache.read_bytes() if real_cache.exists() else None
+    monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
+    result = check(claimed)
+    assert result.exit_code == 0, result.output
+    memo = json.loads(isolated_build_database.with_name("osmx_check_cache.json").read_text())
+    assert set(memo["files"]) == {str(claimed / "c.cpp")}
+    assert (real_cache.read_bytes() if real_cache.exists() else None) == before
 
 
 def test_check_passes_when_every_claim_holds(claimed, monkeypatch):
