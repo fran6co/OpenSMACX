@@ -82,8 +82,12 @@ establish completion of this program.
 - [ ] One-time lossless legacy annotation/seed import and compact source writer.
 - [ ] Component manifests and dependency verification; zlib, CRT and system pilot.
   Zlib's 39 original bindings now live in a source companion header, with pinned
-  archive source verification. Binary/ABI checks and the other components remain.
+  archive source verification and bounded relocation-aware binary checks. Missing
+  data/function bindings, ABI checks and the other components remain.
 - [ ] Relocation-target and original-boundary verification; wrong-global fixture.
+  The portable comparator and PE/COFF target reader reject wrong/missing targets,
+  hardcoded absolute addresses and undeclared extra code. Synthetic damage tests
+  and the zlib integration run; application-gate cutover and ownership checks remain.
 - [ ] Declarative scheduler, discovery consumers, context bundles, agent adapters,
   independent review, safe collection and resumable migrations.
 - [ ] InfoWin ownership and constructor-family end-to-end structural pilots.

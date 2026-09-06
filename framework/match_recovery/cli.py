@@ -40,6 +40,11 @@ def parser() -> argparse.ArgumentParser:
     checking.add_argument("component")
     checking.add_argument("--root", type=Path, default=Path.cwd())
     checking.add_argument("--archive", type=Path)
+    binary = actions.add_parser("check-binary", help="Verify original boundaries and resolved reference bytes")
+    binary.add_argument("component")
+    binary.add_argument("--root", type=Path, default=Path.cwd())
+    binary.add_argument("--image", type=Path, required=True)
+    binary.add_argument("--summary", action="store_true", help="Omit per-function relocation detail")
     history = commands.add_parser("history", help="Read durable execution events")
     history.add_argument("--root", type=Path, default=Path.cwd())
     history.add_argument("--stream", required=True)
@@ -61,7 +66,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             selected = [manifest for manifest in manifests if manifest.component.component_id == args.component]
             if len(selected) != 1:
                 raise ValueError(f"expected one component named {args.component}")
-            result = source_integrity(args.root, selected[0], args.archive)
+            if args.action == "check-binary":
+                from .component_binary import verify_component
+                from .adapters.opensmacx_components import compile_vendor
+                result = verify_component(args.root, selected[0], args.image.read_bytes(),
+                                          lambda path, flags: compile_vendor(args.root, path, flags))
+                if read_components(args.root / "src") != manifests:
+                    raise ValueError("component annotations changed during measurement")
+                if args.summary:
+                    result.pop("functions")
+            else:
+                result = source_integrity(args.root, selected[0], args.archive)
             print(json.dumps(result, indent=2, sort_keys=True))
             return {Result.PASS: 0, Result.FAIL: 1, Result.UNKNOWN: 3}[result["result"]]
         if args.command == "import" and args.provider == "opensmacx-zlib":
@@ -89,7 +104,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             result["snapshot_id"] = store.put(snapshot)
         print(json.dumps(result, indent=2, sort_keys=True))
         return 0
-    except (OSError, ValueError, ImportError, subprocess.CalledProcessError, tarfile.TarError) as error:
+    except (OSError, ValueError, ImportError, subprocess.SubprocessError, tarfile.TarError) as error:
         print(f"recover: {error}", file=sys.stderr)
         return 3
 

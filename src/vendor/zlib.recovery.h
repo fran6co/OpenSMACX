@@ -71,7 +71,7 @@
 //     {"evidence": "git:e381ce551f1fd029f56b84826952d4058af2ed9c:src/vendor/zlib-1.0.2/recovered_0063dc40.c", "origin": "0x0063DC40", "spans": ["0x0063DC40-0x0063DF33"], "symbol": "_deflate_slow", "unit": "deflate.c"},
 //     {"evidence": "git:e381ce551f1fd029f56b84826952d4058af2ed9c:src/vendor/zlib-1.0.2/recovered_0063df40.c", "origin": "0x0063DF40", "spans": ["0x0063DF40-0x0063DF84"], "symbol": "_inflateReset", "unit": "inflate.c"},
 //     {"evidence": "git:e381ce551f1fd029f56b84826952d4058af2ed9c:src/vendor/zlib-1.0.2/recovered_0063dfe0.c", "origin": "0x0063DFE0", "spans": ["0x0063DFE0-0x0063E0EE"], "symbol": "_inflateInit2_", "unit": "inflate.c"},
-//     {"evidence": "git:e381ce551f1fd029f56b84826952d4058af2ed9c:src/vendor/zlib-1.0.2/recovered_0063e110.c", "origin": "0x0063E110", "spans": ["0x0063E110-0x0063E4E8"], "symbol": "inflate", "unit": "inflate.c"},
+//     {"evidence": "git:e381ce551f1fd029f56b84826952d4058af2ed9c:src/vendor/zlib-1.0.2/recovered_0063e110.c", "origin": "0x0063E110", "spans": ["0x0063E110-0x0063E4E8"], "symbol": "_inflate", "unit": "inflate.c"},
 //     {"evidence": "git:e381ce551f1fd029f56b84826952d4058af2ed9c:src/vendor/zlib-1.0.2/recovered_00640c30.c", "origin": "0x00640C30", "spans": ["0x00640C30-0x00640E41"], "symbol": "_tr_static_init", "unit": "trees.c"},
 //     {"evidence": "git:e381ce551f1fd029f56b84826952d4058af2ed9c:src/vendor/zlib-1.0.2/recovered_00640ec0.c", "origin": "0x00640EC0", "spans": ["0x00640EC0-0x00640F33"], "symbol": "_gen_codes", "unit": "trees.c"},
 //     {"evidence": "git:e381ce551f1fd029f56b84826952d4058af2ed9c:src/vendor/zlib-1.0.2/recovered_00640f40.c", "origin": "0x00640F40", "spans": ["0x00640F40-0x00640FF3"], "symbol": "__tr_stored_block", "unit": "trees.c"},

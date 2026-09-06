@@ -15,6 +15,7 @@ uv run recover inventory
 uv run recover import legacy --image /path/to/the/pinned/original.exe
 uv run recover components list
 uv run recover components check-source zlib --archive /path/to/zlib-1.0.2.tar.gz
+uv run recover components check-binary zlib --image /path/to/the/pinned/original.exe --summary
 uv run pytest framework/tests
 uv build --package match-recovery
 ```
@@ -46,6 +47,22 @@ not application recoveries. The source-integrity command derives file hashes fro
 the pinned upstream archive; without that archive it returns unknown (exit 3).
 An altered source or wrong archive returns failure (exit 1). Even a passing source
 check does not establish binary matching or ABI correctness.
+
+The binary check currently uses the OpenSMACX VC6 launcher. Set `VC6_PREFIX` to
+an isolated prefix before running it alongside other agents. It compiles once per
+selected translation unit and resolves references only from explicit source
+bindings, including STATIC functions and labels within a mapped COMDAT. Missing
+targets remain unknown; an address is never inferred from the operand being
+verified. Exact COFF symbol selection is required, with no spelling fallback.
+
+Original extents remain authoritative. The comparator permits only NOP/INT3
+alignment fill after a recorded extent, according to the object's alignment; it
+does not expand an original span to include extra code or a candidate jump table.
+It checks both absent and additional absolute relocations, and applies DIR32/REL32
+addends before comparing bytes. Output is a fresh report, not a stored claim.
+Neither this check nor source integrity proves C++ ownership, ABI, or runtime
+correctness. Missing data bindings and multi-span section placement still require
+implementation; the production gate has not yet switched to this verifier.
 
 The policy API distinguishes byte/instruction-shape, reference, structure and
 runtime obligations. `check_obligations` returns 0 only if all required current

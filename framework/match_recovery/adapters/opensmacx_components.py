@@ -5,6 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 import re
 import subprocess
+import sys
+import tempfile
 
 from ..components import SourceFile, VendorBinding, VendorManifest, source_integrity
 from ..model import Component, Delivery, Origin, Ownership, Result, Span
@@ -36,8 +38,12 @@ def historical_binding(text: str, pin: str, evidence: str) -> VendorBinding:
         if match is None:
             raise ValueError(f"invalid historical vendor span: {evidence}")
         bounds.append(Span(*(int(part, 16) for part in match.groups())))
+    # The retired grammar mixed catalogued C identifiers and already decorated
+    # symbols. This one-time C/i386 import normalizes the explicit C spelling;
+    # the live verifier only accepts the exact resulting COFF symbol.
+    symbol = names[0] if names[0].startswith("_") else "_" + names[0]
     return VendorBinding(Origin(pin, "pe:va", int(markers[0], 16)), tuple(bounds),
-                         names[0], includes[0], evidence)
+                         symbol, includes[0], evidence)
 
 
 def zlib_manifest(root: Path, archive: Path) -> VendorManifest:
@@ -68,3 +74,18 @@ def zlib_manifest(root: Path, archive: Path) -> VendorManifest:
     if source_integrity(root, manifest, archive)["result"] != Result.PASS:
         raise ValueError("vendored sources are not the pinned upstream release")
     return manifest
+
+
+def compile_vendor(root: Path, source: Path, flags: tuple[str, ...]) -> bytes:
+    """Use the existing VC6 launcher, refusing nonzero exit even if an object exists."""
+    with tempfile.TemporaryDirectory(prefix="recover-vendor-") as temporary:
+        work = Path(temporary)
+        try:
+            result = subprocess.run([sys.executable, str(root.resolve() / "tools" / "vc6_cl.py"),
+                                     "/nologo", *flags, "/Founit.obj", str(source.resolve())],
+                                    cwd=work, capture_output=True, text=True, timeout=300)
+        except subprocess.TimeoutExpired as error:
+            raise ValueError("VC6 compilation exceeded 300 seconds") from error
+        if result.returncode != 0 or not (work / "unit.obj").is_file():
+            raise ValueError("VC6 compilation failed: " + (result.stdout + result.stderr).strip())
+        return (work / "unit.obj").read_bytes()
