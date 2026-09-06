@@ -22,11 +22,21 @@ uv run pytest framework/tests
 uv build --package match-recovery
 ```
 
-Reports are JSON on stdout. Errors go to stderr and return exit 3. Inventory is
-read-only. Import stores a content-addressed snapshot under the selected root's
+Reports are JSON on stdout. Errors go to stderr and return exit 3. Inventory never
+changes source or decisions. Import stores a content-addressed snapshot under the selected root's
 ignored `.opensmacx/recovery/objects/` directory and prints its id. It does not
 rewrite source, declare current matches, or choose between conflicting source
 candidates. Raw files preserve all notes, including unparsed or non-UTF-8 text.
+The legacy adapter also memoizes individual files under ignored
+`build/recovery/parse_cache/`, only when Git confirms that directory is ignored
+and contains no tracked files. Otherwise parsing remains uncached.
+Keys include source bytes, relative/resolved path
+shape, image pin and parser/adapter implementation digests; timestamps are not
+authority. Entries have integrity checks and atomic publication. Missing, damaged
+or unwritable caches fall back to parsing. Set `RECOVERY_PARSE_CACHE=off` to bypass
+this memo, or delete its directory. Source inventory and content race checks still
+run on every snapshot; no compilation or verification verdict is cached here.
+
 The snapshot is a disposable parse cache, not durable history. Imports do not
 write versioned inventories or measurement reports. No database is required.
 

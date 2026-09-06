@@ -1,6 +1,9 @@
 import base64
 import hashlib
 import json
+import os
+import shutil
+import subprocess
 
 import pytest
 
@@ -21,6 +24,8 @@ void f() {}
 
 @pytest.fixture
 def project(tmp_path):
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    (tmp_path / ".gitignore").write_text("build/\n")
     src = tmp_path / "src"
     src.mkdir()
     (src / "IMAGE_PIN").write_text("sha256 " + PIN + "\n")
@@ -125,3 +130,80 @@ def test_cli_errors_are_not_green_or_json_contamination(tmp_path, capsys):
     output = capsys.readouterr()
     assert output.out == ""
     assert output.err.startswith("recover:")
+
+
+def test_parse_memo_hit_and_disabled_identity(project, monkeypatch):
+    import decomp.reader
+
+    expected = legacy_snapshot(project)
+    parser = decomp.reader.read_text
+    monkeypatch.setattr(decomp.reader, "read_text", lambda *args: pytest.fail("cache miss"))
+    assert legacy_snapshot(project) == expected
+    monkeypatch.setattr(decomp.reader, "read_text", parser)
+    monkeypatch.setenv("RECOVERY_PARSE_CACHE", "off")
+    assert legacy_snapshot(project) == expected
+
+
+def test_parse_memo_content_pin_and_parser_invalidation(project, monkeypatch):
+    from match_recovery.adapters import opensmacx
+
+    first = legacy_snapshot(project)
+    path = project / "src/a.cpp"
+    stat = path.stat()
+    path.write_bytes(TEXT.replace(b"?f@@", b"?g@@"))
+    os.utime(path, ns=(stat.st_atime_ns, stat.st_mtime_ns))
+    second = legacy_snapshot(project)
+    assert second["records"][0]["catalogued_symbol"] == "?g@@YAXXZ"
+    assert first != second
+    (project / "src/IMAGE_PIN").write_text("sha256 " + "b" * 64)
+    third = legacy_snapshot(project)
+    assert third["records"][0]["entity_id"] != second["records"][0]["entity_id"]
+    monkeypatch.setattr(opensmacx, "_parser_key", lambda: "new parser implementation")
+    parser = opensmacx._parse_file
+    calls = []
+
+    def counting(*args):
+        calls.append(True)
+        return parser(*args)
+
+    monkeypatch.setattr(opensmacx, "_parse_file", counting)
+    assert legacy_snapshot(project) == third
+    assert calls == [True]
+
+
+def test_parse_memo_portable_and_rename_invalidates(project, tmp_path, monkeypatch):
+    import decomp.reader
+
+    expected = legacy_snapshot(project)
+    other = tmp_path / "other-worktree"
+    shutil.copytree(project / "src", other / "src")
+    shutil.copytree(project / "build", other / "build")
+    subprocess.run(["git", "init", "-q", str(other)], check=True)
+    (other / ".gitignore").write_text("build/\n")
+    parser = decomp.reader.read_text
+    monkeypatch.setattr(decomp.reader, "read_text", lambda *args: pytest.fail("cache miss"))
+    assert legacy_snapshot(other) == expected
+    monkeypatch.setattr(decomp.reader, "read_text", parser)
+    seeds = other / "src/unrecovered"
+    seeds.mkdir()
+    (other / "src/a.cpp").rename(seeds / "a.cpp")
+    moved = legacy_snapshot(other)["records"][0]
+    assert moved["path"] == "src/unrecovered/a.cpp"
+    assert moved["candidate_kind"] == "legacy_seed"
+
+
+def test_parse_memo_does_not_create_committable_artifacts(project):
+    (project / ".gitignore").unlink()
+    legacy_snapshot(project)
+    assert not (project / "build").exists()
+
+
+def test_parse_memo_refuses_tracked_cache_directory(project):
+    cache = project / "build/recovery/parse_cache"
+    cache.mkdir(parents=True)
+    tracked = cache / "user-file"
+    tracked.write_text("preserve this")
+    subprocess.run(["git", "add", "-f", str(tracked)], cwd=project, check=True)
+    legacy_snapshot(project)
+    assert list(cache.iterdir()) == [tracked]
+    assert tracked.read_text() == "preserve this"

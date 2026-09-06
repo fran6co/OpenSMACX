@@ -11,12 +11,15 @@ import base64
 from collections import Counter, defaultdict
 from dataclasses import asdict
 import hashlib
+import os
 from pathlib import Path
 import re
 import subprocess
+import sys
 from typing import Any
 
-from ..model import Dimension, Obligation, Origin, Span, require_digest
+from ..model import Dimension, Obligation, Origin, Span, digest, require_digest
+from ..memo import memoized
 
 
 def image_pin(root: Path) -> str:
@@ -62,12 +65,78 @@ def _lifetime_binding_hint(record) -> dict | None:
             "next_action": "measure the real lifetime definition before reworking the wrapper or class layout"}
 
 
-def legacy_snapshot(root: Path, image: Path | None = None) -> dict[str, Any]:
-    # The standalone package works without `decomp`. Only this one-time adapter
-    # needs the old parser, installed by the OpenSMACX workspace.
+def _parse_file(raw: bytes, path: Path, root: Path, pin: str) -> dict:
     from decomp.reader import read_text
 
+    records, obligations = [], []
+    file_digest = hashlib.sha256(raw).hexdigest()
+    relative = path.relative_to(root).as_posix()
+    # Lossless source bytes remain in the snapshot even for invalid UTF-8.
+    for record in read_text(raw.decode("utf-8", errors="replace"), path):
+        origin = Origin(pin, "pe:va", record.address)
+        invalid_spans = []
+        for low, high in record.image_spans:
+            try:
+                Span(low, high)
+            except ValueError:
+                invalid_spans.append([low, high])
+        seed = path.relative_to(root / "src").parts[0] in ("recovered", "unrecovered")
+        row = {
+            "entity_id": origin.entity_id, "origin": asdict(origin),
+            "path": relative, "line": record.line, "file_sha256": file_digest,
+            "candidate_kind": "legacy_seed" if seed else "source",
+            "catalogued_symbol": record.name,
+            "emitted_symbol_hint": record.symbol or record.name,
+            "spans": [list(span) for span in record.image_spans],
+            "invalid_spans": invalid_spans,
+            "body_path": record.body, "kind_hint": record.kind,
+            "legacy_mode": record.mode.value, "legacy_state": record.state.value,
+            "legacy_exclusion": record.exclusion,
+            "legacy_byte_exact": record.byte_exact,
+            "legacy_semantic": record.semantic,
+            "levers": [list(item) for item in record.levers],
+            "tried": list(record.ruled_out), "deferred": list(record.deferred),
+            "extract_error": record.extract_error,
+            "binding_hint": _lifetime_binding_hint(record),
+        }
+        records.append(row)
+        for present, dimension, token in (
+                (record.byte_exact, Dimension.BYTES, "BYTE_EXACT"),
+                (record.semantic, Dimension.INSTRUCTION_SHAPE, "SEMANTIC")):
+            if present:
+                obligation = Obligation(origin.entity_id, dimension,
+                                        f"legacy:{file_digest}:{record.line}:{token}")
+                obligations.append({**asdict(obligation),
+                                    "obligation_id": obligation.obligation_id})
+    return {"records": records, "obligations": obligations}
+
+
+def _parser_key() -> str:
+    # Lazy import keeps the portable core independent of the legacy parser.
+    import decomp
+
+    package = Path(decomp.__file__).parent
+    inputs = {path.relative_to(package).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+              for path in sorted(package.rglob("*.py"))}
+    for name in ("model.py", "memo.py", "records.py", "adapters/opensmacx.py"):
+        inputs["framework/" + name] = hashlib.sha256(
+            (Path(__file__).parents[1] / name).read_bytes()).hexdigest()
+    return digest({"implementation": inputs, "python": sys.version})
+
+
+def legacy_snapshot(root: Path, image: Path | None = None) -> dict[str, Any]:
     root = root.resolve()
+    cache = None
+    if os.environ.get("RECOVERY_PARSE_CACHE") != "off":
+        # Read-only commands must not create committable derived artifacts.
+        relative_cache = "build/recovery/parse_cache/"
+        ignored = subprocess.run(["git", "check-ignore", "-q", relative_cache],
+                                 cwd=root, capture_output=True, check=False)
+        tracked = subprocess.run(["git", "ls-files", "--", relative_cache],
+                                 cwd=root, capture_output=True, check=False)
+        if ignored.returncode == 0 and tracked.returncode == 0 and not tracked.stdout:
+            cache = root / relative_cache
+    parser_key = _parser_key() if cache is not None else None
     pin = image_pin(root)
     revision = _revision(root)
     if image is not None:
@@ -85,44 +154,12 @@ def legacy_snapshot(root: Path, image: Path | None = None) -> dict[str, Any]:
         relative = path.relative_to(root).as_posix()
         files[relative] = {"sha256": file_digest,
                            "content_base64": base64.b64encode(raw).decode("ascii")}
-        # The base64 snapshot is lossless even if the historical source has an
-        # invalid UTF-8 comment; parser replacement cannot destroy that evidence.
-        for record in read_text(raw.decode("utf-8", errors="replace"), path):
-            origin = Origin(pin, "pe:va", record.address)
-            invalid_spans = []
-            for low, high in record.image_spans:
-                try:
-                    Span(low, high)
-                except ValueError:
-                    invalid_spans.append([low, high])
-            seed = path.relative_to(root / "src").parts[0] in ("recovered", "unrecovered")
-            row = {
-                "entity_id": origin.entity_id, "origin": asdict(origin),
-                "path": relative, "line": record.line, "file_sha256": file_digest,
-                "candidate_kind": "legacy_seed" if seed else "source",
-                "catalogued_symbol": record.name,
-                "emitted_symbol_hint": record.symbol or record.name,
-                "spans": [list(span) for span in record.image_spans],
-                "invalid_spans": invalid_spans,
-                "body_path": record.body, "kind_hint": record.kind,
-                "legacy_mode": record.mode.value, "legacy_state": record.state.value,
-                "legacy_exclusion": record.exclusion,
-                "legacy_byte_exact": record.byte_exact,
-                "legacy_semantic": record.semantic,
-                "levers": [list(item) for item in record.levers],
-                "tried": list(record.ruled_out), "deferred": list(record.deferred),
-                "extract_error": record.extract_error,
-                "binding_hint": _lifetime_binding_hint(record),
-            }
-            records.append(row)
-            for present, dimension, token in (
-                    (record.byte_exact, Dimension.BYTES, "BYTE_EXACT"),
-                    (record.semantic, Dimension.INSTRUCTION_SHAPE, "SEMANTIC")):
-                if present:
-                    obligation = Obligation(origin.entity_id, dimension,
-                                            f"legacy:{file_digest}:{record.line}:{token}")
-                    obligations.append({**asdict(obligation),
-                                        "obligation_id": obligation.obligation_id})
+        # Resolved path shape affects the legacy proved-store body extraction.
+        key = digest({"parser": parser_key, "file": file_digest, "path": relative,
+                      "resolved_path": path.resolve().relative_to(root).as_posix(), "image": pin})
+        parsed = memoized(cache, key, lambda: _parse_file(raw, path, root, pin))
+        records.extend(parsed["records"])
+        obligations.extend(parsed["obligations"])
     if not records:
         raise ValueError("no legacy annotations found; refusing an empty migration")
     # Refuse a racing import rather than quietly dropping concurrently moved files.
