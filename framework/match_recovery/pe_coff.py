@@ -37,6 +37,7 @@ class Section:
     data: bytes
     relocations: tuple[tuple[int, int, int], ...]
     flags: int
+    name: str = ""
 
     @property
     def alignment(self) -> int:
@@ -89,7 +90,8 @@ class Coff:
             if any(symbol not in symbols for _, symbol, _ in relocations):
                 raise ValueError("COFF relocation references an absent or auxiliary symbol")
             raw = _slice(data, offset, size) if offset else b""
-            sections.append(Section(raw, relocations, flags))
+            name = _slice(data, at, 8).rstrip(b"\0").decode("ascii")
+            sections.append(Section(raw, relocations, flags, name))
         self.symbols, self.sections = symbols, tuple(sections)
 
     def function(self, name: str) -> Symbol:

@@ -117,6 +117,10 @@ establish completion of this program.
   current claim annotations; the compact source obligation writer and production
   migration verifier remain unfinished.
 - [ ] InfoWin ownership and constructor-family end-to-end structural pilots.
+  Source-owned direct-member expectations now have strict standalone VC6 CodeView
+  checks. InfoWin's redraw_phase_ is measured at +0x90 in Console and InfoWin under
+  both flag sets; damaged offsets and partial debug records are refused. This does
+  not establish hierarchy, complete object size, member types or lifetime.
   The redraw slot is now an InfoWin member instead of independent storage;
   its object-start binding lives beside ConsoleInfoWin's definition. Constructor
   subobjects, object extent, lifetime, full admission and restoration remain.

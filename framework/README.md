@@ -226,6 +226,7 @@ uv run recover tasks create example-layout --group class:InfoWin --author coordi
 uv run recover tasks status example-layout
 uv run recover tasks context example-layout
 uv run recover tasks obligations example-layout
+uv run recover tasks check-layout example-layout
 uv run recover tasks check-binary example-layout --image /path/to/the/pinned/original.exe --summary
 uv run recover tasks discover --help
 uv run recover tasks expand --help
@@ -307,6 +308,28 @@ It writes no context file. A coordinator can use the output directly or cache it
 in ignored storage; neither a stale brief nor a resolved hypothesis is a verdict.
 
 ## Still under construction
+
+Direct-member expectations are load-bearing source comments beside declarations:
+
+```cpp
+// RECOVERY_MEMBER: v1 InfoWin redraw_phase_ 0x90 0x004E09E0
+int redraw_phase_;
+```
+
+The fields name the owning class, member, original offset, and original evidence
+address (qualified by the source image pin). Surrounding prose explains the
+interpretation; no current compiler result is stamped here. `tasks check-layout`
+compiles scoped product TUs with both VC6 flag sets and standalone `/Z7`, then
+compares strict CodeView direct-member offsets with the scoped source expectations.
+Every requested TU/configuration must agree. PCH use, ambiguous class definitions,
+unsupported/truncated field lists and missing observations are unmeasurable.
+No debugger-style partial field lists or type-index voting supplies gate evidence.
+InfoWin's `redraw_phase_` expectation passes in both Console and InfoWin units.
+This checks declared offsets, **not** completeness of the declarations, original
+evidence interpretation, inheritance, member types, full object size or lifetime.
+The result therefore leaves full structural verification unknown. Historical
+preservation of these new layout expectations and migration-gate integration
+remain to be implemented before this can authorize structural admission.
 
 The package is not yet the production gate. The durable task runner, target
 verification, complete dependency checking, source annotation migration and performance

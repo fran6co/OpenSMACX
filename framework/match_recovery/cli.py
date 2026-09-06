@@ -56,6 +56,9 @@ def parser() -> argparse.ArgumentParser:
     obligations = task_actions.add_parser("obligations", help="Derive restoration requirements from source history; not measurements")
     obligations.add_argument("task")
     obligations.add_argument("--root", type=Path, default=Path.cwd())
+    layout = task_actions.add_parser("check-layout", help="Compile and compare declared member offsets; not full structural verification")
+    layout.add_argument("task")
+    layout.add_argument("--root", type=Path, default=Path.cwd())
     task_binary = task_actions.add_parser("check-binary", help="Compile task TUs and check bounded code/references; not an admission gate")
     task_binary.add_argument("task")
     task_binary.add_argument("--root", type=Path, default=Path.cwd())
@@ -127,6 +130,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(json.dumps(output, indent=2, sort_keys=True))
             return (0 if output["ready_for_collection"] else
                     2 if output["stop_reason"] == "migration_admitted" else 3)
+        if args.command == "tasks" and args.action == "check-layout":
+            from .adapters.opensmacx_layout import verify_layout
+            output = verify_layout(args.root, args.task)
+            print(json.dumps(output, indent=2, sort_keys=True))
+            return {Result.PASS: 0, Result.FAIL: 1, Result.UNKNOWN: 3}[output["result"]]
         if args.command == "tasks" and args.action == "obligations":
             from .adapters.opensmacx_obligations import task_obligations
             print(json.dumps(task_obligations(args.root, args.task), indent=2, sort_keys=True))

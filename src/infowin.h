@@ -118,6 +118,7 @@ class InfoWin {
   // Original +0x90: Console::editor_save (0x004E09E0) writes 7 here
   // before redrawing the fixed InfoWin at 0x007AD2A0. This is member
   // storage, not a separate global at 0x007AD330; other values are unnamed.
+  // RECOVERY_MEMBER: v1 InfoWin redraw_phase_ 0x90 0x004E09E0
   int redraw_phase_;
   uint32_t field_94_;  // 0x94
   uint8_t field_98_[0x10];  // 0x98
@@ -151,4 +152,3 @@ class InfoWin {
 // substitute a probe.
 typedef void (OriginalObject::*func_info_win_right_menu)(int, int);
 extern func_info_win_right_menu InfoWinOriginalRightMenu;  // 0x004589C0
-
