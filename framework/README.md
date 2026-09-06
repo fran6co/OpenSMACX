@@ -397,6 +397,11 @@ slot relocations against independently mapped targets. A candidate's size cannot
 invent the original boundary, and one passing emitted copy cannot hide another
 copy's disagreement. PushButton's two table starts now resolve while their
 contents remain unverified. Full class/hierarchy proof is still separate.
+Table identities, symbols and independently declared extents also participate in
+source-history review, anchored by their original evidence address. Rehoming does
+not change an interpretation's identity; changing or removing a mapping preserves
+the old interpretation for explicit independent supersession or retraction.
+Neither that review nor an unknown extent establishes table-content correctness.
 
 Direct-member expectations are load-bearing source comments beside declarations:
 

@@ -258,3 +258,54 @@ def test_strengthening_offset_with_type_preserves_old_interpretation_for_review(
     assert len(after["interpretations"]) == 2
     assert any(item["current"] and item["value"]["class_type"] == "Base" for item in after["interpretations"])
     assert any(not item["current"] and "class_type" not in item["value"] for item in after["interpretations"])
+
+
+GENERATED = "// RECOVERY_GENERATED: v1 vtable 0x00601000 ? ??_7Widget@@6B@ 0x00401000\n"
+
+
+def test_generated_identity_survives_rehome_refinement_and_removal(project):
+    root, _ = project
+    path = root / "src/widget.h"
+    path.write_text(GENERATED)
+    commit(root, "original table identity with unknown extent")
+    first = report(project)
+    obligation = structural(project)[0]
+    assert obligation["entity_id"] == ONE.entity_id  # evidence, not table address
+    initial, = first["interpretations"]
+    assert initial["value"]["span"] is None and initial["current"]
+    path.rename(root / "src/renamed.h")
+    path = root / "src/renamed.h"
+    assert report(project)["interpretations"] == first["interpretations"]
+    path.write_text(GENERATED.replace(" ? ", " 0x00601008 ").replace("Widget", "Owner"))
+    commit(root, "refine table extent and owning class")
+    rows = report(project)["interpretations"]
+    assert len(rows) == 2
+    assert any(not row["current"] and row["interpretation_id"] == initial["interpretation_id"] for row in rows)
+    assert any(row["current"] and row["value"]["span"] == {"start": 0x601000, "end": 0x601008}
+               and row["value"]["symbol"] == "??_7Owner@@6B@" for row in rows)
+    path.unlink()
+    commit(root, "remove table mapping during hierarchy rewrite")
+    after = report(project)
+    assert len(after["interpretations"]) == 2 and not any(row["current"] for row in after["interpretations"])
+    assert structural(project)[0]["obligation_id"] == obligation["obligation_id"]
+    assert after["verification"] == "not_measured"
+
+
+def test_generated_seed_hints_and_other_evidence_are_not_scoped_obligations(project):
+    root, _ = project
+    (root / "src/unrecovered").mkdir()
+    (root / "src/unrecovered/seed.cpp").write_text(GENERATED)
+    (root / "src/unrelated.h").write_text(GENERATED.replace("00401000", "00402000"))
+    commit(root, "seed and unrelated table evidence")
+    assert structural(project) == []
+
+
+def test_malformed_generated_history_cannot_be_hidden_by_deletion(project):
+    root, _ = project
+    path = root / "src/widget.h"
+    path.write_text("// RECOVERY_GENERATED: invalid\n")
+    commit(root, "malformed table interpretation")
+    path.unlink()
+    commit(root, "remove malformed table")
+    with pytest.raises(ValueError, match="invalid generated binding"):
+        report(project)

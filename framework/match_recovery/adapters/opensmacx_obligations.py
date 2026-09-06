@@ -12,6 +12,7 @@ import re
 
 from ..model import Dimension, Obligation, Origin, digest
 from ..layout_source import parse_bases, parse_members
+from ..generated_source import parse_generated
 from ..source_history import git, source_versions
 from ..tasks import TaskStore
 from .opensmacx import _sources, image_pin, legacy_snapshot
@@ -37,7 +38,7 @@ def task_obligations(root: Path, name: str) -> dict:
         if entity in scope:
             found.setdefault((entity, dimension), []).append(evidence)
 
-    def add_layout(text: str, path: str, evidence: dict) -> None:
+    def add_structure(text: str, path: str, evidence: dict) -> None:
         for item in parse_members(text, path, pin):
             # The original evidence address anchors the review obligation;
             # class/member spellings and offsets remain revisable interpretations.
@@ -46,6 +47,15 @@ def task_obligations(root: Path, name: str) -> dict:
                  "interpretation": {"kind": "direct_member_offset", "class_name": item.class_name,
                                     "member": item.member, "offset": item.offset,
                                     **({"class_type": item.class_type} if item.class_type is not None else {}),
+                                    "original_evidence": asdict(item.evidence)}})
+
+        for item in parse_generated(text, path, pin):
+            add(item.evidence.entity_id, Dimension.STRUCTURE,
+                {**evidence, "line": item.line,
+                 "interpretation": {"kind": "compiler_generated_vtable",
+                                    "origin": asdict(item.origin),
+                                    "span": asdict(item.span) if item.span is not None else None,
+                                    "symbol": item.symbol,
                                     "original_evidence": asdict(item.evidence)}})
         for item in parse_bases(text, path, pin):
             add(item.evidence.entity_id, Dimension.STRUCTURE,
@@ -61,7 +71,7 @@ def task_obligations(root: Path, name: str) -> dict:
             if pins != [pin]:
                 raise ValueError("source image pin changed within task history")
             continue
-        add_layout(text, version.path, {"revision": version.revision, "path": version.path, "blob": version.blob})
+        add_structure(text, version.path, {"revision": version.revision, "path": version.path, "blob": version.blob})
         for record in read_text(text, root / version.path):
             entity = Origin(pin, "pe:va", record.address).entity_id
             for present, dimension in ((record.byte_exact, Dimension.BYTES),
@@ -76,7 +86,7 @@ def task_obligations(root: Path, name: str) -> dict:
                 add(row["entity_id"], dimension, {"revision": "working-tree", "path": row["path"],
                                                  "sha256": row["file_sha256"], "line": row["line"]})
     for path, row in snapshot["files"].items():
-        add_layout(base64.b64decode(row["content_base64"]).decode("utf-8", errors="replace"), path,
+        add_structure(base64.b64decode(row["content_base64"]).decode("utf-8", errors="replace"), path,
                    {"revision": "working-tree", "path": path, "sha256": row["sha256"]})
     if (head != git(root, "rev-parse", "HEAD").decode().strip()
             or task != store.read(name) or decisions != store.decisions(name)):
