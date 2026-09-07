@@ -221,8 +221,11 @@ int MainInterface::on_iface_button_pressed(int) {
     return 0;
 }
 
-// ORIGINAL: 0x0045CD80 ?on_iface_left_double_click@MainInterface@@QAEXHH@Z 0x0045CD80-0x0045CDB1 BYTE_EXACT
+// ORIGINAL: 0x0045CD80 ?on_iface_left_double_click@MainInterface@@QAEXHH@Z 0x0045CD80-0x0045CDB0 BYTE_EXACT
 // symbol    ?on_iface_left_double_click@IfaceRegistryEntry@@UAEXHH@Z
+// Original boundary evidence: the return at 0x0045CDAD ends at 0x0045CDB0;
+// the separate right-double-click entry at 0x0045CDB0 has its own return.
+// The former exclusive end 0x0045CDB1 cut into that next instruction.
 // LEVER: 2026-09-05 homed from 0045cd80.cpp, the second of the wave-4
 //   handoffs: it needs StatusWin::on_left_double_click (0x004B8990) as a real
 //   member, which statuswin.cpp now owns. `mov ecx, 0x8c5568` falls out of
