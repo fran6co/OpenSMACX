@@ -1,0 +1,28 @@
+{
+  "event_id": "876beb4173df6af34016fdc6425b71241fbcac58805f786be6b32655aabad2ce",
+  "payload": {
+    "affects": [
+      "entity-0eda974ff26d0e119f3cbc3f0c873b994258d730236b42f00789c65fdbcb4b9b",
+      "entity-3f4d8dcd9c001bc0b2fc5c5a1e74a03ca31a2eb194f89e2be16b44bfd351a9ef",
+      "entity-79c5d471789ed17bb8ef92be1c7b04ae8b5258555afe8dc46c4adc76e1922f58",
+      "entity-c0ce481a106718fb0ddf02b79d6d970107a930de3d4c7d190956e64c50b9a338"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "graphicwin-owned-canvas-receiver",
+    "evidence": [
+      "source:src/graphicwin.h:poCanvas_ at +0xA08 is currently uint32_t",
+      "source:src/graphicwin.cpp:init allocates sizeof(Buffer), constructs a Buffer and stores its pointer in poCanvas_; close uses raw virtual deleting dispatch",
+      "original:0x005D628D loads the +0xA08 receiver before the call at 0x005D6299 to Buffer::resize; 0x005D629E loads PaletteActive and 0x005D62A4 reloads the pointed-to receiver before sync_to_palette",
+      "source:src/unrecovered/005d6210.cpp:seed uses buffer_.resize and reinterpret_cast of the palette-global address",
+      "source:src/palette.cpp:PaletteActive is a Palette pointer stored at 0x009B8180",
+      "source:src/recovered/units/005d79c0.cpp:Buffer resize original span and historical byte obligation"
+    ],
+    "hypothesis": "GraphicWin owns an optional Buffer through its +0xA08 field, currently erased to an integer poCanvas_. Recover its typed pointer and allocation/deletion lifecycle together with on_size and Buffer::resize. The on_size seed resizes the embedded buffer where the original uses the pointed-to buffer, and supplies the address of the palette-pointer global where the original loads PaletteActive. Preserve the two receivers and pointer-versus-object distinction instead of copying that seed body.",
+    "kind": "discovery"
+  },
+  "previous_event": "32280dd04c4a835265387ff91daa6dc77d2329772d94b1b7d12d916e0b426868",
+  "request_id": "graphicwin-owned-canvas-receiver",
+  "schema_version": 1,
+  "sequence": 19,
+  "stream": "task:infowin-ownership"
+}

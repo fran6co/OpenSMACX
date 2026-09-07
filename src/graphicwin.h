@@ -57,6 +57,7 @@ class GraphicWin : public Win, public Buffer {
   // entry adjusts Buffer's receiver back to this GraphicWin automatically.
   virtual GraphicWin *get_graphic_win();
   virtual int resize(int width, int height, int client_size);
+  virtual int on_set_cursor(void *window, unsigned int hit, unsigned int message);
 
   // VIRTUAL, AND THE IMAGE IS WHAT SAYS SO. A body entered on a subobject
   // opens by adjusting `this` back by that subobject's offset, and that is the

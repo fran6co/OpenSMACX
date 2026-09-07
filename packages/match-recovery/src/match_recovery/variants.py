@@ -11,7 +11,7 @@ from .components import local_path, relative_path
 from .generated_source import read_generated
 from .measurement import Measurement
 from .model import Result, digest, require_digest, require_text
-from .object_source import read_objects
+from .object_source import read_objects, referenced_object_units
 from .ownership_source import project_view
 from .pe_coff import Coff, PeImage
 from .tasks import TaskStore
@@ -125,12 +125,38 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
                 or image_path.read_bytes() != image_data or store.read(task_name) != task or store.decisions(task_name) != decisions):
             raise ValueError("candidate source, image, compiler inputs or task changed; discard the deck")
 
-    def score(objects, flags, name, errors=None):
-        rows, data_rows, generated_rows = check_compiled(unit_bindings, data_bindings, generated, objects, image, externals, errors=errors)
+    def score(objects, flags, name, errors=None, contents=None):
+        errors = dict(errors or {})
+        support_controls, support_attempts = [], 0
+        while pending := referenced_object_units(data_bindings, objects) - objects.keys() - errors.keys():
+            for unit in sorted(pending):
+                control = {"unit": unit, "result": Result.UNKNOWN}
+                try:
+                    if Path(unit).suffix not in settings.unit_extensions:
+                        raise ValueError("object owner is not a configured translation unit")
+                    support_attempts += 1
+                    original = Coff(compiler(root / unit, (), flags))
+                    support_attempts += 1
+                    replica = Coff(compiler.overlay(root / unit, originals, (), flags))
+                    if object_signature(original) != object_signature(replica):
+                        raise ValueError("unchanged-source replica differs from the original compilation: " + unit)
+                    control["result"] = Result.PASS
+                    if contents is None:
+                        objects[unit] = replica
+                    else:
+                        support_attempts += 1
+                        objects[unit] = Coff(compiler.overlay(root / unit, contents, (), flags))
+                except (OSError, ValueError) as error:
+                    errors[unit] = str(error)
+                    control["reason"] = str(error)
+                support_controls.append(control)
+        measured = [item for item in bindings if item.unit in objects or item.unit in units]
+        rows, data_rows, generated_rows = check_compiled(measured, data_bindings, generated, objects, image, externals, errors=errors)
         selected_row = next(row for row in rows if row["entity_id"] == target.origin.entity_id)
         return {"name": name, "flags": list(flags), "target": selected_row,
                 "neighbors": [{**row, "in_task": row["entity_id"] in selected} for row in rows if row is not selected_row],
                 "compile_errors": errors or {},
+                "object_dependencies": support_controls, "support_compile_attempts": support_attempts,
                 "object_definitions": data_rows, "generated_tables": generated_rows}
 
     # Replica and damage controls are per flag trial, not a one-time capability
@@ -172,7 +198,7 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
                 objects[unit] = Coff(compiler.overlay(root / unit, contents, (), flags))
             except (OSError, ValueError) as error:
                 errors[unit] = str(error)
-        return score(objects, flags, name, errors)
+        return score(objects, flags, name, errors, contents)
 
     work = [(name, contents, flags) for name, contents in candidates.items() for flags in valid]
     attempts += len(work) * len(units)
@@ -184,6 +210,7 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
         with ThreadPoolExecutor(max_workers=jobs) as pool:
             trials = list(pool.map(compile_trial, work))
     fresh()
+    attempts += sum(row["support_compile_attempts"] for row in (*baselines, *trials))
     # Keep byte/boundary/reference dimensions intact, rather than collapse a
     # relocation failure into a deceptively good masked similarity percentage.
     def ranking_key(trial):

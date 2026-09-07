@@ -646,6 +646,16 @@ remain unmeasurable. Source roots, seeds, names and TU suffixes come from config
 no application identity or branch name is required. Object annotations also use
 configured source selection/address spaces, independently of binary backend limits.
 
+Binary task checks follow actual COFF external references to source-declared object
+owners, compiling those TUs even when they have no selected function. Each flag
+trial gets fresh dependency objects; missing definitions, unsupported owner files
+and compile failures remain unresolved. The `object_dependencies` report lists
+these additional inputs separately from the selected function TUs. This is read-only
+measurement scope, not permission to edit the owners or proof of object extent,
+initialization, lifetime or linked selection. Weak/local symbols and unreferenced
+declarations do not select owners. Candidate decks follow new references too, with
+an unchanged-source replica control for each extra TU and the same candidate overlay.
+
 One complete flag trial must match each body; partial trials cannot be combined.
 Declared layouts must agree across every selected TU/trial. Joint checks share
 objects only inside that invocation and still report all unknown/failing evidence.

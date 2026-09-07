@@ -11,7 +11,7 @@ from typing import Callable
 from match_recovery.bound_objects import FunctionBinding, check_objects
 from match_recovery.generated_source import read_generated
 from match_recovery.model import Origin, Result, Span, digest
-from match_recovery.object_source import read_objects, object_targets
+from match_recovery.object_source import read_objects, object_targets, referenced_object_units
 from match_recovery.pe_coff import Coff, PeImage
 from match_recovery.tasks import TaskStore
 from match_recovery.ownership_source import project_view
@@ -121,7 +121,7 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
         except ValueError as error:
             command_errors[unit] = str(error)
     attempts, variants, object_checks = 0, defaultdict(list), []
-    generated_checks = []
+    generated_checks, dependencies = [], []
     for flags in flag_sets:
         objects, errors = {}, dict(command_errors)
         for unit, command in commands.items():
@@ -132,6 +132,25 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
                 objects[unit] = Coff(compiler(root / unit, command, flags))
             except (OSError, ValueError) as error:
                 errors[unit] = str(error)
+        # A real global may live in a TU without any mapped task function.
+        # Follow source-declared ownership, never resolve it from the original
+        # operand or reuse an object compiled under another flag trial.
+        dependency_units = set()
+        while pending := referenced_object_units(object_bindings, objects) - objects.keys() - errors.keys():
+            dependency_units.update(pending)
+            for unit in sorted(pending):
+                try:
+                    if Path(unit).suffix not in settings.unit_extensions:
+                        raise ValueError("object owner is not a configured translation unit")
+                    command = tuple(command_for(root / unit))
+                    attempts += 1
+                    if compiler is None:
+                        compiler = Compiler(root, profile=settings.compiler_profile)
+                    objects[unit] = Coff(compiler(root / unit, command, flags))
+                except (OSError, ValueError) as error:
+                    errors[unit] = str(error)
+        dependencies.append({"flags": list(flags), "units": sorted(dependency_units),
+                             "errors": {unit: errors[unit] for unit in sorted(dependency_units) if unit in errors}})
         checked_functions, checked_objects, checked_generated = check_compiled(
             bindings, object_bindings, generated_bindings, objects, image, externals, errors=errors)
         object_checks.extend({**item, "flags": list(flags)} for item in checked_objects)
@@ -161,6 +180,7 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
             "input_fingerprint": digest(before), "functions": rows, "counts": dict(sorted(counts.items())),
             "compile_attempts": attempts, "selected_entities": len(selected), "translation_units": units,
             "object_definitions": object_checks,
+            "object_dependencies": dependencies,
             "generated_tables": generated_checks,
             "unresolved_symbols": sorted({relocation["symbol"] for candidates in variants.values()
                                            for row in candidates for relocation in row.get("relocations", [])

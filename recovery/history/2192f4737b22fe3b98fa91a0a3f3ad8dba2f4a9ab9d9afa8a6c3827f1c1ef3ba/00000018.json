@@ -1,0 +1,31 @@
+{
+  "event_id": "32280dd04c4a835265387ff91daa6dc77d2329772d94b1b7d12d916e0b426868",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/graphicwin.cpp",
+      "src/graphicwin.h",
+      "src/recovered/units/005d6330.cpp",
+      "src/temp.cpp"
+    ],
+    "evidence": [
+      "source:src/recovered/units/005d6330.cpp:original cursor handler span and historical obligation; its scaffold substitutes a callee and hardcodes the global",
+      "source:src/win.cpp:Win::OnSetCursor real static callback at 0x005F2670",
+      "source:src/temp.cpp:HandleMain existing real HWND storage at 0x009B7B28",
+      "source:src/pushbutton.h:Win-side generated-table binding; slot 85 observation motivates a real GraphicWin override, without proving table bounds"
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6120240,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "28cd0e280fd830a15868f7a8cf93d6ba9bcac76a6ea2ec53672690ea54eb0f1a",
+  "request_id": "graphicwin-cursor-source-ownership",
+  "schema_version": 1,
+  "sequence": 18,
+  "stream": "task:infowin-ownership"
+}

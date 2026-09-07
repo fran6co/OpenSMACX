@@ -96,6 +96,12 @@ match. A constructor's members must not also be placement-constructed in its bod
 Real reset methods and real pointer arithmetic are allowed when evidence shows
 that behavior; names and a good byte score alone do not establish it.
 
+Bind a real global beside its source definition. Native binary checks and decks
+follow external references to declared object owners and report additional
+`object_dependencies`. This read-only compilation does not expand worker editing
+scope. An unresolved owner needs evidence or a scope request, not a copied original
+operand; successful compilation alone does not prove the object's lifetime.
+
 Compiler-generated functions need source-owned mappings, not handwritten bodies.
 For a secondary-base adjustor, express the real inheritance and virtual override,
 then bind its emitted symbol with a `FILE` annotation in the owning TU. Preserve

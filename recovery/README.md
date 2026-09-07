@@ -156,6 +156,16 @@ bindings, including STATIC functions and labels within a mapped COMDAT. Missing
 targets remain unknown; an address is never inferred from the operand being
 verified. Exact COFF symbol selection is required, with no spelling fallback.
 
+Referenced source-owned globals now bring their defining TUs into native binary
+checks without requiring a selected function in those files. Candidate decks do
+the same with per-owner replica controls and the complete proposed overlay.
+Reports expose this read-only dependency scope; it grants no editing permission
+and proves neither initialization nor lifetime. GraphicWin's recovered cursor
+override uses the real `HandleMain` and `Win::OnSetCursor`; its strict check now
+compiles `temp.cpp` to validate the declared handle definition instead of borrowing
+the fixed address from its old seed. The seed scaffold is removed, with original
+mapping/provenance beside the method and the global identity beside its definition.
+
 The native generated-table report now exposes positional entry diagnostics even
 when the original extent is unknown. Inspect the emitted symbol, source target,
 original word and any weak-external fallback to distinguish a missing method

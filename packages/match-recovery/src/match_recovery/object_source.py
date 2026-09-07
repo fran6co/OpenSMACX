@@ -72,3 +72,26 @@ def object_targets(bindings: tuple[ObjectBinding, ...], objects: dict) -> tuple[
         if valid:
             targets[binding.symbol] = binding.origin.address
     return targets, reports
+
+
+def referenced_object_units(bindings: tuple[ObjectBinding, ...], objects: dict) -> frozenset[str]:
+    """Find declared owners of actual external relocation references.
+
+    This schedules read-only compilation, not target resolution or task editing
+    authorization. Bare symbol declarations, local symbols and weak-external
+    fallbacks cannot select a source owner. Callers retain definition checks and
+    compile each dependency under the same source overlay and flag trial.
+    """
+    owners = {binding.symbol: binding.unit for binding in bindings}
+    if len(owners) != len(bindings):
+        raise ValueError("duplicate original object symbol binding")
+    required = set()
+    for obj in objects.values():
+        for section in obj.sections:
+            for _, index, kind in section.relocations:
+                if kind not in (6, 20):
+                    continue
+                symbol = obj.symbols[index]
+                if symbol.storage == 2 and symbol.name in owners:
+                    required.add(owners[symbol.name])
+    return frozenset(required)

@@ -786,3 +786,13 @@ int GraphicWin::resize(int width, int height, int client_size) {
     }
     return result;
 }
+
+// ORIGINAL: 0x005D6330 ?on_set_cursor@GraphicWin@@QAEHPAXII@Z 0x005D6330-0x005D6350 FILE BYTE_EXACT
+// symbol    ?on_set_cursor@GraphicWin@@UAEHPAXII@Z
+// provenance (retired seed): git:57459ebf:src/recovered/units/005d6330.cpp
+// Win-side virtual slot 85 forwards to the static cursor hook using the
+// real main-window handle. The catalogued nonvirtual spelling is provisional.
+// calls     0x005F2670
+int GraphicWin::on_set_cursor(void *window, unsigned int hit, unsigned int message) {
+    return Win::OnSetCursor(HandleMain, window, hit, message);
+}

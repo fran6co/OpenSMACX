@@ -41,6 +41,7 @@
 // load at every use where the image addresses the storage directly, and
 // the address is terranx.exe's data, unmapped in a standalone build.
 int BufferStrHeight;  // 0x009B3A9C
+// RECOVERY_OBJECT: v1 0x009B7B28 ?HandleMain@@3PAUHWND__@@A
 HWND HandleMain;  // 0x009B7B28
 
 uint32_t UnkBitfield1;  // 0x0090D91C
