@@ -22,6 +22,33 @@ import osmx                                                  # noqa: E402
 runner = CliRunner()
 claim_coverage = osmx._claim_coverage
 initial_data_check = osmx._initial_data
+symbol_coverage_check = osmx._symbol_coverage
+
+
+@pytest.mark.parametrize("state,expected", [("pass", 0), ("fail", 1), ("unknown", 3)])
+def test_native_symbol_coverage_has_no_missing_name_allowance(claimed, monkeypatch, state, expected):
+    monkeypatch.setattr(osmx, "_symbol_coverage", lambda: {"result": state, "counts": {state: 1}})
+    monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
+    result = check(claimed)
+    assert result.exit_code == expected
+    if state == "unknown":
+        assert "INCOMPLETE: source symbol coverage unavailable" in result.output
+
+
+def test_symbol_compiler_does_not_run_after_failed_build(claimed, monkeypatch, project_audits):
+    project_audits.add("build")
+    monkeypatch.setattr(osmx, "_symbol_coverage", lambda: pytest.fail("build and symbol compiler overlapped"))
+    monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
+    assert check(claimed).exit_code == 1
+
+
+def test_unavailable_native_symbol_inputs_stay_incomplete(monkeypatch):
+    import match_recovery.symbol_check as module
+    def refused(root):
+        raise ValueError("source input unavailable")
+    monkeypatch.setattr(module, "check_symbols", refused)
+    result = symbol_coverage_check()
+    assert result["result"] == "unknown" and "unavailable" in result["reason"]
 
 
 @pytest.fixture(autouse=True)
@@ -52,6 +79,8 @@ def project_audits(monkeypatch):
     Keep their exit codes controllable here so refusal propagation is tested.
     """
     failures = set()
+    monkeypatch.setattr(osmx, "_symbol_coverage", lambda:
+                        {"result": "fail" if "check-symbols" in failures else "pass", "counts": {}})
     monkeypatch.setattr(osmx, "_initial_data", lambda exe:
                         {"result": "fail" if "check-data" in failures else "pass", "counts": {}})
     actual = subprocess.run
@@ -705,7 +734,7 @@ def test_json_is_only_json(claimed, monkeypatch):
 
 
 @pytest.mark.parametrize("audit", ["build", "compiler-work", "stale_references.py",
-    "marker_symbols.py", "check-mappings", "class-debt", "storage",
+    "check-symbols", "check-mappings", "class-debt", "storage",
     "data_values.py", "check-source", "header_offsets.py", "check-data"])
 def test_failed_project_audit_prevents_acceptance(claimed, monkeypatch, project_audits, audit):
     monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))

@@ -161,6 +161,27 @@ Build membership is not compiled/link ownership, included-source coverage or
 dependency verification. Exit codes are 0/1/3 for pass/fail/unknown; reports are
 disposable. Missing databases, empty coverage and changing inputs never pass.
 
+### Fresh function-symbol coverage
+
+`recover check-symbols [--root <project>] [--in code/owner.cc] [--summary]`
+checks every nonexcluded product function mapping through the configured compiler
+protocol and measurement flag trials. It also uses `mappings.compile_commands`
+to identify intended build hosts. No game adapter, `nm` invocation or preexisting
+object is used. Compiler/format failures, absent/undefined/weak symbols and unbuilt
+hosts stay unknown; non-function storage or an invalid code start fails. Symbols
+must be defined in their mapped TU, not borrowed from a neighbor. One passing
+trial establishes presence only; it does not establish exclusive COMDAT ownership
+or final linker selection. No ordinal/name alias is silently selected.
+
+The source reader's emitted-symbol fact wins over the catalogue name. Without one,
+the catalogue spelling is tried literally; source names are not automatically
+mangled or renamed. Definitions are checked together per TU, stopping trials once
+every selected symbol in that TU has been observed. `--in` uses exact source paths
+and restricts the diagnostic, never whole-project acceptance. Exit 0 means selected
+emission coverage; 1 a counterexample; 3 incomplete evidence. There is no allowance
+for a population of missing names, stored verdict or source mutation. This does
+not prove original bytes, references, class structure or runtime behavior.
+
 ### Prompt-driven agent commands
 
 `recover agent worker` and `recover agent reviewer` implement the driver protocol

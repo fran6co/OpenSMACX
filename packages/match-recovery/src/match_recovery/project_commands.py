@@ -7,6 +7,10 @@ from .records import read_json
 
 
 def register(commands):
+    symbols = commands.add_parser("check-symbols", help="Freshly verify source-mapped function names through configured compilation")
+    symbols.add_argument("--root", type=Path, default=Path.cwd())
+    symbols.add_argument("--in", dest="files", action="append", help="Exact product source path; omit for all product mappings")
+    symbols.add_argument("--summary", action="store_true")
     data = commands.add_parser("check-data", help="Compare source-bounded object initialization and reference targets; not lifetime proof")
     data.add_argument("--root", type=Path, default=Path.cwd())
     data.add_argument("--image", type=Path, required=True)
@@ -159,6 +163,13 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
     if (configuration.keys() - {"schema_version", "adapter", "source", "source_history", "compiler", "measurement", "audits", "build", "mappings"}
             or type(configuration.get("schema_version")) is not int or configuration["schema_version"] != 1):
         raise ValueError("invalid local project command configuration")
+    if arguments.get("command") == "check-symbols":
+        from .symbol_check import check_symbols
+        output = check_symbols(root, files=arguments.get("files"))
+        if arguments.get("summary"):
+            output["functions"] = [row for row in output["functions"] if row["result"] != "pass"]
+            output.pop("trials")
+        return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
     if arguments.get("command") == "check-mappings":
         from .mapping_check import check_mappings
         output = check_mappings(root)

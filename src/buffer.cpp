@@ -4236,6 +4236,7 @@ int Buffer::dotted_box(int a1, int a2, int a3, int a4, int a5) {
 }
 
 // ORIGINAL: 0x005E32F3 ?dotted_box@Buffer@@QAEHPAURECT@@H@Z 0x005E32F3-0x005E3370 FILE
+// symbol    ?dotted_box@Buffer@@QAEHPAUtagRECT@@H@Z
 // working copy - scaffold materialised by --work
 // size      125 bytes
 // prototype int (__thiscall ?dotted_box@Buffer@@QAEHPAURECT@@H@Z)(Buffer* this, RECT*, int)
@@ -4264,6 +4265,7 @@ int Buffer::dotted_box(RECT * a1, int a2) {
 // Fixed-slot bindings carried from 005dd450.cpp
 
 // ORIGINAL: 0x005DD450 ?write_right_l@Buffer@@QAEHPADPAURECT@@H@Z 0x005DD450-0x005DD52B FILE
+// symbol    ?write_right_l@Buffer@@QAEHPADPAUtagRECT@@H@Z
 // TRIED: bare `strlen` (MSVC inlines it as `repne scasb`, needs `#pragma function(strlen)` to force the real call). With the pragma the structure and call sequence match, but the register allocator puts a1/this in different registers than the original (ebp/esi here vs ebx/edi there); not reproduced. 78/85 shared.
 // working copy - scaffold materialised by --work
 // size      219 bytes
@@ -5257,6 +5259,7 @@ int Buffer::write_cent_l(char *a1, int a2, int a3, int a4, int a5, int a6) {
 
 
 // ORIGINAL: 0x005DB660 ?write_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z 0x005DB660-0x005DB6B4 FILE
+// symbol    ?write_l@Buffer@@QAEHPAVFont@@PADPAUtagRECT@@H@Z
 // size      84 bytes
 // prototype int (__thiscall ?write_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z)(Buffer* this, Font*, int8*, RECT*, int)
 // callers   0   call targets   1
@@ -5335,6 +5338,7 @@ int Buffer::write_l(Font *a1, char *a2, RECT *a3, int a4) {
 }
 
 // ORIGINAL: 0x005DB720 ?write_cent_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z 0x005DB720-0x005DB774 FILE
+// symbol    ?write_cent_l@Buffer@@QAEHPAVFont@@PADPAUtagRECT@@H@Z
 // size      84 bytes
 // prototype int (__thiscall ?write_cent_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z)(Buffer* this, Font*, char *, RECT*, int)
 // callers   6   call targets   1
@@ -5413,6 +5417,7 @@ int Buffer::write_cent_l(Font* a1, char * a2, RECT* a3, int a4) {
 }
 
 // ORIGINAL: 0x005DBC00 ?wrap_cent@Buffer@@QAEHPAVFont@@PADPAURECT@@@Z 0x005DBC00-0x005DBC4F FILE
+// symbol    ?wrap_cent@Buffer@@QAEHPAVFont@@PADPAUtagRECT@@@Z
 // size      79 bytes
 // prototype int (__thiscall ?wrap_cent@Buffer@@QAEHPAVFont@@PADPAURECT@@@Z)(Buffer* this, Font*, char *, RECT*)
 // callers   4   call targets   1
@@ -5491,6 +5496,7 @@ int Buffer::wrap_cent(Font* a1, char * a2, RECT* a3) {
 }
 
 // ORIGINAL: 0x005DB990 ?wrap@Buffer@@QAEHPAVFont@@PADPAURECT@@@Z 0x005DB990-0x005DB9DF FILE
+// symbol    ?wrap@Buffer@@QAEHPAVFont@@PADPAUtagRECT@@@Z
 // size      79 bytes
 // prototype int (__thiscall ?wrap@Buffer@@QAEHPAVFont@@PADPAURECT@@@Z)(Buffer* this, Font*, int8*, RECT*)
 // callers   0   call targets   1
@@ -5875,6 +5881,7 @@ int Buffer::wrap_right(char * a1, int a2, int a3, int a4) {
 }
 
 // ORIGINAL: 0x005DD530 ?wrap@Buffer@@QAEHPADPAURECT@@@Z 0x005DD530-0x005DD730 FILE
+// symbol    ?wrap@Buffer@@QAEHPADPAUtagRECT@@@Z
 // TRIED: MISMATCH #2 'push' vs 'sub' - direct transcription of the Ghidra do-while, using font1_ (0x52C) and its font_obj_ (+8); the entry-block stack-frame allocation shape diverges from the original almost immediately, not chased further.
 // working copy - scaffold materialised by --work
 // size      512 bytes
@@ -5979,6 +5986,7 @@ int Buffer::wrap(char * a1, RECT * a2) {
 }
 
 // ORIGINAL: 0x005DC410 ?find_line_break_l@Buffer@@QAEHPADPAHH@Z 0x005DC410-0x005DC70A FILE
+// symbol    ?find_line_break_l@Buffer@@QAEPADPADPAHH@Z
 // TRIED: same bracket-skip/jump-table markup dispatch as Buffer::text_width (0x005DC7C0), verified against the raw jump/byte tables at 0x5dc70c/0x5dc728 (identical shape, different literal token address 0x696c90). The four find-break-then-adjust call sites collapse to one resolve_break() helper (space-before or segment-start keeps the position, else memrchr back to the last space). Reaches MISMATCH, 147/265 mnemonics shared, first divergence at #2 (frame setup, not the parser).
 // working copy - scaffold materialised by --work
 // size      762 bytes

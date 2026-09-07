@@ -127,6 +127,23 @@ silently collapsed by basename. Historical claims are still remeasured separatel
 This is intended-build consistency, not compiler/link evidence; included/generated
 coverage and dependency bindings retain their own checks.
 
+`uv run recover check-symbols --summary` replaces the old marker-symbol tool and
+its missing-name ceiling. It reads the same source bindings as recovery and
+uses the configured compiler to obtain fresh objects, grouped by product TU.
+Once a symbol is defined, further flag trials are unnecessary for this presence
+check. Missing, undefined or weak names remain unknown; a data symbol or a start
+outside executable code fails. A definition in another TU cannot satisfy the
+mapping. Unbuilt/header mappings remain unknown instead of disappearing; seeds
+and explicit exclusions stay outside product-emission scope. Use `--in` with an
+exact source path for a scoped diagnostic. No bindings or claims are written.
+
+The retained gate runs this after its build and before initial-data compilation,
+and skips it if the build failed. Its JSON includes `symbol_coverage`: unknown
+coverage keeps exit 3, even for a single missing name. This is configured compiler
+emission, not final-link selection, original-byte agreement or complete recovery.
+It adds fresh compilation rather than trusting old incremental objects; shared
+fresh-object reuse with the whole gate remains a throughput improvement to make.
+
 The native `recover tasks variants` command now replaces serial edit-and-restore
 spelling experiments. It reads the source map once and compiles atomic header/body
 overlays across task TUs. Unchanged-replica controls per TU and compiled damage
@@ -194,7 +211,7 @@ class-debt preview. A containing object and its first member sharing an address
 are not automatically duplicate globals. These lexical diagnostics neither prove
 storage ownership nor authorize merging names; establish actual aliasing and
 byte-versus-element semantics through source and binary evidence. The remaining
-initial-data, header-offset and marker-symbol checks still use legacy tooling.
+initial-value and header-offset checks still use legacy tooling.
 
 `check-data` now supplies native compiled initial-storage evidence for explicitly
 bounded `RECOVERY_OBJECT: v2` bindings. See the package README for its grammar and

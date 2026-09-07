@@ -592,11 +592,11 @@ Purpose: Run the shared Ambience constructor, publish this variant's vtable,
          the storage held survives there.
 
 // ORIGINAL: 0x004471F0 ??0FactionAmbience@@QAE@XZ 0x004471F0-0x00447219
+// symbol    ?construct@FactionAmbience@@QAEPAV1@XZ
 // DEMOTED from BYTE_EXACT by direction (strip-all hand vptr writes): the
 // derived-stage vptr overlay store left with the de-management sweep.
 
 // LEVER: the vtable store must NOT be `volatile`. A volatile store is a scheduling barrier for VC6, so the `xor eax, eax` that feeds the seven zero field stores could not be hoisted above it - 13 of 15, with the image's `xor eax, eax` / `mov [esi], vtable` pair in the wrong order. Dropping the qualifier gives 15 of 15, BYTE_EXACT. The store stays alive without it because the seven field stores that follow are not dead, so nothing lets VC6 prove the object unobserved. Measured the same 15 of 15 with the `object[0x000 / 4]` idiom and with the zero stores written before the vtable store, so only the qualifier matters.
-// symbol    ?construct@FactionAmbience@@QAEPAV1@XZ
 //   The catalogued name is the mangled CONSTRUCTOR, `??0FactionAmbience@@QAE@XZ`,
 //   but this tree spells the body as a `construct()` METHOD - see
 //   `Win::construct`, the idiom it follows. Without this fact `measure`
@@ -629,11 +629,11 @@ FactionAmbience *FactionAmbience::construct() {
 /*
 Purpose: As 004471F0, with the MAmbience vtable and one more field.
 // ORIGINAL: 0x00447310 ??0MAmbience@@QAE@XZ 0x00447310-0x0044733C
+// symbol    ?construct@MAmbience@@QAEPAV1@XZ
 // DEMOTED from BYTE_EXACT by direction (strip-all hand vptr writes): the
 // derived-stage vptr overlay store left with the de-management sweep.
 
 // LEVER: same as 0x004471F0 - the vtable store must not be `volatile`, because the barrier stops VC6 hoisting the `xor eax, eax` the zero field stores share. Dropping it took this body byte-exact too.
-// symbol    ?construct@MAmbience@@QAEPAV1@XZ
 //   The catalogued name is the mangled CONSTRUCTOR, `??0MAmbience@@QAE@XZ`,
 //   but this tree spells the body as a `construct()` METHOD - see
 //   `Win::construct`, the idiom it follows. Without this fact `measure`
@@ -667,11 +667,11 @@ MAmbience *MAmbience::construct() {
 /*
 Purpose: As 004471F0, with the SAmbience vtable and two more fields.
 // ORIGINAL: 0x00447850 ??0SAmbience@@QAE@XZ 0x00447850-0x0044787F
+// symbol    ?construct@SAmbience@@QAEPAV1@XZ
 // DEMOTED from BYTE_EXACT by direction (strip-all hand vptr writes): the
 // derived-stage vptr overlay store left with the de-management sweep.
 
 // LEVER: same as 0x004471F0 - the vtable store must not be `volatile`, because the barrier stops VC6 hoisting the `xor eax, eax` the zero field stores share. Dropping it took this body byte-exact too.
-// symbol    ?construct@SAmbience@@QAEPAV1@XZ
 //   The catalogued name is the mangled CONSTRUCTOR, `??0SAmbience@@QAE@XZ`,
 //   but this tree spells the body as a `construct()` METHOD - see
 //   `Win::construct`, the idiom it follows. Without this fact `measure`
@@ -706,11 +706,11 @@ SAmbience *SAmbience::construct() {
 /*
 Purpose: As 004471F0, with the GAmbience vtable and one more field.
 // ORIGINAL: 0x00447B90 ??0GAmbience@@QAE@XZ 0x00447B90-0x00447BBC
+// symbol    ?construct@GAmbience@@QAEPAV1@XZ
 // DEMOTED from BYTE_EXACT by direction (strip-all hand vptr writes): the
 // derived-stage vptr overlay store left with the de-management sweep.
 
 // LEVER: same as 0x004471F0 - the vtable store must not be `volatile`, because the barrier stops VC6 hoisting the `xor eax, eax` the zero field stores share. Dropping it took this body byte-exact too.
-// symbol    ?construct@GAmbience@@QAEPAV1@XZ
 //   The catalogued name is the mangled CONSTRUCTOR, `??0GAmbience@@QAE@XZ`,
 //   but this tree spells the body as a `construct()` METHOD - see
 //   `Win::construct`, the idiom it follows. Without this fact `measure`
@@ -2040,4 +2040,3 @@ void GAmbience::new_base() {
     field_70_ = 0;
     this->play_trackset(0x19);
 }
-

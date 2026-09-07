@@ -1186,6 +1186,7 @@ merge:
 }
 
 // ORIGINAL: 0x00462F00 ?tile_to_pixel@MapWin@@QAEXHHPAHPAH@Z 0x00462F00-0x0046303C FILE
+// symbol    ?tile_to_pixel@MapWin@@QAEXHHPAH0@Z
 // size      316 bytes
 // prototype void (__thiscall ?tile_to_pixel@MapWin@@QAEXHHPAHPAH@Z)(MapWin* this, int xCoord, int yCoord, int*, int*)
 // callers   18   call targets   1
@@ -2506,4 +2507,3 @@ void MapWin::clear_terrain() {
         }
     }
 }
-

@@ -104,7 +104,7 @@ def _marker_respelling() -> None:
     """Put a second space in a live marker line, wherever one is.
 
     TREE-SIDE, and it trips nothing else on purpose: same address, same
-    name, same spans, same claim count - so `address_index`, `marker_symbols`
+    name, same spans, same claim count - so mapping and symbol checks
     and source claim identity coverage stay quiet, and only the canonical spelling of
     the marker notices.
     """
@@ -164,10 +164,16 @@ CASES = [
      "IMAGE IS NOT THE PINNED ONE",
      lambda: _patch("src/IMAGE_PIN", _snap("src/IMAGE_PIN").split("sha256 ")[1][:8],
                     "deadbeef")),
-    ("marker_symbols floor",
-     "FAILED: a marker names a symbol the build does not emit",
+    ("source symbol coverage",
+     lambda: ("SYMBOL UNMEASURABLE " + _first_claim("src/palette.cpp").split()[2]
+              + " ?totally_bogus_harness@@YAXXZ"),
      lambda: _append("src/palette.cpp",
                      "// symbol    ?totally_bogus_harness@@YAXXZ\n",
+                     after=_first_claim("src/palette.cpp"))),
+    ("source symbol data binding",
+     "FAILED: source symbol coverage",
+     lambda: _append("src/palette.cpp",
+                     "// symbol    ?PaletteActive@@3PAVPalette@@A\n",
                      after=_first_claim("src/palette.cpp"))),
     ("stale_references",
      "FAILED: an instruction names something that is not there",

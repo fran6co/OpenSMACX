@@ -1262,6 +1262,15 @@ def _image_pin(src: Path, exe: Path) -> str:
     return ""
 
 
+def _symbol_coverage():
+    """Native fresh compiler evidence; missing names never pass a count floor."""
+    from match_recovery.symbol_check import check_symbols
+    try:
+        return check_symbols(REPO_ROOT)
+    except (OSError, ValueError) as error:
+        return {"result": "unknown", "counts": {}, "reason": str(error)}
+
+
 def _initial_data(exe):
     """Use the native verifier during gate cutover; no local data checker/cache."""
     from match_recovery.data_check import check_data
@@ -1757,13 +1766,11 @@ def check(
     stale_job = _audit("stale_references.py")
 
     def _symbols_after_link():
-        # marker_symbols runs its own incremental build before reading the
-        # objects; two ninjas in one build dir race, so it starts after the
-        # link finishes (and its inner build then no-ops).
-        link_job.result()
-        return subprocess.run(
-            [sys.executable, str(REPO_ROOT / "tools" / "marker_symbols.py"),
-             "--check"], cwd=REPO_ROOT, capture_output=True, text=True)
+        # The configured compiler owns fresh temporary objects. Serialize it
+        # after the build; never read a stale object after a failed build.
+        if link_job.result().returncode:
+            return {"result": "unknown", "counts": {}, "reason": "build failed before symbol coverage"}
+        return _symbol_coverage()
 
     symbols_job = audits.submit(_symbols_after_link)
     index_job = audits.submit(
@@ -1834,19 +1841,21 @@ def check(
         for line in said[:-1][:8]:
             typer.secho(f"  {line}", fg=typer.colors.RED)
 
-    # EVERY MARKER NAMES A SYMBOL THE BUILD EMITS, held to a falling floor.
-    # A wrong or stale `// symbol` fact sends measurement to the wrong bytes
-    # or abandons it - and the class passes rewrite those facts constantly.
-    # Six of today's markers await stub conversions and the ordinal
-    # initialiser matcher; the floor starts there and only goes down.
+    # Fresh emission coverage, distinct from original-byte matching and final
+    # link selection. Missing names are incomplete, not an allowed population.
     symbols = symbols_job.result()
     if not as_json:
-        said = symbols.stdout.strip().splitlines() or [""]
-        typer.secho("  " + said[-1],
-                    fg=typer.colors.RED if symbols.returncode
-                    else typer.colors.WHITE)
-        for line in said[:-1][:4]:
-            typer.secho(f"  {line}", fg=typer.colors.RED)
+        typer.secho(f"  source symbol coverage: {symbols['result']}, "
+                    f"{json.dumps(symbols['counts'], sort_keys=True)}",
+                    fg=typer.colors.RED if symbols["result"] == "fail" else
+                    typer.colors.YELLOW if symbols["result"] == "unknown" else typer.colors.WHITE)
+        if "reason" in symbols:
+            typer.echo("    " + symbols["reason"])
+        for row in symbols.get("functions", []):
+            if row["result"] != "pass" and any(
+                    trial.get("reason") == "no defined function with the mapped name"
+                    for trial in row["variants"]):
+                typer.echo(f"    SYMBOL UNMEASURABLE {row['address']} {row['symbol']} ({row['path']})")
 
     # Full relative identities, intended build hosts and claimed forwarders.
     # Alternative seed evidence is visible but never a production definition;
@@ -1953,11 +1962,12 @@ def check(
 
     code = (1 if regressed or dangling or unread or link.returncode
             or offsets.returncode
-            or vtables.returncode or stale.returncode or symbols.returncode
+            or vtables.returncode or stale.returncode or symbols["result"] == "fail"
             or index.returncode or coverage["result"] == "fail" or debt.returncode
             or annotations.returncode or storage.returncode
             or values.returncode or initial_data["result"] == "fail"
-            else 3 if unasked or coverage["result"] == "unknown" or initial_data["result"] == "unknown" else 0)
+            else 3 if unasked or coverage["result"] == "unknown" or initial_data["result"] == "unknown"
+            or symbols["result"] == "unknown" else 0)
     # THE VERDICT GOES IN THE OUTPUT, not only in the exit code. The brief has
     # told agents for a long time never to pipe this to `tail`, because `cmd |
     # tail` reports TAIL's status and `echo $?` after it is always 0 - and an
@@ -1969,7 +1979,7 @@ def check(
     verdict = ("FAILED: THE TREE DOES NOT LINK" if link.returncode
                else "FAILED: the tree does more of the compiler's work" if vtables.returncode
                else "FAILED: an instruction names something that is not there" if stale.returncode
-               else "FAILED: a marker names a symbol the build does not emit" if symbols.returncode
+               else "FAILED: source symbol coverage" if symbols["result"] == "fail"
                else "FAILED: the address index grew" if index.returncode
                else "FAILED: semantic debt grew" if debt.returncode
                else "FAILED: storage audit" if storage.returncode
@@ -1979,6 +1989,7 @@ def check(
                else "FAILED: historical claim identities are missing" if coverage["result"] == "fail"
                else "INCOMPLETE: claim identity coverage unavailable" if coverage["result"] == "unknown"
                else "FAILED: regressed, dangling or unread claims" if code == 1
+               else "INCOMPLETE: source symbol coverage unavailable (not green)" if symbols["result"] == "unknown"
                else "INCOMPLETE: original initial data unverified (not green)" if initial_data["result"] == "unknown"
                else "INCOMPLETE: unverifiable claims present (not green)" if code == 3
                else "CLEAN")
@@ -1990,11 +2001,12 @@ def check(
             "verdict": verdict,
             "claim_identities": coverage,
             "initial_data": initial_data,
+            "symbol_coverage": symbols,
             "failed": {
                 "link": bool(link.returncode),
                 "compiler_work": bool(vtables.returncode),
                 "stale_references": bool(stale.returncode),
-                "marker_symbols": bool(symbols.returncode),
+                "symbol_coverage": symbols["result"] == "fail",
                 "address_index": bool(index.returncode),
                 "class_debt": bool(debt.returncode),
                 "annotation_identity": bool(annotations.returncode),
