@@ -19,13 +19,22 @@ from .source_config import SourceConfiguration
 def class_hint(symbol: str) -> str | None:
     from match_recovery.source.mangled import qualified_name
 
-    # Initializers/deleting thunks need ownership analysis, not an invented
-    # class based on a quoted demangler description or an encoded variable name.
+    # Deleting entries (including their adjusted entries) encode their class,
+    # not a separate source-level thunk class. Keep this a name hint: it says
+    # nothing about whether the candidate hierarchy or lifetime is correct.
+    if symbol.startswith(("??_G", "??_E")):
+        owner, _, operation = qualified_name(symbol).rpartition("::")
+        if (operation in ("`scalar deleting destructor'", "`vector deleting destructor'")
+                and re.fullmatch(r"[A-Za-z_]\w*(?:::[A-Za-z_]\w*)*", owner)):
+            return owner
+        return None  # unsupported scopes/templates must not invent an owner
+    # Initializers name objects, not necessarily classes. Other special forms
+    # need their own interpretation before supplying an ownership hint.
     if symbol.startswith("??") and not symbol.startswith(("??0", "??1")):
         return None
-    # W is a public virtual member's adjusted entry (for example a secondary
-    # base). Its qualified member name supplies the same class hint as U.
-    if not symbol.startswith(("??0", "??1")) and not re.match(r'^\?[^@]+@.+?@@[ABCDEFIJKLMNQRSTUVW]', symbol):
+    # W and $4 are adjusted entries (fixed displacement and vtordisp). Their
+    # qualified member names supply the same provisional class hint as U.
+    if not symbol.startswith(("??0", "??1")) and not re.match(r'^\?[^@]+@.+?@@(?:[ABCDEFIJKLMNQRSTUVW]|\$4)', symbol):
         return None  # a namespace-qualified free function is not a class method
     name = qualified_name(symbol)
     if "::" not in name or "`" in name or "'" in name:

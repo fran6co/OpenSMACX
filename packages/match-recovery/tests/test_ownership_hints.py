@@ -35,7 +35,10 @@ def put(root, path, catalogue, emitted, *, end=0x401003):
         f"// symbol    {emitted}\n")
 
 
-@pytest.mark.parametrize("emitted", ["?owner@Widget@@UAEPAV1@XZ", "?owner@Widget@@W7AEPAV1@XZ"])
+@pytest.mark.parametrize("emitted", ["?owner@Widget@@UAEPAV1@XZ", "?owner@Widget@@W7AEPAV1@XZ",
+                                    "?owner@Widget@@$4PPPPPPPM@A@AEPAV1@XZ",
+                                    "??_GWidget@@UAEPAXI@Z", "??_GWidget@@W7AEPAXI@Z",
+                                    "??_EWidget@@$4PPPPPPPM@A@AEPAXI@Z"])
 def test_current_member_and_adjustor_use_the_same_class_group(project, emitted):
     put(project, "code/widget.cpp", "sub_401000", emitted)
     view, _ = project_view(project)
@@ -62,8 +65,10 @@ def test_new_member_owner_keeps_catalogue_and_seed_alternatives(project):
 
 
 @pytest.mark.parametrize("catalogue,owner", [("sub_401000", None), ("?owner@OldOwner@@QAEPAXXZ", "OldOwner")])
-def test_seed_emitter_class_is_never_promoted_to_current_ownership(project, catalogue, owner):
-    put(project, "hints/attempt.cpp", catalogue, "?method@Scaffold@@QAEPAXXZ")
+@pytest.mark.parametrize("emitted", ["?method@Scaffold@@QAEPAXXZ", "??_GScaffold@@UAEPAXI@Z",
+                                    "??_EScaffold@@$4PPPPPPPM@A@AEPAXI@Z"])
+def test_seed_emitter_class_is_never_promoted_to_current_ownership(project, catalogue, owner, emitted):
+    put(project, "hints/attempt.cpp", catalogue, emitted)
     view, _ = project_view(project)
     group = select_group(view, "class:" + owner if owner else "unassigned")
     entity, = group["entities"]
@@ -93,9 +98,26 @@ def test_grouping_keeps_a_seed_match_obligation_under_the_same_original_identity
     assert seed.read_bytes() == before
 
 
-@pytest.mark.parametrize("symbol", ["?helper@namespace_name@@YAXXZ", "??__EGlobal@@YAXXZ", "??_GWidget@@UAEPAXI@Z"])
+@pytest.mark.parametrize("symbol", ["?helper@namespace_name@@YAXXZ", "??__EGlobal@@YAXXZ",
+                                    "??__FGlobal@@YAXXZ", "??_7Widget@@6B@",
+                                    "??_G@@UAEPAXI@Z", "??_G?$Widget@H@@UAEPAXI@Z"])
 def test_unhandled_special_or_nonmember_names_remain_unassigned(symbol):
     assert class_hint(symbol) is None
+
+
+@pytest.mark.parametrize("emitted", ["??_GInner@Outer@@UAEPAXI@Z",
+                                    "??_EInner@Outer@@$4PPPPPPPM@A@AEPAXI@Z"])
+def test_deleting_entry_preserves_qualified_owner(emitted):
+    assert class_hint(emitted) == "Outer::Inner"
+
+
+def test_deleting_adjustor_does_not_recreate_a_catalogue_thunk_class(project):
+    put(project, "code/widget.cpp", "??1thunk_Widget@@QAE@H@Z", "??_EWidget@@$4PPPPPPPM@A@AEPAXI@Z")
+    view, _ = project_view(project)
+    entity, = select_group(view, "class:Widget")["entities"]
+    assert entity["ownership"] == {"basis": "source_symbol", "owners": ["Widget"],
+                                    "alternative_hints": ["thunk_Widget"], "verified": False}
+    assert not any(group["selector"] == "class:thunk_Widget" for group in view["groups"])
 
 
 def test_unconfigured_symbol_format_does_not_infer_current_or_old_class(project):
@@ -148,6 +170,9 @@ def test_source_derived_task_includes_anonymous_named_member_and_generated_entry
     with (project / "code/widget.cpp").open("a") as output:
         output.write("// ORIGINAL: 0x00401010 sub_401010 0x00401010-0x00401018 FILE\n"
                      "// symbol    ?owner@Widget@@W7AEPAV1@XZ\n")
+    with (project / "code/widget.cpp").open("a") as output:
+        output.write("// ORIGINAL: 0x00401020 sub_401020 0x00401020-0x00401028 FILE\n"
+                     "// symbol    ??_EWidget@@$4PPPPPPPM@A@AEPAXI@Z\n")
     (project / "code/widget.h").write_text("class Widget;\n")
     def git(*args):
         return subprocess.run(["git", "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
@@ -160,6 +185,6 @@ def test_source_derived_task_includes_anonymous_named_member_and_generated_entry
     result = create_task(project, name="widget", group="class:Widget", author="coordinator",
                          intent="Recover the whole owner interface", evidence=("source:code/widget.h",), target="synthetic")
     assert result["task"]["base_revision"] == baseline
-    assert {item["address"] for item in result["task"]["subjects"]} == {0x401000, 0x401010}
+    assert {item["address"] for item in result["task"]["subjects"]} == {0x401000, 0x401010, 0x401020}
     assert result["task"]["editable_files"] == ("code/widget.cpp", "code/widget.h")
     assert result["verification"] == "not_measured"

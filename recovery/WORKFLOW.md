@@ -62,7 +62,11 @@ Run `uv run recover tasks context <task>` and `uv run recover tasks obligations
 <task>`. Give workers the task identity, authorized files, current context and
 outstanding discoveries—not just addresses or a copied global brief.
 
-Class groups follow current source-mapped member symbols when available. Review
+Class groups and layout observations follow current source-mapped member symbols
+when available, including deleting destructors and fixed/vtordisp adjustors. A
+generated entry belongs with its owning class, not a catalogue scaffold class.
+Layout reports retain catalogue ownership hints alongside the current owner;
+neither interpretation adds or removes original-layout requirements. Review
 each entity's ownership basis and alternative hints against the actual declarations
 and callers; a catalogue disagreement is not erased by a new grouping. Seed
 scaffold class names do not establish a current source owner. These derived hints

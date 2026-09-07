@@ -174,6 +174,44 @@ def test_method_hint_exposes_class_before_any_layout_expectation_exists(project)
     assert report["structure_verification"] == "unknown"
 
 
+@pytest.mark.parametrize("emitted", ["?method@Widget@@QAEXXZ", "??_GWidget@@UAEPAXI@Z",
+                                    "??_EWidget@@$4PPPPPPPM@A@AEPAXI@Z"])
+def test_layout_observes_source_owner_without_recreating_catalogue_scaffold(project, emitted):
+    root, task = project
+    path = root / "src/f.cpp"
+    text = path.read_text().replace("?f@@YAXXZ", "??1thunk_Widget@@QAE@H@Z")
+    path.write_text(text.replace("void f()", f"// symbol    {emitted}\nvoid f()"))
+    report = verify_layout(root, task.task_id, compiler=lambda *_: coff(), command_for=lambda _: ("compiler",))
+    assert report["result"] == "unknown"  # a name hint is not an original-layout obligation
+    assert report["members"] == [] and len(report["coverage"]) == 2
+    for row in report["coverage"]:
+        assert row["class_name"] == "Widget" and row["observation"] == "observed"
+        assert row["ownership_hints"] == [{"entity_id": task.subjects[0].entity_id,
+                                           "basis": "source_symbol", "catalogued_owner_hint": "thunk_Widget"}]
+
+
+def test_free_source_binding_retains_catalogue_layout_hint(project):
+    root, task = project
+    path = root / "src/f.cpp"
+    text = path.read_text().replace("?f@@YAXXZ", "?method@Widget@@QAEXXZ")
+    path.write_text(text.replace("void f()", "// symbol    _free_redirect\nvoid f()"))
+    report = verify_layout(root, task.task_id, compiler=lambda *_: coff(), command_for=lambda _: ("compiler",))
+    assert report["result"] == "unknown" and len(report["coverage"]) == 2
+    for row in report["coverage"]:
+        assert row["class_name"] == "Widget"
+        assert row["ownership_hints"][0]["basis"] == "catalogued_symbol"
+
+
+def test_current_owner_hint_cannot_replace_an_original_layout_requirement(project):
+    root, task = prepare(project)
+    path = root / "src/f.cpp"
+    path.write_text(path.read_text().replace("void f()", "// symbol    ??_GOther@@UAEPAXI@Z\nvoid f()"))
+    report = verify_layout(root, task.task_id, compiler=lambda *_: coff(debug_types(8)), command_for=lambda _: ("compiler",))
+    assert report["result"] == "fail"
+    assert all(row["result"] == "fail" for row in report["members"])
+    assert {row["class_name"] for row in report["coverage"]} == {"Widget", "Other"}
+
+
 def test_missing_method_hint_does_not_change_declared_offset_verdict(project):
     root, task = prepare(project)
     path = root / "src/f.cpp"

@@ -58,9 +58,16 @@ def verify_layout(root: Path, task_name: str, *, compiler=None, command_for=None
     for item in source_snapshot(root)["records"]:
         if item["entity_id"] not in selected or item["candidate_kind"] != "source" or item["path"] not in hints:
             continue
-        name = class_hint(item["catalogued_symbol"]) if settings.source.symbol_format == "msvc" else None
+        catalogued = class_hint(item["catalogued_symbol"]) if settings.source.symbol_format == "msvc" else None
+        emitted = class_hint(item["emitted_symbol_hint"]) if settings.source.symbol_format == "msvc" else None
+        # The current source may have replaced a scaffold or corrected an old
+        # catalogue owner. Inspect its actual class, retaining the alternative
+        # as provenance rather than searching for a fictional thunk class.
+        name = emitted or catalogued
         if name:
-            hints[item["path"]].setdefault(name, set()).add(item["entity_id"])
+            hints[item["path"]].setdefault(name, {})[item["entity_id"]] = {
+                "basis": "source_symbol" if emitted else "catalogued_symbol",
+                "catalogued_owner_hint": catalogued}
     required_classes = {item.class_name for item in (*expected, *expected_bases)}
     command_for = command_for if command_for is not None else lambda path: ()
     rows, observations, attempts = [], [], 0
@@ -95,6 +102,8 @@ def verify_layout(root: Path, task_name: str, *, compiler=None, command_for=None
                 observations.append({"class_name": name, "unit": unit, "flags": list(flags),
                                      "basis": "source_expectation" if name in required_classes else "mapped_method_hint",
                                      "hint_entities": sorted(hints[unit].get(name, [])),
+                                     "ownership_hints": [dict(entity_id=entity, **hint)
+                                                         for entity, hint in sorted(hints[unit].get(name, {}).items())],
                                      "compiler_layout": layouts.get(name),
                                      "observation": state, "reason": errors.get(name, "complete compiler definition parsed"),
                                      "next_action": ("verify the mapped class name and ownership; this hint is not a layout obligation"

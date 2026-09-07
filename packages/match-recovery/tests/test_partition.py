@@ -66,7 +66,7 @@ def test_conflicting_sources_are_visible_and_not_automatically_chosen(change):
     ("??1Widget@@QAE@XZ", "Widget"),
     ("?f@Inner@Outer@@QAEXXZ", "Outer::Inner"),
     ("?helper@namespace_name@@YAXXZ", None),
-    ("??_GWidget@@UAEPAXI@Z", None),
+    ("??_GWidget@@UAEPAXI@Z", "Widget"),
     ("??__EGlobal@@YAXXZ", None),
     ("_free_function", None),
 ])
