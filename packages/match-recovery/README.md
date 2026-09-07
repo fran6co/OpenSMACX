@@ -156,6 +156,15 @@ Only `context` and `check` are required in the driver configuration. Add source
 `acceptance`, even a passing scoped check and approved review stop short of
 collection. Review approval is evidence-backed judgment, not a verifier result.
 
+A trusted check may return `next_action: "review_structure"` with an unknown
+result to request independent review before another worker round. The native
+restoration checker does so only when scoped checks, references and current
+declared requirements pass, and the remaining unknown obligations are structural.
+Any configured build must also pass before this early handoff. Reviewer corrections
+feed the worker; approval leaves an explicitly unverified structural checkpoint
+unless the separate migration/acceptance prerequisites are met. This hint grants
+no scope expansion and cannot turn unknown evidence into a passing check.
+
 Worker discoveries have `hypothesis`, `affects` (original entity identities), and
 `evidence`; discoveries affecting other entities pause for a coordinator's scope
 decision rather than disappearing at a function boundary. An empty response is
@@ -431,10 +440,26 @@ remaining requirements. It neither stamps source nor saves a verdict ledger.
 Removed claims remain protected. Bytes and references must use one complete
 compiler trial; known differences with unresolved targets remain unknown, not an
 admissible matching failure. Strict exact agreement can also discharge a historical
-instruction-shape requirement; non-exact shape and full structural obligations
-currently remain unknown. Declared offsets alone do not establish hierarchy or
-lifetime. `candidate` contains the complete scoped diagnostics; `--summary` omits
-those and fingerprint maps while retaining obligation details and refusals.
+instruction-shape requirement; non-exact shape remains unknown.
+
+`structural_requirements` joins current member, base and generated-table checks
+to exact source interpretation identities, retaining previous interpretations as
+explicit review needs. A type/name/offset/original-anchor change cannot borrow a
+different interpretation's measurement. Coverage uses every requested TU/trial;
+missing definitions, missing extents and unsupported checks stay unknown.
+Extra compiled dependency witnesses cannot hide a disagreement either. Read
+`counts`, `trials` and `next_action` to distinguish repair work, missing evidence,
+and historical supersession/retraction decisions. These reports are recomputed
+from source/history and the same fresh candidate check, not another ledger or
+an additional compilation pass.
+
+A measured counterexample to a current declaration marks the corresponding
+structural obligation failed. Passing all declared requirements still leaves
+full structure/lifetime unknown; offsets, types and bounded table contents cannot
+prove the whole original design. Historical measurements are not reused and no
+review disposition is inferred from a passing replacement. `candidate` contains
+the complete scoped diagnostics; `--summary` omits those, fingerprint maps and
+repeated requirement trials while retaining identities, counts and next actions.
 
 This command supplies measurement inputs for a future complete migration gate,
 not an admission report itself. Admission additionally requires fresh independent

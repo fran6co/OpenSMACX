@@ -159,6 +159,11 @@ isolation before launching. The installed CLI flags and synthetic subprocess
 handshake have been checked; a live model recovery pilot is not yet verified.
 
 The driver rebuilds context, checks, calls the worker and rechecks bounded rounds.
+A native `review_structure` next action hands passing scoped evidence to the
+independent reviewer when only broader structural obligations remain unknown;
+the configured build must pass too. This avoids spending more spelling rounds
+on a proof/review gap. Reviewer corrections return to the worker, while approval
+alone leaves an unverified checkpoint, not an admitted migration or accepted task.
 A cross-entity finding pauses the loop for coordinator action; it is not discarded
 as out of scope. Inspect `tasks status`, then use `tasks expand` and `tasks resolve`
 with their revision-checked decision arguments. Incorporation needs source
@@ -211,8 +216,14 @@ Use `uv run recover tasks check-restoration <task> --image <image> --summary`
 to identify the protected requirements still needing work. This recomputes
 measurements, not just the inventory. Missing product bindings and unresolved
 references remain unknown; compiler trials cannot lend each other partial passes.
-Full structural and non-exact instruction-shape obligations are not yet supported
-by this native verifier. A successful offset check does not discharge them.
+Its `structural_requirements` joins fresh member/base/table measurements to exact
+source interpretation identities. Inspect `counts` and `next_action`; omit
+`--summary` for per-TU/trial evidence. No current pass substitutes for a historical
+interpretation requiring review, and no passing TU hides a missing witness.
+A measured current counterexample marks the structural obligation failed without
+reverting source; determine whether the declaration or its interpretation needs
+correction. Passing declared requirements still cannot discharge full hierarchy
+or lifetime, and non-exact instruction-shape proof remains unsupported.
 
 After structure is established, compare a small deck of plausible source forms
 with `uv run recover tasks variants <task> --image <image> --deck <ignored-json>`.

@@ -180,6 +180,8 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
                 output.pop("candidate")
                 output.pop("measurements")
                 output.pop("current")
+                output["structural_requirements"] = [{key: value for key, value in row.items() if key != "trials"}
+                                                      for row in output["structural_requirements"]]
             return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
         if arguments.get("action") == "variants":
             from .variants import measure_variants

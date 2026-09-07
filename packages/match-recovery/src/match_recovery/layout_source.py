@@ -4,11 +4,11 @@ These are evidence-backed interpretations of the original, not observations of
 the current compiler output. A passing offset check is not full class recovery.
 """
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 import re
 
-from match_recovery.model import Origin
+from match_recovery.model import Origin, digest
 from match_recovery.components import relative_path
 from .source_config import SourceConfiguration
 
@@ -30,6 +30,18 @@ class MemberExpectation:
     class_type: str | None = None
     class_pointer_type: str | None = None
 
+    @property
+    def interpretation(self):
+        return {"kind": "direct_member_offset", "class_name": self.class_name,
+                "member": self.member, "offset": self.offset,
+                **({"class_type": self.class_type} if self.class_type is not None else {}),
+                **({"class_pointer_type": self.class_pointer_type} if self.class_pointer_type is not None else {}),
+                "original_evidence": asdict(self.evidence)}
+
+    @property
+    def interpretation_id(self):
+        return digest({"entity_id": self.evidence.entity_id, "value": self.interpretation})
+
 
 @dataclass(frozen=True)
 class BaseExpectation:
@@ -39,6 +51,15 @@ class BaseExpectation:
     evidence: Origin
     path: str
     line: int
+
+    @property
+    def interpretation(self):
+        return {"kind": "nonvirtual_base_offset", "class_name": self.class_name,
+                "base": self.base, "offset": self.offset, "original_evidence": asdict(self.evidence)}
+
+    @property
+    def interpretation_id(self):
+        return digest({"entity_id": self.evidence.entity_id, "value": self.interpretation})
 
 
 def _parse(text, path, pin, prefix, pattern, factory, label, address_space):

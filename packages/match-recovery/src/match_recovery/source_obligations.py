@@ -43,31 +43,13 @@ def task_obligations(root: Path, name: str) -> dict:
     def add_structure(text: str, path: str, evidence: dict, source: SourceConfiguration) -> None:
         if source.is_seed(path):
             return
-        for item in parse_members(text, path, pin, address_space=source.address_space):
-            # The original evidence address anchors the review obligation;
-            # class/member spellings and offsets remain revisable interpretations.
-            add(item.evidence.entity_id, Dimension.STRUCTURE,
-                {**evidence, "line": item.line,
-                 "interpretation": {"kind": "direct_member_offset", "class_name": item.class_name,
-                                    "member": item.member, "offset": item.offset,
-                                    **({"class_type": item.class_type} if item.class_type is not None else {}),
-                                    **({"class_pointer_type": item.class_pointer_type} if item.class_pointer_type is not None else {}),
-                                    "original_evidence": asdict(item.evidence)}})
-
-        for item in parse_generated(text, path, pin, address_space=source.address_space):
-            add(item.evidence.entity_id, Dimension.STRUCTURE,
-                {**evidence, "line": item.line,
-                 "interpretation": {"kind": "compiler_generated_vtable",
-                                    "origin": asdict(item.origin),
-                                    "span": asdict(item.span) if item.span is not None else None,
-                                    "symbol": item.symbol,
-                                    "original_evidence": asdict(item.evidence)}})
-        for item in parse_bases(text, path, pin, address_space=source.address_space):
-            add(item.evidence.entity_id, Dimension.STRUCTURE,
-                {**evidence, "line": item.line,
-                 "interpretation": {"kind": "nonvirtual_base_offset", "class_name": item.class_name,
-                                    "base": item.base, "offset": item.offset,
-                                    "original_evidence": asdict(item.evidence)}})
+        # The original evidence anchor, not a current class/member spelling,
+        # owns the obligation. Share interpretation identities with the fresh
+        # verifiers so a rename/rehome cannot accidentally borrow another proof.
+        for parser in (parse_members, parse_generated, parse_bases):
+            for item in parser(text, path, pin, address_space=source.address_space):
+                add(item.evidence.entity_id, Dimension.STRUCTURE,
+                    {**evidence, "line": item.line, "interpretation": item.interpretation})
 
     for version in versions:
         text = version.content.decode("utf-8", errors="replace")

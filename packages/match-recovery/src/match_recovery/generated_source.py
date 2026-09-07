@@ -1,11 +1,11 @@
 """Source-owned identities for compiler-generated tables, never copied tables."""
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 import re
 
 from match_recovery.components import relative_path
-from match_recovery.model import Origin, Span, require_text
+from match_recovery.model import Origin, Span, digest, require_text
 from .source_config import SourceConfiguration
 
 
@@ -21,6 +21,16 @@ class GeneratedBinding:
     evidence: Origin
     path: str
     line: int
+
+    @property
+    def interpretation(self):
+        return {"kind": "compiler_generated_vtable", "origin": asdict(self.origin),
+                "span": asdict(self.span) if self.span is not None else None,
+                "symbol": self.symbol, "original_evidence": asdict(self.evidence)}
+
+    @property
+    def interpretation_id(self):
+        return digest({"entity_id": self.evidence.entity_id, "value": self.interpretation})
 
     def __post_init__(self):
         require_text(self.symbol, "generated symbol")

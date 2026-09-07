@@ -328,6 +328,18 @@ which remeasures historical obligations as well as running both binary/reference
 and declared-layout checks. Workers receive the joint report under `candidate`,
 with `candidate.checks.binary` and `candidate.checks.layout`, including coverage gaps, even when the other
 dimension fails. A passing body cannot suppress a layout failure or unknown.
+The `structural_requirements` report connects each declared member/base/table
+requirement to its content identity in `context.review_interpretations`. It
+distinguishes current measurements from historical review needs, with per-TU/trial
+coverage and an explicit next action. A measured current counterexample marks its
+structural obligation failed, even when other coverage is missing; those gaps
+remain visible. Passing individual requirements never proves the entire class or
+its lifetime. No old interpretation is silently superseded by a new passing one.
+Summary output keeps identities, counts and next actions but omits repeated trials.
+When scoped checks, references and current declared requirements all pass but
+whole-structure obligations remain unknown, the check requests `review_structure`.
+With a passing configured build, the driver reviews before another worker round.
+Corrections feed the worker; approval alone does not admit or accept the task.
 Both reports must share unchanged source, task decisions, build inputs and image;
 a change between stages refuses the combined result. Unknown evidence keeps the
 combined result unknown. Even two passing scoped checks do not authorize collection.
@@ -557,7 +569,8 @@ are still required; these commands cannot declare a task verified or collect it.
 Decisions use revision-checked, idempotent JSON events. A fresh checkout can resume
 them; deleting private caches loses no scope decision or pending discovery. Actor
 names are attribution within the trusted coordinator API, not authentication for
-untrusted worker processes. Agent isolation and execution are not implemented yet.
+untrusted worker processes. Provider execution uses the native agent bridge;
+worktree/compiler isolation and integration remain coordinator responsibilities.
 
 `tasks context` rebuilds the brief from current source and decisions, including
 seed locations, source homes, pending discoveries and conservative recheck paths.

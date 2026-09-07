@@ -46,6 +46,15 @@ an old claim missing from current source still needs restoration. Unknown
 references or unsupported structural proof are not permitted byte regressions.
 Use `tasks check-restoration` to remeasure; `tasks obligations` only inventories.
 
+Read `structural_requirements` for the exact interpretation behind each member,
+base or generated-table check. `counts` distinguishes passing, failed and missing
+TU/trial witnesses; full output includes their source locations and reasons.
+Follow `next_action`: a measured counterexample requires a source repair or an
+evidence-backed interpretation review, not an automatic revert. Historical rows
+require explicit supersession/retraction and cannot borrow a current pass. Even
+when every declared requirement passes, complete structure/lifetime may remain
+unknown; do not keep changing byte-exact bodies to clear that broader proof gap.
+
 In `candidate.checks.binary.generated_tables`, inspect `diagnostic.entries` for
 missing overrides, unresolved source targets and linker-dependent weak symbols.
 Reverse source-name correlations are hints, not bindings. Matching observed words

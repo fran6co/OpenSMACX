@@ -13,6 +13,15 @@ identity. Reject a superficially exact body that hides missing structure. Treat
 compiler observations as evidence about the candidate, not proof of the original
 design. Require separate evidence for accepted original interpretations.
 
+Use `structural_requirements` to distinguish measured declaration failures,
+coverage gaps and historical interpretations needing disposition. Their content
+identities match `context.review_interpretations`; source rehoming alone does not
+change them. A passing current requirement does not supersede its predecessor,
+and a list of passing offsets/types/tables does not establish complete lifetime.
+The driver may hand off such a `review_structure` state before spending another
+worker round. Return specific source corrections when supported, or identify the
+remaining verification work; approval must not relabel an unknown check as pass.
+
 An intermediate byte regression is not itself grounds to reject a justified
 structural change. Explain what supports the migration, its affected entities and
 remaining restoration work. Unknown checks do not become passing checks because

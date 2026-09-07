@@ -105,7 +105,8 @@ def verify_layout(root: Path, task_name: str, *, compiler=None, command_for=None
                                                      if state == "unmeasurable" else None)})
             for item in expected:
                 checked = check_member(item, layouts.get(item.class_name))
-                rows.append({"expectation": asdict(item), "unit": unit, "flags": list(flags),
+                rows.append({"expectation": asdict(item), "interpretation_id": item.interpretation_id,
+                             "unit": unit, "flags": list(flags),
                              **checked, "reason": errors.get(item.class_name, checked["reason"])})
             for item in expected_bases:
                 layout = layouts.get(item.class_name)
@@ -113,7 +114,8 @@ def verify_layout(root: Path, task_name: str, *, compiler=None, command_for=None
                 result = (Result.UNKNOWN if layout is None or len(matches) > 1 else
                           Result.PASS if len(matches) == 1 and not matches[0]["virtual"] and matches[0]["offset"] == item.offset
                           else Result.FAIL)
-                base_rows.append({"expectation": asdict(item), "unit": unit, "flags": list(flags),
+                base_rows.append({"expectation": asdict(item), "interpretation_id": item.interpretation_id,
+                                  "unit": unit, "flags": list(flags),
                                   "observed_bases": matches, "result": result,
                                   "reason": errors.get(item.class_name,
                                                        "ambiguous named base" if len(matches) > 1 else
@@ -129,6 +131,7 @@ def verify_layout(root: Path, task_name: str, *, compiler=None, command_for=None
               else Result.FAIL if any(row["result"] == Result.FAIL for row in all_rows) else Result.PASS)
     return {"task_id": task_name, "check": "declared_member_and_base_offsets", "result": result,
             "members": rows, "bases": base_rows, "coverage": observations,
+            "translation_units": units, "flag_sets": [list(flags) for flags in settings.flag_sets],
             "counts": {state.value: sum(row["result"] == state for row in all_rows) for state in Result},
             "compile_attempts": attempts, "input_fingerprint": digest(before),
             "scope_complete": False, "structure_verification": Result.UNKNOWN, "persisted": False,

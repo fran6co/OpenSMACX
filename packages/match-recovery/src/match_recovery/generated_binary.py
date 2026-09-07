@@ -148,6 +148,8 @@ def check_generated(bindings, objects, image, external_targets):
             source_symbols[address].append(symbol)
     for binding, unit, obj, section in emitted:
         row = {"symbol": binding.symbol, "unit": unit, "address": f"0x{binding.origin.address:08X}",
+               "interpretation_id": binding.interpretation_id,
+               "source": {"path": binding.path, "line": binding.line},
                "definition": Result.PASS, "content": Result.UNKNOWN,
                "diagnostic": _entries(binding, obj, section, image, external, source_symbols)}
         if binding.span is None:

@@ -16,6 +16,7 @@ from .migration import check_obligations
 from .migration_protocol import extend_inventory
 from .model import Dimension, Measurement, Result, digest
 from .source_obligations import task_obligations
+from .structural_requirements import check_requirements, structural_outcome
 from .tasks import TaskStore
 
 
@@ -91,6 +92,7 @@ def measure_restoration(root: Path, task_name: str, image: Path, *, compiler=Non
     if inventory != after_inventory or before != snapshot(after_inventory):
         raise ValueError("source, history, policy or task changed during restoration measurement")
     fingerprint = digest({"inputs": before, "candidate": candidate["input_fingerprint"]})
+    requirements = check_requirements(inventory, candidate)
     rows = candidate["checks"]["binary"].get("functions", [])
     by_entity = {}
     for row in rows:
@@ -108,30 +110,43 @@ def measure_restoration(root: Path, task_name: str, image: Path, *, compiler=Non
         elif obligation.dimension == Dimension.INSTRUCTION_SHAPE and exact == Result.PASS:
             result = Result.PASS
             evidence = "strict byte/reference agreement also proves instruction shape; " + evidence
+        elif obligation.dimension == Dimension.STRUCTURE:
+            result, evidence = structural_outcome(row for row in requirements if row["entity_id"] == obligation.entity_id)
         else:
             result = Result.UNKNOWN
-            evidence = ("declared offsets/generated tables do not prove complete structure or lifetime"
-                        if obligation.dimension == Dimension.STRUCTURE else
-                        "no native verifier for this obligation; byte mismatch is not a shape/runtime failure")
+            evidence = "no native verifier for this obligation; byte mismatch is not a shape/runtime failure"
         current[key] = digest({"measurement": fingerprint, "obligation": key})
         measurements.append(Measurement(key, current[key], result, evidence))
         details.append({"obligation_id": key, "entity_id": obligation.entity_id,
                         "dimension": obligation.dimension, "result": result, "reason": evidence,
                         "references": references,
+                        **({"requirement_ids": [row["interpretation_id"] for row in requirements
+                                               if row["entity_id"] == obligation.entity_id]}
+                           if obligation.dimension == Dimension.STRUCTURE else {}),
                         **{name: by_entity[obligation.entity_id][name] for name in ("address", "symbol", "unit")
                            if name in by_entity.get(obligation.entity_id, {})}})
     gate = check_obligations(tuple(protected.values()), measurements, current)
     restoration = (Result.UNKNOWN if gate.unknown else Result.FAIL if gate.failed else Result.PASS)
     references = _all(value[1] for value in outcomes.values())
+    unknown_dimensions = {row["dimension"] for row in details if row["result"] == Result.UNKNOWN}
+    # More spelling edits cannot by themselves supply independent structural
+    # review. Hand off only after the actual scoped measurements agree; missing
+    # declaration witnesses or byte/reference failures still require recovery.
+    review_structure = (candidate["result"] == Result.PASS and references == Result.PASS
+                        and not gate.failed and unknown_dimensions == {Dimension.STRUCTURE}
+                        and _all(row["result"] for row in requirements if row["current"]) == Result.PASS)
     return {"task_id": task_name, "check": "scoped_recovery_and_restoration",
             "result": _all((candidate["result"], restoration, references)),
+            "next_action": "review_structure" if review_structure else "recover",
             "candidate": candidate, "restoration": restoration,
             "references": references, "protected": [asdict(item) | {"obligation_id": key}
                                                        for key, item in sorted(protected.items())],
             "measurements": [asdict(item) for item in measurements], "current": current,
             "details": details, "counts": dict(Counter(item.result for item in measurements)),
+            "structural_requirements": requirements,
             "unrestored": asdict(gate), "input_fingerprint": fingerprint,
             "scope_complete": False, "ready_for_collection": False, "persisted": False,
             "limitations": ["fresh scoped obligation measurements, not migration admission or full acceptance",
-                            "structure and non-exact instruction-shape obligations remain unknown",
+                            "declared structural counterexamples are failures, but passing requirements do not prove complete structure/lifetime",
+                            "non-exact instruction-shape obligations remain unknown",
                             "no full build, outside-scope preservation or runtime verification"]}

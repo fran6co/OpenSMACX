@@ -275,12 +275,14 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                 result = combined
                 if changes(round_state, working_state(root)):
                     raise ValueError("source changed between recovery and build checking")
-            if result == "pass":
+            review_requested = (result == "unknown" and check.get("next_action") == "review_structure"
+                                and (build_command is None or check["build_check"]["result"] == "pass"))
+            if result == "pass" or review_requested:
                 reviewed = review_candidate(context, check, round_index)
                 if reviewed is not None:
                     return reviewed
             if round_index == iterations:
-                if result != "pass" and reviewer_command is not None:
+                if result != "pass" and not review_requested and reviewer_command is not None:
                     reviewed = review_candidate(context, check, round_index)
                     if reviewed is not None:
                         return reviewed
