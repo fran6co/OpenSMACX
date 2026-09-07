@@ -265,6 +265,29 @@ progress to stderr, naming the TU, trial index/total and elapsed time. The Pytho
 the trial's flags. Progress is transient observation, not a passing layout result;
 it does not change the final JSON, coverage or input-freshness checks.
 
+For a missing definition, `recover check-layout --unit code/owner.cc
+--witness-missing` or `recover tasks check-layout <task> --witness-missing`
+can request controlled same-TU witnesses. This is opt-in because it adds compiles:
+one unchanged overlay per affected TU/trial, then a pointer-parameter probe and
+a changed-body control per missing class. The library uses the configured
+compiler's existing overlay interface; no project-specific checker is required.
+Probes append a uniquely named C++ function in a private copy, without includes,
+class definitions, instantiation or product-source edits. A visible declaration
+can then appear in standalone debug information even when ordinary compilation
+omits it. `sizeof` alone is not a reliable emission trigger.
+
+Coverage labels these definitions `witnessed`; member/base rows retain
+`layout_basis: same_tu_probe`, distinct from `product_object`. Every definition
+still has to satisfy the original source expectation, and observed counterexamples
+or malformed definitions are never replaced by probes. An unchanged replica must
+agree with product compilation; each probe's deliberately different body must be
+observed without changing its class layout. Failed controls, invisible/incomplete
+classes, macro-substituted names and unsupported overlays remain unknown. This
+observes the declaration visible at the end of that TU, not product-code
+preservation, ABI independence, lifetime or full structure. It cannot waive
+omitted TUs or import a layout from a different compilation. The ordinary joint
+check/driver does not yet request these supplemental witnesses automatically.
+
 Input validation still re-enumerates configured roots, resolves every input path
 and hashes all file contents, including checker code. Path handling avoids
 repeated ancestor-object construction; it does not cache timestamps, resolved

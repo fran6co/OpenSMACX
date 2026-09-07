@@ -22,13 +22,13 @@ from .records import read_json
 from .source_inventory import assert_snapshot_current, image_pin, source_snapshot
 
 
-def check_layout(root: Path, *, units=None, compiler=None, command_for=None, progress=None) -> dict:
+def check_layout(root: Path, *, units=None, compiler=None, command_for=None, progress=None, witness_missing=False) -> dict:
     root = root.resolve()
     settings = Measurement.read(root)
     if units is not None and (not isinstance(units, (list, tuple)) or not units
             or any(not isinstance(unit, str) or not unit for unit in units) or len(set(units)) != len(units)):
         raise ValueError("layout selection requires unique nonempty translation-unit paths")
-    metadata = {"units": units}
+    metadata = {"units": units, "witness_missing": witness_missing}
     before = settings.snapshot(root, metadata)
     snapshot = source_snapshot(root)
     pin = image_pin(root)
@@ -68,7 +68,7 @@ def check_layout(root: Path, *, units=None, compiler=None, command_for=None, pro
             if progress:
                 progress({**event, "event": "trial_start"})
             unchanged()
-            layouts, unavailable, missing = {}, {}, set()
+            layouts, unavailable, missing, witnesses = {}, {}, set(), {}
             try:
                 command = tuple(command_for(root / unit))
                 if any(word.lower().startswith(("/yu", "/yc", "/fp", "-yu", "-yc", "-fp", "@"))
@@ -90,16 +90,29 @@ def check_layout(root: Path, *, units=None, compiler=None, command_for=None, pro
                         unavailable[name] = str(error)
                     except ValueError as error:
                         unavailable[name] = str(error)
+                if witness_missing and missing:
+                    from .layout_witness import missing_layout_witnesses
+                    probed = missing_layout_witnesses(root, unit, sorted(missing), obj, compiler,
+                                                     command, flags + settings.layout_flags)
+                    attempts += probed["compile_attempts"]
+                    for witness in probed["witnesses"]:
+                        name = witness["class_name"]
+                        witnesses[name] = witness
+                        unavailable[name] = witness["reason"]
+                        if witness["result"] == Result.PASS:
+                            layouts[name] = witness["compiler_layout"]
             except (OSError, ValueError) as error:
                 unavailable = {name: str(error) for name in classes}
             unchanged()
             for name in classes:
-                observation = ("observed" if name in layouts else
+                observation = ("witnessed" if name in layouts and name in missing else
+                               "observed" if name in layouts else
                                "not_emitted" if name in missing else "unmeasurable")
                 observations.append({"class_name": name, "unit": unit, "flags": list(flags),
                                      "observation": observation,
+                                     **({"witness": witnesses[name]} if name in witnesses else {}),
                                      "reason": unavailable.get(name, "complete compiler definition parsed")})
-                if observation == "unmeasurable":
+                if observation == "unmeasurable" or (name in witnesses and witnesses[name]["result"] != Result.PASS):
                     errors.append(observations[-1])
             for kind, items, compare in (("member", members, check_member), ("base", bases, check_base)):
                 for item in items:
@@ -108,6 +121,7 @@ def check_layout(root: Path, *, units=None, compiler=None, command_for=None, pro
                     rows.append({"kind": kind, "expectation": asdict(item),
                                  "interpretation_id": item.interpretation_id,
                                  "unit": unit, "flags": list(flags),
+                                 "layout_basis": "same_tu_probe" if item.class_name in witnesses else "product_object",
                                  **compare(item, layouts[item.class_name])})
             if progress:
                 progress({**event, "event": "trial_finish", "elapsed_seconds": monotonic() - started})
@@ -137,6 +151,8 @@ def check_layout(root: Path, *, units=None, compiler=None, command_for=None, pro
             "coverage": observations, "errors": errors, "translation_units": selected,
             "omitted_units": omitted, "unsupported_build_inputs": unsupported, "external_build_inputs": external,
             "compile_attempts": attempts, "selection": units,
+            "witness_missing": witness_missing,
+            "witnessed_definitions": sum(row["observation"] == "witnessed" for row in observations),
             "input_fingerprint": digest({"inputs": before, "database": database_bytes.hex()}),
             "persisted": False, "ready_for_collection": False, "structure_verification": Result.UNKNOWN,
             "limitations": ["checks explicit source member/base interpretations, not legacy offset comments or self-naming fields",
@@ -144,4 +160,5 @@ def check_layout(root: Path, *, units=None, compiler=None, command_for=None, pro
                             "each expectation needs a compiler witness in every configured flag set",
                             "original expectations are source evidence, not re-derived from image bytes",
                             "complete types, virtual-base placement, hierarchy, lifetime and final-link selection remain unproved",
-                            "selected-unit diagnostics cannot waive omitted or unsupported build inputs"]}
+                            "selected-unit diagnostics cannot waive omitted or unsupported build inputs",
+                            "optional same-TU probes witness visible declarations only, not product preservation or ABI independence"]}

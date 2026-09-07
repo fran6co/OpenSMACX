@@ -267,13 +267,17 @@ def test_coverage_distinguishes_missing_types_without_waiving_checks(project, ot
 
 
 @pytest.mark.parametrize("result, code", [("pass", 0), ("fail", 1), ("unknown", 3)])
-def test_layout_summary_preserves_result_and_coverage(monkeypatch, capsys, result, code):
+@pytest.mark.parametrize("witness", [False, True])
+def test_layout_summary_preserves_result_and_coverage(monkeypatch, capsys, result, code, witness):
     import json
 
-    monkeypatch.setattr("match_recovery.application_layout.verify_layout",
-                        lambda *_: {"result": result, "members": ["verbose observations"],
-                                    "coverage": ["required coverage"], "structure_verification": "unknown"})
-    assert main(["tasks", "check-layout", "fixture", "--summary"]) == code
+    def checker(*_, witness_missing):
+        assert witness_missing is witness
+        return {"result": result, "members": ["verbose observations"],
+                "coverage": ["required coverage"], "structure_verification": "unknown"}
+    monkeypatch.setattr("match_recovery.application_layout.verify_layout", checker)
+    assert main(["tasks", "check-layout", "fixture", "--summary"] +
+                (["--witness-missing"] if witness else [])) == code
     report = json.loads(capsys.readouterr().out)
     assert report["coverage"] == ["required coverage"] and "members" not in report
     assert report["structure_verification"] == "unknown"

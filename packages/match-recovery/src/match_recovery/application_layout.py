@@ -51,13 +51,14 @@ def check_base(item, layout):
                        "declared nonvirtual base and offset compared")}
 
 
-def verify_layout(root: Path, task_name: str, *, compiler=None, command_for=None) -> dict:
+def verify_layout(root: Path, task_name: str, *, compiler=None, command_for=None, witness_missing=False) -> dict:
     root = root.resolve()
     store = TaskStore(root)
     task, decisions = store.read(task_name), store.decisions(task_name)
     settings = Measurement.read(root)
     selected, files = store._scope(task, decisions)
-    before = settings.snapshot(root, {})
+    metadata = {"witness_missing": witness_missing}
+    before = settings.snapshot(root, metadata)
     pin = image_pin(root)
     if any(subject.image_sha256 != pin or subject.address_space != "pe:va" for subject in task.subjects):
         raise ValueError("task refers to another original image")
@@ -90,7 +91,7 @@ def verify_layout(root: Path, task_name: str, *, compiler=None, command_for=None
         if not classes:
             continue
         for flags in settings.flag_sets:
-            layouts, errors, missing = {}, {}, set()
+            layouts, errors, missing, witnesses = {}, {}, set(), {}
             try:
                 command = tuple(command_for(root / unit))
                 if any(word.lower().startswith(("/yu", "/yc", "/fp", "-yu", "-yc", "-fp", "@"))
@@ -109,16 +110,29 @@ def verify_layout(root: Path, task_name: str, *, compiler=None, command_for=None
                         missing.add(name)
                     except ValueError as error:
                         errors[name] = str(error)
+                if witness_missing and missing & required_classes:
+                    from .layout_witness import missing_layout_witnesses
+                    probed = missing_layout_witnesses(root, unit, sorted(missing & required_classes),
+                                                     obj, compiler, command, flags + settings.layout_flags)
+                    attempts += probed["compile_attempts"]
+                    for witness in probed["witnesses"]:
+                        name = witness["class_name"]
+                        witnesses[name] = witness
+                        errors[name] = witness["reason"]
+                        if witness["result"] == Result.PASS:
+                            layouts[name] = witness["compiler_layout"]
             except (OSError, ValueError) as error:
                 errors = {name: str(error) for name in classes}
             for name in classes:
-                state = "not_emitted" if name in missing else "observed" if name in layouts else "unmeasurable"
+                state = ("witnessed" if name in missing and name in layouts else
+                         "not_emitted" if name in missing else "observed" if name in layouts else "unmeasurable")
                 observations.append({"class_name": name, "unit": unit, "flags": list(flags),
                                      "basis": "source_expectation" if name in required_classes else "mapped_method_hint",
                                      "hint_entities": sorted(hints[unit].get(name, [])),
                                      "ownership_hints": [dict(entity_id=entity, **hint)
                                                          for entity, hint in sorted(hints[unit].get(name, {}).items())],
                                      "compiler_layout": layouts.get(name),
+                                     **({"witness": witnesses[name]} if name in witnesses else {}),
                                      "observation": state, "reason": errors.get(name, "complete compiler definition parsed"),
                                      "next_action": ("verify the mapped class name and ownership; this hint is not a layout obligation"
                                                      if state == "not_emitted" and name not in required_classes else
@@ -130,13 +144,15 @@ def verify_layout(root: Path, task_name: str, *, compiler=None, command_for=None
                 checked = check_member(item, layouts.get(item.class_name))
                 rows.append({"expectation": asdict(item), "interpretation_id": item.interpretation_id,
                              "unit": unit, "flags": list(flags),
+                             "layout_basis": "same_tu_probe" if item.class_name in witnesses and item.class_name in layouts else "product_object",
                              **checked, "reason": errors.get(item.class_name, checked["reason"])})
             for item in expected_bases:
                 checked = check_base(item, layouts.get(item.class_name))
                 base_rows.append({"expectation": asdict(item), "interpretation_id": item.interpretation_id,
                                   "unit": unit, "flags": list(flags),
+                                  "layout_basis": "same_tu_probe" if item.class_name in witnesses and item.class_name in layouts else "product_object",
                                   **checked, "reason": errors.get(item.class_name, checked["reason"])})
-    if (before != settings.snapshot(root, {})
+    if (before != settings.snapshot(root, metadata)
             or task != store.read(task_name) or decisions != store.decisions(task_name)):
         raise ValueError("source, build inputs or task changed during layout verification")
     # Every requested TU/configuration must agree; never select a passing layout
@@ -149,8 +165,11 @@ def verify_layout(root: Path, task_name: str, *, compiler=None, command_for=None
             "translation_units": units, "flag_sets": [list(flags) for flags in settings.flag_sets],
             "counts": {state.value: sum(row["result"] == state for row in all_rows) for state in Result},
             "compile_attempts": attempts, "input_fingerprint": digest(before),
+            "witness_missing": witness_missing,
+            "witnessed_definitions": sum(row["observation"] == "witnessed" for row in observations),
             "scope_complete": False, "structure_verification": Result.UNKNOWN, "persisted": False,
             "limitations": ["source expectations are original-layout interpretations, not freshly re-derived image evidence",
                             "declared direct members, unqualified class values/pointer targets and nonvirtual bases only; complete hierarchy, types, extent and lifetime remain unproved",
                             "method-derived class hints supply current-code observations, never original-layout expectations",
-                            "all scoped product TUs are checked conservatively; missing debug definitions are unknown"]}
+                            "all scoped product TUs are checked conservatively; missing debug definitions are unknown",
+                            "optional same-TU probes witness visible declarations only, not product preservation or ABI independence"]}

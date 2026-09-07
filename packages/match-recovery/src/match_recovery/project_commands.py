@@ -36,6 +36,7 @@ def register(commands):
     layout = commands.add_parser("check-layout", help="Freshly check source-owned layout expectations across product TUs; not full structure proof")
     layout.add_argument("--root", type=Path, default=Path.cwd())
     layout.add_argument("--unit", dest="units", action="append", help="Exact TU diagnostic; omitted product units keep coverage incomplete")
+    layout.add_argument("--witness-missing", action="store_true", help="Probe missing class debug definitions in controlled private TU overlays; extra compiles")
     layout.add_argument("--summary", action="store_true")
     symbols = commands.add_parser("check-symbols", help="Freshly verify source-mapped function names through configured compilation")
     symbols.add_argument("--root", type=Path, default=Path.cwd())
@@ -107,6 +108,7 @@ def register(commands):
     layout = task_actions.add_parser("check-layout", help="Check declared member offsets and nonvirtual bases; not full structural verification")
     layout.add_argument("task")
     layout.add_argument("--root", type=Path, default=Path.cwd())
+    layout.add_argument("--witness-missing", action="store_true", help="Probe missing class debug definitions in controlled private TU overlays; extra compiles")
     layout.add_argument("--summary", action="store_true", help="Keep coverage and verdicts, omit repeated per-member observations")
     task_binary = task_actions.add_parser("check-binary", help="Compile task TUs and check bounded code/references; not an admission gate")
     task_binary.add_argument("task")
@@ -220,6 +222,7 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
     if arguments.get("command") == "check-layout":
         from .layout_check import check_layout
         output = check_layout(root, units=arguments.get("units"),
+                              witness_missing=arguments.get("witness_missing", False),
                               progress=lambda event: _progress({"check": "layout", **event}))
         if arguments.get("summary"):
             output["expectations"] = [row for row in output["expectations"] if row["result"] != "pass"]
@@ -340,7 +343,7 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
                              (output["checks"]["layout"], ("members", "bases")))
             elif action == "check-layout":
                 from .application_layout import verify_layout
-                output = verify_layout(root, arguments["task"])
+                output = verify_layout(root, arguments["task"], witness_missing=arguments.get("witness_missing", False))
                 summaries = ((output, ("members", "bases")),)
             else:
                 from .application_binary import verify_task
