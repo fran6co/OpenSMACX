@@ -1,0 +1,24 @@
+{
+  "event_id": "5ea72d41e50f65c427e160c4d519139bc5ccd2db6a6c9a1cfb45044a3d3aa89a",
+  "payload": {
+    "affects": [
+      "entity-24441e9fac91ee84d4be7ee8cb88b0a639d6549b7f2adb46f0ad4a1032e4d2a4",
+      "entity-53ac193c0311194ddd7f52aee5c1e0923230775019f4bc89e156620236465164"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "frame-defaults-window-list-refresh",
+    "evidence": [
+      "original:0x004559F5 calls set_def_nc_sprites with one pointer; 0x004559FD immediately calls 0x005D6F50 without setting up a receiver",
+      "source:src/unrecovered/005d6f50.cpp:walks the original WinZOrder list, dispatches slot 61 and reloads the listed window before copying frame defaults",
+      "source:src/win.h:slot 61 is the actual get_graphic_win query; WinZOrderArray and WinZOrderCount already have source-owned bindings",
+      "source:src/pending_bodies.cpp:load_interface still forwards to 0x00455610; its graphics-loading and sprite-lifetime closure is not recovered by the publisher alone"
+    ],
+    "hypothesis": "The publisher and per-window refresh are now native owners, but load_interface still forwards to the old executable and its following global refresh at 0x005D6F50 is a seed. Recover that list-wide operation through WinZOrder storage and the real get_graphic_win virtual query; preserve the original post-query list reload and establish the inlined refresh/calling convention rather than carrying over the seed vtable shim.",
+    "kind": "discovery"
+  },
+  "previous_event": "ea2f0917f60282f9fa102c35f92d9f6810e9a0d361d12391f8decd5f0b9bd04e",
+  "request_id": "frame-defaults-window-list-refresh",
+  "schema_version": 1,
+  "sequence": 32,
+  "stream": "task:infowin-ownership"
+}

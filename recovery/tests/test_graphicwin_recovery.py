@@ -88,7 +88,7 @@ def test_frame_sprites_are_typed_pointers_in_the_existing_window_layout(compiled
     _, _, objects = compiled
     items = [item for item in read_members(ROOT, image_pin(ROOT))
              if item.class_name == "GraphicWin" and item.class_pointer_type == "Sprite"]
-    assert len(items) == 12
+    assert len(items) == 15
     for obj in objects:
         layout = class_layout(obj, "GraphicWin")
         assert layout["size"] == 0xA14
@@ -116,6 +116,76 @@ def test_frame_defaults_have_real_zero_initialized_storage(compiled):
                                    if item[0].start <= binding.origin.address < item[0].end)
         assert region.start + raw_size <= binding.origin.address
         assert binding.origin.address + 11 * 4 <= region.end
+
+
+def test_input_and_process_default_records_have_distinct_verified_layouts(compiled):
+    _, _, objects = compiled
+    members = read_members(ROOT, image_pin(ROOT))
+    for name in ("NCSprites", "GraphicWinFrameDefaults"):
+        items = [item for item in members if item.class_name == name]
+        assert len(items) == 11
+        for obj in objects:
+            layout = class_layout(obj, name)
+            assert layout["size"] == 44
+            assert all(check_member(item, layout)["result"] == "pass" for item in items)
+
+
+def test_default_publisher_and_refresh_match_real_data_targets_and_reject_swapped_fields(compiled):
+    compiler, settings, objects = compiled
+    path = ROOT / ".opensmacx/game/terranx_original.exe"
+    if not path.is_file():
+        pytest.skip("pinned original image is required")
+    pin = image_pin(ROOT)
+    image = PeImage(path.read_bytes(), pin)
+    source = ROOT / "src/graphicwin.cpp"
+    records = [r for r in read_file(source) if r.address in (0x005D6A50, 0x005D6EC0)]
+    assert len(records) == 2
+    bindings = [FunctionBinding(Origin(pin, "pe:va", r.address),
+                                tuple(Span(start, end) for start, end in r.image_spans),
+                                r.symbol or r.name, "src/graphicwin.cpp") for r in records]
+    object_bindings = read_objects(ROOT, pin)
+
+    def verify(obj):
+        units = {"src/graphicwin.cpp": obj}
+        targets, _ = object_targets(object_bindings, units)
+        return check_objects(bindings, units, image, external_targets=targets)
+
+    passing = [flags for flags, obj in zip(settings.flag_sets, objects)
+               if all(row["result"] == "pass" for row in verify(obj))]
+    assert passing  # A complete trial, not mixed partial proofs across flags.
+
+    header = ROOT / "src/graphicwin.h"
+    before = header.read_bytes()
+    start = before.index(b"struct GraphicWinFrameDefaults {")
+    end = before.index(b"};", start) + 2
+    record = before[start:end]
+    swapped = record.replace(b"Sprite *bottom_left;", b"Sprite *swap_control;")
+    swapped = swapped.replace(b"Sprite *top_right;", b"Sprite *bottom_left;")
+    swapped = swapped.replace(b"Sprite *swap_control;", b"Sprite *top_right;")
+    damaged = Coff(compiler.overlay(source, {"src/graphicwin.h": before[:start] + swapped + before[end:]},
+                                    (), passing[0] + settings.layout_flags))
+    # The swapped record still has eleven pointers and compiles. Only the
+    # relocated data-field addresses change; a relocation-masked byte check
+    # cannot establish that the publisher and consumers reach the right slots.
+    control = objects[settings.flag_sets.index(passing[0])]
+    for binding, row in zip(bindings, verify(damaged)):
+        original_code, relocations, _ = control.subject(control.function(binding.symbol))
+        damaged_code, _, _ = damaged.subject(damaged.function(binding.symbol))
+        masked = {offset for relocation in relocations
+                  for offset in range(relocation.offset, relocation.offset + 4)}
+        assert len(original_code) == len(damaged_code)
+        assert original_code != damaged_code
+        assert all(left == right for offset, (left, right) in enumerate(zip(original_code, damaged_code))
+                   if offset not in masked)
+        assert row["boundary"] == "pass"
+        # The strict checker applies the bindings before comparing bytes.
+        assert row["bytes"] == row["references"] == row["result"] == "fail"
+    layout = class_layout(damaged, "GraphicWinFrameDefaults")
+    item, = (item for item in read_members(ROOT, pin)
+              if item.class_name == "GraphicWinFrameDefaults" and item.member == "top_right")
+    assert layout["size"] == 44
+    assert check_member(item, layout)["result"] == "fail"
+    assert header.read_bytes() == before
 
 
 def test_frame_overlay_uses_real_renderers_and_screen_coordinate_imports(compiled):

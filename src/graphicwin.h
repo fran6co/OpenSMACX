@@ -21,6 +21,61 @@
 #include "buffer.h"
 #include "win.h"
 
+// The graphics loader at 0x004559A4 supplies eleven Sprite pointers.
+// Input and process-default layouts differ; the publisher at 0x005D6A50
+// establishes this permutation. Neither record owns the Sprite lifetimes.
+class Sprite;
+struct NCSprites {
+    // RECOVERY_MEMBER: v3 NCSprites top_left Sprite* 0x0 0x005D6A50
+    Sprite *top_left;
+    // RECOVERY_MEMBER: v3 NCSprites top_right Sprite* 0x4 0x005D6A50
+    Sprite *top_right;
+    // RECOVERY_MEMBER: v3 NCSprites bottom_left Sprite* 0x8 0x005D6A50
+    Sprite *bottom_left;
+    // RECOVERY_MEMBER: v3 NCSprites bottom_right Sprite* 0xC 0x005D6A50
+    Sprite *bottom_right;
+    // RECOVERY_MEMBER: v3 NCSprites top Sprite* 0x10 0x005D6A50
+    Sprite *top;
+    // RECOVERY_MEMBER: v3 NCSprites left Sprite* 0x14 0x005D6A50
+    Sprite *left;
+    // RECOVERY_MEMBER: v3 NCSprites right Sprite* 0x18 0x005D6A50
+    Sprite *right;
+    // RECOVERY_MEMBER: v3 NCSprites bottom Sprite* 0x1C 0x005D6A50
+    Sprite *bottom;
+    // RECOVERY_MEMBER: v3 NCSprites noncaption_middle Sprite* 0x20 0x005D6A50
+    Sprite *noncaption_middle;
+    // RECOVERY_MEMBER: v3 NCSprites noncaption_left Sprite* 0x24 0x005D6A50
+    Sprite *noncaption_left;
+    // RECOVERY_MEMBER: v3 NCSprites noncaption_right Sprite* 0x28 0x005D6A50
+    Sprite *noncaption_right;
+};
+
+struct GraphicWinFrameDefaults {
+    // RECOVERY_MEMBER: v3 GraphicWinFrameDefaults top_left Sprite* 0x0 0x005D6A50
+    Sprite *top_left;
+    // RECOVERY_MEMBER: v3 GraphicWinFrameDefaults bottom_left Sprite* 0x4 0x005D6A50
+    Sprite *bottom_left;
+    // RECOVERY_MEMBER: v3 GraphicWinFrameDefaults top_right Sprite* 0x8 0x005D6A50
+    Sprite *top_right;
+    // RECOVERY_MEMBER: v3 GraphicWinFrameDefaults bottom_right Sprite* 0xC 0x005D6A50
+    Sprite *bottom_right;
+    // RECOVERY_MEMBER: v3 GraphicWinFrameDefaults top Sprite* 0x10 0x005D6A50
+    Sprite *top;
+    // RECOVERY_MEMBER: v3 GraphicWinFrameDefaults bottom Sprite* 0x14 0x005D6A50
+    Sprite *bottom;
+    // RECOVERY_MEMBER: v3 GraphicWinFrameDefaults left Sprite* 0x18 0x005D6A50
+    Sprite *left;
+    // RECOVERY_MEMBER: v3 GraphicWinFrameDefaults right Sprite* 0x1C 0x005D6A50
+    Sprite *right;
+    // RECOVERY_MEMBER: v3 GraphicWinFrameDefaults noncaption_right Sprite* 0x20 0x005D6A50
+    Sprite *noncaption_right;
+    // RECOVERY_MEMBER: v3 GraphicWinFrameDefaults noncaption_left Sprite* 0x24 0x005D6A50
+    Sprite *noncaption_left;
+    // RECOVERY_MEMBER: v3 GraphicWinFrameDefaults noncaption_middle Sprite* 0x28 0x005D6A50
+    Sprite *noncaption_middle;
+};
+
+
  /*
   * GraphicWin class
   */
@@ -45,6 +100,9 @@ class GraphicWin : public Win, public Buffer {
  public:
   // Paint frame sprites or the owned-buffer overlay, preserving the clip.
   void overlay_nonclient(RECT *area);
+  // Original caller supplies one explicit pointer and no receiver.
+  static void __cdecl set_def_nc_sprites(NCSprites *sprites);
+  void load_nc_sprites_from_defs();
   friend class Scroll;
   // BaseButton's colour setters drive this buffer directly.
   friend class BaseButton;
@@ -161,9 +219,13 @@ class GraphicWin : public Win, public Buffer {
   Sprite *frame_bottom_;
   // RECOVERY_MEMBER: v3 GraphicWin frame_top_ Sprite* 0x9E8 0x005D6AC0
   Sprite *frame_top_;
-  uint32_t field_9EC_;
-  uint32_t field_9F0_;
-  uint32_t field_9F4_;
+  // The loader supplies the existing NONCAP_LEFT/RIGHT/MID Sprite objects.
+  // RECOVERY_MEMBER: v3 GraphicWin frame_noncaption_left_ Sprite* 0x9EC 0x005D6EC0
+  Sprite *frame_noncaption_left_;
+  // RECOVERY_MEMBER: v3 GraphicWin frame_noncaption_right_ Sprite* 0x9F0 0x005D6EC0
+  Sprite *frame_noncaption_right_;
+  // RECOVERY_MEMBER: v3 GraphicWin frame_noncaption_middle_ Sprite* 0x9F4 0x005D6EC0
+  Sprite *frame_noncaption_middle_;
   // Optional alternate corners; null selects the matching frame corner.
   // RECOVERY_MEMBER: v3 GraphicWin overlay_top_left_ Sprite* 0x9F8 0x005D6AC0
   Sprite *overlay_top_left_;
@@ -288,7 +350,7 @@ extern func_buffer_init BufferOriginalInit;
 // The eleven process window defaults init republishes, at 0x009B3394 - one
 // contiguous block between the colour-map slot GraphicWinColorMapTable
 // already binds at 0x009B3390 and GraphicWinFieldA0CDefault at 0x009B33C0.
-extern uint32_t GraphicWinInitDefaults[11];
+extern GraphicWinFrameDefaults GraphicWinInitDefaults;
 
 
 // GraphicWin::soft_update at 0x005D5890 (157 bytes, bare ret) blits the

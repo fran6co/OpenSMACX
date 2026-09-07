@@ -66,11 +66,10 @@ func_subobject_close BufferSubobjectClose = original_method<func_subobject_close
 func_subobject_close WinOriginalClose = original_method<func_subobject_close>(0x005EB640);
 uint32_t GraphicWinFieldA0CDefault;  // 0x009B33C0
 
-// Eleven defaults copied by init; the original table is in PE zero-fill.
-// The first eight entries supply borrowed Sprite pointers. The remaining
-// three interpretations and the runtime publisher still need recovery.
-// RECOVERY_OBJECT: v1 0x009B3394 ?GraphicWinInitDefaults@@3PAIA
-uint32_t GraphicWinInitDefaults[11];
+// Eleven borrowed Sprite defaults, originally in PE zero-fill. The loader
+// publishes them through set_def_nc_sprites after creating the frame assets.
+// RECOVERY_OBJECT: v1 0x009B3394 ?GraphicWinInitDefaults@@3UGraphicWinFrameDefaults@@A
+GraphicWinFrameDefaults GraphicWinInitDefaults;
 
 /*
 Purpose: Construct the Win base and Buffer subobject, then install GraphicWin
@@ -117,9 +116,9 @@ GraphicWin::GraphicWin() {
     frame_right_ = 0;
     frame_bottom_ = 0;
     frame_top_ = 0;
-    field_9EC_ = 0;
-    field_9F0_ = 0;
-    field_9F4_ = 0;
+    frame_noncaption_left_ = 0;
+    frame_noncaption_right_ = 0;
+    frame_noncaption_middle_ = 0;
     overlay_top_left_ = 0;
     overlay_bottom_left_ = 0;
     overlay_top_right_ = 0;
@@ -211,9 +210,9 @@ uint32_t GraphicWin::close() {
     frame_right_ = 0;
     frame_bottom_ = 0;
     frame_top_ = 0;
-    field_9EC_ = 0;
-    field_9F0_ = 0;
-    field_9F4_ = 0;
+    frame_noncaption_left_ = 0;
+    frame_noncaption_right_ = 0;
+    frame_noncaption_middle_ = 0;
     overlay_top_left_ = 0;
     overlay_bottom_left_ = 0;
     overlay_top_right_ = 0;
@@ -641,20 +640,18 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
         // scheduling only, since both of those slots map to their own field.
         // Every destination is GraphicWin's own field, so it is written
         // directly rather than through an aliased pointer into `this`.
-        // The array is real source-owned storage. Its first eight words
-        // become typed Sprite pointers here; recover the shared publisher
-        // before treating the entire defaults record as a pointer array.
-        frame_top_left_ = reinterpret_cast<Sprite *>(GraphicWinInitDefaults[0]);
-        frame_top_right_ = reinterpret_cast<Sprite *>(GraphicWinInitDefaults[2]);
-        frame_bottom_left_ = reinterpret_cast<Sprite *>(GraphicWinInitDefaults[1]);
-        frame_bottom_right_ = reinterpret_cast<Sprite *>(GraphicWinInitDefaults[3]);
-        frame_top_ = reinterpret_cast<Sprite *>(GraphicWinInitDefaults[4]);
-        frame_bottom_ = reinterpret_cast<Sprite *>(GraphicWinInitDefaults[5]);
-        frame_left_ = reinterpret_cast<Sprite *>(GraphicWinInitDefaults[6]);
-        frame_right_ = reinterpret_cast<Sprite *>(GraphicWinInitDefaults[7]);
-        field_9EC_ = GraphicWinInitDefaults[9];
-        field_9F0_ = GraphicWinInitDefaults[8];
-        field_9F4_ = GraphicWinInitDefaults[10];
+        // The named defaults are real source-owned pointer storage.
+        frame_top_left_ = GraphicWinInitDefaults.top_left;
+        frame_top_right_ = GraphicWinInitDefaults.top_right;
+        frame_bottom_left_ = GraphicWinInitDefaults.bottom_left;
+        frame_bottom_right_ = GraphicWinInitDefaults.bottom_right;
+        frame_top_ = GraphicWinInitDefaults.top;
+        frame_bottom_ = GraphicWinInitDefaults.bottom;
+        frame_left_ = GraphicWinInitDefaults.left;
+        frame_right_ = GraphicWinInitDefaults.right;
+        frame_noncaption_left_ = GraphicWinInitDefaults.noncaption_left;
+        frame_noncaption_right_ = GraphicWinInitDefaults.noncaption_right;
+        frame_noncaption_middle_ = GraphicWinInitDefaults.noncaption_middle;
     }
 
     // A separately owned Buffer, not another construction of our Buffer base.
@@ -937,4 +934,46 @@ void GraphicWin::overlay_nonclient(RECT *area) {
         }
     }
     Buffer::set_clip(&saved);
+}
+
+// ORIGINAL: 0x005D6A50 ?set_def_nc_sprites@GraphicWin@@QAAXPAUNCSprites@@@Z 0x005D6A50-0x005D6ABA FILE BYTE_EXACT
+// symbol    ?set_def_nc_sprites@GraphicWin@@SAXPAUNCSprites@@@Z
+// The input's top-right/bottom-left and edge order differ from the shared
+// defaults. Preserve each named field, not a byte copy of the input record.
+// Original caller 0x004559F5 supplies one pointer and no implicit receiver;
+// static class ownership follows the catalogue, not its QAA decoration.
+void __cdecl GraphicWin::set_def_nc_sprites(NCSprites *sprites) {
+    if (sprites != nullptr) {
+        GraphicWinInitDefaults.top_left = sprites->top_left;
+        GraphicWinInitDefaults.top_right = sprites->top_right;
+        GraphicWinInitDefaults.bottom_left = sprites->bottom_left;
+        GraphicWinInitDefaults.bottom_right = sprites->bottom_right;
+        GraphicWinInitDefaults.top = sprites->top;
+        GraphicWinInitDefaults.left = sprites->left;
+        GraphicWinInitDefaults.right = sprites->right;
+        GraphicWinInitDefaults.bottom = sprites->bottom;
+        GraphicWinInitDefaults.noncaption_left = sprites->noncaption_left;
+        GraphicWinInitDefaults.noncaption_right = sprites->noncaption_right;
+        GraphicWinInitDefaults.noncaption_middle = sprites->noncaption_middle;
+    }
+}
+
+// ORIGINAL: 0x005D6EC0 sub_5d6ec0 0x005D6EC0-0x005D6F4B FILE BYTE_EXACT
+// symbol    ?load_nc_sprites_from_defs@GraphicWin@@QAEXXZ
+// Refresh an existing styled window from the current process defaults.
+// This receiver's fields and the init copy use the same data interpretation.
+void GraphicWin::load_nc_sprites_from_defs() {
+    if (iFlags_ & 0x30000000) {
+        frame_top_left_ = GraphicWinInitDefaults.top_left;
+        frame_top_right_ = GraphicWinInitDefaults.top_right;
+        frame_bottom_left_ = GraphicWinInitDefaults.bottom_left;
+        frame_bottom_right_ = GraphicWinInitDefaults.bottom_right;
+        frame_top_ = GraphicWinInitDefaults.top;
+        frame_bottom_ = GraphicWinInitDefaults.bottom;
+        frame_left_ = GraphicWinInitDefaults.left;
+        frame_right_ = GraphicWinInitDefaults.right;
+        frame_noncaption_left_ = GraphicWinInitDefaults.noncaption_left;
+        frame_noncaption_right_ = GraphicWinInitDefaults.noncaption_right;
+        frame_noncaption_middle_ = GraphicWinInitDefaults.noncaption_middle;
+    }
 }

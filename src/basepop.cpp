@@ -860,7 +860,7 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
     } else {
         style |= 0x400000;
     }
-    if (GraphicWinInitDefaults[0] != 0) {
+    if (GraphicWinInitDefaults.top_left != 0) {
         style |= 0x10000000;
     }
     if ((field_30A8_ & 0x4100) != 0) {
