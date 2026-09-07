@@ -34,9 +34,9 @@ class Build:
     environment: tuple[str, ...]
 
     @classmethod
-    def read(cls, root):
+    def read(cls, root, *, key="build"):
         project = read_json(root / "recovery/project.json")
-        path = relative_path(project.get("build"))
+        path = relative_path(project.get(key))
         value = read_json(root / path)
         fields = {"schema_version", "artifacts", "commands", "outputs", "inputs", "input_roots", "environment"}
         if (set(value) != fields or type(value["schema_version"]) is not int or value["schema_version"] != 1):
@@ -51,7 +51,7 @@ class Build:
             raise ValueError("build commands must use their fresh {build} directory")
         outputs = []
         for item in value["outputs"]:
-            if not isinstance(item, dict) or set(item) != {"path", "format"} or item["format"] not in ("file", "pe32-i386"):
+            if not isinstance(item, dict) or set(item) != {"path", "format"} or item["format"] not in ("file", "pe32-i386", "compilation-database"):
                 raise ValueError("build outputs require a path and supported format")
             outputs.append((relative_path(item["path"]), item["format"]))
         if len({path for path, _ in outputs}) != len(outputs):
@@ -109,9 +109,19 @@ class Build:
 
 
 def check_build(root: Path) -> dict:
+    return generate_build(root, Build.read(root))
+
+
+def generate_build(root: Path, settings: Build, *, retain=False) -> dict:
+    """Run one fresh generator/build; retain compiler context if requested.
+
+    Preparation databases may reference generated headers in this directory.
+    They cannot outlive a temporary directory that has already been removed.
+    Retained output (including failed commands) is disposable, ignored compiler
+    context, never a verdict cache.
+    """
     started = monotonic()
     root = root.resolve()
-    settings = Build.read(root)
     before = settings.snapshot(root)
     state = working_state(root)
     parent = artifact_parent(root, settings.artifacts, excluded_roots=settings.input_roots)
@@ -119,7 +129,7 @@ def check_build(root: Path) -> dict:
     result = Result.UNKNOWN
     reason = "build did not finish"
     try:
-        with tempfile.TemporaryDirectory(prefix="build-", dir=parent) as temporary:
+        with tempfile.TemporaryDirectory(prefix="build-", dir=parent, delete=not retain) as temporary:
             directory = Path(temporary)
             def expand(match):
                 name = match[1]
@@ -168,6 +178,9 @@ def check_build(root: Path) -> dict:
                         if format_name == "pe32-i386":
                             from .pe_coff import PeImage
                             PeImage(data, fingerprint)
+                        elif format_name == "compilation-database":
+                            from .compilation_database import entries
+                            entries(data, directory)
                         outputs.append({"path": name, "format": format_name, "result": Result.PASS,
                                         "sha256": fingerprint, "size": len(data)})
                     except (OSError, ValueError) as error:
@@ -180,6 +193,7 @@ def check_build(root: Path) -> dict:
     return {"check": "fresh_configured_build", "result": result, "reason": reason,
             "elapsed_seconds": monotonic() - started,
             "commands": reports, "outputs": outputs, "input_fingerprint": digest(before),
+            **({"directory": directory.relative_to(root).as_posix()} if retain else {}),
             "fresh_directory": True, "persisted": False, "ready_for_collection": False,
             "limitations": ["trusted configured build commands; no sandbox or proof of source coverage",
                             "artifact format checks do not establish byte/reference, structure or runtime correctness",

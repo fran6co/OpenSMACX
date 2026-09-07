@@ -919,23 +919,6 @@ def _fresh_compile_commands(compile_commands: Path,
         _configure(compile_commands)
 
 
-@app.command()
-def configure(
-    compile_commands: Annotated[Path, typer.Option(
-        envvar="OPENSMACX_COMPILE_COMMANDS",
-    )] = REPO_ROOT / "build" / "compile_commands.json",
-) -> None:
-    """Clear the cmake cache and regenerate the build database.
-
-    `measure`, `record` and `check` do this for themselves when an input is
-    newer than the database; this is how to do it deliberately.
-    """
-    _configure(compile_commands)
-    entries = len(json.loads(compile_commands.read_text()))
-    typer.secho(f"{entries} build inputs in {compile_commands}",
-                fg=typer.colors.GREEN)
-
-
 def duplicated_markers(records: list) -> list:
     """Addresses annotated more than once WITHIN one file.
 

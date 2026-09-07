@@ -532,6 +532,40 @@ another edit/recheck round. A reviewed failed/unknown build stops with
 Full acceptance still requires independent structure/reference/obligation/runtime
 verification. Build parallelism and isolated compiler resources are project policy.
 
+### Compiler recipe preparation
+
+`recover prepare [--root <project>] [--summary]` generates compiler recipes before
+measurements. Set `"preparation": "recovery/prepare.json"` in `project.json`, using
+the same command/input/environment schema as a fresh build. Declare exactly one
+output with `format: "compilation-database"`; the configured generator must write
+that file into its fresh `{build}` directory. For CMake, a project can declare its
+configure command with `-DCMAKE_EXPORT_COMPILE_COMMANDS=ON`. Other build systems
+can supply their own commands without adding package code.
+
+The destination is `mappings.compile_commands`. It must be under a Git-ignored,
+untracked directory outside preparation input roots. All commands must succeed
+and the fresh database must parse before atomic publication. Existing databases
+cannot satisfy missing outputs. Entry file/directory identities are made absolute
+without splitting or rewriting compiler argv. Original source and Git state are
+preserved; changed inputs or a changed destination refuse publication. A previous
+database is retained beside the generated context for interruption recovery.
+
+Unlike `check-build`, preparation retains its fresh directory: recipes can depend
+on generated headers and other files in it. These directories are disposable
+compiler caches, including unsuccessful generation attempts, not recovery records.
+After deleting generated context, prepare again before measuring. Measurements
+fingerprint preparation inputs, environment and the whole generated artifact root;
+old context directories currently over-invalidate too. No mtime or cached verdict
+can substitute for changed generated headers. External compiler installation
+identity and the correctness of trusted generator commands remain project policy.
+
+`recover check` automatically prepares when configured, before starting its
+measurement snapshot. Preparation failure stops that invocation without using an
+old database. Standalone task checks and recording do not mutate compiler setup;
+the coordinator runs preparation before them and after relevant input changes.
+Never prepare concurrently with measurements. This replaces no source coverage,
+build, layout, reference or runtime proof and cannot make a task collection-ready.
+
 ### Source-policy audits
 
 `recover audits check <name> [--root <project>] [--summary]` runs natively, with

@@ -24,6 +24,7 @@ from .match_check import check_matches
 from .measurement import Measurement
 from .model import digest, require_text
 from .processes import run_bounded
+from .preparation import prepare_project
 from .records import read_json
 from .source_audits import audit_source, _validate_policy
 from .source_integrity import check_source
@@ -93,6 +94,29 @@ def check_project(root: Path, image: Path, *, jobs: int = 1, progress=None) -> d
     measurement = Measurement.read(root)
     build = Build.read(root)
     path, config, commands, environment, policy_path, audits = _configuration(root, measurement.source)
+    preparation = (Build.read(root, key="preparation")
+                   if "preparation" in read_json(root / "recovery/project.json") else None)
+    reports = []
+    if preparation is not None:
+        # Preparation is an explicit write phase BEFORE the measurement epoch;
+        # no generator may change a database underneath already-started checks.
+        with image.open("rb") as stream:
+            actual = hashlib.file_digest(stream, "sha256").hexdigest()
+        if actual != image_pin(root, measurement.source):
+            raise ValueError("project gate requires the configured pinned original image")
+        if progress:
+            progress({"check": "preparation", "event": "start"})
+        started = monotonic()
+        try:
+            report = prepare_project(root)
+        except (OSError, ValueError, subprocess.SubprocessError) as error:
+            report = {"result": "unknown", "reason": str(error)}
+        reports.append({"name": "preparation", "result": report["result"],
+                        "elapsed_seconds": monotonic() - started, "report": report})
+        if progress:
+            progress({"check": "preparation", "event": "finish", "result": report["result"]})
+        if report["result"] != "pass":
+            return _result(reports, report.get("input_fingerprint"))
     state = working_state(root)
 
     def snapshot():
@@ -112,6 +136,7 @@ def check_project(root: Path, image: Path, *, jobs: int = 1, progress=None) -> d
                     files.add(item.relative_to(root).as_posix())
         result = input_snapshot(root, files, {
             "measurement": measurement.snapshot(root, {}), "build": build.snapshot(root),
+            "preparation": preparation.snapshot(root) if preparation is not None else None,
             "image": {"path": str(image), "sha256": actual},
             "environment": {name: hashlib.sha256(os.environ[name].encode()).hexdigest() if name in os.environ else None
                             for name in environment}})
@@ -120,7 +145,6 @@ def check_project(root: Path, image: Path, *, jobs: int = 1, progress=None) -> d
         return result
 
     initial = snapshot()
-    reports = []
 
     def unchanged():
         if snapshot() != initial or working_state(root) != state:
@@ -166,11 +190,15 @@ def check_project(root: Path, image: Path, *, jobs: int = 1, progress=None) -> d
                 "result": "unknown", "reason": "fresh project build did not pass; compiler sweep not run"})
     except (OSError, ValueError, subprocess.SubprocessError) as error:
         reports.append({"name": "freshness", "result": "unknown", "report": {"reason": str(error)}})
+    return _result(reports, digest(initial))
+
+
+def _result(reports, fingerprint):
     results = {row["result"] for row in reports}
     result = "fail" if "fail" in results else "unknown" if "unknown" in results else "pass"
     return {"schema_version": 1, "check": "project_gate", "result": result,
             "exit_code": {"pass": 0, "fail": 1, "unknown": 3}[result], "checks": reports,
-            "input_fingerprint": digest(initial), "persisted": False, "ready_for_collection": False,
+            "input_fingerprint": fingerprint, "persisted": False, "ready_for_collection": False,
             "limitations": ["all configured checks, not full structural, lifetime, dependency ABI or runtime acceptance",
                             "historical byte claims use relocation masking; strict reference checks remain separate",
                             "additional project commands are trusted exit-status checks, not inferred proof dimensions",

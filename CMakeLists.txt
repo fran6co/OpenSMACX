@@ -37,7 +37,7 @@ endif()
 # decisions, and the copy goes stale the first time an include path is added.
 # CMake already knows; this makes it say so.
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL
-    "write build/compile_commands.json; tools/osmx.py configure reads it"
+    "write compiler recipes for the configured match-recovery environment"
     FORCE)
 
 # `C` AS WELL AS `CXX`, for zlib. zlib 1.0.2 uses K&R parameter definitions,

@@ -76,11 +76,22 @@ class Measurement:
             if not isinstance(name, str) or not re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*", name):
                 raise ValueError("invalid measurement environment variable")
         inputs = tuple(sorted(set(value["inputs"]) | set(compiler.get("inputs", []))))
+        roots = set(value["input_roots"])
+        if "preparation" in project:
+            from .build_check import Build
+            preparation = Build.read(root, key="preparation")
+            # Recipe generation can supply forced includes or other compiler
+            # context. Pin its policy and generated contents, not just the JSON
+            # database. Conservative whole-cache invalidation is intentional;
+            # an unobserved generated header must never lend stale evidence.
+            inputs = tuple(sorted({*inputs, preparation.path, *preparation.inputs}))
+            roots.update((*preparation.input_roots, preparation.artifacts))
+            environment.update(preparation.environment)
         for path in inputs:
             relative_path(path)
         return cls(value["backend"], value["compiler_profile"], tuple(tuple(flags) for flags in value["flag_sets"]),
                    tuple(value["layout_flags"]), tuple(value["unit_extensions"]), inputs,
-                   tuple(value["input_roots"]), source, tuple(sorted(environment)))
+                   tuple(sorted(roots)), source, tuple(sorted(environment)))
 
     def snapshot(self, root: Path, metadata: dict):
         paths = {"recovery/project.json", self.source.image_pin, *self.inputs}

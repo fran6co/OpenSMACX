@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
   "build": "recovery/build.json",
+  "preparation": "recovery/prepare.json",
   "gate": "recovery/gate.json",
   "audits": "recovery/audits.json",
   "mappings": {

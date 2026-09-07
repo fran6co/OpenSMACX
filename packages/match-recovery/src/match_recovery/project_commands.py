@@ -7,6 +7,9 @@ from .records import read_json
 
 
 def register(commands):
+    prepare = commands.add_parser("prepare", help="Generate fresh configured compiler recipes and publish the database; not a recovery check")
+    prepare.add_argument("--root", type=Path, default=Path.cwd())
+    prepare.add_argument("--summary", action="store_true")
     gate = commands.add_parser("check", help="Run the whole configured project gate; incomplete evidence is not green")
     gate.add_argument("--root", type=Path, default=Path.cwd())
     gate.add_argument("--image", type=Path, required=True)
@@ -174,9 +177,17 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
     """Native configured source operations, otherwise the local JSON boundary."""
     root = root.resolve()
     configuration = read_json(root / "recovery/project.json")
-    if (configuration.keys() - {"schema_version", "adapter", "source", "source_history", "compiler", "measurement", "audits", "build", "mappings", "gate"}
+    if (configuration.keys() - {"schema_version", "adapter", "source", "source_history", "compiler", "measurement", "audits", "build", "mappings", "gate", "preparation"}
             or type(configuration.get("schema_version")) is not int or configuration["schema_version"] != 1):
         raise ValueError("invalid local project command configuration")
+    if arguments.get("command") == "prepare":
+        from .preparation import prepare_project
+        output = prepare_project(root)
+        if arguments.get("summary"):
+            for command in output["commands"]:
+                command.pop("stdout", None)
+                command.pop("stderr", None)
+        return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
     if arguments.get("command") == "check":
         import sys
         from .gate import check_project, summary

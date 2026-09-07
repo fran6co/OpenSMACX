@@ -48,6 +48,6 @@ image="$root/.opensmacx/game/terranx_original.exe"
 # database by symmetry, which breaks every measurement, because that database
 # names the ROOT's paths and a record in the worktree does not match any of
 # them - `build_command` answers "buffer.cpp is not a build input". Your
-# worktree builds its own, with its own paths; `osmx.py configure` writes it.
+# worktree builds its own, with its own paths; `recover prepare` writes it.
 echo "export OPENSMACX_IMAGE='$image'"
 echo "export OPENSMACX_ROOT='$root'"

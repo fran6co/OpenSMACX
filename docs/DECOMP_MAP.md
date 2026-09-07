@@ -201,7 +201,7 @@ uv run tools/osmx.py show <addr|name>  # annotation + shipped disassembly
 uv run tools/osmx.py calls <addr>      # call sites in image order
 uv run tools/osmx.py measure <addr | --body F | --dir D>   # exit 0 only BYTE_EXACT
 uv run recover record <addrs...> --image <image> # measure AND stamp annotations
-uv run tools/osmx.py configure         # regenerate the build database
+uv run recover prepare                # generate fresh compiler recipes
 ```
 
 Legacy measurement goes through `match_recovery.source.asm`: the pinned image on one side, the

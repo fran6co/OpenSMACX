@@ -40,6 +40,7 @@ Everything Python runs through `uv run`, never bare `python3`.
 
 ```sh
 uv run recover inventory
+uv run recover prepare
 uv run recover partition
 uv run recover tasks context <task>
 uv run recover tasks obligations <task>
@@ -71,6 +72,9 @@ The package-owned `recover check` now coordinates the whole configured gate;
 `recovery/gate.json` retains three local command checks pending their migration.
 Keep the legacy route for cutover comparison/control until that verification
 is complete. Neither command establishes full structure or runtime acceptance.
+The native gate runs configured preparation before measuring. For standalone
+task checks/recording, run `recover prepare` at a coordinator checkpoint first;
+never regenerate compiler recipes during an active measurement epoch.
 `check-preservation` compares fresh baseline/current compiler output outside
 source-mapped task functions. It is not a full-link/structural proof or a way to
 replace the task baseline; unsupported historical TU recipes and unobserved

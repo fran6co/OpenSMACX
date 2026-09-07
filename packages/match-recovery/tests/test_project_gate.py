@@ -199,3 +199,67 @@ def test_real_native_checks_cannot_call_an_unimplemented_fixture_complete(config
     assert by_name["source"]["result"] == by_name["mappings"]["result"] == "pass"
     assert by_name["build"]["result"] != "pass" and report["exit_code"] != 0
     assert not report["ready_for_collection"]
+
+
+def preparation(root, commands=None):
+    value = json.loads((root / "recovery/build.json").read_text())
+    rows = (root / "build/commands.json").read_text()
+    value.update(artifacts="build/preparation", outputs=[{"path": "commands.json", "format": "compilation-database"}],
+        commands=commands or [{"argv": [sys.executable, "-c",
+            "from pathlib import Path; import sys; (Path(sys.argv[1])/'commands.json').write_text(sys.argv[2])",
+            "{build}", rows], "timeout": 10}])
+    (root / "recovery/prepare.json").write_text(json.dumps(value))
+    configuration(root, lambda project: project.update(preparation="recovery/prepare.json"))
+
+
+def test_preparation_runs_before_measurement_snapshot_and_missing_database_checks(configured, observed):
+    preparation(configured)
+    (configured / "build/commands.json").unlink()
+    report = run(configured)
+    assert report["result"] == "pass" and report["checks"][0]["name"] == "preparation"
+    assert report["checks"][0]["report"]["published"]
+    assert [name for name, _, _ in observed] == list(NATIVE)
+
+
+@pytest.mark.parametrize("code,expected", [(0, "unknown"), (1, "fail")])
+def test_failed_preparation_stops_before_checks_and_cannot_use_old_database(configured, observed, code, expected):
+    previous = (configured / "build/commands.json").read_bytes()
+    preparation(configured, [{"argv": [sys.executable, "-c", f"raise SystemExit({code})", "{build}"], "timeout": 10}])
+    report = run(configured)
+    assert report["result"] == expected and len(report["checks"]) == 1
+    assert report["checks"][0]["name"] == "preparation" and not observed
+    assert (configured / "build/commands.json").read_bytes() == previous
+
+
+def test_wrong_image_refuses_before_preparation_writes(configured, observed):
+    preparation(configured)
+    (configured / "original/input.exe").write_bytes(b"wrong executable")
+    with pytest.raises(ValueError, match="pinned"):
+        run(configured)
+    assert not observed and not (configured / "build/preparation").exists()
+
+
+def test_generated_context_changes_invalidate_standalone_measurements(configured):
+    from match_recovery.measurement import Measurement
+    from match_recovery.preparation import prepare_project
+    preparation(configured)
+    report = prepare_project(configured)
+    header = configured / report["directory"] / "generated.h"
+    header.write_text("original generated context")
+    settings = Measurement.read(configured)
+    before = settings.snapshot(configured, {})
+    header.write_text("changed generated context")
+    assert settings.snapshot(configured, {}) != before
+    assert "recovery/prepare.json" in before["inputs"]
+
+
+def test_generated_context_changes_mid_gate_stop_compiler_sweeps(configured, observed, monkeypatch):
+    preparation(configured)
+    def mutate(*_):
+        directory, = (configured / "build/preparation").glob("build-*")
+        (directory / "generated.h").write_text("concurrent generated input")
+        return {"result": "pass"}
+    monkeypatch.setattr(gate, "check_build", mutate)
+    report = run(configured)
+    assert report["exit_code"] == 3 and report["checks"][-1]["name"] == "freshness"
+    assert not any(name in COMPILED for name, _, _ in observed)

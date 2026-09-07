@@ -55,6 +55,10 @@ parallelism from measured compiler capacity; do not restart the old fleet loop.
 Update against master only at safe coordinator-owned checkpoints. Never stash
 across worktrees, discard another worker's edits, or auto-fast-forward a worker
 after its task baseline has been established.
+Run `uv run recover prepare` before standalone task measurements/recording and
+again after changing build inputs. This publishes fresh configured recipes while
+retaining their generated include context in ignored storage. It does not clear
+the existing build tree. Never run preparation during a measurement epoch.
 
 ## 3. Read context and model the group
 
@@ -302,7 +306,9 @@ borrow it. The package infers no donor or build reconfiguration.
 Default `--jobs 1` is deliberate; concurrent TUs need isolated compiler capacity.
 
 The package-owned `uv run recover check --image <image> --summary` now runs the
-whole configured project gate. Its source, mapping/body-link, history and audit
+whole configured project gate. Configured preparation runs before the measurement
+snapshot; failure stops the gate without measuring against an old database.
+Its source, mapping/body-link, history and audit
 checks precede a fresh build; match, symbol, initial-data and layout sweeps follow
 serially. Additional checks are explicit bounded commands in `recovery/gate.json`.
 Use both gate routes for cutover comparison until real runs and damage controls

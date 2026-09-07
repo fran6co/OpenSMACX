@@ -39,8 +39,14 @@ bounded commands, not a project operation dispatcher. `recover check-matches`
 remeasures all current claims and built candidates through the configured compiler
 with per-TU reuse and no persistent verdict memo. This project's seed-only donor
 recipe is explicit compiler policy, not an inferred original TU environment.
-Production cutover still requires compilation-database preparation and migrated
-full-gate damage controls. Three local checks remain until their conventional
+Native `recover prepare` now generates fresh compiler recipes through configured
+commands, sharing the fresh-build runner and preserving generated include context
+in ignored storage. It publishes the validated database without deleting existing
+build caches. The native gate prepares before its measurement snapshot; standalone
+checks use coordinator-prepared recipes. The old configure CLI is removed; the
+retained legacy gate/measurement still have their internal preparation helper until
+cutover. Production cutover still requires migrated full-gate damage controls.
+Three local checks remain until their conventional
 source/document coverage is absorbed. Full acceptance is a separate unfinished
 verifier; an incomplete native gate does not permit deleting the old control route.
 

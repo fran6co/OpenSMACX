@@ -26,6 +26,19 @@ incremental link probe. Neither gate establishes full structural/runtime accepta
 Keep the old unpiped gate as the comparison/control route until the native run
 and damage controls establish the cutover; do not call it retired prematurely.
 
+`uv run recover prepare` replaces the old `osmx` configure command. The installed
+package runs the CMake invocation declared in `prepare.json` in a fresh ignored
+directory, then validates and atomically publishes `build/compile_commands.json`.
+Debug here preserves the established measurement include/define environment;
+the separate fresh application build remains Release. Nothing in the library
+chooses CMake, VC6 or these flags. Existing build caches are not cleared. Generated
+headers/context and the previous database remain under `build/recovery/preparation/`
+as disposable caches; do not delete the currently referenced context without
+preparing again. Failed commands, missing outputs and concurrent input/destination
+changes never count as a successful preparation. `recover check` runs this phase
+before its read-only measurement epoch; standalone checks/recording expect the
+coordinator to prepare first. No recipe generation may overlap measurements.
+
 `recover check-matches --image <original> --jobs 1 --summary` is the native
 current-claim sweep. It measures all claims plus unclaimed built candidates with
 per-TU compilation reuse, never stamps discoveries and uses no persistent verdict
@@ -96,7 +109,7 @@ names when the source symbol format supports them). Ambiguous candidates require
 an exact project-relative `--in` host. Source roots, TU suffixes, flags and compiler
 profile come from `project.json`; the command does not import local project Python.
 The configured compiler subprocess supplies product recipes and explicit seed-donor
-policy; it does not reconfigure CMake. A caller may explicitly supply compiler argv in a
+policy; the compiler subprocess does not reconfigure CMake. A caller may explicitly supply compiler argv in a
 project-relative JSON array via `--arguments`. Missing recipes are unmeasurable.
 Batch related addresses; `--jobs` defaults to 1 until isolated capacity is available.
 Its JSON report distinguishes updated source, measurements, unresolved subjects,
