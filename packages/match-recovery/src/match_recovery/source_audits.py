@@ -12,6 +12,7 @@ import re
 
 from .cpp_audit_rules import CPP_RECOVERY_V1
 from .cpp_model_audit import MODEL_RULES, model_findings
+from .cpp_storage_audit import STORAGE_RULES, storage_findings
 from .model import digest, require_text
 from .records import parse_json
 from .source_config import SourceConfiguration
@@ -80,10 +81,18 @@ def audit_source(root: Path, name: str, *, files=None) -> dict:
     config = policy["audits"][name]
     required = {"ruleset", "unit_extensions", "interface_extensions", "exclude_roots", "ceilings", "counters"}
     if (not isinstance(config, dict) or set(config) != required
-            or config["ruleset"] not in ("cpp-recovery-v1", "cpp-model-v1")):
+            or config["ruleset"] not in ("cpp-recovery-v1", "cpp-model-v1", "cpp-storage-v1")):
         raise ValueError("invalid or unsupported source audit ruleset")
     rules = CPP_RECOVERY_V1 if config["ruleset"] == "cpp-recovery-v1" else {}
-    explanations = {key: why for key, (_, _, why) in rules.items()} if rules else dict(MODEL_RULES)
+    storage = config["ruleset"] == "cpp-storage-v1"
+    explanations = ({key: why for key, (_, _, why) in rules.items()} if rules else
+                    dict(STORAGE_RULES if storage else MODEL_RULES))
+    pin_path, pin_bytes, pin = None, None, None
+    if storage:
+        from .source_inventory import image_pin
+        pin_path = source.path(root, source.image_pin)
+        pin_bytes = pin_path.read_bytes()
+        pin = image_pin(root, source)
     for field in ("unit_extensions", "interface_extensions", "exclude_roots"):
         values = config[field]
         if (not isinstance(values, list) or any(not isinstance(value, str) for value in values)
@@ -191,7 +200,13 @@ def audit_source(root: Path, name: str, *, files=None) -> dict:
         if found:
             per_file[relative] = dict(found)
             counts.update(found)
-    if not rules:
+    if storage:
+        if not product:
+            raise ValueError("storage audit has no product source coverage")
+        measured, per_file, findings = storage_findings(product, pin=pin, address_space=source.address_space,
+                                                       symbol_format=source.symbol_format)
+        counts.update(measured)
+    elif not rules:
         records = [(path, record) for path, data in before.items() for record in read_text(_text(data), root / path)]
         measured, per_file, findings = model_findings(product, records, numbered_code_lines)
         counts.update(measured)
@@ -208,7 +223,8 @@ def audit_source(root: Path, name: str, *, files=None) -> dict:
     # Detect changed inputs and added/deleted source files, not just mtimes.
     if (before != snapshot() or project_path.read_bytes() != project_bytes
             or policy_path.read_bytes() != policy_bytes
-            or implementation != implementation_snapshot()):
+            or implementation != implementation_snapshot()
+            or storage and pin_path.read_bytes() != pin_bytes):
         raise ValueError("source or audit policy changed during the census")
     rows = [{"name": key, "count": counts[key], "ceiling": ceilings[key],
              "status": "growth" if counts[key] > ceilings[key] else "slack" if counts[key] < ceilings[key] else "exact"}
@@ -219,12 +235,15 @@ def audit_source(root: Path, name: str, *, files=None) -> dict:
     return {"audit": name, "result": "fail" if any(row["status"] != "exact" for row in rows) else "pass",
             "total": sum(counts.values()), "rules": rows, "per_file": per_file,
             "ruleset": config["ruleset"], "files_scanned": len(product), "findings": findings,
-            "count_basis": {"orphan redirect": "unique textual names; per-file findings count mentions"} if not rules else {},
+            "count_basis": ({"duplicate global identities": "unique original addresses; per-file findings count mentions"}
+                            if storage else {"orphan redirect": "unique textual names; per-file findings count mentions"}
+                            if not rules else {}),
             "explanations": explanations,
             "detail_selection": {path: "scanned" if path in product else "excluded" for path in files} if files is not None else None,
             "lowerings": {key: counts[key] for key in sorted(names) if counts[key] < ceilings[key]},
             "input_fingerprint": digest({"source": {path: sha256(data).hexdigest() for path, data in before.items()},
                                          "project": sha256(project_bytes).hexdigest(), "policy": sha256(policy_bytes).hexdigest(),
+                                         "image_pin": sha256(pin_bytes).hexdigest() if storage else None,
                                          "implementation": {path: sha256(data).hexdigest() for path, data in implementation.items()},
                                          "rules": {key: [rx.pattern, rx.flags, headers] for key, (rx, headers, _) in rules.items()}}),
             "persisted": False, "structure_verification": "unknown",

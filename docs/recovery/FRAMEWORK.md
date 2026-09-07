@@ -33,6 +33,16 @@ package, preserving argv tokens and duplicate recipe identities. Nonzero compile
 exits can no longer contribute leftover objects to the old gate. Production
 gate orchestration and complete acceptance still need migration.
 
+The full gate's duplicate-global and scaled-pointer checks now use the native
+configured storage audit; their standalone tools are removed. Original-address
+conflicts retain cross-file source locations and participate in ownership-task
+context. Compact object identities and conventional legacy bindings are analyzed
+together, distinguishing first-member address notes from separate global storage.
+Existing limits remain project policy. Missing coverage, malformed identities and
+inconsistent reports are refused. This is a lexical diagnostic, not proof of
+aliasing, hierarchy or lifetime; initial-data/header-offset checks and full gate
+orchestration still need replacement.
+
 Recording and the legacy gate now share the package's per-TU measurement engine,
 including span refusals, absent-symbol trials and similarity-first ranking. The
 recorder groups requested functions before dispatch instead of compiling each

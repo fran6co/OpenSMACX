@@ -80,6 +80,12 @@ source line locations and counts for authorized files. Structural questions come
 before naming volume in the bounded preview; omitted findings remain available
 through `uv run recover audits check class-debt --in src/infowin.cpp` (use the
 actual file). Filtering details never narrows reference analysis or the gate.
+The configured storage audit comes first and connects potentially conflicting
+global names to their other source locations. Inspect all those owners with
+`uv run recover audits check storage --in src/infowin.cpp` (substitute the file).
+Related locations outside the task are evidence for a discovery/scope request,
+not permission to edit them. A suspicious pointer sum needs byte-versus-element
+analysis; a shared address may denote a containing object and its first member.
 These are recomputed clues, not decisions or fresh structural proofs. A textual
 orphan needs reachability evidence before removal; a documented naming refusal
 must not turn into an invented name just to make a count fall.

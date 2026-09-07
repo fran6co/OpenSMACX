@@ -381,6 +381,9 @@ keyed by project-chosen audit names. Each audit specifies:
   smells, such as manual dispatch, lifecycle seams and address-derived names.
   Alternatively, `cpp-model-v1` locates raw member/inheritance access, naming
   questions, source-mapped function-address casts and textual orphan candidates.
+  `cpp-storage-v1` locates conflicting original-global names and suspicious
+  cast-wrapped class-pointer offsets, using the configured image pin and symbol
+  format. It does not need the original executable.
 - `unit_extensions`, `interface_extensions`: disjoint subsets of configured
   source suffixes. Some patterns apply only to units, avoiding declaration counts.
 - `exclude_roots`: explicit paths within configured source roots. Pattern scans
@@ -388,6 +391,7 @@ keyed by project-chosen audit names. Each audit specifies:
 - `ceilings`: nonnegative integer policy limits for every selected rule/counter.
   The rule names are exported by `match_recovery.cpp_audit_rules.CPP_RECOVERY_V1`.
   Model rule names are exported by `match_recovery.cpp_model_audit.MODEL_RULES`.
+  Storage rule names are exported by `match_recovery.cpp_storage_audit.STORAGE_RULES`.
 - `counters`: additional project-owned scopes. Each has `name`, `path`, and
   `kind`: `text` also requires a regex `pattern`; `files` requires `extension`
   and boolean `recursive`; `lines` counts physical lines. These explicit scopes
@@ -415,6 +419,17 @@ whole-product. A reference outside the selected file can disprove an orphan hint
 Excluded/seed selections are identified explicitly. Orphan rule totals count
 unique names; per-file findings count mentions. A short-claim documentation hint
 describes historical source prose, not a fresh byte or behavioral measurement.
+
+Storage conflicts count unique original addresses, while per-file findings count
+mentions. Each conflict includes `related` source locations across the product,
+even when `--in` filters the displayed findings. Compact `RECOVERY_OBJECT`
+bindings and conventional address comments/pointer bindings participate together;
+duplicate compact identities are refused. Conventional class-member comments are
+not global bindings: an embedded first member can share its containing object's
+address. The legacy spelling lens recognizes six-to-sixteen-digit hex addresses
+and uppercase class-pointer type names, not arbitrary C++ scope, aliases or
+element sizes. Pin changes invalidate a census; empty product coverage is refused.
+These are investigation hints, not aliasing, layout or lifetime verification.
 
 An optional `context` list in the audit policy selects audits for native task
 context. Only authorized-file details are shown, with structural questions ahead

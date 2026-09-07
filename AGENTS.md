@@ -50,6 +50,7 @@ uv run recover check-build --summary
 uv run recover check-source --jobs 8 --summary
 uv run recover check-mappings --summary
 uv run recover check-claims --summary
+uv run recover audits check storage --summary
 uv run recover record <addresses> --image <image> --in <source-file>
 uv run recover run <task> --worker <config> --reviewer <config>
 uv run pytest packages/match-recovery/tests recovery/tests

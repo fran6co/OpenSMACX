@@ -62,10 +62,10 @@ def test_object_needs_its_owners_actual_compiled_data_definition(source):
     assert not object_targets(bindings, {"src/object.cpp": obj})[0]
 
 
-def test_new_object_mapping_remains_visible_to_legacy_duplicate_audit(source, monkeypatch, source_configuration):
-    from tools import duplicate_globals
-    (source / "src/IMAGE_PIN").write_text("sha256 " + PIN)
+def test_object_mapping_remains_visible_to_storage_audit(source):
+    from match_recovery.cpp_storage_audit import storage_findings
     (source / "src/other.cpp").write_text("int Other; // 0x00402000\n")
-    monkeypatch.setattr(duplicate_globals, "REPO", source)
-    duplicates, _ = duplicate_globals.census()
-    assert duplicates == {"00402000": {"g", "Other"}}
+    files = {p.relative_to(source).as_posix(): p.read_text() for p in (source / "src").glob("*.cpp")}
+    counts, _, rows = storage_findings(files, pin=PIN, address_space="pe:va", symbol_format="msvc")
+    assert counts["duplicate global identities"] == 1
+    assert rows[0]["symbols"] == ["Other", "g"]

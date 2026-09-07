@@ -1262,7 +1262,7 @@ def _image_pin(src: Path, exe: Path) -> str:
     return ""
 
 
-def _native_audit_result(outcome, name, label):
+def _native_audit_result(outcome, name, label, required_rules=None):
     """Read package audit reports during gate cutover; never accept missing proof."""
     try:
         report = json.loads(outcome.stdout)
@@ -1274,6 +1274,17 @@ def _native_audit_result(outcome, name, label):
                 or any(not isinstance(row, dict) or not {"name", "status", "count", "ceiling"} <= row.keys()
                        for row in report["rules"])):
             raise ValueError("malformed source audit report or exit/result disagreement")
+        if required_rules is not None:
+            rows = report["rules"]
+            if (len(rows) != len(required_rules) or {row["name"] for row in rows} != set(required_rules)
+                    or type(report.get("files_scanned")) is not int or report["files_scanned"] < 1
+                    or report.get("persisted") is not False
+                    or any(type(row[key]) is not int or row[key] < 0 for row in rows for key in ("count", "ceiling"))
+                    or any(row["status"] != ("growth" if row["count"] > row["ceiling"] else
+                                             "slack" if row["count"] < row["ceiling"] else "exact") for row in rows)
+                    or report["total"] != sum(row["count"] for row in rows)
+                    or (report["result"] == "pass") != all(row["status"] == "exact" for row in rows)):
+                raise ValueError("incomplete source audit coverage or inconsistent counts")
     except (ValueError, TypeError) as error:
         return subprocess.CompletedProcess(outcome.args, outcome.returncode or 3,
                                            outcome.stderr.strip() or str(error), outcome.stderr)
@@ -1754,9 +1765,11 @@ def check(
         subprocess.run,
         [sys.executable, "-m", "match_recovery.cli", "audits", "check", "class-debt", "--summary"],
         cwd=REPO_ROOT, capture_output=True, text=True)
-    dupes_job = _audit("duplicate_globals.py", "--check")
+    storage_job = audits.submit(
+        subprocess.run,
+        [sys.executable, "-m", "match_recovery.cli", "audits", "check", "storage", "--summary"],
+        cwd=REPO_ROOT, capture_output=True, text=True)
     values_job = _audit("data_values.py", "--check")
-    scaling_job = _audit("pointer_scale.py", "--check")
     annotations_job = audits.submit(
         subprocess.run,
         [sys.executable, "-m", "match_recovery.cli", "check-source", "--jobs", "8", "--summary"],
@@ -1861,12 +1874,11 @@ def check(
     # other. Each body stays internally consistent, so the byte ratchet is
     # blind to it. Fifteen were created in one afternoon by a naming pass
     # whose duplicate check knew only the binding spelling.
-    dupes = dupes_job.result()
+    from match_recovery.cpp_storage_audit import STORAGE_RULES
+    storage = _native_audit_result(storage_job.result(), "storage", "storage audit", STORAGE_RULES)
     if not as_json:
-        said = dupes.stdout.strip().splitlines() or [""]
-        typer.secho("  " + said[-1],
-                    fg=typer.colors.RED if dupes.returncode
-                    else typer.colors.WHITE)
+        typer.secho("  " + storage.stdout.strip(),
+                    fg=typer.colors.RED if storage.returncode else typer.colors.WHITE)
 
     # INITIAL VALUES: a global written `int X;  // 0x00696D14` is ZERO at run
     # time. If the image's own .data carries 9 at that address, the recovered
@@ -1881,22 +1893,6 @@ def check(
         typer.secho("  " + said[-1],
                     fg=typer.colors.RED if values.returncode
                     else typer.colors.WHITE)
-
-    # POINTER SCALING: `reinterpret_cast<int *>(parent + 0xcc)` where parent
-    # is a `Win *` advances 0xcc whole OBJECTS, not bytes, and reads about
-    # 900KB past the one it meant. A byte comparison cannot tell a wrong
-    # displacement from a right one - it sees two numbers that differ - so
-    # Win::remove_parent_dialog carried eight of them at 12 of 61 and nobody
-    # asked why. Ceiling is zero; the correct form casts the POINTER, not
-    # the sum.
-    scaling = scaling_job.result()
-    if not as_json:
-        said = scaling.stdout.strip().splitlines() or [""]
-        typer.secho("  " + said[-1],
-                    fg=typer.colors.RED if scaling.returncode
-                    else typer.colors.WHITE)
-        for line in said[:-1][:6]:
-            typer.secho(f"  {line}", fg=typer.colors.RED)
 
     # ANNOTATION IDENTITY: does an annotation survive being rewritten? The
     # writer used to regenerate each lesson run from a lossy parse, so
@@ -1938,8 +1934,7 @@ def check(
             or offsets.returncode
             or vtables.returncode or stale.returncode or symbols.returncode
             or index.returncode or coverage["result"] == "fail" or debt.returncode
-            or annotations.returncode or scaling.returncode
-            or dupes.returncode
+            or annotations.returncode or storage.returncode
             or values.returncode
             else 3 if unasked or coverage["result"] == "unknown" else 0)
     # THE VERDICT GOES IN THE OUTPUT, not only in the exit code. The brief has
@@ -1956,6 +1951,7 @@ def check(
                else "FAILED: a marker names a symbol the build does not emit" if symbols.returncode
                else "FAILED: the address index grew" if index.returncode
                else "FAILED: semantic debt grew" if debt.returncode
+               else "FAILED: storage audit" if storage.returncode
                else "FAILED: an annotation does not survive being rewritten"
                if annotations.returncode
                else "FAILED: historical claim identities are missing" if coverage["result"] == "fail"
@@ -1978,8 +1974,7 @@ def check(
                 "address_index": bool(index.returncode),
                 "class_debt": bool(debt.returncode),
                 "annotation_identity": bool(annotations.returncode),
-                "pointer_scale": bool(scaling.returncode),
-                "duplicate_globals": bool(dupes.returncode),
+                "storage": bool(storage.returncode),
                 "data_values": bool(values.returncode),
                 "header_offsets": bool(offsets.returncode),
                 "claim_identities": coverage["result"] == "fail",

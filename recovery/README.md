@@ -164,6 +164,7 @@ uv run recover components check-source zlib --archive /path/to/zlib-1.0.2.tar.gz
 uv run recover components check-binary zlib --image /path/to/the/pinned/original.exe --summary
 uv run recover audits check compiler-work --summary
 uv run recover audits check class-debt --summary
+uv run recover audits check storage --summary
 uv run pytest packages/match-recovery/tests recovery/tests
 uv build --package match-recovery
 ```
@@ -183,6 +184,16 @@ Both growth and slack return failure (exit 1); missing/malformed inputs return 3
 The report's `lowerings` gives only downward edits to apply to `audits.json` in the
 same commit as the improvement. There is no self-rewriting Python ceiling table.
 Neither this heuristic audit nor a zero count proves correct hierarchy or lifetime.
+
+The native `cpp-storage-v1` audit replaces the standalone duplicate-global and
+pointer-scaling checks in the full gate. Their existing limits are project policy
+in `audits.json`; conflict reports connect all related source locations, including
+compact original-object bindings. Task context includes these hints before the
+class-debt preview. A containing object and its first member sharing an address
+are not automatically duplicate globals. These lexical diagnostics neither prove
+storage ownership nor authorize merging names; establish actual aliasing and
+byte-versus-element semantics through source and binary evidence. The remaining
+initial-data, header-offset and marker-symbol checks still use legacy tooling.
 
 The class-debt audit now uses the package's `cpp-model-v1` ruleset. The former
 project tool is removed, with all nine ceilings and per-file counts preserved.

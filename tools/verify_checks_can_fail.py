@@ -170,6 +170,13 @@ CASES = [
     ("class-model audit growth",
      "SEMANTIC DEBT GREW",
      lambda: _append("src/palette.h", "  void UNK99(int);\n")),
+    ("storage identity conflict",
+     "STORAGE AUDIT GREW: duplicate global identities",
+     lambda: _append("src/palette.h", "\nextern int StorageConflictControl; // 0x009BB438\n")),
+    ("scaled pointer offset",
+     "STORAGE AUDIT GREW: scaled class-pointer sum",
+     lambda: _append("src/palette.h", "\ninline int *storage_scale_control(Palette *parent) {\n"
+                     "  return reinterpret_cast<int *>(parent + 0xcc);\n}\n")),
     ("historical claim removed",
      # The one corruption no verdict can catch: the marker stops being a
      # marker, the claim ceases to exist, and source history retains it.

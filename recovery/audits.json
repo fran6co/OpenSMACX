@@ -102,6 +102,17 @@
         }
       ]
     },
+    "storage": {
+      "ruleset": "cpp-storage-v1",
+      "unit_extensions": [".cpp", ".c"],
+      "interface_extensions": [".h"],
+      "exclude_roots": ["src/vendor"],
+      "ceilings": {
+        "duplicate global identities": 8,
+        "scaled class-pointer sum": 0
+      },
+      "counters": []
+    },
     "class-debt": {
       "ruleset": "cpp-model-v1",
       "unit_extensions": [
@@ -128,6 +139,7 @@
     }
   },
   "context": [
+    "storage",
     "class-debt"
   ]
 }

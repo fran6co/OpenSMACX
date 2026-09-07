@@ -65,6 +65,14 @@ def project_audits(monkeypatch):
                    else Path(command[1]).name if audit else "build")
             output = (json.dumps({"audit": key, "result": "fail" if key in failures else "pass",
                                   "total": 0, "rules": []}) if native_audit else "")
+            if native_audit and key == "storage":
+                from match_recovery.cpp_storage_audit import STORAGE_RULES
+                bad = int(key in failures)
+                output = json.dumps({"audit": key, "result": "fail" if bad else "pass", "total": bad,
+                                     "files_scanned": 1, "persisted": False,
+                                     "rules": [{"name": name, "count": bad if i == 0 else 0, "ceiling": 0,
+                                                "status": "growth" if bad and i == 0 else "exact"}
+                                               for i, name in enumerate(STORAGE_RULES)]})
             if source_check:
                 from match_recovery.source_integrity import RULES
                 output = json.dumps({"check": "source_annotation_integrity", "schema_version": 1,
@@ -694,8 +702,8 @@ def test_json_is_only_json(claimed, monkeypatch):
 
 
 @pytest.mark.parametrize("audit", ["build", "compiler-work", "stale_references.py",
-    "marker_symbols.py", "check-mappings", "class-debt", "duplicate_globals.py",
-    "data_values.py", "pointer_scale.py", "check-source", "header_offsets.py"])
+    "marker_symbols.py", "check-mappings", "class-debt", "storage",
+    "data_values.py", "check-source", "header_offsets.py"])
 def test_failed_project_audit_prevents_acceptance(claimed, monkeypatch, project_audits, audit):
     monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
     project_audits.add(audit)
@@ -704,7 +712,7 @@ def test_failed_project_audit_prevents_acceptance(claimed, monkeypatch, project_
 
 @pytest.mark.parametrize("report", ["", "not JSON", "{}", '{"audit":"wrong"}',
                                     '{"audit":"compiler-work","result":"fail","total":0,"rules":[]}'])
-@pytest.mark.parametrize("audit_name", ["compiler-work", "class-debt"])
+@pytest.mark.parametrize("audit_name", ["compiler-work", "class-debt", "storage"])
 def test_invalid_native_audit_report_cannot_pass_the_gate(claimed, monkeypatch, report, audit_name):
     actual = osmx.subprocess.run
     def invoke(argv, *args, **kwargs):
@@ -715,8 +723,38 @@ def test_invalid_native_audit_report_cannot_pass_the_gate(claimed, monkeypatch, 
     monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
     result = check(claimed)
     assert result.exit_code == 1
-    expected = "FAILED: the tree does more of the compiler's work" if audit_name == "compiler-work" else "FAILED: semantic debt grew"
+    expected = ("FAILED: the tree does more of the compiler's work" if audit_name == "compiler-work" else
+                "FAILED: storage audit" if audit_name == "storage" else "FAILED: semantic debt grew")
     assert expected in result.output
+
+
+@pytest.mark.parametrize("damage", [
+    lambda r: r.update(rules=[]),
+    lambda r: r["rules"].pop(),
+    lambda r: r["rules"].append(dict(r["rules"][0])),
+    lambda r: r["rules"][0].update(name=[]),
+    lambda r: r["rules"][0].update(count=-1),
+    lambda r: r["rules"][0].update(count=True),
+    lambda r: r["rules"][0].update(ceiling=-1),
+    lambda r: r["rules"][0].update(status="growth"),
+    lambda r: r["rules"][0].update(count=1),
+    lambda r: r.update(total=1),
+    lambda r: r.update(files_scanned=0),
+    lambda r: r.update(files_scanned=True),
+    lambda r: r.update(persisted=True),
+    lambda r: (r["rules"][0].update(count=1, status="growth"), r.update(total=1)),
+])
+def test_storage_gate_refuses_incomplete_or_inconsistent_coverage(damage):
+    from match_recovery.cpp_storage_audit import STORAGE_RULES
+    report = {"audit": "storage", "result": "pass", "total": 0,
+              "files_scanned": 1, "persisted": False,
+              "rules": [{"name": name, "count": 0, "ceiling": 0, "status": "exact"}
+                        for name in STORAGE_RULES]}
+    def outcome():
+        return osmx.subprocess.CompletedProcess([], 0, json.dumps(report), "")
+    assert osmx._native_audit_result(outcome(), "storage", "storage audit", STORAGE_RULES).returncode == 0
+    damage(report)
+    assert osmx._native_audit_result(outcome(), "storage", "storage audit", STORAGE_RULES).returncode == 3
 
 
 @pytest.mark.parametrize("state,code", [("fail", 1), ("unknown", 3)])
