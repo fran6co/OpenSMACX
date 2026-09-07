@@ -62,6 +62,12 @@ Run `uv run recover tasks context <task>` and `uv run recover tasks obligations
 <task>`. Give workers the task identity, authorized files, current context and
 outstanding discoveries—not just addresses or a copied global brief.
 
+Class groups follow current source-mapped member symbols when available. Review
+each entity's ownership basis and alternative hints against the actual declarations
+and callers; a catalogue disagreement is not erased by a new grouping. Seed
+scaffold class names do not establish a current source owner. These derived hints
+help select work; they do not grant a scope expansion or prove a structural model.
+
 Both commands are native source-configuration operations. Historical source
 roots, pin locations and seed classifications come from the commits being read;
 old claims do not vanish when a directory moves or an attempt becomes a seed.

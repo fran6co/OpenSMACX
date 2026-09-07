@@ -23,7 +23,9 @@ def class_hint(symbol: str) -> str | None:
     # class based on a quoted demangler description or an encoded variable name.
     if symbol.startswith("??") and not symbol.startswith(("??0", "??1")):
         return None
-    if not symbol.startswith(("??0", "??1")) and not re.match(r'^\?[^@]+@.+?@@[ABCDEFIJKLMNQRSTUV]', symbol):
+    # W is a public virtual member's adjusted entry (for example a secondary
+    # base). Its qualified member name supplies the same class hint as U.
+    if not symbol.startswith(("??0", "??1")) and not re.match(r'^\?[^@]+@.+?@@[ABCDEFIJKLMNQRSTUVW]', symbol):
         return None  # a namespace-qualified free function is not a class method
     name = qualified_name(symbol)
     if "::" not in name or "`" in name or "'" in name:
@@ -36,11 +38,19 @@ def project_view(root: Path, image: Path | None = None) -> tuple[dict, dict]:
     configuration = SourceConfiguration.from_dict(snapshot["source_configuration"])
     candidates = []
     for row in snapshot["records"]:
+        seed = row["candidate_kind"] == "legacy_seed"
+        catalogued = class_hint(row["catalogued_symbol"]) if configuration.symbol_format == "msvc" else None
+        emitted = (class_hint(row["emitted_symbol_hint"])
+                   if configuration.symbol_format == "msvc" and not seed else None)
+        # Seed-emitted classes can be arbitrary compiler scaffolds. Product
+        # member bindings describe today's source home; retain the catalogue's
+        # different interpretation alongside it rather than rewriting history.
         candidates.append(Candidate(Origin(**row["origin"]),
                                     tuple(Span(*span) for span in row["spans"] if span not in row["invalid_spans"]),
-                                    row["path"], row["line"], row["candidate_kind"] == "legacy_seed",
-                                    row["emitted_symbol_hint"], class_hint(row["catalogued_symbol"])
-                                    if configuration.symbol_format == "msvc" else None))
+                                    row["path"], row["line"], seed,
+                                    row["emitted_symbol_hint"], emitted or catalogued,
+                                    owner_hint_basis="source_symbol" if emitted else "catalogued_symbol",
+                                    catalogued_owner_hint=catalogued))
     manifests = parse_components({name: base64.b64decode(row["content_base64"]).decode("utf-8")
                                  for name, row in snapshot["files"].items()
                                  if name.endswith(".recovery.h") and not configuration.is_seed(name)})

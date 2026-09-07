@@ -323,6 +323,17 @@ an importer. Common C/C++ suffixes are supported, including `.cc` and `.hpp`;
 are explicit worktree-relative paths, seed directories are configured rather than
 guessed by name, and missing roots/outside symlinks are refused. `symbol_format`
 defaults to `none`; opt into `msvc` for decorated-class/lifetime search hints.
+
+Class grouping follows the current source-mapped member symbol, including supported
+public secondary-base adjustors. An old anonymous catalogue label therefore does
+not strand a recovered method outside its class group. Catalogue labels remain a
+fallback for free redirect wrappers and seed-only evidence; a seed's emitted
+scaffold class never establishes current ownership. Each entity reports the
+grouping basis and alternative catalogue/seed owner hints. Alternatives remain
+questions for review, not permission to discard historical interpretations or
+matching obligations. Conflicting current member owners, multiple current source
+homes and incompatible original extents still produce conflicts. No class group
+proves hierarchy, lifetime, compilation success or a historical TU boundary.
 Hints are not original-design proof. Include impact remains conservative.
 
 With this source configuration, `tasks create <task> --group <group> --target

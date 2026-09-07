@@ -185,6 +185,10 @@ of every protected obligation.
 dependencies from source. Seeds contribute evidence without replacing product
 definitions. Conflicting names/extents/homes remain explicit, and address
 adjacency never proves a translation-unit boundary. These reports are not stored.
+Current mapped member symbols drive class grouping; old catalogue/seed owners
+remain visible as alternative hints, not automatic overrides of recovered source.
+This includes the shared GraphicWin query and its compiler-generated adjustor.
+The grouping is not structural proof and does not change historical obligations.
 `--impact` adds a conservative include-based recheck scope, not a completeness
 claim about object ownership or dynamic calls. Unresolved includes widen the
 scope; this view is not yet used to narrow the production check cache.

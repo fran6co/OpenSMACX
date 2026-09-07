@@ -123,6 +123,7 @@ def task_context(root: Path, name: str, *, restoration_for):
                                 for row in snapshot["records"] if row["entity_id"] in scope and row["binding_hint"]],
               "instructions": ["Read source declarations, definitions and evidence before editing.",
                                "Treat archived bodies and class/name labels as seeds, not mandatory source form.",
+                               "Review ownership alternatives against declarations and callers; a member-symbol group does not prove hierarchy or erase an older interpretation.",
                                "Report structural discoveries even when they affect other functions or units.",
                                "Do not edit beyond authorized scope or discard matching obligations.",
                                "A scope decision does not approve a regression; migration review and fresh checks are separate."],

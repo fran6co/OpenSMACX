@@ -22,6 +22,8 @@ class Candidate:
     symbol: str
     owner_hint: str | None = None
     component: str | None = None
+    owner_hint_basis: str = "supplied"
+    catalogued_owner_hint: str | None = None
 
     def __post_init__(self):
         relative_path(self.path)
@@ -29,6 +31,12 @@ class Candidate:
             raise ValueError("invalid source candidate location")
         if self.owner_hint is not None:
             require_text(self.owner_hint, "owner hint")
+        if self.catalogued_owner_hint is not None:
+            require_text(self.catalogued_owner_hint, "catalogued owner hint")
+        if self.owner_hint_basis not in ("supplied", "catalogued_symbol", "source_symbol"):
+            raise ValueError("invalid owner hint basis")
+        if self.owner_hint_basis == "source_symbol" and (self.seed or self.owner_hint is None):
+            raise ValueError("source-symbol ownership needs a current source member hint")
         if self.component is not None:
             require_text(self.component, "component binding")
 
@@ -41,7 +49,13 @@ def partition(candidates: Iterable[Candidate]) -> dict:
     groups = defaultdict(list)
     for entity_id, items in sorted(by_entity.items()):
         items.sort(key=lambda item: (item.path, item.line, item.symbol))
-        owners = sorted({item.owner_hint for item in items if item.owner_hint})
+        hints = {owner for item in items for owner in
+                 (item.owner_hint, item.catalogued_owner_hint) if owner}
+        current = {item.owner_hint for item in items if item.owner_hint_basis == "source_symbol"}
+        # Organize recovery around the current member bindings, not a seed's
+        # scaffold class or obsolete catalogue spelling. Alternatives remain
+        # visible for review; selecting a work group is not ownership proof.
+        owners = sorted(current or hints)
         components = sorted({item.component for item in items if item.component})
         sources = sorted({item.path for item in items if not item.seed})
         extents = {item.spans for item in items if item.spans}
@@ -65,7 +79,10 @@ def partition(candidates: Iterable[Candidate]) -> dict:
         else:
             group = "unassigned"
         groups[group].append({"entity_id": entity_id, "origin": asdict(items[0].origin),
-                              "candidates": [asdict(item) for item in items], "conflicts": reasons})
+                              "candidates": [asdict(item) for item in items], "conflicts": reasons,
+                              "ownership": {"basis": "source_symbol" if current else "hints",
+                                            "owners": owners, "alternative_hints": sorted(hints - set(owners)),
+                                            "verified": False}})
     result = []
     for key, entities in sorted(groups.items()):
         entities.sort(key=lambda entity: (entity["origin"]["image_sha256"],
@@ -78,7 +95,9 @@ def partition(candidates: Iterable[Candidate]) -> dict:
                                        "review_ownership_and_structure"),
                        "entity_count": len(entities), "entities": entities})
     return {"schema_version": 1, "entity_count": len(by_entity), "groups": result,
-            "historical_tu_boundaries": "not_inferred", "persisted": False}
+            "historical_tu_boundaries": "not_inferred", "persisted": False,
+            "limitations": ["class groups are member/name hints, not structural or historical-TU proof",
+                            "catalogue and seed alternatives remain evidence to review, not current owners by default"]}
 
 
 def select_group(view: dict, selector: str) -> dict:

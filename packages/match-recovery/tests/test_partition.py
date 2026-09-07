@@ -61,12 +61,12 @@ def test_conflicting_sources_are_visible_and_not_automatically_chosen(change):
 
 
 @pytest.mark.parametrize(("symbol", "owner"), [
-    ("?on_redraw@InfoWin@@QAEXXZ", "InfoWin"),
-    ("??0InfoWin@@QAE@XZ", "InfoWin"),
-    ("??1InfoWin@@QAE@XZ", "InfoWin"),
+    ("?on_redraw@Widget@@QAEXXZ", "Widget"),
+    ("??0Widget@@QAE@XZ", "Widget"),
+    ("??1Widget@@QAE@XZ", "Widget"),
     ("?f@Inner@Outer@@QAEXXZ", "Outer::Inner"),
     ("?helper@namespace_name@@YAXXZ", None),
-    ("??_GInfoWin@@UAEPAXI@Z", None),
+    ("??_GWidget@@UAEPAXI@Z", None),
     ("??__EGlobal@@YAXXZ", None),
     ("_free_function", None),
 ])
@@ -112,7 +112,12 @@ def test_comment_spelling_in_a_string_does_not_erase_later_directives():
 
 
 @pytest.fixture
-def project(tmp_path, source_configuration):
+def project(tmp_path):
+    (tmp_path / "recovery").mkdir()
+    (tmp_path / "recovery/project.json").write_text(json.dumps({
+        "schema_version": 1, "source": {
+            "image_pin": "src/IMAGE_PIN", "address_space": "pe:va",
+            "seed_roots": ["src/recovered", "src/unrecovered"], "symbol_format": "msvc"}}))
     src = tmp_path / "src"
     src.mkdir()
     (src / "IMAGE_PIN").write_text("sha256 " + PIN + "\n")
@@ -164,7 +169,7 @@ def test_task_cli_keeps_discoveries_through_scope_expansion_and_context_rebuild(
     common = ["--root", str(project)]
     assert main(["tasks", "create", "widget", *common, "--group", "class:Widget", "--author", "coordinator",
                  "--intent", "Fix member ownership", "--evidence", "source:src/widget.h",
-                 "--target", "opensmacx", "--base", baseline]) == 0
+                 "--target", "synthetic", "--base", baseline]) == 0
     assert json.loads(capsys.readouterr().out)["task"]["base_revision"] == baseline
     other = Origin(PIN, "pe:va", 0x402000).entity_id
     assert main(["tasks", "discover", "widget", *common, "--author", "worker", "--request-id", "finding",
@@ -191,5 +196,5 @@ def test_task_cli_keeps_discoveries_through_scope_expansion_and_context_rebuild(
     assert not json.loads(capsys.readouterr().out)["ready_for_collection"]
     (project / "src" / "widget.h").write_text("// uncommitted layout change\n")
     assert main(["tasks", "create", "dirty", *common, "--group", "class:Widget", "--author", "coordinator",
-                 "--intent", "New migration", "--evidence", "source:src/widget.h", "--target", "opensmacx"]) == 3
+                 "--intent", "New migration", "--evidence", "source:src/widget.h", "--target", "synthetic"]) == 3
     assert "checkpoint source" in capsys.readouterr().err
