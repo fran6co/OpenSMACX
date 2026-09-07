@@ -2583,6 +2583,40 @@ char *__cdecl get_pacts(int faction_id, int other_id) {
     return StringTable.get((int)labels[code]);
 }
 
+// ORIGINAL: 0x005247B0 ?generators@@YAHHPAH@Z 0x005247B0-0x00524862
+// The generator threshold at 0x00949864 is Rules.size_base_subspace_gen,
+// one of RulesBasic's last three fields, not a separate global in a gap.
+// The original walk reads Players[].rule_flags and Bases[] ownership,
+// population and facility bits. Compare population as signed, as in the image.
+int __cdecl generators(int faction_id, int *count_out) {
+    int count = 0;
+    if (count_out != 0) {
+        *count_out = 0;
+    }
+    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) == 0) {
+        return 0;
+    }
+    int total = BaseCurrentCount;
+    if (total > 0) {
+        int index = 0;
+        do {
+            if (Bases[index].faction_id_current == faction_id
+                && has_fac_built_call(0x28, index)) {
+                if (Bases[index].population_size
+                    < static_cast<int>(Rules.size_base_subspace_gen)) {
+                    if (count_out != 0) {
+                        ++*count_out;
+                    }
+                } else {
+                    ++count;
+                }
+            }
+            ++index;
+        } while (index < total);
+    }
+    return count;
+}
+
 // ORIGINAL: 0x0058FBC0 ?get_his_her@@YAPADHH@Z 0x0058FBC0-0x0058FC4B FILE
 // LEVER: the fixed-address bindings renamed to the tree's own models - Players
 //         (faction.h), Labels (alpha.h), StringTable (strings.h), the CharUpperA
@@ -2641,4 +2675,3 @@ char *__cdecl get_pact_hood(int faction_id, int other_id) {
     LPSTR *labels = (LPSTR *)Labels.strings_ptr;
     return StringTable.get((int)labels[code]);
 }
-
