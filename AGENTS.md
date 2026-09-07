@@ -51,6 +51,7 @@ uv run recover check-data --image <image> --summary
 uv run recover check-source --jobs 8 --summary
 uv run recover check-mappings --summary
 uv run recover check-symbols --summary
+uv run recover check-layout --summary
 uv run recover check-claims --summary
 uv run recover audits check storage --summary
 uv run recover record <addresses> --image <image> --in <source-file>

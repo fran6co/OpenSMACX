@@ -218,6 +218,13 @@ CASES = [
      lambda: _patch("src/basewin.h",
                     "uint32_t field_1D04C_;  // 0x1D04C",
                     "uint32_t field_1D04C_;  // 0x1D0FC")),
+    # Pure expectation damage: C++ offsets and every function byte stay intact.
+    # The compiler must contradict the wrong source-owned original member fact.
+    ("source layout expectation",
+     "FAILED: source layout coverage",
+     lambda: _patch("src/radiobutton.h",
+                    "RECOVERY_MEMBER: v3 RadioButton unchecked_sprite_ Sprite* 0x4 0x0060D750",
+                    "RECOVERY_MEMBER: v3 RadioButton unchecked_sprite_ Sprite* 0x8 0x0060D750")),
     ("annotation identity",
      "FAILED: an annotation does not survive being rewritten",
      _origin_blind),

@@ -23,6 +23,7 @@ runner = CliRunner()
 claim_coverage = osmx._claim_coverage
 initial_data_check = osmx._initial_data
 symbol_coverage_check = osmx._symbol_coverage
+layout_coverage_check = osmx._layout_coverage
 
 
 @pytest.mark.parametrize("state,expected", [("pass", 0), ("fail", 1), ("unknown", 3)])
@@ -40,6 +41,22 @@ def test_symbol_compiler_does_not_run_after_failed_build(claimed, monkeypatch, p
     monkeypatch.setattr(osmx, "_symbol_coverage", lambda: pytest.fail("build and symbol compiler overlapped"))
     monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
     assert check(claimed).exit_code == 1
+
+
+def test_layout_compiler_does_not_run_after_failed_build(claimed, monkeypatch, project_audits):
+    project_audits.add("build")
+    monkeypatch.setattr(osmx, "_layout_coverage", lambda: pytest.fail("layout compilation after failed build"))
+    monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
+    assert check(claimed).exit_code == 1
+
+
+def test_unavailable_native_layout_inputs_stay_incomplete(monkeypatch):
+    import match_recovery.layout_check as module
+    def refused(root):
+        raise ValueError("source input unavailable")
+    monkeypatch.setattr(module, "check_layout", refused)
+    result = layout_coverage_check()
+    assert result["result"] == "unknown" and "unavailable" in result["reason"]
 
 
 def test_unavailable_native_symbol_inputs_stay_incomplete(monkeypatch):
@@ -83,6 +100,8 @@ def project_audits(monkeypatch):
                         {"result": "fail" if "check-symbols" in failures else "pass", "counts": {}})
     monkeypatch.setattr(osmx, "_initial_data", lambda exe:
                         {"result": "fail" if "check-data" in failures else "pass", "counts": {}})
+    monkeypatch.setattr(osmx, "_layout_coverage", lambda:
+                        {"result": "fail" if "check-layout" in failures else "pass", "counts": {}})
     actual = subprocess.run
     def invoke(argv, *args, **kwargs):
         command = [str(word) for word in argv]
@@ -735,7 +754,7 @@ def test_json_is_only_json(claimed, monkeypatch):
 
 @pytest.mark.parametrize("audit", ["build", "compiler-work", "stale_references.py",
     "check-symbols", "check-mappings", "class-debt", "storage",
-    "data_values.py", "check-source", "header_offsets.py", "check-data"])
+    "data_values.py", "check-source", "header_offsets.py", "check-data", "check-layout"])
 def test_failed_project_audit_prevents_acceptance(claimed, monkeypatch, project_audits, audit):
     monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
     project_audits.add(audit)
@@ -751,6 +770,17 @@ def test_initial_storage_verdict_is_independent_of_passing_function_claims(claim
     assert result.exit_code == code
     assert report["initial_data"]["result"] == state
     assert report["failed"]["initial_data"] == (state == "fail")
+
+
+@pytest.mark.parametrize("state,code", [("pass", 0), ("fail", 1), ("unknown", 3)])
+def test_layout_coverage_is_independent_of_passing_function_claims(claimed, monkeypatch, state, code):
+    monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
+    monkeypatch.setattr(osmx, "_layout_coverage", lambda: {"result": state, "counts": {state: 2}})
+    result = check(claimed, "--json")
+    report = json.loads(result.stdout)
+    assert result.exit_code == code
+    assert report["layout_coverage"]["result"] == state
+    assert report["failed"]["layout_coverage"] == (state == "fail")
 
 
 def test_unavailable_native_data_evidence_is_unknown(monkeypatch, tmp_path):

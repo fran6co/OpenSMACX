@@ -1271,6 +1271,15 @@ def _symbol_coverage():
         return {"result": "unknown", "counts": {}, "reason": str(error)}
 
 
+def _layout_coverage():
+    """Compiler-derived structural facts are independent of function scores."""
+    from match_recovery.layout_check import check_layout
+    try:
+        return check_layout(REPO_ROOT)
+    except (OSError, ValueError) as error:
+        return {"result": "unknown", "counts": {}, "reason": str(error)}
+
+
 def _initial_data(exe):
     """Use the native verifier during gate cutover; no local data checker/cache."""
     from match_recovery.data_check import check_data
@@ -1955,6 +1964,24 @@ def check(
         if "reason" in initial_data:
             typer.echo("    " + initial_data["reason"])
 
+    # Source-owned layout requirements used to be visible only inside tasks.
+    # All product definitions now participate, without sharing a Wine prefix
+    # concurrently or substituting the old guessed-size header walk.
+    layouts = _layout_coverage() if not link.returncode else {
+        "result": "unknown", "counts": {}, "reason": "build failed before layout coverage"}
+    if not as_json:
+        typer.secho(f"  native source layout: {layouts['result']}, "
+                    f"{json.dumps(layouts['counts'], sort_keys=True)} (declared layout, not full hierarchy/lifetime)",
+                    fg=typer.colors.RED if layouts["result"] == "fail" else
+                    typer.colors.YELLOW if layouts["result"] == "unknown" else typer.colors.WHITE)
+        if "reason" in layouts:
+            typer.echo("    " + layouts["reason"])
+        for row in layouts.get("expectations", []):
+            if row["result"] == "fail":
+                item = row["expectation"]
+                typer.secho(f"    LAYOUT CONTRADICTION {item['class_name']}::{item.get('member', item.get('base'))} "
+                            f"({item['path']}:{item['line']})", fg=typer.colors.RED)
+
     coverage = _claim_coverage(src)
     coverage_note = _claim_coverage_note(coverage)
     if not as_json:
@@ -1965,9 +1992,9 @@ def check(
             or vtables.returncode or stale.returncode or symbols["result"] == "fail"
             or index.returncode or coverage["result"] == "fail" or debt.returncode
             or annotations.returncode or storage.returncode
-            or values.returncode or initial_data["result"] == "fail"
+            or values.returncode or initial_data["result"] == "fail" or layouts["result"] == "fail"
             else 3 if unasked or coverage["result"] == "unknown" or initial_data["result"] == "unknown"
-            or symbols["result"] == "unknown" else 0)
+            or symbols["result"] == "unknown" or layouts["result"] == "unknown" else 0)
     # THE VERDICT GOES IN THE OUTPUT, not only in the exit code. The brief has
     # told agents for a long time never to pipe this to `tail`, because `cmd |
     # tail` reports TAIL's status and `echo $?` after it is always 0 - and an
@@ -1984,6 +2011,7 @@ def check(
                else "FAILED: semantic debt grew" if debt.returncode
                else "FAILED: storage audit" if storage.returncode
                else "FAILED: original initial data" if initial_data["result"] == "fail"
+               else "FAILED: source layout coverage" if layouts["result"] == "fail"
                else "FAILED: an annotation does not survive being rewritten"
                if annotations.returncode
                else "FAILED: historical claim identities are missing" if coverage["result"] == "fail"
@@ -1991,6 +2019,7 @@ def check(
                else "FAILED: regressed, dangling or unread claims" if code == 1
                else "INCOMPLETE: source symbol coverage unavailable (not green)" if symbols["result"] == "unknown"
                else "INCOMPLETE: original initial data unverified (not green)" if initial_data["result"] == "unknown"
+               else "INCOMPLETE: source layout coverage unavailable (not green)" if layouts["result"] == "unknown"
                else "INCOMPLETE: unverifiable claims present (not green)" if code == 3
                else "CLEAN")
 
@@ -2002,6 +2031,7 @@ def check(
             "claim_identities": coverage,
             "initial_data": initial_data,
             "symbol_coverage": symbols,
+            "layout_coverage": layouts,
             "failed": {
                 "link": bool(link.returncode),
                 "compiler_work": bool(vtables.returncode),
@@ -2013,6 +2043,7 @@ def check(
                 "storage": bool(storage.returncode),
                 "data_values": bool(values.returncode),
                 "initial_data": initial_data["result"] == "fail",
+                "layout_coverage": layouts["result"] == "fail",
                 "header_offsets": bool(offsets.returncode),
                 "claim_identities": coverage["result"] == "fail",
                 "regressed": bool(regressed),

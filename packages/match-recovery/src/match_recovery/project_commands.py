@@ -7,6 +7,10 @@ from .records import read_json
 
 
 def register(commands):
+    layout = commands.add_parser("check-layout", help="Freshly check source-owned layout expectations across product TUs; not full structure proof")
+    layout.add_argument("--root", type=Path, default=Path.cwd())
+    layout.add_argument("--unit", dest="units", action="append", help="Exact TU diagnostic; omitted product units keep coverage incomplete")
+    layout.add_argument("--summary", action="store_true")
     symbols = commands.add_parser("check-symbols", help="Freshly verify source-mapped function names through configured compilation")
     symbols.add_argument("--root", type=Path, default=Path.cwd())
     symbols.add_argument("--in", dest="files", action="append", help="Exact product source path; omit for all product mappings")
@@ -163,6 +167,14 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
     if (configuration.keys() - {"schema_version", "adapter", "source", "source_history", "compiler", "measurement", "audits", "build", "mappings"}
             or type(configuration.get("schema_version")) is not int or configuration["schema_version"] != 1):
         raise ValueError("invalid local project command configuration")
+    if arguments.get("command") == "check-layout":
+        from .layout_check import check_layout
+        output = check_layout(root, units=arguments.get("units"))
+        if arguments.get("summary"):
+            output["expectations"] = [row for row in output["expectations"] if row["result"] != "pass"]
+            output["observations"] = [row for row in output["observations"] if row["result"] != "pass"]
+            output.pop("coverage")
+        return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
     if arguments.get("command") == "check-symbols":
         from .symbol_check import check_symbols
         output = check_symbols(root, files=arguments.get("files"))

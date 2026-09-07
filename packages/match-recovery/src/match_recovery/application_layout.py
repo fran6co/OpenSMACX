@@ -28,14 +28,27 @@ def check_member(item, layout):
         correct = (actual_class == item.class_type if item.class_type is not None else
                    actual_pointer_class == item.class_pointer_type)
         type_result = Result.UNKNOWN if kind == "unknown" else Result.PASS if correct else Result.FAIL
-    result = (Result.UNKNOWN if Result.UNKNOWN in (offset_result, type_result) else
-              Result.FAIL if Result.FAIL in (offset_result, type_result) else Result.PASS)
+    result = (Result.FAIL if Result.FAIL in (offset_result, type_result) else
+              Result.UNKNOWN if Result.UNKNOWN in (offset_result, type_result) else Result.PASS)
     return {"actual_class_type": actual_class, "actual_class_pointer_type": actual_pointer_class,
             "member_type_kind": kind, "observed_type": observed, "actual_offset": actual,
             "offset_result": offset_result, "type_result": type_result, "result": result,
             "reason": ("member absent or compiler definition unavailable" if actual is None else
                        "member offset and unqualified class-pointer target compared" if item.class_pointer_type else
                        "member offset and class-value type compared" if item.class_type else "direct member offset compared")}
+
+
+def check_base(item, layout):
+    """Compare one named nonvirtual base without guessing virtual placement."""
+    matches = [base for base in layout["bases"] if base["class"] == item.base] if layout else []
+    result = (Result.UNKNOWN if layout is None or len(matches) > 1 else
+              Result.PASS if len(matches) == 1 and not matches[0]["virtual"] and matches[0]["offset"] == item.offset
+              else Result.FAIL)
+    return {"observed_bases": matches, "result": result,
+            "reason": ("compiler definition unavailable" if layout is None else
+                       "ambiguous named base" if len(matches) > 1 else
+                       "named base absent from complete class definition" if not matches else
+                       "declared nonvirtual base and offset compared")}
 
 
 def verify_layout(root: Path, task_name: str, *, compiler=None, command_for=None) -> dict:
@@ -118,26 +131,18 @@ def verify_layout(root: Path, task_name: str, *, compiler=None, command_for=None
                              "unit": unit, "flags": list(flags),
                              **checked, "reason": errors.get(item.class_name, checked["reason"])})
             for item in expected_bases:
-                layout = layouts.get(item.class_name)
-                matches = [base for base in layout["bases"] if base["class"] == item.base] if layout else []
-                result = (Result.UNKNOWN if layout is None or len(matches) > 1 else
-                          Result.PASS if len(matches) == 1 and not matches[0]["virtual"] and matches[0]["offset"] == item.offset
-                          else Result.FAIL)
+                checked = check_base(item, layouts.get(item.class_name))
                 base_rows.append({"expectation": asdict(item), "interpretation_id": item.interpretation_id,
                                   "unit": unit, "flags": list(flags),
-                                  "observed_bases": matches, "result": result,
-                                  "reason": errors.get(item.class_name,
-                                                       "ambiguous named base" if len(matches) > 1 else
-                                                       "named base absent from complete class definition" if not matches else
-                                                       "declared nonvirtual base and offset compared")})
+                                  **checked, "reason": errors.get(item.class_name, checked["reason"])})
     if (before != settings.snapshot(root, {})
             or task != store.read(task_name) or decisions != store.decisions(task_name)):
         raise ValueError("source, build inputs or task changed during layout verification")
     # Every requested TU/configuration must agree; never select a passing layout
     # from one TU to hide an ABI disagreement in another.
     all_rows = rows + base_rows
-    result = (Result.UNKNOWN if not all_rows or any(row["result"] == Result.UNKNOWN for row in all_rows)
-              else Result.FAIL if any(row["result"] == Result.FAIL for row in all_rows) else Result.PASS)
+    result = (Result.FAIL if any(row["result"] == Result.FAIL for row in all_rows) else
+              Result.UNKNOWN if not all_rows or any(row["result"] == Result.UNKNOWN for row in all_rows) else Result.PASS)
     return {"task_id": task_name, "check": "declared_member_and_base_offsets", "result": result,
             "members": rows, "bases": base_rows, "coverage": observations,
             "translation_units": units, "flag_sets": [list(flags) for flags in settings.flag_sets],

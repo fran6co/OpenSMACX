@@ -144,6 +144,20 @@ emission, not final-link selection, original-byte agreement or complete recovery
 It adds fresh compilation rather than trusting old incremental objects; shared
 fresh-object reuse with the whole gate remains a throughput improvement to make.
 
+`uv run recover check-layout --summary` checks source-owned `RECOVERY_MEMBER`
+and `RECOVERY_BASE` expectations across all configured product TUs and flag sets.
+It uses the same compiler-observed member/type/base comparisons as task checks;
+one passing definition cannot hide another TU's contradiction. Missing compiler
+evidence remains unknown. Every expectation needs an observed definition in each
+flag set. Valid non-emission is reported, not proof of ABI independence. A scoped
+`--unit src/radiobutton.cpp` diagnostic leaves omitted product units unverified.
+
+The retained full gate invokes this serially after initial-data compilation.
+The older header-offset walk remains until its conventional offset comments and
+self-naming members have replacement coverage. This native check adds fresh
+compilation cost; shared fresh-object reuse is still unfinished. Neither passing
+offsets nor class-pointer targets prove the full hierarchy or runtime lifetime.
+
 The native `recover tasks variants` command now replaces serial edit-and-restore
 spelling experiments. It reads the source map once and compiles atomic header/body
 overlays across task TUs. Unchanged-replica controls per TU and compiled damage

@@ -124,6 +124,19 @@ def test_all_configurations_are_checked_and_disagreement_is_not_hidden(project):
     assert report["structure_verification"] == "unknown" and not report["scope_complete"]
 
 
+def test_task_layout_failure_is_not_hidden_by_an_unmeasurable_configuration(project):
+    (project / "code/unit.hpp").write_text(ANNOTATION)
+    path = project / "recovery/project.json"
+    config = json.loads(path.read_text())
+    config["measurement"]["flag_sets"].append(["-alternate"])
+    path.write_text(json.dumps(config))
+    def compiler(path, command, flags):
+        return b"truncated" if "-alternate" in flags else coff(pointer_types(attributes=0x2A))
+    report = verify_layout(project, "owner", compiler=compiler)
+    assert report["result"] == "fail"
+    assert [row["result"] for row in report["members"]] == ["fail", "unknown"]
+
+
 def test_joint_task_check_reports_wrong_pointer_even_when_function_bytes_pass(project):
     (project / "code/unit.hpp").write_text(ANNOTATION)
     report = check_task(project, "owner", project / "original.exe",

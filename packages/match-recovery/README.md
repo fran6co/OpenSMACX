@@ -182,6 +182,30 @@ emission coverage; 1 a counterexample; 3 incomplete evidence. There is no allowa
 for a population of missing names, stored verdict or source mutation. This does
 not prove original bytes, references, class structure or runtime behavior.
 
+### Project-wide declared layout coverage
+
+`recover check-layout [--root <project>] [--unit code/owner.cc] [--summary]`
+checks explicit source-owned member and nonvirtual-base expectations using fresh
+standalone compiler debug information. Existing source, measurement and compilation
+database configuration supplies the inputs; no task or project checker is needed.
+It compiles every configured product TU for every flag set once, sharing each
+object across expectations. All observed definitions must agree; a later passing
+configuration cannot erase a counterexample. A known wrong offset remains a
+failure even if its member type is unmeasurable.
+
+Each expectation needs a complete compiler witness in every configured flag set.
+Unsupported/malformed debug information, failed compiles and missing witnesses
+remain unknown. Non-emission from a valid type stream is visible in coverage,
+not proof the TU has no ABI dependency. `--unit` narrows investigation but omitted
+product TUs keep the overall result unknown. Unsupported/external build inputs
+likewise cannot silently disappear. Exit codes are 0/1/3 for pass/fail/unknown.
+Summary output retains counterexamples; all reports are disposable.
+
+This checks explicit `RECOVERY_MEMBER`/`RECOVERY_BASE` interpretations, not legacy
+offset prose, self-naming fields, full types, virtual-base placement, hierarchy,
+lifetime or linker selection. Original expectations remain source evidence, not
+freshly re-derived binary evidence. It is not acceptance or migration admission.
+
 ### Prompt-driven agent commands
 
 `recover agent worker` and `recover agent reviewer` implement the driver protocol
