@@ -316,6 +316,27 @@ establish equivalent coverage. `recover check-matches` exposes the native claim
 sweep without banking its discoveries. Neither command is the unfinished full
 acceptance/migration verifier or evidence that the game works.
 
+The real-project damage controls are now opt-in pytest cases in
+`recovery/tests/test_gate_controls.py`, replacing the old main-tree mutation
+harness. At a clean coordinator checkpoint, with an explicitly isolated compiler
+prefix, run:
+
+```sh
+OPENSMACX_LIVE_GATE_CONTROLS=1 uv run pytest recovery/tests/test_gate_controls.py -vv -s
+```
+
+Set `OPENSMACX_IMAGE` if the pinned original is elsewhere, and
+`OPENSMACX_GATE_JOBS` only to measured isolated capacity (default 1). `-k` can
+select a case. Each selected case invokes the full native gate in a temporary
+detached checkout with its own package installation; fresh initial/final baseline
+gates still run. A case must observe its named stage and, for ambiguous missing
+symbol evidence, its damaged subject. An unrelated failure or old unknown result
+cannot satisfy it. No model worker is launched. The checkouts are removed without
+force; unexpected edits are preserved for inspection. Reports remain disposable
+under ignored `build/recovery/gate-controls/`. These can be long compiler runs;
+ordinary tests check anchors/restoration safety but skip real gates unless enabled.
+Passing those fast tests is not evidence that the live damage matrix passed.
+
 The gate uses the native `uv run recover check-source --jobs 8 --summary` for
 annotation integrity. Its keyword/demotion/deletion experiments run only in
 memory. Standalone `ORIGINAL:` comment heads are reserved for mappings, not run

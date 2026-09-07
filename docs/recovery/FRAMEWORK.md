@@ -46,6 +46,10 @@ build caches. The native gate prepares before its measurement snapshot; standalo
 checks use coordinator-prepared recipes. The old configure CLI is removed; the
 retained legacy gate/measurement still have their internal preparation helper until
 cutover. Production cutover still requires migrated full-gate damage controls.
+Those project controls now live in opt-in `recovery/tests/test_gate_controls.py`:
+full native gates in a disposable detached checkout, named stage/subject assertions,
+and guarded damage restoration. The old main-tree mutation CLI is removed.
+Ordinary anchor/safety tests are not a substitute for executing the live matrix.
 Three local checks remain until their conventional
 source/document coverage is absorbed. Full acceptance is a separate unfinished
 verifier; an incomplete native gate does not permit deleting the old control route.
