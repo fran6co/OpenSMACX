@@ -7,6 +7,9 @@ from .records import read_json
 
 
 def register(commands):
+    claims = commands.add_parser("check-claims", help="Check source-owned obligation identities against history; not current matching")
+    claims.add_argument("--root", type=Path, default=Path.cwd())
+    claims.add_argument("--summary", action="store_true")
     mappings = commands.add_parser("check-mappings", help="Check source identity and intended build ownership; not binary proof")
     mappings.add_argument("--root", type=Path, default=Path.cwd())
     mappings.add_argument("--summary", action="store_true")
@@ -146,6 +149,13 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
             output["seed_alternative_groups"] = len(output.pop("seed_alternatives"))
             output["forwarder_sites"] = len(output.pop("forwarders"))
             output.pop("findings")
+        return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
+    if arguments.get("command") == "check-claims":
+        from .claim_integrity import check_claims
+        output = check_claims(root)
+        output["missing_requirements"] = len(output["missing"])
+        if arguments.get("summary"):
+            output.pop("missing")
         return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
     if arguments.get("command") == "check-source":
         from .source_integrity import check_source

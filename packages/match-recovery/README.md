@@ -82,6 +82,38 @@ or generating the starter files cannot establish a recovery result.
 
 ## Small integration contract
 
+### Historical obligation identities
+
+`recover check-claims [--root <project>] [--summary]` derives byte and
+instruction-shape requirements from source history and checks that their original
+identities remain represented in current source. Configure a one-time history
+scope decision, with evidence, in `recovery/project.json`:
+
+```json
+"source_history": {
+  "baseline_revision": "<full committed ancestor revision>",
+  "evidence": ["Source checkpoint where protected recovery began"]
+}
+```
+
+The baseline needs source configuration and an image pin; pre-framework history
+also needs explicit `before_configuration` source inputs as described below.
+Once committed, the baseline cannot be advanced or reset: the checker inspects
+reachable configuration history, including merged branches, before selecting its
+source-history interval. The established pre-configuration interpretation cannot
+be changed either. Shallow clones must fetch complete history before this check
+can establish coverage. Preserve source bindings and obligations, not counts.
+Renaming or rehoming a candidate leaves its original identity intact. Dropping a
+byte requirement, replacing it with a weaker shape requirement, deleting the last
+marker, or swapping claims while keeping the count unchanged fails. Deleting a
+redundant seed copy does not require retaining an artificial count.
+
+Exit 0 establishes source coverage only; 1 reports lost obligations; unavailable
+history/configuration returns 3. Current and newly declared claims still require
+fresh binary verification. No ledger, current verdict or source mutation is
+written. This does not authenticate which editor added a token or prove current
+matching, original boundaries, ownership or structure.
+
 ### Source annotation integrity
 
 `recover check-source --root <project> [--jobs N] [--summary]` checks all files

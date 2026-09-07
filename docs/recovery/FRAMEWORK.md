@@ -49,11 +49,21 @@ the selected image and legacy command inputs. Complete measurement coverage is
 required before staging. Only byte obligations are added; historical notes and
 existing obligations survive nonmatching measurements. The old demotion and
 weaker-claim grant/withdraw paths, along with automatic count reconciliation,
-are removed. The remaining floor advances only by this batch's measured increment.
+are removed. Source-only publication no longer maintains a count floor.
 Original/replacement bytes are staged in ignored storage. Ordinary write failures
 roll back the invocation's own unchanged outputs, preserving conflicting later
-edits and recoverable backups. Multi-file atomicity, compact obligation writing,
-source-identity floor replacement and native production CLI cutover remain open.
+edits and recoverable backups. Multi-file atomicity, compact obligation writing
+and native production CLI cutover remain open.
+
+Native `recover check-claims` now replaces the count floor in production recording
+and the full gate. It derives byte/shape requirements from the existing structural
+baseline through reachable source history, including merged branches, and requires
+their original identities to remain represented in source. Same-count swaps,
+weakened requirements and deleted markers fail; renames, rehoming and removal of
+redundant seed copies preserve identity. The one-time `source_history.baseline_revision`
+decision cannot be advanced or reset after it appears in reachable configuration
+history. No counts, inventories or fresh match results are persisted. Current
+measurements, ownership, references and structural acceptance remain separate.
 
 The production gate's annotation-integrity dependency now runs through native
 `recover check-source`; the replaced script is removed. The package checks actual

@@ -61,12 +61,16 @@ def _first_claim(rel: str) -> str:
     return found.group(0)
 
 
-def _floor_decrement() -> None:
-    """Lower the persisted floor by one, whatever it currently says."""
-    found = re.search(r"claims (\d+)", _snap("src/CLAIM_FLOOR"))
-    assert found, "no claims line in src/CLAIM_FLOOR"
-    _patch("src/CLAIM_FLOOR", found.group(0),
-           f"claims {int(found.group(1)) - 1}")
+def _swap_claim() -> None:
+    """Keep the number of tokens constant while dropping a required identity."""
+    old = _first_claim("src/palette.cpp")
+    _patch("src/palette.cpp", old, old.replace(" BYTE_EXACT", ""))
+    text = _snap("src/caviar.cpp")
+    candidate = next((line for line in text.splitlines()
+                      if line.startswith("// ORIGINAL:") and "BYTE_EXACT" not in line
+                      and "SEMANTIC" not in line), None)
+    assert candidate, "no unclaimed control candidate"
+    _patch("src/caviar.cpp", candidate, candidate + " BYTE_EXACT")
 
 
 def _any_artifact() -> str:
@@ -101,7 +105,7 @@ def _marker_respelling() -> None:
 
     TREE-SIDE, and it trips nothing else on purpose: same address, same
     name, same spans, same claim count - so `address_index`, `marker_symbols`
-    and the claim floor all stay quiet, and only the canonical spelling of
+    and source claim identity coverage stay quiet, and only the canonical spelling of
     the marker notices.
     """
     marker = _first_claim("src/palette.cpp")
@@ -166,19 +170,17 @@ CASES = [
     ("class-model audit growth",
      "SEMANTIC DEBT GREW",
      lambda: _append("src/palette.h", "  void UNK99(int);\n")),
-    ("claim floor fell",
+    ("historical claim removed",
      # The one corruption no verdict can catch: the marker stops being a
-     # marker, the claim ceases to exist, and only the ledger notices.
-     "CLAIMS FELL",
+     # marker, the claim ceases to exist, and source history retains it.
+     "HISTORICAL CLAIMS MISSING",
      lambda: _patch("src/palette.cpp",
                     _first_claim("src/palette.cpp"),
                     _first_claim("src/palette.cpp")
                     .replace("// ORIGINAL:", "// ORIGINAl:"))),
-    ("claim floor exceeded",
-     # Equivalent to a BYTE_EXACT token nothing measured: the tree holds one
-     # more claim than `osmx record` ever wrote down.
-     "CLAIMS ABOVE THE FLOOR",
-     lambda: _floor_decrement()),
+    ("same-count claim swap",
+     "HISTORICAL CLAIMS MISSING",
+     _swap_claim),
     # A WALK THAT SHIFTS RENAMES THE WRONG MEMBER. `name_offsets.py` turns
     # `self + 0xNN` into a member name from the map header_offsets derives,
     # and both spellings compile to the identical offset - so a walk that

@@ -526,8 +526,9 @@ def read(path: Path | str) -> list[DecompilationState]:
                 # (2026-08-24, src/unrecovered/005fe700.cpp deleted by a
                 # homing pass). A measurement tool degrades, it does not
                 # abort: the file is gone, so its annotations are gone, and
-                # the claim-floor gate is what makes that VISIBLE as a count
-                # - a crash here reported nothing at all.
+                # historical identity coverage detects lost obligations.
+                # Snapshot-aware measurement callers separately refuse source
+                # changes during a run; this reader is not a coverage proof.
                 try:
                     found.extend(read_file(file))
                 except FileNotFoundError:

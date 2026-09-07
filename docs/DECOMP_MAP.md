@@ -203,18 +203,21 @@ structural change merely to avoid a temporary regression.
 
 **THE RATCHET IS `osmx check`.** It reads the claims in `src/`, recompiles
 every one against the pinned image, links the tree, and fails by address and
-file if a claim stops reproducing. The floor is the number of claims, so
-there is no constant to bump: only `osmx record` writes the token, it stamps
+file if a claim stops reproducing. Source-history identity coverage protects
+removed obligations; no persisted claim count remains. Only `osmx record` writes the token, it stamps
 only what it measured, and nothing ever removes one but a deliberate source
 edit visible in the diff. The recorder no longer offers `--demote`, weaker
 claim grants or withdrawal. Existing SEMANTIC annotations remain historical
 instruction-shape obligations and are still checked; they do not establish
 completed recovery.
 
-Recording refuses a missing or mismatched starting floor. Only its measured
-increment is published with its source changes, never a recount that could hide
-an unrelated loss. This count remains transitional until source-identity/history
-coverage replaces it. Recording preserves historical notes and source bytes;
+Recording refuses missing or unverifiable historical obligations before compiling.
+`recover check-claims` compares original identities and requirement strength with
+the configured immutable source-history baseline. A rename or rehome does not
+lose identity; replacing one claim with another at the same count fails. The
+baseline revision is a history-scope decision, not another claim ledger. New
+source tokens still require fresh measurement by the binary gate. Recording
+preserves historical notes and source bytes;
 its publication guards and interruption limits are described in `recovery/README.md`.
 
 ## Drift

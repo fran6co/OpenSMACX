@@ -128,7 +128,9 @@ def _parser_key() -> str:
     return digest({"implementation": inputs, "python": sys.version})
 
 
-def source_snapshot(root: Path, image: Path | None = None) -> dict[str, Any]:
+def source_snapshot(root: Path, image: Path | None = None, *, allow_empty: bool = False) -> dict[str, Any]:
+    if type(allow_empty) is not bool:
+        raise ValueError("empty source selection policy must be a boolean")
     root = root.resolve()
     configuration = SourceConfiguration.read(root)
     cache = None
@@ -167,7 +169,7 @@ def source_snapshot(root: Path, image: Path | None = None) -> dict[str, Any]:
         parsed = memoized(cache, key, lambda: _parse_file(raw, path, root, pin, configuration))
         records.extend(parsed["records"])
         obligations.extend(parsed["obligations"])
-    if not records:
+    if not records and not allow_empty:
         raise ValueError("no legacy annotations found; refusing an empty migration")
     # Refuse a racing import rather than quietly dropping concurrently moved files.
     if (configuration != SourceConfiguration.read(root) or paths != source_files(root, configuration)

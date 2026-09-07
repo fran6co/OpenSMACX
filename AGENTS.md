@@ -49,6 +49,7 @@ uv run recover tasks check-preservation <task> --summary
 uv run recover check-build --summary
 uv run recover check-source --jobs 8 --summary
 uv run recover check-mappings --summary
+uv run recover check-claims --summary
 uv run recover run <task> --worker <config> --reviewer <config>
 uv run pytest packages/match-recovery/tests recovery/tests
 cmake --build build
@@ -71,10 +72,11 @@ proof of current structure or relocation-target correctness.
 
 The retained recorder now uses guarded package publication: 0 means every
 selected body measured exact, 1 a measured miss, 3 incomplete/refused evidence.
-It requires the pinned image and an intact starting floor; it cannot recount
-unrelated lost claims. Automatic demotion and weaker-claim grant/withdraw are
+It requires the pinned image and intact historical source obligations. The
+count floor is removed: `recover check-claims` detects missing original identities,
+including same-count swaps. Automatic demotion and weaker-claim grant/withdraw are
 removed. Existing obligations and historical notes remain. After interruption,
-inspect the source/floor diff and ignored `build/recovery/publications/` backups;
+inspect the source diff and ignored `build/recovery/publications/` backups;
 multi-file publication is not globally atomic. See `recovery/README.md`.
 
 ## Working rules

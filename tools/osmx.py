@@ -32,6 +32,9 @@ from match_recovery.source.calls import CallSite, call_sites, imported_names
 from match_recovery.source.recording import record_claims
 from match_recovery.measurement import Measurement
 from match_recovery.source_inventory import image_pin
+from match_recovery.source_config import SourceConfiguration
+from match_recovery.source_history import git as source_git
+from match_recovery.claim_integrity import check_claims
 from recovery.environment.recipe import build_command, MissingRecipe
 from match_recovery.compilation_database import build_inputs
 from recovery.environment.compile import compile_object
@@ -40,50 +43,6 @@ from match_recovery.source.asm import (AsmComparison, CompileFailed, compare_uni
                         original_asm, shared_spans, span_refusal)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-
-# THE CLAIM FLOOR IS A FILE, NOT A RECOUNT. `check` recomputes the claim
-# count from the tree on every run, so "the floor is the number of claims"
-# only held against honest edits: delete a marker - or typo it, `ORIGINAl:`
-# reads as prose - and the claim did not fail, it CEASED TO EXIST, and the
-# recount just followed it down (measured 2026-08-23: both corruptions read
-# as 0 records, silently). This file is what the recount is compared TO.
-# Only the guarded recorder rewrites it, in the same batch as
-# the annotations; the gate fails on ANY mismatch, in either direction - a
-# live count above the floor is a BYTE_EXACT token something other than
-# `record` wrote. Recording now refuses a mismatched starting floor, and
-# publishes only its measured increment with its source changes. It cannot
-# reconcile unrelated dropped/added claims by recounting the tree. Collection
-# must preserve the source/floor pair before measurement; identity-based
-# history checks must replace this count before it can be retired.
-#
-# THE FLOOR LIVES IN THE TREE IT COUNTS. The first version pinned the path
-# from __file__ while counting the `--src` it was handed - the mixed
-# location mechanism the 2026-08-24 audit named as a hazard, rebuilt hours
-# later by its own author. It bit the same day: a record run against a
-# small src wrote `claims 3` into MAIN's floor while main held 3,018.
-# Deriving the path from `src` makes counting and writing the same tree by
-# construction, and gives every worktree its own self-consistent floor.
-
-
-def _floor_path(src: Path) -> Path:
-    return Path(src) / "CLAIM_FLOOR"
-
-
-def _read_floor(src: Path) -> int | None:
-    """The persisted claim count, or None when the file is missing/garbled."""
-    try:
-        return int(_floor_path(src).read_text().split()[-1])
-    except (OSError, ValueError, IndexError):
-        return None
-
-
-def _floor_bytes(live: int) -> bytes:
-    return (
-        "# Transitional claim floor. Maintained by guarded `osmx record`;\n"
-        "# `osmx check` fails when the tree's live claim count differs in\n"
-        "# EITHER direction. Never edit by hand or recount unrelated edits.\n"
-        "# Recording adds only the obligations measured in its own batch.\n"
-        f"claims {live}\n").encode()
 
 # More matches than this and a listing is more use than a dump.
 SHOW_IN_FULL = 4
@@ -902,18 +861,45 @@ def _measure_records(chosen, exe, compile_commands, borrow, shared):
     return [row for unit in units for row in unit.results]
 
 
+def _claim_coverage(src):
+    """The legacy CLI can measure only its configured single source root."""
+    try:
+        configuration = SourceConfiguration.read(REPO_ROOT)
+        if [configuration.path(REPO_ROOT, name).resolve() for name in configuration.roots] != [src.resolve()]:
+            raise ValueError("legacy measurement must use its configured source root")
+        unsupported = [str(path.relative_to(REPO_ROOT)) for path in configuration.files(REPO_ROOT)
+                       if path.suffix not in (".cpp", ".c")
+                       and any(row.byte_exact or row.semantic for row in read(path))]
+        if unsupported:
+            raise ValueError("legacy measurement does not cover claimed source hosts: " + ", ".join(unsupported))
+        return check_claims(REPO_ROOT)
+    except (OSError, ValueError) as error:
+        return {"result": "unknown", "missing": [], "error": str(error)}
+
+
+def _claim_coverage_note(report):
+    if report["result"] == "unknown":
+        return "claim identity coverage is unmeasurable: " + report["error"]
+    if report["missing"]:
+        identities = ", ".join(row["address"] + "/" + row["dimension"] for row in report["missing"])
+        return "HISTORICAL CLAIMS MISSING: " + identities
+    return (f"claim identity coverage: {report['historical_requirements']:,} historical requirements, "
+            f"{report['claims']:,} current claims; no missing obligations")
+
+
 def _record_input_identity(src, exe, compile_commands, borrow):
     """Transitional CLI inputs over the package's configured measurement policy."""
     settings = Measurement.read(REPO_ROOT)
     staging = (compile_commands.parent / "recovery/publications").resolve()
-    paths = {exe, compile_commands, Path(__file__), _floor_path(src)}
+    paths = {exe, compile_commands, Path(__file__)}
     paths.update(path for path in src.rglob("*")
                  if path.is_file() and not path.resolve().is_relative_to(staging))
     files = {str(path): (hashlib.sha256(path.read_bytes()).hexdigest(), str(path.resolve()))
              if path.exists() else None for path in sorted(paths)}
     if files[str(exe)] is None or files[str(exe)][0] != image_pin(REPO_ROOT, settings.source):
         raise ValueError("recording requires the configured pinned original image")
-    return settings.snapshot(REPO_ROOT, {"flags": FLAG_SETS, "borrow": borrow}), files
+    return settings.snapshot(REPO_ROOT, {"flags": FLAG_SETS, "borrow": borrow,
+                                          "head": source_git(REPO_ROOT, "rev-parse", "HEAD").decode().strip()}), files
 
 
 @app.command()
@@ -956,12 +942,9 @@ def record(
         before = _record_input_identity(src, exe, compile_commands, borrow)
         records = read(src)
         shared = shared_spans(records)
-        floor = _read_floor(src)
-        live = sum(piece.byte_exact or piece.semantic for piece in records)
-        if floor is None or floor != live:
-            raise ValueError("claim floor is missing or differs from source; recording cannot reconcile unrelated claim edits")
-        floor_path = _floor_path(src)
-        floor_before = floor_path.read_bytes()
+        coverage = _claim_coverage(src)
+        if coverage["result"] != "pass":
+            raise ValueError(_claim_coverage_note(coverage))
 
         chosen = []
         for target in targets:
@@ -974,16 +957,9 @@ def record(
             if _record_input_identity(src, exe, compile_commands, borrow) != before:
                 raise ValueError("source, compiler or measurement inputs changed; no claims written")
 
-        def auxiliary(updated):
-            old = {(piece.path, piece.line): piece for piece in chosen}
-            gained = sum(not (old[(piece.path, piece.line)].byte_exact
-                              or old[(piece.path, piece.line)].semantic) for piece in updated)
-            return ({floor_path: floor_before},
-                    {floor_path: _floor_bytes(floor + gained)})
-
         publication = record_claims(
             chosen, measure=lambda: _measure_records(chosen, exe, compile_commands, borrow, shared),
-            validate=validate, auxiliary=auxiliary,
+            validate=validate,
             staging_directory=compile_commands.parent / "recovery/publications")
         updated, regressed = publication.updated, publication.regressed
         results, unresolved = publication.measured, publication.unresolved
@@ -1514,12 +1490,12 @@ def check(
     """THE RATCHET. Does every proved body still reproduce?
 
     Re-measures every `BYTE_EXACT` claim in the tree against the shipped
-    image and fails if one stopped. The floor is the number of claims, so
-    there is no constant to bump.
+    image and fails if one stopped. Source-history identity coverage catches
+    removed obligations, including losses hidden by an unchanged claim count.
 
     IT WRITES NOTHING INTO THE TREE, and that is what makes it a gate rather
     than a pass of `record` that happens to fail. A gate that can add a claim
-    changes the floor as a side effect of measuring it, and one that can
+    changes its own requirements as a side effect of measuring it, and one that can
     clear a broken claim can always be made to pass. The one thing it does
     write is a verdict memo beside the build database, which no command
     reads for anything but skipping a byte-identical re-measurement -
@@ -1550,34 +1526,14 @@ def check(
     if not claims:
         typer.secho(f"no BYTE_EXACT claims under {src}",
                     fg=typer.colors.RED)
-        raise typer.Exit(2)
+        coverage = _claim_coverage(src)
+        typer.secho(_claim_coverage_note(coverage), fg=typer.colors.RED)
+        raise typer.Exit(1 if coverage["result"] == "fail" else 3)
 
-    # THE FLOOR, before anything is measured: a claim that VANISHED never
-    # reaches the measure loop, so no verdict can catch it - only the count
-    # against the persisted ledger can. Both directions fail. Below: a marker
-    # was deleted or corrupted into prose (`ORIGINAl:` reads as a comment).
-    # Above: a claim token exists that `osmx record` never measured.
     pin_broken = _image_pin(src, exe)
     if pin_broken:
         typer.secho(pin_broken, fg=typer.colors.RED, bold=True)
         raise typer.Exit(1)
-
-    floor = _read_floor(src)
-    if floor is None:
-        floor_broken = (f"NO CLAIM FLOOR at {_floor_path(src)} - "
-                        f"restore the source-owned baseline from Git; recording does not recreate it")
-    elif claims < floor:
-        floor_broken = (f"CLAIMS FELL: {claims:,} live against a floor of "
-                        f"{floor:,} - a marker vanished or was edited into "
-                        f"prose; inspect source history and restore the missing "
-                        f"obligations; recording cannot clear or recount them")
-    elif claims > floor:
-        floor_broken = (f"CLAIMS ABOVE THE FLOOR: {claims:,} live against "
-                        f"{floor:,} - a claim token was written by something "
-                        f"other than the guarded recorder; inspect the source/floor "
-                        f"integration before measuring; recording cannot recount it")
-    else:
-        floor_broken = ""
 
     jobs = max(1, min(jobs or (os.cpu_count() or 1), WINE_CEILING))
 
@@ -1776,8 +1732,6 @@ def check(
         # a red gate gets called green. `--json` is a superset now.
         payload = {
             "claims": claims,
-            "claim_floor": floor,
-            "floor_broken": floor_broken or None,
             "reproduced": claims - len(broken),
             "semantic": [{"address": r.address_hex, "name": r.name}
                          for r in semantic_held],
@@ -2117,17 +2071,19 @@ def check(
                     fg=typer.colors.RED if offsets.returncode
                     else typer.colors.WHITE)
 
-    if floor_broken and not as_json:
-        typer.secho(f"  {floor_broken}", fg=typer.colors.RED, bold=True)
+    coverage = _claim_coverage(src)
+    coverage_note = _claim_coverage_note(coverage)
+    if not as_json:
+        typer.secho("  " + coverage_note, fg=typer.colors.RED if coverage["result"] != "pass" else typer.colors.WHITE)
 
     code = (1 if regressed or dangling or unread or link.returncode
             or offsets.returncode
             or vtables.returncode or stale.returncode or symbols.returncode
-            or index.returncode or floor_broken or debt.returncode
+            or index.returncode or coverage["result"] == "fail" or debt.returncode
             or annotations.returncode or scaling.returncode
             or dupes.returncode
             or values.returncode
-            else 3 if unasked else 0)
+            else 3 if unasked or coverage["result"] == "unknown" else 0)
     # THE VERDICT GOES IN THE OUTPUT, not only in the exit code. The brief has
     # told agents for a long time never to pipe this to `tail`, because `cmd |
     # tail` reports TAIL's status and `echo $?` after it is always 0 - and an
@@ -2144,7 +2100,8 @@ def check(
                else "FAILED: semantic debt grew" if debt.returncode
                else "FAILED: an annotation does not survive being rewritten"
                if annotations.returncode
-               else "FAILED: the claim floor does not match the tree" if floor_broken
+               else "FAILED: historical claim identities are missing" if coverage["result"] == "fail"
+               else "INCOMPLETE: claim identity coverage unavailable" if coverage["result"] == "unknown"
                else "FAILED: regressed, dangling or unread claims" if code == 1
                else "INCOMPLETE: unverifiable claims present (not green)" if code == 3
                else "CLEAN")
@@ -2154,6 +2111,7 @@ def check(
         payload.update({
             "exit_code": code,
             "verdict": verdict,
+            "claim_identities": coverage,
             "failed": {
                 "link": bool(link.returncode),
                 "compiler_work": bool(vtables.returncode),
@@ -2166,7 +2124,7 @@ def check(
                 "duplicate_globals": bool(dupes.returncode),
                 "data_values": bool(values.returncode),
                 "header_offsets": bool(offsets.returncode),
-                "claim_floor": bool(floor_broken),
+                "claim_identities": coverage["result"] == "fail",
                 "regressed": bool(regressed),
                 "dangling": bool(dangling),
                 "unread_markers": bool(unread),

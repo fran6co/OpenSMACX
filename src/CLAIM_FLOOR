@@ -1,5 +1,0 @@
-# Transitional claim floor. Maintained by guarded `osmx record`;
-# `osmx check` fails when the tree's live claim count differs in
-# EITHER direction. Never edit by hand or recount unrelated edits.
-# Recording adds only the obligations measured in its own batch.
-claims 2423

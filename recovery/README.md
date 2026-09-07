@@ -57,9 +57,9 @@ Recording requires the configured image pin before compiling. Its exit code is
 incomplete/refused evidence. A no-compile result is not a measured regression;
 an unclaimed mismatch is not a successful recording run.
 
-Source and the transitional count increment are staged together under ignored
-`build/recovery/publications/`. A missing/mismatched initial floor refuses before
-compilation instead of reconciling unrelated claim edits. Each file replacement
+Source changes are staged under ignored `build/recovery/publications/`.
+Missing or unverifiable historical obligations refuse recording before compilation.
+Each file replacement
 is atomic, not the entire batch: ordinary failures roll back only unchanged
 outputs from this invocation. If another editor intervenes, its work is preserved
 and the diagnostic names retained original backups. A killed process may leave
@@ -68,7 +68,30 @@ diffs and backups before resuming, and rerun measurement/gates after recovery.
 Use coordinator-owned isolated worktrees: an uncooperative writer can still race
 the final filesystem check. This is not a transactional filesystem, compiler
 installation attestation, compact obligation format, native recording CLI or
-full acceptance cutover. The count must still be replaced by identity coverage.
+full acceptance cutover.
+
+`uv run recover check-claims --summary` is the native source-history identity
+check, used by production recording and the retained full gate. The count floor
+and its mutation support are removed. This project uses the existing structural
+task baseline as `source_history.baseline_revision`; that is an explicit history
+scope decision, not a stored claim count or second map. Once committed, an anchor
+cannot be changed, removed or reset to hide earlier obligations; reachable
+configuration history includes merged branches. Missing history is unknown,
+not an empty successful inventory. Shallow clones are refused, and the historical
+source interpretation cannot be changed after the anchor is established.
+
+The check derives required original identities and byte/instruction-shape
+strengths from historical source. A rehome or rename preserves identity; removing
+one claim and adding another at the same count does not. Redundant seed candidates
+can be removed without preserving an obsolete count, provided the original
+obligation remains represented. A byte obligation also covers an older shape
+requirement. This is source coverage only: all current claims, including new
+declarations, still require independent fresh measurement. The check does not
+authenticate which editor wrote a token or prove reference/layout correctness.
+The transitional measurement loop only covers `.c`/`.cpp` hosts in its configured
+single source root; claims in headers or other suffixes are refused as unmeasurable,
+not silently counted as checked. The native source-coverage command has no such
+suffix restriction.
 
 `uv run recover check-source --jobs 8 --summary` now replaces the old annotation
 identity script in the production gate. It checks every configured source file,
@@ -118,6 +141,7 @@ From the OpenSMACX workspace:
 uv run recover --help
 uv run recover check-build --summary
 uv run recover inventory
+uv run recover check-claims --summary
 uv run recover partition
 uv run recover partition --group class:InfoWin --details --impact
 uv run recover inventory --image /path/to/the/pinned/original.exe

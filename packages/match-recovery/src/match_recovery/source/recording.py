@@ -32,15 +32,14 @@ class RecordingResult:
         return 3 if self.unresolved else 0
 
 
-def record_claims(selected, *, measure, validate, staging_directory: Path, auxiliary=None) -> RecordingResult:
+def record_claims(selected, *, measure, validate, staging_directory: Path) -> RecordingResult:
     """Measure existing mappings and publish only newly proved byte obligations.
 
     ``measure`` is invoked here, after source capture; it must return exactly
     one (original record, AsmComparison or error string) pair per selection.
-    ``validate`` refuses changed complete measurement inputs. ``auxiliary`` is
-    transitional caller-owned publication data (e.g. an existing old gate's
-    count floor), returned as (expected bytes, replacement bytes) mappings.
-    It cannot replace a selected source file. No automatic demotion is supported.
+    ``validate`` refuses changed complete measurement inputs. Only selected
+    source files can be published; no count floor or side ledger is updated.
+    No automatic demotion is supported.
     A BYTE_EXACT result is the historical masked comparer, not structural proof.
     """
     selected = tuple(selected)
@@ -96,11 +95,5 @@ def record_claims(selected, *, measure, validate, staging_directory: Path, auxil
     for item in updated:
         grouped[item.path].append(replace(lossless[(item.path, item.line)], byte_exact=True, semantic=False))
     replacements = {path: write_bytes(expected[path], group) for path, group in grouped.items()}
-    if auxiliary is not None:
-        extra_before, extra_after = auxiliary(tuple(updated))
-        if set(extra_before) & set(expected) or set(extra_after) & set(expected):
-            raise ValueError("auxiliary publication may not replace selected source")
-        expected.update(extra_before)
-        replacements.update(extra_after)
     changed = publish(expected, replacements, validate=validate, staging_directory=staging_directory)
     return RecordingResult(tuple(measured), tuple(unresolved), tuple(regressed), tuple(updated), changed)

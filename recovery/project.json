@@ -13,6 +13,7 @@
     "symbol_format": "msvc"
   },
   "source_history": {
+    "baseline_revision": "3d8cf9192650ec25460072736e48c03734cf1f0e",
     "before_configuration": {
       "image_pin": "src/IMAGE_PIN",
       "address_space": "pe:va",

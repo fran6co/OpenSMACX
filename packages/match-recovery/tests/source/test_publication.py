@@ -219,22 +219,6 @@ def test_source_change_during_measurement_is_preserved_not_stamped(inputs):
     assert paths[1].read_bytes() == b"another editor's work"
 
 
-def test_auxiliary_floor_is_in_the_same_guarded_batch(inputs, tmp_path, monkeypatch):
-    paths, expected, staging = inputs
-    floor = tmp_path / "floor"
-    floor.write_bytes(b"0\n")
-    real = os.replace
-    def failing(source, destination):
-        if destination == floor:
-            raise OSError("floor failure")
-        real(source, destination)
-    monkeypatch.setattr(publication.os, "replace", failing)
-    with pytest.raises(OSError, match="floor failure"):
-        record(inputs, auxiliary=lambda updated: ({floor: b"0\n"}, {floor: b"2\n"}))
-    assert all(path.read_bytes() == expected[path] for path in paths)
-    assert floor.read_bytes() == b"0\n" and not list(staging.iterdir())
-
-
 @pytest.mark.parametrize("newline", [b"\n", b"\r\n", b"\r"])
 @pytest.mark.parametrize("terminated", [True, False])
 def test_byte_writer_preserves_encoding_newlines_and_final_termination(tmp_path, newline, terminated):

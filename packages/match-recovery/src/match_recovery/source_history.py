@@ -22,6 +22,7 @@ def git(root: Path, *args: str, input: bytes | None = None) -> bytes:
 class HistoryConfiguration:
     before_configuration: SourceConfiguration | None = None
     evidence: tuple[str, ...] = ()
+    baseline_revision: str | None = None
 
     @classmethod
     def read(cls, root: Path):
@@ -32,12 +33,20 @@ class HistoryConfiguration:
         if "source_history" not in project:
             return cls()
         value = project["source_history"]
-        if (not isinstance(value, dict) or set(value) != {"before_configuration", "evidence"}
+        if (not isinstance(value, dict) or set(value) - {"before_configuration", "evidence", "baseline_revision"}
+                or "evidence" not in value
                 or not isinstance(value["evidence"], list) or not value["evidence"]):
             raise ValueError("historical source configuration requires explicit source inputs and evidence")
         for item in value["evidence"]:
             require_text(item, "historical configuration evidence")
-        return cls(SourceConfiguration.from_dict(value["before_configuration"]), tuple(value["evidence"]))
+        baseline = value.get("baseline_revision")
+        if baseline is not None and (not isinstance(baseline, str)
+                                    or not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", baseline)):
+            raise ValueError("source history baseline requires a full committed revision")
+        if "before_configuration" not in value and baseline is None:
+            raise ValueError("source history needs baseline_revision or before_configuration")
+        return cls(SourceConfiguration.from_dict(value["before_configuration"])
+                   if "before_configuration" in value else None, tuple(value["evidence"]), baseline)
 
 
 @dataclass(frozen=True)

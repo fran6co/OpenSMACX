@@ -20,6 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
 import osmx                                                  # noqa: E402
 
 runner = CliRunner()
+claim_coverage = osmx._claim_coverage
 
 
 @pytest.fixture(autouse=True)
@@ -111,12 +112,8 @@ def tree(tmp_path):
 
 
 def run(*args):
-    # Synthetic recorder fixtures explicitly establish their initial count. Real
-    # production recording must refuse a missing/mismatched existing floor.
     if args[0] == "record" and "--src" in args:
         src = Path(args[args.index("--src") + 1])
-        if not osmx._floor_path(src).exists():
-            establish_floor(src)
         if "--exe" not in args:
             image = src / "record-test-image"
             image.write_bytes(b"synthetic-record-image")
@@ -124,9 +121,26 @@ def run(*args):
     return runner.invoke(osmx.app, list(args))
 
 
-def establish_floor(src):
-    live = sum(row.byte_exact or row.semantic for row in osmx.read(src))
-    osmx._floor_path(src).write_bytes(osmx._floor_bytes(live))
+@pytest.fixture(autouse=True)
+def synthetic_claim_coverage(monkeypatch):
+    report = {"result": "pass", "missing": [], "claims": 2, "historical_requirements": 2}
+    monkeypatch.setattr(osmx, "_claim_coverage", lambda src: report)
+    return report
+
+
+@pytest.mark.parametrize("suffix", [".h", ".hpp", ".cc", ".cxx", ".hh"])
+@pytest.mark.parametrize("token", ["BYTE_EXACT", "SEMANTIC"])
+def test_legacy_coverage_refuses_claims_outside_its_measurement_walk(tmp_path, monkeypatch, suffix, token):
+    source = tmp_path / "src"
+    source.mkdir()
+    (source / ("claimed" + suffix)).write_text(
+        f"// ORIGINAL: 0x00401000 _first 0x00401000-0x00401008 {token}\nint first();\n")
+    monkeypatch.setattr(osmx, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(osmx.SourceConfiguration, "read", lambda root: osmx.SourceConfiguration("src/PIN", "pe:va"))
+    monkeypatch.setattr(osmx, "check_claims", lambda root: pytest.fail("unsupported coverage must refuse"))
+    result = claim_coverage(source)
+    assert result["result"] == "unknown"
+    assert "does not cover claimed source hosts" in result["error"]
 
 
 def test_status_counts_each_population(tree):
@@ -558,20 +572,16 @@ def test_record_refuses_source_changed_after_a_worker_returns(named, monkeypatch
     assert result.exit_code != 0
     assert "source changed" in result.output
     assert (named / "n.cpp").read_text() == before + "// another edit\n"
-    assert osmx._read_floor(named) == 0
+    assert not (named / "CLAIM_FLOOR").exists()
 
 
-@pytest.mark.parametrize("floor", [None, 1])
-def test_record_refuses_to_recount_an_unrelated_floor_mismatch(named, monkeypatch, floor):
-    if floor is not None:
-        (named / "CLAIM_FLOOR").write_text(f"claims {floor}\n")
-    def unexpected(*args):
-        pytest.fail("a damaged floor must refuse before compiling")
-    monkeypatch.setattr(osmx, "_record_file", unexpected)
-    image = named / "record-test-image"
-    image.write_bytes(b"synthetic-record-image")
-    result = runner.invoke(osmx.app, ["record", "WinMain", "--src", str(named), "--exe", str(image)])
-    assert result.exit_code == 3 and "claim floor" in result.output
+@pytest.mark.parametrize("result", ["fail", "unknown"])
+def test_record_refuses_missing_or_unverifiable_obligations(named, monkeypatch, synthetic_claim_coverage, result):
+    synthetic_claim_coverage.update(result=result, error="missing source history",
+                                    missing=[{"address": "0x00401000", "dimension": "bytes"}])
+    monkeypatch.setattr(osmx, "_record_file", lambda *args: pytest.fail("must refuse before compiling"))
+    result = run("record", "WinMain", "--src", str(named))
+    assert result.exit_code == 3
     assert not any(row.byte_exact for row in osmx.read(named))
 
 
@@ -604,7 +614,7 @@ def test_record_refuses_an_unmapped_header_changed_by_measurement(named, monkeyp
     result = run("record", "WinMain", "--src", str(named))
     assert result.exit_code == 3 and "inputs changed" in result.output
     assert not any(row.byte_exact for row in osmx.read(named))
-    assert osmx._read_floor(named) == 0
+    assert not (named / "CLAIM_FLOOR").exists()
 
 
 def test_record_groups_targets_before_dispatch(named, monkeypatch):
@@ -653,9 +663,6 @@ def fake_file_result(verdicts):
 
 
 def check(tree, *extra):
-    # These fixtures predate the source-owned floor. Establish the synthetic
-    # baseline explicitly; floor-damage cases below invoke the CLI without this.
-    establish_floor(tree)
     # `--jobs 1` runs the worker inline: a pool cannot take the local
     # function these tests substitute for it, and a serial run is what any
     # failure here would be debugged with anyway.
@@ -871,14 +878,16 @@ def test_invalid_native_audit_report_cannot_pass_the_gate(claimed, monkeypatch, 
     assert expected in result.output
 
 
-@pytest.mark.parametrize("floor", [None, 1, 3])
-def test_missing_or_changed_floor_still_fails(claimed, monkeypatch, floor):
+@pytest.mark.parametrize("state,code", [("fail", 1), ("unknown", 3)])
+def test_history_identity_failures_and_unknowns_propagate(claimed, monkeypatch, synthetic_claim_coverage, state, code):
     monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
-    if floor is not None:
-        osmx._floor_path(claimed).write_text(f"claims {floor}\n")
-    result = run("check", "--src", str(claimed), "--exe", "/nonexistent", "--jobs", "1")
-    assert result.exit_code == 1
-    assert "claim floor" in result.output.lower()
+    synthetic_claim_coverage.update(result=state, error="missing historical configuration",
+                                    missing=[{"address": "0x00401000", "dimension": "bytes"}])
+    result = check(claimed, "--json")
+    assert result.exit_code == code
+    output = json.loads(result.stdout)
+    assert output["claim_identities"]["result"] == state
+    assert output["failed"]["claim_identities"] == (state == "fail")
 
 
 @pytest.mark.parametrize("damage", ["not-json", "wrong-check", "missing-rule", "duplicate-rule",
@@ -921,7 +930,7 @@ def test_a_tree_with_no_claims_says_so(tmp_path):
     (tmp_path / "c.cpp").write_text(
         "// ORIGINAL: 0x00401000 ?a@@YAXXZ 0x00401000-0x00401008\nvoid a(){}\n")
     result = check(tmp_path)
-    assert result.exit_code == 2
+    assert result.exit_code == 3
     assert "no BYTE_EXACT claims" in result.output
 
 
