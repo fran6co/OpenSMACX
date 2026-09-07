@@ -26,25 +26,16 @@
 #include "temp.h"  // HandleMain
 #include "buffer.h"
 
-// SpriteBox's own vbtable {0, 0x8C, 0xAA4} and the vtables it installs into
-// the two virtual-base slots. Same idiom as CheckBoxDefault1/2 - a plain
-// literal, since these are byte-visible immediates in the image, not
-// runtime-read globals.
+// The original event posts through the SDK's USER32 import. The framework
+// derives its IAT slot from the pinned image; no executable address is C++.
+// RECOVERY_IMPORT: v1 __imp__PostMessageA@16 USER32.dll name:PostMessageA
 
 /*
-Purpose: Compose a SpriteBox from its GraphicWin and Dialog virtual-base-
-         shaped subobjects (both constructed only when most-derived) and an
-         unconditional Spot, install this class's own vtable/vtordisp
-         values and a secondary "field_28_" table's own slot, clear the
-         intrusive-list fields, and set the buffer's default text colours
-         and font.
-
-         `a1` is the compiler's most-derived flag in the image
-         (??0SpriteBox@@QAE@H@Z): nonzero means construct the two bases,
-         zero means skip both - the same guard CheckBox/EditGroup/
-         RadioButton use. This class cannot let VC6 synthesise that flag
-         (see the class comment in spritebox.h), so it is modelled as an
-         explicit parameter instead.
+Purpose: Construct the GraphicWin and Dialog virtual bases when most-derived,
+         then the owned Spot and item list in declaration order. Initialize
+         this control's state and buffer defaults. VC6 supplies table setup,
+         exception cleanup and the hidden most-derived flag; the catalogue's
+         int parameter is not a source parameter.
 // ORIGINAL: 0x0060FF00 ??0SpriteBox@@QAE@H@Z 0x0060FF00-0x0061011B;0x006116C0-0x006116DB;0x00662FA0-0x00662FFA
 // symbol    ??0SpriteBox@@QAE@XZ
 // size      656 bytes
@@ -64,24 +55,8 @@ Return Value: n/a
 Status: Complete
 */
 SpriteBox::SpriteBox() {
-    char *const self = reinterpret_cast<char *>(this);
-
-    // The virtual-base construction is the compiler's now (both bases are
-    // real constructors) - the old `if (a1) { placement; construct(); }`
-    // guard block is gone with the flag-spelling.
-    new (self + 0x10) Spot();
-
-    // The sprite list builds from the declaration: list_'s implicit member
-    // construction is StringList's chain (StringStruct stage, five field
-    // zeros, the StringAllocationBase capture reading 0x009B3374 and
-    // clearing it - the old field_28_/field_4C_/field_50_/field_24_ hand
-    // stores and the two vbtable-relative derived-stage stores), then the
-    // five SpriteBox derived-stage blocks below it in the old body are gone
-    // per the strip-all direction, as in CheckBox/RadioButton/EditGroup.
-    // Divergences accepted: the list's staged table is StringStruct-shaped
-    // until SpriteBoxList's own virtual surface is named, and SpriteBox's
-    // derived tables are no longer staged at all.
-
+    // spots_ is constructed before list_, as in the original. The list's
+    // remaining virtual surface needs recovery; do not stage its tables here.
     field_4_ = 0;
     field_1C_ = 1;
     field_20_ = 1;
@@ -96,7 +71,7 @@ SpriteBox::SpriteBox() {
     field_74_ = 0;
     field_78_ = 0;
     field_7C_ = 0;
-    field_80_ = 0;
+    double_click_callback_ = 0;
     field_84_ = 0;
 
     field_8_ = *reinterpret_cast<int *>(0x009B8FC4);
@@ -116,8 +91,8 @@ SpriteBox::SpriteBox() {
 }
 
 /*
-Purpose: Tear down a SpriteBox: reinstall the base subobjects' own
-         vtable/vtordisp values, close it, then destroy the Spot member.
+Purpose: Close the control, then let the compiler destroy its owned list and
+         Spot, and its virtual bases through the appropriate destructor entry.
 // ORIGINAL: 0x00610120 ??1SpriteBox@@QAE@XZ 0x00610120-0x00610274;0x006116C0-0x006116DB;0x00662FFA-0x0066301A
 // symbol    ??1SpriteBox@@UAE@XZ
 // TRIED: 35 compiled instructions against the image's 99, and the image opens
@@ -165,13 +140,7 @@ Return Value: n/a
 Status: Complete
 */
 SpriteBox::~SpriteBox() {
-    // Strip-all direction: the image's five derived-stage re-stores here are
-    // gone, as in the constructor.
-    char *const self = reinterpret_cast<char *>(this) - 0x8C;
-
-    reinterpret_cast<SpriteBox *>(self)->close();
-
-    reinterpret_cast<Spot *>(self + 0x10)->~Spot();
+    close();
 }
 
 /*
@@ -798,11 +767,13 @@ void SpriteBox::on_left_down(int x_coord, int y_coord) {
 }
 
 /*
-Purpose: The double-click twin of on_left_down: hit test, notify the stored
-         double-click callback, post WM_KEYDOWN (VK_RETURN) on a true return.
-         Entered on the same adjusted pointer; its callback sits 0xC below
-         `this`.
+Purpose: Hit-test the owned Spot member, notify the stored double-click
+         callback with the hit position, and post WM_KEYDOWN (VK_RETURN)
+         when it returns nonzero. The GraphicWin-relative Spot at -0x7C and
+         callback at -0xC are complete-object members +0x10 and +0x80;
+         the compiler supplies those adjustments for this virtual override.
 // ORIGINAL: 0x006112E0 ?on_left_double_click@SpriteBox@@QAEXHH@Z 0x006112E0-0x00611330 BYTE_EXACT
+// symbol    ?on_left_double_click@SpriteBox@@UAEXHH@Z
 // size      80 bytes
 // prototype void (__thiscall ?on_left_double_click@SpriteBox@@QAEXHH@Z)(SpriteBox* this, int xCoord, int yCoord)
 // callers   1   call targets   1
@@ -816,12 +787,8 @@ Return Value: n/a
 Status: Complete
 */
 void SpriteBox::on_left_double_click(int x_coord, int y_coord) {
-    char *self = reinterpret_cast<char *>(this);
-    Spot *spot = reinterpret_cast<Spot *>(self - 0x7c);
-    if (spot->check(x_coord, y_coord, &y_coord, 0) != -1) {
-        typedef int (__cdecl *sprite_box_click)(int);
-        sprite_box_click click = *reinterpret_cast<sprite_box_click *>(self - 0xc);
-        if (click != 0 && click(y_coord) != 0) {
+    if (spots_.check(x_coord, y_coord, &y_coord, 0) != -1) {
+        if (double_click_callback_ != 0 && double_click_callback_(y_coord) != 0) {
             PostMessageA(HandleMain, 0x100, 0xd, 0);
         }
     }

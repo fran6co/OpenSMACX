@@ -38,14 +38,9 @@ class SpriteBoxList : public StringList {
   void close();
 };
 
- /*
-  * SpriteBox class
-  *
-  * Layout not established; its methods reach as far as 0x450, so the
-  * object is at least that large. The stubs recovered here are constant
-  * returns touching no field, so the opaque storage below is only an object
-  * for the canary to seed, not a modelled layout.
-  */
+// GraphicWin and Dialog are virtual bases; Spot and the item list are
+// owned members. Remaining offset-named fields and virtual operations still
+// need interpretation; the size assertion alone does not prove the model.
 class SpriteBox : public virtual GraphicWin, public virtual Dialog {
  public:
   // 0x00611380, a pending_bodies forwarder.
@@ -91,11 +86,7 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
   // no declaration, which is why its body could not be integrated.
   int init(int a1, int a2, int a3, int a4, Heap *a5);
   // ??0SpriteBox@@QAE@H@Z at 0x0060FF00. The `int` is NOT a user parameter -
-  // SpriteBox's layout is composed by hand (see the class comment above), so
-  // VC6 cannot inject the most-derived flag the way it would for a real
-  // `: virtual GraphicWin, virtual Dialog` declaration; this constructor
-  // takes an explicit flag instead and mirrors what the image's own guard
-  // does with it.
+  // VC6 supplies its hidden most-derived flag for the real virtual bases.
   SpriteBox();
   ~SpriteBox();
   uint32_t id_to_pos(int id);
@@ -118,11 +109,11 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
   uint32_t field_4_;  // 0x4
   uint32_t field_8_;  // 0x8
   uint8_t field_C_[0x4];  // 0xC
-  // Placement-new'd unconditionally by the constructor (`new (self+0x10)
-  // Spot();`), raw storage rather than a real member so its construction
-  // stays exactly where the disassembly puts it rather than moving into
-  // the compiler's own implicit member-init prologue.
-  uint8_t spot_storage_[0xC];  // 0x10, sizeof(Spot)
+  // Constructed at complete-object +0x10 before list_ (0x0060FF64), then
+  // destroyed at GraphicWin-relative -0x7C (0x00610252). Its lifetime is
+  // compiler-owned, not placement construction in the constructor body.
+  // RECOVERY_MEMBER: v2 SpriteBox spots_ Spot 0x10 0x0060FF00
+  Spot spots_;  // 0x10
  public:
   // PUBLIC, like CheckBox::field_10_ for DipEdit::init: BasePop
   // ::calculate_dimensions stores the popup's two text-limits straight into
@@ -166,7 +157,11 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
   uint32_t field_78_;  // 0x78
   uint32_t field_7C_;  // 0x7C
  public:
-  uint32_t field_80_;  // 0x80
+  typedef int (__cdecl *ClickCallback)(int);
+  // 0x00611301 loads this slot; caller cleanup follows its one argument,
+  // and the returned int decides whether to post the Enter-key message.
+  // RECOVERY_MEMBER: v1 SpriteBox double_click_callback_ 0x80 0x006112E0
+  ClickCallback double_click_callback_;  // 0x80
  private:
   uint32_t field_84_;  // 0x84
   // 0x88 IS GRAPHICWIN'S VTORDISP, not a field. The compiler emits it because

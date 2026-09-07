@@ -2082,7 +2082,7 @@ BasePop::BasePop() {
     string_color_hyperc_ = static_cast<int>(BasePopDefaultStringColors[2][3]);
     string_color_hyper_d_ = static_cast<int>(BasePopDefaultStringColors[3][3]);
     field_3160_ = 0;
-    field_3164_ = 0;
+    sprite_double_click_callback_ = 0;
     redraw_callback_ = 0;
     button_font1_ = BasePopDefaultButtonFonts[0];
     button_color_a_ = static_cast<uint8_t>(BasePopDefaultButtonColors[0][0]);
@@ -2478,6 +2478,7 @@ int BasePop::on_key_down(int key) {
 
 
 // ORIGINAL: 0x006044D0 ?double_click@BasePop@@QAEXH@Z 0x006044D0-0x00604581 FILE
+// symbol    ?double_click@BasePop@@SAXH@Z
 // TRIED: early-return on tab==1 (MSVC folds the later redundant tab==1 check into dead code, collapsing 4 original instrs to 1 lea); lea-vs-add on the (off+base) address computation persists regardless of local-vs-inline pointer arithmetic
 // working copy - scaffold materialised by --work
 // size      177 bytes
@@ -2491,7 +2492,7 @@ int BasePop::on_key_down(int key) {
 typedef void (__fastcall *func_basepop_slot058)(void *);
 typedef void (__fastcall *func_basepop_slot002)(void *);
 
-void BasePop::double_click(int button_id) {
+void __cdecl BasePop::double_click(int button_id) {
     // THE MODAL-FOCUS POPUP, not this one: the handler runs for whichever
     // window holds modal focus, and every field it touches belongs to that
     // object. A static downcast from Win * is free - BasePop's front is its
@@ -3265,43 +3266,15 @@ int BasePop::UNK2() {
 //        receiver the image already holds (`mov ecx,[esi+0xa3c];
 //        add ecx,0x444`), and wrap_height at 0x00603EFD and 0x00603F03 runs
 //        on `this` instead - the one place the popup's own surface is used.
-// TRIED: the eight config slots this body installs into the embedded dialog's
-//        subobjects. They are ListBox::field_40_ (0x2210),
-//        RadioButton::field_10_ (0x2224), CheckBox::field_C_ (0x2234) and
-//        SpriteBox::field_1C_/field_20_/field_64_/field_68_/field_80_
-//        (0x225c/0x2260/0x22a4/0x22a8/0x22c0), and all eight are PRIVATE in
-//        headers the BasePop passes do not own, so the direct member writes
-//        the image has do not compile here (C2248). They are reached from
-//        ListBox::field_2C_ - their one public neighbour, Dialogs+0x2C - at
-//        the fixed strides below, which is why the image's
-//        `mov dword ptr [esi+0x2210], imm32` carries an extra `lea` and
-//        eight shifted displacements here.
-//        HANDOFF (listbox.h, radiobutton.h, checkbox.h, spritebox.h): move
-//        the eight under a public label, as CheckBox::field_10_ already is
-//        for DipEdit::init, and rewrite the eight `dialog_cfg[N]` stores as
-//        the direct qualified member writes - then delete the anchor local.
-//        Access is compile-time only, so nothing else re-measures.
-// RESIDUAL: 138 of 703, first divergence at instruction 0 - the image opens
-//        `sub esp, 8` for TWO spill slots and this tree opens `sub esp, 0xc`
-//        for THREE, the third holding the `dialog_cfg` anchor above. The
-//        image then puts its zero in EBP (`xor ebp,ebp` at 0x00603920) and
-//        its 0x400 in EDI; this tree puts the zero in EBX and the 0x400 in
-//        EDX, and every register assignment after that differs. So this is
-//        the receiver-spill wall in its register-allocation form, and it is
-//        the anchor's fault: the image has no anchor at all, because its
-//        eight writes are direct member stores. Until the four headers grant
-//        access, no spelling of the anchor can win - measured, see TRIED.
-// TRIED: THE HANDOFF ABOVE IS MEASURED AND FALSE (2026-09-06). With all eight
-//        subobject fields public (listbox.h, radiobutton.h, checkbox.h,
-//        spritebox.h) the eight `dialog_cfg[N]` stores were rewritten as the
-//        direct qualified member writes the image has and the anchor deleted:
-//        138 of 703 -> 10 of 703, and the scorer moved from /O2 (FPO) to
-//        /O2 /Oy- /GX, so the frame pointer came back. The direct writes each
-//        need their own `lea`, and VC6 no longer has the one anchor register
-//        to hold them against - the anchor is what buys the FPO frame here,
-//        not what costs it. The anchor form stays. Same result as the earlier
-//        `*(&field_2C_ + N)` spelling, which is the same experiment reached
-//        through a public label instead of a private one.
+// The notification stores at popup offsets 0x2210, 0x2224 and 0x2234
+// belong to ListBox, RadioButton and CheckBox respectively. Their handlers
+// invoke the stored value as a cdecl callback, and the installed entry at
+// 0x006044D0 loads its popup through WinModalFocus instead of an incoming
+// receiver. Use the qualified callback members and the static function.
+// Four remaining dialog_cfg stores address SpriteBox configuration at
+// 0x225c/0x2260/0x22a4/0x22a8; that ownership/lifetime recovery is
+// unfinished. Earlier anchor-versus-member spelling trials remain in Git
+// history, not an instruction to preserve raw access against better evidence.
 // TRIED: folding the anchor away, each store written
 //        `*(&dialogs_.ListBox::field_2C_ + N) = v` - VC6 does NOT fold it
 //        back into the one store; the body grew past what the FPO path would
@@ -3678,12 +3651,6 @@ int BasePop::start(char *text_file, const char *text_label, int value,
 
 
 typedef void(__fastcall *func_basepop_slot093)(void *);
-// The notification slot each sub-dialog carries: the four bytes of a
-// single-inheritance member pointer, which is the address of the popup's own
-// double_click. The slots are uint32_t fields, so the store goes through a
-// pointer cast rather than an integer one - VC6 refuses
-// reinterpret_cast<unsigned int>( &BasePop::double_click ) outright.
-typedef void (BasePop::*func_basepop_click)(int);
 
 int BasePop::calculate_dimensions() {
     // THE OWNER'S SURFACE, for every text call below. GraphicWin's Buffer
@@ -3836,8 +3803,7 @@ int BasePop::calculate_dimensions() {
       case 0:
         break;
       case 2:
-        // 0x2234, CheckBox::field_C_
-        *reinterpret_cast<func_basepop_click *>(dialog_cfg + 0x0e) =
+        dialogs_.CheckBox::double_click_callback_ =
             &BasePop::double_click;
         break;
       case 3:
@@ -3846,8 +3812,7 @@ int BasePop::calculate_dimensions() {
         } else {
             dialogs_.ListBox::set_selected_pos(0, 1);
         }
-        // 0x2210, ListBox::field_40_
-        *reinterpret_cast<func_basepop_click *>(dialog_cfg + 0x05) =
+        dialogs_.ListBox::double_click_callback_ =
             &BasePop::double_click;
         break;
       case 5:
@@ -3857,7 +3822,7 @@ int BasePop::calculate_dimensions() {
         break;
       case 9:
         dialog_cfg[0x2b] = field_3160_;                            // 0x22a8
-        dialog_cfg[0x31] = field_3164_;                            // 0x22c0
+        dialogs_.SpriteBox::double_click_callback_ = sprite_double_click_callback_;
         dialog_cfg[0x2a] = reinterpret_cast<uint32_t>(redraw_callback_);
         dialog_cfg[0x19] = field_3108_;                            // 0x2260
         dialog_cfg[0x18] = field_3104_;                            // 0x225c
@@ -3868,8 +3833,7 @@ int BasePop::calculate_dimensions() {
         } else {
             dialogs_.Dialog::selected_position_ = 0;
         }
-        // 0x2224, RadioButton::field_10_
-        *reinterpret_cast<func_basepop_click *>(dialog_cfg + 0x0a) =
+        dialogs_.RadioButton::double_click_callback_ =
             &BasePop::double_click;
         break;
     }

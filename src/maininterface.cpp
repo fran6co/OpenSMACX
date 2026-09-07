@@ -794,6 +794,7 @@ void MainInterface::on_scrolling(int a1, int a2) {
 
 
 // ORIGINAL: 0x0045C640 ?on_left_double_click@MainInterface@@QAEXHH@Z 0x0045C640-0x0045C674 FILE BYTE_EXACT
+// symbol    ?on_left_double_click@MainInterface@@UAEXHH@Z
 // size      52 bytes
 // prototype void (__thiscall ?on_left_double_click@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   0

@@ -65,6 +65,10 @@ class GraphicWin;
 // position on every non-parent mouse move, `key_hook_` with the virtual
 // key on every key-down. Both default to null and the bodies null-test.
 typedef void (__cdecl *WinMouseMoveHookFn)(int x, int y);
+// Control notifications pass one selected id with caller-owned stack cleanup
+// (RadioButton 0x0060E20C-0x0060E210, CheckBox 0x0060FAA6-0x0060FAA9).
+// The installed BasePop callback returns with plain ret at 0x00604580.
+typedef void (__cdecl *WinNotificationCallback)(int selected_id);
 // resize_event's installable width/height callback, stored in Win::field_400_.
 typedef void (__cdecl *WinResizeCallback)(int width, int height);
 typedef int (__cdecl *WinKeyHookFn)(int key);
@@ -554,7 +558,10 @@ class Win : public AutoSound {
   virtual int vslot_25(int = 0, int = 0) { return 0; }  // 0x00406A80
   virtual int vslot_26(int = 0) { return 0; }  // 0x00404250
   virtual int vslot_27(int = 0) { return 0; }  // 0x00404250
-  virtual void vslot_28(int = 0, int = 0) {}  // 0x00404260
+  // Slot 28: Win dispatches left double-clicks here (0x005EE570).
+  // RadioButton's table at 0x00669A6C selects its receiver adjustor
+  // 0x00407040 at +0x70, reaching the override at 0x0060E1E0.
+  virtual void on_left_double_click(int = 0, int = 0) {}  // 0x00404260
   virtual void vslot_29(int = 0, int = 0) {}  // 0x00404260
   virtual void vslot_30(int = 0) {}  // 0x00404270
   virtual void vslot_31(int = 0, int = 0) {}  // 0x00404260

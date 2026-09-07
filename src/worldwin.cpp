@@ -59,6 +59,7 @@ void WorldWin::clear_terrain() {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x004C3E90 ?on_left_double_click@WorldWin@@QAEXHH@Z 0x004C3E90-0x004C3E93 BYTE_EXACT
+// symbol    ?on_left_double_click@WorldWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_left_double_click@WorldWin@@QAEXHH@Z)(WorldWin* this, int, int)
 // callers   0   call targets   0

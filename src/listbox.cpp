@@ -105,7 +105,7 @@ uint32_t ListBox::close() {
     field_34_ = 0;
     field_38_ = 0;
     field_3C_ = 0;
-    field_40_ = 0;
+    double_click_callback_ = 0;
     field_C_ = 0;
     return 0;
 }
@@ -337,12 +337,12 @@ Purpose: Report a right double click: raise the click guard, forward (a1, a2)
 // indirect  0x0060C6F2
 Return Value: n/a
 Status: Complete
-DEMOTED from BYTE_EXACT by direction (idiomatic-first): vslot_28 is the
+DEMOTED from BYTE_EXACT by direction (idiomatic-first): on_left_double_click is the
 plain virtual call; the image's front-walk addressing is the entered-
 receiver relationship work (see on_right_down's note).
 */
 void ListBox::on_right_double_click(int a1, int a2) {
     ListBoxClickGuard = 1;
-    vslot_28(a1, a2);
+    on_left_double_click(a1, a2);
     ListBoxClickGuard = 0;
 }

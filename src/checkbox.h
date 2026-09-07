@@ -139,12 +139,10 @@ class CheckBox : public virtual GraphicWin, public virtual Dialog {
   uint32_t field_4_;  // 0x0004
   uint32_t field_8_;
  public:
-  // PUBLIC, like the sprites below: BasePop::calculate_dimensions installs the
-  // popup's double-click handler straight into it (Dialogs+0x2234, the check
-  // box kind's notification slot) with no call in between, so the access has
-  // to be spelled from outside the class. Access is compile-time only; the
-  // static_assert below pins the layout.
-  uint32_t field_C_;
+  // BasePop::calculate_dimensions installs this notification; the check-box
+  // entry passes Dialog's selected position, with caller stack cleanup.
+  // RECOVERY_MEMBER: v1 CheckBox double_click_callback_ 0xC 0x0060FA80
+  WinNotificationCallback double_click_callback_;  // 0xC
  public:
   // DipEdit::init substitutes the shared interface array's elements 1 and 2
   // at 0x004DB457 / 0x004DB45E, so these pointers are caller-accessible.

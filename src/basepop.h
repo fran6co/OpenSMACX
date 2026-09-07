@@ -78,8 +78,9 @@ class BasePop : public GraphicWin {
   static void __cdecl close_class();
 
  public:
-  // homed from 006044d0.cpp
-  void double_click(int button_id);
+  // 0x006044D0 reads WinModalFocus, not an incoming receiver, and returns
+  // without popping its caller's notification argument.
+  static void __cdecl double_click(int button_id);
 
  public:
   // homed from 00604410.cpp
@@ -563,10 +564,12 @@ class BasePop : public GraphicWin {
   int string_color_2d_;        // 0x3154 = StringColors[3][1]
   int string_color_3d_;        // 0x3158 = StringColors[3][2]
   int string_color_hyper_d_;   // 0x315c = StringColors[3][3]
-  // Three dwords between the two colour blocks. The first two stay
-  // offset-named: nothing in the tree reads them back.
+  // The first configuration word still needs its reader recovered.
   uint32_t field_3160_;  // 0x3160
-  uint32_t field_3164_;  // 0x3164
+  // calculate_dimensions installs this into the embedded SpriteBox's
+  // double-click callback; that handler tests its int return value.
+  // RECOVERY_MEMBER: v1 BasePop sprite_double_click_callback_ 0x3164 0x00603800
+  SpriteBox::ClickCallback sprite_double_click_callback_;  // 0x3164
   // 0x3168. THE POPUP'S DRAW CALLBACK, typed from its one reader. on_redraw
   // (0x00604AB0) calls it through the slot with five arguments - the caller
   // sprite, the owner window, the SpriteBox's position for item 0, and the

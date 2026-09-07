@@ -285,6 +285,7 @@ void MapWin::on_right_click(int a, int b) {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 // ORIGINAL: 0x0046EBD0 ?on_left_double_click@MapWin@@QAEXHH@Z 0x0046EBD0-0x0046EBD3 BYTE_EXACT
+// symbol    ?on_left_double_click@MapWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_left_double_click@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
 // callers   0   call targets   0

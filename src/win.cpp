@@ -6248,7 +6248,7 @@ void Win::on_l_button_down(long flags, int x, int y, unsigned int keys, int dbl)
             if (fp != 0) {
                 reinterpret_cast<void(__cdecl *)(int, int)>(fp)(x, y);
             }
-            this->vslot_28(y, x);
+            this->on_left_double_click(y, x);
             related = val_17_;
         } else {
             this->vslot_38(y, x);
@@ -11770,7 +11770,7 @@ void Win::dispatch_28(int a, int b, int alternate) {
         if (hook != 0) {
             hook(a, b);
         }
-        vslot_28(a, b);
+        on_left_double_click(a, b);
         Win *child = reinterpret_cast<Win *>(val_17_);
         if (child != 0) {
             if (child->vslot_23() == 0) {

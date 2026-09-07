@@ -56,7 +56,7 @@ CheckBox::CheckBox() {
     // hidden most-derived flag. The body initializes this class's own state.
     field_4_ = 0;
     field_8_ = 0;
-    field_C_ = 0;
+    double_click_callback_ = 0;
     checked_sprite_ = CheckBoxDefault2;
     unchecked_sprite_ = CheckBoxDefault1;
 }
@@ -113,7 +113,7 @@ CheckBox::~CheckBox() {
 
     field_4_ = 0;
     field_8_ = 0;
-    field_C_ = 0;
+    double_click_callback_ = 0;
     checked_sprite_ = CheckBoxDefault2;
     unchecked_sprite_ = CheckBoxDefault1;
 
@@ -158,7 +158,7 @@ uint32_t CheckBox::close() {
     // reaches the right subobjects.
     field_4_ = 0;
     field_8_ = 0;
-    field_C_ = 0;
+    double_click_callback_ = 0;
     checked_sprite_ = CheckBoxDefault2;
     unchecked_sprite_ = CheckBoxDefault1;
     Dialog::close();
@@ -505,14 +505,14 @@ void __cdecl teardown_0060fd60() {
 }
 
 /*
-Purpose: A double click on a check box copies the selected row marker to the
-         current-win pointer and calls the object's stored callback with the
-         group's selected id. Entered on the GraphicWin-subobject adjusted
-         pointer (the family's thunk convention), so the vbtable sits 0x1C
-         below `this` and the callback 0x10 below; the marker and the
-         callback argument are located through that vbtable at run time,
-         since this class is used as a subobject of larger windows.
+Purpose: A double click selects the parent window as the callback window and
+         notifies the cached callback with Dialog::selected_position_. The
+         original reads this state word directly, not through get_selected_id.
+         Its GraphicWin-relative -0x1C vbtable and -0x10 callback accesses
+         correspond to the virtual bases and CheckBox's own callback at +0xC;
+         the real virtual override lets the compiler supply the adjustments.
 // ORIGINAL: 0x0060FA80 ?on_left_double_click@CheckBox@@QAEXHH@Z 0x0060FA80-0x0060FAAD BYTE_EXACT
+// symbol    ?on_left_double_click@CheckBox@@UAEXHH@Z
 // size      45 bytes
 // prototype void (__thiscall ?on_left_double_click@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)
 // callers   1   call targets   0
@@ -526,16 +526,9 @@ Return Value: n/a
 Status: Complete
 */
 void CheckBox::on_left_double_click(int x_coord, int y_coord) {
-    char *self = reinterpret_cast<char *>(this);
-    int graphicwin_disp = (*reinterpret_cast<int **>(self - 0x1c))[1];
-    WinCallbackWindow = reinterpret_cast<Win *>(
-        *reinterpret_cast<int *>(self + graphicwin_disp + 0xa8));
-
-    int callback = *reinterpret_cast<int *>(self - 0x10);
+    WinCallbackWindow = win_parent_;
+    WinNotificationCallback callback = double_click_callback_;
     if (callback != 0) {
-        int dialog_disp = (*reinterpret_cast<int **>(self - 0x1c))[2];
-        int arg = *reinterpret_cast<int *>(self + dialog_disp + 0xd0);
-        typedef int(__cdecl *check_click_callback)(int);
-        reinterpret_cast<check_click_callback>(callback)(arg);
+        callback(Dialog::selected_position_);
     }
 }

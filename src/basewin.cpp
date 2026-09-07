@@ -421,6 +421,7 @@ void BaseWin::on_right_click(int xCoord, int yCoord) {
 Purpose: Report a left double-click to the shared click handler. Unlike the
          iface_click family, `this` is the BaseWin itself with no adjustment.
 // ORIGINAL: 0x0041AFB0 ?on_left_double_click@BaseWin@@QAEXHH@Z 0x0041AFB0-0x0041AFC8 BYTE_EXACT
+// symbol    ?on_left_double_click@BaseWin@@UAEXHH@Z
 // size      24 bytes
 // prototype void (__thiscall ?on_left_double_click@BaseWin@@QAEXHH@Z)(BaseWin* this, int xCoord, int yCoord)
 // callers   0   call targets   1

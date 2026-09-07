@@ -46,7 +46,7 @@ RadioButton::RadioButton() {
     // hidden most-derived flag. The body initializes this class's own state.
 
     field_C_ = 0;
-    field_10_ = 0;
+    double_click_callback_ = 0;
     checked_sprite_ = RadioButtonDefault2;
     unchecked_sprite_ = RadioButtonDefault1;
 }
@@ -146,7 +146,7 @@ uint32_t RadioButton::close() {
     // (whose vbtable names different offsets) still reaches the right
     // subobjects.
     field_C_ = 0;
-    field_10_ = 0;
+    double_click_callback_ = 0;
     checked_sprite_ = RadioButtonDefault2;
     unchecked_sprite_ = RadioButtonDefault1;
     Dialog::close();
@@ -305,14 +305,14 @@ void __cdecl teardown_0060e5d0() {
 // ====================
 
 /*
-Purpose: A double click on a radio button copies the selected row marker to
-         the current-win pointer and notifies the object's stored callback
-         with the group's selected id. Entered on the GraphicWin-subobject
-         adjusted pointer (the family's thunk convention), so the vbtable
-         sits 0x18 below `this` and the callback 8 below; both the marker and
-         the selection id are located through that vbtable at run time, since
-         this class is used as a subobject of larger windows.
+Purpose: A double click selects the parent window as the callback window and
+         notifies the stored callback with the group's selected id. The image
+         enters through the GraphicWin virtual-base receiver: its -0x18
+         vbtable access reaches Win::win_parent_ and the virtual Dialog base;
+         its -8 access is RadioButton's own callback at complete offset 0x10.
+         The real virtual override lets the compiler supply these adjustments.
 // ORIGINAL: 0x0060E1E0 ?on_left_double_click@RadioButton@@QAEXHH@Z 0x0060E1E0-0x0060E217 BYTE_EXACT
+// symbol    ?on_left_double_click@RadioButton@@UAEXHH@Z
 // size      55 bytes
 // prototype void (__thiscall ?on_left_double_click@RadioButton@@QAEXHH@Z)(RadioButton* this, int, int)
 // callers   1   call targets   1
@@ -320,47 +320,15 @@ Purpose: A double click on a radio button copies the selected row marker to
 // calls     0x00609A50
 // indirect  0x0060E20D
 //
-// PROMOTED out of the archived verification unit for this address, whose
-// reached the Dialog call through a fabricated two-virtual-base carrier
-// class; this file keeps that carrier (RadioCarrier below) because VC6
-// computes a virtual-base member receiver straight into ecx, which is where
-// the image puts it.
-// TRIED: raw vbtable reads through a named `graphicwin_disp` local - the
-// store half matched but the Dialog call compiled `lea ecx, [eax + esi -
-// 0x18]` where the image has `[ecx + esi - 0x18]` (the displacement local
-// landed in eax). 17 of 18. The carrier spelling is 18 of 18.
-// LEVER: no cached locals for the callback or the vbtable - the image
-// re-reads [this-0x18] before the get_selected_id call and calls [this-8]
-// straight out of memory rather than through the register the null check
-// used; a cached callback or vbtable compiles 4 bytes smaller and stops
-// matching.
+// The notification is reloaded after get_selected_id, unlike CheckBox's
+// cached callback. Both the null test and call use the declared callback
+// member; the original virtual-base adjustment is compiler-owned.
 Return Value: n/a
 Status: Complete
 */
-namespace {
-// The enclosing-object access the image spells through its own vbtable,
-// modelled as the two-virtual-base carrier it reads like: never defined,
-// never instantiated, only ever pointed at 0x18 below the handler's entry
-// `this` (the shape the archived unit was proved on). VC6
-// computes the Dialog receiver straight into ecx and folds the -0x18 into
-// the base's own displacement, which is why the pad is 0xc4: 0xc4 - 0x18 is
-// the 0xac the image's instruction carries.
-class RadioCarrierBase { public:
-    char pad[0xc4];
-    int marker;
-};
-class RadioCarrier : public virtual RadioCarrierBase, public virtual Dialog {
-};
-}  // namespace
-
 void RadioButton::on_left_double_click(int x_coord, int y_coord) {
-    typedef void (__cdecl *radio_click_callback)(int);
-    char *self = reinterpret_cast<char *>(this);
-    WinCallbackWindow = reinterpret_cast<Win *>(
-        reinterpret_cast<RadioCarrier *>(self - 0x18)->marker);
-    if (*reinterpret_cast<radio_click_callback *>(self - 8) != 0) {
-        (*reinterpret_cast<radio_click_callback *>(self - 8))(
-            reinterpret_cast<RadioCarrier *>(self - 0x18)
-                ->get_selected_id());
+    WinCallbackWindow = win_parent_;
+    if (double_click_callback_ != 0) {
+        double_click_callback_(Dialog::get_selected_id());
     }
 }

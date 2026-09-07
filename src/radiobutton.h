@@ -87,13 +87,10 @@ class RadioButton : public virtual GraphicWin, public virtual Dialog {
  private:
   uint32_t field_C_;
  public:
-  // PUBLIC, like CheckBox's sprite pointers for DipEdit::init: BasePop
-  // ::calculate_dimensions installs the popup's double-click handler straight
-  // into it (Dialogs+0x2224, the push-button kind's notification slot) with
-  // no call in between, so the access has to be spelled from outside the
-  // class. Access is compile-time only; the static_assert below pins the
-  // layout.
-  uint32_t field_10_;
+  // BasePop::calculate_dimensions installs its static notification here;
+  // the radio entry invokes it with Dialog::get_selected_id().
+  // RECOVERY_MEMBER: v1 RadioButton double_click_callback_ 0x10 0x0060E1E0
+  WinNotificationCallback double_click_callback_;  // 0x10
   // NO GAP MEMBER: those four bytes are GraphicWin's VTORDISP and the compiler
   // emits them, because this class overrides GraphicWin's on_dialog_focus and
   // on_mouse_leave. Declaring the gap as well pushes the base to 0x1C where

@@ -25,6 +25,7 @@
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 // ORIGINAL: 0x005AD3D0 ?on_left_double_click@ReplayWin@@QAEXHH@Z 0x005AD3D0-0x005AD3D3 BYTE_EXACT
+// symbol    ?on_left_double_click@ReplayWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_left_double_click@ReplayWin@@QAEXHH@Z)(ReplayWin* this, int, int)
 // callers   0   call targets   0
@@ -134,5 +135,4 @@ void __cdecl fn_005adbd0(ReplayWin* a1) {
         a1->timer_callback();
     }
 }
-
 
