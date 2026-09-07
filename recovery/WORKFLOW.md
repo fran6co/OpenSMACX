@@ -311,6 +311,8 @@ snapshot; failure stops the gate without measuring against an old database.
 Its source, mapping/body-link, history and audit
 checks precede a fresh build; match, symbol, initial-data and layout sweeps follow
 serially. Additional checks are explicit bounded commands in `recovery/gate.json`.
+Layout trials report their TU, index/total and elapsed time on stderr; final
+verification remains in the JSON report. A completed trial is not a passing claim.
 Use both gate routes for cutover comparison until real runs and damage controls
 establish equivalent coverage. `recover check-matches` exposes the native claim
 sweep without banking its discoveries. Neither command is the unfinished full

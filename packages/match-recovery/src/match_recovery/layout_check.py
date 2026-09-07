@@ -8,6 +8,7 @@ compiler-observation coverage, not full hierarchy/lifetime or migration admissio
 from collections import Counter
 from dataclasses import asdict
 from pathlib import Path
+from time import monotonic
 
 from .application_layout import check_base, check_member
 from .codeview import ClassLayouts, ClassNotEmitted
@@ -21,7 +22,7 @@ from .records import read_json
 from .source_inventory import assert_snapshot_current, image_pin, source_snapshot
 
 
-def check_layout(root: Path, *, units=None, compiler=None, command_for=None) -> dict:
+def check_layout(root: Path, *, units=None, compiler=None, command_for=None, progress=None) -> dict:
     root = root.resolve()
     settings = Measurement.read(root)
     if units is not None and (not isinstance(units, (list, tuple)) or not units
@@ -58,8 +59,14 @@ def check_layout(root: Path, *, units=None, compiler=None, command_for=None) -> 
         if settings.snapshot(root, metadata) != before or database.read_bytes() != database_bytes:
             raise ValueError("source, compiler policy or compilation database changed during layout coverage")
 
+    trial, total = 0, len(selected) * len(settings.flag_sets)
     for unit in selected:
         for flags in settings.flag_sets:
+            trial += 1
+            started = monotonic()
+            event = {"unit": unit, "flags": list(flags), "trial": trial, "total": total}
+            if progress:
+                progress({**event, "event": "trial_start"})
             unchanged()
             layouts, unavailable, missing = {}, {}, set()
             try:
@@ -102,6 +109,8 @@ def check_layout(root: Path, *, units=None, compiler=None, command_for=None) -> 
                                  "interpretation_id": item.interpretation_id,
                                  "unit": unit, "flags": list(flags),
                                  **compare(item, layouts[item.class_name])})
+            if progress:
+                progress({**event, "event": "trial_finish", "elapsed_seconds": monotonic() - started})
     # Unlike spelling trials, ABI observations are not alternatives. Every
     # complete definition must agree; one good TU cannot hide another's failure.
     summaries = []

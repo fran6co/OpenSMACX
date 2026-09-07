@@ -263,3 +263,17 @@ def test_generated_context_changes_mid_gate_stop_compiler_sweeps(configured, obs
     report = run(configured)
     assert report["exit_code"] == 3 and report["checks"][-1]["name"] == "freshness"
     assert not any(name in COMPILED for name, _, _ in observed)
+
+
+def test_whole_gate_forwards_layout_trial_progress(configured, observed, monkeypatch):
+    def layout(root, *, progress):
+        progress({"event": "trial_start", "unit": "engine/family.cc", "trial": 1, "total": 1, "flags": []})
+        progress({"event": "trial_finish", "unit": "engine/family.cc", "trial": 1, "total": 1,
+                  "flags": [], "elapsed_seconds": 0.1})
+        return {"result": "pass"}
+    monkeypatch.setattr(gate, "check_layout", layout)
+    events = []
+    report = run(configured, progress=events.append)
+    assert report["result"] == "pass"
+    assert events[-3]["event"] == "trial_start" and events[-3]["check"] == "layout"
+    assert events[-2]["event"] == "trial_finish" and events[-1]["result"] == "pass"

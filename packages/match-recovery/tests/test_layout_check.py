@@ -188,3 +188,39 @@ def test_cli_returns_three_for_missing_compiler_evidence(layout_project, monkeyp
     monkeypatch.setattr(module, "Compiler", lambda *_, **__: lambda *_: b"truncated")
     assert main(["check-layout", "--root", str(layout_project)]) == 3
     assert json.loads(capsys.readouterr().out)["counts"] == {"unknown": 1}
+
+
+@pytest.mark.parametrize("available", [True, False])
+def test_trial_progress_preserves_coverage_and_verdicts(layout_project, available):
+    add_unit(layout_project)
+    compiler = lambda *_: coff() if available else b"truncated"
+    before = check_layout(layout_project, compiler=compiler)
+    events = []
+    observed = check_layout(layout_project, compiler=compiler, progress=events.append)
+    assert observed == before
+    starts = [event for event in events if event["event"] == "trial_start"]
+    finishes = [event for event in events if event["event"] == "trial_finish"]
+    assert [event["trial"] for event in starts] == [event["trial"] for event in finishes] == [1, 2, 3, 4]
+    assert [event["unit"] for event in starts] == ["code/f.cc", "code/f.cc", "code/g.cc", "code/g.cc"]
+    assert [event["flags"] for event in starts] == [["first"], ["second"], ["first"], ["second"]]
+    assert all(event["total"] == 4 and "result" not in event for event in events)
+    assert all(event["elapsed_seconds"] >= 0 for event in finishes)
+
+
+def test_progress_cannot_hide_input_changes_before_compilation(layout_project):
+    path = layout_project / "code/types.h"
+    def progress(_):
+        path.write_text("preserve concurrent input")
+    with pytest.raises(ValueError, match="changed"):
+        check_layout(layout_project, compiler=lambda *_: pytest.fail("compiled changed inputs"), progress=progress)
+    assert path.read_text() == "preserve concurrent input"
+
+
+def test_cli_layout_progress_stays_out_of_json(layout_project, monkeypatch, capsys):
+    import match_recovery.layout_check as module
+    monkeypatch.setattr(module, "Compiler", lambda *_, **__: lambda *_: coff())
+    assert main(["check-layout", "--root", str(layout_project), "--summary"]) == 0
+    captured = capsys.readouterr()
+    assert json.loads(captured.out)["result"] == "pass"
+    assert "layout: trial 1/2 started: code/f.cc" in captured.err
+    assert "layout: trial 2/2 finished: code/f.cc" in captured.err

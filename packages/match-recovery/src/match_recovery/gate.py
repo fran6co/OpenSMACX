@@ -184,7 +184,8 @@ def check_project(root: Path, image: Path, *, jobs: int = 1, progress=None) -> d
             ("matches", lambda: check_matches(root, image, jobs=jobs)),
             ("symbols", lambda: check_symbols(root)),
             ("initial-data", lambda: check_data(root, image)),
-            ("layout", lambda: check_layout(root)),
+            ("layout", lambda: check_layout(root, **({"progress": lambda event: progress({"check": "layout", **event})}
+                                                    if progress else {}))),
         ):
             run(name, operation if built == "pass" else lambda: {
                 "result": "unknown", "reason": "fresh project build did not pass; compiler sweep not run"})

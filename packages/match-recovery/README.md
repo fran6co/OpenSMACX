@@ -259,6 +259,11 @@ not proof the TU has no ABI dependency. `--unit` narrows investigation but omitt
 product TUs keep the overall result unknown. Unsupported/external build inputs
 likewise cannot silently disappear. Exit codes are 0/1/3 for pass/fail/unknown.
 Summary output retains counterexamples; all reports are disposable.
+The standalone command and whole-project gate emit layout trial start/finish
+progress to stderr, naming the TU, trial index/total and elapsed time. The Python
+`check_layout` API accepts an optional `progress` callback with those events and
+the trial's flags. Progress is transient observation, not a passing layout result;
+it does not change the final JSON, coverage or input-freshness checks.
 
 Input validation still re-enumerates configured roots, resolves every input path
 and hashes all file contents, including checker code. Path handling avoids

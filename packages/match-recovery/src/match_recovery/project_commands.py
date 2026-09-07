@@ -6,6 +6,19 @@ from .driver import Command, invoke
 from .records import read_json
 
 
+def _progress(event):
+    """Human-readable progress on stderr, separate from the final JSON report."""
+    import sys
+    if event["event"] in ("trial_start", "trial_finish"):
+        action = "started" if event["event"] == "trial_start" else "finished"
+        message = f"trial {event['trial']}/{event['total']} {action}: {event['unit']}"
+        if "elapsed_seconds" in event:
+            message += f" ({event['elapsed_seconds']:.2f}s)"
+    else:
+        message = event.get("result", "checking")
+    print(f"{event['check']}: {message}", file=sys.stderr, flush=True)
+
+
 def register(commands):
     prepare = commands.add_parser("prepare", help="Generate fresh configured compiler recipes and publish the database; not a recovery check")
     prepare.add_argument("--root", type=Path, default=Path.cwd())
@@ -189,11 +202,8 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
                 command.pop("stderr", None)
         return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
     if arguments.get("command") == "check":
-        import sys
         from .gate import check_project, summary
-        def progress(event):
-            print(f"{event['check']}: {event.get('result', 'checking')}", file=sys.stderr, flush=True)
-        output = check_project(root, arguments["image"], jobs=arguments.get("jobs", 1), progress=progress)
+        output = check_project(root, arguments["image"], jobs=arguments.get("jobs", 1), progress=_progress)
         if arguments.get("summary"):
             output = summary(output)
         return output["exit_code"], output
@@ -205,7 +215,8 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
         return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
     if arguments.get("command") == "check-layout":
         from .layout_check import check_layout
-        output = check_layout(root, units=arguments.get("units"))
+        output = check_layout(root, units=arguments.get("units"),
+                              progress=lambda event: _progress({"check": "layout", **event}))
         if arguments.get("summary"):
             output["expectations"] = [row for row in output["expectations"] if row["result"] != "pass"]
             output["observations"] = [row for row in output["observations"] if row["result"] != "pass"]
