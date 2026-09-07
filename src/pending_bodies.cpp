@@ -588,11 +588,6 @@ int Buffer::map_colors(int a1, int a2, int a3, int a4, void *table) {
                                              table);
 }
 
-void GraphicWin::overlay_nonclient(RECT *area) {           // 0x005D6AC0
-    typedef void(__fastcall *pending)(GraphicWin *, void *, RECT *);
-    PENDING_BODY(0x005D6AC0, pending)(this, nullptr, area);
-}
-
 void BaseWin::click(int a1, int a2, int right, int is_double) {       // 0x004165D0
     typedef void(__fastcall *pending)(BaseWin *, void *, int, int, int, int);
     PENDING_BODY(0x004165D0, pending)(this, nullptr, a1, a2, right, is_double);

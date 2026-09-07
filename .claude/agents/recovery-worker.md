@@ -66,6 +66,11 @@ coverage prevents a full comparison. Check these for accidental recursion, wrong
 base callees and unresolved globals before spending rounds on instruction spelling.
 These are candidate offsets and bindings, not aligned original call sites or proof.
 
+Resolve imported calls from the pinned image's import table before adopting a
+seed's API name or typedef. Two APIs can share a signature and compile cleanly
+while using different coordinate spaces or behavior. Keep DLL/export identity
+in source bindings; a seed label or masked-byte match cannot establish it.
+
 Also read `check.build_check`: the driver performs a fresh configured full build
 each round. A passing scoped byte result (`check.recovery_result`) cannot excuse
 a link failure. Repair authorized build defects, or report the dependency/scope

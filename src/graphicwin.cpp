@@ -29,11 +29,14 @@
 #include "spritebox.h"
 #include "net_class.h"
 #include "basepop.h"
+#include "sprite.h"
 
 #include <cstring>
 
 // SDK import identity; the original IAT slot is derived from the pinned image.
 // RECOVERY_IMPORT: v1 __imp__InvalidateRect@12 USER32.dll name:InvalidateRect
+// RECOVERY_IMPORT: v1 __imp__GetWindowRect@8 USER32.dll name:GetWindowRect
+// RECOVERY_IMPORT: v1 __imp__IntersectRect@12 USER32.dll name:IntersectRect
 
 void __fastcall buffer_subobject_destructor(void *self) {
     // Source-owned: dispatches to the recovered Buffer destructor rather than
@@ -62,6 +65,12 @@ func_subobject_close BufferSubobjectClose = original_method<func_subobject_close
     reinterpret_cast<unsigned long>(&buffer_subobject_close));
 func_subobject_close WinOriginalClose = original_method<func_subobject_close>(0x005EB640);
 uint32_t GraphicWinFieldA0CDefault;  // 0x009B33C0
+
+// Eleven defaults copied by init; the original table is in PE zero-fill.
+// The first eight entries supply borrowed Sprite pointers. The remaining
+// three interpretations and the runtime publisher still need recovery.
+// RECOVERY_OBJECT: v1 0x009B3394 ?GraphicWinInitDefaults@@3PAIA
+uint32_t GraphicWinInitDefaults[11];
 
 /*
 Purpose: Construct the Win base and Buffer subobject, then install GraphicWin
@@ -100,21 +109,21 @@ GraphicWin::GraphicWin() {
     field_A10_ = 0;
     field_134_ = 0;
     field_138_ = 0;
-    field_9CC_ = 0;
-    field_9D0_ = 0;
-    field_9D4_ = 0;
-    field_9D8_ = 0;
-    field_9DC_ = 0;
-    field_9E0_ = 0;
-    field_9E4_ = 0;
-    field_9E8_ = 0;
+    frame_top_left_ = 0;
+    frame_bottom_left_ = 0;
+    frame_top_right_ = 0;
+    frame_bottom_right_ = 0;
+    frame_left_ = 0;
+    frame_right_ = 0;
+    frame_bottom_ = 0;
+    frame_top_ = 0;
     field_9EC_ = 0;
     field_9F0_ = 0;
     field_9F4_ = 0;
-    field_9F8_ = 0;
-    field_9FC_ = 0;
-    field_A00_ = 0;
-    field_A04_ = 0;
+    overlay_top_left_ = 0;
+    overlay_bottom_left_ = 0;
+    overlay_top_right_ = 0;
+    overlay_bottom_right_ = 0;
     owned_buffer_ = 0;
     field_A0C_ = GraphicWinFieldA0CDefault;
 }
@@ -194,21 +203,21 @@ uint32_t GraphicWin::close() {
     field_A10_ = 0;
     field_134_ = 0;
     field_138_ = 0;
-    field_9CC_ = 0;
-    field_9D0_ = 0;
-    field_9D4_ = 0;
-    field_9D8_ = 0;
-    field_9DC_ = 0;
-    field_9E0_ = 0;
-    field_9E4_ = 0;
-    field_9E8_ = 0;
+    frame_top_left_ = 0;
+    frame_bottom_left_ = 0;
+    frame_top_right_ = 0;
+    frame_bottom_right_ = 0;
+    frame_left_ = 0;
+    frame_right_ = 0;
+    frame_bottom_ = 0;
+    frame_top_ = 0;
     field_9EC_ = 0;
     field_9F0_ = 0;
     field_9F4_ = 0;
-    field_9F8_ = 0;
-    field_9FC_ = 0;
-    field_A00_ = 0;
-    field_A04_ = 0;
+    overlay_top_left_ = 0;
+    overlay_bottom_left_ = 0;
+    overlay_top_right_ = 0;
+    overlay_bottom_right_ = 0;
     const uint32_t default_value = GraphicWinFieldA0CDefault;
     field_A0C_ = default_value;
     if (!release_target) {
@@ -632,19 +641,17 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
         // scheduling only, since both of those slots map to their own field.
         // Every destination is GraphicWin's own field, so it is written
         // directly rather than through an aliased pointer into `this`.
-        // NO LOCAL FOR THE TABLE BASE: `GraphicWinInitDefaults` is already
-        // a fixed-address constant, and indexing it directly at each site
-        // lets each store fold to its own absolute address, the way the
-        // image computes eleven independent `mov reg, [0x9b33xx]` reads
-        // rather than caching the base pointer in a register.
-        field_9CC_ = GraphicWinInitDefaults[0];
-        field_9D4_ = GraphicWinInitDefaults[2];
-        field_9D0_ = GraphicWinInitDefaults[1];
-        field_9D8_ = GraphicWinInitDefaults[3];
-        field_9E8_ = GraphicWinInitDefaults[4];
-        field_9E4_ = GraphicWinInitDefaults[5];
-        field_9DC_ = GraphicWinInitDefaults[6];
-        field_9E0_ = GraphicWinInitDefaults[7];
+        // The array is real source-owned storage. Its first eight words
+        // become typed Sprite pointers here; recover the shared publisher
+        // before treating the entire defaults record as a pointer array.
+        frame_top_left_ = reinterpret_cast<Sprite *>(GraphicWinInitDefaults[0]);
+        frame_top_right_ = reinterpret_cast<Sprite *>(GraphicWinInitDefaults[2]);
+        frame_bottom_left_ = reinterpret_cast<Sprite *>(GraphicWinInitDefaults[1]);
+        frame_bottom_right_ = reinterpret_cast<Sprite *>(GraphicWinInitDefaults[3]);
+        frame_top_ = reinterpret_cast<Sprite *>(GraphicWinInitDefaults[4]);
+        frame_bottom_ = reinterpret_cast<Sprite *>(GraphicWinInitDefaults[5]);
+        frame_left_ = reinterpret_cast<Sprite *>(GraphicWinInitDefaults[6]);
+        frame_right_ = reinterpret_cast<Sprite *>(GraphicWinInitDefaults[7]);
         field_9EC_ = GraphicWinInitDefaults[9];
         field_9F0_ = GraphicWinInitDefaults[8];
         field_9F4_ = GraphicWinInitDefaults[10];
@@ -834,4 +841,100 @@ void GraphicWin::on_size(unsigned int flags, int width, int height) {
 // provenance (retired seed): git:078b2095:src/unrecovered/005d63e0.cpp
 void GraphicWin::set_rects() {
     Win::set_rects();
+}
+
+// ORIGINAL: 0x005D6AC0 ?overlay_nonclient@GraphicWin@@QAEXPAURECT@@@Z 0x005D6AC0-0x005D6EB7 FILE
+// symbol    ?overlay_nonclient@GraphicWin@@QAEXPAUtagRECT@@@Z
+// Frame placement evidence: 0x005D6BB7-0x005D6D00 chooses the corner
+// sprites and draws them; 0x005D6D15-0x005D6E65 tiles the edge sprites.
+// The import at 0x006692A8 is GetWindowRect, not the seed's GetClientRect.
+// The supplied area is in screen coordinates; the Buffer clip is local.
+void GraphicWin::overlay_nonclient(RECT *area) {
+    RECT saved = Buffer::rect1_;
+    if (area != nullptr) {
+        RECT window_rect;
+        GetWindowRect(HandleMain, &window_rect);
+        RECT clip;
+        if (!IntersectRect(&clip, &window_rect, area)) {
+            return;
+        }
+        clip.left -= window_rect.left;
+        clip.right -= window_rect.left;
+        clip.top -= window_rect.top;
+        clip.bottom -= window_rect.top;
+        Buffer::set_clip(&clip);
+    } else {
+        Buffer::set_clip(&rect2_);
+    }
+
+    int top_inset = ((iFlags_ & 0x10) && !(iFlags_ & 0x400000))
+                        ? caption_height_ : border_thickness_;
+    int bottom_inset = bottom_border_thickness_;
+    if (bottom_inset == -1) {
+        bottom_inset = border_thickness_;
+    }
+
+    if (iFlags_ & 0x60000000) {
+        Sprite *top_left = overlay_top_left_ ? overlay_top_left_ : frame_top_left_;
+        Sprite *top_right = overlay_top_right_ ? overlay_top_right_ : frame_top_right_;
+        Sprite *bottom_left = overlay_bottom_left_ ? overlay_bottom_left_ : frame_bottom_left_;
+        Sprite *bottom_right = overlay_bottom_right_ ? overlay_bottom_right_ : frame_bottom_right_;
+        if (top_left) {
+            top_left->draw(this, top_left->cTransparentIndex_,
+                           -border_thickness_, -top_inset, 1, 1);
+        }
+        if (top_right) {
+            top_right->draw(this, top_right->cTransparentIndex_,
+                            dib_.bmiHeader.biWidth - top_right->iWidth_ + border_thickness_,
+                            -top_inset, 1, 1);
+        }
+        if (bottom_left) {
+            bottom_left->draw(this, bottom_left->cTransparentIndex_,
+                              -border_thickness_,
+                              bottom_inset - dib_.bmiHeader.biHeight - bottom_left->iHeight_, 1, 1);
+        }
+        if (bottom_right) {
+            bottom_right->draw(this, bottom_right->cTransparentIndex_,
+                               dib_.bmiHeader.biWidth - bottom_right->iWidth_ + border_thickness_,
+                               bottom_inset - dib_.bmiHeader.biHeight - bottom_right->iHeight_, 1, 1);
+        }
+
+        if (!(iFlags_ & 0x40000000)) {
+            // Reload frame geometry for each call, as the image does.
+            // These callees can observe or change the window's drawing state.
+            if (frame_top_) {
+                Buffer::tile(frame_top_, 0, 0,
+                    frame_top_left_->iWidth_ - border_thickness_, -top_inset,
+                    client_rect_.right - client_rect_.left
+                        - frame_top_right_->iWidth_ - frame_top_left_->iWidth_,
+                    frame_top_->iHeight_);
+            }
+            if (frame_bottom_) {
+                Buffer::tile(frame_bottom_, 0, 0,
+                    frame_bottom_left_->iWidth_ - border_thickness_,
+                    bottom_inset - dib_.bmiHeader.biHeight - frame_bottom_->iHeight_,
+                    client_rect_.right - client_rect_.left
+                        - frame_bottom_right_->iWidth_ - frame_bottom_left_->iWidth_,
+                    frame_bottom_->iHeight_);
+            }
+            if (frame_left_) {
+                Buffer::tile(frame_left_, 0, 0, -border_thickness_,
+                    frame_top_left_->iHeight_ - top_inset, frame_left_->iWidth_,
+                    client_rect_.bottom - client_rect_.top
+                        - frame_bottom_left_->iHeight_ - frame_top_left_->iHeight_);
+            }
+            if (frame_right_) {
+                // The original uses the top-left height for this origin too.
+                Buffer::tile(frame_right_, 0, 0,
+                    dib_.bmiHeader.biWidth + border_thickness_ - frame_right_->iWidth_,
+                    frame_top_left_->iHeight_ - top_inset, frame_right_->iWidth_,
+                    client_rect_.bottom - client_rect_.top
+                        - frame_bottom_right_->iHeight_ - frame_top_right_->iHeight_);
+            }
+        } else if (owned_buffer_) {
+            owned_buffer_->copy_mask(this, 0, 0, 0, 0,
+                                    dib_.bmiHeader.biWidth, -dib_.bmiHeader.biHeight, 0x108);
+        }
+    }
+    Buffer::set_clip(&saved);
 }

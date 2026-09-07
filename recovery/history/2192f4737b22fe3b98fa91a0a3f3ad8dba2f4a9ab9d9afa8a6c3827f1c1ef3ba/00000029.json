@@ -1,0 +1,24 @@
+{
+  "event_id": "c59c3660a41702773a1f024d9a5f5ef5ca42ab9a2cf6d1d26a9091a05b053a26",
+  "payload": {
+    "affects": [
+      "entity-79c5d471789ed17bb8ef92be1c7b04ae8b5258555afe8dc46c4adc76e1922f58",
+      "entity-8f8901b0c0a0b38b50063fac2398ae601331842a713d6e7837f06b430109029f"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "frame-defaults-runtime-publisher",
+    "evidence": [
+      "source:src/graphicwin.cpp:GraphicWinInitDefaults owns 44 bytes at original 0x009B3394, wholly inside the pinned PE zero-fill tail",
+      "original:0x005D4F1E-0x005D4F98 copies eleven table words; slots 0-7 supply the recovered frame pointers, slots 8-10 still lack complete pointee evidence",
+      "source:src/graphicwin.h:frame and optional overlay corners are source-owned Sprite-pointer interpretations, not proof of allocation ownership",
+      "source:src/sprite.cpp:the six-argument Sprite::draw still delegates to a separately unfinished four-argument draw operation"
+    ],
+    "hypothesis": "The frame consumer establishes twelve borrowed Sprite-pointer fields, but the process defaults publisher and the remaining three table words need recovery. Real zero-filled storage removes the old-address dependency without proving runtime population or sprite lifetime.",
+    "kind": "discovery"
+  },
+  "previous_event": "e45de24039360abe0689fa29e5a7db1a7daaa2e30b152e81e7b578aafbf22879",
+  "request_id": "frame-defaults-runtime-publisher",
+  "schema_version": 1,
+  "sequence": 29,
+  "stream": "task:infowin-ownership"
+}

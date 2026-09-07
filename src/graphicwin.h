@@ -43,7 +43,7 @@ class GraphicWin : public Win, public Buffer {
   void compute_min_size();
 
  public:
-  // 0x005D6AC0, a pending_bodies forwarder.
+  // Paint frame sprites or the owned-buffer overlay, preserving the clip.
   void overlay_nonclient(RECT *area);
   friend class Scroll;
   // BaseButton's colour setters drive this buffer directly.
@@ -142,21 +142,37 @@ class GraphicWin : public Win, public Buffer {
   // zero-argument one above. StatusWin::redraw calls it BY NAME.
   void soft_update(RECT *area);
  private:
-  uint32_t field_9CC_;  // 0x09cc
-  uint32_t field_9D0_;
-  uint32_t field_9D4_;
-  uint32_t field_9D8_;
-  uint32_t field_9DC_;
-  uint32_t field_9E0_;
-  uint32_t field_9E4_;
-  uint32_t field_9E8_;
+  // Borrowed frame sprites. overlay_nonclient supplies each as Sprite's
+  // receiver or Buffer::tile's Sprite argument, reading +8/+0x18/+0x1C.
+  // Corner names follow their actual placement, not the default-table order.
+  // RECOVERY_MEMBER: v3 GraphicWin frame_top_left_ Sprite* 0x9CC 0x005D6AC0
+  Sprite *frame_top_left_;
+  // RECOVERY_MEMBER: v3 GraphicWin frame_bottom_left_ Sprite* 0x9D0 0x005D6AC0
+  Sprite *frame_bottom_left_;
+  // RECOVERY_MEMBER: v3 GraphicWin frame_top_right_ Sprite* 0x9D4 0x005D6AC0
+  Sprite *frame_top_right_;
+  // RECOVERY_MEMBER: v3 GraphicWin frame_bottom_right_ Sprite* 0x9D8 0x005D6AC0
+  Sprite *frame_bottom_right_;
+  // RECOVERY_MEMBER: v3 GraphicWin frame_left_ Sprite* 0x9DC 0x005D6AC0
+  Sprite *frame_left_;
+  // RECOVERY_MEMBER: v3 GraphicWin frame_right_ Sprite* 0x9E0 0x005D6AC0
+  Sprite *frame_right_;
+  // RECOVERY_MEMBER: v3 GraphicWin frame_bottom_ Sprite* 0x9E4 0x005D6AC0
+  Sprite *frame_bottom_;
+  // RECOVERY_MEMBER: v3 GraphicWin frame_top_ Sprite* 0x9E8 0x005D6AC0
+  Sprite *frame_top_;
   uint32_t field_9EC_;
   uint32_t field_9F0_;
   uint32_t field_9F4_;
-  uint32_t field_9F8_;
-  uint32_t field_9FC_;
-  uint32_t field_A00_;
-  uint32_t field_A04_;
+  // Optional alternate corners; null selects the matching frame corner.
+  // RECOVERY_MEMBER: v3 GraphicWin overlay_top_left_ Sprite* 0x9F8 0x005D6AC0
+  Sprite *overlay_top_left_;
+  // RECOVERY_MEMBER: v3 GraphicWin overlay_bottom_left_ Sprite* 0x9FC 0x005D6AC0
+  Sprite *overlay_bottom_left_;
+  // RECOVERY_MEMBER: v3 GraphicWin overlay_top_right_ Sprite* 0xA00 0x005D6AC0
+  Sprite *overlay_top_right_;
+  // RECOVERY_MEMBER: v3 GraphicWin overlay_bottom_right_ Sprite* 0xA04 0x005D6AC0
+  Sprite *overlay_bottom_right_;
   // Optional separately allocated Buffer, distinct from the Buffer base.
   // init creates it; on_size resizes it; close releases it through slot 0.
   // Original init calls Buffer's constructor at 0x005D4FC5, then stores
@@ -248,8 +264,6 @@ int graphic_win_destructor_probe_order();
 // bottom-1.
 typedef int (OriginalObject::*func_graphic_win_buffer_fill_color)(int);
 typedef int (OriginalObject::*func_graphic_win_map_colors)(int, int, int, int, void *);
-// GraphicWin::overlay_nonclient 0x005D6AC0 (ret 4) repaints the frame.
-typedef void (OriginalObject::*func_graphic_win_overlay_nonclient)(RECT *);
 
 // The translation table fill consults before remapping. A null table means
 // the plain blit is the whole operation, which is the common case.
@@ -274,7 +288,7 @@ extern func_buffer_init BufferOriginalInit;
 // The eleven process window defaults init republishes, at 0x009B3394 - one
 // contiguous block between the colour-map slot GraphicWinColorMapTable
 // already binds at 0x009B3390 and GraphicWinFieldA0CDefault at 0x009B33C0.
-uint32_t *const GraphicWinInitDefaults = (uint32_t *)0x009B3394;
+extern uint32_t GraphicWinInitDefaults[11];
 
 
 // GraphicWin::soft_update at 0x005D5890 (157 bytes, bare ret) blits the

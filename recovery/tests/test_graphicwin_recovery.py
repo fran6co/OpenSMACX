@@ -19,6 +19,7 @@ from match_recovery.source_inventory import image_pin
 from match_recovery.pe_coff import PeImage
 from match_recovery.bound_objects import FunctionBinding, check_objects
 from match_recovery.model import Origin, Span
+from match_recovery.object_source import read_objects, object_targets
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -81,6 +82,77 @@ def test_owned_buffer_is_pointer_storage_not_an_embedded_buffer_or_integer(compi
         assert layout["member_type_kinds"]["owned_buffer_"] == "pointer"
         assert "owned_buffer_" not in layout["class_value_members"]
         assert check_member(item, layout)["result"] == "pass"
+
+
+def test_frame_sprites_are_typed_pointers_in_the_existing_window_layout(compiled):
+    _, _, objects = compiled
+    items = [item for item in read_members(ROOT, image_pin(ROOT))
+             if item.class_name == "GraphicWin" and item.class_pointer_type == "Sprite"]
+    assert len(items) == 12
+    for obj in objects:
+        layout = class_layout(obj, "GraphicWin")
+        assert layout["size"] == 0xA14
+        for item in items:
+            assert check_member(item, layout)["result"] == "pass"
+
+
+def test_frame_defaults_have_real_zero_initialized_storage(compiled):
+    _, _, objects = compiled
+    bindings = read_objects(ROOT, image_pin(ROOT))
+    binding, = (item for item in bindings if item.origin.address == 0x009B3394)
+    initializer = symbol_at("src/graphicwin.cpp", 0x005D4EF0)
+    for obj in objects:
+        targets, _ = object_targets(bindings, {"src/graphicwin.cpp": obj})
+        assert targets[binding.symbol] == binding.origin.address
+        assert binding.symbol in calls(obj, initializer)
+        symbol, = (item for item in obj.symbols.values() if item.name == binding.symbol)
+        section = obj.sections[symbol.section - 1]
+        assert section.flags & 0x80  # IMAGE_SCN_CNT_UNINITIALIZED_DATA
+        assert symbol.value + 11 * 4 <= obj.section_sizes[symbol.section - 1]
+    image_path = ROOT / ".opensmacx/game/terranx_original.exe"
+    if image_path.is_file():
+        image = PeImage(image_path.read_bytes(), image_pin(ROOT))
+        region, _, raw_size = next(item for item in image.sections
+                                   if item[0].start <= binding.origin.address < item[0].end)
+        assert region.start + raw_size <= binding.origin.address
+        assert binding.origin.address + 11 * 4 <= region.end
+
+
+def test_frame_overlay_uses_real_renderers_and_screen_coordinate_imports(compiled):
+    compiler, settings, objects = compiled
+    path = ROOT / ".opensmacx/game/terranx_original.exe"
+    if not path.is_file():
+        pytest.skip("pinned original image is required")
+    image = PeImage(path.read_bytes(), image_pin(ROOT))
+    overlay = symbol_at("src/graphicwin.cpp", 0x005D6AC0)
+    renderers = {symbol_at("src/sprite.cpp", 0x005E4B4A),
+                 symbol_at("src/buffer.cpp", 0x005DA9F0),
+                 symbol_at("src/buffer.cpp", 0x005E2B00)}
+    expected = {"__imp__GetWindowRect@8": 0x006692A8,
+                "__imp__IntersectRect@12": 0x00669338}
+    bindings = read_imports(ROOT)
+    for obj in objects:
+        targets = set(calls(obj, overlay))
+        assert renderers <= targets
+        assert expected.keys() <= targets
+        resolved, _ = import_targets(bindings, {"src/graphicwin.cpp": obj}, image)
+        assert {name: resolved[name] for name in expected} == expected
+
+    # The seed called this GetClientRect, although the original IAT slot
+    # is GetWindowRect. Both APIs type-check; compilation alone misses it.
+    source = ROOT / "src/graphicwin.cpp"
+    before = source.read_bytes()
+    anchor = b"GetWindowRect(HandleMain, &window_rect);"
+    assert before.count(anchor) == 1
+    wrong = before.replace(anchor, b"GetClientRect(HandleMain, &window_rect);")
+    for flags in settings.flag_sets:
+        damaged = Coff(compiler.overlay(source, {"src/graphicwin.cpp": wrong}, (), flags))
+        targets = set(calls(damaged, overlay))
+        assert "__imp__GetClientRect@8" in targets
+        assert "__imp__GetWindowRect@8" not in targets
+        resolved, _ = import_targets(bindings, {"src/graphicwin.cpp": damaged}, image)
+        assert "__imp__GetClientRect@8" not in resolved  # No invented alias.
+    assert source.read_bytes() == before
 
 
 @pytest.mark.parametrize("replacement, kind", [(b"Win *", "pointer"), (b"int ", "non_class_value"),

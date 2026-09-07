@@ -127,6 +127,8 @@ class Sprite {
   // to inset the edges by. Access is compile-time only: no offset moves and
   // no emitted byte changes.
   friend class Buffer;
+  // The frame overlay reads the same transparency byte and dimensions.
+  friend class GraphicWin;
   // `BasePop::on_redraw` (0x00604AB0) centres and draws the two popup sprites
   // the class carries at 0x2148 and 0x214c, reading cTransparentIndex_,
   // iSpriteWidth_, iSpriteHeight_, iWidth_ and iHeight_ off them. Compile-time
@@ -222,4 +224,3 @@ extern int SpriteDrawOriginY;
 
 // The four-argument overload this one wraps is a 3225-byte body with eleven
 // call targets, still an original dependency. Tests rebind this seam.
-
