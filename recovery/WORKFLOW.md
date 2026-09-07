@@ -278,6 +278,10 @@ absence as `coverage_only`, not an observed member offset. It closes only bounde
 declaration coverage, not ABI independence or the safety of raw/untyped callers.
 Incomplete coverage still requires recovery; automatic probing does not authorize
 new includes, scope changes or structural acceptance.
+The checker batches absence controls per TU/flag trial, retaining each class's
+two layout/body controls. Failed batches are split and recompiled independently;
+never treat a passing sibling as proof for the failed class. Compile-attempt
+counts include those retries, so compare actual reports when assessing throughput.
 
 After structure is established, compare a small deck of plausible source forms
 with `uv run recover tasks variants <task> --image <image> --deck <ignored-json>`.

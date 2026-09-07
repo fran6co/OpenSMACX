@@ -311,6 +311,15 @@ not a member offset or whole-class proof. Contradictory, incomplete, duplicate o
 wrong-TU/trial absence records are refused. Historical interpretations still need
 their independent review dispositions.
 
+Absence controls are batched within one TU/flag trial: two compiles can serve
+several missing classes, while every class still needs its own exact sentinel
+layouts and changed probe body. Each compiled type stream is indexed once for
+the group. If a group fails compilation, parsing or any class's controls, it is
+split into smaller independently compiled groups. No partial batch result or
+one class's evidence can satisfy another class. A difficult/unsupported sibling
+stays unknown without blocking valid independent witnesses. Batching introduces
+neither persistent results nor additional project configuration.
+
 The joint task check requests these witnesses automatically for missing declared
 requirements, so restoration, migration checking and the recovery driver consume
 the evidence in the same fresh invocation. Already emitted classes incur no probe

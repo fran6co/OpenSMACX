@@ -7,7 +7,7 @@ import pytest
 
 from match_recovery.codeview import ClassLayouts, ClassNotEmitted
 from match_recovery.layout_witness import missing_layout_witnesses
-from match_recovery.layout_witness import _absence_witness, declaration_absent
+from match_recovery.layout_witness import _absence_witnesses, declaration_absent
 from match_recovery.pe_coff import Coff
 from recovery.environment.compile import compile_object, compile_overlay
 from recovery.environment.wine import VC6_ROOT
@@ -80,7 +80,7 @@ def test_counterfactual_definition_controls_do_not_replace_existing_types(varian
         return Coff(compile_overlay(root, source, {"code/unit.cpp": contents}, command, flags))
 
     def probe():
-        return _absence_witness(compile, original, name, "match_recovery_test_absence", "")
+        return _absence_witnesses(compile, original, [(name, "match_recovery_test_absence", "")])[0]
 
     if absent:
         report = probe()
@@ -89,4 +89,79 @@ def test_counterfactual_definition_controls_do_not_replace_existing_types(varian
     else:
         with pytest.raises(ValueError):
             probe()
+    assert source.read_bytes() == original
+
+
+@pytest.mark.parametrize("blocked", [False, True])
+@pytest.mark.parametrize("extra_flags", [(), ("/Oy-",)])
+def test_real_absence_batches_share_compiles_and_isolate_a_refused_class(variant_project, blocked, extra_flags):
+    if not (VC6_ROOT / "BIN/CL.EXE").is_file():
+        pytest.skip("VC6 is not installed")
+    root = variant_project
+    source = root / "code/unit.cpp"
+    source.write_text(("#define Blocked int\n" if blocked else "") + "int work() { return 0; }\n")
+    original = source.read_bytes()
+    wrapper = Path(__file__).resolve().parents[1] / "environment/wine.py"
+    command = (sys.executable, str(wrapper), "--tool=cl", "/nologo")
+    flags = ("/c", "/O2", "/Gy", "/Z7", *extra_flags)
+    baseline = Coff(compile_object(source, command, flags))
+    calls = []
+
+    class Compiler:
+        def overlay(self, source, replacements, arguments, flags):
+            contents, = replacements.values()
+            calls.append(contents)
+            return compile_overlay(root, source, replacements, arguments, flags)
+
+    names = ["First", "Second", "UI::Third"] + (["Blocked"] if blocked else [])
+    report = missing_layout_witnesses(root, "code/unit.cpp", names, baseline, Compiler(), command, flags)
+    assert [row["class_name"] for row in report["witnesses"]] == names
+    assert all(declaration_absent(row) for row in report["witnesses"][:3])
+    assert report["compile_attempts"] == len(calls)
+    if blocked:
+        assert report["witnesses"][-1]["result"] == "unknown"
+        assert report["witnesses"][-1]["compiler_layout"] is None
+        assert report["witnesses"][-1]["absence_reason"]
+        assert any(b"struct First" in data and b"struct Blocked" in data for data in calls)
+        assert any(b"struct First" in data and b"struct Blocked" not in data for data in calls)
+    else:
+        assert report["compile_attempts"] == 6  # Replica + three pointer probes + two shared definitions.
+        assert all(all(("struct " + name).encode() in data for name in ("First", "Second", "Third"))
+                   for data in calls[-2:])
+    assert source.read_bytes() == original
+    assert not list((root / "build/recovery/variants").iterdir())
+
+
+@pytest.mark.parametrize("damage", ["definition", "body"])
+def test_real_batch_cannot_borrow_another_class_control(variant_project, damage):
+    import re
+    if not (VC6_ROOT / "BIN/CL.EXE").is_file():
+        pytest.skip("VC6 is not installed")
+    root = variant_project
+    source = root / "code/unit.cpp"
+    source.write_text("int work() { return 0; }\n")
+    original = source.read_bytes()
+    wrapper = Path(__file__).resolve().parents[1] / "environment/wine.py"
+    command = (sys.executable, str(wrapper), "--tool=cl", "/nologo")
+    flags = ("/c", "/O2", "/Gy", "/Z7")
+    baseline = Coff(compile_object(source, command, flags))
+    contents_seen = []
+
+    class Compiler:
+        def overlay(self, source, replacements, arguments, flags):
+            contents, = replacements.values()
+            contents_seen.append(contents)
+            if damage == "definition":
+                contents = re.sub(rb"(struct Second \{ char \w+\[)29(\];)", rb"\g<1>17\2", contents)
+            else:
+                contents = contents.replace(b"return sizeof(Second);", b"return 17;")
+            return compile_overlay(root, source, {"code/unit.cpp": contents}, arguments, flags)
+
+    report = missing_layout_witnesses(root, "code/unit.cpp", ["First", "Second"], baseline, Compiler(), command, flags)
+    first, second = report["witnesses"]
+    assert declaration_absent(first)
+    assert second["result"] == "unknown" and second["compiler_layout"] is None
+    assert report["compile_attempts"] == 9  # Replica, two pointer probes, failed pair, two fresh singleton pairs.
+    assert any(b"struct First" in data and b"struct Second" in data for data in contents_seen)
+    assert any(b"struct First" in data and b"struct Second" not in data for data in contents_seen)
     assert source.read_bytes() == original

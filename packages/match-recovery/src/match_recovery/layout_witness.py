@@ -27,7 +27,7 @@ def declaration_absent(witness):
             and isinstance(witness.get("probe_symbol"), str) and witness["probe_symbol"].startswith("_match_recovery_"))
 
 
-def _absence_witness(compile, original, name, identifier, guards):
+def _absence_witnesses(compile, original, probes):
     """Positive counterfactuals, not inference from a failed compiler command.
 
     C++ forbids a second complete definition in the same namespace. Accepting
@@ -36,29 +36,33 @@ def _absence_witness(compile, original, name, identifier, guards):
     or the absence of raw/untyped consumers. Diagnostic types never enter the
     recovered layout or product-object cache.
     """
-    parts = name.split("::")
-    member = identifier + "_sentinel"
-    symbol = "_" + identifier
-    opening = "".join("namespace " + part + " {\n" for part in parts[:-1])
-    closing = "}\n" * (len(parts) - 1)
-    signatures, controls = [], []
+    signatures = {name: [] for name, _, _ in probes}
     for width in (17, 29):
-        text = ("\n\n" + guards + "\n" + opening + "struct " + parts[-1] +
-                " { char " + member + "[" + str(width) + "]; };\n" + closing +
-                'extern "C" int ' + identifier + "(" + name + "* object) { return sizeof(" + name + "); }\n")
-        obj = compile(original + text.encode("ascii"))
-        layout = ClassLayouts(obj).layout(name)
-        if (layout["size"] != width or layout["members"] != {member: 0} or layout["bases"]
-                or layout["member_type_kinds"] != {member: "array"}):
-            raise ValueError("class absence control did not emit its exact diagnostic definition")
-        signatures.append(function_signature(obj, symbol))
-        controls.append({"extent": width, "result": Result.PASS})
-    if signatures[0] == signatures[1]:
+        snippets = []
+        for name, identifier, guards in probes:
+            parts = name.split("::")
+            opening = "".join("namespace " + part + " {\n" for part in parts[:-1])
+            closing = "}\n" * (len(parts) - 1)
+            snippets.append("\n\n" + guards + "\n" + opening + "struct " + parts[-1] +
+                            " { char " + identifier + "_sentinel[" + str(width) + "]; };\n" + closing +
+                            'extern "C" int ' + identifier + "(" + name + "* object) { return sizeof(" + name + "); }\n")
+        obj = compile(original + "".join(snippets).encode("ascii"))
+        types = ClassLayouts(obj)
+        for name, identifier, _ in probes:
+            member = identifier + "_sentinel"
+            layout = types.layout(name)
+            if (layout["size"] != width or layout["members"] != {member: 0} or layout["bases"]
+                    or layout["member_type_kinds"] != {member: "array"}):
+                raise ValueError("class absence control did not emit its exact diagnostic definition")
+            signatures[name].append(function_signature(obj, "_" + identifier))
+    if any(first == second for first, second in signatures.values()):
         raise ValueError("class absence changed-definition control was not observed")
-    return {"basis": "same_tu_definition_absence", "result": Result.PASS,
-            "compiler_layout": None, "replica_control": Result.PASS,
-            "definition_controls": controls, "probe_symbol": symbol,
-            "reason": "two distinct complete diagnostic definitions accepted at the requested namespace scope; no prior complete declaration there; ABI independence unproved"}
+    return [{"basis": "same_tu_definition_absence", "result": Result.PASS,
+             "compiler_layout": None, "replica_control": Result.PASS,
+             "definition_controls": [{"extent": width, "result": Result.PASS} for width in (17, 29)],
+             "probe_symbol": "_" + identifier,
+             "reason": "two distinct complete diagnostic definitions accepted at the requested namespace scope; no prior complete declaration there; ABI independence unproved"}
+            for _, identifier, _ in probes]
 
 
 def missing_layout_witnesses(root, unit, names, baseline, compiler, command, flags):
@@ -81,6 +85,7 @@ def missing_layout_witnesses(root, unit, names, baseline, compiler, command, fla
            for word in (*command, *flags)):
         raise ValueError("layout witnesses require standalone compilation")
     types = ClassLayouts(baseline)
+    pending_absences = []
     for name in names:
         try:
             types.layout(name)
@@ -146,10 +151,29 @@ def missing_layout_witnesses(root, unit, names, baseline, compiler, command, fla
         except (OSError, ValueError) as error:
             row["reason"] = str(error)
             if absence_eligible:
-                try:
-                    row.update(_absence_witness(compile, original, name, identifier, guards))
-                    row.pop("probe_control")
-                except (OSError, ValueError) as absent_error:
-                    row["absence_reason"] = str(absent_error)
+                pending_absences.append((row, identifier, guards))
         rows.append(row)
+
+    def check_absences(pending):
+        if not pending:
+            return
+        try:
+            results = _absence_witnesses(compile, original,
+                                         [(row["class_name"], identifier, guards) for row, identifier, guards in pending])
+        except (OSError, ValueError) as error:
+            # A collision or unsupported definition must not hide observable
+            # siblings. Re-run smaller independent groups; never retain a
+            # partial result from a failed batch or mix widths across groups.
+            if len(pending) == 1:
+                pending[0][0]["absence_reason"] = str(error)
+            else:
+                middle = len(pending) // 2
+                check_absences(pending[:middle])
+                check_absences(pending[middle:])
+        else:
+            for (row, _, _), result in zip(pending, results, strict=True):
+                row.update(result)
+                row.pop("probe_control")
+
+    check_absences(pending_absences)
     return {"compile_attempts": attempts, "witnesses": rows}
