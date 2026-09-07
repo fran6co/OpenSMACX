@@ -1481,7 +1481,7 @@ Purpose: THE BLITTER. Copy a rectangle out of this buffer into `buffer`,
 // TRIED: byte-exactness, twice over, and it was RULED OUT IN PROSE ONLY
 //   until now - which is why `frontier.py --untouched` kept offering this
 //   body. Both reasons are mechanical facts, not judgements.
-//   (1) `uv run tools/handwritten_asm.py` lists this address for `pushf` and
+//   (1) The original disassembly contains `pushf` and
 //   `popf`. The shipped bytes save and restore FLAGS around a block, which
 //   no compiler emits because it owns the flags between setting and reading
 //   them, so no C++ spelling can produce these bytes.
@@ -2398,9 +2398,8 @@ Purpose: Fill one vertical run of pixels, clipped to the buffer's rectangle.
 // from C++ and the honest ceiling here is semantic equivalence. The shipped
 // bytes use the `loop` instruction, which VC6 never emits - it counts down
 // with `dec`/`jne` - and it writes the colour through `ah`, which is
-// a hand-assembly idiom rather than a compiler's. Found by
-// `tools/handwritten_asm.py`, which scans every unclaimed body for opcodes
-// this compiler does not generate; there are seven in the game code.
+// a hand-assembly idiom rather than a compiler's. The earlier opcode census
+// found seven such bodies in the game code; that count is historical.
 //
 // Do NOT grind spellings here, and do NOT write `__asm`: a semantic C++ body
 // is worth more than a byte-exact assembly one. `Buffer::vline` reached 0.925
@@ -4085,7 +4084,7 @@ int Buffer::box(int a1, int a2, int a3, int a4, int a5, int a6) {
 
 // ====================
 // THE TWO DOTTED PRIMITIVES. Both are HAND-WRITTEN ASSEMBLY IN THE ORIGINAL
-// (`tools/handwritten_asm.py` - the shipped bytes count the run down with the
+// (the earlier census found the shipped bytes count the run down with the
 // `loop` opcode, which VC6 never emits), so byte-exactness is NOT reachable
 // from C++ and the honest ceiling here is semantic equivalence. Same wall
 // `vline` documented; do not grind spellings here and do not write `__asm`.

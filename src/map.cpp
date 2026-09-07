@@ -5236,8 +5236,8 @@ void __cdecl world_geothermal(int x, int y) {
     // world_alt_set/bit2_set/code_set per iteration, gated by BOTH conditions below,
     // with a plain `has_skipped = true;` (no calls at all) on the else side. The prior
     // recovery invented a second, unconditional set of the same three calls after the
-    // if/else, which the disassembly does not have - `uv run tools/call_diff.py
-    // 0x005C83B0` is what caught it (this tree made 13 calls against the image's 9),
+    // if/else, which the disassembly does not have. The earlier call comparison
+    // caught it (this tree made 13 calls against the image's 9),
     // and walking 0x005C83B0's raw bytes end to end confirmed the single-block shape.
     // The bit2_set argument is BIT2_GEOTHERMAL (0x400), not LM_GEOTHERMAL (10) - the
     // image pushes 0x400.

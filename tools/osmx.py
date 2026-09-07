@@ -1144,33 +1144,6 @@ def _semantic_note_holds(note: str) -> bool:
     return "[allocation-only]" in (note or "")
 
 
-def _report_stale_worktrees() -> None:
-    """Name agent worktrees whose agent has finished, if any.
-
-    ADVISORY AND FAILURE-PROOF: this is a convenience on the ratchet's output,
-    so anything going wrong with git must leave the gate's verdict untouched.
-    It counts only; `tools/reap_worktrees.py` owns the four refusals that
-    decide what is actually safe to remove.
-    """
-    try:
-        listing = subprocess.run(
-            ("git", "worktree", "list", "--porcelain"),
-            cwd=str(REPO_ROOT), capture_output=True, text=True, timeout=20)
-        if listing.returncode:
-            return
-        blocks = listing.stdout.split("\n\n")
-        finished = [b for b in blocks
-                    if "worktrees/agent-" in b and "locked" not in b]
-        if finished:
-            typer.secho(
-                f"  {len(finished):,} finished agent worktree(s) still on "
-                f"disk:", fg=typer.colors.YELLOW)
-            typer.echo("    uv run tools/reap_worktrees.py"
-                       "        # then --reap")
-    except Exception:                                    # noqa: BLE001
-        return
-
-
 # How many instructions short a body may be and still be worth listing as
 # nearly done. Three, because two is where the array thunks sat before the
 # vector-iterator fix and one is where `Buffer::hline` sits now.
@@ -1704,12 +1677,6 @@ def check(
                 f"  {len(allocation):,} unclaimed body(s) differ only in "
                 f"register allocation:", fg=typer.colors.CYAN)
             typer.echo("    diagnostic only; retain matching work and check strict references")
-        # FINISHED AGENT WORKTREES, reported HERE because this is the command
-        # that always runs. Twelve of them accumulated - nine belonging to
-        # agents that had finished hours earlier, each a full checkout - and
-        # nothing named them, because reaping them was something the
-        # coordinator had to REMEMBER. The gate does not forget.
-        _report_stale_worktrees()
         typer.secho(
             f"{claims - len(broken) - len(semantic_held):,} verified, "
             f"{len(semantic_held):,} semantic, {len(regressed):,} "
@@ -1921,8 +1888,8 @@ def check(
         for line in said[:-1][:4]:
             typer.secho(f"  {line}", fg=typer.colors.RED)
 
-    # OFFSET MAPS: `name_offsets.py` turns `self + 0xNN` into a member name
-    # using a walk derived from the header, so a walk that shifts by four
+    # OFFSET MAPS: recovering members from a walk derived from the header
+    # needs a consistent layout. A walk that shifts by four
     # bytes renames every access after it to the WRONG member - and no byte
     # comparison can see it, because both spellings compile to the identical
     # offset. The invariant is self-verifying: a member named `field_NN_`

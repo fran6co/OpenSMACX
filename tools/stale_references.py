@@ -20,8 +20,8 @@ that had been deleted (`verify_recovered_function.py`, `decomp_status.py`,
 zero markers left of. Found by hand on 2026-08-22; a check that scanned prose
 for humans but not prose for agents could never have found it.
 
-`.sh` counts too: `tools/agent_setup.sh` is the first command a dispatched
-agent runs, and matching only `.py` would not have noticed it going missing.
+Shell command references count too; matching only `.py` would miss a deleted
+shell entry point named by an active instruction.
 
     uv run tools/stale_references.py
 

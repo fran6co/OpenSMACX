@@ -13,8 +13,10 @@ not override task scope, structural evidence or acceptance policy.
 Source records, strict CodeView parsing (`class_layout`) and emitted-table checks
 (`check_generated`) now live in the installed library. These are format/ABI
 capabilities, not project/compiler-environment adapters. `environment/` contains
-only the local compiler interaction. The old production command/gate and other
-remaining tools still need absorption or retirement before `tools/` can disappear.
+only the local compiler interaction. Unused fleet, rewriting and spelling-search
+scripts are removed. The remaining `tools/` files support the retained gate,
+its three conventional checks, or CMake's debugger sidecar; their live consumers
+still need absorption or retirement before that directory can disappear.
 
 The package now coordinates a whole-project gate:
 `uv run recover check --image <original> --jobs 1 --summary`. `gate.json` declares

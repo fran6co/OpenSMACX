@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """Derive an offset -> member map from a class declaration.
 
-`name_offsets.py` needs a map from `self + 0xNN` to a member name, and until
-now that map had to be written by hand - which is the shape this project has
-recorded as its highest-yield tooling defect. The header already knows: it
-declares the members in order, and it annotates enough of them with their
-offset to anchor the walk.
+This conventional source-layout check derives a member-offset map from
+declaration order and existing offset annotations. It remains in the gate
+until native source interpretations cover those historical annotations.
+It is not a compiler-observed layout or permission to rewrite accesses.
 
     uv run tools/header_offsets.py src/win.h Win
     uv run tools/header_offsets.py src/win.h Win --json > map.json
@@ -150,7 +149,7 @@ def packed(text: str, cls: str) -> bool:
     this walk derives for such a class would be wrong in the one direction
     that looks plausible. caviar.h packs a three-member group precisely so
     `camera_` can sit at the unaligned 0xA5 the image uses; a walk that
-    "helpfully" rounded that to 0xA8 would hand name_offsets the wrong member.
+    "helpfully" rounded that to 0xA8 would identify the wrong member.
     Refusing is the honest answer - the map is not derivable here.
     """
     depth = 0
@@ -240,7 +239,7 @@ def derive(header: Path, cls: str, extra: dict[str, int] | None = None):
                 types[f"{offset + delta:#x}"] = "int"      # RECT/POINT fields
         else:
             table[f"{offset:#x}"] = name
-            # THE DECLARED TYPE IS PART OF THE MAP. Without it `name_offsets`
+            # THE DECLARED TYPE IS PART OF THE MAP. Without it a consumer
             # cannot tell whether `*reinterpret_cast<int *>(self + 0xNN)` may
             # become a bare `member` - it may only when the member IS an int.
             # It assumed so, and rewrote `void *` members read through `int *`
@@ -252,8 +251,8 @@ def derive(header: Path, cls: str, extra: dict[str, int] | None = None):
     # THE END OF THE WALK IS EVIDENCE, not a byproduct. A class whose last
     # member ends exactly on a size derived elsewhere corroborates that size;
     # one that falls short has an undeclared tail. Callers that only want the
-    # map ignore this, but `sizeof_from_embeds.py` cannot do its job without
-    # it - and reporting the last member's OFFSET instead of its END is a
+    # map ignore this, but extent comparisons need it. Reporting the last
+    # member's OFFSET instead of its END is a
     # whole member's worth of false shortfall.
     derive.types = types
     return table, disagreements, seen, bool(body), offset
@@ -279,8 +278,8 @@ def main() -> int:
 
     if args.check:
         # WHY THIS IS A GATE CHECK AND NOT A THING SOMEONE RE-RUNS.
-        # `name_offsets.py` rewrites `self + 0xNN` into a member name using
-        # the map this file derives, so a walk that quietly shifts by four
+        # Recovering member names from this map needs a consistent layout:
+        # a walk that quietly shifts by four
         # bytes renames every access after it to the WRONG member - and the
         # bytes cannot see it, because the compiled offset is identical
         # either way. Two edits on 2026-08-26 changed this walk (alignment
@@ -336,8 +335,7 @@ def main() -> int:
         return 0
 
     if args.survey:
-        # WHY THIS EXISTS. `name_offsets.py` clears the "raw self-access"
-        # shape, but only for a class whose header can anchor a walk. Every
+        # WHY THIS EXISTS. A header needs an anchor for its offset walk. Every
         # class WITHOUT an anchor is a blocker, and it blocks its DERIVED
         # classes too: EditGroup's cleanup needs Dialog's layout, and Dialog
         # declares 56 members with no `// 0xNN` on any of them (measured
