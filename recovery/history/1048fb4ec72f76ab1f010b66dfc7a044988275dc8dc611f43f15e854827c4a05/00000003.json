@@ -1,0 +1,25 @@
+{
+  "event_id": "5957305797ca50b7ca067151b88c97f87b344c3f8a261dd2e49fae2fd2bc4ab7",
+  "payload": {
+    "affects": [
+      "entity-5eeaa7dfaa3d8f1e9490a388ca40905c05431cfcc9e3d25adcbb0c9e520a74f4",
+      "entity-828e30e8416c892fd6f450ab895c49a0d7b30603104698492989460f540c6c98",
+      "entity-91e63536cf6912e513a130a3f32bfc2ad171945429f4f67841512d9be1959d5a",
+      "entity-9ebf209694b1d67c0cdef11c7c05b8a0313229d75876f76bd091d4c134c0a3c3"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "radio-double-click-slot28",
+    "evidence": [
+      "original:0x0060D138 installs RadioButton GraphicWin table 0x00669A6C; table slot 28 at 0x00669ADC points to adjustor 0x00407040, which reaches handler 0x0060E1E0.",
+      "original:0x0060E1E3 reads the vbtable at the adjusted receiver minus 0x18; 0x0060E1E9 loads virtual GraphicWin offset 0xC4, matching src/win.h Win::win_parent_, and 0x0060E1F6/0x0060E20D test/call own offset 0x10 with Dialog::get_selected_id at 0x0060E207.",
+      "source:src/radiobutton.cpp still defines RadioCarrierBase and RadioCarrier plus raw this-relative accesses; src/radiobutton.h declares this handler nonvirtual, src/win.h names inherited slot 28 vslot_28, and src/win.cpp original 0x005EE570 dispatches through that slot. Naming the Win slot can affect other derived handlers; map their original identities and expand scope before changing them."
+    ],
+    "hypothesis": "RadioButton double-click recovery requires its real inherited Win slot 28, not a fabricated RadioCarrier or class-front nonvirtual receiver. Its apparent marker is Win::win_parent_ and its own +0x10 word is a callable notification slot. Reconcile the Win declaration, dependent overrides and callers before removing raw receiver accesses; preserve current byte obligations across the structural migration.",
+    "kind": "discovery"
+  },
+  "previous_event": "29f84e035f40e1e56ef68c7e235c7d7e391a54e880ce931e3ff7f9ff3c382fb4",
+  "request_id": "radio-double-click-slot28",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:radiobutton-lifetime"
+}
