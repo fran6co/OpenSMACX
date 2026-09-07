@@ -193,9 +193,8 @@ object across expectations. All observed definitions must agree; a later passing
 configuration cannot erase a counterexample. Task and project layout checks also
 index each fresh object's standalone type stream once, without sharing objects
 or verdicts across compilations. Unsupported class field lists remain separate
-lookup failures; a malformed type stream never supplies a partial index. A
-known wrong offset remains a
-failure even if its member type is unmeasurable.
+lookup failures; a malformed type stream never supplies a partial index. A known
+wrong offset remains a failure even if its member type is unmeasurable.
 
 Each expectation needs a complete compiler witness in every configured flag set.
 Unsupported/malformed debug information, failed compiles and missing witnesses
@@ -204,6 +203,12 @@ not proof the TU has no ABI dependency. `--unit` narrows investigation but omitt
 product TUs keep the overall result unknown. Unsupported/external build inputs
 likewise cannot silently disappear. Exit codes are 0/1/3 for pass/fail/unknown.
 Summary output retains counterexamples; all reports are disposable.
+
+Input validation still re-enumerates configured roots, resolves every input path
+and hashes all file contents, including checker code. Path handling avoids
+repeated ancestor-object construction; it does not cache timestamps, resolved
+aliases, file inventories or verdicts. Same-size edits with restored timestamps
+and newly introduced headers remain observable.
 
 This checks explicit `RECOVERY_MEMBER`/`RECOVERY_BASE` interpretations, not legacy
 offset prose, self-naming fields, full types, virtual-base placement, hierarchy,

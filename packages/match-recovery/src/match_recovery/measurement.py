@@ -90,9 +90,12 @@ class Measurement:
             directory = self.source.path(root, name)
             for path in directory.rglob("*"):
                 if path.is_file():
-                    paths.add(path.relative_to(root).as_posix())
+                    # Enumeration starts at a validated project-local root.
+                    # relpath avoids repeatedly constructing ancestor Paths;
+                    # input_snapshot still resolves and hashes every input.
+                    paths.add(Path(os.path.relpath(path, root)).as_posix())
         package = Path(__file__).parent
-        implementation = digest({path.relative_to(package).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+        implementation = digest({Path(os.path.relpath(path, package)).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
                                  for path in sorted(package.rglob("*.py"))})
         environment = {name: hashlib.sha256(os.environ[name].encode()).hexdigest() if name in os.environ else None
                        for name in self.environment}

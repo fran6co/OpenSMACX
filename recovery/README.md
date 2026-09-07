@@ -161,6 +161,10 @@ reparsing it for every class. This is invocation-local parsing reuse, not an
 object/verdict cache or a change to compiler trials and coverage. Neither passing
 offsets nor class-pointer targets prove the full hierarchy or runtime lifetime.
 
+Repeated input snapshots now use cheaper component-based path operations while
+retaining full content hashing, path resolution and root re-enumeration. There
+is no mtime-based shortcut, cached alias target or narrowed dependency set.
+
 The native `recover tasks variants` command now replaces serial edit-and-restore
 spelling experiments. It reads the source map once and compiles atomic header/body
 overlays across task TUs. Unchanged-replica controls per TU and compiled damage

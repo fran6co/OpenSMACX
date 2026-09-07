@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
 
@@ -19,7 +20,10 @@ def input_snapshot(root: Path, files: Iterable[str], configuration: dict[str, An
                 or "\\" in name or str(relative) != name):
             raise ValueError(f"expected a normalized relative input path: {name}")
         path = root / name
-        if not path.resolve().is_relative_to(root):
+        # Resolve every input as before. Compare path components without
+        # constructing a Path object for every possible ancestor; a string
+        # prefix would incorrectly admit a sibling such as project-other.
+        if os.path.commonpath((root, path.resolve())) != str(root):
             raise ValueError(f"input resolves outside the worktree: {name}")
         try:
             with path.open("rb") as stream:
