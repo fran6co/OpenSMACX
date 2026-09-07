@@ -317,6 +317,10 @@ class MainInterface : public GraphicWin, public IfaceRegistryEntry {
   // message pane and to the desktop's MessageWin.
   void chat(char *text, int channel);
 
+  const RECT &status_hit_rect() const { return status_hit_rect_; }
+  const RECT &status_left_rect() const { return status_left_rect_; }
+  const RECT &status_right_rect() const { return status_right_rect_; }
+
  private:
   // 0xA14 is the IfaceRegistryEntry base - its SubInterface vptr and its one
   // dword, exactly the eight bytes field_A14_ and field_A18_ used to stand
@@ -500,18 +504,17 @@ class MainInterface : public GraphicWin, public IfaceRegistryEntry {
   uint32_t field_CC0_;
   uint32_t field_CC4_;
   uint32_t field_CC8_;
-  uint32_t field_CCC_;
-  uint32_t field_CD0_;
-  uint32_t field_CD4_;
-  uint32_t field_CD8_;
-  uint32_t field_CDC_;
-  uint32_t field_CE0_;
-  uint32_t field_CE4_;
-  uint32_t field_CE8_;
-  uint32_t field_CEC_;
-  uint32_t field_CF0_;
-  uint32_t field_CF4_;
-  uint32_t field_CF8_;
+  // init (0x00459680) retains the outer receiver in esi, copies four
+  // coordinates at +0xCCC/+0xCDC/+0xCEC and insets their edges. Its split
+  // puts +0xCCC to the right of +0xCDC; the separate +0xCEC rectangle is
+  // the double-click hit region (0x0045CD8B). These are owned rectangles,
+  // not independent globals at MainInterfaceGlobal + those offsets.
+  // RECOVERY_MEMBER: v2 MainInterface status_right_rect_ tagRECT 0xCCC 0x00459680
+  RECT status_right_rect_;
+  // RECOVERY_MEMBER: v2 MainInterface status_left_rect_ tagRECT 0xCDC 0x00459680
+  RECT status_left_rect_;
+  // RECOVERY_MEMBER: v2 MainInterface status_hit_rect_ tagRECT 0xCEC 0x00459680
+  RECT status_hit_rect_;
   uint32_t field_CFC_;
   uint32_t field_D00_;
   uint32_t field_D04_;
@@ -635,3 +638,4 @@ class MainInterface : public GraphicWin, public IfaceRegistryEntry {
 
 void __cdecl desktop_update();
 
+extern MainInterface MainInterfaceGlobal;

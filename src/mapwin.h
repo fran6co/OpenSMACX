@@ -368,11 +368,6 @@ static_assert(sizeof(MapWin) == 0x22480, "MapWin layout must match terranx.exe")
 // keeps at a fixed address, using a caption that also lives at one.
 typedef void (OriginalObject::*func_set_date)(char *);
 extern func_set_date MainInterfaceOriginalSetDate;
-// AN OBJECT AT 0x007AE820, not a `void *`: `MapWin::main_caption` is
-// `mov ecx, 0x7ae820` - the address as an immediate - where a pointer
-// variable loads it. Its constructor is trivial, so making it real
-// adds no dynamic initialiser.
-extern MainInterface MainInterfaceGlobal;
 extern char MapWinMainCaption[256];
 
 // 0x004710E0, still an original body (src/unrecovered/004710e0.cpp); the

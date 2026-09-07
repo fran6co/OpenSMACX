@@ -142,6 +142,9 @@ void MapWin::do_image_buttons() {
 }
 
 
+// The hit-test rectangle at 0x007AF50C is this object's +0xCEC member;
+// MapWin::main_caption also selects its complete receiver at 0x007AE820.
+// RECOVERY_OBJECT: v1 0x007AE820 ?MainInterfaceGlobal@@3VMainInterface@@A
 MainInterface MainInterfaceGlobal;  // 0x007AE820
 // AN ARRAY: the image pushes 0x009B86A0 as an immediate. Extent is a
 // floor - nothing recovered bounds the writes.

@@ -146,16 +146,6 @@ inline SubInterface *sub_interface_global() {
 }
 
 
-// Three fixed-address RECTs redraw() unions together, no established identity
-// beyond what that one function shows. DEFINED here rather than in
-// statuswin.cpp on purpose: a namespace-scope const in a header has internal
-// linkage, so every TU that names one folds its address to the immediate the
-// image pushes (`push 0x7af50c`). An `extern` declaration costs maininterface's
-// click handlers a memory load the image does not make.
-RECT *const StatusWinRedrawRect1 = (RECT *)0x007AF50C;
-RECT *const StatusWinRedrawRect2 = (RECT *)0x007AF4EC;
-RECT *const StatusWinRedrawRect3 = (RECT *)0x007AF4FC;
-
 // 0x00939ED8, a status word. The corpus shows it cleared (00515430), read-
 // modify-written (00458d60) and tested bit by bit; UNK4 sets bit 0x20 in it
 // and 0x00479F90 sets bit 0x40. The name is the archived body's own local

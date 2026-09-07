@@ -28,7 +28,7 @@
 #include "game.h"
 #include "base.h"
 #include "map.h"  // WorldClimateSkipTerrainClear
-#include "statuswin.h"  // StatusWinRedrawRect1, the redraw rects
+#include "statuswin.h"
 #include "console.h"   // ConsoleStatusWin, 0x008C5568
 #include "alpha.h"     // label_get, the Labels.strings_ptr walk
 
@@ -238,7 +238,7 @@ int MainInterface::on_iface_button_pressed(int) {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x004B8990 0x005FA7E0
 void IfaceRegistryEntry::on_iface_left_double_click(int x, int y) {
-    if (in_box(x, y, StatusWinRedrawRect1)) {
+    if (in_box(x, y, &MainInterfaceGlobal.status_hit_rect())) {
         ConsoleStatusWin.on_left_double_click(x, y);
     }
 }

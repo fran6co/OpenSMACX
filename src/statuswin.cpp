@@ -172,8 +172,9 @@ void StatusWin::redraw() {
     }
     draw_status(-1, -1, -1, -1, 0);
     RECT localRect;
-    UnionRect(&localRect, StatusWinRedrawRect1, StatusWinRedrawRect2);
-    UnionRect(&localRect, &localRect, StatusWinRedrawRect3);
+    UnionRect(&localRect, &MainInterfaceGlobal.status_hit_rect(),
+              &MainInterfaceGlobal.status_right_rect());
+    UnionRect(&localRect, &localRect, &MainInterfaceGlobal.status_left_rect());
     MainInterfaceGlobal.soft_update(&localRect);
 }
 
@@ -187,6 +188,7 @@ void __fastcall status_win_redraw_redirect(StatusWin *self, void *) {
 // real StatusWin constructor against it and registers the deleting destructor
 // with atexit; here the same recovered constructor runs through this build's
 // own startup and the destructor closes it at exit.
+// RECOVERY_OBJECT: v1 0x008C5568 ?ConsoleStatusWin@@3VStatusWin@@A
 StatusWin ConsoleStatusWin;  // 0x008C5568
 
 // Fixed-slot bindings carried from 004b6570.cpp
@@ -236,8 +238,9 @@ void StatusWin::draw(int tile_x, int tile_y, int city_index, int unit_index,
                      int mode) {
     RECT localRect;
     draw_status(tile_x, tile_y, city_index, unit_index, mode);
-    UnionRect(&localRect, StatusWinRedrawRect1, StatusWinRedrawRect2);
-    UnionRect(&localRect, &localRect, StatusWinRedrawRect3);
+    UnionRect(&localRect, &MainInterfaceGlobal.status_hit_rect(),
+              &MainInterfaceGlobal.status_right_rect());
+    UnionRect(&localRect, &localRect, &MainInterfaceGlobal.status_left_rect());
     MainInterfaceGlobal.soft_update(&localRect);
 }
 
@@ -387,8 +390,9 @@ void StatusWin::on_redraw() {
     reinterpret_cast<StatusWin *>(self)->draw_status(-1, -1, -1, -1, 0);
 
     RECT rect;
-    UnionRect(&rect, StatusWinRedrawRect1, StatusWinRedrawRect2);
-    UnionRect(&rect, &rect, StatusWinRedrawRect3);
+    UnionRect(&rect, &MainInterfaceGlobal.status_hit_rect(),
+              &MainInterfaceGlobal.status_right_rect());
+    UnionRect(&rect, &rect, &MainInterfaceGlobal.status_left_rect());
 
     MainInterfaceGlobal.soft_update(&rect);
 }

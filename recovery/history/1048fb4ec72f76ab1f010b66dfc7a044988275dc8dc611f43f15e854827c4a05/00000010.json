@@ -1,0 +1,18 @@
+{
+  "event_id": "b467f46f95140f9058f75bf87cde24372df55cd76bd0e5985b8e1050164db490",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "statuswin-hit-test-storage-owners",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/maininterface.h: the three RECT members and typed original-layout expectations preserve the receiver-relative initialization evidence; getters expose the owned rectangles without fixed-address aliases.",
+      "src/maininterface.cpp and src/statuswin.cpp: the hit-test and three redraw consumers take the addresses of those members. src/mapwin.cpp and src/statuswin.cpp bind the existing MainInterfaceGlobal and ConsoleStatusWin definitions to their original object starts. src/statuswin.h no longer defines the raw rectangle pointers. This incorporates the storage finding; full startup/lifetime and other reference obligations remain separate."
+    ]
+  },
+  "previous_event": "1a1f66939bcf2e5021d059fdd9d879a28f307e755533a6b3236ba79178fb137d",
+  "request_id": "incorporate-statuswin-hit-test-storage-owners",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:radiobutton-lifetime"
+}
