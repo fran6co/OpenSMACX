@@ -1,0 +1,30 @@
+{
+  "event_id": "29f84e035f40e1e56ef68c7e235c7d7e391a54e880ce931e3ff7f9ff3c382fb4",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json"
+    ],
+    "evidence": [
+      "Original 0x00407060 and 0x00407080 adjust Buffer and Dialog receivers before tail-jumping to the same 0x00406F60 deleting destructor; recover all generated identities together and lower cleanup ceilings for removed handwritten machinery."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4223072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4223104,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "ca3516ba394d924457443fa3d408cceab7f876a5956fb20867ebbcaa62a07737",
+  "request_id": "include-secondary-deleting-adjustors",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:radiobutton-lifetime"
+}

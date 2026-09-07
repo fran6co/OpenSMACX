@@ -1,0 +1,23 @@
+{
+  "event_id": "ca3516ba394d924457443fa3d408cceab7f876a5956fb20867ebbcaa62a07737",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "original:0x00406F50 is the two-instruction vtordisp adjustor that tail-jumps to the selected 0x00406F60 deleting destructor; recover their generated identities together"
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4222800,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "include-deleting-adjustor",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:radiobutton-lifetime"
+}
