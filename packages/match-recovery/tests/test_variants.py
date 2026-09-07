@@ -341,9 +341,13 @@ def test_replica_normalizes_explicit_section_symbol_and_association_identities()
     assert object_signature(original) != object_signature(replica)
 
 
-@pytest.mark.parametrize("selection, expected_same", [(2, True), (4, False), (5, True)])
+@pytest.mark.parametrize("selection, expected_same", [(0, True), (1, True), (2, True), (3, True), (4, False), (5, True), (6, True)])
 def test_checksum_normalization_retains_exact_match_policy_and_actual_contents(selection, expected_same):
-    original = Coff(object_fixture(selection=selection, parent=1 if selection == 5 else 0))
+    raw = bytearray(object_fixture(selection=selection, parent=1 if selection == 5 else 0))
+    if selection == 0:
+        at = 20 + 40 + 36  # Second section header's characteristics.
+        struct.pack_into("<I", raw, at, struct.unpack_from("<I", raw, at)[0] & ~0x1000)
+    original = Coff(bytes(raw))
     replica = copy.deepcopy(original)
     data = bytearray(replica.auxiliary[3])
     struct.pack_into("<I", data, 8, 123)

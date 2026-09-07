@@ -1060,8 +1060,15 @@ compares code, data, relocation identities, types,
 COMDAT policy, BSS extents and link directives. Compiler-local section/symbol
 numbers are normalized through explicit names and associative ownership; ambiguous
 identities are refused. Timestamps, file records and CodeView source/line records
-are ignored. Cached checksums for ANY/ASSOCIATIVE COMDATs are replaced by actual
-content/reference comparison; EXACT_MATCH checksums are retained. This is a
+are ignored. Known numeric exception labels retain associative owner, offset,
+type and storage instead of their unstable spelling. Simple VC6 unnamed-namespace
+definitions are recognized only through the primary COFF FILE path and a single
+namespace nonce; function/data names and signatures remain distinct. This rule
+applies to replica and damage controls, never to original-image bindings or
+baseline preservation aliases. Missing definitions and ambiguous identities
+are refused; ordinary external names, data and type streams stay strict.
+Unused section checksums are replaced by actual content/reference comparison;
+EXACT_MATCH checksums are retained. This is a
 replica control for scoped measurement, not proof of an identical final link.
 Then each file's explicit damage control, applied independently with the other
 files unchanged, must compile and change its witness function's code or relocations.

@@ -153,6 +153,37 @@ def test_real_vc6_atomic_header_body_overlay_reaches_both_translation_units(vari
     assert not list((root / "build/recovery/variants").iterdir())
 
 
+@pytest.mark.parametrize("debug_flags", [(), ("/Z7",)])
+def test_real_vc6_unnamed_namespace_replica_keeps_code_and_external_edges(variant_project, debug_flags):
+    from recovery.environment.wine import VC6_ROOT
+    if not (VC6_ROOT / "BIN/CL.EXE").is_file():
+        pytest.skip("VC6 is not installed")
+    root = variant_project
+    source = root / "code/unit.cpp"
+    (root / "code/helper.h").write_text("struct Guard { ~Guard(); };\ninline int identity(int x) { return x; }\n")
+    source.write_text('#include "helper.h"\nint external(int);\n'
+                      "namespace { int stored = 3; int helper(int x) { return x + stored; } }\n"
+                      "int value(int x) { Guard g; return external(helper(identity(x))); }\n")
+    wrapper = Path(__file__).resolve().parents[1] / "environment/wine.py"
+    command = (sys.executable, str(wrapper), "--tool=cl", "/nologo")
+    flags = ("/c", "/O2", "/Ob0", "/Gy", "/GX", *debug_flags)
+    original = Coff(compile_object(source, command, flags))
+    replica = Coff(compile_overlay(root, source, {}, command, flags))
+    assert any("?helper@?%" in s.name for s in original.symbols.values())
+    if debug_flags:
+        assert sum(s.storage == 103 for s in original.symbols.values()) > 1
+    assert object_signature(original) == object_signature(replica)
+    # A different helper nonce/path is not evidence that a damage edit reached
+    # the selected caller. Ordinary external edge changes must still count.
+    symbol = "?value@@YAHH@Z"
+    assert function_signature(original, symbol) == function_signature(replica, symbol)
+    for before, after in ((b"stored = 3", b"stored = 4"), (b"external", b"other_external")):
+        damaged = Coff(compile_overlay(root, source, {"code/unit.cpp": source.read_bytes().replace(before, after)}, command, flags))
+        assert object_signature(original) != object_signature(damaged)
+        if before == b"external":
+            assert function_signature(original, symbol) != function_signature(damaged, symbol)
+
+
 def test_real_vc6_deck_follows_nonvirtual_to_virtual_method_binding(variant_project):
     from match_recovery.model import Origin
     from match_recovery.tasks import Task, TaskStore

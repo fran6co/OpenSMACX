@@ -5,21 +5,78 @@ executable. A control can refuse harmless representation differences; it must
 not turn a candidate's successful compilation into a recovery claim.
 """
 
+import re
 import struct
 
 from .model import digest
 from .pe_coff import weak_external
 
 
-def _section_keys(obj, overrides=None):
+def _replica_names(obj):
+    """Narrow compiler-local identities for unchanged-source controls only.
+
+    VC6 encodes a simple unnamed-namespace definition as
+    ?name@?%<primary COFF FILE path><decimal nonce>@@<signature>. Recognize only
+    that observed form and a defined function COMDAT or ordinary data symbol.
+    Never infer an external alias for original-image or baseline preservation.
+    Exception labels retain their associative owner, offset, type and storage;
+    only the compiler's numeric spelling is immaterial to an object-local edge.
+    """
+    names = {}
+    for symbol in obj.symbols.values():
+        if (symbol.section in obj.associations and symbol.type == 0
+                and ((symbol.storage == 6 and re.fullmatch(r"\$L[0-9]+", symbol.name))
+                     or (symbol.storage == 3 and re.fullmatch(r"\$T[0-9]+", symbol.name)))
+                and not obj.auxiliary.get(symbol.index)):
+            names[symbol.index] = "<replica-local>"
+    # /Z7 adds FILE records for inline headers and repeated returns to the TU.
+    # Only the first FILE is the primary source; never guess among headers or
+    # choose a filename merely because it makes two symbol spellings agree.
+    files = [obj.auxiliary.get(s.index, b"").split(b"\0", 1)[0]
+             for _, s in sorted(obj.symbols.items()) if s.storage == 103]
+    if files and files[0]:
+        try:
+            path = files[0].decode("ascii")
+        except UnicodeDecodeError:
+            path = ""  # Unknown filename encoding supplies no normalization.
+        if path:
+            pattern = re.compile(r"^\?([^@?]+)@\?%" + re.escape(path) + r"([0-9]+)@@([^%]+)$")
+            recognized = [(s, pattern.fullmatch(s.name)) for s in obj.symbols.values()]
+            recognized = [(s, match) for s, match in recognized if match is not None]
+            # One TU namespace, not a guessed many-to-one merge of namespaces.
+            if len({match[2] for _, match in recognized}) > 1:
+                raise ValueError("replica has conflicting unnamed-namespace identities")
+            for symbol, match in recognized:
+                if symbol.storage != 2 or symbol.section <= 0 or symbol.type not in (0, 0x20):
+                    raise ValueError("replica unnamed namespace requires a defined function or data symbol")
+                if symbol.type == 0x20:
+                    obj.function(symbol.name)  # Validate exclusive code COMDAT ownership.
+                elif not obj.sections[symbol.section - 1].flags & 0xC0:
+                    raise ValueError("replica unnamed namespace data lacks a data section")
+                basename = path.replace("\\", "/").rsplit("/", 1)[-1]
+                names[symbol.index] = "?" + match[1] + "@<replica-tu:" + basename + ">@@" + match[3]
+    # Refuse aliases/collisions, including two local labels at the same offset.
+    # A relocation can never borrow the identity of another original symbol.
+    seen = {}
+    for symbol in obj.symbols.values():
+        key = (names.get(symbol.index, symbol.name), symbol.section, symbol.value, symbol.type, symbol.storage)
+        if key in seen and (symbol.index in names or seen[key] in names):
+            raise ValueError("ambiguous compiler-local replica identity")
+        seen[key] = symbol.index
+    return names
+
+
+def _section_keys(obj, overrides=None, names=None):
     """Explicit names and associative ownership, never byte-similarity pairing."""
     keys = {}
     for number, section in enumerate(obj.sections, 1):
-        names = sorted((symbol.name, symbol.value, symbol.type, symbol.storage)
+        symbols = sorted(((names or {}).get(symbol.index, symbol.name), symbol.value, symbol.type, symbol.storage)
                        for symbol in obj.symbols.values() if symbol.section == number and symbol.storage != 103
                        and not (symbol.name == section.name and symbol.storage == 3 and symbol.type == 0))
-        if names:
-            keys[number] = "named:" + digest(names)
+        # Associative ownership is stronger than a child's compiler-local name.
+        # Keep every child symbol/offset below; do not use labels as its owner.
+        if symbols and number not in obj.associations:
+            keys[number] = "named:" + digest(symbols)
     keys.update(overrides or {})
 
     def key(number):
@@ -36,7 +93,7 @@ def _section_keys(obj, overrides=None):
     return keys
 
 
-def _object_evidence(obj, *, excluded=frozenset(), section_keys=None, entry_names=None):
+def _object_evidence(obj, *, excluded=frozenset(), section_keys=None, entry_names=None, replica=False):
     """All sections/relocations/symbols except file and CodeView line records.
 
     COFF timestamps are already omitted by the parser. Keep type records, BSS
@@ -51,7 +108,8 @@ def _object_evidence(obj, *, excluded=frozenset(), section_keys=None, entry_name
     """
     if any(section.name == ".debug$P" for section in obj.sections):
         raise ValueError("replica control requires standalone objects, not external precompiled types")
-    keys = _section_keys(obj, section_keys)
+    names = _replica_names(obj) if replica else {}
+    keys = _section_keys(obj, section_keys, names)
     debug = {index for index, section in enumerate(obj.sections, 1) if section.name == ".debug$S"}
     omitted = debug | set(excluded)
     entry_names = entry_names or {}
@@ -59,7 +117,7 @@ def _object_evidence(obj, *, excluded=frozenset(), section_keys=None, entry_name
                   for _, target, _ in section.relocations}
 
     def symbol_key(symbol):
-        return (entry_names.get(symbol.index, symbol.name), symbol.value,
+        return (entry_names.get(symbol.index, names.get(symbol.index, symbol.name)), symbol.value,
                 keys[symbol.section] if symbol.section > 0 else str(symbol.section), symbol.type, symbol.storage)
 
     def auxiliary(index, symbol):
@@ -101,11 +159,12 @@ def _object_evidence(obj, *, excluded=frozenset(), section_keys=None, entry_name
         if symbol.section > 0 and symbol.storage == 3 and symbol.type == 0 and symbol.name == obj.sections[symbol.section - 1].name:
             # Coff already validates this section-definition auxiliary record.
             length, relocs, lines, checksum, parent, selection = struct.unpack_from("<IHHIHB", raw)
-            # ANY and ASSOCIATIVE selection do not select by checksum. VC6 can
-            # change these cached checksums when numbering/reordering symbols.
-            # Compare actual section bytes/references and retain selection/owner;
-            # EXACT_MATCH checksums and other unknown cases stay conservative.
-            if selection in (2, 5):
+            # Only EXACT_MATCH selection uses content equality to select a
+            # duplicate. Other supported policies use presence, size or owner;
+            # non-COMDAT .drectve checksums can even vary between identical VC6
+            # compiles. Compare all actual bytes/references and retain policy,
+            # size and owner rather than trusting these unused checksum fields.
+            if selection in (0, 1, 2, 3, 5, 6):
                 checksum = None
             return ("section", length, relocs, lines, checksum, keys[parent] if selection == 5 else parent, selection)
         # Unknown auxiliary forms remain conservative byte comparisons, not
@@ -130,7 +189,7 @@ def _object_evidence(obj, *, excluded=frozenset(), section_keys=None, entry_name
 
 
 def object_signature(obj):
-    return digest(_object_evidence(obj))
+    return digest(_object_evidence(obj, replica=True))
 
 
 def function_signature(obj, name):
@@ -141,8 +200,9 @@ def function_signature(obj, name):
     refused; use a control with an observable change to the selected code.
     """
     symbol = obj.function(name)
+    names = _replica_names(obj)
     return digest([{"bytes": obj.sections[number - 1].data.hex(),
-                    "relocations": [(offset, ("external", obj.symbols[target].name)
+                    "relocations": [(offset, ("external", names.get(target, obj.symbols[target].name))
                                      if obj.symbols[target].storage == 2 else ("local",), kind)
                                     for offset, target, kind in obj.sections[number - 1].relocations]}
                    for number in obj.code_sections(symbol)])

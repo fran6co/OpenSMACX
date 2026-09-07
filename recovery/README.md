@@ -218,6 +218,11 @@ VC6 can use it to search the original directories and break `#pragma once`.
 The package compares COFF function-debug links by symbol identity, not their
 renumbered table indices, and ignores line-table file locations. It still retains
 function sizes, types, code/data bytes, relocation targets and linker metadata.
+Replica controls also recognize VC6's primary-file unnamed-namespace nonce and
+numeric exception labels through their associative owners and exact offsets.
+This does not alias original symbols or relax baseline preservation. Ordinary
+external targets, initialized data and type records remain strict; unused section
+checksums do not substitute for comparing their actual contents.
 Path/time-sensitive differences remain unsupported when the replica control
 cannot agree. Reports include mapped outside-task neighbors in compiled units,
 but do not prove preservation of all other code. The native `tasks check-preservation`
@@ -723,7 +728,9 @@ Full `structure` and `runtime` obligations remain separate and unwaived.
 This supplies checkpoint admission for supported cases, not full acceptance.
 Changed TU recipes, unobserved substitutions, path-sensitive compiler symbols,
 and scoped table/data changes unsupported by the preservation model still refuse
-admission. The current window-family trial encounters such a replica refusal.
+admission. The window-family deck now passes its task-TU and edited-file controls
+and reaches candidate evaluation, but supporting TUs still expose type-stream
+ordering differences. Passing its selected function is not a completed family.
 Synthetic tests exercise measured regression/restoration and rejection paths;
 they are not evidence of a completed game recovery pilot.
 
