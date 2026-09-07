@@ -256,16 +256,21 @@ reverting source; determine whether the declaration or its interpretation needs
 correction. Passing declared requirements still cannot discharge full hierarchy
 or lifetime, and non-exact instruction-shape proof remains unsupported.
 
-When a required class is absent from debug information, use `uv run recover
-tasks check-layout <task> --witness-missing` for controlled same-TU probes, or
+The joint task/restoration check automatically attempts controlled same-TU probes
+when a declared class is absent from debug information. For a layout-only
+investigation, use `uv run recover tasks check-layout <task> --witness-missing`, or
 `uv run recover check-layout --unit src/listbox.cpp --witness-missing` to investigate
 one product TU (substitute the actual path). These private compiler overlays add
 no product declarations or includes. Inspect `witnessed` coverage and its replica/
 changed-body controls separately from ordinary product-object observations.
 Invisible classes and failed controls remain unknown; do not add includes merely
 to make a witness pass or use a successful probe as lifetime/preservation proof.
-This opt-in diagnostic adds compiles and is not yet consumed automatically by the
-joint restoration/driver check.
+Probes add compiles only for missing declared classes. The joint check reports
+`compilation.overlay_attempts`; restoration trials preserve `layout_basis` for
+review. No product-object cache entry can satisfy an overlay control, and probe
+objects are never used to score product functions. Incomplete visibility or layout
+coverage still requires recovery; automatic probing does not authorize new includes,
+scope changes or structural acceptance.
 
 After structure is established, compare a small deck of plausible source forms
 with `uv run recover tasks variants <task> --image <image> --deck <ignored-json>`.

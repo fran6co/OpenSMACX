@@ -28,35 +28,59 @@ def check_task(root: Path, task_name: str, image: Path, *,
 
     before = snapshot()
     objects = {}
-    compilation = {"attempts": 0, "reused_objects": 0, "debug": list(settings.layout_flags), "persistent_cache": False}
+    compilation = {"attempts": 0, "overlay_attempts": 0, "reused_objects": 0,
+                   "debug": list(settings.layout_flags), "persistent_cache": False}
 
-    def shared_compile(source, command, flags):
-        nonlocal compiler
-        # Only this invocation owns these objects. Verify all source/header,
-        # command-database, image and task inputs even before an in-memory hit.
-        if snapshot() != before:
-            raise ValueError("inputs changed before shared compilation")
-        key = (source.resolve(), tuple(command), tuple(flags))
-        if key in objects:
-            compilation["reused_objects"] += 1
-            return objects[key]
-        compilation["attempts"] += 1
-        if compiler is None:
-            compiler = Compiler(root, profile=settings.compiler_profile)
-        value = compiler(source, command, flags)
-        if snapshot() != before:
-            raise ValueError("inputs changed during shared compilation")
-        # Compiler exceptions are never memoized; each consumer still validates
-        # these object bytes with its own strict parser and measurement rules.
-        objects[key] = value
-        return value
+    class SharedCompiler:
+        def provider(self):
+            nonlocal compiler
+            if snapshot() != before:
+                raise ValueError("inputs changed before shared compilation")
+            if compiler is None:
+                compiler = Compiler(root, profile=settings.compiler_profile)
+            return compiler
+
+        def unchanged(self):
+            if snapshot() != before:
+                raise ValueError("inputs changed during shared compilation")
+
+        def __call__(self, source, command, flags):
+            # Only this invocation owns these objects. Check all live inputs
+            # even before a hit; exceptions are never memoized.
+            provider = self.provider()
+            key = (source.resolve(), tuple(command), tuple(flags))
+            if key in objects:
+                compilation["reused_objects"] += 1
+                return objects[key]
+            compilation["attempts"] += 1
+            try:
+                value = provider(source, command, flags)
+            finally:
+                self.unchanged()
+            objects[key] = value
+            return value
+
+        def overlay(self, source, replacements, command, flags):
+            provider = self.provider()
+            if not callable(getattr(provider, "overlay", None)):
+                raise ValueError("compiler does not support private source overlays")
+            compilation["attempts"] += 1
+            compilation["overlay_attempts"] += 1
+            # Never satisfy an unchanged-overlay control from the ordinary
+            # object cache. Nor may a probe object replace product code in it.
+            try:
+                return provider.overlay(source, replacements, command, flags)
+            finally:
+                self.unchanged()
+
+    shared_compile = SharedCompiler()
 
     if binary_checker is None:
         binary_checker = lambda *args: verify_task(*args, compiler=shared_compile,
                                                   command_for=command_for, debug_types=True)
     if layout_checker is None:
         layout_checker = lambda *args: verify_layout(*args, compiler=shared_compile,
-                                                    command_for=command_for)
+                                                    command_for=command_for, witness_missing=True)
     checks = {}
     # A failed byte match must not prevent discovery of a structural regression,
     # and a passing body must not hide unknown or regressed layout evidence.

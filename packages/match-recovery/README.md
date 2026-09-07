@@ -285,8 +285,20 @@ observed without changing its class layout. Failed controls, invisible/incomplet
 classes, macro-substituted names and unsupported overlays remain unknown. This
 observes the declaration visible at the end of that TU, not product-code
 preservation, ABI independence, lifetime or full structure. It cannot waive
-omitted TUs or import a layout from a different compilation. The ordinary joint
-check/driver does not yet request these supplemental witnesses automatically.
+omitted TUs or import a layout from a different compilation.
+
+The joint task check requests these witnesses automatically for missing declared
+requirements, so restoration, migration checking and the recovery driver consume
+the evidence in the same fresh invocation. Already emitted classes incur no probe
+work. The shared compiler reuses ordinary product objects between binary and
+layout checks, but never uses that cache to satisfy a private-replica control or
+puts probe output into the product-object cache. `compilation.overlay_attempts`
+reports the additional compiler work; no verdicts or probe results persist.
+Structural-requirement trials retain `layout_basis` so a reviewer can distinguish
+product observations from controlled same-TU declaration witnesses. Missing
+overlay support remains unknown without discarding independent binary evidence.
+The standalone layout commands remain opt-in for targeted diagnostics; a whole
+product layout census does not automatically probe every class in every TU.
 
 Input validation still re-enumerates configured roots, resolves every input path
 and hashes all file contents, including checker code. Path handling avoids

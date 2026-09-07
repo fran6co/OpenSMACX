@@ -75,7 +75,8 @@ def check_requirements(inventory, candidate):
                 expectation = row.get("expectation", {})
                 source = {name: expectation[name] for name in ("path", "line") if name in expectation}
             observations[key][witness] = {"unit": unit, "flags": flags, "result": result,
-                                          "reason": reason, "source": source}
+                                          "reason": reason, "source": source,
+                                          **({"layout_basis": row["layout_basis"]} if "layout_basis" in row else {})}
     requirements = []
     for key, item in sorted(known.items()):
         kind = item["value"].get("kind")

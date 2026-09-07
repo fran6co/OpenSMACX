@@ -2,10 +2,12 @@
 
 import re
 import struct
+import json
 
 import pytest
 
 from match_recovery.application_layout import verify_layout
+from match_recovery.application_check import check_task
 from match_recovery.layout_check import check_layout
 from match_recovery.layout_witness import missing_layout_witnesses
 from match_recovery.pe_coff import Coff
@@ -13,6 +15,7 @@ from test_application_commands import combined_object, project
 from test_codeview import coff, debug_types
 from test_layout_check import add_unit
 from test_symbol_check import project as product_project
+from test_restoration import historical
 
 
 ABSENT = combined_object(debug_types().replace(b"Widget", b"OtherX"))
@@ -145,3 +148,62 @@ def test_product_keeps_missing_units_and_failed_witnesses_unknown(product_projec
     compiler.damage = "control"
     report = check_layout(product_project, compiler=compiler, witness_missing=True)
     assert report["result"] == "unknown" and report["errors"]
+
+
+def test_joint_check_automatically_probes_missing_layout_without_reusing_control_objects(project):
+    compiler = Compiler(project)
+    for _ in range(2):
+        report = check_task(project, "owner", project / "original.exe", compiler=compiler)
+        assert report["checks"]["binary"]["result"] == report["checks"]["layout"]["result"] == "pass"
+        assert report["compilation"]["attempts"] == 4
+        assert report["compilation"]["overlay_attempts"] == 3
+        assert report["compilation"]["reused_objects"] == 1
+        assert report["checks"]["layout"]["witnessed_definitions"] == 1
+        assert not report["ready_for_collection"] and report["structure_verification"] == "unknown"
+    assert len(compiler.calls) == 6  # Fresh controls on every invocation.
+
+
+@pytest.mark.parametrize("damage", ["replica", "ignore", "invisible", "control", "layout"])
+def test_joint_check_never_lends_product_bytes_to_a_failed_overlay_control(project, damage):
+    report = check_task(project, "owner", project / "original.exe", compiler=Compiler(project, damage=damage))
+    assert report["checks"]["binary"]["result"] == "pass"
+    assert report["checks"]["layout"]["result"] == report["result"] == "unknown"
+
+
+def test_joint_check_without_overlay_capability_still_reports_the_binary_result(project):
+    report = check_task(project, "owner", project / "original.exe", compiler=lambda *_: ABSENT)
+    assert report["checks"]["binary"]["result"] == "pass"
+    assert report["checks"]["layout"]["result"] == "unknown"
+    assert report["compilation"]["attempts"] == 1 and report["compilation"]["overlay_attempts"] == 0
+
+
+@pytest.mark.parametrize("damage", ["header", "image", "task", "policy", "new_header"])
+def test_changed_inputs_during_probe_refuse_the_entire_joint_snapshot(project, damage):
+    path = project / {"header": "code/unit.hpp", "image": "original.exe",
+                      "task": "recovery/tasks/owner.json", "policy": "recovery/project.json",
+                      "new_header": "code/new.hpp"}[damage]
+    class Changed(Compiler):
+        def overlay(self, *args):
+            value = super().overlay(*args)
+            if damage == "task":
+                task = json.loads(path.read_text())
+                task["intent"] = "concurrent task decision"
+                path.write_text(json.dumps(task))
+            else:
+                path.write_bytes((path.read_bytes() if path.exists() else b"") + b"\n")
+            return value
+    with pytest.raises(ValueError, match="changed"):
+        check_task(project, "owner", project / "original.exe", compiler=Changed(project))
+
+
+def test_restoration_consumes_witnesses_without_reclassifying_them_as_product_observations(historical):
+    from match_recovery.restoration import measure_restoration
+    path = historical / "code/unit.hpp"
+    path.write_text(path.read_text().replace("0x00401010", "0x00401000"))
+    report = measure_restoration(historical, "owner", historical / "original.exe", compiler=Compiler(historical))
+    declared, = [row for row in report["details"] if row["dimension"] == "declared_structure"]
+    assert declared["result"] == "pass"
+    requirement, = [row for row in report["structural_requirements"] if row["current"]]
+    assert requirement["result"] == "pass"
+    assert requirement["trials"][0]["layout_basis"] == "same_tu_probe"
+    assert not report["ready_for_collection"] and not report["scope_complete"]

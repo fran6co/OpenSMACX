@@ -66,7 +66,8 @@ def test_native_checks_need_no_project_dispatcher(project, capsys, action):
     assert report["result"] == "pass" and report["scope_complete"] is False
     assert report["structure_verification"] == "unknown"
     if action == "check":
-        assert report["compilation"] == {"attempts": 1, "reused_objects": 1, "debug": ["-types"], "persistent_cache": False}
+        assert report["compilation"] == {"attempts": 1, "overlay_attempts": 0, "reused_objects": 1,
+                                         "debug": ["-types"], "persistent_cache": False}
         assert not report["ready_for_collection"]
 
 
