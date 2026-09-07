@@ -1,0 +1,25 @@
+{
+  "event_id": "3e860729000a062efb0fd3ece5a32e522d552049663640bf24d5761200379310",
+  "payload": {
+    "affects": [
+      "entity-781a78a76e45c3fb81f4f5e41a9e337c61d2a7575f379165f6863f2775c6ad83",
+      "entity-9dd220baa03bfa83102df034ac184063fa61a36805bfe7ab26226452d820bc9c",
+      "entity-a0a7c7f9f3b76f0850d2f376d8a9ee2b4eef5fdaa052527f04478c244bced607",
+      "entity-d2a947419d96eb0c7f6fbf01c7745189670c01b23d2e7f4da604ad96cebe15d1"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "spritebox-spot-callback-ownership",
+    "evidence": [
+      "original:0x0060FF64 forms complete-object +0x10 and 0x0060FF67 calls Spot::Spot at 0x005FA860 before constructing the list at +0x24; destructor 0x00610252 forms GraphicWin-relative -0x7C and 0x0061025D calls Spot::~Spot at 0x005FA870.",
+      "original:0x006112F4 uses that Spot for check; 0x00611301 loads the GraphicWin-relative -0xC callback, 0x0061130C pushes the hit position, 0x0061130F cleans four bytes, and 0x00611312 tests the returned int before posting WM_KEYDOWN.",
+      "source:src/spritebox.h keeps Spot in a byte array and the callback in field_80_; its constructor placement-constructs Spot after implicit list construction, its destructor manually tears it down, and the event still subtracts from a receiver already adjusted by the true virtual override. BasePop::calculate_dimensions copies field_3164_ through dialog_cfg[0x31] into this callback slot; follow the actual owner rather than keeping the integer alias."
+    ],
+    "hypothesis": "SpriteBox owns a real Spot at +0x10 and an int-returning cdecl double-click callback at +0x80. Restore its member construction/destruction and typed callback use together with BasePop callback storage and installation; keep the true Win virtual slot and all historical byte obligations.",
+    "kind": "discovery"
+  },
+  "previous_event": "6dda6221dadd51a59754afdcb9c1ab81550f600ae6b0ba8dbf6aa734f7b12a91",
+  "request_id": "spritebox-spot-callback-ownership",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:radiobutton-lifetime"
+}
