@@ -186,8 +186,8 @@ def _type_records(obj: Coff):
     return records
 
 
-def class_layout(obj: Coff, name: str) -> dict:
-    """Caller must compile a standalone /Z7 TU, explicitly without PCH use."""
+def _class_records(obj: Coff):
+    """Validate and index class headers once, without guessing field lists."""
     records = _type_records(obj)
     classes = {}
     for index, (leaf, record) in enumerate(records):
@@ -202,6 +202,25 @@ def class_layout(obj: Coff, name: str) -> dict:
         if record.at != len(record.data):
             raise ValueError("unsupported class record tail")
         classes[index + 0x1000] = {"name": class_name, "properties": properties, "field": field, "size": size}
+    return records, classes
+
+
+class ClassLayouts:
+    """An invocation-local index of one supplied standalone object's types.
+
+    No objects or verdicts are shared across compilations. Class field lists
+    are checked on lookup, so one unsupported class does not erase observable
+    siblings. Each result is newly constructed and safe for its caller to edit.
+    """
+
+    def __init__(self, obj: Coff):
+        self._records, self._classes = _class_records(obj)
+
+    def layout(self, name: str) -> dict:
+        return _class_layout(self._records, self._classes, name)
+
+
+def _class_layout(records, classes, name):
     definitions = []
     for cls in classes.values():
         class_name, properties, field, size = (cls[key] for key in ("name", "properties", "field", "size"))
@@ -236,3 +255,11 @@ def class_layout(obj: Coff, name: str) -> dict:
     if len(definitions) != 1:
         raise ValueError("requires one complete compiler class definition")
     return definitions[0]
+
+
+def class_layout(obj: Coff, name: str) -> dict:
+    """Single lookup; use ClassLayouts for several names in the same object.
+
+    Caller must compile a standalone /Z7 TU, explicitly without PCH use.
+    """
+    return ClassLayouts(obj).layout(name)

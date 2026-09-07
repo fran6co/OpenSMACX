@@ -190,7 +190,11 @@ standalone compiler debug information. Existing source, measurement and compilat
 database configuration supplies the inputs; no task or project checker is needed.
 It compiles every configured product TU for every flag set once, sharing each
 object across expectations. All observed definitions must agree; a later passing
-configuration cannot erase a counterexample. A known wrong offset remains a
+configuration cannot erase a counterexample. Task and project layout checks also
+index each fresh object's standalone type stream once, without sharing objects
+or verdicts across compilations. Unsupported class field lists remain separate
+lookup failures; a malformed type stream never supplies a partial index. A
+known wrong offset remains a
 failure even if its member type is unmeasurable.
 
 Each expectation needs a complete compiler witness in every configured flag set.

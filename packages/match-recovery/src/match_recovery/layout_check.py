@@ -10,7 +10,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from .application_layout import check_base, check_member
-from .codeview import ClassNotEmitted, class_layout
+from .codeview import ClassLayouts, ClassNotEmitted
 from .compiler import Compiler
 from .layout_source import read_bases, read_members
 from .mapping_check import build_units
@@ -74,9 +74,10 @@ def check_layout(root: Path, *, units=None, compiler=None, command_for=None) -> 
                 if not isinstance(data, bytes) or not data:
                     raise ValueError("compiler returned no object bytes")
                 obj = Coff(data)
+                types = ClassLayouts(obj)
                 for name in classes:
                     try:
-                        layouts[name] = class_layout(obj, name)
+                        layouts[name] = types.layout(name)
                     except ClassNotEmitted as error:
                         missing.add(name)
                         unavailable[name] = str(error)

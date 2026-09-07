@@ -155,7 +155,10 @@ flag set. Valid non-emission is reported, not proof of ABI independence. A scope
 The retained full gate invokes this serially after initial-data compilation.
 The older header-offset walk remains until its conventional offset comments and
 self-naming members have replacement coverage. This native check adds fresh
-compilation cost; shared fresh-object reuse is still unfinished. Neither passing
+compilation cost; shared fresh-object reuse is still unfinished. Task and project
+layout checks now index each fresh object's CodeView type stream once instead of
+reparsing it for every class. This is invocation-local parsing reuse, not an
+object/verdict cache or a change to compiler trials and coverage. Neither passing
 offsets nor class-pointer targets prove the full hierarchy or runtime lifetime.
 
 The native `recover tasks variants` command now replaces serial edit-and-restore

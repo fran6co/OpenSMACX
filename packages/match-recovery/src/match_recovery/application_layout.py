@@ -9,7 +9,7 @@ from match_recovery.pe_coff import Coff
 from match_recovery.tasks import TaskStore
 from match_recovery.source_inventory import image_pin, source_snapshot
 from match_recovery.ownership_source import class_hint
-from match_recovery.codeview import ClassNotEmitted, class_layout
+from match_recovery.codeview import ClassLayouts, ClassNotEmitted
 from .compiler import Compiler
 from .measurement import Measurement
 
@@ -100,9 +100,10 @@ def verify_layout(root: Path, task_name: str, *, compiler=None, command_for=None
                 if compiler is None:
                     compiler = Compiler(root, profile=settings.compiler_profile)
                 obj = Coff(compiler(root / unit, command, flags + settings.layout_flags))
+                types = ClassLayouts(obj)
                 for name in classes:
                     try:
-                        layouts[name] = class_layout(obj, name)
+                        layouts[name] = types.layout(name)
                     except ClassNotEmitted as error:
                         errors[name] = str(error)
                         missing.add(name)
