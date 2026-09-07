@@ -1,0 +1,26 @@
+{
+  "event_id": "9932ebbceeadfe395d478fc22613b01d91c86906a5b7dde4e26749af5b68b76a",
+  "payload": {
+    "affects": [
+      "entity-23237c9b32077075ad757016016442da83fb13c46040946889ff9753643e239b",
+      "entity-4f8ac347d25b74b97fed9df98351737f74300dd223ea22b167f6cdc5a08791ee",
+      "entity-8322586b563650809e7a0d9cce94ef9c5eeaae5b540fc8fb6b17d7e65202188a"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "window-fill-colour-storage",
+    "evidence": [
+      "source:src/win.cpp:WinFillColour is const unsigned char initialized to 9 in the same TU as its set_rects readers",
+      "source:src/win.h:WinFillColour declaration identifies original storage 0x00696D14",
+      "original:0x005F29BB,0x005F2A00,0x005F2A4F,0x005F2A96 load the shared colour byte before Buffer::fill",
+      "original:0x005D5EBB reads the same byte in GraphicWin on_paint; the data issue crosses virtual handlers",
+      "source:src/win.cpp:on_nc_paint definition has no current original mapping; relocated colour operands at 0x005F5902 and 0x005F5910 are not covered by current function spans"
+    ],
+    "hypothesis": "WinFillColour is currently a const definition in the same TU as Win::set_rects, allowing immediate folding where the original loads shared byte storage. Establish its original ownership, mutability and affected readers before changing declarations or moving its definition. A mutable global and a separately defined const object are different interpretations; a better byte score alone cannot choose between them. The original on_nc_paint mapping near 0x005F5810 also remains absent from current source and must be restored before claiming complete reader coverage.",
+    "kind": "discovery"
+  },
+  "previous_event": "ac1a0c6b02b8567a7d3b9fd65fe2bed53ae64c6707e6a1c1fb2d21d9858a3abd",
+  "request_id": "window-fill-colour-storage",
+  "schema_version": 1,
+  "sequence": 23,
+  "stream": "task:infowin-ownership"
+}

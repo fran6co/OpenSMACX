@@ -60,6 +60,22 @@ def test_owned_buffer_is_pointer_storage_not_an_embedded_buffer_or_integer(compi
         assert "owned_buffer_" not in layout["class_value_members"]
 
 
+def test_layout_override_delegates_to_base_and_occupies_the_original_slot(compiled):
+    _, _, objects = compiled
+    derived = symbol_at("src/graphicwin.cpp", 0x005D63E0)
+    base = symbol_at("src/win.cpp", 0x005F2940)
+    size_handler = symbol_at("src/graphicwin.cpp", 0x005D6210)
+    for obj in objects:
+        assert calls(obj, derived) == [base]  # Qualified call, no self-recursion.
+        table, = (s for s in obj.symbols.values() if s.name == "??_7GraphicWin@@6BWin@@@")
+        section = obj.sections[table.section - 1]
+        entries = {offset // 4: obj.symbols[index].name
+                   for offset, index, kind in section.relocations if kind == 6}
+        # Original slot observations do not establish the complete table extent.
+        assert entries[66] == derived
+        assert entries[71] == size_handler
+
+
 def test_unqualified_initializer_damage_really_changes_the_compiled_call_target(compiled):
     compiler, settings, _ = compiled
     path = ROOT / "src/graphicwin.cpp"

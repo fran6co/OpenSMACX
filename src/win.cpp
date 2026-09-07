@@ -6916,6 +6916,9 @@ void __cdecl Win::remove_parent(Win* window) {
 
 // ===== homed from src/recovered/units/005f2940.cpp =====
 
+// ORIGINAL: 0x005F2940 ?set_rects@Win@@QAEXXZ 0x005F2940-0x005F2ABA FILE
+// symbol    ?set_rects@Win@@UAEXXZ
+// provenance (retired seed): git:3cb99d43^:src/recovered/units/005f2940.cpp
 void Win::set_rects() {
     if (this->iSomeFlag_ & 2) {
         int32_t barH;

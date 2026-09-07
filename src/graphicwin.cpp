@@ -823,3 +823,11 @@ void GraphicWin::on_size(unsigned int flags, int width, int height) {
         }
     }
 }
+
+// The original derived entry delegates non-client rectangle setup to Win.
+// ORIGINAL: 0x005D63E0 ?set_rects@GraphicWin@@QAEXXZ 0x005D63E0-0x005D63E5 FILE BYTE_EXACT
+// symbol    ?set_rects@GraphicWin@@UAEXXZ
+// provenance (retired seed): git:078b2095:src/unrecovered/005d63e0.cpp
+void GraphicWin::set_rects() {
+    Win::set_rects();
+}

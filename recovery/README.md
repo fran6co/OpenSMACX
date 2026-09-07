@@ -169,8 +169,10 @@ mapping/provenance beside the method and the global identity beside its definiti
 The resize path now distinguishes GraphicWin's Buffer base from its optional
 `Buffer *owned_buffer_`. Buffer's resize uses the typed owner query and virtual
 window resize, replacing the archived vtable shim. GraphicWin's on_size body uses
-real fields and the PaletteActive pointer; its remaining matching and set_rects/
-redraw dispatch dependencies stay open. The owned buffer now uses ordinary C++
+real fields and the PaletteActive pointer. Its set_rects override delegates to
+Win's real method; the old cast-based seed is removed, and the base mapping lost
+during homing is restored from Git. Remaining handler matching and redraw dispatch
+stay open. The owned buffer now uses ordinary C++
 allocation. Manual deleting dispatch in close still needs coupled teardown/return
 type recovery; a member offset check is not lifetime acceptance. GraphicWin::init
 also calls Win::init explicitly instead of recursing; the base initializer's lost

@@ -1,0 +1,35 @@
+{
+  "event_id": "ac1a0c6b02b8567a7d3b9fd65fe2bed53ae64c6707e6a1c1fb2d21d9858a3abd",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/graphicwin.cpp",
+      "src/graphicwin.h",
+      "src/unrecovered/005d63e0.cpp",
+      "src/win.cpp"
+    ],
+    "evidence": [
+      "task:infowin-ownership:graphicwin-layout-redraw-dispatch",
+      "original:0x005D63E0 tail-jumps 0x005F2940; original positional table entry 0x00670D68 selects that derived entry",
+      "git:3cb99d43^:src/recovered/units/005f2940.cpp:base set_rects mapping lost during homing"
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6120416,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6236480,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "bcdde574666611d0d14a673afb7667ae07acd36c92d098f3428534d02a3bb716",
+  "request_id": "graphicwin-set-rects-override",
+  "schema_version": 1,
+  "sequence": 22,
+  "stream": "task:infowin-ownership"
+}
