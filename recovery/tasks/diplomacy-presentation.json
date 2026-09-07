@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "task_id": "diplomacy-presentation",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Recover withdrawal presentation and diplomacy captions as genuine C++; treat previous hand-recovery interpretations as seeds, verify ownership and references, and expand scope for affected classes or callees.",
+  "base_revision": "1df75b55d218913e5eaf09331264b37457f98c8e",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5498048
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5478816
+    }
+  ],
+  "editable_files": [
+    "src/faction.cpp",
+    "src/faction.h",
+    "src/unrecovered/0053e4c0.cpp",
+    "src/recovered/units/005399a0.cpp"
+  ],
+  "evidence": [
+    "Seed provenance: unfinished faction work in e5927297 and 8e3d44c0, reviewed before deleting the inactive branch. These are unverified hypotheses, not transferred match claims. Existing src seeds retain the control-flow attempts. Do not import the raw-address call forwarders or fixed-address object aliases from that work.",
+    "Withdrawal hypothesis (0x0053E4C0): try factions_status_byte(0) & (1 << faction_id_with), keeping byte-load promotion before the full-width shifted mask rather than narrowing the mask to unsigned char. Use the current Players noun, noun_gender and is_noun_plural fields instead of the seed's raw record-base arithmetic; verify the current model and emitted references independently.",
+    "Caption hypothesis (0x005399A0): pairwise status is indexed by faction and counterpart; a 0x10 status bit raises low friction to 15. The mood ladder's proposed thresholds are 0, 2, 4, 8, 12, 15, 17 and 19. Compose counterpart noun, dash and mood adjective, with a label-table alternative for the vote-bank/pact condition. Re-derive this from the original instead of treating the previous spelling as authority.",
+    "Ownership hypothesis: the shared counter referenced at 0x0093FA98 may be a diplomacy vote bank, based on diplomacy_check and buy_council_vote, not an anonymous int pointer. The caption's DiploPop receiver at 0x00733990 and redraw rectangle at 0x00735A84 require actual object/member ownership. Correlate its draw_info call at 0x0043FA90 with the class before introducing declarations; request scope expansion for that recovery."
+  ]
+}
