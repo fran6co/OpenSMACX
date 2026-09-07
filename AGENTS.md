@@ -75,6 +75,8 @@ is complete. Neither command establishes full structure or runtime acceptance.
 The native gate runs configured preparation before measuring. For standalone
 task checks/recording, run `recover prepare` at a coordinator checkpoint first;
 never regenerate compiler recipes during an active measurement epoch.
+The retained legacy gate finishes its incremental build before selecting recipes
+or measuring claims, so CMake regeneration cannot race the mapping audit.
 Real-project damage controls are opt-in isolated pytest cases in
 `recovery/tests/test_gate_controls.py`; see `recovery/WORKFLOW.md`. Fast tests
 exercise their anchors and restoration, not the full live matrix.

@@ -1366,15 +1366,8 @@ def check(
     unread = unread_markers(src)
     restated = asm_matches(src)
 
-    # THE BUILD DATABASE IS THE AUTHORITY ON WHOSE FAULT A WALL IS - see
-    # `unasked_here` below - and on which unclaimed bodies are worth measuring.
-    # Read once, not once per file.
-    built = build_inputs(compile_commands)
-    grouped = _claims_by_file(records, built)
-    claimed = {_claim_key(r) for group in grouped.values() for r in group
-               if r.byte_exact or r.semantic}
+    claimed = {_claim_key(r) for r in records if r.byte_exact or r.semantic}
     claims = len(claimed)
-    scored = sum(len(v) for v in grouped.values())
     if not claims:
         typer.secho(f"no BYTE_EXACT claims under {src}",
                     fg=typer.colors.RED)
@@ -1386,6 +1379,21 @@ def check(
     if pin_broken:
         typer.secho(pin_broken, fg=typer.colors.RED, bold=True)
         raise typer.Exit(1)
+
+    # CMake's build may regenerate compile_commands.json. Finish that before
+    # choosing commands or measuring anything, not alongside the mapping audit
+    # in the epilogue. Otherwise this gate can score old recipes and its own
+    # build invalidates the native check's input snapshot. Keep that freshness
+    # refusal intact; order the producer before all of its consumers instead.
+    if not as_json:
+        typer.echo("Building before selecting measurement recipes...")
+    link = subprocess.run(["cmake", "--build", "build"], cwd=REPO_ROOT,
+                          capture_output=True, text=True)
+    # The refreshed database determines which unclaimed bodies are built and
+    # which recipe each claim uses. Read once, not once per file.
+    built = build_inputs(compile_commands)
+    grouped = _claims_by_file(records, built)
+    scored = sum(len(v) for v in grouped.values())
 
     jobs = max(1, min(jobs or (os.cpu_count() or 1), WINE_CEILING))
 
@@ -1702,12 +1710,9 @@ def check(
                         else
                         f"DANGLING  {record.address_hex} body fact: {note} - "
                         f"{record.location}", fg=typer.colors.RED)
-    # THE AUDITS BELOW ARE INDEPENDENT PROCESSES, so they all start here and
-    # the blocks below only collect and print, in the same order as before.
-    # Serial, the epilogue cost the SUM of eleven full-tree parses - 4m17s of
-    # a warm run's 4m20s - and the wall is now the slowest one. Wine is idle
-    # by this point (measurement is done), so the link shares the clock with
-    # the pure-python censuses.
+    # The build finished before measurement. Read-only audits can now overlap
+    # without CMake replacing their compiler database; only collection/printing
+    # is ordered here. Symbol compilation still needs the build's result.
     audits = concurrent.futures.ThreadPoolExecutor(max_workers=11)
 
     def _audit(tool: str, *argv):
@@ -1716,22 +1721,20 @@ def check(
             [sys.executable, str(REPO_ROOT / "tools" / tool), *argv],
             cwd=REPO_ROOT, capture_output=True, text=True)
 
-    link_job = audits.submit(subprocess.run, ["cmake", "--build", "build"],
-                             cwd=REPO_ROOT, capture_output=True, text=True)
     vtables_job = audits.submit(
         subprocess.run,
         [sys.executable, "-m", "match_recovery.cli", "audits", "check", "compiler-work", "--summary"],
         cwd=REPO_ROOT, capture_output=True, text=True)
     stale_job = _audit("stale_references.py")
 
-    def _symbols_after_link():
-        # The configured compiler owns fresh temporary objects. Serialize it
-        # after the build; never read a stale object after a failed build.
-        if link_job.result().returncode:
+    def _symbols_after_build():
+        # The configured compiler owns fresh temporary objects; a failed build
+        # cannot authorize symbol coverage.
+        if link.returncode:
             return {"result": "unknown", "counts": {}, "reason": "build failed before symbol coverage"}
         return _symbol_coverage()
 
-    symbols_job = audits.submit(_symbols_after_link)
+    symbols_job = audits.submit(_symbols_after_build)
     index_job = audits.submit(
         subprocess.run,
         [sys.executable, "-m", "match_recovery.cli", "check-mappings", "--summary"],
@@ -1761,9 +1764,7 @@ def check(
     # that. The entry point is the frontier; a tree that cannot link has no
     # entry point.
     #
-    # The build is incremental and this is the last thing the gate does, so a
-    # clean tree pays almost nothing for it.
-    link = link_job.result()
+    # Report the incremental build completed before measurements began.
     unlinked = [line for line in (link.stdout + link.stderr).splitlines()
                 if "LNK" in line or "error" in line.lower()]
     if link.returncode and not as_json:

@@ -50,6 +50,35 @@ def test_layout_compiler_does_not_run_after_failed_build(claimed, monkeypatch, p
     assert check(claimed).exit_code == 1
 
 
+def test_build_recipe_refresh_finishes_before_measurement_and_mapping_audits(
+        claimed, monkeypatch, isolated_build_database):
+    actual = osmx.subprocess.run
+    events = []
+
+    def invoke(argv, *args, **kwargs):
+        if list(argv)[:2] == ["cmake", "--build"]:
+            entries = json.loads(isolated_build_database.read_text())
+            entries[0]["arguments"].append("/DBUILD_REFRESHED=1")
+            isolated_build_database.write_text(json.dumps(entries))
+            events.append("build")
+        elif list(argv)[:4] == [sys.executable, "-m", "match_recovery.cli", "check-mappings"]:
+            events.append("mappings")
+            assert events[0] == "build"
+        return actual(argv, *args, **kwargs)
+
+    def measure(job):
+        events.append("measure")
+        assert "/DBUILD_REFRESHED=1" in job[3], "measurement selected a pre-build compiler recipe"
+        return fake_file_result({})(job)
+
+    monkeypatch.setattr(osmx.subprocess, "run", invoke)
+    monkeypatch.setattr(osmx, "_check_one_file", measure)
+    result = check(claimed)
+    assert result.exit_code == 0, result.exception or result.output
+    assert events[0] == "build" and events.count("build") == 1
+    assert "measure" in events and "mappings" in events
+
+
 def test_unavailable_native_layout_inputs_stay_incomplete(monkeypatch):
     import match_recovery.layout_check as module
     def refused(root):
