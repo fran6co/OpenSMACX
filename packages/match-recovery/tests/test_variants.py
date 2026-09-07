@@ -366,6 +366,69 @@ def test_replica_weak_aliases_compare_target_identity_not_symbol_table_index():
     assert object_signature(original) != object_signature(replica)
 
 
+def debug_object(*, index_shift=0, line_offset=100, storage=2):
+    """Synthetic function-debug records; no bytes from a compiler/game object."""
+    from match_recovery.pe_coff import Symbol
+    obj = Coff(coff_fixture(storage=storage))
+    obj.symbols[2] = Symbol(2, ".bf", 0, 1, 0, 101)
+    obj.symbols[4] = Symbol(4, "_next", 1, 1, 0x20, storage)
+    obj.symbols[6] = Symbol(6, ".bf", 1, 1, 0, 101)
+    obj.symbols = {i + index_shift: replace(s, index=i + index_shift) for i, s in obj.symbols.items()}
+    obj.auxiliary = {
+        index_shift: struct.pack("<IIIIH", 2 + index_shift, 1, line_offset, 4 + index_shift, 0),
+        2 + index_shift: struct.pack("<IH6xIH", 0, 10, 6 + index_shift, 0),
+        4 + index_shift: struct.pack("<IIIIH", 6 + index_shift, 1, line_offset + 6, 0, 0),
+        6 + index_shift: struct.pack("<IH6xIH", 0, 11, 0, 0),
+    }
+    return obj
+
+
+@pytest.mark.parametrize("storage", [2, 3])
+def test_replica_normalizes_function_debug_links_not_sizes_or_source_data(storage):
+    original = debug_object(storage=storage)
+    replica = debug_object(index_shift=30, line_offset=200, storage=storage)
+    assert object_signature(original) == object_signature(replica)
+    replica.sections = (replace(replica.sections[0], data=b"\xcc" * 16),)
+    assert object_signature(original) != object_signature(replica)
+
+
+@pytest.mark.parametrize("symbol, offset, fmt, value", [
+    (0, 4, "<I", 2),  # function extent
+    (0, 8, "<I", 0),  # absence of line records (not their file offsets)
+    (0, 12, "<I", 0),  # next-function identity
+    (0, 16, "<H", 1),  # unsupported/unused fields remain conservative
+    (2, 4, "<H", 20),  # source line
+    (2, 12, "<I", 0),  # next-begin identity
+])
+def test_replica_debug_normalization_preserves_other_metadata(symbol, offset, fmt, value):
+    original = debug_object()
+    replica = copy.deepcopy(original)
+    raw = bytearray(replica.auxiliary[symbol])
+    struct.pack_into(fmt, raw, offset, value)
+    replica.auxiliary[symbol] = bytes(raw)
+    assert object_signature(original) != object_signature(replica)
+
+
+@pytest.mark.parametrize("symbol, offset, target", [
+    (0, 0, 999), (0, 0, 1), (0, 12, 2), (2, 12, 4), (2, 12, 999),
+])
+def test_replica_debug_normalization_refuses_missing_or_wrong_kind_links(symbol, offset, target):
+    obj = debug_object()
+    raw = bytearray(obj.auxiliary[symbol])
+    struct.pack_into("<I", raw, offset, target)
+    obj.auxiliary[symbol] = bytes(raw)
+    with pytest.raises(ValueError, match="function-debug auxiliary reference"):
+        object_signature(obj)
+
+
+@pytest.mark.parametrize("symbol", [0, 2])
+def test_replica_debug_normalization_refuses_unknown_record_extents(symbol):
+    obj = debug_object()
+    obj.auxiliary[symbol] += bytes(18)
+    with pytest.raises(ValueError, match="auxiliary extent"):
+        object_signature(obj)
+
+
 def test_package_cli_runs_deck_with_only_local_compiler_configuration(project, capsys, monkeypatch):
     root, task = project
     value = deck(project)

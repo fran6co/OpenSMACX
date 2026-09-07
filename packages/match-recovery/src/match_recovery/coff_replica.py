@@ -43,6 +43,8 @@ def _object_evidence(obj, *, excluded=frozenset(), section_keys=None, entry_name
     sizes, link directives, COMDAT auxiliary metadata and relocation identities.
     Section/symbol indices are compiler-local. Normalize them only through
     explicit names and associative ownership. Ambiguous identities are refused.
+    Function-debug auxiliary links use those same identities; line-table file
+    offsets retain presence, not location (line-table contents are not compared).
 
     Auxiliary layouts follow Microsoft's PE/COFF specification:
     https://learn.microsoft.com/en-us/windows/win32/debug/pe-format#auxiliary-symbol-records
@@ -64,6 +66,35 @@ def _object_evidence(obj, *, excluded=frozenset(), section_keys=None, entry_name
         raw = obj.auxiliary.get(index, b"")
         if not raw:
             return ("none",)
+        def debug_reference(target_index, *, begin=False):
+            if target_index == 0:
+                return ("end",)
+            target = obj.symbols.get(target_index)
+            valid = (target is not None and target.section > 0 and
+                     ((target.name == ".bf" and target.storage == 101 and target.type == 0) if begin else
+                      (target.type == 0x20 and target.storage in (2, 3))))
+            if not valid:
+                raise ValueError("invalid COFF function-debug auxiliary reference")
+            return symbol_key(target)
+
+        if symbol.section > 0 and symbol.type == 0x20 and symbol.storage in (2, 3):
+            # Format 1. VC6 also emits it for STATIC function definitions.
+            # Longer FILE auxiliary strings renumber these symbol-table links
+            # and move the line table, without changing executable contents.
+            if len(raw) != 18:
+                raise ValueError("unsupported COFF function-definition auxiliary extent")
+            tag, size, lines, following, unused = struct.unpack("<IIIIH", raw)
+            begin = debug_reference(tag, begin=True)
+            if tag and obj.symbols[tag].section != symbol.section:
+                raise ValueError("COFF function-debug tag belongs to another section")
+            return ("function", begin, size, bool(lines), debug_reference(following), unused)
+        if symbol.section > 0 and symbol.type == 0 and symbol.storage == 101 and symbol.name == ".bf":
+            # Format 2. Retain line/unused fields; only normalize the next .bf
+            # index. .ef has no such link and stays a conservative raw record.
+            if len(raw) != 18:
+                raise ValueError("unsupported COFF begin-function auxiliary extent")
+            following, = struct.unpack_from("<I", raw, 12)
+            return ("begin-function", raw[:12].hex(), debug_reference(following, begin=True), raw[16:].hex())
         if symbol.storage == 105:
             target, mode = weak_external(obj, symbol)
             return ("weak", symbol_key(target), mode)

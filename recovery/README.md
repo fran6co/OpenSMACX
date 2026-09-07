@@ -215,6 +215,9 @@ and forced-include paths. PCH, response files, hidden CL options and custom incl
 environment overrides are refused. Copies preserve quote/angle include ordering
 and physical header identity; no absolute `#line` rewrite is injected because
 VC6 can use it to search the original directories and break `#pragma once`.
+The package compares COFF function-debug links by symbol identity, not their
+renumbered table indices, and ignores line-table file locations. It still retains
+function sizes, types, code/data bytes, relocation targets and linker metadata.
 Path/time-sensitive differences remain unsupported when the replica control
 cannot agree. Reports include mapped outside-task neighbors in compiled units,
 but do not prove preservation of all other code. The native `tasks check-preservation`

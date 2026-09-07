@@ -108,14 +108,15 @@ def test_local_protocol_checks_original_identity_before_dispatch(variant_project
 
 
 @pytest.mark.parametrize("path_sensitive", [False, True])
-def test_real_vc6_replica_preserves_includes_lines_and_refuses_file_data_difference(variant_project, path_sensitive):
+@pytest.mark.parametrize("debug_flags", [(), ("/Z7",)])
+def test_real_vc6_replica_preserves_includes_lines_and_refuses_file_data_difference(variant_project, path_sensitive, debug_flags):
     root = variant_project
     wrapper = Path(__file__).resolve().parents[1] / "environment/wine.py"
     from recovery.environment.wine import VC6_ROOT
     if not (VC6_ROOT / "BIN/CL.EXE").is_file():
         pytest.skip("VC6 is not installed")
     command = (sys.executable, str(wrapper), "--tool=cl", "/nologo", "/I" + str(root / "support"), "/I" + str(root / "code"))
-    flags = ("/c", "/O2", "/Gy", "/FI" + str(root / "code/detail/value.h"))
+    flags = ("/c", "/O2", "/Gy", "/FI" + str(root / "code/detail/value.h"), *debug_flags)
     source = root / "code/unit.cpp"
     if not path_sensitive:
         source.write_bytes(source.read_bytes().replace(b"__FILE__", b'"stable"'))
