@@ -184,6 +184,31 @@ def test_real_vc6_unnamed_namespace_replica_keeps_code_and_external_edges(varian
             assert function_signature(original, symbol) != function_signature(damaged, symbol)
 
 
+def test_real_vc6_same_code_and_storage_cannot_hide_changed_member_type(variant_project):
+    from recovery.environment.wine import VC6_ROOT
+    from match_recovery.codeview import class_layout
+    from match_recovery.codeview_identity import type_identity
+    if not (VC6_ROOT / "BIN/CL.EXE").is_file():
+        pytest.skip("VC6 is not installed")
+    root = variant_project
+    source = root / "code/unit.cpp"
+    source.write_text("struct Model { int value; };\nModel instance;\n"
+                      "int size() { return sizeof(Model); }\n")
+    wrapper = Path(__file__).resolve().parents[1] / "environment/wine.py"
+    command = (sys.executable, str(wrapper), "--tool=cl", "/nologo")
+    flags = ("/c", "/O2", "/Gy", "/Z7")
+    original = Coff(compile_object(source, command, flags))
+    changed = Coff(compile_overlay(root, source,
+        {"code/unit.cpp": source.read_bytes().replace(b"int value", b"float value")}, command, flags))
+    assert class_layout(original, "Model")["size"] == class_layout(changed, "Model")["size"] == 4
+    assert function_signature(original, "?size@@YAHXZ") == function_signature(changed, "?size@@YAHXZ")
+    assert [(s.name, s.data) for s in original.sections if not s.name.startswith(".debug")]
+    assert [(s.name, s.data) for s in original.sections if not s.name.startswith(".debug")] == [
+        (s.name, s.data) for s in changed.sections if not s.name.startswith(".debug")]
+    assert type_identity(original) != type_identity(changed)
+    assert object_signature(original) != object_signature(changed)
+
+
 def test_real_vc6_deck_follows_nonvirtual_to_virtual_method_binding(variant_project):
     from match_recovery.model import Origin
     from match_recovery.tasks import Task, TaskStore

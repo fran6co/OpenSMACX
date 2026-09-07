@@ -1066,7 +1066,14 @@ definitions are recognized only through the primary COFF FILE path and a single
 namespace nonce; function/data names and signatures remain distinct. This rule
 applies to replica and damage controls, never to original-image bindings or
 baseline preservation aliases. Missing definitions and ambiguous identities
-are refused; ordinary external names, data and type streams stay strict.
+are refused; ordinary external names and data stay strict. Supported standalone
+CodeView 5 type streams compare complete record contents modulo emission order
+and type-index numbering. Only decoded type-reference fields are normalized;
+names, attributes, sizes, member/base/vtable offsets, calling conventions and
+duplicate-record counts remain protected. Cycles, unsupported/malformed records
+and relocated type streams fall back to exact raw-stream comparison, not omission.
+This type-content comparison also applies to compiled baseline preservation;
+it does not prove full class ownership, lifetime or symbol-to-type associations.
 Unused section checksums are replaced by actual content/reference comparison;
 EXACT_MATCH checksums are retained. This is a
 replica control for scoped measurement, not proof of an identical final link.

@@ -116,6 +116,23 @@ def _object_evidence(obj, *, excluded=frozenset(), section_keys=None, entry_name
     referenced = {target for number, section in enumerate(obj.sections, 1) if number not in omitted
                   for _, target, _ in section.relocations}
 
+    type_contents = None
+    if any(section.name == ".debug$T" for section in obj.sections):
+        from .codeview_identity import type_identity
+        try:
+            # A relocated type stream would need its byte-offset relocations
+            # mapped through the graph too. Do not silently detach those edges.
+            if any(section.relocations for section in obj.sections if section.name == ".debug$T"):
+                raise ValueError("relocated CodeView type stream")
+            type_contents = type_identity(obj)
+        except ValueError:
+            pass  # Exact raw-stream equality remains required, never omission.
+
+    def contents(section):
+        if section.name == ".debug$T" and type_contents is not None:
+            return ("codeview5-types", type_contents)
+        return ("raw", section.data.hex())
+
     def symbol_key(symbol):
         return (entry_names.get(symbol.index, names.get(symbol.index, symbol.name)), symbol.value,
                 keys[symbol.section] if symbol.section > 0 else str(symbol.section), symbol.type, symbol.storage)
@@ -171,7 +188,7 @@ def _object_evidence(obj, *, excluded=frozenset(), section_keys=None, entry_name
         # inferred aliases or discarded linker metadata.
         return ("raw", raw.hex())
 
-    sections = sorted((keys[index], section.name, section.flags, obj.section_sizes[index - 1], section.data.hex(),
+    sections = sorted((keys[index], section.name, section.flags, obj.section_sizes[index - 1], contents(section),
                  [(offset, symbol_key(obj.symbols[target]), kind) for offset, target, kind in section.relocations])
                 for index, section in enumerate(obj.sections, 1) if index not in omitted)
     symbols = sorted((symbol_key(symbol), auxiliary(index, symbol))
