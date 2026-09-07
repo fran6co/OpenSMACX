@@ -271,8 +271,8 @@ can request controlled same-TU witnesses. This is opt-in because it adds compile
 one unchanged overlay per affected TU/trial, then a pointer-parameter probe and
 a changed-body control per missing class. The library uses the configured
 compiler's existing overlay interface; no project-specific checker is required.
-Probes append a uniquely named C++ function in a private copy, without includes,
-class definitions, instantiation or product-source edits. A visible declaration
+Pointer probes append a uniquely named C++ function in a private copy, without
+includes, class definitions, instantiation or product-source edits. A visible declaration
 can then appear in standalone debug information even when ordinary compilation
 omits it. `sizeof` alone is not a reliable emission trigger.
 
@@ -281,11 +281,35 @@ Coverage labels these definitions `witnessed`; member/base rows retain
 still has to satisfy the original source expectation, and observed counterexamples
 or malformed definitions are never replaced by probes. An unchanged replica must
 agree with product compilation; each probe's deliberately different body must be
-observed without changing its class layout. Failed controls, invisible/incomplete
-classes, macro-substituted names and unsupported overlays remain unknown. This
+observed without changing its class layout. Failed controls, macro-substituted
+names and unsupported overlays remain unknown. This
 observes the declaration visible at the end of that TU, not product-code
 preservation, ABI independence, lifetime or full structure. It cannot waive
 omitted TUs or import a layout from a different compilation.
+
+When a pointer probe cannot obtain a definition, independent counterfactual
+controls can establish `no_complete_definition` coverage. They append two distinct
+diagnostic class definitions at the requested namespace scope in separate private
+copies. Both exact sentinel layouts and differing `sizeof` probe bodies must be
+observed. An existing complete definition prevents redefinition; this is tested
+against real compiler controls, including aliases, using directives and anonymous
+namespaces. Nested-class paths that cannot be expressed as namespace scopes remain
+unknown. Macro guards and the unchanged-replica control still apply. Neither a
+compile error nor missing debug information is evidence of absence by itself.
+See Microsoft's [type-redefinition diagnostic](https://learn.microsoft.com/en-us/cpp/error-messages/compiler-errors-1/compiler-error-c2011)
+for the language restriction used by these counterfactual controls.
+
+Diagnostic class sizes/members are never supplied as recovered layout facts or
+scored against the original executable. Absence means no complete declaration at
+that scope in this TU; it does **not** prove ABI independence or rule out raw/untyped
+consumers. Every requirement must still have at least one actual layout witness
+in every configured flag set. An absent-everywhere class stays unknown.
+Member/base reports omit nonexistent measurements and retain absence in coverage;
+restoration trials label it `coverage_only` with `layout_basis:
+same_tu_definition_absence`. Such a trial closes bounded declaration coverage,
+not a member offset or whole-class proof. Contradictory, incomplete, duplicate or
+wrong-TU/trial absence records are refused. Historical interpretations still need
+their independent review dispositions.
 
 The joint task check requests these witnesses automatically for missing declared
 requirements, so restoration, migration checking and the recovery driver consume

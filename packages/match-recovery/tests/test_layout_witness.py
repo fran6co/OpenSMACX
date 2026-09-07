@@ -10,9 +10,10 @@ from match_recovery.application_layout import verify_layout
 from match_recovery.application_check import check_task
 from match_recovery.layout_check import check_layout
 from match_recovery.layout_witness import missing_layout_witnesses
+from match_recovery.layout_witness import declaration_absent
 from match_recovery.pe_coff import Coff
 from test_application_commands import combined_object, project
-from test_codeview import coff, debug_types
+from test_codeview import coff, debug_types, record
 from test_layout_check import add_unit
 from test_symbol_check import project as product_project
 from test_restoration import historical
@@ -21,8 +22,8 @@ from test_restoration import historical
 ABSENT = combined_object(debug_types().replace(b"Widget", b"OtherX"))
 
 
-def probe_object(symbol, *, changed=False, offset=4):
-    data = bytearray(combined_object(debug_types(offset)))
+def probe_object(symbol, *, changed=False, offset=4, types=None):
+    data = bytearray(combined_object(debug_types(offset) if types is None else types))
     start, = struct.unpack_from("<I", data, 8)
     data[start:start + 8] = struct.pack("<II", 0, 4)
     data[100] = 0x90 if changed else 0xC3
@@ -53,6 +54,28 @@ class Compiler:
         changed = data.endswith(b"1; }\n")
         return probe_object(symbol, changed=changed and self.damage != "control",
                             offset=8 if changed and self.damage == "layout" else self.offset)
+
+
+class AbsenceCompiler(Compiler):
+    """Emit diagnostic classes only when actually supplied in the overlay."""
+    def __call__(self, source, *_):
+        return combined_object() if source.name == "present.cc" else ABSENT
+
+    def overlay(self, source, replacements, command, flags):
+        self.calls.append((source, replacements, command, flags))
+        data, = replacements.values()
+        definition = re.search(rb"struct Widget \{ char (\w+)\[(\d+)\]; \};", data)
+        if definition is None:
+            return self(source)
+        name, width = definition[1], int(definition[2])
+        if self.damage == "width":
+            width = 17
+        fields = record(0x1203, struct.pack("<HHIH", 0x1405, 0, 0x1002, 0) + bytes([len(name)]) + name)
+        cls = record(0x1005, struct.pack("<HHIIIH", 1, 0, 0x1000, 0, 0, width) + b"\x06Widget")
+        array = record(0x1003, struct.pack("<IIH", 0x70, 0x74, width) + b"\0")
+        types = struct.pack("<I", 2) + fields + cls + array
+        symbol = "_" + re.search(rb'int (match_recovery_layout_\w+)\(', data)[1].decode()
+        return probe_object(symbol, changed=width == 29 and self.damage != "body", types=types)
 
 
 def run(root, compiler, **kwargs):
@@ -207,3 +230,46 @@ def test_restoration_consumes_witnesses_without_reclassifying_them_as_product_ob
     assert requirement["result"] == "pass"
     assert requirement["trials"][0]["layout_basis"] == "same_tu_probe"
     assert not report["ready_for_collection"] and not report["scope_complete"]
+
+
+def test_controlled_absence_is_not_a_recovered_layout(project):
+    result = run(project, AbsenceCompiler(project))
+    row, = result["witnesses"]
+    assert declaration_absent(row) and row["compiler_layout"] is None
+    assert result["compile_attempts"] == 4
+
+
+@pytest.mark.parametrize("damage", ["width", "body"])
+def test_absence_requires_both_type_and_code_damage_to_be_observed(project, damage):
+    row, = run(project, AbsenceCompiler(project, damage=damage))["witnesses"]
+    assert not declaration_absent(row) and row["result"] == "unknown"
+
+
+def test_absence_everywhere_cannot_discharge_a_declared_layout(project):
+    result = verify_layout(project, "owner", compiler=AbsenceCompiler(project), witness_missing=True)
+    assert result["members"] == [] and result["absent_definitions"] == 1
+    assert result["result"] == "unknown" and result["missing_witnesses"]
+
+
+def test_actual_witness_and_controlled_absence_complete_only_bounded_declaration_coverage(project):
+    from match_recovery.tasks import TaskStore
+    (project / "code/present.cc").write_text("void present() {}\n")
+    TaskStore(project).expand("owner", request_id="another-tu", author="coordinator", subjects=(),
+                              editable_files=("code/present.cc",), evidence=("synthetic",), expected_revision=0)
+    result = verify_layout(project, "owner", compiler=AbsenceCompiler(project), witness_missing=True)
+    assert result["result"] == "pass" and len(result["members"]) == 1
+    assert result["absent_definitions"] == 1 and not result["missing_witnesses"]
+    assert result["structure_verification"] == "unknown" and not result["scope_complete"]
+
+
+def test_each_flag_set_needs_a_real_definition_even_if_absence_controls_pass(project):
+    config = project / "recovery/project.json"
+    value = json.loads(config.read_text())
+    value["measurement"]["flag_sets"].append(["-other"])
+    config.write_text(json.dumps(value))
+    class Alternate(AbsenceCompiler):
+        def __call__(self, source, command=(), flags=()):
+            return combined_object() if "-trial" in flags else ABSENT
+    result = verify_layout(project, "owner", compiler=Alternate(project), witness_missing=True)
+    assert result["result"] == "unknown" and result["absent_definitions"] == 1
+    assert result["missing_witnesses"][0]["flags"] == ["-other"]

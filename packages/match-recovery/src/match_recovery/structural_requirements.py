@@ -9,6 +9,7 @@ from collections import Counter, defaultdict
 
 from .model import Result, require_digest
 from .reviews import merge_interpretations, pending_interpretations
+from .layout_witness import declaration_absent
 
 
 def _all(values):
@@ -43,6 +44,20 @@ def check_requirements(inventory, candidate):
     checks = candidate["checks"]
     reports = {"layout": checks.get("layout", {}), "binary": checks.get("binary", {})}
     grids = {name: _grid(report) for name, report in reports.items()}
+    absences = {}
+    for row in reports["layout"].get("coverage", []):
+        if row.get("observation") != "no_complete_definition":
+            continue
+        name, unit, flags, witness = (row.get(key) for key in ("class_name", "unit", "flags", "witness"))
+        units, trials, _ = grids["layout"]
+        if (not isinstance(name, str) or not name or unit not in units or not isinstance(flags, list)
+                or any(not isinstance(flag, str) for flag in flags) or tuple(flags) not in trials
+                or not declaration_absent(witness) or witness.get("class_name") != name):
+            raise ValueError("invalid compiler declaration-absence coverage")
+        key = (name, unit, tuple(flags))
+        if key in absences:
+            raise ValueError("ambiguous compiler declaration-absence coverage")
+        absences[key] = witness
     observations = defaultdict(dict)
     for backend, collection, kind in (("layout", "members", "direct_member_offset"),
                                        ("layout", "bases", "nonvirtual_base_offset"),
@@ -107,13 +122,25 @@ def check_requirements(inventory, candidate):
             wanted = {(unit, flags) for unit in units for flags in flag_sets}
             for witness in sorted(wanted | observed.keys()):
                 trial = observed.get(witness)
-                if trial is None:
+                absence = absences.get((item["value"].get("class_name"), *witness)) if backend == "layout" else None
+                if absence is not None and trial is not None:
+                    raise ValueError("class declaration is both measured and reported absent in one TU/trial")
+                if absence is not None:
+                    trial = {"unit": witness[0], "flags": list(witness[1]), "result": Result.PASS,
+                             "reason": "controlled absence of a complete declaration; no member/base layout to compare in this TU",
+                             "source": None, "coverage_only": True, "layout_basis": "same_tu_definition_absence"}
+                elif trial is None:
                     trial = {"unit": witness[0], "flags": list(witness[1]), "result": Result.UNKNOWN,
                              "reason": "no measurement of this interpretation in the requested TU/trial", "source": None}
                 elif witness[1] not in flag_sets:
                     trial = {**trial, "result": Result.UNKNOWN, "reason": "measurement uses an unrequested compiler trial"}
                 row["trials"].append(trial)
             row["counts"].update(Counter(trial["result"] for trial in row["trials"]))
+            if backend == "layout" and any(
+                    not any(tuple(trial["flags"]) == flags and not trial.get("coverage_only")
+                            and (trial["unit"], flags) in observed for trial in row["trials"])
+                    for flags in flag_sets):
+                gap = gap or "each declared requirement needs an actual layout witness in every configured trial; absence alone is insufficient"
             result = Result.UNKNOWN if gap else _all(trial["result"] for trial in row["trials"])
             row.update(result=result, reason=gap or "all requested TU/trial witnesses compared independently",
                        next_action=("repair_source_or_review_interpretation" if row["counts"]["fail"] else

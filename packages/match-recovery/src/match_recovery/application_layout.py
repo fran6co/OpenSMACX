@@ -10,6 +10,7 @@ from match_recovery.tasks import TaskStore
 from match_recovery.source_inventory import image_pin, source_snapshot
 from match_recovery.ownership_source import class_hint
 from match_recovery.codeview import ClassLayouts, ClassNotEmitted
+from .layout_witness import declaration_absent
 from .compiler import Compiler
 from .measurement import Measurement
 
@@ -91,7 +92,7 @@ def verify_layout(root: Path, task_name: str, *, compiler=None, command_for=None
         if not classes:
             continue
         for flags in settings.flag_sets:
-            layouts, errors, missing, witnesses = {}, {}, set(), {}
+            layouts, errors, missing, witnesses, absent = {}, {}, set(), {}, set()
             try:
                 command = tuple(command_for(root / unit))
                 if any(word.lower().startswith(("/yu", "/yc", "/fp", "-yu", "-yc", "-fp", "@"))
@@ -119,12 +120,15 @@ def verify_layout(root: Path, task_name: str, *, compiler=None, command_for=None
                         name = witness["class_name"]
                         witnesses[name] = witness
                         errors[name] = witness["reason"]
-                        if witness["result"] == Result.PASS:
+                        if declaration_absent(witness):
+                            absent.add(name)
+                        elif witness["result"] == Result.PASS:
                             layouts[name] = witness["compiler_layout"]
             except (OSError, ValueError) as error:
                 errors = {name: str(error) for name in classes}
             for name in classes:
-                state = ("witnessed" if name in missing and name in layouts else
+                state = ("no_complete_definition" if name in absent else
+                         "witnessed" if name in missing and name in layouts else
                          "not_emitted" if name in missing else "observed" if name in layouts else "unmeasurable")
                 observations.append({"class_name": name, "unit": unit, "flags": list(flags),
                                      "basis": "source_expectation" if name in required_classes else "mapped_method_hint",
@@ -141,12 +145,16 @@ def verify_layout(root: Path, task_name: str, *, compiler=None, command_for=None
                                                      "repair compilation or unsupported debug parsing before checking offsets"
                                                      if state == "unmeasurable" else None)})
             for item in expected:
+                if item.class_name in absent:
+                    continue  # Coverage evidence, not an invented member-offset observation.
                 checked = check_member(item, layouts.get(item.class_name))
                 rows.append({"expectation": asdict(item), "interpretation_id": item.interpretation_id,
                              "unit": unit, "flags": list(flags),
                              "layout_basis": "same_tu_probe" if item.class_name in witnesses and item.class_name in layouts else "product_object",
                              **checked, "reason": errors.get(item.class_name, checked["reason"])})
             for item in expected_bases:
+                if item.class_name in absent:
+                    continue
                 checked = check_base(item, layouts.get(item.class_name))
                 base_rows.append({"expectation": asdict(item), "interpretation_id": item.interpretation_id,
                                   "unit": unit, "flags": list(flags),
@@ -155,11 +163,15 @@ def verify_layout(root: Path, task_name: str, *, compiler=None, command_for=None
     if (before != settings.snapshot(root, metadata)
             or task != store.read(task_name) or decisions != store.decisions(task_name)):
         raise ValueError("source, build inputs or task changed during layout verification")
-    # Every requested TU/configuration must agree; never select a passing layout
-    # from one TU to hide an ABI disagreement in another.
+    # Every present definition must agree. Controlled absence closes declaration
+    # coverage only; each requirement still needs a real witness in every trial.
     all_rows = rows + base_rows
+    missing_witnesses = [{"interpretation_id": item.interpretation_id, "flags": list(flags)}
+                         for item in (*expected, *expected_bases) for flags in settings.flag_sets
+                         if not any(row["interpretation_id"] == item.interpretation_id
+                                    and row["flags"] == list(flags) for row in all_rows)]
     result = (Result.FAIL if any(row["result"] == Result.FAIL for row in all_rows) else
-              Result.UNKNOWN if not all_rows or any(row["result"] == Result.UNKNOWN for row in all_rows) else Result.PASS)
+              Result.UNKNOWN if not all_rows or missing_witnesses or any(row["result"] == Result.UNKNOWN for row in all_rows) else Result.PASS)
     return {"task_id": task_name, "check": "declared_member_and_base_offsets", "result": result,
             "members": rows, "bases": base_rows, "coverage": observations,
             "translation_units": units, "flag_sets": [list(flags) for flags in settings.flag_sets],
@@ -167,9 +179,11 @@ def verify_layout(root: Path, task_name: str, *, compiler=None, command_for=None
             "compile_attempts": attempts, "input_fingerprint": digest(before),
             "witness_missing": witness_missing,
             "witnessed_definitions": sum(row["observation"] == "witnessed" for row in observations),
+            "absent_definitions": sum(row["observation"] == "no_complete_definition" for row in observations),
+            "missing_witnesses": missing_witnesses,
             "scope_complete": False, "structure_verification": Result.UNKNOWN, "persisted": False,
             "limitations": ["source expectations are original-layout interpretations, not freshly re-derived image evidence",
                             "declared direct members, unqualified class values/pointer targets and nonvirtual bases only; complete hierarchy, types, extent and lifetime remain unproved",
                             "method-derived class hints supply current-code observations, never original-layout expectations",
-                            "all scoped product TUs are checked conservatively; missing debug definitions are unknown",
+                            "all scoped product TUs need declaration observations or controlled absence; non-emission alone is unknown",
                             "optional same-TU probes witness visible declarations only, not product preservation or ABI independence"]}

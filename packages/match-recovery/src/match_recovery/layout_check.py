@@ -16,6 +16,7 @@ from .compiler import Compiler
 from .layout_source import read_bases, read_members
 from .mapping_check import build_units
 from .measurement import Measurement
+from .layout_witness import declaration_absent
 from .model import Result, digest
 from .pe_coff import Coff
 from .records import read_json
@@ -68,7 +69,7 @@ def check_layout(root: Path, *, units=None, compiler=None, command_for=None, pro
             if progress:
                 progress({**event, "event": "trial_start"})
             unchanged()
-            layouts, unavailable, missing, witnesses = {}, {}, set(), {}
+            layouts, unavailable, missing, witnesses, absent = {}, {}, set(), {}, set()
             try:
                 command = tuple(command_for(root / unit))
                 if any(word.lower().startswith(("/yu", "/yc", "/fp", "-yu", "-yc", "-fp", "@"))
@@ -99,13 +100,16 @@ def check_layout(root: Path, *, units=None, compiler=None, command_for=None, pro
                         name = witness["class_name"]
                         witnesses[name] = witness
                         unavailable[name] = witness["reason"]
-                        if witness["result"] == Result.PASS:
+                        if declaration_absent(witness):
+                            absent.add(name)
+                        elif witness["result"] == Result.PASS:
                             layouts[name] = witness["compiler_layout"]
             except (OSError, ValueError) as error:
                 unavailable = {name: str(error) for name in classes}
             unchanged()
             for name in classes:
-                observation = ("witnessed" if name in layouts and name in missing else
+                observation = ("no_complete_definition" if name in absent else
+                               "witnessed" if name in layouts and name in missing else
                                "observed" if name in layouts else
                                "not_emitted" if name in missing else "unmeasurable")
                 observations.append({"class_name": name, "unit": unit, "flags": list(flags),
@@ -153,6 +157,7 @@ def check_layout(root: Path, *, units=None, compiler=None, command_for=None, pro
             "compile_attempts": attempts, "selection": units,
             "witness_missing": witness_missing,
             "witnessed_definitions": sum(row["observation"] == "witnessed" for row in observations),
+            "absent_definitions": sum(row["observation"] == "no_complete_definition" for row in observations),
             "input_fingerprint": digest({"inputs": before, "database": database_bytes.hex()}),
             "persisted": False, "ready_for_collection": False, "structure_verification": Result.UNKNOWN,
             "limitations": ["checks explicit source member/base interpretations, not legacy offset comments or self-naming fields",

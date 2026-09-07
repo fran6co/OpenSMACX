@@ -263,14 +263,21 @@ investigation, use `uv run recover tasks check-layout <task> --witness-missing`,
 one product TU (substitute the actual path). These private compiler overlays add
 no product declarations or includes. Inspect `witnessed` coverage and its replica/
 changed-body controls separately from ordinary product-object observations.
-Invisible classes and failed controls remain unknown; do not add includes merely
-to make a witness pass or use a successful probe as lifetime/preservation proof.
+Do not add includes merely to make a witness pass or use a successful probe as
+lifetime/preservation proof. For missing definitions, separate counterfactual
+controls may establish `no_complete_definition`: two distinct diagnostic types
+must compile and emit their exact sentinel layouts at the requested namespace
+scope. Those private types are never recovery facts. A compile error alone cannot
+establish absence, and failed controls remain unknown. Every declared requirement
+still needs a real layout witness in every flag set; absence everywhere cannot pass.
 Probes add compiles only for missing declared classes. The joint check reports
 `compilation.overlay_attempts`; restoration trials preserve `layout_basis` for
 review. No product-object cache entry can satisfy an overlay control, and probe
-objects are never used to score product functions. Incomplete visibility or layout
-coverage still requires recovery; automatic probing does not authorize new includes,
-scope changes or structural acceptance.
+objects are never used to score product functions. Restoration marks controlled
+absence as `coverage_only`, not an observed member offset. It closes only bounded
+declaration coverage, not ABI independence or the safety of raw/untyped callers.
+Incomplete coverage still requires recovery; automatic probing does not authorize
+new includes, scope changes or structural acceptance.
 
 After structure is established, compare a small deck of plausible source forms
 with `uv run recover tasks variants <task> --image <image> --deck <ignored-json>`.

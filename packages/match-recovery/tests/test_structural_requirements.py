@@ -18,6 +18,68 @@ MEMBER = parse_members("// RECOVERY_MEMBER: v3 Owner field_ Buffer* 0x8 0x10", "
 FLAGS = [["trial-a"], ["trial-b"]]
 
 
+def absent_coverage(unit, flags, name="Owner"):
+    return {"class_name": name, "unit": unit, "flags": flags, "observation": "no_complete_definition",
+            "witness": {"class_name": name, "basis": "same_tu_definition_absence", "result": "pass",
+                        "replica_control": "pass", "compiler_layout": None, "probe_symbol": "_match_recovery_absence_test",
+                        "definition_controls": [{"extent": 17, "result": "pass"}, {"extent": 29, "result": "pass"}]}}
+
+
+def test_controlled_absence_covers_only_the_named_tu_trial_not_full_structure():
+    report = candidate()
+    layout = report["checks"]["layout"]
+    layout["translation_units"].append("code/another.cc")
+    layout["coverage"] = [absent_coverage("code/another.cc", flags) for flags in FLAGS]
+    row, = check_requirements(inventory((MEMBER, True)), report)
+    assert row["result"] == declared_outcome([row], {})[0] == "pass"
+    assert len([trial for trial in row["trials"] if trial.get("coverage_only")]) == 2
+    assert structural_outcome([row])[0] == "unknown"
+
+
+@pytest.mark.parametrize("missing", ["all", "one_trial"])
+def test_absence_never_supplies_the_required_actual_definition_in_each_trial(missing):
+    report = candidate()
+    layout = report["checks"]["layout"]
+    layout["members"] = [] if missing == "all" else layout["members"][:1]
+    layout["coverage"] = [absent_coverage("code/owner.cc", flags) for flags in (FLAGS if missing == "all" else FLAGS[1:])]
+    row, = check_requirements(inventory((MEMBER, True)), report)
+    assert row["counts"]["pass"] == 2  # Coverage can be closed, without a declaration to check.
+    assert row["result"] == declared_outcome([row], {})[0] == "unknown"
+
+
+@pytest.mark.parametrize("damage", ["replica", "width", "result", "class", "unit", "flags", "duplicate", "definition"])
+def test_invalid_absence_evidence_cannot_remove_a_missing_witness(damage):
+    report = candidate()
+    layout = report["checks"]["layout"]
+    layout["translation_units"].append("code/another.cc")
+    coverage = absent_coverage("code/another.cc", FLAGS[0])
+    layout["coverage"] = [coverage]
+    if damage == "replica": coverage["witness"]["replica_control"] = "unknown"
+    elif damage == "width": coverage["witness"]["definition_controls"][1]["extent"] = 17
+    elif damage == "result": coverage["witness"]["result"] = "unknown"
+    elif damage == "class": coverage["witness"]["class_name"] = "Another"
+    elif damage == "unit": coverage["unit"] = "code/not_checked.cc"
+    elif damage == "flags": coverage["flags"] = ["not_checked"]
+    elif damage == "duplicate": layout["coverage"].append(deepcopy(coverage))
+    elif damage == "definition": coverage["witness"]["compiler_layout"] = {"size": 17}
+    with pytest.raises(ValueError, match="absence"):
+        check_requirements(inventory((MEMBER, True)), report)
+
+
+def test_observed_declaration_and_absence_cannot_both_describe_one_trial():
+    report = candidate()
+    report["checks"]["layout"]["coverage"] = [absent_coverage("code/owner.cc", FLAGS[0])]
+    with pytest.raises(ValueError, match="both measured"):
+        check_requirements(inventory((MEMBER, True)), report)
+
+
+def test_absence_of_another_class_cannot_cover_the_required_class():
+    report = candidate(results=())
+    report["checks"]["layout"]["coverage"] = [absent_coverage("code/owner.cc", flags, "Different") for flags in FLAGS]
+    row, = check_requirements(inventory((MEMBER, True)), report)
+    assert row["result"] == "unknown" and row["counts"]["unknown"] == 2
+
+
 def test_object_initial_data_requires_owner_trials_not_duplicate_definitions_in_callers():
     item, = parse_objects("// RECOVERY_OBJECT: v2 0x2000 0x2004 _g 0x10", "code/data.cc", "a" * 64, address_space="custom:offset")
     report = candidate()
