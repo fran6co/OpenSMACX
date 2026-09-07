@@ -7,6 +7,9 @@ from .records import read_json
 
 
 def register(commands):
+    mappings = commands.add_parser("check-mappings", help="Check source identity and intended build ownership; not binary proof")
+    mappings.add_argument("--root", type=Path, default=Path.cwd())
+    mappings.add_argument("--summary", action="store_true")
     source = commands.add_parser("check-source", help="Verify annotation text integrity without compiling or stamping")
     source.add_argument("--root", type=Path, default=Path.cwd())
     source.add_argument("--jobs", type=int, default=1)
@@ -133,9 +136,17 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
     """Native configured source operations, otherwise the local JSON boundary."""
     root = root.resolve()
     configuration = read_json(root / "recovery/project.json")
-    if (configuration.keys() - {"schema_version", "adapter", "source", "source_history", "compiler", "measurement", "audits", "build"}
+    if (configuration.keys() - {"schema_version", "adapter", "source", "source_history", "compiler", "measurement", "audits", "build", "mappings"}
             or type(configuration.get("schema_version")) is not int or configuration["schema_version"] != 1):
         raise ValueError("invalid local project command configuration")
+    if arguments.get("command") == "check-mappings":
+        from .mapping_check import check_mappings
+        output = check_mappings(root)
+        if arguments.get("summary"):
+            output["seed_alternative_groups"] = len(output.pop("seed_alternatives"))
+            output["forwarder_sites"] = len(output.pop("forwarders"))
+            output.pop("findings")
+        return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
     if arguments.get("command") == "check-source":
         from .source_integrity import check_source
         output = check_source(root, jobs=arguments.get("jobs", 1))

@@ -28,8 +28,18 @@ The production gate's annotation-integrity dependency now runs through native
 `recover check-source`; the replaced script is removed. The package checks actual
 source text, marker coverage and in-memory claim/lesson transitions across configured
 source roots. Its stronger lesson-deletion control rejects unrelated equal-line-count
-edits. Missing inputs and empty coverage remain unverified. Address/host audits,
-the production measurement/stamping path and complete acceptance still need cutover.
+edits. Missing inputs and empty coverage remain unverified. The production
+measurement/stamping path and complete acceptance still need cutover.
+
+The address/build-host check now uses native `recover check-mappings`, with only
+a compilation-database path and forwarder macro names supplied by the project.
+No hardcoded scaffold exemption list remains. Full paths expose four pairs of
+complementary seed candidates the old basename check hid; these remain visible
+hints while ambiguous production mappings fail. Historical claims still undergo
+the independent measurement sweep. The replaced index, unused automatic-homing
+implementation and its scratch batch caller are removed; the active ownership
+partition/task/discovery workflow replaces their nearest-address and copy/revert
+policy. Compiler/link ownership, full acceptance and migration remain unfinished.
 
 ## Accepted design
 

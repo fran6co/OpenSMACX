@@ -86,8 +86,8 @@ def _marker_line(record: DecompilationState) -> str:
 # deleting src/win.cpp:2473 - a WRAPPED PROSE line reading "name in early
 # transcriptions guessed: ..." - which silently rewrote the sentence above it
 # into something its author never said. A sweep with no work left to do and
-# one way to corrupt is not a sweep worth keeping; `address_index` and
-# `marker_symbols` already police marker identity.
+# one way to corrupt is not a sweep worth keeping. Source integrity and
+# build-mapping checks are separate from rewriting these annotations.
 
 
 def _lesson_lines(record: DecompilationState) -> list[str]:

@@ -265,6 +265,15 @@ annotation integrity. Its keyword/demotion/deletion experiments run only in
 memory. Standalone `ORIGINAL:` comment heads are reserved for mappings, not run
 notes or ordinary prose. A passing text check is not a current byte claim.
 
+Run `uv run recover check-mappings --summary` to check original identities against
+intended build hosts. Inspect the full report's `seed_alternatives` before deleting
+duplicate-looking artifacts: equal basenames can hide complementary full-unit and
+extracted-body evidence. Multiple files containing seed hints do not establish
+production ownership. A product mapping plus another mapped candidate, or two
+markers for the same entity in one file, needs reconciliation. The command also
+rejects claims shadowed by configured forwarder macros; nonliteral addresses stay
+unknown. Actual emitted ownership and included-source coverage remain separate.
+
 The gate's compiler-work ratchet is the native `uv run recover audits check
 compiler-work` command. Its report identifies exact, grown and slack ceilings.
 Apply justified downward `lowerings` to `recovery/audits.json` in the same commit;

@@ -25,9 +25,14 @@ def read_json(path: Path) -> dict:
     return parse_json(path.read_bytes())
 
 
+def parse_json_value(text: str | bytes):
+    """Strict JSON for external formats whose root need not be an object."""
+    return json.loads(text, object_pairs_hook=_unique_pairs,
+                      parse_constant=_reject_constant)
+
+
 def parse_json(text: str | bytes) -> dict:
-    value = json.loads(text, object_pairs_hook=_unique_pairs,
-                       parse_constant=_reject_constant)
+    value = parse_json_value(text)
     if not isinstance(value, dict):
         raise ValueError("record must be a JSON object")
     return value

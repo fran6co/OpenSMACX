@@ -24,6 +24,18 @@ old invariants; standalone malformed marker heads and unrelated text changes
 also fail. This never edits or stamps source. It does not replace the separate
 address/host audits, matching checks or full acceptance.
 
+The address/host check is now `uv run recover check-mappings --summary`, also
+called by the retained full gate. Its only project-specific inputs are the
+compilation-database path and the `PENDING_BODY` macro name in `project.json`.
+There is no scaffold exemption list. It uses full paths, rejects ambiguous
+product mappings, repeated same-file markers, unbuilt mapping hosts and direct
+seed build inputs, and distinguishes live or seed claims behind forwarders.
+Nonliteral forwarder arguments stay unknown. The 4 existing pairs of alternative
+seed files remain visible rather than being mistaken for product owners or
+silently collapsed by basename. Historical claims are still remeasured separately.
+This is intended-build consistency, not compiler/link evidence; included/generated
+coverage and dependency bindings retain their own checks.
+
 The native `recover tasks variants` command now replaces serial edit-and-restore
 spelling experiments. It reads the source map once and compiles atomic header/body
 overlays across task TUs. Unchanged-replica controls per TU and compiled damage

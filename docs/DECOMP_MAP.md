@@ -214,9 +214,11 @@ edit visible in the diff.
 There is no second catalogue left to drift against: the annotations ARE the
 map, so drift is checked by re-measurement rather than by comparison with an
 export. `osmx status` reports how many records the build can compile today;
-records in non-build directories are counted separately, and an address
-claimed by both product source and a leftover artifact is what
-`tools/address_index.py` reports alongside the gate's artifact checks.
+records in non-build directories are counted separately. `recover check-mappings`
+checks full relative source identities, build hosts and claims contradicted by
+configured forwarder macros. Alternative seeds are reported separately; they are
+not production owners or fresh proofs. A product binding accompanied by another
+mapped candidate remains ambiguous until its source ownership is reconciled.
 
 ## Migration — done 2026-08-09
 

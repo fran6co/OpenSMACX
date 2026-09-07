@@ -2,6 +2,10 @@
   "schema_version": 1,
   "build": "recovery/build.json",
   "audits": "recovery/audits.json",
+  "mappings": {
+    "compile_commands": "build/compile_commands.json",
+    "forwarder_macros": ["PENDING_BODY"]
+  },
   "source": {
     "image_pin": "src/IMAGE_PIN",
     "address_space": "pe:va",

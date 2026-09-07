@@ -1660,16 +1660,15 @@ def _native_audit_result(outcome, name, label):
     return subprocess.CompletedProcess(outcome.args, outcome.returncode, "\n".join(lines), outcome.stderr)
 
 
-def _source_integrity_result(outcome):
-    """Consume the native text-integrity check until the whole gate migrates."""
-    from match_recovery.source_integrity import RULES
+def _native_consistency_result(outcome, check, rules, counters, label):
+    """Consume native consistency evidence until the whole gate migrates."""
     try:
         report = json.loads(outcome.stdout)
-        if (not isinstance(report, dict) or report.get("check") != "source_annotation_integrity"
+        if (not isinstance(report, dict) or report.get("check") != check
                 or type(report.get("schema_version")) is not int or report["schema_version"] != 1
                 or report.get("result") not in ("pass", "fail", "unknown")
-                or type(report.get("annotations")) is not int or report["annotations"] < 0
-                or type(report.get("files_scanned")) is not int or report["files_scanned"] < 1
+                or any(type(report.get(name)) is not int or report[name] < minimum
+                       for name, minimum in counters.items())
                 or report.get("persisted") is not False or report.get("ready_for_collection") is not False
                 or not isinstance(report.get("input_fingerprint"), str)
                 or not re.fullmatch(r"[0-9a-f]{64}", report["input_fingerprint"])
@@ -1677,22 +1676,23 @@ def _source_integrity_result(outcome):
                 or any(not isinstance(row, dict) or not isinstance(row.get("reason"), str)
                        or not row["reason"] for row in report["errors"])
                 or not isinstance(report.get("rules"), list)
-                or len(report["rules"]) != len(RULES)
+                or len(report["rules"]) != len(rules)
                 or any(not isinstance(row, dict) or not isinstance(row.get("name"), str)
                        or type(row.get("failures")) is not int or row["failures"] < 0
                        for row in report["rules"])
-                or {row["name"] for row in report["rules"]} != set(RULES)):
-            raise ValueError("malformed annotation-integrity report")
+                or {row["name"] for row in report["rules"]} != set(rules)):
+            raise ValueError(f"malformed {label} report")
         failed = sum(row["failures"] for row in report["rules"])
         expected = "fail" if failed else "unknown" if report["errors"] or not report["annotations"] else "pass"
         if report["result"] != expected or outcome.returncode != {"pass": 0, "fail": 1, "unknown": 3}[expected]:
-            raise ValueError("annotation-integrity evidence, result and exit code disagree")
+            raise ValueError(f"{label} evidence, result and exit code disagree")
     except (ValueError, TypeError) as error:
         return subprocess.CompletedProcess(outcome.args, outcome.returncode or 3,
                                            outcome.stderr.strip() or str(error), outcome.stderr)
-    lines = [f"annotation integrity: {report['annotations']:,} annotation(s), "
-             f"{failed} failure(s), {len(report['errors'])} unmeasurable file(s)"]
-    lines.extend(f"{row['name']}: {row['failures']} failure(s)" for row in report["rules"] if row["failures"])
+    lines = [label + ": " + ", ".join(f"{name.replace('_', ' ')}={report[name]:,}" for name in counters)
+             + f"; {failed} failure(s), {len(report['errors'])} unmeasurable input(s)"]
+    lines.extend(f"{label.upper()} FAILED: {row['name']} {row['failures']}"
+                 for row in report["rules"] if row["failures"])
     lines.extend(row["reason"] for row in report["errors"][:4])
     return subprocess.CompletedProcess(outcome.args, outcome.returncode, "\n".join(lines), outcome.stderr)
 
@@ -2142,7 +2142,10 @@ def check(
              "--check"], cwd=REPO_ROOT, capture_output=True, text=True)
 
     symbols_job = audits.submit(_symbols_after_link)
-    index_job = _audit("address_index.py", "--check")
+    index_job = audits.submit(
+        subprocess.run,
+        [sys.executable, "-m", "match_recovery.cli", "check-mappings", "--summary"],
+        cwd=REPO_ROOT, capture_output=True, text=True)
     debt_job = audits.submit(
         subprocess.run,
         [sys.executable, "-m", "match_recovery.cli", "audits", "check", "class-debt", "--summary"],
@@ -2219,15 +2222,13 @@ def check(
         for line in said[:-1][:4]:
             typer.secho(f"  {line}", fg=typer.colors.RED)
 
-    # ONE ADDRESS, EVERY PLACE IT APPEARS. The three partial duplicate/
-    # artifact checks each guarded one boundary and the audit found every
-    # boundary leaking: addresses annotated in two artifact files, claims
-    # contradicted by the PENDING_BODY forwarder the build actually links,
-    # scaffold files nobody ratcheted. This is the whole map, floors only
-    # falling; duplicated_markers/redundant_artifacts stay (they encode
-    # within-file and claimed-copy RULES) while orphan_artifacts' report is
-    # subsumed here.
-    index = index_job.result()
+    # Full relative identities, intended build hosts and claimed forwarders.
+    # Alternative seed evidence is visible but never a production definition;
+    # the claim sweep above still measures every historical claim separately.
+    from match_recovery.mapping_check import RULES as mapping_rules
+    index = _native_consistency_result(index_job.result(), "source_build_mappings", mapping_rules,
+                                       {"annotations": 1, "entities": 1, "build_units": 1,
+                                        "seed_alternative_groups": 0, "forwarder_sites": 0}, "mapping consistency")
     if not as_json:
         said = index.stdout.strip().splitlines() or [""]
         typer.secho("  " + said[-1],
@@ -2299,7 +2300,9 @@ def check(
     # prose of 434 records the moment it touched their file - and the
     # roundtrip test could not see it, because it compared POST-PARSE data.
     # This is the check that had to exist outside the parse.
-    annotations = _source_integrity_result(annotations_job.result())
+    from match_recovery.source_integrity import RULES as integrity_rules
+    annotations = _native_consistency_result(annotations_job.result(), "source_annotation_integrity", integrity_rules,
+                                             {"annotations": 0, "files_scanned": 1}, "annotation integrity")
     if not as_json:
         said = annotations.stdout.strip().splitlines() or [""]
         typer.secho("  " + said[-1],

@@ -55,9 +55,11 @@ def project_audits(monkeypatch):
                  and Path(command[1]).parent == osmx.REPO_ROOT / "tools")
         native_audit = command[:5] == [sys.executable, "-m", "match_recovery.cli", "audits", "check"]
         source_check = command[:4] == [sys.executable, "-m", "match_recovery.cli", "check-source"]
+        mapping_check = command[:4] == [sys.executable, "-m", "match_recovery.cli", "check-mappings"]
         build = command[:2] == ["cmake", "--build"]
-        if audit or native_audit or source_check or build:
-            key = "check-source" if source_check else command[5] if native_audit else Path(command[1]).name if audit else "build"
+        if audit or native_audit or source_check or mapping_check or build:
+            key = (command[3] if source_check or mapping_check else command[5] if native_audit
+                   else Path(command[1]).name if audit else "build")
             output = (json.dumps({"audit": key, "result": "fail" if key in failures else "pass",
                                   "total": 0, "rules": []}) if native_audit else "")
             if source_check:
@@ -68,6 +70,15 @@ def project_audits(monkeypatch):
                                      "ready_for_collection": False, "input_fingerprint": "a" * 64,
                                      "errors": [], "rules": [{"name": rule, "failures": int(key in failures)}
                                                               for rule in RULES]})
+            if mapping_check:
+                from match_recovery.mapping_check import RULES
+                output = json.dumps({"check": "source_build_mappings", "schema_version": 1,
+                                     "result": "fail" if key in failures else "pass",
+                                     "annotations": 2, "entities": 2, "build_units": 1,
+                                     "seed_alternative_groups": 0, "forwarder_sites": 0,
+                                     "persisted": False, "ready_for_collection": False,
+                                     "input_fingerprint": "a" * 64, "errors": [],
+                                     "rules": [{"name": rule, "failures": int(key in failures)} for rule in RULES]})
             return subprocess.CompletedProcess(argv, int(key in failures), output, "")
         return actual(argv, *args, **kwargs)
     monkeypatch.setattr(osmx.subprocess, "run", invoke)
@@ -706,7 +717,7 @@ def test_json_is_only_json(claimed, monkeypatch):
 
 
 @pytest.mark.parametrize("audit", ["build", "compiler-work", "stale_references.py",
-    "marker_symbols.py", "address_index.py", "class-debt", "duplicate_globals.py",
+    "marker_symbols.py", "check-mappings", "class-debt", "duplicate_globals.py",
     "data_values.py", "pointer_scale.py", "check-source", "header_offsets.py"])
 def test_failed_project_audit_prevents_acceptance(claimed, monkeypatch, project_audits, audit):
     monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
@@ -744,12 +755,13 @@ def test_missing_or_changed_floor_still_fails(claimed, monkeypatch, floor):
 @pytest.mark.parametrize("damage", ["not-json", "wrong-check", "missing-rule", "duplicate-rule",
                                     "pass-with-errors", "pass-with-failures", "empty-coverage",
                                     "invalid-fingerprint", "exit-disagreement"])
-def test_invalid_native_source_integrity_evidence_fails_the_gate(claimed, monkeypatch, damage):
+@pytest.mark.parametrize("command", ["check-source", "check-mappings"])
+def test_invalid_native_consistency_evidence_fails_the_gate(claimed, monkeypatch, damage, command):
     actual = osmx.subprocess.run
 
     def invoke(argv, *args, **kwargs):
         outcome = actual(argv, *args, **kwargs)
-        if list(argv)[:4] != [sys.executable, "-m", "match_recovery.cli", "check-source"]:
+        if list(argv)[:4] != [sys.executable, "-m", "match_recovery.cli", command]:
             return outcome
         report = json.loads(outcome.stdout)
         if damage == "not-json":

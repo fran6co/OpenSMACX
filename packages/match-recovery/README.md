@@ -100,6 +100,35 @@ only parallelizes read-only text checks, not compiler processes. This is not a
 C++ lexer, ownership/duplicate-binding check, current match or acceptance gate.
 No result or new claim is written into source.
 
+### Source identities and build hosts
+
+`recover check-mappings [--root <project>] [--summary]` uses the existing source
+configuration and two local inputs in `project.json`:
+
+```json
+"mappings": {
+  "compile_commands": "build/compile_commands.json",
+  "forwarder_macros": ["ORIGINAL_CALL"]
+}
+```
+
+The macro name is illustrative; supply your own literal-address forwarding
+macros, or an empty list when none are used. The compilation database supplies
+intended source membership; no compiler or project Python module is imported.
+Relative file names resolve against each entry's directory, with relative
+directories rooted at the project, not the caller's working directory.
+
+The native checker reports full-path candidate identities, unbuilt mapping hosts,
+direct seed build inputs and historical claims shadowed by forwarding macros.
+Alternative seed files remain visible hints, not additional production owners.
+Repeated same-file mappings and any overlapping product mapping are ambiguous.
+No claim is erased and no seed is promoted or deleted. The command masks ordinary
+comments and literals after line splicing; unresolved address expressions stay
+unknown. This lexical check does not expand macros or resolve conditional branches.
+Build membership is not compiled/link ownership, included-source coverage or
+dependency verification. Exit codes are 0/1/3 for pass/fail/unknown; reports are
+disposable. Missing databases, empty coverage and changing inputs never pass.
+
 ### Prompt-driven agent commands
 
 `recover agent worker` and `recover agent reviewer` implement the driver protocol
