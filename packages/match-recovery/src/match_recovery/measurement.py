@@ -95,16 +95,19 @@ class Measurement:
 
     def snapshot(self, root: Path, metadata: dict):
         paths = {"recovery/project.json", self.source.image_pin, *self.inputs}
+        root_name = os.fspath(root)
         # Root inventories are re-enumerated, so new/shadowing headers invalidate
         # a check too. No dependency narrowing or persistent verdict cache here.
         for name in (*self.source.roots, *self.input_roots):
             directory = self.source.path(root, name)
-            for path in directory.rglob("*"):
-                if path.is_file():
-                    # Enumeration starts at a validated project-local root.
-                    # relpath avoids repeatedly constructing ancestor Paths;
-                    # input_snapshot still resolves and hashes every input.
-                    paths.add(Path(os.path.relpath(path, root)).as_posix())
+            for parent, _, names in os.walk(directory):
+                for filename in names:
+                    path = os.path.join(parent, filename)
+                    if os.path.isfile(path):
+                        # Like rglob, do not descend through directory links.
+                        # Configured root aliases retain their logical names;
+                        # input_snapshot still resolves and hashes every file.
+                        paths.add(os.path.relpath(path, root_name).replace(os.sep, "/"))
         package = Path(__file__).parent
         implementation = digest({Path(os.path.relpath(path, package)).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
                                  for path in sorted(package.rglob("*.py"))})

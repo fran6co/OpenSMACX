@@ -335,9 +335,13 @@ product layout census does not automatically probe every class in every TU.
 
 Input validation still re-enumerates configured roots, resolves every input path
 and hashes all file contents, including checker code. Path handling avoids
-repeated ancestor-object construction; it does not cache timestamps, resolved
-aliases, file inventories or verdicts. Same-size edits with restored timestamps
-and newly introduced headers remain observable.
+repeated ancestor-object construction, and streaming hashes share one bounded
+scratch buffer per snapshot. Every file gets a new hash and only bytes actually
+read enter it; short reads are not end-of-file and read errors cannot yield a
+successful partial digest. This does not cache timestamps, resolved aliases,
+file inventories or verdicts. Paths are resolved again even within one snapshot;
+same-size edits with restored timestamps and newly introduced headers remain
+observable.
 
 This checks explicit `RECOVERY_MEMBER`/`RECOVERY_BASE` interpretations, not legacy
 offset prose, self-naming fields, full types, virtual-base placement, hierarchy,

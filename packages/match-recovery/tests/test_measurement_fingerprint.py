@@ -1,12 +1,14 @@
 """Snapshot path optimization must retain content and namespace coverage."""
 
 import hashlib
+import builtins
+import io
 import json
 import os
 
 import pytest
 
-from match_recovery.fingerprint import input_snapshot
+from match_recovery.fingerprint import input_snapshot, _content_digest
 from match_recovery.measurement import Measurement
 from test_symbol_check import project
 
@@ -37,6 +39,7 @@ def test_symlink_escape_to_same_prefix_sibling_is_refused_before_reading(tmp_pat
     def forbidden(*args, **kwargs):
         pytest.fail("an escaping input must not be opened")
     monkeypatch.setattr(type(root), "open", forbidden)
+    monkeypatch.setattr(builtins, "open", forbidden)
     with pytest.raises(ValueError, match="outside the worktree"):
         input_snapshot(root, [name], {})
 
@@ -54,6 +57,72 @@ def test_internal_symlinks_and_an_aliased_root_keep_source_names(tmp_path):
     expected = {name: hashlib.sha256(b"compiler script").hexdigest() for name in names}
     assert input_snapshot(root, names, {})["inputs"] == expected
     assert input_snapshot(outer, names, {})["inputs"] == expected
+
+
+def test_reused_buffer_never_hashes_bytes_left_by_a_previous_input(tmp_path):
+    contents = {"a.bin": b"large\x00" * 100_003, "b.bin": b"short", "c.bin": b"",
+                "d.bin": b"boundary" * 32_768, "e.bin": b"last"}
+    for name, raw in contents.items():
+        (tmp_path / name).write_bytes(raw)
+    expected = {name: hashlib.sha256(raw).hexdigest() for name, raw in contents.items()}
+    assert input_snapshot(tmp_path, contents, {})["inputs"] == expected
+
+
+def test_short_reads_are_not_mistaken_for_end_of_input():
+    raw = b"short reads followed by more content\x00\xff"
+
+    class ShortReads(io.BytesIO):
+        def readinto(self, buffer):
+            return super().readinto(memoryview(buffer)[:3])
+
+    assert _content_digest(ShortReads(raw), bytearray(16)) == hashlib.sha256(raw).hexdigest()
+
+
+def test_would_block_is_not_a_successful_partial_digest():
+    class WouldBlock:
+        def readinto(self, buffer):
+            return None
+
+    with pytest.raises(BlockingIOError, match="would block"):
+        _content_digest(WouldBlock(), bytearray(16))
+
+
+def test_directory_link_is_resolved_again_for_each_input(tmp_path, monkeypatch):
+    root, outside = tmp_path / "project", tmp_path / "project-other"
+    root.mkdir()
+    outside.mkdir()
+    inside = root / "inside"
+    inside.mkdir()
+    (inside / "a.h").write_bytes(b"first")
+    (outside / "b.h").write_bytes(b"must not be read")
+    link = root / "alias"
+    link.symlink_to(inside, target_is_directory=True)
+    original_open = builtins.open
+    opened = []
+
+    def changing_open(path, *args, **kwargs):
+        opened.append(os.fspath(path))
+        assert os.fspath(path) == os.fspath(root / "alias/a.h")
+        stream = original_open(path, *args, **kwargs)
+        link.unlink()
+        link.symlink_to(outside, target_is_directory=True)
+        return stream
+
+    monkeypatch.setattr(builtins, "open", changing_open)
+    with pytest.raises(ValueError, match="outside the worktree"):
+        input_snapshot(root, ["alias/a.h", "alias/b.h"], {})
+    assert len(opened) == 1
+
+
+def test_read_errors_are_not_missing_inputs(tmp_path, monkeypatch):
+    (tmp_path / "input.h").write_bytes(b"unreadable")
+
+    def denied(*args, **kwargs):
+        raise PermissionError("input read denied")
+
+    monkeypatch.setattr(builtins, "open", denied)
+    with pytest.raises(PermissionError, match="denied"):
+        input_snapshot(tmp_path, ["input.h"], {})
 
 
 def test_symlink_targets_are_resolved_again_on_every_snapshot(tmp_path):
@@ -94,6 +163,30 @@ def test_added_renamed_and_deleted_include_files_are_reenumerated(project):
     assert renamed != added and "code/detail with spaces/member.inc" not in renamed["inputs"]
     (directory / "renamed.inc").unlink()
     assert settings.snapshot(project, {}) == before
+
+
+def test_hidden_and_non_cpp_include_inputs_are_still_enumerated(project):
+    directory = project / "code/.generated"
+    directory.mkdir()
+    (directory / "compiler-input").write_bytes(b"hidden include")
+    report = Measurement.read(project).snapshot(project, {})
+    assert report["inputs"]["code/.generated/compiler-input"] == hashlib.sha256(b"hidden include").hexdigest()
+
+
+def test_enumerated_file_aliases_are_hashed_and_external_retargets_refused(project, tmp_path_factory):
+    target = project / "code/actual.h"
+    target.write_bytes(b"original include")
+    alias = project / "code/alias.h"
+    alias.symlink_to("actual.h")
+    settings = Measurement.read(project)
+    report = settings.snapshot(project, {})
+    assert report["inputs"]["code/alias.h"] == report["inputs"]["code/actual.h"]
+    outside = tmp_path_factory.mktemp("outside") / "other.h"
+    outside.write_bytes(b"outside include")
+    alias.unlink()
+    alias.symlink_to(outside)
+    with pytest.raises(ValueError, match="outside the worktree"):
+        settings.snapshot(project, {})
 
 
 def test_same_size_and_timestamp_edits_are_rehashed_in_measurement(project):
