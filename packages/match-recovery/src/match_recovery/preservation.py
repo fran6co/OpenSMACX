@@ -89,7 +89,69 @@ def _outside_annotations(files, source, pin, selected):
     return records
 
 
-def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | None = None, compiler=None):
+def _symbol_sources(bindings, annotations, selected):
+    """Index declared source identities, not inferred compiler ownership."""
+    index = defaultdict(list)
+    for entity, rows in bindings.items():
+        for row in rows:
+            value = {"kind": "function", "entity_id": entity, "source": row["unit"],
+                     "task_scope": entity in selected}
+            index[row["symbol"]].append(value)
+            if entity in selected:
+                index["scoped-entry:" + entity].append(value)
+    for row in annotations.values():
+        if row["kind"] in ("object", "generated"):
+            entity = Origin(**row["origin"]).entity_id
+            value = {"kind": row["kind"], "entity_id": entity,
+                     "source": row["unit"] if row["kind"] == "object" else row["path"],
+                     "task_scope": entity in selected}
+            if row["kind"] == "generated":
+                value["evidence_entity_id"] = Origin(**row["evidence"]).entity_id
+            index[row["symbol"]].append(value)
+        elif row["kind"] == "component":
+            for binding in row["manifest"]["bindings"]:
+                entity = Origin(**binding["origin"]).entity_id
+                index[binding["symbol"]].append({"kind": "component_function", "entity_id": entity,
+                                                "source": row["manifest"]["source_root"] + "/" + binding["unit"],
+                                                "annotation_source": row["path"], "task_scope": entity in selected})
+    return index
+
+
+def _explain_sources(comparison, old_sources, new_sources):
+    affected, unbound = {}, {}
+    def attach(symbol, sources, version):
+        # Retain every candidate for duplicate/ambiguous annotations. A matching
+        # spelling is a navigation hint, not evidence that the compiler emitted
+        # this definition from the annotated source home.
+        symbol["source_bindings"] = sources.get(symbol["symbol"], [])
+        if not symbol["source_bindings"] and symbol["storage"] in (2, 105):
+            value = {"version": version, **{key: symbol[key] for key in
+                                            ("symbol", "offset", "section_identity", "type", "storage")}}
+            unbound[digest(value)] = value
+        for binding in symbol["source_bindings"]:
+            value = {"version": version, "symbol": symbol["symbol"], **binding}
+            affected[digest(value)] = value
+    for section in comparison["changed_sections"]:
+        for version, sources in (("baseline", old_sources), ("current", new_sources)):
+            for symbol in section[version + "_symbols"]:
+                attach(symbol, sources, version)
+        for field, sources, version in (("references_removed", old_sources, "baseline"),
+                                        ("references_added", new_sources, "current")):
+            for reference in section[field]:
+                attach(reference["target"], sources, version)
+    for symbol in comparison["symbol_changes"]:
+        version = "baseline" if symbol["change"] == "removed" else "current"
+        attach(symbol, old_sources if version == "baseline" else new_sources, version)
+    comparison["affected_source_bindings"] = sorted(affected.values(), key=lambda row: (row["source"], row["symbol"], row["version"]))
+    comparison["unbound_linker_symbols"] = sorted(unbound.values(), key=lambda row: (row["symbol"], row["version"], row["section_identity"]))
+    comparison["changed_section_count"] = len(comparison["changed_sections"])
+    comparison["symbol_change_count"] = len(comparison["symbol_changes"])
+
+
+def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | None = None,
+                       diagnostic: bool = False, compiler=None):
+    if type(diagnostic) is not bool:
+        raise ValueError("diagnostic mode must be boolean")
     root = root.resolve()
     settings, store = Measurement.read(root), TaskStore(root)
     task, decisions = store.read(task_name), store.decisions(task_name)
@@ -130,6 +192,8 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                        if old_bindings.get(key) != new_bindings.get(key)]
     old_annotations = _outside_annotations(baseline, settings.source, pin, selected)
     new_annotations = _outside_annotations(current, settings.source, pin, selected)
+    old_sources = _symbol_sources(old_bindings, _outside_annotations(baseline, settings.source, pin, frozenset()), selected)
+    new_sources = _symbol_sources(new_bindings, _outside_annotations(current, settings.source, pin, frozenset()), selected)
     annotation_changes = [{"change": "removed", "annotation": old_annotations[key]}
                           for key in sorted(old_annotations.keys() - new_annotations.keys())]
     annotation_changes += [{"change": "added", "annotation": new_annotations[key]}
@@ -176,8 +240,10 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
             old_overlay = baseline if tree_mode else {name: baseline[name] for name in changed_files}
             identity_overlay = current if tree_mode else {name: current[name] for name in changed_files}
             for flags in settings.flag_sets:
-                control = {"flags": list(flags), "result": Result.PASS, "files": []}
-                for name in changed_files:
+                control = {"flags": list(flags), "result": Result.UNKNOWN if diagnostic else Result.PASS, "files": [],
+                           "mode": "omitted_for_diagnostics" if diagnostic else "per_file_damage",
+                           "omitted_file_controls": len(changed_files) if diagnostic else 0}
+                for name in (() if diagnostic else changed_files):
                     marker = "MATCH_RECOVERY_PRESERVATION_" + digest({"inputs": before, "file": name, "flags": flags})
                     # Deleted files must be observable in their historical tree;
                     # newly added files in the current one. Never resurrect them
@@ -220,9 +286,12 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                         new_allowed, new_outside = _unit_scope(new_bindings, selected, unit)
                         comparison = compare_outside_functions(prior, original, old_allowed, new_allowed,
                                                                baseline_outside=old_outside, current_outside=new_outside)
+                        _explain_sources(comparison, old_sources, new_sources)
                         row.update(comparison, replica=Result.PASS)
+                        row["compiled_comparison"] = comparison["result"]
                         if control["result"] != Result.PASS:
-                            row.update(result=Result.UNKNOWN, reason="baseline substitutions lack per-file compiler controls")
+                            row.update(result=Result.UNKNOWN, reason="per-file controls deliberately omitted for diagnostics" if diagnostic else
+                                       "baseline substitutions lack per-file compiler controls")
                     except (OSError, ValueError) as error:
                         row.update(result=Result.UNKNOWN, reason=str(error))
                     reports.append(row)
@@ -230,7 +299,7 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
         fresh()
     unmeasured = sorted(all_units - set(measured_units))
     counts = Counter(row["result"] for row in reports)
-    result = (Result.UNKNOWN if unavailable or unmeasured or counts[Result.UNKNOWN] or not reports else
+    result = (Result.UNKNOWN if diagnostic or unavailable or unmeasured or counts[Result.UNKNOWN] or not reports else
               Result.FAIL if binding_changes or annotation_changes or counts[Result.FAIL] else Result.PASS)
     return {"task_id": task_name, "check": "baseline_current_compiled_residuals", "result": result,
             "base_revision": task.base_revision, "head": head, "changed_files": changed_files,
@@ -239,6 +308,7 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
             "outside_annotation_changes": annotation_changes,
             "translation_units": measured_units, "unmeasured_units": unmeasured,
             "controls": controls, "units": reports, "counts": dict(counts), "compile_attempts": attempts,
+            "diagnostic_only": diagnostic,
             "input_fingerprint": digest(before), "persisted": False, "ready_for_collection": False,
             "scope_complete": False, "outside_scope_verification": Result.UNKNOWN,
             "limitations": ["compiled residuals only; no original-byte, full-link, runtime or lifecycle proof",
@@ -246,5 +316,7 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                             "only source-mapped function COMDAT ownership may vary; independent data/tables stay protected",
                             "source/configuration roots must agree; added/deleted product TUs require explicit historical recipe/coverage mapping",
                             "changed non-TU file sets require compiler protocol v5; unobserved seed/header substitutions remain unknown",
+                            "symbol-to-source matches are annotation navigation hints, not ownership proof or scope authorization",
+                            "diagnostic mode omits per-file damage controls and can never establish preservation",
                             "filtered units and missing compiler controls cannot yield an overall pass",
                             "all configured non-seed source units, including dependencies and unmapped units; build coverage still requires verification"]}

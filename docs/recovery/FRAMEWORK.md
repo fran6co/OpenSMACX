@@ -18,6 +18,9 @@ Native baseline/current COFF preservation now compares non-scoped compiler outpu
 and outside source bindings, with explicit controls and immutable task history.
 Historical header/seed file sets now use the package's complete-tree compiler
 protocol, preserving absent/new files without mutating the current checkout.
+Preservation reports now expose exact symbol/reference differences and source
+navigation hints. Selected-TU diagnostic mode avoids the full damage-control sweep
+but always remains unverified; it is investigation, not migration admission.
 Full structure, historical product-TU recipe mapping, full-link outside-scope admission
 and a live model recovery pilot remain unfinished.
 

@@ -382,6 +382,26 @@ task decisions, compiler policy and Git state are rechecked; no source, claim or
 baseline is edited. Temporary copies are disposed through the same compiler overlay
 path as candidate decks.
 
+For inexpensive investigation before the full sweep, run `recover tasks
+check-preservation <task> --unit code/model.cc --diagnostic --summary`. This
+compiles the selected current TU directly, checks its unchanged replica, and
+compiles the historical tree under each configured flag set. It deliberately
+omits per-file damage probes. Both the command and every unit result remain
+`unknown` (exit 3), even when `compiled_comparison` reports agreement. This mode
+cannot establish preservation or admit a migration; omitted controls and units
+remain explicit in the report.
+
+Full reports name baseline/current section symbols, changed dimensions and exact
+removed/added relocation targets, including local offsets. Symbol-table changes
+carry auxiliary fingerprints, not raw metadata or object bytes. No fuzzy pairing
+of renamed symbols or compiler-local labels changes the verdict. Source annotations
+provide navigation hints for function, object, generated-table and dependency
+identities; all ambiguous candidates are retained. These hints do not prove which
+source declaration produced an emitted symbol and do not authorize scope expansion.
+Summaries retain changed-section/symbol counts, affected source bindings and
+unbound public/weak linker symbols. Compiler-generated local symbols are not new
+application recovery targets merely because they lack a source annotation.
+
 Current limits are explicit: source interpretation must agree across the baseline
 and current tree. Changed header/seed file sets use compiler protocol v5 complete
 trees: current-only files are absent from the baseline, historical-only files are

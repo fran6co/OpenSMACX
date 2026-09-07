@@ -136,6 +136,16 @@ source bindings remain protected. It compares unfinished outside code to the tas
 baseline, not to the original executable. Existing restoration requirements are
 still checked separately and cannot be weakened by a preservation result.
 
+To investigate a particular TU first, add `--unit src/infowin.cpp --diagnostic`
+(substitute its actual source path). This avoids the full per-file damage sweep,
+while still checking the current replica and compiling the historical tree.
+It always exits 3/unverified. Read `compiled_comparison`, changed symbol/reference
+details and source-binding hints to identify affected owners before proposing
+scope changes. A source-name correlation is not ownership proof; do not add
+compiler-local labels to application recovery merely to clear a diagnostic.
+Neither a diagnostic match nor an unrelated upstream rename permits moving the
+task baseline or waiving outside changes. Full migration review remains separate.
+
 The check uses current compiler policy for both versions, not historical objects.
 Historical header/seed additions and deletions use complete private source trees,
 not patches against today's file set. Changed product-TU file sets still need

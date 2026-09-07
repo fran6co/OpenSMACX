@@ -94,3 +94,60 @@ def test_no_object_bytes_are_exposed_in_report():
     old, new = Coff(coff_fixture(b"\x11\x22\x33\x44")), Coff(coff_fixture(b"\x55\x66\x77\x88"))
     report = compare_outside_functions(old, new, {}, {})
     assert report["changed_sections"] and "11223344" not in repr(report) and "55667788" not in repr(report)
+
+
+def test_changed_code_reports_defined_symbols_and_dimensions_without_object_bytes():
+    old, new = Coff(coff_fixture(b"\x90\xc3")), Coff(coff_fixture(b"\x91\xc3"))
+    report = compare_outside_functions(old, new, {}, {})
+    section, = report["changed_sections"]
+    assert section["changed_dimensions"] == ["bytes"]
+    assert [symbol["symbol"] for symbol in section["baseline_symbols"]] == ["_f"]
+    assert section["baseline_symbols"] == section["current_symbols"]
+    assert section["references_removed"] == section["references_added"] == []
+    assert report["symbol_changes"] == []
+
+
+def test_same_bytes_wrong_reference_reports_old_and_new_symbolic_targets():
+    raw = coff_fixture(b"\xe8\0\0\0\0\xc3", relocation=(1, 1, 20))
+    report = compare_outside_functions(Coff(raw), Coff(raw.replace(b"_g", b"_h")), {}, {})
+    section, = report["changed_sections"]
+    assert section["changed_dimensions"] == ["references"] and report["result"] == "fail"
+    before, = section["references_removed"]
+    after, = section["references_added"]
+    assert (before["offset"], before["kind"], before["target"]["symbol"], before["count"]) == (1, 20, "_g", 1)
+    assert (after["offset"], after["kind"], after["target"]["symbol"], after["count"]) == (1, 20, "_h", 1)
+    assert {(row["change"], row["symbol"]) for row in report["symbol_changes"]} == {("removed", "_g"), ("added", "_h")}
+
+
+def test_local_target_changes_keep_exact_offsets_and_are_not_inferred_renames():
+    old = Coff(coff_fixture(b"\xe8\0\0\0\0\xc3", relocation=(1, 1, 20)))
+    old.symbols[1] = replace(old.symbols[1], name="$local", section=1, value=1, storage=3)
+    new = copy.deepcopy(old)
+    new.symbols[1] = replace(new.symbols[1], value=4)
+    report = compare_outside_functions(old, new, {}, {})
+    removed = [r["target"]["offset"] for row in report["changed_sections"] for r in row["references_removed"]]
+    added = [r["target"]["offset"] for row in report["changed_sections"] for r in row["references_added"]]
+    assert removed == [1] and added == [4] and report["result"] == "fail"
+
+
+def test_auxiliary_changes_are_reported_without_raw_auxiliary_bytes():
+    old = Coff(coff_fixture())
+    old.symbols[2] = Symbol(2, "_weak", 0, 0, 0, 105)
+    old.auxiliary[2] = struct.pack("<II10x", 1, 2)
+    new = copy.deepcopy(old)
+    new.auxiliary[2] = struct.pack("<II10x", 1, 3)
+    report = compare_outside_functions(old, new, {}, {})
+    assert not report["changed_sections"] and report["result"] == "fail"
+    assert [(row["change"], row["symbol"]) for row in report["symbol_changes"]] == [("removed", "_weak"), ("added", "_weak")]
+    assert len({row["auxiliary_fingerprint"] for row in report["symbol_changes"]}) == 2
+    assert old.auxiliary[2].hex() not in repr(report)
+
+
+def test_symbol_diagnostic_preserves_duplicate_multiplicity():
+    old = Coff(coff_fixture())
+    old.symbols[2] = replace(old.symbols[1], index=2)
+    new = copy.deepcopy(old)
+    del new.symbols[2]
+    report = compare_outside_functions(old, new, {}, {})
+    removed, = report["symbol_changes"]
+    assert removed["symbol"] == "_g" and removed["count"] == 1 and removed["change"] == "removed"

@@ -62,6 +62,11 @@ changes outside task-owned functions relative to its fixed Git baseline. It does
 not require unrelated unfinished bodies to match the original. It also does not
 admit a structural migration: missing historical TU recipes and full-link/lifetime
 proof remain gaps. Never advance a task baseline to make its report pass.
+For initial investigation, use `--unit <tu> --diagnostic --summary`: this omits
+per-file damage controls and always remains unverified. Follow the changed
+symbols/references and source-binding hints, checking ambiguous or unmapped
+ownership in source. Do not infer equivalent behavior from a rename or turn
+compiler-generated local labels into application recovery targets.
 
 The configured worker command must return the framework's JSON response:
 `{"discoveries":[]}`, or discoveries with `hypothesis`, `affects` (original

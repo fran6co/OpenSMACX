@@ -381,6 +381,13 @@ annotations are preserved too. It covers configured non-seed TUs by default;
 `--unit` is diagnostic filtering, never a narrower acceptance claim. No local
 Python preservation adapter or saved measurement ledger is required.
 
+`--unit src/infowin.cpp --diagnostic --summary` provides a cheaper investigation
+path: fresh direct/replica/historical compiles, no per-file damage probes, and
+always an unverified exit 3. Full output identifies changed code/data dimensions,
+symbol-table records and exact relocation targets; the summary retains source
+navigation hints and unbound linker symbols. No report field is scope permission
+or proof that an annotation identifies the emitted definition.
+
 It does not yet supply the full `outside_scope` admission result. The current
 compiler policy is used for both source versions; full link/runtime/lifetime and
 historical build reconstruction are separate work. Compiler v5 now materializes

@@ -297,3 +297,87 @@ def test_duplicate_outside_annotations_are_not_collapsed(project):
     header.write_text(header.read_text() + annotation)
     report = check_preservation(project, task.task_id, compiler=Compiler(project))
     assert report["result"] == "fail" and len(report["outside_annotation_changes"]) == 1
+
+
+@pytest.mark.parametrize("changed", [False, True])
+def test_diagnostic_mode_never_claims_preservation_even_with_full_unit_coverage(project, changed):
+    if changed:
+        path = project / "code/owner.cc"
+        path.write_text(path.read_text().replace("return 1", "return 2"))
+    compiler = Compiler(project)
+    report = check(project, compiler=compiler, diagnostic=True)
+    assert report["result"] == "unknown" and report["diagnostic_only"]
+    assert report["compile_attempts"] == (6 if changed else 4)
+    assert all(row["result"] == "unknown" and row["compiled_comparison"] == "pass" and row["replica"] == "pass"
+               for row in report["units"])
+    assert report["controls"][0]["mode"] == "omitted_for_diagnostics"
+    assert report["controls"][0]["omitted_file_controls"] == int(changed)
+    assert not report["ready_for_collection"] and not report["persisted"]
+    assert not any(b"#error" in data for _, _, overlay in compiler.calls if overlay for data in overlay.values())
+
+
+def test_diagnostic_code_changes_point_to_current_and_historical_source_bindings(project):
+    (project / "code/model.h").write_text("struct Model { int padding; int field; };\n")
+    report = check(project, diagnostic=True, units=("code/caller.cc",))
+    row, = report["units"]
+    assert row["result"] == "unknown" and row["compiled_comparison"] == "fail" and row["changed_section_count"] == 1
+    section, = row["changed_sections"]
+    assert section["changed_dimensions"] == ["bytes"]
+    for version in ("baseline", "current"):
+        symbol, = section[version + "_symbols"]
+        binding, = symbol["source_bindings"]
+        assert symbol["symbol"] == "_h" and binding["source"] == "code/caller.cc"
+        assert binding["kind"] == "function" and not binding["task_scope"]
+    assert {value["version"] for value in row["affected_source_bindings"]} == {"baseline", "current"}
+
+
+def test_diagnostic_cli_summary_keeps_actionable_bindings_and_explicit_unknown(project, monkeypatch, capsys):
+    from match_recovery import preservation
+    monkeypatch.setattr(preservation, "Compiler", lambda root, **kwargs: Compiler(root))
+    (project / "code/model.h").write_text("struct Model { int padding; int field; };\n")
+    assert main(["tasks", "check-preservation", "owner", "--root", str(project), "--unit", "code/caller.cc",
+                 "--diagnostic", "--summary"]) == 3
+    report = json.loads(capsys.readouterr().out)
+    row, = report["units"]
+    assert report["diagnostic_only"] and row["affected_source_bindings"]
+    assert row["changed_section_count"] == 1 and row["compiled_comparison"] == "fail"
+    assert "changed_sections" not in row and "symbol_changes" not in row
+
+
+def test_diagnostic_still_requires_an_unchanged_current_replica(project):
+    class Broken(Compiler):
+        def overlay(self, *args): return coff_fixture(b"\xcc")
+    report = check(project, compiler=Broken(project), diagnostic=True)
+    assert report["result"] == "unknown" and all("compiled_comparison" not in row for row in report["units"])
+    assert all("replica" in row["reason"] for row in report["units"])
+
+
+def test_symbol_source_navigation_retains_ambiguity_and_distinguishes_table_identity_from_anchor():
+    from dataclasses import asdict
+    from match_recovery.preservation import _symbol_sources
+    anchor = Origin("a" * 64, "pe:va", 0x401000)
+    other = Origin("a" * 64, "pe:va", 0x401020)
+    table = Origin("a" * 64, "pe:va", 0x402000)
+    functions = {anchor.entity_id: [{"unit": "code/a.cc", "symbol": "_f"}],
+                 other.entity_id: [{"unit": "code/b.cc", "symbol": "_f"}]}
+    annotations = {"table": {"kind": "generated", "origin": asdict(table), "evidence": asdict(anchor),
+                              "symbol": "_vtable", "path": "code/model.h"}}
+    index = _symbol_sources(functions, annotations, {anchor.entity_id})
+    assert [row["source"] for row in index["_f"]] == ["code/a.cc", "code/b.cc"]
+    assert len(index["scoped-entry:" + anchor.entity_id]) == 1
+    binding, = index["_vtable"]
+    assert binding["entity_id"] == table.entity_id and binding["evidence_entity_id"] == anchor.entity_id
+    assert not binding["task_scope"]  # A scoped constructor is not permission to change its table.
+
+
+def test_unannotated_linker_symbols_remain_visible_without_invented_source_ownership():
+    from match_recovery.coff_preservation import compare_outside_functions
+    from match_recovery.pe_coff import Coff
+    from match_recovery.preservation import _explain_sources
+    raw = coff_fixture(b"\xe8\0\0\0\0\xc3", relocation=(1, 1, 20))
+    report = compare_outside_functions(Coff(raw), Coff(raw.replace(b"_g", b"_h")), {}, {})
+    _explain_sources(report, {}, {})
+    assert not report["affected_source_bindings"]
+    assert {(row["version"], row["symbol"]) for row in report["unbound_linker_symbols"]} == {
+        ("baseline", "_f"), ("current", "_f"), ("baseline", "_g"), ("current", "_h")}
+    assert report["result"] == "fail"
