@@ -75,7 +75,7 @@ Purpose: sub_406b30 - a do-nothing leaf. The whole body is a return
          calls it either, here or anywhere: all 56 redirects in this file are
          annotation carriers.
 
-         `Buffer::surface_lost` in src/buffer.cpp is the first declaration in
+         `Buffer::get_graphic_win` in src/buffer.cpp is a declaration in
          this tree that is actually TRUE about one of those slots - a virtual
          returning 0 - and it emits the identical `33 c0 c3`. As more classes
          declare their real virtuals, each empty override folds here too, and

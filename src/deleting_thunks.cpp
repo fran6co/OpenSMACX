@@ -134,8 +134,6 @@ the destructor patched to record its receiver. That is not built here.
 // time, and the leaf suite rebinds it to a recorder.
 func_deleting_dtor PopupDtorTarget =
     original_method<func_deleting_dtor>(0x00406C00);
-func_deleting_forward_nullary Sub004042B0Target =
-    original_method<func_deleting_forward_nullary>(0x004042B0);
 func_deleting_forward Sub00612710Target =
     original_method<func_deleting_forward>(0x00612710);
 func_deleting_forward Sub006336D0Target =
@@ -166,24 +164,6 @@ void *__fastcall scalar_delete_alpha_movie(void *self, void *,
     return self;
 }
 
-/*
-Purpose: Step the receiver back to the subobject sub_4042b0 expects, then
-         forward unchanged.
-// ORIGINAL: 0x00404420 sub_404420 0x00404420-0x0040442B
-// symbol    ?adjust_this_sub_404420@@YIPAXPAX0@Z
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_sub_404420(void *self, void *) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return (ORIGINAL(object - 0x444)->*Sub004042B0Target)();
-}
 
 /*
 Purpose: The compiler-generated scalar deleting destructor at

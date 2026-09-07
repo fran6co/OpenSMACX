@@ -90,6 +90,15 @@ match. A constructor's members must not also be placement-constructed in its bod
 Real reset methods and real pointer arithmetic are allowed when evidence shows
 that behavior; names and a good byte score alone do not establish it.
 
+Compiler-generated functions need source-owned mappings, not handwritten bodies.
+For a secondary-base adjustor, express the real inheritance and virtual override,
+then bind its emitted symbol with a `FILE` annotation in the owning TU. Preserve
+the independent original span and distinguish the catalogued seed name from the
+actual emitted symbol. Check both the adjustor and its target, then the affected
+table/callers; a matching thunk alone does not establish the entire hierarchy.
+Restore mappings lost during earlier homing from their source history before
+trying to fix an unresolved reference by changing otherwise-correct C++.
+
 ## 4. Run, discover, and expand
 
 With local worker/reviewer command configurations, use

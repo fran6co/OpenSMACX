@@ -597,7 +597,8 @@ class Win : public AutoSound {
   virtual void release_modal();  // slot 58  0x005EE280
   virtual int vslot_59() { return 1; }  // 0x00406840
   virtual void vslot_60(int = 0, int = 0) {}  // 0x00404260
-  virtual int vslot_61() { return 0; }  // 0x00406B30
+  // Slot 61 (0xF4): ordinary windows have no GraphicWin surface.
+  virtual GraphicWin *get_graphic_win() { return nullptr; }  // 0x00406B30
   virtual void vslot_62() {}  // 0x00404280
   virtual void vslot_63() {}  // 0x00404280
   virtual void pass_dialog_focus();  // slot 64  0x005ECD20

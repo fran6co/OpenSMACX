@@ -1,0 +1,30 @@
+{
+  "event_id": "569cf021724cead751462a3b6029e2acd163378d9c4e28e4a505ab30f0efaa72",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Restore source mappings lost when these Win bodies were homed, using the pre-deletion original spans rather than current code length or call operands.",
+      "git:85fc7721f56c2a5cae754b993fe04fcfec74fec1:src/unrecovered/005ed880.cpp",
+      "git:85fc7721f56c2a5cae754b993fe04fcfec74fec1:src/unrecovered/005eef60.cpp"
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6215808,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6221664,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "72bba2ecaad24f17a35f1565f115804b803cd1688f28f6754bd811dc0ff37a0c",
+  "request_id": "authorize-lost-win-bindings",
+  "schema_version": 1,
+  "sequence": 14,
+  "stream": "task:infowin-ownership"
+}

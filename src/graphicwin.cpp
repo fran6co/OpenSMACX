@@ -286,10 +286,6 @@ int GraphicWin::fill(int x1, int y1, int x2, int y2, int color) {
 }
 
 
-// Slot 0xF4 on the parent's vtable. The stock body at 0x004042B0 is
-// `mov eax, ecx; ret`, so a non-null parent answers with itself.
-typedef void * (OriginalObject::*func_graphic_win_parent_query)();
-
 // USER32!InvalidateRect - called directly (see GraphicWin::redraw below).
 // image address 0x00669304 is that call's own IAT slot; it is not read as
 // a raw address anywhere here, so there is nothing hardcoded to fault on
@@ -375,17 +371,12 @@ void GraphicWin::fill(int color) {
     // so the upcast is the language's own +0x444.
     Buffer *const surface = this;
     // Bit 19 alone does not make the window transparent: the parent has to
-    // exist and has to answer its slot 0xF4 with a nonzero value. The stock
-    // implementation at 0x004042B0 is `mov eax, ecx; ret`, so a non-null
-    // parent answers with itself and the copy path is the default.
+    // exist and expose a GraphicWin through Win's slot 0xF4. A plain Win
+    // returns null; GraphicWin returns itself.
     bool transparent = false;
     if ((iFlags_ & 0x80000) != 0 && win_parent_ != nullptr) {
-        // ONE `call dword ptr [reg+0xf4]`, not two instructions: the
-        // pointer-to-member spelling loads the slot into a register first.
-        typedef void *(__fastcall *parent_query_fn)(void *);
         Win *const parent = win_parent_;
-        transparent =
-            vtable_slot<parent_query_fn>(parent, 0xF4)(parent) != nullptr;
+        transparent = parent->get_graphic_win() != nullptr;
     }
     if (!transparent) {
         surface->fill(color);
@@ -765,3 +756,33 @@ Purpose: Step the receiver back to the subobject ??_GGraphicWin@@UAEPAXI@Z
 Return Value: the forwarded call's
 Status: Complete
 */
+
+// ORIGINAL: 0x004042B0 sub_4042b0 0x004042B0-0x004042B3 FILE BYTE_EXACT
+// symbol    ?get_graphic_win@GraphicWin@@UAEPAV1@XZ
+// Win slot 61 and Buffer slot 1 identify the GraphicWin owning the surface.
+// The original self-query is shared by derived windows.
+GraphicWin *GraphicWin::get_graphic_win() {
+    return this;
+}
+
+// ORIGINAL: 0x00404420 sub_404420 0x00404420-0x0040442B FILE BYTE_EXACT
+// symbol    ?get_graphic_win@GraphicWin@@WEEE@AEPAV1@XZ
+// Compiler-owned secondary-base entry: Buffer lies at GraphicWin +0x444.
+// Original Buffer-side slot 1 at 0x00670C5C points here; this entry forwards
+// to the self-query at 0x004042B0. There is no handwritten C++ thunk body.
+
+// ORIGINAL: 0x005D5540 ?resize@GraphicWin@@QAEXHHH@Z 0x005D5540-0x005D5590 FILE BYTE_EXACT
+// symbol    ?resize@GraphicWin@@UAEHHHH@Z
+// The catalogued void/nonvirtual prototype is a seed interpretation.
+// Win slot 3 and Buffer::load_pcx use the returned status.
+// calls     0x005D7670 0x005ED880 0x005EEF60
+int GraphicWin::resize(int width, int height, int client_size) {
+    if (client_size == 0) {
+        nonclient_to_client(&width, &height);
+    }
+    int result = Buffer::init(width, height, 0, nullptr);
+    if (result == 0) {
+        result = Win::resize(width, height, 1);
+    }
+    return result;
+}

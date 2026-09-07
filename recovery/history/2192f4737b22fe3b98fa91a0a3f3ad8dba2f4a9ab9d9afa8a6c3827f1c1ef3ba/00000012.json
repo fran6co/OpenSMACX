@@ -1,0 +1,25 @@
+{
+  "event_id": "f7546ba9f3af2da476086110b8c24a9ed55e77827417924d2874512c464f07dd",
+  "payload": {
+    "affects": [
+      "entity-04912b963a6ec85ccb70a6b58d169cc7a084381a2478cee5a312d5b7b0843317",
+      "entity-3e2c420d0eb3d1e479388db35811ce2dbab7fefa83085f010dc0c6caeeb1864c",
+      "entity-762bfc23e036952d199ce3de7e5aeda0221cdb4b2da40fecc02d1edc97dd29dc"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "graphicwin-buffer-owner-query",
+    "evidence": [
+      "image:0x00670C5C points to 0x00404420; its adjusted tail call targets 0x004042B0",
+      "source:src/graphicwin.cpp:parent query at Win slot 0xF4",
+      "source:src/buffer.cpp:load_pcx consumes the queried object through resize slot 3",
+      "source:src/recovered/005d5540.cpp:original resize spans and calls"
+    ],
+    "hypothesis": "Buffer slot 1 and Win slot 61 query a GraphicWin, not a surface-loss status. GraphicWin must override both with a typed self result and supply its resize override; C++ should generate the secondary-base thunk.",
+    "kind": "discovery"
+  },
+  "previous_event": "bf6edd3fe175e0ca8a092afff4fce3272fb445fd2ec880ce94028451916bc28a",
+  "request_id": "graphicwin-buffer-owner-query",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:infowin-ownership"
+}

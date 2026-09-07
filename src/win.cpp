@@ -3915,7 +3915,7 @@ Win *__cdecl get_mouse_window_recurse(Win * window, int * x, int * y) {
         Buffer *buf;
         bool hit;
 
-        int slotResult = reinterpret_cast<Win *>(wc)->vslot_61();
+        GraphicWin *slotResult = reinterpret_cast<Win *>(wc)->get_graphic_win();
         flagsHere = *reinterpret_cast<unsigned int *>(wc + 0x98);
         if (slotResult == 0 || (flagsHere & 0x10000000) == 0) {
             WinMouseDirect = 1;
@@ -3984,7 +3984,7 @@ alt_path:
     }
 
     if ((*(unsigned char *)(wc + 0x98) & 2) == 0) {
-        int slotResult = reinterpret_cast<Win *>(wc)->vslot_61();
+        GraphicWin *slotResult = reinterpret_cast<Win *>(wc)->get_graphic_win();
         unsigned int flagsHere = *reinterpret_cast<unsigned int *>(wc + 0x98);
         if (slotResult == 0 || (flagsHere & 0x1000000) == 0 || (*(unsigned char *)(wc + 0x99) & 1) != 0) {
             return window;
@@ -6254,7 +6254,7 @@ void Win::on_l_button_down(long flags, int x, int y, unsigned int keys, int dbl)
         }
     }
 
-    int32_t hitTest = this->vslot_61();
+    GraphicWin *hitTest = this->get_graphic_win();
     int32_t idx = 0;
     if (hitTest == 0 ||
         reinterpret_cast<Spot *>(self + 0x8f4)->check(x, y, &idx, 0) < 0 ||
@@ -7027,7 +7027,7 @@ void Win::window_line_raw(int x2, int y2, int x1, int y1, int colour,
 void __cdecl Win::update() {
     for (int i = 0; i < WinZOrderCount; ++i) {
         reinterpret_cast<Win *>(reinterpret_cast<void **>(WinZOrderArray)[i])->on_nc_paint(0, -1);
-        if (reinterpret_cast<Win *>(reinterpret_cast<void **>(WinZOrderArray)[i])->vslot_61() != 0) {
+        if (reinterpret_cast<Win *>(reinterpret_cast<void **>(WinZOrderArray)[i])->get_graphic_win() != 0) {
             reinterpret_cast<Win *>(reinterpret_cast<void **>(WinZOrderArray)[i])->vslot_63();
             do_sound();
         }
@@ -7960,7 +7960,7 @@ int Win::init(int x, int y, int width, int height, char * caption,
     }
 
     if ((flags & 0xF0000000) != 0) {
-        if (this->vslot_61() == 0) {
+        if (this->get_graphic_win() == 0) {
             return 3;
         }
     }
@@ -8948,6 +8948,9 @@ int Win::set_cursor(HCURSOR *name) {
 
 // ===== homed from src/unrecovered/005ed880.cpp =====
 
+// ORIGINAL: 0x005ED880 ?resize@Win@@QAEHHHH@Z 0x005ED880-0x005ED9B5 FILE
+// symbol    ?resize@Win@@UAEHHHH@Z
+// Original mapping restored from git:85fc7721f56c2a5cae754b993fe04fcfec74fec1:src/unrecovered/005ed880.cpp
 int Win::resize(int width, int height, int repaint) {
     if (repaint != 0) {
         if ((iSomeFlag_ & 2) == 0) {
@@ -9978,6 +9981,9 @@ void Win::client_to_nonclient(RECT * rect) {
 
 // ===== homed from src/unrecovered/005eef60.cpp =====
 
+// ORIGINAL: 0x005EEF60 ?nonclient_to_client@Win@@QAEXPAH0@Z 0x005EEF60-0x005EF050 FILE
+// symbol    ?nonclient_to_client@Win@@QAEXPAH0@Z
+// Original mapping restored from git:85fc7721f56c2a5cae754b993fe04fcfec74fec1:src/unrecovered/005eef60.cpp
 void Win::nonclient_to_client(int * x, int * y) {
     if (x == 0) {
         return;
@@ -10396,7 +10402,7 @@ void __cdecl Win::update_zorder() {
 long Win::on_window_pos_changing(WINDOWPOS * pos) {
     char *wp = reinterpret_cast<char *>(pos);
     if ((*reinterpret_cast<unsigned char *>(wp + 0x18) & 1) == 0) {
-        int ok = this->vslot_61();
+        GraphicWin *ok = this->get_graphic_win();
         if (ok != 0) {
             int cx = *reinterpret_cast<int *>(wp + 0x10);
             int f134 = field_134_;

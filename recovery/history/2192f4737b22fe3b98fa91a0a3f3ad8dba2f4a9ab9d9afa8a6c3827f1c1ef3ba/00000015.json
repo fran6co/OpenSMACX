@@ -1,0 +1,20 @@
+{
+  "event_id": "a351f147d3f74ce10937a55885dca52ff12a639661ca785ad0870eca0ac5b621",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "graphicwin-buffer-owner-query",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "source:src/graphicwin.h:one typed get_graphic_win override serves Win and Buffer; resize overrides the inherited window interface",
+      "source:src/graphicwin.cpp:0x004042B0 and 0x00404420 map the actual method and compiler-owned Buffer adjustor; 0x005D5540 maps the status-returning resize",
+      "source:src/buffer.cpp:load_pcx calls resize on the typed GraphicWin query result without a fake vtable interface",
+      "source:src/win.cpp:the original Win resize and nonclient_to_client spans are restored from pre-deletion Git evidence; their bodies remain unfinished"
+    ]
+  },
+  "previous_event": "569cf021724cead751462a3b6029e2acd163378d9c4e28e4a505ab30f0efaa72",
+  "request_id": "incorporate-graphicwin-buffer-owner-query",
+  "schema_version": 1,
+  "sequence": 15,
+  "stream": "task:infowin-ownership"
+}

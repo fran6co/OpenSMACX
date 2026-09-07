@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "buffer.h"
+#include "graphicwin.h"
 #include "filemap.h"
 #include "font.h"
 #include "general.h"   // mem_get, for the link labels this owns
@@ -70,30 +71,10 @@ bounded by the array now. Widening the fallback ramp wrote a 257th entry at
 adjacent stores inside that ramp still target distinct bytes with independent
 values, so their order is genuinely not observable.
 */
-// Slot 1 of the vtable - the do-nothing virtual, returning 0.
-//
-// NO `ORIGINAL:` MARKER, deliberately, and the gate caught the first
-// attempt: an annotation here makes a SECOND claim on 0x00406B30, which
-// `annotation_scan` reports as a duplicate and drops from both sides. The
-// claim count fell by one - `nullsub_thunks.cpp` stopped counting - for a
-// comment.
-//
-// It is not claimed here because it is not this file's function. `src/nullsub_thunks.cpp`
-// already owns 0x00406B30 as `sub_406b30`, byte-exact, and 129 vtable slots
-// across 70 classes point at it - Buffer's slot 1 among them. There is ONE
-// three-byte function in the image, not 129: `/Gy` gives every function its
-// own COMDAT and the linker folded every identical empty override onto a
-// single copy.
-//
-// So the recovery of "Buffer::surface_lost" is not a second body. It is
-// declaring this override so that it compiles to the same three bytes and
-// folds the same way - `xor eax, eax; ret`, which is why it returns `int`
-// and returns 0. Written `void` it is `ret` alone, one byte, and Buffer's
-// slot 1 would stop being the function the image put there. Verified by
-// compiling this unit and reading the symbol out of the object:
-// `?surface_lost@Buffer@@UAEHXZ` is `33 c0 c3`, the three bytes at
-// 0x00406B30.
-int Buffer::surface_lost() { return 0; }
+// Plain Buffer's null query shares the folded leaf mapped in nullsub_thunks.cpp
+// at 0x00406B30. GraphicWin overrides this slot with its typed self-query;
+// the compiler supplies the Buffer-secondary-base adjustor at 0x00404420.
+GraphicWin *Buffer::get_graphic_win() { return nullptr; }
 
 /*
 Purpose: Return the address of the pixel at (x, y) in the buffer, locking the
@@ -564,18 +545,6 @@ const size_t PcxMagic = 0, PcxVersion = 1, PcxEncoding = 2, PcxBitsPerPixel = 3;
 const size_t PcxXMin = 4, PcxYMin = 6, PcxXMax = 8, PcxYMax = 10;
 const size_t PcxPlanes = 65, PcxBytesPerLine = 66;
 
-// Slot 1 of a Buffer's vtable answers 0 here and an object elsewhere: a
-// subclass that owns its own surface returns it, and this decoder asks that
-// object to size itself instead of calling `Buffer::init`. Nothing in this
-// tree recovers the subclass, so all that is known about the object is the
-// slot being called - which is what this declares and no more.
-struct SurfaceOwner {
-    virtual int slot0();
-    virtual int slot1();
-    virtual int slot2();
-    virtual int resize(int width, int height, int flags);
-};
-
 }  // namespace
 
 /*
@@ -678,10 +647,10 @@ int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette,
     const int bits_per_pixel = header[PcxBitsPerPixel];
     const int planes = header[PcxPlanes];
 
-    const int owner = surface_lost();
+    GraphicWin *const owner = get_graphic_win();
     const int sized = (owner == 0)
         ? init(width, height, static_cast<int>(init_flags_), nullptr)
-        : reinterpret_cast<SurfaceOwner *>(owner)->resize(width, height, 1);
+        : owner->resize(width, height, 1);
     if (sized != 0) {
         return sized;
     }
@@ -755,7 +724,7 @@ int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette,
         // the call form leaves ~60 instructions of this body unaccounted
         // for. Same idiom as Win::init_class.
         if (locked_bits_ != 0) {
-            surface_lost();
+            get_graphic_win();
         }
         IDirectDrawSurface *const surface = surface_;
         HDC acquired;
@@ -768,7 +737,7 @@ int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette,
             acquired = hdc2_;
         } else {
             if (surface->GetDC(&hdc2_) != 0) {
-                surface_lost();
+                get_graphic_win();
             }
             ++hdc_lock_count_;
             acquired = hdc2_;
@@ -786,7 +755,7 @@ int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette,
                 --hdc_lock_count_;
                 if (hdc2_ != nullptr && hdc_lock_count_ <= 0) {
                     if (surface_->ReleaseDC(hdc2_) != 0) {
-                        surface_lost();
+                        get_graphic_win();
                     }
                     hdc_lock_count_ = 0;
                     hdc2_ = nullptr;
@@ -1010,14 +979,14 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
     }
 
     if (locked_bits_ != 0) {
-        surface_lost();
+        get_graphic_win();
     }
 
     if (surface_ == nullptr) {
         hdc2_ = hdc_;
     } else if (hdc2_ == nullptr) {
         if (surface_->GetDC(&hdc2_) != 0) {
-            surface_lost();
+            get_graphic_win();
         }
     }
 
@@ -1040,7 +1009,7 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
         const int remaining = --hdc_lock_count_;
         if (hdc2_ != nullptr && remaining <= 0) {
             if (surface_->ReleaseDC(hdc2_) != 0) {
-                surface_lost();
+                get_graphic_win();
             }
             hdc_lock_count_ = 0;
             hdc2_ = nullptr;
@@ -1725,7 +1694,7 @@ void Buffer::close() {
                 const int remaining = --hdc_lock_count_;
                 if (hdc2_ != nullptr && remaining <= 0) {
                     if (surface_->ReleaseDC(hdc2_) != 0) {
-                        surface_lost();
+                        get_graphic_win();
                     }
                     hdc_lock_count_ = 0;
                     hdc2_ = nullptr;
@@ -6969,4 +6938,3 @@ int __stdcall Buffer::load_bmp(const char * a1, Palette * a2, int a3, int a4) {
         throw;
     }
 }
-

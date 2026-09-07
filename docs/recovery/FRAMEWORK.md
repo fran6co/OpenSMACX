@@ -163,6 +163,14 @@ establish completion of this program.
   The redraw slot is now an InfoWin member instead of independent storage;
   its object-start binding lives beside ConsoleInfoWin's definition. Constructor
   subobjects, object extent, lifetime, full admission and restoration remain.
+  Win's slot 61 and Buffer's slot 1 now share a typed GraphicWin query. The
+  derived override owns its compiler-generated secondary-base adjustor, replacing
+  the fixed-address forwarding wrapper; GraphicWin also owns the status-returning
+  resize override used by the PCX loader. The original mappings are beside the
+  real methods/generated entry, not separate seed bodies. Previously lost Win
+  callee mappings are restored from pre-deletion source history; their unfinished
+  implementations remain recovery work. This does not close full table bounds,
+  lifetime, preservation or task acceptance.
 - [ ] Prefix leases, include/parse/measurement caches, candidate decks, benchmarks.
   Native task-authorized multi-file decks now share strict reference-aware checks,
   read the map once and compile proposed source without mutating the product tree.

@@ -53,6 +53,10 @@ class GraphicWin : public Win, public Buffer {
   void on_mouse_move(int x, int y, unsigned int keys, int from_parent);
   GraphicWin();
   ~GraphicWin();
+  // One override serves Win slot 61 and Buffer slot 1. The secondary-base
+  // entry adjusts Buffer's receiver back to this GraphicWin automatically.
+  virtual GraphicWin *get_graphic_win();
+  virtual int resize(int width, int height, int client_size);
 
   // VIRTUAL, AND THE IMAGE IS WHAT SAYS SO. A body entered on a subobject
   // opens by adjusting `this` back by that subobject's offset, and that is the

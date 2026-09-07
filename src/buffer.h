@@ -90,6 +90,7 @@ struct Dib : BITMAPINFO {
 static_assert(sizeof(Dib) == 0x428, "Dib is BITMAPINFOHEADER + 256 RGBQUAD");
 
 class Buffer;
+class GraphicWin;
 
 /*
  * The panel-drawing table `Buffer::box_sprite` is driven by. The image holds
@@ -193,24 +194,9 @@ class Buffer {
   // `call ??1Buffer@@QAE@XZ` at all 87 of its sites (checkbox, radiobutton,
   // sprite, palette textcolor_init). Same lever as general.h's bitmask_call.
   MEASURED virtual ~Buffer();
-  // `int`, and returning 0, because that is what the three bytes are:
-  // `xor eax, eax; ret`. Declared `void` it compiles to `ret` alone and
-  // Buffer's slot 1 stops being the function the image put there.
-  virtual int surface_lost();
-
-  // Slot 1 of this class's vtable.
-  //
-  // MEASURED, 2026-08-16. Declaring it `virtual` and deleting the explicit
-  // `LPVOID vtable_;` below is the right shape and is what the image has -
-  // the constructor's store to offset 0 is a C++ vtable spelled as data.
-  // It compiles, it links, `sizeof` stays
-  // 0x588, and it changes not one byte of `Buffer::init` or
-  // `Buffer::close`: 90.8% and 95.7% either way. It also breaks 87 claims,
-  // because `emit_translation_unit` emits its class shells in an order that
-  // a polymorphic Buffer defeats - `C2504: 'GraphicWin' : base class
-  // undefined` on the first three checked. The blocker is the SCAFFOLD, not
-  // the class, and it is the same blocker `Win` has.
-
+  // Slot 1 queries the owning GraphicWin, or null for a plain Buffer.
+  // load_pcx dispatches resize through the returned window's slot 3.
+  virtual GraphicWin *get_graphic_win();
 
   void clear_links();
   int set_font(Font *font1, Font *font2, Font *font3, Font *font4);
@@ -288,7 +274,7 @@ class Buffer {
   // and the two claims in buffer.cpp have nothing to measure.
   MEASURED HDC get_hdc() {
       if (locked_bits_ != 0) {
-          surface_lost();
+          get_graphic_win();
       }
       IDirectDrawSurface *const surface = surface_;
       // Without a surface the buffer owns its context directly, so acquiring is
@@ -303,7 +289,7 @@ class Buffer {
           return hdc2_;
       }
       if (surface->GetDC(&hdc2_) != 0) {
-          surface_lost();
+          get_graphic_win();
       }
       ++hdc_lock_count_;
       return hdc2_;
@@ -328,7 +314,7 @@ class Buffer {
       }
       if (hdc_lock_count_ <= 0) {
           if (surface_->ReleaseDC(hdc2_) != 0) {
-              surface_lost();
+              get_graphic_win();
           }
           hdc_lock_count_ = 0;
           hdc2_ = nullptr;
@@ -842,4 +828,3 @@ void __cdecl buffer_close_class_redirect();
 // the original ends `mov eax, edi` at 0x005DCE18, handing back the advanced
 // pen position, which is why the scalar writers return the incoming x when
 // they emit nothing.
-
