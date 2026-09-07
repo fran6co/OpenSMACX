@@ -1,0 +1,26 @@
+{
+  "event_id": "7d4111b6ecf4dd643a9f428ae795d5930975cdde4912ad2c349fac2abdcf2b96",
+  "payload": {
+    "affects": [
+      "entity-0eda974ff26d0e119f3cbc3f0c873b994258d730236b42f00789c65fdbcb4b9b",
+      "entity-8322586b563650809e7a0d9cce94ef9c5eeaae5b540fc8fb6b17d7e65202188a",
+      "entity-c6fb34b500edd3876214cc76d777186d6460ee536cc9afc0923bc7eb721a1b57"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "graphicwin-event-overrides",
+    "evidence": [
+      "source:src/pushbutton.h:original Win-side table start 0x00670C60; its original extent remains unknown",
+      "source:src/unrecovered/005d6210.cpp:GraphicWin on_size original mapping",
+      "source:src/unrecovered/005d5cf0.cpp:GraphicWin on_paint original mapping and provisional return type",
+      "source:src/recovered/units/005d6330.cpp:GraphicWin on_set_cursor original mapping and historical obligation",
+      "source:src/graphicwin.h:these overrides are absent; validate the positional table observations against event callers before changing the hierarchy"
+    ],
+    "hypothesis": "GraphicWin is missing real event overrides for on_size, on_paint and on_set_cursor. Recover the coupled base/derived declarations and implementations from original evidence; inherited Win behavior is not a substitute, and the catalogue return types remain hypotheses.",
+    "kind": "discovery"
+  },
+  "previous_event": "a351f147d3f74ce10937a55885dca52ff12a639661ca785ad0870eca0ac5b621",
+  "request_id": "graphicwin-event-overrides",
+  "schema_version": 1,
+  "sequence": 16,
+  "stream": "task:infowin-ownership"
+}

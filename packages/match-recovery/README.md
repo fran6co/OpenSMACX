@@ -298,6 +298,20 @@ or prove structure; use the strict comparison APIs for those obligations.
 CodeView 5 and MSVC PE/COFF table verification, with unsupported cases explicit.
 No compiler installation, executable location or flag policy is selected there.
 
+Generated-table reports include a capped, position-based `diagnostic`: emitted
+slot symbols, candidate addends applied to explicit source bindings, original
+words, original relocation presence and reverse source-symbol correlations.
+The first 128 emitted entries are shown, with omissions counted; that limit
+never narrows full-table verification. A declared extent prevents diagnostic
+reads beyond it. An unknown extent stays unknown: words following the start may
+belong to another object, and emitted length cannot supply the original bound.
+Neither word agreement nor an old wrapper name automatically resolves a target.
+COFF weak-external fallbacks expose their search mode but still require link
+selection evidence. These observations reach task checks and variant decks without
+a project-specific table probe. They are disposable diagnostics, not new source
+annotations or acceptance claims. Independently bounded tables still require
+complete four-byte slots and strict whole-table byte/reference agreement.
+
 All public recovery commands, including `inventory`, `partition`, `components`
 and task commands, belong to this package. `inventory` and `partition` run
 natively when `recovery/project.json` supplies a `source` section. No local Python

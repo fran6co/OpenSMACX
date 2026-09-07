@@ -156,6 +156,13 @@ bindings, including STATIC functions and labels within a mapped COMDAT. Missing
 targets remain unknown; an address is never inferred from the operand being
 verified. Exact COFF symbol selection is required, with no spelling fallback.
 
+The native generated-table report now exposes positional entry diagnostics even
+when the original extent is unknown. Inspect the emitted symbol, source target,
+original word and any weak-external fallback to distinguish a missing method
+binding from a linker-selection dependency. Reverse source-name correlations are
+hints only. Do not turn emitted table size, an adjacent plausible pointer run or
+matching observed entries into an original extent or a passing table claim.
+
 Original extents remain authoritative. The comparator permits only NOP/INT3
 alignment fill after a recorded extent, according to the object's alignment; it
 does not expand an original span to include extra code or a candidate jump table.

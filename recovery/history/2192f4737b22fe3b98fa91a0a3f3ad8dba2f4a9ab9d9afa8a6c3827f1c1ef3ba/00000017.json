@@ -1,0 +1,25 @@
+{
+  "event_id": "28cd0e280fd830a15868f7a8cf93d6ba9bcac76a6ea2ec53672690ea54eb0f1a",
+  "payload": {
+    "affects": [
+      "entity-0d663d1ff3b75f8c877540672a984d089999e317e57f86b9679a49175b9b5312",
+      "entity-3bd83f1392b9d9755438a48f2bc9f9b22e4d087a1c89604d59b705fe135dd79b",
+      "entity-46c5f3c0986932f8c28e494b5865ac2f4090898d9ae8a3676f3199d51617c49f"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "pushbutton-generated-delete-linkage",
+    "evidence": [
+      "source:src/deleting_thunks.cpp:0x0062C830 scalar_delete_push_button maps the original scalar deleting destructor to a handwritten wrapper",
+      "source:src/gamma.cpp:real PushButton destructor and compiler-generated secondary-base deleting adjustor mapping at 0x0062C850",
+      "source:src/pushbutton.h:generated primary and secondary table identities; original table extents remain unknown",
+      "source:recovery/project.json:reproduce both configured compiler trials and inspect generated-table weak-external diagnostics; do not combine partial proof dimensions across trials"
+    ],
+    "hypothesis": "Replace the handwritten PushButton scalar deleting-destructor wrapper with its compiler-generated definition while preserving the original mapping and historical obligation. The table and secondary-base adjustor reference a weak vector-deleting name; establish actual linker selection and the operator-delete runtime binding instead of assuming the weak fallback is selected or aliasing it to force a match.",
+    "kind": "discovery"
+  },
+  "previous_event": "7d4111b6ecf4dd643a9f428ae795d5930975cdde4912ad2c349fac2abdcf2b96",
+  "request_id": "pushbutton-generated-delete-linkage",
+  "schema_version": 1,
+  "sequence": 17,
+  "stream": "task:infowin-ownership"
+}

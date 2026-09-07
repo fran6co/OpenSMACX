@@ -105,6 +105,15 @@ table/callers; a matching thunk alone does not establish the entire hierarchy.
 Restore mappings lost during earlier homing from their source history before
 trying to fix an unresolved reference by changing otherwise-correct C++.
 
+Read generated-table `diagnostic.entries` in the native binary check before
+writing a table probe. Positional target differences can expose missing overrides;
+reverse source-symbol correlations can expose stale wrapper bindings. Weak-external
+fallbacks need link-selection evidence, not a renamed annotation. If the original
+extent is unknown, every displayed word remains a positional observation; it may
+belong to a neighboring object. Establish bounds and source bindings independently,
+and preserve cross-class findings as discoveries rather than declaring the table
+verified from its observed prefix.
+
 ## 4. Run, discover, and expand
 
 With local worker/reviewer command configurations, use

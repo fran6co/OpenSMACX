@@ -1,9 +1,10 @@
-"""Bounds-checked i386 PE/COFF inputs for the VC6 target adapter.
+"""Bounds-checked i386 PE/COFF inputs for binary verification.
 
 Format reference: https://learn.microsoft.com/en-us/windows/win32/debug/pe-format
 Unsupported relocation/section forms are refused, never silently masked.
 """
 
+from bisect import bisect_left
 from dataclasses import dataclass
 import hashlib
 import struct
@@ -30,6 +31,21 @@ class Symbol:
     section: int
     type: int
     storage: int
+
+
+def weak_external(obj, symbol: Symbol) -> tuple[Symbol, int]:
+    """Decode a COFF fallback edge, without selecting its link-time definition.
+
+    Microsoft PE/COFF, Auxiliary Format 3: Weak Externals. Search modes 1/2/3
+    mean no-library/library/alias; this metadata is not a source-image binding.
+    """
+    raw = getattr(obj, "auxiliary", {}).get(symbol.index, b"")
+    if symbol.storage != 105 or symbol.section != 0 or symbol.value != 0 or len(raw) != 18 or any(raw[8:]):
+        raise ValueError("unsupported COFF weak-external metadata")
+    target, mode = _unpack("<II", raw, 0)
+    if target not in obj.symbols or mode not in (1, 2, 3):
+        raise ValueError("invalid COFF weak-external target or search mode")
+    return obj.symbols[target], mode
 
 
 @dataclass(frozen=True)
@@ -229,6 +245,7 @@ class PeImage:
                         sites.add(site)
                     at += block_size
                 self.relocations = frozenset(sites)
+        self._relocation_sites = tuple(sorted(self.relocations))
 
     def read(self, span: Span) -> bytes:
         matches = [(region, offset, size) for region, offset, size in self.sections
@@ -239,7 +256,12 @@ class PeImage:
         return _slice(self.data, offset + span.start - region.start, span.end - span.start)
 
     def absolute_sites(self, span: Span) -> frozenset[int]:
-        sites = {site for site in self.relocations if site < span.end and site + 4 > span.start}
+        # Include sites beginning before the span when their four-byte operand
+        # overlaps it. Table diagnostics query individual words, so rescanning
+        # the entire image's relocation set for every slot is needlessly costly.
+        left = bisect_left(self._relocation_sites, span.start - 3)
+        right = bisect_left(self._relocation_sites, span.end)
+        sites = self._relocation_sites[left:right]
         if any(not span.start <= site <= span.end - 4 for site in sites):
             raise ValueError("original span cuts through a relocation")
         return frozenset(site - span.start for site in sites)

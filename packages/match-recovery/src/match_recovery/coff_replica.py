@@ -8,6 +8,7 @@ not turn a candidate's successful compilation into a recovery claim.
 import struct
 
 from .model import digest
+from .pe_coff import weak_external
 
 
 def _section_keys(obj, overrides=None):
@@ -64,12 +65,8 @@ def _object_evidence(obj, *, excluded=frozenset(), section_keys=None, entry_name
         if not raw:
             return ("none",)
         if symbol.storage == 105:
-            if len(raw) != 18 or any(raw[8:]):
-                raise ValueError("unsupported weak-external replica metadata")
-            target, mode = struct.unpack_from("<II", raw)
-            if target not in obj.symbols or mode not in (1, 2, 3):
-                raise ValueError("invalid weak-external replica metadata")
-            return ("weak", symbol_key(obj.symbols[target]), mode)
+            target, mode = weak_external(obj, symbol)
+            return ("weak", symbol_key(target), mode)
         if symbol.section > 0 and symbol.storage == 3 and symbol.type == 0 and symbol.name == obj.sections[symbol.section - 1].name:
             # Coff already validates this section-definition auxiliary record.
             length, relocs, lines, checksum, parent, selection = struct.unpack_from("<IHHIHB", raw)

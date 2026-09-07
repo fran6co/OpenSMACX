@@ -186,6 +186,21 @@ def test_pe_requires_pin_and_does_not_read_beyond_declared_backing():
         image.absolute_sites(Span(0x401002, 0x401006))
 
 
+@pytest.mark.parametrize("absolute_site", [None, 0, 1, 4, 15])
+def test_pe_relocation_index_preserves_every_overlap_boundary(absolute_site):
+    raw = pe_fixture(absolute_site=absolute_site)
+    image = PeImage(raw, hashlib.sha256(raw).hexdigest())
+    for start in range(0x400FFC, 0x401018):
+        for length in range(1, 10):
+            span = Span(start, start + length)
+            sites = {site for site in image.relocations if site < span.end and site + 4 > span.start}
+            if any(not span.start <= site <= span.end - 4 for site in sites):
+                with pytest.raises(ValueError, match="cuts through"):
+                    image.absolute_sites(span)
+            else:
+                assert image.absolute_sites(span) == frozenset(site - span.start for site in sites)
+
+
 def component_fixture(raw):
     origin = Origin(hashlib.sha256(raw).hexdigest(), "pe:va", 0x401000)
     return VendorManifest(Component("fixture", Ownership.THIRD_PARTY, Delivery.UPSTREAM_SOURCE,

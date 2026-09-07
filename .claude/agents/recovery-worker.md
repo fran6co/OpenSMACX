@@ -41,6 +41,12 @@ an old claim missing from current source still needs restoration. Unknown
 references or unsupported structural proof are not permitted byte regressions.
 Use `tasks check-restoration` to remeasure; `tasks obligations` only inventories.
 
+In `candidate.checks.binary.generated_tables`, inspect `diagnostic.entries` for
+missing overrides, unresolved source targets and linker-dependent weak symbols.
+Reverse source-name correlations are hints, not bindings. Matching observed words
+do not prove a table's extent; never infer that extent from the candidate size or
+substitute a weak symbol's fallback without link-selection evidence.
+
 Also read `check.build_check`: the driver performs a fresh configured full build
 each round. A passing scoped byte result (`check.recovery_result`) cannot excuse
 a link failure. Repair authorized build defects, or report the dependency/scope
