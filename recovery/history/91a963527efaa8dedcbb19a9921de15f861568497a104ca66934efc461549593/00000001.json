@@ -1,0 +1,21 @@
+{
+  "event_id": "99523314a1d41a63f8dbfdf4ef607de3a7b072763f902770a18e669cfac6586b",
+  "payload": {
+    "affects": [
+      "entity-b3c9b1a959cafb4c8d3719a004718802d52bb5174aa18c0bd3ecf49f9db48dfb"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "checkbox-draw-state-argument",
+    "evidence": [
+      "original:0x0060F030 allocates 0x24 locals plus four saved registers; 0x0060F3DE reads esp+0x3C (entry esp+8, second argument), then selects +0x14 when nonzero and +0x10 when zero",
+      "seed:src/unrecovered/0060f030.cpp assigns local_8 from width/position arithmetic but later uses it for sprite selection; current source member bindings preserve the independently checked pointer interpretation"
+    ],
+    "hypothesis": "The CheckBox draw_item seed selects sprites using local_8 geometry instead of the original second state argument; recover the branch from original stack dataflow before promoting this seed.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "checkbox-draw-state-argument",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:control-sprite-defaults"
+}

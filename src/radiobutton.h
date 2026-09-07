@@ -27,38 +27,9 @@ extern Sprite g_RADIOBUTTON_SPRITE_2;
 #include "graphicwin.h"
 
 
- /*
-  * RadioButton class
-  *
-  * Virtually derives from GraphicWin, so the base is held as a member at the
-  * offset MSVC's vbtable names rather than written as `: virtual GraphicWin` -
-  * the Itanium ABI this toolchain follows would place it after the derived
-  * object instead. The vbtable at 0x00670590 reads {0, 0x18, 0xA30}, and
-  * close() resolves both of its calls through exactly those two entries.
-  *
-  * A Dialog follows the base at 0xA30, four bytes past where the base ends.
-  * Nothing pins this sizeof: no method touches past the Dialog, but unlike
-  * MapWin and Console there is no global instance to bound the object from
-  * above, and "nothing touches it" would not notice a trailing field that is
-  * never used.
-  *
-  *   * MEASURED under VC6 12.00.8168, and the conclusion is OPEN, not closed.
-  * `: virtual GraphicWin, virtual Dialog` gives 0xB4C against the 0xB54 this
-  * class needs, and adding a virtual function to the DERIVED class gives
-  * 0xB50 - that +4 is its own vfptr. An earlier note here blamed vtordisp
-  * fields; that was WRONG and is withdrawn. A probe settles it: two bases
-  * with a virtual destructor grow 0x10 -> 0x14 EACH, and the derived total
-  * moves 0x34 -> 0x3C, so the missing 8 bytes are the two BASES' own vtable
-  * pointers, not a displacement.
-  *
-  * Which means the conversion is probably reachable and is blocked on
-  * something specific: GraphicWin and Dialog model their vtable as an opaque
-  * dword the original installs by hand, so neither declares a virtual. Giving
-  * them real virtual destructors is a coupled edit - the compiler then emits
-  * the vfptr, so the modelled dword has to come out in the same change - and
-  * `sizeof(GraphicWin) == 0xA14` is the check that would catch it going wrong.
-  * Do NOT read this paragraph as "cannot be done".
-  */
+// The original vbtable at 0x00670590 describes GraphicWin at +0x18 and
+// Dialog at +0xA30. VC6 owns the virtual-base setup; no embedded substitutes
+// or hand-installed table fields belong in the declaration.
 class RadioButton : public virtual GraphicWin, public virtual Dialog {
  public:
   // 0x0060E220, a pending_bodies forwarder.
@@ -96,12 +67,8 @@ class RadioButton : public virtual GraphicWin, public virtual Dialog {
   // ::calculate_dimensions (0x006132A0) tail-calls it for kind 0x10 - the
   // access costs nothing and the definition stays where it is.
   int calculate_dimensions();
-  // ??0RadioButton@@QAE@H@Z at 0x0060D0E0. The `int` is NOT a user
-  // parameter - RadioButton's layout is composed by hand (see the class
-  // comment above), so VC6 cannot inject the most-derived flag the way it
-  // would for a real `: virtual GraphicWin, virtual Dialog` declaration;
-  // this constructor takes an explicit flag instead and mirrors what the
-  // image's own guard does with it.
+  // The catalogue's @H@Z at 0x0060D0E0 describes VC6's hidden most-derived
+  // flag, not a source parameter. The emitted symbol is mapped in the TU.
   RadioButton();
   // VIRTUAL, and that is what earns the vtordisp. A displacement is emitted
   // for a virtual base only when the derived class OVERRIDES one of its
@@ -112,18 +79,17 @@ class RadioButton : public virtual GraphicWin, public virtual Dialog {
   uint32_t close();
 
  public:
-  // PUBLIC, like field_10_ below: Popup::on_post_window_init zeroes field_4_
-  // and field_8_ straight into the Dialogs subobject (0x2218/0x221c, i.e.
-  // RadioButton+4 and +8) with no call in between, so the access has to be
-  // spelled from outside the class. Access is compile-time only; the
-  // declaration ORDER - field_4_, field_8_, then the private field_C_ - is
-  // the layout and is unchanged.
-  uint32_t field_4_;  // 0x0004
-  uint32_t field_8_;
+  // draw_item selects +8 for a nonzero state argument and +4 for zero
+  // (0x0060DAE8-0x0060DB77), then calls Sprite::draw on that receiver.
+  // Popup::on_post_window_init clears both to suppress the sprite pair.
+  // RECOVERY_MEMBER: v3 RadioButton unchecked_sprite_ Sprite* 0x4 0x0060D750
+  Sprite *unchecked_sprite_;
+  // RECOVERY_MEMBER: v3 RadioButton checked_sprite_ Sprite* 0x8 0x0060D750
+  Sprite *checked_sprite_;
  private:
   uint32_t field_C_;
  public:
-  // PUBLIC, like CheckBox::field_10_ for DipEdit::init: BasePop
+  // PUBLIC, like CheckBox's sprite pointers for DipEdit::init: BasePop
   // ::calculate_dimensions installs the popup's double-click handler straight
   // into it (Dialogs+0x2224, the push-button kind's notification slot) with
   // no call in between, so the access has to be spelled from outside the
@@ -137,28 +103,20 @@ class RadioButton : public virtual GraphicWin, public virtual Dialog {
   // assertion alone cannot pin a two-virtual-base layout.
 };
 
-// PINNED BEFORE CHANGING THE DECLARATION, so that replacing the hand-composed
-// vbtable pointer and embedded subobjects with a real
-// `: public virtual GraphicWin, public virtual Dialog` cannot move the layout
-// without failing here. 0x18 of own data, then GraphicWin 0xA14, then the
-// 4-byte vtordisp this header already carries as a gap, then Dialog 0xF4.
+// Complete-object extent: own data and compiler displacement to +0x18,
+// GraphicWin (0xA14), another compiler displacement, then Dialog (0xF4).
+// Extent alone does not verify base offsets or virtual dispatch.
 static_assert(sizeof(RadioButton) == 0xB24,
               "RadioButton layout must match the original executable");
 
-// RadioButton's Dialog::close is not recovered yet.
-extern uint32_t RadioButtonDefault1;
-extern uint32_t RadioButtonDefault2;
+// Rebindable defaults, backed by original pointer-cell bindings in the TU.
+extern Sprite *RadioButtonDefault1;
+extern Sprite *RadioButtonDefault2;
 
 
-// ??1RadioButton@@QAE@H@Z at 0x00406F60 - the DESTRUCTOR entry that also
-// conditionally frees the storage. C++ forbids a user-declared destructor
-// from taking a parameter (that spelling is reserved for the compiler's own
-// virtual-base-destroy flag, and RadioButton cannot get VC6 to synthesise
-// one - see the constructor's own note above), so this is an ordinary
-// __fastcall free function with the same (adjusted-this, unused, mode) shape
-// dialogs_scalar_dtor_redirect (src/dialogs.cpp) already uses for the
-// identical situation on a real `??_G` scalar deleting destructor. Entered
-// on `this - 0x18` (the GraphicWin-subobject-adjusted pointer), matching
-// close()'s own vbtable-relative arithmetic.
+// Unfinished teardown adapter for 0x00406F60, entered on the GraphicWin
+// subobject at +0x18. Its explicit teardown and optional deletion still need
+// recovery as compiler-owned destruction; the catalogue signature is not a
+// reason to preserve this shim or to add a source-level destructor parameter.
 RadioButton *__fastcall radio_button_teardown_redirect(void *adjusted, void *,
                                                         unsigned int mode);

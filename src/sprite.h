@@ -205,6 +205,9 @@ extern Sprite g_TER1_BUNKER_SPRITE;                   // 0x007AD010
 extern Sprite g_TER1_AIRBASE_SPRITE;                  // 0x007ACC60
 extern Sprite g_TER1_SENSOR_ARRAY_SPRITE;             // 0x007A6830
 
+// Shared interface choices: DipEdit uses elements 1 and 2 for its checkboxes.
+extern Sprite g_IFACE_CLOSE_X_SPRITES[3];
+
 // Running total of Sprite-owned bytes. The constructor adds one object; the
 // release paths subtract the object plus its pixel buffer. The image holds
 // the counter in .bss at 0x009B6618 - zero at load - so the tree owns it as

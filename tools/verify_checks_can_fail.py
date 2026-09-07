@@ -140,6 +140,16 @@ CASES = [
     # against the image's 9. This asserts the compare can still fail: strip
     # the initialiser off a value restored from the image and the census must
     # notice, which it cannot do if it ever stops reading the image's bytes.
+    ("bounded pointer initial value",
+     "FAILED: original initial data",
+     lambda: _patch("src/radiobutton.cpp",
+                    "Sprite *RadioButtonDefault1 = &g_RADIOBUTTON_SPRITE_1;",
+                    "Sprite *RadioButtonDefault1 = 0;")),
+    ("bounded pointer target",
+     "FAILED: original initial data",
+     lambda: _patch("src/radiobutton.cpp",
+                    "Sprite *RadioButtonDefault1 = &g_RADIOBUTTON_SPRITE_1;",
+                    "Sprite *RadioButtonDefault1 = &g_RADIOBUTTON_SPRITE_2;")),
     ("dropped initial value",
      "DROPPED INITIAL VALUES GREW",
      lambda: _patch("src/sprite.cpp", "SpriteDrawOriginX = 1;",

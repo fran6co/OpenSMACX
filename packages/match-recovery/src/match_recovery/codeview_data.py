@@ -9,6 +9,19 @@ This observes compiler storage extent, not original extent or C++ lifetime.
 from .codeview import Cursor, _type_records, _unqualified_type
 
 
+def _class_record(leaf, record):
+    cursor = Cursor(record.data[2:])
+    count, properties, field = cursor.number("<H"), cursor.number("<H"), cursor.number("<I")
+    derived, shape = (cursor.number("<I"), cursor.number("<I")) if leaf != 0x1006 else (0, 0)
+    size, name = cursor.numeric(), cursor.name()
+    cursor.padding()
+    if cursor.at != len(cursor.data) or not name:
+        raise ValueError("unsupported CodeView class storage record")
+    if properties & 0x80 and any((count, field, derived, shape, size)):
+        raise ValueError("inconsistent CodeView forward storage record")
+    return properties, field, size, name
+
+
 def storage_size(index, records, seen=frozenset()):
     index = _unqualified_type(index, records)
     if index is None or index in seen or len(seen) >= 32:
@@ -44,14 +57,26 @@ def storage_size(index, records, seen=frozenset()):
         if not subscript or size <= 0 or size % width:
             raise ValueError("invalid CodeView array storage extent")
     elif leaf in (0x1004, 0x1005, 0x1006):  # class, struct, union
-        cursor.take(2)  # field count
-        properties, field = cursor.number("<H"), cursor.number("<I")
-        if leaf != 0x1006:
-            cursor.take(8)  # derived list, vshape
-        size, _ = cursor.numeric(), cursor.name()
-        if (properties & 0x80 or size <= 0 or (field and
+        properties, field, size, name = _class_record(leaf, record)
+        if properties & 0x80:
+            # CodeView identifies a forward UDT by its qualified name. Resolve
+            # only one complete same-kind record in this standalone stream;
+            # never borrow another TU's definition or vote among layouts.
+            # https://lists.llvm.org/pipermail/llvm-dev/2015-October/091847.html
+            complete = []
+            for candidate, (kind, other) in enumerate(records):
+                if kind != leaf:
+                    continue
+                options, _, _, other_name = _class_record(kind, other)
+                if not options & 0x80 and other_name == name:
+                    complete.append(candidate + 0x1000)
+            if len(complete) != 1:
+                raise ValueError("requires one complete CodeView forward storage definition")
+            return storage_size(complete[0], records, seen | {index})
+        if (size <= 0 or (field and
                 (not 0 <= field - 0x1000 < len(records) or records[field - 0x1000][0] != 0x1203))):
             raise ValueError("requires complete CodeView object storage definition")
+        return size
     elif leaf == 0x1007:  # enum: its underlying type determines storage
         cursor.take(4)  # count, properties
         target, field = cursor.number("<I"), cursor.number("<I")

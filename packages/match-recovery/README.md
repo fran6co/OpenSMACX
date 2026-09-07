@@ -318,6 +318,9 @@ retains historical review requirements on the evidence anchor's task.
 The PE/COFF backend uses standalone CodeView data records to measure candidate
 widths, tying the exact emitted symbol to its debug record with SECTION/SECREL
 relocations. It does not guess sizes from C++ spelling or neighboring symbols.
+Forward class/struct/union storage records require one complete same-kind,
+qualified-name definition in that standalone stream; missing or ambiguous
+definitions remain unknown, and no other TU supplies a substitute layout.
 The configured `layout_flags` request the compiler's supported standalone debug
 metadata. Initial bytes include virtual zero fill, but exclude executable sections.
 Pointer slots require the correct source-bound targets and original relocation

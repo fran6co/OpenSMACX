@@ -1298,10 +1298,8 @@ int __cdecl pop_ask_number(char *label, int (__cdecl *callback)()) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005F0580 0x005F05D0 0x005F0610
 //
-// Scaffold preamble stripped by hand 2026-09-06. The two zeroed dwords are the
-// push-button kind's state inside the RadioButton subobject of dialogs_
-// (0x2218 / 0x221c, i.e. RadioButton+4 and +8), spelled through the member the
-// way BasePop::calculate_dimensions spells its write into field_10_.
+// Clear the RadioButton subobject's sprite pair at 0x2218 / 0x221c so this
+// popup draws without those icons; these are pointers, not integer flags.
 // TRIED: the image reads field_30B0_ (0x30b0) and `test`s it immediately
 //   before the closing `call set_bottom_border_thickness(0)`, with no branch
 //   anywhere near - a load and a flag store whose result nothing reads. Two
@@ -1313,8 +1311,8 @@ int __cdecl pop_ask_number(char *label, int (__cdecl *callback)()) {
 void Popup::on_post_window_init() {
     if (external_window_ == 0
         && static_cast<int>(field_30AC_) / 10000 != 1000) {
-        dialogs_.RadioButton::field_4_ = 0;
-        dialogs_.RadioButton::field_8_ = 0;
+        dialogs_.RadioButton::unchecked_sprite_ = 0;
+        dialogs_.RadioButton::checked_sprite_ = 0;
         set_border_thickness(0);
         set_caption_height(0);
         if (owned_text_ != 0) {

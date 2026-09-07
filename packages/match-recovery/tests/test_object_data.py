@@ -161,3 +161,19 @@ def test_initializer_dependency_selection_ignores_other_data_and_function_refere
     assert referenced_initial_object_units((binding,), (binding, target), {binding.unit: obj}) == frozenset({target.unit})
     unbounded = replace(binding, span=None, evidence=None)
     assert referenced_initial_object_units((unbounded,), (unbounded, target), {binding.unit: obj}) == frozenset()
+
+
+@pytest.mark.parametrize("damage", [None, "missing", "duplicate", "other_namespace", "other_kind", "malformed_forward"])
+def test_class_array_resolves_only_one_complete_same_stream_type(damage):
+    forward = record(0x1004, struct.pack("<HHIIIH", 0, 0x80, 0, 0, 0,
+                                      4 if damage == "malformed_forward" else 0) + b"\x06A::Box")
+    fields = record(0x1203, struct.pack("<HHIH", 0x1405, 0, 0x74, 0) + b"\x01n")
+    name = b"B::Box" if damage == "other_namespace" else b"A::Box"
+    definition = record(0x1005 if damage == "other_kind" else 0x1004,
+                        struct.pack("<HHIIIH", 1, 0, 0x1001, 0, 0, 4) + bytes([len(name)]) + name)
+    if damage == "missing":
+        definition = record(0x1001, struct.pack("<IH", 0x74, 0))
+    array = record(0x1003, struct.pack("<IIH", 0x1000, 0x74, 12) + b"\0")
+    types = forward + fields + definition + array + (definition if damage == "duplicate" else b"")
+    obj = Coff(data_fixture(bytes(12), type_index=0x1003, types=types))
+    assert proof(bytes(12), obj)["content"] == ("pass" if damage is None else "unknown")

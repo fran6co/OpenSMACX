@@ -38,7 +38,7 @@ DEFINITION = re.compile(
 SCALARS = {"int", "unsigned int", "long", "unsigned long", "uint32_t",
            "int32_t", "short", "uint16_t", "bool", "size_t", "DWORD"}
 
-CEILING = 4
+CEILING = 0
 NEUTRAL = {"0", "nullptr", "NULL", "{}", "{0}", "0u", "false"}
 
 

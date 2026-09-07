@@ -21,22 +21,16 @@
 #include "vtable_shim.h"
 #include "win.h"  // WinCallbackWindow
 
-uint32_t RadioButtonDefault1;  // 0x006970F0
-uint32_t RadioButtonDefault2;  // 0x006970F4
+// The constructor loads these rebindable pointer cells, not sprite contents.
+// init_class passes their original targets to Sprite::extract.
+// RECOVERY_OBJECT: v2 0x006970F0 0x006970F4 ?RadioButtonDefault1@@3PAVSprite@@A 0x0060D0E0
+Sprite *RadioButtonDefault1 = &g_RADIOBUTTON_SPRITE_1;
+// RECOVERY_OBJECT: v2 0x006970F4 0x006970F8 ?RadioButtonDefault2@@3PAVSprite@@A 0x0060D0E0
+Sprite *RadioButtonDefault2 = &g_RADIOBUTTON_SPRITE_2;
 
 /*
-Purpose: Compose a RadioButton from its two base-shaped subobjects
-         (GraphicWin, Dialog - both constructed only when most-derived),
-         install this class's own vtable/vtordisp values into the object's
-         vbtable-named slots, and reset the two state fields.
-
-         `a1` is the compiler's most-derived flag in the image
-         (??0RadioButton@@QAE@H@Z): nonzero means construct the two bases
-         AND set the object's own vbtable pointer, zero means skip both and
-         go straight to installing this class's own tables - the same "am I
-         the most-derived object" guard ListBox's constructor uses. This
-         class cannot let VC6 synthesise that flag (see the class comment in
-         radiobutton.h), so it is modelled as an explicit parameter instead.
+Purpose: Construct the virtual bases through VC6's hidden most-derived flag,
+         clear this control's state, and install its default sprite pointers.
 // ORIGINAL: 0x0060D0E0 ??0RadioButton@@QAE@H@Z 0x0060D0E0-0x0060D1A2;0x00662F20-0x00662F44 BYTE_EXACT
 // symbol    ??0RadioButton@@QAE@XZ
 // size      230 bytes
@@ -49,16 +43,13 @@ Return Value: n/a
 Status: Complete
 */
 RadioButton::RadioButton() {
-    // THE COMPILER OWNS THE VIRTUAL-BASE SETUP, end to end: the implicit
-    // machinery builds both virtual bases (GraphicWin() and Dialog(), both
-    // real constructors now) under the most-derived flag and stages the
-    // derived tables. Strip-all direction: the image's five derived-stage
-    // stores remain unreproduced; the constructor is unclaimed either way.
+    // VC6 owns virtual-base construction and derived table setup under its
+    // hidden most-derived flag. The body initializes this class's own state.
 
     field_C_ = 0;
     field_10_ = 0;
-    field_8_ = RadioButtonDefault2;
-    field_4_ = RadioButtonDefault1;
+    checked_sprite_ = RadioButtonDefault2;
+    unchecked_sprite_ = RadioButtonDefault1;
 }
 
 /*
@@ -135,8 +126,8 @@ uint32_t RadioButton::close() {
     // subobjects.
     field_C_ = 0;
     field_10_ = 0;
-    field_8_ = RadioButtonDefault2;
-    field_4_ = RadioButtonDefault1;
+    checked_sprite_ = RadioButtonDefault2;
+    unchecked_sprite_ = RadioButtonDefault1;
     Dialog::close();
     return GraphicWin::close();
 }
@@ -260,7 +251,10 @@ Status: Complete
 */
 
 // ====================
+// Original receivers of Sprite::extract at 0x0060E56E / 0x0060E58C.
+// RECOVERY_OBJECT: v1 0x009B8EF8 ?g_RADIOBUTTON_SPRITE_1@@3VSprite@@A
 Sprite g_RADIOBUTTON_SPRITE_1;
+// RECOVERY_OBJECT: v1 0x009B8F28 ?g_RADIOBUTTON_SPRITE_2@@3VSprite@@A
 Sprite g_RADIOBUTTON_SPRITE_2;
 
 // ===== close_class: once-only teardown of the managed sprites =====

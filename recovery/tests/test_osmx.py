@@ -21,6 +21,7 @@ import osmx                                                  # noqa: E402
 
 runner = CliRunner()
 claim_coverage = osmx._claim_coverage
+initial_data_check = osmx._initial_data
 
 
 @pytest.fixture(autouse=True)
@@ -51,6 +52,8 @@ def project_audits(monkeypatch):
     Keep their exit codes controllable here so refusal propagation is tested.
     """
     failures = set()
+    monkeypatch.setattr(osmx, "_initial_data", lambda exe:
+                        {"result": "fail" if "check-data" in failures else "pass", "counts": {}})
     actual = subprocess.run
     def invoke(argv, *args, **kwargs):
         command = [str(word) for word in argv]
@@ -703,11 +706,30 @@ def test_json_is_only_json(claimed, monkeypatch):
 
 @pytest.mark.parametrize("audit", ["build", "compiler-work", "stale_references.py",
     "marker_symbols.py", "check-mappings", "class-debt", "storage",
-    "data_values.py", "check-source", "header_offsets.py"])
+    "data_values.py", "check-source", "header_offsets.py", "check-data"])
 def test_failed_project_audit_prevents_acceptance(claimed, monkeypatch, project_audits, audit):
     monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
     project_audits.add(audit)
     assert check(claimed).exit_code == 1
+
+
+@pytest.mark.parametrize("state,code", [("pass", 0), ("fail", 1), ("unknown", 3)])
+def test_initial_storage_verdict_is_independent_of_passing_function_claims(claimed, monkeypatch, state, code):
+    monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
+    monkeypatch.setattr(osmx, "_initial_data", lambda exe: {"result": state, "counts": {state: 2}})
+    result = check(claimed, "--json")
+    report = json.loads(result.stdout)
+    assert result.exit_code == code
+    assert report["initial_data"]["result"] == state
+    assert report["failed"]["initial_data"] == (state == "fail")
+
+
+def test_unavailable_native_data_evidence_is_unknown(monkeypatch, tmp_path):
+    from match_recovery import data_check
+    def unavailable(*args):
+        raise ValueError("missing source bounds")
+    monkeypatch.setattr(data_check, "check_data", unavailable)
+    assert initial_data_check(tmp_path / "image.exe")["result"] == "unknown"
 
 
 @pytest.mark.parametrize("report", ["", "not JSON", "{}", '{"audit":"wrong"}',

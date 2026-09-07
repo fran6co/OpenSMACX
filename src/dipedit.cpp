@@ -897,8 +897,8 @@ void DipEdit::init(int faction_index) {
     rect.right = width_ - 4;
     check_box_.close();
     check_box_.Dialog::init(&rect, 0);
-    check_box_.field_10_ = 0x779504;
-    check_box_.field_14_ = 0x779530;
+    check_box_.unchecked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[1];
+    check_box_.checked_sprite_ = &g_IFACE_CLOSE_X_SPRITES[2];
     check_box_.item(label_get(875), DTREATY_COMMLINK, 0);
     check_box_.item(label_get(646), DTREATY_VENDETTA, 0);
     check_box_.item(label_get(643), DTREATY_TRUCE, 0);

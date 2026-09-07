@@ -21,21 +21,16 @@
 #include "vtable_shim.h"
 #include "win.h"  // WinCallbackWindow
 
-uint32_t CheckBoxDefault1;  // 0x00697104
-uint32_t CheckBoxDefault2;  // 0x00697108
+// The constructor loads these rebindable pointer cells, not sprite contents.
+// init_class passes their original targets to Sprite::extract.
+// RECOVERY_OBJECT: v2 0x00697104 0x00697108 ?CheckBoxDefault1@@3PAVSprite@@A 0x0060E670
+Sprite *CheckBoxDefault1 = &g_CHECKBOX_SPRITE_1;
+// RECOVERY_OBJECT: v2 0x00697108 0x0069710C ?CheckBoxDefault2@@3PAVSprite@@A 0x0060E670
+Sprite *CheckBoxDefault2 = &g_CHECKBOX_SPRITE_2;
 
 /*
-Purpose: Compose a CheckBox from its two base-shaped subobjects (GraphicWin,
-         Dialog), install this class's own vtable/vtordisp values into the
-         object's vbtable-named slots, and reset the state fields.
-
-         `a1` is the compiler's most-derived flag in the image
-         (??0CheckBox@@QAE@H@Z): nonzero means construct the two bases,
-         zero means skip straight to installing this class's own tables -
-         the same "am I the most-derived object" guard ListBox's constructor
-         uses. This class cannot let VC6 synthesise that flag (see the class
-         comment in checkbox.h), so it is modelled as an explicit parameter
-         instead and the guard is written out by hand.
+Purpose: Construct the virtual bases through VC6's hidden most-derived flag,
+         clear this control's state, and install its default sprite pointers.
 // ORIGINAL: 0x0060E670 ??0CheckBox@@QAE@H@Z 0x0060E670-0x0060E735;0x00662F60-0x00662F84 BYTE_EXACT
 // symbol    ??0CheckBox@@QAE@XZ
 // MEASURED (per the coordinator's correction on constructor-vs-flag
@@ -57,19 +52,13 @@ Return Value: n/a
 Status: Complete
 */
 CheckBox::CheckBox() {
-    // THE COMPILER OWNS THE VIRTUAL-BASE SETUP, now end to end: with
-    // GraphicWin() and Dialog() both real constructors, the implicit
-    // machinery builds both virtual bases under the most-derived flag (the
-    // image's [ebp+8]), stages the derived tables, and constructs the
-    // members - everything the old body spelled by hand or through the
-    // construct() seams. Strip-all direction: the image's five derived-stage
-    // stores remain unreproduced (see batch 9); the constructor is
-    // unclaimed either way.
+    // VC6 owns virtual-base construction and derived table setup under its
+    // hidden most-derived flag. The body initializes this class's own state.
     field_4_ = 0;
     field_8_ = 0;
     field_C_ = 0;
-    field_14_ = CheckBoxDefault2;
-    field_10_ = CheckBoxDefault1;
+    checked_sprite_ = CheckBoxDefault2;
+    unchecked_sprite_ = CheckBoxDefault1;
 }
 // (The old CheckBox(int a1) spelling: `if (a1 != 0) { new (GraphicWin*)
 // GraphicWin(); Dialog::construct(); }` - both hand construction seams.)
@@ -125,8 +114,8 @@ CheckBox::~CheckBox() {
     field_4_ = 0;
     field_8_ = 0;
     field_C_ = 0;
-    field_14_ = CheckBoxDefault2;
-    field_10_ = CheckBoxDefault1;
+    checked_sprite_ = CheckBoxDefault2;
+    unchecked_sprite_ = CheckBoxDefault1;
 
     Dialog::close();
     GraphicWin::close();
@@ -170,8 +159,8 @@ uint32_t CheckBox::close() {
     field_4_ = 0;
     field_8_ = 0;
     field_C_ = 0;
-    field_14_ = CheckBoxDefault2;
-    field_10_ = CheckBoxDefault1;
+    checked_sprite_ = CheckBoxDefault2;
+    unchecked_sprite_ = CheckBoxDefault1;
     Dialog::close();
     return GraphicWin::close();
 }
@@ -487,7 +476,10 @@ int CheckBox::get_state_id(int id) {
 }
 
 // ====================
+// Original receivers of Sprite::extract at 0x0060FCFE / 0x0060FD1C.
+// RECOVERY_OBJECT: v1 0x009B8F60 ?g_CHECKBOX_SPRITE_1@@3VSprite@@A
 Sprite g_CHECKBOX_SPRITE_1;
+// RECOVERY_OBJECT: v1 0x009B8F90 ?g_CHECKBOX_SPRITE_2@@3VSprite@@A
 Sprite g_CHECKBOX_SPRITE_2;
 
 // ===== close_class: once-only teardown of the managed sprites =====

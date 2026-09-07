@@ -23,7 +23,7 @@ def test_vc6_initialization_uses_actual_widths_and_symbolic_pointer_targets(tmp_
     for name in ("CL", "_CL_", "VC6_INCLUDE"):
         monkeypatch.delenv(name, raising=False)
     source = tmp_path / "data.cpp"
-    source.write_text("struct Pixel { int value; };\nPixel image;\nPixel *selection = &image;\n"
+    source.write_text("struct Pixel { Pixel() : value(0) {} int value; };\nPixel image;\nPixel tiles[3];\nPixel *selection = &image;\n"
                       "int count = 7;\nchar narrow = 1;\nunsigned short small = 2;\nint array[3] = {1,2,3};\n"
                       "int get() { return count; }\n")
     wrapper = Path(__file__).resolve().parents[1] / "environment/wine.py"
@@ -32,7 +32,7 @@ def test_vc6_initialization_uses_actual_widths_and_symbolic_pointer_targets(tmp_
     obj = Coff(compile_object(source, command, flags))
     assert any(section.name == ".debug$S" and i + 1 in obj.associations for i, section in enumerate(obj.sections))
     names = {"?narrow@@3DA": 1, "?small@@3GA": 2, "?count@@3HA": 4, "?array@@3PAHA": 12,
-             "?image@@3UPixel@@A": 4, "?selection@@3PAUPixel@@A": 4}
+             "?image@@3UPixel@@A": 4, "?selection@@3PAUPixel@@A": 4, "?tiles@@3PAUPixel@@A": 12}
     assert {name: data_layout(obj, name)["size"] for name in names} == names
     raw = data_image(struct.pack("<I", 0x402000), absolute=0)
     pin = hashlib.sha256(raw).hexdigest()

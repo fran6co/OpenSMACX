@@ -1262,6 +1262,15 @@ def _image_pin(src: Path, exe: Path) -> str:
     return ""
 
 
+def _initial_data(exe):
+    """Use the native verifier during gate cutover; no local data checker/cache."""
+    from match_recovery.data_check import check_data
+    try:
+        return check_data(REPO_ROOT, exe)
+    except (OSError, ValueError) as error:
+        return {"result": "unknown", "counts": {}, "reason": str(error)}
+
+
 def _native_audit_result(outcome, name, label, required_rules=None):
     """Read package audit reports during gate cutover; never accept missing proof."""
     try:
@@ -1925,6 +1934,18 @@ def check(
                     fg=typer.colors.RED if offsets.returncode
                     else typer.colors.WHITE)
 
+    # Run after all build/symbol jobs have finished: native data measurement
+    # shares the project's compiler environment, not an independent Wine slot.
+    # Legacy trailing-address coverage remains in data_values until migrated.
+    initial_data = _initial_data(exe)
+    if not as_json:
+        typer.secho(f"  native initial data: {initial_data['result']}, "
+                    f"{json.dumps(initial_data['counts'], sort_keys=True)} (initial storage, not runtime lifetime)",
+                    fg=typer.colors.RED if initial_data["result"] == "fail" else
+                    typer.colors.YELLOW if initial_data["result"] == "unknown" else typer.colors.WHITE)
+        if "reason" in initial_data:
+            typer.echo("    " + initial_data["reason"])
+
     coverage = _claim_coverage(src)
     coverage_note = _claim_coverage_note(coverage)
     if not as_json:
@@ -1935,8 +1956,8 @@ def check(
             or vtables.returncode or stale.returncode or symbols.returncode
             or index.returncode or coverage["result"] == "fail" or debt.returncode
             or annotations.returncode or storage.returncode
-            or values.returncode
-            else 3 if unasked or coverage["result"] == "unknown" else 0)
+            or values.returncode or initial_data["result"] == "fail"
+            else 3 if unasked or coverage["result"] == "unknown" or initial_data["result"] == "unknown" else 0)
     # THE VERDICT GOES IN THE OUTPUT, not only in the exit code. The brief has
     # told agents for a long time never to pipe this to `tail`, because `cmd |
     # tail` reports TAIL's status and `echo $?` after it is always 0 - and an
@@ -1952,11 +1973,13 @@ def check(
                else "FAILED: the address index grew" if index.returncode
                else "FAILED: semantic debt grew" if debt.returncode
                else "FAILED: storage audit" if storage.returncode
+               else "FAILED: original initial data" if initial_data["result"] == "fail"
                else "FAILED: an annotation does not survive being rewritten"
                if annotations.returncode
                else "FAILED: historical claim identities are missing" if coverage["result"] == "fail"
                else "INCOMPLETE: claim identity coverage unavailable" if coverage["result"] == "unknown"
                else "FAILED: regressed, dangling or unread claims" if code == 1
+               else "INCOMPLETE: original initial data unverified (not green)" if initial_data["result"] == "unknown"
                else "INCOMPLETE: unverifiable claims present (not green)" if code == 3
                else "CLEAN")
 
@@ -1966,6 +1989,7 @@ def check(
             "exit_code": code,
             "verdict": verdict,
             "claim_identities": coverage,
+            "initial_data": initial_data,
             "failed": {
                 "link": bool(link.returncode),
                 "compiler_work": bool(vtables.returncode),
@@ -1976,6 +2000,7 @@ def check(
                 "annotation_identity": bool(annotations.returncode),
                 "storage": bool(storage.returncode),
                 "data_values": bool(values.returncode),
+                "initial_data": initial_data["result"] == "fail",
                 "header_offsets": bool(offsets.returncode),
                 "claim_identities": coverage["result"] == "fail",
                 "regressed": bool(regressed),

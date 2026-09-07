@@ -720,7 +720,11 @@ Sprite g_UNUSED_SPRITE_VAR17;  // 0x006A7400
 Sprite g_UNUSED_SPRITE_VAR19;  // 0x006A7460
 Sprite g_UNUSED_SPRITE_VAR12;  // 0x006A7310
 Sprite g_UNUSED_SPRITE_VAR07;  // 0x006A7220
-Sprite g_IFACE_CLOSE_X_SPRITES[3];  // 0x007794D8, 0x2c stride
+// Original CRT initializer 0x0044CCA0 constructs three 0x2C-byte Sprites;
+// 0x0044CCD0 destroys the same array. DipEdit::init references elements 1
+// and 2 at 0x00779504 / 0x00779530. Initial storage is separate from lifetime.
+// RECOVERY_OBJECT: v2 0x007794D8 0x0077955C ?g_IFACE_CLOSE_X_SPRITES@@3PAVSprite@@A 0x004DB080
+Sprite g_IFACE_CLOSE_X_SPRITES[3];
 Sprite g_IFACE_BOX_SPRITES1[51];  // 0x007AC290, 0x2c stride
 Sprite g_IFACE_BOX_SPRITES2[51];  // 0x0076DC98, 0x2c stride
 Sprite g_IFACE_BOX_SPRITES3[51];  // 0x0078AE58, 0x2c stride

@@ -204,6 +204,10 @@ changes. Existing v1 starts remain unbounded, and legacy trailing-address commen
 are not silently imported. Therefore this does not yet retire the old initial-value
 gate dependency: its complete source coverage still needs migration. Keep the
 old check until that coverage is replaced; neither command proves runtime lifetime.
+The production gate also calls the native data verifier after its build/symbol
+jobs finish, serializing compiler access. A data counterexample fails the gate;
+missing bounds or unavailable evidence keep it incomplete independently of the
+function claims. Its JSON includes the native report, not a second data ledger.
 
 The class-debt audit now uses the package's `cpp-model-v1` ruleset. The former
 project tool is removed, with all nine ceilings and per-file counts preserved.

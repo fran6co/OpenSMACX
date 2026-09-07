@@ -27,46 +27,12 @@ extern Sprite g_CHECKBOX_SPRITE_1;
 extern Sprite g_CHECKBOX_SPRITE_2;
 
 
- /*
-  * CheckBox class
-  *
-  * Virtually derives from GraphicWin, so the base is held as a member at the
-  * offset MSVC's vbtable names rather than written as `: virtual GraphicWin` -
-  * the Itanium ABI this toolchain follows would place it after the derived
-  * object instead. The vbtable at 0x00670718 reads {0, 0x1C, 0xA34}, and
-  * close() resolves both of its calls through exactly those two entries.
-  *
-  * A Dialog follows the base at 0xA34, four bytes past where the base ends.
-  * Nothing pins this sizeof: no method touches past the Dialog, but unlike
-  * MapWin and Console there is no global instance to bound the object from
-  * above, and "nothing touches it" would not notice a trailing field that is
-  * never used.
-  *
-  *   * MEASURED under VC6 12.00.8168, and the conclusion is OPEN, not closed.
-  * `: virtual GraphicWin, virtual Dialog` gives 0xB4C against the 0xB54 this
-  * class needs, and adding a virtual function to the DERIVED class gives
-  * 0xB50 - that +4 is its own vfptr. An earlier note here blamed vtordisp
-  * fields; that was WRONG and is withdrawn. A probe settles it: two bases
-  * with a virtual destructor grow 0x10 -> 0x14 EACH, and the derived total
-  * moves 0x34 -> 0x3C, so the missing 8 bytes are the two BASES' own vtable
-  * pointers, not a displacement.
-  *
-  * Which means the conversion is probably reachable and is blocked on
-  * something specific: GraphicWin and Dialog model their vtable as an opaque
-  * dword the original installs by hand, so neither declares a virtual. Giving
-  * them real virtual destructors is a coupled edit - the compiler then emits
-  * the vfptr, so the modelled dword has to come out in the same change - and
-  * `sizeof(GraphicWin) == 0xA14` is the check that would catch it going wrong.
-  * Do NOT read this paragraph as "cannot be done".
-  */
-// The bases are REAL: `: public virtual GraphicWin, public virtual Dialog`.
-// The vbtable pointer, both base constructions and the unwind are the
-// compiler's now. The 4 bytes that used to sit before the Dialog subobject are
-// its VTORDISP, which VC6 emits because this class overrides the virtual
-// `Dialog::close()` - a displacement is earned by overriding a NON-destructor
-// virtual, and nothing else forces it (measured 2026-08-22; /vd2 does not).
-// The displacement before GraphicWin stays a declared member, because the
-// image's own constructor writes that one by hand.
+// The original vbtable at 0x00670718 describes GraphicWin at +0x1C and
+// Dialog at +0xA34. VC6 owns the virtual-base setup and displacement fields;
+// no embedded substitutes or hand-installed table fields belong here.
+// The following experiment predates the current nonvirtual close() and
+// compiler-owned displacement fields; retain its caller-convention evidence,
+// not its superseded declaration prescription (see GraphicWin's declarations).
 // WHY EDITGROUP AND SPRITEBOX ARE NOT CONVERTED WITH THIS CLASS, measured
 // 2026-08-22. The displacement before the Dialog base is earned by overriding
 // a non-destructor virtual of it, and `close()` is the ONLY method these
@@ -122,12 +88,9 @@ class CheckBox : public virtual GraphicWin, public virtual Dialog {
   static int init_class();   // 0060FC60
   void on_mouse_leave(int a1, int a2);
   void on_dialog_focus(int a1);
-  // ??0CheckBox@@QAE@H@Z at 0x0060E670. The `int` is NOT a user parameter -
-  // CheckBox's layout is composed by hand (see the class comment above), so
-  // VC6 cannot inject the most-derived flag the way it would for a real
-  // `: virtual GraphicWin, virtual Dialog` declaration; this constructor
-  // takes an explicit flag instead and mirrors what the image's own guard
-  // does with it.
+  // The catalogue's @H@Z at 0x0060E670 describes VC6's hidden most-derived
+  // flag, not a source parameter. The emitted symbol is mapped in the TU.
+  // Historical rejected interpretation below; superseded by the real bases.
   // TRIED (re-checked 2026-08-22): declaring the real
   // `: public virtual GraphicWin, public virtual Dialog` and letting VC6
   // emit the vbtable and the base construction. It cannot produce this
@@ -176,20 +139,21 @@ class CheckBox : public virtual GraphicWin, public virtual Dialog {
   uint32_t field_4_;  // 0x0004
   uint32_t field_8_;
  public:
-  // PUBLIC, like field_10_ below: BasePop::calculate_dimensions installs the
+  // PUBLIC, like the sprites below: BasePop::calculate_dimensions installs the
   // popup's double-click handler straight into it (Dialogs+0x2234, the check
   // box kind's notification slot) with no call in between, so the access has
   // to be spelled from outside the class. Access is compile-time only; the
   // static_assert below pins the layout.
   uint32_t field_C_;
  public:
-  // PUBLIC, like Dialog's carved-out fields: DipEdit::init stores the two
-  // sprite-table addresses straight into them (`mov dword ptr [edi+0x10],
-  // 0x779504` and `[edi+0x14], 0x779530` at 0x004DB457/0x004DB45E) with no
-  // call in between, so the access has to be spelled from outside the class.
-  // Access is compile-time only; the static_assert below pins the layout.
-  uint32_t field_10_;
-  uint32_t field_14_;
+  // DipEdit::init substitutes the shared interface array's elements 1 and 2
+  // at 0x004DB457 / 0x004DB45E, so these pointers are caller-accessible.
+  // draw_item selects +0x14 for a nonzero state argument and +0x10 for
+  // zero (0x0060F3C8-0x0060F457), then calls Sprite::draw on that receiver.
+  // RECOVERY_MEMBER: v3 CheckBox unchecked_sprite_ Sprite* 0x10 0x0060F030
+  Sprite *unchecked_sprite_;
+  // RECOVERY_MEMBER: v3 CheckBox checked_sprite_ Sprite* 0x14 0x0060F030
+  Sprite *checked_sprite_;
  private:
   // The vbtable puts the base at 0x1C; the declared fields reach
   // 0x18, so 4 bytes sit between them.
@@ -211,7 +175,6 @@ class CheckBox : public virtual GraphicWin, public virtual Dialog {
 static_assert(sizeof(CheckBox) == 0xB28,
               "CheckBox layout must match the original executable");
 
-// CheckBox's Dialog::close is not recovered yet.
-extern uint32_t CheckBoxDefault1;
-extern uint32_t CheckBoxDefault2;
-
+// Rebindable defaults, backed by original pointer-cell bindings in the TU.
+extern Sprite *CheckBoxDefault1;
+extern Sprite *CheckBoxDefault2;
