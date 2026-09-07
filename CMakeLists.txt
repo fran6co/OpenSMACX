@@ -298,8 +298,10 @@ target_link_options(OpenSMACX PRIVATE
 # worse than none: gdb reads it without complaint and reports names for the
 # addresses of an older build. It costs under a second and reads only what the
 # link just wrote - the executable, the map, and the objects' CodeView.
+find_program(OPENSMACX_UV_EXECUTABLE NAMES uv REQUIRED)
 add_custom_command(TARGET OpenSMACX POST_BUILD
-    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tools/gdb_sidecar.py"
+    COMMAND "${OPENSMACX_UV_EXECUTABLE}" run --project "${CMAKE_CURRENT_SOURCE_DIR}"
+            python "${CMAKE_CURRENT_SOURCE_DIR}/tools/gdb_sidecar.py"
             --exe "$<TARGET_FILE:OpenSMACX>"
             --map "${CMAKE_CURRENT_BINARY_DIR}/OpenSMACX.map"
             --out "${CMAKE_CURRENT_BINARY_DIR}/OpenSMACX.sym"
@@ -370,4 +372,3 @@ install(TARGETS OpenSMACX
 # ---------------------------------------------------------------------------
 set(OPENSMACX_ROOT "${CMAKE_CURRENT_SOURCE_DIR}")
 set(OPENSMACX_BUILD_ROOT "${CMAKE_CURRENT_BINARY_DIR}")
-

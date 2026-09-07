@@ -34,6 +34,9 @@ the pinned tool dependencies, the interpreter named in `.python-version`, and
 the `match-recovery` package - and every tool runs through `uv run`, never a bare
 `python3`.
 
+The CMake post-link symbol generator also uses that project environment, so
+building does not require activating `.venv` or installing the package globally.
+
 The VC6 toolchain defaults in from `cmake/toolchains/vc6.cmake` - no
 `-DCMAKE_TOOLCHAIN_FILE` needed; pass one to override it and the default
 stands aside. One one-time step belongs to the VC6 install itself, not the
