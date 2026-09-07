@@ -30,20 +30,21 @@ include paths before changing output directories, and refuses ambiguous recipes
 or unsupported response/launcher forms. Only a missing recipe permits an explicit
 donor; malformed/conflicting recipes cannot silently borrow another file's flags.
 The compiler-neutral database reader is in the package and is also used by the
-mapping check. This consolidation does not migrate recording or full acceptance.
+mapping check. Full acceptance remains separate.
 
-The retained recorder and gate now use the package's shared per-TU measurement
+The native recorder and retained gate use the package's shared per-TU measurement
 engine. Pass a family's addresses together: the recorder groups them by source
 host, compiles each requested flag set once and reports actual compile/reuse
 counts. Its former per-function compile pool and the gate's duplicate ranking
 loop are removed. A later flag can still emit a missing subject, and a missing
 subject cannot erase its measured siblings. Candidate/marker changes and changed
 selected hosts after worker completion refuse publication. Whole-project
-freshness, source obligation writing and full acceptance still need cutover.
+freshness is checked by native recording; compact source obligations and full
+acceptance remain unfinished.
 The gate now uses the same span refusals and similarity-first tie ranking as
 measurement/recording; its disposable cache includes global shared-span identity.
 
-The package now owns guarded claim publication as well. The retained recorder
+The package owns production recording and guarded claim publication. The installed recorder
 validates configured source/header/build/compiler-policy inputs, image bytes and
 environment before measuring and before publication. It validates complete
 measurement coverage against the original selected records; unresolved siblings
@@ -67,8 +68,21 @@ a partially published batch and `.before`/`.after` backups there; inspect Git
 diffs and backups before resuming, and rerun measurement/gates after recovery.
 Use coordinator-owned isolated worktrees: an uncooperative writer can still race
 the final filesystem check. This is not a transactional filesystem, compiler
-installation attestation, compact obligation format, native recording CLI or
+installation attestation, compact obligation format or
 full acceptance cutover.
+
+Use `uv run recover record <addresses> --image <image> [--in src/family.cpp]`.
+It selects exact original addresses or catalogue/emitted names (and qualified
+names when the source symbol format supports them). Ambiguous candidates require
+an exact project-relative `--in` host. Source roots, TU suffixes, flags and compiler
+profile come from `project.json`; the command does not import local project Python.
+The configured compiler subprocess supplies its recipes, with no implicit donor
+or CMake reconfiguration. A caller may explicitly supply compiler argv in a
+project-relative JSON array via `--arguments`. Missing recipes are unmeasurable.
+Batch related addresses; `--jobs` defaults to 1 until isolated capacity is available.
+Its JSON report distinguishes updated source, measurements, unresolved subjects,
+retained regressions and actual compile/reuse counts. No report is a full acceptance
+receipt. The old `osmx` recording command and orchestration are removed.
 
 `uv run recover check-claims --summary` is the native source-history identity
 check, used by production recording and the retained full gate. The count floor
@@ -88,10 +102,10 @@ obligation remains represented. A byte obligation also covers an older shape
 requirement. This is source coverage only: all current claims, including new
 declarations, still require independent fresh measurement. The check does not
 authenticate which editor wrote a token or prove reference/layout correctness.
-The transitional measurement loop only covers `.c`/`.cpp` hosts in its configured
+The retained full gate only covers `.c`/`.cpp` hosts in its configured
 single source root; claims in headers or other suffixes are refused as unmeasurable,
-not silently counted as checked. The native source-coverage command has no such
-suffix restriction.
+not silently counted as checked. Native recording uses configured TU suffixes;
+the source-coverage command includes every configured source suffix.
 
 `uv run recover check-source --jobs 8 --summary` now replaces the old annotation
 identity script in the production gate. It checks every configured source file,

@@ -50,6 +50,7 @@ uv run recover check-build --summary
 uv run recover check-source --jobs 8 --summary
 uv run recover check-mappings --summary
 uv run recover check-claims --summary
+uv run recover record <addresses> --image <image> --in <source-file>
 uv run recover run <task> --worker <config> --reviewer <config>
 uv run pytest packages/match-recovery/tests recovery/tests
 cmake --build build
@@ -65,12 +66,12 @@ source-mapped task functions. It is not a full-link/structural proof or a way to
 replace the task baseline; unsupported historical TU recipes and unobserved
 header/seed substitutions remain unknown.
 
-Until the stamping command migrates, only `uv run tools/osmx.py record <addrs>`
-banks measured legacy claims. Never hand-edit an `ORIGINAL:` marker or type a
+Only `uv run recover record <addrs> --image <image>` banks measured historical
+byte claims; the old recording command is removed. Never hand-edit an `ORIGINAL:` marker or type a
 `BYTE_EXACT` token. Those claims retain restoration obligations; they are not
 proof of current structure or relocation-target correctness.
 
-The retained recorder now uses guarded package publication: 0 means every
+The installed recorder uses configured compiler interaction and guarded package publication: 0 means every
 selected body measured exact, 1 a measured miss, 3 incomplete/refused evidence.
 It requires the pinned image and intact historical source obligations. The
 count floor is removed: `recover check-claims` detects missing original identities,

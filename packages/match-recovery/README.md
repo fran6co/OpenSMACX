@@ -691,7 +691,31 @@ coordinator's complete-input validator before measurement and publication.
 Only newly proved byte obligations are added; unresolved or nonmatching results
 cannot demote existing claims. Historical notes are preserved, not changed into
 run status. This legacy measurement API requires the `x86` extra and is not a
-strict-reference or task-acceptance API. The native recording CLI remains open.
+strict-reference or task-acceptance API.
+
+`recover record <addresses-or-symbols> --image <image> [--root <project>]
+[--in <exact-relative-source-path>]` owns production selection, measurement and
+publication through that API. It reads source roots and TU suffixes from project
+configuration, derives historical identity coverage, and uses the configured
+compiler profile/flag arrays through the JSON compiler client. It does not import
+project Python modules, infer recipes, borrow another TU's command, configure a
+build or accept precomputed verdicts. Default empty compiler arguments request the
+local compiler's recipe; explicit argv can be supplied with `--arguments <relative
+JSON-file>`. All arguments remain tokens, not a shell command string.
+
+Functions in one TU share invocation-local objects and failures; `--jobs N` permits
+multiple TUs concurrently, defaulting to 1. The project/coordinator must provide
+safe compiler capacity. Header-only mappings need an explicit compilation host
+before recording; the command will not pretend a header was a configured TU.
+Source/build/compiler inputs, original image, argument-file bytes, environment and
+HEAD are revalidated before publication. Staging must be ignored, untracked and
+outside measured input roots. The JSON output reports selected/measured/updated
+subjects, retained regressions, unresolved subjects and compile/reuse counts.
+Exit 0 means all selected bodies freshly matched, 1 a measured miss, and 3
+incomplete/refused evidence. Independently exact siblings may be published on a
+nonzero run; existing obligations are never automatically weakened. This backend
+records historical relocation-masked byte obligations, not strict target, structural,
+task or full-project acceptance. No measured report is persisted as a new ledger.
 
 `source.publication.publish` stages existing-file replacements and original
 backups in a caller-supplied disposable directory on the output filesystem.

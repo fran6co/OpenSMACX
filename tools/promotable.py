@@ -38,7 +38,7 @@ became 13 after two fixes, and several of those 13 are still overloads.
 To finish one: read the true span with `osmx show` - do not trust the size you
 assume - get the emitted symbol (the catalogued name is often `QAA`, a
 non-static member, where the tree emits `QAE` or `SA`), write the marker with a
-`symbol` fact, and `osmx record` it.
+`symbol` fact, and measure it with `recover record --image <image>`.
 
 RANKED BY WHETHER IT MATTERS. An artifact body some compiled body CALLS is worth
 promoting now: it removes a `pending_bodies.cpp` forwarder, turns an indirect

@@ -31,7 +31,7 @@ in the library. CMake uses the environment entry points directly and the four ol
 build-path shims are removed. Generic compilation-database parsing remains in the
 package, preserving argv tokens and duplicate recipe identities. Nonzero compiler
 exits can no longer contribute leftover objects to the old gate. Production
-recording, gate orchestration and complete acceptance still need migration.
+gate orchestration and complete acceptance still need migration.
 
 Recording and the legacy gate now share the package's per-TU measurement engine,
 including span refusals, absent-symbol trials and similarity-first ranking. The
@@ -41,7 +41,7 @@ local, including failed compiles. Changed selected hosts refuse publication and
 global shared-span changes invalidate the gate memo. A 12-function Caviar-family
 control compares grouped and individual measurements without changing source;
 the measured timings belong in the cutover commit, not a current-status ledger.
-This is not fleet throughput or completion of the recording CLI cutover.
+This is not a fleet-throughput claim.
 
 The recording mutation path now uses package-owned guarded publication. Input
 snapshots cover configured source/build/compiler-policy inputs and environment,
@@ -52,8 +52,18 @@ weaker-claim grant/withdraw paths, along with automatic count reconciliation,
 are removed. Source-only publication no longer maintains a count floor.
 Original/replacement bytes are staged in ignored storage. Ordinary write failures
 roll back the invocation's own unchanged outputs, preserving conflicting later
-edits and recoverable backups. Multi-file atomicity, compact obligation writing
-and native production CLI cutover remain open.
+edits and recoverable backups. Multi-file atomicity and compact obligation writing
+remain open.
+
+Production recording now runs through installed `recover record`, with native
+source selection and configured compiler JSON interaction. The old recording CLI,
+its project orchestration and recorder-specific mutation tests are removed; synthetic
+compiler-protocol controls exercise their replacement. Exact host disambiguation,
+full input/HEAD/image validation, explicit argument files and source-only guarded
+publication are package owned. Default serial TU dispatch avoids inventing compiler
+capacity; optional jobs share no in-process object cache across TUs. This still
+records historical masked-byte obligations, not strict reference or structural
+acceptance. Compact annotations, full gate and migration admission remain open.
 
 Native `recover check-claims` now replaces the count floor in production recording
 and the full gate. It derives byte/shape requirements from the existing structural
@@ -70,7 +80,7 @@ The production gate's annotation-integrity dependency now runs through native
 source text, marker coverage and in-memory claim/lesson transitions across configured
 source roots. Its stronger lesson-deletion control rejects unrelated equal-line-count
 edits. Missing inputs and empty coverage remain unverified. The production
-measurement/stamping path and complete acceptance still need cutover.
+full gate and complete acceptance still need cutover.
 
 The address/build-host check now uses native `recover check-mappings`, with only
 a compilation-database path and forwarder macro names supplied by the project.

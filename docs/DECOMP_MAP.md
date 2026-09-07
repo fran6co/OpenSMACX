@@ -70,7 +70,7 @@ ORIGINAL: 0x0046FB10 ?g@@YAXXZ 0x0046FB10-0x0046FB40 BYTE_EXACT
 ever written into the tree. It is a claim, not a status field: every other
 tier — MISMATCH, NO_COMPILE, MNEMONIC_ONLY — is measured on demand and
 recorded nowhere, because a status field in a comment goes stale the moment
-someone edits the body and is believed anyway. The retained `osmx record`
+someone edits the body and is believed anyway. The installed `recover record`
 command adds a token only for a body it measures; `--record-matches` belongs to
 a retired command. Existing tokens preserve restoration obligations even when
 structural work temporarily stops reproducing them.
@@ -187,7 +187,7 @@ uv run tools/osmx.py status            # every population, reachable or not
 uv run tools/osmx.py show <addr|name>  # annotation + shipped disassembly
 uv run tools/osmx.py calls <addr>      # call sites in image order
 uv run tools/osmx.py measure <addr | --body F | --dir D>   # exit 0 only BYTE_EXACT
-uv run tools/osmx.py record <addrs...> # measure AND stamp annotations
+uv run recover record <addrs...> --image <image> # measure AND stamp annotations
 uv run tools/osmx.py configure         # regenerate the build database
 ```
 
@@ -204,7 +204,7 @@ structural change merely to avoid a temporary regression.
 **THE RATCHET IS `osmx check`.** It reads the claims in `src/`, recompiles
 every one against the pinned image, links the tree, and fails by address and
 file if a claim stops reproducing. Source-history identity coverage protects
-removed obligations; no persisted claim count remains. Only `osmx record` writes the token, it stamps
+removed obligations; no persisted claim count remains. Only `recover record` writes the token, it stamps
 only what it measured, and nothing ever removes one but a deliberate source
 edit visible in the diff. The recorder no longer offers `--demote`, weaker
 claim grants or withdrawal. Existing SEMANTIC annotations remain historical

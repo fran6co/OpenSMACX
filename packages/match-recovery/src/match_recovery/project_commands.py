@@ -7,6 +7,14 @@ from .records import read_json
 
 
 def register(commands):
+    recording = commands.add_parser("record", help="Measure and publish historical byte obligations; not structural acceptance")
+    recording.add_argument("targets", nargs="+")
+    recording.add_argument("--root", type=Path, default=Path.cwd())
+    recording.add_argument("--image", type=Path, required=True)
+    recording.add_argument("--in", dest="in_file", help="Exact project-relative source mapping host")
+    recording.add_argument("--arguments", dest="arguments_file", type=Path,
+                           help="Project-relative JSON compiler argv array; default uses configured compiler recipes")
+    recording.add_argument("--jobs", type=int, default=1, help="Concurrent TUs; caller must provide isolated compiler capacity")
     claims = commands.add_parser("check-claims", help="Check source-owned obligation identities against history; not current matching")
     claims.add_argument("--root", type=Path, default=Path.cwd())
     claims.add_argument("--summary", action="store_true")
@@ -136,6 +144,10 @@ def register(commands):
 
 
 def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
+    if arguments.get("command") == "record":
+        from .recording import record
+        return record(root, arguments["targets"], image=arguments["image"], in_file=arguments.get("in_file"),
+                      arguments_file=arguments.get("arguments_file"), jobs=arguments.get("jobs", 1))
     """Native configured source operations, otherwise the local JSON boundary."""
     root = root.resolve()
     configuration = read_json(root / "recovery/project.json")

@@ -2,8 +2,8 @@
 """Transitional production commands over match_recovery source APIs.
 
 Compiler interaction is supplied by recovery/environment, shared with the
-framework compiler protocol. This CLI remains only until production recording
-and the complete gate migrate; project location is not a library policy.
+framework compiler protocol. Recording now uses the installed recover command.
+This CLI remains until diagnostics and the complete gate migrate; project location is not a library policy.
 """
 
 from __future__ import annotations
@@ -29,11 +29,7 @@ from match_recovery.source import DecompilationState, State, mangled, read
 from match_recovery import source as source_records
 from match_recovery.source.mangled import qualified_name
 from match_recovery.source.calls import CallSite, call_sites, imported_names
-from match_recovery.source.recording import record_claims
-from match_recovery.measurement import Measurement
-from match_recovery.source_inventory import image_pin
 from match_recovery.source_config import SourceConfiguration
-from match_recovery.source_history import git as source_git
 from match_recovery.claim_integrity import check_claims
 from recovery.environment.recipe import build_command, MissingRecipe
 from match_recovery.compilation_database import build_inputs
@@ -833,34 +829,6 @@ def _unnamed(target: int, row: dict, neighbours: list) -> dict:
     return row
 
 
-def _record_file(job: tuple):
-    path, records, exe, command, flag_sets, shared = job
-    return compare_unit(records, exe, path, command, flag_sets, shared,
-                        compiler=compile_object, retry_compile=flag_dependent)
-
-
-def _measure_records(chosen, exe, compile_commands, borrow, shared):
-    """One package measurement per host, never one compiler run per function."""
-    grouped = {}
-    for piece in chosen:
-        grouped.setdefault(piece.path, []).append(piece)
-    before = {path: path.read_bytes() for path in grouped}
-    work = [(path, group, exe, _command_for(compile_commands, path, borrow),
-             FLAG_SETS, shared) for path, group in grouped.items()]
-    jobs = max(1, min(os.cpu_count() or 1, WINE_CEILING))
-    if len(work) > 1 and jobs > 1:
-        with concurrent.futures.ProcessPoolExecutor(max_workers=jobs) as pool:
-            units = list(pool.map(_record_file, work))
-    else:
-        units = [_record_file(job) for job in work]
-    if any(path.read_bytes() != content for path, content in before.items()):
-        raise ValueError("source changed while measuring the selected units; no claims written")
-    typer.echo(f"{len(units)} translation unit(s), "
-               f"{sum(unit.compile_attempts for unit in units)} compiler invocation(s), "
-               f"{sum(unit.reused_attempts for unit in units)} reused attempt(s)")
-    return [row for unit in units for row in unit.results]
-
-
 def _claim_coverage(src):
     """The legacy CLI can measure only its configured single source root."""
     try:
@@ -885,118 +853,6 @@ def _claim_coverage_note(report):
         return "HISTORICAL CLAIMS MISSING: " + identities
     return (f"claim identity coverage: {report['historical_requirements']:,} historical requirements, "
             f"{report['claims']:,} current claims; no missing obligations")
-
-
-def _record_input_identity(src, exe, compile_commands, borrow):
-    """Transitional CLI inputs over the package's configured measurement policy."""
-    settings = Measurement.read(REPO_ROOT)
-    staging = (compile_commands.parent / "recovery/publications").resolve()
-    paths = {exe, compile_commands, Path(__file__)}
-    paths.update(path for path in src.rglob("*")
-                 if path.is_file() and not path.resolve().is_relative_to(staging))
-    files = {str(path): (hashlib.sha256(path.read_bytes()).hexdigest(), str(path.resolve()))
-             if path.exists() else None for path in sorted(paths)}
-    if files[str(exe)] is None or files[str(exe)][0] != image_pin(REPO_ROOT, settings.source):
-        raise ValueError("recording requires the configured pinned original image")
-    return settings.snapshot(REPO_ROOT, {"flags": FLAG_SETS, "borrow": borrow,
-                                          "head": source_git(REPO_ROOT, "rev-parse", "HEAD").decode().strip()}), files
-
-
-@app.command()
-def record(
-    targets: Annotated[list[str], typer.Argument(
-        help="Addresses in hex, or names.")],
-    in_file: Annotated[str, typer.Option(
-        "--in",
-        help="Disambiguate by file when one address is annotated twice, "
-             "e.g. --in src/text.cpp or --in unrecovered.")] = "",
-    src: Annotated[Path, typer.Option(
-        envvar="OPENSMACX_SRC")] = REPO_ROOT / "src",
-    exe: Annotated[Path, typer.Option(
-        envvar="OPENSMACX_IMAGE",
-    )] = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe",
-    compile_commands: Annotated[Path, typer.Option(
-        envvar="OPENSMACX_COMPILE_COMMANDS",
-    )] = REPO_ROOT / "build" / "compile_commands.json",
-    borrow: Annotated[str, typer.Option(
-        help="Compile a file the build does not name with THIS file's "
-             "command.")] = "src/buffer.cpp",
-    reconfigure: Annotated[bool, typer.Option(
-        "--reconfigure",
-        help="Clear the cmake cache and regenerate the build database "
-             "first, whether or not it looks stale.")] = False,
-) -> None:
-    """Measure these pieces and write down what was measured.
-
-    UPDATES ANNOTATIONS THAT EXIST; it does not create them. A piece with no
-    annotation cannot be named here, because naming one takes its mangled
-    name and its image spans and nothing in this tree can supply those for
-    an address nobody has annotated - `src/` IS the catalogue now. Creating
-    one is a different operation with different inputs.
-
-    Exit 0 only when every selected body measured exact; 1 for a measured miss,
-    3 for incomplete evidence. Existing obligations are kept, never demoted.
-    """
-    try:
-        _fresh_compile_commands(compile_commands, reconfigure)
-        before = _record_input_identity(src, exe, compile_commands, borrow)
-        records = read(src)
-        shared = shared_spans(records)
-        coverage = _claim_coverage(src)
-        if coverage["result"] != "pass":
-            raise ValueError(_claim_coverage_note(coverage))
-
-        chosen = []
-        for target in targets:
-            claimants = _in_file(_matching(records, target), in_file)
-            if len(claimants) != 1:
-                _ambiguous(claimants, target, "record", in_file)
-            chosen.append(claimants[0])
-
-        def validate():
-            if _record_input_identity(src, exe, compile_commands, borrow) != before:
-                raise ValueError("source, compiler or measurement inputs changed; no claims written")
-
-        publication = record_claims(
-            chosen, measure=lambda: _measure_records(chosen, exe, compile_commands, borrow, shared),
-            validate=validate,
-            staging_directory=compile_commands.parent / "recovery/publications")
-        updated, regressed = publication.updated, publication.regressed
-        results, unresolved = publication.measured, publication.unresolved
-
-        for piece, result in results:
-            gained = (not piece.byte_exact
-                      and str(result.verdict) == "BYTE_EXACT")
-            mark = "  claimed" if gained else ""
-            typer.echo(f"{piece.address_hex}  {result.verdict:14}"
-                       f"{piece.name}{mark}")
-        # THE DENOMINATOR, ALWAYS. "0 rewritten" is two different answers -
-        # nothing moved, or nothing was measured - and only this separates them.
-        typer.echo(f"\n{len(updated)} annotation(s) rewritten, "
-                   f"{len(results)} of {len(chosen)} measured")
-        for piece, why in unresolved:
-            typer.secho(f"  UNRESOLVED {piece.address_hex}: {why}",
-                        fg=typer.colors.RED)
-
-        for piece, result in regressed:
-            typer.secho(
-                f"{piece.address_hex} claimed BYTE_EXACT and measured "
-                f"{result.verdict} - {piece.location}",
-                fg=typer.colors.RED)
-        if regressed:
-            typer.secho(
-                f"{len(regressed)} claim(s) stopped reproducing and were KEPT; "
-                f"preserve structural work and restore their matching obligations",
-                fg=typer.colors.RED)
-            raise typer.Exit(1)
-        # AN UNRESOLVABLE ADDRESS IS STILL A FAILURE - it just no longer costs
-        # the whole run. The verdicts above are written and reported first, then
-        # this.
-        if publication.exit_code:
-            raise typer.Exit(publication.exit_code)
-    except (OSError, ValueError) as error:
-        typer.secho(f"recording refused: {error}", fg=typer.colors.RED, err=True)
-        raise typer.Exit(3) from error
 
 
 # WHAT THE BUILD IS CONFIGURED WITH, read off the cache the first time and
@@ -1346,7 +1202,9 @@ def _agreement(note: str) -> tuple[int, int]:
 
 def _check_one_file(job: tuple) -> list[tuple[tuple, str, str]]:
     """Render package measurements for the transitional gate's report."""
-    unit = _record_file(job)
+    path, records, exe, command, flag_sets, shared = job
+    unit = compare_unit(records, exe, path, command, flag_sets, shared,
+                        compiler=compile_object, retry_compile=flag_dependent)
     rows = []
     for record, result in unit.results:
         if isinstance(result, str):
@@ -1818,8 +1676,8 @@ def check(
             typer.secho(
                 f"  {len(free):,} unclaimed body(s) already reproduce:",
                 fg=typer.colors.GREEN)
-            typer.echo("    osmx record "
-                       + " ".join(r.address_hex for r in free))
+            typer.echo("    uv run recover record "
+                       + " ".join(r.address_hex for r in free) + " --image <image>")
         if allocation:
             typer.secho(
                 f"  {len(allocation):,} unclaimed body(s) differ only in "

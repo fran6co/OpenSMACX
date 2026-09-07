@@ -254,7 +254,8 @@ a fresh Release tree with the configured isolated compiler; existing incremental
 objects cannot satisfy it. Passing build output is not structural or runtime proof.
 For a standalone build summary, use `uv run recover check-build --summary`.
 
-During cutover, pass related addresses together to the retained recorder: its
+Pass related addresses together to `uv run recover record <addresses> --image
+<image>`: its
 measurement engine groups them by host and compiles once per flag trial, while
 each function retains its own outcome. This does not authorize new scope or
 turn a byte result into structural acceptance.
@@ -271,9 +272,14 @@ Recover source at a coordinator checkpoint, then recheck identities and remeasur
 
 During cutover, also run `cmake --build build` and the full unpiped
 `uv run tools/osmx.py check`. Exit 3 is unmeasurable, not green; “0 REGRESSED”
-alone is not acceptance. The retained `uv run tools/osmx.py record <addresses>`
-is the only current claim-stamping entry point and proves legacy masked-byte
+alone is not acceptance. The installed `recover record` command
+is the only current claim-stamping entry point and proves historical masked-byte
 agreement, not full structural/reference correctness. Never hand-edit markers.
+Use `--in` with an exact project-relative source path when seed alternatives make
+selection ambiguous. The configured compiler supplies TU recipes; missing ones
+remain unmeasurable. Explicit compiler argv may be supplied as a project-relative
+JSON array with `--arguments`. No implicit donor or build reconfiguration occurs.
+Default `--jobs 1` is deliberate; concurrent TUs need isolated compiler capacity.
 
 The gate uses the native `uv run recover check-source --jobs 8 --summary` for
 annotation integrity. Its keyword/demotion/deletion experiments run only in

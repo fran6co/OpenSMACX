@@ -88,11 +88,6 @@ def project_audits(monkeypatch):
     return failures
 
 
-@pytest.fixture(autouse=True)
-def synthetic_record_pin(monkeypatch):
-    import hashlib
-    monkeypatch.setattr(osmx, "image_pin", lambda *args: hashlib.sha256(b"synthetic-record-image").hexdigest())
-
 ANNOTATED = """// ORIGINAL: 0x00401000 ?a@@YAXXZ 0x00401000-0x00401040 BYTE_EXACT
 void a() {
 }
@@ -112,12 +107,6 @@ def tree(tmp_path):
 
 
 def run(*args):
-    if args[0] == "record" and "--src" in args:
-        src = Path(args[args.index("--src") + 1])
-        if "--exe" not in args:
-            image = src / "record-test-image"
-            image.write_bytes(b"synthetic-record-image")
-            args = (*args, "--exe", str(image))
     return runner.invoke(osmx.app, list(args))
 
 
@@ -478,158 +467,10 @@ def test_a_candidate_that_misses_the_subject_is_a_row_not_a_crash():
     assert Tier                      # the import is the point of the name
 
 
-# ---------------------------------------------------------------- record
-
-
-def test_record_writes_a_claim_it_proved(named, monkeypatch):
-    from match_recovery.source import Tier
-    from match_recovery.source.asm import AsmComparison
-    monkeypatch.setattr(source_asm, "compare_source",
-                        lambda *a, **k: AsmComparison(verdict=Tier.BYTE_EXACT))
-    result = run("record", "WinMain", "--src", str(named))
-    assert result.exit_code == 0, result.output
-    assert "1 annotation(s) rewritten" in result.output
-    assert "_WinMain@16 0x0045F950-0x0045F958 BYTE_EXACT" in (
-        named / "n.cpp").read_text()
-
-
-def test_record_keeps_a_claim_that_stopped_and_exits_one(tmp_path,
-                                                          monkeypatch):
-    """The floor is the number of claims. Clearing one lowers the floor and
-    the gate then has nothing to fail on, so this reports and keeps."""
-    from match_recovery.source import Tier
-    from match_recovery.source.asm import AsmComparison
-    (tmp_path / "x.cpp").write_text(
-        "// ORIGINAL: 0x00401000 ?f@@YAXXZ 0x00401000-0x00401008 BYTE_EXACT\n"
-        "void f() {\n}\n")
-    monkeypatch.setattr(source_asm, "compare_source",
-                        lambda *a, **k: AsmComparison(verdict=Tier.MISMATCH))
-    result = run("record", "0x00401000", "--src", str(tmp_path))
-    assert result.exit_code == 1
-    assert "stopped reproducing and were KEPT" in result.output
-    assert "BYTE_EXACT" in (tmp_path / "x.cpp").read_text()
-
-
-def test_record_no_longer_offers_automatic_demotion(tmp_path, monkeypatch):
-    from match_recovery.source import Tier
-    from match_recovery.source.asm import AsmComparison
-    (tmp_path / "x.cpp").write_text(
-        "// ORIGINAL: 0x00401000 ?f@@YAXXZ 0x00401000-0x00401008 BYTE_EXACT\n"
-        "void f() {\n}\n")
-    monkeypatch.setattr(source_asm, "compare_source",
-                        lambda *a, **k: AsmComparison(verdict=Tier.MISMATCH))
-    result = run("record", "0x00401000", "--src", str(tmp_path), "--demote")
-    assert result.exit_code != 0
-    assert "BYTE_EXACT" in (tmp_path / "x.cpp").read_text()
-
-
-def test_record_touches_nothing_when_nothing_moved(named, monkeypatch):
-    from match_recovery.source import Tier
-    from match_recovery.source.asm import AsmComparison
-    monkeypatch.setattr(source_asm, "compare_source",
-                        lambda *a, **k: AsmComparison(verdict=Tier.MISMATCH))
-    before = (named / "n.cpp").read_text()
-    result = run("record", "WinMain", "--src", str(named))
-    assert result.exit_code == 1
-    assert (named / "n.cpp").read_text() == before
-
-
-def test_record_unmeasurable_is_three_not_success_or_regression(named, monkeypatch):
-    from match_recovery.source.asm import AsmComparison
-    from match_recovery.source import Tier
-    monkeypatch.setattr(source_asm, "compare_source", lambda *args, **kwargs: AsmComparison(verdict=Tier.NO_COMPILE))
-    result = run("record", "WinMain", "--src", str(named))
-    assert result.exit_code == 3
-    assert "0 of 1 measured" in result.output and "UNRESOLVED" in result.output
-
-
-def test_record_writes_several_in_one_file_at_once(named, monkeypatch):
-    """Writing one at a time re-reads the file, and a first write that
-    canonicalises a wrapped lesson moves every line below it - leaving the
-    records read before it pointing at the wrong lines."""
-    from match_recovery.source import Tier, read
-    from match_recovery.source.asm import AsmComparison
-    monkeypatch.setattr(source_asm, "compare_source",
-                        lambda *a, **k: AsmComparison(verdict=Tier.BYTE_EXACT))
-    result = run("record", "WinMain", "Buffer::set_font", "Alpha::init",
-                 "--src", str(named))
-    assert result.exit_code == 0
-    assert "3 annotation(s) rewritten" in result.output
-    claimed = [r for r in read(named) if r.byte_exact]
-    assert len(claimed) == 3
-
-
-def test_record_refuses_source_changed_after_a_worker_returns(named, monkeypatch):
-    from match_recovery.source.asm import UnitComparison, AsmComparison
-    from match_recovery.source import Tier
-    before = (named / "n.cpp").read_text()
-    def changed(job):
-        path, records, *_ = job
-        path.write_text(before + "// another edit\n")
-        return UnitComparison(tuple((row, AsmComparison(verdict=Tier.BYTE_EXACT)) for row in records), 1, 0)
-    monkeypatch.setattr(osmx, "_record_file", changed)
-    result = run("record", "WinMain", "--src", str(named))
-    assert result.exit_code != 0
-    assert "source changed" in result.output
-    assert (named / "n.cpp").read_text() == before + "// another edit\n"
-    assert not (named / "CLAIM_FLOOR").exists()
-
-
-@pytest.mark.parametrize("result", ["fail", "unknown"])
-def test_record_refuses_missing_or_unverifiable_obligations(named, monkeypatch, synthetic_claim_coverage, result):
-    synthetic_claim_coverage.update(result=result, error="missing source history",
-                                    missing=[{"address": "0x00401000", "dimension": "bytes"}])
-    monkeypatch.setattr(osmx, "_record_file", lambda *args: pytest.fail("must refuse before compiling"))
-    result = run("record", "WinMain", "--src", str(named))
-    assert result.exit_code == 3
-    assert not any(row.byte_exact for row in osmx.read(named))
-
-
-@pytest.mark.parametrize("missing", [False, True])
-def test_record_refuses_wrong_or_missing_pinned_image(named, monkeypatch, missing):
-    image = named / "wrong-image"
-    if not missing:
-        image.write_bytes(b"wrong-original")
-    monkeypatch.setattr(osmx, "_record_file", lambda *args: pytest.fail("must refuse before compiling"))
-    result = run("record", "WinMain", "--src", str(named), "--exe", str(image))
-    assert result.exit_code == 3 and "pinned original image" in result.output
-    assert not any(row.byte_exact for row in osmx.read(named))
-
-
-def test_record_cannot_grant_or_withdraw_weaker_claims():
-    result = run("semantic", "0x00401000")
-    assert result.exit_code != 0 and "No such command" in result.output
-
-
-def test_record_refuses_an_unmapped_header_changed_by_measurement(named, monkeypatch):
-    from match_recovery.source.asm import UnitComparison, AsmComparison
-    from match_recovery.source import Tier
-    header = named / "types.h"
-    header.write_text("struct Type { int field; };\n")
-    def measured(job):
-        _path, records, *_ = job
-        header.write_text("struct Type { int additional; int field; };\n")
-        return UnitComparison(tuple((row, AsmComparison(verdict=Tier.BYTE_EXACT)) for row in records), 1, 0)
-    monkeypatch.setattr(osmx, "_record_file", measured)
-    result = run("record", "WinMain", "--src", str(named))
-    assert result.exit_code == 3 and "inputs changed" in result.output
-    assert not any(row.byte_exact for row in osmx.read(named))
-    assert not (named / "CLAIM_FLOOR").exists()
-
-
-def test_record_groups_targets_before_dispatch(named, monkeypatch):
-    from match_recovery.source.asm import UnitComparison, AsmComparison
-    from match_recovery.source import Tier
-    groups = []
-    def measured(job):
-        path, records, *_ = job
-        groups.append((path, [row.address for row in records]))
-        return UnitComparison(tuple((row, AsmComparison(verdict=Tier.BYTE_EXACT)) for row in records), 1, 2)
-    monkeypatch.setattr(osmx, "_record_file", measured)
-    result = run("record", "WinMain", "Buffer::set_font", "Alpha::init", "--src", str(named))
-    assert result.exit_code == 0, result.output
-    assert groups == [(named / "n.cpp", [0x0045F950, 0x005DAC70, 0x00401000])]
-    assert "1 translation unit(s), 1 compiler invocation(s), 2 reused attempt(s)" in result.output
+def test_legacy_cli_has_no_claim_mutation_commands():
+    for command in ("record", "semantic"):
+        result = run(command, "0x00401000")
+        assert result.exit_code != 0 and "No such command" in result.output
 
 
 # ----------------------------------------------------------------- check
