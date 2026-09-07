@@ -36,9 +36,8 @@ from recovery.environment.recipe import build_command, MissingRecipe
 from match_recovery.compilation_database import build_inputs
 from recovery.environment.compile import compile_object
 from recovery.environment.recipe import flag_dependent
-from match_recovery.source.asm import (AsmComparison, CompileFailed, compare_record, compare_source,
-                        compare_subject, original_asm, shared_spans, span_refusal,
-                        subject_asm)
+from match_recovery.source.asm import (AsmComparison, CompileFailed, compare_unit, compare_source,
+                        original_asm, shared_spans, span_refusal)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -878,14 +877,32 @@ def _unnamed(target: int, row: dict, neighbours: list) -> dict:
     return row
 
 
-def _record_one(job: tuple) -> tuple:
-    """Measure one piece in a worker. Returns (piece, result) or (piece, None)."""
-    piece, exe, command, shared = job
-    try:
-        return piece, compare_record(piece, exe, command, FLAG_SETS, shared,
-                                     compiler=compile_object, retry_compile=flag_dependent)
-    except (ValueError, CompileFailed) as problem:
-        return piece, str(problem)
+def _record_file(job: tuple):
+    path, records, exe, command, flag_sets, shared = job
+    return compare_unit(records, exe, path, command, flag_sets, shared,
+                        compiler=compile_object, retry_compile=flag_dependent)
+
+
+def _measure_records(chosen, exe, compile_commands, borrow, shared):
+    """One package measurement per host, never one compiler run per function."""
+    grouped = {}
+    for piece in chosen:
+        grouped.setdefault(piece.path, []).append(piece)
+    before = {path: path.read_bytes() for path in grouped}
+    work = [(path, group, exe, _command_for(compile_commands, path, borrow),
+             FLAG_SETS, shared) for path, group in grouped.items()]
+    jobs = max(1, min(os.cpu_count() or 1, WINE_CEILING))
+    if len(work) > 1 and jobs > 1:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=jobs) as pool:
+            units = list(pool.map(_record_file, work))
+    else:
+        units = [_record_file(job) for job in work]
+    if any(path.read_bytes() != content for path, content in before.items()):
+        raise ValueError("source changed while measuring the selected units; no claims written")
+    typer.echo(f"{len(units)} translation unit(s), "
+               f"{sum(unit.compile_attempts for unit in units)} compiler invocation(s), "
+               f"{sum(unit.reused_attempts for unit in units)} reused attempt(s)")
+    return [row for unit in units for row in unit.results]
 
 
 @app.command()
@@ -946,15 +963,7 @@ def record(
     # IN PARALLEL, because a `sweep` hands this hundreds of addresses at once
     # and one compile is a wine invocation: 236 of them serially is the best
     # part of an hour, and the work is independent until the WRITE.
-    work = [(piece, exe, _command_for(compile_commands, piece.path, borrow),
-             shared) for piece in chosen]
-    jobs = max(1, min(os.cpu_count() or 1, WINE_CEILING))
-    if len(work) > 1 and jobs > 1:
-        pool = concurrent.futures.ProcessPoolExecutor(max_workers=jobs)
-        with pool:
-            measured = list(pool.map(_record_one, work))
-    else:
-        measured = [_record_one(job) for job in work]
+    measured = _measure_records(chosen, exe, compile_commands, borrow, shared)
 
     updated, regressed, results, unresolved = [], [], [], []
     # EVERY PIECE IS ALREADY MEASURED BY THE TIME WE GET HERE - the pool
@@ -1080,15 +1089,7 @@ def semantic(
 
     # IN PARALLEL, for the same reason `record` is: `sweep --semantic` hands
     # this a list, and one compile is a wine invocation.
-    work = [(piece, exe, _command_for(compile_commands, piece.path, borrow),
-             shared) for piece in chosen]
-    jobs = max(1, min(os.cpu_count() or 1, WINE_CEILING))
-    if len(work) > 1 and jobs > 1:
-        pool = concurrent.futures.ProcessPoolExecutor(max_workers=jobs)
-        with pool:
-            measured = list(pool.map(_record_one, work))
-    else:
-        measured = [_record_one(job) for job in work]
+    measured = _measure_records(chosen, exe, compile_commands, borrow, shared)
 
     for piece, result in measured:
         if isinstance(result, str):
@@ -1438,14 +1439,6 @@ def _claim_key(record: DecompilationState) -> tuple:
     return (record.path, record.address, record.line)
 
 
-TIER_ORDER = {"BYTE_EXACT": 0, "SHAPE_EXACT": 1, "MNEMONIC_ONLY": 2,
-              "MISMATCH": 3, "UNRESOLVED": 4, "NO_COMPILE": 5}
-
-
-def _rank(verdict: str) -> int:
-    return TIER_ORDER.get(verdict, 9)
-
-
 def _semantic_note_holds(note: str) -> bool:
     """Whether a scorer's note still supports a SEMANTIC claim.
 
@@ -1483,12 +1476,6 @@ def _report_stale_worktrees() -> None:
         return
 
 
-def _agreeing(note: str) -> int:
-    """The matching-instruction count a scorer put in a claim's note."""
-    found = re.match(r"(\d+)/", note or "")
-    return int(found.group(1)) if found else -1
-
-
 # How many instructions short a body may be and still be worth listing as
 # nearly done. Three, because two is where the array thunks sat before the
 # vector-iterator fix and one is where `Buffer::hline` sits now.
@@ -1502,81 +1489,23 @@ def _agreement(note: str) -> tuple[int, int]:
 
 
 def _check_one_file(job: tuple) -> list[tuple[tuple, str, str]]:
-    """Score every record in one file - claimed and unclaimed alike.
-
-    ONE COMPILE PER FLAG SET, NOT PER RECORD: this tree's records are ~2,100
-    across ~90 files, so per record is thousands of compiles and per file is
-    at most ten. It stops as soon as every record in the file is BYTE_EXACT,
-    which is almost never now that unclaimed bodies are included - the early
-    exit was worth more when only claims were scored, and scoring everything
-    in ONE pass is worth more than the exit was.
-    """
-    path, records, exe, command, flag_sets = job
-    best: dict = {}
-    unresolved: dict = {}
-    outstanding = list(records)
-    diagnostic = ""
-    for flags in flag_sets:
-        if not outstanding:
-            break
-        try:
-            obj = compile_object(path, command, flags)
-        except (OSError, ValueError, CompileFailed) as failed:
-            # A UNIT THAT WILL NOT PARSE WILL NOT PARSE SEVEN MORE TIMES.
-            # See `recovery.environment.recipe.flag_dependent`, and the measurement behind it.
-            diagnostic = diagnostic or str(failed)
-            if flag_dependent(str(failed)):
-                continue
-            break
-        for record in list(outstanding):
-            try:
-                compiled = subject_asm(obj, record, flags)
-            except ValueError as problem:
-                # A SUBJECT THIS INVOCATION DOES NOT EMIT IS NOT A VERDICT.
-                # An `inline` function is folded into its callers under /O2
-                # and emitted as its own COMDAT under /Ob0, so the record
-                # stays outstanding and the next flag set gets its turn;
-                # UNRESOLVED is only true if NONE of them emitted it.
-                # `match_recovery.source.asm.compare_source` learned this first and this
-                # copy of the loop did not, which is how `say_num` went from
-                # BYTE_EXACT to unverifiable between two sweeps.
-                unresolved[_claim_key(record)] = str(problem)
-                continue
-            result = compare_subject(record, exe, compiled)
-            verdict = str(result.verdict)
-            # THE NOTE CARRIES THE AGREEMENT, so `sweep --verdicts` can rank
-            # within a tier. Most of the remaining work is MISMATCHes, and the
-            # word alone cannot tell one that is two instructions out from one
-            # nobody has started.
-            # THE NOTE CARRIES WHAT A SEMANTIC CLAIM RESTS ON as well as the
-            # agreement, because `check` re-proves both from it.
-            score = (f"{result.matching_instructions}/"
-                     f"{result.original_instructions} instructions, "
-                     f"{result.mnemonic_similarity:.3f} similar"
-                     + (f", {result.compiled_instructions} compiled"
-                        if result.compiled_instructions
-                        != result.original_instructions else "")
-                     + (" [allocation-only]" if result.allocation_only == ""
-                        else ""))
-            key = _claim_key(record)
-            if key not in best or best[key][0] != "BYTE_EXACT":
-                previous = best.get(key)
-                better = (previous is None
-                          or _rank(verdict) < _rank(previous[0])
-                          or (_rank(verdict) == _rank(previous[0])
-                              and result.matching_instructions
-                              > _agreeing(previous[1])))
-                if better:
-                    best[key] = (verdict, score)
-            if verdict == "BYTE_EXACT":
-                outstanding.remove(record)
-    for record in outstanding:
-        key = _claim_key(record)
-        if key in unresolved:
-            best.setdefault(key, ("UNRESOLVED", unresolved[key]))
-        else:
-            best.setdefault(key, ("NO_COMPILE", diagnostic))
-    return [(key, verdict, note) for key, (verdict, note) in best.items()]
+    """Render package measurements for the transitional gate's report."""
+    unit = _record_file(job)
+    rows = []
+    for record, result in unit.results:
+        if isinstance(result, str):
+            rows.append((_claim_key(record), "UNRESOLVED", result))
+            continue
+        score = (f"{result.matching_instructions}/"
+                 f"{result.original_instructions} instructions, "
+                 f"{result.mnemonic_similarity:.3f} similar"
+                 + (f", {result.compiled_instructions} compiled"
+                    if result.compiled_instructions != result.original_instructions else "")
+                 + (" [allocation-only]" if result.allocation_only == "" else ""))
+        if str(result.verdict) == "NO_COMPILE":
+            score = result.diagnostic
+        rows.append((_claim_key(record), str(result.verdict), score))
+    return rows
 
 
 def _image_pin(src: Path, exe: Path) -> str:
@@ -1774,9 +1703,10 @@ def check(
     jobs = max(1, min(jobs or (os.cpu_count() or 1), WINE_CEILING))
 
     work = []
+    shared = shared_spans(records)
     for path, mine in grouped.items():
         command = _command_for(compile_commands, path, borrow)
-        work.append((path, mine, exe, command, FLAG_SETS))
+        work.append((path, mine, exe, command, FLAG_SETS, shared))
 
     # THE CACHE IS A MEMO, NOT A LEDGER: it never adds, clears, or counts a
     # claim - it only skips re-measuring a file whose every input is
@@ -1795,6 +1725,7 @@ def check(
         + b"".join(p.read_bytes() for p in sorted(
             (REPO_ROOT / "recovery/environment").glob("*.py")))
         + b"".join(p.read_bytes() for p in sorted(src.rglob("*.h")))
+        + repr(sorted(shared)).encode()
         + (exe.read_bytes() if exe.exists() else b"no-image")).hexdigest()
     try:
         cache = json.loads(cache_path.read_text())
@@ -1804,7 +1735,7 @@ def check(
         cache = {"salt": salt, "files": {}}
 
     def _file_key(job: tuple) -> str:
-        path, _mine, _exe, command, _flags = job
+        path, _mine, _exe, command, _flags, _shared = job
         return hashlib.sha256(path.read_bytes()
                               + "\0".join(command).encode()).hexdigest()
 

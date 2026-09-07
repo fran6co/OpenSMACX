@@ -640,6 +640,16 @@ compiler-specific parse failure; absent that policy, all alternatives are tried.
 These APIs still provide relocation-masked diagnostics, not strict reference or
 structural acceptance. They neither choose project recipes nor stamp source.
 
+`source.asm.compare_unit(records, image, source, arguments, flag_sets,
+compiler=...)` measures selected mappings from one host together, using that same
+per-function comparison. It compiles once per requested flag configuration and
+reuses the object (or failed attempt) only within the call. Different functions
+can select different successful trials; missing symbols do not discard measured
+siblings. Its `UnitComparison` contains results in selection order plus actual
+compiler/reuse counts. Duplicate selections, mixed hosts and changed candidate
+or marker files are refused. The caller still owns whole-project/header/compiler
+freshness and publication; this is neither a persistent cache nor acceptance.
+
 `compilation_database` provides strict, compiler-neutral database parsing and
 source identities. It preserves argv arrays exactly and leaves command strings
 opaque; the environment owns quoting, launchers, option selection and include

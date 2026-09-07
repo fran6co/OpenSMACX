@@ -1028,6 +1028,86 @@ def compare_record(record: DecompilationState, exe: Path | str,
                           compiler=compiler, retry_compile=retry_compile)
 
 
+@dataclass(frozen=True)
+class UnitComparison:
+    """Disposable measurements in selection order; never source claims.
+
+    A string result is unresolved original/symbol evidence, not a compilation
+    verdict. Objects and failed attempts are reused only inside this call.
+    """
+    results: tuple[tuple[DecompilationState, AsmComparison | str], ...]
+    compile_attempts: int
+    reused_attempts: int
+
+
+def compare_unit(records, exe: Path | str, source: Path | str,
+                 command: list[str], flags: tuple | str,
+                 shared: frozenset = frozenset(), *, compiler,
+                 retry_compile=None) -> UnitComparison:
+    """Measure one TU's selected mappings with one compile per flag trial.
+
+    Use the same per-function selection, span refusals, missing-symbol retries
+    and similarity ranking as compare_source, rather than another scoring loop.
+    Different subjects may need different trials. One unresolved subject never
+    discards measured siblings. The caller owns whole-project input freshness
+    and publication; this function also refuses changed candidate/marker files.
+    No objects, scores or failures are cached across calls.
+    """
+    records = tuple(records)
+    if not records:
+        raise ValueError("no source mappings to measure")
+    keys = {(item.path.resolve(), item.address, item.line) for item in records}
+    if len(keys) != len(records):
+        raise ValueError("the same source mapping was selected more than once")
+    if len({item.path.resolve() for item in records}) != 1:
+        raise ValueError("one measurement unit requires one source mapping host")
+    attempts = (flags,) if isinstance(flags, str) else tuple(flags)
+    if not attempts:
+        raise ValueError("no flag sets to try")
+    source = Path(source)
+    inputs = {path: path.read_bytes() for path in {source, *(item.path for item in records)}}
+    objects, failures = {}, {}
+    count, reused = 0, 0
+
+    def current():
+        if any(path.read_bytes() != data for path, data in inputs.items()):
+            raise ValueError("source changed during unit measurement")
+
+    def shared_compile(path, arguments, trial):
+        nonlocal count, reused
+        current()
+        key = (path.resolve(), arguments, trial)
+        if key in objects:
+            reused += 1
+            return objects[key]
+        if key in failures:
+            reused += 1
+            raise CompileFailed(failures[key])
+        count += 1
+        try:
+            data = compiler(path, arguments, trial)
+            if not isinstance(data, bytes) or not data:
+                raise CompileFailed("compiler returned no object bytes")
+        except (OSError, ValueError, CompileFailed) as error:
+            failures[key] = str(error)
+            raise CompileFailed(str(error)) from error
+        finally:
+            current()
+        objects[key] = data
+        return data
+
+    results = []
+    for record in records:
+        try:
+            result = compare_source(record, exe, source, command, attempts, shared,
+                                    compiler=shared_compile, retry_compile=retry_compile)
+        except (OSError, ValueError) as error:
+            result = str(error)
+        results.append((record, result))
+    current()
+    return UnitComparison(tuple(results), count, reused)
+
+
 def compare_source(record: DecompilationState, exe: Path | str,
                    source: Path | str, command: list[str],
                    flags: tuple | str,

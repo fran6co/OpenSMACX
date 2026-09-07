@@ -33,6 +33,16 @@ package, preserving argv tokens and duplicate recipe identities. Nonzero compile
 exits can no longer contribute leftover objects to the old gate. Production
 recording, gate orchestration and complete acceptance still need migration.
 
+Recording and the legacy gate now share the package's per-TU measurement engine,
+including span refusals, absent-symbol trials and similarity-first ranking. The
+recorder groups requested functions before dispatch instead of compiling each
+separately; the gate's duplicate comparison loop is removed. Reuse is invocation
+local, including failed compiles. Changed selected hosts refuse publication and
+global shared-span changes invalidate the gate memo. A 12-function Caviar-family
+control compares grouped and individual measurements without changing source;
+the measured timings belong in the cutover commit, not a current-status ledger.
+This is not fleet throughput or completion of the recording CLI cutover.
+
 The production gate's annotation-integrity dependency now runs through native
 `recover check-source`; the replaced script is removed. The package checks actual
 source text, marker coverage and in-memory claim/lesson transitions across configured

@@ -32,6 +32,17 @@ donor; malformed/conflicting recipes cannot silently borrow another file's flags
 The compiler-neutral database reader is in the package and is also used by the
 mapping check. This consolidation does not migrate recording or full acceptance.
 
+The retained recorder and gate now use the package's shared per-TU measurement
+engine. Pass a family's addresses together: the recorder groups them by source
+host, compiles each requested flag set once and reports actual compile/reuse
+counts. Its former per-function compile pool and the gate's duplicate ranking
+loop are removed. A later flag can still emit a missing subject, and a missing
+subject cannot erase its measured siblings. Candidate/marker changes and changed
+selected hosts after worker completion refuse publication. Whole-project
+freshness, source obligation writing and full acceptance still need cutover.
+The gate now uses the same span refusals and similarity-first tie ranking as
+measurement/recording; its disposable cache includes global shared-span identity.
+
 `uv run recover check-source --jobs 8 --summary` now replaces the old annotation
 identity script in the production gate. It checks every configured source file,
 including headers and seeds, without an image, compiler, Git database or optional

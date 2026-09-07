@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 
 import pytest
+import match_recovery.source.asm as source_asm
 from typer.testing import CliRunner
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
@@ -448,7 +449,7 @@ def test_a_candidate_that_misses_the_subject_is_a_row_not_a_crash():
 def test_record_writes_a_claim_it_proved(named, monkeypatch):
     from match_recovery.source import Tier
     from match_recovery.source.asm import AsmComparison
-    monkeypatch.setattr(osmx, "compare_record",
+    monkeypatch.setattr(source_asm, "compare_source",
                         lambda *a, **k: AsmComparison(verdict=Tier.BYTE_EXACT))
     result = run("record", "WinMain", "--src", str(named))
     assert result.exit_code == 0, result.output
@@ -466,7 +467,7 @@ def test_record_keeps_a_claim_that_stopped_and_exits_one(tmp_path,
     (tmp_path / "x.cpp").write_text(
         "// ORIGINAL: 0x00401000 ?f@@YAXXZ 0x00401000-0x00401008 BYTE_EXACT\n"
         "void f() {\n}\n")
-    monkeypatch.setattr(osmx, "compare_record",
+    monkeypatch.setattr(source_asm, "compare_source",
                         lambda *a, **k: AsmComparison(verdict=Tier.MISMATCH))
     result = run("record", "0x00401000", "--src", str(tmp_path))
     assert result.exit_code == 1
@@ -480,7 +481,7 @@ def test_demote_clears_it_once_someone_has_looked(tmp_path, monkeypatch):
     (tmp_path / "x.cpp").write_text(
         "// ORIGINAL: 0x00401000 ?f@@YAXXZ 0x00401000-0x00401008 BYTE_EXACT\n"
         "void f() {\n}\n")
-    monkeypatch.setattr(osmx, "compare_record",
+    monkeypatch.setattr(source_asm, "compare_source",
                         lambda *a, **k: AsmComparison(verdict=Tier.MISMATCH))
     result = run("record", "0x00401000", "--src", str(tmp_path), "--demote")
     assert result.exit_code == 0
@@ -490,7 +491,7 @@ def test_demote_clears_it_once_someone_has_looked(tmp_path, monkeypatch):
 def test_record_touches_nothing_when_nothing_moved(named, monkeypatch):
     from match_recovery.source import Tier
     from match_recovery.source.asm import AsmComparison
-    monkeypatch.setattr(osmx, "compare_record",
+    monkeypatch.setattr(source_asm, "compare_source",
                         lambda *a, **k: AsmComparison(verdict=Tier.MISMATCH))
     before = (named / "n.cpp").read_text()
     result = run("record", "WinMain", "--src", str(named))
@@ -504,7 +505,7 @@ def test_record_writes_several_in_one_file_at_once(named, monkeypatch):
     records read before it pointing at the wrong lines."""
     from match_recovery.source import Tier, read
     from match_recovery.source.asm import AsmComparison
-    monkeypatch.setattr(osmx, "compare_record",
+    monkeypatch.setattr(source_asm, "compare_source",
                         lambda *a, **k: AsmComparison(verdict=Tier.BYTE_EXACT))
     result = run("record", "WinMain", "Buffer::set_font", "Alpha::init",
                  "--src", str(named))
@@ -512,6 +513,37 @@ def test_record_writes_several_in_one_file_at_once(named, monkeypatch):
     assert "3 annotation(s) rewritten" in result.output
     claimed = [r for r in read(named) if r.byte_exact]
     assert len(claimed) == 3
+
+
+def test_record_refuses_source_changed_after_a_worker_returns(named, monkeypatch):
+    from match_recovery.source.asm import UnitComparison, AsmComparison
+    from match_recovery.source import Tier
+    before = (named / "n.cpp").read_text()
+    def changed(job):
+        path, records, *_ = job
+        path.write_text(before + "// another edit\n")
+        return UnitComparison(tuple((row, AsmComparison(verdict=Tier.BYTE_EXACT)) for row in records), 1, 0)
+    monkeypatch.setattr(osmx, "_record_file", changed)
+    result = run("record", "WinMain", "--src", str(named))
+    assert result.exit_code != 0
+    assert "source changed" in str(result.exception)
+    assert (named / "n.cpp").read_text() == before + "// another edit\n"
+    assert not (named / "CLAIM_FLOOR").exists()
+
+
+def test_record_groups_targets_before_dispatch(named, monkeypatch):
+    from match_recovery.source.asm import UnitComparison, AsmComparison
+    from match_recovery.source import Tier
+    groups = []
+    def measured(job):
+        path, records, *_ = job
+        groups.append((path, [row.address for row in records]))
+        return UnitComparison(tuple((row, AsmComparison(verdict=Tier.BYTE_EXACT)) for row in records), 1, 2)
+    monkeypatch.setattr(osmx, "_record_file", measured)
+    result = run("record", "WinMain", "Buffer::set_font", "Alpha::init", "--src", str(named))
+    assert result.exit_code == 0, result.output
+    assert groups == [(named / "n.cpp", [0x0045F950, 0x005DAC70, 0x00401000])]
+    assert "1 translation unit(s), 1 compiler invocation(s), 2 reused attempt(s)" in result.output
 
 
 # ----------------------------------------------------------------- check
@@ -666,14 +698,16 @@ def test_a_failed_compile_is_not_retried_under_every_flag_set(
     tried = []
 
     def refuse(path, command, flags):
-        tried.append(flags)
+        tried.append(" ".join(flags))
         raise osmx.CompileFailed("c.cpp(1) : error C2065: 'x' : undeclared")
 
     monkeypatch.setattr(osmx, "compile_object", refuse)
+    monkeypatch.setattr(source_asm, "original_asm", lambda *a, **k: None)
+    monkeypatch.setattr(source_asm, "span_refusal", lambda *a, **k: None)
     records = osmx.read(claimed)
     path = next(iter(osmx._claims_by_file(records)))
     osmx._check_one_file((path, osmx._claims_by_file(records)[path],
-                          Path("/nonexistent"), ["cl"], osmx.FLAG_SETS))
+                          Path("/nonexistent"), ["cl"], osmx.FLAG_SETS, frozenset()))
     assert tried == [osmx.FLAG_SETS[0]], tried
 
 
@@ -683,14 +717,16 @@ def test_an_internal_compiler_error_is_retried(claimed, monkeypatch):
     tried = []
 
     def refuse(path, command, flags):
-        tried.append(flags)
+        tried.append(" ".join(flags))
         raise osmx.CompileFailed("fatal error C1001: INTERNAL COMPILER ERROR")
 
     monkeypatch.setattr(osmx, "compile_object", refuse)
+    monkeypatch.setattr(source_asm, "original_asm", lambda *a, **k: None)
+    monkeypatch.setattr(source_asm, "span_refusal", lambda *a, **k: None)
     records = osmx.read(claimed)
     path = next(iter(osmx._claims_by_file(records)))
     osmx._check_one_file((path, osmx._claims_by_file(records)[path],
-                          Path("/nonexistent"), ["cl"], osmx.FLAG_SETS))
+                          Path("/nonexistent"), ["cl"], osmx.FLAG_SETS, frozenset()))
     assert tried == list(osmx.FLAG_SETS), tried
 
 
@@ -708,6 +744,22 @@ def test_check_writes_nothing(claimed, monkeypatch):
     before = (claimed / "c.cpp").read_text()
     check(claimed)
     assert (claimed / "c.cpp").read_text() == before
+
+
+def test_shared_span_added_in_an_unmeasured_file_invalidates_the_gate_cache(claimed, monkeypatch):
+    seen = []
+    def measured(job):
+        seen.append(job[-1])
+        return fake_file_result({})(job)
+    monkeypatch.setattr(osmx, "_check_one_file", measured)
+    assert check(claimed).exit_code == 0
+    assert seen == [frozenset()]
+    assert check(claimed).exit_code == 0
+    assert len(seen) == 1  # Warm invocation really did reuse the old answer.
+    (claimed / "another.cpp").write_text(
+        "// ORIGINAL: 0x00404000 ?other@@YAXXZ 0x00401000-0x00401008\nvoid other() {}\n")
+    assert check(claimed).exit_code == 0
+    assert len(seen) == 2 and (0x00401000, 0x00401008) in seen[-1]
 
 
 def test_json_is_only_json(claimed, monkeypatch):
@@ -1095,7 +1147,9 @@ def test_a_subject_one_flag_set_does_not_emit_stays_outstanding(tmp_path,
         "// ORIGINAL: 0x00402000 ?f@@YAXXZ 0x00402000-0x00402010 BYTE_EXACT\n"
         "void f() {\n}\n")
     records = read(tmp_path)
-    monkeypatch.setattr(osmx, "compile_object", lambda *a, **k: b"")
+    monkeypatch.setattr(osmx, "compile_object", lambda *a, **k: b"object")
+    monkeypatch.setattr(source_asm, "original_asm", lambda *a, **k: None)
+    monkeypatch.setattr(source_asm, "span_refusal", lambda *a, **k: None)
     tries = iter([ValueError("not found among the object's .text symbols"),
                   "second set emits it"])
     def maybe(obj, record, flags):
@@ -1103,13 +1157,13 @@ def test_a_subject_one_flag_set_does_not_emit_stays_outstanding(tmp_path,
         if isinstance(got, ValueError):
             raise got
         return got
-    monkeypatch.setattr(osmx, "subject_asm", maybe)
+    monkeypatch.setattr(source_asm, "subject_asm", maybe)
     from match_recovery.source import Tier
     from match_recovery.source.asm import AsmComparison
-    monkeypatch.setattr(osmx, "compare_subject",
+    monkeypatch.setattr(source_asm, "compare_subject",
                         lambda *a, **k: AsmComparison(verdict=Tier.BYTE_EXACT))
     out = osmx._check_one_file((tmp_path / "x.cpp", records, "exe", ["cl"],
-                                ("/O2", "/O2 /Ob0")))
+                                ("/O2", "/O2 /Ob0"), frozenset()))
     assert [v for _k, v, _n in out] == ["BYTE_EXACT"]
 
 

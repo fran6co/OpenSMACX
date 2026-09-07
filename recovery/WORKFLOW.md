@@ -254,6 +254,11 @@ a fresh Release tree with the configured isolated compiler; existing incremental
 objects cannot satisfy it. Passing build output is not structural or runtime proof.
 For a standalone build summary, use `uv run recover check-build --summary`.
 
+During cutover, pass related addresses together to the retained recorder: its
+measurement engine groups them by host and compiles once per flag trial, while
+each function retains its own outcome. This does not authorize new scope or
+turn a byte result into structural acceptance.
+
 During cutover, also run `cmake --build build` and the full unpiped
 `uv run tools/osmx.py check`. Exit 3 is unmeasurable, not green; “0 REGRESSED”
 alone is not acceptance. The retained `uv run tools/osmx.py record <addresses>`
