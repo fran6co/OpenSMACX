@@ -260,6 +260,11 @@ alone is not acceptance. The retained `uv run tools/osmx.py record <addresses>`
 is the only current claim-stamping entry point and proves legacy masked-byte
 agreement, not full structural/reference correctness. Never hand-edit markers.
 
+The gate uses the native `uv run recover check-source --jobs 8 --summary` for
+annotation integrity. Its keyword/demotion/deletion experiments run only in
+memory. Standalone `ORIGINAL:` comment heads are reserved for mappings, not run
+notes or ordinary prose. A passing text check is not a current byte claim.
+
 The gate's compiler-work ratchet is the native `uv run recover audits check
 compiler-work` command. Its report identifies exact, grown and slack ceilings.
 Apply justified downward `lowerings` to `recovery/audits.json` in the same commit;

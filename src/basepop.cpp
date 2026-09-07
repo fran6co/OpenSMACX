@@ -3912,7 +3912,7 @@ int BasePop::calculate_dimensions() {
         }
 
         // StringStruct::current_entry()->text, open-coded. BUG IN THE
-        // ORIGINAL: the middle arm dereferences a null payload and reads
+        // Original behavior: the middle arm dereferences a null payload and reads
         // address 4 when the list has a cursor but no head - the image emits
         // `xor eax,eax / mov ebp,[eax+4]` there. Reproduced as shipped.
         char *text = unit_ids_.current_ != 0

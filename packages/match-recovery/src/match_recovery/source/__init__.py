@@ -11,11 +11,13 @@ The reader deliberately has no persistent cache. Callers may memoize parsing
 with complete input keys; annotations remain authoritative. The writer preserves
 unmodified mapping facts and seed notes rather than regenerating their prose.
 
-The optional ``asm``, ``calls`` and ``record`` modules retain the legacy i386
+The optional ``asm`` and ``calls`` modules retain the legacy i386
 PE/COFF/MSVC measurement contract and require the package's ``x86`` extra.
 They are not imported here. Their masked-byte agreement is not a proof of
 relocation targets, ownership or runtime correctness. Strict verification is
 provided by the framework's separate binary, generated-table and layout APIs.
+The ``record`` module only prepares historical claim transitions in memory;
+it neither measures nor writes source and needs no optional dependencies.
 
 No repository root, original image path or compiler flag sets are selected here.
 """

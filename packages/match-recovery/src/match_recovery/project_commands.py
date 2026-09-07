@@ -7,6 +7,10 @@ from .records import read_json
 
 
 def register(commands):
+    source = commands.add_parser("check-source", help="Verify annotation text integrity without compiling or stamping")
+    source.add_argument("--root", type=Path, default=Path.cwd())
+    source.add_argument("--jobs", type=int, default=1)
+    source.add_argument("--summary", action="store_true")
     build = commands.add_parser("check-build", help="Run configured commands in a fresh ignored build directory; not recovery acceptance")
     build.add_argument("--root", type=Path, default=Path.cwd())
     build.add_argument("--summary", action="store_true")
@@ -132,6 +136,12 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
     if (configuration.keys() - {"schema_version", "adapter", "source", "source_history", "compiler", "measurement", "audits", "build"}
             or type(configuration.get("schema_version")) is not int or configuration["schema_version"] != 1):
         raise ValueError("invalid local project command configuration")
+    if arguments.get("command") == "check-source":
+        from .source_integrity import check_source
+        output = check_source(root, jobs=arguments.get("jobs", 1))
+        if arguments.get("summary"):
+            output.pop("findings")
+        return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
     if arguments.get("command") == "check-build":
         from .build_check import check_build
         output = check_build(root)

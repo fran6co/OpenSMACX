@@ -35,11 +35,10 @@ THE SPELLINGS COME FROM `grammar`, nowhere else. A written marker is
 ` BYTE_EXACT` appended as the record requires - exactly the forms
 `grammar.MARKER` and `grammar.MARKER_KEYWORD` accept - and lessons are
 spelled the way `grammar.LESSON_*` accept them. That is what makes the
-read -> write -> read loop closed by construction. What MEASURES that over
-the whole tree is `tools/annotation_identity.py`, wired into `osmx check`;
-`python -m decomp` has not existed since `__main__.py` was folded into
-the source roundtrip tests, and naming a dead entry point is how this
-module's central claim went unenforced long enough to reflow 434 records.
+read -> write -> read loop closed by construction. The installed
+`recover check-source` command measures text fidelity across configured source
+files. It compares original text as well as parsed records, so two equally
+lossy parses cannot conceal lost prose or unrelated edits.
 
 STATE IS NEVER WRITTEN. It is derived from the region on read, which is
 what makes the loop a test: the rewritten file must re-derive the same

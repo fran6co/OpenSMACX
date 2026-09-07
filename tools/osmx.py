@@ -987,7 +987,7 @@ def record(
             unresolved.append((piece, result))
             continue
         results.append((piece, result))
-        after = stamped(piece, result, demote)
+        after = stamped(piece, result.verdict, demote)
         if piece.byte_exact and str(result.verdict) != "BYTE_EXACT":
             regressed.append((piece, result))
         if after != piece:
@@ -1660,6 +1660,43 @@ def _native_audit_result(outcome, name, label):
     return subprocess.CompletedProcess(outcome.args, outcome.returncode, "\n".join(lines), outcome.stderr)
 
 
+def _source_integrity_result(outcome):
+    """Consume the native text-integrity check until the whole gate migrates."""
+    from match_recovery.source_integrity import RULES
+    try:
+        report = json.loads(outcome.stdout)
+        if (not isinstance(report, dict) or report.get("check") != "source_annotation_integrity"
+                or type(report.get("schema_version")) is not int or report["schema_version"] != 1
+                or report.get("result") not in ("pass", "fail", "unknown")
+                or type(report.get("annotations")) is not int or report["annotations"] < 0
+                or type(report.get("files_scanned")) is not int or report["files_scanned"] < 1
+                or report.get("persisted") is not False or report.get("ready_for_collection") is not False
+                or not isinstance(report.get("input_fingerprint"), str)
+                or not re.fullmatch(r"[0-9a-f]{64}", report["input_fingerprint"])
+                or not isinstance(report.get("errors"), list)
+                or any(not isinstance(row, dict) or not isinstance(row.get("reason"), str)
+                       or not row["reason"] for row in report["errors"])
+                or not isinstance(report.get("rules"), list)
+                or len(report["rules"]) != len(RULES)
+                or any(not isinstance(row, dict) or not isinstance(row.get("name"), str)
+                       or type(row.get("failures")) is not int or row["failures"] < 0
+                       for row in report["rules"])
+                or {row["name"] for row in report["rules"]} != set(RULES)):
+            raise ValueError("malformed annotation-integrity report")
+        failed = sum(row["failures"] for row in report["rules"])
+        expected = "fail" if failed else "unknown" if report["errors"] or not report["annotations"] else "pass"
+        if report["result"] != expected or outcome.returncode != {"pass": 0, "fail": 1, "unknown": 3}[expected]:
+            raise ValueError("annotation-integrity evidence, result and exit code disagree")
+    except (ValueError, TypeError) as error:
+        return subprocess.CompletedProcess(outcome.args, outcome.returncode or 3,
+                                           outcome.stderr.strip() or str(error), outcome.stderr)
+    lines = [f"annotation integrity: {report['annotations']:,} annotation(s), "
+             f"{failed} failure(s), {len(report['errors'])} unmeasurable file(s)"]
+    lines.extend(f"{row['name']}: {row['failures']} failure(s)" for row in report["rules"] if row["failures"])
+    lines.extend(row["reason"] for row in report["errors"][:4])
+    return subprocess.CompletedProcess(outcome.args, outcome.returncode, "\n".join(lines), outcome.stderr)
+
+
 @app.command()
 def check(
     src: Annotated[Path, typer.Option(
@@ -2113,7 +2150,10 @@ def check(
     dupes_job = _audit("duplicate_globals.py", "--check")
     values_job = _audit("data_values.py", "--check")
     scaling_job = _audit("pointer_scale.py", "--check")
-    annotations_job = _audit("annotation_identity.py", "--check")
+    annotations_job = audits.submit(
+        subprocess.run,
+        [sys.executable, "-m", "match_recovery.cli", "check-source", "--jobs", "8", "--summary"],
+        cwd=REPO_ROOT, capture_output=True, text=True)
     offsets_job = _audit("header_offsets.py", "--check")
 
     # DOES IT STILL LINK? The gate compiles each body on its own and never
@@ -2259,7 +2299,7 @@ def check(
     # prose of 434 records the moment it touched their file - and the
     # roundtrip test could not see it, because it compared POST-PARSE data.
     # This is the check that had to exist outside the parse.
-    annotations = annotations_job.result()
+    annotations = _source_integrity_result(annotations_job.result())
     if not as_json:
         said = annotations.stdout.strip().splitlines() or [""]
         typer.secho("  " + said[-1],

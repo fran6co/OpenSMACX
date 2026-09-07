@@ -82,6 +82,24 @@ or generating the starter files cannot establish a recovery result.
 
 ## Small integration contract
 
+### Source annotation integrity
+
+`recover check-source --root <project> [--jobs N] [--summary]` checks all files
+selected by `source` configuration, including headers and seeds. It needs no
+compiler, image, Git database or optional dependency. All rewrite experiments
+are in memory: a no-op must preserve exact text; a keyword flip may touch only
+its own marker; hypothetical demotion must preserve line count and lesson
+meaning; clearing lessons may delete only their attributed lines. A separate
+standalone-comment witness catches marker heads the parser silently misses.
+Reserve standalone `ORIGINAL:` heads for mappings, not ordinary prose.
+
+The command emits disposable JSON: exit 0 for intact annotations, 1 for an
+observed violation, 3 for unavailable evidence. Empty coverage, invalid encoding,
+unsupported source symlinks and changing inputs cannot become success. `--jobs`
+only parallelizes read-only text checks, not compiler processes. This is not a
+C++ lexer, ownership/duplicate-binding check, current match or acceptance gate.
+No result or new claim is written into source.
+
 ### Prompt-driven agent commands
 
 `recover agent worker` and `recover agent reviewer` implement the driver protocol
@@ -353,7 +371,7 @@ are not persisted as authority; no SQLite database is used.
 
 `match_recovery.source` owns the annotation grammar, reader and writer. Its
 read/write APIs need no optional dependencies. Legacy i386 disassembly and
-masked-byte measurement in `source.asm`, `source.calls` and `source.record`
+masked-byte measurement in `source.asm` and `source.calls`
 require the `x86` extra. They do not replace strict relocation-target verification
 or prove structure; use the strict comparison APIs for those obligations.
 `codeview.class_layout` and `generated_binary.check_generated` provide reusable

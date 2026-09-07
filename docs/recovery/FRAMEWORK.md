@@ -24,6 +24,13 @@ but always remains unverified; it is investigation, not migration admission.
 Full structure, historical product-TU recipe mapping, full-link outside-scope admission
 and a live model recovery pilot remain unfinished.
 
+The production gate's annotation-integrity dependency now runs through native
+`recover check-source`; the replaced script is removed. The package checks actual
+source text, marker coverage and in-memory claim/lesson transitions across configured
+source roots. Its stronger lesson-deletion control rejects unrelated equal-line-count
+edits. Missing inputs and empty coverage remain unverified. Address/host audits,
+the production measurement/stamping path and complete acceptance still need cutover.
+
 ## Accepted design
 
 - Identify application, third-party, runtime, system, generated, and unknown

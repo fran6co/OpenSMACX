@@ -54,11 +54,20 @@ def project_audits(monkeypatch):
         audit = (len(command) > 1 and command[0] == sys.executable
                  and Path(command[1]).parent == osmx.REPO_ROOT / "tools")
         native_audit = command[:5] == [sys.executable, "-m", "match_recovery.cli", "audits", "check"]
+        source_check = command[:4] == [sys.executable, "-m", "match_recovery.cli", "check-source"]
         build = command[:2] == ["cmake", "--build"]
-        if audit or native_audit or build:
-            key = command[5] if native_audit else Path(command[1]).name if audit else "build"
+        if audit or native_audit or source_check or build:
+            key = "check-source" if source_check else command[5] if native_audit else Path(command[1]).name if audit else "build"
             output = (json.dumps({"audit": key, "result": "fail" if key in failures else "pass",
                                   "total": 0, "rules": []}) if native_audit else "")
+            if source_check:
+                from match_recovery.source_integrity import RULES
+                output = json.dumps({"check": "source_annotation_integrity", "schema_version": 1,
+                                     "result": "fail" if key in failures else "pass",
+                                     "annotations": 2, "files_scanned": 1, "persisted": False,
+                                     "ready_for_collection": False, "input_fingerprint": "a" * 64,
+                                     "errors": [], "rules": [{"name": rule, "failures": int(key in failures)}
+                                                              for rule in RULES]})
             return subprocess.CompletedProcess(argv, int(key in failures), output, "")
         return actual(argv, *args, **kwargs)
     monkeypatch.setattr(osmx.subprocess, "run", invoke)
@@ -698,7 +707,7 @@ def test_json_is_only_json(claimed, monkeypatch):
 
 @pytest.mark.parametrize("audit", ["build", "compiler-work", "stale_references.py",
     "marker_symbols.py", "address_index.py", "class-debt", "duplicate_globals.py",
-    "data_values.py", "pointer_scale.py", "annotation_identity.py", "header_offsets.py"])
+    "data_values.py", "pointer_scale.py", "check-source", "header_offsets.py"])
 def test_failed_project_audit_prevents_acceptance(claimed, monkeypatch, project_audits, audit):
     monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
     project_audits.add(audit)
@@ -730,6 +739,41 @@ def test_missing_or_changed_floor_still_fails(claimed, monkeypatch, floor):
     result = run("check", "--src", str(claimed), "--exe", "/nonexistent", "--jobs", "1")
     assert result.exit_code == 1
     assert "claim floor" in result.output.lower()
+
+
+@pytest.mark.parametrize("damage", ["not-json", "wrong-check", "missing-rule", "duplicate-rule",
+                                    "pass-with-errors", "pass-with-failures", "empty-coverage",
+                                    "invalid-fingerprint", "exit-disagreement"])
+def test_invalid_native_source_integrity_evidence_fails_the_gate(claimed, monkeypatch, damage):
+    actual = osmx.subprocess.run
+
+    def invoke(argv, *args, **kwargs):
+        outcome = actual(argv, *args, **kwargs)
+        if list(argv)[:4] != [sys.executable, "-m", "match_recovery.cli", "check-source"]:
+            return outcome
+        report = json.loads(outcome.stdout)
+        if damage == "not-json":
+            return subprocess.CompletedProcess(argv, 0, "not JSON", "")
+        if damage == "wrong-check":
+            report["check"] = "another-check"
+        elif damage == "missing-rule":
+            report["rules"].pop()
+        elif damage == "duplicate-rule":
+            report["rules"][-1] = report["rules"][0]
+        elif damage == "pass-with-errors":
+            report["errors"] = [{"reason": "could not read a file"}]
+        elif damage == "pass-with-failures":
+            report["rules"][0]["failures"] = 1
+        elif damage == "empty-coverage":
+            report["annotations"] = 0
+        elif damage == "invalid-fingerprint":
+            report["input_fingerprint"] = "stale"
+        return subprocess.CompletedProcess(argv, 3 if damage == "exit-disagreement" else 0,
+                                           json.dumps(report), "")
+
+    monkeypatch.setattr(osmx.subprocess, "run", invoke)
+    monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
+    assert check(claimed).exit_code == 1
 
 
 def test_a_tree_with_no_claims_says_so(tmp_path):

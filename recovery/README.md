@@ -16,6 +16,14 @@ capabilities, not project/compiler-environment adapters. `environment/` contains
 only the local compiler interaction. The old production command/gate and other
 remaining tools still need absorption or retirement before `tools/` can disappear.
 
+`uv run recover check-source --jobs 8 --summary` now replaces the old annotation
+identity script in the production gate. It checks every configured source file,
+including headers and seeds, without an image, compiler, Git database or optional
+Python dependencies. In-memory keyword/demotion/deletion controls preserve the
+old invariants; standalone malformed marker heads and unrelated text changes
+also fail. This never edits or stamps source. It does not replace the separate
+address/host audits, matching checks or full acceptance.
+
 The native `recover tasks variants` command now replaces serial edit-and-restore
 spelling experiments. It reads the source map once and compiles atomic header/body
 overlays across task TUs. Unchanged-replica controls per TU and compiled damage
