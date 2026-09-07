@@ -1,0 +1,26 @@
+{
+  "event_id": "52a99dae853570214c1ca2ed133f84b3334868dc4e3164967a2ce0aa62ea472c",
+  "payload": {
+    "affects": [
+      "entity-346c04d1785451ee6ffeaa72f3c1284de42227437f5cdf73d6f7e4fccbce21f8",
+      "entity-44654e60399bda0b7e701e97183e5dfb3016365c85246161376fc04d47c20507",
+      "entity-5eeaa7dfaa3d8f1e9490a388ca40905c05431cfcc9e3d25adcbb0c9e520a74f4",
+      "entity-a0a7c7f9f3b76f0850d2f376d8a9ee2b4eef5fdaa052527f04478c244bced607",
+      "entity-b5ce5e1391e3df7a6a8ccb64239a63842b92bcc36923fdfa4916a08b5564b0ef"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "window-double-click-cdecl-notification",
+    "evidence": [
+      "original:0x0060E20C pushes the selected id, 0x0060E20D calls the stored callback and 0x0060E210 adds esp,4; CheckBox 0x0060FAA6-0x0060FAA9 likewise performs caller cleanup.",
+      "original:0x006044D1 loads the popup from 0x009B8D7C; the callback does not consume an incoming this and ends with ret at 0x00604580, not ret 4.",
+      "source:src/basepop.h currently declares a nonstatic double_click; src/basepop.cpp stores &BasePop::double_click via a member-pointer cast into ListBox+0x40, RadioButton+0x10 and CheckBox+0xC. Their headers still declare integer storage."
+    ],
+    "hypothesis": "The installed BasePop double_click notification is a static cdecl function, not a member-function pointer. Recover the callback fields and their typed installation together with the virtual event family.",
+    "kind": "discovery"
+  },
+  "previous_event": "5957305797ca50b7ca067151b88c97f87b344c3f8a261dd2e49fae2fd2bc4ab7",
+  "request_id": "window-double-click-cdecl-notification",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:radiobutton-lifetime"
+}
