@@ -103,8 +103,6 @@ def data_layout(obj, name):
     if section.flags & 0x20 or not section.flags & (0x40 | 0x80) or section.name.startswith(".tls"):
         raise ValueError("unsupported COFF data storage section")
     records = _type_records(obj)
-    if any(leaf in (0x0013, 0x0014, 0x0016, 0x100E, 0x1501, 0x1509, 0x1515) for leaf, _ in records):
-        raise ValueError("requires standalone CodeView storage types, not PCH or type servers")
     debug_sections = [(i + 1, s) for i, s in enumerate(obj.sections) if s.name == ".debug$S"]
     roots = [number for number, section in debug_sections if not section.flags & 0x1000]
     if len(roots) != 1:

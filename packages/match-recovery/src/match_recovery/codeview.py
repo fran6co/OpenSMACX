@@ -182,7 +182,14 @@ def _type_records(obj: Coff):
         if size < 2:
             raise ValueError("invalid CodeView type length")
         record = Cursor(cursor.take(size))
-        records.append((record.number("<H"), record))
+        leaf = record.number("<H")
+        # Imported/precompiled types change the type-index context. A local
+        # definition beside such a record is not standalone evidence. Apply
+        # this boundary to both class and data observers, before returning an
+        # index that either could mistake for a complete type stream.
+        if leaf in (0x0013, 0x0014, 0x0016, 0x100E, 0x1501, 0x1509, 0x1515):
+            raise ValueError("requires standalone CodeView types, not PCH or type servers")
+        records.append((leaf, record))
     return records
 
 

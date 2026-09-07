@@ -195,6 +195,8 @@ index each fresh object's standalone type stream once, without sharing objects
 or verdicts across compilations. Unsupported class field lists remain separate
 lookup failures; a malformed type stream never supplies a partial index. A known
 wrong offset remains a failure even if its member type is unmeasurable.
+The shared type reader rejects PCH/type-server dependencies for both class and
+data observations, even when a requested class also has a local definition.
 
 Each expectation needs a complete compiler witness in every configured flag set.
 Unsupported/malformed debug information, failed compiles and missing witnesses
