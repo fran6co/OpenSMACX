@@ -260,6 +260,12 @@ and the cross-TU neighbor rows, including outside-task neighbors where available
 apply the chosen change deliberately, then rerun the task checks. Unmeasured
 callers remain outside this experiment's coverage; it does not replace full
 structural, preservation or review checks.
+Function `// symbol` proposals for task subjects are resolved separately for
+each candidate, including their call/reference correlations. Inspect
+`binding_changes`; an object still emitting only the old name cannot prove the
+proposed binding. Original identities, spans, historical claims and other
+recovery interpretations stay fixed during a deck. Change those only at a
+reviewed checkpoint, never as a way to improve a candidate score.
 A plateau is a resumable finding, not an exclusion. Never fabricate code or
 relax a check to bank a result.
 

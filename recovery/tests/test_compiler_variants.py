@@ -152,6 +152,68 @@ def test_real_vc6_atomic_header_body_overlay_reaches_both_translation_units(vari
     assert not list((root / "build/recovery/variants").iterdir())
 
 
+def test_real_vc6_deck_follows_nonvirtual_to_virtual_method_binding(variant_project):
+    from match_recovery.model import Origin
+    from match_recovery.tasks import Task, TaskStore
+    from match_recovery.variants import measure_variants
+    from recovery.environment.wine import VC6_ROOT
+    from test_binary import pe_fixture
+    if not (VC6_ROOT / "BIN/CL.EXE").is_file():
+        pytest.skip("VC6 is not installed")
+    root = variant_project
+    # Independent synthetic image: mov eax,[ecx+4]; ret. The existing virtual
+    # anchor gives C a vptr before its data member in both candidate spellings.
+    image = pe_fixture(b"\x8b\x41\x04\xc3")
+    pin = hashlib.sha256(image).hexdigest()
+    (root / "image.exe").write_bytes(image)
+    (root / "code/IMAGE_PIN").write_text("sha256 " + pin + "\n")
+    source, header = root / "code/unit.cpp", root / "code/model.h"
+    old_symbol, new_symbol = "?get@C@@QAEHXZ", "?get@C@@UAEHXZ"
+    header.write_text("class C { public: virtual void anchor(); int value; int get(); };\n")
+    source.write_text('#include "model.h"\n'
+                      '// ORIGINAL: 0x00401000 ?get@C@@QAEHXZ 0x00401000-0x00401004\n'
+                      'int C::get() { return value; }\n')
+    path = root / "recovery/project.json"
+    settings = json.loads(path.read_text())
+    settings["source"]["symbol_format"] = "msvc"
+    settings["measurement"].update(flag_sets=[["/c", "/O2", "/Gy", "/GR-"]], layout_flags=[])
+    path.write_text(json.dumps(settings))
+    task = Task("virtual-binding", "synthetic", "coordinator", "Test coupled virtual method proposal", "a" * 40,
+                (Origin(pin, "pe:va", 0x401000),), ("code/unit.cpp", "code/model.h"), ("synthetic compiler control",))
+    TaskStore(root).create(task)
+    original = {name: (root / name).read_bytes() for name in task.editable_files}
+    body = "int C::get() { return value; }"
+    declaration = "int value; int get();"
+    value = {"schema_version": 2, "source": "code/unit.cpp", "entity_id": task.subjects[0].entity_id,
+             "files": {name: {"source_sha256": hashlib.sha256(data).hexdigest(),
+                               "entity_id": task.subjects[0].entity_id,
+                               "before": body if name.endswith(".cpp") else declaration,
+                               "control": body.replace("return value", "return value + 1") if name.endswith(".cpp")
+                               else "int prefix; " + declaration} for name, data in original.items()},
+             "candidates": {name: {"code/unit.cpp": "// symbol " + new_symbol + "\n" + body,
+                                    "code/model.h": spelling} for name, spelling in (
+                                        ("virtual", "int value; virtual int get();"), ("stale", declaration))}}
+    wrapper = Path(__file__).resolve().parents[1] / "environment/wine.py"
+    command = (sys.executable, str(wrapper), "--tool=cl", "/nologo")
+    class LocalCompiler:
+        def __call__(self, source, arguments, flags):
+            return compile_object(source, command, flags)
+
+        def overlay(self, source, contents, arguments, flags):
+            return compile_overlay(root, source, contents, command, flags)
+
+    report = measure_variants(root, task.task_id, root / "image.exe", value, compiler=LocalCompiler())
+    assert report["controls"][0]["result"] == "pass", report["controls"]
+    assert report["baseline"][0]["target"]["symbol"] == old_symbol
+    assert report["baseline"][0]["target"]["result"] == "pass"
+    virtual, stale = report["candidates"]
+    assert virtual["target"]["symbol"] == stale["target"]["symbol"] == new_symbol
+    assert virtual["target"]["result"] == "pass", virtual
+    assert stale["target"]["result"] == "unknown", stale
+    assert {name: (root / name).read_bytes() for name in original} == original
+    assert not list((root / "build/recovery/variants").iterdir())
+
+
 def test_real_vc6_historical_tree_excludes_new_include_shadow(variant_project):
     from match_recovery.source_replica import replica_snapshot
     from recovery.environment.wine import VC6_ROOT

@@ -1055,6 +1055,13 @@ control or compare only the coarse match tier to bypass that refusal.
 The source map is read once per deck. Candidates compile at the requested width
 (default 1), with strict byte/boundary/reference checks shared with ordinary task
 measurement. Every TU in a candidate sees the same complete file overlay.
+An authorized task function may propose a different emitted `// symbol` without
+editing the live tree. Each candidate reparses its edited annotations and resolves
+its own function/reference bindings; `binding_changes` lists the old and proposed
+names. Emitting only the old symbol cannot prove the proposal. Symbol collisions
+and out-of-scope binding changes are refused before compilation. Original
+identities, spans, historical claims and non-function recovery interpretations
+remain fixed; changing those requires a reviewed checkpoint, not a spelling deck.
 Results include unambiguous mapped neighbors in compiled TUs, tagged by whether
 they are task subjects, and explicitly list unmeasured task entities and other
 mapped product units. These lists are not proof of complete caller/ownership impact.

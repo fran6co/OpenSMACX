@@ -100,6 +100,126 @@ def test_bad_replica_and_wrong_target_control_prevent_scoring(project, damage):
     assert result["controls"][0]["result"] == "unknown"
 
 
+def renamed_deck(project, symbol="_r"):
+    value = deck(project)
+    value["files"]["code/unit.cc"].update(
+        before="void f() { /* baseline */ }", control="void f() { for (;;) {} }")
+    value["candidates"] = {"renamed": {"code/unit.cc": f"// symbol    {symbol}\nvoid renamed() {{}}"}}
+    return value
+
+
+def test_candidate_cannot_pass_by_emitting_the_old_symbol_after_a_binding_change(project):
+    result = measure(project, renamed_deck(project))
+    assert result["controls"][0]["result"] == "pass"
+    trial = result["candidates"][0]
+    assert trial["target"]["symbol"] == "_r"
+    assert trial["target"]["result"] == "unknown"
+
+
+def test_candidate_can_measure_a_new_symbol_without_writing_the_tree(project):
+    class Renamed(Compiler):
+        def variant(self, source, contents, *args):
+            emitted = super().variant(source, contents, *args)
+            return emitted.replace(b"_f", b"_r") if b"// symbol" in contents else emitted
+    root, _ = project
+    before = (root / "code/unit.cc").read_bytes()
+    result = measure(project, renamed_deck(project), compiler=Renamed())
+    assert result["baseline"][0]["target"]["symbol"] == "_f"
+    trial = result["candidates"][0]
+    assert trial["target"]["symbol"] == "_r" and trial["target"]["result"] == "pass"
+    assert trial["binding_changes"] == [{"entity_id": project[1].subjects[0].entity_id,
+                                        "unit": "code/unit.cc", "before": "_f", "after": "_r"}]
+    assert (root / "code/unit.cc").read_bytes() == before
+
+
+@pytest.mark.parametrize("reference,expected", [("_r", "pass"), ("_f", "unknown")])
+def test_renamed_candidate_references_cannot_borrow_the_old_external_binding(project, reference, expected):
+    root, task = project
+    image = pe_fixture(b"\xe8\xfb\xff\xff\xff\xc3")  # call self
+    pin = hashlib.sha256(image).hexdigest()
+    (root / "image.exe").write_bytes(image)
+    (root / "code/PIN").write_text("sha256 " + pin + "\n")
+    source = root / "code/unit.cc"
+    source.write_text(source.read_text().replace("-0x00401001", "-0x00401006"))
+    task = replace(task, task_id="recursive", subjects=(Origin(pin, "pe:va", 0x401000),))
+    TaskStore(root).create(task)
+    project = root, task
+
+    class Recursive(Compiler):
+        def __call__(self, *_):
+            return coff_fixture(b"\xe8\0\0\0\0\xc3", relocation=(1, 1, 20)).replace(b"_g", b"_f")
+
+        def variant(self, source, contents, *args):
+            if b"for (;;)" in contents:
+                return coff_fixture(b"\xeb\xfe")
+            if b"// symbol" in contents:
+                return coff_fixture(b"\xe8\0\0\0\0\xc3", relocation=(1, 1, 20)).replace(
+                    b"_f", b"_r").replace(b"_g", reference.encode())
+            return self()
+
+    report = measure(project, renamed_deck(project), compiler=Recursive())
+    assert report["baseline"][0]["target"]["result"] == "pass"
+    assert report["controls"][0]["result"] == "pass"
+    assert report["candidates"][0]["target"]["result"] == expected
+
+
+@pytest.mark.parametrize("damage", ["remove", "add", "address", "span", "catalogue", "mode", "claim", "body", "kind"])
+def test_candidate_cannot_redefine_original_evidence_or_claims(project, damage):
+    original = (project[0] / "code/unit.cc").read_text()
+    value = deck(project)
+    value["files"]["code/unit.cc"].update(before=original, control=original.replace("/* baseline */", "for (;;) {}"))
+    after = original
+    if damage == "remove": after = "void f() {}\n"
+    elif damage == "add": after += "// ORIGINAL: 0x00401010 _g 0x00401010-0x00401011\nvoid g() {}\n"
+    elif damage == "address": after = after.replace("ORIGINAL: 0x00401000", "ORIGINAL: 0x00401010")
+    elif damage == "span": after = after.replace("-0x00401001", "-0x00401002")
+    elif damage == "catalogue": after = after.replace(" _f ", " _r ")
+    elif damage == "mode": after = after.replace("0x00401001", "0x00401001 FILE")
+    elif damage == "claim": after = after.replace("0x00401001", "0x00401001 BYTE_EXACT")
+    elif damage == "body": after = after.replace("void f()", "// body code/elsewhere.h\nvoid f()")
+    elif damage == "kind": after = after.replace("void f()", "// kind library\nvoid f()")
+    value["candidates"] = {damage: {"code/unit.cc": after}}
+    with pytest.raises(ValueError, match="original identities, spans or historical claims"):
+        measure(project, value, compiler=object())
+
+
+def test_damage_control_must_not_satisfy_its_witness_by_changing_its_binding(project):
+    value = renamed_deck(project)
+    value["files"]["code/unit.cc"]["control"] = "// symbol _r\nvoid f() { for (;;) {} }"
+    with pytest.raises(ValueError, match="damage controls"):
+        measure(project, value, compiler=object())
+
+
+def test_renaming_an_unselected_neighbor_requires_scope_expansion(project):
+    root, _ = project
+    source = root / "code/unit.cc"
+    source.write_text(source.read_text() + "// ORIGINAL: 0x00401010 _h 0x00401010-0x00401011\nvoid h() {}\n")
+    original = source.read_text()
+    value = deck(project)
+    value["files"]["code/unit.cc"].update(before=original, control=original.replace("/* baseline */", "for (;;) {}"))
+    value["candidates"] = {"outside": {"code/unit.cc": original.replace("void h()", "// symbol _r\nvoid h()")}}
+    with pytest.raises(ValueError, match="task authorization"):
+        measure(project, value, compiler=object())
+
+
+def test_proposed_symbol_collision_is_refused_before_compilation(project):
+    (project[0] / "code/other.cc").write_text("// ORIGINAL: 0x00401010 _r 0x00401010-0x00401011\nvoid r() {}\n")
+    with pytest.raises(ValueError, match="ambiguous bindings"):
+        measure(project, renamed_deck(project), compiler=object())
+
+
+@pytest.mark.parametrize("annotation", [
+    "// RECOVERY_OBJECT: v1 0x00401100 _object",
+    "// RECOVERY_GENERATED: v1 vtable 0x00401100 ? _table 0x00401000",
+    "// RECOVERY_MEMBER: v1 C member 0x10 0x00401000",
+])
+def test_other_recovery_interpretations_cannot_change_under_baseline_scoring(project, annotation):
+    value = deck(project)
+    value["candidates"] = {"annotation": {"code/unit.cc": "\n" + annotation + "\n"}}
+    with pytest.raises(ValueError, match="recovery interpretations"):
+        measure(project, value, compiler=object())
+
+
 @pytest.mark.parametrize("damage", ["stale", "absent-anchor", "ambiguous-anchor", "scope", "file", "invalid-schema", "empty"])
 def test_invalid_decks_never_reach_compilation(project, damage):
     value = deck(project)

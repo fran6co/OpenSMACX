@@ -8,13 +8,16 @@ from .application_binary import check_compiled, select_bindings
 from .coff_replica import function_signature, object_signature
 from .compiler import Compiler
 from .components import local_path, relative_path
+from .component_source import parse_components
 from .generated_source import read_generated
 from .measurement import Measurement
-from .model import Result, digest, require_digest, require_text
+from .model import Origin, Result, Span, digest, require_digest, require_text
 from .object_source import read_objects, referenced_object_units
 from .import_source import read_imports, parse_imports
-from .ownership_source import project_view
+from .ownership_source import class_hint, project_view
+from .partition import Candidate, partition
 from .pe_coff import Coff, PeImage
+from .source.reader import read_text
 from .tasks import TaskStore
 
 
@@ -70,6 +73,61 @@ def _deck(value, root, editable, selected, settings):
                [controls[path][1], *(candidate[path] for candidate in replacements.values())]):
             raise ValueError("candidate deck cannot change import identities; checkpoint binding decisions first")
     return originals, controls, replacements
+
+
+def _trial_bindings(view, originals, contents, selected, settings, pin, *, control=False):
+    """Rebind proposed function symbols without borrowing baseline correlations.
+
+    Original identities/obligations and non-function interpretations belong to
+    checkpoint decisions, not spelling search. A deck may propose an emitted
+    function symbol for a task subject; it never publishes that decision.
+    Only edited files are reparsed, and the ordinary selector handles ambiguity.
+    """
+    protected = ("address", "name", "image_spans", "mode", "body", "kind",
+                 "exclusion", "byte_exact", "semantic")
+    updates, changes = {}, []
+    for path, original in originals.items():
+        baseline_text, proposed_text = original.decode("utf-8"), contents[path].decode("utf-8")
+        # These line-oriented interpretations are not candidate function names.
+        # Keep their evidence intact rather than scoring changed C++ against an
+        # obsolete object/import/table/layout binding. Component blocks also
+        # contain multi-line metadata and need their complete parser below.
+        def interpretations(text):
+            return [line.strip() for line in text.splitlines()
+                    if line.lstrip().startswith("// RECOVERY_")]
+        if (interpretations(baseline_text) != interpretations(proposed_text)
+                or parse_components({path: baseline_text}) != parse_components({path: proposed_text})):
+            raise ValueError("candidate deck cannot change recovery interpretations; checkpoint binding decisions first")
+        baseline, proposed = read_text(baseline_text, path), read_text(proposed_text, path)
+        def identities(records):
+            return [tuple(getattr(row, field) for field in protected) for row in records]
+        if identities(baseline) != identities(proposed):
+            raise ValueError("candidate deck cannot change original identities, spans or historical claims")
+        for old, new in zip(baseline, proposed):
+            old_symbol, new_symbol = old.symbol or old.name, new.symbol or new.name
+            origin = Origin(pin, settings.source.address_space, old.address)
+            if old_symbol != new_symbol:
+                if control or origin.entity_id not in selected:
+                    raise ValueError("candidate symbol changes require task authorization and cannot be damage controls")
+                changes.append({"entity_id": origin.entity_id, "unit": path,
+                                "before": old_symbol, "after": new_symbol})
+            updates[path, old.line] = (new_symbol, new.line)
+    candidates = []
+    for group in view["groups"]:
+        for entity in group["entities"]:
+            for row in entity["candidates"]:
+                symbol, line = updates.get((row["path"], row["line"]), (row["symbol"], row["line"]))
+                owner, basis = row["owner_hint"], row["owner_hint_basis"]
+                if symbol != row["symbol"] and settings.source.symbol_format == "msvc":
+                    emitted = class_hint(symbol)
+                    owner = emitted or row["catalogued_owner_hint"]
+                    basis = "source_symbol" if emitted else "catalogued_symbol"
+                candidates.append(Candidate(Origin(**row["origin"]), tuple(Span(**span) for span in row["spans"]),
+                                            row["path"], line, row["seed"], symbol, owner,
+                                            row["component"], basis, row["catalogued_owner_hint"]))
+    selected_all = frozenset(entity["entity_id"] for group in view["groups"] for entity in group["entities"])
+    bindings, refused, externals = select_bindings(partition(candidates), selected_all)
+    return bindings, refused, externals, changes
 
 
 def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *, jobs: int = 1, compiler=None):
@@ -128,6 +186,18 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
     if ({item.symbol for item in data_bindings} & set(externals)
             or {item.symbol for item in generated} & (set(externals) | {item.symbol for item in data_bindings})):
         raise ValueError("conflicting function/object/generated symbol bindings")
+    candidate_bindings = {}
+    for path, (_, contents) in damage_controls.items():
+        _trial_bindings(view, originals, {**originals, path: contents}, selected, settings, pin, control=True)
+    for name, contents in candidates.items():
+        resolved = _trial_bindings(view, originals, contents, selected, settings, pin)
+        proposed, _, targets, _ = resolved
+        if {item.origin.entity_id for item in proposed} != {item.origin.entity_id for item in bindings}:
+            raise ValueError("candidate symbol changes create or resolve ambiguous bindings; checkpoint decisions first")
+        reserved = {item.symbol for item in (*data_bindings, *generated, *imports)}
+        if set(targets) & reserved:
+            raise ValueError("conflicting function/object/generated/import symbol bindings")
+        candidate_bindings[name] = resolved
     compiler = compiler if compiler is not None else Compiler(root, profile=settings.compiler_profile)
     flags_list = tuple(flags + settings.layout_flags for flags in settings.flag_sets) if any(item.span is not None for item in data_bindings) else settings.flag_sets
     controls, baselines, trials = [], [], []
@@ -140,6 +210,8 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
 
     def score(objects, flags, name, errors=None, contents=None):
         errors = dict(errors or {})
+        trial_bindings, _, trial_externals, changes = (
+            (bindings, all_refused, externals, []) if contents is None else candidate_bindings[name])
         support_controls, support_attempts = [], 0
         while pending := referenced_object_units(data_bindings, objects) - objects.keys() - errors.keys():
             for unit in sorted(pending):
@@ -163,13 +235,14 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
                     errors[unit] = str(error)
                     control["reason"] = str(error)
                 support_controls.append(control)
-        measured = [item for item in bindings if item.unit in objects or item.unit in units]
+        measured = [item for item in trial_bindings if item.unit in objects or item.unit in units]
         rows, data_rows, generated_rows, import_rows = check_compiled(
-            measured, data_bindings, generated, objects, image, externals, errors=errors, import_bindings=imports)
+            measured, data_bindings, generated, objects, image, trial_externals, errors=errors, import_bindings=imports)
         selected_row = next(row for row in rows if row["entity_id"] == target.origin.entity_id)
         return {"name": name, "flags": list(flags), "target": selected_row,
                 "neighbors": [{**row, "in_task": row["entity_id"] in selected} for row in rows if row is not selected_row],
                 "compile_errors": errors or {},
+                "binding_changes": changes,
                 "object_dependencies": support_controls, "support_compile_attempts": support_attempts,
                 "object_definitions": data_rows, "generated_tables": generated_rows, "import_bindings": import_rows}
 
@@ -250,6 +323,7 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
             "scope_complete": False, "ready_for_collection": False, "persisted": False,
             "structure_verification": Result.UNKNOWN,
             "limitations": ["diagnostic source trials only; no winner applied and no claims stamped",
+                            "task function symbol proposals are scored against candidate bindings; original identities, claims and other recovery interpretations require checkpoint decisions",
                             "ranked per flag trial by compilation, task code and bounded initial-data results, then differing bytes; missing distances sort last, trials are never combined",
                             "all mapped task TUs compiled; neighboring rows also show unambiguous outside-task functions in those TUs, not all affected callers",
                             "layout, lifecycle, full build, protected obligations and review still require task checks",
