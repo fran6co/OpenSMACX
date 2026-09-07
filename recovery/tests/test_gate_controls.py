@@ -20,6 +20,8 @@ import tempfile
 import pytest
 
 from match_recovery.processes import run_bounded
+from match_recovery.source_config import SourceConfiguration
+from match_recovery.source_inventory import image_pin
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -99,6 +101,15 @@ def slack(edits):
     edits.replace(name, match[0], match[1] + str(int(match[2]) + 5))
 
 
+def wrong_image_pin(edits):
+    configuration = SourceConfiguration("src/IMAGE_PIN", "pe:va")
+    original = image_pin(edits.root, configuration)
+    changed = ("1" if original[0] == "0" else "0") + original[1:]
+    edits.replace(configuration.image_pin, "sha256 " + original, "sha256 " + changed)
+    # A textual edit alone is insufficient: a comment can mention sha256 too.
+    assert image_pin(edits.root, configuration) == changed
+
+
 def swap_claim(edits):
     old = edits.claim()
     edits.replace("src/palette.cpp", old, old.removesuffix(" BYTE_EXACT"))
@@ -142,8 +153,7 @@ CASES = (
                              "Sprite *RadioButtonDefault1 = &g_RADIOBUTTON_SPRITE_2;")),
     Case("dropped_initial_value", "project:trailing-address-initial-values", "fail",
          lambda e: e.replace("src/sprite.cpp", "SpriteDrawOriginX = 1;", "SpriteDrawOriginX;")),
-    Case("image_pin", None, "unknown",
-         lambda e: e.replace("src/IMAGE_PIN", e.read("src/IMAGE_PIN").split("sha256 ")[1][:8], "deadbeef")),
+    Case("image_pin", None, "unknown", wrong_image_pin),
     Case("source_symbol_missing", "symbols", "unknown",
          lambda e: symbol(e, "?totally_bogus_harness@@YAXXZ"),
          ("functions", "symbol", "?totally_bogus_harness@@YAXXZ")),
@@ -320,6 +330,23 @@ def test_control_anchor_must_be_unique(tmp_path):
         with pytest.raises(AssertionError, match="ambiguous"):
             edits.replace("source.cpp", "duplicate", "replacement")
     assert (tmp_path / "source.cpp").read_text() == "duplicate duplicate"
+
+
+@pytest.mark.parametrize("pin", ["0" * 64, "1" * 64])
+def test_pin_damage_changes_parsed_identity_not_sha256_comment(tmp_path, pin):
+    path = tmp_path / "src/IMAGE_PIN"
+    path.parent.mkdir()
+    comment = "# Historical command: grep -rn sha256 tools decomp\n"
+    original = comment + "sha256 " + pin + "\n"
+    path.write_text(original)
+    configuration = SourceConfiguration("src/IMAGE_PIN", "pe:va")
+    case = next(case for case in CASES if case.name == "image_pin")
+    with damage(tmp_path) as edits:
+        case.mutate(edits)
+        assert image_pin(tmp_path, configuration) != pin
+        assert path.read_text().splitlines()[0] == comment.rstrip("\n")
+    assert path.read_text() == original
+    assert image_pin(tmp_path, configuration) == pin
 
 
 @pytest.mark.parametrize("kind", ["symlink", "hardlink"])
