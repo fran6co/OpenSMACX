@@ -241,7 +241,7 @@ if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13)
     # it here delivers the same shim to every target without a per-file edit,
     # which is the rule this directory already follows for the include path.
     # `#pragma once` in the header makes the double delivery to `stdafx.h`
-    # sources a no-op, and `tools/vc6_cl.py` already translates `/FI`.
+    # sources a no-op, and `recovery/environment/wine.py` already translates `/FI`.
     add_compile_options("/FI${CMAKE_CURRENT_SOURCE_DIR}/src/vc6_compat.h")
 endif()
 

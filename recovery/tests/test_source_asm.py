@@ -4,7 +4,9 @@ import os
 import shutil
 import pytest
 from match_recovery.source import asm, read_file, Tier
-from match_recovery.source.asm import build_command, compare_asm, compiled_asm, original_asm
+from recovery.environment.recipe import build_command, flag_dependent
+from recovery.environment.compile import compile_object
+from match_recovery.source.asm import compare_asm, compiled_asm, original_asm
 from test_asm import record_in, MARKED, SELFMOD
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -35,7 +37,7 @@ def test_byte_exact_body_compiles_to_the_same_shape():
     assert record.byte_exact
     original = original_asm(record, EXE)
     command = build_command(COMPILE_COMMANDS, record.path)
-    compiled = compiled_asm(record, command, FLAGS)
+    compiled = compiled_asm(record, command, FLAGS, compiler=compile_object)
     result = compare_asm(original, compiled)
     assert result.verdict == "BYTE_EXACT", \
         f"{result.verdict}: {result.matching_instructions}/{result.original_instructions} " \
@@ -111,5 +113,5 @@ def test_a_borrowed_command_compiles_a_file_the_build_never_names():
     if record is None:
         pytest.skip("no annotated unit to try")
     command = build_command(COMPILE_COMMANDS, REPO_ROOT / "src" / "buffer.cpp")
-    verdict = compare_record(record, EXE, command, FLAGS)
+    verdict = compare_record(record, EXE, command, FLAGS, compiler=compile_object, retry_compile=flag_dependent)
     assert verdict.verdict in {str(tier) for tier in Tier}

@@ -1,14 +1,9 @@
 #!/usr/bin/env python3
-"""The command line over `decomp` - what state the source map is in.
+"""Transitional production commands over match_recovery source APIs.
 
-    uv run tools/osmx.py status
-
-WHY THIS IS A TOOL AND NOT PART OF THE PACKAGE. `decomp` names no location,
-no compiler and no flag set, on purpose: it is a library and those are facts
-about a checkout. Something has to know them, and this is that something.
-Every path below is an option with an environment-variable default, so the
-knowledge lives in one file that a person can read instead of being spread
-through the code that uses it.
+Compiler interaction is supplied by recovery/environment, shared with the
+framework compiler protocol. This CLI remains only until production recording
+and the complete gate migrate; project location is not a library policy.
 """
 
 from __future__ import annotations
@@ -30,15 +25,19 @@ import typer
 
 from dataclasses import replace
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from match_recovery.source import DecompilationState, State, mangled, read, write_file
 from match_recovery import source as source_records
 from match_recovery.source.mangled import qualified_name
 from match_recovery.source.calls import CallSite, call_sites, imported_names
 from match_recovery.source.record import stamped
-from match_recovery.source.asm import (AsmComparison, CompileFailed, build_command,
-                        build_inputs, compare_record, compare_source,
-                        compare_subject, compile_unit, flag_dependent,
-                        original_asm, shared_spans, span_refusal,
+from recovery.environment.recipe import build_command, MissingRecipe
+from match_recovery.compilation_database import build_inputs
+from recovery.environment.compile import compile_object
+from recovery.environment.recipe import flag_dependent
+from match_recovery.source.asm import (AsmComparison, CompileFailed, compare_record, compare_source,
+                        compare_subject, original_asm, shared_spans, span_refusal,
                         subject_asm)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -131,25 +130,6 @@ def population(record: DecompilationState) -> Population:
     return Population.NOT_MATCHING
 
 
-def _build_inputs(compile_commands: Path) -> set[Path]:
-    """The source files the build names, or an empty set if it names none.
-
-    Empty is not the same as "none reachable": a checkout with no configured
-    build simply cannot say, and `status` reports the column as unknown
-    rather than as zero.
-    """
-    if not compile_commands.is_file():
-        return set()
-    table = json.loads(compile_commands.read_text())
-    found = set()
-    for entry in table:
-        file = Path(entry["file"])
-        if not file.is_absolute():
-            file = Path(entry.get("directory", ".")) / file
-        found.add(file.resolve())
-    return found
-
-
 @app.command()
 def status(
     src: Annotated[Path, typer.Option(
@@ -174,7 +154,7 @@ def status(
         typer.secho(f"no annotations under {src}", fg=typer.colors.RED)
         raise typer.Exit(1)
 
-    inputs = _build_inputs(compile_commands)
+    inputs = build_inputs(compile_commands) if compile_commands.is_file() else set()
     rows = {}
     for name in Population:
         mine = [r for r in records if population(r) is name]
@@ -567,7 +547,8 @@ def measure(
     source = body if body is not None else record.path
     try:
         result = compare_source(record, exe, source, command, FLAG_SETS,
-                                shared)
+                                shared, compiler=compile_object,
+                                retry_compile=flag_dependent)
     except (ValueError, CompileFailed) as problem:
         typer.secho(f"{record.address_hex}: {problem}", fg=typer.colors.RED)
         raise typer.Exit(2) from None
@@ -592,7 +573,7 @@ def _command_for(compile_commands: Path, source: Path,
     """
     try:
         return build_command(compile_commands, source)
-    except ValueError:
+    except MissingRecipe:
         return build_command(compile_commands, REPO_ROOT / borrow)
 
 
@@ -627,7 +608,8 @@ def _score_candidate(job: tuple) -> tuple:
     source, record, exe, command, flag_sets, shared = job
     try:
         return str(source), compare_source(record, exe, source, command,
-                                           flag_sets, shared), ""
+                                           flag_sets, shared, compiler=compile_object,
+                                           retry_compile=flag_dependent), ""
     except (ValueError, CompileFailed) as problem:
         return str(source), None, str(problem)
 
@@ -900,7 +882,8 @@ def _record_one(job: tuple) -> tuple:
     """Measure one piece in a worker. Returns (piece, result) or (piece, None)."""
     piece, exe, command, shared = job
     try:
-        return piece, compare_record(piece, exe, command, FLAG_SETS, shared)
+        return piece, compare_record(piece, exe, command, FLAG_SETS, shared,
+                                     compiler=compile_object, retry_compile=flag_dependent)
     except (ValueError, CompileFailed) as problem:
         return piece, str(problem)
 
@@ -1537,10 +1520,10 @@ def _check_one_file(job: tuple) -> list[tuple[tuple, str, str]]:
         if not outstanding:
             break
         try:
-            obj = compile_unit(path, command, flags)
-        except CompileFailed as failed:
+            obj = compile_object(path, command, flags)
+        except (OSError, ValueError, CompileFailed) as failed:
             # A UNIT THAT WILL NOT PARSE WILL NOT PARSE SEVEN MORE TIMES.
-            # See `match_recovery.source.asm.flag_dependent`, and the measurement behind it.
+            # See `recovery.environment.recipe.flag_dependent`, and the measurement behind it.
             diagnostic = diagnostic or str(failed)
             if flag_dependent(str(failed)):
                 continue
@@ -1807,7 +1790,7 @@ def check(
     cache_path = compile_commands.parent / "osmx_check_cache.json"
     salt = hashlib.sha256(
         b"".join(p.read_bytes() for p in
-                 sorted(Path(source_records.__file__).parent.glob("*.py")))
+                 sorted(Path(source_records.__file__).parent.parent.rglob("*.py")))
         + Path(__file__).read_bytes()
         + b"".join(p.read_bytes() for p in sorted(
             (REPO_ROOT / "recovery/environment").glob("*.py")))

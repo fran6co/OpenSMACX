@@ -35,7 +35,8 @@ def isolated_build_database(tmp_path, monkeypatch):
     # Match the legacy command's explicitly chosen borrowing anchor, without
     # consulting the real database or providing an executable compiler.
     database.write_text(json.dumps([{"file": str(osmx.REPO_ROOT / "src/buffer.cpp"),
-                                     "arguments": ["not-a-compiler", "/c", "buffer.cpp"]}]))
+                                     "directory": str(database.parent),
+                                     "arguments": ["not-a-compiler", "/c", str(osmx.REPO_ROOT / "src/buffer.cpp")]}]))
     monkeypatch.setenv("OPENSMACX_COMPILE_COMMANDS", str(database))
     return database
 
@@ -668,7 +669,7 @@ def test_a_failed_compile_is_not_retried_under_every_flag_set(
         tried.append(flags)
         raise osmx.CompileFailed("c.cpp(1) : error C2065: 'x' : undeclared")
 
-    monkeypatch.setattr(osmx, "compile_unit", refuse)
+    monkeypatch.setattr(osmx, "compile_object", refuse)
     records = osmx.read(claimed)
     path = next(iter(osmx._claims_by_file(records)))
     osmx._check_one_file((path, osmx._claims_by_file(records)[path],
@@ -685,7 +686,7 @@ def test_an_internal_compiler_error_is_retried(claimed, monkeypatch):
         tried.append(flags)
         raise osmx.CompileFailed("fatal error C1001: INTERNAL COMPILER ERROR")
 
-    monkeypatch.setattr(osmx, "compile_unit", refuse)
+    monkeypatch.setattr(osmx, "compile_object", refuse)
     records = osmx.read(claimed)
     path = next(iter(osmx._claims_by_file(records)))
     osmx._check_one_file((path, osmx._claims_by_file(records)[path],
@@ -1094,7 +1095,7 @@ def test_a_subject_one_flag_set_does_not_emit_stays_outstanding(tmp_path,
         "// ORIGINAL: 0x00402000 ?f@@YAXXZ 0x00402000-0x00402010 BYTE_EXACT\n"
         "void f() {\n}\n")
     records = read(tmp_path)
-    monkeypatch.setattr(osmx, "compile_unit", lambda *a, **k: b"")
+    monkeypatch.setattr(osmx, "compile_object", lambda *a, **k: b"")
     tries = iter([ValueError("not found among the object's .text symbols"),
                   "second set emits it"])
     def maybe(obj, record, flags):

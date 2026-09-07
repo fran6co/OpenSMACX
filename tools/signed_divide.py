@@ -29,7 +29,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from match_recovery.source import read
-from match_recovery.source.asm import (build_command, build_inputs, compiled_asm,
+from recovery.environment.recipe import build_command, MissingRecipe, flag_dependent
+from recovery.environment.compile import compile_object
+from match_recovery.compilation_database import build_inputs
+from match_recovery.source.asm import (compiled_asm,
                         original_asm, shared_spans, span_refusal)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -77,7 +80,7 @@ def one(job):
     record, command = job
     try:
         theirs = fixups(original_asm(record, IMAGE))
-        mine = fixups(compiled_asm(record, command, FLAGS))
+        mine = fixups(compiled_asm(record, command, FLAGS, compiler=compile_object))
     except Exception as error:                            # noqa: BLE001
         return None
     if mine > theirs:
@@ -101,7 +104,7 @@ if __name__ == "__main__":
             continue
         try:
             command = build_command(COMPILE_COMMANDS, record.path)
-        except ValueError:
+        except MissingRecipe:
             command = build_command(COMPILE_COMMANDS, BORROW)
         work.append((record, command))
 

@@ -35,7 +35,9 @@ REPO = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
 from match_recovery.source import read                                        # noqa: E402
-from match_recovery.source.asm import (build_command, original_asm,           # noqa: E402
+from recovery.environment.recipe import build_command, flag_dependent
+from recovery.environment.compile import compile_object
+from match_recovery.source.asm import (original_asm,           # noqa: E402
                         compiled_asm)
 from match_recovery.source.calls import call_sites                            # noqa: E402
 from tools.iat_names import imports                            # noqa: E402
@@ -63,7 +65,7 @@ def _one_file(job: tuple) -> tuple[list[str], int]:
     for record in group:
         try:
             theirs = _slots(original_asm(record, IMAGE))
-            ours = _slots(compiled_asm(record, command, FLAGS))
+            ours = _slots(compiled_asm(record, command, FLAGS, compiler=compile_object))
         except Exception as problem:                   # noqa: BLE001
             # SAID, not swallowed: a body this cannot compile or locate is a
             # body this check did not cover, and a silent skip is how a

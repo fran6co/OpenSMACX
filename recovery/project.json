@@ -26,7 +26,7 @@
   },
   "compiler": {
     "command": {"argv": ["uv", "run", "python", "recovery/environment/adapter.py"], "timeout": 330},
-    "inputs": ["recovery/environment/adapter.py", "recovery/environment/compile.py", "recovery/environment/wine.py"],
+    "inputs": ["recovery/environment/adapter.py", "recovery/environment/compile.py", "recovery/environment/recipe.py", "recovery/environment/wine.py"],
     "environment": ["VC6_PREFIX", "VC6_ROOT", "VC6_INCLUDE", "VC6_LIB", "WINEARCH", "CL", "_CL_"]
   },
   "measurement": {
@@ -36,6 +36,6 @@
     "layout_flags": ["/Z7"],
     "unit_extensions": [".cpp", ".c"],
     "input_roots": ["cmake"],
-    "inputs": ["CMakeLists.txt", "build/compile_commands.json", "tools/vc6_cl.py", "tools/vc6-cl", "recovery/driver.json", "pyproject.toml", "uv.lock"]
+    "inputs": ["CMakeLists.txt", "build/compile_commands.json", "recovery/environment/vc6-cl", "recovery/driver.json", "pyproject.toml", "uv.lock"]
   }
 }

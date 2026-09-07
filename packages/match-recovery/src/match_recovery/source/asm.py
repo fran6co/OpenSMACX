@@ -1,75 +1,21 @@
-"""The assembly behind a record: the original image's, VC6's, and the verdict.
+"""Legacy relocation-masked i386 listing comparison over source mappings.
 
-One call answers the recovery's central question for one record:
+Compiler commands, option semantics and process management are supplied by the
+caller through a required compiler callable (the framework Compiler client also
+implements it). This module never starts a compiler or locates a project.
 
-    from pathlib import Path
-    from match_recovery.source import read_file
-    from match_recovery.source.asm import compare_record
-
-    records = read_file(Path("src/buffer.cpp"))
-    record = next(r for r in records if r.address == 0x005DAC70)
-    from match_recovery.source.asm import build_command
-    command = build_command(Path("build/compile_commands.json"),
-                            record.path)
-    compare_record(record,
-                   Path("/path/to/original.exe"),
-                   command, FLAG_SETS).verdict
-
-and the two sides are still available separately, as `original_asm` and
-`compiled_asm`.
-
-THE ORIGINAL SIDE reads the pinned executable's bytes at the record's span
-and disassembles them. THE COMPILED SIDE compiles the record's file with a
-command the CALLER supplies - `build_command` reads one out of the build's
-own database - plus the optimisation flags the caller is asking about, and
-disassembles the function pulled out of the resulting object. The compiler the entry names is the build's own wrapper -
-it knows where VC6 lives and how to run it under wine, so this module never
-asks. Both return a `Listing`: lines shaped like tools/disasm.py's output,
-carrying the bytes and the relocation mask behind them.
-
-THREE THINGS A CORRECT COMPARISON NEEDS, each of which this module got
-wrong until it was measured against the tree. Four bodies carrying a
-BYTE_EXACT claim in `src/` all reported MISMATCH:
-
-  * THE FLAG SET IS PER FUNCTION - see `compare_record`, which takes as
-    many as the caller cares to name. Asking one answers half the image.
-  * A RELOCATED BYTE IS NOT A WRONG ANSWER. The object holds zeros where
-    the image holds linked addresses; `compare_asm` discounts both sides.
-  * THE CATALOGUE'S NAME IS NOT ALWAYS THE COMPILER'S. What the image
-    calls a piece and what this tree emits for it are two facts, and the
-    annotation carries both - `name` and `symbol`. The lookup reads them;
-    it does not guess, and a missing fact is an error that names itself.
-
-SEVEN TIERS, and the last three are not failures. NO_COMPILE is a body
-that did not build, returned as a verdict because getting one from there to
-MISMATCH is the most valuable single move in a recovery pass. SHARED_TAIL
-and REFUSED are spans no verdict is DEFINED on - a `/Gy`-folded tail
-belonging to several functions, a span that rewrites itself at run time -
-and keeping them apart from the misses is what lets a reader tell a wall
-from a body nobody has written. See `model.Tier`.
-
-This legacy comparer masks relocations. It cannot establish reference identity
-or replace the framework's strict comparison and full acceptance checks.
-
-CAPSTONE is imported like anything else. It is a declared dependency, so a
-lazy import bought nothing but a failure that arrives halfway through a
-measurement instead of at import; the readers that must not need it live in
-other modules, and the layering test checks that split. The PE and COFF
-readers below are small struct walks instead of dependencies, because all
-they need is the section table, the symbol table and two relocation
-directories.
+This historical comparer discounts relocation bytes. Its BYTE_EXACT tier does
+not establish reference identity, C++ structure, lifetime or full acceptance;
+use the strict reference-aware checks for those independent requirements.
 """
 
 from __future__ import annotations
 
 import difflib
 import functools
-import json
 import re
 import shlex
 import struct
-import subprocess
-import tempfile
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 
@@ -364,7 +310,7 @@ def differing_constants(original: Listing, compiled: Listing) -> list:
 
 
 class CompileFailed(Exception):
-    """CL produced no object. Carries what CL said about it.
+    """The supplied compiler failed. Carries its diagnostic.
 
     Its own type because a loop treats it as a RESULT - `Tier.NO_COMPILE` -
     while a stale or missing `symbol` fact is a defect in the annotation and
@@ -372,16 +318,6 @@ class CompileFailed(Exception):
     exception, so a body that would not build and an annotation that lied
     were indistinguishable to everything above.
     """
-
-
-def _diagnostic(stdout: str, stderr: str) -> str:
-    """The first line CL called an error, or the last thing it said."""
-    for stream in (stdout or "", stderr or ""):
-        for line in stream.splitlines():
-            if "error" in line.lower():
-                return line.strip()
-    tail = (stdout or stderr or "").strip().splitlines()
-    return tail[-1].strip() if tail else "the compile produced no object"
 
 
 # SECTION CHARACTERISTICS. A section that is both executable and writable is
@@ -590,150 +526,6 @@ def original_asm(record: DecompilationState, exe: Path | str,
 # --------------------------------------------------------------- the compile
 
 
-# THE OPTIMISATION FLAGS ARE BACK-END, so a translation unit that will not
-# PARSE will not parse under any of the others either, and a flag search that
-# retries one is buying nothing. Measured on this tree rather than assumed:
-# all 992 files with claims were compiled under all eight sets, and the 313
-# that fail failed with a BYTE-IDENTICAL diagnostic every time - none
-# disagreed. Those retries were 2,504 of a sweep's 4,831 compiles.
-#
-# C1001 IS THE EXCEPTION THAT KEEPS THE RULE HONEST: an internal compiler
-# error is the optimiser falling over, so it genuinely can depend on the
-# flags and is still worth another invocation. C1060 is the same argument
-# for memory. Neither occurred in the measurement; they are here because the
-# reasoning above does not cover them, not because they were observed.
-_FLAG_DEPENDENT = ("C1001", "C1060")
-
-
-def flag_dependent(diagnostic: str) -> bool:
-    """Could a different optimisation flag set make this compile succeed?"""
-    return any(code in diagnostic for code in _FLAG_DEPENDENT)
-
-
-def build_command(compile_commands: Path | str,
-                  source: Path | str) -> list[str]:
-    """The compiler invocation this build uses for `source`, without its
-    optimisation flags.
-
-    The compiler and the include and define flags - what a translation unit
-    needs to parse - and nothing about how it is optimised, because that is
-    a property of the FUNCTION being matched and belongs to the caller. See
-    `compare_record`.
-
-    RAISES IF THE BUILD DOES NOT NAME `source`, and does not go looking for
-    something close. A build entry is a command, not a permission: this
-    tree's `src/recovered/` and `src/unrecovered/` hold 3,315 annotated
-    records CMake has no reason to build, 2,475 of them FILE-mode, where the
-    file already IS the translation unit and the only thing missing is an
-    invocation. Those are perfectly compilable with a command borrowed from
-    anywhere in the same tree - and WHICH command is a judgement about which
-    include path a unit needs, which the caller is holding and this module
-    is not. Borrow deliberately:
-
-        command = build_command(cc, record.path if in_build else a_sibling)
-
-    The leading tokens up to the first flag are the compiler the build
-    invokes - this tree's wrapper, which knows where VC6 lives and how to
-    run it under wine. PCH flags are dropped, because they point at a
-    precompiled header built for the build's own object directory.
-    """
-    compile_commands = Path(compile_commands)
-    if not compile_commands.is_file():
-        raise ValueError(
-            f"no {compile_commands} - configure the build first")
-    table = json.loads(compile_commands.read_text())
-    resolved = Path(source).resolve()
-    for candidate in table:
-        file = Path(candidate["file"])
-        if not file.is_absolute():
-            file = Path(candidate.get("directory", ".")) / file
-        if file.resolve() == resolved:
-            return _invocation(candidate)
-    raise ValueError(
-        f"{Path(source).name} is not a build input in "
-        f"{compile_commands.name}; pass the command of a file that is")
-
-
-def build_inputs(compile_commands: Path | str) -> set[Path]:
-    """Every source file this build compiles, resolved.
-
-    WHICH FILES THE PROJECT ASSERTS COMPILE. `build_command` answers it one
-    file at a time and re-reads the database each time, which is fine for a
-    single question and quadratic for a sweep over a thousand files.
-    """
-    compile_commands = Path(compile_commands)
-    if not compile_commands.is_file():
-        raise ValueError(
-            f"no {compile_commands} - configure the build first")
-    inputs = set()
-    for entry in json.loads(compile_commands.read_text()):
-        file = Path(entry["file"])
-        if not file.is_absolute():
-            file = Path(entry.get("directory", ".")) / file
-        inputs.add(file.resolve())
-    return inputs
-
-
-def _invocation(entry: dict[str, str]) -> list[str]:
-    """An entry's compiler and its include and define flags."""
-    words = shlex.split(entry.get("command")
-                        or " ".join(entry.get("arguments", [])))
-    split = 0
-    for index, word in enumerate(words):
-        if index and word.startswith(("-", "/", "@")):
-            split = index
-            break
-    compiler, kept = words[:split], []
-    for word in words[split:]:
-        if "cmake_pch" in word or word.startswith(("/Fo", "/Fd", "/Fp")):
-            continue
-        if word.startswith(("-I", "-D", "-FI")):
-            word = "/" + word[1:]
-        if (word.startswith(("/I", "/D")) and len(word) > 2) or \
-                (word.startswith("/FI") and len(word) > 3):
-            kept.append(word)
-    return [*compiler, "/nologo", *kept]
-
-
-# LONG ENOUGH FOR THE BIGGEST UNIT UNDER CONTENTION. `dialogs.cpp` is
-# 20,000 lines and every compile in this tree runs through one wine prefix,
-# so a sweep at the concurrency ceiling can leave a single invocation
-# waiting far longer than it takes to run.
-TIMEOUT_SECONDS = 300
-
-
-def compile_unit(source: Path, command: list[str], flags: str) -> bytes:
-    """Compile `source` with `command` plus `flags`; return the object.
-
-    PUBLIC BECAUSE ONE OBJECT ANSWERS FOR MANY SUBJECTS. `compiled_asm`
-    compiles per record, which is right for one question and wrong for a
-    sweep: this tree's 626 reachable claims live in 96 files, so asking per
-    record is 2,504 compiles where asking per file is 384. A caller doing
-    the second calls this once and `subject_asm` many times.
-    """
-    with tempfile.TemporaryDirectory() as work:
-        try:
-            result = subprocess.run([*command, *flags.split(), "/Founit.obj",
-                                     str(source)],
-                                    cwd=work, capture_output=True, text=True,
-                                    timeout=TIMEOUT_SECONDS)
-        except subprocess.TimeoutExpired:
-            # A TIMEOUT IS A COMPILE FAILURE, not a different kind of event.
-            # It escaped as `subprocess.TimeoutExpired` and killed a sweep
-            # of 2,060 records outright, because every caller that guards a
-            # compile guards `CompileFailed`. The cause was wine contention
-            # rather than the source, which is exactly why it has to come
-            # back as a per-record verdict instead of taking the run down.
-            raise CompileFailed(
-                f"the compiler did not finish within {TIMEOUT_SECONDS}s "
-                f"- if several sweeps are running, they are queueing on the "
-                f"one wine prefix") from None
-        obj = Path(work) / "unit.obj"
-        if not obj.is_file():
-            raise CompileFailed(_diagnostic(result.stdout, result.stderr))
-        return obj.read_bytes()
-
-
 def text_symbols(obj: bytes) -> list[tuple[str, int, int]]:
     """Every external `.text` symbol in a COFF object: (name, value, section).
 
@@ -849,10 +641,13 @@ def _coff_function_masked(obj: bytes, symbol: str, emitted: str = "",
 
 
 def compiled_asm(record: DecompilationState, command: list[str],
-                 flags: str, source: Path | str | None = None) -> Listing:
-    """The assembly VC6 produces for the record's code: the record's file
-    compiled by the build's own compile command with its optimisation flags
-    swapped for `flags`, the function pulled out of the object by the
+                 flags: str, source: Path | str | None = None, *, compiler) -> Listing:
+    """Compile through the caller's environment and select a mapped COFF body.
+
+    `compiler(source, arguments, flags)` receives tuples of argument tokens,
+    returns nonempty object bytes, and raises OSError/ValueError on failure.
+    The framework Compiler client implements this same boundary. The function
+    is pulled out of the object by the
     record's mangled name, disassembled at the record's address so the
     listing lines up with `original_asm`.
 
@@ -865,8 +660,13 @@ def compiled_asm(record: DecompilationState, command: list[str],
     if not record.name:
         raise ValueError(
             f"{record.address_hex}: no name fact under its marker")
-    obj = compile_unit(Path(source) if source else record.path,
-                       command, flags)
+    try:
+        obj = compiler(Path(source) if source else record.path,
+                       tuple(command), tuple(shlex.split(flags)))
+    except (OSError, ValueError) as error:
+        raise CompileFailed(str(error)) from error
+    if not isinstance(obj, bytes) or not obj:
+        raise CompileFailed("compiler returned no object bytes")
     return subject_asm(obj, record, flags)
 
 
@@ -1217,19 +1017,22 @@ def _better(candidate: AsmComparison, incumbent: AsmComparison) -> bool:
 
 def compare_record(record: DecompilationState, exe: Path | str,
                    command: list[str], flags: tuple | str,
-                   shared: frozenset = frozenset()) -> AsmComparison:
+                   shared: frozenset = frozenset(), *, compiler,
+                   retry_compile=None) -> AsmComparison:
     """How far VC6 reproduces the shipped bytes for the body IN THE TREE.
 
     `compare_source` with the record's own file - which is the question
     `check` and `record` ask, and the only one that can be written down.
     """
-    return compare_source(record, exe, record.path, command, flags, shared)
+    return compare_source(record, exe, record.path, command, flags, shared,
+                          compiler=compiler, retry_compile=retry_compile)
 
 
 def compare_source(record: DecompilationState, exe: Path | str,
                    source: Path | str, command: list[str],
                    flags: tuple | str,
-                   shared: frozenset = frozenset()) -> AsmComparison:
+                   shared: frozenset = frozenset(), *, compiler,
+                   retry_compile=None) -> AsmComparison:
     """How far VC6 reproduces the shipped bytes for `record` when the piece
     is spelled the way `source` spells it, best of `flags`.
 
@@ -1263,7 +1066,7 @@ def compare_source(record: DecompilationState, exe: Path | str,
     is the one that can choose.
 
     A COMPILE THAT FAILS IS A RESULT, not an error. `Tier.NO_COMPILE` is
-    returned with the compiler's own first error line, because getting a
+    returned with the compiler's diagnostic, because getting a
     body from there to MISMATCH is the most valuable single move in a
     recovery pass and a loop has to be able to rank it. A stale or missing
     `symbol` fact stays a `ValueError`: that is a defect in the annotation,
@@ -1272,6 +1075,10 @@ def compare_source(record: DecompilationState, exe: Path | str,
 
     SPANS THAT CANNOT BE SCORED come back before any of that - see
     `span_refusal`.
+
+    Compiler failures try the remaining flag sets unless a caller-supplied
+    `retry_compile(diagnostic)` says they cannot help. No compiler error codes
+    or process-management policy live in this comparer.
     """
     attempts = (flags,) if isinstance(flags, str) else tuple(flags)
     if not attempts:
@@ -1284,10 +1091,10 @@ def compare_source(record: DecompilationState, exe: Path | str,
     missing = None
     for attempt in attempts:
         try:
-            compiled = compiled_asm(record, command, attempt, source)
+            compiled = compiled_asm(record, command, attempt, source, compiler=compiler)
         except CompileFailed as failed:
             diagnostic = diagnostic or str(failed)
-            if flag_dependent(str(failed)):
+            if retry_compile is None or retry_compile(str(failed)):
                 continue
             break
         except ValueError as absent:

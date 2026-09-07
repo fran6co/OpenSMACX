@@ -30,6 +30,10 @@ from the strict reference-aware comparator. Root `tools/` is transitional:
 retire each implementation only after its live consumers and checks are replaced.
 Do not add another ad hoc CLI or compatibility layer.
 
+CMake and recovery measurements now share `recovery/environment/` compiler
+interaction. The library receives compiler callables or uses its configured JSON
+client; it does not infer VC6 commands. The old compiler shims are removed.
+
 ## Commands and current acceptance boundary
 
 Everything Python runs through `uv run`, never bare `python3`.

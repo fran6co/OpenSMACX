@@ -35,7 +35,7 @@ def test_real_vc6_preserves_scoped_change_and_detects_collateral_header_change(t
     (root / "recovery/project.json").write_text(json.dumps(config))
     (root / "build/compile_commands.json").write_text(json.dumps([
         {"directory": str(root), "file": str(root / name),
-         "arguments": [str(repository / "tools/vc6-cl"), "/nologo", "/c", str(root / name)]}
+         "arguments": [str(repository / "recovery/environment/vc6-cl"), "/nologo", "/c", str(root / name)]}
         for name in ("code/owner.cpp", "code/caller.cpp")]))
     def git(*args):
         return subprocess.run(["git", "-c", "user.name=Compiler fixture", "-c", "user.email=fixture@example.invalid", *args],

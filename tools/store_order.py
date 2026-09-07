@@ -28,7 +28,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import capstone.x86 as x86
 
 from match_recovery.source import read
-from match_recovery.source.asm import (build_command, compile_unit, original_asm,
+from recovery.environment.recipe import build_command, MissingRecipe
+from recovery.environment.compile import compile_object
+from match_recovery.source.asm import (original_asm,
                         shared_spans, span_refusal, subject_asm)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -88,14 +90,14 @@ if __name__ == "__main__":
 
     try:
         command = build_command(COMPILE_COMMANDS, record.path)
-    except ValueError:
+    except MissingRecipe:
         command = build_command(COMPILE_COMMANDS, BORROW)
 
     image = stores(original_asm(record, IMAGE))
     best: list[str] = []
     for flags in FLAGS:
         try:
-            here = stores(subject_asm(compile_unit(record.path, command,
+            here = stores(subject_asm(compile_object(record.path, command,
                                                    flags), record, flags))
         except Exception:                       # noqa: BLE001 - try the next
             continue

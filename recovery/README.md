@@ -16,6 +16,22 @@ capabilities, not project/compiler-environment adapters. `environment/` contains
 only the local compiler interaction. The old production command/gate and other
 remaining tools still need absorption or retirement before `tools/` can disappear.
 
+CMake now launches `environment/vc6-cl`, `environment/vc6-link` and
+`environment/vc6-lib` directly (links to `environment/wine.py`). The former
+build-path shims are removed. `environment/compile.py` supplies the single
+disposable-object implementation used by both legacy measurements and the native
+compiler protocol: nonzero exits, missing/empty objects and timeouts cannot supply
+measurement evidence. Bounded process-group cleanup is shared package code and
+never stops a shared Wine server.
+
+`environment/recipe.py` owns VC6 option selection, explicit donor recipes and
+compiler-error retry policy. It preserves argv boundaries, resolves relative
+include paths before changing output directories, and refuses ambiguous recipes
+or unsupported response/launcher forms. Only a missing recipe permits an explicit
+donor; malformed/conflicting recipes cannot silently borrow another file's flags.
+The compiler-neutral database reader is in the package and is also used by the
+mapping check. This consolidation does not migrate recording or full acceptance.
+
 `uv run recover check-source --jobs 8 --summary` now replaces the old annotation
 identity script in the production gate. It checks every configured source file,
 including headers and seeds, without an image, compiler, Git database or optional

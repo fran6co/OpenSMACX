@@ -631,6 +631,20 @@ Protocol v2 adds an explicit project-defined compilation profile. The local
 command can resolve an application build entry or choose a dependency invocation;
 there is no profile registry or compiler-command parser to modify in the library.
 
+The historical `source.asm` listing APIs use this same callable boundary:
+`compiled_asm`, `compare_source` and `compare_record` require `compiler=` (a
+`Compiler` instance or a callable receiving source path, argument tuple and flag
+tuple). There is no implicit compiler invocation or `compile_unit` fallback.
+An optional `retry_compile(diagnostic)` callable can stop flag trials after a
+compiler-specific parse failure; absent that policy, all alternatives are tried.
+These APIs still provide relocation-masked diagnostics, not strict reference or
+structural acceptance. They neither choose project recipes nor stamp source.
+
+`compilation_database` provides strict, compiler-neutral database parsing and
+source identities. It preserves argv arrays exactly and leaves command strings
+opaque; the environment owns quoting, launchers, option selection and include
+resolution. Missing/conflicting recipes are not permission to guess a donor.
+
 `Compiler.overlay(source, replacements, arguments, flags)` sends protocol v4:
 the same fields plus `overrides`, a map of project-relative file paths to
 `{"sha256":"<original file digest>","base64":"<proposed whole-file bytes>"}`.

@@ -38,8 +38,8 @@
   *   - "The virtual base is a member rather than a virtual base for the ABI
   *     reason described in mapwin.h." mapwin.h no longer says that, and the
   *     reason was never true for this build: CMAKE_CXX_COMPILER is
-  *     tools/vc6-cl, and VC6 places a virtual base exactly where the vbtable
-  *     names it. Probed with the same `cl` verify_member_offsets uses, this
+  *     recovery/environment/vc6-cl, and VC6 places a virtual base exactly
+  *     where the vbtable names it. Probed with the same `cl` verify_member_offsets uses, this
   *     declaration puts field_21A6C_ at 0x21A6C, buffer_ at 0x21A70,
   *     field_21FF8_ at 0x21FF8 and sizeof at 0x22A64 - the image's numbers,
   *     with no GraphicWin member declared at all.
@@ -117,4 +117,3 @@ class PlanWin : public MapWin {
 };
 
 static_assert(sizeof(PlanWin) == 0x22A64, "PlanWin layout must match terranx.exe");
-

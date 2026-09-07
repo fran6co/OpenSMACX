@@ -17,7 +17,7 @@
 # -DCMAKE_TOOLCHAIN_FILE to override it and the default stands aside.
 # CMakePresets.json stays retired (AGENTS.md, 2026-08-12).
 #
-# It runs under wine through tools/vc6_cl.py, which exists because CMake
+# It runs under wine through recovery/environment/wine.py, which exists because CMake
 # drives a compiler with POSIX paths and MSVC reads a leading `/` as the start
 # of an option.
 # ---------------------------------------------------------------------------
@@ -46,9 +46,9 @@ endif()
 set(VC6_INCLUDE_DIR "${VC6_ROOT}/INCLUDE" CACHE PATH
     "The Win32 + CRT headers cl 12.00.8168 compiles against")
 
-set(_vc6_tools "${CMAKE_CURRENT_LIST_DIR}/../../tools")
+set(_vc6_tools "${CMAKE_CURRENT_LIST_DIR}/../../recovery/environment")
 # Normalized: CMake canonicalizes the COMPILER path but records the linker as
-# given, and an unnormalized `.../../../tools/vc6-link` ended up spelled that
+# given, and an unnormalized `.../../../recovery/environment/vc6-link` ended up spelled that
 # way in every link line.
 get_filename_component(_vc6_tools "${_vc6_tools}" ABSOLUTE)
 set(CMAKE_CXX_COMPILER "${_vc6_tools}/vc6-cl" CACHE FILEPATH "VC6 C++ compiler under wine")
@@ -90,8 +90,8 @@ set(CMAKE_CXX98_EXTENSION_COMPILE_OPTION "")
 # build, it is a build that reports success over stale objects - three
 # measurements in one session were taken against them before it surfaced.
 #
-# cl cannot write a GNU depfile, so tools/vc6_cl.py consumes these flags
-# itself, adds `/showIncludes`, and converts the `Z:\...` paths cl reports
+# cl cannot write a GNU depfile, so recovery/environment/wine.py consumes these flags
+# itself, runs a preprocess-only `/E` pass, and converts the `Z:\...` paths cl reports
 # back to the POSIX ones ninja matches against. A path in the wrong alphabet
 # is not a mismatch ninja reports; it is a dependency it silently lacks.
 #
@@ -112,7 +112,7 @@ set(CMAKE_DEPFILE_FLAGS_C "--deptarget=<DEP_TARGET> --depfile=<DEP_FILE>")
 # until this line existed.
 #
 # `gcc` is the format the wrapper actually writes: cl cannot emit a depfile at
-# all, so tools/vc6_cl.py parses `/showIncludes` and writes a GNU one itself,
+# all, so recovery/environment/wine.py parses `/E` line directives and writes a GNU one itself,
 # which is the whole reason the flags above are its own spelling.
 set(CMAKE_CXX_DEPFILE_FORMAT gcc)
 set(CMAKE_DEPFILE_FORMAT gcc)

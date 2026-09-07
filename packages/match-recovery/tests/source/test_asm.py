@@ -8,17 +8,20 @@ smoke test, with the ratchet in tools/ keeping the strict machinery.
 """
 
 import struct
-import subprocess
 from pathlib import Path
 
 import pytest
 
 from match_recovery.source import read_file
 from match_recovery.source import asm
-from match_recovery.source.asm import (build_command, compare_asm, compiled_asm,
+from match_recovery.source.asm import (compare_asm, compiled_asm,
                         original_asm)
 
 # A synthetic caller-supplied flag set; the library selects no environment.
+def compiler(*args, **kwargs):
+    raise AssertionError("this test must provide its compiler or mock compiled_asm")
+
+
 FLAGS = "/c /O2 /Gy /GR- /Oy- /GX"
 
 MARKED = """// ORIGINAL: 0x00401000 ?f@C@@QAEXXZ 0x00401000-0x00401008
@@ -60,7 +63,43 @@ def test_original_asm_refused_without_the_exe(tmp_path):
 
 def test_compiled_asm_refused_without_the_name_fact(tmp_path):
     with pytest.raises(ValueError, match="no name"):
-        compiled_asm(record_in(tmp_path, NO_FACTS), ["cl"], FLAGS)
+        compiled_asm(record_in(tmp_path, NO_FACTS), ["cl"], FLAGS, compiler=compiler)
+
+
+def test_compiler_callable_receives_lossless_arguments_and_supplies_object_bytes(tmp_path):
+    record = record_in(tmp_path, MARKED)
+    calls = []
+    def backend(source, arguments, flags):
+        calls.append((source, arguments, flags))
+        return tiny_coff(b"\xC3", record.name)
+    result = compiled_asm(record, ["environment", "an argument"],
+                          '--flag "another argument"', compiler=backend)
+    assert result.code == b"\xC3"
+    assert calls == [(record.path, ("environment", "an argument"), ("--flag", "another argument"))]
+
+
+@pytest.mark.parametrize("output", [b"", None, "not bytes"])
+def test_invalid_compiler_response_is_not_disassembly(tmp_path, output):
+    with pytest.raises(asm.CompileFailed, match="object bytes"):
+        compiled_asm(record_in(tmp_path, MARKED), [], "--compile",
+                     compiler=lambda *args: output)
+
+
+@pytest.mark.parametrize("retry,attempts", [(None, 2), (lambda diagnostic: False, 1),
+                                          (lambda diagnostic: True, 2)])
+def test_error_retry_policy_is_supplied_by_the_environment(tmp_path, monkeypatch, retry, attempts):
+    record = record_in(tmp_path, MARKED)
+    calls = []
+    def failing(*args):
+        calls.append(args)
+        raise ValueError("compiler refused this source")
+    monkeypatch.setattr(asm, "span_refusal", lambda *a: None)
+    monkeypatch.setattr(asm, "original_asm", lambda *a: listing(b"\xC3"))
+    result = asm.compare_record(record, "image", [], ("--trial=a", "--trial=b"),
+                                compiler=failing, retry_compile=retry)
+    assert result.verdict == "NO_COMPILE"
+    assert result.diagnostic == "compiler refused this source"
+    assert len(calls) == attempts
 
 
 # --------------------------------------------------------------- COFF reader
@@ -389,7 +428,7 @@ def test_a_body_that_will_not_build_is_a_tier(tmp_path, monkeypatch):
     monkeypatch.setattr(asm, "original_asm",
                         lambda *a, **k: listing(b"\xC3"))
     monkeypatch.setattr(asm, "span_refusal", lambda *a, **k: None)
-    result = asm.compare_record(record, "exe", ["cl"], ("/c /O2",))
+    result = asm.compare_record(record, "exe", ["cl"], ("/c /O2",), compiler=compiler)
     assert result.verdict == "NO_COMPILE"
     assert "C2065" in result.diagnostic
 
@@ -405,7 +444,7 @@ def test_a_lying_annotation_is_still_an_error(tmp_path, monkeypatch):
                         lambda *a, **k: listing(b"\xC3"))
     monkeypatch.setattr(asm, "span_refusal", lambda *a, **k: None)
     with pytest.raises(ValueError, match="stale"):
-        asm.compare_record(record, "exe", ["cl"], ("/c /O2",))
+        asm.compare_record(record, "exe", ["cl"], ("/c /O2",), compiler=compiler)
 
 
 def test_compare_source_compiles_the_candidate_not_the_tree(tmp_path,
@@ -417,23 +456,16 @@ def test_compare_source_compiles_the_candidate_not_the_tree(tmp_path,
     candidate = tmp_path / "candidate.cpp"
     candidate.write_text("void f() {}\n")
     compiled = []
-    monkeypatch.setattr(asm, "compile_unit",
-                        lambda source, *a, **k: compiled.append(source) or b"")
+    compiler = lambda source, *a, **k: compiled.append(source) or b"object"
     monkeypatch.setattr(asm, "subject_asm",
                         lambda *a, **k: listing(b"\xC3"))
     monkeypatch.setattr(asm, "original_asm",
                         lambda *a, **k: listing(b"\xC3"))
     monkeypatch.setattr(asm, "span_refusal", lambda *a, **k: None)
 
-    asm.compare_source(record, "exe", candidate, ["cl"], ("/c /O2",))
-    asm.compare_record(record, "exe", ["cl"], ("/c /O2",))
+    asm.compare_source(record, "exe", candidate, ["cl"], ("/c /O2",), compiler=compiler)
+    asm.compare_record(record, "exe", ["cl"], ("/c /O2",), compiler=compiler)
     assert compiled == [candidate, record.path]
-
-
-def test_the_diagnostic_prefers_what_cl_called_an_error():
-    assert "C2065" in asm._diagnostic("note\nx.cpp : error C2065: bad\n", "")
-    assert asm._diagnostic("", "") == "the compile produced no object"
-    assert asm._diagnostic("only this\n", "") == "only this"
 
 
 SELFMOD = """// ORIGINAL: 0x00666F68 ?f@@YAXXZ 0x00666F68-0x00666F70
@@ -503,7 +535,7 @@ def test_a_tie_on_tier_is_decided_on_agreement(tmp_path, monkeypatch):
             matching_instructions=matching, mnemonic_similarity=similarity)
     monkeypatch.setattr(asm, "compare_asm", measured)
     result = asm.compare_record(record, "exe", ["cl"],
-                                ("/Oy-", "/Oy", "/O1", "/O1 /Oy"))
+                                ("/Oy-", "/Oy", "/O1", "/O1 /Oy"), compiler=compiler)
     assert result.matching_instructions == 35
 
 
@@ -595,20 +627,8 @@ def test_a_shorter_candidate_can_still_be_the_closer_one(tmp_path,
             verdict=asm.Tier.MISMATCH, original_instructions=99,
             matching_instructions=matching, mnemonic_similarity=similarity)
     monkeypatch.setattr(asm, "compare_asm", measured)
-    result = asm.compare_record(record, "exe", ["cl"], ("/O2", "/O1"))
+    result = asm.compare_record(record, "exe", ["cl"], ("/O2", "/O1"), compiler=compiler)
     assert result.mnemonic_similarity == 0.930
-
-
-def test_a_compile_that_never_finishes_is_a_compile_failure(monkeypatch):
-    """It escaped as `subprocess.TimeoutExpired` and took a sweep of 2,060
-    records down with it, because every caller that guards a compile guards
-    `CompileFailed`. The cause was contention on the one wine prefix rather
-    than the source, so it has to come back as a per-record verdict."""
-    def stall(*args, **kwargs):
-        raise subprocess.TimeoutExpired(cmd="cl", timeout=1)
-    monkeypatch.setattr(asm.subprocess, "run", stall)
-    with pytest.raises(asm.CompileFailed, match="did not finish"):
-        asm.compile_unit(Path("x.cpp"), ["cl"], "/c")
 
 
 def test_a_subject_one_invocation_does_not_emit_is_not_the_end(tmp_path,
@@ -631,7 +651,7 @@ def test_a_subject_one_invocation_does_not_emit_is_not_the_end(tmp_path,
     monkeypatch.setattr(asm, "compare_subject",
                         lambda *a, **k: asm.AsmComparison(
                             verdict=asm.Tier.BYTE_EXACT))
-    result = asm.compare_record(record, "exe", ["cl"], ("/O2", "/O2 /Ob0"))
+    result = asm.compare_record(record, "exe", ["cl"], ("/O2", "/O2 /Ob0"), compiler=compiler)
     assert result.verdict == "BYTE_EXACT"
 
 
@@ -646,7 +666,7 @@ def test_a_subject_no_invocation_emits_is_still_an_error(tmp_path,
     monkeypatch.setattr(asm, "original_asm", lambda *a, **k: listing(b"\xC3"))
     monkeypatch.setattr(asm, "span_refusal", lambda *a, **k: None)
     with pytest.raises(ValueError, match="stale"):
-        asm.compare_record(record, "exe", ["cl"], ("/O2", "/O2 /Ob0"))
+        asm.compare_record(record, "exe", ["cl"], ("/O2", "/O2 /Ob0"), compiler=compiler)
 
 
 def section_image(tmp_path):

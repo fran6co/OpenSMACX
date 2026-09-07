@@ -30,8 +30,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from match_recovery.source import read
-from match_recovery.source.asm import (build_command, build_inputs, compile_unit,
-                        original_asm, shared_spans, span_refusal, subject_asm)
+from recovery.environment.recipe import build_command, MissingRecipe
+from match_recovery.compilation_database import build_inputs
+from recovery.environment.compile import compile_object
+from match_recovery.source.asm import (original_asm, shared_spans, span_refusal, subject_asm)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 # HONOURS `OPENSMACX_IMAGE`, because `.opensmacx/` is gitignored and a
@@ -62,7 +64,7 @@ def _one(job: tuple) -> list[tuple]:
     out = []
     for flags in FLAGS:
         try:
-            obj = compile_unit(path, command, flags)
+            obj = compile_object(path, command, flags)
         except Exception:                       # noqa: BLE001 - next flag set
             continue
         for record in records:
@@ -101,7 +103,7 @@ if __name__ == "__main__":
     for path, mine in sorted(grouped.items()):
         try:
             command = build_command(COMPILE_COMMANDS, path)
-        except ValueError:
+        except MissingRecipe:
             command = build_command(COMPILE_COMMANDS, BORROW)
         work.append((path, mine, command))
 

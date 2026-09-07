@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import os
+import shlex
 import subprocess
 import tempfile
 
@@ -11,8 +12,9 @@ from match_recovery.source_replica import replica_roots, source_replica, source_
 
 
 
-def compile_object(source: Path, command: tuple[str, ...], flags: tuple[str, ...], *, temporary_parent: Path | None = None) -> bytes:
+def compile_object(source: Path, command: tuple[str, ...], flags: tuple[str, ...] | str, *, temporary_parent: Path | None = None) -> bytes:
     """Objects are disposable; a nonzero compiler exit never supplies evidence."""
+    flags = tuple(shlex.split(flags)) if isinstance(flags, str) else flags
     with tempfile.TemporaryDirectory(prefix="recover-vc6-", dir=temporary_parent) as temporary:
         work = Path(temporary)
         try:
@@ -23,7 +25,10 @@ def compile_object(source: Path, command: tuple[str, ...], flags: tuple[str, ...
         if result.returncode != 0 or not (work / "unit.obj").is_file():
             raise ValueError("VC6 compilation failed: " +
                              (result.stdout + result.stderr).decode(errors="replace").strip())
-        return (work / "unit.obj").read_bytes()
+        data = (work / "unit.obj").read_bytes()
+        if not data:
+            raise ValueError("VC6 compilation produced an empty object")
+        return data
 
 
 def _variant_arguments(arguments, root, replica, roots):

@@ -39,8 +39,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from match_recovery.source import read
-from match_recovery.source.asm import (build_command, build_inputs, call_symbols,
-                        compile_unit, original_asm, shared_spans,
+from recovery.environment.recipe import build_command, MissingRecipe
+from match_recovery.compilation_database import build_inputs
+from recovery.environment.compile import compile_object
+from match_recovery.source.asm import (call_symbols,
+                        original_asm, shared_spans,
                         span_refusal, subject_asm)
 from match_recovery.source.calls import call_sites
 
@@ -83,7 +86,7 @@ def _one(job: tuple) -> list[tuple]:
     objects = []
     for flags in FLAG_SETS:
         try:
-            objects.append((flags, compile_unit(path, command, flags)))
+            objects.append((flags, compile_object(path, command, flags)))
         except Exception:                       # noqa: BLE001 - try the next
             continue
     if not objects:
@@ -223,7 +226,7 @@ if __name__ == "__main__":
     for path, mine in sorted(grouped.items()):
         try:
             command = build_command(COMPILE_COMMANDS, path)
-        except ValueError:
+        except MissingRecipe:
             command = build_command(COMPILE_COMMANDS, BORROW)
         work.append((path, mine, command, named, by_symbol))
 

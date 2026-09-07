@@ -12,7 +12,8 @@ from pathlib import Path
 import re
 
 from .model import digest
-from .records import parse_json, parse_json_value
+from .records import parse_json
+from .compilation_database import entries
 from .source_config import SourceConfiguration
 from .source_inventory import source_snapshot, assert_snapshot_current
 
@@ -61,31 +62,13 @@ def forwarder_sites(text: str, macros: tuple[str, ...]) -> tuple[list, list]:
 
 def build_units(root: Path, data: bytes) -> tuple[set[str], list[str]]:
     """Resolve compilation database file identities without executing commands."""
-    rows = parse_json_value(data)
-    if not isinstance(rows, list) or not rows:
-        raise ValueError("compilation database must be a nonempty array")
     units, external = set(), set()
-    for row in rows:
-        if (not isinstance(row, dict) or not isinstance(row.get("file"), str) or not row["file"]
-                or not isinstance(row.get("directory"), str) or not row["directory"]):
-            raise ValueError("compilation database entries require file and directory")
-        arguments, command = row.get("arguments"), row.get("command")
-        if command is not None and (not isinstance(command, str) or not command or "\0" in command):
-            raise ValueError("invalid compilation database command")
-        if arguments is not None:
-            if (not isinstance(arguments, list) or not arguments
-                    or any(not isinstance(word, str) or not word or "\0" in word for word in arguments)):
-                raise ValueError("invalid compilation database arguments")
-        elif not isinstance(command, str) or not command or "\0" in command:
-            raise ValueError("compilation database entry has no compiler invocation")
-        directory = Path(row["directory"])
-        if not directory.is_absolute():
-            directory = root / directory
-        if not directory.is_dir():
+    for entry in entries(data, root):
+        if not entry.directory.is_dir():
             raise ValueError("compilation database working directory is missing")
-        path = (directory / row["file"]).resolve()
+        path = entry.file
         if not path.is_file():
-            raise ValueError(f"compilation database source is missing: {row['file']}")
+            raise ValueError(f"compilation database source is missing: {path}")
         if path.is_relative_to(root):
             units.add(path.relative_to(root).as_posix())
         else:

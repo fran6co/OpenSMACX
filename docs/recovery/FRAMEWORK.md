@@ -24,6 +24,15 @@ but always remains unverified; it is investigation, not migration admission.
 Full structure, historical product-TU recipe mapping, full-link outside-scope admission
 and a live model recovery pilot remain unfinished.
 
+Compiler execution now has one project-owned implementation shared by native
+checks and the retained production measurements. The masked comparer requires an
+explicit compiler callable; VC6 command extraction and retry codes no longer live
+in the library. CMake uses the environment entry points directly and the four old
+build-path shims are removed. Generic compilation-database parsing remains in the
+package, preserving argv tokens and duplicate recipe identities. Nonzero compiler
+exits can no longer contribute leftover objects to the old gate. Production
+recording, gate orchestration and complete acceptance still need migration.
+
 The production gate's annotation-integrity dependency now runs through native
 `recover check-source`; the replaced script is removed. The package checks actual
 source text, marker coverage and in-memory claim/lesson transitions across configured

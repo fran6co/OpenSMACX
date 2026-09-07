@@ -23,7 +23,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from match_recovery.source import read
-from match_recovery.source.asm import (build_command, compare_record,
+from recovery.environment.recipe import build_command, flag_dependent
+from recovery.environment.compile import compile_object
+from match_recovery.source.asm import (compare_record,
                         compiled_asm, original_asm)
 from osmx import FLAG_SETS
 
@@ -68,8 +70,8 @@ if __name__ == "__main__":
     # gets 177 from the same source. I read a regression into that gap once
     # and wrote it down before checking; the number a diff prints has to be
     # the number the ratchet would use.
-    flags = override or compare_record(record, IMAGE, command, FLAG_SETS).flags
-    mine = aligned(compiled_asm(record, command, flags))
+    flags = override or compare_record(record, IMAGE, command, FLAG_SETS, compiler=compile_object, retry_compile=flag_dependent).flags
+    mine = aligned(compiled_asm(record, command, flags, compiler=compile_object))
 
     print(f"0x{address:08X}  {record.name}")
     print(f"  flags {flags}")

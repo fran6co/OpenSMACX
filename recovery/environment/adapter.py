@@ -21,7 +21,7 @@ def main():
         command = request.arguments
         if not command:
             if request.profile == "application":
-                from match_recovery.source.asm import build_command
+                from recovery.environment.recipe import build_command
                 command = tuple(build_command(root / "build/compile_commands.json", source))
             else:
                 command = (sys.executable, str(root / "recovery/environment/wine.py"), "--tool=cl", "/nologo")
