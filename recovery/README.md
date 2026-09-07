@@ -637,6 +637,15 @@ its original constructor calls as evidence. Strengthening or changing a type
 preserves the previous interpretation for independent review; no byte claim is
 banked by these annotations.
 
+For an ordinary class pointer, `RECOVERY_MEMBER: v3` uses a starred class token:
+`// RECOVERY_MEMBER: v3 GraphicWin owned_buffer_ Buffer* 0xA08 0x005D4EF0`.
+The original initializer stores Buffer's constructor result at +0xA08; on_size
+loads it as the Buffer resize receiver. The native check now verifies that
+specific pointer target, not just pointer-sized storage. Live compiler damage
+controls retain the class size/member offset while substituting Win*, int and
+Buffer&, and require type failures. The package README describes format limits;
+neither a passing pointer check nor the field's name proves deletion/lifetime.
+
 Nonvirtual base interpretations use `// RECOVERY_BASE: v1 Derived Base 0x0 0x00401000`
 beside the class declaration: derived class, base class, original subobject offset,
 and original evidence address. This does not infer inheritance from an offset alone.

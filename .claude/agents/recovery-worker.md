@@ -21,6 +21,11 @@ by evidence. Byte agreement does not justify raw vtables, original-address
 bindings, flattened objects or lifecycle stand-ins. Unknown structure is an open
 question, not a reason to invent a declaration or permanently stop recovery.
 
+Use source-owned typed member expectations when original evidence distinguishes
+an embedded class value from a pointer to that class. Inspect both offset and
+type results in layout checks; identical offsets alone cannot protect the model.
+A pointer-target match does not prove its ownership or deletion behavior.
+
 When a finding affects another entity or requires unauthorized files, return it
 as a discovery with original identities and evidence. Let the coordinator expand
 scope before those edits. Do not suppress the finding to finish a function.

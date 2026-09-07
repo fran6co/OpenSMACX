@@ -78,6 +78,31 @@ structural work temporarily stops reproducing them.
 The lookbehind matters: `PROVEN-AGAINST-ORIGINAL: 0x...` provenance
 comments end in this spelling and are not map entries.
 
+## Original layout interpretations
+
+Place evidence-backed layout expectations beside their owning C++ declarations:
+
+```cpp
+// RECOVERY_MEMBER: v1 Window flags_ 0x4 0x00401000
+// RECOVERY_MEMBER: v2 Window timer_ Timer 0x8 0x00401000
+// RECOVERY_MEMBER: v3 Window canvas_ Canvas* 0x10 0x00401000
+// RECOVERY_BASE: v1 Window BaseWindow 0x0 0x00401000
+```
+
+These are illustrative identities. The final address anchors original evidence;
+do not create expectations from current compiler observations alone. Member v1
+requires only an offset, v2 also requires an embedded class value, and v3 requires
+an ordinary pointer to the named class. In the CodeView 5 backend, v3 checks a
+32-bit near pointer and its unqualified class target, not qualifiers, ownership,
+lifetime or complete ABI. References, integers, arrays and other class targets
+cannot satisfy it merely by occupying the same bytes. Unsupported type encodings
+remain unknown. `recover tasks check-layout` reports offset and type results
+separately; partial layout success does not establish full structure.
+
+Changing/removing an interpretation preserves its historical review obligation.
+Old versions remain readable for that history, not as alternative ways to waive
+an established type requirement. No layout annotation banks a byte claim.
+
 ## System import bindings
 
 `// RECOVERY_IMPORT: v1 <emitted-pointer-symbol> <DLL> name:<export>` binds a

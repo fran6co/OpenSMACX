@@ -19,9 +19,9 @@ from test_binary import coff_fixture, pe_fixture
 from test_codeview import debug_types
 
 
-def combined_object():
+def combined_object(types=None):
     obj = coff_fixture()
-    types = debug_types()
+    types = debug_types() if types is None else types
     raw, symbols = obj[60:76], obj[76:]
     text = bytearray(obj[20:60])
     struct.pack_into("<I", text, 20, 100)

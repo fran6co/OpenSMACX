@@ -74,6 +74,24 @@ def test_root_and_pin_relocation_keep_deleted_claims(task_project):
     assert any(item["path"] == "code/owner.cc" for item in after["obligations"][0]["source_evidence"])
 
 
+def test_pointer_target_refinement_and_removal_preserve_review_obligations(task_project):
+    path = task_project / "code/owner.hpp"
+    path.write_text(MEMBER)
+    commit(task_project, "Original offset interpretation")
+    initial = report(task_project)
+    path.write_text(MEMBER.replace("v1", "v3").replace("field_ 0x4", "field_ Buffer* 0x4"))
+    commit(task_project, "Recover pointer target interpretation")
+    refined = report(task_project)
+    assert {row["obligation_id"] for row in initial["obligations"]} == {row["obligation_id"] for row in refined["obligations"]}
+    assert len(refined["interpretations"]) == 2
+    assert any(row["current"] and row["value"].get("class_pointer_type") == "Buffer" for row in refined["interpretations"])
+    path.unlink()
+    commit(task_project, "Remove declaration during migration")
+    removed = report(task_project)
+    assert {row["obligation_id"] for row in refined["obligations"]} == {row["obligation_id"] for row in removed["obligations"]}
+    assert len(removed["interpretations"]) == 2 and not any(row["current"] for row in removed["interpretations"])
+
+
 def test_reclassifying_product_as_seed_does_not_erase_structural_history(task_project):
     root = task_project
     (root / "code/owner.hpp").write_text(MEMBER)

@@ -33,7 +33,8 @@ def test_strict_standalone_class_layout():
     assert obj.sections[0].name == ".debug$T"
     assert class_layout(obj, "Widget") == {"class": "Widget", "size": 16, "members": {"slot_": 4},
                                           "bases": [], "class_value_members": {},
-                                          "member_type_kinds": {"slot_": "non_class_value"}}
+                                          "member_type_kinds": {"slot_": "non_class_value"},
+                                          "member_types": {"slot_": {"kind": "non_class_value"}}}
 
 
 
@@ -47,7 +48,7 @@ def hierarchy_types(*, virtual=False, base_index=0x1002, base_offset=0):
     fields = record(0x1203, base + value + pointer)
     definition = record(0x1005, struct.pack("<HHIIIH", 3, 0, 0x1000, 0, 0, 16) + b"\x06Widget")
     forward = record(0x1005, struct.pack("<HHIIIH", 0, 0x80, 0, 0, 0, 0) + b"\x04Base")
-    ptr_type = record(0x1002, struct.pack("<II", 0x1002, 0))
+    ptr_type = record(0x1002, struct.pack("<II", 0x1002, 0xA))
     return struct.pack("<I", 2) + fields + definition + forward + ptr_type
 
 

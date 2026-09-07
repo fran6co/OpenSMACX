@@ -14,7 +14,7 @@ from .source_config import SourceConfiguration
 
 
 PREFIX = "// RECOVERY_MEMBER:"
-PATTERN = re.compile(r"// RECOVERY_MEMBER: v(?P<version>[12]) (?P<class_name>[A-Za-z_]\w*(?:::[A-Za-z_]\w*)*) (?P<target>[A-Za-z_]\w*) (?:(?P<class_type>[A-Za-z_]\w*(?:::[A-Za-z_]\w*)*) )?(?P<offset>0x[0-9a-fA-F]+) (?P<evidence>0x[0-9a-fA-F]+)")
+PATTERN = re.compile(r"// RECOVERY_MEMBER: v(?P<version>[123]) (?P<class_name>[A-Za-z_]\w*(?:::[A-Za-z_]\w*)*) (?P<target>[A-Za-z_]\w*) (?:(?P<class_type>[A-Za-z_]\w*(?:::[A-Za-z_]\w*)*)(?P<pointer>\*)? )?(?P<offset>0x[0-9a-fA-F]+) (?P<evidence>0x[0-9a-fA-F]+)")
 BASE_PREFIX = "// RECOVERY_BASE:"
 BASE_PATTERN = re.compile(r"// RECOVERY_BASE: v1 (?P<class_name>[A-Za-z_]\w*(?:::[A-Za-z_]\w*)*) (?P<target>[A-Za-z_]\w*(?:::[A-Za-z_]\w*)*) (?P<offset>0x[0-9a-fA-F]+) (?P<evidence>0x[0-9a-fA-F]+)")
 
@@ -28,6 +28,7 @@ class MemberExpectation:
     path: str
     line: int
     class_type: str | None = None
+    class_pointer_type: str | None = None
 
 
 @dataclass(frozen=True)
@@ -52,9 +53,10 @@ def _parse(text, path, pin, prefix, pattern, factory, label, address_space):
             raise ValueError(f"invalid original {label} expectation at {path}:{line}")
         extra = {}
         if label == "member":
-            if (match["version"] == "2") != (match["class_type"] is not None):
+            typed, pointer = match["class_type"] is not None, match["pointer"] is not None
+            if (typed, pointer) != {"1": (False, False), "2": (True, False), "3": (True, True)}[match["version"]]:
                 raise ValueError(f"invalid original member expectation version/type at {path}:{line}")
-            extra["class_type"] = match["class_type"]
+            extra["class_pointer_type" if pointer else "class_type"] = match["class_type"]
         rows.append(factory(match["class_name"], match["target"], int(match["offset"], 16),
                             Origin(pin, address_space, int(match["evidence"], 16)), path, line, **extra))
     return tuple(rows)

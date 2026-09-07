@@ -14,6 +14,30 @@ from .compiler import Compiler
 from .measurement import Measurement
 
 
+def check_member(item, layout):
+    """Compare a source interpretation with one complete compiler definition."""
+    actual = layout["members"].get(item.member) if layout else None
+    offset_result = Result.UNKNOWN if actual is None else Result.PASS if actual == item.offset else Result.FAIL
+    observed = layout["member_types"].get(item.member, {"kind": "unknown"}) if layout else {"kind": "unknown"}
+    kind = observed["kind"]
+    actual_class = observed.get("class") if kind == "class_value" else None
+    target = observed.get("target", {}) if kind == "pointer" else {}
+    actual_pointer_class = target.get("class") if target.get("kind") == "class_value" else None
+    type_result = None
+    if item.class_type is not None or item.class_pointer_type is not None:
+        correct = (actual_class == item.class_type if item.class_type is not None else
+                   actual_pointer_class == item.class_pointer_type)
+        type_result = Result.UNKNOWN if kind == "unknown" else Result.PASS if correct else Result.FAIL
+    result = (Result.UNKNOWN if Result.UNKNOWN in (offset_result, type_result) else
+              Result.FAIL if Result.FAIL in (offset_result, type_result) else Result.PASS)
+    return {"actual_class_type": actual_class, "actual_class_pointer_type": actual_pointer_class,
+            "member_type_kind": kind, "observed_type": observed, "actual_offset": actual,
+            "offset_result": offset_result, "type_result": type_result, "result": result,
+            "reason": ("member absent or compiler definition unavailable" if actual is None else
+                       "member offset and unqualified class-pointer target compared" if item.class_pointer_type else
+                       "member offset and class-value type compared" if item.class_type else "direct member offset compared")}
+
+
 def verify_layout(root: Path, task_name: str, *, compiler=None, command_for=None) -> dict:
     root = root.resolve()
     store = TaskStore(root)
@@ -80,21 +104,9 @@ def verify_layout(root: Path, task_name: str, *, compiler=None, command_for=None
                                                      "repair compilation or unsupported debug parsing before checking offsets"
                                                      if state == "unmeasurable" else None)})
             for item in expected:
-                layout = layouts.get(item.class_name)
-                actual = layout["members"].get(item.member) if layout else None
-                result = Result.UNKNOWN if actual is None else Result.PASS if actual == item.offset else Result.FAIL
-                actual_class = layout["class_value_members"].get(item.member) if layout else None
-                type_kind = layout["member_type_kinds"].get(item.member, "unknown") if layout else "unknown"
-                if item.class_type is not None:
-                    type_result = (Result.UNKNOWN if type_kind == "unknown" else
-                                   Result.PASS if actual_class == item.class_type else Result.FAIL)
-                    result = (Result.UNKNOWN if Result.UNKNOWN in (result, type_result) else
-                              Result.FAIL if Result.FAIL in (result, type_result) else Result.PASS)
+                checked = check_member(item, layouts.get(item.class_name))
                 rows.append({"expectation": asdict(item), "unit": unit, "flags": list(flags),
-                             "actual_class_type": actual_class, "member_type_kind": type_kind,
-                             "actual_offset": actual, "result": result,
-                             "reason": errors.get(item.class_name, "member absent" if actual is None else
-                                                  "member offset and class-value type compared" if item.class_type else "direct member offset compared")})
+                             **checked, "reason": errors.get(item.class_name, checked["reason"])})
             for item in expected_bases:
                 layout = layouts.get(item.class_name)
                 matches = [base for base in layout["bases"] if base["class"] == item.base] if layout else []
@@ -121,6 +133,6 @@ def verify_layout(root: Path, task_name: str, *, compiler=None, command_for=None
             "compile_attempts": attempts, "input_fingerprint": digest(before),
             "scope_complete": False, "structure_verification": Result.UNKNOWN, "persisted": False,
             "limitations": ["source expectations are original-layout interpretations, not freshly re-derived image evidence",
-                            "declared direct members and nonvirtual bases only; complete hierarchy, types, extent and lifetime remain unproved",
+                            "declared direct members, unqualified class values/pointer targets and nonvirtual bases only; complete hierarchy, types, extent and lifetime remain unproved",
                             "method-derived class hints supply current-code observations, never original-layout expectations",
                             "all scoped product TUs are checked conservatively; missing debug definitions are unknown"]}

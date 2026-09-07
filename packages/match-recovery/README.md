@@ -177,6 +177,33 @@ live in `migration.py`, `migration_protocol.py`, `reviews.py` and `tasks.py`.
 
 ## Package boundary and verification
 
+### Pointer-member interpretations
+
+An original-layout interpretation can require pointer storage and its class
+target, not just an offset:
+
+```cpp
+// RECOVERY_MEMBER: v3 Window canvas_ Canvas* 0x10 0x00401000
+Canvas *canvas_;
+```
+
+Use original constructor/caller evidence for the address and interpretation;
+this example is not a bundled binding. `tasks check-layout` checks the source
+expectation against every scoped compiler trial, reporting `offset_result`,
+`type_result` and the observed storage shape. The standalone CodeView 5 backend
+supports near32 ordinary pointers, distinguishing class values, references and
+different pointer targets even at identical offsets. Its pointer format follows
+[Microsoft's CodeView definitions](https://github.com/microsoft/microsoft-pdb/blob/master/include/cvinfo.h).
+Malformed, cyclic, unsupported or missing type metadata stays unknown. Validated
+const/volatile wrappers preserve unqualified class identity; this does not prove
+qualifiers, ownership, lifetime or full structural correctness.
+
+Version 1 member annotations require offsets only; version 2 additionally
+requires an embedded class value. Refining or removing a type interpretation
+preserves historical review requirements, and outside-scope annotation changes
+remain visible even when object code is unchanged. Results are disposable;
+only the original interpretation belongs in source.
+
 ### System import identities
 
 For ordinary PE32 imports, declare the emitted pointer symbol and intended

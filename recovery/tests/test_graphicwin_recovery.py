@@ -8,6 +8,8 @@ from capstone import Cs, CS_ARCH_X86, CS_MODE_32, CS_AC_READ, CS_AC_WRITE
 from capstone.x86 import X86_OP_MEM
 
 from match_recovery.codeview import class_layout
+from match_recovery.application_layout import check_member
+from match_recovery.layout_source import read_members
 from match_recovery.compiler import Compiler
 from match_recovery.measurement import Measurement
 from match_recovery.pe_coff import Coff
@@ -69,12 +71,46 @@ def test_window_initializer_reaches_its_base_and_uses_native_allocation(compiled
 
 def test_owned_buffer_is_pointer_storage_not_an_embedded_buffer_or_integer(compiled):
     _, _, objects = compiled
+    item, = (item for item in read_members(ROOT, image_pin(ROOT))
+              if item.class_name == "GraphicWin" and item.member == "owned_buffer_")
+    assert item.class_pointer_type == "Buffer"
     for obj in objects:
         layout = class_layout(obj, "GraphicWin")
         assert layout["size"] == 0xA14
         assert layout["members"]["owned_buffer_"] == 0xA08
         assert layout["member_type_kinds"]["owned_buffer_"] == "pointer"
         assert "owned_buffer_" not in layout["class_value_members"]
+        assert check_member(item, layout)["result"] == "pass"
+
+
+@pytest.mark.parametrize("replacement, kind", [(b"Win *", "pointer"), (b"int ", "non_class_value"),
+                                               (b"Buffer &", "reference")])
+def test_wrong_owned_buffer_type_at_identical_offset_fails_native_layout_check(compiled, replacement, kind):
+    compiler, settings, _ = compiled
+    header = ROOT / "src/graphicwin.h"
+    before = header.read_bytes()
+    anchor = b"Buffer *owned_buffer_;"
+    assert before.count(anchor) == 1
+    # Compile the actual declaration with a layout witness. The original
+    # method bodies need not type-check under deliberately wrong member types.
+    witness = b'#include "stdafx.h"\n#include "graphicwin.h"\nint layout_witness(GraphicWin *p) { return sizeof(*p); }\n'
+    item, = (item for item in read_members(ROOT, image_pin(ROOT))
+              if item.class_name == "GraphicWin" and item.member == "owned_buffer_")
+    for flags in settings.flag_sets:
+        def layout(text):
+            obj = Coff(compiler.overlay(ROOT / "src/graphicwin.cpp",
+                                         {"src/graphicwin.cpp": witness, "src/graphicwin.h": text},
+                                         (), flags + settings.layout_flags))
+            return class_layout(obj, "GraphicWin")
+        control = layout(before)
+        assert check_member(item, control)["result"] == "pass"
+        damaged = layout(before.replace(anchor, replacement + b"owned_buffer_;"))
+        assert damaged["size"] == control["size"] == 0xA14
+        row = check_member(item, damaged)
+        assert row["actual_offset"] == 0xA08 and row["offset_result"] == "pass"
+        assert row["member_type_kind"] == kind
+        assert row["result"] == row["type_result"] == "fail"
+    assert header.read_bytes() == before
 
 
 def test_layout_override_delegates_to_base_and_occupies_the_original_slot(compiled):

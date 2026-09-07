@@ -159,7 +159,10 @@ class GraphicWin : public Win, public Buffer {
   uint32_t field_A04_;
   // Optional separately allocated Buffer, distinct from the Buffer base.
   // init creates it; on_size resizes it; close releases it through slot 0.
-  // RECOVERY_MEMBER: v1 GraphicWin owned_buffer_ 0xA08 0x005D4EF0
+  // Original init calls Buffer's constructor at 0x005D4FC5, then stores
+  // its returned pointer at 0x005D4FD6. on_size loads that receiver at
+  // 0x005D628D before calling Buffer::resize at 0x005D6299.
+  // RECOVERY_MEMBER: v3 GraphicWin owned_buffer_ Buffer* 0xA08 0x005D4EF0
   Buffer *owned_buffer_;
   uint32_t field_A0C_;
   // 0xA10. THE PAINT HOOK `redraw` calls before painting, not storage: null

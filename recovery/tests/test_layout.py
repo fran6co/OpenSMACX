@@ -54,7 +54,7 @@ def test_scalar_at_correct_offset_cannot_replace_embedded_object(project):
 def test_array_at_correct_offset_cannot_replace_single_embedded_object(project):
     root, task = prepare(project)
     (root / "src/widget.h").write_text("// RECOVERY_MEMBER: v2 Widget ptr Base 0x8 0x00401000\n")
-    pointer_record = record(0x1002, struct.pack("<II", 0x1002, 0))
+    pointer_record = record(0x1002, struct.pack("<II", 0x1002, 0xA))
     array_record = record(0x1003, struct.pack("<IIH", 0x1002, 0x74, 4) + b"\0")
     blob = hierarchy_types().replace(pointer_record, array_record)
     report = verify_layout(root, task.task_id, compiler=lambda *_: coff(blob), command_for=lambda _: ("compiler",))

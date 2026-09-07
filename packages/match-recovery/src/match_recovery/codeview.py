@@ -118,6 +118,56 @@ def _unqualified_type(type_index: int, records: list) -> int | None:
     return None  # A cycle cannot establish an embedded class type.
 
 
+def _member_type(type_index, records, classes, seen=frozenset()):
+    """Observe unqualified storage shape, not ownership or full C++ type equality.
+
+    LF_POINTER also represents references and member pointers. A leaf number
+    alone is not proof of ordinary pointer storage. CV5 near32 pointers and
+    lvalue references are supported; other models/modes remain unknown.
+    Format: Microsoft's microsoft-pdb/include/cvinfo.h, lfPointerBody.
+    """
+    unknown = {"kind": "unknown"}
+    type_index = _unqualified_type(type_index, records)
+    if type_index is None or type_index in seen or len(seen) >= 16:
+        return unknown
+    if type_index in classes:
+        return {"kind": "class_value", "class": classes[type_index]["name"]}
+    if 0 < type_index < 0x1000:
+        return {"kind": "non_class_value"}
+    index = type_index - 0x1000
+    if not 0 <= index < len(records):
+        return unknown
+    leaf, record = records[index]
+    cursor = Cursor(record.data[2:])
+    try:
+        if leaf == 0x1002:
+            target, attributes = cursor.number("<I"), cursor.number("<I")
+            mode = (attributes >> 5) & 7
+            # CV5's near32 model supplies width; later size/restrict/managed
+            # encodings are not silently interpreted as this older format.
+            if attributes & ~0xFFF or attributes & 31 != 0xA or mode not in (0, 1):
+                return unknown
+            cursor.padding()
+            if cursor.at != len(cursor.data):
+                return unknown
+            target_type = _member_type(target, records, classes, seen | {type_index})
+            if target_type["kind"] == "unknown":
+                return unknown
+            return {"kind": "pointer" if mode == 0 else "reference", "width": 4, "target": target_type}
+        if leaf == 0x1003:
+            target, index_type = cursor.number("<I"), cursor.number("<I")
+            size = cursor.numeric()
+            cursor.name()
+            cursor.padding()
+            if size < 0 or not index_type or cursor.at != len(cursor.data):
+                return unknown
+            target_type = _member_type(target, records, classes, seen | {type_index})
+            return {"kind": "array"} if target_type["kind"] != "unknown" else unknown
+    except ValueError:
+        return unknown
+    return unknown
+
+
 def class_layout(obj: Coff, name: str) -> dict:
     """Caller must compile a standalone /Z7 TU, explicitly without PCH use."""
     sections = [section for section in obj.sections if section.name == ".debug$T"]
@@ -165,25 +215,16 @@ def class_layout(obj: Coff, name: str) -> dict:
             if not base["virtual"] and base["offset"] >= size:
                 raise ValueError("base offset outside compiler class extent")
             named_bases.append({**base, "class": base_class["name"]})
-        # Qualifiers do not turn a class value into a pointer. Resolve only
-        # validated modifier chains; never follow a pointer/array to its target.
-        resolved_types = {member: _unqualified_type(type_index, records) for member, type_index in member_types.items()}
-        class_members = {member: classes[type_index]["name"] for member, type_index in resolved_types.items()
-                         if type_index in classes}
-        type_kinds = {}
-        for member, type_index in resolved_types.items():
-            if type_index is None:
-                type_kinds[member] = "unknown"
-                continue
-            index = type_index - 0x1000
-            type_kinds[member] = ("class_value" if type_index in classes else
-                                  "non_class_value" if 0 < type_index < 0x1000 else
-                                  "pointer" if 0 <= index < len(records) and records[index][0] == 0x1002 else
-                                  "array" if 0 <= index < len(records) and records[index][0] == 0x1003 else
-                                  "unknown")
+        observed_types = {member: _member_type(type_index, records, classes)
+                          for member, type_index in member_types.items()}
+        if any(members[member] + value.get("width", 0) > size for member, value in observed_types.items()):
+            raise ValueError("member storage outside compiler class extent")
+        class_members = {member: value["class"] for member, value in observed_types.items()
+                         if value["kind"] == "class_value"}
+        type_kinds = {member: value["kind"] for member, value in observed_types.items()}
         definitions.append({"class": name, "size": size, "members": members,
                             "bases": named_bases, "class_value_members": class_members,
-                            "member_type_kinds": type_kinds})
+                            "member_type_kinds": type_kinds, "member_types": observed_types})
     if not definitions:
         raise ClassNotEmitted("requires one complete compiler class definition; none emitted")
     if len(definitions) != 1:

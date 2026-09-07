@@ -105,6 +105,12 @@ When replacing an address alias, distinguish the global's storage from its loade
 pointer value. A relocation to the right symbol alone does not establish whether
 the code assigns that global or dereferences it to overwrite another object.
 
+For a recovered pointed-to class member, preserve its original evidence with a
+`RECOVERY_MEMBER: v3` expectation beside the declaration. Read the layout check's
+separate offset/type results: an integer, reference or wrong class pointer can
+occupy the same bytes. A passing unqualified pointer-target check is not ownership
+or lifetime proof; those still require the coupled constructor/destructor evidence.
+
 For an SDK import, bind the actual emitted pointer symbol to its DLL and export
 with `RECOVERY_IMPORT` in source. The native checker derives the slot address from
 the pinned PE import directory; do not copy an IAT address into C++ or infer a DLL
