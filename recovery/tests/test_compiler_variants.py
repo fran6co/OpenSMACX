@@ -240,16 +240,16 @@ def test_real_vc6_deck_follows_nonvirtual_to_virtual_method_binding(variant_proj
     TaskStore(root).create(task)
     original = {name: (root / name).read_bytes() for name in task.editable_files}
     body = "int C::get() { return value; }"
-    declaration = "int value; int get();"
     value = {"schema_version": 2, "source": "code/unit.cpp", "entity_id": task.subjects[0].entity_id,
              "files": {name: {"source_sha256": hashlib.sha256(data).hexdigest(),
                                "entity_id": task.subjects[0].entity_id,
-                               "before": body if name.endswith(".cpp") else declaration,
+                               "before": body if name.endswith(".cpp") else ["int value;", "int get();"],
                                "control": body.replace("return value", "return value + 1") if name.endswith(".cpp")
-                               else "int prefix; " + declaration} for name, data in original.items()},
+                               else ["int prefix; int value;", "int get();"]} for name, data in original.items()},
              "candidates": {name: {"code/unit.cpp": "// symbol " + new_symbol + "\n" + body,
                                     "code/model.h": spelling} for name, spelling in (
-                                        ("virtual", "int value; virtual int get();"), ("stale", declaration))}}
+                                        ("virtual", ["int value;", "virtual int get();"]),
+                                        ("stale", ["int value;", "int get();"]))}}
     wrapper = Path(__file__).resolve().parents[1] / "environment/wine.py"
     command = (sys.executable, str(wrapper), "--tool=cl", "/nologo")
     class LocalCompiler:

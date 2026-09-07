@@ -21,6 +21,45 @@ from .source.reader import read_text
 from .tasks import TaskStore
 
 
+def _texts(value):
+    """One exact edit, or an ordered list of edits to the same original file."""
+    if isinstance(value, str):
+        return [value]
+    if not isinstance(value, list) or not value or any(not isinstance(item, str) for item in value):
+        raise ValueError("candidate edit text must be a string or nonempty string array")
+    return value
+
+
+def _anchor_ranges(original, value):
+    ranges = []
+    for text in _texts(value):
+        require_text(text, "candidate replacement anchor")
+        anchor = text.encode("utf-8")
+        start = original.find(anchor)
+        # bytes.count misses overlapping occurrences such as 'aaa' in 'aaaa'.
+        if start < 0 or original.find(anchor, start + 1) >= 0:
+            raise ValueError("candidate replacement anchor must occur exactly once")
+        ranges.append((start, start + len(anchor)))
+    ordered = sorted(ranges)
+    if any(left[1] > right[0] for left, right in zip(ordered, ordered[1:])):
+        raise ValueError("candidate replacement anchors must not overlap")
+    return ranges
+
+
+def _splice(original, ranges, value):
+    texts = _texts(value)
+    if len(texts) != len(ranges):
+        raise ValueError("candidate replacement count must equal the file's anchor count")
+    pieces, cursor = [], 0
+    # All ranges refer to original bytes; replacement text is never searched
+    # again or consumed by a later edit. Preserve untouched bytes verbatim.
+    for (start, end), text in sorted(zip(ranges, texts)):
+        pieces.extend((original[cursor:start], text.encode("utf-8")))
+        cursor = end
+    pieces.append(original[cursor:])
+    return b"".join(pieces)
+
+
 def _deck(value, root, editable, selected, settings):
     fields = {"schema_version", "source", "entity_id", "files", "candidates"}
     if set(value) != fields or type(value["schema_version"]) is not int or value["schema_version"] != 2:
@@ -47,22 +86,17 @@ def _deck(value, root, editable, selected, settings):
         require_digest(row["source_sha256"])
         if hashlib.sha256(original).hexdigest() != row["source_sha256"]:
             raise ValueError("candidate deck source digest is stale")
-        require_text(row["before"], "candidate replacement anchor")
-        before = anchors[name] = row["before"].encode("utf-8")
-        if original.count(before) != 1:
-            raise ValueError("candidate replacement anchor must occur exactly once")
-        if not isinstance(row["control"], str):
-            raise ValueError("candidate control must be replacement text")
-        controls[name] = (row["entity_id"], original.replace(before, row["control"].encode("utf-8"), 1))
+        anchors[name] = _anchor_ranges(original, row["before"])
+        controls[name] = (row["entity_id"], _splice(original, anchors[name], row["control"]))
     candidates = value["candidates"]
     if not isinstance(candidates, dict) or not candidates:
         raise ValueError("candidate deck requires named replacements")
     replacements = {}
     for name, after in candidates.items():
         require_text(name, "candidate name")
-        if not isinstance(after, dict) or set(after) != set(originals) or any(not isinstance(text, str) for text in after.values()):
+        if not isinstance(after, dict) or set(after) != set(originals):
             raise ValueError("each candidate must provide replacement text for every declared file")
-        replacements[name] = {path: original.replace(anchors[path], after[path].encode("utf-8"), 1)
+        replacements[name] = {path: _splice(original, anchors[path], after[path])
                               for path, original in originals.items()}
     for path, original in originals.items():
         def identities(contents):

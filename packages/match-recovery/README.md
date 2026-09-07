@@ -1048,6 +1048,16 @@ The UTF-8 `before` text must occur exactly once in each byte-pinned file. No bra
 parsing or marker edits are inferred. Replacement/control text supplies the
 entire replacement for that anchor, not necessarily a whole function. Keep
 experimental decks in ignored artifact storage; they are not another ledger.
+For separated changes in one file, `before` and `control` may be nonempty arrays
+of strings. Each candidate then supplies a same-length replacement array for
+that file, in anchor order. For example, `before: ["int old_;", "return old_;"]`
+can pair with a candidate `["int value_;", "return value_;"]`. Each anchor must
+occur exactly once in the original file, and anchors must not overlap. All byte
+ranges are resolved against that original snapshot before any replacement;
+replacement text is never matched again by a later edit. Empty replacement strings
+delete an anchor. Untouched bytes, including line endings, are preserved.
+Controls still operate independently per file and must change its compiled witness;
+multiple anchors do not narrow replica, task-TU or original-identity checks.
 Every candidate supplies all declared files, including unchanged anchors where
 appropriate. Each file's witness must be a mapped task subject. Schema v2 replaces
 the old single-file deck format; a single-file experiment uses one `files` entry.

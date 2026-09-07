@@ -84,6 +84,72 @@ def test_deck_reuses_source_map_and_scores_without_writing_or_banking(project, m
     assert {p.relative_to(root): p.read_bytes() for p in root.rglob("*") if p.is_file()} == before
 
 
+def test_multiple_edits_use_original_byte_ranges_without_cascading(project):
+    root, _ = project
+    path = root / "code/unit.cc"
+    original = "// π\r\nint one; int two;\r\n".encode() + path.read_bytes()
+    path.write_bytes(original)
+    value = deck(project)
+    # Deliberately not source order. The first replacement contains another
+    # anchor's text, but that new text must not be replaced a second time.
+    value["files"]["code/unit.cc"].update(
+        before=["/* baseline */", "int two;", "int one;"],
+        control=["for (;;) {}", "int two;", "int one;"])
+    value["candidates"] = {"coupled": {"code/unit.cc": ["/* proposed */", "int final;", "int two;"]}}
+    class Observed(Compiler):
+        def __init__(self):
+            self.contents = []
+        def variant(self, source, contents, *args):
+            self.contents.append(contents)
+            return super().variant(source, contents, *args)
+    compiler = Observed()
+    report = measure(project, value, compiler=compiler)
+    assert report["status"] == "scored" and report["controls"][0]["result"] == "pass"
+    assert compiler.contents[-1].startswith("// π\r\nint two; int final;\r\n".encode())
+    assert b"/* proposed */" in compiler.contents[-1]
+    assert path.read_bytes() == original
+
+
+@pytest.mark.parametrize("damage", ["duplicate", "nested", "partial-overlap", "overlapping-occurrences",
+                                    "empty", "empty-anchor", "non-string", "short-control", "short-candidate"])
+def test_invalid_multi_edits_refuse_before_compilation(project, damage):
+    root, _ = project
+    path = root / "code/unit.cc"
+    path.write_text(path.read_text() + "// abcdef aaaa\n")
+    value = deck(project)
+    row = value["files"]["code/unit.cc"]
+    row.update(before=["/* baseline */", "abcdef"], control=["for (;;) {}", "abcdef"])
+    value["candidates"] = {"coupled": {"code/unit.cc": ["/* proposed */", "changed"]}}
+    if damage == "duplicate": row["before"] = ["abcdef", "abcdef"]
+    elif damage == "nested": row["before"] = ["abcdef", "bcd"]
+    elif damage == "partial-overlap": row["before"] = ["abcd", "cdef"]
+    elif damage == "overlapping-occurrences": row["before"] = ["/* baseline */", "aaa"]
+    elif damage == "empty": row["before"] = []
+    elif damage == "empty-anchor": row["before"][1] = ""
+    elif damage == "non-string": row["before"][1] = 12
+    elif damage == "short-control": row["control"] = "for (;;) {}"
+    else: value["candidates"]["coupled"]["code/unit.cc"] = ["/* proposed */"]
+    with pytest.raises(ValueError):
+        measure(project, value, compiler=object())
+
+
+def test_adjacent_anchors_allow_deletion_without_changing_other_bytes(project):
+    value = deck(project)
+    value["files"]["code/unit.cc"].update(before=["/* baseline", " */"], control=["for (;;) {}", ""])
+    value["candidates"] = {"empty": {"code/unit.cc": ["", ""]}}
+    report = measure(project, value)
+    assert report["status"] == "scored" and report["candidates"][0]["target"]["result"] == "pass"
+
+
+def test_multi_edits_cannot_redefine_original_evidence(project):
+    value = deck(project)
+    value["files"]["code/unit.cc"].update(
+        before=["/* baseline */", "0x00401001"], control=["for (;;) {}", "0x00401001"])
+    value["candidates"] = {"changed-span": {"code/unit.cc": ["/* proposed */", "0x00401002"]}}
+    with pytest.raises(ValueError, match="original identities, spans or historical claims"):
+        measure(project, value, compiler=object())
+
+
 @pytest.mark.parametrize("damage", ["replica", "ignored-control", "compile-control"])
 def test_bad_replica_and_wrong_target_control_prevent_scoring(project, damage):
     class Bad(Compiler):

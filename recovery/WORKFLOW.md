@@ -261,7 +261,10 @@ with `uv run recover tasks variants <task> --image <image> --deck <ignored-json>
 The package README documents multi-file exact-text anchors, source digests and
 original entities. Header and dependent-body edits can be one atomic candidate;
 all mapped task TUs are compiled with that same overlay. Score 3–5 plausible candidates together
-before editing product source. Every compiled TU needs an unchanged-replica control,
+before editing product source.
+Use ordered anchor/replacement arrays for separated declaration, initialization,
+teardown and caller changes in one file; do not copy a whole TU just to span them.
+Every compiled TU needs an unchanged-replica control,
 and every edited file needs its own deliberately changed compiled witness. These controls
 must pass; coarse tier equality is not a valid control. Default `--jobs 1` is
 deliberate until isolated compiler capacity is measured. Review all dimensions
