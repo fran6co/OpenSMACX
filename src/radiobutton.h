@@ -70,12 +70,10 @@ class RadioButton : public virtual GraphicWin, public virtual Dialog {
   // The catalogue's @H@Z at 0x0060D0E0 describes VC6's hidden most-derived
   // flag, not a source parameter. The emitted symbol is mapped in the TU.
   RadioButton();
-  // VIRTUAL, and that is what earns the vtordisp. A displacement is emitted
-  // for a virtual base only when the derived class OVERRIDES one of its
-  // virtuals; inheriting Dialog's destructor implicitly is not enough for
-  // VC6. The image has ??1RadioButton@@QAE@H@Z at 0x00406F60, so a real
-  // destructor is what belongs here regardless.
-  virtual ~RadioButton() { ; }
+  // The original deleting entry closes the control before destroying its
+  // virtual bases. VC6 owns their destruction, optional operator delete,
+  // and all three receiver adjustors; their image bindings live in the TU.
+  virtual ~RadioButton() { close(); }
   uint32_t close();
 
  public:
@@ -112,11 +110,3 @@ static_assert(sizeof(RadioButton) == 0xB24,
 // Rebindable defaults, backed by original pointer-cell bindings in the TU.
 extern Sprite *RadioButtonDefault1;
 extern Sprite *RadioButtonDefault2;
-
-
-// Unfinished teardown adapter for 0x00406F60, entered on the GraphicWin
-// subobject at +0x18. Its explicit teardown and optional deletion still need
-// recovery as compiler-owned destruction; the catalogue signature is not a
-// reason to preserve this shim or to add a source-level destructor parameter.
-RadioButton *__fastcall radio_button_teardown_redirect(void *adjusted, void *,
-                                                        unsigned int mode);

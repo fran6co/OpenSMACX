@@ -18,7 +18,6 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "radiobutton.h"
-#include "vtable_shim.h"
 #include "win.h"  // WinCallbackWindow
 
 // The constructor loads these rebindable pointer cells, not sprite contents.
@@ -53,15 +52,14 @@ RadioButton::RadioButton() {
 }
 
 /*
-Purpose: The complete-object destructor entry, which also conditionally
-         frees the allocation: reinstall the base subobjects' own
-         vtable/vtordisp values, close the RadioButton, destroy the Dialog
-         and GraphicWin subobjects, then free through the executable's
-         operator delete only when bit 0 of mode asks. See the note in
-         radiobutton.h for why this is a free function rather than a
-         destructor.
-// ORIGINAL: 0x00406F60 ??1RadioButton@@QAE@H@Z 0x00406F60-0x00406FE2
-// symbol    ?radio_button_teardown_redirect@@YIPAVRadioButton@@PAX0I@Z
+Purpose: Compiler-generated scalar deleting destructor for the inline
+         ~RadioButton. Entered on GraphicWin at +0x18, it restores the
+         derived tables, closes the control, destroys Dialog and GraphicWin,
+         and conditionally deletes the complete object. The catalogue's int
+         is the ABI deleting flag, not an explicit C++ destructor parameter.
+// ORIGINAL: 0x00406F60 ??1RadioButton@@QAE@H@Z 0x00406F60-0x00406FE2 FILE BYTE_EXACT
+// symbol    ??_GRadioButton@@UAEPAXI@Z
+// Historical manual-teardown experiment, superseded by real destruction:
 // TRIED: MEASURED 3/39 agreeing, first divergence at instruction 2
 //            (matches through `push ebp; mov ebp,esp`, then this body loads
 //            the vbtable pointer a step earlier than the image's `push
@@ -75,24 +73,47 @@ Purpose: The complete-object destructor entry, which also conditionally
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x005D4DD0 0x00608E10 0x0060D1B0 0x0064557F
-Return Value: the RadioButton pointer (this - 0x18), the original's EAX
-Status: Complete
+Return Value: the complete RadioButton pointer, returned by generated code.
 */
-RadioButton *__fastcall radio_button_teardown_redirect(void *adjusted, void *,
-                                                        unsigned int mode) {
-    char *const self = static_cast<char *>(adjusted) - 0x18;
 
-    // Strip-all direction: the image's five derived-stage re-stores here are
-    // gone, as in the constructor.
-    reinterpret_cast<RadioButton *>(self)->close();
-    reinterpret_cast<Dialog *>(self + 0xA30)->destroy();
-    reinterpret_cast<GraphicWin *>(self + 0x18)->~GraphicWin();
+/*
+Purpose: Compiler-generated deleting adjustor through RadioButton virtual
+         inheritance; tail-jumps to the scalar deleting destructor at 0x00406F60.
+// ORIGINAL: 0x00406F50 ??1thunk1_RadioButton@@QAE@H@Z 0x00406F50-0x00406F58 FILE BYTE_EXACT
+// symbol    ??_ERadioButton@@$4PPPPPPPM@A@AEPAXI@Z
+// size      8 bytes
+// prototype void (__thiscall ??1thunk1_RadioButton@@QAE@H@Z)(RadioButton* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+*/
 
-    if (mode & 1) {
-        operator delete(self);
-    }
-    return reinterpret_cast<RadioButton *>(self);
-}
+/*
+Purpose: Compiler-generated deleting adjustor through RadioButton virtual
+         inheritance; tail-jumps to the scalar deleting destructor at 0x00406F60.
+// ORIGINAL: 0x00407060 ??1thunk2_RadioButton@@QAE@H@Z 0x00407060-0x00407071 FILE BYTE_EXACT
+// symbol    ??_ERadioButton@@$4PPPPPLLI@EEE@AEPAXI@Z
+// size      17 bytes
+// prototype void (__thiscall ??1thunk2_RadioButton@@QAE@H@Z)(RadioButton* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+*/
+
+/*
+Purpose: Compiler-generated deleting adjustor through RadioButton virtual
+         inheritance; tail-jumps to the scalar deleting destructor at 0x00406F60.
+// ORIGINAL: 0x00407080 ??1thunk3_RadioButton@@QAE@H@Z 0x00407080-0x0040708E FILE BYTE_EXACT
+// symbol    ??_ERadioButton@@$4PPPPPPPM@KBI@AEPAXI@Z
+// size      14 bytes
+// prototype void (__thiscall ??1thunk3_RadioButton@@QAE@H@Z)(RadioButton* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+*/
 
 /*
 Purpose: Reset the radio button to its defaults, then close its dialog and

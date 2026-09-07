@@ -147,46 +147,6 @@ func_adjustor_p_u MapWinScalarDeleteTarget =
     original_method<func_adjustor_p_u>(0x00421830);
 func_adjustor_p_u PlanWinScalarDeleteTarget =
     original_method<func_adjustor_p_u>(0x0048BF20);
-// TRIED for the whole vtordisp family, and the blocker is NOT this seam.
-// The image's thunk is two instructions - `sub ecx, [ecx-4]` then a TAIL JUMP
-// to 0x00406F60 - and VC6 does generate the folded `sub ecx, [ecx-4]` from
-// `object - *(int32_t *)(object - 4)`. What it will not do is reuse the
-// caller's pushed argument across the jump: ours emits `push [esp+4]` first,
-// four instructions against two.
-//
-// That argument is MSVC's hidden vbase-destructor flag - 0x00406F60 ends
-// `ret 4` - and it only appears when the class really declares virtual
-// inheritance. `radiobutton.h` explains why it cannot yet: GraphicWin and
-// Dialog model their vtable as an opaque dword the original installs by hand,
-// so neither declares a virtual, and giving them real virtual destructors is a
-// coupled edit. So this family is capped there, not here.
-//
-// MEASURED: declaring `~RadioButton()` for real and forwarding it to
-// 0x00406F60 changes NOTHING - 0 of 2 either way, four compiled instructions
-// either way. The seam is not what costs the match.
-func_adjustor_v_i RadioButtonDtorTarget =
-    original_method<func_adjustor_v_i>(0x00406F60);
-
-/*
-Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
-         RadioButton::dtor expects, then forward unchanged.
-// ORIGINAL: 0x00406F50 ??1thunk1_RadioButton@@QAE@H@Z 0x00406F50-0x00406F58
-// symbol    ?adjust_radio_button1_dtor@@YIXPAX0H@Z
-// size      8 bytes
-// prototype void (__thiscall ??1thunk1_RadioButton@@QAE@H@Z)(RadioButton* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_radio_button1_dtor(void *self, void *, int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp)->*RadioButtonDtorTarget)(arg0);
-}
 
 /*
 Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
@@ -296,49 +256,6 @@ void __fastcall adjust_radio_button1_on_left_double_click(void *self, void *,
         *reinterpret_cast<const int32_t *>(object - 4);
     reinterpret_cast<RadioButton *>(object - vtordisp)->RadioButton::on_left_double_click(arg0, arg1);
 }
-
-/*
-Purpose: Adjust the receiver from RadioButton's thunk2 subobject to the one
-         RadioButton::dtor expects, then forward unchanged.
-// ORIGINAL: 0x00407060 ??1thunk2_RadioButton@@QAE@H@Z 0x00407060-0x00407071
-// symbol    ?adjust_radio_button2_dtor@@YIXPAX0H@Z
-// size      17 bytes
-// prototype void (__thiscall ??1thunk2_RadioButton@@QAE@H@Z)(RadioButton* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_radio_button2_dtor(void *self, void *, int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 1096);
-    (ORIGINAL(object - vtordisp - 1092)->*RadioButtonDtorTarget)(arg0);
-}
-
-/*
-Purpose: Adjust the receiver from RadioButton's thunk3 subobject to the one
-         RadioButton::dtor expects, then forward unchanged.
-// ORIGINAL: 0x00407080 ??1thunk3_RadioButton@@QAE@H@Z 0x00407080-0x0040708E
-// symbol    ?adjust_radio_button3_dtor@@YIXPAX0H@Z
-// size      14 bytes
-// prototype void (__thiscall ??1thunk3_RadioButton@@QAE@H@Z)(RadioButton* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_radio_button3_dtor(void *self, void *, int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    (ORIGINAL(object - vtordisp - 2584)->*RadioButtonDtorTarget)(arg0);
-}
-
 
 /*
 Purpose: Adjust the receiver from RadioButton's thunk3 subobject to the one
