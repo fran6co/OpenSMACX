@@ -30,8 +30,11 @@ and physical header identity; no absolute `#line` rewrite is injected because
 VC6 can use it to search the original directories and break `#pragma once`.
 Path/time-sensitive differences remain unsupported when the replica control
 cannot agree. Reports include mapped outside-task neighbors in compiled units,
-but do not prove preservation of all other code. Baseline/current preservation,
-file additions/deletions and prefix pooling remain unfinished. Default concurrency is 1.
+but do not prove preservation of all other code. The native `tasks check-preservation`
+command now compares baseline/current compiled residuals separately (see below).
+Historical header/seed file sets use v5 complete-tree materialization. Full
+preservation, historical product-TU recipe mapping and prefix pooling remain unfinished.
+Default concurrency is 1.
 
 ## Available now
 
@@ -369,6 +372,25 @@ this review to migration admission requires the explicit configuration below;
 structural approval alone does not admit or demote a byte obligation.
 
 ### Protected migration execution
+
+`uv run recover tasks check-preservation <task> --summary` now supplies one
+native prerequisite: fresh baseline/current COFF comparisons outside source-owned
+task functions, with per-TU replica and per-changed-file compiler damage controls.
+Independent data, linker metadata, relocation targets and outside source
+annotations are preserved too. It covers configured non-seed TUs by default;
+`--unit` is diagnostic filtering, never a narrower acceptance claim. No local
+Python preservation adapter or saved measurement ledger is required.
+
+It does not yet supply the full `outside_scope` admission result. The current
+compiler policy is used for both source versions; full link/runtime/lifetime and
+historical build reconstruction are separate work. Compiler v5 now materializes
+added/deleted/renamed headers and seeds without leaving newer headers visible in
+the old tree. Changed product-TU file sets still require explicit recipe/coverage
+mapping. Unobserved seed inputs remain unknown, not silently excluded. The existing
+InfoWin task has historical seed and annotation changes; materialization alone
+does not discharge its preservation or restoration requirements. Use the report to
+identify coverage and collateral changes; do not configure it as a complete
+migration checker. Package documentation describes the exact comparison boundary.
 
 The optional project `obligations` command returns a source-derived `obligations`
 array (entity id, proof dimension, baseline and validated obligation id; source

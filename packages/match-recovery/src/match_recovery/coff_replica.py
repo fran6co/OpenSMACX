@@ -10,7 +10,7 @@ import struct
 from .model import digest
 
 
-def _section_keys(obj):
+def _section_keys(obj, overrides=None):
     """Explicit names and associative ownership, never byte-similarity pairing."""
     keys = {}
     for number, section in enumerate(obj.sections, 1):
@@ -19,6 +19,7 @@ def _section_keys(obj):
                        and not (symbol.name == section.name and symbol.storage == 3 and symbol.type == 0))
         if names:
             keys[number] = "named:" + digest(names)
+    keys.update(overrides or {})
 
     def key(number):
         if number not in keys:
@@ -34,7 +35,7 @@ def _section_keys(obj):
     return keys
 
 
-def _object_evidence(obj):
+def _object_evidence(obj, *, excluded=frozenset(), section_keys=None, entry_names=None):
     """All sections/relocations/symbols except file and CodeView line records.
 
     COFF timestamps are already omitted by the parser. Keep type records, BSS
@@ -47,11 +48,16 @@ def _object_evidence(obj):
     """
     if any(section.name == ".debug$P" for section in obj.sections):
         raise ValueError("replica control requires standalone objects, not external precompiled types")
-    keys = _section_keys(obj)
+    keys = _section_keys(obj, section_keys)
     debug = {index for index, section in enumerate(obj.sections, 1) if section.name == ".debug$S"}
+    omitted = debug | set(excluded)
+    entry_names = entry_names or {}
+    referenced = {target for number, section in enumerate(obj.sections, 1) if number not in omitted
+                  for _, target, _ in section.relocations}
 
     def symbol_key(symbol):
-        return (symbol.name, symbol.value, keys[symbol.section] if symbol.section > 0 else str(symbol.section), symbol.type, symbol.storage)
+        return (entry_names.get(symbol.index, symbol.name), symbol.value,
+                keys[symbol.section] if symbol.section > 0 else str(symbol.section), symbol.type, symbol.storage)
 
     def auxiliary(index, symbol):
         raw = obj.auxiliary.get(index, b"")
@@ -80,11 +86,19 @@ def _object_evidence(obj):
 
     sections = sorted((keys[index], section.name, section.flags, obj.section_sizes[index - 1], section.data.hex(),
                  [(offset, symbol_key(obj.symbols[target]), kind) for offset, target, kind in section.relocations])
-                for index, section in enumerate(obj.sections, 1) if index not in debug)
+                for index, section in enumerate(obj.sections, 1) if index not in omitted)
     symbols = sorted((symbol_key(symbol), auxiliary(index, symbol))
-                     for index, symbol in obj.symbols.items() if symbol.section not in debug and symbol.storage != 103)
+                     for index, symbol in obj.symbols.items() if symbol.storage != 103
+                     and (symbol.section not in omitted or
+                          (symbol.section in excluded and symbol.storage == 2 and index not in entry_names))
+                     # A new ordinary undefined callee used only by scoped code
+                     # is not an outside definition. Common storage, weak aliases
+                     # and auxiliary metadata can affect linkage and stay visible.
+                     and not (excluded and symbol.section == 0 and symbol.storage == 2 and symbol.value == 0
+                              and not obj.auxiliary.get(index) and index not in referenced))
     return {"sections": sections, "symbols": symbols,
-            "associations": sorted((keys[child], keys[parent]) for child, parent in obj.associations.items())}
+            "associations": sorted((keys[child], keys[parent]) for child, parent in obj.associations.items()
+                                   if child not in excluded)}
 
 
 def object_signature(obj):

@@ -10,6 +10,7 @@ from pathlib import Path
 import re
 
 from match_recovery.model import Origin
+from match_recovery.components import relative_path
 from .source_config import SourceConfiguration
 
 
@@ -25,6 +26,20 @@ class ObjectBinding:
     line: int
 
 
+def parse_objects(text: str, path: str, pin: str, *, address_space: str) -> tuple[ObjectBinding, ...]:
+    """Parse current or historical object identities without reading live files."""
+    relative_path(path)
+    bindings = []
+    for line, source_line in enumerate(text.splitlines(), 1):
+        if not source_line.lstrip().startswith(PREFIX):
+            continue
+        match = PATTERN.fullmatch(source_line.strip())
+        if match is None:
+            raise ValueError(f"invalid object annotation at {path}:{line}")
+        bindings.append(ObjectBinding(Origin(pin, address_space, int(match[1], 16)), match[2], path, line))
+    return tuple(bindings)
+
+
 def read_objects(root: Path, pin: str) -> tuple[ObjectBinding, ...]:
     root = root.resolve()
     configuration = SourceConfiguration.read(root)
@@ -33,14 +48,7 @@ def read_objects(root: Path, pin: str) -> tuple[ObjectBinding, ...]:
         relative = path.relative_to(root).as_posix()
         if configuration.is_seed(relative):
             continue
-        for line, text in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
-            if not text.lstrip().startswith(PREFIX):
-                continue
-            match = PATTERN.fullmatch(text.strip())
-            if match is None:
-                raise ValueError(f"invalid object annotation at {path}:{line}")
-            address = int(match[1], 16)
-            bindings.append(ObjectBinding(Origin(pin, configuration.address_space, address), match[2], relative, line))
+        bindings.extend(parse_objects(path.read_text(encoding="utf-8"), relative, pin, address_space=configuration.address_space))
     if len({item.symbol for item in bindings}) != len(bindings):
         raise ValueError("duplicate original object symbol binding")
     if len({item.origin.entity_id for item in bindings}) != len(bindings):

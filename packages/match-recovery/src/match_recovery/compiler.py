@@ -17,6 +17,7 @@ from .driver import Command, invoke
 from .fingerprint import input_snapshot
 from .model import require_text
 from .records import read_json
+from .source_replica import replica_roots, replica_snapshot, snapshot_digest, validate_tree
 
 
 @dataclass(frozen=True)
@@ -32,6 +33,8 @@ class CompilationRequest:
     arguments: tuple[str, ...]
     flags: tuple[str, ...]
     replacements: dict[str, bytes] | None
+    tree_roots: tuple[str, ...] | None = None
+    tree_files: dict[str, bytes] | None = None
 
     @classmethod
     def read(cls, root: Path, value: dict):
@@ -42,7 +45,9 @@ class CompilationRequest:
         fields = {"schema_version", "profile", "source", "arguments", "flags"}
         if version == 4:
             fields.add("overrides")
-        if type(version) is not int or version not in (2, 4) or set(value) != fields:
+        if version == 5:
+            fields.add("tree")
+        if type(version) is not int or version not in (2, 4, 5) or set(value) != fields:
             raise ValueError("invalid compiler request")
         require_text(value["profile"], "compiler profile")
         for name in ("arguments", "flags"):
@@ -55,7 +60,28 @@ class CompilationRequest:
             if path.resolve() != path or not path.is_file():
                 raise ValueError("compiler request requires existing canonical regular files")
             return path
-        source = existing(value["source"])
+        tree_roots, tree_files = None, None
+        if version == 5:
+            tree = value["tree"]
+            if (not isinstance(tree, dict) or set(tree) != {"roots", "current_sha256", "files"}
+                    or not isinstance(tree["roots"], list) or not isinstance(tree["files"], dict)):
+                raise ValueError("invalid complete source tree request")
+            tree_roots = replica_roots(tree["roots"])
+            if list(tree_roots) != tree["roots"]:
+                raise ValueError("source tree roots must be canonical and nonoverlapping")
+            tree_files = {}
+            for name, encoded in tree["files"].items():
+                if not isinstance(encoded, str):
+                    raise ValueError("source tree files require base64 strings")
+                tree_files[name] = base64.b64decode(encoded, validate=True)
+            validate_tree(tree_roots, tree_files)
+            if snapshot_digest(replica_snapshot(root, tree_roots)) != tree["current_sha256"]:
+                raise ValueError("source tree requires the unchanged current input digest")
+            source = local_path(root, value["source"])
+            if source.resolve() != source or value["source"] not in tree_files:
+                raise ValueError("compiler source must be a canonical file in the supplied tree")
+        else:
+            source = existing(value["source"])
         replacements = None
         if version == 4:
             if not isinstance(value["overrides"], dict) or not value["overrides"]:
@@ -68,7 +94,7 @@ class CompilationRequest:
                         or item["sha256"] != hashlib.sha256(path.read_bytes()).hexdigest()):
                     raise ValueError("source overlay requires the unchanged original file digest")
                 replacements[name] = base64.b64decode(item["base64"], validate=True)
-        return cls(source, value["profile"], tuple(value["arguments"]), tuple(value["flags"]), replacements)
+        return cls(source, value["profile"], tuple(value["arguments"]), tuple(value["flags"]), replacements, tree_roots, tree_files)
 
 
 class Compiler:
@@ -139,11 +165,32 @@ class Compiler:
                 if path.resolve() != path or not path.is_file() or path.read_bytes() != original:
                     raise ValueError("compiler overlay input changed during compilation")
 
-    def _compile(self, source, arguments, flags, *, overrides=None):
+    def materialize(self, source: Path, roots: tuple[str, ...], files: dict[str, bytes],
+                    arguments: tuple[str, ...], flags: tuple[str, ...]) -> bytes:
+        """Compile a complete private source tree via protocol v5.
+
+        No compiler recipe is inferred for a missing/renamed translation unit.
+        Commands without this protocol must refuse it, not fall back to v4.
+        """
+        roots = validate_tree(roots, files)
+        before = replica_snapshot(self.root, roots)
+        tree = {"roots": list(roots), "current_sha256": snapshot_digest(before),
+                "files": {name: base64.b64encode(data).decode("ascii") for name, data in sorted(files.items())}}
+        try:
+            return self._compile(source, arguments, flags, tree=tree)
+        finally:
+            if replica_snapshot(self.root, roots) != before:
+                raise ValueError("compiler source tree inputs changed during compilation")
+
+    def _compile(self, source, arguments, flags, *, overrides=None, tree=None):
+        if tree is not None and source.resolve() != source:
+            raise ValueError("compiler source tree path must be canonical")
         source = source.resolve()
-        if not source.is_relative_to(self.root) or not source.is_file():
+        if not source.is_relative_to(self.root) or (tree is None and not source.is_file()):
             raise ValueError("compiler source must be an existing file inside the project")
-        original = source.read_bytes()
+        if tree is not None and source.relative_to(self.root).as_posix() not in tree["files"]:
+            raise ValueError("compiler source is absent from supplied tree")
+        original = source.read_bytes() if source.is_file() else None
         for value in (*arguments, *flags):
             require_text(value, "compiler argument")
         if self.snapshot() != self.initial:
@@ -152,6 +199,8 @@ class Compiler:
                    "arguments": list(arguments), "flags": list(flags)}
         if overrides is not None:
             request.update(schema_version=4, overrides=overrides)
+        if tree is not None:
+            request.update(schema_version=5, tree=tree)
         try:
             code, output = invoke(self.command, self.root, "", request)
         except subprocess.SubprocessError as error:
@@ -159,7 +208,7 @@ class Compiler:
         finally:
             if self.snapshot() != self.initial:
                 raise ValueError("compiler inputs changed during compilation")
-            if not source.is_file() or source.read_bytes() != original:
+            if (source.read_bytes() if source.is_file() else None) != original:
                 raise ValueError("compiler source changed during compilation")
         if code != 0:
             raise ValueError("compiler command failed: " + str(output.get("error", "no diagnostic"))[:2000])

@@ -41,6 +41,7 @@ uv run recover tasks context <task>
 uv run recover tasks obligations <task>
 uv run recover tasks check <task> --image <image> --summary
 uv run recover tasks check-restoration <task> --image <image> --summary
+uv run recover tasks check-preservation <task> --summary
 uv run recover check-build --summary
 uv run recover run <task> --worker <config> --reviewer <config>
 uv run pytest packages/match-recovery/tests recovery/tests
@@ -52,6 +53,10 @@ The last command is the retained full legacy gate: never pipe it. Exit 0 is
 clean, 1 a failure, 3 unmeasurable—not green. This project's strict full
 acceptance and migration-check adapters are unfinished. Scoped checks and
 reviews do not establish full acceptance or a working game.
+`check-preservation` compares fresh baseline/current compiler output outside
+source-mapped task functions. It is not a full-link/structural proof or a way to
+replace the task baseline; unsupported historical TU recipes and unobserved
+header/seed substitutions remain unknown.
 
 Until the stamping command migrates, only `uv run tools/osmx.py record <addrs>`
 banks measured legacy claims. Never hand-edit an `ORIGINAL:` marker or type a

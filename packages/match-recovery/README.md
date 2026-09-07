@@ -356,6 +356,46 @@ Migration-check reports must now include `references` with a passing result, eve
 when historical source recorded only byte claims. Missing/failed/unknown references
 cannot be waived by a matching-regression permission.
 
+`tasks check-preservation <task> [--unit path ...] [--summary]` adds native
+baseline/current compiled preservation evidence, without a project checker script
+or another ledger. It reads the task's immutable Git baseline and uses the same
+current measurement/compiler policy on both source versions. Every configured
+non-seed TU is included by default, even units with no function annotations and
+dependency units. A diagnostic unit subset leaves the overall result unknown.
+No original executable argument is needed: this comparison does not claim that
+the baseline or candidate matches the original.
+
+Only exclusively owned function COMDATs selected by source origin identities and
+their associative children may vary. All remaining code/data, BSS extents, link
+directives, weak/common symbols, public aliases and exact symbolic relocations
+are compared. Scoped entry renames use original entity identity; local relocation
+destinations are never reduced to a generic placeholder. Ordinary undefined
+callees used only by scoped code are not outside definitions. Outside function
+bindings/claims and object/member/base/generated/component annotations also stay
+protected; a comment-only address change cannot be hidden by unchanged objects.
+
+Each TU needs a matching direct/current-overlay control. Each changed file also
+needs a compiler-observed unique `#error` control before substituted baseline
+bytes can support a pass. Generic compiler failure is insufficient. Reports carry
+digests, section identities, coverage and failures, never object bytes. Inputs,
+task decisions, compiler policy and Git state are rechecked; no source, claim or
+baseline is edited. Temporary copies are disposed through the same compiler overlay
+path as candidate decks.
+
+Current limits are explicit: source interpretation must agree across the baseline
+and current tree. Changed header/seed file sets use compiler protocol v5 complete
+trees: current-only files are absent from the baseline, historical-only files are
+recreated only there. Deleted-file damage controls run against that historical tree;
+added-file controls run against the current tree. Unobserved inputs, including
+unused seeds, remain coverage gaps. Added/deleted/renamed product TUs still require
+explicit recipe and build-coverage mapping; those gaps are reported before compiling.
+It uses current compiler recipes, not historical build reconstruction, and does
+not prove full-link selection, original references, runtime or lifecycle behavior.
+`result:pass` means the covered compiled residuals and outside annotations agree;
+`scope_complete`/`ready_for_collection` stay false and `outside_scope_verification`
+stays unknown. The full migration/acceptance verifier still needs those additional
+dimensions. Do not reset task history or substitute this diagnostic for restoration.
+
 History uses each commit's source roots, suffixes, seed classifications and pin
 location, including merged side histories. Moving/deleting a claim or treating
 its old home as seed does not withdraw an earlier obligation. Member/base/table
@@ -429,6 +469,20 @@ the compiler actually measured the intended candidate. See the controls below.
 Local commands can use `CompilationRequest.read(root, parsed_json)` to validate
 the package-owned protocol and decode/pin overlay bytes before compiler dispatch.
 Only profile selection, compiler options and invocation need local implementation.
+
+`Compiler.materialize(source, roots, files, arguments, flags)` sends protocol v5
+for historical file sets. It replaces `overrides` with a `tree` object containing
+canonical nonoverlapping `roots`, `current_sha256` (the current complete input
+snapshot fingerprint), and `files` (relative paths to base64-encoded file contents).
+This is a complete file map, not a patch: omitted current files must be absent.
+The source must exist in the supplied tree but need not exist in today's checkout.
+No historical build recipe is inferred; the local command must have an explicit
+recipe or refuse the request. Current source roots must still exist. The package's
+`CompilationRequest.read` validates the manifest and freshness; `source_tree`
+materializes only those files in an isolated copy and detects concurrent original
+changes without reverting them. Commands without v5 support must fail explicitly.
+Complete trees are transient compiler inputs, not a saved source or verdict ledger.
+Replica and damage controls remain necessary; protocol success is not verification.
 
 `inputs` lists local compiler scripts/configuration files; `environment` names
 additional compiler-affecting variables. PATH and command environment placeholders

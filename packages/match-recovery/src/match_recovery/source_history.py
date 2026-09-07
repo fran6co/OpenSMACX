@@ -8,6 +8,7 @@ import subprocess
 from .model import require_text
 from .records import parse_json, read_json
 from .source_config import SourceConfiguration
+from .components import relative_path
 
 
 def git(root: Path, *args: str, input: bytes | None = None) -> bytes:
@@ -62,6 +63,42 @@ def _regular(entry, path):
     if kind != "blob" or mode not in ("100644", "100755"):
         raise ValueError(f"unsupported historical source entry: {path}")
     return oid
+
+
+def _blobs(root, oids):
+    oids = sorted(set(oids))
+    if not oids:
+        return {}
+    batch = git(root, "cat-file", "--batch", input=("\n".join(oids) + "\n").encode())
+    blobs, offset = {}, 0
+    for oid in oids:
+        end = batch.index(b"\n", offset)
+        header = batch[offset:end].decode().split()
+        if len(header) != 3 or header[:2] != [oid, "blob"]:
+            raise ValueError("invalid source blob response")
+        size = int(header[2])
+        offset = end + 1
+        blobs[oid] = batch[offset:offset + size]
+        if len(blobs[oid]) != size or batch[offset + size:offset + size + 1] != b"\n":
+            raise ValueError("truncated source blob response")
+        offset += size + 1
+    if offset != len(batch):
+        raise ValueError("unexpected source blob response tail")
+    return blobs
+
+
+def revision_files(root: Path, revision: str, roots: tuple[str, ...]) -> dict[str, bytes]:
+    """Read regular files under explicit committed roots, including non-C++ includes."""
+    if not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", revision) or not roots:
+        raise ValueError("historical files require a full revision and explicit roots")
+    for name in roots:
+        relative_path(name)
+    tree = _tree(root, revision, roots)
+    if any(name in tree for name in roots):
+        raise ValueError("historical source root is not a directory")
+    entries = {name: _regular(entry, name) for name, entry in tree.items()}
+    blobs = _blobs(root, entries.values())
+    return {name: blobs[oid] for name, oid in entries.items()}
 
 
 def source_versions(root: Path, baseline: str, head: str, *,
@@ -131,23 +168,6 @@ def source_versions(root: Path, baseline: str, head: str, *,
             if key not in seen:
                 seen.add(key)
                 entries.append((revision, path, oid, selected))
-    oids = sorted({oid for _, _, oid, _ in entries})
-    if not oids:
-        return ()
-    batch = git(root, "cat-file", "--batch", input=("\n".join(oids) + "\n").encode())
-    blobs, offset = {}, 0
-    for oid in oids:
-        end = batch.index(b"\n", offset)
-        header = batch[offset:end].decode().split()
-        if len(header) != 3 or header[:2] != [oid, "blob"]:
-            raise ValueError("invalid source blob response")
-        size = int(header[2])
-        offset = end + 1
-        blobs[oid] = batch[offset:offset + size]
-        if len(blobs[oid]) != size or batch[offset + size:offset + size + 1] != b"\n":
-            raise ValueError("truncated source blob response")
-        offset += size + 1
-    if offset != len(batch):
-        raise ValueError("unexpected source blob response tail")
+    blobs = _blobs(root, (oid for _, _, oid, _ in entries))
     return tuple(SourceVersion(revision, path, oid, blobs[oid], selected)
                  for revision, path, oid, selected in entries)

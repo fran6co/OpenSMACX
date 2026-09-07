@@ -7,7 +7,7 @@ import tempfile
 
 from match_recovery.measurement import Measurement
 from match_recovery.processes import run_bounded
-from match_recovery.source_replica import replica_roots, source_replica
+from match_recovery.source_replica import replica_roots, source_replica, source_tree
 
 
 
@@ -58,7 +58,8 @@ def _variant_arguments(arguments, root, replica, roots):
     return tuple(output)
 
 
-def compile_overlay(root: Path, source: Path, replacements: dict[str, bytes], command: tuple[str, ...], flags: tuple[str, ...]) -> bytes:
+def compile_overlay(root: Path, source: Path, replacements: dict[str, bytes], command: tuple[str, ...], flags: tuple[str, ...],
+                    *, tree_roots: tuple[str, ...] | None = None) -> bytes:
     """Compile a TU with all proposed headers/bodies in one private tree.
 
     An identical-content replica control is still required by the measurement
@@ -68,6 +69,8 @@ def compile_overlay(root: Path, source: Path, replacements: dict[str, bytes], co
     root, source = root.resolve(), source.resolve()
     settings = Measurement.read(root)
     roots = replica_roots((*settings.source.roots, *settings.input_roots))
+    if tree_roots is not None and tree_roots != roots:
+        raise ValueError("complete source tree roots must cover the configured compiler inputs")
     if any(os.environ.get(name) for name in ("CL", "_CL_", "VC6_INCLUDE")):
         raise ValueError("source overrides require explicit include/options, not CL/_CL_/VC6_INCLUDE overrides")
 
@@ -76,7 +79,8 @@ def compile_overlay(root: Path, source: Path, replacements: dict[str, bytes], co
     # Do not inject absolute #line filenames: VC6 uses those during quote-include
     # lookup, mixing original and copied headers and defeating #pragma once.
     # __FILE__ data differences must fail the caller's replica control instead.
-    with source_replica(root, roots, replacements, artifacts="build/recovery/variants") as replica:
+    materialize = source_replica if tree_roots is None else source_tree
+    with materialize(root, roots, replacements, artifacts="build/recovery/variants") as replica:
         return compile_object(replica / source.relative_to(root),
                               _variant_arguments(command, root, replica, roots),
                               _variant_arguments(flags, root, replica, roots), temporary_parent=replica)

@@ -152,6 +152,28 @@ def test_real_vc6_atomic_header_body_overlay_reaches_both_translation_units(vari
     assert not list((root / "build/recovery/variants").iterdir())
 
 
+def test_real_vc6_historical_tree_excludes_new_include_shadow(variant_project):
+    from match_recovery.source_replica import replica_snapshot
+    from recovery.environment.wine import VC6_ROOT
+    if not (VC6_ROOT / "BIN/CL.EXE").is_file():
+        pytest.skip("VC6 is not installed")
+    root = variant_project
+    source = root / "code/unit.cpp"
+    source.write_bytes(source.read_bytes().replace(b"__FILE__", b'"stable"'))
+    wrapper = Path(__file__).resolve().parents[1] / "environment/wine.py"
+    command = (sys.executable, str(wrapper), "--tool=cl", "/nologo", "/I" + str(root / "code"), "/I" + str(root / "support"))
+    flags = ("/c", "/O2", "/Gy")
+    files = {name: data for name, data in replica_snapshot(root, ("code", "support")).items() if data is not None}
+    prior = Coff(compile_object(source, command, flags))
+    (root / "code/value.h").write_text("#define GLOBAL_VALUE 99\n")
+    current = Coff(compile_object(source, command, flags))
+    assert function_signature(prior, "?value@@YAHXZ") != function_signature(current, "?value@@YAHXZ")
+    historical = Coff(compile_overlay(root, source, files, command, flags, tree_roots=("code", "support")))
+    assert object_signature(prior) == object_signature(historical)
+    assert (root / "code/value.h").read_text() == "#define GLOBAL_VALUE 99\n"
+    assert not list((root / "build/recovery/variants").iterdir())
+
+
 @pytest.mark.parametrize("damage", ["stale-header", "malformed-header", "symlink-header", "v3", "empty"])
 def test_adapter_refuses_bad_overlay_before_compiling_any_file(variant_project, monkeypatch, capsys, damage):
     from recovery.environment import adapter

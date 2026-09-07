@@ -10,6 +10,8 @@ import subprocess
 import tempfile
 
 from .components import relative_path
+from .model import digest
+import hashlib
 
 
 def replica_roots(roots):
@@ -20,7 +22,10 @@ def replica_roots(roots):
                  if not any(name != other and PurePosixPath(name).is_relative_to(other) for other in roots))
 
 
-def _files(root, roots):
+def replica_snapshot(root, roots):
+    """Read every regular input under canonical, nonoverlapping replica roots."""
+    root = root.resolve()
+    roots = replica_roots(roots)
     result = {}
     for name in roots:
         directory = root / name
@@ -39,6 +44,58 @@ def _files(root, roots):
             else:
                 raise ValueError(f"source replica requires regular files: {path.relative_to(root)}")
     return result
+
+
+def snapshot_digest(snapshot):
+    """Fingerprint files and directories without serializing source bytes."""
+    return digest({name: hashlib.sha256(data).hexdigest() if data is not None else None
+                   for name, data in sorted(snapshot.items())})
+
+
+def validate_tree(roots, files):
+    """Validate a complete file set, never a patch against today's source."""
+    roots = replica_roots(roots)
+    if not roots or not isinstance(files, dict):
+        raise ValueError("source tree requires explicit roots and a complete file map")
+    for name, data in files.items():
+        relative_path(name)
+        path = PurePosixPath(name)
+        if not isinstance(data, bytes):
+            raise ValueError("source tree files must be bytes")
+        if not any(path != PurePosixPath(base) and path.is_relative_to(base) for base in roots):
+            raise ValueError("source tree file is outside declared roots")
+        if any(parent.as_posix() in files for parent in path.parents):
+            raise ValueError("source tree file conflicts with a directory")
+        if any(PurePosixPath(base).is_relative_to(path) for base in roots):
+            raise ValueError("source tree file conflicts with a root")
+    return roots
+
+
+@contextmanager
+def source_tree(root: Path, roots: tuple[str, ...], files: dict[str, bytes], *, artifacts: str | None = None):
+    """Materialize exactly these files; omitted current files are absent.
+
+    Source roots must exist in the current checkout for freshness controls.
+    New/deleted/renamed historical files are supported inside those roots.
+    This supplies no compile recipe or claim about historical build policy.
+    """
+    root = root.resolve()
+    roots = validate_tree(roots, files)
+    before = replica_snapshot(root, roots)
+    parent = artifact_parent(root, artifacts, excluded_roots=roots) if artifacts is not None else None
+    try:
+        with tempfile.TemporaryDirectory(prefix="recover-tree-", dir=parent) as temporary:
+            destination = Path(temporary)
+            for name in roots:
+                (destination / name).mkdir(parents=True, exist_ok=True)
+            for name, data in files.items():
+                path = destination / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(data)
+            yield destination
+    finally:
+        if replica_snapshot(root, roots) != before:
+            raise ValueError("source tree inputs changed during compilation")
 
 
 def artifact_parent(root: Path, artifacts: str, *, excluded_roots=()) -> Path:
@@ -78,7 +135,7 @@ def source_replica(root: Path, roots: tuple[str, ...], replacements: dict[str, b
         relative_path(path)
         if not isinstance(contents, bytes):
             raise ValueError("source replica replacements must be bytes")
-    before = _files(root, roots)
+    before = replica_snapshot(root, roots)
     if any(before.get(name) is None for name in replacements):
         raise ValueError("source replica replacements must name existing files in its roots")
     try:
@@ -94,5 +151,5 @@ def source_replica(root: Path, roots: tuple[str, ...], replacements: dict[str, b
                 path.write_bytes(data)
             yield destination
     finally:
-        if _files(root, roots) != before:
+        if replica_snapshot(root, roots) != before:
             raise ValueError("source replica inputs changed during compilation")

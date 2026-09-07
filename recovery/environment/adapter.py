@@ -25,8 +25,11 @@ def main():
                 command = tuple(build_command(root / "build/compile_commands.json", source))
             else:
                 command = (sys.executable, str(root / "recovery/environment/wine.py"), "--tool=cl", "/nologo")
-        data = (compile_object(source, command, request.flags) if request.replacements is None else
-                compile_overlay(root, source, request.replacements, command, request.flags))
+        if request.tree_files is not None:
+            data = compile_overlay(root, source, request.tree_files, command, request.flags, tree_roots=request.tree_roots)
+        else:
+            data = (compile_object(source, command, request.flags) if request.replacements is None else
+                    compile_overlay(root, source, request.replacements, command, request.flags))
         output, code = {"object_base64": base64.b64encode(data).decode("ascii")}, 0
     except (OSError, ValueError) as error:
         output, code = {"error": str(error)}, 3

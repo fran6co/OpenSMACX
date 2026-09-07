@@ -128,6 +128,25 @@ driver has no migration-check adapter yet, so it cannot currently admit such a
 checkpoint. Park the scoped work for review instead of calling it green or
 merging it as accepted. The generic driver never automatically reverts it.
 
+Before migration review, inspect `uv run recover tasks check-preservation <task>
+--summary`. This native command compares fresh current and Git-baseline compiles,
+allowing only source-mapped task function COMDATs and their compiler-owned children
+to vary. Outside code/references, independent data/linker metadata and outside
+source bindings remain protected. It compares unfinished outside code to the task
+baseline, not to the original executable. Existing restoration requirements are
+still checked separately and cannot be weakened by a preservation result.
+
+The check uses current compiler policy for both versions, not historical objects.
+Historical header/seed additions and deletions use complete private source trees,
+not patches against today's file set. Changed product-TU file sets still need
+explicit recipe/coverage mapping. Changed source interpretation, unobservable
+substitution controls and compile failures remain gaps. `--unit`
+can narrow diagnostic work but keeps the overall result unknown when units are
+omitted. Do not move the task baseline forward to hide a gap or outside change.
+This is compiled preservation evidence, not full-link, runtime or lifecycle proof;
+it does not yet unlock migration admission. Run it at coordinator checkpoints,
+not as an extra full sweep for every spelling candidate.
+
 Use `uv run recover tasks check-restoration <task> --image <image> --summary`
 to identify the protected requirements still needing work. This recomputes
 measurements, not just the inventory. Missing product bindings and unresolved

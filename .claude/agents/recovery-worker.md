@@ -57,6 +57,11 @@ callers still require scope expansion and preservation checks.
 Default to one compiler job unless the coordinator has measured
 isolated capacity. Rankings are diagnostics, not a winner to apply automatically.
 After a deliberate source edit, rerun task checks and preserve coupled findings.
+At coordinator checkpoints, `tasks check-preservation <task>` can expose compiled
+changes outside task-owned functions relative to its fixed Git baseline. It does
+not require unrelated unfinished bodies to match the original. It also does not
+admit a structural migration: missing historical TU recipes and full-link/lifetime
+proof remain gaps. Never advance a task baseline to make its report pass.
 
 The configured worker command must return the framework's JSON response:
 `{"discoveries":[]}`, or discoveries with `hypothesis`, `affects` (original

@@ -225,3 +225,62 @@ def test_invalid_protocol_requests_are_refused_in_the_package(compiler_project, 
     else: value["schema_version"] = 4
     with pytest.raises(ValueError):
         CompilationRequest.read(compiler_project, value)
+
+
+def tree_request(root):
+    from match_recovery.source_replica import replica_snapshot, snapshot_digest
+    return {"schema_version": 5, "source": "code/old.cc", "profile": "default", "arguments": [], "flags": [],
+            "tree": {"roots": ["code"], "current_sha256": snapshot_digest(replica_snapshot(root, ("code",))),
+                     "files": {"code/old.cc": base64.b64encode(b"old source\xff").decode()}}}
+
+
+def test_complete_tree_protocol_allows_missing_historical_source_and_pins_current_inputs(compiler_project):
+    root = compiler_project
+    expected = tree_request(root)
+    (root / "recovery/compiler.py").write_text(
+        'import json, sys\nr = json.load(sys.stdin)\n' + f'assert r == {expected!r}\n'
+        'print(json.dumps({"object_base64":"b2JqZWN0"}))\n')
+    assert Compiler(root).materialize(root / "code/old.cc", ("code",), {"code/old.cc": b"old source\xff"}, (), ()) == b"object"
+    request = CompilationRequest.read(root, expected)
+    assert request.tree_roots == ("code",) and request.tree_files == {"code/old.cc": b"old source\xff"}
+    assert request.source == root / "code/old.cc" and request.replacements is None
+    assert not request.source.exists()
+    assert (root / "code/unit.cc").read_text() == "synthetic source\n"
+
+
+@pytest.mark.parametrize("damage", ["digest", "added-current", "missing-source", "outside", "collision",
+                                  "encoding", "not-string", "extra", "root-type", "overlapping-roots"])
+def test_invalid_or_stale_complete_tree_requests_are_refused(compiler_project, damage):
+    root = compiler_project
+    value = tree_request(root)
+    tree = value["tree"]
+    if damage == "digest": tree["current_sha256"] = "0" * 64
+    elif damage == "added-current": (root / "code/new.h").write_bytes(b"concurrent")
+    elif damage == "missing-source": value["source"] = "code/missing.cc"
+    elif damage == "outside": tree["files"]["outside/header"] = ""
+    elif damage == "collision": tree["files"]["code/old.cc/header"] = ""
+    elif damage == "encoding": tree["files"]["code/old.cc"] = "!"
+    elif damage == "not-string": tree["files"]["code/old.cc"] = 12
+    elif damage == "extra": tree["approved"] = True
+    elif damage == "root-type": tree["roots"] = "code"
+    else: tree["roots"] = ["code", "code/sub"]
+    with pytest.raises(ValueError):
+        CompilationRequest.read(root, value)
+
+
+def test_complete_tree_never_falls_back_to_old_compiler_protocol(compiler_project):
+    with pytest.raises(ValueError):
+        Compiler(compiler_project).materialize(compiler_project / "code/old.cc", ("code",), {"code/old.cc": b"old"}, (), ())
+
+
+@pytest.mark.parametrize("damage", ["added", "removed", "changed"])
+def test_complete_tree_compiler_mutations_are_refused_without_restoring(compiler_project, damage):
+    root = compiler_project
+    operation = {"added": 'Path("code/new.h").write_bytes(b"newer")',
+                 "removed": 'Path("code/unit.cc").unlink()',
+                 "changed": 'Path("code/unit.cc").write_bytes(b"newer")'}[damage]
+    (root / "recovery/compiler.py").write_text('from pathlib import Path\n' + operation +
+                                             '\nprint(\'{"object_base64":"b2JqZWN0"}\')\n')
+    with pytest.raises(ValueError, match="inputs changed"):
+        Compiler(root).materialize(root / "code/old.cc", ("code",), {"code/old.cc": b"old"}, (), ())
+    if damage == "changed": assert (root / "code/unit.cc").read_bytes() == b"newer"

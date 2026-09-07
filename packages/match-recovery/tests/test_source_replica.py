@@ -1,7 +1,7 @@
 import pytest
 import subprocess
 
-from match_recovery.source_replica import source_replica
+from match_recovery.source_replica import source_replica, source_tree, replica_snapshot
 
 
 @pytest.fixture
@@ -92,3 +92,36 @@ def test_unsafe_artifact_destinations_are_refused(tree, damage):
     with pytest.raises(ValueError):
         with source_replica(tree, ("code",), {}, artifacts=location):
             pytest.fail("unsafe destination")
+
+
+def test_complete_tree_materializes_historical_files_without_current_fallback(tree):
+    before = replica_snapshot(tree, ("code",))
+    files = {"code/old/unit.cc": b"historical\r\n\xff", "code/old/header": b"original header"}
+    with source_tree(tree, ("code",), files) as replica:
+        assert {name: data for name, data in replica_snapshot(replica, ("code",)).items()
+                if data is not None} == files
+        assert not (replica / "code/unit.cc").exists()
+        assert not (replica / "code/sub/include_without_suffix").exists()
+    assert not replica.exists()
+    assert replica_snapshot(tree, ("code",)) == before
+
+
+@pytest.mark.parametrize("files", [{"other/header": b"outside"}, {"code": b"root"},
+                                 {"code/old": b"file", "code/old/header": b"child"},
+                                 {"code/../outside": b"escape"}, {"code/header": "text"}])
+def test_invalid_complete_trees_are_refused(tree, files):
+    with pytest.raises(ValueError):
+        with source_tree(tree, ("code",), files):
+            pytest.fail("invalid complete tree")
+
+
+@pytest.mark.parametrize("damage", ["added", "removed", "changed"])
+def test_historical_tree_detects_newer_product_work_without_reverting(tree, damage):
+    with pytest.raises(ValueError, match="inputs changed"):
+        with source_tree(tree, ("code",), {"code/old.cc": b"old"}) as replica:
+            path = tree / "code/unit.cc"
+            if damage == "added": (tree / "code/new.h").write_bytes(b"newer")
+            elif damage == "removed": path.unlink()
+            else: path.write_bytes(b"newer")
+    assert not replica.exists()
+    if damage == "changed": assert path.read_bytes() == b"newer"

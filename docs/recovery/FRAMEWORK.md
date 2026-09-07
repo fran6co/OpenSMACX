@@ -14,7 +14,12 @@ legacy byte-only history cannot waive wrong or unknown targets. The native
 driver round, without project checker code or existing incremental outputs.
 The provider-neutral `agent` bridge now connects configured prompt-driven commands
 to worker/reviewer JSON contracts; local provider arguments remain project data.
-Full structure, outside-scope admission and a live model recovery pilot remain unfinished.
+Native baseline/current COFF preservation now compares non-scoped compiler output
+and outside source bindings, with explicit controls and immutable task history.
+Historical header/seed file sets now use the package's complete-tree compiler
+protocol, preserving absent/new files without mutating the current checkout.
+Full structure, historical product-TU recipe mapping, full-link outside-scope admission
+and a live model recovery pilot remain unfinished.
 
 ## Accepted design
 
@@ -162,7 +167,7 @@ establish completion of this program.
   candidates are ranked, never applied or banked automatically. Generic source
   copies and compiler protocol belong to the package; VC6 include semantics stay
   in the project's compiler script. Prefix capacity, include-map invalidation,
-  baseline/current outside-scope preservation and fleet throughput verification remain unfinished.
+  complete baseline/current outside-scope preservation and fleet throughput verification remain unfinished.
 - [ ] Quota/interruption recovery and multiple-checkpoint restoration tests.
 - [ ] Tool/documentation cutover, stale-reference audit, removal of superseded live
   workflows, preservation of retirement history and incoming recoveries.
