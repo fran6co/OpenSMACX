@@ -641,7 +641,8 @@ def _coff_function_masked(obj: bytes, symbol: str, emitted: str = "",
 
 
 def compiled_asm(record: DecompilationState, command: list[str],
-                 flags: str, source: Path | str | None = None, *, compiler) -> Listing:
+                 flags: str | tuple[str, ...] | list[str],
+                 source: Path | str | None = None, *, compiler) -> Listing:
     """Compile through the caller's environment and select a mapped COFF body.
 
     `compiler(source, arguments, flags)` receives tuples of argument tokens,
@@ -660,14 +661,22 @@ def compiled_asm(record: DecompilationState, command: list[str],
     if not record.name:
         raise ValueError(
             f"{record.address_hex}: no name fact under its marker")
+    if isinstance(flags, str):
+        arguments, label = tuple(shlex.split(flags)), flags
+    elif (isinstance(flags, (tuple, list))
+          and all(isinstance(word, str) and "\0" not in word for word in flags)):
+        arguments = tuple(flags)
+        label = shlex.join(arguments)  # Display only; never reparsed to compile.
+    else:
+        raise ValueError("compiler flag trial must be a string or an array of argument tokens")
     try:
         obj = compiler(Path(source) if source else record.path,
-                       tuple(command), tuple(shlex.split(flags)))
+                       tuple(command), arguments)
     except (OSError, ValueError) as error:
         raise CompileFailed(str(error)) from error
     if not isinstance(obj, bytes) or not obj:
         raise CompileFailed("compiler returned no object bytes")
-    return subject_asm(obj, record, flags)
+    return subject_asm(obj, record, label)
 
 
 def subject_asm(obj: bytes, record: DecompilationState,
@@ -1130,7 +1139,10 @@ def compare_source(record: DecompilationState, exe: Path | str,
     annotation records; it is compiled with the record's own invocation, so
     it sees the same include path the real unit does.
 
-    `flags` is a flag string, or several. THERE IS NO DEFAULT SET HERE, and
+    `flags` is a legacy flag string, or a sequence of trials. Each trial may
+    instead be a tuple/list of argument tokens, as in native measurement
+    configuration; those tokens reach the compiler without shell splitting.
+    THERE IS NO DEFAULT SET HERE, and
     that is the point: which invocation built a given function is not
     something this module can know, and a constant sitting in it would be
     read as the answer. It is not even a property of the BUILD - `/Oy-`

@@ -48,6 +48,7 @@ state from the same code.
 from __future__ import annotations
 
 import re
+from difflib import SequenceMatcher
 from pathlib import Path
 
 from .grammar import (FACT_LINE, LESSON_CONTINUED, LESSON_DEFERRED,
@@ -381,6 +382,46 @@ def write(text: str, records: list[DecompilationState]) -> str:
     if text.endswith("\n"):
         joined += "\n"
     return joined
+
+
+def write_bytes(raw: bytes, records: list[DecompilationState]) -> bytes:
+    """Apply the canonical annotation writer without normalizing other bytes.
+
+    Retain non-UTF-8 source and each unchanged line's original newline. Changed
+    lines use their previous newline; inserted lines use the surrounding style.
+    The text writer remains the single implementation of annotation grammar.
+    """
+    text = raw.decode("utf-8", errors="surrogateescape")
+    if re.search(r"[\v\f\x1c-\x1e\x85\u2028\u2029]", text):
+        raise ValueError("unsupported source line separator")
+    lines = text.splitlines(keepends=True)
+    contents = [line.rstrip("\r\n") for line in lines]
+    endings = [line[len(content):] for line, content in zip(lines, contents)]
+    # Python's splitlines recognizes additional separators not used by C++ source
+    # files. Refuse those rather than accidentally treating them as newlines.
+    if any(ending not in ("", "\n", "\r", "\r\n") or "\n" in content or "\r" in content
+           for content, ending in zip(contents, endings)):
+        raise ValueError("unsupported source line separator")
+    normalized = "\n".join(contents) + ("\n" if endings and endings[-1] else "")
+    rendered = write(normalized, records)
+    wanted = rendered.splitlines()
+    output = []
+    for operation, low, high, start, end in SequenceMatcher(
+            None, contents, wanted, autojunk=False).get_opcodes():
+        if operation == "equal":
+            output.extend(lines[low:high])
+        else:
+            newline = next((item for item in endings[low:high] if item),
+                           next((item for item in endings[max(0, low - 1):] if item), "\n"))
+            for index, content in enumerate(wanted[start:end]):
+                ending = endings[low + index] if low + index < high else newline
+                # A replaced unterminated line may no longer be the final line.
+                if start + index < len(wanted) - 1 and not ending:
+                    ending = newline
+                if start + index == len(wanted) - 1:
+                    ending = (ending or newline) if rendered.endswith("\n") else ""
+                output.append(content + ending)
+    return "".join(output).encode("utf-8", errors="surrogateescape")
 
 
 def remove(text: str, records: list[DecompilationState]) -> str:

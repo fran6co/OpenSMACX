@@ -43,6 +43,18 @@ control compares grouped and individual measurements without changing source;
 the measured timings belong in the cutover commit, not a current-status ledger.
 This is not fleet throughput or completion of the recording CLI cutover.
 
+The recording mutation path now uses package-owned guarded publication. Input
+snapshots cover configured source/build/compiler-policy inputs and environment,
+the selected image and legacy command inputs. Complete measurement coverage is
+required before staging. Only byte obligations are added; historical notes and
+existing obligations survive nonmatching measurements. The old demotion and
+weaker-claim grant/withdraw paths, along with automatic count reconciliation,
+are removed. The remaining floor advances only by this batch's measured increment.
+Original/replacement bytes are staged in ignored storage. Ordinary write failures
+roll back the invocation's own unchanged outputs, preserving conflicting later
+edits and recoverable backups. Multi-file atomicity, compact obligation writing,
+source-identity floor replacement and native production CLI cutover remain open.
+
 The production gate's annotation-integrity dependency now runs through native
 `recover check-source`; the replaced script is removed. The package checks actual
 source text, marker coverage and in-memory claim/lesson transitions across configured

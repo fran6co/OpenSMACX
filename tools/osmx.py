@@ -23,15 +23,15 @@ from typing import Annotated
 
 import typer
 
-from dataclasses import replace
-
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from match_recovery.source import DecompilationState, State, mangled, read, write_file
+from match_recovery.source import DecompilationState, State, mangled, read
 from match_recovery import source as source_records
 from match_recovery.source.mangled import qualified_name
 from match_recovery.source.calls import CallSite, call_sites, imported_names
-from match_recovery.source.record import stamped
+from match_recovery.source.recording import record_claims
+from match_recovery.measurement import Measurement
+from match_recovery.source_inventory import image_pin
 from recovery.environment.recipe import build_command, MissingRecipe
 from match_recovery.compilation_database import build_inputs
 from recovery.environment.compile import compile_object
@@ -47,12 +47,14 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 # reads as prose - and the claim did not fail, it CEASED TO EXIST, and the
 # recount just followed it down (measured 2026-08-23: both corruptions read
 # as 0 records, silently). This file is what the recount is compared TO.
-# Only `osmx record` and `osmx semantic` rewrite it, in the same breath as
+# Only the guarded recorder rewrites it, in the same batch as
 # the annotations; the gate fails on ANY mismatch, in either direction - a
 # live count above the floor is a BYTE_EXACT token something other than
-# `record` wrote. Collected agent patches can carry their worktree's floor
-# line; the coordinator's re-measure (`osmx record`, batch step 4) is what
-# reconciles it, exactly as it reconciles the markers themselves.
+# `record` wrote. Recording now refuses a mismatched starting floor, and
+# publishes only its measured increment with its source changes. It cannot
+# reconcile unrelated dropped/added claims by recounting the tree. Collection
+# must preserve the source/floor pair before measurement; identity-based
+# history checks must replace this count before it can be retired.
 #
 # THE FLOOR LIVES IN THE TREE IT COUNTS. The first version pinned the path
 # from __file__ while counting the `--src` it was handed - the mixed
@@ -75,18 +77,13 @@ def _read_floor(src: Path) -> int | None:
         return None
 
 
-def _refresh_floor(src: Path) -> int:
-    """Recount the tree and persist BESIDE IT. Called ONLY by
-    record/semantic, which have just rewritten annotations - the gate itself
-    never writes."""
-    live = sum(1 for r in read(src) if r.byte_exact or r.semantic)
-    _floor_path(src).write_text(
-        "# The claim floor. Maintained by `osmx record` / `osmx semantic`;\n"
+def _floor_bytes(live: int) -> bytes:
+    return (
+        "# Transitional claim floor. Maintained by guarded `osmx record`;\n"
         "# `osmx check` fails when the tree's live claim count differs in\n"
-        "# EITHER direction. Never edit by hand - bank or demote through\n"
-        "# `osmx record`, which rewrites this file with what it measured.\n"
-        f"claims {live}\n")
-    return live
+        "# EITHER direction. Never edit by hand or recount unrelated edits.\n"
+        "# Recording adds only the obligations measured in its own batch.\n"
+        f"claims {live}\n").encode()
 
 # More matches than this and a listing is more use than a dump.
 SHOW_IN_FULL = 4
@@ -905,6 +902,20 @@ def _measure_records(chosen, exe, compile_commands, borrow, shared):
     return [row for unit in units for row in unit.results]
 
 
+def _record_input_identity(src, exe, compile_commands, borrow):
+    """Transitional CLI inputs over the package's configured measurement policy."""
+    settings = Measurement.read(REPO_ROOT)
+    staging = (compile_commands.parent / "recovery/publications").resolve()
+    paths = {exe, compile_commands, Path(__file__), _floor_path(src)}
+    paths.update(path for path in src.rglob("*")
+                 if path.is_file() and not path.resolve().is_relative_to(staging))
+    files = {str(path): (hashlib.sha256(path.read_bytes()).hexdigest(), str(path.resolve()))
+             if path.exists() else None for path in sorted(paths)}
+    if files[str(exe)] is None or files[str(exe)][0] != image_pin(REPO_ROOT, settings.source):
+        raise ValueError("recording requires the configured pinned original image")
+    return settings.snapshot(REPO_ROOT, {"flags": FLAG_SETS, "borrow": borrow}), files
+
+
 @app.command()
 def record(
     targets: Annotated[list[str], typer.Argument(
@@ -924,10 +935,6 @@ def record(
     borrow: Annotated[str, typer.Option(
         help="Compile a file the build does not name with THIS file's "
              "command.")] = "src/buffer.cpp",
-    demote: Annotated[bool, typer.Option(
-        "--demote",
-        help="Also clear a claim that stopped reproducing. Off by default: "
-             "the floor is the number of claims.")] = False,
     reconfigure: Annotated[bool, typer.Option(
         "--reconfigure",
         help="Clear the cmake cache and regenerate the build database "
@@ -941,200 +948,79 @@ def record(
     an address nobody has annotated - `src/` IS the catalogue now. Creating
     one is a different operation with different inputs.
 
-    Exits 1 if a claim stopped reproducing, because that is an event and not
-    a result: `docs/DECOMP_MAP.md` calls it a tooling change or a lost
-    scaffolding, and both need a human.
+    Exit 0 only when every selected body measured exact; 1 for a measured miss,
+    3 for incomplete evidence. Existing obligations are kept, never demoted.
     """
-    _fresh_compile_commands(compile_commands, reconfigure)
-    records = read(src)
-    shared = shared_spans(records)
+    try:
+        _fresh_compile_commands(compile_commands, reconfigure)
+        before = _record_input_identity(src, exe, compile_commands, borrow)
+        records = read(src)
+        shared = shared_spans(records)
+        floor = _read_floor(src)
+        live = sum(piece.byte_exact or piece.semantic for piece in records)
+        if floor is None or floor != live:
+            raise ValueError("claim floor is missing or differs from source; recording cannot reconcile unrelated claim edits")
+        floor_path = _floor_path(src)
+        floor_before = floor_path.read_bytes()
 
-    chosen = []
-    for target in targets:
-        claimants = _in_file(_matching(records, target), in_file)
-        if len(claimants) != 1:
-            _ambiguous(claimants, target, "record", in_file)
-        chosen.append(claimants[0])
+        chosen = []
+        for target in targets:
+            claimants = _in_file(_matching(records, target), in_file)
+            if len(claimants) != 1:
+                _ambiguous(claimants, target, "record", in_file)
+            chosen.append(claimants[0])
 
-    # MEASURED FIRST, WRITTEN AFTER, and grouped by file. Writing one record
-    # at a time re-reads its file, and a first write may canonicalise a
-    # wrapped lesson onto one line - which moves every line below it and
-    # leaves the records read before it pointing at the wrong ones.
-    # IN PARALLEL, because a `sweep` hands this hundreds of addresses at once
-    # and one compile is a wine invocation: 236 of them serially is the best
-    # part of an hour, and the work is independent until the WRITE.
-    measured = _measure_records(chosen, exe, compile_commands, borrow, shared)
+        def validate():
+            if _record_input_identity(src, exe, compile_commands, borrow) != before:
+                raise ValueError("source, compiler or measurement inputs changed; no claims written")
 
-    updated, regressed, results, unresolved = [], [], [], []
-    # EVERY PIECE IS ALREADY MEASURED BY THE TIME WE GET HERE - the pool
-    # above ran them all. Bailing on the first unresolvable one threw that
-    # work away and wrote NOTHING, so a run over 34 addresses where two
-    # destructors are not emitted into the object reported exit 2 with zero
-    # verdicts - which greps identically to a clean run over zero claims.
-    # Four verification passes were lost to this on 2026-08-26, each costing
-    # a full sweep to rediscover one address. Collect them, keep the
-    # measurements that succeeded, and still fail at the end.
-    for piece, result in measured:
-        if isinstance(result, str):
-            unresolved.append((piece, result))
-            continue
-        results.append((piece, result))
-        after = stamped(piece, result.verdict, demote)
-        if piece.byte_exact and str(result.verdict) != "BYTE_EXACT":
-            regressed.append((piece, result))
-        if after != piece:
-            updated.append(after)
+        def auxiliary(updated):
+            old = {(piece.path, piece.line): piece for piece in chosen}
+            gained = sum(not (old[(piece.path, piece.line)].byte_exact
+                              or old[(piece.path, piece.line)].semantic) for piece in updated)
+            return ({floor_path: floor_before},
+                    {floor_path: _floor_bytes(floor + gained)})
 
-    if updated:
-        write_file(updated)
-        typer.echo(f"claim floor now {_refresh_floor(src):,}")
+        publication = record_claims(
+            chosen, measure=lambda: _measure_records(chosen, exe, compile_commands, borrow, shared),
+            validate=validate, auxiliary=auxiliary,
+            staging_directory=compile_commands.parent / "recovery/publications")
+        updated, regressed = publication.updated, publication.regressed
+        results, unresolved = publication.measured, publication.unresolved
 
-    for piece, result in results:
-        gained = (not piece.byte_exact
-                  and str(result.verdict) == "BYTE_EXACT")
-        mark = "  claimed" if gained else ""
-        typer.echo(f"{piece.address_hex}  {result.verdict:14}"
-                   f"{piece.name}{mark}")
-    # THE DENOMINATOR, ALWAYS. "0 rewritten" is two different answers -
-    # nothing moved, or nothing was measured - and only this separates them.
-    typer.echo(f"\n{len(updated)} annotation(s) rewritten, "
-               f"{len(results)} of {len(measured)} measured")
-    for piece, why in unresolved:
-        typer.secho(f"  UNRESOLVED {piece.address_hex}: {why}",
-                    fg=typer.colors.RED)
-
-    for piece, result in regressed:
-        typer.secho(
-            f"{piece.address_hex} claimed BYTE_EXACT and measured "
-            f"{result.verdict} - {piece.location}",
-            fg=typer.colors.RED)
-    if regressed:
-        # `--demote` IS THE ACKNOWLEDGEMENT. Exiting non-zero after being
-        # told to clear them would make the flag unusable in a script; the
-        # demotion is still reported, because a claim disappearing quietly
-        # is the thing all of this exists to prevent.
-        typer.secho(
-            f"{len(regressed)} claim(s) cleared" if demote else
-            f"{len(regressed)} claim(s) stopped reproducing and were KEPT; "
-            f"--demote clears them once someone has looked",
-            fg=typer.colors.RED)
-        if not demote:
-            raise typer.Exit(1)
-    # AN UNRESOLVABLE ADDRESS IS STILL A FAILURE - it just no longer costs
-    # the whole run. The verdicts above are written and reported first, then
-    # this.
-    if unresolved:
-        raise typer.Exit(2)
-
-
-@app.command()
-def semantic(
-    targets: Annotated[list[str], typer.Argument(
-        help="Addresses in hex, or names.")],
-    in_file: Annotated[str, typer.Option("--in")] = "",
-    src: Annotated[Path, typer.Option(
-        envvar="OPENSMACX_SRC")] = REPO_ROOT / "src",
-    exe: Annotated[Path, typer.Option(
-        envvar="OPENSMACX_IMAGE",
-    )] = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe",
-    compile_commands: Annotated[Path, typer.Option(
-        envvar="OPENSMACX_COMPILE_COMMANDS",
-    )] = REPO_ROOT / "build" / "compile_commands.json",
-    borrow: Annotated[str, typer.Option()] = "src/buffer.cpp",
-    withdraw: Annotated[bool, typer.Option(
-        "--withdraw", help="Remove the claim instead of granting it.")] = False,
-) -> None:
-    """Claim that a body is SEMANTICALLY the same as the shipped bytes.
-
-    THE SECOND HALF OF THE GOAL. Some bodies compile to the image's exact
-    instruction sequence - same count, same mnemonics, same order - anddiffer only
-    in which register holds what. Nothing about the source can move that: every
-    processor and optimisation flag VC6 has was measured against ten of them
-    and not one changed a single instruction. They are as finished as a source
-    tree can make them, and with only BYTE_EXACT to write down they counted as
-    unstarted forever.
-
-    GRANTED DELIBERATELY, NEVER SWEPT. `sweep` cannot hand these out, because a
-    tier a machine awards to whatever it cannot improve is a place to hide, and
-    this tree has been bitten by exactly that. The test is strict and stated:
-    identical instruction COUNT, mnemonic similarity of exactly 1.000, and no
-    byte-level agreement possible under any flag set - if a body could be
-    BYTE_EXACT it must be, and this refuses to cover for it.
-
-    `check` re-proves every one of these and REGRESSES it if it stops holding,
-    exactly like a BYTE_EXACT claim. It is reported and counted apart from
-    them, so the ratchet's own number never moves because of this command.
-    """
-    _fresh_compile_commands(compile_commands, False)
-    records = read(src)
-    shared = shared_spans(records)
-    chosen = []
-    for target in targets:
-        claimants = _in_file(_matching(records, target), in_file)
-        if len(claimants) != 1:
-            _ambiguous(claimants, target, "semantic", in_file)
-        chosen.append(claimants[0])
-
-    updated = []
-    if withdraw:
-        for piece in chosen:
-            if piece.semantic:
-                updated.append(replace(piece, semantic=False))
-                typer.echo(f"{piece.address_hex}  withdrawn")
-        if updated:
-            write_file(updated)
-            typer.echo(f"claim floor now {_refresh_floor(src):,}")
-        typer.echo(f"\n{len(updated)} annotation(s) rewritten")
-        return
-
-    # IN PARALLEL, for the same reason `record` is: `sweep --semantic` hands
-    # this a list, and one compile is a wine invocation.
-    measured = _measure_records(chosen, exe, compile_commands, borrow, shared)
-
-    for piece, result in measured:
-        if isinstance(result, str):
-            typer.secho(f"{piece.address_hex}: {result}", fg=typer.colors.RED)
-            raise typer.Exit(2) from None
-        why = _not_semantic(result)
-        if why:
-            typer.secho(f"{piece.address_hex}  REFUSED: {why}",
+        for piece, result in results:
+            gained = (not piece.byte_exact
+                      and str(result.verdict) == "BYTE_EXACT")
+            mark = "  claimed" if gained else ""
+            typer.echo(f"{piece.address_hex}  {result.verdict:14}"
+                       f"{piece.name}{mark}")
+        # THE DENOMINATOR, ALWAYS. "0 rewritten" is two different answers -
+        # nothing moved, or nothing was measured - and only this separates them.
+        typer.echo(f"\n{len(updated)} annotation(s) rewritten, "
+                   f"{len(results)} of {len(chosen)} measured")
+        for piece, why in unresolved:
+            typer.secho(f"  UNRESOLVED {piece.address_hex}: {why}",
                         fg=typer.colors.RED)
-            continue
-        # SAY WHICH OF THE TWO THIS IS. The agreement summary alone reads
-        # like a fresh grant either way, and a caller who stops at the first
-        # line - as I did, twice - reports claims that were already there.
-        # The count at the end says so, but only after the fact.
-        if piece.semantic:
-            typer.secho(f"{piece.address_hex}  ALREADY CLAIMED - "
-                        f"{result.matching_instructions} of "
-                        f"{result.original_instructions} instructions byte "
-                        f"identical, the rest allocated differently. Nothing "
-                        f"written; this is not a new claim.",
-                        fg=typer.colors.YELLOW)
-            continue
-        typer.secho(f"{piece.address_hex}  GRANTED - "
-                    f"{result.matching_instructions} of "
-                    f"{result.original_instructions} instructions byte "
-                    f"identical, the rest allocated differently",
-                    fg=typer.colors.GREEN)
-        updated.append(replace(piece, semantic=True))
-    if updated:
-        write_file(updated)
-        typer.echo(f"claim floor now {_refresh_floor(src):,}")
-    typer.echo(f"\n{len(updated)} annotation(s) rewritten")
 
-
-def _not_semantic(result) -> str:
-    """Why this measurement does not support a SEMANTIC claim, or ""."""
-    if str(result.verdict) == "BYTE_EXACT":
-        return ("it is BYTE_EXACT - claim that instead, a weaker claim would "
-                "cover for a stronger one")
-    # `match_recovery.source.asm.allocation_only` IS the test, and it is stricter than any
-    # tier: SHAPE_EXACT means a VALUE is wrong, which is a semantic difference
-    # and not an allocation. An earlier version of this asked for mnemonic
-    # similarity of 1.000 instead, and would have granted the claim to a body
-    # with a wrong loop bound.
-    return result.allocation_only
+        for piece, result in regressed:
+            typer.secho(
+                f"{piece.address_hex} claimed BYTE_EXACT and measured "
+                f"{result.verdict} - {piece.location}",
+                fg=typer.colors.RED)
+        if regressed:
+            typer.secho(
+                f"{len(regressed)} claim(s) stopped reproducing and were KEPT; "
+                f"preserve structural work and restore their matching obligations",
+                fg=typer.colors.RED)
+            raise typer.Exit(1)
+        # AN UNRESOLVABLE ADDRESS IS STILL A FAILURE - it just no longer costs
+        # the whole run. The verdicts above are written and reported first, then
+        # this.
+        if publication.exit_code:
+            raise typer.Exit(publication.exit_code)
+    except (OSError, ValueError) as error:
+        typer.secho(f"recording refused: {error}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(3) from error
 
 
 # WHAT THE BUILD IS CONFIGURED WITH, read off the cache the first time and
@@ -1279,16 +1165,10 @@ def redundant_artifacts(records: list) -> list:
 def asm_matches(src: Path) -> list:
     """Bodies that match only because they are written in `__asm`.
 
-    THE ORDER THIS PROJECT WANTS, worst last: byte-exact C++, then C++ that is
-    semantically identical, then a byte-exact `__asm` body, then one that does
-    not match. A hand-written assembly body is a MATCH but not an ANSWER - it
-    reproduces the bytes by restating them, and teaches nothing about what the
-    original source said.
-
-    So this does not fail the gate: the claim is true. It reports, so the
-    number cannot quietly grow and so each one stays on a list to be rewritten
-    in C++ - even at the cost of dropping to a semantic claim, which is the
-    trade this project prefers.
+    This is a historical diagnostic, not permission to write inline assembly
+    or weaken an obligation. The compiler-work audit enforces the separate
+    source-form policy. Recover genuine C++ while retaining restoration work;
+    matching bytes alone cannot establish structure or completed recovery.
     """
     out = []
     for path in sorted(src.glob("*.cpp")):
@@ -1444,7 +1324,7 @@ def _semantic_note_holds(note: str) -> bool:
 
     The scorer stamps `[allocation-only]` when `match_recovery.source.asm.allocation_only`
     found nothing but register numbers between the two listings. That is the
-    whole test, and it is the same one `osmx semantic` applies when granting.
+    historical test. Granting/withdrawing weaker claims is retired; the gate\n    still re-proves existing obligations without calling them full acceptance.
     """
     return "[allocation-only]" in (note or "")
 
@@ -1685,18 +1565,17 @@ def check(
     floor = _read_floor(src)
     if floor is None:
         floor_broken = (f"NO CLAIM FLOOR at {_floor_path(src)} - "
-                        f"run `osmx record` on any address to write it")
+                        f"restore the source-owned baseline from Git; recording does not recreate it")
     elif claims < floor:
         floor_broken = (f"CLAIMS FELL: {claims:,} live against a floor of "
                         f"{floor:,} - a marker vanished or was edited into "
-                        f"prose; `git diff` names it, and a deliberate "
-                        f"demotion goes through `osmx record --demote`, "
-                        f"which rewrites the floor")
+                        f"prose; inspect source history and restore the missing "
+                        f"obligations; recording cannot clear or recount them")
     elif claims > floor:
         floor_broken = (f"CLAIMS ABOVE THE FLOOR: {claims:,} live against "
                         f"{floor:,} - a claim token was written by something "
-                        f"other than `osmx record`; measure it "
-                        f"(`osmx record <addr>`) or remove it")
+                        f"other than the guarded recorder; inspect the source/floor "
+                        f"integration before measuring; recording cannot recount it")
     else:
         floor_broken = ""
 
@@ -1971,7 +1850,7 @@ def check(
                 f"  {len(semantic_held):,} semantic: same instructions, "
                 f"different registers", fg=typer.colors.CYAN)
         # WHAT THE SAME PASS FOUND WITHOUT BEING ASKED. Printed, never
-        # written: `record` and `semantic` are the commands that write.
+        # written: the guarded recorder owns claim publication.
         if near:
             typer.echo("")
             typer.echo(f"  {len(near):,} unclaimed body(s) within "
@@ -1991,8 +1870,7 @@ def check(
             typer.secho(
                 f"  {len(allocation):,} unclaimed body(s) differ only in "
                 f"register allocation:", fg=typer.colors.CYAN)
-            typer.echo("    osmx semantic "
-                       + " ".join(r.address_hex for r in allocation))
+            typer.echo("    diagnostic only; retain matching work and check strict references")
         # FINISHED AGENT WORKTREES, reported HERE because this is the command
         # that always runs. Twelve of them accumulated - nine belonging to
         # agents that had finished hours earlier, each a full checkout - and

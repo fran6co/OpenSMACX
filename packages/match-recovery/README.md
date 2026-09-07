@@ -639,6 +639,8 @@ An optional `retry_compile(diagnostic)` callable can stop flag trials after a
 compiler-specific parse failure; absent that policy, all alternatives are tried.
 These APIs still provide relocation-masked diagnostics, not strict reference or
 structural acceptance. They neither choose project recipes nor stamp source.
+Flag trials may be native argument arrays or legacy strings. Native array tokens
+are passed unchanged; quoted display labels are never reparsed into arguments.
 
 `source.asm.compare_unit(records, image, source, arguments, flag_sets,
 compiler=...)` measures selected mappings from one host together, using that same
@@ -649,6 +651,25 @@ siblings. Its `UnitComparison` contains results in selection order plus actual
 compiler/reuse counts. Duplicate selections, mixed hosts and changed candidate
 or marker files are refused. The caller still owns whole-project/header/compiler
 freshness and publication; this is neither a persistent cache nor acceptance.
+
+`source.recording.record_claims` supplies the guarded historical publication
+path. It invokes the supplied measurement callback after capturing selected
+source, requires one unchanged record/result per selection, and calls the
+coordinator's complete-input validator before measurement and publication.
+Only newly proved byte obligations are added; unresolved or nonmatching results
+cannot demote existing claims. Historical notes are preserved, not changed into
+run status. This legacy measurement API requires the `x86` extra and is not a
+strict-reference or task-acceptance API. The native recording CLI remains open.
+
+`source.publication.publish` stages existing-file replacements and original
+backups in a caller-supplied disposable directory on the output filesystem.
+Each replacement is atomic; the batch is not. Stale bytes, aliases, hardlinked
+outputs and changed permissions refuse publication. Ordinary failures undo only
+this invocation's unchanged outputs. Concurrent later edits are preserved, with
+original backup paths reported for manual recovery. Process termination may leave
+partial output and staging files: use isolated coordinator-owned worktrees and
+recheck source/gates after recovery. The byte writer preserves encoding and
+per-line endings rather than normalizing unrelated source text.
 
 `compilation_database` provides strict, compiler-neutral database parsing and
 source identities. It preserves argv arrays exactly and leaves command strings

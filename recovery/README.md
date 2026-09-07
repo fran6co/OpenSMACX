@@ -43,6 +43,33 @@ freshness, source obligation writing and full acceptance still need cutover.
 The gate now uses the same span refusals and similarity-first tie ranking as
 measurement/recording; its disposable cache includes global shared-span identity.
 
+The package now owns guarded claim publication as well. The retained recorder
+validates configured source/header/build/compiler-policy inputs, image bytes and
+environment before measuring and before publication. It validates complete
+measurement coverage against the original selected records; unresolved siblings
+do not erase successful measurements. Only claim tokens change: old LEVER/TRIED
+notes remain historical evidence, including after matching or regression.
+Non-UTF-8 bytes and existing line endings are retained. No demotion is offered.
+The weaker-claim grant/withdraw command and automatic floor recount are removed;
+existing instruction-shape obligations are still checked by the gate.
+Recording requires the configured image pin before compiling. Its exit code is
+0 only if all selected bodies freshly match, 1 for a measured miss, and 3 for
+incomplete/refused evidence. A no-compile result is not a measured regression;
+an unclaimed mismatch is not a successful recording run.
+
+Source and the transitional count increment are staged together under ignored
+`build/recovery/publications/`. A missing/mismatched initial floor refuses before
+compilation instead of reconciling unrelated claim edits. Each file replacement
+is atomic, not the entire batch: ordinary failures roll back only unchanged
+outputs from this invocation. If another editor intervenes, its work is preserved
+and the diagnostic names retained original backups. A killed process may leave
+a partially published batch and `.before`/`.after` backups there; inspect Git
+diffs and backups before resuming, and rerun measurement/gates after recovery.
+Use coordinator-owned isolated worktrees: an uncooperative writer can still race
+the final filesystem check. This is not a transactional filesystem, compiler
+installation attestation, compact obligation format, native recording CLI or
+full acceptance cutover. The count must still be replaced by identity coverage.
+
 `uv run recover check-source --jobs 8 --summary` now replaces the old annotation
 identity script in the production gate. It checks every configured source file,
 including headers and seeds, without an image, compiler, Git database or optional

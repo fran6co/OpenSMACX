@@ -86,6 +86,12 @@ def project_audits(monkeypatch):
     monkeypatch.setattr(osmx.subprocess, "run", invoke)
     return failures
 
+
+@pytest.fixture(autouse=True)
+def synthetic_record_pin(monkeypatch):
+    import hashlib
+    monkeypatch.setattr(osmx, "image_pin", lambda *args: hashlib.sha256(b"synthetic-record-image").hexdigest())
+
 ANNOTATED = """// ORIGINAL: 0x00401000 ?a@@YAXXZ 0x00401000-0x00401040 BYTE_EXACT
 void a() {
 }
@@ -105,7 +111,22 @@ def tree(tmp_path):
 
 
 def run(*args):
+    # Synthetic recorder fixtures explicitly establish their initial count. Real
+    # production recording must refuse a missing/mismatched existing floor.
+    if args[0] == "record" and "--src" in args:
+        src = Path(args[args.index("--src") + 1])
+        if not osmx._floor_path(src).exists():
+            establish_floor(src)
+        if "--exe" not in args:
+            image = src / "record-test-image"
+            image.write_bytes(b"synthetic-record-image")
+            args = (*args, "--exe", str(image))
     return runner.invoke(osmx.app, list(args))
+
+
+def establish_floor(src):
+    live = sum(row.byte_exact or row.semantic for row in osmx.read(src))
+    osmx._floor_path(src).write_bytes(osmx._floor_bytes(live))
 
 
 def test_status_counts_each_population(tree):
@@ -475,7 +496,7 @@ def test_record_keeps_a_claim_that_stopped_and_exits_one(tmp_path,
     assert "BYTE_EXACT" in (tmp_path / "x.cpp").read_text()
 
 
-def test_demote_clears_it_once_someone_has_looked(tmp_path, monkeypatch):
+def test_record_no_longer_offers_automatic_demotion(tmp_path, monkeypatch):
     from match_recovery.source import Tier
     from match_recovery.source.asm import AsmComparison
     (tmp_path / "x.cpp").write_text(
@@ -484,8 +505,8 @@ def test_demote_clears_it_once_someone_has_looked(tmp_path, monkeypatch):
     monkeypatch.setattr(source_asm, "compare_source",
                         lambda *a, **k: AsmComparison(verdict=Tier.MISMATCH))
     result = run("record", "0x00401000", "--src", str(tmp_path), "--demote")
-    assert result.exit_code == 0
-    assert "BYTE_EXACT" not in (tmp_path / "x.cpp").read_text()
+    assert result.exit_code != 0
+    assert "BYTE_EXACT" in (tmp_path / "x.cpp").read_text()
 
 
 def test_record_touches_nothing_when_nothing_moved(named, monkeypatch):
@@ -495,8 +516,17 @@ def test_record_touches_nothing_when_nothing_moved(named, monkeypatch):
                         lambda *a, **k: AsmComparison(verdict=Tier.MISMATCH))
     before = (named / "n.cpp").read_text()
     result = run("record", "WinMain", "--src", str(named))
-    assert result.exit_code == 0
+    assert result.exit_code == 1
     assert (named / "n.cpp").read_text() == before
+
+
+def test_record_unmeasurable_is_three_not_success_or_regression(named, monkeypatch):
+    from match_recovery.source.asm import AsmComparison
+    from match_recovery.source import Tier
+    monkeypatch.setattr(source_asm, "compare_source", lambda *args, **kwargs: AsmComparison(verdict=Tier.NO_COMPILE))
+    result = run("record", "WinMain", "--src", str(named))
+    assert result.exit_code == 3
+    assert "0 of 1 measured" in result.output and "UNRESOLVED" in result.output
 
 
 def test_record_writes_several_in_one_file_at_once(named, monkeypatch):
@@ -526,9 +556,55 @@ def test_record_refuses_source_changed_after_a_worker_returns(named, monkeypatch
     monkeypatch.setattr(osmx, "_record_file", changed)
     result = run("record", "WinMain", "--src", str(named))
     assert result.exit_code != 0
-    assert "source changed" in str(result.exception)
+    assert "source changed" in result.output
     assert (named / "n.cpp").read_text() == before + "// another edit\n"
-    assert not (named / "CLAIM_FLOOR").exists()
+    assert osmx._read_floor(named) == 0
+
+
+@pytest.mark.parametrize("floor", [None, 1])
+def test_record_refuses_to_recount_an_unrelated_floor_mismatch(named, monkeypatch, floor):
+    if floor is not None:
+        (named / "CLAIM_FLOOR").write_text(f"claims {floor}\n")
+    def unexpected(*args):
+        pytest.fail("a damaged floor must refuse before compiling")
+    monkeypatch.setattr(osmx, "_record_file", unexpected)
+    image = named / "record-test-image"
+    image.write_bytes(b"synthetic-record-image")
+    result = runner.invoke(osmx.app, ["record", "WinMain", "--src", str(named), "--exe", str(image)])
+    assert result.exit_code == 3 and "claim floor" in result.output
+    assert not any(row.byte_exact for row in osmx.read(named))
+
+
+@pytest.mark.parametrize("missing", [False, True])
+def test_record_refuses_wrong_or_missing_pinned_image(named, monkeypatch, missing):
+    image = named / "wrong-image"
+    if not missing:
+        image.write_bytes(b"wrong-original")
+    monkeypatch.setattr(osmx, "_record_file", lambda *args: pytest.fail("must refuse before compiling"))
+    result = run("record", "WinMain", "--src", str(named), "--exe", str(image))
+    assert result.exit_code == 3 and "pinned original image" in result.output
+    assert not any(row.byte_exact for row in osmx.read(named))
+
+
+def test_record_cannot_grant_or_withdraw_weaker_claims():
+    result = run("semantic", "0x00401000")
+    assert result.exit_code != 0 and "No such command" in result.output
+
+
+def test_record_refuses_an_unmapped_header_changed_by_measurement(named, monkeypatch):
+    from match_recovery.source.asm import UnitComparison, AsmComparison
+    from match_recovery.source import Tier
+    header = named / "types.h"
+    header.write_text("struct Type { int field; };\n")
+    def measured(job):
+        _path, records, *_ = job
+        header.write_text("struct Type { int additional; int field; };\n")
+        return UnitComparison(tuple((row, AsmComparison(verdict=Tier.BYTE_EXACT)) for row in records), 1, 0)
+    monkeypatch.setattr(osmx, "_record_file", measured)
+    result = run("record", "WinMain", "--src", str(named))
+    assert result.exit_code == 3 and "inputs changed" in result.output
+    assert not any(row.byte_exact for row in osmx.read(named))
+    assert osmx._read_floor(named) == 0
 
 
 def test_record_groups_targets_before_dispatch(named, monkeypatch):
@@ -579,7 +655,7 @@ def fake_file_result(verdicts):
 def check(tree, *extra):
     # These fixtures predate the source-owned floor. Establish the synthetic
     # baseline explicitly; floor-damage cases below invoke the CLI without this.
-    osmx._refresh_floor(tree)
+    establish_floor(tree)
     # `--jobs 1` runs the worker inline: a pool cannot take the local
     # function these tests substitute for it, and a serial run is what any
     # failure here would be debugged with anyway.

@@ -617,12 +617,12 @@ if __name__ == "__main__":
         for record in stubs:
             print(f"      {record.address_hex}  {record.size or 0:,} image "
                   f"bytes   {record.name}")
-        print(f"    {len(granted):,} carry a PROVED semantic claim "
+        print(f"    {len(granted):,} carry a historical instruction-shape obligation "
               f"(same instructions, different registers)")
 
         # WHAT IS NOT REACHABLE AT ALL, so the goal's completion criterion can
         # be read honestly. A body whose image bytes are hand-written assembly
-        # can never be byte-exact from C++, and `osmx semantic` cannot certify
+        # was considered outside the old exact/shape mechanisms. Neither can certify
         # it either - that tier requires the SAME instruction sequence, and a
         # `rep stosd` block is not the sequence any C++ compiles to. Those
         # bodies can only ever be semantically equivalent in the ordinary
@@ -643,27 +643,20 @@ if __name__ == "__main__":
                   f"image - neither tier is reachable:")
             for record in blocked:
                 print(f"      {record.address_hex}  {record.name}")
-        print("\n  A transcription is EVIDENCE of equivalence, not proof. The"
-              "\n  proof this tree can give is `osmx semantic`, and the"
-              "\n  strongest cheap check is `call_diff`: a body calling"
-              "\n  something the image does not is not equivalent, whatever"
-              "\n  its similarity score says.")
+        print("\n  A transcription or historical claim is not current proof."
+              "\n  Use ownership-scoped strict byte/reference and restoration checks;"
+              "\n  instruction similarity cannot establish structure or completion.")
         sys.exit(0)
 
     print(f"{len(order):,} reachable and catalogued, {len(pending):,} not yet "
           f"byte exact; {unnamed:,} direct edges name nothing in the catalogue "
           f"({edges:,} edges walked, indirect ones not followed)")
-    # AND THE NUMBER THE GOAL ACTUALLY ASKS FOR. "Byte exact OR semantically
-    # the same" is the bar, and a body carrying a PROVED semantic claim has
-    # met it - `osmx semantic` grants only where the instruction sequence is
-    # identical and the registers differ. Counting those as outstanding
-    # overstates the work remaining, so both numbers are printed rather than
-    # one being quietly substituted for the other.
+    # Historical weaker obligations remain visible, but do not reduce the
+    # outstanding exact/structural recovery population.
     proved = sum(1 for record in pending if record.semantic)
     if proved:
-        print(f"  {proved:,} of those carry a PROVED semantic claim, so "
-              f"{len(pending) - proved:,} remain against "
-              f"\"byte exact or semantically the same\"")
+        print(f"  {proved:,} carry historical instruction-shape obligations; "
+              f"they are still pending exact/structural recovery")
     print("  --all also lists reachable bodies the build does not compile")
     split = ", ".join(f"{n} {kind}" for kind, n in sorted(skip_counts.items()))
     print(f"  filtered from the queue as never-work: {split or 'nothing'}"

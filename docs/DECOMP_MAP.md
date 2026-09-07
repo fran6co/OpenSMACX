@@ -188,7 +188,6 @@ uv run tools/osmx.py show <addr|name>  # annotation + shipped disassembly
 uv run tools/osmx.py calls <addr>      # call sites in image order
 uv run tools/osmx.py measure <addr | --body F | --dir D>   # exit 0 only BYTE_EXACT
 uv run tools/osmx.py record <addrs...> # measure AND stamp annotations
-uv run tools/osmx.py semantic <addr> [--withdraw]          # equivalence claim
 uv run tools/osmx.py configure         # regenerate the build database
 ```
 
@@ -207,7 +206,16 @@ every one against the pinned image, links the tree, and fails by address and
 file if a claim stops reproducing. The floor is the number of claims, so
 there is no constant to bump: only `osmx record` writes the token, it stamps
 only what it measured, and nothing ever removes one but a deliberate source
-edit visible in the diff.
+edit visible in the diff. The recorder no longer offers `--demote`, weaker
+claim grants or withdrawal. Existing SEMANTIC annotations remain historical
+instruction-shape obligations and are still checked; they do not establish
+completed recovery.
+
+Recording refuses a missing or mismatched starting floor. Only its measured
+increment is published with its source changes, never a recount that could hide
+an unrelated loss. This count remains transitional until source-identity/history
+coverage replaces it. Recording preserves historical notes and source bytes;
+its publication guards and interruption limits are described in `recovery/README.md`.
 
 ## Drift
 

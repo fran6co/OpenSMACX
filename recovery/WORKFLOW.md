@@ -259,6 +259,15 @@ measurement engine groups them by host and compiles once per flag trial, while
 each function retains its own outcome. This does not authorize new scope or
 turn a byte result into structural acceptance.
 
+Recording now stages its source/floor updates through the package's guarded
+publisher. It refuses stale measurement inputs or a mismatched starting floor;
+do not recount or remove unrelated obligations to get past the refusal. It keeps
+historical notes unchanged and no longer grants weaker claims, withdraws them,
+or offers automatic demotion. Existing instruction-shape obligations still need
+verification. After interruption, inspect the Git diff and retained backups under
+ignored `build/recovery/publications/`; a multi-file batch is not globally atomic.
+Recover the source/floor pair at a coordinator checkpoint, then remeasure.
+
 During cutover, also run `cmake --build build` and the full unpiped
 `uv run tools/osmx.py check`. Exit 3 is unmeasurable, not green; “0 REGRESSED”
 alone is not acceptance. The retained `uv run tools/osmx.py record <addresses>`

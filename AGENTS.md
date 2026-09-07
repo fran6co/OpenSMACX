@@ -69,6 +69,14 @@ banks measured legacy claims. Never hand-edit an `ORIGINAL:` marker or type a
 `BYTE_EXACT` token. Those claims retain restoration obligations; they are not
 proof of current structure or relocation-target correctness.
 
+The retained recorder now uses guarded package publication: 0 means every
+selected body measured exact, 1 a measured miss, 3 incomplete/refused evidence.
+It requires the pinned image and an intact starting floor; it cannot recount
+unrelated lost claims. Automatic demotion and weaker-claim grant/withdraw are
+removed. Existing obligations and historical notes remain. After interruption,
+inspect the source/floor diff and ignored `build/recovery/publications/` backups;
+multi-file publication is not globally atomic. See `recovery/README.md`.
+
 ## Working rules
 
 `recovery/worker.json` and `recovery/reviewer.json` use the package's native

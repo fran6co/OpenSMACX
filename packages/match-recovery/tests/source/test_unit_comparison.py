@@ -71,6 +71,28 @@ def test_objects_are_not_reused_between_calls(unit):
     assert len(unit[3]) == 4
 
 
+@pytest.mark.parametrize("container", [tuple, list])
+def test_configured_flag_arrays_reach_compiler_without_shell_splitting(unit, container):
+    path, rows, _, calls = unit
+    flags = container(("/DVALUE=two words", '/Ipath with "literal" quotes', "/DTRAIL=back\\slash"))
+    def compiler(source, arguments, trial):
+        calls.append((source, arguments, trial))
+        return coff([("_a", b"\xc3"), ("_b", b"\x33\xc0\xc3")])
+    result = asm.compare_unit(rows, "image", path, ["compiler"], (flags,), compiler=compiler)
+    assert len(calls) == result.compile_attempts == 1 and result.reused_attempts == 1
+    assert calls[0][2] == tuple(flags)
+    assert all(value.verdict == Tier.BYTE_EXACT for row, value in result.results)
+
+
+def test_empty_native_flag_trial_is_valid(unit):
+    path, rows, _, calls = unit
+    def compiler(source, arguments, trial):
+        calls.append(trial)
+        return coff([("_a", b"\xc3"), ("_b", b"\x33\xc0\xc3")])
+    result = asm.compare_unit(rows, "image", path, [], ((),), compiler=compiler)
+    assert calls == [()] and all(value.flags == "" for row, value in result.results)
+
+
 def test_missing_symbol_does_not_discard_measured_siblings(unit):
     path, rows, compiler, calls = unit
     missing = replace(rows[0], name="_absent", line=rows[0].line + 100)
