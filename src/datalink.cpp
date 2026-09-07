@@ -114,7 +114,7 @@ static const int *const TerraformFlagBase = (const int *)0x00691884;
 // basewin.cpp also carries locally, is not dragged into every TU that includes
 // this header; /Ob2 re-inlines the body at each of the five callers below.
 void Datalink::repaint_slot() {
-    listBox_.vslot_62();
+    listBox_.redraw();
 }
 
 /*

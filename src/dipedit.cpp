@@ -561,7 +561,7 @@ void DipEdit::do_check() {
     // (win-table slot 62). Re-derived here rather than through the cached
     // `cb`: the image folds the +0x15A0 into the call's own receiver
     // computation (`lea ecx, [edx + esi + 0x15a0]`).
-    check_box_.vslot_62();
+    check_box_.redraw();
 }
 
 /*
@@ -932,25 +932,25 @@ void DipEdit::init(int faction_index) {
     int step = rect.right - rect.left + 2;
     flat_button5_.init(label_get(876), 3, rect.left, rect.top,
                        rect.right - rect.left, rect.bottom - rect.top, this, 0);
-    flat_button5_.vslot_62();
+    flat_button5_.redraw();
     flat_button5_.show(0);
     rect.left += step;
     rect.right += step;
     flat_button4_.init(label_get(222), 2, rect.left, rect.top,
                        rect.right - rect.left, rect.bottom - rect.top, this, 0);
-    flat_button4_.vslot_62();
+    flat_button4_.redraw();
     flat_button4_.show(0);
     rect.left += step;
     rect.right += step;
     flat_button3_.init(label_get(863), 1, rect.left, rect.top,
                        rect.right - rect.left, rect.bottom - rect.top, this, 0);
-    flat_button3_.vslot_62();
+    flat_button3_.redraw();
     flat_button3_.show(0);
     rect.left += step;
     rect.right += step;
     flat_button1_.init(label_get(101), -1, rect.left, rect.top,
                        rect.right - rect.left, rect.bottom - rect.top, this, 0);
-    flat_button1_.vslot_62();
+    flat_button1_.redraw();
     flat_button1_.show(0);
 
     do_check();

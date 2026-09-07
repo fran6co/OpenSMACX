@@ -156,6 +156,13 @@ bindings, including STATIC functions and labels within a mapped COMDAT. Missing
 targets remain unknown; an address is never inferred from the operand being
 verified. Exact COFF symbol selection is required, with no spelling fallback.
 
+System import identities use source `RECOVERY_IMPORT` annotations and the native
+PE reader, not project-specific checker code. GraphicWin's InvalidateRect binding
+names USER32.dll and the exact emitted import pointer; the slot address is derived
+from the pinned image. Checks and decks report `import_bindings` separately from
+candidate link selection, DLL version and ABI, which remain unverified. No import
+address ledger or executable-address forwarding body is needed.
+
 Referenced source-owned globals now bring their defining TUs into native binary
 checks without requiring a selected function in those files. Candidate decks do
 the same with per-owner replica controls and the complete proposed overlay.
@@ -171,8 +178,15 @@ The resize path now distinguishes GraphicWin's Buffer base from its optional
 window resize, replacing the archived vtable shim. GraphicWin's on_size body uses
 real fields and the PaletteActive pointer. Its set_rects override delegates to
 Win's real method; the old cast-based seed is removed, and the base mapping lost
-during homing is restored from Git. Remaining handler matching and redraw dispatch
-stay open. The owned buffer now uses ordinary C++
+during homing is restored from Git. Win slot 62 now has the real GraphicWin
+redraw override; the separate list-wide Win operation is named redraw_all.
+Original direct GraphicWin calls stay qualified while dynamic callers use the
+virtual method. This does not complete the paint handlers or prove table bounds.
+Redraw and callbacks now publish their receiver through the existing real
+WinCallbackWindow global, replacing the fixed-address ScrollCurrentWin helper.
+The system-close handler assigns that pointer rather than overwriting its old
+window; its lost mapping and the key-click mapping are restored from Git.
+The owned buffer now uses ordinary C++
 allocation. Manual deleting dispatch in close still needs coupled teardown/return
 type recovery; a member offset check is not lifetime acceptance. GraphicWin::init
 also calls Win::init explicitly instead of recursing; the base initializer's lost

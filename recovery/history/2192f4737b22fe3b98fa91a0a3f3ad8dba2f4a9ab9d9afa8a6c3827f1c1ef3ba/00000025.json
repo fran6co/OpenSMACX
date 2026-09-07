@@ -1,0 +1,54 @@
+{
+  "event_id": "31608d73b8db6dc9c5ab349d2274f6364595f927287c8a649ad8f7fe07a4e83f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/graphicwin.cpp",
+      "src/scroll.cpp",
+      "src/scroll.h",
+      "src/win.cpp",
+      "src/win.h"
+    ],
+    "evidence": [
+      "source:src/win.cpp:WinCallbackWindow already owns storage at original 0x009B7AB8",
+      "source:src/scroll.h:ScrollCurrentWin bypasses that object through a fixed-address reference",
+      "original:0x005F26CA stores ESI directly into 0x009B7AB8; the current OnSysCommand instead dereferences WinCallbackWindow and overwrites the pointed-to window",
+      "original:0x005EEB19 stores ESI into the same global during key_click_event",
+      "git:3cb99d43^:src/unrecovered/005f2680.cpp and src/unrecovered/005eea90.cpp preserve mappings lost during homing",
+      "source:src/win.cpp:WinZOrderArray and WinZOrderCount own the original list globals used by redraw_all"
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6235776,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6220432,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6251296,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6118000,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6315296,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "7f8aeb18d134557c70616a8579a6634ebc0bebf3bf19345269c401dc302a400d",
+  "request_id": "window-callback-global-ownership",
+  "schema_version": 1,
+  "sequence": 25,
+  "stream": "task:infowin-ownership"
+}

@@ -118,7 +118,7 @@ Status: Complete
 */
 void __cdecl MultiDebug::timer_callback_daemon(int a2) {
     if (this) {
-        vslot_62();
+        redraw();
     }
 }
 

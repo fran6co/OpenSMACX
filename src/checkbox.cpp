@@ -281,17 +281,11 @@ Return Value: n/a
 Status: Complete
 */
 void CheckBox::set_state_flag(long value) {
-    // The state word as a plain member write, the repaint as the plain
-    // virtual call it is (win-table slot 62, the vslot_62 default the
-    // most-derived may override). BYTE_EXACT 10/10. Measured around it:
-    // `static_cast<GraphicWin *>(this)->vslot_62()` grew an EBP frame the
-    // image does not carry, a reference binding framed the same way, and
-    // `GraphicWin::vslot_62()` is wrong outright - a qualified call
-    // suppresses the dispatch and would call the empty default body. The
-    // vbtable re-reads the old hand walk reproduced were the compiler's
-    // own, for the member write and the primary-vftable dispatch.
+    // Win slot 62 is a virtual dispatch here. A qualified GraphicWin call
+    // would suppress it. Actual virtual bases supply the receiver adjustments
+    // for both the member write and the most-derived redraw implementation.
     selected_position_ = static_cast<int32_t>(value);
-    vslot_62();
+    redraw();
 }
 
 /*
@@ -309,9 +303,9 @@ Status: Complete
 */
 void CheckBox::on_dialog_focus(int a1) {
     // The repaint, as the plain virtual call it is (win-table slot 62, the
-    // vslot_62 default the most-derived may override). a1 is never read;
+    // redraw default the most-derived may override). a1 is never read;
     // `ret 4` still pops it.
-    vslot_62();
+    redraw();
 }
 
 /*
@@ -342,11 +336,11 @@ Status: Complete
 */
 void CheckBox::on_mouse_leave(int a1, int a2) {
     // Clear the hover index (Dialog::field_F0_, through the virtual base)
-    // and repaint (the vslot_62 virtual) - plain member forms; the
+    // and repaint (the redraw virtual) - plain member forms; the
     // compiler's virtual-base machinery does the walking the old hand
     // chains spelled. Both parameters are dead; `ret 8` still pops them.
     field_F0_ = -1;
-    vslot_62();
+    redraw();
 }
 
 /*

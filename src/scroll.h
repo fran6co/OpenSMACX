@@ -132,7 +132,6 @@ class Scroll : public ScrollGraphicWin {
 static_assert(sizeof(Scroll) == 0x214C,
               "Scroll layout must match the legacy ABI");
 
-inline Win *&ScrollCurrentWin() { return *reinterpret_cast<Win **>(0x009B7AB8); }
 extern int ScrollDefaultThickness;
 extern int ScrollNonClientInit;
 // Defaults copied by close(). The static table contains eleven process

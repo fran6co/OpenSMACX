@@ -740,13 +740,17 @@ Win *WinModalFocus;         // 0x009B8D7C
 Win *WinPopupWindow;        // 0x009B23B4
 Win *WinTopDialog;          // 0x009B2300
 Win *WinPendingFocus;       // 0x009B7B38
-Win *WinCallbackWindow;   // 0x009B7AB8
+// Shared current receiver for window callbacks and redraw, not a pointer
+// through which to overwrite the previous receiver's object storage.
+// RECOVERY_OBJECT: v1 0x009B7AB8 ?WinCallbackWindow@@3PAVWin@@A
+Win *WinCallbackWindow;
 Win *WinInputFocus;       // 0x009B7AC4
 Win *WinActiveWindow;     // 0x009B7AC8
 Win *WinBubbleCompanion;   // 0x009B7A4C
 Win WinBubbleWindow;       // 0x009B22F0
 Win *WinDialogList[150];   // 0x009B2494
-Win *WinZOrderArray[512];  // 0x009B6630
+// RECOVERY_OBJECT: v1 0x009B6630 ?WinZOrderArray@@3PAPAVWin@@A
+Win *WinZOrderArray[512];
 RECT WinBubbleRect;        // 0x009B6E38
 RECT WinScreenClipRect;    // 0x009B74C0
 RECT WinDirtyRect;         // 0x009B6EE8
@@ -760,7 +764,8 @@ const uint32_t WinStaticDefaults[10] = {  // 0x00696D34, the image's values
 WinDynamicDefaultsTable WinDynamicDefaults;  // 0x009B7AF0
 int WinBubbleActive;       // 0x009B7A50
 Win *WinZOrderWindow;      // 0x009B7A6C
-int WinZOrderCount;        // 0x009B7B30
+// RECOVERY_OBJECT: v1 0x009B7B30 ?WinZOrderCount@@3HA
+int WinZOrderCount;
 int WinZOrderFlag;         // 0x009B7A78
 void(__cdecl *WinLeftDownHook)(int x, int y);  // 0x009B7A90
 int WinCursorMoved;        // 0x009B7B3C
@@ -2507,7 +2512,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
                         DefWindowProcA(window, WM_SYSCOMMAND, wparam, lparam);
                         return 0;
                     }
-                    ScrollCurrentWin() = owner;
+                    WinCallbackWindow = owner;
                     {
                         // The class's own close callback at 0x404, called when
                         // it is set. Read as the function pointer it is called
@@ -3665,7 +3670,7 @@ void Win::on_mouse_move(int x, int y, unsigned int keys, int from_parent) {
         return;
     }
     if (from_parent == 0) {
-        ScrollCurrentWin() = this;
+        WinCallbackWindow = this;
         WinMouseMoveHookFn const fn = mouse_move_hook_;
         if (fn != 0) {
             fn(x, y);
@@ -7542,7 +7547,7 @@ void Win::show(int visible) {
             this->vslot_12();
         }
         if (menu_ != 0) {
-            menu_->vslot_62();
+            menu_->redraw();
         }
         if (list_.count_ != 0 && list_.head_ != 0) {
             Win *obj = *reinterpret_cast<Win **>(reinterpret_cast<char *>(list_.current_) + 4);
@@ -9237,6 +9242,8 @@ typedef int (__cdecl *Callback2)(int, int);
 typedef void (OriginalObject::*VCall0)();
 typedef void (OriginalObject::*VCall1)(int);
 
+// ORIGINAL: 0x005EEA90 ?key_click_event@Win@@QAEHHH@Z 0x005EEA90-0x005EEB81 FILE
+// provenance (retired seed): git:3cb99d43^:src/unrecovered/005eea90.cpp
 int Win::key_click_event(int key, int flags) {
     Win *const self = this;
 
@@ -9273,7 +9280,7 @@ int Win::key_click_event(int key, int flags) {
     }
 
     int result = 0;
-    *(void **)0x009B7AB8 = self;
+    WinCallbackWindow = self;
     Callback2 callback = reinterpret_cast<Callback2>(field_42C_);
     if (callback != 0) {
         result = callback(key, flags);
@@ -9925,6 +9932,9 @@ typedef long (__stdcall *GetWindowLongAFn)(void *, int);
 typedef long (__stdcall *DefWindowProcAFn)(void *, unsigned int, unsigned int, long);
 typedef void (__cdecl *Callback404)();
 
+// ORIGINAL: 0x005F2680 ?OnSysCommand@Win@@QAAHPAXIHH@Z 0x005F2680-0x005F26FF FILE
+// symbol    ?OnSysCommand@Win@@QAAHPAUHWND__@@IHH@Z
+// provenance (retired seed): git:3cb99d43^:src/unrecovered/005f2680.cpp
 int __cdecl Win::OnSysCommand(HWND hwnd, unsigned int command, int x,
                               int y) {
     Win *self = reinterpret_cast<Win *>(
@@ -9938,7 +9948,7 @@ int __cdecl Win::OnSysCommand(HWND hwnd, unsigned int command, int x,
             (static_cast<unsigned int>(static_cast<unsigned short>(y)) << 16)
                 | static_cast<unsigned short>(x));
     }
-    *reinterpret_cast<Win **>(WinCallbackWindow) = self;
+    WinCallbackWindow = self;
     Callback404 cb = *reinterpret_cast<Callback404 *>(
         reinterpret_cast<char *>(self) + 0x404);
     if (cb != 0) {
@@ -11242,6 +11252,7 @@ void Win::screen_to_client(RECT * rect) {
 
 // ===== homed from src/recovered/units/005f4cc0.cpp =====
 // ORIGINAL: 0x005F4CC0 ?redraw@Win@@QAAXXZ 0x005F4CC0-0x005F4CF1 FILE BYTE_EXACT
+// symbol    ?redraw_all@Win@@QAAXXZ
 // size      49 bytes
 // prototype 
 // callers   0   call targets   1
@@ -11249,77 +11260,21 @@ void Win::screen_to_client(RECT * rect) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005FD2B0
 // indirect  0x005F4CD6
-// PRESERVED UNIT - measured BYTE_EXACT.
-//
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x005F4CC0
-// measured tier  BYTE_EXACT
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/005f4cc0/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?redraw@Win@@QAAXXZ  at 0x005F4CC0  (49 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
-// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
-// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
-// and declaring `int i` twice in one function (VC6 leaks for-scope).
-// static_cast/reinterpret_cast are fine and are the right spelling.
-//
-// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
-// attempts to it. They are here rather than in a prompt so the next
-// agent does not rediscover them:
-//
-//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
-//    swapped; `if (x) {...}` gives `je`.
-//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
-//    two special cases branching FAR away, write them negated and
-//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
-//    sequential guard clauses, which inline each body instead.
-//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
-//    an indirect virtual call use the generated VCall shim below; for a
-//    thiscall function POINTER, take a member-function pointer of a
-//    dummy class instead of spelling the convention.
-//  * Loop form is visible: while / do-while / for lower differently,
-//    and so does counting up versus down.
-//  * If the original dedicates a callee-saved register to a constant
-//    across the whole body (an extra `push ebx`/`push edi` in the
-//    prologue), it had enough register pressure to do so. That is a
-//    hard case - the tool reports a similarity ratio so you can tell a
-//    near miss from a wrong body.
-// A `QAA` NAME IS A __cdecl MEMBER, and the receiver is passed on the stack
-// like any other argument - which is exactly what the artifact spelled as
-// `fn_005f4cc0(Win *a1)`. `a1` is never read in this body, so making it the
-// implicit `this` changes nothing the compiler emits. The body is otherwise
-// byte-for-byte what the claim was measured on.
-//
-// LEVER (2026-09-03): `redraw_sound_call`, a file-local forwarder over
-// autosound.h's MEASURED inline `do_sound`. The helper is `return 0;`, so
-// /Ob1 expanded it to NOTHING here and the body was one instruction short of
-// the image's 19; the image emits a real `call 0x5FD2B0` per iteration. With
-// the forwarder the call is back. 19 of 19, BYTE_EXACT.
+// Historical spelling/call-wrapper rationale: git:de080f82:src/win.cpp
+// This list-wide operation is distinct from each window's virtual redraw.
+// The catalogued QAA convention is retained; its unused receiver does not
+// independently establish whether the original declaration was static.
+// The original calls do_sound at 0x005FD2B0 once per iteration. The local
+// forwarder preserves a call here, but its target still needs native binding
+// recovery; masked-byte agreement does not verify this helper's identity.
 static int __cdecl redraw_sound_call() {
     return do_sound();
 }
 
-void __cdecl Win::redraw() {
+void __cdecl Win::redraw_all() {
     int i;
     for (i = 0; i < WinZOrderCount; ++i) {
-        reinterpret_cast<Win *>(reinterpret_cast<void **>(WinZOrderArray)[i])->vslot_62();
+        WinZOrderArray[i]->redraw();
         redraw_sound_call();
     }
 }

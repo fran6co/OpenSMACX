@@ -127,7 +127,8 @@ class GraphicWin : public Win, public Buffer {
            Win *parent, Menu *menu, BorderSizing *border);
   int fill(int x1, int y1, int x2, int y2, int color);
   void fill(int color);
-  void redraw();
+  // Win slot 62; original PushButton entry 0x00670D58 selects 0x005D5A70.
+  virtual void redraw();
   // 0x005D56B0  ?update@GraphicWin@@QAEXPAUGraphicWin@@@Z - public,
   // __thiscall, void(GraphicWin *). The one-argument overload; the siblings
   // take (int, int, int, int, GraphicWin *) and (RECT *, GraphicWin *).

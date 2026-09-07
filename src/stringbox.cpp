@@ -127,7 +127,7 @@ Status: Complete
 */
 void StringBox::on_scrolled(int code, int pos) {
     top_line_ = pos;
-    vslot_62();
+    redraw();
 }
 
 /*

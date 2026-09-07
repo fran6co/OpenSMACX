@@ -32,6 +32,9 @@
 
 #include <cstring>
 
+// SDK import identity; the original IAT slot is derived from the pinned image.
+// RECOVERY_IMPORT: v1 __imp__InvalidateRect@12 USER32.dll name:InvalidateRect
+
 void __fastcall buffer_subobject_destructor(void *self) {
     // Source-owned: dispatches to the recovered Buffer destructor rather than
     // the original body at 0x005D7410.
@@ -408,6 +411,7 @@ Purpose: Repaint the window and invalidate the screen area it occupies. A
          window already inside a redraw is skipped, so a paint hook that
          redraws again cannot recurse.
 // ORIGINAL: 0x005D5A70 ?redraw@GraphicWin@@QAEXXZ 0x005D5A70-0x005D5B64 BYTE_EXACT
+// symbol    ?redraw@GraphicWin@@UAEXXZ
 // LEVER: `InvalidateRect(...)` called directly instead of through a
 //        manually lazily-resolved function pointer read from a hardcoded
 //        IAT address - the image just calls `dword ptr [0x669304]`
@@ -443,7 +447,7 @@ void GraphicWin::redraw() {
     }
     state |= 1;
     field_1A0_ = state;
-    ScrollCurrentWin() = static_cast<Win *>(this);
+    WinCallbackWindow = this;
 
     // The paint hook, called before the paint itself.
     if (field_A10_ != nullptr) {
@@ -819,7 +823,7 @@ void GraphicWin::on_size(unsigned int flags, int width, int height) {
         on_nc_paint(nullptr, -1);
         resize_event(rect2_.right - rect2_.left, rect2_.bottom - rect2_.top);
         if (Win::is_visible()) {
-            vslot_62();
+            redraw();
         }
     }
 }

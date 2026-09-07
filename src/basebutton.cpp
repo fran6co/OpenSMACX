@@ -525,9 +525,9 @@ void BaseButton::set(int value) {
     }
     field_A18_ = value;
 
-    // Slot 0xF8 is Win::vslot_62 - the window's own repaint-and-notify hook,
+    // Slot 0xF8 is Win::redraw - the window's own repaint-and-notify hook,
     // reached the way any virtual call is reached, so it is spelled as one.
-    vslot_62();
+    redraw();
 
     if (!win_parent_) {
         return;

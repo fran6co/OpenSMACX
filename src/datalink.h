@@ -156,7 +156,7 @@ class Datalink : public GraphicWin {
   // spelled by hand because no GraphicWin virtual table this deep is modelled
   // anywhere in the tree - see the note on vtable_shim.h - and spelling it
   // here keeps the vbtable-relative addressing the image has: calling Win's
-  // own vslot_62 through the ListBox member makes the compiler read the
+  // own redraw through the ListBox member makes the compiler read the
   // GraphicWin displacement out of the list's vbtable at run time, never baked
   // in. Defined in datalink.cpp, whose /Ob2 re-inlines it at each caller.
   void repaint_slot();

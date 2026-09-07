@@ -1,0 +1,22 @@
+{
+  "event_id": "efb08ea9f1f192df3e891ae3ef4ad8a621ff738030f21213f1496245f6a98c58",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "graphicwin-layout-redraw-dispatch",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "source:src/win.h:Win redraw owns virtual slot 62; the separate cdecl list-wide operation is redraw_all",
+      "source:src/graphicwin.h:GraphicWin declares real redraw and set_rects overrides",
+      "source:src/graphicwin.cpp:set_rects delegates to Win and on_size dispatches through the real redraw override",
+      "source:src/time.cpp,src/faction.cpp,src/veh.cpp:original direct GraphicWin redraw calls remain explicitly qualified",
+      "source:recovery/tests/test_graphicwin_recovery.py:compiled slot and direct-call damage controls",
+      "This incorporates the dispatch model, not complete table extents, paint lifetimes, callee recovery or task acceptance."
+    ]
+  },
+  "previous_event": "31608d73b8db6dc9c5ab349d2274f6364595f927287c8a649ad8f7fe07a4e83f",
+  "request_id": "incorporate-native-graphicwin-redraw",
+  "schema_version": 1,
+  "sequence": 26,
+  "stream": "task:infowin-ownership"
+}

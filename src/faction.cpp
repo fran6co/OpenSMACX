@@ -973,7 +973,7 @@ void __cdecl treaty_on(int faction_id, int faction_id_with, int treaty) {
     SpyingStatusTable[index] |= treaty;
     if ((faction_id == local_faction || faction_id_with == local_faction)
         && (treaty & 0x1f) && MultiWindowOpen) {
-        reinterpret_cast<GraphicWin *>(&MultiWindow)->redraw();
+        reinterpret_cast<GraphicWin *>(&MultiWindow)->GraphicWin::redraw();
     }
 }
 

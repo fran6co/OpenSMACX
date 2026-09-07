@@ -398,10 +398,10 @@ Return Value: n/a
 Status: Complete
 */
 void SpriteBox::on_dialog_focus(int a1) {
-    // The repaint, as the plain virtual call it is (the vslot_62 default).
+    // The repaint, as the plain virtual call it is (the redraw default).
     // The compiler performs the out-of-subobject adjustment as part of the
     // override's entry; `a1` is dead; `ret 4` still pops it.
-    vslot_62();
+    redraw();
 }
 
 /*

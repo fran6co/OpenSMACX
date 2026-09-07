@@ -7570,7 +7570,7 @@ forest_shared:
         (ORIGINAL(&TutWinBaseWindow)->*BaseWinOriginalCheckVeh)(veh_id);
         (ORIGINAL(&TutWinBaseWindow)->*BaseWinOriginalCheckLoc)(x, y, 2);
     } else {
-        TutWinBaseWindow.redraw();
+        TutWinBaseWindow.GraphicWin::redraw();
     }
 
     if (faction != LocalFaction) {

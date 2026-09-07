@@ -594,11 +594,9 @@ uint32_t Scroll::set_range(int minimum, int maximum) {
     range_minimum_ = minimum;
     position_ = minimum;
     range_maximum_ = maximum;
-    // Slot 62 of the primary table is GraphicWin::redraw (0x005D5A70) in
-    // Scroll's AND FlatButton's published tables, so the slot Win declares as
-    // vslot_62 IS the redraw dispatch. A plain virtual call is what finally
-    // compiles the image's two-instruction tail; see set_button_color.
-    vslot_62();
+    // Scroll and FlatButton use GraphicWin::redraw at Win slot 62. Preserve
+    // the original virtual dispatch rather than qualifying the base method.
+    redraw();
 }
 
 /*
@@ -630,8 +628,8 @@ uint32_t Scroll::set_button_color(int color) {
     *reinterpret_cast<volatile uint32_t *>(&color_) = value;
     flat_button_left_.color_ = value;
     flat_button_right_.color_ = value;
-    flat_button_left_.vslot_62();
-    flat_button_right_.vslot_62();
+    flat_button_left_.redraw();
+    flat_button_right_.redraw();
 }
 
 /*
@@ -654,8 +652,8 @@ uint32_t Scroll::set_bevel_thickness(int thickness) {
     *reinterpret_cast<volatile uint32_t *>(&bevel_thickness_) = value;
     flat_button_left_.bevel_thickness_ = value;
     flat_button_right_.bevel_thickness_ = value;
-    flat_button_left_.vslot_62();
-    flat_button_right_.vslot_62();
+    flat_button_left_.redraw();
+    flat_button_right_.redraw();
 }
 
 /*
@@ -678,8 +676,8 @@ uint32_t Scroll::set_bevel_upper(int color) {
     *reinterpret_cast<volatile uint32_t *>(&bevel_upper_) = value;
     flat_button_left_.bevel_upper_ = value;
     flat_button_right_.bevel_upper_ = value;
-    flat_button_left_.vslot_62();
-    flat_button_right_.vslot_62();
+    flat_button_left_.redraw();
+    flat_button_right_.redraw();
 }
 
 /*
@@ -702,8 +700,8 @@ uint32_t Scroll::set_bevel_lower(int color) {
     *reinterpret_cast<volatile uint32_t *>(&bevel_lower_) = value;
     flat_button_left_.bevel_lower_ = value;
     flat_button_right_.bevel_lower_ = value;
-    flat_button_left_.vslot_62();
-    flat_button_right_.vslot_62();
+    flat_button_left_.redraw();
+    flat_button_right_.redraw();
 }
 #pragma warning(pop)
 
@@ -1008,7 +1006,7 @@ Purpose: Clamp, optionally reverse, and redraw the scrollbar position.
 //   offsets, so nothing to rename, just the qualifier to drop. Plain reads
 //   took this from 8/29 to 11/29. The branch-polarity gap above is
 //   unaffected: it is still the first divergence, at instruction 2.
-// LEVER: the vslot_62 tail (2026-08-28) took this to 13/29 - the plain
+// LEVER: the redraw tail (2026-08-28) took this to 13/29 - the plain
 //   virtual call replaced the redraw_from_vtable helper. TRIED after it:
 //   the whole work block wrapped in `if (parent != nullptr)` with a single
 //   fallthrough exit - 13/29, similarity 0.933 vs 0.931, two instructions
@@ -1051,7 +1049,7 @@ Status: Complete
 uint32_t Scroll::set_pos(int position) {
     ::Win *const parent = win_parent_;
     if (parent != nullptr) {
-        ScrollCurrentWin() = parent;
+        WinCallbackWindow = parent;
 
         const int minimum = range_minimum_;
         int *const current = &position_;
@@ -1073,7 +1071,7 @@ uint32_t Scroll::set_pos(int position) {
         }
         // Slot 62 = GraphicWin::redraw (see set_range); the plain virtual call
         // is the image's two-instruction `mov edx,[ecx]; call [edx+0xf8]`.
-        vslot_62();
+        redraw();
     }
 }
 #pragma warning(pop)

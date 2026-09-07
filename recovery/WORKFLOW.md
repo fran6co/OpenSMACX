@@ -101,6 +101,15 @@ follow external references to declared object owners and report additional
 `object_dependencies`. This read-only compilation does not expand worker editing
 scope. An unresolved owner needs evidence or a scope request, not a copied original
 operand; successful compilation alone does not prove the object's lifetime.
+When replacing an address alias, distinguish the global's storage from its loaded
+pointer value. A relocation to the right symbol alone does not establish whether
+the code assigns that global or dereferences it to overwrite another object.
+
+For an SDK import, bind the actual emitted pointer symbol to its DLL and export
+with `RECOVERY_IMPORT` in source. The native checker derives the slot address from
+the pinned PE import directory; do not copy an IAT address into C++ or infer a DLL
+from a familiar function name. Read `import_bindings` in checks/decks. A verified
+slot identity still leaves candidate link selection and dependency ABI unproved.
 
 Compiler-generated functions need source-owned mappings, not handwritten bodies.
 For a secondary-base adjustor, express the real inheritance and virtual override,
@@ -110,6 +119,11 @@ actual emitted symbol. Check both the adjustor and its target, then the affected
 table/callers; a matching thunk alone does not establish the entire hierarchy.
 Restore mappings lost during earlier homing from their source history before
 trying to fix an unresolved reference by changing otherwise-correct C++.
+
+When restoring an override, recheck its callers as well as its table entry.
+An originally direct base call needs explicit qualification; an originally virtual
+call must keep dispatching through the object. Do not infer the call form from a
+shared method name, or merge distinct operations just to reuse that name.
 
 Read generated-table `diagnostic.entries` in the native binary check before
 writing a table probe. Positional target differences can expose missing overrides;

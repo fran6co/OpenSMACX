@@ -238,11 +238,11 @@ Status: Complete
 */
 void ListBox::on_mouse_leave(int a1, int a2) {
     // Clear the hover index (Dialog::field_F0_, through the virtual base)
-    // and repaint (the vslot_62 virtual) - plain member forms; the
+    // and repaint (the redraw virtual) - plain member forms; the
     // compiler's virtual-base machinery does the walking the old hand
     // chains spelled. Both parameters are dead; `ret 8` still pops them.
     field_F0_ = -1;
-    vslot_62();
+    redraw();
 }
 
 /*
@@ -346,4 +346,3 @@ void ListBox::on_right_double_click(int a1, int a2) {
     vslot_28(a1, a2);
     ListBoxClickGuard = 0;
 }
-

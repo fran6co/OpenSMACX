@@ -810,7 +810,7 @@ void __cdecl turn_timer(int a1) {
     if (IsMultiplayerNet != 0) {
         if (TimerHoldFlag == 0) {
             if (TurnRedrawPending != 0) {
-                TurnRedrawWindow->redraw();
+                TurnRedrawWindow->GraphicWin::redraw();
             }
             MultiWindow.draw(1);
         }

@@ -874,7 +874,7 @@ Verification note: the repaint is a virtual dispatch on THIS object's own
          vtable - `mov edx, [ecx]` / `call [edx + 0xF8]` - not on the entry or
          its PullDown, and it takes no arguments. It runs only on the found
          path, after the flag is written. That is Win's slot 62, so the call is
-         spelled `vslot_62()`; the ORIGINAL()/vtable-slot shim this body used
+         spelled `redraw()`; the ORIGINAL()/vtable-slot shim this body used
          before compiled to the same two instructions and is gone, with its
          `reinterpret_cast` of `this`.
 Verification note: as in the item operations, the image's post-search test
@@ -913,7 +913,7 @@ int Menu::UNK6(int menu_id) {
         return 0xB;
     }
     entries_[index].flags &= 0xFE;
-    vslot_62();
+    redraw();
     return 0;
 }
 
@@ -935,7 +935,7 @@ Verification note: the repaint is a virtual dispatch on THIS object's own
          vtable - `mov edx, [ecx]` / `call [edx + 0xF8]` - not on the entry or
          its PullDown, and it takes no arguments. It runs only on the found
          path, after the flag is written. That is Win's slot 62, so the call is
-         spelled `vslot_62()`; the ORIGINAL()/vtable-slot shim this body used
+         spelled `redraw()`; the ORIGINAL()/vtable-slot shim this body used
          before compiled to the same two instructions and is gone, with its
          `reinterpret_cast` of `this`.
 Verification note: as in the item operations, the image's post-search test
@@ -974,7 +974,7 @@ int Menu::UNK7(int menu_id) {
         return 0xB;
     }
     entries_[index].flags |= 0x01;
-    vslot_62();
+    redraw();
     return 0;
 }
 
@@ -996,7 +996,7 @@ Verification note: the repaint is a virtual dispatch on THIS object's own
          vtable - `mov edx, [ecx]` / `call [edx + 0xF8]` - not on the entry or
          its PullDown, and it takes no arguments. It runs only on the found
          path, after the flag is written. That is Win's slot 62, so the call is
-         spelled `vslot_62()`; the ORIGINAL()/vtable-slot shim this body used
+         spelled `redraw()`; the ORIGINAL()/vtable-slot shim this body used
          before compiled to the same two instructions and is gone, with its
          `reinterpret_cast` of `this`.
 Verification note: as in the item operations, the image's post-search test
@@ -1035,7 +1035,7 @@ int Menu::UNK8(int menu_id) {
         return 0xB;
     }
     entries_[index].flags |= 0x02;
-    vslot_62();
+    redraw();
     return 0;
 }
 
@@ -1057,7 +1057,7 @@ Verification note: the repaint is a virtual dispatch on THIS object's own
          vtable - `mov edx, [ecx]` / `call [edx + 0xF8]` - not on the entry or
          its PullDown, and it takes no arguments. It runs only on the found
          path, after the flag is written. That is Win's slot 62, so the call is
-         spelled `vslot_62()`; the ORIGINAL()/vtable-slot shim this body used
+         spelled `redraw()`; the ORIGINAL()/vtable-slot shim this body used
          before compiled to the same two instructions and is gone, with its
          `reinterpret_cast` of `this`.
 Verification note: as in the item operations, the image's post-search test
@@ -1096,7 +1096,7 @@ int Menu::UNK9(int menu_id) {
         return 0xB;
     }
     entries_[index].flags &= 0xFD;
-    vslot_62();
+    redraw();
     return 0;
 }
 

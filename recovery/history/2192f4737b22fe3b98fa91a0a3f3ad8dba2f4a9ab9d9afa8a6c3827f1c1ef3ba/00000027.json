@@ -1,0 +1,27 @@
+{
+  "event_id": "2a53302fcf795abbc61b3682d8180cb4a095bd743e1f83cc6c5fc262f0d5469f",
+  "payload": {
+    "affects": [
+      "entity-1bd065e88de40f1bfb18de52c7647e9d34081144f9dba44b8660fff101cea077",
+      "entity-57f0924e92c2f1d03c462a93b029ab2a9dba2ae35e7e6f179fa8f4e0d6a34db3",
+      "entity-784acc563b55fa3ac8c196af99e95e39f074244a18680a45bc7870fd83f5f09d",
+      "entity-8f8901b0c0a0b38b50063fac2398ae601331842a713d6e7837f06b430109029f"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "window-redraw-callee-ownership",
+    "evidence": [
+      "source:src/pending_bodies.cpp:GraphicWin overlay_nonclient forwards to original 0x005D6AC0",
+      "source:src/recovered/units/005d6ac0.cpp:archived nonclient overlay body is seed evidence, not a product owner",
+      "source:src/win.cpp:redraw_sound_call substitutes for the original do_sound call at 0x005F4CDC",
+      "source:src/autosound.h:do_sound is currently an exported inline constant-return body",
+      "source:src/autosound.cpp:original 0x005FD2B0 identity must stay with the actual sound operation, not a new alias for the wrapper"
+    ],
+    "hypothesis": "Redraw dispatch is now expressed by real overrides, but its frame-overlay callee remains an executable-address forwarder and the list-wide routine still uses a local sound surrogate. Recover those source owners and the original direct call forms before treating these matching callers as working C++.",
+    "kind": "discovery"
+  },
+  "previous_event": "efb08ea9f1f192df3e891ae3ef4ad8a621ff738030f21213f1496245f6a98c58",
+  "request_id": "window-redraw-callee-ownership",
+  "schema_version": 1,
+  "sequence": 27,
+  "stream": "task:infowin-ownership"
+}

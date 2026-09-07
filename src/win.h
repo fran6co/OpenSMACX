@@ -599,7 +599,8 @@ class Win : public AutoSound {
   virtual void vslot_60(int = 0, int = 0) {}  // 0x00404260
   // Slot 61 (0xF4): ordinary windows have no GraphicWin surface.
   virtual GraphicWin *get_graphic_win() { return nullptr; }  // 0x00406B30
-  virtual void vslot_62() {}  // 0x00404280
+  // Slot 62: plain Win has no surface; GraphicWin supplies the redraw.
+  virtual void redraw() {}  // 0x00404280
   virtual void vslot_63() {}  // 0x00404280
   virtual void pass_dialog_focus();  // slot 64  0x005ECD20
   virtual void set_dialog_focus(Win *target);  // slot 65  0x005ECC40
@@ -740,7 +741,8 @@ class Win : public AutoSound {
   void close();
 
  public:
-  void __cdecl redraw();  // 0x005F4CC0
+  // Distinct list-wide operation; preserve its recovered calling convention.
+  void __cdecl redraw_all();  // 0x005F4CC0
 
  public:
 
