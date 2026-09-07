@@ -12,6 +12,7 @@ from .generated_source import read_generated
 from .measurement import Measurement
 from .model import Result, digest, require_digest, require_text
 from .object_source import read_objects, referenced_object_units
+from .import_source import read_imports, parse_imports
 from .ownership_source import project_view
 from .pe_coff import Coff, PeImage
 from .tasks import TaskStore
@@ -60,6 +61,14 @@ def _deck(value, root, editable, selected, settings):
             raise ValueError("each candidate must provide replacement text for every declared file")
         replacements[name] = {path: original.replace(anchors[path], after[path].encode("utf-8"), 1)
                               for path, original in originals.items()}
+    for path, original in originals.items():
+        def identities(contents):
+            return [(item.symbol, item.module, item.name, item.ordinal)
+                    for item in parse_imports(contents.decode("utf-8"), path)]
+        expected = identities(original)
+        if any(identities(contents) != expected for contents in
+               [controls[path][1], *(candidate[path] for candidate in replacements.values())]):
+            raise ValueError("candidate deck cannot change import identities; checkpoint binding decisions first")
     return originals, controls, replacements
 
 
@@ -112,6 +121,7 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
             raise ValueError("each edited file requires a mapped compiled task witness")
         witnesses[name] = witness
     data_bindings, generated = read_objects(root, pin), read_generated(root, pin)
+    imports = read_imports(root)
     if ({item.symbol for item in data_bindings} & set(externals)
             or {item.symbol for item in generated} & (set(externals) | {item.symbol for item in data_bindings})):
         raise ValueError("conflicting function/object/generated symbol bindings")
@@ -151,13 +161,14 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
                     control["reason"] = str(error)
                 support_controls.append(control)
         measured = [item for item in bindings if item.unit in objects or item.unit in units]
-        rows, data_rows, generated_rows = check_compiled(measured, data_bindings, generated, objects, image, externals, errors=errors)
+        rows, data_rows, generated_rows, import_rows = check_compiled(
+            measured, data_bindings, generated, objects, image, externals, errors=errors, import_bindings=imports)
         selected_row = next(row for row in rows if row["entity_id"] == target.origin.entity_id)
         return {"name": name, "flags": list(flags), "target": selected_row,
                 "neighbors": [{**row, "in_task": row["entity_id"] in selected} for row in rows if row is not selected_row],
                 "compile_errors": errors or {},
                 "object_dependencies": support_controls, "support_compile_attempts": support_attempts,
-                "object_definitions": data_rows, "generated_tables": generated_rows}
+                "object_definitions": data_rows, "generated_tables": generated_rows, "import_bindings": import_rows}
 
     # Replica and damage controls are per flag trial, not a one-time capability
     # claim. A matching score alone cannot show that the intended code changed.

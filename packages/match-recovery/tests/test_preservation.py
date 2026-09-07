@@ -192,6 +192,7 @@ def test_unannotated_product_unit_is_not_silently_omitted(project):
 
 
 @pytest.mark.parametrize("annotation", ["// RECOVERY_OBJECT: v1 0x00402000 _object",
+                                        "// RECOVERY_IMPORT: v1 __imp__Paint@4 DEMO.dll name:Paint",
                                         "// RECOVERY_MEMBER: v1 Model field 0x4 0x00401010",
                                         "// RECOVERY_BASE: v1 Model Base 0x0 0x00401010",
                                         "// RECOVERY_GENERATED: v1 vtable 0x00402000 ? _table 0x00401010"])

@@ -78,6 +78,17 @@ structural work temporarily stops reproducing them.
 The lookbehind matters: `PROVEN-AGAINST-ORIGINAL: 0x...` provenance
 comments end in this spelling and are not map entries.
 
+## System import bindings
+
+`// RECOVERY_IMPORT: v1 <emitted-pointer-symbol> <DLL> name:<export>` binds a
+source SDK import to an explicit dependency identity. Use `ordinal:<decimal>`
+instead of `name:<export>` for an ordinal import. The pinned image supplies the
+slot address; do not duplicate it in annotations or hardcode it into C++.
+This is separate from an `ORIGINAL` function marker: an import slot is not a
+recovered application body. Place the annotation near the relevant declaration
+or use, outside another function's marker facts. The package README describes
+the strict resolver and its remaining link/ABI limitations.
+
 ## Historical lesson syntax (read-only seed context)
 
 The reader preserves existing LEVER/TRIED notes losslessly. The convention below

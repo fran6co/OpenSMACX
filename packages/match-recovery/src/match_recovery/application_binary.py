@@ -18,6 +18,7 @@ from match_recovery.ownership_source import project_view
 from match_recovery.generated_binary import check_generated
 from .compiler import Compiler
 from .measurement import Measurement
+from .import_source import read_imports, import_targets
 
 
 def select_bindings(view: dict, selected: frozenset[str]) -> tuple[list, list, dict]:
@@ -69,13 +70,19 @@ def select_bindings(view: dict, selected: frozenset[str]) -> tuple[list, list, d
                                if symbol not in ambiguous}
 
 
-def check_compiled(bindings, object_bindings, generated_bindings, objects, image, externals, *, errors=None):
+def check_compiled(bindings, object_bindings, generated_bindings, objects, image, externals, *, errors=None,
+                   import_bindings=()):
     """Same strict target resolution for ordinary measurements and source trials."""
     data_targets, checked_objects = object_targets(object_bindings, objects)
+    if {item.symbol for item in import_bindings} & (
+            set(externals) | {item.symbol for item in object_bindings} | {item.symbol for item in generated_bindings}):
+        raise ValueError("import symbol also has a function/object/generated binding")
+    imports, checked_imports = import_targets(import_bindings, objects, image)
     generated_targets, checked_generated = check_generated(generated_bindings, objects, image, {**externals, **data_targets})
     rows = check_objects(bindings, objects, image,
-                         external_targets={**externals, **data_targets, **generated_targets}, errors=errors)
-    return rows, checked_objects, checked_generated
+                         external_targets={**externals, **data_targets, **generated_targets},
+                         import_targets=imports, errors=errors)
+    return rows, checked_objects, checked_generated, checked_imports
 
 
 def verify_task(root: Path, task_name: str, image_path: Path, *,
@@ -103,6 +110,7 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
     image = PeImage(image_data, snapshot["image_sha256"])
     object_bindings = read_objects(root, snapshot["image_sha256"])
     generated_bindings = read_generated(root, snapshot["image_sha256"])
+    import_bindings = read_imports(root)
     bindings, refused, externals = select_bindings(view, selected)
     unsupported = [item for item in bindings if Path(item.unit).suffix not in settings.unit_extensions]
     refused.extend({"entity_id": item.origin.entity_id, "result": Result.UNKNOWN, "symbol": item.symbol,
@@ -121,7 +129,7 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
         except ValueError as error:
             command_errors[unit] = str(error)
     attempts, variants, object_checks = 0, defaultdict(list), []
-    generated_checks, dependencies = [], []
+    generated_checks, dependencies, import_checks = [], [], []
     for flags in flag_sets:
         objects, errors = {}, dict(command_errors)
         for unit, command in commands.items():
@@ -151,9 +159,11 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
                     errors[unit] = str(error)
         dependencies.append({"flags": list(flags), "units": sorted(dependency_units),
                              "errors": {unit: errors[unit] for unit in sorted(dependency_units) if unit in errors}})
-        checked_functions, checked_objects, checked_generated = check_compiled(
-            bindings, object_bindings, generated_bindings, objects, image, externals, errors=errors)
+        checked_functions, checked_objects, checked_generated, checked_imports = check_compiled(
+            bindings, object_bindings, generated_bindings, objects, image, externals, errors=errors,
+            import_bindings=import_bindings)
         object_checks.extend({**item, "flags": list(flags)} for item in checked_objects)
+        import_checks.extend({**item, "flags": list(flags)} for item in checked_imports)
         generated_checks.extend({**item, "flags": list(flags)} for item in checked_generated)
         for row in checked_functions:
             variants[row["entity_id"]].append({**row, "flags": list(flags)})
@@ -182,6 +192,7 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
             "object_definitions": object_checks,
             "object_dependencies": dependencies,
             "generated_tables": generated_checks,
+            "import_bindings": import_checks,
             "unresolved_symbols": sorted({relocation["symbol"] for candidates in variants.values()
                                            for row in candidates for relocation in row.get("relocations", [])
                                            if relocation["result"] == Result.UNKNOWN}),
@@ -189,6 +200,7 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
             "build_verification": Result.UNKNOWN, "structure_verification": Result.UNKNOWN,
             "runtime_verification": Result.UNKNOWN,
             "limitations": ["task subjects only; dependent callers require a wider admission gate",
-                            "object starts require compiled definitions; extents and import bindings remain unproved",
+                            "object starts require compiled definitions; extents remain unproved",
+                            "import slot identities require source DLL/export bindings; candidate DLL selection, ABI and delay imports remain unproved",
                             "no layout, lifetime, full link or independent review proof",
                             "fresh diagnostic only; fingerprint is not a reusable measurement cache key"]}

@@ -194,6 +194,14 @@ class Coff:
         return section.data, tuple(rows), section.alignment
 
 
+@dataclass(frozen=True)
+class PeImport:
+    module: str
+    name: str | None
+    ordinal: int | None
+    address: int  # Address of the loader-owned slot, never its loaded pointer.
+
+
 class PeImage:
     def __init__(self, data: bytes, pin: str):
         require_digest(pin)
@@ -222,6 +230,9 @@ class PeImage:
             raise ValueError("overlapping PE sections")
         self.data, self.sections = data, tuple(sections)
         directories, = _unpack("<I", header, 92)
+        if directories > (len(header) - 96) // 8:
+            raise ValueError("truncated PE data directory array")
+        self.directories = tuple(_unpack("<II", header, 96 + index * 8) for index in range(directories))
         self.relocations = frozenset()
         if directories > 5:
             rva, size = _unpack("<II", header, 96 + 5 * 8)
@@ -265,3 +276,73 @@ class PeImage:
         if any(not span.start <= site <= span.end - 4 for site in sites):
             raise ValueError("original span cuts through a relocation")
         return frozenset(site - span.start for site in sites)
+
+    def _import_bytes(self, rva: int, size: int) -> bytes:
+        if not rva or self.base + rva + size > 0x100000000:
+            raise ValueError("invalid PE import RVA")
+        return self.read(Span(self.base + rva, self.base + rva + size))
+
+    def _import_string(self, rva: int) -> str:
+        # Strings must end within their raw-backed section, not somewhere in
+        # the rest of the file. A resource limit refuses, never truncates names.
+        start = self.base + rva
+        matches = [(region, offset, size) for region, offset, size in self.sections
+                   if region.start <= start < region.start + size]
+        if not rva or len(matches) != 1 or start > 0xFFFFFFFF:
+            raise ValueError("unbacked PE import name")
+        region, offset, size = matches[0]
+        at = offset + start - region.start
+        end = self.data.find(b"\0", at, min(offset + size, at + 4096))
+        if end <= at:
+            raise ValueError("empty or unterminated PE import name")
+        try:
+            return self.data[at:end].decode("ascii")
+        except UnicodeDecodeError as error:
+            raise ValueError("non-ASCII PE import name") from error
+
+    def imports(self) -> tuple[PeImport, ...]:
+        """Read ordinary PE32 imports independently of code operands/symbols.
+
+        Bound IAT values are not identities. Without the original lookup table
+        a bound descriptor cannot supply names. Delay imports are not decoded.
+        Malformed or unsupported input raises rather than returning a prefix.
+        """
+        rva, size = self.directories[1] if len(self.directories) > 1 else (0, 0)
+        if not rva and not size:
+            return ()
+        table = self._import_bytes(rva, size)
+        imports, slots = [], set()
+        for at in range(0, min(len(table), 4096 * 20), 20):
+            lookup, timestamp, chain, name, iat = _unpack("<IIIII", table, at)
+            if not any((lookup, timestamp, chain, name, iat)):
+                return tuple(imports)
+            module = self._import_string(name)
+            if not iat:
+                raise ValueError("missing PE import address table")
+            if not lookup and timestamp:
+                raise ValueError("bound PE import has no original lookup table")
+            for index in range(65536):
+                entry, = struct.unpack("<I", self._import_bytes((lookup or iat) + index * 4, 4))
+                stored, = struct.unpack("<I", self._import_bytes(iat + index * 4, 4))
+                address = self.base + iat + index * 4
+                if any(address + delta in slots for delta in range(-3, 4)):
+                    raise ValueError("overlapping PE import address tables")
+                slots.add(address)  # Include each terminator in overlap checks.
+                if not entry:
+                    if stored:
+                        raise ValueError("PE import tables have different termination")
+                    break
+                if not timestamp and entry != stored:
+                    raise ValueError("unbound PE import tables disagree")
+                if len(imports) >= 65536:
+                    raise ValueError("PE import count exceeds verification limit")
+                if entry & 0x80000000:
+                    if entry & 0x7FFF0000:
+                        raise ValueError("reserved bits in PE ordinal import")
+                    imports.append(PeImport(module, None, entry & 0xFFFF, address))
+                else:
+                    self._import_bytes(entry, 2)  # Hint exists, but is not an ordinal.
+                    imports.append(PeImport(module, self._import_string(entry + 2), None, address))
+            else:
+                raise ValueError("unterminated PE import lookup table")
+        raise ValueError("unterminated or oversized PE import directory")

@@ -25,13 +25,14 @@ module classifies; it does not decide what to hide.
 
 from __future__ import annotations
 
-import struct
+import hashlib
 from dataclasses import dataclass
 from pathlib import Path
 
 from capstone import x86
 
 from .asm import Listing
+from ..pe_coff import PeImage
 
 
 @dataclass(frozen=True)
@@ -91,64 +92,9 @@ def imported_names(exe: Path | str) -> dict[int, str]:
     indirect call.
     """
     data = Path(exe).read_bytes()
-    (e_lfanew,) = struct.unpack_from("<I", data, 0x3C)
-    if data[e_lfanew:e_lfanew + 4] != b"PE\x00\x00":
-        raise ValueError(f"{Path(exe).name}: not a PE image")
-    _machine, n_sections, _ts, _sp, _ns, opt_size, _ch = \
-        struct.unpack_from("<HHIIIHH", data, e_lfanew + 4)
-    optional = e_lfanew + 24
-    (image_base,) = struct.unpack_from("<I", data, optional + 28)
-    # DataDirectory starts at optional+96; [0] is the export table and
-    # [1] is the import table, so the import descriptors are at +104.
-    import_rva, _size = struct.unpack_from("<II", data, optional + 104)
-    if not import_rva:
-        return {}
-
-    sections = []
-    table = optional + opt_size
-    for index in range(n_sections):
-        off = table + index * 40
-        va, raw_size, raw_ptr = struct.unpack_from("<III", data, off + 12)
-        sections.append((va, raw_size, raw_ptr))
-
-    def at(rva: int) -> int | None:
-        for va, raw_size, raw_ptr in sections:
-            if va <= rva < va + raw_size:
-                return raw_ptr + (rva - va)
-        return None
-
-    def string(rva: int) -> str:
-        start = at(rva)
-        if start is None:
-            return ""
-        return data[start:data.index(b"\x00", start)].decode(errors="replace")
-
-    found: dict[int, str] = {}
-    descriptor = at(import_rva)
-    if descriptor is None:
-        return {}
-    while True:
-        int_rva, _ts, _fc, name_rva, iat_rva = \
-            struct.unpack_from("<IIIII", data, descriptor)
-        if not (int_rva or name_rva or iat_rva):
-            break
-        library = string(name_rva)
-        # THE INT IS THE ONE THAT KEEPS THE NAMES. In a linked image the
-        # IAT holds the resolved addresses, so reading it back gives no
-        # names at all; the import name table beside it still points at
-        # the hint/name pairs. Where the INT is absent - some linkers omit
-        # it - the IAT is still the unbound original on disk.
-        walk = at(int_rva or iat_rva)
-        slot = image_base + iat_rva
-        while walk is not None:
-            (entry,) = struct.unpack_from("<I", data, walk)
-            if not entry:
-                break
-            if entry & 0x80000000:
-                found[slot] = f"{library}!#{entry & 0xFFFF}"
-            else:
-                found[slot] = f"{library}!{string(entry + 2)}"
-            walk += 4
-            slot += 4
-        descriptor += 20
-    return found
+    try:
+        image = PeImage(data, hashlib.sha256(data).hexdigest())
+    except ValueError as error:
+        raise ValueError(f"{Path(exe).name}: not a PE image: {error}") from error
+    return {item.address: f"{item.module}!{item.name if item.name is not None else '#' + str(item.ordinal)}"
+            for item in image.imports()}

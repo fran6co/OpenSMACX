@@ -58,6 +58,7 @@ class FunctionBinding:
 
 def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Coff],
                   image: PeImage, *, external_targets: Mapping[str, int] | None = None,
+                  import_targets: Mapping[str, int] | None = None,
                   errors: Mapping[str, str] | None = None) -> list[dict]:
     """One report per selected binding, including missing objects and symbols.
 
@@ -71,9 +72,12 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
     if any(item.origin.image_sha256 != pin or item.origin.address_space != "pe:va" for item in bindings):
         raise ValueError("function binding refers to a different image/address space")
     externals = dict(external_targets or {})
+    imports = dict(import_targets or {})
     if any(not isinstance(key, str) or not key or type(value) is not int
-           or not 0 <= value <= 0xFFFFFFFF for key, value in externals.items()):
+           or not 0 <= value <= 0xFFFFFFFF for key, value in (*externals.items(), *imports.items())):
         raise ValueError("invalid explicit external target binding")
+    if imports.keys() & (externals.keys() | {binding.symbol for binding in bindings}):
+        raise ValueError("conflicting source and import symbol bindings")
     sections, subjects, layouts = {}, {}, {}
     for binding in bindings:
         obj = objects.get(binding.unit)
@@ -129,6 +133,8 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                 elif symbol.section == 0 and symbol.value == 0 and symbol.storage == 2:
                     if symbol.name in externals:
                         targets[str(index)] = externals[symbol.name]
+                    elif symbol.name in imports:
+                        targets[str(index)] = imports[symbol.name]
             row["diagnostic"] = _emitted_references(obj, subject, targets)
             if layout is None:
                 raise ValueError("code sections require one entry and at most one uniquely associated recorded tail")

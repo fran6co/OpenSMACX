@@ -21,6 +21,7 @@ from .layout_source import parse_members, parse_bases
 from .model import Origin, Result, digest
 from .pe_coff import Coff
 from .object_source import parse_objects
+from .import_source import parse_imports
 from .records import parse_json
 from .source_config import SourceConfiguration
 from .source_history import HistoryConfiguration, _tree, git, revision_files
@@ -75,6 +76,10 @@ def _outside_annotations(files, source, pin, selected):
                 or not any(Path(name).is_relative_to(directory) for directory in source.roots)):
             continue
         text = raw.decode("utf-8", errors="replace")
+        for item in parse_imports(text, name):
+            # System identities are not task-owned function bodies. A changed
+            # DLL/name/ordinal must not disappear behind identical object bytes.
+            add({"kind": "import", **{key: value for key, value in asdict(item).items() if key != "line"}})
         for kind, parser in (("object", parse_objects), ("member", parse_members),
                              ("base", parse_bases), ("generated", parse_generated)):
             for item in parser(text, name, pin, address_space=source.address_space):

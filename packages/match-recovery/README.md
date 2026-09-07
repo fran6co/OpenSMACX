@@ -177,6 +177,32 @@ live in `migration.py`, `migration_protocol.py`, `reviews.py` and `tasks.py`.
 
 ## Package boundary and verification
 
+### System import identities
+
+For ordinary PE32 imports, declare the emitted pointer symbol and intended
+DLL/export beside the source that uses the SDK declaration:
+
+```cpp
+// RECOVERY_IMPORT: v1 __imp__Paint@4 DISPLAY.dll name:Paint
+// RECOVERY_IMPORT: v1 __imp__Legacy@0 LEGACY.dll ordinal:7
+```
+
+These are examples, not bundled SDK bindings. Source owns the symbol-to-export
+interpretation; the pinned image supplies the IAT slot address on each check.
+No address list or decoration heuristic is needed. DLL comparison ignores case;
+export names do not. Ordinals are explicit, never inferred from name hints.
+Duplicate matching slots, malformed tables, missing identities, and
+defined/common/weak symbols stay unverified. Bound images require their original
+lookup table; loaded DLL addresses cannot substitute for identities.
+
+Task checks and candidate decks use the same resolver and expose `import_bindings`.
+Decks cannot change import interpretations while borrowing baseline bindings;
+checkpoint those source decisions first. Outside-scope preservation detects
+changed import annotations even when compiled code is unchanged.
+This proves correspondence to an original import slot, not the candidate link's
+chosen DLL/version, its ABI or runtime behavior. Delay imports and generated-table
+import references remain unsupported; full acceptance remains separate.
+
 ### Fresh build checks
 
 `recover check-build [--root <project>] [--summary]` uses project configuration,
