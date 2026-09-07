@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "task_id": "control-sprite-defaults",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Recover checkbox and radio-button sprite pointer defaults, their member types, and coupled caller bindings without original-address storage or lost initialization",
+  "base_revision": "6eae6dfbc5cee82b39e282315fb92b9754600251",
+  "subjects": [
+    {
+      "address": 6344928,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6345136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6346576,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6350032,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6350448,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6350656,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6350784,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6352944,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6356064,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5091456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4214512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6174688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "editable_files": [
+    "src/radiobutton.cpp",
+    "src/radiobutton.h",
+    "src/checkbox.cpp",
+    "src/checkbox.h",
+    "src/dipedit.cpp",
+    "src/popup.cpp",
+    "src/sprite.cpp",
+    "src/sprite.h"
+  ],
+  "evidence": [
+    "original:0x0060D180/0x0060D18A and 0x0060E713/0x0060E71C read four-byte default cells; each cell has an original HIGHLOW relocation to its class sprite",
+    "original:0x0060E56E/0x0060E58C and 0x0060FCFE/0x0060FD1C pass the default target objects as Sprite::extract receivers",
+    "source:src/sprite.cpp:g_IFACE_CLOSE_X_SPRITES is the existing owner at 0x007794D8 with 0x2C element stride; DipEdit::init stores elements 1 and 2",
+    "seed:src/unrecovered/0060d750.cpp and src/unrecovered/0060f030.cpp select sprite pointer members by item state; verify branches against original before naming"
+  ]
+}
