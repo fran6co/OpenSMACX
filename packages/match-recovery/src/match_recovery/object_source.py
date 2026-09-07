@@ -5,17 +5,18 @@ object start, not a pointer variable containing that address. Object extent,
 layout, initialization and lifetime remain separate verification obligations.
 """
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 import re
 
-from match_recovery.model import Origin
+from match_recovery.model import Origin, Span, digest, require_text
 from match_recovery.components import relative_path
 from .source_config import SourceConfiguration
 
 
 PREFIX = "// RECOVERY_OBJECT:"
 PATTERN = re.compile(r"// RECOVERY_OBJECT: v1 (0x[0-9A-Fa-f]+) (\S+)\s*")
+BOUNDED = re.compile(r"// RECOVERY_OBJECT: v2 (0x[0-9A-Fa-f]+) (0x[0-9A-Fa-f]+) (\S+) (0x[0-9A-Fa-f]+)\s*")
 
 
 @dataclass(frozen=True)
@@ -24,6 +25,32 @@ class ObjectBinding:
     symbol: str
     unit: str
     line: int
+    span: Span | None = None
+    evidence: Origin | None = None
+
+    def __post_init__(self):
+        relative_path(self.unit)
+        require_text(self.symbol, "object symbol")
+        if (self.span is None) != (self.evidence is None):
+            raise ValueError("bounded object requires original evidence")
+        if self.span is not None:
+            if self.span.start != self.origin.address:
+                raise ValueError("object extent must begin at its original identity")
+            if (self.evidence.image_sha256, self.evidence.address_space) != (self.origin.image_sha256, self.origin.address_space):
+                raise ValueError("object evidence belongs to another original")
+
+    @property
+    def interpretation(self):
+        if self.span is None:
+            raise ValueError("unbounded object has no initializer interpretation")
+        return {"kind": "object_initial_data", "origin": asdict(self.origin),
+                "span": asdict(self.span), "symbol": self.symbol,
+                "original_evidence": asdict(self.evidence)}
+
+    @property
+    def interpretation_id(self):
+        value = self.interpretation
+        return digest({"entity_id": self.evidence.entity_id, "value": value})
 
 
 def parse_objects(text: str, path: str, pin: str, *, address_space: str) -> tuple[ObjectBinding, ...]:
@@ -32,6 +59,12 @@ def parse_objects(text: str, path: str, pin: str, *, address_space: str) -> tupl
     bindings = []
     for line, source_line in enumerate(text.splitlines(), 1):
         if not source_line.lstrip().startswith(PREFIX):
+            continue
+        match = BOUNDED.fullmatch(source_line.strip())
+        if match:
+            start, end, symbol, evidence = match.groups()
+            bindings.append(ObjectBinding(Origin(pin, address_space, int(start, 16)), symbol, path, line,
+                                          Span(int(start, 16), int(end, 16)), Origin(pin, address_space, int(evidence, 16))))
             continue
         match = PATTERN.fullmatch(source_line.strip())
         if match is None:
@@ -53,6 +86,9 @@ def read_objects(root: Path, pin: str) -> tuple[ObjectBinding, ...]:
         raise ValueError("duplicate original object symbol binding")
     if len({item.origin.entity_id for item in bindings}) != len(bindings):
         raise ValueError("multiple objects claim the same original start address")
+    spans = sorted(item.span for item in bindings if item.span is not None)
+    if any(left.end > right.start for left, right in zip(spans, spans[1:])):
+        raise ValueError("original object extents overlap")
     return tuple(bindings)
 
 

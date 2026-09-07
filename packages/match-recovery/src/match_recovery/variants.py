@@ -107,12 +107,16 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
     target = next((item for item in bindings if item.origin.entity_id == deck["entity_id"] and item.unit == deck["source"]), None)
     if target is None:
         raise ValueError("candidate target requires one unambiguous mapped product definition with image spans")
+    data_bindings, generated = read_objects(root, pin), read_generated(root, pin)
     # Compile every mapped task TU together, not just the primary target. This
     # catches coupled header/body changes and includes out-of-scope neighbors in
     # those TUs. Uncompiled callers remain explicit, never an outside-scope pass.
     units = sorted({item.unit for item in bindings if item.origin.entity_id in selected
                     and Path(item.unit).suffix in settings.unit_extensions}
-                   | {name for name in originals if Path(name).suffix in settings.unit_extensions})
+                   | {name for name in originals if Path(name).suffix in settings.unit_extensions}
+                   | {item.unit for item in data_bindings if item.evidence is not None and item.evidence.entity_id in selected})
+    if any(Path(unit).suffix not in settings.unit_extensions for unit in units):
+        raise ValueError("required data owner is not a configured translation unit")
     unit_bindings = [item for item in bindings if item.unit in units]
     witnesses = {}
     for name, (entity, _) in damage_controls.items():
@@ -120,13 +124,12 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
         if witness is None:
             raise ValueError("each edited file requires a mapped compiled task witness")
         witnesses[name] = witness
-    data_bindings, generated = read_objects(root, pin), read_generated(root, pin)
     imports = read_imports(root)
     if ({item.symbol for item in data_bindings} & set(externals)
             or {item.symbol for item in generated} & (set(externals) | {item.symbol for item in data_bindings})):
         raise ValueError("conflicting function/object/generated symbol bindings")
     compiler = compiler if compiler is not None else Compiler(root, profile=settings.compiler_profile)
-    flags_list = settings.flag_sets
+    flags_list = tuple(flags + settings.layout_flags for flags in settings.flag_sets) if any(item.span is not None for item in data_bindings) else settings.flag_sets
     controls, baselines, trials = [], [], []
     attempts = 0
 
@@ -226,9 +229,11 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
     # relocation failure into a deceptively good masked similarity percentage.
     def ranking_key(trial):
         rows = [trial["target"], *(row for row in trial["neighbors"] if row["in_task"])]
-        result = (Result.UNKNOWN if any(row["result"] == Result.UNKNOWN for row in rows) else
-                  Result.FAIL if any(row["result"] == Result.FAIL for row in rows) else Result.PASS)
+        data = [row for row in trial["object_definitions"] if "content" in row]
+        results = [row["result"] for row in rows] + [row["content"] for row in data]
+        result = (Result.UNKNOWN if Result.UNKNOWN in results else Result.FAIL if Result.FAIL in results else Result.PASS)
         proofs = [span for row in rows for span in row.get("spans", [row])]
+        proofs.extend(row.get("proof", {}) for row in data)
         differing = sum(len(proof["differing_offsets"]) for proof in proofs) if all("differing_offsets" in proof for proof in proofs) else float("inf")
         return (bool(trial["compile_errors"]), {Result.PASS: 0, Result.FAIL: 1, Result.UNKNOWN: 2}[result], differing, trial["name"])
 
@@ -245,7 +250,7 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
             "scope_complete": False, "ready_for_collection": False, "persisted": False,
             "structure_verification": Result.UNKNOWN,
             "limitations": ["diagnostic source trials only; no winner applied and no claims stamped",
-                            "ranked per flag trial by compilation, measured task-wide strict result and differing bytes; missing distances sort last, trials are never combined",
+                            "ranked per flag trial by compilation, task code and bounded initial-data results, then differing bytes; missing distances sort last, trials are never combined",
                             "all mapped task TUs compiled; neighboring rows also show unambiguous outside-task functions in those TUs, not all affected callers",
                             "layout, lifecycle, full build, protected obligations and review still require task checks",
                             "compiler commands are trusted; requested parallelism must fit isolated compiler capacity"]}

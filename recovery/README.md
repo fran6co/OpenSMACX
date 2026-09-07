@@ -154,6 +154,7 @@ From the OpenSMACX workspace:
 ```sh
 uv run recover --help
 uv run recover check-build --summary
+uv run recover check-data --image /path/to/the/pinned/original.exe --summary
 uv run recover inventory
 uv run recover check-claims --summary
 uv run recover partition
@@ -194,6 +195,15 @@ are not automatically duplicate globals. These lexical diagnostics neither prove
 storage ownership nor authorize merging names; establish actual aliasing and
 byte-versus-element semantics through source and binary evidence. The remaining
 initial-data, header-offset and marker-symbol checks still use legacy tooling.
+
+`check-data` now supplies native compiled initial-storage evidence for explicitly
+bounded `RECOVERY_OBJECT: v2` bindings. See the package README for its grammar and
+strict width/reference checks. Task checks and decks consume the same verifier;
+source history retains those initialization interpretations through structural
+changes. Existing v1 starts remain unbounded, and legacy trailing-address comments
+are not silently imported. Therefore this does not yet retire the old initial-value
+gate dependency: its complete source coverage still needs migration. Keep the
+old check until that coverage is replaced; neither command proves runtime lifetime.
 
 The class-debt audit now uses the package's `cpp-model-v1` ruleset. The former
 project tool is removed, with all nine ceilings and per-file counts preserved.

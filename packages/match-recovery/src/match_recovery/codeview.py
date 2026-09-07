@@ -168,8 +168,8 @@ def _member_type(type_index, records, classes, seen=frozenset()):
     return unknown
 
 
-def class_layout(obj: Coff, name: str) -> dict:
-    """Caller must compile a standalone /Z7 TU, explicitly without PCH use."""
+def _type_records(obj: Coff):
+    """Read the standalone type stream shared by class and object observers."""
     sections = [section for section in obj.sections if section.name == ".debug$T"]
     if len(sections) != 1 or any(section.name == ".debug$P" for section in obj.sections):
         raise ValueError("requires one standalone CodeView type section")
@@ -183,6 +183,12 @@ def class_layout(obj: Coff, name: str) -> dict:
             raise ValueError("invalid CodeView type length")
         record = Cursor(cursor.take(size))
         records.append((record.number("<H"), record))
+    return records
+
+
+def class_layout(obj: Coff, name: str) -> dict:
+    """Caller must compile a standalone /Z7 TU, explicitly without PCH use."""
+    records = _type_records(obj)
     classes = {}
     for index, (leaf, record) in enumerate(records):
         if leaf not in (0x1004, 0x1005):

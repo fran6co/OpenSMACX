@@ -43,6 +43,15 @@ inconsistent reports are refused. This is a lexical diagnostic, not proof of
 aliasing, hierarchy or lifetime; initial-data/header-offset checks and full gate
 orchestration still need replacement.
 
+Native initial-data verification now compares source-bounded object storage to
+compiled definitions using standalone CodeView extents and strict relocation
+targets. The package-owned `check-data` command also serves data-only projects;
+it requires no legacy function seeds. Task checks/decks reuse the verifier, and
+source-history interpretations retain initialization requirements across rehoming
+and removal. Original bounds and evidence anchors live in v2 object annotations;
+observed results are disposable. Legacy trailing-address coverage, full gate
+cutover, complete object layout and CRT/runtime lifetime remain unfinished.
+
 Recording and the legacy gate now share the package's per-TU measurement engine,
 including span refusals, absent-symbol trials and similarity-first ranking. The
 recorder groups requested functions before dispatch instead of compiling each

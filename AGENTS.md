@@ -47,6 +47,7 @@ uv run recover tasks check <task> --image <image> --summary
 uv run recover tasks check-restoration <task> --image <image> --summary
 uv run recover tasks check-preservation <task> --summary
 uv run recover check-build --summary
+uv run recover check-data --image <image> --summary
 uv run recover check-source --jobs 8 --summary
 uv run recover check-mappings --summary
 uv run recover check-claims --summary

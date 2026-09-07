@@ -7,6 +7,11 @@ from .records import read_json
 
 
 def register(commands):
+    data = commands.add_parser("check-data", help="Compare source-bounded object initialization and reference targets; not lifetime proof")
+    data.add_argument("--root", type=Path, default=Path.cwd())
+    data.add_argument("--image", type=Path, required=True)
+    data.add_argument("--symbol", dest="symbols", action="append", help="Select exact emitted object symbols; default checks all source object bindings")
+    data.add_argument("--summary", action="store_true")
     recording = commands.add_parser("record", help="Measure and publish historical byte obligations; not structural acceptance")
     recording.add_argument("targets", nargs="+")
     recording.add_argument("--root", type=Path, default=Path.cwd())
@@ -161,6 +166,12 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
             output["seed_alternative_groups"] = len(output.pop("seed_alternatives"))
             output["forwarder_sites"] = len(output.pop("forwarders"))
             output.pop("findings")
+        return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
+    if arguments.get("command") == "check-data":
+        from .data_check import check_data
+        output = check_data(root, arguments["image"], symbols=arguments.get("symbols"))
+        if arguments.get("summary"):
+            output.pop("objects")
         return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
     if arguments.get("command") == "check-claims":
         from .claim_integrity import check_claims

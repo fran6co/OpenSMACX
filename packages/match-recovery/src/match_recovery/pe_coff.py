@@ -229,6 +229,7 @@ class PeImage:
         if any(left.end > right.start for left, right in zip(ordered, ordered[1:])):
             raise ValueError("overlapping PE sections")
         self.data, self.sections = data, tuple(sections)
+        self.section_flags = tuple(_unpack("<I", data, pe + 24 + optional + index * 40 + 36)[0] for index in range(count))
         directories, = _unpack("<I", header, 92)
         if directories > (len(header) - 96) // 8:
             raise ValueError("truncated PE data directory array")
@@ -276,6 +277,24 @@ class PeImage:
         if any(not span.start <= site <= span.end - 4 for site in sites):
             raise ValueError("original span cuts through a relocation")
         return frozenset(site - span.start for site in sites)
+
+    def read_initial(self, span: Span) -> bytes:
+        """Image storage before CRT initialization, including virtual zero fill.
+
+        Relocations are still encoded for the preferred base; callers must
+        independently verify their targets and forms. This is not runtime state.
+        """
+        matches = [(region, offset, size, flags) for (region, offset, size), flags in zip(self.sections, self.section_flags)
+                   if region.start <= span.start and span.end <= region.end]
+        if len(matches) != 1:
+            raise ValueError("initial data span is not inside one image section")
+        region, offset, size, flags = matches[0]
+        if flags & 0x20 or not flags & (0x40 | 0x80):
+            raise ValueError("original initial data requires a non-code data section")
+        begin = span.start - region.start
+        backed = max(0, min(span.end - span.start, size - begin))
+        raw = _slice(self.data, offset + begin, backed) if backed else b""
+        return raw + bytes(span.end - span.start - backed)
 
     def _import_bytes(self, rva: int, size: int) -> bytes:
         if not rva or self.base + rva + size > 0x100000000:

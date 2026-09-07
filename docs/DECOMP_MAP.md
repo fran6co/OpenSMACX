@@ -15,8 +15,21 @@ read the map.
 Reader/writer: `match_recovery.source`, installed with `match-recovery`.
 Portable tests: `uv run pytest packages/match-recovery/tests`; whole-source and
 build controls: `uv run pytest recovery/tests`. The legacy `tools/osmx.py`
-measurement/stamping/gate command remains during cutover. The active task and
+measurement/gate command remains during cutover; `recover record` owns production
+claim stamping. The active task and
 structural-migration workflow is `recovery/WORKFLOW.md`, not this format reference.
+
+## Compact object bindings
+
+`RECOVERY_OBJECT: v1 <start> <emitted-symbol>` binds an original object start
+beside the owning source definition. `RECOVERY_OBJECT: v2 <start> <end>
+<emitted-symbol> <evidence-address>` additionally requires the independently
+bounded initial storage; end is exclusive. All addresses use `0x` notation.
+The configured image pin/address space supplies the remaining original identity.
+Source bounds and the evidence anchor are load-bearing inputs, not a current
+measurement. The installed `recover check-data` computes compiler extents, initial
+bytes and relocation-target agreement; missing bounds stay unknown. The active
+workflow explains history/review preservation and lifetime limitations.
 
 ## The grammar
 

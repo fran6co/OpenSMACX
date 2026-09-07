@@ -79,6 +79,12 @@ def check_compiled(bindings, object_bindings, generated_bindings, objects, image
         raise ValueError("import symbol also has a function/object/generated binding")
     imports, checked_imports = import_targets(import_bindings, objects, image)
     generated_targets, checked_generated = check_generated(generated_bindings, objects, image, {**externals, **data_targets})
+    from .object_data import check_initial_data
+    bounded = [item for item in object_bindings if item.span is not None
+               and (item.unit in objects or item.unit in (errors or {}))]
+    initial = check_initial_data(bounded, objects, image, {**externals, **data_targets, **generated_targets, **imports}, errors=errors)
+    by_symbol = {item["symbol"]: item for item in initial}
+    checked_objects = [by_symbol.pop(row["symbol"], row) for row in checked_objects] + list(by_symbol.values())
     rows = check_objects(bindings, objects, image,
                          external_targets={**externals, **data_targets, **generated_targets},
                          import_targets=imports, errors=errors)
@@ -101,7 +107,7 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
     selected, _ = store._scope(task, decisions)
     if not selected:
         raise ValueError("refusing an empty task measurement")
-    before = settings.snapshot(root, {"flags": flag_sets})
+    before = settings.snapshot(root, {"debug_types": debug_types})
     view, snapshot = project_view(root)
     if any(subject.image_sha256 != snapshot["image_sha256"] or subject.address_space != "pe:va"
            for subject in task.subjects):
@@ -109,6 +115,8 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
     image_data = image_path.read_bytes()
     image = PeImage(image_data, snapshot["image_sha256"])
     object_bindings = read_objects(root, snapshot["image_sha256"])
+    if any(item.span is not None for item in object_bindings):
+        flag_sets = tuple(flags + settings.layout_flags for flags in settings.flag_sets)
     generated_bindings = read_generated(root, snapshot["image_sha256"])
     import_bindings = read_imports(root)
     bindings, refused, externals = select_bindings(view, selected)
@@ -121,10 +129,13 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
     if {item.symbol for item in generated_bindings} & (set(externals) | {item.symbol for item in object_bindings}):
         raise ValueError("generated symbol also has a function/object binding")
     command_for = command_for if command_for is not None else lambda path: ()
-    units = sorted({item.unit for item in bindings})
+    required_data = [item for item in object_bindings if item.evidence is not None and item.evidence.entity_id in selected]
+    units = sorted({item.unit for item in bindings} | {item.unit for item in required_data})
     commands, command_errors = {}, {}
     for unit in units:
         try:
+            if Path(unit).suffix not in settings.unit_extensions:
+                raise ValueError("source owner is not a configured translation unit")
             commands[unit] = tuple(command_for(root / unit))
         except ValueError as error:
             command_errors[unit] = str(error)
@@ -176,12 +187,12 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
                   if Result.UNKNOWN in results else Result.FAIL)
         rows.append({**{name: candidates[0][name] for name in ("entity_id", "address", "symbol", "unit")},
                      "result": result, "variants": candidates})
-    if (settings.snapshot(root, {"flags": flag_sets}) != before or image_path.read_bytes() != image_data
+    if (settings.snapshot(root, {"debug_types": debug_types}) != before or image_path.read_bytes() != image_data
             or store.read(task_name) != task or store.decisions(task_name) != decisions):
         raise ValueError("source, build inputs or task decisions changed during measurement; retry")
     counts = Counter(row["result"] for row in rows)
     overall = (Result.UNKNOWN if counts[Result.UNKNOWN] else Result.FAIL if counts[Result.FAIL] else Result.PASS)
-    table_results = {item["content"] for item in generated_checks}
+    table_results = {item["content"] for item in generated_checks} | {item["content"] for item in object_checks if "content" in item}
     if Result.UNKNOWN in table_results:
         overall = Result.UNKNOWN
     elif Result.FAIL in table_results and overall != Result.UNKNOWN:
@@ -191,6 +202,8 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
             "compile_attempts": attempts, "selected_entities": len(selected), "translation_units": units,
             "flag_sets": [list(flags) for flags in flag_sets],
             "object_definitions": object_checks,
+            "object_owners": [{"interpretation_id": item.interpretation_id, "unit": item.unit}
+                              for item in object_bindings if item.span is not None],
             "object_dependencies": dependencies,
             "generated_tables": generated_checks,
             "import_bindings": import_checks,
@@ -201,7 +214,7 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
             "build_verification": Result.UNKNOWN, "structure_verification": Result.UNKNOWN,
             "runtime_verification": Result.UNKNOWN,
             "limitations": ["task subjects only; dependent callers require a wider admission gate",
-                            "object starts require compiled definitions; extents remain unproved",
+                            "unbounded object starts prove no initial data; bounded data needs standalone debug types and source extents",
                             "import slot identities require source DLL/export bindings; candidate DLL selection, ABI and delay imports remain unproved",
                             "no layout, lifetime, full link or independent review proof",
                             "fresh diagnostic only; fingerprint is not a reusable measurement cache key"]}

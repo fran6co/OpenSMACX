@@ -8,6 +8,7 @@ import pytest
 from match_recovery.generated_binary import check_generated
 from match_recovery.layout_source import parse_bases, parse_members
 from match_recovery.model import Result
+from match_recovery.object_source import parse_objects
 from match_recovery.structural_requirements import check_requirements, structural_outcome
 from test_generated import fixture
 
@@ -15,6 +16,26 @@ from test_generated import fixture
 MEMBER = parse_members("// RECOVERY_MEMBER: v3 Owner field_ Buffer* 0x8 0x10", "code/owner.hpp", "a" * 64,
                        address_space="custom:offset")[0]
 FLAGS = [["trial-a"], ["trial-b"]]
+
+
+def test_object_initial_data_requires_owner_trials_not_duplicate_definitions_in_callers():
+    item, = parse_objects("// RECOVERY_OBJECT: v2 0x2000 0x2004 _g 0x10", "code/data.cc", "a" * 64, address_space="custom:offset")
+    report = candidate()
+    binary = report["checks"]["binary"]
+    binary["object_owners"] = [{"interpretation_id": item.interpretation_id, "unit": item.unit}]
+    binary["object_definitions"] = [{"interpretation_id": item.interpretation_id, "unit": item.unit,
+                                    "flags": flags, "definition": "pass", "content": "pass"} for flags in FLAGS]
+    row, = check_requirements(inventory((item, True)), report)
+    assert row["result"] == "pass" and row["counts"]["pass"] == 2
+    binary["object_definitions"][1]["content"] = "fail"
+    row, = check_requirements(inventory((item, True)), report)
+    assert structural_outcome([row])[0] == "fail"
+    binary["object_definitions"].pop()
+    row, = check_requirements(inventory((item, True)), report)
+    assert row["result"] == "unknown" and row["counts"]["unknown"] == 1
+    binary["object_owners"] = []
+    row, = check_requirements(inventory((item, True)), report)
+    assert row["result"] == "unknown"
 
 
 def inventory(*items):

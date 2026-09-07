@@ -33,8 +33,8 @@ def class_hint(symbol: str) -> str | None:
     return name.rsplit("::", 1)[0]
 
 
-def project_view(root: Path, image: Path | None = None) -> tuple[dict, dict]:
-    snapshot = source_snapshot(root, image)
+def project_view(root: Path, image: Path | None = None, *, allow_empty: bool = False) -> tuple[dict, dict]:
+    snapshot = source_snapshot(root, image, allow_empty=allow_empty)
     configuration = SourceConfiguration.from_dict(snapshot["source_configuration"])
     candidates = []
     for row in snapshot["records"]:

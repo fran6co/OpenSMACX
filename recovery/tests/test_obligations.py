@@ -66,6 +66,20 @@ def test_removed_claim_survives_rehome_and_resume_without_a_ledger(project):
     assert git(root, "status", "--porcelain") == status_before == ""
 
 
+def test_initial_data_interpretation_survives_rehome_and_removal(project):
+    root, task = project
+    source = root / "src/data.cpp"
+    source.write_text("// RECOVERY_OBJECT: v2 0x500000 0x500004 _g 0x401000\nint g;\n")
+    commit(root, "original initial data requirement")
+    current, = report(project)["interpretations"]
+    assert current["current"] and current["value"]["kind"] == "object_initial_data"
+    source.rename(root / "src/moved.cpp")
+    assert report(project)["interpretations"][0]["interpretation_id"] == current["interpretation_id"]
+    (root / "src/moved.cpp").unlink()
+    old, = report(project)["interpretations"]
+    assert not old["current"] and old["interpretation_id"] == current["interpretation_id"]
+
+
 def test_new_claim_committed_then_removed_is_still_required(project):
     root, task = project
     store = TaskStore(root)

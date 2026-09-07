@@ -107,6 +107,14 @@ follow external references to declared object owners and report additional
 `object_dependencies`. This read-only compilation does not expand worker editing
 scope. An unresolved owner needs evidence or a scope request, not a copied original
 operand; successful compilation alone does not prove the object's lifetime.
+Where original accesses and data evidence establish an object's extent, use a
+bounded `RECOVERY_OBJECT: v2` interpretation beside its definition and inspect
+`uv run recover check-data --image <image> --symbol <emitted-name>`. Scope the
+evidence anchor to the function/family requiring that storage. Task checks then
+compile the declared owner even when today's incorrect body has lost its reference.
+Read definition, extent, content and relocation results separately. A pointer's
+numeric bytes are not its target identity; initial image storage is not CRT or
+post-construction state. Do not derive original bounds from candidate debug types.
 When replacing an address alias, distinguish the global's storage from its loaded
 pointer value. A relocation to the right symbol alone does not establish whether
 the code assigns that global or dereferences it to overwrite another object.

@@ -11,6 +11,7 @@ from pathlib import Path
 from match_recovery.model import Dimension, Obligation, Origin, digest
 from match_recovery.layout_source import parse_bases, parse_members
 from match_recovery.generated_source import parse_generated
+from match_recovery.object_source import parse_objects
 from match_recovery.source_history import HistoryConfiguration, git, source_versions
 from match_recovery.tasks import TaskStore
 from match_recovery.source_inventory import assert_snapshot_current, source_snapshot
@@ -46,8 +47,10 @@ def task_obligations(root: Path, name: str) -> dict:
         # The original evidence anchor, not a current class/member spelling,
         # owns the obligation. Share interpretation identities with the fresh
         # verifiers so a rename/rehome cannot accidentally borrow another proof.
-        for parser in (parse_members, parse_generated, parse_bases):
+        for parser in (parse_members, parse_generated, parse_bases, parse_objects):
             for item in parser(text, path, pin, address_space=source.address_space):
+                if item.evidence is None:
+                    continue  # A v1 object start does not assert original initial-data bounds.
                 add(item.evidence.entity_id, Dimension.STRUCTURE,
                     {**evidence, "line": item.line, "interpretation": item.interpretation})
 

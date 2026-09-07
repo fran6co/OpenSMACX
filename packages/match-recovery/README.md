@@ -292,6 +292,55 @@ preserves historical review requirements, and outside-scope annotation changes
 remain visible even when object code is unchanged. Results are disposable;
 only the original interpretation belongs in source.
 
+### Original object initialization
+
+`recover check-data --image <original> [--symbol <emitted-name>] [--summary]`
+checks source-owned objects through the configured compiler. Repeated `--symbol`
+selects exact emitted names; the default includes every object binding. A data-only
+project needs no legacy function seeds. Source, compiler policy and image changes
+during measurement invalidate the whole report. Results are disposable JSON.
+
+Bind an object beside its definition. Version 1 names its original start only;
+version 2 additionally records an independently established, exclusive-end extent
+and the original evidence anchor requiring that interpretation:
+
+```cpp
+// RECOVERY_OBJECT: v2 0x00402000 0x00402004 ?Selected@@3PAVCanvas@@A 0x00401000
+Canvas *Selected = &DefaultCanvas;
+```
+
+The addresses and symbols above are examples, not bundled project bindings.
+Obtain bounds from original accesses/data evidence, never from the candidate's
+size or the next symbol. This is an initial-storage requirement, not a stored
+verdict. Rehoming preserves its identity; replacing/removing the interpretation
+retains historical review requirements on the evidence anchor's task.
+
+The PE/COFF backend uses standalone CodeView data records to measure candidate
+widths, tying the exact emitted symbol to its debug record with SECTION/SECREL
+relocations. It does not guess sizes from C++ spelling or neighboring symbols.
+The configured `layout_flags` request the compiler's supported standalone debug
+metadata. Initial bytes include virtual zero fill, but exclude executable sections.
+Pointer slots require the correct source-bound targets and original relocation
+form; hardcoded original addresses cannot pass through byte equality alone.
+Every selected object is checked in each configured trial, compiling shared TUs
+once per trial and following referenced object owners without expanding edit scope.
+
+Missing bounds/types/definitions/targets remain unknown. Nonmatching contents,
+extents or resolved references fail. Exit 0 requires all requested observations
+to pass; counterexamples exit 1 and incomplete evidence exits 3. Supported ordinary
+external data excludes weak/common/TLS storage, overlapping definitions and
+unsupported debug/relocation forms. Individual comparisons are bounded to 16 MiB.
+No source or claims are stamped, and no initializer executes during verification.
+Passing says nothing about CRT constructors, final-link selection or later lifetime.
+
+Bounded objects also participate in task checks and candidate decks. An evidence
+anchor in task scope schedules its object's owner even without a current code
+reference. Candidate rankings include bounded data failures, not just function
+bytes. Restoration reports join fresh initialization results to exact source
+interpretations, requiring the owner in every trial—not duplicate definitions in
+each caller. Legacy address comments still need explicit source-binding migration;
+this check does not silently treat them as complete coverage.
+
 ### System import identities
 
 For ordinary PE32 imports, declare the emitted pointer symbol and intended
