@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
   "build": "recovery/build.json",
+  "gate": "recovery/gate.json",
   "audits": "recovery/audits.json",
   "mappings": {
     "compile_commands": "build/compile_commands.json",
@@ -27,7 +28,7 @@
   },
   "compiler": {
     "command": {"argv": ["uv", "run", "python", "recovery/environment/adapter.py"], "timeout": 330},
-    "inputs": ["recovery/environment/adapter.py", "recovery/environment/compile.py", "recovery/environment/recipe.py", "recovery/environment/wine.py"],
+    "inputs": ["recovery/environment/adapter.py", "recovery/environment/compile.py", "recovery/environment/recipe.py", "recovery/environment/recipes.json", "recovery/environment/wine.py"],
     "environment": ["VC6_PREFIX", "VC6_ROOT", "VC6_INCLUDE", "VC6_LIB", "WINEARCH", "CL", "_CL_"]
   },
   "measurement": {

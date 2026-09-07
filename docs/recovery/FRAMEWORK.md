@@ -30,8 +30,19 @@ explicit compiler callable; VC6 command extraction and retry codes no longer liv
 in the library. CMake uses the environment entry points directly and the four old
 build-path shims are removed. Generic compilation-database parsing remains in the
 package, preserving argv tokens and duplicate recipe identities. Nonzero compiler
-exits can no longer contribute leftover objects to the old gate. Production
-gate orchestration and complete acceptance still need migration.
+exits can no longer contribute leftover objects to the old gate.
+
+The package now owns `recover check`, with native source integrity, mapping/body
+links, history identities, all configured audits, a fresh build, historical match,
+symbol, initial-data and layout stages. Additional project checks are explicit
+bounded commands, not a project operation dispatcher. `recover check-matches`
+remeasures all current claims and built candidates through the configured compiler
+with per-TU reuse and no persistent verdict memo. This project's seed-only donor
+recipe is explicit compiler policy, not an inferred original TU environment.
+Production cutover still requires compilation-database preparation and migrated
+full-gate damage controls. Three local checks remain until their conventional
+source/document coverage is absorbed. Full acceptance is a separate unfinished
+verifier; an incomplete native gate does not permit deleting the old control route.
 
 The full gate's duplicate-global and scaled-pointer checks now use the native
 configured storage audit; their standalone tools are removed. Original-address
@@ -40,8 +51,8 @@ context. Compact object identities and conventional legacy bindings are analyzed
 together, distinguishing first-member address notes from separate global storage.
 Existing limits remain project policy. Missing coverage, malformed identities and
 inconsistent reports are refused. This is a lexical diagnostic, not proof of
-aliasing, hierarchy or lifetime; initial-data/header-offset checks and full gate
-orchestration still need replacement.
+aliasing, hierarchy or lifetime; conventional initial-data/header-offset checks
+and the full production cutover still need replacement coverage.
 
 Native initial-data verification now compares source-bounded object storage to
 compiled definitions using standalone CodeView extents and strict relocation

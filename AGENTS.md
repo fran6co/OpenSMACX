@@ -47,6 +47,8 @@ uv run recover tasks check <task> --image <image> --summary
 uv run recover tasks check-restoration <task> --image <image> --summary
 uv run recover tasks check-preservation <task> --summary
 uv run recover check-build --summary
+uv run recover check --image <image> --summary
+uv run recover check-matches --image <image> --summary
 uv run recover check-data --image <image> --summary
 uv run recover check-source --jobs 8 --summary
 uv run recover check-mappings --summary
@@ -65,6 +67,10 @@ The last command is the retained full legacy gate: never pipe it. Exit 0 is
 clean, 1 a failure, 3 unmeasurable—not green. This project's strict full
 acceptance and migration-check adapters are unfinished. Scoped checks and
 reviews do not establish full acceptance or a working game.
+The package-owned `recover check` now coordinates the whole configured gate;
+`recovery/gate.json` retains three local command checks pending their migration.
+Keep the legacy route for cutover comparison/control until that verification
+is complete. Neither command establishes full structure or runtime acceptance.
 `check-preservation` compares fresh baseline/current compiler output outside
 source-mapped task functions. It is not a full-link/structural proof or a way to
 replace the task baseline; unsupported historical TU recipes and unobserved

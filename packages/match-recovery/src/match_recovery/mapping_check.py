@@ -18,7 +18,7 @@ from .source_config import SourceConfiguration
 from .source_inventory import source_snapshot, assert_snapshot_current
 
 
-RULES = ("ambiguous_source", "unbuilt_host", "seed_build_input", "claimed_forwarder")
+RULES = ("ambiguous_source", "unbuilt_host", "seed_build_input", "claimed_forwarder", "body_reference")
 _LITERAL = re.compile(
     r'//[^\n]*|/\*[\s\S]*?\*/|(?:u8|u|U|L)?R"(?P<delimiter>[^\s()\\]{0,16})'
     r'\([\s\S]*?\)(?P=delimiter)"|"(?:\\[\s\S]|[^"\\])*"|\'(?:\\[\s\S]|[^\'\\])*\'')
@@ -122,6 +122,38 @@ def check_mappings(root: Path) -> dict:
         by_file[record["path"]].append(record)
     findings, alternatives, errors, forwarders = [], [], [], []
 
+    # A source-owned body link is an exact project-relative identity, not a
+    # request to search ancestors until some same-named file happens to exist.
+    # Keep the old lexical name witness, without calling it a definition proof.
+    body_references = []
+    for record in records:
+        name = record["body_path"]
+        if not name:
+            continue
+        row = {"path": record["path"], "line": record["line"], "body_path": name}
+        try:
+            target = source.path(root, name)
+        except ValueError as error:
+            findings.append({"rule": "body_reference", **row, "reason": str(error)})
+            continue
+        if not target.is_file():
+            findings.append({"rule": "body_reference", **row, "reason": "body reference does not exist"})
+        elif name not in snapshot["files"]:
+            errors.append({**row, "reason": "body reference is outside configured source coverage"})
+        else:
+            text = base64.b64decode(snapshot["files"][name]["content_base64"]).decode("utf-8")
+            symbol = record["emitted_symbol_hint"]
+            if source.symbol_format == "msvc":
+                from .source.mangled import identifier
+                symbol = identifier(symbol)
+            if not symbol:
+                errors.append({**row, "reason": "body reference has no interpretable identifier"})
+            elif symbol not in text:
+                findings.append({"rule": "body_reference", **row, "reason": "body reference does not mention mapped identifier",
+                                 "identifier": symbol})
+            else:
+                body_references.append({**row, "identifier": symbol})
+
     def location(record):
         return {key: record[key] for key in ("path", "line", "candidate_kind", "legacy_byte_exact", "legacy_semantic")}
 
@@ -173,6 +205,7 @@ def check_mappings(root: Path) -> dict:
         "rules": [{"name": name, "failures": counts[name]} for name in RULES],
         "findings": findings, "errors": errors, "seed_alternatives": alternatives,
         "forwarders": forwarders, "external_build_units": external,
+        "body_references": body_references,
         "input_fingerprint": digest({"source": {name: row["sha256"] for name, row in snapshot["files"].items()},
                                      "image_sha256": snapshot["image_sha256"],
                                      "project": sha256(project_bytes).hexdigest(),
@@ -183,5 +216,6 @@ def check_mappings(root: Path) -> dict:
                         "compilation databases do not establish included/generated source coverage",
                         "seed alternatives remain hints; all historical claims still require separate remeasurement",
                         "forwarder macros are a lexical lens, not preprocessing, reachability or complete fixed-address detection",
+                        "body paths require an in-scope text witness, not proof of a compiled definition",
                         "component, global, import and generated-table bindings require their separate checks"],
     }

@@ -7,6 +7,16 @@ from .records import read_json
 
 
 def register(commands):
+    gate = commands.add_parser("check", help="Run the whole configured project gate; incomplete evidence is not green")
+    gate.add_argument("--root", type=Path, default=Path.cwd())
+    gate.add_argument("--image", type=Path, required=True)
+    gate.add_argument("--jobs", type=int, default=1, help="Concurrent match TUs; must fit isolated compiler capacity")
+    gate.add_argument("--summary", action="store_true")
+    matches = commands.add_parser("check-matches", help="Remeasure all current source claims and product candidates; not full acceptance")
+    matches.add_argument("--root", type=Path, default=Path.cwd())
+    matches.add_argument("--image", type=Path, required=True)
+    matches.add_argument("--jobs", type=int, default=1, help="Concurrent TUs; must fit isolated compiler capacity")
+    matches.add_argument("--summary", action="store_true")
     layout = commands.add_parser("check-layout", help="Freshly check source-owned layout expectations across product TUs; not full structure proof")
     layout.add_argument("--root", type=Path, default=Path.cwd())
     layout.add_argument("--unit", dest="units", action="append", help="Exact TU diagnostic; omitted product units keep coverage incomplete")
@@ -164,9 +174,24 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
     """Native configured source operations, otherwise the local JSON boundary."""
     root = root.resolve()
     configuration = read_json(root / "recovery/project.json")
-    if (configuration.keys() - {"schema_version", "adapter", "source", "source_history", "compiler", "measurement", "audits", "build", "mappings"}
+    if (configuration.keys() - {"schema_version", "adapter", "source", "source_history", "compiler", "measurement", "audits", "build", "mappings", "gate"}
             or type(configuration.get("schema_version")) is not int or configuration["schema_version"] != 1):
         raise ValueError("invalid local project command configuration")
+    if arguments.get("command") == "check":
+        import sys
+        from .gate import check_project, summary
+        def progress(event):
+            print(f"{event['check']}: {event.get('result', 'checking')}", file=sys.stderr, flush=True)
+        output = check_project(root, arguments["image"], jobs=arguments.get("jobs", 1), progress=progress)
+        if arguments.get("summary"):
+            output = summary(output)
+        return output["exit_code"], output
+    if arguments.get("command") == "check-matches":
+        from .match_check import check_matches
+        output = check_matches(root, arguments["image"], jobs=arguments.get("jobs", 1))
+        if arguments.get("summary"):
+            output["measured"] = len(output.pop("measurements"))
+        return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
     if arguments.get("command") == "check-layout":
         from .layout_check import check_layout
         output = check_layout(root, units=arguments.get("units"))

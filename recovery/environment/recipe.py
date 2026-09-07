@@ -4,10 +4,36 @@ from pathlib import Path
 import shlex
 
 from match_recovery.compilation_database import CompilationEntry, read_database
+from match_recovery.records import read_json
+from match_recovery.source_config import SourceConfiguration
 
 
 class MissingRecipe(ValueError):
     """Only absence permits an explicitly chosen donor, not a malformed recipe."""
+
+
+def application_command(root: Path, source: Path) -> list[str]:
+    """Use the product recipe, or this project's explicit seed-only donor.
+
+    The donor reproduces the old sweep's chosen include/define environment;
+    it does not claim to recover an original translation-unit recipe. Product
+    files and malformed/conflicting database entries can never use this path.
+    """
+    database = root / "build/compile_commands.json"
+    try:
+        return build_command(database, source)
+    except MissingRecipe:
+        settings = SourceConfiguration.read(root)
+        if not settings.is_seed(source.relative_to(root).as_posix()):
+            raise
+        policy = read_json(root / "recovery/environment/recipes.json")
+        if (set(policy) != {"schema_version", "seed_donor"}
+                or type(policy["schema_version"]) is not int or policy["schema_version"] != 1):
+            raise ValueError("invalid project seed compiler recipe policy")
+        donor = settings.path(root, policy["seed_donor"])
+        if settings.is_seed(policy["seed_donor"]):
+            raise ValueError("seed recipe donor must be a product translation unit")
+        return build_command(database, donor)
 
 
 def flag_dependent(diagnostic: str) -> bool:

@@ -296,8 +296,19 @@ agreement, not full structural/reference correctness. Never hand-edit markers.
 Use `--in` with an exact project-relative source path when seed alternatives make
 selection ambiguous. The configured compiler supplies TU recipes; missing ones
 remain unmeasurable. Explicit compiler argv may be supplied as a project-relative
-JSON array with `--arguments`. No implicit donor or build reconfiguration occurs.
+JSON array with `--arguments`. This project's compiler now declares a seed-only
+donor in `recovery/environment/recipes.json`; missing product recipes cannot
+borrow it. The package infers no donor or build reconfiguration.
 Default `--jobs 1` is deliberate; concurrent TUs need isolated compiler capacity.
+
+The package-owned `uv run recover check --image <image> --summary` now runs the
+whole configured project gate. Its source, mapping/body-link, history and audit
+checks precede a fresh build; match, symbol, initial-data and layout sweeps follow
+serially. Additional checks are explicit bounded commands in `recovery/gate.json`.
+Use both gate routes for cutover comparison until real runs and damage controls
+establish equivalent coverage. `recover check-matches` exposes the native claim
+sweep without banking its discoveries. Neither command is the unfinished full
+acceptance/migration verifier or evidence that the game works.
 
 The gate uses the native `uv run recover check-source --jobs 8 --summary` for
 annotation integrity. Its keyword/demotion/deletion experiments run only in

@@ -16,6 +16,25 @@ capabilities, not project/compiler-environment adapters. `environment/` contains
 only the local compiler interaction. The old production command/gate and other
 remaining tools still need absorption or retirement before `tools/` can disappear.
 
+The package now coordinates a whole-project gate:
+`uv run recover check --image <original> --jobs 1 --summary`. `gate.json` declares
+only the three remaining project command checks (live references, conventional
+trailing-address initial values and the older header-offset walk); native source,
+mapping/body-link, history, audit, build, match, symbol, data and layout checks
+are run by the library. The native build is fresh, unlike the retained gate's
+incremental link probe. Neither gate establishes full structural/runtime acceptance.
+Keep the old unpiped gate as the comparison/control route until the native run
+and damage controls establish the cutover; do not call it retired prematurely.
+
+`recover check-matches --image <original> --jobs 1 --summary` is the native
+current-claim sweep. It measures all claims plus unclaimed built candidates with
+per-TU compilation reuse, never stamps discoveries and uses no persistent verdict
+cache. Missing historical source identities are checked separately. The local
+compiler's `environment/recipes.json` explicitly preserves the former sweep's
+`src/buffer.cpp` donor for configured seed roots only. That is an experimental
+include/define environment, not evidence of an original TU. Missing product
+recipes and malformed/conflicting entries still refuse compilation.
+
 CMake now launches `environment/vc6-cl`, `environment/vc6-link` and
 `environment/vc6-lib` directly (links to `environment/wine.py`). The former
 build-path shims are removed. `environment/compile.py` supplies the single
@@ -76,8 +95,8 @@ It selects exact original addresses or catalogue/emitted names (and qualified
 names when the source symbol format supports them). Ambiguous candidates require
 an exact project-relative `--in` host. Source roots, TU suffixes, flags and compiler
 profile come from `project.json`; the command does not import local project Python.
-The configured compiler subprocess supplies its recipes, with no implicit donor
-or CMake reconfiguration. A caller may explicitly supply compiler argv in a
+The configured compiler subprocess supplies product recipes and explicit seed-donor
+policy; it does not reconfigure CMake. A caller may explicitly supply compiler argv in a
 project-relative JSON array via `--arguments`. Missing recipes are unmeasurable.
 Batch related addresses; `--jobs` defaults to 1 until isolated capacity is available.
 Its JSON report distinguishes updated source, measurements, unresolved subjects,

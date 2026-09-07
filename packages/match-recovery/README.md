@@ -33,6 +33,60 @@ commands for every role. No Python inheritance, plugin registration, package for
 or library modification is required. The package does not supply an agent service,
 compiler installation or project verification policy.
 
+## Whole-project gate
+
+`recover check --root <project> --image <original> --jobs 1 --summary` runs the
+package-owned project gate. Native source integrity, build mappings/body links,
+historical claim identities, every configured source audit, a fresh configured
+build, current historical matches, emitted symbols, initial data and declared
+layouts all participate. There is no project Python dispatcher or switch for
+omitting a native check. Compiled stages run serially after a successful fresh
+build; only the match sweep uses the explicitly requested compiler concurrency.
+
+Set `gate` in `recovery/project.json` to a local configuration path. A project
+with no additional command checks can use:
+
+```json
+{
+  "schema_version": 1,
+  "checks": {},
+  "inputs": [],
+  "input_roots": [],
+  "environment": []
+}
+```
+
+Additional project tests are named entries in `checks`, each containing `argv`
+(an argument array) and `timeout` (1–3600 seconds). Commands run from the project
+root and support `{root}`, `{image}` and `{env:NAME}`. Their exits mean 0 pass,
+1 failure, 3 unknown; interruption, timeout and other exits remain unknown.
+Commands are trusted project tools, not a sandbox or inferred structural proof.
+Declare additional inputs, input roots and environment dependencies. The gate
+also checks configured build/measurement inputs and Git-visible working-tree
+contents before and after each stage. Concurrent edits stop verification and
+are preserved. JSON goes to stdout, stage progress to stderr; no verdict ledger
+is written. The summary retains all stage results and failure identities.
+
+`recover check-matches --image <original> --jobs 1 --summary` exposes the native
+whole-source matching stage separately. It remeasures every current claim,
+including seed attempts and unsupported hosts, and scores unclaimed product
+candidates in the same TU compilation. It never banks a discovery. Different
+attempts at one address remain separate measurements; compiler objects are reused
+only within that invocation's TU/flag trials. Recipes are supplied by the
+configured compiler, not inferred by the package. A build-mapped claimed subject
+that stops compiling or being emitted fails; unresolved seed evidence remains
+unknown. Header claims are visible but require unsupported host coverage. An
+empty claim set does not pass. Historical identity coverage is a separate stage.
+
+Gate exit 0 means its configured checks passed, 1 means a known failure, and 3
+means incomplete evidence. A known failure takes precedence over unknowns.
+This is not yet a full acceptance/migration verifier: historical matching still
+uses relocation masking, and these checks do not establish complete hierarchy,
+object lifetime, final-link reference selection, dependency ABI or runtime
+behavior. `ready_for_collection` therefore remains false, even on exit 0.
+
+## Configure recovery agents
+
 Configure these commands before starting real recovery. The generated worker and
 reviewer configs call the package-owned `agent` bridge. Set the prompt-driven
 commands in `agents.json`; its starter commands use `RECOVERY_WORKER` and
