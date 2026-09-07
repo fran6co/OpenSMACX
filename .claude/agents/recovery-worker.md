@@ -47,6 +47,11 @@ Reverse source-name correlations are hints, not bindings. Matching observed word
 do not prove a table's extent; never infer that extent from the candidate size or
 substitute a weak symbol's fallback without link-selection evidence.
 
+Function trials also expose `diagnostic.emitted_references` when size or companion
+coverage prevents a full comparison. Check these for accidental recursion, wrong
+base callees and unresolved globals before spending rounds on instruction spelling.
+These are candidate offsets and bindings, not aligned original call sites or proof.
+
 Also read `check.build_check`: the driver performs a fresh configured full build
 each round. A passing scoped byte result (`check.recovery_result`) cannot excuse
 a link failure. Repair authorized build defects, or report the dependency/scope

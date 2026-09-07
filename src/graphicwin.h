@@ -58,6 +58,7 @@ class GraphicWin : public Win, public Buffer {
   virtual GraphicWin *get_graphic_win();
   virtual int resize(int width, int height, int client_size);
   virtual int on_set_cursor(void *window, unsigned int hit, unsigned int message);
+  virtual void on_size(unsigned int flags, int width, int height);
 
   // VIRTUAL, AND THE IMAGE IS WHAT SAYS SO. A body entered on a subobject
   // opens by adjusting `this` back by that subobject's offset, and that is the
@@ -152,7 +153,10 @@ class GraphicWin : public Win, public Buffer {
   uint32_t field_9FC_;
   uint32_t field_A00_;
   uint32_t field_A04_;
-  uint32_t poCanvas_;
+  // Optional separately allocated Buffer, distinct from the Buffer base.
+  // init creates it; on_size resizes it; close releases it through slot 0.
+  // RECOVERY_MEMBER: v1 GraphicWin owned_buffer_ 0xA08 0x005D4EF0
+  Buffer *owned_buffer_;
   uint32_t field_A0C_;
   // 0xA10. THE PAINT HOOK `redraw` calls before painting, not storage: null
   // by default, installed from outside, entered with no arguments. Was

@@ -20,7 +20,6 @@
 #include "graphicwin.h"
 #include "buffer.h"
 #include "scroll.h"
-#include "vector_teardown.h"
 #include "temp.h"  // HandleMain, the window the invalidate targets
 #include "statuswin.h"
 #include "dialog.h"
@@ -113,7 +112,7 @@ GraphicWin::GraphicWin() {
     field_9FC_ = 0;
     field_A00_ = 0;
     field_A04_ = 0;
-    poCanvas_ = 0;
+    owned_buffer_ = 0;
     field_A0C_ = GraphicWinFieldA0CDefault;
 }
 
@@ -188,8 +187,7 @@ uint32_t GraphicWin::close() {
     // Win's own field_134_/field_138_ are named now that the base's fields
     // are protected; everything else here is GraphicWin's own field, written
     // directly.
-    void *const release_target =
-        reinterpret_cast<void *>(static_cast<uintptr_t>(poCanvas_));
+    Buffer *const release_target = owned_buffer_;
     field_A10_ = 0;
     field_134_ = 0;
     field_138_ = 0;
@@ -223,7 +221,7 @@ uint32_t GraphicWin::close() {
     func_scalar_deleting_destructor &deleting_destructor =
         vtable_method<func_scalar_deleting_destructor>(release_target, 0);
     const uint32_t result = (ORIGINAL(release_target)->*deleting_destructor)(1);
-    poCanvas_ = 0;
+    owned_buffer_ = 0;
     return result;
 }
 
@@ -648,22 +646,14 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
         field_9F4_ = GraphicWinInitDefaults[10];
     }
 
-    // 0x588 is sizeof(Buffer). The allocation goes through the executable's
-    // own operator new at 0x0064558A, already bound for the Wave work - the
-    // address is what matters, not the name - and the legacy body stores
-    // whatever it got, null included, at 0xA08. It does not check that 0xA08
-    // was empty first; close() has just cleared it if it held anything.
+    // A separately owned Buffer, not another construction of our Buffer base.
+    // close() has released any previous allocation before this point.
     if ((flags & 0x40000000) != 0) {
-        void *const block = WaveOperatorNew(0x588);
-        Buffer *owned = nullptr;
-        if (block != nullptr) {
-            owned = new (block) Buffer();
-        }
-        poCanvas_ = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(owned));
+        owned_buffer_ = new Buffer;
     }
 
     // All nine arguments go straight through in order.
-    const int base_result = init(x, y, width, height, title, flags, parent, menu, border);
+    const int base_result = Win::init(x, y, width, height, title, flags, parent, menu, border);
     if (base_result != 0) {
         return base_result;
     }
@@ -795,4 +785,41 @@ int GraphicWin::resize(int width, int height, int client_size) {
 // calls     0x005F2670
 int GraphicWin::on_set_cursor(void *window, unsigned int hit, unsigned int message) {
     return Win::OnSetCursor(HandleMain, window, hit, message);
+}
+
+// ORIGINAL: 0x005D6210 ?on_size@GraphicWin@@QAEXIHH@Z 0x005D6210-0x005D6308 FILE
+// symbol    ?on_size@GraphicWin@@UAEXIHH@Z
+// provenance (retired seed): git:b5a9c5dd:src/unrecovered/005d6210.cpp
+// The drawing surface is our Buffer base; the optional owned buffer is a
+// separate allocation. PaletteActive is a pointer value, not its storage.
+// calls     0x005D7670 0x005D79C0 0x005DE8F0 0x005EE330 0x005F7E90
+void GraphicWin::on_size(unsigned int flags, int width, int height) {
+    if (flags != 1) {
+        int client_width = width;
+        int client_height = height;
+        if (client_width == 0 || client_height == 0) {
+            client_width = dib_.bmiHeader.biWidth;
+            client_height = -dib_.bmiHeader.biHeight;
+        }
+        const unsigned int window_flags = iFlags_;
+        const int thickness = ScrollDefaultThickness;
+        if ((window_flags & 8) != 0) {
+            client_width -= thickness;
+        }
+        if ((window_flags & 4) != 0) {
+            client_height -= thickness;
+        }
+        Buffer::init(client_width, client_height, init_flags_, nullptr);
+        Buffer::sync_to_palette(PaletteActive);
+        if ((iFlags_ & 0x40000000) != 0 && owned_buffer_ != nullptr) {
+            owned_buffer_->resize(client_width, client_height);
+            owned_buffer_->sync_to_palette(PaletteActive);
+        }
+        set_rects();
+        on_nc_paint(nullptr, -1);
+        resize_event(rect2_.right - rect2_.left, rect2_.bottom - rect2_.top);
+        if (Win::is_visible()) {
+            vslot_62();
+        }
+    }
 }

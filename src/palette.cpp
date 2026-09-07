@@ -25,6 +25,7 @@
 Palette g_PALETTE1;  // 0x0094C590
 HPALETTE PaletteInitialized;  // 0x009B8178
 int PaletteUsesSystemColours;  // 0x009B8188
+// RECOVERY_OBJECT: v1 0x009B8180 ?PaletteActive@@3PAVPalette@@A
 Palette *PaletteActive;                 // 0x009B8180
 Buffer ScreenBuffer;                    // 0x009B7490
 int PaletteSeedCache;                   // 0x009B8184
@@ -2347,4 +2348,3 @@ void __cdecl textcolor_init() {
         y += 0x10;
     } while ((int)p < (int)&TextColourTable[69]);
 }
-

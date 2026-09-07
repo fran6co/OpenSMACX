@@ -14,6 +14,31 @@ from .model import Origin, Result, Span, require_text
 from .pe_coff import Coff, PeImage
 
 
+MAX_REFERENCE_DIAGNOSTICS = 128
+
+
+def _emitted_references(obj, subject, targets):
+    entries, count = [], 0
+    for number in obj.code_sections(subject):
+        section = obj.sections[number - 1]
+        for offset, index, kind in section.relocations:
+            if kind == 0:  # COFF's explicit no-op is not a reference.
+                continue
+            count += 1
+            if len(entries) >= MAX_REFERENCE_DIAGNOSTICS:
+                continue
+            target = targets.get(str(index))
+            entries.append({"section": number, "section_name": section.name,
+                            "offset": offset, "coff_type": kind,
+                            "symbol": obj.symbols[index].name,
+                            "storage_class": obj.symbols[index].storage,
+                            "binding_address": f"0x{target:08X}" if target is not None else None})
+    return {"emitted_references": entries, "omitted_references": count - len(entries),
+            "limitations": ["candidate section offsets, not aligned original instruction positions",
+                            "binding addresses exclude operand addends and do not prove target agreement or linker selection",
+                            "diagnostic limit never narrows whole-function verification"]}
+
+
 @dataclass(frozen=True)
 class FunctionBinding:
     origin: Origin
@@ -91,8 +116,6 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
             if isinstance(subject, str):
                 raise ValueError(subject)
             layout = layouts.get(binding.origin.entity_id)
-            if layout is None:
-                raise ValueError("code sections require one entry and at most one uniquely associated recorded tail")
             obj, targets = objects[binding.unit], {}
             for index, symbol in obj.symbols.items():
                 if symbol.section > 0:
@@ -106,6 +129,9 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                 elif symbol.section == 0 and symbol.value == 0 and symbol.storage == 2:
                     if symbol.name in externals:
                         targets[str(index)] = externals[symbol.name]
+            row["diagnostic"] = _emitted_references(obj, subject, targets)
+            if layout is None:
+                raise ValueError("code sections require one entry and at most one uniquely associated recorded tail")
             proofs = []
             for number, span in layout:
                 code, relocations, alignment = obj.section_subject(number)

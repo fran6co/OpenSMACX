@@ -166,6 +166,16 @@ compiles `temp.cpp` to validate the declared handle definition instead of borrow
 the fixed address from its old seed. The seed scaffold is removed, with original
 mapping/provenance beside the method and the global identity beside its definition.
 
+The resize path now distinguishes GraphicWin's Buffer base from its optional
+`Buffer *owned_buffer_`. Buffer's resize uses the typed owner query and virtual
+window resize, replacing the archived vtable shim. GraphicWin's on_size body uses
+real fields and the PaletteActive pointer; its remaining matching and set_rects/
+redraw dispatch dependencies stay open. The owned buffer now uses ordinary C++
+allocation. Manual deleting dispatch in close still needs coupled teardown/return
+type recovery; a member offset check is not lifetime acceptance. GraphicWin::init
+also calls Win::init explicitly instead of recursing; the base initializer's lost
+original spans were restored from Git. Its implementation remains unfinished.
+
 The native generated-table report now exposes positional entry diagnostics even
 when the original extent is unknown. Inspect the emitted symbol, source target,
 original word and any weak-external fallback to distinguish a missing method

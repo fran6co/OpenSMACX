@@ -29,6 +29,7 @@
 // AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
 // load at every use where the image addresses the storage directly, and
 // the address is terranx.exe's data, unmapped in a standalone build.
+// RECOVERY_OBJECT: v1 0x009B8DD4 ?ScrollDefaultThickness@@3HA
 int ScrollDefaultThickness;  // 0x009B8DD4
 int ScrollNonClientInit;  // 0x009B8E24
 uint32_t ScrollCloseStaticDefaults = 2;  // 0x00697020

@@ -6938,3 +6938,16 @@ int __stdcall Buffer::load_bmp(const char * a1, Palette * a2, int a3, int a4) {
         throw;
     }
 }
+
+// ORIGINAL: 0x005D79C0 ?resize@Buffer@@QAEXHH@Z 0x005D79C0-0x005D7A05 FILE BYTE_EXACT
+// provenance (retired seed): git:b5a9c5dd:src/recovered/units/005d79c0.cpp
+// A plain Buffer resizes its surface; a window-owned Buffer dispatches to
+// its GraphicWin. The original queries the owner twice before resizing.
+// calls     0x005D7670
+void Buffer::resize(int width, int height) {
+    if (get_graphic_win() != nullptr) {
+        get_graphic_win()->resize(width, height, 1);
+        return;
+    }
+    init(width, height, init_flags_, nullptr);
+}

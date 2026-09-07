@@ -1,0 +1,27 @@
+{
+  "event_id": "bcdde574666611d0d14a673afb7667ae07acd36c92d098f3428534d02a3bb716",
+  "payload": {
+    "affects": [
+      "entity-0eda974ff26d0e119f3cbc3f0c873b994258d730236b42f00789c65fdbcb4b9b",
+      "entity-57f0924e92c2f1d03c462a93b029ab2a9dba2ae35e7e6f179fa8f4e0d6a34db3",
+      "entity-784acc563b55fa3ac8c196af99e95e39f074244a18680a45bc7870fd83f5f09d",
+      "entity-a15170eb6377adfcc1b95756dd8bbae86fa915c183942368e1c351be63a6ffb4"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "graphicwin-layout-redraw-dispatch",
+    "evidence": [
+      "original:0x005D62B4 dispatches slot 66; the positional PushButton Win-table entry at 0x00670D68 points to 0x005D63E0",
+      "original:0x005D62FE dispatches slot 62; the positional entry at 0x00670D58 points to 0x005D5A70; table bounds remain unknown",
+      "source:src/unrecovered/005d63e0.cpp:GraphicWin set_rects seed",
+      "source:src/graphicwin.cpp:GraphicWin redraw body is currently nonvirtual",
+      "source:src/win.cpp:Win cdecl redraw iterates WinZOrderArray and dispatches vslot_62"
+    ],
+    "hypothesis": "The resize path needs real GraphicWin set_rects and redraw virtual overrides. Current inherited set_rects and vslot_62 do not represent the original table targets. Win already has a separate cdecl redraw routine that traverses the window list; distinguish that operation before naming the per-window virtual slot, and preserve all affected caller bindings.",
+    "kind": "discovery"
+  },
+  "previous_event": "d8e8c824ad39fd76a0a5262931a2e682861ae39ba3e7eedc67a5f314dac78a6a",
+  "request_id": "graphicwin-layout-redraw-dispatch",
+  "schema_version": 1,
+  "sequence": 21,
+  "stream": "task:infowin-ownership"
+}

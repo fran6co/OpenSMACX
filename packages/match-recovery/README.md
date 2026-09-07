@@ -312,6 +312,15 @@ a project-specific table probe. They are disposable diagnostics, not new source
 annotations or acceptance claims. Independently bounded tables still require
 complete four-byte slots and strict whole-table byte/reference agreement.
 
+Function checks expose `diagnostic.emitted_references` even when the candidate's
+size differs or its original companion extent is missing. This reveals emitted
+callees, globals and source bindings without claiming their original counterparts
+agree. Offsets refer to candidate sections; binding addresses exclude operand
+addends. The first 128 references are shown, with omissions counted, independently
+of the complete byte/reference proof. Local and weak symbols do not borrow external
+bindings. These reports help distinguish structural mistakes, such as an accidental
+recursive call instead of a base initializer, from instruction-spelling work.
+
 All public recovery commands, including `inventory`, `partition`, `components`
 and task commands, belong to this package. `inventory` and `partition` run
 natively when `recovery/project.json` supplies a `source` section. No local Python

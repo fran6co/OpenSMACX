@@ -1,0 +1,56 @@
+{
+  "event_id": "d8e8c824ad39fd76a0a5262931a2e682861ae39ba3e7eedc67a5f314dac78a6a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/buffer.cpp",
+      "src/buffer.h",
+      "src/graphicwin.cpp",
+      "src/graphicwin.h",
+      "src/palette.cpp",
+      "src/recovered/units/005d79c0.cpp",
+      "src/scroll.cpp",
+      "src/unrecovered/005d6210.cpp",
+      "src/win.cpp"
+    ],
+    "evidence": [
+      "task:infowin-ownership:graphicwin-owned-canvas-receiver",
+      "git:3cb99d431fb928d698e7eb29afee4ac2fc664027^:src/unrecovered/005ebd80.cpp:Win initializer original spans before the homing deletion",
+      "source:src/graphicwin.cpp:unqualified init call recursively selects the derived initializer rather than Win::init",
+      "source:src/recovered/units/005d79c0.cpp:replace virtual-call shim with typed owner query and resize"
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6119952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6126016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6115056,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6114880,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6208896,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "876beb4173df6af34016fdc6425b71241fbcac58805f786be6b32655aabad2ce",
+  "request_id": "graphicwin-resize-buffer-ownership",
+  "schema_version": 1,
+  "sequence": 20,
+  "stream": "task:infowin-ownership"
+}

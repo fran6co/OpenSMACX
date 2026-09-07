@@ -7926,6 +7926,10 @@ int Win::key_down_event(int key) {
 // ===== homed from src/unrecovered/005ebd80.cpp =====
 typedef int (__stdcall *MessageBoxAFn)(void *, const char *, const char *, unsigned int);
 
+// ORIGINAL: 0x005EBD80 ?init@Win@@QAEHHHHHPADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z 0x005EBD80-0x005EC621;0x00662C80-0x00662CCC FILE
+// symbol    ?init@Win@@QAEHHHHHPADHPAV1@PAVMenu@@PAUBorderSizing@@@Z
+// provenance (retired seed): git:3cb99d431fb928d698e7eb29afee4ac2fc664027^:src/unrecovered/005ebd80.cpp
+// Original spans restored from the mapping lost during homing.
 int Win::init(int x, int y, int width, int height, char * caption,
               int flags, Win * parent, Menu * menu, BorderSizing * border) {
     this->close();

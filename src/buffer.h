@@ -197,6 +197,7 @@ class Buffer {
   // Slot 1 queries the owning GraphicWin, or null for a plain Buffer.
   // load_pcx dispatches resize through the returned window's slot 3.
   virtual GraphicWin *get_graphic_win();
+  void resize(int width, int height);
 
   void clear_links();
   int set_font(Font *font1, Font *font2, Font *font3, Font *font4);
