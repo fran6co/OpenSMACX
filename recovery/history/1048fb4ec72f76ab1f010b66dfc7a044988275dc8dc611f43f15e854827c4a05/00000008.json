@@ -1,0 +1,21 @@
+{
+  "event_id": "65147cda7a3b27c8e48e7f14af9d090f0279203b8fc0a4bf3d49059381eb54f3",
+  "payload": {
+    "affects": [
+      "entity-b8a4f5b9d01d2312fdc77fa4ebf0b420852e61d5be78e38772eeef3fbd8fdbc5"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "statuswin-hit-test-storage-owners",
+    "evidence": [
+      "original:0x0045CD8B pushes the rectangle at 0x007AF50C and 0x0045CDA0 selects the receiver at 0x008C5568. Correcting the independently verified handler end to 0x0045CDB0 leaves these reference obligations intact.",
+      "source:src/statuswin.h defines StatusWinRedrawRect1 as a constant pointer to 0x007AF50C, not rectangle storage; src/statuswin.cpp defines real ConsoleStatusWin with only a trailing address comment and documents initializer 0x004B3FA0. Both files are outside current edit authorization. The /Oy- native trial has no differing resolved bytes but reports the missing rectangle relocation and unresolved ConsoleStatusWin binding."
+    ],
+    "hypothesis": "Recover the left-double-click hit-test rectangle as real storage or a true owning member, and bind the existing ConsoleStatusWin global beside its definition. Expand to the owning declarations, definitions and affected callers before editing them. Do not substitute an extern pointer holding the old address or infer rectangle ownership merely from adjacency.",
+    "kind": "discovery"
+  },
+  "previous_event": "e4c5a4fee2387d6476ddc3b5dd7c59efd11d12dc1e5968aa00718a294713b62c",
+  "request_id": "statuswin-hit-test-storage-owners",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:radiobutton-lifetime"
+}

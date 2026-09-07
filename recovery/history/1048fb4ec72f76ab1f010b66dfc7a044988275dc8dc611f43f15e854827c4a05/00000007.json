@@ -1,0 +1,22 @@
+{
+  "event_id": "e4c5a4fee2387d6476ddc3b5dd7c59efd11d12dc1e5968aa00718a294713b62c",
+  "payload": {
+    "affects": [
+      "entity-9fa098397b71c95f1ec77df097456435dd3d50de859f28b4748880de0052e99a",
+      "entity-d3a3ddfc1654bf031f043e89999e89ae7054deb20bade33bbc1fefb664195234"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "worldwin-embedded-mapwin-terrain-owner",
+    "evidence": [
+      "source:src/worldwin.h declares WorldClimateWorldWin at original 0x008E9F60 and mapWin_ at +0x152C; their sum is 0x008EB48C, the first raw receiver in src/mapwin.cpp mapwin_terrain_fixup (0x00471240). This is an ownership hypothesis requiring original constructor/access verification, not a layout proof from current C++.",
+      "source:src/map.cpp defines the actual WorldClimateWorldWin; src/worldwin.cpp owns the genuine WorldWin constructor at 0x004C4BF0. The object definition is outside the current task editable files. src/mapwin.h still implements MapWinTable through a cast original address despite independently documented eight-slot bounds."
+    ],
+    "hypothesis": "Replace the first terrain-fixup fixed-address alias with the embedded MapWin of the source-owned WorldClimateWorldWin, after verifying its original member extent/lifetime and authorizing its definition in src/map.cpp. Recover MapWinTable as real array storage and resolve the other two fixed receivers as part of the same reference repair; do not infer their identities from proximity or keep raw addresses to protect byte similarity.",
+    "kind": "discovery"
+  },
+  "previous_event": "3e860729000a062efb0fd3ece5a32e522d552049663640bf24d5761200379310",
+  "request_id": "worldwin-embedded-mapwin-terrain-owner",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:radiobutton-lifetime"
+}
