@@ -135,6 +135,7 @@ class Dimension(StrEnum):
     BYTES = "bytes"
     INSTRUCTION_SHAPE = "instruction_shape"
     REFERENCES = "references"
+    DECLARED_STRUCTURE = "declared_structure"
     STRUCTURE = "structure"
     RUNTIME = "runtime"
 

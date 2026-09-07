@@ -182,7 +182,7 @@ MEMBER = "// RECOVERY_MEMBER: v1 Widget slot_ 0x4 0x00401000\n"
 
 
 def structural(project):
-    return [row for row in report(project)["obligations"] if row["dimension"] == "structure"]
+    return [row for row in report(project)["obligations"] if row["dimension"] == "declared_structure"]
 
 
 @pytest.mark.parametrize("annotation", [MEMBER, "// RECOVERY_BASE: v1 Widget Base 0x4 0x00401000\n",
@@ -254,10 +254,10 @@ def test_structural_review_requirements_enter_driver_protected_inventory(project
     inventory = report(project)
     protected = {}
     extend_inventory(protected, inventory, frozenset({ONE.entity_id}))
-    assert {item.dimension.value for item in protected.values()} == {"bytes", "structure"}
+    assert {item.dimension.value for item in protected.values()} == {"bytes", "declared_structure"}
     (root / "src/widget.h").unlink()
     extend_inventory(protected, report(project), frozenset({ONE.entity_id}))
-    assert {item.dimension.value for item in protected.values()} == {"bytes", "structure"}
+    assert {item.dimension.value for item in protected.values()} == {"bytes", "declared_structure"}
 
 
 def test_strengthening_offset_with_type_preserves_old_interpretation_for_review(project):

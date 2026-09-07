@@ -182,7 +182,8 @@ handshake have been checked; a live model recovery pilot is not yet verified.
 
 The driver rebuilds context, checks, calls the worker and rechecks bounded rounds.
 A native `review_structure` next action hands passing scoped evidence to the
-independent reviewer when only broader structural obligations remain unknown;
+independent reviewer when only historical interpretation review or broader
+structural obligations remain unknown;
 the configured build must pass too. This avoids spending more spelling rounds
 on a proof/review gap. Reviewer corrections return to the worker, while approval
 alone leaves an unverified checkpoint, not an admitted migration or accepted task.
@@ -200,10 +201,17 @@ callers, globals and generated code needed to close the migration.
 
 Admission requires explicit coordinator permission, independent snapshot review,
 and a configured migration check proving its build/structure/reference prerequisites.
-`recover run --migration <permission>` is not a bypass: this project's supplied
-driver has no migration-check adapter yet, so it cannot currently admit such a
-checkpoint. Park the scoped work for review instead of calling it green or
-merging it as accepted. The generic driver never automatically reverts it.
+`recover run --migration <permission>` uses the package-owned native verifier
+configured in this project's driver. It checks source/mapping/claim integrity,
+audits, a fresh build, bounded declarations, references and outside-scope
+compiled preservation under unchanged build and compiler policy. A permitted
+measured byte regression yields a checkpoint (exit 2), never collection readiness.
+Missing measurements, failed prerequisites and unsupported preservation cases
+still refuse admission: park the scoped work for review instead of calling it
+green or merging it as accepted. The driver never automatically reverts it.
+Source annotations establish `declared_structure` requirements, not complete
+hierarchy/lifetime claims. Independent review must explicitly dispose of historical
+interpretations; it cannot waive a missing or failing current declaration witness.
 
 Before migration review, inspect `uv run recover tasks check-preservation <task>
 --summary`. This native command compares fresh current and Git-baseline compiles,
@@ -231,7 +239,8 @@ substitution controls and compile failures remain gaps. `--unit`
 can narrow diagnostic work but keeps the overall result unknown when units are
 omitted. Do not move the task baseline forward to hide a gap or outside change.
 This is compiled preservation evidence, not full-link, runtime or lifecycle proof;
-it does not yet unlock migration admission. Run it at coordinator checkpoints,
+it supplies one prerequisite to the native migration verifier, not admission by
+itself. Run it at coordinator checkpoints,
 not as an extra full sweep for every spelling candidate.
 
 Use `uv run recover tasks check-restoration <task> --image <image> --summary`

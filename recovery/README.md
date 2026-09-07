@@ -548,12 +548,13 @@ The `structural_requirements` report connects each declared member/base/table
 requirement to its content identity in `context.review_interpretations`. It
 distinguishes current measurements from historical review needs, with per-TU/trial
 coverage and an explicit next action. A measured current counterexample marks its
-structural obligation failed, even when other coverage is missing; those gaps
+bounded structural obligation failed, even when other coverage is missing; those gaps
 remain visible. Passing individual requirements never proves the entire class or
 its lifetime. No old interpretation is silently superseded by a new passing one.
 Summary output keeps identities, counts and next actions but omits repeated trials.
 When scoped checks, references and current declared requirements all pass but
-whole-structure obligations remain unknown, the check requests `review_structure`.
+historical interpretation review or whole-structure obligations remain unknown,
+the check requests `review_structure`.
 With a passing configured build, the driver reviews before another worker round.
 Corrections feed the worker; approval alone does not admit or accept the task.
 Both reports must share unchanged source, task decisions, build inputs and image;
@@ -710,10 +711,21 @@ the source but never collection readiness. A resumed run re-derives obligations
 from source history and rechecks them; only complete restoration plus the full
 acceptance gate can yield readiness/exit 0. Admission itself is a disposable gate
 result, not a stored verdict. Source and review/permission decisions must be
-checkpointed for resumption. OpenSMACX does **not** yet configure a complete
-migration verifier: its scoped binary checker is insufficient to prove layout,
-build and outside-scope preservation. Real-command synthetic tests exercise this
-protocol; they are not evidence of a completed game recovery pilot.
+checkpointed for resumption. `driver.json` now configures the package-owned
+`tasks check-migration` verifier, not a local Python adapter. It combines fresh
+source/mapping/history/audit checks, a build, bounded structural restoration,
+references and full-TU compiled residuals under an unchanged build policy.
+Source layout/table/object annotations create `declared_structure` requirements;
+they do not invent complete hierarchy/lifetime claims. Historical interpretations
+need explicit snapshot review, and current declarations must still measure.
+Full `structure` and `runtime` obligations remain separate and unwaived.
+
+This supplies checkpoint admission for supported cases, not full acceptance.
+Changed TU recipes, unobserved substitutions, path-sensitive compiler symbols,
+and scoped table/data changes unsupported by the preservation model still refuse
+admission. The current window-family trial encounters such a replica refusal.
+Synthetic tests exercise measured regression/restoration and rejection paths;
+they are not evidence of a completed game recovery pilot.
 
 ## Task commands and source bindings
 

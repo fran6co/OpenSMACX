@@ -51,7 +51,7 @@ def test_native_context_and_obligations_require_no_adapter(task_project, capsys)
         assert main(["tasks", action, "owner", "--root", str(root)]) == 0
         output = json.loads(capsys.readouterr().out)
         inventory = output if action == "obligations" else output["restoration"]
-        assert {row["dimension"] for row in inventory["obligations"]} == {"bytes", "structure"}
+        assert {row["dimension"] for row in inventory["obligations"]} == {"bytes", "declared_structure"}
         assert len(inventory["interpretations"]) == 2
         assert inventory["verification"] == "not_measured"
     member, = read_members(root, "a" * 64)
@@ -114,7 +114,7 @@ def test_same_blob_promoted_from_seed_becomes_a_review_obligation(task_project):
     introduced = commit(root, "Adopt source interpretation without changing its bytes")
     after = report(root)
     assert len(after["interpretations"]) == 1
-    structural = next(row for row in after["obligations"] if row["dimension"] == "structure")
+    structural = next(row for row in after["obligations"] if row["dimension"] == "declared_structure")
     assert any(row["revision"] == introduced for row in structural["source_evidence"])
 
 
@@ -131,7 +131,7 @@ def test_merged_side_history_with_different_roots_is_not_pruned(task_project):
     commit(root, "Return source home while migration remains unfinished")
     git(root, "switch", "work")
     git(root, "merge", "--no-ff", "side", "-m", "Merge side history")
-    structure = next(row for row in report(root)["obligations"] if row["dimension"] == "structure")
+    structure = next(row for row in report(root)["obligations"] if row["dimension"] == "declared_structure")
     assert any(item["revision"] == introduced and item["path"] == "side_code/owner.hpp" for item in structure["source_evidence"])
 
 

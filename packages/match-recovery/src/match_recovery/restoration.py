@@ -16,7 +16,8 @@ from .migration import check_obligations
 from .migration_protocol import extend_inventory
 from .model import Dimension, Measurement, Result, digest
 from .source_obligations import task_obligations
-from .structural_requirements import check_requirements, structural_outcome
+from .structural_requirements import check_requirements, declared_outcome, structural_outcome
+from .reviews import merge_interpretations, validate_review
 from .tasks import TaskStore
 
 
@@ -72,18 +73,28 @@ def _binary_outcome(row):
     return min(eligible, key=lambda item: {Result.PASS: 0, Result.UNKNOWN: 1, Result.FAIL: 2}[item[1]])
 
 
-def measure_restoration(root: Path, task_name: str, image: Path, *, compiler=None, command_for=None) -> dict:
+def measure_restoration(root: Path, task_name: str, image: Path, *, compiler=None, command_for=None,
+                        review=None, review_snapshot=None) -> dict:
     root = root.resolve()
     store = TaskStore(root)
     scope, _ = store.scope(task_name)
     inventory = task_obligations(root, task_name)
+    if review is not None:
+        validate_review(review)
+        if review_snapshot is None or review["snapshot"] != review_snapshot:
+            raise ValueError("restoration review requires the caller's current reviewed snapshot")
+    elif review_snapshot is not None:
+        raise ValueError("restoration review snapshot has no review")
+    interpretations = {}
+    merge_interpretations(interpretations, inventory.get("interpretations", []), scope)
     protected = {}
     extend_inventory(protected, inventory, scope)
     settings = Settings.read(root)
     def snapshot(value):
         with image.open("rb") as stream:
             image_sha = hashlib.file_digest(stream, "sha256").hexdigest()
-        return settings.snapshot(root, {"inventory": value, "image_sha256": image_sha})
+        return settings.snapshot(root, {"inventory": value, "image_sha256": image_sha,
+                                        "review": review, "review_snapshot": review_snapshot})
     before = snapshot(inventory)
     candidate = check_task(root, task_name, image, compiler=compiler, command_for=command_for)
     # Re-read history as well as source. A commit, scope expansion or removed
@@ -110,6 +121,10 @@ def measure_restoration(root: Path, task_name: str, image: Path, *, compiler=Non
         elif obligation.dimension == Dimension.INSTRUCTION_SHAPE and exact == Result.PASS:
             result = Result.PASS
             evidence = "strict byte/reference agreement also proves instruction shape; " + evidence
+        elif obligation.dimension == Dimension.DECLARED_STRUCTURE:
+            result, evidence = declared_outcome(
+                (row for row in requirements if row["entity_id"] == obligation.entity_id),
+                interpretations, review=review)
         elif obligation.dimension == Dimension.STRUCTURE:
             result, evidence = structural_outcome(row for row in requirements if row["entity_id"] == obligation.entity_id)
         else:
@@ -122,7 +137,7 @@ def measure_restoration(root: Path, task_name: str, image: Path, *, compiler=Non
                         "references": references,
                         **({"requirement_ids": [row["interpretation_id"] for row in requirements
                                                if row["entity_id"] == obligation.entity_id]}
-                           if obligation.dimension == Dimension.STRUCTURE else {}),
+                           if obligation.dimension in (Dimension.STRUCTURE, Dimension.DECLARED_STRUCTURE) else {}),
                         **{name: by_entity[obligation.entity_id][name] for name in ("address", "symbol", "unit")
                            if name in by_entity.get(obligation.entity_id, {})}})
     gate = check_obligations(tuple(protected.values()), measurements, current)
@@ -133,7 +148,8 @@ def measure_restoration(root: Path, task_name: str, image: Path, *, compiler=Non
     # review. Hand off only after the actual scoped measurements agree; missing
     # declaration witnesses or byte/reference failures still require recovery.
     review_structure = (candidate["result"] == Result.PASS and references == Result.PASS
-                        and not gate.failed and unknown_dimensions == {Dimension.STRUCTURE}
+                        and not gate.failed and unknown_dimensions
+                        and unknown_dimensions <= {Dimension.STRUCTURE, Dimension.DECLARED_STRUCTURE}
                         and _all(row["result"] for row in requirements if row["current"]) == Result.PASS)
     return {"task_id": task_name, "check": "scoped_recovery_and_restoration",
             "result": _all((candidate["result"], restoration, references)),
@@ -147,6 +163,6 @@ def measure_restoration(root: Path, task_name: str, image: Path, *, compiler=Non
             "unrestored": asdict(gate), "input_fingerprint": fingerprint,
             "scope_complete": False, "ready_for_collection": False, "persisted": False,
             "limitations": ["fresh scoped obligation measurements, not migration admission or full acceptance",
-                            "declared structural counterexamples are failures, but passing requirements do not prove complete structure/lifetime",
+                            "declared_structure covers bounded source requirements and reviewed historical dispositions, not complete structure/lifetime",
                             "non-exact instruction-shape obligations remain unknown",
                             "no full build, outside-scope preservation or runtime verification"]}

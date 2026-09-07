@@ -9,7 +9,7 @@ from match_recovery.generated_binary import check_generated
 from match_recovery.layout_source import parse_bases, parse_members
 from match_recovery.model import Result
 from match_recovery.object_source import parse_objects
-from match_recovery.structural_requirements import check_requirements, structural_outcome
+from match_recovery.structural_requirements import check_requirements, declared_outcome, structural_outcome
 from test_generated import fixture
 
 
@@ -58,6 +58,38 @@ def test_all_declared_witnesses_pass_without_proving_complete_structure():
     assert all(trial["source"] == {"path": "code/owner.hpp", "line": 1} for trial in row["trials"])
     assert structural_outcome([row])[0] == Result.UNKNOWN
     assert row["next_action"] == "verify_remaining_structure_and_lifetime"
+    assert declared_outcome([row], {})[0] == Result.PASS
+
+
+def test_reviewed_replacement_requires_its_own_complete_measurements():
+    old = replace(MEMBER, offset=12)
+    facts = inventory((old, False), (MEMBER, True))
+    known = {row["interpretation_id"]: row for row in facts["interpretations"]}
+    review = {"kind": "review", "author": "worker", "reviewer": "independent",
+              "snapshot": "b" * 64, "decision": "approve", "feedback": "Correct offset from original accesses",
+              "evidence": ["source:original accesses"], "supersessions": [
+                  {"previous": old.interpretation_id, "replacement": MEMBER.interpretation_id,
+                   "evidence": ["source:original accesses"], "reason": "Old offset counted from wrong base"}]}
+    rows = check_requirements(facts, candidate())
+    assert declared_outcome(rows, known)[0] == Result.UNKNOWN
+    assert declared_outcome(rows, known, review={**review, "supersessions": []})[0] == Result.UNKNOWN
+    assert declared_outcome(rows, known, review=review)[0] == Result.PASS
+    assert structural_outcome(rows)[0] == Result.UNKNOWN  # Whole-model proof is still separate.
+    for results, expected in ((("fail", "pass"), Result.FAIL), (("unknown", "pass"), Result.UNKNOWN)):
+        rows = check_requirements(facts, candidate(results=results))
+        assert declared_outcome(rows, known, review=review)[0] == expected
+
+
+def test_retracting_every_interpretation_does_not_prove_a_replacement():
+    facts = inventory((MEMBER, False))
+    known = {row["interpretation_id"]: row for row in facts["interpretations"]}
+    rows = check_requirements(facts, candidate())
+    review = {"kind": "review", "author": "worker", "reviewer": "independent",
+              "snapshot": "b" * 64, "decision": "approve", "feedback": "Wrong model",
+              "evidence": ["source:contradiction"], "retractions": [
+                  {"interpretation": MEMBER.interpretation_id, "evidence": ["source:contradiction"],
+                   "reason": "Not a direct member"}]}
+    assert declared_outcome(rows, known, review=review)[0] == Result.UNKNOWN
 
 
 @pytest.mark.parametrize("results, expected", [(("pass", "fail"), "fail"), (("pass",), "unknown"),

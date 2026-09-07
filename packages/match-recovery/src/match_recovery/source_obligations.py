@@ -51,7 +51,10 @@ def task_obligations(root: Path, name: str) -> dict:
             for item in parser(text, path, pin, address_space=source.address_space):
                 if item.evidence is None:
                     continue  # A v1 object start does not assert original initial-data bounds.
-                add(item.evidence.entity_id, Dimension.STRUCTURE,
+                # A member offset/table bound is a concrete source requirement,
+                # not an assertion that the entire class/lifetime is recovered.
+                # Full STRUCTURE obligations, if supplied, remain distinct.
+                add(item.evidence.entity_id, Dimension.DECLARED_STRUCTURE,
                     {**evidence, "line": item.line, "interpretation": item.interpretation})
 
     for version in versions:

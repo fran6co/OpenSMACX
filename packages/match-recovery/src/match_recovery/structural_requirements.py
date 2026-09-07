@@ -8,7 +8,7 @@ not interchangeable spellings from which to select a convenient passing check.
 from collections import Counter, defaultdict
 
 from .model import Result, require_digest
-from .reviews import merge_interpretations
+from .reviews import merge_interpretations, pending_interpretations
 
 
 def _all(values):
@@ -128,3 +128,26 @@ def structural_outcome(requirements):
     if failed:
         return Result.FAIL, "current source interpretations have measured counterexamples; inspect structural_requirements"
     return Result.UNKNOWN, "declared requirements do not prove complete structure or lifetime; inspect structural_requirements and historical review needs"
+
+
+def declared_outcome(requirements, interpretations, *, review=None):
+    """Prove only bounded declarations, with explicit historical dispositions.
+
+    The caller must bind an optional independent review to its current input
+    snapshot. Review never supplies a missing compiler witness, waives a current
+    counterexample, or establishes complete structure/lifetime. Removing every
+    requirement remains unknown even if a reviewer retracts the old model.
+    """
+    rows = tuple(requirements)
+    current = [row for row in rows if row["current"]]
+    if any(row["counts"]["fail"] for row in current):
+        return Result.FAIL, "current declared requirements have measured counterexamples"
+    if not current or any(row["result"] != Result.PASS for row in current):
+        return Result.UNKNOWN, "current declared requirements lack complete compiler witnesses"
+    historical = {row["interpretation_id"] for row in rows if not row["current"]}
+    if historical:
+        if review is None or review.get("decision") != "approve":
+            return Result.UNKNOWN, "historical interpretations require independent snapshot review"
+        if historical.intersection(pending_interpretations(review, interpretations)):
+            return Result.UNKNOWN, "historical interpretations lack explicit reviewed dispositions"
+    return Result.PASS, "all current bounded declarations measured; historical dispositions checked; not full structure/lifetime proof"

@@ -118,6 +118,10 @@ def register(commands):
     task_check.add_argument("--root", type=Path, default=Path.cwd())
     task_check.add_argument("--image", type=Path, required=True)
     task_check.add_argument("--summary", action="store_true")
+    migration = task_actions.add_parser("check-migration", help="Measure reviewed checkpoint prerequisites from driver JSON on stdin; not admission or final acceptance")
+    migration.add_argument("task")
+    migration.add_argument("--root", type=Path, default=Path.cwd())
+    migration.add_argument("--image", type=Path, required=True)
     restoration = task_actions.add_parser("check-restoration", help="Remeasure historical obligations alongside scoped checks; never waive regressions")
     restoration.add_argument("task")
     restoration.add_argument("--root", type=Path, default=Path.cwd())
@@ -296,6 +300,15 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
                                     if key not in ("baseline_scoped_functions", "current_scoped_functions", "changed_sections", "symbol_changes")}
                                    for row in output["units"]]
             return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
+        if arguments.get("action") == "check-migration":
+            import sys
+            from .records import parse_json
+            from .migration_check import measure_migration
+            output = measure_migration(root, arguments["task"], Path(arguments["image"]),
+                                       parse_json(sys.stdin.read()), progress=_progress)
+            # Protocol completion, not a passing gate: driver applies permissions
+            # and independent review to every measured prerequisite/obligation.
+            return 0, output
         if arguments.get("action") == "check-restoration":
             from .restoration import measure_restoration
             image = Path(arguments["image"])

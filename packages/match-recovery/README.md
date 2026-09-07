@@ -378,6 +378,18 @@ proof is not permission to regress. A migration checkpoint exits 2, never green;
 closing it requires restoring all protected obligations. The reusable policy APIs
 live in `migration.py`, `migration_protocol.py`, `reviews.py` and `tasks.py`.
 
+The package supplies the native `migration_check` command:
+`recover tasks check-migration <task> --image <image>`. It consumes the driver's
+JSON request on stdin and freshly runs source integrity, mapping/history checks,
+configured audits, build, restoration and full-TU compiled-residual preservation.
+Its exit 0 means the measurement envelope completed, **not** admission; only the
+driver applies permission/review and can return a tracked checkpoint (exit 2).
+Build-policy changes, missing compiler controls, unresolved references and
+unmeasured obligations prevent admission. No target-specific verifier script is
+needed for these supported checks. This is not full-link equivalence or runtime
+acceptance. Preservation still refuses unsupported TU migrations and changes to
+independent data/tables outside its function-ownership model.
+
 ## Package boundary and verification
 
 ### Pointer-member interpretations
@@ -748,15 +760,21 @@ and historical supersession/retraction decisions. These reports are recomputed
 from source/history and the same fresh candidate check, not another ledger or
 an additional compilation pass.
 
-A measured counterexample to a current declaration marks the corresponding
-structural obligation failed. Passing all declared requirements still leaves
-full structure/lifetime unknown; offsets, types and bounded table contents cannot
-prove the whole original design. Historical measurements are not reused and no
-review disposition is inferred from a passing replacement. `candidate` contains
+A measured counterexample to a current declaration marks its `declared_structure`
+obligation failed. Source member/base/table/object annotations generate this
+bounded dimension, not a claim of complete hierarchy or lifetime. Passing all
+current requirements discharges only that dimension; historical replacements
+also need explicit independent, snapshot-bound review. Retracting every old
+interpretation without a measurable current model stays unknown. Explicit
+`structure` and `runtime` obligations remain distinct and cannot be discharged
+by these bounded checks or waived as matching regressions. Obligation inventories
+are rederived from source/history, not converted by rewriting source annotations
+or a second ledger. Historical measurements are not reused and no review
+disposition is inferred from a passing replacement. `candidate` contains
 the complete scoped diagnostics; `--summary` omits those, fingerprint maps and
 repeated requirement trials while retaining identities, counts and next actions.
 
-This command supplies measurement inputs for a future complete migration gate,
+This command supplies measurement inputs for the native migration verifier,
 not an admission report itself. Admission additionally requires fresh independent
 review, build, structural prerequisites, references and outside-scope preservation.
 Migration-check reports must now include `references` with a passing result, even

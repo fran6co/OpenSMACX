@@ -66,7 +66,9 @@ uv run tools/osmx.py check
 
 The last command is the retained full legacy gate: never pipe it. Exit 0 is
 clean, 1 a failure, 3 unmeasurable—not green. This project's strict full
-acceptance and migration-check adapters are unfinished. Scoped checks and
+acceptance remains unfinished. The driver uses the package's native migration
+verifier for supported reviewed checkpoints; missing preservation or other
+prerequisites still refuse admission. Scoped checks and
 reviews do not establish full acceptance or a working game.
 The package-owned `recover check` now coordinates the whole configured gate;
 `recovery/gate.json` retains three local command checks pending their migration.

@@ -81,17 +81,17 @@ def test_missing_product_binding_is_unknown_not_a_permitted_failure(historical):
     assert report["unrestored"]["failed"] == ()
 
 
-def test_passing_offset_does_not_discharge_hierarchy_or_lifetime(historical):
+def test_passing_offset_discharges_only_its_declared_requirement(historical):
     header = historical / "code/unit.hpp"
     header.write_text(header.read_text().replace("0x00401010", "0x00401000"))
     report = measure(historical)
     assert report["candidate"]["checks"]["layout"]["result"] == "pass"
-    assert report["restoration"] == report["result"] == "unknown"
-    structural, = [row for row in report["details"] if row["dimension"] == "structure"]
-    assert structural["result"] == "unknown" and "lifetime" in structural["reason"]
+    assert report["restoration"] == report["result"] == "pass"
+    structural, = [row for row in report["details"] if row["dimension"] == "declared_structure"]
+    assert structural["result"] == "pass" and "not full structure/lifetime" in structural["reason"]
     requirement, = report["structural_requirements"]
     assert requirement["result"] == "pass" and requirement["current"]
-    assert report["next_action"] == "review_structure"
+    assert not report["scope_complete"] and not report["ready_for_collection"]
     assert structural["requirement_ids"] == [requirement["interpretation_id"]]
 
 
@@ -100,7 +100,7 @@ def test_wrong_declared_layout_is_actionable_even_when_function_bytes_match(hist
     header.write_text(header.read_text().replace("0x00401010", "0x00401000"))
     report = measure(historical, compiler=lambda *_: combined_object(debug_types(8)))
     assert report["candidate"]["checks"]["binary"]["result"] == "pass"
-    structural, = [row for row in report["details"] if row["dimension"] == "structure"]
+    structural, = [row for row in report["details"] if row["dimension"] == "declared_structure"]
     assert structural["result"] == report["restoration"] == report["result"] == "fail"
     requirement, = report["structural_requirements"]
     assert requirement["result"] == "fail" and requirement["counts"]["fail"] == 1
@@ -162,7 +162,7 @@ def test_driver_uses_native_requirement_feedback_to_repair_without_claiming_full
     assert report["worker_rounds"] == 1 and report["stop_reason"] == "independent_review_required"
     assert checked[0]["protected"] == checked[1]["protected"]
     assert checked[1]["structural_requirements"][0]["result"] == "pass"
-    assert report["check"]["result"] == "unknown" and not report["ready_for_collection"]
+    assert report["check"]["result"] == "pass" and not report["ready_for_collection"]
     assert "padding[1]" in source.read_text()  # Useful edit is preserved.
     assert TaskStore(historical).read("owner").base_revision == task.base_revision
 
@@ -171,7 +171,7 @@ def test_summary_keeps_structural_decisions_but_omits_repeated_trials(historical
     header = historical / "code/unit.hpp"
     header.write_text(header.read_text().replace("0x00401010", "0x00401000"))
     assert main(["tasks", "check-restoration", "owner", "--root", str(historical),
-                 "--image", "original.exe", "--summary"]) == 3
+                 "--image", "original.exe", "--summary"]) == 0
     report = json.loads(capsys.readouterr().out)
     requirement, = report["structural_requirements"]
     assert requirement["result"] == "pass" and "trials" not in requirement

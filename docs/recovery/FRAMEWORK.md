@@ -241,13 +241,21 @@ establish completion of this program.
   admission policy after independent review, preserve required matches across
   worker rounds, and distinguish admitted regressions from collection readiness.
   Synthetic checkpoint/resumption tests restore obligations before full acceptance.
-  Live model recovery validation, the OpenSMACX migration verifier and actual
-  collection remain under construction.
+  The package-owned native migration verifier now composes fresh build, bounded
+  declarations, references and outside-scope preservation checks; OpenSMACX
+  configures that command without a project adapter. A synthetic driver test
+  admits a measured byte regression and resumes restoration against the same
+  baseline. Live model recovery validation and actual collection remain under
+  construction; unsupported compiler replicas and scoped table/data changes
+  still refuse preservation.
   Task context now derives restoration requirements from baseline, reachable
   source history and the working tree, preserving removed/rehomed claims without
   a copied ledger. This is a migration safety input, not permission to remove
-  current claim annotations; the compact source obligation writer and production
-  migration verifier remain unfinished.
+  current claim annotations; the compact source obligation writer remains
+  unfinished. Source declarations create bounded `declared_structure`
+  requirements, not complete hierarchy/lifetime claims. Historical interpretations
+  require explicit independent dispositions, and current declarations require
+  fresh measurements. Full structure/runtime acceptance is still separate.
 - [ ] InfoWin ownership and constructor-family end-to-end structural pilots.
   Source-owned direct-member expectations now have strict standalone VC6 CodeView
   checks. InfoWin's redraw_phase_ is measured at +0x90 in Console and InfoWin under
