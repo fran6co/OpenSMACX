@@ -1,0 +1,97 @@
+{
+  "event_id": "1a1f66939bcf2e5021d059fdd9d879a28f307e755533a6b3236ba79178fb137d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/statuswin.cpp",
+      "src/statuswin.h"
+    ],
+    "evidence": [
+      "Incorporate statuswin-hit-test-storage-owners: MainInterface::init at 0x00459680 captures the outer receiver in esi at 0x004596A0, constructs four-coordinate rectangles at +0xCDC (0x00459BCA), +0xCEC (0x00459C35), and +0xCCC (0x00459C89). The hit-test and redraw constants equal MainInterfaceGlobal at 0x007AE820 plus those member offsets.",
+      "Authorize all mapped StatusWin product functions and its shared header because three draw/redraw consumers must change together with the hit-test caller and real ConsoleStatusWin binding. MainInterface and MapWin definition/header files are already authorized. Include the original initialization seed as structural evidence, without promoting its unfinished body or resetting the baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4560512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4934000,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4934032,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4941104,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4941168,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4950064,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4950160,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4950384,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4950416,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4955792,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4955808,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4956032,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4956048,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4956448,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4956576,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "65147cda7a3b27c8e48e7f14af9d090f0279203b8fc0a4bf3d49059381eb54f3",
+  "request_id": "statuswin-maininterface-rectangle-ownership-scope",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:radiobutton-lifetime"
+}
