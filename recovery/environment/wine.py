@@ -30,6 +30,22 @@ VC6_PREFIX = Path(os.environ.get("VC6_PREFIX", VC6_ROOT / ".wineprefix"))
 TOOLS = {"cl": "CL.EXE", "link": "LINK.EXE", "lib": "LIB.EXE"}
 
 
+def run_tool(command: list) -> subprocess.CompletedProcess:
+    """Wait for the tool, not EOF from background Wine services.
+
+    Wine services can inherit captured pipes and keep them open after CL exits.
+    File-backed diagnostics preserve the tool's output and status without
+    waiting for those unrelated services or terminating a shared wineserver.
+    The caller still owns compilation timeouts and process-group cleanup.
+    """
+    with tempfile.TemporaryFile(mode="w+", errors="replace") as stdout, \
+            tempfile.TemporaryFile(mode="w+", errors="replace") as stderr:
+        finished = subprocess.run(command, env=environment(), stdout=stdout, stderr=stderr)
+        stdout.seek(0)
+        stderr.seek(0)
+        return subprocess.CompletedProcess(command, finished.returncode, stdout.read(), stderr.read())
+
+
 def windows_path(text: str) -> str:
     """`/home/x/y.cpp` -> `Z:\\home\\x\\y.cpp`; anything else unchanged.
 
@@ -219,9 +235,8 @@ def write_depfile(executable, arguments: list, path: str, target: str) -> None:
     pass failed would turn a missing nicety into a broken build.
     """
     kept = [a for a in arguments if not a.startswith(DEP_PASS_DROP)]
-    finished = subprocess.run(
-        ["wine32", str(executable), "/nologo", "/E"] + [translate(a) for a in kept],
-        env=environment(), capture_output=True, text=True, errors="replace")
+    finished = run_tool(
+        ["wine32", str(executable), "/nologo", "/E"] + [translate(a) for a in kept])
     seen, ordered = set(), []
     for name in LINE_DIRECTIVE.findall(finished.stdout):
         # cl escapes the separators inside the directive, so `Z:\\a\\b.h`.
@@ -272,8 +287,7 @@ def main(argv: list) -> int:
         scratch.close()
         translated = ["@" + windows_path(scratch.name)]
     command = ["wine32", str(executable)] + translated
-    finished = subprocess.run(command, env=environment(), capture_output=True,
-                              text=True, errors="replace")
+    finished = run_tool(command)
     if scratch is not None:
         os.unlink(scratch.name)
     # CL writes the source file name to stdout before any diagnostic. It is

@@ -54,7 +54,11 @@ build-path shims are removed. `environment/compile.py` supplies the single
 disposable-object implementation used by both legacy measurements and the native
 compiler protocol: nonzero exits, missing/empty objects and timeouts cannot supply
 measurement evidence. Bounded process-group cleanup is shared package code and
-never stops a shared Wine server.
+never stops a shared Wine server. The Wine wrapper captures compiler and
+preprocessor diagnostics in temporary files, not pipes: background Wine services
+can inherit output handles after the compiler exits. Completion follows the
+compiler's exit status, without waiting for service shutdown or weakening object
+validation. This behavior is covered by a lingering-output-owner control.
 
 `environment/recipe.py` owns VC6 option selection, explicit donor recipes and
 compiler-error retry policy. It preserves argv boundaries, resolves relative
