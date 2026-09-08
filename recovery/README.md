@@ -10,6 +10,14 @@ The active agent/coordinator contract is [WORKFLOW.md](WORKFLOW.md). Historical
 compiler observations are in [COMPILER_EVIDENCE.md](COMPILER_EVIDENCE.md); they do
 not override task scope, structural evidence or acceptance policy.
 
+For direct address work use `recover inspect <address-or-symbol> --image <original>`
+(optionally `--callers`) and `recover measure <addresses-or-symbols> --image <original>`.
+An exact project-relative `--in <source-file>` resolves source/seed ambiguity.
+Inspection exposes source hints and fresh original call sites, never a recovery
+verdict. Measurement batches current spellings per TU without banking claims;
+private spelling decks use `recover tasks variants`. Neither command guesses
+class ownership, hides unknown callees, or accepts unfinished placeholders.
+
 Source records, strict CodeView parsing (`class_layout`) and emitted-table checks
 (`check_generated`) now live in the installed library. These are format/ABI
 capabilities, not project/compiler-environment adapters. `environment/` contains

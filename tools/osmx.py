@@ -27,8 +27,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from match_recovery.source import DecompilationState, State, mangled, read
 from match_recovery import source as source_records
-from match_recovery.source.mangled import qualified_name
-from match_recovery.source.calls import CallSite, call_sites, imported_names
 from match_recovery.source_config import SourceConfiguration
 from match_recovery.claim_integrity import check_claims
 from recovery.environment.recipe import build_command, MissingRecipe
@@ -36,12 +34,10 @@ from match_recovery.compilation_database import build_inputs
 from recovery.environment.compile import compile_object
 from recovery.environment.recipe import flag_dependent
 from match_recovery.source.asm import (AsmComparison, CompileFailed, compare_unit, compare_source,
-                        original_asm, shared_spans, span_refusal)
+                        shared_spans)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-# More matches than this and a listing is more use than a dump.
-SHOW_IN_FULL = 4
 
 app = typer.Typer(add_completion=False, no_args_is_help=True,
                   help="Drive the OpenSMACX source map.")
@@ -146,8 +142,6 @@ def status(
                    f"{row['median_bytes']:>10,}{row['under_128_bytes']:>9,}")
 
 
-
-
 def _looks_like_an_address(text: str) -> bool:
     """Is `text` an address rather than a name?
 
@@ -245,145 +239,6 @@ def _ambiguous(claimants: list, target: str, command: str,
         typer.echo(f"  {piece.address_hex}  {piece.name}")
         typer.echo(f"  {'':10}  {piece.location}")
     raise typer.Exit(2)
-
-
-def _lessons(record: DecompilationState) -> list[tuple[str, str]]:
-    out = [("LEVER", f"{key}  {prose}") for key, prose in record.levers]
-    out += [("TRIED", p) for p in record.ruled_out]
-    out += [("TRIED", p) for p in record.unrecoverable]
-    out += [("DEFERRED", p) for p in record.deferred]
-    return out
-
-
-@app.command()
-def show(
-    target: Annotated[str, typer.Argument(
-        help="An address in hex, or a name: WinMain, set_font, "
-             "Buffer::set_font.")],
-    in_file: Annotated[str, typer.Option(
-        "--in",
-        help="Disambiguate by file when one address is annotated twice, "
-             "e.g. --in src/text.cpp or --in unrecovered.")] = "",
-    src: Annotated[Path, typer.Option(
-        envvar="OPENSMACX_SRC")] = REPO_ROOT / "src",
-    exe: Annotated[Path, typer.Option(
-        envvar="OPENSMACX_IMAGE",
-        help="The pinned original executable.",
-    )] = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe",
-    as_json: Annotated[bool, typer.Option(
-        "--json", help="Machine-readable output.")] = False,
-) -> None:
-    """Everything the map and the image say about one piece.
-
-    What the annotation claims, what state it is in, and the shipped bytes
-    it claims - which is the first thing anyone recovering a function looks
-    at. No compiler: `measure` is the one that asks whether a body
-    reproduces this.
-    """
-    records = read(src)
-    claimants = _in_file(_matching(records, target), in_file)
-    if not claimants:
-        typer.secho(f"nothing under {src} matches {target!r}",
-                    fg=typer.colors.RED)
-        raise typer.Exit(1)
-
-    # SEVERAL MATCHES IS A REAL CONDITION, not a corner case. 34 addresses in
-    # this tree are annotated twice - usually a body in `src/` and the same
-    # piece in the proved store - and a name like `init` names dozens of
-    # methods. Choosing one silently would answer a question nobody asked.
-    if len(claimants) > SHOW_IN_FULL:
-        typer.secho(f"{len(claimants)} pieces match {target!r}; "
-                    f"naming one of these exactly, or its address, shows it",
-                    fg=typer.colors.YELLOW)
-        for record in sorted(claimants, key=lambda r: r.address):
-            typer.echo(f"  {record.address_hex}  {population(record):13} "
-                       f"{record.name}")
-        raise typer.Exit(1)
-    if len(claimants) > 1 and not as_json:
-        typer.secho(f"{len(claimants)} annotations match {target!r}; "
-                    f"all are shown", fg=typer.colors.YELLOW)
-
-    payload = []
-    for record in claimants:
-        entry = {
-            "address": record.address_hex,
-            "name": record.name,
-            "symbol": record.symbol,
-            "kind": record.kind,
-            "body": record.body,
-            "location": str(record.location),
-            "mode": str(record.mode),
-            "recipe": str(record.recipe),
-            "population": str(population(record)),
-            "spans": [[f"0x{lo:08X}", f"0x{hi:08X}"]
-                      for lo, hi in record.image_spans],
-            "size": record.size,
-            "lessons": [[kind, text] for kind, text in _lessons(record)],
-            "extract_error": record.extract_error,
-        }
-        entry["refusal"], entry["disassembly"] = _image_side(record, records,
-                                                            exe)
-        payload.append(entry)
-
-    if as_json:
-        typer.echo(json.dumps(payload, indent=2))
-        return
-    for entry in payload:
-        _print_record(entry)
-
-
-def _image_side(record: DecompilationState, records: list,
-                exe: Path) -> tuple[str, list[str]]:
-    """(refusal, lines) for a record, or ("", []) with no image to read."""
-    if not exe.is_file():
-        return "", []
-    refusal = span_refusal(record, exe, shared_spans(records))
-    if refusal is not None:
-        return str(refusal), []
-    try:
-        return "", list(original_asm(record, exe).lines)
-    except ValueError as problem:
-        return "", [f"({problem})"]
-
-
-def _print_record(entry: dict) -> None:
-    typer.echo("")
-    typer.secho(f"{entry['address']}  {entry['name']}", bold=True)
-    typer.echo(f"  {entry['location']}")
-    typer.echo(f"  {entry['mode']} / {entry['recipe']} / "
-               f"{entry['population']}")
-    spans = "  ".join(f"{lo}-{hi}" for lo, hi in entry["spans"])
-    typer.echo(f"  spans      {spans}   ({entry['size']} bytes)")
-    if len(entry["spans"]) > 1:
-        typer.echo(f"  {'':10} the first is the body; the rest is cold code "
-                   f"the image lays elsewhere")
-    if entry["symbol"]:
-        typer.echo(f"  symbol     {entry['symbol']}")
-    if entry["kind"]:
-        typer.echo(f"  kind       {entry['kind']}")
-    if entry["body"]:
-        # THE WHOLE POINT OF THE FACT. Without it a marker with no definition
-        # under it reports "no closing brace within the file", which is true
-        # and useless: the body is in a header, on purpose, and the reader
-        # wants to be told where rather than told the file looks broken.
-        typer.echo(f"  body       {entry['body']}   (defined in-class; the "
-                   f"marker is here because a header cannot be compiled)")
-    elif entry["extract_error"]:
-        typer.secho(f"  no region  {entry['extract_error']}",
-                    fg=typer.colors.YELLOW)
-    for kind, text in entry["lessons"]:
-        typer.echo(f"  {kind:9}  {text}")
-    typer.echo("")
-    if entry["refusal"]:
-        typer.secho(f"  {entry['refusal']} - no verdict is defined for this "
-                    f"span, so there is nothing to compare",
-                    fg=typer.colors.YELLOW)
-    elif entry["disassembly"]:
-        for line in entry["disassembly"]:
-            typer.echo(f"  {line}")
-    else:
-        typer.secho("  (no image to read; pass --exe)",
-                    fg=typer.colors.YELLOW)
 
 
 # THE TWO SETS, per direction 2026-09-03: the image is two compilations -
@@ -681,152 +536,6 @@ def _print_verdict(record: DecompilationState, result: AsmComparison,
 # not this project's job, since they can be had from the compiler and from
 # upstream. The catalogue's `kind` fact separates them from Alpha Centauri's
 # own 5,575, and imports leave the program entirely.
-OURS = ("game", "thunk")
-
-
-@app.command()
-def calls(
-    target: Annotated[str, typer.Argument(
-        help="An address in hex, or a name.")],
-    in_file: Annotated[str, typer.Option(
-        "--in", help="Disambiguate by file when one address is annotated "
-                     "twice.")] = "",
-    src: Annotated[Path, typer.Option(
-        envvar="OPENSMACX_SRC")] = REPO_ROOT / "src",
-    exe: Annotated[Path, typer.Option(
-        envvar="OPENSMACX_IMAGE",
-    )] = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe",
-    every: Annotated[bool, typer.Option(
-        "--all", help="Keep the CRT, zlib and the DLL imports too.")] = False,
-    as_json: Annotated[bool, typer.Option("--json")] = False,
-) -> None:
-    """What this function calls, IN THE ORDER THE IMAGE CALLS IT.
-
-    Read from the shipped bytes, not from the annotation's `calls` fact -
-    that fact is a sorted SET produced by a pass that no longer runs, so it
-    cannot say what happens first, cannot say a target is reached twice, and
-    nothing re-derives it when a body changes.
-
-    ALPHA CENTAURI'S OWN CODE ONLY, by default. The image links the CRT and
-    zlib statically and every DLL entry point arrives through the import
-    table; listing those buries the edges a recovery cares about. `--all`
-    keeps them, labelled.
-
-    An edge nothing in the catalogue names is still shown, marked `?`. It is
-    either uncatalogued game code or library code nobody annotated, and
-    dropping it would quietly shorten the answer.
-    """
-    records = read(src)
-    claimants = _in_file(_matching(records, target), in_file)
-    if len(claimants) != 1:
-        _ambiguous(claimants, target, "calls", in_file)
-    record = claimants[0]
-
-    refusal = span_refusal(record, exe, shared_spans(records))
-    if refusal is not None:
-        typer.secho(f"{record.address_hex}: {refusal} - no bytes to read",
-                    fg=typer.colors.YELLOW)
-        raise typer.Exit(1)
-    listing = original_asm(record, exe)
-    imports = imported_names(exe)
-    by_address = {r.address: r for r in records}
-    neighbours = sorted(records, key=lambda r: r.address)
-
-    rows = [_edge(site, by_address, imports, neighbours)
-            for site in call_sites(listing)]
-    kept = rows if every else [r for r in rows if r["ours"]]
-
-    if as_json:
-        typer.echo(json.dumps({
-            "address": record.address_hex,
-            "name": record.name,
-            "edges": [{k: v for k, v in row.items() if k != "ours"}
-                      for row in kept],
-        }, indent=2))
-        return
-
-    readable = qualified_name(record.name)
-    typer.secho(f"\n{record.address_hex}  {readable or record.name}", bold=True)
-    if readable and readable != record.name:
-        typer.echo(f"  {record.name}")
-    hidden = len(rows) - len(kept)
-    typer.echo(f"  {len(kept)} call(s)" + (f", {hidden} hidden (--all shows "
-               f"the CRT, zlib and the imports)" if hidden else "") + "\n")
-    for row in kept:
-        where = row["target"] or row["via"] or "?"
-        # THE READABLE NAME HERE, THE MANGLED ONE IN `--json`. Nobody reads a
-        # call list to copy a symbol out of it; every other use - `measure`,
-        # `record`, a grep - wants the spelling the catalogue holds, and
-        # `--json` is what those read.
-        typer.echo(f"  {row['at']}  {row['form']:9}{where:12} "
-                   f"{row['kind']:8} {qualified_name(row['name'])
-                                      or row['name']}")
-
-
-def _edge(site: CallSite, by_address: dict, imports: dict,
-          neighbours: list) -> dict:
-    """One call site, resolved as far as the image allows."""
-    row = {"at": f"0x{site.at:08X}", "form": site.form, "target": None,
-           "via": None, "kind": "", "name": "", "ours": False}
-    if site.slot is not None:
-        row["via"] = f"[0x{site.slot:08X}]"
-        if site.slot in imports:
-            row["kind"] = "import"
-            row["name"] = imports[site.slot]
-            return row
-        # A SLOT THAT IS NOT AN IMPORT is this image's own indirection - a
-        # vtable, a bound function pointer, a dispatch table. Where it points
-        # is a runtime fact, so the slot is the whole answer.
-        row["kind"] = "indirect"
-        row["name"] = "(this image's own slot)"
-        row["ours"] = True
-        return row
-    if site.target is None:
-        row["kind"] = "dynamic"
-        row["name"] = "(through a register)"
-        row["ours"] = True
-        return row
-    row["target"] = f"0x{site.target:08X}"
-    callee = by_address.get(site.target)
-    if callee is not None:
-        row["kind"] = callee.kind or "?"
-        row["name"] = callee.name
-        row["ours"] = callee.kind in OURS or not callee.kind
-        return row
-    return _unnamed(site.target, row, neighbours)
-
-
-def _unnamed(target: int, row: dict, neighbours: list) -> dict:
-    """An edge the catalogue does not name, described by what surrounds it.
-
-    NOT CLASSIFIED, LOCATED. Naming a kind for an address nobody annotated
-    would be an invention, and this tree has been bitten by facts that were
-    really guesses. What CAN be said is where the address falls: inside a
-    catalogued span - a call into the middle of a known function - or after
-    one, in which case the neighbour's own `kind` is evidence about the
-    neighbourhood and is reported AS evidence.
-
-    0x00644EF2 is the case that shaped this. It sits between `__initterm`
-    and `_abs`, both `library`, and it is the CRT's `free` under no name -
-    so hiding it by default is right and asserting `kind library` is not.
-    """
-    below = None
-    for record in neighbours:
-        if record.address > target:
-            break
-        below = record
-    if below is None:
-        row["kind"] = "?"
-        row["name"] = "(before anything the catalogue names)"
-        row["ours"] = True
-        return row
-    inside = any(low <= target < high for low, high in below.image_spans)
-    row["kind"] = "?"
-    row["ours"] = below.kind in OURS or not below.kind
-    row["name"] = (
-        f"(inside {below.name}, +0x{target - below.address:X})" if inside else
-        f"(unnamed; after {below.name}, kind {below.kind or '?'})")
-    return row
 
 
 def _claim_coverage(src):

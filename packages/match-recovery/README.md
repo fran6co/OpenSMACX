@@ -5,6 +5,31 @@ structure-led matching decompilation. It does not register projects, import a
 project's Python code or bundle a game's adapters. Project integration is local
 configuration plus commands exchanging JSON. Those commands can use any language.
 
+## Direct recovery diagnostics
+
+`recover inspect <address-or-symbol> [--in <source-file>]` shows the source
+mapping, extracted region and historical hints without a compiler. Add
+`--image <original>` for pinned, bounded disassembly of every declared span and
+ordered call sites. `--callers` additionally searches mapped spans for incoming
+direct calls; it is not whole-binary coverage or dynamic dispatch resolution.
+Duplicate source/seed mappings require an exact host and remain visible as
+alternatives. Imports and unknown targets are not hidden by neighboring labels.
+Incomplete decoding and exhausted `--max-bytes` budgets remain explicit.
+
+`recover measure <addresses-or-symbols> --image <original> [--in <source-file>]`
+measures current spellings without publication. Subjects sharing a TU reuse the
+same configured compiler trials. `--jobs` controls TU concurrency, bounded by the
+project's provisioned compiler capacity. Exit 0 means all selected bodies matched
+the historical masked-byte comparer, 1 a measured miss, 3 unavailable evidence.
+No result establishes structural or runtime acceptance. Existing claims survive
+regressions; unfinished placeholders cannot pass. No historical-claim gate must
+already be satisfied just to investigate a broken intermediate structure.
+
+Use `recover tasks variants` for candidate decks in private overlays, and only
+`recover record` to bank newly measured claims. Diagnostics do not configure a
+build or guess donor recipes; run configured preparation at a coordinator
+checkpoint first. All reports are recomputed or disposable caches, not records.
+
 ## Instruction references
 
 `recover check-references --summary` checks literal source-file references and

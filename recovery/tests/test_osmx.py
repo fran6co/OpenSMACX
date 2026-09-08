@@ -318,30 +318,6 @@ def named(tmp_path):
     return tmp_path
 
 
-def show(tree, target, *extra):
-    return run("show", target, "--src", str(tree),
-               "--exe", "/nonexistent", *extra)
-
-
-def test_a_name_finds_it_through_its_decoration(named):
-    """`WinMain` is `_WinMain@16` here: the underscore is stdcall
-    decoration, so a word-boundary match would miss it entirely."""
-    result = show(named, "WinMain", "--json")
-    assert result.exit_code == 0, result.output
-    assert json.loads(result.output)[0]["name"] == "_WinMain@16"
-
-
-def test_a_scoped_name_finds_the_member(named):
-    result = show(named, "Buffer::set_font", "--json")
-    assert json.loads(result.output)[0]["address"] == "0x005DAC70"
-
-
-def test_an_address_finds_it(named):
-    for spelling in ("0x0045F950", "0045F950", "45f950"):
-        assert json.loads(show(named, spelling, "--json").output)[0][
-            "name"] == "_WinMain@16"
-
-
 def test_a_short_hex_looking_name_is_read_as_a_name(named):
     """`add`, `face` and `dead` are all valid hex. Winning that argument
     silently is how someone asking about a function gets the bytes at
@@ -350,39 +326,6 @@ def test_a_short_hex_looking_name_is_read_as_a_name(named):
     assert not osmx._looks_like_an_address("face")
     assert osmx._looks_like_an_address("0xadd")
     assert osmx._looks_like_an_address("0045F950")
-
-
-def test_a_name_many_pieces_share_lists_rather_than_dumps(named):
-    """Five classes have an `init`. Choosing one silently would answer a
-    question nobody asked; printing five disassemblies answers too much."""
-    result = show(named, "init")
-    assert result.exit_code == 1
-    assert "5 pieces match" in result.output
-    for owner in ("Alpha", "Beta", "Gamma", "Delta", "Epsilon"):
-        assert f"?init@{owner}@@QAEXXZ" in result.output
-
-
-def test_an_address_two_annotations_claim_shows_both(named):
-    """34 addresses in the real tree are annotated twice, usually a body in
-    `src/` and the same piece in the proved store. Both are the answer."""
-    result = show(named, "0x00406000")
-    assert result.exit_code == 0
-    assert "2 annotations match" in result.output
-    assert result.output.count("0x00406000") >= 2
-
-
-def test_an_unmatched_target_fails(named):
-    result = show(named, "NotAThing")
-    assert result.exit_code == 1
-    assert "matches" in result.output
-
-
-def test_without_an_image_it_still_answers_from_the_map(named):
-    """The map is on disk; the image may not be. What the annotation says
-    is worth having either way."""
-    result = show(named, "WinMain")
-    assert result.exit_code == 0
-    assert "no image to read" in result.output
 
 
 # --------------------------------------------------------------- measure
@@ -1062,31 +1005,12 @@ HEADER_BODIED = """/*
 """
 
 
-def test_a_marker_with_no_definition_says_where_the_body_is(tmp_path):
-    """27 pieces are written in-class so the image's own inlining
-    reproduces. Their marker cannot sit beside them - a header is neither
-    globbed nor compiled - so without the fact `show` reports "no closing
-    brace within the file", which is true and useless."""
-    (tmp_path / "thing.cpp").write_text(HEADER_BODIED)
-    result = show(tmp_path, "0x00404000")
-    assert result.exit_code == 0, result.output
-    assert "body       src/thing.h" in result.output
-    assert "no region" not in result.output
-
-
 def test_the_body_fact_reaches_the_record(tmp_path):
     from match_recovery.source import read
     (tmp_path / "thing.cpp").write_text(HEADER_BODIED)
     record = read(tmp_path)[0]
     assert record.body == "src/thing.h"
     assert record.kind == "game"
-
-
-def test_a_marker_with_no_body_fact_still_reports_the_missing_region(tmp_path):
-    """The fact suppresses the warning; its absence must not."""
-    (tmp_path / "thing.cpp").write_text(
-        HEADER_BODIED.replace("// body      src/thing.h\n", ""))
-    assert "no region" in show(tmp_path, "0x00404000").output
 
 
 def test_the_most_specific_in_fragment_wins(tmp_path):
@@ -1188,9 +1112,6 @@ def test_an_overload_is_named_by_its_address_or_its_full_name(tmp_path):
         "void a() {\n}\n"
         "// ORIGINAL: 0x00409000 ?f@@YAHPAD@Z 0x00409000-0x00409008\n"
         "void b() {\n}\n")
-    result = run("show", "f", "--src", str(tmp_path), "--exe", "/nonexistent")
-    assert result.exit_code == 0
-    assert "2 annotations match" in result.output
     result = run("measure", "f", "--src", str(tmp_path))
     assert result.exit_code == 2
     assert "name one of these exactly, or its address" in result.output

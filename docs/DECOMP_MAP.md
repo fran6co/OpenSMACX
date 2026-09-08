@@ -216,24 +216,24 @@ scaffold route; they are verification artifacts, not product source, and are
 not build inputs. They are seeds for ownership-scoped recovery, not a mandatory
 source form. Reconcile mappings and callers when establishing a product home;
 do not copy a scaffold merely because the old workflow did so.
-`uv run tools/osmx.py show <addr> --in unrecovered` still reads an old copy
-when it is the best starting point.
+`uv run recover inspect <addr> --in <seed-file>` reads an old copy when it is
+the best starting point. Ambiguous selections list the exact source/seed hosts.
 
-## The status tool
+## Native diagnostics and recording
 
 ```
-uv run tools/osmx.py status            # every population, reachable or not
-uv run tools/osmx.py show <addr|name>  # annotation + shipped disassembly
-uv run tools/osmx.py calls <addr>      # call sites in image order
-uv run tools/osmx.py measure <addr | --body F | --dir D>   # exit 0 only BYTE_EXACT
+uv run recover inventory              # source and seed populations
+uv run recover inspect <addr|name> --image <image> --callers
+uv run recover measure <addrs...> --image <image> # read-only current spellings
+uv run recover tasks variants <task> --image <image> --deck <deck.json>
 uv run recover record <addrs...> --image <image> # measure AND stamp annotations
 uv run recover prepare                # generate fresh compiler recipes
 ```
 
-Legacy measurement goes through `match_recovery.source.asm`: the pinned image on one side, the
+Historical byte measurement goes through `match_recovery.source.asm`: the pinned image on one side, the
 record's unit compiled by VC6 on the other, several flag sets compared, and
-the best answer kept. `--dir` scores a whole directory of candidate bodies
-best-first in one pass. Without VC6, Wine, or the pinned image the commands
+the best answer kept. Task variant decks score authorized private source overlays
+against a baseline and damage control. Without VC6, Wine, or the pinned image the commands
 print the reason instead of guessing. This comparer masks relocations and does
 not prove target identity or C++ structure; the strict framework checks remain
 separate until full-gate cutover. Claims retain restoration obligations during

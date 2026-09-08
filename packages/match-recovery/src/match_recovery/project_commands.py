@@ -104,6 +104,19 @@ def register(commands):
     inventory = commands.add_parser("inventory", help="Inspect configured source and seed annotations without altering them")
     inventory.add_argument("--root", type=Path, default=Path.cwd())
     inventory.add_argument("--image", type=Path, help="Verify the original against its pin")
+    inspect = commands.add_parser("inspect", help="Inspect source mappings, original spans and calls without measuring or banking")
+    inspect.add_argument("targets", nargs="+")
+    inspect.add_argument("--root", type=Path, default=Path.cwd())
+    inspect.add_argument("--in", dest="in_file", help="Exact project-relative annotation host")
+    inspect.add_argument("--image", type=Path, help="Pinned original for disassembly and call evidence")
+    inspect.add_argument("--callers", action="store_true", help="Search original mapped spans for incoming direct calls; not whole-executable coverage")
+    inspect.add_argument("--max-bytes", type=int, default=4 * 1024 * 1024)
+    measure = commands.add_parser("measure", help="Measure selected source mappings without banking claims or changing source")
+    measure.add_argument("targets", nargs="+")
+    measure.add_argument("--root", type=Path, default=Path.cwd())
+    measure.add_argument("--image", type=Path, required=True)
+    measure.add_argument("--in", dest="in_file", help="Exact project-relative annotation host")
+    measure.add_argument("--jobs", type=int, default=1, help="Concurrent TUs; must fit isolated compiler capacity")
     grouping = commands.add_parser("partition", help="Derive provisional ownership units, not historical TU claims")
     grouping.add_argument("--root", type=Path, default=Path.cwd())
     grouping.add_argument("--group", help="A source-derived class or component group identity")
@@ -240,6 +253,17 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
             spans.append(Span(*(int(part, 0) for part in parts)))
         return 0, bind(root, image=arguments["image"], spans=spans,
                        **{key: arguments[key] for key in ("address", "name", "source", "line", "source_sha256", "reason", "evidence")})
+    if arguments.get("command") == "measure":
+        from .source_measure import measure_source
+        output = measure_source(root, arguments["targets"], image=arguments["image"],
+                                in_file=arguments.get("in_file"), jobs=arguments.get("jobs", 1))
+        return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
+    if arguments.get("command") == "inspect":
+        from .inspection import inspect_source
+        output = inspect_source(root, arguments["targets"], in_file=arguments.get("in_file"),
+                                image=arguments.get("image"), callers=arguments.get("callers", False),
+                                max_bytes=arguments.get("max_bytes", 4 * 1024 * 1024))
+        return {"pass": 0, "unknown": 3}[output["result"]], output
     if arguments.get("command") == "survey":
         from .image_survey import survey_image
         return 0, survey_image(root, arguments["image"], starts=arguments.get("starts", ()),

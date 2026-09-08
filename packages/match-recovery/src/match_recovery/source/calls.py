@@ -15,12 +15,10 @@ DLL entry point, and if it is not it is this image's own indirection. An
 `FF /2 <register>` cannot be resolved from one function's bytes at all,
 and is reported as what it is rather than dropped.
 
-WHAT IS WORTH READING. The catalogue's `kind` fact separates Alpha
-Centauri's own code (5,575 pieces) from the statically linked CRT and zlib
-(331) and the thunks (35). A call graph that lists `_memset` and
-`__ftol` beside `Console::editor_polar` buries the thing the reader came
-for, so the caller filters on `kind` - see `tools/osmx.py calls`. This
-module classifies; it does not decide what to hide.
+This module classifies control-flow encodings, not ownership. The native
+inspector retains imports, unresolved dynamic edges and every source/seed
+interpretation at a direct target. Nearby names or historical kind labels
+cannot establish which component owns an otherwise unmapped destination.
 """
 
 from __future__ import annotations

@@ -95,6 +95,11 @@ Run `uv run recover prepare` before standalone task measurements/recording and
 again after changing build inputs. This publishes fresh configured recipes while
 retaining their generated include context in ignored storage. It does not clear
 the existing build tree. Never run preparation during a measurement epoch.
+Use `recover inspect <address-or-symbol> --image <original> --callers` for source
+context and fresh mapped call evidence, and `recover measure <addresses-or-symbols>
+--image <original>` for read-only current-spelling trials. Resolve source/seed
+ambiguity with an exact `--in <source-file>`; do not select a scaffold silently.
+These diagnostics do not bank claims or replace ownership-task checks and review.
 
 ## 3. Read context and model the group
 

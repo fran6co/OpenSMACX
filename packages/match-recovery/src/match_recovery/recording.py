@@ -8,7 +8,6 @@ or object from an earlier invocation can be submitted as recording evidence.
 from concurrent.futures import ProcessPoolExecutor
 import hashlib
 from pathlib import Path
-import re
 import subprocess
 
 from .claim_integrity import check_claims
@@ -19,38 +18,16 @@ from .model import digest, require_text
 from .records import parse_json_value
 from .source import read_file
 from .source.asm import compare_unit, shared_spans
-from .source.mangled import qualified_name
 from .source.recording import record_claims
 from .source_history import git
 from .source_inventory import image_pin
+from .source_selection import select_records
 
 
 def _unit(job):
     root, profile, path, records, image, arguments, flags, shared = job
     return compare_unit(records, image, path, arguments, flags, shared,
                         compiler=Compiler(root, profile=profile))
-
-
-def _select(records, targets, host, symbol_format):
-    selected = []
-    for target in targets:
-        require_text(target, "recording target")
-        candidates = [row for row in records if host is None or row.path == host]
-        matches = [row for row in candidates if target in (row.name, row.symbol)
-                   or symbol_format == "msvc" and target == qualified_name(row.name)]
-        # Ordinary C++ names such as f/add/face are also hexadecimal strings.
-        # Explicit 0x selects an address; otherwise exact names take precedence.
-        if (re.fullmatch(r"0[xX][0-9a-fA-F]+", target)
-                or not matches and re.fullmatch(r"[0-9a-fA-F]+", target)):
-            matches = [row for row in candidates if row.address == int(target, 16)]
-        if len(matches) != 1:
-            locations = ", ".join(f"{row.path}:{row.line}" for row in matches)
-            raise ValueError(f"recording target {target!r} requires one source mapping; "
-                             f"found {len(matches)}" + (f": {locations}; select an exact --in path" if matches else ""))
-        selected.append(matches[0])
-    if len({(row.path, row.line) for row in selected}) != len(selected):
-        raise ValueError("the same source mapping was selected more than once")
-    return selected
 
 
 def record(root: Path, targets, *, image: Path, in_file: str | None = None,
@@ -120,7 +97,7 @@ def record(root: Path, targets, *, image: Path, in_file: str | None = None,
     if in_file is not None:
         relative_path(in_file)
         host = settings.source.path(root, in_file)
-    selected = _select(records, targets, host, settings.source.symbol_format)
+    selected = select_records(records, targets, host, settings.source.symbol_format)
     if any(row.path.suffix not in settings.unit_extensions for row in selected):
         raise ValueError("selected mapping host is not a configured translation unit")
     arguments = ()
