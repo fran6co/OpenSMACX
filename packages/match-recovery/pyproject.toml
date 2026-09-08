@@ -6,7 +6,7 @@ requires-python = ">=3.12"
 dependencies = []
 
 [project.optional-dependencies]
-# Only legacy i386 disassembly/measurement needs Capstone. Reading and writing
+# i386 image surveying and historical disassembly/measurement need Capstone. Reading and writing
 # source annotations and running the workflow require only the standard library.
 x86 = ["capstone==5.0.6"]
 

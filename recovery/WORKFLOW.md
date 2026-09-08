@@ -8,6 +8,18 @@ boundary and unfinished capabilities are described in `README.md` here and
 
 ## 1. Establish ownership and evidence
 
+For executable-first exploration, `uv run recover survey --image <image> --summary`
+derives bounded entry/direct-call hints and correlates them with source/seed and
+component bindings. `--start <address>` adds an explicit manual/external-analysis
+hint; `--max-instructions` bounds static traversal. Full instruction/edge details
+are available without `--summary`. Keep redirected image-derived reports ignored.
+Candidates have no inferred function extent or class/TU ownership. A direct call
+is not proof of an application function; declared component candidates need
+dependency verification, and unidentified runtime code remains unidentified.
+Budget exhaustion, overlapping decodes and unknown indirect paths stay visible.
+Establish bounds and source mappings from evidence before creating a recovery task;
+the survey does not authorize a task or generate C++.
+
 Run `uv run recover inventory`, `uv run recover components list`, then
 `uv run recover partition`. Inspect a candidate with
 `uv run recover partition --group class:InfoWin --details --impact` (substitute

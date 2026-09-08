@@ -89,7 +89,7 @@ def initialize(root: Path, target: str, python: str, *, image: Path | None = Non
                            "Configure RECOVERY_COMPILER (compiler JSON protocol) and RECOVERY_BUILD (root and fresh build directory arguments), or replace their argv arrays.",
                            "Configure actual flags, debug-type flags, build outputs, compile database and all compiler/build inputs; no compiler or ABI was inferred.",
                            "The native measurement starter supports PE/COFF i386 only; other backends need verification support, not a relabeled configuration.",
-                           "Add source-owned mappings and evidence; inventory, partition, task context and restoration use the package without project dispatch code.",
+                           "Use recover survey --image <original> for bounded starting hints, then establish source-owned mappings and evidence; no function/TU bounds are inferred.",
                            "Configure independent prompt-driven worker/reviewer commands in recovery/agents.json.",
                            "Configure history scope and source audits from evidence, then create an ownership task with recover tasks create.",
                            "Ignore build/ caches and checkpoint configuration/task decisions in Git before recover run.",

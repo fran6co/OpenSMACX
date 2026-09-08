@@ -219,6 +219,8 @@ class PeImage:
         if _unpack("<H", header, 0)[0] != 0x10B:
             raise ValueError("expected a PE32 optional header")
         self.base, = _unpack("<I", header, 28)
+        entry_rva, = _unpack("<I", header, 16)
+        self.entrypoint = self.base + entry_rva if entry_rva else None
         sections = []
         for index in range(count):
             at = pe + 24 + optional + index * 40
@@ -229,6 +231,8 @@ class PeImage:
         if any(left.end > right.start for left, right in zip(ordered, ordered[1:])):
             raise ValueError("overlapping PE sections")
         self.data, self.sections = data, tuple(sections)
+        self.section_names = tuple(_slice(data, pe + 24 + optional + index * 40, 8).rstrip(b"\0").decode("latin1")
+                                   for index in range(count))
         self.section_flags = tuple(_unpack("<I", data, pe + 24 + optional + index * 40 + 36)[0] for index in range(count))
         directories, = _unpack("<I", header, 92)
         if directories > (len(header) - 96) // 8:

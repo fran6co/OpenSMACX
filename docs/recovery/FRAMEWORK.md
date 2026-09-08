@@ -14,6 +14,13 @@ project-wide dispatch fallback is removed. This improves onboarding, not backend
 coverage: native measurements remain PE/COFF i386, and compiler recipes, source
 evidence, full acceptance and autonomous recovery are not inferred by setup.
 
+The native `recover survey` now exposes executable-first starting points without
+requiring a legacy function catalogue. Bounded PE/i386 static traversal retains
+entry/direct-call provenance, source and component correlations, decode conflicts,
+indirect-flow gaps and unfinished budgets. It generates no source and invents no
+function/TU boundaries; these observations are inputs for establishing recoverable
+identities, not completed executable-to-source seeding or application coverage.
+
 The configured loop now uses the package-owned `tasks check-restoration` command:
 current strict binary/layout measurements are joined to source-history obligation
 identities, including removed claims. These are disposable measurements, not a

@@ -19,6 +19,13 @@ def _progress(event):
 
 
 def register(commands):
+    survey = commands.add_parser("survey", help="Derive executable starting hints and source correlations; never infer function or TU extents")
+    survey.add_argument("--root", type=Path, default=Path.cwd())
+    survey.add_argument("--image", type=Path, required=True)
+    survey.add_argument("--start", dest="starts", action="append", type=lambda value: int(value, 0), default=[],
+                        help="Additional PE virtual-address hint from manual/external analysis")
+    survey.add_argument("--max-instructions", type=int, default=50000)
+    survey.add_argument("--summary", action="store_true", help="Omit individual instructions and edges; keep candidate provenance and unresolved paths")
     prepare = commands.add_parser("prepare", help="Generate fresh configured compiler recipes and publish the database; not a recovery check")
     prepare.add_argument("--root", type=Path, default=Path.cwd())
     prepare.add_argument("--summary", action="store_true")
@@ -198,6 +205,10 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
     if (configuration.keys() - {"schema_version", "source", "source_history", "compiler", "measurement", "audits", "build", "mappings", "gate", "preparation"}
             or type(configuration.get("schema_version")) is not int or configuration["schema_version"] != 1):
         raise ValueError("invalid local project command configuration")
+    if arguments.get("command") == "survey":
+        from .image_survey import survey_image
+        return 0, survey_image(root, arguments["image"], starts=arguments.get("starts", ()),
+                               max_instructions=arguments.get("max_instructions", 50000), summary=arguments.get("summary", False))
     if arguments.get("command") == "prepare":
         from .preparation import prepare_project
         output = prepare_project(root)

@@ -40,6 +40,7 @@ Everything Python runs through `uv run`, never bare `python3`.
 
 ```sh
 uv run recover inventory
+uv run recover survey --image <image> --summary
 uv run recover prepare
 uv run recover partition
 uv run recover tasks context <task>

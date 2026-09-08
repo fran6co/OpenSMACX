@@ -64,6 +64,40 @@ is required for a supported target. Compiler interaction scripts can remain loca
 or existing tools can implement that boundary. The package does not supply an agent
 service, compiler installation or project verification policy.
 
+## Survey an executable before source recovery
+
+With the `x86` extra installed, a new project can inspect the pinned original even
+before it has function annotations:
+
+```sh
+recover survey --image /path/to/original.exe --max-instructions 50000 --summary
+recover survey --image /path/to/original.exe --start 0x401000
+```
+
+The native PE32/i386 survey follows bounded static control flow from the PE entry
+point and optional starting hints supplied from manual analysis or other tools.
+It reports executable sections, ordinary imports, instruction/edge observations,
+entry/direct-call candidates, source/seed correlations, declared dependency
+bindings, unresolved paths and pending addresses when its budget is exhausted.
+Removing `--summary` retains individual instructions and edges. Neither mode
+writes source, task decisions or a results ledger; redirected proprietary-derived
+reports belong in ignored storage.
+
+These candidates are starting hints, not established functions: call fallthrough
+is explored without proving that a callee returns, and data can decode as code.
+Indirect jumps stop traversal; ordinary IAT operands can identify dependency slots
+but are not followed as local functions. Overlapping instruction interpretations,
+unbacked targets and undecodable instructions remain diagnostics. Additional export,
+TLS, exception and delay-import paths remain explicitly incomplete. A static
+reachability budget is not executable coverage, even when its queue empties.
+
+Jumps do not establish tail calls, class ownership or historical TU boundaries.
+Original extents remain unknown; existing ownership names remain hints. Source-owned
+upstream component declarations route candidates to `verify_dependency`, without
+proving the dependency's version/ABI. Unmapped candidates still need independent
+boundary/ownership evidence and source mappings before recovery tasks can use them.
+Exit 0 means the survey ran, not that any recovery or executable verification passed.
+
 ## Whole-project gate
 
 `recover check --root <project> --image <original> --jobs 1 --summary` runs the
