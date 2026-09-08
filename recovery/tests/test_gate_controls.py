@@ -161,7 +161,7 @@ CASES = (
     Case("source_symbol_data_binding", "symbols", "fail",
          lambda e: symbol(e, "?PaletteActive@@3PAVPalette@@A"),
          ("functions", "symbol", "?PaletteActive@@3PAVPalette@@A")),
-    Case("live_references", "project:live-references", "fail",
+    Case("live_references", "live-references", "fail",
          lambda e: e.append("README.md", "\nRun `uv run tools/harness_not_a_tool_9f3a.py` now.\n")),
     Case("source_mapping_conflict", "mappings", "fail", conflicting_map),
     Case("class_model_growth", "audit:class-debt", "fail",

@@ -88,6 +88,9 @@ def register(commands):
     source.add_argument("--root", type=Path, default=Path.cwd())
     source.add_argument("--jobs", type=int, default=1)
     source.add_argument("--summary", action="store_true")
+    references = commands.add_parser("check-references", help="Check live source and instruction path references; not command execution proof")
+    references.add_argument("--root", type=Path, default=Path.cwd())
+    references.add_argument("--summary", action="store_true")
     build = commands.add_parser("check-build", help="Run configured commands in a fresh ignored build directory; not recovery acceptance")
     build.add_argument("--root", type=Path, default=Path.cwd())
     build.add_argument("--summary", action="store_true")
@@ -223,7 +226,7 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
                       arguments_file=arguments.get("arguments_file"), jobs=arguments.get("jobs", 1))
     root = root.resolve()
     configuration = read_json(root / "recovery/project.json")
-    if (configuration.keys() - {"schema_version", "source", "source_history", "compiler", "measurement", "audits", "build", "mappings", "gate", "preparation", "acceptance", "initializers", "layout"}
+    if (configuration.keys() - {"schema_version", "source", "source_history", "compiler", "measurement", "audits", "build", "mappings", "gate", "preparation", "acceptance", "initializers", "layout", "references"}
             or type(configuration.get("schema_version")) is not int or configuration["schema_version"] != 1):
         raise ValueError("invalid local project command configuration")
     if arguments.get("command") == "bind":
@@ -306,6 +309,12 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
         output["missing_requirements"] = len(output["missing"])
         if arguments.get("summary"):
             output.pop("missing")
+        return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
+    if arguments.get("command") == "check-references":
+        from .reference_check import check_references
+        output = check_references(root)
+        if arguments.get("summary"):
+            output["historical_mentions"] = len(output.pop("history"))
         return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
     if arguments.get("command") == "check-source":
         from .source_integrity import check_source

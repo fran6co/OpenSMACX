@@ -53,6 +53,7 @@ uv run recover check --image <image> --summary
 uv run recover check-matches --image <image> --summary
 uv run recover check-data --image <image> --summary
 uv run recover check-source --jobs 8 --summary
+uv run recover check-references --summary
 uv run recover check-mappings --summary
 uv run recover check-symbols --summary
 uv run recover check-layout --summary
@@ -77,8 +78,9 @@ verifier for supported reviewed checkpoints; missing preservation or other
 prerequisites still refuse admission. Scoped checks and
 reviews do not establish full acceptance or a working game.
 The package-owned `recover check` now coordinates the whole configured gate;
-`recovery/gate.json` retains the local live-reference script pending migration,
-plus the package's native conventional initializer check. Source-configured
+`recovery/gate.json` invokes the package's conventional initializer check.
+Source/instruction reference checks are native and configured in `project.json`.
+Source-configured
 native layout coverage replaces the old header-offset walk, including controlled
 witnesses for declarations absent from ordinary debug output.
 Keep the legacy route for cutover comparison/control until that verification

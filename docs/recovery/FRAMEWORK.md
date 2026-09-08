@@ -76,7 +76,9 @@ Those project controls now live in opt-in `recovery/tests/test_gate_controls.py`
 full native gates in a disposable detached checkout, named stage/subject assertions,
 and guarded damage restoration. The old main-tree mutation CLI is removed.
 Ordinary anchor/safety tests are not a substitute for executing the live matrix.
-The local live-reference script remains until its document coverage is absorbed.
+The local live-reference script is removed. Native `recover check-references`
+checks configured source/documentation roots, including the recovery instructions;
+the gate tracks reference-target existence as well as instruction bytes.
 Native compiler-observed layouts now cover conventional header offsets; the old
 guessed-size walk is removed. Controlled source-derived witnesses expose otherwise
 unemitted declarations, without hiding conflicting product definitions.

@@ -1253,6 +1253,14 @@ def _initializer_coverage(exe):
         return {"result": "unknown", "counts": {}, "reason": str(error)}
 
 
+def _reference_coverage():
+    from match_recovery.reference_check import check_references
+    try:
+        return check_references(REPO_ROOT)
+    except (OSError, ValueError) as error:
+        return {"result": "unknown", "reason": str(error)}
+
+
 def _native_audit_result(outcome, name, label, required_rules=None):
     """Read package audit reports during gate cutover; never accept missing proof."""
     try:
@@ -1723,17 +1731,11 @@ def check(
     # is ordered here. Symbol compilation still needs the build's result.
     audits = concurrent.futures.ThreadPoolExecutor(max_workers=11)
 
-    def _audit(tool: str, *argv):
-        return audits.submit(
-            subprocess.run,
-            [sys.executable, str(REPO_ROOT / "tools" / tool), *argv],
-            cwd=REPO_ROOT, capture_output=True, text=True)
-
     vtables_job = audits.submit(
         subprocess.run,
         [sys.executable, "-m", "match_recovery.cli", "audits", "check", "compiler-work", "--summary"],
         cwd=REPO_ROOT, capture_output=True, text=True)
-    stale_job = _audit("stale_references.py")
+    references_job = audits.submit(_reference_coverage)
 
     def _symbols_after_build():
         # The configured compiler owns fresh temporary objects; a failed build
@@ -1791,22 +1793,16 @@ def check(
         typer.secho("  " + vtables.stdout.strip(),
                     fg=typer.colors.RED if vtables.returncode else typer.colors.WHITE)
 
-    # PROSE THAT TELLS THE READER TO RUN SOMETHING THAT IS NOT THERE, held to
-    # zero the same way. This failure is invisible from inside the instruction:
-    # `.claude/commands/recover-batch.md` named SEVEN deleted tools, so every
-    # `uv run` line in it failed at step 1 - and nothing noticed, because the
-    # only reader is whoever types the slash command. `tools/stale_references.py`
-    # had existed for months and its roots stopped one directory short of that
-    # file, and one directory is the whole difference between a check and a
-    # check that cannot see the defect it was written for.
-    stale = stale_job.result()
+    references = references_job.result()
     if not as_json:
-        said = stale.stdout.strip().splitlines() or [""]
-        typer.secho("  " + said[-1],
-                    fg=typer.colors.RED if stale.returncode
-                    else typer.colors.WHITE)
-        for line in said[:-1][:8]:
-            typer.secho(f"  {line}", fg=typer.colors.RED)
+        typer.secho(f"  native live references: {references['result']}, "
+                    f"{references.get('missing_paths', '?')} missing path(s)",
+                    fg=typer.colors.RED if references["result"] == "fail" else
+                    typer.colors.YELLOW if references["result"] == "unknown" else typer.colors.WHITE)
+        for row in references.get("findings", [])[:8]:
+            typer.secho(f"    {row['path']}:{row['line']}: {row['target']}", fg=typer.colors.RED)
+        if "reason" in references:
+            typer.echo("    " + references["reason"])
 
     # Fresh emission coverage, distinct from original-byte matching and final
     # link selection. Missing names are incomplete, not an allowed population.
@@ -1935,12 +1931,13 @@ def check(
         typer.secho("  " + coverage_note, fg=typer.colors.RED if coverage["result"] != "pass" else typer.colors.WHITE)
 
     code = (1 if regressed or dangling or unread or link.returncode
-            or vtables.returncode or stale.returncode or symbols["result"] == "fail"
+            or vtables.returncode or references["result"] == "fail" or symbols["result"] == "fail"
             or index.returncode or coverage["result"] == "fail" or debt.returncode
             or annotations.returncode or storage.returncode
             or values["result"] == "fail" or initial_data["result"] == "fail" or layouts["result"] == "fail"
             else 3 if unasked or coverage["result"] == "unknown" or initial_data["result"] == "unknown"
-            or symbols["result"] == "unknown" or layouts["result"] == "unknown" or values["result"] == "unknown" else 0)
+            or symbols["result"] == "unknown" or layouts["result"] == "unknown" or values["result"] == "unknown"
+            or references["result"] == "unknown" else 0)
     # THE VERDICT GOES IN THE OUTPUT, not only in the exit code. The brief has
     # told agents for a long time never to pipe this to `tail`, because `cmd |
     # tail` reports TAIL's status and `echo $?` after it is always 0 - and an
@@ -1951,7 +1948,7 @@ def check(
     # a status nobody can see through a pipe.
     verdict = ("FAILED: THE TREE DOES NOT LINK" if link.returncode
                else "FAILED: the tree does more of the compiler's work" if vtables.returncode
-               else "FAILED: an instruction names something that is not there" if stale.returncode
+               else "FAILED: an instruction names something that is not there" if references["result"] == "fail"
                else "FAILED: source symbol coverage" if symbols["result"] == "fail"
                else "FAILED: the address index grew" if index.returncode
                else "FAILED: semantic debt grew" if debt.returncode
@@ -1968,6 +1965,7 @@ def check(
                else "INCOMPLETE: original initial data unverified (not green)" if initial_data["result"] == "unknown"
                else "INCOMPLETE: source layout coverage unavailable (not green)" if layouts["result"] == "unknown"
                else "INCOMPLETE: initializer coverage unavailable (not green)" if values["result"] == "unknown"
+               else "INCOMPLETE: live references unavailable (not green)" if references["result"] == "unknown"
                else "INCOMPLETE: unverifiable claims present (not green)" if code == 3
                else "CLEAN")
 
@@ -1981,10 +1979,11 @@ def check(
             "initializers": values,
             "symbol_coverage": symbols,
             "layout_coverage": layouts,
+            "references": references,
             "failed": {
                 "link": bool(link.returncode),
                 "compiler_work": bool(vtables.returncode),
-                "stale_references": bool(stale.returncode),
+                "references": references["result"] == "fail",
                 "symbol_coverage": symbols["result"] == "fail",
                 "address_index": bool(index.returncode),
                 "class_debt": bool(debt.returncode),

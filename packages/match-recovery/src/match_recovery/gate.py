@@ -26,6 +26,7 @@ from .model import digest, require_text
 from .processes import run_bounded
 from .preparation import prepare_project
 from .records import read_json
+from .reference_check import check_references, reference_snapshot
 from .source_audits import audit_source, _validate_policy
 from .source_integrity import check_source
 from .source_inventory import image_pin
@@ -106,7 +107,12 @@ def project_inputs(root: Path, image: Path) -> dict:
                 raise ValueError("gate input roots cannot contain symlinks")
             if item.is_file():
                 files.add(item.relative_to(root).as_posix())
+    # Configured prose checks include target existence, not only document bytes.
+    # A deleted referenced script must invalidate acceptance even if no doc changed.
+    references = (digest(reference_snapshot(root))
+                  if "references" in read_json(root / "recovery/project.json") else None)
     result = input_snapshot(root, files, {
+        "references": references,
         "measurement": measurement.snapshot(root, {}), "build": build.snapshot(root),
         "preparation": preparation.snapshot(root) if preparation is not None else None,
         "image": {"path": str(image), "sha256": actual},
@@ -179,6 +185,8 @@ def check_project(root: Path, image: Path, *, jobs: int = 1, progress=None, reta
 
     try:
         run("source", lambda: check_source(root, jobs=jobs))
+        if "references" in read_json(root / "recovery/project.json"):
+            run("live-references", lambda: check_references(root))
         run("mappings", lambda: check_mappings(root))
         run("claim-identities", lambda: check_claims(root))
         for name in audits:
@@ -223,6 +231,8 @@ def summary(report):
         value = stage["report"]
         if stage["name"] == "matches" and "measurements" in value:
             value["measured"] = len(value.pop("measurements"))
+        elif stage["name"] == "live-references" and "history" in value:
+            value["historical_mentions"] = len(value.pop("history"))
         elif stage["name"] == "symbols":
             value["functions"] = [row for row in value.get("functions", []) if row["result"] != "pass"]
             value.pop("trials", None)

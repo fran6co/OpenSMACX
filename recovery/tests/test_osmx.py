@@ -125,6 +125,8 @@ def project_audits(monkeypatch):
     Keep their exit codes controllable here so refusal propagation is tested.
     """
     failures = set()
+    monkeypatch.setattr(osmx, "_reference_coverage", lambda:
+                        {"result": "fail" if "check-references" in failures else "pass"})
     monkeypatch.setattr(osmx, "_symbol_coverage", lambda:
                         {"result": "fail" if "check-symbols" in failures else "pass", "counts": {}})
     monkeypatch.setattr(osmx, "_initial_data", lambda exe:
@@ -783,7 +785,7 @@ def test_json_is_only_json(claimed, monkeypatch):
     assert "pin was not verified" in result.stderr
 
 
-@pytest.mark.parametrize("audit", ["build", "compiler-work", "stale_references.py",
+@pytest.mark.parametrize("audit", ["build", "compiler-work", "check-references",
     "check-symbols", "check-mappings", "class-debt", "storage",
     "check-initializers", "check-source", "check-data", "check-layout"])
 def test_failed_project_audit_prevents_acceptance(claimed, monkeypatch, project_audits, audit):
@@ -800,6 +802,16 @@ def test_initializer_verdict_is_independent_of_passing_function_claims(claimed, 
     report = json.loads(result.stdout)
     assert result.exit_code == code and report["initializers"]["result"] == state
     assert report["failed"]["initializers"] == (state == "fail")
+
+
+@pytest.mark.parametrize("state,code", [("pass", 0), ("fail", 1), ("unknown", 3)])
+def test_reference_verdict_is_independent_of_passing_function_claims(claimed, monkeypatch, state, code):
+    monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
+    monkeypatch.setattr(osmx, "_reference_coverage", lambda: {"result": state})
+    result = check(claimed, "--json")
+    report = json.loads(result.stdout)
+    assert result.exit_code == code and report["references"]["result"] == state
+    assert report["failed"]["references"] == (state == "fail")
 
 
 @pytest.mark.parametrize("state,code", [("pass", 0), ("fail", 1), ("unknown", 3)])

@@ -217,6 +217,48 @@ def preparation(root, commands=None):
     configuration(root, lambda project: project.update(preparation="recovery/prepare.json"))
 
 
+def reference_policy(root):
+    (root / "notes").mkdir()
+    (root / "scripts").mkdir()
+    (root / "notes/start.md").write_text("Run scripts/check.py\n")
+    configuration(root, lambda value: value.update(references={
+        "documentation_roots": ["notes"], "command_roots": ["scripts"], "exclude_roots": []}))
+
+
+def test_reference_target_existence_is_in_whole_gate_fingerprint(configured):
+    reference_policy(configured)
+    target = configured / "scripts/check.py"
+    target.write_text("pass\n")
+    before = gate.project_inputs(configured, configured / "original/input.exe")
+    target.unlink()
+    after = gate.project_inputs(configured, configured / "original/input.exe")
+    assert before != after
+
+
+def test_configured_reference_policy_cannot_be_skipped_by_omitting_project_command(configured, observed):
+    reference_policy(configured)
+    report = run(configured)
+    stage = next(row for row in report["checks"] if row["name"] == "live-references")
+    assert stage["result"] == "fail" and report["exit_code"] == 1
+    assert stage["report"]["findings"][0]["target"] == "scripts/check.py"
+
+
+def test_reference_stage_unknown_cannot_pass_gate(configured, observed, monkeypatch):
+    reference_policy(configured)
+    monkeypatch.setattr(gate, "check_references", lambda _: {"result": "unknown"})
+    assert run(configured)["exit_code"] == 3
+
+
+def test_reference_summary_keeps_live_failures_and_counts_history(configured, observed):
+    reference_policy(configured)
+    with (configured / "notes/start.md").open("a") as stream:
+        stream.write("scripts/historical.py\n")
+    report = gate.summary(run(configured))
+    stage = next(row["report"] for row in report["checks"] if row["name"] == "live-references")
+    assert stage["historical_mentions"] == 1 and "history" not in stage
+    assert stage["findings"][0]["target"] == "scripts/check.py"
+
+
 def test_preparation_runs_before_measurement_snapshot_and_missing_database_checks(configured, observed):
     preparation(configured)
     (configured / "build/commands.json").unlink()

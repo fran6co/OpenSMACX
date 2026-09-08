@@ -1,16 +1,12 @@
 {
   "schema_version": 1,
   "checks": {
-    "live-references": {
-      "argv": ["uv", "run", "python", "tools/stale_references.py"],
-      "timeout": 120
-    },
     "trailing-address-initial-values": {
       "argv": ["uv", "run", "recover", "check-initializers", "--image", "{image}", "--summary"],
       "timeout": 120
     }
   },
-  "inputs": ["tools/stale_references.py", "README.md", "AGENTS.md", ".opensmacx/game/terranx_original.exe"],
+  "inputs": ["README.md", "AGENTS.md", ".opensmacx/game/terranx_original.exe"],
   "input_roots": ["docs"],
   "environment": []
 }

@@ -4,6 +4,11 @@
   "preparation": "recovery/prepare.json",
   "gate": "recovery/gate.json",
   "audits": "recovery/audits.json",
+  "references": {
+    "documentation_roots": ["docs", "recovery", ".claude"],
+    "command_roots": ["tools", "recovery"],
+    "exclude_roots": [".claude/worktrees"]
+  },
   "layout": {
     "conventional_offsets": true,
     "witness_unobserved": true

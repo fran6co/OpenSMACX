@@ -5,6 +5,29 @@ structure-led matching decompilation. It does not register projects, import a
 project's Python code or bundle a game's adapters. Project integration is local
 configuration plus commands exchanging JSON. Those commands can use any language.
 
+## Instruction references
+
+`recover check-references --summary` checks literal source-file references and
+instructions naming Python/shell scripts under configured roots. It requires no
+compiler or original image. Source roots/extensions and seed exclusions come
+from the normal source policy; optional project policy supplies the rest:
+
+```json
+"references": {
+  "documentation_roots": ["docs", "recovery"],
+  "command_roots": ["scripts", "recovery"],
+  "exclude_roots": []
+}
+```
+
+Root Markdown files are scanned too. The native gate always runs this check when
+the policy is present, even without an entry in its additional-command list.
+Missing inputs and aliases are refused; changed scan membership, text, policy or
+reference-target existence invalidate the result and whole-gate fingerprint.
+Historical mentions stay separate in the report. Historical classification uses
+bounded English prose heuristics, not semantic understanding; this does not check
+arbitrary links, prove command execution, or verify the truth of recovery notes.
+
 ## Start a project
 
 Install a built wheel into your environment, then work in your own Git repository:

@@ -14,17 +14,22 @@ Source records, strict CodeView parsing (`class_layout`) and emitted-table check
 (`check_generated`) now live in the installed library. These are format/ABI
 capabilities, not project/compiler-environment adapters. `environment/` contains
 only the local compiler interaction. Unused fleet, rewriting and spelling-search
-scripts are removed. The remaining `tools/` files support the retained gate,
-its remaining live-reference script check, or CMake's debugger sidecar; their live consumers
+scripts are removed. The remaining `tools/` files support the retained gate
+and diagnostics, or CMake's debugger sidecar; their live consumers
 still need absorption or retirement before that directory can disappear.
 
 The package now coordinates a whole-project gate:
 `uv run recover check --image <original> --jobs 1 --summary`. `gate.json` declares
-the remaining local live-reference script and the native
-`check-initializers` command for conventional trailing-address hints; native source,
+the native `check-initializers` command for conventional trailing-address hints; native source,
 mapping/body-link, history, audit, build, match, symbol, data and layout checks
 are run by the library. The native build is fresh, unlike the retained gate's
 incremental link probe. Neither gate establishes full structural/runtime acceptance.
+`recover check-references` replaces the deleted live-reference script. Project
+policy adds documentation and command roots to the configured source population,
+including `recovery/`; seed/excluded roots remain historical inputs. The native
+gate always runs this check when its policy is present, and fingerprints reference
+target existence as well as scanned text. The retained gate uses the same checker.
+This is bounded prose lint, not proof that a referenced command works.
 Keep the old unpiped gate as the comparison/control route until the native run
 and damage controls establish the cutover; do not call it retired prematurely.
 
@@ -109,7 +114,7 @@ the final filesystem check. This is not a transactional filesystem, compiler
 installation attestation, compact obligation format or
 full acceptance cutover.
 
-Use `uv run recover record <addresses> --image <image> [--in src/family.cpp]`.
+Use `uv run recover record <addresses> --image <image> [--in <source-file>]`.
 It selects exact original addresses or catalogue/emitted names (and qualified
 names when the source symbol format supports them). Ambiguous candidates require
 an exact project-relative `--in` host. Source roots, TU suffixes, flags and compiler
