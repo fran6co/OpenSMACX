@@ -412,7 +412,7 @@ Use stderr for diagnostics. Exit codes are 0 = pass/success, 1 = measured failur
 | --- | --- | --- |
 | `context` | Task decision | Project-defined source/evidence context object |
 | `check` | Task and current context | `result`: `pass`, `fail` or `unknown`; additional diagnostic fields allowed |
-| Worker | Task, context, check, authorized files and review feedback | `discoveries` array; may edit only authorized files |
+| Worker | Task, context, check, authorized files, review and acceptance feedback | `discoveries` array; may edit only authorized files |
 | Reviewer | Task, context, check and source `snapshot` | Same `snapshot`, `decision`, nonempty `evidence`, `feedback`; read-only |
 | `obligations` | Task | Source-derived `obligations` and optional `interpretations`; read-only |
 | `acceptance` | Task, reviewed snapshot, protected obligations and review | Full-project gate report; read-only |
@@ -427,9 +427,12 @@ result to request independent review before another worker round. The native
 restoration checker does so only when scoped checks, references and current
 declared requirements pass, and the remaining unknown obligations are structural.
 Any configured build must also pass before this early handoff. Reviewer corrections
-feed the worker; approval leaves an explicitly unverified structural checkpoint
-unless the separate migration/acceptance prerequisites are met. This hint grants
-no scope expansion and cannot turn unknown evidence into a passing check.
+feed the worker; approval hands this review-only unknown result to a configured
+full acceptance verifier, which must independently resolve every outstanding
+obligation. Without that verifier the loop reports `full_acceptance_gate_required`.
+This hint grants no scope expansion and cannot turn unknown evidence into a
+passing check. Arbitrary unknown results and measured scoped failures cannot
+bypass recovery through this handoff.
 
 Worker discoveries have `hypothesis`, `affects` (original entity identities), and
 `evidence`; discoveries affecting other entities pause for a coordinator's scope
@@ -442,6 +445,15 @@ Acceptance must report exactly `scope: "full_project"` and `result`, `build`,
 `structure`, `references`, `obligations`, `runtime`, each one `pass`, `fail` or
 `unknown`. All dimensions must pass for acceptance. Source and decision freshness
 are rechecked around commands; unrelated writes and Git mutations are refused.
+
+An optional `findings` array contains `{dimension, message, evidence}` objects:
+the named dimension must not pass, and explanation/evidence must be nonempty.
+A failed full gate feeds its `{snapshot, report}` to the worker as
+`acceptance_feedback`, within the existing round budget and editing scope.
+Changed source requires fresh checks, review and acceptance; discoveries still
+pause for authorization. Unknown acceptance stops for evidence instead of
+spending speculative worker rounds. Feedback is a disposable diagnostic for its
+recorded snapshot, not a cached verdict or proof about later source.
 
 Optional `migration_check` and coordinator `--migration` permission allow reviewed
 temporary matching regressions while structural work proceeds. They require

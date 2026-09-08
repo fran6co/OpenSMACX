@@ -636,7 +636,11 @@ a review alone does not invalidate it. Review history is workflow metadata, not
 an allowed build input. Compiler/image freshness remains the target gate's job.
 
 On a passing scoped check and approved review, the optional project `acceptance`
-command runs afresh. It must implement the actual full-project checks—not echo
+command runs afresh. A native `review_structure` handoff may also reach it after
+approval, provided the configured build passed: the scoped check remains unknown
+and the full verifier must independently resolve every remaining obligation.
+An arbitrary unknown result, a known scoped failure or a failed/unknown build
+cannot use this route. It must implement the actual full-project checks—not echo
 worker claims—and return exactly `scope: "full_project"`, an overall `result`,
 and `build`, `structure`, `references`, `obligations`, `runtime` outcomes. Outcomes
 are `pass`, `fail` or `unknown`; an unknown dimension yields overall unknown/exit
@@ -645,6 +649,18 @@ exit 0 can produce `ready_for_collection:true` and driver exit 0. Missing fields
 scoped reports and contradictory exits are refused. The target adapter must
 verify pinned inputs, original boundaries and every preserved obligation; these
 are contracts for trusted verifier code, not proofs obtained by adding JSON keys.
+
+The report may additionally contain `findings`, an array of
+`{"dimension":"runtime","message":"Explain the measured defect",
+"evidence":["source:src/example.cpp","runtime control reference"]}`.
+Each finding must name a non-passing dimension and have nonempty explanation and
+evidence. Findings do not change verdicts or grant source-editing authority.
+A failed full gate feeds `acceptance_feedback: {snapshot, report}` to the next
+worker within the remaining budget. Source changes require fresh scoped/build
+checks, review and acceptance; no-progress, scope/discovery and budget stops still
+apply. Unknown acceptance stops immediately for evidence rather than asking the
+worker to guess at an unsupported proof. Feedback is a disposable run output,
+not a stored verdict or current proof once its source snapshot changes.
 
 Acceptance is never cached by this driver, even when a source-identical review is
 reused. Readiness is a current output, not a durable status or permission to collect

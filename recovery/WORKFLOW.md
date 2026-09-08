@@ -193,8 +193,15 @@ A native `review_structure` next action hands passing scoped evidence to the
 independent reviewer when only historical interpretation review or broader
 structural obligations remain unknown;
 the configured build must pass too. This avoids spending more spelling rounds
-on a proof/review gap. Reviewer corrections return to the worker, while approval
-alone leaves an unverified checkpoint, not an admitted migration or accepted task.
+on a proof/review gap. Reviewer corrections return to the worker. Approval can
+hand that review-only unknown state to a configured full acceptance verifier;
+it does not rewrite the scoped result or waive its outstanding obligations.
+Without that verifier the driver reports `full_acceptance_gate_required`.
+A measured acceptance failure feeds its snapshot-bound report back to the worker
+within the remaining round budget, then requires fresh checks and review. Unknown
+acceptance stops for evidence; it does not consume speculative spelling rounds.
+This project still lacks the full acceptance verifier, so the handoff capability
+is not an accepted application pilot or a working-game claim.
 A cross-entity finding pauses the loop for coordinator action; it is not discarded
 as out of scope. Inspect `tasks status`, then use `tasks expand` and `tasks resolve`
 with their revision-checked decision arguments. Incorporation needs source

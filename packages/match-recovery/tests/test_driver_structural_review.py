@@ -22,10 +22,9 @@ def test_structural_review_request_does_not_burn_worker_rounds_or_claim_acceptan
         assert payload["check"]["result"] == "unknown"
         return 0, {"snapshot": payload["snapshot"], "decision": "approve", "evidence": ["synthetic structural review"],
                    "feedback": "Declared requirements agree; broader structural proof remains."}
-    config = {**CONFIG, "acceptance": {"argv": ["acceptance"], "timeout": 10}}
-    report = drive(root, task.task_id, config, WORKER, iterations=5, reviewer_configuration=reviewer, execute=execute)
+    report = drive(root, task.task_id, CONFIG, WORKER, iterations=5, reviewer_configuration=reviewer, execute=execute)
     assert report["worker_rounds"] == 0 and not report["ready_for_collection"]
-    assert report["stop_reason"] == ("structural_checkpoint_reviewed" if reviewer else "independent_review_required")
+    assert report["stop_reason"] == ("full_acceptance_gate_required" if reviewer else "independent_review_required")
     assert calls == ["context", "check"] + (["review"] if reviewer else [])
 
 
@@ -48,7 +47,7 @@ def test_requested_review_corrections_drive_the_next_worker_round(project):
         (root / "src/f.cpp").write_text("real member\n")
         return 0, {"discoveries": []}
     report = drive(root, task.task_id, CONFIG, WORKER, iterations=5, reviewer_configuration=REVIEWER, execute=execute)
-    assert report["worker_rounds"] == 1 and report["stop_reason"] == "structural_checkpoint_reviewed"
+    assert report["worker_rounds"] == 1 and report["stop_reason"] == "full_acceptance_gate_required"
     assert calls == ["context", "check", "review", "worker", "context", "check", "review"]
     assert not report["ready_for_collection"]
 

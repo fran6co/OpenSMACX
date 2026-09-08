@@ -27,7 +27,8 @@ MAX_RESPONSE = 1024 * 1024
 def _request(root, role, request):
     common = {"task", "context", "check", "instructions"}
     fields = common | ({"editable_files", "round", "review_feedback"} if role == "worker" else {"snapshot"})
-    if not isinstance(request, dict) or set(request) != fields:
+    optional = {"acceptance_feedback"} if role == "worker" else set()
+    if not isinstance(request, dict) or not fields <= set(request) or set(request) - fields - optional:
         raise ValueError("invalid agent request fields")
     task = Task.from_dict(request["task"])
     store = TaskStore(root)
@@ -51,6 +52,13 @@ def _request(root, role, request):
         if request["review_feedback"] is not None:
             from .reviews import validate_review
             validate_review(request["review_feedback"])
+        feedback = request.get("acceptance_feedback")
+        if feedback is not None:
+            from .reviews import acceptance_result
+            if not isinstance(feedback, dict) or set(feedback) != {"snapshot", "report"}:
+                raise ValueError("invalid acceptance feedback")
+            require_digest(feedback["snapshot"])
+            acceptance_result(1, feedback["report"])  # Only a measured failure prompts repair.
     else:
         require_digest(request["snapshot"])
     return task, decisions, editable

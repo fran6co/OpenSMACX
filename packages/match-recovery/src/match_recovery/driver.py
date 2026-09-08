@@ -131,6 +131,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
         if permission is not None:
             policy["migration"] = permission
         review_feedback = None
+        acceptance_feedback = None
         interpretations = {}
         # Existing scoped edits are resumable. Unrelated dirty work is not the
         # runner's property and must be checkpointed before dispatch.
@@ -143,6 +144,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
         def finish(reason, rounds, check=None, *, current=True):
             return {"task_id": task_name, "stop_reason": reason, "worker_rounds": rounds,
                     "check": check, "check_is_current": check is not None and current,
+                    **({"acceptance_feedback": acceptance_feedback} if acceptance_feedback else {}),
                     "ready_for_collection": False, "persisted_results": False}
         def readonly(command, payload):
             before = working_state(root)
@@ -161,8 +163,8 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                 merge_interpretations(interpretations, inventory.get("interpretations", []), selected)
                 policy["interpretations"] = [interpretations[key] for key in sorted(interpretations)]
             return [{**asdict(item), "obligation_id": key} for key, item in sorted(protected.items())]
-        def review_candidate(context, check, round_index):
-            nonlocal review_feedback
+        def review_candidate(context, check, round_index, *, structural_handoff=False):
+            nonlocal review_feedback, acceptance_feedback
             if reviewer_command is None:
                 return finish("independent_review_required", round_index, check)
             snapshot = reviews.snapshot(working_state(root), policy)
@@ -220,7 +222,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                     output = finish("migration_admitted", round_index, check)
                     output.update(review=decision, migration=asdict(migration_report))
                     return output  # Checkpoint only, never full acceptance or collection.
-            if check["result"] != "pass":
+            if check["result"] != "pass" and not structural_handoff:
                 output = finish("structural_checkpoint_reviewed", round_index, check)
                 output["review"] = decision
                 return output  # Approval does not admit a matching regression.
@@ -236,6 +238,13 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                 if reviews.snapshot(working_state(root), policy) != snapshot:
                     raise ValueError("source changed after review")
                 result = acceptance_result(code, report)
+                acceptance_feedback = ({"snapshot": snapshot, "report": report}
+                                       if result == "fail" else None)
+                if result == "fail" and round_index < iterations:
+                    # A current full-gate counterexample needs another scoped
+                    # worker round, not manual restart after a passing review.
+                    # Unknown proof capabilities still stop; no blind edits.
+                    return None
                 output = finish("ready_for_collection" if result == "pass" else "acceptance_" + result,
                                 round_index, check)
                 output["acceptance"] = report
@@ -278,7 +287,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             review_requested = (result == "unknown" and check.get("next_action") == "review_structure"
                                 and (build_command is None or check["build_check"]["result"] == "pass"))
             if result == "pass" or review_requested:
-                reviewed = review_candidate(context, check, round_index)
+                reviewed = review_candidate(context, check, round_index, structural_handoff=review_requested)
                 if reviewed is not None:
                     return reviewed
             if round_index == iterations:
@@ -293,8 +302,10 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                                          {"task": task.to_dict(), "editable_files": sorted(editable),
                                           "context": context, "check": check, "round": round_index + 1,
                                           "review_feedback": review_feedback,
+                                          "acceptance_feedback": acceptance_feedback,
                                           "instructions": ["Edit only authorized files; never run Git mutations.",
                                                            "Report structural discoveries even outside task scope.",
+                                                           "Acceptance feedback belongs to its recorded snapshot; use it to investigate, not as current proof after edits.",
                                                            "Do not erase source mappings or restoration obligations."]})
             finally:
                 changed = changes(before, working_state(root))

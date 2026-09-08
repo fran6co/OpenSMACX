@@ -141,7 +141,8 @@ class ReviewStore:
 def acceptance_result(code: int, report: dict) -> str:
     """A separate full-project gate, never the scoped spelling-search check."""
     fields = {"scope", "result", "build", "structure", "references", "obligations", "runtime"}
-    if set(report) != fields or report["scope"] != "full_project":
+    if (not isinstance(report, dict) or not fields <= set(report)
+            or set(report) - fields - {"findings"} or report["scope"] != "full_project"):
         raise ValueError("acceptance requires a full-project gate report")
     outcomes = [report[key] for key in fields - {"scope"}]
     if any(value not in ("pass", "fail", "unknown") for value in outcomes):
@@ -150,4 +151,19 @@ def acceptance_result(code: int, report: dict) -> str:
     expected = "unknown" if "unknown" in dimensions else "fail" if "fail" in dimensions else "pass"
     if report["result"] != expected or code != {"pass": 0, "fail": 1, "unknown": 3}[expected]:
         raise ValueError("acceptance summary, dimensions and exit code disagree")
+    findings = report.get("findings", [])
+    if not isinstance(findings, list):
+        raise ValueError("acceptance findings must be an array")
+    for finding in findings:
+        if (not isinstance(finding, dict) or set(finding) != {"dimension", "message", "evidence"}
+                or not isinstance(finding["dimension"], str)
+                or finding["dimension"] not in fields - {"scope", "result"}):
+            raise ValueError("invalid acceptance finding")
+        if report[finding["dimension"]] == "pass":
+            raise ValueError("acceptance finding contradicts a passing dimension")
+        require_text(finding["message"], "acceptance finding message")
+        if not isinstance(finding["evidence"], list) or not finding["evidence"]:
+            raise ValueError("acceptance finding needs evidence")
+        for evidence in finding["evidence"]:
+            require_text(evidence, "acceptance finding evidence")
     return expected

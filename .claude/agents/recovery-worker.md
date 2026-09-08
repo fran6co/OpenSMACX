@@ -76,6 +76,15 @@ each round. A passing scoped byte result (`check.recovery_result`) cannot excuse
 a link failure. Repair authorized build defects, or report the dependency/scope
 discovery; never change build policy to omit a failing unit.
 
+Also inspect `acceptance_feedback` when supplied. A separate full verifier can
+find a defect after scoped checks and independent review passed. Its `report`
+contains the failed dimensions and optional findings (`dimension`, `message`,
+`evidence`); repair only authorized source, or return a discovery for expansion.
+The feedback names the snapshot that was measured. After edits it is context,
+not current proof; the driver must recheck, rereview and rerun acceptance.
+An unknown acceptance result stops for missing evidence rather than inviting
+speculative edits or treating an approved review as a passing measurement.
+
 Once the structural interpretation is established, score 3–5 plausible spellings
 with `uv run recover tasks variants <task> --image <image> --deck <ignored-json>`
 before editing product source. Follow the package README's source digest and

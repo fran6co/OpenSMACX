@@ -161,6 +161,59 @@ def test_real_driver_round_trip_needs_only_configured_prompt_commands(project):
     assert (root / "src/f.cpp").read_text() == "finished\n"
 
 
+def test_real_provider_bridge_receives_acceptance_failure_then_rechecks(project):
+    from test_reviews import PASS
+    from match_recovery.reviews import ReviewStore
+
+    root, task = project
+    script = PROVIDER.replace("if role == 'worker':", """if role == 'worker':
+    assert request['acceptance_feedback']['report']['runtime'] == 'fail'
+    assert request['acceptance_feedback']['report']['findings'][0]['message'] == 'Controlled runtime failure'
+    assert request['acceptance_feedback']['snapshot'] == request['review_feedback']['snapshot']
+    assert request['check']['result'] == 'unknown'
+""")
+    configure(root, script=script)
+    git(root, "add", ".")
+    git(root, "commit", "-m", "Configure counterexample provider")
+    def command(program):
+        return {"argv": [sys.executable, "-c", program], "timeout": 10}
+    config = {**CONFIG, "context": command("print('{}')"),
+              "check": command("print('{\"result\":\"unknown\",\"next_action\":\"review_structure\"}'); raise SystemExit(3)"),
+              "acceptance": command(
+                  "import json; from pathlib import Path; "
+                  "ok=Path('src/f.cpp').read_text()=='finished\\n'; "
+                  f"report={PASS!r}; "
+                  "report.update(result='pass' if ok else 'fail', runtime='pass' if ok else 'fail'); "
+                  "report['findings']=[] if ok else [dict(dimension='runtime',message='Controlled runtime failure',evidence=['source:src/f.cpp'])]; "
+                  "print(json.dumps(report)); raise SystemExit(0 if ok else 1)")}
+    roles = {role: {"author": role, "command": {"argv": [sys.executable, "-m", "match_recovery.cli", "agent", role],
+                                               "timeout": 20}} for role in ("worker", "reviewer")}
+    report = drive(root, task.task_id, config, roles["worker"], iterations=2, reviewer_configuration=roles["reviewer"])
+    assert report["ready_for_collection"] and report["worker_rounds"] == 1
+    assert len(ReviewStore(root, task.task_id).decisions()) == 2
+    assert (root / "src/f.cpp").read_text() == "finished\n"
+
+
+@pytest.mark.parametrize("feedback", [[], {}, {"snapshot": "bad", "report": {}},
+                                     {"snapshot": "a" * 64, "report": {"result": "fail"}}])
+def test_invalid_acceptance_feedback_cannot_reach_provider(project, feedback):
+    root, task = project
+    config = configure(root, script="raise AssertionError('must not launch')")
+    with pytest.raises(ValueError):
+        run_agent(root, "worker", config, {**request(task), "acceptance_feedback": feedback})
+    assert not (root / "build/recovery/agents").exists()
+
+
+@pytest.mark.parametrize("outcome", ["pass", "unknown"])
+def test_bridge_rejects_nonfailure_acceptance_feedback(project, outcome):
+    from test_reviews import PASS
+    root, task = project
+    config = configure(root, script="raise AssertionError('must not launch')")
+    feedback = {"snapshot": "a" * 64, "report": {**PASS, "result": outcome, "runtime": outcome}}
+    with pytest.raises(ValueError, match="disagree"):
+        run_agent(root, "worker", config, {**request(task), "acceptance_feedback": feedback})
+
+
 def test_cli_returns_structured_errors_instead_of_an_empty_pipe(project, monkeypatch, capsys):
     root, task = project
     configure(root, script="raise SystemExit(7)")

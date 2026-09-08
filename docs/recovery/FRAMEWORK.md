@@ -241,6 +241,15 @@ establish completion of this program.
   admission policy after independent review, preserve required matches across
   worker rounds, and distinguish admitted regressions from collection readiness.
   Synthetic checkpoint/resumption tests restore obligations before full acceptance.
+  Review-only structural unknowns now reach configured final verification after
+  independent approval; scoped/build failures still cannot bypass recovery.
+  Failed acceptance feeds snapshot-bound findings back to a scoped worker and
+  forces fresh checks/review, while unknown acceptance stops for evidence.
+  A compiler-backed control builds its own small C++ reference executable,
+  rejects a byte-exact flattened class, preserves a genuine base/member change
+  across a matching regression, then restores matching and runs the final build.
+  Its worker/reviewer are deterministic test doubles, not a live-agent pilot or
+  evidence of completed OpenSMACX acceptance.
   The package-owned native migration verifier now composes fresh build, bounded
   declarations, references and outside-scope preservation checks; OpenSMACX
   configures that command without a project adapter. A synthetic driver test
