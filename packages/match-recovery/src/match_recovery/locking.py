@@ -4,6 +4,7 @@ from contextlib import contextmanager
 import errno
 import os
 from pathlib import Path
+import stat
 import time
 
 
@@ -21,15 +22,37 @@ class FileLease:
 
 
 @contextmanager
-def file_lock(path: Path, *, timeout: float = 10, held: FileLease | None = None):
+def _lock_stream(path, guarded):
+    if not guarded:
+        with path.open("a+b") as stream:
+            yield stream
+        return
+    # Resource locks must not silently acquire an alias of another lock inode.
+    if path.parent.resolve() != path.parent or path.is_symlink():
+        raise ValueError("resource lock requires a canonical path")
+    descriptor = os.open(path, os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0), 0o600)
+    with os.fdopen(descriptor, "r+b") as stream:
+        info = os.fstat(stream.fileno())
+        current = path.lstat()
+        if (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1
+                or not stat.S_ISREG(current.st_mode)
+                or (info.st_dev, info.st_ino) != (current.st_dev, current.st_ino)):
+            raise ValueError("resource lock requires an unaliased regular file")
+        yield stream
+
+
+@contextmanager
+def file_lock(path: Path, *, timeout: float = 10, held: FileLease | None = None,
+              guarded: bool = False):
     if held is not None:
         if (not isinstance(held, FileLease) or not held.active or held.pid != os.getpid()
                 or held.path != path.resolve()):
             raise ValueError("nested operation requires its active local file lease")
         yield held
         return
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("a+b") as stream:
+    if not guarded:
+        path.parent.mkdir(parents=True, exist_ok=True)
+    with _lock_stream(path, guarded) as stream:
         if os.name == "nt":
             import msvcrt
             stream.write(b"\0")

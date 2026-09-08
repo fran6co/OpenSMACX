@@ -129,6 +129,11 @@ multi-file publication is not globally atomic. See `recovery/README.md`.
 `recovery/worker.json` and `recovery/reviewer.json` use the package's native
 agent-command bridge; provider arguments live in `recovery/agents.json`.
 Verify provider access and isolated worktree/compiler resources before launching.
+Top-level `run`, `start` and `integrate publish` can lease provisioned compiler
+slots with `--resources recovery/resources.json` and an absolute shared
+`OPENSMACX_COMPILER_POOL`. Child commands inherit the selected prefix; do not
+allocate again or run standalone compiles on a leased prefix. Interrupted slots
+are quarantined, not automatically reclaimed. See `recovery/WORKFLOW.md`.
 Synthetic protocol tests are not proof of successful autonomous recovery.
 
 - Prefer real bases, members, globals, virtual methods and lifecycle code over

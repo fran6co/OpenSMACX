@@ -141,6 +141,62 @@ is required for a supported target. Compiler interaction scripts can remain loca
 or existing tools can implement that boundary. The package does not supply an agent
 service, compiler installation or project verification policy.
 
+## Lease project-provisioned compiler resources
+
+`run`, `start` and `integrate publish` accept `--resources <pool.json>` (relative
+to `--root`) and optional `--resource-timeout <seconds>`. Default wait is zero;
+the maximum is 3600 seconds. Other commands inherit an existing allocation or use
+their manually configured environment. The package does not create compiler
+installations, clone resources, infer their capacity or increase `--jobs`.
+
+Example coordinator-owned configuration, with no project Python adapter:
+
+```json
+{
+  "schema_version": 1,
+  "slots": [
+    {
+      "name": "compiler-0",
+      "directory": "{env:COMPILER_POOL}/compiler-0",
+      "environment": {"COMPILER_INSTANCE": "{resource}"}
+    },
+    {
+      "name": "compiler-1",
+      "directory": "{env:COMPILER_POOL}/compiler-1",
+      "environment": {"COMPILER_INSTANCE": "{resource}"}
+    }
+  ]
+}
+```
+
+Directories must already exist and be canonical, absolute and disjoint. All
+worktrees using the same actual compiler resource must name the same directory.
+The coordinator must ensure different slots really select isolated compiler
+resources: the package cannot infer the meaning of an environment variable.
+All slots set the same variable names, declared in `compiler.environment` in
+each checkout's `recovery/project.json` (`PATH` is implicitly measured). For
+integration this includes candidate and destination. Selected values are inherited
+by preparation, agents, nested checks and builds, and fingerprinted by the native
+compiler interface. The slot remains leased through review and publication, even
+while no compiler is running. Children must not request another allocation.
+
+Kernel locks serialize cooperating local runs. Busy slots are skipped; all-busy
+or quarantined pools refuse with exit 3 after the bounded wait, without dispatching
+agents. Invalid or missing resources refuse before dispatch. Locks do not protect
+against manual commands bypassing allocation, edits to leased resources, or
+programs deliberately detaching unfinished compiler work. Network-filesystem lock
+behavior is not validated. Leases do not isolate source/build directories.
+
+The slot contains `.match-recovery-resource.lock` and, while owned,
+`.match-recovery-resource-active.json`. These are ignored operational state,
+never recovery evidence. Normal completion removes the active marker and restores
+the parent environment; abrupt termination leaves the slot quarantined even after
+the kernel unlocks it. A dead PID does not prove descendants have stopped. Before
+removing an interrupted active marker, the coordinator must stop/verify all work
+using that resource and ensure no allocator is running. Never delete or replace
+the lock file to unlock a resource. Provision these directories outside versioned
+source or beneath an ignored directory. No cleanup of installations is implicit.
+
 ## Survey an executable before source recovery
 
 With the `x86` extra installed, a new project can inspect the pinned original even

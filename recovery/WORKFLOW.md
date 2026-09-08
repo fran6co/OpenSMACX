@@ -92,6 +92,18 @@ parallelism from measured compiler capacity; do not restart the old fleet loop.
 Update against master only at safe coordinator-owned checkpoints. Never stash
 across worktrees, discard another worker's edits, or auto-fast-forward a worker
 after its task baseline has been established.
+For provisioned local prefixes, set `OPENSMACX_COMPILER_POOL` to the canonical
+absolute shared prefix directory and add `--resources recovery/resources.json`
+to `run`, `start` or `integrate publish`. The supplied two-slot configuration
+selects `worker-0` or `worker-1` and exports its `VC6_PREFIX` for the entire run.
+All cooperating worktrees must use the same pool path; an isolated checkout's own
+relative `.opensmacx/` is not the shared pool. Missing prefixes refuse; no copying,
+installation or increased compiler concurrency is implicit. Standalone commands
+remain manually coordinated; do not run them against a leased prefix. Interrupted
+slots quarantine until the coordinator verifies compiler/descendant termination;
+see the package README before clearing operational markers. This replaces manual
+slot selection for opted-in driver runs, not worktree/build isolation or fleet
+capacity measurement.
 Run `uv run recover prepare` before standalone task measurements/recording and
 again after changing build inputs. This publishes fresh configured recipes while
 retaining their generated include context in ignored storage. It does not clear

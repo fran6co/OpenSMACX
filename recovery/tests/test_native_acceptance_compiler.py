@@ -226,7 +226,7 @@ def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, autho
     return root, image, task, git, evidence
 
 
-@pytest.mark.parametrize("publish", [False, True])
+@pytest.mark.parametrize("publish", [False, True, "resources"])
 def test_real_change_acceptance_does_not_require_application_proof_capabilities(tmp_path, monkeypatch, publish):
     provider = {"schema_version": 1, "artifacts": "build/agents"}
     for role in ("worker", "coordinator", "reviewer"):
@@ -244,6 +244,13 @@ def test_real_change_acceptance_does_not_require_application_proof_capabilities(
         authorization.write_text(json.dumps({"author": task.author, "message": "Recover real Base and Member ownership",
                                              "allow_migration": False}))
         options = ["--checkpoint", str(authorization)]
+    if publish == "resources":
+        prefix = Path(os.environ.get("VC6_PREFIX", VC6_ROOT / ".wineprefix")).resolve()
+        resources = tmp_path / "resources.json"
+        resources.write_text(json.dumps({"schema_version": 1, "slots": [
+            {"name": "test-compiler", "directory": str(prefix), "environment": {"VC6_PREFIX": "{resource}"}}
+        ]}))
+        options += ["--resources", str(resources)]
     result = subprocess.run([sys.executable, "-m", "match_recovery.cli", "run", task.task_id,
                              "--root", str(root), "--acceptance-scope", "change", "--iterations", "2",
                              "--reviewer", "recovery/reviewer.json", "--coordinator", "recovery/coordinator.json", *options],
@@ -255,6 +262,9 @@ def test_real_change_acceptance_does_not_require_application_proof_capabilities(
     assert report["migration"] == {"exit_code": 0, "failed": [], "unknown": [], "tracked": []}
     assert "acceptance" not in report
     assert report["worker_rounds"] == 2 and report["coordinator_decisions"] == 2
+    if publish == "resources":
+        from match_recovery.resources import ACTIVE, LOCK
+        assert (prefix / LOCK).is_file() and not (prefix / ACTIVE).exists()
     assert (root / "src/owner.h").read_text() == evidence + CLASSES
     assert TaskStore(root).read(task.task_id).base_revision == task.base_revision
     if publish:

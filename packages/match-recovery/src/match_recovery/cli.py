@@ -78,6 +78,10 @@ def parser() -> argparse.ArgumentParser:
     start.add_argument("--checkpoint", type=Path, help="Explicit coordinator authorization for verified source commits")
     start.add_argument("--acceptance-scope", choices=("change", "full_project"))
     start.add_argument("--iterations", type=int, default=3)
+    for command in (run, start, publish):
+        command.add_argument("--resources", type=Path, help="Project-defined compiler resource pool, relative to --root")
+        command.add_argument("--resource-timeout", type=float, default=0,
+                             help="Wait at most this many seconds for a slot (default: refuse immediately)")
     from .project_commands import register
     register(commands)
     history = commands.add_parser("history", help="Read durable decision events")
@@ -88,6 +92,24 @@ def parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = parser().parse_args(argv)
+    try:
+        if getattr(args, "resources", None) is not None:
+            from .resources import resource_environment
+            roots = [args.root.resolve()]
+            if args.command == "integrate":
+                roots.append((args.candidate if args.candidate.is_absolute() else args.root / args.candidate).resolve())
+            path = args.resources if args.resources.is_absolute() else args.root / args.resources
+            with resource_environment(read_json(path), roots, timeout=args.resource_timeout):
+                return _dispatch(args)
+        if getattr(args, "resource_timeout", 0) != 0:
+            raise ValueError("--resource-timeout requires --resources")
+        return _dispatch(args)
+    except (OSError, ValueError) as error:
+        print(f"recover: {error}", file=sys.stderr)
+        return 3
+
+
+def _dispatch(args) -> int:
     try:
         if args.command == "debug-sidecar":
             from .debug_sidecar import build

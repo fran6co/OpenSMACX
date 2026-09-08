@@ -322,7 +322,12 @@ establish completion of this program.
   destination source/policy. `integrate prepare` now constructs an unverified merge
   commit and raw isolated worktree while preserving both inputs. Conflicts refuse;
   no hooks, active checkout filters or external merge drivers silently participate.
-  Compiler allocation and automatic conflict resolution remain missing.
+  Optional project-configured compiler pools now allocate one already provisioned
+  resource for an entire `run`, `start` or `integrate publish`, including nested
+  preparation/check/review/build commands. Kernel leases, declared environment
+  inputs and interrupted-owner quarantine prevent silent cooperative slot reuse.
+  Compiler provisioning, automatic conflict resolution and fleet sizing remain
+  coordinator work; standalone compiler commands still require coordination.
   `run --verify-only` supplies fresh checks and a fresh independent review without
   worker repairs or automatic scope delegation. Failed verification preserves the
   candidate source and returns findings. Explicit local publication remains separate;
