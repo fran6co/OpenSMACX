@@ -675,8 +675,8 @@ int __cdecl pops_no_flags(char *caption, char *label, int value, char *text,
 /*
 Purpose: Sound a popup's wave. Nothing sounds unless bit 0x400 of the flag
          word is set, the popup is armed, and its index is inside the
-         forty-five entry bank. Wave 0x19 becomes 0x25 when the context
-         field at 0x50 is below -0x46; wave 0x2B only sounds when the
+         forty-five entry bank. Wave 0x19 becomes 0x25 when the selected
+         base is producing a secret project; wave 0x2B only sounds when the
          millisecond clock modulo three is one. With both the voiceover
          wave and the last-played bank wave idle, the index is remembered
          and its bank entry loads and plays. Afterwards - whether or not
@@ -716,9 +716,7 @@ void __cdecl popup_wave_callback(PopupWave *popup, int) {
         return;
     }
     if (index == 0x19) {
-        const uint8_t *const context =
-            static_cast<const uint8_t *>(PopupWaveContext());
-        if (*reinterpret_cast<const int32_t *>(context + 0x50) < -0x46) {
+        if (BaseCurrent->queue_production_id[0] < -FacilitySPStart) {
             popup->wave_index_ = 0x25;
         }
     }

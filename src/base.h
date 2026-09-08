@@ -509,7 +509,8 @@ extern BaseSecretProject SecretProject;             // 0x009A6514
 extern int BaseIDCurrentSelected;
 extern int BaseCurrentCount;
 extern int BaseFindDist;
-inline Base *&BaseCurrent() { return *reinterpret_cast<Base **>(0x0090EA30); }
+extern Base *BaseCurrent;
+extern int BaseComputedID;
 extern uint32_t ScnVictFacilityObj;
 extern uint32_t BaseUpkeepStage;
 uint32_t *const BaseCurrentConvoyFrom = (uint32_t *)0x0090E904; // resources convoyed from base
@@ -557,8 +558,11 @@ int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
 int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
                                    BOOL assume_improved);
 void __cdecl base_support();
+void __cdecl base_yield();
 void __cdecl base_nutrient();
 void __cdecl base_minerals();
+void __cdecl base_energy();
+void __cdecl base_compute(int force);
 uint32_t __cdecl black_market(int energy);
 void __cdecl base_psych();
 int __cdecl base_rank(int faction_id, int rank_position);
@@ -603,10 +607,7 @@ BOOL __cdecl facility_avail(int facility_id, int faction_id, int base_id,
 int __cdecl facility_offset(LPCSTR facil_search);
 int __cdecl suggest_plan(int faction_id, int faction_id_2);
 
-MEASURED inline void __cdecl set_base(int base_id) {
-    BaseIDCurrentSelected = base_id;
-    BaseCurrent() = &Bases[base_id];
-}
+void __cdecl set_base(int base_id);
 
 MEASURED inline int __cdecl base_project(int project_id) {
     return *(&SecretProject.human_genome_project + project_id);

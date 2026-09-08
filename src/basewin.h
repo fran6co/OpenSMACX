@@ -535,7 +535,10 @@ class BaseWin : public ConstructedGraphicWin, public IfaceRegistryEntry {
   int zoom_wait_pending_;
   uint32_t field_40B2C_;  // 0x40B2C
   uint32_t field_40B30_;  // 0x40B30
-  uint32_t field_40B34_;  // 0x40B34
+  // soft_zoom copies the signed production id (negative for facilities and
+  // projects) when updating the base without displaying the window.
+  // RECOVERY_MEMBER: v1 BaseWin displayed_production_id_ 0x40B34 0x0041AE40
+  int displayed_production_id_;
   uint32_t field_40B38_;  // 0x40B38
   uint32_t field_40B3C_;  // 0x40B3C
   uint32_t field_40B40_;  // 0x40B40

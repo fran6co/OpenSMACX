@@ -31,10 +31,35 @@
 #include "xpops.h"
 
 int BaseIDCurrentSelected = -1;  // 0x00689370
+// set_base publishes the pointer itself; resource computations and the popup
+// sound callback load it before accessing the selected Base's members.
+// RECOVERY_OBJECT: v2 0x0090EA30 0x0090EA34 ?BaseCurrent@@3PAUBase@@A 0x004E39D0
+Base *BaseCurrent;
+// base_compute publishes the selected id before running the resource passes.
+// Window refreshes invalidate this cache without changing the selected base.
+// RECOVERY_OBJECT: v2 0x00689374 0x00689378 ?BaseComputedID@@3HA 0x004EC3B0
+int BaseComputedID = -1;
 int BaseCurrentCount;  // 0x009A64CC
 int BaseFindDist;  // 0x0090EA04
 uint32_t ScnVictFacilityObj;  // 0x009A6814
 uint32_t BaseUpkeepStage;  // 0x0090EA34
+
+// The cached path has no result contract: its EAX is the selected id, while
+// recomputation leaves the last resource pass's register residue. Callers use
+// the published base fields, not a returned integer.
+// ORIGINAL: 0x004EC3B0 ?base_compute@@YAHH@Z 0x004EC3B0-0x004EC3E7 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004EC3B0-0x004EC3E7"], "reason": "Recover the original base-selection/cache operation with source-owned state and typed fields. The archived seed remains an obligation until this product definition is freshly remeasured."}
+// symbol    ?base_compute@@YAXH@Z
+void __cdecl base_compute(int force) {
+    if (force || BaseComputedID != BaseIDCurrentSelected) {
+        BaseComputedID = BaseIDCurrentSelected;
+        base_support();
+        base_yield();
+        base_nutrient();
+        base_minerals();
+        base_energy();
+    }
+}
 /*
  * THE PER-FACTION PROTOTYPE-STATUS BYTE RUN, as the image addresses it:
  * PlayersData (0x0096C9E0) + 0x858, indexed faction * 0x20CC + prototype id.
@@ -191,10 +216,10 @@ Purpose: Set the current base globals.
 Return Value: n/a
 Status: Complete
 */
-// BODY IN base.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+void __cdecl set_base(int base_id) {
+    BaseIDCurrentSelected = base_id;
+    BaseCurrent = &Bases[base_id];
+}
 
 
 /*
@@ -504,10 +529,10 @@ Status: Complete
 uint32_t  __cdecl best_specialist() {
     int current_bonus = -999;
     uint32_t citizen_id = 0;
-    Base *base_current = BaseCurrent();
+    Base *base_current = BaseCurrent;
     for (int i = 0; i < MaxSpecialistNum; i++) {
         BOOL known = has_tech_call(Citizen[i].preq_tech, base_current->faction_id_current);
-        base_current = BaseCurrent();
+        base_current = BaseCurrent;
         if (known) {
             uint32_t bonus = Citizen[i].psych_bonus * 3;
             if (base_current->population_size >= (int)Rules.min_base_size_specialists) {
@@ -1743,7 +1768,7 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
                     continue;
                 }
                 if (adjacent->territory
-                    != (int)(BaseCurrent())->faction_id_current) {
+                    != (int)BaseCurrent->faction_id_current) {
                     continue;
                 }
                 energy++;
@@ -1857,7 +1882,7 @@ see false, but has_abil() logs on a negative prototype id and the call count is
 therefore observable.
 */
 void __cdecl base_support() {
-    int faction_id = (BaseCurrent())->faction_id_current;
+    int faction_id = BaseCurrent->faction_id_current;
     // Unrolled (image writes each ConvoyTo/ConvoyFrom pair explicitly, not
     // as a loop): [0x90e93c] before [0x90e904], then [0x90e940]/[0x90e908],
     // and so on.
@@ -1877,7 +1902,7 @@ void __cdecl base_support() {
     for (int support = -4; support <= 3; support++) {
         int free_units;
         if (support >= 3) {
-            int pop_size = (BaseCurrent())->population_size;
+            int pop_size = BaseCurrent->population_size;
             free_units = (pop_size > 4) ? pop_size : 4;
         } else if (support < -2) {
             free_units = 0;
@@ -1901,7 +1926,7 @@ void __cdecl base_support() {
             * BaseCurrentConvoyTo to the base's intake all the same.
             */
             if (VehPrototypes[proto_id].plan == PLAN_SUPPLY_CONVOY
-                && veh->x == (BaseCurrent())->x && veh->y == (BaseCurrent())->y
+                && veh->x == BaseCurrent->x && veh->y == BaseCurrent->y
                 && veh->order == ORDER_CONVOY && veh->home_base_id >= 0) {
                 BaseCurrentConvoyTo[veh->order_auto_type]++;
             }
@@ -2001,7 +2026,7 @@ void __cdecl base_support() {
                     }
                     int cost = has_abil(proto_id, ABL_CLEAN_REACTOR)
                         ? 0 : ((support <= -4) ? 2 : 1);
-                    int minerals = (BaseCurrent())->mineral_intake_2;
+                    int minerals = BaseCurrent->mineral_intake_2;
                     int half_minerals = minerals / 2;
                     if (cost >= minerals) {
                         cost += (cost - half_minerals) * 2;
@@ -2070,29 +2095,29 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl base_nutrient() {
-    uint32_t faction_id = (BaseCurrent())->faction_id_current;
+    uint32_t faction_id = BaseCurrent->faction_id_current;
     BaseCurrentGrowthRate = PlayersData[faction_id].soc_effect_pending.growth;
     if (has_fac_built_call(FAC_CHILDREN_CRECHE, BaseIDCurrentSelected)) {
         BaseCurrentGrowthRate += 2; // +2 on growth scale
     }
-    if ((BaseCurrent())->state & BSTATE_GOLDEN_AGE_ACTIVE) {
+    if (BaseCurrent->state & BSTATE_GOLDEN_AGE_ACTIVE) {
         BaseCurrentGrowthRate += 2;
     }
-    (BaseCurrent())->nutrient_intake_2 += BaseCurrentConvoyTo[RSC_NUTRIENTS];
-    (BaseCurrent())->nutrient_consumption = BaseCurrentConvoyFrom[RSC_NUTRIENTS]
-        + (BaseCurrent())->population_size * Rules.nutrient_req_citizen;
-    (BaseCurrent())->nutrient_surplus = (BaseCurrent())->nutrient_intake_2
-        - (BaseCurrent())->nutrient_consumption;
-    if ((BaseCurrent())->nutrient_surplus >= 0) {
-        if ((BaseCurrent())->nutrients_accumulated < 0) {
-            (BaseCurrent())->nutrients_accumulated = 0;
+    BaseCurrent->nutrient_intake_2 += BaseCurrentConvoyTo[RSC_NUTRIENTS];
+    BaseCurrent->nutrient_consumption = BaseCurrentConvoyFrom[RSC_NUTRIENTS]
+        + BaseCurrent->population_size * Rules.nutrient_req_citizen;
+    BaseCurrent->nutrient_surplus = BaseCurrent->nutrient_intake_2
+        - BaseCurrent->nutrient_consumption;
+    if (BaseCurrent->nutrient_surplus >= 0) {
+        if (BaseCurrent->nutrients_accumulated < 0) {
+            BaseCurrent->nutrients_accumulated = 0;
         }
-    } else if (!((BaseCurrent())->nutrients_accumulated)) {
-        (BaseCurrent())->nutrients_accumulated = -1;
+    } else if (!(BaseCurrent->nutrients_accumulated)) {
+        BaseCurrent->nutrients_accumulated = -1;
     }
     if (BaseUpkeepStage == 1) {
         PlayersData[faction_id].nutrient_surplus_total
-            += range((BaseCurrent())->nutrient_surplus, 0, 99);
+            += range(BaseCurrent->nutrient_surplus, 0, 99);
     }
 }
 
@@ -2126,8 +2151,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl base_minerals() {
-    uint32_t faction_id = (BaseCurrent())->faction_id_current;
-    (BaseCurrent())->mineral_intake_2 += BaseCurrentConvoyTo[RSC_MINERALS];
+    uint32_t faction_id = BaseCurrent->faction_id_current;
+    BaseCurrent->mineral_intake_2 += BaseCurrentConvoyTo[RSC_MINERALS];
     uint32_t mineral_bonus = (has_fac(FAC_QUANTUM_CONVERTER, BaseIDCurrentSelected, 0)
         || has_project(SP_SINGULARITY_INDUCTOR, faction_id)) ? 1 : 0;
     if (has_fac(FAC_ROBOTIC_ASSEMBLY_PLANT, BaseIDCurrentSelected, 0)) {
@@ -2142,23 +2167,23 @@ void __cdecl base_minerals() {
     if (has_project(SP_BULK_MATTER_TRANSMITTER, faction_id)) {
         mineral_bonus++;
     }
-    (BaseCurrent())->mineral_intake_2 = ((BaseCurrent())->mineral_intake_2 * (mineral_bonus + 2)) / 2;
-    (BaseCurrent())->mineral_consumption = BaseCurrentForcesMaintCost
+    BaseCurrent->mineral_intake_2 = (BaseCurrent->mineral_intake_2 * (mineral_bonus + 2)) / 2;
+    BaseCurrent->mineral_consumption = BaseCurrentForcesMaintCost
         + BaseCurrentConvoyFrom[RSC_MINERALS];
-    (BaseCurrent())->mineral_surplus = (BaseCurrent())->mineral_intake_2
-        - (BaseCurrent())->mineral_consumption;
-    (BaseCurrent())->mineral_inefficiency = 0; // ?
-    (BaseCurrent())->mineral_surplus -= (BaseCurrent())->mineral_inefficiency; // ?
-    (BaseCurrent())->mineral_surplus_final = (BaseCurrent())->mineral_surplus;
-    (BaseCurrent())->eco_damage /= 8;
+    BaseCurrent->mineral_surplus = BaseCurrent->mineral_intake_2
+        - BaseCurrent->mineral_consumption;
+    BaseCurrent->mineral_inefficiency = 0; // ?
+    BaseCurrent->mineral_surplus -= BaseCurrent->mineral_inefficiency; // ?
+    BaseCurrent->mineral_surplus_final = BaseCurrent->mineral_surplus;
+    BaseCurrent->eco_damage /= 8;
     int planet_eco_factor = PlayersData[faction_id].planet_ecology + 16;
-    if ((BaseCurrent())->eco_damage > 0) {
-        int planet_modifier = (BaseCurrent())->eco_damage;
-        if ((BaseCurrent())->eco_damage >= planet_eco_factor) {
+    if (BaseCurrent->eco_damage > 0) {
+        int planet_modifier = BaseCurrent->eco_damage;
+        if (BaseCurrent->eco_damage >= planet_eco_factor) {
             planet_modifier = planet_eco_factor;
         }
         planet_eco_factor -= planet_modifier;
-        (BaseCurrent())->eco_damage -= planet_modifier;
+        BaseCurrent->eco_damage -= planet_modifier;
     }
     int eco_dmg_reduction = (has_fac(FAC_NANOREPLICATOR, BaseIDCurrentSelected, 0)
         || has_project(SP_SINGULARITY_INDUCTOR, faction_id)) ? 2 : 1;
@@ -2171,22 +2196,22 @@ void __cdecl base_minerals() {
     if (has_project(SP_PHOLUS_MUTAGEN, faction_id)) {
         eco_dmg_reduction++;
     }
-    (BaseCurrent())->eco_damage += ((BaseCurrent())->mineral_intake_2 - planet_eco_factor
-        - range(PlayersData[faction_id].satellites_mineral, 0, (BaseCurrent())->population_size))
+    BaseCurrent->eco_damage += (BaseCurrent->mineral_intake_2 - planet_eco_factor
+        - range(PlayersData[faction_id].satellites_mineral, 0, BaseCurrent->population_size))
         / eco_dmg_reduction;
     if (is_human(faction_id)) {
-        (BaseCurrent())->eco_damage += ((PlayersData[faction_id].major_atrocities
+        BaseCurrent->eco_damage += ((PlayersData[faction_id].major_atrocities
             + TectonicDetonationCount[faction_id]) * 5) / (range(MapSeaLevel, 0, 100)
                 / range(WorldBuilder.sea_level_rises, 1, 100) + eco_dmg_reduction);
     }
-    if ((BaseCurrent())->eco_damage < 0) {
-        (BaseCurrent())->eco_damage = 0;
+    if (BaseCurrent->eco_damage < 0) {
+        BaseCurrent->eco_damage = 0;
     }
     if (ascending(faction_id) && GameRules & RULES_VICTORY_TRANSCENDENCE) {
-        (BaseCurrent())->eco_damage *= 2;
+        BaseCurrent->eco_damage *= 2;
     }
     if (GameState & STATE_PERIHELION_ACTIVE) {
-        (BaseCurrent())->eco_damage *= 2;
+        BaseCurrent->eco_damage *= 2;
     }
     uint32_t diff_factor;
     if (is_human(faction_id)) {
@@ -2196,19 +2221,19 @@ void __cdecl base_minerals() {
     } else {
         diff_factor = range(6 - DiffLevelCurrent, DLVL_SPECIALIST, DLVL_LIBRARIAN);
     }
-    (BaseCurrent())->eco_damage = ((PlayersData[faction_id].tech_ranking
+    BaseCurrent->eco_damage = ((PlayersData[faction_id].tech_ranking
         - PlayersData[faction_id].theory_of_everything)
         * (3 - range(PlayersData[faction_id].soc_effect_pending.planet, -3, 2))
-        * (MapNativeLifeForms + 1) * (BaseCurrent())->eco_damage * diff_factor) / 6;
-    (BaseCurrent())->eco_damage = ((BaseCurrent())->eco_damage + 50) / 100;
+        * (MapNativeLifeForms + 1) * BaseCurrent->eco_damage * diff_factor) / 6;
+    BaseCurrent->eco_damage = (BaseCurrent->eco_damage + 50) / 100;
     int queue_id;
     if (has_project(SP_SPACE_ELEVATOR, faction_id) // orbital facilities double mineral prod rate
-        && (queue_id = (BaseCurrent())->queue_production_id[0], queue_id == -FAC_SKY_HYDRO_LAB
+        && (queue_id = BaseCurrent->queue_production_id[0], queue_id == -FAC_SKY_HYDRO_LAB
             || queue_id == -FAC_NESSUS_MINING_STATION || queue_id == -FAC_ORBITAL_POWER_TRANS
             || queue_id == -FAC_ORBITAL_DEFENSE_POD)) {
-        (BaseCurrent())->mineral_intake_2 *= 2;
-        (BaseCurrent())->mineral_surplus = // doesn't update mineral_surplus_final?
-            (BaseCurrent())->mineral_intake_2 - (BaseCurrent())->mineral_consumption;
+        BaseCurrent->mineral_intake_2 *= 2;
+        BaseCurrent->mineral_surplus = // doesn't update mineral_surplus_final?
+            BaseCurrent->mineral_intake_2 - BaseCurrent->mineral_consumption;
     }
 }
 
@@ -2251,7 +2276,7 @@ uint32_t __cdecl black_market(int energy) {
     if (energy <= 0) {
         return 0;
     }
-    uint32_t faction_id = (BaseCurrent())->faction_id_current;
+    uint32_t faction_id = BaseCurrent->faction_id_current;
     int dist_hq = 999;
     for (int i = 0; i < BaseCurrentCount; i++) { // modified version of vulnerable()
         if (Bases[i].faction_id_current == faction_id && has_fac_built_call(FAC_HEADQUARTERS, i)) {
@@ -2259,8 +2284,8 @@ uint32_t __cdecl black_market(int energy) {
             // times, never vector_dist itself - see base_find (0x004E3D50)
             // for the same expansion. (BaseCurrent())->x/y are re-read here,
             // not hoisted, matching the image reading the global fresh.
-            int dx = x_dist(Bases[i].x, (BaseCurrent())->x);
-            int dy = abs(Bases[i].y - (BaseCurrent())->y);
+            int dx = x_dist(Bases[i].x, BaseCurrent->x);
+            int dy = abs(Bases[i].y - BaseCurrent->y);
             int abs_dx = abs(dx);
             int abs_dy = abs(dy);
             int largest = abs_dx;
@@ -2352,8 +2377,8 @@ Return Value: n/a
 Status: WIP
 */
 void __cdecl base_psych() {
-    uint32_t faction_id = (BaseCurrent())->faction_id_current;
-    int pop_size = (BaseCurrent())->population_size;
+    uint32_t faction_id = BaseCurrent->faction_id_current;
+    int pop_size = BaseCurrent->population_size;
     int drones_base;
     int talents_base;
     int diff_lvl = is_human(faction_id) ? PlayersData[faction_id].diff_level : DLVL_LIBRARIAN;
@@ -2364,7 +2389,7 @@ void __cdecl base_psych() {
             / talents_base, 0, pop_size);
     }
     int psych_val = range(pop_size - drones_base, 0, pop_size);
-    psych_val += range(((BaseCurrent())->assimilation_turns_left + 9) / 10,
+    psych_val += range((BaseCurrent->assimilation_turns_left + 9) / 10,
         0, (pop_size + diff_lvl - 2) / 4);
     if (Players[faction_id].rule_drone) {
         psych_val += pop_size / Players[faction_id].rule_drone;
@@ -2435,12 +2460,12 @@ void __cdecl base_psych() {
             if (val_2 > 1) {
                 val_2--;
             }
-            (BaseCurrent())->drone_total = drones_base;
-            (BaseCurrent())->talent_total = talents_base;
+            BaseCurrent->drone_total = drones_base;
+            BaseCurrent->talent_total = talents_base;
             if (val_2 >= 0) {
-                (BaseCurrent())->talent_total += val_2;
+                BaseCurrent->talent_total += val_2;
             } else {
-                (BaseCurrent())->drone_total -= val_2;
+                BaseCurrent->drone_total -= val_2;
             }
         }
     }
@@ -2645,10 +2670,10 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl base_energy_costs() {
-    if ((BaseCurrent())->energy_surplus >= 0 || VehCurrentCount <= 0) {
+    if (BaseCurrent->energy_surplus >= 0 || VehCurrentCount <= 0) {
         return;
     }
-    uint32_t faction_id = (BaseCurrent())->faction_id_current;
+    uint32_t faction_id = BaseCurrent->faction_id_current;
     for (int i = 0; i < VehCurrentCount; i++) {
         if (Vehs[i].faction_id == faction_id 
             && VehPrototypes[Vehs[i].proto_id].plan == PLAN_SUPPLY_CONVOY
@@ -2725,7 +2750,7 @@ Return Value: Base maintenance cost
 Status: Complete
 */
 void __cdecl base_maint() {
-    uint32_t faction_id = (BaseCurrent())->faction_id_current;
+    uint32_t faction_id = BaseCurrent->faction_id_current;
     for (int fac = 1; fac < FacilitySPStart; fac++) {
         if (has_fac_built(fac)) {
             uint32_t maint = fac_maint(fac, faction_id);
@@ -2744,7 +2769,7 @@ void __cdecl base_maint() {
             PlayersData[faction_id].maint_cost_total += maint;
             if (PlayersData[faction_id].energy_reserves < 0) {
                 if (PlayersData[faction_id].diff_level <= DLVL_SPECIALIST
-                    || (BaseCurrent())->queue_production_id[0] == -fac) {
+                    || BaseCurrent->queue_production_id[0] == -fac) {
                     PlayersData[faction_id].energy_reserves = 0;
                 } else {
                     set_fac(fac, BaseIDCurrentSelected, false);

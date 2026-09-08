@@ -283,7 +283,7 @@ static_assert(offsetof(PopupWave, armed_108_) == 0x108,
 
 // The callback's dependencies, every one rebindable: the sound-enable flag
 // word (bit 0x400 gates everything), the context whose field at 0x50 turns
-// wave 0x19 into 0x25 deep below sea level, the voiceover wave, the
+// wave 0x19 into 0x25 for a secret project, the voiceover wave, the
 // forty-five entry popup wave bank with its last-played index beside it,
 // the owner whose virtual at 0x138 fires after wave 0x19, and the FX bank
 // that plays effect 0x38 after wave 0x10.
@@ -297,11 +297,10 @@ typedef unsigned long(__stdcall func_popup_time_source)(void);
 // the FX bank is `g_FX` (fx.cpp, 0x00749CF8) - all declared by the headers
 // this file's users already include. The last-played index has no home yet,
 // so it is real storage homed to popup.cpp; in the image it is the
-// zero-initialised dword at 0x0074DAA4 beside the bank. The three inline
+// zero-initialised dword at 0x0074DAA4 beside the bank. The two inline
 // accessors below are seams that remain, not bindings: each names a single
 // fixed address the tests rebind.
 extern int PopupWaveLastIndex;  // 0x0074DAA4
-inline void *&PopupWaveContext() { return *reinterpret_cast<void **>(0x0090EA30); }
 inline void *&PopupWaveOwnerSlot() { return *reinterpret_cast<void **>(0x0074DAA0); }
 inline func_popup_time_source *&PopupWaveTimeSlot() { return *reinterpret_cast<func_popup_time_source **>(0x00669368); }
 

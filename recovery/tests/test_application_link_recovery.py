@@ -37,7 +37,8 @@ def compiled():
                for flags in settings.flag_sets]
         for unit in ("src/infowin.cpp", "src/pulldown.cpp", "src/graphicwin.cpp",
                      "src/menu.cpp", "src/popmenu.cpp", "src/temp.cpp", "src/console.cpp",
-                     "src/netdaemon.cpp", "src/statuswin.cpp", "src/popup.cpp", "src/scroll.cpp")
+                     "src/netdaemon.cpp", "src/statuswin.cpp", "src/popup.cpp", "src/scroll.cpp",
+                     "src/base.cpp", "src/basewin.cpp")
     }
 
 
@@ -204,21 +205,48 @@ def test_popup_family_destroys_each_owned_subobject_once(compiled):
         assert not any("?destroy@" in target or "Original" in target for target in targets)
 
 
-def test_status_menu_runtime_branches_use_the_actual_recovered_handler(tmp_path, monkeypatch):
-    """Run the real body with doubles; not a full-game or collaborator proof."""
+def test_base_computation_owns_its_shared_state_and_orders_resource_passes(compiled):
+    pointer = "?BaseCurrent@@3PAUBase@@A"
+    cache = "?BaseComputedID@@3HA"
+    stages = ["?base_support@@YAXXZ", "?base_yield@@YAXXZ", "?base_nutrient@@YAXXZ",
+              "?base_minerals@@YAXXZ", "?base_energy@@YAXXZ"]
+    for obj in compiled["src/base.cpp"]:
+        for symbol in (pointer, cache):
+            definitions = [row for row in obj.symbols.values() if row.name == symbol and row.section > 0]
+            assert len(definitions) == 1
+        targets = references(obj, symbol_at("src/base.cpp", 0x4EC3B0))
+        assert [target for target in targets if target in stages] == stages
+        assert cache in targets and "?BaseIDCurrentSelected@@3HA" in targets
+        assert pointer in references(obj, symbol_at("src/base.cpp", 0x4E39D0))
+    for obj in compiled["src/popup.cpp"]:
+        assert pointer in references(obj, symbol_at("src/popup.cpp", 0x4456B0))
+    for obj in compiled["src/basewin.cpp"]:
+        layout = class_layout(obj, "BaseWin")
+        assert layout["members"]["displayed_production_id_"] == 0x40B34
+        targets = references(obj, symbol_at("src/basewin.cpp", 0x41AE40))
+        assert "?base_compute@@YAXH@Z" in targets and cache in targets
+        assert "?set_base@@YAXH@Z" in targets
+        assert "?is_visible@Win@@QAEHXZ" in targets
+        assert "?lock_base@NetDaemon@@QAEHHHHH@Z" in targets
+        assert "?unlock_base@NetDaemon@@QAEXH@Z" in targets
+
+
+def run_recovered_harness(tmp_path, monkeypatch, harness_name, handlers):
+    """Compile actual source bodies with doubles; not full-game acceptance."""
     from recovery.environment.compile import compile_object
     from recovery.environment.wine import VC6_ROOT, environment
     if not (VC6_ROOT / "BIN/CL.EXE").is_file() or shutil.which("wine32") is None:
         pytest.skip("the project compiler and Wine32 are required")
     for name in ("CL", "_CL_", "VC6_INCLUDE"):
         monkeypatch.delenv(name, raising=False)
-    record, = (row for row in read_file(ROOT / "src/statuswin.cpp") if row.address == 0x4B9010)
-    assert record.region and not record.extract_error
-    harness = Path(__file__).with_name("status_menu_harness.cpp").read_text()
-    anchor = "// RECOVERED_HANDLER is replaced with read_file(...).region, never a copy."
-    assert harness.count(anchor) == 1
+    harness = Path(__file__).with_name(harness_name).read_text()
+    for anchor, unit, address in handlers:
+        record, = (row for row in read_file(ROOT / unit) if row.address == address)
+        assert record.region and not record.extract_error
+        assert harness.count(anchor) == 1
+        harness = harness.replace(anchor, record.region)
     source = tmp_path / "menu.cpp"
-    source.write_text(harness.replace(anchor, record.region))
+    source.write_text(harness)
     wrapper = ROOT / "recovery/environment/wine.py"
     command = (sys.executable, str(wrapper), "--tool=cl", "/nologo")
     flags = ("/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-")
@@ -233,3 +261,15 @@ def test_status_menu_runtime_branches_use_the_actual_recovered_handler(tmp_path,
         diagnostics.seek(0)
         output = diagnostics.read().decode(errors="replace")
     assert result.returncode == 0, output
+
+
+def test_status_menu_runtime_branches_use_the_actual_recovered_handler(tmp_path, monkeypatch):
+    run_recovered_harness(tmp_path, monkeypatch, "status_menu_harness.cpp", [
+        ("// RECOVERED_HANDLER is replaced with read_file(...).region, never a copy.",
+         "src/statuswin.cpp", 0x4B9010)])
+
+
+def test_soft_zoom_and_computation_runtime_use_actual_recovered_bodies(tmp_path, monkeypatch):
+    run_recovered_harness(tmp_path, monkeypatch, "base_compute_harness.cpp", [
+        ("// RECOVERED_COMPUTE", "src/base.cpp", 0x4EC3B0),
+        ("// RECOVERED_SOFT_ZOOM", "src/basewin.cpp", 0x41AE40)])

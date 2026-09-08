@@ -33,6 +33,7 @@
 #include "general.h"
 #include "leaf_recoveries.h"
 #include "map.h"
+#include "netdaemon.h"
 #include "popup.h"
 #include "pulldown.h"
 #include "temp.h"
@@ -43,6 +44,27 @@
 #include "xpops.h"
 #include <cstdint>
 #include <cstring>
+
+// ORIGINAL: 0x0041AE40 ?soft_zoom@BaseWin@@QAEXH@Z 0x0041AE40-0x0041AF12 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x0041AE40-0x0041AF12"], "reason": "Recover the original base-selection/cache operation with source-owned state and typed fields. The archived seed remains an obligation until this product definition is freshly remeasured."}
+void BaseWin::soft_zoom(int base_id) {
+    if (!Win::is_visible()) {
+        focusedBaseID_ = base_id;
+        BaseComputedID = -1;
+        int worked_tiles = Bases[focusedBaseID_].resource_sqr_radius;
+        set_base(focusedBaseID_);
+        base_compute(0);
+        if (IsMultiplayerNet && !ConsoleControlTurnActive
+            && worked_tiles != Bases[focusedBaseID_].resource_sqr_radius) {
+            if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1) == 0) {
+                NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+            }
+        }
+        displayed_production_id_ = Bases[base_id].queue_production_id[0];
+        return;
+    }
+    zoom(base_id, 0);
+}
 
 /*
 Purpose: Construct BaseWin's large aggregate of sub-windows: a ProdPicker, a
