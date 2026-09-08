@@ -10,6 +10,7 @@
 #include "stdafx.h"
 #include "temp.h"  // do_all_draws
 #include "pulldown.h"
+#include "menu.h"
 #include "vtable_shim.h"
 #include <stdlib.h>
 
@@ -443,34 +444,103 @@ uint32_t PullDownFieldF38Default;  // 0x009B7B58
 uint32_t PullDownFieldF3CDefault;  // 0x009B7B5C
 Font *PullDownDefaultFont;         // 0x009B7B68
 
+// Shared menu geometry, initialized in the original image's .data.
+// RECOVERY_OBJECT: v2 0x00696E04 0x00696E08 ?PullDownTextPadding@@3HA 0x005F9170
+int PullDownTextPadding = 10;
+// RECOVERY_OBJECT: v2 0x00696E1C 0x00696E20 ?PullDownBorderPadding@@3HA 0x005F9170
+int PullDownBorderPadding = 2;
+// These two reset words have no established event interpretation yet.
+// RECOVERY_OBJECT: v2 0x009B7B70 0x009B7B74 ?PullDownState009B7B70@@3HA 0x005F9170
+int PullDownState009B7B70;
+// RECOVERY_OBJECT: v2 0x009B7B74 0x009B7B78 ?PullDownState009B7B74@@3HA 0x005F9170
+int PullDownState009B7B74;
+// Published only for the duration of the modal call at 0x005F929C.
+// RECOVERY_OBJECT: v2 0x009B7B78 0x009B7B7C ?ActivePullDown@@3PAVPullDown@@A 0x005F9170
+PullDown *ActivePullDown;
+
+// ORIGINAL: 0x005F9170 ?show@PullDown@@QAEHHHP6AHXZ@Z 0x005F9170-0x005F9397
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x005F9170-0x005F9397"], "reason": "Original modal menu behavior expressed through the GraphicWin base, item members and typed callback."}
+int PullDown::show(int x, int y, int (*poll)()) {
+    poll_ = poll;
+    if (dirty_) {
+        int width = width_ + 2 * (PullDownBorderPadding + PullDownTextPadding);
+        int height = visible_count_ * PullDownDefaultFont->line_advance()
+                   + 2 * PullDownBorderPadding;
+        if (width != dib_.bmiHeader.biWidth || height != -dib_.bmiHeader.biHeight) {
+            GraphicWin::resize(width, height, 0);
+        }
+    }
+    selected_ = -1;
+    if (win_parent_) {
+        x = x < 0 ? 0 : x;
+        y = y < 0 ? 0 : y;
+        if (x + dib_.bmiHeader.biWidth > WinScreenWidth)
+            x = WinScreenWidth - dib_.bmiHeader.biWidth;
+        if (y - dib_.bmiHeader.biHeight > WinScreenHeight)
+            y = WinScreenHeight + dib_.bmiHeader.biHeight;
+    } else {
+        ++x;
+        ++y;
+        if (x + dib_.bmiHeader.biWidth > WinScreenWidth)
+            x -= dib_.bmiHeader.biWidth;
+        if (y - dib_.bmiHeader.biHeight > WinScreenHeight)
+            y += dib_.bmiHeader.biHeight;
+        x = x < 0 ? 0 : x;
+        y = y < 0 ? 0 : y;
+    }
+    PullDownState009B7B70 = 0;
+    PullDownState009B7B74 = 0;
+    Win::move(x, y);
+    if (!win_parent_ && !WinPointerOwner3) {
+        WinPointerOwner3 = this;
+        WinPointerOwner4 = 0;
+    }
+    ActivePullDown = this;
+    set_modal(1, poll, 0);
+    ActivePullDown = 0;
+    if (!win_parent_) {
+        if (WinPointerOwner3 == this) {
+            WinPointerOwner3 = 0;
+            vslot_04();
+        }
+        if (WinPointerOwner4 == this) WinPointerOwner4 = 0;
+    }
+    Win::hide();
+    do_all_draws();
+    if (selected_ != -1 && menu_ && !(items_[selected_].flags & 2)) {
+        menu_->menu_event(selected_ < 64 ? items_[selected_].id : -1);
+    }
+    return selected_;
+}
+
+// ORIGINAL: 0x005F8920 ?init@PullDown@@QAEXPAUMenu@@@Z 0x005F8920-0x005F8967 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x005F8920-0x005F8967", "git:7c6c86d9:src/recovered/005f8920.cpp"], "reason": "Initialize the real GraphicWin base and disable markup through its Buffer subobject; Menu is a class in product source, not the retired seed struct spelling."}
+// symbol    ?init@PullDown@@QAEXPAVMenu@@@Z
+void PullDown::init(Menu *menu) {
+    if (PullDownDefaultFont == 0) {
+        PullDownDefaultFont = FontDefault;
+    }
+    menu_ = menu;
+    GraphicWin::init(0, 0, 0, 0, 0, 0, 0, 0, 0);
+    set_markup_enabled(0);
+}
+
 /*
 Purpose: Destroy a PullDown by releasing every item's text pair, resetting
          the trailing fields from their global defaults, and delegating to
          the GraphicWin destructor.
 // ORIGINAL: 0x005F88A0 ??1PullDown@@QAE@XZ 0x005F88A0-0x005F891B
-// symbol    ?destroy@PullDown@@QAEPAV1@XZ
-// LEVER: void trailing-call tail-jmps every time (VC6 always sibling-calls
-//          a trailing call needing no stack cleanup, verified in isolation
-//          even for a compiler-generated base-dtor call); returning `this`
-//          (matching BaseButton::destroy/Scroll::destroy) forces a real
-//          call+epilogue and mirrors the image's `call 0x5d4dd0` / pop* /
-//          ret shape instead of pop* / jmp.
+// symbol    ??1PullDown@@UAE@XZ
 // size      123 bytes
 // prototype void (__thiscall ??1PullDown@@QAE@XZ)(PullDown* this)
 // callers   27   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4DD0 0x00644EF2
-Status: Complete
-DEMOTED from BYTE_EXACT by direction (strip-all hand vptr writes): the two
-virtual-table stores left with the de-management sweep. They were not dead
-to the optimizer the way FlatButton's were - holding `ordered` anchored
-`this` in ebx for the whole body - so the stripped body re-allocates to
-edi and diverges at instruction 0 (1 of 36). The stores were dead to the
-PROGRAM: the GraphicWin delegation below unconditionally overwrites both
-slots with its own tables.
+The compiler owns table staging and base teardown. Earlier destroy()-helper
+experiments are retained in Git; they do not describe this real destructor.
 */
-PullDown *PullDown::destroy() {
+PullDown::~PullDown() {
     // Sixty-four items with two owned strings each, released directly
     // through items_'s own named fields.
     for (size_t index = 0; index < 64; ++index) {
@@ -487,8 +557,7 @@ PullDown *PullDown::destroy() {
     dirty_ = 1;
     field_F38_ = PullDownFieldF38Default;
     field_F3C_ = PullDownFieldF3CDefault;
-    reinterpret_cast<GraphicWin *>(this)->~GraphicWin();
-    return this;
+    // GraphicWin is destroyed once by C++ after the owned strings.
 }
 
 
@@ -762,26 +831,9 @@ void PullDown::hide() {
 // calls     0x005D4CF0
 */
 
-// TRIED: SEH frame - same symptom as FlatButton::FlatButton() (see
-// flatbutton.cpp for the full measurement) - PullDown : public GraphicWin
-// is a REAL constructor calling `GraphicWin::construct()`, and this tree's
-// compiled body gets an unwind frame (`push -1 / push handler / mov eax,
-// fs:[0] / push eax / mov fs:[0], esp`) the image does not have (flags
-// carry no `frame`).
-//
-// MEASURED 2026-08-21: this is NOT `GraphicWin`'s `Buffer buffer_` etc.
-// being held by value - swapping every by-value member up the whole
-// GraphicWin/Win/BaseButton chain for raw storage of the same size does
-// not drop the frame. Only compiling with `/GX-` does (confirmed on
-// FlatButton's identical shape), and `/GX-` is not reachable from `src/`:
-// it is a whole-translation-unit flag, and `Buffer::~Buffer()`
-// (0x005D7410, `buffer.h`) is currently BYTE_EXACT specifically because
-// the image's own destructor carries this same SEH prologue - turning
-// `/GX` off would regress that claim. `__declspec(nothrow)` / `throw()`
-// on `GraphicWin::construct()`'s declaration does not suppress the frame
-// either. Left as a MISMATCH; see flatbutton.cpp for the full note.
+// The one base-constructor call in the image belongs to implicit C++ base
+// initialization. Placement-constructing GraphicWin here ran it twice.
 PullDown::PullDown() {
-    new (static_cast<GraphicWin *>(this)) GraphicWin();
     for (size_t index = 0; index < 64; ++index) {
         items_[index].text = nullptr;
         items_[index].right_text = nullptr;
@@ -794,7 +846,7 @@ PullDown::PullDown() {
     // before visible_count_ (0xF2C), and field_A14_ (0xA14, the class's
     // FIRST declared field) dead last, after dirty_.
     field_F18_ = 0;
-    field_F1C_ = 0;
+    poll_ = 0;
     item_count_ = 0;
     width_ = 0;
     selected_ = -1;
@@ -906,4 +958,3 @@ void PullDown::UNK4() {
     visible_count_ = 0;
     dirty_ = 1;
 }
-

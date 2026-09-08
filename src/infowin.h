@@ -33,6 +33,12 @@
   *
   * The layout is not established and nothing pins its sizeof.
 */
+// Each pane owns twelve fixed-capacity text rows and parallel row values.
+typedef char InfoPaneText[12][80];
+typedef int InfoPaneRows[12];
+static_assert(sizeof(InfoPaneText) == 0x3C0, "InfoWin pane text stride");
+static_assert(sizeof(InfoPaneRows) == 0x30, "InfoWin pane row-value stride");
+
 class InfoWin {
  public:
   // homed from 00459420.cpp. EVIDENCE-FREE as a name - see the marker in
@@ -117,10 +123,9 @@ class InfoWin {
   Time timer_;
   // RECOVERY_MEMBER: v2 InfoWin font_ Font 0x58 0x00459500
   Font font_;
-  uint32_t field_80_;  // 0x80
+  int active_pane_;  // 0x80
   uint32_t field_84_;  // 0x84
-  uint32_t field_88_;  // 0x88
-  uint32_t field_8C_;  // 0x8C
+  int pane_states_[2];  // 0x88, timer_change cycles these modulo eight
   // Original +0x90: Console::editor_save (0x004E09E0) writes 7 here
   // before redrawing the fixed InfoWin at 0x007AD2A0. This is member
   // storage, not a separate global at 0x007AD330; other values are unnamed.
@@ -132,16 +137,15 @@ class InfoWin {
   uint32_t field_AC_;  // 0xAC
   uint32_t field_B0_;  // 0xB0
   uint32_t field_B4_;  // 0xB4
-  uint8_t field_B8_;  // 0xB8
-  uint8_t field_B9_[0x77F];  // 0xB9
-  uint32_t field_838_;  // 0x838
-  uint8_t field_83C_[0x5C];  // 0x83C
-  uint32_t field_898_;  // 0x898
-  uint8_t field_89C_[0x5C];  // 0x89C
-  uint32_t field_8F8_;  // 0x8F8
-  uint8_t field_8FC_[0x5C];  // 0x8FC
-  uint32_t field_958_;  // 0x958
-  uint8_t field_95C_[0x64];  // 0x95C
+  // setup_text initializes two groups of twelve rows (0x00456357),
+  // using 80-byte text slots and parallel four-byte coordinate/color slots.
+  // draw_text consumes those same indexed groups (0x00458462-0x00458513).
+  InfoPaneText row_text_[2];     // 0xB8
+  InfoPaneRows row_x_[2];        // 0x838
+  InfoPaneRows row_y_[2];        // 0x898
+  InfoPaneRows row_color_[2];    // 0x8F8
+  InfoPaneRows row_reveal_color_[2];  // 0x958
+  int row_count_[2];         // 0x9B8
   // setup_text zeros the selected total at 0x004582CB and accumulates
   // strlen results at 0x00458338-0x0045834A. on_left_click walks two
   // four-byte entries at +0x9C0/+0x9C8 (0x00458952-0x0045896B), using

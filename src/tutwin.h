@@ -164,10 +164,10 @@ extern DesignWin TutWinDesWindow;   // 0x0071F2B0
 // global of that type would need a constructor this tree does not model. The
 // const spelling folds the receiver to the immediate the image's
 // `mov ecx, 0x8c6e68` uses (draw_cursor is the reader).
-TutWin *const TutWinGlobal = (TutWin *)0x008C6E68;
+extern TutWin TutorialWindow;
+TutWin *const TutWinGlobal = &TutorialWindow;
 
 
 // The shared tail of the four do_* helpers: 0x004BDFE0, still original.
 typedef int (OriginalObject::*func_tut_win_show)(void *window, const char *text, int x, int y, void *sprite, int flag, int a7, int a8);
 extern func_tut_win_show TutWinOriginalShow;
-

@@ -1,0 +1,19 @@
+{
+  "event_id": "0b1afc899d118ca0d11de8df7515f94ea31b54dbe3492aa768407ad57f3e048d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/unrecovered/005d5630.cpp"
+    ],
+    "evidence": [
+      "InfoWin::draw_text calls GraphicWin::update(RECT*, GraphicWin*) at 0x005D5630, not the existing one-argument overload; the body copies a rect, updates the visible window, converts coordinates and flips."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "5c3927e85409d3a9b871360a9064b9f05510f881d1e47d177f51cbd82856a24a",
+  "request_id": "application-link-info-update",
+  "schema_version": 1,
+  "sequence": 41,
+  "stream": "task:infowin-ownership"
+}

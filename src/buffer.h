@@ -200,6 +200,16 @@ class Buffer {
   void resize(int width, int height);
 
   void clear_links();
+  void set_markup_enabled(int enabled) { markup_enabled_ = enabled; }
+  // InfoWin resets both the drawing and measuring markup cursors between
+  // partially revealed text runs (0x00458803-0x00458819).
+  void reset_text_state() {
+    write_font_slot_ = 0;
+    font_slot_ = 0;
+    field_514_ = 0;
+    markup_pending_ = 0;
+  }
+  void restore_clip() { set_clip(&rect2_); }
   int set_font(Font *font1, Font *font2, Font *font3, Font *font4);
   void set_text_color(int color1, int color2, int color3, int color4);
   void set_text_color2(int color1, int color2, int color3, int color4);

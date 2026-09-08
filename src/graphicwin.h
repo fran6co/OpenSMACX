@@ -191,6 +191,8 @@ class GraphicWin : public Win, public Buffer {
   // __thiscall, void(GraphicWin *). The one-argument overload; the siblings
   // take (int, int, int, int, GraphicWin *) and (RECT *, GraphicWin *).
   void update(GraphicWin *target);
+  // 0x005D5630 returns zero on both paths; the second argument is unused.
+  int update(RECT *area, GraphicWin *target);
   // 0x005D5890  ?soft_update@GraphicWin@@QAEXXZ - public, __thiscall,
   // void(void). Called directly (not virtually) by WorldWin, so it must not
   // be virtual here. Still an original body; the definition at the end of

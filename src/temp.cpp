@@ -22,6 +22,22 @@
 #include "technology.h"
 #include "map.h"
 #include "base.h"
+#include "win.h"
+
+// ORIGINAL: 0x005FC9F0 ?do_all_tasks@@YAXPAUWin@@@Z 0x005FC9F0-0x005FCA23 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x005FC9F0-0x005FCA23", "git:7c6c86d9:src/recovered/units/005fc9f0.cpp"], "reason": "Clear the real queued-window globals before polling do_net; the independently remeasured seed is retired."}
+// symbol    ?do_all_tasks@@YAXPAVWin@@@Z
+void __cdecl do_all_tasks(Win *window) {
+    MsgStatus = 0;
+    if (window) {
+        Win *active = WinPointerOwner1 ? WinPointerOwner1 : WinPointerOwner2;
+        if (window == active) {
+            WinPointerOwner1 = 0;
+            WinPointerOwner2 = 0;
+        }
+    }
+    do_net();
+}
 
 // built-in functions > used to prevent crash from mixed alloc/free SDKs
 //func12 *_realloc = (func12 *)0x00647132;

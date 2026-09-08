@@ -1,0 +1,23 @@
+{
+  "event_id": "81b8c8ed08c0db3f1d331aeadfb1fde01cb23efd7e772a695a05d9ba5eaefe6d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/deleting_thunks.cpp",
+      "src/font.h",
+      "src/menu.h",
+      "src/pending_bodies.cpp",
+      "src/unrecovered/005fb830.cpp"
+    ],
+    "evidence": [
+      "PullDown show needs Font line advance and Menu event dispatch; real scope-owned PullDown and PopMenu require single construction and destruction, not placement-reconstruction or forwarding complete destructors followed by automatic teardown."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "6574069bf15f4ffc2ad5713ece468fddab04c9fe4aa55d063a68d2210f911078",
+  "request_id": "application-link-menu-model",
+  "schema_version": 1,
+  "sequence": 37,
+  "stream": "task:infowin-ownership"
+}

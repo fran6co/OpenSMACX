@@ -1,0 +1,20 @@
+{
+  "event_id": "5c3927e85409d3a9b871360a9064b9f05510f881d1e47d177f51cbd82856a24a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/tutwin.cpp",
+      "src/tutwin.h"
+    ],
+    "evidence": [
+      "InfoWin drawing reads bounded pane text/coordinate/color arrays, Buffer text-state members and the process-wide TutWin. Replace literal global receiver binding with real owned storage for the recovered call."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "7c4b46215a7d32e0ba2ce6aac5addf74553658d4a7c769383b5106e68b37469b",
+  "request_id": "application-link-info-draw-storage",
+  "schema_version": 1,
+  "sequence": 40,
+  "stream": "task:infowin-ownership"
+}

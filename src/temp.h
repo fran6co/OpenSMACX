@@ -182,6 +182,7 @@ extern uint32_t MsgStatus;
 
 BOOL __cdecl do_non_input();
 void __cdecl do_all_draws();
+void __cdecl do_all_tasks(Win *window);
 void __cdecl do_all_keyboard();
 
 // BODIES HERE, as `MEASURED inline`, because `do_all_draws` and

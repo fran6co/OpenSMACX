@@ -84,10 +84,12 @@ class PopMenu : public Popup {
   // nothing and the deleting destructor needs a `call rel32`.
   ~PopMenu();
   int init();
+  // The caller at 0x004B90F8 switches on the selected ID returned in EAX;
+  // the catalogue's void return omitted that observed result.
+  int exec(int x, int y, int (*poll)());
 
  private:
   PullDown pull_down_;  // 0x537C
 };
 
 // BasePop::init is not recovered yet.
-

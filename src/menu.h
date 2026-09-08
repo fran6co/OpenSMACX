@@ -71,6 +71,7 @@ class Menu : public GraphicWin {
 
   void on_adjust_pulldown_pos(int *a1, int *a2);
   void set_menu_proc(MenuProc proc);
+  void menu_event(int id);
   int id_to_index(int id);
   int UNK3(int menu_id, int item_id);
   int hide_menu_item(int menu_id, int item_id);

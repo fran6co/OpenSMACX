@@ -1,0 +1,49 @@
+{
+  "event_id": "6574069bf15f4ffc2ad5713ece468fddab04c9fe4aa55d063a68d2210f911078",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/popmenu.cpp",
+      "src/popmenu.h",
+      "src/pulldown.cpp",
+      "src/pulldown.h",
+      "src/recovered/005f8920.cpp",
+      "src/recovered/units/0059d250.cpp",
+      "src/statuswin.cpp",
+      "src/statuswin.h",
+      "src/unrecovered/004b9010.cpp",
+      "src/unrecovered/005f9170.cpp"
+    ],
+    "evidence": [
+      "User requested fixing application link; original StatusWin right-click at 0x004B9010 owns PullDown and PopMenu locals and calls their init/show/exec methods. Recover real menu semantics rather than the seed vtable/cleanup scaffolding."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4952080,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6261024,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6263152,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5886544,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "fc13580957384ccdda314445ebfa68002cfd387349042de21308644f2a71bfd9",
+  "request_id": "application-link-status-menu-dependencies",
+  "schema_version": 1,
+  "sequence": 36,
+  "stream": "task:infowin-ownership"
+}

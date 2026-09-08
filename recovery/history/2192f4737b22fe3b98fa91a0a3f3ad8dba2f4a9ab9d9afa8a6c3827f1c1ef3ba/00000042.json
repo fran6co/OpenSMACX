@@ -1,0 +1,51 @@
+{
+  "event_id": "f316bbc5278dadb6f0df06633f726da6402f90fe16cc4fff585b2416740f66c3",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "recovery/tests/test_application_link_recovery.py"
+    ],
+    "evidence": [
+      "Recover and test the menu lifetime/event-loop and InfoWin drawing link closure; retain original restoration obligations while retiring only independently remeasured duplicate seeds."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6273072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6277616,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6116912,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6260736,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6260896,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6268784,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "0b1afc899d118ca0d11de8df7515f94ea31b54dbe3492aa768407ad57f3e048d",
+  "request_id": "application-link-verification-closure",
+  "schema_version": 1,
+  "sequence": 42,
+  "stream": "task:infowin-ownership"
+}

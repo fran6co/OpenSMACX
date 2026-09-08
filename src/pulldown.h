@@ -11,6 +11,8 @@
 #include "graphicwin.h"
 
 class Menu;
+typedef int (__cdecl *PullDownPoll)();
+static_assert(sizeof(PullDownPoll) == 4, "PullDown callback uses the original x86 ABI");
 
 struct PullDownItem {
   char *text;
@@ -47,12 +49,9 @@ class PullDown : public GraphicWin {
   int UNK5();
   int UNK6();
   PullDown();
-  ~PullDown() { ; }
-
-  // The recovered complete-object destructor body (0x005F88A0); the inline
-  // ~PullDown stays trivial so the layout-only semantics match, exactly as
-  // Dialog::destroy and Scroll::destroy do.
-  PullDown *destroy();
+  void init(Menu *menu = 0);
+  ~PullDown();
+  int show(int x, int y, int (*poll)());
 
   int hide_item(int id);
   int show_item(int id);
@@ -83,7 +82,7 @@ class PullDown : public GraphicWin {
   uint32_t field_A14_;  // 0x0a14
   PullDownItem items_[64];
   uint32_t field_F18_;
-  uint32_t field_F1C_;
+  PullDownPoll poll_;  // 0xF1C, assigned by show before entering the modal loop
   int item_count_;
   int width_;
   int selected_;

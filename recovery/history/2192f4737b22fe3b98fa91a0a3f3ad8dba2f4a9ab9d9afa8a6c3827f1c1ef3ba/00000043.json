@@ -1,0 +1,25 @@
+{
+  "event_id": "944135114e1d364ed8004bc92e0ec4e700b28e1587f912661b020b0fbf422e36",
+  "payload": {
+    "affects": [
+      "entity-26d46bfaec930a5f3a065684964935358d050ecd049899b81e2244feea13e785",
+      "entity-5a6d9913c94bb0992e4be5b93409d960b0d0987a4862f147e089b5c595c1269b",
+      "entity-82e12fc277c2ce0e548993b026339e4c63d72d128c195b9c0a06f515fb05d101",
+      "entity-d108c4df8afefa8edaaa9abceb25ae1e1d83a5a3060e505a82e26488722fcff1",
+      "entity-d844a03b38420bcf81e996cff2f039037bfad156441b2e3d1e94947fe642e2f9",
+      "entity-f3ccd3b4e8a744eb684318b53494e7eb7060417a41fc7fd3e5fbabec35e90544"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "application-link-transitive-body-gaps",
+    "evidence": [
+      "image:0x00458FF0-0x00459141; image:0x004B9010-0x004B9DF8; src/unrecovered/00456300.cpp documents omitted ranking geometry and real switch cases; src/unrecovered/004b9010.cpp documents placeholder action callees."
+    ],
+    "hypothesis": "Complete the real link closure before accepting the handlers: timer_change requires setup_text including the ranking-panel branches omitted by its seed; StatusWin right-click requires BaseWin soft_zoom and Console set_move/editor_edit_veh in addition to the recovered menu primitives. Seed-local vtable and approximate cleanup models are not executable implementations.",
+    "kind": "discovery"
+  },
+  "previous_event": "f316bbc5278dadb6f0df06633f726da6402f90fe16cc4fff585b2416740f66c3",
+  "request_id": "application-link-transitive-body-gaps",
+  "schema_version": 1,
+  "sequence": 43,
+  "stream": "task:infowin-ownership"
+}

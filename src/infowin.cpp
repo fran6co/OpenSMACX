@@ -30,7 +30,90 @@
 #include "pushbutton.h"
 #include "game.h"
 #include "faction.h"
+#include "maininterface.h"
 #include <cstring>
+
+// Primary normal/revealed and secondary normal/revealed foreground/shadow
+// pairs read by draw_text. Their initialization policy is still unrecovered.
+// RECOVERY_OBJECT: v2 0x008C6BB4 0x008C6BD4 ?InfoTextColors@@3PAY01HA 0x00458420
+int InfoTextColors[4][2];
+// Rank rows use one palette entry per faction, including native life.
+// RECOVERY_OBJECT: v2 0x0068F9F0 0x0068FA10 ?InfoFactionTextColors@@3PAHA 0x00458420
+int InfoFactionTextColors[8] = {249, 111, 252, 255, 251, 65, 102, 187};
+// RECOVERY_OBJECT: v2 0x0068FA10 0x0068FA30 ?InfoFactionShadowColors@@3PAHA 0x00458420
+int InfoFactionShadowColors[8] = {1, 175, 4, 248, 3, 57, 109, 192};
+
+// ORIGINAL: 0x00458420 ?draw_text@InfoWin@@QAEXH@Z 0x00458420-0x004588A9
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00458420-0x004588A9"], "reason": "Recovered original behavior through real source classes and owned members; source remains subject to byte and structural verification."}
+void InfoWin::draw_text(int pane) {
+    Buffer &buffer = MainInterfaceGlobal;
+    buffer.set_font(&font_, 0, 0, 0);
+    int row = 0;
+    int first = pane == -1 ? 0 : pane;
+    int end = pane == -1 ? 2 : pane + 1;
+    for (int column = first; column < end; ++column) {
+        RECT &clip = pane_rects_[column];
+        buffer.set_clip(&clip);
+        int left = clip.left + 3;
+        int right = clip.right - 3;
+        int remaining = visible_characters_[column];
+        for (; row < row_count_[column] && remaining >= 0; ++row) {
+            char *text = row_text_[column][row];
+            int length = strlen(text);
+            bool ranked = pane_states_[column] == 4 && row >= 1;
+            if (length) {
+                int color = row_color_[column][row];
+                if (ranked) {
+                    int faction = FactionRankings[8 - row];
+                    buffer.set_text_color(InfoFactionTextColors[faction],
+                                          InfoFactionShadowColors[faction], 1, 1);
+                } else if (!color) {
+                    int primary = field_94_ ? 1 : 0;
+                    buffer.set_text_color(InfoTextColors[primary][0],
+                                          InfoTextColors[primary][1], 1, 1);
+                    buffer.set_text_color2(InfoTextColors[primary + 2][0],
+                                           InfoTextColors[primary + 2][1], 1, 1);
+                } else {
+                    buffer.set_text_color(field_94_ ? row_reveal_color_[column][row]
+                                                    : color, -1, 1, 1);
+                }
+                int y = row_y_[column][row];
+                if (length < remaining) {
+                    if (ranked) buffer.write_right_l(text, 2, y, right - left - 4, strlen(text));
+                    else buffer.write_l(text, row_x_[column][row], y, strlen(text));
+                } else {
+                    // A zero budget displays no character. In particular, do
+                    // not form the seed's row[-1] pointer or use its uninitialized x.
+                    if (remaining > 0) {
+                        char prefix[80];
+                        strcpy(prefix, text);
+                        prefix[remaining - 1] = 0;
+                        int x = ranked ? right - left - buffer.text_width(text) - 2
+                                       : row_x_[column][row];
+                        x = buffer.write_l(prefix, x, y, strlen(prefix));
+                        strcpy(prefix, text);
+                        prefix[remaining] = 0;
+                        if (!ranked) {
+                            if (!color) {
+                                buffer.set_text_color(InfoTextColors[1][0], InfoTextColors[0][1], 1, 1);
+                                buffer.set_text_color2(InfoTextColors[3][0], InfoTextColors[3][1], 1, 1);
+                            } else {
+                                buffer.set_text_color(row_reveal_color_[column][row], -1, 1, 1);
+                            }
+                        }
+                        char *last = prefix + remaining - 1;
+                        buffer.write_l(last, x, y, strlen(last));
+                    }
+                    buffer.reset_text_state();
+                }
+            }
+            remaining -= length;
+        }
+    }
+    buffer.restore_clip();
+    MainInterfaceGlobal.update(pane == -1 ? &bounds_ : &pane_rects_[pane], 0);
+    TutorialWindow.draw_arrow();
+}
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.

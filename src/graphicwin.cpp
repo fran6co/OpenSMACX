@@ -531,6 +531,28 @@ void GraphicWin::update(GraphicWin *) {
     }
 }
 
+// ORIGINAL: 0x005D5630 ?update@GraphicWin@@QAEXPAURECT@@PAUGraphicWin@@@Z 0x005D5630-0x005D56AA
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x005D5630-0x005D56AA"], "reason": "Rectangle update through real Buffer/Win bases; original returns zero and ignores its second explicit argument."}
+// symbol    ?update@GraphicWin@@QAEHPAUtagRECT@@PAV1@@Z
+int GraphicWin::update(RECT *area, GraphicWin *) {
+    if (!area) area = &rect2_;
+    int top = area->top;
+    int left = area->left;
+    int height = area->bottom - top;
+    int width = area->right - left;
+    if (Win::is_visible()) {
+        RECT local;
+        local.top = top;
+        local.left = left;
+        local.right = left + width;
+        local.bottom = top + height;
+        Win::update_window(&local);
+        Win::client_to_screen(&local);
+        Win::flip(&local);
+    }
+    return 0;
+}
+
 // GraphicWin::init's four remaining original dependencies. Win::init carries
 // the whole window-creation closure, compute_min_size is frame arithmetic,
 // nonclient_to_client converts an outer size to a client size in place, and

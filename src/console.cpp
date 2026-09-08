@@ -2114,8 +2114,8 @@ void Console::survey2() {
         console_map_win()->field_1DD70_ & 0xffffefff;
     if (tut_check(0x400) != 0) {
         const int slot = CursorLastIndex;
-        TutWinGlobal->tut_map(StrTerraSurvey2, CursorLastX[slot],
-                              CursorLastY[slot], -1, nullptr, 0, -1, -1);
+        TutorialWindow.tut_map(StrTerraSurvey2, CursorLastX[slot],
+                               CursorLastY[slot], -1, nullptr, 0, -1, -1);
     }
 }
 

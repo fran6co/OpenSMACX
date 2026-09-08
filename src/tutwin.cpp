@@ -18,6 +18,11 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "tutwin.h"
+
+// The tutorial overlay used by InfoWin and MapWin; a real process-lifetime
+// object rather than a pointer into the original executable's BSS.
+// RECOVERY_OBJECT: v2 0x008C6E68 0x008CC240 ?TutorialWindow@@3VTutWin@@A 0x00458420
+TutWin TutorialWindow;
 #include "win.h"
 #include "mapwin.h"
 #include "vtable_shim.h"
@@ -597,4 +602,3 @@ tut_check2(int flag) {
     TutorialFlags2 |= flag;
     return 1;
 }
-

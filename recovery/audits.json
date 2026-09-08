@@ -17,7 +17,7 @@
         "construct": 7,
         "free-function destructor": 5,
         "explicit base construct/destroy": 8,
-        "placement new on a subobject": 7,
+        "placement new on a subobject": 6,
         "hand-walked vbtable": 0,
         "VCall shim": 9,
         "ORIGINAL() vtable-slot dispatch": 29,
@@ -34,8 +34,8 @@
         "leaf_recoveries.cpp markers": 52,
         "nullsub_thunks.cpp markers": 56,
         "PENDING_BODY forwarders": 261,
-        "artifact files (recovered/)": 946,
-        "unrecovered files": 1027,
+        "artifact files (recovered/)": 942,
+        "unrecovered files": 1024,
         "hypothesis_layouts.h lines": 2752
       },
       "counters": [
@@ -131,7 +131,7 @@
         "orphan redirect": 198,
         "pointer-as-int": 0,
         "undocumented trivial body": 0,
-        "raw self-access": 209,
+        "raw self-access": 208,
         "pointer-parameter as int": 102,
         "scaffold name": 2996
       },

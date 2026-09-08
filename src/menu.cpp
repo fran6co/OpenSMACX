@@ -22,6 +22,35 @@
 #include "pulldown.h"
 #include "filewin.h"
 #include "win.h"
+#include "temp.h"
+#include "console.h"
+
+// RECOVERY_OBJECT: v2 0x00696E3C 0x00696E40 ?MenuSelection@@3HA 0x005FB830
+int MenuSelection = -1;
+
+// ORIGINAL: 0x005FB830 ?menu_event@Menu@@QAEHH@Z 0x005FB830-0x005FB8D8
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x005FB830-0x005FB8D8"], "reason": "Recovered original behavior through real source classes and owned members; source remains subject to byte and structural verification."}
+// symbol    ?menu_event@Menu@@QAEXH@Z
+void Menu::menu_event(int id) {
+    if (field_A24_ != 0xFFFFFFFF) {
+        MenuEntry &entry = entries_[field_A24_];
+        entry.pull_down->hide();
+        field_A24_ = 0xFFFFFFFF;
+        MenuSelection = -1;
+        redraw();
+        flush_input();
+        do_all_tasks(entry.pull_down);
+        do_all_tasks(this);
+    }
+    if (!(field_A28_ & 4)) hide();
+    if (proc_) {
+        proc_(id);
+        if (win_parent_) {
+            Win *target = win_parent_->event_window();
+            if (target && !target->vslot_23()) target->vslot_07();
+        }
+    }
+}
 
 /*
 Purpose: Construct the GraphicWin base and the embedded Spot, install

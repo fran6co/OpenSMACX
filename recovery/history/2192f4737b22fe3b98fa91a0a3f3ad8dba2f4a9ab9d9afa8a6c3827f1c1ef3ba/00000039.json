@@ -1,0 +1,21 @@
+{
+  "event_id": "7c4b46215a7d32e0ba2ce6aac5addf74553658d4a7c769383b5106e68b37469b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/recovered/units/005fc9f0.cpp",
+      "src/temp.cpp",
+      "src/temp.h"
+    ],
+    "evidence": [
+      "Menu event invokes the 51-byte do_all_tasks routine; recover its real queued-window state updates and existing do_net call as part of the link closure."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "9520936277745bb96fc0a317f93ef2e74f8dbda9e3f7fd531d9ec1d083251922",
+  "request_id": "application-link-menu-tasks",
+  "schema_version": 1,
+  "sequence": 39,
+  "stream": "task:infowin-ownership"
+}

@@ -121,7 +121,9 @@ class AutoSound {
   int val_31_;
   int val_32_;
   int val_33_;
-  int val_34_;
+  // Menu::menu_event (0x005FB8B8) reads this as a window and dispatches
+  // its event slots. The precise relationship remains unnamed.
+  Win *event_window_;  // 0x88
   int val_35_;
   int val_36_;
   int val_37_;

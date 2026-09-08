@@ -1,0 +1,21 @@
+{
+  "event_id": "9520936277745bb96fc0a317f93ef2e74f8dbda9e3f7fd531d9ec1d083251922",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/autosound.cpp",
+      "src/autosound.h",
+      "src/win.h"
+    ],
+    "evidence": [
+      "Menu::menu_event reads parent AutoSound +0x88 as a Win pointer and dispatches slots 23/7; type the member and expose a typed getter rather than introduce raw offset access."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "81b8c8ed08c0db3f1d331aeadfb1fde01cb23efd7e772a695a05d9ba5eaefe6d",
+  "request_id": "application-link-menu-focus",
+  "schema_version": 1,
+  "sequence": 38,
+  "stream": "task:infowin-ownership"
+}

@@ -74,7 +74,7 @@ AutoSound::AutoSound() {
     val_31_ = static_cast<int>(AutoSoundDefaults[30]);
     val_32_ = static_cast<int>(AutoSoundDefaults[31]);
     val_33_ = static_cast<int>(AutoSoundDefaults[32]);
-    val_34_ = static_cast<int>(AutoSoundDefaults[33]);
+    event_window_ = reinterpret_cast<Win *>(AutoSoundDefaults[33]);
     val_35_ = static_cast<int>(AutoSoundDefaults[34]);
     val_36_ = static_cast<int>(AutoSoundDefaults[35]);
     val_37_ = static_cast<int>(AutoSoundDefaults[36]);
@@ -133,7 +133,7 @@ void AutoSound::close() {
     val_31_ = static_cast<int>(AutoSoundDefaults[30]);
     val_32_ = static_cast<int>(AutoSoundDefaults[31]);
     val_33_ = static_cast<int>(AutoSoundDefaults[32]);
-    val_34_ = static_cast<int>(AutoSoundDefaults[33]);
+    event_window_ = reinterpret_cast<Win *>(AutoSoundDefaults[33]);
     val_35_ = static_cast<int>(AutoSoundDefaults[34]);
     val_36_ = static_cast<int>(AutoSoundDefaults[35]);
     val_37_ = static_cast<int>(AutoSoundDefaults[36]);
@@ -190,7 +190,7 @@ void AutoSound::close2() {
     val_31_ = static_cast<int>(AutoSoundDefaults[30]);
     val_32_ = static_cast<int>(AutoSoundDefaults[31]);
     val_33_ = static_cast<int>(AutoSoundDefaults[32]);
-    val_34_ = static_cast<int>(AutoSoundDefaults[33]);
+    event_window_ = reinterpret_cast<Win *>(AutoSoundDefaults[33]);
     val_35_ = static_cast<int>(AutoSoundDefaults[34]);
     val_36_ = static_cast<int>(AutoSoundDefaults[35]);
     val_37_ = static_cast<int>(AutoSoundDefaults[36]);
@@ -249,7 +249,7 @@ void AutoSound::init() {
     val_31_ = 0;
     val_32_ = 0;
     val_33_ = 0;
-    val_34_ = 0;
+    event_window_ = 0;
     val_35_ = 0;
     val_36_ = 0;
     val_37_ = 0;
@@ -290,5 +290,4 @@ Status: Complete
 // some call sites and calls it at others, and a .cpp definition is only ever
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
-
 

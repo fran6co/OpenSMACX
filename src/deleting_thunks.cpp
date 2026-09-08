@@ -1727,7 +1727,7 @@ void *__fastcall scalar_delete_pull_down(void *self, void *,
     // THE METHOD, not the redirect: `nullptr` for the redirect's unused
     // second argument materialises `xor edx, edx`, which the image does not
     // emit. Same fix as SelectPartWin::close.
-    reinterpret_cast<PullDown *>(self)->destroy();
+    static_cast<PullDown *>(self)->PullDown::~PullDown();
     if (arg0 & 1) {
         operator delete(self);
     }

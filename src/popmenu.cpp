@@ -22,6 +22,24 @@
 #include "sounddevice.h"
 #include "basepop.h"
 
+// ORIGINAL: 0x0059D250 ?exec@PopMenu@@QAEXHHP6AHXZ@Z 0x0059D250-0x0059D392
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x0059D250-0x0059D392"], "reason": "Recovered original behavior through real source classes and owned members; source remains subject to byte and structural verification."}
+// symbol    ?exec@PopMenu@@QAEHHHP6AHXZ@Z
+int PopMenu::exec(int x, int y, int (*poll)()) {
+    pull_down_.init(0);
+    for (int i = 0; i < dialogs().get_num_items(); ++i) {
+        StringList &items = dialogs().item_list_;
+        items.seek_pos(i);
+        char *text = items.head_ ? items.current_->payload->text : 0;
+        int id = items.head_ ? items.current_->id : 0;
+        // Dialog menu separator literal at 0x006900C8.
+        if (strcmp(text, "*") == 0) pull_down_.add_separator(id);
+        else pull_down_.add_item(id, text);
+    }
+    pull_down_.show(x, y, poll);
+    return pull_down_.get_selected();
+}
+
 
 /*
 Purpose: Initialise the pop-up menu with the base defaults.
@@ -38,4 +56,3 @@ Status: Complete
 int PopMenu::init() {
     return BasePop::init(0, 0);
 }
-

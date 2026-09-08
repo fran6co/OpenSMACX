@@ -89,6 +89,11 @@ class Font {
   }
   LPSTR find_line_break_l(LPSTR input, int *break_len, size_t len);
   bool is_initialized() const { return font_obj_ != NULL; }
+  // PullDown::show (0x005F91A3) uses the natural line height unless
+  // an explicit inter-line adjustment has been supplied.
+  int line_advance() const {
+    return unk_1_ < 0 ? line_height_ : height_ + unk_1_;
+  }
 
   // eventually make atomic for thread safety
   static HDC FontHDC;

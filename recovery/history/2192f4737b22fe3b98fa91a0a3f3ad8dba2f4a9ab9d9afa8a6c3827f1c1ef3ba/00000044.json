@@ -1,0 +1,23 @@
+{
+  "event_id": "7443ecb39115acf83abcdcd977d72d28d4622e076bdd5c998a7e56dd3935b048",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Replacing TutWinGlobal with real storage exposes a late LEA-versus-MOV call setup difference in Console::survey2. Preserve the real TutorialWindow while restoring the coupled caller claim."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5330224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "944135114e1d364ed8004bc92e0ec4e700b28e1587f912661b020b0fbf422e36",
+  "request_id": "tutorial-storage-survey-caller",
+  "schema_version": 1,
+  "sequence": 44,
+  "stream": "task:infowin-ownership"
+}
