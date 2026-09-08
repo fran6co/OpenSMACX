@@ -47,7 +47,8 @@ Preservation reports now expose exact symbol/reference differences and source
 navigation hints. Selected-TU diagnostic mode avoids the full damage-control sweep
 but always remains unverified; it is investigation, not migration admission.
 Full structure, historical product-TU recipe mapping, full-link outside-scope admission
-and a live model recovery pilot remain unfinished.
+and an OpenSMACX live recovery pilot remain unfinished. A bounded, test-owned live
+worker/reviewer/native-acceptance control is now verified as described below.
 
 Compiler execution now has one project-owned implementation shared by native
 checks and the retained production measurements. The masked comparer requires an
@@ -293,11 +294,19 @@ establish completion of this program.
   not a live-agent/game pilot. It replaces the older custom-verifier compiler
   control while retaining executable-survey and independently bounded binding
   coverage; Git retains the replaced fixture.
+  An opt-in live control now reuses that native pipeline with the configured
+  provider, not worker/reviewer doubles. Given original COFF class hints, the
+  worker restored real Base/Member fields and preserved a caller discovery.
+  The bounded fixture coordinator authorized that known caller and incorporated
+  the discovery through native commands, leaving editable files and the baseline
+  unchanged. Fresh independent review and all acceptance dimensions then passed.
+  Unknown scope remains refused; this is not a blind executable-only recovery,
+  general autonomous coordinator, or completed OpenSMACX acceptance.
   The package-owned native migration verifier now composes fresh build, bounded
   declarations, references and outside-scope preservation checks; OpenSMACX
   configures that command without a project adapter. A synthetic driver test
   admits a measured byte regression and resumes restoration against the same
-  baseline. Live model recovery validation and actual collection remain under
+  baseline. Production live recovery validation and actual collection remain under
   construction; unsupported compiler replicas and scoped table/data changes
   still refuse preservation.
   Task context now derives restoration requirements from baseline, reachable

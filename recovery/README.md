@@ -506,8 +506,10 @@ worktree; never point that variable at a shared prefix or a broad directory.
 Model selection and authentication use the user's CLI configuration; no model or
 credential is embedded here. This configuration follows the
 [official non-interactive documentation](https://learn.chatgpt.com/docs/non-interactive-mode)
-and was checked against installed `codex exec --help`. No live model task has yet
-validated recovery quality or this machine's nested-provider sandbox behavior.
+and was checked against installed `codex exec --help`. An opt-in, isolated live
+control now recovers an evidence-assisted test-owned hierarchy with a real worker,
+independent reviewer and native acceptance. It exercises the configured nested
+sandboxes; it does not establish OpenSMACX recovery quality or production readiness.
 Prepare/authorize an isolated run before using these commands. The generic bridge
 also supports a single final JSON object on stdout for other provider commands.
 
@@ -679,6 +681,20 @@ byte-identical wrong hierarchy in the retained build and a runtime-mismatching
 artifact. Its workers/reviewers are deterministic; it does not supply OpenSMACX's
 missing proof coverage. Native receipts expose verified artifact paths/hashes so
 downstream work can identify the tested build without guessing a cache directory.
+
+The same file has an opt-in live-provider control:
+`OPENSMACX_LIVE_AGENT_CONTROL=1 uv run pytest -s recovery/tests/test_native_acceptance_compiler.py::test_live_worker_and_independent_reviewer_reach_native_acceptance`.
+Set an isolated `VC6_PREFIX` and verify provider availability first. This consumes
+the configured provider's usage; ordinary test runs skip it. Original COFF class
+evidence is supplied as a hint, not a claim of blind executable-only recovery.
+The live worker recovered the real base/member fields in one worker round and
+reported the affected entry caller. The control's bounded coordinator uses native
+scope/resolve commands for that independently mapped caller, without widening
+editable files or replacing the task baseline. Independent review and fresh native
+acceptance then passed. Unknown entities are refused; this fixture coordinator
+is not a general autonomous scope planner. Reports/artifacts remain ignored test
+outputs; only decisions belong to task history. OpenSMACX still needs its actual
+link closure and structural/runtime proof coverage.
 
 The report may additionally contain `findings`, an array of
 `{"dimension":"runtime","message":"Explain the measured defect",

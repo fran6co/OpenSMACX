@@ -1,12 +1,14 @@
 """Real native gate/restoration/preservation/build/runtime acceptance control.
 
-Only the worker and independent reviewer are deterministic test doubles. The
+The default controls use deterministic worker/reviewer doubles. An opt-in live
+control uses the configured provider and a bounded fixture coordinator. The
 test-owned reference is freshly compiled, linked and run; no proprietary fixture
-or precomputed verifier response participates. Not a live-model/game pilot.
+or precomputed verifier response participates. Not an Alpha Centauri pilot.
 """
 
 import hashlib
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -21,6 +23,7 @@ from match_recovery.model import Origin, Span
 from match_recovery.pe_coff import Coff
 from match_recovery.project import initialize
 from match_recovery.recording import record
+from match_recovery.source_inventory import source_snapshot
 from match_recovery.tasks import Task, TaskStore
 from recovery.environment.wine import VC6_ROOT
 
@@ -52,8 +55,7 @@ FLAGS = ("/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Z7")
 METHOD = "?add@Owner@@QAEHH@Z"
 
 
-@pytest.mark.parametrize("damage", [None, "runtime", "structure"])
-def test_real_native_acceptance_preserves_structure_through_byte_regression(tmp_path, monkeypatch, damage):
+def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None):
     if not (VC6_ROOT / "BIN/CL.EXE").is_file():
         pytest.skip("VC6 is not installed")
     for name in ("CL", "_CL_", "VC6_INCLUDE"):
@@ -121,6 +123,22 @@ def test_real_native_acceptance_preserves_structure_through_byte_regression(tmp_
                   acceptance={"checks": {name: command(name) for name in ("structure", "runtime")},
                               "inputs": inputs, "environment": env})
     config_file.write_text(json.dumps(config))
+    if provider is not None:
+        (local / "agents.json").write_text(json.dumps(provider))
+        instructions = (
+            "This is a bounded test-owned C++ application, not Alpha Centauri. "
+            "Recover the authorized Owner hierarchy and method from original evidence. "
+            "The original reference COFF with CodeView class names/types is at " + str(original / "owner.obj") + ". "
+            "It is a supplied seed/hint; the pinned executable remains the byte reference. "
+            "Read it with match_recovery.pe_coff.Coff and match_recovery.codeview.class_layout. "
+            "The Python interpreter with the package installed is " + sys.executable + ". "
+            "Do not change source annotations, task decisions, compiler/build/proof policy or Git state. "
+            "Do not start other agents or invoke recover run recursively. "
+            "Return the required final JSON. Original names and declared member/base evidence "
+            "are important; a flattened raw array is not an accepted model. "
+        )
+        (local / "worker.md").write_text(instructions + "Edit only src/owner.h and src/owner.cpp; preserve structural progress on a byte miss.\n")
+        (local / "reviewer.md").write_text(instructions + "Remain read-only. Inspect source and original evidence independently; approval is not acceptance.\n")
     (local / "build.json").write_text(json.dumps({
         "schema_version": 1, "artifacts": "build/products",
         "commands": [{"argv": [*script, "build-" + damage + "-damage" if damage else "build", "{root}", "{build}"], "timeout": 90}],
@@ -166,6 +184,13 @@ def test_real_native_acceptance_preserves_structure_through_byte_regression(tmp_
     TaskStore(root).create(task)
     git("add", "recovery")
     git("commit", "-m", "Authorize ownership task")
+    return root, image, task, git, evidence
+
+
+@pytest.mark.parametrize("damage", [None, "runtime", "structure"])
+def test_real_native_acceptance_preserves_structure_through_byte_regression(tmp_path, monkeypatch, damage):
+    root, image, task, git, evidence = prepared_project(tmp_path, monkeypatch, damage=damage)
+    product, local, original = root / "src", root / "recovery", image.parent
     flat = (product / "owner.cpp").read_text()
     real = flat.replace("raw_[0] + raw_[1]", "bias + member.value")
     config_driver = json.loads((local / "driver.json").read_text())
@@ -214,4 +239,100 @@ def test_real_native_acceptance_preserves_structure_through_byte_regression(tmp_
     if damage == "runtime":
         assert "retained candidate exit=13" in receipt["findings"][0]["evidence"][0]
     assert TaskStore(root).read(task.task_id).base_revision == task.base_revision
+    assert git("diff", "--name-only", "HEAD").splitlines() == ["src/owner.cpp", "src/owner.h"]
+
+
+@pytest.mark.skipif(os.environ.get("OPENSMACX_LIVE_AGENT_CONTROL") != "1", reason="opt-in live provider recovery and acceptance")
+def test_live_worker_and_independent_reviewer_reach_native_acceptance(tmp_path, monkeypatch):
+    # Deliberately reuse the project's existing provider settings and models.
+    # Only instructions are replaced with this unrelated application's evidence.
+    provider = json.loads((Path(__file__).resolve().parents[1] / "agents.json").read_text())
+    for role in ("worker", "reviewer"):
+        provider[role]["instructions"] = ["recovery/" + role + ".md"]
+    root, image, task, git, _ = prepared_project(tmp_path, monkeypatch, provider=provider)
+    monkeypatch.setenv("RECOVERY_IMAGE", str(image))
+    print("Live native acceptance project: " + str(root), flush=True)
+    local = root / "recovery"
+    def configuration(name):
+        return json.loads((local / (name + ".json")).read_text())
+    # No execute override: worker/reviewer, native checks and acceptance all use
+    # real configured commands. The bounded fixture coordinator can authorize
+    # only its independently mapped caller; it cannot waive checks or edit code.
+    reports, rounds = [], 0
+    for checkpoint in range(4):
+        report = drive(root, task.task_id, configuration("driver"), configuration("worker"),
+                       iterations=3 - rounds, reviewer_configuration=configuration("reviewer"))
+        reports.append(report)
+        rounds += report["worker_rounds"]
+        (root / "build/live-result.json").write_text(json.dumps(reports, indent=2))
+        if report["ready_for_collection"] or report["stop_reason"] not in (
+                "review_scope_expansion", "evaluate_structural_discoveries"):
+            break
+        if rounds == 3:
+            break  # A checkpoint must not silently reset the worker budget.
+        incorporate_fixture_discoveries(root, task, git, checkpoint)
+    assert report["ready_for_collection"], report
+    assert 1 <= rounds <= 3
+    assert all(report["acceptance"][key] == "pass" for key in (
+        "build", "structure", "references", "obligations", "runtime"))
+    for name, fingerprint in report["acceptance"]["artifacts"].items():
+        assert hashlib.sha256((root / name).read_bytes()).hexdigest() == fingerprint
+    assert TaskStore(root).read(task.task_id).base_revision == task.base_revision
+    assert set(git("diff", "--name-only", "HEAD").splitlines()) <= {"src/owner.cpp", "src/owner.h"}
+
+
+def incorporate_fixture_discoveries(root, task, git, checkpoint):
+    """Bounded test coordinator, not general automatic scope authorization."""
+    records = source_snapshot(root)["records"]
+    assert len(records) == 2 and {row["path"] for row in records} == {"src/owner.cpp", "src/entry.cpp"}
+    known = {row["entity_id"] for row in records}
+    store = TaskStore(root)
+    state = store.status(task.task_id, known)
+    assert state["pending_discoveries"] and not state["missing_subjects"]
+    requested = {key for row in state["pending_discoveries"] for key in row["affects"]}
+    assert requested <= known, "Unknown original needs a separate coordinator decision"
+    def command(action, *args):
+        result = subprocess.run([sys.executable, "-m", "match_recovery.cli", "tasks", action, task.task_id,
+                                 "--root", str(root), *args], cwd=root, capture_output=True, text=True, timeout=30)
+        assert result.returncode == 0, result.stderr + result.stdout
+    revision = state["decision_revision"]
+    extra = sorted(requested - store.scope(task.task_id)[0])
+    if extra:
+        command("expand", "--request-id", f"fixture-callers-{checkpoint}", "--author", task.author,
+                *[word for key in extra for word in ("--subject", key)],
+                "--evidence", "Known test-owned entry caller uses the shared Owner header; include its original obligations without widening editable files.",
+                "--expected-revision", str(revision))
+        revision += 1
+    for index, discovery in enumerate(state["pending_discoveries"]):
+        command("resolve", "--discovery-id", discovery["discovery_id"], "--request-id", f"fixture-incorporate-{checkpoint}-{index}",
+                "--author", task.author, "--disposition", "incorporated", "--source-evidence",
+                "src/owner.h and src/owner.cpp express the recovered model; its known caller is in scope. Resume independent review and all native checks; incorporation is not acceptance.",
+                "--expected-revision", str(revision))
+        revision += 1
+    git("add", "recovery/history")
+    git("commit", "-m", "Authorize known fixture caller and preserve the structural discovery")
+    assert store.read(task.task_id).base_revision == task.base_revision
+    assert store.scope(task.task_id)[1] == frozenset(("src/owner.cpp", "src/owner.h"))
+
+
+@pytest.mark.parametrize("unknown", [False, True])
+def test_fixture_coordinator_preserves_bounds_and_baseline(tmp_path, monkeypatch, unknown):
+    root, _, task, git, evidence = prepared_project(tmp_path, monkeypatch)
+    path = root / "src/owner.cpp"
+    path.write_text(path.read_text().replace("raw_[0] + raw_[1]", "bias + member.value"))
+    (root / "src/owner.h").write_text(evidence + CLASSES)
+    store = TaskStore(root)
+    known = {row["entity_id"] for row in source_snapshot(root)["records"]}
+    affected = known | ({"entity-" + "a" * 64} if unknown else set())
+    store.discover(task.task_id, request_id="caller", author="worker", hypothesis="Shared header affects the entry caller",
+                   affects=affected, evidence=["src/owner.h and src/entry.cpp"], expected_revision=0)
+    if unknown:
+        with pytest.raises(AssertionError, match="Unknown original"):
+            incorporate_fixture_discoveries(root, task, git, 0)
+        assert len(store.decisions(task.task_id)) == 1
+    else:
+        incorporate_fixture_discoveries(root, task, git, 0)
+        assert store.scope(task.task_id)[0] == known
+        assert not store.status(task.task_id, known)["pending_discoveries"]
+    assert store.read(task.task_id).base_revision == task.base_revision
     assert git("diff", "--name-only", "HEAD").splitlines() == ["src/owner.cpp", "src/owner.h"]

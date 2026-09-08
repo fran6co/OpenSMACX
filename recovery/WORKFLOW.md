@@ -208,7 +208,11 @@ ephemeral invocations, workspace-write worker and read-only reviewer. Existing
 Markdown role instructions are inputs to that bridge, not executable adapters.
 Configure provider authentication/model policy and verify worktree/compiler
 isolation before launching. The installed CLI flags and synthetic subprocess
-handshake have been checked; a live model recovery pilot is not yet verified.
+handshake have been checked. An isolated, evidence-assisted small C++ project now
+passes a live worker/independent-review/native-acceptance control, including a
+preserved caller discovery and explicit coordinator scope authorization. The
+opt-in command and limits are in `README.md`. This does not prove an OpenSMACX
+pilot or a general autonomous coordinator; do not silently auto-expand real tasks.
 
 The driver rebuilds context, checks, calls the worker and rechecks bounded rounds.
 A native `review_structure` next action hands passing scoped evidence to the
