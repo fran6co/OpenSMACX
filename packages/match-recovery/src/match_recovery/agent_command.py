@@ -86,7 +86,13 @@ def _request(root, role, request):
             require_digest(feedback["snapshot"])
             # Historical diagnostics only; the driver validates request binding
             # and protected coverage before issuing this feedback.
-            acceptance_outcome(1, feedback["report"])
+            report = feedback["report"]
+            outcome = report.get("result") if isinstance(report, dict) else None
+            if outcome not in ("fail", "unknown"):
+                raise ValueError("acceptance feedback requires a failed or unknown report")
+            acceptance_outcome(1 if outcome == "fail" else 3, report)
+            if outcome == "unknown" and not report.get("findings"):
+                raise ValueError("unknown acceptance feedback needs diagnostic findings")
     else:
         require_digest(request["snapshot"])
     return task, decisions, editable

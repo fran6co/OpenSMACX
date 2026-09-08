@@ -161,17 +161,18 @@ def test_real_driver_round_trip_needs_only_configured_prompt_commands(project):
     assert (root / "src/f.cpp").read_text() == "finished\n"
 
 
-def test_real_provider_bridge_receives_acceptance_failure_then_rechecks(project):
+@pytest.mark.parametrize("outcome", ["fail", "unknown"])
+def test_real_provider_bridge_receives_acceptance_failure_then_rechecks(project, outcome):
     from test_reviews import PASS
     from match_recovery.reviews import ReviewStore
 
     root, task = project
     script = PROVIDER.replace("if role == 'worker':", """if role == 'worker':
-    assert request['acceptance_feedback']['report']['runtime'] == 'fail'
+    assert request['acceptance_feedback']['report']['runtime'] == EXPECTED_OUTCOME
     assert request['acceptance_feedback']['report']['findings'][0]['message'] == 'Controlled runtime failure'
     assert request['acceptance_feedback']['snapshot'] == request['review_feedback']['snapshot']
     assert request['check']['result'] == 'unknown'
-""")
+""".replace("EXPECTED_OUTCOME", repr(outcome)))
     configure(root, script=script)
     git(root, "add", ".")
     git(root, "commit", "-m", "Configure counterexample provider")
@@ -185,9 +186,9 @@ def test_real_provider_bridge_receives_acceptance_failure_then_rechecks(project)
                   "ok=Path('src/f.cpp').read_text()=='finished\\n'; "
                   f"report={PASS!r}; "
                   "report.update(request_fingerprint=digest(request),measurements=[],current={}); "
-                  "report.update(result='pass' if ok else 'fail', runtime='pass' if ok else 'fail'); "
+                  f"report.update(result='pass' if ok else {outcome!r}, runtime='pass' if ok else {outcome!r}); "
                   "report['findings']=[] if ok else [dict(dimension='runtime',message='Controlled runtime failure',evidence=['source:src/f.cpp'])]; "
-                  "print(json.dumps(report)); raise SystemExit(0 if ok else 1)")}
+                  f"print(json.dumps(report)); raise SystemExit(0 if ok else {1 if outcome == 'fail' else 3})")}
     roles = {role: {"author": role, "command": {"argv": [sys.executable, "-m", "match_recovery.cli", "agent", role],
                                                "timeout": 20}} for role in ("worker", "reviewer")}
     report = drive(root, task.task_id, config, roles["worker"], iterations=2, reviewer_configuration=roles["reviewer"])
@@ -207,13 +208,32 @@ def test_invalid_acceptance_feedback_cannot_reach_provider(project, feedback):
 
 
 @pytest.mark.parametrize("outcome", ["pass", "unknown"])
-def test_bridge_rejects_nonfailure_acceptance_feedback(project, outcome):
+def test_bridge_rejects_passes_and_unknown_without_findings(project, outcome):
     from test_reviews import PASS
     root, task = project
     config = configure(root, script="raise AssertionError('must not launch')")
     feedback = {"snapshot": "a" * 64, "report": {**PASS, "result": outcome, "runtime": outcome}}
-    with pytest.raises(ValueError, match="disagree"):
+    with pytest.raises(ValueError, match="failed or unknown|needs diagnostic findings"):
         run_agent(root, "worker", config, {**request(task), "acceptance_feedback": feedback})
+
+
+@pytest.mark.parametrize("damage", ["passing_dimension", "empty_evidence", "inconsistent_summary"])
+def test_unknown_feedback_still_requires_a_consistent_report_before_provider_launch(project, damage):
+    from test_reviews import PASS
+    root, task = project
+    config = configure(root, script="raise AssertionError('must not launch')")
+    report = {**PASS, "result": "unknown", "runtime": "unknown", "findings": [
+        {"dimension": "runtime", "message": "Missing observation", "evidence": ["source:src/f.cpp"]}]}
+    if damage == "passing_dimension":
+        report["findings"][0]["dimension"] = "build"
+    elif damage == "empty_evidence":
+        report["findings"][0]["evidence"] = []
+    else:
+        report["runtime"] = "fail"
+    with pytest.raises(ValueError):
+        run_agent(root, "worker", config, {**request(task), "acceptance_feedback": {
+            "snapshot": "a" * 64, "report": report}})
+    assert not (root / "build/recovery/agents").exists()
 
 
 def test_cli_returns_structured_errors_instead_of_an_empty_pipe(project, monkeypatch, capsys):

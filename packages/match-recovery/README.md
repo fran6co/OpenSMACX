@@ -768,6 +768,9 @@ reported as a discovery. It does not authorize speculative edits or changes to
 proof policy. Unknown acceptance without findings stops; no source progress also
 stops unless the worker reports a discovery. Feedback is a disposable diagnostic for its
 recorded snapshot, not a cached verdict or proof about later source.
+The native agent-command bridge validates failure and unknown reports using
+their respective verdicts before provider dispatch. Unknown feedback requires
+diagnostic findings; passing, contradictory or malformed feedback is refused.
 
 ### Native acceptance verifier
 
