@@ -641,7 +641,7 @@ approval, provided the configured build passed: the scoped check remains unknown
 and the full verifier must independently resolve every remaining obligation.
 An arbitrary unknown result, a known scoped failure or a failed/unknown build
 cannot use this route. It must implement the actual full-project checks—not echo
-worker claims—and return exactly `scope: "full_project"`, an overall `result`,
+worker claims—and return `scope: "full_project"`, an overall `result`,
 and `build`, `structure`, `references`, `obligations`, `runtime` outcomes. Outcomes
 are `pass`, `fail` or `unknown`; an unknown dimension yields overall unknown/exit
 3, otherwise any failure yields fail/exit 1. Only all passing dimensions with
@@ -649,6 +649,18 @@ exit 0 can produce `ready_for_collection:true` and driver exit 0. Missing fields
 scoped reports and contradictory exits are refused. The target adapter must
 verify pinned inputs, original boundaries and every preserved obligation; these
 are contracts for trusted verifier code, not proofs obtained by adding JSON keys.
+
+Acceptance reports must also contain `request_fingerprint`, `measurements` and
+`current`. The fingerprint is the package's canonical digest of the entire stdin
+request, including its per-invocation `verification_id`; even source-identical
+review reuse requires a fresh receipt. Every protected obligation needs a fresh
+passing `{obligation_id, fingerprint, result, evidence}` measurement before the
+obligations summary may pass. `current` contains the verifier's current input
+fingerprints. Missing/stale/unknown measurements keep that dimension unknown;
+duplicate or unrequested identities and contradictory passing summaries are
+refused. The package README defines the encoding and exact contract. No receipt
+or measurement report is saved as workflow history, and old boolean-only replies
+are unsupported. This closes a protocol gap, not the missing full verifier.
 
 The report may additionally contain `findings`, an array of
 `{"dimension":"runtime","message":"Explain the measured defect",

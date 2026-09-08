@@ -6,9 +6,9 @@ import pytest
 
 from match_recovery.driver import drive
 from match_recovery.model import Dimension, Obligation
-from match_recovery.reviews import ReviewStore, acceptance_result
+from match_recovery.reviews import ReviewStore, acceptance_outcome
 from test_driver import CONFIG, WORKER, project
-from test_reviews import GATED, PASS, REVIEWER, interpretation, supersession
+from test_reviews import GATED, PASS, REVIEWER, interpretation, supersession, receipt
 
 
 def approve(payload):
@@ -34,7 +34,8 @@ def test_structural_review_reaches_fresh_full_verification_not_an_automatic_pass
         if stage == "acceptance":
             assert payload["review"]["snapshot"] == payload["snapshot"]
             assert payload["review"]["decision"] == "approve"
-            assert set(payload) == {"task", "snapshot", "protected", "review", "interpretations"}
+            assert set(payload) == {"task", "snapshot", "protected", "review", "interpretations", "verification_id"}
+            report.update(receipt(payload, report))
             return {"pass": 0, "fail": 1, "unknown": 3}[outcome], report
         assert stage == "worker" and outcome == "fail"
         assert payload["acceptance_feedback"]["report"] == report
@@ -68,7 +69,8 @@ def test_acceptance_counterexample_repairs_then_rechecks_and_rereviews(project):
             return approve(payload)
         if stage == "acceptance":
             assert payload["snapshot"] == snapshots[-1]
-            return (0, PASS) if (root / "src/f.cpp").read_text() == "owned member\n" else (1, failure)
+            failure.update(receipt(payload, failure))
+            return (0, receipt(payload)) if (root / "src/f.cpp").read_text() == "owned member\n" else (1, failure)
         assert stage == "worker"
         assert payload["check"]["result"] == "pass"
         assert payload["review_feedback"]["decision"] == "approve"
@@ -103,7 +105,7 @@ def test_failed_acceptance_retains_bounds_scope_and_discoveries(project, damage)
         if stage == "review":
             return approve(payload)
         if stage == "acceptance":
-            return 1, {**PASS, "references": "fail", "result": "fail"}
+            return 1, receipt(payload, {**PASS, "references": "fail", "result": "fail"})
         assert stage == "worker"
         if damage in ("budget", "outside_scope"):
             name = "src/f.cpp" if damage == "budget" else "src/outside.cpp"
@@ -156,7 +158,7 @@ def test_historical_interpretations_and_obligations_reach_post_review_gate(proje
         assert payload["protected"] == protected
         assert len(payload["interpretations"]) == 2
         assert payload["review"]["supersessions"] == [supersession(old, new)]
-        return 3, {**PASS, "structure": "unknown", "result": "unknown"}
+        return 3, receipt(payload, {**PASS, "structure": "unknown", "result": "unknown"})
 
     result = drive(root, task.task_id, config, WORKER, iterations=1,
                    reviewer_configuration=REVIEWER, execute=execute)
@@ -169,7 +171,7 @@ def test_historical_interpretations_and_obligations_reach_post_review_gate(proje
                                     [{"dimension": "build", "message": "bad", "evidence": ["x"]}]])
 def test_acceptance_findings_are_actionable_and_cannot_contradict_passes(finding):
     with pytest.raises(ValueError):
-        acceptance_result(1, {**PASS, "result": "fail", "runtime": "fail", "findings": finding})
+        acceptance_outcome(1, {**PASS, "result": "fail", "runtime": "fail", "findings": finding})
 
 
 @pytest.mark.parametrize("damage", ["mutation", "false_exit"])
@@ -185,7 +187,7 @@ def test_post_structural_review_gate_keeps_readonly_and_verdict_guards(project, 
         assert stage == "acceptance"
         if damage == "mutation":
             (root / "src/f.cpp").write_text("unauthorized verifier edit\n")
-        return 0, {**PASS, "result": "unknown", "runtime": "unknown"}
+        return 0, receipt(payload, {**PASS, "result": "unknown", "runtime": "unknown"})
 
     with pytest.raises(ValueError, match="read-only" if damage == "mutation" else "disagree"):
         drive(project[0], project[1].task_id, GATED, WORKER, iterations=1,

@@ -8,7 +8,7 @@ import pytest
 from match_recovery.driver import drive
 from match_recovery.model import Dimension, Obligation
 from test_driver import CONFIG, WORKER, project
-from test_reviews import REVIEWER, PASS
+from test_reviews import REVIEWER, receipt
 
 
 CONFIGURED = {**CONFIG, "obligations": {"argv": ["inventory"], "timeout": 10},
@@ -54,7 +54,7 @@ def setup(project, *, damage=None, disappear=False, restored=False):
             return 0, report
         assert stage == "acceptance"
         assert payload["protected"] == [row]
-        return 0, PASS
+        return 0, receipt(payload)
     return permission, execute, calls
 
 

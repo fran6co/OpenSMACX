@@ -519,7 +519,7 @@ Use stderr for diagnostics. Exit codes are 0 = pass/success, 1 = measured failur
 | Worker | Task, context, check, authorized files, review and acceptance feedback | `discoveries` array; may edit only authorized files |
 | Reviewer | Task, context, check and source `snapshot` | Same `snapshot`, `decision`, nonempty `evidence`, `feedback`; read-only |
 | `obligations` | Task | Source-derived `obligations` and optional `interpretations`; read-only |
-| `acceptance` | Task, reviewed snapshot, protected obligations and review | Full-project gate report; read-only |
+| `acceptance` | Task, reviewed snapshot, protected obligations, review, interpretations and fresh `verification_id` | Request-bound full-project gate report and protected measurements; read-only |
 
 Only `context` and `check` are required in the driver configuration. Add source
 `obligations` to preserve restoration requirements across rewrites. Without
@@ -545,10 +545,36 @@ decision rather than disappearing at a function boundary. An empty response is
 Source-derived historical interpretations require explicit reviewed supersession
 or retraction; generic approval cannot silently erase them.
 
-Acceptance must report exactly `scope: "full_project"` and `result`, `build`,
+Acceptance must report `scope: "full_project"` and `result`, `build`,
 `structure`, `references`, `obligations`, `runtime`, each one `pass`, `fail` or
 `unknown`. All dimensions must pass for acceptance. Source and decision freshness
 are rechecked around commands; unrelated writes and Git mutations are refused.
+
+The report also requires `request_fingerprint`, `measurements` and `current`.
+`request_fingerprint` is `match_recovery.model.digest(request)` over the complete
+stdin request, including its fresh `verification_id`. For non-Python verifiers,
+this is SHA-256 of UTF-8 JSON with sorted keys, unescaped Unicode, compact `,`/`:`
+separators, no NaN/Infinity and one trailing newline. A receipt cannot be reused
+even when the source and independent review are unchanged. The nonce belongs to
+the invocation, not versioned source or a new measurement ledger.
+
+Each measurement is `{obligation_id, fingerprint, result, evidence}`, with a
+SHA-256 input fingerprint and nonempty evidence text. `current` maps obligation
+ids to the verifier's independently computed current input fingerprints. Every
+requested protected obligation needs one fresh passing measurement before the
+`obligations` dimension can pass. Duplicate or unrequested identities are refused;
+equal counts cannot hide replacement identities. Missing, stale or unknown
+measurements require `obligations: "unknown"`; a measured failure cannot be
+summarized as pass. The verifier can leave both collections empty when it cannot
+measure, but must report the resulting unknown obligations. Passing the requested
+subset alone does not discharge other full-project requirements.
+
+Boolean-only legacy reports are no longer accepted. These checks bind a trusted
+verifier's observations; echoing the request fingerprint is not itself proof of
+compiler/image freshness, structural correctness or runtime behavior. Those
+checks still belong to the verifier. `acceptance_result(..., request=request)`
+validates admission evidence; `acceptance_outcome` only validates report syntax
+for historical diagnostics and must not be used to grant admission.
 
 An optional `findings` array contains `{dimension, message, evidence}` objects:
 the named dimension must not pass, and explanation/evidence must be nonempty.

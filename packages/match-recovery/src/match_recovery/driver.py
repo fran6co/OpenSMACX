@@ -232,12 +232,14 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                 obligations = refresh_obligations()
                 if reviews.snapshot(working_state(root), policy) != snapshot:
                     raise ValueError("source or interpretation inventory changed after review")
-                code, report = readonly(acceptance, {"task": task.to_dict(), "snapshot": snapshot,
-                                                     "protected": obligations, "review": decision,
-                                                     "interpretations": policy.get("interpretations", [])})
+                request = {"task": task.to_dict(), "snapshot": snapshot,
+                           "protected": obligations, "review": decision,
+                           "interpretations": policy.get("interpretations", []),
+                           "verification_id": uuid.uuid4().hex}
+                code, report = readonly(acceptance, request)
                 if reviews.snapshot(working_state(root), policy) != snapshot:
                     raise ValueError("source changed after review")
-                result = acceptance_result(code, report)
+                result = acceptance_result(code, report, request=request)
                 acceptance_feedback = ({"snapshot": snapshot, "report": report}
                                        if result == "fail" else None)
                 if result == "fail" and round_index < iterations:

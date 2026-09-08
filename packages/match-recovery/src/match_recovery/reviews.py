@@ -7,8 +7,8 @@ Approving a structural interpretation never establishes binary/build correctness
 from pathlib import Path
 
 from .journal import Journal
-from .model import digest, require_digest, require_text
-from .tasks import task_name
+from .model import Dimension, Measurement, Obligation, Result, digest, require_digest, require_text
+from .tasks import entity_id, task_name
 
 
 def validate_review(value: dict) -> None:
@@ -138,12 +138,27 @@ class ReviewStore:
                                   if not name.startswith(directory)}, "policy": policy})
 
 
-def acceptance_result(code: int, report: dict) -> str:
-    """A separate full-project gate, never the scoped spelling-search check."""
+def acceptance_outcome(code: int, report: dict) -> str:
+    """Validate report syntax for diagnostics, NOT admission or freshness."""
     fields = {"scope", "result", "build", "structure", "references", "obligations", "runtime"}
-    if (not isinstance(report, dict) or not fields <= set(report)
-            or set(report) - fields - {"findings"} or report["scope"] != "full_project"):
+    receipt = {"request_fingerprint", "measurements", "current"}
+    if (not isinstance(report, dict) or not (fields | receipt) <= set(report)
+            or set(report) - fields - receipt - {"findings"} or report["scope"] != "full_project"):
         raise ValueError("acceptance requires a full-project gate report")
+    require_digest(report["request_fingerprint"])
+    if not isinstance(report["measurements"], list) or not isinstance(report["current"], dict):
+        raise ValueError("invalid acceptance measurements")
+    seen = set()
+    for row in report["measurements"]:
+        if not isinstance(row, dict) or set(row) != {"obligation_id", "fingerprint", "result", "evidence"}:
+            raise ValueError("invalid acceptance measurement")
+        item = Measurement(row["obligation_id"], row["fingerprint"], Result(row["result"]), row["evidence"])
+        if item.obligation_id in seen:
+            raise ValueError("duplicate acceptance measurement")
+        seen.add(item.obligation_id)
+    for key, fingerprint in report["current"].items():
+        require_text(key, "obligation id")
+        require_digest(fingerprint)
     outcomes = [report[key] for key in fields - {"scope"}]
     if any(value not in ("pass", "fail", "unknown") for value in outcomes):
         raise ValueError("invalid acceptance outcome")
@@ -167,3 +182,47 @@ def acceptance_result(code: int, report: dict) -> str:
         for evidence in finding["evidence"]:
             require_text(evidence, "acceptance finding evidence")
     return expected
+
+
+def acceptance_result(code: int, report: dict, *, request: dict) -> str:
+    """Bind a trusted verifier's report to this invocation and protected set.
+
+    Neither the receipt nor textual evidence makes an untrusted verifier sound.
+    The verifier still owns image/compiler freshness and the actual full checks.
+    Missing/stale protected measurements may explain unknown, never a pass.
+    """
+    outcome = acceptance_outcome(code, report)
+    fields = {"task", "snapshot", "protected", "review", "interpretations", "verification_id"}
+    if not isinstance(request, dict) or set(request) != fields:
+        raise ValueError("invalid acceptance request")
+    require_digest(request["snapshot"])
+    require_text(request["verification_id"], "verification id")
+    validate_review(request["review"])
+    if request["review"]["decision"] != "approve" or request["review"]["snapshot"] != request["snapshot"]:
+        raise ValueError("acceptance requires the reviewed snapshot")
+    if report["request_fingerprint"] != digest(request):
+        raise ValueError("acceptance report refers to a stale or different request")
+    if not isinstance(request["protected"], list):
+        raise ValueError("invalid acceptance protected obligations")
+    protected = set()
+    for row in request["protected"]:
+        if not isinstance(row, dict) or set(row) != {"entity_id", "dimension", "baseline", "obligation_id"}:
+            raise ValueError("invalid acceptance protected obligation")
+        entity_id(row["entity_id"])
+        item = Obligation(row["entity_id"], Dimension(row["dimension"]), row["baseline"])
+        if item.obligation_id != row["obligation_id"] or item.obligation_id in protected:
+            raise ValueError("invalid or duplicate acceptance obligation identity")
+        protected.add(item.obligation_id)
+    measured = {row["obligation_id"]: row for row in report["measurements"]}
+    if set(measured) - protected or set(report["current"]) - protected:
+        raise ValueError("acceptance measurements name unrequested obligations")
+    results = []
+    for key in protected:
+        row = measured.get(key)
+        results.append(Result.UNKNOWN if row is None or row["fingerprint"] != report["current"].get(key)
+                       else Result(row["result"]))
+    if Result.UNKNOWN in results and report["obligations"] != "unknown":
+        raise ValueError("acceptance obligations omit unknown or stale measurements")
+    if Result.FAIL in results and report["obligations"] == "pass":
+        raise ValueError("acceptance obligations contradict a failed measurement")
+    return outcome

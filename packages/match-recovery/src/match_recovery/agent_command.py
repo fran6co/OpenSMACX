@@ -54,11 +54,13 @@ def _request(root, role, request):
             validate_review(request["review_feedback"])
         feedback = request.get("acceptance_feedback")
         if feedback is not None:
-            from .reviews import acceptance_result
+            from .reviews import acceptance_outcome
             if not isinstance(feedback, dict) or set(feedback) != {"snapshot", "report"}:
                 raise ValueError("invalid acceptance feedback")
             require_digest(feedback["snapshot"])
-            acceptance_result(1, feedback["report"])  # Only a measured failure prompts repair.
+            # Historical diagnostics only; the driver validates request binding
+            # and protected coverage before issuing this feedback.
+            acceptance_outcome(1, feedback["report"])
     else:
         require_digest(request["snapshot"])
     return task, decisions, editable

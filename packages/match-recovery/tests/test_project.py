@@ -193,7 +193,7 @@ raise SystemExit(main(["init", "--target", "isolated-target", "--root", sys.argv
     assert json.loads(result.stdout)["ready_for_recovery"] is False
 
 
-LOCAL_ADAPTER = '''import json, sys
+LOCAL_ADAPTER = '''import hashlib, json, sys
 from pathlib import Path
 request = json.load(sys.stdin)
 source = Path("code/owner.cc")
@@ -215,6 +215,9 @@ else:
     if action == "acceptance":
         report.update(scope="full_project", **{key: result for key in
                       ("build", "structure", "references", "obligations", "runtime")})
+        serialized = json.dumps(request, sort_keys=True, ensure_ascii=False, separators=(",", ":")) + "\\n"
+        report.update(request_fingerprint=hashlib.sha256(serialized.encode()).hexdigest(),
+                      measurements=[], current={})
     print(json.dumps(report))
     raise SystemExit(0 if passed else 1)
 '''

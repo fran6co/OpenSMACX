@@ -180,9 +180,11 @@ def test_real_provider_bridge_receives_acceptance_failure_then_rechecks(project)
     config = {**CONFIG, "context": command("print('{}')"),
               "check": command("print('{\"result\":\"unknown\",\"next_action\":\"review_structure\"}'); raise SystemExit(3)"),
               "acceptance": command(
-                  "import json; from pathlib import Path; "
+                  "import json,sys; from pathlib import Path; from match_recovery.model import digest; "
+                  "request=json.load(sys.stdin); "
                   "ok=Path('src/f.cpp').read_text()=='finished\\n'; "
                   f"report={PASS!r}; "
+                  "report.update(request_fingerprint=digest(request),measurements=[],current={}); "
                   "report.update(result='pass' if ok else 'fail', runtime='pass' if ok else 'fail'); "
                   "report['findings']=[] if ok else [dict(dimension='runtime',message='Controlled runtime failure',evidence=['source:src/f.cpp'])]; "
                   "print(json.dumps(report)); raise SystemExit(0 if ok else 1)")}

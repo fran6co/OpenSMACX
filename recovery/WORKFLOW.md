@@ -219,6 +219,10 @@ on a proof/review gap. Reviewer corrections return to the worker. Approval can
 hand that review-only unknown state to a configured full acceptance verifier;
 it does not rewrite the scoped result or waive its outstanding obligations.
 Without that verifier the driver reports `full_acceptance_gate_required`.
+The verifier's report must bind the complete current request, including a fresh
+invocation id, and supply current measurements for all protected obligations.
+Old passing reports and boolean-only summaries cannot authorize collection.
+Receipts are disposable verification outputs, not source claims or history.
 A measured acceptance failure feeds its snapshot-bound report back to the worker
 within the remaining round budget, then requires fresh checks and review. Unknown
 acceptance stops for evidence; it does not consume speculative spelling rounds.

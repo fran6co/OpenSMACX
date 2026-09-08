@@ -6,6 +6,7 @@ this bounded fixture says nothing about full application/lifetime acceptance.
 """
 
 import hashlib
+from dataclasses import asdict
 from pathlib import Path
 import subprocess
 import sys
@@ -21,7 +22,7 @@ from match_recovery.codeview import class_layout
 from match_recovery.driver import drive
 from match_recovery.image_survey import survey_image
 from match_recovery.layout_source import parse_bases, parse_members
-from match_recovery.model import Origin, Span
+from match_recovery.model import Dimension, Obligation, Origin, Span, digest
 from match_recovery.pe_coff import Coff, PeImage
 from match_recovery.processes import run_bounded
 from match_recovery.project import initialize
@@ -170,11 +171,15 @@ def test_compiled_wrong_structure_exact_bytes_migration_and_final_handoff(tmp_pa
         return rows, base_result, member_result
 
     calls, observations = [], []
+    obligation = Obligation(bindings[0].origin.entity_id, Dimension.BYTES,
+                            "test-owned reference:" + hashlib.sha256(reference_exe.read_bytes()).hexdigest())
     def execute(cmd, directory, name, payload):
         stage = cmd.argv[0]
         calls.append(stage)
         if stage == "context":
             return 0, {"evidence": task.evidence}
+        if stage == "obligations":
+            return 0, {"obligations": [{**asdict(obligation), "obligation_id": obligation.obligation_id}]}
         if stage == "check":
             rows, base_row, member_row = observe()
             observations.append((rows[0]["result"], base_row["result"], member_row["result"]))
@@ -197,21 +202,35 @@ def test_compiled_wrong_structure_exact_bytes_migration_and_final_handoff(tmp_pa
                        "evidence": ["controlled reference declarations", "src/owner.h"],
                        "feedback": "The real Base and Member are restored; final verification must run."}
         assert stage == "acceptance"
+        assert payload["protected"] == [{**asdict(obligation), "obligation_id": obligation.obligation_id}]
+        def measurement_inputs():
+            return digest({"source": {name: hashlib.sha256((product / name).read_bytes()).hexdigest()
+                                      for name in ("owner.cpp", "owner.h", "entry.cpp")},
+                           "image": hashlib.sha256(reference_exe.read_bytes()).hexdigest(), "flags": FLAGS,
+                           "compiler": hashlib.sha256((VC6_ROOT / "BIN/CL.EXE").read_bytes()).hexdigest()})
+        inputs = measurement_inputs()
         rows, base_row, member_row = observe()  # Fresh, not the earlier check's objects.
         assert all(row["result"] == "pass" for row in [*rows, base_row, member_row])
         candidate_exe = build(product, root / "build" / "acceptance")
         assert run(candidate_exe) == reference_exit
+        assert measurement_inputs() == inputs
         return 0, {"scope": "full_project", "result": "pass", "build": "pass", "structure": "pass",
-                   "references": "pass", "obligations": "pass", "runtime": "pass"}
+                   "references": "pass", "obligations": "pass", "runtime": "pass",
+                   "request_fingerprint": digest(payload),
+                   "measurements": [{"obligation_id": obligation.obligation_id, "fingerprint": inputs,
+                                     "result": rows[0]["result"],
+                                     "evidence": "fresh strict comparison against the test-owned original image"}],
+                   "current": {obligation.obligation_id: inputs}}
 
     configured = lambda name: {"argv": [name], "timeout": 60}
     result = drive(root, task.task_id, {"schema_version": 1, "target": task.target,
-                                      **{name: configured(name) for name in ("context", "check", "acceptance")}},
+                                      **{name: configured(name) for name in ("context", "check", "obligations", "acceptance")}},
                    {"author": "fixture-worker", "command": configured("worker")}, iterations=3,
                    reviewer_configuration={"author": "fixture-reviewer", "command": configured("review")}, execute=execute)
     assert result["ready_for_collection"] and result["worker_rounds"] == 2
-    assert calls == ["context", "check", "worker", "context", "check", "worker",
-                     "context", "check", "review", "acceptance"]
+    assert [name for name in calls if name != "obligations"] == [
+        "context", "check", "worker", "context", "check", "worker", "context", "check", "review", "acceptance"]
+    assert calls.count("obligations") == 4
     assert observations[-1] == ("pass", "pass", "pass")
     assert TaskStore(root).read(task.task_id).base_revision == task.base_revision
     assert git("diff", "--name-only", "HEAD").splitlines() == ["src/owner.cpp", "src/owner.h"]

@@ -5,7 +5,7 @@ import pytest
 
 from match_recovery.driver import drive, working_state
 from match_recovery.cli import main
-from match_recovery.reviews import ReviewStore, acceptance_result, merge_interpretations, pending_interpretations, validate_review, validate_supersessions
+from match_recovery.reviews import ReviewStore, acceptance_outcome, merge_interpretations, pending_interpretations, validate_review, validate_supersessions
 from match_recovery.model import digest
 from test_driver import CONFIG, WORKER, project
 
@@ -13,7 +13,16 @@ from test_driver import CONFIG, WORKER, project
 REVIEWER = {"author": "independent-reviewer", "command": {"argv": ["review"], "timeout": 10}}
 GATED = {**CONFIG, "acceptance": {"argv": ["acceptance"], "timeout": 10}}
 PASS = {"scope": "full_project", "result": "pass", "build": "pass", "structure": "pass",
-        "references": "pass", "obligations": "pass", "runtime": "pass"}
+        "references": "pass", "obligations": "pass", "runtime": "pass",
+        "request_fingerprint": "a" * 64, "measurements": [], "current": {}}
+
+
+def receipt(request, report=PASS):
+    """Synthetic protocol fixture, never a real verifier or measurement cache."""
+    current = {row["obligation_id"]: digest([request, row["obligation_id"]]) for row in request["protected"]}
+    return {**report, "request_fingerprint": digest(request), "current": current,
+            "measurements": [{"obligation_id": key, "fingerprint": value, "result": "pass",
+                              "evidence": "synthetic protocol control"} for key, value in current.items()]}
 
 
 def execution(project, *, reject_first=False, malformed=False, mutate=False, gate=PASS, gate_code=0):
@@ -27,7 +36,7 @@ def execution(project, *, reject_first=False, malformed=False, mutate=False, gat
         if name == "check":
             return 0, {"result": "pass"}
         if name == "acceptance":
-            return gate_code, gate
+            return gate_code, receipt(payload, gate)
         if name == "review":
             if mutate:
                 (root / "src/f.cpp").write_text("reviewer edited the code")
@@ -129,7 +138,7 @@ def test_reviewed_replacement_reaches_full_gate_without_dropping_obligations(pro
         assert command.argv[0] == "acceptance"
         observed.append(payload)
         # Reviewed replacement is not current build/runtime/layout proof.
-        return 3, {**PASS, "result": "unknown", "structure": "unknown"}
+        return 3, receipt(payload, {**PASS, "result": "unknown", "structure": "unknown"})
 
     report = drive(root, task.task_id, config, WORKER, iterations=1,
                    reviewer_configuration=REVIEWER, execute=execute)
@@ -165,7 +174,7 @@ def test_generic_approval_cannot_skip_removed_interpretation_and_review_can_resu
                                              "evidence": ["source:src/f.cpp"]}]
             return 0, response
         assert name == "acceptance"
-        return 3, {**PASS, "result": "unknown", "structure": "unknown"}
+        return 3, receipt(payload, {**PASS, "result": "unknown", "structure": "unknown"})
 
     first = drive(root, task.task_id, config, WORKER, iterations=1,
                   reviewer_configuration=REVIEWER, execute=execute)
@@ -275,9 +284,9 @@ def test_current_approval_can_be_reused_but_acceptance_always_reruns(project):
 @pytest.mark.parametrize("dimension", ["build", "structure", "references", "obligations", "runtime"])
 def test_no_missing_dimension_can_be_green(dimension):
     with pytest.raises(ValueError, match="disagree"):
-        acceptance_result(0, {**PASS, dimension: "unknown"})
-    assert acceptance_result(3, {**PASS, dimension: "unknown", "result": "unknown"}) == "unknown"
-    assert acceptance_result(1, {**PASS, dimension: "fail", "result": "fail"}) == "fail"
+        acceptance_outcome(0, {**PASS, dimension: "unknown"})
+    assert acceptance_outcome(3, {**PASS, dimension: "unknown", "result": "unknown"}) == "unknown"
+    assert acceptance_outcome(1, {**PASS, dimension: "fail", "result": "fail"}) == "fail"
 
 
 def test_review_records_cannot_smuggle_in_current_measurements():
@@ -337,7 +346,7 @@ def test_real_subprocess_review_feedback_and_acceptance_loop(project):
     config = {"schema_version": 1, "target": "synthetic",
               "context": command("print('{}')"),
               "check": command("print('{\"result\":\"pass\"}')"),
-              "acceptance": command("from pathlib import Path; import json,sys; good=Path('src/f.cpp').read_text()=='finished'; r='pass' if good else 'fail'; print(json.dumps(dict(scope='full_project',result=r,build=r,structure=r,references=r,obligations=r,runtime=r))); sys.exit(0 if good else 1)")}
+              "acceptance": command("from pathlib import Path; import json,sys; from match_recovery.model import digest; p=json.load(sys.stdin); good=Path('src/f.cpp').read_text()=='finished'; r='pass' if good else 'fail'; print(json.dumps(dict(scope='full_project',result=r,build=r,structure=r,references=r,obligations=r,runtime=r,request_fingerprint=digest(p),measurements=[],current={}))); sys.exit(0 if good else 1)")}
     reviewer = {"author": "reviewer", "command": command("from pathlib import Path; import json,sys; p=json.load(sys.stdin); good=Path('src/f.cpp').read_text()=='finished'; print(json.dumps(dict(snapshot=p['snapshot'],decision='approve' if good else 'request_changes',evidence=['source:src/f.cpp'],feedback='Finish the fixture.')))")}
     worker = {"author": "worker", "command": command("from pathlib import Path; import json,sys; p=json.load(sys.stdin); assert p['review_feedback']['decision']=='request_changes'; Path('src/f.cpp').write_text('finished'); print('{\"discoveries\":[]}')")}
     result = drive(root, task.task_id, config, worker, iterations=2, reviewer_configuration=reviewer)
