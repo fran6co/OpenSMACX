@@ -69,6 +69,7 @@ class InfoWin {
   ~InfoWin();
   void UNK1();
   void on_redraw();
+  const RECT &bounds() const { return bounds_; }
   void set_redraw_phase(int phase) { redraw_phase_ = phase; }
   void reset();
   void change(int a1);
@@ -99,15 +100,17 @@ class InfoWin {
   // Owned subobjects are constructed in declaration order by 0x00459500
   // and destroyed in reverse order by 0x004594A0. Gaps remain unnamed;
   // these offsets do not by themselves prove the complete original extent.
-  uint8_t field_0_[0x10];  // 0x0
-  uint32_t field_10_;  // 0x10
-  uint32_t field_14_;  // 0x14
-  uint32_t field_18_;  // 0x18
-  uint32_t field_1C_;  // 0x1C
-  uint32_t field_20_;  // 0x20
-  uint32_t field_24_;  // 0x24
-  uint32_t field_28_;  // 0x28
-  uint32_t field_2C_;  // 0x2C
+  // init (0x004592A0) writes four coordinates at +0x10 and +0x20.
+  // At 0x004593F7, USER32!UnionRect receives those two members and
+  // this as its destination: the leading rectangle is their union.
+  // The panes coincide at width 800; otherwise the second is to the right.
+  // Their displayed-content roles remain unestablished.
+  // RECOVERY_MEMBER: v2 InfoWin bounds_ tagRECT 0x0 0x004592A0
+  RECT bounds_;
+  // RECOVERY_MEMBER: v2 InfoWin first_pane_rect_ tagRECT 0x10 0x004592A0
+  RECT first_pane_rect_;
+  // RECOVERY_MEMBER: v2 InfoWin second_pane_rect_ tagRECT 0x20 0x004592A0
+  RECT second_pane_rect_;
   // RECOVERY_MEMBER: v2 InfoWin timer_ Time 0x30 0x00459500
   Time timer_;
   // RECOVERY_MEMBER: v2 InfoWin font_ Font 0x58 0x00459500

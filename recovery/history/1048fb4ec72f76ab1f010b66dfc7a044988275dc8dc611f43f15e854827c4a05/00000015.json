@@ -1,0 +1,22 @@
+{
+  "event_id": "21ea026a24fdcec775021fe37b1f17f22017fa4954127c53862c9ac9fae755f0",
+  "payload": {
+    "affects": [
+      "entity-df16d547f8b8157975f47a7c9eee7b6ab18fa56b3d7dce637292321261cd2db8",
+      "entity-ea6b8b53df3aa0430a0c06bc18c75acd285e5f167c154c82b7039d9cfe6cd0fe"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "infowin-pane-rectangle-array",
+    "evidence": [
+      "original:0x0045842C captures InfoWin this in edi; 0x00458447-0x00458462 selects indices 0..2 for the all-panels case or a single requested index. 0x00458465-0x00458472 computes this+(index+1)*16, then 0x00458489-0x0045848F passes it to Buffer::set_clip at 0x005D8000.",
+      "source:src/infowin.h currently declares bounds_ plus first_pane_rect_ and second_pane_rect_ with initializer evidence. The latter declarations are provisional pending the indexed renderer. The generic layout_source grammar accepts only v1 offsets, v2 class values and v3 class pointers; CodeView currently reports arrays without element/count details. That verification gap must not dictate the recovered C++ model."
+    ],
+    "hypothesis": "The two pane rectangles at InfoWin +0x10 and +0x20 are an indexed pair, likely a real RECT[2] member. Recover that array and teach the generic layout verifier to check its element type, count and extent; do not retain separate members solely because the current checker supports only scalar class-value expectations.",
+    "kind": "discovery"
+  },
+  "previous_event": "9d8c00a6da64e6f1b762fa44371f193b8a4b0cb3815da845cf58c6bbcf909116",
+  "request_id": "infowin-pane-rectangle-array",
+  "schema_version": 1,
+  "sequence": 15,
+  "stream": "task:radiobutton-lifetime"
+}

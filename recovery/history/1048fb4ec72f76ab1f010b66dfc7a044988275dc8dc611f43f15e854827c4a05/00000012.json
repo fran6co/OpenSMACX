@@ -1,0 +1,35 @@
+{
+  "event_id": "64fece8f81325b052dc46564a7ead9ec835708e607aa36abb0087fa546a88604",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/infowin.h"
+    ],
+    "evidence": [
+      "Authorize the initializer evidence and both coupled click handlers, plus the InfoWin declaration, to replace opaque rectangle storage and fixed-address forwarding. Preserve the original baseline and seed claims; this is not structural acceptance or a waiver of dependent caller, lifetime, restoration or preservation checks."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4559520,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4574656,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4574848,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "229fc979455f0782266a6578de320c4ef14bba7b98a5fc1a6cceee8994351365",
+  "request_id": "infowin-owned-hit-rectangles-scope",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:radiobutton-lifetime"
+}

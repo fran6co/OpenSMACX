@@ -29,6 +29,7 @@
 #include "base.h"
 #include "map.h"  // WorldClimateSkipTerrainClear
 #include "statuswin.h"
+#include "infowin.h"
 #include "console.h"   // ConsoleStatusWin, 0x008C5568
 #include "alpha.h"     // label_get, the Labels.strings_ptr walk
 
@@ -315,43 +316,65 @@ void MainInterface::on_iface_left_down(int a1, int a2) {
         this, nullptr, a1, a2);
 }
 
-// PENDING 0x0045CDC0 ?on_iface_left_click@MainInterface@@QAEXHH@Z 0x0045CDC0-0x0045CE72
+// ORIGINAL: 0x0045CDC0 ?on_iface_left_click@MainInterface@@QAEXHH@Z 0x0045CDC0-0x0045CE72 BYTE_EXACT
 // symbol    ?on_iface_left_click@MainInterface@@UAEXHH@Z
-// PENDING BODY - the shape is four separate in_box tests with a `ret 8` after
-//   each (not one chained condition), the first three on StatusWinRedrawRect
-//   3/1/2 against ConsoleStatusWin.on_left_click, the fourth on the InfoWin
-//   rect gated by `button_group_[0].field_84_ == 0x3e9` - entry+0x1DEE8, so
-//   the entry receiver again. Two names are missing: ButtonGroup::field_84_
-//   is PRIVATE in buttongroup.h and InfoWin has no on_left_click declared
-//   (infowin.h has only on_right_click). HANDOFF to buttongroup.h and
-//   infowin.h; both click handlers land the moment those two land.
+// The first three hit regions belong to MainInterfaceGlobal; the last
+// is InfoWin's union rectangle, established by its init at 0x004592A0.
+// The original interface-receiver +0x1DEE8 is complete-object +0x1E8FC:
+// button_group_[0] at +0x1E878, with its still-unnamed word at +0x84.
 // size      178 bytes
 // prototype void (__thiscall ?on_iface_left_click@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   3
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004B8E40 0x005FA7E0
-void MainInterface::on_iface_left_click(int a1, int a2) {
-    typedef void(__fastcall *pending)(MainInterface *, void *, int, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x0045CDC0))(
-        this, nullptr, a1, a2);
+// calls     0x00458930 0x004B8E40 0x005FA7E0
+void MainInterface::on_iface_left_click(int x, int y) {
+    if (in_box(x, y, &MainInterfaceGlobal.status_left_rect())) {
+        ConsoleStatusWin.on_left_click(x, y);
+        return;
+    }
+    if (in_box(x, y, &MainInterfaceGlobal.status_hit_rect())) {
+        ConsoleStatusWin.on_left_click(x, y);
+        return;
+    }
+    if (in_box(x, y, &MainInterfaceGlobal.status_right_rect())) {
+        ConsoleStatusWin.on_left_click(x, y);
+        return;
+    }
+    if (in_box(x, y, &ConsoleInfoWin.bounds()) &&
+        button_group_[0].field_84_ == 0x3E9) {
+        ConsoleInfoWin.on_left_click(x, y);
+    }
 }
 
-// PENDING 0x0045CE80 ?on_iface_right_click@MainInterface@@QAEXHH@Z 0x0045CE80-0x0045CF3A
+// ORIGINAL: 0x0045CE80 ?on_iface_right_click@MainInterface@@QAEXHH@Z 0x0045CE80-0x0045CF38 BYTE_EXACT
 // symbol    ?on_iface_right_click@MainInterface@@UAEXHH@Z
-// PENDING BODY - see on_iface_left_click above: same four-test shape, same two
-//   missing names (ButtonGroup::field_84_, InfoWin::on_left_click's left-click
-//   sibling), and so the same HANDOFF.
-// size      186 bytes
+// Each hit returns independently. The middle StatusWin region selects 1;
+// its two neighbors select 0. InfoWin owns the final hit rectangle.
+// The ret 8 at 0x0045CF35 ends at 0x0045CF38, not the old pending extent.
+// size      184 bytes
 // prototype void (__thiscall ?on_iface_right_click@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   3
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004B9010 0x005FA7E0
-void MainInterface::on_iface_right_click(int a1, int a2) {
-    typedef void(__fastcall *pending)(MainInterface *, void *, int, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x0045CE80))(
-        this, nullptr, a1, a2);
+// calls     0x00458D40 0x004B9010 0x005FA7E0
+void MainInterface::on_iface_right_click(int x, int y) {
+    if (in_box(x, y, &MainInterfaceGlobal.status_left_rect())) {
+        ConsoleStatusWin.on_right_click(x, y, 0);
+        return;
+    }
+    if (in_box(x, y, &MainInterfaceGlobal.status_hit_rect())) {
+        ConsoleStatusWin.on_right_click(x, y, 1);
+        return;
+    }
+    if (in_box(x, y, &MainInterfaceGlobal.status_right_rect())) {
+        ConsoleStatusWin.on_right_click(x, y, 0);
+        return;
+    }
+    if (in_box(x, y, &ConsoleInfoWin.bounds()) &&
+        button_group_[0].field_84_ == 0x3E9) {
+        ConsoleInfoWin.on_right_click(x, y);
+    }
 }
 
 // PENDING 0x0045CCB0 ?on_iface_group_clicked@MainInterface@@QAEXHHH@Z 0x0045CCB0-0x0045CD75

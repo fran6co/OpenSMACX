@@ -1,0 +1,26 @@
+{
+  "event_id": "9d8c00a6da64e6f1b762fa44371f193b8a4b0cb3815da845cf58c6bbcf909116",
+  "payload": {
+    "affects": [
+      "entity-0c00e4b293a88e2e4c2c87d33fc7a6bcf43814fbfa228ba35579c03d22baf30d",
+      "entity-175adaeb7038d26cecbda08e68ab53f4edb2194fe1027ded2c9d723d5444d2de",
+      "entity-82e12fc277c2ce0e548993b026339e4c63d72d128c195b9c0a06f515fb05d101",
+      "entity-d108c4df8afefa8edaaa9abceb25ae1e1d83a5a3060e505a82e26488722fcff1",
+      "entity-df16d547f8b8157975f47a7c9eee7b6ab18fa56b3d7dce637292321261cd2db8",
+      "entity-f3a849a62df7f33c567171cbc906d104b63b109784ac1f596618e7a2c61823b4"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "interface-click-callee-closure",
+    "evidence": [
+      "source:src/infowin.h and src/statuswin.h declare the two callees, but neither has a product definition; the former MainInterface forwarders hid that absence. A fresh Release link reports their exact symbols as unresolved: ?on_left_click@InfoWin@@QAEXHH@Z and ?on_right_click@StatusWin@@QAEXHHH@Z.",
+      "source:the 0x00458930 seed calls InfoWin::draw_text (0x00458420), timer_change (0x00458FF0) and StatusWin::reset (0x004B8970), and writes original global 0x006E8150. The 0x004B9010 seed exposes a larger menu/lifetime family and an independent exception tail. Their opaque globals, guessed classes and manual vptr stores are hints to replace, not code to copy into product source."
+    ],
+    "hypothesis": "The recovered MainInterface click dispatch exposes missing product definitions for InfoWin::on_left_click and StatusWin::on_right_click. Recover their real dependency families instead of reinstating executable-address forwarders or substituting no-op definitions.",
+    "kind": "discovery"
+  },
+  "previous_event": "a3203725f0c9b982985f880a44c00a48926569c90abe024b4806b3555238f12c",
+  "request_id": "interface-click-callee-closure",
+  "schema_version": 1,
+  "sequence": 14,
+  "stream": "task:radiobutton-lifetime"
+}

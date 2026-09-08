@@ -1,0 +1,18 @@
+{
+  "event_id": "a3203725f0c9b982985f880a44c00a48926569c90abe024b4806b3555238f12c",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "infowin-owned-hit-rectangles",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/infowin.h: bounds_ and two pane RECT members retain their original init/UnionRect evidence and typed layout requirements; bounds() exposes the leading member without casting the containing object.",
+      "src/maininterface.cpp: both click handlers now use MainInterfaceGlobal rectangle members, ConsoleInfoWin.bounds(), ConsoleStatusWin and the actual ButtonGroup member. The two fixed-address executable forwarders and obsolete missing-declaration handoffs are removed. The framework writer added unclaimed product mappings; seeds and historical byte obligations remain. Independent structure/lifetime, dependent caller, preservation and matching checks are not waived."
+    ]
+  },
+  "previous_event": "64fece8f81325b052dc46564a7ead9ec835708e607aa36abb0087fa546a88604",
+  "request_id": "infowin-owned-hit-rectangles-incorporated",
+  "schema_version": 1,
+  "sequence": 13,
+  "stream": "task:radiobutton-lifetime"
+}

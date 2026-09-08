@@ -1,0 +1,23 @@
+{
+  "event_id": "229fc979455f0782266a6578de320c4ef14bba7b98a5fc1a6cceee8994351365",
+  "payload": {
+    "affects": [
+      "entity-175adaeb7038d26cecbda08e68ab53f4edb2194fe1027ded2c9d723d5444d2de",
+      "entity-ea6b8b53df3aa0430a0c06bc18c75acd285e5f167c154c82b7039d9cfe6cd0fe",
+      "entity-f3a849a62df7f33c567171cbc906d104b63b109784ac1f596618e7a2c61823b4"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "infowin-owned-hit-rectangles",
+    "evidence": [
+      "original:InfoWin::init 0x004592A2 captures this in esi; 0x004593B1-0x004593DC writes the first four-coordinate rectangle at esi+0x10, 0x004593DF-0x004593F4 writes the second at esi+0x20; 0x004593EB-0x004593F7 passes both plus esi as destination to the PE-verified USER32.dll!UnionRect IAT slot 0x00669328.",
+      "original:0x0045CE80 tests MainInterfaceGlobal rectangles +0xCDC/+0xCEC/+0xCCC then ConsoleInfoWin at 0x007AD2A0; 0x0045CF19 compares the incoming interface receiver +0x1DEE8 with 0x3E9. The seed for 0x0045CDC0 has the corresponding left-click route. Existing ButtonGroup field_84_ and InfoWin click declarations make the old missing-declaration handoff obsolete."
+    ],
+    "hypothesis": "InfoWin owns a bounds RECT at +0 and pane RECTs at +0x10 and +0x20; the MainInterface click handlers should test those real members and dispatch through existing global instances instead of forwarding to executable addresses.",
+    "kind": "discovery"
+  },
+  "previous_event": "b467f46f95140f9058f75bf87cde24372df55cd76bd0e5985b8e1050164db490",
+  "request_id": "infowin-owned-hit-rectangles",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:radiobutton-lifetime"
+}
