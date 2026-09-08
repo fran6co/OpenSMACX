@@ -240,7 +240,8 @@ working-game claim. See the package README for the proof-command contract.
 A cross-entity finding normally pauses the loop for coordinator action; it is not discarded
 as out of scope. Inspect `tasks status`, then use `tasks expand` and `tasks resolve`
 with their revision-checked decision arguments. Incorporation needs source
-evidence; rejection needs an explanation. Checkpoint decisions before resuming.
+evidence; rejection needs an explanation. Valid append-only decisions can resume
+without a Git checkpoint; committed history cannot be rewritten or removed.
 The installed driver also supports an explicit `--coordinator` delegation file:
 a read-only decision agent proposes bounded expansion/incorporation/rejection,
 and the package journals valid decisions before refreshing checks in the same run.

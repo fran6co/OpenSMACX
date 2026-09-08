@@ -529,9 +529,13 @@ The driver stops on a discovery needing evaluation/scope expansion, no source
 change, budget exhaustion, unavailable context, interruption, or a passing check
 needing independent review. Scoped edits remain in place on every stop; nothing
 is automatically reverted, committed or collected. Discoveries enter versioned
-task history; reproducible context/check results do not. Checkpoint new decision
-records before resuming. Existing edits confined to the approved files can be
-resumed; unrelated dirty work is refused.
+task history; reproducible context/check results do not. Existing scoped source
+and valid append-only task/review decisions can resume without a Git checkpoint.
+The driver protects committed decision prefixes and refuses unrelated dirty work,
+malformed history and symlinks. Changed task/configuration/permission decisions
+still require a checkpoint. Resumption remeasures source and acceptance, preserving
+the task baseline; a new explicit invocation has its own bounded round budget.
+It does not automatically retry providers or recover incomplete publication files.
 
 The driver serializes execution in one worktree and detects tracked/nonignored
 file, index and HEAD changes outside allowed operations, including on command
@@ -680,6 +684,10 @@ and the real whole gate and restoration/preservation checks. It rejects both a
 byte-identical wrong hierarchy in the retained build and a runtime-mismatching
 artifact. Its worker/coordinator/reviewer reasoning is deterministic and local;
 all role bridges, delegated authorization and verification use real subprocesses.
+An additional control stops after scope expansion while the correct hierarchy
+still has a byte regression, resumes without committing, and reaches fresh native
+acceptance. A further invocation reuses the unchanged review but rebuilds and
+rechecks acceptance with distinct artifact paths and request identities.
 It does not supply OpenSMACX's
 missing proof coverage. Native receipts expose verified artifact paths/hashes so
 downstream work can identify the tested build without guessing a cache directory.
@@ -792,8 +800,9 @@ Allowed fresh failures produce `migration_admitted` and CLI exit **2**, preservi
 the source but never collection readiness. A resumed run re-derives obligations
 from source history and rechecks them; only complete restoration plus the full
 acceptance gate can yield readiness/exit 0. Admission itself is a disposable gate
-result, not a stored verdict. Source and review/permission decisions must be
-checkpointed for resumption. `driver.json` now configures the package-owned
+result, not a stored verdict. Scoped source and append-only review decisions may
+resume without committing; new permission/configuration needs a checkpoint.
+`driver.json` now configures the package-owned
 `tasks check-migration` verifier, not a local Python adapter. It combines fresh
 source/mapping/history/audit checks, a build, bounded structural restoration,
 references and full-TU compiled residuals under an unchanged build policy.

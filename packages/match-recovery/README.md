@@ -546,6 +546,22 @@ decision rather than disappearing at a function boundary. An empty response is
 Source-derived historical interpretations require explicit reviewed supersession
 or retraction; generic approval cannot silently erase them.
 
+Run the same task again to resume scoped source edits and its valid append-only
+discovery/review decisions without an intermediate Git commit. The driver checks
+both complete decision streams and their committed prefixes: rewritten/deleted
+committed events, malformed chains, symlinks and unrelated dirty files are refused.
+Only the selected task's native decision files receive this allowance; it never
+grants workers permission to edit history. Task/configuration and migration-policy
+changes still need a coordinator checkpoint. Decision attribution retains the
+trusted-coordinator API boundary; a hash chain does not authenticate its author.
+
+A resumed invocation re-derives context/obligations and remeasures source. An
+unchanged snapshot may reuse an independent review, never an acceptance receipt;
+full acceptance needs a fresh invocation and verified artifacts. Each explicit
+`run` supplies a new bounded invocation budget without changing the task baseline.
+This is not automatic retry scheduling, recovery of malformed partial publications,
+or collection/integration. No current measurement state is stored for resumption.
+
 Acceptance must report `scope: "full_project"` and `result`, `build`,
 `structure`, `references`, `obligations`, `runtime`, each one `pass`, `fail` or
 `unknown`. All dimensions must pass for acceptance. Source and decision freshness
@@ -1508,8 +1524,8 @@ The driver journals valid decisions through TaskStore, refreshes scope/context a
 obligations, and resumes the same worker budget and baseline. Decision calls have
 a separate bounded budget. Deferral, unavailable providers or budget exhaustion
 preserve source and pending discoveries. Independent review and full native
-acceptance remain required. There is no automatic Git commit; restarting with
-uncommitted journal decisions still requires a coordinator checkpoint. Commands
+acceptance remain required. There is no automatic Git commit; valid append-only
+task/review decisions can be resumed under the restart rules above. Commands
 must be externally sandboxed: post-execution hashes detect writes but cannot
 prevent a malicious command. Delegation validates authority, not the quality of
 the agent's reasoning or the truth of its evidence.

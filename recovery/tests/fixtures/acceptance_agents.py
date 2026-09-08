@@ -26,9 +26,10 @@ role, request_path = sys.argv[1:]
 request = json.loads(Path(request_path).read_text())
 sys.stdin.read()  # Consume the bridge prompt; decisions use the structured request.
 if role == "worker":
-    step = request["round"]
-    assert step in (1, 2)
     header = Path("src/owner.h")
+    # Reason from current source, including after a new bounded invocation;
+    # invocation-local round numbers are not a recovery-state ledger.
+    step = 1 if "int raw_[2];" in header.read_text() else 2
     if step == 2:
         assert header.read_text().endswith(MODEL)  # Structural progress was preserved.
     evidence = "".join(line + "\n" for line in header.read_text().splitlines() if line.startswith("//"))

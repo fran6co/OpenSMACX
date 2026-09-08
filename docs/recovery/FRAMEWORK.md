@@ -305,6 +305,13 @@ establish completion of this program.
   authority outside delegation still require a separate decision. This does not
   implement executable-first task selection, unattended integration or completed
   OpenSMACX acceptance. No real-project standing delegation is enabled.
+  Bounded invocations can now resume their source edits and valid append-only
+  task/review decisions without intermediate Git commits. Committed history
+  prefixes remain protected, and context, obligations and acceptance are freshly
+  checked; an unchanged review is not a cached gate result. A local compiler-backed
+  three-agent control stops on a decision budget during a structural byte regression,
+  resumes to acceptance, then verifies a new build without rewriting history.
+  This is not automatic provider retry, partial-publication repair or integration.
   The package-owned native migration verifier now composes fresh build, bounded
   declarations, references and outside-scope preservation checks; OpenSMACX
   configures that command without a project adapter. A synthetic driver test

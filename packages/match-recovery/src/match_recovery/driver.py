@@ -86,6 +86,46 @@ def changes(before: dict, after: dict) -> set[str]:
             if before["files"].get(name) != after["files"].get(name)}
 
 
+def _resumable_history(root: Path, store: TaskStore, reviews: ReviewStore, task_name: str) -> set[str]:
+    """Allow this task's valid append-only decisions, not arbitrary dirty history.
+
+    Decisions retain the trusted-coordinator boundary of TaskStore/ReviewStore;
+    content hashes are integrity checks, not authentication. Git protects the
+    committed prefix. No checkpoint, acceptance result or new baseline is made.
+    """
+    store.decisions(task_name)
+    reviews.decisions()
+    allowed = set()
+    for journal, stream in ((store.journal, "task:" + task_name), (reviews.journal, reviews.stream)):
+        directory = journal.stream_directory(stream)
+        events = journal.read(stream)
+        paths = {directory / f"{event.sequence:08d}.json" for event in events}
+        if directory.resolve() != directory:
+            raise ValueError("resumable history cannot use symlinked directories")
+        for path in paths:
+            if not path.is_file() or path.is_symlink() or path.stat().st_mode & 0o111:
+                raise ValueError("resumable history needs regular decision files")
+        names = {path.relative_to(root).as_posix() for path in paths}
+        committed = subprocess.run(
+            ["git", "ls-tree", "-rz", "HEAD", "--", directory.relative_to(root).as_posix()],
+            cwd=root, capture_output=True, check=True).stdout
+        for entry in committed.split(b"\0"):
+            if not entry:
+                continue
+            metadata, raw_name = entry.split(b"\t", 1)
+            mode, kind, blob = metadata.split()
+            name = os.fsdecode(raw_name)
+            if name not in names or kind != b"blob" or mode != b"100644":
+                raise ValueError("committed task history was removed or replaced; inspect before resuming")
+            original = subprocess.run(["git", "cat-file", "blob", blob.decode("ascii")],
+                                      cwd=root, capture_output=True, check=True).stdout
+            path = root / name
+            if path.read_bytes() != original:
+                raise ValueError("committed task history changed; inspect before resuming")
+        allowed.update(names)
+    return allowed
+
+
 def drive(root: Path, task_name: str, configuration: dict, worker_configuration: dict, *,
           iterations: int, reviewer_configuration: dict | None = None,
           migration_configuration: dict | None = None,
@@ -143,13 +183,14 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
         review_feedback = None
         acceptance_feedback = None
         interpretations = {}
-        # Existing scoped edits are resumable. Unrelated dirty work is not the
-        # runner's property and must be checkpointed before dispatch.
+        # Scoped source and validated append-only decisions survive interruption.
+        # They are not worker permission to edit history or unrelated dirty work.
+        history = _resumable_history(root, store, reviews, task_name)
         dirty = subprocess.run(["git", "diff", "--name-only", "HEAD", "-z"], cwd=root,
                                capture_output=True, check=True).stdout.split(b"\0")
         untracked = subprocess.run(["git", "ls-files", "--others", "--exclude-standard", "-z"],
                                    cwd=root, capture_output=True, check=True).stdout.split(b"\0")
-        if {os.fsdecode(name) for name in dirty + untracked if name} - editable:
+        if {os.fsdecode(name) for name in dirty + untracked if name} - editable - history:
             raise ValueError("checkpoint unrelated changes before running this task")
         def finish(reason, rounds, check=None, *, current=True):
             return {"task_id": task_name, "stop_reason": reason, "worker_rounds": rounds,

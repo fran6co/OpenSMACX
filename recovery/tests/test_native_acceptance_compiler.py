@@ -241,6 +241,51 @@ def test_real_native_acceptance_preserves_structure_through_byte_regression(tmp_
     assert git("diff", "--name-only", "HEAD").splitlines() == ["src/owner.cpp", "src/owner.h"]
 
 
+def test_native_acceptance_resumes_uncommitted_scope_decisions_and_rechecks_review(tmp_path, monkeypatch):
+    provider = {"schema_version": 1, "artifacts": "build/agents"}
+    for role in ("worker", "coordinator", "reviewer"):
+        provider[role] = {"command": {"argv": [sys.executable, "recovery/local_agents.py", role, "{request}"], "timeout": 30},
+                          "instructions": [], "response": "stdout"}
+    root, image, task, git, evidence = prepared_project(tmp_path, monkeypatch, provider=provider)
+    monkeypatch.setenv("RECOVERY_IMAGE", str(image))
+    configuration = lambda name: json.loads((root / "recovery" / (name + ".json")).read_text())
+    head, index = git("rev-parse", "HEAD"), git("ls-files", "--stage")
+    # One decision per invocation forces a real stop between native expansion
+    # and incorporation, while the good hierarchy still has mismatching bytes.
+    delegation = {**configuration("coordinator"), "max_decisions": 1}
+    def attempt():
+        return drive(root, task.task_id, configuration("driver"), configuration("worker"), iterations=1,
+                     reviewer_configuration=configuration("reviewer"), coordinator_configuration=delegation)
+    first = attempt()
+    assert first["stop_reason"] == "coordination_budget_exhausted", first
+    assert first["worker_rounds"] == first["coordinator_decisions"] == 1
+    assert not first["ready_for_collection"]
+    assert (root / "src/owner.h").read_text() == evidence + CLASSES
+    assert "- input" in (root / "src/owner.cpp").read_text()
+    store = TaskStore(root)
+    assert [item["kind"] for item in store.decisions(task.task_id)] == ["discovery", "scope_expanded"]
+    before = {path: path.read_bytes() for path in (root / "recovery/history").rglob("*.json")}
+    second = attempt()
+    assert second["ready_for_collection"], second
+    assert second["worker_rounds"] == second["coordinator_decisions"] == 1
+    assert all(path.read_bytes() == contents for path, contents in before.items())
+    assert [item["kind"] for item in store.decisions(task.task_id)] == ["discovery", "scope_expanded", "discovery_resolved"]
+    # A stored review can be reused when fresh; it is never a cached acceptance.
+    before = {path: path.read_bytes() for path in (root / "recovery/history").rglob("*.json")}
+    third = attempt()
+    assert third["ready_for_collection"] and third["worker_rounds"] == third["coordinator_decisions"] == 0, third
+    assert {path: path.read_bytes() for path in (root / "recovery/history").rglob("*.json")} == before
+    assert second["acceptance"]["request_fingerprint"] != third["acceptance"]["request_fingerprint"]
+    assert second["acceptance"]["artifacts"].keys().isdisjoint(third["acceptance"]["artifacts"])
+    for report in (second, third):
+        assert all(report["acceptance"][key] == "pass" for key in (
+            "build", "structure", "references", "obligations", "runtime"))
+        for name, fingerprint in report["acceptance"]["artifacts"].items():
+            assert hashlib.sha256((root / name).read_bytes()).hexdigest() == fingerprint
+    assert store.read(task.task_id) == task
+    assert git("rev-parse", "HEAD") == head and git("ls-files", "--stage") == index
+
+
 @pytest.mark.skipif(os.environ.get("OPENSMACX_LIVE_AGENT_CONTROL") != "1", reason="opt-in live provider recovery and acceptance")
 def test_live_worker_and_independent_reviewer_reach_native_acceptance(tmp_path, monkeypatch):
     # Deliberately reuse the project's existing provider settings and models.
