@@ -41,7 +41,7 @@ def compiled():
         for unit in ("src/infowin.cpp", "src/pulldown.cpp", "src/graphicwin.cpp",
                      "src/menu.cpp", "src/popmenu.cpp", "src/temp.cpp", "src/console.cpp",
                      "src/netdaemon.cpp", "src/statuswin.cpp", "src/popup.cpp", "src/scroll.cpp",
-                     "src/base.cpp", "src/basewin.cpp", "src/net_class.cpp")
+                     "src/base.cpp", "src/basewin.cpp", "src/net_class.cpp", "src/general.cpp")
     }
 
 
@@ -207,6 +207,38 @@ def test_net_initializes_receiver_state_after_its_own_table(compiled):
         assert stores == expected_offsets
 
 
+def test_receiver_cleanup_uses_the_shared_layout_and_virtual_owners(compiled):
+    # Original insertion bounds the node at 0x1C, distinct from the 0x60
+    # payload. Cleanup dispatches through receiver slot 1, Sound slot 2,
+    # and the node's virtual allocation-base destructor, respectively.
+    for unit in ("src/general.cpp", "src/net_class.cpp", "src/netdaemon.cpp"):
+        for obj in compiled[unit]:
+            receiver = class_layout(obj, "JackalVoiceRx")
+            assert receiver["size"] == 0x24
+            assert receiver["members"] == {"head_": 8, "cursor_": 12, "count_": 16,
+                                           "cursor_index_": 20, "entries_heap_": 24}
+    for obj in compiled["src/general.cpp"]:
+        node = class_layout(obj, "VoiceReceiverEntry")
+        assert node["size"] == 0x1C
+        assert node["members"] == {"id_": 4, "payload_": 8, "next_": 12, "previous_": 16}
+        assert node["member_type_kinds"]["payload_"] == "pointer"
+        base, = node["bases"]
+        assert base["class"] == "StringAllocationBase" and base["virtual"]
+        assert base["vbptr_offset"] == 0 and base["vbtable_index"] == 1
+        code, relocations, _ = obj.subject(obj.function(symbol_at("src/general.cpp", 0x538EC0)))
+        assert not relocations  # All three operations dispatch virtually.
+        decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+        decoder.detail = True
+        calls = [i for i in decoder.disasm(code, 0) if i.mnemonic == "call"]
+        assert len(calls) == 3
+        assert all(i.operands[0].type == X86_OP_MEM for i in calls)
+        assert [i.operands[0].mem.disp for i in calls] == [4, 8, 0]
+    for obj in compiled["src/netdaemon.cpp"]:
+        targets = references(obj, symbol_at("src/netdaemon.cpp", 0x538D10))
+        assert targets.count(symbol_at("src/general.cpp", 0x538EC0)) == 1
+        assert not any("JackalVoiceRxShim" in target for target in targets)
+
+
 def test_menu_candidates_use_typed_source_definitions(compiled):
     for unit, address in (("src/pulldown.cpp", 0x5F9170),
                           ("src/menu.cpp", 0x5FB830),
@@ -343,7 +375,7 @@ def test_base_computation_owns_its_shared_state_and_orders_resource_passes(compi
         assert "?unlock_base@NetDaemon@@QAEXH@Z" in targets
 
 
-def run_recovered_harness(tmp_path, monkeypatch, harness_name, handlers):
+def run_recovered_harness(tmp_path, monkeypatch, harness_name, handlers, declarations=()):
     """Compile actual source bodies with doubles; not full-game acceptance."""
     from recovery.environment.compile import compile_object
     from recovery.environment.wine import VC6_ROOT, environment
@@ -352,6 +384,12 @@ def run_recovered_harness(tmp_path, monkeypatch, harness_name, handlers):
     for name in ("CL", "_CL_", "VC6_INCLUDE"):
         monkeypatch.delenv(name, raising=False)
     harness = Path(__file__).with_name(harness_name).read_text()
+    for anchor, unit, start, end in declarations:
+        text = (ROOT / unit).read_text()
+        assert text.count(start) == text.count(end) == harness.count(anchor) == 1
+        first, last = text.index(start), text.index(end)
+        assert first < last
+        harness = harness.replace(anchor, text[first:last])
     for anchor, unit, address in handlers:
         record, = (row for row in read_file(ROOT / unit) if row.address == address)
         assert record.region and not record.extract_error
@@ -373,6 +411,21 @@ def run_recovered_harness(tmp_path, monkeypatch, harness_name, handlers):
         diagnostics.seek(0)
         output = diagnostics.read().decode(errors="replace")
     assert result.returncode == 0, output
+
+
+def test_receiver_cleanup_respects_payload_and_allocation_ownership(tmp_path, monkeypatch):
+    # The historical FILE marker intentionally exposes the complete TU as
+    # record.region. Select its live definition using unique neighboring anchors.
+    run_recovered_harness(tmp_path, monkeypatch, "receiver_cleanup_harness.cpp", [], declarations=[
+        ("// LIVE_CLEAR_BODY", "src/general.cpp", "void JackalVoiceRx::clear() {",
+         "// ORIGINAL: 0x005D271D"),
+        ("// LIVE_ALLOCATION_BASE", "src/stringstruct.h", "class StringAllocationBase {",
+         "// REAL VIRTUAL INHERITANCE, like StringStructPayload"),
+        ("// LIVE_OWNER_PUBLICATION", "src/stringstruct.cpp", "StringAllocationBase::~StringAllocationBase() {",
+         "void StringStruct::unk_slot00()"),
+        ("// LIVE_RECEIVER_DECLARATIONS", "src/net_class.h", "struct VoiceReceiverEntry :",
+         "// The list subobject at Net+0x72C"),
+    ])
 
 
 def test_status_menu_runtime_branches_use_the_actual_recovered_handler(tmp_path, monkeypatch):

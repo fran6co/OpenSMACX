@@ -129,19 +129,7 @@ void HeapShim::shutdown() {
     typedef void(__fastcall *pending)(HeapShim *, void *);
     reinterpret_cast<pending>(static_cast<unsigned long>(0x005D45B0))(this, nullptr);
 }
-// The JackalVoiceRx-shaped container at self+0xb0 - `Net::~Net` (net_class.cpp)
-// models the same container's teardown loop explicitly; this destructor
-// reaches a genuinely different, COMDAT-shared helper for it instead
-// (0x00538EC0, local to this address's own cold region), so it is left a
-// shim rather than duplicated as a second copy of that loop.
-class JackalVoiceRxShim {
- public:
-  ~JackalVoiceRxShim();
-};
-JackalVoiceRxShim::~JackalVoiceRxShim() {
-    typedef void(__fastcall *pending)(JackalVoiceRxShim *, void *);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x00538EC0))(this, nullptr);
-}
+// Receiver cleanup uses the shared source-owned helper, not an image-address shim.
 class NetFifoShim {
  public:
   ~NetFifoShim();
@@ -294,7 +282,7 @@ NetDaemon::~NetDaemon() {
     reinterpret_cast<NetFifoShim *>(self + 0x10c)->~NetFifoShim();
     reinterpret_cast<NetFifoShim *>(self + 0xe8)->~NetFifoShim();
 
-    reinterpret_cast<JackalVoiceRxShim *>(self + 0xb0)->~JackalVoiceRxShim();
+    jackal_voice_rx_.clear();
     *reinterpret_cast<int32_t *>(self + 0xc4) = 0;
     StringAllocationHeap = *reinterpret_cast<Heap **>(self + 0xd0);
 

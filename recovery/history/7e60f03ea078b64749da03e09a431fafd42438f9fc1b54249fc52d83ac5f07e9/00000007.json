@@ -1,0 +1,20 @@
+{
+  "event_id": "87bceb287aee20ae0a57c519d33d2b4e3e9e6be9e069fd0ee2c805beb100046f",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "recovery/tests/receiver_cleanup_harness.cpp"
+    ],
+    "evidence": [
+      "Original insertion 0x00633180, node deletion 0x00402C20 and cleanup 0x00538EC0 justify a live-source runtime control for Heap-owned versus individually allocated entries. Audit configuration is authorized only to lower ceilings for removed scaffolding, never to waive findings."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "d5565d56b6f06a1d1060f3a357f1c65953b4a48f61f2511a927e9475d6013b59",
+  "request_id": "receiver-cleanup-runtime-controls",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:jackal-voice-ownership"
+}

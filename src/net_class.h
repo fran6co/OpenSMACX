@@ -119,11 +119,29 @@ static_assert(sizeof(VoiceTx) == 0x58,
   * `static_assert(sizeof(AlphaNet) == 0x14A0)` there, which is the intended
   * alarm - re-measure AlphaNet's `data_` rather than silence it.
   */
-// Provisional node identity: the receiver's circular list has separate
-// allocation-owning entries and payload objects. Their complete declarations
-// and destruction are still recovery work; do not reuse StringStruct's
-// string-payload type merely because its entry has the same physical layout.
-struct VoiceReceiverEntry;
+// A circular-list entry, not its separately allocated voice payload.
+// Insertion 0x00633180 requests 0x1C bytes and installs vbtable 0x006693C8:
+// StringAllocationBase is at +0x14, with ID/payload/next/previous before it.
+// VoiceRx construction 0x004C8960 stages the Sound base before its own table;
+// this pointer is a Sound base view, not a claim about the complete allocated
+// 0x60 payload wrapper or its still-unrecovered factory.
+struct VoiceReceiverEntry : public virtual StringAllocationBase {
+  int id_;                       // 0x04
+  Sound *payload_;               // 0x08
+  VoiceReceiverEntry *next_;     // 0x0C
+  VoiceReceiverEntry *previous_; // 0x10
+
+  // Original node deletion 0x00402C20 republishes the saved allocation
+  // owner, frees the complete node only without an owner, then clears the
+  // handoff. The inherited destructor owns publication; this deallocator
+  // owns the storage decision. Never free an individual Heap-owned block.
+  static void operator delete(void *memory) {
+    if (StringAllocationHeap == 0) {
+      ::operator delete(memory);
+    }
+    StringAllocationHeap = 0;
+  }
+};
 
 // Net's receiver list at +0xB0. Original constructor 0x0062D6CE..0x0062D733
 // places the vbptr at +4, virtual StringAllocationBase at +0x1C, and clears
@@ -147,6 +165,7 @@ class JackalVoiceRx : public virtual StringAllocationBase {
   }
   virtual int on_insert(void *payload);
   virtual void on_remove(void *payload);
+  void clear();
 
  private:
   // 0x00538EC0 advances through entry+0xC, stores the cursor, and clears
@@ -340,7 +359,9 @@ class Net {
   // 0x0062D6C9, and ??1Net tears it down at the same offset. The two members
   // this replaces covered exactly 0x58 bytes, so nothing moves.
   VoiceTx voice_tx_;  // 0x58
+ protected:
   JackalVoiceRx jackal_voice_rx_;  // 0xB0 (vbase StringAllocationBase at 0xCC)
+ private:
   // The voice-transmitter state between the receiver and the fifos.
   uint32_t voice_key_D4_;      // 0xD4, start_voice's key
   uint32_t voice_flags_D8_;    // 0xD8, 0x20000000 started / 0x60000000 in-flight

@@ -44,20 +44,7 @@ extern Sprite g_BLANK_SPRITE;
 #include "map.h"     // zoc_any
 #include "veh.h"     // can_arty
 #include "alphamovie.h"  // MCIVideo - 0x00600330 is one of its members
-// The AI turn loop calls three of NetDaemon's methods and stores into
-// NetDaemonNet + 0x1B74 (netdaemon.h:67's queue-1 dword_3). Neither
-// netdaemon.h nor net_class.h can be included here - both declare
-// JackalVoiceRx, which this TU already declares for ??1JackalVoiceRx@@QAE@XZ,
-// and a second definition is C2011 - so the three members enemy_veh reaches
-// are declared instead. The layout stays in netdaemon.h; nothing here needs
-// it.
-class NetDaemon {
-public:
-    void await_synch();                // ?await_synch@NetDaemon@@QAEXXZ
-    uint32_t unlock_veh();             // netdaemon.h spells the return uint32_t
-    int action(int veh_id, int mode);  // ?action@NetDaemon@@QAEHHH@Z
-};
-extern NetDaemon NetDaemonNet;   // 0x0093CD90
+#include "netdaemon.h"  // Shared receiver hierarchy and NetDaemonNet storage.
 #include "xpops.h"   // X_pop
 #include "filemap.h" // Filemap::open_read
 // jackal_init_real brings all of these up, in this order.
@@ -2428,137 +2415,31 @@ int __cdecl trig_init() {
     return sin(static_cast<int>(0xe02d82d7), 100);
 }
 
-// ORIGINAL: 0x00538EC0 ??1JackalVoiceRx@@QAE@XZ 0x00538EC0-0x00538F2E FILE
-// size      110 bytes
-// prototype void (__thiscall ??1JackalVoiceRx@@QAE@XZ)(JackalVoiceRx* this)
-// callers   2   call targets   0
+// ORIGINAL: 0x00538EC0 ??1JackalVoiceRx@@QAE@XZ 0x00538EC0-0x00538F2E FILE BYTE_EXACT
 // kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x00538EE2 0x00538EEF 0x00538F0F
-// PRESERVED UNIT - measured MISMATCH.
-//
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x00538EC0
-// measured tier  MISMATCH
-// divergence     9
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/00538ec0/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ??1JackalVoiceRx@@QAE@XZ  at 0x00538EC0  (110 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
-
-typedef int int32_t;
-typedef unsigned int uint32_t;
-typedef short int16_t;
-typedef unsigned short uint16_t;
-typedef signed char int8_t;
-typedef unsigned char uint8_t;
-typedef int int32;
-typedef unsigned int uint32;
-typedef short int16;
-typedef unsigned short uint16;
-// `char`, NOT `signed char`. They are distinct MSVC types and mangle
-// differently - D against C - and the catalogue's `int8` means the first:
-// counted over every catalogued mangled name, `PAD` appears 508 times and
-// `PAC` once. Spelling it `signed char` made 150 derived prototypes emit a
-// symbol no target object holds. `int8_t` keeps its C meaning below; neither
-// catalogue ever uses it.
-typedef char int8;
-typedef unsigned char uint8;
-
-class JackalVoiceRx;
-
-// Vtable shim. VC6 rejects a free `__thiscall` function pointer
-// (C4234), so an indirect virtual call is spelled by calling the Nth
-// virtual of a class that is never defined and never instantiated.
-// Only DECLARATION ORDER matters - change a slot's signature freely
-// to match the call you need; it will not move.
-// This body dispatches through slot(s): 0, 1, 2
-// A fake vtable for JackalVoiceRx's own dispatch, under a name of our own: the
-// compiler-generated 'VCall' shim idiom is what the census ratchets on, and
-// this one is not scaffolding to retire but the body's real three-slot table.
-class JackalVoiceRxVt { public:
-    virtual void slot000(int);  // <-- used
-    virtual void slot001(void *);  // <-- used
-    virtual void slot002(int);  // <-- used
-};
-
-class JackalVoiceRx { public:
-    ~JackalVoiceRx();
-};
-
-// NOT BYTE_EXACT. Closest reached: 108/110 bytes, mnemonic similarity
-// 0.918, edit_count 4 (verify_recovered_function.py --json / byte_match.py).
-// The loop body's logic and every virtual-dispatch shape match:
-// `slot001` on `this` fed by an adjustor-free vtable read, `slot002`
-// on the freed sub-object, and the vcall-thunk-style adjustor call
-// (`off = *(*node + 4); node[off]->slot000(1)`) for the third all
-// reproduce the original's exact instruction sequence and operands.
-// Divergence is REGISTER ALLOCATION, not logic: the original keeps
-// everything in registers with NO stack frame at all - eax doubles
-// as the reusable "0" constant AND scratch, ebx is dedicated to the
-// loop counter, esi is `this`, edi is the freed sub-object pointer;
-// four roles packed into three callee-saved registers (ebx/esi/edi)
-// plus one caller-saved (eax) reused across the whole body. Every
-// source spelling tried here (naming vs. inlining the freed-node and
-// adjusted-node reads, `!= 0` vs. plain truthy guards, reordering the
-// two reads sharing one base pointer) has the compiler give the loop
-// counter its OWN stack slot instead of reusing a register the way
-// the original's allocator did, adding a `push ecx` alignment filler
-// and an EBP frame the original does not have. Ruled out as a
-// register-allocation wall like the one documented on 0x006339E0's
-// NetFifo destructor: mnemonics and operands agree wherever the
-// register choice does not force it, and no restructuring tried
-// moved the counter off the stack.
-JackalVoiceRx::~JackalVoiceRx() {
-    char *self = reinterpret_cast<char *>(this);
-    if (*reinterpret_cast<void **>(self + 8) != 0) {
-        if (*reinterpret_cast<int *>(self + 0x10) > 0) {
-            int i = 0;
-            do {
-                *reinterpret_cast<char **>(self + 0xc) =
-                    *reinterpret_cast<char **>(*reinterpret_cast<char **>(self + 8) + 0xc);
-                void *sub = *reinterpret_cast<void **>(*reinterpret_cast<char **>(self + 8) + 8);
-                reinterpret_cast<JackalVoiceRxVt *>(self)->slot001(sub);
-                if (sub) {
-                    reinterpret_cast<JackalVoiceRxVt *>(sub)->slot002(1);
-                }
-                *reinterpret_cast<void **>(*reinterpret_cast<char **>(self + 8) + 8) = 0;
-                if (*reinterpret_cast<void **>(self + 8)) {
-                    char *n2 = *reinterpret_cast<char **>(self + 8);
-                    reinterpret_cast<JackalVoiceRxVt *>(
-                        n2 + *reinterpret_cast<int *>(*reinterpret_cast<char **>(n2) + 4))
-                        ->slot000(1);
-                }
-                ++i;
-                *reinterpret_cast<char **>(self + 8) = *reinterpret_cast<char **>(self + 0xc);
-            } while (i < *reinterpret_cast<int *>(self + 0x10));
+// symbol    ?clear@JackalVoiceRx@@QAEXXZ
+// The catalogue destructor label names this shared list-clearing helper.
+// Callers stage receiver/base tables and allocation-owner handoff outside it
+// (0x00538E5A..0x00538E9E); the complete receiver destructor is separate
+// (0x004E3660). Keep the original identity, not the skeleton's class fiction.
+// Insertion 0x00633180 establishes distinct 0x1C circular entries and 0x60
+// voice payloads. The three virtual calls below are respectively a receiver
+// hook, Sound-family destruction, and entry virtual-base destruction.
+// This does not complete Net/AlphaNet/NetDaemon lifetime recovery.
+void JackalVoiceRx::clear() {
+    if (head_) {
+        for (int removed = 0; removed < count_; ++removed) {
+            cursor_ = head_->next_;
+            Sound *payload = head_->payload_;
+            on_remove(payload);
+            delete payload;
+            head_->payload_ = 0;
+            delete head_;
+            head_ = cursor_;
         }
-        *reinterpret_cast<void **>(self + 8) = 0;
-        *reinterpret_cast<void **>(self + 0x14) = 0;
-        *reinterpret_cast<int *>(self + 0x10) = 0;
+        head_ = 0;
+        cursor_index_ = 0;
+        count_ = 0;
     }
 }
 
@@ -4979,13 +4860,7 @@ int __cdecl enemy_veh(int veh_id) {
     }
 
     if (IsMultiplayerNet != 0) {
-        // NetDaemonNet + 0x1B74 is netdaemon.h's lock_state_[1].dword_[3] -
-        // the queue-1 slot the constructor clears and process_message reads.
-        // Neither netdaemon.h nor net_class.h can be included in this TU (see
-        // the declaration above), so the offset stands on the object until
-        // that include is possible.
-        *reinterpret_cast<unsigned int *>(
-            reinterpret_cast<char *>(&NetDaemonNet) + 0x1B74) = 3;
+        NetDaemonNet.lock_state_[1].dword_[3] = 3;
     }
 
     do_all_non_input();
@@ -5192,4 +5067,3 @@ void __cdecl enemy_turn(int faction_id) {
 
     PlayersData[faction_id].flags &= ~PFLAG_UNK_10000;
 }
-
