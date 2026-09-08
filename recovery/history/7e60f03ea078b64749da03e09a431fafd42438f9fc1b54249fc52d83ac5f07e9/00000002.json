@@ -1,0 +1,44 @@
+{
+  "event_id": "4e0dc2115cd072471938ec0558097d139d59dbcde07733e9c7a95126d4257e82",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/alphanet.cpp",
+      "src/alphanet.h"
+    ],
+    "evidence": [
+      "Discovery receiver-cleanup-ownership requires shared receiver declarations and coupled Net/AlphaNet/NetDaemon construction and destruction, not an address-only spelling pass.",
+      "src/net_class.cpp: original Net destructor 0x004E34D0 currently delegates no explicit cleanup; implicit member destruction and the manual NetDaemon teardown must be reconciled together.",
+      "src/alphanet.h: AlphaNet derives from Net and declares ledger/Heap union storage without an explicit destructor; the seed at original 0x00538B60 remains evidence, not an accepted product implementation.",
+      "Keep task baseline edc32903e16080d1607aa9e630adbb13f0c0d951 and all protected obligations unchanged. This authorizes lifecycle work, not payload-type guesses, seed deletion, gate relaxation, or collection."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5475600,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6477472,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5475168,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5125328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "90b24d9017e43f83617cb80634b9d8105e992938fb6355e6127a08dbd7fdd73b",
+  "request_id": "receiver-lifecycle-scope",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:jackal-voice-ownership"
+}

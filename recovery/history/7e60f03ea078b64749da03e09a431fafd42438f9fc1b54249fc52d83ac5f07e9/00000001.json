@@ -1,0 +1,27 @@
+{
+  "event_id": "90b24d9017e43f83617cb80634b9d8105e992938fb6355e6127a08dbd7fdd73b",
+  "payload": {
+    "affects": [
+      "entity-0f3a715815c5c39be3ab242bcf39f2468f8bbf239f10f6c5da2b9001fd2cc0e6",
+      "entity-3f6349cc1e1e55b2d272de80befdb3454ee51d275842d4f5c3c1a65acbe1c0dc",
+      "entity-bc59ea28cb7bc3b303789b40bea8a9573a433c67abcbc82cc25c34b11f692265",
+      "entity-ecc8c939672aeca28dcd606fb1e479bb69d70a3070d4d40fa6817fe83c162eb2"
+    ],
+    "author": "coordinator",
+    "discovery_id": "receiver-cleanup-ownership",
+    "evidence": [
+      "src/general.cpp: original 0x00538EC0; dispatch sites 0x00538EE2, 0x00538EEF, 0x00538F0F",
+      "src/netdaemon.cpp: original 0x00538D10; receiver lifetime context 0x00538E5A-0x00538E9E; JackalVoiceRxShim still calls original address",
+      "src/net_class.cpp: original 0x0062D6A0; receiver construction 0x0062D6CE-0x0062D733",
+      "src/hypothesis_layouts.h: JackalVoiceRx virtual StringAllocationBase declaration conflicts with general.cpp skeleton",
+      "src/recovered/units/00538b60.cpp: original AlphaNet destructor 0x00538B60; receiver cleanup call 0x00538CD0"
+    ],
+    "hypothesis": "Treat 0x00538EC0 as a receiver-list cleanup operation pending lifecycle classification, not as proof of the catalogue destructor spelling. Its three indirect calls dispatch on three distinct objects: the container, its payload, and a node virtual base. One synthetic vtable class cannot express those ownership relationships. The containing Net constructor and NetDaemon/AlphaNet teardown must be recovered together with the shared receiver declaration: the caller performs receiver table staging and allocation-owner handoff outside this helper. Recover typed list members and real destruction only after checking payload and node construction/dispatch evidence; a Sound-family payload is a possibility, not an established type. Preserve the original identity and historical obligations while investigating a helper/destructor split; neither rename nor accept from the catalogue label or local byte score alone.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "receiver-cleanup-ownership",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:jackal-voice-ownership"
+}

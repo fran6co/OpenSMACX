@@ -1,0 +1,24 @@
+{
+  "event_id": "b9db09a8520a56c3b07e9382d06234711af754025b2acacc2b86989d9e41166d",
+  "payload": {
+    "affects": [
+      "entity-3f6349cc1e1e55b2d272de80befdb3454ee51d275842d4f5c3c1a65acbe1c0dc",
+      "entity-a5ace58353d3210408c862b56c5752e5de4163492cf5aef7a0bb989157545d83"
+    ],
+    "author": "coordinator",
+    "discovery_id": "distinguish-net-700-owner",
+    "evidence": [
+      "src/net_class.h: jackal_voice_rx_, jackal_voice_rx_700_, unk_72c_, unk_base_758_ currently modeled as separate sequential members",
+      "src/net_class.cpp: original 0x0062D6A0; vbptr stores at 0x0062D6CE and 0x0062D763; virtual-base walks at 0x0062D707 and 0x0062D808",
+      "src/IMAGE_PIN: original vbtable 0x00670DCC has receiver-relative entry offset -4 and base displacement +0x18 from its vbptr; 0x00669430 instead has offset 0 and base displacement +0x58",
+      "git:df024b808d265f48f10d0ed95dd27c2d2819c4fa:src/net_class.cpp and src/net_class.h introduced the shared receiver declaration and the unobservable owner-order hypothesis; that historical hypothesis is not ownership proof"
+    ],
+    "hypothesis": "Do not propagate a receiver fix at Net+0xB0 to the object at Net+0x700 merely because both currently use JackalVoiceRx. The original gives the first a vbptr at relative +4 reaching an allocation base at relative +0x1C, but the second a vbptr at relative zero reaching a base at relative +0x58. This contradicts treating both as complete instances of the same current declaration. Investigate the +0x700 owner and its relationship to the separately staged +0x72C member before moving the +0x758 base into ordinary sequential storage or declaring the reversed allocation-owner capture order harmless. The complete original class name, extent, and containment/inheritance relationship remain unresolved; keep them provisional rather than introducing another fake table.",
+    "kind": "discovery"
+  },
+  "previous_event": "4e0dc2115cd072471938ec0558097d139d59dbcde07733e9c7a95126d4257e82",
+  "request_id": "distinguish-net-700-owner",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:jackal-voice-ownership"
+}
