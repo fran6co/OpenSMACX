@@ -20,7 +20,7 @@ def request_data(project):
                    for dimension in (Dimension.BYTES, Dimension.STRUCTURE)]
     return {"task": task.to_dict(), "snapshot": "a" * 64,
             "protected": [{**asdict(row), "obligation_id": row.obligation_id} for row in obligations],
-            "interpretations": [], "verification_id": "one invocation",
+            "interpretations": [], "verification_id": "one invocation", "review_policy": {},
             "review": {"kind": "review", "author": "worker", "reviewer": "independent-reviewer",
                        "snapshot": "a" * 64, "decision": "approve", "evidence": ["fixture evidence"],
                        "feedback": "Controlled approval; actual acceptance still required."}}
@@ -33,7 +33,20 @@ def test_complete_fresh_receipt_passes_without_changing_source_or_decisions(proj
     assert (root / "src/f.cpp").read_bytes() == source
 
 
-@pytest.mark.parametrize("dimension", ["task", "snapshot", "protected", "review", "interpretations", "verification_id"])
+@pytest.mark.parametrize("policy", [None, [], "unbound review"])
+def test_review_policy_must_be_supplied_as_an_object(request_data, policy):
+    request_data["review_policy"] = policy
+    with pytest.raises(ValueError, match="reviewed policy"):
+        acceptance_result(0, receipt(request_data), request=request_data)
+
+
+def test_old_requests_without_review_policy_are_refused(request_data):
+    request_data.pop("review_policy")
+    with pytest.raises(ValueError, match="invalid acceptance request"):
+        acceptance_result(0, receipt(request_data), request=request_data)
+
+
+@pytest.mark.parametrize("dimension", ["task", "snapshot", "protected", "review", "review_policy", "interpretations", "verification_id"])
 def test_receipt_binds_every_request_input_not_just_source_snapshot(request_data, dimension):
     stale = receipt(request_data)
     changed = deepcopy(request_data)
@@ -45,6 +58,8 @@ def test_receipt_binds_every_request_input_not_just_source_snapshot(request_data
         changed[dimension] = changed[dimension][1:]  # Same source, different protected set.
     elif dimension == "review":
         changed[dimension]["feedback"] = "Changed review decision evidence"
+    elif dimension == "review_policy":
+        changed[dimension] = {"changed": "review policy"}
     elif dimension == "interpretations":
         changed[dimension] = [{"source": "changed interpretation"}]
     else:

@@ -267,6 +267,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                     raise ValueError("source or interpretation inventory changed after review")
                 code, measured = readonly(migration_command, {"task": task.to_dict(), "snapshot": snapshot,
                                                               "protected": obligations, "permission": permission,
+                                                              "review_policy": policy,
                                                               "review": decision, "interpretations": policy.get("interpretations", [])})
                 if reviews.snapshot(working_state(root), policy) != snapshot:
                     raise ValueError("source changed after migration review")
@@ -287,6 +288,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                     raise ValueError("source or interpretation inventory changed after review")
                 request = {"task": task.to_dict(), "snapshot": snapshot,
                            "protected": obligations, "review": decision,
+                           "review_policy": policy,
                            "interpretations": policy.get("interpretations", []),
                            "verification_id": uuid.uuid4().hex}
                 code, report = readonly(acceptance, request)

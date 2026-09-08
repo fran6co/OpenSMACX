@@ -296,7 +296,11 @@ establish completion of this program.
   and fresh measurements of protected obligations; stale/replayed reports and
   boolean-only passes are refused. Native `tasks check-acceptance` now runs the
   full gate and retains its fresh build for trusted structure/runtime proof
-  commands, checking source/compiler/image/artifact freshness throughout. Strict
+  commands, checking source/compiler/image/artifact freshness throughout. Both
+  acceptance and migration requests now include the exact review policy, letting
+  native verifiers independently re-derive the reviewed source snapshot. A stale
+  approval cannot be replayed through standalone CLI entry after source edits;
+  publication of the review's own journal remains valid. Strict
   restoration, declared structure, outside preservation and baseline build policy
   remain native prerequisites that hooks cannot waive. Default initialization and
   OpenSMACX's driver use this package command; no local acceptance dispatcher is

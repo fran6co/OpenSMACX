@@ -244,6 +244,10 @@ it does not rewrite the scoped result or waive its outstanding obligations.
 Without that verifier the driver reports `full_acceptance_gate_required`.
 The verifier's report must bind the complete current request, including a fresh
 invocation id, and supply current measurements for all protected obligations.
+The request includes the exact `review_policy`: native acceptance recomputes its
+source-bound review snapshot before running the gate. An old approval cannot be
+replayed on edited source through standalone CLI entry. Publishing that review's
+own journal alone remains allowed; source or policy edits require a fresh review.
 Old passing reports and boolean-only summaries cannot authorize collection.
 Receipts are disposable verification outputs, not source claims or history.
 A measured acceptance failure feeds its snapshot-bound report back to the worker

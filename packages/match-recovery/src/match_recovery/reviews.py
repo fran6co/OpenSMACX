@@ -199,11 +199,13 @@ def acceptance_result(code: int, report: dict, *, request: dict) -> str:
     Missing/stale protected measurements may explain unknown, never a pass.
     """
     outcome = acceptance_outcome(code, report)
-    fields = {"task", "snapshot", "protected", "review", "interpretations", "verification_id"}
+    fields = {"task", "snapshot", "protected", "review", "review_policy", "interpretations", "verification_id"}
     if not isinstance(request, dict) or set(request) != fields:
         raise ValueError("invalid acceptance request")
     require_digest(request["snapshot"])
     require_text(request["verification_id"], "verification id")
+    if not isinstance(request["review_policy"], dict):
+        raise ValueError("acceptance requires the reviewed policy")
     validate_review(request["review"])
     if request["review"]["decision"] != "approve" or request["review"]["snapshot"] != request["snapshot"]:
         raise ValueError("acceptance requires the reviewed snapshot")

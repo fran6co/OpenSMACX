@@ -34,7 +34,7 @@ def test_structural_review_reaches_fresh_full_verification_not_an_automatic_pass
         if stage == "acceptance":
             assert payload["review"]["snapshot"] == payload["snapshot"]
             assert payload["review"]["decision"] == "approve"
-            assert set(payload) == {"task", "snapshot", "protected", "review", "interpretations", "verification_id"}
+            assert set(payload) == {"task", "snapshot", "protected", "review", "review_policy", "interpretations", "verification_id"}
             report.update(receipt(payload, report))
             return {"pass": 0, "fail": 1, "unknown": 3}[outcome], report
         assert stage == "worker" and outcome == "fail"

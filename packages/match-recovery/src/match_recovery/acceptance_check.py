@@ -25,7 +25,7 @@ from .preservation import check_preservation
 from .records import read_json
 from .restoration import measure_restoration
 from .source_obligations import task_obligations
-from .reviews import acceptance_result, merge_interpretations, pending_interpretations
+from .reviews import ReviewStore, acceptance_result, merge_interpretations, pending_interpretations
 from .structural_requirements import declared_outcome
 from .tasks import TaskStore
 
@@ -92,6 +92,11 @@ def measure_acceptance(root: Path, task_name: str, image: Path, request: dict, *
         raise ValueError("acceptance requires disposition of historical interpretations")
     config, commands, inputs, environment = _policy(root)
     state = working_state(root)
+    # A matching request/review token alone cannot establish that the source
+    # still has the contents independently reviewed. Check at this boundary,
+    # including standalone CLI entry, before compiling or invoking proof code.
+    if ReviewStore(root, task_name).snapshot(state, request["review_policy"]) != request["snapshot"]:
+        raise ValueError("acceptance requires the current reviewed source snapshot")
 
     def proof_inputs():
         value = input_snapshot(root, inputs, {"policy": config, "environment": {

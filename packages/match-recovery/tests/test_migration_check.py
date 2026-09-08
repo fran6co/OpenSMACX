@@ -13,11 +13,12 @@ import pytest
 
 from match_recovery import migration_check as native
 from match_recovery.cli import main
-from match_recovery.driver import drive
+from match_recovery.driver import drive, working_state
 from match_recovery.migration_protocol import admit, extend_inventory
 from match_recovery.model import Dimension, Obligation
 from match_recovery.preservation import check_preservation
 from match_recovery.restoration import measure_restoration
+from match_recovery.reviews import ReviewStore
 from match_recovery.source_obligations import task_obligations
 from match_recovery.tasks import TaskStore
 from test_application_commands import project, combined_object
@@ -82,9 +83,12 @@ def migration(project, monkeypatch):
 def request(root):
     task = TaskStore(root).read("owner")
     inventory = task_obligations(root, "owner")
-    review = {"kind": "review", "author": "worker", "reviewer": "independent", "snapshot": "c" * 64,
+    policy = {}
+    snapshot = ReviewStore(root, "owner").snapshot(working_state(root), policy)
+    review = {"kind": "review", "author": "worker", "reviewer": "independent", "snapshot": snapshot,
               "decision": "approve", "evidence": ["source:synthetic reviewed change"], "feedback": "Checkpoint, not completion"}
     return {"task": task.to_dict(), "snapshot": review["snapshot"], "review": review,
+            "review_policy": policy,
             "protected": inventory["obligations"], "interpretations": inventory["interpretations"],
             "permission": {"migration_id": "layout", "author": task.author, "evidence": ["source:synthetic permission"],
                            "allowed": [{"entity_id": task.subjects[0].entity_id, "dimension": "bytes"}]}}
@@ -237,6 +241,19 @@ def test_stale_review_is_refused_before_build(migration, monkeypatch):
     payload["review"]["snapshot"] = "d" * 64
     monkeypatch.setattr(native, "check_build", lambda *_: pytest.fail("built for stale review"))
     with pytest.raises(ValueError, match="current independent approval"):
+        measure(migration, payload)
+
+
+@pytest.mark.parametrize("damage", ["source", "review-policy"])
+def test_stale_reviewed_inputs_cannot_admit_a_migration(migration, monkeypatch, damage):
+    payload = request(migration)
+    if damage == "source":
+        path = migration / "code/unit.cc"
+        path.write_text(path.read_text() + "// edited after independent review\n")
+    else:
+        payload["review_policy"]["changed"] = "policy"
+    monkeypatch.setattr(native, "check_build", lambda *_: pytest.fail("built for stale reviewed inputs"))
+    with pytest.raises(ValueError, match="reviewed source snapshot"):
         measure(migration, payload)
 
 

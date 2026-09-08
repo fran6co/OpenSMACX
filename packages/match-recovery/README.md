@@ -673,7 +673,7 @@ Use stderr for diagnostics. Exit codes are 0 = pass/success, 1 = measured failur
 | Worker | Task, context, check, authorized files, review and acceptance feedback | `discoveries` array; may edit only authorized files |
 | Reviewer | Task, context, check and source `snapshot` | Same `snapshot`, `decision`, nonempty `evidence`, `feedback`; read-only |
 | `obligations` | Task | Source-derived `obligations` and optional `interpretations`; read-only |
-| `acceptance` | Task, reviewed snapshot, protected obligations, review, interpretations and fresh `verification_id` | Request-bound full-project gate report and protected measurements; read-only |
+| `acceptance` | Task, reviewed snapshot and `review_policy`, protected obligations, review, interpretations and fresh `verification_id` | Request-bound full-project gate report and protected measurements; read-only |
 
 Only `context` and `check` are required in the driver configuration. Add source
 `obligations` to preserve restoration requirements across rewrites. Without
@@ -727,6 +727,16 @@ this is SHA-256 of UTF-8 JSON with sorted keys, unescaped Unicode, compact `,`/`
 separators, no NaN/Infinity and one trailing newline. A receipt cannot be reused
 even when the source and independent review are unchanged. The nonce belongs to
 the invocation, not versioned source or a new measurement ledger.
+
+The request also supplies `review_policy`, the exact policy used by
+`ReviewStore.snapshot` for that independent review. Native acceptance recomputes
+the reviewed source snapshot before running the gate, including on standalone
+CLI entry: replaying an old approval after an edit is refused even if the new
+source would pass every measurement. Only that task's own review journal is
+excluded; publishing/committing the review alone does not invalidate it. Source,
+other decisions and policy remain bound. Requests without this policy are refused,
+not upgraded using today's configuration. Attribution still trusts the coordinator;
+this is stale-review protection, not reviewer authentication.
 
 Each measurement is `{obligation_id, fingerprint, result, evidence}`, with a
 SHA-256 input fingerprint and nonempty evidence text. `current` maps obligation
@@ -825,6 +835,9 @@ The package supplies the native `migration_check` command:
 `recover tasks check-migration <task> --image <image>`. It consumes the driver's
 JSON request on stdin and freshly runs source integrity, mapping/history checks,
 configured audits, build, restoration and full-TU compiled-residual preservation.
+The request includes the same exact `review_policy` used for the independent
+review; the verifier re-derives that source snapshot before and throughout its
+checks. A matching pair of stale snapshot tokens cannot admit a checkpoint.
 Its exit 0 means the measurement envelope completed, **not** admission; only the
 driver applies permission/review and can return a tracked checkpoint (exit 2).
 Build-policy changes, missing compiler controls, unresolved references and

@@ -15,9 +15,9 @@ import pytest
 from match_recovery import acceptance_check as native
 from match_recovery.build_check import check_build
 from match_recovery.cli import main
-from match_recovery.driver import Command, drive
+from match_recovery.driver import Command, drive, working_state
 from match_recovery.model import Dimension, Obligation, digest
-from match_recovery.reviews import acceptance_result
+from match_recovery.reviews import ReviewStore, acceptance_result
 from match_recovery.source_obligations import task_obligations
 from match_recovery.tasks import TaskStore
 from test_application_commands import project
@@ -71,6 +71,9 @@ def request(root):
     value["protected"] = [{key: row[key] for key in ("entity_id", "dimension", "baseline", "obligation_id")}
                           for row in value["protected"]]
     value["verification_id"] = "fresh fixture invocation"
+    value["review_policy"] = {}
+    value["snapshot"] = value["review"]["snapshot"] = ReviewStore(root, "owner").snapshot(
+        working_state(root), value["review_policy"])
     return value
 
 
@@ -104,6 +107,33 @@ def test_native_acceptance_retains_one_fresh_build_for_both_proofs(acceptance, p
     assert report["artifacts"] == {proofs[0]["build"]["directory"] + "/" + row["path"]: row["sha256"]
                                    for row in proofs[0]["build"]["outputs"]}
     assert len(list((acceptance / "build/products").iterdir())) == 1
+
+
+@pytest.mark.parametrize("damage", ["source", "untracked", "build-policy", "review-policy"])
+def test_native_acceptance_refuses_source_changed_after_review_before_entry(acceptance, proofs, monkeypatch, damage):
+    payload = request(acceptance)
+    if damage == "review-policy":
+        payload["review_policy"]["different"] = "policy after independent review"
+    else:
+        name = {"source": "code/unit.cc", "untracked": "not-reviewed.txt",
+                "build-policy": "recovery/build.json"}[damage]
+        path = acceptance / name
+        path.write_text((path.read_text() if path.exists() else "") + "\n")
+    def no_gate(*args, **kwargs):
+        pytest.fail("a stale review must be refused before running the gate")
+    monkeypatch.setattr(native, "check_project", no_gate)
+    with pytest.raises(ValueError, match="reviewed source snapshot"):
+        measure(acceptance, payload)
+    assert not proofs
+
+
+def test_publishing_and_committing_the_review_does_not_invalidate_it(acceptance, proofs):
+    payload = request(acceptance)
+    ReviewStore(acceptance, "owner").append(payload["review"], expected_revision=0)
+    git(acceptance, "add", "recovery/history")
+    git(acceptance, "commit", "-m", "Publish the independent review without editing source")
+    assert measure(acceptance, payload)["result"] == "pass"
+    assert len(proofs) == 2
 
 
 @pytest.mark.parametrize("result", ["fail", "unknown"])

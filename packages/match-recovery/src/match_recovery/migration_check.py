@@ -20,7 +20,7 @@ from .model import Result, digest, require_digest
 from .preservation import check_preservation
 from .records import read_json
 from .restoration import measure_restoration
-from .reviews import merge_interpretations, pending_interpretations, validate_review
+from .reviews import ReviewStore, merge_interpretations, pending_interpretations, validate_review
 from .source_audits import _validate_policy, audit_source
 from .source_history import _tree, git
 from .source_integrity import check_source
@@ -57,7 +57,7 @@ def unchanged_build_policy(root, task, settings, build):
 def measure_migration(root: Path, task_name: str, image: Path, request: dict, *, progress=None) -> dict:
     root = root.resolve()
     image = image if image.is_absolute() else root / image
-    fields = {"task", "snapshot", "protected", "permission", "review", "interpretations"}
+    fields = {"task", "snapshot", "protected", "permission", "review", "review_policy", "interpretations"}
     if not isinstance(request, dict) or set(request) != fields:
         raise ValueError("invalid native migration request")
     store = TaskStore(root)
@@ -66,6 +66,8 @@ def measure_migration(root: Path, task_name: str, image: Path, request: dict, *,
     if digest(request["task"]) != digest(task.to_dict()):
         raise ValueError("migration request does not name the current task")
     require_digest(request["snapshot"])
+    if not isinstance(request["review_policy"], dict):
+        raise ValueError("migration requires the reviewed policy")
     permissions(request["permission"], task, scope)
     validate_review(request["review"])
     if request["review"]["decision"] != "approve" or request["review"]["snapshot"] != request["snapshot"]:
@@ -86,6 +88,8 @@ def measure_migration(root: Path, task_name: str, image: Path, request: dict, *,
     _validate_policy(policy)
     def snapshot():
         state = working_state(root)
+        if ReviewStore(root, task_name).snapshot(state, request["review_policy"]) != request["snapshot"]:
+            raise ValueError("migration inputs changed from the reviewed source snapshot")
         with image.open("rb") as stream:
             image_sha = hashlib.file_digest(stream, "sha256").hexdigest()
         if image_sha != inventory["image_sha256"]:
