@@ -1,0 +1,24 @@
+{
+  "event_id": "ac15aa0e0ac6dde2b319b289072811500fb7884092ad1de2f9c53cc34cea0b9b",
+  "payload": {
+    "affects": [
+      "entity-0ccb80f595ef99d9f49e432b2f8d515597e60ec21357dc56a7e760c7084f8a37",
+      "entity-2c446c147c1ea103e63f30a56d7b5976be7ce22d366f23bb993c9ac8797378ad",
+      "entity-6660d3fc4d2099387d42a3dfb9f1d1dd894963eecd6c1d42e7c816d3159f8bc3",
+      "entity-a1e967b92aa3c9b837201a8df6e25afed3d5fd2af10925103967cfabe1598f20"
+    ],
+    "author": "coordinator",
+    "discovery_id": "net-queue-caller-storage",
+    "evidence": [
+      "src/net_class.cpp defines uint32_t NetGetScratch at the hinted original address 0x009BC4BC; the four queue callers pass its address to readers. Both current NetFifo get overloads copy node data_size_ bytes into the supplied destination. Neighboring 0x009BE4BC references in retained seeds are hints only, not proof of a 0x2000 extent.",
+      "The native strict caller checks lack bindings for NetGetScratch, NetDirectPlay, NetFifo::sub_634200 and NetFifo::sub_6340c0. Existing byte claims predate reference-aware checking and must be retained while these independent storage and callee obligations are resolved."
+    ],
+    "hypothesis": "The queue callers need real source-owned scratch storage and dependency bindings before strict reference-aware acceptance. NetGetScratch is currently a uint32_t object passed as the destination of variable-length queue payload copies; its complete original extent and storage type must be recovered, not merely bound as four bytes to make relocation checks pass. Establish NetDirectPlay storage identity and map the two remaining queue-reader forwarders without treating their bodies as recovered.",
+    "kind": "discovery"
+  },
+  "previous_event": "8857a2292b8cd7afd50ee30e7bc6afd2bc16bc39ed788769bbc1bf6457a2e1df",
+  "request_id": "net-queue-caller-storage",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:jackal-voice-ownership"
+}

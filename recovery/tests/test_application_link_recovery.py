@@ -241,19 +241,17 @@ def test_receiver_cleanup_uses_the_shared_layout_and_virtual_owners(compiled):
         assert targets.count("??1Net@@QAE@XZ") == 1
     for obj in compiled["src/net_class.cpp"]:
         targets = references(obj, "??1Net@@QAE@XZ")
-        # VC6 passes the destructor to its exception-safe array iterator;
-        # one relocation is a callback for three elements, not one teardown.
-        iterator = "??_M@YGXPAXIHP6EX0@Z@Z"
         cleanup = symbol_at("src/general.cpp", 0x538EC0)
-        assert targets.count("??1NetFifo@@QAE@XZ") == targets.count(iterator) == 1
+        assert "??_M@YGXPAXIHP6EX0@Z@Z" not in targets
+        assert targets.count("??1NetFifo@@QAE@XZ") == 3
         assert targets.count(cleanup) == 1
-        assert targets.index(iterator) < targets.index(cleanup) < targets.index("??1Sound@@UAE@XZ")
-        code, relocations, _ = obj.subject(obj.function("??1Net@@QAE@XZ"))
-        begin, = (r.offset for r in relocations if obj.symbols[int(r.target)].name == "??1NetFifo@@QAE@XZ")
-        end, = (r.offset for r in relocations if obj.symbols[int(r.target)].name == iterator)
-        setup = list(Cs(CS_ARCH_X86, CS_MODE_32).disasm(code[begin + 4:end - 1], begin + 4))
-        assert [(i.mnemonic, i.op_str) for i in setup[:4]] == [
-            ("push", "3"), ("lea", "eax, [edi + 0xe8]"), ("push", "0x24"), ("push", "eax")]
+        assert targets.index("??1NetFifo@@QAE@XZ") < targets.index(cleanup) < targets.index("??1Sound@@UAE@XZ")
+        ctor = references(obj, "??0Net@@QAE@XZ")
+        assert ctor.count("??0NetFifo@@QAE@XZ") == 3
+        net = class_layout(obj, "Net")
+        for member, offset in (("queue_e8_", 0xE8), ("queue_10c_", 0x10C), ("queue_130_", 0x130)):
+            assert net["members"][member] == offset
+            assert net["class_value_members"][member] == "NetFifo"
 
 
 def test_menu_candidates_use_typed_source_definitions(compiled):

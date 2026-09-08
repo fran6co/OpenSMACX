@@ -311,7 +311,7 @@ void NetUnk72C::unk_slot0() { }
 void NetUnk72C::unk_slot1() { }
 
 Net::Net() {
-    // voice_tx_ (0x58), jackal_voice_rx_ (0xB0), netfifo_[3] (0xE8..0x14B)
+    // voice_tx_ (0x58), jackal_voice_rx_ (0xB0), three queues (0xE8..0x14B)
     // and allocation_node_ (0x700) construct implicitly. The node's virtual
     // base at 0x758 is constructed before its list member at 0x72C, whose
     // own allocation base is at 0x750. This preserves the original owner
@@ -869,9 +869,7 @@ Status: Complete
 int Net::get(unsigned long *a, unsigned long *b) {
     if (*NetEnabled != 0) {
         if (a != 0) {
-            NetFifo *const fifo = reinterpret_cast<NetFifo *>(
-                reinterpret_cast<char *>(this) + 0x10C);
-            int result = fifo->get(&NetGetScratch,
+            int result = queue_10c_.get(&NetGetScratch,
                                    reinterpret_cast<unsigned int *>(a), 0,
                                    reinterpret_cast<unsigned int *>(b));
             return result ? reinterpret_cast<int>(&NetGetScratch) : 0;
@@ -1591,7 +1589,7 @@ int Net::sub_630a40(int first, int second) {
   if (first == 0) {
     return 0;
   }
-  int got = netfifo_[1].get(&NetGetScratch,
+  int got = queue_10c_.get(&NetGetScratch,
                             reinterpret_cast<unsigned int *>(first),
                             reinterpret_cast<int *>(0),
                             reinterpret_cast<int *>(second));
@@ -1616,7 +1614,7 @@ int Net::sub_630980(int first, int second) {
   if (NetDirectPlay == 0 || first == 0) {
     return 0;
   }
-  int got = netfifo_[1].sub_634200(&NetGetScratch, first, 0, second);
+  int got = queue_10c_.sub_634200(&NetGetScratch, first, 0, second);
   return got != 0 ? reinterpret_cast<int>(&NetGetScratch) : 0;
 }
 
@@ -1639,7 +1637,7 @@ int Net::sub_6309c0(int first, int second) {
   if (first == 0) {
     return 0;
   }
-  int got = netfifo_[1].sub_6340c0(&NetGetScratch, first, 0, second);
+  int got = queue_10c_.sub_6340c0(&NetGetScratch, first, 0, second);
   return got != 0 ? reinterpret_cast<int>(&NetGetScratch) : 0;
 }
 

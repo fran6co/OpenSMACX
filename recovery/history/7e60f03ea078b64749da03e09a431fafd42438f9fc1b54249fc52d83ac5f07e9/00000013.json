@@ -1,0 +1,17 @@
+{
+  "event_id": "8b8f411f92da12ca42683a0cdb61ea4aaead8d2c0b22b12d5b99c6c2c8c9c42b",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "net-distinct-queue-members",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/net_class.h now declares queue_e8_, queue_10c_ and queue_130_ as distinct NetFifo members, with source-owned original type/offset expectations and constructor/destructor evidence. src/net_class.cpp uses queue_10c_ in all four current readers instead of an array or raw self offset. recovery/tests/test_application_link_recovery.py verifies three direct constructor and destructor calls and each class-valued member offset. This incorporates the declaration discovery, not full Net lifetime or strict caller-storage acceptance; net-queue-caller-storage remains open."
+    ]
+  },
+  "previous_event": "ac15aa0e0ac6dde2b319b289072811500fb7884092ad1de2f9c53cc34cea0b9b",
+  "request_id": "net-distinct-queue-members-incorporated",
+  "schema_version": 1,
+  "sequence": 13,
+  "stream": "task:jackal-voice-ownership"
+}

@@ -378,7 +378,16 @@ class Net {
   uint32_t poll_time_DC_;      // 0xDC, timeGetTime() of the last keep-alive
   uint32_t poll_timeout_E0_;   // 0xE0, the staleness threshold in ms
   uint32_t field_E4_;          // 0xE4, opaque - close() writes 1 here
-  NetFifo netfifo_[3];  // 0xE8, 0x10C, 0x130 - the three message queues
+  // Distinct members: original construction 0x0062D733..0x0062D75E and
+  // destruction 0x004E3563..0x004E358B protect each queue with its own EH
+  // state. An array instead emits VC6's vector lifetime helpers. Queue roles
+  // remain provisional; offsets disambiguate the source names, not storage.
+  // RECOVERY_MEMBER: v2 Net queue_e8_ NetFifo 0xE8 0x0062D6A0
+  NetFifo queue_e8_;   // 0xE8
+  // RECOVERY_MEMBER: v2 Net queue_10c_ NetFifo 0x10C 0x0062D6A0
+  NetFifo queue_10c_;  // 0x10C
+  // RECOVERY_MEMBER: v2 Net queue_130_ NetFifo 0x130 0x0062D6A0
+  NetFifo queue_130_;  // 0x130
   NetPlayer players_[16];  // 0x154, sixteen 0x58-byte slots to 0x6D4
   uint32_t field_6D4_;  // 0x6D4
   uint32_t field_6D8_;  // 0x6D8, init() sets 0xC8 here
