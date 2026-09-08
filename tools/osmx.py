@@ -1245,6 +1245,14 @@ def _initial_data(exe):
         return {"result": "unknown", "counts": {}, "reason": str(error)}
 
 
+def _initializer_coverage(exe):
+    from match_recovery.initializer_check import check_initializers
+    try:
+        return check_initializers(REPO_ROOT, exe)
+    except (OSError, ValueError) as error:
+        return {"result": "unknown", "counts": {}, "reason": str(error)}
+
+
 def _native_audit_result(outcome, name, label, required_rules=None):
     """Read package audit reports during gate cutover; never accept missing proof."""
     try:
@@ -1747,7 +1755,7 @@ def check(
         subprocess.run,
         [sys.executable, "-m", "match_recovery.cli", "audits", "check", "storage", "--summary"],
         cwd=REPO_ROOT, capture_output=True, text=True)
-    values_job = _audit("data_values.py", "--check")
+    values_job = audits.submit(_initializer_coverage, exe)
     annotations_job = audits.submit(
         subprocess.run,
         [sys.executable, "-m", "match_recovery.cli", "check-source", "--jobs", "8", "--summary"],
@@ -1862,15 +1870,15 @@ def check(
     # time. If the image's own .data carries 9 at that address, the recovered
     # program is simply wrong - and nothing else here can tell, because both
     # spellings compile the same load and the byte comparison sees no
-    # difference. WinFillColour shipped as 0 against the image's 9 on
-    # 2026-08-25, caught only because tools/image_data.py had just been
-    # written to ask the image what its DATA says rather than its code.
+    # difference. The native initializer probe preserves this conventional
+    # annotation coverage; bounded object/relocation checks remain separate.
     values = values_job.result()
     if not as_json:
-        said = values.stdout.strip().splitlines() or [""]
-        typer.secho("  " + said[-1],
-                    fg=typer.colors.RED if values.returncode
-                    else typer.colors.WHITE)
+        typer.echo(f"  native initializer probes: {values['result']}, {values['counts']}")
+        for row in values.get("findings", [])[:4] + values.get("errors", [])[:4]:
+            typer.echo("    " + str(row))
+        if "reason" in values:
+            typer.echo("    " + values["reason"])
 
     # ANNOTATION IDENTITY: does an annotation survive being rewritten? The
     # writer used to regenerate each lesson run from a lossy parse, so
@@ -1905,7 +1913,8 @@ def check(
 
     # Run after all build/symbol jobs have finished: native data measurement
     # shares the project's compiler environment, not an independent Wine slot.
-    # Legacy trailing-address coverage remains in data_values until migrated.
+    # Conventional trailing-address coverage is checked separately by the
+    # package's initializer probe; this measures source-owned object bindings.
     initial_data = _initial_data(exe)
     if not as_json:
         typer.secho(f"  native initial data: {initial_data['result']}, "
@@ -1943,9 +1952,9 @@ def check(
             or vtables.returncode or stale.returncode or symbols["result"] == "fail"
             or index.returncode or coverage["result"] == "fail" or debt.returncode
             or annotations.returncode or storage.returncode
-            or values.returncode or initial_data["result"] == "fail" or layouts["result"] == "fail"
+            or values["result"] == "fail" or initial_data["result"] == "fail" or layouts["result"] == "fail"
             else 3 if unasked or coverage["result"] == "unknown" or initial_data["result"] == "unknown"
-            or symbols["result"] == "unknown" or layouts["result"] == "unknown" else 0)
+            or symbols["result"] == "unknown" or layouts["result"] == "unknown" or values["result"] == "unknown" else 0)
     # THE VERDICT GOES IN THE OUTPUT, not only in the exit code. The brief has
     # told agents for a long time never to pipe this to `tail`, because `cmd |
     # tail` reports TAIL's status and `echo $?` after it is always 0 - and an
@@ -1961,6 +1970,7 @@ def check(
                else "FAILED: the address index grew" if index.returncode
                else "FAILED: semantic debt grew" if debt.returncode
                else "FAILED: storage audit" if storage.returncode
+               else "FAILED: missing original initializers" if values["result"] == "fail"
                else "FAILED: original initial data" if initial_data["result"] == "fail"
                else "FAILED: source layout coverage" if layouts["result"] == "fail"
                else "FAILED: an annotation does not survive being rewritten"
@@ -1971,6 +1981,7 @@ def check(
                else "INCOMPLETE: source symbol coverage unavailable (not green)" if symbols["result"] == "unknown"
                else "INCOMPLETE: original initial data unverified (not green)" if initial_data["result"] == "unknown"
                else "INCOMPLETE: source layout coverage unavailable (not green)" if layouts["result"] == "unknown"
+               else "INCOMPLETE: initializer coverage unavailable (not green)" if values["result"] == "unknown"
                else "INCOMPLETE: unverifiable claims present (not green)" if code == 3
                else "CLEAN")
 
@@ -1981,6 +1992,7 @@ def check(
             "verdict": verdict,
             "claim_identities": coverage,
             "initial_data": initial_data,
+            "initializers": values,
             "symbol_coverage": symbols,
             "layout_coverage": layouts,
             "failed": {
@@ -1992,7 +2004,7 @@ def check(
                 "class_debt": bool(debt.returncode),
                 "annotation_identity": bool(annotations.returncode),
                 "storage": bool(storage.returncode),
-                "data_values": bool(values.returncode),
+                "initializers": values["result"] == "fail",
                 "initial_data": initial_data["result"] == "fail",
                 "layout_coverage": layouts["result"] == "fail",
                 "header_offsets": bool(offsets.returncode),

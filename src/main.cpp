@@ -106,7 +106,7 @@
 
 char CommandLineText[0x108];  // 0x007D3970
 // 0x00696ECC, and the image's own .data carries this initial value -
-// tools/data_values.py reads 0x00604E40 there, which is
+// The original data word is 0x00604E40, which is
 // `BasePop::basepop_alloc`. The assignment below at start-up is the
 // image's too; the STATIC value was simply dropped in recovery.
 func_popup_alloc *PopupAllocHook = &BasePop::basepop_alloc;

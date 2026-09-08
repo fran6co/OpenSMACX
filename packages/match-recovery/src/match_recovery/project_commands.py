@@ -64,6 +64,10 @@ def register(commands):
     data.add_argument("--image", type=Path, required=True)
     data.add_argument("--symbol", dest="symbols", action="append", help="Select exact emitted object symbols; default checks all source object bindings")
     data.add_argument("--summary", action="store_true")
+    initializers = commands.add_parser("check-initializers", help="Check missing nonzero initialization at conventional source address hints; not full object proof")
+    initializers.add_argument("--root", type=Path, default=Path.cwd())
+    initializers.add_argument("--image", type=Path, required=True)
+    initializers.add_argument("--summary", action="store_true")
     recording = commands.add_parser("record", help="Measure and publish historical byte obligations; not structural acceptance")
     recording.add_argument("targets", nargs="+")
     recording.add_argument("--root", type=Path, default=Path.cwd())
@@ -217,7 +221,7 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
                       arguments_file=arguments.get("arguments_file"), jobs=arguments.get("jobs", 1))
     root = root.resolve()
     configuration = read_json(root / "recovery/project.json")
-    if (configuration.keys() - {"schema_version", "source", "source_history", "compiler", "measurement", "audits", "build", "mappings", "gate", "preparation", "acceptance"}
+    if (configuration.keys() - {"schema_version", "source", "source_history", "compiler", "measurement", "audits", "build", "mappings", "gate", "preparation", "acceptance", "initializers"}
             or type(configuration.get("schema_version")) is not int or configuration["schema_version"] != 1):
         raise ValueError("invalid local project command configuration")
     if arguments.get("command") == "bind":
@@ -285,6 +289,12 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
         output = check_data(root, arguments["image"], symbols=arguments.get("symbols"))
         if arguments.get("summary"):
             output.pop("objects")
+        return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
+    if arguments.get("command") == "check-initializers":
+        from .initializer_check import check_initializers
+        output = check_initializers(root, arguments["image"])
+        if arguments.get("summary"):
+            output.pop("observations")
         return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
     if arguments.get("command") == "check-claims":
         from .claim_integrity import check_claims

@@ -293,6 +293,33 @@ No result or new claim is written into source.
 
 ### Source identities and build hosts
 
+`recover check-initializers --image <original> [--root <project>] [--summary]`
+preserves conventional trailing-address initializer probes during source migration.
+It uses the pinned PE reader and needs no compiler or project Python adapter.
+Configure the source dialect and probe policy in `project.json`, for example:
+
+```json
+"initializers": {
+  "ruleset": "cpp-trailing-address-v1",
+  "probe_bytes": 4,
+  "scalar_types": ["int", "unsigned int", "int32_t", "uint32_t"],
+  "unit_extensions": [".cpp"],
+  "exclude_roots": ["src/vendor"]
+}
+```
+
+This deliberately limited lens recognizes column-zero declarations such as
+`int count; // 0x00402000`. It checks configured scalar types, pointers and simple
+arrays, excluding seeds, configured dependency roots and commented-out text.
+Missing/explicit-zero initialization against nonzero original storage fails;
+arbitrary nonzero C++ expressions are not evaluated. The prefix size is probe
+policy, not an original extent or ABI inference. Unsupported types are counted;
+no supported probes, unbacked/code addresses or missing/wrongly pinned input
+remain unknown. Virtual zero fill is distinct from file-backed storage and does
+not establish CRT/runtime state. Reports retain failures/errors even in summary
+mode. Nothing is persisted or claimed. Use `RECOVERY_OBJECT` and `check-data`
+for compiled object widths, exact initialization and relocation-target evidence.
+
 `recover check-mappings [--root <project>] [--summary]` uses the existing source
 configuration and two local inputs in `project.json`:
 

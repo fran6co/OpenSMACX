@@ -129,6 +129,8 @@ def project_audits(monkeypatch):
                         {"result": "fail" if "check-symbols" in failures else "pass", "counts": {}})
     monkeypatch.setattr(osmx, "_initial_data", lambda exe:
                         {"result": "fail" if "check-data" in failures else "pass", "counts": {}})
+    monkeypatch.setattr(osmx, "_initializer_coverage", lambda exe:
+                        {"result": "fail" if "check-initializers" in failures else "pass", "counts": {}})
     monkeypatch.setattr(osmx, "_layout_coverage", lambda:
                         {"result": "fail" if "check-layout" in failures else "pass", "counts": {}})
     actual = subprocess.run
@@ -783,11 +785,21 @@ def test_json_is_only_json(claimed, monkeypatch):
 
 @pytest.mark.parametrize("audit", ["build", "compiler-work", "stale_references.py",
     "check-symbols", "check-mappings", "class-debt", "storage",
-    "data_values.py", "check-source", "header_offsets.py", "check-data", "check-layout"])
+    "check-initializers", "check-source", "header_offsets.py", "check-data", "check-layout"])
 def test_failed_project_audit_prevents_acceptance(claimed, monkeypatch, project_audits, audit):
     monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
     project_audits.add(audit)
     assert check(claimed).exit_code == 1
+
+
+@pytest.mark.parametrize("state,code", [("pass", 0), ("fail", 1), ("unknown", 3)])
+def test_initializer_verdict_is_independent_of_passing_function_claims(claimed, monkeypatch, state, code):
+    monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
+    monkeypatch.setattr(osmx, "_initializer_coverage", lambda exe: {"result": state, "counts": {}})
+    result = check(claimed, "--json")
+    report = json.loads(result.stdout)
+    assert result.exit_code == code and report["initializers"]["result"] == state
+    assert report["failed"]["initializers"] == (state == "fail")
 
 
 @pytest.mark.parametrize("state,code", [("pass", 0), ("fail", 1), ("unknown", 3)])

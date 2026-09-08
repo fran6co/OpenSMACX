@@ -77,7 +77,8 @@ verifier for supported reviewed checkpoints; missing preservation or other
 prerequisites still refuse admission. Scoped checks and
 reviews do not establish full acceptance or a working game.
 The package-owned `recover check` now coordinates the whole configured gate;
-`recovery/gate.json` retains three local command checks pending their migration.
+`recovery/gate.json` retains two local script checks pending migration, plus the
+package's native conventional initializer check.
 Keep the legacy route for cutover comparison/control until that verification
 is complete. Neither command establishes full structure or runtime acceptance.
 The native gate runs configured preparation before measuring. For standalone

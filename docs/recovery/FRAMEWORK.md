@@ -98,8 +98,10 @@ targets. The package-owned `check-data` command also serves data-only projects;
 it requires no legacy function seeds. Task checks/decks reuse the verifier, and
 source-history interpretations retain initialization requirements across rehoming
 and removal. Original bounds and evidence anchors live in v2 object annotations;
-observed results are disposable. Legacy trailing-address coverage, full gate
-cutover, complete object layout and CRT/runtime lifetime remain unfinished.
+observed results are disposable. Native `check-initializers` now covers the
+conventional trailing-address probes separately; those hints are not bounded
+object proofs. Full gate cutover, complete object layout and CRT/runtime lifetime
+remain unfinished.
 The retained production gate now consumes that verifier too: matching functions
 cannot excuse incorrect initialized data, and unbounded source objects keep the
 gate incomplete. Native checks run after the legacy build jobs, not concurrently

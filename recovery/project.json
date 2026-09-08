@@ -4,6 +4,13 @@
   "preparation": "recovery/prepare.json",
   "gate": "recovery/gate.json",
   "audits": "recovery/audits.json",
+  "initializers": {
+    "ruleset": "cpp-trailing-address-v1",
+    "probe_bytes": 4,
+    "scalar_types": ["int", "unsigned int", "long", "unsigned long", "uint32_t", "int32_t", "short", "uint16_t", "bool", "size_t", "DWORD"],
+    "unit_extensions": [".cpp"],
+    "exclude_roots": ["src/vendor"]
+  },
   "mappings": {
     "compile_commands": "build/compile_commands.json",
     "forwarder_macros": ["PENDING_BODY"]

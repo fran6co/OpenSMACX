@@ -15,13 +15,13 @@ Source records, strict CodeView parsing (`class_layout`) and emitted-table check
 capabilities, not project/compiler-environment adapters. `environment/` contains
 only the local compiler interaction. Unused fleet, rewriting and spelling-search
 scripts are removed. The remaining `tools/` files support the retained gate,
-its three conventional checks, or CMake's debugger sidecar; their live consumers
+its two remaining conventional script checks, or CMake's debugger sidecar; their live consumers
 still need absorption or retirement before that directory can disappear.
 
 The package now coordinates a whole-project gate:
 `uv run recover check --image <original> --jobs 1 --summary`. `gate.json` declares
-only the three remaining project command checks (live references, conventional
-trailing-address initial values and the older header-offset walk); native source,
+the remaining local live-reference/header-offset scripts and the native
+`check-initializers` command for conventional trailing-address hints; native source,
 mapping/body-link, history, audit, build, match, symbol, data and layout checks
 are run by the library. The native build is fresh, unlike the retained gate's
 incremental link probe. Neither gate establishes full structural/runtime acceptance.
@@ -283,16 +283,18 @@ class-debt preview. A containing object and its first member sharing an address
 are not automatically duplicate globals. These lexical diagnostics neither prove
 storage ownership nor authorize merging names; establish actual aliasing and
 byte-versus-element semantics through source and binary evidence. The remaining
-initial-value and header-offset checks still use legacy tooling.
+header-offset check still uses legacy tooling. Conventional initial-value probes
+now use the package's `check-initializers` command and shared pinned PE reader.
 
 `check-data` now supplies native compiled initial-storage evidence for explicitly
 bounded `RECOVERY_OBJECT: v2` bindings. See the package README for its grammar and
 strict width/reference checks. Task checks and decks consume the same verifier;
 source history retains those initialization interpretations through structural
 changes. Existing v1 starts remain unbounded, and legacy trailing-address comments
-are not silently imported. Therefore this does not yet retire the old initial-value
-gate dependency: its complete source coverage still needs migration. Keep the
-old check until that coverage is replaced; neither command proves runtime lifetime.
+are not silently imported. `check-initializers` independently preserves their
+conventional four-byte probe coverage without treating those hints as bounded
+object evidence. The old initial-value script and duplicate image parser are
+removed. Neither native check proves runtime lifetime.
 The production gate also calls the native data verifier after its build/symbol
 jobs finish, serializing compiler access. A data counterexample fails the gate;
 missing bounds or unavailable evidence keep it incomplete independently of the
