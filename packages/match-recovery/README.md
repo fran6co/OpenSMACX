@@ -491,6 +491,30 @@ preserves historical review requirements, and outside-scope annotation changes
 remain visible even when object code is unchanged. Results are disposable;
 only the original interpretation belongs in source.
 
+### Bounded class-array interpretations
+
+```cpp
+// RECOVERY_MEMBER: v4 Window panes_ Rect[2] 0x10 0x20 0x00401000
+Rect panes_[2];
+```
+
+Version 4 names the unqualified element class, positive element count, original
+member offset, total array byte extent, and original evidence address, in that
+order. Count and extent require original access/boundary evidence; do not copy
+them from the candidate compiler. The example's two elements occupy 32 bytes.
+The checker reports offset, element type, `array_count_result` and
+`array_size_result` separately. All must agree. Same-sized scalars, pointers,
+wrong classes and a different number of larger elements cannot substitute.
+
+The standalone CodeView backend resolves element storage in the same object's
+type stream, including an unambiguous complete definition for a forward class.
+Missing stride evidence remains unknown. Malformed or cyclic types and arrays
+extending past their containing class cannot supply a passing layout. This
+version supports one-dimensional arrays of class values, not arrays of pointers
+or a complete C++ type system. Qualifiers, lifetime, original indexing behavior
+and runtime bounds safety remain separate requirements. Array changes retain
+their historical interpretation/review obligations like other member changes.
+
 ### Original object initialization
 
 `recover check-data --image <original> [--symbol <emitted-name>] [--summary]`

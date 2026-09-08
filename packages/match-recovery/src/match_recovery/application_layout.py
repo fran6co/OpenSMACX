@@ -24,17 +24,31 @@ def check_member(item, layout):
     actual_class = observed.get("class") if kind == "class_value" else None
     target = observed.get("target", {}) if kind == "pointer" else {}
     actual_pointer_class = target.get("class") if target.get("kind") == "class_value" else None
+    element = observed.get("target", {}) if kind == "array" else {}
+    actual_array_class = element.get("class") if element.get("kind") == "class_value" else None
     type_result = None
+    count_result = size_result = None
     if item.class_type is not None or item.class_pointer_type is not None:
         correct = (actual_class == item.class_type if item.class_type is not None else
                    actual_pointer_class == item.class_pointer_type)
         type_result = Result.UNKNOWN if kind == "unknown" else Result.PASS if correct else Result.FAIL
-    result = (Result.FAIL if Result.FAIL in (offset_result, type_result) else
-              Result.UNKNOWN if Result.UNKNOWN in (offset_result, type_result) else Result.PASS)
+    if item.class_array_type is not None:
+        type_result = (Result.UNKNOWN if kind == "unknown" else
+                       Result.PASS if actual_array_class == item.class_array_type else Result.FAIL)
+        def compare_extent(key, expected):
+            actual = observed.get(key) if kind == "array" else None
+            return Result.UNKNOWN if actual is None else Result.PASS if actual == expected else Result.FAIL
+        count_result = compare_extent("count", item.array_count)
+        size_result = compare_extent("size", item.array_size)
+    outcomes = (offset_result, type_result, count_result, size_result)
+    result = (Result.FAIL if Result.FAIL in outcomes else Result.UNKNOWN if Result.UNKNOWN in outcomes else Result.PASS)
     return {"actual_class_type": actual_class, "actual_class_pointer_type": actual_pointer_class,
+            "actual_class_array_type": actual_array_class,
+            "array_count_result": count_result, "array_size_result": size_result,
             "member_type_kind": kind, "observed_type": observed, "actual_offset": actual,
             "offset_result": offset_result, "type_result": type_result, "result": result,
             "reason": ("member absent or compiler definition unavailable" if actual is None else
+                       "member offset, class-array element, count and byte extent compared" if item.class_array_type else
                        "member offset and unqualified class-pointer target compared" if item.class_pointer_type else
                        "member offset and class-value type compared" if item.class_type else "direct member offset compared")}
 

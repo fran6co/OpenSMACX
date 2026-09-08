@@ -107,10 +107,13 @@ class InfoWin {
   // Their displayed-content roles remain unestablished.
   // RECOVERY_MEMBER: v2 InfoWin bounds_ tagRECT 0x0 0x004592A0
   RECT bounds_;
-  // RECOVERY_MEMBER: v2 InfoWin first_pane_rect_ tagRECT 0x10 0x004592A0
-  RECT first_pane_rect_;
-  // RECOVERY_MEMBER: v2 InfoWin second_pane_rect_ tagRECT 0x20 0x004592A0
-  RECT second_pane_rect_;
+  // draw_text (0x00458420) selects indices [0,2) for both panes, or
+  // one requested index. At 0x00458465-0x00458472 it computes
+  // this+(index+1)*16 before passing the rectangle to Buffer::set_clip.
+  // Together with init's two destinations, this establishes a pair of
+  // 16-byte elements at +0x10, not independently addressed loose fields.
+  // RECOVERY_MEMBER: v4 InfoWin pane_rects_ tagRECT[2] 0x10 0x20 0x00458420
+  RECT pane_rects_[2];
   // RECOVERY_MEMBER: v2 InfoWin timer_ Time 0x30 0x00459500
   Time timer_;
   // RECOVERY_MEMBER: v2 InfoWin font_ Font 0x58 0x00459500

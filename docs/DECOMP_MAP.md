@@ -99,6 +99,7 @@ Place evidence-backed layout expectations beside their owning C++ declarations:
 // RECOVERY_MEMBER: v1 Window flags_ 0x4 0x00401000
 // RECOVERY_MEMBER: v2 Window timer_ Timer 0x8 0x00401000
 // RECOVERY_MEMBER: v3 Window canvas_ Canvas* 0x10 0x00401000
+// RECOVERY_MEMBER: v4 Window panes_ Rect[2] 0x18 0x20 0x00401000
 // RECOVERY_BASE: v1 Window BaseWindow 0x0 0x00401000
 ```
 
@@ -111,6 +112,14 @@ lifetime or complete ABI. References, integers, arrays and other class targets
 cannot satisfy it merely by occupying the same bytes. Unsupported type encodings
 remain unknown. `recover tasks check-layout` reports offset and type results
 separately; partial layout success does not establish full structure.
+
+Member v4 requires a one-dimensional array of the named class. Its additional
+fields are the positive decimal element count in brackets and the total byte
+extent after the offset. The example declares two elements occupying 0x20 bytes
+at offset 0x18. Element type, count, byte extent and offset are checked separately;
+the original indexed accesses/bounds must establish these inputs independently
+of the candidate compiler. Missing complete element storage remains unknown.
+This does not prove qualifiers, initialization, lifetime or bounds-safe behavior.
 
 Changing/removing an interpretation preserves its historical review obligation.
 Old versions remain readable for that history, not as alternative ways to waive

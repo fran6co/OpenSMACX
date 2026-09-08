@@ -133,6 +133,14 @@ separate offset/type results: an integer, reference or wrong class pointer can
 occupy the same bytes. A passing unqualified pointer-target check is not ownership
 or lifetime proof; those still require the coupled constructor/destructor evidence.
 
+Indexed embedded objects may require a real member array, not adjacent fields.
+Use `RECOVERY_MEMBER: v4` when original accesses establish its element class,
+count, offset and total byte extent. Read all four measurement dimensions;
+matching offsets and bytes alone cannot establish the element count. The package
+README documents the grammar and backend limits. An array interpretation still
+needs lifecycle and caller evidence; it does not authorize copying a seed's
+pointer arithmetic or weakening an earlier structural obligation.
+
 For an SDK import, bind the actual emitted pointer symbol to its DLL and export
 with `RECOVERY_IMPORT` in source. The native checker derives the slot address from
 the pinned PE import directory; do not copy an IAT address into C++ or infer a DLL

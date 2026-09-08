@@ -162,7 +162,20 @@ def _member_type(type_index, records, classes, seen=frozenset()):
             if size < 0 or not index_type or cursor.at != len(cursor.data):
                 return unknown
             target_type = _member_type(target, records, classes, seen | {type_index})
-            return {"kind": "array"} if target_type["kind"] != "unknown" else unknown
+            if target_type["kind"] == "unknown":
+                return unknown
+            # The array leaf declares total bytes, not the element count.
+            # Resolve element storage within this same standalone stream;
+            # names alone (especially forward UDTs) cannot supply a stride.
+            from .codeview_data import storage_size
+            try:
+                width = storage_size(target, records, seen | {type_index})
+            except ValueError:
+                width = None
+            if width is not None and (width <= 0 or size <= 0 or size % width):
+                return unknown
+            return {"kind": "array", "target": target_type, "size": size,
+                    "element_size": width, "count": size // width if width else None}
     except ValueError:
         return unknown
     return unknown
@@ -249,7 +262,8 @@ def _class_layout(records, classes, name):
             named_bases.append({**base, "class": base_class["name"]})
         observed_types = {member: _member_type(type_index, records, classes)
                           for member, type_index in member_types.items()}
-        if any(members[member] + value.get("width", 0) > size for member, value in observed_types.items()):
+        if any(members[member] + value.get("width", value.get("size", 0)) > size
+               for member, value in observed_types.items()):
             raise ValueError("member storage outside compiler class extent")
         class_members = {member: value["class"] for member, value in observed_types.items()
                          if value["kind"] == "class_value"}

@@ -1,0 +1,18 @@
+{
+  "event_id": "512b8a0069bb876339b221905da2f0481b81fdac4a3d1de4f04bb9fab15beefb",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "infowin-pane-rectangle-array",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/infowin.h: pane_rects_ is now a real RECT[2] with original indexed-access and initializer evidence, a v4 element/count/offset/extent requirement, and no raw member arithmetic.",
+      "packages/match-recovery: source grammar and generic layout checking now support bounded class-value arrays. The CodeView backend derives stride/count from complete same-object type metadata; synthetic and actual compiler controls reject same-offset/same-sized wrong-type/count cases. Historical separate-member interpretations remain review obligations, and this incorporation does not establish the unfinished InfoWin rendering/lifetime or click-callee recovery."
+    ]
+  },
+  "previous_event": "eb5459a3193aef30427a4364c9b68af8fdd61e410b240710b32e50835b608ca5",
+  "request_id": "infowin-pane-array-incorporated",
+  "schema_version": 1,
+  "sequence": 17,
+  "stream": "task:radiobutton-lifetime"
+}

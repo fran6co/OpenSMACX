@@ -14,7 +14,7 @@ from .source_config import SourceConfiguration
 
 
 PREFIX = "// RECOVERY_MEMBER:"
-PATTERN = re.compile(r"// RECOVERY_MEMBER: v(?P<version>[123]) (?P<class_name>[A-Za-z_]\w*(?:::[A-Za-z_]\w*)*) (?P<target>[A-Za-z_]\w*) (?:(?P<class_type>[A-Za-z_]\w*(?:::[A-Za-z_]\w*)*)(?P<pointer>\*)? )?(?P<offset>0x[0-9a-fA-F]+) (?P<evidence>0x[0-9a-fA-F]+)")
+PATTERN = re.compile(r"// RECOVERY_MEMBER: v(?P<version>[1234]) (?P<class_name>[A-Za-z_]\w*(?:::[A-Za-z_]\w*)*) (?P<target>[A-Za-z_]\w*) (?:(?P<class_type>[A-Za-z_]\w*(?:::[A-Za-z_]\w*)*)(?:(?P<pointer>\*)|\[(?P<count>[1-9][0-9]*)\])? )?(?P<offset>0x[0-9a-fA-F]+) (?:(?P<array_size>0x[0-9a-fA-F]+) )?(?P<evidence>0x[0-9a-fA-F]+)")
 BASE_PREFIX = "// RECOVERY_BASE:"
 BASE_PATTERN = re.compile(r"// RECOVERY_BASE: v1 (?P<class_name>[A-Za-z_]\w*(?:::[A-Za-z_]\w*)*) (?P<target>[A-Za-z_]\w*(?:::[A-Za-z_]\w*)*) (?P<offset>0x[0-9a-fA-F]+) (?P<evidence>0x[0-9a-fA-F]+)")
 
@@ -29,6 +29,17 @@ class MemberExpectation:
     line: int
     class_type: str | None = None
     class_pointer_type: str | None = None
+    class_array_type: str | None = None
+    array_count: int | None = None
+    array_size: int | None = None
+
+    def __post_init__(self):
+        if any(value is not None for value in (self.class_array_type, self.array_count, self.array_size)):
+            if (not self.class_array_type or self.class_type is not None or self.class_pointer_type is not None
+                    or type(self.array_count) is not int or self.array_count <= 0
+                    or type(self.array_size) is not int or self.array_size <= 0
+                    or self.array_size % self.array_count):
+                raise ValueError("invalid original member array expectation")
 
     @property
     def interpretation(self):
@@ -36,6 +47,8 @@ class MemberExpectation:
                 "member": self.member, "offset": self.offset,
                 **({"class_type": self.class_type} if self.class_type is not None else {}),
                 **({"class_pointer_type": self.class_pointer_type} if self.class_pointer_type is not None else {}),
+                **({"class_array_type": self.class_array_type, "array_count": self.array_count,
+                    "array_size": self.array_size} if self.class_array_type is not None else {}),
                 "original_evidence": asdict(self.evidence)}
 
     @property
@@ -74,10 +87,15 @@ def _parse(text, path, pin, prefix, pattern, factory, label, address_space):
             raise ValueError(f"invalid original {label} expectation at {path}:{line}")
         extra = {}
         if label == "member":
-            typed, pointer = match["class_type"] is not None, match["pointer"] is not None
-            if (typed, pointer) != {"1": (False, False), "2": (True, False), "3": (True, True)}[match["version"]]:
+            shape = tuple(match[key] is not None for key in ("class_type", "pointer", "count", "array_size"))
+            if shape != {"1": (False, False, False, False), "2": (True, False, False, False),
+                         "3": (True, True, False, False), "4": (True, False, True, True)}[match["version"]]:
                 raise ValueError(f"invalid original member expectation version/type at {path}:{line}")
-            extra["class_pointer_type" if pointer else "class_type"] = match["class_type"]
+            if match["version"] == "4":
+                extra.update(class_array_type=match["class_type"], array_count=int(match["count"]),
+                             array_size=int(match["array_size"], 16))
+            else:
+                extra["class_pointer_type" if match["pointer"] else "class_type"] = match["class_type"]
         rows.append(factory(match["class_name"], match["target"], int(match["offset"], 16),
                             Origin(pin, address_space, int(match["evidence"], 16)), path, line, **extra))
     return tuple(rows)
