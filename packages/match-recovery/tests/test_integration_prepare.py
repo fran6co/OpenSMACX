@@ -167,6 +167,25 @@ def test_unused_global_filter_configuration_does_not_block_raw_preparation(input
     assert prepare(inputs)["candidate_created"]
 
 
+def test_normalized_clean_destination_is_preserved_while_candidate_uses_raw_commit_bytes(inputs):
+    root, context = inputs
+    (root / ".gitattributes").write_text("*.csv text=auto\n")
+    data = root / "notes.csv"
+    data.write_bytes(b"field,offset\nmember,4\n")
+    git(root, "add", ".gitattributes", "notes.csv")
+    git(root, "commit", "-m", "Version normalized source evidence")
+    context = {**context, "target_revision": git(root, "rev-parse", "HEAD")}
+    data.write_bytes(b"field,offset\r\nmember,4\r\n")
+    # A stat-cache size change can still show M in porcelain even though Git's
+    # normalized content comparison is empty (the repository has this case).
+    assert not git(root, "diff", "--name-only", "HEAD")
+    before = working_state(root)
+    report = prepare((root, context))
+    assert report["candidate_created"] and working_state(root) == before
+    assert data.read_bytes() == b"field,offset\r\nmember,4\r\n"
+    assert (Path(report["worktree"]) / "notes.csv").read_bytes() == b"field,offset\nmember,4\n"
+
+
 def test_external_merge_drivers_are_not_invoked(inputs):
     root, _ = inputs
     git(root, "config", "merge.custom.driver", "false")

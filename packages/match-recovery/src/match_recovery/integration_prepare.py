@@ -75,6 +75,18 @@ def _assert_raw_checkout(root, revision):
     return state
 
 
+def _destination_state(root, revision, options):
+    entries, _ = _files(root, revision)
+    state = working_state(root)
+    if (set(state["files"]) != set(entries) or any(value is None for value in state["files"].values())
+            or _run(root, options, "diff", "--name-only", "-z", revision).stdout):
+        raise ValueError("integration preparation requires a clean destination checkout")
+    # The destination is not copied or edited. Honor Git's built-in text
+    # normalization here, while external clean/process filters stay disabled.
+    # Candidate materialization below still proves exact committed raw bytes.
+    return state
+
+
 def prepare_integration(root, name, context, *, worktree, branch):
     root = Path(root).resolve()
     task_name(name)
@@ -107,7 +119,7 @@ def prepare_integration(root, name, context, *, worktree, branch):
         target, source = context["target_revision"], context["source_revision"]
         if git(root, "rev-parse", "HEAD").decode().strip() != target:
             raise ValueError("destination HEAD has moved from the explicitly authorized target")
-        before = _assert_raw_checkout(root, target)
+        before = _destination_state(root, target, options)
         for revision in (target, source):
             if git(root, "rev-parse", revision + "^{commit}").decode().strip() != revision:
                 raise ValueError("integration inputs must be commits")

@@ -869,8 +869,10 @@ recover integrate prepare TASK --root DESTINATION --context CONTEXT.json \
 ```
 
 This explicitly authorizes creating a new local branch/worktree, not collection.
-The destination must be clean, canonical tracked bytes at the context's target
-commit; existing paths/branches, staged work and ongoing Git operations are refused.
+The destination must be clean at the context's target commit, honoring Git's
+built-in text normalization without running external filters. Its actual checkout
+bytes are preserved; the candidate uses exact stored commit bytes. Existing
+paths/branches, staged work and ongoing Git operations are refused.
 Nested candidate paths must be ignored and outside Git metadata. Keep context JSON
 outside the destination checkout or in ignored coordinator storage. The decision
 is retained in the unverified candidate's Git message; its two parents also pin
