@@ -93,5 +93,6 @@ def initialize(root: Path, target: str, python: str, *, image: Path | None = Non
                            "Use recover survey --image <original> for bounded starting hints, then establish source-owned mappings and evidence; no function/TU bounds are inferred.",
                            "Configure independent prompt-driven worker/reviewer commands in recovery/agents.json.",
                            "Configure history scope and source audits from evidence, then create an ownership task with recover tasks create.",
+                           "Optionally configure a read-only planner and explicit task-only checkpoint authority for recover start; source-bound groups are required, and new executable bindings are not inferred.",
                            "Ignore build/ caches and checkpoint configuration/task decisions in Git before recover run.",
                            "Configure full structural/runtime acceptance before claiming completed recovery; successful scaffolding is not acceptance."]}

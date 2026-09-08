@@ -1481,12 +1481,82 @@ have been removed. Its [recovery integration](../../recovery/README.md) now cont
 configuration, compiler interaction and integration tests. The legacy production
 gate/tools and full acceptance integration remain separate unfinished work.
 
+### Delegated ownership task selection
+
+`recover start --planner recovery/planner.json --reviewer recovery/reviewer.json`
+selects and runs one ownership task without a preselected task id. It uses the
+same driver/worker/configuration/iteration options as `run`, including optional
+`--coordinator` and `--migration`. Configure a read-only `planner` role in local
+`recovery/agents.json`; it uses the same command/instructions/response transport
+as the reviewer. No provider or project Python adapter is required in the package.
+
+The planner delegation is explicit authority to choose application work and make
+a **task-decision-only Git commit**, not to commit recovered source:
+
+```json
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "command": {"argv": ["recover", "agent", "planner"], "timeout": 300},
+  "max_entities": 100,
+  "max_editable_files": 20,
+  "commit_decision": true,
+  "evidence": ["Authorize bounded ownership tasks and task-only checkpoint commits"]
+}
+```
+
+Keep that policy and provider configuration committed. The author must differ
+from worker/reviewer attribution. Requests contain a fresh `snapshot`, `target`,
+`delegation`, derived ownership `groups`, existing `tasks`, `create_available` and
+`instructions`. Groups expose ownership summaries, not every function/disassembly;
+use `recover partition --group <selector> --details --impact` for detailed members
+and seed alternatives. Existing tasks retain pending discoveries and intent in the
+request; `tasks context <task>` supplies deeper evidence. Eligibility is not a
+completion score. Byte-exact groups can still need structural
+recovery. Dependency, conflicting, unassigned and seed-only groups stay visible
+with their required next actions, but cannot become application tasks this way.
+Group scope uses source homes and their own interfaces, not a transitive include
+closure or a guess at historical TU boundaries. This avoids rebuilding an include
+graph separately for every group in the planner request.
+
+Responses have exactly `snapshot`, `action`, `task_id`, `group`, `intent`,
+`editable_files`, `evidence`. Actions are `create`, `resume`, `defer`. Creation
+selects an eligible group and a fresh task name, with evidence-backed intent and
+optional additional regular product source files within the file limit. Native
+publication fixes all group identities and the committed source baseline; planners
+cannot supply an older baseline, drop group members, edit seeds/vendor dependencies,
+or overlap an existing task's entity/file reservations. Existing tasks reserve
+their expanded scopes regardless of cached reviews or claims; they are not silently
+retired. Resume names an existing task by the same author/target/original, without
+changing scope or baseline. For resume/defer, `group` and `intent` are empty strings
+and `editable_files` is empty; defer also has an empty `task_id`. Evidence is always
+required. Planner proposals are not proof or direct mutation authority.
+The two size limits bound new tasks; existing tasks retain their authorized scopes.
+
+Creating a task requires a clean worktree, committed source/configuration, and a
+working Git identity/signing setup. Only the package publishes and checkpoints its
+new task JSON before invoking the normal driver. Unexpected edits or checkpoint
+failures refuse dispatch and preserve work/index for inspection; no automatic reset
+or rollback occurs. Resume uses the existing dirty-source/append-only-history rules.
+The read-only planner itself must be externally sandboxed. Command hashes detect
+writes and stale decisions, not malicious intent or false reasoning.
+
+One `start` performs one planning call and one bounded recovery invocation. It does
+not infer unmapped function bounds, author new source bindings, create worktrees,
+automatically retire tasks, schedule a fleet, or commit/integrate recovered C++.
+Empty or unresolved inventories need executable analysis and source-owned evidence;
+deferral is not successful recovery. The compiler-backed local control exercises
+selection, a task-only commit, structural recovery with a temporary byte regression,
+caller discovery, independent review and native acceptance through installed CLI
+subprocesses. Its reasoning agents are deterministic local doubles, not live-model
+validation or an executable-only Alpha Centauri recovery claim.
+
 ### Delegated discovery coordination
 
 `recover run TASK --coordinator recovery/coordinator.json` enables a read-only
 decision agent within an existing task. Omit it to retain manual discovery stops.
-This is not automatic task selection, binding creation, worktree management or
-collection. Configure the optional `coordinator` role in the local agent-command
+This role does not select tasks (`start` above does), create bindings, manage
+worktrees or collect code. Configure the optional `coordinator` role in the local agent-command
 configuration using the same command/instructions/response shape as the reviewer.
 No provider or application adapter is required in the package.
 
@@ -1524,7 +1594,7 @@ The driver journals valid decisions through TaskStore, refreshes scope/context a
 obligations, and resumes the same worker budget and baseline. Decision calls have
 a separate bounded budget. Deferral, unavailable providers or budget exhaustion
 preserve source and pending discoveries. Independent review and full native
-acceptance remain required. There is no automatic Git commit; valid append-only
+acceptance remain required. The driver never commits recovered source; valid append-only
 task/review decisions can be resumed under the restart rules above. Commands
 must be externally sandboxed: post-execution hashes detect writes but cannot
 prevent a malicious command. Delegation validates authority, not the quality of

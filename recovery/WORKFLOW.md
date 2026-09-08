@@ -56,6 +56,20 @@ task per address. Keep uncertain assignments explicit.
 
 ## 2. Authorize a task, then prepare its worktree
 
+In an already isolated, configured worktree, `uv run recover start --planner
+<delegation.json> --reviewer recovery/reviewer.json` can select an ownership task
+and run the same recovery driver. Optional `--coordinator` enables bounded discovery
+handling. The planner can resume an existing task or select an unoccupied source/class
+group; source and interface ownership are hints, not historical-TU proof. New task
+creation needs committed source/configuration and explicit task-only Git checkpoint
+authority in the planner policy. The package commits only that authorization JSON,
+never recovered C++. Dependency/conflict/unassigned groups remain analysis work.
+See the package README for the exact protocol, scope limits and failure behavior.
+No standing planner policy is enabled for OpenSMACX. Its local compiler-backed
+control uses deterministic reasoning agents; live planning and executable-only
+binding discovery remain unverified. Worktree setup and integration are still
+coordinator responsibilities, not implicit effects of `start`.
+
 Create a source-derived task with `uv run recover tasks create <task> --group
 <group> --author <coordinator> --intent <intent> --evidence <evidence>`, or use
 `--file` with an explicit task decision. Additional files require `--edit-file`.

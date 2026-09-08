@@ -55,7 +55,7 @@ FLAGS = ("/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Z7")
 METHOD = "?add@Owner@@QAEHH@Z"
 
 
-def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None):
+def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, authorize=True):
     if not (VC6_ROOT / "BIN/CL.EXE").is_file():
         pytest.skip("VC6 is not installed")
     for name in ("CL", "_CL_", "VC6_INCLUDE"):
@@ -185,7 +185,8 @@ def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None):
     task = Task("owner", "native-control", "coordinator", "Recover real base and member while preserving bytes",
                 git("rev-parse", "HEAD"), (Origin(pin, "pe:va", addresses[METHOD]),),
                 ("src/owner.cpp", "src/owner.h"), ("test-owned original class and lifetime model",))
-    TaskStore(root).create(task)
+    if authorize:
+        TaskStore(root).create(task)
     if provider is not None:
         (local / "coordinator.json").write_text(json.dumps({
             "schema_version": 1, "author": task.author,
@@ -284,6 +285,50 @@ def test_native_acceptance_resumes_uncommitted_scope_decisions_and_rechecks_revi
             assert hashlib.sha256((root / name).read_bytes()).hexdigest() == fingerprint
     assert store.read(task.task_id) == task
     assert git("rev-parse", "HEAD") == head and git("ls-files", "--stage") == index
+
+
+def test_installed_start_selects_checkpoints_recovers_and_accepts_without_a_precreated_task(tmp_path, monkeypatch):
+    provider = {"schema_version": 1, "artifacts": "build/agents"}
+    for role in ("planner", "worker", "coordinator", "reviewer"):
+        provider[role] = {"command": {"argv": [sys.executable, "recovery/local_agents.py", role, "{request}"], "timeout": 30},
+                          "instructions": [], "response": "stdout"}
+    root, image, _, git, evidence = prepared_project(tmp_path, monkeypatch, provider=provider, authorize=False)
+    monkeypatch.setenv("RECOVERY_IMAGE", str(image))
+    (root / "recovery/planner.json").write_text(json.dumps({
+        "schema_version": 1, "author": "coordinator",
+        "command": {"argv": [sys.executable, "-m", "match_recovery.cli", "agent", "planner"], "timeout": 60},
+        "max_entities": 4, "max_editable_files": 4, "commit_decision": True,
+        "evidence": ["Authorize selection of test-owned application ownership groups and task-only checkpoint commits"]}))
+    git("add", "recovery/planner.json")
+    git("commit", "-m", "Configure planner without preselecting a task")
+    baseline = git("rev-parse", "HEAD")
+    assert not list((root / "recovery/tasks").glob("*.json"))
+    command = [sys.executable, "-m", "match_recovery.cli", "start", "--root", str(root),
+               "--planner", "recovery/planner.json", "--reviewer", "recovery/reviewer.json",
+               "--coordinator", "recovery/coordinator.json", "--iterations", "2"]
+    def attempt():
+        result = subprocess.run(command, cwd=tmp_path, capture_output=True, timeout=180)
+        assert result.returncode == 0, result.stdout.decode() + result.stderr.decode()
+        return json.loads(result.stdout)
+    report = attempt()
+    assert report["ready_for_collection"] and report["selection"]["action"] == "create"
+    assert report["worker_rounds"] == report["coordinator_decisions"] == 2
+    task = TaskStore(root).read(report["task_id"])
+    assert task.base_revision == baseline
+    assert git("rev-parse", "HEAD^") == baseline
+    assert git("diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD") == "recovery/tasks/" + task.task_id + ".json"
+    assert (root / "src/owner.h").read_text() == evidence + CLASSES
+    checkpoint = git("rev-parse", "HEAD")
+    resumed = attempt()
+    assert resumed["selection"]["action"] == "resume" and resumed["selection"]["checkpoint"] is None
+    assert resumed["worker_rounds"] == resumed["coordinator_decisions"] == 0
+    assert resumed["ready_for_collection"] and git("rev-parse", "HEAD") == checkpoint
+    assert resumed["acceptance"]["request_fingerprint"] != report["acceptance"]["request_fingerprint"]
+    assert len(list((root / "recovery/tasks").glob("*.json"))) == 1
+    for result in (report, resumed):
+        assert all(result["acceptance"][key] == "pass" for key in ("build", "structure", "references", "obligations", "runtime"))
+        for name, fingerprint in result["acceptance"]["artifacts"].items():
+            assert hashlib.sha256((root / name).read_bytes()).hexdigest() == fingerprint
 
 
 @pytest.mark.skipif(os.environ.get("OPENSMACX_LIVE_AGENT_CONTROL") != "1", reason="opt-in live provider recovery and acceptance")

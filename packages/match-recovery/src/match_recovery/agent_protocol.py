@@ -13,6 +13,10 @@ def response_schema(role):
     text = {"type": "string", "minLength": 1}
     evidence = {"type": "array", "items": text, "minItems": 1}
     digest = {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    if role == "planner":
+        return _object({"snapshot": digest, "action": {"type": "string", "enum": ["create", "resume", "defer"]},
+                        "task_id": {"type": "string"}, "group": {"type": "string"}, "intent": {"type": "string"},
+                        "editable_files": {"type": "array", "items": text}, "evidence": evidence})
     if role == "coordinator":
         return _object({"snapshot": digest,
                         "action": {"type": "string", "enum": ["expand", "incorporate", "reject", "defer"]},
@@ -26,7 +30,7 @@ def response_schema(role):
                              "evidence": evidence})
         return _object({"discoveries": {"type": "array", "items": discovery}})
     if role != "reviewer":
-        raise ValueError("agent role must be worker, reviewer or coordinator")
+        raise ValueError("agent role must be worker, reviewer, coordinator or planner")
     return _object({"snapshot": digest, "decision": {"type": "string", "enum": ["approve", "request_changes"]},
                     "evidence": evidence, "feedback": text,
                     "supersessions": {"type": "array", "items": _object({"previous": digest, "replacement": digest,

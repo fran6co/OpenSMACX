@@ -42,6 +42,13 @@ def class_hint(symbol: str) -> str | None:
     return name.rsplit("::", 1)[0]
 
 
+def component_manifests(snapshot: dict):
+    configuration = SourceConfiguration.from_dict(snapshot["source_configuration"])
+    return parse_components({name: base64.b64decode(row["content_base64"]).decode("utf-8")
+                             for name, row in snapshot["files"].items()
+                             if name.endswith(".recovery.h") and not configuration.is_seed(name)})
+
+
 def project_view(root: Path, image: Path | None = None, *, allow_empty: bool = False) -> tuple[dict, dict]:
     snapshot = source_snapshot(root, image, allow_empty=allow_empty)
     configuration = SourceConfiguration.from_dict(snapshot["source_configuration"])
@@ -60,9 +67,7 @@ def project_view(root: Path, image: Path | None = None, *, allow_empty: bool = F
                                     row["emitted_symbol_hint"], emitted or catalogued,
                                     owner_hint_basis="source_symbol" if emitted else "catalogued_symbol",
                                     catalogued_owner_hint=catalogued))
-    manifests = parse_components({name: base64.b64decode(row["content_base64"]).decode("utf-8")
-                                 for name, row in snapshot["files"].items()
-                                 if name.endswith(".recovery.h") and not configuration.is_seed(name)})
+    manifests = component_manifests(snapshot)
     for manifest in manifests:
         for binding in manifest.bindings:
             if (binding.origin.image_sha256 != snapshot["image_sha256"]
@@ -74,16 +79,22 @@ def project_view(root: Path, image: Path | None = None, *, allow_empty: bool = F
     return partition(candidates), snapshot
 
 
+def ownership_files(snapshot: dict, group: dict) -> list[str]:
+    """Initial source/interface scope; not transitive editing authorization."""
+    configuration = SourceConfiguration.from_dict(snapshot["source_configuration"])
+    roots = set(group["source_homes"])
+    headers = {name.rsplit(".", 1)[0] + suffix for name in roots for suffix in configuration.interface_extensions}
+    return sorted(roots | (headers & snapshot["files"].keys()))
+
+
 def structural_impact(snapshot: dict, group: dict) -> dict:
     configuration = SourceConfiguration.from_dict(snapshot["source_configuration"])
     sources = {name: base64.b64decode(record["content_base64"]).decode("utf-8", errors="replace")
                for name, record in snapshot["files"].items()}
     graph, widened = include_graph(sources, configuration.include_paths)
-    roots = set(group["source_homes"])
     # A source home's own interface is an initial structural-scope candidate.
     # All transitive includes are context; reverse includers are recheck targets.
-    headers = {name.rsplit(".", 1)[0] + suffix for name in roots for suffix in configuration.interface_extensions}
-    roots.update(headers & sources.keys())
+    roots = set(ownership_files(snapshot, group))
     impacted = graph.impacted(roots)
     root_ids = {entity["entity_id"] for entity in group["entities"]}
     entities = sorted(root_ids | {record["entity_id"] for record in snapshot["records"]

@@ -20,7 +20,7 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--version", action="version", version=__version__)
     commands = result.add_subparsers(dest="command", required=True)
     agent = commands.add_parser("agent", help="Bridge a configured prompt-driven command to a recovery role protocol")
-    agent.add_argument("role", choices=("worker", "reviewer", "coordinator"))
+    agent.add_argument("role", choices=("worker", "reviewer", "coordinator", "planner"))
     agent.add_argument("--root", type=Path, default=Path.cwd())
     agent.add_argument("--config", type=Path, default=Path("recovery/agents.json"))
     init = commands.add_parser("init", help="Create non-overwriting project-local command configuration")
@@ -38,6 +38,15 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("--migration", type=Path, help="Coordinator permission for scoped temporary regressions")
     run.add_argument("--coordinator", type=Path, help="Read-only discovery coordinator with explicit delegated scope")
     run.add_argument("--iterations", type=int, default=3)
+    start = commands.add_parser("start", help="Select/checkpoint one ownership task through a delegated planner, then run recovery")
+    start.add_argument("--root", type=Path, default=Path.cwd())
+    start.add_argument("--planner", required=True, type=Path, help="Explicit selection and task-only commit authorization")
+    start.add_argument("--config", type=Path, default=Path("recovery/driver.json"))
+    start.add_argument("--worker", type=Path, default=Path("recovery/worker.json"))
+    start.add_argument("--reviewer", type=Path)
+    start.add_argument("--coordinator", type=Path)
+    start.add_argument("--migration", type=Path)
+    start.add_argument("--iterations", type=int, default=3)
     from .project_commands import register
     register(commands)
     history = commands.add_parser("history", help="Read durable decision events")
@@ -61,15 +70,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         elif args.command == "init":
             from .project import initialize
             output = initialize(args.root, args.target, args.python, image=args.image, source_root=args.source_root)
-        elif args.command == "run":
+        elif args.command in ("run", "start"):
             from .driver import drive
             # All relative configuration paths belong to --root, not whichever
             # directory the installed executable happened to be invoked from.
             config = lambda path: read_json(path if path.is_absolute() else args.root / path)
-            output = drive(args.root, args.task, config(args.config), config(args.worker), iterations=args.iterations,
+            options = dict(iterations=args.iterations,
                            reviewer_configuration=config(args.reviewer) if args.reviewer else None,
                            migration_configuration=config(args.migration) if args.migration else None,
                            coordinator_configuration=config(args.coordinator) if args.coordinator else None)
+            if args.command == "start":
+                from .planning import start
+                output = start(args.root, config(args.config), config(args.worker), config(args.planner), **options)
+            else:
+                output = drive(args.root, args.task, config(args.config), config(args.worker), **options)
             print(json.dumps(output, indent=2, sort_keys=True))
             return (0 if output["ready_for_collection"] else
                     2 if output["stop_reason"] == "migration_admitted" else 3)

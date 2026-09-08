@@ -688,6 +688,15 @@ An additional control stops after scope expansion while the correct hierarchy
 still has a byte regression, resumes without committing, and reaches fresh native
 acceptance. A further invocation reuses the unchanged review but rebuilds and
 rechecks acceptance with distinct artifact paths and request identities.
+Another installed-CLI control starts with no task record: a configured read-only
+planner selects an ownership group, the package checkpoints only its authorization,
+and the normal worker/coordinator/reviewer/native-verifier path reaches acceptance.
+A second `start` resumes that same task and freshly verifies it without a new commit.
+This uses the package's `recover start --planner <policy>` path, not a fixture task
+creation callback. All four reasoning roles are local deterministic controls, while
+compilation, linking and verification are real. The package README documents this
+optional policy; it is not enabled for OpenSMACX and does not infer unmapped bounds,
+manage worktrees or integrate recovered source.
 It does not supply OpenSMACX's
 missing proof coverage. Native receipts expose verified artifact paths/hashes so
 downstream work can identify the tested build without guessing a cache directory.

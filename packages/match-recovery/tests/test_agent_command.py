@@ -242,7 +242,7 @@ def test_driver_preserves_provider_failure_details_and_source(project):
     assert not report["check_is_current"] and (root / "src/f.cpp").read_text() == "WIP"
 
 
-@pytest.mark.parametrize("role", ["worker", "reviewer", "coordinator"])
+@pytest.mark.parametrize("role", ["worker", "reviewer", "coordinator", "planner"])
 def test_schema_is_strict_and_uses_only_provider_neutral_json(role):
     schema = response_schema(role)
     assert schema["additionalProperties"] is False

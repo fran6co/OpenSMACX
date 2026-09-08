@@ -25,7 +25,17 @@ struct Owner : Base {
 role, request_path = sys.argv[1:]
 request = json.loads(Path(request_path).read_text())
 sys.stdin.read()  # Consume the bridge prompt; decisions use the structured request.
-if role == "worker":
+if role == "planner":
+    existing = [item for item in request["tasks"] if item["eligible"]]
+    group = next((item for item in request["groups"] if item["eligible"] and any(
+        "Owner::add(" in Path(name).read_text() for name in item["source_homes"])), None)
+    action = "resume" if existing else "create" if group and request["create_available"] else "defer"
+    response = {"snapshot": request["snapshot"], "action": action,
+                "task_id": existing[0]["task"]["task_id"] if existing else "planned-owner" if action == "create" else "",
+                "group": group["selector"] if action == "create" else "",
+                "intent": "Recover the original Owner model and affected caller" if action == "create" else "",
+                "editable_files": [], "evidence": ["Test-owned original Owner evidence and current source model"]}
+elif role == "worker":
     header = Path("src/owner.h")
     # Reason from current source, including after a new bounded invocation;
     # invocation-local round numbers are not a recovery-state ledger.

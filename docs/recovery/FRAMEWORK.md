@@ -312,6 +312,15 @@ establish completion of this program.
   three-agent control stops on a decision budget during a structural byte regression,
   resumes to acceptance, then verifies a new build without rewriting history.
   This is not automatic provider retry, partial-publication repair or integration.
+  `recover start` now closes the manual inventory-to-task handoff for existing
+  source-bound ownership groups. A read-only planner proposes creation or resumption;
+  native validation enforces reservations, source/dependency boundaries and explicit
+  task-only checkpoint authority before calling the unchanged recovery driver.
+  A real compiler-backed installed-CLI control reaches full native acceptance from
+  no pre-created task and then resumes without another commit. Reasoning roles in
+  that control are deterministic local doubles. New executable bindings, live model
+  planning, task retirement and recovered-source integration remain unfinished;
+  no standing OpenSMACX planner authorization is enabled.
   The package-owned native migration verifier now composes fresh build, bounded
   declarations, references and outside-scope preservation checks; OpenSMACX
   configures that command without a project adapter. A synthetic driver test
