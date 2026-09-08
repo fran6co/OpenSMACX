@@ -82,6 +82,40 @@ def test_strict_joint_check_runs_without_site_packages(project):
     assert json.loads(result.stdout)["checks"]["binary"]["result"] == "pass"
 
 
+@pytest.mark.parametrize("action", ["check-binary", "check"])
+def test_matching_placeholder_is_not_completed_recovery(project, capsys, action):
+    path = project / "code/unit.cc"
+    implemented = path.read_text()
+    path.write_text(implemented.replace("void f() {}", "void f() {\n// BODY GOES HERE.\n}"))
+    before = path.read_bytes()
+    args = ["tasks", action, "owner", "--root", str(project), "--image", "original.exe"]
+    # The compiler protocol returns the same exact RET as the reference for
+    # both spellings. Source-declared unfinished work must still remain unknown.
+    assert main(args) == 3
+    report = json.loads(capsys.readouterr().out)
+    binary = report["checks"]["binary"] if action == "check" else report
+    assert binary["result"] == "unknown"
+    assert any("unfinished source placeholder" in row.get("reason", "") for row in binary["functions"])
+    assert not report["ready_for_collection"] and path.read_bytes() == before
+    path.write_text(implemented)
+    assert main(args) == 0
+    assert json.loads(capsys.readouterr().out)["result"] == "pass"
+
+
+def test_seed_placeholder_does_not_override_an_implemented_product_owner(project, capsys):
+    configuration = project / "recovery/project.json"
+    value = json.loads(configuration.read_text())
+    value["source"]["seed_roots"] = ["code/seeds"]
+    configuration.write_text(json.dumps(value))
+    (project / "code/seeds").mkdir()
+    seed = project / "code/seeds/hint.cc"
+    seed.write_text((project / "code/unit.cc").read_text().replace(
+        "void f() {}", "void f() {\n// BODY GOES HERE.\n}"))
+    assert main(["tasks", "check-binary", "owner", "--root", str(project), "--image", "original.exe"]) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report["result"] == "pass" and not report["ready_for_collection"]
+
+
 @pytest.mark.parametrize("damage", [{"backend": "unknown"}, {"flag_sets": []}, {"flag_sets": ["-trial"]},
                                    {"unit_extensions": []}, {"unit_extensions": ["*.cc"]},
                                    {"input_roots": ["../outside"]}, {"layout_flags": "-types"}])

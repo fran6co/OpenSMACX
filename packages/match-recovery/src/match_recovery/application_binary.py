@@ -120,6 +120,17 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
     generated_bindings = read_generated(root, snapshot["image_sha256"])
     import_bindings = read_imports(root)
     bindings, refused, externals = select_bindings(view, selected)
+    # Build-only definitions are deliberately unfinished. Their emitted RET
+    # may match an empty original, but cannot establish task completion until
+    # the source body-slot sentinel is deliberately removed. Keep reference
+    # identities available to callers; this is not a binding withdrawal.
+    placeholders = {(row["entity_id"], row["path"]) for row in snapshot["records"]
+                    if row["candidate_kind"] == "source" and row["legacy_state"] == "placeholder"}
+    unfinished = [item for item in bindings if (item.origin.entity_id, item.unit) in placeholders]
+    refused.extend({"entity_id": item.origin.entity_id, "result": Result.UNKNOWN, "symbol": item.symbol,
+                    "reason": "unfinished source placeholder; implement its body before task acceptance"}
+                   for item in unfinished)
+    bindings = [item for item in bindings if item not in unfinished]
     unsupported = [item for item in bindings if Path(item.unit).suffix not in settings.unit_extensions]
     refused.extend({"entity_id": item.origin.entity_id, "result": Result.UNKNOWN, "symbol": item.symbol,
                     "reason": "source definition is not in a configured translation unit"} for item in unsupported)

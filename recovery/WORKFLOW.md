@@ -391,6 +391,8 @@ and seed evidence; do not claim matching or replace existing recovered behavior.
 Request scope expansion first when its owner is outside the task. Remove the
 sentinel when implementing that body and remeasure normally. These placeholders
 are refused by the recorder even if their emitted bytes happen to match. They
+also remain unknown in native task binary/joint checks and cannot satisfy task
+acceptance merely by emitting matching empty code. They
 only maintain build continuity: affected features remain nonfunctional, and no
 runtime, structural or full-recovery acceptance follows from a passing link.
 
