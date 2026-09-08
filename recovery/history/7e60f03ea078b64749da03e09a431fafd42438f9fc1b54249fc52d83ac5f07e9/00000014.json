@@ -1,0 +1,53 @@
+{
+  "event_id": "f0de05effa6ea7031cc1359b201bec5e0e0cc1e67e10f2b54181151ce8b50e72",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Authorize shared receive storage and all NetEnabled consumers for net-queue-caller-storage. Original 0x00630BA1..0x00630BD4 passes buffer 0x009BC4BC and the capacity from Net+0x6E4 to DirectPlay Receive; 0x0062D8F5 initializes that capacity to 0x2000. Recover that advertised buffer capacity, not an extent guessed solely from adjacent globals. Unify NetEnabled and NetDirectPlay as one source-owned interface pointer, including its cached member at +0x1C. Original QueryInterface IID at 0x006717C0 is 9d460580-a822-11cf-960c-0080c7534e82, matching the installed SDK IID_IDirectPlay2A. Preserve historical claims and extend the existing lifetime/runtime controls; other original-address globals remain separate work."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6477232,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6477264,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6479648,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6496480,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6478048,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6478304,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6479888,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "8b8f411f92da12ca42683a0cdb61ea4aaead8d2c0b22b12d5b99c6c2c8c9c42b",
+  "request_id": "net-shared-receive-storage",
+  "schema_version": 1,
+  "sequence": 14,
+  "stream": "task:jackal-voice-ownership"
+}
