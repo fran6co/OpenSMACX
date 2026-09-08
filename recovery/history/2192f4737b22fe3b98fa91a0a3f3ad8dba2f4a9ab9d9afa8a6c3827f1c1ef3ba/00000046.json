@@ -1,0 +1,28 @@
+{
+  "event_id": "ac6a332f5c5b89aee3bb92f0b8fb86be86a6f4d98154a2746697c4b1fb686517",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Original soft_zoom calls base_compute and lock_base directly; recover their real source owners, preserving the cached selected-base identity and daemon state."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5161904,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5442896,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "95b5951b60a66e0a46e4a28f3bf05814b9e89c39154dbad7ecf20237b58c6dbb",
+  "request_id": "base-compute-lock-base-dependencies",
+  "schema_version": 1,
+  "sequence": 46,
+  "stream": "task:infowin-ownership"
+}

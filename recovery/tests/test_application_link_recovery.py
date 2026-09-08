@@ -32,7 +32,8 @@ def compiled():
         unit: [Coff(compiler(ROOT / unit, (), flags + settings.layout_flags))
                for flags in settings.flag_sets]
         for unit in ("src/infowin.cpp", "src/pulldown.cpp", "src/graphicwin.cpp",
-                     "src/menu.cpp", "src/popmenu.cpp", "src/temp.cpp", "src/console.cpp")
+                     "src/menu.cpp", "src/popmenu.cpp", "src/temp.cpp", "src/console.cpp",
+                     "src/netdaemon.cpp")
     }
 
 
@@ -125,3 +126,32 @@ def test_survey_loads_the_real_tutorial_receiver_directly(compiled):
         # 0x005155EA is MOV ECX, immediate. Taking the object's address
         # through the old pointer alias produced a longer LEA instruction.
         assert instruction.mnemonic == "mov" and instruction.op_str.startswith("ecx,")
+
+
+def test_base_lock_references_shared_state_and_real_base_fields(compiled):
+    function = symbol_at("src/netdaemon.cpp", 0x530D50)
+    expected = {"?ConsoleControlTurnActive@@3HA", "?IsMultiplayerNet@@3HA",
+                "?BaseIDCurrentSelected@@3HA", "?UnkGlobal0093A934@@3HA",
+                "?Bases@@3PAUBase@@A", "?lock@NetDaemon@@QAEHHHHHHH@Z",
+                "?message_data@@YAIHHHHHH@Z"}
+    for obj in compiled["src/netdaemon.cpp"]:
+        targets = references(obj, function)
+        assert expected <= set(targets), targets
+        layout = class_layout(obj, "NetDaemon")
+        # The blocked flag is the fourth word of the first lock-state entry,
+        # not a scalar reached through a literal receiver offset.
+        assert layout["members"]["lock_state_"] == 0x1B2C
+        base = class_layout(obj, "Base")
+        assert base["size"] == 0x134
+        assert {name: base["members"][name] for name in ("x", "y", "state")} == {
+            "x": 0, "y": 2, "state": 0x30}
+        assert not any("Original" in target or "vtable_slot" in target for target in targets)
+
+
+def test_turn_control_is_defined_once_and_referenced_by_the_console(compiled):
+    symbol = "?ConsoleControlTurnActive@@3HA"
+    for obj in compiled["src/console.cpp"]:
+        definitions = [row for row in obj.symbols.values()
+                       if row.name == symbol and row.section > 0]
+        assert len(definitions) == 1
+        assert symbol in references(obj, symbol_at("src/console.cpp", 0x5108A0))

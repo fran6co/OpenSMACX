@@ -30,6 +30,7 @@
 #include "veh.h"           // Vehs / VehCurrentCount, which game_checksum walks
 #include "map.h"           // the map bounds, PlayersData and Bases it sums
 #include "technology.h"    // GameTechAchieved
+#include "game.h"          // IsMultiplayerNet: the application's shared flag
 
 int NetDaemonIsMultiplayerNet;  // 0x0093F660
 int NetDaemonLocalFaction;  // 0x00939284
@@ -65,11 +66,33 @@ int SpockHelpActive;     // 0x0093F674
 
 extern int BaseAtDebugPopupFlag;  // 0x0093A94C, defined in base.cpp
 
-// The turn daemon's "a control_turn is running" flag, console.h's
-// ConsoleControlTurnActive - that header is not included here (it drags in
-// the whole window stack), so the same fixed-address binding is spelled
-// locally with the same name.
-static int32_t *const ConsoleControlTurnActive = (int32_t *)0x0093A938;
+// The same source storage exported by console.h, without including its
+// window hierarchy just for this scalar declaration.
+extern int ConsoleControlTurnActive;
+
+// ORIGINAL: 0x00530D50 ?lock_base@NetDaemon@@QAEHHHHH@Z 0x00530D50-0x00530E48
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00530D50-0x00530E48"], "reason": "Recover the base-menu network guard through real Base records, shared turn state and NetDaemon lock-state members; original calls establish argument forwarding and log strings."}
+int NetDaemon::lock_base(int base_id, int target, int payload_1C, int payload_20) {
+    log_say("LockBase", UnkGlobal0093A934, ConsoleControlTurnActive,
+            BaseIDCurrentSelected);
+    if (!IsMultiplayerNet) {
+        return 0;
+    }
+    if (UnkGlobal0093A934) {
+        Bases[base_id].state |= BSTATE_NET_LOCKED;
+        message_data(0x4304, 0, 0, 0, 0, 0);
+        return 0;
+    }
+    if (ConsoleControlTurnActive) {
+        return 1;
+    }
+    if (lock_state_[0].dword_[3]) {
+        return 1;
+    }
+    Base &base = Bases[base_id];
+    log_say("LockBase Needs Lock", base_id, base.x, base.y);
+    return lock(target | 4, base.x, base.y, 0, payload_1C, payload_20);
+}
 
 // The map row stride in dwords, read as a value. mapwin.cpp keeps the same
 // fixed-address binding file-local and no header exports it; game_checksum's
@@ -729,7 +752,7 @@ void NetDaemon::hang_up() {
     }
     lock_state_[0].dword_[4] = 1;
     if (NetTurnFlags & 0x10) {
-        if (*ConsoleControlTurnActive == 0) {
+        if (ConsoleControlTurnActive == 0) {
             if (NetTurnFaction != NetDaemonLocalFaction) {
                 goto L0cc;
             }
@@ -1859,7 +1882,7 @@ void NetDaemon::send_message(char *message, unsigned long length, int target) {
         if (flags & 0xa000) {
             int counter = NetDaemonNet.lock_state_[0].dword_[5];
             if ((NetTurnFlags & 0x10) &&
-                *ConsoleControlTurnActive == 0 && NetTurnFaction > 0 && counter > 1) {
+                ConsoleControlTurnActive == 0 && NetTurnFaction > 0 && counter > 1) {
                 Net::send(message, length,
                           AlphaNet::who_2_pid(NetTurnFaction), 1);
                 return;
@@ -3374,7 +3397,7 @@ void __cdecl help_spock();  // defined below
 void __cdecl check_spock() {
     if (NetDaemonNet.lock_state_[0].dword_[1] != 0 &&
         SpockNotifyPending != 0 && UnkGlobal0093A934 == 0 &&
-        *ConsoleControlTurnActive == 0) {
+        ConsoleControlTurnActive == 0) {
         SpockHelpActive = 1;
         if (NetDaemonNet.locks_.any_locks() == 0) {
             help_spock();

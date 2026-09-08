@@ -103,6 +103,9 @@ class NetDaemon : public AlphaNet {
  public:
   // homed from 00530e50.cpp
   void unlock_base(int base_id);
+  // Lock a base through its coordinates; the last two arguments are passed
+  // unchanged to lock's payload slots, not interpreted as coordinates here.
+  int lock_base(int base_id, int target, int payload_1C, int payload_20);
 
  public:
   // homed from 00530aa0.cpp

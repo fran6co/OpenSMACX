@@ -1816,7 +1816,7 @@ int __cdecl sub_52db70() {
     if ((NetTurnFlags & 0x10) == 0) {
         return 0;
     }
-    if (*ConsoleControlTurnActive != 0) {
+    if (ConsoleControlTurnActive != 0) {
         return 0;
     }
     return NetTurnFaction == NetDaemonLocalFaction;
@@ -2255,7 +2255,7 @@ char *__cdecl get_pact(int faction_id) {
 // duplication or tail sharing (those match through the merged trailing
 // return); it reads as five live values forcing two callee-saved spills.
 int __cdecl current_server() {
-    int in_transit = *ConsoleControlTurnActive;
+    int in_transit = ConsoleControlTurnActive;
     if ((NetTurnFlags & 0x10) != 0 && in_transit == 0) {
         if (NetTurnFaction == LocalFaction) {
             return 1;

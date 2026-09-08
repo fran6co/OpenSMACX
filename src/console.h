@@ -580,7 +580,7 @@ LPCSTR const CursorNextDangerMsg2 = (LPCSTR)0x00939FF0;
 // 0x0052A301 and 0 at 0x0052A4ED. Over a hundred sites read it, always as a
 // plain zero/non-zero gate. focus consults it only at 0x00510910, to decide
 // whether an untagged primary window still gets the cursor path.
-int32_t *const ConsoleControlTurnActive = (int32_t *)0x0093A938;  // 0x0093A938
+extern int ConsoleControlTurnActive;
 
 // on_sys_close raises the flag the turn loop watches. The dword at 0x009B2068
 // is game.h's ExitTurnLoop now - a real global, defined in game.cpp when
@@ -592,4 +592,3 @@ int32_t *const ConsoleControlTurnActive = (int32_t *)0x0093A938;  // 0x0093A938
 // original embeds at +0x22A2C. MainMenu::check (0x00460DD0, 4782 bytes) is
 // unrecovered and MainMenu has no header in src/, so this is a seam rather
 // than a declared type.
-

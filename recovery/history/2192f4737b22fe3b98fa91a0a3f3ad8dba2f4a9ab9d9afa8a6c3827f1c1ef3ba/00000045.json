@@ -1,0 +1,35 @@
+{
+  "event_id": "95b5951b60a66e0a46e4a28f3bf05814b9e89c39154dbad7ecf20237b58c6dbb",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/base.cpp",
+      "src/base.h",
+      "src/basewin.cpp",
+      "src/basewin.h",
+      "src/console.h",
+      "src/game.cpp",
+      "src/netdaemon.cpp",
+      "src/netdaemon.h",
+      "src/recovered/004ec3b0.cpp",
+      "src/unrecovered/0041ae40.cpp",
+      "src/unrecovered/00530d50.cpp"
+    ],
+    "evidence": [
+      "The status menu requires soft_zoom, whose original direct calls require real base_compute and NetDaemon::lock_base. Scope their owning TUs and shared control-turn readers to replace executable-address aliases with source storage without weakening historical claims."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4558832,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "7443ecb39115acf83abcdcd977d72d28d4622e076bdd5c998a7e56dd3935b048",
+  "request_id": "status-base-menu-link-closure",
+  "schema_version": 1,
+  "sequence": 45,
+  "stream": "task:infowin-ownership"
+}

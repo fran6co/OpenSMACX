@@ -42,6 +42,7 @@
 #include "lock.h"  // LockMapTable - editor_clear_vehicles rewrites its records
 #include "log.h"  // log_say - the chat / message handlers report through it
 #include "netdaemon.h"  // synch_veh - the turn handlers resync vehicles
+
 #include "netmsg.h"  // NetMsgPopup - the editor's ALREADYDONE/PROTECT* pops
 #include "tutwin.h"  // TutWinGlobal - survey2 raises the map tutorial on it
 #include "spying_recovery.h"  // spying - the espionage order
@@ -51,6 +52,11 @@
 #include "worldwin.h"  // WorldClimateWorldWin - editor_flat / editor_clear redraw it
 #include "buttongroup.h"  // ButtonGroup::set - the editor brush/paint selectors
 #include <cstring>
+
+// Shared by the turn loop and network lock guards. The original writers
+// are control_turn, net_end_of_turn and net_control_turn (see console.h).
+// RECOVERY_OBJECT: v2 0x0093A938 0x0093A93C ?ConsoleControlTurnActive@@3HA 0x00530D50
+int ConsoleControlTurnActive;
 
 // FREE FUNCTIONS THE CONSOLE BODIES CALL that no header in src/ declares yet.
 // Each line carries the image address its catalogue entry names, and the
@@ -643,7 +649,7 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
         // materialises it (`and`/`setne` plus a second `test`) and the whole
         // tail shifts - 32 of 85 against 81 of 85 here.
         if ((mask & flags) == 0
-            && (slot != 0 || *ConsoleControlTurnActive == 0)) {
+            && (slot != 0 || ConsoleControlTurnActive == 0)) {
             continue;
         }
         if (slot == 0) {

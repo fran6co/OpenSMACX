@@ -6905,7 +6905,7 @@ Status: MISMATCH.
 */
 void __cdecl action_go_to(int veh_id) {
     const int net = NetDaemonIsMultiplayerNet;
-    const int turn_active = *ConsoleControlTurnActive;
+    const int turn_active = ConsoleControlTurnActive;
     if (net != 0 && turn_active == 0) {
         *VehSelectionFollow = (int *)&veh_id;
     }
@@ -6923,7 +6923,7 @@ void __cdecl action_go_to(int veh_id) {
 
     if (move_result < 0) {
         Vehs[veh_id].order = ORDER_NONE;
-        if (NetDaemonIsMultiplayerNet != 0 && *ConsoleControlTurnActive == 0) {
+        if (NetDaemonIsMultiplayerNet != 0 && ConsoleControlTurnActive == 0) {
             synch_veh(veh_id);
             NetDaemonNet.await_synch();
             NetDaemonNet.unlock_veh();
@@ -6931,7 +6931,7 @@ void __cdecl action_go_to(int veh_id) {
         return;
     }
 
-    if (NetDaemonIsMultiplayerNet != 0 && *ConsoleControlTurnActive == 0) {
+    if (NetDaemonIsMultiplayerNet != 0 && ConsoleControlTurnActive == 0) {
         if (NetDaemonNet.order_veh(veh_id, move_result, 1) != 0) {
             NetDaemonNet.await_exec(1);
         }
@@ -7018,7 +7018,7 @@ Return Value: n/a
 Status: MISMATCH.
 */
 void __cdecl action_road_to(int veh_id) {
-    if (NetDaemonIsMultiplayerNet != 0 && *ConsoleControlTurnActive == 0) {
+    if (NetDaemonIsMultiplayerNet != 0 && ConsoleControlTurnActive == 0) {
         *VehSelectionFollow = (int *)&veh_id;
     }
 
@@ -7044,7 +7044,7 @@ void __cdecl action_road_to(int veh_id) {
             && has_tech_call(Terraforming[TERRA_REMOVE_FUNGUS].preq_tech, owner)) {
             if (!(tile->bit & BIT_BASE_IN_TILE) || (tile->val2 & 0xf) > 7) {
                 if (NetDaemonIsMultiplayerNet == 0
-                    || *ConsoleControlTurnActive != 0) {
+                    || ConsoleControlTurnActive != 0) {
                     const uint8_t saved_order = Vehs[veh_id].order;
                     action_terraform(veh_id, ORDER_REMOVE_FUNGUS, 1);
                     Vehs[veh_id].order = saved_order;
@@ -7063,7 +7063,7 @@ void __cdecl action_road_to(int veh_id) {
             if (!(tile->bit & BIT_BASE_IN_TILE) || (tile->val2 & 0xf) > 7) {
                 if (!(tile->bit & BIT_ROAD)) {
                     if (NetDaemonIsMultiplayerNet == 0
-                        || *ConsoleControlTurnActive != 0) {
+                        || ConsoleControlTurnActive != 0) {
                         const uint8_t saved_order = Vehs[veh_id].order;
                         action_terraform(veh_id, ORDER_ROAD, 1);
                         Vehs[veh_id].order = saved_order;
@@ -7078,7 +7078,7 @@ void __cdecl action_road_to(int veh_id) {
                     && !(tile->bit & BIT_MAGTUBE)
                     && has_tech_call(Terraforming[TERRA_MAGTUBE].preq_tech, owner)) {
                     if (NetDaemonIsMultiplayerNet == 0
-                        || *ConsoleControlTurnActive != 0) {
+                        || ConsoleControlTurnActive != 0) {
                         action_terraform(veh_id, ORDER_ROAD, 1);
                         Vehs[veh_id].order = ORDER_MAGTUBE_TO;
                         return;
@@ -7095,7 +7095,7 @@ void __cdecl action_road_to(int veh_id) {
             const uint8_t order = Vehs[veh_id].order;
             Vehs[veh_id].order = ORDER_NONE;
             if (NetDaemonIsMultiplayerNet != 0
-                && *ConsoleControlTurnActive == 0) {
+                && ConsoleControlTurnActive == 0) {
                 synch_veh(veh_id);
                 NetDaemonNet.await_synch();
                 NetDaemonNet.unlock_veh();
@@ -7123,7 +7123,7 @@ void __cdecl action_road_to(int veh_id) {
         net_flag = NetDaemonIsMultiplayerNet;
         if (found >= 0 && found < 8) {
             if (NetDaemonIsMultiplayerNet != 0
-                && *ConsoleControlTurnActive == 0) {
+                && ConsoleControlTurnActive == 0) {
                 if (NetDaemonNet.order_veh(veh_id, found, 1) == 0) {
                     return;
                 }
@@ -7136,7 +7136,7 @@ void __cdecl action_road_to(int veh_id) {
         Vehs[veh_id].order = ORDER_NONE;
     }
 
-    if (net_flag != 0 && *ConsoleControlTurnActive == 0) {
+    if (net_flag != 0 && ConsoleControlTurnActive == 0) {
         synch_veh(veh_id);
         NetDaemonNet.await_synch();
         NetDaemonNet.unlock_veh();
