@@ -79,7 +79,11 @@ def verify_layout(root: Path, task_name: str, *, compiler=None, command_for=None
         raise ValueError("task refers to another original image")
     expected = [item for item in read_members(root, pin) if item.path in files]
     expected_bases = [item for item in read_bases(root, pin) if item.path in files]
+    # Task authorization includes test/compiler support, not only product code.
+    # Select by configured source ownership, never by build-database presence:
+    # a missing recipe for a scoped product TU must remain unmeasurable.
     units = sorted(name for name in files if Path(name).suffix in settings.unit_extensions
+                   and any(Path(name).is_relative_to(directory) for directory in settings.source.roots)
                    and not settings.source.is_seed(name))
     # Method mappings are search hints, not proof that an original class existed
     # or a new requirement to match this candidate's current shape.

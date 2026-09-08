@@ -12,6 +12,7 @@ from match_recovery.cli import main
 from match_recovery.codeview import class_layout
 from match_recovery.layout_source import parse_members, read_members
 from match_recovery.pe_coff import Coff
+from match_recovery.tasks import TaskStore
 from test_application_commands import combined_object, project
 from test_codeview import coff, hierarchy_types, record
 
@@ -122,6 +123,45 @@ def test_all_configurations_are_checked_and_disagreement_is_not_hidden(project):
     assert report["result"] == "fail" and report["compile_attempts"] == 2
     assert [row["result"] for row in report["members"]] == ["pass", "fail"]
     assert report["structure_verification"] == "unknown" and not report["scope_complete"]
+
+
+@pytest.mark.parametrize("extra", ["tests/probe.cc", "code-sibling/probe.cc"])
+def test_task_layout_only_compiles_units_inside_configured_source_roots(project, extra):
+    # Edit permission also covers tests and compiler integration. Matching a
+    # source suffix or a directory-name prefix does not make either product code.
+    path = project / extra
+    path.parent.mkdir()
+    path.write_text("#error test harness needs its own preparation\n")
+    TaskStore(project).expand("owner", request_id="test-support", author="coordinator", subjects=(),
+                             editable_files=(extra,), evidence=("Runtime control",), expected_revision=0)
+    calls = []
+    def compiler(path, command, flags):
+        calls.append(path.relative_to(project).as_posix())
+        if path.name == "probe.cc":
+            raise ValueError("no product build recipe for a test harness")
+        return combined_object()
+    report = verify_layout(project, "owner", compiler=compiler)
+    assert report["result"] == "pass"
+    assert report["translation_units"] == calls == ["code/unit.cc"]
+    assert report["compile_attempts"] == 1
+
+
+def test_missing_product_recipe_remains_an_unknown_layout_witness(project):
+    # Do not implement the root filter by silently skipping files absent from
+    # the compile database (or filesystem): a scoped product TU still owes proof.
+    TaskStore(project).expand("owner", request_id="missing-product", author="coordinator", subjects=(),
+                             editable_files=("code/missing.cc",), evidence=("Product dependency",), expected_revision=0)
+    calls = []
+    def compiler(path, command, flags):
+        calls.append(path.relative_to(project).as_posix())
+        if path.name == "missing.cc":
+            raise ValueError("missing product build recipe")
+        return combined_object()
+    report = verify_layout(project, "owner", compiler=compiler)
+    assert report["result"] == "unknown"
+    assert report["translation_units"] == calls == ["code/missing.cc", "code/unit.cc"]
+    assert report["counts"] == {"pass": 1, "fail": 0, "unknown": 1}
+    assert report["members"][0]["reason"] == "missing product build recipe"
 
 
 def test_task_layout_failure_is_not_hidden_by_an_unmeasurable_configuration(project):
