@@ -15,8 +15,8 @@ import uuid
 
 from .locking import file_lock
 from .agent_protocol import validate_reviewer_response, validate_worker_response
-from .migration import GateExit
-from .migration_protocol import admit, extend_inventory, permissions
+from .migration import AdmissionRefused, GateExit
+from .migration_protocol import admit, extend_inventory, permissions, validate_checkpoint_feedback
 from .model import canonical, require_text
 from .records import parse_json
 from .processes import run_bounded
@@ -190,6 +190,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             policy["migration"] = permission
         review_feedback = None
         acceptance_feedback = None
+        checkpoint_feedback = None
         interpretations = {}
         # Scoped source and validated append-only decisions survive interruption.
         # They are not worker permission to edit history or unrelated dirty work.
@@ -206,6 +207,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                        if coordinator_configuration is not None else {}),
                     "check": check, "check_is_current": check is not None and current,
                     **({"acceptance_feedback": acceptance_feedback} if acceptance_feedback else {}),
+                    **({"checkpoint_feedback": checkpoint_feedback} if checkpoint_feedback else {}),
                     "acceptance_scope": acceptance_scope,
                     "ready_for_collection": False, "persisted_results": False}
         def readonly(command, payload):
@@ -226,7 +228,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                 policy["interpretations"] = [interpretations[key] for key in sorted(interpretations)]
             return [{**asdict(item), "obligation_id": key} for key, item in sorted(protected.items())]
         def review_candidate(context, check, round_index, *, structural_handoff=False):
-            nonlocal review_feedback, acceptance_feedback
+            nonlocal review_feedback, acceptance_feedback, checkpoint_feedback
             if reviewer_command is None:
                 return finish("independent_review_required", round_index, check)
             snapshot = reviews.snapshot(working_state(root), policy)
@@ -280,7 +282,22 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                                                               "review": decision, "interpretations": policy.get("interpretations", [])})
                 if reviews.snapshot(working_state(root), policy) != snapshot:
                     raise ValueError("source changed after migration review")
-                migration_report = admit(permission, tuple(protected.values()), selected, decision, snapshot, code, measured)
+                try:
+                    migration_report = admit(permission, tuple(protected.values()), selected, decision, snapshot, code, measured)
+                except AdmissionRefused as error:
+                    if acceptance_scope != "change":
+                        raise
+                    checkpoint_feedback = {"snapshot": snapshot, "result": error.result,
+                                           "reason": str(error), "report": measured}
+                    validate_checkpoint_feedback(checkpoint_feedback)
+                    actionable = (error.result == "fail" or measured.get("diagnostics") or
+                                  any(row["result"] != "pass" for row in measured["measurements"]))
+                    if actionable and round_index < iterations:
+                        return None  # Same scope/budget, then fresh checks and independent review.
+                    output = finish("change_" + error.result, round_index, check)
+                    output["review"] = decision
+                    return output
+                checkpoint_feedback = None
                 if migration_report.exit_code == GateExit.TRACKED_REGRESSIONS:
                     output = finish("migration_admitted", round_index, check)
                     output.update(review=decision, migration=asdict(migration_report))
@@ -346,7 +363,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                 if migration_configuration is not None:
                     permission = permissions(migration_configuration, task, selected)
                     policy["migration"] = permission
-                review_feedback = acceptance_feedback = None
+                review_feedback = acceptance_feedback = checkpoint_feedback = None
                 state = store.status(task_name, selected)
             if state["pending_discoveries"]:
                 return finish(state["next_action"], round_index)
@@ -396,10 +413,12 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                                           "context": context, "check": check, "round": round_index + 1,
                                           "review_feedback": review_feedback,
                                           "acceptance_feedback": acceptance_feedback,
+                                          **({"checkpoint_feedback": checkpoint_feedback} if checkpoint_feedback else {}),
                                           "instructions": ["Edit only authorized files; never run Git mutations.",
                                                            "Report structural discoveries even outside task scope.",
                                                            "Acceptance feedback belongs to its recorded snapshot; use it to investigate, not as current proof after edits.",
                                                            "Unknown acceptance findings require evidence, not speculative matching edits. Repair only authorized source; report missing capabilities or authority as discoveries without changing proof policy.",
+                                                           "Checkpoint feedback is historical diagnostic evidence, not admission. Repair only scoped source; preserve justified structural work and report outside-scope effects or missing verification capabilities as discoveries.",
                                                            "Do not erase source mappings or restoration obligations."]})
             finally:
                 changed = changes(before, working_state(root))

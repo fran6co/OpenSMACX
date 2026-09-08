@@ -8,6 +8,7 @@ policy, plus a fresh current build, not equivalence of the whole running program
 
 from pathlib import Path
 import hashlib
+import json
 import os
 
 from .build_check import Build, check_build
@@ -101,6 +102,14 @@ def measure_migration(root: Path, task_name: str, image: Path, request: dict, *,
                        "audit_policy": read_json(policy_path)})
 
     before = snapshot()
+    diagnostics = []
+
+    def diagnose(name, report):
+        if report["result"] != Result.PASS:
+            text = json.dumps(report, ensure_ascii=False, sort_keys=True)
+            if len(text) > 12000:
+                text = text[:6000] + "\n[diagnostic truncated]\n" + text[-6000:]
+            diagnostics.append({"check": name, "result": report["result"], "evidence": [text]})
 
     def fresh():
         if snapshot() != before or store.read(task_name) != task or store.decisions(task_name) != decisions:
@@ -117,6 +126,7 @@ def measure_migration(root: Path, task_name: str, image: Path, request: dict, *,
         except (OSError, ValueError) as error:
             report = {"result": Result.UNKNOWN, "reason": str(error)}
         fresh()
+        diagnose(name, report)
         if progress:
             progress({"check": name, "event": "finish", "result": report["result"]})
         return report
@@ -128,6 +138,9 @@ def measure_migration(root: Path, task_name: str, image: Path, request: dict, *,
     # build. Those helpers must also retain their baseline contents; otherwise
     # both replicas could agree only because today's compiler adapter changed.
     unchanged_policy = unchanged_build_policy(root, task, settings, build)
+    if not unchanged_policy:
+        diagnose("baseline-build-policy", {"result": Result.UNKNOWN,
+                                           "reason": "compiler/build inputs differ from or lack the task baseline; preserve work and request coordinator evidence"})
     checks = [run("source", lambda: check_source(root)), run("mappings", lambda: check_mappings(root)),
               run("claim-identities", lambda: check_claims(root))]
     checks += [run("audit:" + name, lambda name=name: audit_source(root, name)) for name in sorted(policy["audits"])]
@@ -135,7 +148,7 @@ def measure_migration(root: Path, task_name: str, image: Path, request: dict, *,
     if built["result"] != Result.PASS:
         return {"snapshot": request["snapshot"], "changed": sorted(scope), "build": built["result"],
                 "structure": Result.UNKNOWN, "references": Result.UNKNOWN, "outside_scope": Result.UNKNOWN,
-                "measurements": [], "current": {}}
+                "measurements": [], "current": {}, "diagnostics": diagnostics}
     restored = run("restoration", lambda: measure_restoration(
         root, task_name, image, review=request["review"], review_snapshot=request["snapshot"]))
     preservation = run("preservation", lambda: check_preservation(root, task_name))
@@ -152,4 +165,5 @@ def measure_migration(root: Path, task_name: str, image: Path, request: dict, *,
             "structure": structural, "references": restored.get("references", Result.UNKNOWN),
             "outside_scope": _all([*(row["result"] for row in checks), preservation["result"],
                                    Result.PASS if unchanged_policy else Result.UNKNOWN]),
-            "measurements": [measurements[key] for key in sorted(protected)], "current": current}
+            "measurements": [measurements[key] for key in sorted(protected)], "current": current,
+            "diagnostics": diagnostics}

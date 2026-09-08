@@ -720,6 +720,11 @@ functions to match or application runtime hooks to exist. Its exit 0 means the
 change is ready for a coordinator checkpoint, not that the game is finished.
 Explicitly permitted structural regressions still yield `migration_admitted` / 2.
 Neither path collects or commits source; integrated changes must be reverified.
+Valid refused checkpoints return snapshot-bound `checkpoint_feedback`, including
+bounded native build/preservation/restoration diagnostics. Actionable failures
+and unknowns feed a bounded repair/discovery round, followed by fresh checks and
+review; protocol errors never become worker retry requests. Refusals remain
+`change_fail` or `change_unknown`, not accepted regressions.
 Use `recover run ... --acceptance-scope full_project` for the application boundary
 described above. That boundary also rejects explicit inline assembly/emitted
 instructions through the native C++ source-form check; it is not a whole-program

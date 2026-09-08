@@ -17,7 +17,7 @@ import pytest
 from capstone import Cs, CS_ARCH_X86, CS_MODE_32
 
 from match_recovery.binding import bind
-from match_recovery.driver import drive
+from match_recovery.driver import drive, invoke
 from match_recovery.image_survey import survey_image
 from match_recovery.model import Origin, Span
 from match_recovery.pe_coff import Coff
@@ -221,6 +221,42 @@ def test_real_change_acceptance_does_not_require_application_proof_capabilities(
     assert "acceptance" not in report
     assert report["worker_rounds"] == 2 and report["coordinator_decisions"] == 2
     assert (root / "src/owner.h").read_text() == evidence + CLASSES
+    assert TaskStore(root).read(task.task_id).base_revision == task.base_revision
+    assert git("rev-parse", "HEAD") == head
+
+
+def test_real_preservation_refusal_drives_scoped_repair_without_reverting_structure(tmp_path, monkeypatch):
+    root, image, task, git, evidence = prepared_project(tmp_path, monkeypatch, proofs=False)
+    monkeypatch.setenv("RECOVERY_IMAGE", str(image))
+    (root / "src/owner.h").write_text(evidence + CLASSES)
+    body = root / "src/owner.cpp"
+    restored = body.read_text().replace("raw_[0] + raw_[1]", "bias + member.value")
+    helper = "\nint accidental_unmapped_helper() { return 7; }\n"
+    body.write_text(restored + helper)
+    config = json.loads((root / "recovery/driver.json").read_text())
+    snapshots, feedback = [], []
+    def execute(command, root, name, payload):
+        if command.argv[0] == "test-worker":
+            feedback.append(payload["checkpoint_feedback"])
+            assert "accidental_unmapped_helper" in str(feedback[-1]["report"]["diagnostics"])
+            assert (root / "src/owner.h").read_text() == evidence + CLASSES
+            body.write_text(body.read_text().replace(helper, ""))
+            return 0, {"discoveries": []}
+        if command.argv[0] == "test-reviewer":
+            snapshots.append(payload["snapshot"])
+            return 0, {"snapshot": payload["snapshot"], "decision": "approve",
+                       "evidence": ["test-owned Base/Member source declarations and original reference"],
+                       "feedback": "Check compiler preservation independently; keep the recovered hierarchy."}
+        return invoke(command, root, name, payload)
+    head = git("rev-parse", "HEAD")
+    report = drive(root, task.task_id, {**config, "acceptance_scope": "change"},
+                   {"author": "worker", "command": {"argv": ["test-worker"], "timeout": 30}}, iterations=2,
+                   reviewer_configuration={"author": "reviewer", "command": {"argv": ["test-reviewer"], "timeout": 30}},
+                   execute=execute)
+    assert report["stop_reason"] == "change_accepted", report
+    assert report["worker_rounds"] == 1 and len(feedback) == 1 and len(set(snapshots)) == 2
+    assert feedback[0]["report"]["outside_scope"] == "fail"
+    assert body.read_text() == restored and (root / "src/owner.h").read_text() == evidence + CLASSES
     assert TaskStore(root).read(task.task_id).base_revision == task.base_revision
     assert git("rev-parse", "HEAD") == head
 

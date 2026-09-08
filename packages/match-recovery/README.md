@@ -801,6 +801,19 @@ Missing bounded structural witnesses and unsupported preservation coverage still
 refuse admission. Use `--acceptance-scope full_project` for the stronger application
 boundary below; configurations without the scope field retain that boundary.
 
+In change mode, a valid measured refusal produces disposable
+`checkpoint_feedback: {snapshot, result, reason, report}`. The native verifier
+includes bounded `diagnostics` for failed/incomplete build, preservation, restoration,
+policy and other prerequisite checks. A failure, or an unknown with diagnostic or
+non-passing obligation evidence, reaches the worker within the same scope and round
+budget. Missing capabilities or outside-scope effects require discoveries, not
+speculative edits or changes to proof policy. No-progress and budget stops remain;
+source changes require fresh checks and review. The native bridge validates the
+feedback envelope before dispatch. Malformed receipts, stale review snapshots,
+unauthorized changes and invalid permissions remain protocol errors, not repair
+feedback. Final refusal reports use `change_fail` or `change_unknown` and cannot
+become checkpoint-ready. No admission is inferred from diagnostics alone.
+
 `recover tasks check-acceptance TASK --image IMAGE` reads the complete driver
 request from stdin and returns the request-bound receipt above. `init` configures
 this installed command; no project acceptance dispatcher is required. It runs

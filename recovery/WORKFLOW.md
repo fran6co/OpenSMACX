@@ -264,6 +264,12 @@ matching regressions are implicitly permitted. Explicit `--migration` permission
 can instead produce `migration_admitted` / exit 2 with restoration work retained.
 Both are ready for a coordinator checkpoint, not automatic collection or a claim
 that the whole game works. Unknown evidence still refuses admission.
+Valid per-change refusals now retain `checkpoint_feedback` with native diagnostic
+evidence. The worker may repair scoped source or report discoveries within the
+remaining budget; changed source is checked and reviewed again. Unknown without
+diagnostic/non-passing-obligation evidence stops. Malformed/stale receipts and
+scope violations still stop immediately. Never weaken preservation, move a task
+baseline or discard justified structure to turn that feedback into a pass.
 
 With `--acceptance-scope full_project`, the driver invokes native
 `tasks check-acceptance`: the full configured

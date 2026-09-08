@@ -45,6 +45,10 @@ Ordinary runs target per-change acceptance, not completion of the whole game.
 it does not require unrelated unfinished functions to match. `migration_admitted`
 retains explicitly permitted byte regressions. Neither gives a worker permission
 to commit, collect, weaken evidence or call the whole application finished.
+If handed `checkpoint_feedback`, read its snapshot, refusal reason and native
+diagnostics. An outside-scope effect is a discovery, not permission to edit its
+source. Preserve the justified model while repairing authorized code; unsupported
+proof requires evidence or coordinator action, never a changed baseline or gate.
 
 The configured check includes current historical-obligation measurements in
 `details` and the joint scoped diagnostics in `candidate.checks`. Work from both:

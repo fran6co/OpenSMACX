@@ -108,8 +108,10 @@ def test_change_mode_without_regression_permission_only_accepts_passes(project, 
     if restored:
         assert run_change()["stop_reason"] == "change_accepted"
     else:
-        with pytest.raises(ValueError, match="not admissible"):
-            run_change()
+        report = run_change()
+        assert report["stop_reason"] == "change_fail"
+        assert "not admissible" in report["checkpoint_feedback"]["reason"]
+        assert not report.get("ready_for_checkpoint") and not report["ready_for_collection"]
     assert "acceptance" not in calls
 
 
@@ -157,23 +159,29 @@ def test_resume_must_restore_before_full_acceptance(project):
     assert second["ready_for_collection"] and "acceptance" in calls
 
 
-@pytest.mark.parametrize("damage", [
-    lambda r: r.update(measurements=[]),
-    lambda r: r.update(current={}),
-    lambda r: r["measurements"][0].update(result="unknown"),
-    lambda r: r["measurements"][0].update(fingerprint="b" * 64),
-    lambda r: r.update(build="fail"),
-    lambda r: r.update(structure="unknown"),
-    lambda r: r.update(references="fail"),
-    lambda r: r.update(references="unknown"),
-    lambda r: r.pop("references"),
-    lambda r: r.update(outside_scope="unknown"),
-    lambda r: r.update(snapshot="b" * 64),
+@pytest.mark.parametrize("damage,invalid", [
+    (lambda r: r.update(measurements=[]), False),
+    (lambda r: r.update(current={}), False),
+    (lambda r: r["measurements"][0].update(result="unknown"), False),
+    (lambda r: r["measurements"][0].update(fingerprint="b" * 64), False),
+    (lambda r: r.update(build="fail"), False),
+    (lambda r: r.update(structure="unknown"), False),
+    (lambda r: r.update(references="fail"), False),
+    (lambda r: r.update(references="unknown"), False),
+    (lambda r: r.pop("references"), True),
+    (lambda r: r.update(outside_scope="unknown"), False),
+    (lambda r: r.update(snapshot="b" * 64), True),
 ])
 @pytest.mark.parametrize("scope", ["change", "full_project"])
-def test_incomplete_or_stale_evidence_is_never_an_allowed_regression(project, damage, scope):
-    with pytest.raises(ValueError):
-        run(project, damage=damage, acceptance_scope=scope)
+def test_incomplete_or_stale_evidence_is_never_an_allowed_regression(project, damage, invalid, scope):
+    if invalid or scope == "full_project":
+        with pytest.raises(ValueError):
+            run(project, damage=damage, acceptance_scope=scope)
+    else:
+        report, _ = run(project, damage=damage, acceptance_scope=scope)
+        assert report["stop_reason"] in ("change_fail", "change_unknown")
+        assert not report.get("ready_for_checkpoint") and not report["ready_for_collection"]
+        assert report["checkpoint_feedback"]["result"] != "pass"
 
 
 def test_unpermitted_matching_regression_is_refused(project):

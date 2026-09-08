@@ -4,7 +4,7 @@ Permissions are decisions. Inventories and measurement reports are disposable
 outputs of source readers and verifiers, never worker-authored proof records.
 """
 
-from .migration import Migration, Review
+from .migration import AdmissionRefused, Migration, Review
 from .model import Dimension, Measurement, Obligation, Result, require_digest, require_text
 from .tasks import entity_id
 
@@ -56,13 +56,11 @@ def extend_inventory(frozen: dict[str, Obligation], report: dict, scope: frozens
     frozen.update(additions)
 
 
-def admit(permission: dict, protected: tuple[Obligation, ...], scope: frozenset[str],
-          decision: dict, snapshot: str, code: int, report: dict):
+def _report(report: dict, snapshot: str):
+    """Validate an observation envelope; this alone grants no admission."""
     fields = {"snapshot", "changed", "build", "structure", "references", "outside_scope", "measurements", "current"}
-    if not isinstance(report, dict) or set(report) != fields or report["snapshot"] != snapshot:
+    if not isinstance(report, dict) or not fields <= set(report) or set(report) - fields - {"diagnostics"} or report["snapshot"] != snapshot:
         raise ValueError("invalid or stale migration check report")
-    if code != 0:
-        raise ValueError("migration verifier could not complete its checks")
     require_digest(snapshot)
     if not isinstance(report["changed"], list):
         raise ValueError("invalid changed entity inventory")
@@ -70,8 +68,8 @@ def admit(permission: dict, protected: tuple[Obligation, ...], scope: frozenset[
         entity_id(entity)
     if len(set(report["changed"])) != len(report["changed"]):
         raise ValueError("duplicate changed entity")
-    if Result(report["outside_scope"]) != Result.PASS:
-        raise ValueError("outside-scope preservation must be verified before admission")
+    for key in ("build", "structure", "references", "outside_scope"):
+        Result(report[key])
     if not isinstance(report["measurements"], list) or not isinstance(report["current"], dict):
         raise ValueError("invalid migration measurements")
     measurements = []
@@ -79,8 +77,41 @@ def admit(permission: dict, protected: tuple[Obligation, ...], scope: frozenset[
         if not isinstance(row, dict) or set(row) != {"obligation_id", "fingerprint", "result", "evidence"}:
             raise ValueError("invalid migration measurement")
         measurements.append(Measurement(row["obligation_id"], row["fingerprint"], Result(row["result"]), row["evidence"]))
-    for fingerprint in report["current"].values():
+    if len({row.obligation_id for row in measurements}) != len(measurements):
+        raise ValueError("duplicate migration measurement")
+    for key, fingerprint in report["current"].items():
+        require_text(key, "obligation id")
         require_digest(fingerprint)
+    diagnostics = report.get("diagnostics", [])
+    if not isinstance(diagnostics, list):
+        raise ValueError("checkpoint diagnostics must be an array")
+    for row in diagnostics:
+        if not isinstance(row, dict) or set(row) != {"check", "result", "evidence"}:
+            raise ValueError("invalid checkpoint diagnostic")
+        require_text(row["check"], "checkpoint check name")
+        Result(row["result"])
+        if not isinstance(row["evidence"], list) or not row["evidence"]:
+            raise ValueError("checkpoint diagnostic needs evidence")
+        for value in row["evidence"]:
+            require_text(value, "checkpoint evidence")
+    return measurements
+
+
+def validate_checkpoint_feedback(feedback: dict):
+    """Historical worker diagnostics, never an admission receipt or permission."""
+    if not isinstance(feedback, dict) or set(feedback) != {"snapshot", "result", "reason", "report"}:
+        raise ValueError("invalid checkpoint feedback")
+    if feedback["result"] not in (Result.FAIL, Result.UNKNOWN):
+        raise ValueError("checkpoint feedback must describe refused admission")
+    require_text(feedback["reason"], "checkpoint refusal reason")
+    _report(feedback["report"], feedback["snapshot"])
+
+
+def admit(permission: dict, protected: tuple[Obligation, ...], scope: frozenset[str],
+          decision: dict, snapshot: str, code: int, report: dict):
+    measurements = _report(report, snapshot)
+    if code != 0:
+        raise ValueError("migration verifier could not complete its checks")
     keys = {item.obligation_id for item in protected}
     if set(report["current"]) - keys or {item.obligation_id for item in measurements} - keys:
         raise ValueError("migration measurements name unrequested obligations")
@@ -95,7 +126,10 @@ def admit(permission: dict, protected: tuple[Obligation, ...], scope: frozenset[
     review = Review(decision["author"], decision["reviewer"], decision["snapshot"],
                     Result.PASS if decision["decision"] == "approve" else Result.FAIL,
                     tuple(decision["evidence"]))
-    return migration.admit(snapshot=snapshot, changed=frozenset(report["changed"]), review=review,
+    outcome = migration.admit(snapshot=snapshot, changed=frozenset(report["changed"]), review=review,
                            build=Result(report["build"]), structural_checks=Result(report["structure"]),
                            references=Result(report["references"]),
                            measurements=measurements, current=report["current"])
+    if Result(report["outside_scope"]) != Result.PASS:
+        raise AdmissionRefused("outside-scope preservation must be verified before admission", Result(report["outside_scope"]))
+    return outcome

@@ -196,6 +196,29 @@ def test_wrong_layout_cannot_be_admitted_by_review(migration):
     assert measure(migration)["structure"] == "fail"
 
 
+@pytest.mark.parametrize("outcome", ["fail", "unknown"])
+def test_refused_preservation_retains_actionable_native_diagnostics(migration, monkeypatch, outcome):
+    monkeypatch.setattr(native, "check_preservation", lambda *_: {
+        "result": outcome, "units": [{"unit": "code/unit.cc", "reason": "unscoped function changed",
+                                       "symbol_changes": [{"symbol": "outside_helper", "change": "added"}]}]})
+    payload = request(migration)
+    report = measure(migration, payload)
+    row = next(row for row in report["diagnostics"] if row["check"] == "preservation")
+    assert row["result"] == outcome
+    assert "outside_helper" in row["evidence"][0] and "code/unit.cc" in row["evidence"][0]
+    with pytest.raises(ValueError, match="outside-scope preservation"):
+        admission(migration, payload, report)
+
+
+def test_failed_build_diagnostics_survive_early_return(migration, monkeypatch):
+    monkeypatch.setattr(native, "check_build", lambda *_: {
+        "result": "fail", "commands": [{"stderr": "undefined reference to Owner::add"}]})
+    report = measure(migration)
+    assert report["build"] == "fail" and report["measurements"] == []
+    assert "undefined reference to Owner::add" in next(
+        row for row in report["diagnostics"] if row["check"] == "build")["evidence"][0]
+
+
 def test_changed_build_policy_cannot_borrow_baseline_preservation(migration):
     path = migration / "recovery/build.json"
     value = json.loads(path.read_text())

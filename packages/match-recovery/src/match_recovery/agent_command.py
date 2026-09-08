@@ -53,7 +53,7 @@ def _request(root, role, request):
         return task, decisions, frozenset()
     common = {"task", "context", "check", "instructions"}
     fields = common | ({"editable_files", "round", "review_feedback"} if role == "worker" else {"snapshot"})
-    optional = {"acceptance_feedback"} if role == "worker" else set()
+    optional = {"acceptance_feedback", "checkpoint_feedback"} if role == "worker" else set()
     if not isinstance(request, dict) or not fields <= set(request) or set(request) - fields - optional:
         raise ValueError("invalid agent request fields")
     task = Task.from_dict(request["task"])
@@ -93,6 +93,9 @@ def _request(root, role, request):
             acceptance_outcome(1 if outcome == "fail" else 3, report)
             if outcome == "unknown" and not report.get("findings"):
                 raise ValueError("unknown acceptance feedback needs diagnostic findings")
+        if request.get("checkpoint_feedback") is not None:
+            from .migration_protocol import validate_checkpoint_feedback
+            validate_checkpoint_feedback(request["checkpoint_feedback"])
     else:
         require_digest(request["snapshot"])
     return task, decisions, editable

@@ -236,6 +236,50 @@ def test_unknown_feedback_still_requires_a_consistent_report_before_provider_lau
     assert not (root / "build/recovery/agents").exists()
 
 
+@pytest.mark.parametrize("outcome", ["fail", "unknown"])
+def test_real_bridge_delivers_checkpoint_diagnostics_then_rechecks(project, outcome):
+    root, task = project
+    script = PROVIDER.replace("if role == 'worker':", """if role == 'worker':
+    feedback = request['checkpoint_feedback']
+    assert feedback['result'] == EXPECTED_OUTCOME
+    assert feedback['snapshot'] == request['review_feedback']['snapshot']
+    assert feedback['report']['diagnostics'][0]['check'] == 'preservation'
+""".replace("EXPECTED_OUTCOME", repr(outcome)))
+    configure(root, script=script)
+    git(root, "add", ".")
+    git(root, "commit", "-m", "Configure local checkpoint feedback control")
+    def command(program):
+        return {"argv": [sys.executable, "-c", program], "timeout": 10}
+    config = {**CONFIG, "acceptance_scope": "change", "context": command("print('{}')"),
+              "check": command("print('{\"result\":\"pass\"}')"),
+              "obligations": command("print('{\"obligations\":[]}')"),
+              "migration_check": command(
+                  "import json,sys; from pathlib import Path; p=json.load(sys.stdin); "
+                  "ok=Path('src/f.cpp').read_text()=='finished\\n'; "
+                  f"state='pass' if ok else {outcome!r}; "
+                  "print(json.dumps(dict(snapshot=p['snapshot'],changed=[],build='pass',structure='pass',references='pass',"
+                  "outside_scope=state,measurements=[],current={},diagnostics=[] if ok else "
+                  "[dict(check='preservation',result=state,evidence=['source:src/f.cpp'])])))")}
+    roles = {role: {"author": role, "command": {"argv": [sys.executable, "-m", "match_recovery.cli", "agent", role],
+                                               "timeout": 20}} for role in ("worker", "reviewer")}
+    report = drive(root, task.task_id, config, roles["worker"], iterations=2, reviewer_configuration=roles["reviewer"])
+    assert report["stop_reason"] == "change_accepted" and report["worker_rounds"] == 1
+    assert report["ready_for_checkpoint"] and not report["ready_for_collection"]
+    assert "checkpoint_feedback" not in report
+
+
+@pytest.mark.parametrize("feedback", [None, {}, {"snapshot": "a" * 64, "result": "pass", "reason": "not refusal", "report": {}},
+                                     {"snapshot": "a" * 64, "result": "unknown", "reason": "missing", "report": {}}])
+def test_invalid_checkpoint_feedback_does_not_launch_provider(project, feedback):
+    root, task = project
+    config = configure(root, script="raise AssertionError('must not launch')")
+    if feedback is None:
+        feedback = []
+    with pytest.raises(ValueError):
+        run_agent(root, "worker", config, {**request(task), "checkpoint_feedback": feedback})
+    assert not (root / "build/recovery/agents").exists()
+
+
 def test_cli_returns_structured_errors_instead_of_an_empty_pipe(project, monkeypatch, capsys):
     root, task = project
     configure(root, script="raise SystemExit(7)")

@@ -314,6 +314,11 @@ establish completion of this program.
   needed. Synthetic build/history/COFF and subprocess/driver controls exercise
   admission and refusal. OpenSMACX links, but still needs complete application proof
   capabilities configured and a real autonomous pilot before acceptance is proven.
+  In change mode, valid checkpoint refusals retain bounded native diagnostics and
+  feed scoped repair/discovery rounds; fresh checks and independent review follow
+  edits. Protocol/snapshot/authority errors still stop rather than being retried.
+  A real compiler control catches an unintended unscoped helper, repairs it from
+  preservation feedback and accepts the change without reverting its hierarchy.
   The native compiler control now uses the generated driver commands
   and real gate/restoration/preservation/build/proof subprocesses throughout.
   It restores the hierarchy through a byte regression and rejects two real

@@ -20,6 +20,16 @@ class GateExit(IntEnum):
     UNMEASURABLE = 3
 
 
+class AdmissionRefused(ValueError):
+    """Valid measurements did not establish admission; not a protocol error."""
+
+    def __init__(self, message: str, result: Result):
+        if result not in (Result.FAIL, Result.UNKNOWN):
+            raise ValueError("admission refusal must fail or lack evidence")
+        super().__init__(message)
+        self.result = result
+
+
 @dataclass(frozen=True)
 class GateReport:
     exit_code: GateExit
@@ -110,12 +120,17 @@ class Migration:
                 or review.snapshot != snapshot or review.result != Result.PASS
                 or not review.evidence):
             raise ValueError("a fresh, independent, evidence-backed review is required")
-        if build != Result.PASS or structural_checks != Result.PASS or references != Result.PASS:
-            raise ValueError("build, declared structural checks and references must pass before admission")
         report = check_obligations(self.protected, measurements, current,
                                    self.allowed_regressions)
+        prerequisites = (build, structural_checks, references)
+        if any(not isinstance(value, Result) for value in prerequisites):
+            raise ValueError("invalid checkpoint prerequisite result")
+        if any(value != Result.PASS for value in prerequisites):
+            raise AdmissionRefused("build, declared structural checks and references must pass before admission",
+                                   Result.FAIL if Result.FAIL in prerequisites else Result.UNKNOWN)
         if report.exit_code not in (GateExit.PASSED, GateExit.TRACKED_REGRESSIONS):
-            raise ValueError(f"migration is not admissible: {report.exit_code.name}")
+            raise AdmissionRefused(f"migration is not admissible: {report.exit_code.name}",
+                                   Result.UNKNOWN if report.unknown else Result.FAIL)
         return report
 
     def close(self, **checks) -> GateReport:
