@@ -149,8 +149,8 @@ class Font {
 
 // 0x28, and statuswin.h is the evidence rather than a count of members:
 // it embeds three consecutive Fonts at 0x1530, 0x1558 and 0x1580, so the
-// stride between them IS sizeof(Font). Asserted so the compiler checks it
-// and tools/header_offsets.py can walk THROUGH an embedded Font.
+// stride between them IS sizeof(Font). The compiler checks this extent;
+// native layout checks observe embedded Font members through debug types.
 static_assert(sizeof(Font) == 0x28, "Font must match the embedded stride in StatusWin");
 
 #if defined(_M_IX86) || defined(__i386__)

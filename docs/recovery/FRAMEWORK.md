@@ -76,8 +76,11 @@ Those project controls now live in opt-in `recovery/tests/test_gate_controls.py`
 full native gates in a disposable detached checkout, named stage/subject assertions,
 and guarded damage restoration. The old main-tree mutation CLI is removed.
 Ordinary anchor/safety tests are not a substitute for executing the live matrix.
-Two local script checks remain until their conventional
-source/document coverage is absorbed. Native acceptance now coordinates the gate,
+The local live-reference script remains until its document coverage is absorbed.
+Native compiler-observed layouts now cover conventional header offsets; the old
+guessed-size walk is removed. Controlled source-derived witnesses expose otherwise
+unemitted declarations, without hiding conflicting product definitions.
+Native acceptance now coordinates the gate,
 restoration/preservation and configured structure/runtime proof commands. Complete
 OpenSMACX proof coverage remains unfinished; an incomplete native gate does not
 permit deleting the old control route.
@@ -89,8 +92,8 @@ context. Compact object identities and conventional legacy bindings are analyzed
 together, distinguishing first-member address notes from separate global storage.
 Existing limits remain project policy. Missing coverage, malformed identities and
 inconsistent reports are refused. This is a lexical diagnostic, not proof of
-aliasing, hierarchy or lifetime; conventional initial-data/header-offset checks
-and the full production cutover still need replacement coverage.
+aliasing, hierarchy or lifetime. Conventional initial-data and header-offset
+coverage is now native; full production cutover and structural proof remain unfinished.
 
 Native initial-data verification now compares source-bounded object storage to
 compiled definitions using standalone CodeView extents and strict relocation

@@ -15,12 +15,12 @@ Source records, strict CodeView parsing (`class_layout`) and emitted-table check
 capabilities, not project/compiler-environment adapters. `environment/` contains
 only the local compiler interaction. Unused fleet, rewriting and spelling-search
 scripts are removed. The remaining `tools/` files support the retained gate,
-its two remaining conventional script checks, or CMake's debugger sidecar; their live consumers
+its remaining live-reference script check, or CMake's debugger sidecar; their live consumers
 still need absorption or retirement before that directory can disappear.
 
 The package now coordinates a whole-project gate:
 `uv run recover check --image <original> --jobs 1 --summary`. `gate.json` declares
-the remaining local live-reference/header-offset scripts and the native
+the remaining local live-reference script and the native
 `check-initializers` command for conventional trailing-address hints; native source,
 mapping/body-link, history, audit, build, match, symbol, data and layout checks
 are run by the library. The native build is fresh, unlike the retained gate's
@@ -191,14 +191,22 @@ flag set. Valid non-emission is reported, not proof of ABI independence. A scope
 `--unit src/radiobutton.cpp` diagnostic leaves omitted product units unverified.
 
 The retained full gate invokes this serially after initial-data compilation.
-The older header-offset walk remains until its conventional offset comments and
-self-naming members have verified replacement coverage. The opt-in
-`uv run recover check-layout --conventional-offsets --summary` now reads those
+The old header-offset walk and its type-size table are removed.
+`uv run recover check-layout --summary` now reads those conventional
 header hints and compares them against compiler offsets using the same trials.
 It does not infer sizes from a project-specific table or promote comments into
-original-layout proof. Cutover remains pending coverage/counterexample controls;
-the old walk is still called by both gates. This native check adds fresh
-compilation cost; shared fresh-object reuse is still unfinished. Task and project
+original-layout proof. Project layout policy also enables the native
+unobserved-only witness stage: after normal trials, classes without a compiler
+definition are probed in a source-derived include host with unchanged-replica and
+changed-body controls. Missing/failed witnesses remain unknown, not waived.
+Both gates use this native stage. All former self-naming checks have compiler
+witnesses; conflicting definitions in another TU still keep a hint unverified.
+Co-located witnesses share probe/control compilations; each symbol must change
+and each layout must agree. Failed groups are split and freshly checked without
+borrowing partial successes. Real compiler damage controls cover both used and
+otherwise-unused classes; opt-in full-gate cases retain the legacy offset damage
+anchor and add an unused-class anchor. This native check adds fresh compilation
+cost; sharing objects between the separate gate stages is still unfinished. Task and project
 layout checks now index each fresh object's CodeView type stream once instead of
 reparsing it for every class. This is invocation-local parsing reuse, not an
 object/verdict cache or a change to compiler trials and coverage. Neither passing
@@ -287,8 +295,9 @@ compact original-object bindings. Task context includes these hints before the
 class-debt preview. A containing object and its first member sharing an address
 are not automatically duplicate globals. These lexical diagnostics neither prove
 storage ownership nor authorize merging names; establish actual aliasing and
-byte-versus-element semantics through source and binary evidence. The remaining
-header-offset check still uses legacy tooling. Conventional initial-value probes
+byte-versus-element semantics through source and binary evidence. Conventional
+member-offset checks now use the native compiler-observed layout stage.
+Conventional initial-value probes
 now use the package's `check-initializers` command and shared pinned PE reader.
 
 `check-data` now supplies native compiled initial-storage evidence for explicitly

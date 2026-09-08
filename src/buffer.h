@@ -84,9 +84,8 @@ struct Dib : BITMAPINFO {
      */
     RGBQUAD bmiColorsRest[255];
 };
-// The arithmetic above, stated so the COMPILER checks it and so
-// tools/header_offsets.py can walk THROUGH a `Dib` member instead of
-// stopping there and reporting a layout it never measured.
+// The arithmetic above is a compiler-checked extent. Native layout checks
+// observe an embedded Dib through compiler debug information.
 static_assert(sizeof(Dib) == 0x428, "Dib is BITMAPINFOHEADER + 256 RGBQUAD");
 
 class Buffer;

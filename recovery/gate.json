@@ -8,13 +8,9 @@
     "trailing-address-initial-values": {
       "argv": ["uv", "run", "recover", "check-initializers", "--image", "{image}", "--summary"],
       "timeout": 120
-    },
-    "conventional-header-offsets": {
-      "argv": ["uv", "run", "python", "tools/header_offsets.py", "--check"],
-      "timeout": 120
     }
   },
-  "inputs": ["tools/stale_references.py", "tools/header_offsets.py", "README.md", "AGENTS.md", ".opensmacx/game/terranx_original.exe"],
+  "inputs": ["tools/stale_references.py", "README.md", "AGENTS.md", ".opensmacx/game/terranx_original.exe"],
   "input_roots": ["docs"],
   "environment": []
 }

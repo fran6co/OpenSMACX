@@ -18,6 +18,7 @@ from .layout_source import read_bases, read_members
 from .mapping_check import build_units
 from .measurement import Measurement
 from .layout_witness import declaration_absent
+from .layout_hosts import witness_hosts
 from .model import Result, digest
 from .pe_coff import Coff
 from .records import read_json
@@ -25,13 +26,23 @@ from .source_inventory import assert_snapshot_current, image_pin, source_snapsho
 
 
 def check_layout(root: Path, *, units=None, compiler=None, command_for=None, progress=None, witness_missing=False,
-                 conventional_offsets=False) -> dict:
+                 conventional_offsets=None, witness_unobserved=None) -> dict:
     root = root.resolve()
     settings = Measurement.read(root)
+    policy = read_json(root / "recovery/project.json").get("layout", {})
+    if (not isinstance(policy, dict) or policy.keys() - {"conventional_offsets", "witness_unobserved"}
+            or any(type(value) is not bool for value in policy.values())):
+        raise ValueError("layout policy accepts only boolean conventional_offsets and witness_unobserved")
+    conventional_offsets = policy.get("conventional_offsets", False) if conventional_offsets is None else conventional_offsets
+    witness_unobserved = (policy.get("witness_unobserved", False) and not witness_missing
+                          if witness_unobserved is None else witness_unobserved)
+    if type(conventional_offsets) is not bool or type(witness_unobserved) is not bool or witness_missing and witness_unobserved:
+        raise ValueError("layout witness modes must be boolean and mutually exclusive")
     if units is not None and (not isinstance(units, (list, tuple)) or not units
             or any(not isinstance(unit, str) or not unit for unit in units) or len(set(units)) != len(units)):
         raise ValueError("layout selection requires unique nonempty translation-unit paths")
-    metadata = {"units": units, "witness_missing": witness_missing, "conventional_offsets": conventional_offsets}
+    metadata = {"units": units, "witness_missing": witness_missing, "conventional_offsets": conventional_offsets,
+                "witness_unobserved": witness_unobserved}
     before = settings.snapshot(root, metadata)
     snapshot = source_snapshot(root)
     pin = image_pin(root)
@@ -56,6 +67,9 @@ def check_layout(root: Path, *, units=None, compiler=None, command_for=None, pro
             raise ValueError("layout selection is not a configured product translation unit: " + unit)
     selected = sorted(product if units is None else units)
     classes = sorted({item.class_name for item in (*expectations, *hints)})
+    hosts = witness_hosts(snapshot, settings.source, selected, (*expectations, *hints)) if witness_unobserved else {}
+    retained_hosts = {row["unit"] for row in hosts.values()} - {None}
+    baselines, observed_flags, supplements = {}, defaultdict(set), []
     hint_trials = {item.interpretation_id: {"count": 0, "flags": set(), "outcomes": set()} for item in hints}
     rows, observations, errors, attempts = [], [], [], 0
     command_for = command_for if command_for is not None else lambda path: ()
@@ -63,6 +77,28 @@ def check_layout(root: Path, *, units=None, compiler=None, command_for=None, pro
     def unchanged():
         if settings.snapshot(root, metadata) != before or database.read_bytes() != database_bytes:
             raise ValueError("source, compiler policy or compilation database changed during layout coverage")
+
+    def record_layouts(unit, flags, layouts, witnesses):
+        for name in layouts:
+            observed_flags[name].add(flags)
+        for kind, items, compare in (("member", members, check_member), ("base", bases, check_base),
+                                     ("conventional_member", hints, check_offset)):
+            for item in items:
+                if item.class_name not in layouts:
+                    continue
+                compared = compare(item, layouts[item.class_name])
+                if kind == "conventional_member":
+                    trial_info = hint_trials[item.interpretation_id]
+                    trial_info["count"] += 1
+                    trial_info["flags"].add(flags)
+                    trial_info["outcomes"].add(compared["result"])
+                    if compared["result"] == Result.PASS:
+                        continue
+                rows.append({"kind": kind, "expectation": asdict(item),
+                             "interpretation_id": item.interpretation_id,
+                             "unit": unit, "flags": list(flags),
+                             "layout_basis": "same_tu_probe" if item.class_name in witnesses else "product_object",
+                             **compared})
 
     trial, total = 0, len(selected) * len(settings.flag_sets)
     for unit in selected:
@@ -95,6 +131,8 @@ def check_layout(root: Path, *, units=None, compiler=None, command_for=None, pro
                         unavailable[name] = str(error)
                     except ValueError as error:
                         unavailable[name] = str(error)
+                if unit in retained_hosts:
+                    baselines[unit, flags] = obj, command, set(missing)
                 if witness_missing and missing:
                     from .layout_witness import missing_layout_witnesses
                     probed = missing_layout_witnesses(root, unit, sorted(missing), obj, compiler,
@@ -122,31 +160,56 @@ def check_layout(root: Path, *, units=None, compiler=None, command_for=None, pro
                                      "reason": unavailable.get(name, "complete compiler definition parsed")})
                 if observation == "unmeasurable" or (name in witnesses and witnesses[name]["result"] != Result.PASS):
                     errors.append(observations[-1])
-            for kind, items, compare in (("member", members, check_member), ("base", bases, check_base)):
-                for item in items:
-                    if item.class_name not in layouts:
-                        continue
-                    rows.append({"kind": kind, "expectation": asdict(item),
-                                 "interpretation_id": item.interpretation_id,
-                                 "unit": unit, "flags": list(flags),
-                                 "layout_basis": "same_tu_probe" if item.class_name in witnesses else "product_object",
-                                 **compare(item, layouts[item.class_name])})
-            for item in hints:
-                if item.class_name not in layouts:
+            record_layouts(unit, flags, layouts, witnesses)
+            if progress:
+                progress({**event, "event": "trial_finish", "elapsed_seconds": monotonic() - started})
+    if witness_unobserved:
+        from .layout_witness import missing_layout_witnesses
+        groups = defaultdict(list)
+        for name in classes:
+            for flags in settings.flag_sets:
+                if flags in observed_flags[name]:
                     continue
-                compared = check_offset(item, layouts[item.class_name])
-                trial_info = hint_trials[item.interpretation_id]
-                trial_info["count"] += 1
-                trial_info["flags"].add(flags)
-                trial_info["outcomes"].add(compared["result"])
-                # Keep every counterexample, but not millions of repeated good
-                # header observations. Coverage and counts retain their trials.
-                if compared["result"] != Result.PASS:
-                    rows.append({"kind": "conventional_member", "expectation": asdict(item),
-                                 "interpretation_id": item.interpretation_id,
-                                 "unit": unit, "flags": list(flags),
-                                 "layout_basis": "same_tu_probe" if item.class_name in witnesses else "product_object",
-                                 **compared})
+                unit = hosts[name]["unit"]
+                saved = baselines.get((unit, flags))
+                if saved is None or name not in saved[2]:
+                    supplements.append({"class_name": name, "unit": unit, "flags": list(flags),
+                                        "result": Result.UNKNOWN,
+                                        "reason": "no valid non-emitting baseline at the selected literal-include host"})
+                else:
+                    groups[unit, flags].append(name)
+        for (unit, flags), names in sorted(groups.items()):
+            unchanged()
+            started = monotonic()
+            event = {"unit": unit, "flags": list(flags), "classes": names,
+                     "trial": trial + 1, "total": total + len(groups), "phase": "unobserved_witness"}
+            trial += 1
+            if progress:
+                progress({**event, "event": "trial_start"})
+            obj, command, _ = baselines[unit, flags]
+            try:
+                probed = missing_layout_witnesses(root, unit, names, obj, compiler, command, flags + settings.layout_flags)
+                attempts += probed["compile_attempts"]
+                witnessed = probed["witnesses"]
+            except (OSError, ValueError) as error:
+                witnessed = [{"class_name": name, "result": Result.UNKNOWN, "compiler_layout": None,
+                              "reason": str(error)} for name in names]
+            unchanged()
+            layouts, witnesses = {}, {}
+            for witness in witnessed:
+                name = witness["class_name"]
+                present = witness["result"] == Result.PASS and witness["compiler_layout"] is not None
+                if present:
+                    layouts[name], witnesses[name] = witness["compiler_layout"], witness
+                observation = {"class_name": name, "unit": unit, "flags": list(flags),
+                               "observation": "witnessed" if present else "no_complete_definition" if declaration_absent(witness) else "unmeasurable",
+                               "witness": witness, "reason": witness["reason"], "phase": "unobserved_witness"}
+                observations.append(observation)
+                supplements.append({"class_name": name, "unit": unit, "flags": list(flags),
+                                    "result": Result.PASS if present else Result.UNKNOWN, "reason": witness["reason"]})
+                if not present:
+                    errors.append(observation)
+            record_layouts(unit, flags, layouts, witnesses)
             if progress:
                 progress({**event, "event": "trial_finish", "elapsed_seconds": monotonic() - started})
     # Unlike spelling trials, ABI observations are not alternatives. Every
@@ -191,6 +254,7 @@ def check_layout(root: Path, *, units=None, compiler=None, command_for=None, pro
             "conventional_offsets": {"enabled": conventional_offsets, "hints": len(hints), "errors": hint_errors,
                                      "excluded_component_roots": dependencies},
             "witness_missing": witness_missing,
+            "unobserved_witnesses": {"enabled": witness_unobserved, "hosts": hosts, "attempts": supplements},
             "witnessed_definitions": sum(row["observation"] == "witnessed" for row in observations),
             "absent_definitions": sum(row["observation"] == "no_complete_definition" for row in observations),
             "input_fingerprint": digest({"inputs": before, "database": database_bytes.hex()}),

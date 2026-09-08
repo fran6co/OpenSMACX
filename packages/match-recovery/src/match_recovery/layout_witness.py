@@ -68,10 +68,11 @@ def _absence_witnesses(compile, original, probes):
 def missing_layout_witnesses(root, unit, names, baseline, compiler, command, flags):
     """Probe missing definitions only; never replace a malformed/observed one.
 
-    One unchanged replica controls the TU's private include context. Each class
-    then needs an emitted probe and a changed-body control under identical
-    flags. Missing definitions need independent counterfactual controls; failed
-    controls remain unknown. Reports are transient, not source claims.
+    One unchanged replica controls the TU's private include context. Classes
+    share a probe/control compilation, but every probe symbol must change and
+    every class layout must agree. Failed groups are split and freshly measured;
+    no partial good result escapes a failed batch. Missing definitions need
+    independent counterfactual controls. Reports are transient, not source claims.
     """
     root = Path(root).resolve()
     source = local_path(root, unit)
@@ -115,13 +116,13 @@ def missing_layout_witnesses(root, unit, names, baseline, compiler, command, fla
             {"class_name": name, "result": Result.UNKNOWN, "reason": str(error),
              "replica_control": Result.UNKNOWN, "compiler_layout": None} for name in names]}
 
+    pending_probes = []
     for name in names:
         identifier = "match_recovery_layout_" + digest([unit, name, original.hex()])[:24]
         symbol = "_" + identifier  # Explicit i386 C linkage, not a guessed class method.
         row = {"class_name": name, "result": Result.UNKNOWN, "compiler_layout": None,
                "replica_control": Result.PASS, "probe_control": Result.UNKNOWN,
                "probe_symbol": symbol, "basis": "same_tu_pointer_parameter_probe"}
-        absence_eligible = False
         try:
             if identifier.encode() in original or any(s.name == symbol for s in baseline.symbols.values()):
                 raise ValueError("layout witness name collides with product input")
@@ -130,29 +131,49 @@ def missing_layout_witnesses(root, unit, names, baseline, compiler, command, fla
                                for part in name.split("::"))
             prefix = ("\n\n" + guards + '\nextern "C" int ' + identifier +
                       "(" + name + "* object) { return ").encode("ascii")
-            absence_eligible = True
-            probe = compile(original + prefix + b"0; }\n")
+            pending_probes.append((row, identifier, guards, prefix))
+        except (OSError, ValueError) as error:
+            row["reason"] = str(error)
+        rows.append(row)
+
+    def check_present(pending):
+        if not pending:
+            return
+        absence_eligible = True
+        try:
+            probe = compile(original + b"".join(prefix + b"0; }\n" for _, _, _, prefix in pending))
             try:
-                layout = ClassLayouts(probe).layout(name)
+                types = ClassLayouts(probe)
+                layouts = {row["class_name"]: types.layout(row["class_name"]) for row, _, _, _ in pending}
             except ClassNotEmitted:
                 raise
             except ValueError:
                 absence_eligible = False  # Unsupported definitions are not absent.
                 raise
-            absence_eligible = False  # Never replace an observed class or failed body control.
-            probe_signature = function_signature(probe, symbol)
-            control = compile(original + prefix + b"1; }\n")
-            if function_signature(control, symbol) == probe_signature:
-                raise ValueError("layout witness changed-body control was not observed")
-            if ClassLayouts(control).layout(name) != layout:
-                raise ValueError("layout witness declaration differs between probe and control")
-            row.update(result=Result.PASS, compiler_layout=layout, probe_control=Result.PASS,
-                       reason="same-TU declaration emitted with replica and changed-body controls")
+            absence_eligible = False  # Observed classes and failed body controls cannot become absence proofs.
+            control = compile(original + b"".join(prefix + b"1; }\n" for _, _, _, prefix in pending))
+            types = ClassLayouts(control)
+            for row, _, _, _ in pending:
+                if function_signature(control, row["probe_symbol"]) == function_signature(probe, row["probe_symbol"]):
+                    raise ValueError("layout witness changed-body control was not observed")
+                if types.layout(row["class_name"]) != layouts[row["class_name"]]:
+                    raise ValueError("layout witness declaration differs between probe and control")
         except (OSError, ValueError) as error:
-            row["reason"] = str(error)
-            if absence_eligible:
-                pending_absences.append((row, identifier, guards))
-        rows.append(row)
+            if len(pending) > 1:
+                middle = len(pending) // 2
+                check_present(pending[:middle])
+                check_present(pending[middle:])
+            else:
+                row, identifier, guards, _ = pending[0]
+                row["reason"] = str(error)
+                if absence_eligible:
+                    pending_absences.append((row, identifier, guards))
+        else:
+            for row, _, _, _ in pending:
+                row.update(result=Result.PASS, compiler_layout=layouts[row["class_name"]], probe_control=Result.PASS,
+                           reason="same-TU declaration emitted with replica and changed-body controls")
+
+    check_present(pending_probes)
 
     def check_absences(pending):
         if not pending:

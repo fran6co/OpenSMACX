@@ -785,7 +785,7 @@ def test_json_is_only_json(claimed, monkeypatch):
 
 @pytest.mark.parametrize("audit", ["build", "compiler-work", "stale_references.py",
     "check-symbols", "check-mappings", "class-debt", "storage",
-    "check-initializers", "check-source", "header_offsets.py", "check-data", "check-layout"])
+    "check-initializers", "check-source", "check-data", "check-layout"])
 def test_failed_project_audit_prevents_acceptance(claimed, monkeypatch, project_audits, audit):
     monkeypatch.setattr(osmx, "_check_one_file", fake_file_result({}))
     project_audits.add(audit)

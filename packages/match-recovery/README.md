@@ -411,6 +411,36 @@ aggregated per hint; every nonpassing observation retains its TU and flags.
 This opt-in diagnostic does not replace a project's legacy gate until its coverage
 and compiler counterexamples have been investigated and cutover controls verified.
 
+`--witness-unobserved` adds a bounded second stage after the ordinary product
+trials. For each class/flag set without any complete definition, it selects one
+existing TU using the shortest literal-include path to the source declaration,
+then smaller TU text and pathname as tie-breakers. The normal baseline object is
+retained only within this measurement invocation. Its unchanged-replica and
+changed-body overlay controls must pass before the class supplies a witness.
+Co-located classes share the probe and changed-body compilation, with independent
+symbol-change and layout-agreement checks for every class. Failed batches are
+split into freshly compiled groups; partial successes never escape a failed batch.
+Positive batches need three overlay compilations including the unchanged replica;
+unsupported or absent declarations can require extra split/absence controls.
+Includes select a candidate, not proof of visibility; absent declarations, failed
+controls, macro includes without a literal host and unsupported types remain
+unknown. Alternative candidate hosts are reported, not exhaustively compiled.
+This never replaces an already observed definition or hides an ordinary TU's
+counterexample. It is distinct from `--witness-missing`, which probes missing
+definitions in every selected TU. Neither proves ABI independence or lifetime.
+
+A project can enable these source dialect/coverage options for both the installed
+gate and standalone checks without adding a checker script:
+
+```json
+"layout": {"conventional_offsets": true, "witness_unobserved": true}
+```
+
+Missing options default to false. Explicit `--witness-missing` uses per-TU
+witnessing instead of the configured unobserved-only mode. Both modes cannot be
+explicitly requested together. Reports retain host selection and every unresolved
+supplement; no coverage decision or compiler result is written into source.
+
 The standalone command and whole-project gate emit layout trial start/finish
 progress to stderr, naming the TU, trial index/total and elapsed time. The Python
 `check_layout` API accepts an optional `progress` callback with those events and

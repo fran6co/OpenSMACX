@@ -1760,7 +1760,6 @@ def check(
         subprocess.run,
         [sys.executable, "-m", "match_recovery.cli", "check-source", "--jobs", "8", "--summary"],
         cwd=REPO_ROOT, capture_output=True, text=True)
-    offsets_job = _audit("header_offsets.py", "--check")
 
     # DOES IT STILL LINK? The gate compiles each body on its own and never
     # built the executable, so a tree could be 2,532-verified green while
@@ -1897,19 +1896,7 @@ def check(
         for line in said[:-1][:4]:
             typer.secho(f"  {line}", fg=typer.colors.RED)
 
-    # OFFSET MAPS: recovering members from a walk derived from the header
-    # needs a consistent layout. A walk that shifts by four
-    # bytes renames every access after it to the WRONG member - and no byte
-    # comparison can see it, because both spellings compile to the identical
-    # offset. The invariant is self-verifying: a member named `field_NN_`
-    # states its own offset, and an annotated one states it twice.
-    offsets = offsets_job.result()
     audits.shutdown()
-    if not as_json:
-        said = offsets.stdout.strip().splitlines() or [""]
-        typer.secho("  " + said[-1],
-                    fg=typer.colors.RED if offsets.returncode
-                    else typer.colors.WHITE)
 
     # Run after all build/symbol jobs have finished: native data measurement
     # shares the project's compiler environment, not an independent Wine slot.
@@ -1948,7 +1935,6 @@ def check(
         typer.secho("  " + coverage_note, fg=typer.colors.RED if coverage["result"] != "pass" else typer.colors.WHITE)
 
     code = (1 if regressed or dangling or unread or link.returncode
-            or offsets.returncode
             or vtables.returncode or stale.returncode or symbols["result"] == "fail"
             or index.returncode or coverage["result"] == "fail" or debt.returncode
             or annotations.returncode or storage.returncode
@@ -2007,7 +1993,6 @@ def check(
                 "initializers": values["result"] == "fail",
                 "initial_data": initial_data["result"] == "fail",
                 "layout_coverage": layouts["result"] == "fail",
-                "header_offsets": bool(offsets.returncode),
                 "claim_identities": coverage["result"] == "fail",
                 "regressed": bool(regressed),
                 "dangling": bool(dangling),

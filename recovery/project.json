@@ -4,6 +4,10 @@
   "preparation": "recovery/prepare.json",
   "gate": "recovery/gate.json",
   "audits": "recovery/audits.json",
+  "layout": {
+    "conventional_offsets": true,
+    "witness_unobserved": true
+  },
   "initializers": {
     "ruleset": "cpp-trailing-address-v1",
     "probe_bytes": 4,

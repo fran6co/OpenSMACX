@@ -137,6 +137,7 @@ class Case:
     result: str
     mutate: object
     subject: tuple[str, str, str] | None = None
+    layout_subject: tuple[str, str] | None = None
 
 
 CASES = (
@@ -173,9 +174,14 @@ CASES = (
     Case("historical_claim_removed", "claim-identities", "fail",
          lambda e: e.replace("src/palette.cpp", e.claim(), e.claim().replace("// ORIGINAL:", "// ORIGINAl:"))),
     Case("same_count_claim_swap", "claim-identities", "fail", swap_claim),
-    Case("offset_walk_disagrees", "project:conventional-header-offsets", "fail",
+    Case("conventional_offset_disagrees", "layout", "fail",
          lambda e: e.replace("src/basewin.h", "uint32_t field_1D04C_;  // 0x1D04C",
-                            "uint32_t field_1D04C_;  // 0x1D0FC")),
+                            "uint32_t field_1D04C_;  // 0x1D0FC"),
+         layout_subject=("BaseWin", "field_1D04C_")),
+    Case("unobserved_offset_disagrees", "layout", "fail",
+         lambda e: e.replace("src/hypothesis_layouts.h", "class Video {\n public:\n  uint32_t field_0_;  // 0x0",
+                             "class Video {\n public:\n  uint32_t field_0_;  // 0x4"),
+         layout_subject=("Video", "field_0_")),
     Case("source_layout_expectation", "layout", "fail",
          lambda e: e.replace("src/radiobutton.h",
                             "RECOVERY_MEMBER: v3 RadioButton unchecked_sprite_ Sprite* 0x4 0x0060D750",
@@ -212,6 +218,11 @@ def assert_control(case, code, report, stderr):
         collection, field, expected = case.subject
         rows = [row for row in stages[case.stage]["report"][collection] if row[field] == expected]
         assert rows and all(row["result"] == case.result for row in rows)
+    if case.layout_subject:
+        name, member = case.layout_subject
+        rows = [row for row in stages["layout"]["report"]["expectations"]
+                if row["expectation"]["class_name"] == name and row["expectation"].get("member") == member]
+        assert any(row["result"] == case.result for row in rows), "intended class/member counterexample was not observed"
     if case.name == "source_symbol_missing":
         # The same damage covers both former missing-name cases in one full
         # compiler run: unknown emission must also fail the built byte claim.
@@ -393,7 +404,7 @@ def test_damage_anchor_still_applies_and_restores_private_source(case, tmp_path)
     # source. A legitimate rename/rehoming should update its dependent control
     # before an hours-long full-gate run discovers the stale anchor.
     names = ["src/palette.cpp", "src/palette.h", "src/caviar.cpp", "src/radiobutton.cpp",
-             "src/radiobutton.h", "src/basewin.h", "src/sprite.cpp", "src/IMAGE_PIN", "README.md",
+             "src/radiobutton.h", "src/basewin.h", "src/hypothesis_layouts.h", "src/sprite.cpp", "src/IMAGE_PIN", "README.md",
              "recovery/audits.json", "packages/match-recovery/src/match_recovery/source/writer.py"]
     seed = next(iter(sorted((ROOT / "src/unrecovered").glob("*.cpp"))), None)
     if seed is not None:
