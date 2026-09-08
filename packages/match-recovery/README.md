@@ -1561,6 +1561,14 @@ control or compare only the coarse match tier to bypass that refusal.
 The source map is read once per deck. Candidates compile at the requested width
 (default 1), with strict byte/boundary/reference checks shared with ordinary task
 measurement. Every TU in a candidate sees the same complete file overlay.
+Successful unchanged-source replica controls for referenced object owners are
+reused within that deck and exact flag set, including when concurrent candidates
+discover the same dependency. The invocation retains immutable replica bytes;
+parsed objects and candidate dependency compiles are not shared. Failed controls
+are not cached, every candidate still compiles its complete overlay, and the
+source/image/compiler/task freshness checks remain in force. Dependency rows
+report `replica_reused`; compile-attempt counters count actual compiler calls.
+Nothing survives as a persistent object or verdict cache.
 An authorized task function may propose a different emitted `// symbol` without
 editing the live tree. Each candidate reparses its edited annotations and resolves
 its own function/reference bindings; `binding_changes` lists the old and proposed

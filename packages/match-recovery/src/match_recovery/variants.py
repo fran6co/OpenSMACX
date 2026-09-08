@@ -3,6 +3,7 @@
 from concurrent.futures import ThreadPoolExecutor
 import hashlib
 from pathlib import Path
+from threading import Lock
 
 from .application_binary import check_compiled, select_bindings
 from .coff_replica import function_signature, object_signature
@@ -236,6 +237,11 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
     flags_list = tuple(flags + settings.layout_flags for flags in settings.flag_sets) if any(item.span is not None for item in data_bindings) else settings.flag_sets
     controls, baselines, trials = [], [], []
     attempts = 0
+    # Only successful unchanged-source controls are reusable, within this
+    # frozen deck and exact flag set. Keep bytes, not mutable parsed objects.
+    # Candidate overlays and per-file damage controls always compile afresh.
+    support_replicas, support_locks = {}, {}
+    support_index_lock = Lock()
 
     def fresh():
         if (settings.snapshot(root, metadata) != before
@@ -253,15 +259,25 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
                 try:
                     if Path(unit).suffix not in settings.unit_extensions:
                         raise ValueError("object owner is not a configured translation unit")
-                    support_attempts += 1
-                    original = Coff(compiler(root / unit, (), flags))
-                    support_attempts += 1
-                    replica = Coff(compiler.overlay(root / unit, originals, (), flags))
-                    if object_signature(original) != object_signature(replica):
-                        raise ValueError("unchanged-source replica differs from the original compilation: " + unit)
+                    key = (unit, flags)
+                    with support_index_lock:
+                        lock = support_locks.setdefault(key, Lock())
+                    # A dependency first discovered by concurrent candidates
+                    # needs one control, not one racing compilation per worker.
+                    with lock:
+                        replica_data = support_replicas.get(key)
+                        control["replica_reused"] = replica_data is not None
+                        if replica_data is None:
+                            support_attempts += 1
+                            original = Coff(compiler(root / unit, (), flags))
+                            support_attempts += 1
+                            replica_data = compiler.overlay(root / unit, originals, (), flags)
+                            if object_signature(original) != object_signature(Coff(replica_data)):
+                                raise ValueError("unchanged-source replica differs from the original compilation: " + unit)
+                            support_replicas[key] = replica_data
                     control["result"] = Result.PASS
                     if contents is None:
-                        objects[unit] = replica
+                        objects[unit] = Coff(replica_data)
                     else:
                         support_attempts += 1
                         objects[unit] = Coff(compiler.overlay(root / unit, contents, (), flags))

@@ -128,7 +128,7 @@ def test_changed_owner_source_invalidates_the_whole_measurement(project):
         check(project, failure=change_source)
 
 
-@pytest.mark.parametrize("bad_replica", [False, True])
+@pytest.mark.parametrize("bad_replica", [False, True, "second"])
 def test_candidate_new_global_reference_gets_its_own_owner_replica_control(project, bad_replica):
     from match_recovery.variants import measure_variants
     task = TaskStore(project).read("owner")
@@ -136,7 +136,8 @@ def test_candidate_new_global_reference_gets_its_own_owner_replica_control(proje
     deck = {"schema_version": 2, "source": "code/caller.cc", "entity_id": task.subjects[0].entity_id,
             "files": {"code/caller.cc": {"source_sha256": hashlib.sha256(original).hexdigest(),
                       "before": "int f();", "control": "int f(); // damaged", "entity_id": task.subjects[0].entity_id}},
-            "candidates": {"reference": {"code/caller.cc": "int f(); // proposed"}}}
+            "candidates": {name: {"code/caller.cc": "int f(); // proposed"}
+                           for name in ("reference", "another-reference")}}
     calls = []
     class Compiler:
         def __call__(self, source, command, flags):
@@ -149,7 +150,7 @@ def test_candidate_new_global_reference_gets_its_own_owner_replica_control(proje
                 # No candidate may borrow a dependency from the actual tree
                 # without proving the same overlay mechanism works for it.
                 raw = bytearray(data_object())
-                if bad_replica:
+                if bad_replica is True or bad_replica == "second" and flags == ("second",):
                     raw[60] = 1
                 return bytes(raw)
             content = replacements["code/caller.cc"]
@@ -160,11 +161,91 @@ def test_candidate_new_global_reference_gets_its_own_owner_replica_control(proje
     assert report["compile_attempts"] == len(calls)
     assert all(not row["object_dependencies"] for row in report["baseline"])
     for row in report["candidates"]:
+        broken = bad_replica is True or bad_replica == "second" and row["flags"] == ["second"]
         assert row["object_dependencies"][0]["unit"] == "code/global.cc"
-        assert row["target"]["result"] == ("unknown" if bad_replica else "pass")
-        if bad_replica:
+        assert row["target"]["result"] == ("unknown" if broken else "pass")
+        if broken:
             assert "replica differs" in row["compile_errors"]["code/global.cc"]
+            assert not row["object_dependencies"][0]["replica_reused"]
         else:
             assert row["object_dependencies"][0]["result"] == "pass"
+    for flag in ("first", "second"):
+        broken = bad_replica is True or bad_replica == "second" and flag == "second"
+        assert calls.count(("global.cc", (flag,), "direct")) == (2 if broken else 1)
     assert report["status"] == ("incomplete" if bad_replica else "scored")
     assert (project / "code/caller.cc").read_bytes() == original
+
+
+@pytest.mark.parametrize("jobs", [1, 4])
+@pytest.mark.parametrize("baseline_reference", [False, True])
+def test_deck_reuses_only_dependency_controls_per_flag_and_invocation(project, jobs, baseline_reference):
+    from collections import Counter
+    from match_recovery.variants import measure_variants
+    task = TaskStore(project).read("owner")
+    original = (project / "code/caller.cc").read_bytes()
+    deck = {"schema_version": 2, "source": "code/caller.cc", "entity_id": task.subjects[0].entity_id,
+            "files": {"code/caller.cc": {"source_sha256": hashlib.sha256(original).hexdigest(),
+                      "before": "int f();", "control": "int f(); // damaged", "entity_id": task.subjects[0].entity_id}},
+            "candidates": {name: {"code/caller.cc": "int f(); // " + name}
+                           for name in ("proposed-one", "proposed-bad", "proposed-two")}}
+    calls = []
+    reference = coff_fixture(b"\xa1\0\0\0\0\xc3", relocation=(1, 1, 6))
+    baseline = reference if baseline_reference else coff_fixture(b"\x90" * 5 + b"\xc3")
+
+    class Compiler:
+        def __call__(self, source, command, flags):
+            calls.append((source.name, flags, "direct"))
+            return data_object() if source.name == "global.cc" else baseline
+
+        def overlay(self, source, replacements, command, flags):
+            content = replacements["code/caller.cc"]
+            candidate = next((n for n in deck["candidates"] if n.encode() in content), "replica")
+            calls.append((source.name, flags, candidate))
+            if source.name == "global.cc":
+                # Each candidate must still compile its own dependency. A bad
+                # overlay cannot borrow either the control or a sibling object.
+                return coff_fixture() if candidate == "proposed-bad" else data_object()
+            if b"damaged" in content:
+                return coff_fixture(b"\xeb\xfe")
+            return reference if candidate != "replica" else baseline
+
+    for invocation in range(2):
+        start = len(calls)
+        report = measure_variants(project, "owner", project / "image.exe", deck, compiler=Compiler(), jobs=jobs)
+        current = calls[start:]
+        assert report["compile_attempts"] == len(current) == 22
+        assert report["status"] == "scored"  # All compiles succeeded, not all proofs.
+        assert not report["ready_for_collection"]
+        for flag in ("first", "second"):
+            owners = Counter(kind for name, flags, kind in current if name == "global.cc" and flags == (flag,))
+            assert owners == {"direct": 1, "replica": 1, "proposed-one": 1,
+                              "proposed-bad": 1, "proposed-two": 1}
+            controls = [control for row in report["baseline"] + report["candidates"]
+                        if row["flags"] == [flag] for control in row["object_dependencies"]]
+            assert sum(not row["replica_reused"] for row in controls) == 1
+            assert all(row["result"] == "pass" for row in controls)
+        for row in report["candidates"]:
+            assert row["target"]["result"] == ("unknown" if row["name"] == "proposed-bad" else "pass")
+        assert (project / "code/caller.cc").read_bytes() == original
+
+
+def test_dependency_control_reuse_does_not_hide_source_changes(project):
+    from match_recovery.variants import measure_variants
+    task = TaskStore(project).read("owner")
+    original = (project / "code/caller.cc").read_bytes()
+    deck = {"schema_version": 2, "source": "code/caller.cc", "entity_id": task.subjects[0].entity_id,
+            "files": {"code/caller.cc": {"source_sha256": hashlib.sha256(original).hexdigest(),
+                      "before": "int f();", "control": "int f(); // damaged", "entity_id": task.subjects[0].entity_id}},
+            "candidates": {"reference": {"code/caller.cc": "int f(); // proposed"}}}
+    class Compiler:
+        def __call__(self, source, command, flags):
+            return data_object() if source.name == "global.cc" else coff_fixture(b"\xa1\0\0\0\0\xc3", relocation=(1, 1, 6))
+
+        def overlay(self, source, replacements, command, flags):
+            if source.name == "global.cc" and b"proposed" in replacements["code/caller.cc"]:
+                source.write_text(source.read_text() + "// raced\n")
+            if source.name == "caller.cc" and b"damaged" in replacements["code/caller.cc"]:
+                return coff_fixture(b"\xeb\xfe")
+            return self(source, command, flags)
+    with pytest.raises(ValueError, match="candidate source, image, compiler inputs or task changed"):
+        measure_variants(project, "owner", project / "image.exe", deck, compiler=Compiler())
