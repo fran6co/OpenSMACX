@@ -621,6 +621,13 @@ retained build for both proofs. Paths are relative to the project root, except
 the original image path. Output rows contain their relative artifact path, format,
 SHA-256 and size. The command must test those exact artifacts; the verifier
 rechecks their content and rejects symlink substitution after each stage.
+The final native receipt exposes `artifacts`, mapping normalized project-relative
+paths to SHA-256 content hashes. This identifies the exact retained products, not
+the next build or a deployable versioned artifact. Consumers must recheck those
+hashes before using them; the manifest is disposable evidence, not a cached pass.
+Other trusted verifiers may include the same optional field. It is invalid to
+report artifact identities with a non-passing build, and a manifest cannot turn
+failed/unknown acceptance into success.
 
 The command's `protected` array contains only that dimension's obligations. Reply
 with exactly `request_fingerprint`, `result`, `evidence` (nonempty string array),

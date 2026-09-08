@@ -99,6 +99,22 @@ def test_known_failure_remains_actionable_with_other_unknown_proofs(request_data
     assert acceptance_result(1, report, request=request_data) == "fail"
 
 
+@pytest.mark.parametrize("artifacts", [[], {"../outside.exe": "a" * 64},
+                                        {"/absolute.exe": "a" * 64}, {"build/result": "stale"}])
+def test_artifact_manifest_requires_normalized_paths_and_content_hashes(request_data, artifacts):
+    with pytest.raises(ValueError):
+        acceptance_result(0, {**receipt(request_data), "artifacts": artifacts}, request=request_data)
+
+
+def test_manifest_identifies_the_verified_product_without_granting_acceptance(request_data):
+    artifacts = {"build/products/invocation/result.exe": "b" * 64}
+    report = {**receipt(request_data), "artifacts": artifacts}
+    assert acceptance_result(0, report, request=request_data) == "pass"
+    report.update(build="fail", result="fail")
+    with pytest.raises(ValueError, match="passing build"):
+        acceptance_result(1, report, request=request_data)
+
+
 def test_request_itself_cannot_erase_the_need_for_independent_approval(request_data):
     request_data["review"]["decision"] = "request_changes"
     with pytest.raises(ValueError, match="reviewed snapshot"):

@@ -6,6 +6,7 @@ Approving a structural interpretation never establishes binary/build correctness
 
 from pathlib import Path
 
+from .components import relative_path
 from .journal import Journal
 from .model import Dimension, Measurement, Obligation, Result, digest, require_digest, require_text
 from .tasks import entity_id, task_name
@@ -143,9 +144,15 @@ def acceptance_outcome(code: int, report: dict) -> str:
     fields = {"scope", "result", "build", "structure", "references", "obligations", "runtime"}
     receipt = {"request_fingerprint", "measurements", "current"}
     if (not isinstance(report, dict) or not (fields | receipt) <= set(report)
-            or set(report) - fields - receipt - {"findings"} or report["scope"] != "full_project"):
+            or set(report) - fields - receipt - {"findings", "artifacts"} or report["scope"] != "full_project"):
         raise ValueError("acceptance requires a full-project gate report")
     require_digest(report["request_fingerprint"])
+    artifacts = report.get("artifacts", {})
+    if not isinstance(artifacts, dict) or artifacts and report["build"] != "pass":
+        raise ValueError("acceptance artifacts require a passing build")
+    for name, fingerprint in artifacts.items():
+        relative_path(name)
+        require_digest(fingerprint)
     if not isinstance(report["measurements"], list) or not isinstance(report["current"], dict):
         raise ValueError("invalid acceptance measurements")
     seen = set()

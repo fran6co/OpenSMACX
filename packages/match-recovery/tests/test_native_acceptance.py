@@ -101,6 +101,8 @@ def test_native_acceptance_retains_one_fresh_build_for_both_proofs(acceptance, p
     assert report["measurements"] and all(row["result"] == "pass" for row in report["measurements"])
     assert [row["dimension"] for row in proofs] == ["structure", "runtime"]
     assert proofs[0]["build"] == proofs[1]["build"]
+    assert report["artifacts"] == {proofs[0]["build"]["directory"] + "/" + row["path"]: row["sha256"]
+                                   for row in proofs[0]["build"]["outputs"]}
     assert len(list((acceptance / "build/products").iterdir())) == 1
 
 

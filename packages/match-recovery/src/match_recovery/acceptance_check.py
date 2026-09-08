@@ -128,6 +128,7 @@ def measure_acceptance(root: Path, task_name: str, image: Path, request: dict, *
     artifacts = {directory + "/" + relative_path(row["path"]): row["sha256"] for row in built["outputs"]}
     if not artifacts:
         raise ValueError("acceptance requires fresh retained build artifacts")
+    report["artifacts"] = dict(sorted(artifacts.items()))
 
     def fresh():
         source_fresh()

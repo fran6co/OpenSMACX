@@ -672,6 +672,13 @@ baseline compiler/build policy. Its proof-command boundary is documented under
 passing hooks cannot override failing native checks. OpenSMACX has not configured
 those hooks yet, and the application link remains red. This is tested orchestration,
 not a verified autonomous application acceptance pilot.
+`recovery/tests/test_native_acceptance_compiler.py` exercises that installed path
+with a freshly built test-owned executable, local compiler/build/proof commands,
+and the real whole gate and restoration/preservation checks. It rejects both a
+byte-identical wrong hierarchy in the retained build and a runtime-mismatching
+artifact. Its workers/reviewers are deterministic; it does not supply OpenSMACX's
+missing proof coverage. Native receipts expose verified artifact paths/hashes so
+downstream work can identify the tested build without guessing a cache directory.
 
 The report may additionally contain `findings`, an array of
 `{"dimension":"runtime","message":"Explain the measured defect",

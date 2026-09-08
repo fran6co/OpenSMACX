@@ -65,7 +65,7 @@ def initialize(root: Path, target: str, python: str, *, image: Path | None = Non
                                  "flag_sets": [[]], "layout_flags": [],
                                  "unit_extensions": [".cpp", ".c", ".cc", ".cxx"],
                                  "inputs": [], "input_roots": []},
-                 "mappings": {"compile_commands": "build/compile_commands.json"},
+                 "mappings": {"compile_commands": "build/compile_commands.json", "forwarder_macros": []},
                  "build": "recovery/build.json", "gate": "recovery/gate.json", "audits": "recovery/audits.json"})
     publish_json(directory / "build.json", {"schema_version": 1, "artifacts": "build/recovery/builds",
                  "commands": [{"argv": ["{env:RECOVERY_BUILD}", "{root}", "{build}"], "timeout": 3600}],

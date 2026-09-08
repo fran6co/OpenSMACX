@@ -283,11 +283,16 @@ establish completion of this program.
   needed. Synthetic build/history/COFF and subprocess/driver controls exercise
   admission and refusal. OpenSMACX still needs its link fixed, complete proof
   capabilities configured and a real autonomous pilot before acceptance is proven.
-  A compiler-backed control builds its own small C++ reference executable,
-  rejects a byte-exact flattened class, preserves a genuine base/member change
-  across a matching regression, then restores matching and runs the final build.
-  Its worker/reviewer are deterministic test doubles, not a live-agent pilot or
-  evidence of completed OpenSMACX acceptance.
+  The native compiler control now uses the generated driver commands
+  and real gate/restoration/preservation/build/proof subprocesses throughout.
+  It restores the hierarchy through a byte regression and rejects two real
+  retained-build defects: a flattened class with identical method bytes and a
+  differing runtime exit despite passing source measurements. The final native
+  receipt identifies retained artifacts by path/hash. No controlled global-gate
+  response is substituted in this control; workers/reviewers remain test doubles,
+  not a live-agent/game pilot. It replaces the older custom-verifier compiler
+  control while retaining executable-survey and independently bounded binding
+  coverage; Git retains the replaced fixture.
   The package-owned native migration verifier now composes fresh build, bounded
   declarations, references and outside-scope preservation checks; OpenSMACX
   configures that command without a project adapter. A synthetic driver test
