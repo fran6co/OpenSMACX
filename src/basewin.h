@@ -85,6 +85,8 @@ class BaseWin : public ConstructedGraphicWin, public IfaceRegistryEntry {
   // base under the cursor's last position. Body still unrecovered - a
   // pending_bodies forwarder.
   void zoom(int base_id, int wait_done);
+  // Release zoom's optional wait without hiding or destroying the window.
+  void cancel_zoom_wait() { zoom_wait_pending_ = 0; }
 
  public:
   // homed from 0041e8b0.cpp
@@ -523,7 +525,13 @@ class BaseWin : public ConstructedGraphicWin, public IfaceRegistryEntry {
   uint32_t field_40B1C_;  // 0x40B1C
   uint32_t field_40B20_;  // 0x40B20
   uint32_t field_40B24_;  // 0x40B24
-  uint32_t field_40B28_;  // 0x40B28
+  // zoom captures the complete receiver at 0x0041A928, sets this word
+  // at 0x0041A9E2, then tests it around wait_2 at 0x0041AE0A/0x0041AE2D.
+  // exit clears it at 0x0041A4D7. Other window clicks cancel that wait:
+  // InfoWin's absolute 0x006E8150 is TutWinBaseWindow + 0x40B28.
+  // This is a four-byte flag, not the window's visibility or lifetime.
+  // RECOVERY_MEMBER: v1 BaseWin zoom_wait_pending_ 0x40B28 0x0041A920
+  int zoom_wait_pending_;
   uint32_t field_40B2C_;  // 0x40B2C
   uint32_t field_40B30_;  // 0x40B30
   uint32_t field_40B34_;  // 0x40B34

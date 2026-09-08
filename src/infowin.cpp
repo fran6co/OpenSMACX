@@ -18,6 +18,9 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "infowin.h"
+#include "basewin.h"
+#include "tutwin.h"
+#include "console.h"
 #include "council.h"
 #include "datalink.h"
 #include "statuswin.h"
@@ -55,6 +58,27 @@ Return Value: n/a
 Status: Complete
 */
 void InfoWin::on_redraw() {
+}
+
+// ORIGINAL: 0x00458930 ?on_left_click@InfoWin@@QAEXHH@Z 0x00458930-0x004589C0 BYTE_EXACT
+void InfoWin::on_left_click(int, int) {
+    TutWinBaseWindow.cancel_zoom_wait();
+    field_A8_ = 0;
+    ConsoleStatusWin.reset();
+
+    for (int pane = 0; pane < 2; ++pane) {
+        if (visible_characters_[pane] < text_lengths_[pane] + 1) {
+            visible_characters_[pane] = text_lengths_[pane] + 1;
+            draw_text(pane);
+            redraw_phase_ = 0;
+            return;
+        }
+    }
+
+    timer_change(1);
+    visible_characters_[0] = text_lengths_[0] + 1;
+    visible_characters_[1] = text_lengths_[1] + 1;
+    draw_text(-1);
 }
 
 

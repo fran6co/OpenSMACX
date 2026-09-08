@@ -46,10 +46,9 @@ class InfoWin {
 
  public:
   // 0x00458930  ?on_left_click@InfoWin@@QAEXHH@Z - public, __thiscall,
-  // void(int, int). Declared, not defined: the body (00458930.cpp) is still an
-  // artifact, so anything that reaches it goes through the pending_bodies
-  // forwarder until it homes. MainInterface's on_iface_left_click /
-  // on_iface_right_click dispatch here.
+  // void(int, int). MainInterface's two interface click handlers dispatch
+  // here. The coordinates are unused: the first unfinished pane is revealed,
+  // or the next pane state is selected when both are already complete.
   void on_left_click(int xCoord, int yCoord);
 
   void on_right_click(int a, int b);
@@ -143,10 +142,17 @@ class InfoWin {
   uint8_t field_8FC_[0x5C];  // 0x8FC
   uint32_t field_958_;  // 0x958
   uint8_t field_95C_[0x64];  // 0x95C
-  uint32_t field_9C0_;  // 0x9C0
-  uint32_t field_9C4_;  // 0x9C4
-  uint32_t field_9C8_;  // 0x9C8
-  uint32_t field_9CC_;  // 0x9CC
+  // setup_text zeros the selected total at 0x004582CB and accumulates
+  // strlen results at 0x00458338-0x0045834A. on_left_click walks two
+  // four-byte entries at +0x9C0/+0x9C8 (0x00458952-0x0045896B), using
+  // a signed comparison. draw_text loads the selected budget at
+  // 0x004584B3 and tests it signed at 0x004584DA/0x004584DC.
+  // The offset-only annotations do not claim verified primitive-array type
+  // or count; the indexed original accesses establish the source model.
+  // RECOVERY_MEMBER: v1 InfoWin text_lengths_ 0x9C0 0x00456300
+  int text_lengths_[2];
+  // RECOVERY_MEMBER: v1 InfoWin visible_characters_ 0x9C8 0x00458930
+  int visible_characters_[2];
   // RECOVERY_MEMBER: v2 InfoWin button_ PushButton 0x9D0 0x00459500
   PushButton button_;
 };

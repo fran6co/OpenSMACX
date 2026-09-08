@@ -577,6 +577,7 @@ Wave g_BASEWIN_WAVE;  // 0x006EEE68
 // real BaseWin constructor against it and registers the deleting destructor
 // with atexit; here the same recovered constructor runs through this
 // build's own startup and the destructor closes it at exit.
+// RECOVERY_OBJECT: v1 0x006A7628 ?TutWinBaseWindow@@3VBaseWin@@A
 BaseWin TutWinBaseWindow;  // 0x006A7628
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are

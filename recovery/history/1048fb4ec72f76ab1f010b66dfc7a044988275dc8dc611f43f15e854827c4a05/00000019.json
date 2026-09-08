@@ -1,0 +1,35 @@
+{
+  "event_id": "2513251d3c423e9545c8f40cd38e69e4d9426ba42d1072a7027c1f2556a72b9c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/unrecovered/00458930.cpp"
+    ],
+    "evidence": [
+      "Authorize the BaseWin original initializer/zoom/exit evidence for the shared member interpretation and object-start binding; basewin.cpp/.h are already editable. Authorize replacing the unclaimed InfoWin left-click seed with its real product definition. Existing task baseline and historical obligations remain unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4228016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4303136,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4302016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "ba0696d07a1eda26ba9badc78944a6526d8c35af5ddb489402bdc2ea7a38e555",
+  "request_id": "infowin-click-owned-state-scope",
+  "schema_version": 1,
+  "sequence": 19,
+  "stream": "task:radiobutton-lifetime"
+}

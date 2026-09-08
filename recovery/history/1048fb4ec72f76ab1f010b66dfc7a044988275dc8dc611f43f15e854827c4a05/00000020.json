@@ -1,0 +1,18 @@
+{
+  "event_id": "c9f7039414b5dab708740b054b6c6722ab5da1337000cbea629c67dbd129d3dc",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "infowin-click-owned-state",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/basewin.cpp binds the actual TutWinBaseWindow definition to original start 0x006A7628; src/basewin.h names zoom_wait_pending_ with original zoom/exit evidence and a +0x40B28 offset requirement. cancel_zoom_wait clears that member, not a new executable-address alias.",
+      "src/infowin.h declares two real signed character-count arrays with setup_text/draw_text/click evidence. These currently have offset-only native requirements; primitive element type and array count are not yet native proof dimensions. src/infowin.cpp implements on_left_click through the owning BaseWin, real ConsoleStatusWin, and those arrays; the superseded unclaimed seed is removed. Renderer/timer and remaining click-callee recovery, broader lifetime and structural acceptance stay unfinished under the pending interface-click-callee-closure discovery."
+    ]
+  },
+  "previous_event": "2513251d3c423e9545c8f40cd38e69e4d9426ba42d1072a7027c1f2556a72b9c",
+  "request_id": "infowin-click-owned-state-incorporated",
+  "schema_version": 1,
+  "sequence": 20,
+  "stream": "task:radiobutton-lifetime"
+}

@@ -1,0 +1,26 @@
+{
+  "event_id": "ba0696d07a1eda26ba9badc78944a6526d8c35af5ddb489402bdc2ea7a38e555",
+  "payload": {
+    "affects": [
+      "entity-07f42ff674f1124cf0f0bc39494048e7fb8631fc596ed403133bbb649ae348fa",
+      "entity-0c00e4b293a88e2e4c2c87d33fc7a6bcf43814fbfa228ba35579c03d22baf30d",
+      "entity-9f3faf69e687e6a59ef4a668e51cf8f1007056bdf1b8885489749365e7eb6839",
+      "entity-bcca068091632aa3d9567394fd2efefa3af6d482e1fdb15dcc86135ef2f76896",
+      "entity-df16d547f8b8157975f47a7c9eee7b6ab18fa56b3d7dce637292321261cd2db8",
+      "entity-f3ccd3b4e8a744eb684318b53494e7eb7060417a41fc7fd3e5fbabec35e90544"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "infowin-click-owned-state",
+    "evidence": [
+      "Pinned image: 0x004083B0 constructs BaseWin with receiver 0x006A7628; 0x004083D0 destructs that same receiver. zoom captures ECX in ESI at 0x0041A928, sets [ESI+0x40B28] to 1 at 0x0041A9E2, and tests it around the wait_2 loop at 0x0041AE0A/2D. exit clears the same receiver member at 0x0041A4D7. 0x006A7628+0x40B28 equals the absolute word cleared by InfoWin at 0x00458934.",
+      "Original 0x00458952-6B indexes two signed counts at +0x9C8 against totals at +0x9C0; setup_text zeroes each total at 0x004582CB and adds each string length at 0x00458338-4A. draw_text selects the per-pane budget through +0x9B8+index*4 then loads +0x10 at 0x004584B3 and tests it signed at 0x004584DA/DC. Preserve the unresolved renderer/timer family rather than introducing stubs."
+    ],
+    "hypothesis": "InfoWin left-click cancels the existing BaseWin zoom wait through its member at +0x40B28, and completes the first unfinished pane using two signed per-pane character-count arrays. Recover these owners before copying the click seed; fixed address 0x006E8150 is not independent global storage.",
+    "kind": "discovery"
+  },
+  "previous_event": "512b8a0069bb876339b221905da2f0481b81fdac4a3d1de4f04bb9fab15beefb",
+  "request_id": "infowin-click-owned-state",
+  "schema_version": 1,
+  "sequence": 18,
+  "stream": "task:radiobutton-lifetime"
+}
