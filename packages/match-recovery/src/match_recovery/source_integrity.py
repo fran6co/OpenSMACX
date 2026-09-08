@@ -21,7 +21,7 @@ from .source_config import SourceConfiguration
 
 RULES = (
     "marker_coverage", "noop_identity", "keyword_isolation",
-    "demotion_line_count", "demotion_lessons", "lesson_deletion",
+    "demotion_line_count", "demotion_lessons", "lesson_deletion", "binding_evidence",
 )
 # Independent, deliberately broader than the parser's accepted address grammar.
 # Only standalone comment marker heads count here, not quoted documentation,
@@ -36,6 +36,12 @@ def check_annotation_text(path: Path, text: str) -> dict:
 
     def fail(rule, line, reason):
         findings.append({"rule": rule, "line": line, "reason": reason})
+
+    from .binding_source import parse as parse_binding_evidence
+    try:
+        parse_binding_evidence(text, records)
+    except ValueError as error:
+        fail("binding_evidence", 1, str(error))
 
     parsed_lines = {record.line for record in records}
     for line, content in enumerate(text.splitlines(), 1):

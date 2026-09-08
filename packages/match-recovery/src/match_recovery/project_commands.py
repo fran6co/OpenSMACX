@@ -19,6 +19,17 @@ def _progress(event):
 
 
 def register(commands):
+    binding = commands.add_parser("bind", help="Add an explicitly bounded, unverified source identity; never bank matching or infer a body")
+    binding.add_argument("address", type=lambda value: int(value, 0))
+    binding.add_argument("--root", type=Path, default=Path.cwd())
+    binding.add_argument("--image", type=Path, required=True)
+    binding.add_argument("--in", dest="source", required=True)
+    binding.add_argument("--line", type=int, required=True, help="Existing code line to annotate; source bytes are otherwise unchanged")
+    binding.add_argument("--source-sha256", required=True, help="Expected current source digest, not a stored verdict")
+    binding.add_argument("--name", required=True)
+    binding.add_argument("--span", dest="spans", action="append", required=True, help="Explicit original start-end (exclusive), e.g. 0x401000-0x401020")
+    binding.add_argument("--reason", required=True, help="Non-derivable rationale for the name and original extent interpretation")
+    binding.add_argument("--evidence", action="append", required=True, help="Source/manual/external evidence reference; stored beside the mapping")
     survey = commands.add_parser("survey", help="Derive executable starting hints and source correlations; never infer function or TU extents")
     survey.add_argument("--root", type=Path, default=Path.cwd())
     survey.add_argument("--image", type=Path, required=True)
@@ -205,6 +216,17 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
     if (configuration.keys() - {"schema_version", "source", "source_history", "compiler", "measurement", "audits", "build", "mappings", "gate", "preparation"}
             or type(configuration.get("schema_version")) is not int or configuration["schema_version"] != 1):
         raise ValueError("invalid local project command configuration")
+    if arguments.get("command") == "bind":
+        from .binding import bind
+        from .model import Span
+        spans = []
+        for value in arguments["spans"]:
+            parts = value.split("-")
+            if len(parts) != 2:
+                raise ValueError("binding span must be start-end")
+            spans.append(Span(*(int(part, 0) for part in parts)))
+        return 0, bind(root, image=arguments["image"], spans=spans,
+                       **{key: arguments[key] for key in ("address", "name", "source", "line", "source_sha256", "reason", "evidence")})
     if arguments.get("command") == "survey":
         from .image_survey import survey_image
         return 0, survey_image(root, arguments["image"], starts=arguments.get("starts", ()),

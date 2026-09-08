@@ -119,6 +119,9 @@ def task_context(root: Path, name: str, *, restoration_for):
               "decision_state": store.status(name, (entity["entity_id"] for entity in selected)),
               "impact": structural_impact(snapshot, group), "restoration": restoration_for(root, name),
               "source_hints": context_audits(root, files),
+              "binding_evidence": [{"entity_id": row["entity_id"], "path": row["path"], "line": row["line"],
+                                    **row["binding_evidence"]} for row in snapshot["records"]
+                                   if row["entity_id"] in scope and row.get("binding_evidence")],
               "binding_hints": [{"entity_id": row["entity_id"], "path": row["path"], **row["binding_hint"]}
                                 for row in snapshot["records"] if row["entity_id"] in scope and row["binding_hint"]],
               "instructions": ["Read source declarations, definitions and evidence before editing.",

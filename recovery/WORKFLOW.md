@@ -20,6 +20,16 @@ Budget exhaustion, overlapping decodes and unknown indirect paths stay visible.
 Establish bounds and source mappings from evidence before creating a recovery task;
 the survey does not authorize a task or generate C++.
 
+For a genuinely new original identity with an evidence-backed name/extent
+interpretation, the coordinator uses `uv run recover bind --help` to annotate an
+existing C++ candidate through the native writer. Supply original spans, rationale,
+evidence references and the current source digest. The source-owned binding comment
+is not a measurement; executable backing alone cannot prove a function boundary.
+Review/checkpoint it before task creation. This is not the rehoming route for an
+already mapped product function, an implicit scope expansion, or permission to bank
+an unmeasured claim. Compatible seeds remain available; conflicting/overlapping
+identities need separate review. Never create run-log annotations for this step.
+
 Run `uv run recover inventory`, `uv run recover components list`, then
 `uv run recover partition`. Inspect a candidate with
 `uv run recover partition --group class:InfoWin --details --impact` (substitute

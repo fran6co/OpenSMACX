@@ -65,6 +65,12 @@ Function trials also expose `diagnostic.emitted_references` when size or compani
 coverage prevents a full comparison. Check these for accidental recursion, wrong
 base callees and unresolved globals before spending rounds on instruction spelling.
 These are candidate offsets and bindings, not aligned original call sites or proof.
+For a newly identified original function, preserve its boundary/name evidence and
+report the discovery. The coordinator can use `recover bind` for an unclaimed
+source identity after establishing its spans, then authorize the ownership task.
+Read any supplied `binding_evidence` in task context; it records the source mapping's
+rationale, not a current score. Do not use new bindings to bypass scope, duplicate
+an existing product identity or turn survey reachability into a function extent.
 
 Resolve imported calls from the pinned image's import table before adopting a
 seed's API name or typedef. Two APIs can share a signature and compile cleanly

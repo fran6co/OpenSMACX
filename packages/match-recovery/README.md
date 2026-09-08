@@ -98,6 +98,45 @@ proving the dependency's version/ABI. Unmapped candidates still need independent
 boundary/ownership evidence and source mappings before recovery tasks can use them.
 Exit 0 means the survey ran, not that any recovery or executable verification passed.
 
+### Establish a source binding, then authorize recovery
+
+Once analysis establishes a name/extent interpretation, the coordinator can bind
+an existing C++ candidate through the package writer:
+
+```sh
+recover bind 0x401000 --image /path/to/original.exe --in src/owner.cpp --line 12 \
+  --source-sha256 <current-file-sha256> --name '?method@Owner@@QAEHXZ' \
+  --span 0x401000-0x401020 --reason 'Explain the original entry and extent evidence' \
+  --evidence 'source:src/owner.cpp' --evidence 'manual-analysis:original-function-boundary'
+```
+
+Replace these illustrative values with independent evidence; survey reachability
+or the candidate's compiled length does not establish an original extent. Multiple
+`--span` arguments describe separately established pieces, with the entry span first.
+The command checks the image pin and executable file backing, not correctness of
+the proposed name, function boundaries, definition ownership or implementation.
+
+`bind` adds an unclaimed `ORIGINAL` marker before the selected existing code line
+and an immediately adjacent `RECOVERY_BINDING: v1` JSON comment containing only
+`reason` and `evidence`. This is non-derivable binding rationale, not a run log,
+saved score, file-hash ledger or second source catalogue. Native source inventory
+and task context expose that evidence, and source integrity refuses malformed or
+orphaned binding comments. Existing C++ bytes and neighboring annotations remain.
+The supplied source digest is a publication guard and is not saved in source.
+
+Existing product/component identities, conflicting seed spans, overlapping
+identities and linked/stale destinations are refused. Compatible seed attempts
+remain as evidence; they are not erased or demoted. Rehoming, shared tails and
+generated/header mappings require their separate reviewed workflows, not this
+new-body binding operation. Publication uses the existing ignored backup/staging
+mechanism and does not commit or authorize an expanded task. Use a coordinator-owned
+worktree; concurrent uncooperative edits can still race filesystem replacement.
+
+After reviewing the binding, checkpoint source and use `tasks create --group ...`
+or the explicit scope-expansion workflow. Recheck the affected TU. Only `record`
+can bank freshly measured historical byte claims; successful binding is not a
+measurement or acceptance result.
+
 ## Whole-project gate
 
 `recover check --root <project> --image <original> --jobs 1 --summary` runs the

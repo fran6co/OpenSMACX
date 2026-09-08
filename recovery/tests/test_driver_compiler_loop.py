@@ -15,15 +15,16 @@ import pytest
 from capstone import Cs, CS_ARCH_X86, CS_MODE_32
 
 from match_recovery.application_layout import check_base, check_member
+from match_recovery.binding import bind
 from match_recovery.bound_objects import FunctionBinding, check_objects
 from match_recovery.codeview import class_layout
 from match_recovery.driver import drive
+from match_recovery.image_survey import survey_image
 from match_recovery.layout_source import parse_bases, parse_members
 from match_recovery.model import Origin, Span
 from match_recovery.pe_coff import Coff, PeImage
 from match_recovery.processes import run_bounded
-from match_recovery.source.model import DecompilationState, Mode, State
-from match_recovery.source.writer import write
+from match_recovery.project import initialize
 from match_recovery.tasks import Task, TaskStore
 from recovery.environment.compile import compile_object
 from recovery.environment.wine import VC6_ROOT, environment
@@ -67,6 +68,8 @@ def test_compiled_wrong_structure_exact_bytes_migration_and_final_handoff(tmp_pa
     root = tmp_path / "candidate"
     original.mkdir()
     root.mkdir()
+    product = root / "src"
+    product.mkdir()
 
     def compile_units(directory):
         return {name: Coff(compile_object(directory / name, command, FLAGS))
@@ -90,7 +93,7 @@ def test_compiled_wrong_structure_exact_bytes_migration_and_final_handoff(tmp_pa
                                     stdout=diagnostics, stderr=diagnostics, timeout=30)
         return result.returncode
 
-    for directory in (original, root):
+    for directory in (original, product):
         (directory / "owner.h").write_text(CLASSES)
         (directory / "owner.cpp").write_text(BODY)
         (directory / "entry.cpp").write_text(ENTRY)
@@ -128,11 +131,9 @@ def test_compiled_wrong_structure_exact_bytes_migration_and_final_handoff(tmp_pa
                             "owner.h", pin, address_space="pe:va")
 
     flat_body = BODY.replace("bias + member.value", "raw_[0] + raw_[1]")
-    (root / "owner.h").write_text(FLAT)
-    record = DecompilationState(addresses[METHOD], Mode.BODY, State.IMPLEMENTED,
-                                root / "owner.cpp", 2, METHOD,
-                                ((bindings[0].spans[0].start, bindings[0].spans[0].end),))
-    (root / "owner.cpp").write_text(write(flat_body, [record]))
+    (product / "owner.h").write_text(FLAT)
+    (product / "owner.cpp").write_text(flat_body)
+    initialize(root, "controlled-cpp", sys.executable, image=reference_exe)
     (root / ".gitignore").write_text("build/\n")
 
     def git(*args):
@@ -141,16 +142,28 @@ def test_compiled_wrong_structure_exact_bytes_migration_and_final_handoff(tmp_pa
     git("config", "user.name", "Recovery fixture")
     git("config", "user.email", "fixture@example.invalid")
     git("add", ".")
-    git("commit", "-m", "flat byte-exact seed")
+    git("commit", "-m", "unmapped flat source candidate")
+    survey = survey_image(root, reference_exe)
+    assert any(row["origin"]["address"] == addresses[METHOD] for row in survey["candidates"])
+    # The survey supplied a starting hint, not the extent: use independently
+    # bounded reference code above, never candidate size or the survey's walk.
+    bind(root, image=reference_exe, address=addresses[METHOD], name=METHOD, spans=bindings[0].spans,
+         source="src/owner.cpp", line=2, source_sha256=hashlib.sha256((product / "owner.cpp").read_bytes()).hexdigest(),
+         reason="Controlled reference MAP identifies entry; known straight-line reference body bounds exclude padding.",
+         evidence=["test-owned original source/object/MAP", "source:src/owner.cpp"])
+    bound_flat = (product / "owner.cpp").read_text()
+    bound_real = bound_flat.replace("raw_[0] + raw_[1]", "bias + member.value")
+    git("add", "src")
+    git("commit", "-m", "bind independently bounded original method")
     task = Task("owner", "controlled-cpp", "coordinator", "Recover the real base and embedded member",
-                git("rev-parse", "HEAD"), (bindings[0].origin,), ("owner.h", "owner.cpp"),
+                git("rev-parse", "HEAD"), (bindings[0].origin,), ("src/owner.h", "src/owner.cpp"),
                 ("Known reference class model; source markers retain the original method identity.",))
     TaskStore(root).create(task)
     git("add", "recovery")
     git("commit", "-m", "authorize ownership group")
 
     def observe():
-        compiled = compile_units(root)
+        compiled = compile_units(product)
         rows = check_objects(bindings, compiled, image, import_targets=imports)
         layout = class_layout(compiled["owner.cpp"], "Owner")
         base_result, member_result = check_base(base, layout), check_member(member, layout)
@@ -171,22 +184,22 @@ def test_compiled_wrong_structure_exact_bytes_migration_and_final_handoff(tmp_pa
         if stage == "worker":
             if payload["round"] == 1:
                 assert observations[-1][0:2] == ("pass", "fail")
-                (root / "owner.h").write_text(CLASSES)
-                (root / "owner.cpp").write_text(write(BODY.replace("+ input", "- input"), [record]))
+                (product / "owner.h").write_text(CLASSES)
+                (product / "owner.cpp").write_text(bound_real.replace("+ input", "- input"))
             else:
                 assert observations[-1] == ("fail", "pass", "pass")
-                assert (root / "owner.h").read_text() == CLASSES  # No automatic structural rollback.
-                (root / "owner.cpp").write_text(write(BODY, [record]))
+                assert (product / "owner.h").read_text() == CLASSES  # No automatic structural rollback.
+                (product / "owner.cpp").write_text(bound_real)
             return 0, {"discoveries": []}
         if stage == "review":
-            assert (root / "owner.h").read_text() == CLASSES
+            assert (product / "owner.h").read_text() == CLASSES
             return 0, {"snapshot": payload["snapshot"], "decision": "approve",
-                       "evidence": ["controlled reference declarations", "owner.h"],
+                       "evidence": ["controlled reference declarations", "src/owner.h"],
                        "feedback": "The real Base and Member are restored; final verification must run."}
         assert stage == "acceptance"
         rows, base_row, member_row = observe()  # Fresh, not the earlier check's objects.
         assert all(row["result"] == "pass" for row in [*rows, base_row, member_row])
-        candidate_exe = build(root, root / "build" / "acceptance")
+        candidate_exe = build(product, root / "build" / "acceptance")
         assert run(candidate_exe) == reference_exit
         return 0, {"scope": "full_project", "result": "pass", "build": "pass", "structure": "pass",
                    "references": "pass", "obligations": "pass", "runtime": "pass"}
@@ -201,4 +214,4 @@ def test_compiled_wrong_structure_exact_bytes_migration_and_final_handoff(tmp_pa
                      "context", "check", "review", "acceptance"]
     assert observations[-1] == ("pass", "pass", "pass")
     assert TaskStore(root).read(task.task_id).base_revision == task.base_revision
-    assert git("diff", "--name-only", "HEAD").splitlines() == ["owner.cpp", "owner.h"]
+    assert git("diff", "--name-only", "HEAD").splitlines() == ["src/owner.cpp", "src/owner.h"]

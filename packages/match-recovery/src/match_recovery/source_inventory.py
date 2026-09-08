@@ -73,7 +73,10 @@ def _parse_file(raw: bytes, path: Path, root: Path, pin: str, configuration: Sou
     file_digest = hashlib.sha256(raw).hexdigest()
     relative = path.relative_to(root).as_posix()
     # Lossless source bytes remain in the snapshot even for invalid UTF-8.
-    for record in read_text(raw.decode("utf-8", errors="replace"), path):
+    from .binding_source import parse as parse_binding_evidence
+    parsed_records = read_text(raw.decode("utf-8", errors="replace"), path)
+    binding_evidence = parse_binding_evidence(raw.decode("utf-8", errors="replace"), parsed_records)
+    for record in parsed_records:
         origin = Origin(pin, configuration.address_space, record.address)
         invalid_spans = []
         for low, high in record.image_spans:
@@ -99,6 +102,7 @@ def _parse_file(raw: bytes, path: Path, root: Path, pin: str, configuration: Sou
             "tried": list(record.ruled_out), "deferred": list(record.deferred),
             "extract_error": record.extract_error,
             "binding_hint": _lifetime_binding_hint(record) if configuration.symbol_format == "msvc" else None,
+            "binding_evidence": binding_evidence.get(record.line),
         }
         records.append(row)
         for present, dimension, token in (
@@ -120,7 +124,7 @@ def _parser_key() -> str:
     inputs = {path.relative_to(package).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
               for path in sorted(package.rglob("*.py"))}
     import match_recovery
-    for name in ("model.py", "memo.py", "records.py"):
+    for name in ("model.py", "memo.py", "records.py", "binding_source.py"):
         inputs["framework/" + name] = hashlib.sha256(
             (Path(match_recovery.__file__).parent / name).read_bytes()).hexdigest()
     inputs["source_inventory.py"] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()

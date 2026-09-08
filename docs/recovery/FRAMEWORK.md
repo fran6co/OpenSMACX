@@ -21,6 +21,15 @@ indirect-flow gaps and unfinished budgets. It generates no source and invents no
 function/TU boundaries; these observations are inputs for establishing recoverable
 identities, not completed executable-to-source seeding or application coverage.
 
+`recover bind` now bridges independently interpreted original extents to existing
+C++ candidates using guarded source publication. Binding rationale stays beside
+the marker and reaches native task context, while current status remains measured.
+The compiler-backed ownership control now uses initialization, image survey and
+this binding path before its structural-regression/restoration loop. Original
+bounds in that control come from its known reference, not candidate size or survey
+reachability. Its worker/reviewer remain deterministic controls, not a live-agent
+pilot or full OpenSMACX acceptance.
+
 The configured loop now uses the package-owned `tasks check-restoration` command:
 current strict binary/layout measurements are joined to source-history obligation
 identities, including removed claims. These are disposable measurements, not a

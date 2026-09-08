@@ -5,12 +5,12 @@ piece of the binary the project maps carries an annotation in a `.cpp` file
 naming the bytes it claims, and one command asks the original compiler what
 state each piece is in.
 
-Every annotation carries its own `name`, `size`, `spans`, `prototype`,
-`callers`, `kind`, `flags`, direct `calls` and `indirect` call sites. The IDA
-database was the SEED - the only thing that could produce these facts in the
-first place, since the image carries no symbols - and each fact now travels
-with the annotation that needs it, so nothing else has to be consulted to
-read the map.
+New annotations carry original entry identity, a name interpretation and explicit
+image spans. The older catalogue also carries prototypes, callers, kind/flags and
+call-site facts imported from IDA. Those are seed evidence, not fresh measurements
+or a requirement to persist every reproducible observation. C++ declarations own
+the current source structure; explicit binding rationale preserves non-derivable
+evidence beside the original mapping.
 
 Reader/writer: `match_recovery.source`, installed with `match-recovery`.
 Portable tests: `uv run pytest packages/match-recovery/tests`; whole-source and
@@ -18,6 +18,23 @@ build controls: `uv run pytest recovery/tests`. The legacy `tools/osmx.py`
 measurement/gate command remains during cutover; `recover record` owns production
 claim stamping. The active task and
 structural-migration workflow is `recovery/WORKFLOW.md`, not this format reference.
+
+## Original-function binding rationale
+
+The native `recover bind` command adds a new, unverified function identity to an
+existing source TU using explicit original spans, source freshness and evidence.
+It uses the package marker writer; it does not stamp matching, infer boundaries,
+write a body, rehome existing product bindings or authorize recovery scope.
+See the package README for its arguments and publication limits.
+
+An immediately adjacent `// RECOVERY_BINDING: v1 {"reason":"...","evidence":["..."]}`
+comment records the non-derivable basis for that mapping. The adjoining `ORIGINAL`
+marker supplies its identity and spans, so those are not copied into the rationale.
+Both fields are required, with nonempty single-line text and evidence references.
+Malformed/orphaned records fail source integrity. Native inventory and task context
+carry this rationale to agents. Run results, timings, spelling-search attempts and
+current match status do not belong here. Existing historical LEVER/TRIED comments
+remain legacy seed evidence, not the destination for new run logs.
 
 ## Compact object bindings
 
