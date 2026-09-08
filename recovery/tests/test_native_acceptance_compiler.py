@@ -55,7 +55,7 @@ FLAGS = ("/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Z7")
 METHOD = "?add@Owner@@QAEHH@Z"
 
 
-def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, authorize=True, proofs=True):
+def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, authorize=True, proofs=True, preparation=False):
     if not (VC6_ROOT / "BIN/CL.EXE").is_file():
         pytest.skip("VC6 is not installed")
     for name in ("CL", "_CL_", "VC6_INCLUDE"):
@@ -125,6 +125,13 @@ def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, autho
                   measurement={**config["measurement"], "flag_sets": [list(FLAGS[:-1])], "layout_flags": ["/Z7"]},
                   acceptance={"checks": {name: command(name) for name in ("structure", "runtime")} if proofs else {},
                               "inputs": inputs, "environment": env})
+    if preparation:
+        config["preparation"] = "recovery/preparation.json"
+        (local / "preparation.json").write_text(json.dumps({
+            "schema_version": 1, "artifacts": "build/preparation", "input_roots": ["src"],
+            "inputs": inputs, "environment": [],
+            "commands": [{"argv": [*script, "prepare", "{root}", "{build}"], "timeout": 30}],
+            "outputs": [{"path": "compile_commands.json", "format": "compilation-database"}]}))
     config_file.write_text(json.dumps(config))
     if provider is not None:
         (local / "agents.json").write_text(json.dumps(provider))
@@ -180,6 +187,9 @@ def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, autho
              evidence=["test-owned original source, COFF and MAP"])
     git("add", ".")
     git("commit", "-m", "Bind source-owned original evidence and flat candidate")
+    if preparation:
+        from match_recovery.preparation import prepare_project
+        assert prepare_project(root)["published"]
     code, report = record(root, [hex(addresses[METHOD]), hex(addresses["_entry"])], image=image)
     assert code == 0, report
     git("add", "src")
@@ -275,12 +285,13 @@ def test_real_preservation_refusal_drives_scoped_repair_without_reverting_struct
     assert git("rev-parse", "HEAD") == head
 
 
-def test_installed_integration_recheck_uses_destination_without_resetting_task_history(tmp_path, monkeypatch):
+@pytest.mark.parametrize("isolated", [False, True])
+def test_installed_integration_recheck_uses_destination_without_resetting_task_history(tmp_path, monkeypatch, isolated):
     provider = {"schema_version": 1, "artifacts": "build/agents"}
     for role in ("worker", "coordinator", "reviewer"):
         provider[role] = {"command": {"argv": [sys.executable, "recovery/local_agents.py", role, "{request}"], "timeout": 30},
                           "instructions": [], "response": "stdout"}
-    root, image, task, git, evidence = prepared_project(tmp_path, monkeypatch, provider=provider, proofs=False)
+    root, image, task, git, evidence = prepared_project(tmp_path, monkeypatch, provider=provider, proofs=False, preparation=isolated)
     monkeypatch.setenv("RECOVERY_IMAGE", str(image))
     fork = git("rev-parse", "HEAD")
     git("switch", "-c", "incoming")
@@ -298,15 +309,46 @@ def test_installed_integration_recheck_uses_destination_without_resetting_task_h
     git("add", "src/entry.cpp", "recovery/build.json")
     git("commit", "-m", "Independent destination source and build-policy input")
     target = git("rev-parse", "HEAD")
-    git("switch", "-c", "integration-candidate")
-    git("merge", "--no-ff", source, "-m", "Unverified candidate; destination remains unchanged")
-    candidate = git("rev-parse", "HEAD")
-    from match_recovery.preservation import check_preservation
-    assert check_preservation(root, task.task_id)["result"] == "fail"
     context = {"author": task.author, "source_revision": source, "target_revision": target,
                "evidence": ["Test-owned incoming hierarchy and separately advanced destination"]}
     integration = tmp_path / "integration.json"
     integration.write_text(json.dumps(context))
+    if isolated:
+        destination = root
+        root = tmp_path / "isolated-candidate"
+        result = subprocess.run([sys.executable, "-m", "match_recovery.cli", "integrate", "prepare", task.task_id,
+                                 "--root", str(destination), "--context", str(integration), "--worktree", str(root),
+                                 "--branch", "integration-candidate"], cwd=tmp_path, capture_output=True, timeout=60)
+        assert result.returncode == 0, result.stdout.decode() + result.stderr.decode()
+        prepared = json.loads(result.stdout)
+        candidate = prepared["commit"]
+        assert prepared["candidate_created"] and prepared["verification"] == "not_measured"
+        assert git("rev-parse", "HEAD") == target and not git("status", "--porcelain")
+        assert not (root / "build/compile_commands.json").exists()
+        generated = subprocess.run([sys.executable, "-m", "match_recovery.cli", "prepare", "--root", str(root)],
+                                   cwd=tmp_path, capture_output=True, timeout=60)
+        assert generated.returncode == 0, generated.stdout.decode() + generated.stderr.decode()
+        assert json.loads(generated.stdout)["published"]
+        assert all(str(root) in row["directory"] for row in json.loads((root / "build/compile_commands.json").read_text()))
+    else:
+        git("switch", "-c", "integration-candidate")
+        git("merge", "--no-ff", source, "-m", "Unverified candidate; destination remains unchanged")
+        candidate = git("rev-parse", "HEAD")
+    from match_recovery.preservation import check_preservation
+    outside = check_preservation(root, task.task_id)
+    assert outside["result"] == ("unknown" if isolated else "fail")
+    if isolated:
+        # Preparation caches are currently mistaken for historical source
+        # substitutions. Keep the real refusal visible, not a vacuous green
+        # control: metadata cannot supply a C++ #error witness. Proper handling
+        # of generated historical context remains a framework gap.
+        preservation = check_preservation(root, task.task_id, integration=context)
+        assert preservation["result"] == "unknown"
+        missing = {row["path"] for control in preservation["controls"] for row in control["files"]
+                   if row["result"] != "pass"}
+        assert "build/preparation/prepare.lock" in missing
+        assert any(name.endswith("/compile_commands.json") for name in missing)
+        assert all(row["compiled_comparison"] == "pass" for row in preservation["units"])
     checkpoint = tmp_path / "checkpoint.json"
     checkpoint.write_text(json.dumps({"author": task.author, "message": "Verify merged hierarchy in destination context",
                                       "allow_migration": False}))
@@ -314,15 +356,24 @@ def test_installed_integration_recheck_uses_destination_without_resetting_task_h
                              "--acceptance-scope", "change", "--iterations", "1", "--reviewer", "recovery/reviewer.json",
                              "--integration", str(integration), "--checkpoint", str(checkpoint)],
                             cwd=tmp_path, capture_output=True, timeout=180)
-    assert result.returncode == 0, result.stdout.decode() + result.stderr.decode()
+    assert result.returncode == (3 if isolated else 0), result.stdout.decode() + result.stderr.decode()
     report = json.loads(result.stdout)
+    if isolated:
+        assert report["stop_reason"] == "change_unknown" and report["checkpoint_feedback"]["result"] == "unknown"
+        assert not report.get("ready_for_checkpoint") and not report["ready_for_collection"]
+        assert "build/preparation/prepare.lock" in str(report["checkpoint_feedback"]["report"]["diagnostics"])
+        assert TaskStore(root).read(task.task_id) == task
+        assert (root / "src/owner.h").read_text() == evidence + CLASSES
+        assert git("rev-parse", "HEAD") == target and not git("status", "--porcelain")
+        assert subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, check=True).stdout.decode().strip() == candidate
+        return  # Candidate/recipe preparation passed; autonomous admission did not.
     assert report["stop_reason"] == "change_accepted" and report["worker_rounds"] == 0
     assert report["integration"] == context and report["checkpoint"]["published"]
     assert report["checkpoint"]["parent"] == candidate and not report["ready_for_collection"]
     assert TaskStore(root).read(task.task_id) == task
     assert git("rev-parse", "destination") == target and git("rev-parse", "incoming") == source
     assert (root / "src/owner.h").read_text() == evidence + CLASSES
-    assert "return 7;" in entry.read_text() and not git("status", "--porcelain")
+    assert "return 7;" in (root / "src/entry.cpp").read_text() and not git("status", "--porcelain")
 
 
 @pytest.mark.parametrize("damage", [None, "runtime", "structure"])

@@ -58,6 +58,12 @@ def run(executable):
 def main():
     mode = sys.argv[1]
     root = Path.cwd()
+    if mode == "prepare":
+        source, output = Path(sys.argv[2]), Path(sys.argv[3])
+        (output / "compile_commands.json").write_text(json.dumps([
+            {"directory": str(source), "file": str(source / "src" / (name + ".cpp")), "arguments": ["local-compiler"]}
+            for name in ("owner", "entry")]))
+        return 0
     if mode in ("build", "build-runtime-damage", "build-structure-damage"):
         build(Path(sys.argv[2]), Path(sys.argv[3]), damage=mode.split("-")[1] if "-" in mode else None)
         return 0

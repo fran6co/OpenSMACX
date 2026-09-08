@@ -856,10 +856,54 @@ comparison for investigation; it is not admission. Reports distinguish the
 comparison `base_revision` from `task_base_revision` when this context is present.
 
 Combining `run --integration` with `--checkpoint` can publish a verified **local**
-checkpoint on the candidate branch, not fast-forward the destination. Preparing
-isolated merge candidates, resolving conflicts, revalidating destination freshness
-and publishing the destination ref remain unfinished coordinator responsibilities.
+checkpoint on the candidate branch, not fast-forward the destination. Resolving
+conflicts, revalidating destination freshness and publishing the destination ref
+remain unfinished coordinator responsibilities.
 Do not merge unverified candidates onto the production branch to use this command.
+
+The package can now prepare the isolated candidate itself:
+
+```sh
+recover integrate prepare TASK --root DESTINATION --context CONTEXT.json \
+  --worktree NEW_PATH --branch NEW_BRANCH
+```
+
+This explicitly authorizes creating a new local branch/worktree, not collection.
+The destination must be clean, canonical tracked bytes at the context's target
+commit; existing paths/branches, staged work and ongoing Git operations are refused.
+Nested candidate paths must be ignored and outside Git metadata. Keep context JSON
+outside the destination checkout or in ignored coordinator storage. The decision
+is retained in the unverified candidate's Git message; its two parents also pin
+the destination and incoming source. No measurement ledger or new task baseline
+is created.
+
+Git constructs the merge tree without checking it out over either input. Conflicts
+return `merge_conflicts`, affected paths and exit 3; no candidate branch/worktree is
+created for text conflicts. Successful raw materialization preserves executable
+bits and internal file symlinks, then validates scope and both sides' task history.
+Exit 0 / `candidate_prepared` means **unverified preparation only**, with
+`verification: not_measured` and `ready_for_collection: false`. No original image,
+ignored build cache, Wine prefix or credentials are copied. Allocate isolated
+compiler resources and run the project's native `recover prepare` before driving
+verification in the candidate. Neither the destination branch nor its files move.
+
+Preparation disables Git hooks/filters and refuses configured external merge
+drivers or active checkout-filter attributes. Unused global filter configuration
+does not block ordinary source projects. Directory/external/dangling symlinks and
+submodules are unsupported. Git must support `merge-tree --write-tree` and
+`check-attr --source`. A failure after candidate creation retains that path/branch
+for inspection; it never resets or reaps possible work. Local leases and hashes
+are coordination/integrity checks, not a sandbox against arbitrary filesystem writers.
+
+The new-worktree VC6 control exposed a remaining generated-context admission gap:
+preservation currently treats ignored preparation cache metadata (including its
+lock and generated recipe JSON) as historical C++ source substitutions. These
+cannot provide the required C++ damage witnesses, so the real driver correctly
+stops unknown, despite matching compiled residuals. Candidate creation and fresh
+recipes pass; autonomous acceptance of that prepared worktree does **not**. Proper
+historical generated-context handling must be implemented without ignoring genuine
+generated headers or waiving missing controls. The control retains this refusal
+and the unchanged destination; it is not a successful autonomous recovery pilot.
 
 Unrelated unfinished functions need not match the original to accept a change;
 their preservation must still be measured. Global source/mapping/audit defects can

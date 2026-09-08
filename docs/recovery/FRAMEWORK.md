@@ -319,8 +319,16 @@ establish completion of this program.
   destination-before-merge while historical obligations keep the original task base.
   Both incoming/destination task histories must survive and changes remain scoped.
   A live compiler control rechecks a merged hierarchy against independently advanced
-  destination source/policy. Automated candidate preparation, conflict resolution
-  and destination-ref publication are still missing; no source receipt is replayed.
+  destination source/policy. `integrate prepare` now constructs an unverified merge
+  commit and raw isolated worktree while preserving both inputs. Conflicts refuse;
+  no hooks, active checkout filters or external merge drivers silently participate.
+  Compiler allocation, conflict resolution and destination publication remain missing.
+  Fresh recipe generation in that new-worktree VC6 control exposed a real admission
+  gap: ignored preparation cache metadata is incorrectly treated as historical C++
+  substitutions and cannot provide damage witnesses. The driver remains unknown,
+  retains the model and never publishes the destination. Correct generated-context
+  reconstruction is required; do not bypass the missing proof. No source receipt
+  is replayed, and this control is not a completed autonomous acceptance pilot.
   The stronger
   full-project boundary remains explicitly selectable. No local acceptance dispatcher is
   needed. Synthetic build/history/COFF and subprocess/driver controls exercise

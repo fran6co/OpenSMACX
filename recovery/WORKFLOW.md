@@ -553,6 +553,18 @@ historical restoration still starts at the unchanged original task baseline.
 Fresh review and all native change checks are required. This does not create the
 merge candidate, resolve conflicts or publish the destination branch. Keep that
 branch untouched until collection is verified. See the package README for limits.
+`recover integrate prepare <task> --root <destination> --context <context.json>
+--worktree <new-path> --branch <new-branch>` now creates that isolated candidate
+from committed inputs. The destination must be clean at the authorized target;
+existing paths/branches are refused. A clean text merge is unverified (exit 0 only
+means preparation succeeded); conflicts stop without moving either input. Git hooks,
+active checkout filters and external merge drivers cannot silently participate.
+Provide an isolated compiler resource and regenerate recipes in the new checkout;
+no caches, original image or Wine prefix are copied. Post-creation failures retain
+the candidate for inspection. Destination publication and conflict resolution remain
+coordinator work. A live control currently refuses admission after fresh preparation
+because cache metadata lacks C++ preservation witnesses; do not waive that unknown
+or confuse candidate creation with completed acceptance.
 Do not pipe mutating commands or the gate. Do not delete a worktree until its
 changes have been verified as preserved.
 

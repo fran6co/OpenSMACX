@@ -734,6 +734,14 @@ comparisons use the destination revision. `tasks check-preservation --integratio
 exposes the same bounded comparison. Fresh scoped matching/restoration and review
 are still required. This is not automated merge preparation, conflict resolution
 or destination publication; keep unverified candidates off the production branch.
+The separate package command `integrate prepare <task> --context <context.json>
+--worktree <new-path> --branch <new-branch>` can now create an unverified candidate
+without changing the clean destination. It preserves both parent histories and
+refuses conflicts, existing paths/branches and unsupported checkout behavior.
+Compiler resources and fresh recipes are separate. The real new-worktree control
+currently stops unknown at preservation of generated cache metadata; historical
+generated-context handling is still missing. No passing acceptance is inferred
+from a clean merge, successful preparation or matching residual objects.
 Valid refused checkpoints return snapshot-bound `checkpoint_feedback`, including
 bounded native build/preservation/restoration diagnostics. Actionable failures
 and unknowns feed a bounded repair/discovery round, followed by fresh checks and

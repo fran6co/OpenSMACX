@@ -14,7 +14,7 @@ from .source_history import _tree, git
 from .tasks import TaskStore
 
 
-def validate(root, task, value):
+def decision(task, value):
     fields = {"author", "source_revision", "target_revision", "evidence"}
     if not isinstance(value, dict) or set(value) != fields or value["author"] != task.author:
         raise ValueError("integration context requires the task coordinator and exact source/target revisions")
@@ -22,11 +22,18 @@ def validate(root, task, value):
         raise ValueError("integration context requires coordinator evidence")
     for item in value["evidence"]:
         require_text(item, "integration evidence")
-    head = git(root, "rev-parse", "HEAD").decode().strip()
     for key in ("source_revision", "target_revision"):
         revision = value[key]
         if not isinstance(revision, str) or not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", revision):
             raise ValueError("integration context requires full immutable commit ids")
+    return dict(value)
+
+
+def validate(root, task, value):
+    value = decision(task, value)
+    head = git(root, "rev-parse", "HEAD").decode().strip()
+    for key in ("source_revision", "target_revision"):
+        revision = value[key]
         if git(root, "rev-parse", revision + "^{commit}").decode().strip() != revision:
             raise ValueError("integration revision must identify a commit, not an alias or tag object")
         try:

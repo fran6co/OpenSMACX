@@ -37,6 +37,14 @@ def parser() -> argparse.ArgumentParser:
     init.add_argument("--python", default=sys.executable, help="Interpreter with match_recovery installed for native commands")
     init.add_argument("--image", type=Path, help="Original image to pin in source; relative to --root, never copied")
     init.add_argument("--source-root", default="src", help="Project-relative source directory; native starter measurements support PE/COFF i386")
+    integrate = commands.add_parser("integrate", help="Prepare unverified integration candidates without moving the destination")
+    integration_actions = integrate.add_subparsers(dest="action", required=True)
+    candidate = integration_actions.add_parser("prepare", help="Create a new isolated branch/worktree from explicit source and destination commits")
+    candidate.add_argument("task")
+    candidate.add_argument("--root", type=Path, default=Path.cwd())
+    candidate.add_argument("--context", type=Path, required=True, help="Explicit coordinator integration authorization")
+    candidate.add_argument("--worktree", type=Path, required=True, help="New path; nested paths must be ignored")
+    candidate.add_argument("--branch", required=True, help="New branch; existing branches are never overwritten")
     run = commands.add_parser("run", help="Drive bounded recovery through project-local JSON commands")
     run.add_argument("task")
     run.add_argument("--root", type=Path, default=Path.cwd())
@@ -95,6 +103,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         elif args.command == "init":
             from .project import initialize
             output = initialize(args.root, args.target, args.python, image=args.image, source_root=args.source_root)
+        elif args.command == "integrate":
+            from .integration_prepare import prepare_integration
+            context = read_json(args.context if args.context.is_absolute() else args.root / args.context)
+            output = prepare_integration(args.root, args.task, context, worktree=args.worktree, branch=args.branch)
+            print(json.dumps(output, indent=2, sort_keys=True))
+            return 0 if output["candidate_created"] else 3
         elif args.command in ("run", "start"):
             from .driver import drive
             # All relative configuration paths belong to --root, not whichever
