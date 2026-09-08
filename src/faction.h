@@ -664,6 +664,9 @@ uint32_t *const DiploLoanPaymentTable = (uint32_t *)0x0096CAC4;
 // observable behaviour, not a catalogue label.
 extern int PopupWaitActive;  // 0x0093FAC4
 
+// introduce enters diplomacy; diplomacy_ends clears this shared state.
+extern int DiplomacyActive;
+
 // THE SQUARE THE DIPLOMACY SCREEN CENTRES ON, both -1 in the shipped image
 // (meaning "none") and both reset to -1 when the screen comes down.
 // wants_to_speak bounds X against MapLongitudeBounds and Y against

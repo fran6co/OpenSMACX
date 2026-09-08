@@ -1,0 +1,24 @@
+{
+  "event_id": "fc13580957384ccdda314445ebfa68002cfd387349042de21308644f2a71bfd9",
+  "payload": {
+    "affects": [
+      "entity-126f3dea8787aed5eeb92c1748d6886ddf7e25673c89ac1e0f42064c7d3d3d32",
+      "entity-912116a15bf06dcd93143334e7db4b84e6885d4637ab89e8c2560e952737e3e1",
+      "entity-c1167ed69d2794f1c2bc636dc374c8922ea1a9c7338f6a52e092bbd05ab31840"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "infowin-diplomacy-active-producers",
+    "evidence": [
+      "source:src/faction.cpp:DiplomacyActive",
+      "source:src/unrecovered/0053d360.cpp:introduce stores 1 at 0x0093FAB4",
+      "source:src/recovered/units/0053e470.cpp:diplomacy_ends clears 0x0093FAB4"
+    ],
+    "hypothesis": "InfoWin eligibility observes diplomacy activity owned outside InfoWin. Recover introduce and diplomacy_ends against the real DiplomacyActive storage; their fixed-address seed stores do not update a relocated C++ object. The recovered reader and zero initialization do not establish this lifecycle.",
+    "kind": "discovery"
+  },
+  "previous_event": "42620016c0c542678a8c6eaa2cc2b07a974a7b4b7bd8aae1bdbc2bd0f98ba51d",
+  "request_id": "infowin-diplomacy-active-producers",
+  "schema_version": 1,
+  "sequence": 35,
+  "stream": "task:infowin-ownership"
+}

@@ -28,6 +28,8 @@
 #include "time.h"
 #include "font.h"
 #include "pushbutton.h"
+#include "game.h"
+#include "faction.h"
 #include <cstring>
 
 /*
@@ -79,6 +81,61 @@ void InfoWin::on_left_click(int, int) {
     visible_characters_[0] = text_lengths_[0] + 1;
     visible_characters_[1] = text_lengths_[1] + 1;
     draw_text(-1);
+}
+
+// State numbers are presentation modes; their display names remain unknown.
+// Difficulty and contact tests use the owning faction record, not absolute
+// addresses or a manually scaled 0x20CC stride.
+// ORIGINAL: 0x00458DC0 ?state_valid@InfoWin@@QAEHH@Z 0x00458DC0-0x00458EDA BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00458DC0-0x00458EDA; jump table 0x00458EDC-0x00458F0C", "source:src/faction.h:PlayerData.diff_level and diplo_treaties", "git:6455075f:src/unrecovered/00458dc0.cpp"], "reason": "Recover InfoWin mode eligibility using game state and typed faction difficulty/contact fields; switch destinations checked in original image; retired seed is a hint, not product code."}
+int InfoWin::state_valid(int state) {
+    if (state == 0) {
+        return 1;
+    }
+    if (TurnCurrentNum != 0) {
+        switch (state) {
+        case 0:
+        case 11:
+            return 1;
+        case 1:
+            if (TurnCurrentNum >= 50 &&
+                (TurnCurrentNum >= 100 || PlayersData[LocalFaction].diff_level >= DLVL_TALENT)) {
+                return 1;
+            }
+            break;
+        case 3:
+            if (DiplomacyActive) {
+                return 1;
+            }
+            if (TurnCurrentNum >= 50 || PlayersData[LocalFaction].diff_level >= DLVL_TALENT) {
+                for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+                    if (faction != LocalFaction &&
+                        (PlayersData[LocalFaction].diplo_treaties[faction] & DTREATY_COMMLINK)) {
+                        return 1;
+                    }
+                }
+            }
+            break;
+        case 2:
+            if (DiplomacyActive) {
+                return 1;
+            }
+            break;
+        case 4:
+        case 5:
+        case 6:
+            if (TurnCurrentNum >= 20 || (GameState & STATE_IS_SCENARIO)) {
+                return 1;
+            }
+            break;
+        case 7:
+            if ((GameState & STATE_OMNISCIENT_VIEW) && (GameState & STATE_SCENARIO_EDITOR)) {
+                return 1;
+            }
+            break;
+        }
+    }
+    return 0;
 }
 
 

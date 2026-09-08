@@ -90,7 +90,7 @@ class InfoWin {
   // 0xfa x 0xd4 at and above) into the same globals InfoWin::init reads, so
   // its purpose is legible even though its name is not.
   void UNK4();                                        // 0x00458D60
-  int state_valid(int a1);                            // 0x00458DC0
+  int state_valid(int state);                         // 0x00458DC0
   void set_state(int a1, int a2);                     // 0x00458F10
   void timer_change(int a1);                          // 0x00458FF0
   void init();                                        // 0x004592A0

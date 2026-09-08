@@ -46,6 +46,12 @@ uint32_t DiploFrictionFactionID;  // 0x0093FAC0
 // is the prototype the speaking faction brags about.
 int BestProtoForTrade;  // 0x0093F804
 int BestProtoToMention;  // 0x0093FA40
+// introduce (0x0053D360) stores 1 here; diplomacy_ends (0x0053E470)
+// stores 0. InfoWin::state_valid tests the dword at 0x00458E25/0x00458E95.
+// Those producers are still seeds; recovering this storage does not recover
+// their lifecycle. The original four-byte storage is zero-initialized.
+// RECOVERY_OBJECT: v2 0x0093FAB4 0x0093FAB8 ?DiplomacyActive@@3HA 0x0053E470
+int DiplomacyActive;
 // The faction whose voice the next popup speaks in. Popup::start (0x00406380)
 // and popp(0x0048C0A0) are the only readers: each bounds it to 1..7 and, when
 // Players[it].rule_flags has RFLAG_ALIEN, reads the dialogue out of

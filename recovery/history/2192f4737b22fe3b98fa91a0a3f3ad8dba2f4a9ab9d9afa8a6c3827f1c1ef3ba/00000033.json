@@ -1,0 +1,19 @@
+{
+  "event_id": "4b58be474c7e5c3f0c8d8d2066864c5862ae6eb3baa16d613ca12cc3985b535d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/faction.h"
+    ],
+    "evidence": [
+      "source:src/unrecovered/0053d360.cpp:diplomacy_check sets original 0x0093FAB4; source:src/recovered/units/0053e470.cpp:diplomacy_ends clears it; InfoWin::state_valid reads it"
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "5ea72d41e50f65c427e160c4d519139bc5ccd2db6a6c9a1cfb45044a3d3aa89a",
+  "request_id": "infowin-state-valid-diplomacy-storage",
+  "schema_version": 1,
+  "sequence": 33,
+  "stream": "task:infowin-ownership"
+}

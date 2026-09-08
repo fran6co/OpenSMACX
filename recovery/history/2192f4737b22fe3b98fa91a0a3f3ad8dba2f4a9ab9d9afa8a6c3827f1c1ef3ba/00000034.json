@@ -1,0 +1,19 @@
+{
+  "event_id": "42620016c0c542678a8c6eaa2cc2b07a974a7b4b7bd8aae1bdbc2bd0f98ba51d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/unrecovered/00458dc0.cpp"
+    ],
+    "evidence": [
+      "source:src/infowin.cpp:InfoWin::state_valid now owns original 0x00458DC0 and remeasures exact; old seed is unclaimed scaffolding. Correction to prior scope evidence: the writer at 0x0053D360 is introduce, not diplomacy_check."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "4b58be474c7e5c3f0c8d8d2066864c5862ae6eb3baa16d613ca12cc3985b535d",
+  "request_id": "infowin-state-valid-retire-seed",
+  "schema_version": 1,
+  "sequence": 34,
+  "stream": "task:infowin-ownership"
+}
