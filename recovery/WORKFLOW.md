@@ -62,8 +62,9 @@ and run the same recovery driver. Optional `--coordinator` enables bounded disco
 handling. The planner can resume an existing task or select an unoccupied source/class
 group; source and interface ownership are hints, not historical-TU proof. New task
 creation needs committed source/configuration and explicit task-only Git checkpoint
-authority in the planner policy. The package commits only that authorization JSON,
-never recovered C++. Dependency/conflict/unassigned groups remain analysis work.
+authority in the planner policy. The planner commits only that authorization JSON.
+Committing recovered C++ requires separate `--checkpoint` authorization after
+driver verification. Dependency/conflict/unassigned groups remain analysis work.
 See the package README for the exact protocol, scope limits and failure behavior.
 No standing planner policy is enabled for OpenSMACX. Its local compiler-backed
 control uses deterministic reasoning agents; live planning and executable-only
@@ -264,6 +265,17 @@ matching regressions are implicitly permitted. Explicit `--migration` permission
 can instead produce `migration_admitted` / exit 2 with restoration work retained.
 Both are ready for a coordinator checkpoint, not automatic collection or a claim
 that the whole game works. Unknown evidence still refuses admission.
+Optional `--checkpoint <authorization.json>` delegates a local verified commit to
+the package. Its fields are `author` (the independent task coordinator), `message`
+and boolean `allow_migration`. The default should be false; publishing a tracked
+regression additionally needs explicit migration permission and true here. The
+driver holds its lease through verification and publication, refuses staged work
+or an in-progress Git operation, and commits only authorized source and validated
+decision history. It preserves task baselines and does not collect/rebase/push.
+No Git filters or hooks run during publication; required checks belong in the
+verification policy. On interruption, inspect the branch/index before resuming.
+The package README specifies refusal and crash boundaries. This is local checkpoint
+publication, not verification in the eventual integration checkout.
 Valid per-change refusals now retain `checkpoint_feedback` with native diagnostic
 evidence. The worker may repair scoped source or report discoveries within the
 remaining budget; changed source is checked and reviewed again. Unknown without
@@ -527,7 +539,7 @@ checkpoint path above; a scoped pass alone, legacy claim or approved design is
 not sufficient. Report exact results, coverage gaps, discoveries, changed source
 and remaining obligations; do not equate “compiles” with “working game.”
 
-The coordinator alone collects and commits approved work, checking the actual
+The coordinator alone authorizes local publication and collects approved work, checking the actual
 index/source after application and rerunning checks in the integrated checkout.
 Do not pipe mutating commands or the gate. Do not delete a worktree until its
 changes have been verified as preserved.

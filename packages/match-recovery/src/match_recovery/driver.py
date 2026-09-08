@@ -2,7 +2,8 @@
 
 Commands exchange JSON over stdin/stdout, never shell fragments. Workers must
 run in an externally sandboxed worktree: scope checks detect violations, they
-are not a security sandbox. This driver never commits, collects or discards work.
+are not a security sandbox. Only explicit coordinator authorization permits local
+verified checkpoint commits. This driver never collects or discards work.
 """
 
 from dataclasses import asdict, dataclass
@@ -129,7 +130,8 @@ def _resumable_history(root: Path, store: TaskStore, reviews: ReviewStore, task_
 def drive(root: Path, task_name: str, configuration: dict, worker_configuration: dict, *,
           iterations: int, reviewer_configuration: dict | None = None,
           migration_configuration: dict | None = None,
-          coordinator_configuration: dict | None = None, execute=invoke) -> dict:
+          coordinator_configuration: dict | None = None,
+          checkpoint_configuration: dict | None = None, execute=invoke) -> dict:
     """Recompute context/checks, edit, recheck, repeat; discoveries stop for review."""
     if type(iterations) is not int or not 1 <= iterations <= 100:
         raise ValueError("iterations must be 1..100")
@@ -164,6 +166,14 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
     store = TaskStore(root)
     with file_lock(root / "build/recovery/driver.lock", timeout=0):
         task = store.read(task_name)
+        publication = publication_branch = None
+        if checkpoint_configuration is not None:
+            from .checkpoints import authorization, preflight
+            if acceptance_scope != "change":
+                raise ValueError("checkpoint publication currently requires change acceptance scope")
+            publication = authorization(checkpoint_configuration, task.author, worker_configuration["author"],
+                                        reviewer_configuration["author"] if reviewer_configuration else None)
+            publication_branch = preflight(root)
         coordination_count, coordination_feedback = 0, None
         if coordinator_configuration is not None:
             from .coordination import coordinate, policy as coordination_policy
@@ -184,6 +194,8 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
         initial_decisions = store.decisions(task_name)
         reviews = ReviewStore(root, task_name)
         policy = {"project": configuration, "worker": worker_configuration, "reviewer": reviewer_configuration}
+        if publication is not None:
+            policy["checkpoint"] = publication
         if coordinator_configuration is not None:
             policy["coordinator"] = coordinator_configuration
         if permission is not None:
@@ -218,6 +230,16 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                 if changes(before, working_state(root)):
                     raise ValueError("read-only adapter edited the worktree; preserve work and inspect manually")
             return code, output
+        def checkpoint(output, expected):
+            if publication is not None:
+                if output["stop_reason"] == "migration_admitted" and not publication["allow_migration"]:
+                    output["checkpoint"] = {"published": False, "reason": "migration_publication_not_authorized"}
+                else:
+                    from .checkpoints import publish
+                    history = _resumable_history(root, store, reviews, task_name)
+                    output["checkpoint"] = publish(root, expected, editable | history, publication_branch,
+                                                    publication["message"])
+            return output
         def refresh_obligations():
             if inventory_command is not None:
                 code, inventory = readonly(inventory_command, {"task": task.to_dict()})
@@ -276,6 +298,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                 obligations = refresh_obligations()
                 if reviews.snapshot(working_state(root), policy) != snapshot:
                     raise ValueError("source or interpretation inventory changed after review")
+                verified_state = working_state(root)
                 code, measured = readonly(migration_command, {"task": task.to_dict(), "snapshot": snapshot,
                                                               "protected": obligations, "permission": permission,
                                                               "review_policy": policy,
@@ -302,7 +325,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                     output = finish("migration_admitted", round_index, check)
                     output.update(review=decision, migration=asdict(migration_report))
                     output["ready_for_checkpoint"] = True
-                    return output  # Checkpoint only, never full acceptance or collection.
+                    return checkpoint(output, verified_state)  # Never full acceptance or collection.
                 if acceptance_scope == "change":
                     # Protected history alone does not cover newly recovered
                     # bodies. Their current scoped binary check must pass too.
@@ -313,7 +336,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                         return output
                     output = finish("change_accepted", round_index, check)
                     output.update(review=decision, migration=asdict(migration_report), ready_for_checkpoint=True)
-                    return output  # Current change only; no claim about the whole application.
+                    return checkpoint(output, verified_state)  # No claim about the whole application.
             if check["result"] != "pass" and not structural_handoff:
                 output = finish("structural_checkpoint_reviewed", round_index, check)
                 output["review"] = decision

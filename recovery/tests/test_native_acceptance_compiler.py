@@ -201,7 +201,8 @@ def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, autho
     return root, image, task, git, evidence
 
 
-def test_real_change_acceptance_does_not_require_application_proof_capabilities(tmp_path, monkeypatch):
+@pytest.mark.parametrize("publish", [False, True])
+def test_real_change_acceptance_does_not_require_application_proof_capabilities(tmp_path, monkeypatch, publish):
     provider = {"schema_version": 1, "artifacts": "build/agents"}
     for role in ("worker", "coordinator", "reviewer"):
         provider[role] = {"command": {"argv": [sys.executable, "recovery/local_agents.py", role, "{request}"], "timeout": 30},
@@ -209,9 +210,15 @@ def test_real_change_acceptance_does_not_require_application_proof_capabilities(
     root, image, task, git, evidence = prepared_project(tmp_path, monkeypatch, provider=provider, proofs=False)
     monkeypatch.setenv("RECOVERY_IMAGE", str(image))
     head = git("rev-parse", "HEAD")
+    options = []
+    if publish:
+        authorization = tmp_path / "checkpoint.json"
+        authorization.write_text(json.dumps({"author": task.author, "message": "Recover real Base and Member ownership",
+                                             "allow_migration": False}))
+        options = ["--checkpoint", str(authorization)]
     result = subprocess.run([sys.executable, "-m", "match_recovery.cli", "run", task.task_id,
                              "--root", str(root), "--acceptance-scope", "change", "--iterations", "2",
-                             "--reviewer", "recovery/reviewer.json", "--coordinator", "recovery/coordinator.json"],
+                             "--reviewer", "recovery/reviewer.json", "--coordinator", "recovery/coordinator.json", *options],
                             cwd=tmp_path, capture_output=True, timeout=180)
     assert result.returncode == 0, result.stdout.decode() + result.stderr.decode()
     report = json.loads(result.stdout)
@@ -222,7 +229,14 @@ def test_real_change_acceptance_does_not_require_application_proof_capabilities(
     assert report["worker_rounds"] == 2 and report["coordinator_decisions"] == 2
     assert (root / "src/owner.h").read_text() == evidence + CLASSES
     assert TaskStore(root).read(task.task_id).base_revision == task.base_revision
-    assert git("rev-parse", "HEAD") == head
+    if publish:
+        assert report["checkpoint"]["published"]
+        assert report["checkpoint"]["parent"] == head
+        assert git("rev-parse", "HEAD") == report["checkpoint"]["commit"]
+        assert git("show", "HEAD:src/owner.h") + "\n" == evidence + CLASSES
+        assert not git("status", "--porcelain")
+    else:
+        assert git("rev-parse", "HEAD") == head
 
 
 def test_real_preservation_refusal_drives_scoped_repair_without_reverting_structure(tmp_path, monkeypatch):
@@ -349,7 +363,8 @@ def test_native_acceptance_resumes_uncommitted_scope_decisions_and_rechecks_revi
     assert git("rev-parse", "HEAD") == head and git("ls-files", "--stage") == index
 
 
-def test_installed_start_selects_checkpoints_recovers_and_accepts_without_a_precreated_task(tmp_path, monkeypatch):
+@pytest.mark.parametrize("publish", [False, True])
+def test_installed_start_selects_checkpoints_recovers_and_accepts_without_a_precreated_task(tmp_path, monkeypatch, publish):
     provider = {"schema_version": 1, "artifacts": "build/agents"}
     for role in ("planner", "worker", "coordinator", "reviewer"):
         provider[role] = {"command": {"argv": [sys.executable, "recovery/local_agents.py", role, "{request}"], "timeout": 30},
@@ -368,23 +383,39 @@ def test_installed_start_selects_checkpoints_recovers_and_accepts_without_a_prec
     command = [sys.executable, "-m", "match_recovery.cli", "start", "--root", str(root),
                "--planner", "recovery/planner.json", "--reviewer", "recovery/reviewer.json",
                "--coordinator", "recovery/coordinator.json", "--iterations", "2"]
+    if publish:
+        permission = tmp_path / "checkpoint.json"
+        permission.write_text(json.dumps({"author": "coordinator", "message": "Recover owner from planned task",
+                                         "allow_migration": False}))
+        command.extend(["--acceptance-scope", "change", "--checkpoint", str(permission)])
     def attempt():
         result = subprocess.run(command, cwd=tmp_path, capture_output=True, timeout=180)
         assert result.returncode == 0, result.stdout.decode() + result.stderr.decode()
         return json.loads(result.stdout)
     report = attempt()
-    assert report["ready_for_collection"] and report["selection"]["action"] == "create"
+    assert report["ready_for_collection"] == (not publish) and report["selection"]["action"] == "create"
     assert report["worker_rounds"] == report["coordinator_decisions"] == 2
     task = TaskStore(root).read(report["task_id"])
     assert task.base_revision == baseline
-    assert git("rev-parse", "HEAD^") == baseline
-    assert git("diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD") == "recovery/tasks/" + task.task_id + ".json"
+    task_commit = report["selection"]["checkpoint"]
+    assert git("rev-parse", task_commit + "^") == baseline
+    assert git("diff-tree", "--no-commit-id", "--name-only", "-r", task_commit) == "recovery/tasks/" + task.task_id + ".json"
+    if publish:
+        assert report["stop_reason"] == "change_accepted" and report["checkpoint"]["published"]
+        assert report["checkpoint"]["parent"] == task_commit
+        assert not git("status", "--porcelain")
     assert (root / "src/owner.h").read_text() == evidence + CLASSES
     checkpoint = git("rev-parse", "HEAD")
     resumed = attempt()
     assert resumed["selection"]["action"] == "resume" and resumed["selection"]["checkpoint"] is None
     assert resumed["worker_rounds"] == resumed["coordinator_decisions"] == 0
-    assert resumed["ready_for_collection"] and git("rev-parse", "HEAD") == checkpoint
+    assert resumed["ready_for_collection"] == (not publish) and git("rev-parse", "HEAD") == checkpoint
+    if publish:
+        assert resumed["stop_reason"] == "change_accepted"
+        assert resumed["checkpoint"] == {"published": False, "reason": "no_changes"}
+        assert TaskStore(root).read(task.task_id).base_revision == baseline
+        assert len(list((root / "recovery/tasks").glob("*.json"))) == 1
+        return  # This branch verifies per-change publication, not full acceptance.
     assert resumed["acceptance"]["request_fingerprint"] != report["acceptance"]["request_fingerprint"]
     assert len(list((root / "recovery/tasks").glob("*.json"))) == 1
     for result in (report, resumed):

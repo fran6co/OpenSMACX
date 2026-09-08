@@ -791,7 +791,40 @@ coordinator `--migration` decision can admit only the named measured matching fa
 - `migration_admitted` / exit 2: a reviewed structural checkpoint retains named
   matching restoration obligations; it is not a completed recovery.
 - Both expose `ready_for_checkpoint: true`, retain `ready_for_collection: false`,
-  and do not invoke whole-application acceptance. No source is committed or collected.
+  and do not invoke whole-application acceptance. Publication is opt-in; collection
+  into another checkout is not implemented.
+
+For a local verified source commit, pass `run --checkpoint AUTHORIZATION.json`
+(also supported by `start`) in change mode. The explicit coordinator authorization
+has exactly these fields:
+
+```json
+{"author":"task-coordinator","message":"Recover the real owner hierarchy","allow_migration":false}
+```
+
+The author must be the task coordinator, independent of worker and reviewer.
+This policy participates in the reviewed snapshot; it is not a saved acceptance
+receipt. The driver retains its lease from verification through publication.
+Only authorized source and validated append-only task/review decisions are committed.
+The task baseline and historical obligations are not reset. A migration requires
+both the separate matching-regression permission and `allow_migration: true` to
+publish; otherwise its source remains uncommitted. Reports include `checkpoint`
+with `published`, and the new `commit`, `parent` and `files` when publication succeeds.
+No authorization means no source commit. No-change publication creates no empty commit.
+
+Publication refuses staged changes, skip-worktree/assume-unchanged index entries,
+Git operations in progress, unrelated edits, Git path overrides and detached HEAD.
+It checks raw source bytes/modes/symlinks,
+leases the index and compare-and-swaps the branch. It uses Git plumbing without
+clean filters or hooks: required checks must be in the recovery verification policy,
+not assumed to run from commit hooks. Git identity must be configured. No push,
+merge, rebase, claim stamping, branch deletion or cross-worktree collection occurs.
+An interruption between branch update and index replacement can leave the old
+index staged against the new commit. Preserve and inspect it; do not reset or
+replay a receipt. Noncooperating filesystem writers can still race local locks;
+detected publication-time changes require inspection and fresh verification.
+Integration into another checkout needs a separate target-context verification
+boundary, not reuse of this local acceptance or replacement of the task baseline.
 
 Unrelated unfinished functions need not match the original to accept a change;
 their preservation must still be measured. Global source/mapping/audit defects can
@@ -1823,7 +1856,8 @@ The driver journals valid decisions through TaskStore, refreshes scope/context a
 obligations, and resumes the same worker budget and baseline. Decision calls have
 a separate bounded budget. Deferral, unavailable providers or budget exhaustion
 preserve source and pending discoveries. Independent review and full native
-acceptance remain required. The driver never commits recovered source; valid append-only
+acceptance remain required. Only separate explicit checkpoint authorization permits
+the driver to commit freshly verified source in change mode; valid append-only
 task/review decisions can be resumed under the restart rules above. Commands
 must be externally sandboxed: post-execution hashes detect writes but cannot
 prevent a malicious command. Delegation validates authority, not the quality of

@@ -44,6 +44,7 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("--worker", type=Path, default=Path("recovery/worker.json"))
     run.add_argument("--reviewer", type=Path, help="Independent read-only reviewer command configuration")
     run.add_argument("--migration", type=Path, help="Coordinator permission for scoped temporary regressions")
+    run.add_argument("--checkpoint", type=Path, help="Explicit coordinator authorization to commit a freshly verified change")
     run.add_argument("--acceptance-scope", choices=("change", "full_project"), help="Override the configured acceptance boundary")
     run.add_argument("--coordinator", type=Path, help="Read-only discovery coordinator with explicit delegated scope")
     run.add_argument("--iterations", type=int, default=3)
@@ -55,6 +56,7 @@ def parser() -> argparse.ArgumentParser:
     start.add_argument("--reviewer", type=Path)
     start.add_argument("--coordinator", type=Path)
     start.add_argument("--migration", type=Path)
+    start.add_argument("--checkpoint", type=Path, help="Explicit coordinator authorization for verified source commits")
     start.add_argument("--acceptance-scope", choices=("change", "full_project"))
     start.add_argument("--iterations", type=int, default=3)
     from .project_commands import register
@@ -100,6 +102,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             options = dict(iterations=args.iterations,
                            reviewer_configuration=config(args.reviewer) if args.reviewer else None,
                            migration_configuration=config(args.migration) if args.migration else None,
+                           checkpoint_configuration=config(args.checkpoint) if args.checkpoint else None,
                            coordinator_configuration=config(args.coordinator) if args.coordinator else None)
             configuration = config(args.config)
             if args.acceptance_scope is not None:

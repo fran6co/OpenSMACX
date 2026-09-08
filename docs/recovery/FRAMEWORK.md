@@ -309,7 +309,12 @@ establish completion of this program.
   independent review and native checkpoint verification can accept a completed
   change without waiting for unrelated unfinished application functions. Explicit
   regression permission is still required for a tracked structural checkpoint;
-  neither outcome collects/commits source or claims a finished game. The stronger
+  neither outcome collects source or claims a finished game. Explicit independent
+  coordinator `--checkpoint` authorization now permits a fresh local verified commit
+  under the driver lease, with separate opt-in for tracked migrations. Staged work,
+  active Git operations and stale state refuse publication; baselines stay fixed.
+  This is not cross-worktree integration or reuse of acceptance on another target.
+  The stronger
   full-project boundary remains explicitly selectable. No local acceptance dispatcher is
   needed. Synthetic build/history/COFF and subprocess/driver controls exercise
   admission and refusal. OpenSMACX links, but still needs complete application proof

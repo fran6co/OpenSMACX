@@ -214,7 +214,8 @@ def select_task(root: Path, target: str, configuration: dict, *, execute=invoke)
 
 
 def start(root, configuration, worker_configuration, planner_configuration, *, iterations,
-          reviewer_configuration=None, coordinator_configuration=None, migration_configuration=None, execute=invoke):
+          reviewer_configuration=None, coordinator_configuration=None, migration_configuration=None,
+          checkpoint_configuration=None, execute=invoke):
     """Select/checkpoint one task, then run the existing bounded recovery loop."""
     delegation = policy(planner_configuration)
     if not isinstance(configuration, dict) or not isinstance(configuration.get("target"), str):
@@ -229,10 +230,17 @@ def start(root, configuration, worker_configuration, planner_configuration, *, i
         raise ValueError("planner must be independent of worker and reviewer")
     if type(iterations) is not int or not 1 <= iterations <= 100:
         raise ValueError("iterations must be 1..100")
+    if checkpoint_configuration is not None:
+        from .checkpoints import authorization
+        if configuration.get("acceptance_scope", "full_project") != "change":
+            raise ValueError("checkpoint publication currently requires change acceptance scope")
+        authorization(checkpoint_configuration, delegation["author"], worker_configuration["author"],
+                      reviewer_configuration["author"] if reviewer_configuration else None)
     selection = select_task(root, configuration["target"], delegation, execute=execute)
     if selection["action"] not in ("create", "resume"):
         return {"stop_reason": "planning_" + selection["action"], "selection": selection, "ready_for_collection": False}
     report = drive(root, selection["task_id"], configuration, worker_configuration, iterations=iterations,
                    reviewer_configuration=reviewer_configuration, coordinator_configuration=coordinator_configuration,
-                   migration_configuration=migration_configuration, execute=execute)
+                   migration_configuration=migration_configuration,
+                   checkpoint_configuration=checkpoint_configuration, execute=execute)
     return {**report, "selection": selection}

@@ -717,7 +717,15 @@ preservation can yield `change_accepted` without requiring unfinished unrelated
 functions to match or application runtime hooks to exist. Its exit 0 means the
 change is ready for a coordinator checkpoint, not that the game is finished.
 Explicitly permitted structural regressions still yield `migration_admitted` / 2.
-Neither path collects or commits source; integrated changes must be reverified.
+Neither path collects source; integrated changes must be reverified. Optional
+`--checkpoint <authorization.json>` delegates local publication after fresh review
+and verification. Supply `author` (the independent task coordinator), `message`,
+and boolean `allow_migration`; true plus separate migration permission is required
+to publish a tracked regression. The driver refuses staged work, Git operations
+in progress and stale/unrelated changes. It commits authorized source and validated
+decision history without changing task baselines, running Git hooks/filters or
+integrating into another checkout. See the package README for the exact crash and
+concurrency boundaries. No permission means no source commit.
 Valid refused checkpoints return snapshot-bound `checkpoint_feedback`, including
 bounded native build/preservation/restoration diagnostics. Actionable failures
 and unknowns feed a bounded repair/discovery round, followed by fresh checks and

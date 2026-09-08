@@ -137,6 +137,20 @@ def test_start_selects_then_drives_without_manual_task_creation_or_checkpoint(se
     assert report["selection"]["action"] == "create"
 
 
+@pytest.mark.parametrize("scope,author", [("full_project", "coordinator"), ("change", "worker")])
+def test_invalid_source_publication_permission_refuses_before_planning(setup, scope, author):
+    root, delegation = setup
+    before = working_state(root)
+    def execute(*args):
+        pytest.fail("invalid publication must be rejected before any planner or worker invocation")
+    with pytest.raises(ValueError, match="checkpoint"):
+        start(root, {"target": "custom", "acceptance_scope": scope},
+              {"author": "worker", "command": {"argv": ["worker"], "timeout": 10}}, delegation,
+              iterations=1, checkpoint_configuration={"author": author, "message": "source checkpoint",
+                                                       "allow_migration": False}, execute=execute)
+    assert working_state(root) == before
+
+
 def test_installed_planner_agent_bridge_selects_without_a_task_input(setup):
     root, delegation = setup
     script = ("import json,sys; from pathlib import Path; p=json.loads(Path(sys.argv[1]).read_text()); sys.stdin.read(); "

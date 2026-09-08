@@ -75,7 +75,9 @@ without waiting for the whole game. Build/link, scoped matching/restoration,
 declared structure/references and outside-scope preservation must pass; only
 explicit coordinator permission admits temporary matching regressions (exit 2).
 Exit 0 in change mode means readiness for a coordinator checkpoint, not game
-acceptance or automatic collection. Use `--acceptance-scope full_project` to invoke
+acceptance or automatic collection. Explicit coordinator `--checkpoint` authorization
+can publish a freshly verified local change; it does not integrate into another
+checkout or reset task baselines. Use `--acceptance-scope full_project` to invoke
 `recover tasks check-acceptance` with a fresh reviewed request on stdin. It owns
 the full gate, retained build, restoration/preservation and proof sequencing;
 OpenSMACX still lacks complete structure/runtime proof commands. The application
