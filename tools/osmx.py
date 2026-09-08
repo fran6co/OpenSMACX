@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Transitional production commands over match_recovery source APIs.
+"""Retained full gate for native cutover comparison and controls.
 
 Compiler interaction is supplied by recovery/environment, shared with the
-framework compiler protocol. Recording now uses the installed recover command.
-This CLI remains until diagnostics and the complete gate migrate; project location is not a library policy.
+framework compiler protocol. All recovery diagnostics and recording use the
+installed recover command. Remove this gate when full cutover controls pass.
 """
 
 from __future__ import annotations
@@ -31,118 +31,18 @@ from recovery.environment.recipe import build_command, MissingRecipe
 from match_recovery.compilation_database import build_inputs
 from recovery.environment.compile import compile_object
 from recovery.environment.recipe import flag_dependent
-from match_recovery.source.asm import (AsmComparison, CompileFailed, compare_unit, compare_source,
-                        shared_spans)
+from match_recovery.source.asm import compare_unit, shared_spans
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 app = typer.Typer(add_completion=False, no_args_is_help=True,
-                  help="Retained measurement and gate comparison during native cutover.")
+                  help="Retained full gate comparison during native cutover.")
 
 
 @app.callback()
 def main() -> None:
     """Keep explicit subcommands while the final legacy routes are retired."""
-
-
-def _looks_like_an_address(text: str) -> bool:
-    """Is `text` an address rather than a name?
-
-    `0x...` always is. Otherwise it takes six hex digits or more, because
-    the short ones are ambiguous and silently winning that argument is how
-    someone asking about a function called `add` or `face` gets handed the
-    bytes at 0x000ADD instead. Every address in this image is six to eight
-    digits, so nothing real is lost.
-    """
-    lowered = text.lower()
-    if lowered.startswith("0x"):
-        return True
-    return len(text) >= 6 and all(c in "0123456789abcdef" for c in lowered)
-
-
-def _in_file(claimants: list, fragment: str) -> list:
-    """The subset of `claimants` whose file path contains `fragment`.
-
-    THIRTY-SIX ADDRESSES ARE ANNOTATED TWICE - the body in `src/` and the
-    same piece preserved in `src/recovered/` or `src/unrecovered/` - and
-    they are two claims measured in two translation units. Without a way to
-    name one, `measure` and `record` could not be pointed at either of
-    them; they refused with "2 pieces match" and there was no answer.
-    """
-    if not fragment:
-        return claimants
-    matched = [r for r in claimants if fragment in str(r.path)]
-    # MOST SPECIFIC WINS. A plain substring makes `--in src/` match both
-    # `src/text.cpp` and `src/unrecovered/00608c00.cpp`, so the fragment that
-    # names one file exactly still refused with "2 pieces match". A fragment
-    # that ends a path is the caller naming a FILE; one that appears in the
-    # middle is naming a directory, and the first reading wins where both
-    # apply.
-    exact = [r for r in matched if str(r.path).endswith(fragment)]
-    return exact or matched
-
-
-def _matching(records: list, target: str) -> list:
-    """Every record `target` names, by address or by name.
-
-    THREE SPELLINGS, because a mangled name is not what anyone types.
-    `WinMain` is `_WinMain@16` in this map, `set_font` is
-    `?set_font@Buffer@@QAEHPAVFont@@000@Z`, and someone who knows the class
-    writes `Buffer::set_font`. All three find it; an exact match on the
-    whole mangled name or on the emitted symbol wins outright.
-    """
-    if _looks_like_an_address(target):
-        wanted = int(target, 16)
-        return [r for r in records if r.address == wanted]
-
-    exact = [r for r in records if target and target in (r.name, r.symbol)]
-    if exact:
-        return exact
-
-    if "::" in target:
-        owner, _sep, member = target.rpartition("::")
-        # A CONSTRUCTOR AND A DESTRUCTOR ARE NOT SPELLED LIKE A METHOD.
-        # `?member@Owner@@` is the shape for a named member; `Text::Text` and
-        # `Text::~Text` mangle to `??0Text@@` and `??1Text@@`, with no member
-        # name at all. Without this, the two spellings a person is most
-        # likely to type for the 199 header-defined pieces found nothing.
-        if member == owner:
-            scoped = f"??0{owner}@@"
-        elif member == f"~{owner}":
-            scoped = f"??1{owner}@@"
-        else:
-            scoped = f"?{member}@{owner}@@"
-        return [r for r in records if r.name.startswith(scoped)
-                or (r.symbol and r.symbol.startswith(scoped))]
-
-    return [r for r in records
-            if target in (mangled.identifier(r.name),
-                          mangled.identifier(r.symbol))]
-
-
-def _ambiguous(claimants: list, target: str, command: str,
-               in_file: str) -> None:
-    """Say why one target names several pieces, and how to say which.
-
-    THE ADVICE HAS TO FIT THE CASE. `--in` disambiguates a piece annotated
-    in two FILES - the body in `src/` and the copy preserved beside it - and
-    it cannot separate two overloads that share one. `prefs_get` is two
-    functions on lines 1326 and 1439 of `src/alpha.cpp`, so telling someone
-    to pass `--in` there sends them somewhere with no answer in it. Both are
-    reachable by address, and by the mangled name that spells the arguments
-    out, so those are what get offered - printed in full, ready to copy.
-    """
-    files = {piece.path for piece in claimants}
-    advice = (" - --in <path fragment> picks one"
-              if len(files) > 1 and not in_file else
-              " - name one of these exactly, or its address")
-    typer.secho(f"{len(claimants)} pieces match {target!r}; {command} "
-                f"names one{advice}", fg=typer.colors.RED)
-    for piece in sorted(claimants, key=lambda r: (str(r.path), r.address)):
-        typer.echo(f"  {piece.address_hex}  {piece.name}")
-        typer.echo(f"  {'':10}  {piece.location}")
-    raise typer.Exit(2)
 
 
 # THE TWO SETS, per direction 2026-09-03: the image is two compilations -
@@ -172,105 +72,6 @@ FLAG_SETS = (
 WINE_CEILING = 8
 
 
-@app.command()
-def measure(
-    target: Annotated[str, typer.Argument(
-        help="An address in hex, or a name.")],
-    in_file: Annotated[str, typer.Option(
-        "--in",
-        help="Disambiguate by file when one address is annotated twice, "
-             "e.g. --in src/text.cpp or --in unrecovered.")] = "",
-    src: Annotated[Path, typer.Option(
-        envvar="OPENSMACX_SRC")] = REPO_ROOT / "src",
-    exe: Annotated[Path, typer.Option(
-        envvar="OPENSMACX_IMAGE",
-    )] = REPO_ROOT / ".opensmacx" / "game" / "terranx_original.exe",
-    compile_commands: Annotated[Path, typer.Option(
-        envvar="OPENSMACX_COMPILE_COMMANDS",
-    )] = REPO_ROOT / "build" / "compile_commands.json",
-    borrow: Annotated[str, typer.Option(
-        help="Compile a file the build does not name with THIS file's "
-             "command. Needed for src/recovered and src/unrecovered.",
-    )] = "src/buffer.cpp",
-    body: Annotated[Path | None, typer.Option(
-        "--body",
-        help="Score THIS file's spelling of the piece instead of the "
-             "tree's. The tree is not touched.")] = None,
-    directory: Annotated[Path | None, typer.Option(
-        "--dir",
-        help="Score every *.cpp in this directory and rank them, best "
-             "first. The tree's own body is scored alongside as the "
-             "baseline.")] = None,
-    jobs: Annotated[int, typer.Option(
-        help=f"Concurrent compiles for --dir. Capped at {WINE_CEILING}: "
-             f"one shared wine prefix.")] = 0,
-    reconfigure: Annotated[bool, typer.Option(
-        "--reconfigure",
-        help="Clear the cmake cache and regenerate the build database "
-             "first, whether or not it looks stale.")] = False,
-
-    as_json: Annotated[bool, typer.Option("--json")] = False,
-) -> None:
-    """Does this body reproduce the shipped bytes?
-
-    EXITS 0 ONLY FOR BYTE_EXACT. That is the contract every other tier is
-    measured against, and it is what lets this be a loop condition:
-
-        until osmx measure 0x0045F950; do  ...edit...  done
-
-    It does not write anything. `record` is the one that stamps a claim,
-    and keeping them apart is what lets an agent be given this and not that.
-
-    `--body` AND `--dir` SCORE A SPELLING THAT IS NOT IN THE TREE, which is
-    what makes this a loop rather than a report. A match is found by
-    searching over source form, and the compiler is the only thing that can
-    say which form is right; without a candidate to hand it, the only way to
-    pose the question is to edit `src/`, measure, and edit back - so a
-    failed experiment leaves a dirty checkout, one spelling can be in flight
-    at a time, and an agent that may not write cannot ask at all.
-
-        osmx measure 0x004E0F80 --dir /tmp/variants
-
-    ranks a whole directory in one run against an unchanged tree. Each
-    candidate is a translation unit that DEFINES the piece under the name
-    the annotation records; it is compiled with the record's own invocation,
-    so it sees the include path the real unit sees.
-    """
-    if body and directory:
-        typer.secho("--body names one candidate and --dir a directory of "
-                    "them; pass one", fg=typer.colors.RED)
-        raise typer.Exit(2)
-    _fresh_compile_commands(compile_commands, reconfigure)
-    records = read(src)
-    claimants = _in_file(_matching(records, target), in_file)
-    if len(claimants) != 1:
-        _ambiguous(claimants, target, "measure", in_file)
-    record = claimants[0]
-    command = _command_for(compile_commands, record.path, borrow)
-    shared = shared_spans(records)
-
-    if directory is not None:
-        _rank_candidates(record, exe, directory, command, shared, jobs,
-                         as_json)
-        return
-
-    source = body if body is not None else record.path
-    try:
-        result = compare_source(record, exe, source, command, FLAG_SETS,
-                                shared, compiler=compile_object,
-                                retry_compile=flag_dependent)
-    except (ValueError, CompileFailed) as problem:
-        typer.secho(f"{record.address_hex}: {problem}", fg=typer.colors.RED)
-        raise typer.Exit(2) from None
-
-    if as_json:
-        typer.echo(json.dumps(
-            {"source": str(source), **_verdict_row(record, result)}, indent=2))
-    else:
-        _print_verdict(record, result, source)
-    raise typer.Exit(0 if str(result.verdict) == "BYTE_EXACT" else 1)
-
-
 def _command_for(compile_commands: Path, source: Path,
                  borrow: str) -> list[str]:
     """The build's invocation for `source`, or a borrowed one.
@@ -285,161 +86,6 @@ def _command_for(compile_commands: Path, source: Path,
         return build_command(compile_commands, source)
     except MissingRecipe:
         return build_command(compile_commands, REPO_ROOT / borrow)
-
-
-def _verdict_row(record: DecompilationState, result: AsmComparison) -> dict:
-    return {
-        "address": record.address_hex,
-        "name": record.name,
-        "verdict": str(result.verdict),
-        "flags": result.flags,
-        "instructions": [result.original_instructions,
-                         result.compiled_instructions],
-        "matching": result.matching_instructions,
-        "similarity": round(result.mnemonic_similarity, 4),
-        "first_divergence": result.first_divergence,
-        "compared_bytes": result.compared_bytes,
-        "masked_bytes": result.masked_bytes,
-        "differing_constants": [list(c) for c in result.differing_constants],
-        "data_bytes": result.data_bytes,
-        "data_divergence": result.data_divergence,
-        "diagnostic": result.diagnostic,
-    }
-
-
-def _score_candidate(job: tuple) -> tuple:
-    """Score one candidate file. Runs in a worker process.
-
-    A CANDIDATE THAT DOES NOT DEFINE THE PIECE IS A ROW, NOT A CRASH. Half
-    the point of ranking a directory is that some of it is wrong; a
-    misnamed subject or a missing `extern "C"` would otherwise take the
-    other eight answers down with it.
-    """
-    source, record, exe, command, flag_sets, shared = job
-    try:
-        return str(source), compare_source(record, exe, source, command,
-                                           flag_sets, shared, compiler=compile_object,
-                                           retry_compile=flag_dependent), ""
-    except (ValueError, CompileFailed) as problem:
-        return str(source), None, str(problem)
-
-
-def _rank_candidates(record: DecompilationState, exe: Path, directory: Path,
-                     command: list[str], shared: frozenset, jobs: int,
-                     as_json: bool) -> None:
-    """Score every candidate in `directory` and report them best first."""
-    candidates = sorted(directory.glob("*.cpp")) + sorted(
-        directory.glob("*.c"))
-    if not candidates:
-        typer.secho(f"no *.cpp under {directory}", fg=typer.colors.RED)
-        raise typer.Exit(2)
-
-    # THE TREE'S OWN BODY IS ALWAYS IN THE FIELD. "Best" with no baseline
-    # is not an answer anyone can act on: what a candidate has to beat is
-    # what is committed, and one extra compile is what it costs to say so.
-    work = [(source, record, exe, command, FLAG_SETS, shared)
-            for source in [record.path, *candidates]]
-    jobs = max(1, min(jobs or (os.cpu_count() or 1), WINE_CEILING))
-    if jobs == 1:
-        scored = [_score_candidate(job) for job in work]
-    else:
-        pool = concurrent.futures.ProcessPoolExecutor(max_workers=jobs)
-        with pool:
-            scored = list(pool.map(_score_candidate, work))
-
-    def rank(row: tuple) -> tuple:
-        _source, result, _note = row
-        if result is None:
-            return (99, 0.0)
-        return (result.verdict.rank, -result.mnemonic_similarity)
-
-    ordered = sorted(scored, key=rank)
-    baseline = next(r for r in scored if r[0] == str(record.path))
-    best = ordered[0]
-
-    if as_json:
-        typer.echo(json.dumps({
-            "address": record.address_hex,
-            "name": record.name,
-            "baseline": str(record.path),
-            "candidates": [
-                {"source": source, "error": note,
-                 **({} if result is None else _verdict_row(record, result))}
-                for source, result, note in ordered],
-        }, indent=2))
-    else:
-        typer.secho(f"\n{record.address_hex}  {record.name}", bold=True)
-        typer.echo(f"  {len(candidates)} candidate(s) against the tree's own "
-                   f"body")
-        typer.echo(f"  {'tier':14}{'simil':>7} {'agree':>10}\n")
-        for source, result, note in ordered:
-            mark = "  <- the tree" if source == str(record.path) else ""
-            if result is None:
-                typer.secho(f"  {'ERROR':14}{Path(source).name}{mark}",
-                            fg=typer.colors.RED)
-                typer.echo(f"  {'':14}{note}")
-                continue
-            colour = (typer.colors.GREEN
-                      if str(result.verdict) == "BYTE_EXACT" else None)
-            # SIMILARITY FIRST, BECAUSE IT IS WHAT THE RANKING USES and
-            # because `matching` is POSITIONAL: once a candidate's length
-            # differs from the image's, every instruction after the first
-            # divergence is compared against the wrong one, so the count
-            # collapses and misranks. Measured on 0x005FEBB0, the best
-            # candidate of five showed 33/99 against the tree's 34/99 while
-            # aligning three MORE instructions than the tree did.
-            typer.secho(f"  {str(result.verdict):14}"
-                        f"{result.mnemonic_similarity:>7.3f} "
-                        f"{result.matching_instructions:>4}/"
-                        f"{result.original_instructions:<5} "
-                        f"{Path(source).name}{mark}", fg=colour)
-        if best[1] is not None and best[0] != baseline[0]:
-            _print_verdict(record, best[1], Path(best[0]))
-
-    verdict = best[1] and str(best[1].verdict)
-    raise typer.Exit(0 if verdict == "BYTE_EXACT" else 1)
-
-
-def _print_verdict(record: DecompilationState, result: AsmComparison,
-                   source: Path | None = None) -> None:
-    typer.secho(f"\n{record.address_hex}  {record.name}", bold=True)
-    if source is not None and source != record.path:
-        typer.echo(f"  candidate  {source}")
-    colour = (typer.colors.GREEN if str(result.verdict) == "BYTE_EXACT"
-              else typer.colors.YELLOW)
-    typer.secho(f"  {result.verdict}", fg=colour, bold=True)
-    if result.diagnostic:
-        typer.echo(f"  {result.diagnostic}")
-        return
-    if result.flags:
-        typer.echo(f"  flags      {result.flags}")
-    typer.echo(f"  agreeing   {result.matching_instructions} of "
-               f"{result.original_instructions} instructions"
-               f"   (compiled has {result.compiled_instructions})")
-    typer.echo(f"  bytes      {result.compared_bytes} compared, "
-               f"{result.masked_bytes} discounted as relocations")
-    if result.data_bytes:
-        where = ("agrees" if result.data_divergence is None
-                 else f"differs at +0x{result.data_divergence:X}")
-        typer.echo(f"  jump table {result.data_bytes} bytes past the span, "
-                   f"{where}")
-    for index, mnemonic, was, now in result.differing_constants[:8]:
-        typer.echo(f"  constant   #{index} {mnemonic}: {was} -> {now}")
-    if result.first_divergence is None:
-        return
-    typer.echo(f"\n  first divergence at instruction "
-               f"{result.first_divergence}")
-    for original, compiled in zip(*result.context):
-        typer.echo(f"    O: {original}")
-        typer.echo(f"    C: {compiled}")
-
-
-# WHAT THE CALL GRAPH IS FOR, and so what it hides by default. The image
-# links the CRT and zlib statically, so a function's raw edge list is full of
-# `_memset`, `__ftol` and `inflate` - 331 catalogued pieces whose recovery is
-# not this project's job, since they can be had from the compiler and from
-# upstream. The catalogue's `kind` fact separates them from Alpha Centauri's
-# own 5,575, and imports leave the program entirely.
 
 
 def _claim_coverage(src):

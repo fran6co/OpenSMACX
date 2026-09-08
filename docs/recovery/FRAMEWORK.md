@@ -70,12 +70,17 @@ commands, sharing the fresh-build runner and preserving generated include contex
 in ignored storage. It publishes the validated database without deleting existing
 build caches. The native gate prepares before its measurement snapshot; standalone
 checks use coordinator-prepared recipes. The old configure CLI is removed; the
-retained legacy gate/measurement still have their internal preparation helper until
+retained legacy gate still has its internal preparation helper until
 cutover. Production cutover still requires migrated full-gate damage controls.
 Those project controls now live in opt-in `recovery/tests/test_gate_controls.py`:
 full native gates in a disposable detached checkout, named stage/subject assertions,
 and guarded damage restoration. The old main-tree mutation CLI is removed.
 Ordinary anchor/safety tests are not a substitute for executing the live matrix.
+All standalone diagnostics now use native `recover inventory`, `recover inspect`
+and `recover measure`; the legacy status/show/calls/measure commands are removed.
+Measurement groups requested current spellings by TU; private candidate decks use
+`recover tasks variants`, with task scope and compiler damage controls. Neither
+route banks claims or treats a matching unfinished placeholder as recovery.
 The local live-reference script is removed. Native `recover check-references`
 checks configured source/documentation roots, including the recovery instructions;
 the gate tracks reference-target existence as well as instruction bytes.

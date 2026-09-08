@@ -24,8 +24,11 @@ def select_records(records, targets, host, symbol_format):
             matches = [row for row in candidates if row.address == int(target, 16)]
         if len(matches) != 1:
             locations = ", ".join(f"{row.path}:{row.line} ({row.address_hex} {row.symbol or row.name})" for row in matches)
+            advice = ("select an exact --in path or original address/symbol"
+                      if len({row.path for row in matches}) > 1
+                      else "select an original address or exact symbol")
             raise ValueError(f"source target {target!r} requires one source mapping; found {len(matches)}" +
-                             (f": {locations}; select an exact --in path or original address/symbol" if matches else ""))
+                             (f": {locations}; {advice}" if matches else ""))
         selected.append(matches[0])
     if len({(row.path, row.line) for row in selected}) != len(selected):
         raise ValueError("the same source mapping was selected more than once")

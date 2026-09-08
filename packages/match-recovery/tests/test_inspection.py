@@ -142,6 +142,21 @@ def test_shared_selector_supports_lifetime_and_decorated_names(project, target, 
     assert inspect(project, target)["subjects"][0]["source"]["catalogued_symbol"] == symbol
 
 
+def test_overloads_in_one_host_require_address_or_exact_symbol(project):
+    configuration(project, lambda c: c["source"].update(symbol_format="msvc"))
+    (project / "engine/family.cc").write_text(
+        "// ORIGINAL: 0x00401000 ?f@@YAHH@Z 0x00401000-0x00401001\nint f(int value) {}\n"
+        "// ORIGINAL: 0x00401010 ?f@@YAHPAD@Z 0x00401010-0x00401011\nint f(char* value) {}\n")
+    with pytest.raises(ValueError, match="found 2") as error:
+        inspect(project, "f", in_file="engine/family.cc")
+    assert "--in" not in str(error.value)
+    assert "0x00401000 ?f@@YAHH@Z" in str(error.value)
+    assert "0x00401010 ?f@@YAHPAD@Z" in str(error.value)
+    for target, symbol in (("0x00401000", "?f@@YAHH@Z"), ("?f@@YAHPAD@Z", "?f@@YAHPAD@Z")):
+        assert inspect(project, target)["subjects"][0]["source"]["catalogued_symbol"] == symbol
+    assert not calls(project)
+
+
 def test_import_calls_are_retained_with_independently_parsed_dll_name(project):
     from test_imports import image_imports
     data = image_imports()

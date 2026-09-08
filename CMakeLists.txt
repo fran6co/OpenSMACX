@@ -24,9 +24,9 @@ endif()
 
 # THE BUILD'S OWN FLAGS, WRITTEN DOWN WHERE A TOOL CAN READ THEM.
 #
-# `tools/osmx.py measure` measures a body in its real translation unit
-# whenever the scaffold cannot build one, and to do that it has to compile
-# that file the way the build compiles it. It used to approximate: copy the
+# `recover measure` groups mapped bodies by their source translation unit
+# and obtains compiler recipes through the configured environment. It must
+# compile that file the way the build compiles it. Older tools approximated: copy the
 # file's own directory beside it and hope. That resolves `#include "win.h"`
 # and nothing else, so `src/basewin.cpp` died on
 # `C1083: Cannot open include file: 'cstdint'` - which is supplied by

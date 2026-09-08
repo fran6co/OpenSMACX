@@ -22,8 +22,8 @@ Source records, strict CodeView parsing (`class_layout`) and emitted-table check
 (`check_generated`) now live in the installed library. These are format/ABI
 capabilities, not project/compiler-environment adapters. `environment/` contains
 only the local compiler interaction. Unused fleet, rewriting and spelling-search
-scripts are removed. The remaining `tools/` files support the retained gate
-and diagnostics, or CMake's debugger sidecar; their live consumers
+scripts are removed. The remaining `tools/` files support only the retained gate
+or CMake's debugger sidecar; their live consumers
 still need absorption or retirement before that directory can disappear.
 
 The package now coordinates a whole-project gate:

@@ -14,9 +14,9 @@ evidence beside the original mapping.
 
 Reader/writer: `match_recovery.source`, installed with `match-recovery`.
 Portable tests: `uv run pytest packages/match-recovery/tests`; whole-source and
-build controls: `uv run pytest recovery/tests`. The legacy `tools/osmx.py`
-measurement/gate command remains during cutover; `recover record` owns production
-claim stamping. The active task and
+build controls: `uv run pytest recovery/tests`. Only the legacy `tools/osmx.py check`
+gate remains during cutover; `recover measure` owns diagnostics and
+`recover record` owns production claim stamping. The active task and
 structural-migration workflow is `recovery/WORKFLOW.md`, not this format reference.
 
 ## Original-function binding rationale

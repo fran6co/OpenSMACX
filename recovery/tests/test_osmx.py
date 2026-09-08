@@ -206,228 +206,6 @@ def test_legacy_coverage_refuses_claims_outside_its_measurement_walk(tmp_path, m
     assert "does not cover claimed source hosts" in result["error"]
 
 
-# ----------------------------------------------------------------- show
-
-NAMED = """// ORIGINAL: 0x0045F950 _WinMain@16 0x0045F950-0x0045F958
-void a() {
-}
-// ORIGINAL: 0x005DAC70 ?set_font@Buffer@@QAEHPAVFont@@000@Z 0x005DAC70-0x005DAC78
-void b() {
-}
-// ORIGINAL: 0x00401000 ?init@Alpha@@QAEXXZ 0x00401000-0x00401008
-void c() {
-}
-// ORIGINAL: 0x00402000 ?init@Beta@@QAEXXZ 0x00402000-0x00402008
-void d() {
-}
-// ORIGINAL: 0x00403000 ?init@Gamma@@QAEXXZ 0x00403000-0x00403008
-void e() {
-}
-// ORIGINAL: 0x00404000 ?init@Delta@@QAEXXZ 0x00404000-0x00404008
-void f() {
-}
-// ORIGINAL: 0x00405000 ?init@Epsilon@@QAEXXZ 0x00405000-0x00405008
-void g() {
-}
-// ORIGINAL: 0x00406000 ?close@Alpha@@QAEXXZ 0x00406000-0x00406008
-void h() {
-}
-// ORIGINAL: 0x00406000 ?close@Alpha@@QAEXXZ 0x00406000-0x00406008 FILE
-void i() {
-}
-"""
-
-
-@pytest.fixture
-def named(tmp_path):
-    (tmp_path / "n.cpp").write_text(NAMED)
-    return tmp_path
-
-
-def test_a_short_hex_looking_name_is_read_as_a_name(named):
-    """`add`, `face` and `dead` are all valid hex. Winning that argument
-    silently is how someone asking about a function gets the bytes at
-    0x000ADD instead, so an address takes six digits or an `0x`."""
-    assert not osmx._looks_like_an_address("add")
-    assert not osmx._looks_like_an_address("face")
-    assert osmx._looks_like_an_address("0xadd")
-    assert osmx._looks_like_an_address("0045F950")
-
-
-# --------------------------------------------------------------- measure
-
-
-def test_measure_names_exactly_one_piece(named):
-    """`measure init` cannot be answered: five pieces match. Exit 2 is a
-    usage error, distinct from exit 1, which means "measured, not exact"."""
-    result = run("measure", "init", "--src", str(named))
-    assert result.exit_code == 2
-    assert "measure names one" in result.output
-
-
-def test_measure_exits_zero_only_for_byte_exact(named, monkeypatch):
-    """The contract every other tier is measured against, and what lets
-    this be a shell loop condition."""
-    from match_recovery.source import Tier
-    from match_recovery.source.asm import AsmComparison
-
-    for tier in Tier:
-        monkeypatch.setattr(
-            osmx, "compare_source",
-            lambda *a, tier=tier, **k: AsmComparison(verdict=tier))
-        result = run("measure", "WinMain", "--src", str(named))
-        expected = 0 if tier is Tier.BYTE_EXACT else 1
-        assert result.exit_code == expected, f"{tier} gave {result.exit_code}"
-
-
-def test_measure_reports_a_compile_failure_rather_than_crashing(named,
-                                                                monkeypatch):
-    from match_recovery.source.asm import CompileFailed
-
-    def refuse(*args, **kwargs):
-        raise CompileFailed("x.cpp(3) : error C2065: 'g_x' : undeclared")
-
-    monkeypatch.setattr(osmx, "compare_source", refuse)
-    result = run("measure", "WinMain", "--src", str(named))
-    assert result.exit_code == 2
-    assert "C2065" in result.output
-
-
-def test_measure_writes_nothing(named, monkeypatch):
-    """`record` is the one that stamps a claim. Keeping them apart is what
-    lets an agent be given this and not that."""
-    from match_recovery.source import Tier
-    from match_recovery.source.asm import AsmComparison
-    before = (named / "n.cpp").read_text()
-    monkeypatch.setattr(osmx, "compare_source",
-                        lambda *a, **k: AsmComparison(verdict=Tier.BYTE_EXACT))
-    run("measure", "WinMain", "--src", str(named))
-    assert (named / "n.cpp").read_text() == before
-
-
-# ------------------------------------------------- candidates, not the tree
-
-
-def a_verdict(tier):
-    from match_recovery.source.asm import AsmComparison
-    return AsmComparison(verdict=tier)
-
-
-def test_body_scores_the_file_it_is_given(named, tmp_path, monkeypatch):
-    """The whole point: pose the question without editing `src/`."""
-    from match_recovery.source import Tier
-    candidate = tmp_path / "candidate.cpp"
-    candidate.write_text("void f() {}\n")
-    asked = []
-    monkeypatch.setattr(
-        osmx, "compare_source",
-        lambda record, exe, source, *a, **k: (
-            asked.append(source), a_verdict(Tier.BYTE_EXACT))[1])
-    result = run("measure", "WinMain", "--src", str(named),
-                 "--body", str(candidate))
-    assert result.exit_code == 0, result.output
-    assert asked == [candidate]
-
-
-def test_without_a_candidate_the_tree_is_the_candidate(named, monkeypatch):
-    """`measure` with no `--body` must still ask about the committed body,
-    or the plain form silently starts answering about something else."""
-    from match_recovery.source import Tier
-    asked = []
-    monkeypatch.setattr(
-        osmx, "compare_source",
-        lambda record, exe, source, *a, **k: (
-            asked.append(source), a_verdict(Tier.BYTE_EXACT))[1])
-    run("measure", "WinMain", "--src", str(named))
-    assert asked == [named / "n.cpp"]
-
-
-def test_scoring_a_candidate_writes_nothing(named, tmp_path, monkeypatch):
-    from match_recovery.source import Tier
-    candidate = tmp_path / "candidate.cpp"
-    candidate.write_text("void f() {}\n")
-    before = (named / "n.cpp").read_text()
-    monkeypatch.setattr(osmx, "compare_source",
-                        lambda *a, **k: a_verdict(Tier.BYTE_EXACT))
-    run("measure", "WinMain", "--src", str(named), "--body", str(candidate))
-    assert (named / "n.cpp").read_text() == before
-
-
-def test_one_candidate_or_a_directory_of_them_but_not_both(named, tmp_path):
-    result = run("measure", "WinMain", "--src", str(named),
-                 "--body", str(tmp_path / "a.cpp"), "--dir", str(tmp_path))
-    assert result.exit_code == 2
-    assert "pass one" in result.output
-
-
-def test_a_directory_ranks_best_first_against_the_tree(named, tmp_path,
-                                                       monkeypatch):
-    """"Best" with no baseline is not an answer anyone can act on: what a
-    candidate has to beat is what is committed."""
-    from match_recovery.source import Tier
-    variants = tmp_path / "variants"
-    variants.mkdir()
-    for name in ("a.cpp", "b.cpp"):
-        (variants / name).write_text("void f() {}\n")
-    tiers = {"a.cpp": Tier.MISMATCH, "b.cpp": Tier.BYTE_EXACT,
-             "n.cpp": Tier.NO_COMPILE}
-    monkeypatch.setattr(
-        osmx, "compare_source",
-        lambda record, exe, source, *a, **k: a_verdict(tiers[source.name]))
-    result = run("measure", "WinMain", "--src", str(named),
-                 "--dir", str(variants), "--jobs", "1")
-    assert result.exit_code == 0, result.output
-    # The table rows, which are the ones naming a file. The winner's full
-    # verdict is printed under them and repeats its tier.
-    order = [line.split()[0] for line in result.output.splitlines()
-             if line.startswith("  ") and line.split()[0].isupper()
-             and line.rstrip().endswith((".cpp", "<- the tree"))]
-    assert order == ["BYTE_EXACT", "MISMATCH", "NO_COMPILE"]
-    assert "n.cpp  <- the tree" in result.output
-
-
-def test_a_directory_with_no_best_exits_one(named, tmp_path, monkeypatch):
-    from match_recovery.source import Tier
-    variants = tmp_path / "variants"
-    variants.mkdir()
-    (variants / "a.cpp").write_text("void f() {}\n")
-    monkeypatch.setattr(osmx, "compare_source",
-                        lambda *a, **k: a_verdict(Tier.MISMATCH))
-    result = run("measure", "WinMain", "--src", str(named),
-                 "--dir", str(variants), "--jobs", "1")
-    assert result.exit_code == 1
-
-
-def test_an_empty_directory_says_so(named, tmp_path):
-    empty = tmp_path / "variants"
-    empty.mkdir()
-    result = run("measure", "WinMain", "--src", str(named),
-                 "--dir", str(empty))
-    assert result.exit_code == 2
-    assert "no *.cpp" in result.output
-
-
-def test_a_candidate_that_misses_the_subject_is_a_row_not_a_crash():
-    """Half the point of ranking a directory is that some of it is wrong; a
-    misnamed subject would otherwise take the other answers down with it."""
-    from match_recovery.source import Tier
-    import match_recovery.source.asm as asm
-
-    def refuse(*args, **kwargs):
-        raise ValueError("?f@@YAXXZ not found among the object's .text")
-
-    original = asm.compare_source
-    osmx.compare_source = refuse
-    try:
-        source, result, note = osmx._score_candidate(
-            (Path("a.cpp"), None, None, [], (), frozenset()))
-    finally:
-        osmx.compare_source = original
-    assert result is None
-    assert "not found" in note
-    assert Tier                      # the import is the point of the name
-
-
 def test_legacy_cli_has_no_claim_mutation_commands():
     for command in ("record", "semantic"):
         result = run(command, "0x00401000")
@@ -584,7 +362,7 @@ def test_a_failed_compile_is_not_retried_under_every_flag_set(
 
     def refuse(path, command, flags):
         tried.append(" ".join(flags))
-        raise osmx.CompileFailed("c.cpp(1) : error C2065: 'x' : undeclared")
+        raise source_asm.CompileFailed("c.cpp(1) : error C2065: 'x' : undeclared")
 
     monkeypatch.setattr(osmx, "compile_object", refuse)
     monkeypatch.setattr(source_asm, "original_asm", lambda *a, **k: None)
@@ -603,7 +381,7 @@ def test_an_internal_compiler_error_is_retried(claimed, monkeypatch):
 
     def refuse(path, command, flags):
         tried.append(" ".join(flags))
-        raise osmx.CompileFailed("fatal error C1001: INTERNAL COMPILER ERROR")
+        raise source_asm.CompileFailed("fatal error C1001: INTERNAL COMPILER ERROR")
 
     monkeypatch.setattr(osmx, "compile_object", refuse)
     monkeypatch.setattr(source_asm, "original_asm", lambda *a, **k: None)
@@ -939,23 +717,6 @@ def test_the_body_fact_reaches_the_record(tmp_path):
     assert record.kind == "game"
 
 
-def test_the_most_specific_in_fragment_wins(tmp_path):
-    """`--in src/` matched both `src/text.cpp` and
-    `src/unrecovered/00608c00.cpp`, so naming one file exactly still refused
-    with "2 pieces match"."""
-    marker = ("// ORIGINAL: 0x00402000 ?f@@YAXXZ 0x00402000-0x00402010\n"
-              "void f() {\n}\n")
-    (tmp_path / "body.cpp").write_text(marker)
-    kept = tmp_path / "unrecovered"
-    kept.mkdir()
-    (kept / "00402000.cpp").write_text(marker)
-    from match_recovery.source import read
-    records = read(tmp_path)
-    assert len(osmx._in_file(records, "unrecovered")) == 1
-    assert len(osmx._in_file(records, "body.cpp")) == 1
-    assert len(osmx._in_file(records, str(tmp_path))) == 2
-
-
 def test_a_body_fact_that_leads_nowhere_fails_the_gate(tmp_path,
                                                         monkeypatch):
     """The fact has to be checked or it is a comment with a parser: nothing
@@ -999,50 +760,6 @@ def test_a_body_fact_that_resolves_is_silent(tmp_path, monkeypatch):
     result = check(tree)
     assert result.exit_code == 0, result.output
     assert "DANGLING" not in result.output
-
-
-CTORS = """// ORIGINAL: 0x00407000 ??0Thing@@QAE@XZ 0x00407000-0x00407008
-void a() {
-}
-// ORIGINAL: 0x00407100 ??1Thing@@QAE@XZ 0x00407100-0x00407108
-void b() {
-}
-// ORIGINAL: 0x00407200 ?init@Thing@@QAEXXZ 0x00407200-0x00407208
-void c() {
-}
-"""
-
-
-def test_a_scoped_name_finds_a_constructor_and_a_destructor(tmp_path):
-    """`Text::Text` and `Text::~Text` mangle to `??0Text@@` and `??1Text@@`,
-    with no member name at all - the two spellings a person is most likely
-    to type for a header-defined piece found nothing."""
-    (tmp_path / "x.cpp").write_text(CTORS)
-    from match_recovery.source import read
-    records = read(tmp_path)
-    assert [r.address for r in osmx._matching(records, "Thing::Thing")] == [
-        0x00407000]
-    assert [r.address for r in osmx._matching(records, "Thing::~Thing")] == [
-        0x00407100]
-    assert [r.address for r in osmx._matching(records, "Thing::init")] == [
-        0x00407200]
-
-
-def test_an_overload_is_named_by_its_address_or_its_full_name(tmp_path):
-    """`--in` separates a piece annotated in two FILES; it cannot separate
-    two overloads that share one. `prefs_get` is two functions on lines 1326
-    and 1439 of src/alpha.cpp, so offering `--in` there sends someone
-    somewhere with no answer in it."""
-    (tmp_path / "x.cpp").write_text(
-        "// ORIGINAL: 0x00408000 ?f@@YAHH@Z 0x00408000-0x00408008\n"
-        "void a() {\n}\n"
-        "// ORIGINAL: 0x00409000 ?f@@YAHPAD@Z 0x00409000-0x00409008\n"
-        "void b() {\n}\n")
-    result = run("measure", "f", "--src", str(tmp_path))
-    assert result.exit_code == 2
-    assert "name one of these exactly, or its address" in result.output
-    assert "--in <path fragment>" not in result.output
-    assert "0x00408000" in result.output and "0x00409000" in result.output
 
 
 def test_one_address_annotated_twice_in_one_file_fails_the_gate(tmp_path,
