@@ -1,0 +1,38 @@
+{
+  "event_id": "8857a2292b8cd7afd50ee30e7bc6afd2bc16bc39ed788769bbc1bf6457a2e1df",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Authorize the four middle-queue callers for the net-distinct-queue-members discovery. Original construction 0x0062D733..0x0062D75E directly constructs three receivers at +0xE8, +0x10C, +0x130 with separate exception states, corroborating the original destruction and unwind evidence. Replace indexed and raw-self accesses with the corresponding real member; preserve all four historical byte claims and keep queue role names provisional."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6490688,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6490496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6490560,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6490624,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "d969a24afd0d25925bf0a6e46e6733b0d5320267aad7b2b965c2c334bd91a322",
+  "request_id": "net-distinct-queue-callers",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:jackal-voice-ownership"
+}
