@@ -1,0 +1,28 @@
+{
+  "event_id": "db0cf24a685b79bac3b3d76e92dba8d48c9d799f974c106858ea38a367d72b93",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Popup lifetime checks found Scroll::~Scroll empty while the mapped destroy helper manually destroys members and base. Recover the actual destructor with close plus implicit owned teardown, and preserve the deleting-redirect claim on its coupled caller."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4222560,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4222752,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "735a6a43931897b10f556aaa743c0b3beddcc0c2f9f73fe433d6e851de8c45cd",
+  "request_id": "scroll-destructor-real-lifetime",
+  "schema_version": 1,
+  "sequence": 51,
+  "stream": "task:infowin-ownership"
+}

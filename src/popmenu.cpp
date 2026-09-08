@@ -22,6 +22,14 @@
 #include "sounddevice.h"
 #include "basepop.h"
 
+// PullDown is an owned member; Popup is the base. Reverse declaration order
+// supplies both normal destruction and exception cleanup exactly once.
+// ORIGINAL: 0x00421400 ??1PopMenu@@QAE@XZ 0x00421400-0x00421634;0x00652AB0-0x00652B9F
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x421400"], "reason": "Recover the full original operation using owned C++ members and base lifetimes; retain all original branches and expose unresolved callees instead of executing original-address forwarders."}
+// symbol    ??1PopMenu@@UAE@XZ
+PopMenu::~PopMenu() {
+}
+
 // ORIGINAL: 0x0059D250 ?exec@PopMenu@@QAEXHHP6AHXZ@Z 0x0059D250-0x0059D392
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0059D250-0x0059D392"], "reason": "Recovered original behavior through real source classes and owned members; source remains subject to byte and structural verification."}
 // symbol    ?exec@PopMenu@@QAEHHHP6AHXZ@Z

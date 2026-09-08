@@ -1,0 +1,20 @@
+{
+  "event_id": "4c6bb15290c20771d8f98686fbe159bdbcc346003dde78efba2b76311c486ca7",
+  "payload": {
+    "affects": [
+      "entity-82e12fc277c2ce0e548993b026339e4c63d72d128c195b9c0a06f515fb05d101"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "status-facility-name-storage-type",
+    "evidence": [
+      "image:0x004B9387-0x004B93AD; source:src/base.h:RulesFacility; src/alpha.cpp:read_facilities; src/game.cpp and src/veh.cpp direct name consumers"
+    ],
+    "hypothesis": "StatusWin reads RulesFacility::name as a string-table offset, while RulesFacility declares LPSTR and other callers dereference it as text. Resolve the shared loader and consumers as a coupled type recovery; a local cast preserves this caller interpretation but does not settle the global representation.",
+    "kind": "discovery"
+  },
+  "previous_event": "2f08fb82f2c34cb05b8d221d1e62c55fe759f606d9b20e663a7afe31c9e64765",
+  "request_id": "status-facility-name-storage-type",
+  "schema_version": 1,
+  "sequence": 48,
+  "stream": "task:infowin-ownership"
+}

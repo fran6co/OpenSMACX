@@ -1331,33 +1331,20 @@ int Scroll::on_left_click(int, int) {
 
 /*
 Purpose: Destroy a Scroll: run close, destroy the embedded right then left
-         FlatButtons, and finish with the GraphicWin base teardown. The
-         original's exception frame is omitted as unreachable per policy.
-// ORIGINAL: 0x00406E60 ??1Scroll@@QAE@XZ 0x00406E60-0x00406F1A;0x00650BB0-0x00650BEE
-// TRIED: dropping `volatile` from `object` (plain `uint32_t *`, same raw
-//   offsets): no change, still 0/46. The image's prologue is an SEH frame
-//   (`push ebp; mov ebp,esp; push -1; push handler; ...`) that this body's
-//   policy-omitted frame (see Purpose above) never reproduces, so every
-//   instruction is misaligned from #0 - the divergence is the missing frame,
-//   not the volatile.
-// symbol    ?destroy@Scroll@@QAEPAV1@XZ
+         FlatButtons, and finish with the GraphicWin base teardown through
+         ordinary C++ destruction, including exception cleanup.
+// ORIGINAL: 0x00406E60 ??1Scroll@@QAE@XZ 0x00406E60-0x00406F1A;0x00650BB0-0x00650BEE BYTE_EXACT
+// symbol    ??1Scroll@@UAE@XZ
 // size      248 bytes
 // prototype void (__thiscall ??1Scroll@@QAE@XZ)(Scroll* this)
 // callers   41   call targets   4
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005D4DD0 0x00605370 0x00607040 0x00607DA0
-Return Value: Instance pointer in EAX
-Status: Complete
+Return Value: n/a
 */
-Scroll *Scroll::destroy() {
-    volatile uint32_t *const object =
-        reinterpret_cast<volatile uint32_t *>(this);
+Scroll::~Scroll() {
     close();
-    flat_button_right_.destroy();
-    flat_button_left_.destroy();
-    static_cast<GraphicWin *>(this)->~GraphicWin();
-    return this;
 }
 
 
@@ -1378,7 +1365,7 @@ Status: Complete
 */
 void *__fastcall scroll_scalar_dtor_redirect(Scroll *self, void *,
                                              unsigned int mode) {
-    self->destroy();
+    self->Scroll::~Scroll();
     if (mode & 1) {
         operator delete(self);
     }

@@ -424,13 +424,7 @@ int PullDown::get_selected() {
     if (selected_ == -1) {
         return -1;
     }
-    static_assert(sizeof(uintptr_t) == sizeof(uint32_t),
-                  "PullDown unchecked indexing requires PE32");
-    uintptr_t flags_address = reinterpret_cast<uintptr_t>(this);
-    flags_address += 0xA24U + static_cast<uint32_t>(selected_) * 0x14U;
-    uint32_t flags;
-    memcpy(&flags, reinterpret_cast<const void *>(flags_address), sizeof(flags));
-    return (flags & 2U) ? -1 : selected_;
+    return (items_[selected_].flags & 2U) ? -1 : selected_;
 }
 
 

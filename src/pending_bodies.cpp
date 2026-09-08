@@ -234,13 +234,6 @@ void __cdecl consider_designs(uint32_t faction_id) {
 // 2026-08-29; the linker (LNK2005) enforced it exactly as the note at the
 // top of this file says it would.
 
-// ??1Popup@@UAE@XZ at 0x00406C00 - reached by `??_GPopup` and by one guarded
-// teardown. See the note in `popup.h`.
-Popup::~Popup() {
-    typedef void(__fastcall *pending)(Popup *, void *);
-    PENDING_BODY(0x00406C00, pending)(this, nullptr);
-}
-
 // sub_4c86d0 at 0x004C86D0 and sub_633010 at 0x00633010 - the teardowns the
 // Video and 0x633160 deleting thunks call. See the note in
 // `deleting_thunks.h`.
@@ -978,11 +971,6 @@ NewTechWin::~NewTechWin() {  // ??1NewTechWin@@QAE@XZ at 0x00484810
 PickWin::~PickWin() {  // ??1PickWin@@QAE@XZ at 0x0048A8E0
     typedef void(__fastcall *pending)(PickWin *, void *);
     PENDING_BODY(0x0048A8E0, pending)(this, nullptr);
-}
-
-PopMenu::~PopMenu() {  // ??1PopMenu@@QAE@XZ at 0x00421400
-    typedef void(__fastcall *pending)(PopMenu *, void *);
-    PENDING_BODY(0x00421400, pending)(this, nullptr);
 }
 
 ProdPicker::~ProdPicker() {  // ??1ProdPicker@@QAE@XZ at 0x00421100

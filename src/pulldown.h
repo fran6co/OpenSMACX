@@ -63,6 +63,12 @@ class PullDown : public GraphicWin {
   int add_separator(int id);
   int rename_item(int id, char *text);
   int get_selected();
+  // get_selected returns a slot, not its action ID. Cancellation must not
+  // index before items_: the old status-menu seed confused these two values.
+  int get_selected_id() {
+    int index = get_selected();
+    return index >= 0 && index < 64 ? items_[index].id : -1;
+  }
   int id_to_index(int id);
 
   void on_mouse_leave(int a1, int a2);

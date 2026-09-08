@@ -79,12 +79,10 @@
 class PopMenu : public Popup {
  public:
   PopMenu() { ; }
-  // 0x00421400 is not recovered: a
-  // pending_bodies forwarder, because an empty inline stub emits
-  // nothing and the deleting destructor needs a `call rel32`.
+  // Original 0x00421400: destroy pull_down_, then the Popup base.
   ~PopMenu();
   int init();
-  // The caller at 0x004B90F8 switches on the selected ID returned in EAX;
+  // The caller at 0x004B9178 switches on the selected index returned in EAX;
   // the catalogue's void return omitted that observed result.
   int exec(int x, int y, int (*poll)());
 

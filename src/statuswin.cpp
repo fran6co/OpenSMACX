@@ -16,8 +16,6 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
-// Homed StatusWin bodies call free helpers the archive binds by address:
-// base_at (base.h). veh.h is excluded - its `range` collides with general.h.
 #include "base.h"
 #include "original_seam.h"
 #include "strings.h"  // StringTemp, 0x009B86A0
@@ -27,6 +25,148 @@
 #include "win.h"
 #include "graphicwin.h"
 #include "mapwin.h"  // MainInterfaceGlobal
+#include "alpha.h"
+#include "basewin.h"
+#include "console.h"
+#include "datalink.h"
+#include "game.h"
+#include "netdaemon.h"
+#include "popmenu.h"
+#include "spying_recovery.h"
+#include "tutwin.h"
+#include "veh.h"
+
+extern int CursorVehIndex;  // console.cpp owns the selected vehicle
+void __cdecl help_any();
+
+// ORIGINAL: 0x004B9010 ?on_right_click@StatusWin@@QAEXHHH@Z 0x004B9010-0x004B9DF8;0x00659AA0-0x00659BCA
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x4b9010"], "reason": "Recover the full original operation using owned C++ members and base lifetimes; retain all original branches and expose unresolved callees instead of executing original-address forwarders."}
+void StatusWin::on_right_click(int x, int y, int) {
+    PullDown menu;
+    PopMenu display_menu;
+    menu.init(0);
+    int object_index = -1;
+    int menu_id = -1;
+    if (spot_.check(x, y, &object_index, &menu_id) < 0) {
+        return;
+    }
+    if (menu_id == 3) {
+        display_menu.init();
+        display_menu.dialogs().item(label_get(0xFEC / 4), 0);
+        display_menu.dialogs().item(label_get(0xFF0 / 4), 1);
+        display_menu.dialogs().item(label_get(0xFF4 / 4), 2);
+        int screen_x, screen_y;
+        MainInterfaceGlobal.get_mouse_pos(&screen_x, &screen_y);
+        MainInterfaceGlobal.client_to_screen(&screen_x, &screen_y);
+        int choice = display_menu.exec(screen_x, screen_y, 0);
+        if (choice == 0 || choice == 1) {
+            field_15A8_ = choice == 0 ? 0 : -1;
+            draw_status(-1, -1, -1, -1, 0);
+        } else if (choice == 2) {
+            DatalinkMain.exec(9, 0);
+        }
+        return;
+    }
+
+    int base_id = -1;
+    if (menu_id != 2) {
+        if (menu_id == 0 || menu_id == 10) {
+            if (menu_id == 10) object_index = CursorVehIndex;
+            menu.add_item(6, label_get(0x958 / 4));
+            menu.add_item(7, label_get(0x112C / 4));
+            if (GameState & STATE_SCENARIO_EDITOR) {
+                menu.add_item(90, label_get(0xDFC / 4));
+            }
+            menu.add_separator(99);
+        } else {
+            base_id = object_index;
+            int owner = Bases[base_id].faction_id_current;
+            if ((GameState & STATE_OMNISCIENT_VIEW) || owner == LocalFaction
+                || spying(owner) || (PlayersData[LocalFaction].diplo_treaties[owner] & 1)) {
+                menu.add_item(5, label_get(0x894 / 4));
+            }
+            if (owner == LocalFaction || (GameState & STATE_OMNISCIENT_VIEW)) {
+                for (int action = 51; action <= 56; ++action) {
+                    StringTemp[0] = '\0';
+                    strcat(StringTemp, " ");
+                    strcat(StringTemp, label_get(0x898 / 4 + action - 51));
+                    if (action == 52) {
+                        strcat(StringTemp, " ");
+                        int production = Bases[base_id].queue_production_id[0];
+                        // This caller passes the facility name through Strings::get.
+                        // RulesFacility still types its stored string offset as LPSTR;
+                        // that shared type/loader disagreement needs coupled recovery.
+                        char *name = production < 0
+                            ? StringTable.get(reinterpret_cast<int>(Facility[-production].name))
+                            : VehPrototypes[production].veh_name;
+                        strcat(StringTemp, name);
+                    }
+                    menu.add_item(action, StringTemp);
+                }
+                menu.add_separator(99);
+            }
+        }
+    }
+    menu.add_item(20, label_get(0x8FC / 4));
+    MainInterfaceGlobal.client_to_screen(&x, &y);
+    menu.show(x, y, 0);
+    int selected = menu.get_selected_id();
+    bool network_blocked = IsMultiplayerNet &&
+        (ConsoleControlTurnActive || NetDaemonNet.lock_state_[2].dword_[4]
+         || NetDaemonNet.lock_state_[0].dword_[3]);
+    bool faction_blocked = IsMultiplayerNet &&
+        (NetDaemonNet.lock_state_[0].dword_[12] & (1U << LocalFaction));
+
+    switch (selected) {
+    case 1:
+        iUnitIndex_ = -1;
+        iCityIndex_ = base_id;
+        redraw();
+        break;
+    case 2:
+        iCityIndex_ = -1;
+        iUnitIndex_ = object_index;
+        redraw();
+        break;
+    case 5:
+        TutWinBaseWindow.zoom(base_id, 0);
+        break;
+    case 6:
+        if (veh_selectable(object_index)) {
+            CursorVehIndex = object_index;
+            if (NetDaemonNet.lock_veh(&object_index, 0, -1, -1, 0) == 0) {
+                veh_wake(object_index);
+                synch_veh(object_index);
+                NetDaemonNet.await_synch();
+                NetDaemonNet.unlock_veh();
+            }
+            ConsoleGlobal.set_move(1);
+        }
+        break;
+    case 7:
+        iUnitIndex_ = object_index;
+        redraw();
+        break;
+    case 20:
+        help_any();
+        break;
+    case 51: case 52: case 53: case 54: case 55: case 56:
+        if (!network_blocked && !faction_blocked) {
+            TutWinBaseWindow.soft_zoom(base_id);
+            if (selected == 51) TutWinBaseWindow.production(0, 0);
+            else if (selected == 52) TutWinBaseWindow.hurry();
+            else TutWinBaseWindow.gov_on(0x1000000 << (selected - 53));
+        }
+        break;
+    case 90:
+        ConsoleGlobal.editor_edit_veh(object_index);
+        break;
+    }
+    if (selected != 5 && selected != 6 && (field_15C4_ >= 0 || field_15C8_ >= 0)) {
+        field_15C4_ = field_15C8_ = -1;
+        draw_active(field_15CC_, field_15D0_, 0);
+    }
+}
 
 /*
 Purpose: Compose a StatusWin from its Caviar, three Font and one Spot
@@ -149,17 +289,12 @@ Return Value: n/a
 Status: Complete
 */
 void StatusWin::redraw() {
-    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
     int sizeVal = (WinScreenWidth != 0x320) ? 0xC : 0xA;
-    int *const sizeSlot = reinterpret_cast<int *>(self + 0x15AC);
-    if (sizeVal != *sizeSlot) {
-        *sizeSlot = sizeVal;
-        reinterpret_cast<Font *>(self + 0x1530)->init(DefaultFontFace,
-                                                       sizeVal, 0);
-        reinterpret_cast<Font *>(self + 0x1558)->init(DefaultFontFace,
-                                                       sizeVal, 2);
-        reinterpret_cast<Font *>(self + 0x1580)->init(DefaultFontFace,
-                                                       sizeVal, 1);
+    if (sizeVal != field_15AC_) {
+        field_15AC_ = sizeVal;
+        font1_.init(DefaultFontFace, sizeVal, 0);
+        font2_.init(DefaultFontFace, sizeVal, 2);
+        font3_.init(DefaultFontFace, sizeVal, 1);
     }
     if (WinScreenWidth != 0x320) {
         // font.h's `int unk_1_; // height offset? set outside of class

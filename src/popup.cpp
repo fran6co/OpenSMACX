@@ -57,6 +57,16 @@ void Popup::close() {
     BasePop::close();
 }
 
+// Close the live popup before C++ tears down its owned Scroll and BasePop.
+// The original destructor inlines close, then those ordinary destructors;
+// it does not destroy another complete Popup through an executable address.
+// ORIGINAL: 0x00406C00 ??1Popup@@QAE@XZ 0x00406C00-0x00406E52;0x00650AB0-0x00650BA2
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x406c00"], "reason": "Recover the full original operation using owned C++ members and base lifetimes; retain all original branches and expose unresolved callees instead of executing original-address forwarders."}
+// symbol    ??1Popup@@UAE@XZ
+Popup::~Popup() {
+    close();
+}
+
 
 
 /*

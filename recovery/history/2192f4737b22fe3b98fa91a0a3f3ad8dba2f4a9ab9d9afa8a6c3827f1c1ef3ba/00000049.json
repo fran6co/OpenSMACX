@@ -1,0 +1,20 @@
+{
+  "event_id": "d1333b8638340d26565b1dae86aa40cb521a88037f6bf593969e3fe0c4933604",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/recovered/units/00406c00.cpp",
+      "src/unrecovered/00421400.cpp"
+    ],
+    "evidence": [
+      "Retire redundant unclaimed destructor seeds once real Popup/PopMenu source definitions and mappings compile; preserve their original identities and history."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "4c6bb15290c20771d8f98686fbe159bdbcc346003dde78efba2b76311c486ca7",
+  "request_id": "retire-homed-menu-destructor-seeds",
+  "schema_version": 1,
+  "sequence": 49,
+  "stream": "task:infowin-ownership"
+}

@@ -46,10 +46,9 @@ class Scroll : public ScrollGraphicWin {
   // 0x006051D0. Defined in scroll.cpp, alongside close() which resets the
   // same fields from the same two process-default tables.
   Scroll();
-  ~Scroll() { ; }
+  ~Scroll();
 
   uint32_t close();
-  Scroll *destroy();
   // 0x006054D0, still a pending_bodies forwarder. The overloads that
   // wrap it call it BY NAME, so they emit the image's `call rel32`
   // rather than the `call [ptr]` a function-pointer seam compiles.

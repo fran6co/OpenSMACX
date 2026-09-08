@@ -1,0 +1,25 @@
+{
+  "event_id": "735a6a43931897b10f556aaa743c0b3beddcc0c2f9f73fe433d6e851de8c45cd",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/status_menu_harness.cpp"
+    ],
+    "evidence": [
+      "Exercise the actual recovered status-handler source with isolated collaborator doubles under the original compiler, including all menu modes and network restrictions. Replace the selected-slot raw self address with its already-declared item flags while retaining the exactness obligation."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6266688,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "d1333b8638340d26565b1dae86aa40cb521a88037f6bf593969e3fe0c4933604",
+  "request_id": "status-runtime-controls-and-selected-slot",
+  "schema_version": 1,
+  "sequence": 50,
+  "stream": "task:infowin-ownership"
+}

@@ -33,9 +33,9 @@
         "field_accessors.cpp markers": 41,
         "leaf_recoveries.cpp markers": 52,
         "nullsub_thunks.cpp markers": 56,
-        "PENDING_BODY forwarders": 261,
-        "artifact files (recovered/)": 942,
-        "unrecovered files": 1023,
+        "PENDING_BODY forwarders": 259,
+        "artifact files (recovered/)": 941,
+        "unrecovered files": 1021,
         "hypothesis_layouts.h lines": 2752
       },
       "counters": [
@@ -131,7 +131,7 @@
         "orphan redirect": 198,
         "pointer-as-int": 0,
         "undocumented trivial body": 0,
-        "raw self-access": 208,
+        "raw self-access": 205,
         "pointer-parameter as int": 102,
         "scaffold name": 2996
       },

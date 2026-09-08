@@ -6,6 +6,9 @@ executable-derived object, disassembly or fixture is stored in the repository.
 
 from pathlib import Path
 import shutil
+import subprocess
+import sys
+import tempfile
 
 import pytest
 from capstone import Cs, CS_ARCH_X86, CS_MODE_32
@@ -15,6 +18,7 @@ from match_recovery.compiler import Compiler
 from match_recovery.measurement import Measurement
 from match_recovery.pe_coff import Coff
 from match_recovery.source.reader import read_file
+from match_recovery.processes import run_bounded
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -33,7 +37,7 @@ def compiled():
                for flags in settings.flag_sets]
         for unit in ("src/infowin.cpp", "src/pulldown.cpp", "src/graphicwin.cpp",
                      "src/menu.cpp", "src/popmenu.cpp", "src/temp.cpp", "src/console.cpp",
-                     "src/netdaemon.cpp")
+                     "src/netdaemon.cpp", "src/statuswin.cpp", "src/popup.cpp", "src/scroll.cpp")
     }
 
 
@@ -155,3 +159,77 @@ def test_turn_control_is_defined_once_and_referenced_by_the_console(compiled):
                        if row.name == symbol and row.section > 0]
         assert len(definitions) == 1
         assert symbol in references(obj, symbol_at("src/console.cpp", 0x5108A0))
+
+
+def test_status_handler_uses_source_actions_and_owned_status_fields(compiled):
+    expected = {"?soft_zoom@BaseWin@@QAEXH@Z", "?production@BaseWin@@QAEXHH@Z",
+                "?hurry@BaseWin@@QAEXXZ", "?gov_on@BaseWin@@QAEXH@Z",
+                "?set_move@Console@@QAEXH@Z", "?editor_edit_veh@Console@@QAEXH@Z",
+                "?redraw@StatusWin@@QAEXXZ", "?ConsoleControlTurnActive@@3HA"}
+    for obj in compiled["src/statuswin.cpp"]:
+        targets = references(obj, symbol_at("src/statuswin.cpp", 0x4B9010))
+        assert expected <= set(targets), targets
+        assert not any("Original" in target or "vtable_slot" in target for target in targets)
+        layout = class_layout(obj, "StatusWin")
+        expected_members = {"font1_": 0x1530, "font2_": 0x1558, "font3_": 0x1580,
+                            "iUnitIndex_": 0x15BC, "iCityIndex_": 0x15C0, "spot_": 0x15E0}
+        assert {name: layout["members"][name] for name in expected_members} == expected_members
+
+
+def test_popup_family_destroys_each_owned_subobject_once(compiled):
+    popup_destructor = symbol_at("src/popup.cpp", 0x406C00)
+    menu_destructor = symbol_at("src/popmenu.cpp", 0x421400)
+    pull_destructor = symbol_at("src/pulldown.cpp", 0x5F88A0)
+    for obj in compiled["src/popmenu.cpp"]:
+        targets = references(obj, menu_destructor)
+        assert targets.count(pull_destructor) == 1
+        assert targets.count(popup_destructor) == 1
+    for obj in compiled["src/popup.cpp"]:
+        targets = references(obj, popup_destructor)
+        assert targets.count(symbol_at("src/scroll.cpp", 0x406E60)) == 1
+        base_destructor = symbol_at("src/basepop.cpp", 0x4064D0)
+        if base_destructor in targets:
+            assert targets.count(base_destructor) == 1
+        else:
+            # BasePop's in-class destructor expands here. Check its close
+            # and two uniquely owned members, not a nonexistent call edge.
+            assert targets.count("?close@BasePop@@QAEXXZ") == 1
+            assert targets.count("??1Spot@@QAE@XZ") == 1
+            assert targets.count("??1Heap@@QAE@XZ") == 1
+        assert not any("Original" in target for target in targets)
+    for obj in compiled["src/scroll.cpp"]:
+        targets = references(obj, symbol_at("src/scroll.cpp", 0x406E60))
+        assert targets.count("?close@Scroll@@QAEIXZ") == 1
+        assert targets.count("??1GraphicWin@@UAE@XZ") == 1
+        assert not any("?destroy@" in target or "Original" in target for target in targets)
+
+
+def test_status_menu_runtime_branches_use_the_actual_recovered_handler(tmp_path, monkeypatch):
+    """Run the real body with doubles; not a full-game or collaborator proof."""
+    from recovery.environment.compile import compile_object
+    from recovery.environment.wine import VC6_ROOT, environment
+    if not (VC6_ROOT / "BIN/CL.EXE").is_file() or shutil.which("wine32") is None:
+        pytest.skip("the project compiler and Wine32 are required")
+    for name in ("CL", "_CL_", "VC6_INCLUDE"):
+        monkeypatch.delenv(name, raising=False)
+    record, = (row for row in read_file(ROOT / "src/statuswin.cpp") if row.address == 0x4B9010)
+    assert record.region and not record.extract_error
+    harness = Path(__file__).with_name("status_menu_harness.cpp").read_text()
+    anchor = "// RECOVERED_HANDLER is replaced with read_file(...).region, never a copy."
+    assert harness.count(anchor) == 1
+    source = tmp_path / "menu.cpp"
+    source.write_text(harness.replace(anchor, record.region))
+    wrapper = ROOT / "recovery/environment/wine.py"
+    command = (sys.executable, str(wrapper), "--tool=cl", "/nologo")
+    flags = ("/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-")
+    (tmp_path / "menu.obj").write_bytes(compile_object(source, command, flags))
+    result = run_bounded([sys.executable, str(wrapper), "--tool=link", "/nologo",
+                          "/subsystem:console", "/incremental:no", "/out:menu.exe",
+                          "menu.obj", "kernel32.lib"], cwd=tmp_path, timeout=60)
+    assert result.returncode == 0, (result.stdout + result.stderr).decode(errors="replace")
+    with tempfile.TemporaryFile() as diagnostics:
+        result = subprocess.run(["wine32", str(tmp_path / "menu.exe")], env=environment(),
+                                stdout=diagnostics, stderr=diagnostics, timeout=30)
+        diagnostics.seek(0)
+        output = diagnostics.read().decode(errors="replace")
+    assert result.returncode == 0, output

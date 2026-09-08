@@ -682,6 +682,7 @@ int __cdecl prototype_factor(int proto_id);
 int __cdecl veh_cost(int proto_id, int base_id, BOOL *has_proto_cost);
 BOOL __cdecl veh_jail(int veh_id);
 int __cdecl veh_wake(int veh_id);
+int __cdecl veh_selectable(int veh_id);
 int __cdecl action_home(int veh_id, int flags);
 void __cdecl add_abil(int *ability_flags, int ability, int faction_id);
 void __cdecl action_go_to(int veh_id);

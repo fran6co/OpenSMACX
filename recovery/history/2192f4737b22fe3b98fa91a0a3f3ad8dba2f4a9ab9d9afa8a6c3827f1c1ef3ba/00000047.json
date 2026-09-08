@@ -1,0 +1,58 @@
+{
+  "event_id": "2f08fb82f2c34cb05b8d221d1e62c55fe759f606d9b20e663a7afe31c9e64765",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/console.h",
+      "src/popup.cpp",
+      "src/popup.h",
+      "src/veh.h"
+    ],
+    "evidence": [
+      "Recover every original status-menu branch and its actual PopMenu/Popup lifecycle. Scope the existing redraw claim for replacing raw self offsets, and expose the real movement/base/editor callees as link obligations rather than forwarding to the old executable."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4952080,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4955808,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4221952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4330496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4304448,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5313824,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5102160,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "ac6a332f5c5b89aee3bb92f0b8fb86be86a6f4d98154a2746697c4b1fb686517",
+  "request_id": "status-menu-full-handler-and-lifetimes",
+  "schema_version": 1,
+  "sequence": 47,
+  "stream": "task:infowin-ownership"
+}

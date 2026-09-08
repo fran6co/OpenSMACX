@@ -257,6 +257,8 @@ class Console : public MapWin {
   // toggle drives. Declared ahead of its own body landing because
   // editor_lock2 calls it; the pending_bodies forwarder goes when it homes.
   void set_view(int force_update);
+  void set_move(int force_update);  // 0x00511520
+  void editor_edit_veh(int veh_id);  // 0x004DDA50
 
  public:
   // homed from 004e1300.cpp
