@@ -163,6 +163,13 @@ class JackalVoiceRx : public virtual StringAllocationBase {
     cursor_index_ = 0;
     entries_heap_ = 0;
   }
+  // Original Net teardown drains the receiver after the queues, resets its
+  // cursor index even when empty, then publishes the virtual base's owner.
+  // Member destruction owns this sequence; containing classes must not repeat it.
+  ~JackalVoiceRx() {
+    clear();
+    cursor_index_ = 0;
+  }
   virtual int on_insert(void *payload);
   virtual void on_remove(void *payload);
   void clear();

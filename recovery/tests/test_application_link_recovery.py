@@ -235,8 +235,25 @@ def test_receiver_cleanup_uses_the_shared_layout_and_virtual_owners(compiled):
         assert [i.operands[0].mem.disp for i in calls] == [4, 8, 0]
     for obj in compiled["src/netdaemon.cpp"]:
         targets = references(obj, symbol_at("src/netdaemon.cpp", 0x538D10))
-        assert targets.count(symbol_at("src/general.cpp", 0x538EC0)) == 1
-        assert not any("JackalVoiceRxShim" in target for target in targets)
+        assert symbol_at("src/general.cpp", 0x538EC0) not in targets
+        assert not any("JackalVoiceRxShim" in target or "NetFifoShim" in target for target in targets)
+        assert not any("VoiceTx" in target or "NetFifo" in target for target in targets)
+        assert targets.count("??1Net@@QAE@XZ") == 1
+    for obj in compiled["src/net_class.cpp"]:
+        targets = references(obj, "??1Net@@QAE@XZ")
+        # VC6 passes the destructor to its exception-safe array iterator;
+        # one relocation is a callback for three elements, not one teardown.
+        iterator = "??_M@YGXPAXIHP6EX0@Z@Z"
+        cleanup = symbol_at("src/general.cpp", 0x538EC0)
+        assert targets.count("??1NetFifo@@QAE@XZ") == targets.count(iterator) == 1
+        assert targets.count(cleanup) == 1
+        assert targets.index(iterator) < targets.index(cleanup) < targets.index("??1Sound@@UAE@XZ")
+        code, relocations, _ = obj.subject(obj.function("??1Net@@QAE@XZ"))
+        begin, = (r.offset for r in relocations if obj.symbols[int(r.target)].name == "??1NetFifo@@QAE@XZ")
+        end, = (r.offset for r in relocations if obj.symbols[int(r.target)].name == iterator)
+        setup = list(Cs(CS_ARCH_X86, CS_MODE_32).disasm(code[begin + 4:end - 1], begin + 4))
+        assert [(i.mnemonic, i.op_str) for i in setup[:4]] == [
+            ("push", "3"), ("lea", "eax, [edi + 0xe8]"), ("push", "0x24"), ("push", "eax")]
 
 
 def test_menu_candidates_use_typed_source_definitions(compiled):
@@ -425,6 +442,14 @@ def test_receiver_cleanup_respects_payload_and_allocation_ownership(tmp_path, mo
          "void StringStruct::unk_slot00()"),
         ("// LIVE_RECEIVER_DECLARATIONS", "src/net_class.h", "struct VoiceReceiverEntry :",
          "// The list subobject at Net+0x72C"),
+        ("// LIVE_QUEUE_DECLARATIONS", "src/hypothesis_layouts.h", "class NetFifo {",
+         "/* 0x80 bytes, 18 member(s), 18 named. From Thinker. */"),
+        ("// LIVE_QUEUE_CONSTRUCTOR", "src/net_class.cpp", "NetFifo::NetFifo() {",
+         "// ---------------------------------------------------------------------------\n// THE FIFO QUEUE"),
+        ("// LIVE_QUEUE_CLOSE", "src/net_class.cpp", "void NetFifo::close() {",
+         "// ORIGINAL: 0x00633AB0"),
+        ("// LIVE_QUEUE_DESTRUCTOR", "src/net_class.cpp", "NetFifo::~NetFifo() {",
+         "// The wrapped device's own interface"),
     ])
 
 

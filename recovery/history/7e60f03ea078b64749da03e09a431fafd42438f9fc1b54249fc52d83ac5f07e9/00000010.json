@@ -1,0 +1,22 @@
+{
+  "event_id": "d969a24afd0d25925bf0a6e46e6733b0d5320267aad7b2b965c2c334bd91a322",
+  "payload": {
+    "affects": [
+      "entity-3f6349cc1e1e55b2d272de80befdb3454ee51d275842d4f5c3c1a65acbe1c0dc",
+      "entity-a5ace58353d3210408c862b56c5752e5de4163492cf5aef7a0bb989157545d83"
+    ],
+    "author": "coordinator",
+    "discovery_id": "net-distinct-queue-members",
+    "evidence": [
+      "Pinned original Net destructor: 0x004E3563..0x004E358B loads receivers at +0x130, +0x10C, +0xE8, stores separate EH states 3, 2, 1, and directly calls 0x006339E0 three times. Unwind entries at 0x0065C82C..0x0065C84E separately adjust those receivers and jump to that destructor.",
+      "Current src/net_class.h declares netfifo_[3]. VC6 in both configured trials passes count 3, stride 0x24, base +0xE8 and the NetFifo destructor to its exception-safe array iterator. src/net_class.cpp currently indexes only netfifo_[1] in the three Net get/pending-reader wrappers; their source mappings and claims must be preserved through any member rename."
+    ],
+    "hypothesis": "The three NetFifo subobjects should likely be distinct members, not the current netfifo_[3] array: the original normal teardown and unwind paths protect each queue separately, whereas the current compiler delegates all three to one array iterator. Recover the member declaration and affected callers together, retain the working single-destruction ownership chain, and do not replace this structural work with spelling-only trials. Precise queue roles and names remain provisional.",
+    "kind": "discovery"
+  },
+  "previous_event": "5be1a66f3235a3f962f6550567f16a4020f5861eb62dd0783183a82489281954",
+  "request_id": "net-distinct-queue-members",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:jackal-voice-ownership"
+}

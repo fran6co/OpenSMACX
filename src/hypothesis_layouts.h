@@ -1629,7 +1629,7 @@ struct NameNode {
    CRITICAL_SECTION starts at 0xC, and 0xC + 24 == 0x24. */
 class NetFifo {
  public:
-  // 0x006339C0 and 0x006339E0, both pending_bodies forwarders. Declared HERE
+  // 0x006339C0 and 0x006339E0, source-owned in net_class.cpp. Declared HERE
   // rather than as a file-local class in net_class.cpp, which is where they
   // arrived: that spelling declared a NetFifo with no members at all, a
   // different layout from this one, and two definitions of the same class in

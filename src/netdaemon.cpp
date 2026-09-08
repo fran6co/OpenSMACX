@@ -129,16 +129,6 @@ void HeapShim::shutdown() {
     typedef void(__fastcall *pending)(HeapShim *, void *);
     reinterpret_cast<pending>(static_cast<unsigned long>(0x005D45B0))(this, nullptr);
 }
-// Receiver cleanup uses the shared source-owned helper, not an image-address shim.
-class NetFifoShim {
- public:
-  ~NetFifoShim();
-};
-NetFifoShim::~NetFifoShim() {
-    typedef void(__fastcall *pending)(NetFifoShim *, void *);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x006339E0))(this, nullptr);
-}
-
 
 /*
 Purpose: Build a network daemon - its AlphaNet base, then its own eight
@@ -278,15 +268,9 @@ NetDaemon::~NetDaemon() {
     StringAllocationHeap = *reinterpret_cast<Heap **>(self + 0x754);
     StringAllocationHeap = *reinterpret_cast<Heap **>(self + 0x75c);
 
-    reinterpret_cast<NetFifoShim *>(self + 0x130)->~NetFifoShim();
-    reinterpret_cast<NetFifoShim *>(self + 0x10c)->~NetFifoShim();
-    reinterpret_cast<NetFifoShim *>(self + 0xe8)->~NetFifoShim();
-
-    jackal_voice_rx_.clear();
-    *reinterpret_cast<int32_t *>(self + 0xc4) = 0;
-    StringAllocationHeap = *reinterpret_cast<Heap **>(self + 0xd0);
-
-    reinterpret_cast<VoiceTx *>(self + 0x58)->~VoiceTx();
+    // Net's implicit member destruction now owns the three queues, receiver
+    // and VoiceTx, in that order. The list teardown above still needs to move
+    // into its real owning classes; do not duplicate these member lifetimes.
 }
 
 /*

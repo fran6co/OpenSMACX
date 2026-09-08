@@ -47,8 +47,8 @@ static const GUID NetLobbyAppGuid = {
 // ORIGINAL: 0x006339E0 ??1NetFifo@@QAE@XZ 0x006339E0-0x00633A42
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/006339e0.cpp", "image:0x006339E0-0x00633A42", "src/net_class.h: Net::netfifo_ members at +0xE8, +0x10C and +0x130"], "reason": "Bind the existing queue-destructor forwarder to its retained original seed identity before typed ownership recovery. Original calls and the 0x24 embedded queue layout identify this destructor; this binding does not implement or verify it."}
 NetFifo::~NetFifo() {
-    typedef void(__fastcall *pending)(NetFifo *, void *);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x006339E0))(this, nullptr);
+    close();
+    DeleteCriticalSection(&lock_);
 }
 
 // The wrapped device's own interface, as far as VoiceTx's dispatches reach.
@@ -1272,17 +1272,15 @@ NetFifo::NetFifo() {
 void NetFifo::close() {
   EnterCriticalSection(&lock_);
   while (head_ != 0) {
-    NetFifoNode *node = head_;
-    NetFifoNode *next = node->next_;
-    void *data = node->data_;
-    if (data != 0) {
-      free(data);
+    NetFifoNode *next = head_->next_;
+    if (head_->data_ != 0) {
+      free(head_->data_);
     }
-    free(head_);
+    head_->data_ = 0;
+    if (head_ != 0) {
+      free(head_);
+    }
     head_ = next;
-    if (head_ == 0) {
-      break;
-    }
   }
   tail_ = 0;
   count_ = 0;
