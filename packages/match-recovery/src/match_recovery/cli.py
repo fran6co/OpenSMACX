@@ -19,6 +19,14 @@ def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(prog="recover", description="Structure-led matching recovery")
     result.add_argument("--version", action="version", version=__version__)
     commands = result.add_subparsers(dest="command", required=True)
+    debug = commands.add_parser("debug-sidecar", help="Generate ELF32/DWARF debugger hints from an i386 PE, MSVC map and COFF objects")
+    for option in ("exe", "map", "out", "build-root", "comp-dir"):
+        debug.add_argument("--" + option, type=Path, required=True)
+    debug.add_argument("--frame-base", choices=("none", "ebp"), default="none",
+                       help="Emit locals only when the caller guarantees EBP-relative frames")
+    debug.add_argument("--path-map", action="append", default=[], metavar="OLD=NEW",
+                       help="Explicit source prefix translation, applied in argument order")
+    debug.add_argument("--summary", action="store_true", help="Report diagnostic counts and bounded examples")
     agent = commands.add_parser("agent", help="Bridge a configured prompt-driven command to a recovery role protocol")
     agent.add_argument("role", choices=("worker", "reviewer", "coordinator", "planner"))
     agent.add_argument("--root", type=Path, default=Path.cwd())
@@ -58,7 +66,19 @@ def parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     args = parser().parse_args(argv)
     try:
-        if args.command == "agent":
+        if args.command == "debug-sidecar":
+            from .debug_sidecar import build
+            mappings = []
+            for value in args.path_map:
+                if "=" not in value:
+                    raise ValueError("debug path mapping requires OLD=NEW")
+                mappings.append(tuple(value.split("=", 1)))
+            output = build(args.exe, args.map, args.out, args.comp_dir, args.build_root,
+                           frame_base=args.frame_base, path_maps=mappings)
+            if args.summary:
+                notes = output.pop("diagnostics")
+                output.update(diagnostic_count=len(notes), diagnostic_examples=notes[:8])
+        elif args.command == "agent":
             from .agent_command import run_agent
             from .records import parse_json
             try:

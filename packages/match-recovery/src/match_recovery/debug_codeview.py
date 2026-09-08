@@ -1,27 +1,17 @@
-#!/usr/bin/env python3
-"""Read the CodeView VC6 puts in every object, so gdb can be given it.
+"""CV5 debugger types and procedures, not recovery layout verification.
 
-`/Z7` is on for all 127 translation units, which means each `.obj` carries its
-own debug information rather than deferring to the PDB: `.debug$S` holds the
-symbols - one `S_GPROC32` per function and an `S_BPREL32` per local, with the
-name and the frame offset - and `.debug$T` holds the types those indices point
-into. This module turns both into plain Python; `gdb_sidecar.py` turns that
-into DWARF.
-
-WHY NOT THE PDB, which has the same content already linked: nothing outside
-wine can read it. It is version 2.0, the `JG` container, and `llvm-pdbutil`
-answers "not a supported file type". The objects are ordinary COFF.
-
-THE FORMAT IS CV5-SHAPED, not the CV8 that modern documentation describes, and
-every offset here was read off this tree's own objects rather than assumed:
-type indices are 4 bytes, `LF_MEMBER` is 0x1405 (not 0x150D), and a structure
-is `count(2) property(2) field(4) derived(4) vshape(4) size(numeric)
-name(pascal)`.
+COFF boundaries and variable-length values use the shared checked readers.
+PCH imports require matching signatures and index ranges, never type-index votes.
+Unsupported debug records remain diagnostics, not empty complete class proofs.
+Format: https://github.com/microsoft/microsoft-pdb/blob/master/include/cvinfo.h
 """
 from __future__ import annotations
 
 import struct
 from pathlib import Path
+
+from .codeview import Cursor
+from .pe_coff import Coff
 
 # ------------------------------------------------------------------- symbols
 
@@ -46,8 +36,8 @@ LF_BITFIELD = 0x1205
 
 # The field-list leaves, which are their own 0x140x family. Each entry's
 # length is implied by its shape, so ONE unrecognised leaf ends the walk and
-# takes the rest of the class with it - `Palette` came back with no members at
-# all until `LF_ONEMETHOD`, which VC6 emits FIRST, was among these.
+# takes the rest of the class with it. Unknown leaves invalidate that field list
+# rather than returning a partial class as though every member had been read.
 LF_BCLASS = 0x1400
 LF_VBCLASS = 0x1401
 LF_IVBCLASS = 0x1402
@@ -69,8 +59,7 @@ FIRST_USER_TYPE = 0x1000
 SIGNED, UNSIGNED, SIGNED_CHAR, UNSIGNED_CHAR, FLOAT, BOOLEAN = 5, 7, 6, 8, 4, 2
 
 # CV primitive types are `(mode << 8) | kind`: mode 0 is the type itself, mode 4
-# a 32-bit pointer to it. Only the kinds this tree's objects actually use are
-# named; anything else is reported as unknown rather than guessed at.
+# a 32-bit pointer to it. Unsupported kinds remain unknown.
 PRIMITIVE = {
     0x00: ("void", 0, SIGNED),
     0x03: ("void", 0, SIGNED),
@@ -105,8 +94,10 @@ def primitive(index: int) -> dict:
     name, size, encoding = named
     base = dict(kind="void") if size == 0 and name == "void" else \
         dict(kind="base", name=name, size=size, encoding=encoding)
-    if mode in (4, 5, 6):                      # near/far 32-bit pointer
+    if mode == 4:                            # near 32-bit pointer
         return dict(kind="pointer", target=index & 0xFF, size=4)
+    if mode:
+        return dict(kind="unknown", name=f"cv_{index:#06x}")
     return base
 
 
@@ -114,8 +105,10 @@ def primitive(index: int) -> dict:
 
 def pascal(data: bytes, at: int) -> tuple:
     """`(text, next_offset)` for CodeView's length-prefixed names."""
-    length = data[at]
-    return data[at + 1:at + 1 + length].decode("latin-1"), at + 1 + length
+    cursor = Cursor(data)
+    cursor.take(at)
+    name = cursor.name()
+    return name, cursor.at
 
 
 def numeric(data: bytes, at: int) -> tuple:
@@ -124,16 +117,10 @@ def numeric(data: bytes, at: int) -> tuple:
     Under 0x8000 the value IS the halfword; at or above it, the halfword names
     the encoding of what follows.
     """
-    value = struct.unpack_from("<H", data, at)[0]
-    if value < 0x8000:
-        return value, at + 2
-    widths = {0x8000: ("<b", 1), 0x8001: ("<h", 2), 0x8002: ("<H", 2),
-              0x8003: ("<i", 4), 0x8004: ("<I", 4), 0x8009: ("<q", 8),
-              0x800A: ("<Q", 8)}
-    if value not in widths:
-        return 0, at + 2
-    form, width = widths[value]
-    return struct.unpack_from(form, data, at + 2)[0], at + 2 + width
+    cursor = Cursor(data)
+    cursor.take(at)
+    value = cursor.numeric()
+    return value, cursor.at
 
 
 # ---------------------------------------------------------------------- COFF
@@ -146,100 +133,93 @@ class Object:
 
     def __init__(self, path: Path):
         self.path = Path(path)
-        self.data = self.path.read_bytes()
-        count = struct.unpack_from("<H", self.data, 2)[0]
-        symbol_pointer, symbol_count = struct.unpack_from("<II", self.data, 8)
-        self._symbols = symbol_pointer
-        self._strings = symbol_pointer + symbol_count * 18
-        self.sections = []
-        for index in range(count):
-            at = 20 + index * 40
-            name = self.data[at:at + 8].rstrip(b"\0").decode("latin-1")
-            (_, _, size, pointer, relocations, _, relocation_count,
-             _, flags) = struct.unpack_from("<IIIIIIHHI", self.data, at + 8)
-            self.sections.append(dict(
-                name=name, size=size, pointer=pointer, flags=flags,
-                relocations=relocations, relocation_count=relocation_count))
+        self.obj = Coff(self.path.read_bytes())
+        self.sections = self.obj.sections
+        self.diagnostics = []
 
-    def symbol_name(self, index: int) -> str:
-        at = self._symbols + index * 18
-        raw = self.data[at:at + 8]
-        if raw[:4] == b"\0\0\0\0":
-            offset = struct.unpack_from("<I", raw, 4)[0]
-            end = self.data.index(b"\0", self._strings + offset)
-            return self.data[self._strings + offset:end].decode("latin-1")
-        return raw.rstrip(b"\0").decode("latin-1")
-
-    def relocations(self, section: dict) -> dict:
+    def relocations(self, section) -> dict:
         """`{offset_within_section: mangled_name}`."""
         found = {}
-        for index in range(section["relocation_count"]):
-            at = section["relocations"] + index * 10
-            address, symbol, _ = struct.unpack_from("<IIH", self.data, at)
-            found[address] = self.symbol_name(symbol)
+        for address, symbol, kind in section.relocations:
+            if address in found:
+                raise ValueError("duplicate debug relocation site")
+            if kind == 0xB:  # IMAGE_REL_I386_SECREL, the procedure offset
+                found[address] = self.obj.symbols[symbol].name
         return found
 
     # ----------------------------------------------------------------- types
 
     def type_table(self) -> tuple:
-        """`(records, base)` for this object's own type section.
+        """Indexed local records plus explicit import/export metadata.
 
-        THE FIRST INDEX IS NOT 0x1000 when a precompiled header is in use, and
-        nothing in the section says what it is: the PCH's types occupy the low
-        indices and the object's own table continues above them. This tree's
-        objects start at 0x22C3, and the PCH that supplies 0x1000 upward is
-        `cmake_pch.cxx.obj`, which carries its table in `.debug$P` rather than
-        `.debug$T`.
-
-        The base is VOTED FOR rather than assumed, because it is recoverable
-        from the data: VC6 emits a class's `LF_FIELDLIST` immediately before
-        the class, so `field - (position - 1)` is the base for every one of
-        them, and a few hundred structures agree to the index.
+        LF_PRECOMP_ST supplies start/count/signature. LF_ENDPRECOMP marks the
+        provider's exported prefix. The import is replaced by that prefix;
+        ENDPRECOMP occupies an untranslated local index in the provider. A
+        provider may contain further, non-exported local types after its end.
         """
-        section = next((s for s in self.sections
-                        if s["name"] in (".debug$T", ".debug$P")), None)
-        if section is None:
-            return [], FIRST_USER_TYPE
-        blob = self.data[section["pointer"]:section["pointer"] + section["size"]]
-        records, at = [], 4
-        while at + 4 <= len(blob):
-            length = struct.unpack_from("<H", blob, at)[0]
-            if not length:
-                break
-            leaf = struct.unpack_from("<H", blob, at + 2)[0]
-            records.append(self._type_record(leaf, blob[at + 4:at + 2 + length]))
-            at += 2 + length
+        sections = [s for s in self.sections if s.name in (".debug$T", ".debug$P")]
+        if not sections:
+            self.diagnostics.append("no CodeView type stream")
+            return {}, None, None
+        if len(sections) != 1:
+            raise ValueError("ambiguous CodeView type streams")
+        cursor = Cursor(sections[0].data)
+        if cursor.number("<I") != 2:
+            raise ValueError("unsupported CodeView type signature")
+        table, imported, exported, index = {}, None, None, FIRST_USER_TYPE
+        while cursor.at < len(cursor.data):
+            size = cursor.number("<H")
+            if size < 2:
+                raise ValueError("invalid CodeView type length")
+            row = Cursor(cursor.take(size))
+            leaf = row.number("<H")
+            if leaf == 0x100E:
+                if table or imported is not None or exported is not None:
+                    raise ValueError("misplaced precompiled type import")
+                start, count, signature = row.number("<I"), row.number("<I"), row.number("<I")
+                name = row.name()
+                row.padding()
+                if row.at != len(row.data) or start != FIRST_USER_TYPE or count <= 0 or start + count > 0xFFFFFFFF:
+                    raise ValueError("unsupported precompiled type range")
+                imported = {"start": start, "count": count, "signature": signature, "name": name}
+                index = start + count
+                continue
+            if leaf == 0x0014:
+                if imported is not None or exported is not None or sections[0].name != ".debug$P":
+                    raise ValueError("misplaced precompiled type export")
+                signature = row.number("<I")
+                row.padding()
+                if row.at != len(row.data):
+                    raise ValueError("invalid precompiled type signature record")
+                exported = {"start": FIRST_USER_TYPE, "count": index - FIRST_USER_TYPE,
+                            "signature": signature, "types": dict(table)}
+                index += 1
+                continue
+            if leaf in (0x0013, 0x0016, 0x1501, 0x1509, 0x1515, 0x1200):
+                raise ValueError("unsupported CodeView external type context")
+            table[index] = self._type_record(leaf, row.data[2:])
+            index += 1
+        if sections[0].name == ".debug$P" and exported is None:
+            raise ValueError("precompiled type stream has no export signature")
+        return table, imported, exported
 
-        votes = {}
-        for position, record in enumerate(records):
-            if (record and record["kind"] in ("struct", "union")
-                    and not record.get("forward") and record.get("field")):
-                candidate = record["field"] - (position - 1)
-                votes[candidate] = votes.get(candidate, 0) + 1
-        base = max(votes, key=votes.get) if votes else FIRST_USER_TYPE
-        return records, base
-
-    def types(self, inherited: dict = None) -> dict:
-        """`{index: record}`, forward references resolved.
-
-        `inherited` is the precompiled header's table, which supplies every
-        index below this object's base. A forward reference carries the name
-        and nothing else; the definition appears elsewhere in the table, and
-        left unresolved every `this` would point at an empty class.
-        """
-        records, base = self.type_table()
-        table = dict(inherited or {})
-        table = {index: record for index, record in table.items()
-                 if index < base}
-        for position, record in enumerate(records):
-            if record is not None:
-                table[base + position] = record
-
-        defined = {r["name"]: i for i, r in table.items()
-                   if r.get("name") and not r.get("forward")}
+    def types(self, providers=()) -> dict:
+        table, imported, _ = self.type_table()
+        if imported:
+            matches = [p for p in providers if all(p[key] == imported[key]
+                       for key in ("start", "count", "signature"))]
+            if len(matches) != 1:
+                raise ValueError("precompiled types require one matching signature and index range")
+            table = {**matches[0]["types"], **table}
+        table = {i: dict(r) for i, r in table.items() if r is not None}
+        defined = {}
+        for i, record in table.items():
+            if record.get("name") and not record.get("forward"):
+                defined.setdefault((record["kind"], record["name"]), []).append(i)
         for record in table.values():
-            if record.get("forward") and record.get("name") in defined:
-                record["definition"] = defined[record["name"]]
+            matches = defined.get((record["kind"], record.get("name")), [])
+            if record.get("forward") and len(matches) == 1:
+                record["definition"] = matches[0]
         return table
 
     def _type_record(self, leaf: int, body: bytes) -> dict:
@@ -250,7 +230,9 @@ class Object:
                             const=bool(attribute & 1),
                             volatile=bool(attribute & 2))
             if leaf == LF_POINTER:
-                target = struct.unpack_from("<I", body, 0)[0]
+                target, attribute = struct.unpack_from("<II", body, 0)
+                if attribute & 0x1F != 0xA or (attribute >> 5) & 7:
+                    raise ValueError("unsupported pointer representation")
                 return dict(kind="pointer", target=target, size=4)
             if leaf == LF_ARRAY:
                 element, _ = struct.unpack_from("<II", body, 0)
@@ -281,11 +263,11 @@ class Object:
                 returns = struct.unpack_from("<I", body, 0)[0]
                 return dict(kind="function", returns=returns)
             if leaf == LF_BITFIELD:
-                target = struct.unpack_from("<I", body, 0)[0]
-                return dict(kind="modifier", target=target, const=False,
-                            volatile=False)
-        except (struct.error, IndexError):
+                raise ValueError("bitfield location requires bit-sized DWARF support")
+        except (struct.error, IndexError, ValueError) as error:
+            self.diagnostics.append(f"type {leaf:#x}: {error}")
             return None
+        self.diagnostics.append(f"unsupported type leaf {leaf:#x}")
         return None
 
     def _field_list(self, body: bytes) -> list:
@@ -319,7 +301,8 @@ class Object:
                     _, _, _ = struct.unpack_from("<HII", body, at)
                     _, at = numeric(body, at + 10)
                     _, at = numeric(body, at)
-                elif leaf == LF_ENUMERATE:
+                    self.diagnostics.append("virtual-base location omitted")
+                elif leaf == 0x0403:  # LF_ENUMERATE_ST: length-prefixed name
                     value, at = numeric(body, at + 2)
                     name, at = pascal(body, at)
                     members.append(dict(kind="enumerator", name=name,
@@ -336,14 +319,18 @@ class Object:
                 elif leaf in (LF_STMEMBER, LF_NESTTYPE, LF_FRIENDFCN):
                     at += 6
                     _, at = pascal(body, at)
-                elif leaf in (LF_VFUNCTAB, LF_FRIENDCLS, LF_INDEX, LF_VFUNCOFF):
+                elif leaf in (LF_VFUNCTAB, LF_FRIENDCLS):
                     at += 6
                 else:
-                    break
-            except (struct.error, IndexError):
-                break
-            while at < len(body) and body[at] >= 0xF0:   # LF_PAD
-                at += 1
+                    raise ValueError(f"unsupported field leaf {leaf:#x}")
+            except (struct.error, IndexError) as error:
+                raise ValueError("truncated CodeView field") from error
+            cursor = Cursor(body)
+            cursor.take(at)
+            cursor.padding()
+            at = cursor.at
+        if at != len(body):
+            raise ValueError("truncated CodeView field leaf")
         return members
 
     # --------------------------------------------------------------- symbols
@@ -353,26 +340,29 @@ class Object:
 
         The mangled name comes from the section's RELOCATION rather than the
         record: CodeView spells a procedure the way a human reads it -
-        `Palette::set_from_dib` - and this tree has overloads that share that
-        spelling. The relocation at the record's `offset` field names the COFF
+        `Widget::update` - and overloads can share that spelling.
+        The relocation at the record's `offset` field names the COFF
         symbol, which is what the linker's map is keyed by.
         """
         found = []
         for section in self.sections:
-            if section["name"] != ".debug$S":
+            if section.name != ".debug$S":
                 continue
-            blob = self.data[section["pointer"]:
-                             section["pointer"] + section["size"]]
-            comdat = bool(section["flags"] & IMAGE_SCN_LNK_COMDAT)
+            blob = section.data
+            comdat = bool(section.flags & IMAGE_SCN_LNK_COMDAT)
             relocations = self.relocations(section)
-            at = 0 if comdat else 4
+            cursor = Cursor(blob)
+            if not comdat and cursor.number("<I") != 2:
+                raise ValueError("unsupported CodeView symbol signature")
             current = None
-            while at + 4 <= len(blob):
-                length = struct.unpack_from("<H", blob, at)[0]
-                if not length:
-                    break
-                kind = struct.unpack_from("<H", blob, at + 2)[0]
-                body = blob[at + 4:at + 2 + length]
+            while cursor.at < len(blob):
+                at = cursor.at
+                length = cursor.number("<H")
+                if length < 2:
+                    raise ValueError("invalid CodeView symbol length")
+                record = Cursor(cursor.take(length))
+                kind = record.number("<H")
+                body = record.data[2:]
                 if kind in (S_GPROC32, S_LPROC32):
                     current = self._procedure(body, at, relocations,
                                               kind == S_GPROC32)
@@ -385,7 +375,6 @@ class Object:
                         dict(name=name, offset=offset, type=index))
                 elif kind == S_END:
                     current = None
-                at += 2 + length
         return found
 
     def _procedure(self, body: bytes, at: int, relocations: dict,
@@ -394,8 +383,8 @@ class Object:
             length = struct.unpack_from("<I", body, 12)[0]
             type_index, offset = struct.unpack_from("<II", body, 24)
             name, _ = pascal(body, 35)
-        except (struct.error, IndexError):
-            return None
+        except (struct.error, IndexError, ValueError) as error:
+            raise ValueError("truncated CodeView procedure") from error
         # `off` sits 32 bytes into the record, and the relocation that fills it
         # in is the only place the mangled name appears.
         mangled = relocations.get(at + 32)
@@ -413,20 +402,33 @@ def definition(table: dict, index: int) -> dict:
     record = table.get(index)
     if record is None:
         return primitive(index)
+    seen = set()
     while record.get("forward") and record.get("definition") in table:
+        target = record["definition"]
+        if target in seen:
+            return None
+        seen.add(target)
         record = table[record["definition"]]
+    if record.get("forward"):
+        return {"kind": record["kind"], "name": record.get("name"), "forward": True}
     return record
 
 
 def precompiled(path: Path) -> dict:
     """The PCH object's type table, to be handed to every object it covers."""
     obj = Object(path)
-    records, base = obj.type_table()
-    return {base + position: record
-            for position, record in enumerate(records) if record is not None}
+    _, _, exported = obj.type_table()
+    if exported is not None:
+        exported["diagnostics"] = obj.diagnostics
+    return exported
 
 
-def read(path: Path, inherited: dict = None) -> dict:
+def read(path: Path, providers=()) -> dict:
     """`{"types": {...}, "procedures": [...]}` for one object file."""
     obj = Object(path)
-    return dict(types=obj.types(inherited), procedures=obj.procedures())
+    try:
+        types = obj.types(providers)
+    except ValueError as error:
+        types = {}
+        obj.diagnostics.append(str(error))
+    return dict(types=types, procedures=obj.procedures(), diagnostics=sorted(set(obj.diagnostics)))

@@ -76,6 +76,11 @@ Those project controls now live in opt-in `recovery/tests/test_gate_controls.py`
 full native gates in a disposable detached checkout, named stage/subject assertions,
 and guarded damage restoration. The old main-tree mutation CLI is removed.
 Ordinary anchor/safety tests are not a substitute for executing the live matrix.
+CMake's debugger support now uses native `recover debug-sidecar`; the former
+sidecar and CodeView scripts are removed. PCH imports use recorded signatures and
+index ranges, with shared bounds-checked COFF/value parsing. Debugger hints stay
+separate from strict recovery verification. Frame guarantees and source-path
+translation are supplied by the project build, not chosen by the package.
 All standalone diagnostics now use native `recover inventory`, `recover inspect`
 and `recover measure`; the legacy status/show/calls/measure commands are removed.
 Measurement groups requested current spellings by TU; private candidate decks use

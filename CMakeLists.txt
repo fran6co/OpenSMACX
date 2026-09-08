@@ -288,7 +288,7 @@ target_link_libraries(OpenSMACX PRIVATE zlib user32 gdi32 winmm dxguid ddraw)
 # handles 4), and `/debugtype:coff` segfaults gdb 15.1 on `file` alone -
 # measured, all three. The map carries every public with its final address and,
 # with `/MAPINFO:LINES`, a line table per source, which is what
-# `tools/gdb_sidecar.py` turns into an ELF gdb loads beside a live winedbg.
+# `recover debug-sidecar` turns into an ELF gdb loads beside a live winedbg.
 # It is a side file: the linked bytes are the same with it and without.
 target_link_options(OpenSMACX PRIVATE
     "/MAP:${CMAKE_CURRENT_BINARY_DIR}/OpenSMACX.map" "/MAPINFO:LINES")
@@ -296,17 +296,21 @@ target_link_options(OpenSMACX PRIVATE
 # The sidecar is DERIVED FROM THE LINK, so it is built by it. Left as a command
 # to remember, it goes stale the moment anything moves, and a stale one is
 # worse than none: gdb reads it without complaint and reports names for the
-# addresses of an older build. It costs under a second and reads only what the
-# link just wrote - the executable, the map, and the objects' CodeView.
+# addresses of an older build. It reads the executable, map and objects from
+# this build. Source path mapping and frame-base guarantees are toolchain policy,
+# not assumptions in the portable package; only Debug explicitly retains EBP.
 find_program(OPENSMACX_UV_EXECUTABLE NAMES uv REQUIRED)
 add_custom_command(TARGET OpenSMACX POST_BUILD
     COMMAND "${OPENSMACX_UV_EXECUTABLE}" run --project "${CMAKE_CURRENT_SOURCE_DIR}"
-            python "${CMAKE_CURRENT_SOURCE_DIR}/tools/gdb_sidecar.py"
+            recover debug-sidecar
             --exe "$<TARGET_FILE:OpenSMACX>"
             --map "${CMAKE_CURRENT_BINARY_DIR}/OpenSMACX.map"
             --out "${CMAKE_CURRENT_BINARY_DIR}/OpenSMACX.sym"
             --build-root "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles"
             --comp-dir "${CMAKE_CURRENT_SOURCE_DIR}"
+            --path-map "z:/=/"
+            --frame-base "$<IF:$<CONFIG:Debug>,ebp,none>"
+            --summary
     BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/OpenSMACX.sym"
     COMMENT "Building the gdb sidecar"
     VERBATIM)

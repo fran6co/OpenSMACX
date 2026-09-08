@@ -1,71 +1,39 @@
-#!/usr/bin/env python3
-"""Give gdb the symbols VC6 cannot hand it.
+"""ELF32/DWARF debugger hints from an explicitly supplied PE and MSVC link map.
 
-gdb reads DWARF, stabs and old-style COFF. VC6 writes a PDB (2.0, the `JG`
-container - LLVM's reader refuses it), CodeView in `.debug$S` (signature 2,
-where LLVM handles 4), and a COFF symbol table that segfaults gdb 15.1 on
-`file` alone. Every byte of debug information exists; the one consumer we want
-cannot parse any of it.
-
-So this translates. It reads the linker's MAP - which carries every public with
-its final address, and, with `/MAPINFO:LINES`, a line-number table per source
-file - and writes an ELF32 whose only content is symbols and DWARF describing
-the addresses the VC6 executable actually runs at:
-
-    winedbg --gdb --port 12345 --no-start build/OpenSMACX.exe
-    gdb -ex 'file build/OpenSMACX.sym' -ex 'target remote localhost:12345'
-
-THE SIDECAR DESCRIBES THE REAL BINARY. That is the whole reason it exists
-rather than a gcc build of the same sources: the questions this project asks -
-why does the recovered code fault at 0x0062D3C2 - are about addresses, and a
-different compiler moves every one of them.
-
-WHAT IS NOT HERE YET: locals and types. Those live in the CodeView the compiler
-already emits into each `.obj` (`/Z7` is on for all 127 translation units) -
-`S_BPREL32` for a local's name and frame offset, `.debug$T` for the layouts.
-This stage gets names, addresses and lines, which is what `break`, `step`,
-`list` and a readable backtrace need.
+This describes the linked candidate, not the original executable or recovery
+acceptance. Incomplete CodeView coverage is reported; it never supplies layout
+verification. The command definition belongs to the installed package CLI.
 """
 from __future__ import annotations
 
-import argparse
+import hashlib
+import os
+import tempfile
 import re
 import struct
-import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO_ROOT))
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-
-import codeview  # noqa: E402
-from match_recovery.source.mangled import qualified_name  # noqa: E402
+from . import debug_codeview as codeview
+from .source.mangled import qualified_name
+from .pe_coff import PeImage
 
 
 # ----------------------------------------------------------------- the image
 
 def pe_sections(exe: Path) -> tuple:
-    """`(image_base, [(name, virtual_address, virtual_size), ...])`.
+    """Image base, section bounds/execution flags, and actual PE entry point.
 
     The MAP names segments by ordinal - `0001:000a1300` - and only the PE
-    itself says where segment one begins. Reading it here means the sidecar
-    cannot disagree with the executable it describes.
+    itself says where segment one begins. This does not attest that the map
+    was produced by the same link; the caller must supply corresponding inputs.
     """
     data = exe.read_bytes()
-    pe = struct.unpack_from("<I", data, 0x3C)[0]
-    if data[pe:pe + 4] != b"PE\0\0":
-        raise SystemExit(f"{exe} is not a PE image")
-    sections = struct.unpack_from("<H", data, pe + 6)[0]
-    optional = struct.unpack_from("<H", data, pe + 20)[0]
-    base = struct.unpack_from("<I", data, pe + 24 + 28)[0]
-    table = pe + 24 + optional
-    out = []
-    for i in range(sections):
-        offset = table + i * 40
-        name = data[offset:offset + 8].rstrip(b"\0").decode("latin-1")
-        virtual_size, virtual_address = struct.unpack_from("<II", data, offset + 8)
-        out.append((name, virtual_address, virtual_size))
-    return base, out
+    parsed = PeImage(data, hashlib.sha256(data).hexdigest())
+    out = [(name, span.start - parsed.base, span.end - span.start, bool(flags & 0x20000000))
+           for name, (span, _, _), flags in zip(parsed.section_names, parsed.sections, parsed.section_flags)]
+    if len({row[0] for row in out}) != len(out):
+        raise ValueError("debug sidecar requires unique image section names")
+    return parsed.base, out, parsed.entrypoint
 
 
 # ------------------------------------------------------------------- the map
@@ -77,23 +45,20 @@ LINE_ENTRY = re.compile(r"(\d+)\s+([0-9a-fA-F]{4}):([0-9a-fA-F]{8})")
 
 
 def posix_path(text: str) -> str:
-    """`Z:\\home\\x\\y.cpp` back to `/home/x/y.cpp`."""
-    if len(text) > 2 and text[1] == ":":
-        text = text[2:]
+    """Normalize separators without inventing a host mapping for drive letters."""
     return text.replace("\\", "/")
 
 
-def read_map(path: Path) -> tuple:
+def read_map(path: Path, path_maps=()) -> tuple:
     """`(publics, lines)` from a VC6 link map.
 
     A public is `(address, name, is_function, object)`. `lines` is
     `{object: [(source, line, segment, offset), ...]}` - KEYED BY OBJECT,
     because that is the unit DWARF calls a compile unit and the map does not:
-    it emits one block per (object, source) pair, so `win.cpp.obj` reports its
-    own lines and `original_seam.h`'s separately. Grouped by source instead,
+    it emits one block per (object, source) pair, so a TU reports its
+    own lines and its headers' separately. Grouped by source instead,
     a header's rows scatter across the whole image and the compile unit built
-    from them spans - and mis-attributes - everything in between. That was a
-    real defect here: gdb placed `WinMain` in `buffer.h:100`.
+    from them spans and misattributes unrelated functions in between.
 
     `lines` is empty unless the link ran with `/MAPINFO:LINES`. A map without
     it parses fine and simply carries no line numbers, which is worth
@@ -104,7 +69,12 @@ def read_map(path: Path) -> tuple:
     for raw in path.read_text(errors="replace").splitlines():
         block = LINE_BLOCK.match(raw.strip())
         if block:
-            current = (Path(block.group(1)).name, posix_path(block.group(2)))
+            source = posix_path(block.group(2))
+            for old, new in path_maps:
+                if source.casefold().startswith(old.casefold()):
+                    source = new + source[len(old):]
+                    break
+            current = (Path(posix_path(block.group(1))).name, source)
             lines.setdefault(current[0], [])
             in_publics = False
             continue
@@ -136,6 +106,8 @@ def read_map(path: Path) -> tuple:
 # ------------------------------------------------------------------ encoding
 
 def uleb(value: int) -> bytes:
+    if value < 0:
+        raise ValueError("negative unsigned DWARF value")
     out = bytearray()
     while True:
         byte = value & 0x7F
@@ -367,16 +339,18 @@ class Types:
     def __init__(self, table: dict, unit: Die):
         self.table, self.unit, self.cache = table, unit, {}
 
-    def size(self, index: int) -> int:
+    def size(self, index: int, seen=frozenset()) -> int:
+        if index in seen:
+            return 0
         record = codeview.definition(self.table, index) or {}
         if record.get("kind") == "pointer":
             return 4
         if record.get("kind") in ("base", "struct", "union", "array"):
             return record.get("size", 0)
         if record.get("kind") == "modifier":
-            return self.size(record["target"])
+            return self.size(record["target"], seen | {index})
         if record.get("kind") == "enum":
-            return 4
+            return self.size(record["underlying"], seen | {index})
         return 0
 
     def die(self, index: int) -> Die:
@@ -406,9 +380,18 @@ class Types:
                 die.attributes.append(("type", "ref4", target))
             return die
         if kind == "modifier":
+            if not record.get("const") and not record.get("volatile"):
+                self.cache[index] = None
+                self.cache[index] = self.die(record["target"])
+                return self.cache[index]
             tag = "const_type" if record.get("const") else "volatile_type"
             die = self._keep(index, Die(tag))
             target = self.die(record["target"])
+            if record.get("const") and record.get("volatile"):
+                volatile = self.unit.add(Die("volatile_type"))
+                if target is not None:
+                    volatile.attributes.append(("type", "ref4", target))
+                target = volatile
             if target is not None:
                 die.attributes.append(("type", "ref4", target))
             return die
@@ -435,11 +418,15 @@ class Types:
 
     def _aggregate(self, index: int, record: dict) -> Die:
         tag = "union_type" if record["kind"] == "union" else "structure_type"
-        attributes = [("byte_size", "udata", record.get("size", 0))]
+        fields = self.table.get(record.get("field", 0)) or {}
+        incomplete = record.get("forward") or (record.get("field") and fields.get("kind") != "fieldlist")
+        attributes = ([("declaration", "flag", 1)] if incomplete else
+                      [("byte_size", "udata", record.get("size", 0))])
         if record.get("name"):
             attributes.insert(0, ("name", "string", record["name"]))
         die = self._keep(index, Die(tag, attributes))
-        fields = self.table.get(record.get("field", 0)) or {}
+        if incomplete:
+            return die
         for member in fields.get("members", []):
             if member["kind"] == "member":
                 target = self.die(member["type"])
@@ -468,14 +455,16 @@ class Types:
             return None
         die.attributes.append(("type", "ref4", element))
         stride = self.size(record["element"])
-        if stride:
+        size = record.get("size", 0)
+        if stride and size > 0 and size % stride == 0:
             die.add(Die("subrange_type", [
                 ("upper_bound", "udata",
-                 max(record.get("size", 0) // stride - 1, 0))]))
+                 size // stride - 1)]))
         return die
 
     def _enumeration(self, index: int, record: dict) -> Die:
-        attributes = [("byte_size", "data1", 4)]
+        size = self.size(record["underlying"])
+        attributes = [("byte_size", "data1", size)] if size else []
         if record.get("name"):
             attributes.insert(0, ("name", "string", record["name"]))
         die = self._keep(index, Die("enumeration_type", attributes))
@@ -599,47 +588,74 @@ def objects(root: Path) -> dict:
     """
     found = {}
     for path in sorted(root.rglob("*.obj")):
-        found.setdefault(path.name, path)
+        if path.name in found:
+            raise ValueError(f"ambiguous debug object basename: {path.name}")
+        found[path.name] = path
     return found
 
 
-def build(exe: Path, map_path: Path, output: Path, comp_dir: Path,
-          build_root: Path) -> dict:
-    image_base, pe = pe_sections(exe)
-    publics, lines = read_map(map_path)
+def render(exe: Path, map_path: Path, comp_dir: Path, build_root: Path,
+           *, frame_base="none", path_maps=()) -> tuple[bytes, dict]:
+    if frame_base not in ("none", "ebp"):
+        raise ValueError("unsupported debug frame base")
+    image_base, pe, entrypoint = pe_sections(exe)
+    publics, lines = read_map(map_path, path_maps)
     publics.sort()
+    if not publics:
+        raise ValueError("link map has no public symbols")
+    diagnostics = []
 
-    sections = [(name, image_base + address, size, name.startswith(".text"))
-                for name, address, size in pe]
+    sections = [(name, image_base + address, size, executable)
+                for name, address, size, executable in pe]
     segment_base = {index: image_base + address
-                    for index, (_, address, _) in enumerate(pe, start=1)}
+                    for index, (_, address, _, _) in enumerate(pe, start=1)}
 
     def owning_section(address: int) -> str:
         for name, start, size, _ in sections:
             if start <= address < start + size:
                 return name
-        return ".text"
+        return None
 
     # A public's extent is the next public's address: VC6's map records where
     # each one starts and nothing about how long it is.
     symbols, by_object, address_of = [], {}, {}
+    ends, following = {}, None
+    for address in sorted({row[0] for row in publics}, reverse=True):
+        ends[address] = following if following is not None else address + 1
+        following = address
     for index, (address, mangled, is_function, owner) in enumerate(publics):
-        following = publics[index + 1][0] if index + 1 < len(publics) else address
-        size = max(following - address, 1) if is_function else 1
+        section = owning_section(address)
+        if section is None:
+            diagnostics.append(f"public outside image sections: {mangled}")
+            continue
+        _, low, length, executable = next(row for row in sections if row[0] == section)
+        if is_function and not executable:
+            raise ValueError(f"function public outside executable section: {mangled}")
+        following = ends[address]
+        size = min(following, low + length) - address if is_function else 1
         pretty = qualified_name(mangled) or mangled
-        symbols.append((pretty, address, size, owning_section(address),
+        symbols.append((pretty, address, size, section,
                         is_function))
         if is_function:
             by_object.setdefault(owner, []).append((pretty, address,
                                                     address + size))
-            address_of.setdefault(mangled, (address, address + size))
+            key = owner, mangled
+            if key in address_of and address_of[key] != (address, address + size):
+                raise ValueError(f"ambiguous linked debug symbol: {mangled}")
+            address_of[key] = address, address + size
 
     available = objects(build_root)
-    inherited = {}
+    providers = []
     for name, path in available.items():
-        if "pch" in name:
-            inherited = codeview.precompiled(path)
-            break
+        # The section identity, not a project-specific filename, identifies PCH.
+        try:
+            obj = codeview.Object(path)
+            if any(s.name == ".debug$P" for s in obj.sections):
+                provider = codeview.precompiled(path)
+                providers.append(provider)
+                diagnostics.extend(f"{name}: {note}" for note in provider["diagnostics"])
+        except (OSError, ValueError) as error:
+            diagnostics.append(f"{name}: {error}")
 
     abbreviations = Abbreviations()
     debug_line, debug_info = bytearray(), bytearray()
@@ -651,8 +667,13 @@ def build(exe: Path, map_path: Path, output: Path, comp_dir: Path,
         entries = lines.get(owner, [])
         sources = sorted({source for source, _, _, _ in entries})
         index_of = {source: number for number, source in enumerate(sources, 1)}
-        rows = sorted({(segment_base[segment] + offset, index_of[source], number)
-                       for source, number, segment, offset in entries})
+        rows = []
+        for source, number, segment, offset in entries:
+            if segment not in segment_base or not 0 <= offset < pe[segment - 1][2]:
+                diagnostics.append(f"{owner}: line outside image section")
+                continue
+            rows.append((segment_base[segment] + offset, index_of[source], number))
+        rows = sorted(set(rows))
 
         # Every row belongs to the function that contains it; rows outside all
         # of them - the map does emit a few - describe addresses this unit does
@@ -673,7 +694,7 @@ def build(exe: Path, map_path: Path, output: Path, comp_dir: Path,
         primary = next((s for s in sources if Path(s).name == stem),
                        sources[0] if sources else stem)
         unit = Die("compile_unit", [
-            ("producer", "string", "opensmacx gdb_sidecar"),
+            ("producer", "string", "match-recovery debug-sidecar"),
             ("language", "data1", 0x04),
             ("name", "string", primary),
             ("comp_dir", "string", str(comp_dir)),
@@ -689,19 +710,23 @@ def build(exe: Path, map_path: Path, output: Path, comp_dir: Path,
         source = available.get(owner)
         if source is not None:
             try:
-                read = codeview.read(source, inherited)
-            except (OSError, struct.error, IndexError):
+                read = codeview.read(source, providers)
+            except (OSError, ValueError, struct.error, IndexError) as error:
+                diagnostics.append(f"{owner}: {error}")
                 read = None
             if read:
+                diagnostics.extend(f"{owner}: {note}" for note in read["diagnostics"])
                 types = Types(read["types"], unit)
                 for procedure in read["procedures"]:
-                    placed = address_of.get(procedure.get("mangled") or "")
+                    placed = address_of.get((owner, procedure.get("mangled") or ""))
                     if placed is None:
                         continue
                     low, high = placed
                     described_here.add(low)
                     described += 1
-                    located += _subprogram(unit, types, procedure, low, high)
+                    located += _subprogram(unit, types, procedure, low, high, frame_base=frame_base)
+        else:
+            diagnostics.append(f"{owner}: no unique local object for debug types/locals")
 
         for name, low, high in functions:
             if low in described_here:
@@ -717,31 +742,32 @@ def build(exe: Path, map_path: Path, output: Path, comp_dir: Path,
     payload = {".debug_info": bytes(debug_info),
                ".debug_abbrev": abbreviations.encode(),
                ".debug_line": bytes(debug_line)}
-    entry = next((address for address, name, _, _ in publics
-                  if name in ("_WinMain@16",
-                              "?WinMain@@YGHPAUHINSTANCE__@@0PADH@Z")),
-                 image_base)
-    output.write_bytes(elf(sections, symbols, payload, entry))
-    return dict(symbols=len(symbols),
+    result = elf(sections, symbols, payload, entrypoint or 0)
+    return result, dict(symbols=len(symbols),
                 functions=sum(len(v) for v in by_object.values()),
                 units=units, sources=len(lines),
                 rows=sum(len(v) for v in lines.values()),
-                attributed=attributed, described=described, located=located)
+                attributed=attributed, described=described, located=located,
+                diagnostics=sorted(set(diagnostics)), frame_base=frame_base,
+                verification="debug_hints_only", ready_for_collection=False,
+                limitations=["public extents bounded by next distinct public and image section, not proven function extents",
+                             "link map/object correspondence supplied by caller; no final-link identity attestation",
+                             "unsupported debug types and locals remain incomplete; virtual-base locations are not emitted",
+                             "frame locations omitted unless caller explicitly guarantees EBP-relative frames"])
 
 
 def _subprogram(unit: Die, types: "Types", procedure: dict, low: int,
-                high: int) -> int:
+                high: int, *, frame_base="none") -> int:
     """One function DIE with its locals; returns how many locals were placed.
 
-    `DW_AT_frame_base` is the value in ebp, and `S_BPREL32` offsets are
-    relative to it - which is exactly `DW_OP_fbreg`. The Debug build keeps the
-    frame pointer (`/Od` implies it), so this is not an assumption the
-    optimiser can take away.
+    EBP-relative locations require the caller's explicit frame-base contract.
+    A toolchain may omit EBP, so the backend cannot infer this from a build name.
     """
     attributes = [("name", "string", procedure["name"]),
                   ("low_pc", "addr", low), ("high_pc", "addr", high),
-                  ("external", "flag", 1 if procedure["external"] else 0),
-                  ("frame_base", "block1", bytes([DW_OP_reg5]))]
+                  ("external", "flag", 1 if procedure["external"] else 0)]
+    if frame_base == "ebp":
+        attributes.append(("frame_base", "block1", bytes([DW_OP_reg5])))
     die = unit.add(Die("subprogram", attributes))
     signature = types.table.get(procedure.get("type", 0)) or {}
     if signature.get("kind") == "function":
@@ -749,6 +775,8 @@ def _subprogram(unit: Die, types: "Types", procedure: dict, low: int,
         if returns is not None:
             die.attributes.append(("type", "ref4", returns))
     placed = 0
+    if frame_base != "ebp":
+        return placed
     for local in procedure["locals"]:
         target = types.die(local["type"])
         tag = "formal_parameter" if local["offset"] > 0 else "variable"
@@ -762,39 +790,58 @@ def _subprogram(unit: Die, types: "Types", procedure: dict, low: int,
     return placed
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--exe", type=Path,
-                        default=REPO_ROOT / "build" / "OpenSMACX.exe")
-    parser.add_argument("--map", type=Path,
-                        default=REPO_ROOT / "build" / "OpenSMACX.map")
-    parser.add_argument("--out", type=Path,
-                        default=REPO_ROOT / "build" / "OpenSMACX.sym")
-    parser.add_argument("--comp-dir", type=Path, default=REPO_ROOT)
-    parser.add_argument("--build-root", type=Path,
-                        default=REPO_ROOT / "build" / "CMakeFiles",
-                        help="where the objects with the CodeView are")
-    arguments = parser.parse_args()
+def build(exe: Path, map_path: Path, output: Path, comp_dir: Path, build_root: Path,
+          *, frame_base="none", path_maps=()) -> dict:
+    """Publish one disposable sidecar after checking input/output freshness.
 
-    for path in (arguments.exe, arguments.map):
-        if not path.is_file():
-            print(f"gdb-sidecar: {path} is absent"
-                  + (" - the link needs /MAP /MAPINFO:LINES"
-                     if path is arguments.map else ""), file=sys.stderr)
-            return 2
+    The caller supplies an output artifact path. Existing source, image, map and
+    object inputs cannot be overwritten, even through aliases. Unsupported debug
+    information is reported, while malformed primary inputs refuse publication.
+    """
+    exe, map_path, output, comp_dir, build_root = (
+        Path(p).absolute() for p in (exe, map_path, output, comp_dir, build_root))
+    if any(not isinstance(pair, (list, tuple)) or len(pair) != 2 or not pair[0]
+           or any(not isinstance(word, str) or "\0" in word for word in pair) for pair in path_maps):
+        raise ValueError("path maps require nonempty source prefixes and replacement strings")
+    if not comp_dir.is_dir() or not build_root.is_dir():
+        raise ValueError("debug source and object directories must exist")
+    if output.resolve() != output or output.suffix != ".sym":
+        raise ValueError("sidecar output must be a non-aliased .sym artifact")
+    if not output.parent.is_dir():
+        raise ValueError("sidecar output directory must exist")
 
-    counted = build(arguments.exe, arguments.map, arguments.out,
-                    arguments.comp_dir, arguments.build_root)
-    print(f"{arguments.out}: {counted['symbols']:,} symbols "
-          f"({counted['functions']:,} functions), {counted['units']:,} units, "
-          f"{counted['attributed']:,} of {counted['rows']:,} line rows, "
-          f"{counted['described']:,} functions with locals "
-          f"({counted['located']:,} variables)")
-    if not counted["rows"]:
-        print("gdb-sidecar: no line numbers in the map - relink with "
-              "/MAPINFO:LINES for source-level stepping", file=sys.stderr)
-    return 0
+    def snapshot():
+        paths = {exe, map_path, *objects(build_root).values()}
+        if output in paths:
+            raise ValueError("sidecar output overlaps an input")
+        result = {}
+        for path in sorted(paths):
+            if path.resolve() != path or not path.is_file() or path.stat().st_nlink != 1:
+                raise ValueError(f"unsafe debug input: {path}")
+            result[str(path)] = hashlib.sha256(path.read_bytes()).hexdigest()
+        return result
 
+    def previous():
+        if output.is_symlink() or (output.exists() and (not output.is_file() or output.stat().st_nlink != 1)):
+            raise ValueError("unsafe sidecar destination")
+        return output.read_bytes() if output.exists() else None
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+    before, destination = snapshot(), previous()
+    data, report = render(exe, map_path, comp_dir, build_root, frame_base=frame_base, path_maps=path_maps)
+    if snapshot() != before or previous() != destination:
+        raise ValueError("debug inputs or destination changed during sidecar generation")
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(dir=output.parent, prefix=".debug-sidecar-", delete=False) as stream:
+            temporary = Path(stream.name)
+            stream.write(data)
+            stream.flush()
+            os.fsync(stream.fileno())
+        if output.parent.resolve() != output.parent or previous() != destination:
+            raise ValueError("sidecar destination changed before publication")
+        os.replace(temporary, output)
+    finally:
+        if temporary is not None and temporary.exists():
+            temporary.unlink()
+    return {"operation": "debug_sidecar", "output": str(output), "output_sha256": hashlib.sha256(data).hexdigest(),
+            "debug_coverage": "incomplete", "artifact_written": True, **report}

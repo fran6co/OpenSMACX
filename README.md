@@ -92,8 +92,17 @@ mkdir -p OpenSMACX/.opensmacx/game
 cp /path/to/terranx_original.exe OpenSMACX/.opensmacx/game/
 ```
 
-Debugging the built executable under Wine is what `tools/gdb_sidecar.py` is
-for; its docstring carries the whole recipe.
+CMake generates `build/OpenSMACX.sym` using the installed `recover debug-sidecar`
+command. To inspect the linked candidate under Wine:
+
+```sh
+winedbg --gdb --port 12345 --no-start build/OpenSMACX.exe
+gdb -ex 'file build/OpenSMACX.sym' -ex 'target remote localhost:12345'
+```
+
+Use the matching sidecar for that build. Unsupported debug information stays
+explicitly incomplete; these hints do not establish recovery acceptance. Locals
+are emitted only for the Debug profile's explicit EBP-relative frame guarantee.
 
 ## Where things are
 
