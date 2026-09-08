@@ -11,27 +11,58 @@ Install a built wheel into your environment, then work in your own Git repositor
 
 ```sh
 python -m pip install /path/to/match_recovery-0.1.0-py3-none-any.whl
-recover init --target my-application
+recover init --target my-application --image /path/to/original.exe
 ```
 
-This creates only local, editable files:
+This creates local, editable configuration and an original-image identity in source:
 
 ```text
+src/IMAGE_PIN       SHA-256 of the explicitly supplied original; no image bytes
 recovery/
-  driver.json       context/check commands and arbitrary target identity
-  project.json      native source inputs and optional local operation adapter
-  adapter.py        starter context command; checks deliberately return unknown
+  driver.json       native context, obligations, restoration, build and migration commands
+  project.json      source selection, compiler interaction and measurement configuration
+  build.json        fresh build command and expected output artifact
+  gate.json         additional checks; native checks always participate
+  audits.json       project-owned source policy, initially empty
   worker.json       your worker command and attribution
   reviewer.json     your independent reviewer command and attribution
   agents.json       prompt-driven provider commands used by the native bridge
 ```
 
-Initialization refuses to overwrite existing files. The starter interpreter is
-the interpreter running `recover`; use `--python` to select another one. You can
-replace `adapter.py` entirely, call existing tools directly, or use separate
-commands for every role. No Python inheritance, plugin registration, package fork
-or library modification is required. The package does not supply an agent service,
-compiler installation or project verification policy.
+Initialization refuses to overwrite destination files and preserves existing C++.
+Use `--source-root code` for another source directory. Relative `--image` paths
+resolve under `--root`; image bytes are read only to establish identity and are
+never copied. Without `--image`, supply the configured `IMAGE_PIN` yourself;
+missing identity is not silently invented. No Git commits or ignore-rule changes
+are made. Publication is per-file, not a globally atomic multi-file transaction;
+after an I/O interruption inspect the created paths before retrying.
+
+The generated driver invokes installed package commands, not a project dispatcher.
+The interpreter running `recover` is used by default; `--python` must identify
+another interpreter with this package installed. Configure these local boundaries:
+
+- `RECOVERY_COMPILER`: executable implementing the compiler JSON protocol below,
+  not a raw compiler or shell string. Alternatively replace its `argv` array.
+- `RECOVERY_BUILD`: executable taking the project root and a fresh build directory;
+  alternatively configure your existing generator/build command arrays. Replace
+  the starter `application.exe` output with the actual output path/format.
+- `RECOVERY_IMAGE`: original image path for the driver's checks, checked against
+  the source pin. Inventory and standalone checks also accept `--image` directly.
+
+Set actual flag trials, debug-type flags, compiler/build input files and environment
+dependencies, compile-database location, and source audit policy. The empty starter
+flags do not identify the original compiler; an empty audit policy is not structural
+proof. No compiler, TU boundaries, history baseline, dependency ABI, or model was
+inferred. Native measurements currently support PE/COFF i386; hashing another file
+does not add another backend. Source inventory/identity pinning do not validate its
+executable format. Full structural/runtime acceptance still needs a verifier.
+`inventory` can report zero annotations in a new project; that is an empty census,
+not accepted coverage or permission to create an empty recovery task.
+
+No Python inheritance, plugin registration, package fork or library modification
+is required for a supported target. Compiler interaction scripts can remain local,
+or existing tools can implement that boundary. The package does not supply an agent
+service, compiler installation or project verification policy.
 
 ## Whole-project gate
 
@@ -964,11 +995,11 @@ changed image pins or changed address spaces. Reports and historical blobs are
 derived in memory; no inventory is persisted as authority. Old interpretation
 identities and restoration requirements survive source/configuration migrations.
 
-Unmigrated operations and projects using another source provider use the optional
-`adapter` command in the same file, exchanging versioned arguments and an
-`output` envelope. This is a JSON protocol, not a second project CLI. The starter
-configuration still provides that adapter; add `source` when using native readers.
-Generic source annotation readers stay in the core. Compiler commands, environment
+Public source operations use native `source` configuration. The old project-wide
+`adapter` dispatch key is removed; it is not a route for overriding those commands.
+The driver still accepts configured worker, reviewer and verification commands
+through their explicit contracts. Generic source annotation readers stay in the
+core. Compiler commands, environment
 variables, flag choices and optional interaction scripts belong to the project.
 The example project keeps its VC6/Wine interaction in `recovery/environment/`;
 there is no separate compiler package or per-compiler CLI.

@@ -1,50 +1,78 @@
 """Non-overwriting local project setup; no target registry or bundled project code."""
 
-from pathlib import Path
+import hashlib
+from pathlib import Path, PurePosixPath
 
+from .components import relative_path
 from .model import require_text
 from .records import publish_json, publish_text
 
 
-ADAPTER = '''"""Project-owned command adapter. Replace the unimplemented checks locally.
+def initialize(root: Path, target: str, python: str, *, image: Path | None = None,
+               source_root: str = "src") -> dict:
+    """Configure native operations; compiler/build semantics remain external.
 
-One JSON object arrives on stdin; write one JSON object to stdout. Diagnostics
-belong on stderr. No framework imports are required, and any language works.
-"""
-
-import json
-import sys
-
-request = json.load(sys.stdin)
-action = sys.argv[1]
-if action == "project":
-    print(json.dumps({"output": {"result": "unknown", "reason": "project source operations are not configured"}}))
-    raise SystemExit(3)
-if action == "context":
-    print(json.dumps({"source_homes": request["task"]["editable_files"],
-                      "instructions": ["Read source-owned mappings and project evidence before editing."]}))
-    raise SystemExit(0)
-print(json.dumps({"result": "unknown", "reason": action + " is not configured in this project"}))
-raise SystemExit(3)
-'''
-
-
-def initialize(root: Path, target: str, python: str) -> dict:
+    The supplied image establishes identity only. No compiler flags, original
+    ownership, historical baseline or completed verification are inferred.
+    Current native measurement supports PE/COFF i386, not arbitrary binaries.
+    """
     require_text(target, "target")
     require_text(python, "Python executable")
     root = root.resolve()
-    files = ("driver.json", "project.json", "worker.json", "reviewer.json", "agents.json", "adapter.py")
-    directory = root / "recovery"
-    if directory.is_symlink() or not directory.resolve().is_relative_to(root):
-        raise ValueError("project setup directory must stay inside the project")
+    relative_path(source_root)
+    source = PurePosixPath(source_root)
+    if any(source.is_relative_to(name) or PurePosixPath(name).is_relative_to(source)
+           for name in ("recovery", "build", ".git")):
+        raise ValueError("source root must not overlap recovery, build or Git metadata")
+    pin_path = source_root + "/IMAGE_PIN"
+    files = ["recovery/" + name for name in
+             ("driver.json", "project.json", "build.json", "gate.json", "audits.json",
+              "worker.json", "reviewer.json", "agents.json")]
+    if image is not None:
+        files.append(pin_path)
+    for name in [*files, source_root]:
+        path = root / name
+        if any(parent.is_symlink() for parent in (path, *path.parents) if parent.is_relative_to(root)):
+            raise ValueError("project setup paths must stay inside the project without symlinks")
+        if any(parent.exists() and not parent.is_dir() for parent in path.parents if parent.is_relative_to(root)):
+            raise ValueError("project setup parent is not a directory")
     for name in files:
-        path = directory / name
+        path = root / name
         if path.exists() or path.is_symlink():
             raise ValueError(f"project setup refuses to overwrite {path}")
-    command = lambda action: {"argv": [python, "recovery/adapter.py", action], "timeout": 300}
+    if (root / source_root).exists() and not (root / source_root).is_dir():
+        raise ValueError("project source root is not a directory")
+    pin = None
+    if image is not None:
+        image = image if image.is_absolute() else root / image
+        with image.open("rb") as stream:
+            pin = hashlib.file_digest(stream, "sha256").hexdigest()
+    directory = root / "recovery"
+    command = lambda *args: {"argv": [python, "-m", "match_recovery.cli", *args], "timeout": 3600}
     publish_json(directory / "driver.json", {"schema_version": 1, "target": target,
-                 "context": command("context"), "check": command("check")})
-    publish_json(directory / "project.json", {"schema_version": 1, "adapter": command("project")})
+                 "context": command("tasks", "context", "{task}"),
+                 "obligations": command("tasks", "obligations", "{task}"),
+                 "check": command("tasks", "check-restoration", "{task}", "--image", "{env:RECOVERY_IMAGE}"),
+                 "build": command("check-build"),
+                 "migration_check": command("tasks", "check-migration", "{task}", "--image", "{env:RECOVERY_IMAGE}")})
+    publish_json(directory / "project.json", {"schema_version": 1,
+                 "source": {"image_pin": pin_path, "address_space": "pe:va", "roots": [source_root],
+                            "include_paths": [source_root]},
+                 "compiler": {"command": {"argv": ["{env:RECOVERY_COMPILER}"], "timeout": 330},
+                              "inputs": [], "environment": []},
+                 "measurement": {"backend": "pe-coff-i386", "compiler_profile": "application",
+                                 "flag_sets": [[]], "layout_flags": [],
+                                 "unit_extensions": [".cpp", ".c", ".cc", ".cxx"],
+                                 "inputs": [], "input_roots": []},
+                 "mappings": {"compile_commands": "build/compile_commands.json"},
+                 "build": "recovery/build.json", "gate": "recovery/gate.json", "audits": "recovery/audits.json"})
+    publish_json(directory / "build.json", {"schema_version": 1, "artifacts": "build/recovery/builds",
+                 "commands": [{"argv": ["{env:RECOVERY_BUILD}", "{root}", "{build}"], "timeout": 3600}],
+                 "outputs": [{"path": "application.exe", "format": "pe32-i386"}],
+                 "inputs": [], "input_roots": [source_root], "environment": []})
+    publish_json(directory / "gate.json", {"schema_version": 1, "checks": {}, "inputs": [],
+                                          "input_roots": [], "environment": []})
+    publish_json(directory / "audits.json", {"schema_version": 1, "audits": {}})
     agents = {"schema_version": 1, "artifacts": "build/recovery/agents"}
     for role in ("worker", "reviewer"):
         publish_json(directory / (role + ".json"), {"author": role,
@@ -52,11 +80,17 @@ def initialize(root: Path, target: str, python: str) -> dict:
         agents[role] = {"command": {"argv": ["{env:RECOVERY_" + role.upper() + "}"], "timeout": 3300},
                         "instructions": [], "response": "stdout"}
     publish_json(directory / "agents.json", agents)
-    publish_text(directory / "adapter.py", ADAPTER)
-    return {"created": ["recovery/" + name for name in files], "target": target,
+    (root / source_root).mkdir(parents=True, exist_ok=True)
+    if pin is not None:
+        publish_text(root / pin_path, "# Original image identity; not a recovery verdict.\nsha256 " + pin + "\n")
+    return {"created": files, "target": target, "image_sha256": pin,
             "ready_for_recovery": False,
-            "next_steps": ["Implement local context and verification commands; missing proof must stay unknown.",
+            "next_steps": ["Pin the original with --image during init, or supply the configured source IMAGE_PIN; set RECOVERY_IMAGE when running checks.",
+                           "Configure RECOVERY_COMPILER (compiler JSON protocol) and RECOVERY_BUILD (root and fresh build directory arguments), or replace their argv arrays.",
+                           "Configure actual flags, debug-type flags, build outputs, compile database and all compiler/build inputs; no compiler or ABI was inferred.",
+                           "The native measurement starter supports PE/COFF i386 only; other backends need verification support, not a relabeled configuration.",
+                           "Add source-owned mappings and evidence; inventory, partition, task context and restoration use the package without project dispatch code.",
                            "Configure independent prompt-driven worker/reviewer commands in recovery/agents.json.",
-                           "Create a task decision from source-owned original identities with recover tasks create --file.",
+                           "Configure history scope and source audits from evidence, then create an ownership task with recover tasks create.",
                            "Ignore build/ caches and checkpoint configuration/task decisions in Git before recover run.",
-                           "Configure obligations and full acceptance before claiming completed recovery."]}
+                           "Configure full structural/runtime acceptance before claiming completed recovery; successful scaffolding is not acceptance."]}

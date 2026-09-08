@@ -1,8 +1,7 @@
-"""Public recovery operations and the project-local JSON command boundary."""
+"""Public native recovery operations driven by project-local configuration."""
 
 from pathlib import Path
 
-from .driver import Command, invoke
 from .records import read_json
 
 
@@ -189,14 +188,14 @@ def register(commands):
 
 
 def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
+    """Native configured operations; driver/compiler commands have separate contracts."""
     if arguments.get("command") == "record":
         from .recording import record
         return record(root, arguments["targets"], image=arguments["image"], in_file=arguments.get("in_file"),
                       arguments_file=arguments.get("arguments_file"), jobs=arguments.get("jobs", 1))
-    """Native configured source operations, otherwise the local JSON boundary."""
     root = root.resolve()
     configuration = read_json(root / "recovery/project.json")
-    if (configuration.keys() - {"schema_version", "adapter", "source", "source_history", "compiler", "measurement", "audits", "build", "mappings", "gate", "preparation"}
+    if (configuration.keys() - {"schema_version", "source", "source_history", "compiler", "measurement", "audits", "build", "mappings", "gate", "preparation"}
             or type(configuration.get("schema_version")) is not int or configuration["schema_version"] != 1):
         raise ValueError("invalid local project command configuration")
     if arguments.get("command") == "prepare":
@@ -289,7 +288,9 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
             if image is not None:
                 image = Path(image)
                 image = image if image.is_absolute() else root / image
-            return 0, inventory(source_snapshot(root, image))
+            # A new project has no recovered entities yet. Report that census;
+            # task/migration checks keep their separate nonempty-coverage guards.
+            return 0, inventory(source_snapshot(root, image, allow_empty=True))
         from .ownership_source import partition_report
         return 0, partition_report(root, group=arguments.get("group"), details=arguments.get("details", False),
                                    impact=arguments.get("impact", False))
@@ -371,18 +372,4 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
             return 0, expand_task(root, name=arguments["task"], subjects=arguments["subject"],
                                   editable_files=arguments["edit_file"],
                                   **{key: arguments[key] for key in ("request_id", "author", "evidence", "expected_revision")})
-    if "adapter" not in configuration:
-        raise ValueError("this operation needs a configured project adapter")
-    return _invoke_adapter(root, configuration, arguments)
-
-
-def _invoke_adapter(root: Path, configuration: dict, arguments: dict) -> tuple[int, object]:
-    command = Command.read(configuration["adapter"])
-    arguments = {key: str(value) if isinstance(value, Path) else value for key, value in arguments.items()}
-    code, response = invoke(command, root, arguments.get("task") or "",
-                            {"schema_version": 1, "arguments": arguments})
-    if set(response) != {"output"}:
-        raise ValueError("project adapter must return an output envelope")
-    if code == 3 and isinstance(response["output"], dict) and set(response["output"]) == {"error"}:
-        raise ValueError(response["output"]["error"])
-    return code, response["output"]
+    raise ValueError("operation requires native source configuration or is not supported")

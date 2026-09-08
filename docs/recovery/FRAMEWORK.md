@@ -5,6 +5,15 @@ This is the implementation contract and progress record for the independent
 active until replacement coverage and a measured cutover are demonstrated.
 Their continued presence during construction is not a compatibility promise.
 
+New projects now start with native source/measurement/driver configuration via
+`recover init`, not a local operation dispatcher stub. An explicitly supplied
+original can be pinned in source without copying its bytes; compiler and build
+interaction remain configured executable boundaries. Native inventory, task
+context and historical obligations run directly from that starter. The unused
+project-wide dispatch fallback is removed. This improves onboarding, not backend
+coverage: native measurements remain PE/COFF i386, and compiler recipes, source
+evidence, full acceptance and autonomous recovery are not inferred by setup.
+
 The configured loop now uses the package-owned `tasks check-restoration` command:
 current strict binary/layout measurements are joined to source-history obligation
 identities, including removed claims. These are disposable measurements, not a

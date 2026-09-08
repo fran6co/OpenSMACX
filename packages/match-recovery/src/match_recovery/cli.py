@@ -26,7 +26,9 @@ def parser() -> argparse.ArgumentParser:
     init = commands.add_parser("init", help="Create non-overwriting project-local command configuration")
     init.add_argument("--root", type=Path, default=Path.cwd())
     init.add_argument("--target", required=True, help="Project-chosen identity; no registered targets required")
-    init.add_argument("--python", default=sys.executable, help="Interpreter for the local starter adapter")
+    init.add_argument("--python", default=sys.executable, help="Interpreter with match_recovery installed for native commands")
+    init.add_argument("--image", type=Path, help="Original image to pin in source; relative to --root, never copied")
+    init.add_argument("--source-root", default="src", help="Project-relative source directory; native starter measurements support PE/COFF i386")
     run = commands.add_parser("run", help="Drive bounded recovery through project-local JSON commands")
     run.add_argument("task")
     run.add_argument("--root", type=Path, default=Path.cwd())
@@ -57,7 +59,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             return code
         elif args.command == "init":
             from .project import initialize
-            output = initialize(args.root, args.target, args.python)
+            output = initialize(args.root, args.target, args.python, image=args.image, source_root=args.source_root)
         elif args.command == "run":
             from .driver import drive
             # All relative configuration paths belong to --root, not whichever
