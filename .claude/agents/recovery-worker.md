@@ -93,8 +93,10 @@ contains the failed dimensions and optional findings (`dimension`, `message`,
 `evidence`); repair only authorized source, or return a discovery for expansion.
 The feedback names the snapshot that was measured. After edits it is context,
 not current proof; the driver must recheck, rereview and rerun acceptance.
-An unknown acceptance result stops for missing evidence rather than inviting
-speculative edits or treating an approved review as a passing measurement.
+Unknown acceptance findings also reach you for evidence gathering or a discovery
+request. They do not authorize speculative edits, changing proof policy, or
+treating an approved review as a passing measurement. If evidence or authority is
+unavailable, report the missing capability; do not invent a passing proof.
 
 Once the structural interpretation is established, score 3–5 plausible spellings
 with `uv run recover tasks variants <task> --image <image> --deck <ignored-json>`

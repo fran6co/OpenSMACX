@@ -289,7 +289,9 @@ establish completion of this program.
   Review-only structural unknowns now reach configured final verification after
   independent approval; scoped/build failures still cannot bypass recovery.
   Failed acceptance feeds snapshot-bound findings back to a scoped worker and
-  forces fresh checks/review, while unknown acceptance stops for evidence.
+  forces fresh checks/review. Unknown acceptance with diagnostic findings now
+  reaches the same bounded worker/discovery path; absent diagnostics or source
+  progress still stops, and missing capabilities cannot be waived.
   Acceptance receipts now bind each invocation, the complete reviewed request
   and fresh measurements of protected obligations; stale/replayed reports and
   boolean-only passes are refused. Native `tasks check-acceptance` now runs the

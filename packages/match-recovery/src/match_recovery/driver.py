@@ -294,11 +294,12 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                     raise ValueError("source changed after review")
                 result = acceptance_result(code, report, request=request)
                 acceptance_feedback = ({"snapshot": snapshot, "report": report}
-                                       if result == "fail" else None)
-                if result == "fail" and round_index < iterations:
-                    # A current full-gate counterexample needs another scoped
-                    # worker round, not manual restart after a passing review.
-                    # Unknown proof capabilities still stop; no blind edits.
+                                       if result != "pass" else None)
+                if (result == "fail" or result == "unknown" and report.get("findings")) and round_index < iterations:
+                    # Missing evidence can have actionable diagnostics too:
+                    # let the worker investigate or request scope, not waive it.
+                    # No diagnostics, no source progress or an exhausted budget
+                    # still stops; approval never turns an unknown into a pass.
                     return None
                 output = finish("ready_for_collection" if result == "pass" else "acceptance_" + result,
                                 round_index, check)
@@ -375,6 +376,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                                           "instructions": ["Edit only authorized files; never run Git mutations.",
                                                            "Report structural discoveries even outside task scope.",
                                                            "Acceptance feedback belongs to its recorded snapshot; use it to investigate, not as current proof after edits.",
+                                                           "Unknown acceptance findings require evidence, not speculative matching edits. Repair only authorized source; report missing capabilities or authority as discoveries without changing proof policy.",
                                                            "Do not erase source mappings or restoration obligations."]})
             finally:
                 changed = changes(before, working_state(root))

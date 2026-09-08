@@ -48,11 +48,12 @@ def test_structural_review_reaches_fresh_full_verification_not_an_automatic_pass
     assert result["check"]["result"] == "unknown"  # No rewritten scoped verdict.
 
 
-def test_acceptance_counterexample_repairs_then_rechecks_and_rereviews(project):
+@pytest.mark.parametrize("outcome", ["fail", "unknown"])
+def test_acceptance_findings_repair_then_recheck_and_rereview(project, outcome):
     root, task = project
     calls, snapshots = [], []
-    failure = {**PASS, "runtime": "fail", "result": "fail", "findings": [
-        {"dimension": "runtime", "message": "Owned member is destroyed twice.",
+    failure = {**PASS, "runtime": outcome, "result": outcome, "findings": [
+        {"dimension": "runtime", "message": "Owned member lifetime needs investigation.",
          "evidence": ["controlled lifetime observation", "source:src/f.cpp"]}]}
 
     def execute(command, root, task_name, payload):
@@ -70,7 +71,8 @@ def test_acceptance_counterexample_repairs_then_rechecks_and_rereviews(project):
         if stage == "acceptance":
             assert payload["snapshot"] == snapshots[-1]
             failure.update(receipt(payload, failure))
-            return (0, receipt(payload)) if (root / "src/f.cpp").read_text() == "owned member\n" else (1, failure)
+            return ((0, receipt(payload)) if (root / "src/f.cpp").read_text() == "owned member\n"
+                    else ({"fail": 1, "unknown": 3}[outcome], failure))
         assert stage == "worker"
         assert payload["check"]["result"] == "pass"
         assert payload["review_feedback"]["decision"] == "approve"
@@ -91,7 +93,8 @@ def test_acceptance_counterexample_repairs_then_rechecks_and_rereviews(project):
 
 
 @pytest.mark.parametrize("damage", ["none", "budget", "discovery", "outside_scope"])
-def test_failed_acceptance_retains_bounds_scope_and_discoveries(project, damage):
+@pytest.mark.parametrize("outcome", ["fail", "unknown"])
+def test_incomplete_acceptance_retains_bounds_scope_and_discoveries(project, damage, outcome):
     root, task = project
     calls = []
 
@@ -105,8 +108,12 @@ def test_failed_acceptance_retains_bounds_scope_and_discoveries(project, damage)
         if stage == "review":
             return approve(payload)
         if stage == "acceptance":
-            return 1, receipt(payload, {**PASS, "references": "fail", "result": "fail"})
+            return {"fail": 1, "unknown": 3}[outcome], receipt(payload, {
+                **PASS, "references": outcome, "result": outcome, "findings": [
+                    {"dimension": "references", "message": "Callee ownership needs evidence.",
+                     "evidence": ["source:src/f.cpp"]}]})
         assert stage == "worker"
+        assert payload["acceptance_feedback"]["report"]["result"] == outcome
         if damage in ("budget", "outside_scope"):
             name = "src/f.cpp" if damage == "budget" else "src/outside.cpp"
             (root / name).write_text("structural progress\n")
@@ -123,11 +130,11 @@ def test_failed_acceptance_retains_bounds_scope_and_discoveries(project, damage)
     result = drive(root, task.task_id, GATED, WORKER, iterations=1,
                    reviewer_configuration=REVIEWER, execute=execute)
     assert not result["ready_for_collection"] and calls.count("worker") == 1
-    assert result["acceptance_feedback"]["report"]["references"] == "fail"
+    assert result["acceptance_feedback"]["report"]["references"] == outcome
     if damage == "none":
         assert result["stop_reason"] == "no_source_progress"
     elif damage == "budget":
-        assert result["stop_reason"] == "acceptance_fail"
+        assert result["stop_reason"] == "acceptance_" + outcome
         assert calls.count("acceptance") == 2
         assert (root / "src/f.cpp").read_text() == "structural progress\n"
     else:

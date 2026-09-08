@@ -248,7 +248,10 @@ Old passing reports and boolean-only summaries cannot authorize collection.
 Receipts are disposable verification outputs, not source claims or history.
 A measured acceptance failure feeds its snapshot-bound report back to the worker
 within the remaining round budget, then requires fresh checks and review. Unknown
-acceptance stops for evidence; it does not consume speculative spelling rounds.
+acceptance with diagnostic findings follows that same bounded path for evidence
+gathering or discovery/scope requests, not speculative spelling rounds. Missing
+proof capabilities do not authorize a worker to edit verifier policy. Without
+findings or source progress/discoveries the driver stops, retaining the feedback.
 This project now invokes native `tasks check-acceptance`: the full configured
 gate, one retained fresh build, restoration and preservation checks, followed by
 configured structure/runtime proof commands. Those last proof capabilities are

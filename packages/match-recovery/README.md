@@ -752,8 +752,11 @@ the named dimension must not pass, and explanation/evidence must be nonempty.
 A failed full gate feeds its `{snapshot, report}` to the worker as
 `acceptance_feedback`, within the existing round budget and editing scope.
 Changed source requires fresh checks, review and acceptance; discoveries still
-pause for authorization. Unknown acceptance stops for evidence instead of
-spending speculative worker rounds. Feedback is a disposable diagnostic for its
+pause for authorization. Unknown acceptance with diagnostic findings also reaches
+the worker within the same budget, so missing evidence can be investigated or
+reported as a discovery. It does not authorize speculative edits or changes to
+proof policy. Unknown acceptance without findings stops; no source progress also
+stops unless the worker reports a discovery. Feedback is a disposable diagnostic for its
 recorded snapshot, not a cached verdict or proof about later source.
 
 ### Native acceptance verifier
