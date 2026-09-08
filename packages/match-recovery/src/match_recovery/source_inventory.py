@@ -222,6 +222,10 @@ def inventory(snapshot: dict[str, Any]) -> dict[str, Any]:
         "source_files": len(snapshot["files"]), "annotations": len(records),
         "entities": len(by_entity),
         "candidates": dict(sorted(Counter(row["candidate_kind"] for row in records).items())),
+        "source_body_states": {
+            kind: dict(sorted(Counter(row["legacy_state"] for row in records if row["candidate_kind"] == kind).items()))
+            for kind in sorted({row["candidate_kind"] for row in records})},
+        "body_state_basis": "source_text_only_not_recovery_acceptance",
         "ownership_hints": dict(sorted(Counter(row["kind_hint"] or "unknown"
                                                 for row in records).items())),
         "historical_byte_obligations": sum(item["dimension"] == Dimension.BYTES

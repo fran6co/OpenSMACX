@@ -57,6 +57,19 @@ def test_source_selection_is_configured_not_inferred_from_directory_names(config
     assert found["candidate_kind"] == "source"
 
 
+def test_inventory_body_presence_is_separate_from_historical_matching_and_acceptance(configured, capsys):
+    (configured / "code/pending.cc").write_text(
+        '// ORIGINAL: 0x00000020 _pending 0x00000020-0x00000028\n'
+        'void pending() {\n// BODY GOES HERE.\n}\n')
+    assert main(["inventory", "--root", str(configured)]) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report["source_body_states"] == {"source": {"implemented": 1, "placeholder": 1},
+                                             "legacy_seed": {"implemented": 1}}
+    assert report["historical_byte_obligations"] == 1
+    assert report["body_state_basis"] == "source_text_only_not_recovery_acceptance"
+    assert report["verification"] == "not_measured"
+
+
 def test_configured_readers_do_not_guess_msvc_ownership(configured):
     path = configured / "code/owner.cc"
     path.write_text(path.read_text().replace("_owner", "??0Widget@@QAE@XZ"))

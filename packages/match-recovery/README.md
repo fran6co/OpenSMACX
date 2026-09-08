@@ -7,6 +7,11 @@ configuration plus commands exchanging JSON. Those commands can use any language
 
 ## Direct recovery diagnostics
 
+`recover inventory` reports source and seed populations, body-presence states,
+historical obligations and mapping conflicts. Body states derive from source
+text; an implemented or historically matching body is not completed recovery.
+Build membership and fresh compilation belong to the mapping/build checks.
+
 `recover inspect <address-or-symbol> [--in <source-file>]` shows the source
 mapping, extracted region and historical hints without a compiler. Add
 `--image <original>` for pinned, bounded disassembly of every declared span and

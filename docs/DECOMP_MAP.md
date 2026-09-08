@@ -198,11 +198,13 @@ note is not a refusal to recover the body or a current measurement.
 `// EXTERN-SYMBOL LEVER:` is a different, older convention that appears inside
 recovered bodies; the anchored grammar above does not read it.
 
-**State is measured, not claimed.** The only declared state is EXCLUDED,
-because exclusion is a decision. Everything else is derived: a record whose
-region holds no body at all is **NO_BODY** in `osmx status`; anything with a
-body is **implemented** and goes to the compiler. A file that claims a match in
-a comment and does not hold one in bytes is not a match.
+**Body state is derived from source text, not recovery acceptance.** The only
+declared state is EXCLUDED, because exclusion is a decision. `recover inventory`
+reports source and seed body states separately: `placeholder` identifies absent
+or explicitly unfinished bodies; `implemented` means a body is present, not
+that its behavior or C++ structure is correct. Historical byte obligations are
+separate and must be remeasured. Neither body presence nor byte matching alone
+establishes completed recovery.
 
 Prose stays as ordinary comments around the marker; the parser keys only on
 the marker line. Layout is free: one function per file or many per file,
@@ -263,8 +265,8 @@ its publication guards and interruption limits are described in `recovery/README
 
 There is no second catalogue left to drift against: the annotations ARE the
 map, so drift is checked by re-measurement rather than by comparison with an
-export. `osmx status` reports how many records the build can compile today;
-records in non-build directories are counted separately. `recover check-mappings`
+export. `recover inventory` separates product-source candidates from historical
+seeds without claiming either is buildable. `recover check-mappings`
 checks full relative source identities, build hosts and claims contradicted by
 configured forwarder macros. Alternative seeds are reported separately; they are
 not production owners or fresh proofs. A product binding accompanied by another
