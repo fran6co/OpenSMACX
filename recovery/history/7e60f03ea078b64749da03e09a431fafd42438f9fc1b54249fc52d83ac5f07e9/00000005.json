@@ -1,0 +1,19 @@
+{
+  "event_id": "bc495ed819b956e7387f55362b5dd6f75be3105873ba6d1b0c55a22524940a65",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "distinguish-net-700-owner",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/net_class.h: NetAllocationNode now owns entries_ at +0x2C and virtually inherits StringAllocationBase; Net owns allocation_node_ at +0x700. The two RECOVERY_MEMBER interpretations anchor containment to original Net construction. Size 0x60 and vbtable displacement +0x58 have independent original allocation/destruction evidence; the class name remains provisional.",
+      "src/net_class.cpp: Net construction now uses the nested lifetime order instead of treating +0x758 as a separate sequential member; the unsupported harmless-order claim is removed.",
+      "recovery/tests/test_application_link_recovery.py: compiler controls check the distinct class, emitted vbtable and +0x75C-before-+0x754 owner capture under both flag sets. This resolves the conflated physical owner only, not complete field semantics, cleanup, runtime behavior or acceptance; receiver-cleanup-ownership remains pending."
+    ]
+  },
+  "previous_event": "a5ef81afbf992c59b14c7058bf59dfaa3581cecb56dab5cec6eda9edfda50e73",
+  "request_id": "incorporated-distinct-allocation-owner",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:jackal-voice-ownership"
+}

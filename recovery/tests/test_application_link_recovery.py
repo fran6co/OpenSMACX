@@ -6,12 +6,14 @@ executable-derived object, disassembly or fixture is stored in the repository.
 
 from pathlib import Path
 import shutil
+import struct
 import subprocess
 import sys
 import tempfile
 
 import pytest
 from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+from capstone.x86 import X86_OP_MEM
 
 from match_recovery.codeview import class_layout
 from match_recovery.compiler import Compiler
@@ -39,7 +41,7 @@ def compiled():
         for unit in ("src/infowin.cpp", "src/pulldown.cpp", "src/graphicwin.cpp",
                      "src/menu.cpp", "src/popmenu.cpp", "src/temp.cpp", "src/console.cpp",
                      "src/netdaemon.cpp", "src/statuswin.cpp", "src/popup.cpp", "src/scroll.cpp",
-                     "src/base.cpp", "src/basewin.cpp")
+                     "src/base.cpp", "src/basewin.cpp", "src/net_class.cpp")
     }
 
 
@@ -111,6 +113,46 @@ def test_pulldown_base_is_constructed_and_destroyed_once(compiled):
         assert layout["members"]["poll_"] == 0xF1C
         # CodeView currently leaves pointers-to-functions undecoded. This
         # checks the offset, not an independently verified callback signature.
+
+
+def test_net_allocation_node_is_not_a_second_receiver(compiled):
+    # Original evidence: Net construction 0x62D763..0x62D817; deleting
+    # destructor 0x402CC0 adjusts by -0x58; allocator 0x401ED3 requests 0x60.
+    # These bounded constraints do not claim full list/receiver recovery.
+    for obj in compiled["src/net_class.cpp"]:
+        net = class_layout(obj, "Net")
+        node = class_layout(obj, "NetAllocationNode")
+        receiver = class_layout(obj, "JackalVoiceRx")
+        assert net["members"]["allocation_node_"] == 0x700
+        assert net["class_value_members"]["allocation_node_"] == "NetAllocationNode"
+        assert node["size"] == 0x60
+        assert node["members"]["entries_"] == 0x2C
+        assert node["class_value_members"]["entries_"] == "NetUnk72C"
+        base, = node["bases"]
+        assert base["class"] == "StringAllocationBase" and base["virtual"]
+        assert base["vbptr_offset"] == 0 and base["vbtable_index"] == 1
+        receiver_base, = receiver["bases"]
+        assert receiver["size"] == 0x24 and receiver_base["vbptr_offset"] == 4
+        table, = (s for s in obj.symbols.values()
+                  if s.name == "??_8NetAllocationNode@@7B@" and s.section > 0)
+        section = obj.sections[table.section - 1]
+        assert not section.relocations
+        assert struct.unpack_from("<ii", section.data, table.value) == (0, 0x58)
+
+
+def test_net_captures_outer_allocation_owner_before_contained_list(compiled):
+    # Original owner stores at 0x62D77C and 0x62D7A2, respectively.
+    # The old flattened declaration captured at +0x720 first and reversed
+    # +0x754/+0x75C. A matching total sizeof(Net) could not catch that defect.
+    decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+    decoder.detail = True
+    for obj in compiled["src/net_class.cpp"]:
+        code, _, _ = obj.subject(obj.function(symbol_at("src/net_class.cpp", 0x62D6A0)))
+        owner_stores = [i.operands[0].mem.disp for i in decoder.disasm(code, 0)
+                        if i.mnemonic == "mov" and i.operands[0].type == X86_OP_MEM
+                        and i.operands[0].mem.base and not i.operands[0].mem.index
+                        and i.operands[0].mem.disp in (0x720, 0x754, 0x75C)]
+        assert owner_stores == [0x75C, 0x754]
 
 
 def test_menu_candidates_use_typed_source_definitions(compiled):

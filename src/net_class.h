@@ -119,10 +119,10 @@ static_assert(sizeof(VoiceTx) == 0x58,
   * `static_assert(sizeof(AlphaNet) == 0x14A0)` there, which is the intended
   * alarm - re-measure AlphaNet's `data_` rather than silence it.
   */
-// THE NET EMBEDDED RECEIVER at Net+0xB0: two virtual slots (the image's
-// vftable 0x66EAFC, both entries leaves) over a virtual StringAllocationBase
-// (vbtable 0x670DCC places the base at +0x18 - Net+0xCC). The construction
-// staging the register transcription spelled by hand is the compiler's now.
+// The list subobject at Net+0x72C, not the receiver at Net+0xB0.
+// Net construction (0x0062D788..0x0062D7FD) installs its vbptr at +4;
+// vbtable 0x00669424 locates its allocation base at relative +0x24.
+// Its list fields, virtual surface and two-stage teardown remain unfinished.
 class NetUnk72C : public virtual StringAllocationBase {
  public:
   virtual void unk_slot0();  // 0x005D4C50, unrecovered
@@ -131,6 +131,27 @@ class NetUnk72C : public virtual StringAllocationBase {
  private:
   uint8_t field_8_[0x1C];  // 0x8..0x23, opaque
 };
+
+// Provisional name for the distinct allocation-owning node at Net+0x700.
+// Original construction at 0x0062D763 installs a vbptr at relative zero:
+// vbtable 0x00669430 locates StringAllocationBase at +0x58. Construction
+// captures that base's owner before constructing the list at +0x2C;
+// destruction through 0x00402CC0 adjusts the base receiver back by 0x58
+// and delegates the list teardown to 0x00402DD0. The separate allocator
+// path at 0x00401ED3 requests 0x60 bytes and installs the same vbtable.
+// Thus the base at Net+0x758 belongs to this object, not to Net as another
+// sequential member. This is not a second JackalVoiceRx: that class's
+// vbptr is at +4 and its virtual base is at +0x1C. Remaining node fields
+// and the list's complete cleanup still need recovery.
+class NetAllocationNode : public virtual StringAllocationBase {
+ private:
+  uint8_t field_4_[0x28];  // 0x4, roles not yet recovered
+  // RECOVERY_MEMBER: v2 NetAllocationNode entries_ NetUnk72C 0x2C 0x0062D6A0
+  NetUnk72C entries_;  // 0x2C
+};
+
+static_assert(sizeof(NetAllocationNode) == 0x60,
+              "allocation node extent from original allocation and virtual base");
 
 /* One of the sixteen 0x58-byte player slots at Net+0x154. Two independent
    reads: init() clears the words at 0x0, 0x4, 0x8 and 0xC and ONE BYTE at
@@ -293,16 +314,10 @@ class Net {
   _GUID *guid_6E8_;  // 0x6E8, the session GUID init() was handed
   uint8_t field_6EC_[0x10];  // 0x6EC
   uint32_t field_6FC_;  // 0x6FC
-  // THE 0x700 FAMILY - a second JackalVoiceRx-shaped receiver at 0x700
-  // (its final table is the same two leaf slots), then an unknown
-  // two-virtual class at 0x72C whose virtual base is a StringAllocationBase
-  // at 0x750, then one more bare StringAllocationBase at 0x758. The image
-  // stages all of these by hand inside ??0Net; here the classes construct
-  // and the owner captures run implicitly.
-  JackalVoiceRx jackal_voice_rx_700_;  // 0x700
-  uint8_t field_724_[0x8];  // 0x724..0x72B, opaque
-  NetUnk72C unk_72c_;       // 0x72C (vbase StringAllocationBase at 0x750)
-  StringAllocationBase unk_base_758_;  // 0x758
+  // The node owns the list at +0x72C and virtual allocation base at +0x758.
+  // Its list has a distinct allocation base at +0x750.
+  // RECOVERY_MEMBER: v2 Net allocation_node_ NetAllocationNode 0x700 0x0062D6A0
+  NetAllocationNode allocation_node_;  // 0x700
   // 0x760 and 0x764 are the two words check_polling compares to decide
   // whether the whole player table is stale or only a slice of it - close()
   // zeroes both - and 0x768 the slot count AlphaNet::close zeroes; the rest

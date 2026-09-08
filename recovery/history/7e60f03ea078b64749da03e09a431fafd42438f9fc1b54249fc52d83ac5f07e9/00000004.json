@@ -1,0 +1,20 @@
+{
+  "event_id": "a5ef81afbf992c59b14c7058bf59dfaa3581cecb56dab5cec6eda9edfda50e73",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_application_link_recovery.py"
+    ],
+    "evidence": [
+      "Add compiler-backed regression tests for the distinct Net+0x700 allocation owner, its embedded NetUnk72C at relative +0x2C, virtual allocation base at relative +0x58, and outer-before-inner owner capture in Net construction.",
+      "Private unchanged-replica and header-damage controls passed for both configured flag sets; this scope authorization is not structural or collection acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "b9db09a8520a56c3b07e9382d06234711af754025b2acacc2b86989d9e41166d",
+  "request_id": "receiver-ownership-regression-tests",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:jackal-voice-ownership"
+}

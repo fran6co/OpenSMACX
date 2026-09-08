@@ -326,13 +326,11 @@ void NetUnk72C::unk_slot1() { }
 
 Net::Net() {
     // voice_tx_ (0x58), jackal_voice_rx_ (0xB0), netfifo_[3] (0xE8..0x14B)
-    // and the 0x700 family - a second JackalVoiceRx-shaped receiver, the
-    // NetUnk72C at 0x72C and the bare StringAllocationBase at 0x758 - all
-    // construct implicitly in declaration order. Every vtable/vbtable the
-    // image stages by hand over these is the compiler's own base-construction
-    // sequence here. (The image captures the 0x758 owner BEFORE the 0x72C
-    // family's; declaration order gives the reverse. Nothing reads either
-    // owner before a session opens, so the difference is unobservable.)
+    // and allocation_node_ (0x700) construct implicitly. The node's virtual
+    // base at 0x758 is constructed before its list member at 0x72C, whose
+    // own allocation base is at 0x750. This preserves the original owner
+    // capture order; treating all three as sequential Net members did not.
+    // Other initialization and the receiver/list lifecycle remain unfinished.
     NetDirectPlay = 0;
 }
 
@@ -1680,4 +1678,3 @@ void Net::set_polling(int flag) {
     voice_flags_D8_ &= 0xFFFBFFFF;
   }
 }
-
