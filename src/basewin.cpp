@@ -32,6 +32,7 @@
 #include "datalink.h"
 #include "general.h"
 #include "leaf_recoveries.h"
+#include "lock.h"
 #include "map.h"
 #include "netdaemon.h"
 #include "popup.h"
@@ -44,6 +45,59 @@
 #include "xpops.h"
 #include <cstdint>
 #include <cstring>
+
+// The retired scaffold is cited below only as historical seed evidence.
+// ORIGINAL: 0x00415F70 ?gov_on@BaseWin@@QAEXH@Z 0x00415F70-0x004160E1 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00415F70-0x004160E1", "source:src/base.h:Base and GovernorBaseBitfield", "source:src/graphicwin.h:Win slot 62", "git:0e5175fa:src/recovered/units/00415f70.cpp"], "reason": "Recover governor selection using source-owned current-base state, typed Base fields and the real virtual redraw operation; preserve the following explicitly direct base redraw."}
+void BaseWin::gov_on(int priorities) {
+    if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) {
+        return;
+    }
+    const unsigned int priority_mask = GOV_PRIORITY_EXPLORE | GOV_PRIORITY_DISCOVER
+        | GOV_PRIORITY_BUILD | GOV_PRIORITY_CONQUER;
+    if (priorities) {
+        if (BaseCurrent->governor & GOV_MULTI_PRIORITIES) {
+            BaseCurrent->governor ^= priorities;
+        } else {
+            BaseCurrent->governor &= ~priority_mask;
+            BaseCurrent->governor |= priorities;
+        }
+        if (BaseCurrent->governor & priority_mask) {
+            BaseCurrent->governor |= GOV_ACTIVE | GOV_MANAGES_PRODUCTION
+                | GOV_MANAGES_CITIZENS_SPECS;
+        } else {
+            BaseCurrent->governor &= ~GOV_ACTIVE;
+        }
+    } else {
+        BaseCurrent->governor |= GOV_ACTIVE;
+    }
+    if (((unsigned char)LockEnableMask & (1 << BaseCurrent->faction_id_current)) == 0) {
+        BaseCurrent->governor &= ~GOV_ACTIVE;
+    }
+    BaseCurrent->governor &= ~GOV_UNK_40000000;
+    if (BaseCurrent->governor & GOV_ACTIVE) {
+        if (BaseCurrent->governor & GOV_MANAGES_PRODUCTION) {
+            BaseCurrent->state &= ~BSTATE_UNK_8000000000;
+            BaseCurrent->queue_size = 0;
+            base_reset(BaseIDCurrentSelected, 1);
+        }
+        if (BaseCurrent->governor & GOV_MANAGES_CITIZENS_SPECS) {
+            BaseCurrent->resource_sqr_radius = 0;
+            BaseCurrent->specialist_total = 0;
+            BaseCurrent->specialist_unk_1 = 0;
+            base_compute(1);
+            base_doctors();
+        }
+    }
+    NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+    // Original 0x004160A8 dispatches Win slot 62 on this receiver. The
+    // following call at 0x004160B3 is direct, to GraphicWin::redraw.
+    redraw();
+    MainInterfaceGlobal.GraphicWin::redraw();
+    if (!(BaseCurrent->governor & GOV_ACTIVE)) {
+        draw_radius(BaseCurrent->x, BaseCurrent->y, 2, 2);
+    }
+}
 
 // ORIGINAL: 0x0041AE40 ?soft_zoom@BaseWin@@QAEXH@Z 0x0041AE40-0x0041AF12 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0041AE40-0x0041AF12"], "reason": "Recover the original base-selection/cache operation with source-owned state and typed fields. The archived seed remains an obligation until this product definition is freshly remeasured."}

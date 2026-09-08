@@ -1,0 +1,23 @@
+{
+  "event_id": "26ff725e8f7b68ddca0cafb12ab3f78b0a9bc442366a402c62edad96678dc9db",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Explicitly include original 0x00415F70 governor definition in the existing base/UI link-closure task. Its compatible unclaimed seed and new typed product binding share one original identity; preserve the task baseline and all historical obligations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4284272,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "55dd5631a2a35a6a2de22540a076b58585a0cc806aa43aa73dc012c4c94213df",
+  "request_id": "governor-original-scope",
+  "schema_version": 1,
+  "sequence": 54,
+  "stream": "task:infowin-ownership"
+}

@@ -1,0 +1,20 @@
+{
+  "event_id": "55dd5631a2a35a6a2de22540a076b58585a0cc806aa43aa73dc012c4c94213df",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/governor_harness.cpp",
+      "src/recovered/units/00415f70.cpp"
+    ],
+    "evidence": [
+      "Recover BaseWin governor link closure through existing typed BaseCurrent storage, LockEnableMask and NetDaemonNet. Original virtual slot 62 is Win::redraw/GraphicWin::redraw; preserve virtual receiver dispatch but qualify the separate direct MainInterface GraphicWin redraw call. Runtime controls cover flags, lock refusal and callback state changes. No baseline reset or acceptance granted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "fbfc89bd256cb402631eb3990eacaba5cc39340d5782e96b60de481b30b7290d",
+  "request_id": "governor-link-closure",
+  "schema_version": 1,
+  "sequence": 53,
+  "stream": "task:infowin-ownership"
+}

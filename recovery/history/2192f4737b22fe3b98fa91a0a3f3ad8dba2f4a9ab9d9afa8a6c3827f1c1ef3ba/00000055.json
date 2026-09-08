@@ -1,0 +1,20 @@
+{
+  "event_id": "f75090a80720abda25bc7f7ee3b3fed66e8053fe9d8579044d54bf264efa52dc",
+  "payload": {
+    "affects": [
+      "entity-5a90d10230a80b90f5b61034e485e439560cc6758d9d6d4758c088bb9d992646"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "governor-downstream-closure",
+    "evidence": [
+      "Original gov_on calls 0x004E5FE0 and 0x004F5F30. The matching product now emits direct references to both; only seed definitions remain. Its real runtime control uses explicitly test-only collaborators and is not game acceptance."
+    ],
+    "hypothesis": "Recovered governor logic exposes missing real base_reset and base_doctors definitions. Exact bytes for gov_on do not close the application link or establish callee/runtime equivalence; preserve this body and recover the production-selection/specialist ownership groups next.",
+    "kind": "discovery"
+  },
+  "previous_event": "26ff725e8f7b68ddca0cafb12ab3f78b0a9bc442366a402c62edad96678dc9db",
+  "request_id": "governor-downstream-closure",
+  "schema_version": 1,
+  "sequence": 55,
+  "stream": "task:infowin-ownership"
+}

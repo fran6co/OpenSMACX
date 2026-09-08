@@ -273,3 +273,24 @@ def test_soft_zoom_and_computation_runtime_use_actual_recovered_bodies(tmp_path,
     run_recovered_harness(tmp_path, monkeypatch, "base_compute_harness.cpp", [
         ("// RECOVERED_COMPUTE", "src/base.cpp", 0x4EC3B0),
         ("// RECOVERED_SOFT_ZOOM", "src/basewin.cpp", 0x41AE40)])
+
+
+def test_governor_runtime_uses_typed_state_and_preserves_dispatch(tmp_path, monkeypatch):
+    run_recovered_harness(tmp_path, monkeypatch, "governor_harness.cpp", [
+        ("// RECOVERED_GOVERNOR", "src/basewin.cpp", 0x415F70)])
+
+
+def test_governor_reaches_real_owners_and_base_fields(compiled):
+    for obj in compiled["src/basewin.cpp"]:
+        targets = references(obj, symbol_at("src/basewin.cpp", 0x415F70))
+        for symbol in ("?BaseCurrent@@3PAUBase@@A", "?LockEnableMask@@3IA",
+                       "?NetDaemonNet@@3VNetDaemon@@A",
+                       "?MainInterfaceGlobal@@3VMainInterface@@A",
+                       "?base_reset@@YAXHH@Z", "?base_doctors@@YAXXZ",
+                       "?redraw@GraphicWin@@UAEXXZ"):
+            assert symbol in targets, targets
+        layout = class_layout(obj, "Base")
+        expected = {"state": 0x30, "governor": 0x38, "queue_size": 0x4C,
+                    "resource_sqr_radius": 0x78, "specialist_total": 0x7C,
+                    "specialist_unk_1": 0x80}
+        assert {key: layout["members"][key] for key in expected} == expected

@@ -563,6 +563,8 @@ void __cdecl base_nutrient();
 void __cdecl base_minerals();
 void __cdecl base_energy();
 void __cdecl base_compute(int force);
+void __cdecl base_reset(int base_id, int force);  // 0x004E5FE0
+void __cdecl base_doctors();                     // 0x004F5F30
 uint32_t __cdecl black_market(int energy);
 void __cdecl base_psych();
 int __cdecl base_rank(int faction_id, int rank_position);
