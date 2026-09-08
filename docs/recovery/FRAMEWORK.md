@@ -76,7 +76,7 @@ Those project controls now live in opt-in `recovery/tests/test_gate_controls.py`
 full native gates in a disposable detached checkout, named stage/subject assertions,
 and guarded damage restoration. The old main-tree mutation CLI is removed.
 Ordinary anchor/safety tests are not a substitute for executing the live matrix.
-Three local checks remain until their conventional
+Two local script checks remain until their conventional
 source/document coverage is absorbed. Native acceptance now coordinates the gate,
 restoration/preservation and configured structure/runtime proof commands. Complete
 OpenSMACX proof coverage remains unfinished; an incomplete native gate does not

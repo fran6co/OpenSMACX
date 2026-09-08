@@ -396,6 +396,21 @@ not proof the TU has no ABI dependency. `--unit` narrows investigation but omitt
 product TUs keep the overall result unknown. Unsupported/external build inputs
 likewise cannot silently disappear. Exit codes are 0/1/3 for pass/fail/unknown.
 Summary output retains counterexamples; all reports are disposable.
+
+`--conventional-offsets` additionally reads trailing `// 0xNN` / `// (+N)`
+comments and `field_<hex>_` names on direct member declarations in configured
+interface files. It compares them with the same compiler objects, without a type
+size table, offset walk, new annotations or project adapter. These are conventional
+source hints, not evidence-backed original-layout interpretations. Conflicting
+names and comments remain separate checks. Seeds and source-declared upstream
+component roots are excluded (and component exclusions are reported); that does
+not establish dependency compatibility. Unsupported hinted declarations/lexing
+remain diagnostics and keep coverage unknown. The lens is not a complete C++
+parser or conditional-preprocessing analysis. Passing conventional trials are
+aggregated per hint; every nonpassing observation retains its TU and flags.
+This opt-in diagnostic does not replace a project's legacy gate until its coverage
+and compiler counterexamples have been investigated and cutover controls verified.
+
 The standalone command and whole-project gate emit layout trial start/finish
 progress to stderr, naming the TU, trial index/total and elapsed time. The Python
 `check_layout` API accepts an optional `progress` callback with those events and

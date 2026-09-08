@@ -54,6 +54,7 @@ def register(commands):
     layout.add_argument("--root", type=Path, default=Path.cwd())
     layout.add_argument("--unit", dest="units", action="append", help="Exact TU diagnostic; omitted product units keep coverage incomplete")
     layout.add_argument("--witness-missing", action="store_true", help="Probe missing class debug definitions in controlled private TU overlays; extra compiles")
+    layout.add_argument("--conventional-offsets", action="store_true", help="Also compare legacy member-offset comments and field_<hex>_ names with compiler layouts")
     layout.add_argument("--summary", action="store_true")
     symbols = commands.add_parser("check-symbols", help="Freshly verify source-mapped function names through configured compilation")
     symbols.add_argument("--root", type=Path, default=Path.cwd())
@@ -262,6 +263,7 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
     if arguments.get("command") == "check-layout":
         from .layout_check import check_layout
         output = check_layout(root, units=arguments.get("units"),
+                              conventional_offsets=arguments.get("conventional_offsets", False),
                               witness_missing=arguments.get("witness_missing", False),
                               progress=lambda event: _progress({"check": "layout", **event}))
         if arguments.get("summary"):

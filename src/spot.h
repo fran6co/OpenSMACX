@@ -59,7 +59,8 @@ class Spot {
       int type;
       int position;
   } *spots_;
-  uint32_t max_count_;  // 0x0000
+  // RECOVERY_MEMBER: v1 Spot max_count_ 0x4 0x005FA8A0
+  uint32_t max_count_;  // 0x0004; Spot::init stores count at this+4
   uint32_t add_count_;
 };
 

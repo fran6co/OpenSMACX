@@ -38,10 +38,10 @@ struct CaviarCamera {
 struct CaviarChannelBounds {
   // 0xD9..0xEC, five engine limits init seeds: 0, 0xc77fff00, 0x477fff00, 0,
   // 0x477fff00 - the outer pair is a float -1e38/+1e38-style clip range.
-  uint32_t lead_[5];     // 0xD9
-  int32_t values_[6];    // 0xED, the six channel bounds init, set_buffer and
+  uint32_t lead_[5];     // 0x00; at Caviar+0xD9
+  int32_t values_[6];    // 0x14; at Caviar+0xED, the six channel bounds init, set_buffer and
                          // render_scene all reset to {0,0,0xff,0xff,0x100,0x100}
-  uint8_t tail_[3];      // 0x105
+  uint8_t tail_[3];      // 0x2C; at Caviar+0x105
 };
 #pragma pack(pop)
 
@@ -556,4 +556,3 @@ struct VOX_ScnRenderHnd {
 
 static_assert(sizeof(VOX_ScnRenderHnd) == 0x54,
               "the render handle must reach its colour table at +0x50");
-

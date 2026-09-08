@@ -192,7 +192,12 @@ flag set. Valid non-emission is reported, not proof of ABI independence. A scope
 
 The retained full gate invokes this serially after initial-data compilation.
 The older header-offset walk remains until its conventional offset comments and
-self-naming members have replacement coverage. This native check adds fresh
+self-naming members have verified replacement coverage. The opt-in
+`uv run recover check-layout --conventional-offsets --summary` now reads those
+header hints and compares them against compiler offsets using the same trials.
+It does not infer sizes from a project-specific table or promote comments into
+original-layout proof. Cutover remains pending coverage/counterexample controls;
+the old walk is still called by both gates. This native check adds fresh
 compilation cost; shared fresh-object reuse is still unfinished. Task and project
 layout checks now index each fresh object's CodeView type stream once instead of
 reparsing it for every class. This is invocation-local parsing reuse, not an

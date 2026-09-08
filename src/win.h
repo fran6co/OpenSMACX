@@ -989,8 +989,8 @@ extern const uint32_t WinStaticDefaults[10];   // 0x00696D34
 // the standalone build until the two became one.
 struct WinDynamicDefaultsTable {
   uint32_t field_0_;      // was [0]
-  Font *default_font_;    // 0x009B7AF4, was [1] - see the note above
-  uint32_t rest_[8];      // 0x009B7AF8..0x009B7B14, was [2]..[9]
+  Font *default_font_;    // 0x4; original address 0x009B7AF4, was [1] - see above
+  uint32_t rest_[8];      // 0x8; original addresses 0x009B7AF8..0x009B7B14, was [2]..[9]
 };
 extern WinDynamicDefaultsTable WinDynamicDefaults;
 extern int WinBubbleActive;      // 0x009B7A50
