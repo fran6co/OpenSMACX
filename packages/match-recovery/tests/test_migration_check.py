@@ -220,6 +220,41 @@ def test_failed_build_diagnostics_survive_early_return(migration, monkeypatch):
         row for row in report["diagnostics"] if row["check"] == "build")["evidence"][0]
 
 
+@pytest.mark.parametrize("damage", ["generator", "preparation", "added_input", "removed_input", "source"])
+def test_preparation_policy_is_protected_independently_of_application_build_inputs(migration, damage):
+    from match_recovery.build_check import Build
+    from match_recovery.measurement import Measurement
+    root = migration
+    path = root / "recovery/project.json"
+    project = json.loads(path.read_text())
+    project["preparation"] = "recovery/preparation.json"
+    path.write_text(json.dumps(project))
+    (root / "generator-data").mkdir()
+    (root / "generator-data/model.txt").write_text("stable recipe inputs\n")
+    (root / "recovery/generator.py").write_text("# configured generator\n")
+    (root / "recovery/preparation.json").write_text(json.dumps({
+        "schema_version": 1, "artifacts": "build/preparation", "input_roots": ["code", "generator-data"],
+        "inputs": ["recovery/generator.py"], "environment": [],
+        "commands": [{"argv": [sys.executable, "recovery/generator.py", "{build}"], "timeout": 10}],
+        "outputs": [{"path": "compile_commands.json", "format": "compilation-database"}]}))
+    git(root, "add", ".")
+    git(root, "commit", "-m", "Declare generator before authorizing a new task")
+    task = replace(TaskStore(root).read("owner"), task_id="prepared", base_revision=git(root, "rev-parse", "HEAD"))
+    assert native.unchanged_build_policy(root, task, Measurement.read(root), Build.read(root))
+    if damage == "generator":
+        (root / "recovery/generator.py").write_text("# different generator\n")
+    elif damage == "preparation":
+        path = root / "recovery/preparation.json"
+        path.write_text(path.read_text() + "\n")
+    elif damage == "added_input":
+        (root / "generator-data/new.txt").write_text("new input\n")
+    elif damage == "removed_input":
+        (root / "generator-data/model.txt").unlink()
+    else:
+        (root / "code/unit.cc").write_text((root / "code/unit.cc").read_text() + "// authorized source edit\n")
+    assert native.unchanged_build_policy(root, task, Measurement.read(root), Build.read(root)) == (damage == "source")
+
+
 def test_changed_build_policy_cannot_borrow_baseline_preservation(migration):
     path = migration / "recovery/build.json"
     value = json.loads(path.read_text())

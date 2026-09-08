@@ -323,12 +323,16 @@ establish completion of this program.
   commit and raw isolated worktree while preserving both inputs. Conflicts refuse;
   no hooks, active checkout filters or external merge drivers silently participate.
   Compiler allocation, conflict resolution and destination publication remain missing.
-  Fresh recipe generation in that new-worktree VC6 control exposed a real admission
-  gap: ignored preparation cache metadata is incorrectly treated as historical C++
-  substitutions and cannot provide damage witnesses. The driver remains unknown,
-  retains the model and never publishes the destination. Correct generated-context
-  reconstruction is required; do not bypass the missing proof. No source receipt
-  is replayed, and this control is not a completed autonomous acceptance pilot.
+  Preparation now regenerates baseline/current compiler context and damage controls
+  independently in disposable projects with private Git state. Generated metadata
+  is no longer treated as historical C++ source; generated headers are rebuilt
+  from each source version, not copied between them. The new-worktree VC6 control
+  reaches change acceptance/local publication with the destination unchanged.
+  Source-dependent generated-data damage and stale-cache controls still refuse.
+  Generator policy inputs are protected alongside build policy. No source receipt
+  is replayed; deterministic subprocess agents on a test-owned application do not
+  prove live-provider Alpha Centauri acceptance. External environments, unobserved
+  substitutions and unsupported historical TU coverage remain explicit limits.
   The stronger
   full-project boundary remains explicitly selectable. No local acceptance dispatcher is
   needed. Synthetic build/history/COFF and subprocess/driver controls exercise

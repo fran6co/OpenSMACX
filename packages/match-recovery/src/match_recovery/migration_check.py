@@ -43,10 +43,17 @@ def unchanged_build_policy(root, task, settings, build, *, integration=None):
     project = read_json(root / "recovery/project.json")
     def outside_source(name):
         return not any(Path(name).is_relative_to(directory) for directory in settings.source.roots)
-    policy_inputs = set(build.snapshot(root)["inputs"]) | set(project.get("compiler", {}).get("inputs", []))
+    generators = [build]
+    if "preparation" in project:
+        generators.append(Build.read(root, key="preparation"))
+    policy_inputs = set(project.get("compiler", {}).get("inputs", []))
+    policy_roots = set()
+    for generator in generators:
+        policy_inputs.update(generator.snapshot(root)["inputs"])
+        policy_roots.update(generator.input_roots)
     policy_files = {name for name in policy_inputs if outside_source(name)} | {"recovery/project.json"}
     baseline = {name: entry for name, entry in _tree(
-        root, baseline_revision, tuple(sorted(policy_files | set(build.input_roots)))).items() if outside_source(name)}
+        root, baseline_revision, tuple(sorted(policy_files | policy_roots))).items() if outside_source(name)}
     unchanged = set(baseline) == policy_files
     for name, (mode, kind, blob) in baseline.items():
         path = root / name

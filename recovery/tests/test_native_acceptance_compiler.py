@@ -56,7 +56,7 @@ METHOD = "?add@Owner@@QAEHH@Z"
 
 
 def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, authorize=True, proofs=True, preparation=False,
-                     normalized_checkout=False):
+                     normalized_checkout=False, generated_context=None):
     if not (VC6_ROOT / "BIN/CL.EXE").is_file():
         pytest.skip("VC6 is not installed")
     for name in ("CL", "_CL_", "VC6_INCLUDE"):
@@ -81,6 +81,11 @@ def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, autho
     # runtime verifier must observe the retained artifact, not those objects.
     entry = entry.replace("    ExitProcess", "#ifdef TEST_RUNTIME_DAMAGE\n    owner.assign(TestBias, 5);\n#endif\n    ExitProcess")
     entry = entry.replace('extern "C" void entry()', 'int TestBias = 3;\nextern "C" void entry()')
+    if generated_context is not None:
+        assert preparation
+        (local / "generated.json").write_text(json.dumps({"flat": 1 if generated_context == "collateral" else 2,
+                                                         "structured": 2}))
+        entry += "\nint GeneratedSentinel = GENERATED_SENTINEL;\n"
     (product / "entry.cpp").write_text(entry)
     original = tmp_path / "original"
     original.mkdir()
@@ -120,6 +125,8 @@ def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, autho
         for unit in ("owner", "entry")]))
     command = lambda mode: {"argv": [*script, mode], "timeout": 300}
     inputs = ["recovery/environment.py", "recovery/compiler_support.py", "recovery/local_wine.py"]
+    if generated_context is not None:
+        inputs.append("recovery/generated.json")
     env = ["VC6_PREFIX", "VC6_ROOT", "WINEARCH", "CL", "_CL_", "VC6_INCLUDE", "VC6_LIB"]
     config_file = local / "project.json"
     config = json.loads(config_file.read_text())
@@ -350,18 +357,15 @@ def test_installed_integration_recheck_uses_destination_without_resetting_task_h
         candidate = git("rev-parse", "HEAD")
     from match_recovery.preservation import check_preservation
     outside = check_preservation(root, task.task_id)
-    assert outside["result"] == ("unknown" if isolated else "fail")
+    assert outside["result"] == "fail"
     if isolated:
-        # Preparation caches are currently mistaken for historical source
-        # substitutions. Keep the real refusal visible, not a vacuous green
-        # control: metadata cannot supply a C++ #error witness. Proper handling
-        # of generated historical context remains a framework gap.
+        # Fresh recipes are regenerated independently for historical/current
+        # source and each damage control, never copied from today's cache.
         preservation = check_preservation(root, task.task_id, integration=context)
-        assert preservation["result"] == "unknown"
-        missing = {row["path"] for control in preservation["controls"] for row in control["files"]
-                   if row["result"] != "pass"}
-        assert "build/preparation/prepare.lock" in missing
-        assert any(name.endswith("/compile_commands.json") for name in missing)
+        assert preservation["result"] == "pass", preservation
+        assert preservation["materialization"] == "fresh-prepared-project"
+        assert preservation["prepared_contexts"] >= 4
+        assert all(row["result"] == "pass" for control in preservation["controls"] for row in control["files"])
         assert all(row["compiled_comparison"] == "pass" for row in preservation["units"])
     checkpoint = tmp_path / "checkpoint.json"
     checkpoint.write_text(json.dumps({"author": task.author, "message": "Verify merged hierarchy in destination context",
@@ -370,17 +374,17 @@ def test_installed_integration_recheck_uses_destination_without_resetting_task_h
                              "--acceptance-scope", "change", "--iterations", "1", "--reviewer", "recovery/reviewer.json",
                              "--integration", str(integration), "--checkpoint", str(checkpoint)],
                             cwd=tmp_path, capture_output=True, timeout=180)
-    assert result.returncode == (3 if isolated else 0), result.stdout.decode() + result.stderr.decode()
+    assert result.returncode == 0, result.stdout.decode() + result.stderr.decode()
     report = json.loads(result.stdout)
     if isolated:
-        assert report["stop_reason"] == "change_unknown" and report["checkpoint_feedback"]["result"] == "unknown"
-        assert not report.get("ready_for_checkpoint") and not report["ready_for_collection"]
-        assert "build/preparation/prepare.lock" in str(report["checkpoint_feedback"]["report"]["diagnostics"])
+        assert report["stop_reason"] == "change_accepted" and report["checkpoint"]["published"]
+        assert report["checkpoint"]["parent"] == candidate and not report["ready_for_collection"]
         assert TaskStore(root).read(task.task_id) == task
         assert (root / "src/owner.h").read_text() == evidence + CLASSES
         assert git("rev-parse", "HEAD") == target and not git("status", "--porcelain")
-        assert subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, check=True).stdout.decode().strip() == candidate
-        return  # Candidate/recipe preparation passed; autonomous admission did not.
+        assert subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, check=True).stdout.decode().strip() == report["checkpoint"]["commit"]
+        assert report["integration"] == context and git("rev-parse", "incoming") == source
+        return  # Local candidate accepted and published; destination stays untouched.
     assert report["stop_reason"] == "change_accepted" and report["worker_rounds"] == 0
     assert report["integration"] == context and report["checkpoint"]["published"]
     assert report["checkpoint"]["parent"] == candidate and not report["ready_for_collection"]
@@ -388,6 +392,34 @@ def test_installed_integration_recheck_uses_destination_without_resetting_task_h
     assert git("rev-parse", "destination") == target and git("rev-parse", "incoming") == source
     assert (root / "src/owner.h").read_text() == evidence + CLASSES
     assert "return 7;" in (root / "src/entry.cpp").read_text() and not git("status", "--porcelain")
+
+
+@pytest.mark.parametrize("context", ["stable", "collateral", "stale_cache"])
+def test_regenerated_header_preservation_detects_source_dependent_collateral_and_stale_cache(tmp_path, monkeypatch, context):
+    from match_recovery.preparation import prepare_project
+    from match_recovery.preservation import check_preservation
+    from match_recovery.driver import working_state
+    root, image, task, git, evidence = prepared_project(tmp_path, monkeypatch, proofs=False,
+                                                       preparation=True, generated_context=context)
+    (root / "src/owner.h").write_text(evidence + CLASSES)
+    body = root / "src/owner.cpp"
+    body.write_text(body.read_text().replace("raw_[0] + raw_[1]", "bias + member.value"))
+    prepared = prepare_project(root)
+    assert prepared["published"]
+    if context == "stale_cache":
+        (root / prepared["directory"] / "generated.h").write_text("#define GENERATED_SENTINEL 9\n")
+    before = working_state(root)
+    report = check_preservation(root, task.task_id)
+    assert report["result"] == {"stable": "pass", "collateral": "fail", "stale_cache": "unknown"}[context], report
+    assert report["changed_files"] == ["src/owner.cpp", "src/owner.h"]
+    assert report["prepared_contexts"] >= 4
+    assert all(row["result"] == "pass" for control in report["controls"] for row in control["files"])
+    if context == "collateral":
+        assert any(row["result"] == "fail" and "GeneratedSentinel" in str(row["changed_sections"]) for row in report["units"])
+    elif context == "stale_cache":
+        assert any("current replica does not agree" in row.get("reason", "") for row in report["units"])
+    assert working_state(root) == before and TaskStore(root).read(task.task_id) == task
+    assert (root / "src/owner.h").read_text() == evidence + CLASSES
 
 
 @pytest.mark.parametrize("damage", [None, "runtime", "structure"])

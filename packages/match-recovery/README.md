@@ -903,15 +903,27 @@ submodules are unsupported. Git must support `merge-tree --write-tree` and
 for inspection; it never resets or reaps possible work. Local leases and hashes
 are coordination/integrity checks, not a sandbox against arbitrary filesystem writers.
 
-The new-worktree VC6 control exposed a remaining generated-context admission gap:
-preservation currently treats ignored preparation cache metadata (including its
-lock and generated recipe JSON) as historical C++ source substitutions. These
-cannot provide the required C++ damage witnesses, so the real driver correctly
-stops unknown, despite matching compiled residuals. Candidate creation and fresh
-recipes pass; autonomous acceptance of that prepared worktree does **not**. Proper
-historical generated-context handling must be implemented without ignoring genuine
-generated headers or waiving missing controls. The control retains this refusal
-and the unchanged destination; it is not a successful autonomous recovery pilot.
+When preparation is configured, preservation regenerates recipes and generated
+headers independently for baseline/current source and each damage control. Private
+projects own their Git HEAD/index and read historical objects through an alternate;
+their current policy and HEAD stay fixed while their source file sets vary. No
+original source, index, task baseline or generated cache is edited. These are
+disposable ignored contexts, not branches, worktrees requiring collection, or
+historical build-policy recreation. Current compiler output must agree with a fresh
+current-context control; stale caches and path-sensitive output cannot pass.
+Preparation policy and its non-source inputs must match the authorized baseline.
+
+The isolated-worktree VC6 control now reaches per-change acceptance and authorized
+local checkpoint publication with the destination untouched. Separate real-compiler
+controls detect source-dependent generated-header collateral changes and tampered
+current caches. Generated metadata is not a historical C++ substitution, but genuine
+generated compiler inputs are independently rebuilt, not copied into both versions.
+Unobserved source controls, failed generators, aliased/external recipe identities,
+overlapping source/artifact roots and unsupported historical TU coverage remain
+unverified. Configured generators/compilers are trusted, not sandboxed; external
+toolchain and Python environment availability remain project responsibilities.
+This is a test-owned application with deterministic subprocess agents, not proof of
+a live-provider Alpha Centauri recovery or automatic destination publication.
 
 Unrelated unfinished functions need not match the original to accept a change;
 their preservation must still be measured. Global source/mapping/audit defects can

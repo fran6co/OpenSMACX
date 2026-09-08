@@ -6,6 +6,7 @@ All reports are disposable. No claims, baselines or task decisions are rewritten
 """
 
 from collections import Counter, defaultdict
+from contextlib import ExitStack
 from dataclasses import asdict
 from pathlib import Path
 import re
@@ -22,11 +23,11 @@ from .model import Origin, Result, digest
 from .pe_coff import Coff
 from .object_source import parse_objects
 from .import_source import parse_imports
-from .records import parse_json
+from .records import parse_json, read_json
 from .source_config import SourceConfiguration
 from .source_history import HistoryConfiguration, _tree, git, revision_files
 from .source_inventory import image_pin
-from .source_replica import replica_roots, replica_snapshot
+from .source_replica import replica_roots, replica_snapshot, snapshot_digest
 from .tasks import TaskStore
 
 
@@ -170,7 +171,14 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
         raise ValueError("preservation task refers to another original image/address space")
     metadata = {"task": task, "decisions": decisions, "head": head, "integration": integration}
     before, state = settings.snapshot(root, metadata), working_state(root)
-    roots = replica_roots((*settings.source.roots, *settings.input_roots))
+    regenerated = "preparation" in read_json(root / "recovery/project.json")
+    if regenerated and compiler is not None:
+        raise ValueError("prepared preservation requires the configured compiler in independently generated projects")
+    if regenerated:
+        from .prepared_context import source_roots
+        roots = source_roots(root, settings)
+    else:
+        roots = replica_roots((*settings.source.roots, *settings.input_roots))
     current = {name: data for name, data in replica_snapshot(root, roots).items() if data is not None}
     baseline = revision_files(root, baseline_revision, roots)
     configuration_path = "recovery/project.json"
@@ -223,6 +231,7 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                    and not callable(getattr(compiler, "materialize", None)) else
                    sorted(set(file_set_changes) & all_units))
     reports, controls, attempts = [], [], 0
+    contexts, replicas = {}, ExitStack()
 
     def fresh():
         if (settings.snapshot(root, metadata) != before or store.read(task_name) != task
@@ -236,9 +245,18 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
         fresh()
         if compiler is None:
             compiler = Compiler(root, profile=settings.compiler_profile)
-        value = (compiler(root / unit, (), flags) if replacements is None else
-                 compiler.materialize(root / unit, roots, replacements, (), flags) if tree_mode else
-                 compiler.overlay(root / unit, replacements, (), flags))
+        if replacements is not None and regenerated:
+            from .prepared_context import prepared_compiler
+            files = replacements if tree_mode else {**current, **replacements}
+            key = snapshot_digest(files)
+            if key not in contexts:
+                contexts[key] = replicas.enter_context(prepared_compiler(root, roots, files, settings))
+            environment = contexts[key]
+            value = environment(environment.root / unit, (), flags)
+        else:
+            value = (compiler(root / unit, (), flags) if replacements is None else
+                     compiler.materialize(root / unit, roots, replacements, (), flags) if tree_mode else
+                     compiler.overlay(root / unit, replacements, (), flags))
         fresh()
         return Coff(value)
 
@@ -303,7 +321,10 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                         row.update(result=Result.UNKNOWN, reason=str(error))
                     reports.append(row)
     finally:
-        fresh()
+        try:
+            replicas.close()
+        finally:
+            fresh()
     unmeasured = sorted(all_units - set(measured_units))
     counts = Counter(row["result"] for row in reports)
     result = (Result.UNKNOWN if diagnostic or unavailable or unmeasured or counts[Result.UNKNOWN] or not reports else
@@ -313,7 +334,9 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
             **({"task_base_revision": task.base_revision, "integration": integration} if integration is not None else {}),
             "head": head, "changed_files": changed_files,
             "outside_binding_changes": binding_changes, "file_set_changes": file_set_changes,
-            "unsupported_file_set_changes": unavailable, "materialization": "complete-tree-v5" if tree_mode else "existing-file-v4",
+            "unsupported_file_set_changes": unavailable,
+            "materialization": "fresh-prepared-project" if regenerated else "complete-tree-v5" if tree_mode else "existing-file-v4",
+            "prepared_contexts": len(contexts),
             "outside_annotation_changes": annotation_changes,
             "translation_units": measured_units, "unmeasured_units": unmeasured,
             "controls": controls, "units": reports, "counts": dict(counts), "compile_attempts": attempts,
@@ -322,6 +345,7 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
             "scope_complete": False, "outside_scope_verification": Result.UNKNOWN,
             "limitations": ["compiled residuals only; no original-byte, full-link, runtime or lifecycle proof",
                             "same current compiler policy on both source versions, not historical artifact recreation",
+                            "configured preparation regenerates each private source context; current replicas must agree with direct output",
                             "only source-mapped function COMDAT ownership may vary; independent data/tables stay protected",
                             "source/configuration roots must agree; added/deleted product TUs require explicit historical recipe/coverage mapping",
                             "changed non-TU file sets require compiler protocol v5; unobserved seed/header substitutions remain unknown",

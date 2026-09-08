@@ -13,6 +13,7 @@ import tempfile
 
 from match_recovery.codeview import class_layout
 from match_recovery.compiler import CompilationRequest
+from match_recovery.compilation_database import read_database
 from match_recovery.model import digest
 from match_recovery.pe_coff import Coff
 from match_recovery.processes import run_bounded
@@ -25,8 +26,19 @@ WRAPPER = Path(__file__).with_name("local_wine.py")
 COMMAND = (sys.executable, str(WRAPPER), "--tool=cl", "/nologo")
 
 
+def generated_arguments(root, output):
+    policy = root / "recovery/generated.json"
+    if not policy.exists():
+        return ()
+    values = json.loads(policy.read_text())
+    flat = "int raw_[2]" in (root / "src/owner.h").read_text()
+    header = output / "generated.h"
+    header.write_text("#define GENERATED_SENTINEL " + str(values["flat" if flat else "structured"]) + "\n")
+    return ("/FI" + str(header),)
+
+
 def build(root, output, *, damage=None):
-    flags = FLAGS + (("/DTEST_RUNTIME_DAMAGE",) if damage == "runtime" else ())
+    flags = FLAGS + generated_arguments(root, output) + (("/DTEST_RUNTIME_DAMAGE",) if damage == "runtime" else ())
     replacements = None
     if damage == "structure":
         # Simulate a faulty build generator retaining a flattened model. Only
@@ -60,8 +72,9 @@ def main():
     root = Path.cwd()
     if mode == "prepare":
         source, output = Path(sys.argv[2]), Path(sys.argv[3])
+        arguments = generated_arguments(source, output)
         (output / "compile_commands.json").write_text(json.dumps([
-            {"directory": str(source), "file": str(source / "src" / (name + ".cpp")), "arguments": ["local-compiler"]}
+            {"directory": str(source), "file": str(source / "src" / (name + ".cpp")), "arguments": ["local-compiler", *arguments]}
             for name in ("owner", "entry")]))
         return 0
     if mode in ("build", "build-runtime-damage", "build-structure-damage"):
@@ -70,7 +83,10 @@ def main():
     payload = json.load(sys.stdin)
     if mode == "compile":
         request = CompilationRequest.read(root, payload)
-        flags = (*request.arguments, *request.flags)
+        recipes = [row for row in read_database(root / "build/compile_commands.json") if row.file == request.source]
+        if len(recipes) != 1 or not recipes[0].arguments or recipes[0].arguments[0] != "local-compiler":
+            raise ValueError("fixture compiler needs its generated local recipe")
+        flags = (*recipes[0].arguments[1:], *request.arguments, *request.flags)
         if request.tree_roots is not None:
             obj = compile_overlay(root, request.source, request.tree_files, COMMAND, flags,
                                   tree_roots=request.tree_roots)

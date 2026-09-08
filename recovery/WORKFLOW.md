@@ -562,9 +562,14 @@ active checkout filters and external merge drivers cannot silently participate.
 Provide an isolated compiler resource and regenerate recipes in the new checkout;
 no caches, original image or Wine prefix are copied. Post-creation failures retain
 the candidate for inspection. Destination publication and conflict resolution remain
-coordinator work. A live control currently refuses admission after fresh preparation
-because cache metadata lacks C++ preservation witnesses; do not waive that unknown
-or confuse candidate creation with completed acceptance.
+coordinator work. Preservation now regenerates compiler context independently for
+each historical/current source tree and its damage controls, using disposable
+projects with private Git state. Current-context replica checks must agree with
+direct compilation; generated-header collateral changes and stale caches cannot
+pass. Generator policy/input changes require coordinator review just like build
+policy changes. The test-owned VC6 isolated-worktree control reaches per-change
+acceptance and local publication, leaving the destination unchanged. This does not
+establish a live-provider game recovery or authorize automatic collection.
 Do not pipe mutating commands or the gate. Do not delete a worktree until its
 changes have been verified as preserved.
 
