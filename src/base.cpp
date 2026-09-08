@@ -44,6 +44,31 @@ int BaseFindDist;  // 0x0090EA04
 uint32_t ScnVictFacilityObj;  // 0x009A6814
 uint32_t BaseUpkeepStage;  // 0x0090EA34
 
+// Link-only placeholders; these resource/production passes do not work yet.
+// ORIGINAL: 0x004EB560 ?base_energy@@YAXXZ 0x004EB560-0x004EC3A6
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004eb560.cpp", "source:src/base.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
+void __cdecl base_energy() {
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x004E80B0 ?base_yield@@YAXXZ 0x004E80B0-0x004E954B
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004e80b0.cpp", "source:src/base.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
+void __cdecl base_yield() {
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x004F5F30 ?base_doctors@@YAXXZ 0x004F5F30-0x004F650C
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004f5f30.cpp", "source:src/base.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
+void __cdecl base_doctors() {
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x004E5FE0 ?base_reset@@YAXHH@Z 0x004E5FE0-0x004E62FB
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004e5fe0.cpp", "source:src/base.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
+void __cdecl base_reset(int, int) {
+    // BODY GOES HERE.
+}
+
 // The cached path has no result contract: its EAX is the selected id, while
 // recomputation leaves the last resource pass's register residue. Callers use
 // the published base fields, not a returned integer.

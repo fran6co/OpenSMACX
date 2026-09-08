@@ -81,6 +81,11 @@ Also read `check.build_check`: the driver performs a fresh configured full build
 each round. A passing scoped byte result (`check.recovery_result`) cannot excuse
 a link failure. Repair authorized build defects, or report the dependency/scope
 discovery; never change build policy to omit a failing unit.
+For an unimplemented dependency, an empty body in its owning TU is allowed to
+maintain compile/link continuity. Keep its original mapping and put the existing
+`// BODY GOES HERE.` sentinel inside the body; request coordinator binding/scope
+authorization as needed. Do not replace recovered behavior or claim a placeholder
+matches. Preserve the seed and report the missing behavior, even when linking passes.
 
 Also inspect `acceptance_feedback` when supplied. A separate full verifier can
 find a defect after scoped checks and independent review passed. Its `report`

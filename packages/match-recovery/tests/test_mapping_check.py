@@ -67,6 +67,48 @@ def test_complementary_seed_candidates_are_preserved_not_promoted(project):
     assert other.read_text() == seed.replace(" BYTE_EXACT", "")
 
 
+@pytest.mark.parametrize("placeholder", [False, True])
+def test_explicit_product_binding_retains_compatible_unclaimed_seeds(project, placeholder):
+    from match_recovery.binding_source import render
+    product = project / "engine/current/widget.cc"
+    seed = project / "engine/seeds/widget.cc"
+    seed.write_text(MARKER.replace(" BYTE_EXACT", ""))
+    code = "int f() {\n// BODY GOES HERE.\n}\n" if placeholder else "int f() {return 1;}\n"
+    product.write_text(MARKER.splitlines()[0].replace(" BYTE_EXACT", "") + "\n" +
+                       render("Own the source definition; retain the seed as a hint.",
+                              ["source:engine/seeds/widget.cc"]) + "\n" + code)
+    before = seed.read_bytes(), product.read_bytes()
+    report = mappings.check_mappings(project)
+    assert report["result"] == "pass" and not report["ready_for_collection"]
+    group, = report["seed_alternatives"]
+    assert group["product_owner"]["path"] == "engine/current/widget.cc"
+    assert len(group["candidates"]) == 2
+    assert not any(row["legacy_byte_exact"] or row["legacy_semantic"] for row in group["candidates"])
+    assert before == (seed.read_bytes(), product.read_bytes())
+
+
+@pytest.mark.parametrize("damage", ["span", "byte_claim", "semantic_claim", "product", "repeated_seed"])
+def test_explicit_binding_does_not_hide_conflicting_or_claimed_candidates(project, damage):
+    from match_recovery.binding_source import render
+    product = project / "engine/current/widget.cc"
+    seed = project / "engine/seeds/widget.cc"
+    marker, body = MARKER.replace(" BYTE_EXACT", "").split("\n", 1)
+    product.write_text(marker + "\n" + render("Source ownership interpretation.", ["seed evidence"]) + "\n" + body)
+    seed.write_text(marker + "\n" + body)
+    if damage == "span":
+        seed.write_text(seed.read_text().replace("-0x00401008", "-0x00401007"))
+    elif damage in {"byte_claim", "semantic_claim"}:
+        token = "BYTE_EXACT" if damage == "byte_claim" else "SEMANTIC"
+        seed.write_text(marker + " " + token + "\n" + body)
+    elif damage == "product":
+        (project / "engine/current/other.cc").write_text(product.read_text())
+    else:
+        seed.write_text(seed.read_text() * 2)
+    report = mappings.check_mappings(project)
+    assert report["result"] == "fail"
+    assert any(row["rule"] == "ambiguous_source" for row in report["findings"])
+
+
 @pytest.mark.parametrize("name", ["current", "seeds"])
 def test_repeated_marker_in_one_file_is_ambiguous_even_for_seeds(project, name):
     path = project / f"engine/{name}/widget.cc"

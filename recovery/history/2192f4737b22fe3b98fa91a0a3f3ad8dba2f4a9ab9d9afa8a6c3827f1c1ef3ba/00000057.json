@@ -1,0 +1,48 @@
+{
+  "event_id": "99ae96eb15ba1a979411be24608ca406b6270581b1bff3745596dac0e05036ff",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "User-authorized empty product definitions; retain original seeds and historical obligations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5158240,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5144752,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5201712,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5136352,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4288576,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4296176,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "05a88137bfeccd8d0a4f02058b67e86b776766b6d8a4a2442d832516cc7694ce",
+  "request_id": "linkable-placeholder-scope",
+  "schema_version": 1,
+  "sequence": 57,
+  "stream": "task:infowin-ownership"
+}

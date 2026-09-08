@@ -1,0 +1,28 @@
+{
+  "event_id": "05a88137bfeccd8d0a4f02058b67e86b776766b6d8a4a2442d832516cc7694ce",
+  "payload": {
+    "affects": [
+      "entity-1c59933cf2aaf6a966010c527222be587159865cda835d79a88c67aeff5f1ee0",
+      "entity-4f8be5f57a7de09da4b5f35b4ba42f10837382f85d9804e96a8edd5ba6ac17ab",
+      "entity-5a6d9913c94bb0992e4be5b93409d960b0d0987a4862f147e089b5c595c1269b",
+      "entity-7a5f50d819960fe621e2bb0d4efd3335c22611cb27cd4f38ba7d492ea9e05b63",
+      "entity-8252ad9b514fc77bba32541f37db3820422a32fbfebab5a1ef73f5d6cfeb6d64",
+      "entity-868f3037c25381e4c70bc8d6b1f026afceae90dd92a6f1721a98899dbd52f2c9",
+      "entity-b60e515481664873d2e75e15d9613300caf913faeaab76bb50efff7abf4ba837",
+      "entity-d108c4df8afefa8edaaa9abceb25ae1e1d83a5a3060e505a82e26488722fcff1",
+      "entity-d844a03b38420bcf81e996cff2f039037bfad156441b2e3d1e94947fe642e2f9"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "linkable-placeholder-policy",
+    "evidence": [
+      "User instruction: recoveries must keep compiling and linking; empty bodies are allowed. Link diagnostics: nine unresolved symbols after governor integration."
+    ],
+    "hypothesis": "User explicitly permits empty bodies for missing dependencies to preserve compile/link continuity. These nine source-owned placeholders remain unfinished; no original behavior or byte claim is granted.",
+    "kind": "discovery"
+  },
+  "previous_event": "f75090a80720abda25bc7f7ee3b3fed66e8053fe9d8579044d54bf264efa52dc",
+  "request_id": "linkable-placeholder-policy",
+  "schema_version": 1,
+  "sequence": 56,
+  "stream": "task:infowin-ownership"
+}

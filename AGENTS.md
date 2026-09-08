@@ -70,7 +70,8 @@ clean, 1 a failure, 3 unmeasurable—not green. This project's strict full
 acceptance remains unfinished. The driver now invokes native
 `recover tasks check-acceptance` with a fresh reviewed request on stdin. It owns
 the full gate, retained build, restoration/preservation and proof sequencing;
-OpenSMACX still lacks complete structure/runtime proof commands and a green link.
+OpenSMACX still lacks complete structure/runtime proof commands. The application
+links with explicitly unfinished placeholders; build success is not game acceptance.
 Missing evidence cannot pass. The driver uses the package's native migration
 verifier for supported reviewed checkpoints; missing preservation or other
 prerequisites still refuse admission. Scoped checks and
@@ -130,6 +131,11 @@ Synthetic protocol tests are not proof of successful autonomous recovery.
   stash, unapproved scope changes, or automatic worker fast-forwards.
 - One commit per verified step. Preserve other agents' edits and recheck after
   integration. Never discard or reap work that has not been safely preserved.
+- Integrated recovery steps must compile and link. For a newly referenced,
+  unimplemented function, an explicitly unfinished empty body is allowed in
+  its owning TU: keep its original mapping and the `// BODY GOES HERE.` sentinel.
+  Preserve seeds and all historical claims; never replace recovered behavior
+  with a placeholder. Build continuity is not behavioral or recovery acceptance.
 - Keep proprietary bytes and derivatives in ignored `.opensmacx/` or `build/`.
   Retain dependency licenses/provenance; recognized libraries are verification
   dependencies, not application-function recovery targets.

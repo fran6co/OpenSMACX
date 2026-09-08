@@ -33,6 +33,13 @@
 #include "maininterface.h"
 #include <cstring>
 
+// Link-only placeholder; timed pane changes are not implemented.
+// ORIGINAL: 0x00458FF0 ?timer_change@InfoWin@@QAEXH@Z 0x00458FF0-0x00459141
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00458ff0.cpp", "source:src/infowin.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
+void InfoWin::timer_change(int) {
+    // BODY GOES HERE.
+}
+
 // Primary normal/revealed and secondary normal/revealed foreground/shadow
 // pairs read by draw_text. Their initialization policy is still unrecovered.
 // RECOVERY_OBJECT: v2 0x008C6BB4 0x008C6BD4 ?InfoTextColors@@3PAY01HA 0x00458420

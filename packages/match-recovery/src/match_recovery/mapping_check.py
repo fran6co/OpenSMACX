@@ -162,9 +162,21 @@ def check_mappings(root: Path) -> dict:
         if len(candidates) > 1:
             details = {"entity_id": identity, "origin": candidates[0]["origin"],
                        "candidates": [location(row) for row in candidates]}
-            if product or len({row["path"] for row in candidates}) != len(candidates):
+            # The native binder deliberately retains compatible seed evidence.
+            # An explicit product interpretation can own the definition without
+            # deleting those hints. This is not permission to borrow a seed's
+            # claim or silently choose between product owners/boundaries.
+            adopted = (len(product) == 1 and bool(product[0]["binding_evidence"])
+                       and bool(product[0]["spans"]) and not product[0]["invalid_spans"]
+                       and all(row["spans"] == product[0]["spans"]
+                               and not row["invalid_spans"]
+                               and not row["legacy_byte_exact"] and not row["legacy_semantic"]
+                               for row in candidates if source.is_seed(row["path"])))
+            if (product and not adopted) or len({row["path"] for row in candidates}) != len(candidates):
                 findings.append({"rule": "ambiguous_source", **details})
             else:
+                if adopted:
+                    details["product_owner"] = location(product[0])
                 alternatives.append(details)
     for name, candidates in sorted(by_file.items()):
         if not source.is_seed(name) and name not in units:

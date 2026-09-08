@@ -312,7 +312,12 @@ directories rooted at the project, not the caller's working directory.
 The native checker reports full-path candidate identities, unbuilt mapping hosts,
 direct seed build inputs and historical claims shadowed by forwarding macros.
 Alternative seed files remain visible hints, not additional production owners.
-Repeated same-file mappings and any overlapping product mapping are ambiguous.
+Repeated same-file mappings and multiple product owners remain ambiguous.
+A single product owner with an explicit source binding rationale can retain
+unclaimed seed hints with identical original spans. The report identifies that
+`product_owner`; conflicting spans and seed claims still require reconciliation.
+This applies to unfinished placeholders as well as implemented candidates and
+does not establish behavior or matching.
 No claim is erased and no seed is promoted or deleted. The command masks ordinary
 comments and literals after line splicing; unresolved address expressions stay
 unknown. This lexical check does not expand macros or resolve conditional branches.

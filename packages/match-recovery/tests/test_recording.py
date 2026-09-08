@@ -91,6 +91,22 @@ def test_noop_keeps_source_inode_timestamp_and_claims(project):
     assert len(calls(project)) == 2  # No object/result reuse across invocations.
 
 
+@pytest.mark.parametrize("targets", [("_f",), ("_f", "_h")])
+def test_even_byte_identical_placeholder_cannot_bank_a_claim(project, targets, capsys):
+    source = project / "engine/family.cc"
+    source.write_text(source.read_text().replace("void f() {}", "void f() {\n// BODY GOES HERE.\n}"))
+    before = source.read_bytes()
+    # Both the synthetic image and compiler emit RET for f. Matching that is
+    # insufficient while the source still declares the body unfinished.
+    code = main(["record", *targets, "--root", str(project), "--image", "original/input.exe"])
+    assert code == 3 and "unfinished placeholder" in capsys.readouterr().err
+    assert source.read_bytes() == before and not calls(project)
+    assert not any(row.byte_exact for row in read_file(source))
+    # An intentional empty implementation is allowed; no permanent stub ban.
+    source.write_text(source.read_text().replace("// BODY GOES HERE.\n", ""))
+    assert run(project, *targets)[0] == 0
+
+
 def test_regression_keeps_existing_claim_and_notes(project):
     run(project)
     commit(project, "Measured byte obligations")

@@ -87,10 +87,15 @@ def test_refusals_do_not_change_source(project, damage):
 
 
 def test_exact_seed_identity_can_seed_a_new_product_without_erasing_its_evidence(project):
+    from match_recovery.mapping_check import check_mappings
     config_path = project / "recovery/project.json"
     config = json.loads(config_path.read_text())
     config["source"]["seed_roots"] = ["src/seeds"]
+    config["mappings"] = {"compile_commands": "build/compilation.json", "forwarder_macros": []}
     config_path.write_text(json.dumps(config))
+    (project / "build").mkdir(exist_ok=True)
+    (project / "build/compilation.json").write_text(json.dumps([
+        {"directory": str(project), "file": "src/f.cpp", "arguments": ["compiler-not-run", "src/f.cpp"]}]))
     (project / "src/seeds").mkdir()
     seed = project / "src/seeds/f.cpp"
     text = "// ORIGINAL: 0x00401000 _old_hint 0x00401000-0x00401001\nint old_hint() { return 0; }\n"
@@ -98,6 +103,9 @@ def test_exact_seed_identity_can_seed_a_new_product_without_erasing_its_evidence
     bind(project, **parameters(project))
     assert seed.read_text() == text
     assert len(source_snapshot(project)["records"]) == 2
+    mappings = check_mappings(project)
+    assert mappings["result"] == "pass" and not mappings["ready_for_collection"]
+    assert mappings["seed_alternatives"][0]["product_owner"]["path"] == "src/f.cpp"
 
 
 def test_neighboring_claim_and_lessons_survive_insertion(project):

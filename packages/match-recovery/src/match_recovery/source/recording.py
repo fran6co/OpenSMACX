@@ -10,7 +10,7 @@ from collections import defaultdict
 from dataclasses import dataclass, replace
 from pathlib import Path
 
-from .model import DecompilationState, Tier
+from .model import DecompilationState, State, Tier
 from .reader import read_text
 from .writer import write_bytes
 from .publication import publish
@@ -55,6 +55,8 @@ def record_claims(selected, *, measure, validate, staging_directory: Path) -> Re
         lossless.update({(path, item.line): item for item in read_text(text, path)})
     if any(original.get(key) != item for key, item in zip(keys, selected)):
         raise ValueError("source mapping changed before recording")
+    if any(item.state is State.PLACEHOLDER for item in selected):
+        raise ValueError("cannot record an unfinished placeholder; implement its body and remove the body-slot sentinel first")
     groups = defaultdict(list)
     for key, item in zip(keys, selected):
         native = lossless[key]

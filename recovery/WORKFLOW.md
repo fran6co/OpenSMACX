@@ -247,7 +247,8 @@ acceptance stops for evidence; it does not consume speculative spelling rounds.
 This project now invokes native `tasks check-acceptance`: the full configured
 gate, one retained fresh build, restoration and preservation checks, followed by
 configured structure/runtime proof commands. Those last proof capabilities are
-not configured for OpenSMACX yet and its application link still fails. Missing
+not configured for OpenSMACX yet. Its application links with explicitly unfinished
+placeholders, which do not establish the missing behavior. Missing
 capabilities stay unknown; known failures remain actionable even when other
 dimensions are unknown. The handoff is not an accepted application pilot or a
 working-game claim. See the package README for the proof-command contract.
@@ -381,6 +382,18 @@ relax a check to bank a result.
 
 ## 6. Verify and hand back
 
+Every integrated step must leave the application compiling and linking. Trace
+new callees before integration. If an unresolved function cannot yet be recovered,
+the coordinator may bind an empty definition in its owning product TU, with the
+existing `// BODY GOES HERE.` sentinel inside the body. The source reader reports
+it as a placeholder, not an implementation. Retain the original identity, spans
+and seed evidence; do not claim matching or replace existing recovered behavior.
+Request scope expansion first when its owner is outside the task. Remove the
+sentinel when implementing that body and remeasure normally. These placeholders
+are refused by the recorder even if their emitted bytes happen to match. They
+only maintain build continuity: affected features remain nonfunctional, and no
+runtime, structural or full-recovery acceptance follows from a passing link.
+
 `uv run recover tasks check <task> --image <image> --summary` jointly checks
 bounded code/references and declared layout. Unknown bindings, missing original
 extents, unsupported CodeView records and incomplete lifetime evidence remain
@@ -464,8 +477,10 @@ Run `uv run recover check-mappings --summary` to check original identities again
 intended build hosts. Inspect the full report's `seed_alternatives` before deleting
 duplicate-looking artifacts: equal basenames can hide complementary full-unit and
 extracted-body evidence. Multiple files containing seed hints do not establish
-production ownership. A product mapping plus another mapped candidate, or two
-markers for the same entity in one file, needs reconciliation. The command also
+production ownership. One explicitly bound product owner may retain unclaimed
+seeds with identical original spans; the report lists its `product_owner` without
+granting behavior or matching. Conflicting spans, claimed seeds, multiple product
+owners, or two markers for the same entity in one file need reconciliation. The command also
 rejects claims shadowed by configured forwarder macros; nonliteral addresses stay
 unknown. Actual emitted ownership and included-source coverage remain separate.
 

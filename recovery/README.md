@@ -555,7 +555,8 @@ Without independent review and a configured full acceptance gate, driver stops
 return CLI exit 3 and `ready_for_collection:false`. The supplied OpenSMACX
 configuration now invokes the native `tasks check-acceptance` command. This
 coordinates verification, but OpenSMACX still lacks complete structure/runtime
-proof commands and a green application link; it cannot yet yield full acceptance.
+proof commands; it cannot yet yield full acceptance. The application now links
+with explicitly unfinished placeholders, not complete recovered behavior.
 Its scoped checker cannot stand in for those missing proofs.
 The configured check is now `tasks check-restoration <task> --image <image>`,
 which remeasures historical obligations as well as running both binary/reference
@@ -676,7 +677,7 @@ matching, declared structure, protected restoration, outside preservation and
 baseline compiler/build policy. Its proof-command boundary is documented under
 "Native acceptance verifier" in the package README. Missing hooks remain unknown;
 passing hooks cannot override failing native checks. OpenSMACX has not configured
-those hooks yet, and the application link remains red. This is tested orchestration,
+those hooks yet. Its application links with unfinished placeholders. This is tested orchestration,
 not a verified autonomous application acceptance pilot.
 `recovery/tests/test_native_acceptance_compiler.py` exercises that installed path
 with a freshly built test-owned executable, local compiler/build/proof commands,

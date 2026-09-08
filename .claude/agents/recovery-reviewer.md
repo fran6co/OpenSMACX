@@ -12,6 +12,9 @@ Check ownership, lifecycle, hierarchy, globals, virtual dispatch and reference
 identity. Reject a superficially exact body that hides missing structure. Treat
 compiler observations as evidence about the candidate, not proof of the original
 design. Require separate evidence for accepted original interpretations.
+Empty source-mapped placeholders may preserve build continuity, but are unfinished
+dependencies, not recovered behavior. A passing link cannot establish acceptance
+of the features that call them. Reject replacement of recovered code with stubs.
 
 Use `structural_requirements` to distinguish measured declaration failures,
 coverage gaps and historical interpretations needing disposition. Their content

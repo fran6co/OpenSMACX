@@ -53,6 +53,19 @@
 #include "buttongroup.h"  // ButtonGroup::set - the editor brush/paint selectors
 #include <cstring>
 
+// Link-only placeholders; movement selection and vehicle editing are unfinished.
+// ORIGINAL: 0x00511520 ?set_move@Console@@QAEXH@Z 0x00511520-0x005117FD
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00511520.cpp", "source:src/console.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
+void Console::set_move(int) {
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x004DDA50 ?editor_edit_veh@Console@@QAEXH@Z 0x004DDA50-0x004DE95B;0x0065B97E-0x0065BC13
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004dda50.cpp", "source:src/console.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
+void Console::editor_edit_veh(int) {
+    // BODY GOES HERE.
+}
+
 // Shared by the turn loop and network lock guards. The original writers
 // are control_turn, net_end_of_turn and net_control_turn (see console.h).
 // RECOVERY_OBJECT: v2 0x0093A938 0x0093A93C ?ConsoleControlTurnActive@@3HA 0x00530D50

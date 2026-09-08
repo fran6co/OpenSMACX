@@ -1,0 +1,17 @@
+{
+  "event_id": "8ccc2119fd45e290ac6d805a62eb5df5527e74606f04a39fada868ab7ddd4b37",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "linkable-placeholder-policy",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/base.cpp, src/basewin.cpp, src/console.cpp and src/infowin.cpp now contain nine mapped BODY GOES HERE placeholders. Application compile/link exits zero; original behavior remains unfinished and seed evidence is preserved."
+    ]
+  },
+  "previous_event": "99ae96eb15ba1a979411be24608ca406b6270581b1bff3745596dac0e05036ff",
+  "request_id": "linkable-placeholder-incorporated",
+  "schema_version": 1,
+  "sequence": 58,
+  "stream": "task:infowin-ownership"
+}

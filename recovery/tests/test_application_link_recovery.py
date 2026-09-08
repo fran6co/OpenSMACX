@@ -18,6 +18,7 @@ from match_recovery.compiler import Compiler
 from match_recovery.measurement import Measurement
 from match_recovery.pe_coff import Coff
 from match_recovery.source.reader import read_file
+from match_recovery.source.model import State
 from match_recovery.processes import run_bounded
 
 
@@ -50,6 +51,23 @@ def symbol_at(unit, address):
 def references(obj, symbol):
     _, relocations, _ = obj.subject(obj.function(symbol))
     return [obj.symbols[int(row.target)].name for row in relocations]
+
+
+@pytest.mark.parametrize("unit,address", [
+    ("src/base.cpp", 0x4EB560), ("src/base.cpp", 0x4E80B0),
+    ("src/base.cpp", 0x4F5F30), ("src/base.cpp", 0x4E5FE0),
+    ("src/basewin.cpp", 0x417040), ("src/basewin.cpp", 0x418DF0),
+    ("src/console.cpp", 0x511520), ("src/console.cpp", 0x4DDA50),
+    ("src/infowin.cpp", 0x458FF0),
+])
+def test_application_dependencies_have_mapped_product_definitions(compiled, unit, address):
+    # Keep passing when a placeholder is genuinely implemented. This protects
+    # definition ownership/link continuity, not the current empty spelling.
+    record, = (row for row in read_file(ROOT / unit) if row.address == address)
+    for obj in compiled[unit]:
+        obj.function(record.symbol or record.name)
+    if record.state == State.PLACEHOLDER:
+        assert not record.byte_exact and not record.semantic
 
 
 def test_info_text_rows_preserve_the_original_parallel_array_layout(compiled):
