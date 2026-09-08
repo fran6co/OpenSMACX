@@ -812,6 +812,19 @@ publish; otherwise its source remains uncommitted. Reports include `checkpoint`
 with `published`, and the new `commit`, `parent` and `files` when publication succeeds.
 No authorization means no source commit. No-change publication creates no empty commit.
 
+Use `run TASK --verify-only --reviewer ...` for final verification without repair
+dispatch. It runs the ordinary fresh checks and asks the independent reviewer
+again, even when an identical attributed decision already exists. Identical
+decisions remain idempotent; they are not duplicated just to log a run. A failed
+check, requested change or pending discovery stops with zero worker rounds.
+Automatic `--coordinator` delegation is refused in this mode. Neither task scope
+nor C++ source is edited by the driver. Review decisions may still be recorded,
+and explicit `--checkpoint` authorization can publish a freshly verified local
+commit; verification-only does not itself authorize publication or collection.
+It also supports the existing `--integration` destination context. This is the
+source-read-only verification step for collection workflows, not an implemented
+destination checkout transaction or a saved-verdict fast-forward command.
+
 Publication refuses staged changes, skip-worktree/assume-unchanged index entries,
 Git operations in progress, unrelated edits, Git path overrides and detached HEAD.
 It checks raw source bytes/modes/symlinks. Unchanged outside files with declared

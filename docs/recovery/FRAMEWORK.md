@@ -323,6 +323,10 @@ establish completion of this program.
   commit and raw isolated worktree while preserving both inputs. Conflicts refuse;
   no hooks, active checkout filters or external merge drivers silently participate.
   Compiler allocation, conflict resolution and destination publication remain missing.
+  `run --verify-only` supplies fresh checks and a fresh independent review without
+  worker repairs or automatic scope delegation. Failed verification preserves the
+  candidate source and returns findings. Explicit local publication remains separate;
+  this supplies a collection prerequisite, not a destination checkout transaction.
   Preparation now regenerates baseline/current compiler context and damage controls
   independently in disposable projects with private Git state. Generated metadata
   is no longer treated as historical C++ source; generated headers are rebuilt

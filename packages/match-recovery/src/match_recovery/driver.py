@@ -132,10 +132,15 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
           migration_configuration: dict | None = None,
           coordinator_configuration: dict | None = None,
           checkpoint_configuration: dict | None = None,
-          integration_configuration: dict | None = None, execute=invoke) -> dict:
+          integration_configuration: dict | None = None, verify_only: bool = False, execute=invoke) -> dict:
     """Recompute context/checks, edit, recheck, repeat; discoveries stop for review."""
     if type(iterations) is not int or not 1 <= iterations <= 100:
         raise ValueError("iterations must be 1..100")
+    if type(verify_only) is not bool:
+        raise ValueError("verify_only must be boolean")
+    if verify_only and coordinator_configuration is not None:
+        raise ValueError("verification-only runs cannot delegate task or scope changes")
+    round_limit = 0 if verify_only else iterations
     required = {"schema_version", "target", "context", "check"}
     if (not required <= set(configuration) or set(configuration) - required - {"acceptance", "acceptance_scope", "obligations", "migration_check", "build"}
             or type(configuration["schema_version"]) is not int or configuration["schema_version"] != 1):
@@ -203,6 +208,8 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
         initial_decisions = store.decisions(task_name)
         reviews = ReviewStore(root, task_name)
         policy = {"project": configuration, "worker": worker_configuration, "reviewer": reviewer_configuration}
+        if verify_only:
+            policy["verification_only"] = True
         if integration is not None:
             policy["integration"] = integration
         if publication is not None:
@@ -232,6 +239,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                     **({"acceptance_feedback": acceptance_feedback} if acceptance_feedback else {}),
                     **({"checkpoint_feedback": checkpoint_feedback} if checkpoint_feedback else {}),
                     "acceptance_scope": acceptance_scope,
+                    **({"verification_only": True} if verify_only else {}),
                     **({"integration": integration} if integration is not None else {}),
                     "ready_for_collection": False, "persisted_results": False}
         def readonly(command, payload):
@@ -271,7 +279,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                        and value["author"] == worker_configuration["author"]
                        and value["reviewer"] == reviewer_configuration["author"]
                        and (value["decision"] != "approve" or not pending_interpretations(value, interpretations))]
-            if current:
+            if current and not verify_only:
                 decision = current[-1]
             else:
                 code, response = readonly(reviewer_command, {"task": task.to_dict(), "context": context,
@@ -295,6 +303,10 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             validate_supersessions(decision, interpretations)
             review_feedback = decision
             if decision["decision"] == "request_changes":
+                if verify_only:
+                    output = finish("review_changes_requested", round_index, check)
+                    output["review"] = decision
+                    return output
                 return None  # Feed the independent findings to the next worker round.
             pending = pending_interpretations(decision, interpretations)
             if pending:
@@ -327,7 +339,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                     validate_checkpoint_feedback(checkpoint_feedback)
                     actionable = (error.result == "fail" or measured.get("diagnostics") or
                                   any(row["result"] != "pass" for row in measured["measurements"]))
-                    if actionable and round_index < iterations:
+                    if actionable and round_index < round_limit:
                         return None  # Same scope/budget, then fresh checks and independent review.
                     output = finish("change_" + error.result, round_index, check)
                     output["review"] = decision
@@ -370,7 +382,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                 result = acceptance_result(code, report, request=request)
                 acceptance_feedback = ({"snapshot": snapshot, "report": report}
                                        if result != "pass" else None)
-                if (result == "fail" or result == "unknown" and report.get("findings")) and round_index < iterations:
+                if (result == "fail" or result == "unknown" and report.get("findings")) and round_index < round_limit:
                     # Missing evidence can have actionable diagnostics too:
                     # let the worker investigate or request scope, not waive it.
                     # No diagnostics, no source progress or an exhausted budget
@@ -384,7 +396,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             if migration_report is not None:
                 output["migration"] = asdict(migration_report)
             return output
-        for round_index in range(iterations + 1):
+        for round_index in range(round_limit + 1):
             state = store.status(task_name, selected)
             while state["pending_discoveries"] and coordinator_configuration is not None:
                 if coordination_count == coordinator_configuration["max_decisions"]:
@@ -437,12 +449,12 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                 reviewed = review_candidate(context, check, round_index, structural_handoff=review_requested)
                 if reviewed is not None:
                     return reviewed
-            if round_index == iterations:
+            if round_index == round_limit:
                 if result != "pass" and not review_requested and reviewer_command is not None:
                     reviewed = review_candidate(context, check, round_index)
                     if reviewed is not None:
                         return reviewed
-                return finish("iteration_budget_exhausted", round_index, check)
+                return finish("verification_required" if verify_only else "iteration_budget_exhausted", round_index, check)
             before = working_state(root)
             try:
                 code, response = execute(worker_command, root, task_name,

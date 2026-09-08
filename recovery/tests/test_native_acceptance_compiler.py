@@ -294,12 +294,20 @@ def test_real_preservation_refusal_drives_scoped_repair_without_reverting_struct
                        "feedback": "Check compiler preservation independently; keep the recovered hierarchy."}
         return invoke(command, root, name, payload)
     head = git("rev-parse", "HEAD")
+    verified = drive(root, task.task_id, {**config, "acceptance_scope": "change"},
+                     {"author": "worker", "command": {"argv": ["test-worker"], "timeout": 30}}, iterations=2,
+                     reviewer_configuration={"author": "reviewer", "command": {"argv": ["test-reviewer"], "timeout": 30}},
+                     verify_only=True, execute=execute)
+    assert verified["stop_reason"] == "change_fail" and verified["verification_only"]
+    assert verified["worker_rounds"] == 0 and not feedback and len(snapshots) == 1
+    assert body.read_text() == restored + helper and (root / "src/owner.h").read_text() == evidence + CLASSES
+    assert git("rev-parse", "HEAD") == head
     report = drive(root, task.task_id, {**config, "acceptance_scope": "change"},
                    {"author": "worker", "command": {"argv": ["test-worker"], "timeout": 30}}, iterations=2,
                    reviewer_configuration={"author": "reviewer", "command": {"argv": ["test-reviewer"], "timeout": 30}},
                    execute=execute)
     assert report["stop_reason"] == "change_accepted", report
-    assert report["worker_rounds"] == 1 and len(feedback) == 1 and len(set(snapshots)) == 2
+    assert report["worker_rounds"] == 1 and len(feedback) == 1 and len(set(snapshots)) == 3
     assert feedback[0]["report"]["outside_scope"] == "fail"
     assert body.read_text() == restored and (root / "src/owner.h").read_text() == evidence + CLASSES
     assert TaskStore(root).read(task.task_id).base_revision == task.base_revision
@@ -372,10 +380,11 @@ def test_installed_integration_recheck_uses_destination_without_resetting_task_h
                                       "allow_migration": False}))
     result = subprocess.run([sys.executable, "-m", "match_recovery.cli", "run", task.task_id, "--root", str(root),
                              "--acceptance-scope", "change", "--iterations", "1", "--reviewer", "recovery/reviewer.json",
-                             "--integration", str(integration), "--checkpoint", str(checkpoint)],
+                             "--integration", str(integration), "--checkpoint", str(checkpoint), "--verify-only"],
                             cwd=tmp_path, capture_output=True, timeout=180)
     assert result.returncode == 0, result.stdout.decode() + result.stderr.decode()
     report = json.loads(result.stdout)
+    assert report["verification_only"] and report["worker_rounds"] == 0
     if isolated:
         assert report["stop_reason"] == "change_accepted" and report["checkpoint"]["published"]
         assert report["checkpoint"]["parent"] == candidate and not report["ready_for_collection"]

@@ -542,7 +542,7 @@ and remaining obligations; do not equate “compiles” with “working game.”
 The coordinator alone authorizes local publication and collects approved work, checking the actual
 index/source after application and rerunning checks in the integrated checkout.
 For an already merged candidate in an isolated checkout, `recover run <task>
---integration <context.json> --acceptance-scope change --reviewer ...` verifies
+--integration <context.json> --acceptance-scope change --reviewer ... --verify-only` verifies
 against an explicitly authorized destination-before-merge revision. The context
 contains exactly `author`, `source_revision`, `target_revision` and `evidence`;
 the independent task coordinator supplies immutable full commit ids. Both commits
@@ -553,6 +553,10 @@ historical restoration still starts at the unchanged original task baseline.
 Fresh review and all native change checks are required. This does not create the
 merge candidate, resolve conflicts or publish the destination branch. Keep that
 branch untouched until collection is verified. See the package README for limits.
+Verification-only never dispatches a repair worker or delegates scope changes;
+failed checks and review requests remain findings for a subsequent recovery run.
+It always asks the reviewer again. Decisions can be journaled and separately
+authorized local checkpoints published, but C++ and task scope are not edited.
 `recover integrate prepare <task> --root <destination> --context <context.json>
 --worktree <new-path> --branch <new-branch>` now creates that isolated candidate
 from committed inputs. The destination must be clean at the authorized target;

@@ -57,6 +57,7 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("--acceptance-scope", choices=("change", "full_project"), help="Override the configured acceptance boundary")
     run.add_argument("--coordinator", type=Path, help="Read-only discovery coordinator with explicit delegated scope")
     run.add_argument("--iterations", type=int, default=3)
+    run.add_argument("--verify-only", action="store_true", help="Fresh checks and independent review without worker repairs or scope delegation")
     start = commands.add_parser("start", help="Select/checkpoint one ownership task through a delegated planner, then run recovery")
     start.add_argument("--root", type=Path, default=Path.cwd())
     start.add_argument("--planner", required=True, type=Path, help="Explicit selection and task-only commit authorization")
@@ -127,7 +128,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 output = start(args.root, configuration, config(args.worker), config(args.planner), **options)
             else:
                 output = drive(args.root, args.task, configuration, config(args.worker),
-                               integration_configuration=config(args.integration) if args.integration else None, **options)
+                               integration_configuration=config(args.integration) if args.integration else None,
+                               **({"verify_only": True} if args.verify_only else {}), **options)
             print(json.dumps(output, indent=2, sort_keys=True))
             return (0 if output["ready_for_collection"] or output["stop_reason"] == "change_accepted" else
                     2 if output["stop_reason"] == "migration_admitted" else 3)
