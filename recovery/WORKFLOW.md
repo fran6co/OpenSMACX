@@ -423,6 +423,11 @@ and the cross-TU neighbor rows, including outside-task neighbors where available
 apply the chosen change deliberately, then rerun the task checks. Unmeasured
 callers remain outside this experiment's coverage; it does not replace full
 structural, preservation or review checks.
+Read `rankings[].details`, not just the first candidate name: it exposes lost
+baseline passes, unknown/failed task-and-data measurements and unavailable byte
+distances separately. Rankings stay per flag trial and advisory. A structural
+improvement requiring restoration is not an instruction to revert; retain its
+evidence and use the task's explicit review/restoration path.
 Function `// symbol` proposals for task subjects are resolved separately for
 each candidate, including their call/reference correlations. Inspect
 `binding_changes`; an object still emitting only the old name cannot prove the

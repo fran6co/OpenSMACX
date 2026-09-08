@@ -1909,9 +1909,25 @@ Results include unambiguous mapped neighbors in compiled TUs, tagged by whether
 they are task subjects, and explicitly list unmeasured task entities and other
 mapped product units. These lists are not proof of complete caller/ownership impact.
 Failures in secondary TUs remain visible alongside the primary target's diagnostics.
-Rankings are per flag trial: successful compilation, measured task-wide strict
-pass/fail/unknown, then known differing bytes. They neither combine partial trials nor choose code on
-the worker's behalf. Exit 0 means the deck was scored, not that any candidate
+Rankings are advisory and separate for each flag trial. `rankings[].details`
+explains the ascending comparison order: compile-error count, number of lost
+baseline passing measurements, unknown then failed scored results, unmeasured
+byte-distance count, known differing bytes, and finally candidate name. A shared
+unmeasurable neighbor no longer hides a newly exact function behind an alphabetical
+tie. Strict reference/boundary failures remain failures even when compared bytes
+agree. Missing distances are counted separately, never treated as zero mismatches.
+
+Losses include previously passing mapped neighbors outside the task and bounded
+initial data, keyed by original identity and source owner rather than proposed
+function spelling or report order. Scored-result counts cover the union of observed
+task functions and bounded initial-data objects across that flag's baseline and
+candidates; an absent observation stays unknown rather than shrinking the
+denominator. These counts do not include uncompiled code, generated-table or import
+selection, layout or lifetime proof. Read those diagnostics and ordinary task checks
+separately. A loss is evidence for restoration/review, not authority to revert a
+justified structural migration. Ranking neither applies a winner nor grants
+preservation or acceptance. Flag trials are never combined into a fictitious
+passing configuration. Exit 0 means the deck was scored, not that any candidate
 passed recovery; exit 3 means invalid inputs or an incomplete experiment.
 
 No source is applied or claims stamped. The worker deliberately applies a

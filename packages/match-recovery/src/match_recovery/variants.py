@@ -22,6 +22,63 @@ from .source.reader import read_text
 from .tasks import TaskStore
 
 
+def _rank_trials(baselines, trials):
+    """Explain partial binary progress, without granting recovery acceptance.
+
+    Compare stable original identities, not proposed symbols or list positions.
+    All trials of a flag set use one measurement universe: losing a discovered
+    dependency is missing evidence, not a smaller denominator or a zero distance.
+    """
+    def measurements(trial):
+        rows = {("function", row["unit"], row["entity_id"]): row
+                for row in (trial["target"], *trial["neighbors"])}
+        rows.update({("object", row["unit"], row["symbol"], row["address"]): row
+                     for row in trial["object_definitions"] if "content" in row})
+        return rows
+
+    def result(key, row):
+        return row.get("content" if key[0] == "object" else "result", Result.UNKNOWN)
+
+    rankings = []
+    for baseline in baselines:
+        group = [trial for trial in trials if trial["flags"] == baseline["flags"]]
+        if not group:
+            continue
+        before = measurements(baseline)
+        observed = [(trial, measurements(trial)) for trial in group]
+        scoped = {key for rows in (before, *(rows for _, rows in observed)) for key, row in rows.items()
+                  if key[0] == "object" or row.get("in_task") or key[2] == baseline["target"]["entity_id"]}
+        passing = {key for key, row in before.items() if result(key, row) == Result.PASS}
+        details = []
+        for trial, rows in observed:
+            losses = []
+            for key in sorted(passing):
+                after = result(key, rows.get(key, {}))
+                if after != Result.PASS:
+                    identity = ({"entity_id": key[2]} if key[0] == "function" else
+                                {"symbol": key[2], "address": key[3]})
+                    losses.append({"kind": key[0], "unit": key[1], **identity, "after": after})
+            counts = {state.value: 0 for state in Result}
+            proofs = []
+            for key in sorted(scoped):
+                row = rows.get(key, {})
+                counts[result(key, row)] += 1
+                proofs.extend([row.get("proof", {})] if key[0] == "object" else row.get("spans") or [row])
+            details.append({"name": trial["name"], "compile_errors": len(trial["compile_errors"]),
+                            "lost_passing_measurements": losses, "scored_results": counts,
+                            "unmeasured_distances": sum("differing_offsets" not in proof for proof in proofs),
+                            "known_differing_bytes": sum(len(proof.get("differing_offsets", ())) for proof in proofs)})
+
+        def key(detail):
+            return (detail["compile_errors"], len(detail["lost_passing_measurements"]),
+                    detail["scored_results"]["unknown"], detail["scored_results"]["fail"],
+                    detail["unmeasured_distances"], detail["known_differing_bytes"], detail["name"])
+
+        details.sort(key=key)
+        rankings.append({"flags": baseline["flags"], "names": [row["name"] for row in details], "details": details})
+    return rankings
+
+
 def _texts(value):
     """One exact edit, or an ordered list of edits to the same original file."""
     if isinstance(value, str):
@@ -348,23 +405,10 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
             trials = list(pool.map(compile_trial, work))
     fresh()
     attempts += sum(row["support_compile_attempts"] for row in (*baselines, *trials))
-    # Keep byte/boundary/reference dimensions intact, rather than collapse a
-    # relocation failure into a deceptively good masked similarity percentage.
-    def ranking_key(trial):
-        rows = [trial["target"], *(row for row in trial["neighbors"] if row["in_task"])]
-        data = [row for row in trial["object_definitions"] if "content" in row]
-        results = [row["result"] for row in rows] + [row["content"] for row in data]
-        result = (Result.UNKNOWN if Result.UNKNOWN in results else Result.FAIL if Result.FAIL in results else Result.PASS)
-        proofs = [span for row in rows for span in row.get("spans", [row])]
-        proofs.extend(row.get("proof", {}) for row in data)
-        differing = sum(len(proof["differing_offsets"]) for proof in proofs) if all("differing_offsets" in proof for proof in proofs) else float("inf")
-        return (bool(trial["compile_errors"]), {Result.PASS: 0, Result.FAIL: 1, Result.UNKNOWN: 2}[result], differing, trial["name"])
-
     return {"task_id": task_name, "operation": "candidate_deck", "entity_id": target.origin.entity_id,
             "source": target.unit, "files": sorted(originals), "translation_units": units,
             "controls": controls, "baseline": baselines, "candidates": trials,
-            "rankings": [{"flags": list(flags), "names": [trial["name"] for trial in sorted(
-                (item for item in trials if item["flags"] == list(flags)), key=ranking_key)]} for flags in valid],
+            "rankings": _rank_trials(baselines, trials),
             "status": "scored" if len(valid) == len(flags_list) and all(not item["compile_errors"] for item in trials) else "incomplete",
             "compile_attempts": attempts, "jobs": jobs, "input_fingerprint": digest(before),
             "unmeasured_task_entities": sorted(selected - {item.origin.entity_id for item in unit_bindings}),
@@ -374,7 +418,8 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
             "structure_verification": Result.UNKNOWN,
             "limitations": ["diagnostic source trials only; no winner applied and no claims stamped",
                             "task function symbol proposals are scored against candidate bindings; original identities, claims and other recovery interpretations require checkpoint decisions",
-                            "ranked per flag trial by compilation, task code and bounded initial-data results, then differing bytes; missing distances sort last, trials are never combined",
+                            "advisory ranking per flag trial: compile errors, lost baseline passes (including measured neighbors), unknown and failed scored task/data results, missing distances, known differing bytes, then name; trials are never combined",
+                            "ranking details cover the union of observed task code and bounded initial data in that flag trial; absent observations remain unknown, and generated tables/import selection, structure and uncompiled code are not ranked",
                             "all mapped task TUs compiled; neighboring rows also show unambiguous outside-task functions in those TUs, not all affected callers",
                             "layout, lifecycle, full build, protected obligations and review still require task checks",
                             "compiler commands are trusted; requested parallelism must fit isolated compiler capacity"]}

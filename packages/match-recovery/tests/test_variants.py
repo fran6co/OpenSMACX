@@ -15,7 +15,7 @@ from match_recovery.coff_replica import function_signature, object_signature
 from match_recovery.model import Origin
 from match_recovery.pe_coff import Coff
 from match_recovery.tasks import Task, TaskStore
-from match_recovery.variants import measure_variants
+from match_recovery.variants import _rank_trials, measure_variants
 from test_binary import coff_fixture, pe_fixture
 from test_multispan import object_fixture
 
@@ -78,7 +78,11 @@ def test_deck_reuses_source_map_and_scores_without_writing_or_banking(project, m
     assert report["compile_attempts"] == 5 and len(calls) == 1
     assert report["controls"][0]["result"] == "pass"
     assert [row["target"]["result"] for row in report["candidates"]] == ["pass", "fail"]
-    assert report["rankings"] == [{"flags": ["-O2"], "names": ["exact", "different"]}]
+    ranking, = report["rankings"]
+    assert ranking["flags"] == ["-O2"] and ranking["names"] == ["exact", "different"]
+    assert ranking["details"][0]["scored_results"] == {"pass": 1, "fail": 0, "unknown": 0}
+    assert ranking["details"][1]["lost_passing_measurements"] == [
+        {"kind": "function", "unit": "code/unit.cc", "entity_id": project[1].subjects[0].entity_id, "after": "fail"}]
     assert not report["ready_for_collection"] and not report["scope_complete"] and not report["persisted"]
     assert report["structure_verification"] == "unknown"
     assert {p.relative_to(root): p.read_bytes() for p in root.rglob("*") if p.is_file()} == before
@@ -309,6 +313,127 @@ def test_one_failed_candidate_does_not_erase_the_other_trials(project):
     result = measure(project, compiler=Failing())
     assert result["status"] == "incomplete"
     assert [item["target"]["result"] for item in result["candidates"]] == ["pass", "unknown"]
+
+
+def test_an_unresolved_task_neighbor_does_not_hide_an_exact_candidate(project):
+    root, task = project
+    source = root / "code/unit.cc"
+    source.write_text(source.read_text() + "// ORIGINAL: 0x00401010 _h 0x00401010-0x00401011\nvoid h() {}\n")
+    neighbor = Origin(task.subjects[0].image_sha256, "pe:va", 0x401010)
+    TaskStore(root).expand(task.task_id, request_id="neighbor", author=task.author, subjects=(neighbor,),
+                          editable_files=(), evidence=("coupled recovery",), expected_revision=0)
+    value = deck(project)
+    value["candidates"] = {"a_miss": {"code/unit.cc": "/* different */"},
+                           "z_exact": {"code/unit.cc": "/* proposed */"}}
+    class MissingNeighbor(Compiler):
+        def __call__(self, *_):
+            return coff_fixture(b"\x90")
+        def variant(self, source, contents, *args):
+            return self() if b"baseline" in contents else super().variant(source, contents, *args)
+    report = measure(project, value, compiler=MissingNeighbor())
+    assert report["controls"][0]["result"] == "pass"
+    assert all(row["neighbors"][0]["result"] == "unknown" for row in report["candidates"])
+    assert [row["target"]["result"] for row in report["candidates"]] == ["fail", "pass"]
+    assert report["rankings"][0]["names"] == ["z_exact", "a_miss"]
+    assert not report["ready_for_collection"] and not report["scope_complete"]
+
+
+def ranked_trial(name, result="fail", *, differences=(0,), neighbors=(), objects=(), flags=("-O2",)):
+    return {"name": name, "flags": list(flags), "compile_errors": {},
+            "target": {"entity_id": "target", "unit": "code/f.cc", "symbol": "_f",
+                       "result": result, "differing_offsets": list(differences)},
+            "neighbors": list(neighbors), "object_definitions": list(objects)}
+
+
+def bounded_data(result="pass"):
+    return {"unit": "code/data.cc", "symbol": "_data", "address": "0x00402000",
+            "content": result, "proof": {"result": result, "differing_offsets": []}}
+
+
+@pytest.mark.parametrize("kind,after", [(kind, result) for kind in ("function", "object")
+                                     for result in ("fail", "unknown", "missing")])
+def test_ranking_retains_baseline_passes_even_outside_the_task(kind, after):
+    neighbor = {"entity_id": "other", "unit": "code/other.cc", "symbol": "_other",
+                "in_task": False, "result": "pass", "differing_offsets": []}
+    baseline = ranked_trial("baseline", neighbors=[neighbor], objects=[bounded_data()])
+    safe = ranked_trial("z_preserved", "pass", differences=(), neighbors=[neighbor], objects=[bounded_data()])
+    broken = copy.deepcopy(safe)
+    broken["name"] = "a_regressed"
+    field = "neighbors" if kind == "function" else "object_definitions"
+    if after == "missing":
+        broken[field] = []
+    else:
+        broken[field][0]["result" if kind == "function" else "content"] = after
+    before = copy.deepcopy([baseline, safe, broken])
+    report, = _rank_trials([baseline], [broken, safe])
+    assert report["names"] == ["z_preserved", "a_regressed"]
+    lost, = report["details"][1]["lost_passing_measurements"]
+    assert lost["kind"] == kind and lost["after"] == ("unknown" if after == "missing" else after)
+    if kind == "object":
+        assert report["details"][1]["scored_results"]["unknown" if after == "missing" else after] == 1
+    assert [baseline, safe, broken] == before  # Diagnostics never rewrite verification results.
+
+
+def test_ranking_keys_functions_by_original_identity_not_symbol_or_row_order():
+    neighbor = {"entity_id": "other", "unit": "code/f.cc", "symbol": "_other",
+                "in_task": True, "result": "pass", "differing_offsets": []}
+    baseline = ranked_trial("baseline", "pass", differences=(), neighbors=[neighbor])
+    renamed = copy.deepcopy(baseline)
+    renamed["name"] = "renamed"
+    renamed["target"]["symbol"] = "_new"
+    # A diagnostic's stable identity also survives changing which row is primary.
+    renamed["neighbors"], renamed["target"] = [dict(renamed["target"], in_task=True)], renamed["neighbors"][0]
+    report, = _rank_trials([baseline], [renamed])
+    assert report["details"][0]["lost_passing_measurements"] == []
+    assert report["details"][0]["scored_results"] == {"pass": 2, "fail": 0, "unknown": 0}
+
+
+def test_new_dependency_cannot_disappear_from_another_candidates_denominator():
+    baseline = ranked_trial("baseline")
+    discovery = ranked_trial("discovered", objects=[bounded_data("unknown")])
+    absent = ranked_trial("absent")
+    report, = _rank_trials([baseline], [discovery, absent])
+    assert all(row["scored_results"] == {"pass": 0, "fail": 1, "unknown": 1} for row in report["details"])
+    missing = next(row for row in report["details"] if row["name"] == "absent")
+    assert missing["unmeasured_distances"] == 1
+
+
+def test_known_byte_progress_is_visible_despite_a_shared_unmeasurable_span():
+    baseline = ranked_trial("baseline")
+    trials = [ranked_trial("a_far"), ranked_trial("z_near")]
+    for trial, differences in zip(trials, ([0, 1, 2, 3], [0])):
+        trial["target"]["result"] = "unknown"
+        trial["target"]["spans"] = [{"result": "fail", "differing_offsets": differences},
+                                     {"result": "unknown", "reason": "unsupported tail association"}]
+    report, = _rank_trials([baseline], trials)
+    assert report["names"] == ["z_near", "a_far"]
+    assert [row["known_differing_bytes"] for row in report["details"]] == [1, 4]
+    assert all(row["unmeasured_distances"] == row["scored_results"]["unknown"] == 1 for row in report["details"])
+
+
+def test_missing_distance_is_not_a_zero_byte_mismatch():
+    baseline = ranked_trial("baseline")
+    known = ranked_trial("z_known", differences=(0, 1, 2))
+    missing = ranked_trial("a_unknown_distance")
+    del missing["target"]["differing_offsets"]
+    report, = _rank_trials([baseline], [missing, known])
+    assert report["names"] == ["z_known", "a_unknown_distance"]
+    assert report["details"][1]["unmeasured_distances"] == 1
+
+
+def test_ranking_keeps_strict_reference_failures_and_flag_trials_distinct():
+    baselines = [ranked_trial("baseline", flags=(flag,)) for flag in ("-one", "-two")]
+    trials = []
+    for baseline in baselines:
+        for name in ("first", "second"):
+            exact = (name == "first") == (baseline["flags"] == ["-one"])
+            trial = ranked_trial(name, "pass" if exact else "fail", differences=(), flags=baseline["flags"])
+            trial["target"].update(bytes="pass", boundary="pass", references="pass" if exact else "fail")
+            trials.append(trial)
+    reports = _rank_trials(baselines, trials)
+    assert [row["names"] for row in reports] == [["first", "second"], ["second", "first"]]
+    assert all(row["details"][1]["scored_results"]["fail"] == 1 for row in reports)
+    assert all(row["details"][1]["known_differing_bytes"] == 0 for row in reports)
 
 
 def test_candidate_compiles_can_overlap_at_requested_width(project):
