@@ -34,6 +34,9 @@ Keep edits inside the authorized files. Do not change Git state, task decisions,
 checker policy or obligation annotations, launch other workers, collect worktrees,
 or run automatic fast-forward setup. The coordinator owns those operations.
 Do not invoke `recover run` recursively from inside a worker command.
+If context includes `integration_context`, preserve the destination's independently
+committed changes; do not undo them to imitate the old task baseline. Original
+task obligations remain protected, and the destination comparison grants no new scope.
 
 Keep structurally justified edits on a mismatch; report the regression and its
 restoration dependencies. Do not erase a claim or call the migration accepted.

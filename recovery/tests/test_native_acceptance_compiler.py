@@ -275,6 +275,56 @@ def test_real_preservation_refusal_drives_scoped_repair_without_reverting_struct
     assert git("rev-parse", "HEAD") == head
 
 
+def test_installed_integration_recheck_uses_destination_without_resetting_task_history(tmp_path, monkeypatch):
+    provider = {"schema_version": 1, "artifacts": "build/agents"}
+    for role in ("worker", "coordinator", "reviewer"):
+        provider[role] = {"command": {"argv": [sys.executable, "recovery/local_agents.py", role, "{request}"], "timeout": 30},
+                          "instructions": [], "response": "stdout"}
+    root, image, task, git, evidence = prepared_project(tmp_path, monkeypatch, provider=provider, proofs=False)
+    monkeypatch.setenv("RECOVERY_IMAGE", str(image))
+    fork = git("rev-parse", "HEAD")
+    git("switch", "-c", "incoming")
+    (root / "src/owner.h").write_text(evidence + CLASSES)
+    body = root / "src/owner.cpp"
+    body.write_text(body.read_text().replace("raw_[0] + raw_[1]", "bias + member.value"))
+    git("add", "src/owner.h", "src/owner.cpp")
+    git("commit", "-m", "Incoming real hierarchy; verification still required")
+    source = git("rev-parse", "HEAD")
+    git("switch", "-c", "destination", fork)
+    entry = root / "src/entry.cpp"
+    entry.write_text(entry.read_text() + "\nint independent_destination_helper() { return 7; }\n")
+    build_policy = root / "recovery/build.json"
+    build_policy.write_text(build_policy.read_text() + "\n")
+    git("add", "src/entry.cpp", "recovery/build.json")
+    git("commit", "-m", "Independent destination source and build-policy input")
+    target = git("rev-parse", "HEAD")
+    git("switch", "-c", "integration-candidate")
+    git("merge", "--no-ff", source, "-m", "Unverified candidate; destination remains unchanged")
+    candidate = git("rev-parse", "HEAD")
+    from match_recovery.preservation import check_preservation
+    assert check_preservation(root, task.task_id)["result"] == "fail"
+    context = {"author": task.author, "source_revision": source, "target_revision": target,
+               "evidence": ["Test-owned incoming hierarchy and separately advanced destination"]}
+    integration = tmp_path / "integration.json"
+    integration.write_text(json.dumps(context))
+    checkpoint = tmp_path / "checkpoint.json"
+    checkpoint.write_text(json.dumps({"author": task.author, "message": "Verify merged hierarchy in destination context",
+                                      "allow_migration": False}))
+    result = subprocess.run([sys.executable, "-m", "match_recovery.cli", "run", task.task_id, "--root", str(root),
+                             "--acceptance-scope", "change", "--iterations", "1", "--reviewer", "recovery/reviewer.json",
+                             "--integration", str(integration), "--checkpoint", str(checkpoint)],
+                            cwd=tmp_path, capture_output=True, timeout=180)
+    assert result.returncode == 0, result.stdout.decode() + result.stderr.decode()
+    report = json.loads(result.stdout)
+    assert report["stop_reason"] == "change_accepted" and report["worker_rounds"] == 0
+    assert report["integration"] == context and report["checkpoint"]["published"]
+    assert report["checkpoint"]["parent"] == candidate and not report["ready_for_collection"]
+    assert TaskStore(root).read(task.task_id) == task
+    assert git("rev-parse", "destination") == target and git("rev-parse", "incoming") == source
+    assert (root / "src/owner.h").read_text() == evidence + CLASSES
+    assert "return 7;" in entry.read_text() and not git("status", "--porcelain")
+
+
 @pytest.mark.parametrize("damage", [None, "runtime", "structure"])
 def test_real_native_acceptance_preserves_structure_through_byte_regression(tmp_path, monkeypatch, damage):
     provider = {"schema_version": 1, "artifacts": "build/agents"}

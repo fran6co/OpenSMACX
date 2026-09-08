@@ -76,7 +76,8 @@ def migration(project, monkeypatch):
         monkeypatch.setattr(native, name, lambda *_: {"result": "pass"})
     monkeypatch.setattr(native, "measure_restoration", lambda root, name, image, **kwargs:
                         measure_restoration(root, name, image, compiler=Compiler(root), **kwargs))
-    monkeypatch.setattr(native, "check_preservation", lambda root, name: check_preservation(root, name, compiler=Compiler(root)))
+    monkeypatch.setattr(native, "check_preservation", lambda root, name, **kwargs:
+                        check_preservation(root, name, compiler=Compiler(root), **kwargs))
     return root
 
 

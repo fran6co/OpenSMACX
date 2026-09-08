@@ -154,25 +154,27 @@ def _explain_sources(comparison, old_sources, new_sources):
 
 
 def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | None = None,
-                       diagnostic: bool = False, compiler=None):
+                       diagnostic: bool = False, compiler=None, integration: dict | None = None):
     if type(diagnostic) is not bool:
         raise ValueError("diagnostic mode must be boolean")
     root = root.resolve()
     settings, store = Measurement.read(root), TaskStore(root)
     task, decisions = store.read(task_name), store.decisions(task_name)
+    from .integration import preservation_base
+    baseline_revision = preservation_base(root, task, integration)
     selected, _ = store._scope(task, decisions)
     head = git(root, "rev-parse", "HEAD").decode().strip()
     git(root, "merge-base", "--is-ancestor", task.base_revision, head)
     pin = image_pin(root, settings.source)
     if any(subject.image_sha256 != pin or subject.address_space != settings.source.address_space for subject in task.subjects):
         raise ValueError("preservation task refers to another original image/address space")
-    metadata = {"task": task, "decisions": decisions, "head": head}
+    metadata = {"task": task, "decisions": decisions, "head": head, "integration": integration}
     before, state = settings.snapshot(root, metadata), working_state(root)
     roots = replica_roots((*settings.source.roots, *settings.input_roots))
     current = {name: data for name, data in replica_snapshot(root, roots).items() if data is not None}
-    baseline = revision_files(root, task.base_revision, roots)
+    baseline = revision_files(root, baseline_revision, roots)
     configuration_path = "recovery/project.json"
-    tree = _tree(root, task.base_revision, (configuration_path,))
+    tree = _tree(root, baseline_revision, (configuration_path,))
     if configuration_path in tree:
         if tree[configuration_path][:2] not in (("100644", "blob"), ("100755", "blob")):
             raise ValueError("historical project configuration is not a regular file")
@@ -185,7 +187,7 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
         historical_source = HistoryConfiguration.read(root).before_configuration
     if historical_source != settings.source:
         raise ValueError("preservation requires the same baseline/current source interpretation; history cannot be guessed")
-    pin_tree = _tree(root, task.base_revision, (settings.source.image_pin,))
+    pin_tree = _tree(root, baseline_revision, (settings.source.image_pin,))
     entry = pin_tree.get(settings.source.image_pin)
     if entry is None or entry[:2] not in (("100644", "blob"), ("100755", "blob")):
         raise ValueError("preservation baseline original pin is missing or not regular")
@@ -307,7 +309,9 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
     result = (Result.UNKNOWN if diagnostic or unavailable or unmeasured or counts[Result.UNKNOWN] or not reports else
               Result.FAIL if binding_changes or annotation_changes or counts[Result.FAIL] else Result.PASS)
     return {"task_id": task_name, "check": "baseline_current_compiled_residuals", "result": result,
-            "base_revision": task.base_revision, "head": head, "changed_files": changed_files,
+            "base_revision": baseline_revision,
+            **({"task_base_revision": task.base_revision, "integration": integration} if integration is not None else {}),
+            "head": head, "changed_files": changed_files,
             "outside_binding_changes": binding_changes, "file_set_changes": file_set_changes,
             "unsupported_file_set_changes": unavailable, "materialization": "complete-tree-v5" if tree_mode else "existing-file-v4",
             "outside_annotation_changes": annotation_changes,

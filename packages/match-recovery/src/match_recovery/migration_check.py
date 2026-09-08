@@ -36,15 +36,17 @@ def _all(values):
             Result.FAIL if Result.FAIL in values else Result.PASS)
 
 
-def unchanged_build_policy(root, task, settings, build):
-    """Both fresh replicas must use the task's unchanged compiler/build policy."""
+def unchanged_build_policy(root, task, settings, build, *, integration=None):
+    """Use unchanged task policy, or the explicitly authorized destination policy."""
+    from .integration import preservation_base
+    baseline_revision = preservation_base(root, task, integration)
     project = read_json(root / "recovery/project.json")
     def outside_source(name):
         return not any(Path(name).is_relative_to(directory) for directory in settings.source.roots)
     policy_inputs = set(build.snapshot(root)["inputs"]) | set(project.get("compiler", {}).get("inputs", []))
     policy_files = {name for name in policy_inputs if outside_source(name)} | {"recovery/project.json"}
     baseline = {name: entry for name, entry in _tree(
-        root, task.base_revision, tuple(sorted(policy_files | set(build.input_roots)))).items() if outside_source(name)}
+        root, baseline_revision, tuple(sorted(policy_files | set(build.input_roots)))).items() if outside_source(name)}
     unchanged = set(baseline) == policy_files
     for name, (mode, kind, blob) in baseline.items():
         path = root / name
@@ -69,8 +71,14 @@ def measure_migration(root: Path, task_name: str, image: Path, request: dict, *,
     require_digest(request["snapshot"])
     if not isinstance(request["review_policy"], dict):
         raise ValueError("migration requires the reviewed policy")
+    integration = request["review_policy"].get("integration")
+    if integration is not None:
+        from .integration import validate
+        validate(root, task, integration)
     permissions(request["permission"], task, scope)
     validate_review(request["review"])
+    if integration is not None and task.author in {request["review"]["author"], request["review"]["reviewer"]}:
+        raise ValueError("integration coordinator must be independent of worker and reviewer")
     if request["review"]["decision"] != "approve" or request["review"]["snapshot"] != request["snapshot"]:
         raise ValueError("migration requires the current independent approval")
     inventory = task_obligations(root, task_name)
@@ -137,10 +145,10 @@ def measure_migration(root: Path, task_name: str, image: Path, request: dict, *,
     # The measurement compiler may use different helpers from the application
     # build. Those helpers must also retain their baseline contents; otherwise
     # both replicas could agree only because today's compiler adapter changed.
-    unchanged_policy = unchanged_build_policy(root, task, settings, build)
+    unchanged_policy = unchanged_build_policy(root, task, settings, build, integration=integration)
     if not unchanged_policy:
         diagnose("baseline-build-policy", {"result": Result.UNKNOWN,
-                                           "reason": "compiler/build inputs differ from or lack the task baseline; preserve work and request coordinator evidence"})
+                                           "reason": "compiler/build inputs differ from or lack the authorized preservation baseline; preserve work and request coordinator evidence"})
     checks = [run("source", lambda: check_source(root)), run("mappings", lambda: check_mappings(root)),
               run("claim-identities", lambda: check_claims(root))]
     checks += [run("audit:" + name, lambda name=name: audit_source(root, name)) for name in sorted(policy["audits"])]
@@ -151,7 +159,8 @@ def measure_migration(root: Path, task_name: str, image: Path, request: dict, *,
                 "measurements": [], "current": {}, "diagnostics": diagnostics}
     restored = run("restoration", lambda: measure_restoration(
         root, task_name, image, review=request["review"], review_snapshot=request["snapshot"]))
-    preservation = run("preservation", lambda: check_preservation(root, task_name))
+    preservation = run("preservation", lambda: check_preservation(
+        root, task_name, **({"integration": integration} if integration is not None else {})))
     structural = (declared_outcome(restored.get("structural_requirements", []), interpretations,
                                    review=request["review"])[0] if interpretations else Result.PASS)
     measurements = {row["obligation_id"]: row for row in restored.get("measurements", [])}

@@ -541,6 +541,18 @@ and remaining obligations; do not equate “compiles” with “working game.”
 
 The coordinator alone authorizes local publication and collects approved work, checking the actual
 index/source after application and rerunning checks in the integrated checkout.
+For an already merged candidate in an isolated checkout, `recover run <task>
+--integration <context.json> --acceptance-scope change --reviewer ...` verifies
+against an explicitly authorized destination-before-merge revision. The context
+contains exactly `author`, `source_revision`, `target_revision` and `evidence`;
+the independent task coordinator supplies immutable full commit ids. Both commits
+must be ancestors of the candidate, retaining the original task baseline. Source
+changes must remain scoped and neither branch's task/review history may be lost.
+Only collateral-change and build-policy comparisons use the destination revision;
+historical restoration still starts at the unchanged original task baseline.
+Fresh review and all native change checks are required. This does not create the
+merge candidate, resolve conflicts or publish the destination branch. Keep that
+branch untouched until collection is verified. See the package README for limits.
 Do not pipe mutating commands or the gate. Do not delete a worktree until its
 changes have been verified as preserved.
 

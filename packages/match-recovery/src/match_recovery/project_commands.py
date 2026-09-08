@@ -177,6 +177,7 @@ def register(commands):
     preservation.add_argument("--root", type=Path, default=Path.cwd())
     preservation.add_argument("--unit", action="append", help="Diagnostic subset; omitted units keep the overall result unknown")
     preservation.add_argument("--diagnostic", action="store_true", help="Inspect fresh compiler differences without per-file damage controls; always unverified")
+    preservation.add_argument("--integration", type=Path, help="Explicit coordinator source/target context; does not reset task history")
     preservation.add_argument("--summary", action="store_true")
     variants = task_actions.add_parser("variants", help="Score authorized source candidates without editing or banking them")
     variants.add_argument("task")
@@ -382,7 +383,12 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
         if arguments.get("action") == "check-preservation":
             from .preservation import check_preservation
             units = tuple(arguments["unit"]) if arguments.get("unit") is not None else None
-            output = check_preservation(root, arguments["task"], units=units, diagnostic=arguments.get("diagnostic", False))
+            context = arguments.get("integration")
+            if context is not None:
+                context = Path(context)
+                context = read_json(context if context.is_absolute() else root / context)
+            output = check_preservation(root, arguments["task"], units=units, diagnostic=arguments.get("diagnostic", False),
+                                        **({"integration": context} if context is not None else {}))
             if arguments.get("summary"):
                 output["units"] = [{key: value for key, value in row.items()
                                     if key not in ("baseline_scoped_functions", "current_scoped_functions", "changed_sections", "symbol_changes")}

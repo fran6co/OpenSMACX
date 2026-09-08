@@ -826,6 +826,41 @@ detected publication-time changes require inspection and fresh verification.
 Integration into another checkout needs a separate target-context verification
 boundary, not reuse of this local acceptance or replacement of the task baseline.
 
+For an **already merged candidate checkout**, `recover run TASK --integration
+CONTEXT.json --acceptance-scope change --reviewer ...` now supplies that verification
+context. This command does not perform the merge or move the destination branch.
+The coordinator decision has exactly these fields:
+
+```json
+{"author":"task-coordinator","source_revision":"<full incoming commit id>","target_revision":"<full destination commit id before integration>","evidence":["Why these revisions are authorized for integration"]}
+```
+
+Both revisions must retain the original task baseline and already be ancestors of
+the candidate HEAD. The target must precede collection of the incoming source.
+The source must contain the task authorization. Exact committed task/review history
+from both revisions must survive; conflicting streams require explicit resolution
+outside this interface, not discarded decisions. Differences from the target may
+touch only task-authorized source and valid task/review decisions. The task's
+original `base_revision` is unchanged: restoration still traverses its complete
+reachable source history, including the incoming branch. No claim is demoted and
+no matching regression is implicitly allowed.
+
+Only the outside-scope comparison and unchanged-build-policy comparison use the
+authorized target revision. Native compilation, scoped original matching, historical
+restoration, references, declared structure, build/link and independent review run
+fresh in the candidate context. The context is part of the reviewed policy; a
+source-branch approval or saved acceptance cannot be replayed on the merged source.
+Workers/reviewers receive it as `context.integration_context`. The read-only
+`tasks check-preservation TASK --integration CONTEXT.json` supports the same
+comparison for investigation; it is not admission. Reports distinguish the
+comparison `base_revision` from `task_base_revision` when this context is present.
+
+Combining `run --integration` with `--checkpoint` can publish a verified **local**
+checkpoint on the candidate branch, not fast-forward the destination. Preparing
+isolated merge candidates, resolving conflicts, revalidating destination freshness
+and publishing the destination ref remain unfinished coordinator responsibilities.
+Do not merge unverified candidates onto the production branch to use this command.
+
 Unrelated unfinished functions need not match the original to accept a change;
 their preservation must still be measured. Global source/mapping/audit defects can
 still prevent checkpoint admission. This boundary does not prove whole-linked-image

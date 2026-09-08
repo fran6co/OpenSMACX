@@ -314,6 +314,13 @@ establish completion of this program.
   under the driver lease, with separate opt-in for tracked migrations. Staged work,
   active Git operations and stale state refuse publication; baselines stay fixed.
   This is not cross-worktree integration or reuse of acceptance on another target.
+  Already merged candidate checkouts can now use explicit coordinator `--integration`
+  source/target context: preservation and unchanged-policy checks use the authorized
+  destination-before-merge while historical obligations keep the original task base.
+  Both incoming/destination task histories must survive and changes remain scoped.
+  A live compiler control rechecks a merged hierarchy against independently advanced
+  destination source/policy. Automated candidate preparation, conflict resolution
+  and destination-ref publication are still missing; no source receipt is replayed.
   The stronger
   full-project boundary remains explicitly selectable. No local acceptance dispatcher is
   needed. Synthetic build/history/COFF and subprocess/driver controls exercise

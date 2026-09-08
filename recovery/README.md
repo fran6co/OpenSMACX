@@ -726,6 +726,14 @@ in progress and stale/unrelated changes. It commits authorized source and valida
 decision history without changing task baselines, running Git hooks/filters or
 integrating into another checkout. See the package README for the exact crash and
 concurrency boundaries. No permission means no source commit.
+An already merged candidate can be reverified with `run --integration <context.json>`:
+an independent task-coordinator decision names the incoming source and destination
+before integration, both full ancestor commit ids, with evidence. The original
+task baseline and both sides' decisions remain intact; only preservation/build-policy
+comparisons use the destination revision. `tasks check-preservation --integration`
+exposes the same bounded comparison. Fresh scoped matching/restoration and review
+are still required. This is not automated merge preparation, conflict resolution
+or destination publication; keep unverified candidates off the production branch.
 Valid refused checkpoints return snapshot-bound `checkpoint_feedback`, including
 bounded native build/preservation/restoration diagnostics. Actionable failures
 and unknowns feed a bounded repair/discovery round, followed by fresh checks and

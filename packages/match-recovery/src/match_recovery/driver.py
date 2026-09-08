@@ -131,7 +131,8 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
           iterations: int, reviewer_configuration: dict | None = None,
           migration_configuration: dict | None = None,
           coordinator_configuration: dict | None = None,
-          checkpoint_configuration: dict | None = None, execute=invoke) -> dict:
+          checkpoint_configuration: dict | None = None,
+          integration_configuration: dict | None = None, execute=invoke) -> dict:
     """Recompute context/checks, edit, recheck, repeat; discoveries stop for review."""
     if type(iterations) is not int or not 1 <= iterations <= 100:
         raise ValueError("iterations must be 1..100")
@@ -166,6 +167,14 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
     store = TaskStore(root)
     with file_lock(root / "build/recovery/driver.lock", timeout=0):
         task = store.read(task_name)
+        integration = None
+        if integration_configuration is not None:
+            from .integration import validate
+            if acceptance_scope != "change":
+                raise ValueError("integration context currently requires change acceptance scope")
+            if task.author in {worker_configuration["author"], reviewer_configuration["author"] if reviewer_configuration else None}:
+                raise ValueError("integration coordinator must be independent of worker and reviewer")
+            integration = validate(root, task, integration_configuration)
         publication = publication_branch = None
         if checkpoint_configuration is not None:
             from .checkpoints import authorization, preflight
@@ -194,6 +203,8 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
         initial_decisions = store.decisions(task_name)
         reviews = ReviewStore(root, task_name)
         policy = {"project": configuration, "worker": worker_configuration, "reviewer": reviewer_configuration}
+        if integration is not None:
+            policy["integration"] = integration
         if publication is not None:
             policy["checkpoint"] = publication
         if coordinator_configuration is not None:
@@ -221,6 +232,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                     **({"acceptance_feedback": acceptance_feedback} if acceptance_feedback else {}),
                     **({"checkpoint_feedback": checkpoint_feedback} if checkpoint_feedback else {}),
                     "acceptance_scope": acceptance_scope,
+                    **({"integration": integration} if integration is not None else {}),
                     "ready_for_collection": False, "persisted_results": False}
         def readonly(command, payload):
             before = working_state(root)
@@ -400,6 +412,8 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                            "review_interpretations": policy["interpretations"]}
             if permission is not None:
                 context = {**context, "migration_permission": permission}
+            if integration is not None:
+                context = {**context, "integration_context": integration}
             code, check = readonly(check_command, {"task": task.to_dict(), "context": context})
             if changes(round_state, working_state(root)):
                 raise ValueError("source changed between context generation and checking")

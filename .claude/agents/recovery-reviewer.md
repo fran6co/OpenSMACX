@@ -36,6 +36,10 @@ gaps, but do not demand recovery of unrelated unfinished functions. The native
 checkpoint verifier still must prove build/link, declared requirements, references,
 protected obligations and outside-scope preservation. Full runtime/lifetime proof
 is a separate application boundary, not implied by `change_accepted`.
+When `context.integration_context` is present, review the candidate against the
+authorized destination-before-merge while retaining original task obligations.
+Neither source-branch approval nor a passing old receipt covers this merged source;
+the context is not permission to drop either side's decisions or publish a branch.
 
 The reviewer adapter returns the unchanged supplied `snapshot`, a `decision`
 (`approve` or `request_changes`), nonempty `evidence`, and `feedback`. Explicit

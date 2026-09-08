@@ -45,6 +45,7 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("--reviewer", type=Path, help="Independent read-only reviewer command configuration")
     run.add_argument("--migration", type=Path, help="Coordinator permission for scoped temporary regressions")
     run.add_argument("--checkpoint", type=Path, help="Explicit coordinator authorization to commit a freshly verified change")
+    run.add_argument("--integration", type=Path, help="Coordinator source/target context for rechecking an already integrated candidate")
     run.add_argument("--acceptance-scope", choices=("change", "full_project"), help="Override the configured acceptance boundary")
     run.add_argument("--coordinator", type=Path, help="Read-only discovery coordinator with explicit delegated scope")
     run.add_argument("--iterations", type=int, default=3)
@@ -111,7 +112,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 from .planning import start
                 output = start(args.root, configuration, config(args.worker), config(args.planner), **options)
             else:
-                output = drive(args.root, args.task, configuration, config(args.worker), **options)
+                output = drive(args.root, args.task, configuration, config(args.worker),
+                               integration_configuration=config(args.integration) if args.integration else None, **options)
             print(json.dumps(output, indent=2, sort_keys=True))
             return (0 if output["ready_for_collection"] or output["stop_reason"] == "change_accepted" else
                     2 if output["stop_reason"] == "migration_admitted" else 3)
