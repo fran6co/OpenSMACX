@@ -69,9 +69,9 @@ Native `recover prepare` now generates fresh compiler recipes through configured
 commands, sharing the fresh-build runner and preserving generated include context
 in ignored storage. It publishes the validated database without deleting existing
 build caches. The native gate prepares before its measurement snapshot; standalone
-checks use coordinator-prepared recipes. The old configure CLI is removed; the
-retained legacy gate still has its internal preparation helper until
-cutover. Production cutover still requires migrated full-gate damage controls.
+checks use coordinator-prepared recipes. The old configure CLI and legacy gate
+are removed. Native full-gate damage controls and restored-baseline comparison
+cover the replaced route.
 Those project controls now live in opt-in `recovery/tests/test_gate_controls.py`:
 full native gates in a disposable detached checkout, named stage/subject assertions,
 and guarded damage restoration. The old main-tree mutation CLI is removed.
@@ -115,20 +115,20 @@ source-history interpretations retain initialization requirements across rehomin
 and removal. Original bounds and evidence anchors live in v2 object annotations;
 observed results are disposable. Native `check-initializers` now covers the
 conventional trailing-address probes separately; those hints are not bounded
-object proofs. Full gate cutover, complete object layout and CRT/runtime lifetime
+object proofs. Complete object layout and CRT/runtime lifetime
 remain unfinished.
-The retained production gate now consumes that verifier too: matching functions
+The native production gate consumes that verifier too: matching functions
 cannot excuse incorrect initialized data, and unbounded source objects keep the
-gate incomplete. Native checks run after the legacy build jobs, not concurrently
+gate incomplete. Native checks run after the fresh build jobs, not concurrently
 on their shared compiler environment. Standalone forward type records resolve
 only to one complete same-kind qualified-name definition in the same COFF stream.
 
-Recording and the legacy gate now share the package's per-TU measurement engine,
+Recording and the native gate share the package's per-TU measurement engine,
 including span refusals, absent-symbol trials and similarity-first ranking. The
 recorder groups requested functions before dispatch instead of compiling each
 separately; the gate's duplicate comparison loop is removed. Reuse is invocation
 local, including failed compiles. Changed selected hosts refuse publication and
-global shared-span changes invalidate the gate memo. A 12-function Caviar-family
+global shared-span changes participate in fresh input identity. A 12-function Caviar-family
 control compares grouped and individual measurements without changing source;
 the measured timings belong in the cutover commit, not a current-status ledger.
 This is not a fleet-throughput claim.
@@ -169,8 +169,8 @@ The production gate's annotation-integrity dependency now runs through native
 `recover check-source`; the replaced script is removed. The package checks actual
 source text, marker coverage and in-memory claim/lesson transitions across configured
 source roots. Its stronger lesson-deletion control rejects unrelated equal-line-count
-edits. Missing inputs and empty coverage remain unverified. The production
-full gate and complete acceptance still need cutover.
+edits. Missing inputs and empty coverage remain unverified. Complete application
+acceptance remains separate from the production gate.
 
 The address/build-host check now uses native `recover check-mappings`, with only
 a compilation-database path and forwarder macro names supplied by the project.
@@ -269,7 +269,7 @@ establish completion of this program.
 - [ ] Relocation-target and original-boundary verification; wrong-global fixture.
   The portable comparator and PE/COFF target reader reject wrong/missing targets,
   hardcoded absolute addresses and undeclared extra code. Synthetic damage tests
-  and the zlib integration run; application-gate cutover and ownership checks remain.
+  and the zlib integration run; complete ownership checks remain.
 - [ ] Declarative scheduler, discovery consumers, context bundles, agent adapters,
   independent review, safe collection and resumable migrations.
   Ownership partitions and conservative include-impact views are derived live;

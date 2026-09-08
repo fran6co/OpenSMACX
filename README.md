@@ -68,12 +68,14 @@ Byte comparison alone must not be described as proving a working reconstruction.
 uv sync                                  # framework, comparison extra and test tools
 uv run pytest packages/match-recovery/tests recovery/tests
 cmake -S . -B build -G Ninja && cmake --build build
-uv run tools/osmx.py check                # THE GATE (never pipe it)
+uv run recover check --image .opensmacx/game/terranx_original.exe   # never pipe the gate
 ```
 
-`osmx check` re-compiles every `BYTE_EXACT` claim in `src/` against the
-pinned image and fails if one stops reproducing; on a new host it is the
-answer to "did the move cost anything".
+`recover check` prepares compiler recipes, checks source/history and policy,
+builds/links the application, then verifies claims, symbols, data and layout
+against the pinned image. Exit 0 is a passing configured gate, 1 a failure,
+3 incomplete evidence—not green or proof of a working game. The old gate and
+root `tools/` implementations have been removed after native damage controls.
 
 ## New host
 

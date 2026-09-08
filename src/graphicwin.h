@@ -301,9 +301,9 @@ GraphicWin *__fastcall graphic_win_destructor_redirect(GraphicWin *self, void *)
 // switching a class over, do not stop at the first number.
 //
 // Use it ONLY where the image really does construct first - check with
-// `uv run tools/osmx.py show <ctor>`, whose call to 0x005D4CF0 should come
-// before the first `lea ecx, [esi + N]`. tools/body_construct_order.py lists
-// the candidates.
+// `uv run recover inspect <ctor> --image <original>`: the call to 0x005D4CF0
+// should come before the first `lea ecx, [esi + N]`. Establish this order from
+// original constructor/caller evidence before choosing a candidate class.
 struct ConstructedGraphicWin : public GraphicWin {
   // Empty: GraphicWin::GraphicWin() is a REAL constructor now, so the
   // base runs implicitly and calling it again would double-construct.

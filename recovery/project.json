@@ -6,7 +6,7 @@
   "audits": "recovery/audits.json",
   "references": {
     "documentation_roots": ["docs", "recovery", ".claude"],
-    "command_roots": ["tools", "recovery"],
+    "command_roots": ["recovery"],
     "exclude_roots": [".claude/worktrees"]
   },
   "layout": {

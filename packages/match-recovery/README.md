@@ -484,8 +484,8 @@ not establish dependency compatibility. Unsupported hinted declarations/lexing
 remain diagnostics and keep coverage unknown. The lens is not a complete C++
 parser or conditional-preprocessing analysis. Passing conventional trials are
 aggregated per hint; every nonpassing observation retains its TU and flags.
-This opt-in diagnostic does not replace a project's legacy gate until its coverage
-and compiler counterexamples have been investigated and cutover controls verified.
+This diagnostic is not a whole-project gate: investigate its coverage and compiler
+counterexamples alongside the other configured checks.
 
 `--witness-unobserved` adds a bounded second stage after the ordinary product
 trials. For each class/flag set without any complete definition, it selects one

@@ -451,8 +451,8 @@ verification. After interruption, inspect the Git diff and retained backups unde
 ignored `build/recovery/publications/`; a multi-file batch is not globally atomic.
 Recover source at a coordinator checkpoint, then recheck identities and remeasure.
 
-During cutover, also run `cmake --build build` and the full unpiped
-`uv run tools/osmx.py check`. Exit 3 is unmeasurable, not green; “0 REGRESSED”
+Run `cmake --build build` and the full unpiped
+`uv run recover check --image <original>`. Exit 3 is unmeasurable, not green; “0 REGRESSED”
 alone is not acceptance. The installed `recover record` command
 is the only current claim-stamping entry point and proves historical masked-byte
 agreement, not full structural/reference correctness. Never hand-edit markers.
@@ -472,10 +472,10 @@ checks precede a fresh build; match, symbol, initial-data and layout sweeps foll
 serially. Additional checks are explicit bounded commands in `recovery/gate.json`.
 Layout trials report their TU, index/total and elapsed time on stderr; final
 verification remains in the JSON report. A completed trial is not a passing claim.
-Use both gate routes for cutover comparison until real runs and damage controls
-establish equivalent coverage. `recover check-matches` exposes the native claim
-sweep without banking its discoveries. Neither command is the unfinished full
-acceptance/migration verifier or evidence that the game works.
+The old gate is removed after native damage controls and restored-baseline
+comparison. `recover check-matches` exposes the native claim sweep without banking
+its discoveries. Neither command alone establishes application acceptance or
+evidence that the game works; per-change admission uses the reviewed workflow above.
 
 The real-project damage controls are now opt-in pytest cases in
 `recovery/tests/test_gate_controls.py`, replacing the old main-tree mutation

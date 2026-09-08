@@ -351,28 +351,5 @@ install(TARGETS OpenSMACX
     ARCHIVE DESTINATION lib
 )
 
-# ---------------------------------------------------------------------------
-# THE BUILD IS THE EXECUTABLE. Nothing else.
-#
-# `tests/` held 95 ctest registrations - the tool tests, the ABI, vtable and
-# layout gates, the annotation-integrity checks and a C++ fixture target -
-# and it was RETIRED on 2026-08-15 because nothing consumed its results.
-#
-# The finding that settled it: the suite reported 21% passing, 75 failures,
-# every one of them `ModuleNotFoundError: No module named 'pefile'`, because
-# a plain `cmake -S . -B build` had reconfigured the tree onto
-# /usr/bin/python3 instead of the venv every tool runs on. That state is not
-# something a person sees and tolerates - it is what an unrun suite looks
-# like. A second check had been failing since the very commit that
-# introduced its bound, and stayed red through every commit after.
-#
-# The gate is `tools/osmx.py check`: it compiles every BYTE_EXACT
-# claim in `src/` against the shipped image and fails if one no longer
-# reproduces. That one is run every batch, its result is read, and it is the
-# only check in this tree that was ever load-bearing.
-#
-# `OPENSMACX_ROOT` and `OPENSMACX_BUILD_ROOT` outlive the split that needed
-# them: `tools/` still reads them out of the cache.
-# ---------------------------------------------------------------------------
-set(OPENSMACX_ROOT "${CMAKE_CURRENT_SOURCE_DIR}")
-set(OPENSMACX_BUILD_ROOT "${CMAKE_CURRENT_BINARY_DIR}")
+# CMake builds the application. The installed recovery package owns verification:
+# `uv run recover check --image <original>`; build success alone is not acceptance.

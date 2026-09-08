@@ -26,9 +26,9 @@ Format/ABI parsing and verification belong in the library, not project scripts.
 
 There is no separate `decomp` package. Read and write annotations through
 `match_recovery.source`. Its legacy masked-byte comparison remains distinct
-from the strict reference-aware comparator. Root `tools/` is transitional:
-retire each implementation only after its live consumers and checks are replaced.
-Do not add another ad hoc CLI or compatibility layer.
+from the strict reference-aware comparator. The old root `tools/` directory and
+legacy gate are removed; the installed package owns verification and CLI entry
+points. Do not add another ad hoc CLI or compatibility layer.
 
 CMake and recovery measurements now share `recovery/environment/` compiler
 interaction. The library receives compiler callables or uses its configured JSON
@@ -65,10 +65,9 @@ uv run recover record <addresses> --image <image> --in <source-file>
 uv run recover run <task> --worker <config> --reviewer <config>
 uv run pytest packages/match-recovery/tests recovery/tests
 cmake --build build
-uv run tools/osmx.py check
 ```
 
-The last command is the retained full legacy gate: never pipe it. Exit 0 is
+`recover check` is the configured whole-project gate: never pipe it. Exit 0 is
 clean, 1 a failure, 3 unmeasurable—not green. This project's strict full
 acceptance remains unfinished. Ordinary driver runs now use per-change acceptance:
 native checkpoint verification plus independent review can yield `change_accepted`
@@ -91,13 +90,11 @@ Source/instruction reference checks are native and configured in `project.json`.
 Source-configured
 native layout coverage replaces the old header-offset walk, including controlled
 witnesses for declarations absent from ordinary debug output.
-Keep the legacy route for cutover comparison/control until that verification
-is complete. Neither command establishes full structure or runtime acceptance.
+Native full-gate damage controls and restored-baseline comparison cover the
+retired route. The gate does not establish full structure or runtime acceptance.
 The native gate runs configured preparation before measuring. For standalone
 task checks/recording, run `recover prepare` at a coordinator checkpoint first;
 never regenerate compiler recipes during an active measurement epoch.
-The retained legacy gate finishes its incremental build before selecting recipes
-or measuring claims, so CMake regeneration cannot race the mapping audit.
 Real-project damage controls are opt-in isolated pytest cases in
 `recovery/tests/test_gate_controls.py`; see `recovery/WORKFLOW.md`. Fast tests
 exercise their anchors and restoration, not the full live matrix.

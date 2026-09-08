@@ -8,14 +8,6 @@ requires-python = ">=3.12"
 dependencies = ["match-recovery[x86]"]
 
 [dependency-groups]
-# Temporary legacy command dependencies; removed as those commands migrate.
-tools = [
-    # typer 0.15.1 calls `Parameter.make_metavar()` without the `ctx` that
-    # click 8.2 made required, so `--help` raises. Newer typer fixed it;
-    # pinning the pair is what keeps `--help` from being the one command
-    # nobody runs until it matters.
-    "typer>=0.16",
-]
 # Test runners are not package runtime dependencies.
 test = [
     "pytest==8.4.1",
@@ -25,7 +17,7 @@ test = [
 package = false
 # So a bare `uv sync` reproduces the environment every tool already runs on,
 # without anyone having to remember a group name.
-default-groups = ["tools", "test"]
+default-groups = ["test"]
 
 [tool.uv.workspace]
 members = ["packages/match-recovery"]

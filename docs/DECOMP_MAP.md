@@ -14,8 +14,8 @@ evidence beside the original mapping.
 
 Reader/writer: `match_recovery.source`, installed with `match-recovery`.
 Portable tests: `uv run pytest packages/match-recovery/tests`; whole-source and
-build controls: `uv run pytest recovery/tests`. Only the legacy `tools/osmx.py check`
-gate remains during cutover; `recover measure` owns diagnostics and
+build controls: `uv run pytest recovery/tests`. `recover check` owns the configured
+whole-project gate; `recover measure` owns diagnostics and
 `recover record` owns production claim stamping. The active task and
 structural-migration workflow is `recovery/WORKFLOW.md`, not this format reference.
 
@@ -238,11 +238,11 @@ the best answer kept. Task variant decks score authorized private source overlay
 against a baseline and damage control. Without VC6, Wine, or the pinned image the commands
 print the reason instead of guessing. This comparer masks relocations and does
 not prove target identity or C++ structure; the strict framework checks remain
-separate until full-gate cutover. Claims retain restoration obligations during
+distinct from historical masked measurement. Claims retain restoration obligations during
 structural work. Never hand-edit them or automatically revert a justified
 structural change merely to avoid a temporary regression.
 
-**THE RATCHET IS `osmx check`.** It reads the claims in `src/`, recompiles
+**THE RATCHET IS `recover check`.** It reads the claims in `src/`, recompiles
 every one against the pinned image, links the tree, and fails by address and
 file if a claim stops reproducing. Source-history identity coverage protects
 removed obligations; no persisted claim count remains. Only `recover record` writes the token, it stamps

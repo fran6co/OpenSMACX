@@ -30,8 +30,8 @@ def test_original_asm_on_a_known_record():
                     reason="no build environment")
 def test_byte_exact_body_compiles_to_the_same_shape():
     """Smoke: a BYTE_EXACT claim reproduces byte for byte. The strict
-    multi-flag machinery stays with the ratchet in tools/byte_match.py;
-    this is the single-flag comparison the package offers."""
+    multi-flag machinery belongs to the package's source_measure engine;
+    this is its single-flag historical comparison, not a reference/structure proof."""
     records = read_file(REPO_ROOT / "src" / "caviar.cpp")
     record = next(r for r in records if r.address == 0x00616BC0)
     assert record.byte_exact
