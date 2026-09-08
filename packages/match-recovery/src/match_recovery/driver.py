@@ -88,7 +88,8 @@ def changes(before: dict, after: dict) -> set[str]:
 
 def drive(root: Path, task_name: str, configuration: dict, worker_configuration: dict, *,
           iterations: int, reviewer_configuration: dict | None = None,
-          migration_configuration: dict | None = None, execute=invoke) -> dict:
+          migration_configuration: dict | None = None,
+          coordinator_configuration: dict | None = None, execute=invoke) -> dict:
     """Recompute context/checks, edit, recheck, repeat; discoveries stop for review."""
     if type(iterations) is not int or not 1 <= iterations <= 100:
         raise ValueError("iterations must be 1..100")
@@ -120,6 +121,13 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
     store = TaskStore(root)
     with file_lock(root / "build/recovery/driver.lock", timeout=0):
         task = store.read(task_name)
+        coordination_count, coordination_feedback = 0, None
+        if coordinator_configuration is not None:
+            from .coordination import coordinate, policy as coordination_policy
+            coordination_policy(coordinator_configuration, task)
+            if task.author in {worker_configuration["author"],
+                              reviewer_configuration["author"] if reviewer_configuration else None}:
+                raise ValueError("coordinator must be separate from worker and reviewer")
         if task.target != configuration["target"]:
             raise ValueError("task target disagrees with configured target adapter")
         selected, editable = store.scope(task_name)
@@ -128,6 +136,8 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
         initial_decisions = store.decisions(task_name)
         reviews = ReviewStore(root, task_name)
         policy = {"project": configuration, "worker": worker_configuration, "reviewer": reviewer_configuration}
+        if coordinator_configuration is not None:
+            policy["coordinator"] = coordinator_configuration
         if permission is not None:
             policy["migration"] = permission
         review_feedback = None
@@ -143,6 +153,8 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             raise ValueError("checkpoint unrelated changes before running this task")
         def finish(reason, rounds, check=None, *, current=True):
             return {"task_id": task_name, "stop_reason": reason, "worker_rounds": rounds,
+                    **({"coordinator_decisions": coordination_count, "coordination": coordination_feedback}
+                       if coordinator_configuration is not None else {}),
                     "check": check, "check_is_current": check is not None and current,
                     **({"acceptance_feedback": acceptance_feedback} if acceptance_feedback else {}),
                     "ready_for_collection": False, "persisted_results": False}
@@ -257,6 +269,20 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             return output
         for round_index in range(iterations + 1):
             state = store.status(task_name, selected)
+            while state["pending_discoveries"] and coordinator_configuration is not None:
+                if coordination_count == coordinator_configuration["max_decisions"]:
+                    return finish("coordination_budget_exhausted", round_index)
+                coordination_count += 1
+                coordination_feedback = coordinate(root, task_name, coordinator_configuration, execute=execute)
+                if not coordination_feedback["published"]:
+                    return finish("coordination_" + coordination_feedback["action"], round_index)
+                selected, editable = store.scope(task_name)
+                initial_decisions = store.decisions(task_name)
+                if migration_configuration is not None:
+                    permission = permissions(migration_configuration, task, selected)
+                    policy["migration"] = permission
+                review_feedback = acceptance_feedback = None
+                state = store.status(task_name, selected)
             if state["pending_discoveries"]:
                 return finish(state["next_action"], round_index)
             round_state = working_state(root)
@@ -325,6 +351,9 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                                author=worker_configuration["author"], expected_revision=len(store.decisions(task_name)),
                                **finding)
             if response["discoveries"]:
+                if coordinator_configuration is not None:
+                    initial_decisions = store.decisions(task_name)
+                    continue  # Same worker budget; fresh scope, context and checks before dispatch.
                 return finish(store.status(task_name, selected)["next_action"], round_index + 1, check, current=False)
             if not changed:
                 if permission is not None and reviewer_command is not None:

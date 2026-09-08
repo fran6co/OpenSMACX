@@ -1,7 +1,7 @@
 """Real native gate/restoration/preservation/build/runtime acceptance control.
 
 The default controls use deterministic worker/reviewer doubles. An opt-in live
-control uses the configured provider and a bounded fixture coordinator. The
+control uses the configured provider and the package's delegated coordinator. The
 test-owned reference is freshly compiled, linked and run; no proprietary fixture
 or precomputed verifier response participates. Not an Alpha Centauri pilot.
 """
@@ -17,7 +17,7 @@ import pytest
 from capstone import Cs, CS_ARCH_X86, CS_MODE_32
 
 from match_recovery.binding import bind
-from match_recovery.driver import drive, invoke
+from match_recovery.driver import drive
 from match_recovery.image_survey import survey_image
 from match_recovery.model import Origin, Span
 from match_recovery.pe_coff import Coff
@@ -69,6 +69,7 @@ def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None):
     integration = Path(__file__).resolve().parents[1]
     for source, target in ((integration / "environment/compile.py", "compiler_support.py"),
                            (integration / "environment/wine.py", "local_wine.py"),
+                           (Path(__file__).with_name("fixtures") / "acceptance_agents.py", "local_agents.py"),
                            (Path(__file__).with_name("fixtures") / "acceptance_environment.py", "environment.py")):
         (local / target).write_bytes(source.read_bytes())
     (product / "owner.h").write_text(CLASSES)
@@ -139,6 +140,9 @@ def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None):
         )
         (local / "worker.md").write_text(instructions + "Edit only src/owner.h and src/owner.cpp; preserve structural progress on a byte miss.\n")
         (local / "reviewer.md").write_text(instructions + "Remain read-only. Inspect source and original evidence independently; approval is not acceptance.\n")
+        (local / "coordinator.md").write_text(instructions +
+            "Remain read-only. Inspect each discovery and source evidence. Propose expansion only within the delegated originals, "
+            "then incorporation only once the insight is expressed in source. Never waive proof or declare acceptance.\n")
     (local / "build.json").write_text(json.dumps({
         "schema_version": 1, "artifacts": "build/products",
         "commands": [{"argv": [*script, "build-" + damage + "-damage" if damage else "build", "{root}", "{build}"], "timeout": 90}],
@@ -182,6 +186,13 @@ def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None):
                 git("rev-parse", "HEAD"), (Origin(pin, "pe:va", addresses[METHOD]),),
                 ("src/owner.cpp", "src/owner.h"), ("test-owned original class and lifetime model",))
     TaskStore(root).create(task)
+    if provider is not None:
+        (local / "coordinator.json").write_text(json.dumps({
+            "schema_version": 1, "author": task.author,
+            "command": {"argv": [sys.executable, "-m", "match_recovery.cli", "agent", "coordinator"], "timeout": 300},
+            "subjects": [Origin(pin, "pe:va", addresses["_entry"]).entity_id], "editable_files": [],
+            "evidence": ["Authorize the independently mapped caller's verification scope; existing owner editing files remain unchanged."],
+            "max_decisions": 4}))
     git("add", "recovery")
     git("commit", "-m", "Authorize ownership task")
     return root, image, task, git, evidence
@@ -189,39 +200,25 @@ def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None):
 
 @pytest.mark.parametrize("damage", [None, "runtime", "structure"])
 def test_real_native_acceptance_preserves_structure_through_byte_regression(tmp_path, monkeypatch, damage):
-    root, image, task, git, evidence = prepared_project(tmp_path, monkeypatch, damage=damage)
+    provider = {"schema_version": 1, "artifacts": "build/agents"}
+    for role in ("worker", "coordinator", "reviewer"):
+        provider[role] = {"command": {"argv": [sys.executable, "recovery/local_agents.py", role, "{request}"], "timeout": 30},
+                          "instructions": [], "response": "stdout"}
+    root, image, task, git, evidence = prepared_project(tmp_path, monkeypatch, damage=damage, provider=provider)
     product, local, original = root / "src", root / "recovery", image.parent
-    flat = (product / "owner.cpp").read_text()
-    real = flat.replace("raw_[0] + raw_[1]", "bias + member.value")
-    config_driver = json.loads((local / "driver.json").read_text())
     monkeypatch.setenv("RECOVERY_IMAGE", str(image))
-    outcomes, acceptance_reports = [], []
-    def execute(cmd, directory, name, payload):
-        if cmd.argv[0] == "worker":
-            outcomes.append(payload["check"])
-            if len(outcomes) > 1:
-                assert (product / "owner.h").read_text() == evidence + CLASSES
-            (product / "owner.h").write_text(evidence + CLASSES)
-            (product / "owner.cpp").write_text(real.replace("+ input", "- input") if len(outcomes) == 1 else real)
-            return 0, {"discoveries": []}
-        if cmd.argv[0] == "review":
-            return 0, {"snapshot": payload["snapshot"], "decision": "approve",
-                       "evidence": ["test-owned original Base and Member"], "feedback": "Run native full acceptance"}
-        code, report = invoke(cmd, directory, name, payload)
-        if "check-acceptance" in cmd.argv:
-            acceptance_reports.append(report)
-        return code, report
-    result = drive(root, task.task_id, config_driver,
-                   {"author": "worker", "command": {"argv": ["worker"], "timeout": 30}}, iterations=2,
-                   reviewer_configuration={"author": "reviewer", "command": {"argv": ["review"], "timeout": 30}},
-                   execute=execute)
+    configuration = lambda name: json.loads((local / (name + ".json")).read_text())
+    head = git("rev-parse", "HEAD")
+    result = drive(root, task.task_id, configuration("driver"), configuration("worker"), iterations=2,
+                   reviewer_configuration=configuration("reviewer"), coordinator_configuration=configuration("coordinator"))
     assert result["ready_for_collection"] == (damage is None), result
-    assert len(outcomes) == 2 and len(acceptance_reports) == 1
+    assert result["worker_rounds"] == 2 and result["coordinator_decisions"] == 2
+    outcomes = [json.loads((root / f"build/worker-{step}.json").read_text()) for step in (1, 2)]
     assert outcomes[0]["candidate"]["checks"]["binary"]["result"] == "pass"
     assert outcomes[0]["candidate"]["checks"]["layout"]["result"] == "fail"
     assert outcomes[1]["candidate"]["checks"]["binary"]["result"] == "fail"
     assert outcomes[1]["candidate"]["checks"]["layout"]["result"] == "pass"
-    receipt = acceptance_reports[0]
+    receipt = result["acceptance"]
     assert len(receipt["artifacts"]) == 2
     for name, fingerprint in receipt["artifacts"].items():
         assert hashlib.sha256((root / name).read_bytes()).hexdigest() == fingerprint
@@ -239,6 +236,8 @@ def test_real_native_acceptance_preserves_structure_through_byte_regression(tmp_
     if damage == "runtime":
         assert "retained candidate exit=13" in receipt["findings"][0]["evidence"][0]
     assert TaskStore(root).read(task.task_id).base_revision == task.base_revision
+    assert git("rev-parse", "HEAD") == head
+    assert (product / "owner.h").read_text() == evidence + CLASSES
     assert git("diff", "--name-only", "HEAD").splitlines() == ["src/owner.cpp", "src/owner.h"]
 
 
@@ -247,7 +246,8 @@ def test_live_worker_and_independent_reviewer_reach_native_acceptance(tmp_path, 
     # Deliberately reuse the project's existing provider settings and models.
     # Only instructions are replaced with this unrelated application's evidence.
     provider = json.loads((Path(__file__).resolve().parents[1] / "agents.json").read_text())
-    for role in ("worker", "reviewer"):
+    provider["coordinator"] = json.loads(json.dumps(provider["reviewer"]))
+    for role in ("worker", "reviewer", "coordinator"):
         provider[role]["instructions"] = ["recovery/" + role + ".md"]
     root, image, task, git, _ = prepared_project(tmp_path, monkeypatch, provider=provider)
     monkeypatch.setenv("RECOVERY_IMAGE", str(image))
@@ -255,84 +255,25 @@ def test_live_worker_and_independent_reviewer_reach_native_acceptance(tmp_path, 
     local = root / "recovery"
     def configuration(name):
         return json.loads((local / (name + ".json")).read_text())
-    # No execute override: worker/reviewer, native checks and acceptance all use
-    # real configured commands. The bounded fixture coordinator can authorize
-    # only its independently mapped caller; it cannot waive checks or edit code.
-    reports, rounds = [], 0
-    for checkpoint in range(4):
-        report = drive(root, task.task_id, configuration("driver"), configuration("worker"),
-                       iterations=3 - rounds, reviewer_configuration=configuration("reviewer"))
-        reports.append(report)
-        rounds += report["worker_rounds"]
-        (root / "build/live-result.json").write_text(json.dumps(reports, indent=2))
-        if report["ready_for_collection"] or report["stop_reason"] not in (
-                "review_scope_expansion", "evaluate_structural_discoveries"):
-            break
-        if rounds == 3:
-            break  # A checkpoint must not silently reset the worker budget.
-        incorporate_fixture_discoveries(root, task, git, checkpoint)
+    # No execute override or fixture coordinator. All three agent roles and
+    # native verification use the installed path, in ONE bounded driver run.
+    head = git("rev-parse", "HEAD")
+    report = drive(root, task.task_id, configuration("driver"), configuration("worker"),
+                   iterations=3, reviewer_configuration=configuration("reviewer"),
+                   coordinator_configuration=configuration("coordinator"))
+    (root / "build/live-result.json").write_text(json.dumps(report, indent=2))
     assert report["ready_for_collection"], report
-    assert 1 <= rounds <= 3
+    assert 1 <= report["worker_rounds"] <= 3
+    assert 2 <= report["coordinator_decisions"] <= 4
     assert all(report["acceptance"][key] == "pass" for key in (
         "build", "structure", "references", "obligations", "runtime"))
     for name, fingerprint in report["acceptance"]["artifacts"].items():
         assert hashlib.sha256((root / name).read_bytes()).hexdigest() == fingerprint
     assert TaskStore(root).read(task.task_id).base_revision == task.base_revision
+    assert git("rev-parse", "HEAD") == head
     assert set(git("diff", "--name-only", "HEAD").splitlines()) <= {"src/owner.cpp", "src/owner.h"}
-
-
-def incorporate_fixture_discoveries(root, task, git, checkpoint):
-    """Bounded test coordinator, not general automatic scope authorization."""
-    records = source_snapshot(root)["records"]
-    assert len(records) == 2 and {row["path"] for row in records} == {"src/owner.cpp", "src/entry.cpp"}
-    known = {row["entity_id"] for row in records}
-    store = TaskStore(root)
-    state = store.status(task.task_id, known)
-    assert state["pending_discoveries"] and not state["missing_subjects"]
-    requested = {key for row in state["pending_discoveries"] for key in row["affects"]}
-    assert requested <= known, "Unknown original needs a separate coordinator decision"
-    def command(action, *args):
-        result = subprocess.run([sys.executable, "-m", "match_recovery.cli", "tasks", action, task.task_id,
-                                 "--root", str(root), *args], cwd=root, capture_output=True, text=True, timeout=30)
-        assert result.returncode == 0, result.stderr + result.stdout
-    revision = state["decision_revision"]
-    extra = sorted(requested - store.scope(task.task_id)[0])
-    if extra:
-        command("expand", "--request-id", f"fixture-callers-{checkpoint}", "--author", task.author,
-                *[word for key in extra for word in ("--subject", key)],
-                "--evidence", "Known test-owned entry caller uses the shared Owner header; include its original obligations without widening editable files.",
-                "--expected-revision", str(revision))
-        revision += 1
-    for index, discovery in enumerate(state["pending_discoveries"]):
-        command("resolve", "--discovery-id", discovery["discovery_id"], "--request-id", f"fixture-incorporate-{checkpoint}-{index}",
-                "--author", task.author, "--disposition", "incorporated", "--source-evidence",
-                "src/owner.h and src/owner.cpp express the recovered model; its known caller is in scope. Resume independent review and all native checks; incorporation is not acceptance.",
-                "--expected-revision", str(revision))
-        revision += 1
-    git("add", "recovery/history")
-    git("commit", "-m", "Authorize known fixture caller and preserve the structural discovery")
-    assert store.read(task.task_id).base_revision == task.base_revision
-    assert store.scope(task.task_id)[1] == frozenset(("src/owner.cpp", "src/owner.h"))
-
-
-@pytest.mark.parametrize("unknown", [False, True])
-def test_fixture_coordinator_preserves_bounds_and_baseline(tmp_path, monkeypatch, unknown):
-    root, _, task, git, evidence = prepared_project(tmp_path, monkeypatch)
-    path = root / "src/owner.cpp"
-    path.write_text(path.read_text().replace("raw_[0] + raw_[1]", "bias + member.value"))
-    (root / "src/owner.h").write_text(evidence + CLASSES)
     store = TaskStore(root)
     known = {row["entity_id"] for row in source_snapshot(root)["records"]}
-    affected = known | ({"entity-" + "a" * 64} if unknown else set())
-    store.discover(task.task_id, request_id="caller", author="worker", hypothesis="Shared header affects the entry caller",
-                   affects=affected, evidence=["src/owner.h and src/entry.cpp"], expected_revision=0)
-    if unknown:
-        with pytest.raises(AssertionError, match="Unknown original"):
-            incorporate_fixture_discoveries(root, task, git, 0)
-        assert len(store.decisions(task.task_id)) == 1
-    else:
-        incorporate_fixture_discoveries(root, task, git, 0)
-        assert store.scope(task.task_id)[0] == known
-        assert not store.status(task.task_id, known)["pending_discoveries"]
-    assert store.read(task.task_id).base_revision == task.base_revision
-    assert git("diff", "--name-only", "HEAD").splitlines() == ["src/owner.cpp", "src/owner.h"]
+    assert not store.status(task.task_id, known)["pending_discoveries"]
+    assert store.scope(task.task_id)[0] <= known
+    assert store.scope(task.task_id)[1] == frozenset(("src/owner.cpp", "src/owner.h"))

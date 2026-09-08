@@ -678,7 +678,9 @@ not a verified autonomous application acceptance pilot.
 with a freshly built test-owned executable, local compiler/build/proof commands,
 and the real whole gate and restoration/preservation checks. It rejects both a
 byte-identical wrong hierarchy in the retained build and a runtime-mismatching
-artifact. Its workers/reviewers are deterministic; it does not supply OpenSMACX's
+artifact. Its worker/coordinator/reviewer reasoning is deterministic and local;
+all role bridges, delegated authorization and verification use real subprocesses.
+It does not supply OpenSMACX's
 missing proof coverage. Native receipts expose verified artifact paths/hashes so
 downstream work can identify the tested build without guessing a cache directory.
 
@@ -687,14 +689,22 @@ The same file has an opt-in live-provider control:
 Set an isolated `VC6_PREFIX` and verify provider availability first. This consumes
 the configured provider's usage; ordinary test runs skip it. Original COFF class
 evidence is supplied as a hint, not a claim of blind executable-only recovery.
-The live worker recovered the real base/member fields in one worker round and
-reported the affected entry caller. The control's bounded coordinator uses native
-scope/resolve commands for that independently mapped caller, without widening
-editable files or replacing the task baseline. Independent review and fresh native
-acceptance then passed. Unknown entities are refused; this fixture coordinator
-is not a general autonomous scope planner. Reports/artifacts remain ignored test
-outputs; only decisions belong to task history. OpenSMACX still needs its actual
-link closure and structural/runtime proof coverage.
+The earlier live worker recovered the real base/member fields and reported the
+affected entry caller; a fixture-specific coordinator then resumed native
+acceptance. That helper is removed. The control now uses the installed delegated
+coordinator and three configured agent roles in one driver invocation, with no
+manual scope/resolve command or intermediate commit. Its configured authority
+covers only the known caller's verification scope, not additional editing files.
+Unknown originals and proposals outside delegation are refused. Reports/artifacts
+remain ignored test outputs; only decisions belong to task history. This is not
+executable-first task selection or unrestricted autonomous planning. OpenSMACX
+still needs its actual link closure and structural/runtime proof coverage; no
+standing delegation is enabled for it. See the package README's delegated
+coordination section for the configuration and protocol.
+Local compiler-backed controls establish the new delegated execution path, not
+live model decision quality. The separately opt-in provider test must be run to
+establish that additional evidence; the earlier fixture-coordinator success does
+not automatically validate its replacement.
 
 The report may additionally contain `findings`, an array of
 `{"dimension":"runtime","message":"Explain the measured defect",

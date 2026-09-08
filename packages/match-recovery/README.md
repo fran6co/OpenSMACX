@@ -1465,6 +1465,55 @@ have been removed. Its [recovery integration](../../recovery/README.md) now cont
 configuration, compiler interaction and integration tests. The legacy production
 gate/tools and full acceptance integration remain separate unfinished work.
 
+### Delegated discovery coordination
+
+`recover run TASK --coordinator recovery/coordinator.json` enables a read-only
+decision agent within an existing task. Omit it to retain manual discovery stops.
+This is not automatic task selection, binding creation, worktree management or
+collection. Configure the optional `coordinator` role in the local agent-command
+configuration using the same command/instructions/response shape as the reviewer.
+No provider or application adapter is required in the package.
+
+The delegation file has exactly these fields (populate `subjects` with additional
+original entity IDs from the source inventory, and files with explicit source paths):
+
+```json
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "command": {"argv": ["recover", "agent", "coordinator"], "timeout": 300},
+  "subjects": [],
+  "editable_files": [],
+  "evidence": ["Explain the authorized investigation boundary"],
+  "max_decisions": 8
+}
+```
+
+`author` must be the task author, separate from worker and reviewer. The two lists
+are upper bounds on additions, not a request to expand everything. Empty lists
+permit only decisions within existing scope. Editing expansion accepts existing
+regular configured source files only, not compiler policy or the image pin.
+New files and unknown original identities need separate coordinator authorization.
+Keep delegation configuration versioned; its digest accompanies published decisions.
+
+Requests contain a fresh snapshot token, pending discoveries, current/delegated
+scope and affected source/seed records. Responses have exactly `snapshot`, `action`,
+`discovery_id`, `subjects`, `editable_files`, `evidence`. Actions are `expand`,
+`incorporate`, `reject`, `defer`; only expansion uses nonempty scope arrays. Evidence
+is mandatory. Incorporation requires affected originals already in task scope;
+it records a source interpretation, never a passing proof. Unknown originals,
+stale responses, writes, policy expansion and no-op expansion are refused.
+
+The driver journals valid decisions through TaskStore, refreshes scope/context and
+obligations, and resumes the same worker budget and baseline. Decision calls have
+a separate bounded budget. Deferral, unavailable providers or budget exhaustion
+preserve source and pending discoveries. Independent review and full native
+acceptance remain required. There is no automatic Git commit; restarting with
+uncommitted journal decisions still requires a coordinator checkpoint. Commands
+must be externally sandboxed: post-execution hashes detect writes but cannot
+prevent a malicious command. Delegation validates authority, not the quality of
+the agent's reasoning or the truth of its evidence.
+
 From this development workspace:
 
 ```sh

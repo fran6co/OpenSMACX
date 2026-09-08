@@ -297,11 +297,14 @@ establish completion of this program.
   An opt-in live control now reuses that native pipeline with the configured
   provider, not worker/reviewer doubles. Given original COFF class hints, the
   worker restored real Base/Member fields and preserved a caller discovery.
-  The bounded fixture coordinator authorized that known caller and incorporated
-  the discovery through native commands, leaving editable files and the baseline
-  unchanged. Fresh independent review and all acceptance dimensions then passed.
-  Unknown scope remains refused; this is not a blind executable-only recovery,
-  general autonomous coordinator, or completed OpenSMACX acceptance.
+  The original control used a bounded fixture coordinator before acceptance.
+  That helper is now replaced by package-owned delegated discovery coordination:
+  optional read-only agent proposals, source-bound scope limits, native journal
+  publication and continuation within the same worker budget/baseline. The live
+  control exercises three agent roles through that path; unknown originals and
+  authority outside delegation still require a separate decision. This does not
+  implement executable-first task selection, unattended integration or completed
+  OpenSMACX acceptance. No real-project standing delegation is enabled.
   The package-owned native migration verifier now composes fresh build, bounded
   declarations, references and outside-scope preservation checks; OpenSMACX
   configures that command without a project adapter. A synthetic driver test

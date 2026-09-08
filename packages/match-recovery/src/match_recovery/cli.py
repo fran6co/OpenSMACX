@@ -19,8 +19,8 @@ def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(prog="recover", description="Structure-led matching recovery")
     result.add_argument("--version", action="version", version=__version__)
     commands = result.add_subparsers(dest="command", required=True)
-    agent = commands.add_parser("agent", help="Bridge a configured prompt-driven command to the worker/reviewer protocol")
-    agent.add_argument("role", choices=("worker", "reviewer"))
+    agent = commands.add_parser("agent", help="Bridge a configured prompt-driven command to a recovery role protocol")
+    agent.add_argument("role", choices=("worker", "reviewer", "coordinator"))
     agent.add_argument("--root", type=Path, default=Path.cwd())
     agent.add_argument("--config", type=Path, default=Path("recovery/agents.json"))
     init = commands.add_parser("init", help="Create non-overwriting project-local command configuration")
@@ -36,6 +36,7 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("--worker", type=Path, default=Path("recovery/worker.json"))
     run.add_argument("--reviewer", type=Path, help="Independent read-only reviewer command configuration")
     run.add_argument("--migration", type=Path, help="Coordinator permission for scoped temporary regressions")
+    run.add_argument("--coordinator", type=Path, help="Read-only discovery coordinator with explicit delegated scope")
     run.add_argument("--iterations", type=int, default=3)
     from .project_commands import register
     register(commands)
@@ -67,7 +68,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             config = lambda path: read_json(path if path.is_absolute() else args.root / path)
             output = drive(args.root, args.task, config(args.config), config(args.worker), iterations=args.iterations,
                            reviewer_configuration=config(args.reviewer) if args.reviewer else None,
-                           migration_configuration=config(args.migration) if args.migration else None)
+                           migration_configuration=config(args.migration) if args.migration else None,
+                           coordinator_configuration=config(args.coordinator) if args.coordinator else None)
             print(json.dumps(output, indent=2, sort_keys=True))
             return (0 if output["ready_for_collection"] else
                     2 if output["stop_reason"] == "migration_admitted" else 3)

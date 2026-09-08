@@ -212,7 +212,7 @@ handshake have been checked. An isolated, evidence-assisted small C++ project no
 passes a live worker/independent-review/native-acceptance control, including a
 preserved caller discovery and explicit coordinator scope authorization. The
 opt-in command and limits are in `README.md`. This does not prove an OpenSMACX
-pilot or a general autonomous coordinator; do not silently auto-expand real tasks.
+pilot or executable-first task planning; do not silently auto-expand real tasks.
 
 The driver rebuilds context, checks, calls the worker and rechecks bounded rounds.
 A native `review_structure` next action hands passing scoped evidence to the
@@ -237,10 +237,16 @@ not configured for OpenSMACX yet and its application link still fails. Missing
 capabilities stay unknown; known failures remain actionable even when other
 dimensions are unknown. The handoff is not an accepted application pilot or a
 working-game claim. See the package README for the proof-command contract.
-A cross-entity finding pauses the loop for coordinator action; it is not discarded
+A cross-entity finding normally pauses the loop for coordinator action; it is not discarded
 as out of scope. Inspect `tasks status`, then use `tasks expand` and `tasks resolve`
 with their revision-checked decision arguments. Incorporation needs source
 evidence; rejection needs an explanation. Checkpoint decisions before resuming.
+The installed driver also supports an explicit `--coordinator` delegation file:
+a read-only decision agent proposes bounded expansion/incorporation/rejection,
+and the package journals valid decisions before refreshing checks in the same run.
+See the package README for the exact schema. OpenSMACX has no standing delegation
+configured; do not infer one from a worker's discovery. Baselines, proof policy,
+new original bindings and acceptance remain outside this authority.
 
 ## 5. Preserve structural progress and restore matching
 
