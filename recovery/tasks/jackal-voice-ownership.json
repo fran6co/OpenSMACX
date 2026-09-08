@@ -1,0 +1,29 @@
+{
+  "author": "coordinator",
+  "base_revision": "edc32903e16080d1607aa9e630adbb13f0c0d951",
+  "editable_files": [
+    "src/general.cpp",
+    "src/general.h",
+    "src/hypothesis_layouts.h",
+    "src/net_class.cpp",
+    "src/net_class.h",
+    "src/netdaemon.cpp",
+    "src/netdaemon.h"
+  ],
+  "evidence": [
+    "src/general.cpp",
+    "src/hypothesis_layouts.h",
+    "src/netdaemon.h"
+  ],
+  "intent": "Reconcile the incompatible JackalVoiceRx and NetDaemon declarations across product translation units; recover shared hierarchy, receiver storage and destruction rather than preserving per-function raw-offset and fake-vtable scaffolds. Preserve existing byte obligations and compile/link continuity; do not accept the skeleton or opaque declaration as authoritative without original evidence.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5476032,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "jackal-voice-ownership"
+}
