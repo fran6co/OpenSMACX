@@ -166,6 +166,77 @@ def test_unchanged_tree_does_not_make_empty_commit(project):
     assert working_state(root) == expected
 
 
+@pytest.mark.parametrize("policy", ["text", "text=auto", "eol=crlf", "autocrlf", "input"])
+@pytest.mark.parametrize("publish_source", [False, True])
+def test_normalized_outside_files_keep_both_committed_and_checkout_bytes(project, policy, publish_source):
+    root, _ = project
+    notes = root / "notes.csv"
+    notes.write_bytes(b"name,value\noriginal,1\n")
+    if policy in ("autocrlf", "input"):
+        git(root, "config", "core.autocrlf", "true" if policy == "autocrlf" else "input")
+    else:
+        (root / ".gitattributes").write_text("*.csv " + policy + "\n")
+    git(root, "add", ".")
+    git(root, "commit", "-m", "Declare text checkout policy")
+    original = git(root, "show", "HEAD:notes.csv")
+    notes.write_bytes(original.replace(b"\n", b"\r\n"))
+    assert not git(root, "diff", "--name-only", "HEAD")
+    if publish_source:
+        (root / "src/f.cpp").write_bytes(b"verified source\r\n")
+    expected, branch = working_state(root), checkpoints.preflight(root)
+    report = checkpoints.publish(root, expected, {"src/f.cpp"}, branch, "Preserve unrelated checkout")
+    assert report["published"] == publish_source
+    assert git(root, "show", "HEAD:notes.csv") == original
+    assert notes.read_bytes() == original.replace(b"\n", b"\r\n")
+    assert working_state(root)["files"] == expected["files"]
+    if publish_source:
+        assert report["files"] == ["src/f.cpp"]
+        assert git(root, "show", "HEAD:src/f.cpp") == b"verified source\r\n"
+    else:
+        assert report == {"published": False, "reason": "no_changes"}
+        assert working_state(root) == expected
+
+
+@pytest.mark.parametrize("damage", ["content", "mode", "binary", "no_policy", "unset_text", "filter", "encoding", "ident", "new_policy"])
+def test_normalization_cannot_hide_other_outside_changes_or_transforms(project, damage):
+    root, _ = project
+    notes = root / "notes.csv"
+    attributes = root / ".gitattributes"
+    attributes.write_text("*.csv text=auto\n")
+    notes.write_bytes(b"original\n")
+    if damage == "no_policy":
+        attributes.write_text("")
+    elif damage == "unset_text":
+        attributes.write_text("*.csv -text\n")
+    elif damage == "binary":
+        notes.write_bytes(b"original\x00\n")
+    elif damage in ("filter", "encoding", "ident"):
+        attr = {"filter": "filter=unused", "encoding": "working-tree-encoding=UTF-8", "ident": "ident"}[damage]
+        attributes.write_text("*.csv text=auto " + attr + "\n")
+    elif damage == "new_policy":
+        attributes.write_text("")
+    git(root, "add", ".")
+    git(root, "commit", "-m", "Outside file baseline")
+    notes.write_bytes(notes.read_bytes().replace(b"\n", b"\r\n"))
+    if damage == "content":
+        notes.write_bytes(b"changed\r\n")
+    elif damage == "mode":
+        git(root, "config", "core.fileMode", "false")
+        notes.chmod(0o755)
+    elif damage == "new_policy":
+        attributes.write_text("*.csv text=auto\n")
+    if damage == "filter":
+        # None of the publication/read-only normalization commands may run it.
+        git(root, "config", "filter.unused.clean", "touch filter-ran; cat")
+        git(root, "config", "filter.unused.required", "true")
+    (root / "src/f.cpp").write_text("verified source\n")
+    expected, branch = working_state(root), checkpoints.preflight(root)
+    with pytest.raises(ValueError, match="outside authorized"):
+        checkpoints.publish(root, expected, {"src/f.cpp", ".gitattributes"}, branch, "refused")
+    assert working_state(root) == expected
+    assert not (root / "filter-ran").exists()
+
+
 def test_git_hooks_cannot_change_verified_source(project):
     root, _ = project
     hook = root / ".git/hooks/reference-transaction"

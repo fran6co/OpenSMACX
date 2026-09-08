@@ -55,7 +55,8 @@ FLAGS = ("/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Z7")
 METHOD = "?add@Owner@@QAEHH@Z"
 
 
-def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, authorize=True, proofs=True, preparation=False):
+def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, authorize=True, proofs=True, preparation=False,
+                     normalized_checkout=False):
     if not (VC6_ROOT / "BIN/CL.EXE").is_file():
         pytest.skip("VC6 is not installed")
     for name in ("CL", "_CL_", "VC6_INCLUDE"):
@@ -110,6 +111,9 @@ def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, autho
     survey = survey_image(root, image)
     assert any(row["origin"]["address"] == addresses[METHOD] for row in survey["candidates"])
     (root / ".gitignore").write_text("build/\n__pycache__/\n")
+    if normalized_checkout:
+        (root / ".gitattributes").write_text("*.csv text=auto\n")
+        (root / "notes.csv").write_bytes(b"owner,evidence\nOwner,test-owned reference\n")
     (root / "build").mkdir()
     (root / "build/compile_commands.json").write_text(json.dumps([
         {"directory": str(root), "file": "src/" + unit + ".cpp", "arguments": ["local-compiler"]}
@@ -208,6 +212,10 @@ def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, autho
             "max_decisions": 4}))
     git("add", "recovery")
     git("commit", "-m", "Authorize ownership task")
+    if normalized_checkout:
+        notes = root / "notes.csv"
+        notes.write_bytes(notes.read_bytes().replace(b"\n", b"\r\n"))
+        assert not git("diff", "--name-only", "HEAD")
     return root, image, task, git, evidence
 
 
@@ -217,11 +225,14 @@ def test_real_change_acceptance_does_not_require_application_proof_capabilities(
     for role in ("worker", "coordinator", "reviewer"):
         provider[role] = {"command": {"argv": [sys.executable, "recovery/local_agents.py", role, "{request}"], "timeout": 30},
                           "instructions": [], "response": "stdout"}
-    root, image, task, git, evidence = prepared_project(tmp_path, monkeypatch, provider=provider, proofs=False)
+    root, image, task, git, evidence = prepared_project(tmp_path, monkeypatch, provider=provider, proofs=False,
+                                                       normalized_checkout=publish)
     monkeypatch.setenv("RECOVERY_IMAGE", str(image))
     head = git("rev-parse", "HEAD")
     options = []
     if publish:
+        notes_before = (root / "notes.csv").read_bytes()
+        notes_blob = git("rev-parse", "HEAD:notes.csv")
         authorization = tmp_path / "checkpoint.json"
         authorization.write_text(json.dumps({"author": task.author, "message": "Recover real Base and Member ownership",
                                              "allow_migration": False}))
@@ -244,6 +255,9 @@ def test_real_change_acceptance_does_not_require_application_proof_capabilities(
         assert report["checkpoint"]["parent"] == head
         assert git("rev-parse", "HEAD") == report["checkpoint"]["commit"]
         assert git("show", "HEAD:src/owner.h") + "\n" == evidence + CLASSES
+        assert "notes.csv" not in report["checkpoint"]["files"]
+        assert (root / "notes.csv").read_bytes() == notes_before
+        assert git("rev-parse", "HEAD:notes.csv") == notes_blob
         assert not git("status", "--porcelain")
     else:
         assert git("rev-parse", "HEAD") == head

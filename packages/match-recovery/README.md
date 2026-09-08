@@ -814,7 +814,13 @@ No authorization means no source commit. No-change publication creates no empty 
 
 Publication refuses staged changes, skip-worktree/assume-unchanged index entries,
 Git operations in progress, unrelated edits, Git path overrides and detached HEAD.
-It checks raw source bytes/modes/symlinks,
+It checks raw source bytes/modes/symlinks. Unchanged outside files with declared
+CRLF checkout spelling of their committed LF bytes keep both their existing Git
+blobs and physical checkout bytes; they are not included in the commit. This
+exception requires unchanged text attributes, identical file modes and exact
+CRLF-to-LF byte equivalence, and refuses active filter/encoding/ident transforms.
+Authorized files always retain the exact raw verified bytes, including CRLF.
+The publisher
 leases the index and compare-and-swaps the branch. It uses Git plumbing without
 clean filters or hooks: required checks must be in the recovery verification policy,
 not assumed to run from commit hooks. Git identity must be configured. No push,

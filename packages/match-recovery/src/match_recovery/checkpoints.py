@@ -29,7 +29,7 @@ def _git(root, *args, input=None, index=None):
     env = dict(os.environ)
     if index is not None:
         env["GIT_INDEX_FILE"] = str(index)
-    return subprocess.run(["git", "--literal-pathspecs", *args], cwd=root, env=env, input=input,
+    return subprocess.run(["git", "--literal-pathspecs", "-c", "core.fsmonitor=false", *args], cwd=root, env=env, input=input,
                           capture_output=True, check=True).stdout
 
 
@@ -66,6 +66,82 @@ def _content(root, name, state):
     raise ValueError("verified checkpoint file changed during publication")
 
 
+def _blob_id(algorithm, content):
+    return hashlib.new(algorithm, b"blob " + str(len(content)).encode() + b"\0" + content).hexdigest()
+
+
+def _newline_checkout(root, name, revision, content, blob, algorithm):
+    """Recognize only declared, lossless CRLF checkout spelling of an LF blob.
+
+    Never execute Git's conversion pipeline. In particular, a clean filter or
+    encoding/ident transform cannot declare arbitrary outside edits unchanged.
+    Changed authorized source is still committed exactly as it was verified.
+    """
+    normalized = content.replace(b"\r\n", b"\n")
+    if (normalized == content or b"\0" in content or b"\r" in normalized
+            or _blob_id(algorithm, normalized) != blob):
+        return False
+    attributes = ("text", "eol", "filter", "working-tree-encoding", "ident", "crlf")
+
+    def read_attributes(*options):
+        fields = _git(root, "check-attr", *options, "-z", *attributes, "--", name).split(b"\0")
+        if (fields[-1:] != [b""] or len(fields[:-1]) != 3 * len(attributes)
+                or fields[::3][:-1] != [os.fsencode(name)] * len(attributes)
+                or fields[1::3] != [value.encode() for value in attributes]):
+            raise ValueError("unsupported Git attribute response during checkpoint publication")
+        return dict(zip(attributes, fields[2::3], strict=True))
+
+    policy = read_attributes()
+    # A policy edit in this checkpoint cannot authorize ignoring outside bytes.
+    if policy != read_attributes("--source=" + revision):
+        return False
+    if (any(policy[key] not in (b"unspecified", b"unset") for key in ("filter", "working-tree-encoding", "ident"))
+            or policy["crlf"] != b"unspecified"):
+        return False
+    if policy["text"] in (b"set", b"auto"):
+        return True
+    if policy["text"] != b"unspecified":
+        return False
+    if policy["eol"] in (b"lf", b"crlf"):
+        return True
+    if policy["eol"] != b"unspecified":
+        return False
+    return _git(root, "config", "--default", "false", "--get", "core.autocrlf").strip().lower() in (b"true", b"input")
+
+
+def _publication_changes(root, expected, allowed):
+    """Plan a raw tree without writing objects, the index, source, or refs."""
+    revision = expected["head"].decode().strip()
+    baseline = {}
+    for row in _git(root, "ls-tree", "-rz", revision).split(b"\0"):
+        if row:
+            metadata, name = row.split(b"\t", 1)
+            mode, kind, blob = metadata.decode().split()
+            if kind != "blob":
+                raise ValueError("checkpoint publication requires ordinary files, not submodules")
+            baseline[os.fsdecode(name)] = (mode, blob)
+    algorithm = _git(root, "rev-parse", "--show-object-format").decode().strip()
+    candidate = {}
+    for name, state in expected["files"].items():
+        if state is None:
+            continue
+        mode, content = _content(root, name, state)
+        blob = _blob_id(algorithm, content)
+        candidate[name] = (mode, blob)
+        if (name not in allowed and mode in ("100644", "100755") and name in baseline
+                and mode == baseline[name][0] and blob != baseline[name][1]
+                and _newline_checkout(root, name, revision, content, baseline[name][1], algorithm)):
+            # Do not re-bank or rewrite an unrelated normalized checkout file.
+            # Its old Git blob and physical current bytes are both preserved.
+            candidate[name] = baseline[name]
+    # Raw comparison remains mandatory for every authorized file, mode change,
+    # symlink, addition/deletion, and outside change beyond declared CRLF spelling.
+    names = {name for name in baseline.keys() | candidate.keys() if baseline.get(name) != candidate.get(name)}
+    if names - set(allowed):
+        raise ValueError("checkpoint contains changes outside authorized source and decision history")
+    return candidate, names
+
+
 def publish(root, expected, allowed, branch, message):
     """Publish only a just-verified state. Caller must hold the driver lease.
 
@@ -80,27 +156,7 @@ def publish(root, expected, allowed, branch, message):
             raise ValueError("verified checkpoint state changed; preserve work and reverify")
 
     current()
-    baseline = {}
-    for row in _git(root, "ls-tree", "-rz", "HEAD").split(b"\0"):
-        if row:
-            metadata, name = row.split(b"\t", 1)
-            mode, kind, blob = metadata.decode().split()
-            if kind != "blob":
-                raise ValueError("checkpoint publication requires ordinary files, not submodules")
-            baseline[os.fsdecode(name)] = (mode, blob)
-    algorithm = _git(root, "rev-parse", "--show-object-format").decode().strip()
-    candidate = {}
-    for name, state in expected["files"].items():
-        if state is None:
-            continue
-        mode, content = _content(root, name, state)
-        blob = hashlib.new(algorithm, b"blob " + str(len(content)).encode() + b"\0" + content).hexdigest()
-        candidate[name] = (mode, blob)
-    # Compare raw files, not `git diff`: clean filters, CRLF conversion and
-    # core.fileMode=false must not hide a difference in the verified snapshot.
-    names = {name for name in baseline.keys() | candidate.keys() if baseline.get(name) != candidate.get(name)}
-    if names - set(allowed):
-        raise ValueError("checkpoint contains changes outside authorized source and decision history")
+    candidate, names = _publication_changes(root, expected, set(allowed))
     if not names:
         current()
         return {"published": False, "reason": "no_changes"}
