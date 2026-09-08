@@ -1,0 +1,24 @@
+{
+  "event_id": "d5565d56b6f06a1d1060f3a357f1c65953b4a48f61f2511a927e9475d6013b59",
+  "payload": {
+    "affects": [
+      "entity-3f6349cc1e1e55b2d272de80befdb3454ee51d275842d4f5c3c1a65acbe1c0dc",
+      "entity-bc59ea28cb7bc3b303789b40bea8a9573a433c67abcbc82cc25c34b11f692265"
+    ],
+    "author": "coordinator",
+    "discovery_id": "receiver-insertion-and-payload-ownership",
+    "evidence": [
+      "Pinned original 0x00633180: 0x006331A3 loads the explicit Heap at +0x18; 0x006331BA-0x006331BE allocates a 0x1C entry; 0x006332B5-0x006332BE establishes circular next/previous links.",
+      "Pinned original 0x006332C8-0x006332CC allocates 0x60; 0x006333CB calls VoiceRx construction at 0x004C8960; 0x006333D0-0x006333DC stages payload and virtual-base tables; 0x006333F3 stores the payload at entry+8.",
+      "Pinned original 0x0063369A-0x0063369F passes the payload to receiver slot 0; 0x006336A1-0x006336A8 stores the previous count as cursor index before incrementing count. Cleanup 0x00538EC0 instead calls receiver slot 1, payload slot 2, and the entry virtual-base destructor.",
+      "Kuna decompilation supplied search hints only; the insertion, construction and hook observations were checked through recover inspect against the source-pinned executable. The broader receiver-cleanup-ownership discovery remains unresolved."
+    ],
+    "hypothesis": "Use the receiver insertion family to separate list entries from payloads before replacing the cleanup shim. The list explicitly selects a Heap at relative +0x18, allocates 0x1C circular-list entries, and allocates separate 0x60 payloads whose construction calls VoiceRx and adds an allocation-owning virtual base. The current flat VoiceRx and general.cpp receiver skeleton are not authoritative C++ types. Next recover the shared entry/payload declarations and cleanup/helper-versus-destructor split together; do not turn three unrelated virtual dispatch receivers into one fake vtable, erase claims, or declare the receiver task accepted from its constructor fields.",
+    "kind": "discovery"
+  },
+  "previous_event": "bc495ed819b956e7387f55362b5dd6f75be3105873ba6d1b0c55a22524940a65",
+  "request_id": "receiver-insertion-and-payload-ownership",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:jackal-voice-ownership"
+}

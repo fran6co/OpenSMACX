@@ -438,6 +438,18 @@ establish completion of this program.
   The redraw slot is now an InfoWin member instead of independent storage;
   its object-start binding lives beside ConsoleInfoWin's definition. Constructor
   subobjects, object extent, lifetime, full admission and restoration remain.
+  The embedded receiver now lives in its owning network header, with named
+  head/cursor/count/index/Heap fields, constructor-owned initialization and
+  source-owned original member expectations. Its obsolete hypothesis-header
+  declaration/include is removed and the legacy-header ceiling lowered.
+  Its insertion/removal hooks have the one-pointer ABI observed in their callers;
+  their shared leaf addresses do not establish the unrelated catalogue class names.
+  Compiler controls check layout, hook cleanup and table-before-state store order
+  under both flag sets. The general.cpp receiver skeleton and complete entry/payload
+  lifetime still require reconciliation; newly explicit member requirements retain
+  unknown witnesses rather than calling the ownership task accepted. The insertion
+  family's separate entry and VoiceRx allocation evidence is preserved as a task
+  discovery, not silently discarded as outside an individual cleanup body.
   Win's slot 61 and Buffer's slot 1 now share a typed GraphicWin query. The
   derived override owns its compiler-generated secondary-base adjustor, replacing
   the fixed-address forwarding wrapper; GraphicWin also owns the status-returning

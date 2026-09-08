@@ -1281,9 +1281,6 @@ struct FileFindPath {
 // evidence for the base is in that header.
 #include "imagebutton.h"
 
-#include "stringstruct.h"  // JackalVoiceRx's virtual base
-
-
 /* 0xFDC bytes, 18 member(s), 2 named. From the IDB. 9 function(s) in the image. */
 class Interlude {
  public:
@@ -1311,20 +1308,6 @@ class Interlude {
   uint32_t field_A4C_;  // 0xA4C
   uint32_t field_A50_;  // 0xA50
   uint8_t buffer_[0x588];  // 0xA54
-};
-
-/* 0x18 bytes, 1 member(s), 0 named. From its own code, which reaches that far. 1 function(s) in the image. */
-// Net's embedded receiver at Net+0xB0: two virtual slots (the image's
-// vftable 0x66EAFC - both entries leaves) over a virtual StringAllocationBase
-// (vbtable 0x670DCC places the base at +0x1C = Net+0xCC). The construction
-// staging ??0Net spells by hand is the compiler's own from this declaration.
-class JackalVoiceRx : public virtual StringAllocationBase {
- public:
-  virtual void unk_slot0();  // 0x00404250, unrecovered leaf
-  virtual void unk_slot1();  // 0x00404270, unrecovered leaf
-
- private:
-  uint8_t field_8_[0x14];  // 0x8..0x1B, opaque
 };
 
 /* 0x14 bytes, 5 member(s), 5 named. From Thinker. */
@@ -2749,4 +2732,3 @@ struct WItem {
   uint32_t AI_power_;  // 0xC
   uint32_t AI_fight_;  // 0x10
 };
-

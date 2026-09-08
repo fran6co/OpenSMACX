@@ -318,9 +318,10 @@ VoiceTx::VoiceTx() {
     set_type(7);
 }
 
-// The unrecovered leaf slots of Net's embedded receivers.
-void JackalVoiceRx::unk_slot0() { }
-void JackalVoiceRx::unk_slot1() { }
+// The receiver's no-op insertion/removal hooks have one pointer argument.
+// The other embedded list's virtual surface remains unfinished.
+int JackalVoiceRx::on_insert(void *) { return 0; }
+void JackalVoiceRx::on_remove(void *) { }
 void NetUnk72C::unk_slot0() { }
 void NetUnk72C::unk_slot1() { }
 

@@ -13,7 +13,7 @@ import tempfile
 
 import pytest
 from capstone import Cs, CS_ARCH_X86, CS_MODE_32
-from capstone.x86 import X86_OP_MEM
+from capstone.x86 import X86_OP_IMM, X86_OP_MEM, X86_OP_REG
 
 from match_recovery.codeview import class_layout
 from match_recovery.compiler import Compiler
@@ -153,6 +153,58 @@ def test_net_captures_outer_allocation_owner_before_contained_list(compiled):
                         and i.operands[0].mem.base and not i.operands[0].mem.index
                         and i.operands[0].mem.disp in (0x720, 0x754, 0x75C)]
         assert owner_stores == [0x75C, 0x754]
+
+
+def test_receiver_has_typed_list_state_and_one_argument_hooks(compiled):
+    for obj in compiled["src/net_class.cpp"]:
+        receiver = class_layout(obj, "JackalVoiceRx")
+        assert receiver["size"] == 0x24
+        assert receiver["members"] == {"head_": 8, "cursor_": 12, "count_": 16,
+                                       "cursor_index_": 20, "entries_heap_": 24}
+        assert all(receiver["member_type_kinds"][name] == "pointer"
+                   for name in ("head_", "cursor_", "entries_heap_"))
+        decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+        for symbol, expected in (("?on_insert@JackalVoiceRx@@UAEHPAX@Z", [("xor", "eax, eax"), ("ret", "4")]),
+                                 ("?on_remove@JackalVoiceRx@@UAEXPAX@Z", [("ret", "4")])):
+            code, _, _ = obj.subject(obj.function(symbol))
+            # Original shared leaf ABI: zero/ret 4 and ret 4, respectively.
+            # This does not assign the unrelated AlphaMovie catalogue names
+            # to this receiver, or claim its entire lifetime is recovered.
+            instructions = [(i.mnemonic, i.op_str) for i in decoder.disasm(code, 0)]
+            assert instructions[:len(expected)] == expected
+
+
+def test_net_initializes_receiver_state_after_its_own_table(compiled):
+    expected_offsets = [0xB8, 0xBC, 0xC0, 0xC4, 0xC8]
+    decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+    decoder.detail = True
+    for obj in compiled["src/net_class.cpp"]:
+        code, relocations, _ = obj.subject(obj.function(symbol_at("src/net_class.cpp", 0x62D6A0)))
+        table, = (row for row in relocations
+                  if obj.symbols[int(row.target)].name == "??_7JackalVoiceRx@@6B0@@")
+        zero_registers, stores = set(), []
+        for instruction in decoder.disasm(code, 0):
+            operands = instruction.operands
+            _, written = instruction.regs_access()
+            zero_registers.difference_update(written)
+            if (instruction.mnemonic == "xor" and len(operands) == 2
+                    and operands[0].type == operands[1].type == X86_OP_REG
+                    and operands[0].reg == operands[1].reg):
+                zero_registers.add(operands[0].reg)
+            if instruction.mnemonic == "call":
+                # Ordinary calling convention preserves the other registers.
+                zero_registers.difference_update({reg for reg in zero_registers
+                                                 if instruction.reg_name(reg) in ("eax", "ecx", "edx")})
+            if instruction.mnemonic != "mov" or len(operands) != 2:
+                continue
+            destination, value = operands
+            if (destination.type == X86_OP_MEM and destination.mem.base and not destination.mem.index
+                    and destination.mem.disp in expected_offsets):
+                assert instruction.address > table.offset
+                assert ((value.type == X86_OP_IMM and value.imm == 0)
+                        or (value.type == X86_OP_REG and value.reg in zero_registers))
+                stores.append(destination.mem.disp)
+        assert stores == expected_offsets
 
 
 def test_menu_candidates_use_typed_source_definitions(compiled):

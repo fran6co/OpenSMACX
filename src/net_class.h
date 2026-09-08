@@ -119,6 +119,52 @@ static_assert(sizeof(VoiceTx) == 0x58,
   * `static_assert(sizeof(AlphaNet) == 0x14A0)` there, which is the intended
   * alarm - re-measure AlphaNet's `data_` rather than silence it.
   */
+// Provisional node identity: the receiver's circular list has separate
+// allocation-owning entries and payload objects. Their complete declarations
+// and destruction are still recovery work; do not reuse StringStruct's
+// string-payload type merely because its entry has the same physical layout.
+struct VoiceReceiverEntry;
+
+// Net's receiver list at +0xB0. Original constructor 0x0062D6CE..0x0062D733
+// places the vbptr at +4, virtual StringAllocationBase at +0x1C, and clears
+// all five list-state fields. Complete extent is 0x24, not the old 0x18 hint.
+// The hooks at 0x0066EAFC dispatch to shared leaves 0x00404250 (zero, ret 4)
+// and 0x00404270 (ret 4). Insertion 0x00633180 passes the newly constructed
+// payload to the first hook; cleanup 0x00538EC0 passes it to the second.
+// Pointer parameter types follow those callers, not the unrelated AlphaMovie
+// catalogue labels sharing the same leaf bytes. Payload's precise static type
+// remains unresolved here.
+class JackalVoiceRx : public virtual StringAllocationBase {
+ public:
+  // Body assignments preserve the original table-then-state initialization
+  // order under VC6; member initializers put these stores before its vfptr.
+  JackalVoiceRx() {
+    head_ = 0;
+    cursor_ = 0;
+    count_ = 0;
+    cursor_index_ = 0;
+    entries_heap_ = 0;
+  }
+  virtual int on_insert(void *payload);
+  virtual void on_remove(void *payload);
+
+ private:
+  // 0x00538EC0 advances through entry+0xC, stores the cursor, and clears
+  // head/count/index after deleting the payload and allocation-owning node.
+  // RECOVERY_MEMBER: v1 JackalVoiceRx head_ 0x08 0x0062D6A0
+  VoiceReceiverEntry *head_;    // 0x08
+  // RECOVERY_MEMBER: v1 JackalVoiceRx cursor_ 0x0C 0x0062D6A0
+  VoiceReceiverEntry *cursor_;  // 0x0C
+  // RECOVERY_MEMBER: v1 JackalVoiceRx count_ 0x10 0x0062D6A0
+  int count_;                   // 0x10
+  // RECOVERY_MEMBER: v1 JackalVoiceRx cursor_index_ 0x14 0x0062D6A0
+  int cursor_index_;            // 0x14, insertion stores the previous count
+  // 0x00633180 tries this explicit Heap before the virtual base's saved
+  // allocation owner when allocating the 0x1C entry and 0x60 payload.
+  // RECOVERY_MEMBER: v3 JackalVoiceRx entries_heap_ Heap* 0x18 0x0062D6A0
+  Heap *entries_heap_;          // 0x18
+};
+
 // The list subobject at Net+0x72C, not the receiver at Net+0xB0.
 // Net construction (0x0062D788..0x0062D7FD) installs its vbptr at +4;
 // vbtable 0x00669424 locates its allocation base at relative +0x24.
