@@ -44,27 +44,12 @@
 static const GUID NetLobbyAppGuid = {
     0x02D1B480, 0xD680, 0x11D0, {0x82, 0x1E, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}};
 
-// 0x00401BE0, recovered in src/leaf_recoveries.cpp. Declared here so
-// Net::~Net reaches it with the image's own `call rel32` at 0x004E353A
-// instead of an indirect through a forwarder.
-extern "C" void __fastcall sub_401be0(void *receiver, void *);
-
-NetFifo::~NetFifo() {  // ??1NetFifo@@QAE@XZ at 0x006339E0 - not this batch's
-                        // address.
+// ORIGINAL: 0x006339E0 ??1NetFifo@@QAE@XZ 0x006339E0-0x00633A42
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/006339e0.cpp", "image:0x006339E0-0x00633A42", "src/net_class.h: Net::netfifo_ members at +0xE8, +0x10C and +0x130"], "reason": "Bind the existing queue-destructor forwarder to its retained original seed identity before typed ownership recovery. Original calls and the 0x24 embedded queue layout identify this destructor; this binding does not implement or verify it."}
+NetFifo::~NetFifo() {
     typedef void(__fastcall *pending)(NetFifo *, void *);
     reinterpret_cast<pending>(static_cast<unsigned long>(0x006339E0))(this, nullptr);
 }
-
-// Vtable shim. VC6 rejects a free `__thiscall` function pointer (C4234), so
-// an indirect virtual call through the JackalVoiceRx-shaped container's own
-// vtable is spelled by calling the Nth virtual of a class that is never
-// defined and never instantiated - only DECLARATION ORDER matters.
-class VCallArg {
- public:
-  virtual void slot000(int);
-  virtual void slot001(void *);
-  virtual void slot002(int);
-};
 
 // The wrapped device's own interface, as far as VoiceTx's dispatches reach.
 // The tree has no modelled class for this device yet (wave.cpp reaches the

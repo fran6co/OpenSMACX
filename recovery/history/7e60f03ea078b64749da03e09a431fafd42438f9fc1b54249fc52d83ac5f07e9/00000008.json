@@ -1,0 +1,23 @@
+{
+  "event_id": "4061af5024ec0377cf1d1f71e37ca5a40059ecd79de2c649dffe8ab147c007f4",
+  "payload": {
+    "affects": [
+      "entity-0f3a715815c5c39be3ab242bcf39f2468f8bbf239f10f6c5da2b9001fd2cc0e6",
+      "entity-7f53574be92e95394d9154cbb7943a59e780e25197fc90291cdeec1823173d79",
+      "entity-d735b48155d18ee1b3c15a22388fe56669cdf9fcc0f31a185e26a63800ed50b0"
+    ],
+    "author": "coordinator",
+    "discovery_id": "net-queue-lifetime",
+    "evidence": [
+      "Pinned original 0x006339E0-0x00633A42 and 0x00633A50-0x00633AAB: same EnterCriticalSection, next/payload walk, payload reset, guarded free, state reset and LeaveCriticalSection; destructor alone calls DeleteCriticalSection at 0x00633A38. Call target 0x00644EF2 corroborates the CRT free implementation, not an invented ownership destructor.",
+      "src/netdaemon.cpp explicitly tears down queues at +0x130, +0x10C, +0xE8, the receiver at +0xB0 and VoiceTx at +0x58; src/net_class.h already declares real members. Integrating native destructors must remove duplicate containing-class teardown while preserving original order."
+    ],
+    "hypothesis": "NetFifo close and destruction share a typed drain operation under the embedded critical section; the destructor additionally deletes that critical section. Current close lacks the original payload reset and guarded node free. NetDaemon explicitly destroys three NetFifo subobjects, then implicit Net destruction destroys them again; its receiver and VoiceTx stages likewise need coordinated ownership transfer before a real queue destructor is integrated. Recover this family together, preserve original seed evidence, and do not mistake matching the queue helper for safe containing-class lifetime.",
+    "kind": "discovery"
+  },
+  "previous_event": "87bceb287aee20ae0a57c519d33d2b4e3e9e6be9e069fd0ee2c805beb100046f",
+  "request_id": "net-queue-lifetime",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:jackal-voice-ownership"
+}

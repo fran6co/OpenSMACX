@@ -1,0 +1,28 @@
+{
+  "event_id": "5be1a66f3235a3f962f6550567f16a4020f5861eb62dd0783183a82489281954",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Authorize the queue close/destructor dependency family identified in net-queue-lifetime. Native source binding may retain the existing unimplemented forwarder while private trials establish the proper typed drain; containing Net/NetDaemon lifetime must be reconciled before integrating it."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6502880,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6502992,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "4061af5024ec0377cf1d1f71e37ca5a40059ecd79de2c649dffe8ab147c007f4",
+  "request_id": "net-queue-lifetime-scope",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:jackal-voice-ownership"
+}
