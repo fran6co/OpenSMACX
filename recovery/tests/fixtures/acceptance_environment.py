@@ -38,6 +38,8 @@ def generated_arguments(root, output):
 
 
 def build(root, output, *, damage=None):
+    if (root / "build/unavailable-toolchain").exists():
+        raise ValueError("test-owned destination build resource is unavailable")
     flags = FLAGS + generated_arguments(root, output) + (("/DTEST_RUNTIME_DAMAGE",) if damage == "runtime" else ())
     replacements = None
     if damage == "structure":

@@ -37,7 +37,7 @@ def parser() -> argparse.ArgumentParser:
     init.add_argument("--python", default=sys.executable, help="Interpreter with match_recovery installed for native commands")
     init.add_argument("--image", type=Path, help="Original image to pin in source; relative to --root, never copied")
     init.add_argument("--source-root", default="src", help="Project-relative source directory; native starter measurements support PE/COFF i386")
-    integrate = commands.add_parser("integrate", help="Prepare unverified integration candidates without moving the destination")
+    integrate = commands.add_parser("integrate", help="Prepare candidates or explicitly verify and publish to a local destination")
     integration_actions = integrate.add_subparsers(dest="action", required=True)
     candidate = integration_actions.add_parser("prepare", help="Create a new isolated branch/worktree from explicit source and destination commits")
     candidate.add_argument("task")
@@ -45,6 +45,15 @@ def parser() -> argparse.ArgumentParser:
     candidate.add_argument("--context", type=Path, required=True, help="Explicit coordinator integration authorization")
     candidate.add_argument("--worktree", type=Path, required=True, help="New path; nested paths must be ignored")
     candidate.add_argument("--branch", required=True, help="New branch; existing branches are never overwritten")
+    publish = integration_actions.add_parser("publish", help="Fresh candidate verification, guarded fast-forward, and fresh destination verification")
+    publish.add_argument("task")
+    publish.add_argument("--root", type=Path, default=Path.cwd(), help="Destination checkout")
+    publish.add_argument("--candidate", type=Path, required=True, help="Candidate worktree in the same local repository")
+    publish.add_argument("--authorization", type=Path, required=True, help="Explicit coordinator candidate/branch/context/publication permission")
+    publish.add_argument("--config", type=Path, default=Path("recovery/driver.json"), help="Driver configuration, relative to the candidate")
+    publish.add_argument("--worker", type=Path, default=Path("recovery/worker.json"), help="Worker identity/configuration; no worker is dispatched")
+    publish.add_argument("--reviewer", type=Path, required=True, help="Independent reviewer configuration, relative to the candidate")
+    publish.add_argument("--migration", type=Path, help="Separate permission for temporary matching regressions")
     run = commands.add_parser("run", help="Drive bounded recovery through project-local JSON commands")
     run.add_argument("task")
     run.add_argument("--root", type=Path, default=Path.cwd())
@@ -105,6 +114,18 @@ def main(argv: Sequence[str] | None = None) -> int:
             from .project import initialize
             output = initialize(args.root, args.target, args.python, image=args.image, source_root=args.source_root)
         elif args.command == "integrate":
+            if args.action == "publish":
+                from .integration_publish import publish_integration
+                candidate = args.candidate if args.candidate.is_absolute() else args.root / args.candidate
+                config = lambda path: read_json(path if path.is_absolute() else candidate / path)
+                permission = read_json(args.authorization if args.authorization.is_absolute() else args.root / args.authorization)
+                output = publish_integration(args.root, args.task, candidate, permission,
+                                             configuration=config(args.config), worker_configuration=config(args.worker),
+                                             reviewer_configuration=config(args.reviewer),
+                                             migration_configuration=config(args.migration) if args.migration else None)
+                print(json.dumps(output, indent=2, sort_keys=True))
+                return (0 if output["stop_reason"] == "destination_accepted" else
+                        2 if output["stop_reason"] == "destination_migration_admitted" else 3)
             from .integration_prepare import prepare_integration
             context = read_json(args.context if args.context.is_absolute() else args.root / args.context)
             output = prepare_integration(args.root, args.task, context, worktree=args.worktree, branch=args.branch)

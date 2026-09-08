@@ -7,8 +7,27 @@ from pathlib import Path
 import time
 
 
+class FileLease:
+    """In-process nesting token, not authorization or a transferable lock file."""
+
+    def __init__(self, path):
+        self._path = path.resolve()
+        self._pid = os.getpid()
+        self._active = False
+
+    path = property(lambda self: self._path)
+    pid = property(lambda self: self._pid)
+    active = property(lambda self: self._active)
+
+
 @contextmanager
-def file_lock(path: Path, *, timeout: float = 10):
+def file_lock(path: Path, *, timeout: float = 10, held: FileLease | None = None):
+    if held is not None:
+        if (not isinstance(held, FileLease) or not held.active or held.pid != os.getpid()
+                or held.path != path.resolve()):
+            raise ValueError("nested operation requires its active local file lease")
+        yield held
+        return
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a+b") as stream:
         if os.name == "nt":
@@ -42,7 +61,10 @@ def file_lock(path: Path, *, timeout: float = 10):
                 if time.monotonic() >= deadline:
                     raise TimeoutError(f"resource is leased: {path.name}") from error
                 time.sleep(0.01)
+        lease = FileLease(path)
+        lease._active = True
         try:
-            yield
+            yield lease
         finally:
+            lease._active = False
             release()

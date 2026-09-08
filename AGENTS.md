@@ -77,7 +77,12 @@ explicit coordinator permission admits temporary matching regressions (exit 2).
 Exit 0 in change mode means readiness for a coordinator checkpoint, not game
 acceptance or automatic collection. Explicit coordinator `--checkpoint` authorization
 can publish a freshly verified local change; it does not integrate into another
-checkout or reset task baselines. Use `--acceptance-scope full_project` to invoke
+checkout or reset task baselines. Separate `recover integrate publish` authorization
+can freshly verify a candidate, fast-forward a clean destination, and verify there
+again. A transferred checkout is not accepted until destination verification passes;
+on failure preserve it and rerun fresh checks, never reset or replay a report.
+See `recovery/WORKFLOW.md` for permission and failure handling.
+Use `--acceptance-scope full_project` to invoke
 `recover tasks check-acceptance` with a fresh reviewed request on stdin. It owns
 the full gate, retained build, restoration/preservation and proof sequencing;
 OpenSMACX still lacks complete structure/runtime proof commands. The application

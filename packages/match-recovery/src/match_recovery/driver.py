@@ -132,7 +132,8 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
           migration_configuration: dict | None = None,
           coordinator_configuration: dict | None = None,
           checkpoint_configuration: dict | None = None,
-          integration_configuration: dict | None = None, verify_only: bool = False, execute=invoke) -> dict:
+          integration_configuration: dict | None = None, verify_only: bool = False, execute=invoke,
+          _held_lease=None, _collection=None) -> dict:
     """Recompute context/checks, edit, recheck, repeat; discoveries stop for review."""
     if type(iterations) is not int or not 1 <= iterations <= 100:
         raise ValueError("iterations must be 1..100")
@@ -140,6 +141,8 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
         raise ValueError("verify_only must be boolean")
     if verify_only and coordinator_configuration is not None:
         raise ValueError("verification-only runs cannot delegate task or scope changes")
+    if _collection is not None and not verify_only:
+        raise ValueError("collection verification cannot dispatch repairs")
     round_limit = 0 if verify_only else iterations
     required = {"schema_version", "target", "context", "check"}
     if (not required <= set(configuration) or set(configuration) - required - {"acceptance", "acceptance_scope", "obligations", "migration_check", "build"}
@@ -170,7 +173,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
         raise ValueError("migration requires source obligations and migration-check adapters")
     root = root.resolve()
     store = TaskStore(root)
-    with file_lock(root / "build/recovery/driver.lock", timeout=0):
+    with file_lock(root / "build/recovery/driver.lock", timeout=0, held=_held_lease):
         task = store.read(task_name)
         integration = None
         if integration_configuration is not None:
@@ -210,6 +213,8 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
         policy = {"project": configuration, "worker": worker_configuration, "reviewer": reviewer_configuration}
         if verify_only:
             policy["verification_only"] = True
+        if _collection is not None:
+            policy["collection"] = _collection
         if integration is not None:
             policy["integration"] = integration
         if publication is not None:
@@ -426,6 +431,8 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                 context = {**context, "migration_permission": permission}
             if integration is not None:
                 context = {**context, "integration_context": integration}
+            if _collection is not None:
+                context = {**context, "collection_context": _collection}
             code, check = readonly(check_command, {"task": task.to_dict(), "context": context})
             if changes(round_state, working_state(root)):
                 raise ValueError("source changed between context generation and checking")

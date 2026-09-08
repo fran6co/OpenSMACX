@@ -822,8 +822,8 @@ nor C++ source is edited by the driver. Review decisions may still be recorded,
 and explicit `--checkpoint` authorization can publish a freshly verified local
 commit; verification-only does not itself authorize publication or collection.
 It also supports the existing `--integration` destination context. This is the
-source-read-only verification step for collection workflows, not an implemented
-destination checkout transaction or a saved-verdict fast-forward command.
+source-read-only verification step used by the separate `integrate publish`
+workflow below, not itself a destination update or saved-verdict fast-forward.
 
 Publication refuses staged changes, skip-worktree/assume-unchanged index entries,
 Git operations in progress, unrelated edits, Git path overrides and detached HEAD.
@@ -936,7 +936,67 @@ overlapping source/artifact roots and unsupported historical TU coverage remain
 unverified. Configured generators/compilers are trusted, not sandboxed; external
 toolchain and Python environment availability remain project responsibilities.
 This is a test-owned application with deterministic subprocess agents, not proof of
-a live-provider Alpha Centauri recovery or automatic destination publication.
+a live-provider Alpha Centauri recovery.
+
+To collect a candidate into its destination, use the separate explicit command:
+
+```sh
+recover integrate publish TASK --root DESTINATION --candidate CANDIDATE \
+  --authorization AUTHORIZATION.json --reviewer recovery/reviewer.json
+```
+
+Authorization has exactly these fields (commit placeholders must be replaced by
+full immutable commit ids):
+
+```json
+{
+  "author": "task-coordinator",
+  "candidate_revision": "<candidate HEAD>",
+  "destination_branch": "refs/heads/master",
+  "integration": {
+    "author": "task-coordinator",
+    "source_revision": "<original incoming commit>",
+    "target_revision": "<destination before integration>",
+    "evidence": ["Coordinator rationale for this collection"]
+  },
+  "message": "Collect the recovered owner hierarchy",
+  "allow_migration": false
+}
+```
+
+Both checkouts must belong to the same local repository and start clean, on the
+authorized destination branch and exact candidate revision. Incoming task/history
+decisions and original baselines survive. Worker/reviewer/config paths are relative
+to the candidate; the authorization path is relative to the destination. Both
+driver leases stay held. Configured preparation runs separately in each checkout.
+Fresh verification-only admission and an authorized local checkpoint precede the
+fast-forward; fresh destination-side verification and local decision publication
+follow it. The reviewer sees the collection authorization in context. No worker or
+scope delegate is launched and no saved acceptance report is consumed.
+
+`destination_accepted` exits 0 only after fresh destination acceptance.
+`destination_migration_admitted` exits 2, retaining matching obligations; it needs
+both `allow_migration: true` and separate `--migration` permission. Missing/failing
+evidence exits 3. Read `destination_updated` separately from `destination_verified`;
+successful Git transfer alone is not acceptance or a working game. `ready_for_collection`
+stays false: this command has already attempted collection, not full-project proof.
+The package disables hooks, checkout filters, autostash and ignored-file overwrite.
+Dirty/staged work, stale revisions/branches, sparse checkouts, ignored path collisions
+and unsupported source aliases refuse publication. No force update, push, automatic
+conflict resolution, worktree deletion, claim demotion, or reset participates.
+
+The fast-forward and final checks are not a filesystem transaction. On interruption
+or a destination check failure, preserve both checkouts; the destination may already
+have moved (`destination_updated: null` means the interrupted update is uncertain).
+The previous target remains in Git history, and authorization is carried in the
+local checkpoint message. Inspect HEAD/index/source before continuing. Fix the
+reported prerequisite and run fresh `run TASK --verify-only --integration ...
+--reviewer ...`, with explicit `--checkpoint` if publishing the new decision.
+Never replay a report, blindly retry the old fast-forward authorization, or reset
+away recovery work. Local leases coordinate cooperating agents, not arbitrary Git
+or filesystem writers. Compiler/provider availability remains project configuration.
+Real-compiler controls cover successful collection, destination-only build failure,
+fresh retry, and preservation of unchanged CRLF checkout files.
 
 Unrelated unfinished functions need not match the original to accept a change;
 their preservation must still be measured. Global source/mapping/audit defects can

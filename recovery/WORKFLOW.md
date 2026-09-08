@@ -565,8 +565,8 @@ means preparation succeeded); conflicts stop without moving either input. Git ho
 active checkout filters and external merge drivers cannot silently participate.
 Provide an isolated compiler resource and regenerate recipes in the new checkout;
 no caches, original image or Wine prefix are copied. Post-creation failures retain
-the candidate for inspection. Destination publication and conflict resolution remain
-coordinator work. Preservation now regenerates compiler context independently for
+the candidate for inspection. Conflict resolution remains coordinator work.
+Preservation now regenerates compiler context independently for
 each historical/current source tree and its damage controls, using disposable
 projects with private Git state. Current-context replica checks must agree with
 direct compilation; generated-header collateral changes and stale caches cannot
@@ -574,6 +574,18 @@ pass. Generator policy/input changes require coordinator review just like build
 policy changes. The test-owned VC6 isolated-worktree control reaches per-change
 acceptance and local publication, leaving the destination unchanged. This does not
 establish a live-provider game recovery or authorize automatic collection.
+For explicitly authorized collection, use `recover integrate publish <task>
+--root <destination> --candidate <candidate> --authorization <permission.json>
+--reviewer recovery/reviewer.json`. The package README specifies the independent
+coordinator's exact candidate revision, destination branch and integration context.
+The command holds both driver leases, freshly verifies the candidate without
+repairs, performs only a guarded fast-forward, then regenerates and verifies at
+the destination. Check `destination_verified`, not just `destination_updated`.
+Exit 0 is fresh per-change destination acceptance; exit 2 needs separate migration
+and publication permissions. Neither is complete game recovery. Post-transfer
+failure leaves the source in place and exits 3; inspect the destination and rerun
+fresh verification after fixing the prerequisite. Never reset or replay a report.
+Hooks, filters, autostash, ignored-file overwrite and force updates are disabled.
 Do not pipe mutating commands or the gate. Do not delete a worktree until its
 changes have been verified as preserved.
 

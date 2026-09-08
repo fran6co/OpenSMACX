@@ -314,13 +314,15 @@ def test_real_preservation_refusal_drives_scoped_repair_without_reverting_struct
     assert git("rev-parse", "HEAD") == head
 
 
-@pytest.mark.parametrize("isolated", [False, True])
-def test_installed_integration_recheck_uses_destination_without_resetting_task_history(tmp_path, monkeypatch, isolated):
+@pytest.mark.parametrize("mode", ["existing", "isolated", "destination_failure"])
+def test_installed_integration_recheck_uses_destination_without_resetting_task_history(tmp_path, monkeypatch, mode):
+    isolated = mode != "existing"
     provider = {"schema_version": 1, "artifacts": "build/agents"}
     for role in ("worker", "coordinator", "reviewer"):
         provider[role] = {"command": {"argv": [sys.executable, "recovery/local_agents.py", role, "{request}"], "timeout": 30},
                           "instructions": [], "response": "stdout"}
-    root, image, task, git, evidence = prepared_project(tmp_path, monkeypatch, provider=provider, proofs=False, preparation=isolated)
+    root, image, task, git, evidence = prepared_project(tmp_path, monkeypatch, provider=provider, proofs=False,
+                                                       preparation=isolated, normalized_checkout=isolated)
     monkeypatch.setenv("RECOVERY_IMAGE", str(image))
     fork = git("rev-parse", "HEAD")
     git("switch", "-c", "incoming")
@@ -352,7 +354,7 @@ def test_installed_integration_recheck_uses_destination_without_resetting_task_h
         prepared = json.loads(result.stdout)
         candidate = prepared["commit"]
         assert prepared["candidate_created"] and prepared["verification"] == "not_measured"
-        assert git("rev-parse", "HEAD") == target and not git("status", "--porcelain")
+        assert git("rev-parse", "HEAD") == target and not git("diff", "--name-only", "HEAD")
         assert not (root / "build/compile_commands.json").exists()
         generated = subprocess.run([sys.executable, "-m", "match_recovery.cli", "prepare", "--root", str(root)],
                                    cwd=tmp_path, capture_output=True, timeout=60)
@@ -390,10 +392,52 @@ def test_installed_integration_recheck_uses_destination_without_resetting_task_h
         assert report["checkpoint"]["parent"] == candidate and not report["ready_for_collection"]
         assert TaskStore(root).read(task.task_id) == task
         assert (root / "src/owner.h").read_text() == evidence + CLASSES
-        assert git("rev-parse", "HEAD") == target and not git("status", "--porcelain")
+        assert git("rev-parse", "HEAD") == target and not git("diff", "--name-only", "HEAD")
         assert subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, check=True).stdout.decode().strip() == report["checkpoint"]["commit"]
         assert report["integration"] == context and git("rev-parse", "incoming") == source
-        return  # Local candidate accepted and published; destination stays untouched.
+        # Collection must reverify rather than accepting the report above.
+        notes = (destination / "notes.csv").read_bytes()
+        publication = tmp_path / "collection.json"
+        publication.write_text(json.dumps({"author": task.author, "candidate_revision": report["checkpoint"]["commit"],
+                                            "destination_branch": "refs/heads/destination", "integration": context,
+                                            "message": "Collect verified test-owned hierarchy", "allow_migration": False}))
+        if mode == "destination_failure":
+            (destination / "build/unavailable-toolchain").write_text("test-owned unavailable build resource\n")
+        collected = subprocess.run([sys.executable, "-m", "match_recovery.cli", "integrate", "publish", task.task_id,
+                                    "--root", str(destination), "--candidate", str(root), "--authorization", str(publication),
+                                    "--reviewer", "recovery/reviewer.json"], cwd=tmp_path, capture_output=True, timeout=180)
+        assert collected.returncode == (3 if mode == "destination_failure" else 0), collected.stdout.decode() + collected.stderr.decode()
+        final = json.loads(collected.stdout)
+        if mode == "destination_failure":
+            assert final["stop_reason"] == "destination_verification_required" and final["destination_updated"]
+            assert not final["destination_verified"] and not final["ready_for_collection"]
+            assert final["candidate_verification"]["stop_reason"] == "change_accepted"
+            assert final["destination_verification"]["check"]["build_check"]["result"] == "fail"
+            assert git("rev-parse", "HEAD") == final["verified_candidate_commit"]
+            assert (destination / "src/owner.h").read_text() == evidence + CLASSES
+            assert TaskStore(destination).read(task.task_id) == task
+            (destination / "build/unavailable-toolchain").unlink()
+            resumed = subprocess.run([sys.executable, "-m", "match_recovery.cli", "run", task.task_id,
+                                      "--root", str(destination), "--acceptance-scope", "change", "--verify-only",
+                                      "--reviewer", "recovery/reviewer.json", "--integration", str(integration),
+                                      "--checkpoint", str(checkpoint)], cwd=tmp_path, capture_output=True, timeout=180)
+            assert resumed.returncode == 0, resumed.stdout.decode() + resumed.stderr.decode()
+            assert json.loads(resumed.stdout)["stop_reason"] == "change_accepted"
+            assert TaskStore(destination).read(task.task_id) == task
+            return  # A fresh retry, never rollback or replay of the failed report.
+        assert final["stop_reason"] == "destination_accepted" and final["destination_updated"] and final["destination_verified"]
+        assert not final["ready_for_collection"] and git("rev-parse", "HEAD") == final["final_commit"]
+        for key in ("candidate_verification", "destination_verification"):
+            assert final[key]["stop_reason"] == "change_accepted" and final[key]["worker_rounds"] == 0
+            assert final[key]["verification_only"] and final[key]["migration"]["exit_code"] == 0
+        assert TaskStore(destination).read(task.task_id) == task and TaskStore(root).read(task.task_id) == task
+        assert (destination / "src/owner.h").read_text() == evidence + CLASSES
+        assert (destination / "notes.csv").read_bytes() == notes
+        assert "return 7;" in (destination / "src/entry.cpp").read_text()
+        assert git("rev-parse", "incoming") == source and not git("diff", "--name-only", "HEAD")
+        assert not git("ls-files", "--others", "--exclude-standard")
+        assert all(row["directory"] == str(destination) for row in json.loads((destination / "build/compile_commands.json").read_text()))
+        return  # Fresh candidate and destination checks, not game/provider acceptance.
     assert report["stop_reason"] == "change_accepted" and report["worker_rounds"] == 0
     assert report["integration"] == context and report["checkpoint"]["published"]
     assert report["checkpoint"]["parent"] == candidate and not report["ready_for_collection"]
