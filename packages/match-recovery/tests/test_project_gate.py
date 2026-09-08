@@ -69,6 +69,11 @@ def test_all_native_stages_run_even_with_no_project_commands(configured, observe
     assert observed[0][2]["jobs"] == observed[4][2]["jobs"] == 2
 
 
+def test_acceptance_can_retain_the_same_native_build(configured, observed):
+    assert run(configured, retain_build=True)["result"] == "pass"
+    assert next(kwargs for name, _, kwargs in observed if name == "check_build") == {"retain": True}
+
+
 @pytest.mark.parametrize("name", NATIVE)
 @pytest.mark.parametrize("result,code", [("fail", 1), ("unknown", 3)])
 def test_each_native_check_participates_in_the_exit_code(configured, observed, monkeypatch, name, result, code):

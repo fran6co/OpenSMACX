@@ -67,7 +67,11 @@ uv run tools/osmx.py check
 
 The last command is the retained full legacy gate: never pipe it. Exit 0 is
 clean, 1 a failure, 3 unmeasurable—not green. This project's strict full
-acceptance remains unfinished. The driver uses the package's native migration
+acceptance remains unfinished. The driver now invokes native
+`recover tasks check-acceptance` with a fresh reviewed request on stdin. It owns
+the full gate, retained build, restoration/preservation and proof sequencing;
+OpenSMACX still lacks complete structure/runtime proof commands and a green link.
+Missing evidence cannot pass. The driver uses the package's native migration
 verifier for supported reviewed checkpoints; missing preservation or other
 prerequisites still refuse admission. Scoped checks and
 reviews do not establish full acceptance or a working game.

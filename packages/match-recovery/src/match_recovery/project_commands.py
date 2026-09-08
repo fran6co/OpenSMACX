@@ -141,6 +141,10 @@ def register(commands):
     migration.add_argument("task")
     migration.add_argument("--root", type=Path, default=Path.cwd())
     migration.add_argument("--image", type=Path, required=True)
+    acceptance = task_actions.add_parser("check-acceptance", help="Verify a reviewed driver request from stdin with the full gate, preservation and configured structure/runtime proofs")
+    acceptance.add_argument("task")
+    acceptance.add_argument("--root", type=Path, default=Path.cwd())
+    acceptance.add_argument("--image", type=Path, required=True)
     restoration = task_actions.add_parser("check-restoration", help="Remeasure historical obligations alongside scoped checks; never waive regressions")
     restoration.add_argument("task")
     restoration.add_argument("--root", type=Path, default=Path.cwd())
@@ -213,7 +217,7 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
                       arguments_file=arguments.get("arguments_file"), jobs=arguments.get("jobs", 1))
     root = root.resolve()
     configuration = read_json(root / "recovery/project.json")
-    if (configuration.keys() - {"schema_version", "source", "source_history", "compiler", "measurement", "audits", "build", "mappings", "gate", "preparation"}
+    if (configuration.keys() - {"schema_version", "source", "source_history", "compiler", "measurement", "audits", "build", "mappings", "gate", "preparation", "acceptance"}
             or type(configuration.get("schema_version")) is not int or configuration["schema_version"] != 1):
         raise ValueError("invalid local project command configuration")
     if arguments.get("command") == "bind":
@@ -336,6 +340,13 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
                 output["units"] = [{key: value for key, value in row.items()
                                     if key not in ("baseline_scoped_functions", "current_scoped_functions", "changed_sections", "symbol_changes")}
                                    for row in output["units"]]
+            return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
+        if arguments.get("action") == "check-acceptance":
+            import sys
+            from .records import parse_json
+            from .acceptance_check import measure_acceptance
+            output = measure_acceptance(root, arguments["task"], Path(arguments["image"]),
+                                        parse_json(sys.stdin.read()), progress=_progress)
             return {"pass": 0, "fail": 1, "unknown": 3}[output["result"]], output
         if arguments.get("action") == "check-migration":
             import sys

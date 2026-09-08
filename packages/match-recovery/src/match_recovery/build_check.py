@@ -108,8 +108,8 @@ class Build:
                                            "implementation": implementation, "environment": environment})
 
 
-def check_build(root: Path) -> dict:
-    return generate_build(root, Build.read(root))
+def check_build(root: Path, *, retain=False) -> dict:
+    return generate_build(root, Build.read(root), retain=retain)
 
 
 def generate_build(root: Path, settings: Build, *, retain=False) -> dict:

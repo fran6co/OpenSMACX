@@ -55,7 +55,8 @@ flags do not identify the original compiler; an empty audit policy is not struct
 proof. No compiler, TU boundaries, history baseline, dependency ABI, or model was
 inferred. Native measurements currently support PE/COFF i386; hashing another file
 does not add another backend. Source inventory/identity pinning do not validate its
-executable format. Full structural/runtime acceptance still needs a verifier.
+executable format. The generated driver configures native acceptance orchestration;
+full structural/runtime acceptance still needs configured proof capabilities.
 `inventory` can report zero annotations in a new project; that is an empty census,
 not accepted coverage or permission to create an empty recovery task.
 
@@ -564,9 +565,10 @@ ids to the verifier's independently computed current input fingerprints. Every
 requested protected obligation needs one fresh passing measurement before the
 `obligations` dimension can pass. Duplicate or unrequested identities are refused;
 equal counts cannot hide replacement identities. Missing, stale or unknown
-measurements require `obligations: "unknown"`; a measured failure cannot be
-summarized as pass. The verifier can leave both collections empty when it cannot
-measure, but must report the resulting unknown obligations. Passing the requested
+measurements prevent a passing obligations summary. Known failures take priority
+over unknown evidence in the aggregate, so actionable defects still reach the
+worker. The verifier can leave both collections empty when it cannot measure,
+but cannot report passing obligations. Passing the requested
 subset alone does not discharge other full-project requirements.
 
 Boolean-only legacy reports are no longer accepted. These checks bind a trusted
@@ -584,6 +586,54 @@ Changed source requires fresh checks, review and acceptance; discoveries still
 pause for authorization. Unknown acceptance stops for evidence instead of
 spending speculative worker rounds. Feedback is a disposable diagnostic for its
 recorded snapshot, not a cached verdict or proof about later source.
+
+### Native acceptance verifier
+
+`recover tasks check-acceptance TASK --image IMAGE` reads the complete driver
+request from stdin and returns the request-bound receipt above. `init` configures
+this installed command; no project acceptance dispatcher is required. It runs
+the whole native/configured gate, retains one fresh build, then verifies strict
+task matching, declared structure, historical obligations, outside-scope compiled
+preservation and unchanged baseline compiler/build policy. Failed native checks
+cannot be waived by review or external proofs. A failed/unknown whole gate stops
+before proof commands run. Compiler/image/source/Git/task changes invalidate the
+epoch; the verifier never stamps annotations or changes the task baseline.
+
+Complete structure and runtime are distinct from declared member offsets and
+successful linking. Configure trusted proof commands in `recovery/project.json`:
+
+```json
+"acceptance": {
+  "checks": {
+    "structure": {"argv": ["local-structure-check", "{root}"], "timeout": 120},
+    "runtime": {"argv": ["local-runtime-check", "{root}"], "timeout": 120}
+  },
+  "inputs": ["recovery/proof-policy.json"],
+  "environment": ["TEST_ASSETS"]
+}
+```
+
+Commands use the usual JSON stdin/stdout boundary. Declare all additional proof
+inputs (including scripts and assets) and environment dependencies; missing inputs
+refuse verification. Each command receives the original request plus `dimension`,
+`image: {path, sha256}`, and `build: {directory, outputs}` identifying the same
+retained build for both proofs. Paths are relative to the project root, except
+the original image path. Output rows contain their relative artifact path, format,
+SHA-256 and size. The command must test those exact artifacts; the verifier
+rechecks their content and rejects symlink substitution after each stage.
+
+The command's `protected` array contains only that dimension's obligations. Reply
+with exactly `request_fingerprint`, `result`, `evidence` (nonempty string array),
+`measurements`, and `current`; the fingerprint covers the complete dimension
+payload. Exit codes are 0/pass, 1/fail, 3/unknown. Measurement syntax and freshness
+rules are the same as the final receipt. A hook cannot report measurements for
+native bytes, references or declared structure, or replace a native failed result.
+Missing hooks, incomplete measurements and unsupported proof coverage remain
+unknown, never a vacuous pass. Proof code is trusted verifier code, not a worker
+self-assessment or a script that merely echoes a digest. The package supplies no
+universal runtime/semantic oracle. Retained products and receipts are disposable
+verification artifacts, not a second source ledger or permission to collect a
+later build without rechecking.
 
 Optional `migration_check` and coordinator `--migration` permission allow reviewed
 temporary matching regressions while structural work proceeds. They require

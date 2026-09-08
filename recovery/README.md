@@ -547,8 +547,10 @@ never yields a usable object or a successful measurement.
 
 Without independent review and a configured full acceptance gate, driver stops
 return CLI exit 3 and `ready_for_collection:false`. The supplied OpenSMACX
-configuration deliberately has no acceptance command yet: its scoped checker
-cannot stand in for complete reference, structure, obligation and runtime checks.
+configuration now invokes the native `tasks check-acceptance` command. This
+coordinates verification, but OpenSMACX still lacks complete structure/runtime
+proof commands and a green application link; it cannot yet yield full acceptance.
+Its scoped checker cannot stand in for those missing proofs.
 The configured check is now `tasks check-restoration <task> --image <image>`,
 which remeasures historical obligations as well as running both binary/reference
 and declared-layout checks. Workers receive the joint report under `candidate`,
@@ -643,10 +645,10 @@ An arbitrary unknown result, a known scoped failure or a failed/unknown build
 cannot use this route. It must implement the actual full-project checks—not echo
 worker claims—and return `scope: "full_project"`, an overall `result`,
 and `build`, `structure`, `references`, `obligations`, `runtime` outcomes. Outcomes
-are `pass`, `fail` or `unknown`; an unknown dimension yields overall unknown/exit
-3, otherwise any failure yields fail/exit 1. Only all passing dimensions with
+are `pass`, `fail` or `unknown`; any known failure yields fail/exit 1, otherwise
+an unknown dimension yields unknown/exit 3. Only all passing dimensions with
 exit 0 can produce `ready_for_collection:true` and driver exit 0. Missing fields,
-scoped reports and contradictory exits are refused. The target adapter must
+scoped reports and contradictory exits are refused. The verifier must
 verify pinned inputs, original boundaries and every preserved obligation; these
 are contracts for trusted verifier code, not proofs obtained by adding JSON keys.
 
@@ -656,11 +658,20 @@ request, including its per-invocation `verification_id`; even source-identical
 review reuse requires a fresh receipt. Every protected obligation needs a fresh
 passing `{obligation_id, fingerprint, result, evidence}` measurement before the
 obligations summary may pass. `current` contains the verifier's current input
-fingerprints. Missing/stale/unknown measurements keep that dimension unknown;
+fingerprints. Missing/stale/unknown measurements prevent that dimension passing;
 duplicate or unrequested identities and contradictory passing summaries are
 refused. The package README defines the encoding and exact contract. No receipt
 or measurement report is saved as workflow history, and old boolean-only replies
-are unsupported. This closes a protocol gap, not the missing full verifier.
+are unsupported. Receipt validation alone does not establish proof coverage.
+
+The package-owned native acceptance verifier runs the whole gate and keeps its
+fresh build for subsequent structure/runtime proofs, then checks strict task
+matching, declared structure, protected restoration, outside preservation and
+baseline compiler/build policy. Its proof-command boundary is documented under
+"Native acceptance verifier" in the package README. Missing hooks remain unknown;
+passing hooks cannot override failing native checks. OpenSMACX has not configured
+those hooks yet, and the application link remains red. This is tested orchestration,
+not a verified autonomous application acceptance pilot.
 
 The report may additionally contain `findings`, an array of
 `{"dimension":"runtime","message":"Explain the measured defect",

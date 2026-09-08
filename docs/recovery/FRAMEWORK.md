@@ -76,8 +76,10 @@ full native gates in a disposable detached checkout, named stage/subject asserti
 and guarded damage restoration. The old main-tree mutation CLI is removed.
 Ordinary anchor/safety tests are not a substitute for executing the live matrix.
 Three local checks remain until their conventional
-source/document coverage is absorbed. Full acceptance is a separate unfinished
-verifier; an incomplete native gate does not permit deleting the old control route.
+source/document coverage is absorbed. Native acceptance now coordinates the gate,
+restoration/preservation and configured structure/runtime proof commands. Complete
+OpenSMACX proof coverage remains unfinished; an incomplete native gate does not
+permit deleting the old control route.
 
 The full gate's duplicate-global and scaled-pointer checks now use the native
 configured storage audit; their standalone tools are removed. Original-address
@@ -272,8 +274,15 @@ establish completion of this program.
   forces fresh checks/review, while unknown acceptance stops for evidence.
   Acceptance receipts now bind each invocation, the complete reviewed request
   and fresh measurements of protected obligations; stale/replayed reports and
-  boolean-only passes are refused. This is protocol enforcement for trusted
-  verifiers, not implementation of the missing full-project verifier.
+  boolean-only passes are refused. Native `tasks check-acceptance` now runs the
+  full gate and retains its fresh build for trusted structure/runtime proof
+  commands, checking source/compiler/image/artifact freshness throughout. Strict
+  restoration, declared structure, outside preservation and baseline build policy
+  remain native prerequisites that hooks cannot waive. Default initialization and
+  OpenSMACX's driver use this package command; no local acceptance dispatcher is
+  needed. Synthetic build/history/COFF and subprocess/driver controls exercise
+  admission and refusal. OpenSMACX still needs its link fixed, complete proof
+  capabilities configured and a real autonomous pilot before acceptance is proven.
   A compiler-backed control builds its own small C++ reference executable,
   rejects a byte-exact flattened class, preserves a genuine base/member change
   across a matching regression, then restores matching and runs the final build.

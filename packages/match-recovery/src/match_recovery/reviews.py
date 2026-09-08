@@ -163,7 +163,7 @@ def acceptance_outcome(code: int, report: dict) -> str:
     if any(value not in ("pass", "fail", "unknown") for value in outcomes):
         raise ValueError("invalid acceptance outcome")
     dimensions = [report[key] for key in ("build", "structure", "references", "obligations", "runtime")]
-    expected = "unknown" if "unknown" in dimensions else "fail" if "fail" in dimensions else "pass"
+    expected = "fail" if "fail" in dimensions else "unknown" if "unknown" in dimensions else "pass"
     if report["result"] != expected or code != {"pass": 0, "fail": 1, "unknown": 3}[expected]:
         raise ValueError("acceptance summary, dimensions and exit code disagree")
     findings = report.get("findings", [])
@@ -221,7 +221,7 @@ def acceptance_result(code: int, report: dict, *, request: dict) -> str:
         row = measured.get(key)
         results.append(Result.UNKNOWN if row is None or row["fingerprint"] != report["current"].get(key)
                        else Result(row["result"]))
-    if Result.UNKNOWN in results and report["obligations"] != "unknown":
+    if Result.UNKNOWN in results and report["obligations"] == "pass":
         raise ValueError("acceptance obligations omit unknown or stale measurements")
     if Result.FAIL in results and report["obligations"] == "pass":
         raise ValueError("acceptance obligations contradict a failed measurement")

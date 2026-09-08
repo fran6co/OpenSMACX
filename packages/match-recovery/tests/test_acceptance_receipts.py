@@ -92,6 +92,13 @@ def test_measured_protected_failure_is_reportable_for_worker_repair(request_data
     assert acceptance_result(1, report, request=request_data) == "fail"
 
 
+def test_known_failure_remains_actionable_with_other_unknown_proofs(request_data):
+    report = receipt(request_data, {**PASS, "result": "fail", "build": "fail",
+                                   "runtime": "unknown", "obligations": "unknown"})
+    report.update(measurements=[], current={})
+    assert acceptance_result(1, report, request=request_data) == "fail"
+
+
 def test_request_itself_cannot_erase_the_need_for_independent_approval(request_data):
     request_data["review"]["decision"] = "request_changes"
     with pytest.raises(ValueError, match="reviewed snapshot"):

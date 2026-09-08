@@ -54,7 +54,8 @@ def initialize(root: Path, target: str, python: str, *, image: Path | None = Non
                  "obligations": command("tasks", "obligations", "{task}"),
                  "check": command("tasks", "check-restoration", "{task}", "--image", "{env:RECOVERY_IMAGE}"),
                  "build": command("check-build"),
-                 "migration_check": command("tasks", "check-migration", "{task}", "--image", "{env:RECOVERY_IMAGE}")})
+                 "migration_check": command("tasks", "check-migration", "{task}", "--image", "{env:RECOVERY_IMAGE}"),
+                 "acceptance": command("tasks", "check-acceptance", "{task}", "--image", "{env:RECOVERY_IMAGE}")})
     publish_json(directory / "project.json", {"schema_version": 1,
                  "source": {"image_pin": pin_path, "address_space": "pe:va", "roots": [source_root],
                             "include_paths": [source_root]},

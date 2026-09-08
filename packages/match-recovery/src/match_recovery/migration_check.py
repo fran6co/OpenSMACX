@@ -35,6 +35,25 @@ def _all(values):
             Result.FAIL if Result.FAIL in values else Result.PASS)
 
 
+def unchanged_build_policy(root, task, settings, build):
+    """Both fresh replicas must use the task's unchanged compiler/build policy."""
+    project = read_json(root / "recovery/project.json")
+    def outside_source(name):
+        return not any(Path(name).is_relative_to(directory) for directory in settings.source.roots)
+    policy_inputs = set(build.snapshot(root)["inputs"]) | set(project.get("compiler", {}).get("inputs", []))
+    policy_files = {name for name in policy_inputs if outside_source(name)} | {"recovery/project.json"}
+    baseline = {name: entry for name, entry in _tree(
+        root, task.base_revision, tuple(sorted(policy_files | set(build.input_roots)))).items() if outside_source(name)}
+    unchanged = set(baseline) == policy_files
+    for name, (mode, kind, blob) in baseline.items():
+        path = root / name
+        expected = git(root, "cat-file", "blob", blob) if kind == "blob" else None
+        actual = (os.fsencode(os.readlink(path)) if mode == "120000" and path.is_symlink() else
+                  path.read_bytes() if mode in ("100644", "100755") and path.is_file() and not path.is_symlink() else None)
+        unchanged = unchanged and expected is not None and expected == actual
+    return unchanged
+
+
 def measure_migration(root: Path, task_name: str, image: Path, request: dict, *, progress=None) -> dict:
     root = root.resolve()
     image = image if image.is_absolute() else root / image
@@ -101,22 +120,10 @@ def measure_migration(root: Path, task_name: str, image: Path, request: dict, *,
     # New commands/link options cannot inherit an outside-preservation claim
     # merely because both source versions compile with today's changed policy.
     # Unknown/untracked historical policy inputs refuse this prerequisite.
-    def outside_source(name):
-        return not any(Path(name).is_relative_to(directory) for directory in settings.source.roots)
     # The measurement compiler may use different helpers from the application
     # build. Those helpers must also retain their baseline contents; otherwise
     # both replicas could agree only because today's compiler adapter changed.
-    policy_inputs = set(build.snapshot(root)["inputs"]) | set(project.get("compiler", {}).get("inputs", []))
-    policy_files = {name for name in policy_inputs if outside_source(name)} | {"recovery/project.json"}
-    baseline_policy = {name: entry for name, entry in _tree(
-        root, task.base_revision, tuple(sorted(policy_files | set(build.input_roots)))).items() if outside_source(name)}
-    unchanged_policy = set(baseline_policy) == policy_files
-    for name, (mode, kind, blob) in baseline_policy.items():
-        path = root / name
-        expected = git(root, "cat-file", "blob", blob) if kind == "blob" else None
-        actual = (os.fsencode(os.readlink(path)) if mode == "120000" and path.is_symlink() else
-                  path.read_bytes() if mode in ("100644", "100755") and path.is_file() and not path.is_symlink() else None)
-        unchanged_policy = unchanged_policy and expected is not None and expected == actual
+    unchanged_policy = unchanged_build_policy(root, task, settings, build)
     checks = [run("source", lambda: check_source(root)), run("mappings", lambda: check_mappings(root)),
               run("claim-identities", lambda: check_claims(root))]
     checks += [run("audit:" + name, lambda name=name: audit_source(root, name)) for name in sorted(policy["audits"])]

@@ -17,6 +17,10 @@
     "argv": ["uv", "run", "recover", "tasks", "check-restoration", "{task}", "--image", "{env:OPENSMACX_IMAGE}"],
     "timeout": 3600
   },
+  "acceptance": {
+    "argv": ["uv", "run", "recover", "tasks", "check-acceptance", "{task}", "--image", "{env:OPENSMACX_IMAGE}"],
+    "timeout": 3600
+  },
   "migration_check": {
     "argv": ["uv", "run", "recover", "tasks", "check-migration", "{task}", "--image", "{env:OPENSMACX_IMAGE}"],
     "timeout": 3600

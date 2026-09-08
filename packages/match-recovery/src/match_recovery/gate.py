@@ -86,7 +86,38 @@ def _command(root, image, command):
             "verification": "configured_command_exit_status"}
 
 
-def check_project(root: Path, image: Path, *, jobs: int = 1, progress=None) -> dict:
+def project_inputs(root: Path, image: Path) -> dict:
+    """Recompute the gate's compiler, image, policy and declared input identity."""
+    measurement, build = Measurement.read(root), Build.read(root)
+    path, config, _, environment, policy_path, _ = _configuration(root, measurement.source)
+    preparation = (Build.read(root, key="preparation")
+                   if "preparation" in read_json(root / "recovery/project.json") else None)
+    with image.open("rb") as stream:
+        actual = hashlib.file_digest(stream, "sha256").hexdigest()
+    if actual != image_pin(root, measurement.source):
+        raise ValueError("project gate requires the configured pinned original image")
+    files = {path.relative_to(root).as_posix(), policy_path.relative_to(root).as_posix(), *config["inputs"]}
+    for name in config["input_roots"]:
+        directory = measurement.source.path(root, name)
+        if not directory.is_dir():
+            raise ValueError(f"missing gate input root: {name}")
+        for item in (directory, *directory.rglob("*")):
+            if item.is_symlink():
+                raise ValueError("gate input roots cannot contain symlinks")
+            if item.is_file():
+                files.add(item.relative_to(root).as_posix())
+    result = input_snapshot(root, files, {
+        "measurement": measurement.snapshot(root, {}), "build": build.snapshot(root),
+        "preparation": preparation.snapshot(root) if preparation is not None else None,
+        "image": {"path": str(image), "sha256": actual},
+        "environment": {name: hashlib.sha256(os.environ[name].encode()).hexdigest() if name in os.environ else None
+                        for name in environment}})
+    if any(value is None for value in result["inputs"].values()):
+        raise ValueError("declared project gate input is missing")
+    return result
+
+
+def check_project(root: Path, image: Path, *, jobs: int = 1, progress=None, retain_build=False) -> dict:
     root = root.resolve()
     if type(jobs) is not int or jobs < 1:
         raise ValueError("gate jobs must be a positive integer")
@@ -120,29 +151,7 @@ def check_project(root: Path, image: Path, *, jobs: int = 1, progress=None) -> d
     state = working_state(root)
 
     def snapshot():
-        with image.open("rb") as stream:
-            actual = hashlib.file_digest(stream, "sha256").hexdigest()
-        if actual != image_pin(root, measurement.source):
-            raise ValueError("project gate requires the configured pinned original image")
-        files = {path.relative_to(root).as_posix(), policy_path.relative_to(root).as_posix(), *config["inputs"]}
-        for name in config["input_roots"]:
-            directory = measurement.source.path(root, name)
-            if not directory.is_dir():
-                raise ValueError(f"missing gate input root: {name}")
-            for item in (directory, *directory.rglob("*")):
-                if item.is_symlink():
-                    raise ValueError("gate input roots cannot contain symlinks")
-                if item.is_file():
-                    files.add(item.relative_to(root).as_posix())
-        result = input_snapshot(root, files, {
-            "measurement": measurement.snapshot(root, {}), "build": build.snapshot(root),
-            "preparation": preparation.snapshot(root) if preparation is not None else None,
-            "image": {"path": str(image), "sha256": actual},
-            "environment": {name: hashlib.sha256(os.environ[name].encode()).hexdigest() if name in os.environ else None
-                            for name in environment}})
-        if any(value is None for value in result["inputs"].values()):
-            raise ValueError("declared project gate input is missing")
-        return result
+        return project_inputs(root, image)
 
     initial = snapshot()
 
@@ -176,7 +185,7 @@ def check_project(root: Path, image: Path, *, jobs: int = 1, progress=None) -> d
             run("audit:" + name, lambda name=name: audit_source(root, name))
         for name, command in commands.items():
             run("project:" + name, lambda command=command: _command(root, image, command))
-        built = run("build", lambda: check_build(root))
+        built = run("build", lambda: check_build(root, **({"retain": True} if retain_build else {})))
         # One compiler environment by default. Pure checks above finish before
         # the build, and compiled sweeps are serial; only the explicit match
         # sweep jobs parameter can use caller-provisioned compiler concurrency.

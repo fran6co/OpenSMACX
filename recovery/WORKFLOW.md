@@ -226,8 +226,13 @@ Receipts are disposable verification outputs, not source claims or history.
 A measured acceptance failure feeds its snapshot-bound report back to the worker
 within the remaining round budget, then requires fresh checks and review. Unknown
 acceptance stops for evidence; it does not consume speculative spelling rounds.
-This project still lacks the full acceptance verifier, so the handoff capability
-is not an accepted application pilot or a working-game claim.
+This project now invokes native `tasks check-acceptance`: the full configured
+gate, one retained fresh build, restoration and preservation checks, followed by
+configured structure/runtime proof commands. Those last proof capabilities are
+not configured for OpenSMACX yet and its application link still fails. Missing
+capabilities stay unknown; known failures remain actionable even when other
+dimensions are unknown. The handoff is not an accepted application pilot or a
+working-game claim. See the package README for the proof-command contract.
 A cross-entity finding pauses the loop for coordinator action; it is not discarded
 as out of scope. Inspect `tasks status`, then use `tasks expand` and `tasks resolve`
 with their revision-checked decision arguments. Incorporation needs source
