@@ -101,6 +101,41 @@ def test_only_exact_section_alignment_fill_is_permitted():
     assert compare(code, code)["result"] == Result.PASS
 
 
+@pytest.mark.parametrize("kind", [ABS, REL])
+@pytest.mark.parametrize("offset", [4, 8])
+def test_valid_candidate_relocation_past_original_is_a_boundary_failure(kind, offset):
+    report = compare(bytes(6), bytes(12), (Relocation(offset, kind, "target"),),
+                     original_absolute_sites=frozenset())
+    assert report["result"] == report["boundary"] == Result.FAIL
+    assert report["bytes"] == report["references"] == Result.UNKNOWN
+    assert report["original_size"] == 6 and report["candidate_size"] == 12
+    assert report["candidate_relocations_outside_original"] == [offset]
+
+
+@pytest.mark.parametrize("kind", [ABS, REL])
+@pytest.mark.parametrize("offset", [0, 4])
+def test_relocation_straddling_or_inside_alignment_fill_is_not_padding(kind, offset):
+    report = compare(b"\xc3", b"\xc3" + b"\xcc" * 15,
+                     (Relocation(offset, kind, "target"),), alignment=16,
+                     original_absolute_sites=frozenset())
+    assert report["result"] == report["boundary"] == Result.FAIL
+    assert report["candidate_relocations_outside_original"] == [offset]
+
+
+@pytest.mark.parametrize("original_size", [2, 8])
+def test_malformed_candidate_relocations_are_refused_even_when_size_differs(original_size):
+    with pytest.raises(ValueError, match="out-of-bound"):
+        compare(bytes(original_size), bytes(4), (Relocation(1, REL, "target"),))
+    with pytest.raises(ValueError, match="overlapping"):
+        compare(bytes(original_size), bytes(6),
+                (Relocation(1, REL, "a"), Relocation(2, REL, "b")))
+
+
+def test_original_relocations_still_require_original_not_candidate_bounds():
+    with pytest.raises(ValueError, match="original relocation"):
+        compare(bytes(4), bytes(8), original_absolute_sites=frozenset({1}))
+
+
 def test_ambiguous_and_out_of_bounds_relocations_are_refused():
     with pytest.raises(ValueError, match="overlapping"):
         compare(bytes(8), bytes(8), (Relocation(1, ABS, "a"), Relocation(2, REL, "b")))

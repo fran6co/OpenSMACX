@@ -1916,6 +1916,13 @@ byte-distance count, known differing bytes, and finally candidate name. A shared
 unmeasurable neighbor no longer hides a newly exact function behind an alphabetical
 tie. Strict reference/boundary failures remain failures even when compared bytes
 agree. Missing distances are counted separately, never treated as zero mismatches.
+The bounded-code comparator validates relocations against the candidate section,
+not the original function's length. Valid relocation fields extending past the
+original extent produce a measured boundary failure, with their offsets in
+`candidate_relocations_outside_original`; they cannot be treated as alignment
+padding. Overlapping fields or fields outside the candidate remain malformed,
+unverifiable evidence. Neither case expands the original mapping or proves
+reference agreement.
 
 Losses include previously passing mapped neighbors outside the task and bounded
 initial data, keyed by original identity and source owner rather than proposed

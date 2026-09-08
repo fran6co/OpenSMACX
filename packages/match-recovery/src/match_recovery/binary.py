@@ -40,6 +40,8 @@ def compare_bound_code(span: Span, original: bytes, candidate: bytes,
     tested. The i386 addend is the candidate's own four-byte relocation field.
     Object-section alignment may account for NOP/INT3 fill *after* the declared
     original extent; it may not account for additional code or jump-table data.
+    Relocations must fit the candidate itself. A valid field past the original
+    extent is a boundary mismatch, not malformed evidence or alignment fill.
     This is a byte/reference check, not a proof of C++ object ownership or ABI.
     """
     size = span.end - span.start
@@ -50,22 +52,25 @@ def compare_bound_code(span: Span, original: bytes, candidate: bytes,
     for target in targets.values():
         if type(target) is not int or not 0 <= target < 2**32:
             raise ValueError("resolved i386 target must be a 32-bit address")
-    rows, occupied = [], set()
+    rows, occupied, outside_original = [], set(), []
     for relocation in relocations:
         sites = set(range(relocation.offset, relocation.offset + 4))
-        if relocation.offset + 4 > size or occupied & sites:
+        if relocation.offset + 4 > len(candidate) or occupied & sites:
             raise ValueError("overlapping or out-of-bound relocation")
         occupied.update(sites)
+        if relocation.offset + 4 > size:
+            outside_original.append(relocation.offset)
     if any(type(site) is not int or not 0 <= site <= size - 4 for site in original_absolute_sites):
         raise ValueError("original relocation lies outside its declared span")
     tail = candidate[size:]
     extent_ok = (len(candidate) == size or
                  (len(candidate) == size + (-size % alignment) and bool(tail)
                   and all(byte in (0x90, 0xCC) for byte in tail)))
-    if not extent_ok:
+    if not extent_ok or outside_original:
         return {"result": Result.FAIL, "boundary": Result.FAIL,
                 "bytes": Result.UNKNOWN, "references": Result.UNKNOWN,
                 "original_size": size, "candidate_size": len(candidate),
+                "candidate_relocations_outside_original": sorted(outside_original),
                 "reason": "candidate exceeds or misses the independently recorded extent"}
     linked = bytearray(candidate[:size])
     unresolved = set()

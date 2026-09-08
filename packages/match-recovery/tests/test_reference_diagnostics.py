@@ -37,6 +37,24 @@ def test_missing_original_companion_extent_does_not_hide_emitted_edges():
     assert entry["symbol"] == "$tail2" and entry["binding_address"] is None
 
 
+@pytest.mark.parametrize("offset,expected", [(5, "fail"), (14, "unknown")])
+def test_late_candidate_reference_distinguishes_wrong_extent_from_malformed_object(offset, expected):
+    raw = pe_fixture(b"\xc3")
+    origin = Origin(hashlib.sha256(raw).hexdigest(), "pe:va", 0x401000)
+    binding = FunctionBinding(origin, (Span(0x401000, 0x401001),), "_f", "code/f.cc")
+    obj = Coff(coff_fixture(b"\x90" * 4 + b"\xe8\0\0\0\0\xc3", relocation=(offset, 1, 20)))
+    row, = check_objects((binding,), {binding.unit: obj}, PeImage(raw, origin.image_sha256))
+    assert row["result"] == expected
+    entry, = row["diagnostic"]["emitted_references"]
+    assert entry["offset"] == offset and entry["symbol"] == "_g"
+    if expected == "fail":
+        assert row["boundary"] == "fail" and row["references"] == "unknown"
+        assert row["original_size"] == 1 and row["candidate_size"] == 16
+        assert row["candidate_relocations_outside_original"] == [offset]
+    else:
+        assert "out-of-bound" in row["reason"]
+
+
 def test_diagnostic_cap_does_not_skip_reference_damage(monkeypatch):
     monkeypatch.setattr("match_recovery.bound_objects.MAX_REFERENCE_DIAGNOSTICS", 0)
     binding, objects, image = multispan_fixture()
