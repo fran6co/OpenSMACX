@@ -16,6 +16,7 @@ def test_new_target_needs_no_library_registration_and_never_overwrites(tmp_path,
     assert not report["ready_for_recovery"]
     config = json.loads((tmp_path / "recovery/driver.json").read_text())
     assert config["target"] == "never-seen-before"
+    assert config["acceptance_scope"] == "change"
     assert "check-acceptance" in config["acceptance"]["argv"]
     project = json.loads((tmp_path / "recovery/project.json").read_text())
     assert project["mappings"] == {"compile_commands": "build/compile_commands.json", "forwarder_macros": []}

@@ -40,6 +40,12 @@ restoration dependencies. Do not erase a claim or call the migration accepted.
 Only configured independent review and migration checks can admit it. Preserve
 unfinished scoped edits for resumption; never stash or silently revert them.
 
+Ordinary runs target per-change acceptance, not completion of the whole game.
+`change_accepted` requires independent review and fresh native checkpoint checks;
+it does not require unrelated unfinished functions to match. `migration_admitted`
+retains explicitly permitted byte regressions. Neither gives a worker permission
+to commit, collect, weaken evidence or call the whole application finished.
+
 The configured check includes current historical-obligation measurements in
 `details` and the joint scoped diagnostics in `candidate.checks`. Work from both:
 an old claim missing from current source still needs restoration. Unknown

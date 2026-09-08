@@ -58,12 +58,66 @@ def setup(project, *, damage=None, disappear=False, restored=False):
     return permission, execute, calls
 
 
-def run(project, **options):
+def run(project, *, acceptance_scope="full_project", **options):
     permission, execute, calls = setup(project, **options)
     root, task = project
-    result = drive(root, task.task_id, CONFIGURED, WORKER, iterations=1,
+    result = drive(root, task.task_id, {**CONFIGURED, "acceptance_scope": acceptance_scope}, WORKER, iterations=1,
                    reviewer_configuration=REVIEWER, migration_configuration=permission, execute=execute)
     return result, calls
+
+
+def test_completed_change_does_not_require_whole_application_acceptance(project):
+    report, calls = run(project, restored=True, acceptance_scope="change")
+    assert report["stop_reason"] == "change_accepted"
+    assert report["acceptance_scope"] == "change"
+    assert report["ready_for_checkpoint"] and not report["ready_for_collection"]
+    assert report["migration"]["exit_code"] == 0
+    assert "migration" in calls and "acceptance" not in calls
+
+
+def test_change_mode_preserves_explicitly_permitted_structural_regressions(project):
+    report, calls = run(project, acceptance_scope="change")
+    assert report["stop_reason"] == "migration_admitted"
+    assert report["ready_for_checkpoint"] and not report["ready_for_collection"]
+    assert report["migration"]["tracked"] and "acceptance" not in calls
+
+
+@pytest.mark.parametrize("binary", [None, "unknown", "fail", "pass"])
+def test_review_hint_does_not_skip_new_body_matching_in_change_mode(project, binary):
+    permission, original, calls = setup(project, restored=True)
+    def execute(command, root, name, payload):
+        if command.argv[0] == "check":
+            return 3, {"result": "unknown", "next_action": "review_structure",
+                       "candidate": {"checks": {"binary": {"result": binary}}}}
+        return original(command, root, name, payload)
+    report = drive(project[0], project[1].task_id, {**CONFIGURED, "acceptance_scope": "change"},
+                   WORKER, iterations=1, reviewer_configuration=REVIEWER,
+                   migration_configuration=permission, execute=execute)
+    assert report["stop_reason"] == ("change_accepted" if binary == "pass" else "change_verification_required")
+    assert not report["ready_for_collection"] and "acceptance" not in calls
+
+
+@pytest.mark.parametrize("restored", [True, False])
+def test_change_mode_without_regression_permission_only_accepts_passes(project, restored):
+    permission, original, calls = setup(project, restored=restored)
+    task = project[1]
+    permission.update(migration_id="change:" + task.task_id, evidence=["authorized task:" + task.task_id], allowed=[])
+    def run_change():
+        return drive(project[0], task.task_id, {**CONFIGURED, "acceptance_scope": "change"}, WORKER,
+                     iterations=1, reviewer_configuration=REVIEWER, execute=original)
+    if restored:
+        assert run_change()["stop_reason"] == "change_accepted"
+    else:
+        with pytest.raises(ValueError, match="not admissible"):
+            run_change()
+    assert "acceptance" not in calls
+
+
+@pytest.mark.parametrize("field", ["obligations", "migration_check"])
+def test_change_mode_requires_real_preservation_and_history_configuration(project, field):
+    config = {key: value for key, value in CONFIGURED.items() if key != field}
+    with pytest.raises(ValueError, match="source obligations"):
+        drive(project[0], project[1].task_id, {**config, "acceptance_scope": "change"}, WORKER, iterations=1)
 
 
 def test_admitted_structural_regression_is_not_collection_ready(project):
@@ -116,9 +170,10 @@ def test_resume_must_restore_before_full_acceptance(project):
     lambda r: r.update(outside_scope="unknown"),
     lambda r: r.update(snapshot="b" * 64),
 ])
-def test_incomplete_or_stale_evidence_is_never_an_allowed_regression(project, damage):
+@pytest.mark.parametrize("scope", ["change", "full_project"])
+def test_incomplete_or_stale_evidence_is_never_an_allowed_regression(project, damage, scope):
     with pytest.raises(ValueError):
-        run(project, damage=damage)
+        run(project, damage=damage, acceptance_scope=scope)
 
 
 def test_unpermitted_matching_regression_is_refused(project):

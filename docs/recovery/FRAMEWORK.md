@@ -302,10 +302,17 @@ establish completion of this program.
   approval cannot be replayed through standalone CLI entry after source edits;
   publication of the review's own journal remains valid. Strict
   restoration, declared structure, outside preservation and baseline build policy
-  remain native prerequisites that hooks cannot waive. Default initialization and
-  OpenSMACX's driver use this package command; no local acceptance dispatcher is
+  remain native prerequisites that hooks cannot waive. The full-application path
+  also refuses explicit assembly/emitted instruction spellings through a bounded
+  native lexical source-form check; absence of those tokens is not a semantic proof.
+  Default initialization and OpenSMACX's driver now select `acceptance_scope: change`:
+  independent review and native checkpoint verification can accept a completed
+  change without waiting for unrelated unfinished application functions. Explicit
+  regression permission is still required for a tracked structural checkpoint;
+  neither outcome collects/commits source or claims a finished game. The stronger
+  full-project boundary remains explicitly selectable. No local acceptance dispatcher is
   needed. Synthetic build/history/COFF and subprocess/driver controls exercise
-  admission and refusal. OpenSMACX still needs its link fixed, complete proof
+  admission and refusal. OpenSMACX links, but still needs complete application proof
   capabilities configured and a real autonomous pilot before acceptance is proven.
   The native compiler control now uses the generated driver commands
   and real gate/restoration/preservation/build/proof subprocesses throughout.

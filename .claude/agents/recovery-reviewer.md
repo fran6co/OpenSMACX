@@ -30,6 +30,13 @@ structural change. Explain what supports the migration, its affected entities an
 remaining restoration work. Unknown checks do not become passing checks because
 you approve a design. A review alone cannot admit a migration or authorize merge.
 
+Distinguish per-change acceptance from final application acceptance. Review the
+authorized ownership change and its effects on callers/dependencies; report scope
+gaps, but do not demand recovery of unrelated unfinished functions. The native
+checkpoint verifier still must prove build/link, declared requirements, references,
+protected obligations and outside-scope preservation. Full runtime/lifetime proof
+is a separate application boundary, not implied by `change_accepted`.
+
 The reviewer adapter returns the unchanged supplied `snapshot`, a `decision`
 (`approve` or `request_changes`), nonempty `evidence`, and `feedback`. Explicit
 supersessions/retractions require the protocol's independently justified entries;

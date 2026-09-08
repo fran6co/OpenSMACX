@@ -70,7 +70,13 @@ uv run tools/osmx.py check
 
 The last command is the retained full legacy gate: never pipe it. Exit 0 is
 clean, 1 a failure, 3 unmeasurable—not green. This project's strict full
-acceptance remains unfinished. The driver now invokes native
+acceptance remains unfinished. Ordinary driver runs now use per-change acceptance:
+native checkpoint verification plus independent review can yield `change_accepted`
+without waiting for the whole game. Build/link, scoped matching/restoration,
+declared structure/references and outside-scope preservation must pass; only
+explicit coordinator permission admits temporary matching regressions (exit 2).
+Exit 0 in change mode means readiness for a coordinator checkpoint, not game
+acceptance or automatic collection. Use `--acceptance-scope full_project` to invoke
 `recover tasks check-acceptance` with a fresh reviewed request on stdin. It owns
 the full gate, retained build, restoration/preservation and proof sequencing;
 OpenSMACX still lacks complete structure/runtime proof commands. The application

@@ -134,9 +134,12 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
     if type(iterations) is not int or not 1 <= iterations <= 100:
         raise ValueError("iterations must be 1..100")
     required = {"schema_version", "target", "context", "check"}
-    if (not required <= set(configuration) or set(configuration) - required - {"acceptance", "obligations", "migration_check", "build"}
+    if (not required <= set(configuration) or set(configuration) - required - {"acceptance", "acceptance_scope", "obligations", "migration_check", "build"}
             or type(configuration["schema_version"]) is not int or configuration["schema_version"] != 1):
         raise ValueError("invalid driver configuration")
+    acceptance_scope = configuration.get("acceptance_scope", "full_project")
+    if acceptance_scope not in ("change", "full_project"):
+        raise ValueError("acceptance_scope must be change or full_project")
     if set(worker_configuration) != {"author", "command"}:
         raise ValueError("worker configuration needs author and command")
     require_text(worker_configuration["author"], "worker author")
@@ -155,7 +158,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
     acceptance = Command.read(configuration["acceptance"]) if "acceptance" in configuration else None
     inventory_command = Command.read(configuration["obligations"]) if "obligations" in configuration else None
     migration_command = Command.read(configuration["migration_check"]) if "migration_check" in configuration else None
-    if migration_configuration is not None and (inventory_command is None or migration_command is None):
+    if (migration_configuration is not None or acceptance_scope == "change") and (inventory_command is None or migration_command is None):
         raise ValueError("migration requires source obligations and migration-check adapters")
     root = root.resolve()
     store = TaskStore(root)
@@ -171,6 +174,11 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
         if task.target != configuration["target"]:
             raise ValueError("task target disagrees with configured target adapter")
         selected, editable = store.scope(task_name)
+        if acceptance_scope == "change" and migration_configuration is None:
+            # Ordinary change acceptance grants NO regression permission. Only
+            # an explicit coordinator decision can relax matching temporarily.
+            migration_configuration = {"migration_id": "change:" + task_name, "author": task.author,
+                                       "evidence": ["authorized task:" + task_name], "allowed": []}
         permission = permissions(migration_configuration, task, selected) if migration_configuration is not None else None
         protected = {}
         initial_decisions = store.decisions(task_name)
@@ -198,6 +206,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                        if coordinator_configuration is not None else {}),
                     "check": check, "check_is_current": check is not None and current,
                     **({"acceptance_feedback": acceptance_feedback} if acceptance_feedback else {}),
+                    "acceptance_scope": acceptance_scope,
                     "ready_for_collection": False, "persisted_results": False}
         def readonly(command, payload):
             before = working_state(root)
@@ -275,7 +284,19 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                 if migration_report.exit_code == GateExit.TRACKED_REGRESSIONS:
                     output = finish("migration_admitted", round_index, check)
                     output.update(review=decision, migration=asdict(migration_report))
+                    output["ready_for_checkpoint"] = True
                     return output  # Checkpoint only, never full acceptance or collection.
+                if acceptance_scope == "change":
+                    # Protected history alone does not cover newly recovered
+                    # bodies. Their current scoped binary check must pass too.
+                    binary = check.get("candidate", {}).get("checks", {}).get("binary", {}).get("result")
+                    if check["result"] != "pass" and not (structural_handoff and binary == "pass"):
+                        output = finish("change_verification_required", round_index, check)
+                        output.update(review=decision, migration=asdict(migration_report))
+                        return output
+                    output = finish("change_accepted", round_index, check)
+                    output.update(review=decision, migration=asdict(migration_report), ready_for_checkpoint=True)
+                    return output  # Current change only; no claim about the whole application.
             if check["result"] != "pass" and not structural_handoff:
                 output = finish("structural_checkpoint_reviewed", round_index, check)
                 output["review"] = decision

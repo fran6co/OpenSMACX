@@ -55,7 +55,7 @@ FLAGS = ("/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Z7")
 METHOD = "?add@Owner@@QAEHH@Z"
 
 
-def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, authorize=True):
+def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, authorize=True, proofs=True):
     if not (VC6_ROOT / "BIN/CL.EXE").is_file():
         pytest.skip("VC6 is not installed")
     for name in ("CL", "_CL_", "VC6_INCLUDE"):
@@ -105,6 +105,8 @@ def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, autho
         assert set(data[end - addresses[name]:]) <= {0x90, 0xCC}
         spans[name] = Span(addresses[name], end)
     initialize(root, "native-control", sys.executable, image=image)
+    driver_path = local / "driver.json"
+    driver_path.write_text(json.dumps({**json.loads(driver_path.read_text()), "acceptance_scope": "full_project"}))
     survey = survey_image(root, image)
     assert any(row["origin"]["address"] == addresses[METHOD] for row in survey["candidates"])
     (root / ".gitignore").write_text("build/\n__pycache__/\n")
@@ -121,7 +123,7 @@ def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, autho
     # local translation units, not another handwritten source/gate catalogue.
     config.update(compiler={"command": command("compile"), "inputs": inputs, "environment": env},
                   measurement={**config["measurement"], "flag_sets": [list(FLAGS[:-1])], "layout_flags": ["/Z7"]},
-                  acceptance={"checks": {name: command(name) for name in ("structure", "runtime")},
+                  acceptance={"checks": {name: command(name) for name in ("structure", "runtime")} if proofs else {},
                               "inputs": inputs, "environment": env})
     config_file.write_text(json.dumps(config))
     if provider is not None:
@@ -197,6 +199,30 @@ def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, autho
     git("add", "recovery")
     git("commit", "-m", "Authorize ownership task")
     return root, image, task, git, evidence
+
+
+def test_real_change_acceptance_does_not_require_application_proof_capabilities(tmp_path, monkeypatch):
+    provider = {"schema_version": 1, "artifacts": "build/agents"}
+    for role in ("worker", "coordinator", "reviewer"):
+        provider[role] = {"command": {"argv": [sys.executable, "recovery/local_agents.py", role, "{request}"], "timeout": 30},
+                          "instructions": [], "response": "stdout"}
+    root, image, task, git, evidence = prepared_project(tmp_path, monkeypatch, provider=provider, proofs=False)
+    monkeypatch.setenv("RECOVERY_IMAGE", str(image))
+    head = git("rev-parse", "HEAD")
+    result = subprocess.run([sys.executable, "-m", "match_recovery.cli", "run", task.task_id,
+                             "--root", str(root), "--acceptance-scope", "change", "--iterations", "2",
+                             "--reviewer", "recovery/reviewer.json", "--coordinator", "recovery/coordinator.json"],
+                            cwd=tmp_path, capture_output=True, timeout=180)
+    assert result.returncode == 0, result.stdout.decode() + result.stderr.decode()
+    report = json.loads(result.stdout)
+    assert report["stop_reason"] == "change_accepted", report
+    assert report["ready_for_checkpoint"] and not report["ready_for_collection"]
+    assert report["migration"] == {"exit_code": 0, "failed": [], "unknown": [], "tracked": []}
+    assert "acceptance" not in report
+    assert report["worker_rounds"] == 2 and report["coordinator_decisions"] == 2
+    assert (root / "src/owner.h").read_text() == evidence + CLASSES
+    assert TaskStore(root).read(task.task_id).base_revision == task.base_revision
+    assert git("rev-parse", "HEAD") == head
 
 
 @pytest.mark.parametrize("damage", [None, "runtime", "structure"])

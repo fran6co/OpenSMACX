@@ -44,6 +44,7 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("--worker", type=Path, default=Path("recovery/worker.json"))
     run.add_argument("--reviewer", type=Path, help="Independent read-only reviewer command configuration")
     run.add_argument("--migration", type=Path, help="Coordinator permission for scoped temporary regressions")
+    run.add_argument("--acceptance-scope", choices=("change", "full_project"), help="Override the configured acceptance boundary")
     run.add_argument("--coordinator", type=Path, help="Read-only discovery coordinator with explicit delegated scope")
     run.add_argument("--iterations", type=int, default=3)
     start = commands.add_parser("start", help="Select/checkpoint one ownership task through a delegated planner, then run recovery")
@@ -54,6 +55,7 @@ def parser() -> argparse.ArgumentParser:
     start.add_argument("--reviewer", type=Path)
     start.add_argument("--coordinator", type=Path)
     start.add_argument("--migration", type=Path)
+    start.add_argument("--acceptance-scope", choices=("change", "full_project"))
     start.add_argument("--iterations", type=int, default=3)
     from .project_commands import register
     register(commands)
@@ -99,13 +101,16 @@ def main(argv: Sequence[str] | None = None) -> int:
                            reviewer_configuration=config(args.reviewer) if args.reviewer else None,
                            migration_configuration=config(args.migration) if args.migration else None,
                            coordinator_configuration=config(args.coordinator) if args.coordinator else None)
+            configuration = config(args.config)
+            if args.acceptance_scope is not None:
+                configuration = {**configuration, "acceptance_scope": args.acceptance_scope}
             if args.command == "start":
                 from .planning import start
-                output = start(args.root, config(args.config), config(args.worker), config(args.planner), **options)
+                output = start(args.root, configuration, config(args.worker), config(args.planner), **options)
             else:
-                output = drive(args.root, args.task, config(args.config), config(args.worker), **options)
+                output = drive(args.root, args.task, configuration, config(args.worker), **options)
             print(json.dumps(output, indent=2, sort_keys=True))
-            return (0 if output["ready_for_collection"] else
+            return (0 if output["ready_for_collection"] or output["stop_reason"] == "change_accepted" else
                     2 if output["stop_reason"] == "migration_admitted" else 3)
         elif args.command == "tasks" and (args.action == "status" or (args.action == "create" and args.file)):
             store = TaskStore(args.root)

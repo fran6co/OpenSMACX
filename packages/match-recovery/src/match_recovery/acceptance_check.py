@@ -25,6 +25,7 @@ from .preservation import check_preservation
 from .records import read_json
 from .restoration import measure_restoration
 from .source_obligations import task_obligations
+from .source_form import check_source_form
 from .reviews import ReviewStore, acceptance_result, merge_interpretations, pending_interpretations
 from .structural_requirements import declared_outcome
 from .tasks import TaskStore
@@ -163,10 +164,15 @@ def measure_acceptance(root: Path, task_name: str, image: Path, request: dict, *
     restored = run("restoration", lambda: measure_restoration(
         root, task_name, image, review=request["review"], review_snapshot=request["snapshot"]))
     preservation = run("preservation", lambda: check_preservation(root, task_name))
+    source_form = run("cpp-source-form", lambda: check_source_form(root))
     policy = run("baseline-build-policy", lambda: {"result": "pass" if unchanged_build_policy(
         root, task, Measurement.read(root), Build.read(root)) else "unknown"})
     native_structure = (declared_outcome(restored.get("structural_requirements", []), interpretations,
                                          review=request["review"])[0] if interpretations else "pass")
+    native_structure = _all((native_structure, source_form["result"]))
+    if source_form["result"] != "pass":
+        report["findings"].append({"dimension": "structure", "message": "Native C++ source-form check did not pass.",
+                                   "evidence": [_diagnostic("cpp-source-form", source_form)]})
     binary = restored.get("candidate", {}).get("checks", {}).get("binary", {}).get("result", "unknown")
     report["references"] = restored.get("references", "unknown")
     measurements = {row["obligation_id"]: row for row in restored.get("measurements", [])}

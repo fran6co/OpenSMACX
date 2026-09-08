@@ -122,7 +122,8 @@ def test_native_measured_checkpoint_tracks_regression_then_restores_same_obligat
     assert TaskStore(migration).read("owner").base_revision == payload["task"]["base_revision"]
 
 
-def test_driver_uses_native_checkpoint_then_resumes_without_resetting_baseline(migration):
+@pytest.mark.parametrize("scope", ["change", "full_project"])
+def test_driver_uses_native_checkpoint_then_resumes_without_resetting_baseline(migration, scope):
     task = TaskStore(migration).read("owner")
     permission = request(migration)["permission"]
     path = migration / "code/unit.cc"
@@ -133,7 +134,7 @@ def test_driver_uses_native_checkpoint_then_resumes_without_resetting_baseline(m
     def command(name):
         return {"argv": [name], "timeout": 10}
 
-    config = {"schema_version": 1, "target": task.target,
+    config = {"schema_version": 1, "target": task.target, "acceptance_scope": scope,
               **{name: command(name) for name in ("context", "check", "obligations", "migration_check")}}
 
     def execute(command, root, name, payload):
@@ -171,7 +172,7 @@ def test_driver_uses_native_checkpoint_then_resumes_without_resetting_baseline(m
     path.write_text(before)
     calls.clear()
     second = run()
-    assert second["stop_reason"] == "full_acceptance_gate_required"
+    assert second["stop_reason"] == ("change_accepted" if scope == "change" else "full_acceptance_gate_required")
     assert second["migration"]["exit_code"] == 0 and not second["migration"]["tracked"]
     assert not second["ready_for_collection"] and "worker" not in calls
     assert "migration_check" in calls

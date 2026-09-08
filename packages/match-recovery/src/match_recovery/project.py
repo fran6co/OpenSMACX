@@ -49,7 +49,7 @@ def initialize(root: Path, target: str, python: str, *, image: Path | None = Non
             pin = hashlib.file_digest(stream, "sha256").hexdigest()
     directory = root / "recovery"
     command = lambda *args: {"argv": [python, "-m", "match_recovery.cli", *args], "timeout": 3600}
-    publish_json(directory / "driver.json", {"schema_version": 1, "target": target,
+    publish_json(directory / "driver.json", {"schema_version": 1, "target": target, "acceptance_scope": "change",
                  "context": command("tasks", "context", "{task}"),
                  "obligations": command("tasks", "obligations", "{task}"),
                  "check": command("tasks", "check-restoration", "{task}", "--image", "{env:RECOVERY_IMAGE}"),

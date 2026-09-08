@@ -139,8 +139,8 @@ def measure_migration(root: Path, task_name: str, image: Path, request: dict, *,
     restored = run("restoration", lambda: measure_restoration(
         root, task_name, image, review=request["review"], review_snapshot=request["snapshot"]))
     preservation = run("preservation", lambda: check_preservation(root, task_name))
-    structural, _ = declared_outcome(restored.get("structural_requirements", []), interpretations,
-                                    review=request["review"])
+    structural = (declared_outcome(restored.get("structural_requirements", []), interpretations,
+                                   review=request["review"])[0] if interpretations else Result.PASS)
     measurements = {row["obligation_id"]: row for row in restored.get("measurements", [])}
     current = {key: value for key, value in restored.get("current", {}).items() if key in protected}
     for key in sorted(protected.keys() - measurements.keys()):

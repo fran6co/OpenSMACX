@@ -771,6 +771,33 @@ recorded snapshot, not a cached verdict or proof about later source.
 
 ### Native acceptance verifier
 
+Recovery changes and completed applications have different acceptance boundaries.
+New projects default to `acceptance_scope: "change"` in `recovery/driver.json`.
+`recover run` and `recover start` also accept `--acceptance-scope change|full_project`;
+the choice is included in the independently reviewed policy snapshot.
+
+Change mode uses the native checkpoint verifier below: fresh build/link, source
+integrity, mappings/history, audit ratchets, bounded declared structure, references,
+protected obligations and baseline/current outside-function preservation. Newly
+recovered bodies must also pass the current scoped binary check. An independent
+review remains mandatory. Missing evidence is not an accepted change. No regression
+permission is inferred: the default permission has an empty allowed set. An explicit
+coordinator `--migration` decision can admit only the named measured matching failures.
+
+- `change_accepted` / exit 0: the reviewed change passes this bounded verification.
+- `migration_admitted` / exit 2: a reviewed structural checkpoint retains named
+  matching restoration obligations; it is not a completed recovery.
+- Both expose `ready_for_checkpoint: true`, retain `ready_for_collection: false`,
+  and do not invoke whole-application acceptance. No source is committed or collected.
+
+Unrelated unfinished functions need not match the original to accept a change;
+their preservation must still be measured. Global source/mapping/audit defects can
+still prevent checkpoint admission. This boundary does not prove whole-linked-image
+equivalence, complete lifetime correctness, dependency ABI or runtime behavior.
+Missing bounded structural witnesses and unsupported preservation coverage still
+refuse admission. Use `--acceptance-scope full_project` for the stronger application
+boundary below; configurations without the scope field retain that boundary.
+
 `recover tasks check-acceptance TASK --image IMAGE` reads the complete driver
 request from stdin and returns the request-bound receipt above. `init` configures
 this installed command; no project acceptance dispatcher is required. It runs
@@ -780,6 +807,15 @@ preservation and unchanged baseline compiler/build policy. Failed native checks
 cannot be waived by review or external proofs. A failed/unknown whole gate stops
 before proof commands run. Compiler/image/source/Git/task changes invalidate the
 epoch; the verifier never stamps annotations or changes the task baseline.
+
+The final application boundary also runs `source_form.check_source_form`: explicit
+`asm`/`__asm`/`_emit` spellings fail even when byte comparisons and proof commands
+pass. Comments and literals are ignored; line splices and raw strings are handled.
+Unsupported lexing is unknown. All configured application branches are scanned;
+seed roots and the exact files in source-owned upstream component declarations
+are reported separately, not treated as application recoveries. This is a bounded
+lexical check without macro expansion, not proof of genuine hierarchy or upstream
+source identity. It does not impose unrelated assembly cleanup on every checkpoint.
 
 Complete structure and runtime are distinct from declared member offsets and
 successful linking. Configure trusted proof commands in `recovery/project.json`:

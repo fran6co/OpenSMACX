@@ -163,6 +163,16 @@ def test_passing_proofs_cannot_waive_native_binary_or_layout(acceptance, proofs,
     assert report["result"] == report[dimension] == "fail"
 
 
+@pytest.mark.parametrize("body,result", [("__asm { _emit 0x90 }", "fail"), ('R"x(unclosed', "unknown")])
+def test_passing_proofs_cannot_waive_native_source_form(acceptance, proofs, body, result):
+    path = acceptance / "code/unit.cc"
+    path.write_text(path.read_text() + "\n" + body + "\n")
+    report = measure(acceptance)
+    assert report["result"] == report["structure"] == result
+    assert any("cpp-source-form" in str(row["evidence"]) for row in report["findings"])
+    assert len(proofs) == 2
+
+
 @pytest.mark.parametrize("result", ["fail", "unknown"])
 def test_outside_preservation_is_mandatory(acceptance, proofs, monkeypatch, result):
     monkeypatch.setattr(native, "check_preservation", lambda *a: {"result": result})

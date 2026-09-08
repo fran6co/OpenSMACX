@@ -583,13 +583,13 @@ handlers and Windows descendant isolation require external job/sandbox containme
 this runner never shuts down a shared Wine server. Compiler timeout/nonzero exit
 never yields a usable object or a successful measurement.
 
-Without independent review and a configured full acceptance gate, driver stops
-return CLI exit 3 and `ready_for_collection:false`. The supplied OpenSMACX
-configuration now invokes the native `tasks check-acceptance` command. This
-coordinates verification, but OpenSMACX still lacks complete structure/runtime
+Without independent review and the configured verifier for the chosen boundary,
+the driver cannot accept a change. The supplied OpenSMACX configuration uses
+per-change native checkpoint verification; `--acceptance-scope full_project`
+invokes `tasks check-acceptance`. OpenSMACX still lacks complete structure/runtime
 proof commands; it cannot yet yield full acceptance. The application now links
 with explicitly unfinished placeholders, not complete recovered behavior.
-Its scoped checker cannot stand in for those missing proofs.
+Its per-change checks cannot stand in for those missing application proofs.
 The configured check is now `tasks check-restoration <task> --image <image>`,
 which remeasures historical obligations as well as running both binary/reference
 and declared-layout checks. Workers receive the joint report under `candidate`,
@@ -711,6 +711,20 @@ baseline compiler/build policy. Its proof-command boundary is documented under
 passing hooks cannot override failing native checks. OpenSMACX has not configured
 those hooks yet. Its application links with unfinished placeholders. This is tested orchestration,
 not a verified autonomous application acceptance pilot.
+
+The ordinary recovery driver now defaults to **per-change** acceptance
+(`acceptance_scope: "change"`). Fresh independent review, build/link, scoped binary
+checks, historical obligations, declared structure/references and outside-scope
+preservation can yield `change_accepted` without requiring unfinished unrelated
+functions to match or application runtime hooks to exist. Its exit 0 means the
+change is ready for a coordinator checkpoint, not that the game is finished.
+Explicitly permitted structural regressions still yield `migration_admitted` / 2.
+Neither path collects or commits source; integrated changes must be reverified.
+Use `recover run ... --acceptance-scope full_project` for the application boundary
+described above. That boundary also rejects explicit inline assembly/emitted
+instructions through the native C++ source-form check; it is not a whole-program
+semantic proof. See the package README for exact coverage and limitations.
+
 `recovery/tests/test_native_acceptance_compiler.py` exercises that installed path
 with a freshly built test-owned executable, local compiler/build/proof commands,
 and the real whole gate and restoration/preservation checks. It rejects both a
@@ -764,8 +778,9 @@ evidence. Findings do not change verdicts or grant source-editing authority.
 A failed full gate feeds `acceptance_feedback: {snapshot, report}` to the next
 worker within the remaining budget. Source changes require fresh scoped/build
 checks, review and acceptance; no-progress, scope/discovery and budget stops still
-apply. Unknown acceptance stops immediately for evidence rather than asking the
-worker to guess at an unsupported proof. Feedback is a disposable run output,
+apply. Unknown application acceptance with diagnostic findings follows the same
+bounded evidence/discovery path; without findings it stops. Missing capabilities
+never authorize guessing or weakening proof policy. Feedback is a disposable run output,
 not a stored verdict or current proof once its source snapshot changes.
 
 Acceptance is never cached by this driver, even when a source-identical review is

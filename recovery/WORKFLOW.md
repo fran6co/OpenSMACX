@@ -256,7 +256,17 @@ acceptance with diagnostic findings follows that same bounded path for evidence
 gathering or discovery/scope requests, not speculative spelling rounds. Missing
 proof capabilities do not authorize a worker to edit verifier policy. Without
 findings or source progress/discoveries the driver stops, retaining the feedback.
-This project now invokes native `tasks check-acceptance`: the full configured
+Ordinary runs now use per-change acceptance (`acceptance_scope: "change"` in the
+driver configuration). Native checkpoint verification and independent review can
+produce `change_accepted` / exit 0 once scoped binary/restoration checks, declared
+structure/references, fresh build/link and outside-scope preservation pass. No
+matching regressions are implicitly permitted. Explicit `--migration` permission
+can instead produce `migration_admitted` / exit 2 with restoration work retained.
+Both are ready for a coordinator checkpoint, not automatic collection or a claim
+that the whole game works. Unknown evidence still refuses admission.
+
+With `--acceptance-scope full_project`, the driver invokes native
+`tasks check-acceptance`: the full configured
 gate, one retained fresh build, restoration and preservation checks, followed by
 configured structure/runtime proof commands. Those last proof capabilities are
 not configured for OpenSMACX yet. Its application links with explicitly unfinished
@@ -504,11 +514,11 @@ Apply justified downward `lowerings` to `recovery/audits.json` in the same commi
 do not alter detector rules or exclusions to hide unfinished work. These are
 heuristic policy checks, separate from the original-layout evidence and review.
 
-Full acceptance requires the independent review plus current build, structure,
+Full application acceptance requires the independent review plus current build, structure,
 references, protected obligations and required runtime checks. The OpenSMACX
-acceptance adapter is not complete. A scoped pass, legacy claim or approved
-design therefore cannot yet produce a fully accepted recovery through this
-configuration. Report exact results, coverage gaps, discoveries, changed source
+proof configuration is not complete. Per-change acceptance uses the bounded
+checkpoint path above; a scoped pass alone, legacy claim or approved design is
+not sufficient. Report exact results, coverage gaps, discoveries, changed source
 and remaining obligations; do not equate “compiles” with “working game.”
 
 The coordinator alone collects and commits approved work, checking the actual
