@@ -962,6 +962,24 @@ requires exactly one JSON object, not fenced Markdown, JSONL or a vendor envelop
 Both modes use the same authoritative response validators as the driver, even
 when a provider claims to enforce the supplied JSON Schema.
 
+A filesystem-capable worker may opt into `"evidence_delivery": "on_demand"`
+beside its `command`, `instructions` and `response` settings. The default,
+`"inline"`, embeds the full request and requires no request-file reading tools.
+On-demand delivery is currently worker-only; reviewer, coordinator and planner
+requests remain complete inline inputs. Do not enable it for a provider that
+cannot read local files through its agent tools.
+
+For on-demand worker requests larger than 128 KiB, the bridge routes diagnostic
+lists/strings larger than 8 KiB under `context.impact`, `context.restoration`
+and `check` to explicit JSON Pointer references in the original request file.
+The prompt identifies that file and its SHA-256. Task scope, instructions,
+pending discoveries, investigation permissions and review/acceptance feedback
+remain inline. This is not a total prompt-size cap: authorization is never
+discarded to meet a budget. Routed evidence is neither empty nor passing; workers
+must read relevant complete evidence before editing. The original request,
+native checks, review and acceptance contracts are unchanged. These temporary
+files are evidence transport, not persisted results or reusable verdicts.
+
 The bridge verifies the task and editing scope before launch, rejects reviewer
 writes, worker scope violations, Git mutations and changed policy, and cleans its
 temporary directory on success or failure. It never reverts source edits. Missing,

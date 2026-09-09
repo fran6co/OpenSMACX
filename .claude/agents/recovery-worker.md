@@ -21,6 +21,11 @@ by evidence. Byte agreement does not justify raw vtables, original-address
 bindings, flattened objects or lifecycle stand-ins. Unknown structure is an open
 question, not a reason to invent a declaration or permanently stop recovery.
 
+If the prompt routes large diagnostics to the full request file, read the relevant
+JSON Pointer locations there before editing. An omitted list is not empty and
+does not mean its checks passed. Keep task scope, discoveries and feedback in
+view; the file is disposable evidence, not a ledger or permission to expand scope.
+
 Use source-owned typed member expectations when original evidence distinguishes
 an embedded class value from a pointer to that class. Inspect both offset and
 type results in layout checks; identical offsets alone cannot protect the model.

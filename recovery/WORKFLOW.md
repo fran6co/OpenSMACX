@@ -316,6 +316,11 @@ The supplied worker/reviewer configurations now call the package-owned `agent`
 bridge. `recovery/agents.json` supplies prompt-driven Codex commands: separate
 ephemeral invocations, workspace-write worker and read-only reviewer. Existing
 Markdown role instructions are inputs to that bridge, not executable adapters.
+The worker enables the bridge's `on_demand` evidence delivery: large diagnostic
+collections are referenced by JSON Pointer in the full temporary request file,
+while scope, discoveries and feedback remain in the prompt. Its local file tools
+must read relevant complete evidence before editing. Reviewers still receive full
+inline requests; no native check or acceptance evidence is reduced.
 Configure provider authentication/model policy and verify worktree/compiler
 isolation before launching. The installed CLI flags and synthetic subprocess
 handshake have been checked. An isolated, evidence-assisted small C++ project now
