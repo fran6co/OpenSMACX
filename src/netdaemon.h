@@ -87,8 +87,18 @@ struct LockStateEntry {
 };
 static_assert(sizeof(LockStateEntry) == 0x3C, "lock state stride");
 
+// Original daemon construction first constructs AlphaNet at this+0.
+// RECOVERY_BASE: v1 NetDaemon AlphaNet 0x0 0x005389F0
 class NetDaemon : public AlphaNet {
  public:
+  // Original 0x00538B21 publishes this table. Only slots 1/2 differ from
+  // AlphaNet's six slots; their bodies still need seed recovery. Original
+  // Net dispatch requires slot 5, while the word at 0x0066EF24 is neither
+  // relocated nor a code address, bounding this primary table independently
+  // of the candidate declaration (see Net's inheritance evidence).
+  // RECOVERY_GENERATED: v1 vtable 0x0066EF0C 0x0066EF24 ??_7NetDaemon@@6B@ 0x005389F0
+  virtual void on_player_added(char *name, unsigned long id);
+  virtual void on_player_deleted(char *name, unsigned long id);
   // homed from 00534330.cpp
   int fixup_message(char *message);
 

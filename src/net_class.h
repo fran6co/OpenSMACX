@@ -250,6 +250,21 @@ struct ServiceList;
 
 class Net {
  public:
+  // Original construction publishes the primary table at 0x0066EB04.
+  // Six slots: original drop_player calls primary slot 5 at 0x00632612.
+  // NetDaemon's same primary chain ends at 0x0066EF24 (a nonrelocated,
+  // non-code word after six relocated code pointers). Its zero-offset base
+  // construction and AlphaNet's table preserve all six inherited slots.
+  // Slot 0's two stack words are known; their meaning/types remain provisional.
+  // Shared no-op code addresses do not make these AlphaMovie methods.
+  // RECOVERY_GENERATED: v1 vtable 0x0066EB04 0x0066EB1C ??_7Net@@6B@ 0x0062D6A0
+  virtual void on_net_event_0(int, int);
+  virtual void on_player_added(char *name, unsigned long id);
+  virtual void on_player_deleted(char *name, unsigned long id);
+  virtual void on_player_name_changed(char *name, unsigned long id);
+  virtual void on_session_lost();
+  virtual void on_host_changed();
+
   // ?start_voice@Net@@QAEHK@Z at 0x0062DF20. `K`, not `I` - the image spells
   // the argument `unsigned long`, and the wrong spelling stops the symbol
   // matching. PROMOTED out of src/recovered/0062df20.cpp; its
@@ -347,7 +362,6 @@ class Net {
   char *get_player_name(unsigned long key);
 
  private:
-  uint32_t field_0_;  // 0x0
   // init() fills the next six: the thread that owns the session, five events
   // it creates, and the DirectPlay interface copied out of 0x009BE600.
   uint32_t thread_id_4_;  // 0x4, GetCurrentThreadId

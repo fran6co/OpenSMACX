@@ -153,8 +153,8 @@ Purpose: Build an AlphaNet: the Net base (implicit), the eight process
 // PROMOTED and TYPED: the ledger (AlphaNetStringStruct/AlphaNetLedger) and
 // the Heap construct implicitly - the two-stage table staging and the
 // placement-new are the compiler's own base-construction sequence. The
-// image's final [this]=0x66EACC store publishes AlphaNet's own vtable,
-// which this non-polymorphic model does not carry.
+// image's final [this]=0x66EACC store is now emitted from AlphaNet's real
+// overrides. The constructor's remaining source and lifetime remain unfinished.
 Return Value: n/a
 Status: Complete
 */
@@ -177,6 +177,25 @@ AlphaNet::AlphaNet() {
         process_slots_[j].pid_ = 0;
     }
 }
+
+// Intentional no-op overrides, independently present in AlphaNet's original
+// table. The preserved original identities belong to these methods, not
+// free fastcall functions with invented receiver arguments.
+// ORIGINAL: 0x004E32F0 nullsub_20 0x004E32F0-0x004E32F3 BYTE_EXACT
+// symbol    ?on_net_event_0@AlphaNet@@UAEXHH@Z
+void AlphaNet::on_net_event_0(int, int) { }
+
+// ORIGINAL: 0x004E32C0 nullsub_164 0x004E32C0-0x004E32C3 BYTE_EXACT
+// symbol    ?on_player_name_changed@AlphaNet@@UAEXPADK@Z
+void AlphaNet::on_player_name_changed(char *, unsigned long) { }
+
+// ORIGINAL: 0x004E32D0 nullsub_165 0x004E32D0-0x004E32D1 BYTE_EXACT
+// symbol    ?on_session_lost@AlphaNet@@UAEXXZ
+void AlphaNet::on_session_lost() { }
+
+// ORIGINAL: 0x004E32E0 nullsub_166 0x004E32E0-0x004E32E1 BYTE_EXACT
+// symbol    ?on_host_changed@AlphaNet@@UAEXXZ
+void AlphaNet::on_host_changed() { }
 
 // The ledger's five list fields, zeroed; the rest of the construction (the
 // vtable staging and the owner capture) belongs to the compiler.

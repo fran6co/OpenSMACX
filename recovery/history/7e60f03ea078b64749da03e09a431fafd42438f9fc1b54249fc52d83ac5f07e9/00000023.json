@@ -1,0 +1,22 @@
+{
+  "event_id": "aa773073c52c2578b968efc500a5c45a914eb685ff8d191fdf34fd603b9b2a13",
+  "payload": {
+    "affects": [
+      "entity-3f6349cc1e1e55b2d272de80befdb3454ee51d275842d4f5c3c1a65acbe1c0dc",
+      "entity-4fabe4dcd453a1866bd3a752038ec3c9caed79de94deba2b16fb5dabb196639e"
+    ],
+    "author": "coordinator",
+    "discovery_id": "net-folded-default-bindings",
+    "evidence": [
+      "src/net_class.h now declares the six real primary methods; the original first four entries at 0x0066EB04 share 0x00404260 and the final two share 0x00404280. Existing source claims at those leaf addresses remain in alphamovie.cpp under catalogue labels. application_binary.select_bindings requires one unambiguous product definition per original entity, so generated-table diagnostics cannot resolve the additional Net method symbols from those existing claims.",
+      "The primary table bounds are now source-owned: original Net code dispatches slot 5 at 0x00632612, while the original NetDaemon table at 0x0066EF0C has six relocated executable pointers followed at 0x0066EF24 by an unrelocated non-code word. The zero-offset constructor chain constrains the Net and AlphaNet primary tables to the same six slots. Bounded native checks distinguish the passing NetDaemon table from unresolved Net/AlphaNet folded targets; the daemon callback bodies remain explicit placeholders, not accepted implementations."
+    ],
+    "hypothesis": "Add project-agnostic support for evidence-anchored many-to-one function bindings so distinct C++ methods can share an original folded code body without becoming duplicate recovery identities or adopting another class name. Essential bindings must remain in source; every additional emitted method needs fresh bounded byte/reference proof, and shared original claims must stay protected. Apply this consistently to table/caller resolution, tasks and variant checks rather than adding a Net-specific alias exception. Keep the provisional slot-0 signature and unfinished callback behavior separate from byte-only alias proof.",
+    "kind": "discovery"
+  },
+  "previous_event": "50d75318700da8613a30989a69171a8970324009a36774dfd74d15aa93986d92",
+  "request_id": "net-folded-default-bindings",
+  "schema_version": 1,
+  "sequence": 23,
+  "stream": "task:jackal-voice-ownership"
+}

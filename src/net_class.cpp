@@ -233,14 +233,11 @@ Purpose: Build a Net - its embedded VoiceTx, three NetFifo message queues,
 // calls     0x004C8CC0 0x006339C0
 Return Value: this
 
-Net has no base and no virtual anything of its own - a genuine constructor
-is safe here (unlike MapWin/PlanWin/Console, whose virtual `GraphicWin`
-base makes VC6 double the most-derived flag - see the note in `mapwin.h`),
-and the image's own SEH frame around this body is what a real constructor
-with real destructible members earns. Net's own layout past `voice_tx_` is
-still opaque storage (see the class declaration), so the rest reaches its
-sub-objects by raw offset, the same way this tree's other unmodelled
-`??0`/`??1` pairs do.
+Net's primary virtual surface is distinct from its members' virtual bases.
+The original 0x0062D822 vfptr store belongs to the compiler, as do the member
+construction and exception-cleanup stages. Scalar initialization and shared
+no-op target bindings remain unfinished; the primary table bound follows the
+original derived-table boundary and slot-5 dispatch documented in Net.
 */
 // QueryInterface in 0x0062D9E0 writes this slot with IID_IDirectPlay2A
 // (original GUID at 0x006717C0); Net initialization/close clear the same
@@ -318,6 +315,17 @@ int JackalVoiceRx::on_insert(void *) { return 0; }
 void JackalVoiceRx::on_remove(void *) { }
 void NetUnk72C::unk_slot0() { }
 void NetUnk72C::unk_slot1() { }
+
+// The base table's first four entries share ret 8 at 0x00404260; its last
+// two share ret at 0x00404280. These are intentional base defaults, not
+// missing daemon callback implementations. Their folded bindings remain
+// unresolved independently of the unrelated catalogue labels at those leaves.
+void Net::on_net_event_0(int, int) { }
+void Net::on_player_added(char *, unsigned long) { }
+void Net::on_player_deleted(char *, unsigned long) { }
+void Net::on_player_name_changed(char *, unsigned long) { }
+void Net::on_session_lost() { }
+void Net::on_host_changed() { }
 
 Net::Net() {
     // voice_tx_ (0x58), jackal_voice_rx_ (0xB0), three queues (0xE8..0x14B)

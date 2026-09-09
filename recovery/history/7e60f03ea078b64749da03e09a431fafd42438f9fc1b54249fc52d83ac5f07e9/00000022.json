@@ -1,0 +1,19 @@
+{
+  "event_id": "50d75318700da8613a30989a69171a8970324009a36774dfd74d15aa93986d92",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/nullsub_thunks.h"
+    ],
+    "evidence": [
+      "The four obsolete AlphaNet fastcall no-op wrapper definitions also have declarations in nullsub_thunks.h. Authorize removing those unused declarations in the same change that moves the preserved original identities onto real AlphaNet virtual overrides; no other source references those wrapper names."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "6349b17d679a567adffe0d9af37584273314b0fda190f238e0096b4c20e75d21",
+  "request_id": "net-primary-retire-wrapper-declarations",
+  "schema_version": 1,
+  "sequence": 22,
+  "stream": "task:jackal-voice-ownership"
+}

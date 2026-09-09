@@ -130,6 +130,21 @@ void HeapShim::shutdown() {
     reinterpret_cast<pending>(static_cast<unsigned long>(0x005D45B0))(this, nullptr);
 }
 
+// Product slots for the real derived callbacks. Retained nonexact seeds
+// remain the implementation inputs; empty bodies provide link continuity
+// only and must not be accepted as recovered behavior.
+// ORIGINAL: 0x0052E160 ?on_player_added@NetDaemon@@UAEXPADK@Z 0x0052E160-0x0052E364
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0052e160.cpp; original NetDaemon table 0x0066EF0C selects this callback, unlike the inherited Net no-op."], "reason": "Establish the missing product callback slot for the compiler-owned derived virtual table. This is an explicitly unfinished body; retain the nonexact seed as implementation evidence."}
+void NetDaemon::on_player_added(char *, unsigned long) {
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x0052E370 ?on_player_deleted@NetDaemon@@UAEXPADK@Z 0x0052E370-0x0052E8FD
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0052e370.cpp; original NetDaemon table 0x0066EF0C selects this callback, unlike the inherited Net no-op."], "reason": "Establish the missing product callback slot for the compiler-owned derived virtual table. This is an explicitly unfinished body; retain the nonexact seed as implementation evidence."}
+void NetDaemon::on_player_deleted(char *, unsigned long) {
+    // BODY GOES HERE.
+}
+
 /*
 Purpose: Build a network daemon - its AlphaNet base, then its own eight
          PlayerLocks and 0x18-entry lock table.

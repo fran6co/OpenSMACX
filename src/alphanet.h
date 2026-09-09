@@ -91,8 +91,17 @@ struct AlphaNetProcessSlot {
 };
 static_assert(sizeof(AlphaNetProcessSlot) == 0x19C, "process slot stride");
 
+// Original 0x004E24B7 calls Net construction on the unadjusted receiver.
+// RECOVERY_BASE: v1 AlphaNet Net 0x0 0x004E2490
 class AlphaNet : public Net {
  public:
+  // Primary overrides from 0x0066EACC; slots 1/2 remain Net's defaults.
+  // The six-slot bound follows the original primary chain described in Net.
+  // RECOVERY_GENERATED: v1 vtable 0x0066EACC 0x0066EAE4 ??_7AlphaNet@@6B@ 0x004E2490
+  virtual void on_net_event_0(int, int);
+  virtual void on_player_name_changed(char *name, unsigned long id);
+  virtual void on_session_lost();
+  virtual void on_host_changed();
   AlphaNet();   // 0x004E2490, defined in alphanet.cpp
   int pid_2_idx(uint32_t process_id);
   int pid_2_who(uint32_t process_id);

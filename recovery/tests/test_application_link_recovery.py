@@ -42,7 +42,7 @@ def compiled():
                      "src/menu.cpp", "src/popmenu.cpp", "src/temp.cpp", "src/console.cpp",
                      "src/netdaemon.cpp", "src/statuswin.cpp", "src/popup.cpp", "src/scroll.cpp",
                      "src/base.cpp", "src/basewin.cpp", "src/net_class.cpp", "src/general.cpp",
-                     "src/win.cpp")
+                     "src/win.cpp", "src/alphanet.cpp")
     }
 
 
@@ -306,6 +306,36 @@ def test_active_net_is_published_and_shared_with_the_window(compiled):
         for member, offset in (("voice_hotkey_48_", 0x48), ("voice_hotkey_4c_", 0x4C),
                                ("voice_target_50_", 0x50), ("field_54_", 0x54)):
             assert layout["members"][member] == offset
+
+
+def test_net_primary_tables_are_emitted_from_the_inheritance_chain(compiled):
+    def method(owner, name, args):
+        return f"?{name}@{owner}@@UAEX{args}@Z" if args else f"?{name}@{owner}@@UAEXXZ"
+
+    slots = (("on_net_event_0", "HH"), ("on_player_added", "PADK"),
+             ("on_player_deleted", "PADK"), ("on_player_name_changed", "PADK"),
+             ("on_session_lost", ""), ("on_host_changed", ""))
+    cases = (("Net", "src/net_class.cpp", 0x62D6A0, ("Net",) * 6),
+             ("AlphaNet", "src/alphanet.cpp", 0x4E2490,
+              ("AlphaNet", "Net", "Net", "AlphaNet", "AlphaNet", "AlphaNet")),
+             ("NetDaemon", "src/netdaemon.cpp", 0x5389F0,
+              ("AlphaNet", "NetDaemon", "NetDaemon", "AlphaNet", "AlphaNet", "AlphaNet")))
+    for owner, unit, constructor, owners in cases:
+        table = f"??_7{owner}@@6B@"
+        for obj in compiled[unit]:
+            symbol, = (s for s in obj.symbols.values() if s.name == table and s.section > 0)
+            section = obj.sections[symbol.section - 1]
+            assert len(section.data) == 24
+            assert [offset for offset, _, _ in section.relocations] == list(range(0, 24, 4))
+            assert [obj.symbols[index].name for _, index, _ in section.relocations] == [
+                method(base, name, args) for base, (name, args) in zip(owners, slots)]
+            assert references(obj, symbol_at(unit, constructor)).count(table) == 1
+            net = class_layout(obj, "Net")
+            assert net["size"] == 0x780 and "field_0_" not in net["members"]
+            assert net["members"]["thread_id_4_"] == 4
+    for address in (0x52E160, 0x52E370):
+        row, = (r for r in read_file(ROOT / "src/netdaemon.cpp") if r.address == address)
+        assert row.state == State.PLACEHOLDER and not row.byte_exact
 
 
 def test_menu_candidates_use_typed_source_definitions(compiled):
