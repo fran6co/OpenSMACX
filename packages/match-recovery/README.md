@@ -1730,7 +1730,16 @@ Thin/BSD archives, unsupported name encodings and non-supported COFF function
 layouts do not pass. Format details follow the
 [Microsoft archive specification](https://learn.microsoft.com/en-us/windows/win32/debug/pe-format#archive-library-file-format).
 
-Missing members, imports/data/function bindings and unsupported code layouts stay
+Both upstream-source and precompiled binary checks use ordinary source
+`RECOVERY_IMPORT` declarations to resolve unique original DLL/export slots.
+The same resolver used for application code refuses ambiguous, weak, common or
+defined import symbols and checks the actual relocated operand. The native CLI
+checks the complete configured source epoch, including added or removed import
+files; seed declarations do not supply identities. The report's `import_bindings`
+separates original slot identity from still-unknown candidate link selection.
+No original IAT addresses need to be stored in source.
+
+Missing members, undeclared imports/data/function bindings and unsupported code layouts stay
 unknown. A wrong archive pin or observed byte/boundary/reference disagreement
 fails. Source `ORIGINAL` tokens are neither generated nor banked. Partition and
 planning classify these functions as dependencies and navigate to the companion;

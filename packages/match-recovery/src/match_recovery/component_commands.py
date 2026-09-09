@@ -9,7 +9,7 @@ from .components import ToolchainManifest, source_integrity
 from .fingerprint import input_snapshot
 from .model import Result
 from .source_config import SourceConfiguration
-from .source_inventory import image_pin
+from .source_inventory import image_pin, source_snapshot, assert_snapshot_current
 
 
 def component_snapshot(root: Path):
@@ -77,17 +77,24 @@ def execute(root: Path, arguments: dict):
     if action == "check-source":
         result = source_integrity(root, manifest, external)
     elif action == "check-binary":
+        from .import_source import read_imports
+        # Imports may live outside the component companion. Cover their full
+        # configured source epoch, including added/removed files and seed policy.
+        import_source = source_snapshot(root, allow_empty=True)
+        imports = read_imports(root)
+        assert_snapshot_current(root, import_source)
         if toolchain:
             from .component_binary import verify_toolchain
-            result = verify_toolchain(manifest, external.read_bytes(), archive_data)
+            result = verify_toolchain(manifest, external.read_bytes(), archive_data, import_bindings=imports)
         else:
             from .compiler import Compiler
             from .component_binary import verify_component
             compiler = Compiler(root)
             result = verify_component(root, manifest, external.read_bytes(),
-                                      lambda path, flags: compiler(path, (), flags))
+                                      lambda path, flags: compiler(path, (), flags), import_bindings=imports)
             if compiler.snapshot() != compiler.initial:
                 raise ValueError("compiler inputs changed during component verification")
+        assert_snapshot_current(root, import_source)
         if arguments.get("summary"):
             result.pop("functions")
     else:

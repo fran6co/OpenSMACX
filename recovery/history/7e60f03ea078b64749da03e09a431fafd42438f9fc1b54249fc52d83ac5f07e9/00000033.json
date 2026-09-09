@@ -1,0 +1,21 @@
+{
+  "event_id": "788d85124e561d3dc5b7734dba45e523330209456de1263d749fa45c25170370",
+  "payload": {
+    "affects": [
+      "entity-37bea69ba05e70b68bff38dff0013b42cac88b17a077e486e4d4b8f5863c4cfe",
+      "entity-7a68ce4521c8abe034be18de261a94e7af7a8bb2688e10090824724533c5ae47"
+    ],
+    "author": "coordinator",
+    "discovery_id": "runtime-build-selection",
+    "evidence": [
+      "src/vendor/vc6-runtime.recovery.h binds the original real _free body and its lock/small-block-heap callees to the pinned LIBCMT artifact. recovery/build.json requests Release, but a fresh retained build selects -MD and the map identifies _free as MSVCRT:MSVCRT.dll; the linked PE confirms a jump through its named MSVCRT.dll free import. recovery/prepare.json instead generates Debug recipes with -MDd, and recovery/environment/recipe.py invocation retains includes/defines but drops runtime switches. These are different runtime contracts, not a harmless address relocation."
+    ],
+    "hypothesis": "Align product-link and measurement runtime policy with the original static multithreaded CRT before admitting runtime dependencies. Preserve historical matching obligations while making runtime switches an explicit project compiler decision, not an option silently discarded from measurement recipes. Require fresh selected-library and linked-symbol evidence, not only a successful build or component report.",
+    "kind": "discovery"
+  },
+  "previous_event": "1da9d8d1f0e1374c208d431de362786d45eb5ec0b36964c13a19de6d490e337f",
+  "request_id": "runtime-build-selection",
+  "schema_version": 1,
+  "sequence": 33,
+  "stream": "task:jackal-voice-ownership"
+}

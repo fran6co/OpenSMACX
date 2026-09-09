@@ -215,8 +215,8 @@ def test_toolchain_input_mutation_cannot_publish_a_pass(toolchain_project, capsy
     from match_recovery import component_binary
     root = toolchain_project
     original = component_binary.verify_toolchain
-    def mutate(*args):
-        report = original(*args)
+    def mutate(*args, **kwargs):
+        report = original(*args, **kwargs)
         assert report["result"] == "pass"
         path = root / target
         path.write_bytes(path.read_bytes() + b"\n")

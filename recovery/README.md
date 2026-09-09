@@ -287,11 +287,12 @@ uv run pytest packages/match-recovery/tests recovery/tests
 uv build --package match-recovery
 ```
 
-The runtime companion `src/vendor/vc6-runtime.recovery.h` currently binds only
-the ledger's `_free` dependency. The precompiled-library command reads the pinned
-archive without compiler invocation or extraction. Its strict reference check
-does not yet resolve the lock/heap/import dependencies or establish final-link
-selection. It does not promote library symbols into application acceptance.
+The runtime companion `src/vendor/vc6-runtime.recovery.h` binds the ledger's
+`_free` dependency and four lock/small-block-heap callees, with source-declared
+system imports. The precompiled-library command reads the pinned archive without
+compiler invocation or extraction. Its strict reference check resolves original
+DLL/export slots but still needs runtime data and remaining callee bindings and
+final-link selection. It does not promote library symbols into application acceptance.
 Use the actual local compiler path; the example above is not an installation step.
 
 Reports are JSON on stdout. Errors go to stderr and return exit 3. Inventory never
