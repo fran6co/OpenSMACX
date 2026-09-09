@@ -861,8 +861,12 @@ handling, fresh serial integration, cleanup and another planning round. Its
 compiler-backed control is `recovery/tests/test_campaign_compiler.py`: both an
 existing task and a newly planned task recover genuine structure through a byte
 regression, reach fresh destination acceptance and retain the original baseline.
-Only reasoning is doubled. This is not a live OpenSMACX campaign; interrupted
-supervisor resumption and arbitrary conflict repair remain unfinished. See the
+Only reasoning is doubled. `campaign --resume <run-directory>` now resumes the
+last assigned batch using current worktrees, decisions and fresh verification,
+including a transferred destination with uncommitted review history. Live leases
+and quarantined compiler resources still refuse, and new campaigns cannot duplicate
+preserved workers. This is not a live OpenSMACX campaign; moved integration targets,
+partial Git publication and arbitrary conflict repair remain unfinished. See the
 package README and `recovery/WORKFLOW.md` before authorizing a campaign.
 It does not supply OpenSMACX's
 missing proof coverage. Native receipts expose verified artifact paths/hashes so

@@ -32,7 +32,7 @@ def collection(inputs):
     return root, candidate, permission
 
 
-def collect(collection, *, effect=None, permission=None, regression=False, matching_permission=False):
+def collect(collection, *, effect=None, permission=None, regression=False, matching_permission=False, resume=False):
     root, candidate, original = collection
     task = TaskStore(candidate).read("owner")
     obligation = Obligation(task.subjects[0].entity_id, Dimension.BYTES, "git-history:" + task.base_revision)
@@ -64,7 +64,32 @@ def collect(collection, *, effect=None, permission=None, regression=False, match
                    "current": {obligation.obligation_id: "a" * 64} if regression else {}}
     return publish_integration(root, "owner", candidate, permission or original, configuration=CONFIG,
                                worker_configuration=WORKER, reviewer_configuration=REVIEWER,
-                               migration_configuration=migration, execute=execute), calls
+                               migration_configuration=migration, execute=execute, resume=resume), calls
+
+
+def test_resume_rechecks_transferred_destination_with_collection_context_not_saved_results(collection):
+    root, candidate, permission = collection
+    (root / "build/refuse").write_text("current prerequisite remains unavailable")
+    first, _ = collect(collection)
+    assert first["destination_updated"] and not first["destination_verified"]
+    permission = {**permission, "candidate_revision": git(candidate, "rev-parse", "HEAD")}
+    refused, calls = collect(collection, permission=permission, resume=True)
+    assert refused["stop_reason"] == "destination_verification_required" and not refused["destination_verified"]
+    assert all(path == root for path, _ in calls)
+    (root / "build/refuse").unlink()
+    accepted, calls = collect(collection, permission=permission, resume=True)
+    assert accepted["destination_verified"] and accepted["destination_already_contains_candidate"]
+    assert not accepted["destination_updated"] and not accepted["ready_for_collection"]
+    assert calls.count((root, "review")) == calls.count((root, "check")) == calls.count((root, "migration")) == 1
+    assert all(path == root for path, _ in calls)
+    assert git(candidate, "rev-parse", "HEAD") == permission["candidate_revision"]
+
+
+def test_resume_refuses_untransferred_or_unrelated_destination_before_any_verification(collection):
+    before = working_state(collection[0])
+    with pytest.raises(ValueError):
+        collect(collection, resume=True, effect=lambda *args: pytest.fail("candidate has not reached the destination"))
+    assert working_state(collection[0]) == before
 
 
 def test_collect_verifies_both_worktrees_and_fast_forwards_only_authorized_destination(collection):

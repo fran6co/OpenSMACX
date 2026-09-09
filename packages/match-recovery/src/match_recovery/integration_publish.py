@@ -12,7 +12,7 @@ import re
 import subprocess
 
 from .checkpoints import _publication_changes, preflight
-from .driver import drive, invoke, working_state
+from .driver import _resumable_history, drive, invoke, working_state
 from .integration import decision, validate
 from .git_worktree import (assert_raw_checkout as _assert_raw_checkout, destination_state as _destination_state,
                            committed_files as _files, run_git as _run)
@@ -20,6 +20,7 @@ from .locking import file_lock
 from .model import canonical, require_text
 from .preparation import prepare_project
 from .records import read_json
+from .reviews import ReviewStore
 from .tasks import TaskStore
 
 
@@ -61,7 +62,9 @@ def _checkout_policy(root, revision, options):
 
 
 def publish_integration(root, name, candidate, permission, *, configuration, worker_configuration,
-                        reviewer_configuration, migration_configuration=None, execute=invoke, _held_lease=None):
+                        reviewer_configuration, migration_configuration=None, execute=invoke, _held_lease=None, resume=False):
+    if type(resume) is not bool:
+        raise ValueError("collection resumption must be boolean")
     root, candidate = Path(root).resolve(), Path(candidate).resolve()
     if root == candidate:
         raise ValueError("collection requires separate destination and candidate checkouts")
@@ -86,16 +89,20 @@ def publish_integration(root, name, candidate, permission, *, configuration, wor
             raise ValueError("collection needs an independent coordinator, worker identity and reviewer")
         branch, candidate_branch = preflight(root), preflight(candidate)
         target = permission["integration"]["target_revision"]
-        if branch != permission["destination_branch"] or git(root, "rev-parse", "HEAD") != target:
+        observed_target = git(root, "rev-parse", "HEAD")
+        if branch != permission["destination_branch"] or not resume and observed_target != target:
             raise ValueError("destination branch or HEAD changed from the explicit collection authorization")
         if git(candidate, "rev-parse", "HEAD") != permission["candidate_revision"]:
             raise ValueError("candidate HEAD changed from the explicit collection authorization")
         _assert_raw_checkout(candidate, permission["candidate_revision"])
         _checkout_policy(candidate, permission["candidate_revision"], options[candidate])
-        old_entries = _checkout_policy(root, target, options[root])
+        old_entries = _checkout_policy(root, observed_target, options[root])
         _checkout_policy(root, permission["candidate_revision"], options[root])
-        before = _destination_state(root, target, options[root])
-        _publication_changes(root, before, set())  # Do not hide mode edits behind core.fileMode=false.
+        before = working_state(root) if resume else _destination_state(root, observed_target, options[root])
+        history = _resumable_history(root, TaskStore(root), ReviewStore(root, name), name) if resume else set()
+        # A stopped destination review may leave valid append-only decisions.
+        # Do not admit source/policy/index edits or arbitrary untracked files.
+        _publication_changes(root, before, history)
         validate(candidate, task, permission["integration"])
         publication = {"author": task.author, "message": permission["message"] + "\n\nCollection authorization:\n" + canonical(permission).decode(),
                        "allow_migration": permission["allow_migration"]}
@@ -118,6 +125,24 @@ def publish_integration(root, name, candidate, permission, *, configuration, wor
         def admitted(result):
             return (result["stop_reason"] == "change_accepted" or
                     result["stop_reason"] == "migration_admitted" and permission["allow_migration"])
+
+        if resume:
+            # A previous transfer is an observed Git relationship, not proof.
+            # Reuse the same collection-aware verifier, preserving its original
+            # pre-transfer preservation base and independent review context.
+            git(root, "merge-base", "--is-ancestor", permission["candidate_revision"], observed_target)
+            validate(root, TaskStore(root).read(name), permission["integration"])
+            candidate_state = working_state(candidate)
+            checked = verify(root)
+            if working_state(candidate) != candidate_state or preflight(candidate) != candidate_branch:
+                raise ValueError("candidate changed during resumed destination verification; preserve both")
+            if preflight(root) != branch:
+                raise ValueError("destination branch changed during resumed verification")
+            accepted = admitted(checked)
+            return {**report, "destination_already_contains_candidate": True, "destination_verified": accepted,
+                    "destination_verification": checked, "final_commit": git(root, "rev-parse", "HEAD"),
+                    "stop_reason": ("destination_accepted" if checked["stop_reason"] == "change_accepted" else
+                                    "destination_migration_admitted" if accepted else "destination_verification_required")}
 
         # Nothing at the destination moves before fresh candidate admission.
         checked = verify(candidate)

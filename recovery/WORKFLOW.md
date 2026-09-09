@@ -141,8 +141,14 @@ original task baselines and treats a clean no-op as a deferred attempt, never a
 completed task. After source changes, earlier tasks may be selected again. Worker
 exit codes and saved receipts cannot pass integration. Scope conflicts, dirty WIP,
 interruption and failed destination checks are preserved for replanning/resumption.
-This bounded loop does not yet resume a dead supervisor or resolve arbitrary merge
-conflicts; inspect existing workers before another invocation. Full executable-only
+Use `uv run recover campaign --config <authorization> --resume <run-directory>`
+to continue the last scheduled batch from its source/Git state, including scoped
+WIP and valid append-only decisions. Live leases/quarantined resources still refuse;
+there is no PID-based reclamation or acceptance-receipt replay. Pending transferred
+candidates receive fresh collection-aware destination verification with the original
+pre-transfer preservation base. Fresh campaigns refuse to duplicate preserved work.
+Moved pending targets, changed authority, partial Git operations, older-batch new
+work and arbitrary merge conflicts still need inspection/reauthorization. Full executable-only
 autonomous recovery and application acceptance remain unfinished.
 Run `uv run recover prepare` before standalone task measurements/recording and
 again after changing build inputs. This publishes fresh configured recipes while
@@ -660,6 +666,10 @@ Exit 0 is fresh per-change destination acceptance; exit 2 needs separate migrati
 and publication permissions. Neither is complete game recovery. Post-transfer
 failure leaves the source in place and exits 3; inspect the destination and rerun
 fresh verification after fixing the prerequisite. Never reset or replay a report.
+For an already transferred candidate, `recover integrate publish --resume` uses
+the same original integration context and an explicit authorization naming the
+candidate's actual current commit. It allows valid uncommitted review decisions,
+not source/policy or staged-index edits. It rechecks rather than fast-forwarding again.
 Hooks, filters, autostash, ignored-file overwrite and force updates are disabled.
 Do not pipe mutating commands or the gate. Do not delete a worktree until its
 changes have been verified as preserved.

@@ -357,14 +357,49 @@ planner returns 3. Reports always say `full_project_accepted: false`; they are n
 verification inputs. Operational choices and derived logs stay under ignored
 `build/recovery/campaigns/` and `build/recovery/dispatch/`, not a completion database.
 
-This command does not yet resume a dead supervisor, adopt earlier interrupted
-workers, resolve merge conflicts automatically, discover all unmapped originals,
-or establish complete game structure/runtime correctness. Inspect/resume preserved
-workers through native commands before starting another campaign; do not launch
-duplicate work over their scopes. The real VC6 control exercises both existing-task
+Resume a preserved campaign with the same configuration and
+`recover campaign --config recovery/campaign.json --resume <run-directory>`.
+Starting another campaign refuses preserved worker/candidate work and points to
+resumption rather than duplicating it. Assignments and pre-transfer integration
+contexts are recorded **before** their actions in the ignored run directory.
+These are coordination choices, not a source catalogue or acceptance ledger.
+The current branch, initial ancestry, frozen profiles and canonical paths must
+agree. Resumption uses actual source, task history, branches and leases; old
+stdout, PID files and acceptance reports cannot advance it.
+
+The last scheduled batch is resumed serially before further parallel planning.
+Existing workers retain their initial task baseline and scoped committed/uncommitted
+source, with fresh compiler recipes. New path/branch creation occurs only for an
+assignment that has not been materialized, and still needs the authorized starting
+revision at the coordinator. Valid append-only task/review decisions survive;
+source/policy/index edits outside worker authority refuse before compiler execution.
+Live worker leases and interrupted compiler quarantine still block reuse. The
+framework does not infer stopped descendants from an old PID or clear quarantine.
+
+An existing untransferred candidate is freshly verified through native publication.
+After a transfer, native publication resumption rechecks the destination against
+the **original pre-transfer preservation base**, including a fresh independent
+collection-aware review. Valid uncommitted review decisions are allowed; arbitrary
+source, policy and staged-index edits are not. No rollback or saved verdict is used.
+Retired attempts are only routing choices: their revisions must remain in actual
+destination ancestry, and any remaining worker/candidate is checked for additional
+work even when cleanup is disabled. Clean merged branch-only leftovers can be
+removed after interrupted cleanup. This grants no new acceptance from a retirement
+record; `retained_in_history` explicitly reports `verification: "not_replayed"`.
+
+Each explicit invocation/resumption has the configured batch/command budgets.
+Changed profiles, moved pending integration targets, partial Git/index publication,
+older-batch additional work and unknown/aliased checkouts require inspection and
+reauthorization through native commands; no force update, automatic conflict repair
+or adoption of unrelated workers is supplied. Unmapped original discovery and
+complete game structure/runtime correctness remain unfinished.
+The real VC6 control exercises both existing-task
 and new-task selection, structural recovery across a byte regression, central caller
 discovery, fresh integration/destination acceptance, cleanup and another planning
-round. Reasoning in that control is deterministic, not a live-model or game pilot.
+round, plus interruption before setup, during structural WIP, at candidate publication,
+after transfer and after destination refusal, and during cleanup. Reasoning in that
+control is deterministic, not a live-model or game pilot. A separate process control
+kills the actual supervisor and proves that resumption refuses its still-live worker.
 
 ## Lease project-provisioned compiler resources
 

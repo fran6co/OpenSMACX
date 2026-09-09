@@ -54,6 +54,7 @@ def parser() -> argparse.ArgumentParser:
     publish.add_argument("--worker", type=Path, default=Path("recovery/worker.json"), help="Worker identity/configuration; no worker is dispatched")
     publish.add_argument("--reviewer", type=Path, required=True, help="Independent reviewer configuration, relative to the candidate")
     publish.add_argument("--migration", type=Path, help="Separate permission for temporary matching regressions")
+    publish.add_argument("--resume", action="store_true", help="Freshly verify an already transferred candidate against its original integration context")
     run = commands.add_parser("run", help="Drive bounded recovery through project-local JSON commands")
     run.add_argument("task")
     run.add_argument("--root", type=Path, default=Path.cwd())
@@ -73,6 +74,7 @@ def parser() -> argparse.ArgumentParser:
     campaign = commands.add_parser("campaign", help="Coordinate bounded task selection, isolated workers and fresh serial integration")
     campaign.add_argument("--root", type=Path, default=Path.cwd(), help="Authorized destination checkout")
     campaign.add_argument("--config", type=Path, required=True, help="Standing bounded campaign authorization, relative to --root")
+    campaign.add_argument("--resume", type=Path, help="Resume a preserved run directory using current source/Git state, never old reports")
     worktree = commands.add_parser("worktree", help="Prepare isolated worker checkouts without resetting task baselines")
     worktree_actions = worktree.add_subparsers(dest="action", required=True)
     worker_tree = worktree_actions.add_parser("prepare", help="Create a raw committed worker checkout and optionally prepare fresh compiler recipes")
@@ -158,7 +160,7 @@ def _dispatch(args) -> int:
                 output = publish_integration(args.root, args.task, candidate, permission,
                                              configuration=config(args.config), worker_configuration=config(args.worker),
                                              reviewer_configuration=config(args.reviewer),
-                                             migration_configuration=config(args.migration) if args.migration else None)
+                                             migration_configuration=config(args.migration) if args.migration else None, resume=args.resume)
                 print(json.dumps(output, indent=2, sort_keys=True))
                 return (0 if output["stop_reason"] == "destination_accepted" else
                         2 if output["stop_reason"] == "destination_migration_admitted" else 3)
@@ -185,7 +187,7 @@ def _dispatch(args) -> int:
         elif args.command == "campaign":
             from .campaign import campaign
             config = read_json(args.config if args.config.is_absolute() else args.root / args.config)
-            output = campaign(args.root, config, progress=lambda event: print(
+            output = campaign(args.root, config, resume=args.resume, progress=lambda event: print(
                 json.dumps(event, sort_keys=True), file=sys.stderr, flush=True))
             print(json.dumps(output, indent=2, sort_keys=True))
             # A clean scheduling stop is not full-project acceptance.

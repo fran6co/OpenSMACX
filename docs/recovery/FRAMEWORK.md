@@ -404,8 +404,15 @@ establish completion of this program.
   scheduling exclusions expire on source changes. A real VC6 control covers both
   existing and newly planned tasks, recovery through a structural byte regression,
   fresh destination verification, cleanup and a subsequent planning round.
-  Its reasoning is deterministic, not a live game pilot. Dead-supervisor resumption,
-  arbitrary conflict repair and new executable binding discovery remain gaps.
+  `campaign --resume` now uses durable assignments and original integration contexts
+  to continue the last scheduled batch. Actual leases, source/task history and Git
+  ancestry govern reuse, not stored verdicts. The native integration publisher's
+  resumed destination path retains the original preservation base and collection-aware
+  independent review, including valid uncommitted review decisions after refusal.
+  Compiler-backed interruption controls and an actual supervisor-death/live-worker
+  refusal control cover this path. Reasoning is deterministic, not a live game pilot.
+  Moved pending targets, partial Git publication, arbitrary conflict repair and new
+  executable binding discovery remain gaps.
   The package-owned native migration verifier now composes fresh build, bounded
   declarations, references and outside-scope preservation checks; OpenSMACX
   configures that command without a project adapter. A synthetic driver test
