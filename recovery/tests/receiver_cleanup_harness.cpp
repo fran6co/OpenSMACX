@@ -2,6 +2,7 @@
 // inserted by pytest. Sound is a collaborator double, not a recovered factory.
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 #include <new>
 
 struct Heap {};
@@ -87,13 +88,15 @@ void DeleteCriticalSection(CRITICAL_SECTION *lock) {
 NetFifo *active_queue;
 void *queue_nodes[3], *queue_payloads[3];
 int queue_node_frees[3], queue_payload_frees[3];
+bool queue_pop;
 void queue_free(void *memory) {
     assert(active_queue && active_queue->lock_.held);
     bool found = false;
     for (int i = 0; i < 3; ++i) {
         if (memory && memory == queue_nodes[i]) {
-            assert(active_queue->head_ == memory);
-            assert(!active_queue->head_->data_);
+            NetFifo::NetFifoNode *node = static_cast<NetFifo::NetFifoNode *>(memory);
+            assert(active_queue->head_ == (queue_pop ? node->next_ : node));
+            assert(!node->data_);
             assert(++queue_node_frees[i] == 1);
             found = true;
         }
@@ -108,8 +111,10 @@ void queue_free(void *memory) {
 #define free queue_free
 // LIVE_QUEUE_CONSTRUCTOR
 // LIVE_QUEUE_CLOSE
+// LIVE_QUEUE_GET
 // LIVE_QUEUE_DESTRUCTOR
 #undef free
+// LIVE_SCRATCH_STORAGE
 
 void check_queues() {
     for (int scenario = 0; scenario < 3; ++scenario) {
@@ -154,8 +159,49 @@ void check_queues() {
     }
 }
 
+void check_receive_storage() {
+    assert(sizeof(NetGetScratch) == 0x2000);
+    for (int i = 0; i < 0x2000; ++i) assert(NetGetScratch[i] == 0);
+    for (int j = 0; j < 3; ++j) {
+        queue_nodes[j] = queue_payloads[j] = 0;
+        queue_node_frees[j] = queue_payload_frees[j] = 0;
+    }
+    {
+        NetFifo queue;
+        active_queue = &queue;
+        queue_pop = true;
+        NetFifo::NetFifoNode *node = static_cast<NetFifo::NetFifoNode *>(malloc(sizeof(*node)));
+        unsigned char *payload = static_cast<unsigned char *>(malloc(0x2000));
+        assert(node && payload);
+        for (int k = 0; k < 0x2000; ++k) payload[k] = static_cast<unsigned char>(k * 17 + 3);
+        queue_nodes[0] = node;
+        queue_payloads[0] = payload;
+        node->data_ = payload;
+        node->data_size_ = 0x2000;
+        node->key_ = 91;
+        node->caller_value_ = 7;
+        node->result_ = 1;
+        node->next_ = 0;
+        queue.head_ = queue.tail_ = node;
+        queue.count_ = 1;
+        unsigned int key = 0, length = 0;
+        int type = 0;
+        assert(queue.get(NetGetScratch, &key, &type, &length) == 1);
+        assert(key == 91 && type == 7 && length == 0x2000);
+        for (int n = 0; n < 0x2000; ++n)
+            assert(NetGetScratch[n] == static_cast<unsigned char>(n * 17 + 3));
+        assert(queue_node_frees[0] == 1 && queue_payload_frees[0] == 1);
+        assert(!queue.head_ && !queue.count_ && !queue.lock_.held);
+        assert(queue.get(NetGetScratch, &key, &type, &length) == 0);
+        queue_pop = false;
+    }
+    active_queue = 0;
+    assert(lock_initializations == lock_deletions && lock_entries == lock_leaves);
+}
+
 int main() {
     check_queues();
+    check_receive_storage();
     Receiver receiver;
     assert(sizeof(VoiceReceiverEntry) == 0x1C);
     assert(sizeof(JackalVoiceRx) == 0x24);

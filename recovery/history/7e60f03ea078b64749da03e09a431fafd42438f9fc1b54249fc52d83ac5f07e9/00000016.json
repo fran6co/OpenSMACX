@@ -1,0 +1,23 @@
+{
+  "event_id": "00996924c573bcdb51031384415b813cb1b5f9d3833fa2d749f452212ff7f005",
+  "payload": {
+    "affects": [
+      "entity-2561b00db70403cfcfb517288d03d8c707ee64d552563b10cf238c58dcff018f",
+      "entity-3f6349cc1e1e55b2d272de80befdb3454ee51d275842d4f5c3c1a65acbe1c0dc",
+      "entity-9da5df6af1acc6edd91f617725fcba0908f0031372dc8f09d1c61c36cc19e035"
+    ],
+    "author": "coordinator",
+    "discovery_id": "net-active-instance-storage",
+    "evidence": [
+      "src/net_class.h: NetCurrent() casts 0x009BE608 to Net** and WinNetBuffer binds the same address; src/win.cpp: Win::on_key reads WinNetBuffer and Net fields at +0x48/+0x4C/+0x50. A nearby homing comment is not a source-owned original mapping.",
+      "Strict do_net/check_net comparisons match every byte but lack the original absolute relocation at body offset 2, corresponding to the active Net pointer load. Original Net construction stores its this pointer to 0x009BE608; current Net::Net does not publish a source-owned active pointer."
+    ],
+    "hypothesis": "The active Net pointer at original 0x009BE608 needs a single source-owned global with constructor publication and all consumers reconciled. NetCurrent() and WinNetBuffer still load the old executable address, so do_net/check_net retain missing relocation proof even after their interface pointer is corrected. Win::on_key also reaches that storage and then reads Net key fields by raw offset; recover its original mapping and authorize that cross-file consumer before replacing the aliases. Do not restore a raw address just to keep the historical masked-byte result.",
+    "kind": "discovery"
+  },
+  "previous_event": "b8af26e8b72e1d2902b862e5bbd33d41eb41cbf82ac9c188cf29e22689e13bb4",
+  "request_id": "net-active-instance-storage",
+  "schema_version": 1,
+  "sequence": 16,
+  "stream": "task:jackal-voice-ownership"
+}

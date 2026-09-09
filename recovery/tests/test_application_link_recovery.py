@@ -254,6 +254,29 @@ def test_receiver_cleanup_uses_the_shared_layout_and_virtual_owners(compiled):
             assert net["class_value_members"][member] == "NetFifo"
 
 
+def test_net_receive_storage_and_interface_have_shared_source_owners(compiled):
+    pointer = "?NetDirectPlay@@3PAUIDirectPlay2@@A"
+    scratch = "?NetGetScratch@@3PAEA"
+    for obj in compiled["src/net_class.cpp"]:
+        for symbol in (pointer, scratch):
+            assert len([row for row in obj.symbols.values()
+                        if row.name == symbol and row.section > 0]) == 1
+        layout = class_layout(obj, "Net")
+        assert layout["members"]["direct_play_1c_"] == 0x1C
+        assert layout["member_type_kinds"]["direct_play_1c_"] == "pointer"
+        for address in (0x62D5B0, 0x62D5D0, 0x62DF20, 0x6320E0, 0x62D8E0, 0x62D9E0,
+                        0x630A00, 0x630A40, 0x630980, 0x6309C0):
+            assert pointer in references(obj, symbol_at("src/net_class.cpp", address))
+        for address in (0x630A00, 0x630A40, 0x630980, 0x6309C0):
+            assert scratch in references(obj, symbol_at("src/net_class.cpp", address))
+        # The original calls distinguish pop-head from keyed search. Both
+        # symbols existing in one TU cannot justify swapping their addresses.
+        assert symbol_at("src/net_class.cpp", 0x633F70) in references(
+            obj, symbol_at("src/net_class.cpp", 0x630A00))
+        assert symbol_at("src/net_class.cpp", 0x633D90) in references(
+            obj, symbol_at("src/net_class.cpp", 0x630A40))
+
+
 def test_menu_candidates_use_typed_source_definitions(compiled):
     for unit, address in (("src/pulldown.cpp", 0x5F9170),
                           ("src/menu.cpp", 0x5FB830),
@@ -446,6 +469,11 @@ def test_receiver_cleanup_respects_payload_and_allocation_ownership(tmp_path, mo
          "// ---------------------------------------------------------------------------\n// THE FIFO QUEUE"),
         ("// LIVE_QUEUE_CLOSE", "src/net_class.cpp", "void NetFifo::close() {",
          "// ORIGINAL: 0x00633AB0"),
+        ("// LIVE_QUEUE_GET", "src/net_class.cpp",
+         "int NetFifo::get(void *data, unsigned int *key, int *type,\n                 unsigned int *len)",
+         "// ---------------------------------------------------------------------------\n// THE DIRECTPLAY GROUP CALLS"),
+        ("// LIVE_SCRATCH_STORAGE", "src/net_class.cpp", "unsigned char NetGetScratch[",
+         "// 0x0062F390, unrecovered"),
         ("// LIVE_QUEUE_DESTRUCTOR", "src/net_class.cpp", "NetFifo::~NetFifo() {",
          "// The wrapped device's own interface"),
     ])

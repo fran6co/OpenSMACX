@@ -1,0 +1,28 @@
+{
+  "event_id": "b8af26e8b72e1d2902b862e5bbd33d41eb41cbf82ac9c188cf29e22689e13bb4",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Authorize correction of emitted-symbol hints for the two existing queue reader definitions. VC6 emits PAIPAH2 for the keyed-search int* length overload at the source body mapped to 0x00633D90, and PAIPAH1 for the pop-head unsigned-int* length overload mapped to 0x00633F70. Current hints cross-assign those identities, as strict original call-target comparisons from Net::get and sub_630a40 expose after scratch/global bindings are supplied. Preserve ORIGINAL catalogue names, spans, implementations and all caller claims; correct only the current emitted-symbol hints and contradictory explanatory prose, then remeasure."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6503824,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6504304,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "f0de05effa6ea7031cc1359b201bec5e0e0cc1e67e10f2b54181151ce8b50e72",
+  "request_id": "net-queue-overload-bindings",
+  "schema_version": 1,
+  "sequence": 15,
+  "stream": "task:jackal-voice-ownership"
+}

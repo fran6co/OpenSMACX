@@ -17,6 +17,8 @@
  */
 #pragma once
 
+struct IDirectPlay2;
+
 #include "sound.h"          // VoiceTx's base
 #include "stringstruct.h"      // StringAllocationBase - the virtual base of Net's subobjects
 #include "hypothesis_layouts.h"  // NetFifo
@@ -350,7 +352,9 @@ class Net {
   // it creates, and the DirectPlay interface copied out of 0x009BE600.
   uint32_t thread_id_4_;  // 0x4, GetCurrentThreadId
   HANDLE events_8_[5];  // 0x8, 0xC, 0x10, 0x14, 0x18 - CreateEventA(NULL...)
-  uint32_t field_1C_;  // 0x1C, the DirectPlay interface pointer
+  // Original init copies the shared interface into this per-session cache.
+  // RECOVERY_MEMBER: v3 Net direct_play_1c_ IDirectPlay2* 0x1C 0x0062D8E0
+  IDirectPlay2 *direct_play_1c_;  // 0x1C
   Net *self_20_;  // 0x20, this object's own address: a session is open when
                   // it is non-null, which is what close() tests
   void *buffer_24_;  // 0x24, the 0x2000-byte DirectPlay buffer
@@ -430,14 +434,15 @@ static_assert(sizeof(Net) == 0x780, "Net is the 0x780-byte base AlphaNet pads fr
 // mov ecx, [eax]` - where the image has one, `mov ecx, [0x9be608]`. This is
 // the same form `BaseCurrent()` and `console_map_win()` already use.
 inline Net *&NetCurrent() { return *reinterpret_cast<Net **>(0x009BE608); }
-uint32_t *const NetEnabled = (uint32_t *)0x009BE600;
+// QueryInterface requests IID_IDirectPlay2A; the SDK aliases that interface
+// to IDirectPlay2. All source reads and writes share this one pointer object.
+extern IDirectPlay2 *NetDirectPlay;
 
 // THE TWO RE-ENTRANCY GUARDS beside them, each set to 1 while its own pass is
 // inside the code that must not be re-entered and cleared on the way out.
 // check_polling sends its 0x20 keep-alive under the 0x9BE610 flag and reaps
-// stale players under the 0x9BE60C one; the same `uint32_t *const` binding as
-// NetEnabled, so the reads and the stores fold to the image's absolute
-// operand.
+// stale players under the 0x9BE60C one. These remaining fixed-address guards
+// still need source-owned storage; they are not aliases of NetDirectPlay.
 uint32_t *const NetReapBusy = (uint32_t *)0x009BE60C;
 uint32_t *const NetKeepAliveBusy = (uint32_t *)0x009BE610;
 
@@ -452,12 +457,9 @@ inline func_net_time &NetTimeGetTimeSlot() {
     return *reinterpret_cast<func_net_time *>(0x00669368);
 }
 
-// Net::get's scratch destination: passed BY ADDRESS to NetFifo::get as the
-// buffer to fill, and that same address is the "got a message" return value,
-// not the message's own bytes - Net::get never reads through it. An
-// `extern` symbol, not a plain literal, keeps the relocation the image emits
-// at each of the two uses.
-extern uint32_t NetGetScratch;  // 0x009BC4BC
+// Shared receive/queue-copy storage. Original Receive advertises the 0x2000
+// capacity initialized by Net::init, not the old four-byte scalar declaration.
+extern unsigned char NetGetScratch[0x2000];  // 0x009BC4BC
 
 // 0x009BE608, the live Net the class registers itself in. Declared here
 // rather than in net_class.cpp because win.cpp reads it too - it used to

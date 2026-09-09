@@ -242,7 +242,11 @@ still opaque storage (see the class declaration), so the rest reaches its
 sub-objects by raw offset, the same way this tree's other unmodelled
 `??0`/`??1` pairs do.
 */
-void *NetDirectPlay;  // the image's 0x009BE600 .bss: the DP interface, null until a session connects
+// QueryInterface in 0x0062D9E0 writes this slot with IID_IDirectPlay2A
+// (original GUID at 0x006717C0); Net initialization/close clear the same
+// four-byte slot. The former NetEnabled literal pointed outside this object.
+// RECOVERY_OBJECT: v2 0x009BE600 0x009BE604 ?NetDirectPlay@@3PAUIDirectPlay2@@A 0x00630A00
+IDirectPlay2 *NetDirectPlay;
 
 // 0x009BE5F0, the dword just below it: poll_services parks the ServiceStruct
 // the enumeration callback fills there for the length of the call, and the
@@ -413,7 +417,7 @@ void Net::close() {
         (ORIGINAL(NetDirectPlay)->*vtable_method<iface_fn>(NetDirectPlay, 0x10))();
         (ORIGINAL(NetDirectPlay)->*vtable_method<iface_fn>(NetDirectPlay, 8))();
         NetDirectPlay = 0;
-        field_1C_ = 0;
+        direct_play_1c_ = 0;
         (*reinterpret_cast<void(__cdecl **)(void *)>(0x00669174))(&lock_2C_);
         (*reinterpret_cast<void(__cdecl **)(int)>(0x0066912C))(0);
         visit(&lock_2C_);
@@ -523,7 +527,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl do_net() {
-    if (NetCurrent() && *NetEnabled) {
+    if (NetCurrent() && NetDirectPlay) {
         NetCurrent()->process_voice();
     }
 }
@@ -548,7 +552,7 @@ void __cdecl check_net() {
     if (net == nullptr) {
         return;
     }
-    if (*NetEnabled == 0) {
+    if (NetDirectPlay == 0) {
         return;
     }
     net->check_polling();
@@ -579,7 +583,7 @@ Purpose: Begin streaming voice over this connection, when net play is live
 //        it, and the claim held unchanged through the swap.
 */
 int Net::start_voice(unsigned long key) {
-    if (*NetEnabled == 0) {
+    if (NetDirectPlay == 0) {
         return 7;
     }
     if ((voice_flags_D8_ & 0x60000000) == 0) {
@@ -624,7 +628,13 @@ void Net::stop_voice() {
     }
 }
 
-uint32_t NetGetScratch;  // 0x009BC4BC
+// Original 0x00630BA1..0x00630BD4 passes this storage and Net+0x6E4's
+// capacity to IDirectPlay2::Receive; 0x0062D8F5 sets that capacity to 0x2000.
+// Queue readers also copy payload bytes here, and return this buffer's address.
+// This bounds the advertised storage independently of the candidate's size;
+// the separate global at 0x009BE4BC corroborates, but does not supply, the bound.
+// RECOVERY_OBJECT: v2 0x009BC4BC 0x009BE4BC ?NetGetScratch@@3PAEA 0x00630A00
+unsigned char NetGetScratch[0x2000];
 
 // 0x0062F390, unrecovered. In-file forwarder, the same shape NetFifo::~NetFifo
 // carries above: it keeps process_voice's call an `E8` to the image's own body
@@ -695,7 +705,7 @@ Purpose: Keep the session alive and reap the players that have gone quiet:
 //        (`push ebp / mov ebp,esp`), which the image has none of.
 // THE RESIDUAL. MISMATCH 11 of 135, and it is one register-assignment cascade
 // plus one dead-store difference, not a transcription error. The image loads
-// the clock's import slot into EBP once, AFTER the NetEnabled test, and never
+// the clock's import slot into EBP once, AFTER the NetDirectPlay test, and never
 // stores it to its home; this tree loads it before the test and VC6 keeps a
 // home copy (`mov dword ptr [esp+0x10], ebp`) for a local the image does not
 // have. Everything else follows: with EBP spent on the clock the image cannot
@@ -706,7 +716,7 @@ Return Value: n/a
 */
 void Net::check_polling() {
     const func_net_time now = NetTimeGetTimeSlot();
-    if (*NetEnabled == 0) {
+    if (NetDirectPlay == 0) {
         return;
     }
     if (now() - poll_time_DC_ <= 2000) {
@@ -867,12 +877,12 @@ Return Value: NetGetScratch's address when a message was fetched, else 0
 Status: Complete
 */
 int Net::get(unsigned long *a, unsigned long *b) {
-    if (*NetEnabled != 0) {
+    if (NetDirectPlay != 0) {
         if (a != 0) {
-            int result = queue_10c_.get(&NetGetScratch,
+            int result = queue_10c_.get(NetGetScratch,
                                    reinterpret_cast<unsigned int *>(a), 0,
                                    reinterpret_cast<unsigned int *>(b));
-            return result ? reinterpret_cast<int>(&NetGetScratch) : 0;
+            return result ? reinterpret_cast<int>(NetGetScratch) : 0;
         }
     }
     return 0;
@@ -929,7 +939,7 @@ int Net::init(_GUID *guid, int option_a, int option_b) {
     } while (count != 0);
     self_20_ = this;
     buffer_24_ = buffer_6E0_;
-    field_1C_ = *NetEnabled;
+    direct_play_1c_ = NetDirectPlay;
     thread_id_4_ = GetCurrentThreadId();
     events_8_[0] = CreateEventA(0, 0, 0, 0);
     events_8_[1] = CreateEventA(0, 0, 0, 0);
@@ -972,11 +982,9 @@ Purpose: Probe the DirectPlay lobby for a connection the command line asked
 // `#pragma comment(lib, "dplayx.lib")` that names it - the one link input this
 // tree cannot reach from CMakeLists.txt.
 //
-// 0x9BE600 is the same word net_class.h binds as `NetEnabled`; QueryInterface
-// fills it with the IDirectPlay2A and every other Net entry point then tests
-// it as the "net play is live" flag, so `(void **)NetEnabled` - the pointer
-// VALUE, not the address of the binding - is what reproduces the image's
-// `push 0x9be600`.
+// QueryInterface fills the shared NetDirectPlay pointer with IDirectPlay2A.
+// Other Net entry points test that same pointer, rather than a separate flag
+// or a read from the original executable's fixed address.
 //
 // LEVER: the option walk is a `switch`, not an if/else chain - and that is not
 //        a style choice. The switch is what makes VC6 promote the case value
@@ -1190,9 +1198,9 @@ have_lobby:
                     0, 0, reinterpret_cast<DPLCONNECTION *>(buffer)) == 0) {
                 if (lobby->Connect(0, &direct_play, 0) == 0) {
                     if (direct_play->QueryInterface(IID_IDirectPlay2A,
-                                                    (void **)NetEnabled)
+                                                    reinterpret_cast<void **>(&NetDirectPlay))
                         == 0) {
-                        field_1C_ = *NetEnabled;
+                        direct_play_1c_ = NetDirectPlay;
                         direct_play->Release();
                         direct_play = 0;
                         if (status == 1) {
@@ -1336,6 +1344,7 @@ int NetFifo::add(void *data, unsigned long size, unsigned long key, int type,
 }
 
 // ORIGINAL: 0x00633D90 ?get@NetFifo@@QAEHPAXPAIPAH1@Z 0x00633D90-0x00633E75
+// symbol    ?get@NetFifo@@QAEHPAXPAIPAH2@Z
 // size      229 bytes
 // prototype int (__thiscall ?get@NetFifo@@QAEHPAXPAIPAH1@Z)(NetFifo* this, void*, unsigned int*, int*, int*)
 // callers   1   call targets   2
@@ -1391,16 +1400,15 @@ int NetFifo::get(void *data, unsigned int *key, int *type, int *len) {
 }
 
 // ORIGINAL: 0x00633F70 ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z 0x00633F70-0x00634067
-// symbol    ?get@NetFifo@@QAEHPAXPAIPAH2@Z
+// symbol    ?get@NetFifo@@QAEHPAXPAIPAH1@Z
 // size      248 bytes
 // prototype int (__thiscall ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z)(NetFifo* this, void*, unsigned int*, int*, unsigned int*)
 // callers   1   call targets   2
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
-// VC6 spells this overload's fourth parameter PAIPAH2 - the backref table
-// numbers PAX 0, PAI 1, PAH 2 - where the catalogue spells the repeat out as
-// PAI. Same argument list, same body; only the encoding of the repeat
-// differs, so the fact stands in for the name.
+// The unsigned-int length pointer repeats the key type (backref 1); the
+// keyed-search overload repeats the int* type (backref 2). Keep the original
+// catalogue names as hints, distinct from these emitted-symbol bindings.
 // The pop-the-head form: whatever is at the front of the queue goes back, and
 // the key comes out with it.
 int NetFifo::get(void *data, unsigned int *key, int *type,
@@ -1589,11 +1597,11 @@ int Net::sub_630a40(int first, int second) {
   if (first == 0) {
     return 0;
   }
-  int got = queue_10c_.get(&NetGetScratch,
+  int got = queue_10c_.get(NetGetScratch,
                             reinterpret_cast<unsigned int *>(first),
                             reinterpret_cast<int *>(0),
                             reinterpret_cast<int *>(second));
-  return got != 0 ? reinterpret_cast<int>(&NetGetScratch) : 0;
+  return got != 0 ? reinterpret_cast<int>(NetGetScratch) : 0;
 }
 
 // ORIGINAL: 0x00630980 sub_630980 0x00630980-0x006309BA BYTE_EXACT
@@ -1614,8 +1622,8 @@ int Net::sub_630980(int first, int second) {
   if (NetDirectPlay == 0 || first == 0) {
     return 0;
   }
-  int got = queue_10c_.sub_634200(&NetGetScratch, first, 0, second);
-  return got != 0 ? reinterpret_cast<int>(&NetGetScratch) : 0;
+  int got = queue_10c_.sub_634200(NetGetScratch, first, 0, second);
+  return got != 0 ? reinterpret_cast<int>(NetGetScratch) : 0;
 }
 
 // ORIGINAL: 0x006309C0 sub_6309c0 0x006309C0-0x006309FD BYTE_EXACT
@@ -1637,8 +1645,8 @@ int Net::sub_6309c0(int first, int second) {
   if (first == 0) {
     return 0;
   }
-  int got = queue_10c_.sub_6340c0(&NetGetScratch, first, 0, second);
-  return got != 0 ? reinterpret_cast<int>(&NetGetScratch) : 0;
+  int got = queue_10c_.sub_6340c0(NetGetScratch, first, 0, second);
+  return got != 0 ? reinterpret_cast<int>(NetGetScratch) : 0;
 }
 
 // ORIGINAL: 0x00632300 ?set_polling@Net@@QAEXH@Z 0x00632300-0x0063234F BYTE_EXACT
