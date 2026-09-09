@@ -1,0 +1,23 @@
+{
+  "event_id": "3a34bbb3eb36aee60bc217799d55b8d3fae57d2f0e8f840a9ccc4cde7611ea04",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "The native binding writer restored Win::on_key at 0x005F5D10-0x005F5F53 from the retired unclaimed seed. Authorize its shared active-Net storage and direct member accesses with Net construction and do_net/check_net. Original +0x48/+0x4C compare hotkeys, +0x50 supplies unsigned start_voice, and +0x54 supplies signed start_voice but is also set to 0/1 by those overloads; preserve the last field as provisional, not an invented independent target."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6249744,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "e148f12b80b68d5b1fd10c2c2f18a81078b8543d6dbe838c585c4a4eff8001e6",
+  "request_id": "net-active-window-identity",
+  "schema_version": 1,
+  "sequence": 18,
+  "stream": "task:jackal-voice-ownership"
+}

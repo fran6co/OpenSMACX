@@ -9824,6 +9824,9 @@ typedef short(__stdcall *GetKeyStateFn)(int);
 typedef int(__stdcall *PeekMessageFn)(MsgT *, void *, unsigned int, unsigned int, unsigned int);
 typedef int(__stdcall *Fn1)(void *);
 
+// ORIGINAL: 0x005F5D10 ?on_key@Win@@QAEXIJHI@Z 0x005F5D10-0x005F5F53
+// RECOVERY_BINDING: v1 {"evidence": ["git:3cb99d43^:src/recovered/units/005f5d10.cpp:1; src/win.h slot 78; pinned original 0x005F5D4F-0x005F5DE0 reads the active Net and calls its two voice-start overloads and stop_voice"], "reason": "Restore the unclaimed original identity lost when this existing Win::on_key body was homed; retain the catalogue name separately from its current virtual emitted symbol. Original instruction decoding confirms entry and ret 0x10 at 0x005F5F50; the historical extent ends at 0x005F5F53."}
+// symbol    ?on_key@Win@@UAEXIJHI@Z
 void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
     char *self = reinterpret_cast<char *>(this);
     (void)repeat;

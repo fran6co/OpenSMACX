@@ -1,0 +1,19 @@
+{
+  "event_id": "e148f12b80b68d5b1fd10c2c2f18a81078b8543d6dbe838c585c4a4eff8001e6",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/win.cpp"
+    ],
+    "evidence": [
+      "Authorize restoring the lost Win::on_key original mapping from 3cb99d43^:src/recovered/units/005f5d10.cpp (unclaimed FILE identity 0x005F5D10-0x005F5F53) through the native writer and reconciling its active Net pointer and voice-key member accesses with Net construction. The retained source body and Win slot 78 still identify the consumer; original disassembly must arbitrate contradictory voice-target hints before naming or changing dispatch."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "00996924c573bcdb51031384415b813cb1b5f9d3833fa2d749f452212ff7f005",
+  "request_id": "net-active-window-consumer",
+  "schema_version": 1,
+  "sequence": 17,
+  "stream": "task:jackal-voice-ownership"
+}
