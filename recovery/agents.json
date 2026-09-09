@@ -3,7 +3,7 @@
   "artifacts": "build/recovery/agents",
   "worker": {
     "command": {
-      "argv": ["codex", "exec", "--ephemeral", "--model", "gpt-5.6-luna", "-c", "model_reasoning_effort=high", "--sandbox", "workspace-write", "--approve-for-me", "--add-dir", "{env:VC6_PREFIX}", "--output-schema", "{schema}", "--output-last-message", "{response}", "-"],
+      "argv": ["codex", "exec", "--ephemeral", "--model", "gpt-5.6-luna", "-c", "model_reasoning_effort=high", "--approve-for-me", "--add-dir", "{env:VC6_PREFIX}", "--output-schema", "{schema}", "--output-last-message", "{response}", "-"],
       "timeout": 3300
     },
     "instructions": [".claude/agents/recovery-worker.md"],

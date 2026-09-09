@@ -967,7 +967,12 @@ writes, worker scope violations, Git mutations and changed policy, and cleans it
 temporary directory on success or failure. It never reverts source edits. Missing,
 oversized, symlinked, malformed or stale responses, nonzero provider exits and
 timeouts exit 3 with structured error details. The driver reports `agent_error`
-and stops; it does not retry quota failures or invent a reset time. Review schemas
+and stops; it does not retry quota failures or invent a reset time. Failed commands
+retain available stdout/stderr tails (at most 64 KiB each) in private ignored
+`failure-*` artifact directories, referenced by `error.diagnostics`. Those raw,
+untrusted logs may contain source or sensitive provider output: inspect locally,
+do not commit or treat them as evidence for acceptance. Successful command output
+and temporary request/schema/response files remain disposable. Review schemas
 require `supersessions` and `retractions` arrays; return empty arrays when unused.
 
 Provider sandboxing, authentication, model choice and independent sessions remain

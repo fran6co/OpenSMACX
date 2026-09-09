@@ -22,6 +22,7 @@ from .tasks import Task, TaskStore
 
 
 MAX_RESPONSE = 1024 * 1024
+MAX_FAILURE_LOG = 64 * 1024
 
 
 def _request(root, role, request):
@@ -143,7 +144,22 @@ def run_agent(root: Path, role: str, configuration: Path, request: dict) -> tupl
     before = working_state(root)
     # None of these derived inputs is a versioned ledger or a reusable verdict.
     parent = artifact_parent(root, settings["artifacts"])
-    failure = lambda kind, message: (3, {"error": {"kind": kind, "message": message}})
+    def failure(kind, message, *, output=None, errors=None):
+        result = {"error": {"kind": kind, "message": message}}
+        if output is not None or errors is not None:
+            # Private, bounded diagnostics, never agent evidence or a response.
+            # Revalidate the artifact root after running the external command.
+            diagnostic = Path(tempfile.mkdtemp(prefix="failure-", dir=artifact_parent(root, settings["artifacts"])))
+            logs = {}
+            for name, data in (("stdout", output), ("stderr", errors)):
+                data = data or b""
+                path = diagnostic / (name + ".log")
+                path.write_bytes(data[-MAX_FAILURE_LOG:])
+                path.chmod(0o600)
+                logs[name] = {"path": path.relative_to(root).as_posix(), "bytes": len(data),
+                              "truncated": len(data) > MAX_FAILURE_LOG}
+            result["error"]["diagnostics"] = logs
+        return 3, result
     try:
         with tempfile.TemporaryDirectory(prefix="agent-", dir=parent) as temporary:
             directory = Path(temporary)
@@ -179,12 +195,14 @@ def run_agent(root: Path, role: str, configuration: Path, request: dict) -> tupl
                     for word in command.argv]
             try:
                 completed = run_bounded(argv, cwd=root, input=prompt.encode(), timeout=command.timeout)
-            except subprocess.TimeoutExpired:
-                return failure("timeout", "provider timed out; source edits were preserved")
+            except subprocess.TimeoutExpired as error:
+                return failure("timeout", "provider timed out; source edits were preserved",
+                               output=error.stdout, errors=error.stderr)
             except OSError as error:
                 return failure("unavailable", f"provider unavailable: {error.strerror}")
             if completed.returncode != 0:
-                return failure("provider_exit", f"provider exited {completed.returncode}; no response accepted, source edits preserved")
+                return failure("provider_exit", f"provider exited {completed.returncode}; no response accepted, source edits preserved",
+                               output=completed.stdout, errors=completed.stderr)
             if any(path.is_symlink() or path.read_bytes() != originals[name] for name, path in files.items() if name in originals):
                 raise ValueError("agent modified its request or response schema")
             try:
@@ -211,7 +229,7 @@ def run_agent(root: Path, role: str, configuration: Path, request: dict) -> tupl
                     validate_reviewer_response(response, request["snapshot"])
                 return 0, response
             except (OSError, ValueError) as error:
-                return failure("invalid_response", str(error))
+                return failure("invalid_response", str(error), output=completed.stdout, errors=completed.stderr)
     finally:
         changed = changes(before, working_state(root))
         if changed - (editable if role == "worker" else frozenset()):

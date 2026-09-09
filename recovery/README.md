@@ -17,6 +17,10 @@ project-owned provider choices, not package defaults or a proven recovery-qualit
 ranking. Worker commands retain the workspace-write sandbox and use automatic
 permission review for operations such as the leased Wine compiler; reviewers
 remain read-only. No sandbox bypass or implicit model escalation is configured.
+The worker's `--approve-for-me` option already selects workspace-write; this CLI
+rejects combining it with a separate `--sandbox` option. The installed-command
+control checks all role arguments using an intentionally absent schema, without
+calling the provider.
 Inspect preserved work and authorize a different worker profile when a bounded
 attempt exposes a task beyond the selected model's ability. A successful provider
 probe does not establish recovery or acceptance quality.

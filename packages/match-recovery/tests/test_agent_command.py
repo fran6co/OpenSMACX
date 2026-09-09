@@ -7,7 +7,7 @@ import sys
 
 import pytest
 
-from match_recovery.agent_command import MAX_RESPONSE, run_agent
+from match_recovery.agent_command import MAX_FAILURE_LOG, MAX_RESPONSE, run_agent
 from match_recovery.agent_protocol import response_schema
 from match_recovery.cli import main
 from match_recovery.driver import drive
@@ -88,7 +88,26 @@ def test_failure_never_banks_a_response_or_discards_edits(project, script, kind)
     code, result = run_agent(root, "worker", config, request(task))
     assert code == 3 and result["error"]["kind"] == kind
     assert (root / "src/f.cpp").read_text() == "preserve this work"
-    assert list((root / "build/recovery/agents").iterdir()) == []
+    assert not list((root / "build/recovery/agents").glob("agent-*"))
+
+
+def test_failed_provider_logs_are_bounded_private_ignored_and_not_response_evidence(project):
+    root, task = project
+    script = ("import sys; sys.stdout.buffer.write(b'x' * " + str(MAX_FAILURE_LOG + 9) + "); "
+              "sys.stderr.write('provider configuration diagnostic'); raise SystemExit(2)")
+    code, result = run_agent(root, "worker", configure(root, script=script), request(task))
+    assert code == 3 and result["error"]["kind"] == "provider_exit"
+    assert "provider configuration diagnostic" not in json.dumps(result)
+    logs = result["error"]["diagnostics"]
+    assert logs["stdout"]["bytes"] == MAX_FAILURE_LOG + 9 and logs["stdout"]["truncated"]
+    assert not logs["stderr"]["truncated"]
+    assert (root / logs["stdout"]["path"]).read_bytes() == b'x' * MAX_FAILURE_LOG
+    assert (root / logs["stderr"]["path"]).read_text() == "provider configuration diagnostic"
+    for row in logs.values():
+        path = root / row["path"]
+        assert path.stat().st_mode & 0o777 == 0o600
+        assert path.parent.stat().st_mode & 0o777 == 0o700
+        assert git(root, "check-ignore", row["path"]) == row["path"]
 
 
 @pytest.mark.parametrize("role,path", [("reviewer", "src/f.cpp"), ("worker", "src/other.cpp")])
