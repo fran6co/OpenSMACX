@@ -1,0 +1,61 @@
+{
+  "event_id": "6349b17d679a567adffe0d9af37584273314b0fda190f238e0096b4c20e75d21",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/nullsub_thunks.cpp"
+    ],
+    "evidence": [
+      "Authorize the primary Net/AlphaNet/NetDaemon virtual hierarchy and four AlphaNet no-op overrides currently represented by unrelated fastcall wrappers. Original constructor stores bind primary tables at 0x0066EB04, 0x0066EACC and 0x0066EF0C. Their observed six-slot prefixes distinguish inheritance from overrides. Preserve shared base-leaf identities as unresolved folded bindings, not AlphaMovie ownership, and preserve the unknown complete table bounds.",
+      "Original 0x00632D6B dispatches player addition at slot 1 with a name and ID; 0x00632633 dispatches deletion at slot 2; 0x00632F34 dispatches the SDK name-change message at slot 3; 0x00632F0C handles session loss at slot 4; 0x00632612 notifies host replacement at slot 5. Slot 0 remains a provisional two-word no-op interface. NetDaemon callback implementations exist only as nonexact seeds; retain them and add explicitly unfinished mapped product slots for link continuity, not pretend empty behavior is recovered."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5121168,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5474800,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5124800,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5124816,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5124832,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5124848,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5431648,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5432176,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "ed2260c02b4a9aac666ff6f7eb34e9af0a36c6e570a4817dd0ace93d934ab9c3",
+  "request_id": "net-primary-hierarchy",
+  "schema_version": 1,
+  "sequence": 21,
+  "stream": "task:jackal-voice-ownership"
+}
