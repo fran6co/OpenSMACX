@@ -457,12 +457,32 @@ void Net::close() {
     }
 }
 
+// Retained unresolved entry points, now reached by the owning classes rather
+// than NetDaemon manually destroying its bases. No new target is inferred.
+void RemoveAllShim::remove_all() {
+    typedef void(__fastcall *pending)(RemoveAllShim *, void *);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x00402970))(this, nullptr);
+}
+class Sub401be0Shim {
+ public:
+    void run();
+};
+void Sub401be0Shim::run() {
+    typedef void(__fastcall *pending)(Sub401be0Shim *, void *);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x00401BE0))(this, nullptr);
+}
+
 Net::~Net() {
-    // The mirror of the constructor: the embedded subobjects tear down
-    // implicitly (reverse declaration order), which republishes each
-    // StringAllocationBase owner exactly as the image's hand-staged
-    // teardown does. NetDaemon's ~NetDaemon carries the rest of the
-    // image's ??1Net sequence through its own typed members.
+    close();
+    // The allocation node/list's internal teardown is still unfinished.
+    // Preserve its existing operations while recovering member ownership;
+    // queues, receiver and VoiceTx remain compiler-owned destruction.
+    char *const self = reinterpret_cast<char *>(this);
+    reinterpret_cast<RemoveAllShim *>(self + 0x72c)->remove_all();
+    *reinterpret_cast<int32_t *>(self + 0x740) = 0;
+    reinterpret_cast<Sub401be0Shim *>(self + 0x748)->run();
+    StringAllocationHeap = *reinterpret_cast<Heap **>(self + 0x754);
+    StringAllocationHeap = *reinterpret_cast<Heap **>(self + 0x75c);
 }
 
 /*

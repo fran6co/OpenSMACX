@@ -99,37 +99,6 @@ int NetDaemon::lock_base(int base_id, int target, int payload_1C, int payload_20
 // per-row walk multiplies it by the row index to reach a tile record.
 static int *const MapRowStride = (int *)0x0068FAF0;
 
-// Two nameless __thiscall helpers the catalogue has no mangled name for -
-// the call sites set up a `this` pointer first. Shims only, the same
-// reasoning as the FileWin/BasePop recoveries' casts: the symbol they
-// resolve to is a relocation on both sides and is masked out of the
-// comparison the same way an address literal is.
-class RemoveAllShim {
- public:
-  void remove_all();  // 0x00402970
-};
-void RemoveAllShim::remove_all() {
-    typedef void(__fastcall *pending)(RemoveAllShim *, void *);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x00402970))(this, nullptr);
-}
-class Sub401be0Shim {
- public:
-  void run();  // 0x00401BE0
-};
-void Sub401be0Shim::run() {
-    typedef void(__fastcall *pending)(Sub401be0Shim *, void *);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x00401BE0))(this, nullptr);
-}
-// A Heap, reached only by raw offset here - see the note on the destructor.
-class HeapShim {
- public:
-  void shutdown();  // 0x005D45B0
-};
-void HeapShim::shutdown() {
-    typedef void(__fastcall *pending)(HeapShim *, void *);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x005D45B0))(this, nullptr);
-}
-
 // Product slots for the real derived callbacks. Retained nonexact seeds
 // remain the implementation inputs; empty bodies provide link continuity
 // only and must not be accepted as recovered behavior.
@@ -222,9 +191,8 @@ NetDaemon::NetDaemon() : AlphaNet() {
 }
 
 /*
-Purpose: Tear down a network daemon - its own lock table, then AlphaNet's
-         and Net's fields, directly (no separate calls into their own
-         destructors).
+Purpose: Tear down a network daemon through its lock members and the
+         AlphaNet/Net destructor chain.
 // ORIGINAL: 0x00538D10 ??1NetDaemon@@QAE@XZ 0x00538D10-0x00538EBE;0x004E3710-0x004E372B;0x0065E010-0x0065E0A5
 // TRIED: 15/97 with 62 compiled instructions, and the gap is the class, not
 //   the spelling. TWO things measured 2026-08-22. (1) call_diff says MORE: this
@@ -254,38 +222,15 @@ Purpose: Tear down a network daemon - its own lock table, then AlphaNet's
 // calls     0x00401BE0 0x00402970 0x00402DD0 0x004C8DB0 0x004E25B0 0x00538EC0 0x005D45B0 0x0062E010 0x006339E0
 Return Value: n/a
 
-MEASURED SHARED_TAIL in the artifact this was transcribed from: one span is
-COMDAT-folded with another function, so no per-instruction verdict is well
-defined there regardless of spelling. Kept as the faithful coverage
-translation anyway. Before several of these calls the image also resets one
-or two hand-maintained "vtable" pointers through the same vbtable-relative
-pattern `GraphicWin::construct` uses (see graphicwin.cpp) - not reproduced
-here field-by-field; the shims above carry the call sequence instead.
+The retained seed includes shared cleanup spans. Their ownership and exact
+matching remain unfinished; shared code is not grounds to exclude this body.
+The TRIED note above describes the former hand-staged candidate, not current
+measurements. Ordinary bases and members now own destruction; the remaining
+list-cleanup bridges live in those owners and still require recovery.
 */
 NetDaemon::~NetDaemon() {
-
-    char *const self = reinterpret_cast<char *>(this);
-
-    AlphaNet::close();
-    reinterpret_cast<HeapShim *>(self + 0x148c)->shutdown();
-
-    reinterpret_cast<RemoveAllShim *>(self + 0x144c)->remove_all();
-    *reinterpret_cast<int32_t *>(self + 0x1460) = 0;
-    reinterpret_cast<RemoveAllShim *>(self + 0x144c)->remove_all();
-    *reinterpret_cast<int32_t *>(self + 0x1460) = 0;
-    StringAllocationHeap = *reinterpret_cast<Heap **>(self + 0x1488);
-
-    Net::close();
-
-    reinterpret_cast<RemoveAllShim *>(self + 0x72c)->remove_all();
-    *reinterpret_cast<int32_t *>(self + 0x740) = 0;
-    reinterpret_cast<Sub401be0Shim *>(self + 0x748)->run();
-    StringAllocationHeap = *reinterpret_cast<Heap **>(self + 0x754);
-    StringAllocationHeap = *reinterpret_cast<Heap **>(self + 0x75c);
-
-    // Net's implicit member destruction now owns the three queues, receiver
-    // and VoiceTx, in that order. The list teardown above still needs to move
-    // into its real owning classes; do not duplicate these member lifetimes.
+    // AlphaNet owns transport close, Heap and ledger destruction; Net owns
+    // its remaining list, queue and voice cleanup. Do not repeat base lifetimes.
 }
 
 /*
@@ -3272,7 +3217,7 @@ void NetDaemon::process_message(char * message, unsigned long sender, int channe
     // lock_state_[0].dword_[1], named below; 0x1B74 is lock_state_[1].dword_[3]
     // and 0x1BB8 is lock_state_[2].dword_[5], both in parts of the dispatcher
     // this transcription does not reach - and one per-slot byte table at
-    // 0x794, AlphaNet's slot_region_[8].
+    // 0x794, the first player's status byte at record offset +0x28.
 
     unsigned char *msg = reinterpret_cast<unsigned char *>(message);
     unsigned short type = *reinterpret_cast<unsigned short *>(message);
@@ -3338,10 +3283,9 @@ void NetDaemon::process_message(char * message, unsigned long sender, int channe
                 case 5:
                 case 6: {
                     int field4 = *reinterpret_cast<int *>(message + 4);
-                    int slot = field4 * 103;
-                    // 0x794 is AlphaNet's slot_region_[8], one status byte
-                    // per process slot.
-                    slot_region_[8 + slot * 4] = (idx == 5) ? 1 : 2;
+                    // The original's *103 followed by *4 is the record
+                    // stride, not an array of unrelated status dwords.
+                    process_slots_[field4].status_bytes_[0] = (idx == 5) ? 1 : 2;
                     return;
                 }
             }

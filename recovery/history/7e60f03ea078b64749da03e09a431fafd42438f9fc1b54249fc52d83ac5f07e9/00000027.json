@@ -1,0 +1,21 @@
+{
+  "event_id": "51c5fdc1761aa69e414483fdc6cef6139770f57550e86dc3bb02d1ab5225412a",
+  "payload": {
+    "affects": [
+      "entity-a5ace58353d3210408c862b56c5752e5de4163492cf5aef7a0bb989157545d83",
+      "entity-ecc8c939672aeca28dcd606fb1e479bb69d70a3070d4d40fa6817fe83c162eb2"
+    ],
+    "author": "coordinator",
+    "discovery_id": "alphanet-ledger-lifetime",
+    "evidence": [
+      "src/alphanet.h now declares independent complete player records, ledger and Heap; the ledger virtual surface still has only unk_slot0 although retained original remove_all 0x402970 dispatches primary slot 1. The seed at src/unrecovered/005d4890.cpp copies payload strings and scalar fields, so its derived table entry is not a no-op. Existing 0x402970 and 0x401BE0 bridges remain explicit unresolved dependencies in the owning destructors. Heap destructor 0x5D4580 versus original AlphaNet teardown call 0x5D45B0 requires emitted-context investigation, not a forged shared address. The adopted AlphaNet destructor preserves all three existing seed spans, including shared cleanup tails, without banking a claim."
+    ],
+    "hypothesis": "Complete ledger and allocation-node virtual payload/lifetime recovery behind the now ordinary AlphaNet members. Preserve correct ownership while restoring emitted destructor code and call targets; do not restore the false player-record union or duplicate member destruction to obtain a local match.",
+    "kind": "discovery"
+  },
+  "previous_event": "092918e61391fa2020160d8992be5ca4e5b71b773aa4284381a7ffe173fa23e5",
+  "request_id": "alphanet-ledger-lifetime",
+  "schema_version": 1,
+  "sequence": 27,
+  "stream": "task:jackal-voice-ownership"
+}

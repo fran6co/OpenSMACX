@@ -17,7 +17,7 @@
         "construct": 7,
         "free-function destructor": 5,
         "explicit base construct/destroy": 8,
-        "placement new on a subobject": 6,
+        "placement new on a subobject": 4,
         "hand-walked vbtable": 0,
         "VCall shim": 9,
         "ORIGINAL() vtable-slot dispatch": 29,
@@ -131,7 +131,7 @@
         "orphan redirect": 194,
         "pointer-as-int": 0,
         "undocumented trivial body": 0,
-        "raw self-access": 202,
+        "raw self-access": 199,
         "pointer-parameter as int": 102,
         "scaffold name": 2996
       },

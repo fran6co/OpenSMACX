@@ -15,7 +15,6 @@
 
 #include "stringstruct.h"  // StringAllocationBase, the ledger's virtual base
 #include "heap.h"
-#include <new>      // Heap placement-construction at 0x148C
 
 /*
 Purpose: Convert a multiplayer process ID to its one-based player index.
@@ -32,11 +31,8 @@ Return Value: Player index (1-7); process ID not found (0)
 Status: Complete
 */
 int AlphaNet::pid_2_idx(uint32_t process_id) {
-    const uint8_t *bytes = reinterpret_cast<const uint8_t *>(this);
     for (int index = 1; index < 8; index++) {
-        uint32_t candidate;
-        memcpy(&candidate, bytes + 0x928 + (index - 1) * 0x19C, sizeof(candidate));
-        if (candidate == process_id) {
+        if (process_slots_[index].pid_ == process_id) {
             return index;
         }
     }
@@ -58,14 +54,9 @@ Return Value: Player identity; process ID not found (0)
 Status: Complete
 */
 int AlphaNet::pid_2_who(uint32_t process_id) {
-    const uint8_t *bytes = reinterpret_cast<const uint8_t *>(this);
     for (int index = 1; index < 8; index++) {
-        uint32_t candidate;
-        memcpy(&candidate, bytes + 0x928 + (index - 1) * 0x19C, sizeof(candidate));
-        if (candidate == process_id) {
-            int8_t identity;
-            memcpy(&identity, bytes + 0x92C + (index - 1) * 0x19C, sizeof(identity));
-            return identity;
+        if (process_slots_[index].pid_ == process_id) {
+            return process_slots_[index].identity_;
         }
     }
     return 0;
@@ -85,14 +76,9 @@ Return Value: Process ID; player identity not found (0)
 Status: Complete
 */
 int AlphaNet::who_2_pid(int identity) {
-    const uint8_t *bytes = reinterpret_cast<const uint8_t *>(this);
     for (int index = 1; index < 8; index++) {
-        int8_t candidate;
-        memcpy(&candidate, bytes + 0x92C + (index - 1) * 0x19C, sizeof(candidate));
-        if (candidate == identity) {
-            int process_id;
-            memcpy(&process_id, bytes + 0x928 + (index - 1) * 0x19C, sizeof(process_id));
-            return process_id;
+        if (process_slots_[index].identity_ == identity) {
+            return process_slots_[index].pid_;
         }
     }
     return 0;
@@ -113,11 +99,8 @@ Return Value: Player index (1-7); player identity not found (0)
 Status: Complete
 */
 int AlphaNet::who_2_idx(int identity) {
-    const uint8_t *bytes = reinterpret_cast<const uint8_t *>(this);
     for (int index = 1; index < 8; index++) {
-        int8_t candidate;
-        memcpy(&candidate, bytes + 0x92C + (index - 1) * 0x19C, sizeof(candidate));
-        if (candidate == identity) {
+        if (process_slots_[index].identity_ == identity) {
             return index;
         }
     }
@@ -150,32 +133,25 @@ Purpose: Build an AlphaNet: the Net base (implicit), the eight process
 // symbol    ??0AlphaNet@@QAE@XZ
 // size      277 bytes
 // kind      game
-// PROMOTED and TYPED: the ledger (AlphaNetStringStruct/AlphaNetLedger) and
-// the Heap construct implicitly - the two-stage table staging and the
-// placement-new are the compiler's own base-construction sequence. The
+// Player record construction owns the five initial identity/status bytes.
+// The ledger and Heap now construct/destruct as ordinary members. The
 // image's final [this]=0x66EACC store is now emitted from AlphaNet's real
 // overrides. The constructor's remaining source and lifetime remain unfinished.
 Return Value: n/a
-Status: Complete
 */
 AlphaNet::AlphaNet() {
-    for (int i = 0; i < 8; ++i) {
-        AlphaNetProcessSlot &slot = process_slots_[i];
-        slot.pattern_[0] = 0xFF;
-        slot.pattern_[1] = 0;
-        slot.pattern_[2] = 0;
-        slot.pattern_[3] = 0xFF;
-        slot.pattern_[4] = 2;
-    }
-    // The union's ledger arm: placement-constructed, as the image does -
-    // the base chain stages the tables, zeroes the five list fields and
-    // captures the allocation owner into the virtual base at 0x1488.
-    new (&ledger_) AlphaNetLedger();
-    // and the Heap, exactly the image's explicit call on 0x148C.
-    new (&heap_) Heap();
     for (int j = 0; j < 8; ++j) {
         process_slots_[j].pid_ = 0;
     }
+    player_count_ = 0;
+}
+
+// The original closes transport before destroying Heap, ledger, then Net.
+// The members/base own those lifetimes; NetDaemon must not repeat them.
+// ORIGINAL: 0x00538B60 ??1AlphaNet@@QAE@XZ 0x00538B60-0x00538D0E;0x004E3710-0x004E372B;0x0065DF70-0x0065E005
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00538b60.cpp: existing identity and complete recorded spans", "Original AlphaNet destruction closes transport, then destroys Heap at +0x148C and ledger at +0x144C before Net; normal members now own this chain."], "reason": "Adopt the retained destructor seed identity for the real AlphaNet owner. Existing shared cleanup spans are preserved, not newly inferred or claimed exact; the native one-entry/new-binding route deliberately does not infer overlapping ownership."}
+AlphaNet::~AlphaNet() {
+    close();
 }
 
 // Intentional no-op overrides, independently present in AlphaNet's original
@@ -209,15 +185,26 @@ AlphaNetStringStruct::AlphaNetStringStruct() {
 
 void AlphaNetStringStruct::unk_slot0() { }
 
+// Original AlphaNet teardown clears the list in both derived and base stages,
+// then lets the virtual allocation base publish its saved owner. The existing
+// bridge to 0x00402970 is unfinished recovery, not a claim about the list's
+// still-incomplete virtual surface or payload types.
+AlphaNetLedger::~AlphaNetLedger() {
+    reinterpret_cast<RemoveAllShim *>(this)->remove_all();
+    current_position_ = 0;
+}
+
+AlphaNetStringStruct::~AlphaNetStringStruct() {
+    reinterpret_cast<RemoveAllShim *>(this)->remove_all();
+    current_position_ = 0;
+}
+
 void AlphaNet::close() {
     // Eight process-ID slots at 0x78C, one per player, stride 0x19C.
     for (size_t slot = 0; slot < 8; ++slot) {
-        const uint32_t zero = 0;
-        memcpy(&process_slots_[slot].pid_, &zero, sizeof(zero));
+        process_slots_[slot].pid_ = 0;
     }
-    const uint32_t zero = 0;
-    memcpy(reinterpret_cast<uint32_t *>(
-               reinterpret_cast<char *>(this) + 0x768), &zero, sizeof(zero));
+    player_count_ = 0;
     // The legacy body tail-jumps here with this unchanged, so the network
     // close runs against the same object.
     Net::close();

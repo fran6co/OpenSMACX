@@ -239,7 +239,14 @@ def test_receiver_cleanup_uses_the_shared_layout_and_virtual_owners(compiled):
         assert symbol_at("src/general.cpp", 0x538EC0) not in targets
         assert not any("JackalVoiceRxShim" in target or "NetFifoShim" in target for target in targets)
         assert not any("VoiceTx" in target or "NetFifo" in target for target in targets)
+        assert targets.count("??1AlphaNet@@QAE@XZ") == 1
+        assert "??1Net@@QAE@XZ" not in targets
+        assert not any("HeapShim" in target or "RemoveAllShim" in target for target in targets)
+    for obj in compiled["src/alphanet.cpp"]:
+        targets = references(obj, "??1AlphaNet@@QAE@XZ")
+        assert targets.count("??1Heap@@QAE@XZ") == 1
         assert targets.count("??1Net@@QAE@XZ") == 1
+        assert targets.index("??1Heap@@QAE@XZ") < targets.index("??1Net@@QAE@XZ")
     for obj in compiled["src/net_class.cpp"]:
         targets = references(obj, "??1Net@@QAE@XZ")
         cleanup = symbol_at("src/general.cpp", 0x538EC0)
@@ -331,7 +338,7 @@ def test_net_primary_tables_are_emitted_from_the_inheritance_chain(compiled):
                 method(base, name, args) for base, (name, args) in zip(owners, slots)]
             assert references(obj, symbol_at(unit, constructor)).count(table) == 1
             net = class_layout(obj, "Net")
-            assert net["size"] == 0x780 and "field_0_" not in net["members"]
+            assert net["size"] == 0x768 and "field_0_" not in net["members"]
             assert net["members"]["thread_id_4_"] == 4
     for address in (0x52E160, 0x52E370):
         row, = (r for r in read_file(ROOT / "src/netdaemon.cpp") if r.address == address)
@@ -369,6 +376,39 @@ def test_net_shared_defaults_and_all_primary_tables_match_original_bindings(comp
         _, rows = check_generated(tables, objects, image, {**externals, **targets})
         assert {row["symbol"] for row in rows} == {item.symbol for item in tables}
         assert all(row["definition"] == row["content"] == "pass" for row in rows)
+
+
+def test_alphanet_records_are_complete_nonoverlapping_members(compiled):
+    for unit in ("src/net_class.cpp", "src/alphanet.cpp", "src/netdaemon.cpp"):
+        for obj in compiled[unit]:
+            assert class_layout(obj, "Net")["size"] == 0x768
+            if unit == "src/net_class.cpp":
+                continue
+            record = class_layout(obj, "AlphaNetProcessSlot")
+            assert record["size"] == 0x19C
+            assert {name: record["members"][name] for name in ("name_", "pid_", "identity_", "status_bytes_")} == {
+                "name_": 0, "pid_": 0x20, "identity_": 0x24, "status_bytes_": 0x28}
+            owner = class_layout(obj, "AlphaNet")
+            assert owner["size"] == 0x14A0
+            assert {name: owner["members"][name] for name in ("player_count_", "process_slots_", "ledger_", "heap_")} == {
+                "player_count_": 0x768, "process_slots_": 0x76C, "ledger_": 0x144C, "heap_": 0x148C}
+            assert owner["member_type_kinds"]["process_slots_"] == "array"
+            assert owner["member_type_kinds"]["ledger_"] == owner["member_type_kinds"]["heap_"] == "class_value"
+            assert owner["class_value_members"]["ledger_"] == "AlphaNetLedger"
+            assert owner["class_value_members"]["heap_"] == "Heap"
+
+
+def test_alphanet_lookup_reset_and_member_lifetimes(tmp_path, monkeypatch):
+    run_recovered_harness(tmp_path, monkeypatch, "alphanet_records_harness.cpp", [
+        ("// LIVE_ALPHANET_CTOR", "src/alphanet.cpp", 0x4E2490),
+        ("// LIVE_ALPHANET_DTOR", "src/alphanet.cpp", 0x538B60),
+        ("// LIVE_PID_INDEX", "src/alphanet.cpp", 0x4E25E0),
+        ("// LIVE_PID_IDENTITY", "src/alphanet.cpp", 0x4E2610),
+        ("// LIVE_IDENTITY_PID", "src/alphanet.cpp", 0x4E2660),
+        ("// LIVE_IDENTITY_INDEX", "src/alphanet.cpp", 0x4E26B0)], declarations=[
+        ("// LIVE_PLAYER_RECORD", "src/alphanet.h", "struct AlphaNetProcessSlot {", "static_assert(sizeof(AlphaNetProcessSlot)"),
+        ("// LIVE_ALPHANET_DECLARATION", "src/alphanet.h", "class AlphaNet : public Net {", "static_assert(sizeof(AlphaNet)"),
+        ("// LIVE_ALPHANET_CLOSE", "src/alphanet.cpp", "void AlphaNet::close() {", "\n\n\n/*\n// ORIGINAL: 0x00401CE0")])
 
 
 def test_menu_candidates_use_typed_source_definitions(compiled):

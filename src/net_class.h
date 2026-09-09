@@ -111,15 +111,14 @@ static_assert(sizeof(VoiceTx) == 0x58,
   * measurement is 0x768 - docs/recovery/access-lower-bounds.csv records
   * `Net,0x768` from `mov dword ptr [esi + 0x764], ebx` at 0x0062D850 in
   * ??0Net, and no row of docs/recovery/member-accesses.csv attributed to Net
-  * goes higher. A reach is a LOWER bound, so the object is at least 0x768;
-  * tools/derive_class_layout.py finds no size evidence for Net at all, and
-  * the 0x18 that carries the total to 0x780 below is pad, not a measurement.
+  * goes higher. A reach is a LOWER bound, so the object is at least 0x768.
+  * AlphaNet's count at +0x768 and name-bearing records at +0x76C now replace
+  * the former unsupported tail pad; see alphanet.h for the caller evidence.
   * Everything the members above do not name stays opaque storage.
   *
-  * That pad is now load-bearing: src/alphanet.h derives AlphaNet from Net, so
-  * this size is where AlphaNet's own storage begins. Correcting it will fail
-  * `static_assert(sizeof(AlphaNet) == 0x14A0)` there, which is the intended
-  * alarm - re-measure AlphaNet's `data_` rather than silence it.
+  * The source models the derived player count as AlphaNet-owned, rather than
+  * inventing additional Net storage. Layout checks reprove the derived array
+  * position and extent; the standalone Net allocation size is not known.
   */
 // A circular-list entry, not its separately allocated voice payload.
 // Insertion 0x00633180 requests 0x1C bytes and installs vbtable 0x006693C8:
@@ -247,6 +246,13 @@ class NetPlayer {
 };
 
 struct ServiceList;
+
+// Existing unresolved list-cleanup bridge, shared by the Net and AlphaNet
+// owning destructors until the list's actual virtual/payload types are recovered.
+class RemoveAllShim {
+ public:
+  void remove_all();  // 0x00402970; not accepted recovery
+};
 
 class Net {
  public:
@@ -432,20 +438,16 @@ class Net {
   NetAllocationNode allocation_node_;  // 0x700
   // 0x760 and 0x764 are the two words check_polling compares to decide
   // whether the whole player table is stale or only a slice of it - close()
-  // zeroes both - and 0x768 the slot count AlphaNet::close zeroes; the rest
-  // is opaque to 0x780.
+  // zeroes both. AlphaNet owns the following player count and record array.
   uint32_t field_760_;       // 0x760
   // Read by NetDaemon::send_message (netdaemon.cpp) as the substitution for
   // an out-of-range target, so it is reachable from the derived class rather
   // than a this-pun over the offset.
  public:
   uint32_t field_764_;       // 0x764
- private:
-  uint8_t field_768_[0x18];  // 0x768..0x77F, opaque
 };
 
-// Pinned by AlphaNet's own assert: AlphaNet = Net + data_[0xD20] = 0x14A0.
-static_assert(sizeof(Net) == 0x780, "Net is the 0x780-byte base AlphaNet pads from");
+static_assert(sizeof(Net) == 0x768, "Net ends before AlphaNet's player count");
 
 
 

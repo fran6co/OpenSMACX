@@ -25,32 +25,17 @@
  * object's first dword (`mov [esi], 0x66eb04`, the very constant ??0Net
  * writes at 0x0062D822, overwriting AlphaNet's own 0x66eacc from 0x004E2572)
  * and then calls ?close@Net@@QAEXXZ on that unadjusted receiver at
- * 0x00538C1B. The declaration below replaces `uint32_t alignment_;` and the
- * first 0x77C bytes of the old `data_` slab - exactly sizeof(Net) - so
- * nothing moves.
+ * 0x00538C1B. The queues and voice members destroyed there belong to Net.
  *
- * WHAT THIS WITHDRAWS. tools/verify_subobjects.py reports five subobjects as
- * AlphaNet's own - VoiceTx at 0x58, JackalVoiceRx at 0xB0 and NetFifo at
- * 0xE8, 0x10C and 0x130 - because ??1AlphaNet tears them down. They are
- * Net's. ??1Net@@QAE@XZ (0x004E34D0, a standalone 525-byte function) destroys
- * the identical five at the identical offsets in the identical order, and
- * ??0Net builds them (`lea ecx, [esi+0x58]` / ??0VoiceTx at 0x0062D6C9,
- * ??0NetFifo three times from 0x0062D73E). ??1AlphaNet simply inlines ~Net
- * after the ?close@Net call; those offsets are inside the base subobject and
- * are not AlphaNet's to declare.
- *
- * WHERE THE BASE ENDS IS NOT MEASURED, and `data_` starting at 0x780 inherits
- * that. Nothing in the image pins sizeof(Net): tools/derive_class_layout.py
- * finds "no size evidence" for both Net and AlphaNet, and Net's own methods
- * reach only 0x768 (docs/recovery/access-lower-bounds.csv - which also
- * withdraws src/net_class.h's "as far as 0x770"). Against that, both
- * ??0AlphaNet (0x004E2590) and ?close@AlphaNet (0x004E25C9) write
- * [this+0x768] themselves, and AlphaNet's first unambiguously own structure
- * is the eight-entry, 0x19C-stride slot array based at 0x78C. So the real
- * boundary lies somewhere in [0x768, 0x78C]; 0x780 is only where the trailing
- * pad in src/net_class.h happens to round. The edge above is proven; this
- * offset is borrowed, and the static_assert is what will notice if
- * sizeof(Net) is ever corrected.
+ * Player records start at +0x76C, not at their process IDs at +0x78C.
+ * Original on_player_added (0x0052E1DC) copies a name to +0x76C+n*0x19C;
+ * its ID store (0x0052E1BA) uses +0x78C+n*0x19C. Eight records therefore
+ * end at +0x144C, exactly before the ledger. The old record/ledger overlap
+ * was an artifact of omitting the first 32 bytes, not evidence for a union.
+ * AlphaNet construction and close initialize the count at +0x768;
+ * Net construction's final ID word is +0x764. We model the count as
+ * AlphaNet-owned and end Net at +0x768, removing its unsupported tail pad.
+ * These ownership interpretations remain subject to wider caller evidence.
  */
   // PUBLIC: access specifiers change nothing about layout, and this
   // tree's bodies reach base methods the image reaches with a direct
@@ -58,11 +43,14 @@
   // what `class` means - those calls do not compile at all, and the
   // seam that stood in for them cost the caller `call [ptr]`.
 // THE LEDGER - AlphaNet's StringList-family subobject at 0x144C. A
-// StringStruct-shaped base stage (vftable 0x669408, its one slot a leaf)
+// StringStruct-shaped base stage (vftable 0x669408)
 // over a VIRTUAL StringAllocationBase at +0x38 (vbtable 0x66EAF0 places it
 // there; the owner capture lands at 0x1488), then a derived list stage
 // (vftable 0x66EAE8) that adds no state. The two-stage construction the old
 // transcription staged by hand is the compiler's own base-chain sequence.
+// The virtual surface is incomplete: original remove_all (0x402970) uses
+// a second slot, and the derived table's 0x5D4890 payload operation remains
+// a seed. The single declaration below is not evidence of a one-slot table.
 class AlphaNetStringStruct : public virtual StringAllocationBase {
  public:
   virtual void unk_slot0();   // 0x00404250, unrecovered leaf
@@ -75,19 +63,42 @@ class AlphaNetStringStruct : public virtual StringAllocationBase {
   uint8_t field_1C_[0x1C];     // +0x1C..+0x37, opaque to the virtual base
 
   AlphaNetStringStruct();
+  ~AlphaNetStringStruct();
 };
 
 class AlphaNetLedger : public AlphaNetStringStruct {
   // the list stage - its own vtable (0x66EAE8, slot 0x5D4890) and nothing
   // else; the base chain carries all the state.
+ public:
+  ~AlphaNetLedger();
 };
 
-// One player's process slot: the pid dword (cleared at construction and by
-// close) and the five-byte {FF,0,0,FF,2} identity pattern at +4.
+// One complete player record, including the name before the process ID.
+// Name storage ends at the ID; the meanings/types of the trailing status
+// region are not yet established beyond the observed byte writes.
 struct AlphaNetProcessSlot {
+  // RECOVERY_MEMBER: v1 AlphaNetProcessSlot name_ 0x0 0x0052E160
+  char name_[0x20];
+  // RECOVERY_MEMBER: v1 AlphaNetProcessSlot pid_ 0x20 0x0052E160
   uint32_t pid_;
-  uint8_t pattern_[5];
-  uint8_t pad_[0x193];
+  // The lookup functions sign-extend this identity byte.
+  // RECOVERY_MEMBER: v1 AlphaNetProcessSlot identity_ 0x24 0x004E2610
+  int8_t identity_;
+  uint8_t field_25_;
+  uint8_t field_26_;
+  int8_t field_27_;
+  // Starts at original +0x794. process_message writes its first byte in
+  // the indexed player record; the remaining bytes stay untyped evidence.
+  // RECOVERY_MEMBER: v1 AlphaNetProcessSlot status_bytes_ 0x28 0x00534400
+  uint8_t status_bytes_[0x174];
+
+  AlphaNetProcessSlot() {
+    identity_ = -1;
+    field_25_ = 0;
+    field_26_ = 0;
+    field_27_ = -1;
+    status_bytes_[0] = 2;
+  }
 };
 static_assert(sizeof(AlphaNetProcessSlot) == 0x19C, "process slot stride");
 
@@ -103,6 +114,7 @@ class AlphaNet : public Net {
   virtual void on_session_lost();
   virtual void on_host_changed();
   AlphaNet();   // 0x004E2490, defined in alphanet.cpp
+  ~AlphaNet();  // 0x00538B60; owns close before member/base destruction
   int pid_2_idx(uint32_t process_id);
   int pid_2_who(uint32_t process_id);
   int who_2_pid(int identity);
@@ -114,25 +126,18 @@ class AlphaNet : public Net {
   int setup(int option);
 
  public:
-  // Made public 2026-09-04: NetDaemon::process_message writes one per-slot
-  // status byte at 0x794 (slot_region_[8 + slot * 4]) and private would have
-  // forced a this-pun the class_debt ratchet rightly refuses. Access
-  // specifiers change nothing about layout.
-  uint8_t field_780_[0xC];        // 0x780..0x78B, opaque
-  // THE SLOT REGION AND THE LEDGER SHARE STORAGE: eight 0x19C process
-  // slots run 0x78C..0x146C, and the ledger (0x144C..0x148C) with its Heap
-  // (0x148C..0x14A0) begins inside the eighth slot's unused tail - the
-  // seventh slot's WRITTEN fields end at 0x12D9, far below. The original
-  // models this as a union; both arms are placement-constructed (the image
-  // calls Heap::Heap on 0x148C explicitly and inlines the ledger's ctor).
-  union {
-      AlphaNetProcessSlot process_slots_[8];  // from 0x78C
-      struct {
-          uint8_t slot_region_[0xCC0];        // the slot region's extent
-          AlphaNetLedger ledger_;             // at 0x144C
-          Heap heap_;                         // at 0x148C
-      };
-  };
+  // RECOVERY_MEMBER: v1 AlphaNet player_count_ 0x768 0x004E2490
+  int player_count_;
+  // Original initialization traverses eight records; callback name/ID accesses
+  // establish their common start and stride independently of this declaration.
+  // RECOVERY_MEMBER: v4 AlphaNet process_slots_ AlphaNetProcessSlot[8] 0x76C 0xCE0 0x004E2490
+  AlphaNetProcessSlot process_slots_[8];
+
+  // Ordinary independent members: Heap tears down first, then the ledger.
+  // RECOVERY_MEMBER: v2 AlphaNet ledger_ AlphaNetLedger 0x144C 0x004E2490
+  AlphaNetLedger ledger_;
+  // RECOVERY_MEMBER: v2 AlphaNet heap_ Heap 0x148C 0x004E2490
+  Heap heap_;
 };
 
 static_assert(sizeof(AlphaNet) == 0x14A0,

@@ -1,0 +1,17 @@
+{
+  "event_id": "fe437806aecb3a2adc517045563715d273e48de322bd1cb93a6ea9cf37f37d2f",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "alphanet-player-record-boundary",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/alphanet.h now models eight complete 0x19C player records beginning at 0x76C, ending at ledger 0x144C; src/net_class.h removes the unsupported Net tail pad and AlphaNet owns count 0x768. Original callback/constructor/close evidence is retained beside the declarations. src/alphanet.cpp uses the real fields in all four lookups and close, and src/netdaemon.cpp indexes the same record for message status. Heap and ledger are independent ordinary members, with destruction owned by AlphaNet and Net rather than repeated in NetDaemon. recovery/tests/test_application_link_recovery.py checks emitted layouts, preserved primary-table targets and destructor references; recovery/tests/alphanet_records_harness.cpp exercises the live lookup/reset bodies and record/member lifecycle with instrumented collaborators. This incorporates the record-boundary interpretation, not final lifecycle or game acceptance; alphanet-ledger-lifetime remains open."
+    ]
+  },
+  "previous_event": "51c5fdc1761aa69e414483fdc6cef6139770f57550e86dc3bb02d1ab5225412a",
+  "request_id": "incorporate-alphanet-complete-records",
+  "schema_version": 1,
+  "sequence": 28,
+  "stream": "task:jackal-voice-ownership"
+}
