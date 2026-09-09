@@ -214,6 +214,9 @@ def check_toolchain_link(root: Path, manifest: ToolchainManifest, archive_path: 
             identity = (Result.PASS if bound and len(selected) == 1 and selected[0]["result"] == Result.PASS
                         and selected[0]["after"]["sha256"] == manifest.archive_sha256 else Result.UNKNOWN)
             result["archive_file_identity"] = identity
+            from .link_input_coverage import input_coverage
+            coverage = input_coverage(artifacts["link-input-files"][1], artifacts["msvc-link-log"][1])
+            result["link_input_coverage"] = coverage
             if file_evidence["result"] == Result.FAIL:
                 result["result"] = Result.FAIL
             elif file_evidence["result"] != Result.PASS or identity != Result.PASS:
@@ -228,4 +231,9 @@ def check_toolchain_link(root: Path, manifest: ToolchainManifest, archive_path: 
     if file_logs and build["result"] == Result.PASS:
         if verify_link_files(artifacts["link-input-files"][1], artifacts["msvc-link-log"][1]) != file_evidence:
             raise ValueError("observed physical link inputs changed during verification")
+        for row in coverage["generated_exports"]:
+            path = Path(row["path"])
+            if (not path.is_file() or any(item.is_symlink() for item in (path, *path.parents))
+                    or hashlib.sha256(path.read_bytes()).hexdigest() != row["sha256"]):
+                raise ValueError("generated link input changed during verification")
     return {**result, "build_attempts": 1, "fresh_build": build}

@@ -67,3 +67,18 @@ def test_explicit_library_path_outside_search_roots_is_captured(tmp_path):
     library = sdk / "RUNTIME.LIB"
     before = capture_before([str(library)], tool, [], tmp_path)
     assert str(library) in before["before"] and before["explicit_inputs"] == [str(library)]
+
+
+@pytest.mark.parametrize("existing", [False, True])
+def test_export_output_records_real_prelink_existence_not_an_invented_before_hash(tmp_path, existing):
+    sdk, tool = setup(tmp_path)
+    path = tmp_path / "app.exp"
+    if existing:
+        path.write_bytes(b"previous output")
+    before = capture_before(["app.obj", "/implib:app.lib"], tool, [str(sdk)], tmp_path)
+    assert before["generated_exports"] == [{"path": str(path), "existed_before": existing}]
+    path.write_bytes(b"new export object")
+    after = capture_after(before, "")
+    assert after["schema_version"] == 2
+    assert after["generated_exports"][0]["existed_before"] is existing
+    assert after["generated_exports"][0]["after"]["size"] == len(b"new export object")

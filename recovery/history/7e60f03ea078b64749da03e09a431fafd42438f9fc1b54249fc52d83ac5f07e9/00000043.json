@@ -1,0 +1,20 @@
+{
+  "event_id": "ea12c561c4709d0fe8da5720d60bd1d1ebc1b6fa2e57d3c7736e5d85081eeb18",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "packages/match-recovery/src/match_recovery/link_input_coverage.py",
+      "packages/match-recovery/tests/test_link_input_coverage.py"
+    ],
+    "evidence": [
+      "Bind every final-pass input label to the captured explicit object or searched archive population; record absent-before/generated export objects at the compiler boundary and validate their current COFF records without pretending they existed before linking. Preserve ambiguous repeated archive member candidates as a conservative set, inventory every candidate, and keep exact selected-member identity and common allocations unknown until independently proved."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "64fcb9bfabb19abd24c77bbf42d386f6238edccc772907b82cb37647c6db0fac",
+  "request_id": "runtime-final-input-coverage",
+  "schema_version": 1,
+  "sequence": 43,
+  "stream": "task:jackal-voice-ownership"
+}

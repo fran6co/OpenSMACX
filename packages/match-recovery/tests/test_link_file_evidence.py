@@ -20,12 +20,13 @@ def evidence(root, log=LOG):
     for path in (tool, library, other, obj):
         if not path.exists():
             path.write_bytes(b"synthetic input " + path.name.encode())
-    return {"schema_version": 1, "link_log_sha256": hashlib.sha256(log.encode()).hexdigest(),
+    return {"schema_version": 2, "link_log_sha256": hashlib.sha256(log.encode()).hexdigest(),
             "cwd": str(root), "arguments": [str(obj)], "tool": str(tool), "explicit_inputs": [str(obj)],
             "files": [{"path": str(path), "before": stamp(path.read_bytes()), "after": stamp(path.read_bytes())}
                       for path in (tool, library, other, obj)],
             "library_searches": [{"spelling": row["path"], "path": str(other if "OTHER" in row["path"] else library)}
-                                 for row in parse_link_log(log.encode())["searched_libraries"]], "capture_gaps": []}
+                                 for row in parse_link_log(log.encode())["searched_libraries"]],
+            "generated_exports": [], "capture_gaps": []}
 
 
 def verify(value, log=LOG):
@@ -111,3 +112,21 @@ def test_output_format_validation_reads_no_arbitrary_input_paths(tmp_path):
     value = evidence(tmp_path)
     (tmp_path / "runtime.lib").unlink()
     assert parse_link_files(json.dumps(value).encode()) == value
+
+
+@pytest.mark.parametrize("damage", ["old_schema", "duplicate", "explicit", "not_boolean"])
+def test_generated_input_observations_cannot_be_invented_from_legacy_or_ambiguous_records(tmp_path, damage):
+    value = evidence(tmp_path)
+    row = {"path": str(tmp_path / "app.exp"), "existed_before": False, "after": stamp(b"output")}
+    value["generated_exports"] = [row]
+    if damage == "old_schema":
+        value["schema_version"] = 1
+        del value["generated_exports"]
+    elif damage == "duplicate":
+        value["generated_exports"].append(row.copy())
+    elif damage == "explicit":
+        row["path"] = value["explicit_inputs"][0]
+    else:
+        row["existed_before"] = 0
+    with pytest.raises(ValueError):
+        parse_link_files(json.dumps(value).encode())

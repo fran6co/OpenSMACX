@@ -34,8 +34,8 @@ def _stamp(value):
 def parse_link_files(data: bytes) -> dict:
     value = parse_json(data)
     if (set(value) != {"schema_version", "link_log_sha256", "cwd", "arguments", "tool", "explicit_inputs",
-                       "files", "library_searches", "capture_gaps"}
-            or type(value["schema_version"]) is not int or value["schema_version"] != 1):
+                       "files", "library_searches", "generated_exports", "capture_gaps"}
+            or type(value["schema_version"]) is not int or value["schema_version"] != 2):
         raise ValueError("invalid link input evidence schema")
     require_digest(value["link_log_sha256"])
     _path(value["cwd"])
@@ -67,6 +67,18 @@ def parse_link_files(data: bytes) -> dict:
                 raise ValueError("searched library lacks file observations")
     if value["tool"] not in paths or set(value["explicit_inputs"]) - paths:
         raise ValueError("tool or explicit input lacks file observations")
+    if not isinstance(value["generated_exports"], list):
+        raise ValueError("generated export observations must be an array")
+    generated = set()
+    for row in value["generated_exports"]:
+        if (not isinstance(row, dict) or set(row) != {"path", "existed_before", "after"}
+                or type(row["existed_before"]) is not bool):
+            raise ValueError("invalid generated export observation")
+        _path(row["path"])
+        if row["path"] in generated or row["path"] in value["explicit_inputs"]:
+            raise ValueError("duplicate or explicitly supplied generated export")
+        generated.add(row["path"])
+        _stamp(row["after"])
     return value
 
 

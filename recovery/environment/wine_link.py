@@ -78,6 +78,25 @@ def capture_before(arguments: list[str], executable: Path, library_dirs: list[st
             explicit.append(str(path))
         except (OSError, ValueError) as error:
             gaps.append(str(error))
+    generated = []
+    for word in arguments:
+        if word.upper().startswith(("/IMPLIB:", "-IMPLIB:")):
+            try:
+                name = word.split(":", 1)[1].replace("\\", "/")
+                if len(name) > 1 and name[1] == ":":
+                    if name[:2].lower() != "z:":
+                        raise ValueError("unsupported generated export drive")
+                    name = name[2:]
+                path = Path(name).with_suffix(".exp")
+                path = path if path.is_absolute() else cwd / path
+                parent = host_path(str(path.parent), cwd)
+                matches = [entry for entry in parent.iterdir() if entry.name.casefold() == path.name.casefold()]
+                if len(matches) > 1 or any(entry.is_symlink() for entry in matches):
+                    raise ValueError("ambiguous generated export path")
+                path = matches[0] if matches else parent / path.name
+                generated.append({"path": str(path), "existed_before": bool(matches)})
+            except (OSError, ValueError) as error:
+                gaps.append(str(error))
     before = {}
     for path in sorted(files):
         try:
@@ -85,7 +104,7 @@ def capture_before(arguments: list[str], executable: Path, library_dirs: list[st
         except (OSError, ValueError) as error:
             gaps.append(str(error))
     return {"cwd": str(cwd), "arguments": arguments, "tool": str(executable.absolute()),
-            "explicit_inputs": explicit, "before": before, "gaps": gaps}
+            "explicit_inputs": explicit, "before": before, "generated_exports": generated, "gaps": gaps}
 
 
 def capture_after(before: dict, stdout: str) -> dict:
@@ -109,7 +128,17 @@ def capture_after(before: dict, stdout: str) -> dict:
         except (OSError, ValueError) as error:
             gaps.append(str(error))
         files.append({"path": path, "before": before["before"].get(path), "after": after})
-    return {"schema_version": 1, "link_log_sha256": hashlib.sha256(stdout.encode("utf-8")).hexdigest(),
+    generated = []
+    for row in before["generated_exports"]:
+        after = None
+        path = Path(row["path"])
+        if path.exists():
+            try:
+                after = stamp(path)
+            except (OSError, ValueError) as error:
+                gaps.append(str(error))
+        generated.append({**row, "after": after})
+    return {"schema_version": 2, "link_log_sha256": hashlib.sha256(stdout.encode("utf-8")).hexdigest(),
             "cwd": before["cwd"], "arguments": before["arguments"], "tool": before["tool"],
             "explicit_inputs": before["explicit_inputs"], "files": files,
-            "library_searches": searches, "capture_gaps": gaps}
+            "library_searches": searches, "generated_exports": generated, "capture_gaps": gaps}

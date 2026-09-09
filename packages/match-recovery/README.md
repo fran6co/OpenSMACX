@@ -1802,14 +1802,21 @@ fingerprints at the compiler boundary and common-allocation proof remain require
 the transcript alone cannot admit a dependency or export an application target.
 
 A paired `link-input-files` build output can supply compiler-boundary file
-observations. Its schema-1 JSON contains `link_log_sha256`, absolute normalized
+observations. Its schema-2 JSON contains `link_log_sha256`, absolute normalized
 host `cwd` and `tool` paths, expanded `arguments`, `explicit_inputs`, `files`,
-`library_searches`, and `capture_gaps`. Each file has `path`, `before`, and
+`library_searches`, `generated_exports`, and `capture_gaps`. Each file has `path`, `before`, and
 `after`; each non-null observation is `{ "sha256": "<digest>", "size": 123 }`.
 Each search has its exact diagnostic `spelling` and resolved host `path` (null
 when unresolved). Keep the full ordered search sequence, including nested
 export-library searches. The environment captures before and after the actual
 link; missing observations must stay null, not be filled from post-link files.
+
+Each `generated_exports` row contains `path`, boolean `existed_before`, and
+`after` (the output content observation or null). This specifically describes
+MSVC export-object generation: do not label arbitrary post-link discoveries as
+generated inputs. An explicitly supplied export object instead needs ordinary
+pre/post file observations. Schema 1 caches must be regenerated, not migrated by
+inventing absence observations.
 
 The package validates this format, binds it to the log digest/search sequence,
 and rereads physical files during fresh component verification. The selected
@@ -1819,8 +1826,20 @@ Symlinks, changed files, incomplete capture and ambiguous paths cannot pass.
 Unused search candidates are reported separately from required observed inputs.
 `archive_file_identity` and `link_files` expose this bounded evidence. Compiler
 path resolution/capture is trusted interaction, not filesystem attestation;
-generated inputs, complete selected-member coverage, and common allocations
-remain unverified. A saved artifact never replaces the fresh-build CLI sequence.
+complete selected-member identity and common allocations remain unverified.
+A saved artifact never replaces the fresh-build CLI sequence.
+
+`link_input_coverage` now inventories the explicit objects, every member of every
+searched archive, and uniquely observed export objects absent before this link.
+It checks every final-pass label against that conservative candidate population.
+Repeated/abbreviated member labels retain all candidates; unsupported records,
+missing file observations and ambiguous physical object paths keep coverage
+unknown. This includes archive records not selected into retained sections, so
+their declarations cannot silently disappear from later common-storage analysis.
+Export-object records are parsed as COFF and rechecked for content changes.
+The report includes common requests and format gaps, not selected allocation
+extents. A parsing/coverage pass is separate from the bounded linked-code result
+and never exports application targets or proves full dependency acceptance.
 
 Passing means bounded **candidate linked-code correspondence**, not original
 equivalence or dependency admission. A map's common/public data address does not
