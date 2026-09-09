@@ -318,13 +318,23 @@ void NetUnk72C::unk_slot1() { }
 
 // The base table's first four entries share ret 8 at 0x00404260; its last
 // two share ret at 0x00404280. These are intentional base defaults, not
-// missing daemon callback implementations. Their folded bindings remain
-// unresolved independently of the unrelated catalogue labels at those leaves.
+// missing daemon callback implementations. Net's constructor publishes the
+// primary table at 0x0066EB04; AlphaNet's table at 0x0066EACC retains Net's
+// player-added/deleted entries. Those original table references establish
+// sharing independently of the unrelated catalogue labels at these leaves.
+// Each emitted definition requires its own strict proof. This does not prove
+// how the old linker shared code, or resolve slot 0's provisional semantics.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_net_event_0@Net@@UAEXHH@Z 0x0062D6A0
 void Net::on_net_event_0(int, int) { }
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_player_added@Net@@UAEXPADK@Z 0x0062D6A0
 void Net::on_player_added(char *, unsigned long) { }
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_player_deleted@Net@@UAEXPADK@Z 0x0062D6A0
 void Net::on_player_deleted(char *, unsigned long) { }
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_player_name_changed@Net@@UAEXPADK@Z 0x0062D6A0
 void Net::on_player_name_changed(char *, unsigned long) { }
+// RECOVERY_SHARED: v1 0x00404280 0x00404281 ?on_session_lost@Net@@UAEXXZ 0x0062D6A0
 void Net::on_session_lost() { }
+// RECOVERY_SHARED: v1 0x00404280 0x00404281 ?on_host_changed@Net@@UAEXXZ 0x0062D6A0
 void Net::on_host_changed() { }
 
 Net::Net() {

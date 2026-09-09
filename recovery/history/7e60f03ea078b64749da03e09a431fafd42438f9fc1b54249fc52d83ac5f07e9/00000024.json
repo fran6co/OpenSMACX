@@ -1,0 +1,17 @@
+{
+  "event_id": "32a9cf6596c343b73ae22ca2a493dfb99e10282d43189d67df527c27678a22b6",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "net-folded-default-bindings",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/net_class.cpp declares six RECOVERY_SHARED interpretations anchored to original Net construction; package shared_source/shared_binary verify each additional method without duplicating canonical ORIGINAL identities. Fresh native task checks proved all six bodies and Net, AlphaNet and NetDaemon primary table content/reference bindings under both configured trials. This resolves shared binding support only: slot-0 semantics, callback implementations and full lifetime recovery remain unfinished."
+    ]
+  },
+  "previous_event": "aa773073c52c2578b968efc500a5c45a914eb685ff8d191fdf34fd603b9b2a13",
+  "request_id": "net-shared-bodies-incorporated",
+  "schema_version": 1,
+  "sequence": 24,
+  "stream": "task:jackal-voice-ownership"
+}

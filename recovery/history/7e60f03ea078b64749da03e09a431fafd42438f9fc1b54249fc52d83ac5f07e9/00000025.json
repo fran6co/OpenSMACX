@@ -1,0 +1,22 @@
+{
+  "event_id": "d8710dece1662e11d42434ab208014048581e63658a9f51bec6e5ce9816c0e6b",
+  "payload": {
+    "affects": [
+      "entity-3f6349cc1e1e55b2d272de80befdb3454ee51d275842d4f5c3c1a65acbe1c0dc",
+      "entity-4fabe4dcd453a1866bd3a752038ec3c9caed79de94deba2b16fb5dabb196639e",
+      "entity-a2e86e4d3eb1d4ef2632ace87615a2fb794997d0196e924687cb97eb1675c48e"
+    ],
+    "author": "coordinator",
+    "discovery_id": "alphanet-player-record-boundary",
+    "evidence": [
+      "Fresh native inspect of original 0x0052E160 confirms this+0x768 count load/increment at 0x0052E17A/0x0052E1A5, ID store at this+0x78C+n*0x19C at 0x0052E1BA, and name destination this+0x76C+n*0x19C at 0x0052E1DC before call 0x00645460. The current src/alphanet.h begins AlphaNetProcessSlot at the ID instead of the name and asserts a union with ledger_ at 0x144C; its prose already admits that the Net base end is unmeasured. src/net_class.h pads 0x768..0x780 rather than naming this counter or name storage. This is a structural hypothesis, not a measured replacement or permission to withdraw historical claims."
+    ],
+    "hypothesis": "Investigate replacing AlphaNet process-slot/ledger overlap with eight complete player records beginning at 0x76C, including the preceding name field, and correct the provisional Net/AlphaNet boundary instead of preserving padding or a fabricated union. Original callback indexing suggests records contain name at +0, process ID at +0x20 and identity bytes at +0x24, with stride 0x19C: 0x76C + 8*0x19C equals the ledger start 0x144C. Establish the name extent and base ownership from original constructor/close/caller evidence before changing declarations; existing sizeof(Net)==0x780 checks describe the candidate, not independent original evidence.",
+    "kind": "discovery"
+  },
+  "previous_event": "32a9cf6596c343b73ae22ca2a493dfb99e10282d43189d67df527c27678a22b6",
+  "request_id": "alphanet-player-record-boundary",
+  "schema_version": 1,
+  "sequence": 25,
+  "stream": "task:jackal-voice-ownership"
+}

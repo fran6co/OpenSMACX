@@ -338,6 +338,39 @@ def test_net_primary_tables_are_emitted_from_the_inheritance_chain(compiled):
         assert row.state == State.PLACEHOLDER and not row.byte_exact
 
 
+def test_net_shared_defaults_and_all_primary_tables_match_original_bindings(compiled):
+    from match_recovery.generated_binary import check_generated
+    from match_recovery.generated_source import read_generated
+    from match_recovery.ownership_source import project_view
+    from match_recovery.application_binary import select_bindings
+    from match_recovery.pe_coff import PeImage
+    from match_recovery.shared_source import read_shared, validate_shared
+    from match_recovery.shared_binary import check_shared
+
+    image_path = ROOT / ".opensmacx/game/terranx_original.exe"
+    if not image_path.is_file():
+        pytest.skip("pinned original image is required for live shared-body proofs")
+    view, snapshot = project_view(ROOT)
+    pin = snapshot["image_sha256"]
+    image = PeImage(image_path.read_bytes(), pin)
+    bindings = tuple(item for item in read_shared(ROOT, pin) if item.unit == "src/net_class.cpp")
+    validate_shared(bindings, view)
+    assert len(bindings) == 6
+    assert sorted(item.origin.address for item in bindings) == [0x404260] * 4 + [0x404280] * 2
+    tables = tuple(item for item in read_generated(ROOT, pin)
+                   if item.symbol in {"??_7Net@@6B@", "??_7AlphaNet@@6B@", "??_7NetDaemon@@6B@"})
+    assert len(tables) == 3
+    _, _, externals = select_bindings(view, frozenset())
+    for trial in range(len(Measurement.read(ROOT).flag_sets)):
+        objects = {unit: values[trial] for unit, values in compiled.items()}
+        targets, rows = check_shared(bindings, objects, image, externals)
+        assert len(targets) == len(rows) == 6
+        assert all(row["result"] == row["bytes"] == row["references"] == "pass" for row in rows)
+        _, rows = check_generated(tables, objects, image, {**externals, **targets})
+        assert {row["symbol"] for row in rows} == {item.symbol for item in tables}
+        assert all(row["definition"] == row["content"] == "pass" for row in rows)
+
+
 def test_menu_candidates_use_typed_source_definitions(compiled):
     for unit, address in (("src/pulldown.cpp", 0x5F9170),
                           ("src/menu.cpp", 0x5FB830),
