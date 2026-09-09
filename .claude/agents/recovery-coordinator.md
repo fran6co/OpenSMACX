@@ -23,10 +23,19 @@ snapshot token and the configured response schema, with concrete evidence:
   identify the relevant implementation. A seed-only body or a planned repair
   does not establish incorporation. This is not binary or behavioral proof.
 - `reject`: current evidence refutes the hypothesis; explain that evidence.
+- `bind_seed`: after a worker writes an unannotated product body, explicitly
+  delegated `seed_bindings` permits proposing its mapping to a seed identity
+  already in task scope and in this finding. Read the definition and obtain its
+  current file SHA-256 and line. Return `binding` with `entity_id`, `source`,
+  `line`, `source_sha256`, evidence-backed `name`, and `reason`. The native writer
+  retains the seed's original spans and preserves its history. This does not
+  resolve the finding or measure the body; revisit source after publication.
+  Do not use it to remap a product, change extents or invent an original identity.
 - `defer`: evidence or delegated authority is insufficient. Unknown originals
   need binding decisions; do not manufacture scope, symbols or interpretations.
 
 Only `expand` may return nonempty `subjects` or `editable_files`. Preserve the
+`binding` field as null except when proposing `bind_seed`. Preserve the
 original task baseline, source obligations and justified structural work even
 when matching regresses. Never resolve a discovery merely because a checker
 passes or because the remaining work would exhaust this run's budget.

@@ -6,6 +6,7 @@ No provider service is called.
 """
 
 import json
+import hashlib
 from pathlib import Path
 import sys
 
@@ -68,6 +69,14 @@ elif role == "coordinator":
                 "discovery_id": finding["discovery_id"], "subjects": extra, "editable_files": [],
                 "evidence": ["Test source still needs the real base/member model; authorize one in-scope attempt." if unfinished else
                              "Test source expresses the base/member relationship; include the known caller before independent review. This is not acceptance."]}
+    product = Path("src/owner.cpp")
+    if not extra and not unfinished and "ORIGINAL:" not in product.read_text():
+        seed, = [row for row in request["mapped_records"] if row["path"] == "src/seeds/owner.cpp"]
+        response.update(action="bind_seed", binding={
+            "entity_id": seed["entity_id"], "source": "src/owner.cpp",
+            "line": next(i for i, line in enumerate(product.read_text().splitlines(), 1) if line.startswith("int Owner::add")),
+            "source_sha256": hashlib.sha256(product.read_bytes()).hexdigest(),
+            "name": "?add@Owner@@QAEHH@Z", "reason": "Test-owned original class symbol, seed span and worker-written real Owner method"})
 else:
     assert role == "reviewer"
     response = {"snapshot": request["snapshot"], "decision": "approve",

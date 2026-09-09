@@ -19,10 +19,14 @@ def response_schema(role):
                         "editable_files": {"type": "array", "items": text}, "evidence": evidence})
     if role == "coordinator":
         return _object({"snapshot": digest,
-                        "action": {"type": "string", "enum": ["expand", "incorporate", "reject", "defer", "investigate"]},
+                        "action": {"type": "string", "enum": ["expand", "incorporate", "reject", "defer", "investigate", "bind_seed"]},
                         "discovery_id": text,
                         "subjects": {"type": "array", "items": {"type": "string", "pattern": "^entity-[0-9a-f]{64}$"}},
-                        "editable_files": {"type": "array", "items": text}, "evidence": evidence})
+                        "editable_files": {"type": "array", "items": text}, "evidence": evidence,
+                        "binding": {"anyOf": [{"type": "null"}, _object({
+                            "entity_id": {"type": "string", "pattern": "^entity-[0-9a-f]{64}$"},
+                            "source": text, "line": {"type": "integer", "minimum": 1},
+                            "source_sha256": digest, "name": text, "reason": text})]}})
     if role == "worker":
         discovery = _object({"hypothesis": text,
                              "affects": {"type": "array", "minItems": 1,

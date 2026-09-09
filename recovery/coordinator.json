@@ -4,6 +4,7 @@
   "command": {"argv": ["uv", "run", "recover", "agent", "coordinator"], "timeout": 3600},
   "subjects": [],
   "editable_files": [],
-  "evidence": ["User-authorized autonomous ownership recovery: coordinate discoveries inside existing task scope; this policy grants no scope expansion, baseline change, source acceptance or Git publication."],
+  "seed_bindings": {"image": "{env:OPENSMACX_IMAGE}"},
+  "evidence": ["User-authorized autonomous ownership recovery: coordinate discoveries and bind already-authorized seed identities to worker-written bodies inside existing editable product files, retaining seed spans/history. This policy grants no scope expansion, new original identities, baseline change, source acceptance or Git publication."],
   "max_decisions": 8
 }

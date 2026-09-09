@@ -135,6 +135,12 @@ Its empty expansion lists grant no additional scope. The coordinator may request
 remains pending, a worker gets one bounded attempt, then coordination revisits the
 actual source. All pending findings need individual authorization. No acceptance
 or checkpoint may pass while they remain unresolved; deferral is still a stop.
+The same policy explicitly permits `bind_seed` for an already-selected seed-only
+identity, after a worker writes its body in an already-editable product TU. The
+native binder preserves existing spans and seed history, inserts an unclaimed
+source binding from a fresh location/digest, then coordination and checks run
+again. It does not resolve findings, add original identities, remap product
+functions or change the baseline. `OPENSMACX_IMAGE` supplies the pinned reference.
 
 The installed `uv run recover campaign --config <campaign-authorization>` now
 connects these native operations: bounded planning, task-only commits, isolated
@@ -388,7 +394,8 @@ In-scope `investigate` grants are transient and leave findings unresolved until
 fresh coordination examines the resulting source. See the package README for the
 exact schema. OpenSMACX supplies only the no-expansion policy described above;
 do not infer additional authority from a worker's discovery. Baselines, proof policy,
-new original bindings and acceptance remain outside this authority.
+new original identities and acceptance remain outside this authority; only the
+explicitly delegated existing-seed handoff above may publish a product binding.
 
 ## 5. Preserve structural progress and restore matching
 

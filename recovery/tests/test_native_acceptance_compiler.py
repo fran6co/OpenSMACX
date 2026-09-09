@@ -56,7 +56,7 @@ METHOD = "?add@Owner@@QAEHH@Z"
 
 
 def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, authorize=True, proofs=True, preparation=False,
-                     normalized_checkout=False, generated_context=None):
+                     normalized_checkout=False, generated_context=None, seed_owner=False):
     if not (VC6_ROOT / "BIN/CL.EXE").is_file():
         pytest.skip("VC6 is not installed")
     for name in ("CL", "_CL_", "VC6_INCLUDE"):
@@ -201,10 +201,21 @@ def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, autho
     if preparation:
         from match_recovery.preparation import prepare_project
         assert prepare_project(root)["published"]
-    code, report = record(root, [hex(addresses[METHOD]), hex(addresses["_entry"])], image=image)
+    code, report = record(root, [hex(addresses["_entry"])] if seed_owner else
+                          [hex(addresses[METHOD]), hex(addresses["_entry"])], image=image)
     assert code == 0, report
     git("add", "src")
     git("commit", "-m", "Measure original byte obligations before structural recovery")
+    if seed_owner:
+        config["source"]["seed_roots"] = ["src/seeds"]
+        config_file.write_text(json.dumps(config))
+        (product / "seeds").mkdir()
+        # Test-owned seed has no matching claim. Product code starts unbound;
+        # the delegated coordinator must use the real writer after worker repair.
+        (product / "seeds/owner.cpp").write_bytes((product / "owner.cpp").read_bytes())
+        (product / "owner.cpp").write_text(BODY.replace("bias + member.value", "raw_[0] + raw_[1]"))
+        git("add", ".")
+        git("commit", "-m", "Supply an unclaimed seed and unbound product body")
     task = Task("owner", "native-control", "coordinator", "Recover real base and member while preserving bytes",
                 git("rev-parse", "HEAD"), (Origin(pin, "pe:va", addresses[METHOD]),),
                 ("src/owner.cpp", "src/owner.h"), ("test-owned original class and lifetime model",))
@@ -216,7 +227,8 @@ def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, autho
             "command": {"argv": [sys.executable, "-m", "match_recovery.cli", "agent", "coordinator"], "timeout": 300},
             "subjects": [Origin(pin, "pe:va", addresses["_entry"]).entity_id], "editable_files": [],
             "evidence": ["Authorize the independently mapped caller's verification scope; existing owner editing files remain unchanged."],
-            "max_decisions": 4}))
+            "max_decisions": 6 if seed_owner else 4,
+            **({"seed_bindings": {"image": str(image)}} if seed_owner else {})}))
     git("add", "recovery")
     git("commit", "-m", "Authorize ownership task")
     if normalized_checkout:
@@ -485,13 +497,14 @@ def test_regenerated_header_preservation_detects_source_dependent_collateral_and
     assert (root / "src/owner.h").read_text() == evidence + CLASSES
 
 
-@pytest.mark.parametrize("damage,investigate", [(None, False), ("runtime", False), ("structure", False), (None, True)])
-def test_real_native_acceptance_preserves_structure_through_byte_regression(tmp_path, monkeypatch, damage, investigate):
+@pytest.mark.parametrize("damage,investigate,seed_owner", [(None, False, False), ("runtime", False, False),
+                                                         ("structure", False, False), (None, True, False), (None, True, True)])
+def test_real_native_acceptance_preserves_structure_through_byte_regression(tmp_path, monkeypatch, damage, investigate, seed_owner):
     provider = {"schema_version": 1, "artifacts": "build/agents"}
     for role in ("worker", "coordinator", "reviewer"):
         provider[role] = {"command": {"argv": [sys.executable, "recovery/local_agents.py", role, "{request}"], "timeout": 30},
                           "instructions": [], "response": "stdout"}
-    root, image, task, git, evidence = prepared_project(tmp_path, monkeypatch, damage=damage, provider=provider)
+    root, image, task, git, evidence = prepared_project(tmp_path, monkeypatch, damage=damage, provider=provider, seed_owner=seed_owner)
     product, local, original = root / "src", root / "recovery", image.parent
     monkeypatch.setenv("RECOVERY_IMAGE", str(image))
     configuration = lambda name: json.loads((local / (name + ".json")).read_text())
@@ -506,8 +519,9 @@ def test_real_native_acceptance_preserves_structure_through_byte_regression(tmp_
     head = git("rev-parse", "HEAD")
     result = drive(root, task.task_id, configuration("driver"), configuration("worker"), iterations=2,
                    reviewer_configuration=configuration("reviewer"), coordinator_configuration=configuration("coordinator"))
+    (root / "build/driver-result.json").write_text(json.dumps(result))
     assert result["ready_for_collection"] == (damage is None), result
-    assert result["worker_rounds"] == 2 and result["coordinator_decisions"] == (4 if investigate else 2)
+    assert result["worker_rounds"] == 2 and result["coordinator_decisions"] == (5 if seed_owner else 4 if investigate else 2)
     if investigate:
         grants = json.loads((root / "build/investigation-worker.json").read_text())
         assert len(grants) == 1 and grants[0]["action"] == "investigate" and not grants[0]["published"]
@@ -517,7 +531,7 @@ def test_real_native_acceptance_preserves_structure_through_byte_regression(tmp_
         assert [item["kind"] for item in decisions].count("discovery_resolved") == 2
         assert all(item["kind"] != "investigate" for item in decisions)
     outcomes = [json.loads((root / f"build/worker-{step}.json").read_text()) for step in (1, 2)]
-    assert outcomes[0]["candidate"]["checks"]["binary"]["result"] == "pass"
+    assert outcomes[0]["candidate"]["checks"]["binary"]["result"] == ("unknown" if seed_owner else "pass")
     assert outcomes[0]["candidate"]["checks"]["layout"]["result"] == "fail"
     assert outcomes[1]["candidate"]["checks"]["binary"]["result"] == "fail"
     assert outcomes[1]["candidate"]["checks"]["layout"]["result"] == "pass"
@@ -541,6 +555,12 @@ def test_real_native_acceptance_preserves_structure_through_byte_regression(tmp_
     assert TaskStore(root).read(task.task_id).base_revision == task.base_revision
     assert git("rev-parse", "HEAD") == head
     assert (product / "owner.h").read_text() == evidence + CLASSES
+    if seed_owner:
+        records = [row for row in source_snapshot(root)["records"] if row["origin"]["address"] == task.subjects[0].address]
+        assert {row["path"] for row in records} == {"src/owner.cpp", "src/seeds/owner.cpp"}
+        assert all(not row["legacy_byte_exact"] for row in records)
+        assert (product / "seeds/owner.cpp").read_text() == git("show", "HEAD:src/seeds/owner.cpp") + "\n"
+        assert "binding_evidence" in next(row for row in records if row["path"] == "src/owner.cpp")
     assert git("diff", "--name-only", "HEAD").splitlines() == ["src/owner.cpp", "src/owner.h"]
 
 

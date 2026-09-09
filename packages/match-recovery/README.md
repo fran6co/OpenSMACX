@@ -2585,12 +2585,12 @@ validation or an executable-only Alpha Centauri recovery claim.
 
 `recover run TASK --coordinator recovery/coordinator.json` enables a read-only
 decision agent within an existing task. Omit it to retain manual discovery stops.
-This role does not select tasks (`start` above does), create bindings, manage
+This role does not select tasks (`start` above does), invent original identities, manage
 worktrees or collect code. Configure the optional `coordinator` role in the local agent-command
 configuration using the same command/instructions/response shape as the reviewer.
 No provider or application adapter is required in the package.
 
-The delegation file has exactly these fields (populate `subjects` with additional
+The delegation file has these required fields (populate `subjects` with additional
 original entity IDs from the source inventory, and files with explicit source paths):
 
 ```json
@@ -2611,11 +2611,16 @@ permit only decisions within existing scope. Editing expansion accepts existing
 regular configured source files only, not compiler policy or the image pin.
 New files and unknown original identities need separate coordinator authorization.
 Keep delegation configuration versioned; its digest accompanies published decisions.
+An optional `seed_bindings: {"image": "path/to/original.exe"}` also delegates
+unclaimed product bindings for existing selected seed-only identities. The image
+may instead be one whole `{env:VARIABLE}` placeholder. Its contents must match
+the source pin; there is no image-path inference or additional scope grant.
 
 Requests contain a fresh snapshot token, pending discoveries, current/delegated
-scope and affected source/seed records. Responses have exactly `snapshot`, `action`,
-`discovery_id`, `subjects`, `editable_files`, `evidence`. Actions are `expand`,
-`incorporate`, `reject`, `defer`, `investigate`; only expansion uses nonempty scope arrays. Evidence
+scope and affected source/seed records. Responses contain `snapshot`, `action`,
+`discovery_id`, `subjects`, `editable_files`, `evidence`, and nullable `binding`.
+Actions are `expand`, `incorporate`, `reject`, `defer`, `investigate`, `bind_seed`;
+only expansion uses nonempty scope arrays. Evidence
 is mandatory. Incorporation requires affected originals already in task scope;
 it records a source interpretation, never a passing proof. Unknown originals,
 stale responses, writes, policy expansion and no-op expansion are refused.
@@ -2629,6 +2634,31 @@ After source edits or published decisions, authorization must be obtained afresh
 Pending discoveries block all review/acceptance/checkpoint paths even if checks
 pass. Only subsequent evidence-backed incorporation or rejection resolves them.
 Deferral never grants investigation, and verification-only runs cannot request it.
+
+`bind_seed` requires explicit `seed_bindings` delegation and a `binding` object
+with `entity_id`, `source`, positive `line`, current `source_sha256`, emitted
+`name`, and `reason`. The identity must already be selected and affected by the
+pending discovery; its existing records must all be seeds with agreeing spans.
+The product TU must already exist in the editing scope. The native binder retains
+those spans, validates the pinned executable backing and fresh source, inserts
+only unclaimed binding comments, and preserves every seed and historical claim.
+Other actions must not supply a nonnull binding. No proposal can set a byte claim,
+change an extent, replace an existing product binding, or add an unknown original.
+This currently uses the native PE32 binder, not an inferred universal format.
+
+Binding publication occurs between worker epochs and invalidates earlier context
+and investigation grants. The discovery remains pending, so fresh coordination
+and verification are still required. A mapped body is not thereby correct or
+accepted, and an unannotated product body cannot borrow its seed's measurement.
+If a newly bound method already compiled as unbound code in the baseline, the
+preservation comparator retains its current same-named definition in the residual
+too. Exact bytes, references, metadata and associated sections must still agree;
+current names do not establish historical ownership or authorize changing that
+old unbound code. Actual new definitions retain the existing scoped exclusion.
+Reports expose this extra protection as `newly_bound_protected_functions`.
+The compiler-backed seed control covers binding, structural repair, a temporary
+byte regression, restoration and full acceptance on a test-owned executable.
+Its reasoning roles are deterministic; this is not a live Alpha Centauri result.
 
 The driver journals expansions and resolutions through TaskStore, refreshes scope/context and
 obligations, and resumes the same worker budget and baseline. Decision calls have

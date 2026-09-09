@@ -12,8 +12,8 @@ from .model import Result, digest
 from .tasks import entity_id
 
 
-def _residual(obj, allowed, outside):
-    excluded, keys, entries, found = set(), {}, {}, {}
+def _residual(obj, allowed, outside, *, retained=frozenset()):
+    excluded, seen, keys, entries, found = set(), set(), {}, {}, {}
     if len(set(allowed.values())) != len(allowed):
         raise ValueError("ambiguous scoped function identity")
     for name, entity in sorted(allowed.items()):
@@ -30,10 +30,14 @@ def _residual(obj, allowed, outside):
             if expanded == owned:
                 break
             owned = expanded
-        if owned & excluded:
+        if owned & seen:
             raise ValueError("overlapping scoped compiler ownership")
-        if any(s.name in outside and s.section in owned for s in obj.symbols.values()):
+        seen.update(owned)
+        if any((s.name in outside or s.name in retained and s.name != name) and s.section in owned
+               for s in obj.symbols.values()):
             raise ValueError("scoped COMDAT also contains an outside source binding")
+        if name in retained:
+            continue  # Newly annotating existing code does not waive its baseline preservation.
         excluded.update(owned)
         keys[symbol.section] = "scoped-function:" + entity
         entries[symbol.index] = "scoped-entry:" + entity
@@ -62,8 +66,16 @@ def compare_outside_functions(baseline, current, baseline_scope, current_scope, 
     data, directives, types and COMDAT policies remain strict comparisons.
     Reports contain digests and names, not proprietary object bytes.
     """
+    # A seed-to-product binding can annotate code that already compiled in the
+    # baseline without a source binding. Do not make that old residual appear
+    # removed, or infer historical ownership from its current name. Keep the
+    # current same-named definition fully protected too. Actual new definitions
+    # remain removable under their explicit current source scope.
+    defined_before = {symbol.name for symbol in baseline.symbols.values() if symbol.section > 0}
+    retained = {name: entity for name, entity in current_scope.items()
+                if name in defined_before and name not in baseline_scope}
     old, old_scope = _residual(baseline, baseline_scope, baseline_outside)
-    new, new_scope = _residual(current, current_scope, current_outside)
+    new, new_scope = _residual(current, current_scope, current_outside, retained=retained.keys())
     changed_sections = []
     old_sections = {row[0]: row for row in old["sections"]}
     new_sections = {row[0]: row for row in new["sections"]}
@@ -92,6 +104,7 @@ def compare_outside_functions(baseline, current, baseline_scope, current_scope, 
     return {"result": Result.PASS if old == new else Result.FAIL,
             "baseline_fingerprint": digest(old), "current_fingerprint": digest(new),
             "baseline_scoped_functions": old_scope, "current_scoped_functions": new_scope,
+            "newly_bound_protected_functions": retained,
             "changed_sections": changed_sections,
             "symbol_changes": symbol_difference(old["symbols"], new["symbols"]),
             "symbols_changed": old["symbols"] != new["symbols"],

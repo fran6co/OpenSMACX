@@ -25,6 +25,52 @@ def test_scoped_body_may_regress_without_requiring_original_correctness():
     assert report["result"] == "pass" and report["baseline_fingerprint"] == report["current_fingerprint"]
 
 
+@pytest.mark.parametrize("changed", [False, True])
+def test_new_binding_preserves_previously_unbound_definition(changed):
+    old = Coff(coff_fixture(b"\x90\xc3"))
+    new = Coff(coff_fixture(b"\xeb\xfe" if changed else b"\x90\xc3"))
+    report = compare_outside_functions(old, new, {}, SCOPE)
+    assert report["result"] == ("fail" if changed else "pass")
+    assert report["newly_bound_protected_functions"] == SCOPE
+    assert report["baseline_scoped_functions"] == report["current_scoped_functions"] == {}
+    assert report["residual_sections"]["baseline"] == report["residual_sections"]["current"]
+
+
+def test_new_binding_does_not_mask_changed_reference_in_old_unbound_code():
+    old = Coff(coff_fixture(b"\xe8\0\0\0\0\xc3", relocation=(1, 1, 20)))
+    new = Coff(coff_fixture(b"\xe8\0\0\0\0\xc3", relocation=(1, 1, 20)).replace(b"_g", b"_h"))
+    assert compare_outside_functions(old, new, {}, SCOPE)["result"] == "fail"
+
+
+def test_actual_new_scoped_definition_can_be_excluded():
+    old = Coff(object_fixture())
+    new = Coff(object_fixture(extra=(b".text", b"\xc3", (), 0, 2, 0x60501020)))
+    # Keep both versions' existing _f scoped; the new independently named
+    # COMDAT is explicitly mapped, not a previously unbound definition.
+    added = next(symbol for symbol in new.symbols.values() if symbol.name == "$tail3")
+    added = replace(added, name="_new", type=0x20, storage=2)
+    new.symbols[added.index] = added
+    second = Origin("a" * 64, "pe:va", 0x401010).entity_id
+    current = {**SCOPE, added.name: second}
+    report = compare_outside_functions(old, new, SCOPE, current)
+    assert report["result"] == "pass" and report["newly_bound_protected_functions"] == {}
+
+
+def test_new_binding_cannot_reinterpret_renamed_old_unbound_definition():
+    old = Coff(coff_fixture())
+    new = Coff(coff_fixture().replace(b"_f", b"_h"))
+    assert compare_outside_functions(old, new, {}, {"_h": ENTITY})["result"] == "fail"
+
+
+def test_new_binding_keeps_associated_sections_and_ownership_checks():
+    old = Coff(object_fixture())
+    new = Coff(object_fixture(tail=b"\x90\xc3"))
+    assert compare_outside_functions(old, new, {}, SCOPE)["result"] == "fail"
+    second = Origin("a" * 64, "pe:va", 0x401010).entity_id
+    with pytest.raises(ValueError):
+        compare_outside_functions(old, old, {}, {**SCOPE, "$tail2": second})
+
+
 def test_new_callee_used_only_by_scoped_code_is_not_an_outside_definition():
     old = Coff(coff_fixture(b"\xe8\0\0\0\0\xc3", relocation=(1, 1, 20)))
     new = Coff(coff_fixture(b"\xe8\0\0\0\0\xc3", relocation=(1, 1, 20)).replace(b"_g", b"_h"))

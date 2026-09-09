@@ -35,6 +35,11 @@ within existing scope using the supplied evidence. Authorization lasts for this
 bounded attempt; it is not incorporation, a new baseline or acceptance. Preserve
 the findings for fresh coordinator review of the resulting source. Do not create
 duplicate discoveries for unchanged evidence or edit their decision records.
+When implementing an identity that exists only as a seed, write the real product
+body inside authorized files and report its source location and original identity
+for coordinator binding. Do not copy/edit markers. An unannotated body can be
+built, but native original-function measurements require the coordinator's binding
+before the next measured attempt. Keep boundary/symbol evidence for that handoff.
 
 Keep edits inside the authorized files. Do not change Git state, task decisions,
 checker policy or obligation annotations, launch other workers, collect worktrees,
