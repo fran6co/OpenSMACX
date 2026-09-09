@@ -314,6 +314,9 @@ The heap handle and header-list globals are common allocation requests in COFF.
 Their map addresses do not prove selected storage extents: complete link-input
 and allocation-selection evidence is still needed before dependency admission.
 Do not manufacture application definitions for these library-owned globals.
+Native linked-component reports now expose the pinned archive's record inventory
+and common allocation requests, using the package's COFF/import-record parser.
+Parsing these requests does not establish which allocation the linker selected.
 
 `CMakeLists.txt` selects the static multithreaded runtime for both C and C++ in
 all configurations. Debug optimization/instrumentation does not select a debug

@@ -48,6 +48,12 @@ def verify_linked_toolchain(manifest: ToolchainManifest, archive_data: bytes, im
                               "no application target bindings are published"]}
     if not archive_ok:
         return {**report, "result": Result.FAIL, "counts": {}}
+    from .coff_inventory import inventory_archive
+    inventory = inventory_archive(archive_data)
+    # Surface the whole supplied archive's declarations without making parsing
+    # success a code/selection verdict. Full record detail is available via the
+    # inventory API; normal link reports retain common requests and format gaps.
+    report["archive_inventory"] = {key: value for key, value in inventory.items() if key != "members"}
     image = PeImage(image_data, report["image_sha256"])
     mapping = parse_link_map(map_data)
     mapping.validate(image)

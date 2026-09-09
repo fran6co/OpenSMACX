@@ -1792,6 +1792,32 @@ Original-image bindings, full dependency closure, archive selection provenance,
 ABI, structure and runtime checks remain separate. No targets or claims are
 published into application acceptance, and `ready_for_collection` stays false.
 
+The linked-component report also includes `archive_inventory`: format coverage,
+unsupported member records and common allocation requests from the entire
+supplied pinned archive. This is a separate **parsing** result, not an additional
+code or selection claim. An unsupported unselected member can leave inventory
+unknown even when the bounded linked functions agree. Common allocations are
+requests, not selected object extents, and no inventory address bindings are
+exported to application code.
+
+`coff_inventory.inventory_object` and `inventory_archive` expose full declaration
+records to compiler-boundary integrations. Regular COFF includes i386 and
+unspecified-machine metadata, traditional import descriptors (including their
+PE32 optional header) and explicit weak fallback edges. Documented version-zero
+i386 short imports preserve code/data/const kind, DLL identity, ordinal/hint and
+name-transformation mode. Repeated archive member names retain separate
+occurrences; no linker index or last-record-wins selection is used. Unsupported
+records prevent complete inventory, and linker directives remain visible but
+uninterpreted. The `Coff` function verifier still requires i386 without an
+optional header and retains all of its COMDAT ownership checks; these broader
+record forms cannot become function proof. Format details follow the
+[Microsoft import-library specification](https://learn.microsoft.com/en-us/windows/win32/debug/pe-format#import-library-format).
+
+This inventories only supplied bytes. Complete fresh link-input enumeration,
+implicit library resolution, selected common allocation/alias semantics and
+runtime storage verification remain separate work. A diagnostic system-call
+trace is not automatically a complete or fingerprinted input manifest.
+
 ### Source compiler interaction
 
 The project supplies compiler interaction through `recovery/project.json`:

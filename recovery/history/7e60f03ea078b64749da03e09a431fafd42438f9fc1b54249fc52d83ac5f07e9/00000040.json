@@ -1,0 +1,24 @@
+{
+  "event_id": "fab4bb5bc3b9a99936e3f088b352c81d7b1b1d82ee5e73b68dcfc5aeac8ff674",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "packages/match-recovery/README.md",
+      "packages/match-recovery/src/match_recovery/coff_inventory.py",
+      "packages/match-recovery/src/match_recovery/component_link.py",
+      "packages/match-recovery/src/match_recovery/pe_coff.py",
+      "packages/match-recovery/tests/test_coff_inventory.py",
+      "recovery/tests/test_runtime_component.py"
+    ],
+    "evidence": [
+      "Implement the native declaration inventory required by runtime-link-input-coverage: separate ordinary COFF record parsing from strict function COMDAT verification, classify supported short import records, and surface complete supplied-archive inventory/common requests in the existing linked-component report. Preserve strict function checks, unknown selection/ownership, unsupported input visibility and the refusal to export unchecked component targets."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "8a93c71a72c036b660741ecfcb102f49a72051abe4f0cae5b0f4399be5bd8558",
+  "request_id": "runtime-coff-input-inventory",
+  "schema_version": 1,
+  "sequence": 40,
+  "stream": "task:jackal-voice-ownership"
+}

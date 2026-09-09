@@ -63,12 +63,27 @@ class Section:
         return 1 << (encoded - 1)
 
 
-class Coff:
+class CoffRecords:
+    """Regular COFF records for inventory, without a code-ownership verdict.
+
+    Import-descriptor objects can carry section-named symbols without the
+    COMDAT auxiliary metadata required by the function verifier. Keep that
+    distinction explicit: this reader exposes no function/subject API.
+    """
     def __init__(self, data: bytes):
         machine, count, _, sym_offset, sym_count, optional, _ = _unpack("<HHIIIHH", data, 0)
-        if machine != 0x14C or optional:
-            raise ValueError("expected an i386 COFF object without an optional header")
-        _slice(data, 20, count * 40)
+        if machine not in (0, 0x14C):
+            raise ValueError("expected i386 or unspecified-machine COFF records")
+        self.machine = machine
+        self.optional_header_size = optional
+        if optional:
+            header = _slice(data, 20, optional)
+            if machine != 0x14C or optional < 96 or _unpack("<H", header, 0)[0] != 0x10B:
+                raise ValueError("unsupported COFF record optional header")
+            if _unpack("<I", header, 92)[0] > (optional - 96) // 8:
+                raise ValueError("truncated COFF optional-header directory array")
+        section_table = 20 + optional
+        _slice(data, section_table, count * 40)
         _slice(data, sym_offset, sym_count * 18)
         strings_at = sym_offset + sym_count * 18
         strings_size, = _unpack("<I", data, strings_at)
@@ -98,7 +113,7 @@ class Coff:
             index += aux + 1
         sections = []
         for index in range(count):
-            at = 20 + index * 40
+            at = section_table + index * 40
             size, offset, reloc_offset = _unpack("<III", data, at + 16)
             reloc_count, = _unpack("<H", data, at + 32)
             flags, = _unpack("<I", data, at + 36)
@@ -112,7 +127,17 @@ class Coff:
             sections.append(Section(raw, relocations, flags, name))
         self.symbols, self.sections = symbols, tuple(sections)
         self.auxiliary = auxiliary
-        self.section_sizes = tuple(_unpack("<I", data, 20 + index * 40 + 16)[0] for index in range(count))
+        self.section_sizes = tuple(_unpack("<I", data, section_table + index * 40 + 16)[0] for index in range(count))
+
+
+class Coff(CoffRecords):
+    def __init__(self, data: bytes):
+        machine, _, _, _, _, optional, _ = _unpack("<HHIIIHH", data, 0)
+        if machine != 0x14C or optional:
+            raise ValueError("expected an i386 COFF object without an optional header")
+        super().__init__(data)
+        symbols, sections, auxiliary = self.symbols, self.sections, self.auxiliary
+        count = len(sections)
         # Section ownership is explicit COFF metadata, not section order, a
         # compiler-local label spelling or a match against original operands.
         definitions, associations = {}, {}

@@ -8,6 +8,23 @@ from match_recovery.component_commands import execute
 from recovery.environment.wine import VC6_ROOT
 
 
+def test_native_runtime_and_import_record_inventory_preserves_common_requests():
+    from match_recovery.coff_inventory import inventory_archive
+    runtime_path, system_path = VC6_ROOT / "LIB/LIBCMT.LIB", VC6_ROOT / "LIB/KERNEL32.LIB"
+    if not runtime_path.is_file() or not system_path.is_file():
+        pytest.skip("local compiler libraries are required")
+    runtime = inventory_archive(runtime_path.read_bytes())
+    system = inventory_archive(system_path.read_bytes())
+    assert runtime["result"] == system["result"] == "pass"
+    assert system["format_counts"]["coff"] and system["format_counts"]["short_import"]
+    required = {"__crtheap", "___sbh_pHeaderList", "___sbh_pHeaderScan", "___sbh_pHeaderDefer",
+                "___sbh_cntHeaderList", "___sbh_sizeHeaderList", "___sbh_indGroupDefer"}
+    requests = [row for row in runtime["common_requests"] if row["symbol"] in required]
+    assert {row["symbol"] for row in requests} == required
+    assert len(requests) == len(required) and all(row["size"] == 4 for row in requests)
+    assert runtime["allocation_verification"] == system["link_selection"] == "unknown"
+
+
 def test_native_original_runtime_initializers_keep_unproved_common_storage_visible():
     root = Path(__file__).resolve().parents[2]
     image = root / ".opensmacx/game/terranx_original.exe"
