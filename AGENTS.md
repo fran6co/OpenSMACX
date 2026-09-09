@@ -63,6 +63,7 @@ uv run recover check-claims --summary
 uv run recover audits check storage --summary
 uv run recover record <addresses> --image <image> --in <source-file>
 uv run recover run <task> --worker <config> --reviewer <config>
+uv run recover dispatch --plan <batch-plan>
 uv run pytest packages/match-recovery/tests recovery/tests
 cmake --build build
 ```
@@ -135,6 +136,11 @@ slots with `--resources recovery/resources.json` and an absolute shared
 allocate again or run standalone compiles on a leased prefix. Interrupted slots
 are quarantined, not automatically reclaimed. See `recovery/WORKFLOW.md`.
 Synthetic protocol tests are not proof of successful autonomous recovery.
+`dispatch` supervises a bounded, coordinator-authorized batch in existing isolated
+worktrees using separate resource leases. It refuses overlapping scopes; workers
+return discoveries for central replanning. It does not select tasks, create
+worktrees, integrate, or establish acceptance from process reports. See the package
+README for the plan schema and interruption/quarantine rules.
 
 - Prefer real bases, members, globals, virtual methods and lifecycle code over
   vtable arrays, fixed executable addresses, raw self-offset access or stand-ins.

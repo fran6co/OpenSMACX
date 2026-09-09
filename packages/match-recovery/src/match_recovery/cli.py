@@ -67,6 +67,9 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("--coordinator", type=Path, help="Read-only discovery coordinator with explicit delegated scope")
     run.add_argument("--iterations", type=int, default=3)
     run.add_argument("--verify-only", action="store_true", help="Fresh checks and independent review without worker repairs or scope delegation")
+    dispatch = commands.add_parser("dispatch", help="Supervise a coordinator-authorized batch in isolated worktrees; never accept or integrate reports")
+    dispatch.add_argument("--root", type=Path, default=Path.cwd(), help="Coordinator checkout")
+    dispatch.add_argument("--plan", type=Path, required=True, help="Batch authorization, relative to --root")
     start = commands.add_parser("start", help="Select/checkpoint one ownership task through a delegated planner, then run recovery")
     start.add_argument("--root", type=Path, default=Path.cwd())
     start.add_argument("--planner", required=True, type=Path, help="Explicit selection and task-only commit authorization")
@@ -153,6 +156,12 @@ def _dispatch(args) -> int:
             output = prepare_integration(args.root, args.task, context, worktree=args.worktree, branch=args.branch)
             print(json.dumps(output, indent=2, sort_keys=True))
             return 0 if output["candidate_created"] else 3
+        elif args.command == "dispatch":
+            from .dispatch import dispatch
+            plan = read_json(args.plan if args.plan.is_absolute() else args.root / args.plan)
+            output = dispatch(args.root, plan)
+            print(json.dumps(output, indent=2, sort_keys=True))
+            return 0 if output["batch_completed"] else 3
         elif args.command in ("run", "start"):
             from .driver import drive
             # All relative configuration paths belong to --root, not whichever

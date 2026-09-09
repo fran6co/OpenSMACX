@@ -104,6 +104,20 @@ slots quarantine until the coordinator verifies compiler/descendant termination;
 see the package README before clearing operational markers. This replaces manual
 slot selection for opted-in driver runs, not worktree/build isolation or fleet
 capacity measurement.
+For a bounded parallel batch, the coordinator can now use `uv run recover dispatch
+--plan <batch-plan>` with explicitly authorized tasks in already prepared
+worktrees. The batch schema and refusal rules are in the package README. Supply
+the shared resource-pool configuration once; each native child driver leases its
+own slot. Per-job worker/reviewer profiles can select smaller reasoning providers
+without changing the framework. No live fleet size or model choice has been
+validated for this project by the synthetic dispatcher controls.
+
+Parallel workers cannot expand their own scopes. Preserve their discoveries and
+source work, finish the bounded batch, then replan centrally or prepare and verify
+integration serially. A dispatcher process result is never an accepted recovery
+or permission to collect a worktree. It does not choose tasks, create worktrees,
+resume a dead supervisor or integrate changes automatically. The whole-project
+autonomous campaign remains unfinished.
 Run `uv run recover prepare` before standalone task measurements/recording and
 again after changing build inputs. This publishes fresh configured recipes while
 retaining their generated include context in ignored storage. It does not clear

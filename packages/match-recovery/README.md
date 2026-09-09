@@ -154,6 +154,78 @@ is required for a supported target. Compiler interaction scripts can remain loca
 or existing tools can implement that boundary. The package does not supply an agent
 service, compiler installation or project verification policy.
 
+## Dispatch a parallel recovery batch
+
+`recover dispatch --root <coordinator-checkout> --plan <batch-plan>`
+supervises native `recover run` children in **already prepared** worktrees. All
+CLI definitions and supervision live in the installed package; project files
+select compiler resources and worker/reviewer commands (including model choices).
+The current supervisor requires POSIX process groups.
+
+The plan is an explicit scheduling authorization, not stored recovery status:
+
+```json
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "evidence": ["Delegate these disjoint ownership tasks for one bounded batch"],
+  "max_parallel": 2,
+  "resources": "recovery/resources.json",
+  "timeout": 3600,
+  "jobs": [
+    {
+      "task": "widget-owner",
+      "root": "build/recovery/worktrees/widget-owner",
+      "config": "recovery/driver.json",
+      "worker": "recovery/worker.json",
+      "reviewer": "recovery/reviewer.json",
+      "iterations": 3
+    }
+  ]
+}
+```
+
+Add independent jobs to the array; `max_parallel` cannot exceed the provisioned
+slot count. It does not raise each compiler invocation's internal parallelism.
+`timeout` bounds each entire child run, including review/checkpoint work, in
+seconds (1–86400); iterations are 1–100. Plans contain 1–256 jobs and parallelism
+is bounded to 1–32. Busy/quarantined slots refuse through the normal resource
+allocator; no PID-based salvage, retries or resource provisioning is implicit.
+
+Each job needs a distinct task and local branch/worktree in the same repository.
+Nested worker worktrees must be ignored and outside source roots. Task identity
+and effective scope must agree with the coordinator checkout, and the plan author
+must own the tasks. Entity identities and editable paths cannot overlap between
+jobs. This batch route permits existing application source only, not seed/vendor
+work or changes to recovery/build policy. Workers and reviewers have independent
+identities. Optional per-job `migration` and `checkpoint` paths retain the native
+driver's explicit authorization requirements. All job configuration paths are
+relative to that worker; resource configuration is relative to the coordinator.
+
+The coordinator checkout stays leased and unchanged throughout the batch. Child
+drivers own their own worktree and compiler leases. There is deliberately no
+per-worker `coordinator` option: an out-of-scope discovery is retained by the native
+driver and returned for central replanning, not independently expanded into a
+sibling's scope. Disjoint edits can still interact after integration; this is why
+fresh serial destination verification remains mandatory.
+
+Binary stdout/stderr logs and the frozen resource declaration stay in unique,
+ignored `build/recovery/dispatch/` directories. The returned report lists process
+outcomes and scope integrity; it never consumes child stdout as acceptance proof
+and always has `ready_for_collection: false`. Exit 0 means every child returned
+0 or 2 with intact scopes, no timeout and unchanged coordinator inputs; migration
+admission is not restoration or integration acceptance. Other outcomes return 3.
+Inspect the actual worktrees and use fresh native integration checks, not this
+report, before collection. Worker source and discoveries are never reverted.
+
+Timeout/interruption requests cooperative descendant cleanup and preserves logs;
+interrupted compiler slots remain quarantined. Commands are trusted, not sandboxed:
+detached descendants need external containment and inspection before resources
+can be reused. Supervisor-death resumption, task/worktree creation, automatic
+integration and a persistent whole-project campaign loop are not supplied by
+`dispatch`. Its synthetic process controls are not an autonomous game-recovery
+demonstration.
+
 ## Lease project-provisioned compiler resources
 
 `run`, `start` and `integrate publish` accept `--resources <pool.json>` (relative
