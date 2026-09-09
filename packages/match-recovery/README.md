@@ -276,6 +276,96 @@ integration and a persistent whole-project campaign loop are not supplied by
 `dispatch`. Its synthetic process controls are not an autonomous game-recovery
 demonstration.
 
+## Coordinate a bounded recovery campaign
+
+`recover campaign --root <destination> --config recovery/campaign.json` connects
+native planning, task-only authorization commits, isolated worker preparation,
+parallel dispatch, optional central discovery handling, and fresh serial integration.
+It repeats planning against the updated source until its batch budget is exhausted,
+the planner defers, or preserved work needs intervention. All public commands and
+coordination live in the installed package; providers and compiler interaction
+remain project-local commands.
+
+The standing authorization has this exact shape (the two optional profile paths
+are `coordinator` and `migration`):
+
+```json
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "destination_branch": "refs/heads/master",
+  "planner": "recovery/planner.json",
+  "driver": "recovery/driver.json",
+  "worker": "recovery/worker.json",
+  "reviewer": "recovery/reviewer.json",
+  "coordinator": "recovery/coordinator.json",
+  "checkpoint": "recovery/checkpoint.json",
+  "resources": "recovery/resources.json",
+  "max_batches": 10,
+  "max_parallel": 2,
+  "iterations": 3,
+  "timeout": 3600,
+  "publication": {
+    "enabled": true,
+    "allow_migration": false,
+    "message": "Integrate freshly verified recovery",
+    "cleanup": true
+  },
+  "evidence": ["Authorize bounded application recovery and verified local integration"]
+}
+```
+
+Referenced profiles must be committed canonical project-relative files. They use
+the existing planner, driver, role, checkpoint, resource and optional discovery/
+migration protocols. The driver must explicitly use `acceptance_scope: "change"`.
+Coordinator, worker and reviewer identities must differ. Publication is separately
+authorized from worker checkpointing; temporary regressions need both the existing
+migration policy and the explicit publication permission. No standing game campaign
+is enabled by installing the package or by `init`.
+
+`max_batches` and `iterations` are integers in 1..100, `max_parallel` in 1..32 and
+no greater than provisioned slots, and `timeout` in 1..86400 seconds per parallel
+driver job. Planning and optional serial coordination have their own configured
+command/iteration budgets; `timeout` is not a whole-campaign deadline. The destination
+must be clean, on the authorized branch, without a staged index or unfinished Git
+operation. The campaign retains its coordinator lease across nested native operations.
+
+Each batch selects nonoverlapping existing application source/entity scopes within
+the planner's limits. All new task decisions are committed before workers branch
+from that batch's coordinator revision. Seeds, dependency source and verifier policy
+are not mechanical parallel-worker editing targets. Workers cannot expand scope
+during parallel dispatch. Afterwards the optional central coordinator can handle
+discoveries within its separately supplied delegation, serially; it cannot invent
+unmapped identities or grant itself application-wide editing permission.
+
+Neither a process exit nor a saved report authorizes integration. The campaign
+inspects actual worker source/Git state, prepares a merge candidate against the
+current destination, then invokes native fresh candidate and destination verification.
+Only verified publication permits cleanup of its own clean, integrated worktrees
+and merged branches. Cleanup uses ordinary Git removal/deletion, never force/reset.
+Timeouts, scope changes, dirty workers, conflicts and failed destination checks
+preserve source and branches. A failure after the destination moves stops immediately
+for fresh verification; there is no rollback or acceptance-receipt replay.
+
+A clean worker with no checkpoint is deferred for that source snapshot, without
+closing its task. Its unchanged branch may be removed under `cleanup`. In-memory
+attempt exclusions expire when source changes, allowing earlier work to be revisited
+after a later structural change. Task reservations and original baselines remain.
+JSON progress goes to stderr; the final report goes to stdout. Exit 0 means a clean
+bounded scheduling stop, **not game acceptance**. Unresolved work or an unavailable
+planner returns 3. Reports always say `full_project_accepted: false`; they are not
+verification inputs. Operational choices and derived logs stay under ignored
+`build/recovery/campaigns/` and `build/recovery/dispatch/`, not a completion database.
+
+This command does not yet resume a dead supervisor, adopt earlier interrupted
+workers, resolve merge conflicts automatically, discover all unmapped originals,
+or establish complete game structure/runtime correctness. Inspect/resume preserved
+workers through native commands before starting another campaign; do not launch
+duplicate work over their scopes. The real VC6 control exercises both existing-task
+and new-task selection, structural recovery across a byte regression, central caller
+discovery, fresh integration/destination acceptance, cleanup and another planning
+round. Reasoning in that control is deterministic, not a live-model or game pilot.
+
 ## Lease project-provisioned compiler resources
 
 `run`, `start`, `prepare`, `worktree prepare` and `integrate publish` accept `--resources <pool.json>` (relative
@@ -2345,7 +2435,8 @@ passing them alone never enables collection.
 The example project's old operation dispatcher and application adapter modules
 have been removed. Its [recovery integration](../../recovery/README.md) now contains
 configuration, compiler interaction and integration tests. The legacy production
-gate/tools and full acceptance integration remain separate unfinished work.
+gate/tools are removed; complete application structure/runtime acceptance remains
+unfinished.
 
 ### Delegated ownership task selection
 
@@ -2397,13 +2488,15 @@ retired. Resume names an existing task by the same author/target/original, witho
 changing scope or baseline. For resume/defer, `group` and `intent` are empty strings
 and `editable_files` is empty; defer also has an empty `task_id`. Evidence is always
 required. Planner proposals are not proof or direct mutation authority.
-The two size limits bound new tasks; existing tasks retain their authorized scopes.
+The two size limits bound selection of new and existing tasks; existing tasks retain
+their authorized scopes even when too large for a particular planner invocation.
 
 Creating a task requires a clean worktree, committed source/configuration, and a
 working Git identity/signing setup. Only the package publishes and checkpoints its
 new task JSON before invoking the normal driver. Unexpected edits or checkpoint
 failures refuse dispatch and preserve work/index for inspection; no automatic reset
-or rollback occurs. Resume uses the existing dirty-source/append-only-history rules.
+or rollback occurs. Task commits use the native guarded raw publisher, without Git
+hooks or source-conversion filters. Resume uses the existing dirty-source/append-only-history rules.
 The read-only planner itself must be externally sandboxed. Command hashes detect
 writes and stale decisions, not malicious intent or false reasoning.
 

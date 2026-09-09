@@ -126,8 +126,24 @@ Parallel workers cannot expand their own scopes. Preserve their discoveries and
 source work, finish the bounded batch, then replan centrally or prepare and verify
 integration serially. A dispatcher process result is never an accepted recovery
 or permission to collect a worktree. It does not choose tasks, create worktrees,
-resume a dead supervisor or integrate changes automatically. The whole-project
-autonomous campaign remains unfinished.
+resume a dead supervisor or integrate changes automatically.
+
+The installed `uv run recover campaign --config <campaign-authorization>` now
+connects these native operations: bounded planning, task-only commits, isolated
+preparation, parallel dispatch, optional serial discovery coordination, fresh
+candidate/destination verification, cleanup and another planning round. The package
+README defines the standing authorization and exact exit semantics. No standing
+OpenSMACX campaign policy is enabled yet. The compiler-backed test-owned control
+uses deterministic reasoning, not a live fleet or game recovery proof.
+
+The campaign must start on its authorized clean destination branch. It preserves
+original task baselines and treats a clean no-op as a deferred attempt, never a
+completed task. After source changes, earlier tasks may be selected again. Worker
+exit codes and saved receipts cannot pass integration. Scope conflicts, dirty WIP,
+interruption and failed destination checks are preserved for replanning/resumption.
+This bounded loop does not yet resume a dead supervisor or resolve arbitrary merge
+conflicts; inspect existing workers before another invocation. Full executable-only
+autonomous recovery and application acceptance remain unfinished.
 Run `uv run recover prepare` before standalone task measurements/recording and
 again after changing build inputs. This publishes fresh configured recipes while
 retaining their generated include context in ignored storage. It does not clear

@@ -214,20 +214,20 @@ def test_extra_editing_files_cannot_smuggle_in_a_vendor_header(setup):
 
 
 def test_checkpoint_failure_preserves_decision_and_refuses_worker_dispatch(setup, monkeypatch):
-    import match_recovery.planning as planning
+    import match_recovery.checkpoints as checkpoints
     root, delegation = setup
     baseline = git(root, "rev-parse", "HEAD")
-    original = planning._git
-    def unavailable(root, *args):
-        if args[0] == "commit":
-            raise subprocess.CalledProcessError(1, "git commit", stderr=b"controlled unavailable signing identity")
-        return original(root, *args)
-    monkeypatch.setattr(planning, "_git", unavailable)
+    original = checkpoints._git
+    def unavailable(root, *args, **kwargs):
+        if args[0] == "commit-tree":
+            raise subprocess.CalledProcessError(1, "git commit-tree", stderr=b"controlled unavailable signing identity")
+        return original(root, *args, **kwargs)
+    monkeypatch.setattr(checkpoints, "_git", unavailable)
     with pytest.raises(subprocess.CalledProcessError):
         select_task(root, "custom", delegation, execute=lambda *args: (0, answer(args[-1])))
     assert (root / "recovery/tasks/owner.json").is_file()
     assert git(root, "rev-parse", "HEAD") == baseline
-    assert git(root, "diff", "--cached", "--name-only") == "recovery/tasks/owner.json"
+    assert git(root, "diff", "--cached", "--name-only") == ""
 
 
 @pytest.mark.parametrize("authority", ["other", "foreign_target"])
@@ -239,3 +239,49 @@ def test_planner_cannot_resume_another_author_or_target_task(setup, authority):
     with pytest.raises(ValueError, match="within delegated authority"):
         select_task(root, "foreign" if authority == "foreign_target" else "custom", delegation,
                     execute=lambda *args: (0, answer(args[-1], "resume")))
+
+
+@pytest.mark.parametrize("restriction", ["skip", "parallel", "entities", "files"])
+def test_scheduling_limits_defer_existing_tasks_without_closing_them(setup, restriction):
+    root, delegation = setup
+    if restriction == "entities":
+        path = root / "code/owner.cc"
+        path.write_text(path.read_text() + '\n// ORIGINAL: 0x00000020 _extra 0x00000020-0x00000028\nvoid extra() {}\n')
+        git(root, "add", "code/owner.cc")
+        git(root, "commit", "-m", "Second synthetic original in the source group")
+    select_task(root, "custom", delegation, execute=lambda *args: (0, answer(args[-1])))
+    before = working_state(root)
+    options = {}
+    if restriction == "skip": options["skip_tasks"] = ["owner"]
+    if restriction == "parallel": options["parallel_tasks"] = ["owner"]
+    if restriction == "entities": delegation = {**delegation, "max_entities": 1}
+    if restriction == "files": delegation = {**delegation, "max_editable_files": 1}
+    def defer(command, root, name, payload):
+        assert not payload["tasks"][0]["eligible"]
+        return 0, answer(payload, "defer")
+    select_task(root, "custom", delegation, execute=defer, **options)
+    assert working_state(root) == before
+    resumed = select_task(root, "custom", setup[1], execute=lambda *args: (0, answer(args[-1], "resume")))
+    assert resumed["action"] == "resume"
+
+
+def test_planner_task_checkpoint_does_not_execute_git_hooks(setup):
+    root, delegation = setup
+    source = (root / "code/owner.cc").read_bytes()
+    for name in ("pre-commit", "post-commit", "reference-transaction"):
+        hook = root / ".git/hooks" / name
+        hook.write_text("#!/bin/sh\nprintf 'hook damage' > code/owner.cc\n")
+        hook.chmod(0o755)
+    report = select_task(root, "custom", delegation, execute=lambda *args: (0, answer(args[-1])))
+    assert report["checkpoint"] == git(root, "rev-parse", "HEAD")
+    assert (root / "code/owner.cc").read_bytes() == source
+
+
+def test_planner_can_reuse_only_its_own_active_driver_lease(setup):
+    from match_recovery.locking import file_lock
+    root, delegation = setup
+    with file_lock(root / "build/recovery/driver.lock") as lease:
+        result = select_task(root, "custom", delegation, execute=lambda *args: (0, answer(args[-1])), _held_lease=lease)
+        assert result["checkpoint"]
+    with pytest.raises(ValueError, match="active local file lease"):
+        select_task(root, "custom", delegation, _held_lease=lease)

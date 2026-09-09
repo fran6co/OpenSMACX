@@ -10,6 +10,7 @@ from pathlib import Path, PurePosixPath
 import subprocess
 
 from .components import VendorManifest, relative_path
+from .checkpoints import preflight, publish
 from .driver import Command, _resumable_history, changes, drive, invoke, working_state
 from .locking import file_lock
 from .model import digest, require_digest, require_text
@@ -91,13 +92,18 @@ def _clean(root):
     return not _git(root, "status", "--porcelain", "--untracked-files=all").strip()
 
 
-def _context(root, target, delegation):
+def _context(root, target, delegation, *, skip_tasks=(), parallel_tasks=(), application_only=False):
     view, source = project_view(root, allow_empty=True)
     config = SourceConfiguration.from_dict(source["source_configuration"])
     vendor_roots = [item.source_root for item in component_manifests(source) if isinstance(item, VendorManifest)]
     dependency_files = {name for name in source["files"] if name.endswith(".recovery.h") or
                         any(PurePosixPath(name).is_relative_to(directory) for directory in vendor_roots)}
     store = TaskStore(root)
+    parallel_subjects, parallel_files = set(), set()
+    for name in parallel_tasks:
+        selected, editable = store.scope(name)
+        parallel_subjects.update(selected)
+        parallel_files.update(editable)
     tasks, occupied_entities, occupied_files = [], set(), set()
     directory = root / "recovery/tasks"
     if directory.resolve() != directory:
@@ -111,8 +117,14 @@ def _context(root, target, delegation):
         occupied_entities.update(subjects)
         occupied_files.update(files)
         eligible = (task.target == target and task.author == delegation["author"]
+                    and task.task_id not in skip_tasks
+                    and not (subjects & parallel_subjects or files & parallel_files)
+                    and len(subjects) <= delegation["max_entities"] and len(files) <= delegation["max_editable_files"]
                     and all((item.image_sha256, item.address_space) == (source["image_sha256"], config.address_space)
                             for item in task.subjects))
+        if application_only and any(name not in source["files"] or config.is_seed(name)
+                                    or name == config.image_pin or name in dependency_files for name in files):
+            eligible = False
         tasks.append({"task": {key: value for key, value in task.to_dict().items()
                                if key not in ("schema_version", "subjects", "editable_files")},
                       "subject_count": len(subjects), "editable_files": sorted(files), "eligible": eligible,
@@ -141,6 +153,7 @@ def _context(root, target, delegation):
             "instructions": ["Remain read-only. Choose one evidence-backed ownership task to create or resume, or defer.",
                              "Byte claims and stored reviews do not prove structure or completion; inspect source evidence.",
                              "Existing task reservations stay in force. Resume them instead of duplicating or resetting their baselines.",
+                             "Scheduling exclusions only defer another attempt against the current source; they never declare a task complete.",
                              "Do not invent original extents, edit source/policy, publish decisions, commit or accept code.",
                              "Inspect detailed members/seed alternatives with recover partition --group SELECTOR --details --impact, and tasks context TASK for existing work.",
                              "Dependency, conflicting and unassigned groups need their indicated analysis, not automatic application recovery."]}, source, occupied_files | dependency_files
@@ -153,8 +166,9 @@ def _checkpoint(root, task, before):
         raise ValueError("task publication raced other edits; preserve work and inspect before checkpointing")
     # This is a coordinator checkpoint before any worker/measurement epoch.
     # On failure preserve the decision and current index for inspection; never reset.
-    _git(root, "add", "--", name)
-    _git(root, "commit", "--only", "-m", "Authorize recovery task " + task["task_id"], "--", name)
+    published = publish(root, expected, {name}, preflight(root), "Authorize recovery task " + task["task_id"])
+    if not published["published"]:
+        raise ValueError("new task authorization was not checkpointed")
     after = working_state(root)
     if (_git(root, "rev-parse", "HEAD^") != before["head"]
             or _git(root, "diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD").decode().splitlines() != [name]
@@ -163,14 +177,20 @@ def _checkpoint(root, task, before):
     return after["head"].decode().strip()
 
 
-def select_task(root: Path, target: str, configuration: dict, *, execute=invoke):
+def select_task(root: Path, target: str, configuration: dict, *, execute=invoke,
+                skip_tasks=(), parallel_tasks=(), application_only=False, _held_lease=None):
     """One read-only selection plus optional task-only commit; never acceptance."""
     root = root.resolve()
     require_text(target, "planner target")
     delegation = policy(configuration)
-    with file_lock(root / "build/recovery/driver.lock", timeout=0):
+    if type(application_only) is not bool:
+        raise ValueError("application-only selection must be boolean")
+    for name in (*skip_tasks, *parallel_tasks):
+        task_name(name)
+    with file_lock(root / "build/recovery/driver.lock", timeout=0, held=_held_lease):
         before = working_state(root)
-        request, source, occupied_files = _context(root, target, delegation)
+        request, source, occupied_files = _context(root, target, delegation, skip_tasks=skip_tasks,
+                                                  parallel_tasks=parallel_tasks, application_only=application_only)
         request["snapshot"] = digest({"request": request, "source": digest(source),
                                        "head": before["head"].hex(), "index": before["index"].hex(), "files": before["files"]})
         if changes(before, working_state(root)):

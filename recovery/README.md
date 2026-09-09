@@ -260,7 +260,8 @@ cannot agree. Reports include mapped outside-task neighbors in compiled units,
 but do not prove preservation of all other code. The native `tasks check-preservation`
 command now compares baseline/current compiled residuals separately (see below).
 Historical header/seed file sets use v5 complete-tree materialization. Full
-preservation, historical product-TU recipe mapping and prefix pooling remain unfinished.
+preservation and historical product-TU recipe mapping remain unfinished. Provisioned
+prefix leasing is native; it does not establish safe fleet throughput by itself.
 Default concurrency is 1.
 
 ## Available now
@@ -854,6 +855,15 @@ creation callback. All four reasoning roles are local deterministic controls, wh
 compilation, linking and verification are real. The package README documents this
 optional policy; it is not enabled for OpenSMACX and does not infer unmapped bounds,
 manage worktrees or integrate recovered source.
+The separate native `recover campaign --config <standing-authorization>` now
+connects planning, isolated preparation/dispatch, optional central discovery
+handling, fresh serial integration, cleanup and another planning round. Its
+compiler-backed control is `recovery/tests/test_campaign_compiler.py`: both an
+existing task and a newly planned task recover genuine structure through a byte
+regression, reach fresh destination acceptance and retain the original baseline.
+Only reasoning is doubled. This is not a live OpenSMACX campaign; interrupted
+supervisor resumption and arbitrary conflict repair remain unfinished. See the
+package README and `recovery/WORKFLOW.md` before authorizing a campaign.
 It does not supply OpenSMACX's
 missing proof coverage. Native receipts expose verified artifact paths/hashes so
 downstream work can identify the tested build without guessing a cache directory.
@@ -1200,7 +1210,7 @@ interpretation history now survives in the source-derived restoration inventory;
 explicit reviewed supersession is supported, but the full structural admission
 verifier remains unfinished.
 
-The package owns the production gate. Remaining autonomous integration,
+The package owns the production gate. Remaining autonomous restart/conflict handling,
 complete dependency checking, source annotation migration and performance work
 are tracked in `docs/recovery/FRAMEWORK.md`. There are no root compatibility
 wrappers. Keep native damage controls when changing verification responsibilities.

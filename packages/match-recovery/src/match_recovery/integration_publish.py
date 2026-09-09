@@ -61,7 +61,7 @@ def _checkout_policy(root, revision, options):
 
 
 def publish_integration(root, name, candidate, permission, *, configuration, worker_configuration,
-                        reviewer_configuration, migration_configuration=None, execute=invoke):
+                        reviewer_configuration, migration_configuration=None, execute=invoke, _held_lease=None):
     root, candidate = Path(root).resolve(), Path(candidate).resolve()
     if root == candidate:
         raise ValueError("collection requires separate destination and candidate checkouts")
@@ -69,7 +69,8 @@ def publish_integration(root, name, candidate, permission, *, configuration, wor
                                          "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_NAMESPACE")):
         raise ValueError("destination publication refuses Git path overrides")
     with ExitStack() as stack:
-        leases = {path: stack.enter_context(file_lock(path / "build/recovery/driver.lock", timeout=0))
+        leases = {path: stack.enter_context(file_lock(path / "build/recovery/driver.lock", timeout=0,
+                                                     held=_held_lease if path == root else None))
                   for path in sorted((root, candidate))}
         options = {path: _options(path) for path in (root, candidate)}
         def git(path, *args):

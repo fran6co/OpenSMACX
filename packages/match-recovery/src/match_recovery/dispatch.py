@@ -145,11 +145,11 @@ def _prepare(root, plan):
     return jobs, resources
 
 
-def dispatch(root: Path, plan: dict, *, progress=None):
+def dispatch(root: Path, plan: dict, *, progress=None, _held_lease=None):
     """Run one bounded batch; return process outcomes, never accepted source."""
     root = Path(root).absolute()
     _checkout(root)
-    with file_lock(root / "build/recovery/driver.lock", timeout=0):
+    with file_lock(root / "build/recovery/driver.lock", timeout=0, held=_held_lease):
         before = working_state(root)
         jobs, resources = _prepare(root, plan)
         parent = artifact_parent(root, "build/recovery/dispatch", excluded_roots=SourceConfiguration.read(root).roots)

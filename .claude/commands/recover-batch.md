@@ -13,6 +13,14 @@ reviewer guidance is in `.claude/agents/recovery-worker.md` and
 `.claude/agents/recovery-reviewer.md`. Use configured executable adapters when
 invoking `recover run`; those Markdown files do not implement the JSON protocol.
 
+With an explicit standing campaign authorization, use the package-owned
+`uv run recover campaign --config <authorization>` to connect planning, isolated
+worker setup/dispatch, central discovery handling and fresh serial integration.
+See the package README for the schema; do not create another shell fleet loop.
+No standing OpenSMACX campaign is enabled. Inspect preserved workers before a new
+invocation: dead-supervisor resumption and arbitrary conflict repair are not yet
+automatic. A clean bounded scheduling exit is not game acceptance.
+
 One ownership/header conflict domain has one active writer. Do not infer a fleet
 size from obsolete Wine throughput measurements. The coordinator owns Git and
 integration; workers do not auto-fast-forward, collect, commit or reap worktrees.

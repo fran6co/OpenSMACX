@@ -22,7 +22,7 @@ from .source_history import _tree, git
 from .tasks import Task, task_name
 
 
-def prepare_integration(root, name, context, *, worktree, branch):
+def prepare_integration(root, name, context, *, worktree, branch, _held_lease=None):
     root = Path(root).resolve()
     task_name(name)
     require_text(branch, "candidate branch")
@@ -37,7 +37,7 @@ def prepare_integration(root, name, context, *, worktree, branch):
     if task.task_id != name:
         raise ValueError("incoming task filename and identity disagree")
     context = decision(task, context)
-    with file_lock(root / "build/recovery/driver.lock", timeout=0), git_options(root) as options:
+    with file_lock(root / "build/recovery/driver.lock", timeout=0, held=_held_lease), git_options(root) as options:
         target_branch = preflight(root)
         target, source = context["target_revision"], context["source_revision"]
         if git(root, "rev-parse", "HEAD").decode().strip() != target:

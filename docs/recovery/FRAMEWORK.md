@@ -1,9 +1,10 @@
 # Structure-led recovery implementation
 
 This is the implementation contract and progress record for the independent
-`match-recovery` package in `packages/match-recovery/`. The existing recovery tools remain
-active until replacement coverage and a measured cutover are demonstrated.
-Their continued presence during construction is not a compatibility promise.
+`match-recovery` package in `packages/match-recovery/`. The old `decomp` package,
+root tools and legacy gate have been removed following native cutover controls.
+The installed package owns recovery commands and verification; project-local
+configuration and compiler interaction remain under `recovery/`.
 
 New projects now start with native source/measurement/driver configuration via
 `recover init`, not a local operation dispatcher stub. An explicitly supplied
@@ -393,8 +394,18 @@ establish completion of this program.
   A real compiler-backed installed-CLI control reaches full native acceptance from
   no pre-created task and then resumes without another commit. Reasoning roles in
   that control are deterministic local doubles. New executable bindings, live model
-  planning, task retirement and recovered-source integration remain unfinished;
+  planning and task retirement remain unfinished;
   no standing OpenSMACX planner authorization is enabled.
+  The native `recover campaign` now composes bounded task planning, task-only
+  guarded commits, isolated worker setup, resource-leased parallel dispatch,
+  optional central discovery handling and fresh serial integration/publication.
+  Successful destination verification permits ordinary cleanup of its own merged
+  worktrees; clean no-op attempts are deferred without closing tasks. In-memory
+  scheduling exclusions expire on source changes. A real VC6 control covers both
+  existing and newly planned tasks, recovery through a structural byte regression,
+  fresh destination verification, cleanup and a subsequent planning round.
+  Its reasoning is deterministic, not a live game pilot. Dead-supervisor resumption,
+  arbitrary conflict repair and new executable binding discovery remain gaps.
   The package-owned native migration verifier now composes fresh build, bounded
   declarations, references and outside-scope preservation checks; OpenSMACX
   configures that command without a project adapter. A synthetic driver test

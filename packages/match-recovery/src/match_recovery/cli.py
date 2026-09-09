@@ -70,6 +70,9 @@ def parser() -> argparse.ArgumentParser:
     dispatch = commands.add_parser("dispatch", help="Supervise a coordinator-authorized batch in isolated worktrees; never accept or integrate reports")
     dispatch.add_argument("--root", type=Path, default=Path.cwd(), help="Coordinator checkout")
     dispatch.add_argument("--plan", type=Path, required=True, help="Batch authorization, relative to --root")
+    campaign = commands.add_parser("campaign", help="Coordinate bounded task selection, isolated workers and fresh serial integration")
+    campaign.add_argument("--root", type=Path, default=Path.cwd(), help="Authorized destination checkout")
+    campaign.add_argument("--config", type=Path, required=True, help="Standing bounded campaign authorization, relative to --root")
     worktree = commands.add_parser("worktree", help="Prepare isolated worker checkouts without resetting task baselines")
     worktree_actions = worktree.add_subparsers(dest="action", required=True)
     worker_tree = worktree_actions.add_parser("prepare", help="Create a raw committed worker checkout and optionally prepare fresh compiler recipes")
@@ -179,6 +182,15 @@ def _dispatch(args) -> int:
                                     resource_timeout=args.resource_timeout)
             print(json.dumps(output, indent=2, sort_keys=True))
             return 0 if output["stop_reason"] in ("worker_prepared", "checkout_prepared") else 3
+        elif args.command == "campaign":
+            from .campaign import campaign
+            config = read_json(args.config if args.config.is_absolute() else args.root / args.config)
+            output = campaign(args.root, config, progress=lambda event: print(
+                json.dumps(event, sort_keys=True), file=sys.stderr, flush=True))
+            print(json.dumps(output, indent=2, sort_keys=True))
+            # A clean scheduling stop is not full-project acceptance.
+            return (0 if not output["unresolved_work"] and output["stop_reason"] in
+                    ("planning_defer", "batch_budget_exhausted") else 3)
         elif args.command == "dispatch":
             from .dispatch import dispatch
             plan = read_json(args.plan if args.plan.is_absolute() else args.root / args.plan)

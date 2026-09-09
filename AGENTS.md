@@ -64,6 +64,7 @@ uv run recover audits check storage --summary
 uv run recover record <addresses> --image <image> --in <source-file>
 uv run recover run <task> --worker <config> --reviewer <config>
 uv run recover dispatch --plan <batch-plan>
+uv run recover campaign --config <campaign-authorization>
 uv run recover worktree prepare <task> --authorization <permission> --worktree <new-path> --branch <new-branch> --resources <pool>
 uv run pytest packages/match-recovery/tests recovery/tests
 cmake --build build
@@ -147,6 +148,11 @@ its task baseline, optionally preparing fresh recipes under a compiler lease.
 Existing paths/branches are not repurposed; partial setup is retained on failure.
 Use `prepare --root <worker> --resources <pool>` to regenerate an existing worker's
 recipes after resolving its preparation failure. Setup does not establish acceptance.
+`campaign` connects bounded planning, isolated preparation/dispatch, optional central
+discovery handling and fresh serial candidate/destination publication. Its explicit
+standing policy is documented in the package README. Clean scheduling exit is not
+game acceptance. Interrupted/conflicting/dirty work is preserved; supervisor restart,
+arbitrary conflict repair and an OpenSMACX live campaign remain unverified/unfinished.
 
 - Prefer real bases, members, globals, virtual methods and lifecycle code over
   vtable arrays, fixed executable addresses, raw self-offset access or stand-ins.

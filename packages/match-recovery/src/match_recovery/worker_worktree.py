@@ -24,7 +24,7 @@ from .source_inventory import image_pin
 from .tasks import TaskStore, task_name
 
 
-def prepare_worker(root, name, authorization, *, worktree, branch, resources=None, resource_timeout=0):
+def prepare_worker(root, name, authorization, *, worktree, branch, resources=None, resource_timeout=0, _held_lease=None):
     root = Path(root).absolute()
     if root.resolve() != root:
         raise ValueError("worker preparation needs a canonical coordinator root")
@@ -43,7 +43,7 @@ def prepare_worker(root, name, authorization, *, worktree, branch, resources=Non
         raise ValueError("automatic compiler preparation requires explicit resources; checkout-only setup does not lease them")
     if resources is None and resource_timeout != 0:
         raise ValueError("resource timeout requires compiler preparation resources")
-    with file_lock(root / "build/recovery/driver.lock", timeout=0), git_options(root) as options:
+    with file_lock(root / "build/recovery/driver.lock", timeout=0, held=_held_lease), git_options(root) as options:
         coordinator_branch = preflight(root)
         revision = authorization["revision"]
         if git(root, "rev-parse", "HEAD").decode().strip() != revision:
