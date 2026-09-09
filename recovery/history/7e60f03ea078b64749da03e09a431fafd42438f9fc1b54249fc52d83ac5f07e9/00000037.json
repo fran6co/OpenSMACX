@@ -1,0 +1,21 @@
+{
+  "event_id": "5ab8ddb32ce57330b39dc0db52f5f68e75c21800c3a59a5a810e13f007b3ba38",
+  "payload": {
+    "affects": [
+      "entity-37bea69ba05e70b68bff38dff0013b42cac88b17a077e486e4d4b8f5863c4cfe",
+      "entity-7a68ce4521c8abe034be18de261a94e7af7a8bb2688e10090824724533c5ae47"
+    ],
+    "author": "coordinator",
+    "discovery_id": "runtime-common-storage-ownership",
+    "evidence": [
+      "Local compiler CRT/SRC/HEAPINIT.C declares HANDLE _crtheap and constructs it via HeapCreate; the original code at 0x647D7A stores that return in 0x9C11C4 and uses HeapDestroy on small-block initialization failure. CRT/SRC/SBHEAP.C and WINHEAP.H identify the header-list/scan/defer/count/capacity globals; original 0x647DB6 allocates 0x140 bytes and establishes the corresponding state. Pinned heapinit.obj and sbheap.obj express these globals as COFF common allocation requests, while the fresh map labels their candidate addresses <common>. Native link-code correspondence cannot prove common selection or object size from that label. No replacement C++ global or operand-derived alias should be introduced."
+    ],
+    "hypothesis": "The ledger allocator depends on CRT-owned common globals, not missing application definitions. Use the local CRT sources as provenance-bearing hints, map the original heap initialization path, and require complete current link-input/common-selection evidence before admitting those globals or exporting library targets. A public map address and a four-byte common request alone do not prove the selected allocation extent.",
+    "kind": "discovery"
+  },
+  "previous_event": "461ec54c3a3bfa5c6f9fdc7cc8f709981e6fb86ecfa8c3cb024159d85ecce445",
+  "request_id": "runtime-common-storage-ownership",
+  "schema_version": 1,
+  "sequence": 37,
+  "stream": "task:jackal-voice-ownership"
+}

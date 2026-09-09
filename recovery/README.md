@@ -289,8 +289,8 @@ uv build --package match-recovery
 ```
 
 The runtime companion `src/vendor/vc6-runtime.recovery.h` binds the ledger's
-`_free` dependency and four lock/small-block-heap callees, with source-declared
-system imports. The precompiled-library command reads the pinned archive without
+`_free` dependency, four lock/small-block-heap callees and two heap initialization
+entries, with source-declared system imports. The precompiled-library command reads the pinned archive without
 compiler invocation or extraction. Its strict reference check resolves original
 DLL/export slots but still needs runtime data and remaining callee bindings and
 final-link selection. It does not promote library symbols into application acceptance.
@@ -306,6 +306,14 @@ original addresses from the candidate map or prove the runtime globals' storage,
 initialization, remaining dependency closure or full application acceptance.
 The project compiler test uses this command's native implementation; there is
 no separate project-local link comparator.
+
+The compiler distribution's external CRT sources also provide heap/global type
+and ownership hints; their identities and the original initialization evidence
+are recorded in the runtime companion. They are not copied into the project.
+The heap handle and header-list globals are common allocation requests in COFF.
+Their map addresses do not prove selected storage extents: complete link-input
+and allocation-selection evidence is still needed before dependency admission.
+Do not manufacture application definitions for these library-owned globals.
 
 `CMakeLists.txt` selects the static multithreaded runtime for both C and C++ in
 all configurations. Debug optimization/instrumentation does not select a debug

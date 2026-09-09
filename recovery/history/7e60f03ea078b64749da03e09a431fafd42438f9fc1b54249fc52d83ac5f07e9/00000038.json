@@ -1,0 +1,20 @@
+{
+  "event_id": "2cc30566b3608a97b7ef240f87873be646d3a96cae1df43f2432ea5aebb92041",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_runtime_component.py",
+      "src/vendor/vc6-runtime.recovery.h"
+    ],
+    "evidence": [
+      "Map the evidence-backed CRT heap initialization entries and their system import identities in the existing runtime companion. Preserve essential source-family and global-ownership evidence there, with local proprietary sources remaining external. Add native original-binary integration controls. Do not create application globals, bank claims or resolve common allocations without selected-storage proof."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "5ab8ddb32ce57330b39dc0db52f5f68e75c21800c3a59a5a810e13f007b3ba38",
+  "request_id": "runtime-initialization-evidence",
+  "schema_version": 1,
+  "sequence": 38,
+  "stream": "task:jackal-voice-ownership"
+}

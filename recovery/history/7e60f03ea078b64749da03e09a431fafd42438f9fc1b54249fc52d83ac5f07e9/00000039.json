@@ -1,0 +1,20 @@
+{
+  "event_id": "8a93c71a72c036b660741ecfcb102f49a72051abe4f0cae5b0f4399be5bd8558",
+  "payload": {
+    "affects": [
+      "entity-37bea69ba05e70b68bff38dff0013b42cac88b17a077e486e4d4b8f5863c4cfe"
+    ],
+    "author": "coordinator",
+    "discovery_id": "runtime-link-input-coverage",
+    "evidence": [
+      "A fresh read-only mapping trace sees LIBCMT, LIBCPMT and system import libraries that an openat-only descendant trace did not observe. Symbol inspection of mapped files identifies the expected common requests in heapinit.obj and sbheap.obj, but the function-oriented Coff reader refuses import-object and import-descriptor members. This is evidence for a compiler-boundary input inventory plus native COFF/import-record support, not proof of complete input coverage or selected allocation sizes."
+    ],
+    "hypothesis": "Common-allocation admission needs a complete, fingerprinted compiler/link-input inventory, including implicit libraries and both regular COFF and import-object records. Do not infer input absence from child openat traces, or reuse the function COMDAT verifier as a complete symbol-inventory reader. Keep unsupported inputs visible until the native inventory can classify them safely.",
+    "kind": "discovery"
+  },
+  "previous_event": "2cc30566b3608a97b7ef240f87873be646d3a96cae1df43f2432ea5aebb92041",
+  "request_id": "runtime-link-input-coverage",
+  "schema_version": 1,
+  "sequence": 39,
+  "stream": "task:jackal-voice-ownership"
+}
