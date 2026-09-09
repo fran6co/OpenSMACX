@@ -19,6 +19,7 @@ you whether the code is valid, never whether it is right.
 from __future__ import annotations
 
 import os
+import json
 import re
 import subprocess
 import sys
@@ -321,12 +322,22 @@ def main(argv: list) -> int:
         scratch.close()
         translated = ["@" + windows_path(scratch.name)]
     command = ["wine32", str(executable)] + translated
+    input_capture = None
+    if link_diagnostics is not None:
+        # Keep standalone CMake entry points usable without importing project
+        # recovery code or the installed framework into the compiler wrapper.
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from wine_link import capture_before, capture_after
+        input_capture = capture_before(arguments, executable,
+            [part for part in os.environ.get("VC6_LIB", str(VC6_ROOT / "LIB")).split(":") if part], Path.cwd())
     finished = run_tool(command)
     if scratch is not None:
         os.unlink(scratch.name)
     if link_diagnostics is not None:
         try:
             write_link_diagnostics(link_diagnostics, finished.stdout)
+            evidence = capture_after(input_capture, finished.stdout)
+            write_link_diagnostics(link_diagnostics.with_suffix(".inputs.json"), json.dumps(evidence, indent=2) + "\n")
         except OSError as error:
             print(f"cannot capture link diagnostics: {error}", file=sys.stderr)
             return 3

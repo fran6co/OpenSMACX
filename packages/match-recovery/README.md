@@ -1801,6 +1801,27 @@ member selection. Other verbose diagnostics are uninterpreted. File-content
 fingerprints at the compiler boundary and common-allocation proof remain required;
 the transcript alone cannot admit a dependency or export an application target.
 
+A paired `link-input-files` build output can supply compiler-boundary file
+observations. Its schema-1 JSON contains `link_log_sha256`, absolute normalized
+host `cwd` and `tool` paths, expanded `arguments`, `explicit_inputs`, `files`,
+`library_searches`, and `capture_gaps`. Each file has `path`, `before`, and
+`after`; each non-null observation is `{ "sha256": "<digest>", "size": 123 }`.
+Each search has its exact diagnostic `spelling` and resolved host `path` (null
+when unresolved). Keep the full ordered search sequence, including nested
+export-library searches. The environment captures before and after the actual
+link; missing observations must stay null, not be filled from post-link files.
+
+The package validates this format, binds it to the log digest/search sequence,
+and rereads physical files during fresh component verification. The selected
+archive must be the uniquely observed physical path supplied by `--archive`,
+with the source-pinned contents stable before/after linking and verification.
+Symlinks, changed files, incomplete capture and ambiguous paths cannot pass.
+Unused search candidates are reported separately from required observed inputs.
+`archive_file_identity` and `link_files` expose this bounded evidence. Compiler
+path resolution/capture is trusted interaction, not filesystem attestation;
+generated inputs, complete selected-member coverage, and common allocations
+remain unverified. A saved artifact never replaces the fresh-build CLI sequence.
+
 Passing means bounded **candidate linked-code correspondence**, not original
 equivalence or dependency admission. A map's common/public data address does not
 prove storage size, contents, initialization or ownership. Owner labels and

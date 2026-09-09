@@ -100,6 +100,8 @@ def test_release_link_preserves_the_selected_runtime_code_and_relocations():
     assert report["link_inputs"]["input_count"] > len(manifest.bindings)
     assert report["link_inputs"]["input_identity"] == "unknown"
     assert report["link_inputs"]["export_generations"] == 1
+    assert report["archive_file_identity"] == report["link_files"]["result"] == "pass"
+    assert report["link_files"]["input_coverage"] == "unknown"
     assert report["storage_verification"] == report["original_verification"] == "unknown"
     build = report["fresh_build"]
     directory = root / build["directory"]

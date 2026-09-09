@@ -140,6 +140,38 @@ def test_fresh_link_log_cannot_change_after_binary_verification(project, capsys,
     assert "changed" in capsys.readouterr().err
 
 
+@pytest.mark.parametrize("damage", [None, "other_path", "missing_before", "log_digest", "missing_log"])
+def test_fresh_component_checks_physical_archive_evidence_when_configured(project, capsys, damage):
+    from test_link_log import LOG
+    from test_link_file_evidence import evidence
+    args = configure(project)
+    configure_log(project, LOG)
+    receipt = evidence(project)
+    if damage == "other_path":
+        shadow = project / "shadow.lib"
+        shadow.write_bytes((project / "runtime.lib").read_bytes())
+        receipt["files"][1]["path"] = str(shadow)
+        receipt["library_searches"][0]["path"] = str(shadow)
+    elif damage == "missing_before":
+        receipt["files"][1]["before"] = None
+    elif damage == "log_digest":
+        receipt["link_log_sha256"] = "0" * 64
+    value = json.loads((project / "recovery/build.json").read_text())
+    value["commands"][0]["argv"][2] += "; (p/'app.inputs.json').write_text(" + repr(json.dumps(receipt)) + ")"
+    value["outputs"].append({"path": "app.inputs.json", "format": "link-input-files"})
+    if damage == "missing_log":
+        value["outputs"] = [row for row in value["outputs"] if row["format"] != "msvc-link-log"]
+    write_config(project, **value)
+    assert main(args) == (0 if damage is None else 3)
+    output = capsys.readouterr()
+    if damage in ("log_digest", "missing_log"):
+        assert output.err
+    else:
+        report = json.loads(output.out)
+        assert report["archive_file_identity"] == ("pass" if damage is None else "unknown")
+        assert report["link_files"]["input_coverage"] == report["storage_verification"] == "unknown"
+
+
 def test_missing_target_never_comes_from_the_operand_under_test():
     mapping = MAP.replace(" 0001:00000020 _g 00401020 f application.obj\n", "")
     report = verify(*inputs(), mapping)

@@ -8,7 +8,7 @@ separate obligations; this module never exports application target bindings.
 
 from collections import Counter
 import hashlib
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 from .binary import compare_bound_code
 from .coff_archive import CoffArchive
@@ -169,6 +169,11 @@ def check_toolchain_link(root: Path, manifest: ToolchainManifest, archive_path: 
         raise ValueError("linked verification supports at most one configured MSVC link log")
     if logs:
         expected["msvc-link-log"] = logs
+    file_logs = [name for name, kind in settings.outputs if kind == "link-input-files"]
+    if len(file_logs) > 1 or file_logs and not logs:
+        raise ValueError("link input files require one evidence artifact and one MSVC log")
+    if file_logs:
+        expected["link-input-files"] = file_logs
     state, before = working_state(root), settings.snapshot(root)
     source = source_snapshot(root, allow_empty=True)
     imports = read_imports(root)
@@ -196,10 +201,31 @@ def check_toolchain_link(root: Path, manifest: ToolchainManifest, archive_path: 
                                          artifacts["pe32-i386"][1], artifacts["msvc-map"][1],
                                          library=library, import_bindings=imports,
                                          link_log=artifacts["msvc-link-log"][1] if logs else None)
+        if file_logs:
+            from .link_file_evidence import verify_link_files
+            file_evidence = verify_link_files(artifacts["link-input-files"][1], artifacts["msvc-link-log"][1])
+            result["link_files"] = file_evidence
+            label = library if library.lower().endswith(".lib") else library + ".lib"
+            searches = [row for row in file_evidence["library_searches"] if row["phase"] == "executable"
+                        and PureWindowsPath(row["spelling"]).name.casefold() == label.casefold()]
+            paths = {row["path"] for row in searches}
+            bound = bool(searches) and paths == {str(archive_path.resolve())}
+            selected = [row for row in file_evidence["files"] if row["path"] in paths]
+            identity = (Result.PASS if bound and len(selected) == 1 and selected[0]["result"] == Result.PASS
+                        and selected[0]["after"]["sha256"] == manifest.archive_sha256 else Result.UNKNOWN)
+            result["archive_file_identity"] = identity
+            if file_evidence["result"] == Result.FAIL:
+                result["result"] = Result.FAIL
+            elif file_evidence["result"] != Result.PASS or identity != Result.PASS:
+                if result["result"] != Result.FAIL:
+                    result["result"] = Result.UNKNOWN
     assert_snapshot_current(root, source)
     if (settings.snapshot(root) != before or changes(state, working_state(root))
             or archive_path.read_bytes() != archive_data
             or any(any(part.is_symlink() for part in (path, *path.parents) if part.is_relative_to(root))
                    or path.read_bytes() != data for path, data in artifacts.values())):
         raise ValueError("inputs or linked artifacts changed during component verification")
+    if file_logs and build["result"] == Result.PASS:
+        if verify_link_files(artifacts["link-input-files"][1], artifacts["msvc-link-log"][1]) != file_evidence:
+            raise ValueError("observed physical link inputs changed during verification")
     return {**result, "build_attempts": 1, "fresh_build": build}

@@ -1,0 +1,22 @@
+{
+  "event_id": "64fcb9bfabb19abd24c77bbf42d386f6238edccc772907b82cb37647c6db0fac",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "packages/match-recovery/src/match_recovery/link_file_evidence.py",
+      "packages/match-recovery/tests/test_link_file_evidence.py",
+      "recovery/environment/wine_link.py",
+      "recovery/tests/test_wine_link.py"
+    ],
+    "evidence": [
+      "Capture compiler-boundary pre/post content observations for explicit link inputs and library search candidates; bind fresh verbose-library searches to physical files through a validated native evidence artifact. Check the configured pinned runtime archive against that evidence. Keep incomplete final-input coverage, generated inputs, ambiguous archive members and common-allocation ownership unknown; never export targets merely from an environment receipt."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "66cfec5733d024f38257bf2ab0818c630f7e22e5b88a4d07e2e5f6f5449aa662",
+  "request_id": "runtime-link-file-identity",
+  "schema_version": 1,
+  "sequence": 42,
+  "stream": "task:jackal-voice-ownership"
+}
