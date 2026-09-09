@@ -200,7 +200,7 @@ def with_second_import(raw, module):
 
 def test_duplicate_import_identity_cannot_pick_the_slot_from_the_operand():
     raw = with_second_import(image_imports(), "DEMO.dll")
-    rows, _, _, imports = check_import(raw)
+    rows, _, _, imports, _ = check_import(raw)
     assert rows[0]["result"] == imports[0]["identity"] == "unknown"
     assert "exactly one" in imports[0]["reason"]
 

@@ -35,6 +35,19 @@ Use `recover tasks variants` for candidate decks in private overlays, and only
 build or guess donor recipes; run configured preparation at a coordinator
 checkpoint first. All reports are recomputed or disposable caches, not records.
 
+Additional methods can share an already mapped original function without
+duplicating its canonical annotation. Put `// RECOVERY_SHARED: v1 <start> <end>
+<emitted-symbol> <evidence-address>` beside each extra definition, with ordinary
+comments explaining the original call/table evidence. Bounds must agree with the
+existing complete contiguous original span. The evidence address anchors the
+interpretation to a recovery task; it is not a measurement or an inferred class.
+Task checks, private decks and bounded-data checks compile referenced shared
+owners and prove each emitted method separately before resolving its targets.
+Task history retains changed/deleted interpretations for review. Missing bodies,
+explicit placeholders and unsupported reference cycles remain unknown. Original
+claim identities stay unique; shared-body results are not new banked claims or
+proof of names, prototypes, complete hierarchy, or final linker folding.
+
 ## Instruction references
 
 `recover check-references --summary` checks literal source-file references and

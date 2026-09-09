@@ -62,7 +62,8 @@ def check_requirements(inventory, candidate):
     for backend, collection, kind in (("layout", "members", "direct_member_offset"),
                                        ("layout", "bases", "nonvirtual_base_offset"),
                                        ("binary", "generated_tables", "compiler_generated_vtable"),
-                                       ("binary", "object_definitions", "object_initial_data")):
+                                       ("binary", "object_definitions", "object_initial_data"),
+                                       ("binary", "shared_functions", "shared_function_body")):
         for row in reports[backend].get(collection, []):
             key = row.get("interpretation_id")
             if key is None:
@@ -84,6 +85,10 @@ def check_requirements(inventory, candidate):
                                Result(row.get("content", Result.UNKNOWN))))
                 reason = row.get("reason", row.get("proof", {}).get("reason", "table definition and bounded contents compared"))
                 source = row.get("source")
+            elif kind == "shared_function_body":
+                result = Result(row["result"])
+                reason = row.get("reason", "shared body bytes, extent and references compared independently")
+                source = row.get("source")
             else:
                 result = Result(row["result"])
                 reason = row.get("reason", "declared layout requirement compared")
@@ -96,7 +101,8 @@ def check_requirements(inventory, candidate):
     for key, item in sorted(known.items()):
         kind = item["value"].get("kind")
         backend = {"direct_member_offset": "layout", "nonvirtual_base_offset": "layout",
-                   "compiler_generated_vtable": "binary", "object_initial_data": "binary"}.get(kind)
+                   "compiler_generated_vtable": "binary", "object_initial_data": "binary",
+                   "shared_function_body": "binary"}.get(kind)
         row = {"interpretation_id": key, "entity_id": item["entity_id"], "kind": kind,
                "current": item["current"], "requirement": item["value"], "result": Result.UNKNOWN,
                "counts": {state.value: 0 for state in Result}, "trials": []}
@@ -108,14 +114,16 @@ def check_requirements(inventory, candidate):
         else:
             units, flag_sets, gap = grids[backend]
             observed = observations[key]
-            if kind == "object_initial_data":
-                owners = reports[backend].get("object_owners", [])
+            if kind in ("object_initial_data", "shared_function_body"):
+                owners = reports[backend].get("object_owners" if kind == "object_initial_data" else "shared_owners", [])
                 if not isinstance(owners, list) or any(not isinstance(owner, dict) or set(owner) != {"interpretation_id", "unit"}
                         or not isinstance(owner["unit"], str) or not owner["unit"] for owner in owners):
-                    raise ValueError("invalid object owner coverage")
+                    raise ValueError("invalid source owner coverage")
                 units = [owner["unit"] for owner in owners if owner["interpretation_id"] == key]
                 if len(units) != 1:
-                    gap = "requires one source-owned initial-data measurement host"
+                    gap = "requires one source-owned measurement host"
+                elif kind == "shared_function_body" and units != [item["value"].get("unit")]:
+                    gap = "shared body measurement host disagrees with source interpretation"
             # Include any extra compiled dependency witnesses as well. A bad
             # definition there must not disappear behind a passing scoped TU.
             units = sorted(set(units) | {unit for unit, _ in observed})

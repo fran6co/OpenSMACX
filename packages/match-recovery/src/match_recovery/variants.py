@@ -20,6 +20,7 @@ from .partition import Candidate, partition
 from .pe_coff import Coff, PeImage
 from .source.reader import read_text
 from .tasks import TaskStore
+from .shared_source import read_shared, parse_shared, referenced_shared_units, validate_shared
 
 
 def _rank_trials(baselines, trials):
@@ -34,6 +35,8 @@ def _rank_trials(baselines, trials):
                 for row in (trial["target"], *trial["neighbors"])}
         rows.update({("object", row["unit"], row["symbol"], row["address"]): row
                      for row in trial["object_definitions"] if "content" in row})
+        rows.update({("shared", row["unit"], row["symbol"], row["address"]): row
+                     for row in trial.get("shared_functions", [])})
         return rows
 
     def result(key, row):
@@ -47,7 +50,7 @@ def _rank_trials(baselines, trials):
         before = measurements(baseline)
         observed = [(trial, measurements(trial)) for trial in group]
         scoped = {key for rows in (before, *(rows for _, rows in observed)) for key, row in rows.items()
-                  if key[0] == "object" or row.get("in_task") or key[2] == baseline["target"]["entity_id"]}
+                  if key[0] in ("object", "shared") or row.get("in_task") or key[2] == baseline["target"]["entity_id"]}
         passing = {key for key, row in before.items() if result(key, row) == Result.PASS}
         details = []
         for trial, rows in observed:
@@ -258,13 +261,16 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
     if target is None:
         raise ValueError("candidate target requires one unambiguous mapped product definition with image spans")
     data_bindings, generated = read_objects(root, pin), read_generated(root, pin)
+    shared = read_shared(root, pin)
+    validate_shared(shared, view)
     # Compile every mapped task TU together, not just the primary target. This
     # catches coupled header/body changes and includes out-of-scope neighbors in
     # those TUs. Uncompiled callers remain explicit, never an outside-scope pass.
     units = sorted({item.unit for item in bindings if item.origin.entity_id in selected
                     and Path(item.unit).suffix in settings.unit_extensions}
                    | {name for name in originals if Path(name).suffix in settings.unit_extensions}
-                   | {item.unit for item in data_bindings if item.evidence is not None and item.evidence.entity_id in selected})
+                   | {item.unit for item in data_bindings if item.evidence is not None and item.evidence.entity_id in selected}
+                   | {item.unit for item in shared if item.evidence.entity_id in selected})
     if any(Path(unit).suffix not in settings.unit_extensions for unit in units):
         raise ValueError("required data owner is not a configured translation unit")
     unit_bindings = [item for item in bindings if item.unit in units]
@@ -275,6 +281,7 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
             raise ValueError("each edited file requires a mapped compiled task witness")
         witnesses[name] = witness
     imports = read_imports(root)
+    validate_shared(shared, view, reserved=[item.symbol for item in (*data_bindings, *generated, *imports)])
     if ({item.symbol for item in data_bindings} & set(externals)
             or {item.symbol for item in generated} & (set(externals) | {item.symbol for item in data_bindings})):
         raise ValueError("conflicting function/object/generated symbol bindings")
@@ -286,7 +293,7 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
         proposed, _, targets, _ = resolved
         if {item.origin.entity_id for item in proposed} != {item.origin.entity_id for item in bindings}:
             raise ValueError("candidate symbol changes create or resolve ambiguous bindings; checkpoint decisions first")
-        reserved = {item.symbol for item in (*data_bindings, *generated, *imports)}
+        reserved = {item.symbol for item in (*data_bindings, *generated, *imports, *shared)}
         if set(targets) & reserved:
             raise ValueError("conflicting function/object/generated/import symbol bindings")
         candidate_bindings[name] = resolved
@@ -310,7 +317,13 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
         trial_bindings, _, trial_externals, changes = (
             (bindings, all_refused, externals, []) if contents is None else candidate_bindings[name])
         support_controls, support_attempts = [], 0
-        while pending := referenced_object_units(data_bindings, objects) - objects.keys() - errors.keys():
+        trial_shared = shared
+        if contents is not None:
+            trial_shared = tuple(item for item in shared if item.unit not in contents) + tuple(
+                item for unit, raw in contents.items()
+                for item in parse_shared(raw.decode("utf-8"), unit, pin, address_space=settings.source.address_space))
+        while pending := (referenced_object_units(data_bindings, objects)
+                          | referenced_shared_units(trial_shared, objects)) - objects.keys() - errors.keys():
             for unit in sorted(pending):
                 control = {"unit": unit, "result": Result.UNKNOWN}
                 try:
@@ -343,15 +356,18 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
                     control["reason"] = str(error)
                 support_controls.append(control)
         measured = [item for item in trial_bindings if item.unit in objects or item.unit in units]
-        rows, data_rows, generated_rows, import_rows = check_compiled(
-            measured, data_bindings, generated, objects, image, trial_externals, errors=errors, import_bindings=imports)
+        active_shared = [item for item in trial_shared if item.unit in objects or item.unit in errors]
+        rows, data_rows, generated_rows, import_rows, shared_rows = check_compiled(
+            measured, data_bindings, generated, objects, image, trial_externals, errors=errors,
+            import_bindings=imports, shared_bindings=active_shared)
         selected_row = next(row for row in rows if row["entity_id"] == target.origin.entity_id)
         return {"name": name, "flags": list(flags), "target": selected_row,
                 "neighbors": [{**row, "in_task": row["entity_id"] in selected} for row in rows if row is not selected_row],
                 "compile_errors": errors or {},
                 "binding_changes": changes,
                 "object_dependencies": support_controls, "support_compile_attempts": support_attempts,
-                "object_definitions": data_rows, "generated_tables": generated_rows, "import_bindings": import_rows}
+                "object_definitions": data_rows, "generated_tables": generated_rows, "import_bindings": import_rows,
+                "shared_functions": shared_rows}
 
     # Replica and damage controls are per flag trial, not a one-time capability
     # claim. A matching score alone cannot show that the intended code changed.
@@ -419,7 +435,7 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
             "limitations": ["diagnostic source trials only; no winner applied and no claims stamped",
                             "task function symbol proposals are scored against candidate bindings; original identities, claims and other recovery interpretations require checkpoint decisions",
                             "advisory ranking per flag trial: compile errors, lost baseline passes (including measured neighbors), unknown and failed scored task/data results, missing distances, known differing bytes, then name; trials are never combined",
-                            "ranking details cover the union of observed task code and bounded initial data in that flag trial; absent observations remain unknown, and generated tables/import selection, structure and uncompiled code are not ranked",
+                            "ranking details cover the union of observed task code, shared bodies and bounded initial data in that flag trial; absent observations remain unknown, and generated tables/import selection, structure and uncompiled code are not ranked",
                             "all mapped task TUs compiled; neighboring rows also show unambiguous outside-task functions in those TUs, not all affected callers",
                             "layout, lifecycle, full build, protected obligations and review still require task checks",
                             "compiler commands are trusted; requested parallelism must fit isolated compiler capacity"]}

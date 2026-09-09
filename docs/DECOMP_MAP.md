@@ -48,6 +48,27 @@ measurement. The installed `recover check-data` computes compiler extents, initi
 bytes and relocation-target agreement; missing bounds stay unknown. The active
 workflow explains history/review preservation and lifetime limitations.
 
+## Shared original function bodies
+
+`// RECOVERY_SHARED: v1 <start> <end> <emitted-symbol> <evidence-address>`
+beside an additional method definition states that it shares an already mapped
+original function's complete contiguous span. End is exclusive; addresses use
+`0x` notation. Keep the canonical `ORIGINAL` identity and its historical claims.
+Do not duplicate that marker for each method or infer a binding from equal bytes
+alone. Explain the original call/table evidence in adjacent ordinary comments;
+the evidence address anchors the interpretation to its recovery ownership task.
+An old catalogue class name does not establish the shared code's class owner.
+
+Native task checks and variant decks compile declared shared owners when referenced
+or required by a scoped evidence anchor. Each emitted method gets an independent
+strict extent/bytes/reference result, in every configured trial. Only freshly
+passing methods supply reference targets to callers, tables and bounded data.
+Unfinished placeholders, missing definitions and unproved reference cycles stay
+unknown. Shared bodies do not increment the canonical claim population, and
+passing bytes do not establish semantic names, prototypes or complete hierarchy.
+Removal, rehoming or reinterpretation retains task-history review requirements.
+Variant decks may change bodies but cannot change these binding decisions.
+
 ## The grammar
 
 One marker, valid in any comment form (`//` or inside `/* */`); the whole

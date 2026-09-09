@@ -165,6 +165,17 @@ Real reset methods and real pointer arithmetic are allowed when evidence shows
 that behavior; names and a good byte score alone do not establish it.
 
 Bind a real global beside its source definition. Native binary checks and decks
+also support source-owned `RECOVERY_SHARED` interpretations when original
+call/table evidence ties distinct real methods to one mapped code span. Keep the
+canonical original identity; annotate each extra definition and explain its
+evidence. Never create duplicate canonical markers or manually alias vtable
+targets to bypass missing method proofs. Inspect `shared_functions` alongside
+table/caller results: every method and compiler trial must be checked, and a
+passing sibling is not a substitute. These bindings prove bounded code, not the
+method's semantic name/signature or the historical linker's folding mechanism.
+See `docs/DECOMP_MAP.md` for the source grammar.
+
+For object storage, native binary checks and decks
 follow external references to declared object owners and report additional
 `object_dependencies`. This read-only compilation does not expand worker editing
 scope. An unresolved owner needs evidence or a scope request, not a copied original

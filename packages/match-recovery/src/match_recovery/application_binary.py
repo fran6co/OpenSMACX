@@ -19,6 +19,8 @@ from match_recovery.generated_binary import check_generated
 from .compiler import Compiler
 from .measurement import Measurement
 from .import_source import read_imports, import_targets
+from .shared_source import read_shared, referenced_shared_units, validate_shared
+from .shared_binary import check_shared
 
 
 def select_bindings(view: dict, selected: frozenset[str]) -> tuple[list, list, dict]:
@@ -71,14 +73,23 @@ def select_bindings(view: dict, selected: frozenset[str]) -> tuple[list, list, d
 
 
 def check_compiled(bindings, object_bindings, generated_bindings, objects, image, externals, *, errors=None,
-                   import_bindings=()):
+                   import_bindings=(), shared_bindings=()):
     """Same strict target resolution for ordinary measurements and source trials."""
     data_targets, checked_objects = object_targets(object_bindings, objects)
+    if {item.symbol for item in shared_bindings} & (set(externals) | {item.symbol for item in bindings}
+            | {item.symbol for item in object_bindings} | {item.symbol for item in generated_bindings}
+            | {item.symbol for item in import_bindings}):
+        raise ValueError("shared symbol also has a function/object/generated/import binding")
     if {item.symbol for item in import_bindings} & (
             set(externals) | {item.symbol for item in object_bindings} | {item.symbol for item in generated_bindings}):
         raise ValueError("import symbol also has a function/object/generated binding")
     imports, checked_imports = import_targets(import_bindings, objects, image)
     generated_targets, checked_generated = check_generated(generated_bindings, objects, image, {**externals, **data_targets})
+    shared_targets, checked_shared = check_shared(shared_bindings, objects, image,
+        {**externals, **data_targets, **generated_targets}, import_targets=imports, errors=errors)
+    externals = {**externals, **shared_targets}
+    if shared_bindings:
+        generated_targets, checked_generated = check_generated(generated_bindings, objects, image, {**externals, **data_targets})
     from .object_data import check_initial_data
     bounded = [item for item in object_bindings if item.span is not None
                and (item.unit in objects or item.unit in (errors or {}))]
@@ -88,7 +99,7 @@ def check_compiled(bindings, object_bindings, generated_bindings, objects, image
     rows = check_objects(bindings, objects, image,
                          external_targets={**externals, **data_targets, **generated_targets},
                          import_targets=imports, errors=errors)
-    return rows, checked_objects, checked_generated, checked_imports
+    return rows, checked_objects, checked_generated, checked_imports, checked_shared
 
 
 def verify_task(root: Path, task_name: str, image_path: Path, *,
@@ -119,6 +130,8 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
         flag_sets = tuple(flags + settings.layout_flags for flags in settings.flag_sets)
     generated_bindings = read_generated(root, snapshot["image_sha256"])
     import_bindings = read_imports(root)
+    shared_bindings = read_shared(root, snapshot["image_sha256"])
+    validate_shared(shared_bindings, view, reserved=[item.symbol for item in (*object_bindings, *generated_bindings, *import_bindings)])
     bindings, refused, externals = select_bindings(view, selected)
     # Build-only definitions are deliberately unfinished. Their emitted RET
     # may match an empty original, but cannot establish task completion until
@@ -141,7 +154,9 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
         raise ValueError("generated symbol also has a function/object binding")
     command_for = command_for if command_for is not None else lambda path: ()
     required_data = [item for item in object_bindings if item.evidence is not None and item.evidence.entity_id in selected]
-    units = sorted({item.unit for item in bindings} | {item.unit for item in required_data})
+    required_shared = [item for item in shared_bindings if item.evidence.entity_id in selected]
+    units = sorted({item.unit for item in bindings} | {item.unit for item in required_data}
+                   | {item.unit for item in required_shared})
     commands, command_errors = {}, {}
     for unit in units:
         try:
@@ -151,7 +166,7 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
         except ValueError as error:
             command_errors[unit] = str(error)
     attempts, variants, object_checks = 0, defaultdict(list), []
-    generated_checks, dependencies, import_checks = [], [], []
+    generated_checks, dependencies, import_checks, shared_checks = [], [], [], []
     for flags in flag_sets:
         objects, errors = {}, dict(command_errors)
         for unit, command in commands.items():
@@ -166,7 +181,8 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
         # Follow source-declared ownership, never resolve it from the original
         # operand or reuse an object compiled under another flag trial.
         dependency_units = set()
-        while pending := referenced_object_units(object_bindings, objects) - objects.keys() - errors.keys():
+        while pending := (referenced_object_units(object_bindings, objects)
+                          | referenced_shared_units(shared_bindings, objects)) - objects.keys() - errors.keys():
             dependency_units.update(pending)
             for unit in sorted(pending):
                 try:
@@ -181,9 +197,11 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
                     errors[unit] = str(error)
         dependencies.append({"flags": list(flags), "units": sorted(dependency_units),
                              "errors": {unit: errors[unit] for unit in sorted(dependency_units) if unit in errors}})
-        checked_functions, checked_objects, checked_generated, checked_imports = check_compiled(
+        active_shared = [item for item in shared_bindings if item.unit in objects or item.unit in errors]
+        checked_functions, checked_objects, checked_generated, checked_imports, checked_shared = check_compiled(
             bindings, object_bindings, generated_bindings, objects, image, externals, errors=errors,
-            import_bindings=import_bindings)
+            import_bindings=import_bindings, shared_bindings=active_shared)
+        shared_checks.extend({**item, "flags": list(flags)} for item in checked_shared)
         object_checks.extend({**item, "flags": list(flags)} for item in checked_objects)
         import_checks.extend({**item, "flags": list(flags)} for item in checked_imports)
         generated_checks.extend({**item, "flags": list(flags)} for item in checked_generated)
@@ -203,7 +221,9 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
         raise ValueError("source, build inputs or task decisions changed during measurement; retry")
     counts = Counter(row["result"] for row in rows)
     overall = (Result.UNKNOWN if counts[Result.UNKNOWN] else Result.FAIL if counts[Result.FAIL] else Result.PASS)
-    table_results = {item["content"] for item in generated_checks} | {item["content"] for item in object_checks if "content" in item}
+    table_results = ({item["content"] for item in generated_checks}
+                     | {item["content"] for item in object_checks if "content" in item}
+                     | {item["result"] for item in shared_checks})
     if Result.UNKNOWN in table_results:
         overall = Result.UNKNOWN
     elif Result.FAIL in table_results and overall != Result.UNKNOWN:
@@ -216,6 +236,8 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
             "object_owners": [{"interpretation_id": item.interpretation_id, "unit": item.unit}
                               for item in object_bindings if item.span is not None],
             "object_dependencies": dependencies,
+            "shared_functions": shared_checks,
+            "shared_owners": [{"interpretation_id": item.interpretation_id, "unit": item.unit} for item in shared_bindings],
             "generated_tables": generated_checks,
             "import_bindings": import_checks,
             "unresolved_symbols": sorted({relocation["symbol"] for candidates in variants.values()

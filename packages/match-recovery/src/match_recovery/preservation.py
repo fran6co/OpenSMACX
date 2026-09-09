@@ -22,6 +22,7 @@ from .layout_source import parse_members, parse_bases
 from .model import Origin, Result, digest
 from .pe_coff import Coff
 from .object_source import parse_objects
+from .shared_source import parse_shared
 from .import_source import parse_imports
 from .records import parse_json, read_json
 from .source_config import SourceConfiguration
@@ -44,6 +45,13 @@ def _bindings(root, files, source, pin):
             rows[entity].append({"unit": name, "symbol": record.symbol or record.name,
                                  "spans": record.image_spans, "body": record.body,
                                  "byte_obligation": record.byte_exact, "shape_obligation": record.semantic})
+        for item in parse_shared(raw.decode("utf-8", errors="replace"), name, pin, address_space=source.address_space):
+            # Shared methods have distinct preservation identities, while the
+            # evidence anchor determines editing scope. Do not merge siblings
+            # under the single canonical original-function selection key.
+            rows[item.interpretation_id].append({"unit": name, "symbol": item.symbol,
+                "spans": ((item.span.start, item.span.end),), "body": None,
+                "byte_obligation": False, "shape_obligation": False, "scope_entity": item.evidence.entity_id})
     return dict(rows)
 
 
@@ -54,7 +62,7 @@ def _unit_scope(rows, selected, unit):
             if row["unit"] != unit:
                 continue
             symbol = row["symbol"]
-            if entity not in selected:
+            if row.get("scope_entity", entity) not in selected:
                 outside.add(symbol)
             elif len(candidates) != 1 or symbol in allowed:
                 raise ValueError("ambiguous scoped source binding: " + symbol)
@@ -82,11 +90,11 @@ def _outside_annotations(files, source, pin, selected):
             # DLL/name/ordinal must not disappear behind identical object bytes.
             add({"kind": "import", **{key: value for key, value in asdict(item).items() if key != "line"}})
         for kind, parser in (("object", parse_objects), ("member", parse_members),
-                             ("base", parse_bases), ("generated", parse_generated)):
+                             ("base", parse_bases), ("generated", parse_generated), ("shared", parse_shared)):
             for item in parser(text, name, pin, address_space=source.address_space):
                 anchor = item.origin if kind == "object" else item.evidence
                 if anchor.entity_id not in selected:
-                    value = {"kind": kind, **{key: value for key, value in asdict(item).items() if key != "line"}}
+                    value = {"kind": kind, **{key: value for key, value in asdict(item).items() if key not in ("line", "body_error")}}
                     add(value)
         if name.endswith(".recovery.h"):
             for manifest in parse_components({name: text}):
@@ -101,9 +109,9 @@ def _symbol_sources(bindings, annotations, selected):
     for entity, rows in bindings.items():
         for row in rows:
             value = {"kind": "function", "entity_id": entity, "source": row["unit"],
-                     "task_scope": entity in selected}
+                     "task_scope": row.get("scope_entity", entity) in selected}
             index[row["symbol"]].append(value)
-            if entity in selected:
+            if row.get("scope_entity", entity) in selected:
                 index["scoped-entry:" + entity].append(value)
     for row in annotations.values():
         if row["kind"] in ("object", "generated"):
@@ -204,7 +212,9 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
     old_bindings, new_bindings = _bindings(root, baseline, settings.source, pin), _bindings(root, current, settings.source, pin)
     binding_changes = [{"entity_id": key, "baseline": old_bindings.get(key, []), "current": new_bindings.get(key, [])}
                        for key in sorted((old_bindings.keys() | new_bindings.keys()) - selected)
-                       if old_bindings.get(key) != new_bindings.get(key)]
+                       if old_bindings.get(key) != new_bindings.get(key)
+                       and any(row.get("scope_entity", key) not in selected
+                               for row in (*old_bindings.get(key, []), *new_bindings.get(key, [])))]
     old_annotations = _outside_annotations(baseline, settings.source, pin, selected)
     new_annotations = _outside_annotations(current, settings.source, pin, selected)
     old_sources = _symbol_sources(old_bindings, _outside_annotations(baseline, settings.source, pin, frozenset()), selected)

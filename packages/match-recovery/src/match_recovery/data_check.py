@@ -11,9 +11,11 @@ from .import_source import import_targets, read_imports
 from .measurement import Measurement
 from .model import Result, digest
 from .object_data import check_initial_data, referenced_initial_object_units
-from .object_source import object_targets, read_objects
+from .object_source import object_targets, read_objects, referenced_object_units
 from .ownership_source import project_view
 from .pe_coff import Coff, PeImage
+from .shared_source import read_shared, referenced_shared_units, validate_shared
+from .shared_binary import check_shared
 
 
 def check_data(root: Path, image_path: Path, *, symbols=None, compiler=None):
@@ -33,13 +35,16 @@ def check_data(root: Path, image_path: Path, *, symbols=None, compiler=None):
     if not selected or symbols is not None and {b.symbol for b in selected} != set(symbols):
         raise ValueError("data selection needs source-owned original objects; missing or empty coverage")
     generated, imports = read_generated(root, pin), read_imports(root)
+    shared = read_shared(root, pin)
+    validate_shared(shared, view)
     _, _, functions = select_bindings(view, frozenset())
-    groups = [set(functions), {b.symbol for b in bindings}, {b.symbol for b in generated}, {b.symbol for b in imports}]
+    groups = [set(functions), {b.symbol for b in bindings}, {b.symbol for b in generated},
+              {b.symbol for b in imports}, {b.symbol for b in shared}]
     if any(group & other for i, group in enumerate(groups) for other in groups[:i]):
         raise ValueError("conflicting function/object/generated/import bindings")
     flags_list = tuple(flags + settings.layout_flags for flags in settings.flag_sets)
     compiler = compiler if compiler is not None else Compiler(root, profile=settings.compiler_profile)
-    rows, dependencies, attempts = [], [], 0
+    rows, dependencies, shared_checks, attempts = [], [], [], 0
     for flags in flags_list:
         objects, errors = {}, {}
         pending = {b.unit for b in selected}
@@ -52,19 +57,29 @@ def check_data(root: Path, image_path: Path, *, symbols=None, compiler=None):
                     objects[unit] = Coff(compiler(root / unit, (), flags))
                 except (OSError, ValueError) as error:
                     errors[unit] = str(error)
-            pending = referenced_initial_object_units(selected, bindings, objects) - objects.keys() - errors.keys()
+            pending = (referenced_initial_object_units(selected, bindings, objects)
+                       | referenced_shared_units(shared, objects)
+                       | referenced_object_units(bindings, {item.unit: objects[item.unit]
+                           for item in shared if item.unit in objects})) - objects.keys() - errors.keys()
         targets, _ = object_targets(bindings, objects)
         imported, _ = import_targets(imports, objects, image)
         tables, _ = check_generated(generated, objects, image, {**functions, **targets})
-        measured = check_initial_data(selected, objects, image, {**functions, **targets, **imported, **tables}, errors=errors)
+        active_shared = [item for item in shared if item.unit in objects or item.unit in errors]
+        shared_targets, checked_shared = check_shared(active_shared, objects, image,
+            {**functions, **targets, **tables}, import_targets=imported, errors=errors)
+        shared_checks.extend({**row, "flags": list(flags)} for row in checked_shared)
+        measured = check_initial_data(selected, objects, image,
+            {**functions, **targets, **imported, **tables, **shared_targets}, errors=errors)
         rows.extend({**row, "flags": list(flags)} for row in measured)
         dependencies.append({"flags": list(flags), "compiled_units": sorted(objects), "errors": errors})
     if settings.snapshot(root, metadata) != before or image_path.read_bytes() != image_bytes:
         raise ValueError("source, compiler inputs or image changed during initial-data measurement")
     counts = Counter(row["content"] for row in rows)
-    result = Result.FAIL if counts[Result.FAIL] else Result.UNKNOWN if counts[Result.UNKNOWN] else Result.PASS
+    results = {row["result"] for row in shared_checks} | set(counts)
+    result = Result.FAIL if Result.FAIL in results else Result.UNKNOWN if Result.UNKNOWN in results else Result.PASS
     return {"check": "original_initial_data", "schema_version": 1, "result": result,
             "objects": rows, "selected_objects": len(selected), "counts": dict(counts),
+            "shared_functions": shared_checks,
             "compile_attempts": attempts, "trials": dependencies,
             "flag_sets": [list(flags) for flags in flags_list], "input_fingerprint": digest(before),
             "persisted": False, "ready_for_collection": False,
