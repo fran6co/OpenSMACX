@@ -1,0 +1,30 @@
+{
+  "event_id": "9fcf0d35c91958c6cb9b74ba54b2cebdf4d5c9cfabee0555cbd21d24c45468ac",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/alphanet_ledger_harness.cpp"
+    ],
+    "evidence": [
+      "Authorize ledger virtual insertion and cleanup recovery from the independently bounded two-slot tables and retained seeds. Keep 0x5D4990 historical exactness and both seeds intact; typed base/derived storage, payload fields, allocator ownership and new runtime controls belong to this ownership pass. Shared base defaults and list traversal must be proved independently, not supplied by fixed original addresses."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6113424,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6113680,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "7bb7bdec4028ef4ab6baf38bdcba0d4e48b485b4f7954f2623f29c1a69151225",
+  "request_id": "ledger-virtual-payload-recovery",
+  "schema_version": 1,
+  "sequence": 30,
+  "stream": "task:jackal-voice-ownership"
+}
