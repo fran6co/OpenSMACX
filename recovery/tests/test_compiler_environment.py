@@ -245,6 +245,24 @@ def test_real_failed_process_cannot_supply_an_object_to_the_comparer(tmp_path):
         environment.compile_object(tmp_path / "unit.cpp", (sys.executable, "-c", script), ())
 
 
+@pytest.mark.parametrize("code,body,diagnostic", [(7, None, b""), (0, None, b""),
+                                                (-6, None, b""), (1, b"object", b"C2248: protected member")])
+def test_compiler_failure_preserves_exit_and_object_evidence(tmp_path, monkeypatch, code, body, diagnostic):
+    seen = []
+    def run(argv, *, cwd, timeout):
+        seen.append(cwd)
+        if body is not None:
+            (cwd / "unit.obj").write_bytes(body)
+        return subprocess.CompletedProcess(argv, code, b"", diagnostic)
+    monkeypatch.setattr(environment, "run_bounded", run)
+    with pytest.raises(ValueError) as raised:
+        environment.compile_object(tmp_path / "unit.cpp", ("compiler",), ())
+    assert str(raised.value) == (f"VC6 compilation failed: exit {code}; "
+                                f"object {'present' if body is not None else 'missing'}; "
+                                + (diagnostic.decode() or "no compiler output"))
+    assert seen and not seen[0].exists()
+
+
 def test_vc6_retry_policy_remains_in_the_environment():
     assert not flag_dependent("error C2065: identifier not declared")
     assert flag_dependent("fatal error C1001: internal compiler error")

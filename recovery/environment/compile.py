@@ -22,9 +22,12 @@ def compile_object(source: Path, command: tuple[str, ...], flags: tuple[str, ...
                                  cwd=work, timeout=300)
         except subprocess.TimeoutExpired as error:
             raise ValueError("VC6 compilation exceeded 300 seconds") from error
-        if result.returncode != 0 or not (work / "unit.obj").is_file():
-            raise ValueError("VC6 compilation failed: " +
-                             (result.stdout + result.stderr).decode(errors="replace").strip())
+        object_exists = (work / "unit.obj").is_file()
+        if result.returncode != 0 or not object_exists:
+            diagnostic = (result.stdout + result.stderr).decode(errors="replace").strip()
+            raise ValueError(f"VC6 compilation failed: exit {result.returncode}; "
+                             f"object {'present' if object_exists else 'missing'}; "
+                             + (diagnostic or "no compiler output"))
         data = (work / "unit.obj").read_bytes()
         if not data:
             raise ValueError("VC6 compilation produced an empty object")

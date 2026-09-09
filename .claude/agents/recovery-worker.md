@@ -137,6 +137,15 @@ and outside-task neighbors, not just the primary function's score. Unmeasured
 callers still require scope expansion and preservation checks.
 Default to one compiler job unless the coordinator has measured
 isolated capacity. Rankings are diagnostics, not a winner to apply automatically.
+Use the inherited `VC6_PREFIX`; the driver already holds its compiler lease.
+On this host, Wine execution may need the exec tool's approved host-execution
+path even when the prefix is writable. If a sandboxed compile cannot run,
+request approval for that same scoped compiler/check command through the tool
+(for Codex exec, `sandbox_permissions: "require_escalated"` with a concise
+justification). Automatic review still decides whether it may run. Do not disable
+the sandbox, change permissions policy, allocate another prefix, or work around
+a denial. Report unavailable execution separately from actual C++ errors and
+byte mismatches; use the parent's fresh build diagnostics when available.
 After a deliberate source edit, rerun task checks and preserve coupled findings.
 At coordinator checkpoints, `tasks check-preservation <task>` can expose compiled
 changes outside task-owned functions relative to its fixed Git baseline. It does

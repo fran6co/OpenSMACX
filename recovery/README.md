@@ -21,6 +21,14 @@ The worker's `--approve-for-me` option already selects workspace-write; this CLI
 rejects combining it with a separate `--sandbox` option. The installed-command
 control checks all role arguments using an intentionally absent schema, without
 calling the provider.
+Writable compiler storage does not guarantee Wine can execute inside the agent's
+sandbox. Workers request approved execution of the same scoped compiler command
+when needed, retaining their inherited prefix and lease. Automatic review does
+not grant permission by itself or remove the sandbox boundary; see
+[official OpenAI documentation](https://learn.chatgpt.com/docs/sandboxing/auto-review).
+Compiler failures retain the exit status and whether an object was produced,
+including when Wine emits no text. Do not infer a source regression or sandbox
+denial solely from an empty diagnostic; inspect the actual execution result.
 Inspect preserved work and authorize a different worker profile when a bounded
 attempt exposes a task beyond the selected model's ability. A successful provider
 probe does not establish recovery or acceptance quality.
