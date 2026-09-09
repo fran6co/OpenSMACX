@@ -1,0 +1,23 @@
+{
+  "event_id": "7bb7bdec4028ef4ab6baf38bdcba0d4e48b485b4f7954f2623f29c1a69151225",
+  "payload": {
+    "affects": [
+      "entity-37bea69ba05e70b68bff38dff0013b42cac88b17a077e486e4d4b8f5863c4cfe",
+      "entity-7a68ce4521c8abe034be18de261a94e7af7a8bb2688e10090824724533c5ae47",
+      "entity-ecc8c939672aeca28dcd606fb1e479bb69d70a3070d4d40fa6817fe83c162eb2"
+    ],
+    "author": "coordinator",
+    "discovery_id": "alphanet-ledger-two-slot-seeds",
+    "evidence": [
+      "Fresh pinned-image reads show relocated code pointers at base table 0x669408/0x66940C targeting 0x404250/0x404270, followed by nonrelocated vbtable words -4 and 0x18. Derived table 0x66EAE8/0x66EAEC targets 0x5D4890/0x5D4990, followed by nonrelocated -4 and 0x34. This independently bounds both primary tables to two slots. Original remove_all at 0x402992 invokes primary slot 1 with the entry payload, then destroys payload and entry via their virtual allocation bases. The candidate src/alphanet.h currently declares only unk_slot0.",
+      "Native inspect of 0x5D4990 confirms receiver field +0x18 gates cleanup; when it is zero, payload pointers +4 and +8 are individually freed at 0x5D49A4/0x5D49BB and nulled. src/recovered/005d4990.cpp retains a BYTE_EXACT seed with precisely this behavior, while src/unrecovered/005d4890.cpp and its original code create/copy those two strings using the list allocator. This is a source-model recovery direction, not evidence that the current ledger lifetime is accepted."
+    ],
+    "hypothesis": "Recover the AlphaNet ledger two-slot virtual surface and allocator-aware payload cleanup as one ownership change. Use the existing exact cleanup seed at 0x5D4990 instead of a new raw-address bridge, and retain its historical obligation while recovering the real receiver and payload fields. Establish the base-versus-derived storage split and allocation-aware node deletion before replacing list cleanup; do not restore a one-slot placeholder or manually install original tables.",
+    "kind": "discovery"
+  },
+  "previous_event": "fe437806aecb3a2adc517045563715d273e48de322bd1cb93a6ea9cf37f37d2f",
+  "request_id": "alphanet-ledger-two-slot-seeds",
+  "schema_version": 1,
+  "sequence": 29,
+  "stream": "task:jackal-voice-ownership"
+}
