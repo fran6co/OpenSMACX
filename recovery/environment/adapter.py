@@ -11,10 +11,26 @@ from match_recovery.compiler import CompilationRequest
 from match_recovery.records import parse_json
 
 
+def toolchain_inputs():
+    # Locations and environment defaults are compiler interaction, not package
+    # policy. Keep these consistent with the actual compile/link wrapper.
+    from recovery.environment.wine import VC6_ROOT, sdk_search_paths
+    return {"schema_version": 1, "files": {}, "directories": {
+        "compiler": str((VC6_ROOT / "BIN").resolve()),
+        **{f"include-{index}": str(path) for index, path in enumerate(
+            sdk_search_paths("VC6_INCLUDE", VC6_ROOT / "INCLUDE"))},
+        **{f"library-{index}": str(path) for index, path in enumerate(
+            sdk_search_paths("VC6_LIB", VC6_ROOT / "LIB"))}}}
+
+
 def main():
     try:
         root = Path.cwd().resolve()
-        request = CompilationRequest.read(root, parse_json(sys.stdin.read()))
+        value = parse_json(sys.stdin.read())
+        if value == {"schema_version": 1, "operation": "toolchain_inputs"} and type(value["schema_version"]) is int:
+            print(json.dumps(toolchain_inputs()))
+            return 0
+        request = CompilationRequest.read(root, value)
         source = request.source
         if request.profile not in ("default", "application"):
             raise ValueError("unsupported project compiler profile")

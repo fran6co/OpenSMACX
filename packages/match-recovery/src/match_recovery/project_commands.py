@@ -247,7 +247,7 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
                       arguments_file=arguments.get("arguments_file"), jobs=arguments.get("jobs", 1))
     root = root.resolve()
     configuration = read_json(root / "recovery/project.json")
-    if (configuration.keys() - {"schema_version", "source", "source_history", "compiler", "measurement", "audits", "build", "mappings", "gate", "preparation", "acceptance", "initializers", "layout", "references"}
+    if (configuration.keys() - {"schema_version", "source", "source_history", "compiler", "toolchain", "measurement", "audits", "build", "mappings", "gate", "preparation", "acceptance", "initializers", "layout", "references"}
             or type(configuration.get("schema_version")) is not int or configuration["schema_version"] != 1):
         raise ValueError("invalid local project command configuration")
     if arguments.get("command") == "bind":

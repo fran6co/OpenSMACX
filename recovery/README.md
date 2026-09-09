@@ -77,6 +77,18 @@ can inherit output handles after the compiler exits. Completion follows the
 compiler's exit status, without waiting for service shutdown or weakening object
 validation. This behavior is covered by a lingering-output-owner control.
 
+The same adapter also describes VC6 `BIN`, effective `VC6_INCLUDE` and `VC6_LIB`
+directories for the package's configured external-toolchain identity. Compilation,
+measurement, preparation and builds fingerprint their current contents, not only
+the wrapper and environment paths. Case aliases inside the SDK are included.
+SDK overrides require absolute POSIX paths; discovery and execution share their
+canonicalization, so temporary compile directories cannot change their meaning.
+This is declared compiler/SDK coverage, not complete Wine/OS isolation or runtime
+acceptance. The package's bounded in-process hash cache re-enumerates the SDK and
+checks inode/size/mode/mtime/ctime before reuse; it stores no compiler verdicts.
+Use `MATCH_RECOVERY_TOOLCHAIN_CACHE=off` for fresh-read comparison or filesystems
+without coherent change metadata. External input discovery remains project-local.
+
 `environment/recipe.py` owns VC6 option selection, explicit donor recipes and
 compiler-error retry policy. It preserves argv boundaries, resolves relative
 include paths before changing output directories, and refuses ambiguous recipes

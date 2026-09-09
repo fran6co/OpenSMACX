@@ -12,6 +12,7 @@ from .fingerprint import input_snapshot
 from .model import digest, require_text
 from .records import read_json
 from .source_config import SourceConfiguration
+from .toolchain import snapshot as toolchain_snapshot
 
 
 @dataclass(frozen=True)
@@ -114,4 +115,4 @@ class Measurement:
         environment = {name: hashlib.sha256(os.environ[name].encode()).hexdigest() if name in os.environ else None
                        for name in self.environment}
         return input_snapshot(root, paths, {"measurement": asdict(self), "implementation": implementation,
-                                            "environment": environment, **metadata})
+                                            "environment": environment, **metadata, "toolchain": toolchain_snapshot(root)})

@@ -43,6 +43,11 @@
       "git:3d8cf9192650ec25460072736e48c03734cf1f0e:docs/DECOMP_MAP.md"
     ]
   },
+  "toolchain": {
+    "command": {"argv": ["uv", "run", "python", "recovery/environment/adapter.py"], "timeout": 30},
+    "inputs": ["recovery/environment/adapter.py", "recovery/environment/compile.py", "recovery/environment/wine.py"],
+    "environment": ["VC6_ROOT", "VC6_INCLUDE", "VC6_LIB"]
+  },
   "compiler": {
     "command": {"argv": ["uv", "run", "python", "recovery/environment/adapter.py"], "timeout": 330},
     "inputs": ["recovery/environment/adapter.py", "recovery/environment/compile.py", "recovery/environment/recipe.py", "recovery/environment/recipes.json", "recovery/environment/wine.py"],

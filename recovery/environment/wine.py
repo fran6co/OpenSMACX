@@ -152,6 +152,13 @@ def expand_responses(arguments: list, depth: int = 0) -> list:
 COMMAND_LINE_LIMIT = 30000
 
 
+def sdk_search_paths(variable: str, default: Path) -> tuple[Path, ...]:
+    paths = tuple(Path(part) for part in os.environ.get(variable, str(default)).split(":") if part)
+    if any(not path.is_absolute() for path in paths):
+        raise ValueError(variable + " requires absolute POSIX directory paths")
+    return tuple(path.resolve() for path in paths)
+
+
 def environment() -> dict:
     # LINK can prepend options independently of argv. The captured effective
     # link policy must not omit aliases, forced links or extra input files.
@@ -161,17 +168,15 @@ def environment() -> dict:
     if implicit:
         raise ValueError("implicit linker environment options are unsupported; use explicit arguments: " +
                          ", ".join(sorted(implicit)))
-    include = os.environ.get("VC6_INCLUDE", str(VC6_ROOT / "INCLUDE"))
-    library = os.environ.get("VC6_LIB", str(VC6_ROOT / "LIB"))
+    include = sdk_search_paths("VC6_INCLUDE", VC6_ROOT / "INCLUDE")
+    library = sdk_search_paths("VC6_LIB", VC6_ROOT / "LIB")
     return dict(
         {key: value for key, value in os.environ.items() if key.upper() not in {"LINK", "_LINK_"}},
         LINK="", _LINK_="",
         WINEPREFIX=str(VC6_PREFIX),
         WINEDEBUG=os.environ.get("WINEDEBUG", "-all"),
-        INCLUDE=";".join("Z:" + part.replace("/", "\\")
-                         for part in include.split(":") if part),
-        LIB=";".join("Z:" + part.replace("/", "\\")
-                     for part in library.split(":") if part),
+        INCLUDE=";".join("Z:" + str(part).replace("/", "\\") for part in include),
+        LIB=";".join("Z:" + str(part).replace("/", "\\") for part in library),
     )
 
 

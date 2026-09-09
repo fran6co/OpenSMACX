@@ -2168,6 +2168,37 @@ Protocol v2 adds an explicit project-defined compilation profile. The local
 command can resolve an application build entry or choose a dependency invocation;
 there is no profile registry or compiler-command parser to modify in the library.
 
+Optional project-level `toolchain` configuration uses the same `command`, `inputs`
+and `environment` shape to identify external tools and SDKs. Its command receives
+`{"schema_version":1,"operation":"toolchain_inputs"}` and returns, for example,
+`{"schema_version":1,"files":{"compiler":"/opt/sdk/bin/compiler"},"directories":{"sdk":"/opt/sdk/include"}}`.
+Names are unique normalized relative labels; locations are canonical absolute
+paths. The package hashes actual contents and re-enumerates directories, including
+new/shadowing files, executable permission changes and internal filename/directory
+aliases. Directory enumeration errors refuse observation rather than omitting
+inaccessible inputs. Aliases cannot leave their declared tree; directory aliases are recorded,
+not recursively followed. Same-size edits with restored modification times still
+change the identity. Environment values and external locations are hashed in
+observations rather than printed. The project command is trusted local code,
+not a sandbox or authority to install/download a compiler.
+
+Configured `Compiler` calls, measurement epochs, preparation and fresh builds
+include this identity in their existing before/after checks. Unconfigured projects
+report no external identity (`null`), not complete toolchain verification. Nothing
+is added to source mappings or a second ledger. On coherent POSIX filesystems,
+a bounded process-local cache reuses content hashes only while two fresh inventories
+agree on paths, device/inode, mode, size, mtime and ctime. Any change causes fresh
+content reads. Discovery commands and their policy are always rechecked; compiler
+objects and verdicts are never cached here. Forked children start with an empty
+cache. `MATCH_RECOVERY_TOOLCHAIN_CACHE=off` forces fresh reads and must produce the
+same identities; use it on filesystems without reliable metadata coherency.
+Non-POSIX hosts always use fresh reads, since ctime need not track content changes.
+Even cached observations add inventory/discovery overhead for large SDKs.
+The descriptor must enumerate relevant inputs: it does not prove all dynamic
+loader, operating-system or remote-execution dependencies were captured. Target
+execution, target ABI/backend support and compiler installation remain separate
+capabilities; this interface does not make unsupported architectures measurable.
+
 The historical `source.asm` listing APIs use this same callable boundary:
 `compiled_asm`, `compare_source` and `compare_record` require `compiler=` (a
 `Compiler` instance or a callable receiving source path, argument tuple and flag

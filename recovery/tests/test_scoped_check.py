@@ -58,8 +58,10 @@ def test_joint_results_cannot_mix_different_input_snapshots(project, change):
     root, task = project
     image = root / "image.bin"
     image.write_bytes(b"synthetic")
+    mutated = False
 
     def first(*args):
+        nonlocal mutated
         if change == "task":
             target = root / "recovery/tasks" / (task.task_id + ".json")
             data = json.loads(target.read_text())
@@ -72,11 +74,16 @@ def test_joint_results_cannot_mix_different_input_snapshots(project, change):
                       "compiler_config": root / "recovery/project.json"}[change]
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text("changed input")
+        mutated = True
         return {"task_id": task.task_id, "result": "pass"}
 
-    with pytest.raises(ValueError, match="changed between scoped checks"):
+    # A corrupted JSON policy can now refuse during external-toolchain input
+    # discovery, before the final digest comparison. Both paths must refuse a
+    # joint result; an earlier fixture/setup error must not satisfy this test.
+    with pytest.raises(ValueError):
         check_task(root, task.task_id, image, binary_checker=first,
                    layout_checker=lambda *_: {"task_id": task.task_id, "result": "pass"})
+    assert mutated
 
 
 @pytest.mark.parametrize("result, expected", [("pass", 0), ("fail", 1), ("unknown", 3)])

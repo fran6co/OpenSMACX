@@ -21,6 +21,7 @@ from .model import Result, digest
 from .processes import run_bounded
 from .records import read_json
 from .source_replica import artifact_parent
+from .toolchain import snapshot as toolchain_snapshot
 
 
 @dataclass(frozen=True)
@@ -105,7 +106,8 @@ class Build:
         environment = {name: hashlib.sha256(os.environ[name].encode()).hexdigest() if name in os.environ else None
                        for name in self.environment}
         return input_snapshot(root, files, {"build": self, "directories": sorted(directories), "links": links,
-                                           "implementation": implementation, "environment": environment})
+                                           "implementation": implementation, "environment": environment,
+                                           "toolchain": toolchain_snapshot(root)})
 
 
 def check_build(root: Path, *, retain=False) -> dict:

@@ -18,6 +18,7 @@ from .fingerprint import input_snapshot
 from .model import require_text
 from .records import read_json
 from .source_replica import replica_roots, replica_snapshot, snapshot_digest, validate_tree
+from .toolchain import snapshot as toolchain_snapshot
 
 
 @dataclass(frozen=True)
@@ -129,7 +130,8 @@ class Compiler:
         environment = {name: hashlib.sha256(os.environ[name].encode()).hexdigest()
                        if name in os.environ else None for name in sorted(self.environment)}
         result = input_snapshot(self.root, ["recovery/project.json", *self.configuration["inputs"]],
-                                {"command": asdict(self.command), "profile": self.profile, "environment": environment})
+                                {"command": asdict(self.command), "profile": self.profile, "environment": environment,
+                                 "toolchain": toolchain_snapshot(self.root)})
         if any(value is None for value in result["inputs"].values()):
             raise ValueError("declared compiler input is missing")
         return result
