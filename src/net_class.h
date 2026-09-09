@@ -361,10 +361,21 @@ class Net {
   uint32_t field_28_;  // 0x28, set to 1 once the lock below exists
   CRITICAL_SECTION lock_2C_;  // 0x2C, guards the fifo queue heads
   uint32_t field_44_;  // 0x44
-  uint32_t field_48_;  // 0x48
-  uint32_t field_4C_;  // 0x4C
-  uint32_t field_50_;  // 0x50
+ public:
+  // Win::on_key compares these modifier-encoded hotkeys, then starts the
+  // corresponding voice overload. Construction clears all four words.
+  // RECOVERY_MEMBER: v1 Net voice_hotkey_48_ 0x48 0x005F5D10
+  uint32_t voice_hotkey_48_;  // unsigned-key voice shortcut
+  // RECOVERY_MEMBER: v1 Net voice_hotkey_4c_ 0x4C 0x005F5D10
+  uint32_t voice_hotkey_4c_;  // signed-key voice shortcut
+  // RECOVERY_MEMBER: v1 Net voice_target_50_ 0x50 0x005F5D10
+  unsigned long voice_target_50_;
+  // Original on_key passes +0x54 to start_voice(long), but the two start
+  // overloads also overwrite it with 0/1 for process_voice's routing choice.
+  // Keep this dual-use field provisional rather than invent a second target.
+  // RECOVERY_MEMBER: v1 Net field_54_ 0x54 0x005F5D10
   uint32_t field_54_;  // 0x54
+ private:
   // 0x58 - THE SUBOBJECT ??0Net BUILDS, not opaque storage that happens to
   // be 0x58 wide. `lea ecx, [esi+0x58]` / `call ??0VoiceTx@@QAE@XZ` at
   // 0x0062D6C9, and ??1Net tears it down at the same offset. The two members
@@ -424,16 +435,9 @@ static_assert(sizeof(Net) == 0x780, "Net is the 0x780-byte base AlphaNet pads fr
 
 
 
-// THE LIVE NET AND THE FLAG THAT GATES IT. `do_net` and `check_net` both read
-// 0x009BE608 for the object and 0x009BE600 for the enable flag, and do nothing
-// unless both are set. Defined here rather than declared `extern`, so each
-// unit folds them to the image's absolute operand - see the note in
-// `init_thunks.h`.
-// AN `inline T *&` ACCESSOR, not a `Net **const`. The latter is a variable
-// holding the address, so `*NetCurrent` compiles TWO loads - `mov eax, [addr];
-// mov ecx, [eax]` - where the image has one, `mov ecx, [0x9be608]`. This is
-// the same form `BaseCurrent()` and `console_map_win()` already use.
-inline Net *&NetCurrent() { return *reinterpret_cast<Net **>(0x009BE608); }
+// Published by Net construction; the window and network pumps read the
+// same source-owned pointer. Its original binding is beside the definition.
+extern Net *ActiveNet;
 // QueryInterface requests IID_IDirectPlay2A; the SDK aliases that interface
 // to IDirectPlay2. All source reads and writes share this one pointer object.
 extern IDirectPlay2 *NetDirectPlay;
@@ -460,9 +464,3 @@ inline func_net_time &NetTimeGetTimeSlot() {
 // Shared receive/queue-copy storage. Original Receive advertises the 0x2000
 // capacity initialized by Net::init, not the old four-byte scalar declaration.
 extern unsigned char NetGetScratch[0x2000];  // 0x009BC4BC
-
-// 0x009BE608, the live Net the class registers itself in. Declared here
-// rather than in net_class.cpp because win.cpp reads it too - it used to
-// carry its own `int *const` binding to the same address, which is one
-// address under two names.
-static Net **const WinNetBuffer = reinterpret_cast<Net **>(0x009BE608);

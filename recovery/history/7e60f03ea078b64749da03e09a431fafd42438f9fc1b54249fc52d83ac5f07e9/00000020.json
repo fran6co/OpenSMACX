@@ -1,0 +1,21 @@
+{
+  "event_id": "ed2260c02b4a9aac666ff6f7eb34e9af0a36c6e570a4817dd0ace93d934ab9c3",
+  "payload": {
+    "affects": [
+      "entity-3f6349cc1e1e55b2d272de80befdb3454ee51d275842d4f5c3c1a65acbe1c0dc"
+    ],
+    "author": "coordinator",
+    "discovery_id": "net-primary-virtual-surface",
+    "evidence": [
+      "Pinned original Net construction at 0x0062D822 stores 0x0066EB04 at this+0; src/alphanet.h documents AlphaNet construction/destruction republishing related primary tables. src/net_class.h instead declares uint32_t field_0_ and no primary virtual methods; the old net_class.cpp comment asserting no virtual anything is contradicted by these instructions.",
+      "The observed six-word prefix at 0x0066EB04 contains four entries targeting 0x00404260 (ret 8) and two targeting 0x00404280 (ret). Current source catalogue maps those shared leaves to AlphaMovie names; this is not ownership evidence for Net, nor proof of the whole table extent or parameter types. Recover caller and derived-override evidence before declaring the surface or binding generated tables."
+    ],
+    "hypothesis": "Net needs a compiler-owned primary virtual surface in place of field_0_. Recover it with AlphaNet/NetDaemon overrides, base construction/destruction and table callers; preserve historical matching obligations through the structural migration instead of installing a literal table or treating the current nonvirtual class as authoritative.",
+    "kind": "discovery"
+  },
+  "previous_event": "7cfa6c568e9075248381a07404d871e3f46e37cda9f8e6a19daafdd2ea10d3a9",
+  "request_id": "net-primary-virtual-surface",
+  "schema_version": 1,
+  "sequence": 20,
+  "stream": "task:jackal-voice-ownership"
+}

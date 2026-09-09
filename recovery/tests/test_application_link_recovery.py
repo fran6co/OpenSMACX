@@ -41,7 +41,8 @@ def compiled():
         for unit in ("src/infowin.cpp", "src/pulldown.cpp", "src/graphicwin.cpp",
                      "src/menu.cpp", "src/popmenu.cpp", "src/temp.cpp", "src/console.cpp",
                      "src/netdaemon.cpp", "src/statuswin.cpp", "src/popup.cpp", "src/scroll.cpp",
-                     "src/base.cpp", "src/basewin.cpp", "src/net_class.cpp", "src/general.cpp")
+                     "src/base.cpp", "src/basewin.cpp", "src/net_class.cpp", "src/general.cpp",
+                     "src/win.cpp")
     }
 
 
@@ -174,8 +175,8 @@ def test_receiver_has_typed_list_state_and_one_argument_hooks(compiled):
             assert instructions[:len(expected)] == expected
 
 
-def test_net_initializes_receiver_state_after_its_own_table(compiled):
-    expected_offsets = [0xB8, 0xBC, 0xC0, 0xC4, 0xC8]
+def test_net_initializes_receiver_state_and_window_voice_inputs(compiled):
+    expected_offsets = [0xB8, 0xBC, 0xC0, 0xC4, 0xC8, 0x48, 0x4C, 0x50, 0x54]
     decoder = Cs(CS_ARCH_X86, CS_MODE_32)
     decoder.detail = True
     for obj in compiled["src/net_class.cpp"]:
@@ -275,6 +276,36 @@ def test_net_receive_storage_and_interface_have_shared_source_owners(compiled):
             obj, symbol_at("src/net_class.cpp", 0x630A00))
         assert symbol_at("src/net_class.cpp", 0x633D90) in references(
             obj, symbol_at("src/net_class.cpp", 0x630A40))
+
+
+def test_active_net_is_published_and_shared_with_the_window(compiled):
+    active = "?ActiveNet@@3PAVNet@@A"
+    decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+    decoder.detail = True
+    for obj in compiled["src/net_class.cpp"]:
+        assert len([row for row in obj.symbols.values()
+                    if row.name == active and row.section > 0]) == 1
+        code, relocations, _ = obj.subject(obj.function(symbol_at("src/net_class.cpp", 0x62D6A0)))
+        publication, = (row for row in relocations if obj.symbols[int(row.target)].name == active)
+        store, = (i for i in decoder.disasm(code, 0)
+                  if i.address <= publication.offset < i.address + i.size)
+        assert store.mnemonic == "mov"
+        assert store.operands[0].type == X86_OP_MEM and not store.operands[0].mem.base
+        assert store.operands[1].type == X86_OP_REG
+        assert publication.offset == store.address + store.disp_offset
+        for address in (0x62D5B0, 0x62D5D0):
+            assert active in references(obj, symbol_at("src/net_class.cpp", address))
+    for obj in compiled["src/win.cpp"]:
+        assert not [row for row in obj.symbols.values() if row.name == active and row.section > 0]
+        targets = references(obj, symbol_at("src/win.cpp", 0x5F5D10))
+        assert active in targets
+        # An unsigned/signed substitution selects a different original path.
+        assert symbol_at("src/net_class.cpp", 0x62DF20) in targets
+        assert symbol_at("src/net_class.cpp", 0x62DF70) in targets
+        layout = class_layout(obj, "Net")
+        for member, offset in (("voice_hotkey_48_", 0x48), ("voice_hotkey_4c_", 0x4C),
+                               ("voice_target_50_", 0x50), ("field_54_", 0x54)):
+            assert layout["members"][member] == offset
 
 
 def test_menu_candidates_use_typed_source_definitions(compiled):

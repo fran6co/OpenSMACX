@@ -248,6 +248,11 @@ sub-objects by raw offset, the same way this tree's other unmodelled
 // RECOVERY_OBJECT: v2 0x009BE600 0x009BE604 ?NetDirectPlay@@3PAUIDirectPlay2@@A 0x00630A00
 IDirectPlay2 *NetDirectPlay;
 
+// Original Net construction publishes this at 0x0062D828; do_net,
+// check_net and Win::on_key load the same four-byte pointer object.
+// RECOVERY_OBJECT: v2 0x009BE608 0x009BE60C ?ActiveNet@@3PAVNet@@A 0x0062D5B0
+Net *ActiveNet;
+
 // 0x009BE5F0, the dword just below it: poll_services parks the ServiceStruct
 // the enumeration callback fills there for the length of the call, and the
 // callback reads it back out - a hand-off, not a second list.
@@ -321,7 +326,13 @@ Net::Net() {
     // own allocation base is at 0x750. This preserves the original owner
     // capture order; treating all three as sequential Net members did not.
     // Other initialization and the receiver/list lifecycle remain unfinished.
+    ActiveNet = this;
     NetDirectPlay = 0;
+    // Original 0x0062D8A3..0x0062D8AC initializes the window's voice inputs.
+    voice_hotkey_48_ = 0;
+    voice_hotkey_4c_ = 0;
+    voice_target_50_ = 0;
+    field_54_ = 0;
 }
 
 /*
@@ -527,8 +538,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl do_net() {
-    if (NetCurrent() && NetDirectPlay) {
-        NetCurrent()->process_voice();
+    if (ActiveNet && NetDirectPlay) {
+        ActiveNet->process_voice();
     }
 }
 
@@ -548,7 +559,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl check_net() {
-    Net *net = NetCurrent();
+    Net *net = ActiveNet;
     if (net == nullptr) {
         return;
     }

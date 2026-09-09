@@ -1,0 +1,17 @@
+{
+  "event_id": "7cfa6c568e9075248381a07404d871e3f46e37cda9f8e6a19daafdd2ea10d3a9",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "net-active-instance-storage",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/net_class.cpp now defines and binds ActiveNet at original 0x009BE608, publishes this during construction and initializes the window voice inputs; src/net_class.h declares shared storage and original hotkey/member offsets; src/win.cpp restores the lost on_key mapping and consumes the same pointer and named fields, preserving signed and unsigned voice overloads. Strict do_net/check_net and bounded initial object comparisons pass, as do 150 scoped member witnesses and compiler-backed ownership controls. This incorporates shared storage and its live consumers, not full Net construction, Win::on_key matching or lifetime acceptance; the task remains unfinished."
+    ]
+  },
+  "previous_event": "3a34bbb3eb36aee60bc217799d55b8d3fae57d2f0e8f840a9ccc4cde7611ea04",
+  "request_id": "net-active-instance-incorporated",
+  "schema_version": 1,
+  "sequence": 19,
+  "stream": "task:jackal-voice-ownership"
+}

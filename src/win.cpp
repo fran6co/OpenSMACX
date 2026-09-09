@@ -9828,7 +9828,6 @@ typedef int(__stdcall *Fn1)(void *);
 // RECOVERY_BINDING: v1 {"evidence": ["git:3cb99d43^:src/recovered/units/005f5d10.cpp:1; src/win.h slot 78; pinned original 0x005F5D4F-0x005F5DE0 reads the active Net and calls its two voice-start overloads and stop_voice"], "reason": "Restore the unclaimed original identity lost when this existing Win::on_key body was homed; retain the catalogue name separately from its current virtual emitted symbol. Original instruction decoding confirms entry and ret 0x10 at 0x005F5F50; the historical extent ends at 0x005F5F53."}
 // symbol    ?on_key@Win@@UAEXIJHI@Z
 void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
-    char *self = reinterpret_cast<char *>(this);
     (void)repeat;
     (void)scan;
 
@@ -9837,15 +9836,14 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
     if (GetKeyState(0x11) & 0x8000) with_modifiers |= 0x20000;
     if (GetKeyState(0x12) & 0x8000) with_modifiers |= 0x40000;
 
-    char *net = *reinterpret_cast<char **>(WinNetBuffer);
+    Net *net = ActiveNet;
     if (net != 0) {
         MsgT msg;
-        if (with_modifiers == *reinterpret_cast<unsigned int *>(net + 0x48)) {
+        if (with_modifiers == net->voice_hotkey_48_) {
             if (flags == 0) {
-                reinterpret_cast<Net *>(net)->stop_voice();
+                net->stop_voice();
             } else {
-                reinterpret_cast<Net *>(net)->start_voice(
-                    *reinterpret_cast<unsigned long *>(net + 0x50));
+                net->start_voice(net->voice_target_50_);
             }
             if (!PeekMessageA(&msg, HandleMain, 0x102, 0x102, 1)) {
                 return;
@@ -9854,12 +9852,11 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
             } while (PeekMessageA(&msg, HandleMain, 0x102, 0x102, 1));
             return;
         }
-        if (with_modifiers == *reinterpret_cast<unsigned int *>(net + 0x4c)) {
+        if (with_modifiers == net->voice_hotkey_4c_) {
             if (flags == 0) {
-                reinterpret_cast<Net *>(net)->stop_voice();
+                net->stop_voice();
             } else {
-                reinterpret_cast<Net *>(net)->start_voice(
-                    *reinterpret_cast<long *>(net + 0x54));
+                net->start_voice(static_cast<long>(net->field_54_));
             }
             if (!PeekMessageA(&msg, HandleMain, 0x102, 0x102, 1)) {
                 return;
