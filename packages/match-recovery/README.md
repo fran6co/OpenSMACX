@@ -486,8 +486,12 @@ direct seed build inputs and historical claims shadowed by forwarding macros.
 Alternative seed files remain visible hints, not additional production owners.
 Repeated same-file mappings and multiple product owners remain ambiguous.
 A single product owner with an explicit source binding rationale can retain
-unclaimed seed hints with identical original spans. The report identifies that
-`product_owner`; conflicting spans and seed claims still require reconciliation.
+seed hints with identical original spans when the product carries all of their
+historical claim obligations (byte exactness also covers instruction shape).
+The report identifies that `product_owner`; conflicting spans, multiple product
+owners and claims carried only by a seed still require reconciliation.
+Both product and retained seed claims remain subject to fresh matching checks;
+this read-only ownership check neither copies nor banks a claim.
 This applies to unfinished placeholders as well as implemented candidates and
 does not establish behavior or matching.
 No claim is erased and no seed is promoted or deleted. The command masks ordinary

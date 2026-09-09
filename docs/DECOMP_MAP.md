@@ -290,8 +290,11 @@ export. `recover inventory` separates product-source candidates from historical
 seeds without claiming either is buildable. `recover check-mappings`
 checks full relative source identities, build hosts and claims contradicted by
 configured forwarder macros. Alternative seeds are reported separately; they are
-not production owners or fresh proofs. A product binding accompanied by another
-mapped candidate remains ambiguous until its source ownership is reconciled.
+not production owners or fresh proofs. An explicit product binding can retain
+same-span seeds when it carries all their historical claim obligations too.
+The mapping checker reports that owner without deleting or promoting seeds;
+matching checks still remeasure claims. Conflicting spans, multiple product
+owners or claims carried only by a seed require reconciliation.
 
 ## Migration — done 2026-08-09
 

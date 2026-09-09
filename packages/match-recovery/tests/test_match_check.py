@@ -110,6 +110,33 @@ def test_source_and_seed_attempts_do_not_overwrite_each_other(mapped, jobs):
     # must ask every historical attempt instead of counting one address twice.
 
 
+@pytest.mark.parametrize("damaged", ["engine/family.cc", "seeds/copy.cc"])
+def test_explicit_product_owner_cannot_hide_a_retained_attempt_failure(mapped, damaged):
+    from match_recovery.binding_source import render
+    from match_recovery.mapping_check import check_mappings
+    run(mapped)
+    product = mapped / "engine/family.cc"
+    (mapped / "seeds/copy.cc").write_bytes(product.read_bytes())
+    lines = []
+    for line in product.read_text().splitlines():
+        lines.append(line)
+        if line.startswith("// ORIGINAL:"):
+            lines.append(render("Product home with preserved seed obligations.", ["seed evidence"]))
+    product.write_text("\n".join(lines) + "\n")
+    # Use the actual compiler protocol: only one host fails, while the other
+    # still emits the matching synthetic object. Neither may mask its sibling.
+    compiler(mapped, effect=f"if r['source'] == {damaged!r}:\n"
+             "    print(json.dumps({'error': 'damaged candidate'})); sys.exit(3)")
+    assert check_mappings(mapped)["result"] == "pass"
+    report = check(mapped)
+    assert report["claims"] == 4 and report["verified"] == 2
+    assert report["result"] == ("fail" if damaged.startswith("engine/") else "unknown")
+    rows = report["regressed"] if damaged.startswith("engine/") else report["unverifiable"]
+    assert len(rows) == 2 and {row["path"] for row in rows} == {damaged}
+    assert all(row.byte_exact for row in read_file(product))
+    assert all(row.byte_exact for row in read_file(mapped / "seeds/copy.cc"))
+
+
 def test_repeated_markers_in_one_file_do_not_silently_collapse(mapped):
     run(mapped)
     path = mapped / "engine/family.cc"

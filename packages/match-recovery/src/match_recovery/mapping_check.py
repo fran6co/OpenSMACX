@@ -166,11 +166,16 @@ def check_mappings(root: Path) -> dict:
             # An explicit product interpretation can own the definition without
             # deleting those hints. This is not permission to borrow a seed's
             # claim or silently choose between product owners/boundaries.
+            # A retained claimed seed is compatible only when the product
+            # carries every historical obligation too. Matching checks still
+            # independently remeasure those claims; this is ownership, not proof.
             adopted = (len(product) == 1 and bool(product[0]["binding_evidence"])
                        and bool(product[0]["spans"]) and not product[0]["invalid_spans"]
                        and all(row["spans"] == product[0]["spans"]
                                and not row["invalid_spans"]
-                               and not row["legacy_byte_exact"] and not row["legacy_semantic"]
+                               and (not row["legacy_byte_exact"] or product[0]["legacy_byte_exact"])
+                               and (not row["legacy_semantic"] or product[0]["legacy_semantic"]
+                                    or product[0]["legacy_byte_exact"])
                                for row in candidates if source.is_seed(row["path"])))
             if (product and not adopted) or len({row["path"] for row in candidates}) != len(candidates):
                 findings.append({"rule": "ambiguous_source", **details})

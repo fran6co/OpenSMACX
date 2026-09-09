@@ -109,6 +109,33 @@ def test_explicit_binding_does_not_hide_conflicting_or_claimed_candidates(projec
     assert any(row["rule"] == "ambiguous_source" for row in report["findings"])
 
 
+@pytest.mark.parametrize("product_claim", ["", "SEMANTIC", "BYTE_EXACT", "BYTE_EXACT SEMANTIC"])
+@pytest.mark.parametrize("seed_claim", ["", "SEMANTIC", "BYTE_EXACT", "BYTE_EXACT SEMANTIC"])
+def test_explicit_owner_must_carry_all_retained_seed_obligations(project, product_claim, seed_claim):
+    from match_recovery.binding_source import render
+    product = project / "engine/current/widget.cc"
+    seed = project / "engine/seeds/widget.cc"
+    marker, body = MARKER.replace(" BYTE_EXACT", "").split("\n", 1)
+    product.write_text(marker + " " + product_claim + "\n" +
+                       render("Explicit product ownership; retain historical seed.", ["seed evidence"]) +
+                       "\n" + body)
+    seed.write_text(marker + " " + seed_claim + "\n" + body)
+    before = product.read_bytes(), seed.read_bytes()
+    report = mappings.check_mappings(project)
+    carried = (("BYTE_EXACT" not in seed_claim or "BYTE_EXACT" in product_claim)
+               and ("SEMANTIC" not in seed_claim or bool(product_claim)))
+    assert report["result"] == ("pass" if carried else "fail")
+    assert not report["ready_for_collection"]
+    if carried:
+        group, = report["seed_alternatives"]
+        assert group["product_owner"]["path"] == "engine/current/widget.cc"
+        assert len(group["candidates"]) == 2
+        assert group["product_owner"]["legacy_byte_exact"] == ("BYTE_EXACT" in product_claim)
+    else:
+        assert any(row["rule"] == "ambiguous_source" for row in report["findings"])
+    assert before == (product.read_bytes(), seed.read_bytes())
+
+
 @pytest.mark.parametrize("name", ["current", "seeds"])
 def test_repeated_marker_in_one_file_is_ambiguous_even_for_seeds(project, name):
     path = project / f"engine/{name}/widget.cc"
