@@ -9,7 +9,7 @@ claims, previous reviews, or cached acceptance. No executable bounds are inferre
 from pathlib import Path, PurePosixPath
 import subprocess
 
-from .components import relative_path
+from .components import VendorManifest, relative_path
 from .driver import Command, _resumable_history, changes, drive, invoke, working_state
 from .locking import file_lock
 from .model import digest, require_digest, require_text
@@ -94,7 +94,7 @@ def _clean(root):
 def _context(root, target, delegation):
     view, source = project_view(root, allow_empty=True)
     config = SourceConfiguration.from_dict(source["source_configuration"])
-    vendor_roots = [item.source_root for item in component_manifests(source)]
+    vendor_roots = [item.source_root for item in component_manifests(source) if isinstance(item, VendorManifest)]
     dependency_files = {name for name in source["files"] if name.endswith(".recovery.h") or
                         any(PurePosixPath(name).is_relative_to(directory) for directory in vendor_roots)}
     store = TaskStore(root)

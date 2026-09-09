@@ -89,6 +89,21 @@ def test_missing_compiler_is_unknown_not_a_dependency_pass(component_project, ca
     assert "compiler configuration" in capsys.readouterr().err
 
 
+def test_upstream_annotation_cannot_supply_unverified_application_targets(component_project):
+    from match_recovery.application_binary import select_bindings
+    from match_recovery.ownership_source import project_view
+    view, _ = project_view(component_project, allow_empty=True)
+    assert "_f" not in select_bindings(view, frozenset())[2]
+    # A different product identity using the same symbol cannot bypass the
+    # dependency by pretending to be its application-owned replacement.
+    (component_project / "code/caller.cpp").write_text(
+        "// ORIGINAL: 0x00401010 _f 0x00401010-0x00401011\nvoid f() {}\n")
+    view, snapshot = project_view(component_project)
+    bindings, refused, targets = select_bindings(view, frozenset({snapshot["records"][0]["entity_id"]}))
+    assert not bindings and "_f" not in targets
+    assert refused[0]["reason"] == "ambiguous source symbol binding"
+
+
 @pytest.mark.parametrize("target", ["vendor/f.c", "upstream.tar", "code/vendor.recovery.h"])
 def test_source_integrity_report_is_refused_if_inputs_change(component_project, capsys, monkeypatch, target):
     from match_recovery import component_commands

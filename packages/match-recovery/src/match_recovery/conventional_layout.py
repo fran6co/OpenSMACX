@@ -134,7 +134,8 @@ def read_offsets(snapshot, source):
     hints, errors = [], []
     sources = {path: base64.b64decode(item["content_base64"]).decode("utf-8")
                for path, item in snapshot["files"].items()}
-    dependencies = sorted({item.source_root for item in parse_components(sources)})
+    from .components import VendorManifest
+    dependencies = sorted({item.source_root for item in parse_components(sources) if isinstance(item, VendorManifest)})
     for path, text in sorted(sources.items()):
         if (source.is_seed(path) or PurePosixPath(path).suffix not in source.interface_extensions
                 or any(PurePosixPath(path).is_relative_to(parent) for parent in dependencies)):

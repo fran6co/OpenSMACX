@@ -229,6 +229,7 @@ def register(commands):
     binary.add_argument("component")
     binary.add_argument("--root", type=Path, default=Path.cwd())
     binary.add_argument("--image", type=Path, required=True)
+    binary.add_argument("--archive", type=Path, help="Pinned precompiled library for a toolchain component")
     binary.add_argument("--summary", action="store_true", help="Omit per-function relocation detail")
 
 

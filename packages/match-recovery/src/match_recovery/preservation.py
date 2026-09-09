@@ -126,7 +126,8 @@ def _symbol_sources(bindings, annotations, selected):
             for binding in row["manifest"]["bindings"]:
                 entity = Origin(**binding["origin"]).entity_id
                 index[binding["symbol"]].append({"kind": "component_function", "entity_id": entity,
-                                                "source": row["manifest"]["source_root"] + "/" + binding["unit"],
+                                                "source": (row["manifest"]["source_root"] + "/" + binding["unit"]
+                                                           if "source_root" in row["manifest"] else row["path"]),
                                                 "annotation_source": row["path"], "task_scope": entity in selected})
     return index
 

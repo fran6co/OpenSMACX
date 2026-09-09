@@ -5,7 +5,7 @@ import hashlib
 from pathlib import Path
 
 from .component_source import parse_components
-from .components import source_integrity
+from .components import ToolchainManifest, source_integrity
 from .fingerprint import input_snapshot
 from .model import Result
 from .source_config import SourceConfiguration
@@ -46,7 +46,10 @@ def execute(root: Path, arguments: dict):
     if len(selected) != 1:
         raise ValueError(f"expected one component named {arguments['component']}")
     manifest, = selected
-    inputs = [manifest.source_root + "/" + item.path for item in manifest.files]
+    toolchain = isinstance(manifest, ToolchainManifest)
+    if toolchain and action != "check-binary":
+        raise ValueError("precompiled toolchain dependencies have no upstream source; use check-binary --archive")
+    inputs = [] if toolchain else [manifest.source_root + "/" + item.path for item in manifest.files]
     sources = input_snapshot(root, inputs, manifest.to_dict())
     external = arguments.get("image" if action == "check-binary" else "archive")
     if external is not None:
@@ -62,22 +65,36 @@ def execute(root: Path, arguments: dict):
             return hashlib.file_digest(stream, "sha256").hexdigest()
 
     original_digest = external_digest()
+    archive_path, archive_data = None, None
+    if toolchain:
+        if arguments.get("archive") is None:
+            raise ValueError("toolchain binary verification requires --archive")
+        archive_path = Path(arguments["archive"])
+        archive_path = archive_path if archive_path.is_absolute() else root / archive_path
+        archive_data = archive_path.read_bytes()
+    elif action == "check-binary" and arguments.get("archive") is not None:
+        raise ValueError("--archive in check-binary is for precompiled toolchain dependencies")
     if action == "check-source":
         result = source_integrity(root, manifest, external)
     elif action == "check-binary":
-        from .compiler import Compiler
-        from .component_binary import verify_component
-        compiler = Compiler(root)
-        result = verify_component(root, manifest, external.read_bytes(),
-                                  lambda path, flags: compiler(path, (), flags))
-        if compiler.snapshot() != compiler.initial:
-            raise ValueError("compiler inputs changed during component verification")
+        if toolchain:
+            from .component_binary import verify_toolchain
+            result = verify_toolchain(manifest, external.read_bytes(), archive_data)
+        else:
+            from .compiler import Compiler
+            from .component_binary import verify_component
+            compiler = Compiler(root)
+            result = verify_component(root, manifest, external.read_bytes(),
+                                      lambda path, flags: compiler(path, (), flags))
+            if compiler.snapshot() != compiler.initial:
+                raise ValueError("compiler inputs changed during component verification")
         if arguments.get("summary"):
             result.pop("functions")
     else:
         raise ValueError("unsupported component operation")
     if (component_snapshot(root) != (manifests, before)
             or input_snapshot(root, inputs, manifest.to_dict()) != sources
-            or external_digest() != original_digest):
+            or external_digest() != original_digest
+            or archive_path is not None and archive_path.read_bytes() != archive_data):
         raise ValueError("component inputs changed during verification")
     return {Result.PASS: 0, Result.FAIL: 1, Result.UNKNOWN: 3}[result["result"]], result

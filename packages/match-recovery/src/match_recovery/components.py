@@ -145,6 +145,64 @@ class VendorManifest:
                    tuple(_list(value["units"], "units")), tuple(_list(value["flags"], "flags")), tuple(bindings))
 
 
+@dataclass(frozen=True)
+class ToolchainManifest:
+    """A pinned precompiled library, not reconstructed application source.
+
+    Binding.unit is an exact archive member identity, not a filesystem path.
+    Archive location is supplied by the environment/CLI, not committed here.
+    """
+    component: Component
+    archive_sha256: str
+    license_evidence: str
+    bindings: tuple[VendorBinding, ...]
+
+    def __post_init__(self):
+        if (self.component.delivery != Delivery.TOOLCHAIN
+                or self.component.ownership not in (Ownership.RUNTIME, Ownership.THIRD_PARTY)):
+            raise ValueError("toolchain manifests require a runtime or third-party toolchain dependency")
+        require_digest(self.archive_sha256)
+        require_text(self.license_evidence, "toolchain license/provenance evidence")
+        if not self.bindings or len({item.origin.entity_id for item in self.bindings}) != len(self.bindings):
+            raise ValueError("toolchain original bindings must be nonempty and unique")
+        if len({item.symbol for item in self.bindings}) != len(self.bindings):
+            raise ValueError("toolchain symbol bindings must be unique")
+        for item in self.bindings:
+            ordered = sorted(item.spans)
+            if any(left.end > right.start for left, right in zip(ordered, ordered[1:])):
+                raise ValueError("toolchain function spans overlap")
+
+    def to_dict(self) -> dict:
+        return {"schema_version": 1, "kind": "toolchain_component", **asdict(self)}
+
+    @classmethod
+    def from_dict(cls, value: dict) -> ToolchainManifest:
+        _fields(value, {"schema_version", "kind", "component", "archive_sha256",
+                        "license_evidence", "bindings"}, "toolchain manifest")
+        if type(value["schema_version"]) is not int or value["schema_version"] != 1:
+            raise ValueError("unsupported toolchain manifest schema")
+        if value["kind"] != "toolchain_component":
+            raise ValueError("not a toolchain component manifest")
+        component = _fields(value["component"], {"component_id", "ownership", "delivery",
+                                                "evidence", "version"}, "component")
+        if component["version"] is not None:
+            require_text(component["version"], "component version")
+        owner = Component(component["component_id"], Ownership(component["ownership"]),
+                          Delivery(component["delivery"]),
+                          tuple(_list(component["evidence"], "component evidence")), component["version"])
+        bindings = []
+        for item in _list(value["bindings"], "bindings"):
+            _fields(item, {"origin", "spans", "symbol", "unit", "evidence"}, "binding")
+            origin = Origin(**_fields(item["origin"], {"image_sha256", "address_space", "address"}, "origin"))
+            spans = tuple(Span(**_fields(span, {"start", "end"}, "span"))
+                          for span in _list(item["spans"], "spans"))
+            bindings.append(VendorBinding(origin, spans, item["symbol"], item["unit"], item["evidence"]))
+        return cls(owner, value["archive_sha256"], value["license_evidence"], tuple(bindings))
+
+
+ComponentManifest = VendorManifest | ToolchainManifest
+
+
 def source_integrity(root: Path, manifest: VendorManifest, archive: Path | None = None) -> dict:
     """Recompute source identity from the pinned archive; no stored hash ledger."""
     source = local_path(root, manifest.source_root)

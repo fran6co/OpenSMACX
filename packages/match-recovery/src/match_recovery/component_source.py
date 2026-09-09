@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 import re
 
-from .components import VendorManifest
+from .components import ComponentManifest, ToolchainManifest, VendorManifest
 from .model import canonical
 from .records import parse_json, publish_text
 
@@ -26,7 +26,7 @@ def _hex(value: object) -> int:
     return int(value, 16)
 
 
-def render_component(manifest: VendorManifest) -> str:
+def render_component(manifest: ComponentManifest) -> str:
     data = json.loads(canonical(manifest.to_dict()))
     bindings = data.pop("bindings")
     origins = {(binding["origin"]["image_sha256"], binding["origin"]["address_space"])
@@ -35,28 +35,30 @@ def render_component(manifest: VendorManifest) -> str:
         raise ValueError("a component source mapping must identify one original image/address space")
     image, space = origins.pop()
     data["image"] = {"sha256": image, "address_space": space}
-    files = data.pop("files")
+    files = data.pop("files", None)
     # One line per selected file and function keeps original boundaries/symbols
     # navigable without repeating a 64-character image pin at every function.
     lines = json.dumps(data, indent=2, ensure_ascii=False).splitlines()[:-1]
     lines[-1] += ","
-    lines.append('  "files": [')
-    for index, item in enumerate(files):
-        lines.append("    " + json.dumps(item, ensure_ascii=False) + ("," if index + 1 < len(files) else ""))
-    lines.extend(['  ],', '  "bindings": ['])
+    if files is not None:
+        lines.append('  "files": [')
+        for index, item in enumerate(files):
+            lines.append("    " + json.dumps(item, ensure_ascii=False) + ("," if index + 1 < len(files) else ""))
+        lines.append('  ],')
+    lines.append('  "bindings": [')
     for index, binding in enumerate(bindings):
         binding["origin"] = f'0x{binding["origin"]["address"]:08X}'
         binding["spans"] = [f'0x{span["start"]:08X}-0x{span["end"]:08X}' for span in binding["spans"]]
         lines.append("    " + json.dumps(binding, ensure_ascii=False)
                      + ("," if index + 1 < len(bindings) else ""))
     lines.extend(["  ]", "}"])
-    return ("// Original-image bindings for this upstream dependency.\n"
+    return ("// Original-image bindings for this dependency.\n"
             "// These are verification obligations, not claims of current matching.\n"
-            "// Upstream source is unmodified; this companion owns its recovery metadata.\n"
+            "// Dependency inputs are unmodified; this companion owns its recovery metadata.\n"
             + BEGIN + "\n" + "\n".join("// " + line for line in lines) + "\n" + END + "\n")
 
 
-def parse_component(text: str) -> VendorManifest:
+def parse_component(text: str) -> ComponentManifest:
     lines = text.splitlines()
     starts = [index for index, line in enumerate(lines) if line.startswith("// RECOVERY_COMPONENT_BEGIN")]
     ends = [index for index, line in enumerate(lines) if line.startswith("// RECOVERY_COMPONENT_END")]
@@ -68,6 +70,8 @@ def parse_component(text: str) -> VendorManifest:
     if any(not line.startswith("// ") for line in body):
         raise ValueError("component metadata must remain C/C++ comments")
     data = parse_json("\n".join(line[3:] for line in body))
+    if not isinstance(data, dict):
+        raise ValueError("component annotation must be an object")
     image = data.pop("image", None)
     if not isinstance(image, dict) or set(image) != {"sha256", "address_space"}:
         raise ValueError("component annotation needs one pinned image/address space")
@@ -85,17 +89,19 @@ def parse_component(text: str) -> VendorManifest:
             start, end = span.split("-")
             spans.append({"start": _hex(start), "end": _hex(end)})
         binding["spans"] = spans
+    if data.get("kind") == "toolchain_component":
+        return ToolchainManifest.from_dict(data)
     return VendorManifest.from_dict(data)
 
 
-def write_component(path: Path, manifest: VendorManifest) -> bool:
+def write_component(path: Path, manifest: ComponentManifest) -> bool:
     text = render_component(manifest)
     if parse_component(text) != manifest:
         raise ValueError("component annotation roundtrip changed a binding")
     return publish_text(path, text, allow_identical=True)
 
 
-def read_components(source_root: Path) -> list[VendorManifest]:
+def read_components(source_root: Path) -> list[ComponentManifest]:
     sources = {}
     for path in sorted(source_root.rglob("*.recovery.h")):
         if not path.resolve().is_relative_to(source_root.resolve()):
@@ -104,13 +110,18 @@ def read_components(source_root: Path) -> list[VendorManifest]:
     return parse_components(sources)
 
 
-def parse_components(sources: dict[str, str]) -> list[VendorManifest]:
+def parse_component_entries(sources: dict[str, str]) -> list[tuple[str, ComponentManifest]]:
     """Validate one coherent source snapshot, including ownership across roots."""
-    manifests = [parse_component(text) for name, text in sorted(sources.items()) if name.endswith(".recovery.h")]
+    entries = [(name, parse_component(text)) for name, text in sorted(sources.items()) if name.endswith(".recovery.h")]
+    manifests = [manifest for _, manifest in entries]
     ids = [manifest.component.component_id for manifest in manifests]
     if len(ids) != len(set(ids)):
         raise ValueError("duplicate component ids")
     entities = [binding.origin.entity_id for manifest in manifests for binding in manifest.bindings]
     if len(entities) != len(set(entities)):
         raise ValueError("original binding owned by multiple components")
-    return manifests
+    return entries
+
+
+def parse_components(sources: dict[str, str]) -> list[ComponentManifest]:
+    return [manifest for _, manifest in parse_component_entries(sources)]

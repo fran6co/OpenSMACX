@@ -1697,6 +1697,54 @@ Source integrity needs the pinned upstream archive and is not binary proof.
 The current strict binary backend supports i386 PE/COFF; unsupported formats or
 unresolved bindings remain unmeasurable, not exemptions from recovery.
 
+### Precompiled toolchain dependencies
+
+`ToolchainManifest` represents an existing runtime/third-party library, separately
+from `VendorManifest`'s upstream-source workflow. `render_component` emits the same
+companion-source comment envelope with `kind: "toolchain_component"` and these
+load-bearing fields:
+
+- `component`: identity, `ownership` (`runtime` or `third_party`), `delivery:
+  "toolchain"`, version and provenance evidence;
+- `archive_sha256`: the selected library artifact's identity, not a measurement;
+- `license_evidence`: provenance/license reference; no library redistribution is
+  implied or performed;
+- `bindings`: original image/spans, emitted symbol, `unit` naming the library
+  member, and independent binding/boundary evidence, as for upstream components.
+
+The companion uses one `image` pin/address space and hexadecimal binding spans.
+It contains no archive location, extracted objects, derived per-member hashes,
+compiler flags or current verdicts. Supply the installed library location locally:
+
+```sh
+uv run recover components check-binary runtime --image original.exe --archive /local/compiler/runtime.lib
+```
+
+This command requires no compiler invocation or project adapter. The current
+backend reads Microsoft COFF archive records in memory, verifies the whole archive
+pin, then checks each declared function's extent, bytes and references using the
+existing strict comparator. Member identities use forward slashes, including
+Windows-produced archive names; duplicate/colliding names refuse selection.
+Linker indexes are not used as evidence of selected members. No paths are extracted.
+Thin/BSD archives, unsupported name encodings and non-supported COFF function
+layouts do not pass. Format details follow the
+[Microsoft archive specification](https://learn.microsoft.com/en-us/windows/win32/debug/pe-format#archive-library-file-format).
+
+Missing members, imports/data/function bindings and unsupported code layouts stay
+unknown. A wrong archive pin or observed byte/boundary/reference disagreement
+fails. Source `ORIGINAL` tokens are neither generated nor banked. Partition and
+planning classify these functions as dependencies and navigate to the companion;
+the manifest does not exempt any C++ file from source checks. Preservation retains
+the full binding decision. `check-source` is inapplicable to precompiled inputs.
+
+This verifies only the selected bounded library code. It does not prove the final
+linker selected those members, identify every library function, or establish ABI,
+runtime behavior or application acceptance. Reports are disposable and are not
+automatically installed as application relocation targets. Those integration
+proofs remain separate work.
+
+### Source compiler interaction
+
 The project supplies compiler interaction through `recovery/project.json`:
 
 ```json

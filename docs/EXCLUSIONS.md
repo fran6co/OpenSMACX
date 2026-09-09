@@ -61,9 +61,14 @@ inside it are not generic enough for a modern libc to satisfy it silently:
 CRT replacement.** MSVC 6.0 Professional is installed at `~/opt/vc6`;
 `~/opt/vc6/BIN/CL.EXE` reports FileVersion `12.00.8168.0`, the exact compiler
 the Rich header pins (docs/HANDOVER.md (retired)), and `~/opt/vc6/LIB/LIBC.LIB` is
-present. Linking the ISO's own `LIBC.LIB` makes these functions **identical**
-rather than assumed-equivalent, which retires the entire behavioural argument
-above instead of arguing it.
+present. Availability alone does not establish which runtime variant or archive
+members the original linker selected. In particular, the ledger's `_free`
+target supports the multithreaded `LIBCMT.LIB` member, not the single-threaded
+`LIBC.LIB` spelling. `src/vendor/vc6-runtime.recovery.h` owns that bounded
+interpretation and its library pin. Native `recover components check-binary`
+can verify selected precompiled members; unresolved references, remaining CRT
+coverage and final-link selection still need proof. Do not treat a matching
+compiler installation or an exclusion as evidence that the runtime is identical.
 
 ## 2. MSVC structured exception frames — the wall that was not there
 

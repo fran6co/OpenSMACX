@@ -279,12 +279,20 @@ uv run recover inventory --image /path/to/the/pinned/original.exe
 uv run recover components list
 uv run recover components check-source zlib --archive /path/to/zlib-1.0.2.tar.gz
 uv run recover components check-binary zlib --image /path/to/the/pinned/original.exe --summary
+uv run recover components check-binary vc6-runtime --image /path/to/the/pinned/original.exe --archive /local/compiler/LIB/LIBCMT.LIB --summary
 uv run recover audits check compiler-work --summary
 uv run recover audits check class-debt --summary
 uv run recover audits check storage --summary
 uv run pytest packages/match-recovery/tests recovery/tests
 uv build --package match-recovery
 ```
+
+The runtime companion `src/vendor/vc6-runtime.recovery.h` currently binds only
+the ledger's `_free` dependency. The precompiled-library command reads the pinned
+archive without compiler invocation or extraction. Its strict reference check
+does not yet resolve the lock/heap/import dependencies or establish final-link
+selection. It does not promote library symbols into application acceptance.
+Use the actual local compiler path; the example above is not an installation step.
 
 Reports are JSON on stdout. Errors go to stderr and return exit 3. Inventory never
 changes source or decisions. Inventory and partition are native package commands

@@ -36,7 +36,12 @@ def select_bindings(view: dict, selected: frozenset[str]) -> tuple[list, list, d
             candidate = candidates[0] if len(candidates) == 1 and not entity["conflicts"] else None
             if candidate is None:
                 ambiguous.update(item["symbol"] for item in candidates)
-            if candidate is not None:
+            # A dependency annotation identifies work to verify; it is not
+            # evidence that the current build uses the specified library code.
+            # Reserve these names against product aliases too. Admission needs
+            # fresh dependency/link evidence, not a prior component report.
+            ambiguous.update(item["symbol"] for item in candidates if item["component"] is not None)
+            if candidate is not None and candidate["component"] is None:
                 # Exact source spelling only. Ambiguous external names are
                 # removed below; static definitions never become external COFF
                 # symbols and so cannot borrow this table during resolution.

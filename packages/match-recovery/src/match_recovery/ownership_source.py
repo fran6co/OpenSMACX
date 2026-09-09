@@ -8,7 +8,8 @@ import base64
 from pathlib import Path
 import re
 
-from match_recovery.component_source import parse_components
+from match_recovery.component_source import parse_component_entries
+from match_recovery.components import VendorManifest
 from match_recovery.includes import include_graph
 from match_recovery.model import Origin, Span
 from match_recovery.partition import Candidate, partition, select_group
@@ -42,11 +43,15 @@ def class_hint(symbol: str) -> str | None:
     return name.rsplit("::", 1)[0]
 
 
-def component_manifests(snapshot: dict):
+def component_entries(snapshot: dict):
     configuration = SourceConfiguration.from_dict(snapshot["source_configuration"])
-    return parse_components({name: base64.b64decode(row["content_base64"]).decode("utf-8")
+    return parse_component_entries({name: base64.b64decode(row["content_base64"]).decode("utf-8")
                              for name, row in snapshot["files"].items()
                              if name.endswith(".recovery.h") and not configuration.is_seed(name)})
+
+
+def component_manifests(snapshot: dict):
+    return [manifest for _, manifest in component_entries(snapshot)]
 
 
 def project_view(root: Path, image: Path | None = None, *, allow_empty: bool = False) -> tuple[dict, dict]:
@@ -67,14 +72,14 @@ def project_view(root: Path, image: Path | None = None, *, allow_empty: bool = F
                                     row["emitted_symbol_hint"], emitted or catalogued,
                                     owner_hint_basis="source_symbol" if emitted else "catalogued_symbol",
                                     catalogued_owner_hint=catalogued))
-    manifests = component_manifests(snapshot)
-    for manifest in manifests:
+    for annotation, manifest in component_entries(snapshot):
         for binding in manifest.bindings:
             if (binding.origin.image_sha256 != snapshot["image_sha256"]
                     or binding.origin.address_space != configuration.address_space):
                 raise ValueError("component bindings refer to a different original image/address space")
             candidates.append(Candidate(binding.origin, binding.spans,
-                                        manifest.source_root + "/" + binding.unit, 1, False,
+                                        (manifest.source_root + "/" + binding.unit
+                                         if isinstance(manifest, VendorManifest) else annotation), 1, False,
                                         binding.symbol, component=manifest.component.component_id))
     return partition(candidates), snapshot
 

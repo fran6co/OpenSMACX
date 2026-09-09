@@ -104,7 +104,10 @@ def check_source_form(root: Path) -> dict:
                for path in config.files(root)}
     manifests = parse_components({name: value for name, value in sources.items() if not config.is_seed(name)})
     dependencies = {}
+    from .components import VendorManifest
     for manifest in manifests:
+        if not isinstance(manifest, VendorManifest):
+            continue  # Precompiled inputs do not exempt any application source.
         for item in manifest.files:
             name = manifest.source_root + "/" + item.path
             if name in dependencies:
