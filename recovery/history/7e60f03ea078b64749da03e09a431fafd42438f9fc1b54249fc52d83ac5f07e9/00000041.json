@@ -1,0 +1,27 @@
+{
+  "event_id": "66cfec5733d024f38257bf2ab0818c630f7e22e5b88a4d07e2e5f6f5449aa662",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "packages/match-recovery/src/match_recovery/build_check.py",
+      "packages/match-recovery/src/match_recovery/msvc_link_log.py",
+      "packages/match-recovery/tests/test_build_check.py",
+      "packages/match-recovery/tests/test_component_link.py",
+      "packages/match-recovery/tests/test_link_log.py",
+      "recovery/build.json",
+      "recovery/environment/wine.py",
+      "recovery/tests/test_wine_output.py"
+    ],
+    "evidence": [
+      "Add native MSVC verbose link-input observations to fresh component verification. Compiler interaction captures full link diagnostics as a configured build artifact; the library validates final Pass2 records separately from nested export-library generation, retains ambiguous member labels and unsupported evidence, and never substitutes the transcript for input fingerprints or common-allocation proof."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "fab4bb5bc3b9a99936e3f088b352c81d7b1b1d82ee5e73b68dcfc5aeac8ff674",
+  "request_id": "runtime-selected-link-inputs",
+  "schema_version": 1,
+  "sequence": 41,
+  "stream": "task:jackal-voice-ownership"
+}

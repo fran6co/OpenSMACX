@@ -20,7 +20,7 @@ from .pe_coff import Coff, PeImage
 
 
 def verify_linked_toolchain(manifest: ToolchainManifest, archive_data: bytes, image_data: bytes,
-                            map_data: bytes, *, library: str, import_bindings=()) -> dict:
+                            map_data: bytes, *, library: str, import_bindings=(), link_log: bytes | None = None) -> dict:
     """Bounded one-COMDAT-per-function check at actual candidate placements.
 
     `library` is the explicit Lib:Object label, not inferred archive identity.
@@ -54,6 +54,11 @@ def verify_linked_toolchain(manifest: ToolchainManifest, archive_data: bytes, im
     # success a code/selection verdict. Full record detail is available via the
     # inventory API; normal link reports retain common requests and format gaps.
     report["archive_inventory"] = {key: value for key, value in inventory.items() if key != "members"}
+    final_inputs = None
+    if link_log is not None:
+        from .msvc_link_log import parse_link_log
+        final_inputs = parse_link_log(link_log)
+        report["link_inputs"] = final_inputs
     image = PeImage(image_data, report["image_sha256"])
     mapping = parse_link_map(map_data)
     mapping.validate(image)
@@ -94,6 +99,16 @@ def verify_linked_toolchain(manifest: ToolchainManifest, archive_data: bytes, im
                 row.update(result=Result.FAIL, reason="link map selected a different library/member")
                 report["functions"].append(row)
                 continue
+            if final_inputs is not None:
+                expected_library = library if library.lower().endswith(".lib") else library + ".lib"
+                observed = [item for item in final_inputs["inputs"]
+                            if item["library"] is not None
+                            and item["library"].casefold() == expected_library.casefold()
+                            and item["member"].casefold() == member.casefold()]
+                row["final_input_observation"] = {"matches": len(observed),
+                    "result": Result.PASS if len(observed) == 1 else Result.UNKNOWN}
+                if len(observed) != 1:
+                    raise ValueError("missing or ambiguous library member in final-pass diagnostics")
             code, relocations, alignment = obj.subject(subject)
             targets, observations = {}, []
             for index, symbol in obj.symbols.items():
@@ -149,6 +164,11 @@ def check_toolchain_link(root: Path, manifest: ToolchainManifest, archive_path: 
                 for format_name in ("pe32-i386", "msvc-map")}
     if any(len(names) != 1 for names in expected.values()):
         raise ValueError("linked verification requires exactly one configured PE32 and one MSVC map output")
+    logs = [name for name, kind in settings.outputs if kind == "msvc-link-log"]
+    if len(logs) > 1:
+        raise ValueError("linked verification supports at most one configured MSVC link log")
+    if logs:
+        expected["msvc-link-log"] = logs
     state, before = working_state(root), settings.snapshot(root)
     source = source_snapshot(root, allow_empty=True)
     imports = read_imports(root)
@@ -174,7 +194,8 @@ def check_toolchain_link(root: Path, manifest: ToolchainManifest, archive_path: 
             artifacts[output["format"]] = (path, data)
         result = verify_linked_toolchain(manifest, archive_data,
                                          artifacts["pe32-i386"][1], artifacts["msvc-map"][1],
-                                         library=library, import_bindings=imports)
+                                         library=library, import_bindings=imports,
+                                         link_log=artifacts["msvc-link-log"][1] if logs else None)
     assert_snapshot_current(root, source)
     if (settings.snapshot(root) != before or changes(state, working_state(root))
             or archive_path.read_bytes() != archive_data

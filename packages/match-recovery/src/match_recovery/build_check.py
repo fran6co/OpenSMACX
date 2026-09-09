@@ -51,7 +51,7 @@ class Build:
             raise ValueError("build commands must use their fresh {build} directory")
         outputs = []
         for item in value["outputs"]:
-            if not isinstance(item, dict) or set(item) != {"path", "format"} or item["format"] not in ("file", "pe32-i386", "compilation-database", "msvc-map"):
+            if not isinstance(item, dict) or set(item) != {"path", "format"} or item["format"] not in ("file", "pe32-i386", "compilation-database", "msvc-map", "msvc-link-log"):
                 raise ValueError("build outputs require a path and supported format")
             outputs.append((relative_path(item["path"]), item["format"]))
         if len({path for path, _ in outputs}) != len(outputs):
@@ -184,6 +184,9 @@ def generate_build(root: Path, settings: Build, *, retain=False) -> dict:
                         elif format_name == "msvc-map":
                             from .msvc_link_map import parse_link_map
                             parse_link_map(data)
+                        elif format_name == "msvc-link-log":
+                            from .msvc_link_log import parse_link_log
+                            parse_link_log(data)
                         outputs.append({"path": name, "format": format_name, "result": Result.PASS,
                                         "sha256": fingerprint, "size": len(data)})
                     except (OSError, ValueError) as error:

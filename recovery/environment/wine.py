@@ -215,6 +215,35 @@ def take_depfile(arguments: list) -> tuple:
     return kept, target, depfile
 
 
+def take_link_diagnostics(tool: str, arguments: list) -> tuple:
+    """Capture a configured link transcript without changing compiler argv."""
+    paths = [a.split("=", 1)[1] for a in arguments if a.startswith("--link-diagnostics=")]
+    if not paths:
+        return arguments, None
+    if tool != "link" or len(paths) != 1 or not paths[0]:
+        raise ValueError("one nonempty --link-diagnostics path is supported only for link")
+    if not any(a.upper() in ("/VERBOSE", "-VERBOSE") for a in arguments):
+        raise ValueError("link diagnostics require full /VERBOSE, not /VERBOSE:LIB")
+    path = Path(paths[0])
+    if not path.parent.is_dir() or path.is_symlink() or path.exists() and not path.is_file():
+        raise ValueError("link diagnostics require a regular output in an existing directory")
+    return [a for a in arguments if not a.startswith("--link-diagnostics=")], path
+
+
+def write_link_diagnostics(path: Path, text: str) -> None:
+    # A new build gets a new path; ordinary incremental builds replace only
+    # their configured derived log. Do not expose a partially written report.
+    with tempfile.NamedTemporaryFile("w", dir=path.parent, prefix=".link-log-",
+                                     encoding="utf-8", delete=False) as scratch:
+        temporary = Path(scratch.name)
+        try:
+            scratch.write(text)
+            scratch.flush()
+            os.replace(temporary, path)
+        finally:
+            temporary.unlink(missing_ok=True)
+
+
 def write_depfile(executable, arguments: list, path: str, target: str) -> None:
     """One GNU depfile, from a preprocess-only pass.
 
@@ -270,6 +299,11 @@ def main(argv: list) -> int:
     # BEFORE ANYTHING READS THE ARGUMENTS. Both the depfile extraction below
     # and the path translation are blind to whatever sits inside a `@file`.
     arguments = expand_responses(arguments)
+    try:
+        arguments, link_diagnostics = take_link_diagnostics(tool, arguments)
+    except ValueError as error:
+        print(str(error), file=sys.stderr)
+        return 3
     arguments, dep_target, dep_file = take_depfile(arguments)
     if dep_file:
         # Before the real compile, and unconditionally: a depfile is what
@@ -290,12 +324,23 @@ def main(argv: list) -> int:
     finished = run_tool(command)
     if scratch is not None:
         os.unlink(scratch.name)
+    if link_diagnostics is not None:
+        try:
+            write_link_diagnostics(link_diagnostics, finished.stdout)
+        except OSError as error:
+            print(f"cannot capture link diagnostics: {error}", file=sys.stderr)
+            return 3
     # CL writes the source file name to stdout before any diagnostic. It is
     # noise in a build log and CMake does not need it, but a diagnostic that
     # follows it does, so only the bare echo line is dropped. The
     # `/showIncludes` notes go the same way - they are the depfile's input,
     # not a build log's.
     for line in finished.stdout.splitlines():
+        if link_diagnostics is not None and finished.returncode == 0:
+            # Keep the full transcript as a build artifact, not thousands of
+            # lines of routine search/ICF chatter in every build report.
+            if not re.search(r"\b(?:warning|error|fatal error) LNK\d+:", line, re.IGNORECASE):
+                continue
         if line.strip() and not line.strip().lower().endswith((".cpp", ".c", ".cxx")):
             print(line)
     if finished.stderr.strip():

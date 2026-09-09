@@ -54,3 +54,49 @@ def test_tool_returns_while_background_output_owner_is_alive(tmp_path, monkeypat
 def test_missing_tool_is_not_reported_as_success():
     with pytest.raises(FileNotFoundError):
         wine.run_tool(["/nonexistent/recovery-test-compiler"])
+
+
+@pytest.mark.parametrize("tool,arguments", [
+    ("cl", ["/VERBOSE", "--link-diagnostics=out.log"]),
+    ("lib", ["/VERBOSE", "--link-diagnostics=out.log"]),
+    ("link", ["/VERBOSE:LIB", "--link-diagnostics=out.log"]),
+    ("link", ["/VERBOSE", "--link-diagnostics="]),
+    ("link", ["/VERBOSE", "--link-diagnostics=out.log", "--link-diagnostics=second.log"])])
+def test_ambiguous_or_wrong_tool_diagnostic_requests_refuse(tool, arguments):
+    with pytest.raises(ValueError):
+        wine.take_link_diagnostics(tool, arguments)
+
+
+def test_link_diagnostics_preserve_argv_and_replace_only_derived_output(tmp_path):
+    path = tmp_path / "app.link.log"
+    args = ["/VERBOSE", "one.obj", "@inputs.rsp", "--link-diagnostics=" + str(path)]
+    kept, output = wine.take_link_diagnostics("link", args)
+    assert kept == args[:-1] and output == path
+    wine.write_link_diagnostics(output, "first complete log\n")
+    wine.write_link_diagnostics(output, "second complete log\n")
+    assert output.read_text() == "second complete log\n"
+    assert list(tmp_path.iterdir()) == [path]
+    alias = tmp_path / "alias.log"
+    alias.symlink_to(path)
+    with pytest.raises(ValueError):
+        wine.take_link_diagnostics("link", ["/VERBOSE", "--link-diagnostics=" + str(alias)])
+
+
+@pytest.mark.parametrize("code", [0, 1])
+def test_wrapper_captures_unfiltered_link_log_without_losing_exit_status(tmp_path, monkeypatch, capsys, code):
+    (tmp_path / "BIN").mkdir()
+    (tmp_path / "BIN/LINK.EXE").write_bytes(b"synthetic executable")
+    monkeypatch.setattr(wine, "VC6_ROOT", tmp_path)
+    log = "Start Pass1\nEnd Pass1\nStart Pass2\nsource.cpp.obj\nEnd Pass2\n"
+    log += "LINK : warning LNK9999: synthetic warning\n"
+    received = []
+    def run(command):
+        received.extend(command)
+        return subprocess.CompletedProcess(command, code, log, "stderr preserved\n")
+    monkeypatch.setattr(wine, "run_tool", run)
+    path = tmp_path / "app.link.log"
+    assert wine.main(["vc6-link", "/VERBOSE", "one.obj", "--link-diagnostics=" + str(path)]) == code
+    assert path.read_text() == log and not any("link-diagnostics" in arg for arg in received)
+    output = capsys.readouterr()
+    assert "warning LNK9999" in output.out and output.err == "stderr preserved\n"
+    assert ("Start Pass1" in output.out) == (code != 0)

@@ -1784,6 +1784,23 @@ context. The API `verify_linked_toolchain` accepts in-memory artifacts for tests
 and integrations but makes no freshness claim; `check_toolchain_link` owns the
 fresh-build sequence used by the CLI.
 
+An optional single `msvc-link-log` build output supplies the compiler's full
+MSVC `/VERBOSE` stdout (not `/VERBOSE:LIB`). The environment captures that
+artifact; the package never chooses a linker invocation. The native parser
+requires complete first/final pass framing, separates nested export-library
+generation, and preserves every final-pass input label, including repetitions.
+When configured, each bound library function also needs one unambiguous matching
+member label in that final input list. Missing/ambiguous observations remain
+unknown; a map row cannot fill them in. The log is fingerprinted and checked
+alongside the fresh PE/map, not consumed from a previous run.
+
+`link_inputs` reports these observations and searched-library path spellings.
+They are not complete input-file identities: basenames may omit directories,
+import-member labels repeat, and sections may be discarded or folded after
+member selection. Other verbose diagnostics are uninterpreted. File-content
+fingerprints at the compiler boundary and common-allocation proof remain required;
+the transcript alone cannot admit a dependency or export an application target.
+
 Passing means bounded **candidate linked-code correspondence**, not original
 equivalence or dependency admission. A map's common/public data address does not
 prove storage size, contents, initialization or ownership. Owner labels and

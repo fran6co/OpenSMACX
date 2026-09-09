@@ -315,7 +315,10 @@ target_link_options(OpenSMACX PRIVATE
     "/MAP:${CMAKE_CURRENT_BINARY_DIR}/OpenSMACX.map" "/MAPINFO:LINES"
     # The original retains absolute-pointer fixups. VC6's nonincremental
     # Release link otherwise drops them even when instruction operands agree.
-    "/FIXED:NO")
+    "/FIXED:NO"
+    # Capture final-pass input labels separately from the debugger map. The
+    # compiler wrapper owns this output; the recovery package parses it.
+    "/VERBOSE" "--link-diagnostics=${CMAKE_CURRENT_BINARY_DIR}/OpenSMACX.link.log")
 
 # The sidecar is DERIVED FROM THE LINK, so it is built by it. Left as a command
 # to remember, it goes stale the moment anything moves, and a stale one is

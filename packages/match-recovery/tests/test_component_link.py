@@ -84,6 +84,62 @@ def test_common_public_address_does_not_claim_allocation_extent_or_ownership():
     assert report["result"] == "pass" and report["storage_verification"] == "unknown"
 
 
+@pytest.mark.parametrize("damage", [None, "missing", "duplicate", "wrong_library", "truncated"])
+def test_supplied_final_input_observations_are_required_not_inferred_from_map(damage):
+    from test_link_log import LOG
+    log = LOG
+    if damage == "missing":
+        log = log.replace("     RUNTIME.lib(runtime.obj)\n", "")
+    elif damage == "duplicate":
+        log = log.replace("     RUNTIME.lib(runtime.obj)\n", "     RUNTIME.lib(runtime.obj)\n" * 2)
+    elif damage == "wrong_library":
+        log = log.replace("     RUNTIME.lib(runtime.obj)", "     OTHER.lib(runtime.obj)")
+    elif damage == "truncated":
+        with pytest.raises(ValueError):
+            verify(*inputs(), link_log=log.replace("End Pass2", "").encode())
+        return
+    report = verify(*inputs(), link_log=log.encode())
+    assert report["result"] == ("pass" if damage is None else "unknown")
+    assert report["link_inputs"]["input_identity"] == "unknown"
+    assert report["storage_verification"] == "unknown"
+
+
+def configure_log(project, text):
+    value = json.loads((project / "recovery/build.json").read_text())
+    value["commands"][0]["argv"][2] += "; (p/'app.link.log').write_text(" + repr(text) + ")"
+    if not any(item["format"] == "msvc-link-log" for item in value["outputs"]):
+        value["outputs"].append({"path": "app.link.log", "format": "msvc-link-log"})
+    write_config(project, **value)
+
+
+def test_fresh_link_log_is_a_validated_artifact_consumed_by_native_verification(project, capsys):
+    from test_link_log import LOG
+    args = configure(project)
+    configure_log(project, LOG)
+    assert main(args) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report["link_inputs"]["input_count"] == 5
+    assert report["functions"][0]["final_input_observation"] == {"matches": 1, "result": "pass"}
+    configure_log(project, "truncated")
+    assert main(args) == 3
+    damaged = json.loads(capsys.readouterr().out)
+    assert damaged["fresh_build"]["outputs"][-1]["result"] == "unknown"
+
+
+def test_fresh_link_log_cannot_change_after_binary_verification(project, capsys, monkeypatch):
+    from test_link_log import LOG
+    args = configure(project)
+    configure_log(project, LOG)
+    original = component_link.verify_linked_toolchain
+    def mutate(*values, **kwargs):
+        report = original(*values, **kwargs)
+        next((project / "build/checks").glob("build-*/app.link.log")).write_text(LOG + "changed")
+        return report
+    monkeypatch.setattr(component_link, "verify_linked_toolchain", mutate)
+    assert main(args) == 3
+    assert "changed" in capsys.readouterr().err
+
+
 def test_missing_target_never_comes_from_the_operand_under_test():
     mapping = MAP.replace(" 0001:00000020 _g 00401020 f application.obj\n", "")
     report = verify(*inputs(), mapping)

@@ -95,6 +95,11 @@ def test_release_link_preserves_the_selected_runtime_code_and_relocations():
                                     "archive": VC6_ROOT / "LIB/LIBCMT.LIB", "library": "LIBCMT"})
     assert status == 0 and report["result"] == "pass", report
     assert len(report["functions"]) == len(manifest.bindings)
+    assert all(row["final_input_observation"] == {"matches": 1, "result": "pass"}
+               for row in report["functions"])
+    assert report["link_inputs"]["input_count"] > len(manifest.bindings)
+    assert report["link_inputs"]["input_identity"] == "unknown"
+    assert report["link_inputs"]["export_generations"] == 1
     assert report["storage_verification"] == report["original_verification"] == "unknown"
     build = report["fresh_build"]
     directory = root / build["directory"]
