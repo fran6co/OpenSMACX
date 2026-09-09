@@ -1,0 +1,50 @@
+{
+  "event_id": "092918e61391fa2020160d8992be5ca4e5b71b773aa4284381a7ffe173fa23e5",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/alphanet_records_harness.cpp"
+    ],
+    "evidence": [
+      "Original callback 0x0052E160 and AlphaNet construction/close establish eight 0x19C-stride player records: names at +0x76C, IDs at +0x78C, signed identities at +0x790, count at +0x768, with the final record ending before ledger +0x144C. Authorize the dependent lookup/close claims and the existing process_message status-byte access for typed-record recovery. Preserve their identities and matching obligations; lifetime recovery must not duplicate the existing manual heap/ledger teardown."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5121456,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5121504,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5121552,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5121632,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5121712,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5456896,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "d8710dece1662e11d42434ab208014048581e63658a9f51bec6e5ce9816c0e6b",
+  "request_id": "alphanet-records-and-lookups",
+  "schema_version": 1,
+  "sequence": 26,
+  "stream": "task:jackal-voice-ownership"
+}
