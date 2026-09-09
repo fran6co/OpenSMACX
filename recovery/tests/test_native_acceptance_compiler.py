@@ -485,8 +485,8 @@ def test_regenerated_header_preservation_detects_source_dependent_collateral_and
     assert (root / "src/owner.h").read_text() == evidence + CLASSES
 
 
-@pytest.mark.parametrize("damage", [None, "runtime", "structure"])
-def test_real_native_acceptance_preserves_structure_through_byte_regression(tmp_path, monkeypatch, damage):
+@pytest.mark.parametrize("damage,investigate", [(None, False), ("runtime", False), ("structure", False), (None, True)])
+def test_real_native_acceptance_preserves_structure_through_byte_regression(tmp_path, monkeypatch, damage, investigate):
     provider = {"schema_version": 1, "artifacts": "build/agents"}
     for role in ("worker", "coordinator", "reviewer"):
         provider[role] = {"command": {"argv": [sys.executable, "recovery/local_agents.py", role, "{request}"], "timeout": 30},
@@ -495,11 +495,27 @@ def test_real_native_acceptance_preserves_structure_through_byte_regression(tmp_
     product, local, original = root / "src", root / "recovery", image.parent
     monkeypatch.setenv("RECOVERY_IMAGE", str(image))
     configuration = lambda name: json.loads((local / (name + ".json")).read_text())
+    store = TaskStore(root)
+    if investigate:
+        store.discover(task.task_id, request_id="owner-model", author="coordinator",
+                       hypothesis="The byte-identical flat array must become the original Base and Member model",
+                       affects=[task.subjects[0].entity_id], evidence=["Source-owned base/member original evidence"],
+                       expected_revision=0)
+        git("add", "recovery")
+        git("commit", "-m", "Preserve unresolved structural finding before worker dispatch")
     head = git("rev-parse", "HEAD")
     result = drive(root, task.task_id, configuration("driver"), configuration("worker"), iterations=2,
                    reviewer_configuration=configuration("reviewer"), coordinator_configuration=configuration("coordinator"))
     assert result["ready_for_collection"] == (damage is None), result
-    assert result["worker_rounds"] == 2 and result["coordinator_decisions"] == 2
+    assert result["worker_rounds"] == 2 and result["coordinator_decisions"] == (4 if investigate else 2)
+    if investigate:
+        grants = json.loads((root / "build/investigation-worker.json").read_text())
+        assert len(grants) == 1 and grants[0]["action"] == "investigate" and not grants[0]["published"]
+        assert not store.status(task.task_id, store.scope(task.task_id)[0])["pending_discoveries"]
+        # Investigation is a transient worker permission, never a journal resolution.
+        decisions = store.decisions(task.task_id)
+        assert [item["kind"] for item in decisions].count("discovery_resolved") == 2
+        assert all(item["kind"] != "investigate" for item in decisions)
     outcomes = [json.loads((root / f"build/worker-{step}.json").read_text()) for step in (1, 2)]
     assert outcomes[0]["candidate"]["checks"]["binary"]["result"] == "pass"
     assert outcomes[0]["candidate"]["checks"]["layout"]["result"] == "fail"

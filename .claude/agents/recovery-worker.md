@@ -30,6 +30,12 @@ When a finding affects another entity or requires unauthorized files, return it
 as a discovery with original identities and evidence. Let the coordinator expand
 scope before those edits. Do not suppress the finding to finish a function.
 
+If context includes `discovery_investigations`, investigate those pending findings
+within existing scope using the supplied evidence. Authorization lasts for this
+bounded attempt; it is not incorporation, a new baseline or acceptance. Preserve
+the findings for fresh coordinator review of the resulting source. Do not create
+duplicate discoveries for unchanged evidence or edit their decision records.
+
 Keep edits inside the authorized files. Do not change Git state, task decisions,
 checker policy or obligation annotations, launch other workers, collect worktrees,
 or run automatic fast-forward setup. The coordinator owns those operations.

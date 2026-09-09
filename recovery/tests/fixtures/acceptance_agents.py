@@ -40,6 +40,12 @@ elif role == "worker":
     # Reason from current source, including after a new bounded invocation;
     # invocation-local round numbers are not a recovery-state ledger.
     step = 1 if "int raw_[2];" in header.read_text() else 2
+    context = request["context"]
+    if context.get("discovery_investigations"):
+        assert step == 1
+        assert [item["discovery_id"] for item in context["discovery_investigations"]] == ["owner-model"]
+        assert any(item["discovery_id"] == "owner-model" for item in context["pending_discoveries"])
+        Path("build/investigation-worker.json").write_text(json.dumps(context["discovery_investigations"]))
     if step == 2:
         assert header.read_text().endswith(MODEL)  # Structural progress was preserved.
     evidence = "".join(line + "\n" for line in header.read_text().splitlines() if line.startswith("//"))
@@ -54,11 +60,14 @@ elif role == "worker":
                                      "affects": sorted({row["entity_id"] for row in source_snapshot(Path.cwd())["records"]}),
                                      "evidence": ["src/owner.h and src/entry.cpp"]}]
 elif role == "coordinator":
-    finding = request["pending_discoveries"][0]
+    finding = next(item for item in request["pending_discoveries"]
+                   if item["discovery_id"] not in request.get("investigating", []))
     extra = sorted(set(finding["affects"]) - set(request["subjects"]))
-    response = {"snapshot": request["snapshot"], "action": "expand" if extra else "incorporate",
+    unfinished = "int raw_[2];" in Path("src/owner.h").read_text()
+    response = {"snapshot": request["snapshot"], "action": "expand" if extra else "investigate" if unfinished else "incorporate",
                 "discovery_id": finding["discovery_id"], "subjects": extra, "editable_files": [],
-                "evidence": ["Test source expresses the base/member relationship; include the known caller before independent review. This is not acceptance."]}
+                "evidence": ["Test source still needs the real base/member model; authorize one in-scope attempt." if unfinished else
+                             "Test source expresses the base/member relationship; include the known caller before independent review. This is not acceptance."]}
 else:
     assert role == "reviewer"
     response = {"snapshot": request["snapshot"], "decision": "approve",

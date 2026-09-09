@@ -110,6 +110,170 @@ def test_deferral_and_unavailability_preserve_pending_discovery(setup, action):
     assert len(store.decisions(task.task_id)) == 1
 
 
+def test_investigation_preserves_pending_history_and_needs_existing_scope(setup):
+    root, store, task, caller, delegation = setup
+    discover(setup, task.subjects[0].entity_id)
+    before = store.decisions(task.task_id)
+    result = coordinate(root, task.task_id, delegation, execute=lambda *args: (0, answer(args[-1], "investigate")))
+    assert result["action"] == "investigate" and not result["published"]
+    assert result["discovery_id"] == "layout" and len(result["snapshot"]) == 64
+    assert store.decisions(task.task_id) == before
+    assert store.status(task.task_id, store.scope(task.task_id)[0])["pending_discoveries"]
+    store.discover(task.task_id, request_id="outside", author="worker", hypothesis="Caller needs repair",
+                   affects=[caller.entity_id], evidence=["caller"], expected_revision=1)
+    with pytest.raises(ValueError, match="expand current task scope"):
+        coordinate(root, task.task_id, delegation, execute=lambda *args:
+                   (0, answer(args[-1], "investigate", discovery_id="outside")))
+
+
+@pytest.mark.parametrize("outcome", ["resolve", "pending", "no_progress", "no_progress_change", "defer", "budget", "multiple", "multiple_allowed"])
+def test_driver_investigates_before_resolution_but_never_accepts_pending_findings(setup, outcome):
+    root, store, task, _, delegation = setup
+    discover(setup, task.subjects[0].entity_id)
+    if outcome in ("multiple", "multiple_allowed"):
+        store.discover(task.task_id, request_id="second", author="worker", hypothesis="Second in-scope concern",
+                       affects=[task.subjects[0].entity_id], evidence=["owner"], expected_revision=1)
+    original_decisions = store.decisions(task.task_id)
+    delegation["max_decisions"] = 1 if outcome == "budget" else 6
+    config = {"schema_version": 1, "target": task.target,
+              "context": {"argv": ["context"], "timeout": 10},
+              "check": {"argv": ["check"], "timeout": 10},
+              "build": {"argv": ["build"], "timeout": 10},
+              "acceptance": {"argv": ["acceptance"], "timeout": 10}}
+    if outcome == "no_progress_change":
+        config.update(acceptance_scope="change", obligations={"argv": ["inventory"], "timeout": 10},
+                      migration_check={"argv": ["migration"], "timeout": 10})
+    roles = {role: {"author": role, "command": {"argv": [role], "timeout": 10}} for role in ("worker", "reviewer")}
+    calls, snapshots = [], []
+    def execute(command, root, name, payload):
+        role = command.argv[0]
+        calls.append(role)
+        if role == "coordinate":
+            snapshots.append(payload["snapshot"])
+            pending = [item for item in payload["pending_discoveries"]
+                       if item["discovery_id"] not in payload.get("investigating", [])]
+            discovery = pending[0]["discovery_id"]
+            action = ("defer" if outcome == "defer" or outcome == "multiple" and discovery == "second" else
+                      "incorporate" if outcome == "resolve" and "worker" in calls else "investigate")
+            return 0, answer(payload, action, discovery_id=discovery)
+        if role == "context": return 0, {}
+        if role == "inventory": return 0, {"obligations": []}
+        if role in ("check", "build"): return 0, {"result": "pass"}  # Even passing checks cannot waive pending work.
+        if role == "worker":
+            assert len(payload["context"]["discovery_investigations"]) == (2 if outcome == "multiple_allowed" else 1)
+            assert payload["context"]["pending_discoveries"][0]["discovery_id"] == "layout"
+            assert store.decisions(task.task_id) == original_decisions
+            if outcome not in ("no_progress", "no_progress_change"):
+                path = root / "code/owner.cc"
+                path.write_text(path.read_text() + "// investigated repair\n")
+            return 0, {"discoveries": []}
+        assert outcome == "resolve" and not store.status(task.task_id, store.scope(task.task_id)[0])["pending_discoveries"]
+        if role == "reviewer":
+            return 0, {"snapshot": payload["snapshot"], "decision": "approve", "evidence": ["source reviewed"], "feedback": "check independently"}
+        assert role == "acceptance"
+        return 3, {"result": "unknown"}  # Deliberately incomplete; invocation ordering is the subject here.
+    # Do not invoke the separate full acceptance contract in the resolved case.
+    if outcome == "resolve": del config["acceptance"]
+    result = drive(root, task.task_id, config, roles["worker"], iterations=1,
+                   reviewer_configuration=roles["reviewer"], coordinator_configuration=delegation, execute=execute)
+    assert not result["ready_for_collection"]
+    assert store.read(task.task_id).base_revision == task.base_revision
+    assert calls.count("worker") == (0 if outcome in ("defer", "multiple") else 1)
+    assert ("reviewer" in calls) == (outcome == "resolve")
+    assert "acceptance" not in calls
+    if outcome == "resolve":
+        assert calls == ["coordinate", "context", "check", "build", "worker", "coordinate", "context", "check", "build", "reviewer"]
+        assert len(store.decisions(task.task_id)) == 2 and snapshots[0] != snapshots[1]
+    else:
+        assert store.decisions(task.task_id) == original_decisions
+    if outcome == "pending":
+        assert calls.count("check") == calls.count("build") == 2
+        assert result["stop_reason"] == "evaluate_structural_discoveries" and result["check_is_current"]
+    if outcome == "budget": assert result["stop_reason"] == "coordination_budget_exhausted"
+    if outcome in ("no_progress", "no_progress_change"): assert result["stop_reason"] == "no_source_progress"
+
+
+def test_native_agent_bridge_keeps_full_pending_context_when_selecting_next_investigation(setup):
+    root, store, task, _, delegation = setup
+    discover(setup, task.subjects[0].entity_id)
+    store.discover(task.task_id, request_id="second", author="worker", hypothesis="Second concern",
+                   affects=[task.subjects[0].entity_id], evidence=["owner"], expected_revision=1)
+    script = ("import json,sys; from pathlib import Path; "
+              "p=json.loads(Path(sys.argv[1]).read_text()); sys.stdin.read(); "
+              "assert len(p['pending_discoveries']) == 2 and p['investigating'] == ['layout']; "
+              "print(json.dumps(dict(snapshot=p['snapshot'],action='investigate',discovery_id='second',"
+              "subjects=[],editable_files=[],evidence=['inspect current owner in existing scope'])))")
+    role = {"command": {"argv": [sys.executable, "-c", script, "{request}"], "timeout": 10},
+            "response": "stdout", "instructions": []}
+    (root / "recovery/agents.json").write_text(json.dumps({"schema_version": 1, "artifacts": "build/agents",
+                                                          "worker": role, "reviewer": role, "coordinator": role}))
+    delegation["command"] = {"argv": [sys.executable, "-m", "match_recovery.cli", "agent", "coordinator"], "timeout": 20}
+    report = coordinate(root, task.task_id, delegation, investigating=["layout"])
+    assert report["action"] == "investigate" and report["discovery_id"] == "second" and not report["published"]
+    assert len(store.decisions(task.task_id)) == 2
+
+
+def test_verification_only_does_not_investigate_or_accept_pending_discoveries(setup):
+    root, store, task, _, _ = setup
+    discover(setup, task.subjects[0].entity_id)
+    config = {"schema_version": 1, "target": task.target,
+              "context": {"argv": ["context"], "timeout": 10}, "check": {"argv": ["check"], "timeout": 10}}
+    role = {"author": "worker", "command": {"argv": ["worker"], "timeout": 10}}
+    result = drive(root, task.task_id, config, role, iterations=1, verify_only=True,
+                   execute=lambda *args: pytest.fail("pending discovery must block verification-only dispatch"))
+    assert result["worker_rounds"] == 0 and not result["ready_for_collection"]
+    assert result["stop_reason"] == "evaluate_structural_discoveries"
+
+
+def test_investigation_authorization_refuses_intervening_source_change(setup, monkeypatch):
+    import match_recovery.coordination as implementation
+    root, store, task, _, delegation = setup
+    discover(setup, task.subjects[0].entity_id)
+    original = implementation.coordinate
+    def changed_after_authorization(*args, **kwargs):
+        response = original(*args, **kwargs)
+        path = root / "code/owner.cc"
+        path.write_text(path.read_text() + "// concurrent edit preserved\n")
+        return response
+    monkeypatch.setattr(implementation, "coordinate", changed_after_authorization)
+    config = {"schema_version": 1, "target": task.target,
+              "context": {"argv": ["context"], "timeout": 10}, "check": {"argv": ["check"], "timeout": 10}}
+    role = {"author": "worker", "command": {"argv": ["worker"], "timeout": 10}}
+    def execute(command, root, name, payload):
+        assert command.argv[0] == "coordinate"
+        return 0, answer(payload, "investigate")
+    with pytest.raises(ValueError, match="source changed after discovery investigation authorization"):
+        drive(root, task.task_id, config, role, iterations=1, coordinator_configuration=delegation, execute=execute)
+    assert "concurrent edit preserved" in (root / "code/owner.cc").read_text()
+    assert len(store.decisions(task.task_id)) == 1
+
+
+def test_resuming_pending_investigation_needs_fresh_coordinator_authorization(setup):
+    root, store, task, _, delegation = setup
+    discover(setup, task.subjects[0].entity_id)
+    config = {"schema_version": 1, "target": task.target,
+              "context": {"argv": ["context"], "timeout": 10}, "check": {"argv": ["check"], "timeout": 10}}
+    role = {"author": "worker", "command": {"argv": ["worker"], "timeout": 10}}
+    resumed, workers, decisions = False, [], []
+    def execute(command, root, name, payload):
+        name = command.argv[0]
+        if name == "coordinate":
+            assert not payload.get("investigating")
+            decisions.append(payload)
+            return 0, answer(payload, "defer" if resumed else "investigate")
+        if name == "context": return 0, {}
+        if name == "check": return 0, {"result": "pass"}
+        assert name == "worker" and not resumed
+        workers.append(payload)
+        return 0, {"discoveries": []}
+    first = drive(root, task.task_id, config, role, iterations=1, coordinator_configuration=delegation, execute=execute)
+    assert first["stop_reason"] == "no_source_progress"
+    resumed = True
+    second = drive(root, task.task_id, config, role, iterations=1, coordinator_configuration=delegation, execute=execute)
+    assert second["stop_reason"] == "coordination_defer" and second["worker_rounds"] == 0
+    assert len(workers) == 1 and len(decisions) == 2 and len(store.decisions(task.task_id)) == 1
+
+
 @pytest.mark.parametrize("budget", [1, 3])
 def test_driver_coordinates_without_resetting_worker_budget_or_baseline(setup, budget):
     root, store, task, caller, delegation = setup

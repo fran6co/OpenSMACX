@@ -128,6 +128,14 @@ integration serially. A dispatcher process result is never an accepted recovery
 or permission to collect a worktree. It does not choose tasks, create worktrees,
 resume a dead supervisor or integrate changes automatically.
 
+For an individual `run`, `--coordinator recovery/coordinator.json` enables bounded
+read-only discovery coordination for tasks authored by `framework-coordinator`.
+Its empty expansion lists grant no additional scope. The coordinator may request
+`investigate` when existing authorized source still needs repair: the finding
+remains pending, a worker gets one bounded attempt, then coordination revisits the
+actual source. All pending findings need individual authorization. No acceptance
+or checkpoint may pass while they remain unresolved; deferral is still a stop.
+
 The installed `uv run recover campaign --config <campaign-authorization>` now
 connects these native operations: bounded planning, task-only commits, isolated
 preparation, parallel dispatch, optional serial discovery coordination, fresh
@@ -376,8 +384,10 @@ without a Git checkpoint; committed history cannot be rewritten or removed.
 The installed driver also supports an explicit `--coordinator` delegation file:
 a read-only decision agent proposes bounded expansion/incorporation/rejection,
 and the package journals valid decisions before refreshing checks in the same run.
-See the package README for the exact schema. OpenSMACX has no standing delegation
-configured; do not infer one from a worker's discovery. Baselines, proof policy,
+In-scope `investigate` grants are transient and leave findings unresolved until
+fresh coordination examines the resulting source. See the package README for the
+exact schema. OpenSMACX supplies only the no-expansion policy described above;
+do not infer additional authority from a worker's discovery. Baselines, proof policy,
 new original bindings and acceptance remain outside this authority.
 
 ## 5. Preserve structural progress and restore matching

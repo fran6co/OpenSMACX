@@ -2610,12 +2610,22 @@ Keep delegation configuration versioned; its digest accompanies published decisi
 Requests contain a fresh snapshot token, pending discoveries, current/delegated
 scope and affected source/seed records. Responses have exactly `snapshot`, `action`,
 `discovery_id`, `subjects`, `editable_files`, `evidence`. Actions are `expand`,
-`incorporate`, `reject`, `defer`; only expansion uses nonempty scope arrays. Evidence
+`incorporate`, `reject`, `defer`, `investigate`; only expansion uses nonempty scope arrays. Evidence
 is mandatory. Incorporation requires affected originals already in task scope;
 it records a source interpretation, never a passing proof. Unknown originals,
 stale responses, writes, policy expansion and no-op expansion are refused.
 
-The driver journals valid decisions through TaskStore, refreshes scope/context and
+`investigate` requests one bounded worker attempt for a pending discovery entirely
+inside current scope. It publishes no resolution or acceptance: its snapshot-bound
+authorization and evidence are transient worker context. Every pending discovery
+must be authorized individually before dispatch. Requests retain the full pending
+list; optional `investigating` IDs identify those already authorized in this round.
+After source edits or published decisions, authorization must be obtained afresh.
+Pending discoveries block all review/acceptance/checkpoint paths even if checks
+pass. Only subsequent evidence-backed incorporation or rejection resolves them.
+Deferral never grants investigation, and verification-only runs cannot request it.
+
+The driver journals expansions and resolutions through TaskStore, refreshes scope/context and
 obligations, and resumes the same worker budget and baseline. Decision calls have
 a separate bounded budget. Deferral, unavailable providers or budget exhaustion
 preserve source and pending discoveries. Independent review and full native

@@ -276,6 +276,8 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             return [{**asdict(item), "obligation_id": key} for key, item in sorted(protected.items())]
         def review_candidate(context, check, round_index, *, structural_handoff=False):
             nonlocal review_feedback, acceptance_feedback, checkpoint_feedback
+            if store.status(task_name, selected)["pending_discoveries"]:
+                return finish("evaluate_structural_discoveries", round_index, check)
             if reviewer_command is None:
                 return finish("independent_review_required", round_index, check)
             snapshot = reviews.snapshot(working_state(root), policy)
@@ -403,11 +405,24 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             return output
         for round_index in range(round_limit + 1):
             state = store.status(task_name, selected)
-            while state["pending_discoveries"] and coordinator_configuration is not None:
+            investigations = {}
+            investigation_state = None
+            while (any(item["discovery_id"] not in investigations for item in state["pending_discoveries"])
+                   and coordinator_configuration is not None):
                 if coordination_count == coordinator_configuration["max_decisions"]:
                     return finish("coordination_budget_exhausted", round_index)
                 coordination_count += 1
-                coordination_feedback = coordinate(root, task_name, coordinator_configuration, execute=execute)
+                before_coordination = working_state(root)
+                if investigations and changes(investigation_state, before_coordination):
+                    raise ValueError("source changed between discovery investigation authorizations")
+                coordination_feedback = coordinate(root, task_name, coordinator_configuration, execute=execute,
+                                                   investigating=investigations)
+                if coordination_feedback["action"] == "investigate":
+                    if changes(before_coordination, working_state(root)):
+                        raise ValueError("source changed after discovery investigation authorization")
+                    investigation_state = before_coordination
+                    investigations[coordination_feedback["discovery_id"]] = coordination_feedback
+                    continue  # No resolution; every pending item needs its own scoped authorization.
                 if not coordination_feedback["published"]:
                     return finish("coordination_" + coordination_feedback["action"], round_index)
                 selected, editable = store.scope(task_name)
@@ -417,12 +432,19 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                     policy["migration"] = permission
                 review_feedback = acceptance_feedback = checkpoint_feedback = None
                 state = store.status(task_name, selected)
-            if state["pending_discoveries"]:
+                investigations.clear()  # Decisions changed; obtain fresh authorization for remaining items.
+            investigating = bool(state["pending_discoveries"])
+            if investigating and not {item["discovery_id"] for item in state["pending_discoveries"]} <= investigations.keys():
                 return finish(state["next_action"], round_index)
             round_state = working_state(root)
+            if investigating and changes(investigation_state, round_state):
+                raise ValueError("source changed before discovery investigation checks")
             code, context = readonly(context_command, {"task": task.to_dict()})
             if code != 0:
                 return finish("context_unavailable", round_index)
+            if investigating:
+                context = {**context, "discovery_investigations": [investigations[key] for key in sorted(investigations)],
+                           "pending_discoveries": state["pending_discoveries"]}
             obligations = refresh_obligations()
             if inventory_command is not None:
                 context = {**context, "protected_obligations": obligations,
@@ -452,17 +474,21 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                     raise ValueError("source changed between recovery and build checking")
             review_requested = (result == "unknown" and check.get("next_action") == "review_structure"
                                 and (build_command is None or check["build_check"]["result"] == "pass"))
-            if result == "pass" or review_requested:
+            if not investigating and (result == "pass" or review_requested):
                 reviewed = review_candidate(context, check, round_index, structural_handoff=review_requested)
                 if reviewed is not None:
                     return reviewed
             if round_index == round_limit:
+                if investigating:
+                    return finish("evaluate_structural_discoveries", round_index, check)
                 if result != "pass" and not review_requested and reviewer_command is not None:
                     reviewed = review_candidate(context, check, round_index)
                     if reviewed is not None:
                         return reviewed
                 return finish("verification_required" if verify_only else "iteration_budget_exhausted", round_index, check)
             before = working_state(root)
+            if investigating and changes(investigation_state, before):
+                raise ValueError("source changed before discovery investigation dispatch")
             try:
                 code, response = execute(worker_command, root, task_name,
                                          {"task": task.to_dict(), "editable_files": sorted(editable),
@@ -471,6 +497,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                                           "acceptance_feedback": acceptance_feedback,
                                           **({"checkpoint_feedback": checkpoint_feedback} if checkpoint_feedback else {}),
                                           "instructions": ["Edit only authorized files; never run Git mutations.",
+                                                           "Discovery investigation authorizes only this bounded scoped attempt, not incorporation or acceptance. Keep pending findings and report evidence; the coordinator must resolve them against the resulting source.",
                                                            "Report structural discoveries even outside task scope.",
                                                            "Acceptance feedback belongs to its recorded snapshot; use it to investigate, not as current proof after edits.",
                                                            "Unknown acceptance findings require evidence, not speculative matching edits. Repair only authorized source; report missing capabilities or authority as discoveries without changing proof policy.",
@@ -497,7 +524,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                     continue  # Same worker budget; fresh scope, context and checks before dispatch.
                 return finish(store.status(task_name, selected)["next_action"], round_index + 1, check, current=False)
             if not changed:
-                if permission is not None and reviewer_command is not None:
+                if not investigating and permission is not None and reviewer_command is not None:
                     reviewed = review_candidate(context, check, round_index + 1)
                     if reviewed is not None:
                         return reviewed

@@ -33,7 +33,7 @@ def _request(root, role, request):
         from .coordination import policy
         fields = {"task", "decision_revision", "pending_discoveries", "subjects", "editable_files",
                   "delegation", "mapped_records", "instructions", "snapshot"}
-        if not isinstance(request, dict) or set(request) != fields:
+        if not isinstance(request, dict) or not fields <= set(request) or set(request) - fields - {"investigating"}:
             raise ValueError("invalid coordinator agent request fields")
         task = Task.from_dict(request["task"])
         store = TaskStore(root)
@@ -44,6 +44,12 @@ def _request(root, role, request):
                 or request["pending_discoveries"] != store.status(task.task_id, selected)["pending_discoveries"]
                 or request["subjects"] != sorted(selected) or request["editable_files"] != sorted(editable)):
             raise ValueError("coordinator request does not match current task decisions")
+        investigating = request.get("investigating", [])
+        if (not isinstance(investigating, list) or any(not isinstance(item, str) for item in investigating)
+                or len(set(investigating)) != len(investigating)
+                or not set(investigating) <= {item["discovery_id"] for item in request["pending_discoveries"]
+                                              if set(item["affects"]) <= selected}):
+            raise ValueError("coordinator investigation filter must name pending in-scope discoveries")
         policy(request["delegation"], task)
         require_digest(request["snapshot"])
         if not isinstance(request["mapped_records"], list) or not isinstance(request["instructions"], list):

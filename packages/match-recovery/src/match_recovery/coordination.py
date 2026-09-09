@@ -43,7 +43,7 @@ def validate_response(response, snapshot):
         raise ValueError("invalid coordinator response")
     if response["snapshot"] != snapshot:
         raise ValueError("coordinator response refers to stale source or decisions")
-    if response["action"] not in ("expand", "incorporate", "reject", "defer"):
+    if response["action"] not in ("expand", "incorporate", "reject", "defer", "investigate"):
         raise ValueError("unsupported coordinator action")
     require_text(response["discovery_id"], "coordinator discovery")
     for key in ("subjects", "editable_files", "evidence"):
@@ -59,7 +59,7 @@ def validate_response(response, snapshot):
         raise ValueError("only an expansion may request additional scope")
 
 
-def coordinate(root, task_name, configuration, *, execute=None):
+def coordinate(root, task_name, configuration, *, execute=None, investigating=()):
     """Execute at most one read-only decision; an external runner owns the budget."""
     from .driver import Command, changes, invoke, working_state
     execute = invoke if execute is None else execute
@@ -80,9 +80,18 @@ def coordinate(root, task_name, configuration, *, execute=None):
         raise ValueError("repair missing source mappings before coordinating discoveries")
     if not state["pending_discoveries"]:
         return {"action": "none", "published": False, "ready_for_collection": False}
+    # Driver-owned, transient authorizations from this unchanged worker round.
+    # They filter requests, never resolve or hide discoveries from task context.
+    skipped = set(investigating)
+    if not skipped <= {item["discovery_id"] for item in state["pending_discoveries"]}:
+        raise ValueError("investigation filter names a discovery that is not pending")
+    pending = [item for item in state["pending_discoveries"] if item["discovery_id"] not in skipped]
+    if not pending:
+        raise ValueError("no pending discovery remains for coordination")
     affected = {key for item in state["pending_discoveries"] for key in item["affects"]}
     request = {"task": task.to_dict(), "decision_revision": len(decisions),
                "pending_discoveries": state["pending_discoveries"],
+               **({"investigating": sorted(skipped)} if skipped else {}),
                "subjects": sorted(selected), "editable_files": sorted(editable),
                "delegation": delegation,
                "mapped_records": [row for row in source["records"] if row["entity_id"] in affected],
@@ -90,6 +99,8 @@ def coordinate(root, task_name, configuration, *, execute=None):
                                 "Delegation is an upper bound, not a reason to expand everything.",
                                 "Expand scope before incorporating a cross-owner discovery.",
                                 "Incorporation means the insight is expressed in source, not that it is correct or accepted.",
+                                "Use investigate to request one bounded worker round for a discovery already inside current scope; it remains unresolved and cannot pass acceptance.",
+                                "Choose a pending discovery not listed in investigating; those IDs already have transient authorization for this unchanged round.",
                                 "Defer unknown originals or insufficient evidence; do not hide structural work or reset baselines."]}
     request["snapshot"] = digest({"request": request, "source": digest(source),
                                    "head": before["head"].hex(), "index": before["index"].hex(),
@@ -106,7 +117,7 @@ def coordinate(root, task_name, configuration, *, execute=None):
         return {"action": "unavailable", "published": False, "agent_error": response,
                 "ready_for_collection": False}
     validate_response(response, request["snapshot"])
-    discovery = next((item for item in state["pending_discoveries"]
+    discovery = next((item for item in pending
                       if item["discovery_id"] == response["discovery_id"]), None)
     if discovery is None:
         raise ValueError("coordinator named a discovery that is not pending")
@@ -115,6 +126,8 @@ def coordinate(root, task_name, configuration, *, execute=None):
         raise ValueError("unknown originals require a separate binding decision; defer this discovery")
     if action != "defer" and not set(discovery["affects"]) <= selected | set(delegation["subjects"]):
         raise ValueError("coordinator cannot resolve discoveries outside delegated scope")
+    if action == "investigate" and not set(discovery["affects"]) <= selected:
+        raise ValueError("expand current task scope before authorizing investigation")
     subjects, files = set(response["subjects"]), set(response["editable_files"])
     if action == "expand":
         if (not subjects <= set(delegation["subjects"]) or not files <= set(delegation["editable_files"])
@@ -138,5 +151,7 @@ def coordinate(root, task_name, configuration, *, execute=None):
         store.resolve(task_name, discovery_id=discovery["discovery_id"],
                       disposition="incorporated" if action == "incorporate" else "rejected",
                       source_evidence=evidence, **decision)
-    return {"action": action, "published": action != "defer", "evidence": response["evidence"],
+    return {"action": action, "published": action in ("expand", "incorporate", "reject"),
+            **({"discovery_id": discovery["discovery_id"], "snapshot": request["snapshot"]} if action == "investigate" else {}),
+            "evidence": response["evidence"],
             "ready_for_collection": False, "verification": "not_measured"}

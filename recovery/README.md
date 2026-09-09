@@ -11,7 +11,8 @@ compiler observations are in [COMPILER_EVIDENCE.md](COMPILER_EVIDENCE.md); they 
 not override task scope, structural evidence or acceptance policy.
 
 `agents.json` explicitly selects GPT-5.6 Luna for bounded worker attempts and
-GPT-6 Astra for independent review, both with high reasoning effort. These are
+GPT-6 Astra for read-only discovery coordination and independent review, all with
+high reasoning effort. These are
 project-owned provider choices, not package defaults or a proven recovery-quality
 ranking. Worker commands retain the workspace-write sandbox and use automatic
 permission review for operations such as the leased Wine compiler; reviewers

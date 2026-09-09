@@ -19,7 +19,7 @@ def response_schema(role):
                         "editable_files": {"type": "array", "items": text}, "evidence": evidence})
     if role == "coordinator":
         return _object({"snapshot": digest,
-                        "action": {"type": "string", "enum": ["expand", "incorporate", "reject", "defer"]},
+                        "action": {"type": "string", "enum": ["expand", "incorporate", "reject", "defer", "investigate"]},
                         "discovery_id": text,
                         "subjects": {"type": "array", "items": {"type": "string", "pattern": "^entity-[0-9a-f]{64}$"}},
                         "editable_files": {"type": "array", "items": text}, "evidence": evidence})

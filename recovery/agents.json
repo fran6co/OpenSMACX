@@ -9,6 +9,14 @@
     "instructions": [".claude/agents/recovery-worker.md"],
     "response": "file"
   },
+  "coordinator": {
+    "command": {
+      "argv": ["codex", "exec", "--ephemeral", "--model", "gpt-6-astra", "-c", "model_reasoning_effort=high", "--sandbox", "read-only", "--output-schema", "{schema}", "--output-last-message", "{response}", "-"],
+      "timeout": 3300
+    },
+    "instructions": [".claude/agents/recovery-coordinator.md"],
+    "response": "file"
+  },
   "reviewer": {
     "command": {
       "argv": ["codex", "exec", "--ephemeral", "--model", "gpt-6-astra", "-c", "model_reasoning_effort=high", "--sandbox", "read-only", "--output-schema", "{schema}", "--output-last-message", "{response}", "-"],

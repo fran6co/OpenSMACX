@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "author": "framework-coordinator",
+  "command": {"argv": ["uv", "run", "recover", "agent", "coordinator"], "timeout": 3600},
+  "subjects": [],
+  "editable_files": [],
+  "evidence": ["User-authorized autonomous ownership recovery: coordinate discoveries inside existing task scope; this policy grants no scope expansion, baseline change, source acceptance or Git publication."],
+  "max_decisions": 8
+}
