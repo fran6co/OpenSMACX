@@ -154,6 +154,56 @@ is required for a supported target. Compiler interaction scripts can remain loca
 or existing tools can implement that boundary. The package does not supply an agent
 service, compiler installation or project verification policy.
 
+## Prepare a worker worktree
+
+`recover worktree prepare <task> --root <coordinator-checkout> --authorization
+<permission-file> --worktree <new-path> --branch <new-branch> --resources <pool>`
+creates an isolated worker from a committed, source-authorized task. Permission:
+
+```json
+{
+  "author": "coordinator",
+  "revision": "<full-current-coordinator-commit>",
+  "evidence": ["Delegate this committed ownership task to an isolated worker"],
+  "prepare": true
+}
+```
+
+The task must already be committed. The author must own it, its original must
+agree with the source pin, and its baseline must remain an ancestor of the
+explicit revision. The coordinator must be clean and at that revision. Worktree
+creation preserves the task baseline, original obligations, scope and discoveries;
+it does not select a new baseline or create an acceptance record.
+
+Both the path and branch must be new. Nested paths must be ignored, outside
+source roots and Git metadata. Native worker and integration preparation share
+the same raw-checkout implementation: no checkout hooks, active filters, external
+merge drivers, submodules, escaping symlinks or borrowed caches. Committed internal
+file symlinks and executable permissions are preserved. Source files are written
+independently, never hardlinked to the coordinator.
+
+With `prepare: true`, an explicit resource pool is required. The coordinator
+leases a slot before creating the worktree and runs the existing configured native
+preparation there, producing fresh local recipes and generated context. Compiler
+installation, executable/test assets and provider credentials remain explicitly
+provisioned project inputs; no ignored directory is copied from the coordinator.
+Use `prepare: false` and omit `--resources` for checkout-only setup. Neither mode
+claims build success or recovery acceptance. Output has `ready_for_collection:
+false`; `compiler_prepared` means recipe preparation passed, not that the
+application was verified.
+
+Failures preserve any created worktree/branch for inspection. A failed generator
+does not publish recipes or roll back source damage. Interruptions quarantine the
+compiler slot. After resolving the cause, `recover prepare --root <worker>
+--resources <pool>` can regenerate recipes in the existing checkout without
+recreating it or resetting its task. This standalone command holds the worker's
+driver lease and refuses concurrent recovery. An active or quarantined slot
+still requires the normal resource handling; no automatic marker deletion occurs.
+
+Exit 0 means checkout creation and any requested preparation completed; other
+outcomes return 3. This is a native setup step for an agent coordinator, not a
+persistent campaign, automatic integration or permission to reap other worktrees.
+
 ## Dispatch a parallel recovery batch
 
 `recover dispatch --root <coordinator-checkout> --plan <batch-plan>`
@@ -228,7 +278,7 @@ demonstration.
 
 ## Lease project-provisioned compiler resources
 
-`run`, `start` and `integrate publish` accept `--resources <pool.json>` (relative
+`run`, `start`, `prepare`, `worktree prepare` and `integrate publish` accept `--resources <pool.json>` (relative
 to `--root`) and optional `--resource-timeout <seconds>`. Default wait is zero;
 the maximum is 3600 seconds. Other commands inherit an existing allocation or use
 their manually configured environment. The package does not create compiler

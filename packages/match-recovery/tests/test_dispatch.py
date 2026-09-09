@@ -16,6 +16,7 @@ from match_recovery.locking import file_lock
 from match_recovery.model import Origin
 from match_recovery.resources import ACTIVE, INHERITED, LOCK
 from match_recovery.tasks import Task, TaskStore
+from match_recovery.worker_worktree import prepare_worker
 from test_source_configuration import configured
 from test_task_source import git, project
 
@@ -70,7 +71,10 @@ def batch(project):
     jobs = []
     for name in ("owner", "other"):
         child = root / f"build/worktrees/{name}"
-        git(root, "worktree", "add", "-b", name, str(child))
+        prepared = prepare_worker(root, name, {"author": "coordinator", "revision": git(root, "rev-parse", "HEAD"),
+                                               "evidence": ["Authorize native worker setup for the batch control"], "prepare": False},
+                                  worktree=child, branch=name)
+        assert prepared["worker_created"] and not prepared["ready_for_collection"]
         jobs.append({"task": name, "root": str(child), "config": "recovery/driver.json",
                      "worker": "recovery/worker.json", "reviewer": "recovery/reviewer.json", "iterations": 1})
     return root, {"schema_version": 1, "author": "coordinator", "evidence": ["Authorize bounded parallel source recovery"],

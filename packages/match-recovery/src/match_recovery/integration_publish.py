@@ -14,7 +14,8 @@ import subprocess
 from .checkpoints import _publication_changes, preflight
 from .driver import drive, invoke, working_state
 from .integration import decision, validate
-from .integration_prepare import _assert_raw_checkout, _destination_state, _files, _run
+from .git_worktree import (assert_raw_checkout as _assert_raw_checkout, destination_state as _destination_state,
+                           committed_files as _files, run_git as _run)
 from .locking import file_lock
 from .model import canonical, require_text
 from .preparation import prepare_project

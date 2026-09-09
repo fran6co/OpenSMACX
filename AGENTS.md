@@ -64,6 +64,7 @@ uv run recover audits check storage --summary
 uv run recover record <addresses> --image <image> --in <source-file>
 uv run recover run <task> --worker <config> --reviewer <config>
 uv run recover dispatch --plan <batch-plan>
+uv run recover worktree prepare <task> --authorization <permission> --worktree <new-path> --branch <new-branch> --resources <pool>
 uv run pytest packages/match-recovery/tests recovery/tests
 cmake --build build
 ```
@@ -130,7 +131,7 @@ multi-file publication is not globally atomic. See `recovery/README.md`.
 `recovery/worker.json` and `recovery/reviewer.json` use the package's native
 agent-command bridge; provider arguments live in `recovery/agents.json`.
 Verify provider access and isolated worktree/compiler resources before launching.
-Top-level `run`, `start` and `integrate publish` can lease provisioned compiler
+Top-level `run`, `start`, `prepare`, `worktree prepare` and `integrate publish` can lease provisioned compiler
 slots with `--resources recovery/resources.json` and an absolute shared
 `OPENSMACX_COMPILER_POOL`. Child commands inherit the selected prefix; do not
 allocate again or run standalone compiles on a leased prefix. Interrupted slots
@@ -141,6 +142,11 @@ worktrees using separate resource leases. It refuses overlapping scopes; workers
 return discoveries for central replanning. It does not select tasks, create
 worktrees, integrate, or establish acceptance from process reports. See the package
 README for the plan schema and interruption/quarantine rules.
+`worktree prepare` creates a new raw committed worker checkout without resetting
+its task baseline, optionally preparing fresh recipes under a compiler lease.
+Existing paths/branches are not repurposed; partial setup is retained on failure.
+Use `prepare --root <worker> --resources <pool>` to regenerate an existing worker's
+recipes after resolving its preparation failure. Setup does not establish acceptance.
 
 - Prefer real bases, members, globals, virtual methods and lifecycle code over
   vtable arrays, fixed executable addresses, raw self-offset access or stand-ins.

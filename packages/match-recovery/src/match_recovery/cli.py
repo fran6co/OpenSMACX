@@ -70,6 +70,14 @@ def parser() -> argparse.ArgumentParser:
     dispatch = commands.add_parser("dispatch", help="Supervise a coordinator-authorized batch in isolated worktrees; never accept or integrate reports")
     dispatch.add_argument("--root", type=Path, default=Path.cwd(), help="Coordinator checkout")
     dispatch.add_argument("--plan", type=Path, required=True, help="Batch authorization, relative to --root")
+    worktree = commands.add_parser("worktree", help="Prepare isolated worker checkouts without resetting task baselines")
+    worktree_actions = worktree.add_subparsers(dest="action", required=True)
+    worker_tree = worktree_actions.add_parser("prepare", help="Create a raw committed worker checkout and optionally prepare fresh compiler recipes")
+    worker_tree.add_argument("task")
+    worker_tree.add_argument("--root", type=Path, default=Path.cwd())
+    worker_tree.add_argument("--authorization", type=Path, required=True)
+    worker_tree.add_argument("--worktree", type=Path, required=True, help="New path; nested paths must be ignored")
+    worker_tree.add_argument("--branch", required=True, help="New local branch")
     start = commands.add_parser("start", help="Select/checkpoint one ownership task through a delegated planner, then run recovery")
     start.add_argument("--root", type=Path, default=Path.cwd())
     start.add_argument("--planner", required=True, type=Path, help="Explicit selection and task-only commit authorization")
@@ -81,12 +89,12 @@ def parser() -> argparse.ArgumentParser:
     start.add_argument("--checkpoint", type=Path, help="Explicit coordinator authorization for verified source commits")
     start.add_argument("--acceptance-scope", choices=("change", "full_project"))
     start.add_argument("--iterations", type=int, default=3)
-    for command in (run, start, publish):
+    from .project_commands import register
+    register(commands)
+    for command in (run, start, publish, worker_tree, commands.choices["prepare"]):
         command.add_argument("--resources", type=Path, help="Project-defined compiler resource pool, relative to --root")
         command.add_argument("--resource-timeout", type=float, default=0,
                              help="Wait at most this many seconds for a slot (default: refuse immediately)")
-    from .project_commands import register
-    register(commands)
     history = commands.add_parser("history", help="Read durable decision events")
     history.add_argument("--root", type=Path, default=Path.cwd())
     history.add_argument("--stream", required=True)
@@ -96,7 +104,7 @@ def parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     args = parser().parse_args(argv)
     try:
-        if getattr(args, "resources", None) is not None:
+        if args.command != "worktree" and getattr(args, "resources", None) is not None:
             from .resources import resource_environment
             roots = [args.root.resolve()]
             if args.command == "integrate":
@@ -104,7 +112,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             path = args.resources if args.resources.is_absolute() else args.root / args.resources
             with resource_environment(read_json(path), roots, timeout=args.resource_timeout):
                 return _dispatch(args)
-        if getattr(args, "resource_timeout", 0) != 0:
+        if args.command != "worktree" and getattr(args, "resource_timeout", 0) != 0:
             raise ValueError("--resource-timeout requires --resources")
         return _dispatch(args)
     except (OSError, ValueError) as error:
@@ -156,6 +164,21 @@ def _dispatch(args) -> int:
             output = prepare_integration(args.root, args.task, context, worktree=args.worktree, branch=args.branch)
             print(json.dumps(output, indent=2, sort_keys=True))
             return 0 if output["candidate_created"] else 3
+        elif args.command == "prepare":
+            from .locking import file_lock
+            from .project_commands import invoke_project
+            with file_lock(args.root.resolve() / "build/recovery/driver.lock", timeout=0):
+                code, output = invoke_project(args.root, vars(args))
+            print(json.dumps(output, indent=2, sort_keys=True))
+            return code
+        elif args.command == "worktree":
+            from .worker_worktree import prepare_worker
+            config = lambda path: read_json(path if path.is_absolute() else args.root / path)
+            output = prepare_worker(args.root, args.task, config(args.authorization), worktree=args.worktree,
+                                    branch=args.branch, resources=config(args.resources) if args.resources else None,
+                                    resource_timeout=args.resource_timeout)
+            print(json.dumps(output, indent=2, sort_keys=True))
+            return 0 if output["stop_reason"] in ("worker_prepared", "checkout_prepared") else 3
         elif args.command == "dispatch":
             from .dispatch import dispatch
             plan = read_json(args.plan if args.plan.is_absolute() else args.root / args.plan)

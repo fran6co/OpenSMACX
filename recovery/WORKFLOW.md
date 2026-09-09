@@ -68,8 +68,8 @@ driver verification. Dependency/conflict/unassigned groups remain analysis work.
 See the package README for the exact protocol, scope limits and failure behavior.
 No standing planner policy is enabled for OpenSMACX. Its local compiler-backed
 control uses deterministic reasoning agents; live planning and executable-only
-binding discovery remain unverified. Worktree setup and integration are still
-coordinator responsibilities, not implicit effects of `start`.
+binding discovery remain unverified. Worktree setup and integration are coordinator
+responsibilities through native commands, not implicit effects of `start`.
 
 Create a source-derived task with `uv run recover tasks create <task> --group
 <group> --author <coordinator> --intent <intent> --evidence <evidence>`, or use
@@ -84,17 +84,27 @@ an ancestor with identical configured source and source configuration. Commit
 source/configuration changes first. Scope expansion is an explicit authorization,
 not a new baseline or permission to discard historical obligations.
 
-The coordinator prepares an isolated worktree with its own build database,
-caches and compiler prefix. Workers must not share writable Wine prefixes or
-overlapping ownership/header scopes. There is no measured fleet size promised
-here and no automatic worktree creation/collection in the driver yet. Select
+The coordinator can use `uv run recover worktree prepare <task> --authorization
+<permission-file> --worktree <new-path> --branch <new-branch> --resources
+recovery/resources.json` to create an isolated committed worker and prepare fresh
+compiler recipes. The package README defines the explicit author/revision/evidence/
+prepare permission. The task baseline and discoveries are retained; no old build
+database, generated cache, proprietary assets or provider credentials are copied.
+Failed setup retains the worktree for inspection. Existing workers can regenerate
+recipes with `uv run recover prepare --root <worker> --resources <pool>` after the
+cause is resolved, without a reset or another checkout. Recipe preparation is not
+build, link or recovery acceptance.
+
+Workers must not share writable Wine prefixes or overlapping ownership/header
+scopes. There is no measured fleet size promised here; `run` does not implicitly
+create or collect worktrees. Select
 parallelism from measured compiler capacity; do not restart the old fleet loop.
 Update against master only at safe coordinator-owned checkpoints. Never stash
 across worktrees, discard another worker's edits, or auto-fast-forward a worker
 after its task baseline has been established.
 For provisioned local prefixes, set `OPENSMACX_COMPILER_POOL` to the canonical
 absolute shared prefix directory and add `--resources recovery/resources.json`
-to `run`, `start` or `integrate publish`. The supplied two-slot configuration
+to `run`, `start`, `prepare`, `worktree prepare` or `integrate publish`. The supplied two-slot configuration
 selects `worker-0` or `worker-1` and exports its `VC6_PREFIX` for the entire run.
 All cooperating worktrees must use the same pool path; an isolated checkout's own
 relative `.opensmacx/` is not the shared pool. Missing prefixes refuse; no copying,
