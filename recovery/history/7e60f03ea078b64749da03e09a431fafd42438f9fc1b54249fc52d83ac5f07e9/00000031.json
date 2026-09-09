@@ -1,0 +1,21 @@
+{
+  "event_id": "ec870cfe12427a2aa64b84c7d038a83443f58d9ecbf2a181adcb2fc49aa6ecdb",
+  "payload": {
+    "affects": [
+      "entity-3f6349cc1e1e55b2d272de80befdb3454ee51d275842d4f5c3c1a65acbe1c0dc",
+      "entity-ecc8c939672aeca28dcd606fb1e479bb69d70a3070d4d40fa6817fe83c162eb2"
+    ],
+    "author": "coordinator",
+    "discovery_id": "ledger-payload-nested-list-ownership",
+    "evidence": [
+      "Original insertion 0x401D80 allocates the 0x1C circular entry and a 0x60 payload, installs vbtable 0x669430 with virtual owner at +0x58, and constructs the nested list at +0x2C. This is the same NetAllocationNode shape already established by Net construction at 0x62D763. Its one direct caller 0x630C30 maps DPSESSIONDESC2 name/GUID/flags/player counts/password into ledger inputs, supporting the new typed fields. The original list cleanup invokes the payload deleting destructor; the current NetAllocationNode implicit destructor still lacks the nested-list behavior. Existing Net teardown calls 0x401BE0 on node+0x48; that function begins by subtracting 0x1C to reach the nested-list start, not an unrelated eight-byte helper."
+    ],
+    "hypothesis": "Complete NetAllocationNode and its NetUnk72C nested-list destruction before replacing the ledger remove_all bridge with typed deletion. The ledger payload is the existing allocation-owning node, not a newly invented small session record; the same owner is embedded at Net+0x700. Move nested cleanup into its actual base/member chain without duplicating the manual operations currently in Net destruction or freeing individual Heap-owned allocations.",
+    "kind": "discovery"
+  },
+  "previous_event": "9fcf0d35c91958c6cb9b74ba54b2cebdf4d5c9cfabee0555cbd21d24c45468ac",
+  "request_id": "ledger-payload-nested-list-ownership",
+  "schema_version": 1,
+  "sequence": 31,
+  "stream": "task:jackal-voice-ownership"
+}

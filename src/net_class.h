@@ -217,8 +217,26 @@ class NetUnk72C : public virtual StringAllocationBase {
 // vbptr is at +4 and its virtual base is at +0x1C. Remaining node fields
 // and the list's complete cleanup still need recovery.
 class NetAllocationNode : public virtual StringAllocationBase {
+ public:
+  // Session enumeration (0x00630C30) transfers DPSESSIONDESC2 fields into
+  // the ledger. Its insertion hook 0x005D4890 copies them into this 0x60
+  // payload, allocated by 0x00401D80 with the same vbtable as Net's member.
+  // RECOVERY_MEMBER: v1 NetAllocationNode session_name_ 0x4 0x005D4890
+  char *session_name_;
+  // RECOVERY_MEMBER: v1 NetAllocationNode password_ 0x8 0x005D4890
+  char *password_;
+  // RECOVERY_MEMBER: v1 NetAllocationNode instance_guid_ 0xC 0x005D4890
+  GUID instance_guid_;
+  // RECOVERY_MEMBER: v1 NetAllocationNode session_flags_ 0x1C 0x005D4890
+  uint32_t session_flags_;
+  // RECOVERY_MEMBER: v1 NetAllocationNode max_players_ 0x20 0x005D4890
+  uint32_t max_players_;
+  // RECOVERY_MEMBER: v1 NetAllocationNode current_players_ 0x24 0x005D4890
+  uint32_t current_players_;
+  // Copied from ledger+0x34; its meaning is not established by enumeration.
+  // RECOVERY_MEMBER: v1 NetAllocationNode field_28_ 0x28 0x005D4890
+  uint32_t field_28_;
  private:
-  uint8_t field_4_[0x28];  // 0x4, roles not yet recovered
   // RECOVERY_MEMBER: v2 NetAllocationNode entries_ NetUnk72C 0x2C 0x0062D6A0
   NetUnk72C entries_;  // 0x2C
 };

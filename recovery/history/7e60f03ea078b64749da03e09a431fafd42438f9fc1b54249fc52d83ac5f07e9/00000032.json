@@ -1,0 +1,21 @@
+{
+  "event_id": "1da9d8d1f0e1374c208d431de362786d45eb5ec0b36964c13a19de6d490e337f",
+  "payload": {
+    "affects": [
+      "entity-37bea69ba05e70b68bff38dff0013b42cac88b17a077e486e4d4b8f5863c4cfe",
+      "entity-7a68ce4521c8abe034be18de261a94e7af7a8bb2688e10090824724533c5ae47"
+    ],
+    "author": "coordinator",
+    "discovery_id": "ledger-crt-dependency-verification",
+    "evidence": [
+      "Fresh strict task verification leaves the recorded cleanup body unknown because _free has no target binding, although its measured body and boundary agree under the matching trial. Original 0x644EF2 starts a real static-runtime function (push esi, argument/null check, call 0x647D04), not an import jump thunk, so RECOVERY_IMPORT cannot legitimately bind this direct call. The insertion hook likewise references unresolved _strlen and _strcat in addition to its nonmatching code. Keep dependency verification distinct from the historical masked byte claim and from the typed payload/lifetime work."
+    ],
+    "hypothesis": "Verify the matching CRT dependency and its source/compiler-library symbol mapping before treating the recovered ledger hooks as strictly reference-exact. Do not invent original-address aliases for _free, _strlen or _strcat, and do not decompile the CRT as application code merely to discharge these references.",
+    "kind": "discovery"
+  },
+  "previous_event": "ec870cfe12427a2aa64b84c7d038a83443f58d9ecbf2a181adcb2fc49aa6ecdb",
+  "request_id": "ledger-crt-dependency-verification",
+  "schema_version": 1,
+  "sequence": 32,
+  "stream": "task:jackal-voice-ownership"
+}

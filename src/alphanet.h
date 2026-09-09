@@ -42,36 +42,60 @@
   // `call rel32`. Spelled `class X : Base` - private, since that is
   // what `class` means - those calls do not compile at all, and the
   // seam that stood in for them cost the caller `call [ptr]`.
-// THE LEDGER - AlphaNet's StringList-family subobject at 0x144C. A
-// StringStruct-shaped base stage (vftable 0x669408)
-// over a VIRTUAL StringAllocationBase at +0x38 (vbtable 0x66EAF0 places it
-// there; the owner capture lands at 0x1488), then a derived list stage
-// (vftable 0x66EAE8) that adds no state. The two-stage construction the old
-// transcription staged by hand is the compiler's own base-chain sequence.
-// The virtual surface is incomplete: original remove_all (0x402970) uses
-// a second slot, and the derived table's 0x5D4890 payload operation remains
-// a seed. The single declaration below is not evidence of a one-slot table.
+// AlphaNet's session ledger at +0x144C. Both primary tables contain two
+// relocated code pointers, immediately followed by nonrelocated vbtables:
+// base 0x669408 -> {0x404250,0x404270}, vbtable {-4,0x18}; derived
+// 0x66EAE8 -> {0x5D4890,0x5D4990}, vbtable {-4,0x34}. Thus the base's
+// own storage ends at +0x1C, while the derived fields move its virtual
+// StringAllocationBase to +0x38 (whole AlphaNet owner capture at +0x1488).
+// Insertion 0x00401D80 calls slot 0 with the newly allocated NetAllocationNode;
+// remove_all 0x00402970 calls slot 1 before virtual payload/node destruction.
+struct AlphaNetLedgerEntry;
 class AlphaNetStringStruct : public virtual StringAllocationBase {
  public:
-  virtual void unk_slot0();   // 0x00404250, unrecovered leaf
+  // RECOVERY_GENERATED: v1 vtable 0x00669408 0x00669410 ??_7AlphaNetStringStruct@@6B0@@ 0x004E2490
+  virtual int on_insert(NetAllocationNode *payload);
+  virtual void on_remove(NetAllocationNode *payload);
 
-  uint32_t head_;              // +0x08 - the five the constructor zeroes
-  uint32_t current_;           // +0x0C
-  uint32_t entry_count_;       // +0x10
-  uint32_t current_position_;  // +0x14
-  uint32_t field_18_;          // +0x18
-  uint8_t field_1C_[0x1C];     // +0x1C..+0x37, opaque to the virtual base
+  AlphaNetLedgerEntry *head_;     // +0x08 - the five the constructor zeroes
+  AlphaNetLedgerEntry *current_;  // +0x0C
+  int entry_count_;              // +0x10
+  int current_position_;         // +0x14
+  // RECOVERY_MEMBER: v3 AlphaNetStringStruct allocator_ Heap* 0x18 0x005D4890
+  Heap *allocator_;
 
   AlphaNetStringStruct();
   ~AlphaNetStringStruct();
 };
+static_assert(sizeof(AlphaNetStringStruct) == 0x24, "session ledger base and virtual allocation owner");
 
+// RECOVERY_BASE: v1 AlphaNetLedger AlphaNetStringStruct 0x0 0x004E2490
 class AlphaNetLedger : public AlphaNetStringStruct {
-  // the list stage - its own vtable (0x66EAE8, slot 0x5D4890) and nothing
-  // else; the base chain carries all the state.
  public:
+  // RECOVERY_GENERATED: v1 vtable 0x0066EAE8 0x0066EAF0 ??_7AlphaNetLedger@@6BAlphaNetStringStruct@@@ 0x004E2490
+  virtual int on_insert(NetAllocationNode *payload);
+  virtual void on_remove(NetAllocationNode *payload);
   ~AlphaNetLedger();
+
+  // Original enumeration 0x00630C30 passes DPSESSIONDESC2's name, instance
+  // GUID, flags, maximum/current player counts and password at these offsets.
+  // They are borrowed inputs for the insertion hook, not owned strings.
+  // RECOVERY_MEMBER: v1 AlphaNetLedger session_name_ 0x1C 0x005D4890
+  const char *session_name_;
+  // RECOVERY_MEMBER: v1 AlphaNetLedger instance_guid_ 0x20 0x005D4890
+  const GUID *instance_guid_;
+  // RECOVERY_MEMBER: v1 AlphaNetLedger session_flags_ 0x24 0x005D4890
+  uint32_t session_flags_;
+  // RECOVERY_MEMBER: v1 AlphaNetLedger max_players_ 0x28 0x005D4890
+  uint32_t max_players_;
+  // RECOVERY_MEMBER: v1 AlphaNetLedger current_players_ 0x2C 0x005D4890
+  uint32_t current_players_;
+  // RECOVERY_MEMBER: v1 AlphaNetLedger password_ 0x30 0x005D4890
+  const char *password_;
+  // RECOVERY_MEMBER: v1 AlphaNetLedger field_34_ 0x34 0x005D4890
+  uint32_t field_34_;
 };
+static_assert(sizeof(AlphaNetLedger) == 0x40, "session ledger fields precede its virtual allocation owner");
 
 // One complete player record, including the name before the process ID.
 // Name storage ends at the ID; the meanings/types of the trailing status

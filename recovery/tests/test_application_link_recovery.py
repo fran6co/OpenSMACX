@@ -428,6 +428,45 @@ def test_alphanet_lookup_reset_and_member_lifetimes(tmp_path, monkeypatch):
         ("// LIVE_ALPHANET_CLOSE", "src/alphanet.cpp", "void AlphaNet::close() {", "\n\n\n/*\n// ORIGINAL: 0x00401CE0")])
 
 
+def test_session_ledger_payload_fields_and_virtual_hooks(compiled):
+    for unit in ("src/alphanet.cpp", "src/net_class.cpp", "src/netdaemon.cpp"):
+        for obj in compiled[unit]:
+            payload = class_layout(obj, "NetAllocationNode")
+            assert payload["size"] == 0x60
+            assert {name: payload["members"][name] for name in (
+                "session_name_", "password_", "instance_guid_", "session_flags_",
+                "max_players_", "current_players_", "field_28_", "entries_")} == {
+                "session_name_": 4, "password_": 8, "instance_guid_": 12, "session_flags_": 28,
+                "max_players_": 32, "current_players_": 36, "field_28_": 40, "entries_": 44}
+    for obj in compiled["src/alphanet.cpp"]:
+        assert class_layout(obj, "AlphaNetStringStruct")["size"] == 0x24
+        ledger = class_layout(obj, "AlphaNetLedger")
+        assert ledger["size"] == 0x40
+        assert ledger["members"]["session_name_"] == 0x1C and ledger["members"]["password_"] == 0x30
+        for owner, table_symbol in (("AlphaNetStringStruct", "??_7AlphaNetStringStruct@@6B0@@"),
+                                    ("AlphaNetLedger", "??_7AlphaNetLedger@@6BAlphaNetStringStruct@@@")):
+            table, = (symbol for symbol in obj.symbols.values()
+                      if symbol.name == table_symbol and symbol.section > 0)
+            section = obj.sections[table.section - 1]
+            assert len(section.data) == 8
+            assert [obj.symbols[index].name for _, index, _ in section.relocations] == [
+                f"?on_insert@{owner}@@UAEHPAVNetAllocationNode@@@Z",
+                f"?on_remove@{owner}@@UAEXPAVNetAllocationNode@@@Z"]
+
+
+def test_session_ledger_hooks_copy_and_release_by_allocator_ownership(tmp_path, monkeypatch):
+    run_recovered_harness(tmp_path, monkeypatch, "alphanet_ledger_harness.cpp", [
+        ("// LIVE_INSERT", "src/alphanet.cpp", 0x5D4890),
+        ("// LIVE_REMOVE", "src/alphanet.cpp", 0x5D4990)], declarations=[
+        ("// LIVE_ALLOCATION_BASE", "src/stringstruct.h", "class StringAllocationBase {",
+         "// REAL VIRTUAL INHERITANCE, like StringStructPayload"),
+        ("// LIVE_PAYLOAD", "src/net_class.h", "class NetAllocationNode :", "static_assert(sizeof(NetAllocationNode)"),
+        ("// LIVE_LEDGER_BASE", "src/alphanet.h", "struct AlphaNetLedgerEntry;", "static_assert(sizeof(AlphaNetStringStruct)"),
+        ("// LIVE_DERIVED_DECLARATION", "src/alphanet.h", "class AlphaNetLedger :", "static_assert(sizeof(AlphaNetLedger)"),
+        ("// LIVE_LEDGER_CONSTRUCTOR", "src/alphanet.cpp", "AlphaNetStringStruct::AlphaNetStringStruct() {",
+         "// The base table's defaults are shared leaves")])
+
+
 def test_menu_candidates_use_typed_source_definitions(compiled):
     for unit, address in (("src/pulldown.cpp", 0x5F9170),
                           ("src/menu.cpp", 0x5FB830),

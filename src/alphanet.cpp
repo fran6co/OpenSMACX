@@ -15,6 +15,7 @@
 
 #include "stringstruct.h"  // StringAllocationBase, the ledger's virtual base
 #include "heap.h"
+#include "general.h"  // mem_get, the fallback when the ledger has no Heap
 
 /*
 Purpose: Convert a multiplayer process ID to its one-based player index.
@@ -180,15 +181,78 @@ AlphaNetStringStruct::AlphaNetStringStruct() {
     current_ = 0;
     entry_count_ = 0;
     current_position_ = 0;
-    field_18_ = 0;
+    allocator_ = 0;
 }
 
-void AlphaNetStringStruct::unk_slot0() { }
+// The base table's defaults are shared leaves, independently checked;
+// the unrelated AlphaMovie catalogue identities remain unchanged.
+// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_insert@AlphaNetStringStruct@@UAEHPAVNetAllocationNode@@@Z 0x004E2490
+int AlphaNetStringStruct::on_insert(NetAllocationNode *) { return 0; }
+// RECOVERY_SHARED: v1 0x00404270 0x00404273 ?on_remove@AlphaNetStringStruct@@UAEXPAVNetAllocationNode@@@Z 0x004E2490
+void AlphaNetStringStruct::on_remove(NetAllocationNode *) { }
+
+// ORIGINAL: 0x005D4890 ?on_insert@AlphaNetLedger@@UAEHPAVNetAllocationNode@@@Z 0x005D4890-0x005D498D
+// RECOVERY_BINDING: v1 {"evidence": ["Original table 0x66EAE8 slot 0 points here. Insertion 0x401D80 allocates a 0x60 NetAllocationNode, constructs its nested list and invokes this hook; enumeration 0x630C30 supplies DPSESSIONDESC2 fields. Seed extent is retained; this binding makes no matching claim."], "reason": "Recover the session-ledger insertion virtual from its retained seed using the existing allocation-owning payload class."}
+int AlphaNetLedger::on_insert(NetAllocationNode *payload) {
+    if (session_name_ == 0) {
+        payload->session_name_ = 0;
+    } else {
+        char *copy;
+        if (allocator_ == 0) {
+            copy = static_cast<char *>(mem_get(strlen(session_name_) + 1));
+        } else {
+            copy = static_cast<char *>(allocator_->get(strlen(session_name_) + 1));
+        }
+        payload->session_name_ = copy;
+        if (copy == 0) {
+            return 4;
+        }
+        *copy = 0;
+        strcat(copy, session_name_);
+    }
+    if (password_ == 0) {
+        payload->password_ = 0;
+    } else {
+        char *copy;
+        if (allocator_ == 0) {
+            copy = static_cast<char *>(mem_get(strlen(password_) + 1));
+        } else {
+            copy = static_cast<char *>(allocator_->get(strlen(password_) + 1));
+        }
+        payload->password_ = copy;
+        if (copy == 0) {
+            return 4;
+        }
+        *copy = 0;
+        strcat(copy, password_);
+    }
+    payload->instance_guid_ = *instance_guid_;
+    payload->session_flags_ = session_flags_;
+    payload->max_players_ = max_players_;
+    payload->current_players_ = current_players_;
+    payload->field_28_ = field_34_;
+    return 0;
+}
+
+// ORIGINAL: 0x005D4990 ?on_remove@AlphaNetLedger@@UAEXPAVNetAllocationNode@@@Z 0x005D4990-0x005D49CE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Derived table 0x66EAE8 slot 1 points here. Original checks receiver allocator at +0x18 before freeing and nulling payload strings +4 and +8. The exact seed src/recovered/005d4990.cpp remains intact; only fresh recording can bank the new spelling."], "reason": "Recover allocator-aware session payload cleanup as the real ledger virtual, retaining the exact seed as a restoration obligation."}
+void AlphaNetLedger::on_remove(NetAllocationNode *payload) {
+    if (allocator_ == 0) {
+        if (payload->session_name_ != 0) {
+            free(payload->session_name_);
+            payload->session_name_ = 0;
+        }
+        if (payload->password_ != 0) {
+            free(payload->password_);
+            payload->password_ = 0;
+        }
+    }
+}
 
 // Original AlphaNet teardown clears the list in both derived and base stages,
 // then lets the virtual allocation base publish its saved owner. The existing
-// bridge to 0x00402970 is unfinished recovery, not a claim about the list's
-// still-incomplete virtual surface or payload types.
+// bridge to 0x00402970 remains until the nested payload-list destruction is
+// recovered. Typed payload fields and hooks alone do not prove its lifetime.
 AlphaNetLedger::~AlphaNetLedger() {
     reinterpret_cast<RemoveAllShim *>(this)->remove_all();
     current_position_ = 0;
