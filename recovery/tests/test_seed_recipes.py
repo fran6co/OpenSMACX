@@ -26,6 +26,15 @@ def test_seed_uses_the_explicit_product_donor(project):
     assert application_command(project, project / "seeds/f.cc") == ["cl", "/nologo", "/DSEED_CONTEXT=1"]
 
 
+def test_seed_donor_preserves_the_declared_runtime_policy(project):
+    path = project / "build/compile_commands.json"
+    rows = json.loads(path.read_text())
+    rows[0]["arguments"].insert(1, "-MT")
+    path.write_text(json.dumps(rows))
+    assert application_command(project, project / "seeds/f.cc") == [
+        "cl", "/nologo", "/MT", "/DSEED_CONTEXT=1"]
+
+
 def test_missing_product_recipe_cannot_borrow(project):
     with pytest.raises(MissingRecipe):
         application_command(project, project / "code/missing.cc")

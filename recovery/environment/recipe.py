@@ -67,6 +67,8 @@ def invocation(entry: CompilationEntry) -> list[str]:
 
     CMake's POSIX command strings use shell quoting; argv arrays are already
     tokenized. Matching trials supply optimization/debug flags separately.
+    Runtime switches also affect predefines and declaration/link semantics;
+    preserve them rather than silently returning to the compiler's default CRT.
     Precompiled headers and build output flags cannot be reused here.
     """
     words = list(entry.arguments) if entry.arguments is not None else shlex.split(entry.command)
@@ -79,6 +81,9 @@ def invocation(entry: CompilationEntry) -> list[str]:
     for word in iterator:
         if word.startswith("@"):
             raise ValueError("matching recipe requires explicit options, not response files")
+        if word.startswith(("/", "-")) and word[1:] in {"MD", "MDd", "MT", "MTd", "ML", "MLd"}:
+            kept.append("/" + word[1:])
+            continue
         if word.startswith(("/Fo", "/Fd", "/Fp", "/Yu", "/Yc")):
             if word in ("/Fo", "/Fd", "/Fp", "/Yu", "/Yc"):
                 if not next(iterator, ""):

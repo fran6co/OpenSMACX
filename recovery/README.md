@@ -295,6 +295,18 @@ DLL/export slots but still needs runtime data and remaining callee bindings and
 final-link selection. It does not promote library symbols into application acceptance.
 Use the actual local compiler path; the example above is not an installation step.
 
+`CMakeLists.txt` selects the static multithreaded runtime for both C and C++ in
+all configurations. Debug optimization/instrumentation does not select a debug
+or DLL allocator. The project compiler interaction preserves runtime switches
+from the prepared recipe, including the seed donor's recipe; it no longer drops
+them and silently measures with the compiler default. Run `recover prepare`
+after changing this policy. Library and final-link verification are still separate
+from this compiler/build configuration decision. The application link also retains
+base relocations (`/FIXED:NO`); matching pointer bytes without the original-style
+loader fixups is insufficient. A real Release-link control compares the selected
+allocator against the pinned archive member, including operands and relocations;
+it does not establish full dependency or application acceptance.
+
 Reports are JSON on stdout. Errors go to stderr and return exit 3. Inventory never
 changes source or decisions. Inventory and partition are native package commands
 when `recovery/project.json` supplies `source` configuration; they do not launch

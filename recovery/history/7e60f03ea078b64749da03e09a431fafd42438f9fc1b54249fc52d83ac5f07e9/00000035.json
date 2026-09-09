@@ -1,0 +1,17 @@
+{
+  "event_id": "8567c263edb52454c5e17f9a5f0505c097a0ee54c161280917e721f6a965c696",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "runtime-build-selection",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "CMakeLists.txt selects static multithreaded CRT for C and C++ in all configurations and retains PE base relocations. recovery/environment/recipe.py preserves runtime switches in measured product and seed-donor recipes. recovery/tests/test_compiler_environment.py checks actual compiler predefines with contrary-runtime failure controls and freshly links Release, comparing the selected allocator code, reference targets and base relocations with the pinned archive member. This incorporates the compiler/build-policy correction only: full dependency selection, runtime data ownership and application acceptance remain separate obligations under ledger-crt-dependency-verification."
+    ]
+  },
+  "previous_event": "153f8110be2da422366106830476d5800f57177abdbeaa03c0e004eff9a1aac3",
+  "request_id": "runtime-build-selection-incorporated",
+  "schema_version": 1,
+  "sequence": 35,
+  "stream": "task:jackal-voice-ownership"
+}

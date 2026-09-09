@@ -35,6 +35,99 @@ def test_pch_filter_does_not_delete_an_unrelated_define(tmp_path):
                              "/DRESOURCE=cmake_pch", "unit.cpp"]) == ["cl", "/nologo", "/DRESOURCE=cmake_pch"]
 
 
+@pytest.mark.parametrize("prefix", ["/", "-"])
+@pytest.mark.parametrize("runtime", ["MD", "MDd", "MT", "MTd", "ML", "MLd"])
+def test_recipe_preserves_runtime_predefines_and_link_policy(tmp_path, prefix, runtime):
+    assert recipe(tmp_path, ["cl", prefix + runtime, "/O2", "/Z7", "unit.cpp"]) == [
+        "cl", "/nologo", "/" + runtime]
+
+
+def test_runtime_switch_order_is_not_reinterpreted_by_recipe_extraction(tmp_path):
+    assert recipe(tmp_path, ["cl", "-MD", "/MT", "unit.cpp"]) == ["cl", "/nologo", "/MD", "/MT"]
+
+
+def test_different_runtime_recipes_are_not_mistaken_for_duplicates(tmp_path):
+    database = tmp_path / "compilation.json"
+    rows = [{"file": "unit.cpp", "directory": str(tmp_path), "arguments": ["cl", flag, "unit.cpp"]}
+            for flag in ("/MD", "-MT")]
+    database.write_text(json.dumps(rows))
+    with pytest.raises(ValueError, match="conflicting compilation recipes"):
+        build_command(database, tmp_path / "unit.cpp")
+
+
+def test_prepared_project_and_matching_compiler_use_static_multithreaded_runtime(tmp_path):
+    from match_recovery.compilation_database import read_database
+    from match_recovery.pe_coff import Coff
+    from recovery.environment.wine import VC6_ROOT
+    root = Path(__file__).resolve().parents[2]
+    database = root / "build/compile_commands.json"
+    if not database.is_file() or not (VC6_ROOT / "BIN/CL.EXE").is_file() or shutil.which("wine") is None:
+        pytest.skip("prepared project and VC6/Wine are required")
+    commands = [invocation(entry) for entry in read_database(database)]
+    assert commands
+    for command in commands:
+        assert [word for word in command if word in ("/MD", "/MDd", "/MT", "/MTd", "/ML", "/MLd")] == ["/MT"]
+    source = tmp_path / "runtime.cpp"
+    source.write_text("#if !defined(_MT) || defined(_DLL) || defined(_DEBUG)\n"
+                      "#error matching runtime policy is not static multithreaded\n#endif\n"
+                      "int runtime_mode_control() { return 0; }\n")
+    command = build_command(database, root / "src/alphanet.cpp")
+    obj = Coff(environment.compile_object(source, tuple(command), ("/c", "/O2", "/Gy")))
+    obj.function("?runtime_mode_control@@YAHXZ")
+    # Check the actual compiler's predefines, not just spellings in a database.
+    for wrong in ("/MD", "/ML", "/MTd"):
+        changed = tuple(wrong if word == "/MT" else word for word in command)
+        with pytest.raises(ValueError, match="compilation failed"):
+            environment.compile_object(source, changed, ("/c", "/O2", "/Gy"))
+
+
+def test_release_link_preserves_the_selected_runtime_code_and_relocations():
+    """A bounded linked-runtime control, not full original-game acceptance."""
+    from collections import defaultdict
+    import hashlib
+    from match_recovery.binary import compare_bound_code
+    from match_recovery.build_check import check_build
+    from match_recovery.coff_archive import CoffArchive
+    from match_recovery.component_source import parse_component
+    from match_recovery.debug_sidecar import read_map
+    from match_recovery.import_source import read_imports, import_targets
+    from match_recovery.model import Span
+    from match_recovery.pe_coff import Coff, PeImage
+    from recovery.environment.wine import VC6_ROOT
+    if not (VC6_ROOT / "BIN/CL.EXE").is_file() or shutil.which("wine") is None:
+        pytest.skip("VC6/Wine are required for the actual project link")
+    root = Path(__file__).resolve().parents[2]
+    manifest = parse_component((root / "src/vendor/vc6-runtime.recovery.h").read_text())
+    raw = (VC6_ROOT / "LIB/LIBCMT.LIB").read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == manifest.archive_sha256
+    binding, = (item for item in manifest.bindings if item.symbol == "_free")
+    obj = Coff(CoffArchive(raw).member(binding.unit))
+    code, relocations, alignment = obj.subject(obj.function(binding.symbol))
+    report = check_build(root, retain=True)
+    assert report["result"] == "pass", report
+    directory = root / report["directory"]
+    output, = report["outputs"]
+    image = PeImage((directory / output["path"]).read_bytes(), output["sha256"])
+    assert not any(item.module.lower() in ("msvcrt.dll", "msvcrtd.dll") for item in image.imports())
+    publics, _ = read_map(directory / "OpenSMACX.map")
+    addresses = defaultdict(set)
+    for address, name, _, _ in publics:
+        addresses[name].add(address)
+    start, = addresses[binding.symbol]
+    imports, _ = import_targets(read_imports(root), {binding.unit: obj}, image)
+    targets = {str(index): next(iter(addresses[symbol.name])) for index, symbol in obj.symbols.items()
+               if len(addresses[symbol.name]) == 1}
+    targets.update({str(index): imports[symbol.name] for index, symbol in obj.symbols.items()
+                    if symbol.name in imports})
+    span = Span(start, start + len(code))
+    proof = compare_bound_code(span, image.read(span), code, relocations, targets,
+                               original_absolute_sites=image.absolute_sites(span), alignment=alignment)
+    assert proof["result"] == "pass", proof
+    # The map supplies independent linked addresses, not original placement or
+    # complete component admission. A fixed Release image failed this control.
+    assert image.absolute_sites(span)
+
+
 @pytest.mark.parametrize("args", [["compiler", "@options"], ["compiler", "/I"],
     ["compiler", "/FI"], ["compiler", "/Fo"], ["python", "wrapper.py", "unit.cpp"]])
 def test_unsupported_recipe_is_not_silently_changed(tmp_path, args):

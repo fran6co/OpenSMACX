@@ -47,6 +47,16 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL
 # keeping the language out.
 project(OpenSMACX VERSION 0.2.3 LANGUAGES CXX C)
 
+# The original allocator includes the static multithreaded CRT's lock and
+# small-block-heap code (src/vendor/vc6-runtime.recovery.h). CMake's default
+# DLL runtime instead links import thunks, even when application bodies match.
+# Keep this runtime in every configuration; debug code generation must not
+# silently select a different allocator. This project decision applies to zlib
+# as well as C++ and is exported in the compilation database for measurements.
+if(MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
+endif()
+
 # The forced cross-toolchain skips normal compiler viability checks. If its
 # identification command cannot run, CMake can still succeed with generic
 # recipes (including -o instead of /Fo). Those recipes are unusable for
@@ -302,7 +312,10 @@ target_link_libraries(OpenSMACX PRIVATE zlib user32 gdi32 winmm dxguid ddraw)
 # `recover debug-sidecar` turns into an ELF gdb loads beside a live winedbg.
 # It is a side file: the linked bytes are the same with it and without.
 target_link_options(OpenSMACX PRIVATE
-    "/MAP:${CMAKE_CURRENT_BINARY_DIR}/OpenSMACX.map" "/MAPINFO:LINES")
+    "/MAP:${CMAKE_CURRENT_BINARY_DIR}/OpenSMACX.map" "/MAPINFO:LINES"
+    # The original retains absolute-pointer fixups. VC6's nonincremental
+    # Release link otherwise drops them even when instruction operands agree.
+    "/FIXED:NO")
 
 # The sidecar is DERIVED FROM THE LINK, so it is built by it. Left as a command
 # to remember, it goes stale the moment anything moves, and a stale one is

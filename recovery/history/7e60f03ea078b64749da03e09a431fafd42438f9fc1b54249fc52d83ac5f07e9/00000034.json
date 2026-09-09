@@ -1,0 +1,22 @@
+{
+  "event_id": "153f8110be2da422366106830476d5800f57177abdbeaa03c0e004eff9a1aac3",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "recovery/environment/recipe.py",
+      "recovery/tests/test_compiler_environment.py",
+      "recovery/tests/test_seed_recipes.py"
+    ],
+    "evidence": [
+      "Coordinator-owned runtime-policy correction for discovery runtime-build-selection: select the original static multithreaded CRT in product recipes and preserve runtime switches through matching recipe extraction. Verify native build/link and all historical claims without demotion; any runtime-sensitive body differences remain restoration work. This permits project compiler-policy edits, not weakening framework proof requirements."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "788d85124e561d3dc5b7734dba45e523330209456de1263d749fa45c25170370",
+  "request_id": "runtime-policy-correction",
+  "schema_version": 1,
+  "sequence": 34,
+  "stream": "task:jackal-voice-ownership"
+}
