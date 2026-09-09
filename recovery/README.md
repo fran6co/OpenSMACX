@@ -10,6 +10,16 @@ The active agent/coordinator contract is [WORKFLOW.md](WORKFLOW.md). Historical
 compiler observations are in [COMPILER_EVIDENCE.md](COMPILER_EVIDENCE.md); they do
 not override task scope, structural evidence or acceptance policy.
 
+`agents.json` explicitly selects GPT-5.6 Luna for bounded worker attempts and
+GPT-6 Astra for independent review, both with high reasoning effort. These are
+project-owned provider choices, not package defaults or a proven recovery-quality
+ranking. Worker commands retain the workspace-write sandbox and use automatic
+permission review for operations such as the leased Wine compiler; reviewers
+remain read-only. No sandbox bypass or implicit model escalation is configured.
+Inspect preserved work and authorize a different worker profile when a bounded
+attempt exposes a task beyond the selected model's ability. A successful provider
+probe does not establish recovery or acceptance quality.
+
 For direct address work use `recover inspect <address-or-symbol> --image <original>`
 (optionally `--callers`) and `recover measure <addresses-or-symbols> --image <original>`.
 An exact project-relative `--in <source-file>` resolves source/seed ambiguity.
