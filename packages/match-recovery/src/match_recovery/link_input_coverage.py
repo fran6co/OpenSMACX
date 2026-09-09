@@ -18,6 +18,11 @@ from .msvc_link_log import parse_link_log
 
 
 def input_coverage(data: bytes, log_data: bytes) -> dict:
+    return _input_inventory(data, log_data)[0]
+
+
+def _input_inventory(data: bytes, log_data: bytes) -> tuple[dict, list[dict]]:
+    """One checked read epoch; record detail is consumed in memory, not a ledger."""
     evidence = parse_link_files(data)
     files = verify_link_files(data, log_data)
     log = parse_link_log(log_data)
@@ -107,7 +112,7 @@ def input_coverage(data: bytes, log_data: bytes) -> dict:
                "symbol": symbol["name"], "size": symbol["value"]}
               for row in records if row["result"] == Result.PASS
               for symbol in row["symbols"] if symbol["declaration"] == "common"]
-    return {"check": "link_input_candidate_coverage", "result": Result.PASS if complete else Result.UNKNOWN,
+    report = {"check": "link_input_candidate_coverage", "result": Result.PASS if complete else Result.UNKNOWN,
             "inputs": observations, "input_count": len(observations), "record_count": len(records),
             "format_counts": dict(Counter(row["format"] for row in records)), "common_requests": common,
             "generated_exports": [{"path": path, "sha256": row["sha256"]} for path, row in generated.items()],
@@ -117,3 +122,4 @@ def input_coverage(data: bytes, log_data: bytes) -> dict:
             "limitations": ["conservative inventory of boundary-reported inputs and every searched archive member",
                             "candidate coverage is not exact selected-member identity, retained sections or common allocation proof",
                             "trusted compiler capture and final-pass diagnostics, not filesystem attestation"]}
+    return report, records

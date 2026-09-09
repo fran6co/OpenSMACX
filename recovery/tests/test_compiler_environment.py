@@ -105,6 +105,9 @@ def test_release_link_preserves_the_selected_runtime_code_and_relocations():
     assert report["link_input_coverage"]["result"] == "pass", report["link_input_coverage"]
     assert len(report["link_input_coverage"]["generated_exports"]) == 1
     assert report["link_input_coverage"]["allocation_verification"] == "unknown"
+    assert report["common_allocations"]["result"] == "pass", report["common_allocations"]
+    assert report["common_allocations"]["counts"] == {"pass": 7}
+    assert all(row["size"] == 4 for row in report["common_allocations"]["allocations"])
     assert report["storage_verification"] == report["original_verification"] == "unknown"
     build = report["fresh_build"]
     directory = root / build["directory"]
@@ -113,6 +116,68 @@ def test_release_link_preserves_the_selected_runtime_code_and_relocations():
     assert not any(item.module.lower() in ("msvcrt.dll", "msvcrtd.dll") for item in image.imports())
     # Project policy only; comparison and map parsing belong to the package.
     assert image.relocations
+
+
+@pytest.mark.parametrize("sizes,strong,export", [((4,), False, False), ((8,), False, False),
+    ((4, 8), False, False), ((8, 4), False, False), ((4, 4), False, False), ((8,), True, False),
+    ((4,), False, True)])
+def test_actual_linker_common_requests_and_strong_override(tmp_path, sizes, strong, export):
+    """Isolated storage controls: section extent, not neighboring map publics."""
+    import hashlib
+    from match_recovery.coff_inventory import inventory_object
+    from match_recovery.common_allocation import verify_common_allocations
+    from match_recovery.msvc_link_map import parse_link_map
+    from match_recovery.pe_coff import PeImage
+    from match_recovery.model import Span
+    from recovery.environment.wine import VC6_ROOT
+    if not (VC6_ROOT / "BIN/CL.EXE").is_file() or shutil.which("wine") is None:
+        pytest.skip("VC6/Wine are required for common-allocation controls")
+    wrapper = Path(__file__).resolve().parents[1] / "environment/wine.py"
+    command = (sys.executable, str(wrapper), "--tool=cl", "/nologo")
+    objects = []
+    for index, size in enumerate(sizes):
+        source = tmp_path / ("common" + str(index) + ".c")
+        source.write_text("char thing[" + str(size) + "];\n" +
+                          ("int entry(void) { return thing[0]; }\n" if index == 0 else ""))
+        raw = environment.compile_object(source, command, ("/c", "/TC", "/O2", "/Gy", "/MT"))
+        declaration, = (row for row in inventory_object(raw)["symbols"] if row["name"] == "_thing")
+        assert declaration["declaration"] == "common" and declaration["value"] == size
+        obj = source.with_suffix(".obj")
+        obj.write_bytes(raw)
+        objects.append(obj.name)
+    if strong:
+        source = tmp_path / "strong.c"
+        source.write_text("char thing[4] = {7, 0, 0, 0};\n")
+        raw = environment.compile_object(source, command, ("/c", "/TC", "/O2", "/Gy", "/MT"))
+        declaration, = (row for row in inventory_object(raw)["symbols"] if row["name"] == "_thing")
+        assert declaration["declaration"] == "defined"
+        source.with_suffix(".obj").write_bytes(raw)
+        objects.append("strong.obj")
+    result = run_bounded([sys.executable, str(wrapper), "--tool=link", "/nologo", "/nodefaultlib",
+                          "/subsystem:console", "/entry:entry", "/incremental:no", "/opt:noref", "/fixed:no",
+                          "/out:common.exe", "/map:common.map", "/implib:common.lib", "/VERBOSE",
+                          "--link-diagnostics=" + str(tmp_path / "common.link.log"),
+                          *(["/EXPORT:thing,DATA"] if export else []), *objects], cwd=tmp_path, timeout=60)
+    assert result.returncode == 0, (result.stdout + result.stderr).decode(errors="replace")
+    raw = (tmp_path / "common.exe").read_bytes()
+    image = PeImage(raw, hashlib.sha256(raw).hexdigest())
+    mapping = parse_link_map((tmp_path / "common.map").read_bytes())
+    mapping.validate(image)
+    public, = (row for row in mapping.publics if row.symbol == "_thing")
+    if strong:
+        assert public.owner == "strong.obj"
+        assert image.read_initial(Span(public.address, public.address + 4)) == b"\x07\0\0\0"
+    else:
+        assert public.owner == "<common>"
+        region, _, raw_size = image.sections[public.segment - 1]
+        assert raw_size == 0 and public.address == region.start
+        assert region.end - region.start == max(sizes)
+        assert image.read_initial(region) == bytes(max(sizes))
+    proof = verify_common_allocations((tmp_path / "common.link.inputs.json").read_bytes(),
+                                     (tmp_path / "common.link.log").read_bytes(), raw,
+                                     (tmp_path / "common.map").read_bytes(), ("_thing",))
+    assert proof["input_coverage"]["result"] == "pass", proof
+    assert proof["result"] == ("unknown" if strong or len(set(sizes)) != 1 else "pass"), proof
 
 
 @pytest.mark.parametrize("args", [["compiler", "@options"], ["compiler", "/I"],

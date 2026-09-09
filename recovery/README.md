@@ -345,6 +345,17 @@ Do not manufacture application definitions for these library-owned globals.
 Native linked-component reports now expose the pinned archive's record inventory
 and common allocation requests, using the package's COFF/import-record parser.
 Parsing these requests does not establish which allocation the linker selected.
+The fresh component command now separately checks uniform common allocations
+against all captured inputs, selected map coordinates and writable zero-filled
+PE storage. Real VC6 controls cover competing requests, strong overrides and
+data exports; the Release-link control requires this bounded proof for the heap
+handle and six small-block-heap globals. This proves candidate storage, not their
+original-game bindings or runtime lifetime. Conflicting requests, aliases,
+unsupported policies and incomplete evidence remain unknown. No replacement
+application globals are introduced, and full dependency admission remains open.
+The Wine wrapper rejects nonempty `LINK`/`_LINK_` environment options and passes
+explicit empty values to the child; put linker options in the configured argument
+list. Hidden environment/registry defaults must not bypass captured link policy.
 
 `CMakeLists.txt` selects the static multithreaded runtime for both C and C++ in
 all configurations. Debug optimization/instrumentation does not select a debug

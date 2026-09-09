@@ -1,0 +1,20 @@
+{
+  "event_id": "2c214b390f37d9f0b494cc4f9dd6c51ec3f2d529c97e8fc7948abae2e28e31dd",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "packages/match-recovery/src/match_recovery/common_allocation.py",
+      "packages/match-recovery/tests/test_common_allocation.py"
+    ],
+    "evidence": [
+      "Prove bounded candidate common storage using the complete captured declaration population, final common placements and PE zero initialization. Actual VC6 controls establish competing common requests and strong overrides; reject aliases, conflicting sizes and unsupported policy, without admitting original runtime targets or inventing C++ globals."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "ea12c561c4709d0fe8da5720d60bd1d1ebc1b6fa2e57d3c7736e5d85081eeb18",
+  "request_id": "runtime-common-allocation-check",
+  "schema_version": 1,
+  "sequence": 44,
+  "stream": "task:jackal-voice-ownership"
+}

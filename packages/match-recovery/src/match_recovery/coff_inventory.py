@@ -68,7 +68,8 @@ def inventory_object(data: bytes) -> dict:
             obj = CoffRecords(data)
             report.update(format="coff", machine=obj.machine, optional_header_size=obj.optional_header_size)
             for symbol in obj.symbols.values():
-                row = {**asdict(symbol), "declaration": "local_or_metadata"}
+                row = {**asdict(symbol), "auxiliary_size": len(obj.auxiliary.get(symbol.index, b"")),
+                       "declaration": "local_or_metadata"}
                 if symbol.section < -2 or not symbol.name or "\0" in symbol.name:
                     raise ValueError("unsupported COFF symbol identity or section")
                 if symbol.storage == 2:

@@ -153,10 +153,19 @@ COMMAND_LINE_LIMIT = 30000
 
 
 def environment() -> dict:
+    # LINK can prepend options independently of argv. The captured effective
+    # link policy must not omit aliases, forced links or extra input files.
+    # Require explicit arguments, including for case-insensitive Windows names;
+    # pass empty values so Wine registry defaults cannot add hidden options.
+    implicit = [key for key, value in os.environ.items() if key.upper() in {"LINK", "_LINK_"} and value]
+    if implicit:
+        raise ValueError("implicit linker environment options are unsupported; use explicit arguments: " +
+                         ", ".join(sorted(implicit)))
     include = os.environ.get("VC6_INCLUDE", str(VC6_ROOT / "INCLUDE"))
     library = os.environ.get("VC6_LIB", str(VC6_ROOT / "LIB"))
     return dict(
-        os.environ,
+        {key: value for key, value in os.environ.items() if key.upper() not in {"LINK", "_LINK_"}},
+        LINK="", _LINK_="",
         WINEPREFIX=str(VC6_PREFIX),
         WINEDEBUG=os.environ.get("WINEDEBUG", "-all"),
         INCLUDE=";".join("Z:" + part.replace("/", "\\")

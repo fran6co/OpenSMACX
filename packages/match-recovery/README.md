@@ -1803,13 +1803,16 @@ the transcript alone cannot admit a dependency or export an application target.
 
 A paired `link-input-files` build output can supply compiler-boundary file
 observations. Its schema-2 JSON contains `link_log_sha256`, absolute normalized
-host `cwd` and `tool` paths, expanded `arguments`, `explicit_inputs`, `files`,
+host `cwd` and `tool` paths, expanded effective `arguments`, `explicit_inputs`, `files`,
 `library_searches`, `generated_exports`, and `capture_gaps`. Each file has `path`, `before`, and
 `after`; each non-null observation is `{ "sha256": "<digest>", "size": 123 }`.
 Each search has its exact diagnostic `spelling` and resolved host `path` (null
 when unresolved). Keep the full ordered search sequence, including nested
 export-library searches. The environment captures before and after the actual
 link; missing observations must stay null, not be filled from post-link files.
+The boundary must include implicit option sources in those effective arguments
+or refuse them; capturing only argv while an environment variable supplies
+additional linker policy is incomplete evidence.
 
 Each `generated_exports` row contains `path`, boolean `existed_before`, and
 `after` (the output content observation or null). This specifically describes
@@ -1826,7 +1829,7 @@ Symlinks, changed files, incomplete capture and ambiguous paths cannot pass.
 Unused search candidates are reported separately from required observed inputs.
 `archive_file_identity` and `link_files` expose this bounded evidence. Compiler
 path resolution/capture is trusted interaction, not filesystem attestation;
-complete selected-member identity and common allocations remain unverified.
+the file-identity check alone does not prove selected-member identity or common allocations.
 A saved artifact never replaces the fresh-build CLI sequence.
 
 `link_input_coverage` now inventories the explicit objects, every member of every
@@ -1840,6 +1843,25 @@ Export-object records are parsed as COFF and rechecked for content changes.
 The report includes common requests and format gaps, not selected allocation
 extents. A parsing/coverage pass is separate from the bounded linked-code result
 and never exports application targets or proves full dependency acceptance.
+
+For common symbols declared in the source-bound library members, the fresh
+component check also reports `common_allocations`. The package rereads that
+complete input population, including unselected members, to require uniform
+size requests and rule out potential strong/absolute/import/weak overrides.
+At least one request needs a participating explicit object or unique final
+archive candidate. Actual map coordinates must select data-only `<common>`
+storage; its full requested span must be readable/writable, non-executable,
+zero-initialized, and free of overlapping publics and loader fixups. Sizes are
+never inferred from adjacent symbols. Unknown linker options/directives, aliases,
+conflicting sizes and unsupported records remain unverified. This intentionally
+does not apply the largest-request rule to a superset containing unselected
+members. Ordinary non-aliasing exports (including DATA), library searches and
+section merges are handled under the complete-population and actual-PE checks.
+The allocation result is separate from linked-code correspondence: a storage
+counterexample fails the command, but unsupported storage does not erase bounded
+code evidence. Original correspondence, C++ type/lifetime and runtime ownership
+still need separate proof; no application binding or overall storage acceptance
+is published by this bounded check.
 
 Passing means bounded **candidate linked-code correspondence**, not original
 equivalence or dependency admission. A map's common/public data address does not

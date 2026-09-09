@@ -215,7 +215,18 @@ def check_toolchain_link(root: Path, manifest: ToolchainManifest, archive_path: 
                         and selected[0]["after"]["sha256"] == manifest.archive_sha256 else Result.UNKNOWN)
             result["archive_file_identity"] = identity
             from .link_input_coverage import input_coverage
-            coverage = input_coverage(artifacts["link-input-files"][1], artifacts["msvc-link-log"][1])
+            common_names = tuple(sorted({row["symbol"] for row in result["archive_inventory"]["common_requests"]
+                                         if row["member"] in {binding.unit for binding in manifest.bindings}}))
+            if common_names:
+                from .common_allocation import verify_common_allocations
+                common = verify_common_allocations(artifacts["link-input-files"][1], artifacts["msvc-link-log"][1],
+                                                   artifacts["pe32-i386"][1], artifacts["msvc-map"][1], common_names)
+                coverage = common.pop("input_coverage")
+                result["common_allocations"] = common
+                if common["result"] == Result.FAIL:
+                    result["result"] = Result.FAIL
+            else:
+                coverage = input_coverage(artifacts["link-input-files"][1], artifacts["msvc-link-log"][1])
             result["link_input_coverage"] = coverage
             if file_evidence["result"] == Result.FAIL:
                 result["result"] = Result.FAIL

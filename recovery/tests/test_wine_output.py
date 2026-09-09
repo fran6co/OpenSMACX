@@ -56,6 +56,26 @@ def test_missing_tool_is_not_reported_as_success():
         wine.run_tool(["/nonexistent/recovery-test-compiler"])
 
 
+@pytest.mark.parametrize("name", ["LINK", "_LINK_", "link", "_link_", "LiNk"])
+def test_implicit_linker_options_refuse_before_running_any_tool(monkeypatch, name):
+    monkeypatch.setenv(name, "/ALTERNATENAME:_g=_other")
+    def unexpected(*args, **kwargs):
+        pytest.fail("compiler was invoked with unobserved linker options")
+    monkeypatch.setattr(wine.subprocess, "run", unexpected)
+    with pytest.raises(ValueError, match="implicit linker environment options"):
+        wine.run_tool(["unused"])
+
+
+def test_linker_option_environment_is_explicitly_empty_in_child(monkeypatch):
+    for name in tuple(os.environ):
+        if name.upper() in {"LINK", "_LINK_"}:
+            monkeypatch.delenv(name)
+    monkeypatch.setenv("link", "")
+    result = wine.run_tool([sys.executable, "-c",
+        "import os; assert os.environ['LINK'] == os.environ['_LINK_'] == ''; assert 'link' not in os.environ"])
+    assert result.returncode == 0, result.stderr
+
+
 @pytest.mark.parametrize("tool,arguments", [
     ("cl", ["/VERBOSE", "--link-diagnostics=out.log"]),
     ("lib", ["/VERBOSE", "--link-diagnostics=out.log"]),
