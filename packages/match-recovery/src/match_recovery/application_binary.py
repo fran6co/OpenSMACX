@@ -15,7 +15,7 @@ from match_recovery.object_source import read_objects, object_targets, reference
 from match_recovery.pe_coff import Coff, PeImage
 from match_recovery.tasks import TaskStore
 from match_recovery.ownership_source import project_view
-from match_recovery.generated_binary import check_generated
+from match_recovery.generated_binary import check_generated, generated_coverage
 from .compiler import Compiler
 from .measurement import Measurement
 from .import_source import read_imports, import_targets
@@ -167,6 +167,8 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
             command_errors[unit] = str(error)
     attempts, variants, object_checks = 0, defaultdict(list), []
     generated_checks, dependencies, import_checks, shared_checks = [], [], [], []
+    generated_observations = []
+    generated_units = set(units)
     for flags in flag_sets:
         objects, errors = {}, dict(command_errors)
         for unit, command in commands.items():
@@ -197,6 +199,7 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
                     errors[unit] = str(error)
         dependencies.append({"flags": list(flags), "units": sorted(dependency_units),
                              "errors": {unit: errors[unit] for unit in sorted(dependency_units) if unit in errors}})
+        generated_units.update(dependency_units)
         active_shared = [item for item in shared_bindings if item.unit in objects or item.unit in errors]
         checked_functions, checked_objects, checked_generated, checked_imports, checked_shared = check_compiled(
             bindings, object_bindings, generated_bindings, objects, image, externals, errors=errors,
@@ -205,6 +208,8 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
         object_checks.extend({**item, "flags": list(flags)} for item in checked_objects)
         import_checks.extend({**item, "flags": list(flags)} for item in checked_imports)
         generated_checks.extend({**item, "flags": list(flags)} for item in checked_generated)
+        generated_observations.extend({**item, "flags": list(flags)}
+                                      for item in generated_coverage(generated_bindings, objects))
         for row in checked_functions:
             variants[row["entity_id"]].append({**row, "flags": list(flags)})
     rows = list(refused)
@@ -239,6 +244,8 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
             "shared_functions": shared_checks,
             "shared_owners": [{"interpretation_id": item.interpretation_id, "unit": item.unit} for item in shared_bindings],
             "generated_tables": generated_checks,
+            "generated_coverage": generated_observations,
+            "generated_units": sorted(generated_units),
             "import_bindings": import_checks,
             "unresolved_symbols": sorted({relocation["symbol"] for candidates in variants.values()
                                            for row in candidates for relocation in row.get("relocations", [])

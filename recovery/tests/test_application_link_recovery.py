@@ -346,13 +346,14 @@ def test_net_primary_tables_are_emitted_from_the_inheritance_chain(compiled):
 
 
 def test_net_shared_defaults_and_all_primary_tables_match_original_bindings(compiled):
-    from match_recovery.generated_binary import check_generated
+    from match_recovery.generated_binary import check_generated, generated_coverage
     from match_recovery.generated_source import read_generated
     from match_recovery.ownership_source import project_view
     from match_recovery.application_binary import select_bindings
     from match_recovery.pe_coff import PeImage
     from match_recovery.shared_source import read_shared, validate_shared
     from match_recovery.shared_binary import check_shared
+    from match_recovery.structural_requirements import check_requirements
 
     image_path = ROOT / ".opensmacx/game/terranx_original.exe"
     if not image_path.is_file():
@@ -368,7 +369,12 @@ def test_net_shared_defaults_and_all_primary_tables_match_original_bindings(comp
                    if item.symbol in {"??_7Net@@6B@", "??_7AlphaNet@@6B@", "??_7NetDaemon@@6B@"})
     assert len(tables) == 3
     _, _, externals = select_bindings(view, frozenset())
-    for trial in range(len(Measurement.read(ROOT).flag_sets)):
+    settings = Measurement.read(ROOT)
+    flags = [list(trial + settings.layout_flags) for trial in settings.flag_sets]
+    binary = {"translation_units": list(compiled), "flag_sets": flags,
+              "generated_units": list(compiled),
+              "generated_tables": [], "generated_coverage": []}
+    for trial in range(len(settings.flag_sets)):
         objects = {unit: values[trial] for unit, values in compiled.items()}
         targets, rows = check_shared(bindings, objects, image, externals)
         assert len(targets) == len(rows) == 6
@@ -376,6 +382,17 @@ def test_net_shared_defaults_and_all_primary_tables_match_original_bindings(comp
         _, rows = check_generated(tables, objects, image, {**externals, **targets})
         assert {row["symbol"] for row in rows} == {item.symbol for item in tables}
         assert all(row["definition"] == row["content"] == "pass" for row in rows)
+        binary["generated_tables"].extend({**row, "flags": flags[trial]} for row in rows)
+        binary["generated_coverage"].extend({**row, "flags": flags[trial]}
+                                            for row in generated_coverage(tables, objects))
+    inventory = {"scope": [item.evidence.entity_id for item in tables], "interpretations": [{
+        "interpretation_id": item.interpretation_id, "entity_id": item.evidence.entity_id,
+        "value": item.interpretation, "current": True} for item in tables]}
+    requirements = check_requirements(inventory, {"checks": {"binary": binary}})
+    assert len(requirements) == 3 and all(row["result"] == "pass" for row in requirements)
+    # A TU that does not emit the table needs a symbol-table observation, not
+    # a duplicate table definition. Actual emitted copies still match above.
+    assert all(any(trial.get("coverage_only") for trial in row["trials"]) for row in requirements)
 
 
 def test_alphanet_records_are_complete_nonoverlapping_members(compiled):

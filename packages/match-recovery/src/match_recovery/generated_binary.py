@@ -16,6 +16,46 @@ from match_recovery.pe_coff import weak_external
 MAX_ENTRY_DIAGNOSTICS = 128
 
 
+def definition_absent(witness):
+    """Only an inspected symbol table can establish non-emission in one object.
+
+    Ordinary unresolved externals are declarations, not definitions. Common,
+    absolute, static and weak/alias symbols need separate handling; never call
+    them absence just because the ordinary external-definition scan skips them.
+    This evidence is consumed within the same fresh native check, not replayed.
+    """
+    if (not isinstance(witness, dict) or witness.get("basis") != "compiled_coff_symbols"
+            or not isinstance(witness.get("symbol"), str) or not witness["symbol"].startswith("??_7")
+            or not isinstance(witness.get("records"), list)):
+        return False
+    return all(isinstance(row, dict) and set(row) == {"storage", "section", "value", "type"}
+               and all(type(value) is int for value in row.values())
+               and row == {"storage": 2, "section": 0, "value": 0, "type": 0}
+               for row in witness["records"])
+
+
+def generated_coverage(bindings, objects):
+    """Observe non-emission without requiring every TU to emit every vtable.
+
+    Every actual external definition still goes through check_generated. No row
+    is created for a missing/failed compilation. Unsupported symbols remain
+    visible even in dependency objects; they cannot borrow a passing owner.
+    """
+    rows = []
+    for binding in bindings:
+        for unit, obj in sorted(objects.items()):
+            matches = [symbol for symbol in obj.symbols.values() if symbol.name == binding.symbol]
+            if any(symbol.storage == 2 and symbol.section > 0 for symbol in matches):
+                continue
+            witness = {"basis": "compiled_coff_symbols", "symbol": binding.symbol,
+                       "records": [{key: getattr(symbol, key) for key in ("storage", "section", "value", "type")}
+                                   for symbol in matches]}
+            rows.append({"interpretation_id": binding.interpretation_id, "unit": unit,
+                         "observation": "not_emitted" if definition_absent(witness) else "unsupported_symbol",
+                         "witness": witness})
+    return rows
+
+
 def _entries(binding, obj, section, image, external, source_symbols):
     """Position-based observations, never an inferred original table extent.
 

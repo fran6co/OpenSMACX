@@ -2,10 +2,11 @@
 
 from copy import deepcopy
 from dataclasses import asdict, replace
+from types import SimpleNamespace
 
 import pytest
 
-from match_recovery.generated_binary import check_generated
+from match_recovery.generated_binary import check_generated, generated_coverage
 from match_recovery.layout_source import parse_bases, parse_members
 from match_recovery.model import Result
 from match_recovery.object_source import parse_objects
@@ -288,3 +289,90 @@ def test_no_emitted_table_does_not_erase_its_declared_requirement():
     report = {"checks": {"binary": {"translation_units": list(objects), "flag_sets": FLAGS, "generated_tables": []}}}
     row, = check_requirements(inventory((binding, True)), report)
     assert row["result"] == "unknown" and row["counts"]["unknown"] == 2
+
+
+def generated_candidate():
+    binding, objects, image = fixture()
+    objects["src/caller.cpp"] = SimpleNamespace(symbols={}, sections=())
+    _, measured = check_generated((binding,), objects, image, {"_method": 0x402000})
+    report = {"checks": {"binary": {"translation_units": list(objects), "flag_sets": deepcopy(FLAGS),
+              "generated_units": list(objects),
+              "generated_tables": [{**row, "flags": flags} for row in measured for flags in FLAGS],
+              "generated_coverage": [{**row, "flags": flags} for row in generated_coverage((binding,), objects)
+                                     for flags in FLAGS]}}}
+    return binding, report
+
+
+def test_generated_nonemission_covers_a_compiled_tu_without_claiming_table_content():
+    binding, report = generated_candidate()
+    row, = check_requirements(inventory((binding, True)), report)
+    assert row["result"] == declared_outcome([row], {})[0] == "pass"
+    assert row["counts"] == {"pass": 4, "fail": 0, "unknown": 0}
+    assert sum(trial.get("coverage_only", False) for trial in row["trials"]) == 2
+    assert structural_outcome([row])[0] == "unknown"
+
+
+@pytest.mark.parametrize("missing", ["coverage", "trial", "failed_compile", "failed_dependency", "definition",
+                                     "definition_trial", "compilation_grid"])
+def test_generated_absence_never_waives_a_missing_compile_or_all_real_definitions(missing):
+    binding, report = generated_candidate()
+    binary = report["checks"]["binary"]
+    if missing == "coverage": binary.pop("generated_coverage")
+    elif missing == "trial": binary["generated_coverage"].pop()
+    elif missing == "failed_compile": binary["translation_units"].append("src/failed.cpp")
+    elif missing == "failed_dependency": binary["generated_units"].append("src/failed_dependency.cpp")
+    elif missing == "compilation_grid": binary.pop("generated_units")
+    else:
+        absent = deepcopy(binary["generated_coverage"])
+        for row in absent:
+            row["unit"] = "src/widget.cpp"
+        if missing == "definition":
+            binary["generated_tables"] = []
+            binary["generated_coverage"].extend(absent)
+        else:
+            binary["generated_tables"].pop()
+            binary["generated_coverage"].append(absent[1])
+    row, = check_requirements(inventory((binding, True)), report)
+    assert row["result"] == declared_outcome([row], {})[0] == "unknown"
+
+
+@pytest.mark.parametrize("damage", ["symbol", "basis", "records", "common", "weak", "boolean",
+                                   "flags", "unit", "duplicate", "contradiction", "kind"])
+def test_generated_absence_requires_unambiguous_interpretation_and_object_evidence(damage):
+    binding, report = generated_candidate()
+    binary = report["checks"]["binary"]
+    row = binary["generated_coverage"][0]
+    if damage == "symbol": row["witness"]["symbol"] = "??_7Other@@6B@"
+    elif damage == "basis": row["witness"]["basis"] = "source_search"
+    elif damage == "records": row["witness"].pop("records")
+    elif damage in ("common", "weak", "boolean"):
+        row["witness"]["records"] = [{"storage": 105 if damage == "weak" else 2, "section": 0,
+                                      "value": 4 if damage == "common" else False if damage == "boolean" else 0,
+                                      "type": 0}]
+    elif damage == "flags": row["flags"] = ["not_requested"]
+    elif damage == "unit": row["unit"] = "src/not_compiled.cpp"
+    elif damage == "duplicate": binary["generated_coverage"].append(deepcopy(row))
+    elif damage == "contradiction": row["unit"] = "src/widget.cpp"
+    else: row["interpretation_id"] = MEMBER.interpretation_id
+    with pytest.raises(ValueError, match="(absence|both measured)"):
+        check_requirements(inventory((binding, True), (MEMBER, True)), report)
+
+
+def test_unsupported_generated_dependency_is_not_hidden_by_a_passing_owner():
+    binding, report = generated_candidate()
+    row = deepcopy(report["checks"]["binary"]["generated_coverage"][0])
+    row.update(unit="src/dependency.cpp", observation="unsupported_symbol")
+    row["witness"]["records"] = [{"storage": 105, "section": 0, "value": 0, "type": 0}]
+    report["checks"]["binary"]["generated_units"].append("src/dependency.cpp")
+    report["checks"]["binary"]["generated_coverage"].append(row)
+    requirement, = check_requirements(inventory((binding, True)), report)
+    assert requirement["result"] == "unknown" and requirement["counts"]["unknown"] == 2
+
+
+def test_nonemission_elsewhere_cannot_hide_an_incorrect_emitted_table():
+    binding, report = generated_candidate()
+    row = deepcopy(report["checks"]["binary"]["generated_tables"][0])
+    row.update(unit="src/dependency.cpp", content="fail")
+    report["checks"]["binary"]["generated_tables"].append(row)
+    requirement, = check_requirements(inventory((binding, True)), report)
+    assert requirement["counts"]["fail"] == 1 and declared_outcome([requirement], {})[0] == "fail"

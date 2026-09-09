@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from match_recovery.generated_binary import check_generated
+from match_recovery.generated_binary import check_generated, definition_absent, generated_coverage
 from match_recovery.generated_source import GeneratedBinding, read_generated
 from match_recovery.model import Origin, Span
 from match_recovery.pe_coff import PeImage, Section, Symbol
@@ -25,6 +25,31 @@ def fixture(*, bounded=True, target=0x402000, raw=False):
     section = Section(target.to_bytes(4, "little") if raw else bytes(4),
                       () if raw else ((0, 1, 6),), 0x40001040, ".rdata")
     return binding, {"src/widget.cpp": SimpleNamespace(symbols=symbols, sections=(section,))}, image
+
+
+@pytest.mark.parametrize("undefined", [False, True])
+def test_nonemitting_object_coverage_uses_its_actual_symbols(undefined):
+    binding, objects, image = fixture()
+    objects["src/caller.cpp"] = SimpleNamespace(symbols={
+        0: Symbol(0, TABLE, 0, 0, 0, 2)} if undefined else {}, sections=())
+    row, = generated_coverage((binding,), objects)
+    assert row["unit"] == "src/caller.cpp" and row["observation"] == "not_emitted"
+    assert row["interpretation_id"] == binding.interpretation_id
+    assert definition_absent(row["witness"])
+    targets, emitted = check_generated((binding,), objects, image, {"_method": 0x402000})
+    assert targets == {TABLE: 0x401000} and len(emitted) == 1
+    assert emitted[0]["unit"] == "src/widget.cpp" and emitted[0]["content"] == "pass"
+    assert generated_coverage((binding,), {}) == []  # No object is not an absent definition.
+
+
+@pytest.mark.parametrize("fields", [dict(storage=3), dict(storage=105), dict(section=-1),
+                                   dict(value=4), dict(type=0x20)])
+def test_nonordinary_symbols_never_attest_generated_definition_absence(fields):
+    binding, objects, _ = fixture()
+    objects["src/dependency.cpp"] = SimpleNamespace(symbols={
+        0: replace(Symbol(0, TABLE, 0, 0, 0, 2), **fields)}, sections=())
+    row, = generated_coverage((binding,), objects)
+    assert row["observation"] == "unsupported_symbol" and not definition_absent(row["witness"])
 
 
 def test_generated_start_binding_does_not_imply_table_content_proof():

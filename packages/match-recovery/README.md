@@ -1566,6 +1566,18 @@ and historical supersession/retraction decisions. These reports are recomputed
 from source/history and the same fresh candidate check, not another ledger or
 an additional compilation pass.
 
+Generated vtables need not be emitted by every checked translation unit.
+`generated_coverage` records non-emission from each successfully compiled COFF
+symbol table; an ordinary undefined external is a reference, not a definition.
+`generated_units` retains all requested owner/dependency TUs, including failures;
+an unsuccessful dependency compile cannot disappear from the coverage grid.
+Every emitted copy still needs independent bounded content/reference verification,
+and each configured flag trial needs at least one actual definition witness.
+Missing compilations, absent coverage, all-absent tables and weak/common/static
+symbol cases remain unknown. Coverage-only trials cannot prove table contents
+or full hierarchy/lifetime. This uses the already compiled objects and neither
+narrows the requested TU grid nor creates a stored source fact.
+
 A measured counterexample to a current declaration marks its `declared_structure`
 obligation failed. Source member/base/table/object annotations generate this
 bounded dimension, not a claim of complete hierarchy or lifetime. Passing all

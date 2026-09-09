@@ -10,6 +10,7 @@ from collections import Counter, defaultdict
 from .model import Result, require_digest
 from .reviews import merge_interpretations, pending_interpretations
 from .layout_witness import declaration_absent
+from .generated_binary import definition_absent
 
 
 def _all(values):
@@ -44,6 +45,9 @@ def check_requirements(inventory, candidate):
     checks = candidate["checks"]
     reports = {"layout": checks.get("layout", {}), "binary": checks.get("binary", {})}
     grids = {name: _grid(report) for name, report in reports.items()}
+    generated_grid = (_grid({"translation_units": reports["binary"].get("generated_units"),
+                             "flag_sets": reports["binary"].get("flag_sets")})
+                      if "generated_coverage" in reports["binary"] else grids["binary"])
     absences = {}
     for row in reports["layout"].get("coverage", []):
         if row.get("observation") != "no_complete_definition":
@@ -58,6 +62,27 @@ def check_requirements(inventory, candidate):
         if key in absences:
             raise ValueError("ambiguous compiler declaration-absence coverage")
         absences[key] = witness
+    generated_absences = defaultdict(dict)
+    for row in reports["binary"].get("generated_coverage", []):
+        key = row.get("interpretation_id")
+        require_digest(key)
+        if key not in known or not known[key]["current"]:
+            continue
+        item = known[key]["value"]
+        unit, flags, observation, witness = (row.get(name) for name in ("unit", "flags", "observation", "witness"))
+        generated_units, _, coverage_gap = generated_grid
+        _, trials, _ = grids["binary"]
+        if (item.get("kind") != "compiler_generated_vtable" or not isinstance(unit, str) or not unit
+                or not isinstance(flags, list) or any(not isinstance(flag, str) for flag in flags)
+                or tuple(flags) not in trials or observation not in ("not_emitted", "unsupported_symbol")
+                or (not coverage_gap and unit not in generated_units)
+                or not isinstance(witness, dict) or witness.get("symbol") != item.get("symbol")
+                or (observation == "not_emitted" and not definition_absent(witness))):
+            raise ValueError("invalid generated definition-absence coverage")
+        identity = (unit, tuple(flags))
+        if identity in generated_absences[key]:
+            raise ValueError("ambiguous generated definition-absence coverage")
+        generated_absences[key][identity] = row
     observations = defaultdict(dict)
     for backend, collection, kind in (("layout", "members", "direct_member_offset"),
                                        ("layout", "bases", "nonvirtual_base_offset"),
@@ -114,6 +139,10 @@ def check_requirements(inventory, candidate):
         else:
             units, flag_sets, gap = grids[backend]
             observed = observations[key]
+            if kind == "compiler_generated_vtable":
+                generated_units, _, generated_gap = generated_grid
+                units = sorted(set(units) | set(generated_units))
+                gap = gap or generated_gap
             if kind in ("object_initial_data", "shared_function_body"):
                 owners = reports[backend].get("object_owners" if kind == "object_initial_data" else "shared_owners", [])
                 if not isinstance(owners, list) or any(not isinstance(owner, dict) or set(owner) != {"interpretation_id", "unit"}
@@ -126,14 +155,25 @@ def check_requirements(inventory, candidate):
                     gap = "shared body measurement host disagrees with source interpretation"
             # Include any extra compiled dependency witnesses as well. A bad
             # definition there must not disappear behind a passing scoped TU.
-            units = sorted(set(units) | {unit for unit, _ in observed})
+            table_coverage = generated_absences[key]
+            units = sorted(set(units) | {unit for unit, _ in observed} | {unit for unit, _ in table_coverage})
             wanted = {(unit, flags) for unit in units for flags in flag_sets}
             for witness in sorted(wanted | observed.keys()):
                 trial = observed.get(witness)
                 absence = absences.get((item["value"].get("class_name"), *witness)) if backend == "layout" else None
                 if absence is not None and trial is not None:
                     raise ValueError("class declaration is both measured and reported absent in one TU/trial")
-                if absence is not None:
+                table_absence = table_coverage.get(witness)
+                if table_absence is not None and trial is not None:
+                    raise ValueError("generated definition is both measured and reported absent in one TU/trial")
+                if table_absence is not None:
+                    absent = table_absence["observation"] == "not_emitted"
+                    trial = {"unit": witness[0], "flags": list(witness[1]),
+                             "result": Result.PASS if absent else Result.UNKNOWN,
+                             "reason": ("compiled object has no definition of this table; not table-content proof" if absent
+                                        else "unsupported generated symbol requires definition/linker analysis"),
+                             "source": None, "coverage_only": True, "emission_witness": table_absence["witness"]}
+                elif absence is not None:
                     trial = {"unit": witness[0], "flags": list(witness[1]), "result": Result.PASS,
                              "reason": "controlled absence of a complete declaration; no member/base layout to compare in this TU",
                              "source": None, "coverage_only": True, "layout_basis": "same_tu_definition_absence"}
@@ -149,6 +189,11 @@ def check_requirements(inventory, candidate):
                             and (trial["unit"], flags) in observed for trial in row["trials"])
                     for flags in flag_sets):
                 gap = gap or "each declared requirement needs an actual layout witness in every configured trial; absence alone is insufficient"
+            if kind == "compiler_generated_vtable" and any(
+                    not any(trial["flags"] == list(flags) and not trial.get("coverage_only")
+                            and (trial["unit"], flags) in observed for trial in row["trials"])
+                    for flags in flag_sets):
+                gap = gap or "each generated table needs an actual definition witness in every configured trial; non-emission alone is insufficient"
             result = Result.UNKNOWN if gap else _all(trial["result"] for trial in row["trials"])
             row.update(result=result, reason=gap or "all requested TU/trial witnesses compared independently",
                        next_action=("repair_source_or_review_interpretation" if row["counts"]["fail"] else

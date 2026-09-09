@@ -175,6 +175,13 @@ passing sibling is not a substitute. These bindings prove bounded code, not the
 method's semantic name/signature or the historical linker's folding mechanism.
 See `docs/DECOMP_MAP.md` for the source grammar.
 
+For generated tables, distinguish non-emission from missing measurements.
+Native `generated_coverage` observes the former in an actual compiled object;
+every emitted copy is still checked and every compiler trial needs a real
+matching definition somewhere. Do not add duplicate C++ definitions merely to
+satisfy a TU that references a table without emitting it. Missing compilation,
+missing coverage and unsupported symbol/linker cases remain verification work.
+
 For object storage, native binary checks and decks
 follow external references to declared object owners and report additional
 `object_dependencies`. This read-only compilation does not expand worker editing

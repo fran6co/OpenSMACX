@@ -158,6 +158,38 @@ def test_standalone_binary_check_rejects_an_image_changed_during_compilation(pro
         verify_task(project, "owner", project / "original.exe", compiler=changed)
 
 
+@pytest.mark.parametrize("failed_trial", [False, True])
+def test_native_generated_coverage_is_from_successfully_compiled_objects_only(project, failed_trial):
+    from match_recovery.application_binary import verify_task
+    from match_recovery.generated_source import read_generated
+    from match_recovery.structural_requirements import check_requirements
+
+    header = project / "code/unit.hpp"
+    header.write_text(header.read_text() + "// RECOVERY_GENERATED: v1 vtable 0x401010 0x401014 ??_7Widget@@6B@ 0x401000\n")
+    configuration = project / "recovery/project.json"
+    value = json.loads(configuration.read_text())
+    value["measurement"]["flag_sets"] = [["trial-a"], ["trial-b"]]
+    configuration.write_text(json.dumps(value))
+    def compile_object(path, command, flags):
+        if failed_trial and flags == ("trial-b",):
+            raise ValueError("deliberate failed compilation")
+        return combined_object()
+    report = verify_task(project, "owner", project / "original.exe", compiler=compile_object)
+    assert report["compile_attempts"] == 2
+    assert report["generated_units"] == ["code/unit.cc"]
+    coverage = report["generated_coverage"]
+    assert len(coverage) == (1 if failed_trial else 2)
+    assert all(row["observation"] == "not_emitted" and row["unit"] == "code/unit.cc" for row in coverage)
+    assert report["generated_tables"] == []
+    binding, = read_generated(project, hashlib.sha256((project / "original.exe").read_bytes()).hexdigest())
+    inventory = {"scope": [binding.evidence.entity_id], "interpretations": [{
+        "interpretation_id": binding.interpretation_id, "entity_id": binding.evidence.entity_id,
+        "value": binding.interpretation, "current": True}]}
+    row, = check_requirements(inventory, {"checks": {"binary": report}})
+    assert row["result"] == "unknown"  # All-absent never proves the required table.
+    assert row["counts"]["unknown"] == (1 if failed_trial else 0)
+
+
 def test_non_unit_source_cannot_be_compiled_as_a_guessed_translation_unit(project, capsys):
     (project / "code/unit.cc").rename(project / "code/definition.hpp")
     assert main(["tasks", "check-binary", "owner", "--root", str(project), "--image", "original.exe"]) == 3

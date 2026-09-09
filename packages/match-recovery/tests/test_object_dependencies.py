@@ -65,6 +65,7 @@ def test_unselected_global_owner_compiles_once_per_trial_without_expanding_edit_
     assert report["result"] == "pass" and report["compile_attempts"] == 4
     assert calls == [(name, (flag,)) for flag in ("first", "second") for name in ("caller.cc", "global.cc")]
     assert all(row["units"] == ["code/global.cc"] and not row["errors"] for row in report["object_dependencies"])
+    assert report["generated_units"] == ["code/caller.cc", "code/global.cc"]
     assert TaskStore(project).scope("owner")[1] == frozenset({"code/caller.cc"})
     assert not report["ready_for_collection"]
 
@@ -76,6 +77,7 @@ def test_dependency_compile_failure_does_not_borrow_another_trials_object(projec
     report, calls = check(project, failure=failure)
     assert [row["result"] for row in report["functions"][0]["variants"]] == ["pass", "unknown"]
     assert report["object_dependencies"][1]["errors"] == {"code/global.cc": "synthetic missing compiler result"}
+    assert report["generated_units"] == ["code/caller.cc", "code/global.cc"]
     assert len(calls) == 4
 
 
@@ -95,6 +97,7 @@ def test_uncompilable_owner_path_is_reported_without_calling_compiler(project):
     assert report["result"] == "unknown" and len(calls) == 2
     assert all(row["errors"] == {"code/global.h": "object owner is not a configured translation unit"}
                for row in report["object_dependencies"])
+    assert report["generated_units"] == ["code/caller.cc", "code/global.h"]
 
 
 def test_dependency_cycle_terminates_and_shared_owner_is_not_recompiled(project):
