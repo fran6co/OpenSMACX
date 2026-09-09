@@ -47,16 +47,27 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL
 # keeping the language out.
 project(OpenSMACX VERSION 0.2.3 LANGUAGES CXX C)
 
+# The forced cross-toolchain skips normal compiler viability checks. If its
+# identification command cannot run, CMake can still succeed with generic
+# recipes (including -o instead of /Fo). Those recipes are unusable for
+# matching; refuse them before preparation can publish a replacement database.
+if(NOT CMAKE_CXX_COMPILER_ID OR NOT CMAKE_C_COMPILER_ID)
+    message(FATAL_ERROR
+        "Compiler identification failed; refusing to generate recovery recipes. "
+        "Check compiler access and the configured toolchain environment "
+        "(VC6/Wine and VC6_PREFIX for the default toolchain).")
+endif()
+
 if(NOT WIN32)
     message(FATAL_ERROR
-        "The current OpenSMACX target is a Windows DLL. "
+        "The current OpenSMACX target is a Windows application. "
         "Use cmake/toolchains/vc6.cmake, which drives cl 12.00.8168 under "
         "wine, when building from macOS or Linux.")
 endif()
 
 if(NOT CMAKE_SIZEOF_VOID_P EQUAL 4)
     message(FATAL_ERROR
-        "OpenSMACX is injected into the 32-bit terranx.exe process and must be built for x86.")
+        "OpenSMACX recovers a 32-bit x86 application and must be built for x86.")
 endif()
 
 # ZLIB IS A DEPENDENCY, NOT A RECOVERY. `terranx.exe` statically links zlib

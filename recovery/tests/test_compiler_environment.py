@@ -1,12 +1,15 @@
 """Shared compiler failure controls and project-owned VC6 option semantics."""
 
 import json
+from pathlib import Path
+import shutil
 import subprocess
 import sys
 
 import pytest
 
 from match_recovery.compilation_database import entries
+from match_recovery.processes import run_bounded
 from match_recovery.source import read_file
 from match_recovery.source.asm import compiled_asm, CompileFailed
 from recovery.environment import compile as environment
@@ -101,3 +104,25 @@ def test_vc6_retry_policy_remains_in_the_environment():
     assert not flag_dependent("error C2065: identifier not declared")
     assert flag_dependent("fatal error C1001: internal compiler error")
     assert flag_dependent("fatal error C1060: out of heap space")
+
+
+def test_unidentified_compilers_cannot_generate_matching_recipes(tmp_path):
+    cmake, ninja, failed_compiler = (shutil.which(name) for name in ("cmake", "ninja", "false"))
+    if not all((cmake, ninja, failed_compiler)):
+        pytest.skip("CMake, Ninja and a failing POSIX command are required")
+    root = Path(__file__).resolve().parents[2]
+    # No installed compiler or Wine is needed. The forced toolchain used to
+    # report success and emit unusable generic recipes even for /bin/false.
+    install = tmp_path / "vc6"
+    (install / "BIN").mkdir(parents=True)
+    (install / "INCLUDE").mkdir()
+    build = tmp_path / "build"
+    completed = run_bounded([
+        cmake, "-S", str(root), "-B", str(build), "-G", "Ninja",
+        "-DVC6_ROOT=" + str(install), "-DCMAKE_MAKE_PROGRAM=" + ninja,
+        "-DCMAKE_CXX_COMPILER=" + failed_compiler,
+        "-DCMAKE_C_COMPILER=" + failed_compiler,
+    ], cwd=tmp_path, timeout=60)
+    assert completed.returncode != 0
+    assert b"Compiler identification failed" in completed.stderr
+    assert not (build / "compile_commands.json").exists()
