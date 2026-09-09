@@ -280,6 +280,7 @@ uv run recover components list
 uv run recover components check-source zlib --archive /path/to/zlib-1.0.2.tar.gz
 uv run recover components check-binary zlib --image /path/to/the/pinned/original.exe --summary
 uv run recover components check-binary vc6-runtime --image /path/to/the/pinned/original.exe --archive /local/compiler/LIB/LIBCMT.LIB --summary
+uv run recover components check-link vc6-runtime --archive /local/compiler/LIB/LIBCMT.LIB --library LIBCMT --summary
 uv run recover audits check compiler-work --summary
 uv run recover audits check class-debt --summary
 uv run recover audits check storage --summary
@@ -294,6 +295,17 @@ compiler invocation or extraction. Its strict reference check resolves original
 DLL/export slots but still needs runtime data and remaining callee bindings and
 final-link selection. It does not promote library symbols into application acceptance.
 Use the actual local compiler path; the example above is not an installation step.
+
+The native `components check-link` command makes a fresh configured build and
+compares every declared runtime function with the pinned library member at its
+actual linked placement. `recovery/build.json` declares the PE and MSVC map as
+outputs. The package validates map coordinates and owner labels, then checks
+instructions, target operands and base relocations in the executable. Imported
+slots still require source-owned DLL/export identities. It does not infer
+original addresses from the candidate map or prove the runtime globals' storage,
+initialization, remaining dependency closure or full application acceptance.
+The project compiler test uses this command's native implementation; there is
+no separate project-local link comparator.
 
 `CMakeLists.txt` selects the static multithreaded runtime for both C and C++ in
 all configurations. Debug optimization/instrumentation does not select a debug

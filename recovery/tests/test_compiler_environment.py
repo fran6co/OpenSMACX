@@ -83,49 +83,26 @@ def test_prepared_project_and_matching_compiler_use_static_multithreaded_runtime
 
 def test_release_link_preserves_the_selected_runtime_code_and_relocations():
     """A bounded linked-runtime control, not full original-game acceptance."""
-    from collections import defaultdict
-    import hashlib
-    from match_recovery.binary import compare_bound_code
-    from match_recovery.build_check import check_build
-    from match_recovery.coff_archive import CoffArchive
+    from match_recovery.component_commands import execute
     from match_recovery.component_source import parse_component
-    from match_recovery.debug_sidecar import read_map
-    from match_recovery.import_source import read_imports, import_targets
-    from match_recovery.model import Span
-    from match_recovery.pe_coff import Coff, PeImage
+    from match_recovery.pe_coff import PeImage
     from recovery.environment.wine import VC6_ROOT
     if not (VC6_ROOT / "BIN/CL.EXE").is_file() or shutil.which("wine") is None:
         pytest.skip("VC6/Wine are required for the actual project link")
     root = Path(__file__).resolve().parents[2]
     manifest = parse_component((root / "src/vendor/vc6-runtime.recovery.h").read_text())
-    raw = (VC6_ROOT / "LIB/LIBCMT.LIB").read_bytes()
-    assert hashlib.sha256(raw).hexdigest() == manifest.archive_sha256
-    binding, = (item for item in manifest.bindings if item.symbol == "_free")
-    obj = Coff(CoffArchive(raw).member(binding.unit))
-    code, relocations, alignment = obj.subject(obj.function(binding.symbol))
-    report = check_build(root, retain=True)
-    assert report["result"] == "pass", report
-    directory = root / report["directory"]
-    output, = report["outputs"]
+    status, report = execute(root, {"action": "check-link", "component": "vc6-runtime",
+                                    "archive": VC6_ROOT / "LIB/LIBCMT.LIB", "library": "LIBCMT"})
+    assert status == 0 and report["result"] == "pass", report
+    assert len(report["functions"]) == len(manifest.bindings)
+    assert report["storage_verification"] == report["original_verification"] == "unknown"
+    build = report["fresh_build"]
+    directory = root / build["directory"]
+    output, = (item for item in build["outputs"] if item["format"] == "pe32-i386")
     image = PeImage((directory / output["path"]).read_bytes(), output["sha256"])
     assert not any(item.module.lower() in ("msvcrt.dll", "msvcrtd.dll") for item in image.imports())
-    publics, _ = read_map(directory / "OpenSMACX.map")
-    addresses = defaultdict(set)
-    for address, name, _, _ in publics:
-        addresses[name].add(address)
-    start, = addresses[binding.symbol]
-    imports, _ = import_targets(read_imports(root), {binding.unit: obj}, image)
-    targets = {str(index): next(iter(addresses[symbol.name])) for index, symbol in obj.symbols.items()
-               if len(addresses[symbol.name]) == 1}
-    targets.update({str(index): imports[symbol.name] for index, symbol in obj.symbols.items()
-                    if symbol.name in imports})
-    span = Span(start, start + len(code))
-    proof = compare_bound_code(span, image.read(span), code, relocations, targets,
-                               original_absolute_sites=image.absolute_sites(span), alignment=alignment)
-    assert proof["result"] == "pass", proof
-    # The map supplies independent linked addresses, not original placement or
-    # complete component admission. A fixed Release image failed this control.
-    assert image.absolute_sites(span)
+    # Project policy only; comparison and map parsing belong to the package.
+    assert image.relocations
 
 
 @pytest.mark.parametrize("args", [["compiler", "@options"], ["compiler", "/I"],

@@ -47,6 +47,16 @@ def execute(root: Path, arguments: dict):
         raise ValueError(f"expected one component named {arguments['component']}")
     manifest, = selected
     toolchain = isinstance(manifest, ToolchainManifest)
+    if action == "check-link":
+        if not toolchain:
+            raise ValueError("linked component verification currently requires a precompiled toolchain dependency")
+        from .component_link import check_toolchain_link
+        result = check_toolchain_link(root, manifest, arguments["archive"], library=arguments["library"])
+        if component_snapshot(root) != (manifests, before):
+            raise ValueError("component inputs changed during linked verification")
+        if arguments.get("summary"):
+            result.pop("functions", None)
+        return {Result.PASS: 0, Result.FAIL: 1, Result.UNKNOWN: 3}[result["result"]], result
     if toolchain and action != "check-binary":
         raise ValueError("precompiled toolchain dependencies have no upstream source; use check-binary --archive")
     inputs = [] if toolchain else [manifest.source_root + "/" + item.path for item in manifest.files]

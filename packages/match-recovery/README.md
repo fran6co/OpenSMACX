@@ -1335,7 +1335,10 @@ untracked `artifacts` path. It must be outside input roots. Output paths are
 relative to it; existing outputs elsewhere cannot satisfy the check. All commands
 must succeed and all expected outputs must be nonempty regular files. `file`
 checks only artifact existence/content identity; `pe32-i386` additionally parses
-the PE format. Neither validates application behavior or complete source coverage.
+the PE format. `msvc-map` parses an MSVC executable public-symbol map, refusing
+malformed or duplicate public rows; pairing it with a PE for address validation
+is a separate linked-code check. None validates application behavior or complete
+source coverage.
 
 Input roots are re-enumerated and hashed, including headers without extensions.
 Explicit input files may be internal file aliases; their link spelling, target
@@ -1751,6 +1754,43 @@ linker selected those members, identify every library function, or establish ABI
 runtime behavior or application acceptance. Reports are disposable and are not
 automatically installed as application relocation targets. Those integration
 proofs remain separate work.
+
+### Fresh linked-library code
+
+```sh
+uv run recover components check-link runtime --archive /local/compiler/runtime.lib --library RUNTIME
+```
+
+For precompiled components, this native command runs the configured build in a
+new retained ignored directory. Declare exactly one `pe32-i386` output and one
+`msvc-map` output in the build configuration. `--library` supplies the explicit
+Lib:Object label used by that linker; it is not an archive path or an inferred
+dependency identity. No original image or cached verdict is consumed by this
+check. Source annotations still supply the archive pin, member identities and
+independently justified original function lengths.
+
+The package validates map preferred base, entry point and public coordinates
+against the actual PE, preserves library/member labels and refuses duplicate
+publics or ambiguous member basenames. Each supported external single-COMDAT
+function is compared at its linked address with the pinned member, including
+every operand and PE base relocation. A public's address alone cannot replace a
+source-declared DLL/export identity for an imported slot. Missing targets,
+weak/local-data symbols and associated code fragments remain unknown.
+
+Source, imports, build policy, implementation, Git state, archive and produced
+artifacts are checked for changes across the operation. Build or code disagreement
+fails; incomplete evidence exits 3. Outputs remain disposable ignored build
+context. The API `verify_linked_toolchain` accepts in-memory artifacts for tests
+and integrations but makes no freshness claim; `check_toolchain_link` owns the
+fresh-build sequence used by the CLI.
+
+Passing means bounded **candidate linked-code correspondence**, not original
+equivalence or dependency admission. A map's common/public data address does not
+prove storage size, contents, initialization or ownership. Owner labels and
+matching bytes also do not prove the linker read a particular archive path.
+Original-image bindings, full dependency closure, archive selection provenance,
+ABI, structure and runtime checks remain separate. No targets or claims are
+published into application acceptance, and `ready_for_collection` stays false.
 
 ### Source compiler interaction
 

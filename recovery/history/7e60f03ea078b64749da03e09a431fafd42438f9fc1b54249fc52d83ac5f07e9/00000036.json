@@ -1,0 +1,26 @@
+{
+  "event_id": "461ec54c3a3bfa5c6f9fdc7cc8f709981e6fb86ecfa8c3cb024159d85ecce445",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "packages/match-recovery/src/match_recovery/build_check.py",
+      "packages/match-recovery/src/match_recovery/component_commands.py",
+      "packages/match-recovery/src/match_recovery/component_link.py",
+      "packages/match-recovery/src/match_recovery/msvc_link_map.py",
+      "packages/match-recovery/src/match_recovery/project_commands.py",
+      "packages/match-recovery/tests/test_component_link.py",
+      "packages/match-recovery/tests/test_link_map.py",
+      "recovery/build.json"
+    ],
+    "evidence": [
+      "Coordinator-owned native final-link evidence work for the runtime dependency: replace the project-only allocator comparison with reusable pinned archive versus fresh linked PE code/reference/fixup checks and strict link-map validation. Source-owned original obligations, dependency data/ABI/runtime obligations and the refusal to publish unchecked application targets stay intact. Configure the map as a build artifact and use the native path in the real compiler control; this is not permission to weaken task or full acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "8567c263edb52454c5e17f9a5f0505c097a0ee54c161280917e721f6a965c696",
+  "request_id": "runtime-linked-verification",
+  "schema_version": 1,
+  "sequence": 36,
+  "stream": "task:jackal-voice-ownership"
+}

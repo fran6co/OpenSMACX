@@ -231,6 +231,12 @@ def register(commands):
     binary.add_argument("--image", type=Path, required=True)
     binary.add_argument("--archive", type=Path, help="Pinned precompiled library for a toolchain component")
     binary.add_argument("--summary", action="store_true", help="Omit per-function relocation detail")
+    linked = actions.add_parser("check-link", help="Fresh-build pinned toolchain code correspondence; not original or full acceptance")
+    linked.add_argument("component")
+    linked.add_argument("--root", type=Path, default=Path.cwd())
+    linked.add_argument("--archive", type=Path, required=True)
+    linked.add_argument("--library", required=True, help="Explicit library label in the configured MSVC link map")
+    linked.add_argument("--summary", action="store_true", help="Omit per-function relocation detail")
 
 
 def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
