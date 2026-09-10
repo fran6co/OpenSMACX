@@ -1,0 +1,22 @@
+{
+  "event_id": "6c5a7e94a211732a3f3a6ba48a9aa4d8f29712ffe9251835b06bc26676cc46f2",
+  "payload": {
+    "affects": [
+      "entity-b3c9b1a959cafb4c8d3719a004718802d52bb5174aa18c0bd3ecf49f9db48dfb",
+      "entity-fa2d5b1e0b4875cf51af1add3ecc7de2bb9f518b4b6b4ae5db4e268172fb6070"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "preserved-control-draw-candidate",
+    "evidence": [
+      "git:a2e6a2d38a8c6929efa2820c9d2e608fddad3508 on recovery/control-draw-candidate preserves typed CheckBox/RadioButton drawing, StringList::current_text, paired leaf rehoming and intact worker decisions 2-15. The inactive checkout was removed at the user request; no product code was integrated into master.",
+      "The candidate is not an accepted checkpoint. Its saved measurements include unresolved draw matching, accessor emission/restoration and outside-scope preservation; all need fresh verification. Root decisions remain authoritative for current editing scope. Reassess branch discoveries against current source before issuing new scope or incorporation decisions."
+    ],
+    "hypothesis": "A preserved unaccepted candidate contains useful coupled draw/accessor recovery beyond the current source. Inspect it as a hint before resuming this ownership task; do not blindly cherry-pick its source or divergent journal, reset the baseline, or assume old measurements grant acceptance.",
+    "kind": "discovery"
+  },
+  "previous_event": "e42c67092f70f098836677355c5fce82e8b6915629d6b9ccae81897c98e8bc9a",
+  "request_id": "preserved-control-draw-candidate",
+  "schema_version": 1,
+  "sequence": 16,
+  "stream": "task:control-sprite-defaults"
+}
