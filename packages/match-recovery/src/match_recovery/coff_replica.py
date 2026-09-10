@@ -135,6 +135,12 @@ def _object_evidence(obj, *, excluded=frozenset(), section_keys=None, entry_name
     entry_names = entry_names or {}
     referenced = {target for number, section in enumerate(obj.sections, 1) if number not in omitted
                   for _, target, _ in section.relocations}
+    excluded_references = {target for number, section in enumerate(obj.sections, 1) if number in excluded
+                           for _, target, _ in section.relocations}
+    # Weak fallbacks are linker edges even when no retained instruction has a
+    # relocation to the fallback itself. Keep their target records visible.
+    referenced.update(weak_external(obj, symbol)[0].index for symbol in obj.symbols.values()
+                      if symbol.storage == 105 and symbol.section not in omitted)
 
     type_contents = None
     if any(section.name == ".debug$T" for section in obj.sections):
@@ -215,10 +221,12 @@ def _object_evidence(obj, *, excluded=frozenset(), section_keys=None, entry_name
                      for index, symbol in obj.symbols.items() if symbol.storage != 103
                      and (symbol.section not in omitted or
                           (symbol.section in excluded and symbol.storage == 2 and index not in entry_names))
-                     # A new ordinary undefined callee used only by scoped code
-                     # is not an outside definition. Common storage, weak aliases
-                     # and auxiliary metadata can affect linkage and stay visible.
-                     and not (excluded and symbol.section == 0 and symbol.storage == 2 and symbol.value == 0
+                     # Only an actual excluded edge establishes scoped-only use.
+                     # Unreferenced externals can be implicit linker requirements;
+                     # keep them even when unrelated scoped functions are removed.
+                     # Common storage, weak aliases and opaque metadata stay strict.
+                     and not (index in excluded_references and symbol.section == 0
+                              and symbol.storage == 2 and symbol.value == 0 and symbol.type in (0, 0x20)
                               and not obj.auxiliary.get(index) and index not in referenced))
     return {"sections": sections, "symbols": symbols,
             "associations": sorted((keys[child], keys[parent]) for child, parent in obj.associations.items()

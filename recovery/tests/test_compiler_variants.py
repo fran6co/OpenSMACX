@@ -220,6 +220,39 @@ def test_real_vc6_preservation_tracks_exception_locations_not_numeric_names(vari
         assert compare_outside_functions(baseline, damaged, {}, {})["result"] == "fail"
 
 
+@pytest.mark.parametrize("debug_flags", [(), ("/Z7",)])
+def test_real_vc6_scoped_removal_retains_implicit_runtime_requirements(variant_project, debug_flags):
+    from match_recovery.coff_preservation import compare_outside_functions
+    from match_recovery.model import Origin
+    from recovery.environment.wine import VC6_ROOT
+    if not (VC6_ROOT / "BIN/CL.EXE").is_file():
+        pytest.skip("VC6 is not installed")
+    root = variant_project
+    source = root / "code/unit.cpp"
+    # Keep retained debug line numbers and next-function links unchanged; this
+    # control isolates implicit requirements, not debug-list normalization.
+    source.write_text("int removed(int x) { return x + 1; }\n"
+                      "double value(double x) { return x + 1.0; }\n"
+                      "int retained(int x) { return x; }\n")
+    wrapper = Path(__file__).resolve().parents[1] / "environment/wine.py"
+    command = (sys.executable, str(wrapper), "--tool=cl", "/nologo")
+    flags = ("/c", "/O2", "/Gy", *debug_flags)
+    baseline = Coff(compile_object(source, command, flags))
+    replica = Coff(compile_overlay(root, source, {}, command, flags))
+    assert object_signature(baseline) == object_signature(replica)
+    candidate = source.read_bytes().replace(b"int removed(int x) { return x + 1; }", b"")
+    changed = Coff(compile_overlay(root, source, {"code/unit.cpp": candidate}, command, flags))
+    for obj in (baseline, changed):
+        requirement, = [s for s in obj.symbols.values() if s.name == "__fltused"]
+        assert requirement.section == 0 and requirement.storage == 2 and requirement.value == 0
+        assert all(target != requirement.index for section in obj.sections for _, target, _ in section.relocations)
+    scope = {"?removed@@YAHH@Z": Origin("a" * 64, "pe:va", 0x401000).entity_id}
+    assert compare_outside_functions(baseline, changed, scope, scope)["result"] == "pass"
+    damaged = Coff(compile_overlay(root, source,
+        {"code/unit.cpp": candidate.replace(b"x + 1.0", b"x + 2.0")}, command, flags))
+    assert compare_outside_functions(baseline, damaged, scope, scope)["result"] == "fail"
+
+
 def test_real_vc6_same_code_and_storage_cannot_hide_changed_member_type(variant_project):
     from recovery.environment.wine import VC6_ROOT
     from match_recovery.codeview import class_layout

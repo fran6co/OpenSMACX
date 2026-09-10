@@ -78,6 +78,63 @@ def test_new_callee_used_only_by_scoped_code_is_not_an_outside_definition():
     assert compare_outside_functions(old, new, {}, {})["result"] == "fail"
 
 
+@pytest.mark.parametrize("reverse", [False, True])
+def test_scoped_function_removal_keeps_unreferenced_linker_requirements(reverse):
+    old = Coff(object_fixture(extra=(b".text", b"\xc3", (), 0, 2, 0x60501020)))
+    new = Coff(object_fixture())
+    scoped = next(symbol for symbol in old.symbols.values() if symbol.name == "$tail3")
+    old.symbols[scoped.index] = replace(scoped, name="_removed", type=0x20, storage=2)
+    for obj in (old, new):
+        obj.symbols[100] = Symbol(100, "_implicit_runtime_requirement", 0, 0, 0x20, 2)
+    if reverse:
+        old, new = new, old
+    scope = {"_removed": ENTITY}
+    report = compare_outside_functions(old, new, scope, scope)
+    assert report["result"] == "pass" and report["symbol_changes"] == []
+
+
+@pytest.mark.parametrize("damage", ["rename", "remove", "add", "type", "multiplicity"])
+def test_unreferenced_linker_requirements_remain_visible_with_scoped_code(damage):
+    old = Coff(coff_fixture())
+    new = copy.deepcopy(old)
+    if damage == "rename":
+        new.symbols[1] = replace(new.symbols[1], name="_different_requirement")
+    elif damage == "remove":
+        del new.symbols[1]
+    elif damage == "add":
+        new.symbols[2] = Symbol(2, "_new_requirement", 0, 0, 0x20, 2)
+    elif damage == "type":
+        new.symbols[1] = replace(new.symbols[1], type=0x20)
+    else:
+        new.symbols[2] = replace(new.symbols[1], index=2)
+    report = compare_outside_functions(old, new, SCOPE, SCOPE)
+    assert report["result"] == "fail" and report["symbol_changes"]
+
+
+@pytest.mark.parametrize("edge", ["code", "data", "weak", "common", "auxiliary", "opaque_type"])
+def test_scoped_reference_does_not_hide_other_linker_requirements(edge):
+    old = Coff(coff_fixture(b"\xe8\0\0\0\0\xc3", relocation=(1, 1, 20)))
+    if edge in ("code", "data"):
+        section = replace(old.sections[0], name=".outside", relocations=((1, 1, 20),),
+                          flags=0x60500020 if edge == "code" else 0xC0500040)
+        old.sections = (*old.sections, section)
+        old.section_sizes = (*old.section_sizes, len(section.data))
+    elif edge == "weak":
+        old.symbols[2] = Symbol(2, "_fallback_user", 0, 0, 0, 105)
+        old.auxiliary[2] = struct.pack("<II10x", 1, 2)
+    elif edge == "common":
+        old.symbols[1] = replace(old.symbols[1], value=4)
+    elif edge == "auxiliary":
+        old.auxiliary[1] = bytes(18)
+    else:
+        old.symbols[1] = replace(old.symbols[1], type=0x30)
+    new = copy.deepcopy(old)
+    new.symbols[1] = replace(new.symbols[1], name="_other")
+    report = compare_outside_functions(old, new, SCOPE, SCOPE)
+    assert report["result"] == "fail"
+    assert any(row["symbol"] == "_g" for row in report["symbol_changes"])
+
+
 def test_local_relocation_targets_are_not_collapsed_to_a_placeholder():
     old = Coff(coff_fixture(b"\xe8\0\0\0\0\xc3", relocation=(1, 1, 20)))
     old.symbols[1] = replace(old.symbols[1], name="$local", section=1, value=1, storage=3)
