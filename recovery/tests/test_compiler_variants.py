@@ -221,6 +221,43 @@ def test_real_vc6_preservation_tracks_exception_locations_not_numeric_names(vari
 
 
 @pytest.mark.parametrize("debug_flags", [(), ("/Z7",)])
+def test_real_vc6_root_jump_labels_preserve_exact_owned_locations(variant_project, debug_flags):
+    from match_recovery.coff_preservation import compare_outside_functions
+    from recovery.environment.wine import VC6_ROOT
+    if not (VC6_ROOT / "BIN/CL.EXE").is_file():
+        pytest.skip("VC6 is not installed")
+    root = variant_project
+    source = root / "code/unit.cpp"
+    header = root / "code/labels.h"
+    header.write_text("int external(int);\n")
+    source.write_text('#include "labels.h"\nint value(int x) { switch (x) {\n'
+                      "case 0: return external(11); case 1: return external(17);\n"
+                      "case 2: return external(31); case 3: return external(47);\n"
+                      "case 4: return external(61); case 5: return external(79);\n"
+                      "default: return external(97); } }\n")
+    wrapper = Path(__file__).resolve().parents[1] / "environment/wine.py"
+    command = (sys.executable, str(wrapper), "--tool=cl", "/nologo")
+    flags = ("/c", "/O2", "/Gy", *debug_flags)
+    baseline = Coff(compile_object(source, command, flags))
+    replica = Coff(compile_overlay(root, source, {}, command, flags))
+    assert object_signature(baseline) == object_signature(replica)
+    header_candidate = header.read_bytes() + b"inline int unused(int x) { return x; }\n"
+    changed = Coff(compile_overlay(root, source, {"code/labels.h": header_candidate}, command, flags))
+    def labels(obj):
+        owner = obj.function("?value@@YAHH@Z")
+        return {s.name for s in obj.symbols.values() if s.section == owner.section
+                and s.storage == 6 and s.type == 0 and re.fullmatch(r"\$L[0-9]+", s.name)}
+    assert labels(baseline) and labels(changed) and labels(baseline) != labels(changed)
+    assert compare_outside_functions(baseline, changed, {}, {})["result"] == "pass"
+    for damage in (source.read_bytes().replace(b"external(47)", b"external(48)"),
+                   source.read_bytes().replace(b"external", b"other_external")):
+        declarations = header_candidate + b"int other_external(int);\n"
+        damaged = Coff(compile_overlay(root, source,
+            {"code/labels.h": declarations, "code/unit.cpp": damage}, command, flags))
+        assert compare_outside_functions(baseline, damaged, {}, {})["result"] == "fail"
+
+
+@pytest.mark.parametrize("debug_flags", [(), ("/Z7",)])
 def test_real_vc6_scoped_removal_retains_implicit_runtime_requirements(variant_project, debug_flags):
     from match_recovery.coff_preservation import compare_outside_functions
     from match_recovery.model import Origin

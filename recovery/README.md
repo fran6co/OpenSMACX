@@ -285,6 +285,9 @@ numeric exception labels through their associative owners and exact offsets.
 Baseline preservation uses the same narrowly recognized associative numeric
 labels, retaining owner, exact offset, type/storage, auxiliary metadata and every
 relocation edge; duplicate locations and internal-identity impersonation refuse.
+Numeric code labels in a root COMDAT also qualify only with a unique, external
+function owner at offset zero. Other root symbol tuples remain in its identity;
+static-only, ambiguous, data and non-COMDAT owners do not authorize renaming.
 Unnamed-namespace aliases remain restricted to replica controls. None of these
 rules supply original-image target bindings. Ordinary
 external targets and initialized data remain strict. Supported standalone
