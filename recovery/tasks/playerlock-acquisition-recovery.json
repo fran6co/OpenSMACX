@@ -1,0 +1,49 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "276b0421c7f9200a59c9945961ed3e144d6f73b0",
+  "editable_files": [
+    "src/playerlock.cpp",
+    "src/playerlock.h"
+  ],
+  "evidence": [
+    "partition --group class:PlayerLock --details --impact identifies five conflict-free identities, including seed-only lock at 0x00590000. The complete group fits delegation in src/playerlock.cpp and src/playerlock.h, without additional files or reserved work.",
+    "Current PlayerLock declares a byte at +0 and two real SquareLock members at +4 and +0x10. Its clear, active, unlock and add_lock methods are implemented, but the seven-argument lock method exists only in src/unrecovered/00590000.cpp with raw receiver offsets.",
+    "Pinned-image inspection fully decoded 0x00590000–0x00590093. It resets both entries, clears the leading byte, calls SquareLock::lock at 0x00590041 and 0x0059005A, and skips the second acquisition if the first fails. Either failure runs SquareLock::unlock over both entries, clears the byte again and returns 1; successful acquisition returns 0.",
+    "src/squarelock.cpp already implements both original callees, allowing recovery through existing typed members and direct calls. Preserve all five PlayerLock identities, existing historical obligations and seed provenance; the framework must bind the selected seed through its native workflow.",
+    "Original Lock::lock at 0x00590300 independently corroborates the 0x1C player-record stride and the same two-entry acquisition/rollback sequence. Its mapped caller is NetDaemon::process_message. No direct caller of standalone PlayerLock::lock was found; this establishes an implementation opportunity, not demonstrated runtime reachability.",
+    "A separate discovery remains outside this task: original Lock::lock clears its +0xE4 state before broadcasting at 0x00590456, while src/lock.cpp clears field_E4_ after message_data. Preserve this ordering discrepancy for coordinator replanning without editing Lock or reserved NetDaemon work.",
+    "Original subject decoding succeeded, but caller searches returned exit 3 because eleven other mapped spans were incompletely decoded; include-impact coverage is also incomplete. Read-only diagnostics succeeded after approved uv cache-lock escalation. No compilation, edits, publication or acceptance occurred.",
+    "Planner delegation: 187a58e82dc64faa28c80da88add4129f6f45d46253b4dbb525a83e87ae560df"
+  ],
+  "intent": "Recover PlayerLock's missing two-square acquisition and rollback operation as genuine C++ using its existing SquareLock member array. Preserve acquisition order, failure cleanup, return behavior, complete class scope and historical obligations without changing coupled owners.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5832560,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5832608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5832640,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5832704,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5832864,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "playerlock-acquisition-recovery"
+}
