@@ -1,4 +1,4 @@
-"""Conservative controls for compiling an unchanged TU through a source replica.
+"""Conservative compiler-local identities for replica and preservation controls.
 
 These compare compiler outputs with one another, never against the original
 executable. A control can refuse harmless representation differences; it must
@@ -12,23 +12,39 @@ from .model import digest
 from .pe_coff import weak_external
 
 
-def _replica_names(obj):
-    """Narrow compiler-local identities for unchanged-source controls only.
+_ASSOCIATIVE_LOCAL = "<coff-associative-local>"
 
-    VC6 encodes a simple unnamed-namespace definition as
-    ?name@?%<primary COFF FILE path><decimal nonce>@@<signature>. Recognize only
-    that observed form and a defined function COMDAT or ordinary data symbol.
-    Never infer an external alias for original-image or baseline preservation.
-    Exception labels retain their associative owner, offset, type and storage;
-    only the compiler's numeric spelling is immaterial to an object-local edge.
+
+def _associative_names(obj):
+    """Identify narrow numeric local labels by their compiler-owned location.
+
+    Applicable to both replicas and baseline preservation, never original-image
+    target resolution. The complete key still includes associative owner, section,
+    offset, type and storage; neither bytes nor relocation edges are omitted.
     """
+    if any(symbol.name == _ASSOCIATIVE_LOCAL for symbol in obj.symbols.values()):
+        # Otherwise a real symbol in one object could impersonate a normalized
+        # local in the other, even with no within-object collision.
+        raise ValueError("reserved compiler-local identity appears in COFF symbols")
     names = {}
     for symbol in obj.symbols.values():
         if (symbol.section in obj.associations and symbol.type == 0
                 and ((symbol.storage == 6 and re.fullmatch(r"\$L[0-9]+", symbol.name))
                      or (symbol.storage == 3 and re.fullmatch(r"\$T[0-9]+", symbol.name)))
                 and not obj.auxiliary.get(symbol.index)):
-            names[symbol.index] = "<replica-local>"
+            names[symbol.index] = _ASSOCIATIVE_LOCAL
+    return names
+
+
+def _replica_names(obj):
+    """Additional unnamed-namespace identities for unchanged-source controls.
+
+    VC6 encodes a simple unnamed-namespace definition as
+    ?name@?%<primary COFF FILE path><decimal nonce>@@<signature>. Recognize only
+    that observed form and a defined function COMDAT or ordinary data symbol.
+    Never infer this external alias for original-image or baseline preservation.
+    """
+    names = _associative_names(obj)
     # /Z7 adds FILE records for inline headers and repeated returns to the TU.
     # Only the first FILE is the primary source; never guess among headers or
     # choose a filename merely because it makes two symbol spellings agree.
@@ -55,6 +71,10 @@ def _replica_names(obj):
                     raise ValueError("replica unnamed namespace data lacks a data section")
                 basename = path.replace("\\", "/").rsplit("/", 1)[-1]
                 names[symbol.index] = "?" + match[1] + "@<replica-tu:" + basename + ">@@" + match[3]
+    return names
+
+
+def _validate_names(obj, names):
     # Refuse aliases/collisions, including two local labels at the same offset.
     # A relocation can never borrow the identity of another original symbol.
     seen = {}
@@ -63,7 +83,6 @@ def _replica_names(obj):
         if key in seen and (symbol.index in names or seen[key] in names):
             raise ValueError("ambiguous compiler-local replica identity")
         seen[key] = symbol.index
-    return names
 
 
 def _section_keys(obj, overrides=None, names=None):
@@ -108,7 +127,8 @@ def _object_evidence(obj, *, excluded=frozenset(), section_keys=None, entry_name
     """
     if any(section.name == ".debug$P" for section in obj.sections):
         raise ValueError("replica control requires standalone objects, not external precompiled types")
-    names = _replica_names(obj) if replica else {}
+    names = _replica_names(obj) if replica else _associative_names(obj)
+    _validate_names(obj, names)
     keys = _section_keys(obj, section_keys, names)
     debug = {index for index, section in enumerate(obj.sections, 1) if section.name == ".debug$S"}
     omitted = debug | set(excluded)
@@ -218,6 +238,7 @@ def function_signature(obj, name):
     """
     symbol = obj.function(name)
     names = _replica_names(obj)
+    _validate_names(obj, names)
     return digest([{"bytes": obj.sections[number - 1].data.hex(),
                     "relocations": [(offset, ("external", names.get(target, obj.symbols[target].name))
                                      if obj.symbols[target].storage == 2 else ("local",), kind)

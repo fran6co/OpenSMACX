@@ -62,7 +62,9 @@ def compare_outside_functions(baseline, current, baseline_scope, current_scope, 
 
     Scope maps emitted names to original entity identities supplied by source,
     never by similarity or by the compiler's output. Function renames normalize
-    only the scoped entry identity. Local label offsets, weak/common symbols,
+    only the scoped entry identity. Numeric associative local labels use their
+    compiler owner and exact location, not their incidental decimal spellings;
+    this never aliases external or unnamed-namespace symbols. Local label offsets, weak/common symbols,
     data, directives, types and COMDAT policies remain strict comparisons.
     Reports contain digests and names, not proprietary object bytes.
     """
