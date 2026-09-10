@@ -1912,7 +1912,12 @@ their associative children may vary. All remaining code/data, BSS extents, link
 directives, weak/common symbols, public aliases and exact symbolic relocations
 are compared. Scoped entry renames use original entity identity; local relocation
 destinations are never reduced to a generic placeholder. Ordinary undefined
-callees used only by scoped code are not outside definitions. Outside function
+callees reached by relocations only from scoped code are not outside definitions.
+Otherwise-unreferenced externals remain visible: they can express implicit linker
+requirements even without an instruction relocation. A retained code/data edge
+or weak-external fallback also keeps its target protected; unknown external types
+and auxiliary metadata are not dropped. Removing the last scoped function from
+a TU does not change these rules. Outside function
 bindings/claims and object/member/base/generated/component annotations also stay
 protected; a comment-only address change cannot be hidden by unchanged objects.
 
