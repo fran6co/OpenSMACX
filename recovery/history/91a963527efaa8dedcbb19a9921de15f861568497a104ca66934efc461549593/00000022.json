@@ -1,0 +1,23 @@
+{
+  "event_id": "6fd8c37b60384fdb86167592ff9773f09795764388a590f4d3968be437bca1e5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Independent review identified two additional inline StringList input stores in BasePop::start 0x601BF0: unit_ids_ and item_ids_ are real StringList members. Authorize only replacing their old field_1C_ integer casts with pending_text_ pointer assignments, preserving parsing, allocation and metadata behavior. The file is already editable; this does not waive this caller or expand unrelated BasePop recovery."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6298608,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "c7cb16cf132c4316385dde0fe74516156980c9108251e81bafd59479694119ef",
+  "request_id": "list-hook-inline-input-caller",
+  "schema_version": 1,
+  "sequence": 22,
+  "stream": "task:control-sprite-defaults"
+}

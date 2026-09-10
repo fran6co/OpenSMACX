@@ -17,6 +17,7 @@
 #include <cstring>
 
 #include "heap.h"  // StringAllocationHeap
+#include "general.h"  // mem_get
 
 // The real teardown: republish the saved allocation owner so the next
 // allocation routes through it again (sub_401520, the image's deleting
@@ -30,7 +31,52 @@ StringAllocationBase::~StringAllocationBase() {
     StringAllocationHeap = allocation_owner_;
 }
 
-void StringStruct::unk_slot00() {
+namespace {
+// The cleanup path at 0x00608783 tests the captured text pointer again before
+// calling free. This is a local null-safe release idiom, not an original symbol.
+inline void release_text(char *text) {
+    if (text != 0) {
+        free(text);
+    }
+}
+}
+
+// The original primary table uses these shared defaults. Hook names describe
+// their list role; the catalogue's unrelated class names are retained as seeds.
+// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_insert@StringStruct@@UAEHPAVStringStructPayload@@@Z 0x006086F0
+int StringStruct::on_insert(StringStructPayload *) { return 0; }
+// RECOVERY_SHARED: v1 0x00404270 0x00404273 ?on_remove@StringStruct@@UAEXPAVStringStructPayload@@@Z 0x006086F0
+void StringStruct::on_remove(StringStructPayload *) { }
+
+// ORIGINAL: 0x006086F0 ?on_insert@StringList@@UAEHPAVStringStructPayload@@@Z 0x006086F0-0x00608761 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Primary table 0x6698C4 slot0 targets this body. Original StringStruct::add at 0x4012ED/0x4014F7 passes its 0x18 allocation as the one hook argument; this body writes text at +4 and metadata at +8/+C. The retained seed and its extent remain unchanged.", "Original 0x6086FD bypasses the text store when the source is null; preserve that behavior without assuming zeroed allocation. Receiver +0x18 is passed to Heap::get. No byte claim is banked by this binding."], "reason": "Recover the StringList insertion virtual using its allocated payload type; on_insert is a descriptive name, not a recovered original spelling."}
+int StringList::on_insert(StringStructPayload *payload) {
+    if (pending_text_ != 0) {
+        char *copy;
+        if (allocator_ != 0) {
+            copy = static_cast<char *>(allocator_->get(strlen(pending_text_) + 1));
+        } else {
+            copy = static_cast<char *>(mem_get(strlen(pending_text_) + 1));
+        }
+        payload->text = copy;
+        if (copy == 0) {
+            return 4;
+        }
+        *payload->text = 0;
+        strcat(payload->text, pending_text_);
+    }
+    payload->field_8_ = field_20_;
+    payload->field_C_ = field_24_;
+    return 0;
+}
+
+// ORIGINAL: 0x00608770 ?on_remove@StringList@@UAEXPAVStringStructPayload@@@Z 0x00608770-0x0060879B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Primary table 0x6698C4 slot1 targets this body; original 0x608775 loads payload text at +4, then 0x60877C checks the list allocator at +0x18. Only a null allocator permits free and clearing text. on_remove is descriptive; the kill_entry seed and its historical claim remain intact."], "reason": "Recover allocator-aware StringList text cleanup as a real virtual method; the payload node lifetime remains owned by enclosing list teardown."}
+void StringList::on_remove(StringStructPayload *payload) {
+    if (payload->text != 0 && allocator_ == 0) {
+        release_text(payload->text);
+        payload->text = 0;
+    }
 }
 
 // The real destructor body: release the entries and clear the position.
@@ -149,7 +195,6 @@ extern "C" int __cdecl string_struct_seek_id_source(StringStruct *self, int id) 
 
 namespace {
 
-typedef void (OriginalObject::*func_entry_visitor)(void *);
 typedef void (OriginalObject::*func_scalar_deleting_destructor)(int);
 
 // MSVC reaches these destructors through the virtual-base displacement stored
@@ -221,9 +266,8 @@ void StringStruct::remove_all() {
         do {
             StringStructEntry *const entry = head_;
             current_ = entry->next;
-            void *const payload = entry->payload;
-            uint32_t *const vtable = *reinterpret_cast<uint32_t **>(this);
-            (ORIGINAL(this)->*original_method<func_entry_visitor>(static_cast<unsigned long>(vtable[1])))(payload);
+            StringStructPayload *const payload = entry->payload;
+            on_remove(payload);
             if (payload) {
                 destroy_virtual_base(payload);
             }

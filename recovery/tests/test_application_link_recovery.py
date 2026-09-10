@@ -650,7 +650,7 @@ def test_receiver_cleanup_respects_payload_and_allocation_ownership(tmp_path, mo
         ("// LIVE_ALLOCATION_BASE", "src/stringstruct.h", "class StringAllocationBase {",
          "// REAL VIRTUAL INHERITANCE, like StringStructPayload"),
         ("// LIVE_OWNER_PUBLICATION", "src/stringstruct.cpp", "StringAllocationBase::~StringAllocationBase() {",
-         "void StringStruct::unk_slot00()"),
+         "// The original primary table uses these shared defaults."),
         ("// LIVE_RECEIVER_DECLARATIONS", "src/net_class.h", "struct VoiceReceiverEntry :",
          "// The list subobject at Net+0x72C"),
         ("// LIVE_QUEUE_DECLARATIONS", "src/hypothesis_layouts.h", "class NetFifo {",

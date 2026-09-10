@@ -161,17 +161,13 @@ static_assert(sizeof(StringStructPayload) == 0x18,
 
 class StringStruct : public virtual StringAllocationBase {
  public:
-  // THE OWN VIRTUAL SLOT. The image's StringStruct table at 0x006693A4 is
-  // three dwords (0x006693A4..0x006693B0), so StringStruct declares virtuals
-  // of its own - an override of the base's destructor would be folded into
-  // the virtual base's table and leave no vfptr at offset 0, which the image
-  // has. Which body owns which slot is not recovered: close() is called
-  // directly (`call 0x00401060`-shaped sites and the vbase adjustor) and
-  // remove_all() likewise (`call 0x402970` in ??1Net), so neither can carry
-  // the virtual in this tree without changing those call sites' bytes. This
-  // placeholder holds slot 0 so the layout is right; it is semantic debt
-  // counted by class_debt.py until the slots are named.
-  virtual void unk_slot00();
+  // Insertion 0x004012F2 passes the newly allocated 0x18-byte payload to
+  // primary slot 0. Removal 0x00402992 calls slot 1 before destroying it.
+  // The primary table ends where the separate allocation-base table begins
+  // at 0x006693AC; that table's destructor is not a third primary slot.
+  // RECOVERY_GENERATED: v1 vtable 0x006693A4 0x006693AC ??_7StringStruct@@6B0@@ 0x006086F0
+  virtual int on_insert(StringStructPayload *payload);
+  virtual void on_remove(StringStructPayload *payload);
   // Zeroes the five list fields, which the implicit construction chain
   // therefore emits between StringStruct's vtable stage and StringList's - the
   // image's order. Inline for the same reason the capture is.
@@ -224,7 +220,9 @@ class StringStruct : public virtual StringAllocationBase {
   StringStructEntry *current_;   // 0x0C
   int entry_count_;              // 0x10
   int current_position_;         // 0x14
-  void *allocator_;              // 0x18
+  // The insertion hook passes this receiver to Heap::get at 0x00608714.
+  // RECOVERY_MEMBER: v3 StringStruct allocator_ Heap* 0x18 0x006086F0
+  Heap *allocator_;              // 0x18
   // 0x1C..0x24 is the virtual base: its vtable slot (compiler-managed) and
   // the inherited allocation_owner_.
 };
@@ -234,6 +232,14 @@ static_assert(sizeof(StringStruct) == 0x24,
 
 class StringList : public StringStruct {
  public:
+  // Original primary slots name 0x006086F0 and 0x00608770. BasePop's
+  // constructor (0x00600860) installs this table in both embedded lists;
+  // the next table at 0x006698CC belongs to BasePop's Buffer subobject.
+  // Its 0x004070B0 deleting-destructor thunk adjusts that receiver by -0x444.
+  // RECOVERY_GENERATED: v1 vtable 0x006698C4 0x006698CC ??_7StringList@@6BStringStruct@@@ 0x006086F0
+  virtual int on_insert(StringStructPayload *payload);
+  virtual void on_remove(StringStructPayload *payload);
+
   // Provisional name: 0x005E3630 returns the current StringList text.
   // Its original Buffer callers pass this list in ECX and consume a char*.
   char *current_text() {
@@ -249,14 +255,17 @@ class StringList : public StringStruct {
   uint32_t destroy();
 
   // PUBLIC, not private: the image pokes these three fields directly from
-  // outside the class - Dialog::item writes field_1C_/field_20_/field_24_
+  // outside the class - Dialog::item writes pending_text_/field_20_/field_24_
   // of its embedded list (dialog.cpp) - and access specifiers do not change
   // layout, exactly as StringStruct's own list fields above.
   //
   // 0x00 is the compiler's vftable, 0x04 its vbtable, 0x08..0x18 the
   // inherited StringStruct fields; 0x1C..0x24 is this class's own storage,
   // which neither the construction above nor destroy() below touches.
-  uint32_t field_1C_;  // 0x1C
+  // Borrowed text supplied by Dialog::item and BasePop's string/button paths;
+  // on_insert copies it into payload-owned storage. Null leaves text untouched.
+  // RECOVERY_MEMBER: v1 StringList pending_text_ 0x1C 0x006086F0
+  char *pending_text_;  // 0x1C
   uint32_t field_20_;  // 0x20
   uint32_t field_24_;  // 0x24
   // 0x28..0x30 is the inherited StringAllocationBase.

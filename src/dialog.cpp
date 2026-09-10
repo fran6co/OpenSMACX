@@ -402,7 +402,7 @@ int Dialog::item(char *text, int index) {
         return 3;
     }
     // The list at this+0xBC, same subobject Dialog::destroy() reaches. Its
-    // OWN field_1C_/field_20_/field_24_ (StringList-relative) are set
+    // OWN pending_text_/field_20_/field_24_ (StringList-relative) are set
     // through the LIST, not Dialog's absolute offsets: the image advances
     // ecx to this+0xBC first (`add ecx, 0xbc`) and addresses 0x1C/0x20/0x24
     // off of that, which is what keeps the small displacements instead of
@@ -410,7 +410,7 @@ int Dialog::item(char *text, int index) {
     // spelled through the member; TRIED: direct `item_list_.field_1C_`
     // selects made VC6 drop the `add` and store at [ecx+0xd8..e0], 7 of 13.
     StringList *const list = &item_list_;
-    list->field_1C_ = reinterpret_cast<uint32_t>(text);
+    list->pending_text_ = text;
     list->field_20_ = 0;
     list->field_24_ = 1;
     return list->add(index);
