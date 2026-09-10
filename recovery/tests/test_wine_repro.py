@@ -5,7 +5,7 @@ import sys
 
 import pytest
 
-from recovery.environment.wine_repro import ReproducibleCompile, _preprocessed
+from recovery.environment.wine_repro import ReproducibleCompile, _preprocessed, preprocessing_probe
 from recovery.environment import wine
 
 
@@ -95,6 +95,94 @@ def test_policy_is_explicit_and_cl_only(invocation):
         ReproducibleCompile.read("link", args, root / "build")
     with pytest.raises(ValueError, match="one explicit"):
         ReproducibleCompile.read("cl", [args[0], *args], root / "build")
+
+
+@pytest.mark.parametrize("mode", ["/E", "-E", "/EP"])
+def test_preprocessing_probe_keeps_external_input_and_diagnostic_options(invocation, mode):
+    _, _, args = invocation
+    ordinary = ["/TP", "/Be", "/Bd", mode, "/FI/tmp/forced.h", "/tmp/compiler-file"]
+    assert preprocessing_probe("cl", [args[0], *ordinary]) == ordinary
+    assert preprocessing_probe("cl", [args[0], "/c", *ordinary]) is None
+    assert preprocessing_probe("cl", args) is None
+
+
+@pytest.mark.parametrize("option", ["/I", "-I", "/FI", "/D", "/U", "/Tc", "/Tp", "/F", "/wd"])
+def test_preprocessing_mode_must_not_be_a_consumed_option_argument(invocation, option):
+    _, _, args = invocation
+    assert preprocessing_probe("cl", [args[0], option, "/E", "/tmp/input"]) is None
+    assert preprocessing_probe("cl", [option, args[0], "/E", "/tmp/input"]) is None
+    # Ordinary separated include/definition arguments still work with a real /E.
+    ordinary = ["/I", "/tmp/includes", "/D", "VALUE=1", "/E", "/tmp/input"]
+    assert preprocessing_probe("cl", [args[0], *ordinary]) == ordinary
+
+
+def test_preprocessing_wrapper_preserves_raw_stdout_and_stderr(invocation, monkeypatch, capsysbinary):
+    root, source, args = invocation
+    (root / "BIN").mkdir()
+    (root / "BIN/CL.EXE").touch()
+    monkeypatch.setattr(wine, "VC6_ROOT", root)
+    output = b'\r\nconst char *s = "\xff";\r\nfilename.cpp\r\n\r\n'
+    errors = b'diagnostic \xfe\r\n'
+    calls = []
+    def run(command, **options):
+        calls.append(command)
+        assert options == {"binary": True, "explicit_compiler": True}
+        assert not any(word.startswith("--repro-root=") or word == "/Brepro" for word in command)
+        return subprocess.CompletedProcess(command, 0, output, errors)
+    monkeypatch.setattr(wine, "run_tool", run)
+    assert wine.main(["vc6-cl", args[0], "/E", str(source)]) == 0
+    captured = capsysbinary.readouterr()
+    assert captured.out == output and captured.err == errors and len(calls) == 1
+
+
+@pytest.mark.parametrize("flag", ["/Brepro", "/B1custom", "/B2custom", "/d1Brepro",
+                                  "-d1Brepro", "/Foout.obj", "/Fppch", "/Yc", "/P",
+                                  "/FRbrowse", "/Fiout.i", "/link", "@hidden.rsp"])
+def test_preprocessing_probe_cannot_bypass_object_or_hidden_option_policy(invocation, flag):
+    _, _, args = invocation
+    with pytest.raises(ValueError, match="unsupported preprocessing probe"):
+        preprocessing_probe("cl", [args[0], "/E", flag])
+
+
+def test_preprocessing_probe_keeps_root_and_environment_validation(invocation, monkeypatch):
+    _, _, args = invocation
+    with pytest.raises(ValueError, match="one explicit"):
+        preprocessing_probe("cl", [args[0], args[0], "/E"])
+    with pytest.raises(ValueError, match="only for cl"):
+        preprocessing_probe("link", [args[0], "/E"])
+    monkeypatch.setenv("_CL_", "/c")
+    with pytest.raises(ValueError, match="implicit CL"):
+        preprocessing_probe("cl", [args[0], "/E"])
+
+
+def test_real_ide_response_file_probe_preserves_external_source_and_macros(tmp_path, monkeypatch):
+    if not (wine.VC6_ROOT / "BIN/CL.EXE").is_file():
+        pytest.skip("VC6 is not installed")
+    for name in ("CL", "_CL_", "cl"):
+        monkeypatch.delenv(name, raising=False)
+    project = tmp_path / "project"
+    project.mkdir()
+    # The IDE's forced C++ input has no extension and is outside the project.
+    source = tmp_path / "compiler-file"
+    source.write_text('const char *file = __FILE__;\nint compiler_version = _MSC_VER;\n')
+    forced = project / "forced.h"
+    forced.write_text('#define PROBE_FORCED_HEADER 1\n')
+    source.write_text(source.read_text() + 'int forced_header = PROBE_FORCED_HEADER;\n')
+    options = ["/TP", "/DBUILD_DEBUG", "/DWIN32", "/D_WINDOWS", "/Zm200", "/GX",
+               "/Z7", "/Ob0", "/Od", "/Oy-", "/GZ", "-MT", "/FI" + str(forced),
+               "/W4", "/Be", "/Bd", "/E", "/w", "/wd4067"]
+    response = tmp_path / "probe.rsp"
+    response.write_text("\n".join('"' + option + '"' for option in [*options, "--repro-root=" + str(project)]))
+    wrapper = [sys.executable, str(Path(wine.__file__)), "--tool=cl"]
+    actual = subprocess.run([*wrapper, "@" + str(response), str(source)], cwd=tmp_path,
+                            capture_output=True, text=True, timeout=60)
+    ordinary = subprocess.run([*wrapper, *options, str(source)], cwd=tmp_path,
+                              capture_output=True, text=True, timeout=60)
+    assert actual.returncode == ordinary.returncode == 0, actual.stdout + actual.stderr
+    assert "int compiler_version = 1200;" in actual.stdout
+    assert "int forced_header = 1;" in actual.stdout
+    assert [line for line in actual.stdout.splitlines() if line.strip()] == ordinary.stdout.splitlines()
+    assert not list(tmp_path.rglob("*.obj")) and not list(tmp_path.rglob("*.exe"))
 
 
 @pytest.mark.parametrize("name", ["CL", "_CL_", "cl"])

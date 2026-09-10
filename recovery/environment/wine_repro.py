@@ -57,6 +57,54 @@ def _snapshot(files):
             for path in files}
 
 
+def _configuration(tool, arguments):
+    roots = [word[len(ROOT_OPTION):] for word in arguments if word.startswith(ROOT_OPTION)]
+    if not roots:
+        return None
+    if tool != "cl" or len(roots) != 1 or not roots[0]:
+        raise ValueError("one explicit reproducible source root is supported only for cl")
+    root = Path(roots[0])
+    if not root.is_absolute() or root.resolve() != root or not root.is_dir():
+        raise ValueError("reproducible source root must be a canonical absolute directory")
+    if any(value for key, value in os.environ.items() if key.upper() in ("CL", "_CL_")):
+        raise ValueError("reproducible compilation refuses implicit CL options")
+    return root, [word for word in arguments if not word.startswith(ROOT_OPTION)]
+
+
+def preprocessing_probe(tool, arguments):
+    """IDE /E probes observe the ordinary compiler, not reproducible objects.
+
+    Keep their cwd, external temporary source and macros intact. /Be and /Bd
+    are diagnostic switches used by IDEs; opaque compiler forwarding and file
+    outputs are not a preprocessing-only escape from the object guard.
+    """
+    configured = _configuration(tool, arguments)
+    if configured is None:
+        return None
+    _, ordinary = configured
+    # A standalone /I or /D consumes its next word: '/I /E' must not be
+    # mistaken for preprocessing and let an ordinary compile escape its guard.
+    # Classify the actual forwarded argv, after removing wrapper metadata.
+    words = []
+    iterator = iter(ordinary)
+    valued = (*_PATH_OPTIONS, "/D", "/U", "/Tc", "/Tp", "/Fp", "/Fi",
+              "/Fr", "/FR", "/F", "/wd", "/we", "/wo", "/Zm")
+    for raw in iterator:
+        word = "/" + raw[1:] if raw.startswith("-") else raw
+        words.append(word)
+        if word in valued:
+            next(iterator, None)
+    if not any(word in ("/E", "/EP") for word in words) or "/c" in words:
+        return None
+    for raw in ordinary:
+        word = "/" + raw[1:] if raw.startswith("-") else raw
+        if (word.startswith(("/Y", "/Fp", "/Fo", "/Fd", "/Fa", "/Fe", "/Fi", "/Fr", "/FR", "/d", "@"))
+                or (word.startswith("/B") and word not in ("/Be", "/Bd"))
+                or word in ("/P", "/link", "/Zs")):
+            raise ValueError("unsupported preprocessing probe option: " + raw)
+    return ordinary
+
+
 @dataclass
 class ReproducibleCompile:
     root: Path
@@ -68,17 +116,10 @@ class ReproducibleCompile:
 
     @classmethod
     def read(cls, tool, arguments, cwd):
-        roots = [word[len(ROOT_OPTION):] for word in arguments if word.startswith(ROOT_OPTION)]
-        if not roots:
+        configured = _configuration(tool, arguments)
+        if configured is None:
             return None
-        if tool != "cl" or len(roots) != 1 or not roots[0]:
-            raise ValueError("one explicit reproducible source root is supported only for cl")
-        root = Path(roots[0])
-        if not root.is_absolute() or root.resolve() != root or not root.is_dir():
-            raise ValueError("reproducible source root must be a canonical absolute directory")
-        if any(value for key, value in os.environ.items() if key.upper() in ("CL", "_CL_")):
-            raise ValueError("reproducible compilation refuses implicit CL options")
-        arguments = [word for word in arguments if not word.startswith(ROOT_OPTION)]
+        root, arguments = configured
         if not any(word in ("/c", "-c") for word in arguments):
             raise ValueError("reproducible compilation requires compile-only /c")
         stable, original, sources = [], [], []
