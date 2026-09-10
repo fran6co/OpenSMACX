@@ -139,11 +139,6 @@ class Dialog {
   // had no caller left, and a live one would have been a second definition
   // of the same construction.
 
-  // The teardown the two runtime redirects reach. ~Dialog (below) is the
-  // image's own 0x00608E10 destructor and carries the body; destroy() spells
-  // the same three steps for the DllMain-installed redirects, which replace
-  // ??1Dialog at runtime rather than calling it.
-  void destroy();
   int set_dialog_font(Font *font1, Font *font2, Font *font3);
   void set_dialog_text_color(int color1, int color2, int color3, int color4);
   void set_dialog_text_color2(int color1, int color2, int color3, int color4);
@@ -243,8 +238,7 @@ class Dialog {
   // the allocator, StringList's own field_1C_/20_/24_, and the virtual base
   // (vptr + saved owner) at 0xE4/0xE8. The image's ??1Dialog tears this list
   // down with the two-stage derived close and the virtual-base publish -
-  // which is ~StringList's own compiler-emitted chain, spelled in destroy()
-  // as the one explicit destructor call.
+  // which is ~StringList's own compiler-emitted member destruction chain.
   StringList item_list_;
   // PUBLIC, not private, with field_B4_ above: the derived families reach
   // these through their virtual Dialog base - ListBox re-arms field_B4_ in
@@ -294,16 +288,12 @@ extern uint32_t DialogFieldB0Default;  // 0x009B8ED0
 extern uint32_t DialogFieldB4Default;  // 0x009B8ED4
 extern uint32_t DialogFieldB8Default;  // 0x009B8ED8
 
-// Every teardown that reaches the still-original Dialog::close (0x00608F50)
-// binds it through this signature; RadioButton/CheckBox/ListBox share it.
+// Legacy ListBox still uses this method-pointer signature. Dialog's own
+// teardown now calls its recovered close directly.
 typedef void (OriginalObject::*func_dialog_close)();
 
-// ~Dialog's own body reaches Dialog::close through a rebindable seam, and the
-// scalar deleting destructor frees through the executable's operator delete.
-extern func_dialog_close DialogOriginalClose;          // default 0x00608F50
-
 // The four rebindable list-stage table constants left with the hand
-// close_with_tables calls they fed: destroy() runs the one compiler-owned
+// close_with_tables calls they fed: ~Dialog runs the compiler-owned
 // item_list_ destructor chain, which stages the same tables (0x006698C4/
 // 0x006698C0 derived, 0x006693A4/0x006693A0 base) from the StringList
 // declarations. The virtual base's final table and the owner publish are
@@ -339,5 +329,3 @@ inline int Dialog::id_to_pos(int id) {
 }
 
 void __fastcall dialog_destructor_redirect(Dialog *self, void *);
-void *__fastcall dialog_scalar_dtor_redirect(
-    Dialog *self, void *, unsigned int mode);

@@ -112,7 +112,7 @@ FileWin::~FileWin() {
     close();
 
     list_box_.destroy();
-    reinterpret_cast<Dialog *>(reinterpret_cast<char *>(&list_box_) + 0xA60)->destroy();
+    reinterpret_cast<Dialog *>(reinterpret_cast<char *>(&list_box_) + 0xA60)->Dialog::~Dialog();
     reinterpret_cast<GraphicWin *>(&list_box_)->~GraphicWin();
 
     edit_box_.close();

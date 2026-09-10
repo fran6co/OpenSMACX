@@ -1,0 +1,31 @@
+{
+  "event_id": "a8b50408a6362490b89b4d522c6bffcc4541b4378c39711f3c29c459e8207c02",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/dialogs.cpp",
+      "src/filewin.cpp"
+    ],
+    "evidence": [
+      "Full-build retirement check exposed two remaining typed Dialog::destroy callers missed by the earlier bounded reference scan. Pinned native inspection proves direct608E10 calls at40711E inside407100 and407F45 inside407F00. Authorize only replacing those Dialog helper calls with qualified actual Dialog destructor calls, retaining their existing subobject receiver calculations and all other lifecycle code/markers. This repairs dependency closure without keeping an obsolete address-seam helper. Add compiled target tests; no reset of baseline, unrelated caller rewrites or acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4223232,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4226816,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "48af8b1fe26ec9b8bfebc33cfc956689a431ebe9c8177014b1dedef753ca3361",
+  "request_id": "dialog-destructor-retained-callers",
+  "schema_version": 1,
+  "sequence": 33,
+  "stream": "task:control-sprite-defaults"
+}
