@@ -124,9 +124,12 @@ void Sprite::close() {
 int SpriteDrawOriginX = 1;  // 0x00696D18
 int SpriteDrawOriginY = 1;  // 0x00696D1C
 
-// The sprite-memory accounting total, the image's .bss counter at
-// 0x009B6618 - zero at load. A real object, not a pointer into an image
-// that is not mapped here: every constructor and release path touches it.
+// Shared four-byte sprite-memory counter: the constructor at 0x005E37E6/
+// 0x005E37EF reads/writes it, and close at 0x005E3833/0x005E383F updates
+// the same scalar. Its original storage is in .data's loader-zero-filled
+// tail, not a pointer into the executable. The constructor adds sizeof(Sprite);
+// pixel-release paths subtract pixel area, so full accounting is still unclear.
+// RECOVERY_OBJECT: v2 0x009B6618 0x009B661C ?SpriteMemoryUsed@@3HA 0x005E37E0
 int SpriteMemoryUsed = 0;
 
 /*
