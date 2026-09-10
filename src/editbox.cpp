@@ -21,6 +21,9 @@
 #include "graphicwin.h"
 #include "time.h"
 
+// The original SDK import directory identifies this key-state dependency.
+// RECOVERY_IMPORT: v1 __imp__GetAsyncKeyState@4 USER32.dll name:GetAsyncKeyState
+
 // Keep the original out-of-line stop boundary here. Other timer owners rely
 // on the inline definition in time.h for their own cleanup chains.
 static void __fastcall stop_edit_timer(Time *timer) {
@@ -457,16 +460,23 @@ void EditBox::vslot_12() {
  * 0x006971DC-0x006971F8 is one contiguous run in .data; 0x009B90B8 and
  * 0x009B90BC sit apart from it, in the zero-filled range.
  *
- * Naming them costs nothing in bytes: the operand is a relocation, and the
- * comparison masks relocated bytes on both sides.
+ * Independent DWORD reads at 614EA4..614EEE establish each four-byte extent.
+ * These bindings identify the original targets, not just masked operands.
  */
-uint32_t EditBoxDefaultB1C = 255;  // 0x006971DC
-uint32_t EditBoxDefaultB20 = -1;  // 0x006971F8
-uint32_t EditBoxDefaultB24 = -1;  // 0x006971F4
-uint32_t EditBoxDefaultB28;  // 0x009B90B8
-uint32_t EditBoxDefaultB2C;  // 0x009B90BC
-uint32_t EditBoxDefaultB30 = 1;  // 0x006971E0
-uint32_t EditBoxDefaultB34 = 4;  // 0x006971E4
+// RECOVERY_OBJECT: v2 0x006971DC 0x006971E0 ?EditBoxDefaultB1C@@3IA 0x00614E50
+uint32_t EditBoxDefaultB1C = 255;
+// RECOVERY_OBJECT: v2 0x006971F8 0x006971FC ?EditBoxDefaultB20@@3IA 0x00614E50
+uint32_t EditBoxDefaultB20 = -1;
+// RECOVERY_OBJECT: v2 0x006971F4 0x006971F8 ?EditBoxDefaultB24@@3IA 0x00614E50
+uint32_t EditBoxDefaultB24 = -1;
+// RECOVERY_OBJECT: v2 0x009B90B8 0x009B90BC ?EditBoxDefaultB28@@3IA 0x00614E50
+uint32_t EditBoxDefaultB28;
+// RECOVERY_OBJECT: v2 0x009B90BC 0x009B90C0 ?EditBoxDefaultB2C@@3IA 0x00614E50
+uint32_t EditBoxDefaultB2C;
+// RECOVERY_OBJECT: v2 0x006971E0 0x006971E4 ?EditBoxDefaultB30@@3IA 0x00614E50
+uint32_t EditBoxDefaultB30 = 1;
+// RECOVERY_OBJECT: v2 0x006971E4 0x006971E8 ?EditBoxDefaultB34@@3IA 0x00614E50
+uint32_t EditBoxDefaultB34 = 4;
 
 
 /*

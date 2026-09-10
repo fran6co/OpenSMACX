@@ -40,7 +40,9 @@ void ListBox::on_dialog_focus(int) {
 }
 
 
-uint32_t ListBoxCloseDynamicDefault;  // 0x009B8EE0
+// Independent DWORD reads at 609E6F and 609F55 feed ListBox+28.
+// RECOVERY_OBJECT: v2 0x009B8EE0 0x009B8EE4 ?ListBoxCloseDynamicDefault@@3IA 0x00609DB0
+uint32_t ListBoxCloseDynamicDefault;
 int ListBoxClickGuard;                // 0x009B8EEC
 
 // The three subobject vtables the teardown re-staged (0x0067041C/0x00670414/
