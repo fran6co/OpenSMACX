@@ -471,14 +471,6 @@ int Scroll::init(int x, int y, int width, int height, Win *parent,
                                              height, parent, setting, options);
 }
 
-// ?add@StringStruct@@QAEHH@Z at 0x00401100 - allocates and links a new
-// entry; Dialog::item (src/dialog.cpp) and ListBox::item both call it BY
-// NAME on the list embedded at their own this+0xBC/this+... .
-int StringStruct::add(int id) {
-    typedef int(__fastcall *pending)(StringStruct *, void *, int);
-    return PENDING_BODY(0x00401100, pending)(this, nullptr, id);
-}
-
 // ?item@ListBox@@QAEHPADH@Z at 0x0060C920 - the item adder `Dialogs::item`
 // dispatches to for a ListBox.
 int ListBox::item(char *text, int index) {

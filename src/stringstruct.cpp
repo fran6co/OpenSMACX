@@ -9,11 +9,16 @@
  */
 #include "stdafx.h"
 
+// ORIGINAL: 0x00402C20 ??_GStringStructEntry@@UAEPAXI@Z 0x00402C20-0x00402C62 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Original table installed by 401100 construction dispatches deletion through StringStructEntry allocation base at +0x14. This original body publishes saved Heap owner, conditionally frees the complete allocation and clears owner on deleting paths. Same-span seed remains.", "Original construction at 401100 and typed deletion at 402970 establish the owning node lifecycle. The canonical source host is stringstruct.cpp; the compiler owns the virtual-base adjustment and deleting-flag entry."], "reason": "Map the compiler-generated scalar deleting destructor emitted by actual list-node construction, not a handwritten wrapper."}
+// ORIGINAL: 0x00402C70 ??_GStringStructPayload@@UAEPAXI@Z 0x00402C70-0x00402CB2 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Original table installed by 401100 construction dispatches deletion through StringStructPayload allocation base at +0x10. This original body publishes saved Heap owner, conditionally frees the complete allocation and clears owner on deleting paths. Same-span seed remains.", "Original construction at 401100 and typed deletion at 402970 establish the owning node lifecycle. The canonical source host is stringstruct.cpp; the compiler owns the virtual-base adjustment and deleting-flag entry."], "reason": "Map the compiler-generated scalar deleting destructor emitted by actual list-node construction, not a handwritten wrapper."}
 #include "stringstruct.h"
 #include "spritebox.h"
 #include "net_class.h"
 
 #include <cstring>
+#include <new>
 
 #include "heap.h"  // StringAllocationHeap
 #include "general.h"  // mem_get
@@ -76,6 +81,75 @@ void StringList::on_remove(StringStructPayload *payload) {
         release_text(payload->text);
         payload->text = 0;
     }
+}
+
+namespace {
+// 0x00401100 selects the list's allocator before its inherited allocation
+// owner. Heap exhaustion is fatal; CRT allocation failure returns a null node.
+// Construction captures the handoff in the real virtual base and emits the
+// node's tables/destructor naturally. This helper has no original identity.
+template<class T> inline T *allocate_list_node(StringStruct *list, T *) {
+    Heap *owner = list->allocator_;
+    if (owner == 0) {
+        owner = list->allocation_owner_;
+    }
+    void *memory;
+    if (owner != 0) {
+        memory = owner->get(sizeof(T));
+        if (memory == 0) {
+            MessageBoxA(NULL, "out of heap space in new function", "Aborting", MB_OK);
+            exit(3);
+        }
+    } else {
+        memory = mem_get(sizeof(T));
+        if (memory == 0) {
+            return 0;
+        }
+    }
+    StringAllocationHeap = owner;
+    return ::new(memory) T;
+}
+}
+
+// Append before the circular head. Preserve the original partial mutations on
+// allocation failure and ignore the insertion hook's return value: neither
+// rollback nor propagating that value is part of 0x00401100's behavior.
+// ORIGINAL: 0x00401100 ?add@StringStruct@@QAEHH@Z 0x00401100-0x00401513
+// RECOVERY_BINDING: v1 {"evidence": ["Original 401100 selects explicit allocator then inherited allocation owner then mem_get, constructs entry size1C and payload size18 with distinct virtual-base tables. Native construction replaces seed vptr writes; source class names remain interpretations.", "Original 4013B1 publishes the entry allocation into the old tail next link before the null test; 4012D2/4014DC publish null payloads before returning4. Insertion hook result is ignored; count and position update only after it returns. Same-span legacy seed retained."], "reason": "Recover circular-list insertion with real node construction and the original partial updates on allocation failure."}
+int StringStruct::add(int id) {
+    if (entry_count_ == 0) {
+        head_ = allocate_list_node(this, static_cast<StringStructEntry *>(0));
+        if (head_ == 0) {
+            return 4;
+        }
+        head_->id = id;
+        head_->next = head_;
+        head_->previous = head_;
+        head_->payload = allocate_list_node(this, static_cast<StringStructPayload *>(0));
+        if (head_->payload == 0) {
+            return 4;
+        }
+        on_insert(head_->payload);
+        current_ = head_;
+    } else {
+        head_->previous->next = allocate_list_node(this, static_cast<StringStructEntry *>(0));
+        if (head_->previous->next == 0) {
+            return 4;
+        }
+        head_->previous->next->previous = head_->previous;
+        head_->previous->next->next = head_;
+        head_->previous = head_->previous->next;
+        current_ = head_->previous;
+        current_->id = id;
+        current_->payload = allocate_list_node(this, static_cast<StringStructPayload *>(0));
+        if (current_->payload == 0) {
+            return 4;
+        }
+        on_insert(current_->payload);
+    }
+    current_position_ = entry_count_;
+    ++entry_count_;
+    return 0;
 }
 
 // The real destructor body: release the entries and clear the position.
@@ -342,7 +416,7 @@ void StringStruct::close() {
 // destructor above now emits that chain from the declarations. The EH
 // frame's funclet span 0x00650980-0x00650995 is that machinery's own.
 
-// THE ALLOCATOR HAND-OFF SLOT: the allocating Heap published by Heap::get
+// THE ALLOCATOR HAND-OFF SLOT: the Heap published by the allocation wrapper
 // and captured by the next StringAllocationBase construction.
 Heap *StringAllocationHeap;  // 0x009B3374
 

@@ -78,8 +78,9 @@ static const size_t StringStructCloseAdjustment = 0x1C;
 // bases under this same toolchain (see checkbox.h for the layout argument).
 class Heap;  // defined in heap.h; the owner slot carries one
 
-// THE ALLOCATOR HAND-OFF SLOT, the image's 0x009B3374 .bss: a Heap*. Heap::get
-// publishes itself here on a successful allocation; the StringAllocationBase
+// THE ALLOCATOR HAND-OFF SLOT, the image's 0x009B3374 .bss: a Heap*. The
+// allocation wrapper publishes its selected Heap after a successful allocation;
+// the StringAllocationBase
 // constructed on that block captures it and clears the slot.
 extern Heap *StringAllocationHeap;
 
@@ -91,12 +92,12 @@ class StringAllocationBase {
   // StringStruct's stage - which is exactly where the base's own constructor
   // body lands. The address is terranx.exe's data, unmapped in a standalone
   // build; the same raw spelling StringBox::add uses.
-  // THE ALLOCATOR HAND-OFF. Heap::get publishes the allocating Heap into
+  // THE ALLOCATOR HAND-OFF. The allocation wrapper publishes the Heap into
   // the global slot (image 0x009B3374) and the base constructor running
   // right after captures it - "who allocated me" - then clears the slot.
-  // The destructor republishes the saved Heap so the next allocation can
-  // route through it, and frees with operator delete only when no Heap
-  // owns the block (the saved owner is null). Measured at 0x00401100:
+  // The destructor republishes the saved Heap for the deleting destructor's
+  // deallocation decision: only an owner-null block is individually freed.
+  // Original construction evidence at 0x00401100:
   // `call Heap::get; mov [0x9B3374], edi; ... mov ecx, [0x9B3374];
   // mov [obj+0x18], ecx; mov [0x9B3374], 0`.
   StringAllocationBase() {
@@ -220,9 +221,8 @@ class StringStruct : public virtual StringAllocationBase {
   int seek_id(int id);
   void remove_all();
   void close();
-  // 0x00401100, still a pending_bodies forwarder: allocates and links a new
-  // entry, its own id, and (for the derived StringList at Dialog::item's
-  // this+0xBC) a payload id node too. Dialog::item calls it BY NAME.
+  // 0x00401100 appends an entry and payload, then invokes the insertion hook.
+  // Allocation failures retain the original partially updated list state.
   int add(int id);
 
   // Offset 0x00 is the compiler's vftable and 0x04 its vbtable - the
