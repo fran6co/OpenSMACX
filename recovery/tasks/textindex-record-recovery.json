@@ -1,0 +1,44 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "39cd9b9820df4ac020c77f0857cb7bd8cdeadc0d",
+  "editable_files": [
+    "src/textindex.cpp",
+    "src/textindex.h"
+  ],
+  "evidence": [
+    "partition --group class:TextIndex --details --impact identifies four conflict-free identities in src/textindex.cpp: construction, destruction, make_index and search_index. The eligible group retains all four identities within the delegated limits and requires no additional editable files.",
+    "Original make_index at 0x005FE048–0x005FE0BD repeatedly loads shared pointer storage 0x009B7D00 for copying, normalization and section-name extraction. Current src/textindex.cpp substitutes a local 512-byte buffer. src/text.h already declares TextBufferGetPtr; src/text.cpp initializes it from Txt. Original publisher 0x005FD4C0 independently confirms the pointer transfer from 0x009B7CF8 to 0x009B7D00.",
+    "Original make_index calls kill_lf at 0x005FE061, whereas current source calls the deliberately different kill_nl. It also calls GetFileSize at 0x005FE007 and explicitly closes the Filemap before automatic destruction. Existing general.h and Filemap accessors provide the required interfaces without editing their reserved owners.",
+    "Original make_index allocates strlen(section)+5 bytes and stores a four-byte file offset followed by the terminated section name. Original search_index reads this representation from the embedded Heap. Mapped callers connect text_make_index to the producer and Text::open/text_search_index to the consumer, supporting a coherent record-production recovery.",
+    "Construction at 0x005FDF40 establishes Heap at +0x104 and count at +0x100. Preserve genuine member lifetime and both make_index spans, including compiler cleanup at 0x00662D40–0x00662D52. Fresh disassembly contradicts the historical comment claiming a 0x218-byte local allocation: the original subtracts 0x14 after establishing its exception frame.",
+    "Heap call-target interpretation remains unresolved: make_index calls 0x005D4580, while TextIndex destruction tail-calls 0x005D45B0; current Heap annotations identify these as destructor and shutdown respectively. Preserve this discovery and historical obligations without modifying reserved Heap files or forcing manual destruction. Bounded producer correction is meaningful progress, but does not establish complete restoration.",
+    "Pinned-image inspection succeeded for the selected spans. Caller searches returned exit 3 because eleven other mapped spans were incompletely decoded; caller coverage is therefore partial. Include-impact scope is also incomplete. No compilation, edits, task publication or acceptance occurred.",
+    "Planner delegation: 187a58e82dc64faa28c80da88add4129f6f45d46253b4dbb525a83e87ae560df"
+  ],
+  "intent": "Recover TextIndex section-record production using the existing shared text-buffer owner, original normalization and Filemap operations, and genuine C++ cleanup. Preserve the complete class scope, consumer representation and historical obligations; retain unresolved Heap target relationships for coordination without expanding scope.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6283072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6283104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6283136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6283552,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "textindex-record-recovery"
+}
