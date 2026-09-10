@@ -2336,6 +2336,37 @@ unproven structure/runtime behavior unknown.
 
 ### Candidate decks
 
+Add `--compiled-diagnostics` to `recover tasks variants` when a first mismatch or
+extent failure does not explain the candidate. The optional `compiled_diagnostics`
+envelope shows only the deck's primary target for each scored baseline/candidate
+flag trial, using the objects already compiled by that run: no extra compilation,
+object-file ingestion, source publication or acceptance path is introduced.
+Default reports are unchanged. Candidate symbol proposals select their own symbol,
+not the baseline spelling; missing or ambiguous functions remain unavailable.
+
+Each observed entry reports exact raw COFF section sizes/digests, a bounded byte
+prefix, section-relative linear instruction offsets, and relocation symbol/index,
+type, storage, definition and raw-addend evidence. Explicit associative code
+COMDATs remain separate sections; neighboring sections are not inferred as tails.
+Neither a listing nor a relocation name proves a linked destination. In particular,
+`operands_unlinked` is the decoder's rendering of unlinked bytes at section offset
+zero, **not an original-image address**. Original spans and all ordinary strict
+byte/reference results remain unchanged, including extent failures.
+
+The canonical UTF-8 JSON for this optional envelope is capped at 4 MiB (the rest
+of the native report is not capped or reduced). Trial shares are allocated before
+parallel execution, at most 256 KiB each, in stable report order. Each section
+reports at most 16 KiB of raw bytes and decodes at most 4096 instructions. Byte,
+instruction, relocation, section and trial omissions are explicit; omitted trial
+indices refer to scored baseline rows followed by candidate rows. Metadata too
+large for its allocation omits that trial, not its ordinary verification evidence.
+`decoded_instruction_count` covers only the reported prefix; undecoded bytes,
+instruction limits and unavailable decoders are not complete coverage. Linear
+decoding can include padding or jump-table data and does not infer function
+extents. The optional x86 dependency supplies the decoder; absent decoding does
+not change verdicts, rankings, compile counts or acceptance. Keep these derived
+reports in ignored storage.
+
 After establishing the ownership model, use `recover tasks variants <task>
 --image <image> --deck <deck.json> [--jobs N]`. This is a native package command,
 requiring source/measurement configuration and a v4-capable compiler command,

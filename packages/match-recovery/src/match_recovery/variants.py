@@ -225,13 +225,16 @@ def _trial_bindings(view, originals, contents, selected, settings, pin, *, contr
     return bindings, refused, externals, changes
 
 
-def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *, jobs: int = 1, compiler=None):
+def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *, jobs: int = 1, compiler=None,
+                     compiled_diagnostics: bool = False):
     """Score atomic header/body experiments within authorized ownership work.
 
     The exact-text anchor deliberately replaces brace guessing. Only compiler
     invocations are parallel; project/source/binding inputs are prepared once.
     No candidate is selected, applied, recorded or admitted by this operation.
     """
+    if type(compiled_diagnostics) is not bool:
+        raise ValueError("compiled_diagnostics must be a boolean")
     if type(jobs) is not int or jobs < 1:
         raise ValueError("candidate jobs must be a positive integer")
     root = root.resolve()
@@ -299,6 +302,9 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
         candidate_bindings[name] = resolved
     compiler = compiler if compiler is not None else Compiler(root, profile=settings.compiler_profile)
     flags_list = tuple(flags + settings.layout_flags for flags in settings.flag_sets) if any(item.span is not None for item in data_bindings) else settings.flag_sets
+    if compiled_diagnostics:
+        from .compiled_diagnostics import compiled_diagnostic, diagnostic_report, trial_budget
+        diagnostic_budget = trial_budget(len(flags_list) * (1 + len(candidates)))
     controls, baselines, trials = [], [], []
     attempts = 0
     # Only successful unchanged-source controls are reusable, within this
@@ -361,13 +367,18 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
             measured, data_bindings, generated, objects, image, trial_externals, errors=errors,
             import_bindings=imports, shared_bindings=active_shared)
         selected_row = next(row for row in rows if row["entity_id"] == target.origin.entity_id)
-        return {"name": name, "flags": list(flags), "target": selected_row,
+        result = {"name": name, "flags": list(flags), "target": selected_row,
                 "neighbors": [{**row, "in_task": row["entity_id"] in selected} for row in rows if row is not selected_row],
                 "compile_errors": errors or {},
                 "binding_changes": changes,
                 "object_dependencies": support_controls, "support_compile_attempts": support_attempts,
                 "object_definitions": data_rows, "generated_tables": generated_rows, "import_bindings": import_rows,
                 "shared_functions": shared_rows}
+        if compiled_diagnostics:
+            binding = next(item for item in trial_bindings if item.origin.entity_id == target.origin.entity_id)
+            result["_compiled_diagnostic"] = compiled_diagnostic(
+                objects.get(binding.unit), binding, name=name, flags=flags, budget=diagnostic_budget)
+        return result
 
     # Replica and damage controls are per flag trial, not a one-time capability
     # claim. A matching score alone cannot show that the intended code changed.
@@ -421,7 +432,11 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
             trials = list(pool.map(compile_trial, work))
     fresh()
     attempts += sum(row["support_compile_attempts"] for row in (*baselines, *trials))
-    return {"task_id": task_name, "operation": "candidate_deck", "entity_id": target.origin.entity_id,
+    diagnostics = None
+    if compiled_diagnostics:
+        ordered = [*baselines, *trials]
+        diagnostics = diagnostic_report([row.pop("_compiled_diagnostic") for row in ordered], len(ordered))
+    report = {"task_id": task_name, "operation": "candidate_deck", "entity_id": target.origin.entity_id,
             "source": target.unit, "files": sorted(originals), "translation_units": units,
             "controls": controls, "baseline": baselines, "candidates": trials,
             "rankings": _rank_trials(baselines, trials),
@@ -439,3 +454,6 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
                             "all mapped task TUs compiled; neighboring rows also show unambiguous outside-task functions in those TUs, not all affected callers",
                             "layout, lifecycle, full build, protected obligations and review still require task checks",
                             "compiler commands are trusted; requested parallelism must fit isolated compiler capacity"]}
+    if compiled_diagnostics:
+        report["compiled_diagnostics"] = diagnostics
+    return report

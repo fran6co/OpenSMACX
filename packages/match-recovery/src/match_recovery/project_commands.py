@@ -185,6 +185,7 @@ def register(commands):
     variants.add_argument("--image", type=Path, required=True)
     variants.add_argument("--deck", type=Path, required=True, help="Exact-text replacements with current source digest and a damage control")
     variants.add_argument("--jobs", type=int, default=1, help="Compiler concurrency; must fit the project's isolated compiler capacity")
+    variants.add_argument("--compiled-diagnostics", action="store_true", help="Bounded target-only unlinked COFF listings from the existing trial objects; not verification")
     discovery = task_actions.add_parser("discover")
     discovery.add_argument("task")
     discovery.add_argument("--root", type=Path, default=Path.cwd())
@@ -432,7 +433,8 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
             from .variants import measure_variants
             paths = {name: Path(arguments[name]) for name in ("image", "deck")}
             paths = {name: path if path.is_absolute() else root / path for name, path in paths.items()}
-            output = measure_variants(root, arguments["task"], paths["image"], read_json(paths["deck"]), jobs=arguments.get("jobs", 1))
+            output = measure_variants(root, arguments["task"], paths["image"], read_json(paths["deck"]),
+                                      jobs=arguments.get("jobs", 1), compiled_diagnostics=arguments.get("compiled_diagnostics", False))
             return (0 if output["status"] == "scored" else 3), output
         if arguments.get("action") in ("check", "check-layout", "check-binary"):
             from .model import Result
