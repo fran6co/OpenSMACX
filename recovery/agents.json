@@ -1,6 +1,14 @@
 {
   "schema_version": 1,
   "artifacts": "build/recovery/agents",
+  "planner": {
+    "command": {
+      "argv": ["codex", "exec", "--ephemeral", "--model", "gpt-6-astra", "-c", "model_reasoning_effort=high", "--sandbox", "read-only", "--output-schema", "{schema}", "--output-last-message", "{response}", "-"],
+      "timeout": 3300
+    },
+    "instructions": [".claude/agents/recovery-planner.md"],
+    "response": "file"
+  },
   "worker": {
     "evidence_delivery": "on_demand",
     "command": {

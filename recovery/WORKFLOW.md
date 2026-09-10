@@ -66,7 +66,8 @@ authority in the planner policy. The planner commits only that authorization JSO
 Committing recovered C++ requires separate `--checkpoint` authorization after
 driver verification. Dependency/conflict/unassigned groups remain analysis work.
 See the package README for the exact protocol, scope limits and failure behavior.
-No standing planner policy is enabled for OpenSMACX. Its local compiler-backed
+The bounded policy in `recovery/planner.json` enables live ownership planning;
+its external reservation protects the retained control recovery. Its local compiler-backed
 control uses deterministic reasoning agents; live planning and executable-only
 binding discovery remain unverified. Worktree setup and integration are coordinator
 responsibilities through native commands, not implicit effects of `start`.
@@ -155,8 +156,11 @@ The installed `uv run recover campaign --config <campaign-authorization>` now
 connects these native operations: bounded planning, task-only commits, isolated
 preparation, parallel dispatch, optional serial discovery coordination, fresh
 candidate/destination verification, cleanup and another planning round. The package
-README defines the standing authorization and exact exit semantics. No standing
-OpenSMACX campaign policy is enabled yet. The compiler-backed test-owned control
+README defines the standing authorization and exact exit semantics. The project
+policy in `recovery/campaign.json` authorizes one batch of up to two isolated
+workers, with independent review and fresh serial publication checks. Invoke it
+from clean master with the absolute `OPENSMACX_IMAGE` and shared
+`OPENSMACX_COMPILER_POOL` set. The compiler-backed test-owned control
 uses deterministic reasoning, not a live fleet or game recovery proof.
 
 The campaign must start on its authorized clean destination branch. It preserves

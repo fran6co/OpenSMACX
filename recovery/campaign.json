@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "author": "framework-coordinator",
+  "destination_branch": "refs/heads/master",
+  "planner": "recovery/planner.json",
+  "driver": "recovery/driver.json",
+  "worker": "recovery/worker.json",
+  "reviewer": "recovery/reviewer.json",
+  "coordinator": "recovery/coordinator.json",
+  "checkpoint": "recovery/checkpoint.json",
+  "resources": "recovery/resources.json",
+  "max_batches": 1,
+  "max_parallel": 2,
+  "iterations": 2,
+  "timeout": 14400,
+  "publication": {
+    "enabled": true,
+    "allow_migration": false,
+    "message": "Integrate freshly verified ownership recovery",
+    "cleanup": true
+  },
+  "evidence": ["The user explicitly requests a full multi-worker recovery process. Authorize one bounded batch of up to two disjoint ownership tasks in isolated worktrees and compiler slots, followed by fresh independent review and serial candidate/destination verification before integration into master. Respect the retained C++ task reservation; preserve unfinished structural work and discoveries. This grants no acceptance from process reports, game-completion claim, baseline reset, claim demotion or permission to discard preserved work."]
+}

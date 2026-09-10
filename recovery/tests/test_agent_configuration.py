@@ -8,7 +8,7 @@ import subprocess
 import pytest
 
 
-@pytest.mark.parametrize("role", ["worker", "coordinator", "reviewer"])
+@pytest.mark.parametrize("role", ["planner", "worker", "coordinator", "reviewer"])
 def test_configured_provider_accepts_arguments_before_loading_schema(tmp_path, role):
     settings = json.loads((Path(__file__).resolve().parents[1] / "agents.json").read_text())
     command = settings[role]["command"]["argv"]

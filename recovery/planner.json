@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "author": "framework-coordinator",
+  "command": {"argv": ["uv", "run", "recover", "agent", "planner"], "timeout": 3600},
+  "max_entities": 100,
+  "max_editable_files": 20,
+  "commit_decision": true,
+  "reserved_worktrees": [
+    {
+      "path": "build/recovery/control-draw-finalization",
+      "tasks": ["control-sprite-defaults"],
+      "evidence": ["The retained control/list lifecycle recovery is committed but not accepted or merged. The user now prioritizes a disjoint multi-worker campaign; reserve this checkout and derive its complete current task scope without copying or resetting its baseline."]
+    }
+  ],
+  "evidence": ["The user authorizes agents to orchestrate executable recovery and launch Codex workers. Delegate bounded source-owned task selection and task-only authorization commits; source checkpoints and integration require separate fresh native verification and independent review."]
+}

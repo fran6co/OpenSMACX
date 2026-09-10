@@ -395,7 +395,8 @@ establish completion of this program.
   no pre-created task and then resumes without another commit. Reasoning roles in
   that control are deterministic local doubles. New executable bindings, live model
   planning and task retirement remain unfinished;
-  no standing OpenSMACX planner authorization is enabled.
+  the bounded OpenSMACX planner authorization now lives in `recovery/planner.json`,
+  with the retained control-recovery checkout reserved against new assignments.
   The native `recover campaign` now composes bounded task planning, task-only
   guarded commits, isolated worker setup, resource-leased parallel dispatch,
   optional central discovery handling and fresh serial integration/publication.

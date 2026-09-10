@@ -911,8 +911,8 @@ A second `start` resumes that same task and freshly verifies it without a new co
 This uses the package's `recover start --planner <policy>` path, not a fixture task
 creation callback. All four reasoning roles are local deterministic controls, while
 compilation, linking and verification are real. The package README documents this
-optional policy; it is not enabled for OpenSMACX and does not infer unmapped bounds,
-manage worktrees or integrate recovered source.
+optional policy; OpenSMACX configures it in `recovery/planner.json`. The planner
+does not infer unmapped bounds, manage worktrees or integrate recovered source.
 The separate native `recover campaign --config <standing-authorization>` now
 connects planning, isolated preparation/dispatch, optional central discovery
 handling, fresh serial integration, cleanup and another planning round. Its
@@ -928,7 +928,12 @@ preserved workers. Non-campaign worktrees now require explicit scheduling-only
 derived from current source/task history, not copied into policy. Reservations also
 guard saved assignments and coordinator expansion grants. This is not a live OpenSMACX campaign; moved integration targets,
 partial Git publication and arbitrary conflict repair remain unfinished. See the
-package README and `recovery/WORKFLOW.md` before authorizing a campaign.
+package README and `recovery/WORKFLOW.md` before running a campaign.
+The bounded `recovery/campaign.json` policy authorizes one live batch of up to
+two isolated workers, reserves the preserved control recovery, and permits
+publication only after fresh native checks and independent review. Configure the
+absolute shared compiler pool and pinned image paths before launching from clean
+master. This authorization is not evidence of successful live recovery.
 It does not supply OpenSMACX's
 missing proof coverage. Native receipts expose verified artifact paths/hashes so
 downstream work can identify the tested build without guessing a cache directory.
