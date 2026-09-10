@@ -13,6 +13,8 @@ struct Block { void *memory; int frees; bool heap_owned; };
 Block blocks[16];
 int block_count, callbacks;
 bool clearing;
+bool checking_text_order;
+int text_releases;
 
 void release(void *memory) {
     assert(!StringAllocationHeap);
@@ -20,6 +22,12 @@ void release(void *memory) {
         if (blocks[i].memory == memory) {
             assert(!blocks[i].heap_owned && blocks[i].frees == 0);
             if (clearing) assert(callbacks > 0);
+            // Each original list iteration releases text before payload before
+            // entry. Construction below records those blocks in reverse order.
+            if (checking_text_order) {
+                assert(i == (text_releases / 3) * 3 + 2 - text_releases % 3);
+                ++text_releases;
+            }
             ++blocks[i].frees;
             free(memory);
             return;
@@ -45,6 +53,7 @@ int StringList::on_insert(StringStructPayload *) { return 0; }
 // LIVE_REMOVE
 #undef free
 // LIVE_BASE_DESTRUCTOR
+// LIVE_DERIVED_DESTRUCTOR
 // LIVE_CLEAR
 
 // Deduce T from an argument: VC6 mis-selects the explicit specialization in
@@ -116,25 +125,42 @@ template<class T> void check_virtual_delete(T *node, Heap *owner, unsigned int d
     reclaim();
 }
 
-void check_text_and_nodes(Heap *owner) {
-    StringList list;
-    StringStructEntry *entry = make_node(owner, static_cast<StringStructEntry *>(0));
-    StringStructPayload *payload = make_node(owner, static_cast<StringStructPayload *>(0));
-    payload->text = static_cast<char *>(malloc(1));
-    assert(payload->text);
-    *payload->text = 0;
-    blocks[block_count].memory = payload->text;
-    blocks[block_count].frees = 0;
-    blocks[block_count++].heap_owned = owner != 0;
-    entry->payload = payload;
-    entry->next = entry->previous = entry;
-    list.allocator_ = owner;
-    list.head_ = list.current_ = entry;
-    list.entry_count_ = 1;
-    // Calls the actual derived text hook, then actual typed node deletion.
-    // This is explicit clearing, not proof of the unfinished outer destructor.
-    list.remove_all();
-    assert(!list.head_ && !list.entry_count_ && !StringAllocationHeap);
+void check_text_and_nodes(Heap *owner, bool automatic_cleanup, Heap *list_owner, int count) {
+    StringAllocationHeap = list_owner;
+    text_releases = 0;
+    checking_text_order = true;
+    {
+        StringList list;
+        StringStructEntry *entries[3];
+        assert(count >= 0 && count <= 3);
+        for (int i = 0; i < count; ++i) {
+            StringStructEntry *entry = make_node(owner, static_cast<StringStructEntry *>(0));
+            StringStructPayload *payload = make_node(owner, static_cast<StringStructPayload *>(0));
+            payload->text = static_cast<char *>(malloc(1));
+            assert(payload->text);
+            *payload->text = 0;
+            blocks[block_count].memory = payload->text;
+            blocks[block_count].frees = 0;
+            blocks[block_count++].heap_owned = owner != 0;
+            entry->payload = payload;
+            entries[i] = entry;
+        }
+        for (int j = 0; j < count; ++j) {
+            entries[j]->next = entries[(j + 1) % count];
+            entries[j]->previous = entries[(j + count - 1) % count];
+        }
+        list.allocator_ = owner;
+        list.head_ = list.current_ = count ? entries[0] : 0;
+        list.entry_count_ = count;
+        if (!automatic_cleanup) {
+            list.remove_all();
+            assert(!list.head_ && !list.entry_count_ && !StringAllocationHeap);
+        }
+    } // Automatic destruction must run the derived text hook before the base.
+    checking_text_order = false;
+    assert(text_releases == (owner ? 0 : 3 * count));
+    assert(StringAllocationHeap == list_owner);
+    StringAllocationHeap = 0;
     for (int i = 0; i < block_count; ++i)
         assert(blocks[i].frees == (owner ? 0 : 1));
     reclaim();
@@ -148,8 +174,11 @@ int main() {
     // The generic list still delivers a null payload to its hook before the
     // language's null-delete guard. StringList's hook requires non-null input.
     check_clear(0, 0, true);
-    check_text_and_nodes(0);
-    check_text_and_nodes(&heap);
+    for (int text_count = 0; text_count <= 3; ++text_count) {
+        for (int text_mode = 0; text_mode < 8; ++text_mode)
+            check_text_and_nodes(text_mode & 1 ? &heap : 0, (text_mode & 2) != 0,
+                                 text_mode & 4 ? &heap : 0, text_count);
+    }
     check_virtual_delete(make_node(0, static_cast<StringStructPayload *>(0)), 0, 0x10);
     check_virtual_delete(make_node(&heap, static_cast<StringStructPayload *>(0)), &heap, 0x10);
     check_virtual_delete(make_node(0, static_cast<StringStructEntry *>(0)), 0, 0x14);

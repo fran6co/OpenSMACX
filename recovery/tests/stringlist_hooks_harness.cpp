@@ -39,6 +39,7 @@ StringAllocationBase::~StringAllocationBase() { StringAllocationHeap = allocatio
 // LIVE_LIST
 // Full outer destruction remains a separate recovery obligation.
 StringStruct::~StringStruct() {}
+StringList::~StringList() {}
 int StringStruct::on_insert(StringStructPayload *) { return 0; }
 void StringStruct::on_remove(StringStructPayload *) {}
 #define free release

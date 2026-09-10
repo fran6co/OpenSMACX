@@ -23,9 +23,8 @@
 #include "heap.h"  // StringAllocationHeap
 #include "general.h"  // mem_get
 
-// The real teardown: republish the saved allocation owner so the next
-// allocation routes through it again (sub_401520, the image's deleting
-// destructor, and StringList::destroy's tail are this destructor as
+// Republish the saved owner for the deallocation decision (sub_401520, the
+// image's deleting destructor, and StringList::destroy's tail are this destructor as
 // compiled - the [esi] = 0x6693AC vptr re-stage on top of it is the
 // compiler's own destructor machinery). Out of line: OUT OF LINE is the
 // point. A header-inline empty destructor is provably nothrow, and VC6 then
@@ -152,13 +151,16 @@ int StringStruct::add(int id) {
     return 0;
 }
 
-// The real destructor body: release the entries and clear the position.
-// The derived- and base-stage table installs around it are the compiler's
-// (the destructor prologues), replacing the hand stores close() and
-// close_with_tables spelled - the image's own ??1StringList-shaped chain
-// (0x004066C0) carries the same two stages, walked with everything
-// inlined; this compiled chain keeps a real remove_all, which is the
-// recorded divergence.
+// Derived cleanup must run before the base destructor changes virtual dispatch:
+// 0x004066C0 first selects StringList's hooks, then enters the StringStruct stage.
+// ORIGINAL: 0x004066C0 ??1StringList@@UAE@XZ 0x004066C0-0x00406818;0x00650980-0x00650995
+// RECOVERY_BINDING: v1 {"evidence": ["Original 4066C0 installs derived tables6698C4/6698C0 and clears entries before switching to base tables6693A4/6693A0; primary removal slot selects the text-cleanup hook during the derived stage. Implicit base-only cleanup cannot preserve that lifecycle.", "Original bounds4066C0-406818 and650980-650995 retained in 7eb1b2b0 parent src/stringstruct.cpp. Support code650980 adjusts the saved virtual-base receiver by -0xC before jumping to StringStruct base teardown401060. These are original identity/ownership interpretations, not a matching claim."], "reason": "Restore the original two-stage StringList destructor identity to its real C++ destructor, including its historical EH support span."}
+StringList::~StringList() {
+    remove_all();
+    current_position_ = 0;
+}
+
+// Base cleanup also handles a StringStruct destroyed without a StringList.
 StringStruct::~StringStruct() {
     remove_all();
     current_position_ = 0;
@@ -412,8 +414,8 @@ void StringStruct::close() {
 // string_struct_derived_close_redirect are gone. The redirect's own marker
 // carried the diagnosis all along: the image's 0x004066C0 is a
 // COMPILER-GENERATED two-stage teardown (its LEVER/TRIED notes record the
-// /GX frame no free function can produce), and the real ~StringStruct
-// destructor above now emits that chain from the declarations. The EH
+// /GX frame no free function can produce). The real ~StringList destructor
+// above owns the derived cleanup before ~StringStruct's base stage. The EH
 // frame's funclet span 0x00650980-0x00650995 is that machinery's own.
 
 // THE ALLOCATOR HAND-OFF SLOT: the Heap published by the allocation wrapper

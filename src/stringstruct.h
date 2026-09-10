@@ -199,15 +199,10 @@ class StringStruct : public virtual StringAllocationBase {
     current_position_ = 0;
     allocator_ = 0;
   }
-  // THE REAL DESTRUCTOR. Declaring it hands the derived-stage table
-  // installs to the compiler: ~StringList's prologue stages the derived
-  // pair, this destructor's prologue stages the base pair (the stores
-  // close() and close_with_tables used to spell by hand), then the body
-  // runs the entry walk. The original hand-managed these tables - 1998
-  // C++ emulating virtual inheritance - and per direction the hand writes
-  // go even where the image performs them; the compiled chain stages the
-  // same tables from the declarations instead. Out of line in
-  // stringstruct.cpp.
+  // The compiler stages the base tables before this cleanup. StringList's
+  // destructor owns the earlier derived stage, where its text-removal hook
+  // must still be active. These are real C++ destructor transitions, not
+  // hand-written table installs. Out of line in stringstruct.cpp.
   ~StringStruct();
   MEASURED int seek_pos(int a1);
   int current_id();
@@ -252,6 +247,9 @@ static_assert(sizeof(StringStruct) == 0x24,
 
 class StringList : public StringStruct {
  public:
+  // 0x004066C0 removes entries while StringList's text hook is still active,
+  // before the compiler enters StringStruct's base cleanup stage.
+  ~StringList();
   // Original primary slots name 0x006086F0 and 0x00608770. BasePop's
   // constructor (0x00600860) installs this table in both embedded lists;
   // the next table at 0x006698CC belongs to BasePop's Buffer subobject.

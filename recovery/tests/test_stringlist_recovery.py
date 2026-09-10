@@ -87,7 +87,9 @@ def test_actual_node_lifetime_uses_complete_allocations_and_heap_ownership(tmp_p
         ("// LIVE_TEXT_RELEASE", "src/stringstruct.cpp", "namespace {\n// The cleanup path",
          "// The original primary table uses these shared defaults."),
         ("// LIVE_BASE_DESTRUCTOR", "src/stringstruct.cpp", "StringStruct::~StringStruct() {",
-         "/*\nPurpose: Return the current string-list item ID.")])
+         "/*\nPurpose: Return the current string-list item ID."),
+        ("// LIVE_DERIVED_DESTRUCTOR", "src/stringstruct.cpp", "StringList::~StringList() {",
+         "// Base cleanup also handles a StringStruct")])
 
 
 def test_actual_construction_preserves_allocator_and_partial_failure_contracts(tmp_path, monkeypatch):
