@@ -1,0 +1,20 @@
+{
+  "event_id": "75de045b235b4b1420bf2a911f30115ffc4c6617e75cac09a7c3e253491cecf7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/control_draw_harness.cpp",
+      "recovery/tests/test_control_draw_recovery.py"
+    ],
+    "evidence": [
+      "Add focused live-source CheckBox60F030 and RadioButton60D750 runtime controls with explicit surrounding doubles: callback-mutated rectangle/width/current payload, copy direction/original coordinates, state-selected sprite height, CheckBox-only descent, focus rectangle, failed seek and null parent. Include damage controls for cached width, wrong sprite dimension and omitted seek guard. No product-body copying, compiler-policy changes or acceptance waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "ebe19dd3f58e700d4c1fdba2e5c7218a088e0e5f1138d19bbd19fc84df5880d4",
+  "request_id": "control-draw-live-callback-controls",
+  "schema_version": 1,
+  "sequence": 64,
+  "stream": "task:control-sprite-defaults"
+}
