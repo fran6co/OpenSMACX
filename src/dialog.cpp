@@ -613,6 +613,60 @@ Dialog::Dialog() {
     field_1C_ = -1;
 }
 
+// Reset a live dialog, keeping its list and heap objects alive for reuse.
+// Entry hooks run before releasing their backing heap. Empty-head cleanup
+// still resets position but deliberately does not clear current_ or count.
+// ORIGINAL: 0x00608F50 ?close@Dialog@@QAEXXZ 0x00608F50-0x00609143
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original608F50-609143 clears entries using the current list hooks, unconditionally resets position, calls5D4580 at608FDB, then writes heap_ptr/default/font/color fields and field1C=-1 at60913C. current_ is not cleared. Retained seed preserves extent but explicit member destruction is not used in the live C++ reset.", "Existing DialogDefaults and DialogDefaultFonts own the original settings; list removal and allocator-aware node destruction are recovered in stringstruct.cpp. Heap::reset has a separate source shared-code interpretation for the original5D4580 cleanup entry. No byte or full-lifetime acceptance is claimed."], "reason": "Recover reusable dialog cleanup through real list members and a non-destructive heap reset, preserving original cleanup-before-defaults order."}
+void Dialog::close() {
+    item_list_.remove_all();
+    item_list_.current_position_ = 0;
+    heap_.reset();
+    heap_ptr_ = 0;
+    field_20_ = DialogDefaults[36];
+    field_24_ = 0;
+    field_28_ = 0;
+    field_2C_ = DialogDefaults[19];
+    field_30_ = DialogField30Default;
+    selected_position_ = 0;
+    field_F0_ = -1;
+    field_38_ = 0;
+    field_3C_ = 0;
+    field_40_ = DialogField40Default;
+    field_44_ = DialogDefaults[20];
+    field_48_ = -1;
+    field_34_ = DialogField34Default;
+    field_4C_ = DialogDefaults[21];
+    field_50_ = DialogDefaults[22];
+    field_54_ = 0;
+    field_58_ = 0;
+    field_5C_ = 0;
+    field_60_ = 0;
+    field_64_ = 0;
+    field_68_ = 0;
+    field_6C_ = DialogDefaults[23];
+    field_AC_ = DialogFieldACDefault;
+    field_B0_ = DialogFieldB0Default;
+    field_B4_ = DialogFieldB4Default;
+    field_B8_ = DialogFieldB8Default;
+    font1_ = DialogDefaultFonts[0];
+    text_color_a_ = DialogDefaults[24];
+    text_color_b_ = DialogDefaults[27];
+    text_color_c_ = DialogDefaults[30];
+    text_color_d_ = DialogDefaults[33];
+    font2_ = DialogDefaultFonts[1];
+    text_color_2a_ = DialogDefaults[25];
+    text_color_2b_ = DialogDefaults[28];
+    text_color_2c_ = DialogDefaults[31];
+    text_color_2d_ = DialogDefaults[34];
+    font3_ = DialogDefaultFonts[2];
+    text_color_3a_ = DialogDefaults[26];
+    text_color_3b_ = DialogDefaults[29];
+    text_color_3c_ = DialogDefaults[32];
+    text_color_3d_ = DialogDefaults[35];
+    field_1C_ = -1;
+}
+
 // The four list-stage constants (DialogListDerived/VirtualBase and
 // DialogList/VirtualBaseVtable) are gone: destroy()'s two hand
 // close_with_tables calls folded into the one compiler-owned

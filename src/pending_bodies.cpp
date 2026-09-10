@@ -518,11 +518,6 @@ int __cdecl X_pops(char *caption, const char *label, int a3, char *a4, int a5,
 
 // Five more bodies the tree called through function pointers. Each is
 // declared on its class now, so the call sites emit `call rel32`.
-void Dialog::close() {                                      // 0x00608F50
-    typedef void(__fastcall *pending)(Dialog *, void *);
-    PENDING_BODY(0x00608F50, pending)(this, nullptr);
-}
-
 void MainInterface::set_date(char *text) {              // 0x0045BE80
     typedef void(__fastcall *pending)(MainInterface *, void *, char *);
     PENDING_BODY(0x0045BE80, pending)(this, nullptr, text);

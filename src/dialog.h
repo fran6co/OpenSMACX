@@ -74,15 +74,8 @@ class Dialog {
   virtual ~Dialog();
   virtual int attach(void *a1, int a2, int a3, int a4) { return 0; }
   virtual void on_redraw() { ; }
-  // 0x00608F50, a pending_bodies forwarder. checkbox.cpp and
-  // radiobutton.cpp both reach it, and both did so through a pointer.
-  // VIRTUAL, and this is what earns the vtordisp before the Dialog base in
-  // every class that virtually derives from it. VC6 emits a displacement only
-  // where the derived class overrides a NON-DESTRUCTOR virtual of a virtual
-  // base - measured 2026-08-22 on a minimal case: with only virtual
-  // destructors it emits none, with a plain virtual override it emits one per
-  // base. RadioButton::close() has the same `void ()` signature and so
-  // overrides this.
+  // 0x00608F50: reusable, non-virtual reset. The control families call this
+  // directly; it clears entries before resetting their heap and settings.
   void close();
   // THE TWO SHOW-BIT SETTERS, proved by BasePop::exec (0x00602758..0x00602775):
   //   mov eax,[esi+0x21d0]          the embedded Dialogs' vbptr
@@ -174,28 +167,10 @@ class Dialog {
   int init(int a1, int a2, int a3, int a4, Heap *a5);
   // ?init@Dialog@@QAEHHHHHPAUHeap@@@Z  0x00609730
   //
-  // WHY NONE OF THE SEVEN ARE HOMED YET (2026-09-06, dialogs finisher - the
-  //        artifacts are still in src/unrecovered/ and src/recovered/units/).
-  //        Every one of them tears the item list down through TWO virtual
-  //        dispatches the image makes and this tree cannot spell:
-  //          `call dword ptr [edx + 4]` on the list itself, with the entry's
-  //            payload as the one argument - StringStruct's table 0x006693A4
-  //            slot 1, which is 0x00404270 `ret 4`, a no-op the original
-  //            called anyway;
-  //          `call dword ptr [edx]` on `payload + payload->vbtable[1]` - the
-  //            virtual base's own table 0x006693AC slot 0, 0x00401520, the
-  //            final-table install and owner republish.
-  //        stringstruct.h declares only slot 0 (`unk_slot00`, no arguments)
-  //        plus a virtual destructor, so this tree's StringStruct vtable does
-  //        not lay out like the image's three-dword table: a raw
-  //        `vtable_slot<Fn>(&item_list_, 4)` here would reach the compiler's
-  //        COMPLETE DESTRUCTOR, not the image's no-op, and calling it would
-  //        tear the list down N times. The fix is a stringstruct.h decision -
-  //        declare the three slots with the image's signatures - and it moves
-  //        ??0Dialog, ??1Dialog and every list walk, so it is not this file's
-  //        to make alone. The same wall stops 0x00608F50 close() (whose list
-  //        teardown is the same two dispatches) and the five Dialogs::init
-  //        overloads that forward here.
+  // Initializer seeds remain separate recovery work. StringStruct now owns
+  // typed insertion/removal hooks and allocator-aware node deletion; close()
+  // uses that cleanup without destroying the embedded list. The primary list
+  // table has two hook slots, separate from the allocation-base destructor.
 
  private:
   // The vfptr is EMITTED by the compiler now - see the virtual destructor
