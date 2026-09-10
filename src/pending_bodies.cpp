@@ -1854,13 +1854,6 @@ Status: Complete
 // ---- Forwarders for bodies the Win homing revealed as callable but not yet
 // ---- recovered. Each address is the catalogue's, not a guess.
 
-int Buffer::draw(Buffer *source, int index, int x, int y, int a, int b) {
-    typedef int(__fastcall *pending)(Buffer *, void *, Buffer *, int, int, int, int, int);
-    return PENDING_BODY(0x005D8370, pending)(this, nullptr, source, index, x, y, a, b);
-}
-
-
-
 void Buffer::copy_to_window(Win *target, int sx, int sy, int x, int y, int w, int h) {
     typedef void(__fastcall *pending)(Buffer *, void *, Win *, int, int, int, int, int, int);
     PENDING_BODY(0x005D9BE0, pending)(this, nullptr, target, sx, sy, x, y, w, h);

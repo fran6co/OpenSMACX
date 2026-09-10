@@ -778,21 +778,3 @@ void __fastcall global_arith_0048d810_redirect(void *, void *) {
     eax = eax + -2;
     *GlobalSlot008578D0 = eax;
 }
-
-/*
-Purpose: sub_5d8360 - arithmetic over 1 fixed global(s), one
-         statement per original instruction.
-// ORIGINAL: 0x005D8360 sub_5d8360 0x005D8360-0x005D836B BYTE_EXACT
-// symbol    ?global_arith_005d8360_redirect@@YIXPAX0@Z
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall global_arith_005d8360_redirect(void *, void *) {
-    BlitSourceBits = 0;
-}

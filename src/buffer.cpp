@@ -3168,43 +3168,9 @@ int Buffer::write_right_l(char *text, int x_coord, int y_coord, int field_width,
     return write_multi_font_raw_l(text, x_coord + offset, y_coord, len);
 }
 
-// THE BLIT DESCRIPTOR AT 0x009B3A54.. - REAL STORAGE, ten zero-initialised
-// globals (the image's slots are zero-fill past the carried bytes). They were
-// `static int *const BlitSourceBits = (int *)0x009B3A54` and nine neighbours
-// naming terranx.exe data that is unmapped in a standalone build. IS NAMED
-// FROM ANOTHER BODY'S OWN PARAMETERS: src/unrecovered/005d92c0.cpp writes the
-// same ten addresses from locals it has already named - `bits`, `*pWidth`,
-// `-*pHeight`, `transparentIndex` - so the names are evidence rather than
-// inference. The three that stay anonymous (0x70, 0x74, 0x78) are written as
-// literal 0 in BOTH bodies, which says nothing about what they hold. The
-// transparent index is a BYTE-typed object: the image stores it with
-// `mov byte ptr [0x9b3a58], cl`, which is how VC6 writes a uint8_t global.
-// Every store keeps its folded `[disp32]` form, the displacement relocated.
-// 0x009B3A50 - THE SPRITE THE WHOLE DRAW FAMILY DRAWS THROUGH. Named from
-// the arithmetic, not inferred: Sprite is 0x2C bytes and its fields land at
-// +0x04 pcBits_, +0x08 cTransparentIndex_, +0x0C iSpriteWidth2_, +0x10
-// iSpriteWidth_, +0x14 iSpriteHeight_, +0x18 iWidth_, +0x1C iHeight_, +0x20
-// iLeftOffset_, +0x24 iTopOffset_, +0x28 fObj1Exists_ - which is exactly the
-// ten Blit slots below, in the same order, filled by setup_buff_sprite from
-// the same fields of this buffer. The image's blit descriptor IS a Sprite,
-// and the one slot it never writes (+0x00, the file-name copy) is the one a
-// work sprite never loads from a file.
-// THIS BUILD KEEPS TWO SPELLINGS OF THOSE BYTES: the ten Blit globals above,
-// which the BYTE_EXACT setup_buff_sprite writes and global_arith.cpp reads,
-// and this pointer the draw wrappers call through. In the shipped image they
-// are one object; reproducing that needs the ten globals folded into a real
-// Sprite, which is a class-pass decision because it moves a byte-exact claim.
-static Sprite *const BlitSprite = (Sprite *)0x009B3A50;
-int BlitSourceBits;        // 0x009B3A54
-uint8_t BlitTransparentIndex;  // 0x009B3A58, written one byte wide
-static int BlitSourceField4A8;  // 0x009B3A5C
-static int BlitSourceWidth;     // 0x009B3A60
-static int BlitSourceNegHeight;  // 0x009B3A64
-static int BlitClipWidth;       // 0x009B3A68
-static int BlitClipNegHeight;   // 0x009B3A6C
-static int BlitSourceField70;          // 0x009B3A70
-static int BlitSourceField74;          // 0x009B3A74
-static int BlitSourceField78;          // 0x009B3A78
+// All buffer blitters borrow the same Sprite descriptor. Its real object
+// definition and original construction evidence are below.
+extern Sprite g_BUFFER_SPRITE;
 
 // ORIGINAL: 0x005D8290 ?setup_buff_sprite@Buffer@@QAEXH@Z 0x005D8290-0x005D835C FILE BYTE_EXACT
 // LEVER: NAMED MEMBERS AND THE REAL INTERFACE. This was `*(int *)((char *)this
@@ -3239,16 +3205,16 @@ void Buffer::setup_buff_sprite(int colour) {
     if (bits != nullptr) {
         ++surface_lock_count_;
     }
-    BlitSourceBits = reinterpret_cast<int>(bits);
-    BlitSourceField4A8 = stride_;
-    BlitSourceWidth = dib_.bmiHeader.biWidth;
-    BlitSourceNegHeight = -dib_.bmiHeader.biHeight;
-    BlitClipWidth = dib_.bmiHeader.biWidth;
-    BlitClipNegHeight = -dib_.bmiHeader.biHeight;
-    BlitSourceField70 = 0;
-    BlitSourceField74 = 0;
-    BlitTransparentIndex = (uint8_t)colour;
-    BlitSourceField78 = 0;
+    g_BUFFER_SPRITE.pcBits_ = static_cast<char *>(bits);
+    g_BUFFER_SPRITE.iSpriteWidth2_ = stride_;
+    g_BUFFER_SPRITE.iSpriteWidth_ = dib_.bmiHeader.biWidth;
+    g_BUFFER_SPRITE.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+    g_BUFFER_SPRITE.iWidth_ = dib_.bmiHeader.biWidth;
+    g_BUFFER_SPRITE.iHeight_ = -dib_.bmiHeader.biHeight;
+    g_BUFFER_SPRITE.iLeftOffset_ = 0;
+    g_BUFFER_SPRITE.iTopOffset_ = 0;
+    g_BUFFER_SPRITE.cTransparentIndex_ = (uint8_t)colour;
+    g_BUFFER_SPRITE.fObj1Exists_ = 0;
 
     // The same release pair `get_pixel` ends with, in the same two arms.
     if (surface_ == nullptr) {
@@ -3265,6 +3231,61 @@ void Buffer::setup_buff_sprite(int colour) {
         locked_bits_ = nullptr;
         surface_lock_count_ = 0;
     }
+}
+
+/*
+Purpose: Release the shared Sprite descriptor's borrowed pixel pointer.
+// ORIGINAL: 0x005D8360 sub_5d8360 0x005D8360-0x005D836B BYTE_EXACT
+// symbol    ?release_buff_sprite@Buffer@@SAXXZ
+// size      11 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Buffer::release_buff_sprite() {
+    g_BUFFER_SPRITE.pcBits_ = 0;
+}
+
+// ORIGINAL: 0x005D84C0 ?draw@Buffer@@QAEHPAVBuffer@@HHHHH@Z 0x005D84C0-0x005D8646
+// RECOVERY_BINDING: v1 {"evidence": ["Original5D84C0 ends ret18 and forwards the software path to Sprite5E4B4A;5D8370 ends ret10 and is a distinct four-argument overload. The previous six-argument forwarder selected the wrong ABI.", "Original5D84F5 calls source SetColorKey and5D854C destination Blt;5D854F returns the scale denominator. Initializer5D71D0 and cleanup5D71F0 establish the shared Sprite at9B3A50 whose fields the fallback borrows."], "reason": "Recover the six-argument Buffer draw in its owning class using real surfaces and the shared Sprite object; retain the same-span seed."}
+// TRIED: none confirmed byte-exact; MISMATCH #2 'push' vs 'mov' - the two indirect vtable-slot calls (0x74 and 0x14 on the sprite pointers) push their receiver as an explicit first stack argument rather than loading it into ecx, so they are modelled as raw __stdcall function-pointer calls here rather than C++ virtual dispatch; the real calling convention on those two slots is unconfirmed.
+// symbol    ?draw@Buffer@@QAEHPAV1@HHHHH@Z
+// size      390 bytes
+// prototype int (__thiscall ?draw@Buffer@@QAEHPAVBuffer@@HHHHH@Z)(Buffer* this, Buffer*, int, int, int, int, int)
+// callers   14   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x005E4B4A
+// indirect  0x005D84F5 0x005D854C 0x005D860A
+
+// The source and destination fields at +0x58 are DirectDraw surfaces, not
+// Sprite pointers. Original 0x005D84F5 sets the source color key; 0x005D854C
+// blits on the destination. The shared Sprite is only the software fallback.
+int Buffer::draw(Buffer *destination, int index, int x, int y,
+                 int numerator, int denominator) {
+    if (surface_ != 0 && destination->surface_ != 0) {
+        DDCOLORKEY key;
+        key.dwColorSpaceLowValue = index;
+        key.dwColorSpaceHighValue = index;
+        surface_->SetColorKey(DDCKEY_SRCBLT, &key);
+        RECT rectangle;
+        rectangle.left = x;
+        rectangle.top = y;
+        rectangle.right = x + dib_.bmiHeader.biWidth * numerator / denominator;
+        rectangle.bottom = y - dib_.bmiHeader.biHeight * numerator / denominator;
+        destination->surface_->Blt(&rectangle, surface_, 0,
+                                  DDBLT_WAIT | DDBLT_KEYSRC, 0);
+        // The original returns the scale denominator, not either COM result.
+        return denominator;
+    }
+    setup_buff_sprite(index);
+    int result = g_BUFFER_SPRITE.draw(destination, index, x, y, numerator, denominator);
+    g_BUFFER_SPRITE.pcBits_ = 0;
+    return result;
 }
 
 // DirectDraw surface vtable slots 0x19 (Lock) and 0x20 (Unlock), reached the
@@ -3978,7 +3999,11 @@ int Buffer::box_sprite(RECT *rect, BoxSpriteParams *params) {
     }
 }
 
-// ====================
+// Original initializer 0x005D71D0 constructs this Sprite at 0x009B3A50
+// through 0x005E37E0 and registers its cleanup; 0x005D71F0 closes it through
+// 0x005E3820. The blit setup/reset family borrows its pixel pointer rather
+// than owning another allocation. Its original storage is 0x2C zero-fill bytes.
+// RECOVERY_OBJECT: v2 0x009B3A50 0x009B3A7C ?g_BUFFER_SPRITE@@3VSprite@@A 0x005D8290
 Sprite g_BUFFER_SPRITE;
 
 // 0x008C6E2C and 0x008C6E30 - see the declaration in buffer.h. Zero here as
@@ -6635,16 +6660,16 @@ int Buffer::draw_dest(Buffer * a1, int a2, int a3, int a4, int a5) {
         if (locked_bits_ != nullptr) {
             surface_lock_count_ = surface_lock_count_ + 1;
         }
-        BlitSourceBits = reinterpret_cast<int>(locked_bits_);
-        BlitSourceField4A8 = stride_;
-        BlitSourceWidth = dib_.bmiHeader.biWidth;
-        BlitSourceNegHeight = -dib_.bmiHeader.biHeight;
-        BlitClipWidth = dib_.bmiHeader.biWidth;
-        BlitClipNegHeight = -dib_.bmiHeader.biHeight;
-        BlitSourceField70 = 0;
-        BlitSourceField74 = 0;
-        BlitTransparentIndex = (unsigned char)transparent;
-        BlitSourceField78 = 0;
+        g_BUFFER_SPRITE.pcBits_ = static_cast<char *>(locked_bits_);
+        g_BUFFER_SPRITE.iSpriteWidth2_ = stride_;
+        g_BUFFER_SPRITE.iSpriteWidth_ = dib_.bmiHeader.biWidth;
+        g_BUFFER_SPRITE.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+        g_BUFFER_SPRITE.iWidth_ = dib_.bmiHeader.biWidth;
+        g_BUFFER_SPRITE.iHeight_ = -dib_.bmiHeader.biHeight;
+        g_BUFFER_SPRITE.iLeftOffset_ = 0;
+        g_BUFFER_SPRITE.iTopOffset_ = 0;
+        g_BUFFER_SPRITE.cTransparentIndex_ = (unsigned char)transparent;
+        g_BUFFER_SPRITE.fObj1Exists_ = 0;
 
         if (surface_ == 0) {
             surface_lock_count_ = surface_lock_count_ - 1;
@@ -6665,9 +6690,9 @@ int Buffer::draw_dest(Buffer * a1, int a2, int a3, int a4, int a5) {
     }
 tail:
     {
-        int result = BlitSprite->draw_dest(
+        int result = g_BUFFER_SPRITE.draw_dest(
             a1, a2, a3, a4, reinterpret_cast<unsigned char *>(a5));
-        BlitSourceBits = 0;
+        g_BUFFER_SPRITE.pcBits_ = 0;
         return result;
     }
 }
@@ -6702,16 +6727,16 @@ int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5) {
         if (locked_bits_ != nullptr) {
             surface_lock_count_ = surface_lock_count_ + 1;
         }
-        BlitSourceBits = reinterpret_cast<int>(locked_bits_);
-        BlitSourceField4A8 = stride_;
-        BlitSourceWidth = dib_.bmiHeader.biWidth;
-        BlitSourceNegHeight = -dib_.bmiHeader.biHeight;
-        BlitClipWidth = dib_.bmiHeader.biWidth;
-        BlitClipNegHeight = -dib_.bmiHeader.biHeight;
-        BlitSourceField70 = 0;
-        BlitSourceField74 = 0;
-        BlitTransparentIndex = (unsigned char)transparent;
-        BlitSourceField78 = 0;
+        g_BUFFER_SPRITE.pcBits_ = static_cast<char *>(locked_bits_);
+        g_BUFFER_SPRITE.iSpriteWidth2_ = stride_;
+        g_BUFFER_SPRITE.iSpriteWidth_ = dib_.bmiHeader.biWidth;
+        g_BUFFER_SPRITE.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+        g_BUFFER_SPRITE.iWidth_ = dib_.bmiHeader.biWidth;
+        g_BUFFER_SPRITE.iHeight_ = -dib_.bmiHeader.biHeight;
+        g_BUFFER_SPRITE.iLeftOffset_ = 0;
+        g_BUFFER_SPRITE.iTopOffset_ = 0;
+        g_BUFFER_SPRITE.cTransparentIndex_ = (unsigned char)transparent;
+        g_BUFFER_SPRITE.fObj1Exists_ = 0;
 
         if (surface_ == 0) {
             surface_lock_count_ = surface_lock_count_ - 1;
@@ -6732,9 +6757,9 @@ int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5) {
     }
 tail:
     {
-        int result = BlitSprite->draw_multi_table_dest(
+        int result = g_BUFFER_SPRITE.draw_multi_table_dest(
             a1, a2, a3, a4, reinterpret_cast<unsigned char *>(a5));
-        BlitSourceBits = 0;
+        g_BUFFER_SPRITE.pcBits_ = 0;
         return result;
     }
 }
@@ -6779,16 +6804,16 @@ int Buffer::draw_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, unsig
         if (bits != 0) {
             ++surface_lock_count_;
         }
-        BlitSourceBits = bits;
-        BlitSourceField4A8 = stride_;
-        BlitSourceWidth = dib_.bmiHeader.biWidth;
-        BlitSourceNegHeight = -dib_.bmiHeader.biHeight;
-        BlitClipWidth = dib_.bmiHeader.biWidth;
-        BlitClipNegHeight = -dib_.bmiHeader.biHeight;
-        BlitSourceField70 = 0;
-        BlitSourceField74 = 0;
-        BlitTransparentIndex = static_cast<char>(transparentIndex);
-        BlitSourceField78 = 0;
+        g_BUFFER_SPRITE.pcBits_ = static_cast<char *>(locked_bits_);
+        g_BUFFER_SPRITE.iSpriteWidth2_ = stride_;
+        g_BUFFER_SPRITE.iSpriteWidth_ = dib_.bmiHeader.biWidth;
+        g_BUFFER_SPRITE.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+        g_BUFFER_SPRITE.iWidth_ = dib_.bmiHeader.biWidth;
+        g_BUFFER_SPRITE.iHeight_ = -dib_.bmiHeader.biHeight;
+        g_BUFFER_SPRITE.iLeftOffset_ = 0;
+        g_BUFFER_SPRITE.iTopOffset_ = 0;
+        g_BUFFER_SPRITE.cTransparentIndex_ = static_cast<char>(transparentIndex);
+        g_BUFFER_SPRITE.fObj1Exists_ = 0;
 
         void *surface = reinterpret_cast<void *>(surface_);
         if (surface == 0) {
@@ -6815,9 +6840,8 @@ int Buffer::draw_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, unsig
 
 forward:
     {
-        int result = BlitSprite
-                         ->draw_dest(a1, a2, a3, a4, a5, a6, a7);
-        BlitSourceBits = 0;
+        int result = g_BUFFER_SPRITE.draw_dest(a1, a2, a3, a4, a5, a6, a7);
+        g_BUFFER_SPRITE.pcBits_ = 0;
         return result;
     }
 }
@@ -6855,16 +6879,16 @@ int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5, i
         if (bits != 0) {
             ++surface_lock_count_;
         }
-        BlitSourceBits = bits;
-        BlitSourceField4A8 = stride_;
-        BlitSourceWidth = dib_.bmiHeader.biWidth;
-        BlitSourceNegHeight = -dib_.bmiHeader.biHeight;
-        BlitClipWidth = dib_.bmiHeader.biWidth;
-        BlitClipNegHeight = -dib_.bmiHeader.biHeight;
-        BlitSourceField70 = 0;
-        BlitSourceField74 = 0;
-        BlitTransparentIndex = static_cast<char>(transparentIndex);
-        BlitSourceField78 = 0;
+        g_BUFFER_SPRITE.pcBits_ = static_cast<char *>(locked_bits_);
+        g_BUFFER_SPRITE.iSpriteWidth2_ = stride_;
+        g_BUFFER_SPRITE.iSpriteWidth_ = dib_.bmiHeader.biWidth;
+        g_BUFFER_SPRITE.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+        g_BUFFER_SPRITE.iWidth_ = dib_.bmiHeader.biWidth;
+        g_BUFFER_SPRITE.iHeight_ = -dib_.bmiHeader.biHeight;
+        g_BUFFER_SPRITE.iLeftOffset_ = 0;
+        g_BUFFER_SPRITE.iTopOffset_ = 0;
+        g_BUFFER_SPRITE.cTransparentIndex_ = static_cast<char>(transparentIndex);
+        g_BUFFER_SPRITE.fObj1Exists_ = 0;
 
         void *surface = reinterpret_cast<void *>(surface_);
         if (surface == 0) {
@@ -6891,9 +6915,8 @@ int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5, i
 
 forward:
     {
-        int result = BlitSprite
-                         ->draw_multi_table_dest(a1, a2, a3, a4, a5, a6, a7);
-        BlitSourceBits = 0;
+        int result = g_BUFFER_SPRITE.draw_multi_table_dest(a1, a2, a3, a4, a5, a6, a7);
+        g_BUFFER_SPRITE.pcBits_ = 0;
         return result;
     }
 }

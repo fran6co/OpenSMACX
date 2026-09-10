@@ -141,6 +141,7 @@ class Buffer {
   // homed from 005d8290.cpp
   // -1 means "the fill colour": the body substitutes WinFillColour.
   void setup_buff_sprite(int colour);
+  static void release_buff_sprite();
 
  public:
   // homed from 005dd300.cpp
@@ -385,7 +386,7 @@ class Buffer {
   // The body is not recovered yet - this is the declaration only.
   int get_pixel(int x, int y);
 
-  int draw(Buffer *source, int index, int x, int y, int flag_a, int flag_b);
+  int draw(Buffer *destination, int index, int x, int y, int numerator, int denominator);
   // __STDCALL, like load_tga: the image's name is QAG, not QAE, so the
   // loader pair was declared with the explicit convention.
   int __stdcall load_bmp(const char *filename, Palette *palette, int a3,
@@ -496,8 +497,8 @@ class Buffer {
   // that many palette entries.
   int load_pcx(BYTE *data, DWORD size, Palette *palette, int colour_base,
                int colour_count);
-  int copy(Buffer *buffer, int xCoord, int yCoord, int width, int height,
-           int src_width, int src_height);
+  int copy(Buffer *destination, int source_x, int source_y, int destination_x,
+           int destination_y, int width, int height);
 
  // PROTECTED, NOT PRIVATE: GraphicWin derives from Buffer and the homed
  // window bodies read these directly - which is what the image does, since

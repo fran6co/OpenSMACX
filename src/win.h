@@ -229,6 +229,8 @@ class Win : public AutoSound {
   friend class BaseButton;
   // EditBox::pass_dialog_focus resets its parent's child-list iterator.
   friend class EditBox;
+  // GraphicWin's paint clips to a parent's client/outer rectangle.
+  friend class GraphicWin;
 
  public:
   // 0x005F6320  ?on_mouse_move@Win@@QAEXHHIH@Z - public, __thiscall,

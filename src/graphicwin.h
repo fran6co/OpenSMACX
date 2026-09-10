@@ -117,6 +117,8 @@ class GraphicWin : public Win, public Buffer {
   virtual int resize(int width, int height, int client_size);
   virtual int on_set_cursor(void *window, unsigned int hit, unsigned int message);
   virtual void on_size(unsigned int flags, int width, int height);
+  // Win slot 73: GraphicWin and EditBox tables select 0x005D5CF0.
+  virtual void on_paint(RECT *area);
   // Win slot 66: the original PushButton table word at 0x00670D68 selects
   // this derived entry (0x005D63E0), which delegates to Win::set_rects.
   virtual void set_rects();

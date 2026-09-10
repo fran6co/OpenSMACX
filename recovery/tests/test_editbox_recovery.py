@@ -27,6 +27,7 @@ def test_real_editbox_overrides_occupy_existing_primary_slots(control_objects):
         # inherited virtual redraw before its slot-12 callback.
         assert slots[16] == "?on_mouse_move@GraphicWin@@UAEXHHIH@Z"
         assert slots[62] == "?redraw@GraphicWin@@UAEXXZ"
+        assert slots[73] == "?on_paint@GraphicWin@@UAEXPAUtagRECT@@@Z"
         secondary, secondary_slots = table_targets(obj, "??_7EditBox@@6BBuffer@@@")
         assert len(secondary.data) == 8
         assert secondary_slots[0] == "??_EEditBox@@WEEE@AEPAXI@Z"
