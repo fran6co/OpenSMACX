@@ -42,8 +42,9 @@ struct StringStructEntry;
  * emits only when the constructed base really derives virtually; the
  * earlier "Itanium ABI would misplace it" worry does not apply - the whole
  * tree compiles with cl 12.00.8168, and checkbox.h/listbox.h already hold
- * real virtual bases under it. The raw-offset teardowns below are untouched
- * by the change: they read and write fixed displacements, not member names.
+ * real virtual bases under it. Native destruction owns both the derived/base
+ * stages and the complete-object virtual-base tail; no raw-offset teardown
+ * wrapper is needed.
  *
  * Layout evidence, all read from the pinned executable:
  *   0x00  vftable      - 0x006698C4 (StringList) then 0x006693A4
@@ -262,11 +263,6 @@ class StringList : public StringStruct {
   // 0x006087A0 ?sort@StringList@@QAEXH@Z, unrecovered. DECLARATION ONLY:
   // Datalink::set_cat tail-calls it on the entry list it has just emptied.
   void sort(int key);
-  // ~StringList is a void destructor in the original, but EAX at its ret
-  // still holds the saved owner value; modelled as uint32_t to preserve the
-  // residue, as GraphicWin::close, Scroll::destroy and ListBox::close do.
-  uint32_t destroy();
-
   // PUBLIC, not private: the image pokes these three fields directly from
   // outside the class - Dialog::item writes pending_text_/field_20_/field_24_
   // of its embedded list (dialog.cpp) - and access specifiers do not change
@@ -274,7 +270,7 @@ class StringList : public StringStruct {
   //
   // 0x00 is the compiler's vftable, 0x04 its vbtable, 0x08..0x18 the
   // inherited StringStruct fields; 0x1C..0x24 is this class's own storage,
-  // which neither the construction above nor destroy() below touches.
+  // which the default construction does not initialize.
   // Borrowed text supplied by Dialog::item and BasePop's string/button paths;
   // on_insert copies it into payload-owned storage. Null leaves text untouched.
   // RECOVERY_MEMBER: v1 StringList pending_text_ 0x1C 0x006086F0

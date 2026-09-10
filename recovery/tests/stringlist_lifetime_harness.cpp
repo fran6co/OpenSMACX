@@ -170,6 +170,16 @@ void check_text_and_nodes(Heap *owner, bool automatic_cleanup, Heap *list_owner,
 int main() {
     assert(sizeof(StringStructPayload) == 0x18 && sizeof(StringStructEntry) == 0x1C);
     Heap heap;
+    // Complete, non-deleting destruction publishes the virtual-base owner.
+    // No hand-written destroy wrapper or manual virtual-base tail is needed.
+    for (int owned = 0; owned != 2; ++owned) {
+        Heap *owner = owned ? &heap : 0;
+        StringList *list = make_node(owner, static_cast<StringList *>(0));
+        list->~StringList();
+        assert(StringAllocationHeap == owner && blocks[0].frees == 0);
+        StringAllocationHeap = 0;
+        reclaim(); // Storage only: explicit teardown already ended lifetime.
+    }
     for (int mode = 0; mode < 4; ++mode)
         check_clear(mode & 1 ? &heap : 0, mode & 2 ? &heap : 0, false);
     // The generic list still delivers a null payload to its hook before the

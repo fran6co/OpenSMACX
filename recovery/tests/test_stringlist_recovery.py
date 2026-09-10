@@ -9,7 +9,11 @@ from match_recovery.codeview import class_layout
 from match_recovery.compiler import Compiler
 from match_recovery.measurement import Measurement
 from match_recovery.pe_coff import Coff
-from test_application_link_recovery import run_recovered_harness
+from match_recovery.source import read_file
+from match_recovery.source.model import Mode
+from test_application_link_recovery import run_recovered_harness, references
+from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+from capstone.x86 import X86_OP_IMM
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -56,6 +60,24 @@ def test_real_tables_dispatch_to_both_typed_hooks(objects):
             assert [obj.symbols[index].name for _, index, _ in section.relocations[:2]] == [
                 f"?on_insert@{owner}@@UAEHPAVStringStructPayload@@@Z",
                 f"?on_remove@{owner}@@UAEXPAVStringStructPayload@@@Z"]
+
+
+def test_complete_destructor_is_generated_and_destroys_virtual_base(objects):
+    record, = (r for r in read_file(ROOT / "src/dialog.cpp") if r.address == 0x406820)
+    assert record.mode is Mode.FILE
+    for obj in objects["src/dialog.cpp"]:
+        assert references(obj, record.symbol) == [
+            "??1StringList@@UAE@XZ", "??1StringAllocationBase@@UAE@XZ"]
+        code, _, _ = obj.subject(obj.function(record.symbol))
+        decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+        decoder.detail = True
+        calls = [i for i in decoder.disasm(code, 0) if i.mnemonic == "call"]
+        assert len(calls) == 2
+        assert all(i.operands[0].type == X86_OP_IMM for i in calls)
+    for unit in objects.values():
+        for obj in unit:
+            assert not any(s.section > 0 and s.name == "?destroy@StringList@@QAEIXZ"
+                           for s in obj.symbols.values())
 
 
 def test_live_hooks_preserve_null_failure_and_heap_ownership(tmp_path, monkeypatch):

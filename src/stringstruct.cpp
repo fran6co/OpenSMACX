@@ -24,7 +24,7 @@
 #include "general.h"  // mem_get
 
 // Republish the saved owner for the deallocation decision (sub_401520, the
-// image's deleting destructor, and StringList::destroy's tail are this destructor as
+// image's deleting destructor, and StringList's complete tail are this destructor as
 // compiled - the [esi] = 0x6693AC vptr re-stage on top of it is the
 // compiler's own destructor machinery). Out of line: OUT OF LINE is the
 // point. A header-inline empty destructor is provably nothrow, and VC6 then
@@ -414,64 +414,6 @@ StringStruct::~StringStruct() {
 // and captured by the next StringAllocationBase construction.
 Heap *StringAllocationHeap;  // 0x009B3374
 
-/*
-Purpose: Destroy a most-derived StringList: run the source-owned two-stage
-         derived close, then hand the virtual base back its own vtable and
-         republish the pending-allocation owner the constructor captured.
-// ORIGINAL: 0x00406820 sub_406820 0x00406820-0x0040683B
-// TRIED: THE SECOND PARAMETER WAS INVENTED, so it is gone rather than worked
-//   around. 0x00406820 sets only ECX (`mov ecx, esi; call 0x4066c0`) and never
-//   EDX, and 0x004066C0's body reads only ECX - the `_redirect` name is this
-//   tree's own, so nothing about the image required the arity. Declaring ONE
-//   parameter takes this call site to BYTE_EXACT 9/9.
-// TRIED: the two-argument call at this site, verbatim:
-//     string_struct_derived_close_redirect(adjusted, nullptr);
-//   QUOTED ON PURPOSE. tools/reap_worktrees.py keeps an agent's worktree when
-//   a line it wrote appears nowhere in src/, which is right - it cannot tell
-//   "never collected" from "collected and then correctly rejected". A refusal
-//   that quotes the code it refuses is visible to that check, so the worktree
-//   becomes reapable without anyone overriding a safety refusal.
-// TRIED: reaching the same 9/9 with a single-argument OVERLOAD forwarding
-//   to a two-argument body. It measures identically and it is WRONG: VC6 emits
-//   the overload as a 7-byte COMDAT thunk (`33 D2` xor edx,edx; `E9` jmp) and
-//   the call relocation targets THAT, so the recovered call graph becomes
-//   destroy -> invented thunk -> redirect where the image is destroy ->
-//   redirect. No such thunk exists in the image; scanning .text for `33 D2 E9`
-//   returns one hit and it does not target 0x4066C0. BYTE_EXACT survived only
-//   because the rel32 is one of the masked relocation bytes - the measurement
-//   cannot see where the call WENT. Caught by the adversarial verifier
-//   2026-08-22; recorded because the recipe would buy every future BYTE_EXACT
-//   at this idiom's other call sites with one more invented function.
-// symbol    ?destroy@StringList@@QAEIXZ
-// size      27 bytes
-// prototype 
-// callers   26   call targets   1
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x004066C0
-Return Value: EAX residue - the saved owner value, republished into
-              StringAllocationHeap. The original is a void destructor;
-              modelled as uint32_t to preserve the residue, as
-              GraphicWin::close and Scroll::destroy do.
-Status: Complete
-DEMOTED from BYTE_EXACT by direction (strip-all hand vptr writes): the hand
-derived-close call and the three tail operations (owner read, final-table
-install, republish) left - the teardown is the compiler's ~StringList chain
-now, staging the same tables from the StringStruct/StringList declarations.
-Compiled is 8 instructions against the image's 9: the image inlines the
-vbase tail after its call; ours folds it into the chain. The EAX residue
-survives as the republished global.
-*/
-uint32_t StringList::destroy() {
-    // The whole teardown is the compiler's chain now: ~StringList's derived
-    // stage, ~StringStruct's base stage and entry walk, and the virtual-base
-    // destructor whose body restores the one-slot vftable and republishes
-    // the saved owner - the three tail operations the old body spelled by
-    // hand. The EAX residue the 26 callers consume is the republished owner,
-    // which the chain leaves in StringAllocationHeap.
-    this->~StringList();
-    return reinterpret_cast<uint32_t>(StringAllocationHeap);
-}
 
 
 /*
