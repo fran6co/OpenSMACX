@@ -1,0 +1,30 @@
+{
+  "event_id": "bf9104aaefc19a97439f5bee92a41a99b931358bef877aeec4e471509a5d4367",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/stringlist_lifetime_harness.cpp"
+    ],
+    "evidence": [
+      "Authorize typed deletion in the already scoped StringStruct::remove_all and per-derived deallocation for StringStructEntry and StringStructPayload. Original scalar destructors 402C20 and 402C70 accept virtual-base views, free the complete allocation only without a saved Heap owner, and clear the handoff on deleting paths. Keep base destructor publication and all seed identities; compiler must supply -0x14 and -0x10 adjustments, never handwritten pointer corrections. Tests must observe complete allocation addresses, callback ordering, Heap retention, null deletion and destruction-only handoff. Existing stringstruct/test/audit permissions remain; only lower measured debt ceilings. No Dialog expansion, claim demotion, baseline reset or acceptance granted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4205600,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4205680,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "17b6633c007ca4221445149af00bf1455cc97ae7c4b632909aedc863606dffc5",
+  "request_id": "list-node-typed-deletion",
+  "schema_version": 1,
+  "sequence": 25,
+  "stream": "task:control-sprite-defaults"
+}

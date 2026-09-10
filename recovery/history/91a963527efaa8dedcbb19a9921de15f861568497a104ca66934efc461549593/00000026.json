@@ -1,0 +1,22 @@
+{
+  "event_id": "2514722dfc0ca02eadbf5e3c97d2385aa9248c9ccc19c4e6a330289c1ac8cfba",
+  "payload": {
+    "affects": [
+      "entity-05b1b48b122910eccac0bcec5299b0a85ba6c9fbad3232d604a7db7a4c3502ef",
+      "entity-940ac0daa3cf8c476bc90bf5c3fd5af8be514ae64c00bb7ca2152a91a2ee1171",
+      "entity-adfda866e7272530fd888b765cd6a8c524cee98717aa601823d20bd720a08681"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "list-node-construction-emission",
+    "evidence": [
+      "Original StringStruct::add 0x401100 constructs 0x1C entry and 0x18 payload nodes with virtual-base owner capture and derived tables. Current src/pending_bodies.cpp still forwards add, so current src/stringstruct.cpp emits neither node scalar deleting destructor despite actual typed delete calls. Recover add and its allocation/fatal branches with real construction, preserve the seed and original mapping, then bind only observed product compiler-generated symbols. No dummy emission wrapper, claim demotion or acceptance follows from typed-delete matching or isolated runtime tests."
+    ],
+    "hypothesis": "Typed list-node destruction requires genuine coupled construction before product compiler-generated deleting destructors can be bound and verified.",
+    "kind": "discovery"
+  },
+  "previous_event": "bf9104aaefc19a97439f5bee92a41a99b931358bef877aeec4e471509a5d4367",
+  "request_id": "list-node-construction-emission",
+  "schema_version": 1,
+  "sequence": 26,
+  "stream": "task:control-sprite-defaults"
+}

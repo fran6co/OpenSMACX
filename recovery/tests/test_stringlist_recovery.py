@@ -62,7 +62,7 @@ def test_live_hooks_preserve_null_failure_and_heap_ownership(tmp_path, monkeypat
     run_recovered_harness(tmp_path, monkeypatch, "stringlist_hooks_harness.cpp", [
         ("// LIVE_INSERT", "src/stringstruct.cpp", 0x6086F0),
         ("// LIVE_REMOVE", "src/stringstruct.cpp", 0x608770)], declarations=[
-        ("// LIVE_TEXT_RELEASE", "src/stringstruct.cpp", "namespace {\n// The cleanup path", 
+        ("// LIVE_TEXT_RELEASE", "src/stringstruct.cpp", "namespace {\n// The cleanup path",
          "// The original primary table uses these shared defaults."),
         ("// LIVE_ALLOCATION_BASE", "src/stringstruct.h", "class StringAllocationBase {",
          "// REAL VIRTUAL INHERITANCE, like StringStructPayload"),
@@ -70,3 +70,21 @@ def test_live_hooks_preserve_null_failure_and_heap_ownership(tmp_path, monkeypat
         ("// LIVE_ENTRY", "src/stringstruct.h", "struct StringStructEntry :", "static_assert(sizeof(StringStructEntry)"),
         ("// LIVE_LIST_BASE", "src/stringstruct.h", "class StringStruct :", "static_assert(sizeof(StringStruct)"),
         ("// LIVE_LIST", "src/stringstruct.h", "class StringList :", "static_assert(sizeof(StringList)")])
+
+
+def test_actual_node_lifetime_uses_complete_allocations_and_heap_ownership(tmp_path, monkeypatch):
+    run_recovered_harness(tmp_path, monkeypatch, "stringlist_lifetime_harness.cpp", [
+        ("// LIVE_CLEAR", "src/stringstruct.cpp", 0x402970),
+        ("// LIVE_REMOVE", "src/stringstruct.cpp", 0x608770)], declarations=[
+        ("// LIVE_ALLOCATION_BASE", "src/stringstruct.h", "class StringAllocationBase {",
+         "// REAL VIRTUAL INHERITANCE, like StringStructPayload"),
+        ("// LIVE_OWNER_PUBLICATION", "src/stringstruct.cpp", "StringAllocationBase::~StringAllocationBase() {",
+         "namespace {\n// The cleanup path"),
+        ("// LIVE_PAYLOAD", "src/stringstruct.h", "class StringStructPayload :", "static_assert(sizeof(StringStructPayload)"),
+        ("// LIVE_ENTRY", "src/stringstruct.h", "struct StringStructEntry :", "static_assert(sizeof(StringStructEntry)"),
+        ("// LIVE_LIST_BASE", "src/stringstruct.h", "class StringStruct :", "static_assert(sizeof(StringStruct)"),
+        ("// LIVE_LIST", "src/stringstruct.h", "class StringList :", "static_assert(sizeof(StringList)"),
+        ("// LIVE_TEXT_RELEASE", "src/stringstruct.cpp", "namespace {\n// The cleanup path",
+         "// The original primary table uses these shared defaults."),
+        ("// LIVE_BASE_DESTRUCTOR", "src/stringstruct.cpp", "StringStruct::~StringStruct() {",
+         "/*\nPurpose: Return the current string-list item ID.")])

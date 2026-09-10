@@ -8,7 +8,6 @@
  * (at your option) any later version.
  */
 #include "stdafx.h"
-#include "original_seam.h"
 
 #include "stringstruct.h"
 #include "spritebox.h"
@@ -193,32 +192,10 @@ extern "C" int __cdecl string_struct_seek_id_source(StringStruct *self, int id) 
 }
 
 
-namespace {
-
-typedef void (OriginalObject::*func_scalar_deleting_destructor)(int);
-
-// MSVC reaches these destructors through the virtual-base displacement stored
-// in the object's second vtable slot: the displacement selects a subobject
-// whose own first vtable slot is the scalar deleting destructor, invoked with
-// the deleting flag set.
-// `inline`: the image never calls this as a standalone function - every call
-// site (remove_all, twice) has the vtable-adjustor dispatch written out in
-// place, with no real call to a shared helper. A non-inline definition here
-// costs the caller a real out-of-line call the image does not make.
-inline void destroy_virtual_base(void *object) {
-    uint32_t *const vtable = *reinterpret_cast<uint32_t **>(object);
-    uint8_t *const subobject =
-        static_cast<uint8_t *>(object) + vtable[1];
-    uint32_t *const subobject_vtable = *reinterpret_cast<uint32_t **>(subobject);
-    (ORIGINAL(subobject)->*original_method<func_scalar_deleting_destructor>(static_cast<unsigned long>(subobject_vtable[0])))(1);
-}
-
-}  // namespace
-
 /*
 Purpose: Release every entry in the list, notifying the owner about each
          payload before destroying the payload and its entry.
-// ORIGINAL: 0x00402970 StringStruct::remove_all 0x00402970-0x004029E3
+// ORIGINAL: 0x00402970 StringStruct::remove_all 0x00402970-0x004029E3 BYTE_EXACT
 // symbol    ?remove_all@StringStruct@@QAEXXZ
 // size      115 bytes
 // prototype 
@@ -268,13 +245,9 @@ void StringStruct::remove_all() {
             current_ = entry->next;
             StringStructPayload *const payload = entry->payload;
             on_remove(payload);
-            if (payload) {
-                destroy_virtual_base(payload);
-            }
+            delete payload;
             head_->payload = nullptr;
-            if (head_) {
-                destroy_virtual_base(head_);
-            }
+            delete head_;
             ++index;
             head_ = current_;
             // The loop bound is re-read every iteration, so a visitor that

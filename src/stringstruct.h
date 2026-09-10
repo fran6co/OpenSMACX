@@ -10,6 +10,7 @@
 #pragma once
 
 #include "vc6_compat.h"
+#include <stdlib.h>
 #if !defined(_MSC_VER) || _MSC_VER > 1200
 #include <cstddef>
 #include <cstdint>
@@ -128,6 +129,16 @@ struct StringStructEntry : public virtual StringAllocationBase {
   StringStructPayload *payload;  // 0x08
   StringStructEntry *next;       // 0x0C
   StringStructEntry *previous;   // 0x10
+
+  // Original deleting destructor 0x00402C20 releases the complete allocation,
+  // not the virtual-base address at +0x14. The compiler owns that adjustment;
+  // the base destructor publishes ownership before this deallocator runs.
+  static void operator delete(void *memory) {
+    if (StringAllocationHeap == 0) {
+      free(memory);
+    }
+    StringAllocationHeap = 0;
+  }
 };
 
 
@@ -154,6 +165,15 @@ class StringStructPayload : public virtual StringAllocationBase {
   char *text;      // 0x04 - the string this entry carries
   uint32_t field_8_;  // 0x08 - role-dependent metadata, not universally a line count
   uint32_t field_C_;  // 0x0C
+
+  // 0x00402C70 has the same ownership rule for the payload's virtual base
+  // at +0x10. Heap-backed blocks belong to the Heap, not individual nodes.
+  static void operator delete(void *memory) {
+    if (StringAllocationHeap == 0) {
+      free(memory);
+    }
+    StringAllocationHeap = 0;
+  }
 };
 
 static_assert(sizeof(StringStructPayload) == 0x18,

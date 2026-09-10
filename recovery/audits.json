@@ -20,7 +20,7 @@
         "placement new on a subobject": 4,
         "hand-walked vbtable": 0,
         "VCall shim": 9,
-        "ORIGINAL() vtable-slot dispatch": 28,
+        "ORIGINAL() vtable-slot dispatch": 27,
         "ORIGINAL() named-pointer seam": 92,
         "vtable-as-member": 3,
         "vtable-initialiser store": 0,
