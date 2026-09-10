@@ -69,6 +69,53 @@ def check(root, **kwargs):
     return check_preservation(root, "owner", compiler=kwargs.pop("compiler", Compiler(root)), **kwargs)
 
 
+@pytest.mark.parametrize("anchor,expected", [("0x00401000", "pass"), ("0x00401010", "fail")])
+def test_bounded_object_annotation_scope_follows_its_evidence_anchor(project, anchor, expected):
+    header = project / "code/model.h"
+    header.write_text(header.read_text() + f"// RECOVERY_OBJECT: v2 0x00402000 0x00402004 _object {anchor}\n")
+    report = check(project)
+    assert report["result"] == expected
+    assert bool(report["outside_annotation_changes"]) == (expected == "fail")
+    # This is only residual preservation, never initialization/structure proof.
+    assert not report["ready_for_collection"] and not report["scope_complete"]
+
+
+def test_reanchoring_outside_object_cannot_hide_its_previous_interpretation(project):
+    header = project / "code/model.h"
+    header.write_text(header.read_text() + "// RECOVERY_OBJECT: v2 0x00402000 0x00402004 _object 0x00401010\n")
+    git(project, "add", ".")
+    git(project, "commit", "-m", "Outside object interpretation")
+    # Use a fresh task with this committed baseline, not a rewritten old task.
+    task = TaskStore(project).read("owner")
+    from dataclasses import replace
+    TaskStore(project).create(replace(task, task_id="with-object", base_revision=git(project, "rev-parse", "HEAD")))
+    header.write_text(header.read_text().replace("_object 0x00401010", "_object 0x00401000"))
+    report = check_preservation(project, "with-object", compiler=Compiler(project))
+    assert report["result"] == "fail"
+    removed = [row for row in report["outside_annotation_changes"] if row["change"] == "removed"]
+    assert len(removed) == 1 and removed[0]["annotation"]["evidence"]["address"] == 0x401010
+
+
+def test_bounded_annotation_scope_does_not_waive_independent_storage_bytes(project):
+    from test_multispan import object_fixture
+    class StorageCompiler(Compiler):
+        def output(self, source, replacements):
+            original = super().output(source, replacements)
+            if source.name != "owner.cc":
+                return original
+            header = replacements.get("code/model.h", (project / "code/model.h").read_bytes())
+            data = b"BAD!" if b"changed_initializer" in header else b"GOOD"
+            return object_fixture(extra=(b".data", data, (), 0, 2, 0xC0501040))
+    header = project / "code/model.h"
+    header.write_text(header.read_text() + "// RECOVERY_OBJECT: v2 0x00402000 0x00402004 _object 0x00401000\n"
+                      "// changed_initializer\n")
+    report = check(project, compiler=StorageCompiler(project))
+    assert report["result"] == "fail"
+    assert not report["outside_annotation_changes"]
+    assert any(section["name"] == ".data" and "bytes" in section["changed_dimensions"]
+               for unit in report["units"] for section in unit["changed_sections"])
+
+
 def test_fresh_noop_comparison_includes_unmapped_units_and_keeps_git_clean(project):
     report = check(project)
     assert report["result"] == "pass" and report["compile_attempts"] == 4
