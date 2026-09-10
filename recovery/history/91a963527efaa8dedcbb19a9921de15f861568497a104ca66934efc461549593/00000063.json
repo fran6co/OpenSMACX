@@ -1,0 +1,17 @@
+{
+  "event_id": "ebe19dd3f58e700d4c1fdba2e5c7218a088e0e5f1138d19bbd19fc84df5880d4",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "timer-close-callee-ownership",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Time::close and destruction now share private teardown in src/time_lifecycle.cpp; EditBox,FlatButton,NetMsg,Console and header stop_timers call the real method. Original claims moved through native writer.19 focused tests passed, all1912 claims across114 built product TUs passed, fresh builds linked. Native linked-map/PE check observes actual timer call targets/receivers; bounded timer storage passed both flag trials. Independent review completed. This resolves the source finding only, not broader task/game acceptance."
+    ]
+  },
+  "previous_event": "a2d126b10ff2ab4c6456b22a258f63439cfd758e4920a9d0b7c9a924236fc1ca",
+  "request_id": "closeout-incorporated-timer-close-callee-ownership",
+  "schema_version": 1,
+  "sequence": 63,
+  "stream": "task:control-sprite-defaults"
+}

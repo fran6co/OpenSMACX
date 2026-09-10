@@ -1,0 +1,26 @@
+{
+  "event_id": "4f6337621f47ddf006d8b168beadedf5b26cc2dd5e06cb963b60ce547a365bea",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/timer_close_harness.cpp",
+      "src/console.cpp"
+    ],
+    "evidence": [
+      "Console close51D7D0 has the same fourth static forwarder; existing Console::time_ is independently declared at22A04. Replace it with the real member call, retire wrapper and measure its44historical claims. Permit live-source timer lifecycle runtime/damage harness, source SDK import bindings and bounded three timer globals used by50F440. Keep unknown wider Console structure out of this change."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5363664,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "f4560c7d6b0ca4e000920b8c456b8073282e246b6c5e326033f43397fb9b834b",
+  "request_id": "timer-close-console-and-runtime-controls",
+  "schema_version": 1,
+  "sequence": 55,
+  "stream": "task:control-sprite-defaults"
+}

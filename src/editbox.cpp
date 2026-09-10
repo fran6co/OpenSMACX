@@ -524,6 +524,8 @@ EditBox::~EditBox() {
 /*
 Purpose: Reset the edit box - clear its state, republish the seven defaults,
          then close the trailing Time and the GraphicWin prefix.
+The historical forwarding notes below predate the separate timer lifecycle TU;
+this definition now calls the actual Time member.
 // ORIGINAL: 0x00614F30 ?close@EditBox@@QAEXXZ 0x00614F30-0x00614FD1 BYTE_EXACT
 // LEVER: PROMOTED out of src/unrecovered/00614f30.cpp, whose claim proved the ARTIFACT reproduced while the program held a pending_bodies forwarder. src/editbox.cpp did not exist - EditBox was header-only - so this file and its CMakeLists entry are new.
 // LEVER (2026-09-03): time_close_call, not `->close()` on the Time at 0xb4c.
@@ -540,14 +542,7 @@ Purpose: Reset the edit box - clear its state, republish the seven defaults,
 Return Value: n/a
 Status: Complete
 */
-// A real out-of-line forwarder so this call site gets the `call 0x00616780`
-// the image emits, where a direct `->close()` would inline away under /O2.
-// `Time::close` keeps its own BYTE_EXACT COMDAT at 0x00616780 (time.cpp);
-// this only keeps THIS caller from expanding it. __fastcall so the receiver
-// reaches ECX the way the image's __thiscall call site passes it.
-static void __fastcall time_close_call(Time *timer) {
-    timer->close();
-}
+
 
 void EditBox::close() {
     text_[0] = 0;
@@ -566,7 +561,7 @@ void EditBox::close() {
     field_B18_ = 0;
     field_B3C_ = 0;
 
-    time_close_call(&time_);
+    time_.close();
     GraphicWin::close();
 }
 /*

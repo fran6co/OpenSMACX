@@ -28,18 +28,13 @@
 // constant (`xor ecx,ecx / mov edx,[ecx + 0x9b8e44]`).
 static int *const FlatButtonDefaultsTable = (int *)0x009B8E44;
 
-// A real, out-of-line forwarder so this call site gets an actual `call`
-// where `time1_.close()` directly would inline away under /O2 - same
-// idiom as `sleep_call`/`base_cost_call` in veh.cpp. `Time::close()` is
-// itself already claimed BYTE_EXACT at 0x00616780 (time.cpp); this only
-// keeps THIS caller from inlining it.
-void __fastcall time_close_call(Time *timer) {
-    timer->close();
-}
+
 
 /*
 Purpose: Close the primary Time member, reset FlatButton orientation state,
          close the BaseButton base, and reload all nine three-entry tables.
+The historical forwarding notes below predate the separate timer lifecycle TU;
+this definition now calls the actual Time member.
 // ORIGINAL: 0x00607DA0 ?close@FlatButton@@QAEXXZ 0x00607DA0-0x00607E41
 // LEVER: two fixes, stacked. (1) a real out-of-line `time_close_call`
 //        forwarder (same idiom as `sleep_call`/`base_cost_call` in
@@ -105,7 +100,7 @@ Return Value: Legacy final-loop residue (this + 0xAEC)
 Status: Complete
 */
 uint32_t FlatButton::close() {
-    time_close_call(&time1_);
+    time1_.close();
     uint32_t *const object = reinterpret_cast<uint32_t *>(this);
     object[0xA18 / 4] = 0;
     object[0xA14 / 4] = 0;
