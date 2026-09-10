@@ -87,9 +87,9 @@ def test_actual_node_lifetime_uses_complete_allocations_and_heap_ownership(tmp_p
         ("// LIVE_TEXT_RELEASE", "src/stringstruct.cpp", "namespace {\n// The cleanup path",
          "// The original primary table uses these shared defaults."),
         ("// LIVE_BASE_DESTRUCTOR", "src/stringstruct.cpp", "StringStruct::~StringStruct() {",
-         "/*\nPurpose: Return the current string-list item ID."),
+         "// StringStructDerivedVtable / StringStructDerivedVirtualBaseVtable"),
         ("// LIVE_DERIVED_DESTRUCTOR", "src/stringstruct.cpp", "StringList::~StringList() {",
-         "// Base cleanup also handles a StringStruct")])
+         "/*\nPurpose: Return the current string-list item ID.")])
 
 
 def test_actual_construction_preserves_allocator_and_partial_failure_contracts(tmp_path, monkeypatch):
@@ -104,6 +104,6 @@ def test_actual_construction_preserves_allocator_and_partial_failure_contracts(t
         ("// LIVE_ENTRY", "src/stringstruct.h", "struct StringStructEntry :", "static_assert(sizeof(StringStructEntry)"),
         ("// LIVE_LIST_BASE", "src/stringstruct.h", "class StringStruct :", "static_assert(sizeof(StringStruct)"),
         ("// LIVE_BASE_DESTRUCTOR", "src/stringstruct.cpp", "StringStruct::~StringStruct() {",
-         "/*\nPurpose: Return the current string-list item ID."),
+         "// StringStructDerivedVtable / StringStructDerivedVirtualBaseVtable"),
         ("// LIVE_NODE_ALLOCATION", "src/stringstruct.cpp", "namespace {\n// 0x00401100 selects",
          "// Append before the circular head.")])

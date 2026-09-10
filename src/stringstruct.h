@@ -21,13 +21,9 @@ class StringStructPayload;
 struct StringStructEntry;
 
 
-// The legacy close is entered through a virtual-base adjustor, so the redirect
-// receives a pointer 0x1C bytes into the object rather than its base.
-static const size_t StringStructCloseAdjustment = 0x1C;
-
 // The hand-staged close chain is gone: the four staged table constants, the
 // close_with_tables helper, and string_struct_derived_close_redirect left
-// with the real ~StringStruct destructor, whose compiler-owned chain stages
+// with the real StringList/StringStruct destructors, whose compiler-owned chain stages
 // the same tables (derived pair 0x006698C4/0x006698C0, base pair
 // 0x006693A4/0x006693A0, virtual base 0x006693AC) from the declarations.
 
@@ -215,7 +211,6 @@ class StringStruct : public virtual StringAllocationBase {
   MEASURED StringStructPayload *next_entry();
   int seek_id(int id);
   void remove_all();
-  void close();
   // 0x00401100 appends an entry and payload, then invokes the insertion hook.
   // Allocation failures retain the original partially updated list state.
   int add(int id);

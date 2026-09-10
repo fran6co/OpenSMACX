@@ -160,12 +160,6 @@ StringList::~StringList() {
     current_position_ = 0;
 }
 
-// Base cleanup also handles a StringStruct destroyed without a StringList.
-StringStruct::~StringStruct() {
-    remove_all();
-    current_position_ = 0;
-}
-
 /*
 Purpose: Return the current string-list item ID.
 // ORIGINAL: 0x00401640 ?current_id@StringStruct@@QAEHXZ 0x00401640-0x00401651 BYTE_EXACT
@@ -341,9 +335,11 @@ void StringStruct::remove_all() {
 // the declarations, and nothing names them any more.
 
 /*
-Purpose: Reset the list to its constructed state, installing both virtual
-         tables and releasing every entry.
+Purpose: Destroy the StringStruct subobject, releasing entries under the base
+         hooks. The original receiver is its allocation-tracking virtual base;
+         the compiler, not a handwritten close wrapper, owns that adjustment.
 // ORIGINAL: 0x00401060 ?close@StringStruct@@QAEXXZ 0x00401060-0x004010F9
+// symbol    ??1StringStruct@@UAE@XZ
 // size      153 bytes
 // prototype void (__thiscall ?close@StringStruct@@QAEXXZ)(StringStruct* this)
 // callers   25   call targets   0
@@ -351,7 +347,7 @@ Purpose: Reset the list to its constructed state, installing both virtual
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
 // indirect  0x004010A2 0x004010B4 0x004010D0
-// notes     Runtime redirect installed by DllMain after byte-signature validation
+// Historical LEVER/TRIED observations below describe the retired close wrapper.
 // LEVER: 0 of 64 -> 56 of 64, with the compiled instruction count now equal
 //        to the image's, on four stacked fixes. (1) THE 0x1C ADJUSTMENT
 //        BELONGS IN close(), not in string_struct_close_redirect: the image's
@@ -387,26 +383,14 @@ Purpose: Reset the list to its constructed state, installing both virtual
 //            before computing the receiver, a `uintptr_t` receiver cast, and
 //            writing the second site out at the call site instead of through
 //            the helper (56, unchanged).
-Status: Complete
+Status: Genuine destructor; original inlining and strict matching remain unproved.
 */
-void StringStruct::close() {
-    // ENTERED ON THE VIRTUAL BASE, NOT ON THE OBJECT. The image's close
-    // opens `lea esi, [ecx - 0x1c]` at 0x00401066, and every field it then
-    // touches is [esi + N] - so ECX arrives pointing at the two-word
-    // virtual base this class holds at 0x1C. The adjustment belongs HERE
-    // and not in the redirect: with the redirect subtracting it instead,
-    // the compiled body starts `mov esi, ecx` and diverges at instruction 0.
-    uint8_t *const vbase = reinterpret_cast<uint8_t *>(this);
-    StringStruct *const self = reinterpret_cast<StringStruct *>(
-        vbase - StringStructCloseAdjustment);
-    // TRIED: the two table stores the image stages here (`mov [ecx-0x1c],
-    // 0x6693a4` and the vbtable-relative base-pair store) - hand writes in
-    // the original itself, stripped by direction; the walk now dispatches
-    // through whatever tables the constructing chain installed. The image
-    // hoists its zero register between the lea and the first store; both
-    // gaps are recorded on the marker below.
-    self->remove_all();
-    self->current_position_ = 0;
+// Original 4066C0's EH cleanup adjusts its saved virtual-base receiver by -0xC
+// and jumps to 401060. The emitted base destructor makes the remaining -0x1C
+// adjustment and stages the two base tables itself, as in the original body.
+StringStruct::~StringStruct() {
+    remove_all();
+    current_position_ = 0;
 }
 
 // StringStructDerivedVtable / StringStructDerivedVirtualBaseVtable
