@@ -327,11 +327,18 @@ def main(argv: list) -> int:
         return 3
     arguments, dep_target, dep_file = take_depfile(arguments)
     reproducible = None
+    probe_only = False
     if any(word.startswith("--repro-root=") for word in arguments):
         sys.path.insert(0, str(Path(__file__).resolve().parent))
-        from wine_repro import ReproducibleCompile
+        from wine_repro import ReproducibleCompile, preprocessing_probe
         try:
-            reproducible = ReproducibleCompile.read(tool, arguments, Path.cwd())
+            probe = preprocessing_probe(tool, arguments)
+            if probe is not None:
+                if dep_file or dep_target:
+                    raise ValueError("preprocessing probe cannot publish object dependencies")
+                arguments, probe_only = probe, True
+            else:
+                reproducible = ReproducibleCompile.read(tool, arguments, Path.cwd())
             def preprocess(words, directory):
                 result = run_tool(["wine32", str(executable), *map(translate, words)],
                                   cwd=directory, binary=True, explicit_compiler=True)
@@ -342,9 +349,10 @@ def main(argv: list) -> int:
                     raise ValueError("reproducibility preprocessing failed: " +
                                      (result.stdout[-2000:] + result.stderr).decode(errors="replace"))
                 return result.stdout
-            arguments = reproducible.verify(preprocess)
-            if dep_file:
-                reproducible.write_depfile(dep_file, dep_target or "")
+            if reproducible is not None:
+                arguments = reproducible.verify(preprocess)
+                if dep_file:
+                    reproducible.write_depfile(dep_file, dep_target or "")
         except (OSError, ValueError) as error:
             print(str(error), file=sys.stderr)
             return 3
@@ -372,10 +380,20 @@ def main(argv: list) -> int:
         from wine_link import capture_before, capture_after
         input_capture = capture_before(arguments, executable,
             [part for part in os.environ.get("VC6_LIB", str(VC6_ROOT / "LIB")).split(":") if part], Path.cwd())
-    finished = (run_tool(command, cwd=reproducible.root, explicit_compiler=True)
-                if reproducible is not None else run_tool(command))
+    if reproducible is not None:
+        finished = run_tool(command, cwd=reproducible.root, explicit_compiler=True)
+    elif probe_only:
+        finished = run_tool(command, binary=True, explicit_compiler=True)
+    else:
+        finished = run_tool(command)
     if scratch is not None:
         os.unlink(scratch.name)
+    if probe_only:
+        # Preprocessor text is compiler information, not a build log. Preserve
+        # blank lines and file-like lines as well as diagnostics for the IDE.
+        sys.stdout.buffer.write(finished.stdout)
+        sys.stderr.buffer.write(finished.stderr)
+        return finished.returncode
     if reproducible is not None:
         try:
             reproducible.check_inputs()
