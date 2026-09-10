@@ -76,6 +76,30 @@ def test_hidden_options_are_refused(variant_project, monkeypatch, name):
         compile_overlay(root, root / "code/unit.cpp", {"code/unit.cpp": b"candidate"}, ("nonexistent-compiler",), ())
 
 
+@pytest.mark.parametrize("debug_flags", [(), ("/Z7",)])
+def test_real_guarded_vc6_replica_preserves_storage_and_observes_header_damage(variant_project, debug_flags):
+    from recovery.environment.wine import VC6_ROOT
+    from match_recovery.coff_preservation import compare_outside_functions
+    if not (VC6_ROOT / "BIN/CL.EXE").is_file():
+        pytest.skip("VC6 is not installed")
+    root = variant_project
+    source = root / "code/unit.cpp"
+    source.write_text('#include "detail/value.h"\n#include <value.h>\n'
+                      'namespace { int stored = LOCAL_VALUE; int slots[37]; }\n'
+                      'int value(int n) { slots[n] = stored; return GLOBAL_VALUE + slots[n]; }\n')
+    wrapper = Path(__file__).resolve().parents[1] / "environment/wine.py"
+    command = (sys.executable, str(wrapper), "--tool=cl", "/nologo", "--repro-root=" + str(root),
+               "/I" + str(root / "support"), "/I" + str(root / "code"), "/FI" + str(root / "code/detail/value.h"))
+    flags = ("/c", "/O2", "/Gy", *debug_flags)
+    direct = Coff(compile_object(source, command, flags))
+    replica = Coff(compile_overlay(root, source, {}, command, flags))
+    assert compare_outside_functions(direct, replica, {}, {})["result"] == "pass"
+    changed = Coff(compile_overlay(root, source, {"support/value.h": b"#define GLOBAL_VALUE 23\n"}, command, flags))
+    assert compare_outside_functions(direct, changed, {}, {})["result"] == "fail"
+    with pytest.raises(ValueError, match="GUARDED_HEADER_DAMAGE"):
+        compile_overlay(root, source, {"code/detail/value.h": b"#error GUARDED_HEADER_DAMAGE\n"}, command, flags)
+
+
 def test_include_remapping_does_not_change_external_search_paths(variant_project):
     root = variant_project
     assert _variant_arguments(("/I/opt/compiler/include",), root, root / "replica", ("code",)) == ("/I/opt/compiler/include",)

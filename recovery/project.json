@@ -45,12 +45,12 @@
   },
   "toolchain": {
     "command": {"argv": ["uv", "run", "python", "recovery/environment/adapter.py"], "timeout": 30},
-    "inputs": ["recovery/environment/adapter.py", "recovery/environment/compile.py", "recovery/environment/wine.py"],
+    "inputs": ["recovery/environment/adapter.py", "recovery/environment/compile.py", "recovery/environment/wine.py", "recovery/environment/wine_repro.py"],
     "environment": ["VC6_ROOT", "VC6_INCLUDE", "VC6_LIB"]
   },
   "compiler": {
     "command": {"argv": ["uv", "run", "python", "recovery/environment/adapter.py"], "timeout": 330},
-    "inputs": ["recovery/environment/adapter.py", "recovery/environment/compile.py", "recovery/environment/recipe.py", "recovery/environment/recipes.json", "recovery/environment/wine.py"],
+    "inputs": ["recovery/environment/adapter.py", "recovery/environment/compile.py", "recovery/environment/recipe.py", "recovery/environment/recipes.json", "recovery/environment/wine.py", "recovery/environment/wine_repro.py"],
     "environment": ["VC6_PREFIX", "VC6_ROOT", "VC6_INCLUDE", "VC6_LIB", "WINEARCH", "CL", "_CL_"]
   },
   "measurement": {

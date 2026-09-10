@@ -55,6 +55,11 @@ def _variant_arguments(arguments, root, replica, roots):
 
     output, iterator = [], iter(arguments)
     for word in iterator:
+        if word.startswith("--repro-root="):
+            if word != "--repro-root=" + str(root):
+                raise ValueError("reproducible compiler root must be the declared project root")
+            output.append("--repro-root=" + str(replica))
+            continue
         if word.lower().startswith(("/yu", "/yc", "/fp", "-yu", "-yc", "-fp", "@")):
             raise ValueError("source overrides require compilation without PCH or response files")
         prefix = next((prefix for prefix in ("/FI", "-FI", "/I", "-I") if word.startswith(prefix)), None)
