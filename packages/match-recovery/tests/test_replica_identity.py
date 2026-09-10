@@ -98,6 +98,8 @@ def test_alias_labels_at_one_offset_require_explicit_handling():
     obj.symbols[101] = replace(obj.symbols[5], index=101, name="$L456")
     with pytest.raises(ValueError, match="ambiguous compiler-local"):
         object_signature(obj)
+    with pytest.raises(ValueError, match="ambiguous compiler-local"):
+        function_signature(obj, obj.symbols[2].name)
 
 
 def test_static_numeric_name_in_independent_data_is_not_inferred_owned():
@@ -106,6 +108,94 @@ def test_static_numeric_name_in_independent_data_is_not_inferred_owned():
     new = copy.deepcopy(old)
     new.symbols[8] = replace(new.symbols[8], name="$T999")
     assert object_signature(old) != object_signature(new)
+
+
+def local_pair():
+    old = fixture()
+    # A named function owns the same exception sections in both versions;
+    # this is not permission to alias an unnamed-namespace definition.
+    old.symbols[2] = replace(old.symbols[2], name="_owner")
+    old.sections = (replace(old.sections[0], relocations=((1, 8, 6),)),
+                    replace(old.sections[1], relocations=((0, 5, 6),)), old.sections[2])
+    new = copy.deepcopy(old)
+    new.symbols[5] = replace(new.symbols[5], name="$L9876")
+    new.symbols[8] = replace(new.symbols[8], name="$T9876")
+    return old, new
+
+
+def test_preservation_uses_associative_owner_and_offset_for_numeric_local_labels():
+    old, new = local_pair()
+    report = compare_outside_functions(old, new, {}, {})
+    assert report["result"] == "pass"
+    assert report["changed_sections"] == report["symbol_changes"] == []
+
+
+@pytest.mark.parametrize("damage", ["code", "data", "offset", "target", "type", "storage",
+                                     "auxiliary", "owner", "external", "non_numeric", "independent",
+                                     "relocation_site", "relocation_kind", "addend", "parent"])
+def test_preserved_local_labels_do_not_waive_any_target_or_content_dimension(damage):
+    old, new = local_pair()
+    if damage in ("code", "data"):
+        index = 0 if damage == "code" else 2
+        sections = list(new.sections)
+        sections[index] = replace(sections[index], data=b"\x90" + sections[index].data[1:])
+        new.sections = tuple(sections)
+    elif damage == "offset":
+        new.symbols[8] = replace(new.symbols[8], value=4)
+    elif damage == "target":
+        new.sections = (replace(new.sections[0], relocations=((1, 5, 6),)), *new.sections[1:])
+    elif damage in ("relocation_site", "relocation_kind"):
+        relocation = (2, 8, 6) if damage == "relocation_site" else (1, 8, 20)
+        new.sections = (replace(new.sections[0], relocations=(relocation,)), *new.sections[1:])
+    elif damage == "addend":
+        new.sections = (replace(new.sections[0], data=new.sections[0].data[:1] + b"\x04" +
+                                new.sections[0].data[2:]), *new.sections[1:])
+    elif damage == "parent":
+        new.associations[3] = 2
+    elif damage in ("type", "storage"):
+        new.symbols[8] = replace(new.symbols[8], **{damage: 2})
+    elif damage == "auxiliary":
+        new.auxiliary[8] = bytes(18)
+    elif damage == "owner":
+        new.symbols[2] = replace(new.symbols[2], name="_different_owner")
+    elif damage == "external":
+        for obj in (old, new):
+            obj.symbols[8] = replace(obj.symbols[8], storage=2)
+    elif damage == "non_numeric":
+        new.symbols[8] = replace(new.symbols[8], name="$Tsemantic_name")
+    else:
+        for obj in (old, new):
+            del obj.associations[3]
+    assert compare_outside_functions(old, new, {}, {})["result"] == "fail"
+
+
+def test_preservation_refuses_alias_local_labels_even_with_identical_objects():
+    old, _ = local_pair()
+    old.symbols[101] = replace(old.symbols[5], index=101, name="$L456")
+    with pytest.raises(ValueError, match="ambiguous compiler-local"):
+        compare_outside_functions(old, old, {}, {})
+
+
+def test_preservation_never_normalizes_opaque_local_auxiliary_records():
+    old, new = local_pair()
+    for obj in (old, new):
+        obj.auxiliary[8] = bytes(18)
+    assert compare_outside_functions(old, new, {}, {})["result"] == "fail"
+
+
+@pytest.mark.parametrize("operation", ["preservation", "object", "function"])
+def test_raw_symbol_cannot_impersonate_a_normalized_local_in_another_object(operation):
+    old, new = local_pair()
+    new.symbols[5] = replace(new.symbols[5], name="<coff-associative-local>")
+    # There need not be another recognized label or a same-object collision.
+    new.symbols[8] = replace(new.symbols[8], name="opaque_static")
+    with pytest.raises(ValueError, match="reserved compiler-local"):
+        if operation == "object":
+            object_signature(new)
+        elif operation == "function":
+            function_signature(new, "_owner")
+        else:
+            compare_outside_functions(old, new, {}, {})
 
 
 def test_private_helper_name_churn_cannot_satisfy_selected_function_damage_control():

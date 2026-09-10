@@ -4,6 +4,7 @@ import json
 import base64
 import hashlib
 import io
+import re
 import subprocess
 from pathlib import Path
 import sys
@@ -182,6 +183,41 @@ def test_real_vc6_unnamed_namespace_replica_keeps_code_and_external_edges(varian
         assert object_signature(original) != object_signature(damaged)
         if before == b"external":
             assert function_signature(original, symbol) != function_signature(damaged, symbol)
+
+
+@pytest.mark.parametrize("debug_flags", [(), ("/Z7",)])
+def test_real_vc6_preservation_tracks_exception_locations_not_numeric_names(variant_project, debug_flags):
+    from match_recovery.coff_preservation import compare_outside_functions
+    from recovery.environment.wine import VC6_ROOT
+    if not (VC6_ROOT / "BIN/CL.EXE").is_file():
+        pytest.skip("VC6 is not installed")
+    root = variant_project
+    source = root / "code/unit.cpp"
+    header = root / "code/guard.h"
+    header.write_text("struct Guard { ~Guard(); };\n")
+    source.write_text('#include "guard.h"\nint external(int);\n'
+                      "int value(int x) { Guard guard; return external(x); }\n")
+    # A new unused inline definition can renumber later exception labels without
+    # emitting code or changing the already present int(int) function type.
+    candidate = header.read_bytes() + b"inline int unused(int argument) { return argument; }\n"
+    wrapper = Path(__file__).resolve().parents[1] / "environment/wine.py"
+    command = (sys.executable, str(wrapper), "--tool=cl", "/nologo")
+    flags = ("/c", "/O2", "/Gy", "/GX", *debug_flags)
+    baseline = Coff(compile_object(source, command, flags))
+    same = Coff(compile_overlay(root, source, {}, command, flags))
+    assert object_signature(baseline) == object_signature(same)
+    changed = Coff(compile_overlay(root, source, {"code/guard.h": candidate}, command, flags))
+    def locals(obj):
+        return {s.name for s in obj.symbols.values()
+                if s.section in obj.associations and re.fullmatch(r"\$[LT][0-9]+", s.name)}
+    assert locals(baseline) and locals(changed) and locals(baseline) != locals(changed)
+    assert compare_outside_functions(baseline, changed, {}, {})["result"] == "pass"
+    for damage in (source.read_bytes().replace(b"external(x)", b"external(x + 1)"),
+                   source.read_bytes().replace(b"external", b"other_external"),
+                   source.read_bytes() + b"int additional_storage = 7;\n"):
+        damaged = Coff(compile_overlay(root, source,
+            {"code/guard.h": candidate, "code/unit.cpp": damage}, command, flags))
+        assert compare_outside_functions(baseline, damaged, {}, {})["result"] == "fail"
 
 
 def test_real_vc6_same_code_and_storage_cannot_hide_changed_member_type(variant_project):

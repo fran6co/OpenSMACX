@@ -1964,6 +1964,16 @@ Summaries retain changed-section/symbol counts, affected source bindings and
 unbound public/weak linker symbols. Compiler-generated local symbols are not new
 application recovery targets merely because they lack a source annotation.
 
+Numeric COFF exception labels in explicitly associative sections are compared by
+their owner, section, exact offset, type and storage, not their compiler-assigned
+decimal spelling. Only the supported `$L` label and `$T` static forms without
+auxiliary records use this normalization. Relocation sites, kinds, addend bytes,
+target locations, contents and ownership remain protected. Duplicate normalized
+locations and raw symbols impersonating the internal identity refuse comparison.
+Independent-section labels, public names, opaque auxiliary metadata and
+unnamed-namespace renames are not preservation aliases. This is compiler-output
+comparison only, not original-image target resolution or recovery acceptance.
+
 Current limits are explicit: source interpretation must agree across the baseline
 and current tree. Changed header/seed file sets use compiler protocol v5 complete
 trees: current-only files are absent from the baseline, historical-only files are

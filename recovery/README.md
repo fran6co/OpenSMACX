@@ -282,7 +282,11 @@ renumbered table indices, and ignores line-table file locations. It still retain
 function sizes, types, code/data bytes, relocation targets and linker metadata.
 Replica controls also recognize VC6's primary-file unnamed-namespace nonce and
 numeric exception labels through their associative owners and exact offsets.
-This does not alias original symbols or relax baseline preservation. Ordinary
+Baseline preservation uses the same narrowly recognized associative numeric
+labels, retaining owner, exact offset, type/storage, auxiliary metadata and every
+relocation edge; duplicate locations and internal-identity impersonation refuse.
+Unnamed-namespace aliases remain restricted to replica controls. None of these
+rules supply original-image target bindings. Ordinary
 external targets and initialized data remain strict. Supported standalone
 CodeView 5 type records compare by contents and decoded references rather than
 emission order or type-index numbering, retaining names, sizes, offsets, type
