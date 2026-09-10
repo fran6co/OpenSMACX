@@ -386,6 +386,8 @@ destination ancestry, and any remaining worker/candidate is checked for addition
 work even when cleanup is disabled. Clean merged branch-only leftovers can be
 removed after interrupted cleanup. This grants no new acceptance from a retirement
 record; `retained_in_history` explicitly reports `verification: "not_replayed"`.
+Ignored source or task/history files are recovery work, not disposable caches:
+they prevent no-op retirement and cleanup, and are rechecked on resumption.
 
 Each explicit invocation/resumption has the configured batch/command budgets.
 Changed profiles, moved pending integration targets, partial Git/index publication,
@@ -2625,7 +2627,7 @@ a **task-decision-only Git commit**, not to commit recovered source:
 Keep that policy and provider configuration committed. The author must differ
 from worker/reviewer attribution. Requests contain a fresh `snapshot`, `target`,
 `delegation`, derived ownership `groups`, existing `tasks`, `create_available` and
-`instructions`. Groups expose ownership summaries, not every function/disassembly;
+`instructions`, plus derived external `reservations`. Groups expose ownership summaries, not every function/disassembly;
 use `recover partition --group <selector> --details --impact` for detailed members
 and seed alternatives. Existing tasks retain pending discoveries and intent in the
 request; `tasks context <task>` supplies deeper evidence. Eligibility is not a
@@ -2650,6 +2652,43 @@ and `editable_files` is empty; defer also has an empty `task_id`. Evidence is al
 required. Planner proposals are not proof or direct mutation authority.
 The two size limits bound selection of new and existing tasks; existing tasks retain
 their authorized scopes even when too large for a particular planner invocation.
+
+To leave an existing recovery checkout parked while scheduling other work, the
+planner policy accepts optional `reserved_worktrees`:
+
+```json
+{
+  "reserved_worktrees": [{
+    "path": "build/recovery/worktrees/widget-owner",
+    "tasks": ["widget-owner"],
+    "evidence": ["Preserve this unfinished structural migration; schedule disjoint work"]
+  }]
+}
+```
+
+This is a scheduling decision, not copied source ownership or acceptance. Paths
+are canonical, absolute or relative to the coordinator; each must be a registered
+checkout in the same repository. The package derives the union of named tasks'
+current destination/worker scopes, including worker-only append-only decisions.
+Conflicting task identities/baselines, unknown decision streams or source changes
+outside the named scopes refuse; no history is imported into the destination.
+Omitted reservations do not waive safety: other registered checkouts with dirty,
+staged or unmerged committed source/recovery changes refuse scheduling. Clean
+ancestor and framework-only checkouts are not automatically recovery reservations.
+Worker changes are measured from their merge base, so master-only advances are
+not mistaken for worker work. Staged edits and uncommitted reversals cannot hide
+unmerged commits. Ignored source/decision files still participate.
+
+Planner group selection, extra editable files, existing-task resume and new task
+IDs respect these reservations. Campaign resume also checks its saved assignment
+and worker-expanded scope. Overlapping coordinator expansion grants refuse before
+any delegated decision; narrow the grant or explicitly reconcile the parked work.
+External driver leases remain held for scheduling/driver/campaign execution;
+source, history and worktree-inventory freshness are rechecked around agent calls
+and campaign stages. New or changed external work stops the run, never silently
+changes the authorization. These guards coordinate cooperating drivers and detect
+other edits; they are not a sandbox against malicious concurrent filesystem writes.
+The package never prepares, checkpoints, resets or cleans a reserved checkout.
 
 Creating a task requires a clean worktree, committed source/configuration, and a
 working Git identity/signing setup. Only the package publishes and checkpoints its

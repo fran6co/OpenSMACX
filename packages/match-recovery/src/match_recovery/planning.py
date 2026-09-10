@@ -7,6 +7,7 @@ claims, previous reviews, or cached acceptance. No executable bounds are inferre
 """
 
 from pathlib import Path, PurePosixPath
+from contextlib import nullcontext
 import subprocess
 
 from .components import VendorManifest, relative_path
@@ -16,6 +17,7 @@ from .locking import file_lock
 from .model import digest, require_digest, require_text
 from .ownership_source import component_manifests, ownership_files, project_view
 from .reviews import ReviewStore
+from .scheduling import reservations, validate_reservations
 from .source_config import SourceConfiguration
 from .source_inventory import assert_snapshot_current
 from .task_source import create_task
@@ -23,8 +25,8 @@ from .tasks import TaskStore, task_name
 
 
 def policy(value):
-    if (not isinstance(value, dict) or set(value) != {
-            "schema_version", "author", "command", "max_entities", "max_editable_files", "commit_decision", "evidence"}
+    fields = {"schema_version", "author", "command", "max_entities", "max_editable_files", "commit_decision", "evidence"}
+    if (not isinstance(value, dict) or not fields <= value.keys() or value.keys() - fields - {"reserved_worktrees"}
             or type(value["schema_version"]) is not int or value["schema_version"] != 1):
         raise ValueError("invalid planner delegation")
     require_text(value["author"], "planner author")
@@ -38,6 +40,7 @@ def policy(value):
         raise ValueError("planner delegation needs authorization evidence")
     for item in value["evidence"]:
         require_text(item, "planner delegation evidence")
+    validate_reservations(value.get("reserved_worktrees", []))
     return value
 
 
@@ -72,13 +75,13 @@ def validate_response(value, snapshot):
 
 def validate_request(value):
     if not isinstance(value, dict) or set(value) != {
-            "snapshot", "target", "delegation", "groups", "tasks", "create_available", "instructions"}:
+            "snapshot", "target", "delegation", "groups", "tasks", "create_available", "instructions", "reservations"}:
         raise ValueError("invalid planner request")
     require_digest(value["snapshot"])
     require_text(value["target"], "planner target")
     policy(value["delegation"])
     if (type(value["create_available"]) is not bool
-            or any(not isinstance(value[key], list) for key in ("groups", "tasks", "instructions"))):
+            or any(not isinstance(value[key], list) for key in ("groups", "tasks", "instructions", "reservations"))):
         raise ValueError("invalid planner context")
     for item in value["instructions"]:
         require_text(item, "planner instruction")
@@ -92,13 +95,16 @@ def _clean(root):
     return not _git(root, "status", "--porcelain", "--untracked-files=all").strip()
 
 
-def _context(root, target, delegation, *, skip_tasks=(), parallel_tasks=(), application_only=False):
+def _context(root, target, delegation, *, reserved=None, skip_tasks=(), parallel_tasks=(), application_only=False):
     view, source = project_view(root, allow_empty=True)
     config = SourceConfiguration.from_dict(source["source_configuration"])
     vendor_roots = [item.source_root for item in component_manifests(source) if isinstance(item, VendorManifest)]
     dependency_files = {name for name in source["files"] if name.endswith(".recovery.h") or
                         any(PurePosixPath(name).is_relative_to(directory) for directory in vendor_roots)}
     store = TaskStore(root)
+    reserved_tasks = reserved.tasks if reserved is not None else set()
+    reserved_subjects = reserved.subjects if reserved is not None else set()
+    reserved_files = reserved.files if reserved is not None else set()
     parallel_subjects, parallel_files = set(), set()
     for name in parallel_tasks:
         selected, editable = store.scope(name)
@@ -118,6 +124,8 @@ def _context(root, target, delegation, *, skip_tasks=(), parallel_tasks=(), appl
         occupied_files.update(files)
         eligible = (task.target == target and task.author == delegation["author"]
                     and task.task_id not in skip_tasks
+                    and task.task_id not in reserved_tasks
+                    and not (subjects & reserved_subjects or files & reserved_files)
                     and not (subjects & parallel_subjects or files & parallel_files)
                     and len(subjects) <= delegation["max_entities"] and len(files) <= delegation["max_editable_files"]
                     and all((item.image_sha256, item.address_space) == (source["image_sha256"], config.address_space)
@@ -140,6 +148,8 @@ def _context(root, target, delegation, *, skip_tasks=(), parallel_tasks=(), appl
             reasons.append("establish_source_home")
         if subjects & occupied_entities or set(files) & occupied_files:
             reasons.append("reserved_by_existing_task")
+        if subjects & reserved_subjects or set(files) & reserved_files:
+            reasons.append("reserved_by_external_worktree")
         if len(subjects) > delegation["max_entities"] or len(files) > delegation["max_editable_files"]:
             reasons.append("exceeds_delegated_scope_limit")
         if any(name not in source["files"] or config.is_seed(name) or name == config.image_pin for name in files):
@@ -149,14 +159,16 @@ def _context(root, target, delegation, *, skip_tasks=(), parallel_tasks=(), appl
         groups.append({**{key: value for key, value in group.items() if key != "entities"},
                        "editable_files": files, "eligible": not reasons, "reasons": reasons})
     return {"target": target, "delegation": delegation, "groups": groups, "tasks": tasks,
+            "reservations": reserved.records if reserved is not None else [],
             "create_available": _clean(root),
             "instructions": ["Remain read-only. Choose one evidence-backed ownership task to create or resume, or defer.",
                              "Byte claims and stored reviews do not prove structure or completion; inspect source evidence.",
                              "Existing task reservations stay in force. Resume them instead of duplicating or resetting their baselines.",
+                             "External worktree reservations defer overlapping work; do not adopt, modify or duplicate those checkouts.",
                              "Scheduling exclusions only defer another attempt against the current source; they never declare a task complete.",
                              "Do not invent original extents, edit source/policy, publish decisions, commit or accept code.",
                              "Inspect detailed members/seed alternatives with recover partition --group SELECTOR --details --impact, and tasks context TASK for existing work.",
-                             "Dependency, conflicting and unassigned groups need their indicated analysis, not automatic application recovery."]}, source, occupied_files | dependency_files
+                             "Dependency, conflicting and unassigned groups need their indicated analysis, not automatic application recovery."]}, source, occupied_files | dependency_files | reserved_files
 
 
 def _checkpoint(root, task, before):
@@ -178,7 +190,7 @@ def _checkpoint(root, task, before):
 
 
 def select_task(root: Path, target: str, configuration: dict, *, execute=invoke,
-                skip_tasks=(), parallel_tasks=(), application_only=False, _held_lease=None):
+                skip_tasks=(), parallel_tasks=(), application_only=False, _held_lease=None, _reservations=None):
     """One read-only selection plus optional task-only commit; never acceptance."""
     root = root.resolve()
     require_text(target, "planner target")
@@ -187,10 +199,13 @@ def select_task(root: Path, target: str, configuration: dict, *, execute=invoke,
         raise ValueError("application-only selection must be boolean")
     for name in (*skip_tasks, *parallel_tasks):
         task_name(name)
-    with file_lock(root / "build/recovery/driver.lock", timeout=0, held=_held_lease):
+    reservation_context = (reservations(root, delegation.get("reserved_worktrees", []))
+                           if _reservations is None else nullcontext(_reservations))
+    with file_lock(root / "build/recovery/driver.lock", timeout=0, held=_held_lease), reservation_context as reserved:
+        reserved.assert_current()
         before = working_state(root)
         request, source, occupied_files = _context(root, target, delegation, skip_tasks=skip_tasks,
-                                                  parallel_tasks=parallel_tasks, application_only=application_only)
+                                                  parallel_tasks=parallel_tasks, application_only=application_only, reserved=reserved)
         request["snapshot"] = digest({"request": request, "source": digest(source),
                                        "head": before["head"].hex(), "index": before["index"].hex(), "files": before["files"]})
         if changes(before, working_state(root)):
@@ -200,6 +215,7 @@ def select_task(root: Path, target: str, configuration: dict, *, execute=invoke,
         finally:
             if changes(before, working_state(root)):
                 raise ValueError("read-only planner edited the worktree; preserve work and inspect manually")
+            reserved.assert_current()
         assert_snapshot_current(root, source)
         if code != 0:
             return {"action": "unavailable", "agent_error": response, "ready_for_collection": False}
@@ -216,6 +232,7 @@ def select_task(root: Path, target: str, configuration: dict, *, execute=invoke,
         if group is None or not request["create_available"] or not _clean(root):
             raise ValueError("planner creation needs a clean worktree and an eligible unreserved ownership group")
         files = set(group["editable_files"]) | set(response["editable_files"])
+        reserved.check_scope(response["task_id"], (), files)
         config = SourceConfiguration.from_dict(source["source_configuration"])
         if len(files) > delegation["max_editable_files"] or files & occupied_files:
             raise ValueError("planner exceeded delegated file scope or an existing task reservation")
@@ -256,11 +273,20 @@ def start(root, configuration, worker_configuration, planner_configuration, *, i
             raise ValueError("checkpoint publication currently requires change acceptance scope")
         authorization(checkpoint_configuration, delegation["author"], worker_configuration["author"],
                       reviewer_configuration["author"] if reviewer_configuration else None)
-    selection = select_task(root, configuration["target"], delegation, execute=execute)
-    if selection["action"] not in ("create", "resume"):
-        return {"stop_reason": "planning_" + selection["action"], "selection": selection, "ready_for_collection": False}
-    report = drive(root, selection["task_id"], configuration, worker_configuration, iterations=iterations,
-                   reviewer_configuration=reviewer_configuration, coordinator_configuration=coordinator_configuration,
-                   migration_configuration=migration_configuration,
-                   checkpoint_configuration=checkpoint_configuration, execute=execute)
-    return {**report, "selection": selection}
+    with reservations(Path(root).resolve(), delegation.get("reserved_worktrees", [])) as reserved:
+        if coordinator_configuration is not None:
+            reserved.check_scope("", coordinator_configuration.get("subjects", []), coordinator_configuration.get("editable_files", []))
+        selection = select_task(root, configuration["target"], delegation, execute=execute, _reservations=reserved)
+        if selection["action"] not in ("create", "resume"):
+            return {"stop_reason": "planning_" + selection["action"], "selection": selection, "ready_for_collection": False}
+        def guarded_execute(*args, **kwargs):
+            reserved.assert_current()
+            result = execute(*args, **kwargs)
+            reserved.assert_current()
+            return result
+        report = drive(root, selection["task_id"], configuration, worker_configuration, iterations=iterations,
+                       reviewer_configuration=reviewer_configuration, coordinator_configuration=coordinator_configuration,
+                       migration_configuration=migration_configuration,
+                       checkpoint_configuration=checkpoint_configuration, execute=guarded_execute)
+        reserved.assert_current()
+        return {**report, "selection": selection}
