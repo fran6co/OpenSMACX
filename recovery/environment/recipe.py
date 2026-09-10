@@ -79,6 +79,12 @@ def invocation(entry: CompilationEntry) -> list[str]:
         command = str((entry.directory / command).resolve())
     kept, iterator = [], iter(words[1:])
     for word in iterator:
+        if word.startswith("--repro-root="):
+            path = Path(word.split("=", 1)[1])
+            if not path.is_absolute() or path.resolve() != path or not path.is_dir():
+                raise ValueError("matching recipe requires a canonical reproducible compiler root")
+            kept.append(word)
+            continue
         if word.startswith("@"):
             raise ValueError("matching recipe requires explicit options, not response files")
         if word.startswith(("/", "-")) and word[1:] in {"MD", "MDd", "MT", "MTd", "ML", "MLd"}:

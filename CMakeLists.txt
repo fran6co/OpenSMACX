@@ -288,7 +288,11 @@ add_executable(OpenSMACX ${OPENSMACX_SOURCES})
 target_compile_definitions(OpenSMACX PRIVATE
     $<$<CONFIG:Debug>:BUILD_DEBUG>
 )
-target_precompile_headers(OpenSMACX PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/stdafx.h")
+# Stable logical TU identity and guarded /Brepro are shared with recovery
+# recipes. VC6 otherwise time-seeds anonymous names and can reorder global
+# storage between identical compilations. The wrapper refuses macro changes.
+# PCH reuse cannot establish the fresh preprocessing evidence this requires.
+target_compile_options(OpenSMACX PRIVATE "--repro-root=${CMAKE_CURRENT_SOURCE_DIR}")
 # `dxguid` carries the IIDs `Buffer::init` names - without it the link fails
 # with `unresolved external symbol _IID_IDirectDrawSurface`, measured. It used
 # to be a `#pragma comment(lib, "dxguid.lib")` in buffer.cpp, "so the

@@ -31,7 +31,7 @@ VC6_PREFIX = Path(os.environ.get("VC6_PREFIX", VC6_ROOT / ".wineprefix"))
 TOOLS = {"cl": "CL.EXE", "link": "LINK.EXE", "lib": "LIB.EXE"}
 
 
-def run_tool(command: list) -> subprocess.CompletedProcess:
+def run_tool(command: list, *, cwd=None, binary=False, explicit_compiler=False) -> subprocess.CompletedProcess:
     """Wait for the tool, not EOF from background Wine services.
 
     Wine services can inherit captured pipes and keep them open after CL exits.
@@ -39,9 +39,15 @@ def run_tool(command: list) -> subprocess.CompletedProcess:
     waiting for those unrelated services or terminating a shared wineserver.
     The caller still owns compilation timeouts and process-group cleanup.
     """
-    with tempfile.TemporaryFile(mode="w+", errors="replace") as stdout, \
-            tempfile.TemporaryFile(mode="w+", errors="replace") as stderr:
-        finished = subprocess.run(command, env=environment(), stdout=stdout, stderr=stderr)
+    options = {"mode": "w+b"} if binary else {"mode": "w+", "errors": "replace"}
+    child_environment = environment()
+    if explicit_compiler:
+        child_environment = {key: value for key, value in child_environment.items()
+                             if key.upper() not in ("CL", "_CL_")}
+        child_environment.update(CL="", _CL_="")
+    with tempfile.TemporaryFile(**options) as stdout, tempfile.TemporaryFile(**options) as stderr:
+        finished = subprocess.run(command, env=child_environment, stdout=stdout, stderr=stderr,
+                                  **({"cwd": cwd} if cwd is not None else {}))
         stdout.seek(0)
         stderr.seek(0)
         return subprocess.CompletedProcess(command, finished.returncode, stdout.read(), stderr.read())
@@ -320,7 +326,29 @@ def main(argv: list) -> int:
         print(str(error), file=sys.stderr)
         return 3
     arguments, dep_target, dep_file = take_depfile(arguments)
-    if dep_file:
+    reproducible = None
+    if any(word.startswith("--repro-root=") for word in arguments):
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from wine_repro import ReproducibleCompile
+        try:
+            reproducible = ReproducibleCompile.read(tool, arguments, Path.cwd())
+            def preprocess(words, directory):
+                result = run_tool(["wine32", str(executable), *map(translate, words)],
+                                  cwd=directory, binary=True, explicit_compiler=True)
+                # /E puts this one driver echo on stderr, not in C++ text.
+                echo = os.fsencode(reproducible.source.name)
+                if (result.returncode or result.stderr not in (b"", echo + b"\r\n", echo + b"\n") or
+                        re.search(rb"(?m)^.*(?:fatal error|warning|error) [CD][0-9]{4}:", result.stdout)):
+                    raise ValueError("reproducibility preprocessing failed: " +
+                                     (result.stdout[-2000:] + result.stderr).decode(errors="replace"))
+                return result.stdout
+            arguments = reproducible.verify(preprocess)
+            if dep_file:
+                reproducible.write_depfile(dep_file, dep_target or "")
+        except (OSError, ValueError) as error:
+            print(str(error), file=sys.stderr)
+            return 3
+    elif dep_file:
         # Before the real compile, and unconditionally: a depfile is what
         # tells ninja to try again once the header is fixed, so it has to
         # exist even when the compile that follows fails.
@@ -344,9 +372,16 @@ def main(argv: list) -> int:
         from wine_link import capture_before, capture_after
         input_capture = capture_before(arguments, executable,
             [part for part in os.environ.get("VC6_LIB", str(VC6_ROOT / "LIB")).split(":") if part], Path.cwd())
-    finished = run_tool(command)
+    finished = (run_tool(command, cwd=reproducible.root, explicit_compiler=True)
+                if reproducible is not None else run_tool(command))
     if scratch is not None:
         os.unlink(scratch.name)
+    if reproducible is not None:
+        try:
+            reproducible.check_inputs()
+        except (OSError, ValueError) as error:
+            print(str(error), file=sys.stderr)
+            return 3
     if link_diagnostics is not None:
         try:
             write_link_diagnostics(link_diagnostics, finished.stdout)

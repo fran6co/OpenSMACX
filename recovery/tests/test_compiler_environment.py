@@ -72,6 +72,10 @@ def test_prepared_project_and_matching_compiler_use_static_multithreaded_runtime
                       "#error matching runtime policy is not static multithreaded\n#endif\n"
                       "int runtime_mode_control() { return 0; }\n")
     command = build_command(database, root / "src/alphanet.cpp")
+    # This fixture owns a separate source tree, while borrowing the product's
+    # parse/runtime policy. Give the explicit compiler identity its real root.
+    command = ["--repro-root=" + str(tmp_path) if word.startswith("--repro-root=") else word
+               for word in command]
     obj = Coff(environment.compile_object(source, tuple(command), ("/c", "/O2", "/Gy")))
     obj.function("?runtime_mode_control@@YAHXZ")
     # Check the actual compiler's predefines, not just spellings in a database.

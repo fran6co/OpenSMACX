@@ -100,6 +100,22 @@ can inherit output handles after the compiler exits. Completion follows the
 compiler's exit status, without waiting for service shutdown or weakening object
 validation. This behavior is covered by a lingering-output-owner control.
 
+Application CMake recipes explicitly select `--repro-root=<project-root>`.
+The same project-local wrapper then uses the full root-relative TU path and
+guarded VC6 `/Brepro`, avoiding time-seeded unnamed-namespace identities and
+their associated storage-order churn. Before compiling, three fresh `/E` passes
+compare the original invocation, stable-path invocation and reproducible one.
+Only parsed line metadata is separated; source-visible text (including literal
+bytes and pragmas), observed dependencies and input contents must agree.
+Observable file/date/time macro changes, diagnostics, opaque frontend/backend
+forwarding flags, hidden CL options, PCH and unsupported input forms refuse.
+Private output paths retain their original destinations; depfiles use the
+guard's observed inputs. These controls do not prove backend equivalence,
+original matching or acceptance; strict object/build/restoration checks remain.
+The application no longer consumes a PCH, whose provenance this guard cannot
+establish. Dependency compiler recipes without this explicit option are unchanged.
+No policy for VC6 is embedded in the reusable package.
+
 The same adapter also describes VC6 `BIN`, effective `VC6_INCLUDE` and `VC6_LIB`
 directories for the package's configured external-toolchain identity. Compilation,
 measurement, preparation and builds fingerprint their current contents, not only
