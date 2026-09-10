@@ -24,7 +24,9 @@ def register(commands):
     binding.add_argument("--root", type=Path, default=Path.cwd())
     binding.add_argument("--image", type=Path, required=True)
     binding.add_argument("--in", dest="source", required=True)
-    binding.add_argument("--line", type=int, required=True, help="Existing code line to annotate; source bytes are otherwise unchanged")
+    binding.add_argument("--line", type=int, required=True, help="Existing code line to annotate (also #include with --mode file); source bytes are otherwise unchanged")
+    binding.add_argument("--mode", choices=("body", "file"), default="body",
+                         help="Bind the following body (default), or the whole TU for a compiler-emitted function; not emission or ownership proof")
     binding.add_argument("--source-sha256", required=True, help="Expected current source digest, not a stored verdict")
     binding.add_argument("--name", required=True)
     binding.add_argument("--span", dest="spans", action="append", required=True, help="Explicit original start-end (exclusive), e.g. 0x401000-0x401020")
@@ -262,7 +264,7 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
             if len(parts) != 2:
                 raise ValueError("binding span must be start-end")
             spans.append(Span(*(int(part, 0) for part in parts)))
-        return 0, bind(root, image=arguments["image"], spans=spans,
+        return 0, bind(root, image=arguments["image"], spans=spans, mode=arguments.get("mode", "body"),
                        **{key: arguments[key] for key in ("address", "name", "source", "line", "source_sha256", "reason", "evidence")})
     if arguments.get("command") == "measure":
         from .source_measure import measure_source

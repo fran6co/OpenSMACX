@@ -519,11 +519,21 @@ and task context expose that evidence, and source integrity refuses malformed or
 orphaned binding comments. Existing C++ bytes and neighboring annotations remain.
 The supplied source digest is a publication guard and is not saved in source.
 
+The default `--mode body` binds the following body and continues to refuse directive
+anchors. Opt in to `--mode file` for a TU-level function binding, including a
+compiler-generated deleting destructor emitted from a header declaration. FILE
+uses the existing whole-TU source grammar: supply the symbol with `--name` and
+anchor it at an existing code line or `#include` directive in the non-seed source
+TU, not in the header. Other directives, comments and blank anchors are refused.
+No wrapper body or C++ code is generated. The binding does not prove that the TU
+emits the symbol, owns it uniquely, or passes any measurement or acceptance check;
+those remain separate fresh verification obligations.
+
 Existing product/component identities, conflicting seed spans, overlapping
 identities and linked/stale destinations are refused. Compatible seed attempts
 remain as evidence; they are not erased or demoted. Rehoming, shared tails and
-generated/header mappings require their separate reviewed workflows, not this
-new-body binding operation. Publication uses the existing ignored backup/staging
+additional header/body ownership interpretations require their separate reviewed
+workflows, not this new-identity binding operation. Publication uses the existing ignored backup/staging
 mechanism and does not commit or authorize an expanded task. Use a coordinator-owned
 worktree; concurrent uncooperative edits can still race filesystem replacement.
 

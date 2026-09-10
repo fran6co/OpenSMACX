@@ -24,7 +24,11 @@ from .source_replica import artifact_parent
 
 
 def bind(root: Path, *, image: Path, address: int, name: str, spans, source: str, line: int,
-         source_sha256: str, reason: str, evidence) -> dict:
+         source_sha256: str, reason: str, evidence, mode: Mode | str = Mode.BODY) -> dict:
+    try:
+        mode = Mode(mode)
+    except (TypeError, ValueError) as error:
+        raise ValueError("binding mode must be body or file") from error
     root = root.resolve()
     require_digest(source_sha256)
     if type(address) is not int or not 0 <= address <= 0xFFFFFFFF:
@@ -55,7 +59,9 @@ def bind(root: Path, *, image: Path, address: int, name: str, spans, source: str
     lines = text.splitlines(keepends=True)
     if type(line) is not int or not 1 <= line <= len(lines):
         raise ValueError("binding insertion must name an existing source line")
-    if not lines[line - 1].strip() or lines[line - 1].lstrip().startswith(("//", "/*", "*", "#")):
+    anchor = lines[line - 1].lstrip()
+    include_anchor = mode is Mode.FILE and re.match(r"#[ \t]*include\b", anchor)
+    if not anchor.strip() or anchor.startswith(("//", "/*", "*")) or (anchor.startswith("#") and not include_anchor):
         raise ValueError("binding insertion must precede source code, not another annotation or directive")
     origin = Origin(snapshot["image_sha256"], config.address_space, address)
     for group in view["groups"]:
@@ -74,7 +80,7 @@ def bind(root: Path, *, image: Path, address: int, name: str, spans, source: str
         if not any(flags & 0x20000000 and region.start <= span.start and span.end <= region.end
                    for (region, _, _), flags in zip(original.sections, original.section_flags)):
             raise ValueError("original function spans require executable file-backed storage")
-    record = DecompilationState(address, Mode.BODY, State.IMPLEMENTED, path, 1, name,
+    record = DecompilationState(address, mode, State.IMPLEMENTED, path, 1, name,
                                 tuple((span.start, span.end) for span in spans))
     marker = write("", [record])
     newline = "\r\n" if lines[line - 1].endswith("\r\n") else "\n"
@@ -84,7 +90,8 @@ def bind(root: Path, *, image: Path, address: int, name: str, spans, source: str
     before_records, after_records = read_text(text, path), read_text(changed.decode("utf-8"), path)
     added = [row for row in after_records if row.line == line]
     if (len(after_records) != len(before_records) + 1 or len(added) != 1
-            or added[0].address != address or added[0].name != name or added[0].image_spans != record.image_spans
+            or added[0].address != address or added[0].name != name or added[0].mode is not mode
+            or added[0].image_spans != record.image_spans
             or added[0].byte_exact or added[0].semantic or added[0].state == State.EXCLUDED):
         raise ValueError("new source binding did not round-trip as one unclaimed identity")
     for old in before_records:
