@@ -193,7 +193,9 @@ def test_timeout_is_unmeasurable_not_a_lost_task(monkeypatch, tmp_path):
 
 @pytest.mark.parametrize("result, expected", [(Result.PASS, 0), (Result.FAIL, 1), (Result.UNKNOWN, 3)])
 def test_cli_preserves_check_exit_semantics(monkeypatch, capsys, result, expected):
-    monkeypatch.setattr("match_recovery.application_binary.verify_task",
-                        lambda *args: {"result": result, "functions": [], "ready_for_collection": False})
+    def verify(*args, retained_diagnostics=False):
+        assert retained_diagnostics is False
+        return {"result": result, "functions": [], "ready_for_collection": False}
+    monkeypatch.setattr("match_recovery.application_binary.verify_task", verify)
     assert main(["tasks", "check-binary", "widget", "--image", "fixture.exe", "--summary"]) == expected
     assert '"ready_for_collection": false' in capsys.readouterr().out

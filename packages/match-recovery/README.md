@@ -1773,6 +1773,26 @@ of the complete byte/reference proof. Local and weak symbols do not borrow exter
 bindings. These reports help distinguish structural mistakes, such as an accidental
 recursive call instead of a base initializer, from instruction-spelling work.
 
+`recover tasks check-binary <task> --image <image> --retained-diagnostics`
+can investigate a mapped header-defined function absent from its canonical
+product object. The single source mapping must supply its explicit `// body`
+header. Supported ordinary, unambiguous function names are retained by taking
+their addresses in private same-TU compiler overlays, never by exporting them or
+changing optimization flags. Replica, repeated-emission and body-damage controls
+must succeed under each flag trial. Unsupported access, overloads, virtual or
+generated methods and unobservable controls remain unknown. A present mismatching
+or malformed definition never takes this fallback.
+
+The optional `retained_definitions` reports contain separate strict byte/reference
+measurements and control/compilation provenance. They do **not** replace ordinary
+`functions`, affect the check verdict, bank claims, or satisfy restoration or
+acceptance. Target identities come from ordinary product objects and source
+bindings; probe objects never enter product data, table, layout or preservation
+checks and are never linked. Taking an address can affect code generation and
+does not prove the method's inlined callers or final-link selection. This is an
+investigation facility; acceptance of retained-definition evidence remains
+unfinished. The default check incurs no retention probes.
+
 All public recovery commands, including `inventory`, `partition`, `components`
 and task commands, belong to this package. `inventory` and `partition` run
 natively when `recovery/project.json` supplies a `source` section. No local Python

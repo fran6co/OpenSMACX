@@ -541,6 +541,16 @@ two source branches may share one emitted call site without losing a runtime cal
 Offsets are candidate-section-relative, not original image addresses. Retain the
 report in ignored storage and preserve structural discoveries in the task journal.
 
+If a source-bound inline definition is not emitted in its canonical TU, investigate
+with `recover tasks check-binary <task> --image <image> --retained-diagnostics`.
+Keep the explicit `// body` binding to its owning header. Controlled private
+address-taking probes can provide advisory strict measurements without adding
+measurement-only exports to product C++. Read `retained_definitions` separately:
+the ordinary missing-body result and acceptance obligations remain unchanged.
+These temporary objects are never linked or used for product preservation,
+layout or data checks. Do not treat a retained match as a product emission or
+remove existing claim-dependent instrumentation without a restoration plan.
+
 ## 6. Verify and hand back
 
 Every integrated step must leave the application compiling and linking. Trace

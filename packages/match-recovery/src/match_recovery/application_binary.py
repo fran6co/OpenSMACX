@@ -80,6 +80,13 @@ def select_bindings(view: dict, selected: frozenset[str]) -> tuple[list, list, d
 def check_compiled(bindings, object_bindings, generated_bindings, objects, image, externals, *, errors=None,
                    import_bindings=(), shared_bindings=()):
     """Same strict target resolution for ordinary measurements and source trials."""
+    return _compiled_evidence(bindings, object_bindings, generated_bindings, objects, image, externals,
+                              errors=errors, import_bindings=import_bindings, shared_bindings=shared_bindings)[0]
+
+
+def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, image, externals, *, errors=None,
+                       import_bindings=(), shared_bindings=()):
+    """Resolve targets from product objects, never from a retention probe."""
     data_targets, checked_objects = object_targets(object_bindings, objects)
     if {item.symbol for item in shared_bindings} & (set(externals) | {item.symbol for item in bindings}
             | {item.symbol for item in object_bindings} | {item.symbol for item in generated_bindings}
@@ -101,19 +108,22 @@ def check_compiled(bindings, object_bindings, generated_bindings, objects, image
     initial = check_initial_data(bounded, objects, image, {**externals, **data_targets, **generated_targets, **imports}, errors=errors)
     by_symbol = {item["symbol"]: item for item in initial}
     checked_objects = [by_symbol.pop(row["symbol"], row) for row in checked_objects] + list(by_symbol.values())
+    targets = {**externals, **data_targets, **generated_targets}
     rows = check_objects(bindings, objects, image,
-                         external_targets={**externals, **data_targets, **generated_targets},
+                         external_targets=targets,
                          import_targets=imports, errors=errors)
-    return rows, checked_objects, checked_generated, checked_imports, checked_shared
+    return (rows, checked_objects, checked_generated, checked_imports, checked_shared), targets, imports
 
 
 def verify_task(root: Path, task_name: str, image_path: Path, *,
                 compiler: Callable | None = None, command_for: Callable | None = None,
-                debug_types: bool = False) -> dict:
+                debug_types: bool = False, retained_diagnostics: bool = False) -> dict:
     # Joint layout checks need configured debug flags. This is a measured configuration,
     # never an assumption that debug and non-debug objects are interchangeable.
     if type(debug_types) is not bool:
         raise ValueError("debug_types must be a boolean")
+    if type(retained_diagnostics) is not bool:
+        raise ValueError("retained_diagnostics must be a boolean")
     root = root.resolve()
     settings = Measurement.read(root)
     flag_sets = tuple(flags + (settings.layout_flags if debug_types else ()) for flags in settings.flag_sets)
@@ -123,7 +133,9 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
     selected, _ = store._scope(task, decisions)
     if not selected:
         raise ValueError("refusing an empty task measurement")
-    before = settings.snapshot(root, {"debug_types": debug_types})
+    measurement_options = {"debug_types": debug_types,
+                           **({"retained_diagnostics": True} if retained_diagnostics else {})}
+    before = settings.snapshot(root, measurement_options)
     view, snapshot = project_view(root)
     if any(subject.image_sha256 != snapshot["image_sha256"] or subject.address_space != "pe:va"
            for subject in task.subjects):
@@ -173,6 +185,7 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
     attempts, variants, object_checks = 0, defaultdict(list), []
     generated_checks, dependencies, import_checks, shared_checks = [], [], [], []
     generated_observations = []
+    retained_observations = []
     generated_units = set(units)
     for flags in flag_sets:
         objects, errors = {}, dict(command_errors)
@@ -206,9 +219,41 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
                              "errors": {unit: errors[unit] for unit in sorted(dependency_units) if unit in errors}})
         generated_units.update(dependency_units)
         active_shared = [item for item in shared_bindings if item.unit in objects or item.unit in errors]
-        checked_functions, checked_objects, checked_generated, checked_imports, checked_shared = check_compiled(
+        checked, product_targets, product_imports = _compiled_evidence(
             bindings, object_bindings, generated_bindings, objects, image, externals, errors=errors,
             import_bindings=import_bindings, shared_bindings=active_shared)
+        checked_functions, checked_objects, checked_generated, checked_imports, checked_shared = checked
+        if retained_diagnostics:
+            from .function_witness import retained_definition
+            for binding in bindings:
+                product = objects.get(binding.unit)
+                if product is None:
+                    continue  # Failed compilation is not evidence of non-emission.
+                exact_symbols = [symbol for symbol in product.symbols.values() if symbol.name == binding.symbol]
+                if len(exact_symbols) > 1 or any(
+                        symbol.section != 0 or symbol.storage != 2 or symbol.value != 0
+                        or symbol.type not in (0, 0x20) or product.auxiliary.get(symbol.index)
+                        for symbol in exact_symbols):
+                    continue  # Never replace present, common, weak or malformed definitions.
+                sources = [row for row in snapshot["records"] if row["candidate_kind"] == "source"
+                           and row["entity_id"] == binding.origin.entity_id and row["path"] == binding.unit]
+                if len(sources) != 1 or not sources[0]["body_path"]:
+                    continue  # Explicit source-owned body binding, not a guessed header/name.
+                header = sources[0]["body_path"]
+                if (Path(header).suffix in settings.unit_extensions or settings.source.is_seed(header)
+                        or Path(header).suffix not in settings.source.extensions
+                        or not any(Path(header).is_relative_to(directory) for directory in settings.source.roots)):
+                    continue
+                probe, observation = retained_definition(root, binding, header, product, compiler,
+                                                        commands[binding.unit], flags, settings.source.symbol_format)
+                attempts += observation["compile_attempts"]
+                observation = {**observation, "entity_id": binding.origin.entity_id,
+                               "symbol": binding.symbol, "unit": binding.unit, "flags": list(flags)}
+                if probe is not None:
+                    observation["measurement"], = check_objects(
+                        [binding], {binding.unit: probe}, image,
+                        external_targets=product_targets, import_targets=product_imports)
+                retained_observations.append(observation)
         shared_checks.extend({**item, "flags": list(flags)} for item in checked_shared)
         object_checks.extend({**item, "flags": list(flags)} for item in checked_objects)
         import_checks.extend({**item, "flags": list(flags)} for item in checked_imports)
@@ -226,7 +271,7 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
                   if Result.UNKNOWN in results else Result.FAIL)
         rows.append({**{name: candidates[0][name] for name in ("entity_id", "address", "symbol", "unit")},
                      "result": result, "variants": candidates})
-    if (settings.snapshot(root, {"debug_types": debug_types}) != before or image_path.read_bytes() != image_data
+    if (settings.snapshot(root, measurement_options) != before or image_path.read_bytes() != image_data
             or store.read(task_name) != task or store.decisions(task_name) != decisions):
         raise ValueError("source, build inputs or task decisions changed during measurement; retry")
     counts = Counter(row["result"] for row in rows)
@@ -250,6 +295,9 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
             "shared_owners": [{"interpretation_id": item.interpretation_id, "unit": item.unit} for item in shared_bindings],
             "generated_tables": generated_checks,
             "generated_coverage": generated_observations,
+            **({"retained_definitions": retained_observations,
+                "retained_definition_policy": "advisory_only; never product emission, restoration or acceptance"}
+               if retained_diagnostics else {}),
             "generated_units": sorted(generated_units),
             "import_bindings": import_checks,
             "unresolved_symbols": sorted({relocation["symbol"] for candidates in variants.values()

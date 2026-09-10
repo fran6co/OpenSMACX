@@ -154,6 +154,8 @@ def register(commands):
     task_binary.add_argument("--root", type=Path, default=Path.cwd())
     task_binary.add_argument("--image", type=Path, required=True)
     task_binary.add_argument("--summary", action="store_true")
+    task_binary.add_argument("--retained-diagnostics", action="store_true",
+                             help="Privately retain missing source-bound inline definitions for advisory measurements; does not change verification results")
     task_check = task_actions.add_parser("check", help="Joint scoped binary and layout evidence; not full acceptance")
     task_check.add_argument("task")
     task_check.add_argument("--root", type=Path, default=Path.cwd())
@@ -454,7 +456,8 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
                 summaries = ((output, ("members", "bases")),)
             else:
                 from .application_binary import verify_task
-                output = verify_task(root, arguments["task"], image)
+                output = verify_task(root, arguments["task"], image,
+                                     retained_diagnostics=arguments.get("retained_diagnostics", False))
                 summaries = ((output, ("functions",)),)
             if arguments.get("summary"):
                 for report, fields in summaries:
