@@ -180,6 +180,11 @@ inline void clear_list_entries(StringStruct *self) {
     self->current_position_ = 0;
     self->entry_count_ = 0;
 }
+
+inline void finish_list_teardown(StringStruct *self) {
+    clear_list_entries(self);
+    self->current_position_ = 0;
+}
 }
 
 // Derived cleanup must run before the base destructor changes virtual dispatch:
@@ -187,8 +192,7 @@ inline void clear_list_entries(StringStruct *self) {
 // ORIGINAL: 0x004066C0 ??1StringList@@UAE@XZ 0x004066C0-0x00406818;0x00650980-0x00650995
 // RECOVERY_BINDING: v1 {"evidence": ["Original 4066C0 installs derived tables6698C4/6698C0 and clears entries before switching to base tables6693A4/6693A0; primary removal slot selects the text-cleanup hook during the derived stage. Implicit base-only cleanup cannot preserve that lifecycle.", "Original bounds4066C0-406818 and650980-650995 retained in 7eb1b2b0 parent src/stringstruct.cpp. Support code650980 adjusts the saved virtual-base receiver by -0xC before jumping to StringStruct base teardown401060. These are original identity/ownership interpretations, not a matching claim."], "reason": "Restore the original two-stage StringList destructor identity to its real C++ destructor, including its historical EH support span."}
 StringList::~StringList() {
-    clear_list_entries(this);
-    current_position_ = 0;
+    finish_list_teardown(this);
 }
 
 /*
@@ -343,7 +347,7 @@ void StringStruct::remove_all() {
 Purpose: Destroy the StringStruct subobject, releasing entries under the base
          hooks. The original receiver is its allocation-tracking virtual base;
          the compiler, not a handwritten close wrapper, owns that adjustment.
-// ORIGINAL: 0x00401060 ?close@StringStruct@@QAEXXZ 0x00401060-0x004010F9
+// ORIGINAL: 0x00401060 ?close@StringStruct@@QAEXXZ 0x00401060-0x004010F9 BYTE_EXACT
 // symbol    ??1StringStruct@@UAE@XZ
 // size      153 bytes
 // prototype void (__thiscall ?close@StringStruct@@QAEXXZ)(StringStruct* this)
@@ -394,8 +398,7 @@ Status: Genuine destructor; original inlining and strict matching remain unprove
 // and jumps to 401060. The emitted base destructor makes the remaining -0x1C
 // adjustment and stages the two base tables itself, as in the original body.
 StringStruct::~StringStruct() {
-    clear_list_entries(this);
-    current_position_ = 0;
+    finish_list_teardown(this);
 }
 
 // StringStructDerivedVtable / StringStructDerivedVirtualBaseVtable
