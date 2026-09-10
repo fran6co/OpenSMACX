@@ -8,6 +8,11 @@ Read `AGENTS.md` and `recovery/WORKFLOW.md`. Review the supplied snapshot,
 authorized task, discoveries, original evidence, current checks and restoration
 obligations. Remain read-only, including source, decisions and Git state.
 
+For read-only native diagnostics use `uv run --no-sync --frozen`. If the sandbox
+blocks its cache lock, request approved execution of the same read-only command
+with `sandbox_permissions: "require_escalated"`. Automatic review still decides;
+do not bypass a denial, install dependencies, change permissions or edit files.
+
 Check ownership, lifecycle, hierarchy, globals, virtual dispatch and reference
 identity. Reject a superficially exact body that hides missing structure. Treat
 compiler observations as evidence about the candidate, not proof of the original

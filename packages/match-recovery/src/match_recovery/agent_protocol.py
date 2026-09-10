@@ -15,8 +15,21 @@ def response_schema(role):
     digest = {"type": "string", "pattern": "^[0-9a-f]{64}$"}
     if role == "planner":
         return _object({"snapshot": digest, "action": {"type": "string", "enum": ["create", "resume", "defer"]},
-                        "task_id": {"type": "string"}, "group": {"type": "string"}, "intent": {"type": "string"},
-                        "editable_files": {"type": "array", "items": text}, "evidence": evidence})
+                        "task_id": {"type": "string", "description":
+                                    "For create, a new task ID; for resume, the selected existing task ID; "
+                                    "for defer, exactly the empty string."},
+                        "group": {"type": "string", "description":
+                                  "For create, the selected eligible ownership group. "
+                                  "For resume or defer, exactly the empty string."},
+                        "intent": {"type": "string", "description":
+                                   "For create, the recovery task intent. For resume or defer, exactly the "
+                                   "empty string; put explanations in evidence, not here."},
+                        "editable_files": {"type": "array", "items": text, "description":
+                                           "For create, additional authorized product files, or an empty array. "
+                                           "For resume or defer, exactly the empty array []."},
+                        "evidence": {**evidence, "description":
+                                     "Evidence and reasoning for the decision, including any explanation "
+                                     "of deferral or resumption. Required for every action."}})
     if role == "coordinator":
         return _object({"snapshot": digest,
                         "action": {"type": "string", "enum": ["expand", "incorporate", "reject", "defer", "investigate", "bind_seed"]},

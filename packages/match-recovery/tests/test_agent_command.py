@@ -331,3 +331,14 @@ def test_schema_is_strict_and_uses_only_provider_neutral_json(role):
     assert schema["additionalProperties"] is False
     assert set(schema["required"]) == set(schema["properties"])
     assert json.loads(json.dumps(schema)) == schema
+
+
+def test_planner_schema_explains_action_dependent_empty_fields():
+    properties = response_schema("planner")["properties"]
+    for field in ("task_id", "group", "intent"):
+        description = properties[field]["description"]
+        assert "create" in description and "resume" in description and "defer" in description
+        assert "empty string" in description
+    assert "empty array []" in properties["editable_files"]["description"]
+    assert "explanations in evidence" in properties["intent"]["description"]
+    assert "Required for every action" in properties["evidence"]["description"]

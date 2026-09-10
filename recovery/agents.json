@@ -3,7 +3,7 @@
   "artifacts": "build/recovery/agents",
   "planner": {
     "command": {
-      "argv": ["codex", "exec", "--ephemeral", "--model", "gpt-6-astra", "-c", "model_reasoning_effort=high", "--sandbox", "read-only", "--output-schema", "{schema}", "--output-last-message", "{response}", "-"],
+      "argv": ["codex", "exec", "--ephemeral", "--model", "gpt-6-astra", "-c", "model_reasoning_effort=high", "-c", "approval_policy=on-request", "-c", "approvals_reviewer=auto_review", "--sandbox", "read-only", "--output-schema", "{schema}", "--output-last-message", "{response}", "-"],
       "timeout": 3300
     },
     "instructions": [".claude/agents/recovery-planner.md"],
@@ -20,7 +20,7 @@
   },
   "coordinator": {
     "command": {
-      "argv": ["codex", "exec", "--ephemeral", "--model", "gpt-6-astra", "-c", "model_reasoning_effort=high", "--sandbox", "read-only", "--output-schema", "{schema}", "--output-last-message", "{response}", "-"],
+      "argv": ["codex", "exec", "--ephemeral", "--model", "gpt-6-astra", "-c", "model_reasoning_effort=high", "-c", "approval_policy=on-request", "-c", "approvals_reviewer=auto_review", "--sandbox", "read-only", "--output-schema", "{schema}", "--output-last-message", "{response}", "-"],
       "timeout": 3300
     },
     "instructions": [".claude/agents/recovery-coordinator.md"],
@@ -28,7 +28,7 @@
   },
   "reviewer": {
     "command": {
-      "argv": ["codex", "exec", "--ephemeral", "--model", "gpt-6-astra", "-c", "model_reasoning_effort=high", "--sandbox", "read-only", "--output-schema", "{schema}", "--output-last-message", "{response}", "-"],
+      "argv": ["codex", "exec", "--ephemeral", "--model", "gpt-6-astra", "-c", "model_reasoning_effort=high", "-c", "approval_policy=on-request", "-c", "approvals_reviewer=auto_review", "--sandbox", "read-only", "--output-schema", "{schema}", "--output-last-message", "{response}", "-"],
       "timeout": 3300
     },
     "instructions": [".claude/agents/recovery-reviewer.md"],

@@ -10,7 +10,7 @@ import pytest
 from match_recovery.driver import working_state
 from match_recovery.component_source import render_component
 from match_recovery.model import Origin, Span
-from match_recovery.planning import policy, select_task, start
+from match_recovery.planning import policy, select_task, start, validate_response
 from match_recovery.tasks import TaskStore
 from test_source_configuration import configured, vendor_manifest
 from test_task_source import git, project
@@ -36,6 +36,39 @@ def answer(payload, action="create", **changes):
             "group": "source:code/owner.cc" if action == "create" else "",
             "intent": "Recover ownership, not just byte spellings" if action == "create" else "",
             "editable_files": [], "evidence": ["code/owner.cc and its interface"], **changes}
+
+
+def test_captured_planner_deferral_keeps_explanation_in_evidence():
+    # The live failure put its explanation in intent. Replay the response shape
+    # without provider access, source inspection, or turning diagnostics into authority.
+    response = json.loads('''{
+        "snapshot": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "action": "defer", "task_id": "", "group": "", "intent": "", "editable_files": [],
+        "evidence": ["Eligible ownership needs additional evidence before selection."]
+    }''')
+    before = json.dumps(response, sort_keys=True)
+    validate_response(response, "a" * 64)
+    assert json.dumps(response, sort_keys=True) == before
+
+
+@pytest.mark.parametrize("action", ["defer", "resume"])
+@pytest.mark.parametrize("changes,message", [
+    ({"intent": "Defer until the missing evidence is available."}, "resume/defer cannot change scope or task intent"),
+    ({"group": "source:code/owner.cc"}, "resume/defer cannot change scope or task intent"),
+    ({"editable_files": ["code/owner.cc"]}, "resume/defer cannot change scope or task intent"),
+])
+def test_noncreation_planner_response_cannot_smuggle_task_fields(action, changes, message):
+    response = answer({"snapshot": "a" * 64}, action, **changes)
+    before = json.dumps(response, sort_keys=True)
+    with pytest.raises(ValueError, match=message):
+        validate_response(response, "a" * 64)
+    assert json.dumps(response, sort_keys=True) == before  # Never silently coerce a provider response.
+
+
+def test_planner_deferral_cannot_select_a_task():
+    response = answer({"snapshot": "a" * 64}, "defer", task_id="owner")
+    with pytest.raises(ValueError, match="deferral cannot select a task"):
+        validate_response(response, "a" * 64)
 
 
 def test_native_planner_checkpoints_only_task_decision_then_can_resume_same_baseline(setup):

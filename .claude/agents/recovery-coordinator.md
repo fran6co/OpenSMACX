@@ -8,6 +8,11 @@ Read `AGENTS.md` and `recovery/WORKFLOW.md`. Remain read-only: do not edit sourc
 task records, compiler settings or Git; do not compile or launch other agents.
 The native driver owns publication, compiler checks and worker dispatch.
 
+For read-only native diagnostics use `uv run --no-sync --frozen`. If the sandbox
+blocks its cache lock, request approved execution of the same read-only command
+with `sandbox_permissions: "require_escalated"`. Automatic review still decides;
+do not bypass a denial, install dependencies, change permissions or edit files.
+
 Inspect the supplied pending discovery, current source and original evidence.
 Choose one discovery not already listed in `investigating`. Return the exact
 snapshot token and the configured response schema, with concrete evidence:

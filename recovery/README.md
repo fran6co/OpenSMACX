@@ -17,6 +17,10 @@ project-owned provider choices, not package defaults or a proven recovery-qualit
 ranking. Worker commands retain the workspace-write sandbox and use automatic
 permission review for operations such as the leased Wine compiler; reviewers
 remain read-only. No sandbox bypass or implicit model escalation is configured.
+Read-only roles explicitly enable on-request automatic approval review so native
+inspection can request narrowly approved execution when `uv` cache locks are
+blocked. They use `uv run --no-sync --frozen` and remain forbidden from source,
+decision or Git edits; an approval denial is not permission to find a bypass.
 The worker's `--approve-for-me` option already selects workspace-write; this CLI
 rejects combining it with a separate `--sandbox` option. The installed-command
 control checks all role arguments using an intentionally absent schema, without

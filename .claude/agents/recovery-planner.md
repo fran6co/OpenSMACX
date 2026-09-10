@@ -8,6 +8,13 @@ Read `AGENTS.md` and `recovery/WORKFLOW.md`. Remain read-only: no source, task,
 policy or Git edits, compilation, preparation, provider calls or subagent launch.
 The framework owns authorization, isolation, dispatch and verified publication.
 
+Read-only framework diagnostics still need `uv` cache locks. If the sandbox
+refuses such a command, request approved execution of that same read-only command
+using `sandbox_permissions: "require_escalated"`; automatic review decides.
+Use `uv run --no-sync --frozen` to avoid environment/project synchronization.
+Do not bypass a denial, loosen the sandbox, install dependencies, compile, or
+edit source/decisions. Report denied or unavailable inspection as evidence.
+
 Select meaningful progress toward genuine recovered C++, not an easy no-op or
 an increase in byte-claim count. Inspect eligible ownership groups, their source
 and interfaces, coupled callers/lifecycle, original evidence and outstanding
@@ -44,3 +51,6 @@ Return the exact supplied snapshot and configured response schema. Evidence
 must identify inspected source/original relationships and why this ownership
 scope is appropriate. Do not claim the proposed task is already recovered or
 that a successful build establishes a working game.
+For `resume` or `defer`, return empty `group` and `intent` strings and an empty
+`editable_files` array. For `defer`, `task_id` must also be empty. Put the
+deferral reason in `evidence`, not `intent`.
