@@ -523,6 +523,15 @@ reviewed checkpoint, never as a way to improve a candidate score.
 A plateau is a resumable finding, not an exclusion. Never fabricate code or
 relax a check to bank a result.
 
+When an extent failure hides the useful instruction differences, add
+`--compiled-diagnostics` to the same native variant command. It reuses that run's
+compiled objects and shows bounded, unlinked listings for the primary target;
+it does not compile extra probes or change matching/acceptance. Inspect relocation
+identities, control flow and read timing, not just raw size or static call counts:
+two source branches may share one emitted call site without losing a runtime call.
+Offsets are candidate-section-relative, not original image addresses. Retain the
+report in ignored storage and preserve structural discoveries in the task journal.
+
 ## 6. Verify and hand back
 
 Every integrated step must leave the application compiling and linking. Trace
