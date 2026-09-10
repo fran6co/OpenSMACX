@@ -151,12 +151,43 @@ int StringStruct::add(int id) {
     return 0;
 }
 
+namespace {
+// Share the original entry walk without making the public remove_all symbol
+// inline-only. Destructors select their own stage's hooks before this walk;
+// each still clears its position even when the empty-head guard returns here.
+inline void clear_list_entries(StringStruct *self) {
+    if (!self->head_) {
+        return;
+    }
+    // The original initializes its index before testing the entry count.
+    int index = 0;
+    if (self->entry_count_ > 0) {
+        do {
+            StringStructEntry *const entry = self->head_;
+            self->current_ = entry->next;
+            StringStructPayload *const payload = entry->payload;
+            self->on_remove(payload);
+            delete payload;
+            self->head_->payload = nullptr;
+            delete self->head_;
+            ++index;
+            self->head_ = self->current_;
+            // The loop bound is re-read every iteration, so a visitor that
+            // changes the count changes how far the walk goes.
+        } while (index < self->entry_count_);
+    }
+    self->head_ = nullptr;
+    self->current_position_ = 0;
+    self->entry_count_ = 0;
+}
+}
+
 // Derived cleanup must run before the base destructor changes virtual dispatch:
 // 0x004066C0 first selects StringList's hooks, then enters the StringStruct stage.
 // ORIGINAL: 0x004066C0 ??1StringList@@UAE@XZ 0x004066C0-0x00406818;0x00650980-0x00650995
 // RECOVERY_BINDING: v1 {"evidence": ["Original 4066C0 installs derived tables6698C4/6698C0 and clears entries before switching to base tables6693A4/6693A0; primary removal slot selects the text-cleanup hook during the derived stage. Implicit base-only cleanup cannot preserve that lifecycle.", "Original bounds4066C0-406818 and650980-650995 retained in 7eb1b2b0 parent src/stringstruct.cpp. Support code650980 adjusts the saved virtual-base receiver by -0xC before jumping to StringStruct base teardown401060. These are original identity/ownership interpretations, not a matching claim."], "reason": "Restore the original two-stage StringList destructor identity to its real C++ destructor, including its historical EH support span."}
 StringList::~StringList() {
-    remove_all();
+    clear_list_entries(this);
     current_position_ = 0;
 }
 
@@ -300,33 +331,7 @@ Status: Complete
 // Datalink call the public declaration. It must provide an out-of-line symbol;
 // an inline definition here is not available to those translation units.
 void StringStruct::remove_all() {
-    if (!head_) {
-        return;
-    }
-    // `index` is declared BEFORE the count test, not inside it: the image
-    // stores the zero into the slot at 0x00401089, BETWEEN the load of
-    // entry_count_ and the compare against it. Declared inside, VC6 folds the
-    // count into the compare (`cmp dword ptr [esi + 0x10], ebx`) and the
-    // whole walk shifts - 7 of 64 against 50 of 64 in StringStruct::close.
-    int index = 0;
-    if (entry_count_ > 0) {
-        do {
-            StringStructEntry *const entry = head_;
-            current_ = entry->next;
-            StringStructPayload *const payload = entry->payload;
-            on_remove(payload);
-            delete payload;
-            head_->payload = nullptr;
-            delete head_;
-            ++index;
-            head_ = current_;
-            // The loop bound is re-read every iteration, so a visitor that
-            // changes the count changes how far the walk goes.
-        } while (index < entry_count_);
-    }
-    head_ = nullptr;
-    current_position_ = 0;
-    entry_count_ = 0;
+    clear_list_entries(this);
 }
 
 
@@ -389,7 +394,7 @@ Status: Genuine destructor; original inlining and strict matching remain unprove
 // and jumps to 401060. The emitted base destructor makes the remaining -0x1C
 // adjustment and stages the two base tables itself, as in the original body.
 StringStruct::~StringStruct() {
-    remove_all();
+    clear_list_entries(this);
     current_position_ = 0;
 }
 

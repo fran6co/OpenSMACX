@@ -45,6 +45,7 @@ void release(void *memory) {
 #undef free
 // LIVE_LIST_BASE
 // LIVE_LIST
+// LIVE_CLEANUP_HELPER
 int StringStruct::on_insert(StringStructPayload *) { return 0; }
 void StringStruct::on_remove(StringStructPayload *) {}
 int StringList::on_insert(StringStructPayload *) { return 0; }
