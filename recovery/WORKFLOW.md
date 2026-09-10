@@ -431,6 +431,15 @@ source bindings remain protected. It compares unfinished outside code to the tas
 baseline, not to the original executable. Existing restoration requirements are
 still checked separately and cannot be weakened by a preservation result.
 
+For a header-defined function, retain one canonical original binding and add its
+explicit `// body` path to the owning header. That header must be in the task's
+authorized files. Native preservation can attribute copies in other TUs only
+after fresh canonical/replica comparison and a body-damage witness in both
+contexts, separately per source version and flag set. Do not add duplicate
+original markers or infer ownership from matching names. Unsupported definitions
+and local dependencies remain unknown; outside callers, type records, exports
+and independent data remain protected even when inline ownership is established.
+
 To investigate a particular TU first, add `--unit src/infowin.cpp --diagnostic`
 (substitute its actual source path). This avoids the full per-file damage sweep,
 while still checking the current replica and compiling the historical tree.

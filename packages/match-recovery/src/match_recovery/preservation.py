@@ -172,7 +172,7 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
     task, decisions = store.read(task_name), store.decisions(task_name)
     from .integration import preservation_base
     baseline_revision = preservation_base(root, task, integration)
-    selected, _ = store._scope(task, decisions)
+    selected, editable = store._scope(task, decisions)
     head = git(root, "rev-parse", "HEAD").decode().strip()
     git(root, "merge-base", "--is-ancestor", task.base_revision, head)
     pin = image_pin(root, settings.source)
@@ -276,6 +276,32 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
             old_overlay = baseline if tree_mode else {name: baseline[name] for name in changed_files}
             identity_overlay = current if tree_mode else {name: current[name] for name in changed_files}
             for flags in settings.flag_sets:
+                # Objects/witnesses are shared only within this immutable flag
+                # trial. Historical and current source versions never share a
+                # cached definition or damage result.
+                verified_objects, damaged_objects = {}, {}
+
+                def version_compile(version, unit, replacements=None):
+                    overlay = old_overlay if version == "baseline" else identity_overlay
+                    return compile(unit, flags, {**overlay, **(replacements or {})} or
+                                   {unit: (baseline if version == "baseline" else current)[unit]})
+
+                def verified(version, unit):
+                    key = version, unit
+                    if key not in verified_objects:
+                        first = version_compile(version, unit)
+                        replica = version_compile(version, unit)
+                        if object_signature(first) != object_signature(replica):
+                            raise ValueError("inline canonical replica does not agree")
+                        verified_objects[key] = first
+                    return verified_objects[key]
+
+                def damaged(version, unit, header, contents):
+                    key = version, unit, header, digest(contents.hex())
+                    if key not in damaged_objects:
+                        damaged_objects[key] = version_compile(version, unit, {header: contents})
+                    return damaged_objects[key]
+
                 control = {"flags": list(flags), "result": Result.UNKNOWN if diagnostic else Result.PASS, "files": [],
                            "mode": "omitted_for_diagnostics" if diagnostic else "per_file_damage",
                            "omitted_file_controls": len(changed_files) if diagnostic else 0}
@@ -317,9 +343,24 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                         same = compile(unit, flags, identity_overlay or {unit: current[unit]})
                         if object_signature(original) != object_signature(same):
                             raise ValueError("current replica does not agree with direct compilation")
+                        verified_objects["current", unit] = original
                         prior = compile(unit, flags, old_overlay) if old_overlay else same
                         old_allowed, old_outside = _unit_scope(old_bindings, selected, unit)
                         new_allowed, new_outside = _unit_scope(new_bindings, selected, unit)
+                        from .inline_ownership import observe_copies
+                        inline_reports = []
+                        for version, obj, bindings, files, allowed in (
+                                ("baseline", prior, old_bindings, baseline, old_allowed),
+                                ("current", original, new_bindings, current, new_allowed)):
+                            copies, evidence = observe_copies(
+                                obj, unit, bindings, selected, editable, files, settings,
+                                lambda owner, version=version: verified(version, owner),
+                                lambda owner, header, content, version=version:
+                                    damaged(version, owner, header, content))
+                            allowed.update(copies)
+                            inline_reports.extend({"version": version, **item} for item in evidence)
+                        if inline_reports:
+                            row["inline_ownership"] = inline_reports
                         comparison = compare_outside_functions(prior, original, old_allowed, new_allowed,
                                                                baseline_outside=old_outside, current_outside=new_outside)
                         _explain_sources(comparison, old_sources, new_sources)
@@ -328,6 +369,8 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                         if control["result"] != Result.PASS:
                             row.update(result=Result.UNKNOWN, reason="per-file controls deliberately omitted for diagnostics" if diagnostic else
                                        "baseline substitutions lack per-file compiler controls")
+                        elif any(item["result"] != Result.PASS for item in inline_reports):
+                            row.update(result=Result.UNKNOWN, reason="header-defined copies lack compiler ownership witnesses")
                     except (OSError, ValueError) as error:
                         row.update(result=Result.UNKNOWN, reason=str(error))
                     reports.append(row)
@@ -358,6 +401,7 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                             "same current compiler policy on both source versions, not historical artifact recreation",
                             "configured preparation regenerates each private source context; current replicas must agree with direct output",
                             "only source-mapped function COMDAT ownership may vary; independent data/tables stay protected",
+                            "header copies require an authorized explicit body path, canonical replica and per-version/flag body-damage witnesses; exports and outside callers remain protected",
                             "source/configuration roots must agree; added/deleted product TUs require explicit historical recipe/coverage mapping",
                             "changed non-TU file sets require compiler protocol v5; unobserved seed/header substitutions remain unknown",
                             "symbol-to-source matches are annotation navigation hints, not ownership proof or scope authorization",

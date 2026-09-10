@@ -1894,6 +1894,26 @@ callees used only by scoped code are not outside definitions. Outside function
 bindings/claims and object/member/base/generated/component annotations also stay
 protected; a comment-only address change cannot be hidden by unchanged objects.
 
+Header-defined task functions can also own emitted copies in other TUs. Keep one
+canonical original binding and its explicit `// body path/to/header.h` fact; the
+header must be authorized by the task. No duplicate original markers or separate
+copy ledger is needed. For each source version and flag set, the verifier requires
+a fresh canonical replica, identical complete function/associative-section evidence
+in the other TU, and a controlled body replacement that changes both definitions.
+Only witnessed, exclusively owned COMDATs gain scope. The ordinary residual check
+still protects outside callers (including inlined code in those callers), data,
+type records, public aliases and linker directives. A new export is not waived.
+Previously emitted but unbound code also retains its baseline protection.
+
+Body probes support unambiguous ordinary definitions, including in-class and
+qualified definitions. Overloads, complex declarators, unsupported lexical forms,
+missing/unchanged probes, differing definitions, and dependencies on TU-local or
+weak storage outside the owned section family remain unknown. Symbol spelling or
+byte similarity alone cannot supply ownership. `inline_ownership` in each TU's
+report records the fresh evidence/refusal; it is not reusable acceptance authority.
+Probe compiles are counted and cached only within that invocation/source-version/
+flag trial. Diagnostic mode still cannot establish preservation.
+
 Each TU needs a matching direct/current-overlay control. Each changed file also
 needs a compiler-observed unique `#error` control before substituted baseline
 bytes can support a pass. Generic compiler failure is insufficient. Reports carry

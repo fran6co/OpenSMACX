@@ -100,6 +100,15 @@ on 2026-08-19 for the records the build compiles. Every reader goes through
 `match_recovery.source`, which reads this fact, and an annotation without one is simply a
 piece whose emitted name is its `name`.
 
+An adjacent `// body` fact names the source file containing a definition hosted
+elsewhere, for example `// body src/stringstruct.h` for a header-defined method.
+Keep the canonical original marker in its owning TU, not a duplicate per emitted
+copy. The fact is a load-bearing location/ownership interpretation, not a claim
+that the body compiles or matches. Native preservation additionally requires
+compiler-observed body-damage witnesses before attributing copies in other TUs;
+matching symbols alone are insufficient. Export and other independent metadata
+remain separate verification requirements.
+
 ```
 ORIGINAL: 0x00401640 ?init@Game@@QAEHH@Z 0x00401640-0x00401B00
                                   the function definition that follows is
