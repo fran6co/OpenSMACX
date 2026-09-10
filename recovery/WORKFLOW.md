@@ -71,6 +71,15 @@ control uses deterministic reasoning agents; live planning and executable-only
 binding discovery remain unverified. Worktree setup and integration are coordinator
 responsibilities through native commands, not implicit effects of `start`.
 
+Before autonomous scheduling, park any retained non-campaign recovery checkout
+with the planner's `reserved_worktrees` decision (path, task IDs and evidence;
+see the package README). Do not copy its scope or import its task journal just
+to reserve work. The package derives its full current scope, refuses undeclared
+recovery WIP, and prevents overlapping planning, resumption or delegated expansion.
+Parked worktrees remain untouched and leased against cooperating drivers until
+the campaign ends. A changed external checkout requires replanning, not replaying
+an earlier scope snapshot.
+
 Create a source-derived task with `uv run recover tasks create <task> --group
 <group> --author <coordinator> --intent <intent> --evidence <evidence>`, or use
 `--file` with an explicit task decision. Additional files require `--edit-file`.

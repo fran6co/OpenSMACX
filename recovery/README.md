@@ -900,7 +900,10 @@ Only reasoning is doubled. `campaign --resume <run-directory>` now resumes the
 last assigned batch using current worktrees, decisions and fresh verification,
 including a transferred destination with uncommitted review history. Live leases
 and quarantined compiler resources still refuse, and new campaigns cannot duplicate
-preserved workers. This is not a live OpenSMACX campaign; moved integration targets,
+preserved workers. Non-campaign worktrees now require explicit scheduling-only
+`reserved_worktrees` decisions when they contain recovery work; their scopes are
+derived from current source/task history, not copied into policy. Reservations also
+guard saved assignments and coordinator expansion grants. This is not a live OpenSMACX campaign; moved integration targets,
 partial Git publication and arbitrary conflict repair remain unfinished. See the
 package README and `recovery/WORKFLOW.md` before authorizing a campaign.
 It does not supply OpenSMACX's

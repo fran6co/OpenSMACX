@@ -6,6 +6,7 @@ conflicting work is preserved, never reset to make a campaign continue.
 """
 
 import os
+from contextlib import ExitStack
 from pathlib import Path
 import tempfile
 
@@ -24,6 +25,7 @@ from .records import publish_json
 from .preparation import prepare_project
 from .resources import INHERITED, _slots, resource_environment
 from .reviews import ReviewStore
+from .scheduling import _state as reservation_state, reservations
 from .source_config import SourceConfiguration
 from .source_history import git
 from .source_inventory import source_snapshot
@@ -82,6 +84,13 @@ def _source_key(root):
                    "files": {name: row["sha256"] for name, row in source["files"].items()}})
 
 
+def _clean_checkout(root, revision):
+    state = assert_raw_checkout(root, revision)
+    if reservation_state(root) != state:
+        raise ValueError("worktree has ignored recovery work; preserve it before retirement or cleanup")
+    return state
+
+
 def _remove_integrated(root, child, branch, run_directory):
     if not child.is_relative_to(run_directory) or child.resolve() != child:
         raise ValueError("campaign cleanup covers only its own canonical worktrees")
@@ -89,7 +98,7 @@ def _remove_integrated(root, child, branch, run_directory):
         if preflight(child) != "refs/heads/" + branch:
             raise ValueError("campaign worker branch changed; preserve it")
         revision = git(child, "rev-parse", "HEAD").decode().strip()
-        assert_raw_checkout(child, revision)
+        _clean_checkout(child, revision)
         git(root, "merge-base", "--is-ancestor", revision, "HEAD")
         # Git's ordinary removal refuses dirt; never force a worktree away.
         run_git(root, options, "worktree", "remove", str(child))
@@ -134,12 +143,12 @@ def _retained_attempt(root, path, branch, directory, *, expected_revision=None, 
             current = git(path, "rev-parse", "HEAD").decode().strip()
             if expected_revision is not None and current != expected_revision:
                 raise ValueError("retired worker has additional work; preserve and reauthorize")
-            assert_raw_checkout(path, current)
+            state = _clean_checkout(path, current)
             if not ancestor(root, current):
                 raise ValueError("retired worktree contains unincorporated work; preserve it")
         if cleanup:
             _remove_integrated(root, path, branch, directory)
-        return
+        return state if not cleanup else None
     # Removal may have completed just before interruption, leaving only its
     # branch. Never delete a moved branch or prune unrelated worktree metadata.
     with git_options(root) as options:
@@ -190,7 +199,7 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
     if root.resolve() != root or INHERITED in os.environ:
         raise ValueError("campaign needs a canonical coordinator and separately leased worker resources")
     profiles = _policy(root, configuration)
-    with file_lock(root / "build/recovery/driver.lock", timeout=0) as lease:
+    with file_lock(root / "build/recovery/driver.lock", timeout=0) as lease, ExitStack() as stack:
         if preflight(root) != configuration["destination_branch"]:
             raise ValueError("campaign is not on the authorized destination branch")
         initial = git(root, "rev-parse", "HEAD").decode().strip()
@@ -213,6 +222,27 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
             for job in saved["plan"]["jobs"] if saved else ():
                 history.update(_resumable_history(root, TaskStore(root), ReviewStore(root, job["task"]), job["task"]))
             _publication_changes(root, expected, history)
+        managed = set()
+        for batch_choice in ([saved] if saved else []):
+            for job in batch_choice["plan"]["jobs"]:
+                managed.add(Path(job["root"]))
+                candidate = integration_choice(directory, batch_choice["index"], job["task"], {})
+                managed.add(Path(candidate["worktree"]))
+        reserved = stack.enter_context(reservations(root, profiles["planner"].get("reserved_worktrees", []), managed=managed))
+        retained = {}
+        if "coordinator" in profiles:
+            reserved.check_scope("", profiles["coordinator"].get("subjects", []), profiles["coordinator"].get("editable_files", []))
+        def external_freshness():
+            reserved.assert_current()
+            if any(reservation_state(path) != state for path, state in retained.items()):
+                raise ValueError("retired campaign worktree changed; preserve work and replan")
+        original_execute = execute
+        def guarded_execute(*args, **kwargs):
+            external_freshness()
+            result = original_execute(*args, **kwargs)
+            external_freshness()
+            return result
+        execute = guarded_execute
         attempted, batches = {}, []
 
         def announce(stage, **details):
@@ -220,6 +250,7 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
                 progress({"stage": stage, **details})
 
         def fresh_policy():
+            external_freshness()
             if (changes(expected, working_state(root)) or _policy(root, configuration) != profiles
                     or preflight(root) != configuration["destination_branch"]):
                 raise ValueError("campaign policy or destination changed; preserve workers and reauthorize")
@@ -247,7 +278,7 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
                     fresh_policy()
                     choice = select_task(root, profiles["driver"]["target"], profiles["planner"], execute=execute,
                                          skip_tasks=skip | set(selected), parallel_tasks=selected,
-                                         application_only=True, _held_lease=lease)
+                                         application_only=True, _held_lease=lease, _reservations=reserved)
                     expected = working_state(root)  # Only native task publication may change the coordinator here.
                     selections.append(choice)
                     if choice["action"] not in ("create", "resume"):
@@ -268,18 +299,26 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
                 fresh_policy()
                 job = plan["jobs"][index]
                 path, branch = Path(job["root"]), choice["branches"][index]
+                reserved.check_scope(name, *TaskStore(root).scope(name))
+                managed.add(path)
+                if resuming and path.exists():
+                    reserved.check_scope(name, *TaskStore(path).scope(name))
                 retired = retirement(root, directory, number, name) if resuming else None
                 if retired is not None:
-                    _retained_attempt(root, path, branch, directory, expected_revision=retired["worker_revision"],
-                                      cleanup=configuration["publication"]["cleanup"])
+                    state = _retained_attempt(root, path, branch, directory, expected_revision=retired["worker_revision"],
+                                              cleanup=configuration["publication"]["cleanup"])
+                    if state is not None:
+                        retained[path] = state
                     choice_path = directory / f"batch-{number}-integration-{name}.json"
                     if choice_path.exists():
                         previous = _configuration(directory, choice_path.name)
                         context = integration_decision(TaskStore(root).read(name), previous.get("context"))
                         if previous != integration_choice(directory, number, name, context):
                             raise ValueError("retired candidate destination changed")
-                        _retained_attempt(root, Path(previous["worktree"]), previous["branch"], directory,
-                                          cleanup=configuration["publication"]["cleanup"])
+                        state = _retained_attempt(root, Path(previous["worktree"]), previous["branch"], directory,
+                                                  cleanup=configuration["publication"]["cleanup"])
+                        if state is not None:
+                            retained[Path(previous["worktree"])] = state
                     batch.setdefault("retained_in_history", []).append({"task": name, "commit": retired["worker_revision"],
                                                                        "verification": "not_replayed"})
                     if retired["destination_revision"] == git(root, "rev-parse", "HEAD").decode().strip():
@@ -304,6 +343,7 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
                 if batch["dispatch"]["coordinator_changed"]:
                     return finish("coordinator_changed")
                 outcomes = batch["dispatch"]["jobs"]
+                fresh_policy()
             else:
                 batch["dispatch"] = None  # No old process outcome is an input to resumption.
                 outcomes = [None] * len(active_jobs)
@@ -316,6 +356,7 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
                 # After the parallel phase, a single central coordinator may
                 # handle discoveries under separately supplied delegated scope.
                 current_incoming = git(child, "rev-parse", "HEAD").decode().strip()
+                reserved.check_scope(name, *TaskStore(child).scope(name))
                 incorporated = current_incoming != revision and ancestor(root, current_incoming)
                 choice_file = directory / f"batch-{number}-integration-{name}.json"
                 if ("coordinator" in profiles or resuming) and not incorporated and not choice_file.exists():
@@ -328,7 +369,7 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
                 incoming = git(child, "rev-parse", "HEAD").decode().strip()
                 try:
                     preflight(child)
-                    assert_raw_checkout(child, incoming)
+                    worker_state = _clean_checkout(child, incoming)
                 except ValueError:
                     batch["pending"].append({"task": name, "worktree": str(child), "reason": "uncommitted_worker_progress"})
                     continue
@@ -341,6 +382,8 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
                     if configuration["publication"]["cleanup"]:
                         _remove_integrated(root, child, setup["branch"], directory)
                         announce("cleaned", batch=number, task=name)
+                    else:
+                        retained[child] = worker_state
                     continue
                 context = {"author": configuration["author"], "source_revision": incoming,
                            "target_revision": git(root, "rev-parse", "HEAD").decode().strip(), "evidence": configuration["evidence"]}
@@ -357,6 +400,7 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
                     intention = integration_choice(directory, number, name, context)
                     publish_json(choice_file, intention)
                 candidate_path = Path(intention["worktree"])
+                managed.add(candidate_path)
                 if resuming and candidate_path.exists():
                     if _checkout(candidate_path) != (_checkout(root)[0], "refs/heads/" + intention["branch"]):
                         raise ValueError("resumed candidate repository or branch changed")
@@ -392,6 +436,9 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
                     _remove_integrated(root, candidate_path, candidate["branch"], directory)
                     _remove_integrated(root, child, setup["branch"], directory)
                     announce("cleaned", batch=number, task=name)
+                else:
+                    retained[child] = worker_state
+                    retained[candidate_path] = _clean_checkout(candidate_path, git(candidate_path, "rev-parse", "HEAD").decode().strip())
             if batch["pending"]:
                 return finish("replanning_required")
             fresh_policy()
