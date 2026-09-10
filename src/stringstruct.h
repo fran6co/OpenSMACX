@@ -106,6 +106,16 @@ class StringAllocationBase {
   // vbtables that name this base do not exist - VC6 drops the vbptr and the
   // StringStruct layout loses its 0x04 slot.
   virtual ~StringAllocationBase();
+  // Scalar deleting entries 401520/4029F0/406670 and the Net-family
+  // entries share this policy. Their compiler-generated adjustments supply
+  // the complete allocation; the destructor publishes its captured owner.
+  // Ordinary (non-deleting) destruction must leave that handoff intact.
+  static void operator delete(void *memory) {
+    if (StringAllocationHeap == 0) {
+      free(memory);
+    }
+    StringAllocationHeap = 0;
+  }
   Heap *allocation_owner_;
 };
 

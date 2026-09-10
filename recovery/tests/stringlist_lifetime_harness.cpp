@@ -37,7 +37,13 @@ void release(void *memory) {
     assert(false);
 }
 
+// Also observe accidental use of the global delete path: it must never free
+// a Heap-owned block or a virtual-base interior pointer.
+void operator delete(void *memory) { release(memory); }
+
+#define free release
 // LIVE_ALLOCATION_BASE
+#undef free
 // LIVE_OWNER_PUBLICATION
 #define free release
 // LIVE_PAYLOAD
@@ -167,9 +173,40 @@ void check_text_and_nodes(Heap *owner, bool automatic_cleanup, Heap *list_owner,
     reclaim();
 }
 
+void check_populated_virtual_delete(Heap *list_owner, Heap *node_owner) {
+    StringList *list = make_node(list_owner, static_cast<StringList *>(0));
+    StringStructEntry *entry = make_node(node_owner, static_cast<StringStructEntry *>(0));
+    StringStructPayload *payload = make_node(node_owner, static_cast<StringStructPayload *>(0));
+    payload->text = static_cast<char *>(malloc(1));
+    assert(payload->text);
+    blocks[block_count].memory = payload->text;
+    blocks[block_count].frees = 0;
+    blocks[block_count++].heap_owned = node_owner != 0;
+    entry->payload = payload;
+    entry->next = entry->previous = entry;
+    list->head_ = list->current_ = entry;
+    list->entry_count_ = 1;
+    list->allocator_ = node_owner;
+    StringAllocationBase *base = list;
+    delete base;
+    assert(!StringAllocationHeap);
+    for (int i = 0; i < block_count; ++i)
+        assert(blocks[i].frees == (blocks[i].heap_owned ? 0 : 1));
+    reclaim();
+}
+
 int main() {
     assert(sizeof(StringStructPayload) == 0x18 && sizeof(StringStructEntry) == 0x1C);
     Heap heap;
+    for (int allocation_mode = 0; allocation_mode != 4; ++allocation_mode)
+        check_populated_virtual_delete(allocation_mode & 1 ? &heap : 0,
+                                       allocation_mode & 2 ? &heap : 0);
+    for (int list_mode = 0; list_mode != 2; ++list_mode) {
+        Heap *owner = list_mode ? &heap : 0;
+        check_virtual_delete(make_node(owner, static_cast<StringAllocationBase *>(0)), owner, 0);
+        check_virtual_delete(make_node(owner, static_cast<StringStruct *>(0)), owner, 0x1C);
+        check_virtual_delete(make_node(owner, static_cast<StringList *>(0)), owner, 0x28);
+    }
     // Complete, non-deleting destruction publishes the virtual-base owner.
     // No hand-written destroy wrapper or manual virtual-base tail is needed.
     for (int owned = 0; owned != 2; ++owned) {
@@ -208,6 +245,9 @@ int main() {
     reclaim();
 
     StringAllocationHeap = &heap;
+    delete static_cast<StringAllocationBase *>(0);
+    delete static_cast<StringStruct *>(0);
+    delete static_cast<StringList *>(0);
     delete static_cast<StringStructPayload *>(0);
     delete static_cast<StringStructEntry *>(0);
     assert(StringAllocationHeap == &heap);

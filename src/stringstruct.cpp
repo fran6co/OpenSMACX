@@ -23,7 +23,21 @@
 #include "heap.h"  // StringAllocationHeap
 #include "general.h"  // mem_get
 
-// Republish the saved owner for the deallocation decision (sub_401520, the
+// The allocation-base table at 0x6693AC dispatches this scalar deleting
+// entry. The compiler supplies its flag handling and class-specific delete;
+// the original identity is retained from the retired handwritten wrapper.
+/*
+// ORIGINAL: 0x00401520 sub_401520 0x00401520-0x0040155E FILE
+// symbol    ??_GStringAllocationBase@@UAEPAXI@Z
+// size      62 bytes
+// prototype
+// callers   0   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00644EF2
+*/
+
+// Republish the saved owner for the deallocation decision (0x401520, the
 // image's deleting destructor, and StringList's complete tail are this destructor as
 // compiled - the [esi] = 0x6693AC vptr re-stage on top of it is the
 // compiler's own destructor machinery). Out of line: OUT OF LINE is the

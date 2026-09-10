@@ -28,7 +28,8 @@ def objects():
     compiler = Compiler(ROOT, profile=settings.compiler_profile)
     return {unit: [Coff(compiler(ROOT / unit, (), flags + settings.layout_flags))
                    for flags in settings.flag_sets]
-            for unit in ("src/stringstruct.cpp", "src/dialog.cpp")}
+            for unit in ("src/stringstruct.cpp", "src/dialog.cpp",
+                         "src/net_class.cpp", "src/alphanet.cpp")}
 
 
 def test_hooks_use_payload_fields_and_keep_list_layout(objects):
@@ -78,6 +79,32 @@ def test_complete_destructor_is_generated_and_destroys_virtual_base(objects):
         for obj in unit:
             assert not any(s.section > 0 and s.name == "?destroy@StringList@@QAEIXZ"
                            for s in obj.symbols.values())
+
+
+@pytest.mark.parametrize("unit,owner", [
+    ("src/stringstruct.cpp", "StringAllocationBase"),
+    ("src/stringstruct.cpp", "StringStruct"),
+    ("src/stringstruct.cpp", "StringList"),
+    ("src/net_class.cpp", "NetAllocationNode"),
+    ("src/net_class.cpp", "NetUnk72C"),
+    ("src/net_class.cpp", "JackalVoiceRx"),
+    ("src/alphanet.cpp", "AlphaNetStringStruct"),
+    ("src/alphanet.cpp", "AlphaNetLedger"),
+])
+def test_scalar_deleting_entries_inherit_owner_aware_deallocation(objects, unit, owner):
+    for obj in objects[unit]:
+        targets = references(obj, f"??_G{owner}@@UAEPAXI@Z")
+        publication = targets.index("??1StringAllocationBase@@UAE@XZ")
+        assert targets[publication + 1:] == [
+            "?StringAllocationHeap@@3PAVHeap@@A", "_free",
+            "?StringAllocationHeap@@3PAVHeap@@A"]
+        assert "??3@YAXPAX@Z" not in targets
+    # The generated entry owns the existing identity; no copied assembly
+    # or extra wrapper is needed to force emission.
+    record, = (r for r in read_file(ROOT / "src/stringstruct.cpp") if r.address == 0x401520)
+    assert record.mode is Mode.FILE
+    assert record.symbol == "??_GStringAllocationBase@@UAEPAXI@Z"
+    assert not any(r.address == 0x401520 for r in read_file(ROOT / "src/leaf_recoveries.cpp"))
 
 
 def test_live_hooks_preserve_null_failure_and_heap_ownership(tmp_path, monkeypatch):

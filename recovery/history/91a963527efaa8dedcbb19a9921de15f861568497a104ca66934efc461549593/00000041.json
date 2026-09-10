@@ -1,0 +1,64 @@
+{
+  "event_id": "f9e77cd01fc882c26a2c5e2ae731688144af18931c49647189237a1022242fc1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/stringlist_lifetime_harness.cpp",
+      "recovery/tests/test_stringlist_recovery.py",
+      "src/leaf_recoveries.cpp",
+      "src/stringstruct.cpp",
+      "src/stringstruct.h"
+    ],
+    "evidence": [
+      "Pinned scalar entries401520/4029F0/406670 and network402CC0/402350/4E3900/402B40/4E3300 independently publish owner, test delete bit0, free complete storage only when owner-null, then clear9B3374. Their original constructor/table assignments corroborate current allocation-base ownership. Authorize inherited scalar operator delete on StringAllocationBase; keep destructor publication, array behavior and existing node overrides unchanged. Verify complete-pointer runtime deletion, network/list generated entries and protected claims, including StringBox629110. Retire unused handwritten401520 only after natural generated entry emission is observed, preserving original marker/history through native writer. No baseline reset, claim demotion, CRT rewrite or acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4199712,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4205040,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4220528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4205760,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4203344,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5126400,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4205376,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5124864,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "2728f22dc427d0729453710fa7c2bc6faceda24d89d378905d1ac8c6d6d5dd58",
+  "request_id": "shared-allocation-base-delete",
+  "schema_version": 1,
+  "sequence": 41,
+  "stream": "task:control-sprite-defaults"
+}
