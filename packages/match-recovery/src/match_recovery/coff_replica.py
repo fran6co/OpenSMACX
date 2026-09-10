@@ -13,26 +13,49 @@ from .pe_coff import weak_external
 
 
 _ASSOCIATIVE_LOCAL = "<coff-associative-local>"
+_FUNCTION_LOCAL = "<coff-function-local>"
 
 
-def _associative_names(obj):
+def _owned_local_names(obj):
     """Identify narrow numeric local labels by their compiler-owned location.
 
     Applicable to both replicas and baseline preservation, never original-image
-    target resolution. The complete key still includes associative owner, section,
+    target resolution. The complete key still includes function/associative owner, section,
     offset, type and storage; neither bytes nor relocation edges are omitted.
     """
-    if any(symbol.name == _ASSOCIATIVE_LOCAL for symbol in obj.symbols.values()):
+    if any(symbol.name in (_ASSOCIATIVE_LOCAL, _FUNCTION_LOCAL) for symbol in obj.symbols.values()):
         # Otherwise a real symbol in one object could impersonate a normalized
         # local in the other, even with no within-object collision.
         raise ValueError("reserved compiler-local identity appears in COFF symbols")
     names = {}
+    # A numeric code label in the root COMDAT needs a real named function owner,
+    # not merely a .text section or adjacency to another symbol. Validate only
+    # roots containing eligible labels; ordinary objects need no owner searches.
+    roots = {s.section for s in obj.symbols.values() if s.section > 0 and s.section not in obj.associations
+             and s.storage == 6 and s.type == 0 and re.fullmatch(r"\$L[0-9]+", s.name)
+             and not obj.auxiliary.get(s.index)}
+    owners = {}
+    for symbol in obj.symbols.values():
+        if symbol.section in roots and symbol.storage in (2, 3) and symbol.type & 0x20:
+            owners.setdefault(symbol.section, []).append(symbol)
+    owned_roots = set()
+    for section, functions in owners.items():
+        if len(functions) != 1 or functions[0].storage != 2 or functions[0].type != 0x20:
+            continue
+        try:
+            obj.function(functions[0].name)
+        except ValueError:
+            continue  # Unproven ownership retains exact label spellings.
+        owned_roots.add(section)
     for symbol in obj.symbols.values():
         if (symbol.section in obj.associations and symbol.type == 0
                 and ((symbol.storage == 6 and re.fullmatch(r"\$L[0-9]+", symbol.name))
                      or (symbol.storage == 3 and re.fullmatch(r"\$T[0-9]+", symbol.name)))
                 and not obj.auxiliary.get(symbol.index)):
             names[symbol.index] = _ASSOCIATIVE_LOCAL
+        elif (symbol.section in owned_roots and symbol.storage == 6 and symbol.type == 0
+              and re.fullmatch(r"\$L[0-9]+", symbol.name) and not obj.auxiliary.get(symbol.index)):
+            names[symbol.index] = _FUNCTION_LOCAL
     return names
 
 
@@ -44,7 +67,7 @@ def _replica_names(obj):
     that observed form and a defined function COMDAT or ordinary data symbol.
     Never infer this external alias for original-image or baseline preservation.
     """
-    names = _associative_names(obj)
+    names = _owned_local_names(obj)
     # /Z7 adds FILE records for inline headers and repeated returns to the TU.
     # Only the first FILE is the primary source; never guess among headers or
     # choose a filename merely because it makes two symbol spellings agree.
@@ -127,7 +150,7 @@ def _object_evidence(obj, *, excluded=frozenset(), section_keys=None, entry_name
     """
     if any(section.name == ".debug$P" for section in obj.sections):
         raise ValueError("replica control requires standalone objects, not external precompiled types")
-    names = _replica_names(obj) if replica else _associative_names(obj)
+    names = _replica_names(obj) if replica else _owned_local_names(obj)
     _validate_names(obj, names)
     keys = _section_keys(obj, section_keys, names)
     debug = {index for index, section in enumerate(obj.sections, 1) if section.name == ".debug$S"}

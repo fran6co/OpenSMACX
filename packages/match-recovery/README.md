@@ -1980,7 +1980,11 @@ decimal spelling. Only the supported `$L` label and `$T` static forms without
 auxiliary records use this normalization. Relocation sites, kinds, addend bytes,
 target locations, contents and ownership remain protected. Duplicate normalized
 locations and raw symbols impersonating the internal identity refuse comparison.
-Independent-section labels, public names, opaque auxiliary metadata and
+Numeric `$L` code labels in a non-associative root also qualify when one external
+function at offset zero exclusively owns that code COMDAT. All other symbol tuples
+remain part of the section identity; an owner name alone never replaces them.
+Static-only, ambiguous or non-COMDAT ownership and root `$T` names remain strict.
+Unowned independent-section labels, public names, opaque auxiliary metadata and
 unnamed-namespace renames are not preservation aliases. This is compiler-output
 comparison only, not original-image target resolution or recovery acceptance.
 
@@ -2488,7 +2492,7 @@ compares code, data, relocation identities, types,
 COMDAT policy, BSS extents and link directives. Compiler-local section/symbol
 numbers are normalized through explicit names and associative ownership; ambiguous
 identities are refused. Timestamps, file records and CodeView source/line records
-are ignored. Known numeric exception labels retain associative owner, offset,
+are ignored. Known numeric local labels retain function/associative owner, offset,
 type and storage instead of their unstable spelling. Simple VC6 unnamed-namespace
 definitions are recognized only through the primary COFF FILE path and a single
 namespace nonce; function/data names and signatures remain distinct. This rule
