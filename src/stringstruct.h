@@ -152,7 +152,7 @@ static_assert(offsetof(StringStructEntry, payload) == 0x8,
 class StringStructPayload : public virtual StringAllocationBase {
  public:
   char *text;      // 0x04 - the string this entry carries
-  uint32_t field_8_;  // 0x08 - never read by name in src/
+  uint32_t field_8_;  // 0x08 - role-dependent metadata, not universally a line count
   uint32_t field_C_;  // 0x0C
 };
 
@@ -234,6 +234,12 @@ static_assert(sizeof(StringStruct) == 0x24,
 
 class StringList : public StringStruct {
  public:
+  // Provisional name: 0x005E3630 returns the current StringList text.
+  // Its original Buffer callers pass this list in ECX and consume a char*.
+  char *current_text() {
+    return head_ != 0 ? current_->payload->text : 0;
+  }
+
   // 0x006087A0 ?sort@StringList@@QAEXH@Z, unrecovered. DECLARATION ONLY:
   // Datalink::set_cat tail-calls it on the entry list it has just emptied.
   void sort(int key);
@@ -337,5 +343,3 @@ MEASURED inline StringStructPayload *StringStruct::next_entry() {
     }
     return current_->payload;
 }
-
-

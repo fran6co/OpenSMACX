@@ -1,0 +1,24 @@
+{
+  "event_id": "4154b100173e6523e68b7bfa60100c228cf836b6023d6c44246f573addb43298",
+  "payload": {
+    "affects": [
+      "entity-b3c9b1a959cafb4c8d3719a004718802d52bb5174aa18c0bd3ecf49f9db48dfb",
+      "entity-fa2d5b1e0b4875cf51af1add3ecc7de2bb9f518b4b6b4ae5db4e268172fb6070"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-a26c798ba0c54ff295a622e56804cbc5",
+    "evidence": [
+      "CheckBox::draw_item now bases callback state on the second explicit state argument and passes computed item_height to Buffer::copy at src/checkbox.cpp:241-249.",
+      "RadioButton::draw_item now copies from the parent GraphicWin buffer into the control buffer at src/radiobutton.cpp:235-242, matching the original parent-blit evidence in src/unrecovered/0060d750.cpp:2259-2267 and src/unrecovered/005d5350.cpp:2135.",
+      "Sprite selection remains checked_sprite_ for nonzero state and unchecked_sprite_ for zero, matching the recorded original offsets and branch evidence.",
+      "Fresh acceptance remains unavailable: the configured VC6 build reports C2248 for direct access to private Win::win_parent_ at src/checkbox.cpp:178, with the corresponding RadioButton access at src/radiobutton.cpp:164 also requiring an authorized accessor or scope expansion."
+    ],
+    "hypothesis": "The authorized draw-item dataflow corrections are structurally evidence-backed, but both identities remain unverified and cannot be accepted until the private Win::win_parent_ access is resolved within authorized scope and fresh native checks succeed.",
+    "kind": "discovery"
+  },
+  "previous_event": "5ed69b11e9f2b8d318a15310a894b9c9cac6fc804787c425dc18b4eb7624acd0",
+  "request_id": "worker-a26c798ba0c54ff295a622e56804cbc5",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:control-sprite-defaults"
+}

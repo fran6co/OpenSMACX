@@ -90,6 +90,7 @@ static_assert(sizeof(Dib) == 0x428, "Dib is BITMAPINFOHEADER + 256 RGBQUAD");
 
 class Buffer;
 class GraphicWin;
+class CheckBox;
 
 /*
  * The panel-drawing table `Buffer::box_sprite` is driven by. The image holds
@@ -504,6 +505,7 @@ class Buffer {
  // itself friendship for the same reason). Access to a member affects no
  // offset and no emitted byte, so the layout and every claim are untouched.
  protected:
+  friend class CheckBox;
   // `Win::flip` clips the screen buffer back to its own extent and reads
   // the DIB's dimensions for the final BitBlt.
   friend class Win;

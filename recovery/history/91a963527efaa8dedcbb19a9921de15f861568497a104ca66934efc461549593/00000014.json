@@ -1,0 +1,23 @@
+{
+  "event_id": "184850ba74d98fb23bb072298e6a85b825a06d0e33fc68284d5ee1fa39438377",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Include the shared current_entry accessor already implicated by control-list-accessor-semantics for coupled StringList recovery and independent canonical-TU overlay damage control. Preserve its historical obligation and existing implementation; this does not authorize claim demotion or export-metadata waivers."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4203824,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "a02737fabad7c5c2f96a85f183ead178c0f998715625e9e8b927b5ad950036ea",
+  "request_id": "current-entry-retention-control",
+  "schema_version": 1,
+  "sequence": 14,
+  "stream": "task:control-sprite-defaults"
+}

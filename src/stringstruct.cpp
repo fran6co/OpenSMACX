@@ -403,3 +403,35 @@ Status: Complete
 // MEASURED inline, defined at the end of stringstruct.h: the image both
 // calls this (2 callers) and inlines it whole (BasePop::exec 0x00602FC5, abs
 // calls and all). The definition moved; the claim is unchanged.
+
+/*
+Purpose: Return the current StringList text, or null when the list is empty.
+
+             mov eax, [ecx+8] / test eax,eax / je zero
+             mov eax, [ecx+0xc] / mov eax, [eax+8] / mov eax, [eax+4] / ret
+       zero: xor eax,eax / ret
+
+         The guard reads field 8 but the chase starts from field 0xc - two
+         DIFFERENT fields, which is easy to lose when transcribing and produces
+         a body that works whenever the two happen to agree.
+
+// ORIGINAL: 0x005E3630 sub_5e3630 0x005E3630-0x005E3644 SEMANTIC
+// TRIED: 8 source shapes measured, plateaus at MNEMONIC_ONLY 7/9; the image reuses eax across the
+//            whole chase and every guard-clause / named-link / walking-
+//            pointer spelling still routes the middle link through ecx.
+// symbol    ?current_text@StringList@@QAEPADXZ
+// body      src/stringstruct.h
+// size      20 bytes
+// prototype
+// callers   2   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: mutable text, or null when head_ is null
+Status: Complete
+*/
+// Header-visible inline definition in stringstruct.h. current_text is a
+// provisional descriptive name, not a recovered original spelling. Original
+// Buffer::write_strings/height callers (0x005DB3C4, 0x005DB00E) pass their
+// StringList receiver in ECX and consume the result as text. The head guard
+// and current-entry chase also occur inline in CheckBox/RadioButton drawing.

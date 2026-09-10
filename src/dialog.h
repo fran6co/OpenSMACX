@@ -30,6 +30,8 @@
   */
 class Dialog {
  public:
+  friend class CheckBox;
+  friend class RadioButton;
   // VIRTUAL, and this is the Dialog virtual ListBox overrides - which is why
   // ListBox carries a Dialog vtordisp and CheckBox/RadioButton/SpriteBox do
   // not. The evidence is independent of this file: filewin.h pins

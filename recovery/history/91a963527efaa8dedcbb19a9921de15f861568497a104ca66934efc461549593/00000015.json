@@ -1,0 +1,20 @@
+{
+  "event_id": "e42c67092f70f098836677355c5fce82e8b6915629d6b9ccae81897c98e8bc9a",
+  "payload": {
+    "affects": [
+      "entity-a53befaa8823c2111753c03812f574c224128747e4ef3b8518e151da6b25b2be"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "retained-inline-measurement-policy",
+    "evidence": [
+      "Removed MEASURED only from the newly recovered current_text; original mapping, explicit body path and historical semantic obligation remain. Native private deck controls show ordinary non-emission and address-taking emission with the unchanged two-byte mismatch. Fresh application build/link passes; fresh preservation finds no canonical stringstruct.cpp residual differences under either flag set, including no export difference. Older outside callback/table/data differences remain. Do not export the method merely for measurement, treat private probes as linked code, weaken restoration, or reset the task baseline."
+    ],
+    "hypothesis": "An ordinary header-defined accessor can recover the original inlined caller structure without emitting a standalone body in its canonical TU. Private address-taking measurements can inspect the definition, but must remain distinct from product emission until a reviewed restoration and acceptance policy supports that evidence.",
+    "kind": "discovery"
+  },
+  "previous_event": "184850ba74d98fb23bb072298e6a85b825a06d0e33fc68284d5ee1fa39438377",
+  "request_id": "retained-inline-measurement-policy",
+  "schema_version": 1,
+  "sequence": 15,
+  "stream": "task:control-sprite-defaults"
+}

@@ -1,0 +1,23 @@
+{
+  "event_id": "1119c04f145a04b0f269accf70578d57276cf03a298b2eb52d75366045997431",
+  "payload": {
+    "affects": [
+      "entity-b3c9b1a959cafb4c8d3719a004718802d52bb5174aa18c0bd3ecf49f9db48dfb"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-dd9367c1ef0841b28206f2b6487af42b",
+    "evidence": [
+      "Original 0x0060F3DE reads [esp+0x3C], corresponding to the second explicit draw_item argument, and selects this+0x14 when nonzero or this+0x10 when zero.",
+      "src/unrecovered/0060f030.cpp instead branches on local_8, which is geometry derived from layout arithmetic, so the seed's sprite-selection condition is structurally wrong.",
+      "src/unrecovered/0060f8b0.cpp and src/unrecovered/0060fab0.cpp pass the state bit as draw_item's second argument and the current-row/focus flag as its third argument.",
+      "src/checkbox.h records unchecked_sprite_ at offset 0x10 and checked_sprite_ at offset 0x14, matching the original branch targets."
+    ],
+    "hypothesis": "CheckBox::draw_item must branch on its second explicit state argument, not the computed geometry local; the seed requires correction before promotion, while the production source currently has no authorized definition to edit safely.",
+    "kind": "discovery"
+  },
+  "previous_event": "99523314a1d41a63f8dbfdf4ef607de3a7b072763f902770a18e669cfac6586b",
+  "request_id": "worker-dd9367c1ef0841b28206f2b6487af42b",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:control-sprite-defaults"
+}

@@ -1,0 +1,22 @@
+{
+  "event_id": "a4a3b70b2d83fb596ebd4a86eaeb84dae789593c92e364634fc47d1dfd0439ee",
+  "payload": {
+    "affects": [
+      "entity-b3c9b1a959cafb4c8d3719a004718802d52bb5174aa18c0bd3ecf49f9db48dfb",
+      "entity-fa2d5b1e0b4875cf51af1add3ecc7de2bb9f518b4b6b4ae5db4e268172fb6070"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "control-draw-current-item-lifetime",
+    "evidence": [
+      "CheckBox 0x0060F1EB-0x0060F262 and RadioButton 0x0060D90B-0x0060D982 inline StringStruct::seek_pos(position), returning on failure. In particular F21D/D93D reject abs(position)>entry_count. An upper bound guard plus early Dialog::pos_to_id is not equivalent: pos_to_id retains a head ID on failed negative seek. Use existing seek_pos return value before height reads and pos_to_id at the later callback argument evaluation (CheckBox F36D).",
+      "After parent callback and sprite drawing, CheckBox F48F/F4A5/F4A8/F4AB and RadioButton DB98/DBAE/DBB1/DBB4 re-read current item and line count. A pre-callback payload cannot supply those reads if a callback changes the list. CheckBox F3AA and RadioButton DACA also re-read Dialog.field_64_ for copying after the callback. Retain original x/y and computed height but refresh mutable item/width. Current isolated bodies have provisional repairs; fresh compilation, exact matching and review remain required. No claim about observed runtime callback mutation or code acceptance is made."
+    ],
+    "hypothesis": "Use the real list seek result and preserve the original current-item read timing across callbacks. Saved geometry is not a license to cache mutable list payload or column width.",
+    "kind": "discovery"
+  },
+  "previous_event": "dc6f2efd226ea3eb34d9683cfe60070972525ef866592d5bb1a71bd35c35173f",
+  "request_id": "control-draw-current-item-lifetime",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:control-sprite-defaults"
+}
