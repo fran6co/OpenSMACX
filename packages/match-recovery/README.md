@@ -1917,7 +1917,12 @@ Otherwise-unreferenced externals remain visible: they can express implicit linke
 requirements even without an instruction relocation. A retained code/data edge
 or weak-external fallback also keeps its target protected; unknown external types
 and auxiliary metadata are not dropped. Removing the last scoped function from
-a TU does not change these rules. Outside function
+a TU does not change these rules. Bounded object interpretations use their
+explicit evidence anchor for annotation scope, consistently with task data checks
+and restoration; unbounded v1 objects still use their original storage identity.
+This does not exclude independent object bytes from compiled preservation or waive
+historical interpretations. Reanchoring an outside interpretation cannot erase
+its previous binding. Outside function
 bindings/claims and object/member/base/generated/component annotations also stay
 protected; a comment-only address change cannot be hidden by unchanged objects.
 

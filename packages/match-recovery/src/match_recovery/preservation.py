@@ -92,7 +92,10 @@ def _outside_annotations(files, source, pin, selected):
         for kind, parser in (("object", parse_objects), ("member", parse_members),
                              ("base", parse_bases), ("generated", parse_generated), ("shared", parse_shared)):
             for item in parser(text, name, pin, address_space=source.address_space):
-                anchor = item.origin if kind == "object" else item.evidence
+                # Bounded objects belong to their explicit evidence anchor,
+                # as in task binary checks and historical obligations. Legacy
+                # unbounded identities have no anchor and retain origin scope.
+                anchor = (item.evidence or item.origin) if kind == "object" else item.evidence
                 if anchor.entity_id not in selected:
                     value = {"kind": kind, **{key: value for key, value in asdict(item).items() if key not in ("line", "body_error")}}
                     add(value)
