@@ -43,6 +43,16 @@ void ListBox::on_dialog_focus(int) {
 // Independent DWORD reads at 609E6F and 609F55 feed ListBox+28.
 // RECOVERY_OBJECT: v2 0x009B8EE0 0x009B8EE4 ?ListBoxCloseDynamicDefault@@3IA 0x00609DB0
 uint32_t ListBoxCloseDynamicDefault;
+// Destination-based names: the semantic meaning of these fields is unproved.
+// Original 609F4C/5E/67/70 read independent DWORDs into fields24/2C/10/14.
+// RECOVERY_OBJECT: v2 0x006970E0 0x006970E4 ?ListBoxDefault24@@3IA 0x00609F20
+uint32_t ListBoxDefault24 = 247;
+// RECOVERY_OBJECT: v2 0x006970E4 0x006970E8 ?ListBoxDefault2C@@3IA 0x00609F20
+uint32_t ListBoxDefault2C = 2;
+// RECOVERY_OBJECT: v2 0x006970E8 0x006970EC ?ListBoxDefault10@@3IA 0x00609F20
+uint32_t ListBoxDefault10 = -1;
+// RECOVERY_OBJECT: v2 0x006970EC 0x006970F0 ?ListBoxDefault14@@3IA 0x00609F20
+uint32_t ListBoxDefault14 = -1;
 int ListBoxClickGuard;                // 0x009B8EEC
 
 // The three subobject vtables the teardown re-staged (0x0067041C/0x00670414/
@@ -65,10 +75,6 @@ Purpose: Close the ListBox: close its GraphicWin and Dialog virtual bases,
 Return Value: EAX residue (constant 0). Declared void (?close@ListBox@@QAEXXZ);
               modelled as uint32_t to preserve the residue like GraphicWin::close.
 The two base close methods are reusable source-owned operations.
-Verification note: the sweep's five survivors on this function rewrite hex
-constants that occur only in the trailing comments naming each default's
-address - the code reads the seam pointers, so the mutants are byte-identical
-and equivalent by construction.
 */
 uint32_t ListBox::close() {
     // Base offsets come from the object's OWN vbtable, read at run time -
@@ -83,8 +89,8 @@ uint32_t ListBox::close() {
     // Dialog virtual base at 0x00608F50, reached through its real method.
     Dialog::close();
 
-    // The ListBox-owned resets, as the member writes they are; the defaults
-    // come from the same seams as before. The Dialog::field_B4_ = 1 store
+    // ListBox-owned resets read the source-owned process defaults.
+    // The Dialog::field_B4_ = 1 store
     // below is reached through the runtime vbtable displacement, as the
     // image does - its access-and-naming pass is the recorded follow-up.
     field_4_ = 0;
@@ -92,11 +98,11 @@ uint32_t ListBox::close() {
     field_18_ = 0;
     field_1C_ = 0;
     field_20_ = 0;
-    field_24_ = ListBoxCloseStaticDefaults[0];   // 0x006970E0
+    field_24_ = ListBoxDefault24;
     field_28_ = ListBoxCloseDynamicDefault;     // 0x009B8EE0
-    field_2C_ = ListBoxCloseStaticDefaults[1];   // 0x006970E4
-    field_10_ = ListBoxCloseStaticDefaults[2];   // 0x006970E8
-    field_14_ = ListBoxCloseStaticDefaults[3];   // 0x006970EC
+    field_2C_ = ListBoxDefault2C;
+    field_10_ = ListBoxDefault10;
+    field_14_ = ListBoxDefault14;
     // Dialog::field_B4_ = 1, re-arming it through the virtual base as a
     // plain member write.
     field_B4_ = 1;
@@ -117,14 +123,14 @@ uint32_t ListBox::close() {
 ListBox::ListBox() {
     field_4_ = 0;
     field_8_ = 0;
-    field_10_ = ListBoxCloseStaticDefaults[2];
-    field_14_ = ListBoxCloseStaticDefaults[3];
+    field_10_ = ListBoxDefault10;
+    field_14_ = ListBoxDefault14;
     field_18_ = 0;
     field_1C_ = 0;
     field_20_ = 0;
-    field_24_ = ListBoxCloseStaticDefaults[0];
+    field_24_ = ListBoxDefault24;
     field_28_ = ListBoxCloseDynamicDefault;
-    field_2C_ = ListBoxCloseStaticDefaults[1];
+    field_2C_ = ListBoxDefault2C;
     field_30_ = 0;
     field_34_ = 0;
     field_38_ = 0;

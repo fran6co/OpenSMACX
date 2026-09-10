@@ -276,10 +276,6 @@ static_assert(sizeof(ListBox) == 0xB54,
 // (src/checkbox.h) makes the same choice; member ordering plus the two-vbtable
 // test pin the offsets instead.
 
-// ListBox::close reaches Dialog::close (0x00608F50, still an original
-// dependency) through a rebindable seam, identical to CheckBox/RadioButton, so
-// tests can substitute a probe and the seam can later point at a recovered body.
-uint32_t *const ListBoxCloseStaticDefaults = (uint32_t *)0x006970E0;            // 0x006970E0 [0..3]
 extern uint32_t ListBoxCloseDynamicDefault;            // 0x009B8EE0
 // Raised to 1 around on_right_down's and on_right_double_click's virtual-base
 // dispatch, dropped to 0 after (0x0060AA20, 0x0060C6D0).
