@@ -59,15 +59,11 @@ def test_retained_external_callers_reach_actual_dialog_destructor(objects):
     # are at 40711E and 407F45; other teardown in these callers is still pending.
     settings = Measurement.read(ROOT)
     compiler = Compiler(ROOT, profile=settings.compiler_profile)
-    for unit, address in (("src/dialogs.cpp", 0x407100), ("src/filewin.cpp", 0x407F00)):
+    for unit, address in (("src/dialogs.cpp", 0x407100),):
         for flags in settings.flag_sets:
             obj = Coff(compiler(ROOT / unit, (), flags + settings.layout_flags))
             targets = references(obj, symbol_at(unit, address))
-            # Check the explicit source call immediately after the enclosing
-            # legacy stage. FileWin also emits automatic member destruction;
-            # its pre-existing double teardown is a tracked recovery finding,
-            # not a lifetime property this bounded caller repair can certify.
-            previous = ("?destroy@Dialogs@@QAEIXZ" if address == 0x407100
-                        else "?destroy@ListBox@@QAEIXZ")
-            assert targets[targets.index(previous) + 1] == "??1Dialog@@UAE@XZ"
+            # Dialogs still retains a legacy stage. FileWin's native member
+            # chain is covered by test_control_lifetimes instead.
+            assert targets[targets.index("?destroy@Dialogs@@QAEIXZ") + 1] == "??1Dialog@@UAE@XZ"
             assert "?destroy@Dialog@@QAEXXZ" not in targets

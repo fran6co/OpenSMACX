@@ -41,15 +41,10 @@ class FlatButton : public BaseButton {
 
  private:
   uint32_t field_AB8_;  // 0x0ab8
-  uint32_t field_ABC_;
-  uint32_t field_AC0_;
-  uint32_t field_AC4_;
-  uint32_t field_AC8_;
-  uint32_t field_ACC_;
-  uint32_t field_AD0_;
-  uint32_t field_AD4_;
-  uint32_t field_AD8_;
-  uint32_t field_ADC_;
+  // Original 607CF0 walks three columns, resetting each of these runs.
+  uint32_t field_ABC_[3];
+  uint32_t field_AC8_[3];
+  uint32_t field_AD4_[3];
  public:
   // THE 27 CONFIG DWORDS AT 0xAE0..0xB48, PUBLIC so BasePop::exec's
   // apply_button_config can name the array instead of walking the object
@@ -65,5 +60,4 @@ class FlatButton : public BaseButton {
 
 static_assert(sizeof(FlatButton) == 0xB4C,
               "FlatButton layout must match the legacy ABI");
-
 

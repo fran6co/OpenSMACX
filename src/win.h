@@ -227,6 +227,8 @@ class Win : public AutoSound {
   friend class Scroll;
   // BaseButton's colour setters test the parent link before drawing.
   friend class BaseButton;
+  // EditBox::pass_dialog_focus resets its parent's child-list iterator.
+  friend class EditBox;
 
  public:
   // 0x005F6320  ?on_mouse_move@Win@@QAEXHHIH@Z - public, __thiscall,

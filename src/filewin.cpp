@@ -54,28 +54,8 @@ Return Value: n/a
 Status: Complete
 */
 FileWin::FileWin() {
-    // flat_button2_ and flat_button1_ construct through the ordinary
-    // implicit member sequence: FlatButton::FlatButton() is a real
-    // recovered body (0x00607CF0) and ~FlatButton() stays trivial, so
-    // declaring the members is enough to reproduce the image's two calls
-    // with no null-pointer guard and no unwanted automatic-destructor
-    // side effect either way.
-    //
-    // edit_box_ stays a `construct()` method call rather than a real
-    // constructor, even though ??0EditBox@@QAE@XZ could legally be spelled
-    // that way: EditBox's OWN destructor is real (0x00408010, needed as-is
-    // by deleting_thunks.cpp's already-BYTE_EXACT scalar_delete_edit_box),
-    // so a real edit_box_ member would get an automatic ~EditBox() call
-    // here that the image's own destructor never makes. See the note in
-    // editbox.h.
-    //
-    // list_box_'s own default constructor stays a trivial stub - it needs
-    // the most-derived flag ListBox cannot get VC6 to synthesise (see the
-    // note on CheckBox's constructor) - so its real body is reached
-    // explicitly below.
-    // edit_box_ constructs implicitly from the real EditBox() ctor.
-    list_box_.construct(1);
-
+    // The declared members construct once, in declaration order. ListBox's
+    // most-derived flag is a compiler ABI argument, not a second construction.
     field_208_ = 0;
     field_30C_ = 0;
     field_410_ = 0;
@@ -88,9 +68,8 @@ FileWin::FileWin() {
 
 /*
 Purpose: Tear down a FileWin: close it, then destroy the ListBox, EditBox and
-         two FlatButton member subobjects in reverse declaration order,
-         restaging each one's vtable/Buffer-vtable pair and its GraphicWin
-         base by hand rather than through that member's own destructor.
+         two FlatButton members in reverse declaration order. C++ owns the
+         member/base destruction and partial-construction unwind.
 // ORIGINAL: 0x00407F00 ??1FileWin@@QAE@XZ 0x00407F00-0x00408003;0x00650C80-0x00650CE8
 // size      363 bytes
 // prototype void (__thiscall ??1FileWin@@QAE@XZ)(FileWin* this)
@@ -110,20 +89,6 @@ Status: Complete
 */
 FileWin::~FileWin() {
     close();
-
-    list_box_.destroy();
-    reinterpret_cast<Dialog *>(reinterpret_cast<char *>(&list_box_) + 0xA60)->Dialog::~Dialog();
-    reinterpret_cast<GraphicWin *>(&list_box_)->~GraphicWin();
-
-    edit_box_.close();
-    edit_box_.time_.~Time();
-    reinterpret_cast<GraphicWin *>(&edit_box_)->~GraphicWin();
-
-    flat_button1_.close();
-    flat_button1_.BaseButton::destroy();
-
-    flat_button2_.close();
-    flat_button2_.BaseButton::destroy();
 }
 
 /*

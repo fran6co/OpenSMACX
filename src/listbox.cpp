@@ -40,8 +40,6 @@ void ListBox::on_dialog_focus(int) {
 }
 
 
-func_dialog_close ListBoxOriginalDialogClose =
-    original_method<func_dialog_close>(0x00608F50);
 uint32_t ListBoxCloseDynamicDefault;  // 0x009B8EE0
 int ListBoxClickGuard;                // 0x009B8EEC
 
@@ -49,8 +47,8 @@ int ListBoxClickGuard;                // 0x009B8EEC
 // 0x00670408) left with the re-stores, same as the Dialogs stage tables.
 
 /*
-Purpose: Close the ListBox: close its GraphicWin virtual base (source-owned) and
-         its Dialog virtual base (original dependency via seam), both located
+Purpose: Close the ListBox: close its GraphicWin and Dialog virtual bases,
+         both located
          through the runtime vbtable, then reset the ListBox-owned fields from
          the process defaults and re-arm Dialog::field_B4_.
 // ORIGINAL: 0x00609F20 ?close@ListBox@@QAEXXZ 0x00609F20-0x00609F9D BYTE_EXACT
@@ -64,7 +62,7 @@ Purpose: Close the ListBox: close its GraphicWin virtual base (source-owned) and
 // calls     0x005D4E40 0x00608F50
 Return Value: EAX residue (constant 0). Declared void (?close@ListBox@@QAEXXZ);
               modelled as uint32_t to preserve the residue like GraphicWin::close.
-Status: Complete with temporary Dialog::close original dependency
+The two base close methods are reusable source-owned operations.
 Verification note: the sweep's five survivors on this function rewrite hex
 constants that occur only in the trailing comments naming each default's
 address - the code reads the seam pointers, so the mutants are byte-identical
@@ -80,8 +78,7 @@ uint32_t ListBox::close() {
     // GraphicWin virtual base: source-owned close at 0x005D4E40. Return
     // discarded.
     GraphicWin::close();
-    // Dialog virtual base at 0x00608F50, CALLED BY NAME. `Dialog::close`
-    // is a real declared method backed by a pending_bodies forwarder.
+    // Dialog virtual base at 0x00608F50, reached through its real method.
     Dialog::close();
 
     // The ListBox-owned resets, as the member writes they are; the defaults
@@ -110,31 +107,29 @@ uint32_t ListBox::close() {
     return 0;
 }
 
-/*
-Purpose: Destroy a ListBox: re-stage the GraphicWin, Buffer, and Dialog subobject
-         vtables and refresh the two vbase-adjust fields (all located through the
-         runtime vbtable), then run close(). Not independently addressed - VC6
-         inlines this whole body into `list_box_destructor_redirect` below,
-         which is where the marker for 0x00609EC0 actually lives; a real
-         `ListBox::~ListBox()` cannot be the image's own body because the
-         image enters the void destructor ADJUSTED (this = L + 0x48, the
-         GraphicWin subobject), which no C++ member function can express -
-         `this` is always the class's own front. See the redirect's marker.
-Status: Complete with temporary Dialog::close original dependency (through close)
-*/
-// DECLARATION-ONLY IN THE HEADER (2026-09-02), for the 35 out-of-line
-// callers and the member teardowns in ??1DipEdit/??1FileWin. The body is
-// trivial; the entered-on-the-GraphicWin-vbase convention and the vbase
-// re-staging live in list_box_destructor_redirect below, which is where the
-// 0x00609EC0 marker's claim is measured.
-ListBox::~ListBox() {
-}
-
-// DECLARATION-ONLY IN THE HEADER (2026-09-03), beside ~ListBox above. The
-// body is trivial; the virtual-base stage the image builds inside
-// ??0ListBox@@QAE@H@Z (0x00609DB0, still a pending_bodies forwarder reached
-// through construct()) is the compiler's from the two base declarations.
+// Original 609DB0 conditionally constructs GraphicWin and Dialog using the
+// compiler's most-derived flag, then initializes the ListBox-owned fields.
+// ORIGINAL: 0x00609DB0 ??0ListBox@@QAE@H@Z 0x00609DB0-0x00609EB7;0x00662EF0-0x00662F14 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00609db0.cpp", "Original constructor/destructor direct-call receivers and unwind stages"], "reason": "609DB0 calls GraphicWin and Dialog constructors only for the hidden most-derived ABI flag, then stores own defaults. Genuine virtual bases synthesize this flag; it is not an explicit int source parameter."}
+// symbol    ??0ListBox@@QAE@XZ
 ListBox::ListBox() {
+    field_4_ = 0;
+    field_8_ = 0;
+    field_10_ = ListBoxCloseStaticDefaults[2];
+    field_14_ = ListBoxCloseStaticDefaults[3];
+    field_18_ = 0;
+    field_1C_ = 0;
+    field_20_ = 0;
+    field_24_ = ListBoxCloseStaticDefaults[0];
+    field_28_ = ListBoxCloseDynamicDefault;
+    field_2C_ = ListBoxCloseStaticDefaults[1];
+    field_30_ = 0;
+    field_34_ = 0;
+    field_38_ = 0;
+    field_3C_ = 0;
+    double_click_callback_ = 0;
+    field_B4_ = 1;
+    field_C_ = 0;
 }
 
 /*
@@ -193,17 +188,12 @@ uint32_t ListBox::destroy() {
 
 
 /*
-Purpose: The real complete-object destructor body. ~ListBox is entered with
-         this = L + 0x48 (the GraphicWin controlling-vftable location, not
-         ListBox's own front); recover the base with the original's own
-         `eax - 0x48`, then re-stage the three subobject vtables and the two
-         vbase-adjust fields directly (not through a call to
-         `ListBox::destroy()` - that call target is a SEPARATE image
-         address dialogs.cpp already reaches by name, and calling it here
-         adds a `call`/register-spill the image's 83-byte body does not
-         pay for), then run close().
-// ORIGINAL: 0x00609EC0 ??1ListBox@@QAE@XZ 0x00609EC0-0x00609F13
-// symbol    ?list_box_destructor_redirect@@YIIPAX0@Z
+Purpose: The ListBox derived destructor stage. VC6 enters this method on the
+         GraphicWin controlling virtual base, recovers the class receiver,
+         stages its tables and vtordisps, and calls close. The complete-object
+         caller additionally destroys the virtual bases in reverse order.
+// ORIGINAL: 0x00609EC0 ??1ListBox@@QAE@XZ 0x00609EC0-0x00609F13 BYTE_EXACT
+// symbol    ??1ListBox@@UAE@XZ
 // size      83 bytes
 // prototype void (__thiscall ??1ListBox@@QAE@XZ)(ListBox* this)
 // callers   35   call targets   1
@@ -211,8 +201,14 @@ Purpose: The real complete-object destructor body. ~ListBox is entered with
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00609F20
 Return Value: EAX residue (close()'s residue, constant 0).
-Status: Complete with temporary Dialog::close original dependency (through close)
 */
+ListBox::~ListBox() {
+    close();
+}
+
+// Legacy leaf callers still use this partial-stage callback. Their enclosing
+// lifetime paths require coupled recovery; calling an explicit complete C++
+// destructor here would also destroy virtual bases which they destroy later.
 uint32_t __fastcall list_box_destructor_redirect(void *adjusted, void *) {
     // Strip-all direction: the image's five derived-stage re-stores here -
     // the content this BYTE_EXACT claim used to bank - are gone, as in

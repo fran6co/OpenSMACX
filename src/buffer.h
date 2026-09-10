@@ -506,6 +506,8 @@ class Buffer {
  // offset and no emitted byte, so the layout and every claim are untouched.
  protected:
   friend class CheckBox;
+  // EditBox's redraw uses the Buffer text foreground at original +0x53C.
+  friend class EditBox;
   // `Win::flip` clips the screen buffer back to its own extent and reads
   // the DIB's dimensions for the final BitBlt.
   friend class Win;

@@ -281,20 +281,19 @@ FlatButton *FlatButton::destroy() {
 */
 
 FlatButton::FlatButton() {
-    BaseButton::construct();
-    volatile uint32_t *const object =
-        reinterpret_cast<volatile uint32_t *>(this);
-    object[0xA18 / 4] = 0;
-    object[0xA14 / 4] = 0;
-    object[0xAB8 / 4] = 0xFFFFFFFFU;
+    // BaseButton has already constructed its GraphicWin and Time members.
+    // Reconstructing it here would also overwrite the FlatButton table stage.
+    field_A18_ = 0;
+    field_A14_ = 0;
+    field_AB8_ = 0xFFFFFFFFU;
     for (size_t index = 0; index < 3; ++index) {
-        object[(0xABC / 4) + index] = 0xFFFFFFFFU;
+        field_ABC_[index] = 0xFFFFFFFFU;
         for (size_t group = 0; group < 9; ++group) {
-            object[(0xAE0 / 4) + group * 3 + index] =
+            config[group * 3 + index] =
                 static_cast<uint32_t>(FlatButtonDefaultsTable[group * 3 + index]);
         }
-        object[(0xAD4 / 4) + index] = 0;
-        object[(0xAC8 / 4) + index] = 0;
+        field_AD4_[index] = 0;
+        field_AC8_[index] = 0;
     }
 }
 

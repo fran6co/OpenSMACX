@@ -288,10 +288,6 @@ extern uint32_t DialogFieldB0Default;  // 0x009B8ED0
 extern uint32_t DialogFieldB4Default;  // 0x009B8ED4
 extern uint32_t DialogFieldB8Default;  // 0x009B8ED8
 
-// Legacy ListBox still uses this method-pointer signature. Dialog's own
-// teardown now calls its recovered close directly.
-typedef void (OriginalObject::*func_dialog_close)();
-
 // The four rebindable list-stage table constants left with the hand
 // close_with_tables calls they fed: ~Dialog runs the compiler-owned
 // item_list_ destructor chain, which stages the same tables (0x006698C4/

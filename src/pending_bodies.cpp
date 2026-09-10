@@ -252,16 +252,6 @@ void __fastcall sub_633010(void *self) {
 // destructor and PlanWin's/Console's each reach it directly.
 
 
-// ??0EditBox@@QAE@XZ at 0x00614E50 - the EditBox subobject constructor
-// FileWin::FileWin reaches by name. See the note in editbox.h.
-
-// ??0ListBox@@QAE@H@Z at 0x00609DB0 - the ListBox subobject constructor
-// FileWin::FileWin reaches by name. See the note in listbox.h.
-void ListBox::construct(int a1) {
-    typedef void(__fastcall *pending)(ListBox *, void *, int);
-    PENDING_BODY(0x00609DB0, pending)(this, nullptr, a1);
-}
-
 // ?close@FileWin@@QAEXXZ at 0x00613900 - FileWin's own close(), which its
 // destructor calls first. See the note in filewin.h.
 void FileWin::close() {
@@ -1003,11 +993,6 @@ WorldWin::~WorldWin() {  // ??1WorldWin@@QAE@XZ at 0x004C4A70
 AlphaSave::~AlphaSave() {  // ??1AlphaSave@@QAE@XZ at 0x00408170
     typedef void(__fastcall *pending)(AlphaSave *, void *);
     PENDING_BODY(0x00408170, pending)(this, nullptr);
-}
-
-EditBox::~EditBox() {  // ??1EditBox@@QAE@XZ at 0x00408010
-    typedef void(__fastcall *pending)(EditBox *, void *);
-    PENDING_BODY(0x00408010, pending)(this, nullptr);
 }
 
 FameWin::~FameWin() {  // ??1FameWin@@QAE@XZ at 0x0044B100
