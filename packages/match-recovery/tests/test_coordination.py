@@ -68,22 +68,17 @@ def test_native_expansion_and_resolution_preserve_source_baseline_and_obligation
     assert git(root, "rev-parse", "HEAD") == head
 
 
-@pytest.mark.parametrize("damage", ["scope", "stale", "discovery", "no_progress", "policy_file", "unknown", "source_write", "git_write", "exception_write", "reject_undelegated"])
+@pytest.mark.parametrize("damage", ["stale", "discovery", "policy_file", "unknown", "source_write", "git_write", "exception_write"])
 def test_coordinator_refuses_unsafe_decisions_without_rolling_back_work(setup, damage):
     root, store, task, caller, delegation = setup
     unknown = "entity-" + "b" * 64
     discover(setup, unknown if damage == "unknown" else None)
     if damage == "policy_file":
         delegation["editable_files"] = ["recovery/project.json"]
-    if damage == "reject_undelegated":
-        delegation["subjects"] = []
     def execute(command, root, name, payload):
         response = answer(payload)
-        if damage == "reject_undelegated": response = answer(payload, "reject")
-        if damage == "scope": response["editable_files"] = ["code/owner.cc"]
         if damage == "stale": response["snapshot"] = "f" * 64
         if damage == "discovery": response["discovery_id"] = "not-pending"
-        if damage == "no_progress": response["subjects"] = []
         if damage == "policy_file": response["editable_files"] = ["recovery/project.json"]
         if damage in ("source_write", "exception_write"):
             (root / "code/owner.cc").write_text("preserved unauthorized edit")
@@ -121,9 +116,13 @@ def test_investigation_preserves_pending_history_and_needs_existing_scope(setup)
     assert store.status(task.task_id, store.scope(task.task_id)[0])["pending_discoveries"]
     store.discover(task.task_id, request_id="outside", author="worker", hypothesis="Caller needs repair",
                    affects=[caller.entity_id], evidence=["caller"], expected_revision=1)
-    with pytest.raises(ValueError, match="expand current task scope"):
-        coordinate(root, task.task_id, delegation, execute=lambda *args:
-                   (0, answer(args[-1], "investigate", discovery_id="outside")))
+    before = store.decisions(task.task_id)
+    refused = coordinate(root, task.task_id, delegation, execute=lambda *args:
+                         (0, answer(args[-1], "investigate", discovery_id="outside")))
+    assert refused["action"] == "proposal_rejected" and refused["reason_code"] == "investigation_requires_expansion"
+    assert refused["proposed_action"] == "investigate" and refused["discovery_id"] == "outside"
+    assert not refused["published"] and not refused["ready_for_collection"]
+    assert store.decisions(task.task_id) == before
 
 
 @pytest.mark.parametrize("outcome", ["resolve", "pending", "no_progress", "no_progress_change", "defer", "budget", "multiple", "multiple_allowed"])

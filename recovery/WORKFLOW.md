@@ -250,6 +250,14 @@ evidence before repairing metadata, never restore the whole file over good C++.
 Coordinator publication becomes
 the next worker's baseline; this guard is not a new ledger or recovery acceptance.
 
+A well-formed coordinator proposal that exceeds delegated/current scope or adds
+no scope progress stops that task with `coordination_proposal_rejected`. Its
+findings and checkout remain pending for fresh replanning; the campaign can
+continue unrelated tasks, without cleaning or integrating the refused checkout.
+The attempt consumes the existing decision budget and is not automatically retried.
+Malformed responses, stale evidence, unauthorized edits and native publication
+failures still refuse execution; they are not converted into scheduling outcomes.
+
 Class groups and layout observations follow current source-mapped member symbols
 when available, including deleting destructors and fixed/vtordisp adjustors. A
 generated entry belongs with its owning class, not a catalogue scaffold class.

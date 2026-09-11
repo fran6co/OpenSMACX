@@ -600,6 +600,11 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
                                              root, profiles.get("coordinator"), name, plan["jobs"]),
                                          migration_configuration=profiles.get("migration"), checkpoint_configuration=profiles["checkpoint"], execute=coordinated_execute)
                     batch.setdefault("coordination", []).append(repaired)
+                    if repaired["stop_reason"] == "coordination_proposal_rejected":
+                        batch["pending"].append({"task": name, "worktree": str(child),
+                                                 "reason": "coordination_proposal_rejected",
+                                                 "coordination": repaired["coordination"]})
+                        continue  # Keep even clean unresolved workers; no retirement or integration.
                 incoming = git(child, "rev-parse", "HEAD").decode().strip()
                 try:
                     preflight(child)

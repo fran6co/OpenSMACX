@@ -2999,6 +2999,18 @@ If replacing the initializer's native source scaffold with an external-only
 protocol, remove the unused `source` declaration explicitly; a missing pin or
 malformed declared source provider is an error, not an implicit opt-out.
 
+Pure coordinator proposal-scope failures return an internal `proposal_rejected`
+outcome after freshness validation, with the proposed action, bound snapshot,
+discovery identity, reason code and feedback. This is not a provider-selectable
+action or permission to retry. It consumes the existing decision attempt; the
+driver stops the task, retaining every discovery and source edit. Campaigns leave
+that worker pending without cleanup/integration and can continue unrelated work.
+Covered refusals are outside-delegation resolution/investigation, investigation
+or resolution before current-scope expansion, expansion beyond explicit delegation,
+and expansion without progress. Invalid responses, stale inputs, mutations,
+unknown original identities and native writer failures remain fatal. Restricted
+preplanning still routes publishing proposals to fresh serial coordination.
+
 `investigate` requests one bounded worker attempt for a pending discovery entirely
 inside current scope. It publishes no resolution or acceptance: its snapshot-bound
 authorization and evidence are transient worker context. Every pending discovery

@@ -186,6 +186,15 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
     if discovery is None:
         raise ValueError("coordinator named a discovery that is not pending")
     action = response["action"]
+    def refuse(reason_code, feedback):
+        # Only pure proposal-policy failures reach this outcome. Freshness,
+        # response syntax and native publication failures remain fatal above
+        # or below; never catch them as a reason to continue a campaign.
+        return {"action": "proposal_rejected", "published": False,
+                "discovery_id": discovery["discovery_id"], "snapshot": request["snapshot"],
+                "proposed_action": action, "reason_code": reason_code, "feedback": feedback,
+                "ready_for_collection": False, "verification": "not_measured"}
+
     if allowed_actions is not None and action not in allowed_actions:
         raise SerialCoordinationRequired("coordinator action requires fresh serial coordination: " + action)
     if action != "defer" and not set(discovery["affects"]) <= origins.keys():
@@ -195,9 +204,14 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
     # takeover merely to authorize a repair elsewhere. Resolution retains the
     # stronger whole-finding boundary, including TaskStore's independent check.
     if action not in ("defer", "investigate_local", "expand") and not set(discovery["affects"]) <= selected | set(delegation["subjects"]):
-        raise ValueError("coordinator cannot resolve discoveries outside delegated scope")
+        return refuse("outside_delegated_scope", "The complete discovery includes owners outside delegated scope. "
+                      "Keep it pending; propose investigate_local only for useful work in existing scope, or defer.")
     if action == "investigate" and not set(discovery["affects"]) <= selected:
-        raise ValueError("expand current task scope before authorizing investigation")
+        return refuse("investigation_requires_expansion", "Expand current task scope before authorizing whole-finding "
+                      "investigation, or propose investigate_local for useful work within existing scope.")
+    if action in ("incorporate", "reject") and not set(discovery["affects"]) <= selected:
+        return refuse("resolution_requires_expansion", "Delegation is not current ownership. Expand current task scope "
+                      "before resolving the complete discovery; do not dismiss its outside-owner effects.")
     binding_report = None
     if action == "bind_seed":
         from .binding import bind
@@ -225,9 +239,11 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
     if action == "expand":
         if (not subjects <= set(delegation["subjects"]) or not files <= set(delegation["editable_files"])
                 or not subjects <= set(discovery["affects"])):
-            raise ValueError("coordinator exceeded delegated discovery scope")
+            return refuse("expansion_exceeds_delegation", "Expand only explicitly delegated subjects/files and affected "
+                          "identities. Keep other owners as pending read-only context.")
         if not (subjects - selected or files - editable):
-            raise ValueError("coordinator expansion makes no scope progress")
+            return refuse("expansion_no_progress", "The proposed expansion adds no scope. Choose a justified action "
+                          "against current scope or defer; do not republish an existing expansion.")
         for name in files:
             # Delegation cannot smuggle policy/identity files into worker scope.
             path = config.path(root, name)
