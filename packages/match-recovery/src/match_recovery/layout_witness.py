@@ -70,9 +70,10 @@ def missing_layout_witnesses(root, unit, names, baseline, compiler, command, fla
 
     One unchanged replica controls the TU's private include context. Classes
     share a probe/control compilation, but every probe symbol must change and
-    every class layout must agree. Failed groups are split and freshly measured;
-    no partial good result escapes a failed batch. Missing definitions need
-    independent counterfactual controls. Reports are transient, not source claims.
+    every class layout must agree. Absence-eligible failed groups first need
+    complete independent counterfactual controls; otherwise they split and are
+    freshly measured. No partial good result escapes a failed batch. Reports
+    are transient, not source claims.
     """
     root = Path(root).resolve()
     source = local_path(root, unit)
@@ -144,12 +145,20 @@ def missing_layout_witnesses(root, unit, names, baseline, compiler, command, fla
             probe = compile(original + b"".join(prefix + b"0; }\n" for _, _, _, prefix in pending))
             try:
                 types = ClassLayouts(probe)
-                layouts = {row["class_name"]: types.layout(row["class_name"]) for row, _, _, _ in pending}
-            except ClassNotEmitted:
-                raise
+                layouts, missing = {}, []
+                for row, _, _, _ in pending:
+                    try:
+                        layouts[row["class_name"]] = types.layout(row["class_name"])
+                    except ClassNotEmitted as error:
+                        missing.append(error)
             except ValueError:
                 absence_eligible = False  # Unsupported definitions are not absent.
                 raise
+            if missing:
+                # Inspect the whole compiled group before considering absence:
+                # a missing first class must not hide an observed/malformed peer.
+                absence_eligible = not layouts
+                raise missing[0]
             absence_eligible = False  # Observed classes and failed body controls cannot become absence proofs.
             control = compile(original + b"".join(prefix + b"1; }\n" for _, _, _, prefix in pending))
             types = ClassLayouts(control)
@@ -160,6 +169,19 @@ def missing_layout_witnesses(root, unit, names, baseline, compiler, command, fla
                     raise ValueError("layout witness declaration differs between probe and control")
         except (OSError, ValueError) as error:
             if len(pending) > 1:
+                if absence_eligible:
+                    try:
+                        results = _absence_witnesses(compile, original,
+                            [(row["class_name"], identifier, guards) for row, identifier, guards, _ in pending])
+                    except (OSError, ValueError):
+                        # A failed positive control lends no partial evidence.
+                        # Retry smaller pointer-probe groups from fresh objects.
+                        pass
+                    else:
+                        for (row, _, _, _), result in zip(pending, results, strict=True):
+                            row.update(result)
+                            row.pop("probe_control")
+                        return
                 middle = len(pending) // 2
                 check_present(pending[:middle])
                 check_present(pending[middle:])

@@ -168,7 +168,7 @@ def test_real_absence_batches_share_compiles_and_isolate_a_refused_class(variant
         assert any(b"struct First" in data and b"struct Blocked" in data for data in calls)
         assert any(b"struct First" in data and b"struct Blocked" not in data for data in calls)
     else:
-        assert report["compile_attempts"] == 8  # Replica + five failed split pointer groups + two shared definitions.
+        assert report["compile_attempts"] == 4  # Replica + failed whole pointer group + two positive definition controls.
         assert all(all(("struct " + name).encode() in data for name in ("First", "Second", "Third"))
                    for data in calls[-2:])
     assert source.read_bytes() == original
@@ -204,7 +204,7 @@ def test_real_batch_cannot_borrow_another_class_control(variant_project, damage)
     first, second = report["witnesses"]
     assert declaration_absent(first)
     assert second["result"] == "unknown" and second["compiler_layout"] is None
-    assert report["compile_attempts"] == 10  # Replica, three failed pointer groups, failed definition pair, two singleton pairs.
+    assert report["compile_attempts"] == 12  # Failed early group controls still require fresh split/absence controls.
     assert any(b"struct First" in data and b"struct Second" in data for data in contents_seen)
     assert any(b"struct First" in data and b"struct Second" not in data for data in contents_seen)
     assert source.read_bytes() == original

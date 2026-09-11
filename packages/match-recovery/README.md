@@ -1096,6 +1096,11 @@ against real compiler controls, including aliases, using directives and anonymou
 namespaces. Nested-class paths that cannot be expressed as namespace scopes remain
 unknown. Macro guards and the unchanged-replica control still apply. Neither a
 compile error nor missing debug information is evidence of absence by itself.
+An absence-eligible failed pointer group tries both positive definition controls
+before splitting into individual probes. Only a complete passing group supplies
+absence coverage; mixed, unsupported or failed-control groups split and receive
+fresh independent checks. Observed layouts and failed pointer-body controls never
+become absence proofs. No prior compilation result or partial group proof is reused.
 See Microsoft's [type-redefinition diagnostic](https://learn.microsoft.com/en-us/cpp/error-messages/compiler-errors-1/compiler-error-c2011)
 for the language restriction used by these counterfactual controls.
 

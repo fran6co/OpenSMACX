@@ -17,6 +17,7 @@ from test_codeview import coff, debug_types, record
 from test_layout_check import add_unit
 from test_symbol_check import project as product_project
 from test_restoration import historical
+from test_function_witness import object_bytes
 
 
 ABSENT = combined_object(debug_types().replace(b"Widget", b"OtherX"))
@@ -273,3 +274,160 @@ def test_each_flag_set_needs_a_real_definition_even_if_absence_controls_pass(pro
     result = verify_layout(project, "owner", compiler=Alternate(project), witness_missing=True)
     assert result["result"] == "unknown" and result["absent_definitions"] == 1
     assert result["missing_witnesses"][0]["flags"] == ["-other"]
+
+
+def grouped_object(functions, definitions):
+    """Native-readable synthetic COMDATs plus independent class type records."""
+    types = bytearray(struct.pack("<I", 2))
+    for index, (name, member, width, malformed) in enumerate(definitions):
+        field_index = 0x1000 + index * 3
+        member, name = member.encode(), name.encode()
+        fields = struct.pack("<HHIH", 0x1405, 0, field_index + 2, 0) + bytes([len(member)]) + member
+        types.extend(record(0x1203, fields))
+        types.extend(record(0x1005, struct.pack("<HHIIIH", 1, 0, field_index, 0, 0,
+                                                0 if malformed else width) + bytes([len(name)]) + name))
+        types.extend(record(0x1003, struct.pack("<IIH", 0x70, 0x74, width) + b"\0"))
+    original = object_bytes([(symbol, bytes([value]) + b"\xc3", ()) for symbol, value in functions])
+    count, = struct.unpack_from("<H", original, 2)
+    symbols_at, = struct.unpack_from("<I", original, 8)
+    header = bytearray(original[:20])
+    struct.pack_into("<H", header, 2, count + 1)
+    struct.pack_into("<I", header, 8, symbols_at + 40 + len(types))
+    tables = bytearray(original[20:20 + count * 40])
+    for index in range(count):
+        raw_at, = struct.unpack_from("<I", tables, index * 40 + 20)
+        struct.pack_into("<I", tables, index * 40 + 20, raw_at + 40)
+    debug = struct.pack("<8sIIIIIIHHI", b".debug$T", 0, 0, len(types), symbols_at + 40,
+                        0, 0, 0, 0, 0x40000040)
+    return bytes(header + tables + debug + original[20 + count * 40:symbols_at] + types + original[symbols_at:])
+
+
+class GroupCompiler:
+    """Synthetic compiler model: duplicate complete definitions refuse."""
+    def __init__(self, *, present=(), malformed=(), missing="compile", damage=None, damaged_names=None):
+        self.present, self.malformed = set(present), set(malformed)
+        self.missing, self.damage, self.calls = missing, damage, []
+        self.damaged_names = None if damaged_names is None else set(damaged_names)
+        self.baseline = grouped_object([("_product", 0)], [])
+
+    def overlay(self, source, replacements, command, flags):
+        contents = replacements[source.relative_to(source.parents[1]).as_posix()]
+        probes = [(identifier.decode(), name.decode()) for identifier, name in
+                  re.findall(rb'extern "C" int (match_recovery_layout_\w+)\((\w+)\* object\)', contents)]
+        definitions = re.findall(rb"struct (\w+) \{ char (\w+)\[(\d+)\]; \};", contents)
+        width = int(definitions[0][2]) if definitions else None
+        self.calls.append({"names": [name for _, name in probes], "width": width,
+                           "contents": contents, "command": command, "flags": flags})
+        if not probes:
+            return self.baseline
+        if definitions:
+            if any(name.decode() in self.present | self.malformed for name, _, _ in definitions):
+                raise ValueError("duplicate complete class definition")
+            if self.damage == "second_compile" and width == 29:
+                raise ValueError("second definition compilation unavailable")
+            def damaged(name):
+                return self.damaged_names is None or name in self.damaged_names
+
+            layouts = [(name.decode(), member.decode(),
+                        17 if self.damage == "width" and damaged(name.decode()) else int(extent), False)
+                       for name, member, extent in definitions]
+            functions = [("_" + identifier, 17 if self.damage == "body" and damaged(name) else width)
+                         for identifier, name in probes]
+            result = grouped_object(functions, layouts)
+            if self.damage == "source_change":
+                source.write_bytes(source.read_bytes() + b"// concurrent source edit\n")
+            return result
+        if self.missing == "compile" and any(name not in self.present | self.malformed for _, name in probes):
+            raise ValueError("class not declared in this TU")
+        layouts = [(name, "member", 4, name in self.malformed)
+                   for _, name in probes if name in self.present | self.malformed]
+        body = 1 if contents.endswith(b"1; }\n") and self.damage != "pointer_control" else 0
+        return grouped_object([("_" + identifier, body) for identifier, _ in probes], layouts)
+
+
+def run_group(project, names, compiler):
+    return missing_layout_witnesses(project, "code/unit.cc", names, Coff(compiler.baseline), compiler,
+                                    ("same-recipe",), ("same-flags",))
+
+
+@pytest.mark.parametrize("missing", ["compile", "not_emitted"])
+def test_all_absent_group_uses_one_pointer_failure_and_two_fresh_positive_controls(project, missing):
+    compiler = GroupCompiler(missing=missing)
+    names = ["Absent" + str(index) for index in range(8)]
+    source = project / "code/unit.cc"
+    original = source.read_bytes()
+    for iteration in range(2):
+        report = run_group(project, names, compiler)
+        assert report["compile_attempts"] == 4
+        assert all(declaration_absent(row) and row["compiler_layout"] is None for row in report["witnesses"])
+        assert [row["class_name"] for row in report["witnesses"]] == names
+        calls = compiler.calls[iteration * 4:]
+        assert [call["width"] for call in calls] == [None, None, 17, 29]
+        assert [call["names"] for call in calls] == [[], names, names, names]
+        assert all(call["command"] == ("same-recipe",) and call["flags"] == ("same-flags",) for call in calls)
+    assert len(compiler.calls) == 8 and source.read_bytes() == original
+
+
+@pytest.mark.parametrize("missing", ["compile", "not_emitted"])
+def test_mixed_groups_freshly_split_without_borrowing_partial_absence(project, missing):
+    compiler = GroupCompiler(present=["Present"], missing=missing)
+    report = run_group(project, ["Absent", "Present"], compiler)
+    absent, present = report["witnesses"]
+    assert declaration_absent(absent)
+    assert present["result"] == present["probe_control"] == "pass"
+    assert present["compiler_layout"]["class"] == "Present" and not declaration_absent(present)
+    group_definitions = [call for call in compiler.calls if call["width"] and len(call["names"]) > 1]
+    assert len(group_definitions) == (1 if missing == "compile" else 0)
+    assert [call["width"] for call in compiler.calls if call["names"] == ["Absent"]] == [None, 17, 29]
+    assert [call["width"] for call in compiler.calls if call["names"] == ["Present"]] == [None, None]
+
+
+def test_missing_first_class_does_not_hide_malformed_observed_peer(project):
+    compiler = GroupCompiler(malformed=["Malformed"], missing="not_emitted")
+    report = run_group(project, ["Absent", "Malformed"], compiler)
+    absent, malformed = report["witnesses"]
+    assert declaration_absent(absent)
+    assert malformed["result"] == "unknown" and not declaration_absent(malformed)
+    assert not any(call["width"] and "Malformed" in call["names"] for call in compiler.calls)
+
+
+def test_failed_group_pointer_body_controls_are_not_absence_eligible(project):
+    compiler = GroupCompiler(present=["First", "Second"], damage="pointer_control")
+    report = run_group(project, ["First", "Second"], compiler)
+    assert all(row["result"] == "unknown" and not declaration_absent(row) for row in report["witnesses"])
+    assert not any(call["width"] for call in compiler.calls)
+
+
+@pytest.mark.parametrize("damage", ["width", "body", "second_compile", "source_change"])
+def test_failed_group_absence_controls_stay_unknown_and_preserve_mutations(project, damage):
+    compiler = GroupCompiler(damage=damage)
+    source = project / "code/unit.cc"
+    original = source.read_bytes()
+    report = run_group(project, ["First", "Second"], compiler)
+    assert all(row["result"] == "unknown" and not declaration_absent(row) for row in report["witnesses"])
+    assert report["compile_attempts"] == len(compiler.calls)
+    assert any(call["width"] == 17 and len(call["names"]) == 2 for call in compiler.calls)
+    if damage == "source_change":
+        assert source.read_bytes().startswith(original) and source.read_bytes() != original
+    else:
+        assert source.read_bytes() == original
+        # The failed group does not supply width17 or any other partial proof
+        # to its split children: each child starts with a fresh pointer probe.
+        for name in ("First", "Second"):
+            calls = [call for call in compiler.calls if call["names"] == [name]]
+            assert [call["width"] for call in calls] == [None, 17, 29]
+
+
+@pytest.mark.parametrize("damage", ["width", "body"])
+def test_one_failed_absence_control_requires_fresh_independent_sibling_proof(project, damage):
+    compiler = GroupCompiler(damage=damage, damaged_names=["Second"])
+    report = run_group(project, ["First", "Second"], compiler)
+    first, second = report["witnesses"]
+    assert declaration_absent(first)
+    assert second["result"] == "unknown" and not declaration_absent(second)
+    for name in ("First", "Second"):
+        calls = [call for call in compiler.calls if call["names"] == [name]]
+        assert [call["width"] for call in calls] == [None, 17, 29]
+    # Neither the initial failed group nor the later failed absence batch can
+    # supply the successful sibling with a borrowed width or function control.
+    assert [call["width"] for call in compiler.calls if call["names"] == ["First", "Second"]] == [None, 17, 29, 17, 29]
