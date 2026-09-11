@@ -52,6 +52,14 @@ Inspect preserved work and authorize a different worker profile when a bounded
 attempt exposes a task beyond the selected model's ability. A successful provider
 probe does not establish recovery or acceptance quality.
 
+Worker, coordinator and reviewer profiles opt into file-backed diagnostic evidence
+for oversized requests. Complete request JSON remains available to the provider;
+scope, pending discoveries and decision authority stay inline. Read the referenced
+diagnostic values before deciding; a reference is not an empty or passing result.
+This avoids embedding large observation arrays in every prompt, but is not a
+total size guarantee. Preserved campaigns keep their original profiles until an
+explicit authorized transition; editing this checkout does not upgrade them.
+
 For direct address work use `recover inspect <address-or-symbol> --image <original>`
 (optionally `--callers`) and `recover measure <addresses-or-symbols> --image <original>`.
 An exact project-relative `--in <source-file>` resolves source/seed ambiguity.

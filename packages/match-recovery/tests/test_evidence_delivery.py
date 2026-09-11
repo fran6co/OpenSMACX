@@ -103,7 +103,7 @@ def test_large_request_routes_only_diagnostics_and_retains_critical_fields(proje
     assert "passing or empty" in checks_ref["omitted_evidence_is_not"]
 
 
-def test_default_inline_worker_prompt_is_unchanged_and_reviewer_on_demand_refuses(project):
+def test_default_inline_worker_prompt_is_unchanged(project):
     root, task = project
     full = _large_request(task)
     script = ("from pathlib import Path; import json,sys; "
@@ -114,15 +114,6 @@ def test_default_inline_worker_prompt_is_unchanged_and_reviewer_on_demand_refuse
     prompt = (root / "src/f.cpp").read_text()
     assert canonical(full).decode() in prompt
     assert REFERENCE_KEY not in prompt
-
-    config = _configuration(root, script, evidence_delivery="on_demand")
-    reviewer_request = request(task, "reviewer")
-    reviewer_request["context"] = full["context"]
-    reviewer_request["check"] = full["check"]
-    reviewer_request["snapshot"] = "a" * 64
-    with pytest.raises(ValueError, match="only for workers"):
-        run_agent(root, "reviewer", config, reviewer_request)
-
 
 @pytest.mark.parametrize("mode", [True, [], {}, None, "unsupported"])
 def test_invalid_evidence_delivery_modes_refuse_before_provider(project, mode):
@@ -237,13 +228,15 @@ def test_request_threshold_leaves_small_on_demand_requests_inline(project, delta
         assert REFERENCE_KEY not in prompt
 
 
-def test_large_reviewer_request_remains_inline(project):
+@pytest.mark.parametrize("delivery", ["inline", "on_demand"])
+def test_large_reviewer_request_retains_full_evidence_and_readonly_boundary(project, delivery):
     root, task = project
     full = request(task, "reviewer")
     full["check"] = _large_request(task)["check"]
     script = r'''import json, sys
 from pathlib import Path
 request = json.loads(Path(sys.argv[1]).read_text())
+assert request['check']['candidate']['checks'][-1]['result'] == 'fail'
 Path('build/reviewer-prompt.txt').write_text(sys.stdin.read())
 Path(sys.argv[3]).write_text(json.dumps({
     'snapshot': request['snapshot'], 'decision': 'approve',
@@ -251,7 +244,12 @@ Path(sys.argv[3]).write_text(json.dumps({
     'supersessions': [], 'retractions': []}))
 '''
     assert len(canonical(full)) > REQUEST_THRESHOLD
-    config = _configuration(root, script, evidence_delivery="inline")
+    config = _configuration(root, script, evidence_delivery=delivery)
     assert run_agent(root, "reviewer", config, full)[0] == 0
     prompt = (root / "build/reviewer-prompt.txt").read_text()
-    assert canonical(full).decode() in prompt and REFERENCE_KEY not in prompt
+    if delivery == "inline":
+        assert canonical(full).decode() in prompt and REFERENCE_KEY not in prompt
+    else:
+        assert canonical(full).decode() not in prompt and REFERENCE_KEY in prompt
+        assert 'before editing or deciding' in prompt
+        assert canonical(full['snapshot']).decode().strip() in prompt

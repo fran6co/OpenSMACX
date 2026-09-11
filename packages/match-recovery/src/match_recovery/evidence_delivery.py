@@ -1,7 +1,7 @@
-"""Bounded, explicit routing for oversized worker diagnostics.
+"""Bounded, explicit routing for oversized recovery-agent diagnostics.
 
 The authoritative request remains on disk unchanged.  Only diagnostic values
-under the worker's context/check payload are replaced in the provider prompt;
+under role-specific diagnostic roots are replaced in the provider prompt;
 the replacement carries enough information for a filesystem-capable provider
 to retrieve the exact value from that immutable request.
 """
@@ -46,7 +46,7 @@ def _reference(pointer: str, value: list[Any] | str, request_path: str,
         "item_count": metadata["item_count"],
         "byte_count": metadata["byte_count"],
         "omitted_evidence_is_not": "a passing or empty result",
-        "instruction": "Read the full request, resolve this JSON Pointer, and inspect the omitted evidence before editing.",
+        "instruction": "Read the full request, resolve this JSON Pointer, and inspect the omitted evidence before acting or deciding.",
     }}
 
 
@@ -68,7 +68,7 @@ def _compact(value: Any, pointer: str, request_path: str,
 def compact_worker_request(request: dict[str, Any], request_path: str,
                            request_sha256: str,
                            manifest: list[dict[str, Any]] | None = None) -> dict[str, Any]:
-    """Return the worker prompt view while retaining the request authority.
+    """Return the task prompt view used by workers and independent reviewers.
 
     This function deliberately only visits the three diagnostic roots.  Task,
     scope, round, instructions and every authorization/review field therefore
@@ -83,6 +83,33 @@ def compact_worker_request(request: dict[str, Any], request_path: str,
                                          request_path, request_sha256, manifest)
     if isinstance(result.get("check"), dict):
         result["check"] = _compact(result["check"], "/check", request_path, request_sha256, manifest)
+    return result
+
+
+def compact_coordinator_request(request: dict[str, Any], request_path: str,
+                                request_sha256: str,
+                                manifest: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+    """Route observations, never the coordinator's decision authority.
+
+    Pending discoveries, delegation, action facts, routing choices and history
+    remain inline. Within the observation, keep exit codes, freshness pins and
+    non-acceptance labels; only visit the same diagnostic roots as workers.
+    """
+    result = deepcopy(request)
+    observation = result.get("diagnostics")
+    if not isinstance(observation, dict):
+        return result
+    context = observation.get("context")
+    if isinstance(context, dict) and isinstance(context.get("report"), dict):
+        for name in ("impact", "restoration"):
+            if name in context["report"]:
+                context["report"][name] = _compact(
+                    context["report"][name], "/diagnostics/context/report/" + name,
+                    request_path, request_sha256, manifest)
+    check = observation.get("check")
+    if isinstance(check, dict) and isinstance(check.get("report"), dict):
+        check["report"] = _compact(check["report"], "/diagnostics/check/report",
+                                    request_path, request_sha256, manifest)
     return result
 
 

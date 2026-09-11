@@ -14,7 +14,8 @@ import tempfile
 from .agent_protocol import response_schema, validate_reviewer_response, validate_worker_response
 from .components import relative_path
 from .driver import Command, changes, working_state
-from .evidence_delivery import REQUEST_THRESHOLD, compact_worker_request, request_sha256
+from .evidence_delivery import (REQUEST_THRESHOLD, compact_coordinator_request,
+                                compact_worker_request, request_sha256)
 from .model import canonical, require_digest, require_text
 from .processes import run_bounded
 from .records import parse_json
@@ -159,8 +160,8 @@ def run_agent(root: Path, role: str, configuration: Path, request: dict) -> tupl
     evidence_delivery = selected.get("evidence_delivery", "inline")
     if type(evidence_delivery) is not str or evidence_delivery not in ("inline", "on_demand"):
         raise ValueError("agent evidence_delivery must be inline or on_demand")
-    if evidence_delivery == "on_demand" and role != "worker":
-        raise ValueError("on_demand evidence delivery is supported only for workers")
+    if evidence_delivery == "on_demand" and role not in ("worker", "reviewer", "coordinator"):
+        raise ValueError("on_demand evidence delivery is supported only for workers, reviewers and coordinators")
     command = Command.read(selected["command"])
     if selected["response"] not in ("file", "stdout"):
         raise ValueError("agent response must use file or stdout")
@@ -208,10 +209,11 @@ def run_agent(root: Path, role: str, configuration: Path, request: dict) -> tupl
                 files[name].write_bytes(content)
             request_path = str(files["request"].resolve())
             request_hash = request_sha256(originals["request"])
-            route_evidence = (role == "worker" and evidence_delivery == "on_demand"
+            route_evidence = (evidence_delivery == "on_demand"
                               and len(originals["request"]) > REQUEST_THRESHOLD)
             references = []
-            prompt_request = (compact_worker_request(request, request_path, request_hash, references)
+            compact = compact_coordinator_request if role == "coordinator" else compact_worker_request
+            prompt_request = (compact(request, request_path, request_hash, references)
                               if route_evidence else request)
             from .framework_runtime import instructions as runtime_instructions
             prompt = ("You are the recovery " + role + ". Return only the required final JSON response.\n"
@@ -236,7 +238,7 @@ def run_agent(root: Path, role: str, configuration: Path, request: dict) -> tupl
                       + "Configured project instructions:\n" + canonical({"instructions": instructions}).decode()
                       + ("The authoritative full request is at " + request_path + " and has SHA-256 "
                          + request_hash + ". The inline request may contain explicit evidence references.\n"
-                         "Read relevant complete evidence from that unchanged file before editing; resolve its "
+                         "Read relevant complete evidence from that unchanged file before editing or deciding; resolve its "
                          "RFC 6901 JSON Pointer (`~1` means `/` and `~0` means `~`). Omitted evidence is not a passing "
                          "or empty result; inspect the referenced value, including any failing tail. No verdict "
                          "is inferred from routing. Only nodes AT the JSON Pointer locations listed in this "

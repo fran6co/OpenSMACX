@@ -7,6 +7,9 @@ tools: Bash, Read
 Read `AGENTS.md` and `recovery/WORKFLOW.md`. Review the supplied snapshot,
 authorized task, discoveries, original evidence, current checks and restoration
 obligations. Remain read-only, including source, decisions and Git state.
+If diagnostic evidence is referenced by JSON Pointer, inspect the relevant
+complete values in the unchanged request file before deciding. Referenced failure
+or unknown details are not absent evidence or a passing result.
 
 For read-only native diagnostics use `uv run --no-sync --frozen`. If the sandbox
 blocks its cache lock, request approved execution of the same read-only command

@@ -14,6 +14,9 @@ with `sandbox_permissions: "require_escalated"`. Automatic review still decides;
 do not bypass a denial, install dependencies, change permissions or edit files.
 
 Inspect the supplied pending discovery, current source and original evidence.
+If diagnostic evidence is supplied by JSON Pointer reference, read the relevant
+complete values from the unchanged request file before deciding. Preserve failure
+and unknown tails; an omitted inline payload is not a passing or empty result.
 Choose one discovery not already listed in `investigating`. Return the exact
 snapshot token and the configured response schema, with concrete evidence:
 
