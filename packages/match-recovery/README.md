@@ -1361,6 +1361,16 @@ Missing bounded structural witnesses and unsupported preservation coverage still
 refuse admission. Use `--acceptance-scope full_project` for the stronger application
 boundary below; configurations without the scope field retain that boundary.
 
+Unresolved discoveries recorded on the task also refuse native checkpoint
+verification, including direct `tasks check-migration` calls. A fresh generic
+approval or matching-regression permission does not resolve them. Coordinator
+disposition remains in the task journal and requires a fresh review afterward;
+out-of-scope findings cannot be incorporated without scope authorization. Separate
+tasks' unfinished work is not automatically a dependency of this change, but any
+dependency discovered by this task must remain recorded here until addressed.
+Task decisions must participate in the source review snapshot: ignored task or
+journal records refuse verification; unignore them and obtain a fresh review.
+
 In change mode, a valid measured refusal produces disposable
 `checkpoint_feedback: {snapshot, result, reason, report}`. The native verifier
 includes bounded `diagnostics` for failed/incomplete build, preservation, restoration,
@@ -1383,6 +1393,10 @@ preservation and unchanged baseline compiler/build policy. Failed native checks
 cannot be waived by review or external proofs. A failed/unknown whole gate stops
 before proof commands run. Compiler/image/source/Git/task changes invalidate the
 epoch; the verifier never stamps annotations or changes the task baseline.
+Full-project acceptance additionally refuses unresolved discoveries in any of the
+project's versioned task journals, before running the gate or proof commands.
+Per-change approval does not clear that recovery backlog or establish game
+acceptance. New or changed task decisions during verification invalidate its epoch.
 
 The final application boundary also runs `source_form.check_source_form`: explicit
 `asm`/`__asm`/`_emit` spellings fail even when byte comparisons and proof commands

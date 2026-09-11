@@ -65,6 +65,35 @@ def _policy(root):
     return config, commands, inputs, environment
 
 
+def _task_decision_state(root, reviewed_files):
+    """Validate all task decisions and require their bytes in the review snapshot."""
+    store = TaskStore(root)
+    directory = root / "recovery/tasks"
+    if directory.resolve() != directory or not directory.is_dir():
+        raise ValueError("full acceptance requires a canonical task directory")
+    state = {}
+    for path in sorted(directory.glob("*.json")):
+        if path.resolve() != path or not path.is_file():
+            raise ValueError("full acceptance requires regular task records")
+        task = store.read(path.stem)
+        journal = store.journal.stream_directory("task:" + task.task_id)
+        if journal.resolve() != journal or journal.exists() and not journal.is_dir():
+            raise ValueError("full acceptance requires canonical task journals")
+        records = list(journal.glob("*.json"))
+        if any(item.resolve() != item or not item.is_file() for item in records):
+            raise ValueError("full acceptance requires regular task journal records")
+        if any(reviewed_files.get(item.relative_to(root).as_posix()) is None for item in (path, *records)):
+            raise ValueError("acceptance task decisions must participate in review snapshot")
+        decisions = store.decisions(task.task_id)
+        subjects, _ = store._scope(task, decisions)
+        status = store.status(task.task_id, subjects)
+        if store.read(task.task_id) != task or store.decisions(task.task_id) != decisions:
+            raise ValueError("task decisions changed during full acceptance inventory")
+        state[task.task_id] = {"task": task.to_dict(), "decisions": decisions,
+                              "pending": status["pending_discoveries"]}
+    return state
+
+
 def measure_acceptance(root: Path, task_name: str, image: Path, request: dict, *, progress=None) -> dict:
     root = root.resolve()
     image = (image if image.is_absolute() else root / image).resolve()
@@ -78,6 +107,12 @@ def measure_acceptance(root: Path, task_name: str, image: Path, request: dict, *
     acceptance_result(3, report, request=request)
     if digest(request["task"]) != digest(task.to_dict()):
         raise ValueError("acceptance request does not name the current task")
+    state = working_state(root)
+    task_state = _task_decision_state(root, state["files"])
+    pending = [name + ":" + finding["discovery_id"] for name, row in task_state.items()
+               for finding in row["pending"]]
+    if pending:
+        raise ValueError("full acceptance has unresolved discoveries: " + ", ".join(pending))
     inventory = task_obligations(root, task_name)
     protected, live = {}, {}
     extend_inventory(protected, {"obligations": request["protected"]}, scope)
@@ -92,7 +127,6 @@ def measure_acceptance(root: Path, task_name: str, image: Path, request: dict, *
     if pending_interpretations(request["review"], interpretations):
         raise ValueError("acceptance requires disposition of historical interpretations")
     config, commands, inputs, environment = _policy(root)
-    state = working_state(root)
     # A matching request/review token alone cannot establish that the source
     # still has the contents independently reviewed. Check at this boundary,
     # including standalone CLI entry, before compiling or invoking proof code.
@@ -110,12 +144,15 @@ def measure_acceptance(root: Path, task_name: str, image: Path, request: dict, *
     proof_before = proof_inputs()
 
     def source_fresh():
-        if (working_state(root) != state or proof_inputs() != proof_before
-                or store.read(task_name) != task or store.decisions(task_name) != decisions):
+        current_state = working_state(root)
+        if (current_state != state or proof_inputs() != proof_before
+                or store.read(task_name) != task or store.decisions(task_name) != decisions
+                or _task_decision_state(root, current_state["files"]) != task_state):
             raise ValueError("acceptance source, policy or task changed; preserve work and recheck")
 
     # The gate owns preparation BEFORE its measurement epoch. Do not capture
     # generated compiler recipes until that preparation has completed.
+    source_fresh()
     gate = check_project(root, image, progress=progress, retain_build=True)
     source_fresh()
     built = next((row["report"] for row in gate["checks"] if row["name"] == "build"), {})

@@ -15,7 +15,7 @@ from match_recovery import migration_check as native
 from match_recovery.cli import main
 from match_recovery.driver import drive, working_state
 from match_recovery.migration_protocol import admit, extend_inventory
-from match_recovery.model import Dimension, Obligation
+from match_recovery.model import Dimension, Obligation, Origin
 from match_recovery.preservation import check_preservation
 from match_recovery.restoration import measure_restoration
 from match_recovery.reviews import ReviewStore
@@ -301,6 +301,113 @@ def test_stale_review_is_refused_before_build(migration, monkeypatch):
     payload["review"]["snapshot"] = "d" * 64
     monkeypatch.setattr(native, "check_build", lambda *_: pytest.fail("built for stale review"))
     with pytest.raises(ValueError, match="current independent approval"):
+        measure(migration, payload)
+
+
+@pytest.mark.parametrize("outside", [False, True])
+@pytest.mark.parametrize("cli", [False, True])
+def test_pending_discovery_cannot_be_waived_by_direct_approval(migration, monkeypatch, capsys, outside, cli):
+    store = TaskStore(migration)
+    subject = store.read("owner").subjects[0]
+    if outside:
+        subject = Origin(subject.image_sha256, subject.address_space, subject.address + 0x100)
+    store.discover("owner", request_id="unresolved-model", author="worker",
+                   hypothesis="The changed caller may depend on a different lifetime model",
+                   affects=[subject.entity_id], evidence=["source:unresolved relationship"], expected_revision=0)
+    payload = request(migration)  # Fresh approval still cannot resolve a finding.
+    before = working_state(migration)
+    monkeypatch.setattr(native, "check_build", lambda *_: pytest.fail("built with unresolved discovery"))
+    monkeypatch.setattr(native, "measure_restoration", lambda *a, **k: pytest.fail("measured unresolved discovery"))
+    if cli:
+        monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps(payload)))
+        assert main(["tasks", "check-migration", "owner", "--root", str(migration), "--image", "original.exe"]) == 3
+        assert "unresolved-model" in capsys.readouterr().err
+    else:
+        with pytest.raises(ValueError, match="pending discoveries: unresolved-model"):
+            measure(migration, payload)
+    assert working_state(migration) == before
+    assert len(store.status("owner", store.scope("owner")[0])["pending_discoveries"]) == 1
+
+
+@pytest.mark.parametrize("disposition", ["incorporated", "rejected"])
+def test_resolved_discovery_requires_fresh_review_then_native_checks(migration, disposition):
+    store = TaskStore(migration)
+    task = store.read("owner")
+    store.discover("owner", request_id="model", author="worker", hypothesis="Check the member model",
+                   affects=[task.subjects[0].entity_id], evidence=["source:bounded model"], expected_revision=0)
+    stale = request(migration)
+    store.resolve("owner", discovery_id="model", request_id="resolve-model", author=task.author,
+                  disposition=disposition, source_evidence=["source:coordinator disposition"], expected_revision=1)
+    with pytest.raises(ValueError, match="reviewed source snapshot"):
+        measure(migration, stale)
+    payload = request(migration)
+    assert admission(migration, payload, measure(migration, payload)).exit_code == 0
+    assert store.read("owner").base_revision == task.base_revision
+
+
+def test_discovery_during_native_verification_invalidates_review(migration, monkeypatch):
+    store = TaskStore(migration)
+    task = store.read("owner")
+
+    def discover(*_):
+        store.discover("owner", request_id="late-model", author="worker", hypothesis="New dependency",
+                       affects=[task.subjects[0].entity_id], evidence=["source:late finding"], expected_revision=0)
+        return {"result": "pass"}
+
+    monkeypatch.setattr(native, "check_mappings", discover)
+    monkeypatch.setattr(native, "check_build", lambda *_: pytest.fail("built after task mutation"))
+    with pytest.raises(ValueError, match="reviewed source snapshot|inputs changed"):
+        measure(migration)
+
+
+def test_other_tasks_pending_work_does_not_establish_a_change_dependency(migration):
+    store = TaskStore(migration)
+    task = store.read("owner")
+    subject = task.subjects[0]
+    other = replace(task, task_id="other", subjects=(Origin(
+        subject.image_sha256, subject.address_space, subject.address + 0x100),))
+    store.create(other)
+    store.discover("other", request_id="other-work", author="worker", hypothesis="Unfinished other owner",
+                   affects=[other.subjects[0].entity_id], evidence=["source:separate work"], expected_revision=0)
+    payload = request(migration)
+    assert admission(migration, payload, measure(migration, payload)).exit_code == 0
+    assert len(store.status("other", store.scope("other")[0])["pending_discoveries"]) == 1
+
+
+def test_ignored_resolution_cannot_bypass_review_freshness(migration, monkeypatch):
+    path = migration / ".gitignore"
+    path.write_text(path.read_text() + "recovery/history/\n")
+    store = TaskStore(migration)
+    task = store.read("owner")
+    store.discover("owner", request_id="model", author="worker", hypothesis="Changed model",
+                   affects=[task.subjects[0].entity_id], evidence=["source:pending model"], expected_revision=0)
+    payload = request(migration)
+    before = working_state(migration)
+    store.resolve("owner", discovery_id="model", request_id="resolve-model", author=task.author,
+                  disposition="rejected", source_evidence=["source:unreviewed disposition"], expected_revision=1)
+    assert working_state(migration) == before  # Review token alone misses ignored decisions.
+    monkeypatch.setattr(native, "check_build", lambda *_: pytest.fail("built with unreviewed decisions"))
+    with pytest.raises(ValueError, match="decisions must participate in the review snapshot"):
+        measure(migration, payload)
+
+
+@pytest.mark.parametrize("kind", ["task", "journal", "event"])
+def test_symlinked_decisions_are_not_reviewed_bytes(migration, monkeypatch, kind):
+    store = TaskStore(migration)
+    task = store.read("owner")
+    store.discover("owner", request_id="model", author="worker", hypothesis="Changed model",
+                   affects=[task.subjects[0].entity_id], evidence=["source:model"], expected_revision=0)
+    store.resolve("owner", discovery_id="model", request_id="resolve-model", author=task.author,
+                  disposition="rejected", source_evidence=["source:disposition"], expected_revision=1)
+    journal = store.journal.stream_directory("task:owner")
+    path = (migration / "recovery/tasks/owner.json" if kind == "task" else
+            journal if kind == "journal" else journal / "00000002.json")
+    target = migration / "build/decision-target"
+    path.rename(target)
+    path.symlink_to(target, target_is_directory=kind == "journal")
+    payload = request(migration)
+    monkeypatch.setattr(native, "check_build", lambda *_: pytest.fail("built with unreviewed target bytes"))
+    with pytest.raises(ValueError, match="canonical regular task decision files"):
         measure(migration, payload)
 
 

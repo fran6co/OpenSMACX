@@ -88,6 +88,15 @@ def measure_migration(root: Path, task_name: str, image: Path, request: dict, *,
         raise ValueError("integration coordinator must be independent of worker and reviewer")
     if request["review"]["decision"] != "approve" or request["review"]["snapshot"] != request["snapshot"]:
         raise ValueError("migration requires the current independent approval")
+    # The driver normally stops for discoveries before requesting admission,
+    # but this verifier is also a public standalone boundary. Generic approval
+    # (including permission for a matching regression) cannot resolve a finding.
+    # Only inspect pending decisions here; source mapping completeness is checked
+    # separately by the native mapping/restoration prerequisites below.
+    pending = store.status(task_name, scope)["pending_discoveries"]
+    if pending:
+        raise ValueError("migration requires resolution of pending discoveries: "
+                         + ", ".join(item["discovery_id"] for item in pending))
     inventory = task_obligations(root, task_name)
     protected = {}
     extend_inventory(protected, {"obligations": request["protected"]}, scope)
@@ -104,6 +113,14 @@ def measure_migration(root: Path, task_name: str, image: Path, request: dict, *,
     _validate_policy(policy)
     def snapshot():
         state = working_state(root)
+        journal = store.journal.stream_directory("task:" + task_name)
+        paths = [root / "recovery/tasks" / (task_name + ".json"), *journal.glob("*.json")]
+        if (journal.resolve() != journal or journal.exists() and not journal.is_dir()
+                or any(path.resolve() != path or not path.is_file() for path in paths)):
+            raise ValueError("migration requires canonical regular task decision files")
+        decision_inputs = {path.relative_to(root).as_posix() for path in paths}
+        if any(state["files"].get(name) is None for name in decision_inputs):
+            raise ValueError("migration task decisions must participate in the review snapshot; unignore them and obtain fresh review")
         if ReviewStore(root, task_name).snapshot(state, request["review_policy"]) != request["snapshot"]:
             raise ValueError("migration inputs changed from the reviewed source snapshot")
         with image.open("rb") as stream:

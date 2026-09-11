@@ -109,6 +109,144 @@ def test_native_acceptance_retains_one_fresh_build_for_both_proofs(acceptance, p
     assert len(list((acceptance / "build/products").iterdir())) == 1
 
 
+def discover(root, name="owner"):
+    store = TaskStore(root)
+    if name != "owner":
+        store.create(replace(store.read("owner"), task_id=name))
+    task = store.read(name)
+    return store.discover(name, request_id="unresolved-finding", author="worker",
+                          hypothesis="Unresolved recovery evidence", affects=[task.subjects[0].entity_id],
+                          evidence=["Controlled finding; review alone does not resolve it"],
+                          expected_revision=len(store.decisions(name)))
+
+
+@pytest.mark.parametrize("name", ["owner", "other-task"])
+@pytest.mark.parametrize("entry", ["native", "cli"])
+def test_direct_full_acceptance_cannot_bypass_any_tasks_pending_discovery(
+        acceptance, proofs, monkeypatch, capsys, name, entry):
+    discover(acceptance, name)
+    payload = request(acceptance)  # Generic approval includes the current finding.
+    before = working_state(acceptance)
+    decisions = TaskStore(acceptance).decisions(name)
+    def no_gate(*args, **kwargs):
+        pytest.fail("unresolved discoveries must refuse before the gate or proof commands")
+    monkeypatch.setattr(native, "check_project", no_gate)
+    if entry == "native":
+        with pytest.raises(ValueError, match="unresolved discoveries.*" + name):
+            measure(acceptance, payload)
+    else:
+        monkeypatch.setattr("sys.stdin", io.StringIO(json.dumps(payload)))
+        assert main(["tasks", "check-acceptance", "owner", "--root", str(acceptance),
+                     "--image", "original.exe"]) == 3
+        assert "unresolved discoveries" in capsys.readouterr().err
+    assert not proofs
+    assert working_state(acceptance) == before
+    assert TaskStore(acceptance).decisions(name) == decisions
+
+
+@pytest.mark.parametrize("name", ["owner", "other-task"])
+@pytest.mark.parametrize("disposition", ["incorporated", "rejected"])
+def test_explicitly_resolved_findings_do_not_block_full_acceptance(acceptance, proofs, name, disposition):
+    finding = discover(acceptance, name)
+    store = TaskStore(acceptance)
+    store.resolve(name, discovery_id=finding["discovery_id"], request_id="resolve-finding",
+                  author=store.read(name).author, disposition=disposition,
+                  source_evidence=["Controlled explicit resolution; all acceptance checks still run"],
+                  expected_revision=len(store.decisions(name)))
+    decisions = store.decisions(name)
+    assert measure(acceptance)["result"] == "pass"
+    assert len(proofs) == 2
+    assert store.decisions(name) == decisions
+
+
+def test_resolving_another_tasks_finding_requires_a_new_full_review(acceptance, proofs):
+    finding = discover(acceptance, "other-task")
+    payload = request(acceptance)
+    store = TaskStore(acceptance)
+    store.resolve("other-task", discovery_id=finding["discovery_id"], request_id="resolve-finding",
+                  author=store.read("other-task").author, disposition="rejected",
+                  source_evidence=["Controlled explicit rejection after the previous review"],
+                  expected_revision=len(store.decisions("other-task")))
+    with pytest.raises(ValueError, match="reviewed source snapshot"):
+        measure(acceptance, payload)
+    assert not proofs
+    assert measure(acceptance)["result"] == "pass"
+
+
+@pytest.mark.parametrize("ignored", [False, True])
+def test_unrelated_discovery_during_proof_invalidates_full_acceptance(acceptance, proofs, monkeypatch, ignored):
+    store = TaskStore(acceptance)
+    store.create(replace(store.read("owner"), task_id="other-task"))
+    if ignored:
+        path = acceptance / ".gitignore"
+        path.write_text(path.read_text() + "recovery/history/\n")
+    original = native.invoke
+    def changed(*args):
+        result = original(*args)
+        before = working_state(acceptance)
+        discover(acceptance, "other-task")
+        if ignored:
+            assert working_state(acceptance) == before  # Explicit journal freshness covers this gap.
+        return result
+    monkeypatch.setattr(native, "invoke", changed)
+    with pytest.raises(ValueError, match="task changed|must participate in review snapshot"):
+        measure(acceptance)
+    assert len(proofs) == 1
+    assert store.status("other-task", [store.read("other-task").subjects[0].entity_id])["pending_discoveries"]
+
+
+@pytest.mark.parametrize("name", ["owner", "other-task"])
+def test_ignored_resolved_findings_cannot_bypass_review_before_invocation(acceptance, proofs, monkeypatch, name):
+    store = TaskStore(acceptance)
+    if name != "owner":
+        store.create(replace(store.read("owner"), task_id=name))
+    path = acceptance / ".gitignore"
+    path.write_text(path.read_text() + "recovery/history/\n")
+    payload = request(acceptance)
+    before = working_state(acceptance)
+    finding = discover(acceptance, name)
+    store.resolve(name, discovery_id=finding["discovery_id"], request_id="hidden-resolution",
+                  author=store.read(name).author, disposition="rejected",
+                  source_evidence=["Ignored resolution is absent from the independent review snapshot"],
+                  expected_revision=len(store.decisions(name)))
+    assert working_state(acceptance) == before
+    def no_gate(*args, **kwargs):
+        pytest.fail("unreviewed decisions must refuse before the gate")
+    monkeypatch.setattr(native, "check_project", no_gate)
+    with pytest.raises(ValueError, match="task decisions must participate in review snapshot"):
+        measure(acceptance, payload)
+    assert not proofs
+
+
+def test_ignored_task_definition_cannot_bypass_full_review(acceptance, proofs, monkeypatch):
+    path = acceptance / ".gitignore"
+    path.write_text(path.read_text() + "recovery/tasks/other-task.json\n")
+    payload = request(acceptance)
+    before = working_state(acceptance)
+    store = TaskStore(acceptance)
+    store.create(replace(store.read("owner"), task_id="other-task"))
+    assert working_state(acceptance) == before
+    def no_gate(*args, **kwargs):
+        pytest.fail("ignored task decisions must refuse before the gate")
+    monkeypatch.setattr(native, "check_project", no_gate)
+    with pytest.raises(ValueError, match="task decisions must participate in review snapshot"):
+        measure(acceptance, payload)
+    assert not proofs
+
+
+def test_malformed_unrelated_task_journal_refuses_before_full_gate(acceptance, proofs, monkeypatch):
+    discover(acceptance, "other-task")
+    stream = TaskStore(acceptance).journal.stream_directory("task:other-task")
+    (stream / "00000001.json").write_text("{}")
+    payload = request(acceptance)
+    def no_gate(*args, **kwargs):
+        pytest.fail("invalid task journals must refuse before the gate")
+    monkeypatch.setattr(native, "check_project", no_gate)
+    with pytest.raises(ValueError, match="journal schema"):
+        measure(acceptance, payload)
+    assert not proofs
+
+
 @pytest.mark.parametrize("damage", ["source", "untracked", "build-policy", "review-policy"])
 def test_native_acceptance_refuses_source_changed_after_review_before_entry(acceptance, proofs, monkeypatch, damage):
     payload = request(acceptance)

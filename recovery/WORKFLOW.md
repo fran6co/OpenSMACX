@@ -68,8 +68,10 @@ driver verification. Dependency/conflict/unassigned groups remain analysis work.
 See the package README for the exact protocol, scope limits and failure behavior.
 The bounded policy in `recovery/planner.json` enables live ownership planning;
 its external reservation protects the retained control recovery. Its local compiler-backed
-control uses deterministic reasoning agents; live planning and executable-only
-binding discovery remain unverified. Worktree setup and integration are coordinator
+control uses deterministic reasoning agents. A live two-worker campaign has now
+exercised planning, isolated parallel provider/compiler execution and central seed
+binding; both candidates remain unaccepted pending discoveries and verification.
+Executable-only binding discovery remains unverified. Worktree setup and integration are coordinator
 responsibilities through native commands, not implicit effects of `start`.
 
 Before autonomous scheduling, park any retained non-campaign recovery checkout
@@ -130,7 +132,9 @@ worktrees. The batch schema and refusal rules are in the package README. Supply
 the shared resource-pool configuration once; each native child driver leases its
 own slot. Per-job worker/reviewer profiles can select smaller reasoning providers
 without changing the framework. No live fleet size or model choice has been
-validated for this project by the synthetic dispatcher controls.
+validated for this project by the synthetic dispatcher controls. The first live
+campaign exercised two simultaneous workers with distinct compiler leases; that
+demonstrates execution, not accepted recovery or a measured higher fleet capacity.
 
 Parallel workers cannot expand their own scopes. Preserve their discoveries and
 source work, finish the bounded batch, then replan centrally or prepare and verify
@@ -405,6 +409,12 @@ as out of scope. Inspect `tasks status`, then use `tasks expand` and `tasks reso
 with their revision-checked decision arguments. Incorporation needs source
 evidence; rejection needs an explanation. Valid append-only decisions can resume
 without a Git checkpoint; committed history cannot be rewritten or removed.
+Native checkpoint verification refuses unresolved findings on the task even when
+called directly with an approving review. Resolve them with evidence, then obtain
+a fresh review; matching-regression permission is not a discovery waiver.
+Full-project acceptance also refuses pending findings in every other project task
+journal. Separate unfinished tasks need not block per-change acceptance, but a
+dependency found by this task cannot be hidden in a different task to admit it.
 The installed driver also supports an explicit `--coordinator` delegation file:
 a read-only decision agent proposes bounded expansion/incorporation/rejection,
 and the package journals valid decisions before refreshing checks in the same run.

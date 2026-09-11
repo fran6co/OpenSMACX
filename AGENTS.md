@@ -155,7 +155,9 @@ game acceptance. `campaign --resume <run-directory>` continues preserved assignm
 and scoped WIP from current source/Git state. `integrate publish --resume` freshly
 verifies an already transferred candidate with its original preservation base.
 Live leases, quarantine and partial Git/index operations still refuse. Moved pending
-targets, arbitrary conflict repair and an OpenSMACX live campaign remain unfinished.
+targets, arbitrary conflict repair and live end-to-end accepted OpenSMACX recovery
+remain unfinished. A two-worker live campaign exercised parallel recovery and
+central seed binding but stopped with preserved, unaccepted discoveries.
 
 - Prefer real bases, members, globals, virtual methods and lifecycle code over
   vtable arrays, fixed executable addresses, raw self-offset access or stand-ins.
