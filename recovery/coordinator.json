@@ -2,9 +2,9 @@
   "schema_version": 1,
   "author": "framework-coordinator",
   "command": {"argv": ["uv", "run", "recover", "agent", "coordinator"], "timeout": 3600},
-  "subjects": [],
-  "editable_files": [],
+  "subjects": ["entity-b5c6cadbb5dbe13337f0374e3de51575dfeea545f2e7c8c56828fa8b16ddd2ec"],
+  "editable_files": ["src/lock.cpp"],
   "seed_bindings": {"image": "{env:OPENSMACX_IMAGE}"},
-  "evidence": ["User-authorized autonomous ownership recovery: coordinate discoveries and bind already-authorized seed identities to worker-written bodies inside existing editable product files, retaining seed spans/history. This policy grants no scope expansion, new original identities, baseline change, source acceptance or Git publication."],
+  "evidence": ["User-authorized autonomous ownership recovery: coordinate discoveries and bind already-authorized seed identities to worker-written bodies inside existing editable product files, retaining seed spans/history.", "The preserved PlayerLock discovery worker-71aeaa1fab504624bf614c3ddf0e2a47 identifies original Lock::lock at 0x00590300 with a state-clear/broadcast ordering discrepancy. Permit an evidence-backed repair expansion to that existing unowned identity and src/lock.cpp only. NetDaemon remains read-only affected context; its existing task ownership and the complete pending discovery remain intact. This grants no Heap access, other task takeover, new original identities, baseline change, source acceptance or Git publication."],
   "max_decisions": 8
 }

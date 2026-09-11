@@ -151,7 +151,10 @@ resume a dead supervisor or integrate changes automatically.
 
 For an individual `run`, `--coordinator recovery/coordinator.json` enables bounded
 read-only discovery coordination for tasks authored by `framework-coordinator`.
-Its empty expansion lists grant no additional scope. The coordinator may request
+Its explicit expansion grant currently covers only the discovered `Lock::lock`
+repair in `src/lock.cpp`; it grants no Heap or NetDaemon ownership. A preserved
+campaign must receive the matching run-bound coordinator reauthorization before
+using a changed delegation. The coordinator may request
 `investigate` when existing authorized source still needs repair: the finding
 remains pending, a worker gets one bounded attempt, then coordination revisits the
 actual source. All pending findings need individual authorization. No acceptance
