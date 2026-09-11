@@ -20,6 +20,42 @@ def test_tool_preserves_status_and_both_diagnostic_streams(code):
     assert result.stderr == "error\ufffd\n"
 
 
+@pytest.mark.parametrize("binary", [False, True])
+@pytest.mark.parametrize("number", [signal.SIGTERM, signal.SIGSYS])
+@pytest.mark.parametrize("ending", ["", "\n"])
+def test_signal_failure_retains_status_and_explains_unavailable_execution(binary, number, ending, monkeypatch):
+    calls = []
+
+    def terminated(command, **kwargs):
+        calls.append(command)
+        kwargs["stdout"].write(b"preprocessed bytes\r\n" if binary else "compiler output\n")
+        errors = "existing diagnostic" + ending
+        kwargs["stderr"].write(errors.encode() if binary else errors)
+        return subprocess.CompletedProcess(command, -number)
+
+    monkeypatch.setattr(wine.subprocess, "run", terminated)
+    result = wine.run_tool(["wine32", "CL.EXE"], binary=binary)
+    assert result.returncode == -number and calls == [["wine32", "CL.EXE"]]
+    assert result.stdout == (b"preprocessed bytes\r\n" if binary else "compiler output\n")
+    errors = result.stderr.decode() if binary else result.stderr
+    assert errors.startswith("existing diagnostic\nWine tool terminated")
+    assert signal.Signals(number).name in errors
+    assert ("sandbox/execution permissions" in errors) == (number == signal.SIGSYS)
+
+
+def test_empty_signal_diagnostic_is_not_silent_and_never_retries(monkeypatch):
+    calls = []
+
+    def terminated(command, **kwargs):
+        calls.append(command)
+        return subprocess.CompletedProcess(command, -signal.SIGSYS)
+
+    monkeypatch.setattr(wine.subprocess, "run", terminated)
+    result = wine.run_tool(["wine32", "CL.EXE"])
+    assert result.returncode == -signal.SIGSYS and len(calls) == 1
+    assert result.stdout == "" and result.stderr.startswith("Wine tool terminated by signal SIGSYS")
+
+
 @pytest.mark.skipif(os.name != "posix", reason="models inherited Wine descriptors using fork")
 def test_tool_returns_while_background_output_owner_is_alive(tmp_path, monkeypatch):
     pid_file = tmp_path / "background.pid"

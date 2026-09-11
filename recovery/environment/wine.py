@@ -21,6 +21,7 @@ from __future__ import annotations
 import os
 import json
 import re
+import signal
 import subprocess
 import sys
 import tempfile
@@ -50,7 +51,26 @@ def run_tool(command: list, *, cwd=None, binary=False, explicit_compiler=False) 
                                   **({"cwd": cwd} if cwd is not None else {}))
         stdout.seek(0)
         stderr.seek(0)
-        return subprocess.CompletedProcess(command, finished.returncode, stdout.read(), stderr.read())
+        output, errors = stdout.read(), stderr.read()
+        if finished.returncode < 0:
+            number = -finished.returncode
+            try:
+                name = signal.Signals(number).name
+            except ValueError:
+                name = str(number)
+            diagnostic = f"Wine tool terminated by signal {name} ({number}); tool execution failed."
+            if number == getattr(signal, "SIGSYS", None):
+                diagnostic += (
+                    " Check sandbox/execution permissions using the approved diagnostic route;"
+                    " do not change C++ or bypass a denied permission."
+                )
+            # Preserve preprocessing bytes and the actual return code. Otherwise
+            # SIGSYS can surface only as shell exit 225 with empty diagnostics,
+            # indistinguishable to an agent from a broken C++ spelling or recipe.
+            newline = b"\n" if binary else "\n"
+            suffix = ("\n" if errors and not errors.endswith(newline) else "") + diagnostic + "\n"
+            errors += suffix.encode() if binary else suffix
+        return subprocess.CompletedProcess(command, finished.returncode, output, errors)
 
 
 def windows_path(text: str) -> str:
