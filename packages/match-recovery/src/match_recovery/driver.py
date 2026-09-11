@@ -516,6 +516,8 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                 # inputs, so validate it again after all prechecks, before edits.
                 from .investigation_round import validate
                 validate(root, task_name, investigation_configuration)
+            from . import worker_bindings
+            source_before = worker_bindings.capture(root)
             try:
                 code, response = execute(worker_command, root, task_name,
                                          {"task": task.to_dict(), "editable_files": sorted(editable),
@@ -530,8 +532,11 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                                                            "Acceptance feedback belongs to its recorded snapshot; use it to investigate, not as current proof after edits.",
                                                            "Unknown acceptance findings require evidence, not speculative matching edits. Repair only authorized source; report missing capabilities or authority as discoveries without changing proof policy.",
                                                            "Checkpoint feedback is historical diagnostic evidence, not admission. Repair only scoped source; preserve justified structural work and report outside-scope effects or missing verification capabilities as discoveries.",
+                                                           "Preserve existing original source mappings, including unclaimed product bindings and their rationale. A surviving seed does not replace a product mapping. Read current product source before proposing seed binding; do not repeat an already completed binding step.",
+                                                           "Intact mappings may move between authorized source hosts while preserving their source/seed role and explicit header-body references. Body and current-symbol changes remain subject to fresh verification; changing original identity, provenance or header-binding interpretation needs coordinator handling.",
                                                            "Do not erase source mappings or restoration obligations."]})
             finally:
+                worker_bindings.validate(root, source_before, editable)
                 changed = changes(before, working_state(root))
                 if changed - editable:
                     raise ValueError("worker exceeded editing scope; preserve work and inspect manually")

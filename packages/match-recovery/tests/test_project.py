@@ -233,6 +233,13 @@ def test_external_project_commands_drive_recovery_without_python_integration(tmp
     root = tmp_path / "standalone"
     root.mkdir()
     initialize(root, "independent-target", sys.executable)
+    # This integration supplies its own source/checker protocol, not the native
+    # source configuration scaffold emitted by init. Do not silently accept an
+    # unusable declared native provider (its example IMAGE_PIN does not exist).
+    project_file = root / "recovery/project.json"
+    project_configuration = json.loads(project_file.read_text())
+    project_configuration.pop("source")
+    project_file.write_text(json.dumps(project_configuration))
     (root / "recovery/adapter.py").write_text(LOCAL_ADAPTER)
     (root / "code").mkdir()
     (root / "code/owner.cc").write_text("unfinished\n")

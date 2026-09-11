@@ -238,6 +238,18 @@ Run `uv run recover tasks context <task>` and `uv run recover tasks obligations
 <task>`. Give workers the task identity, authorized files, current context and
 outstanding discoveries—not just addresses or a copied global brief.
 
+Existing product mappings remain load-bearing even without a byte claim. Native
+worker boundaries snapshot their original identities, spans, provenance, roles
+and protected claims, then check continuity before consuming a worker response.
+An intact mapping can move between authorized source files; its seed cannot
+substitute for it. Body/member/current-symbol edits remain possible. Dropped
+bindings, rationale or explicit header-body references refuse continuation and
+retain the C++ work, including after interruption. The refusal names a private
+ignored pre-worker source backup when safe storage is available; inspect that
+evidence before repairing metadata, never restore the whole file over good C++.
+Coordinator publication becomes
+the next worker's baseline; this guard is not a new ledger or recovery acceptance.
+
 Class groups and layout observations follow current source-mapped member symbols
 when available, including deleting destructors and fixed/vtordisp adjustors. A
 generated entry belongs with its owning class, not a catalogue scaffold class.

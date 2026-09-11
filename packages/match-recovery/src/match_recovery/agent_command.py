@@ -161,6 +161,8 @@ def run_agent(root: Path, role: str, configuration: Path, request: dict) -> tupl
         instructions.append({"path": name, "text": policy[path].decode("utf-8")})
     task, decisions, editable = _request(root, role, request)
     before = working_state(root)
+    from . import worker_bindings
+    source_before = worker_bindings.capture(root) if role == "worker" else None
     # None of these derived inputs is a versioned ledger or a reusable verdict.
     parent = artifact_parent(root, settings["artifacts"])
     def failure(kind, message, *, output=None, errors=None):
@@ -199,7 +201,10 @@ def run_agent(root: Path, role: str, configuration: Path, request: dict) -> tupl
                       + runtime_instructions()
                       + "Work from the current source and original evidence, not similarity alone.\n"
                       "Do not commit, change task/verification policy, or start other agents.\n"
-                      + ("Edit only the authorized files. Preserve structural discoveries and historical obligations.\n"
+                      + ("Edit only the authorized files. Preserve structural discoveries and historical obligations. "
+                         "Preserve existing original mappings and binding rationale even without a byte claim; a seed "
+                         "cannot replace its product binding. Read current product source before requesting seed binding. "
+                         "Intact mappings may move within authorized source files, not into a different source/seed role.\n"
                          if role == "worker" else
                          "Remain read-only. Propose a discovery decision within the supplied delegation; never accept code.\n"
                          if role == "coordinator" else
@@ -268,6 +273,8 @@ def run_agent(root: Path, role: str, configuration: Path, request: dict) -> tupl
             except (OSError, ValueError) as error:
                 return failure("invalid_response", str(error), output=completed.stdout, errors=completed.stderr)
     finally:
+        if role == "worker":
+            worker_bindings.validate(root, source_before, editable)
         changed = changes(before, working_state(root))
         if changed - (editable if role == "worker" else frozenset()):
             raise ValueError("agent exceeded its editing scope; preserve work and inspect manually")

@@ -2975,6 +2975,30 @@ No preparation, extra compiler allocation, automatic resolution or acceptance is
 performed by this refresh. Direct API callers may omit diagnostic configuration;
 their requests make no claim to contain fresh compiler observations.
 
+For projects declaring native `source` configuration, both the driver and native
+agent bridge enforce original-binding continuity around every worker invocation,
+including failed or interrupted invocations. Ephemeral source snapshots retain
+unclaimed product mappings as well as claims: original identity/spans/catalogue
+symbol, source-versus-seed role, mapping mode/classification, rationale and explicit
+header-body edges. Candidate multiplicity matters; another seed or duplicate
+cannot stand in for a deleted candidate. Intact mappings may move between
+authorized source hosts. Body text, line numbers, derived implementation state
+and emitted-symbol hints are not pinned, so structural C++ recovery remains possible.
+Configured-source changes outside scope are refused even when Git ignores them.
+Violations preserve WIP and stop before response discoveries are consumed. The
+refusal saves pre-worker source in private ignored `build/recovery/worker-source-failures/`
+storage when safely available, retaining uncommitted mapping rationale for manual
+repair. Failure to save a backup still refuses; never write into unsafe or
+committable storage. No automatic rebinding or source rollback occurs. These
+backups are historical recovery aids, not reusable checks or authority.
+Native coordinator binding precedes
+the next snapshot. This is metadata continuity, not proof of correct attachment,
+matching or structure. Command-only integrations without native source
+configuration retain their own metadata/checker contracts.
+If replacing the initializer's native source scaffold with an external-only
+protocol, remove the unused `source` declaration explicitly; a missing pin or
+malformed declared source provider is an error, not an implicit opt-out.
+
 `investigate` requests one bounded worker attempt for a pending discovery entirely
 inside current scope. It publishes no resolution or acceptance: its snapshot-bound
 authorization and evidence are transient worker context. Every pending discovery
