@@ -5,6 +5,43 @@ structure-led matching decompilation. It does not register projects, import a
 project's Python code or bundle a game's adapters. Project integration is local
 configuration plus commands exchanging JSON. Those commands can use any language.
 
+## Explicit installed framework runtime
+
+`recover runtime inspect --python /absolute/venv/bin/python` describes an existing
+noneditable installation without installing or updating anything. Its JSON pins
+the interpreter, package, full site-packages contents and virtual-environment
+configuration. Use an isolated venv without system site packages or bytecode
+caches. Execute its interpreter with `-I -B`; source-tree/editable launchers cannot
+activate a binding to a different installation, even with identical package code.
+
+A coordinator-owned binding file has this shape (insert the complete returned
+descriptor as `runtime`):
+
+```json
+{
+  "schema_version": 1,
+  "runtime": {},
+  "launchers": [["uv", "run", "recover"]]
+}
+```
+
+Invoke the selected interpreter as `-I -B -m match_recovery --runtime
+/absolute/binding.json <subcommand>`. The global option precedes the subcommand.
+Only exact declared launcher prefixes are redirected; enumerate other project
+spellings explicitly. Compiler/provider commands otherwise remain unchanged.
+Native child drivers carry the binding explicitly, and measurement executors
+propagate it to their own workers. Configured command boundaries and verification
+fingerprints recheck its identity; runtime changes refuse continued use rather
+than replaying earlier evidence. Interrupted commands retain cleanup/quarantine
+behavior. Installation is not a hermetic OS/Python proof: content-pinned regular
+files may be hardlinked by the package installer, but symlinks within the installed
+package/environment and aliased configuration paths are refused.
+
+This mechanism does not authorize changing frozen campaign inputs. `campaign`
+currently refuses an active runtime binding pending separate run-bound transition
+authorization. Existing project profiles, compiler hooks, task baselines and
+original campaign manifests must not be edited to work around that restriction.
+
 ## Direct recovery diagnostics
 
 `recover inventory` reports source and seed populations, body-presence states,

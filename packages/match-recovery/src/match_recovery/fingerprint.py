@@ -25,6 +25,7 @@ def _content_digest(stream, buffer: bytearray) -> str:
 
 
 def input_snapshot(root: Path, files: Iterable[str], configuration: dict[str, Any]) -> dict[str, Any]:
+    from .framework_runtime import fingerprint
     root = os.fspath(root.resolve())
     inputs = {}
     buffer = bytearray(2**18)
@@ -47,6 +48,9 @@ def input_snapshot(root: Path, files: Iterable[str], configuration: dict[str, An
             inputs[name] = None
     snapshot = {"schema_version": 1, "inputs": inputs,
                 "configuration": json.loads(canonical(configuration))}
+    runtime = fingerprint()
+    if runtime is not None:
+        snapshot["framework_runtime"] = runtime
     # Validate that configuration is serializable before a caller starts work.
     digest(snapshot)
     return snapshot

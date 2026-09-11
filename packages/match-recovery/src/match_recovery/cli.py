@@ -18,7 +18,11 @@ from .tasks import Task, TaskStore
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(prog="recover", description="Structure-led matching recovery")
     result.add_argument("--version", action="version", version=__version__)
+    result.add_argument("--runtime", type=Path, help="Explicit pinned installed framework binding; place before the subcommand")
     commands = result.add_subparsers(dest="command", required=True)
+    runtime = commands.add_parser("runtime", help="Inspect an installed framework runtime without changing project files")
+    runtime.add_argument("action", choices=("inspect",))
+    runtime.add_argument("--python", type=Path, required=True)
     debug = commands.add_parser("debug-sidecar", help="Generate ELF32/DWARF debugger hints from an i386 PE, MSVC map and COFF objects")
     for option in ("exe", "map", "out", "build-root", "comp-dir"):
         debug.add_argument("--" + option, type=Path, required=True)
@@ -112,6 +116,17 @@ def parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     args = parser().parse_args(argv)
     try:
+        from contextlib import nullcontext
+        from .framework_runtime import binding
+        with binding(args.runtime) if args.runtime else nullcontext():
+            return _main(args)
+    except (OSError, ValueError) as error:
+        print(f"recover: {error}", file=sys.stderr)
+        return 3
+
+
+def _main(args):
+    try:
         if args.command != "worktree" and getattr(args, "resources", None) is not None:
             from .resources import resource_environment
             roots = [args.root.resolve()]
@@ -130,7 +145,10 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 def _dispatch(args) -> int:
     try:
-        if args.command == "debug-sidecar":
+        if args.command == "runtime":
+            from .framework_runtime import inspect
+            output = inspect(args.python)
+        elif args.command == "debug-sidecar":
             from .debug_sidecar import build
             mappings = []
             for value in args.path_map:

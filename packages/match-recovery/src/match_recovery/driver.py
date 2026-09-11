@@ -62,6 +62,7 @@ def invoke(command: Command, root: Path, task: str, payload: dict) -> tuple[int,
 
 
 def working_state(root: Path) -> dict:
+    from .framework_runtime import fingerprint
     def git(*args):
         return subprocess.run(["git", *args], cwd=root, capture_output=True, check=True).stdout
     paths = git("ls-files", "-z", "--cached", "--others", "--exclude-standard").split(b"\0")
@@ -77,10 +78,14 @@ def working_state(root: Path) -> dict:
             raise ValueError(f"unsupported worktree input: {name}")
         else:
             files[name] = None
-    return {"head": git("rev-parse", "HEAD"), "index": git("ls-files", "--stage", "-z"), "files": files}
+    runtime = fingerprint()
+    return {"head": git("rev-parse", "HEAD"), "index": git("ls-files", "--stage", "-z"), "files": files,
+            **({"framework_runtime": runtime} if runtime is not None else {})}
 
 
 def changes(before: dict, after: dict) -> set[str]:
+    if before.get("framework_runtime") != after.get("framework_runtime"):
+        raise ValueError("framework runtime changed during execution")
     if before["head"] != after["head"] or before["index"] != after["index"]:
         raise ValueError("adapter changed Git HEAD or index; preserve work and inspect manually")
     return {name for name in before["files"].keys() | after["files"].keys()

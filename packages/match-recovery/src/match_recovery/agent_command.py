@@ -191,8 +191,10 @@ def run_agent(root: Path, role: str, configuration: Path, request: dict) -> tupl
             references = []
             prompt_request = (compact_worker_request(request, request_path, request_hash, references)
                               if route_evidence else request)
+            from .framework_runtime import instructions as runtime_instructions
             prompt = ("You are the recovery " + role + ". Return only the required final JSON response.\n"
-                      "Work from the current source and original evidence, not similarity alone.\n"
+                      + runtime_instructions()
+                      + "Work from the current source and original evidence, not similarity alone.\n"
                       "Do not commit, change task/verification policy, or start other agents.\n"
                       + ("Edit only the authorized files. Preserve structural discoveries and historical obligations.\n"
                          if role == "worker" else

@@ -347,6 +347,9 @@ def _pending_runs(root, parent):
 
 def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, resume=None,
              coordinator_authorization=None):
+    from .framework_runtime import fingerprint
+    if fingerprint() is not None:
+        raise ValueError("campaign runtime changes require separate run-bound authorization; not yet supported")
     root = Path(root).absolute()
     if root.resolve() != root or INHERITED in os.environ:
         raise ValueError("campaign needs a canonical coordinator and separately leased worker resources")

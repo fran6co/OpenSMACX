@@ -129,7 +129,9 @@ def record(root: Path, targets, *, image: Path, in_file: str | None = None,
         if jobs == 1 or len(work) == 1:
             measurements.extend(_unit(job) for job in work)
         else:
-            with ProcessPoolExecutor(max_workers=min(jobs, len(work))) as pool:
+            from .framework_runtime import export_binding, initialize_worker
+            with ProcessPoolExecutor(max_workers=min(jobs, len(work)), initializer=initialize_worker,
+                                     initargs=(export_binding(),)) as pool:
                 measurements.extend(pool.map(_unit, work))
         return [row for unit in measurements for row in unit.results]
 

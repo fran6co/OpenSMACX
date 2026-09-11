@@ -52,6 +52,14 @@ def _signal(process, signum):
 
 def run_bounded(argv: list[str], *, cwd: Path, timeout: float,
                 input: bytes | None = None) -> subprocess.CompletedProcess:
+    """Bound execution/cleanup, honoring only an explicit framework binding."""
+    from .framework_runtime import command
+    with command(argv) as selected:
+        return _run_bounded(selected, cwd=cwd, timeout=timeout, input=input)
+
+
+def _run_bounded(argv: list[str], *, cwd: Path, timeout: float,
+                 input: bytes | None = None) -> subprocess.CompletedProcess:
     """Capture bytes; preserve failure/timeout, with bounded process cleanup.
 
     POSIX commands own a process group. Timeout/interruption first requests
@@ -99,6 +107,7 @@ def run_parallel(jobs: list[dict], *, limit: int, directory: Path, progress=None
     timeout or interruption unwinds cooperative nested command groups; detached
     descendants still require external containment and quarantined resources.
     """
+    from .framework_runtime import fingerprint, resolve
     if os.name != "posix":
         raise ValueError("parallel command supervision currently requires POSIX process groups")
     if type(limit) is not int or not 1 <= limit <= 32 or not isinstance(jobs, list) or not jobs:
@@ -140,7 +149,8 @@ def run_parallel(jobs: list[dict], *, limit: int, directory: Path, progress=None
                     index = next_job
                     paths = [directory / (str(index) + suffix) for suffix in (".stdout", ".stderr")]
                     with paths[0].open("xb") as output, paths[1].open("xb") as errors:
-                        process = subprocess.Popen(jobs[index]["argv"], cwd=jobs[index]["cwd"],
+                        selected = resolve(jobs[index]["argv"])
+                        process = subprocess.Popen(selected, cwd=jobs[index]["cwd"],
                                                    stdin=subprocess.DEVNULL, stdout=output, stderr=errors,
                                                    start_new_session=True)
                     active[index] = (process, time.monotonic(), paths)
@@ -158,6 +168,7 @@ def run_parallel(jobs: list[dict], *, limit: int, directory: Path, progress=None
                         announce(index, "finished", returncode=process.returncode, timed_out=timed_out)
                 if active:
                     time.sleep(0.02)
+            fingerprint()
         except BaseException as error:
             # A containing runner has already started its own two-second grace
             # period. Leave time for our cleanup before it kills this supervisor.

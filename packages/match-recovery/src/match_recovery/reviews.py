@@ -136,7 +136,8 @@ class ReviewStore:
         # doesn't invalidate it. They are still guarded during command execution.
         directory = self.journal.stream_directory(self.stream).relative_to(self.root).as_posix() + "/"
         return digest({"files": {name: value for name, value in working["files"].items()
-                                  if not name.startswith(directory)}, "policy": policy})
+                                  if not name.startswith(directory)}, "policy": policy,
+                       **({"framework_runtime": working["framework_runtime"]} if "framework_runtime" in working else {})})
 
 
 def acceptance_outcome(code: int, report: dict) -> str:

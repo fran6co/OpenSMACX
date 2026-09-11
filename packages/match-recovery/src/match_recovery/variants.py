@@ -1,6 +1,7 @@
 """Task-scoped candidate decks: one map read, temporary compiles, no banking."""
 
 from concurrent.futures import ThreadPoolExecutor
+from contextvars import copy_context
 import hashlib
 from pathlib import Path
 from threading import Lock
@@ -429,7 +430,11 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
         trials = [compile_trial(item) for item in work]
     else:
         with ThreadPoolExecutor(max_workers=jobs) as pool:
-            trials = list(pool.map(compile_trial, work))
+            # ContextVars are not inherited by executor threads. Each task gets
+            # its own copied context: sharing one context across simultaneous
+            # trials would fail and could lose the explicit runtime binding.
+            futures = [pool.submit(copy_context().run, compile_trial, item) for item in work]
+            trials = [future.result() for future in futures]
     fresh()
     attempts += sum(row["support_compile_attempts"] for row in (*baselines, *trials))
     diagnostics = None

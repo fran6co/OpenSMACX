@@ -75,7 +75,9 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1):
     if jobs == 1 or len(work) < 2:
         units = [_unit(job) for job in work]
     else:
-        with ProcessPoolExecutor(max_workers=min(jobs, len(work))) as pool:
+        from .framework_runtime import export_binding, initialize_worker
+        with ProcessPoolExecutor(max_workers=min(jobs, len(work)), initializer=initialize_worker,
+                                 initargs=(export_binding(),)) as pool:
             units = list(pool.map(_unit, work))
     if inputs() != before:
         raise ValueError("source, original, history or compiler inputs changed during measurement")

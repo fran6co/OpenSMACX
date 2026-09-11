@@ -10,6 +10,12 @@ The active agent/coordinator contract is [WORKFLOW.md](WORKFLOW.md). Historical
 compiler observations are in [COMPILER_EVIDENCE.md](COMPILER_EVIDENCE.md); they do
 not override task scope, structural evidence or acceptance policy.
 
+The package supports an explicitly pinned installed framework for native commands
+through its global `--runtime` binding (see the package README). This does not
+upgrade project-local compiler scripts or authorize changing preserved campaign
+profiles. Campaign runtime transition authorization is still unfinished; live
+workers must not silently switch runtimes or reset their task baselines.
+
 `agents.json` explicitly selects GPT-5.6 Luna for bounded worker attempts and
 GPT-6 Astra for read-only discovery coordination and independent review, all with
 high reasoning effort. These are

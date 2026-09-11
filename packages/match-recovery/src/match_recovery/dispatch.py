@@ -8,7 +8,6 @@ Commands are trusted project inputs, not an adversarial-agent sandbox.
 
 import os
 from pathlib import Path, PurePosixPath
-import sys
 import tempfile
 
 from .components import VendorManifest, relative_path
@@ -166,8 +165,9 @@ def dispatch(root: Path, plan: dict, *, progress=None, _held_lease=None):
         logs.mkdir()
         commands = []
         for row, child, _ in jobs:
-            argv = [sys.executable, "-I", "-m", "match_recovery", "run", row["task"], "--root", str(child),
-                    "--iterations", str(row["iterations"]), "--resources", str(resource_path)]
+            from .framework_runtime import native_argv
+            argv = native_argv(["run", row["task"], "--root", str(child),
+                                "--iterations", str(row["iterations"]), "--resources", str(resource_path)])
             for key in ("config", "worker", "reviewer", "migration", "checkpoint"):
                 if key in row:
                     argv.extend(["--" + key, row[key]])

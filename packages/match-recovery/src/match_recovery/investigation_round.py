@@ -25,7 +25,8 @@ def epoch(root, name):
     state = working_state(root)
     return digest({"root": str(root.resolve()), "task": store.read(name).to_dict(),
                    "decisions": store.decisions(name), "source": source_snapshot(root),
-                   "head": state["head"].hex(), "index": state["index"].hex(), "files": state["files"]})
+                   "head": state["head"].hex(), "index": state["index"].hex(), "files": state["files"],
+                   **({"framework_runtime": state["framework_runtime"]} if "framework_runtime" in state else {})})
 
 
 def authorize(root, task_name, configuration, *, execute=None, _held_lease=None):
