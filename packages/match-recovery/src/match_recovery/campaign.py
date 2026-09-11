@@ -6,7 +6,7 @@ conflicting work is preserved, never reset to make a campaign continue.
 """
 
 import os
-from contextlib import ExitStack
+from contextlib import ExitStack, contextmanager
 from pathlib import Path
 import tempfile
 
@@ -271,7 +271,7 @@ def _authorize_runtime(root, directory, configuration, profiles, authorization, 
         return result
 
 
-def _routing_owners(root, profiles, assignments, scope_reservations, lease, peer_leases):
+def _routing_owners(root, profiles, assignments, scope_reservations, lease, peer_leases, *, retired=()):
     """All current assignments plus read-only older/parked reserved owners.
 
     Only actual held managed peer leases are transferable. Reserved owners
@@ -283,10 +283,10 @@ def _routing_owners(root, profiles, assignments, scope_reservations, lease, peer
         raise ValueError("discovery routing requires all original campaign assignments")
     from .routing_owners import RoutingOwners
     return RoutingOwners(root, assignments, reservations=scope_reservations,
-                         leases={root: lease, **peer_leases})
+                         leases={root: lease, **peer_leases}, retired=retired)
 
 
-def _routing_retention(routing, child, name):
+def _routing_retention(routing, child, name, *, include_unrouted=True):
     """Keep requested owners available; a help request does not accept either task."""
     snapshot = routing.snapshot(child, name)
     current = next(owner for owner in snapshot["owners"]
@@ -294,7 +294,7 @@ def _routing_retention(routing, child, name):
     subjects = set(current["subjects"])
     reason = "owner_request_pending" if snapshot["incoming"] else None
     for owner in snapshot["owners"]:
-        if reason or owner["availability"] != "managed" or owner["task"]["task_id"] == name:
+        if reason or not include_unrouted or owner["availability"] != "managed" or owner["task"]["task_id"] == name:
             continue
         # The native snapshot selected a compatible latest managed history;
         # stale replicas and unrelated pending findings cannot hold this owner.
@@ -308,7 +308,7 @@ def _routing_retention(routing, child, name):
 
 
 def _resume_round(root, plan, profiles, directory, number, revision, *, execute, fresh, announce, lease,
-                  assignments=None, scope_reservations=(), coordination_budgets=None):
+                  assignments=None, scope_reservations=(), coordination_budgets=None, retired_owners=()):
     """Plan stopped-worker investigations centrally, then dispatch disjoint work.
 
     Original assignments remain immutable. Grants expire on any source/decision
@@ -332,7 +332,8 @@ def _resume_round(root, plan, profiles, directory, number, revision, *, execute,
                 continue
             announce("authorize_investigation", batch=number, task=name)
             with peer_epoch(root, name, original_jobs) as peers_fresh, resource_environment(profiles["resources"], [child]):
-                routing = _routing_owners(root, profiles, assignments, scope_reservations, lease, peers_fresh.leases)
+                routing = _routing_owners(root, profiles, assignments, scope_reservations, lease, peers_fresh.leases,
+                                         retired=retired_owners)
                 def decide(*args, **kwargs):
                     fresh()
                     peers_fresh()
@@ -573,6 +574,29 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
             all_assignments = [{"task": job["task"], "root": job["root"], "branch": "refs/heads/" + branch}
                                for job, branch in zip(plan["jobs"], choice["branches"], strict=True)]
             scope_reservations = [{"root": row["path"], "tasks": row["tasks"]} for row in reserved.records]
+            def retired_owners():
+                return {row["task"] for row in all_assignments
+                        if retirement(root, directory, number, row["task"]) is not None}
+
+            @contextmanager
+            def owner_retention(child, name):
+                # Existing requests remain load-bearing even after permission
+                # to create new automatic routes is withdrawn. Hold requester
+                # leases through the caller's cleanup, not merely its decision.
+                from .routing_owners import RoutingOwners
+                with peer_epoch(root, name, all_assignments) as peers_fresh:
+                    fresh_policy()
+                    current = child if child.exists() else root
+                    with file_lock(current / "build/recovery/driver.lock", timeout=0,
+                                   held=lease if current == root else None) as child_lease:
+                        routing = RoutingOwners(root, all_assignments, scope_reservations,
+                                                {root: lease, **peers_fresh.leases, current: child_lease}, retired=retired_owners())
+                        reason = _routing_retention(routing, current, name,
+                                                    include_unrouted=bool(profiles.get("coordinator", {}).get("route_discoveries")))
+                    yield reason
+                    peers_fresh()
+                    fresh_policy()
+
             active_jobs = []
             for index, name in enumerate(selected):
                 announce("prepare", batch=number, task=name)
@@ -585,22 +609,26 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
                     reserved.check_scope(name, *TaskStore(path).scope(name))
                 retired = retirement(root, directory, number, name) if resuming else None
                 if retired is not None:
-                    state = _retained_attempt(root, path, branch, directory, expected_revision=retired["worker_revision"],
-                                              cleanup=configuration["publication"]["cleanup"])
-                    if state is not None:
-                        retained[path] = state
-                    choice_path = directory / f"batch-{number}-integration-{name}.json"
-                    if choice_path.exists():
-                        previous = _configuration(directory, choice_path.name)
-                        context = integration_decision(TaskStore(root).read(name), previous.get("context"))
-                        if previous != integration_choice(directory, number, name, context):
-                            raise ValueError("retired candidate destination changed")
-                        state = _retained_attempt(root, Path(previous["worktree"]), previous["branch"], directory,
-                                                  cleanup=configuration["publication"]["cleanup"])
+                    with owner_retention(path, name) as retention_reason:
+                        cleanup = configuration["publication"]["cleanup"] and not retention_reason
+                        state = _retained_attempt(root, path, branch, directory, expected_revision=retired["worker_revision"],
+                                                  cleanup=cleanup)
                         if state is not None:
-                            retained[Path(previous["worktree"])] = state
+                            retained[path] = state
+                        choice_path = directory / f"batch-{number}-integration-{name}.json"
+                        if choice_path.exists():
+                            previous = _configuration(directory, choice_path.name)
+                            context = integration_decision(TaskStore(root).read(name), previous.get("context"))
+                            if previous != integration_choice(directory, number, name, context):
+                                raise ValueError("retired candidate destination changed")
+                            state = _retained_attempt(root, Path(previous["worktree"]), previous["branch"], directory,
+                                                      cleanup=cleanup)
+                            if state is not None:
+                                retained[Path(previous["worktree"])] = state
                     batch.setdefault("retained_in_history", []).append({"task": name, "commit": retired["worker_revision"],
                                                                        "verification": "not_replayed"})
+                    if retention_reason:
+                        batch["pending"].append({"task": name, "worktree": str(path), "reason": retention_reason})
                     if retired["destination_revision"] == git(root, "rev-parse", "HEAD").decode().strip():
                         attempted[name] = source_key
                     continue
@@ -634,7 +662,7 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
                     execute=execute, fresh=fresh_policy, announce=announce, lease=lease,
                     assignments=all_assignments,
                     scope_reservations=scope_reservations,
-                    coordination_budgets=coordination_budgets)
+                    coordination_budgets=coordination_budgets, retired_owners=retired_owners())
                 batch["investigation_planning"] = decisions
                 if batch["dispatch"] is not None and batch["dispatch"]["coordinator_changed"]:
                     return finish("coordinator_changed")
@@ -658,7 +686,8 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
                 if ("coordinator" in profiles or resuming and outcome is None) and not incorporated and not choice_file.exists():
                     announce("coordinate", batch=number, task=name)
                     with peer_epoch(root, name, all_assignments) as peers_fresh, resource_environment(profiles["resources"], [child]):
-                        routing = _routing_owners(root, profiles, all_assignments, scope_reservations, lease, peers_fresh.leases)
+                        routing = _routing_owners(root, profiles, all_assignments, scope_reservations, lease, peers_fresh.leases,
+                                                 retired=retired_owners())
                         def coordinated_execute(*args, **kwargs):
                             fresh_policy()
                             peers_fresh()
@@ -685,18 +714,6 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
                        for item in store.decisions(name)):
                     batch["pending"].append({"task": name, "worktree": str(child), "reason": "routed_discovery_pending"})
                     continue  # A help request cannot retire or accept its originating task.
-                if profiles.get("coordinator", {}).get("route_discoveries"):
-                    with peer_epoch(root, name, all_assignments) as peers_fresh, file_lock(
-                            child / "build/recovery/driver.lock", timeout=0) as child_lease:
-                        fresh_policy()
-                        routing = _routing_owners(root, profiles, all_assignments, scope_reservations, lease,
-                                                 {**peers_fresh.leases, child: child_lease})
-                        reason = _routing_retention(routing, child, name)
-                        peers_fresh()
-                        fresh_policy()
-                    if reason:
-                        batch["pending"].append({"task": name, "worktree": str(child), "reason": reason})
-                        continue  # Preserve the handoff for a fresh bounded resume.
                 incoming = git(child, "rev-parse", "HEAD").decode().strip()
                 try:
                     preflight(child)
@@ -705,16 +722,20 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
                     batch["pending"].append({"task": name, "worktree": str(child), "reason": "uncommitted_worker_progress"})
                     continue
                 if incoming == revision:
-                    attempted[name] = source_key
-                    # No committed or uncommitted progress: defer this source
-                    # snapshot, without losing source work or declaring it done.
-                    batch["deferred"].append({"task": name, "worktree": str(child), "reason": "no_worker_checkpoint"})
-                    retire(directory, number, name, incoming, git(root, "rev-parse", "HEAD").decode().strip(), reason="no_checkpoint")
-                    if configuration["publication"]["cleanup"]:
-                        _remove_integrated(root, child, setup["branch"], directory)
-                        announce("cleaned", batch=number, task=name)
-                    else:
-                        retained[child] = worker_state
+                    with owner_retention(child, name) as retention_reason:
+                        if retention_reason:
+                            batch["pending"].append({"task": name, "worktree": str(child), "reason": retention_reason})
+                            continue  # Keep the unchanged owner available for its pending request.
+                        attempted[name] = source_key
+                        # No committed or uncommitted progress: defer this source
+                        # snapshot, without losing source work or declaring it done.
+                        batch["deferred"].append({"task": name, "worktree": str(child), "reason": "no_worker_checkpoint"})
+                        retire(directory, number, name, incoming, git(root, "rev-parse", "HEAD").decode().strip(), reason="no_checkpoint")
+                        if configuration["publication"]["cleanup"]:
+                            _remove_integrated(root, child, setup["branch"], directory)
+                            announce("cleaned", batch=number, task=name)
+                        else:
+                            retained[child] = worker_state
                     continue
                 context = {"author": configuration["author"], "source_revision": incoming,
                            "target_revision": git(root, "rev-parse", "HEAD").decode().strip(), "evidence": configuration["evidence"]}
@@ -763,13 +784,25 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
                 expected = working_state(root)  # Fresh native destination verification, never a worker receipt.
                 attempted[name] = _source_key(root)
                 retire(directory, number, name, incoming, git(root, "rev-parse", "HEAD").decode().strip(), reason="integrated")
-                if publication["cleanup"]:
-                    _remove_integrated(root, candidate_path, candidate["branch"], directory)
-                    _remove_integrated(root, child, setup["branch"], directory)
-                    announce("cleaned", batch=number, task=name)
-                else:
-                    retained[child] = worker_state
-                    retained[candidate_path] = _clean_checkout(candidate_path, git(candidate_path, "rev-parse", "HEAD").decode().strip())
+                with owner_retention(child, name) as retention_reason:
+                    if retention_reason:
+                        # An independently verified owner repair may land before its
+                        # caller's discovery is resolved. Keep both owner checkouts
+                        # as read-only evidence of the completed historical transfer.
+                        # Integration neither closes the request nor permits cleanup
+                        # or replaying this verdict as current acceptance.
+                        batch["pending"].append({"task": name, "worktree": str(child), "reason": retention_reason,
+                                                 "destination_verified": True})
+                        retained[child] = worker_state
+                        retained[candidate_path] = _clean_checkout(candidate_path, git(candidate_path, "rev-parse", "HEAD").decode().strip())
+                        continue
+                    if publication["cleanup"]:
+                        _remove_integrated(root, candidate_path, candidate["branch"], directory)
+                        _remove_integrated(root, child, setup["branch"], directory)
+                        announce("cleaned", batch=number, task=name)
+                    else:
+                        retained[child] = worker_state
+                        retained[candidate_path] = _clean_checkout(candidate_path, git(candidate_path, "rev-parse", "HEAD").decode().strip())
             if batch["pending"]:
                 return finish("replanning_required")
             fresh_policy()

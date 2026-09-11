@@ -194,6 +194,9 @@ central seed binding but stopped with preserved, unaccepted discoveries.
   enables native serial requests and cross-worktree delivery between existing
   managed owners, preserving affected recipients for fresh resumption. Parked-owner
   activation, parallel waiting permissions and cross-owner acceptance are unfinished.
+  Independently verified owner progress may integrate while its incoming request
+  remains pending. The completed transfer is historical, its checkouts stay retained,
+  and source findings are not resolved. Retained owners are not runnable assignments.
 - Workers use isolated, coordinator-prepared worktrees/builds/compiler prefixes.
   Only the coordinator runs Git mutations, integration and cleanup. No shared
   stash, unapproved scope changes, or automatic worker fast-forwards.

@@ -180,6 +180,13 @@ the native campaign propose these requests to existing managed owners, publish
 them serially under real held leases, and deliver full incoming findings across
 explicit worker checkouts in subsequent serial rounds. Use bound coordinator
 reauthorization and an updated installed runtime for a preserved campaign.
+An independently verified owner checkpoint can integrate while the originating
+finding remains pending. Both owner checkouts stay retained for the unresolved
+handoff. Its completed transfer is recorded historically, while resume rechecks
+retained identities/ancestry without replaying acceptance. Further owner work
+requires another authorized attempt; failed or partial publication still requires
+fresh verification. This does not refresh
+the requesting worker's dirty source or resolve its finding automatically.
 Historical scope conflicts remain visible and exclude affected owners without
 stopping unrelated disjoint tasks. Parked-owner activation, mixed parallel
 waiting/investigation permissions and cross-owner closure remain unfinished;

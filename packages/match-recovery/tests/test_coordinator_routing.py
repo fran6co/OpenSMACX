@@ -102,13 +102,15 @@ def test_known_owner_subset_can_be_routed_without_hiding_unknown_remainder(propo
     assert store.decisions(task.task_id)[-1]["subjects"] == [peer.subjects[0].entity_id]
 
 
-@pytest.mark.parametrize("damage", ["missing_permission", "missing_context", "reserved", "own_subject", "unknown_owner", "stale_peer"])
+@pytest.mark.parametrize("damage", ["missing_permission", "missing_context", "reserved", "retired", "own_subject", "unknown_owner", "stale_peer"])
 def test_unavailable_or_stale_owners_never_publish(proposed, damage):
     root, assignments, inventory, source, target, task, peer, delegation = proposed
     if damage == "missing_permission": delegation = {key: value for key, value in delegation.items() if key != "route_discoveries"}
     if damage == "missing_context": inventory = None
     if damage == "reserved":
         inventory = RoutingOwners(root, assignments[:1], [{"root": str(target), "tasks": [peer.task_id]}])
+    if damage == "retired":
+        inventory = RoutingOwners(root, assignments, retired={peer.task_id})
     def execute(command, child, name, request):
         output = propose(request, peer)
         if damage == "own_subject": output["route"]["subjects"] = [task.subjects[0].entity_id]

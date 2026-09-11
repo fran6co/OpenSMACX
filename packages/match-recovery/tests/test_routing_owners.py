@@ -67,6 +67,21 @@ def test_managed_current_history_wins_over_root_prefix_and_snapshot_refreshes(ow
     validate_snapshot(source, "owner", after)
 
 
+def test_retired_assignment_remains_fresh_read_only_inventory(ownership):
+    root, assignments, _ = ownership
+    source, owner = children(ownership)
+    before = {path: working_state(path) for path in (root, source, owner)}
+    inventory = RoutingOwners(root, assignments, retired={"other"})
+    snapshot = inventory.snapshot(source, "owner")
+    retained = next(row for row in snapshot["owners"] if row["task"]["task_id"] == "other")
+    assert retained["availability"] == "retained" and retained["root"] == str(owner)
+    assert retained["task"] == target_reference(TaskStore(owner), "other")
+    validate_snapshot(source, "owner", json.loads(json.dumps(snapshot)))
+    assert {path: working_state(path) for path in before} == before
+    with pytest.raises(ValueError, match="explicit assignments"):
+        RoutingOwners(root, assignments, retired={"unassigned"})
+
+
 def test_native_managed_scope_expansion_is_visible_without_rewriting_root_task(ownership):
     root, _, inventory = ownership
     source, owner = children(ownership)

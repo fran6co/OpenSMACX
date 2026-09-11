@@ -7,7 +7,8 @@ import pytest
 
 import match_recovery.campaign as campaign
 from match_recovery.driver import working_state
-from match_recovery.model import Origin
+from match_recovery.locking import file_lock
+from match_recovery.model import Origin, digest
 from match_recovery.task_routes import route_task, target_reference
 from match_recovery.tasks import Task, TaskStore
 from test_coordination import setup
@@ -74,8 +75,11 @@ def publish_help(source, target, *, leases=None):
 
 
 @pytest.mark.parametrize("incoming_first", [False, True], ids=["reversed-owner-before-source", "incoming-without-local-finding"])
-@pytest.mark.parametrize("checkpoint", [False, True], ids=["clean-noop", "committed-worker-progress"])
-def test_serial_owner_is_preserved_before_retirement_or_integration(owner_campaign, monkeypatch, incoming_first, checkpoint):
+@pytest.mark.parametrize("completion", ["noop", "refused", "accepted", "accepted-routing-disabled"])
+def test_serial_owner_progress_can_integrate_without_retiring_pending_handoff(owner_campaign, monkeypatch, incoming_first, completion):
+    disable_routing = completion == "accepted-routing-disabled"
+    if disable_routing:
+        completion = "accepted"
     root, store, owner, configuration = owner_campaign
     if incoming_first:
         assert publish_help(root, root)["published"]
@@ -100,11 +104,16 @@ def test_serial_owner_is_preserved_before_retirement_or_integration(owner_campai
 
     def dispatch(current, plan, **kwargs):
         paths.update({row["task"]: Path(row["root"]) for row in plan["jobs"]})
-        if checkpoint:
+        if completion != "noop":
             path = paths["owner"] / "code/owner.cc"
             path.write_text(path.read_text() + "// Synthetic scoped worker checkpoint.\n")
             git(paths["owner"], "add", "code/owner.cc")
             git(paths["owner"], "commit", "-m", "Synthetic owner progress")
+        if completion == "accepted":
+            path = paths["unrelated"] / "code/unrelated.cc"
+            path.write_text(path.read_text() + "// Independent later checkpoint.\n")
+            git(paths["unrelated"], "add", "code/unrelated.cc")
+            git(paths["unrelated"], "commit", "-m", "Synthetic independent later progress")
         return {"coordinator_changed": False, "jobs": [{"task": row["task"], "scope_intact": True,
                 "timed_out": False, "returncode": 3} for row in plan["jobs"]]}
 
@@ -125,8 +134,17 @@ def test_serial_owner_is_preserved_before_retirement_or_integration(owner_campai
 
     native_cleanup = campaign._remove_integrated
 
+    candidates, allow_owner_cleanup = {}, False
     def cleanup(current, child, branch, directory):
-        assert child == paths["unrelated"], "Neither endpoint of the pending handoff may be cleaned"
+        # A native requester cannot start a late publication after the
+        # retention decision but before removal: its driver lease stays held.
+        with pytest.raises(TimeoutError):
+            with file_lock(paths["source"] / "build/recovery/driver.lock", timeout=0):
+                pytest.fail("Requester lease was released before cleanup")
+        allowed = {paths["unrelated"], candidates.get("unrelated")}
+        if allow_owner_cleanup:
+            allowed.update({paths["owner"], candidates["owner"]})
+        assert child in allowed, "Neither endpoint of a pending handoff may be cleaned"
         cleaned.append(child)
         return native_cleanup(current, child, branch, directory)
 
@@ -134,18 +152,36 @@ def test_serial_owner_is_preserved_before_retirement_or_integration(owner_campai
     monkeypatch.setattr(campaign, "dispatch", dispatch)
     monkeypatch.setattr(campaign, "drive", drive)
     monkeypatch.setattr(campaign, "_remove_integrated", cleanup)
-    monkeypatch.setattr(campaign, "prepare_integration", lambda *args, **kwargs: pytest.fail("Pending handoff cannot integrate"))
-    monkeypatch.setattr(campaign, "publish_integration", lambda *args, **kwargs: pytest.fail("Pending handoff cannot publish"))
+    publications, verification_modes = [], []
+    def publish(current, name, candidate, permission, **kwargs):
+        # Scheduling control only. The separate dependency-integration controls
+        # exercise native compiler-backed verification; this stub supplies its
+        # outcome and performs the real Git transition for scheduling freshness.
+        assert name in ("owner", "unrelated") and completion != "noop"
+        assert name == "owner" or completion == "accepted"
+        candidates[name] = candidate
+        publications.append(permission)
+        verification_modes.append((name, kwargs["resume"]))
+        if completion == "refused":
+            return {"destination_verified": False, "destination_updated": False,
+                    "stop_reason": "candidate_verification_required"}
+        git(current, "merge", "--ff-only", permission["candidate_revision"])
+        return {"destination_verified": True, "destination_updated": True,
+                "stop_reason": "destination_accepted"}
+    monkeypatch.setattr(campaign, "publish_integration", publish)
     report = campaign.campaign(root, configuration, execute=lambda *args: pytest.fail("No real provider in scheduling control"))
-    assert driven == ["owner", "source", "unrelated"] and cleaned == [paths["unrelated"]]
+    assert driven == ["owner", "source", "unrelated"] and paths["unrelated"] in cleaned
     assert paths["owner"].is_dir() and paths["source"].is_dir() and not paths["unrelated"].exists()
     batch, = report["batches"]
     pending = {row["task"]: row["reason"] for row in batch["pending"]}
-    assert pending == {"owner": "owner_request_pending" if incoming_first else "peer_discovery_pending",
+    assert pending == {"owner": ("candidate_verification_required" if completion == "refused" else
+                                 "owner_request_pending" if incoming_first else "peer_discovery_pending"),
                        "source": "routed_discovery_pending"}
-    assert not batch["integrations"] and not report["ready_for_collection"] and not report["full_project_accepted"]
+    assert len(batch["integrations"]) == len(publications) == {"noop": 0, "refused": 1, "accepted": 2}[completion]
+    assert not report["ready_for_collection"] and not report["full_project_accepted"]
     directory = Path(report["artifacts"])
-    assert not list(directory.glob("*retired-owner.json")) and not list(directory.glob("*retired-source.json"))
+    assert bool(list(directory.glob("*retired-owner.json"))) is (completion == "accepted")
+    assert not list(directory.glob("*retired-source.json"))
     assert list(directory.glob("*retired-unrelated.json"))
     for name in ("owner", "source"):
         retained = TaskStore(paths[name])
@@ -154,4 +190,56 @@ def test_serial_owner_is_preserved_before_retirement_or_integration(owner_campai
     source_store = TaskStore(paths["source"])
     assert source_store.status("source", source_store.scope("source")[0])["pending_discoveries"] == [finding]
     assert len(source_store.decisions("source")) == 2
-    assert working_state(root) == before
+    if completion == "accepted":
+        assert working_state(root) != before
+        assert "Synthetic scoped worker checkpoint" in (root / "code/owner.cc").read_text()
+        owner_pending = next(row for row in batch["pending"] if row["task"] == "owner")
+        assert owner_pending["destination_verified"] is True
+        assert "Independent later checkpoint" in (root / "code/unrelated.cc").read_text()
+        # A's completed transfer must not be reopened against its pre-A target
+        # after B's independently verified integration advances the destination.
+        # Retirement is historical retention, not a replayed acceptance verdict.
+        monkeypatch.setattr(campaign, "prepare_project", lambda *args: {"result": "pass", "published": True})
+        def resume_round(current, plan, *args, **kwargs):
+            assert [row["task"] for row in plan["jobs"]] == ["source"]
+            assert kwargs["retired_owners"] == {"owner", "unrelated"}
+            return None, [], {"source"}
+        monkeypatch.setattr(campaign, "_resume_round", resume_round)
+        reauthorization = None
+        if disable_routing:
+            previous = json.loads((root / "recovery/coordinator.json").read_text())
+            coordinator = {key: value for key, value in previous.items() if key != "route_discoveries"}
+            (root / "recovery/coordinator.json").write_text(json.dumps(coordinator))
+            git(root, "add", "recovery/coordinator.json")
+            git(root, "commit", "-m", "Stop new automatic requests without withdrawing existing findings")
+            manifest = json.loads((directory / "run.json").read_text())
+            reauthorization = {"schema_version": 1, "author": configuration["author"], "run_sha256": digest(manifest),
+                               "batch_sha256": digest(json.loads((directory / "batch-0-workers.json").read_text())),
+                               "previous_profiles_sha256": manifest["profiles_sha256"], "previous_coordinator": previous,
+                               "coordinator": coordinator, "destination_revision": git(root, "rev-parse", "HEAD"),
+                               "evidence": ["Explicitly disable new routing; retain all existing pending requests"]}
+        integrated_state = working_state(root)
+        resumed = campaign.campaign(root, configuration, resume=directory,
+                                    coordinator_authorization=reauthorization,
+                                    execute=lambda *args: pytest.fail("No real provider in scheduling control"))
+        assert verification_modes == [("owner", False), ("unrelated", False)]
+        assert resumed["stop_reason"] == "replanning_required"
+        assert all(row["verification"] == "not_replayed" for row in resumed["batches"][0]["retained_in_history"])
+        assert not resumed["batches"][0]["integrations"] and working_state(root) == integrated_state
+        assert list(directory.glob("*retired-owner.json")) and not list(directory.glob("*retired-source.json"))
+        assert paths["owner"].is_dir() and paths["source"].is_dir()
+        assert TaskStore(paths["source"]).status("source", source_store.scope("source")[0])["pending_discoveries"] == [finding]
+        # A separate explicit coordinator decision rejects this synthetic
+        # false-positive dependency. This is not incorporation or a mechanism
+        # for claiming a genuine cross-owner repair is complete.
+        source_store.resolve("source", discovery_id=finding["discovery_id"], request_id="contradicted-dependency",
+                             author=tasks["source"].author, disposition="rejected", expected_revision=2,
+                             source_evidence=["Synthetic independent counterevidence disproves the proposed dependency"])
+        allow_owner_cleanup = True
+        resolved = campaign.campaign(root, configuration, resume=directory,
+                                     execute=lambda *args: pytest.fail("No real provider in scheduling control"))
+        assert not paths["owner"].exists() and not candidates["owner"].exists()
+        assert paths["source"].exists() and not resolved["full_project_accepted"]
+        assert verification_modes == [("owner", False), ("unrelated", False)]
+    else:
+        assert working_state(root) == before

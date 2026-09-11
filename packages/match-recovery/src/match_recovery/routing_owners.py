@@ -108,7 +108,7 @@ def _snapshot(paths, preferred, current_root, current_task):
 class RoutingOwners:
     """Process-local explicit ownership inventory, never scheduling authority."""
 
-    def __init__(self, root, assignments, reservations=(), leases=None):
+    def __init__(self, root, assignments, reservations=(), leases=None, *, retired=()):
         self.root = _path(root)
         self.assignments, self.reservations = [], []
         names, paths = set(), set()
@@ -137,6 +137,9 @@ class RoutingOwners:
                 names.add(name)
             paths.add(path)
             self.reservations.append({"root": path, "tasks": tuple(tasks)})
+        self.retired = frozenset(task_name(name) for name in retired)
+        if not self.retired <= {row["task"] for row in self.assignments}:
+            raise ValueError("retired routing owners must belong to the explicit assignments")
         self.leases = {} if leases is None else dict(leases)
         for path in self.leases:
             if not isinstance(path, Path) or _path(path) not in paths | {self.root}:
@@ -152,7 +155,7 @@ class RoutingOwners:
                 continue  # Absent retired assignments retain only visible root ownership.
             paths.add(path)
             branches[path] = row["branch"]
-            preferred[row["task"]] = (path, "managed")
+            preferred[row["task"]] = (path, "retained" if row["task"] in self.retired else "managed")
         for row in self.reservations:
             path = _path(row["root"])
             paths.add(path)
@@ -226,7 +229,7 @@ def validate_snapshot(root, task, snapshot):
     preferred = {}
     for row in snapshot["owners"]:
         if (not isinstance(row, dict) or set(row) != {"root", "task", "availability", "subjects", "editable_files"}
-                or row["availability"] not in ("managed", "reserved", "unassigned")):
+                or row["availability"] not in ("managed", "reserved", "retained", "unassigned")):
             raise ValueError("invalid routing owner row")
         reference = row["task"]
         if not isinstance(reference, dict) or "task_id" not in reference:

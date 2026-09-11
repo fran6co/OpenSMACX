@@ -3039,8 +3039,8 @@ the complete findings and normal scope facts. A response may use `action: "route
 with `route: {"owner": "supplied-task-id", "subjects": ["entity-..."]}`. Its ordinary
 scope lists remain empty and `binding` remains null. All other actions use
 `route: null`. Only known, affected, outside-scope, not-already-routed identities
-from a listed unambiguous **managed** owner are selectable. Parked and unassigned
-owners remain visible but unavailable. The provider never supplies a checkout
+from a listed unambiguous **managed** owner are selectable. Parked, historically
+retired (`retained`), and unassigned owners remain visible but unavailable. The provider never supplies a checkout
 path, author, baseline, target digest or discovery-event identity.
 
 A valid restricted-preplanning proposal requests fresh serial coordination; it
@@ -3063,6 +3063,23 @@ checks, independent review and publication authorization.
 A pending source route cannot be collected or cleaned up. An owner implicated by
 another managed task's pending finding or incoming request is retained for fresh
 resumption, even if its serial turn came before the source's routing decision.
+Committed owner progress may nevertheless pass ordinary fresh candidate and
+destination verification and integrate independently. Pending requests retain
+both its worker and integration checkout. The existing retirement record marks
+only the completed historical transfer; cleanup is separately deferred. Resume
+checks the retained committed identities and ancestry and reports
+`verification: not_replayed`, without reopening the old transfer against later
+independently integrated work. It does not assert that historical acceptance is
+current acceptance. Further owner edits need another authorized attempt, not a
+rewritten retirement or integration decision. Failed verification never creates
+that retirement, closes a request, or authorizes cleanup; a partial transfer still
+uses fresh destination verification on resume.
+Cleanup checks existing requests even if new automatic routing is subsequently
+disabled. Requester leases stay held from that decision through removal, so a
+cooperating native publisher cannot insert a new request in between.
+Owner integration does not refresh another worker's uncommitted source, enlarge
+its scope, or resolve its discovery. Those require separate source reevaluation
+and the appropriate native integration/decision workflow.
 Unrelated owners are not held back solely because another finding exists. This
 handoff does not resolve either task, authorize a parked checkout, or establish
 accepted cross-owner recovery. Cycles and dependencies beyond existing managed
