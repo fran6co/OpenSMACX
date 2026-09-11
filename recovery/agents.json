@@ -11,6 +11,7 @@
     "response": "file"
   },
   "coordinator": {
+    "evidence_delivery": "on_demand",
     "command": {
       "argv": ["codex", "exec", "--ephemeral", "--model", "gpt-6-astra", "-c", "model_reasoning_effort=high", "--sandbox", "read-only", "--output-schema", "{schema}", "--output-last-message", "{response}", "-"],
       "timeout": 3300
@@ -19,6 +20,7 @@
     "response": "file"
   },
   "reviewer": {
+    "evidence_delivery": "on_demand",
     "command": {
       "argv": ["codex", "exec", "--ephemeral", "--model", "gpt-6-astra", "-c", "model_reasoning_effort=high", "--sandbox", "read-only", "--output-schema", "{schema}", "--output-last-message", "{response}", "-"],
       "timeout": 3300
