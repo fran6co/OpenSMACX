@@ -6,7 +6,8 @@ import pytest
 
 from match_recovery.campaign import _scoped_coordinator
 from match_recovery.coordination import SerialCoordinationRequired, coordinate
-from match_recovery.model import Origin
+from match_recovery.driver import working_state
+from match_recovery.model import Origin, require_digest
 from match_recovery.tasks import Task, TaskStore
 from test_coordination import answer, setup
 from test_source_configuration import configured
@@ -37,6 +38,27 @@ def expansion(partial, *, delegation=None, subjects=None, files=None):
                       execute=lambda *args: (0, answer(args[-1], "expand",
                           subjects=[repair.entity_id] if subjects is None else subjects,
                           editable_files=["code/caller.cc"] if files is None else files)))
+
+
+def preserved_state(root, store, name):
+    """Include exact source/history bytes as well as effective ownership."""
+    contents = {path.relative_to(root).as_posix(): path.read_bytes()
+                for directory in ("code", "hints", "recovery/tasks", "recovery/history")
+                for path in (root / directory).rglob("*") if path.is_file()}
+    return working_state(root), store.read(name), store.scope(name), store.decisions(name), contents
+
+
+def assert_refusal(report, reason, *, action="expand"):
+    assert set(report) == {"action", "published", "discovery_id", "snapshot", "proposed_action",
+                           "reason_code", "feedback", "ready_for_collection", "verification"}
+    assert report["action"] == "proposal_rejected"
+    assert report["proposed_action"] == action
+    assert report["reason_code"] == reason
+    assert report["discovery_id"] == "layout"
+    assert report["published"] is False and report["ready_for_collection"] is False
+    assert report["verification"] == "not_measured"
+    assert isinstance(report["feedback"], str) and report["feedback"].strip()
+    require_digest(report["snapshot"])
 
 
 def test_partial_expansion_repairs_only_delegated_subset_and_retains_other_owner(partial):
@@ -100,14 +122,18 @@ def test_partial_expansion_does_not_relax_original_binding_or_editing_bounds(par
         delegation["editable_files"] = files
     else:
         subjects, files = [], []
-    before = store.decisions(task.task_id), store.scope(task.task_id)
-    with pytest.raises(ValueError):
-        if damage == "unknown_impact":
+    before = preserved_state(root, store, task.task_id)
+    if damage == "unknown_impact":
+        with pytest.raises(ValueError, match="unknown originals"):
             coordinate(root, task.task_id, delegation, execute=lambda *args: (0, answer(args[-1], "expand",
                        discovery_id="unknown", subjects=subjects, editable_files=files)))
-        else:
+    elif damage == "policy_file":
+        with pytest.raises(ValueError, match="existing regular source files"):
             expansion(partial, delegation=delegation, subjects=subjects, files=files)
-    assert (store.decisions(task.task_id), store.scope(task.task_id)) == before
+    else:
+        report = expansion(partial, delegation=delegation, subjects=subjects, files=files)
+        assert_refusal(report, "expansion_no_progress" if damage == "no_progress" else "expansion_exceeds_delegation")
+    assert preserved_state(root, store, task.task_id) == before
     assert store.read(task.task_id).base_revision == task.base_revision
 
 
@@ -118,8 +144,10 @@ def test_existing_owner_is_still_removed_from_shared_campaign_expansion_grants(p
     delegated = _scoped_coordinator(root, offered, task.task_id, [])
     assert delegated["subjects"] == [repair.entity_id]
     assert delegated["editable_files"] == ["code/caller.cc"]
-    with pytest.raises(ValueError):
-        expansion(partial, delegation=delegated, subjects=[repair.entity_id, outside.entity_id])
+    before = preserved_state(root, store, task.task_id)
+    report = expansion(partial, delegation=delegated, subjects=[repair.entity_id, outside.entity_id])
+    assert_refusal(report, "expansion_exceeds_delegation")
+    assert preserved_state(root, store, task.task_id) == before
     assert len(store.decisions(task.task_id)) == 1
     assert expansion(partial, delegation=delegated)["published"]
 
@@ -149,13 +177,15 @@ def test_partial_repair_cannot_resolve_whole_cross_owner_finding(partial, extra_
         # Even allowing central read/decision context is not ownership: the
         # TaskStore independently refuses incorporation beyond actual scope.
         delegation["subjects"].append(outside.entity_id)
-    before = store.decisions(task.task_id), store.scope(task.task_id)
-    with pytest.raises(ValueError):
-        coordinate(root, task.task_id, delegation,
-                   execute=lambda *args: (0, answer(args[-1], "incorporate")))
+    before = preserved_state(root, store, task.task_id)
+    report = coordinate(root, task.task_id, delegation,
+                        execute=lambda *args: (0, answer(args[-1], "incorporate")))
+    assert_refusal(report, "resolution_requires_expansion" if extra_delegation else "outside_delegated_scope",
+                   action="incorporate")
+    assert preserved_state(root, store, task.task_id) == before
     with pytest.raises(ValueError):
         store.resolve(task.task_id, discovery_id="layout", request_id="premature-incorporation", author=task.author,
                       disposition="incorporated", source_evidence=["Local repair is not the entire affected scope"],
                       expected_revision=len(store.decisions(task.task_id)))
-    assert (store.decisions(task.task_id), store.scope(task.task_id)) == before
+    assert preserved_state(root, store, task.task_id) == before
     assert store.status(task.task_id, store.scope(task.task_id)[0])["pending_discoveries"]
