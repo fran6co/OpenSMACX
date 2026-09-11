@@ -40,6 +40,15 @@ The worker's `--approve-for-me` option already selects workspace-write; this CLI
 rejects combining it with a separate `--sandbox` option. The installed-command
 control checks all role arguments using an intentionally absent schema, without
 calling the provider.
+Before a live recovery attempt, an explicit transport preflight can check the
+current native response schemas against all configured provider roles:
+`OPENSMACX_LIVE_PROVIDER_SCHEMA=1 uv run pytest recovery/tests/test_agent_configuration.py -k live_provider`.
+It consumes provider usage in empty temporary checkouts, with no game source,
+compiler calls or recovery authority. Ordinary tests skip it. This catches
+provider-side schema rejection that local CLI argument checks cannot detect;
+it does not establish recovery quality or acceptance. Native response validators
+still enforce constraints such as unique, sorted routing subjects independently
+of the provider's supported JSON Schema subset.
 Writable compiler storage does not guarantee Wine can execute inside the agent's
 sandbox. Workers request approved execution of the same scoped compiler command
 when needed, retaining their inherited prefix and lease. Automatic review does

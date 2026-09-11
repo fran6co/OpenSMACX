@@ -67,7 +67,7 @@ def test_provider_schema_has_only_nullable_owner_subject_route_not_authority_fie
     assert set(route["properties"]) == set(route["required"]) == {"owner", "subjects"}
     assert route["additionalProperties"] is False
     assert route["properties"]["subjects"]["minItems"] == 1
-    assert route["properties"]["subjects"]["uniqueItems"] is True
+    assert "uniqueItems" not in route["properties"]["subjects"]
 
 
 def test_native_routing_response_keeps_scope_and_binding_fields_empty(routing_request):
@@ -181,4 +181,28 @@ def test_real_readonly_bridge_routing_response_publishes_nothing_and_explains_bo
               "print(" + repr(json.dumps(response(caller))) + ")")
     config = configure_bridge(root, script)
     assert run_agent(root, "coordinator", config, value) == (0, response(caller))
+    assert (store.decisions(task.task_id), store.decisions(owner.task_id), store.scope(task.task_id)) == original
+
+
+@pytest.mark.parametrize("duplicate", [False, True])
+def test_strict_provider_schema_accepts_route_shape_but_native_boundary_rejects_duplicates(routing_request, duplicate):
+    root, store, task, owner, caller, value = routing_request
+    original = store.decisions(task.task_id), store.decisions(owner.task_id), store.scope(task.task_id)
+    proposed = response(caller)
+    if duplicate:
+        proposed["route"]["subjects"] *= 2
+    script = ("import json,sys; from pathlib import Path; "
+              "schema=json.loads(Path(sys.argv[1]).read_text()); "
+              "assert 'uniqueItems' not in json.dumps(schema), 'unsupported strict-output keyword'; "
+              "print(" + repr(json.dumps(proposed)) + ")")
+    config = configure_bridge(root, script)
+    profiles = json.loads((root / config).read_text())
+    profiles["coordinator"]["command"]["argv"].append("{schema}")
+    (root / config).write_text(json.dumps(profiles))
+    if duplicate:
+        code, report = run_agent(root, "coordinator", config, value)
+        assert code == 3 and report["error"]["kind"] == "invalid_response"
+        assert "unique" in report["error"]["message"] or "sorted" in report["error"]["message"]
+    else:
+        assert run_agent(root, "coordinator", config, value) == (0, proposed)
     assert (store.decisions(task.task_id), store.decisions(owner.task_id), store.scope(task.task_id)) == original

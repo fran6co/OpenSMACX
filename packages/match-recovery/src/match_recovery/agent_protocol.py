@@ -42,7 +42,11 @@ def response_schema(role):
                             "source_sha256": digest, "name": text, "reason": text})]},
                         "route": {"anyOf": [{"type": "null"}, _object({
                             "owner": text,
-                            "subjects": {"type": "array", "minItems": 1, "uniqueItems": True,
+                            # Keep the transport schema in the common strict-output
+                            # subset. Native response validation enforces uniqueness
+                            # and ordering; provider schemas are not authority.
+                            "subjects": {"type": "array", "minItems": 1,
+                                         "description": "Distinct entity identities in sorted order; duplicates are refused natively.",
                                          "items": {"type": "string", "pattern": "^entity-[0-9a-f]{64}$"}}})],
                                   "description": "Only for action route: select a supplied owner and sorted known outside subjects. "
                                                  "Other actions use null. No paths, author, target pins or scope grants."}})
