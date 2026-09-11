@@ -223,6 +223,54 @@ def _scoped_coordinator(root, profile, name, jobs):
     return {**profile, "subjects": sorted(subjects), "editable_files": sorted(files)}
 
 
+def _authorize_runtime(root, directory, configuration, profiles, authorization, reserved):
+    """Freeze preserved work while publishing only an installed-runtime decision."""
+    from .campaign_runtime import authority
+    before = working_state(root)
+    states, branches, absent = {}, {}, set()
+    common = _checkout(root)[0]
+    with ExitStack() as leases:
+        for batch in saved_batches(root, directory, configuration):
+            for job, branch in zip(batch["plan"]["jobs"], batch["branches"], strict=True):
+                name, worker = job["task"], Path(job["root"])
+                candidate = integration_choice(directory, batch["index"], name, {})
+                retired = retirement(root, directory, batch["index"], name)
+                for path, ref, is_worker in ((worker, branch, True),
+                        (Path(candidate["worktree"]), candidate["branch"], False)):
+                    if not path.exists() and not path.is_symlink():
+                        if is_worker and retired is None:
+                            raise ValueError("runtime transition requires the preserved assigned worker")
+                        absent.add(path)
+                        continue
+                    if path in states or path.resolve() != path:
+                        raise ValueError("runtime transition requires distinct canonical worktrees")
+                    # Earlier retained batches are already leased by the
+                    # reservations guard; never recursively acquire that lock.
+                    if path not in reserved.states:
+                        leases.enter_context(file_lock(path / "build/recovery/driver.lock", timeout=0))
+                    if _checkout(path) != (common, "refs/heads/" + ref) or preflight(path) != "refs/heads/" + ref:
+                        raise ValueError("runtime transition worktree repository or branch changed")
+                    if is_worker and retired is None:
+                        _worker_state(root, name, path, branch, batch["revision"], profiles)
+                    TaskStore(path).scope(name)
+                    states[path] = reservation_state(path)
+                    branches[path] = "refs/heads/" + ref
+
+        def fresh():
+            reserved.assert_current()
+            if (working_state(root) != before or _policy(root, configuration) != profiles
+                    or any(reservation_state(path) != state for path, state in states.items())
+                    or any(_checkout(path) != (common, ref) or preflight(path) != ref
+                           for path, ref in branches.items())
+                    or any(path.exists() or path.is_symlink() for path in absent)):
+                raise ValueError("runtime transition inputs changed; preserve work and retry fresh")
+
+        fresh()
+        result = authority(root, directory, configuration, profiles, authorization, publish=True)
+        fresh()
+        return result
+
+
 def _resume_round(root, plan, profiles, directory, number, revision, *, execute, fresh, announce, lease):
     """Plan stopped-worker investigations centrally, then dispatch disjoint work.
 
@@ -346,10 +394,11 @@ def _pending_runs(root, parent):
 
 
 def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, resume=None,
-             coordinator_authorization=None):
+             coordinator_authorization=None, runtime_authorization=None):
     from .framework_runtime import fingerprint
-    if fingerprint() is not None:
-        raise ValueError("campaign runtime changes require separate run-bound authorization; not yet supported")
+    from .campaign_runtime import authority as runtime_authority
+    if resume is None and (fingerprint() is not None or runtime_authorization is not None):
+        raise ValueError("campaign runtime authorization currently requires a preserved run and --resume")
     root = Path(root).absolute()
     if root.resolve() != root or INHERITED in os.environ:
         raise ValueError("campaign needs a canonical coordinator and separately leased worker resources")
@@ -393,8 +442,13 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
         if (coordinator_authorization is not None
                 and coordinator_authority(root, directory, configuration, profiles) != digest(profiles)):
             _reauthorize_coordinator(root, directory, saved, configuration, profiles, coordinator_authorization, reserved)
+        runtime_decision = (_authorize_runtime(root, directory, configuration, profiles, runtime_authorization, reserved)
+                            if runtime_authorization is not None else
+                            runtime_authority(root, directory, configuration, profiles))
         def external_freshness():
             reserved.assert_current()
+            if runtime_authority(root, directory, configuration, profiles) != runtime_decision:
+                raise ValueError("campaign runtime authorization changed during execution")
             if any(reservation_state(path) != state for path, state in retained.items()):
                 raise ValueError("retired campaign worktree changed; preserve work and replan")
         original_execute = execute

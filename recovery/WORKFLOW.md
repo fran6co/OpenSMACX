@@ -114,6 +114,13 @@ parallelism from measured compiler capacity; do not restart the old fleet loop.
 Update against master only at safe coordinator-owned checkpoints. Never stash
 across worktrees, discard another worker's edits, or auto-fast-forward a worker
 after its task baseline has been established.
+If preserved worker profiles launch an older checkout-local framework, use the
+package's explicit installed-runtime binding and run-bound
+`campaign --runtime-authorization` transition. Its selected installation must
+remain unchanged; workers use the native runtime prefix supplied in their prompt.
+Do not copy new package files into workers or rewrite frozen profiles, compiler
+hooks, original campaign choices or baselines to upgrade their diagnostics.
+See the package README for the permission schema and fresh verification boundary.
 For provisioned local prefixes, set `OPENSMACX_COMPILER_POOL` to the canonical
 absolute shared prefix directory and add `--resources recovery/resources.json`
 to `run`, `start`, `prepare`, `worktree prepare` or `integrate publish`. The supplied two-slot configuration

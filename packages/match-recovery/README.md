@@ -37,10 +37,38 @@ behavior. Installation is not a hermetic OS/Python proof: content-pinned regular
 files may be hardlinked by the package installer, but symlinks within the installed
 package/environment and aliased configuration paths are refused.
 
-This mechanism does not authorize changing frozen campaign inputs. `campaign`
-currently refuses an active runtime binding pending separate run-bound transition
-authorization. Existing project profiles, compiler hooks, task baselines and
-original campaign manifests must not be edited to work around that restriction.
+This mechanism does not authorize changing frozen campaign inputs. To resume a
+preserved campaign with this installed runtime, add `campaign --resume <run>
+--runtime-authorization <decision.json>`. The global runtime option remains
+required. The separate coordinator decision has these exact fields:
+
+```json
+{
+  "schema_version": 1,
+  "author": "the-campaign-coordinator",
+  "run_sha256": "canonical-digest-of-original-run.json",
+  "batch_sha256": "canonical-digest-of-latest-batch-workers.json",
+  "profiles_sha256": "canonical-digest-of-current-effective-profiles",
+  "destination_revision": "full-current-destination-commit",
+  "runtime_binding": "/absolute/binding.json",
+  "runtime_sha256": "canonical-digest-of-complete-binding-document",
+  "evidence": ["Why this explicit installed framework transition is authorized"]
+}
+```
+
+Digests use the package's canonical JSON encoding and SHA-256, not formatted JSON
+file bytes. The destination must be current and retain assignment ancestry.
+The package freezes preserved workers and existing integration candidates before
+publishing an immutable run-local `runtime-authorization.json`. Busy checkouts,
+changed source/profiles or stale decisions refuse. No project profiles, compiler
+hooks, task baselines or original campaign manifests are rewritten. Subsequent
+resumes require the same active installation/binding and reread the decision;
+exact permission retries are idempotent. Normal authorized destination/batch
+progress does not require editing that historical decision. A second runtime
+replacement within that run is not supported. New campaigns with an active
+binding currently refuse; this transition is deliberately for preserved runs.
+Runtime selection grants no source scope, claim banking, review or acceptance;
+all native verification remains fresh under the selected implementation.
 
 ## Direct recovery diagnostics
 

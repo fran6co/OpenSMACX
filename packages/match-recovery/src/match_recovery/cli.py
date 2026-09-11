@@ -82,6 +82,8 @@ def parser() -> argparse.ArgumentParser:
     campaign.add_argument("--resume", type=Path, help="Resume a preserved run directory using current source/Git state, never old reports")
     campaign.add_argument("--coordinator-authorization", type=Path,
                           help="Explicit bound coordinator scope/budget reauthorization for a preserved campaign")
+    campaign.add_argument("--runtime-authorization", type=Path,
+                          help="Explicit run-bound installed runtime transition for a preserved campaign")
     worktree = commands.add_parser("worktree", help="Prepare isolated worker checkouts without resetting task baselines")
     worktree_actions = worktree.add_subparsers(dest="action", required=True)
     worker_tree = worktree_actions.add_parser("prepare", help="Create a raw committed worker checkout and optionally prepare fresh compiler recipes")
@@ -211,7 +213,11 @@ def _dispatch(args) -> int:
             authorization = (read_json(args.coordinator_authorization if args.coordinator_authorization.is_absolute()
                                        else args.root / args.coordinator_authorization)
                              if args.coordinator_authorization else None)
-            output = campaign(args.root, config, resume=args.resume, coordinator_authorization=authorization, progress=lambda event: print(
+            runtime_authorization = (read_json(args.runtime_authorization if args.runtime_authorization.is_absolute()
+                                              else args.root / args.runtime_authorization)
+                                     if args.runtime_authorization else None)
+            output = campaign(args.root, config, resume=args.resume, coordinator_authorization=authorization,
+                              runtime_authorization=runtime_authorization, progress=lambda event: print(
                 json.dumps(event, sort_keys=True), file=sys.stderr, flush=True))
             print(json.dumps(output, indent=2, sort_keys=True))
             # A clean scheduling stop is not full-project acceptance.
