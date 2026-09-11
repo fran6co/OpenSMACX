@@ -550,8 +550,10 @@ the revised coordinator profile, then supply an explicit decision JSON with
 `campaign --config ... --resume RUN --coordinator-authorization DECISION.json`.
 This authorizes the remainder of the **original bounded campaign**, not another
 campaign, acceptance, or an increase in its batch/worker/iteration budgets.
-Only coordinator `subjects`, `editable_files`, `max_decisions`, and `evidence` may
-change. Its command, author and seed-binding permission, all other profiles, and
+Only coordinator `subjects`, `editable_files`, `max_decisions`, `evidence`, and
+the optional `route_discoveries: true` permission may change. Routing permits
+source-journal requests to existing managed owners, not reservation activation,
+scope transfer or acceptance. Its command, author and seed-binding permission, all other profiles, and
 the campaign configuration must remain unchanged. This is not a compiler, provider,
 worker-code or proof-policy upgrade path.
 
@@ -3011,11 +3013,60 @@ history. Its newest supplied prefix determines pending requests; an older replic
 cannot resurrect resolved work. Forked histories refuse rather than choosing a side.
 
 This is a **help request, not execution authority**. Planner eligibility and
-external reservations are unchanged. The coordinator provider protocol does not
-yet emit routes, the campaign does not activate a parked owner, and routing does
-not satisfy investigation permissions or resolve the original finding. Complete
-all-findings accounting and fresh acceptance still apply. Automatic dependency
-scheduling and verified cross-owner closure remain separate implementation work.
+external reservations are unchanged. The campaign does not activate a parked
+owner, and routing does not satisfy investigation permissions or resolve the
+original finding. Complete all-findings accounting and fresh acceptance still
+apply. Dependency activation, parallel waiting/investigation permissions and
+verified cross-owner closure remain separate implementation work.
+
+#### Coordinator-driven managed-owner handoffs
+
+An optional `"route_discoveries": true` in the coordinator delegation enables
+native campaign routing. Existing delegations remain unchanged unless explicitly
+updated; a preserved campaign requires the bound coordinator reauthorization
+described above, and retained workers need a compatible installed runtime.
+
+The campaign supplies all original assignments in the current saved batch,
+including inactive peers, plus the coordinator's task catalog and older/parked
+reservations. It does not infer ownership from only the active dispatch list.
+Native snapshots retain exact task/history/branch catalogs and expose overlapping
+historical scopes as `conflicts`. Those conflicts exclude the affected owners from
+routing, not unrelated disjoint tasks. Ambiguous or rewritten task replicas still
+refuse; no task is silently retired or chosen as the winner of an overlap.
+
+The read-only coordinator sees `routing` and derived `route_choices` alongside
+the complete findings and normal scope facts. A response may use `action: "route"`
+with `route: {"owner": "supplied-task-id", "subjects": ["entity-..."]}`. Its ordinary
+scope lists remain empty and `binding` remains null. All other actions use
+`route: null`. Only known, affected, outside-scope, not-already-routed identities
+from a listed unambiguous **managed** owner are selectable. Parked and unassigned
+owners remain visible but unavailable. The provider never supplies a checkout
+path, author, baseline, target digest or discovery-event identity.
+
+A valid restricted-preplanning proposal requests fresh serial coordination; it
+does not publish there. The serial decision uses the same per-task provider-call
+budget, without replaying a proposal. The controller supplies the original finding
+and current target references, borrows actual live driver/peer lease tokens, and
+publishes only the originating route journal. New decisions invalidate earlier
+investigation permissions, and routed subjects leave the available choices.
+There is no stored permission implied by a route response or successful process.
+
+Subsequent serial driver rounds derive `context.owner_requests` from the explicit
+managed checkouts, including when the recipient has no local discoveries. Workers
+and reviewers see the full original finding, not just the routed subset; source
+journals are not copied and recipient discoveries are not fabricated. Native
+guards check external source/Git state around provider and evidence calls, in
+addition to task/history snapshots. Unauthorized edits remain preserved on refusal.
+Changes within the recipient's existing authorized C++ scope still need all normal
+checks, independent review and publication authorization.
+
+A pending source route cannot be collected or cleaned up. An owner implicated by
+another managed task's pending finding or incoming request is retained for fresh
+resumption, even if its serial turn came before the source's routing decision.
+Unrelated owners are not held back solely because another finding exists. This
+handoff does not resolve either task, authorize a parked checkout, or establish
+accepted cross-owner recovery. Cycles and dependencies beyond existing managed
+owners remain explicit replanning work.
 
 ### Delegated discovery coordination
 

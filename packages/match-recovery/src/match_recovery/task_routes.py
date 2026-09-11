@@ -101,7 +101,7 @@ def _compatible_tasks(source, target):
         raise ValueError("route target refers to an unrelated target image/address space")
 
 
-def route_task(root, name, decision, *, target_root=None):
+def route_task(root, name, decision, *, target_root=None, _held_leases=None):
     """Publish one bound help request, never source changes or owner activation.
 
     Explicit target_root locates an existing owner for validation only; it is not
@@ -122,12 +122,15 @@ def route_task(root, name, decision, *, target_root=None):
     root = Path(root).resolve(strict=True)
     target_root = root if target_root is None else Path(target_root).resolve(strict=True)
     source, owner = TaskStore(root), TaskStore(target_root)
+    if _held_leases is not None and not isinstance(_held_leases, dict):
+        raise ValueError("routing requires actual local lease tokens, not an already-locked flag")
     target_name = payload["target"]["task_id"]
     if name == target_name:
         raise ValueError("route requires a different target task")
     with ExitStack() as stack:
         for path in sorted({root, target_root}):
-            stack.enter_context(file_lock(path / "build/recovery/driver.lock", timeout=0))
+            stack.enter_context(file_lock(path / "build/recovery/driver.lock", timeout=0,
+                                          held=(_held_leases or {}).get(path)))
         stack.enter_context(file_lock(owner.journal.lock_directory / (digest("task:" + target_name) + ".lock"), timeout=0))
         task, decisions = source.read(name), source.decisions(name)
         events = source.journal.read("task:" + name)

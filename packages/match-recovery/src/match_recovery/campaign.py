@@ -271,6 +271,42 @@ def _authorize_runtime(root, directory, configuration, profiles, authorization, 
         return result
 
 
+def _routing_owners(root, profiles, assignments, scope_reservations, lease, peer_leases):
+    """All current assignments plus read-only older/parked reserved owners.
+
+    Only actual held managed peer leases are transferable. Reserved owners
+    remain visible but cannot be activated or published to by this campaign.
+    """
+    if not profiles.get("coordinator", {}).get("route_discoveries"):
+        return None
+    if assignments is None:
+        raise ValueError("discovery routing requires all original campaign assignments")
+    from .routing_owners import RoutingOwners
+    return RoutingOwners(root, assignments, reservations=scope_reservations,
+                         leases={root: lease, **peer_leases})
+
+
+def _routing_retention(routing, child, name):
+    """Keep requested owners available; a help request does not accept either task."""
+    snapshot = routing.snapshot(child, name)
+    current = next(owner for owner in snapshot["owners"]
+                   if owner["task"]["task_id"] == name and owner["root"] == str(child))
+    subjects = set(current["subjects"])
+    reason = "owner_request_pending" if snapshot["incoming"] else None
+    for owner in snapshot["owners"]:
+        if reason or owner["availability"] != "managed" or owner["task"]["task_id"] == name:
+            continue
+        # The native snapshot selected a compatible latest managed history;
+        # stale replicas and unrelated pending findings cannot hold this owner.
+        store, peer = TaskStore(Path(owner["root"])), owner["task"]["task_id"]
+        if any(subjects.intersection(finding["affects"])
+               for finding in store.status(peer, store.scope(peer)[0])["pending_discoveries"]):
+            reason = "peer_discovery_pending"
+    if routing.snapshot(child, name) != snapshot:
+        raise ValueError("routing owner requests changed before worker retirement")
+    return reason
+
+
 def _resume_round(root, plan, profiles, directory, number, revision, *, execute, fresh, announce, lease,
                   assignments=None, scope_reservations=(), coordination_budgets=None):
     """Plan stopped-worker investigations centrally, then dispatch disjoint work.
@@ -282,6 +318,7 @@ def _resume_round(root, plan, profiles, directory, number, revision, *, execute,
     from .investigation_round import authorize
     from .coordination import SerialCoordinationRequired
     jobs, decisions, deferred = [], [], set()
+    original_jobs = plan["jobs"] if assignments is None else assignments
     for job in plan["jobs"]:
         name, child = job["task"], Path(job["root"])
         incoming = git(child, "rev-parse", "HEAD").decode().strip()
@@ -294,7 +331,8 @@ def _resume_round(root, plan, profiles, directory, number, revision, *, execute,
             if "coordinator" not in profiles:
                 continue
             announce("authorize_investigation", batch=number, task=name)
-            with peer_epoch(root, name, plan["jobs"]) as peers_fresh, resource_environment(profiles["resources"], [child]):
+            with peer_epoch(root, name, original_jobs) as peers_fresh, resource_environment(profiles["resources"], [child]):
+                routing = _routing_owners(root, profiles, assignments, scope_reservations, lease, peers_fresh.leases)
                 def decide(*args, **kwargs):
                     fresh()
                     peers_fresh()
@@ -304,9 +342,10 @@ def _resume_round(root, plan, profiles, directory, number, revision, *, execute,
                         peers_fresh()
                         fresh()
                 try:
-                    permission = authorize(child, name, _scoped_coordinator(root, profiles["coordinator"], name, plan["jobs"]),
+                    permission = authorize(child, name, _scoped_coordinator(root, profiles["coordinator"], name, original_jobs),
                                            execute=decide, diagnostic_configuration=profiles["driver"],
-                                           _budget=coordination_budgets[name] if coordination_budgets is not None else None)
+                                           _budget=coordination_budgets[name] if coordination_budgets is not None else None,
+                                           **({"_routing": routing} if routing is not None else {}))
                 except SerialCoordinationRequired as error:
                     decisions.append({"task": name, "status": "serial_coordination_required", "reason": str(error)})
                     continue
@@ -529,6 +568,11 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
             publish_json(directory / f"batch-{number}-workers.json", choice, allow_identical=True)
             saved = None
             plan = choice["plan"]
+            # Complete current saved batch, never filtered active_jobs. Older
+            # and parked workers remain frozen in the separate reservations.
+            all_assignments = [{"task": job["task"], "root": job["root"], "branch": "refs/heads/" + branch}
+                               for job, branch in zip(plan["jobs"], choice["branches"], strict=True)]
+            scope_reservations = [{"root": row["path"], "tasks": row["tasks"]} for row in reserved.records]
             active_jobs = []
             for index, name in enumerate(selected):
                 announce("prepare", batch=number, task=name)
@@ -588,9 +632,8 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
                 batch["dispatch"], decisions, deferred_investigations = _resume_round(
                     root, {**plan, "jobs": active_jobs}, profiles, directory, number, revision,
                     execute=execute, fresh=fresh_policy, announce=announce, lease=lease,
-                    assignments=[{"task": job["task"], "root": job["root"], "branch": "refs/heads/" + branch}
-                                 for job, branch in zip(choice["plan"]["jobs"], choice["branches"], strict=True)],
-                    scope_reservations=[{"root": row["path"], "tasks": row["tasks"]} for row in reserved.records],
+                    assignments=all_assignments,
+                    scope_reservations=scope_reservations,
                     coordination_budgets=coordination_budgets)
                 batch["investigation_planning"] = decisions
                 if batch["dispatch"] is not None and batch["dispatch"]["coordinator_changed"]:
@@ -614,7 +657,8 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
                 choice_file = directory / f"batch-{number}-integration-{name}.json"
                 if ("coordinator" in profiles or resuming and outcome is None) and not incorporated and not choice_file.exists():
                     announce("coordinate", batch=number, task=name)
-                    with peer_epoch(root, name, plan["jobs"]) as peers_fresh, resource_environment(profiles["resources"], [child]):
+                    with peer_epoch(root, name, all_assignments) as peers_fresh, resource_environment(profiles["resources"], [child]):
+                        routing = _routing_owners(root, profiles, all_assignments, scope_reservations, lease, peers_fresh.leases)
                         def coordinated_execute(*args, **kwargs):
                             fresh_policy()
                             peers_fresh()
@@ -625,15 +669,34 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
                                 fresh_policy()
                         repaired = drive(child, name, profiles["driver"], profiles["worker"], iterations=configuration["iterations"],
                                          reviewer_configuration=profiles["reviewer"], coordinator_configuration=_scoped_coordinator(
-                                             root, profiles.get("coordinator"), name, plan["jobs"]),
+                                             root, profiles.get("coordinator"), name, all_assignments),
                                          migration_configuration=profiles.get("migration"), checkpoint_configuration=profiles["checkpoint"],
-                                         execute=coordinated_execute, _coordination_budget=coordination_budgets.get(name))
+                                         execute=coordinated_execute, _coordination_budget=coordination_budgets.get(name),
+                                         **({"_routing": routing} if routing is not None else {}))
                     batch.setdefault("coordination", []).append(repaired)
                     if repaired["stop_reason"] in ("coordination_proposal_rejected", "coordination_budget_exhausted"):
                         batch["pending"].append({"task": name, "worktree": str(child),
                                                  "reason": repaired["stop_reason"],
                                                  "coordination": repaired["coordination"]})
                         continue  # Keep even clean unresolved workers; no retirement or integration.
+                store = TaskStore(child)
+                pending_ids = {item["discovery_id"] for item in store.status(name, store.scope(name)[0])["pending_discoveries"]}
+                if any(item["kind"] == "discovery_routed" and item["discovery_id"] in pending_ids
+                       for item in store.decisions(name)):
+                    batch["pending"].append({"task": name, "worktree": str(child), "reason": "routed_discovery_pending"})
+                    continue  # A help request cannot retire or accept its originating task.
+                if profiles.get("coordinator", {}).get("route_discoveries"):
+                    with peer_epoch(root, name, all_assignments) as peers_fresh, file_lock(
+                            child / "build/recovery/driver.lock", timeout=0) as child_lease:
+                        fresh_policy()
+                        routing = _routing_owners(root, profiles, all_assignments, scope_reservations, lease,
+                                                 {**peers_fresh.leases, child: child_lease})
+                        reason = _routing_retention(routing, child, name)
+                        peers_fresh()
+                        fresh_policy()
+                    if reason:
+                        batch["pending"].append({"task": name, "worktree": str(child), "reason": reason})
+                        continue  # Preserve the handoff for a fresh bounded resume.
                 incoming = git(child, "rev-parse", "HEAD").decode().strip()
                 try:
                     preflight(child)

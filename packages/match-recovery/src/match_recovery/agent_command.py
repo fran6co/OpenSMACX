@@ -35,7 +35,7 @@ def _request(root, role, request):
         from .coordination import decision_facts, policy, validate_rejection_feedback
         fields = {"task", "decision_revision", "pending_discoveries", "subjects", "editable_files",
                   "delegation", "mapped_records", "instructions", "snapshot", "decision_facts"}
-        if not isinstance(request, dict) or not fields <= set(request) or set(request) - fields - {"investigating", "allowed_actions", "diagnostics", "previous_rejection"}:
+        if not isinstance(request, dict) or not fields <= set(request) or set(request) - fields - {"investigating", "allowed_actions", "diagnostics", "previous_rejection", "routing", "route_choices"}:
             raise ValueError("invalid coordinator agent request fields")
         task = Task.from_dict(request["task"])
         store = TaskStore(root)
@@ -55,6 +55,16 @@ def _request(root, role, request):
                 or not set(investigating) <= {item["discovery_id"] for item in request["pending_discoveries"]}):
             raise ValueError("coordinator investigation filter must name pending discoveries")
         policy(request["delegation"], task)
+        if ("routing" in request) != ("route_choices" in request):
+            raise ValueError("coordinator routing snapshot and choices must be supplied together")
+        if "routing" in request:
+            if request["delegation"].get("route_discoveries") is not True:
+                raise ValueError("coordinator routing context requires explicit delegation")
+            from .routing_owners import validate_snapshot
+            from .coordination import routing_facts
+            validate_snapshot(root, task.task_id, request["routing"])
+            if request["route_choices"] != routing_facts(root, task.task_id, request["delegation"], request["routing"]):
+                raise ValueError("coordinator routing choices disagree with current ownership or discoveries")
         if "allowed_actions" in request:
             actions = request["allowed_actions"]
             if (not isinstance(actions, list) or not actions or any(not isinstance(item, str) for item in actions)
@@ -214,6 +224,11 @@ def run_agent(root: Path, role: str, configuration: Path, request: dict) -> tupl
                          "Intact mappings may move within authorized source files, not into a different source/seed role.\n"
                          if role == "worker" else
                          "Remain read-only. Propose a discovery decision within the supplied delegation; never accept code.\n"
+                         "Routing requires explicit route_discoveries delegation and supplied routing choices. "
+                         "A route writes only a request to an existing owner; the full discovery stays pending. "
+                         "Only the serial controller publishes it. Propose only the owner task ID and sorted subjects; "
+                         "paths, author and target reference pins are supplied by the controller, never by you. "
+                         "Routing does not expand editing scope, activate another owner or accept code.\n"
                          if role == "coordinator" else
                          "Remain read-only. Select an eligible ownership task within delegation; never publish, commit or accept code.\n"
                          if role == "planner" else

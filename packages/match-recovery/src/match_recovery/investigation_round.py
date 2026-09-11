@@ -31,10 +31,10 @@ def epoch(root, name):
 
 
 def authorize(root, task_name, configuration, *, execute=None, _held_lease=None, diagnostic_configuration=None,
-              _budget=None):
+              _budget=None, _routing=None):
     """Gather read-only decisions for all findings while the worker is stopped."""
     root = Path(root).resolve()
-    with file_lock(root / "build/recovery/driver.lock", timeout=0, held=_held_lease):
+    with file_lock(root / "build/recovery/driver.lock", timeout=0, held=_held_lease) as lease:
         store = TaskStore(root)
         task = store.read(task_name)
         policy(configuration, task)
@@ -52,7 +52,8 @@ def authorize(root, task_name, configuration, *, execute=None, _held_lease=None,
                                   investigating=[item["discovery_id"] for item in decisions],
                                   diagnostic_configuration=diagnostic_configuration,
                                   previous_rejection=previous_rejection, _budget=budget,
-                                  allowed_actions=("investigate", "investigate_local", "defer"))
+                                  allowed_actions=("investigate", "investigate_local", "defer"),
+                                  **({"_routing": _routing, "_held_lease": lease} if _routing is not None else {}))
             if epoch(root, task_name) != before:
                 raise ValueError("source or decisions changed during investigation planning")
             if decision["action"] == "proposal_rejected":

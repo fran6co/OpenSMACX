@@ -81,7 +81,7 @@ def coordinator_authority(root, directory, configuration, profiles, authorizatio
     tasks = [TaskStore(root).read(name) for name in sorted({row["task"] for batch in saved for row in batch["plan"]["jobs"]})]
     fields = {"schema_version", "author", "run_sha256", "batch_sha256", "previous_profiles_sha256",
               "previous_coordinator", "coordinator", "destination_revision", "evidence"}
-    mutable = {"subjects", "editable_files", "max_decisions", "evidence"}
+    mutable = {"subjects", "editable_files", "max_decisions", "evidence", "route_discoveries"}
 
     def validate(record, previous, *, fresh):
         if (not isinstance(record, dict) or set(record) != fields
@@ -105,7 +105,7 @@ def coordinator_authority(root, directory, configuration, profiles, authorizatio
             policy(after, task)
         if (before == after or {key: item for key, item in before.items() if key not in mutable}
                 != {key: item for key, item in after.items() if key not in mutable}):
-            raise ValueError("coordinator authorization may change only scope, budget and evidence")
+            raise ValueError("coordinator authorization may change only scope, budget, evidence and discovery-routing opt-in")
         if digest({**profiles, "coordinator": before}) != previous:
             raise ValueError("coordinator authorization cannot change other profiles or prior delegation")
         destination = revision(record["destination_revision"])

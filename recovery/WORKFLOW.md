@@ -175,8 +175,15 @@ package README defines the exact pinned discovery/task/history schema. The route
 lives only in the originating journal; it preserves the entire finding and does
 not activate the owner's reservation, grant edits or satisfy investigation or
 acceptance prerequisites. Local incoming/outgoing requests appear in native task
-context and planner rows. Automatic provider routing, parked-owner activation and
-cross-owner closure are still unfinished; do not pretend a request unblocks a run.
+context and planner rows. Optional coordinator `route_discoveries: true` now lets
+the native campaign propose these requests to existing managed owners, publish
+them serially under real held leases, and deliver full incoming findings across
+explicit worker checkouts in subsequent serial rounds. Use bound coordinator
+reauthorization and an updated installed runtime for a preserved campaign.
+Historical scope conflicts remain visible and exclude affected owners without
+stopping unrelated disjoint tasks. Parked-owner activation, mixed parallel
+waiting/investigation permissions and cross-owner closure remain unfinished;
+do not pretend a request resolves a finding or unblocks source acceptance.
 An explicitly delegated `expand` may authorize only the repair subset of a known
 discovery footprint. Affected callers do not automatically become editable or
 owned. Follow with `investigate_local` if other affected owners remain outside;
@@ -222,7 +229,7 @@ progress concurrently; changed ownership refuses. See the package README for
 There is no PID-based reclamation or acceptance-receipt replay. Pending transferred
 candidates receive fresh collection-aware destination verification with the original
 pre-transfer preservation base. Fresh campaigns refuse to duplicate preserved work.
-Coordinator-only scope/budget changes can be explicitly authorized with
+Coordinator-only scope/budget changes or discovery-routing opt-in can be explicitly authorized with
 `campaign --resume <run-directory> --config <authorization>
 --coordinator-authorization <decision.json>` after committing the new delegation.
 The package README defines its run/assignment/prior-profile bindings. It preserves

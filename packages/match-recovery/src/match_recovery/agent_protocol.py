@@ -32,14 +32,20 @@ def response_schema(role):
                                      "of deferral or resumption. Required for every action."}})
     if role == "coordinator":
         return _object({"snapshot": digest,
-                        "action": {"type": "string", "enum": ["expand", "incorporate", "reject", "defer", "investigate", "investigate_local", "bind_seed"]},
+                        "action": {"type": "string", "enum": ["expand", "incorporate", "reject", "defer", "investigate", "investigate_local", "bind_seed", "route"]},
                         "discovery_id": text,
                         "subjects": {"type": "array", "items": {"type": "string", "pattern": "^entity-[0-9a-f]{64}$"}},
                         "editable_files": {"type": "array", "items": text}, "evidence": evidence,
                         "binding": {"anyOf": [{"type": "null"}, _object({
                             "entity_id": {"type": "string", "pattern": "^entity-[0-9a-f]{64}$"},
                             "source": text, "line": {"type": "integer", "minimum": 1},
-                            "source_sha256": digest, "name": text, "reason": text})]}})
+                            "source_sha256": digest, "name": text, "reason": text})]},
+                        "route": {"anyOf": [{"type": "null"}, _object({
+                            "owner": text,
+                            "subjects": {"type": "array", "minItems": 1, "uniqueItems": True,
+                                         "items": {"type": "string", "pattern": "^entity-[0-9a-f]{64}$"}}})],
+                                  "description": "Only for action route: select a supplied owner and sorted known outside subjects. "
+                                                 "Other actions use null. No paths, author, target pins or scope grants."}})
     if role == "worker":
         discovery = _object({"hypothesis": text,
                              "affects": {"type": "array", "minItems": 1,

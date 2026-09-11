@@ -39,6 +39,7 @@ def peer_epoch(root, current_task, jobs):
         peers[path] = name
     with ExitStack() as leases:
         states, checkouts, absent = {}, {}, set()
+        tokens = {}
         for path, name in sorted(peers.items()):
             if not path.exists():
                 if path.is_symlink():
@@ -48,7 +49,7 @@ def peer_epoch(root, current_task, jobs):
             checkout = _checkout(path)
             if checkout[0] != common:
                 raise ValueError("campaign peer belongs to another repository")
-            leases.enter_context(file_lock(path / "build/recovery/driver.lock", timeout=0))
+            tokens[path] = leases.enter_context(file_lock(path / "build/recovery/driver.lock", timeout=0))
             if preflight(path) != checkout[1]:
                 raise ValueError("campaign peer branch changed while acquiring its lease")
             TaskStore(path).scope(name)
@@ -63,6 +64,8 @@ def peer_epoch(root, current_task, jobs):
                         or reservation_state(path) != state):
                     raise ValueError("campaign peer state or scope changed; preserve work and replan")
 
+        # Serial native routing may borrow these exact live peer leases.
+        fresh.leases = tokens
         fresh()
         try:
             yield fresh

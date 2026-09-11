@@ -15,7 +15,7 @@ from .components import relative_path
 from .model import digest, Origin, Span, require_digest, require_text
 from .source_config import SourceConfiguration
 from .source_inventory import assert_snapshot_current, source_snapshot
-from .tasks import entity_id, TaskStore
+from .tasks import entity_id, task_name as validate_task_name, TaskStore
 
 
 class SerialCoordinationRequired(ValueError):
@@ -124,7 +124,7 @@ def decision_facts(source, selected, editable, delegation, pending, allowed_acti
 def policy(value, task):
     from .driver import Command
     fields = {"schema_version", "author", "command", "subjects", "editable_files", "evidence", "max_decisions"}
-    if (not isinstance(value, dict) or not fields <= value.keys() or value.keys() - fields - {"seed_bindings"}
+    if (not isinstance(value, dict) or not fields <= value.keys() or value.keys() - fields - {"seed_bindings", "route_discoveries"}
             or type(value["schema_version"]) is not int or value["schema_version"] != 1):
         raise ValueError("invalid coordinator delegation")
     if value["author"] != task.author:
@@ -141,6 +141,8 @@ def policy(value, task):
              else lambda item: require_text(item, "delegation evidence"))(item)
     if not value["evidence"]:
         raise ValueError("delegation needs evidence for its authorization boundary")
+    if "route_discoveries" in value and value["route_discoveries"] is not True:
+        raise ValueError("discovery routing requires explicit true permission")
     if "seed_bindings" in value:
         binding = value["seed_bindings"]
         if not isinstance(binding, dict) or set(binding) != {"image"}:
@@ -154,11 +156,11 @@ def policy(value, task):
 
 def validate_response(response, snapshot):
     fields = {"snapshot", "action", "discovery_id", "subjects", "editable_files", "evidence"}
-    if not isinstance(response, dict) or not fields <= response.keys() or response.keys() - fields - {"binding"}:
+    if not isinstance(response, dict) or not fields <= response.keys() or response.keys() - fields - {"binding", "route"}:
         raise ValueError("invalid coordinator response")
     if response["snapshot"] != snapshot:
         raise ValueError("coordinator response refers to stale source or decisions")
-    if response["action"] not in ("expand", "incorporate", "reject", "defer", "investigate", "investigate_local", "bind_seed"):
+    if response["action"] not in ("expand", "incorporate", "reject", "defer", "investigate", "investigate_local", "bind_seed", "route"):
         raise ValueError("unsupported coordinator action")
     require_text(response["discovery_id"], "coordinator discovery")
     for key in ("subjects", "editable_files", "evidence"):
@@ -185,10 +187,51 @@ def validate_response(response, snapshot):
             raise ValueError("seed binding requires a positive source line")
     elif binding is not None:
         raise ValueError("only bind_seed may propose a source binding")
+    route = response.get("route")
+    if response["action"] == "route":
+        if not isinstance(route, dict) or set(route) != {"owner", "subjects"}:
+            raise ValueError("routing selects only a supplied owner and affected subjects")
+        validate_task_name(route["owner"])
+        if not isinstance(route["subjects"], list) or not route["subjects"]:
+            raise ValueError("routing requires nonempty sorted unique subjects")
+        for subject in route["subjects"]:
+            entity_id(subject)
+        if route["subjects"] != sorted(set(route["subjects"])):
+            raise ValueError("routing requires sorted unique subjects")
+    elif route is not None:
+        raise ValueError("only route may propose another owner")
+
+
+def routing_facts(root, name, delegation, routing):
+    """Known, unrouted subsets owned by supplied managed peers; never a grant."""
+    from .task_routes import _compatible_tasks
+    store = TaskStore(root)
+    task, decisions = store.read(name), store.decisions(name)
+    selected, _ = store._scope(task, decisions)
+    pending = store.status(name, selected)["pending_discoveries"]
+    known = {row["entity_id"] for row in source_snapshot(root)["records"]}
+    conflicted = {name for row in routing.get("conflicts", []) for name in row["tasks"]}
+    routed = {(item["discovery_id"], subject) for item in decisions if item["kind"] == "discovery_routed"
+              for subject in item["subjects"]}
+    results = []
+    for finding in pending:
+        owners = []
+        for owner in routing["owners"]:
+            if (delegation.get("route_discoveries") is not True or owner["availability"] != "managed"
+                    or owner["task"]["task_id"] == name or name in conflicted
+                    or owner["task"]["task_id"] in conflicted):
+                continue
+            _compatible_tasks(task, TaskStore(Path(owner["root"])).read(owner["task"]["task_id"]))
+            subjects = sorted((set(finding["affects"]) & known & set(owner["subjects"])) - set(selected)
+                              - {subject for key, subject in routed if key == finding["discovery_id"]})
+            if subjects:
+                owners.append({"owner": owner["task"]["task_id"], "subjects": subjects})
+        results.append({"discovery_id": finding["discovery_id"], "owners": owners})
+    return results
 
 
 def coordinate(root, task_name, configuration, *, execute=None, investigating=(), allowed_actions=None,
-               diagnostic_configuration=None, previous_rejection=None, _budget=None):
+               diagnostic_configuration=None, previous_rejection=None, _budget=None, _routing=None, _held_lease=None):
     """Execute at most one read-only decision; an external runner owns the budget."""
     from .driver import Command, changes, invoke, working_state
     execute = invoke if execute is None else execute
@@ -196,6 +239,14 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
     store = TaskStore(root)
     task, decisions = store.read(task_name), store.decisions(task_name)
     delegation = policy(configuration, task)
+    routing = None
+    routing_external = None
+    if _routing is not None:
+        from .routing_owners import RoutingOwners
+        if not isinstance(_routing, RoutingOwners) or delegation.get("route_discoveries") is not True:
+            raise ValueError("owner routing requires an explicit coordinator permission and native owner context")
+        routing = _routing.snapshot(root, task_name)
+        routing_external = _routing.external_epoch(root)
     budget = decision_budget(delegation, _budget)
     if previous_rejection is not None:
         validate_rejection_feedback(root, task_name, delegation, previous_rejection)
@@ -244,6 +295,8 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
                "decision_facts": decision_facts(source, selected, editable, delegation, state["pending_discoveries"], allowed_actions),
                **({"previous_rejection": previous_rejection} if previous_rejection is not None else {}),
                **({"diagnostics": diagnostics} if diagnostics is not None else {}),
+               **({"routing": routing, "route_choices": routing_facts(root, task_name, delegation, routing)}
+                  if routing is not None else {}),
                **({"allowed_actions": sorted(set(allowed_actions))} if allowed_actions is not None else {}),
                "pending_discoveries": state["pending_discoveries"],
                **({"investigating": sorted(skipped)} if skipped else {}),
@@ -264,6 +317,7 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
                                 "Use investigate_local to examine or repair only current task files when a discovery also involves known outside owners. This grants no outside editing, ownership transfer, resolution or acceptance; explain the useful local work in evidence. Defer if only outside work can help.",
                                 "With explicit seed_bindings delegation, bind_seed may map an existing scoped seed identity to a worker-written body in an editable product TU. Supply its fresh source digest/location and evidence-backed symbol; native publication retains the existing original spans and pending finding. Otherwise return binding:null.",
                                 "Choose a pending discovery not listed in investigating; those IDs already have transient authorization for this unchanged round.",
+                                "When routing and route_choices are supplied, route can request help for a listed subset from an existing managed owner. Return only its supplied task id and subjects; the controller binds discovery, owner and history. It grants no editing scope, owner activation, investigation or resolution. Parked/unassigned owners are context, not selectable targets. Routes publish only in serial coordination; keep the complete finding pending.",
                                 "Defer unknown originals or insufficient evidence; do not hide structural work or reset baselines."]}
     request["snapshot"] = digest({"request": request, "source": digest(source),
                                    "head": before["head"].hex(), "index": before["index"].hex(),
@@ -277,17 +331,24 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
             raise ValueError("coordinator inputs changed before diagnostic request dispatch")
     if previous_rejection is not None:
         validate_rejection_feedback(root, task_name, delegation, previous_rejection)
+    if routing is not None and (_routing.snapshot(root, task_name) != routing
+                                or _routing.external_epoch(root) != routing_external):
+        raise ValueError("owner routing context changed before coordinator execution")
     budget.charge()  # Count actual coordinator calls, including serial handoffs and refusals.
     try:
         code, response = execute(Command.read(delegation["command"]), root, task_name, request)
     finally:
         if changes(before, working_state(root)):
             raise ValueError("read-only coordinator edited the worktree; preserve work and inspect manually")
+        if routing is not None and _routing.external_epoch(root) != routing_external:
+            raise ValueError("read-only coordinator changed an external owner; preserve work and replan")
     assert_snapshot_current(root, source)
     if diagnostics is not None:
         validate(root, task_name, diagnostics)
     if task != store.read(task_name) or decisions != store.decisions(task_name):
         raise ValueError("task decisions changed during coordination")
+    if routing is not None and _routing.snapshot(root, task_name) != routing:
+        raise ValueError("owner routing context changed during coordination")
     if code != 0:
         return {"action": "unavailable", "published": False, "agent_error": response,
                 "ready_for_collection": False}
@@ -306,13 +367,13 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
                 "proposed_action": action, "reason_code": reason_code, "feedback": feedback,
                 "ready_for_collection": False, "verification": "not_measured"}
 
-    if action != "defer" and not set(discovery["affects"]) <= origins.keys():
+    if action not in ("defer", "route") and not set(discovery["affects"]) <= origins.keys():
         raise ValueError("unknown originals require a separate binding decision; defer this discovery")
     # Expansion grants only its explicitly proposed subset, checked below. A
     # known outside caller in the impact footprint must not force ownership
     # takeover merely to authorize a repair elsewhere. Resolution retains the
     # stronger whole-finding boundary, including TaskStore's independent check.
-    if action not in ("defer", "investigate_local", "expand") and not set(discovery["affects"]) <= selected | set(delegation["subjects"]):
+    if action not in ("defer", "investigate_local", "expand", "route") and not set(discovery["affects"]) <= selected | set(delegation["subjects"]):
         return refuse("outside_delegated_scope", "The complete discovery includes owners outside delegated scope. "
                       "Keep it pending; propose investigate_local only for useful work in existing scope, or defer.")
     if action == "investigate" and not set(discovery["affects"]) <= selected:
@@ -339,6 +400,14 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
         if not spans or any(row["spans"] != spans for row in records):
             raise ValueError("seed binding requires agreeing existing original spans")
     subjects, files = set(response["subjects"]), set(response["editable_files"])
+    if action == "route":
+        if routing is None:
+            raise ValueError("routing requires native managed owners and explicit delegation")
+        proposal = response["route"]
+        row = next(item for item in request["route_choices"] if item["discovery_id"] == discovery["discovery_id"])
+        available = next((item for item in row["owners"] if item["owner"] == proposal["owner"]), None)
+        if available is None or not set(proposal["subjects"]) <= set(available["subjects"]):
+            raise ValueError("route must select an available managed owner and unrouted affected subjects")
     if action == "expand":
         if (not subjects <= set(delegation["subjects"]) or not files <= set(delegation["editable_files"])
                 or not subjects <= set(discovery["affects"])):
@@ -371,7 +440,21 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
         store.resolve(task_name, discovery_id=discovery["discovery_id"],
                       disposition="incorporated" if action == "incorporate" else "rejected",
                       source_evidence=evidence, **decision)
-    return {"action": action, "published": action in ("expand", "incorporate", "reject", "bind_seed"),
+    elif action == "route":
+        from .task_routes import route_task
+        owner = next(item for item in routing["owners"] if item["task"]["task_id"] == proposal["owner"])
+        event = next(item for item in store.journal.read("task:" + task_name)
+                     if item.payload["kind"] == "discovery" and item.payload["discovery_id"] == discovery["discovery_id"])
+        if _routing.snapshot(root, task_name) != routing:
+            raise ValueError("owner routing context changed before publication")
+        if _routing.external_epoch(root) != routing_external:
+            raise ValueError("external owner changed before route publication")
+        route_task(root, task_name, {"request_id": decision["request_id"], "expected_revision": len(decisions),
+                                    "route": {"kind": "discovery_routed", "author": task.author,
+                                              "discovery_id": discovery["discovery_id"], "discovery_event_id": event.event_id,
+                                              "target": owner["task"], "subjects": proposal["subjects"], "evidence": evidence}},
+                   target_root=Path(owner["root"]), _held_leases={**_routing.leases, **({root: _held_lease} if _held_lease else {})})
+    return {"action": action, "published": action in ("expand", "incorporate", "reject", "bind_seed", "route"),
             **({"binding": binding_report} if binding_report is not None else {}),
             **({"discovery_id": discovery["discovery_id"], "snapshot": request["snapshot"]}
                if action in ("investigate", "investigate_local") else {}),

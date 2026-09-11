@@ -168,7 +168,7 @@ work; correction never substitutes local work for an outside-owner dependency.
 with its original preservation base.
 Live leases, quarantine and partial Git/index operations still refuse. Moved pending
 targets cannot be retargeted. Explicit `campaign --coordinator-authorization` on
-resume can change only coordinator scope/budget/evidence, retaining assignments,
+resume can change only coordinator scope/budget/evidence or discovery-routing opt-in, retaining assignments,
 baselines and the rest of campaign policy; see the package README for its bound
 decision schema. It does not upgrade worker/compiler/provider code. Arbitrary
 conflict repair and live end-to-end accepted OpenSMACX recovery
@@ -190,7 +190,10 @@ central seed binding but stopped with preserved, unaccepted discoveries.
 - Native `recover tasks route` records a pinned request to another existing
   owner in the originating journal. Findings remain pending; routes do not grant
   scope, activate reservations or satisfy worker/acceptance permissions. Context
-  and planning expose local requests; automatic cross-owner scheduling is unfinished.
+  and planning expose local requests. Optional coordinator `route_discoveries: true`
+  enables native serial requests and cross-worktree delivery between existing
+  managed owners, preserving affected recipients for fresh resumption. Parked-owner
+  activation, parallel waiting permissions and cross-owner acceptance are unfinished.
 - Workers use isolated, coordinator-prepared worktrees/builds/compiler prefixes.
   Only the coordinator runs Git mutations, integration and cleanup. No shared
   stash, unapproved scope changes, or automatic worker fast-forwards.

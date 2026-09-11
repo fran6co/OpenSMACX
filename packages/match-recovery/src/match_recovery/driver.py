@@ -140,7 +140,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
           retained_scope_configuration: dict | None = None,
           checkpoint_configuration: dict | None = None,
           integration_configuration: dict | None = None, verify_only: bool = False, execute=invoke,
-          _held_lease=None, _collection=None, _coordination_budget=None) -> dict:
+          _held_lease=None, _collection=None, _coordination_budget=None, _routing=None) -> dict:
     """Recompute context/checks, edit, recheck, repeat; discoveries stop for review."""
     if type(iterations) is not int or not 1 <= iterations <= 100:
         raise ValueError("iterations must be 1..100")
@@ -150,6 +150,11 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
         raise ValueError("verification-only runs cannot delegate task or scope changes")
     if _coordination_budget is not None and coordinator_configuration is None:
         raise ValueError("a shared decision budget requires central coordination")
+    if _routing is not None:
+        from .routing_owners import RoutingOwners
+        if (not isinstance(_routing, RoutingOwners) or coordinator_configuration is None
+                or coordinator_configuration.get("route_discoveries") is not True or verify_only):
+            raise ValueError("owner routing requires a native serial coordinator context and explicit permission")
     if investigation_configuration is not None and (
             iterations != 1 or coordinator_configuration is not None or verify_only
             or integration_configuration is not None or _collection is not None):
@@ -190,7 +195,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
         raise ValueError("migration requires source obligations and migration-check adapters")
     root = root.resolve()
     store = TaskStore(root)
-    with file_lock(root / "build/recovery/driver.lock", timeout=0, held=_held_lease):
+    with file_lock(root / "build/recovery/driver.lock", timeout=0, held=_held_lease) as driver_lease:
         task = store.read(task_name)
         integration = None
         if integration_configuration is not None:
@@ -319,12 +324,18 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
         def readonly(command, payload):
             ownership_current()
             before = working_state(root)
+            routing_before = _routing.snapshot(root, task_name) if _routing is not None else None
+            routing_external = _routing.external_epoch(root) if _routing is not None else None
             try:
                 code, output = execute(command, root, task_name, payload)
             finally:
                 ownership_current()
                 if changes(before, working_state(root)):
                     raise ValueError("read-only adapter edited the worktree; preserve work and inspect manually")
+                if _routing is not None and _routing.snapshot(root, task_name) != routing_before:
+                    raise ValueError("owner request context changed during read-only evidence collection")
+                if _routing is not None and _routing.external_epoch(root) != routing_external:
+                    raise ValueError("read-only evidence command changed an external owner; preserve work and replan")
             return code, output
         def checkpoint(output, expected):
             ownership_current()
@@ -491,7 +502,8 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                     raise ValueError("source changed between discovery investigation authorizations")
                 coordination_feedback = coordinate(root, task_name, coordinator_configuration, execute=execute,
                                                    investigating=investigations, diagnostic_configuration=configuration,
-                                                   previous_rejection=previous_rejection, _budget=coordination_budget)
+                                                   previous_rejection=previous_rejection, _budget=coordination_budget,
+                                                   **({"_routing": _routing, "_held_lease": driver_lease} if _routing is not None else {}))
                 if coordination_feedback["action"] == "proposal_rejected":
                     previous_rejection = rejection_feedback(root, task_name, coordinator_configuration,
                                                            coordination_feedback, epoch_before=before_epoch)
@@ -526,6 +538,9 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             code, context = readonly(context_command, {"task": task.to_dict()})
             if code != 0:
                 return finish("context_unavailable", round_index)
+            routed_requests = _routing.snapshot(root, task_name)["incoming"] if _routing is not None else None
+            if routed_requests is not None:
+                context = {**context, "owner_requests": routed_requests}
             if investigating:
                 context = {**context, "discovery_investigations": [investigations[key] for key in sorted(investigations)],
                            "pending_discoveries": state["pending_discoveries"]}
@@ -585,6 +600,9 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             source_before = worker_bindings.capture(root)
             ownership_current()
             preworker_current()
+            if _routing is not None and _routing.snapshot(root, task_name)["incoming"] != routed_requests:
+                raise ValueError("owner requests changed before worker dispatch")
+            routing_external = _routing.external_epoch(root) if _routing is not None else None
             retained_worker_started = True
             try:
                 code, response = execute(worker_command, root, task_name,
@@ -597,6 +615,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                                                            "Discovery investigation authorizes only this bounded scoped attempt, not incorporation or acceptance. Keep pending findings and report evidence; the coordinator must resolve them against the resulting source.",
                                                            "An investigate_local decision may mention outside owners, but authorizes editing only the existing task files and identities. Preserve external dependency discoveries; do not repair, adopt, or dismiss the other owner's work.",
                                                            "Report structural discoveries even outside task scope.",
+                                                           "owner_requests, when supplied in context, carry complete findings from other managed tasks. Investigate only your existing owned code; report insights or required changes without resolving the originating finding, editing its journal, or taking over another task. A request is not proof that your current source is wrong.",
                                                            "Acceptance feedback belongs to its recorded snapshot; use it to investigate, not as current proof after edits.",
                                                            "Unknown acceptance findings require evidence, not speculative matching edits. Repair only authorized source; report missing capabilities or authority as discoveries without changing proof policy.",
                                                            "Checkpoint feedback is historical diagnostic evidence, not admission. Repair only scoped source; preserve justified structural work and report outside-scope effects or missing verification capabilities as discoveries.",
@@ -609,6 +628,10 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                 changed = changes(before, working_state(root))
                 if changed - editable:
                     raise ValueError("worker exceeded editing scope; preserve work and inspect manually")
+                if _routing is not None and _routing.snapshot(root, task_name)["incoming"] != routed_requests:
+                    raise ValueError("owner request lineage changed during worker dispatch; preserve work and replan")
+                if _routing is not None and _routing.external_epoch(root) != routing_external:
+                    raise ValueError("worker changed an external owner; preserve work and replan")
             if store.read(task_name) != task or store.decisions(task_name) != initial_decisions:
                 raise ValueError("task decisions changed during dispatch; inspect before resuming")
             if code != 0:
