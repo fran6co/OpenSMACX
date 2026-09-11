@@ -435,7 +435,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                 if investigations and changes(investigation_state, before_coordination):
                     raise ValueError("source changed between discovery investigation authorizations")
                 coordination_feedback = coordinate(root, task_name, coordinator_configuration, execute=execute,
-                                                   investigating=investigations)
+                                                   investigating=investigations, diagnostic_configuration=configuration)
                 if coordination_feedback["action"] in ("investigate", "investigate_local"):
                     if changes(before_coordination, working_state(root)):
                         raise ValueError("source changed after discovery investigation authorization")

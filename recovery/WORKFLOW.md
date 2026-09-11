@@ -159,6 +159,12 @@ using a changed delegation. The coordinator may request
 remains pending, a worker gets one bounded attempt, then coordination revisits the
 actual source. All pending findings need individual authorization. No acceptance
 or checkpoint may pass while they remain unresolved; deferral is still a stop.
+Before each decision the driver runs fresh configured context and scoped checks
+under its existing compiler lease, including during campaign resume preplanning.
+Read their actual coverage and unknowns alongside historical findings. A compiler
+that works now does not resolve a structural discovery; passing protected bodies
+does not establish the new candidate or game acceptance. Context failure remains
+visible. Do not prepare recipes or allocate another prefix during this observation.
 For a finding involving known outside owners, `investigate_local` can authorize
 useful work only inside the unchanged current task scope. It does not grant Heap,
 Lock or other shared-owner edits, transfer a reservation, or dismiss the dependency.

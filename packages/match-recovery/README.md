@@ -2962,6 +2962,19 @@ is mandatory. Incorporation requires affected originals already in task scope;
 it records a source interpretation, never a passing proof. Unknown originals,
 stale responses, writes, policy expansion and no-op expansion are refused.
 
+Driver discovery handling and campaign resume preplanning first execute the
+configured context and scoped checker under the existing worker/compiler lease.
+The coordinator receives their full reports, exit codes and coverage in optional
+`diagnostics`, bound to the current source/Git/task/runtime epoch. Context failure
+is visible and skips checking; inconsistent checker status refuses coordination.
+Each decision, including one after scope expansion, obtains fresh observations.
+These are diagnostic inputs, not stored task evidence or acceptance receipts:
+an old compiler failure is not a current measurement, but a current passing check
+neither dismisses its finding nor proves anything outside its reported coverage.
+No preparation, extra compiler allocation, automatic resolution or acceptance is
+performed by this refresh. Direct API callers may omit diagnostic configuration;
+their requests make no claim to contain fresh compiler observations.
+
 `investigate` requests one bounded worker attempt for a pending discovery entirely
 inside current scope. It publishes no resolution or acceptance: its snapshot-bound
 authorization and evidence are transient worker context. Every pending discovery

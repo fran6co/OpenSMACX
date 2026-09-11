@@ -81,7 +81,8 @@ def test_worker_body_is_bound_then_rechecked_without_resolving_discovery_early(p
                    reviewer_configuration={"author": "reviewer", "command": command("reviewer")}, execute=execute)
     assert report["stop_reason"] == "iteration_budget_exhausted" and not report["ready_for_collection"]
     assert report["worker_rounds"] == 1 and report["coordinator_decisions"] == 3
-    assert events == ["coordinate", "context", "check", "build", "worker", "coordinate", "coordinate",
+    assert events == ["context", "check", "coordinate", "context", "check", "build", "worker",
+                      "context", "check", "coordinate", "context", "check", "coordinate",
                       "context", "check", "build", "reviewer"]
     assert store.read(task.task_id).base_revision == task.base_revision and git(root, "rev-parse", "HEAD") == head
     assert seed.read_text() == seed_text

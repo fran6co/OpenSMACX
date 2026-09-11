@@ -304,7 +304,7 @@ def _resume_round(root, plan, profiles, directory, number, revision, *, execute,
                         fresh()
                 try:
                     permission = authorize(child, name, _scoped_coordinator(root, profiles["coordinator"], name, plan["jobs"]),
-                                           execute=decide)
+                                           execute=decide, diagnostic_configuration=profiles["driver"])
                 except SerialCoordinationRequired as error:
                     decisions.append({"task": name, "status": "serial_coordination_required", "reason": str(error)})
                     continue

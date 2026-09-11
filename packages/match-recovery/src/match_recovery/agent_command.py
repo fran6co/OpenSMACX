@@ -35,7 +35,7 @@ def _request(root, role, request):
         from .coordination import policy
         fields = {"task", "decision_revision", "pending_discoveries", "subjects", "editable_files",
                   "delegation", "mapped_records", "instructions", "snapshot"}
-        if not isinstance(request, dict) or not fields <= set(request) or set(request) - fields - {"investigating", "allowed_actions"}:
+        if not isinstance(request, dict) or not fields <= set(request) or set(request) - fields - {"investigating", "allowed_actions", "diagnostics"}:
             raise ValueError("invalid coordinator agent request fields")
         task = Task.from_dict(request["task"])
         store = TaskStore(root)
@@ -62,6 +62,9 @@ def _request(root, role, request):
                     or not set(actions) <= {"investigate", "investigate_local", "defer"}):
                 raise ValueError("invalid read-only coordinator action boundary")
         require_digest(request["snapshot"])
+        if "diagnostics" in request:
+            from .coordination_diagnostics import validate
+            validate(root, task.task_id, request["diagnostics"])
         if not isinstance(request["mapped_records"], list) or not isinstance(request["instructions"], list):
             raise ValueError("invalid coordinator evidence or instructions")
         for instruction in request["instructions"]:

@@ -103,10 +103,15 @@ def test_reauthorized_discovery_expands_through_native_coordinator_then_resumes(
     monkeypatch.setattr(native, "drive", drive)
     def plan_or_coordinate(command, current, name, request):
         if "pending_discoveries" not in request:
+            if "task" in request:
+                # This control substitutes the driver; model fresh diagnostics
+                # as unavailable without pretending the old '{}' check passed.
+                return (3, {"result": "unknown"}) if "context" in request else (0, {})
             return choose(command, current, name, request)
         # Read-only preplanning must leave this expansion for a fresh serial
         # decision. The existing driver double below publishes it natively.
         assert "allowed_actions" in request and len(store.decisions("owner")) == 1
+        assert request["diagnostics"]["verification"] == "diagnostic_only"
         return 0, {"snapshot": request["snapshot"], "action": "expand", "discovery_id": "caller-dependency",
                    "subjects": [dependency.entity_id], "editable_files": ["code/caller.cc"],
                    "evidence": ["source:controlled cross-owner relationship"]}

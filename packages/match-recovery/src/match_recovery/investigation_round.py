@@ -29,7 +29,7 @@ def epoch(root, name):
                    **({"framework_runtime": state["framework_runtime"]} if "framework_runtime" in state else {})})
 
 
-def authorize(root, task_name, configuration, *, execute=None, _held_lease=None):
+def authorize(root, task_name, configuration, *, execute=None, _held_lease=None, diagnostic_configuration=None):
     """Gather read-only decisions for all findings while the worker is stopped."""
     root = Path(root).resolve()
     with file_lock(root / "build/recovery/driver.lock", timeout=0, held=_held_lease):
@@ -46,6 +46,7 @@ def authorize(root, task_name, configuration, *, execute=None, _held_lease=None)
                 return {"status": "deferred", "decision": {"action": "budget_exhausted"}}
             decision = coordinate(root, task_name, configuration, execute=execute,
                                   investigating=[item["discovery_id"] for item in decisions],
+                                  diagnostic_configuration=diagnostic_configuration,
                                   allowed_actions=("investigate", "investigate_local", "defer"))
             if epoch(root, task_name) != before:
                 raise ValueError("source or decisions changed during investigation planning")

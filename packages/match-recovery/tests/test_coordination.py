@@ -182,12 +182,14 @@ def test_driver_investigates_before_resolution_but_never_accepts_pending_finding
     assert ("reviewer" in calls) == (outcome == "resolve")
     assert "acceptance" not in calls
     if outcome == "resolve":
-        assert calls == ["coordinate", "context", "check", "build", "worker", "coordinate", "context", "check", "build", "reviewer"]
+        assert calls == ["context", "check", "coordinate", "context", "check", "build", "worker",
+                         "context", "check", "coordinate", "context", "check", "build", "reviewer"]
         assert len(store.decisions(task.task_id)) == 2 and snapshots[0] != snapshots[1]
     else:
         assert store.decisions(task.task_id) == original_decisions
     if outcome == "pending":
-        assert calls.count("check") == calls.count("build") == 2
+        assert calls.count("build") == 2
+        assert calls.count("check") == calls.count("build") + calls.count("coordinate") == 4
         assert result["stop_reason"] == "evaluate_structural_discoveries" and result["check_is_current"]
     if outcome == "budget": assert result["stop_reason"] == "coordination_budget_exhausted"
     if outcome in ("no_progress", "no_progress_change"): assert result["stop_reason"] == "no_source_progress"
@@ -240,6 +242,8 @@ def test_investigation_authorization_refuses_intervening_source_change(setup, mo
               "context": {"argv": ["context"], "timeout": 10}, "check": {"argv": ["check"], "timeout": 10}}
     role = {"author": "worker", "command": {"argv": ["worker"], "timeout": 10}}
     def execute(command, root, name, payload):
+        if command.argv[0] == "context": return 0, {}
+        if command.argv[0] == "check": return 0, {"result": "pass"}
         assert command.argv[0] == "coordinate"
         return 0, answer(payload, "investigate")
     with pytest.raises(ValueError, match="source changed after discovery investigation authorization"):
@@ -474,6 +478,8 @@ def test_local_investigation_refuses_source_change_after_authorization(setup, mo
     role = {"author": "worker", "command": {"argv": ["worker"], "timeout": 10}}
 
     def execute(command, root, name, payload):
+        if command.argv[0] == "context": return 0, {}
+        if command.argv[0] == "check": return 0, {"result": "pass"}
         assert command.argv[0] == "coordinate"
         return 0, answer(payload, "investigate_local")
 

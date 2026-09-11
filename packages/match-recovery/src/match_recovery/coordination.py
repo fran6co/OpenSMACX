@@ -88,7 +88,8 @@ def validate_response(response, snapshot):
         raise ValueError("only bind_seed may propose a source binding")
 
 
-def coordinate(root, task_name, configuration, *, execute=None, investigating=(), allowed_actions=None):
+def coordinate(root, task_name, configuration, *, execute=None, investigating=(), allowed_actions=None,
+               diagnostic_configuration=None):
     """Execute at most one read-only decision; an external runner owns the budget."""
     from .driver import Command, changes, invoke, working_state
     execute = invoke if execute is None else execute
@@ -131,7 +132,12 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
     if not pending:
         raise ValueError("no pending discovery remains for coordination")
     affected = {key for item in state["pending_discoveries"] for key in item["affects"]}
+    diagnostics = None
+    if diagnostic_configuration is not None:
+        from .coordination_diagnostics import collect
+        diagnostics = collect(root, task_name, diagnostic_configuration, execute)
     request = {"task": task.to_dict(), "decision_revision": len(decisions),
+               **({"diagnostics": diagnostics} if diagnostics is not None else {}),
                **({"allowed_actions": sorted(set(allowed_actions))} if allowed_actions is not None else {}),
                "pending_discoveries": state["pending_discoveries"],
                **({"investigating": sorted(skipped)} if skipped else {}),
@@ -140,6 +146,8 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
                "mapped_records": [row for row in source["records"] if row["entity_id"] in affected],
                "instructions": ["Remain read-only; propose one evidence-backed discovery decision.",
                                 "Delegation is an upper bound, not a reason to expand everything.",
+                                "When diagnostics are supplied, they are freshly run configured context/check observations for this unchanged scope. Historical failure reports in discoveries are not current measurements. Inspect actual coverage, exit status and remaining unknowns; a passing protected-body check does not prove an unmeasured candidate, build, layout or runtime behavior.",
+                                "Diagnostics grant no resolution, scope or acceptance. Keep a genuine source discovery pending while investigating; do not reject it merely because a compiler now works. Controller diagnostics do not authorize preparation or standalone compiler execution on its leased prefix.",
                                 "A discovery's affects list includes read-only impact context, not automatic editing permission. Expand only a known repair subset within delegation; other affected owners remain outside scope and the entire discovery remains pending.",
                                 "During restricted preplanning, allowed_actions controls what this phase may grant or publish. An evidence-backed expansion, binding or resolution may still be proposed to request fresh serial coordination; this phase will not publish it. Do not relabel that required action as investigate or defer merely because it lies outside current task scope.",
                                 "Expand scope before incorporating a cross-owner discovery.",
@@ -152,12 +160,21 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
     request["snapshot"] = digest({"request": request, "source": digest(source),
                                    "head": before["head"].hex(), "index": before["index"].hex(),
                                    "files": before["files"]})
+    if diagnostics is not None:
+        from .coordination_diagnostics import validate
+        validate(root, task_name, diagnostics)
+        assert_snapshot_current(root, source)
+        if (changes(before, working_state(root)) or task != store.read(task_name)
+                or decisions != store.decisions(task_name)):
+            raise ValueError("coordinator inputs changed before diagnostic request dispatch")
     try:
         code, response = execute(Command.read(delegation["command"]), root, task_name, request)
     finally:
         if changes(before, working_state(root)):
             raise ValueError("read-only coordinator edited the worktree; preserve work and inspect manually")
     assert_snapshot_current(root, source)
+    if diagnostics is not None:
+        validate(root, task_name, diagnostics)
     if task != store.read(task_name) or decisions != store.decisions(task_name):
         raise ValueError("task decisions changed during coordination")
     if code != 0:
