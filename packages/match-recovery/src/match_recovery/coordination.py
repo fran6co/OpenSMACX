@@ -140,6 +140,8 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
                "mapped_records": [row for row in source["records"] if row["entity_id"] in affected],
                "instructions": ["Remain read-only; propose one evidence-backed discovery decision.",
                                 "Delegation is an upper bound, not a reason to expand everything.",
+                                "A discovery's affects list includes read-only impact context, not automatic editing permission. Expand only a known repair subset within delegation; other affected owners remain outside scope and the entire discovery remains pending.",
+                                "During restricted preplanning, allowed_actions controls what this phase may grant or publish. An evidence-backed expansion, binding or resolution may still be proposed to request fresh serial coordination; this phase will not publish it. Do not relabel that required action as investigate or defer merely because it lies outside current task scope.",
                                 "Expand scope before incorporating a cross-owner discovery.",
                                 "Incorporation means the insight is expressed in source, not that it is correct or accepted.",
                                 "Use investigate to request one bounded worker round for a discovery already inside current scope; it remains unresolved and cannot pass acceptance.",
@@ -171,7 +173,11 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
         raise SerialCoordinationRequired("coordinator action requires fresh serial coordination: " + action)
     if action != "defer" and not set(discovery["affects"]) <= origins.keys():
         raise ValueError("unknown originals require a separate binding decision; defer this discovery")
-    if action not in ("defer", "investigate_local") and not set(discovery["affects"]) <= selected | set(delegation["subjects"]):
+    # Expansion grants only its explicitly proposed subset, checked below. A
+    # known outside caller in the impact footprint must not force ownership
+    # takeover merely to authorize a repair elsewhere. Resolution retains the
+    # stronger whole-finding boundary, including TaskStore's independent check.
+    if action not in ("defer", "investigate_local", "expand") and not set(discovery["affects"]) <= selected | set(delegation["subjects"]):
         raise ValueError("coordinator cannot resolve discoveries outside delegated scope")
     if action == "investigate" and not set(discovery["affects"]) <= selected:
         raise ValueError("expand current task scope before authorizing investigation")

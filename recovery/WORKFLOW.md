@@ -160,6 +160,13 @@ For a finding involving known outside owners, `investigate_local` can authorize
 useful work only inside the unchanged current task scope. It does not grant Heap,
 Lock or other shared-owner edits, transfer a reservation, or dismiss the dependency.
 All findings remain pending; this is not the missing cross-task handoff mechanism.
+An explicitly delegated `expand` may authorize only the repair subset of a known
+discovery footprint. Affected callers do not automatically become editable or
+owned. Follow with `investigate_local` if other affected owners remain outside;
+incorporation still requires the complete finding's scope. Partial expansion
+enables repair, not dependency resolution or acceptance. In restricted parallel
+preplanning, propose a needed expansion explicitly: native coordination refuses
+publication there and requests a fresh serial decision.
 The same policy explicitly permits `bind_seed` for an already-selected seed-only
 identity, after a worker writes its body in an already-editable product TU. The
 native binder preserves existing spans and seed history, inserts an unclaimed

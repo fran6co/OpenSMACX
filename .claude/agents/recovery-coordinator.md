@@ -27,7 +27,13 @@ snapshot token and the configured response schema, with concrete evidence:
   work. No external edit, ownership transfer or discovery resolution is granted;
   all dependencies remain visible and block acceptance.
 - `expand`: additional known source ownership is needed and lies within the
-  explicit delegation. Request only those additional identities/files.
+  explicit delegation. Request only the additional repair identities/files.
+  A finding's `affects` list may also name read-only callers or other affected
+  owners: they need not all be acquired to authorize a delegated repair subset.
+  Leave those identities/files outside editing scope and preserve the complete
+  pending finding. After partial expansion, `investigate_local` can authorize
+  work in the enlarged local scope. This is not cross-owner resolution; later
+  incorporation still requires the full affected scope and source evidence.
 - `incorporate`: the insight is actually expressed in the current source;
   identify the relevant implementation. A seed-only body or a planned repair
   does not establish incorporation. This is not binary or behavioral proof.
