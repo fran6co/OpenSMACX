@@ -390,7 +390,8 @@ Ignored source or task/history files are recovery work, not disposable caches:
 they prevent no-op retirement and cleanup, and are rechecked on resumption.
 
 Each explicit invocation/resumption has the configured batch/command budgets.
-Changed profiles, moved pending integration targets, partial Git/index publication,
+Except for the explicit coordinator transition below, changed profiles refuse.
+Moved pending integration targets, partial Git/index publication,
 older-batch additional work and unknown/aliased checkouts require inspection and
 reauthorization through native commands; no force update, automatic conflict repair
 or adoption of unrelated workers is supplied. Unmapped original discovery and
@@ -402,6 +403,59 @@ round, plus interruption before setup, during structural WIP, at candidate publi
 after transfer and after destination refusal, and during cleanup. Reasoning in that
 control is deterministic, not a live-model or game pilot. A separate process control
 kills the actual supervisor and proves that resumption refuses its still-live worker.
+
+### Reauthorize a preserved campaign's coordinator
+
+When new findings need a larger existing-source scope or decision budget, commit
+the revised coordinator profile, then supply an explicit decision JSON with
+`campaign --config ... --resume RUN --coordinator-authorization DECISION.json`.
+This authorizes the remainder of the **original bounded campaign**, not another
+campaign, acceptance, or an increase in its batch/worker/iteration budgets.
+Only coordinator `subjects`, `editable_files`, `max_decisions`, and `evidence` may
+change. Its command, author and seed-binding permission, all other profiles, and
+the campaign configuration must remain unchanged. This is not a compiler, provider,
+worker-code or proof-policy upgrade path.
+
+The decision is an exact object with these fields:
+
+| Field | Binding |
+| --- | --- |
+| `schema_version` | Integer `1` |
+| `author` | Existing campaign coordinator |
+| `run_sha256` | `match_recovery.model.digest` of the original parsed `run.json` |
+| `batch_sha256` | Same digest of the latest parsed `batch-N-workers.json` |
+| `previous_profiles_sha256` | Previously authorized profiles digest, initially from `run.json` |
+| `previous_coordinator` | Complete previously authorized coordinator profile |
+| `coordinator` | Complete new profile, identical to the currently configured file |
+| `destination_revision` | Current full destination Git commit |
+| `evidence` | Nonempty unique strings explaining this authorization |
+
+Keep this invocation-specific JSON under ignored `build/recovery/`: committing a
+file that names the current destination would itself move that destination. The
+scope and rationale belong in the versioned coordinator profile; the package
+retains this run-bound permission alongside its immutable scheduling choices.
+These are canonical JSON object digests, not hashes of formatted file bytes.
+The native API reconstructs the prior profiles digest using the supplied old
+coordinator, preventing unrelated profile changes from borrowing this permission.
+Every unretired assigned worker must already exist, retain its original task/baseline and
+contain only authorized source/history changes. The coordinator locks them all
+while verifying ownership and publishing the permission. New shared expansion
+grants cannot overlap an existing task or parked-worktree reservation. Before each
+serial coordination round, grants are narrowed against current peer ownership;
+one worker acquiring scope does not authorize the next to edit it too.
+Peer leases and fresh scope snapshots remain held throughout serial coordination.
+Validated retired/collected assignments need not be recreated; their retained
+ancestry and any remaining checkout are still checked before reauthorization.
+
+The package appends `coordinator-authorization-N.json` in the ignored run directory;
+it never rewrites the original manifest, assignments, task baselines, integration
+contexts or worker files. Permission publication can survive a later preparation
+or execution failure; it is not evidence that a worker ran or was accepted.
+Subsequent ordinary resume validates the complete chain. An exact retry of its last
+decision is idempotent; stale predecessors, changed assignments and unexplained
+profile changes refuse. All source changes still require fresh checks and review;
+changed coordinator delegation is included in the review identity. Existing
+integration targets are never retargeted by this decision.
 
 ## Lease project-provisioned compiler resources
 

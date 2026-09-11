@@ -155,7 +155,11 @@ game acceptance. `campaign --resume <run-directory>` continues preserved assignm
 and scoped WIP from current source/Git state. `integrate publish --resume` freshly
 verifies an already transferred candidate with its original preservation base.
 Live leases, quarantine and partial Git/index operations still refuse. Moved pending
-targets, arbitrary conflict repair and live end-to-end accepted OpenSMACX recovery
+targets cannot be retargeted. Explicit `campaign --coordinator-authorization` on
+resume can change only coordinator scope/budget/evidence, retaining assignments,
+baselines and the rest of campaign policy; see the package README for its bound
+decision schema. It does not upgrade worker/compiler/provider code. Arbitrary
+conflict repair and live end-to-end accepted OpenSMACX recovery
 remain unfinished. A two-worker live campaign exercised parallel recovery and
 central seed binding but stopped with preserved, unaccepted discoveries.
 

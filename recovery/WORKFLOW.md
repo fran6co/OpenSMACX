@@ -178,7 +178,15 @@ WIP and valid append-only decisions. Live leases/quarantined resources still ref
 there is no PID-based reclamation or acceptance-receipt replay. Pending transferred
 candidates receive fresh collection-aware destination verification with the original
 pre-transfer preservation base. Fresh campaigns refuse to duplicate preserved work.
-Moved pending targets, changed authority, partial Git operations, older-batch new
+Coordinator-only scope/budget changes can be explicitly authorized with
+`campaign --resume <run-directory> --config <authorization>
+--coordinator-authorization <decision.json>` after committing the new delegation.
+The package README defines its run/assignment/prior-profile bindings. It preserves
+the original manifest, assignments, baselines and WIP under worker leases; grants
+overlapping other tasks or parked work refuse. No compiler/provider/proof-policy
+changes or acceptance waivers are included. A recorded permission is not a completed
+worker run. Ordinary resume validates it and obtains fresh checks/review.
+Moved pending targets, other changed authority, partial Git operations, older-batch new
 work and arbitrary merge conflicts still need inspection/reauthorization. Full executable-only
 autonomous recovery and application acceptance remain unfinished.
 Run `uv run recover prepare` before standalone task measurements/recording and

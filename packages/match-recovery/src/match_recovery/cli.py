@@ -75,6 +75,8 @@ def parser() -> argparse.ArgumentParser:
     campaign.add_argument("--root", type=Path, default=Path.cwd(), help="Authorized destination checkout")
     campaign.add_argument("--config", type=Path, required=True, help="Standing bounded campaign authorization, relative to --root")
     campaign.add_argument("--resume", type=Path, help="Resume a preserved run directory using current source/Git state, never old reports")
+    campaign.add_argument("--coordinator-authorization", type=Path,
+                          help="Explicit bound coordinator scope/budget reauthorization for a preserved campaign")
     worktree = commands.add_parser("worktree", help="Prepare isolated worker checkouts without resetting task baselines")
     worktree_actions = worktree.add_subparsers(dest="action", required=True)
     worker_tree = worktree_actions.add_parser("prepare", help="Create a raw committed worker checkout and optionally prepare fresh compiler recipes")
@@ -187,7 +189,10 @@ def _dispatch(args) -> int:
         elif args.command == "campaign":
             from .campaign import campaign
             config = read_json(args.config if args.config.is_absolute() else args.root / args.config)
-            output = campaign(args.root, config, resume=args.resume, progress=lambda event: print(
+            authorization = (read_json(args.coordinator_authorization if args.coordinator_authorization.is_absolute()
+                                       else args.root / args.coordinator_authorization)
+                             if args.coordinator_authorization else None)
+            output = campaign(args.root, config, resume=args.resume, coordinator_authorization=authorization, progress=lambda event: print(
                 json.dumps(event, sort_keys=True), file=sys.stderr, flush=True))
             print(json.dumps(output, indent=2, sort_keys=True))
             # A clean scheduling stop is not full-project acceptance.

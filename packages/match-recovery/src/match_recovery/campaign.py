@@ -11,7 +11,7 @@ from pathlib import Path
 import tempfile
 
 from .checkpoints import authorization as checkpoint_authorization, _publication_changes, preflight
-from .campaign_choices import ancestor, batches as saved_batches, integration_choice, latest_batch, load_run, manifest, retire, retirement, worker_choice
+from .campaign_choices import ancestor, batches as saved_batches, coordinator_authority, integration_choice, latest_batch, load_run, manifest, retire, retirement, worker_choice
 from .dispatch import _checkout, _configuration, dispatch
 from .driver import Command, _resumable_history, changes, drive, invoke, working_state
 from .git_worktree import assert_raw_checkout, destination_state, git_options, run_git
@@ -21,6 +21,7 @@ from .integration import decision as integration_decision
 from .locking import file_lock
 from .model import digest, require_text
 from .planning import policy as planner_policy, select_task
+from .campaign_peers import peer_epoch
 from .records import publish_json
 from .preparation import prepare_project
 from .resources import INHERITED, _slots, resource_environment
@@ -105,24 +106,32 @@ def _remove_integrated(root, child, branch, run_directory):
         run_git(root, options, "branch", "-d", branch)
 
 
-def _existing_worker(root, name, path, branch, revision, profiles):
+def _worker_state(root, name, path, branch, revision, profiles):
+    """Inspect a preserved assignment while its caller holds the worker lease."""
     common, current_branch = _checkout(path)
     if common != _checkout(root)[0] or current_branch != "refs/heads/" + branch:
         raise ValueError("resumed worker repository or branch changed")
+    preflight(path)
+    if not ancestor(path, revision):
+        raise ValueError("resumed worker lost its authorized starting revision")
+    store = TaskStore(path)
+    task = store.read(name)
+    if (task != TaskStore(root).read(name) or task.author != profiles["planner"]["author"]
+            or task.target != profiles["driver"]["target"]):
+        raise ValueError("resumed worker changed its task identity or baseline")
+    allowed = set(store.scope(name)[1]) | _resumable_history(path, store, ReviewStore(path, name), name)
+    state = working_state(path)
+    # Compare raw bytes to the assignment, including committed edits. Reauthorization
+    # never upgrades a worker's scripts or permits edits outside its existing task.
+    _publication_changes(path, {**state, "head": (revision + "\n").encode()}, allowed)
+    return state
+
+
+def _existing_worker(root, name, path, branch, revision, profiles):
+    _checkout(path)
     with file_lock(path / "build/recovery/driver.lock", timeout=0):
-        preflight(path)
-        if not ancestor(path, revision):
-            raise ValueError("resumed worker lost its authorized starting revision")
-        store = TaskStore(path)
-        task = store.read(name)
-        if (task != TaskStore(root).read(name) or task.author != profiles["planner"]["author"]
-                or task.target != profiles["driver"]["target"]):
-            raise ValueError("resumed worker changed its task identity or baseline")
-        allowed = set(store.scope(name)[1]) | _resumable_history(path, store, ReviewStore(path, name), name)
-        state = working_state(path)
-        # Compare raw current bytes to the assigned starting commit, including
-        # committed edits. Policy changes cannot run a modified compiler script.
-        _publication_changes(path, {**state, "head": (revision + "\n").encode()}, allowed)
+        state = _worker_state(root, name, path, branch, revision, profiles)
+        task = TaskStore(path).read(name)
         with resource_environment(profiles["resources"], [path]):
             preparation = prepare_project(path)
         if changes(state, working_state(path)):
@@ -131,6 +140,87 @@ def _existing_worker(root, name, path, branch, revision, profiles):
         return {"schema_version": 1, "task_id": name, "worker_created": False, "resumed": True,
                 "worktree": str(path), "branch": branch, "revision": revision, "task_base_revision": task.base_revision,
                 "compiler_prepared": prepared, "preparation": preparation, "ready_for_collection": False}
+
+
+def _reauthorize_coordinator(root, directory, saved, configuration, profiles, authorization, reserved):
+    """Publish only a delegation decision, with every existing assignment frozen."""
+    if saved is None:
+        raise ValueError("coordinator reauthorization requires a preserved batch")
+    from .coordination import policy
+    before = working_state(root)
+    states, scopes, absent = {}, {}, []
+    with ExitStack() as leases:
+        for job, branch in zip(saved["plan"]["jobs"], saved["branches"], strict=True):
+            path, name = Path(job["root"]), job["task"]
+            retired = retirement(root, directory, saved["index"], name)
+            if retired is not None:
+                retained = [(path, branch, retired["worker_revision"])]
+                choice_path = directory / f"batch-{saved['index']}-integration-{name}.json"
+                if choice_path.exists():
+                    choice = _configuration(directory, choice_path.name)
+                    context = integration_decision(TaskStore(root).read(name), choice.get("context"))
+                    if choice != integration_choice(directory, saved["index"], name, context):
+                        raise ValueError("retired candidate destination changed")
+                    retained.append((Path(choice["worktree"]), choice["branch"], None))
+                for child, ref, revision in retained:
+                    state = _retained_attempt(root, child, ref, directory, expected_revision=revision)
+                    if state is None:
+                        absent.append((child, ref, revision))
+                    else:
+                        leases.enter_context(file_lock(child / "build/recovery/driver.lock", timeout=0))
+                        if reservation_state(child) != state:
+                            raise ValueError("retired worker changed during reauthorization")
+                        states[child] = state
+                continue
+            if path.resolve() != path or not path.is_dir():
+                raise ValueError("coordinator reauthorization requires existing canonical workers")
+            leases.enter_context(file_lock(path / "build/recovery/driver.lock", timeout=0))
+            _worker_state(root, name, path, branch, saved["revision"], profiles)
+            states[path] = reservation_state(path)
+            store = TaskStore(path)
+            policy(profiles["coordinator"], store.read(name))
+            scopes[name] = store.scope(name)
+        grants = (set(profiles["coordinator"]["subjects"]), set(profiles["coordinator"]["editable_files"]))
+        # Existing tasks already authorize their own scope. A shared expansion
+        # grant must not give another worker access to an already-owned group.
+        for path in sorted((root / "recovery/tasks").glob("*.json")):
+            name = path.stem
+            scope = scopes.get(name)
+            if scope is None:
+                scope = TaskStore(root).scope(name)
+            if any(grant & occupied for grant, occupied in zip(grants, scope, strict=True)):
+                raise ValueError("coordinator expansion overlaps existing task ownership: " + name)
+        reserved.check_scope("", *grants)
+
+        def fresh():
+            reserved.assert_current()
+            if (working_state(root) != before or _policy(root, configuration) != profiles
+                    or any(reservation_state(path) != state for path, state in states.items())):
+                raise ValueError("reauthorization inputs changed; preserve assignments and retry fresh")
+            for child, ref, revision in absent:
+                if child.exists() or child.is_symlink():
+                    raise ValueError("retired worker reappeared during reauthorization")
+                _retained_attempt(root, child, ref, directory, expected_revision=revision)
+
+        fresh()
+        coordinator_authority(root, directory, configuration, profiles, authorization, publish=True)
+        fresh()
+
+
+def _scoped_coordinator(root, profile, name, jobs):
+    """Shared grants exclude current peer ownership, including collected workers."""
+    if profile is None:
+        return None
+    subjects, files = set(profile["subjects"]), set(profile["editable_files"])
+    scopes = [TaskStore(root).scope(path.stem) for path in (root / "recovery/tasks").glob("*.json")
+              if path.stem != name]
+    for job in jobs:
+        if job["task"] != name and Path(job["root"]).is_dir():
+            scopes.append(TaskStore(Path(job["root"])).scope(job["task"]))
+    for occupied, editable in scopes:
+        subjects.difference_update(occupied)
+        files.difference_update(editable)
+    return {**profile, "subjects": sorted(subjects), "editable_files": sorted(files)}
 
 
 def _retained_attempt(root, path, branch, directory, *, expected_revision=None, cleanup=False):
@@ -152,9 +242,13 @@ def _retained_attempt(root, path, branch, directory, *, expected_revision=None, 
     # Removal may have completed just before interruption, leaving only its
     # branch. Never delete a moved branch or prune unrelated worktree metadata.
     with git_options(root) as options:
-        ref = run_git(root, options, "show-ref", "--verify", "--hash", "refs/heads/" + branch, codes=(0, 1))
-        if ref.returncode:
+        # Without --quiet Git reports an absent ref as fatal (128), not the
+        # documented presence-test result (1). Do not treat other fatal errors
+        # as permission to forget a retained branch.
+        exists = run_git(root, options, "show-ref", "--verify", "--quiet", "refs/heads/" + branch, codes=(0, 1))
+        if exists.returncode:
             return
+        ref = run_git(root, options, "show-ref", "--verify", "--hash", "refs/heads/" + branch)
         current = ref.stdout.decode().strip()
         if (expected_revision is not None and current != expected_revision) or not ancestor(root, current):
             raise ValueError("retired branch contains additional work; preserve it")
@@ -194,10 +288,13 @@ def _pending_runs(root, parent):
     return pending
 
 
-def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, resume=None):
+def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, resume=None,
+             coordinator_authorization=None):
     root = Path(root).absolute()
     if root.resolve() != root or INHERITED in os.environ:
         raise ValueError("campaign needs a canonical coordinator and separately leased worker resources")
+    if coordinator_authorization is not None and resume is None:
+        raise ValueError("coordinator reauthorization requires --resume")
     profiles = _policy(root, configuration)
     with file_lock(root / "build/recovery/driver.lock", timeout=0) as lease, ExitStack() as stack:
         if preflight(root) != configuration["destination_branch"]:
@@ -215,7 +312,8 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
             publish_json(directory / "run.json", manifest(root, configuration, profiles, initial))
             saved = None
         else:
-            directory = load_run(root, parent, resume, configuration, profiles)
+            directory = load_run(root, parent, resume, configuration, profiles,
+                                 coordinator_authorization=coordinator_authorization)
             saved = latest_batch(root, directory, configuration)
             expected = working_state(root)
             history = set()
@@ -232,6 +330,9 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
         retained = {}
         if "coordinator" in profiles:
             reserved.check_scope("", profiles["coordinator"].get("subjects", []), profiles["coordinator"].get("editable_files", []))
+        if (coordinator_authorization is not None
+                and coordinator_authority(root, directory, configuration, profiles) != digest(profiles)):
+            _reauthorize_coordinator(root, directory, saved, configuration, profiles, coordinator_authorization, reserved)
         def external_freshness():
             reserved.assert_current()
             if any(reservation_state(path) != state for path, state in retained.items()):
@@ -361,10 +462,19 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
                 choice_file = directory / f"batch-{number}-integration-{name}.json"
                 if ("coordinator" in profiles or resuming) and not incorporated and not choice_file.exists():
                     announce("coordinate", batch=number, task=name)
-                    with resource_environment(profiles["resources"], [child]):
+                    with peer_epoch(root, name, plan["jobs"]) as peers_fresh, resource_environment(profiles["resources"], [child]):
+                        def coordinated_execute(*args, **kwargs):
+                            fresh_policy()
+                            peers_fresh()
+                            try:
+                                return execute(*args, **kwargs)
+                            finally:
+                                peers_fresh()
+                                fresh_policy()
                         repaired = drive(child, name, profiles["driver"], profiles["worker"], iterations=configuration["iterations"],
-                                         reviewer_configuration=profiles["reviewer"], coordinator_configuration=profiles.get("coordinator"),
-                                         migration_configuration=profiles.get("migration"), checkpoint_configuration=profiles["checkpoint"], execute=execute)
+                                         reviewer_configuration=profiles["reviewer"], coordinator_configuration=_scoped_coordinator(
+                                             root, profiles.get("coordinator"), name, plan["jobs"]),
+                                         migration_configuration=profiles.get("migration"), checkpoint_configuration=profiles["checkpoint"], execute=coordinated_execute)
                     batch.setdefault("coordination", []).append(repaired)
                 incoming = git(child, "rev-parse", "HEAD").decode().strip()
                 try:
