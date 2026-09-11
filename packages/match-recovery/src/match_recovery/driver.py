@@ -131,6 +131,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
           iterations: int, reviewer_configuration: dict | None = None,
           migration_configuration: dict | None = None,
           coordinator_configuration: dict | None = None,
+          investigation_configuration: dict | None = None,
           checkpoint_configuration: dict | None = None,
           integration_configuration: dict | None = None, verify_only: bool = False, execute=invoke,
           _held_lease=None, _collection=None) -> dict:
@@ -141,6 +142,10 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
         raise ValueError("verify_only must be boolean")
     if verify_only and coordinator_configuration is not None:
         raise ValueError("verification-only runs cannot delegate task or scope changes")
+    if investigation_configuration is not None and (
+            iterations != 1 or coordinator_configuration is not None or verify_only
+            or integration_configuration is not None or _collection is not None):
+        raise ValueError("investigation permission allows one local round without coordinator or integration")
     if _collection is not None and not verify_only:
         raise ValueError("collection verification cannot dispatch repairs")
     round_limit = 0 if verify_only else iterations
@@ -195,6 +200,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
         if coordinator_configuration is not None:
             from .coordination import coordinate, policy as coordination_policy
             coordination_policy(coordinator_configuration, task)
+        if coordinator_configuration is not None or investigation_configuration is not None:
             if task.author in {worker_configuration["author"],
                               reviewer_configuration["author"] if reviewer_configuration else None}:
                 raise ValueError("coordinator must be separate from worker and reviewer")
@@ -236,6 +242,14 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                                    cwd=root, capture_output=True, check=True).stdout.split(b"\0")
         if {os.fsdecode(name) for name in dirty + untracked if name} - editable - history:
             raise ValueError("checkpoint unrelated changes before running this task")
+        initial_investigations = {}
+        initial_investigation_state = None
+        if investigation_configuration is not None:
+            from .investigation_round import consume
+            initial_investigation_state = working_state(root)
+            initial_investigations = consume(root, task_name, investigation_configuration)
+            if changes(initial_investigation_state, working_state(root)):
+                raise ValueError("source changed while consuming investigation permission")
         def finish(reason, rounds, check=None, *, current=True):
             return {"task_id": task_name, "stop_reason": reason, "worker_rounds": rounds,
                     **({"coordinator_decisions": coordination_count, "coordination": coordination_feedback}
@@ -405,8 +419,8 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             return output
         for round_index in range(round_limit + 1):
             state = store.status(task_name, selected)
-            investigations = {}
-            investigation_state = None
+            investigations = initial_investigations if round_index == 0 else {}
+            investigation_state = initial_investigation_state if round_index == 0 else None
             while (any(item["discovery_id"] not in investigations for item in state["pending_discoveries"])
                    and coordinator_configuration is not None):
                 if coordination_count == coordinator_configuration["max_decisions"]:
@@ -489,6 +503,14 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             before = working_state(root)
             if investigating and changes(investigation_state, before):
                 raise ValueError("source changed before discovery investigation dispatch")
+            if investigating and (store.read(task_name) != task or store.decisions(task_name) != initial_decisions):
+                raise ValueError("task decisions changed before discovery investigation dispatch")
+            if investigation_configuration is not None:
+                # Working-state checks omit ignored files. The grant also binds
+                # configured source and native task history, including ignored
+                # inputs, so validate it again after all prechecks, before edits.
+                from .investigation_round import validate
+                validate(root, task_name, investigation_configuration)
             try:
                 code, response = execute(worker_command, root, task_name,
                                          {"task": task.to_dict(), "editable_files": sorted(editable),

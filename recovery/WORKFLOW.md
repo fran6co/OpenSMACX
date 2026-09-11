@@ -178,8 +178,14 @@ exit codes and saved receipts cannot pass integration. Scope conflicts, dirty WI
 interruption and failed destination checks are preserved for replanning/resumption.
 Use `uv run recover campaign --config <authorization> --resume <run-directory>`
 to continue the last scheduled batch from its source/Git state, including scoped
-WIP and valid append-only decisions. Live leases/quarantined resources still refuse;
-there is no PID-based reclamation or acceptance-receipt replay. Pending transferred
+WIP and valid append-only decisions. Live leases/quarantined resources still refuse.
+Eligible stopped workers resume through parallel dispatch. Central read-only planning
+must first authorize one local attempt per pending finding; one-use permissions
+bind the unchanged source/task/Git epoch and do not resolve discoveries. Scope
+changes and integration remain serial. Expanded scopes that no longer agree with
+the destination are not silently copied into parallel assignments. See the package
+README for `run --investigation` and interrupted-permission handling.
+There is no PID-based reclamation or acceptance-receipt replay. Pending transferred
 candidates receive fresh collection-aware destination verification with the original
 pre-transfer preservation base. Fresh campaigns refuse to duplicate preserved work.
 Coordinator-only scope/budget changes can be explicitly authorized with

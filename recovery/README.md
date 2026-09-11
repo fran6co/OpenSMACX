@@ -924,8 +924,11 @@ compiler-backed control is `recovery/tests/test_campaign_compiler.py`: both an
 existing task and a newly planned task recover genuine structure through a byte
 regression, reach fresh destination acceptance and retain the original baseline.
 Only reasoning is doubled. `campaign --resume <run-directory>` now resumes the
-last assigned batch using current worktrees, decisions and fresh verification,
-including a transferred destination with uncommitted review history. Live leases
+last assigned batch using current worktrees, decisions and fresh verification.
+Eligible disjoint workers dispatch in parallel after fresh central one-use
+investigation grants when discoveries are pending. Scope-changing decisions and
+integration remain serial; a grant never resolves a finding or passes acceptance.
+This includes fresh verification of a transferred destination with uncommitted review history. Live leases
 and quarantined compiler resources still refuse, and new campaigns cannot duplicate
 preserved workers. Non-campaign worktrees now require explicit scheduling-only
 `reserved_worktrees` decisions when they contain recovery work; their scopes are

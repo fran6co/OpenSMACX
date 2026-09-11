@@ -35,7 +35,7 @@ def _request(root, role, request):
         from .coordination import policy
         fields = {"task", "decision_revision", "pending_discoveries", "subjects", "editable_files",
                   "delegation", "mapped_records", "instructions", "snapshot"}
-        if not isinstance(request, dict) or not fields <= set(request) or set(request) - fields - {"investigating"}:
+        if not isinstance(request, dict) or not fields <= set(request) or set(request) - fields - {"investigating", "allowed_actions"}:
             raise ValueError("invalid coordinator agent request fields")
         task = Task.from_dict(request["task"])
         store = TaskStore(root)
@@ -55,6 +55,12 @@ def _request(root, role, request):
                 or not set(investigating) <= {item["discovery_id"] for item in request["pending_discoveries"]}):
             raise ValueError("coordinator investigation filter must name pending discoveries")
         policy(request["delegation"], task)
+        if "allowed_actions" in request:
+            actions = request["allowed_actions"]
+            if (not isinstance(actions, list) or not actions or any(not isinstance(item, str) for item in actions)
+                    or len(set(actions)) != len(actions)
+                    or not set(actions) <= {"investigate", "investigate_local", "defer"}):
+                raise ValueError("invalid read-only coordinator action boundary")
         require_digest(request["snapshot"])
         if not isinstance(request["mapped_records"], list) or not isinstance(request["instructions"], list):
             raise ValueError("invalid coordinator evidence or instructions")

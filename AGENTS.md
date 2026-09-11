@@ -152,8 +152,13 @@ recipes after resolving its preparation failure. Setup does not establish accept
 discovery handling and fresh serial candidate/destination publication. Its explicit
 standing policy is documented in the package README. Clean scheduling exit is not
 game acceptance. `campaign --resume <run-directory>` continues preserved assignments
-and scoped WIP from current source/Git state. `integrate publish --resume` freshly
-verifies an already transferred candidate with its original preservation base.
+and scoped WIP from current source/Git state.
+Eligible resumed workers dispatch in parallel after central one-use investigation
+permissions when findings are pending. Those permissions preserve scope and all
+discoveries; stale or consumed grants refuse. Scope changes/integration stay serial.
+See the package README for `run --investigation`; do not replay grants after interruption.
+`integrate publish --resume` freshly verifies an already transferred candidate
+with its original preservation base.
 Live leases, quarantine and partial Git/index operations still refuse. Moved pending
 targets cannot be retargeted. Explicit `campaign --coordinator-authorization` on
 resume can change only coordinator scope/budget/evidence, retaining assignments,

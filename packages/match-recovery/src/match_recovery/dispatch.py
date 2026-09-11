@@ -87,7 +87,7 @@ def _prepare(root, plan):
     for row in plan["jobs"]:
         required_job = {"task", "root", "config", "worker", "reviewer", "iterations"}
         if (not isinstance(row, dict) or not required_job <= row.keys()
-                or row.keys() - required_job - {"migration", "checkpoint"}
+                or row.keys() - required_job - {"migration", "checkpoint", "investigation"}
                 or type(row["iterations"]) is not int or not 1 <= row["iterations"] <= 100):
             raise ValueError("invalid dispatch job; scope delegation is not allowed within a batch")
         name = task_name(row["task"])
@@ -133,6 +133,11 @@ def _prepare(root, plan):
         for key in ("migration", "checkpoint"):
             if key in row:
                 _configuration(child, row[key])
+        if "investigation" in row:
+            from .investigation_round import validate
+            if row["iterations"] != 1:
+                raise ValueError("parallel investigation permits exactly one worker round")
+            validate(child, name, row["investigation"])
         seen_roots.append(child)
         seen_branches.add(child_branch)
         seen_tasks.add(name)
@@ -166,6 +171,10 @@ def dispatch(root: Path, plan: dict, *, progress=None, _held_lease=None):
             for key in ("config", "worker", "reviewer", "migration", "checkpoint"):
                 if key in row:
                     argv.extend(["--" + key, row[key]])
+            if "investigation" in row:
+                permission_path = directory / (row["task"] + "-investigation.json")
+                publish_json(permission_path, row["investigation"])
+                argv.extend(["--investigation", str(permission_path)])
             commands.append({"argv": argv, "cwd": child, "timeout": plan["timeout"]})
         if changes(before, working_state(root)):
             raise ValueError("coordinator inputs changed during dispatch preparation")

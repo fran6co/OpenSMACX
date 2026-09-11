@@ -252,6 +252,29 @@ identities. Optional per-job `migration` and `checkpoint` paths retain the nativ
 driver's explicit authorization requirements. All job configuration paths are
 relative to that worker; resource configuration is relative to the coordinator.
 
+An optional inline `investigation` object permits one resumed local attempt;
+that job must set `iterations: 1`. The coordinator obtains it through
+`match_recovery.investigation_round.authorize(root, task, coordinator_policy)`;
+`campaign --resume` performs this planning automatically. This API calls the
+read-only coordinator for every pending finding; it never resolves or expands one.
+Only a complete `status: authorized` result supplies an `authorization` object.
+Deferral, insufficient decision budget or unavailable coordination supplies no grant.
+Proposed scope/binding/resolution changes refuse this phase and require fresh
+serial coordination. Grants bind the task, author, canonical checkout, source,
+Git state and task history. They retain the delegation digest and each decision's
+evidence. These are trusted coordinator permissions, not signed certificates or
+verifier reports. Do not manufacture them from worker receipts.
+
+Dispatch validates a grant before starting children. The child revalidates and
+consumes it under its driver lease before any checks or providers; reuse refuses
+even after a no-op or interrupted attempt. Consumption markers are operational
+state under ignored `build/recovery/investigation-uses/`, not an acceptance ledger.
+Obtain new coordination instead of clearing markers or replaying old grants.
+Standalone `run --investigation <permission.json> --iterations 1` uses the same
+boundary; it cannot be combined with a coordinator, integration or verification-only
+mode. Every finding stays pending and blocks review/acceptance. No second worker
+round is implicitly authorized after edits.
+
 The coordinator checkout stays leased and unchanged throughout the batch. Child
 drivers own their own worktree and compiler leases. There is deliberately no
 per-worker `coordinator` option: an out-of-scope discovery is retained by the native
@@ -367,7 +390,14 @@ The current branch, initial ancestry, frozen profiles and canonical paths must
 agree. Resumption uses actual source, task history, branches and leases; old
 stdout, PID files and acceptance reports cannot advance it.
 
-The last scheduled batch is resumed serially before further parallel planning.
+The last scheduled batch reuses parallel dispatch for eligible disjoint workers.
+Pending findings receive fresh central one-use local-investigation permissions
+before dispatch; no scope-changing coordinators run inside the parallel batch.
+Workers with expanded scopes differing from the destination, proposed serial
+decisions, or pending integration stay on the serial coordination/publication
+path. Deferred investigations remain preserved and are not retried in that phase.
+Original assignments and budgets are not rewritten; retired workers are not restarted.
+Nonparticipating peers remain leased and checked while the selected workers run.
 Existing workers retain their initial task baseline and scoped committed/uncommitted
 source, with fresh compiler recipes. New path/branch creation occurs only for an
 assignment that has not been materialized, and still needs the authorized starting

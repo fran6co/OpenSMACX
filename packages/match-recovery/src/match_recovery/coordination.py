@@ -18,6 +18,10 @@ from .source_inventory import assert_snapshot_current, source_snapshot
 from .tasks import entity_id, TaskStore
 
 
+class SerialCoordinationRequired(ValueError):
+    """A read-only planning phase cannot publish this proposed decision."""
+
+
 def policy(value, task):
     from .driver import Command
     fields = {"schema_version", "author", "command", "subjects", "editable_files", "evidence", "max_decisions"}
@@ -84,7 +88,7 @@ def validate_response(response, snapshot):
         raise ValueError("only bind_seed may propose a source binding")
 
 
-def coordinate(root, task_name, configuration, *, execute=None, investigating=()):
+def coordinate(root, task_name, configuration, *, execute=None, investigating=(), allowed_actions=None):
     """Execute at most one read-only decision; an external runner owns the budget."""
     from .driver import Command, changes, invoke, working_state
     execute = invoke if execute is None else execute
@@ -92,6 +96,9 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
     store = TaskStore(root)
     task, decisions = store.read(task_name), store.decisions(task_name)
     delegation = policy(configuration, task)
+    if allowed_actions is not None:
+        if not allowed_actions or not set(allowed_actions) <= {"investigate", "investigate_local", "defer"}:
+            raise ValueError("read-only coordination actions must be investigation or deferral")
     selected, editable = store._scope(task, decisions)
     before = working_state(root)
     image = None
@@ -125,6 +132,7 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
         raise ValueError("no pending discovery remains for coordination")
     affected = {key for item in state["pending_discoveries"] for key in item["affects"]}
     request = {"task": task.to_dict(), "decision_revision": len(decisions),
+               **({"allowed_actions": sorted(set(allowed_actions))} if allowed_actions is not None else {}),
                "pending_discoveries": state["pending_discoveries"],
                **({"investigating": sorted(skipped)} if skipped else {}),
                "subjects": sorted(selected), "editable_files": sorted(editable),
@@ -159,6 +167,8 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
     if discovery is None:
         raise ValueError("coordinator named a discovery that is not pending")
     action = response["action"]
+    if allowed_actions is not None and action not in allowed_actions:
+        raise SerialCoordinationRequired("coordinator action requires fresh serial coordination: " + action)
     if action != "defer" and not set(discovery["affects"]) <= origins.keys():
         raise ValueError("unknown originals require a separate binding decision; defer this discovery")
     if action not in ("defer", "investigate_local") and not set(discovery["affects"]) <= selected | set(delegation["subjects"]):

@@ -52,7 +52,9 @@ def test_resume_reuses_assignment_and_baseline_without_accepting_reports(configu
     worker, = report["batches"][0]["workers"]
     assert worker["worktree"] == str(child) and worker["task_base_revision"] == base
     assert worker["worker_created"] == (stage == "prepare")
-    assert report["batches"][0]["dispatch"] is None and not report["full_project_accepted"]
+    dispatch = report["batches"][0]["dispatch"]
+    assert dispatch is not None and dispatch["jobs"][0]["task"] == "owner"
+    assert dispatch["verification"] == "not_measured_by_dispatch" and not report["full_project_accepted"]
     assert report["stop_reason"] == "planning_defer" and report["unresolved_work"]
     assert not child.exists() and not git(root, "branch", "--list", "recovery/campaign-*")
 

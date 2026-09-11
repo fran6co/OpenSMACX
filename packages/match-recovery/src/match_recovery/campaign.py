@@ -223,6 +223,63 @@ def _scoped_coordinator(root, profile, name, jobs):
     return {**profile, "subjects": sorted(subjects), "editable_files": sorted(files)}
 
 
+def _resume_round(root, plan, profiles, directory, number, revision, *, execute, fresh, announce, lease):
+    """Plan stopped-worker investigations centrally, then dispatch disjoint work.
+
+    Original assignments remain immutable. Grants expire on any source/decision
+    change and permit one local round; expanded scopes and pending integration
+    stay on the existing serial coordination/publication path.
+    """
+    from .investigation_round import authorize
+    from .coordination import SerialCoordinationRequired
+    jobs, decisions, deferred = [], [], set()
+    for job in plan["jobs"]:
+        name, child = job["task"], Path(job["root"])
+        incoming = git(child, "rev-parse", "HEAD").decode().strip()
+        if ((incoming != revision and ancestor(root, incoming))
+                or (directory / f"batch-{number}-integration-{name}.json").exists()
+                or TaskStore(child).scope(name) != TaskStore(root).scope(name)):
+            continue
+        pending = TaskStore(child).status(name, TaskStore(child).scope(name)[0])["pending_discoveries"]
+        if pending:
+            if "coordinator" not in profiles:
+                continue
+            announce("authorize_investigation", batch=number, task=name)
+            with peer_epoch(root, name, plan["jobs"]) as peers_fresh, resource_environment(profiles["resources"], [child]):
+                def decide(*args, **kwargs):
+                    fresh()
+                    peers_fresh()
+                    try:
+                        return execute(*args, **kwargs)
+                    finally:
+                        peers_fresh()
+                        fresh()
+                try:
+                    permission = authorize(child, name, _scoped_coordinator(root, profiles["coordinator"], name, plan["jobs"]),
+                                           execute=decide)
+                except SerialCoordinationRequired as error:
+                    decisions.append({"task": name, "status": "serial_coordination_required", "reason": str(error)})
+                    continue
+            decisions.append({"task": name, **permission})
+            if permission["status"] != "authorized":
+                deferred.add(name)
+                continue
+            job = {**job, "iterations": 1, "investigation": permission["authorization"]}
+        jobs.append(job)
+    if not jobs:
+        return None, decisions, deferred
+    selected = {job["task"] for job in jobs}
+    inactive = [job for job in plan["jobs"] if job["task"] not in selected]
+    # Protect nonparticipating peers while active drivers hold their own leases.
+    with peer_epoch(root, jobs[0]["task"], inactive):
+        fresh()
+        announce("dispatch", batch=number, tasks=[job["task"] for job in jobs], resumed=True)
+        report = dispatch(root, {**plan, "jobs": jobs}, _held_lease=lease,
+                          progress=lambda event: announce("worker", batch=number, **event))
+        fresh()
+    return report, decisions, deferred
+
+
 def _retained_attempt(root, path, branch, directory, *, expected_revision=None, cleanup=False):
     """Inspect actual retained content even when cleanup is disabled."""
     if path.exists() or path.is_symlink():
@@ -445,12 +502,22 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
                     return finish("coordinator_changed")
                 outcomes = batch["dispatch"]["jobs"]
                 fresh_policy()
+                deferred_investigations = set()
             else:
-                batch["dispatch"] = None  # No old process outcome is an input to resumption.
-                outcomes = [None] * len(active_jobs)
+                batch["dispatch"], decisions, deferred_investigations = _resume_round(
+                    root, {**plan, "jobs": active_jobs}, profiles, directory, number, revision,
+                    execute=execute, fresh=fresh_policy, announce=announce, lease=lease)
+                batch["investigation_planning"] = decisions
+                if batch["dispatch"] is not None and batch["dispatch"]["coordinator_changed"]:
+                    return finish("coordinator_changed")
+                current = {row["task"]: row for row in batch["dispatch"]["jobs"]} if batch["dispatch"] else {}
+                outcomes = [current.get(job["task"]) for job in active_jobs]
             for setup, outcome in zip(batch["workers"], outcomes, strict=True):
                 name, child = setup["task_id"], Path(setup["worktree"])
                 fresh_policy()
+                if name in deferred_investigations:
+                    batch["pending"].append({"task": name, "worktree": str(child), "reason": "investigation_deferred"})
+                    continue
                 if outcome is not None and (outcome["timed_out"] or not outcome["scope_intact"]):
                     batch["pending"].append({"task": name, "worktree": str(child), "reason": "interrupted_or_changed_scope"})
                     continue
@@ -460,7 +527,7 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
                 reserved.check_scope(name, *TaskStore(child).scope(name))
                 incorporated = current_incoming != revision and ancestor(root, current_incoming)
                 choice_file = directory / f"batch-{number}-integration-{name}.json"
-                if ("coordinator" in profiles or resuming) and not incorporated and not choice_file.exists():
+                if ("coordinator" in profiles or resuming and outcome is None) and not incorporated and not choice_file.exists():
                     announce("coordinate", batch=number, task=name)
                     with peer_epoch(root, name, plan["jobs"]) as peers_fresh, resource_environment(profiles["resources"], [child]):
                         def coordinated_execute(*args, **kwargs):

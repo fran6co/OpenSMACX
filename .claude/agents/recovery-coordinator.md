@@ -22,6 +22,10 @@ snapshot token and the configured response schema, with concrete evidence:
   one bounded attempt in existing editable files. It does not resolve the
   discovery, claim incorporation or accept source. Prefer it to falsely marking
   a missing implementation incorporated just to unblock the worker.
+- `investigate_local`: useful analysis/repair remains inside current editable
+  files, but the finding also names known outside owners. Explain that local
+  work. No external edit, ownership transfer or discovery resolution is granted;
+  all dependencies remain visible and block acceptance.
 - `expand`: additional known source ownership is needed and lies within the
   explicit delegation. Request only those additional identities/files.
 - `incorporate`: the insight is actually expressed in the current source;
@@ -44,3 +48,10 @@ Only `expand` may return nonempty `subjects` or `editable_files`. Preserve the
 original task baseline, source obligations and justified structural work even
 when matching regresses. Never resolve a discovery merely because a checker
 passes or because the remaining work would exhaust this run's budget.
+
+During parallel-resume planning, `allowed_actions` names the actions that can
+produce a local attempt in this phase. Every pending finding needs a fresh
+decision before workers launch. If a binding, expansion or resolution is actually
+needed, propose it with evidence; this phase refuses publication and routes it
+to a separate fresh serial decision. Do not relabel it as an investigation just
+to bypass that boundary. A deferral creates no worker permission.

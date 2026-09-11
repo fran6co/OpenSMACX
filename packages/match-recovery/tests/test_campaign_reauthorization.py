@@ -101,7 +101,16 @@ def test_reauthorized_discovery_expands_through_native_coordinator_then_resumes(
         events.append(coordinate(path, name, kwargs["coordinator_configuration"], execute=expand))
         return {"stop_reason": "pending_discovery"}
     monkeypatch.setattr(native, "drive", drive)
-    first = native.campaign(root, config, resume=directory, coordinator_authorization=token, execute=choose)
+    def plan_or_coordinate(command, current, name, request):
+        if "pending_discoveries" not in request:
+            return choose(command, current, name, request)
+        # Read-only preplanning must leave this expansion for a fresh serial
+        # decision. The existing driver double below publishes it natively.
+        assert "allowed_actions" in request and len(store.decisions("owner")) == 1
+        return 0, {"snapshot": request["snapshot"], "action": "expand", "discovery_id": "caller-dependency",
+                   "subjects": [dependency.entity_id], "editable_files": ["code/caller.cc"],
+                   "evidence": ["source:controlled cross-owner relationship"]}
+    first = native.campaign(root, config, resume=directory, coordinator_authorization=token, execute=plan_or_coordinate)
     assert first["stop_reason"] == "replanning_required" and events[0]["published"]
     assert dependency.entity_id in store.scope("owner")[0] and "code/caller.cc" in store.scope("owner")[1]
     assert store.status("owner", store.scope("owner")[0])["pending_discoveries"]
