@@ -104,6 +104,8 @@ def expand_task(root: Path, *, name, subjects, editable_files, **decision):
 
 def task_context(root: Path, name: str, *, restoration_for):
     """Rebuild context; never replace missing restoration coverage with an empty list."""
+    from .task_routes import incoming_routes
+
     root = root.resolve()
     store = TaskStore(root)
     task, decisions = store.read(name), store.decisions(name)
@@ -115,8 +117,10 @@ def task_context(root: Path, name: str, *, restoration_for):
         raise ValueError("task original does not match the configured source image/address space")
     selected = [entity for group in view["groups"] for entity in group["entities"] if entity["entity_id"] in scope]
     group = {"entities": selected, "source_homes": sorted(files)}
+    incoming = incoming_routes(store, name)
     output = {"task": task.to_dict(), "subjects": selected,
               "decision_state": store.status(name, (entity["entity_id"] for entity in selected)),
+              "incoming_routes": incoming,
               "impact": structural_impact(snapshot, group), "restoration": restoration_for(root, name),
               "source_hints": context_audits(root, files),
               "binding_evidence": [{"entity_id": row["entity_id"], "path": row["path"], "line": row["line"],
@@ -128,10 +132,13 @@ def task_context(root: Path, name: str, *, restoration_for):
                                "Treat archived bodies and class/name labels as seeds, not mandatory source form.",
                                "Review ownership alternatives against declarations and callers; a member-symbol group does not prove hierarchy or erase an older interpretation.",
                                "Report structural discoveries even when they affect other functions or units.",
+                               "Incoming routes are requests for an existing owner, not editing or activation authority. Obtain owner authorization; the original findings remain pending until separately resolved.",
                                "Do not edit beyond authorized scope or discard matching obligations.",
                                "A scope decision does not approve a regression; migration review and fresh checks are separate."],
               "persisted": False}
     assert_snapshot_current(root, snapshot)
     if task != store.read(name) or decisions != store.decisions(name):
         raise ValueError("task decisions changed during context generation")
+    if incoming_routes(store, name) != incoming:
+        raise ValueError("incoming owner routes changed during context generation")
     return output

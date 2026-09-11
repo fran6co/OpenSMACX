@@ -187,6 +187,10 @@ central seed binding but stopped with preserved, unaccepted discoveries.
   owns non-derivable scope/review/discovery decisions; Git messages explain
   completed changes. Recompute reports or cache them in ignored locations.
   Existing LEVER/TRIED comments are seed history, not new run-log destinations.
+- Native `recover tasks route` records a pinned request to another existing
+  owner in the originating journal. Findings remain pending; routes do not grant
+  scope, activate reservations or satisfy worker/acceptance permissions. Context
+  and planning expose local requests; automatic cross-owner scheduling is unfinished.
 - Workers use isolated, coordinator-prepared worktrees/builds/compiler prefixes.
   Only the coordinator runs Git mutations, integration and cleanup. No shared
   stash, unapproved scope changes, or automatic worker fast-forwards.

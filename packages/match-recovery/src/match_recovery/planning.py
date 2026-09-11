@@ -96,6 +96,8 @@ def _clean(root):
 
 
 def _context(root, target, delegation, *, reserved=None, skip_tasks=(), parallel_tasks=(), application_only=False):
+    from .task_routes import incoming_routes
+
     view, source = project_view(root, allow_empty=True)
     config = SourceConfiguration.from_dict(source["source_configuration"])
     vendor_roots = [item.source_root for item in component_manifests(source) if isinstance(item, VendorManifest)]
@@ -133,10 +135,13 @@ def _context(root, target, delegation, *, reserved=None, skip_tasks=(), parallel
         if application_only and any(name not in source["files"] or config.is_seed(name)
                                     or name == config.image_pin or name in dependency_files for name in files):
             eligible = False
+        status = store.status(task.task_id, subjects)
         tasks.append({"task": {key: value for key, value in task.to_dict().items()
                                if key not in ("schema_version", "subjects", "editable_files")},
                       "subject_count": len(subjects), "editable_files": sorted(files), "eligible": eligible,
-                      "pending_discoveries": store.status(task.task_id, subjects)["pending_discoveries"]})
+                      "pending_discoveries": status["pending_discoveries"],
+                      "outgoing_routes": status["outgoing_routes"],
+                      "incoming_routes": incoming_routes(store, task.task_id)})
     groups = []
     for group in view["groups"]:
         files = ownership_files(source, group)
@@ -158,12 +163,18 @@ def _context(root, target, delegation, *, reserved=None, skip_tasks=(), parallel
             reasons.append("verify_dependency")
         groups.append({**{key: value for key, value in group.items() if key != "entities"},
                        "editable_files": files, "eligible": not reasons, "reasons": reasons})
+    for row in tasks:
+        name = row["task"]["task_id"]
+        if (incoming_routes(store, name) != row["incoming_routes"]
+                or store.status(name, store.scope(name)[0])["outgoing_routes"] != row["outgoing_routes"]):
+            raise ValueError("owner routes changed during planner context generation")
     return {"target": target, "delegation": delegation, "groups": groups, "tasks": tasks,
             "reservations": reserved.records if reserved is not None else [],
             "create_available": _clean(root),
             "instructions": ["Remain read-only. Choose one evidence-backed ownership task to create or resume, or defer.",
                              "Byte claims and stored reviews do not prove structure or completion; inspect source evidence.",
                              "Existing task reservations stay in force. Resume them instead of duplicating or resetting their baselines.",
+                             "Routes request work from existing owners; they do not grant owner authorization, activate reserved worktrees, or resolve the original pending findings.",
                              "External worktree reservations defer overlapping work; do not adopt, modify or duplicate those checkouts.",
                              "Scheduling exclusions only defer another attempt against the current source; they never declare a task complete.",
                              "Do not invent original extents, edit source/policy, publish decisions, commit or accept code.",

@@ -104,11 +104,13 @@ class TaskStore:
         task = self.read(name)
         allowed = {subject.entity_id for subject in task.subjects}
         images = {(subject.image_sha256, subject.address_space) for subject in task.subjects}
-        discovered, resolved, payloads = {}, set(), []
+        discovered, discovery_events, resolved, routed, payloads = {}, {}, set(), set(), []
         fields = {
             "discovery": {"kind", "discovery_id", "author", "hypothesis", "affects", "evidence"},
             "scope_expanded": {"kind", "author", "subjects", "editable_files", "evidence"},
             "discovery_resolved": {"kind", "discovery_id", "author", "disposition", "source_evidence"},
+            "discovery_routed": {"kind", "author", "discovery_id", "discovery_event_id",
+                                 "target", "subjects", "evidence"},
         }
         for event in self.journal.read("task:" + name):
             payload = event.payload
@@ -130,6 +132,7 @@ class TaskStore:
                 for item in payload["affects"]:
                     entity_id(item)
                 discovered[key] = payload
+                discovery_events[key] = event.event_id
             elif kind == "scope_expanded":
                 if (payload["author"] != task.author or not isinstance(payload["subjects"], list)
                         or not isinstance(payload["editable_files"], list)):
@@ -143,7 +146,7 @@ class TaskStore:
                     allowed.add(subject.entity_id)
                 for item in payload["editable_files"]:
                     relative_path(item)
-            else:
+            elif kind == "discovery_resolved":
                 key = payload["discovery_id"]
                 require_text(key, "discovery id")
                 if key not in discovered or key in resolved or payload["disposition"] not in ("incorporated", "rejected"):
@@ -151,6 +154,14 @@ class TaskStore:
                 if payload["disposition"] == "incorporated" and not set(discovered[key]["affects"]) <= allowed:
                     raise ValueError("discovery was incorporated outside its authorized scope")
                 resolved.add(key)
+            elif kind == "discovery_routed":
+                from .task_routes import validate_route_payload
+                key = payload["discovery_id"]
+                require_text(key, "discovery id")
+                if key not in discovered or key in resolved:
+                    raise ValueError("routing requires a pending discovery")
+                validate_route_payload(payload, task, discovered[key], discovery_events[key], allowed, routed)
+                routed.update((key, subject) for subject in payload["subjects"])
             payloads.append(payload)
         return tuple(payloads)
 
@@ -252,6 +263,8 @@ class TaskStore:
         return {"task_id": name, "decision_revision": len(decisions), "missing_subjects": missing,
                 "editable_files": sorted(files),
                 "pending_discoveries": pending, "scope_expansion_required": expansion,
+                "outgoing_routes": [item for item in decisions if item["kind"] == "discovery_routed"
+                                    and item["discovery_id"] not in resolved],
                 "next_action": ("repair_missing_source_mapping" if missing else
                                 "review_scope_expansion" if expansion else
                                 "evaluate_structural_discoveries" if pending else

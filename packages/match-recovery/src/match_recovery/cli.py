@@ -261,10 +261,18 @@ def _dispatch(args) -> int:
                 task = Task.from_dict(read_json(args.file))
                 output = {"created": store.create(task), "task": task.to_dict(), "verification": "not_measured"}
             else:
+                from .task_routes import target_reference
                 scope, files = store.scope(args.task)
                 output = {**store.status(args.task, scope), "task": store.read(args.task).to_dict(), "decisions": store.decisions(args.task),
+                          "reference": target_reference(store, args.task),
                           "authorized_entities": sorted(scope), "editable_files": sorted(files),
                           "source_verification": "not_measured"}
+        elif args.command == "tasks" and args.action == "route":
+            from .task_routes import route_task
+            decision = read_json(args.file if args.file.is_absolute() else args.root / args.file)
+            target = (args.target_root if args.target_root.is_absolute() else args.root / args.target_root
+                      ) if args.target_root is not None else None
+            output = route_task(args.root, args.task, decision, target_root=target)
         elif args.command == "tasks" and args.action in ("discover", "resolve"):
             store = TaskStore(args.root)
             common = {key: getattr(args, key) for key in ("request_id", "author", "expected_revision")}

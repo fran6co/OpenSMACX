@@ -47,6 +47,32 @@ def test_stale_writer_does_not_overwrite_concurrent_discovery(tmp_path):
     assert [event.sequence for event in journal.read("task")] == [1, 2]
 
 
+def test_pinned_append_detects_a_valid_same_length_history_rewrite(tmp_path):
+    journal = Journal(tmp_path)
+    original = journal.append("task", expected_revision=0, request_id="one", payload={"kind": "open"})
+    alternate = Journal(tmp_path / "alternate")
+    alternate.append("task", expected_revision=0, request_id="one", payload={"kind": "different"})
+    shutil.copy2(alternate.stream_directory("task") / "00000001.json",
+                 journal.stream_directory("task") / "00000001.json")
+    with pytest.raises(ConcurrentUpdate, match="observed head"):
+        journal.append("task", expected_revision=1, expected_head=original.event_id,
+                       request_id="two", payload={"kind": "paused"})
+    assert len(journal.read("task")) == 1
+
+
+def test_pinned_append_and_exact_retry_require_the_current_observed_head(tmp_path):
+    journal = Journal(tmp_path)
+    first = journal.append("task", expected_revision=0, request_id="one", payload={"kind": "open"})
+    second = journal.append("task", expected_revision=1, expected_head=first.event_id,
+                            request_id="two", payload={"kind": "paused"})
+    assert journal.append("task", expected_revision=1, expected_head=second.event_id,
+                          request_id="two", payload=second.payload) == second
+    with pytest.raises(ConcurrentUpdate, match="observed head"):
+        journal.append("task", expected_revision=1, expected_head=first.event_id,
+                       request_id="two", payload=second.payload)
+    assert len(journal.read("task")) == 2
+
+
 def test_concurrent_publishers_produce_one_event(tmp_path):
     def append(index):
         try:

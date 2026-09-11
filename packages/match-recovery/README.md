@@ -2950,6 +2950,73 @@ caller discovery, independent review and native acceptance through installed CLI
 subprocesses. Its reasoning agents are deterministic local doubles, not live-model
 validation or an executable-only Alpha Centauri recovery claim.
 
+### Request help from another task owner
+
+`recover tasks route TASK --file DECISION.json [--target-root CHECKOUT]`
+publishes a typed `discovery_routed` decision in the **originating** task journal.
+Run it at a serial coordinator checkpoint. The explicitly located target must
+already exist and own the routed original identities. No source, target journal,
+task baseline or editing scope is changed. The command requires both checkout
+driver leases and the target journal lease to be free; it never waits for a live
+worker to finish. Relative decision and target paths belong to `--root`.
+
+The decision file is an input, not a new authority ledger. Its durable contents
+live in the originating journal after publication:
+
+```json
+{
+  "request_id": "request-owner-help-1",
+  "expected_revision": 1,
+  "route": {
+    "kind": "discovery_routed",
+    "author": "source-task-coordinator",
+    "discovery_id": "existing-finding-id",
+    "discovery_event_id": "<exact-original-discovery-event-sha256>",
+    "target": {
+      "task_id": "existing-owner-task",
+      "task_sha256": "<immutable-task-digest>",
+      "base_revision": "<original-committed-task-baseline>",
+      "history_head": "<current-owner-task-history-head-or-null>"
+    },
+    "subjects": ["entity-<affected-original-identity>"],
+    "evidence": ["Why this existing owner should investigate this part of the finding"]
+  }
+}
+```
+
+Use the exact `reference` from `recover tasks status OWNER` for `target`;
+`history_head` is JSON null when that task has no decisions. The existing
+`recover history task:TASK` output provides the original discovery event identity.
+Subjects must be nonempty, sorted, unique, affected by that pending finding,
+outside the originating scope, and already owned by the pinned target scope.
+The target must concern the same target image/address space. Visible conflicting
+task owners refuse. No checkout location, compiler output, run transcript or
+acceptance result is written into a route.
+
+A new route requires the exact current owner reference. An exact request retry
+does not append another event; later owner history may extend its pinned prefix,
+but changing its task identity/baseline or replacing that history refuses.
+Another request cannot reroute an already-routed part of the same discovery.
+The original hypothesis, full affected set and pending status remain intact.
+Historical route parsing does not require the owner's checkout to survive.
+
+Native task context and planner task rows expose outgoing and derived incoming
+requests from locally available task histories. The library's
+`task_routes.incoming_routes(store, task, sources=...)` can inspect explicitly
+supplied additional stores; it neither searches for external checkouts nor copies
+their journals. Live owner identity/scope checks still apply. Requests are not
+followed recursively, including when the dependency graph has cycles.
+Explicit replicas of one source task must share immutable identity and compatible
+history. Its newest supplied prefix determines pending requests; an older replica
+cannot resurrect resolved work. Forked histories refuse rather than choosing a side.
+
+This is a **help request, not execution authority**. Planner eligibility and
+external reservations are unchanged. The coordinator provider protocol does not
+yet emit routes, the campaign does not activate a parked owner, and routing does
+not satisfy investigation permissions or resolve the original finding. Complete
+all-findings accounting and fresh acceptance still apply. Automatic dependency
+scheduling and verified cross-owner closure remain separate implementation work.
+
 ### Delegated discovery coordination
 
 `recover run TASK --coordinator recovery/coordinator.json` enables a read-only

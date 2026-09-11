@@ -169,6 +169,14 @@ For a finding involving known outside owners, `investigate_local` can authorize
 useful work only inside the unchanged current task scope. It does not grant Heap,
 Lock or other shared-owner edits, transfer a reservation, or dismiss the dependency.
 All findings remain pending; this is not the missing cross-task handoff mechanism.
+At a serial coordinator checkpoint, `recover tasks route TASK --file DECISION.json
+--target-root OWNER_CHECKOUT` can now record a request to an existing owner. The
+package README defines the exact pinned discovery/task/history schema. The route
+lives only in the originating journal; it preserves the entire finding and does
+not activate the owner's reservation, grant edits or satisfy investigation or
+acceptance prerequisites. Local incoming/outgoing requests appear in native task
+context and planner rows. Automatic provider routing, parked-owner activation and
+cross-owner closure are still unfinished; do not pretend a request unblocks a run.
 An explicitly delegated `expand` may authorize only the repair subset of a known
 discovery footprint. Affected callers do not automatically become editable or
 owned. Follow with `investigate_local` if other affected owners remain outside;

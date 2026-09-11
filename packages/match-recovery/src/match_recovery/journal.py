@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from .locking import file_lock
-from .model import canonical, digest, require_text
+from .model import canonical, digest, require_digest, require_text
 from .records import publish_json, read_json
 
 
@@ -91,11 +91,13 @@ class Journal:
         return tuple(events)
 
     def append(self, stream: str, *, expected_revision: int, request_id: str,
-               payload: dict[str, Any]) -> Event:
+               payload: dict[str, Any], expected_head: str | None = None) -> Event:
         directory = self.stream_directory(stream)
         require_text(request_id, "request id")
         if type(expected_revision) is not int or expected_revision < 0:
             raise ValueError("expected revision must be a nonnegative integer")
+        if expected_head is not None:
+            require_digest(expected_head)
         if not isinstance(payload, dict):
             raise ValueError("event payload must be a JSON object")
         require_text(payload.get("kind"), "event kind")
@@ -103,6 +105,11 @@ class Journal:
         payload_id = digest(payload)
         with file_lock(self.lock_directory / (digest(stream) + ".lock")):
             events = self.read(stream)
+            # Optional observation pin detects a valid same-length rewritten
+            # history, which a revision count alone cannot distinguish. None
+            # retains the ordinary append/retry contract for existing callers.
+            if expected_head is not None and (not events or events[-1].event_id != expected_head):
+                raise ConcurrentUpdate(f"{stream}: history changed since the observed head")
             for event in events:
                 if event.request_id == request_id:
                     if event.payload_id != payload_id:

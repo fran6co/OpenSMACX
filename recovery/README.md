@@ -1102,6 +1102,7 @@ uv run recover tasks obligations example-layout
 uv run recover tasks check-layout example-layout
 uv run recover tasks check-binary example-layout --image /path/to/the/pinned/original.exe --summary
 uv run recover tasks discover --help
+uv run recover tasks route --help
 uv run recover tasks expand --help
 uv run recover tasks resolve --help
 ```
