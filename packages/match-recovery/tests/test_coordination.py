@@ -331,3 +331,183 @@ def test_installed_agent_bridge_runs_a_readonly_coordinator_subprocess(setup):
     assert report["action"] == "expand" and report["published"]
     assert len(store.decisions(task.task_id)) == 2
     assert not report["ready_for_collection"]
+
+
+def test_local_investigation_keeps_cross_owner_finding_and_scope_unchanged(setup):
+    root, store, task, caller, delegation = setup
+    discover(setup)
+    delegation.update(subjects=[], editable_files=[])
+    before = store.decisions(task.task_id), store.scope(task.task_id)
+    source = {path: (root / path).read_bytes() for path in ("code/owner.cc", "code/caller.cc")}
+    head = git(root, "rev-parse", "HEAD")
+
+    def execute(command, root, name, payload):
+        assert payload["subjects"] == [task.subjects[0].entity_id]
+        assert payload["editable_files"] == ["code/owner.cc"]
+        assert payload["pending_discoveries"][0]["affects"] == [caller.entity_id]
+        assert payload["mapped_records"][0]["entity_id"] == caller.entity_id
+        return 0, answer(payload, "investigate_local")
+
+    report = coordinate(root, task.task_id, delegation, execute=execute)
+    assert report["action"] == "investigate_local"
+    assert report["discovery_id"] == "layout" and len(report["snapshot"]) == 64
+    assert not report["published"] and not report["ready_for_collection"]
+    assert (store.decisions(task.task_id), store.scope(task.task_id)) == before
+    status = store.status(task.task_id, store.scope(task.task_id)[0])
+    assert status["scope_expansion_required"] == [caller.entity_id]
+    assert [item["discovery_id"] for item in status["pending_discoveries"]] == ["layout"]
+    assert store.read(task.task_id) == task
+    assert git(root, "rev-parse", "HEAD") == head
+    assert all((root / path).read_bytes() == content for path, content in source.items())
+
+
+@pytest.mark.parametrize("damage", ["unknown", "subjects", "editable_files", "stale", "source_write", "exception_write"])
+def test_local_investigation_does_not_relax_binding_scope_or_freshness_controls(setup, damage):
+    root, store, task, caller, delegation = setup
+    discover(setup, "entity-" + "b" * 64 if damage == "unknown" else None)
+    delegation.update(subjects=[], editable_files=[])
+    before = store.decisions(task.task_id), store.scope(task.task_id)
+
+    def execute(command, root, name, payload):
+        response = answer(payload, "investigate_local")
+        if damage == "subjects": response["subjects"] = [caller.entity_id]
+        if damage == "editable_files": response["editable_files"] = ["code/caller.cc"]
+        if damage == "stale": response["snapshot"] = "f" * 64
+        if damage in ("source_write", "exception_write"):
+            (root / "code/caller.cc").write_text("// preserve unauthorized coordinator work\n")
+        if damage == "exception_write": raise subprocess.TimeoutExpired("coordinator", 1)
+        return 0, response
+
+    with pytest.raises(ValueError):
+        coordinate(root, task.task_id, delegation, execute=execute)
+    assert (store.decisions(task.task_id), store.scope(task.task_id)) == before
+    assert store.read(task.task_id) == task
+    if damage in ("source_write", "exception_write"):
+        assert (root / "code/caller.cc").read_text() == "// preserve unauthorized coordinator work\n"
+
+
+@pytest.mark.parametrize("outcome", ["pending", "no_progress", "outside_edit", "second_deferred"])
+@pytest.mark.parametrize("acceptance_scope", ["change", "full_project"])
+def test_driver_local_investigation_preserves_all_findings_and_cannot_accept(setup, outcome, acceptance_scope):
+    root, store, task, caller, delegation = setup
+    discover(setup)
+    store.discover(task.task_id, request_id="second", author="worker", hypothesis="Owner still needs structural evidence",
+                   affects=[task.subjects[0].entity_id], evidence=["code/owner.cc"], expected_revision=1)
+    delegation.update(subjects=[], editable_files=[], max_decisions=6)
+    decisions, scope = store.decisions(task.task_id), store.scope(task.task_id)
+    config = {"schema_version": 1, "target": task.target,
+              "context": {"argv": ["context"], "timeout": 10},
+              "check": {"argv": ["check"], "timeout": 10},
+              "build": {"argv": ["build"], "timeout": 10},
+              "acceptance_scope": acceptance_scope,
+              "acceptance": {"argv": ["acceptance"], "timeout": 10}}
+    if acceptance_scope == "change":
+        config.update(obligations={"argv": ["inventory"], "timeout": 10},
+                      migration_check={"argv": ["migration"], "timeout": 10})
+    roles = {role: {"author": role, "command": {"argv": [role], "timeout": 10}} for role in ("worker", "reviewer")}
+    calls = []
+
+    def execute(command, root, name, payload):
+        role = command.argv[0]
+        calls.append(role)
+        if role == "coordinate":
+            assert {item["discovery_id"] for item in payload["pending_discoveries"]} == {"layout", "second"}
+            pending = [item for item in payload["pending_discoveries"]
+                       if item["discovery_id"] not in payload.get("investigating", [])]
+            discovery = pending[0]["discovery_id"]
+            action = ("defer" if outcome == "second_deferred" and discovery == "second" else
+                      "investigate_local" if discovery == "layout" else "investigate")
+            return 0, answer(payload, action, discovery_id=discovery)
+        if role == "context": return 0, {}
+        if role == "inventory": return 0, {"obligations": []}
+        if role in ("check", "build"): return 0, {"result": "pass"}
+        assert role == "worker", "Pending cross-owner findings must prevent review and either acceptance route"
+        assert payload["editable_files"] == ["code/owner.cc"]
+        context = payload["context"]
+        assert {item["discovery_id"] for item in context["pending_discoveries"]} == {"layout", "second"}
+        assert {item["action"] for item in context["discovery_investigations"]} == {"investigate_local", "investigate"}
+        assert (store.decisions(task.task_id), store.scope(task.task_id)) == (decisions, scope)
+        if outcome != "no_progress":
+            path = root / ("code/caller.cc" if outcome == "outside_edit" else "code/owner.cc")
+            path.write_text(path.read_text() + "// preserve investigated work\n")
+        return 0, {"discoveries": []}
+
+    def run():
+        return drive(root, task.task_id, config, roles["worker"], iterations=1,
+                     reviewer_configuration=roles["reviewer"], coordinator_configuration=delegation, execute=execute)
+
+    if outcome == "outside_edit":
+        with pytest.raises(ValueError, match="worker exceeded editing scope"):
+            run()
+        assert "preserve investigated work" in (root / "code/caller.cc").read_text()
+    else:
+        report = run()
+        assert not report["ready_for_collection"]
+        expected = {"pending": "evaluate_structural_discoveries", "no_progress": "no_source_progress",
+                    "second_deferred": "coordination_defer"}
+        assert report["stop_reason"] == expected[outcome]
+    assert calls.count("worker") == (0 if outcome == "second_deferred" else 1)
+    assert not {"reviewer", "acceptance", "migration"} & set(calls)
+    assert (store.decisions(task.task_id), store.scope(task.task_id)) == (decisions, scope)
+    assert store.read(task.task_id) == task
+    status = store.status(task.task_id, scope[0])
+    assert status["scope_expansion_required"] == [caller.entity_id]
+    assert len(status["pending_discoveries"]) == 2
+
+
+def test_local_investigation_refuses_source_change_after_authorization(setup, monkeypatch):
+    import match_recovery.coordination as implementation
+    root, store, task, _, delegation = setup
+    discover(setup)
+    delegation.update(subjects=[], editable_files=[])
+    original = implementation.coordinate
+
+    def changed_after_authorization(*args, **kwargs):
+        response = original(*args, **kwargs)
+        path = root / "code/owner.cc"
+        path.write_text(path.read_text() + "// concurrent edit preserved\n")
+        return response
+
+    monkeypatch.setattr(implementation, "coordinate", changed_after_authorization)
+    config = {"schema_version": 1, "target": task.target,
+              "context": {"argv": ["context"], "timeout": 10}, "check": {"argv": ["check"], "timeout": 10}}
+    role = {"author": "worker", "command": {"argv": ["worker"], "timeout": 10}}
+
+    def execute(command, root, name, payload):
+        assert command.argv[0] == "coordinate"
+        return 0, answer(payload, "investigate_local")
+
+    with pytest.raises(ValueError, match="source changed after discovery investigation authorization"):
+        drive(root, task.task_id, config, role, iterations=1, coordinator_configuration=delegation, execute=execute)
+    assert "concurrent edit preserved" in (root / "code/owner.cc").read_text()
+    assert len(store.decisions(task.task_id)) == 1
+
+
+def test_native_bridge_validates_local_action_and_keeps_cross_owner_investigation_visible(setup):
+    root, store, task, caller, delegation = setup
+    discover(setup)
+    store.discover(task.task_id, request_id="second", author="worker", hypothesis="Another local concern",
+                   affects=[task.subjects[0].entity_id], evidence=["code/owner.cc"], expected_revision=1)
+    delegation.update(subjects=[], editable_files=[])
+    script = ("import json,sys; from pathlib import Path; "
+              "p=json.loads(Path(sys.argv[1]).read_text()); s=json.loads(Path(sys.argv[2]).read_text()); sys.stdin.read(); "
+              "assert 'investigate_local' in s['properties']['action']['enum']; "
+              "assert len(p['pending_discoveries']) == 2; "
+              "assert p['pending_discoveries'][0]['affects'][0] not in p['subjects']; "
+              "assert p.get('investigating',[]) in ([],['layout']); "
+              "first=not p.get('investigating'); "
+              "print(json.dumps(dict(snapshot=p['snapshot'],action='investigate_local' if first else 'investigate',"
+              "discovery_id='layout' if first else 'second',subjects=[],editable_files=[],"
+              "evidence=['Investigate authorized owner only; retain external dependency finding'])))")
+    role = {"command": {"argv": [sys.executable, "-c", script, "{request}", "{schema}"], "timeout": 10},
+            "response": "stdout", "instructions": []}
+    (root / "recovery/agents.json").write_text(json.dumps({"schema_version": 1, "artifacts": "build/agents",
+                                                          "worker": role, "reviewer": role, "coordinator": role}))
+    delegation["command"] = {"argv": [sys.executable, "-m", "match_recovery.cli", "agent", "coordinator"], "timeout": 20}
+    decisions, scope = store.decisions(task.task_id), store.scope(task.task_id)
+    first = coordinate(root, task.task_id, delegation)
+    assert first["action"] == "investigate_local" and first["discovery_id"] == "layout" and not first["published"]
+    second = coordinate(root, task.task_id, delegation, investigating=["layout"])
+    assert second["action"] == "investigate" and second["discovery_id"] == "second" and not second["published"]
+    assert (store.decisions(task.task_id), store.scope(task.task_id)) == (decisions, scope)
+    assert store.status(task.task_id, scope[0])["scope_expansion_required"] == [caller.entity_id]

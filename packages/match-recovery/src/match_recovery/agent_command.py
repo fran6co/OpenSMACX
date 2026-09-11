@@ -47,11 +47,13 @@ def _request(root, role, request):
                 or request["subjects"] != sorted(selected) or request["editable_files"] != sorted(editable)):
             raise ValueError("coordinator request does not match current task decisions")
         investigating = request.get("investigating", [])
+        # This selects the next read-only decision, not an editing permission.
+        # coordinate/drive authorize each attempt; investigate_local can retain
+        # a known outside owner in the unchanged full pending-discovery list.
         if (not isinstance(investigating, list) or any(not isinstance(item, str) for item in investigating)
                 or len(set(investigating)) != len(investigating)
-                or not set(investigating) <= {item["discovery_id"] for item in request["pending_discoveries"]
-                                              if set(item["affects"]) <= selected}):
-            raise ValueError("coordinator investigation filter must name pending in-scope discoveries")
+                or not set(investigating) <= {item["discovery_id"] for item in request["pending_discoveries"]}):
+            raise ValueError("coordinator investigation filter must name pending discoveries")
         policy(request["delegation"], task)
         require_digest(request["snapshot"])
         if not isinstance(request["mapped_records"], list) or not isinstance(request["instructions"], list):

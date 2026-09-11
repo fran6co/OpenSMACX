@@ -32,7 +32,7 @@ def response_schema(role):
                                      "of deferral or resumption. Required for every action."}})
     if role == "coordinator":
         return _object({"snapshot": digest,
-                        "action": {"type": "string", "enum": ["expand", "incorporate", "reject", "defer", "investigate", "bind_seed"]},
+                        "action": {"type": "string", "enum": ["expand", "incorporate", "reject", "defer", "investigate", "investigate_local", "bind_seed"]},
                         "discovery_id": text,
                         "subjects": {"type": "array", "items": {"type": "string", "pattern": "^entity-[0-9a-f]{64}$"}},
                         "editable_files": {"type": "array", "items": text}, "evidence": evidence,

@@ -2849,7 +2849,8 @@ the source pin; there is no image-path inference or additional scope grant.
 Requests contain a fresh snapshot token, pending discoveries, current/delegated
 scope and affected source/seed records. Responses contain `snapshot`, `action`,
 `discovery_id`, `subjects`, `editable_files`, `evidence`, and nullable `binding`.
-Actions are `expand`, `incorporate`, `reject`, `defer`, `investigate`, `bind_seed`;
+Actions are `expand`, `incorporate`, `reject`, `defer`, `investigate`,
+`investigate_local`, `bind_seed`;
 only expansion uses nonempty scope arrays. Evidence
 is mandatory. Incorporation requires affected originals already in task scope;
 it records a source interpretation, never a passing proof. Unknown originals,
@@ -2864,6 +2865,15 @@ After source edits or published decisions, authorization must be obtained afresh
 Pending discoveries block all review/acceptance/checkpoint paths even if checks
 pass. Only subsequent evidence-backed incorporation or rejection resolves them.
 Deferral never grants investigation, and verification-only runs cannot request it.
+
+`investigate_local` explicitly authorizes the same bounded, snapshot-bound attempt
+when a finding also names known mapped originals outside the task/delegation.
+Only the existing task identities and editable files are authorized. The coordinator
+must explain useful local work; if only the other owner's work can help, defer.
+This action does not grant outside edits, transfer ownership, classify the dependency
+as nonblocking, or resolve anything. Every finding remains visible and blocks
+acceptance. Unknown original identities still require a separate binding decision.
+Ordinary `investigate` retains its entirely-in-scope requirement.
 
 `bind_seed` requires explicit `seed_bindings` delegation and a `binding` object
 with `entity_id`, `source`, positive `line`, current `source_sha256`, emitted

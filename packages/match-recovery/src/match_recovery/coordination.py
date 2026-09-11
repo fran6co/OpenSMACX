@@ -55,7 +55,7 @@ def validate_response(response, snapshot):
         raise ValueError("invalid coordinator response")
     if response["snapshot"] != snapshot:
         raise ValueError("coordinator response refers to stale source or decisions")
-    if response["action"] not in ("expand", "incorporate", "reject", "defer", "investigate", "bind_seed"):
+    if response["action"] not in ("expand", "incorporate", "reject", "defer", "investigate", "investigate_local", "bind_seed"):
         raise ValueError("unsupported coordinator action")
     require_text(response["discovery_id"], "coordinator discovery")
     for key in ("subjects", "editable_files", "evidence"):
@@ -135,6 +135,7 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
                                 "Expand scope before incorporating a cross-owner discovery.",
                                 "Incorporation means the insight is expressed in source, not that it is correct or accepted.",
                                 "Use investigate to request one bounded worker round for a discovery already inside current scope; it remains unresolved and cannot pass acceptance.",
+                                "Use investigate_local to examine or repair only current task files when a discovery also involves known outside owners. This grants no outside editing, ownership transfer, resolution or acceptance; explain the useful local work in evidence. Defer if only outside work can help.",
                                 "With explicit seed_bindings delegation, bind_seed may map an existing scoped seed identity to a worker-written body in an editable product TU. Supply its fresh source digest/location and evidence-backed symbol; native publication retains the existing original spans and pending finding. Otherwise return binding:null.",
                                 "Choose a pending discovery not listed in investigating; those IDs already have transient authorization for this unchanged round.",
                                 "Defer unknown originals or insufficient evidence; do not hide structural work or reset baselines."]}
@@ -160,7 +161,7 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
     action = response["action"]
     if action != "defer" and not set(discovery["affects"]) <= origins.keys():
         raise ValueError("unknown originals require a separate binding decision; defer this discovery")
-    if action != "defer" and not set(discovery["affects"]) <= selected | set(delegation["subjects"]):
+    if action not in ("defer", "investigate_local") and not set(discovery["affects"]) <= selected | set(delegation["subjects"]):
         raise ValueError("coordinator cannot resolve discoveries outside delegated scope")
     if action == "investigate" and not set(discovery["affects"]) <= selected:
         raise ValueError("expand current task scope before authorizing investigation")
@@ -212,6 +213,7 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
                       source_evidence=evidence, **decision)
     return {"action": action, "published": action in ("expand", "incorporate", "reject", "bind_seed"),
             **({"binding": binding_report} if binding_report is not None else {}),
-            **({"discovery_id": discovery["discovery_id"], "snapshot": request["snapshot"]} if action == "investigate" else {}),
+            **({"discovery_id": discovery["discovery_id"], "snapshot": request["snapshot"]}
+               if action in ("investigate", "investigate_local") else {}),
             "evidence": response["evidence"],
             "ready_for_collection": False, "verification": "not_measured"}

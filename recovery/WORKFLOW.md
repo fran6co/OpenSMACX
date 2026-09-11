@@ -149,6 +149,10 @@ Its empty expansion lists grant no additional scope. The coordinator may request
 remains pending, a worker gets one bounded attempt, then coordination revisits the
 actual source. All pending findings need individual authorization. No acceptance
 or checkpoint may pass while they remain unresolved; deferral is still a stop.
+For a finding involving known outside owners, `investigate_local` can authorize
+useful work only inside the unchanged current task scope. It does not grant Heap,
+Lock or other shared-owner edits, transfer a reservation, or dismiss the dependency.
+All findings remain pending; this is not the missing cross-task handoff mechanism.
 The same policy explicitly permits `bind_seed` for an already-selected seed-only
 identity, after a worker writes its body in an already-editable product TU. The
 native binder preserves existing spans and seed history, inserts an unclaimed

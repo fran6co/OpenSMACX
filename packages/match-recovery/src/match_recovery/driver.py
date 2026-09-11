@@ -417,7 +417,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                     raise ValueError("source changed between discovery investigation authorizations")
                 coordination_feedback = coordinate(root, task_name, coordinator_configuration, execute=execute,
                                                    investigating=investigations)
-                if coordination_feedback["action"] == "investigate":
+                if coordination_feedback["action"] in ("investigate", "investigate_local"):
                     if changes(before_coordination, working_state(root)):
                         raise ValueError("source changed after discovery investigation authorization")
                     investigation_state = before_coordination
@@ -498,6 +498,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                                           **({"checkpoint_feedback": checkpoint_feedback} if checkpoint_feedback else {}),
                                           "instructions": ["Edit only authorized files; never run Git mutations.",
                                                            "Discovery investigation authorizes only this bounded scoped attempt, not incorporation or acceptance. Keep pending findings and report evidence; the coordinator must resolve them against the resulting source.",
+                                                           "An investigate_local decision may mention outside owners, but authorizes editing only the existing task files and identities. Preserve external dependency discoveries; do not repair, adopt, or dismiss the other owner's work.",
                                                            "Report structural discoveries even outside task scope.",
                                                            "Acceptance feedback belongs to its recorded snapshot; use it to investigate, not as current proof after edits.",
                                                            "Unknown acceptance findings require evidence, not speculative matching edits. Repair only authorized source; report missing capabilities or authority as discoveries without changing proof policy.",
