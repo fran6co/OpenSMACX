@@ -93,3 +93,68 @@ def test_measurement_never_reuses_a_previous_invocation_result(project):
     measure(project)
     measure(project)
     assert len(calls(project)) == 2
+
+
+def test_unselected_mapping_still_refuses_a_shared_original_span(project):
+    (project / "seeds/shared.cc").write_text(
+        "// ORIGINAL: 0x00401010 _other 0x00401000-0x00401001\nvoid other() {}\n")
+    report = measure(project, "_f", in_file="engine/family.cc")
+    assert report["result"] == "unknown"
+    assert report["measurements"][0]["verdict"] == "SHARED_TAIL"
+
+
+def test_warm_inventory_reparses_only_selected_hosts_and_never_caches_measurement(project, monkeypatch):
+    from match_recovery.source_inventory import source_snapshot
+    from match_recovery.source import reader
+
+    monkeypatch.setenv("RECOVERY_PARSE_CACHE", "on")
+    (project / "seeds/other.cc").write_text(
+        "// ORIGINAL: 0x00401010 _other 0x00401010-0x00401011\nvoid other() {}\n")
+    source_snapshot(project)  # Populate the existing disposable parse memo.
+    original, parsed = reader._read_text, []
+
+    def observe(text, path):
+        parsed.append(Path(path))
+        return original(text, path)
+
+    monkeypatch.setattr(reader, "_read_text", observe)
+    first = measure(project)
+    assert first["result"] == "pass"
+    assert parsed == [project / "engine/family.cc"]
+    parsed.clear()
+    second = measure(project)
+    assert first == second
+    assert parsed == [project / "engine/family.cc"]
+    assert len(calls(project)) == 2
+
+
+def test_measurement_preserves_replacement_decoding_for_invalid_source_bytes(project):
+    path = project / "engine/family.cc"
+    path.write_bytes(path.read_bytes() + b"\n// provenance: \xff\n")
+    assert measure(project)["result"] == "pass"
+
+
+def test_file_mode_measurement_keeps_crlf_source_and_compiles_the_same_host(project):
+    path = project / "engine/family.cc"
+    text = FIRST.replace("\n", " FILE\n", 1)
+    path.write_bytes(text.encode())
+    before = measure(project, "_f")
+    raw = text.replace("\n", "\r\n").encode()
+    path.write_bytes(raw)
+    after = measure(project, "_f")
+    assert before["result"] == after["result"] == "pass"
+    assert before["measurements"] == after["measurements"]
+    assert path.read_bytes() == raw and len(calls(project)) == 2
+
+
+def test_changed_mapping_cannot_reuse_an_inventory_entry_at_same_timestamp(project):
+    import os
+
+    path = project / "engine/family.cc"
+    before = path.stat()
+    assert measure(project, "_f")["result"] == "pass"
+    path.write_bytes(path.read_bytes().replace(b"_f", b"_g"))
+    os.utime(path, ns=(before.st_atime_ns, before.st_mtime_ns))
+    with pytest.raises(ValueError, match="found 0"):
+        measure(project, "_f")
+    assert len(calls(project)) == 1

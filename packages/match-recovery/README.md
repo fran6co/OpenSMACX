@@ -105,6 +105,13 @@ Duplicate source/seed mappings require an exact host and remain visible as
 alternatives. Imports and unknown targets are not hidden by neighboring labels.
 Incomplete decoding and exhausted `--max-bytes` budgets remain explicit.
 
+Inspection and selected-body measurement reuse the existing content-keyed source
+inventory for selection and global mapping relationships, then parse full source
+records only in selected hosts. All mappings still participate in ambiguity,
+shared-span and caller checks; selected identities must agree with their captured
+source. Normal live-input checks remain mandatory. No measurement result is
+cached or accepted from the inventory.
+
 `recover measure <addresses-or-symbols> --image <original> [--in <source-file>]`
 measures current spellings without publication. Subjects sharing a TU reuse the
 same configured compiler trials. `--jobs` controls TU concurrency, bounded by the

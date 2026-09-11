@@ -99,7 +99,7 @@ class Measurement:
         root_name = os.fspath(root)
         # Root inventories are re-enumerated, so new/shadowing headers invalidate
         # a check too. No dependency narrowing or persistent verdict cache here.
-        for name in (*self.source.roots, *self.input_roots):
+        for name in dict.fromkeys((*self.source.roots, *self.input_roots)):
             directory = self.source.path(root, name)
             for parent, _, names in os.walk(directory):
                 for filename in names:

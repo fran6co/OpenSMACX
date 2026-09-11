@@ -1,9 +1,79 @@
 """Explicit mapped-subject selection shared by diagnostics and publication."""
 
+import base64
+from dataclasses import dataclass
+from pathlib import Path
 import re
 
+from .components import relative_path
 from .model import require_text
+from .source import read_text
 from .source.mangled import identifier, qualified_name
+
+
+@dataclass(frozen=True)
+class SnapshotMapping:
+    """Selection/edge metadata, deliberately not a parsed source body or verdict."""
+
+    address: int
+    path: Path
+    line: int
+    name: str
+    symbol: str
+    image_spans: tuple[tuple[int, int], ...]
+
+    @property
+    def address_hex(self):
+        return f"0x{self.address:08X}"
+
+
+def snapshot_mappings(root, snapshot):
+    """Project every snapshot mapping without reparsing its source text.
+
+    The source snapshot owns inventory and parse-cache validation. Consumers
+    still own their normal current-input checks before returning or compiling.
+    """
+    records, hosts = [], {}
+    for fact in snapshot["records"]:
+        name = fact["path"]
+        relative_path(name)
+        if name not in snapshot["files"]:
+            raise ValueError("indexed source mapping has no captured host")
+        if name not in hosts:
+            # The native reader canonicalizes its record path. Preserve its
+            # alias ambiguity semantics without reopening source contents.
+            hosts[name] = (root / name).resolve()
+        records.append(SnapshotMapping(fact["origin"]["address"], hosts[name], fact["line"],
+                                       fact["catalogued_symbol"], fact["emitted_symbol_hint"],
+                                       tuple(tuple(pair) for pair in fact["spans"])))
+    return records
+
+
+def selected_source_records(root, snapshot, selected_mappings):
+    """Parse selected hosts once from captured bytes; reject index/body drift.
+
+    UTF-8 replacement matches source_inventory and the source reader. A caller
+    requiring stricter input decoding must check that separately. No source file
+    is reopened and no partially populated reader record is manufactured.
+    """
+    indexed = {(row.path, row.line): row for row in snapshot_mappings(root, snapshot)}
+    parsed, selected = {}, []
+    for mapping in selected_mappings:
+        key = mapping.path, mapping.line
+        if indexed.get(key) != mapping:
+            raise ValueError("selected source mapping differs from its snapshot index")
+        if mapping.path not in parsed:
+            name = mapping.path.relative_to(root).as_posix()
+            if name not in snapshot["files"]:
+                raise ValueError("selected source mapping has no captured canonical host")
+            text = base64.b64decode(snapshot["files"][name]["content_base64"]).decode("utf-8", errors="replace")
+            parsed[mapping.path] = {row.line: row for row in read_text(text, mapping.path)}
+        record = parsed[mapping.path].get(mapping.line)
+        if record is None or SnapshotMapping(record.address, record.path, record.line, record.name,
+                                             record.symbol or record.name, record.image_spans) != mapping:
+            raise ValueError("selected source mapping differs from freshly parsed captured source")
+        selected.append(record)
+    return selected
 
 
 def select_records(records, targets, host, symbol_format):

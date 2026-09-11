@@ -8,10 +8,9 @@ from pathlib import Path
 
 from .model import Span, digest
 from .pe_coff import PeImage
-from .source import read_text
 from .source_config import SourceConfiguration
 from .source_inventory import source_snapshot, assert_snapshot_current
-from .source_selection import select_records
+from .source_selection import select_records, snapshot_mappings, selected_source_records
 
 
 def inspect_source(root: Path, targets, *, in_file=None, image=None, callers=False, max_bytes=4 * 1024 * 1024):
@@ -31,10 +30,13 @@ def inspect_source(root: Path, targets, *, in_file=None, image=None, callers=Fal
     implementation = {name: sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
                       for name in ("inspection.py", "source_selection.py")}
     source = SourceConfiguration.from_dict(snapshot["source_configuration"])
-    records = [row for name, item in snapshot["files"].items()
-               for row in read_text(base64.b64decode(item["content_base64"]).decode("utf-8"), root / name)]
+    # Inspection has always required lossless UTF-8 throughout its source
+    # inventory. Validate that contract without re-extracting every body.
+    for item in snapshot["files"].values():
+        base64.b64decode(item["content_base64"]).decode("utf-8")
+    records = snapshot_mappings(root, snapshot)
     host = source.path(root, in_file) if in_file is not None else None
-    selected = select_records(records, targets, host, source.symbol_format)
+    selected = selected_source_records(root, snapshot, select_records(records, targets, host, source.symbol_format))
     facts = {(row["path"], row["line"]): row for row in snapshot["records"]}
     by_address, owners = defaultdict(list), defaultdict(list)
     for record in records:

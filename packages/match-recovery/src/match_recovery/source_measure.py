@@ -14,12 +14,12 @@ from pathlib import Path
 from .compiler import Compiler
 from .measurement import Measurement
 from .model import digest
-from .source import State, read_file
+from .source import State
 from .source.asm import AsmComparison, compare_unit, shared_spans
 from .source.model import Tier
 from .source_history import git
-from .source_inventory import image_pin
-from .source_selection import select_records
+from .source_inventory import image_pin, source_snapshot
+from .source_selection import select_records, snapshot_mappings, selected_source_records
 
 
 def _unit(job):
@@ -56,9 +56,13 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1):
         return snapshot
 
     before = inputs()
-    records = [row for path in settings.source.files(root) for row in read_file(path)]
+    # Reuse the content-keyed inventory's global mapping facts. Only selected
+    # hosts need complete body/lesson parsing; shared spans still use EVERY
+    # mapping, including unselected seed alternatives.
+    snapshot = source_snapshot(root, allow_empty=True)
+    records = snapshot_mappings(root, snapshot)
     host = settings.source.path(root, in_file) if in_file is not None else None
-    selected = select_records(records, targets, host, settings.source.symbol_format)
+    selected = selected_source_records(root, snapshot, select_records(records, targets, host, settings.source.symbol_format))
     groups, unavailable = defaultdict(list), []
     for record in selected:
         if record.path.suffix not in settings.unit_extensions:

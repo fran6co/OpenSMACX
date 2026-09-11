@@ -178,3 +178,80 @@ def test_image_change_during_inspection_is_refused(project, monkeypatch):
     monkeypatch.setattr(module, "assert_snapshot_current", changed)
     with pytest.raises(ValueError, match="original image changed"):
         inspect(project, image=Path("original/input.exe"))
+
+
+def test_warm_inspection_parses_only_selected_host_but_covers_all_caller_and_owner_mappings(project, monkeypatch):
+    import match_recovery.source.reader as reader
+    import match_recovery.source_selection as selection
+    from match_recovery.source_inventory import source_snapshot
+    monkeypatch.delenv("RECOVERY_PARSE_CACHE", raising=False)
+    image(project, b"\xe8\x01\0\0\0\xc3\xc3")
+    callee = "// ORIGINAL: 0x00401006 _callee 0x00401006-0x00401007\nvoid callee() {}\n"
+    (project / "engine/family.cc").write_text(callee)
+    (project / "engine/caller.cc").write_text(FIRST.replace("0x00401001", "0x00401006"))
+    (project / "seeds/callee.cc").write_text(callee)
+    source_snapshot(project)  # Existing content-keyed parse cache, not a verdict cache.
+    original, paths = reader.read_text, []
+
+    def counted(text, path):
+        paths.append(path)
+        return original(text, path)
+
+    monkeypatch.setattr(reader, "read_text", counted)
+    monkeypatch.setattr(selection, "read_text", counted)
+    report = inspect(project, "_callee", in_file="engine/family.cc", image=Path("original/input.exe"), callers=True)
+    assert paths == [project / "engine/family.cc"]
+    caller, = report["callers"]["edges"]
+    assert caller["caller"]["path"] == "engine/caller.cc"
+    subject, = report["subjects"]
+    assert subject["alternatives"][0]["path"] == "seeds/callee.cc"
+    assert {row["path"] for row in subject["original"]["spans"][0]["mapped_owners"]} == {
+        "engine/family.cc", "seeds/callee.cc"}
+    assert {row["path"] for row in caller["mapped_targets"]} == {"engine/family.cc", "seeds/callee.cc"}
+    assert report["result"] == "pass" and not calls(project)
+
+
+@pytest.mark.parametrize("host", ["engine/family.cc", "engine/types.hpp"])
+def test_inspection_retains_strict_utf8_refusal_in_selected_and_unselected_files(project, host):
+    path = project / host
+    path.write_bytes(path.read_bytes() + b"// invalid UTF-8: \xff\n")
+    with pytest.raises(UnicodeDecodeError):
+        inspect(project)
+
+
+def test_unselected_source_change_during_selected_parse_still_refuses_inspection(project, monkeypatch):
+    import match_recovery.source_selection as module
+    actual = module.read_text
+
+    def raced(text, path):
+        rows = actual(text, path)
+        (project / "engine/types.hpp").write_text("struct Changed {};\n")
+        return rows
+
+    monkeypatch.setattr(module, "read_text", raced)
+    with pytest.raises(ValueError, match="source changed"):
+        inspect(project)
+
+
+def test_outward_source_alias_still_refuses_inspection(project, tmp_path):
+    outside = tmp_path.parent / (tmp_path.name + "-outside.cc")
+    outside.write_text(FIRST)
+    (project / "engine/alias.cc").symlink_to(outside)
+    with pytest.raises(ValueError, match="outside the worktree"):
+        inspect(project)
+
+
+@pytest.mark.parametrize("host,count", [(None, 2), ("engine/family.cc", 2), ("engine/alias.cc", 0)])
+def test_internal_alias_keeps_reader_canonical_path_selection_ambiguity(project, host, count):
+    (project / "engine/alias.cc").symlink_to("family.cc")
+    with pytest.raises(ValueError, match=f"found {count}"):
+        inspect(project, in_file=host)
+
+
+def test_file_mode_inspection_preserves_captured_newlines_in_source_region(project):
+    from match_recovery.source import read_text
+    path = project / "engine/family.cc"
+    text = "// ORIGINAL: 0x00401000 _f 0x00401000-0x00401001 FILE\r\nvoid f() {}\r\n"
+    path.write_bytes(text.encode())
+    report = inspect(project, "0x00401000")
+    assert report["subjects"][0]["source_region"] == read_text(text, path)[0].region == text
