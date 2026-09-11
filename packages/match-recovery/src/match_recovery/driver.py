@@ -140,7 +140,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
           retained_scope_configuration: dict | None = None,
           checkpoint_configuration: dict | None = None,
           integration_configuration: dict | None = None, verify_only: bool = False, execute=invoke,
-          _held_lease=None, _collection=None) -> dict:
+          _held_lease=None, _collection=None, _coordination_budget=None) -> dict:
     """Recompute context/checks, edit, recheck, repeat; discoveries stop for review."""
     if type(iterations) is not int or not 1 <= iterations <= 100:
         raise ValueError("iterations must be 1..100")
@@ -148,6 +148,8 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
         raise ValueError("verify_only must be boolean")
     if verify_only and coordinator_configuration is not None:
         raise ValueError("verification-only runs cannot delegate task or scope changes")
+    if _coordination_budget is not None and coordinator_configuration is None:
+        raise ValueError("a shared decision budget requires central coordination")
     if investigation_configuration is not None and (
             iterations != 1 or coordinator_configuration is not None or verify_only
             or integration_configuration is not None or _collection is not None):
@@ -206,10 +208,13 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             publication = authorization(checkpoint_configuration, task.author, worker_configuration["author"],
                                         reviewer_configuration["author"] if reviewer_configuration else None)
             publication_branch = preflight(root)
-        coordination_count, coordination_feedback = 0, None
+        coordination_feedback = None
         if coordinator_configuration is not None:
-            from .coordination import coordinate, policy as coordination_policy
+            from .coordination import (coordinate, decision_budget, rejection_feedback, rejection_key,
+                                       policy as coordination_policy)
+            from .investigation_round import epoch as coordination_epoch
             coordination_policy(coordinator_configuration, task)
+            coordination_budget = decision_budget(coordinator_configuration, _coordination_budget)
         if coordinator_configuration is not None or investigation_configuration is not None:
             if task.author in {worker_configuration["author"],
                               reviewer_configuration["author"] if reviewer_configuration else None}:
@@ -302,7 +307,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
         def finish(reason, rounds, check=None, *, current=True):
             ownership_current()
             return {"task_id": task_name, "stop_reason": reason, "worker_rounds": rounds,
-                    **({"coordinator_decisions": coordination_count, "coordination": coordination_feedback}
+                    **({"coordinator_decisions": coordination_budget.used, "coordination": coordination_feedback}
                        if coordinator_configuration is not None else {}),
                     "check": check, "check_is_current": check is not None and current,
                     **({"acceptance_feedback": acceptance_feedback} if acceptance_feedback else {}),
@@ -475,16 +480,27 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             state = store.status(task_name, selected)
             investigations = initial_investigations if round_index == 0 else {}
             investigation_state = initial_investigation_state if round_index == 0 else None
+            previous_rejection, rejected = None, set()
             while (any(item["discovery_id"] not in investigations for item in state["pending_discoveries"])
                    and coordinator_configuration is not None):
-                if coordination_count == coordinator_configuration["max_decisions"]:
+                if not coordination_budget.remaining:
                     return finish("coordination_budget_exhausted", round_index)
-                coordination_count += 1
                 before_coordination = working_state(root)
+                before_epoch = coordination_epoch(root, task_name)
                 if investigations and changes(investigation_state, before_coordination):
                     raise ValueError("source changed between discovery investigation authorizations")
                 coordination_feedback = coordinate(root, task_name, coordinator_configuration, execute=execute,
-                                                   investigating=investigations, diagnostic_configuration=configuration)
+                                                   investigating=investigations, diagnostic_configuration=configuration,
+                                                   previous_rejection=previous_rejection, _budget=coordination_budget)
+                if coordination_feedback["action"] == "proposal_rejected":
+                    previous_rejection = rejection_feedback(root, task_name, coordinator_configuration,
+                                                           coordination_feedback, epoch_before=before_epoch)
+                    key = rejection_key(coordination_feedback)
+                    if key in rejected or not coordination_budget.remaining:
+                        return finish("coordination_proposal_rejected", round_index)
+                    rejected.add(key)
+                    continue
+                previous_rejection, rejected = None, set()
                 if coordination_feedback["action"] in ("investigate", "investigate_local"):
                     if changes(before_coordination, working_state(root)):
                         raise ValueError("source changed after discovery investigation authorization")

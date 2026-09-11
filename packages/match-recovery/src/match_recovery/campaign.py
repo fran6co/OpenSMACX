@@ -272,7 +272,7 @@ def _authorize_runtime(root, directory, configuration, profiles, authorization, 
 
 
 def _resume_round(root, plan, profiles, directory, number, revision, *, execute, fresh, announce, lease,
-                  assignments=None, scope_reservations=()):
+                  assignments=None, scope_reservations=(), coordination_budgets=None):
     """Plan stopped-worker investigations centrally, then dispatch disjoint work.
 
     Original assignments remain immutable. Grants expire on any source/decision
@@ -305,7 +305,8 @@ def _resume_round(root, plan, profiles, directory, number, revision, *, execute,
                         fresh()
                 try:
                     permission = authorize(child, name, _scoped_coordinator(root, profiles["coordinator"], name, plan["jobs"]),
-                                           execute=decide, diagnostic_configuration=profiles["driver"])
+                                           execute=decide, diagnostic_configuration=profiles["driver"],
+                                           _budget=coordination_budgets[name] if coordination_budgets is not None else None)
                 except SerialCoordinationRequired as error:
                     decisions.append({"task": name, "status": "serial_coordination_required", "reason": str(error)})
                     continue
@@ -570,6 +571,9 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
                     batch["pending"].append({"task": name, "reason": "compiler_preparation_failed", "worktree": str(path)})
                     return finish("preparation_required")
                 active_jobs.append(job)
+            from .coordination import DecisionBudget
+            coordination_budgets = ({job["task"]: DecisionBudget(profiles["coordinator"]["max_decisions"])
+                                     for job in active_jobs} if "coordinator" in profiles else {})
             if not resuming:
                 announce("dispatch", batch=number, tasks=selected)
                 fresh_policy()
@@ -586,7 +590,8 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
                     execute=execute, fresh=fresh_policy, announce=announce, lease=lease,
                     assignments=[{"task": job["task"], "root": job["root"], "branch": "refs/heads/" + branch}
                                  for job, branch in zip(choice["plan"]["jobs"], choice["branches"], strict=True)],
-                    scope_reservations=[{"root": row["path"], "tasks": row["tasks"]} for row in reserved.records])
+                    scope_reservations=[{"root": row["path"], "tasks": row["tasks"]} for row in reserved.records],
+                    coordination_budgets=coordination_budgets)
                 batch["investigation_planning"] = decisions
                 if batch["dispatch"] is not None and batch["dispatch"]["coordinator_changed"]:
                     return finish("coordinator_changed")
@@ -621,11 +626,12 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
                         repaired = drive(child, name, profiles["driver"], profiles["worker"], iterations=configuration["iterations"],
                                          reviewer_configuration=profiles["reviewer"], coordinator_configuration=_scoped_coordinator(
                                              root, profiles.get("coordinator"), name, plan["jobs"]),
-                                         migration_configuration=profiles.get("migration"), checkpoint_configuration=profiles["checkpoint"], execute=coordinated_execute)
+                                         migration_configuration=profiles.get("migration"), checkpoint_configuration=profiles["checkpoint"],
+                                         execute=coordinated_execute, _coordination_budget=coordination_budgets.get(name))
                     batch.setdefault("coordination", []).append(repaired)
-                    if repaired["stop_reason"] == "coordination_proposal_rejected":
+                    if repaired["stop_reason"] in ("coordination_proposal_rejected", "coordination_budget_exhausted"):
                         batch["pending"].append({"task": name, "worktree": str(child),
-                                                 "reason": "coordination_proposal_rejected",
+                                                 "reason": repaired["stop_reason"],
                                                  "coordination": repaired["coordination"]})
                         continue  # Keep even clean unresolved workers; no retirement or integration.
                 incoming = git(child, "rev-parse", "HEAD").decode().strip()

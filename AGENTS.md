@@ -160,6 +160,10 @@ Retained expanded scopes need separate fresh one-use admission against original
 assignment/history and all current ownership, without copying journals or resetting
 baselines. See the package README for `run --investigation` and
 `run --retained-scope`; do not replay grants after interruption.
+Central coordination can correct pure rejected proposals using fresh diagnostics
+and derived scope facts, within one per-task provider-call allowance shared across
+preplanning and serial fallback. Repeated refusals/exhaustion preserve pending
+work; correction never substitutes local work for an outside-owner dependency.
 `integrate publish --resume` freshly verifies an already transferred candidate
 with its original preservation base.
 Live leases, quarantine and partial Git/index operations still refuse. Moved pending

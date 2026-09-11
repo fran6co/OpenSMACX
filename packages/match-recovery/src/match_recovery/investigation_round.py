@@ -9,7 +9,8 @@ from pathlib import Path
 import re
 import uuid
 
-from .coordination import coordinate, policy, validate_response
+from .coordination import (coordinate, decision_budget, policy, rejection_feedback,
+                           rejection_key, validate_response)
 from .locking import file_lock
 from .model import digest, require_digest
 from .records import publish_json
@@ -29,27 +30,39 @@ def epoch(root, name):
                    **({"framework_runtime": state["framework_runtime"]} if "framework_runtime" in state else {})})
 
 
-def authorize(root, task_name, configuration, *, execute=None, _held_lease=None, diagnostic_configuration=None):
+def authorize(root, task_name, configuration, *, execute=None, _held_lease=None, diagnostic_configuration=None,
+              _budget=None):
     """Gather read-only decisions for all findings while the worker is stopped."""
     root = Path(root).resolve()
     with file_lock(root / "build/recovery/driver.lock", timeout=0, held=_held_lease):
         store = TaskStore(root)
         task = store.read(task_name)
         policy(configuration, task)
+        budget = decision_budget(configuration, _budget)
         pending = store.status(task_name, store.scope(task_name)[0])["pending_discoveries"]
         if not pending:
             return {"status": "no_pending"}
         before = epoch(root, task_name)
         decisions = []
-        for _ in pending:
-            if len(decisions) >= configuration["max_decisions"]:
+        previous_rejection, rejected = None, set()
+        while len(decisions) < len(pending):
+            if not budget.remaining:
                 return {"status": "deferred", "decision": {"action": "budget_exhausted"}}
             decision = coordinate(root, task_name, configuration, execute=execute,
                                   investigating=[item["discovery_id"] for item in decisions],
                                   diagnostic_configuration=diagnostic_configuration,
+                                  previous_rejection=previous_rejection, _budget=budget,
                                   allowed_actions=("investigate", "investigate_local", "defer"))
             if epoch(root, task_name) != before:
                 raise ValueError("source or decisions changed during investigation planning")
+            if decision["action"] == "proposal_rejected":
+                previous_rejection = rejection_feedback(root, task_name, configuration, decision, epoch_before=before)
+                key = rejection_key(decision)
+                if key in rejected or not budget.remaining:
+                    return {"status": "deferred", "decision": decision}
+                rejected.add(key)
+                continue
+            previous_rejection, rejected = None, set()
             if decision["action"] not in ("investigate", "investigate_local"):
                 return {"status": "deferred", "decision": decision}
             decisions.append(decision)

@@ -254,10 +254,16 @@ Coordinator publication becomes
 the next worker's baseline; this guard is not a new ledger or recovery acceptance.
 
 A well-formed coordinator proposal that exceeds delegated/current scope or adds
-no scope progress stops that task with `coordination_proposal_rejected`. Its
-findings and checkout remain pending for fresh replanning; the campaign can
-continue unrelated tasks, without cleaning or integrating the refused checkout.
-The attempt consumes the existing decision budget and is not automatically retried.
+no scope progress returns native `proposal_rejected` feedback. The coordinator
+may correct that proposal against unchanged source/decisions/delegation, with
+fresh diagnostics and derived per-finding scope facts. It must choose the next
+action explicitly: local investigation is not a substitute for needed outside work.
+Every coordinator provider invocation consumes the same per-task decision budget,
+including rejected proposals and restricted-preplanning to serial handoffs.
+Repeating the same discovery/action/refusal reason, or exhausting the allowance,
+stops correction. Findings and checkouts remain pending, without cleanup or
+integration; unrelated tasks can continue. No source annotations or task events
+are written for rejected proposals or their transient correction feedback.
 Malformed responses, stale evidence, unauthorized edits and native publication
 failures still refuse execution; they are not converted into scheduling outcomes.
 

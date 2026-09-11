@@ -32,10 +32,10 @@ def _request(root, role, request):
         validate_request(request)
         return None, None, frozenset()
     if role == "coordinator":
-        from .coordination import policy
+        from .coordination import decision_facts, policy, validate_rejection_feedback
         fields = {"task", "decision_revision", "pending_discoveries", "subjects", "editable_files",
-                  "delegation", "mapped_records", "instructions", "snapshot"}
-        if not isinstance(request, dict) or not fields <= set(request) or set(request) - fields - {"investigating", "allowed_actions", "diagnostics"}:
+                  "delegation", "mapped_records", "instructions", "snapshot", "decision_facts"}
+        if not isinstance(request, dict) or not fields <= set(request) or set(request) - fields - {"investigating", "allowed_actions", "diagnostics", "previous_rejection"}:
             raise ValueError("invalid coordinator agent request fields")
         task = Task.from_dict(request["task"])
         store = TaskStore(root)
@@ -61,6 +61,13 @@ def _request(root, role, request):
                     or len(set(actions)) != len(actions)
                     or not set(actions) <= {"investigate", "investigate_local", "defer"}):
                 raise ValueError("invalid read-only coordinator action boundary")
+        from .source_inventory import source_snapshot
+        facts = decision_facts(source_snapshot(root), selected, editable, request["delegation"],
+                               request["pending_discoveries"], request.get("allowed_actions"))
+        if request["decision_facts"] != facts:
+            raise ValueError("coordinator action facts disagree with current source, scope or delegation")
+        if "previous_rejection" in request:
+            validate_rejection_feedback(root, task.task_id, request["delegation"], request["previous_rejection"])
         require_digest(request["snapshot"])
         if "diagnostics" in request:
             from .coordination_diagnostics import validate

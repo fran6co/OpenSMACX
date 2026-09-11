@@ -3035,14 +3035,39 @@ malformed declared source provider is an error, not an implicit opt-out.
 Pure coordinator proposal-scope failures return an internal `proposal_rejected`
 outcome after freshness validation, with the proposed action, bound snapshot,
 discovery identity, reason code and feedback. This is not a provider-selectable
-action or permission to retry. It consumes the existing decision attempt; the
-driver stops the task, retaining every discovery and source edit. Campaigns leave
-that worker pending without cleanup/integration and can continue unrelated work.
+action or additional authority. The driver and central investigation planner may
+request a corrected proposal within the existing allowance, supplying optional
+`previous_rejection` feedback bound to the original pre-call source/task/Git/runtime
+epoch and delegation digest. Each retry collects fresh configured diagnostics.
+Changed inputs invalidate the feedback before another provider call. Successful
+decisions clear it; repeated discovery/action/refusal-reason combinations or budget
+exhaustion stop correction, retaining every discovery and source edit. Campaigns
+leave refused/exhausted workers pending without cleanup/integration and can continue
+unrelated work. Feedback and counters are transient, not new task journal events.
 Covered refusals are outside-delegation resolution/investigation, investigation
 or resolution before current-scope expansion, expansion beyond explicit delegation,
 and expansion without progress. Invalid responses, stale inputs, mutations,
 unknown original identities and native writer failures remain fatal. Restricted
-preplanning still routes publishing proposals to fresh serial coordination.
+preplanning validates proposal legality before routing valid publishing proposals
+to fresh serial coordination; no writer runs in the restricted phase.
+
+Coordinator requests include native `decision_facts` for every pending finding:
+currently owned identities, known delegated repair subsets, outside-delegation
+identities, unknown originals, candidate delegated files and conditional action
+routes. The native agent bridge recomputes these facts. They are constraints,
+not evidence that a repair, expansion or resolution is justified. In particular,
+`conditional_local_work` still requires useful work in existing scope; the provider
+must defer if only outside-owner work can help.
+
+One process-local `DecisionBudget` per task and campaign batch attempt spans
+restricted investigation preplanning and subsequent serial coordination. It is
+charged immediately before each configured coordinator provider invocation,
+including invalid/unavailable proposals and serial handoffs, but not diagnostics.
+No parallel child receives coordinator authority or a serialized budget. Standalone
+driver/planner invocations create their own bounded allowance; a fresh explicit
+campaign resume starts a fresh attempt. Profiles, grants, manifests and baselines
+are not rewritten to carry a remaining count. Exhaustion never establishes progress
+or permits retirement of an unresolved clean worker.
 
 `investigate` requests one bounded worker attempt for a pending discovery entirely
 inside current scope. It publishes no resolution or acceptance: its snapshot-bound

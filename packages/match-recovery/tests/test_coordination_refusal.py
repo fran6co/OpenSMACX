@@ -48,7 +48,7 @@ def test_scope_proposal_refusal_preserves_full_pending_finding_and_all_authority
 
 
 @pytest.mark.parametrize("budget", [1, 5])
-def test_driver_charges_one_decision_without_retry_worker_review_or_acceptance(setup, budget):
+def test_driver_charges_bounded_corrections_without_worker_review_or_acceptance(setup, budget):
     root, store, task, caller, delegation = setup
     discover(setup)
     delegation.update(subjects=[], max_decisions=budget)
@@ -66,9 +66,10 @@ def test_driver_charges_one_decision_without_retry_worker_review_or_acceptance(s
     report = drive(root, task.task_id, configuration, roles["worker"], reviewer_configuration=roles["reviewer"],
                    coordinator_configuration=delegation, execute=execute, iterations=3)
     assert report["stop_reason"] == "coordination_proposal_rejected"
-    assert report["coordinator_decisions"] == 1 and report["worker_rounds"] == 0
+    attempts = min(budget, 2)  # An equivalent second rejection stops this attempt.
+    assert report["coordinator_decisions"] == attempts and report["worker_rounds"] == 0
     assert report["coordination"]["reason_code"] == "outside_delegated_scope"
-    assert not report["ready_for_collection"] and calls == ["context", "check", "coordinate"]
+    assert not report["ready_for_collection"] and calls == ["context", "check", "coordinate"] * attempts
     assert working_state(root) == before and len(store.decisions(task.task_id)) == 1
 
 

@@ -148,8 +148,17 @@ def test_read_only_grant_authorization_rejects_publishing_actions_before_journal
     root, store, task, _, delegation = setup
     discover(setup)
     before, scope = store.decisions(task.task_id), store.scope(task.task_id)
-    with pytest.raises(ValueError):
-        authorize(root, task.task_id, delegation, execute=lambda *args: (0, answer(args[-1], action)))
+    if action == "expand":
+        # This valid publishing proposal still requires serial coordination.
+        with pytest.raises(ValueError):
+            authorize(root, task.task_id, delegation, execute=lambda *args: (0, answer(args[-1], action)))
+    else:
+        # Whole-finding resolution is not legal before scope expansion, even
+        # in a restricted phase; bounded correction cannot publish it either.
+        result = authorize(root, task.task_id, delegation, execute=lambda *args: (0, answer(args[-1], action)))
+        assert result["status"] == "deferred" and "authorization" not in result
+        assert result["decision"]["action"] == "proposal_rejected"
+        assert result["decision"]["reason_code"] == "resolution_requires_expansion"
     assert (store.decisions(task.task_id), store.scope(task.task_id)) == (before, scope)
 
 

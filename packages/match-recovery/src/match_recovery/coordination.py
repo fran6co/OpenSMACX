@@ -22,6 +22,105 @@ class SerialCoordinationRequired(ValueError):
     """A read-only planning phase cannot publish this proposed decision."""
 
 
+class DecisionBudget:
+    """Trusted, process-local allowance shared by central planning phases."""
+
+    def __init__(self, limit):
+        if type(limit) is not int or not 1 <= limit <= 100:
+            raise ValueError("coordinator decision budget must be 1..100")
+        self.limit, self.used = limit, 0
+
+    @property
+    def remaining(self):
+        return self.limit - self.used
+
+    def charge(self):
+        if self.remaining <= 0:
+            raise ValueError("coordinator decision budget exhausted")
+        self.used += 1
+
+
+def decision_budget(configuration, value=None):
+    result = DecisionBudget(configuration["max_decisions"]) if value is None else value
+    if (not isinstance(result, DecisionBudget) or result.limit != configuration["max_decisions"]
+            or type(result.used) is not int or not 0 <= result.used <= result.limit):
+        raise ValueError("shared coordinator budget differs from delegated allowance")
+    return result
+
+
+def rejection_key(report):
+    return tuple(report[key] for key in ("discovery_id", "proposed_action", "reason_code"))
+
+
+def validate_rejection_feedback(root, task_name, configuration, value):
+    from .investigation_round import epoch
+    fields = {"action", "published", "discovery_id", "snapshot", "proposed_action",
+              "reason_code", "feedback", "ready_for_collection", "verification"}
+    reasons = {"outside_delegated_scope": {"investigate", "incorporate", "reject", "bind_seed"},
+               "investigation_requires_expansion": {"investigate"},
+               "resolution_requires_expansion": {"incorporate", "reject"},
+               "expansion_exceeds_delegation": {"expand"}, "expansion_no_progress": {"expand"}}
+    if not isinstance(value, dict) or set(value) != {"epoch", "delegation_sha256", "refusal"}:
+        raise ValueError("invalid coordinator rejection feedback")
+    report = value["refusal"]
+    if (not isinstance(report, dict) or set(report) != fields or report["action"] != "proposal_rejected"
+            or report["published"] is not False or report["ready_for_collection"] is not False
+            or report["verification"] != "not_measured" or not isinstance(report["reason_code"], str)
+            or report["reason_code"] not in reasons or not isinstance(report["proposed_action"], str)
+            or report["proposed_action"] not in reasons[report["reason_code"]]):
+        raise ValueError("feedback must be a pure unpublished coordinator proposal refusal")
+    for key in ("discovery_id", "feedback"):
+        require_text(report[key], "coordinator rejection " + key)
+    for fingerprint in (value["epoch"], value["delegation_sha256"], report["snapshot"]):
+        require_digest(fingerprint)
+    if value["delegation_sha256"] != digest(configuration) or value["epoch"] != epoch(root, task_name):
+        raise ValueError("stale coordinator rejection feedback; source, decisions, runtime or delegation changed")
+    store = TaskStore(root)
+    pending = store.status(task_name, store.scope(task_name)[0])["pending_discoveries"]
+    if report["discovery_id"] not in {item["discovery_id"] for item in pending}:
+        raise ValueError("rejection feedback names a discovery that is not pending")
+
+
+def rejection_feedback(root, task_name, configuration, report, *, epoch_before):
+    """Bind a native refusal to the state captured BEFORE its provider call."""
+    result = {"epoch": epoch_before, "delegation_sha256": digest(configuration), "refusal": report}
+    validate_rejection_feedback(root, task_name, configuration, result)
+    return result
+
+
+def decision_facts(source, selected, editable, delegation, pending, allowed_actions=None):
+    """Derived proposal constraints, not repair evidence or editing authority."""
+    config = SourceConfiguration.from_dict(source["source_configuration"])
+    known = {row["entity_id"] for row in source["records"]}
+    seeds = known - {row["entity_id"] for row in source["records"] if not config.is_seed(row["path"])}
+    files = (set(delegation["editable_files"]) & set(source["files"])) - set(editable) - {config.image_pin}
+    results = []
+    for finding in pending:
+        affected = set(finding["affects"])
+        unknown = affected - known
+        repairs = (affected & known & set(delegation["subjects"])) - set(selected)
+        whole = not unknown and affected <= set(selected)
+        central = "serial_required" if allowed_actions is not None else "central"
+        results.append({"discovery_id": finding["discovery_id"],
+                        "currently_owned": sorted(affected & set(selected)),
+                        "delegated_repairs": sorted(repairs),
+                        "outside_delegation": sorted((affected & known) - set(selected) - set(delegation["subjects"])),
+                        "unknown_originals": sorted(unknown), "delegated_files": sorted(files),
+                        "actions": {"defer": "read_only", "investigate": "read_only" if whole else "unavailable",
+                                    "investigate_local": "conditional_local_work" if not unknown else "unavailable",
+                                    "expand": central if not unknown and (repairs or files) else "unavailable",
+                                    "incorporate": central if whole else "unavailable",
+                                    "reject": central if whole else "unavailable",
+                                    "bind_seed": central if not unknown and "seed_bindings" in delegation
+                                    and affected <= set(selected) | set(delegation["subjects"])
+                                    and affected & set(selected) & seeds else "unavailable"}})
+        if allowed_actions is not None:
+            results[-1]["actions"] = {action: "serial_required" if route != "unavailable"
+                                      and action not in allowed_actions else route
+                                      for action, route in results[-1]["actions"].items()}
+    return results
+
+
 def policy(value, task):
     from .driver import Command
     fields = {"schema_version", "author", "command", "subjects", "editable_files", "evidence", "max_decisions"}
@@ -89,7 +188,7 @@ def validate_response(response, snapshot):
 
 
 def coordinate(root, task_name, configuration, *, execute=None, investigating=(), allowed_actions=None,
-               diagnostic_configuration=None):
+               diagnostic_configuration=None, previous_rejection=None, _budget=None):
     """Execute at most one read-only decision; an external runner owns the budget."""
     from .driver import Command, changes, invoke, working_state
     execute = invoke if execute is None else execute
@@ -97,6 +196,11 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
     store = TaskStore(root)
     task, decisions = store.read(task_name), store.decisions(task_name)
     delegation = policy(configuration, task)
+    budget = decision_budget(delegation, _budget)
+    if previous_rejection is not None:
+        validate_rejection_feedback(root, task_name, delegation, previous_rejection)
+    if not budget.remaining:
+        return {"action": "budget_exhausted", "published": False, "ready_for_collection": False}
     if allowed_actions is not None:
         if not allowed_actions or not set(allowed_actions) <= {"investigate", "investigate_local", "defer"}:
             raise ValueError("read-only coordination actions must be investigation or deferral")
@@ -137,6 +241,8 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
         from .coordination_diagnostics import collect
         diagnostics = collect(root, task_name, diagnostic_configuration, execute)
     request = {"task": task.to_dict(), "decision_revision": len(decisions),
+               "decision_facts": decision_facts(source, selected, editable, delegation, state["pending_discoveries"], allowed_actions),
+               **({"previous_rejection": previous_rejection} if previous_rejection is not None else {}),
                **({"diagnostics": diagnostics} if diagnostics is not None else {}),
                **({"allowed_actions": sorted(set(allowed_actions))} if allowed_actions is not None else {}),
                "pending_discoveries": state["pending_discoveries"],
@@ -145,6 +251,8 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
                "delegation": delegation,
                "mapped_records": [row for row in source["records"] if row["entity_id"] in affected],
                "instructions": ["Remain read-only; propose one evidence-backed discovery decision.",
+                                "decision_facts are derived constraints, not evidence that an action is warranted. A conditional local investigation requires useful work in current files; if only another owner's work can help, defer without inventing a local repair.",
+                                "previous_rejection, when present, is native feedback for an unpublished proposal against unchanged source, decisions and delegation. Correct the proposal using fresh diagnostics; it grants no scope, resolution or acceptance. Repeated equivalent refusals stop this attempt.",
                                 "Delegation is an upper bound, not a reason to expand everything.",
                                 "When diagnostics are supplied, they are freshly run configured context/check observations for this unchanged scope. Historical failure reports in discoveries are not current measurements. Inspect actual coverage, exit status and remaining unknowns; a passing protected-body check does not prove an unmeasured candidate, build, layout or runtime behavior.",
                                 "Diagnostics grant no resolution, scope or acceptance. Keep a genuine source discovery pending while investigating; do not reject it merely because a compiler now works. Controller diagnostics do not authorize preparation or standalone compiler execution on its leased prefix.",
@@ -167,6 +275,9 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
         if (changes(before, working_state(root)) or task != store.read(task_name)
                 or decisions != store.decisions(task_name)):
             raise ValueError("coordinator inputs changed before diagnostic request dispatch")
+    if previous_rejection is not None:
+        validate_rejection_feedback(root, task_name, delegation, previous_rejection)
+    budget.charge()  # Count actual coordinator calls, including serial handoffs and refusals.
     try:
         code, response = execute(Command.read(delegation["command"]), root, task_name, request)
     finally:
@@ -195,8 +306,6 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
                 "proposed_action": action, "reason_code": reason_code, "feedback": feedback,
                 "ready_for_collection": False, "verification": "not_measured"}
 
-    if allowed_actions is not None and action not in allowed_actions:
-        raise SerialCoordinationRequired("coordinator action requires fresh serial coordination: " + action)
     if action != "defer" and not set(discovery["affects"]) <= origins.keys():
         raise ValueError("unknown originals require a separate binding decision; defer this discovery")
     # Expansion grants only its explicitly proposed subset, checked below. A
@@ -229,12 +338,6 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
         spans = records[0]["spans"]
         if not spans or any(row["spans"] != spans for row in records):
             raise ValueError("seed binding requires agreeing existing original spans")
-        # The trusted native writer changes annotations only, between worker
-        # epochs. No discovery is resolved and no task baseline is changed.
-        binding_report = bind(root, image=image, address=origins[key].address,
-                              spans=[Span(*span) for span in spans],
-                              **{name: value for name, value in proposal.items() if name != "entity_id"},
-                              evidence=response["evidence"])
     subjects, files = set(response["subjects"]), set(response["editable_files"])
     if action == "expand":
         if (not subjects <= set(delegation["subjects"]) or not files <= set(delegation["editable_files"])
@@ -250,6 +353,14 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
             if (name not in source["files"] or name == config.image_pin
                     or path.is_symlink() or path.resolve() != path):
                 raise ValueError("coordinator may expand editing only to existing regular source files")
+    if allowed_actions is not None and action not in allowed_actions:
+        raise SerialCoordinationRequired("coordinator action requires fresh serial coordination: " + action)
+    if action == "bind_seed":
+        # All writers stay AFTER policy validation and serial routing.
+        binding_report = bind(root, image=image, address=origins[key].address,
+                              spans=[Span(*span) for span in spans],
+                              **{name: value for name, value in proposal.items() if name != "entity_id"},
+                              evidence=response["evidence"])
     evidence = [*response["evidence"], "Delegated policy: " + digest(delegation)]
     decision = dict(request_id="coordinator-" + uuid.uuid4().hex, author=task.author,
                     expected_revision=len(decisions))
