@@ -90,7 +90,9 @@ def test_reauthorized_discovery_expands_through_native_coordinator_then_resumes(
                    affects=[dependency.entity_id], evidence=["source:code/caller.cc"], expected_revision=0)
     token = authorization(preserved, subjects=[dependency.entity_id], files=["code/caller.cc"])
     source_before = (child / "code/model.h").read_bytes()
+    saved = {name: (directory / name).read_bytes() for name in ("run.json", "batch-0-workers.json")}
     events = []
+    proposals = []
     def drive(path, name, *args, **kwargs):
         if dependency.entity_id in TaskStore(path).scope(name)[0]:
             return {"stop_reason": "pending_discovery"}
@@ -110,8 +112,17 @@ def test_reauthorized_discovery_expands_through_native_coordinator_then_resumes(
             return choose(command, current, name, request)
         # Read-only preplanning must leave this expansion for a fresh serial
         # decision. The existing driver double below publishes it natively.
-        assert "allowed_actions" in request and len(store.decisions("owner")) == 1
+        assert "allowed_actions" in request
         assert request["diagnostics"]["verification"] == "diagnostic_only"
+        revision = len(store.decisions("owner"))
+        assert revision in (1, 2) and request["decision_revision"] == revision
+        proposals.append(revision)
+        if revision == 2:
+            assert [event["kind"] for event in store.decisions("owner")] == ["discovery", "scope_expanded"]
+            assert dependency.entity_id in store.scope("owner")[0]
+            return 0, {"snapshot": request["snapshot"], "action": "defer", "discovery_id": "caller-dependency",
+                       "subjects": [], "editable_files": [],
+                       "evidence": ["Expanded scope retained; fresh diagnostic evidence remains unavailable"]}
         return 0, {"snapshot": request["snapshot"], "action": "expand", "discovery_id": "caller-dependency",
                    "subjects": [dependency.entity_id], "editable_files": ["code/caller.cc"],
                    "evidence": ["source:controlled cross-owner relationship"]}
@@ -121,9 +132,14 @@ def test_reauthorized_discovery_expands_through_native_coordinator_then_resumes(
     assert store.status("owner", store.scope("owner")[0])["pending_discoveries"]
     assert store.read("owner").base_revision == task.base_revision
     # An exact permission retry does not newly grant the scope it already gave.
-    second = native.campaign(root, config, resume=directory, coordinator_authorization=token, execute=choose)
+    history = store.decisions("owner")
+    second = native.campaign(root, config, resume=directory, coordinator_authorization=token, execute=plan_or_coordinate)
     assert second["stop_reason"] == "replanning_required" and len(events) == 1
+    assert not second["full_project_accepted"] and proposals == [1, 2]
+    assert store.decisions("owner") == history and store.read("owner").base_revision == task.base_revision
+    assert store.status("owner", store.scope("owner")[0])["pending_discoveries"]
     assert (child / "code/model.h").read_bytes() == source_before
+    assert {name: (directory / name).read_bytes() for name in saved} == saved
     assert len(list(directory.glob("coordinator-authorization-*.json"))) == 1
 
 

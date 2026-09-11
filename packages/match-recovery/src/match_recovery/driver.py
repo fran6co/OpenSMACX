@@ -137,6 +137,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
           migration_configuration: dict | None = None,
           coordinator_configuration: dict | None = None,
           investigation_configuration: dict | None = None,
+          retained_scope_configuration: dict | None = None,
           checkpoint_configuration: dict | None = None,
           integration_configuration: dict | None = None, verify_only: bool = False, execute=invoke,
           _held_lease=None, _collection=None) -> dict:
@@ -153,6 +154,10 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
         raise ValueError("investigation permission allows one local round without coordinator or integration")
     if _collection is not None and not verify_only:
         raise ValueError("collection verification cannot dispatch repairs")
+    if retained_scope_configuration is not None and (
+            coordinator_configuration is not None or integration_configuration is not None
+            or verify_only or _collection is not None):
+        raise ValueError("retained parallel admission cannot delegate scope or integrate source")
     round_limit = 0 if verify_only else iterations
     required = {"schema_version", "target", "context", "check"}
     if (not required <= set(configuration) or set(configuration) - required - {"acceptance", "acceptance_scope", "obligations", "migration_check", "build"}
@@ -249,6 +254,45 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             raise ValueError("checkpoint unrelated changes before running this task")
         initial_investigations = {}
         initial_investigation_state = None
+        retained_preworker_state = None
+        if retained_scope_configuration is not None:
+            from . import retained_scope
+            from .checkpoints import preflight as retained_preflight
+            from .scheduling import _state as retained_state
+            if task.author in {worker_configuration["author"],
+                               reviewer_configuration["author"] if reviewer_configuration else None}:
+                raise ValueError("retained scope coordinator must be independent of worker and reviewer")
+            retained_scope.consume(root, task_name, retained_scope_configuration)
+            retained_preworker_state = retained_state(root)
+            retained_scope.validate(root, task_name, retained_scope_configuration)
+        retained_worker_started = False
+        def ownership_current():
+            if retained_scope_configuration is not None:
+                retained_scope.check_ownership(root, task_name, retained_scope_configuration)
+        def preworker_current():
+            if retained_preworker_state is not None and not retained_worker_started:
+                retained_preflight(root)
+                if changes(retained_preworker_state, retained_state(root)):
+                    raise ValueError("stale retained worker admission; source or decisions changed")
+        def append_review(decision, decisions):
+            nonlocal retained_preworker_state
+            preworker_current()
+            reviews.append(decision, expected_revision=len(decisions))
+            if retained_preworker_state is not None and not retained_worker_started:
+                # A trusted native review may request repair before the first
+                # worker. Account for exactly its append, including ignored
+                # source/history in the surrounding guard; do not reissue the
+                # one-use permission or accept arbitrary same-scope changes.
+                current = retained_state(root)
+                path = reviews.journal.stream_directory(reviews.stream) / f"{len(decisions) + 1:08d}.json"
+                name = path.relative_to(root).as_posix()
+                expected = decisions if decision in decisions else (*decisions, decision)
+                allowed = set() if expected == decisions else {name}
+                if (changes(retained_preworker_state, current) != allowed
+                        or reviews.decisions() != expected):
+                    raise ValueError("source or history changed during retained native review append")
+                ownership_current()
+                retained_preworker_state = current
         if investigation_configuration is not None:
             from .investigation_round import consume
             initial_investigation_state = working_state(root)
@@ -256,6 +300,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
             if changes(initial_investigation_state, working_state(root)):
                 raise ValueError("source changed while consuming investigation permission")
         def finish(reason, rounds, check=None, *, current=True):
+            ownership_current()
             return {"task_id": task_name, "stop_reason": reason, "worker_rounds": rounds,
                     **({"coordinator_decisions": coordination_count, "coordination": coordination_feedback}
                        if coordinator_configuration is not None else {}),
@@ -267,14 +312,17 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                     **({"integration": integration} if integration is not None else {}),
                     "ready_for_collection": False, "persisted_results": False}
         def readonly(command, payload):
+            ownership_current()
             before = working_state(root)
             try:
                 code, output = execute(command, root, task_name, payload)
             finally:
+                ownership_current()
                 if changes(before, working_state(root)):
                     raise ValueError("read-only adapter edited the worktree; preserve work and inspect manually")
             return code, output
         def checkpoint(output, expected):
+            ownership_current()
             if publication is not None:
                 if output["stop_reason"] == "migration_admitted" and not publication["allow_migration"]:
                     output["checkpoint"] = {"published": False, "reason": "migration_publication_not_authorized"}
@@ -283,6 +331,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                     history = _resumable_history(root, store, reviews, task_name)
                     output["checkpoint"] = publish(root, expected, editable | history, publication_branch,
                                                     publication["message"])
+            ownership_current()
             return output
         def refresh_obligations():
             if inventory_command is not None:
@@ -325,7 +374,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                 validate_supersessions(decision, interpretations)
                 if decision["snapshot"] != snapshot or reviews.snapshot(working_state(root), policy) != snapshot:
                     raise ValueError("review refers to stale source")
-                reviews.append(decision, expected_revision=len(decisions))
+                append_review(decision, decisions)
             validate_supersessions(decision, interpretations)
             review_feedback = decision
             if decision["decision"] == "request_changes":
@@ -518,6 +567,9 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                 validate(root, task_name, investigation_configuration)
             from . import worker_bindings
             source_before = worker_bindings.capture(root)
+            ownership_current()
+            preworker_current()
+            retained_worker_started = True
             try:
                 code, response = execute(worker_command, root, task_name,
                                          {"task": task.to_dict(), "editable_files": sorted(editable),
@@ -537,6 +589,7 @@ def drive(root: Path, task_name: str, configuration: dict, worker_configuration:
                                                            "Do not erase source mappings or restoration obligations."]})
             finally:
                 worker_bindings.validate(root, source_before, editable)
+                ownership_current()
                 changed = changes(before, working_state(root))
                 if changed - editable:
                     raise ValueError("worker exceeded editing scope; preserve work and inspect manually")

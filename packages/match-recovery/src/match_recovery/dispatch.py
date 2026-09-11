@@ -86,7 +86,7 @@ def _prepare(root, plan):
     for row in plan["jobs"]:
         required_job = {"task", "root", "config", "worker", "reviewer", "iterations"}
         if (not isinstance(row, dict) or not required_job <= row.keys()
-                or row.keys() - required_job - {"migration", "checkpoint", "investigation"}
+                or row.keys() - required_job - {"migration", "checkpoint", "investigation", "retained_scope"}
                 or type(row["iterations"]) is not int or not 1 <= row["iterations"] <= 100):
             raise ValueError("invalid dispatch job; scope delegation is not allowed within a batch")
         name = task_name(row["task"])
@@ -106,7 +106,14 @@ def _prepare(root, plan):
         child_store = TaskStore(child)
         task = store.read(name)
         scope = store.scope(name)
-        if task.author != plan["author"] or child_store.read(name) != task or child_store.scope(name) != scope:
+        if task.author != plan["author"] or child_store.read(name) != task:
+            raise ValueError("dispatch requires identical coordinator-authorized task and scope in each worker")
+        if "retained_scope" in row:
+            from .retained_scope import validate
+            if not isinstance(row["retained_scope"], dict) or row["retained_scope"].get("coordinator_root") != str(root):
+                raise ValueError("retained scope admission belongs to another dispatcher")
+            scope = validate(child, name, row["retained_scope"])
+        elif child_store.scope(name) != scope:
             raise ValueError("dispatch requires identical coordinator-authorized task and scope in each worker")
         child_subjects, child_files = scope
         if subjects & child_subjects or files & child_files:
@@ -175,6 +182,10 @@ def dispatch(root: Path, plan: dict, *, progress=None, _held_lease=None):
                 permission_path = directory / (row["task"] + "-investigation.json")
                 publish_json(permission_path, row["investigation"])
                 argv.extend(["--investigation", str(permission_path)])
+            if "retained_scope" in row:
+                permission_path = directory / (row["task"] + "-retained-scope.json")
+                publish_json(permission_path, row["retained_scope"])
+                argv.extend(["--retained-scope", str(permission_path)])
             commands.append({"argv": argv, "cwd": child, "timeout": plan["timeout"]})
         if changes(before, working_state(root)):
             raise ValueError("coordinator inputs changed during dispatch preparation")
@@ -184,7 +195,12 @@ def dispatch(root: Path, plan: dict, *, progress=None, _held_lease=None):
         for (row, child, scope), outcome in zip(jobs, outcomes, strict=True):
             try:
                 intact = (TaskStore(child).read(row["task"]) == TaskStore(root).read(row["task"])
-                          and TaskStore(child).scope(row["task"]) == scope == TaskStore(root).scope(row["task"]))
+                          and TaskStore(child).scope(row["task"]) == scope)
+                if "retained_scope" in row:
+                    from .retained_scope import check_ownership
+                    intact = intact and check_ownership(child, row["task"], row["retained_scope"]) == scope
+                else:
+                    intact = intact and scope == TaskStore(root).scope(row["task"])
             except (OSError, ValueError):
                 intact = False
             results.append({"task": row["task"], "root": str(child), "scope_intact": intact, **outcome})

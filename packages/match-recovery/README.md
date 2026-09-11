@@ -320,8 +320,9 @@ allocator; no PID-based salvage, retries or resource provisioning is implicit.
 
 Each job needs a distinct task and local branch/worktree in the same repository.
 Nested worker worktrees must be ignored and outside source roots. Task identity
-and effective scope must agree with the coordinator checkout, and the plan author
-must own the tasks. Entity identities and editable paths cannot overlap between
+must agree with the coordinator checkout, and the plan author must own the tasks.
+Effective scope must also agree unless an explicit retained-scope admission is
+supplied as described below. Entity identities and editable paths cannot overlap between
 jobs. This batch route permits existing application source only, not seed/vendor
 work or changes to recovery/build policy. Workers and reviewers have independent
 identities. Optional per-job `migration` and `checkpoint` paths retain the native
@@ -357,6 +358,37 @@ per-worker `coordinator` option: an out-of-scope discovery is retained by the na
 driver and returned for central replanning, not independently expanded into a
 sibling's scope. Disjoint edits can still interact after integration; this is why
 fresh serial destination verification remains mandatory.
+
+An optional inline job `retained_scope` admission permits an already-expanded
+retained task to run without copying its journal or scope into the destination.
+`campaign --resume` derives these admissions from its original branch/revision
+assignments under coordinator, worker, peer and external-reservation leases.
+The library API is `match_recovery.retained_scope.authorize(root, child, task,
+revision=..., branch=..., peers=..., reservations=...)`; its trusted coordinator
+caller must supply all active/inactive managed peer assignments and external
+reservations, not just the jobs chosen for dispatch. This API grants no expansion.
+
+Admission requires unchanged task identity/baseline, original assignment ancestry,
+an exact event-and-byte prefix of destination task history, and scoped raw committed
+and uncommitted work (including ignored configured source). It checks conflicts
+against every destination task, effective peer scope and external reservation.
+The permission pins its own source/Git/task/runtime epoch, assigned branch and
+destination state. Peer task identities/scopes/branches are pinned, but their
+source edits and same-scope discovery/review appends may progress concurrently.
+Neither a peer's matching score nor its process report supplies admission.
+
+Dispatch validates before launch; `run --retained-scope <permission.json>` consumes
+the permission under its own driver lease before any hooks and rechecks ownership
+around hooks, worker attempts and checkpoint publication. It cannot delegate scope,
+integrate, or run verification-only collection. Before the first worker attempt,
+the admitted state is rechecked, including ignored configured source/history. Only
+an exactly accounted native review append can advance this internal check (for
+example, a reviewer requesting repair); the original permission remains unchanged.
+Subsequent scoped edits remain subject
+to ordinary source, preservation, review and acceptance checks. One-use receipts
+stay in ignored `build/recovery/retained-scope-uses/`; never clear or replay them.
+Pending findings still need independent investigation permissions. Scope changes
+remain serial and every returned scope is checked again after the parallel batch.
 
 Binary stdout/stderr logs and the frozen resource declaration stay in unique,
 ignored `build/recovery/dispatch/` directories. The returned report lists process
@@ -469,9 +501,10 @@ stdout, PID files and acceptance reports cannot advance it.
 The last scheduled batch reuses parallel dispatch for eligible disjoint workers.
 Pending findings receive fresh central one-use local-investigation permissions
 before dispatch; no scope-changing coordinators run inside the parallel batch.
-Workers with expanded scopes differing from the destination, proposed serial
-decisions, or pending integration stay on the serial coordination/publication
-path. Deferred investigations remain preserved and are not retried in that phase.
+Retained expanded scopes can receive the fresh admission described above;
+proposed serial decisions and pending integration stay on the serial
+coordination/publication path. Deferred investigations remain preserved and are
+not retried in that phase.
 Original assignments and budgets are not rewritten; retired workers are not restarted.
 Nonparticipating peers remain leased and checked while the selected workers run.
 Existing workers retain their initial task baseline and scoped committed/uncommitted

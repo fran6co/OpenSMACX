@@ -271,12 +271,13 @@ def _authorize_runtime(root, directory, configuration, profiles, authorization, 
         return result
 
 
-def _resume_round(root, plan, profiles, directory, number, revision, *, execute, fresh, announce, lease):
+def _resume_round(root, plan, profiles, directory, number, revision, *, execute, fresh, announce, lease,
+                  assignments=None, scope_reservations=()):
     """Plan stopped-worker investigations centrally, then dispatch disjoint work.
 
     Original assignments remain immutable. Grants expire on any source/decision
-    change and permit one local round; expanded scopes and pending integration
-    stay on the existing serial coordination/publication path.
+    change and permit one local round. Explicit original assignments can admit
+    retained expanded scopes; pending integration still stays serial.
     """
     from .investigation_round import authorize
     from .coordination import SerialCoordinationRequired
@@ -286,7 +287,7 @@ def _resume_round(root, plan, profiles, directory, number, revision, *, execute,
         incoming = git(child, "rev-parse", "HEAD").decode().strip()
         if ((incoming != revision and ancestor(root, incoming))
                 or (directory / f"batch-{number}-integration-{name}.json").exists()
-                or TaskStore(child).scope(name) != TaskStore(root).scope(name)):
+                or assignments is None and TaskStore(child).scope(name) != TaskStore(root).scope(name)):
             continue
         pending = TaskStore(child).status(name, TaskStore(child).scope(name)[0])["pending_discoveries"]
         if pending:
@@ -316,8 +317,27 @@ def _resume_round(root, plan, profiles, directory, number, revision, *, execute,
         jobs.append(job)
     if not jobs:
         return None, decisions, deferred
+    if assignments is not None:
+        from .retained_scope import authorize as admit
+        # Include inactive retained workers too. The coordinator has already
+        # validated absent/retired assignments; destination ownership persists.
+        peers = [row for row in assignments if Path(row["root"]).exists()]
+        by_task = {row["task"]: row for row in assignments}
+        admitted = []
+        for job in jobs:
+            name, child = job["task"], Path(job["root"])
+            if name not in by_task or by_task[name]["root"] != str(child):
+                raise ValueError("retained parallel worker differs from its original assignment")
+            with peer_epoch(root, name, peers), file_lock(child / "build/recovery/driver.lock", timeout=0):
+                fresh()
+                permission = admit(root, child, name, revision=revision, branch=by_task[name]["branch"],
+                                   peers=peers, reservations=scope_reservations)
+                fresh()
+            admitted.append({**job, "retained_scope": permission})
+        jobs = admitted
     selected = {job["task"] for job in jobs}
-    inactive = [job for job in plan["jobs"] if job["task"] not in selected]
+    inactive = [job for job in (peers if assignments is not None else plan["jobs"])
+                if job["task"] not in selected]
     # Protect nonparticipating peers while active drivers hold their own leases.
     with peer_epoch(root, jobs[0]["task"], inactive):
         fresh()
@@ -563,7 +583,10 @@ def campaign(root: Path, configuration: dict, *, execute=invoke, progress=None, 
             else:
                 batch["dispatch"], decisions, deferred_investigations = _resume_round(
                     root, {**plan, "jobs": active_jobs}, profiles, directory, number, revision,
-                    execute=execute, fresh=fresh_policy, announce=announce, lease=lease)
+                    execute=execute, fresh=fresh_policy, announce=announce, lease=lease,
+                    assignments=[{"task": job["task"], "root": job["root"], "branch": "refs/heads/" + branch}
+                                 for job, branch in zip(choice["plan"]["jobs"], choice["branches"], strict=True)],
+                    scope_reservations=[{"root": row["path"], "tasks": row["tasks"]} for row in reserved.records])
                 batch["investigation_planning"] = decisions
                 if batch["dispatch"] is not None and batch["dispatch"]["coordinator_changed"]:
                     return finish("coordinator_changed")

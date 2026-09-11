@@ -13,6 +13,7 @@ from match_recovery.driver import working_state
 from match_recovery.locking import file_lock
 from match_recovery.model import digest
 from match_recovery.records import publish_json, read_json
+from match_recovery.retained_scope import validate as validate_retained_scope
 from match_recovery.tasks import TaskStore
 from test_campaign import choose, configured_campaign, compiler_project, project
 from test_campaign_resume import stopped
@@ -103,9 +104,26 @@ def test_runtime_transition_freezes_existing_candidate_lease(transition, monkeyp
     assert not (directory / "runtime-authorization.json").exists()
 
 
+def assert_admitted_plan(root, plan, saved_plan):
+    """Only fresh scheduling admission may supplement an immutable assignment."""
+    stripped = deepcopy(plan)
+    permissions = []
+    for row in stripped["jobs"]:
+        permission = row.pop("retained_scope")
+        child, name = Path(row["root"]), row["task"]
+        assert permission["coordinator_root"] == str(root)
+        assert validate_retained_scope(child, name, permission) == TaskStore(child).scope(name)
+        assert permission["ownership"]["own"]["task"] == TaskStore(root).read(name).to_dict()
+        permissions.append(permission)
+    assert stripped == saved_plan
+    return permissions
+
+
 def installed_boundary(monkeypatch, transition, *, during_dispatch=None):
     root, config, directory, child, state, token = transition
     calls = []
+    saved = {name: (directory / name).read_bytes() for name in ("run.json", "batch-0-workers.json")}
+    admitted_ids = set()
 
     def prepare(path):
         assert path == child and read_json(directory / "runtime-authorization.json") == token
@@ -116,11 +134,15 @@ def installed_boundary(monkeypatch, transition, *, during_dispatch=None):
     def dispatch(current, plan, **kwargs):
         assert current == root and runtime.fingerprint() == token["runtime_sha256"]
         assert runtime.export_binding() == token["runtime_binding"]
-        assert plan == read_json(directory / "batch-0-workers.json")["plan"]
+        assert {name: (directory / name).read_bytes() for name in saved} == saved
+        for permission in assert_admitted_plan(root, plan, json.loads(saved["batch-0-workers.json"])["plan"]):
+            assert permission["request_id"] not in admitted_ids
+            admitted_ids.add(permission["request_id"])
         assert [row["root"] for row in plan["jobs"]] == [str(child)]
         calls.append("dispatch")
         if during_dispatch:
             during_dispatch()
+        assert {name: (directory / name).read_bytes() for name in saved} == saved
         return {"coordinator_changed": False, "batch_completed": False,
                 "verification": "not_measured_by_dispatch", "ready_for_collection": False,
                 "jobs": [{"task": row["task"], "root": row["root"], "timed_out": False,
@@ -244,6 +266,7 @@ def test_runtime_transition_reuses_earlier_retained_batch_reservation_lease(tran
     token = {**token, "batch_sha256": digest(latest)}
     current = root, config, directory, child, state, token
     before = working_state(root), working_state(older), working_state(child)
+    saved = {name: (directory / name).read_bytes() for name in ("run.json", "batch-0-workers.json", "batch-1-workers.json")}
     calls = []
 
     def prepare(path):
@@ -255,7 +278,10 @@ def test_runtime_transition_reuses_earlier_retained_batch_reservation_lease(tran
         return {"result": "pass", "published": True}
 
     def dispatch(path, plan, **kwargs):
-        assert path == root and plan == latest["plan"]
+        assert path == root and runtime.fingerprint() == token["runtime_sha256"]
+        assert runtime.export_binding() == token["runtime_binding"]
+        assert {name: (directory / name).read_bytes() for name in saved} == saved
+        assert_admitted_plan(root, plan, latest["plan"])
         calls.append("dispatch")
         return {"coordinator_changed": False, "jobs": [{"task": "owner", "root": str(child),
                 "scope_intact": True, "timed_out": False, "returncode": 3}]}
@@ -266,3 +292,4 @@ def test_runtime_transition_reuses_earlier_retained_batch_reservation_lease(tran
     assert calls == ["prepare", "dispatch"]
     assert report["stop_reason"] == "replanning_required" and not report["full_project_accepted"]
     assert (working_state(root), working_state(older), working_state(child)) == before
+    assert {name: (directory / name).read_bytes() for name in saved} == saved

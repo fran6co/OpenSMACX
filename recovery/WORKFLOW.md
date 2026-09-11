@@ -205,9 +205,12 @@ WIP and valid append-only decisions. Live leases/quarantined resources still ref
 Eligible stopped workers resume through parallel dispatch. Central read-only planning
 must first authorize one local attempt per pending finding; one-use permissions
 bind the unchanged source/task/Git epoch and do not resolve discoveries. Scope
-changes and integration remain serial. Expanded scopes that no longer agree with
-the destination are not silently copied into parallel assignments. See the package
-README for `run --investigation` and interrupted-permission handling.
+changes and integration remain serial. Already-expanded retained scopes receive
+separate one-use admission only after original assignment/history, scoped WIP,
+branch and all active/inactive/external ownership checks. Their task journals and
+baselines are not copied or reset. Peer source and same-scope discoveries can
+progress concurrently; changed ownership refuses. See the package README for
+`run --investigation`, `run --retained-scope` and interrupted-permission handling.
 There is no PID-based reclamation or acceptance-receipt replay. Pending transferred
 candidates receive fresh collection-aware destination verification with the original
 pre-transfer preservation base. Fresh campaigns refuse to duplicate preserved work.

@@ -71,6 +71,7 @@ def parser() -> argparse.ArgumentParser:
     run.add_argument("--acceptance-scope", choices=("change", "full_project"), help="Override the configured acceptance boundary")
     run.add_argument("--coordinator", type=Path, help="Read-only discovery coordinator with explicit delegated scope")
     run.add_argument("--investigation", type=Path, help="Fresh one-use coordinator permission for one local investigation round")
+    run.add_argument("--retained-scope", type=Path, help="Fresh one-use admission for a retained parallel worker scope")
     run.add_argument("--iterations", type=int, default=3)
     run.add_argument("--verify-only", action="store_true", help="Fresh checks and independent review without worker repairs or scope delegation")
     dispatch = commands.add_parser("dispatch", help="Supervise a coordinator-authorized batch in isolated worktrees; never accept or integrate reports")
@@ -248,6 +249,7 @@ def _dispatch(args) -> int:
             else:
                 output = drive(args.root, args.task, configuration, config(args.worker),
                                investigation_configuration=config(args.investigation) if args.investigation else None,
+                               retained_scope_configuration=config(args.retained_scope) if args.retained_scope else None,
                                integration_configuration=config(args.integration) if args.integration else None,
                                **({"verify_only": True} if args.verify_only else {}), **options)
             print(json.dumps(output, indent=2, sort_keys=True))
