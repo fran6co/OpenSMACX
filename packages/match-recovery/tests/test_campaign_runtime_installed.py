@@ -71,3 +71,32 @@ def test_installed_runtime_resumes_real_native_dispatch_without_accepting_unknow
     assert "Retained unfinished structural candidate" in source.read_text()
     resources = read_json(root / configuration["resources"])
     assert all(not (Path(slot["directory"]) / ACTIVE).exists() for slot in resources["slots"])
+
+    # A subsequent explicit installation selection appends a v2 decision. Both
+    # campaigns and their dispatched native drivers run outside pytest, so no
+    # substituted runtime-validation boundary can hide a stale installation.
+    first_grant_bytes = (directory / "runtime-authorization.json").read_bytes()
+    replacement = install_copy(root / "build/replacement-framework")
+    replacement_binding = write_binding(root / "build", replacement, name="replacement-binding.json")
+    next_token = {**token, "schema_version": 2, "previous_authorization_sha256": digest(token),
+                  "runtime_binding": str(replacement_binding), "runtime_sha256": digest(read_json(replacement_binding)),
+                  "evidence": ["Explicit second installed framework for the same preserved assignment"]}
+    next_permission = root / "build/replacement-runtime-permission.json"
+    next_permission.write_text(json.dumps(next_token))
+    next_argv = [str(replacement[0]), "-I", "-B", "-m", "match_recovery", "--runtime", str(replacement_binding),
+                 "campaign", "--root", str(root), "--config", str(settings), "--resume", str(directory),
+                 "--runtime-authorization", str(next_permission)]
+    next_result = subprocess.run(next_argv, cwd=root, capture_output=True, text=True, timeout=60)
+    assert next_result.returncode == 3, next_result.stderr
+    next_report = json.loads(next_result.stdout)
+    assert next_report["stop_reason"] == "replanning_required"
+    assert not next_report["ready_for_collection"] and not next_report["full_project_accepted"]
+    next_job, = next_report["batches"][0]["dispatch"]["jobs"]
+    assert next_job["returncode"] == 3 and next_job["scope_intact"] and not next_job["timed_out"]
+    assert "invalid restoration inventory" in Path(next_job["stderr"]).read_text()
+    assert (directory / "runtime-authorization.json").read_bytes() == first_grant_bytes
+    assert read_json(directory / "runtime-authorization-2.json") == next_token
+    assert all((directory / name).read_bytes() == contents for name, contents in manifests.items())
+    assert (working_state(root), working_state(child)) == before
+    assert TaskStore(child).read("owner") == original_task
+    assert all(not (Path(slot["directory"]) / ACTIVE).exists() for slot in resources["slots"])

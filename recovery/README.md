@@ -13,13 +13,17 @@ not override task scope, structural evidence or acceptance policy.
 The package supports an explicitly pinned installed framework for native commands
 through its global `--runtime` binding (see the package README). This does not
 upgrade project-local compiler scripts or authorize changing preserved campaign
-profiles. A preserved campaign can explicitly authorize one installed-runtime
+profiles. A preserved campaign can explicitly authorize an installed-runtime
 transition with `campaign --resume ... --runtime-authorization ...`; its decision
 binds the original run, latest assignment, effective profiles and current
 destination. The package freezes retained work before publication. Workers must
 not silently switch runtimes or reset task baselines. This enables using the new
 parallel-resume protocol without copying library code into old worker checkouts;
 it does not establish accepted recovery or upgrade their local compiler scripts.
+Subsequent framework fixes use append-only runtime transition decisions bound to
+the preceding grant, never edits to the original grant or worker installations.
+Bound child commands suppress Python bytecode cache writes automatically; compiler
+arguments and the coordinator's environment are not rewritten.
 
 `agents.json` explicitly selects GPT-5.6 Luna for bounded worker attempts and
 GPT-6 Astra for read-only discovery coordination and independent review, all with

@@ -68,7 +68,15 @@ hooks, task baselines or original campaign manifests are rewritten. Subsequent
 resumes require the same active installation/binding and reread the decision;
 exact permission retries are idempotent. Normal authorized destination/batch
 progress does not require editing that historical decision. A second runtime
-replacement within that run is not supported. New campaigns with an active
+selection requires a new decision with `schema_version: 2` and the additional
+`previous_authorization_sha256` field naming the canonical digest of the current
+effective grant. The original grant remains unchanged; successors are published
+as `runtime-authorization-2.json`, `runtime-authorization-3.json`, and so on.
+The chain must be contiguous, with each successor bound to its immediate
+predecessor and fresh destination/batch/profile authority. Only the effective
+tail's installation must be present; retired runtimes are not probed or executed.
+Replaying an earlier permission cannot roll back that authority, and each
+transition requires the same stopped-worker/candidate freeze. New campaigns with an active
 binding currently refuse; this transition is deliberately for preserved runs.
 Runtime selection grants no source scope, claim banking, review or acceptance;
 all native verification remains fresh under the selected implementation.
