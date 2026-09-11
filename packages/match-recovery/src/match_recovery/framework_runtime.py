@@ -7,15 +7,47 @@ identifies a local installation, not a hermetic Python/OS or behavioral proof.
 
 from contextlib import contextmanager
 from contextvars import ContextVar
+from collections import OrderedDict
 import hashlib
+import os
 from pathlib import Path
+import stat
 import subprocess
+import threading
 
 from .model import digest, require_digest
 from .records import parse_json, read_json
 
 
 _ACTIVE = ContextVar("match_recovery_framework_runtime", default=None)
+_FILES = OrderedDict()
+_FILE_LIMIT = 4096
+_FILE_LOCK = threading.Lock()
+
+
+def _after_fork():
+    global _FILES, _FILE_LOCK
+    _FILES, _FILE_LOCK = OrderedDict(), threading.Lock()
+
+
+if hasattr(os, "register_at_fork"):
+    os.register_at_fork(after_in_child=_after_fork)
+
+
+def _stamp(value):
+    return (value.st_dev, value.st_ino, value.st_mode, value.st_nlink,
+            value.st_size, value.st_mtime_ns, value.st_ctime_ns)
+
+
+def _caching():
+    mode = os.environ.get("MATCH_RECOVERY_RUNTIME_CACHE", "on")
+    if mode not in ("on", "off"):
+        raise ValueError("MATCH_RECOVERY_RUNTIME_CACHE must be on or off")
+    # Restored mtime does not conceal a POSIX ctime change. Filesystems without
+    # coherent metadata must opt out; Windows defaults to fresh content reads.
+    return os.name == "posix" and mode == "on"
+
+
 _PROBE = """
 import importlib.metadata as metadata
 import importlib.util
@@ -36,26 +68,78 @@ print(json.dumps(dict(package=str(pathlib.Path(next(iter(spec.submodule_search_l
 
 
 def _file(path):
-    with path.open("rb") as stream:
-        return hashlib.file_digest(stream, "sha256").hexdigest()
+    caching = _caching()
+    before = path.lstat()
+    if not stat.S_ISREG(before.st_mode):
+        raise ValueError("framework runtime input must remain a regular file")
+    stamp = _stamp(before)
+    with _FILE_LOCK:
+        cached = _FILES.get(path) if caching else None
+        if cached is not None:
+            _FILES.move_to_end(path)
+    if cached is not None and cached[0] == stamp:
+        if _stamp(path.lstat()) != stamp:
+            raise ValueError("framework runtime input changed during observation")
+        return cached[1]
+    # Do not follow a raced-in alias or block on a raced-in FIFO after lstat.
+    descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0))
+    with os.fdopen(descriptor, "rb") as stream:
+        if _stamp(os.fstat(stream.fileno())) != stamp:
+            raise ValueError("framework runtime input changed before hashing")
+        value = hashlib.file_digest(stream, "sha256").hexdigest()
+        if _stamp(os.fstat(stream.fileno())) != stamp or _stamp(path.lstat()) != stamp:
+            raise ValueError("framework runtime input changed during hashing")
+    if caching:
+        with _FILE_LOCK:
+            _FILES[path] = (stamp, value)
+            _FILES.move_to_end(path)
+            while len(_FILES) > _FILE_LIMIT:
+                _FILES.popitem(last=False)
+    return value
+
+
+def _inventory(path, installed):
+    if path.resolve() != path or not path.is_dir():
+        raise ValueError("framework runtime requires canonical installed directories")
+    entries, pending = {path: _stamp(path.lstat())}, [path]
+    while pending:
+        # Unlike pathlib.rglob, propagate directory enumeration failures; an
+        # unreadable directory must not silently disappear from runtime identity.
+        with os.scandir(pending.pop()) as children:
+            for child in children:
+                item, info = Path(child.path), child.stat(follow_symlinks=False)
+                if stat.S_ISLNK(info.st_mode):
+                    raise ValueError("framework installation cannot contain file or directory aliases")
+                if stat.S_ISDIR(info.st_mode):
+                    pending.append(item)
+                elif not stat.S_ISREG(info.st_mode):
+                    raise ValueError("framework installation contains a nonregular input")
+                elif installed and item.suffix in (".pyc", ".pyo"):
+                    raise ValueError("framework runtime must be installed without bytecode caches; execute with -B")
+                entries[item] = _stamp(info)
+    return entries
+
+
+def _tree_values(path, *, installed=False):
+    before = _inventory(path, installed)
+    values = {item.relative_to(path).as_posix(): _file(item) for item, stamp in before.items()
+              if stat.S_ISREG(stamp[2]) and item.suffix not in (".pyc", ".pyo")}
+    if _inventory(path, installed) != before:
+        raise ValueError("framework installation changed during observation")
+    return values
 
 
 def _tree(path, *, installed=False):
-    if path.resolve() != path or not path.is_dir():
-        raise ValueError("framework runtime requires canonical installed directories")
-    values = {}
-    for item in sorted(path.rglob("*")):
-        if item.is_symlink():
-            raise ValueError("framework installation cannot contain file or directory aliases")
-        if item.is_file():
-            if item.suffix in (".pyc", ".pyo"):
-                if installed:
-                    raise ValueError("framework runtime must be installed without bytecode caches; execute with -B")
-                continue
-            values[item.relative_to(path).as_posix()] = _file(item)
-        elif not item.is_dir():
-            raise ValueError("framework installation contains a nonregular input")
+    values = _tree_values(path, installed=installed)
     return digest(values)
+
+
+def _installation(package, purelib):
+    if package.parent != purelib or not package.is_dir():
+        raise ValueError("framework runtime requires its package inside the pinned installation")
+    values = _tree_values(purelib, installed=True)
+    prefix = package.name + "/"
+    return digest({name[len(prefix):]: value for name, value in values.items() if name.startswith(prefix)}), digest(values)
 
 
 def _interpreter(path):
@@ -89,9 +173,10 @@ def inspect(python):
     options = dict(line.lower().split("=", 1) for line in configuration.read_text().splitlines() if "=" in line)
     if {key.strip(): value.strip() for key, value in options.items()}.get("include-system-site-packages") != "false":
         raise ValueError("framework runtime must not inherit system site packages")
+    package_sha, environment_sha = _installation(package, purelib)
     return {"python": str(python), "executable": str(executable), "executable_sha256": _file(executable),
-            "package": str(package), "package_sha256": _tree(package, installed=True),
-            "purelib": str(purelib), "environment_sha256": _tree(purelib, installed=True),
+            "package": str(package), "package_sha256": package_sha,
+            "purelib": str(purelib), "environment_sha256": environment_sha,
             "prefix": str(prefix), "configuration_sha256": _file(configuration),
             "version": info["version"], "python_version": info["python_version"]}
 
@@ -101,11 +186,13 @@ def _unchanged(runtime):
     configuration = Path(runtime["prefix"]) / "pyvenv.cfg"
     if not configuration.is_file() or configuration.resolve() != configuration:
         raise ValueError("framework runtime configuration became unavailable or aliased")
-    if (str(executable) != runtime["executable"] or _file(executable) != runtime["executable_sha256"]
-            or _tree(Path(runtime["package"]), installed=True) != runtime["package_sha256"]
-            or _tree(Path(runtime["purelib"]), installed=True) != runtime["environment_sha256"]
-            or _file(configuration) != runtime["configuration_sha256"]
-            or _tree(Path(__file__).parent) != runtime["package_sha256"]):
+    if str(executable) != runtime["executable"] or _file(executable) != runtime["executable_sha256"]:
+        raise ValueError("framework runtime content changed; reauthorize before continuing")
+    package = Path(runtime["package"])
+    package_sha, environment_sha = _installation(package, Path(runtime["purelib"]))
+    loaded_sha = package_sha if Path(__file__).parent == package else _tree(Path(__file__).parent)
+    if (package_sha != runtime["package_sha256"] or environment_sha != runtime["environment_sha256"]
+            or _file(configuration) != runtime["configuration_sha256"] or loaded_sha != runtime["package_sha256"]):
         raise ValueError("framework runtime content changed; reauthorize before continuing")
 
 

@@ -36,6 +36,14 @@ than replaying earlier evidence. Interrupted commands retain cleanup/quarantine
 behavior. Bound command children also receive `PYTHONDONTWRITEBYTECODE=1` so
 build tools invoking Python through a shebang cannot write caches into the pinned
 installation. This does not change compiler arguments or the parent's environment.
+Runtime validation reenumerates installation membership and checks aliases,
+nonregular inputs and bytecode on every observation. On coherent POSIX
+filesystems, a bounded process-local cache reuses file SHA-256 values only while
+device/inode, mode/link count, size, mtime and ctime remain unchanged; forked
+children start empty. `MATCH_RECOVERY_RUNTIME_CACHE=off` forces fresh byte reads
+and should be used on filesystems without coherent metadata. Other platforms
+default to fresh reads. Package and environment digests share one installation
+observation. This caches neither binding authority nor verification results.
 Installation is not a hermetic OS/Python proof: content-pinned regular
 files may be hardlinked by the package installer, but symlinks within the installed
 package/environment and aliased configuration paths are refused.
