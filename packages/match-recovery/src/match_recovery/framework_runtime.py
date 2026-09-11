@@ -236,6 +236,19 @@ def resolve(argv):
     return list(argv)
 
 
+def child_environment():
+    """Keep shebang and nested Python commands from changing pinned inputs.
+
+    The parent's -B flag does not propagate through a build tool to env python3
+    wrappers. Supply the standard interpreter cache control to children only;
+    never mutate the coordinator's global environment or rewrite compiler argv.
+    """
+    if fingerprint() is None:
+        return None
+    import os
+    return {**os.environ, "PYTHONDONTWRITEBYTECODE": "1"}
+
+
 @contextmanager
 def command(argv):
     """All configured command boundaries check runtime freshness, not just run."""

@@ -33,7 +33,10 @@ Native child drivers carry the binding explicitly, and measurement executors
 propagate it to their own workers. Configured command boundaries and verification
 fingerprints recheck its identity; runtime changes refuse continued use rather
 than replaying earlier evidence. Interrupted commands retain cleanup/quarantine
-behavior. Installation is not a hermetic OS/Python proof: content-pinned regular
+behavior. Bound command children also receive `PYTHONDONTWRITEBYTECODE=1` so
+build tools invoking Python through a shebang cannot write caches into the pinned
+installation. This does not change compiler arguments or the parent's environment.
+Installation is not a hermetic OS/Python proof: content-pinned regular
 files may be hardlinked by the package installer, but symlinks within the installed
 package/environment and aliased configuration paths are refused.
 

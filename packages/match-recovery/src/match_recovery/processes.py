@@ -68,9 +68,11 @@ def _run_bounded(argv: list[str], *, cwd: Path, timeout: float,
     """
     if timeout <= 0:
         raise ValueError("command timeout must be positive")
+    from .framework_runtime import child_environment
     with _termination_cleanup():
         process = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                   env=child_environment(),
                                    start_new_session=os.name != "nt")
         try:
             output, errors = process.communicate(input, timeout=timeout)
@@ -107,7 +109,7 @@ def run_parallel(jobs: list[dict], *, limit: int, directory: Path, progress=None
     timeout or interruption unwinds cooperative nested command groups; detached
     descendants still require external containment and quarantined resources.
     """
-    from .framework_runtime import fingerprint, resolve
+    from .framework_runtime import child_environment, fingerprint, resolve
     if os.name != "posix":
         raise ValueError("parallel command supervision currently requires POSIX process groups")
     if type(limit) is not int or not 1 <= limit <= 32 or not isinstance(jobs, list) or not jobs:
@@ -152,6 +154,7 @@ def run_parallel(jobs: list[dict], *, limit: int, directory: Path, progress=None
                         selected = resolve(jobs[index]["argv"])
                         process = subprocess.Popen(selected, cwd=jobs[index]["cwd"],
                                                    stdin=subprocess.DEVNULL, stdout=output, stderr=errors,
+                                                   env=child_environment(),
                                                    start_new_session=True)
                     active[index] = (process, time.monotonic(), paths)
                     next_job += 1
