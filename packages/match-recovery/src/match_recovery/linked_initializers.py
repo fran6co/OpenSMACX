@@ -11,11 +11,13 @@ from collections import Counter
 import hashlib
 from pathlib import Path, PurePosixPath, PureWindowsPath
 
-from .binary import compare_bound_code
 from .coff_archive import CoffArchive
+from .linked_function import verify_function as _function
+from .linked_code_graph import observe_code_graph, compare_code_graphs
+from .linked_objects import SelectedObjects
 from .link_file_evidence import parse_link_files
 from .link_input_coverage import _input_inventory
-from .model import Result, Span, digest
+from .model import Result, Span
 from .msvc_link_map import parse_link_map
 from .pe_coff import Coff, CoffRecords, PeImage
 
@@ -132,48 +134,6 @@ def _selected_objects(evidence, coverage, records):
     return selected
 
 
-def _function(obj, symbol, owner, mapping, image):
-    subject = obj.function(symbol.name)
-    if subject.index != symbol.index or len(obj.code_sections(subject)) != 1:
-        raise ValueError("initializer requires one independently bounded code COMDAT")
-    placements = mapping.statics if subject.storage == 3 else mapping.publics
-    matches = [row for row in placements or () if row.symbol == subject.name
-               and row.owner.casefold() == owner.casefold() and row.function and row.segment]
-    if len(matches) != 1:
-        raise ValueError("initializer has no unique selected owner-qualified function placement")
-    placed, = matches
-    if not image.section_flags[placed.segment - 1] & 0x20:
-        raise ValueError("initializer placement is outside linked code")
-    code, relocations, alignment = obj.subject(subject)
-    targets, references = {}, []
-    for relocation in relocations:
-        target = obj.symbols[int(relocation.target)]
-        if target.section == subject.section and 0 <= target.value < len(code):
-            address, identity = placed.address + target.value, {"self_offset": target.value}
-        else:
-            if target.storage not in (2, 3) or target.section < 0:
-                raise ValueError("unsupported initializer relocation identity")
-            pool = mapping.publics if target.storage == 2 else mapping.statics or ()
-            matches = [row for row in pool if row.symbol == target.name and row.segment
-                       and (target.storage == 2 or row.owner.casefold() == owner.casefold())]
-            if len(matches) != 1:
-                raise ValueError("initializer reference has no unique independent map placement")
-            address = matches[0].address
-            identity = {"external": target.name} if target.storage == 2 else {"local_owner": owner, "symbol": target.name}
-        targets[relocation.target] = address
-        references.append({"offset": relocation.offset, "kind": relocation.kind,
-                           "identity": identity, "address": address})
-    span = Span(placed.address, placed.address + len(code))
-    proof = compare_bound_code(span, image.read(span), code, relocations, targets,
-                               original_absolute_sites=image.absolute_sites(span), alignment=alignment)
-    fingerprint = digest({"code_sha256": hashlib.sha256(code).hexdigest(), "size": len(code),
-                          "flags": obj.sections[subject.section - 1].flags,
-                          "references": [{key: row[key] for key in ("offset", "kind", "identity")} for row in references]})
-    return {"symbol": subject.name, "owner": owner, "address": placed.address, "size": len(code),
-            "body_fingerprint": fingerprint, "code": proof, "references": references,
-            "target_contents": Result.UNKNOWN, "result": proof["result"]}
-
-
 def _observe(context, artifacts):
     image = PeImage(artifacts["pe32-i386"], hashlib.sha256(artifacts["pe32-i386"]).hexdigest())
     mapping = parse_link_map(artifacts["msvc-map"])
@@ -216,7 +176,8 @@ def _observe(context, artifacts):
     contributions = [row for row in mapping.contributions if row.name == TABLE]
     if not entries and not contributions:
         return {"result": Result.PASS, "table": TABLE, "entries": [], "sequence": [],
-                "contribution": None, "functions": [], "input_coverage": Result.PASS}
+                "contribution": None, "functions": [], "input_coverage": Result.PASS,
+                "code_dependencies": observe_code_graph(SelectedObjects(evidence, coverage, records), mapping, image, [])}
     if len(contributions) != 1:
         raise ValueError("initializer table requires one independently bounded linked contribution")
     table, = contributions
@@ -242,10 +203,14 @@ def _observe(context, artifacts):
     results = [row["result"] for row in functions.values()]
     result = (Result.FAIL if not table_ok or Result.FAIL in results else
               Result.UNKNOWN if Result.UNKNOWN in results else Result.PASS)
+    dependencies = (observe_code_graph(SelectedObjects(evidence, coverage, records), mapping, image,
+                                      [row["function"] for row in sequence]) if table_ok else
+                    {"result": Result.UNKNOWN, "reason": "initializer root table is not verified"})
     return {"result": result, "table": TABLE, "entries": entries, "sequence": sequence,
             "contribution": {"address": start, "size": table.size, "segment": table.segment},
             "table_correspondence": Result.PASS if table_ok else Result.FAIL,
-            "functions": list(functions.values()), "input_coverage": Result.PASS}
+            "functions": list(functions.values()), "input_coverage": Result.PASS,
+            "code_dependencies": dependencies}
 
 
 def observe_build_initializers(context):
@@ -279,10 +244,16 @@ def compare_build_initializers(baseline, current):
         equal = [row["body_fingerprint"] for row in old.get("sequence", [])] == [
             row["body_fingerprint"] for row in new.get("sequence", [])]
         results = [old["result"], new["result"]]
-        result = (Result.FAIL if Result.FAIL in results else Result.UNKNOWN if Result.UNKNOWN in results else
-                  Result.PASS if equal else Result.FAIL)
+        observations_complete = all(value == Result.PASS for value in results)
+        ordered = (Result.FAIL if Result.FAIL in results else Result.UNKNOWN if Result.UNKNOWN in results else
+                   Result.PASS if equal else Result.FAIL)
+        dependencies = compare_code_graphs(
+            old.get("code_dependencies", {"result": Result.UNKNOWN}),
+            new.get("code_dependencies", {"result": Result.UNKNOWN}))
+        results = [ordered, dependencies["result"]]
+        result = (Result.FAIL if Result.FAIL in results else Result.UNKNOWN if Result.UNKNOWN in results else Result.PASS)
         summary = {"baseline_slots": len(old.get("sequence", [])), "current_slots": len(new.get("sequence", [])),
-                   "observations_complete": all(value == Result.PASS for value in results)}
+                   "observations_complete": observations_complete}
         if summary["observations_complete"]:
             left = Counter(row["body_fingerprint"] for row in old["sequence"])
             right = Counter(row["body_fingerprint"] for row in new["sequence"])
@@ -290,10 +261,11 @@ def compare_build_initializers(baseline, current):
                            removed_registrations=sum((left - right).values()), ordered_equal=equal)
         return {"check": "application_linked_initializers", "result": result, "baseline": old, "current": new,
                 "summary": summary,
-                "ordered_code_correspondence": Result.PASS if result == Result.PASS else result,
+                "ordered_code_correspondence": ordered, "code_dependencies": dependencies,
                 "remaining_linked_effects": Result.UNKNOWN, "persisted": False, "ready_for_collection": False,
                 "limitations": ["exact ordered code/relocation identities retain every registration occurrence",
                                 "changed sequence requires scope/effect proof; it is not automatically an outside-scope regression",
+                                "selected relocation-reachable helper/callback code is checked, not just initializer names or addresses",
                                 "matching table code alone cannot discharge callback/storage/selection or other residual obligations"]}
     finally:
         fresh()

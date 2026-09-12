@@ -264,6 +264,18 @@ leaves callback/data contents, initialization effects and residual ownership unp
 This bounded table comparison is consumed by migration diagnostics, not a new CLI
 or a reusable preservation waiver. It does not cover other startup mechanisms.
 
+Initializer comparison also follows code-valued COFF relocations to independently
+selected helper and callback definitions, including tail jumps and address operands.
+Physical final-pass identities and archive occurrences select the objects; map
+names or equal callback addresses do not prove their contents. The rooted code
+graph retains ordered references, shared definitions and linked-address aliases.
+Its node numbering does not depend on generated local function spellings. Changed
+selected helper code is therefore a counterexample even when the initializer's
+own bytes still agree. Missing, ambiguous or unsupported target definitions remain
+unknown. `ordered_code_correspondence` reports the original table/body dimension;
+`code_dependencies` reports this additional prerequisite. Neither proves data
+contents, indirect targets, guard behavior, registration effects or runtime safety.
+
 Command agreement remains an **UNKNOWN** migration prerequisite until remaining
 linked effects are proved. Initializer ordering, common allocation, COMDAT selection,
 independent data and unowned code/references cannot disappear with an authorized TU

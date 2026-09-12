@@ -199,11 +199,42 @@ def test_private_application_context_builds_with_native_command_evidence(added, 
         assert comparison["linked_effects"] == "unknown"
         initializers = compare_build_initializers(application, repeated)
         assert initializers["baseline"]["result"] == initializers["current"]["result"] == "pass", initializers
-        assert initializers["result"] == ("fail" if added else "pass"), initializers
+        ordered = initializers["ordered_code_correspondence"]
+        assert ordered == ("fail" if added else "pass"), initializers
         old_slots, new_slots = (initializers[version]["sequence"] for version in ("baseline", "current"))
         # vc6_compat.h forces <string>: even the plain TU emits a library
         # registration. The explicit dynamic initializer adds a second one.
         assert old_slots and len(new_slots) == len(old_slots) + int(added) + int(initializes)
+        dependencies = initializers["code_dependencies"]
+        assert dependencies["check"] == "application_initializer_code_dependencies"
+        assert dependencies["remaining_linked_effects"] == "unknown"
+        for version, slots in (("baseline", old_slots), ("current", new_slots)):
+            observed = dependencies[version]
+            assert observed == initializers[version]["code_dependencies"]
+            assert observed["check"] == "linked_relocation_code_graph"
+            assert observed["nodes"] and isinstance(observed["gaps"], list)
+            assert len(observed["roots"]) == len(slots)
+            assert observed["remaining_linked_effects"] == "unknown"
+            assert any(node["result"] == "pass" for node in observed["nodes"]), observed
+            for node in observed["nodes"]:
+                if node["result"] != "pass":
+                    continue
+                function = node["proof"]
+                assert function["result"] == "pass" and function["size"] > 0, node
+                assert function["target_contents"] == "unknown"
+                assert all(function["code"][key] == "pass"
+                           for key in ("result", "boundary", "bytes", "references")), node
+            if observed["result"] == "pass":
+                assert not observed["gaps"] and observed["graph_fingerprint"], observed
+                assert all(node["result"] == "pass" for node in observed["nodes"]), observed
+        # Unsupported runtime definitions may leave the reachable closure
+        # unknown. A real counterexample in identical builds must not be hidden
+        # by the independent, passing ordered initializer-body observation.
+        if not added:
+            assert dependencies["result"] in ("pass", "unknown"), dependencies
+        results = (ordered, dependencies["result"])
+        expected = "fail" if "fail" in results else "unknown" if "unknown" in results else "pass"
+        assert initializers["result"] == expected, initializers
         assert initializers["remaining_linked_effects"] == "unknown"
         if not added:
             # Reuse these two actual application builds. This fixture supplies
