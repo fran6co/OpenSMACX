@@ -8,6 +8,5 @@
   "inputs": ["CMakeLists.txt", "pyproject.toml", "uv.lock", "recovery/environment/vc6-cl", "recovery/environment/vc6-link", "recovery/environment/vc6-lib", "recovery/environment/wine.py", "recovery/environment/wine_repro.py"],
   "versioned_inputs": ["CMakeLists.txt"],
   "input_roots": ["src", "cmake"],
-  "versioned_inputs": ["CMakeLists.txt"],
   "environment": ["VC6_PREFIX", "VC6_ROOT", "VC6_INCLUDE", "VC6_LIB", "WINEARCH", "CL", "_CL_"]
 }
