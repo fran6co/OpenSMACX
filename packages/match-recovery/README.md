@@ -184,6 +184,26 @@ All artifact/input hashes and observation membership are rechecked after the bat
 The returned `command_bindings` is fresh evidence, not a persisted source ledger,
 complete include-search closure or permission to integrate a changed build graph.
 
+For comparisons that need live build files, use the context manager
+`match_recovery.application_context.application_build(root, roots, files,
+versioned_files=...)`. `files` supplies a complete byte map beneath explicit
+source roots; `versioned_files` must contain exactly the application's declared
+`Build.versioned_inputs`. The caller selects those versions from authorized
+history: this helper does not select a baseline or infer authority from a branch.
+It creates a private project with current compiler/build policy, copies declared
+ignored inputs, and runs the configured application build—not preparation.
+Unrelated ignored caches are not copied. Compiler/toolchain policy files cannot
+be changed by source/graph substitution.
+
+The yielded value exposes `root`, `directory`, a defensive-copy `report`, and
+`check_current()`. Both original and private source/policy/Git inputs stay guarded;
+declared artifacts and configured compiler/link evidence are rechecked against
+the original build epoch, including receipt bytes and membership. A self-consistent
+new receipt cannot refresh that epoch. Use the evidence inside the context; private
+files are removed on exit and later freshness checks refuse. Unconfigured evidence
+remains unverified. This API provides fresh builds, not baseline/candidate graph
+equivalence, linked-effect preservation, review or permission to publish a change.
+
 `match_recovery.command_paths` supplies lossless command syntax comparison for
 build-graph verification. `validate_command_paths(arguments, cwd, description,
 stage=...)` checks the project environment's explicit path slices; it does not

@@ -54,6 +54,29 @@ def test_native_collector_connects_declared_application_outputs(observed):
     assert report['linked_selection'] == report['build_graph_verification'] == 'unknown'
 
 
+@pytest.mark.parametrize('change', ['arguments', 'formatting', 'receipt_path'])
+def test_verified_epoch_fingerprint_detects_self_consistent_receipt_replacement(observed, change):
+    before = verify(observed)
+    path = observed[1] / 'objects/unit.compile.json'
+    if change == 'receipt_path':
+        path.rename(path.with_name('renamed.compile.json'))
+    elif change == 'formatting':
+        path.write_bytes(path.read_bytes() + b'\n')
+    else:
+        value = json.loads(path.read_bytes())
+        value['arguments'].append('-DCHANGED')
+        path.write_text(json.dumps(value))
+    after = verify(observed)
+    assert before['result'] == after['result'] == 'pass'
+    assert before['evidence_fingerprint'] != after['evidence_fingerprint']
+    # Receipt location/membership was previously absent from per-compile proof.
+    # A live enclosing build must also retain that exact capture epoch.
+    if change == 'receipt_path':
+        before.pop('evidence_fingerprint')
+        after.pop('evidence_fingerprint')
+        assert before == after
+
+
 @pytest.mark.parametrize('name', ['commands.json', 'link.inputs.json', 'link.log', 'application', 'application.map'])
 def test_cannot_mix_artifacts_changed_after_build_format_checks(observed, name):
     path = observed[1] / name

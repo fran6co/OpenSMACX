@@ -10,6 +10,7 @@ from .compile_file_evidence import _observe, parse_compile_files
 from .compile_link_evidence import verify_compile_link_inputs
 from .components import relative_path
 from .link_file_evidence import parse_link_files
+from .model import digest
 from .records import parse_json_value
 
 
@@ -142,4 +143,7 @@ def verify_build_compilations(root, directory, configuration, *, outputs):
     if (_observations(tree, configuration["suffix"]) != selected
             or {path: _observe(path) for path in sorted(observed_paths)} != before):
         raise ValueError("compiler/link files or observation membership changed during verification")
+    report["evidence_fingerprint"] = digest({
+        "files": {str(path): stamp for path, stamp in before.items()},
+        "observations": [str(path) for path in selected]})
     return report

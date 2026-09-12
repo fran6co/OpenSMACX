@@ -44,6 +44,13 @@ The package binds them to observed source/object files and ordered linker inputs
 then rechecks the build's file evidence. The operation does not compile or supply
 an acceptance verdict. This is not a new CLI or migration-admission route;
 baseline/current graph comparison and remaining linked-effect proof are still needed.
+The application build now explicitly declares `CMakeLists.txt` as a versioned
+build-graph input, independently of preparation policy. The package's live
+`application_build` context can generate isolated source/graph versions with the
+current compiler environment and keep their files available for comparison.
+That declaration does not exempt CMake changes from migration verification or
+reset a task's preservation baseline; changed graphs remain unaccepted until
+command, membership and remaining linked effects are proved.
 
 The active agent/coordinator contract is [WORKFLOW.md](WORKFLOW.md). Historical
 compiler observations are in [COMPILER_EVIDENCE.md](COMPILER_EVIDENCE.md); they do
