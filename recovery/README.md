@@ -6,6 +6,12 @@ verification run in the library; the former application operation bridge is
 removed. Local compiler scripts remain in `environment/`. See
 [the portable package](../packages/match-recovery/README.md) for starting an unrelated project.
 
+Compiler and toolchain JSON clients explicitly launch with `{framework_python}`
+and `-I -B`, so their framework imports use the caller's selected installation,
+not a retained worktree's older editable package. Compiler scripts and flags remain
+project-owned. Older frozen campaign profiles are not silently changed by this
+configuration; updating their compiler interaction requires separate authorization.
+
 The active agent/coordinator contract is [WORKFLOW.md](WORKFLOW.md). Historical
 compiler observations are in [COMPILER_EVIDENCE.md](COMPILER_EVIDENCE.md); they do
 not override task scope, structural evidence or acceptance policy.

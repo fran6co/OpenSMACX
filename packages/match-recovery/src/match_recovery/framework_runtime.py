@@ -1,7 +1,9 @@
 """Explicit installed framework selection, separate from project compiler hooks.
 
 No environment variable activates this binding. The caller supplies a pinned
-configuration; only its exact declared recovery launchers are redirected. This
+configuration; only its exact declared recovery launchers are redirected. An
+explicit {framework_python} executable selects this framework's interpreter for
+project-owned Python protocol clients without rewriting arbitrary commands. This
 identifies a local installation, not a hermetic Python/OS or behavioral proof.
 """
 
@@ -314,7 +316,12 @@ def native_argv(suffix):
 
 
 def resolve(argv):
-    if fingerprint() is None:
+    active = fingerprint()
+    if argv and argv[0] == "{framework_python}":
+        import sys
+        python = sys.executable if active is None else _ACTIVE.get()[1]["runtime"]["python"]
+        return [python, *argv[1:]]
+    if active is None:
         return list(argv)
     _, value = _ACTIVE.get()
     for prefix in sorted(value["launchers"], key=len, reverse=True):
@@ -353,4 +360,5 @@ def instructions():
     return ("For native recovery diagnostics use this exact installed framework argv prefix: "
             + canonical(native_argv([])).decode() + ". Append the recovery subcommand/options. "
             "Do not use a checkout-local recovery launcher or change the runtime binding. "
-            "Compiler/provider hooks remain project-local and unchanged.\n")
+            "Compiler/provider hooks remain project-local; only explicit "
+            "{framework_python} executables select this installation's interpreter.\n")

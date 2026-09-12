@@ -29,6 +29,17 @@ Invoke the selected interpreter as `-I -B -m match_recovery --runtime
 /absolute/binding.json <subcommand>`. The global option precedes the subcommand.
 Only exact declared launcher prefixes are redirected; enumerate other project
 spellings explicitly. Compiler/provider commands otherwise remain unchanged.
+Project Python protocol clients that import the framework can explicitly declare
+`["{framework_python}", "-I", "-B", "recovery/compiler.py"]` as their command
+argv. Only the complete executable token is expanded: it selects the bound
+installation's interpreter, or the current interpreter without a binding. Flags
+and remaining arguments are preserved; `-I -B` are explicit project choices.
+This avoids a checkout-local `uv run python` loading an older package than its
+caller. It does not copy adapter code, change ordinary Python/compiler/provider
+commands, or propagate native CLI authority into arbitrary script descendants.
+The script must arrange any project-local imports explicitly under `-I`.
+Changing a frozen campaign's command configuration still needs separate authority;
+runtime reauthorization alone does not grant that change.
 Native child drivers carry the binding explicitly, and measurement executors
 propagate it to their own workers. Configured command boundaries and verification
 fingerprints recheck its identity; runtime changes refuse continued use rather

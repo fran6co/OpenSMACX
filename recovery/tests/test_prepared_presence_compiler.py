@@ -54,7 +54,7 @@ def test_real_prepared_added_unit_cannot_hide_unowned_storage(tmp_path, monkeypa
         "source": {"image_pin": "code/PIN", "address_space": "pe:va", "roots": ["code"], "include_paths": ["code"]},
         "preparation": "recovery/prepare.json",
         "mappings": {"compile_commands": "build/compile_commands.json"},
-        "compiler": {"command": {"argv": [sys.executable, str(repository / "recovery/environment/adapter.py")], "timeout": 60},
+        "compiler": {"command": {"argv": ["{framework_python}", "-I", "-B", str(repository / "recovery/environment/adapter.py")], "timeout": 60},
                      "inputs": [], "environment": ["VC6_PREFIX", "VC6_ROOT", "WINEARCH"]},
         "measurement": {"backend": "pe-coff-i386", "compiler_profile": "application",
                         "flag_sets": [["/c", "/O2", "/Gy"]], "layout_flags": [], "unit_extensions": [".cpp"],

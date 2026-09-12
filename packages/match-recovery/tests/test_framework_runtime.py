@@ -1,10 +1,11 @@
-"""Explicit runtime bindings upgrade native tools, never providers or compilers."""
+"""Explicit runtime bindings and opt-in Python hooks preserve command authority."""
 
 import json
 import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import venv
 
 import pytest
@@ -82,6 +83,91 @@ def test_binding_rewrites_only_exact_declared_launcher_preserving_suffix(tmp_pat
         assert dict(os.environ) == before
     assert runtime.fingerprint() is None
     assert dict(os.environ) == before
+
+
+def test_explicit_framework_python_without_binding_selects_current_interpreter(monkeypatch):
+    monkeypatch.setenv("MATCH_RECOVERY_RUNTIME", "/untrusted/runtime.json")
+    monkeypatch.setenv("PYTHON", "/untrusted/python")
+    suffix = ["hook with spaces.py", "{framework_python}", "--literal={framework_python}"]
+    before = dict(os.environ)
+    assert runtime.resolve(["{framework_python}", *suffix]) == [sys.executable, *suffix]
+    assert runtime.resolve(["{framework_python}"]) == [sys.executable]
+    assert runtime.fingerprint() is None
+    assert dict(os.environ) == before
+
+
+def test_explicit_framework_python_selects_pinned_interpreter_without_injecting_flags(tmp_path, installed):
+    path = write_binding(tmp_path, installed)
+    suffix = ["hook with spaces.py", "--root", "project with spaces", "{framework_python}"]
+    with runtime.binding(path):
+        assert runtime.resolve(["{framework_python}", *suffix]) == [str(installed[0]), *suffix]
+        assert runtime.resolve(["{framework_python}"]) == [str(installed[0])]
+        isolated = ["-I", "-B", *suffix]
+        assert runtime.resolve(["{framework_python}", *isolated]) == [str(installed[0]), *isolated]
+        for argv in (["prefix{framework_python}", "hook.py"],
+                     ["{framework_python}/suffix", "hook.py"],
+                     ["provider", "{framework_python}"],
+                     ["uv", "run", "python", "hook.py"],
+                     [sys.executable, "hook.py"]):
+            assert runtime.resolve(argv) == argv
+
+
+def test_explicit_framework_python_isolated_child_ignores_checkout_and_pythonpath(tmp_path, installed, monkeypatch):
+    from match_recovery.processes import run_bounded
+
+    path = write_binding(tmp_path, installed)
+    checkout = tmp_path / "old checkout"
+    checkout.mkdir()
+    poisoned = checkout / "match_recovery"
+    poisoned.mkdir()
+    marker = checkout / "old-package-imported"
+    (poisoned / "__init__.py").write_text(
+        f"from pathlib import Path\nPath({str(marker)!r}).write_text('imported')\n"
+        "raise RuntimeError('checkout package is not the selected installation')\n"
+    )
+    monkeypatch.setenv("PYTHONPATH", str(checkout))
+    hook = checkout / "hook.py"
+    hook.write_text(
+        "import json, sys\n"
+        "import match_recovery\n"
+        "from match_recovery.framework_runtime import fingerprint\n"
+        "print(json.dumps({'package': match_recovery.__file__, 'python': sys.executable,\n"
+        "                  'isolated': sys.flags.isolated, 'no_bytecode': sys.dont_write_bytecode,\n"
+        "                  'authority': fingerprint(), 'argv': sys.argv[1:]}))\n"
+    )
+    # Positive poison control: without the project's explicit isolation flags,
+    # Python really can import the conflicting checkout package.
+    poison_control = subprocess.run([str(installed[0]), "-B", str(hook)], cwd=checkout,
+                                    capture_output=True, timeout=30)
+    assert poison_control.returncode != 0 and marker.exists()
+    marker.unlink()
+    with runtime.binding(path):
+        result = run_bounded(["{framework_python}", "-I", "-B", str(hook),
+                              "two words", "{framework_python}"], cwd=checkout, timeout=30)
+    assert result.returncode == 0, result.stderr.decode(errors="replace")
+    observed = json.loads(result.stdout)
+    assert Path(observed["package"]).parent == installed[1]
+    assert observed["python"] == str(installed[0])
+    assert observed["isolated"] == 1 and observed["no_bytecode"] is True
+    assert observed["authority"] is None  # Interpreter selection does not grant runtime authority.
+    assert observed["argv"] == ["two words", "{framework_python}"]
+    assert not marker.exists()
+
+
+def test_explicit_framework_python_refuses_changed_installation_before_execution(tmp_path, installed):
+    from match_recovery.processes import run_bounded
+
+    path = write_binding(tmp_path, installed)
+    marker = tmp_path / "changed-runtime-hook-ran"
+    with pytest.raises(ValueError, match="framework runtime content changed"):
+        with runtime.binding(path):
+            target = installed[1] / "__init__.py"
+            target.write_text(target.read_text() + "\n# changed installation\n")
+            run_bounded(["{framework_python}", "-I", "-B", "-c",
+                         f"from pathlib import Path; Path({str(marker)!r}).write_text('ran')"],
+                        cwd=tmp_path, timeout=30)
+    assert not marker.exists()
+    assert runtime.fingerprint() is None
 
 
 def test_same_binding_nesting_restores_outer_context(tmp_path, installed):
