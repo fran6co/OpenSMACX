@@ -53,6 +53,15 @@ def _verify_region(obj, subject, owner, mapping, image, *, objects=None):
     # One before/final physical-population guard per code region, not per
     # relocation operand. Every named candidate still receives the same checks.
     bindings = objects.resolve_constants(names, optional=True) if objects is not None and names else None
+    private_names = sorted({target.name for row in relocations
+        if (target := obj.symbols[int(row.target)]).storage == 3 and target.section != subject.section
+        and not any(item.symbol == target.name and item.segment and item.owner.casefold() == owner.casefold()
+                    for item in mapping.statics or ())})
+    if objects is not None and any(row.symbol in private_names
+            for row in (*mapping.publics, *(mapping.statics or ()))):
+        raise ValueError("private fallback conflicts with existing linked map evidence")
+    private = (objects.resolve_local_symbols(owner, private_names, image)
+               if objects is not None and private_names else {})
     targets, references = {}, []
     for relocation in relocations:
         target = obj.symbols[int(relocation.target)]
@@ -71,13 +80,23 @@ def _verify_region(obj, subject, owner, mapping, image, *, objects=None):
             pool = mapping.publics if target.storage == 2 else mapping.statics or ()
             matches = [row for row in pool if row.symbol == target.name and row.segment
                        and (target.storage == 2 or row.owner.casefold() == owner.casefold())]
-            if len(matches) != 1:
+            if not matches and target.storage == 3 and target.name in private:
+                binding = private[target.name]
+                if (binding["object_index"] != target.index or binding["object_section"] != target.section
+                        or binding["object_offset"] != target.value or target.type != 0
+                        or obj.auxiliary.get(target.index)):
+                    raise ValueError("private binding differs from the referring selected object")
+                address = binding["address"]
+            elif len(matches) == 1:
+                address = matches[0].address
+            else:
                 raise ValueError("linked reference has no unique independent map placement")
-            address = matches[0].address
             identity = {"external": target.name} if target.storage == 2 else {"local_owner": owner, "symbol": target.name}
         targets[relocation.target] = address
         references.append({"offset": relocation.offset, "kind": relocation.kind,
                            "identity": identity, "address": address})
+        if target.name in private and target.storage == 3 and target.section != subject.section:
+            references[-1]["private_binding"] = private[target.name]
     span = Span(placed.address, placed.address + len(code))
     proof = compare_bound_code(span, image.read(span), code, relocations, targets,
                                original_absolute_sites=image.absolute_sites(span), alignment=alignment)

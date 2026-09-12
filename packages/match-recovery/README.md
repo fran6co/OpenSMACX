@@ -1929,6 +1929,21 @@ unknown. Constant correspondence is not runtime storage or behavior proof.
 Names are resolved in a bounded batch per code region, sharing a complete-input
 before/after freshness check rather than repeating it for every operand.
 
+Missing private-data placements can additionally use COFF debug symbols embedded
+in the **same freshly linked PE**. The complete physical input population must
+contain exactly one occurrence of the name, in a plain static data definition
+from the exact selected owner. Duplicate names (including unselected objects),
+conflicting map entries, malformed metadata, unsupported linker policy and stale
+inputs refuse. Debug symbols supply RVAs, not inferred object-section offsets;
+the ordinary operand and HIGHLOW checks still apply. No neighboring symbol,
+pointer value or other build supplies an address. The compiler environment may
+request embedded metadata; the library never injects linker options. Debug
+options can alter the linked layout even with explicit optimization flags, so
+diagnostic-build addresses must not be transplanted. Target contents, associated
+private code and runtime behavior remain unproved. A uniquely identified label
+in associative data can bind without placing or proving its code parent. This adds no PDB requirement,
+new source ledger, CLI or acceptance exemption.
+
 The `projected_order` dimension qualifies initializer order by the
 actual compiler source unit (or exact physical dependency identity), not just
 body hashes or object basenames. It removes only

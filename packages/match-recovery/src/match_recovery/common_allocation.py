@@ -45,7 +45,8 @@ def _option(word):
         return False
     option = word[1:]
     if option.lower() in {"nologo", "nodefaultlib", "incremental:no", "opt:noref", "opt:ref",
-                          "opt:icf", "opt:noicf", "fixed:no", "machine:x86", "verbose", "mapinfo:lines"}:
+                          "opt:icf", "opt:noicf", "fixed:no", "machine:x86", "verbose", "mapinfo:lines",
+                          "debug", "debugtype:coff", "debugtype:both"}:
         return True
     key, separator, value = option.partition(":")
     if not separator or not value:

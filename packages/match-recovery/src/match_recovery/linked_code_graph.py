@@ -78,6 +78,7 @@ never merge distinct definitions. External symbol identity remains explicit.
             spans.append((cursor, begin, end))
             edges = []
             constants = {row["offset"]: row for row in proof["references"] if "constant_binding" in row}
+            private = {row["offset"]: row for row in proof["references"] if "private_binding" in row}
             for relocation in sorted(relocations, key=lambda row: row.offset):
                 target = obj.symbols[int(relocation.target)]
                 addend = int.from_bytes(code[relocation.offset:relocation.offset + 4], "little", signed=True)
@@ -86,6 +87,11 @@ never merge distinct definitions. External symbol identity remains explicit.
                     if relocation.kind != RelocationKind.ABSOLUTE32:
                         raise ValueError("relative linker constants require independent rebase semantics")
                     edge["target"] = constants[relocation.offset]["identity"]
+                elif relocation.offset in private:
+                    reference = private[relocation.offset]
+                    edge["target"] = {"data": reference["identity"]}
+                    storage.append({"node": cursor, **edge, "address": reference["address"],
+                                    "placement": reference["private_binding"], "contents": Result.UNKNOWN})
                 elif target.section == subject.section and 0 <= target.value < len(code):
                     if not 0 <= target.value + addend < len(code):
                         raise ValueError("effective self code reference is outside its observed function span")

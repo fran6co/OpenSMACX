@@ -251,6 +251,77 @@ class SelectedObjects:
         """Single-name form of the guarded complete-population bulk lookup."""
         return self.resolve_constants((name,), optional=optional)[name]
 
+    def resolve_local_symbols(self, owner, names, image):
+        """Place uniquely named selected private data from this PE's COFF debug.
+
+        Linked COFF tables need not retain file scopes. A static spelling is
+        usable only when the *complete physical candidate population* contains
+        exactly one occurrence, from the requested selected owner. No symbol
+        order, target operand, byte search or other build supplies placement.
+        These bindings prove neither target contents nor recovery acceptance.
+        The enclosing live observer still owns source/output freshness guards.
+        """
+        from .common_allocation import _policy
+        from .pe_coff import Coff
+        from .pe_debug import linked_coff_symbols
+
+        if not isinstance(names, (tuple, list)) or not 1 <= len(names) <= 4096:
+            raise ValueError("private symbol lookup requires a bounded nonempty name sequence")
+        names = tuple(names)
+        for name in names:
+            require_text(name, "private linker symbol")
+            if any(ord(char) < 33 or ord(char) >= 127 for char in name):
+                raise ValueError("unsupported private linker symbol spelling")
+        if len(set(names)) != len(names):
+            raise ValueError("private symbol lookup requires unique names")
+        # This same physically revalidated population also backs constants;
+        # cache bytes/parsing within one live epoch, never a placement verdict.
+        records, fresh = self._constant_population()
+        try:
+            if self._constant_policy_gaps is None:
+                self._constant_policy_gaps = _policy(self._constant_evidence, records)
+            if self._constant_policy_gaps:
+                raise ValueError("private resolution has unsupported linker policy or directives")
+            selected = self.resolve(owner)
+            obj = Coff(selected["raw"])
+            linked = defaultdict(list)
+            for symbol in linked_coff_symbols(image):
+                linked[symbol.name].append(symbol)
+            result = {}
+            for name in names:
+                if name in self._constant_imports or self._constant_weak_fallbacks.get(name):
+                    raise ValueError("private symbol conflicts with an import or weak alias")
+                candidates = self._constant_symbols.get(name, ())
+                if len(candidates) != 1:
+                    raise ValueError("private symbol requires exactly one complete-population occurrence")
+                record, declared = candidates[0]
+                identity = {key: record[key] for key in ("path", "member", "occurrence", "generated") if key in record}
+                if identity != selected["identity"] or record["sha256"] != selected["sha256"]:
+                    raise ValueError("private definition differs from the selected physical owner")
+                symbol = obj.symbols.get(declared["index"])
+                if (symbol is None or symbol.name != name or symbol.storage != 3 or symbol.type != 0
+                        or symbol.section <= 0 or obj.auxiliary.get(symbol.index)):
+                    raise ValueError("private placement requires a plain static data symbol")
+                section = obj.sections[symbol.section - 1]
+                if (section.flags & (0x20 | 0x20000000) or not section.flags & (0x40 | 0x80)
+                        or name == section.name or not 0 <= symbol.value < obj.section_sizes[symbol.section - 1]):
+                    raise ValueError("private placement requires bounded non-code object data")
+                placements = linked.get(name, ())
+                if len(placements) != 1:
+                    raise ValueError("private symbol has no unique embedded COFF placement")
+                placed, = placements
+                if (placed.storage != 3 or placed.type != 0 or placed.section <= 0
+                        or image.section_flags[placed.section - 1] & (0x20 | 0x20000000)
+                        or not image.section_flags[placed.section - 1] & (0x40 | 0x80)):
+                    raise ValueError("private embedded COFF placement is not plain image data")
+                result[name] = {"symbol": name, "address": image.base + placed.value,
+                    "owner": selected["owner"], "input": dict(identity), "object_sha256": selected["sha256"],
+                    "object_index": symbol.index, "object_section": symbol.section, "object_offset": symbol.value,
+                    "placement": "embedded_coff"}
+            return result
+        finally:
+            fresh()
+
     def resolve_constants(self, names, *, optional=False):
         """Bind a bounded batch of absolute definitions, not image VAs.
 
