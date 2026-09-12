@@ -125,11 +125,18 @@ def _validate_names(obj, names):
 
 def _section_keys(obj, overrides=None, names=None):
     """Explicit names and associative ownership, never byte-similarity pairing."""
+    by_section = {}
+    for symbol in obj.symbols.values():
+        if not 0 < symbol.section <= len(obj.sections) or symbol.storage == 103:
+            continue
+        section = obj.sections[symbol.section - 1]
+        if symbol.name == section.name and symbol.storage == 3 and symbol.type == 0:
+            continue
+        by_section.setdefault(symbol.section, []).append(
+            ((names or {}).get(symbol.index, symbol.name), symbol.value, symbol.type, symbol.storage))
     keys = {}
     for number, section in enumerate(obj.sections, 1):
-        symbols = sorted(((names or {}).get(symbol.index, symbol.name), symbol.value, symbol.type, symbol.storage)
-                       for symbol in obj.symbols.values() if symbol.section == number and symbol.storage != 103
-                       and not (symbol.name == section.name and symbol.storage == 3 and symbol.type == 0))
+        symbols = sorted(by_section.get(number, ()))
         # Associative ownership is stronger than a child's compiler-local name.
         # Keep every child symbol/offset below; do not use labels as its owner.
         if symbols and number not in obj.associations:
