@@ -203,9 +203,15 @@ def _observe(context, artifacts):
     results = [row["result"] for row in functions.values()]
     result = (Result.FAIL if not table_ok or Result.FAIL in results else
               Result.UNKNOWN if Result.UNKNOWN in results else Result.PASS)
-    dependencies = (observe_code_graph(SelectedObjects(evidence, coverage, records), mapping, image,
-                                      [row["function"] for row in sequence]) if table_ok else
-                    {"result": Result.UNKNOWN, "reason": "initializer root table is not verified"})
+    dependencies = {"result": Result.UNKNOWN, "reason": "initializer root table is not verified"}
+    if table_ok:
+        try:
+            dependencies = observe_code_graph(SelectedObjects(evidence, coverage, records), mapping, image,
+                                              [row["function"] for row in sequence])
+        except (OSError, ValueError) as error:
+            # Unsupported dependency metadata cannot erase a measured root
+            # failure or turn a valid root observation into missing evidence.
+            dependencies = {"result": Result.UNKNOWN, "reason": str(error)}
     return {"result": result, "table": TABLE, "entries": entries, "sequence": sequence,
             "contribution": {"address": start, "size": table.size, "segment": table.segment},
             "table_correspondence": Result.PASS if table_ok else Result.FAIL,
@@ -250,6 +256,9 @@ def compare_build_initializers(baseline, current):
         dependencies = compare_code_graphs(
             old.get("code_dependencies", {"result": Result.UNKNOWN}),
             new.get("code_dependencies", {"result": Result.UNKNOWN}))
+        inputs = [old["result"], new["result"],
+                  dependencies["baseline"]["result"], dependencies["current"]["result"]]
+        consistency = (Result.FAIL if Result.FAIL in inputs else Result.UNKNOWN if Result.UNKNOWN in inputs else Result.PASS)
         results = [ordered, dependencies["result"]]
         result = (Result.FAIL if Result.FAIL in results else Result.UNKNOWN if Result.UNKNOWN in results else Result.PASS)
         summary = {"baseline_slots": len(old.get("sequence", [])), "current_slots": len(new.get("sequence", [])),
@@ -262,6 +271,7 @@ def compare_build_initializers(baseline, current):
         return {"check": "application_linked_initializers", "result": result, "baseline": old, "current": new,
                 "summary": summary,
                 "ordered_code_correspondence": ordered, "code_dependencies": dependencies,
+                "input_consistency": consistency,
                 "remaining_linked_effects": Result.UNKNOWN, "persisted": False, "ready_for_collection": False,
                 "limitations": ["exact ordered code/relocation identities retain every registration occurrence",
                                 "changed sequence requires scope/effect proof; it is not automatically an outside-scope regression",

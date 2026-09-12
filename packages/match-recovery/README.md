@@ -276,12 +276,29 @@ unknown. `ordered_code_correspondence` reports the original table/body dimension
 `code_dependencies` reports this additional prerequisite. Neither proves data
 contents, indirect targets, guard behavior, registration effects or runtime safety.
 
+Ordinary undefined pointer references can terminate at independently parsed PE
+loader slots. Their map placement, absolute relocation, zero addend and actual
+PE import identity must agree; misleading COFF function type hints do not turn an
+IAT slot into a function. The graph preserves module/export-or-ordinal identity
+and slot sharing. This does not establish import-library intent, ABI or the loaded
+DLL implementation. `input_consistency` distinguishes selected-input/actual-PE
+mismatches from differences between two internally consistent builds. The former
+fail the graph prerequisite; the latter still require scope/effect classification.
+
 Command agreement remains an **UNKNOWN** migration prerequisite until remaining
 linked effects are proved. Initializer ordering, common allocation, COMDAT selection,
 independent data and unowned code/references cannot disappear with an authorized TU
 addition. Existing restoration/preservation checks still run; the graph route neither
 waives their findings nor resets a baseline. Reports and temporary builds are
 disposable evidence, not acceptance records or a new command-line workflow.
+
+Explicit generated-effect migration authority is still missing: original-entity
+scope and permission for byte regressions do not authorize a new startup
+registration. Supporting that requires independently reviewed intent tied to a
+source ownership change, fresh proof of the exact generated effect and its bounded
+compiled footprint, and unchanged outside dependencies/residuals. An intentionally
+authorized registration would not need to be falsely proved free of allocation
+effects; no such authorization or residual exemption is currently implemented.
 
 `recover inventory` reports source and seed populations, body-presence states,
 historical obligations and mapping conflicts. Body states derive from source

@@ -9,6 +9,8 @@ from collections import Counter
 import hashlib
 
 from .linked_function import verify_function
+from .linked_imports import import_slots, resolve_import_slot
+from .binary import RelocationKind
 from .model import Result, digest
 from .pe_coff import Coff
 
@@ -26,6 +28,7 @@ never merge distinct definitions. External symbol identity remains explicit.
     if type(max_functions) is not int or not 1 <= max_functions <= MAX_FUNCTIONS:
         raise ValueError("linked code graph requires a bounded positive function limit")
     mapping.validate(image)
+    slots, slot_ids, imports = import_slots(image), {}, []
     nodes, keys, parsed, canonical, gaps = [], {}, {}, [], []
     storage, code_targets = [], []
 
@@ -90,7 +93,16 @@ never merge distinct definitions. External symbol identity remains explicit.
                     if len(matches) != 1:
                         raise ValueError("linked code target has no unique independent placement")
                     placed, = matches
-                    if placed.function:
+                    imported = resolve_import_slot(target, placed, addend, slots)
+                    if imported is not None:
+                        if relocation.kind != RelocationKind.ABSOLUTE32:
+                            raise ValueError("loader slot requires an absolute pointer relocation")
+                        slot_id = slot_ids.setdefault(imported["address"], len(slot_ids))
+                        identity = {key: imported[key] for key in ("module", "name", "ordinal", "symbol")}
+                        edge["target"] = {"loader_import": identity, "slot": slot_id}
+                        imports.append({"node": cursor, **edge, "address": imported["address"],
+                                        "implementation": Result.UNKNOWN, "selection": Result.UNKNOWN})
+                    elif placed.function:
                         edge["target"] = {"node": add(placed.owner, placed.symbol)}
                         code_targets.append((cursor, edge["target"]["node"], addend))
                         if addend:
@@ -129,10 +141,12 @@ never merge distinct definitions. External symbol identity remains explicit.
     result = Result.FAIL if counts[Result.FAIL] else Result.UNKNOWN if counts[Result.UNKNOWN] else Result.PASS
     return {"check": "linked_relocation_code_graph", "result": result, "roots": root_ids,
             "nodes": nodes, "counts": dict(counts), "gaps": gaps, "data_references": storage,
+            "import_references": imports,
             "graph_fingerprint": digest({"roots": root_ids, "nodes": canonical}) if result == Result.PASS else None,
             "remaining_linked_effects": Result.UNKNOWN, "persisted": False, "ready_for_collection": False,
             "limitations": ["code reached by explicit COFF relocations only; data contents and indirect targets are unproved",
                             "code agreement is not guard, callback registration, storage or runtime effect equivalence",
+                            "loader slots bind map symbols to actual PE import identities, not selected import-library intent or loaded DLL behavior",
                             "one independently bounded COMDAT per function; unsupported selections/definitions refuse",
                             "shared definitions, relocation order and linked address aliasing are retained"]}
 

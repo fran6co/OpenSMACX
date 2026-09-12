@@ -167,6 +167,19 @@ def test_initializer_comparison_is_consumed_live_without_waiving_remaining_effec
     assert not report["ready_for_collection"] and working_state(root) == before
 
 
+@pytest.mark.parametrize("consistency", ["pass", "fail", "unknown"])
+def test_input_corruption_is_distinct_from_cross_build_initializer_change(graph_task, monkeypatch, consistency):
+    root, task = graph_task
+    change_graph(root)
+    _, living, _ = contexts(monkeypatch)
+    monkeypatch.setattr(native, "compare_build_initializers", lambda *args: {
+        "result": "fail", "input_consistency": consistency, "remaining_linked_effects": "unknown"})
+    report = native.check_build_graph(root, task.task_id)
+    assert living == []
+    assert report["result"] == ("fail" if consistency == "fail" else "unknown")
+    assert report["linked_effects"] == "unknown" and not report["ready_for_collection"]
+
+
 @pytest.mark.parametrize("damage", ["modify", "add", "delete"])
 def test_source_changes_outside_editable_scope_refuse_before_builds(graph_task, damage):
     root, task = graph_task

@@ -122,7 +122,10 @@ def application_graph(root, task_name, *, integration=None):
                       "source_changes": changed, "commands": commands,
                       "initializers": initializers,
                       "current_build": new.report, "baseline_build": old.report,
-                      "result": Result.FAIL if commands["result"] == Result.FAIL else Result.UNKNOWN,
+                      # A mismatch between selected input and its actual PE is
+                      # corruption, unlike an intentional cross-build delta.
+                      "result": Result.FAIL if commands["result"] == Result.FAIL or
+                                initializers.get("input_consistency") == Result.FAIL else Result.UNKNOWN,
                       "linked_effects": Result.UNKNOWN, "persisted": False, "ready_for_collection": False,
                       "reason": "command comparison does not establish remaining linked-effect preservation; "
                                 + "initializer table/code comparison: " + initializers["result"]

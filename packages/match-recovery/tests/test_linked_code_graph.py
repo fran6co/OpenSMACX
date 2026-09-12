@@ -89,7 +89,7 @@ def graph_build(root, functions, *, roots=("_$E1",), data=None):
             else:
                 assert kind == 6
                 address += struct.unpack_from("<I", linked, offset)[0]
-                struct.pack_into("<I", linked, offset, address)
+                struct.pack_into("<I", linked, offset, address & 0xFFFFFFFF)
                 pages[0x1000].append(0x3000 + row["offset"] + offset)
         raw[512 + row["offset"]:512 + row["offset"] + len(linked)] = linked
     for index, name in enumerate(roots):
@@ -153,6 +153,7 @@ def test_changed_selected_helper_is_not_hidden_by_unchanged_initializer(tmp_path
     assert report["code_dependencies"]["result"] == report["result"] == "fail"
     assert report["code_dependencies"]["baseline"]["result"] == "pass"
     assert report["code_dependencies"]["current"]["result"] == "pass"
+    assert report["input_consistency"] == "pass"
     assert report["summary"]["observations_complete"] is True
     assert report["summary"]["ordered_equal"] is True
     assert report["summary"]["added_registrations"] == report["summary"]["removed_registrations"] == 0
@@ -169,6 +170,7 @@ def test_pe_only_helper_damage_is_a_measured_failure(tmp_path):
     assert report["ordered_code_correspondence"] == "pass"
     dependency = report["code_dependencies"]["current"]
     assert dependency["result"] == report["result"] == "fail"
+    assert report["input_consistency"] == "fail"
     assert dependency["nodes"][1]["proof"]["code"]["result"] == "fail"
 
 

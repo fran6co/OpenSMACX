@@ -213,6 +213,11 @@ def test_private_application_context_builds_with_native_command_evidence(added, 
             assert observed == initializers[version]["code_dependencies"]
             assert observed["check"] == "linked_relocation_code_graph"
             assert observed["nodes"] and isinstance(observed["gaps"], list)
+            assert observed["import_references"], observed
+            for imported in observed["import_references"]:
+                assert imported["implementation"] == imported["selection"] == "unknown"
+                assert imported["target"]["loader_import"]["module"]
+                assert imported["address"] > 0
             assert len(observed["roots"]) == len(slots)
             assert observed["remaining_linked_effects"] == "unknown"
             assert any(node["result"] == "pass" for node in observed["nodes"]), observed
@@ -235,6 +240,10 @@ def test_private_application_context_builds_with_native_command_evidence(added, 
         results = (ordered, dependencies["result"])
         expected = "fail" if "fail" in results else "unknown" if "unknown" in results else "pass"
         assert initializers["result"] == expected, initializers
+        observations = [initializers[version]["result"] for version in ("baseline", "current")]
+        observations += [dependencies[version]["result"] for version in ("baseline", "current")]
+        consistency = "fail" if "fail" in observations else "unknown" if "unknown" in observations else "pass"
+        assert initializers["input_consistency"] == consistency
         assert initializers["remaining_linked_effects"] == "unknown"
         if not added:
             # Reuse these two actual application builds. This fixture supplies
