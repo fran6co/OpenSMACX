@@ -2229,6 +2229,15 @@ omits per-file damage probes. Both the command and every unit result remain
 cannot establish preservation or admit a migration; omitted controls and units
 remain explicit in the report.
 
+An added-TU diagnostic checks the current object and unchanged replica without
+compiling every baseline TU. It shows the raw present-object residual with no
+scope subtraction; even task-mapped functions remain visible. Its row explicitly
+marks baseline definition coverage and scope subtraction omitted, stays `unknown`,
+and supplies no provisional `compiled_comparison` pass. Both source/recipe
+inventories are still freshly generated. Strict checks of an added TU retain
+complete baseline definition protection; removed-only checks and filters that
+exclude added TUs do not need that global scan.
+
 Full reports name baseline/current section symbols, changed dimensions and exact
 removed/added relocation targets, including local offsets. Symbol-table changes
 carry auxiliary fingerprints, not raw metadata or object bytes. No fuzzy pairing

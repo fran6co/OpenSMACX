@@ -88,7 +88,7 @@ def change_presence(root, *, remove=False, extra=b"", graph_damage=None):
 
 
 @pytest.fixture
-def compiler_calls(monkeypatch):
+def compiler_calls(monkeypatch, prepared):
     calls = []
 
     class TreeCompiler:
@@ -108,6 +108,8 @@ def compiler_calls(monkeypatch):
                     raise ValueError(raw.splitlines()[0].decode())
             symbols = re.findall(rb"// ORIGINAL: 0x[0-9A-Fa-f]+ (\S+)", contents)
             functions = [(symbol.decode(), b"\xc3", ()) for symbol in symbols]
+            if b"BROKEN_REPLICA" in contents and self.root != prepared:
+                functions = [(symbol, b"\x90" + body, relocations) for symbol, body, relocations in functions]
             if b"EXTRA_G" in contents:
                 functions.append(("_g", b"\xc3", ()))
             if b"EXTRA_HELPER" in contents:
@@ -204,6 +206,9 @@ def test_existing_unbound_baseline_definition_stays_protected_in_added_tu(prepar
     assert unit["newly_bound_protected_functions"] == {"_g": Origin("a" * 64, "pe:va", 0x401020).entity_id}
     assert any(row["symbol"] == "_g" for row in unit["symbol_changes"])
     assert any(call["unit"] == "code/owner.cc" and b"EXTRA_G" in call["contents"] for call in compiler_calls)
+    baseline_calls = [call for call in compiler_calls if NEW_UNIT not in call["graph"]]
+    for unit in ("code/caller.cc", "code/owner.cc"):
+        assert len([call for call in baseline_calls if call["unit"] == unit]) == 2
 
 
 def test_graph_only_generated_tu_cannot_be_intersected_out_of_coverage(prepared, compiler_calls):
@@ -218,3 +223,77 @@ def test_graph_only_generated_tu_cannot_be_intersected_out_of_coverage(prepared,
     assert report["changed_build_inputs"] == [GRAPH]
     assert "recipe membership differs from source TU coverage" in report["preparation_error"]
     assert report["compile_attempts"] == 0 and compiler_calls == []
+
+
+@pytest.mark.parametrize("extra", [b"", b"// EXTRA_HELPER\n", b"// EXTRA_DATA\n"])
+def test_added_unit_diagnostic_keeps_raw_scoped_and_unmapped_evidence_without_baseline_compiles(
+        prepared, compiler_calls, monkeypatch, extra):
+    base = configure(prepared)
+    change_presence(prepared, extra=extra)
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("raw added-TU diagnostics cannot subtract compiler-witnessed scope")
+
+    monkeypatch.setattr("match_recovery.inline_ownership.observe_copies", forbidden)
+    report = check_unchanged(prepared, base, units=(NEW_UNIT,), diagnostic=True)
+    assert report["result"] == "unknown" and report["diagnostic_only"]
+    row, = report["units"]
+    assert row["result"] == "unknown" and row["replica"] == "pass"
+    assert row["diagnostic_basis"] == "raw_present_object"
+    assert row["baseline_definition_coverage"] == row["scope_subtraction"] == "omitted_for_diagnostics"
+    assert "compiled_comparison" not in row
+    assert row["baseline_scoped_functions"] == row["current_scoped_functions"] == {}
+    assert row["newly_bound_protected_functions"] == {}
+    symbols = {symbol["symbol"] for symbol in row["symbol_changes"]}
+    assert "_g" in symbols  # Even authorized source scope stays visible here.
+    assert any(binding["symbol"] == "_g" and binding["task_scope"] for binding in row["affected_source_bindings"])
+    if b"EXTRA_HELPER" in extra:
+        assert "_helper" in symbols
+    if b"EXTRA_DATA" in extra:
+        assert any(section["name"] == ".data" for section in row["changed_sections"])
+    assert report["compile_attempts"] == len(compiler_calls) == 2
+    assert all(call["unit"] == NEW_UNIT and NEW_UNIT in call["graph"] for call in compiler_calls)
+    assert compiler_calls[0]["root"] == prepared and compiler_calls[1]["root"] != prepared
+    assert not any(call["contents"].startswith(b"#error") for call in compiler_calls)
+
+
+def test_added_unit_diagnostic_cannot_publish_raw_evidence_from_a_failed_replica(prepared, compiler_calls):
+    base = configure(prepared)
+    change_presence(prepared, extra=b"// BROKEN_REPLICA\n")
+    report = check_unchanged(prepared, base, units=(NEW_UNIT,), diagnostic=True)
+    row, = report["units"]
+    assert report["result"] == row["result"] == "unknown"
+    assert "current replica does not agree" in row["reason"]
+    assert "compiled_comparison" not in row and "replica" not in row
+    assert "changed_sections" not in row and "symbol_changes" not in row
+    assert report["compile_attempts"] == len(compiler_calls) == 2
+    assert all(call["unit"] == NEW_UNIT for call in compiler_calls)
+
+
+@pytest.mark.parametrize("diagnostic", [False, True])
+def test_removed_only_filtered_unit_does_not_scan_unrelated_baseline_definitions(prepared, compiler_calls, diagnostic):
+    base = configure(prepared, initially_present=True)
+    change_presence(prepared, remove=True)
+    report = check_unchanged(prepared, base, units=(NEW_UNIT,), diagnostic=diagnostic)
+    row, = report["units"]
+    assert report["result"] == "unknown"  # Other existing units remain unmeasured.
+    assert row["result"] == ("unknown" if diagnostic else "pass")
+    assert row["compiled_comparison"] == row["replica"] == "pass"
+    assert row["unit_presence"] == {"baseline": True, "current": False}
+    assert "diagnostic_basis" not in row
+    assert all(call["unit"] == NEW_UNIT and NEW_UNIT in call["graph"] for call in compiler_calls)
+    assert report["compile_attempts"] == len(compiler_calls) == (2 if diagnostic else 3)
+
+
+@pytest.mark.parametrize("diagnostic", [False, True])
+def test_filtered_out_added_unit_does_not_trigger_global_baseline_scan(prepared, compiler_calls, diagnostic):
+    base = configure(prepared)
+    change_presence(prepared)
+    report = check_unchanged(prepared, base, units=("code/owner.cc",), diagnostic=diagnostic)
+    row, = report["units"]
+    assert report["result"] == "unknown" and NEW_UNIT in report["unmeasured_units"]
+    assert row["unit"] == "code/owner.cc"
+    assert row["compiled_comparison"] == row["replica"] == "pass"
+    assert "diagnostic_basis" not in row
+    assert all(call["unit"] == "code/owner.cc" for call in compiler_calls)
+    assert any(NEW_UNIT not in call["graph"] for call in compiler_calls)

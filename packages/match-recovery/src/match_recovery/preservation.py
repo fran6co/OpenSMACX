@@ -259,6 +259,7 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
     file_set_changes = sorted(baseline.keys() ^ current.keys())
     tree_mode = bool(file_set_changes)
     changed_units = sorted(set(file_set_changes) & all_units)
+    measured_added_units = set(measured_units) & (current.keys() - baseline.keys())
     # Complete materialization alone cannot establish a missing-version recipe.
     # Regenerated projects can supply explicit per-version source/recipe sets.
     unavailable = (file_set_changes if compiler is not None and tree_mode
@@ -380,7 +381,7 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                         control["result"] = Result.UNKNOWN
                 controls.append(control)
                 protected, protection_error = set(), None
-                if changed_units:
+                if measured_added_units and not diagnostic:
                     # A new TU cannot hide a formerly unbound/outside definition
                     # by annotating it at a different path. Observe the complete
                     # baseline's emitted names, not just source annotations.
@@ -395,7 +396,7 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                 for unit in measured_units:
                     row = {"unit": unit, "flags": list(flags), "result": Result.UNKNOWN}
                     try:
-                        if unit in changed_units and protection_error:
+                        if unit in measured_added_units and protection_error:
                             raise ValueError("complete baseline definition coverage unavailable: " + protection_error)
                         original = compile(unit, flags) if unit in current else None
                         # Always exercise the overlay path, including no-op
@@ -405,6 +406,20 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                             if object_signature(original) != object_signature(same):
                                 raise ValueError("current replica does not agree with direct compilation")
                             verified_objects["current", unit] = original
+                        if diagnostic and unit in measured_added_units:
+                            # Without complete baseline definition coverage,
+                            # even a source-scoped name might be old unbound
+                            # code. Show raw present-object evidence instead:
+                            # subtract nothing and claim no compiled pass.
+                            comparison = compare_unit_presence(original, {}, present="current")
+                            _explain_sources(comparison, old_sources, new_sources)
+                            row.update(comparison, replica=Result.PASS, result=Result.UNKNOWN,
+                                       diagnostic_basis="raw_present_object",
+                                       baseline_definition_coverage="omitted_for_diagnostics",
+                                       scope_subtraction="omitted_for_diagnostics",
+                                       reason="raw added-TU diagnostic; baseline definition protection and scope subtraction omitted")
+                            reports.append(row)
+                            continue
                         prior = None
                         if unit in baseline:
                             if changed_units:
@@ -491,5 +506,6 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                             "changed non-TU file sets require compiler protocol v5; unobserved seed/header substitutions remain unknown",
                             "symbol-to-source matches are annotation navigation hints, not ownership proof or scope authorization",
                             "diagnostic mode omits per-file damage controls and can never establish preservation",
+                            "added-TU diagnostics show replica-checked raw residuals without baseline definition coverage or scope subtraction",
                             "filtered units and missing compiler controls cannot yield an overall pass",
                             "all configured non-seed source units, including dependencies and unmapped units; build coverage still requires verification"]}
