@@ -553,6 +553,12 @@ using owner-qualified map placements and real object/linker evidence. Inspect it
 order, multiplicity and incomplete observations before reasoning about startup
 effects. An extra guarded registration is not automatically redundant; matching
 initializer code does not prove callback/storage behavior or grant residual ownership.
+The native `projected_order` diagnostic now binds each compiled occurrence to
+its exact source/output receipt before comparing the remaining global order
+under generated-change permission. Equal body hashes from different TUs are not
+interchangeable owners. Missing selections or ambiguous repeated placements refuse;
+an unowned-order failure cannot be waived by that permission. Other linked-effect
+requirements remain independent and unfinished.
 Missing measurements, failed prerequisites and unsupported preservation cases
 still refuse admission: park the scoped work for review instead of calling it
 green or merging it as accepted. The driver never automatically reverts it.

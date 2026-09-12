@@ -125,7 +125,8 @@ def application_graph(root, task_name, *, integration=None, permission=None):
             fresh()
             commands = compare_build_commands(old, new, editable=editable)
             fresh()
-            initializers = compare_build_initializers(old, new)
+            initializers = compare_build_initializers(old, new, **(
+                {"generated_changes": permission["generated_changes"]} if permission is not None else {}))
             fresh()
             # Reuse the actual current application build in migration; do not
             # compile a third copy simply to obtain another build success.
@@ -137,7 +138,9 @@ def application_graph(root, task_name, *, integration=None, permission=None):
                       # A mismatch between selected input and its actual PE is
                       # corruption, unlike an intentional cross-build delta.
                       "result": Result.FAIL if commands["result"] == Result.FAIL or
-                                initializers.get("input_consistency") == Result.FAIL else Result.UNKNOWN,
+                                initializers.get("input_consistency") == Result.FAIL or
+                                permission is not None and initializers.get("projected_order", {}).get("result") == Result.FAIL
+                                else Result.UNKNOWN,
                       "linked_effects": Result.UNKNOWN, "persisted": False, "ready_for_collection": False,
                       "reason": "command comparison does not establish remaining linked-effect preservation; "
                                 + "initializer table/code comparison: " + initializers["result"]

@@ -1917,6 +1917,17 @@ shared code/storage and all uncovered residuals remain protected. This route doe
 not establish complete linked-graph or runtime acceptance, reset a task baseline,
 or waive historical original-byte obligations.
 
+Native application graph diagnostics also qualify initializer order by the
+actual compiler source unit (or exact physical dependency identity), not just
+body hashes or object basenames. The `projected_order` dimension removes only
+the explicitly selected linked occurrences and compares every remaining root,
+reference fingerprint and registration occurrence in order. A selected root
+with ambiguous repeated placement refuses. Swapping identical code from different
+TUs stays visible. Static root spellings are retained; compiler renumbering is
+not guessed from byte similarity. A proven unowned-order failure refuses the
+generated migration; passing this dimension still cannot waive callback, storage,
+COMDAT or other linked-effect obligations.
+
 The package supplies the native `migration_check` command:
 `recover tasks check-migration <task> --image <image>`. It consumes the driver's
 JSON request on stdin and freshly runs source integrity, mapping/history checks,

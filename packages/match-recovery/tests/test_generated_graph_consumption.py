@@ -28,7 +28,7 @@ def test_generated_graph_keeps_exact_authority_without_granting_linked_acceptanc
     if changed_graph:
         change_graph(root)
     calls, living, _ = contexts(monkeypatch)
-    monkeypatch.setattr(graph_native, "compare_build_initializers", lambda *_: {"result": "pass"})
+    monkeypatch.setattr(graph_native, "compare_build_initializers", lambda *a, **k: {"result": "pass"})
     permission = authority(task)
     before = deepcopy(permission)
     with graph_native.application_graph(root, task.task_id, permission=permission) as session:
@@ -40,6 +40,26 @@ def test_generated_graph_keeps_exact_authority_without_granting_linked_acceptanc
         assert session.report["result"] == session.report["linked_effects"] == "unknown"
         session.check_current()
     assert len(calls) == 2 and living == []
+
+
+@pytest.mark.parametrize("order", ["pass", "fail", "unknown", None])
+@pytest.mark.parametrize("consistency", ["pass", "fail"])
+def test_generated_graph_consumes_order_without_waiving_other_linked_effects(graph_task, monkeypatch, order, consistency):
+    root, task = graph_task
+    contexts(monkeypatch)
+    permission = authority(task)
+    calls = []
+
+    def observe(old, new, **kwargs):
+        calls.append(kwargs)
+        return {"result": "fail", "input_consistency": consistency,
+                **({"projected_order": {"result": order}} if order is not None else {})}
+
+    monkeypatch.setattr(graph_native, "compare_build_initializers", observe)
+    with graph_native.application_graph(root, task.task_id, permission=permission) as session:
+        assert calls == [{"generated_changes": permission["generated_changes"]}]
+        assert session.report["result"] == ("fail" if order == "fail" or consistency == "fail" else "unknown")
+        assert session.report["linked_effects"] == "unknown"
 
 
 @pytest.mark.parametrize("changes", [{"unit": "code/old.cc"}, {"unit": "code/unit.hpp"},

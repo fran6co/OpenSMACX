@@ -238,7 +238,7 @@ def observe_build_initializers(context):
         context.check_current()
 
 
-def compare_build_initializers(baseline, current):
+def compare_build_initializers(baseline, current, *, generated_changes=None):
     def fresh():
         try:
             baseline.check_current()
@@ -247,6 +247,9 @@ def compare_build_initializers(baseline, current):
     try:
         fresh()
         old, new = observe_build_initializers(baseline), observe_build_initializers(current)
+        from .initializer_order import _compare_order
+        projected = _compare_order(baseline, current, old, new,
+                                   [] if generated_changes is None else generated_changes)
         equal = [row["body_fingerprint"] for row in old.get("sequence", [])] == [
             row["body_fingerprint"] for row in new.get("sequence", [])]
         results = [old["result"], new["result"]]
@@ -270,6 +273,7 @@ def compare_build_initializers(baseline, current):
                            removed_registrations=sum((left - right).values()), ordered_equal=equal)
         return {"check": "application_linked_initializers", "result": result, "baseline": old, "current": new,
                 "summary": summary,
+                "projected_order": projected,
                 "ordered_code_correspondence": ordered, "code_dependencies": dependencies,
                 "input_consistency": consistency,
                 "remaining_linked_effects": Result.UNKNOWN, "persisted": False, "ready_for_collection": False,
