@@ -290,8 +290,8 @@ def test_mismatch_diagnostics_are_bounded_and_do_not_change_order_verdict(monkey
     elif mode == "removed":
         new = []
     projected = {"baseline": old, "current": new}
-    monkeypatch.setattr(native, "_project", lambda context, observed, changes: {
-        "sequence": projected[context], "covered": []})
+    monkeypatch.setattr(native, "_project", lambda context, observed, changes: ({
+        "sequence": projected[context], "covered": []}, {}))
     report = native._compare_order("baseline", "current", {"result": "pass"}, {"result": "pass"}, [])
     assert report["baseline"]["sequence"] == old and report["current"]["sequence"] == new
     assert report["remaining_linked_effects"] == "unknown" and not report["ready_for_collection"]

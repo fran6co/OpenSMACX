@@ -1923,13 +1923,30 @@ body hashes or object basenames. The `projected_order` dimension removes only
 the explicitly selected linked occurrences and compares every remaining root,
 reference fingerprint and registration occurrence in order. A selected root
 with ambiguous repeated placement refuses. Swapping identical code from different
-TUs stays visible. Static root spellings are retained; compiler renumbering is
-not guessed from byte similarity. A proven unowned-order failure refuses the
+TUs stays visible. Compiler-local root renaming is supported only at the same
+remaining source-qualified slot after native checks: one static root and table
+occurrence, no exposed/weak aliases, self-address or other runtime incoming
+references, no source symbol binding in the root/table/metadata (original,
+object, shared, generated or import annotations, including headers and seeds),
+and no public/other-owner linked aliases or exports into the root. The native
+PE export inventory includes ordinal-only entries, aliases, holes and forwarders;
+unrelated valid exports do not prevent comparison, while incomplete tables refuse.
+Exported initializer table/boundary addresses and public aliases into its cells
+also refuse, since those expose root addresses indirectly. This
+does not pair arbitrary equal-byte functions or use naming prefixes. Observed
+spellings remain in the report. A proven unowned-order failure refuses the
 generated migration; passing this dimension still cannot waive callback, storage,
 COMDAT or other linked-effect obligations.
 Failed order reports include the total positional mismatch count and the first
 16 baseline/current logical rows, alongside the complete sequences. These are
 diagnostics, not an inference that changed root spellings are equivalent.
+The narrow recognized associated FPO frame-record form may accompany a renamed
+root only when its complete root-relative structure agrees in both versions.
+It is retained in the comparison fingerprint and `root_metadata_comparisons`,
+not silently ignored as debug data. Final linked treatment and address-identity
+effects remain unknown; absent PE debug directories are not discard proof.
+Unsupported metadata or failed locality keeps exact names and reports the refusal.
+No startup code or metadata is removed, and no residual coverage is granted.
 
 The native dependency-code graph also verifies ordinary COFF code sections with
 one external entry at offset zero. These are whole selected sections, not guessed

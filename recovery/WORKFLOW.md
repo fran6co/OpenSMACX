@@ -561,8 +561,15 @@ separately. Unsupported additional entries and associative-code cases still refu
 The native `projected_order` diagnostic now binds each compiled occurrence to
 its exact source/output receipt before comparing the remaining global order
 under generated-change permission. Equal body hashes from different TUs are not
-interchangeable owners. Missing selections or ambiguous repeated placements refuse;
-an unowned-order failure cannot be waived by that permission. Other linked-effect
+interchangeable owners. Missing selections or ambiguous repeated placements refuse.
+Two differing compiler-local names can correspond only through native slot-local
+root checks, with both spellings retained. Roots/table cells/frame metadata bound
+by source, shared or escaped addresses, linked aliases and exports into the root
+still refuse. Complete native export-table checks include ordinal-only targets;
+unrelated exports are allowed, malformed export evidence is not.
+Recognized FPO records must agree structurally and remain explicit unproved
+final-link metadata obligations; this is not a debug-discard or runtime waiver.
+An unowned-order failure cannot be waived by that permission. Other linked-effect
 requirements remain independent and unfinished.
 Missing measurements, failed prerequisites and unsupported preservation cases
 still refuse admission: park the scoped work for review instead of calling it
