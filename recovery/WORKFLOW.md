@@ -558,6 +558,12 @@ zero-offset entry, retaining internal labels, jump tables and all linked fixups.
 This is whole-section correspondence, not inferred function boundaries or a
 library-recovery task; other code/storage and initialization effects remain checked
 separately. Unsupported additional entries and associative-code cases still refuse.
+Selected external absolute COFF constants now use a distinct binding from image
+addresses: native full-input uniqueness and physical selection precede operand
+comparison, and these DIR32 operands must not carry loader HIGHLOW fixups.
+Conflicting map addresses, aliases and unresolved selection refuse; relative
+constant uses remain unsupported. This proves a linker value, not the runtime
+meaning of an exception-chain offset or other storage access.
 The native `projected_order` diagnostic now binds each compiled occurrence to
 its exact source/output receipt before comparing the remaining global order
 under generated-change permission. Equal body hashes from different TUs are not

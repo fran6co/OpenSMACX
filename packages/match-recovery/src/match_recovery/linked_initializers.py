@@ -144,6 +144,7 @@ def _observe(context, artifacts):
     if coverage["result"] != Result.PASS:
         raise ValueError("initializer table requires complete linked input candidate coverage")
     evidence = parse_link_files(artifacts["link-input-files"])
+    objects = SelectedObjects(evidence, coverage, records)
     selected = _selected_objects(evidence, coverage, records)
     functions, entries = {}, []
     for item in selected.values():
@@ -168,7 +169,7 @@ def _observe(context, artifacts):
                     raise ValueError("initializer entry does not target a defined zero-offset function")
                 key = (item["owner"].casefold(), symbol.name)
                 if key not in functions:
-                    functions[key] = _function(obj, symbol, item["owner"], mapping, image)
+                    functions[key] = _function(obj, symbol, item["owner"], mapping, image, objects=objects)
                 function = functions[key]
                 entries.append({"input": item["identity"], "object_sha256": item["sha256"],
                                 "section": index, "offset": offset, "target": function["address"],
@@ -177,7 +178,7 @@ def _observe(context, artifacts):
     if not entries and not contributions:
         return {"result": Result.PASS, "table": TABLE, "entries": [], "sequence": [],
                 "contribution": None, "functions": [], "input_coverage": Result.PASS,
-                "code_dependencies": observe_code_graph(SelectedObjects(evidence, coverage, records), mapping, image, [])}
+                "code_dependencies": observe_code_graph(objects, mapping, image, [])}
     if len(contributions) != 1:
         raise ValueError("initializer table requires one independently bounded linked contribution")
     table, = contributions
@@ -206,7 +207,7 @@ def _observe(context, artifacts):
     dependencies = {"result": Result.UNKNOWN, "reason": "initializer root table is not verified"}
     if table_ok:
         try:
-            dependencies = observe_code_graph(SelectedObjects(evidence, coverage, records), mapping, image,
+            dependencies = observe_code_graph(objects, mapping, image,
                                               [row["function"] for row in sequence])
         except (OSError, ValueError) as error:
             # Unsupported dependency metadata cannot erase a measured root

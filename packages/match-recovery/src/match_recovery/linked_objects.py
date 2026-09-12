@@ -14,7 +14,7 @@ from pathlib import Path, PurePosixPath, PureWindowsPath
 from .coff_archive import CoffArchive
 from .compile_file_evidence import _identity, _physical
 from .link_file_evidence import _path, _stamp
-from .model import Result, require_digest, require_text
+from .model import Result, digest, require_digest, require_text
 from .msvc_link_log import input_label
 
 
@@ -126,6 +126,14 @@ class SelectedObjects:
                     "member": row["member"], "paths": tuple(row["paths"]), "selection": row["selection"],
                     "candidate_coverage": row["candidate_coverage"], "candidate_count": row["candidate_count"]})
             self._files, self._archives, self._resolved = {}, {}, {}
+            # Constant resolution needs the complete candidate population, not
+            # merely the subset whose owners occur in a map. Keep the native
+            # records defensive and verify them against physical inputs before
+            # drawing any absence/uniqueness conclusion.
+            self._constant_evidence = deepcopy(evidence)
+            self._constant_records = deepcopy(records)
+            self._constant_physical = None
+            self._constant_inventory = None
         except (KeyError, TypeError, AttributeError) as error:
             raise ValueError("incomplete selected-object input evidence") from error
 
@@ -175,3 +183,156 @@ class SelectedObjects:
         result = {"identity": dict(row["identity"]), "sha256": row["sha256"], "raw": raw, "owner": observed["owner"]}
         self._resolved[key] = result
         return deepcopy(result)
+
+    def _constant_population(self):
+        from .coff_inventory import inventory_object
+
+        def fresh():
+            for path, expected in self._constant_physical.items():
+                if _identity(_physical(Path(path))) != expected:
+                    raise ValueError("constant input population changed during its live epoch")
+
+        if self._constant_inventory is not None:
+            fresh()
+            return self._constant_inventory, fresh
+        paths = self._explicit | self._libraries | {
+            row["path"] for row in self._constant_records if "generated" in row}
+        physical, records = {}, []
+        for path in sorted(paths):
+            before = _identity(_physical(Path(path)))
+            raw = _read(path, self._stamps[path])
+            if _identity(_physical(Path(path))) != before:
+                raise ValueError("constant input changed while reading the candidate population")
+            physical[path] = before
+            if path in self._libraries or raw.startswith(b"!<arch>\n"):
+                archive = CoffArchive(raw)
+                if not archive.members:
+                    raise ValueError("constant input population contains an empty archive")
+                for name, bodies in archive.members.items():
+                    for occurrence, body in enumerate(bodies):
+                        records.append({"path": path, "member": name, "occurrence": occurrence,
+                                        **inventory_object(body)})
+            else:
+                identity = {"generated": "msvc_export"} if path in self._generated else {}
+                records.append({"path": path, **identity, **inventory_object(raw)})
+        if (any(row["result"] != Result.PASS for row in records)
+                or digest(sorted(records, key=digest)) != digest(sorted(self._constant_records, key=digest))):
+            raise ValueError("constant candidate inventory differs from the complete physical population")
+        symbols, imports, weak_fallbacks = defaultdict(list), set(), defaultdict(set)
+        interesting = set()
+        for record in records:
+            for symbol in record["symbols"]:
+                symbols[symbol["name"]].append((record, symbol))
+                if symbol["section"] == -1 and symbol["storage"] == 2:
+                    interesting.add(symbol["name"])
+                if symbol["declaration"] == "weak":
+                    weak_fallbacks[symbol["fallback"]].add(symbol["name"])
+            for imported in record["imports"]:
+                imports.update((imported["symbol"], "__imp_" + imported["symbol"]))
+        # A weak alias leading to a constant cannot evade the strict path by
+        # being presented as an ordinary mapped image address instead.
+        pending = list(interesting)
+        while pending:
+            for name in weak_fallbacks.get(pending.pop(), ()):
+                if name not in interesting:
+                    interesting.add(name)
+                    pending.append(name)
+        self._constant_symbols = symbols
+        self._constant_imports = imports
+        self._constant_weak_fallbacks = weak_fallbacks
+        self._constant_interest = interesting
+        self._constant_policy_gaps = None
+        self._constant_physical = physical
+        fresh()
+        self._constant_inventory = records
+        return records, fresh
+
+    def resolve_constant(self, name, *, optional=False):
+        """Single-name form of the guarded complete-population bulk lookup."""
+        return self.resolve_constants((name,), optional=optional)[name]
+
+    def resolve_constants(self, names, *, optional=False):
+        """Bind a bounded batch of absolute definitions, not image VAs.
+
+        Unselected candidates still participate in this deliberately conservative
+        uniqueness check. Neither a saved inventory, an unresolved operand, a
+        zero value nor a familiar runtime spelling supplies a binding. The
+        enclosing live observer must additionally verify actual linked operands
+        without HIGHLOW fixups and retain its artifact/context guards.
+
+        ``optional=True`` returns None only when the complete physical input
+        population contains no absolute definition or weak path to one. A map
+        row cannot override a known constant candidate. Ordinary no-candidate
+        lookups do not need the stronger constant-selection policy subset.
+        Complete input-population freshness is checked before and after the
+        whole batch, not once per relocation. No partial batch is returned on
+        refusal, and the enclosing live artifact guards remain mandatory.
+        """
+        from .common_allocation import _policy
+        from .pe_coff import Coff
+
+        if (type(optional) is not bool or not isinstance(names, (tuple, list))
+                or not 1 <= len(names) <= 4096):
+            raise ValueError("absolute symbol lookup requires a bounded nonempty name sequence")
+        names = tuple(names)
+        for name in names:
+            require_text(name, "absolute linker symbol")
+            if any(ord(char) < 33 or ord(char) >= 127 for char in name):
+                raise ValueError("unsupported absolute linker symbol spelling")
+        if len(set(names)) != len(names):
+            raise ValueError("absolute symbol lookup requires unique names")
+        records, fresh = self._constant_population()
+
+        def one(name):
+            if optional and name not in self._constant_interest:
+                return None
+            if self._constant_policy_gaps is None:
+                self._constant_policy_gaps = _policy(self._constant_evidence, records)
+            if self._constant_policy_gaps:
+                raise ValueError("constant resolution has unsupported linker policy or directives")
+            if name in self._constant_imports:
+                raise ValueError("absolute symbol conflicts with an import candidate")
+            if self._constant_weak_fallbacks.get(name):
+                raise ValueError("absolute symbol conflicts with a weak alias")
+            candidates = []
+            for record, symbol in self._constant_symbols.get(name, ()):
+                kind = symbol["declaration"]
+                if kind == "weak":
+                    raise ValueError("absolute symbol conflicts with a weak alias")
+                if kind == "local_or_metadata" or kind == "undefined" and not symbol["auxiliary_size"]:
+                    continue
+                if (kind != "absolute" or symbol["section"] != -1 or symbol["storage"] != 2
+                        or symbol["type"] != 0 or symbol["auxiliary_size"]
+                        or record["machine"] != 0x14C or record["optional_header_size"] != 0):
+                    raise ValueError("absolute symbol has a common, overriding or unsupported definition")
+                candidates.append((record, symbol))
+            if len(candidates) != 1:
+                raise ValueError("absolute symbol requires exactly one complete-population definition")
+            record, declared = candidates[0]
+            identity = {key: record[key] for key in ("path", "member", "occurrence", "generated") if key in record}
+            owners = []
+            basename = PurePosixPath(identity.get("member", identity["path"])).name.casefold()
+            for observations in self._owners.values():
+                for observed in observations:
+                    if (observed["paths"] == (identity["path"],)
+                            and bool(observed["library"]) == ("member" in identity)
+                            and PureWindowsPath(observed["member"]).name.casefold() == basename):
+                        owners.append(observed["owner"])
+            if len(owners) != 1:
+                raise ValueError("absolute definition lacks one selected physical owner")
+            selected = self.resolve(owners[0])
+            if selected["identity"] != identity or selected["sha256"] != record["sha256"]:
+                raise ValueError("absolute definition differs from the selected physical object")
+            obj = Coff(selected["raw"])
+            matches = [symbol for symbol in obj.symbols.values() if symbol.name == name and symbol.storage == 2]
+            if (len(matches) != 1 or matches[0].index != declared["index"]
+                    or matches[0].section != -1 or matches[0].type != 0
+                    or obj.auxiliary.get(matches[0].index) or matches[0].value != declared["value"]):
+                raise ValueError("selected absolute COFF symbol differs from its native inventory")
+            return {"symbol": name, "value": matches[0].value, "input": dict(identity),
+                    "object_sha256": selected["sha256"], "owner": selected["owner"]}
+
+        try:
+            return {name: one(name) for name in names}
+        finally:
+            fresh()

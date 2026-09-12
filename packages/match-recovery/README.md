@@ -1917,9 +1917,21 @@ shared code/storage and all uncovered residuals remain protected. This route doe
 not establish complete linked-graph or runtime acceptance, reset a task baseline,
 or waive historical original-byte obligations.
 
-Native application graph diagnostics also qualify initializer order by the
+Native root/reachable-code observations can bind an external absolute COFF
+constant through the complete candidate
+inventory and its unique selected physical definition. Its value and symbol
+remain in cross-build fingerprints; input provenance remains in diagnostics.
+These DIR32 operands compare the constant plus source addend and require no
+loader HIGHLOW. Image-address bindings, including numeric zero, retain their
+HIGHLOW obligation. Unknown/duplicate/unselected definitions, conflicting map
+placements and unsupported linker policy refuse; relative constant uses remain
+unknown. Constant correspondence is not runtime storage or behavior proof.
+Names are resolved in a bounded batch per code region, sharing a complete-input
+before/after freshness check rather than repeating it for every operand.
+
+The `projected_order` dimension qualifies initializer order by the
 actual compiler source unit (or exact physical dependency identity), not just
-body hashes or object basenames. The `projected_order` dimension removes only
+body hashes or object basenames. It removes only
 the explicitly selected linked occurrences and compares every remaining root,
 reference fingerprint and registration occurrence in order. A selected root
 with ambiguous repeated placement refuses. Swapping identical code from different

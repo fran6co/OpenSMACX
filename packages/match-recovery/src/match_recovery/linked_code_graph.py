@@ -66,7 +66,7 @@ never merge distinct definitions. External symbol identity remains explicit.
                 parsed[item["sha256"]] = Coff(item["raw"])
             obj = parsed[item["sha256"]]
             subject = select_code_region(obj, node["symbol"])
-            proof = verify_code_region(obj, subject, item["owner"], mapping, image)
+            proof = verify_code_region(obj, subject, item["owner"], mapping, image, objects=objects)
             node.update(input=item["identity"], object_sha256=item["sha256"],
                         section=subject.section, proof=proof, result=proof["result"])
             code, relocations, _ = obj.subject(subject)
@@ -77,11 +77,16 @@ never merge distinct definitions. External symbol identity remains explicit.
             alias = overlaps[0][0] if overlaps else cursor
             spans.append((cursor, begin, end))
             edges = []
+            constants = {row["offset"]: row for row in proof["references"] if "constant_binding" in row}
             for relocation in sorted(relocations, key=lambda row: row.offset):
                 target = obj.symbols[int(relocation.target)]
                 addend = int.from_bytes(code[relocation.offset:relocation.offset + 4], "little", signed=True)
                 edge = {"offset": relocation.offset, "kind": relocation.kind}
-                if target.section == subject.section and 0 <= target.value < len(code):
+                if relocation.offset in constants:
+                    if relocation.kind != RelocationKind.ABSOLUTE32:
+                        raise ValueError("relative linker constants require independent rebase semantics")
+                    edge["target"] = constants[relocation.offset]["identity"]
+                elif target.section == subject.section and 0 <= target.value < len(code):
                     if not 0 <= target.value + addend < len(code):
                         raise ValueError("effective self code reference is outside its observed function span")
                     edge["target"] = {"self_offset": target.value}

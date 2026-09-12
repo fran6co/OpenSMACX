@@ -42,13 +42,13 @@ def select_code_region(obj, name):
     return subject
 
 
-def verify_code_region(obj, symbol, owner, mapping, image):
+def verify_code_region(obj, symbol, owner, mapping, image, *, objects=None):
     subject = select_code_region(obj, symbol.name)
     if subject != symbol:
         raise ValueError("linked code entry differs from its selected object symbol")
     if obj.sections[subject.section - 1].flags & 0x1000:
-        return verify_function(obj, subject, owner, mapping, image)
+        return verify_function(obj, subject, owner, mapping, image, objects=objects)
     symbols = _ordinary_symbols(obj, subject)
-    proof = _verify_region(obj, subject, owner, mapping, image)
+    proof = _verify_region(obj, subject, owner, mapping, image, objects=objects)
     return {**proof, "extent_kind": "selected_code_section", "section_symbols": symbols,
             "other_sections": Result.UNKNOWN}

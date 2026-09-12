@@ -17,6 +17,21 @@ class RelocationKind(StrEnum):
 
 
 @dataclass(frozen=True)
+class AbsoluteConstant:
+    """An independently resolved COFF constant, not a rebased image address.
+
+    This type carries a binding supplied by the caller, not its provenance or
+    link-selection proof. The comparator supports only ABSOLUTE32 uses.
+    """
+
+    value: int
+
+    def __post_init__(self):
+        if type(self.value) is not int or not 0 <= self.value < 2**32:
+            raise ValueError("absolute constant must be an unsigned 32-bit integer")
+
+
+@dataclass(frozen=True)
 class Relocation:
     offset: int
     kind: RelocationKind
@@ -31,13 +46,15 @@ class Relocation:
 
 
 def compare_bound_code(span: Span, original: bytes, candidate: bytes,
-                       relocations: tuple[Relocation, ...], targets: Mapping[str, int], *,
+                       relocations: tuple[Relocation, ...], targets: Mapping[str, int | AbsoluteConstant], *,
                        original_absolute_sites: frozenset[int] = frozenset(),
                        alignment: int = 1) -> dict:
     """Apply known relocations, then compare every byte; never enlarge `span`.
 
     A target's address must come from a source binding, not the operand being
-    tested. The i386 addend is the candidate's own four-byte relocation field.
+    tested. An explicit AbsoluteConstant instead requires no loader HIGHLOW at
+    its ABSOLUTE32 field. Its relative uses are unsupported, not image bindings.
+    The i386 addend is the candidate's own four-byte relocation field.
     Object-section alignment may account for NOP/INT3 fill *after* the declared
     original extent; it may not account for additional code or jump-table data.
     Relocations must fit the candidate itself. A valid field past the original
@@ -50,7 +67,11 @@ def compare_bound_code(span: Span, original: bytes, candidate: bytes,
     if type(alignment) is not int or alignment < 1 or alignment & (alignment - 1):
         raise ValueError("section alignment must be a positive power of two")
     for target in targets.values():
-        if type(target) is not int or not 0 <= target < 2**32:
+        if type(target) is AbsoluteConstant:
+            # Revalidate at consumption even if a caller bypassed frozen
+            # dataclass construction or modified the instance deliberately.
+            AbsoluteConstant.__post_init__(target)
+        elif type(target) is not int or not 0 <= target < 2**32:
             raise ValueError("resolved i386 target must be a 32-bit address")
     rows, occupied, outside_original = [], set(), []
     for relocation in relocations:
@@ -73,7 +94,7 @@ def compare_bound_code(span: Span, original: bytes, candidate: bytes,
                 "candidate_relocations_outside_original": sorted(outside_original),
                 "reason": "candidate exceeds or misses the independently recorded extent"}
     linked = bytearray(candidate[:size])
-    unresolved = set()
+    unresolved, constant_absolute = set(), set()
     for relocation in relocations:
         offset = relocation.offset
         target = targets.get(relocation.target)
@@ -81,13 +102,23 @@ def compare_bound_code(span: Span, original: bytes, candidate: bytes,
             unresolved.update(range(offset, offset + 4))
             rows.append({"offset": offset, "target": relocation.target, "result": Result.UNKNOWN})
             continue
+        binding = {}
+        if type(target) is AbsoluteConstant:
+            binding = {"binding": {"kind": "absolute_constant", "value": target.value}}
+            if relocation.kind != RelocationKind.ABSOLUTE32:
+                unresolved.update(range(offset, offset + 4))
+                rows.append({"offset": offset, "target": relocation.target, **binding,
+                             "result": Result.UNKNOWN, "reason": "relative absolute-constant binding is unsupported"})
+                continue
+            constant_absolute.add(offset)
+            target = target.value
         addend = int.from_bytes(linked[offset:offset + 4], "little", signed=True)
         value = target + addend
         if relocation.kind == RelocationKind.RELATIVE32:
             value -= span.start + offset + 4
         encoded = (value & 0xFFFFFFFF).to_bytes(4, "little")
         linked[offset:offset + 4] = encoded
-        rows.append({"offset": offset, "target": relocation.target,
+        rows.append({"offset": offset, "target": relocation.target, **binding,
                      "result": Result.PASS if encoded == original[offset:offset + 4] else Result.FAIL})
     absolute_sites = {relocation.offset for relocation in relocations
                       if relocation.kind == RelocationKind.ABSOLUTE32}
@@ -99,12 +130,13 @@ def compare_bound_code(span: Span, original: bytes, candidate: bytes,
     unresolved_absolute = {relocation.offset for relocation in relocations
                            if relocation.kind == RelocationKind.ABSOLUTE32
                            and relocation.target not in targets}
-    extra = sorted(absolute_sites - original_absolute_sites - unresolved_absolute)
+    extra = sorted(absolute_sites - original_absolute_sites - unresolved_absolute - constant_absolute)
+    constant_rebased = sorted(constant_absolute & original_absolute_sites)
     differences = [index for index, (left, right) in enumerate(zip(original, linked, strict=True))
                    if left != right and index not in unresolved]
     byte_result = Result.FAIL if differences else Result.UNKNOWN if unresolved else Result.PASS
     reference_results = [row["result"] for row in rows]
-    references = (Result.FAIL if missing or extra or Result.FAIL in reference_results else
+    references = (Result.FAIL if missing or extra or constant_rebased or Result.FAIL in reference_results else
                   Result.UNKNOWN if Result.UNKNOWN in reference_results else Result.PASS)
     result = (Result.FAIL if Result.FAIL in (byte_result, references) else
               Result.UNKNOWN if Result.UNKNOWN in (byte_result, references) else Result.PASS)
@@ -113,4 +145,6 @@ def compare_bound_code(span: Span, original: bytes, candidate: bytes,
             "missing_absolute_relocations": missing, "differing_offsets": differences,
             "extra_absolute_relocations": extra,
             "unresolved_absolute_relocations": sorted(unresolved_absolute - original_absolute_sites),
+            "constant_absolute_relocations": sorted(constant_absolute),
+            "unexpected_constant_base_relocations": constant_rebased,
             "alignment_fill": len(tail)}
