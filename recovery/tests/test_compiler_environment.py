@@ -123,15 +123,12 @@ def test_release_link_preserves_the_selected_runtime_code_and_relocations():
     # Each application C++ compile must describe the exact file handed to the
     # linker. This is file correspondence, not proof of retained sections or
     # acceptance of an application build-graph change.
-    from match_recovery.compile_link_evidence import verify_compile_link_inputs
     commands = json.loads((directory / "compile_commands.json").read_bytes())
     expected = [Path(item["file"]) for item in commands if Path(item["file"]).suffix == ".cpp"]
-    proof = verify_compile_link_inputs(
-        (path.read_bytes() for path in directory.rglob("*.compile.json")),
-        (directory / "OpenSMACX.link.inputs.json").read_bytes(),
-        (directory / "OpenSMACX.link.log").read_bytes(), sources=expected)
+    proof = build["compile_link"]
     assert proof["result"] == "pass", proof
     assert len(proof["compilations"]) == len(expected)
+    assert proof["sources"] == sorted(map(str, expected))
     assert proof["linked_selection"] == proof["build_graph_verification"] == "unknown"
 
 

@@ -28,6 +28,12 @@ not a durable include-search or alias inventory; that environment still needs it
 own binding when verifying a build-graph change.
 These ignored observations are prerequisites for future build-graph verification,
 not admission or a replacement for linked-code/lifecycle preservation.
+The application's `recovery/build.json` enables native `compile_link` collection:
+`recover check-build` now requires fresh correspondence for every C++ recipe in
+that build's database. The package rejects missing/substituted observations and
+changing build evidence; extra linker inputs such as zlib remain separately visible.
+Passing this check still does not accept a changed build graph or prove retained
+sections and initialization behavior.
 
 The active agent/coordinator contract is [WORKFLOW.md](WORKFLOW.md). Historical
 compiler observations are in [COMPILER_EVIDENCE.md](COMPILER_EVIDENCE.md); they do

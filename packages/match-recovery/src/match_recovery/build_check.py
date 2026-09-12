@@ -34,6 +34,7 @@ class Build:
     input_roots: tuple[str, ...]
     environment: tuple[str, ...]
     versioned_inputs: tuple[str, ...] = ()
+    compile_link: dict | None = None
 
     @classmethod
     def read(cls, root, *, key="build"):
@@ -41,7 +42,7 @@ class Build:
         path = relative_path(project.get(key))
         value = read_json(root / path)
         fields = {"schema_version", "artifacts", "commands", "outputs", "inputs", "input_roots", "environment"}
-        if (not fields <= set(value) or set(value) - fields - {"versioned_inputs"}
+        if (not fields <= set(value) or set(value) - fields - {"versioned_inputs", "compile_link"}
                 or type(value["schema_version"]) is not int or value["schema_version"] != 1):
             raise ValueError("invalid build configuration")
         for name in ("commands", "outputs", "inputs", "input_roots", "environment"):
@@ -59,6 +60,8 @@ class Build:
             outputs.append((relative_path(item["path"]), item["format"]))
         if len({path for path, _ in outputs}) != len(outputs):
             raise ValueError("duplicate build output")
+        from .build_compile_evidence import validate_configuration
+        compile_link = validate_configuration(value.get("compile_link"), outputs)
         roots = tuple(relative_path(name) for name in value["input_roots"])
         inputs = tuple(relative_path(name) for name in value["inputs"])
         versioned = value.get("versioned_inputs", [])
@@ -83,7 +86,7 @@ class Build:
         if any(not isinstance(name, str) or not re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*", name) for name in environment):
             raise ValueError("invalid build environment name")
         return cls(path, relative_path(value["artifacts"]), commands, tuple(outputs), inputs, roots,
-                   tuple(sorted(environment)), versioned)
+                   tuple(sorted(environment)), versioned, compile_link)
 
     def snapshot(self, root):
         files = {"recovery/project.json", self.path, *self.inputs}
@@ -145,6 +148,8 @@ def generate_build(root: Path, settings: Build, *, retain=False) -> dict:
     state = working_state(root)
     parent = artifact_parent(root, settings.artifacts, excluded_roots=settings.input_roots)
     reports, outputs = [], []
+    compile_link = {"result": Result.UNKNOWN, "verification": "not_measured",
+                    "reason": "compile/link evidence requires successful commands and valid fresh artifacts"}
     result = Result.UNKNOWN
     reason = "build did not finish"
     try:
@@ -215,12 +220,25 @@ def generate_build(root: Path, settings: Build, *, retain=False) -> dict:
                         outputs.append({"path": name, "format": format_name, "result": Result.UNKNOWN, "reason": str(error)})
                 result = Result.PASS if all(item["result"] == Result.PASS for item in outputs) else Result.UNKNOWN
                 reason = "fresh configured artifacts produced" if result == Result.PASS else "build artifacts missing or invalid"
+                if settings.compile_link is not None and result == Result.PASS:
+                    from .build_compile_evidence import verify_build_compilations
+                    try:
+                        observed = verify_build_compilations(root, directory, settings.compile_link, outputs=outputs)
+                        if not isinstance(observed, dict) or observed.get("result") not in tuple(Result):
+                            raise ValueError("compile/link verifier returned no valid result")
+                        compile_link = observed
+                    except (OSError, ValueError) as error:
+                        compile_link = {"result": Result.UNKNOWN, "verification": "not_measured", "reason": str(error)}
+                    result = Result(compile_link["result"])
+                    reason = ("fresh configured artifacts and compile/link evidence verified" if result == Result.PASS
+                              else "compile/link evidence failed or remains unverified")
     finally:
         if changes(state, working_state(root)) or settings.snapshot(root) != before:
             raise ValueError("build changed source, policy or Git state; preserve changes and inspect before retrying")
     return {"check": "fresh_configured_build", "result": result, "reason": reason,
             "elapsed_seconds": monotonic() - started,
             "commands": reports, "outputs": outputs, "input_fingerprint": digest(before),
+            **({"compile_link": compile_link} if settings.compile_link is not None else {}),
             **({"directory": directory.relative_to(root).as_posix()} if retain else {}),
             "fresh_directory": True, "persisted": False, "ready_for_collection": False,
             "limitations": ["trusted configured build commands; no sandbox or proof of source coverage",

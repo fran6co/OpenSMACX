@@ -10,6 +10,14 @@
               {"path": "OpenSMACX.link.log", "format": "msvc-link-log"},
               {"path": "OpenSMACX.link.inputs.json", "format": "link-input-files"},
               {"path": "compile_commands.json", "format": "compilation-database"}],
+  "compile_link": {
+    "database": "compile_commands.json",
+    "source_extensions": [".cpp"],
+    "directory": "CMakeFiles/OpenSMACX.dir",
+    "suffix": ".compile.json",
+    "link_files": "OpenSMACX.link.inputs.json",
+    "link_log": "OpenSMACX.link.log"
+  },
   "inputs": ["CMakeLists.txt", "pyproject.toml", "uv.lock", "recovery/environment/vc6-cl", "recovery/environment/vc6-link", "recovery/environment/vc6-lib", "recovery/environment/wine.py", "recovery/environment/wine_link.py", "recovery/environment/wine_repro.py", "recovery/environment/wine_compile.py"],
   "input_roots": ["src", "cmake"],
   "environment": ["VC6_PREFIX", "VC6_ROOT", "VC6_INCLUDE", "VC6_LIB", "WINEARCH", "CL", "_CL_"]

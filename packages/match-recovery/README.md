@@ -136,6 +136,34 @@ unchanged. This verifies file correspondence only: it neither proves that the
 expected source set is correct nor compares compiler arguments, build graphs or
 retained linker sections.
 
+To require this evidence during every native fresh build, add an optional
+`compile_link` object to the build configuration, for example:
+
+```json
+{
+  "database": "compile_commands.json",
+  "source_extensions": [".cpp"],
+  "directory": "objects/application",
+  "suffix": ".compile.json",
+  "link_files": "application.link.inputs.json",
+  "link_log": "application.link.log"
+}
+```
+
+Paths are relative to the new build directory. The database, link-file observations
+and log must also be declared outputs with formats `compilation-database`,
+`link-input-files` and `msvc-link-log`. The configured compiler writes observation
+files; the library does not infer compiler flags, filenames or source languages.
+The literal extensions select expected recipes; duplicates refuse rather than
+collapsing into a set. The collector requires canonical source/cwd paths inside
+the project and observed outputs inside this build, verifies artifact hashes from
+the current build, and rechecks declared file bytes and observation membership.
+Missing or failed correspondence prevents a passing build result. Unconfigured
+builds retain artifact-only verification. This extension uses the current MSVC
+link-observation backend; it is not a universal linker parser or build-graph
+acceptance. Sources/libraries outside this declared evidence scope remain visible
+limitations, not implicit exclusions from recovery.
+
 `recover inventory` reports source and seed populations, body-presence states,
 historical obligations and mapping conflicts. Body states derive from source
 text; an implemented or historically matching body is not completed recovery.
