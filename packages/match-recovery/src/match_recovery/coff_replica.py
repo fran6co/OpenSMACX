@@ -56,6 +56,20 @@ def _owned_local_names(obj):
         elif (symbol.section in owned_roots and symbol.storage == 6 and symbol.type == 0
               and re.fullmatch(r"\$L[0-9]+", symbol.name) and not obj.auxiliary.get(symbol.index)):
             names[symbol.index] = _FUNCTION_LOCAL
+    groups = {}
+    for index, normalized in names.items():
+        symbol = obj.symbols[index]
+        key = (normalized, symbol.section, symbol.value, symbol.type, symbol.storage)
+        groups.setdefault(key, []).append(symbol)
+    for symbols in groups.values():
+        if len(symbols) > 1:
+            if len({symbol.name for symbol in symbols}) != len(symbols):
+                raise ValueError("ambiguous compiler-local replica identity")
+            # Distinct labels may legitimately share an instruction boundary.
+            # Normalizing them would merge relocation identities: retain every
+            # exact spelling instead, without pairing or collapsing aliases.
+            for symbol in symbols:
+                names.pop(symbol.index)
     return names
 
 
@@ -98,7 +112,8 @@ def _replica_names(obj):
 
 
 def _validate_names(obj, names):
-    # Refuse aliases/collisions, including two local labels at the same offset.
+    # Refuse aliases introduced by normalization; distinct co-located numeric
+    # labels already retain their exact spellings in _owned_local_names.
     # A relocation can never borrow the identity of another original symbol.
     seen = {}
     for symbol in obj.symbols.values():

@@ -123,10 +123,22 @@ def test_unproven_root_label_ownership_keeps_numeric_spellings_strict(case):
 
 @pytest.mark.parametrize("operation", ["preservation", "object", "function"])
 @pytest.mark.parametrize("damage", ["collision", "impersonation"])
-def test_root_local_aliases_and_reserved_marker_impersonation_refuse(operation, damage):
+def test_root_colocated_labels_keep_exact_identity_and_reserved_markers_refuse(operation, damage):
     old, new = pair()
     if damage == "collision":
         new.symbols[101] = replace(new.symbols[101], value=new.symbols[100].value)
+        # Co-located distinct labels are legal but retain exact spellings.
+        # Moving this label still changes object/preservation identity; neither
+        # its name nor location supplies evidence of a changed function body.
+        if operation == "preservation":
+            assert compare_outside_functions(old, new, {}, {})["result"] == "fail"
+            assert compare_outside_functions(new, copy.deepcopy(new), {}, {})["result"] == "pass"
+        elif operation == "object":
+            assert object_signature(old) != object_signature(new)
+            assert object_signature(new) == object_signature(copy.deepcopy(new))
+        else:
+            assert function_signature(old, "_f") == function_signature(new, "_f")
+        return
     else:
         new.symbols[100] = replace(new.symbols[100], name="<coff-function-local>")
     with pytest.raises(ValueError, match="ambiguous compiler-local|reserved compiler-local"):

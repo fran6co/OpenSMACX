@@ -93,13 +93,15 @@ def test_two_namespace_nonces_cannot_be_collapsed_into_one_identity():
         object_signature(obj)
 
 
-def test_alias_labels_at_one_offset_require_explicit_handling():
+def test_distinct_alias_labels_at_one_offset_retain_exact_replica_identity():
     obj = fixture()
     obj.symbols[101] = replace(obj.symbols[5], index=101, name="$L456")
-    with pytest.raises(ValueError, match="ambiguous compiler-local"):
-        object_signature(obj)
-    with pytest.raises(ValueError, match="ambiguous compiler-local"):
-        function_signature(obj, obj.symbols[2].name)
+    same = copy.deepcopy(obj)
+    assert object_signature(obj) == object_signature(same)
+    assert function_signature(obj, obj.symbols[2].name) == function_signature(same, same.symbols[2].name)
+    same.symbols[101] = replace(same.symbols[101], name="$L789")
+    assert object_signature(obj) != object_signature(same)
+    assert function_signature(obj, obj.symbols[2].name) == function_signature(same, same.symbols[2].name)
 
 
 def test_static_numeric_name_in_independent_data_is_not_inferred_owned():
@@ -169,11 +171,13 @@ def test_preserved_local_labels_do_not_waive_any_target_or_content_dimension(dam
     assert compare_outside_functions(old, new, {}, {})["result"] == "fail"
 
 
-def test_preservation_refuses_alias_local_labels_even_with_identical_objects():
+def test_preservation_accepts_distinct_alias_local_labels_only_with_exact_names():
     old, _ = local_pair()
     old.symbols[101] = replace(old.symbols[5], index=101, name="$L456")
-    with pytest.raises(ValueError, match="ambiguous compiler-local"):
-        compare_outside_functions(old, old, {}, {})
+    same = copy.deepcopy(old)
+    assert compare_outside_functions(old, same, {}, {})["result"] == "pass"
+    same.symbols[101] = replace(same.symbols[101], name="$L789")
+    assert compare_outside_functions(old, same, {}, {})["result"] == "fail"
 
 
 def test_preservation_never_normalizes_opaque_local_auxiliary_records():
@@ -206,3 +210,79 @@ def test_private_helper_name_churn_cannot_satisfy_selected_function_damage_contr
     assert function_signature(old, old.symbols[2].name) == function_signature(new, new.symbols[2].name)
     new.symbols[2] = replace(new.symbols[2], name=new.symbols[2].name.replace("helper", "other"))
     assert function_signature(old, old.symbols[2].name) != function_signature(new, new.symbols[2].name)
+
+
+def colocated_labels(kind):
+    obj, _ = local_pair()
+    section, storage, prefix = {"function": (1, 6, "$L"), "associated_code": (2, 6, "$L"),
+                                "associated_data": (3, 3, "$T")}[kind]
+    obj.symbols[101] = Symbol(101, prefix + "27488", 1, section, 0, storage)
+    obj.symbols[102] = Symbol(102, prefix + "27489", 1, section, 0, storage)
+    obj.sections = (replace(obj.sections[0], relocations=((1, 101, 6),)), *obj.sections[1:])
+    return obj
+
+
+@pytest.mark.parametrize("kind", ["function", "associated_code", "associated_data"])
+def test_colocated_numeric_labels_with_exact_names_and_edges_are_stable(kind):
+    old = colocated_labels(kind)
+    new = copy.deepcopy(old)
+    assert object_signature(old) == object_signature(new)
+    assert compare_outside_functions(old, new, {}, {})["result"] == "pass"
+    assert function_signature(old, "_owner") == function_signature(new, "_owner")
+
+
+@pytest.mark.parametrize("kind", ["function", "associated_code", "associated_data"])
+@pytest.mark.parametrize("change", ["rename", "rename_both", "add", "remove", "move", "move_both", "relocation_target"])
+def test_colocated_labels_never_merge_names_multiplicity_offsets_or_edges(kind, change):
+    old = colocated_labels(kind)
+    new = copy.deepcopy(old)
+    if change in ("rename", "rename_both"):
+        new.symbols[102] = replace(new.symbols[102], name=new.symbols[102].name + "0")
+        if change == "rename_both":
+            new.symbols[101] = replace(new.symbols[101], name=new.symbols[101].name + "0")
+    elif change == "add":
+        new.symbols[103] = replace(new.symbols[102], index=103, name=new.symbols[102].name + "0")
+    elif change == "remove":
+        del new.symbols[102]
+    elif change in ("move", "move_both"):
+        new.symbols[102] = replace(new.symbols[102], value=2)
+        if change == "move_both":
+            new.symbols[101] = replace(new.symbols[101], value=2)
+    else:
+        new.sections = (replace(new.sections[0], relocations=((1, 102, 6),)), *new.sections[1:])
+    assert object_signature(old) != object_signature(new)
+    assert compare_outside_functions(old, new, {}, {})["result"] == "fail"
+    # Stronger whole-object identity must not let a local-label-only change
+    # masquerade as the changed instruction body required by probe controls.
+    assert function_signature(old, "_owner") == function_signature(new, "_owner")
+
+
+@pytest.mark.parametrize("kind", ["function", "associated_code", "associated_data"])
+def test_colocated_label_symbol_indices_can_change_only_with_matching_edges(kind):
+    old = colocated_labels(kind)
+    new = copy.deepcopy(old)
+    indices = {101: 211, 102: 210}
+    new.symbols = {indices.get(index, index): replace(symbol, index=indices.get(index, index))
+                   for index, symbol in reversed(list(new.symbols.items()))}
+    new.sections = tuple(replace(section, relocations=tuple((offset, indices.get(target, target), relocation)
+                         for offset, target, relocation in section.relocations)) for section in new.sections)
+    assert object_signature(old) == object_signature(new)
+    assert compare_outside_functions(old, new, {}, {})["result"] == "pass"
+    assert function_signature(old, "_owner") == function_signature(new, "_owner")
+    new.sections = (replace(new.sections[0], relocations=((1, 210, 6),)), *new.sections[1:])
+    assert object_signature(old) != object_signature(new)
+    assert compare_outside_functions(old, new, {}, {})["result"] == "fail"
+
+
+@pytest.mark.parametrize("kind", ["function", "associated_code", "associated_data"])
+@pytest.mark.parametrize("operation", ["object", "preservation", "function"])
+def test_duplicate_raw_numeric_labels_remain_ambiguous(kind, operation):
+    obj = colocated_labels(kind)
+    obj.symbols[103] = replace(obj.symbols[101], index=103)
+    with pytest.raises(ValueError, match="ambiguous compiler-local"):
+        if operation == "object":
+            object_signature(obj)
+        elif operation == "preservation":
+            compare_outside_functions(obj, obj, {}, {})
+        else:
+            function_signature(obj, "_owner")
