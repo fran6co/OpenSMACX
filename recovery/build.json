@@ -2,14 +2,15 @@
   "schema_version": 1,
   "artifacts": "build/recovery/builds",
   "commands": [
-    {"argv": ["cmake", "-S", "{root}", "-B", "{build}", "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release"], "timeout": 120},
+    {"argv": ["cmake", "-S", "{root}", "-B", "{build}", "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release", "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON", "-DOPENSMACX_CAPTURE_COMPILES=ON"], "timeout": 120},
     {"argv": ["cmake", "--build", "{build}", "--parallel", "4"], "timeout": 3300}
   ],
   "outputs": [{"path": "OpenSMACX.exe", "format": "pe32-i386"},
               {"path": "OpenSMACX.map", "format": "msvc-map"},
               {"path": "OpenSMACX.link.log", "format": "msvc-link-log"},
-              {"path": "OpenSMACX.link.inputs.json", "format": "link-input-files"}],
-  "inputs": ["CMakeLists.txt", "pyproject.toml", "uv.lock", "recovery/environment/vc6-cl", "recovery/environment/vc6-link", "recovery/environment/vc6-lib", "recovery/environment/wine.py", "recovery/environment/wine_link.py", "recovery/environment/wine_repro.py"],
+              {"path": "OpenSMACX.link.inputs.json", "format": "link-input-files"},
+              {"path": "compile_commands.json", "format": "compilation-database"}],
+  "inputs": ["CMakeLists.txt", "pyproject.toml", "uv.lock", "recovery/environment/vc6-cl", "recovery/environment/vc6-link", "recovery/environment/vc6-lib", "recovery/environment/wine.py", "recovery/environment/wine_link.py", "recovery/environment/wine_repro.py", "recovery/environment/wine_compile.py"],
   "input_roots": ["src", "cmake"],
   "environment": ["VC6_PREFIX", "VC6_ROOT", "VC6_INCLUDE", "VC6_LIB", "WINEARCH", "CL", "_CL_"]
 }

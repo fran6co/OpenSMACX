@@ -387,6 +387,12 @@ def main(argv: list) -> int:
     # BEFORE ANYTHING READS THE ARGUMENTS. Both the depfile extraction below
     # and the path translation are blind to whatever sits inside a `@file`.
     arguments = expand_responses(arguments)
+    compile_diagnostics = [word.split("=", 1)[1] for word in arguments
+                           if word.startswith("--compile-diagnostics=")]
+    if compile_diagnostics and (tool != "cl" or len(compile_diagnostics) != 1 or not compile_diagnostics[0]):
+        print("one compile diagnostics path is supported only for cl", file=sys.stderr)
+        return 3
+    arguments = [word for word in arguments if not word.startswith("--compile-diagnostics=")]
     try:
         arguments, link_diagnostics = take_link_diagnostics(tool, arguments)
     except ValueError as error:
@@ -428,7 +434,26 @@ def main(argv: list) -> int:
         # tells ninja to try again once the header is fixed, so it has to
         # exist even when the compile that follows fails.
         write_depfile(executable, arguments, dep_file, dep_target or "")
+    compile_capture = None
+    if compile_diagnostics:
+        try:
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            from wine_compile import capture_before as compile_before, capture_after as compile_after
+            compile_capture = compile_before(reproducible, arguments, executable)
+            destination = Path(compile_diagnostics[0]).absolute()
+            observed_paths = {Path(item["path"]) for item in compile_capture["inputs"]}
+            if (destination in observed_paths or destination == Path(compile_capture["output"]["path"])
+                    or destination.parent.resolve() != destination.parent or destination.is_symlink()
+                    or destination.exists()):
+                raise ValueError("compile diagnostics require a new canonical file, separate from compiler inputs and outputs")
+        except (OSError, ValueError) as error:
+            print(str(error), file=sys.stderr)
+            return 3
     translated = [translate(a) for a in arguments]
+    if compile_capture is not None:
+        # Record the actual compiler spellings before optional response-file
+        # packaging, not the host-side paths used to locate observed files.
+        compile_capture["arguments"] = list(translated)
     scratch = None
     if sum(len(a) + 1 for a in translated) > COMMAND_LINE_LIMIT:
         scratch = tempfile.NamedTemporaryFile(
@@ -466,6 +491,17 @@ def main(argv: list) -> int:
             reproducible.check_inputs()
         except (OSError, ValueError) as error:
             print(str(error), file=sys.stderr)
+            return 3
+    if compile_capture is not None:
+        try:
+            # Publish only after the logical include-path bindings survived the
+            # final reproducibility check, not just their resolved file bytes.
+            # Exclusive creation cannot overwrite raced-in source or old evidence.
+            # Interrupted partial JSON is diagnostic debris, never valid evidence.
+            with destination.open("x", encoding="utf-8") as stream:
+                stream.write(json.dumps(compile_after(compile_capture, finished.returncode), indent=2) + "\n")
+        except (OSError, ValueError) as error:
+            print(f"cannot capture compile diagnostics: {error}", file=sys.stderr)
             return 3
     if link_diagnostics is not None:
         try:

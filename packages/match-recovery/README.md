@@ -102,6 +102,26 @@ all native verification remains fresh under the selected implementation.
 
 ## Direct recovery diagnostics
 
+### Compiler-file observations
+
+`match_recovery.compile_file_evidence` reads version-1 compiler-boundary observations
+with `parse_compile_files(bytes)` and freshly checks them with
+`verify_compile_files(bytes, object_path=...)`. The optional object path binds the
+observation to that exact file, not a same-named substitute. The schema contains
+`source`, `tool`, effective `cwd` and ordered `arguments`, an `inputs` array of
+`{path, before, after}`, `output: {path, existed_before, after}`, and `exit_code`.
+Paths are absolute host paths; content observations are `{sha256, size}` or null.
+The source and tool must be among the unique inputs. A pass requires exit zero,
+unchanged freshly read declared inputs and a new, nonempty, unchanged output.
+Missing observations and preexisting outputs cannot pass. Keep observations in
+ignored build storage and read them during the enclosing fresh build epoch.
+
+This is a compiler-neutral file-evidence boundary, not an execution attestation,
+complete include/source inventory, interpretation of opaque compiler arguments,
+linker-selection proof or acceptance. It does not yet admit changed build graphs
+or relax outside-scope preservation. Those require independently bound application
+build commands, source/object/link correspondence and remaining linked effects.
+
 `recover inventory` reports source and seed populations, body-presence states,
 historical obligations and mapping conflicts. Body states derive from source
 text; an implemented or historically matching body is not completed recovery.

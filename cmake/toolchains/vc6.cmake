@@ -102,6 +102,13 @@ set(CMAKE_CXX98_EXTENSION_COMPILE_OPTION "")
 # way. These two are the wrapper's own and can collide with nothing.
 set(CMAKE_DEPFILE_FLAGS_CXX "--deptarget=<DEP_TARGET> --depfile=<DEP_FILE>")
 set(CMAKE_DEPFILE_FLAGS_C "--deptarget=<DEP_TARGET> --depfile=<DEP_FILE>")
+if(OPENSMACX_CAPTURE_COMPILES)
+    # The application is the C++ target. The C target is upstream zlib, whose
+    # build is verified as a dependency and does not use the application's
+    # reproducibility preprocessing. Do not claim that closure for its objects.
+    # Ordinary incremental/IDE builds do not publish these observations.
+    string(APPEND CMAKE_DEPFILE_FLAGS_CXX " --compile-diagnostics=<DEP_TARGET>.compile.json")
+endif()
 
 # AND THE FORMAT THOSE FLAGS PRODUCE, which CMake 4.x requires to be stated.
 # Normally it is discovered along with the compiler; forcing the compiler id

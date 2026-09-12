@@ -12,6 +12,23 @@ not a retained worktree's older editable package. Compiler scripts and flags rem
 project-owned. Older frozen campaign profiles are not silently changed by this
 configuration; updating their compiler interaction requires separate authorization.
 
+Fresh recovery application builds enable `OPENSMACX_CAPTURE_COMPILES` and export
+their application compilation database. The local wrapper's explicit
+`--compile-diagnostics=<new-file>` captures verified preprocessing inputs, compiler
+file, effective argv/cwd and object output. CMake places observations beside each
+application C++ object as `.compile.json`; ordinary incremental/IDE builds leave
+capture disabled. The upstream zlib C objects retain dependency verification;
+these observations do not claim their preprocessing or source coverage.
+The wrapper refuses existing observation destinations instead of overwriting them.
+Interrupted partial files and failed/preexisting objects cannot provide fresh
+successful evidence. The package owns schema validation and fresh file checks.
+Stable SDK header aliases are allowed: their logical targets and bytes are checked
+before and after compilation, while the observation names physical files. This is
+not a durable include-search or alias inventory; that environment still needs its
+own binding when verifying a build-graph change.
+These ignored observations are prerequisites for future build-graph verification,
+not admission or a replacement for linked-code/lifecycle preservation.
+
 The active agent/coordinator contract is [WORKFLOW.md](WORKFLOW.md). Historical
 compiler observations are in [COMPILER_EVIDENCE.md](COMPILER_EVIDENCE.md); they do
 not override task scope, structural evidence or acceptance policy.

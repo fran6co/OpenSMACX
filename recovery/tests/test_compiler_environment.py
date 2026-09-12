@@ -120,6 +120,26 @@ def test_release_link_preserves_the_selected_runtime_code_and_relocations():
     assert not any(item.module.lower() in ("msvcrt.dll", "msvcrtd.dll") for item in image.imports())
     # Project policy only; comparison and map parsing belong to the package.
     assert image.relocations
+    # Each application C++ compile must describe the exact file handed to the
+    # linker. This is file correspondence, not proof of retained sections or
+    # acceptance of an application build-graph change.
+    from match_recovery.compile_file_evidence import verify_compile_files
+    from match_recovery.link_file_evidence import parse_link_files
+    link_files = parse_link_files((directory / "OpenSMACX.link.inputs.json").read_bytes())
+    linked = {item["path"]: item for item in link_files["files"]}
+    commands = json.loads((directory / "compile_commands.json").read_bytes())
+    expected = {str(Path(item["file"])) for item in commands if Path(item["file"]).suffix == ".cpp"}
+    seen = set()
+    for observation in directory.rglob("*.compile.json"):
+        value = json.loads(observation.read_bytes())
+        obj = value["output"]["path"]
+        proof = verify_compile_files(observation.read_bytes(), object_path=Path(obj))
+        assert proof["result"] == "pass", proof
+        assert value["source"] not in seen
+        seen.add(value["source"])
+        assert obj in link_files["explicit_inputs"]
+        assert value["output"]["after"] == linked[obj]["before"] == linked[obj]["after"]
+    assert seen == expected and seen
 
 
 @pytest.mark.parametrize("sizes,strong,export", [((4,), False, False), ((8,), False, False),
