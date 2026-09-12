@@ -30,6 +30,16 @@ def main():
         if value == {"schema_version": 1, "operation": "toolchain_inputs"} and type(value["schema_version"]) is int:
             print(json.dumps(toolchain_inputs()))
             return 0
+        if value.get("operation") == "command_paths":
+            from match_recovery.command_paths import CommandPathRequest
+            from recovery.environment.command_paths import describe_command
+            request = CommandPathRequest.read(root, value)
+            if request.profile not in ("default", "application"):
+                raise ValueError("unsupported project compiler profile")
+            descriptions = [describe_command(command.arguments, command.cwd, stage=command.stage)
+                            for command in request.commands]
+            print(json.dumps({"schema_version": 1, "descriptions": descriptions}))
+            return 0
         request = CompilationRequest.read(root, value)
         source = request.source
         if request.profile not in ("default", "application"):

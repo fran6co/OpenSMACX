@@ -53,6 +53,64 @@ class CommandPaths:
     stage: str
     operands: tuple[PathOperand, ...]
 
+    def to_description(self):
+        if not isinstance(self.operands, (tuple, list)):
+            raise ValueError("command operands must be a sequence")
+        codecs, operands = [], []
+        for item in self.operands:
+            if not isinstance(item, PathOperand) or not isinstance(item.encoding, PathEncoding):
+                raise ValueError("invalid typed command operand")
+            operands.append({"argument": item.argument, "start": item.start, "end": item.end,
+                             "path": str(item.path), "kind": item.kind, "codec": len(codecs)})
+            codecs.append({"anchor": str(item.encoding.anchor), "prefix": item.encoding.prefix,
+                           "separator": item.encoding.separator})
+        return {"schema_version": 1, "stage": self.stage, "codecs": codecs,
+                "operands": operands, "unsupported": []}
+
+
+@dataclass(frozen=True)
+class CommandInvocation:
+    arguments: tuple[str, ...]
+    cwd: Path
+    stage: str
+
+    def to_dict(self):
+        return {"arguments": list(self.arguments), "cwd": str(self.cwd), "stage": self.stage}
+
+
+@dataclass(frozen=True)
+class CommandPathRequest:
+    profile: str
+    commands: tuple[CommandInvocation, ...]
+
+    @classmethod
+    def read(cls, root, value):
+        root = _path(str(root))
+        fields = {"schema_version", "operation", "profile", "commands"}
+        if (not isinstance(value, dict) or set(value) != fields
+                or type(value["schema_version"]) is not int or value["schema_version"] != 1
+                or value["operation"] != "command_paths"):
+            raise ValueError("invalid command path request")
+        profile = _text(value["profile"])
+        if not isinstance(value["commands"], list) or not value["commands"]:
+            raise ValueError("command path request needs a nonempty command array")
+        commands = []
+        for item in value["commands"]:
+            if not isinstance(item, dict) or set(item) != {"arguments", "cwd", "stage"}:
+                raise ValueError("invalid command invocation")
+            if not isinstance(item["arguments"], list) or not item["arguments"]:
+                raise ValueError("command invocation needs an argument array")
+            arguments = tuple(_text(word) for word in item["arguments"])
+            cwd, stage = _path(item["cwd"]), _text(item["stage"])
+            if not cwd.is_relative_to(root):
+                raise ValueError("command working directory is outside the project context")
+            commands.append(CommandInvocation(arguments, cwd, stage))
+        return cls(profile, tuple(commands))
+
+    def to_dict(self):
+        return {"schema_version": 1, "operation": "command_paths", "profile": self.profile,
+                "commands": [item.to_dict() for item in self.commands]}
+
 
 def validate_command_paths(arguments, cwd, description, *, stage):
     """Validate exact argument slices and reversible configured path spellings.
@@ -128,19 +186,7 @@ def compare_commands(before, after, *, path_pairs=()):
     # caller can construct or replace them directly; check exact slices again
     # before any typed path segment can replace command text.
     def checked(command):
-        if not isinstance(command.operands, (tuple, list)):
-            raise ValueError("command operands must be a sequence")
-        codecs, operands = [], []
-        for item in command.operands:
-            if not isinstance(item, PathOperand) or not isinstance(item.encoding, PathEncoding):
-                raise ValueError("invalid typed command operand")
-            operands.append({"argument": item.argument, "start": item.start, "end": item.end,
-                             "path": str(item.path), "kind": item.kind, "codec": len(codecs)})
-            codecs.append({"anchor": str(item.encoding.anchor), "prefix": item.encoding.prefix,
-                           "separator": item.encoding.separator})
-        return validate_command_paths(command.arguments, command.cwd,
-            {"schema_version": 1, "stage": command.stage, "codecs": codecs,
-             "operands": operands, "unsupported": []}, stage=command.stage)
+        return validate_command_paths(command.arguments, command.cwd, command.to_description(), stage=command.stage)
     before, after = checked(before), checked(after)
     pairs = []
     for pair in path_pairs:

@@ -136,3 +136,53 @@ def test_receipt_cannot_substitute_an_output_from_another_build(observed):
     path.write_text(json.dumps(value))
     with pytest.raises(ValueError, match='current fresh build'):
         verify(observed)
+
+
+def test_command_binding_is_opt_in_and_receives_exact_verified_inputs(observed, monkeypatch):
+    from match_recovery import build_command_evidence
+    calls = []
+    def bind(root, directory, compilations, link, stages):
+        assert root == observed[0] and directory == observed[1]
+        assert compilations[0]['source'] == str(directory / 'unit.cc')
+        assert compilations[0]['output']['path'] in link['explicit_inputs']
+        assert stages == {'compile': 'effective', 'link': 'wrapper'}
+        calls.append(True)
+        return {'result': 'pass', 'test_double': True}
+    monkeypatch.setattr(build_command_evidence, 'bind_build_commands', bind)
+    assert 'command_bindings' not in verify(observed) and calls == []
+    observed[2]['command_stages'] = {'compile': 'effective', 'link': 'wrapper'}
+    report = verify(observed)
+    assert calls == [True] and report['command_bindings']['result'] == 'pass'
+
+
+def test_failed_file_evidence_never_calls_command_describer(observed, monkeypatch):
+    from match_recovery import build_command_evidence
+    observed[2]['command_stages'] = {'compile': 'effective', 'link': 'wrapper'}
+    monkeypatch.setattr(build_command_evidence, 'bind_build_commands',
+                        lambda *a, **k: pytest.fail('cannot bind commands against missing compile evidence'))
+    (observed[1] / 'objects/unit.compile.json').unlink()
+    report = verify(observed)
+    assert report['result'] == 'unknown' and report['command_bindings']['verification'] == 'not_measured'
+
+
+@pytest.mark.parametrize('damage', ['source', 'executable', 'receipt', 'membership'])
+def test_command_description_is_inside_the_file_freshness_epoch(observed, monkeypatch, damage):
+    from match_recovery import build_command_evidence
+    observed[2]['command_stages'] = {'compile': 'effective', 'link': 'wrapper'}
+    def mutate(*args):
+        path = observed[1] / {'source': 'unit.cc', 'executable': 'application',
+                              'receipt': 'objects/unit.compile.json', 'membership': 'objects/new.compile.json'}[damage]
+        path.write_bytes(b'changed during command description')
+        return {'result': 'pass'}
+    monkeypatch.setattr(build_command_evidence, 'bind_build_commands', mutate)
+    with pytest.raises(ValueError, match='changed during'):
+        verify(observed)
+
+
+@pytest.mark.parametrize('stages', [None, {}, {'compile': 'one'}, {'compile': '', 'link': 'one'},
+                                  {'compile': 'one', 'link': 'two', 'trust': True},
+                                  {'compile': 'one', 'link': 7}, {'compile': 'one\0', 'link': 'two'}])
+def test_command_observation_stages_are_explicit_policy(observed, stages):
+    observed[2]['command_stages'] = stages
+    with pytest.raises(ValueError, match='command_stages'):
+        collector.validate_configuration(observed[2], [(item['path'], item['format']) for item in observed[3]])

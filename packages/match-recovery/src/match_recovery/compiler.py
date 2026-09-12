@@ -139,6 +139,36 @@ class Compiler:
     def __call__(self, source: Path, arguments: tuple[str, ...], flags: tuple[str, ...]) -> bytes:
         return self._compile(source, arguments, flags)
 
+    def describe_commands(self, commands):
+        """Obtain lossless syntax descriptions, never project-supplied verdicts.
+
+        One batch uses the existing pinned compiler client. Unsupported clients
+        refuse; there is no guessed grammar or fallback to compilation. Actual
+        source/output binding and command comparison remain library operations.
+        """
+        from .command_paths import CommandPathRequest, validate_command_paths
+        request = CommandPathRequest.read(self.root, {
+            "schema_version": 1, "operation": "command_paths", "profile": self.profile, "commands": commands})
+        if self.snapshot() != self.initial:
+            raise ValueError("compiler inputs changed before command description")
+        try:
+            try:
+                code, output = invoke(self.command, self.root, "", request.to_dict())
+            except (OSError, subprocess.TimeoutExpired) as error:
+                raise ValueError("compiler command description did not complete") from error
+            if code != 0:
+                raise ValueError("compiler command description refused")
+            if (not isinstance(output, dict) or set(output) != {"schema_version", "descriptions"}
+                    or type(output["schema_version"]) is not int or output["schema_version"] != 1
+                    or not isinstance(output["descriptions"], list)
+                    or len(output["descriptions"]) != len(request.commands)):
+                raise ValueError("invalid compiler command descriptions")
+            return tuple(validate_command_paths(item.arguments, item.cwd, description, stage=item.stage)
+                         for item, description in zip(request.commands, output["descriptions"], strict=True))
+        finally:
+            if self.snapshot() != self.initial:
+                raise ValueError("compiler inputs changed during command description")
+
     def overlay(self, source: Path, replacements: dict[str, bytes], arguments: tuple[str, ...], flags: tuple[str, ...]) -> bytes:
         """Compile an atomic set of proposed TU/header bytes using protocol v4.
 

@@ -146,7 +146,8 @@ To require this evidence during every native fresh build, add an optional
   "directory": "objects/application",
   "suffix": ".compile.json",
   "link_files": "application.link.inputs.json",
-  "link_log": "application.link.log"
+  "link_log": "application.link.log",
+  "command_stages": {"compile": "compiler-effective", "link": "link-wrapper"}
 }
 ```
 
@@ -163,6 +164,25 @@ builds retain artifact-only verification. This extension uses the current MSVC
 link-observation backend; it is not a universal linker parser or build-graph
 acceptance. Sources/libraries outside this declared evidence scope remain visible
 limitations, not implicit exclusions from recovery.
+
+Optional `command_stages` additionally requires the configured compiler JSON client
+to describe the freshly captured command batch. Stage names are project-defined;
+they explicitly distinguish effective compiler arguments from wrapper arguments.
+The request is `{schema_version: 1, operation: "command_paths", profile: <profile>,
+commands: [{arguments: [...], cwd: <absolute host path>, stage: <stage>}, ...]}`.
+The response is exactly `{schema_version: 1, descriptions: [...]}`, with one
+description per command in request order using the schema below. The operation
+describes syntax only, without compiling or providing a comparison verdict.
+Unsupported syntax, missing descriptions, changed compiler inputs or failed client
+execution refuse verification; there is no fallback to artifact-only acceptance.
+
+The native collector binds every described compilation source and object output
+to its verified file observations, requires described input files to be observed,
+and checks the exact ordered explicit linker-input sequence. Directory roles must
+name canonical physical directories, and output paths must stay in the fresh build.
+All artifact/input hashes and observation membership are rechecked after the batch.
+The returned `command_bindings` is fresh evidence, not a persisted source ledger,
+complete include-search closure or permission to integrate a changed build graph.
 
 `match_recovery.command_paths` supplies lossless command syntax comparison for
 build-graph verification. `validate_command_paths(arguments, cwd, description,

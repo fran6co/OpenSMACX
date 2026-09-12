@@ -37,8 +37,13 @@ sections and initialization behavior.
 The local `environment/command_paths.py` describes application command operands
 for the package's lossless comparison API. It distinguishes effective compiler
 arguments (including translated Wine paths) from host-stage linker arguments;
-library requests remain ordered literals, not guessed file identities. This is
-currently a tested grammar boundary, not a new CLI or migration-admission route.
+library requests remain ordered literals, not guessed file identities. Native fresh
+builds request these descriptions through the configured compiler client's batched
+`command_paths` operation, with explicit `command_stages` in the build policy.
+The package binds them to observed source/object files and ordered linker inputs,
+then rechecks the build's file evidence. The operation does not compile or supply
+an acceptance verdict. This is not a new CLI or migration-admission route;
+baseline/current graph comparison and remaining linked-effect proof are still needed.
 
 The active agent/coordinator contract is [WORKFLOW.md](WORKFLOW.md). Historical
 compiler observations are in [COMPILER_EVIDENCE.md](COMPILER_EVIDENCE.md); they do

@@ -130,6 +130,10 @@ def test_release_link_preserves_the_selected_runtime_code_and_relocations():
     assert len(proof["compilations"]) == len(expected)
     assert proof["sources"] == sorted(map(str, expected))
     assert proof["linked_selection"] == proof["build_graph_verification"] == "unknown"
+    bindings = proof["command_bindings"]
+    assert bindings["result"] == "pass" and len(bindings["compilations"]) == len(expected)
+    assert bindings["link"]["description"]["stage"] == "link-wrapper"
+    assert all(row["description"]["stage"] == "compiler-effective" for row in bindings["compilations"])
 
 
 @pytest.mark.parametrize("sizes,strong,export", [((4,), False, False), ((8,), False, False),

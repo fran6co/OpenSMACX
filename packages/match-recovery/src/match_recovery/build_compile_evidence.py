@@ -17,7 +17,7 @@ def validate_configuration(value, outputs):
     if value is None:
         return None
     fields = {"database", "source_extensions", "directory", "suffix", "link_files", "link_log"}
-    if not isinstance(value, dict) or set(value) != fields:
+    if not isinstance(value, dict) or not fields <= set(value) or set(value) - fields - {"command_stages"}:
         raise ValueError("compile_link requires database, source_extensions, directory, suffix, link_files and link_log")
     for name in ("database", "directory", "link_files", "link_log"):
         relative_path(value[name])
@@ -32,7 +32,12 @@ def validate_configuration(value, outputs):
     for key, kind in (("database", "compilation-database"), ("link_files", "link-input-files"), ("link_log", "msvc-link-log")):
         if declared.get(value[key]) != kind:
             raise ValueError("compile_link requires a declared " + kind + " output")
-    return {**value, "source_extensions": list(extensions)}
+    stages = value.get("command_stages")
+    if "command_stages" in value and (not isinstance(stages, dict) or set(stages) != {"compile", "link"}
+            or any(not isinstance(stage, str) or not stage.strip() or "\0" in stage for stage in stages.values())):
+        raise ValueError("command_stages requires explicit compile and link observation stages")
+    return {**value, "source_extensions": list(extensions),
+            **({"command_stages": dict(stages)} if stages is not None else {})}
 
 
 def _observations(directory, suffix):
@@ -125,6 +130,15 @@ def verify_build_compilations(root, directory, configuration, *, outputs):
            for path, raw in metadata.items()):
         raise ValueError("compiler/link observations changed before verification")
     report = verify_compile_link_inputs(compilations, artifacts["link_files"], artifacts["link_log"], sources=expected)
+    if "command_stages" in configuration:
+        report["command_bindings"] = {"result": "unknown", "verification": "not_measured",
+                                      "reason": "fresh compile/link file correspondence is required"}
+        if report["result"] == "pass":
+            from .build_command_evidence import bind_build_commands
+            report["command_bindings"] = bind_build_commands(
+                root, directory, [parse_compile_files(raw) for raw in compilations], link, configuration["command_stages"])
+            if report["command_bindings"].get("result") != "pass":
+                raise ValueError("command file bindings did not complete")
     if (_observations(tree, configuration["suffix"]) != selected
             or {path: _observe(path) for path in sorted(observed_paths)} != before):
         raise ValueError("compiler/link files or observation membership changed during verification")
