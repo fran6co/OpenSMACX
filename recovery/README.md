@@ -34,6 +34,11 @@ that build's database. The package rejects missing/substituted observations and
 changing build evidence; extra linker inputs such as zlib remain separately visible.
 Passing this check still does not accept a changed build graph or prove retained
 sections and initialization behavior.
+The local `environment/command_paths.py` describes application command operands
+for the package's lossless comparison API. It distinguishes effective compiler
+arguments (including translated Wine paths) from host-stage linker arguments;
+library requests remain ordered literals, not guessed file identities. This is
+currently a tested grammar boundary, not a new CLI or migration-admission route.
 
 The active agent/coordinator contract is [WORKFLOW.md](WORKFLOW.md). Historical
 compiler observations are in [COMPILER_EVIDENCE.md](COMPILER_EVIDENCE.md); they do

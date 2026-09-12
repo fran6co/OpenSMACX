@@ -164,6 +164,26 @@ link-observation backend; it is not a universal linker parser or build-graph
 acceptance. Sources/libraries outside this declared evidence scope remain visible
 limitations, not implicit exclusions from recovery.
 
+`match_recovery.command_paths` supplies lossless command syntax comparison for
+build-graph verification. `validate_command_paths(arguments, cwd, description,
+stage=...)` checks the project environment's explicit path slices; it does not
+parse compiler options. A version-1 description contains `stage`, `codecs`,
+`operands`, and an `unsupported` list. Each codec has an absolute host `anchor`,
+literal `prefix` and `separator`; each operand names `argument`, `start`, `end`,
+absolute host `path`, `kind` and codec index. The encoded path must reproduce its
+exact argument slice. Kinds distinguish source, input file/directory and output
+file/directory. Unsupported grammar and overlapping slices refuse.
+
+`compare_commands(before, after, path_pairs=...)` revalidates these values and
+compares every token and literal character outside explicitly paired paths.
+Pairs come from the enclosing verifier, not the compiler parser; descendants
+retain their full relative names and nested pairs use the most specific anchor.
+Roles, codec syntax, cwd, stage, duplicate arguments and ordering remain visible.
+There is no token-deletion or flag-normalization interface. This is pure syntax
+evidence: callers still need fresh file/command capture, authorized source/output
+bindings, compiler/SDK policy and linked-effect verification. It is not yet wired
+into migration admission, and does not make a changed build graph acceptable.
+
 `recover inventory` reports source and seed populations, body-presence states,
 historical obligations and mapping conflicts. Body states derive from source
 text; an implemented or historically matching body is not completed recovery.
