@@ -122,6 +122,20 @@ linker-selection proof or acceptance. It does not yet admit changed build graphs
 or relax outside-scope preservation. Those require independently bound application
 build commands, source/object/link correspondence and remaining linked effects.
 
+`match_recovery.compile_link_evidence.verify_compile_link_inputs(compilations,
+link_data, log_data, sources=...)` connects those observations to the exact
+explicit linker-input files. Supply compile observation bytes, link-file and
+verbose-log bytes, and an explicit expected set of absolute source paths from
+the current build context. It freshly verifies all observations, requires unique
+source/output identities and one explicit link occurrence per compiled output,
+and compares compilation-output and pre/post-link content stamps. Missing sources
+stay unknown; extra sources, duplicate identities and substituted objects cannot
+pass. Remaining explicit link inputs are reported separately, not claimed as
+application-source coverage. The caller must hold the enclosing build context
+unchanged. This verifies file correspondence only: it neither proves that the
+expected source set is correct nor compares compiler arguments, build graphs or
+retained linker sections.
+
 `recover inventory` reports source and seed populations, body-presence states,
 historical obligations and mapping conflicts. Body states derive from source
 text; an implemented or historically matching body is not completed recovery.
