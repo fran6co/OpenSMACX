@@ -157,7 +157,8 @@ def _section_keys(obj, overrides=None, names=None):
     return keys
 
 
-def _object_evidence(obj, *, excluded=frozenset(), section_keys=None, entry_names=None, replica=False):
+def _object_evidence(obj, *, excluded=frozenset(), section_keys=None, entry_names=None, replica=False,
+                     preserve_references=frozenset()):
     """All sections/relocations/symbols except file and CodeView line records.
 
     COFF timestamps are already omitted by the parser. Keep type records, BSS
@@ -180,6 +181,9 @@ def _object_evidence(obj, *, excluded=frozenset(), section_keys=None, entry_name
     entry_names = entry_names or {}
     referenced = {target for number, section in enumerate(obj.sections, 1) if number not in omitted
                   for _, target, _ in section.relocations}
+    # Independently covered generated code must not erase its implicit linker
+    # requirements. The ordinary mapped-function subtraction remains unchanged.
+    referenced.update(preserve_references)
     excluded_references = {target for number, section in enumerate(obj.sections, 1) if number in excluded
                            for _, target, _ in section.relocations}
     # Weak fallbacks are linker edges even when no retained instruction has a

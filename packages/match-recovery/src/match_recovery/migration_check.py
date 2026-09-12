@@ -56,9 +56,14 @@ def measure_migration(root: Path, task_name: str, image: Path, request: dict, *,
         from .integration import validate
         validate(root, task, integration)
     permissions(request["permission"], task, scope)
+    if digest(request["review_policy"].get("migration")) != digest(request["permission"]):
+        raise ValueError("migration permission must exactly match the independently reviewed policy")
     validate_review(request["review"])
     if integration is not None and task.author in {request["review"]["author"], request["review"]["reviewer"]}:
         raise ValueError("integration coordinator must be independent of worker and reviewer")
+    if request["permission"].get("generated_changes") and task.author in {
+            request["review"]["author"], request["review"]["reviewer"]}:
+        raise ValueError("generated-change coordinator must be independent of worker and reviewer")
     if request["review"]["decision"] != "approve" or request["review"]["snapshot"] != request["snapshot"]:
         raise ValueError("migration requires the current independent approval")
     # The driver normally stops for discoveries before requesting admission,
@@ -144,6 +149,8 @@ def measure_migration(root: Path, task_name: str, image: Path, request: dict, *,
     # both replicas could agree only because today's compiler adapter changed.
     policy_change = build_policy_changes(root, task, settings, build, integration=integration)
     unchanged_policy = policy_change["unchanged"]
+    generated_permission = ({"permission": request["permission"]}
+                            if request["permission"].get("generated_changes") else {})
     if not unchanged_policy and not policy_change["graph_only"]:
         diagnose("baseline-build-policy", {"result": Result.UNKNOWN,
                                            "reason": "compiler/build inputs differ from or lack the authorized preservation baseline; preserve work and request coordinator evidence"})
@@ -156,10 +163,12 @@ def measure_migration(root: Path, task_name: str, image: Path, request: dict, *,
 
             def graph_evidence():
                 nonlocal application
-                application = contexts.enter_context(application_graph(root, task_name, integration=integration))
+                application = contexts.enter_context(application_graph(root, task_name, integration=integration,
+                                                                        **generated_permission))
                 return application.report
 
-            graph = run("build-graph", graph_evidence) if policy_change["graph_only"] else None
+            graph = (run("build-graph", graph_evidence)
+                     if policy_change["graph_only"] or generated_permission else None)
             built = graph.get("current_build") if graph is not None else None
             if not isinstance(built, dict) or built.get("result") != Result.PASS:
                 built = run("build", lambda: check_build(root))
@@ -171,7 +180,7 @@ def measure_migration(root: Path, task_name: str, image: Path, request: dict, *,
                 root, task_name, image, review=request["review"], review_snapshot=request["snapshot"]))
             preservation = run("preservation", lambda: check_preservation(
                 root, task_name, **({"integration": integration} if integration is not None else {}),
-                **({"application": application} if application is not None else {})))
+                **({"application": application} if application is not None else {}), **generated_permission))
             structural = (declared_outcome(restored.get("structural_requirements", []), interpretations,
                                            review=request["review"])[0] if interpretations else Result.PASS)
             measurements = {row["obligation_id"]: row for row in restored.get("measurements", [])}
@@ -184,7 +193,7 @@ def measure_migration(root: Path, task_name: str, image: Path, request: dict, *,
             return {"snapshot": request["snapshot"], "changed": sorted(scope), "build": built["result"],
                     "structure": structural, "references": restored.get("references", Result.UNKNOWN),
                     "outside_scope": _all([*(row["result"] for row in checks), preservation["result"],
-                                           Result.PASS if unchanged_policy else graph["result"] if graph is not None else Result.UNKNOWN]),
+                                           graph["result"] if graph is not None else Result.PASS if unchanged_policy else Result.UNKNOWN]),
                     "measurements": [measurements[key] for key in sorted(protected)], "current": current,
                     "diagnostics": diagnostics}
     finally:

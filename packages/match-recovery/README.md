@@ -1885,6 +1885,38 @@ proof is not permission to regress. A migration checkpoint exits 2, never green;
 closing it requires restoring all protected obligations. The reusable policy APIs
 live in `migration.py`, `migration_protocol.py`, `reviews.py` and `tasks.py`.
 
+Migration permission also supports experimental, bounded generated-initializer
+intent through an optional nonempty `generated_changes` array:
+
+```json
+{
+  "entity_id": "entity-<original identity SHA-256>",
+  "unit": "code/lifecycle.cc",
+  "version": "current",
+  "symbol": "_$E21",
+  "offset": 0,
+  "evidence": ["This exact registration implements the scoped lifecycle change"]
+}
+```
+
+Each entry names one exact TU-local initializer-table slot: `baseline` selects a
+removed occurrence and `current` an added occurrence. Offsets are four-byte
+aligned and below 16 MiB; at most 256 entries are allowed, with no repeated slot
+or root in one version/TU. Source `ORIGINAL` or `RECOVERY_OBJECT` comments remain
+the load-bearing original identities; JSON records the coordinator's intent,
+not a measured ledger. The selected entity must have one original source anchor
+in that exact source version and editable product TU; header/shared/seed anchors
+alone are unsupported. Neither symbol prefixes nor editable-TU scope grant
+ownership of other generated code.
+
+The complete permission must match the independently reviewed policy, and the
+coordinator must be separate from worker and reviewer. Bounded slot projection
+still requires fresh native table/root evidence and matching live application
+objects for the actual preservation trial. A permission alone subtracts nothing:
+shared code/storage and all uncovered residuals remain protected. This route does
+not establish complete linked-graph or runtime acceptance, reset a task baseline,
+or waive historical original-byte obligations.
+
 The package supplies the native `migration_check` command:
 `recover tasks check-migration <task> --image <image>`. It consumes the driver's
 JSON request on stdin and freshly runs source integrity, mapping/history checks,

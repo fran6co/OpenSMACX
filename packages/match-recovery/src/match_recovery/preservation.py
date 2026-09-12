@@ -8,6 +8,7 @@ All reports are disposable. No claims, baselines or task decisions are rewritten
 
 from collections import Counter, defaultdict
 from contextlib import ExitStack
+from copy import deepcopy
 from dataclasses import asdict
 from pathlib import Path
 import re
@@ -20,6 +21,7 @@ from .component_source import parse_components
 from .driver import changes, working_state
 from .measurement import Measurement
 from .generated_source import parse_generated
+from .generated_permissions import generated_sources
 from .layout_source import parse_members, parse_bases
 from .model import Origin, Result, digest
 from .pe_coff import Coff
@@ -171,7 +173,7 @@ def _explain_sources(comparison, old_sources, new_sources):
 
 def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | None = None,
                        diagnostic: bool = False, compiler=None, integration: dict | None = None,
-                       application=None):
+                       application=None, permission=None):
     if type(diagnostic) is not bool:
         raise ValueError("diagnostic mode must be boolean")
     root = root.resolve()
@@ -180,12 +182,17 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
     from .integration import preservation_base
     baseline_revision = preservation_base(root, task, integration)
     selected, editable = store._scope(task, decisions)
+    permission = deepcopy(permission)
+    if permission is not None and (application is None or diagnostic):
+        raise ValueError("generated preservation requires a live application graph and complete controls")
     head = git(root, "rev-parse", "HEAD").decode().strip()
     git(root, "merge-base", "--is-ancestor", task.base_revision, head)
     pin = image_pin(root, settings.source)
     if any(subject.image_sha256 != pin or subject.address_space != settings.source.address_space for subject in task.subjects):
         raise ValueError("preservation task refers to another original image/address space")
     metadata = {"task": task, "decisions": decisions, "head": head, "integration": integration}
+    if permission is not None:
+        metadata["permission"] = permission
     before, state = settings.snapshot(root, metadata), working_state(root)
     regenerated = "preparation" in read_json(root / "recovery/project.json")
     if regenerated and compiler is not None:
@@ -197,7 +204,15 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
         roots = replica_roots((*settings.source.roots, *settings.input_roots))
     current = {name: data for name, data in replica_snapshot(root, roots).items() if data is not None}
     baseline = revision_files(root, baseline_revision, roots)
-    authorization = digest({"task": task.to_dict(), "decisions": decisions, "integration": integration})
+    authority = {"task": task.to_dict(), "decisions": decisions, "integration": integration}
+    generated = []
+    if permission is not None:
+        authority["permission"] = permission
+        generated = generated_sources(permission, task, selected, editable,
+                                      {"baseline": baseline, "current": current}, settings, pin, root)
+        if not generated:
+            raise ValueError("generated preservation requires explicit generated changes")
+    authorization = digest(authority)
     source_digests = {}
     if application is not None:
         application.check_current()
@@ -348,6 +363,16 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                           "result": Result.UNKNOWN, "reason": str(error), "linked_effects": Result.UNKNOWN}
             evidence.append(report)
         return evidence
+
+    def startup_coverage(unit, flags, version, obj):
+        rows = [row for row in generated if row["unit"] == unit and row["version"] == version]
+        if not rows:
+            return None
+        if obj is None:
+            raise ValueError("authorized generated occurrence lacks its actual preservation object")
+        return compare_application_object.cover_startup(
+            object_trials.get(obj), obj, unit=unit, version=version,
+            flags=flags, input_fingerprint=digest(before), changes=rows)
 
     try:
         if application is not None:
@@ -501,16 +526,22 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                             inline_reports.extend({"version": version, **item} for item in evidence)
                         if inline_reports:
                             row["inline_ownership"] = inline_reports
+                        old_startup = startup_coverage(unit, flags, "baseline", prior)
+                        new_startup = startup_coverage(unit, flags, "current", original)
                         if prior is None or original is None:
                             comparison = compare_unit_presence(
                                 prior if original is None else original,
                                 old_allowed if original is None else new_allowed,
                                 present="baseline" if original is None else "current",
                                 outside=old_outside if original is None else new_outside,
-                                protected=protected if prior is None else frozenset())
+                                protected=protected if prior is None else frozenset(),
+                                startup=old_startup if original is None else new_startup)
                         else:
                             comparison = compare_outside_functions(prior, original, old_allowed, new_allowed,
-                                                                   baseline_outside=old_outside, current_outside=new_outside)
+                                                                   baseline_outside=old_outside, current_outside=new_outside,
+                                                                   baseline_startup=old_startup, current_startup=new_startup)
+                        if old_startup is not None or new_startup is not None:
+                            row["generated_changes"] = [item for item in generated if item["unit"] == unit]
                         _explain_sources(comparison, old_sources, new_sources)
                         row.update(comparison, replica=Result.PASS)
                         row["compiled_comparison"] = comparison["result"]
@@ -559,8 +590,8 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
             "limitations": ["compiled residuals only; no original-byte, full-link, runtime or lifecycle proof",
                             "current compiler interaction and measurement policy on both versions; explicit versioned build inputs may change recipes, not historical artifact recreation",
                             "configured preparation regenerates each private source context; current replicas must agree with direct output",
-                            "live application object agreement binds only the actual source/version/flag trial; it never subtracts compiled residuals or proves linked effects",
-                            "only source-mapped function COMDAT ownership may vary; independent data/tables stay protected",
+                            "live application object agreement alone grants no residual scope; explicit generated decisions additionally require exact live initializer coverage",
+                            "source-mapped functions and explicitly covered initializer slots may vary; unowned roots, helpers, storage, references and metadata remain strict",
                             "header copies require an authorized explicit body path, canonical replica and per-version/flag body-damage witnesses; exports and outside callers remain protected",
                             "source interpretation must agree; added/deleted TUs require fresh per-version source/recipe coverage and strict present-object residual checks",
                             "only explicitly declared versioned build inputs are substituted; compiler policy stays current, and build inputs are not compiler #error controls",

@@ -5,6 +5,7 @@ Restoration, layout, outside-code comparison and admission policy are real.
 """
 
 from contextlib import contextmanager
+from copy import deepcopy
 from dataclasses import asdict, replace
 import io
 import json
@@ -85,18 +86,21 @@ def migration(project, monkeypatch):
     return root
 
 
-def request(root):
+def request(root, *, generated_changes=None):
     task = TaskStore(root).read("owner")
     inventory = task_obligations(root, "owner")
-    policy = {}
+    permission = {"migration_id": "layout", "author": task.author, "evidence": ["source:synthetic permission"],
+                  "allowed": [{"entity_id": task.subjects[0].entity_id, "dimension": "bytes"}]}
+    if generated_changes is not None:
+        permission["generated_changes"] = generated_changes
+    policy = {"migration": permission}
     snapshot = ReviewStore(root, "owner").snapshot(working_state(root), policy)
     review = {"kind": "review", "author": "worker", "reviewer": "independent", "snapshot": snapshot,
               "decision": "approve", "evidence": ["source:synthetic reviewed change"], "feedback": "Checkpoint, not completion"}
     return {"task": task.to_dict(), "snapshot": review["snapshot"], "review": review,
             "review_policy": policy,
             "protected": inventory["obligations"], "interpretations": inventory["interpretations"],
-            "permission": {"migration_id": "layout", "author": task.author, "evidence": ["source:synthetic permission"],
-                           "allowed": [{"entity_id": task.subjects[0].entity_id, "dimension": "bytes"}]}}
+            "permission": permission}
 
 
 def measure(root, payload=None):
@@ -471,6 +475,77 @@ def test_matching_permission_cannot_waive_declared_structure(migration):
     payload = request(migration)
     payload["permission"]["allowed"][0]["dimension"] = "declared_structure"
     with pytest.raises(ValueError, match="only scoped matching regressions"):
+        measure(migration, payload)
+
+
+@pytest.mark.parametrize("damage", ["missing", "substituted", "evidence"])
+def test_permission_must_be_the_exact_reviewed_policy(migration, monkeypatch, damage):
+    payload = request(migration)
+    if damage == "missing":
+        del payload["review_policy"]["migration"]
+    else:
+        payload["permission"] = deepcopy(payload["permission"])
+        if damage == "substituted":
+            payload["permission"]["allowed"] = []  # Valid, but never reviewed.
+        else:
+            payload["permission"]["evidence"] = ["different coordinator rationale"]
+    monkeypatch.setattr(native, "check_build", lambda *_: pytest.fail("built for unreviewed permission"))
+    monkeypatch.setattr(native, "check_source", lambda *_: pytest.fail("checked unreviewed permission"))
+    with pytest.raises(ValueError, match="permission must exactly match"):
+        measure(migration, payload)
+
+
+def generated_request(root):
+    task = TaskStore(root).read("owner")
+    return request(root, generated_changes=[{
+        "entity_id": task.subjects[0].entity_id, "unit": "code/unit.cc", "version": "current",
+        "symbol": "_$E21", "offset": 0, "evidence": ["source:explicit scoped lifecycle change"]}])
+
+
+@pytest.mark.parametrize("role", ["author", "reviewer"])
+def test_generated_permission_requires_independent_coordinator_without_integration(migration, monkeypatch, role):
+    payload = generated_request(migration)
+    assert "integration" not in payload["review_policy"]
+    payload["review"][role] = TaskStore(migration).read("owner").author
+    monkeypatch.setattr(native, "check_build", lambda *_: pytest.fail("built for self-approved generated change"))
+    monkeypatch.setattr(native, "check_source", lambda *_: pytest.fail("checked self-approved generated change"))
+    with pytest.raises(ValueError, match="generated-change coordinator must be independent"):
+        measure(migration, payload)
+
+
+def test_generated_permission_policy_binding_preserves_json_types(migration, monkeypatch):
+    payload = generated_request(migration)
+    payload["review_policy"] = deepcopy(payload["review_policy"])
+    # Python's equality treats these as equal; the reviewed decision does not.
+    payload["review_policy"]["migration"]["generated_changes"][0]["offset"] = False
+    assert payload["review_policy"]["migration"] == payload["permission"]
+    monkeypatch.setattr(native, "check_source", lambda *_: pytest.fail("checked substituted decision type"))
+    with pytest.raises(ValueError, match="permission must exactly match"):
+        measure(migration, payload)
+
+
+def test_changing_both_permission_envelopes_still_requires_fresh_review(migration, monkeypatch):
+    payload = generated_request(migration)
+    payload["permission"]["generated_changes"][0]["offset"] = 4
+    assert payload["review_policy"]["migration"] == payload["permission"]
+    monkeypatch.setattr(native, "check_source", lambda *_: pytest.fail("checked stale generated permission"))
+    with pytest.raises(ValueError, match="reviewed source snapshot"):
+        measure(migration, payload)
+
+
+def test_independent_generated_permission_reaches_fresh_native_checks_without_granting_ownership(migration, monkeypatch):
+    payload = generated_request(migration)
+
+    class ReachedNativeChecks(Exception):
+        pass
+
+    def reached(*_):
+        raise ReachedNativeChecks
+
+    # Stop before any compiler checks. A syntactically valid, reviewed decision
+    # authorizes no residual subtraction by itself; native evidence still runs.
+    monkeypatch.setattr(native, "check_source", reached)
+    with pytest.raises(ReachedNativeChecks):
         measure(migration, payload)
 
 

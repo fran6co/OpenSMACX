@@ -6,6 +6,7 @@ may be removed from preservation coverage. Reports cannot be replayed as inputs.
 """
 
 from contextlib import contextmanager
+from copy import deepcopy
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
@@ -13,9 +14,12 @@ from pathlib import Path
 from .build_graph_commands import _context
 from .coff_replica import object_signature
 from .link_file_evidence import _stamp
+from .linked_initializers import observe_build_initializers, _read
 from .model import Result, digest
 from .pe_coff import Coff
 from .source_replica import snapshot_digest
+from .startup_coverage import _mint_startup
+from .startup_projection import project_startup
 
 
 @dataclass(frozen=True)
@@ -42,7 +46,7 @@ def application_objects(graph):
     whole-object signatures are memoized by exact raw SHA256, never verdicts.
     """
     live = False
-    indexes, signatures = {}, {}
+    indexes, signatures, initializer_views = {}, {}, {}
     try:
         graph.check_current()
         root, task_name, baseline_revision = graph.root, graph.task_name, graph.baseline_revision
@@ -106,6 +110,98 @@ def application_objects(graph):
             except (KeyError, TypeError, AttributeError) as error:
                 raise ValueError("incomplete preservation/application object binding") from error
 
+        def coverage_fresh():
+            if not live:
+                raise ValueError("startup coverage application context has expired")
+            graph.check_current()
+            if digest(graph.authorization) != authorization:
+                raise ValueError("startup coverage authorization changed")
+
+        def cover_startup(trial, obj, *, unit, version, flags, input_fingerprint, changes):
+            """Bind authorized exact generated slots, never a supplied report.
+
+            Source ownership is independently validated by the task caller. The
+            same selections must also belong to the graph's pinned permission;
+            source editability alone cannot authorize generated effects.
+            """
+            try:
+                coverage_fresh()
+                fields = {"entity_id", "unit", "version", "symbol", "offset", "evidence"}
+                permission = graph.authorization.get("permission", {}).get("generated_changes", ())
+                permission_ids = ({digest(item) for item in permission}
+                                  if isinstance(permission, (tuple, list)) else set())
+                if (not isinstance(changes, (tuple, list)) or not changes or len(changes) > 4096
+                        or not isinstance(permission, (tuple, list))
+                        or any(not isinstance(change, dict) or set(change) != fields
+                               or change.get("unit") != unit or change.get("version") != version
+                               or not isinstance(change.get("symbol"), str) or not change["symbol"]
+                               or type(change.get("offset")) is not int or change["offset"] < 0
+                               or digest(change) not in permission_ids for change in changes)):
+                    raise ValueError("startup selections differ from exact generated-change permission")
+                changes = deepcopy(changes)
+                if len({(change["offset"], change["symbol"]) for change in changes}) != len(changes):
+                    raise ValueError("duplicate startup coverage selection")
+                observed = compare(trial, obj, unit=unit, version=version, flags=flags,
+                                   input_fingerprint=input_fingerprint)
+                if observed["result"] != Result.PASS:
+                    raise ValueError("startup coverage requires this trial's whole application-object replica")
+                output, expected = indexes[version][unit]
+                raw = _read(output, expected)
+                application_obj = Coff(raw)
+                context = graph.baseline if version == "baseline" else graph.current
+                if version not in initializer_views:
+                    initializer_views[version] = observe_build_initializers(context)
+                    coverage_fresh()
+                linked = initializer_views[version]
+                dependencies = linked.get("code_dependencies", {})
+                if (linked.get("result") != Result.PASS or not isinstance(dependencies, dict)
+                        or dependencies.get("result") not in (Result.PASS, Result.UNKNOWN)):
+                    raise ValueError("startup coverage lacks consistent fresh linked initializer evidence")
+                if object_signature(application_obj) != observed["application_signature"]:
+                    raise ValueError("startup application object changed from its replica observation")
+                application_tables = [number for number, section in enumerate(application_obj.sections, 1)
+                                      if section.name == ".CRT$XCU"]
+                trial_tables = [number for number, section in enumerate(obj.sections, 1)
+                                if section.name == ".CRT$XCU"]
+                if len(application_tables) != 1 or len(trial_tables) != 1:
+                    raise ValueError("startup coverage requires a unique table in both actual compiler objects")
+                application_table, = application_tables
+                trial_table, = trial_tables
+                slots = []
+                for change in changes:
+                    entries = [row for row in linked.get("entries", ())
+                               if row.get("input") == {"path": str(output)}
+                               and row.get("offset") == change["offset"]
+                               and row.get("function", {}).get("symbol") == change["symbol"]]
+                    if len(entries) != 1:
+                        raise ValueError("startup selection has no unique actual compilation/table entry")
+                    entry, = entries
+                    if entry.get("object_sha256") != expected["sha256"] or entry.get("section") != application_table:
+                        raise ValueError("startup entry differs from its actual compiler object receipt")
+                    emitted = application_obj.function(change["symbol"])
+                    local = obj.function(change["symbol"])
+                    for subject, number, symbol in ((application_obj, application_table, emitted),
+                                                    (obj, trial_table, local)):
+                        matches = [row for row in subject.sections[number - 1].relocations
+                                   if row[0] == change["offset"]]
+                        if symbol.storage != 3 or matches != [(change["offset"], symbol.index, 6)]:
+                            raise ValueError("startup slot does not retain its exact static root identity")
+                    slots.append((trial_table, change["offset"], local.index))
+                # Validate the exact projection algebra now. The consumer must
+                # revalidate it alongside ordinary mapped-function subtraction.
+                project_startup(obj, tuple(slots))
+                repeated = compare(trial, obj, unit=unit, version=version, flags=flags,
+                                   input_fingerprint=input_fingerprint)
+                if repeated != observed:
+                    raise ValueError("startup replica evidence changed during linked observation")
+                coverage_fresh()
+                return _mint_startup(obj, tuple(slots), coverage_fresh)
+            except (KeyError, TypeError, AttributeError) as error:
+                raise ValueError("incomplete native startup coverage binding") from error
+            finally:
+                coverage_fresh()
+
+        compare.cover_startup = cover_startup
         yield compare
     except (KeyError, TypeError, AttributeError) as error:
         if live:

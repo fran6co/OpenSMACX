@@ -534,6 +534,14 @@ configured in this project's driver. It checks source/mapping/claim integrity,
 audits, a fresh build, bounded declarations, references and outside-scope
 compiled preservation under unchanged build and compiler policy. A permitted
 measured byte regression yields a checkpoint (exit 2), never collection readiness.
+Intended generated initializer changes require separate exact `generated_changes`
+entries in that reviewed permission (package README schema), not an assertion of
+equivalent behavior. Existing original mappings in C++ anchor ownership; the
+decision names the precise baseline/current TU, root symbol and local table slot.
+Native live compiler/link evidence is required before projecting that footprint.
+Other source owners, helpers, globals and residual metadata remain protected;
+whole linked-effect acceptance is still unfinished. Do not use a whole-TU waiver,
+generated-symbol prefix or saved report as coverage.
 Explicit application `versioned_inputs` content changes now trigger native
 baseline/current graph comparison when every other policy input remains unchanged.
 Source and graph edits must fit authorized files; common commands and ordered

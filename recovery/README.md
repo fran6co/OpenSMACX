@@ -1131,7 +1131,7 @@ full acceptance receives it as `protected`. OpenSMACX configures this reader.
 
 To admit a temporary matching regression, supply `run --migration permission.json`
 and configure a trusted project `migration_check` command. The permission is a
-coordinator decision, suitable for tracked JSON, with exactly these fields:
+coordinator decision, suitable for tracked JSON, with these required fields:
 
 ```json
 {"migration_id":"member-layout","author":"task-coordinator","evidence":["source:layout evidence"],"allowed":[{"entity_id":"entity-<SHA-256>","dimension":"bytes"}]}
@@ -1141,6 +1141,15 @@ Only `bytes` and `instruction_shape` regressions within task scope may be allowe
 The permission is part of the independent review's snapshot policy. It does not
 copy measurements or grant worker authority to change scope. Actor labels remain
 trusted coordinator attribution, not authentication.
+
+An optional `generated_changes` array can describe exact intended initializer
+changes; see the package README for its bounded schema. The native verifier
+requires the exact permission in the reviewed snapshot, an independent
+coordinator, a unique original source anchor in the specified TU/version and
+fresh application-object/initializer evidence. It projects only covered slots
+and exclusive roots, keeping outside source bindings, helpers, storage and other
+metadata protected. This experimental path does not yet establish complete
+linked-effect preservation or admit the retained OpenSMACX migration.
 
 The migration verifier receives the task, reviewed snapshot, protected requirements
 and permission. It returns exit 0 only for a completed report, containing exactly

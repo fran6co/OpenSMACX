@@ -13,6 +13,7 @@ from .build_graph_commands import compare_build_commands
 from .build_policy import build_policy_changes
 from .driver import working_state
 from .measurement import Measurement
+from .generated_permissions import generated_sources
 from .linked_initializers import compare_build_initializers
 from .model import Result
 from .source_history import _tree, git, revision_files
@@ -50,7 +51,7 @@ class ApplicationGraph:
 
 
 @contextmanager
-def application_graph(root, task_name, *, integration=None):
+def application_graph(root, task_name, *, integration=None, permission=None):
     """Build authorized source/graph versions under the same current policy.
 
     Called by native migration verification. Command/membership agreement is
@@ -60,11 +61,19 @@ def application_graph(root, task_name, *, integration=None):
     root = Path(root).resolve()
     store, settings, build = TaskStore(root), Measurement.read(root), Build.read(root)
     task, decisions = store.read(task_name), store.decisions(task_name)
-    _, editable = store._scope(task, decisions)
+    scope, editable = store._scope(task, decisions)
+    permission = deepcopy(permission)
+    authorization = {"task": task.to_dict(), "decisions": decisions, "integration": integration}
+    if permission is not None:
+        from .migration_protocol import permissions
+        permissions(permission, task, scope)
+        if not permission.get("generated_changes"):
+            raise ValueError("application graph permission requires explicit generated changes")
+        authorization["permission"] = permission
     before, policy_before = working_state(root), build.snapshot(root)
     measured_before = settings.snapshot(root, {"task": task, "decisions": decisions, "integration": integration})
     policy = build_policy_changes(root, task, settings, build, integration=integration)
-    if not policy["graph_only"]:
+    if not policy["graph_only"] and not (policy["unchanged"] and permission is not None):
         raise ValueError("application graph comparison requires exclusively versioned graph changes and unchanged compiler/build policy")
     if set(policy["changed_paths"]) - set(editable):
         raise ValueError("changed build graph inputs exceed authorized editable task files")
@@ -81,6 +90,9 @@ def application_graph(root, task_name, *, integration=None):
     if set(changed) - set(editable):
         raise ValueError("application source changes exceed authorized editable task files")
     pin = image_pin(root, settings.source)
+    if permission is not None:
+        generated_sources(permission, task, scope, editable, {"baseline": prior, "current": current},
+                          settings, pin, root)
     pin_entry = _tree(root, baseline, (settings.source.image_pin,)).get(settings.source.image_pin)
     pin_bytes = (git(root, "cat-file", "blob", pin_entry[2]) if pin_entry is not None
                  and pin_entry[:2] in (("100644", "blob"), ("100755", "blob")) else b"")
@@ -151,8 +163,7 @@ def application_graph(root, task_name, *, integration=None):
                 session_fresh()
                 yield ApplicationGraph(root, task_name, baseline, roots, old, new,
                                        deepcopy({"baseline": prior, "current": current}),
-                                       deepcopy(result), deepcopy({"task": task.to_dict(), "decisions": decisions,
-                                                                   "integration": integration}), session_fresh)
+                                       deepcopy(result), deepcopy(authorization), session_fresh)
             finally:
                 try:
                     session_fresh()

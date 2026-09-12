@@ -4,13 +4,15 @@ Permissions are decisions. Inventories and measurement reports are disposable
 outputs of source readers and verifiers, never worker-authored proof records.
 """
 
+from .components import relative_path
 from .migration import AdmissionRefused, Migration, Review
 from .model import Dimension, Measurement, Obligation, Result, require_digest, require_text
 from .tasks import entity_id
 
 
 def permissions(value: dict, task, scope: frozenset[str]) -> dict:
-    if not isinstance(value, dict) or set(value) != {"migration_id", "author", "evidence", "allowed"}:
+    fields = {"migration_id", "author", "evidence", "allowed"}
+    if not isinstance(value, dict) or not fields <= set(value) or set(value) - fields - {"generated_changes"}:
         raise ValueError("invalid migration permission fields")
     require_text(value["migration_id"], "migration id")
     if value["author"] != task.author:
@@ -33,7 +35,47 @@ def permissions(value: dict, task, scope: frozenset[str]) -> dict:
         if key in seen:
             raise ValueError("duplicate allowed regression")
         seen.add(key)
+    if "generated_changes" in value:
+        _generated_changes(value["generated_changes"], scope)
     return value
+
+
+def _generated_changes(rows, scope):
+    """Validate exact coordinator decisions, not source or compiler ownership.
+
+    Baseline/current identify removed/added table occurrences. Native consumers
+    must bind each to scoped source, an editable TU and freshly linked compiler
+    output. A permission alone cannot prove any of those prerequisites.
+    """
+    if not isinstance(rows, list) or not 1 <= len(rows) <= 256:
+        raise ValueError("generated changes require between 1 and 256 entries")
+    occurrences, roots = set(), set()
+    for row in rows:
+        if not isinstance(row, dict) or set(row) != {"entity_id", "unit", "version", "symbol", "offset", "evidence"}:
+            raise ValueError("invalid generated change fields")
+        entity_id(row["entity_id"])
+        if row["entity_id"] not in scope:
+            raise ValueError("generated change requires a scoped original entity")
+        relative_path(row["unit"])
+        if row["version"] not in ("baseline", "current"):
+            raise ValueError("generated change version must be baseline or current")
+        symbol = row["symbol"]
+        if (not isinstance(symbol, str) or not symbol or not symbol.isprintable()
+                or any(character.isspace() for character in symbol)):
+            raise ValueError("generated change symbol must be one exact printable identifier")
+        offset = row["offset"]
+        if type(offset) is not int or not 0 <= offset < 16 * 1024 * 1024 or offset % 4:
+            raise ValueError("generated change offset must identify an aligned slot below 16 MiB")
+        if not isinstance(row["evidence"], list) or not row["evidence"]:
+            raise ValueError("generated change requires evidence")
+        for item in row["evidence"]:
+            require_text(item, "generated change evidence")
+        occurrence = row["version"], row["unit"], offset
+        root = row["version"], row["unit"], symbol
+        if occurrence in occurrences or root in roots:
+            raise ValueError("duplicate generated occurrence or root")
+        occurrences.add(occurrence)
+        roots.add(root)
 
 
 def extend_inventory(frozen: dict[str, Obligation], report: dict, scope: frozenset[str]) -> None:
