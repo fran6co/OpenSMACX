@@ -237,6 +237,20 @@ Remaining objects, libraries, options and ordering must compare exactly through 
 derived root/build-directory pairs. No provider-supplied correspondence is accepted.
 The candidate build is reused rather than run a third time.
 
+While both application builds remain live, native graph verification also compares
+the MSVC `.CRT$XCU` initializer contribution when its linked artifacts are available.
+The strict map reader retains owner-qualified static functions and bounded section
+contributions; absent tables remain absent evidence. The verifier binds actual
+pointer slots and independently bounded initializer code to physical selected COFF
+inputs, map placements and PE loader relocations. Every explicit possible contributor
+needs final-pass representation. Ambiguous archive candidates establish absence only
+when all supported records lack the named section. Unsupported long section names
+remain unknown. Registration order and multiplicity are preserved; no compiler-local
+name or shared guard authorizes deduplication. Exact ordered code agreement still
+leaves callback/data contents, initialization effects and residual ownership unproved.
+This bounded table comparison is consumed by migration diagnostics, not a new CLI
+or a reusable preservation waiver. It does not cover other startup mechanisms.
+
 Command agreement remains an **UNKNOWN** migration prerequisite until remaining
 linked effects are proved. Initializer ordering, common allocation, COMDAT selection,
 independent data and unowned code/references cannot disappear with an authorized TU

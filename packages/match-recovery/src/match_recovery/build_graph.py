@@ -10,6 +10,7 @@ from .build_graph_commands import compare_build_commands
 from .build_policy import build_policy_changes
 from .driver import working_state
 from .measurement import Measurement
+from .linked_initializers import compare_build_initializers
 from .model import Result
 from .source_history import _tree, git, revision_files
 from .source_inventory import image_pin
@@ -78,16 +79,21 @@ def check_build_graph(root, task_name, *, integration=None):
             fresh()
             commands = compare_build_commands(old, new, editable=editable)
             fresh()
+            initializers = compare_build_initializers(old, new)
+            fresh()
             # Reuse the actual current application build in migration; do not
             # compile a third copy simply to obtain another build success.
             result = {"check": "task_application_build_graph", "task": task_name,
                       "baseline_revision": baseline, "graph_inputs": policy["changed_paths"],
                       "source_changes": changed, "commands": commands,
+                      "initializers": initializers,
                       "current_build": new.report, "baseline_build": old.report,
                       "result": Result.FAIL if commands["result"] == Result.FAIL else Result.UNKNOWN,
                       "linked_effects": Result.UNKNOWN, "persisted": False, "ready_for_collection": False,
-                      "reason": "command comparison does not establish remaining linked-effect preservation",
-                      "limitations": ["no initializer order, common allocation, COMDAT selection or linked residual proof",
+                      "reason": "command comparison does not establish remaining linked-effect preservation; "
+                                + "initializer table/code comparison: " + initializers["result"]
+                                + "; callback/storage/other residual effects remain unproved",
+                      "limitations": ["bounded initializer table/code comparison is not startup effect, common allocation, COMDAT selection or residual proof",
                                       "source/graph versions retain original task and integration preservation baselines"]}
         return result
     finally:

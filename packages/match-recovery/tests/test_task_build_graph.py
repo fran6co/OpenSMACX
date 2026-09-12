@@ -145,6 +145,28 @@ def test_cmake_graph_requires_explicit_editable_scope(graph_task):
         native.check_build_graph(root, task.task_id)
 
 
+@pytest.mark.parametrize("outcome", ["pass", "fail", "unknown"])
+def test_initializer_comparison_is_consumed_live_without_waiving_remaining_effects(graph_task, monkeypatch, outcome):
+    root, task = graph_task
+    change_graph(root)
+    calls, living, _ = contexts(monkeypatch)
+    observations = []
+    def initializers(old, new):
+        assert living == [0, 1]
+        assert old is calls[0]["context"] and new is calls[1]["context"]
+        old.check_current()
+        new.check_current()
+        observations.append(True)
+        return {"result": outcome, "remaining_linked_effects": "unknown"}
+    monkeypatch.setattr(native, "compare_build_initializers", initializers)
+    before = working_state(root)
+    report = native.check_build_graph(root, task.task_id)
+    assert observations == [True] and living == []
+    assert report["initializers"]["result"] == outcome
+    assert report["result"] == report["linked_effects"] == "unknown"
+    assert not report["ready_for_collection"] and working_state(root) == before
+
+
 @pytest.mark.parametrize("damage", ["modify", "add", "delete"])
 def test_source_changes_outside_editable_scope_refuse_before_builds(graph_task, damage):
     root, task = graph_task

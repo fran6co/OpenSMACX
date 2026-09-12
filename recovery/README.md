@@ -57,6 +57,12 @@ out. Changed graphs remain unaccepted until remaining linked effects are proved.
 The real compiler-environment control exercises identical graphs and a fixture-only
 TU addition/removal in disposable application copies, including refusal without
 editable-file authority. It does not modify product C++ or establish recovery acceptance.
+It also includes a fixture-only dynamic initializer: native `.CRT$XCU` table/code
+comparison must retain that extra registration even when the compiler/link command
+comparison passes. The library now consumes owner-qualified local map placements,
+COFF pointer/code references and actual PE loader fixups in both live builds.
+This is not proof that callbacks, common storage or startup side effects are
+preserved, and it does not waive the retained recovery's outside-scope findings.
 
 The active agent/coordinator contract is [WORKFLOW.md](WORKFLOW.md). Historical
 compiler observations are in [COMPILER_EVIDENCE.md](COMPILER_EVIDENCE.md); they do

@@ -540,6 +540,11 @@ Source and graph edits must fit authorized files; common commands and ordered
 remaining linker inputs are verified from fresh live builds. This does not yet
 admit changed graphs: independent linked initializer/common/COMDAT effects remain
 unknown and outside-scope preservation findings still refuse acceptance.
+Graph diagnostics now include a bounded, fresh `.CRT$XCU` pointer/code comparison
+using owner-qualified map placements and real object/linker evidence. Inspect its
+order, multiplicity and incomplete observations before reasoning about startup
+effects. An extra guarded registration is not automatically redundant; matching
+initializer code does not prove callback/storage behavior or grant residual ownership.
 Missing measurements, failed prerequisites and unsupported preservation cases
 still refuse admission: park the scoped work for review instead of calling it
 green or merging it as accepted. The driver never automatically reverts it.

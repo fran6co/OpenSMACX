@@ -136,11 +136,10 @@ def test_release_link_preserves_the_selected_runtime_code_and_relocations():
     assert all(row["description"]["stage"] == "compiler-effective" for row in bindings["compilations"])
 
 
-@pytest.mark.parametrize("added", [False, True], ids=["same-graph", "added-tu"])
-def test_private_application_context_builds_with_native_command_evidence(added):
-    """Exercise actual isolated application generation, not migration acceptance."""
+@pytest.fixture(scope="module")
+def private_application_control():
+    """Keep one guarded baseline live for three serial counterfactual builds."""
     from match_recovery.application_context import application_build
-    from match_recovery.build_graph_commands import compare_build_commands
     from match_recovery.build_check import Build
     from match_recovery.driver import working_state
     from match_recovery.source_replica import replica_snapshot
@@ -152,14 +151,6 @@ def test_private_application_context_builds_with_native_command_evidence(added):
     sources = {name: raw for name, raw in replica_snapshot(root, ("src",)).items() if raw is not None}
     settings = Build.read(root)
     graphs = {name: (root / name).read_bytes() for name in settings.versioned_inputs}
-    extra = "src/recovery_graph_control.cpp"
-    assert extra not in sources
-    candidate_sources, candidate_graphs = dict(sources), dict(graphs)
-    if added:
-        # Fixture-only C++ and graph bytes: neither the product checkout nor
-        # any retained recovery candidate is edited to exercise this path.
-        candidate_sources[extra] = b"int recovery_graph_control() { return 17; }\n"
-        candidate_graphs["CMakeLists.txt"] += b"\ntarget_sources(OpenSMACX PRIVATE " + extra.encode() + b")\n"
     with application_build(root, ("src",), sources, versioned_files=graphs) as application:
         proof = application.report["compile_link"]
         assert proof["result"] == proof["command_bindings"]["result"] == "pass"
@@ -168,27 +159,60 @@ def test_private_application_context_builds_with_native_command_evidence(added):
         assert (application.directory / "OpenSMACX.exe").is_file()
         assert (application.root / "CMakeLists.txt").read_bytes() == graphs["CMakeLists.txt"]
         application.check_current()
-        with application_build(root, ("src",), candidate_sources, versioned_files=candidate_graphs) as repeated:
-            if added:
-                with pytest.raises(ValueError, match="membership exceeds editable task scope"):
-                    compare_build_commands(application, repeated, editable=())
-            comparison = compare_build_commands(application, repeated, editable=(extra,) if added else ())
-            assert comparison["result"] == "pass", comparison
-            assert comparison["sources"]["added"] == ([extra] if added else [])
-            assert comparison["sources"]["removed"] == []
-            assert len(comparison["compilations"]) == len(proof["sources"])
-            assert comparison["removed_operands"]["baseline"] == []
-            assert len(comparison["removed_operands"]["current"]) == int(added)
-            assert comparison["linked_effects"] == "unknown"
-            if added:
-                reverse = compare_build_commands(repeated, application, editable=(extra,))
-                assert reverse["result"] == "pass", reverse
-                assert reverse["sources"]["added"] == [] and reverse["sources"]["removed"] == [extra]
-                assert len(reverse["removed_operands"]["baseline"]) == 1
-                assert reverse["removed_operands"]["current"] == []
-                assert reverse["linked_effects"] == "unknown"
-        assert not repeated.root.exists()
+        yield root, sources, graphs, application
     assert not application.root.exists() and working_state(root) == before
+
+
+@pytest.mark.parametrize("added,initializes", [(False, False), (True, False), (True, True)],
+                         ids=["same-graph", "added-tu", "added-initializer"])
+def test_private_application_context_builds_with_native_command_evidence(added, initializes, private_application_control):
+    """Exercise actual isolated application generation, not migration acceptance."""
+    from match_recovery.application_context import application_build
+    from match_recovery.build_graph_commands import compare_build_commands
+    from match_recovery.linked_initializers import compare_build_initializers
+    root, sources, graphs, application = private_application_control
+    proof = application.report["compile_link"]
+    extra = "src/recovery_graph_control.cpp"
+    assert extra not in sources
+    candidate_sources, candidate_graphs = dict(sources), dict(graphs)
+    if added:
+        # Fixture-only C++ and graph bytes: neither the product checkout nor
+        # any retained recovery candidate is edited to exercise this path.
+        candidate_sources[extra] = b"int recovery_graph_control() { return 17; }\n"
+        if initializes:
+            candidate_sources[extra] = (b"volatile int recovery_graph_seed = 17;\n"
+                b"int recovery_graph_control() { return recovery_graph_seed; }\n"
+                b"int recovery_graph_value = recovery_graph_control();\n")
+        candidate_graphs["CMakeLists.txt"] += b"\ntarget_sources(OpenSMACX PRIVATE " + extra.encode() + b")\n"
+    application.check_current()
+    with application_build(root, ("src",), candidate_sources, versioned_files=candidate_graphs) as repeated:
+        if added:
+            with pytest.raises(ValueError, match="membership exceeds editable task scope"):
+                compare_build_commands(application, repeated, editable=())
+        comparison = compare_build_commands(application, repeated, editable=(extra,) if added else ())
+        assert comparison["result"] == "pass", comparison
+        assert comparison["sources"]["added"] == ([extra] if added else [])
+        assert comparison["sources"]["removed"] == []
+        assert len(comparison["compilations"]) == len(proof["sources"])
+        assert comparison["removed_operands"]["baseline"] == []
+        assert len(comparison["removed_operands"]["current"]) == int(added)
+        assert comparison["linked_effects"] == "unknown"
+        initializers = compare_build_initializers(application, repeated)
+        assert initializers["baseline"]["result"] == initializers["current"]["result"] == "pass", initializers
+        assert initializers["result"] == ("fail" if added else "pass"), initializers
+        old_slots, new_slots = (initializers[version]["sequence"] for version in ("baseline", "current"))
+        # vc6_compat.h forces <string>: even the plain TU emits a library
+        # registration. The explicit dynamic initializer adds a second one.
+        assert old_slots and len(new_slots) == len(old_slots) + int(added) + int(initializes)
+        assert initializers["remaining_linked_effects"] == "unknown"
+        if added:
+            reverse = compare_build_commands(repeated, application, editable=(extra,))
+            assert reverse["result"] == "pass", reverse
+            assert reverse["sources"]["added"] == [] and reverse["sources"]["removed"] == [extra]
+            assert len(reverse["removed_operands"]["baseline"]) == 1
+            assert reverse["removed_operands"]["current"] == []
+            assert reverse["linked_effects"] == "unknown"
+    assert not repeated.root.exists()
 
 
 @pytest.mark.parametrize("sizes,strong,export", [((4,), False, False), ((8,), False, False),
