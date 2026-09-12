@@ -1,0 +1,22 @@
+{
+  "event_id": "0eb6f3b15078ad47d03e812362fed1b945da7063f5ad9bd697fa9a41c1f78560",
+  "payload": {
+    "affects": [
+      "entity-55c6fb0f52dc6a1d966f92ad37aada62e03697d8d186dee20fac5e12207fdbeb",
+      "entity-7eed68aa241b7673ad68e9d9fed9124c06a8127b13533bfc4eabc07a95b9e78d"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "lifecycle-tu-preservation-coverage",
+    "evidence": [
+      "Fresh check-preservation at96edcbba against immutable6eae6dfb reports unsupported_file_set_changes=[src/time_lifecycle.cpp], compile_attempts=0. The report is not evidence of compiler or source failure. packages/match-recovery/src/match_recovery/preservation.py deliberately refuses new/removed product TU sets, even in fresh-prepared-project mode.",
+      "Timer close/destructor were rehomed through native mappings in96edcbba; 1912 product claims,19timer/control tests, fresh application builds, linked timer targets and bounded initial storage passed. Do not reset the task baseline, reintroduce shims, drop original claims or label missing preservation green. Framework changes remain paused under the user C++-first instruction."
+    ],
+    "hypothesis": "Correct lifecycle TU separation is implemented and compiler/link verified, but native preservation refuses all added production TUs before compiling. Acceptance requires explicit baseline/current build coverage for the new source home, not flattening correct C++ or bypassing the guard.",
+    "kind": "discovery"
+  },
+  "previous_event": "75de045b235b4b1420bf2a911f30115ffc4c6617e75cac09a7c3e253491cecf7",
+  "request_id": "lifecycle-tu-preservation-coverage",
+  "schema_version": 1,
+  "sequence": 65,
+  "stream": "task:control-sprite-defaults"
+}

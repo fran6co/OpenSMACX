@@ -1,0 +1,88 @@
+{
+  "event_id": "714491c725f83322045f99920222d04f07dcdb4a941cf3aeb41dde38bb975457",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "recovery/tests/alphanet_ledger_harness.cpp",
+      "recovery/tests/network_nested_list_harness.cpp",
+      "recovery/tests/test_application_link_recovery.py",
+      "recovery/tests/test_network_nested_list.py",
+      "recovery/tests/test_stringlist_recovery.py",
+      "src/leaf_recoveries.cpp",
+      "src/net_class.cpp",
+      "src/net_class.h"
+    ],
+    "evidence": [
+      "Authorize evidence-backed distinct typed list/base and native member lifetime, correct hook signatures/bodies, canonical marker relocation and native generated bindings with original seeds/history retained. Remove redundant Net manual cleanup and unused fixed-address shim only once genuine destruction replaces them. Preserve all existing exact claims; independently test allocation modes, hooks, cleanup order, derived/base stages, null/failure paths and emitted layouts. Recheck coupled callers and full build/link. No framework edits, speculative payload completion, claim demotion, forced emission, baseline reset or acceptance waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4201344,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4201440,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4205264,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4205840,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4203424,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4203344,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6114384,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6114496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4206032,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4205760,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5125328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6477472,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "b2b0bd4e927948817eabf936ac392c4e19350809a83b77604d386146636358d6",
+  "request_id": "network-nested-list-scope",
+  "schema_version": 1,
+  "sequence": 52,
+  "stream": "task:control-sprite-defaults"
+}

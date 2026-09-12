@@ -20,6 +20,53 @@
 #include "dialog.h"
 #include "stringstruct.h"
 
+/*
+Purpose: Compiler-generated complete StringList destructor. Dialog owns a
+         real StringList member, so its normal and unwind lifetimes emit this
+         entry without a handwritten wrapper or measurement-only export.
+// ORIGINAL: 0x00406820 sub_406820 0x00406820-0x0040683B FILE
+// TRIED: THE SECOND PARAMETER WAS INVENTED, so it is gone rather than worked
+//   around. 0x00406820 sets only ECX (`mov ecx, esi; call 0x4066c0`) and never
+//   EDX, and 0x004066C0's body reads only ECX - the `_redirect` name is this
+//   tree's own, so nothing about the image required the arity. Declaring ONE
+//   parameter takes this call site to BYTE_EXACT 9/9.
+// TRIED: the two-argument call at this site, verbatim:
+//     string_struct_derived_close_redirect(adjusted, nullptr);
+//   QUOTED ON PURPOSE. tools/reap_worktrees.py keeps an agent's worktree when
+//   a line it wrote appears nowhere in src/, which is right - it cannot tell
+//   "never collected" from "collected and then correctly rejected". A refusal
+//   that quotes the code it refuses is visible to that check, so the worktree
+//   becomes reapable without anyone overriding a safety refusal.
+// TRIED: reaching the same 9/9 with a single-argument OVERLOAD forwarding
+//   to a two-argument body. It measures identically and it is WRONG: VC6 emits
+//   the overload as a 7-byte COMDAT thunk (`33 D2` xor edx,edx; `E9` jmp) and
+//   the call relocation targets THAT, so the recovered call graph becomes
+//   destroy -> invented thunk -> redirect where the image is destroy ->
+//   redirect. No such thunk exists in the image; scanning .text for `33 D2 E9`
+//   returns one hit and it does not target 0x4066C0. BYTE_EXACT survived only
+//   because the rel32 is one of the masked relocation bytes - the measurement
+//   cannot see where the call WENT. Caught by the adversarial verifier
+//   2026-08-22; recorded because the recipe would buy every future BYTE_EXACT
+//   at this idiom's other call sites with one more invented function.
+// symbol    ??_DStringList@@QAEXXZ
+// size      27 bytes
+// prototype
+// callers   26   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x004066C0
+The original is a void complete destructor. Its EAX owner residue is not
+a separate source-level return contract. The historical notes below describe
+the removed handwritten wrapper, not the current generated entry.
+DEMOTED from BYTE_EXACT by direction (strip-all hand vptr writes): the hand
+derived-close call and the three tail operations (owner read, final-table
+install, republish) left - the teardown is the compiler's ~StringList chain
+now, staging the same tables from the StringStruct/StringList declarations.
+Compiled is 8 instructions against the image's 9: the image inlines the
+vbase tail after its call; ours folds it into the chain. The EAX residue
+survives as the republished global.
+*/
+
 // abs is a real call throughout the image (0x00644F3A, called from
 // get_selected_id and pos_to_id twice each); stdafx.h's project-wide
 // `#pragma function(..., abs, ...)` line is what keeps it one - this file
@@ -401,8 +448,8 @@ int Dialog::item(char *text, int index) {
     if (!text) {
         return 3;
     }
-    // The list at this+0xBC, same subobject Dialog::destroy() reaches. Its
-    // OWN field_1C_/field_20_/field_24_ (StringList-relative) are set
+    // The list at this+0xBC, the subobject ~Dialog destroys. Its
+    // OWN pending_text_/field_20_/field_24_ (StringList-relative) are set
     // through the LIST, not Dialog's absolute offsets: the image advances
     // ecx to this+0xBC first (`add ecx, 0xbc`) and addresses 0x1C/0x20/0x24
     // off of that, which is what keeps the small displacements instead of
@@ -410,7 +457,7 @@ int Dialog::item(char *text, int index) {
     // spelled through the member; TRIED: direct `item_list_.field_1C_`
     // selects made VC6 drop the `add` and store at [ecx+0xd8..e0], 7 of 13.
     StringList *const list = &item_list_;
-    list->field_1C_ = reinterpret_cast<uint32_t>(text);
+    list->pending_text_ = text;
     list->field_20_ = 0;
     list->field_24_ = 1;
     return list->add(index);
@@ -457,7 +504,6 @@ int Dialog::set_def_dialog_font(Font *font1, Font *font2, Font *font3) {
 }
 
 
-func_dialog_close DialogOriginalClose = original_method<func_dialog_close>(0x00608F50);
 
 // THE DIALOG DEFAULTS TABLE, the image's .data run 0x0069704C..0x006970DC,
 // defined with the shipped values: BaseButton's bevel color set (0x4C..0x5C,
@@ -613,6 +659,60 @@ Dialog::Dialog() {
     field_1C_ = -1;
 }
 
+// Reset a live dialog, keeping its list and heap objects alive for reuse.
+// Entry hooks run before releasing their backing heap. Empty-head cleanup
+// still resets position but deliberately does not clear current_ or count.
+// ORIGINAL: 0x00608F50 ?close@Dialog@@QAEXXZ 0x00608F50-0x00609143
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original608F50-609143 clears entries using the current list hooks, unconditionally resets position, calls5D4580 at608FDB, then writes heap_ptr/default/font/color fields and field1C=-1 at60913C. current_ is not cleared. Retained seed preserves extent but explicit member destruction is not used in the live C++ reset.", "Existing DialogDefaults and DialogDefaultFonts own the original settings; list removal and allocator-aware node destruction are recovered in stringstruct.cpp. Heap::reset has a separate source shared-code interpretation for the original5D4580 cleanup entry. No byte or full-lifetime acceptance is claimed."], "reason": "Recover reusable dialog cleanup through real list members and a non-destructive heap reset, preserving original cleanup-before-defaults order."}
+void Dialog::close() {
+    item_list_.remove_all();
+    item_list_.current_position_ = 0;
+    heap_.reset();
+    heap_ptr_ = 0;
+    field_20_ = DialogDefaults[36];
+    field_24_ = 0;
+    field_28_ = 0;
+    field_2C_ = DialogDefaults[19];
+    field_30_ = DialogField30Default;
+    selected_position_ = 0;
+    field_F0_ = -1;
+    field_38_ = 0;
+    field_3C_ = 0;
+    field_40_ = DialogField40Default;
+    field_44_ = DialogDefaults[20];
+    field_48_ = -1;
+    field_34_ = DialogField34Default;
+    field_4C_ = DialogDefaults[21];
+    field_50_ = DialogDefaults[22];
+    field_54_ = 0;
+    field_58_ = 0;
+    field_5C_ = 0;
+    field_60_ = 0;
+    field_64_ = 0;
+    field_68_ = 0;
+    field_6C_ = DialogDefaults[23];
+    field_AC_ = DialogFieldACDefault;
+    field_B0_ = DialogFieldB0Default;
+    field_B4_ = DialogFieldB4Default;
+    field_B8_ = DialogFieldB8Default;
+    font1_ = DialogDefaultFonts[0];
+    text_color_a_ = DialogDefaults[24];
+    text_color_b_ = DialogDefaults[27];
+    text_color_c_ = DialogDefaults[30];
+    text_color_d_ = DialogDefaults[33];
+    font2_ = DialogDefaultFonts[1];
+    text_color_2a_ = DialogDefaults[25];
+    text_color_2b_ = DialogDefaults[28];
+    text_color_2c_ = DialogDefaults[31];
+    text_color_2d_ = DialogDefaults[34];
+    font3_ = DialogDefaultFonts[2];
+    text_color_3a_ = DialogDefaults[26];
+    text_color_3b_ = DialogDefaults[29];
+    text_color_3c_ = DialogDefaults[32];
+    text_color_3d_ = DialogDefaults[35];
+    field_1C_ = -1;
+}
+
 // The four list-stage constants (DialogListDerived/VirtualBase and
 // DialogList/VirtualBaseVtable) are gone: destroy()'s two hand
 // close_with_tables calls folded into the one compiler-owned
@@ -622,16 +722,9 @@ Dialog::Dialog() {
 
 
 /*
-Purpose: Destroy a Dialog. Install the Dialog table, run Dialog::close, then
-         destroy the embedded StringStruct-derived list at this+0xBC - its
-         derived close followed by its base StringStruct close, each staging
-         the primary table and the virtual-base table named by the list's OWN
-         vbtable, then walking and clearing the entry list - then destroy the
-         list's virtual-base subobject (read its context word, install its
-         final table, publish the word to the process global, in that order),
-         and finally shut down the embedded Heap. The original's C++ exception
-         frame targets __CxxFrameHandler and is omitted as unreachable per
-         policy.
+Purpose: Close the Dialog, then destroy its list and heap members in reverse
+         construction order. The compiler owns table staging and EH cleanup.
+         Historical observations below also discuss the retired destroy helper.
 // ORIGINAL: 0x00608E10 ??1Dialog@@QAE@XZ 0x00608E10-0x00608F41;0x00662EC0-0x00662EEE
 // LEVER (2026-09-03): this address is the DESTRUCTOR, and the subject was
 //        repointed from the destroy() helper to what the compiler actually
@@ -671,52 +764,27 @@ Purpose: Destroy a Dialog. Install the Dialog table, run Dialog::close, then
 Return Value: n/a (the original leaves Heap::shutdown's EAX residue; the
               scalar deleting destructor overwrites it and the 116 direct
               callers ignore it, so void is faithful)
-Status: Complete with temporary Dialog::close original dependency; the list
-        teardown is item_list_'s compiler-owned destructor chain
-        (~StringList: derived stage, base stage, entry walk, virtual-base
-        destructor) and the Heap shutdown is Heap::shutdown.
-Verification note: the sweep's one survivor swaps the context-word read at
-virtual_base[1] past the final-table install at virtual_base[0]; the slots are
-disjoint, so the original's read-before-install order is unobservable and the
-mutant is equivalent by construction.
+The source close is reusable; member lifetimes end only in this destructor.
+Original normal cleanup at 608F2A and unwind tail at 662EC6 both target
+5D45B0. Its relationship to Heap's catalogued destructor remains a reference
+interpretation to verify, not permission to omit compiler-owned member cleanup.
 */
-void Dialog::destroy() {
-    // The vtable slot is no longer a declared member; reach the same four
-    // bytes the compiler's vfptr occupies.
-    (ORIGINAL(this)->*DialogOriginalClose)();
-
-    // The list teardown is the one explicit destructor call: the compiler's
-    // chain stages the derived pair, then the base pair, walks the entries
-    // once, and runs the virtual-base destructor (final-table install +
-    // owner republish). The image inlines the same two stages at this tail;
-    // the hand close_with_tables calls and their four rebindable constants
-    // are gone with them.
-    item_list_.~StringList();
-
-    heap_.shutdown();
-}
-
-void __fastcall dialog_destructor_redirect(Dialog *self, void *) {
-    self->destroy();
-}
-
-// DECLARATION-ONLY IN THE HEADER (2026-09-02): ??1Dialog is called
-// out-of-line 35 times in the image, so the definition must not be
-// inline-visible in other TUs. It is NOT a trivial body: the image's
-// ??1Dialog (0x00608E10) is THIS destructor, and its own work is the one
-// `close()` call - the vptr install at [this] and the item_list_/heap_
-// teardowns are the compiler's, exactly as they are here. destroy() below
-// stays as the spelling the two runtime redirects reach.
 Dialog::~Dialog() {
     close();
+}
+
+// Retained leaf callers still use this callback ABI. The actual C++ destructor
+// owns its virtual-table stage, member destruction and exception cleanup.
+void __fastcall dialog_destructor_redirect(Dialog *self, void *) {
+    self->Dialog::~Dialog();
 }
 
 /*
 Purpose: The compiler-generated scalar deleting destructor: run the complete
          destructor and free the storage through the executable's operator
          delete only when bit 0 of the mode asks. Always returns the object.
-// ORIGINAL: 0x00609D90 ??_GDialog@@UAEPAXI@Z 0x00609D90-0x00609DAE BYTE_EXACT
-// symbol    ?dialog_scalar_dtor_redirect@@YIPAXPAVDialog@@PAXI@Z
+// ORIGINAL: 0x00609D90 ??_GDialog@@UAEPAXI@Z 0x00609D90-0x00609DAE FILE BYTE_EXACT
+// symbol    ??_GDialog@@UAEPAXI@Z
 // size      30 bytes
 // prototype void* (__thiscall ??_GDialog@@UAEPAXI@Z)(Dialog* this, unsigned int)
 // callers   0   call targets   2
@@ -726,14 +794,8 @@ Purpose: The compiler-generated scalar deleting destructor: run the complete
 Return Value: the object
 Status: Complete
 */
-void *__fastcall dialog_scalar_dtor_redirect(
-        Dialog *self, void *, unsigned int mode) {
-    self->destroy();
-    if (mode & 1) {
-        operator delete(self);
-    }
-    return self;
-}
+// Emitted by Dialog's real virtual destructor and table, not a handwritten
+// fastcall model. The original scalar entry and historical claim stay here.
 
 
 

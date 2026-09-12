@@ -1,0 +1,33 @@
+{
+  "event_id": "20f8f6565fc83b669d85f80ecd11d0bd1811d206273a54702e09ef0c0df85e87",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/dialog_close_harness.cpp",
+      "recovery/tests/test_dialog_close_recovery.py",
+      "src/heap.cpp",
+      "src/heap.h"
+    ],
+    "evidence": [
+      "Authorize real reusable Dialog::close608F50 in dialog.cpp and removal of only its pending forwarder. Native exact seed inspection proves call608FDB targets5D4580, finalfield1C=-1 at60913C, current_ not cleared, and defaults sequence. Preserve source Heap destructor and claim; add a genuine non-destructive reset API with independently measured shared original5D4580 binding, since close callers reuse the embedded heap and an explicit destructor without reconstruction ends its C++ lifetime. Include actual-body runtime tests for resets, order and repeat use. No destroy-wrapper retirement, new baseline, claim demotion or acceptance is authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6328144,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6112640,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "fa310d204696dd8d26405b93c2c9c77f8631620733078b0b1d7f7571327e4d76",
+  "request_id": "dialog-reusable-close",
+  "schema_version": 1,
+  "sequence": 31,
+  "stream": "task:control-sprite-defaults"
+}

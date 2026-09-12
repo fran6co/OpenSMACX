@@ -1,0 +1,19 @@
+{
+  "event_id": "57e75550da54384621e228a4de2bfd3f9090b3499a9860895e452a76137f3824",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "paint-and-buffer-abi-discovery",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/graphicwin.h/cpp adds native on_paint override inherited at EditBox slot73; src/buffer.cpp uses the original six-argument draw ABI, native COM paths, one existing real Sprite descriptor and correctly owned reset. Original identities, seeds and reset historical claim retained.",
+      "Committed a054ac72 source:7 final paint controls and68 coupled tests pass with one pre-existing skip;540 protected claims reproduce and fresh full application build/link passes. Fresh post-paint restoration removes the previous declared-table failure;13 protected obligations pass/30 remain unknown. Broader binary mismatches, missing witnesses and outside-scope preservation still prevent task acceptance.",
+      "Independent source review found no scoped semantic defect. This resolves the incorporated ownership/ABI discovery, not its remaining matching or full acceptance obligations."
+    ]
+  },
+  "previous_event": "0397349947f857766746d7664ef310c4a258caacb7a6967455bb72382d0c75f7",
+  "request_id": "paint-and-buffer-abi-incorporated",
+  "schema_version": 1,
+  "sequence": 47,
+  "stream": "task:control-sprite-defaults"
+}

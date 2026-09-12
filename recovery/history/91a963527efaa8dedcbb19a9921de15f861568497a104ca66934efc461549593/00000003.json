@@ -1,0 +1,23 @@
+{
+  "event_id": "cff132b16771760dbfba868155f680ad0f4adeb6dbe617b8b8d0f5efb3a71931",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/buffer.h",
+      "src/dialog.h",
+      "src/font.h"
+    ],
+    "evidence": [
+      "CheckBox draw_item 0x0060F5A4/0x0060F60B reads Dialog +0xB8: existing src/dialog.h field_B8_ is private; permit a minimal evidence-backed member interface, not raw self-offset access.",
+      "Post-sprite font height read accesses existing Buffer::font1_ and Font::height_; their headers require a minimal direct/inline member interface rather than copied image offsets. Existing out-of-line Buffer::text_height adds a call absent from original; preserve existing symbols and outside-task behavior.",
+      "Recover selected CheckBox/RadioButton draw bodies in existing authorized cpp/header files using genuine virtual bases, Dialog::item_list_ and StringStructEntry payload/next/previous, existing Buffer::copy overload at 0x005DFF00, and Sprite::draw at 0x005E4B4A. Original 0x0060F3DE selects sprites by SECOND explicit state argument; third explicit argument is focus/current-row state. Seeds are fallible hints, not implementation authority. New header permission does not grant changes to unselected function bodies, original identities, task baseline or acceptance policy."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "1119c04f145a04b0f269accf70578d57276cf03a298b2eb52d75366045997431",
+  "request_id": "draw-item-real-member-interfaces",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:control-sprite-defaults"
+}

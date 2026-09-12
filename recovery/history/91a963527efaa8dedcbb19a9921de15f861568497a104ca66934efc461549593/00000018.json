@@ -1,0 +1,17 @@
+{
+  "event_id": "45a1fc485de94a02a481166e0d3dc81e5d8f26bc8d44c0cd1659acdd3446ec87",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "sprite-counter-storage-binding",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/sprite.cpp now owns bounded ?SpriteMemoryUsed@@3HA at original0x009B6618-0x009B661C, anchored by constructor0x005E37E0. Fresh native check-data passes definition,4-byte extent,initial zero bytes and references under both compiler trials; fresh strict task binary check changes that constructor from unknown to pass in both trials. Source behavior and historical claims are unchanged; whole-task acceptance remains unresolved."
+    ]
+  },
+  "previous_event": "571902c9f65c0e6750ec322125a0bb85f11b8bb22f861b0f604d7c0f171f01dc",
+  "request_id": "incorporate-sprite-counter-storage",
+  "schema_version": 1,
+  "sequence": 18,
+  "stream": "task:control-sprite-defaults"
+}

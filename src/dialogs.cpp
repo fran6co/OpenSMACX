@@ -512,7 +512,7 @@ void *__fastcall dialogs_scalar_dtor_redirect(void *adjusted, void *,
     uint8_t *const base =
         static_cast<uint8_t *>(adjusted) - DialogsDestructorAdjustment;
     reinterpret_cast<Dialogs *>(base)->destroy();
-    reinterpret_cast<Dialog *>(base + 0xBA0)->destroy();
+    reinterpret_cast<Dialog *>(base + 0xBA0)->Dialog::~Dialog();
     reinterpret_cast<GraphicWin *>(base + 0x188)->~GraphicWin();
     if (mode & 1) {
         operator delete(base);
@@ -704,4 +704,3 @@ int Dialogs::calculate_dimensions() {
         return 0;
     }
 }
-

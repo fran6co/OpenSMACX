@@ -1,0 +1,19 @@
+{
+  "event_id": "64ac0aed1602d7e95e7145d6df2c015a6a6e13832ad75d49ca59be2684ef21f5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_application_link_recovery.py"
+    ],
+    "evidence": [
+      "The existing receiver lifecycle harness extracts StringAllocationBase destructor up to the retired StringStruct::unk_slot00 definition. Permit updating only that extraction boundary to the new adjacent hook section, retaining the exact destructor source and all runtime assertions. This is test maintenance required by removal of the placeholder, not authorization to change acceptance policy or networking behavior."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "6fd8c37b60384fdb86167592ff9773f09795764388a590f4d3968be437bca1e5",
+  "request_id": "list-hook-dependent-test-anchor",
+  "schema_version": 1,
+  "sequence": 23,
+  "stream": "task:control-sprite-defaults"
+}

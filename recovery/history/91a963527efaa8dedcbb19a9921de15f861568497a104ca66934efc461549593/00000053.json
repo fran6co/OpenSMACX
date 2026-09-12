@@ -1,0 +1,29 @@
+{
+  "event_id": "0f52c9d9593d345a8315fb10bd88405909f4e34b3859ed8a18db9ad7cc532263",
+  "payload": {
+    "affects": [
+      "entity-0130995b0499d668182d84ab3dcad9a453b36e9cff049dccf6b97162aef81bb2",
+      "entity-0591dafaf6cc80640c3b6ff75f378eb4ca3490f2b4c891f599893ca31d76ec95",
+      "entity-0dfe8ba2c508c88a34b7ac980d5286955e569f9045ffdbef12940fbffbb2fbfd",
+      "entity-0f7c1d0be83075c20486f7581fb031158a7cd6d5396fd2e2a61bd44b68e970a3",
+      "entity-55c6fb0f52dc6a1d966f92ad37aada62e03697d8d186dee20fac5e12207fdbeb",
+      "entity-68c1cac89bec25545089cede3c59f6920abbf146bbf1c4ffe12bb871d574e5e3",
+      "entity-7eed68aa241b7673ad68e9d9fed9124c06a8127b13533bfc4eabc07a95b9e78d",
+      "entity-c9c2c3b1e9fa185d957d7f9a45f1aea931343db9e406ebb5e93d8689321810c1",
+      "entity-d6e43b59659158cb5b612147bc93e428b670e3a851d0bd60ec35ef52fd691a59"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "timer-close-callee-ownership",
+    "evidence": [
+      "Current EditBox close strict check has unresolved time_close_call relocation; source historical Time616780/50F440 experiments document why moving close into the mixed time.cpp does not hide its body from callers.",
+      "Original EditBox614FC3 calls616780; FlatButton607DA0, NetMsg47A7D0 and stop_timers50F440 also call the same real member."
+    ],
+    "hypothesis": "Timer close wrappers substitute unrelated symbols for original Time::close calls. Header-visible close and mixed class/application TU placement drove the workaround; real lifecycle TU visibility can preserve inline teardown and expose genuine calls.",
+    "kind": "discovery"
+  },
+  "previous_event": "714491c725f83322045f99920222d04f07dcdb4a941cf3aeb41dde38bb975457",
+  "request_id": "timer-close-callee-ownership",
+  "schema_version": 1,
+  "sequence": 53,
+  "stream": "task:control-sprite-defaults"
+}

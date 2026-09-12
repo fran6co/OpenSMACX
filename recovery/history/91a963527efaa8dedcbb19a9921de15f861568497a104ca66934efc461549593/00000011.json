@@ -1,0 +1,17 @@
+{
+  "event_id": "0b37817e222bc443b5124abfe13c3ea2deb47cb5cc70008a289cde3c03099aa0",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-a26c798ba0c54ff295a622e56804cbc5",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Both product draw_item bodies now obtain Win *parent = win_parent_ directly through the current derived receiver. src/win.h declares win_parent_ protected, not private; no accessor, Win header change, or expanded scope is needed. Fresh configured compile/link of these applied bodies passed in control-draw-dataflow-build.json, and fresh native task compilation completed with 48 attempts in control-draw-dataflow-task-check.json. This closes the C2248 receiver-access issue only, not recovery acceptance: the native task verdict remains unknown with binary failures and unresolved references. Parent Buffer::copy has the parent as receiver and control as source argument; earlier reverse-direction wording is not retained as evidence. Other pending dataflow/structure discoveries and all restoration obligations remain open."
+    ]
+  },
+  "previous_event": "2ce49c653ad252f0037bf523689fc4f6a86c0c8f414031c2a6d74dba559d1634",
+  "request_id": "resolve-control-parent-access",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:control-sprite-defaults"
+}

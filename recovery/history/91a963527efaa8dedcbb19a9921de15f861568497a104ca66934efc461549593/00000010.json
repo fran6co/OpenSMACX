@@ -1,0 +1,23 @@
+{
+  "event_id": "2ce49c653ad252f0037bf523689fc4f6a86c0c8f414031c2a6d74dba559d1634",
+  "payload": {
+    "affects": [
+      "entity-b3c9b1a959cafb4c8d3719a004718802d52bb5174aa18c0bd3ecf49f9db48dfb",
+      "entity-b837d4c0a46d9fe2a8c1b72b128ce9d952fcbdbe83c6aa3393cb58167c9d958e",
+      "entity-fa2d5b1e0b4875cf51af1add3ecc7de2bb9f518b4b6b4ae5db4e268172fb6070"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "control-list-accessor-semantics",
+    "evidence": [
+      "CheckBox 0x0060F0E9 tests current_ before the sole current_entry call at F0F2; F10D/F153/F48F test Dialog+C4, which is item_list_.head_ at StringStruct+8. The mapped current_entry implementation at 0x00402530 also guards head_, not its returned payload. Guards on current_ and payload introduce different behavior.",
+      "CheckBox F4CE calls strchr on head-guarded text; F4DC-F4F9 reloads head/current/payload/text afterwards, and F52E-F54B reloads after splitting the string. The multiline tail F631-F6FA repeats those access patterns and allows null to reach strchr/wrap. RadioButton DB98 onward and DD3A-DE03 carry the coupled pattern. This supports investigation of reusable accessors but does not establish their original names, separate function identities, or current acceptance."
+    ],
+    "hypothesis": "The repeated head-guarded payload/text reads in both draw methods suggest missing inline StringList accessors, not interchangeable head/current/payload null checks. Preserve the actual reads during restoration; investigate shared accessor ownership and names before expanding to stringstruct.h or treating duplicated expressions as the final class API.",
+    "kind": "discovery"
+  },
+  "previous_event": "a4a3b70b2d83fb596ebd4a86eaeb84dae789593c92e364634fc47d1dfd0439ee",
+  "request_id": "control-list-accessor-semantics",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:control-sprite-defaults"
+}

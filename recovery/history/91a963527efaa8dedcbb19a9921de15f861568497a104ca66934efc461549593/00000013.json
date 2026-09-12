@@ -1,0 +1,21 @@
+{
+  "event_id": "a02737fabad7c5c2f96a85f183ead178c0f998715625e9e8b927b5ad950036ea",
+  "payload": {
+    "affects": [
+      "entity-a53befaa8823c2111753c03812f574c224128747e4ef3b8518e151da6b25b2be",
+      "entity-b3c9b1a959cafb4c8d3719a004718802d52bb5174aa18c0bd3ecf49f9db48dfb"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "shared-inline-preservation-ownership",
+    "evidence": [
+      "Fresh native preservation diagnostic against the immutable task baseline identifies an added current_text COMDAT in checkbox.cpp and leaf_recoveries.cpp. The canonical stringstruct.cpp residual differs only in .drectve under both configured flag sets. MEASURED exports are compiler instrumentation, but that intent is not permission to ignore linker metadata. Existing callback/vtable/default-object differences also remain protected; do not attribute them to this accessor or reset the baseline. Preserve the structural source change while establishing compiler-observed inline ownership and explicit metadata handling."
+    ],
+    "hypothesis": "The typed header-visible StringList accessor needs verified per-TU ownership of emitted copies and a separate reviewed export interpretation before it can pass outside-scope preservation. The canonical source binding and body path do not by themselves waive copies, directives, outside callers, or unrelated baseline changes.",
+    "kind": "discovery"
+  },
+  "previous_event": "4cd13efc404f38ec9b38d3d9af83570be390805065a464a8d887420d4f915df8",
+  "request_id": "shared-inline-preservation-ownership",
+  "schema_version": 1,
+  "sequence": 13,
+  "stream": "task:control-sprite-defaults"
+}

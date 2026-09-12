@@ -1,0 +1,17 @@
+{
+  "event_id": "a2d126b10ff2ab4c6456b22a258f63439cfd758e4920a9d0b7c9a924236fc1ca",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "control-header-caviar-scheduling",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Events42/43 explicitly review and authorize the coupled617230 dependency; a054ac72 restores its real six-argument Buffer callee and test_buffer_paint_recovery checks that emitted reference. Resolve dependency review/incorporation only: instruction scheduling and fresh outside-scope preservation are NOT established or waived."
+    ]
+  },
+  "previous_event": "4aba2b2122e915d78011f2fab37aac999b138bb8a4265659cec83aa4bdbf81e3",
+  "request_id": "closeout-incorporated-control-header-caviar-scheduling",
+  "schema_version": 1,
+  "sequence": 62,
+  "stream": "task:control-sprite-defaults"
+}

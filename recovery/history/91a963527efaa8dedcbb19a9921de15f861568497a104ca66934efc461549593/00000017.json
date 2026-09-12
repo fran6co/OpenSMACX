@@ -1,0 +1,20 @@
+{
+  "event_id": "571902c9f65c0e6750ec322125a0bb85f11b8bb22f861b0f604d7c0f171f01dc",
+  "payload": {
+    "affects": [
+      "entity-42aa117c173f0599dbacccd5800288f7090204515e37c6b6089f7deb1a483246"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "sprite-counter-storage-binding",
+    "evidence": [
+      "Pinned original constructor 0x005E37E6/0x005E37EF reads and writes dword0x009B6618, adding0x2C; close0x005E3833/0x005E383F corroborates shared scalar access. Interval0x009B6618-0x009B661C lies in writable .data loader zero-fill. Bind the existing int beside its definition with constructor evidence; do not infer complete accounting semantics or introduce fixed-address C++ access."
+    ],
+    "hypothesis": "The existing SpriteMemoryUsed scalar lacks its source-owned original storage binding, leaving strict constructor references unknown despite existing C++ ownership.",
+    "kind": "discovery"
+  },
+  "previous_event": "6c5a7e94a211732a3f3a6ba48a9aa4d8f29712ffe9251835b06bc26676cc46f2",
+  "request_id": "sprite-counter-storage-binding",
+  "schema_version": 1,
+  "sequence": 17,
+  "stream": "task:control-sprite-defaults"
+}

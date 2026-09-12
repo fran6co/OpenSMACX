@@ -1,0 +1,21 @@
+{
+  "event_id": "95a42a1a152be9798fe256bf72929f814843dfaaa89967c509b13e275899fad7",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "checkbox-draw-state-argument",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/checkbox.cpp:173 binds the existing CheckBox::draw_item identity; its product definition at line 175 takes position, state and focus_mode. Lines 251–256 require both sprite pointers and select checked_sprite_ when state is nonzero, unchecked_sprite_ otherwise.",
+      "src/checkbox.h:157–160 maps unchecked_sprite_ to offset 0x10 and checked_sprite_ to offset 0x14.",
+      "Read-only original-image hashing matches pinned SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf. Disassembly shows 0x24 bytes of locals and four saved registers; 0x0060F3DE reads [esp+0x3C], corresponding to the second explicit argument. The nonzero branch uses this+0x14; the zero branch uses this+0x10.",
+      "The archived seed assigns local_8 from geometry at src/unrecovered/0060f030.cpp:2123 and tests it for sprite selection at line 2157. The current product body expresses the discovered correction independently of that geometry. This decision establishes incorporation of this specific insight only; compiler verification, behavioral correctness and code acceptance remain outstanding.",
+      "Delegated policy: 7cfeedddf17b2c62c016d92deb0178af2bbe7b44084255cc27bf84bf557e2e29"
+    ]
+  },
+  "previous_event": "44100b8f994dee35f35ef59f7a69cfb6e4c73ff3ad26b9c21f295a9520703fac",
+  "request_id": "coordinator-30e728b3f9fe44f8b8ad9e6d40a1dcdc",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:control-sprite-defaults"
+}

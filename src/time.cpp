@@ -63,8 +63,13 @@ static PlanWin *const LineTimerPlanWindow = (PlanWin *)0x00856DC0;
 // and the matching destructors close them at exit. Declarations in time.h
 // beside their users.
 Time TurnTimer;    // 0x00915628
+// Constructor6161D0 initializes a 0x28-byte Time; startup50E9B0 constructs
+// these three distinct objects, and stop_timers50F440 closes them in order.
+// RECOVERY_OBJECT: v2 0x00915658 0x00915680 ?LineTimer@@3VTime@@A 0x0050F440
 Time LineTimer;    // 0x00915658
+// RECOVERY_OBJECT: v2 0x00915688 0x009156B0 ?BlinkTimer@@3VTime@@A 0x0050F440
 Time BlinkTimer;   // 0x00915688
+// RECOVERY_OBJECT: v2 0x00939EB0 0x00939ED8 ?Blink2Timer@@3VTime@@A 0x0050F440
 Time Blink2Timer;  // 0x00939EB0
 Time GoTimer;      // 0x00939E60
 Time ConsoleTimer; // 0x00939E88
@@ -456,33 +461,6 @@ Status: Complete
 
 
 /*
-Purpose: Close out an instance of the class.
-// ORIGINAL: 0x00616780 ?close@Time@@QAEXXZ 0x00616780-0x006167E0 BYTE_EXACT
-// body      src/time.h
-// size      96 bytes
-// prototype void (__thiscall ?close@Time@@QAEXXZ)(Time* this)
-// callers   16   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005FD370
-// indirect  0x0061679E 0x006167AC
-// TRIED: moving the definition out of the class into this file (declared
-//   MEASURED inline in time.cpp, ahead of ~Time) so that the units that CALL
-//   it - stop_timers 0x50F440, go_reset 0x50EF50, Console::close 0x51D873,
-//   EditBox::close 0x614FC3, NetMsg::close, FlatButton's `time_close_call` -
-//   would stop expanding it. It did not reach stop_timers: this unit still
-//   sees the body, and VC6's inline pass is not order-sensitive, so
-//   stop_timers expanded it exactly as before (0 of 6, 90 instructions both
-//   ways). Reverted, because the in-class body is what game.cpp's two
-//   inlined stop_timers expansions (0x58F040, 0x58F450) need - the image
-//   expands close() THERE and calls it in stop_timers, which no single
-//   declaration can give both. See the LEVER note under 0x0050F440.
-Return Value: n/a
-Status: Complete
-*/
-
-
-/*
 Purpose: Callback function that processes WM_TIMER messages (SetTimer).
 // ORIGINAL: 0x006167E0 ?TimerProc@Time@@QAEXPAXIIK@Z 0x006167E0-0x0061681C BYTE_EXACT
 // symbol    ?TimerProc@Time@@SGXPAUHWND__@@IKK@Z
@@ -859,6 +837,8 @@ Status: Complete
 // some call sites and calls it at others, and a .cpp definition is only ever
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
+// Historical experiment below: stop_timers now calls Time::close directly;
+// its implementation is hidden in the separate timer lifecycle TU.
 // LEVER: the `time_close_call` forwarder (declared in time.h, defined in
 //   flatbutton.cpp). 0 of 6 agreeing, 90 instructions against the image's 6,
 //   because close()'s in-class body was expanded at all three sites - the
@@ -927,21 +907,6 @@ Time::Time() {
     resolution_ = 5;
     unk_2_ = 0;
     oneshot_state_ = 0;
-}
-
-/*
-// ORIGINAL: 0x00616200 ??1Time@@QAE@XZ 0x00616200-0x00616260 BYTE_EXACT
-// size      96 bytes
-// prototype void (__thiscall ??1Time@@QAE@XZ)(Time* this)
-// callers   30   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005FD370
-// indirect  0x0061621E 0x0061622C
-// notes     Staged hybrid export redirect calls the source-owned destructor
-*/
-Time::~Time() {
-    close();
 }
 
 /*

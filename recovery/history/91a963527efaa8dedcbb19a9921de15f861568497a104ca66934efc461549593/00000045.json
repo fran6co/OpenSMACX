@@ -1,0 +1,65 @@
+{
+  "event_id": "23871636dc5d02fb2b2232ad4020f834c8132a0513e6b190256619414bd84151",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "recovery/tests/test_control_globals.py",
+      "recovery/tests/win_keyboard_harness.cpp",
+      "src/editbox.cpp",
+      "src/listbox.cpp",
+      "src/win.cpp"
+    ],
+    "evidence": [
+      "Authorize bounded source bindings for the ten verified control globals and SDK import, restore lost keyboard-handler mapping through native writer, correct stale global indirections and use existing typed members in that handler. Preserve behavior, seeds, historical claims and immutable baseline; add live positive/damage controls, remeasure protected TU claims and build/link. This is not task acceptance or permission to change framework verification."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6250416,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6381152,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6381248,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6381328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6377040,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6377264,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6331824,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6332192,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "5832a7ae3b5e9d9cca60be095c6c673afa19a02aa5670dadef31d62cce4db15e",
+  "request_id": "control-globals-and-keyboard-scope",
+  "schema_version": 1,
+  "sequence": 45,
+  "stream": "task:control-sprite-defaults"
+}

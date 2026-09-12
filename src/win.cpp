@@ -701,8 +701,12 @@ Win *WinTrackingWindow;    // 0x009B7AAC
 Win *WinHoverWindow;      // 0x009B7A7C
 Win *WinPointerOwner1;     // 0x009B7ACC
 Win *WinPointerOwner2;     // 0x009B7AD0
-Win *WinPointerOwner3;     // 0x009B7ABC
-Win *WinPointerOwner4;     // 0x009B7AC0
+// Independent DWORD loads/stores at 615E60/615E6C and 615E72/615EDB;
+// 5F60DD/5F60E5 compare and clear the second pointer, not its pointee.
+// RECOVERY_OBJECT: v2 0x009B7ABC 0x009B7AC0 ?WinPointerOwner3@@3PAVWin@@A 0x00615E60
+Win *WinPointerOwner3;
+// RECOVERY_OBJECT: v2 0x009B7AC0 0x009B7AC4 ?WinPointerOwner4@@3PAVWin@@A 0x00615E60
+Win *WinPointerOwner4;
 Win *WinFocusWindow;       // 0x009B7AE0
 Win *WinModalWindow;       // 0x009B7ADC
 Win *WinRootWindows[64];   // 0x009B6E48
@@ -8828,6 +8832,10 @@ void Win::screen_to_nonclient(int * x, int * y) {
 
 // ===== homed from src/unrecovered/005f5fb0.cpp =====
 
+// ORIGINAL: 0x005F5FB0 sub_5f5fb0 0x005F5FB0-0x005F622B
+// RECOVERY_BINDING: v1 {"evidence": ["git:85fc7721f56c2a5cae754b993fe04fcfec74fec1:src/unrecovered/005f5fb0.cpp", "Pinned original5F5FB0..5F622B; direct global accesses5F60DD..5F619C"], "reason": "Restore the lost homing identity for the existing Win keyboard handler; its receiver, scroll dispatch and two stack words identify this method, not the separate string matcher at5F5F60."}
+// symbol    ?on_char@Win@@UAEXDH@Z
+// TRIED: extern "C" __stdcall(int,int) free function per IDA's guess - the spilled ecx is read back later ([esp+0x10] resolves to the "push ecx" slot itself, not a caller stack arg) and used as a Win* (scroll_vert_/scroll_horz_/key_click_event), so this is landed as Win::sub_5f5fb0(char, int) __thiscall instead; the unused 2nd stack dword explains `ret 8` with only 1 real read.
 void Win::on_char(char param2, int param3) {
     char **cursor = &WinKeyRingCursor;
     **cursor = param2;
@@ -8889,38 +8897,38 @@ void Win::on_char(char param2, int param3) {
                 WinPointerOwner3 = 0;
                 (&WinBubbleWindow)->vslot_04();
             }
-            if (*(void **)WinPointerOwner4 == &WinBubbleWindow) {
-                *(int *)WinPointerOwner4 = 0;
+            if (WinPointerOwner4 == &WinBubbleWindow) {
+                WinPointerOwner4 = 0;
             }
             WinDrawFlags &= ~1;
             if (WinFocusWindow == &WinBubbleWindow) {
                 (&WinBubbleWindow)->release_modal();
             }
 
-            if ((*(uint8_t *)JackalInitFlags & 1) != 0) {
+            if ((JackalInitFlags & 1) != 0) {
                 WinZOrderCount = 0;
-                if (*(int *)WinRootCount > 0) {
-                    Win **entries = (Win **)WinRootWindows;
-                    int cur = *(int *)WinZOrderWindow;
+                if (WinRootCount > 0) {
+                    Win **entries = WinRootWindows;
+                    Win *cur = WinZOrderWindow;
                     int j = 0;
                     do {
-                        if (cur != 0 && cur == (int)entries[j]) {
+                        if (cur != 0 && cur == entries[j]) {
                             WinZOrderCount = 0;
-                            *(int *)WinZOrderFlag = 0;
+                            WinZOrderFlag = 0;
                         }
-                        if ((*(uint8_t *)((char *)entries[j] + 0x9c) & 1) != 0) {
+                        if ((entries[j]->iSomeFlag_ & 1) != 0) {
                             recurse_zorder(entries[j]);
-                            cur = *(int *)WinZOrderWindow;
+                            cur = WinZOrderWindow;
                         }
                         j++;
-                    } while (j < *(int *)WinRootCount);
+                    } while (j < WinRootCount);
                 }
 
-                InvalidateRect(*(HWND *)&HandleMain, 0, 0);
+                InvalidateRect(HandleMain, 0, 0);
 
                 Win *w = WinTopDialog;
-                if (w != 0 && reinterpret_cast<Win *>(w)->vslot_23() == 0) {
-                    reinterpret_cast<Win *>(w)->vslot_07();
+                if (w != 0 && w->vslot_23() == 0) {
+                    w->vslot_07();
                 }
             }
         }

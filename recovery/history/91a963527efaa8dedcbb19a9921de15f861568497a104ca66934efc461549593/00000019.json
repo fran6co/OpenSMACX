@@ -1,0 +1,23 @@
+{
+  "event_id": "e0f6f175f2260e5c124f29c70df51dcd4aa8076bde48dd895c44d9a4324b8b36",
+  "payload": {
+    "affects": [
+      "entity-2ed22428678e54cb155b8c3aa912201d04095fd05f0ed6e5ecc5dd907e96f5b8",
+      "entity-d70924f736439867f9692453e3f9b5509d5695aeeeafd1a0a8ade2248213c833"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "control-close-list-lifecycle",
+    "evidence": [
+      "source:src/pending_bodies.cpp retains Dialog::close as a placeholder at 0x00608F50; src/recovered/units/00608f50.cpp retains its 499-byte seed. The control close implementations call this method directly. Keep existing scopes, historical claims and baselines intact until expansion is reviewed.",
+      "Pinned original table words at 0x006693A4 are 0x00404250, 0x00404270, 0x00401520. The adjacent allocation-base table starts at 0x006693AC, so these three observations must not be mistaken for a proven three-slot primary table. StringStruct currently declares only unk_slot00 and dispatches the removal visitor through raw vtable indexing.",
+      "source:src/net_class.h JackalVoiceRx and src/alphanet.cpp AlphaNetStringStruct already model insertion/removal hooks and allocation-owned nodes as real C++. These are structural hints, not proof of StringList payload lifetime. Original derived table observations at 0x006698C4 start 0x006086F0 and 0x00608770; retained seeds exist at src/unrecovered/006086f0.cpp and src/recovered/00608770.cpp. Recover their behavior and correct static payload types rather than copying networking declarations blindly."
+    ],
+    "hypothesis": "Finishing the control close methods requires genuine Dialog and StringStruct/StringList lifecycle recovery, not assigning an original target to the existing Dialog::close placeholder. Investigate and explicitly authorize the coupled virtual hooks, allocation-aware deletion, real close body and affected table/caller obligations before editing outside the current task.",
+    "kind": "discovery"
+  },
+  "previous_event": "45a1fc485de94a02a481166e0d3dc81e5d8f26bc8d44c0cd1659acdd3446ec87",
+  "request_id": "control-close-list-lifecycle",
+  "schema_version": 1,
+  "sequence": 19,
+  "stream": "task:control-sprite-defaults"
+}

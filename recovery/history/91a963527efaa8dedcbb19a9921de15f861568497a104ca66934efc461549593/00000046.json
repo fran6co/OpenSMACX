@@ -1,0 +1,19 @@
+{
+  "event_id": "0397349947f857766746d7664ef310c4a258caacb7a6967455bb72382d0c75f7",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "control-globals-and-keyboard-indirection",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/win.cpp restores historical5F5FB0 mapping/lesson via native writer and corrects direct pointer/count/flag operations and member access, retaining callback rereads. Ten source-owned bounded scalar bindings in win/editbox/listbox and USER32 GetAsyncKeyState import match independently checked original evidence.",
+      "recovery/tests/test_control_globals.py and win_keyboard_harness.cpp:7 focused tests pass with actual-TU access checks and failing old-indirection controls. Native check-data:20 passing trials;122 historical claims across three units reproduce; fresh complete build/link and source/claims/mappings/references/debt audits pass. Independent pinned-image source review found no scoped semantic defect.",
+      "This incorporates the bounded finding only. Restored keyboard handler remains an unclaimed mismatch; no task/game acceptance or original baseline change."
+    ]
+  },
+  "previous_event": "23871636dc5d02fb2b2232ad4020f834c8132a0513e6b190256619414bd84151",
+  "request_id": "control-globals-and-keyboard-incorporated",
+  "schema_version": 1,
+  "sequence": 46,
+  "stream": "task:control-sprite-defaults"
+}

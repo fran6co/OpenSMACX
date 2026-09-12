@@ -227,6 +227,7 @@ set(OPENSMACX_SOURCES
     src/text.cpp
     src/textindex.cpp
     src/time.cpp
+    src/time_lifecycle.cpp
     src/veh.cpp
     src/vector.cpp
     src/win.cpp

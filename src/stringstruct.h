@@ -10,6 +10,7 @@
 #pragma once
 
 #include "vc6_compat.h"
+#include <stdlib.h>
 #if !defined(_MSC_VER) || _MSC_VER > 1200
 #include <cstddef>
 #include <cstdint>
@@ -20,13 +21,9 @@ class StringStructPayload;
 struct StringStructEntry;
 
 
-// The legacy close is entered through a virtual-base adjustor, so the redirect
-// receives a pointer 0x1C bytes into the object rather than its base.
-static const size_t StringStructCloseAdjustment = 0x1C;
-
 // The hand-staged close chain is gone: the four staged table constants, the
 // close_with_tables helper, and string_struct_derived_close_redirect left
-// with the real ~StringStruct destructor, whose compiler-owned chain stages
+// with the real StringList/StringStruct destructors, whose compiler-owned chain stages
 // the same tables (derived pair 0x006698C4/0x006698C0, base pair
 // 0x006693A4/0x006693A0, virtual base 0x006693AC) from the declarations.
 
@@ -45,8 +42,9 @@ static const size_t StringStructCloseAdjustment = 0x1C;
  * emits only when the constructed base really derives virtually; the
  * earlier "Itanium ABI would misplace it" worry does not apply - the whole
  * tree compiles with cl 12.00.8168, and checkbox.h/listbox.h already hold
- * real virtual bases under it. The raw-offset teardowns below are untouched
- * by the change: they read and write fixed displacements, not member names.
+ * real virtual bases under it. Native destruction owns both the derived/base
+ * stages and the complete-object virtual-base tail; no raw-offset teardown
+ * wrapper is needed.
  *
  * Layout evidence, all read from the pinned executable:
  *   0x00  vftable      - 0x006698C4 (StringList) then 0x006693A4
@@ -77,8 +75,9 @@ static const size_t StringStructCloseAdjustment = 0x1C;
 // bases under this same toolchain (see checkbox.h for the layout argument).
 class Heap;  // defined in heap.h; the owner slot carries one
 
-// THE ALLOCATOR HAND-OFF SLOT, the image's 0x009B3374 .bss: a Heap*. Heap::get
-// publishes itself here on a successful allocation; the StringAllocationBase
+// THE ALLOCATOR HAND-OFF SLOT, the image's 0x009B3374 .bss: a Heap*. The
+// allocation wrapper publishes its selected Heap after a successful allocation;
+// the StringAllocationBase
 // constructed on that block captures it and clears the slot.
 extern Heap *StringAllocationHeap;
 
@@ -90,12 +89,12 @@ class StringAllocationBase {
   // StringStruct's stage - which is exactly where the base's own constructor
   // body lands. The address is terranx.exe's data, unmapped in a standalone
   // build; the same raw spelling StringBox::add uses.
-  // THE ALLOCATOR HAND-OFF. Heap::get publishes the allocating Heap into
+  // THE ALLOCATOR HAND-OFF. The allocation wrapper publishes the Heap into
   // the global slot (image 0x009B3374) and the base constructor running
   // right after captures it - "who allocated me" - then clears the slot.
-  // The destructor republishes the saved Heap so the next allocation can
-  // route through it, and frees with operator delete only when no Heap
-  // owns the block (the saved owner is null). Measured at 0x00401100:
+  // The destructor republishes the saved Heap for the deleting destructor's
+  // deallocation decision: only an owner-null block is individually freed.
+  // Original construction evidence at 0x00401100:
   // `call Heap::get; mov [0x9B3374], edi; ... mov ecx, [0x9B3374];
   // mov [obj+0x18], ecx; mov [0x9B3374], 0`.
   StringAllocationBase() {
@@ -107,6 +106,16 @@ class StringAllocationBase {
   // vbtables that name this base do not exist - VC6 drops the vbptr and the
   // StringStruct layout loses its 0x04 slot.
   virtual ~StringAllocationBase();
+  // Scalar deleting entries 401520/4029F0/406670 and the Net-family
+  // entries share this policy. Their compiler-generated adjustments supply
+  // the complete allocation; the destructor publishes its captured owner.
+  // Ordinary (non-deleting) destruction must leave that handoff intact.
+  static void operator delete(void *memory) {
+    if (StringAllocationHeap == 0) {
+      free(memory);
+    }
+    StringAllocationHeap = 0;
+  }
   Heap *allocation_owner_;
 };
 
@@ -128,6 +137,16 @@ struct StringStructEntry : public virtual StringAllocationBase {
   StringStructPayload *payload;  // 0x08
   StringStructEntry *next;       // 0x0C
   StringStructEntry *previous;   // 0x10
+
+  // Original deleting destructor 0x00402C20 releases the complete allocation,
+  // not the virtual-base address at +0x14. The compiler owns that adjustment;
+  // the base destructor publishes ownership before this deallocator runs.
+  static void operator delete(void *memory) {
+    if (StringAllocationHeap == 0) {
+      free(memory);
+    }
+    StringAllocationHeap = 0;
+  }
 };
 
 
@@ -152,8 +171,17 @@ static_assert(offsetof(StringStructEntry, payload) == 0x8,
 class StringStructPayload : public virtual StringAllocationBase {
  public:
   char *text;      // 0x04 - the string this entry carries
-  uint32_t field_8_;  // 0x08 - never read by name in src/
+  uint32_t field_8_;  // 0x08 - role-dependent metadata, not universally a line count
   uint32_t field_C_;  // 0x0C
+
+  // 0x00402C70 has the same ownership rule for the payload's virtual base
+  // at +0x10. Heap-backed blocks belong to the Heap, not individual nodes.
+  static void operator delete(void *memory) {
+    if (StringAllocationHeap == 0) {
+      free(memory);
+    }
+    StringAllocationHeap = 0;
+  }
 };
 
 static_assert(sizeof(StringStructPayload) == 0x18,
@@ -161,17 +189,13 @@ static_assert(sizeof(StringStructPayload) == 0x18,
 
 class StringStruct : public virtual StringAllocationBase {
  public:
-  // THE OWN VIRTUAL SLOT. The image's StringStruct table at 0x006693A4 is
-  // three dwords (0x006693A4..0x006693B0), so StringStruct declares virtuals
-  // of its own - an override of the base's destructor would be folded into
-  // the virtual base's table and leave no vfptr at offset 0, which the image
-  // has. Which body owns which slot is not recovered: close() is called
-  // directly (`call 0x00401060`-shaped sites and the vbase adjustor) and
-  // remove_all() likewise (`call 0x402970` in ??1Net), so neither can carry
-  // the virtual in this tree without changing those call sites' bytes. This
-  // placeholder holds slot 0 so the layout is right; it is semantic debt
-  // counted by class_debt.py until the slots are named.
-  virtual void unk_slot00();
+  // Insertion 0x004012F2 passes the newly allocated 0x18-byte payload to
+  // primary slot 0. Removal 0x00402992 calls slot 1 before destroying it.
+  // The primary table ends where the separate allocation-base table begins
+  // at 0x006693AC; that table's destructor is not a third primary slot.
+  // RECOVERY_GENERATED: v1 vtable 0x006693A4 0x006693AC ??_7StringStruct@@6B0@@ 0x006086F0
+  virtual int on_insert(StringStructPayload *payload);
+  virtual void on_remove(StringStructPayload *payload);
   // Zeroes the five list fields, which the implicit construction chain
   // therefore emits between StringStruct's vtable stage and StringList's - the
   // image's order. Inline for the same reason the capture is.
@@ -182,15 +206,10 @@ class StringStruct : public virtual StringAllocationBase {
     current_position_ = 0;
     allocator_ = 0;
   }
-  // THE REAL DESTRUCTOR. Declaring it hands the derived-stage table
-  // installs to the compiler: ~StringList's prologue stages the derived
-  // pair, this destructor's prologue stages the base pair (the stores
-  // close() and close_with_tables used to spell by hand), then the body
-  // runs the entry walk. The original hand-managed these tables - 1998
-  // C++ emulating virtual inheritance - and per direction the hand writes
-  // go even where the image performs them; the compiled chain stages the
-  // same tables from the declarations instead. Out of line in
-  // stringstruct.cpp.
+  // The compiler stages the base tables before this cleanup. StringList's
+  // destructor owns the earlier derived stage, where its text-removal hook
+  // must still be active. These are real C++ destructor transitions, not
+  // hand-written table installs. Out of line in stringstruct.cpp.
   ~StringStruct();
   MEASURED int seek_pos(int a1);
   int current_id();
@@ -203,10 +222,8 @@ class StringStruct : public virtual StringAllocationBase {
   MEASURED StringStructPayload *next_entry();
   int seek_id(int id);
   void remove_all();
-  void close();
-  // 0x00401100, still a pending_bodies forwarder: allocates and links a new
-  // entry, its own id, and (for the derived StringList at Dialog::item's
-  // this+0xBC) a payload id node too. Dialog::item calls it BY NAME.
+  // 0x00401100 appends an entry and payload, then invokes the insertion hook.
+  // Allocation failures retain the original partially updated list state.
   int add(int id);
 
   // Offset 0x00 is the compiler's vftable and 0x04 its vbtable - the
@@ -224,7 +241,9 @@ class StringStruct : public virtual StringAllocationBase {
   StringStructEntry *current_;   // 0x0C
   int entry_count_;              // 0x10
   int current_position_;         // 0x14
-  void *allocator_;              // 0x18
+  // The insertion hook passes this receiver to Heap::get at 0x00608714.
+  // RECOVERY_MEMBER: v3 StringStruct allocator_ Heap* 0x18 0x006086F0
+  Heap *allocator_;              // 0x18
   // 0x1C..0x24 is the virtual base: its vtable slot (compiler-managed) and
   // the inherited allocation_owner_.
 };
@@ -234,23 +253,38 @@ static_assert(sizeof(StringStruct) == 0x24,
 
 class StringList : public StringStruct {
  public:
+  // 0x004066C0 removes entries while StringList's text hook is still active,
+  // before the compiler enters StringStruct's base cleanup stage.
+  ~StringList();
+  // Original primary slots name 0x006086F0 and 0x00608770. BasePop's
+  // constructor (0x00600860) installs this table in both embedded lists;
+  // the next table at 0x006698CC belongs to BasePop's Buffer subobject.
+  // Its 0x004070B0 deleting-destructor thunk adjusts that receiver by -0x444.
+  // RECOVERY_GENERATED: v1 vtable 0x006698C4 0x006698CC ??_7StringList@@6BStringStruct@@@ 0x006086F0
+  virtual int on_insert(StringStructPayload *payload);
+  virtual void on_remove(StringStructPayload *payload);
+
+  // Provisional name: 0x005E3630 returns the current StringList text.
+  // Its original Buffer callers pass this list in ECX and consume a char*.
+  char *current_text() {
+    return head_ != 0 ? current_->payload->text : 0;
+  }
+
   // 0x006087A0 ?sort@StringList@@QAEXH@Z, unrecovered. DECLARATION ONLY:
   // Datalink::set_cat tail-calls it on the entry list it has just emptied.
   void sort(int key);
-  // ~StringList is a void destructor in the original, but EAX at its ret
-  // still holds the saved owner value; modelled as uint32_t to preserve the
-  // residue, as GraphicWin::close, Scroll::destroy and ListBox::close do.
-  uint32_t destroy();
-
   // PUBLIC, not private: the image pokes these three fields directly from
-  // outside the class - Dialog::item writes field_1C_/field_20_/field_24_
+  // outside the class - Dialog::item writes pending_text_/field_20_/field_24_
   // of its embedded list (dialog.cpp) - and access specifiers do not change
   // layout, exactly as StringStruct's own list fields above.
   //
   // 0x00 is the compiler's vftable, 0x04 its vbtable, 0x08..0x18 the
   // inherited StringStruct fields; 0x1C..0x24 is this class's own storage,
-  // which neither the construction above nor destroy() below touches.
-  uint32_t field_1C_;  // 0x1C
+  // which the default construction does not initialize.
+  // Borrowed text supplied by Dialog::item and BasePop's string/button paths;
+  // on_insert copies it into payload-owned storage. Null leaves text untouched.
+  // RECOVERY_MEMBER: v1 StringList pending_text_ 0x1C 0x006086F0
+  char *pending_text_;  // 0x1C
   uint32_t field_20_;  // 0x20
   uint32_t field_24_;  // 0x24
   // 0x28..0x30 is the inherited StringAllocationBase.
@@ -337,5 +371,3 @@ MEASURED inline StringStructPayload *StringStruct::next_entry() {
     }
     return current_->payload;
 }
-
-

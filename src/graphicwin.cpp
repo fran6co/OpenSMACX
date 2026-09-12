@@ -999,3 +999,92 @@ void GraphicWin::load_nc_sprites_from_defs() {
         frame_noncaption_middle_ = GraphicWinInitDefaults.noncaption_middle;
     }
 }
+
+// ORIGINAL: 0x005D5CF0 ?on_paint@GraphicWin@@QAEHPAURECT@@@Z 0x005D5CF0-0x005D620A
+// RECOVERY_BINDING: v1 {"evidence": ["GraphicWin table66FC50 slot73 and EditBox table66A038 slot73 both select5D5CF0, with an unadjusted Win receiver and Buffer base at444. The original caller ignores a return; use the existing Win void paint signature.", "Original5D5E04 and5D5E56 establish destination clipping;5D61D4 rereads WinBackBuffer before restoring its clip.5D61CF passes width then height to Buffer copy. Real surface Blt and software drawing own separate branches."], "reason": "Recover the inherited GraphicWin paint override selected by the original tables; keep the seed and its original span."}
+// TRIED: transcribed from Ghidra's pseudocode (cross-checked several branches against the raw disassembly: win_parent_/iFlags_/ outer_rect_/client_rect_ offsets match the Win layout confirmed on 0x0050FB10/0x00510110; DAT_00696d14 in Ghidra's arg lists is a BYTE VALUE passed as int, not a pointer, confirmed by the draw()/draw_dest() signatures). Reusing one RECT local instead of two (matching the original's stack-slot reuse across the mutually-exclusive branches) made no measurable difference (sim stayed 0.49 at plain /O2). First divergence #22 is register scheduling in the client_to_screen/nonclient_to_screen setup, not chased further. Not byte-exact.
+// working copy - scaffold materialised by --work
+// symbol    ?on_paint@GraphicWin@@UAEXPAUtagRECT@@@Z
+// size      1306 bytes
+// prototype int (__thiscall ?on_paint@GraphicWin@@QAEHPAURECT@@@Z)(GraphicWin* this, RECT*)
+// callers   0   call targets   8
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D8000 0x005D84C0 0x005D8B20 0x005D94B0 0x005DFF00 0x005ECFE0 0x005ED170 0x005ED240
+// indirect  0x005D5DF0 0x005D5FD7
+
+// Slot 73 in both the GraphicWin and EditBox original tables selects this
+// handler. Clipping belongs to the destination, not this window's buffer.
+// The no-parent branch intentionally clips ScreenBuffer even with a back buffer.
+void GraphicWin::on_paint(RECT *area) {
+    int origin_x = 0;
+    int origin_y = 0;
+    client_to_screen(&origin_x, &origin_y);
+    RECT rectangle;
+    Win *parent = win_parent_;
+    if (parent != 0 && (iFlags_ & 0x20) != 0) {
+        if (iFlags_ & 0x8000) {
+            rectangle = parent->client_rect_;
+            rectangle.right -= rectangle.left;
+            rectangle.bottom -= rectangle.top;
+            rectangle.left = rectangle.top = 0;
+            parent->nonclient_to_screen(&rectangle);
+        } else {
+            rectangle = parent->outer_rect_;
+            rectangle.right -= rectangle.left;
+            rectangle.bottom -= rectangle.top;
+            rectangle.left = rectangle.top = 0;
+            parent->client_to_screen(&rectangle);
+        }
+        if (area != 0 && !IntersectRect(&rectangle, &rectangle, area)) {
+            return;
+        }
+        if (WinBackBuffer != 0) {
+            rectangle.left -= WinViewOriginX;
+            rectangle.right -= WinViewOriginX;
+            rectangle.top -= WinViewOriginY;
+            rectangle.bottom -= WinViewOriginY;
+            WinBackBuffer->set_clip(&rectangle);
+        } else {
+            ScreenBuffer.set_clip(&rectangle);
+        }
+    } else if (area != 0) {
+        ScreenBuffer.set_clip(area);
+    }
+
+    if ((iFlags_ & 0x1000000) == 0 && surface_ != 0) {
+        rectangle.left = origin_x;
+        rectangle.top = origin_y;
+        rectangle.right = origin_x + outer_rect_.right - outer_rect_.left;
+        rectangle.bottom = origin_y + outer_rect_.bottom - outer_rect_.top;
+        DirectDrawBackBuffer->Blt(&rectangle, surface_, 0, DDBLT_WAIT, 0);
+    } else {
+        Buffer *destination = &ScreenBuffer;
+        int x = origin_x;
+        int y = origin_y;
+        if (WinBackBuffer != 0) {
+            destination = WinBackBuffer;
+            x -= WinViewOriginX;
+            y -= WinViewOriginY;
+        }
+        if ((iFlags_ & 0x1000000) == 0) {
+            Buffer::copy(destination, 0, 0, x, y,
+                         outer_rect_.right - outer_rect_.left,
+                         outer_rect_.bottom - outer_rect_.top);
+        } else if (field_A0_ != 0) {
+            Buffer::draw_dest(destination, WinFillColour, x, y, 1, 1,
+                              reinterpret_cast<unsigned char *>(field_A0_));
+        } else if (field_A4_ != 0) {
+            Buffer::draw_multi_table_dest(destination, WinFillColour, x, y, 1, 1,
+                                          reinterpret_cast<unsigned char *>(field_A4_));
+        } else {
+            Buffer::draw(destination, WinFillColour, x, y, 1, 1);
+        }
+    }
+    // Drawing can change the back buffer. The original rereads it here.
+    if (WinBackBuffer != 0) {
+        WinBackBuffer->restore_clip();
+    } else {
+        ScreenBuffer.restore_clip();
+    }
+}

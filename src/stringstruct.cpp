@@ -8,19 +8,37 @@
  * (at your option) any later version.
  */
 #include "stdafx.h"
-#include "original_seam.h"
 
+// ORIGINAL: 0x00402C20 ??_GStringStructEntry@@UAEPAXI@Z 0x00402C20-0x00402C62 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Original table installed by 401100 construction dispatches deletion through StringStructEntry allocation base at +0x14. This original body publishes saved Heap owner, conditionally frees the complete allocation and clears owner on deleting paths. Same-span seed remains.", "Original construction at 401100 and typed deletion at 402970 establish the owning node lifecycle. The canonical source host is stringstruct.cpp; the compiler owns the virtual-base adjustment and deleting-flag entry."], "reason": "Map the compiler-generated scalar deleting destructor emitted by actual list-node construction, not a handwritten wrapper."}
+// ORIGINAL: 0x00402C70 ??_GStringStructPayload@@UAEPAXI@Z 0x00402C70-0x00402CB2 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Original table installed by 401100 construction dispatches deletion through StringStructPayload allocation base at +0x10. This original body publishes saved Heap owner, conditionally frees the complete allocation and clears owner on deleting paths. Same-span seed remains.", "Original construction at 401100 and typed deletion at 402970 establish the owning node lifecycle. The canonical source host is stringstruct.cpp; the compiler owns the virtual-base adjustment and deleting-flag entry."], "reason": "Map the compiler-generated scalar deleting destructor emitted by actual list-node construction, not a handwritten wrapper."}
 #include "stringstruct.h"
 #include "spritebox.h"
 #include "net_class.h"
 
 #include <cstring>
+#include <new>
 
 #include "heap.h"  // StringAllocationHeap
+#include "general.h"  // mem_get
 
-// The real teardown: republish the saved allocation owner so the next
-// allocation routes through it again (sub_401520, the image's deleting
-// destructor, and StringList::destroy's tail are this destructor as
+// The allocation-base table at 0x6693AC dispatches this scalar deleting
+// entry. The compiler supplies its flag handling and class-specific delete;
+// the original identity is retained from the retired handwritten wrapper.
+/*
+// ORIGINAL: 0x00401520 sub_401520 0x00401520-0x0040155E FILE
+// symbol    ??_GStringAllocationBase@@UAEPAXI@Z
+// size      62 bytes
+// prototype
+// callers   0   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00644EF2
+*/
+
+// Republish the saved owner for the deallocation decision (0x401520, the
+// image's deleting destructor, and StringList's complete tail are this destructor as
 // compiled - the [esi] = 0x6693AC vptr re-stage on top of it is the
 // compiler's own destructor machinery). Out of line: OUT OF LINE is the
 // point. A header-inline empty destructor is provably nothrow, and VC6 then
@@ -30,19 +48,165 @@ StringAllocationBase::~StringAllocationBase() {
     StringAllocationHeap = allocation_owner_;
 }
 
-void StringStruct::unk_slot00() {
+namespace {
+// The cleanup path at 0x00608783 tests the captured text pointer again before
+// calling free. This is a local null-safe release idiom, not an original symbol.
+inline void release_text(char *text) {
+    if (text != 0) {
+        free(text);
+    }
+}
 }
 
-// The real destructor body: release the entries and clear the position.
-// The derived- and base-stage table installs around it are the compiler's
-// (the destructor prologues), replacing the hand stores close() and
-// close_with_tables spelled - the image's own ??1StringList-shaped chain
-// (0x004066C0) carries the same two stages, walked with everything
-// inlined; this compiled chain keeps a real remove_all, which is the
-// recorded divergence.
-StringStruct::~StringStruct() {
-    remove_all();
-    current_position_ = 0;
+// The original primary table uses these shared defaults. Hook names describe
+// their list role; the catalogue's unrelated class names are retained as seeds.
+// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_insert@StringStruct@@UAEHPAVStringStructPayload@@@Z 0x006086F0
+int StringStruct::on_insert(StringStructPayload *) { return 0; }
+// RECOVERY_SHARED: v1 0x00404270 0x00404273 ?on_remove@StringStruct@@UAEXPAVStringStructPayload@@@Z 0x006086F0
+void StringStruct::on_remove(StringStructPayload *) { }
+
+// ORIGINAL: 0x006086F0 ?on_insert@StringList@@UAEHPAVStringStructPayload@@@Z 0x006086F0-0x00608761 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Primary table 0x6698C4 slot0 targets this body. Original StringStruct::add at 0x4012ED/0x4014F7 passes its 0x18 allocation as the one hook argument; this body writes text at +4 and metadata at +8/+C. The retained seed and its extent remain unchanged.", "Original 0x6086FD bypasses the text store when the source is null; preserve that behavior without assuming zeroed allocation. Receiver +0x18 is passed to Heap::get. No byte claim is banked by this binding."], "reason": "Recover the StringList insertion virtual using its allocated payload type; on_insert is a descriptive name, not a recovered original spelling."}
+int StringList::on_insert(StringStructPayload *payload) {
+    if (pending_text_ != 0) {
+        char *copy;
+        if (allocator_ != 0) {
+            copy = static_cast<char *>(allocator_->get(strlen(pending_text_) + 1));
+        } else {
+            copy = static_cast<char *>(mem_get(strlen(pending_text_) + 1));
+        }
+        payload->text = copy;
+        if (copy == 0) {
+            return 4;
+        }
+        *payload->text = 0;
+        strcat(payload->text, pending_text_);
+    }
+    payload->field_8_ = field_20_;
+    payload->field_C_ = field_24_;
+    return 0;
+}
+
+// ORIGINAL: 0x00608770 ?on_remove@StringList@@UAEXPAVStringStructPayload@@@Z 0x00608770-0x0060879B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Primary table 0x6698C4 slot1 targets this body; original 0x608775 loads payload text at +4, then 0x60877C checks the list allocator at +0x18. Only a null allocator permits free and clearing text. on_remove is descriptive; the kill_entry seed and its historical claim remain intact."], "reason": "Recover allocator-aware StringList text cleanup as a real virtual method; the payload node lifetime remains owned by enclosing list teardown."}
+void StringList::on_remove(StringStructPayload *payload) {
+    if (payload->text != 0 && allocator_ == 0) {
+        release_text(payload->text);
+        payload->text = 0;
+    }
+}
+
+namespace {
+// 0x00401100 selects the list's allocator before its inherited allocation
+// owner. Heap exhaustion is fatal; CRT allocation failure returns a null node.
+// Construction captures the handoff in the real virtual base and emits the
+// node's tables/destructor naturally. This helper has no original identity.
+template<class T> inline T *allocate_list_node(StringStruct *list, T *) {
+    Heap *owner = list->allocator_;
+    if (owner == 0) {
+        owner = list->allocation_owner_;
+    }
+    void *memory;
+    if (owner != 0) {
+        memory = owner->get(sizeof(T));
+        if (memory == 0) {
+            MessageBoxA(NULL, "out of heap space in new function", "Aborting", MB_OK);
+            exit(3);
+        }
+    } else {
+        memory = mem_get(sizeof(T));
+        if (memory == 0) {
+            return 0;
+        }
+    }
+    StringAllocationHeap = owner;
+    return ::new(memory) T;
+}
+}
+
+// Append before the circular head. Preserve the original partial mutations on
+// allocation failure and ignore the insertion hook's return value: neither
+// rollback nor propagating that value is part of 0x00401100's behavior.
+// ORIGINAL: 0x00401100 ?add@StringStruct@@QAEHH@Z 0x00401100-0x00401513
+// RECOVERY_BINDING: v1 {"evidence": ["Original 401100 selects explicit allocator then inherited allocation owner then mem_get, constructs entry size1C and payload size18 with distinct virtual-base tables. Native construction replaces seed vptr writes; source class names remain interpretations.", "Original 4013B1 publishes the entry allocation into the old tail next link before the null test; 4012D2/4014DC publish null payloads before returning4. Insertion hook result is ignored; count and position update only after it returns. Same-span legacy seed retained."], "reason": "Recover circular-list insertion with real node construction and the original partial updates on allocation failure."}
+int StringStruct::add(int id) {
+    if (entry_count_ == 0) {
+        head_ = allocate_list_node(this, static_cast<StringStructEntry *>(0));
+        if (head_ == 0) {
+            return 4;
+        }
+        head_->id = id;
+        head_->next = head_;
+        head_->previous = head_;
+        head_->payload = allocate_list_node(this, static_cast<StringStructPayload *>(0));
+        if (head_->payload == 0) {
+            return 4;
+        }
+        on_insert(head_->payload);
+        current_ = head_;
+    } else {
+        head_->previous->next = allocate_list_node(this, static_cast<StringStructEntry *>(0));
+        if (head_->previous->next == 0) {
+            return 4;
+        }
+        head_->previous->next->previous = head_->previous;
+        head_->previous->next->next = head_;
+        head_->previous = head_->previous->next;
+        current_ = head_->previous;
+        current_->id = id;
+        current_->payload = allocate_list_node(this, static_cast<StringStructPayload *>(0));
+        if (current_->payload == 0) {
+            return 4;
+        }
+        on_insert(current_->payload);
+    }
+    current_position_ = entry_count_;
+    ++entry_count_;
+    return 0;
+}
+
+namespace {
+// Share the original entry walk without making the public remove_all symbol
+// inline-only. Destructors select their own stage's hooks before this walk;
+// each still clears its position even when the empty-head guard returns here.
+inline void clear_list_entries(StringStruct *self) {
+    if (!self->head_) {
+        return;
+    }
+    // The original initializes its index before testing the entry count.
+    int index = 0;
+    if (self->entry_count_ > 0) {
+        do {
+            StringStructEntry *const entry = self->head_;
+            self->current_ = entry->next;
+            StringStructPayload *const payload = entry->payload;
+            self->on_remove(payload);
+            delete payload;
+            self->head_->payload = nullptr;
+            delete self->head_;
+            ++index;
+            self->head_ = self->current_;
+            // The loop bound is re-read every iteration, so a visitor that
+            // changes the count changes how far the walk goes.
+        } while (index < self->entry_count_);
+    }
+    self->head_ = nullptr;
+    self->current_position_ = 0;
+    self->entry_count_ = 0;
+}
+
+inline void finish_list_teardown(StringStruct *self) {
+    clear_list_entries(self);
+    self->current_position_ = 0;
+}
+}
+
+// Derived cleanup must run before the base destructor changes virtual dispatch:
+// 0x004066C0 first selects StringList's hooks, then enters the StringStruct stage.
+// ORIGINAL: 0x004066C0 ??1StringList@@UAE@XZ 0x004066C0-0x00406818;0x00650980-0x00650995
+// RECOVERY_BINDING: v1 {"evidence": ["Original 4066C0 installs derived tables6698C4/6698C0 and clears entries before switching to base tables6693A4/6693A0; primary removal slot selects the text-cleanup hook during the derived stage. Implicit base-only cleanup cannot preserve that lifecycle.", "Original bounds4066C0-406818 and650980-650995 retained in 7eb1b2b0 parent src/stringstruct.cpp. Support code650980 adjusts the saved virtual-base receiver by -0xC before jumping to StringStruct base teardown401060. These are original identity/ownership interpretations, not a matching claim."], "reason": "Restore the original two-stage StringList destructor identity to its real C++ destructor, including its historical EH support span."}
+StringList::~StringList() {
+    finish_list_teardown(this);
 }
 
 /*
@@ -147,33 +311,10 @@ extern "C" int __cdecl string_struct_seek_id_source(StringStruct *self, int id) 
 }
 
 
-namespace {
-
-typedef void (OriginalObject::*func_entry_visitor)(void *);
-typedef void (OriginalObject::*func_scalar_deleting_destructor)(int);
-
-// MSVC reaches these destructors through the virtual-base displacement stored
-// in the object's second vtable slot: the displacement selects a subobject
-// whose own first vtable slot is the scalar deleting destructor, invoked with
-// the deleting flag set.
-// `inline`: the image never calls this as a standalone function - every call
-// site (remove_all, twice) has the vtable-adjustor dispatch written out in
-// place, with no real call to a shared helper. A non-inline definition here
-// costs the caller a real out-of-line call the image does not make.
-inline void destroy_virtual_base(void *object) {
-    uint32_t *const vtable = *reinterpret_cast<uint32_t **>(object);
-    uint8_t *const subobject =
-        static_cast<uint8_t *>(object) + vtable[1];
-    uint32_t *const subobject_vtable = *reinterpret_cast<uint32_t **>(subobject);
-    (ORIGINAL(subobject)->*original_method<func_scalar_deleting_destructor>(static_cast<unsigned long>(subobject_vtable[0])))(1);
-}
-
-}  // namespace
-
 /*
 Purpose: Release every entry in the list, notifying the owner about each
          payload before destroying the payload and its entry.
-// ORIGINAL: 0x00402970 StringStruct::remove_all 0x00402970-0x004029E3
+// ORIGINAL: 0x00402970 StringStruct::remove_all 0x00402970-0x004029E3 BYTE_EXACT
 // symbol    ?remove_all@StringStruct@@QAEXXZ
 // size      115 bytes
 // prototype 
@@ -208,38 +349,7 @@ Status: Complete
 // Datalink call the public declaration. It must provide an out-of-line symbol;
 // an inline definition here is not available to those translation units.
 void StringStruct::remove_all() {
-    if (!head_) {
-        return;
-    }
-    // `index` is declared BEFORE the count test, not inside it: the image
-    // stores the zero into the slot at 0x00401089, BETWEEN the load of
-    // entry_count_ and the compare against it. Declared inside, VC6 folds the
-    // count into the compare (`cmp dword ptr [esi + 0x10], ebx`) and the
-    // whole walk shifts - 7 of 64 against 50 of 64 in StringStruct::close.
-    int index = 0;
-    if (entry_count_ > 0) {
-        do {
-            StringStructEntry *const entry = head_;
-            current_ = entry->next;
-            void *const payload = entry->payload;
-            uint32_t *const vtable = *reinterpret_cast<uint32_t **>(this);
-            (ORIGINAL(this)->*original_method<func_entry_visitor>(static_cast<unsigned long>(vtable[1])))(payload);
-            if (payload) {
-                destroy_virtual_base(payload);
-            }
-            head_->payload = nullptr;
-            if (head_) {
-                destroy_virtual_base(head_);
-            }
-            ++index;
-            head_ = current_;
-            // The loop bound is re-read every iteration, so a visitor that
-            // changes the count changes how far the walk goes.
-        } while (index < entry_count_);
-    }
-    head_ = nullptr;
-    current_position_ = 0;
-    entry_count_ = 0;
+    clear_list_entries(this);
 }
 
 
@@ -248,9 +358,11 @@ void StringStruct::remove_all() {
 // the declarations, and nothing names them any more.
 
 /*
-Purpose: Reset the list to its constructed state, installing both virtual
-         tables and releasing every entry.
-// ORIGINAL: 0x00401060 ?close@StringStruct@@QAEXXZ 0x00401060-0x004010F9
+Purpose: Destroy the StringStruct subobject, releasing entries under the base
+         hooks. The original receiver is its allocation-tracking virtual base;
+         the compiler, not a handwritten close wrapper, owns that adjustment.
+// ORIGINAL: 0x00401060 ?close@StringStruct@@QAEXXZ 0x00401060-0x004010F9 BYTE_EXACT
+// symbol    ??1StringStruct@@UAE@XZ
 // size      153 bytes
 // prototype void (__thiscall ?close@StringStruct@@QAEXXZ)(StringStruct* this)
 // callers   25   call targets   0
@@ -258,7 +370,7 @@ Purpose: Reset the list to its constructed state, installing both virtual
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
 // indirect  0x004010A2 0x004010B4 0x004010D0
-// notes     Runtime redirect installed by DllMain after byte-signature validation
+// Historical LEVER/TRIED observations below describe the retired close wrapper.
 // LEVER: 0 of 64 -> 56 of 64, with the compiled instruction count now equal
 //        to the image's, on four stacked fixes. (1) THE 0x1C ADJUSTMENT
 //        BELONGS IN close(), not in string_struct_close_redirect: the image's
@@ -294,26 +406,13 @@ Purpose: Reset the list to its constructed state, installing both virtual
 //            before computing the receiver, a `uintptr_t` receiver cast, and
 //            writing the second site out at the call site instead of through
 //            the helper (56, unchanged).
-Status: Complete
+Status: Genuine destructor; original inlining and strict matching remain unproved.
 */
-void StringStruct::close() {
-    // ENTERED ON THE VIRTUAL BASE, NOT ON THE OBJECT. The image's close
-    // opens `lea esi, [ecx - 0x1c]` at 0x00401066, and every field it then
-    // touches is [esi + N] - so ECX arrives pointing at the two-word
-    // virtual base this class holds at 0x1C. The adjustment belongs HERE
-    // and not in the redirect: with the redirect subtracting it instead,
-    // the compiled body starts `mov esi, ecx` and diverges at instruction 0.
-    uint8_t *const vbase = reinterpret_cast<uint8_t *>(this);
-    StringStruct *const self = reinterpret_cast<StringStruct *>(
-        vbase - StringStructCloseAdjustment);
-    // TRIED: the two table stores the image stages here (`mov [ecx-0x1c],
-    // 0x6693a4` and the vbtable-relative base-pair store) - hand writes in
-    // the original itself, stripped by direction; the walk now dispatches
-    // through whatever tables the constructing chain installed. The image
-    // hoists its zero register between the lea and the first store; both
-    // gaps are recorded on the marker below.
-    self->remove_all();
-    self->current_position_ = 0;
+// Original 4066C0's EH cleanup adjusts its saved virtual-base receiver by -0xC
+// and jumps to 401060. The emitted base destructor makes the remaining -0x1C
+// adjustment and stages the two base tables itself, as in the original body.
+StringStruct::~StringStruct() {
+    finish_list_teardown(this);
 }
 
 // StringStructDerivedVtable / StringStructDerivedVirtualBaseVtable
@@ -321,72 +420,14 @@ void StringStruct::close() {
 // string_struct_derived_close_redirect are gone. The redirect's own marker
 // carried the diagnosis all along: the image's 0x004066C0 is a
 // COMPILER-GENERATED two-stage teardown (its LEVER/TRIED notes record the
-// /GX frame no free function can produce), and the real ~StringStruct
-// destructor above now emits that chain from the declarations. The EH
+// /GX frame no free function can produce). The real ~StringList destructor
+// above owns the derived cleanup before ~StringStruct's base stage. The EH
 // frame's funclet span 0x00650980-0x00650995 is that machinery's own.
 
-// THE ALLOCATOR HAND-OFF SLOT: the allocating Heap published by Heap::get
+// THE ALLOCATOR HAND-OFF SLOT: the Heap published by the allocation wrapper
 // and captured by the next StringAllocationBase construction.
 Heap *StringAllocationHeap;  // 0x009B3374
 
-/*
-Purpose: Destroy a most-derived StringList: run the source-owned two-stage
-         derived close, then hand the virtual base back its own vtable and
-         republish the pending-allocation owner the constructor captured.
-// ORIGINAL: 0x00406820 sub_406820 0x00406820-0x0040683B
-// TRIED: THE SECOND PARAMETER WAS INVENTED, so it is gone rather than worked
-//   around. 0x00406820 sets only ECX (`mov ecx, esi; call 0x4066c0`) and never
-//   EDX, and 0x004066C0's body reads only ECX - the `_redirect` name is this
-//   tree's own, so nothing about the image required the arity. Declaring ONE
-//   parameter takes this call site to BYTE_EXACT 9/9.
-// TRIED: the two-argument call at this site, verbatim:
-//     string_struct_derived_close_redirect(adjusted, nullptr);
-//   QUOTED ON PURPOSE. tools/reap_worktrees.py keeps an agent's worktree when
-//   a line it wrote appears nowhere in src/, which is right - it cannot tell
-//   "never collected" from "collected and then correctly rejected". A refusal
-//   that quotes the code it refuses is visible to that check, so the worktree
-//   becomes reapable without anyone overriding a safety refusal.
-// TRIED: reaching the same 9/9 with a single-argument OVERLOAD forwarding
-//   to a two-argument body. It measures identically and it is WRONG: VC6 emits
-//   the overload as a 7-byte COMDAT thunk (`33 D2` xor edx,edx; `E9` jmp) and
-//   the call relocation targets THAT, so the recovered call graph becomes
-//   destroy -> invented thunk -> redirect where the image is destroy ->
-//   redirect. No such thunk exists in the image; scanning .text for `33 D2 E9`
-//   returns one hit and it does not target 0x4066C0. BYTE_EXACT survived only
-//   because the rel32 is one of the masked relocation bytes - the measurement
-//   cannot see where the call WENT. Caught by the adversarial verifier
-//   2026-08-22; recorded because the recipe would buy every future BYTE_EXACT
-//   at this idiom's other call sites with one more invented function.
-// symbol    ?destroy@StringList@@QAEIXZ
-// size      27 bytes
-// prototype 
-// callers   26   call targets   1
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x004066C0
-Return Value: EAX residue - the saved owner value, republished into
-              StringAllocationHeap. The original is a void destructor;
-              modelled as uint32_t to preserve the residue, as
-              GraphicWin::close and Scroll::destroy do.
-Status: Complete
-DEMOTED from BYTE_EXACT by direction (strip-all hand vptr writes): the hand
-derived-close call and the three tail operations (owner read, final-table
-install, republish) left - the teardown is the compiler's ~StringList chain
-now, staging the same tables from the StringStruct/StringList declarations.
-Compiled is 8 instructions against the image's 9: the image inlines the
-vbase tail after its call; ours folds it into the chain. The EAX residue
-survives as the republished global.
-*/
-uint32_t StringList::destroy() {
-    // The whole teardown is the compiler's chain now: ~StringList's derived
-    // stage, ~StringStruct's base stage and entry walk, and the virtual-base
-    // destructor whose body restores the one-slot vftable and republishes
-    // the saved owner - the three tail operations the old body spelled by
-    // hand. The EAX residue the 26 callers consume is the republished owner,
-    // which the chain leaves in StringAllocationHeap.
-    this->~StringList();
-    return reinterpret_cast<uint32_t>(StringAllocationHeap);
-}
 
 
 /*
@@ -403,3 +444,35 @@ Status: Complete
 // MEASURED inline, defined at the end of stringstruct.h: the image both
 // calls this (2 callers) and inlines it whole (BasePop::exec 0x00602FC5, abs
 // calls and all). The definition moved; the claim is unchanged.
+
+/*
+Purpose: Return the current StringList text, or null when the list is empty.
+
+             mov eax, [ecx+8] / test eax,eax / je zero
+             mov eax, [ecx+0xc] / mov eax, [eax+8] / mov eax, [eax+4] / ret
+       zero: xor eax,eax / ret
+
+         The guard reads field 8 but the chase starts from field 0xc - two
+         DIFFERENT fields, which is easy to lose when transcribing and produces
+         a body that works whenever the two happen to agree.
+
+// ORIGINAL: 0x005E3630 sub_5e3630 0x005E3630-0x005E3644 SEMANTIC
+// TRIED: 8 source shapes measured, plateaus at MNEMONIC_ONLY 7/9; the image reuses eax across the
+//            whole chase and every guard-clause / named-link / walking-
+//            pointer spelling still routes the middle link through ecx.
+// symbol    ?current_text@StringList@@QAEPADXZ
+// body      src/stringstruct.h
+// size      20 bytes
+// prototype
+// callers   2   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: mutable text, or null when head_ is null
+Status: Complete
+*/
+// Header-visible inline definition in stringstruct.h. current_text is a
+// provisional descriptive name, not a recovered original spelling. Original
+// Buffer::write_strings/height callers (0x005DB3C4, 0x005DB00E) pass their
+// StringList receiver in ECX and consume the result as text. The head guard
+// and current-entry chase also occur inline in CheckBox/RadioButton drawing.

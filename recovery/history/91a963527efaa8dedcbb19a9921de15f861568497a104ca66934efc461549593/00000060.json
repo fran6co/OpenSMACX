@@ -1,0 +1,17 @@
+{
+  "event_id": "afddd0843bc25721d87762a13298e98da4d4ed8a90c0b1851beab62876cc0400",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "preserved-control-draw-candidate",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Current recovery/control-draw-candidate contains preserved a2e6a2d3 source and the subsequent reviewed C++ lifecycle/painting/global fixes. The work was inspected and incorporated without resetting the original task baseline. Candidate remains unaccepted; this closes only the preserved-work reassessment finding."
+    ]
+  },
+  "previous_event": "9de9bf2d0dcd664f360beb0a763e58c631a4d411d7b9a37e3387b3d553826894",
+  "request_id": "closeout-incorporated-preserved-control-draw-candidate",
+  "schema_version": 1,
+  "sequence": 60,
+  "stream": "task:control-sprite-defaults"
+}

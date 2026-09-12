@@ -1,0 +1,17 @@
+{
+  "event_id": "4aba2b2122e915d78011f2fab37aac999b138bb8a4265659cec83aa4bdbf81e3",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "control-close-list-lifecycle",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Commits40ce26b4,46dc3239,b7c2a4ab,45f5b156,299c7d3d implement real StringStruct/StringList hooks, typed nodes, allocator-aware deletion, derived/base teardown, reusable Dialog close and generated complete destruction. Live-source list and dialog tests cover ownership/failure/repeated-close/unwind. This is source incorporation, not strict restoration or acceptance. Distinct network nested-list lifetime remains a separate pending discovery."
+    ]
+  },
+  "previous_event": "afddd0843bc25721d87762a13298e98da4d4ed8a90c0b1851beab62876cc0400",
+  "request_id": "closeout-incorporated-control-close-list-lifecycle",
+  "schema_version": 1,
+  "sequence": 61,
+  "stream": "task:control-sprite-defaults"
+}

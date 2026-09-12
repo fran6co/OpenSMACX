@@ -1,0 +1,20 @@
+{
+  "event_id": "84f81822f6f6753cb2e374e56282f24c06acfbf97ae8d68ce111f42aa26b952d",
+  "payload": {
+    "affects": [
+      "entity-8322586b563650809e7a0d9cce94ef9c5eeaae5b540fc8fb6b17d7e65202188a"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "paint-and-buffer-abi-discovery",
+    "evidence": [
+      "Fresh task restoration at299c7d3d finds EditBox table slot73 actual Win5F54E0 versus original5D5CF0; pinned GraphicWin66FC50 and EditBox66A038 both select5D5CF0. Original5D84C0 ret18 versus5D8370 ret10 proves the six-argument pending forwarder ABI is wrong; Caviar617230 also calls it. Buffer source admits split ten globals versus fixed9B3A50 Sprite. Pinned initializer5D71D0 constructs Sprite9B3A50 via5E37E0 and registers cleanup5D71F0; buffer.cpp already owns unused g_BUFFER_SPRITE."
+    ],
+    "hypothesis": "EditBox inherits the wrong paint slot because GraphicWin lacks its original override; the required six-argument Buffer draw incorrectly calls a four-argument entry and its shared Sprite storage is split.",
+    "kind": "discovery"
+  },
+  "previous_event": "f9e77cd01fc882c26a2c5e2ae731688144af18931c49647189237a1022242fc1",
+  "request_id": "paint-and-buffer-abi-discovery",
+  "schema_version": 1,
+  "sequence": 42,
+  "stream": "task:control-sprite-defaults"
+}
