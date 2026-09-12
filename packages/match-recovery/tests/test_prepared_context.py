@@ -90,3 +90,150 @@ def test_generated_artifact_roots_cannot_overlap_historical_source(prepared):
     path.write_text(json.dumps(config))
     with pytest.raises(ValueError, match="separate from historical"):
         source_roots(prepared, Measurement.read(prepared))
+
+
+def versioned(prepared):
+    graph = prepared / "BuildGraph.txt"
+    graph.write_text("code/owner.cc\n")
+    path = prepared / "recovery/prepare.json"
+    policy = json.loads(path.read_text())
+    policy["versioned_inputs"] = ["BuildGraph.txt"]
+    path.write_text(json.dumps(policy))
+    script = '''import json,sys
+from pathlib import Path
+root, output = Path(sys.argv[1]), Path(sys.argv[2])
+units = (root / "BuildGraph.txt").read_text().splitlines()
+(output / "compile_commands.json").write_text(json.dumps([
+    {"directory": str(root), "file": str(root / unit), "arguments": ["compiler", str(root / unit)]}
+    for unit in units
+]))
+'''
+    (prepared / "recovery/generate.py").write_text(script)
+    return Measurement.read(prepared)
+
+
+def test_explicit_current_and_historical_build_graphs_generate_real_distinct_membership(prepared):
+    settings = versioned(prepared)
+    current = files(prepared)
+    historical = {name: raw for name, raw in current.items() if name != "code/owner.cc"}
+    historical["code/old.cc"] = b"void old_unit() {}\n"
+    before = working_state(prepared)
+    for source, graph, expected in ((current, b"code/owner.cc\n", "code/owner.cc"),
+                                    (historical, b"code/old.cc\n", "code/old.cc")):
+        with prepared_compiler(prepared, source_roots(prepared, settings), source, settings,
+                               versioned_files={"BuildGraph.txt": graph}) as compiler:
+            assert compiler.units == frozenset([expected])
+            assert (compiler.root / expected).is_file()
+            assert (compiler.root / "BuildGraph.txt").read_bytes() == graph
+            missing = "code/old.cc" if expected == "code/owner.cc" else "code/owner.cc"
+            assert not (compiler.root / missing).exists()
+            assert (compiler.root / "recovery/generate.py").read_bytes() == (prepared / "recovery/generate.py").read_bytes()
+    assert working_state(prepared) == before
+
+
+def test_default_prepared_context_uses_current_explicit_graph(prepared):
+    settings = versioned(prepared)
+    with prepared_compiler(prepared, source_roots(prepared, settings), files(prepared), settings) as compiler:
+        assert compiler.units == frozenset(["code/owner.cc"])
+
+
+@pytest.mark.parametrize("graph", [b"code/missing.cc\n", b"code/owner.cc\ncode/owner.cc\n"])
+def test_missing_or_duplicate_recipe_sources_refuse(prepared, graph):
+    settings = versioned(prepared)
+    with pytest.raises(ValueError, match="canonical existing source|duplicate prepared"):
+        with prepared_compiler(prepared, source_roots(prepared, settings), files(prepared), settings,
+                               versioned_files={"BuildGraph.txt": graph}):
+            pytest.fail("invalid fresh recipe membership admitted")
+
+
+@pytest.mark.parametrize("values", [{}, {"BuildGraph.txt": b"code/owner.cc\n", "extra": b"extra"}])
+def test_preparation_does_not_fill_in_missing_or_extra_versioned_inputs(prepared, values):
+    settings = versioned(prepared)
+    with pytest.raises(ValueError, match="exactly their declared files"):
+        with prepared_compiler(prepared, source_roots(prepared, settings), files(prepared), settings, versioned_files=values):
+            pytest.fail("partial build graph substitution admitted")
+
+
+@pytest.mark.parametrize("location", ["graph", "database"])
+def test_prepared_membership_and_versioned_graph_are_freshly_guarded(prepared, location):
+    settings = versioned(prepared)
+    before = working_state(prepared)
+    with pytest.raises(ValueError, match="changed"):
+        with prepared_compiler(prepared, source_roots(prepared, settings), files(prepared), settings) as compiler:
+            name = "BuildGraph.txt" if location == "graph" else "build/commands.json"
+            (compiler.root / name).write_text("changed\n")
+            compiler.check_current()
+    assert working_state(prepared) == before
+
+
+def test_prepared_compiler_refuses_unlisted_source_before_invoking_compiler(prepared, monkeypatch):
+    import match_recovery.prepared_context as module
+    settings = versioned(prepared)
+    seen = []
+
+    class ControlledCompiler:
+        def __init__(self, root, **kwargs): self.root = root
+        def __call__(self, source, command, flags):
+            seen.append((source, command, flags))
+            return b"compiler protocol result"
+
+    monkeypatch.setattr(module, "Compiler", ControlledCompiler)
+    with prepared_compiler(prepared, source_roots(prepared, settings), files(prepared), settings) as compiler:
+        assert compiler(compiler.root / "code/owner.cc", arguments=("argument",), flags=("flag",)) == b"compiler protocol result"
+        with pytest.raises(ValueError, match="unique freshly prepared recipe"):
+            compiler(compiler.root / "code/model.h", (), ())
+        assert len(seen) == 1
+
+
+@pytest.mark.parametrize("damage", ["graph", "source", "database"])
+def test_compiler_cannot_return_output_from_mutated_prepared_context(prepared, monkeypatch, damage):
+    import match_recovery.prepared_context as module
+    settings = versioned(prepared)
+
+    class MutatingCompiler:
+        def __init__(self, root, **kwargs): self.root = root
+        def __call__(self, source, arguments, flags):
+            name = {"graph": "BuildGraph.txt", "source": "code/owner.cc", "database": "build/commands.json"}[damage]
+            (self.root / name).write_text("changed during compiler interaction\n")
+            return b"must not be usable output"
+
+    monkeypatch.setattr(module, "Compiler", MutatingCompiler)
+    before = working_state(prepared)
+    with pytest.raises(ValueError, match="changed"):
+        with prepared_compiler(prepared, source_roots(prepared, settings), files(prepared), settings) as compiler:
+            compiler(compiler.root / "code/owner.cc", (), ())
+            pytest.fail("mutated compiler output returned")
+    assert working_state(prepared) == before
+
+
+def test_aliased_generated_recipe_source_refuses(prepared):
+    settings = versioned(prepared)
+    script = prepared / "recovery/generate.py"
+    script.write_text(script.read_text().replace(
+        'units = (root / "BuildGraph.txt").read_text().splitlines()',
+        '(output / "alias.cc").symlink_to(root / "code/owner.cc"); units = [str(output / "alias.cc")]'))
+    settings = Measurement.read(prepared)
+    with pytest.raises(ValueError, match="canonical existing source"):
+        with prepared_compiler(prepared, source_roots(prepared, settings), files(prepared), settings):
+            pytest.fail("aliased recipe admitted")
+
+
+def test_nested_recipe_output_resolves_relative_inputs_against_build_directory(prepared):
+    policy_path = prepared / "recovery/prepare.json"
+    policy = json.loads(policy_path.read_text())
+    policy["outputs"][0]["path"] = "nested/compile_commands.json"
+    policy_path.write_text(json.dumps(policy))
+    (prepared / "recovery/generate.py").write_text('''import json,sys
+from pathlib import Path
+root, output = Path(sys.argv[1]), Path(sys.argv[2])
+(output / "nested").mkdir()
+(output / "generated.cc").write_text("int generated_value;\\n")
+(output / "nested/compile_commands.json").write_text(json.dumps([
+    {"directory": ".", "file": "generated.cc", "arguments": ["compiler", "generated.cc"]}
+]))
+''')
+    settings = Measurement.read(prepared)
+    with prepared_compiler(prepared, source_roots(prepared, settings), files(prepared), settings) as compiler:
+        generated = next((compiler.root / "build/preparation").glob("build-*/generated.cc"))
+        assert compiler.units == frozenset([generated.relative_to(compiler.root).as_posix()])
+        assert generated.is_file() and not (generated.parent / "nested/generated.cc").exists()

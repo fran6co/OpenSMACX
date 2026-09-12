@@ -1,7 +1,8 @@
 """Fresh baseline/current compiler evidence outside task-owned functions.
 
-The task's Git baseline is fixed. Current compiler policy is used on both source
-versions; this is not a recreation of historical binaries or a migration gate.
+The task's Git baseline is fixed. Current compiler interaction and measurement
+policy are used on both source versions. Explicit versioned build inputs may
+change generated recipes; this is not historical binary recreation or a migration gate.
 All reports are disposable. No claims, baselines or task decisions are rewritten.
 """
 
@@ -11,7 +12,7 @@ from dataclasses import asdict
 from pathlib import Path
 import re
 
-from .coff_preservation import compare_outside_functions
+from .coff_preservation import compare_outside_functions, compare_unit_presence
 from .coff_replica import object_signature
 from .compiler import Compiler
 from .component_source import parse_components
@@ -193,6 +194,25 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
         roots = replica_roots((*settings.source.roots, *settings.input_roots))
     current = {name: data for name, data in replica_snapshot(root, roots).items() if data is not None}
     baseline = revision_files(root, baseline_revision, roots)
+    # Build graph inputs are distinct from compiler implementation/policy. Only
+    # explicitly declared files travel with their historical source version.
+    versioned_inputs, build_inputs = (), {"baseline": {}, "current": {}}
+    if regenerated:
+        from .build_check import Build
+        versioned_inputs = Build.read(root, key="preparation").versioned_inputs
+        for name in versioned_inputs:
+            path = root / name
+            if not path.is_file() or path.resolve() != path:
+                raise ValueError("versioned build inputs must be canonical regular files")
+            build_inputs["current"][name] = path.read_bytes()
+        if versioned_inputs:
+            entries = _tree(root, baseline_revision, versioned_inputs)
+            for name in versioned_inputs:
+                entry = entries.get(name)
+                if entry is not None:
+                    if entry[:2] not in (("100644", "blob"), ("100755", "blob")):
+                        raise ValueError("historical versioned build input is not a regular file")
+                    build_inputs["baseline"][name] = git(root, "cat-file", "blob", entry[2])
     configuration_path = "recovery/project.json"
     tree = _tree(root, baseline_revision, (configuration_path,))
     if configuration_path in tree:
@@ -238,14 +258,15 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
     changed_files = sorted(name for name in baseline.keys() | current.keys() if baseline.get(name) != current.get(name))
     file_set_changes = sorted(baseline.keys() ^ current.keys())
     tree_mode = bool(file_set_changes)
-    # Full-tree protocol v5 handles historical header/seed file sets. A new or
-    # removed product TU still needs explicit build coverage and recipe mapping;
-    # do not infer that mapping from filenames or similar emitted symbols.
+    changed_units = sorted(set(file_set_changes) & all_units)
+    # Complete materialization alone cannot establish a missing-version recipe.
+    # Regenerated projects can supply explicit per-version source/recipe sets.
     unavailable = (file_set_changes if compiler is not None and tree_mode
                    and not callable(getattr(compiler, "materialize", None)) else
-                   sorted(set(file_set_changes) & all_units))
+                   changed_units if not regenerated else [])
     reports, controls, attempts = [], [], 0
     contexts, replicas = {}, ExitStack()
+    membership, preparation_error = {}, None
 
     def fresh():
         if (settings.snapshot(root, metadata) != before or store.read(task_name) != task
@@ -253,20 +274,24 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                 or changes(state, working_state(root))):
             raise ValueError("source, compiler inputs, task or Git state changed during preservation checking")
 
-    def compile(unit, flags, replacements=None):
+    def environment(files, version):
+        from .prepared_context import prepared_compiler
+        key = digest({"source": snapshot_digest(files), "build": snapshot_digest(build_inputs[version])})
+        if key not in contexts:
+            contexts[key] = replicas.enter_context(prepared_compiler(
+                root, roots, files, settings, versioned_files=build_inputs[version]))
+        return contexts[key]
+
+    def compile(unit, flags, replacements=None, *, version="current"):
         nonlocal compiler, attempts
         attempts += 1
         fresh()
         if compiler is None:
             compiler = Compiler(root, profile=settings.compiler_profile)
         if replacements is not None and regenerated:
-            from .prepared_context import prepared_compiler
             files = replacements if tree_mode else {**current, **replacements}
-            key = snapshot_digest(files)
-            if key not in contexts:
-                contexts[key] = replicas.enter_context(prepared_compiler(root, roots, files, settings))
-            environment = contexts[key]
-            value = environment(environment.root / unit, (), flags)
+            prepared = environment(files, version)
+            value = prepared(prepared.root / unit, (), flags)
         else:
             value = (compiler(root / unit, (), flags) if replacements is None else
                      compiler.materialize(root / unit, roots, replacements, (), flags) if tree_mode else
@@ -275,7 +300,22 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
         return Coff(value)
 
     try:
-        if not unavailable:
+        if regenerated:
+            try:
+                for version, files in (("baseline", baseline), ("current", current)):
+                    prepared = environment(files, version)
+                    expected = all_units & files.keys()
+                    # Do not intersect away generated/extra recipes: an added
+                    # build-only TU is still unmeasured program input.
+                    observed = prepared.units
+                    if observed != expected:
+                        raise ValueError(version + " prepared recipe membership differs from source TU coverage")
+                    membership[version] = sorted(observed)
+                fresh()
+            except (OSError, ValueError) as error:
+                unavailable = changed_units
+                preparation_error = str(error)
+        if not unavailable and preparation_error is None:
             old_overlay = baseline if tree_mode else {name: baseline[name] for name in changed_files}
             identity_overlay = current if tree_mode else {name: current[name] for name in changed_files}
             for flags in settings.flag_sets:
@@ -287,7 +327,7 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                 def version_compile(version, unit, replacements=None):
                     overlay = old_overlay if version == "baseline" else identity_overlay
                     return compile(unit, flags, {**overlay, **(replacements or {})} or
-                                   {unit: (baseline if version == "baseline" else current)[unit]})
+                                   {unit: (baseline if version == "baseline" else current)[unit]}, version=version)
 
                 def verified(version, unit):
                     key = version, unit
@@ -320,12 +360,14 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                     # Ordering is only a latency hint. The actual compiler must
                     # observe this file's unique diagnostic; path adjacency or a
                     # generic failed compile never satisfies the control.
-                    preferred = sorted(measured_units, key=lambda unit: (Path(unit).with_suffix("") != Path(name).with_suffix(""),
+                    control_version = "current" if name in current else "baseline"
+                    present_files = current if name in current else baseline
+                    preferred = sorted((unit for unit in measured_units if unit in present_files), key=lambda unit: (Path(unit).with_suffix("") != Path(name).with_suffix(""),
                                                                         not any(row["unit"] == unit for key in selected
                                                                                 for row in new_bindings.get(key, [])), unit))
                     for unit in preferred:
                         try:
-                            compile(unit, flags, damage)
+                            compile(unit, flags, damage, version=control_version)
                         except (OSError, ValueError) as error:
                             if marker in str(error):
                                 witnessed = unit
@@ -337,17 +379,40 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                     if witnessed is None:
                         control["result"] = Result.UNKNOWN
                 controls.append(control)
+                protected, protection_error = set(), None
+                if changed_units:
+                    # A new TU cannot hide a formerly unbound/outside definition
+                    # by annotating it at a different path. Observe the complete
+                    # baseline's emitted names, not just source annotations.
+                    try:
+                        for unit in sorted(all_units & baseline.keys()):
+                            obj = verified("baseline", unit)
+                            allowed, _ = _unit_scope(old_bindings, selected, unit)
+                            protected.update(s.name for s in obj.symbols.values()
+                                             if s.section > 0 and s.name not in allowed)
+                    except (OSError, ValueError) as error:
+                        protection_error = str(error)
                 for unit in measured_units:
                     row = {"unit": unit, "flags": list(flags), "result": Result.UNKNOWN}
                     try:
-                        original = compile(unit, flags)
+                        if unit in changed_units and protection_error:
+                            raise ValueError("complete baseline definition coverage unavailable: " + protection_error)
+                        original = compile(unit, flags) if unit in current else None
                         # Always exercise the overlay path, including no-op
                         # tasks. Each TU gets a positive current replica control.
-                        same = compile(unit, flags, identity_overlay or {unit: current[unit]})
-                        if object_signature(original) != object_signature(same):
-                            raise ValueError("current replica does not agree with direct compilation")
-                        verified_objects["current", unit] = original
-                        prior = compile(unit, flags, old_overlay) if old_overlay else same
+                        if original is not None:
+                            same = compile(unit, flags, identity_overlay or {unit: current[unit]})
+                            if object_signature(original) != object_signature(same):
+                                raise ValueError("current replica does not agree with direct compilation")
+                            verified_objects["current", unit] = original
+                        prior = None
+                        if unit in baseline:
+                            if changed_units:
+                                prior = verified("baseline", unit)
+                            elif old_overlay or build_inputs["baseline"] != build_inputs["current"]:
+                                prior = compile(unit, flags, old_overlay, version="baseline")
+                            else:
+                                prior = same
                         old_allowed, old_outside = _unit_scope(old_bindings, selected, unit)
                         new_allowed, new_outside = _unit_scope(new_bindings, selected, unit)
                         from .inline_ownership import observe_copies
@@ -355,6 +420,8 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                         for version, obj, bindings, files, allowed in (
                                 ("baseline", prior, old_bindings, baseline, old_allowed),
                                 ("current", original, new_bindings, current, new_allowed)):
+                            if obj is None:
+                                continue
                             copies, evidence = observe_copies(
                                 obj, unit, bindings, selected, editable, files, settings,
                                 lambda owner, version=version: verified(version, owner),
@@ -364,8 +431,16 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                             inline_reports.extend({"version": version, **item} for item in evidence)
                         if inline_reports:
                             row["inline_ownership"] = inline_reports
-                        comparison = compare_outside_functions(prior, original, old_allowed, new_allowed,
-                                                               baseline_outside=old_outside, current_outside=new_outside)
+                        if prior is None or original is None:
+                            comparison = compare_unit_presence(
+                                prior if original is None else original,
+                                old_allowed if original is None else new_allowed,
+                                present="baseline" if original is None else "current",
+                                outside=old_outside if original is None else new_outside,
+                                protected=protected if prior is None else frozenset())
+                        else:
+                            comparison = compare_outside_functions(prior, original, old_allowed, new_allowed,
+                                                                   baseline_outside=old_outside, current_outside=new_outside)
                         _explain_sources(comparison, old_sources, new_sources)
                         row.update(comparison, replica=Result.PASS)
                         row["compiled_comparison"] = comparison["result"]
@@ -384,7 +459,7 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
             fresh()
     unmeasured = sorted(all_units - set(measured_units))
     counts = Counter(row["result"] for row in reports)
-    result = (Result.UNKNOWN if diagnostic or unavailable or unmeasured or counts[Result.UNKNOWN] or not reports else
+    result = (Result.UNKNOWN if diagnostic or unavailable or preparation_error or unmeasured or counts[Result.UNKNOWN] or not reports else
               Result.FAIL if binding_changes or annotation_changes or counts[Result.FAIL] else Result.PASS)
     return {"task_id": task_name, "check": "baseline_current_compiled_residuals", "result": result,
             "base_revision": baseline_revision,
@@ -392,6 +467,11 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
             "head": head, "changed_files": changed_files,
             "outside_binding_changes": binding_changes, "file_set_changes": file_set_changes,
             "unsupported_file_set_changes": unavailable,
+            "preparation_error": preparation_error,
+            "recipe_membership": membership,
+            "versioned_build_inputs": list(versioned_inputs),
+            "changed_build_inputs": sorted(name for name in versioned_inputs
+                                           if build_inputs["baseline"].get(name) != build_inputs["current"].get(name)),
             "materialization": "fresh-prepared-project" if regenerated else "complete-tree-v5" if tree_mode else "existing-file-v4",
             "prepared_contexts": len(contexts),
             "outside_annotation_changes": annotation_changes,
@@ -401,11 +481,13 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
             "input_fingerprint": digest(before), "persisted": False, "ready_for_collection": False,
             "scope_complete": False, "outside_scope_verification": Result.UNKNOWN,
             "limitations": ["compiled residuals only; no original-byte, full-link, runtime or lifecycle proof",
-                            "same current compiler policy on both source versions, not historical artifact recreation",
+                            "current compiler interaction and measurement policy on both versions; explicit versioned build inputs may change recipes, not historical artifact recreation",
                             "configured preparation regenerates each private source context; current replicas must agree with direct output",
                             "only source-mapped function COMDAT ownership may vary; independent data/tables stay protected",
                             "header copies require an authorized explicit body path, canonical replica and per-version/flag body-damage witnesses; exports and outside callers remain protected",
-                            "source/configuration roots must agree; added/deleted product TUs require explicit historical recipe/coverage mapping",
+                            "source interpretation must agree; added/deleted TUs require fresh per-version source/recipe coverage and strict present-object residual checks",
+                            "only explicitly declared versioned build inputs are substituted; compiler policy stays current, and build inputs are not compiler #error controls",
+                            "absence has no fabricated compiler object; retained types, directives, empty section metadata and unowned symbols remain conservative differences",
                             "changed non-TU file sets require compiler protocol v5; unobserved seed/header substitutions remain unknown",
                             "symbol-to-source matches are annotation navigation hints, not ownership proof or scope authorization",
                             "diagnostic mode omits per-file damage controls and can never establish preservation",

@@ -33,6 +33,7 @@ class Build:
     inputs: tuple[str, ...]
     input_roots: tuple[str, ...]
     environment: tuple[str, ...]
+    versioned_inputs: tuple[str, ...] = ()
 
     @classmethod
     def read(cls, root, *, key="build"):
@@ -40,7 +41,8 @@ class Build:
         path = relative_path(project.get(key))
         value = read_json(root / path)
         fields = {"schema_version", "artifacts", "commands", "outputs", "inputs", "input_roots", "environment"}
-        if (set(value) != fields or type(value["schema_version"]) is not int or value["schema_version"] != 1):
+        if (not fields <= set(value) or set(value) - fields - {"versioned_inputs"}
+                or type(value["schema_version"]) is not int or value["schema_version"] != 1):
             raise ValueError("invalid build configuration")
         for name in ("commands", "outputs", "inputs", "input_roots", "environment"):
             if not isinstance(value[name], list):
@@ -59,6 +61,18 @@ class Build:
             raise ValueError("duplicate build output")
         roots = tuple(relative_path(name) for name in value["input_roots"])
         inputs = tuple(relative_path(name) for name in value["inputs"])
+        versioned = value.get("versioned_inputs", [])
+        if not isinstance(versioned, list):
+            raise ValueError("build versioned_inputs must be an array")
+        versioned = tuple(relative_path(name) for name in versioned)
+        if len(set(versioned)) != len(versioned):
+            raise ValueError("duplicate versioned build input")
+        for name in versioned:
+            if (name in ("recovery/project.json", path)
+                    or any(Path(name).is_relative_to(other) or Path(other).is_relative_to(name)
+                           for other in (*roots, value["artifacts"], *(item for item in versioned if item != name)))):
+                raise ValueError("versioned build inputs must be separate files outside policy, source and artifact roots")
+        inputs = (*inputs, *(name for name in versioned if name not in inputs))
         if any(not isinstance(name, str) or not re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*", name)
                for name in value["environment"]):
             raise ValueError("invalid build environment name")
@@ -69,7 +83,7 @@ class Build:
         if any(not isinstance(name, str) or not re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*", name) for name in environment):
             raise ValueError("invalid build environment name")
         return cls(path, relative_path(value["artifacts"]), commands, tuple(outputs), inputs, roots,
-                   tuple(sorted(environment)))
+                   tuple(sorted(environment)), versioned)
 
     def snapshot(self, root):
         files = {"recovery/project.json", self.path, *self.inputs}
@@ -91,6 +105,9 @@ class Build:
                     raise ValueError(f"nonregular build input: {relative}")
         for name in files:
             path = root / name
+            if name in self.versioned_inputs and (path.resolve() != path or not path.is_file()
+                                                  or path.stat().st_nlink != 1):
+                raise ValueError(f"versioned build input must be a canonical unaliased regular file: {name}")
             if (not path.is_file() or not path.resolve().is_relative_to(root)
                     or any(parent.is_symlink() for parent in path.parents
                                          if parent.is_relative_to(root))):

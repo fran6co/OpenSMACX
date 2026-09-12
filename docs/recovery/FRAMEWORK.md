@@ -47,7 +47,10 @@ protocol, preserving absent/new files without mutating the current checkout.
 Preservation reports now expose exact symbol/reference differences and source
 navigation hints. Selected-TU diagnostic mode avoids the full damage-control sweep
 but always remains unverified; it is investigation, not migration admission.
-Full structure, historical product-TU recipe mapping, full-link outside-scope admission
+Explicitly versioned build inputs and fresh per-version recipe inventories now
+support conservative added/removed-TU residual checks without synthetic historical
+objects. Live project preservation through that route is still unverified.
+Full structure, historical compiler recreation, full-link outside-scope admission
 and an OpenSMACX live recovery pilot remain unfinished. A bounded, test-owned live
 worker/reviewer/native-acceptance control is now verified as described below.
 

@@ -1044,8 +1044,12 @@ It does not yet supply the full `outside_scope` admission result. The current
 compiler policy is used for both source versions; full link/runtime/lifetime and
 historical build reconstruction are separate work. Compiler v5 now materializes
 added/deleted/renamed headers and seeds without leaving newer headers visible in
-the old tree. Changed product-TU file sets still require explicit recipe/coverage
-mapping. Unobserved seed inputs remain unknown, not silently excluded. The existing
+the old tree. The package now supports changed product-TU coverage through fresh
+per-version preparation and explicitly versioned build inputs (`CMakeLists.txt`
+in this checkout's `recovery/prepare.json`); strict residual
+checks still retain unowned code, types, storage and linker metadata. This route
+has not yet established preservation for the live OpenSMACX candidate. Unobserved
+seed inputs remain unknown, not silently excluded. The existing
 InfoWin task has historical seed and annotation changes; materialization alone
 does not discharge its preservation or restoration requirements. Use the report to
 identify coverage and collateral changes; do not configure it as a complete

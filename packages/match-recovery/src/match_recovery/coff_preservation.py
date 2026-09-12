@@ -78,6 +78,36 @@ def compare_outside_functions(baseline, current, baseline_scope, current_scope, 
                 if name in defined_before and name not in baseline_scope}
     old, old_scope = _residual(baseline, baseline_scope, baseline_outside)
     new, new_scope = _residual(current, current_scope, current_outside, retained=retained.keys())
+    return _compare_residuals(old, new, old_scope, new_scope, retained)
+
+
+def compare_unit_presence(obj, scope, *, present, outside=frozenset(), protected=frozenset()):
+    """Report a present TU's residual against explicitly established absence.
+
+    The caller must independently establish source AND fresh recipe membership
+    in both versions, compile the present version, and verify its replica. This
+    function supplies none of those prerequisites: it never fabricates or
+    compiles an empty historical TU. Every retained section/symbol is a real
+    difference, including directives, types, empty section metadata and implicit
+    linker requirements. No guessed compiler scaffolding is waived.
+
+    For an added unit, protected names are definitions from the complete
+    baseline that lacked task ownership. Moving/duplicating such a definition
+    into a newly annotated TU must not waive its historical preservation.
+    """
+    if present not in ("baseline", "current"):
+        raise ValueError("unit presence requires baseline or current")
+    retained = {name: entity for name, entity in scope.items() if name in protected}
+    value, found = _residual(obj, scope, outside, retained=retained.keys())
+    absent = {"sections": [], "symbols": [], "associations": []}
+    old, new = (value, absent) if present == "baseline" else (absent, value)
+    old_scope, new_scope = (found, {}) if present == "baseline" else ({}, found)
+    report = _compare_residuals(old, new, old_scope, new_scope, retained)
+    report["unit_presence"] = {"baseline": present == "baseline", "current": present == "current"}
+    return report
+
+
+def _compare_residuals(old, new, old_scope, new_scope, retained):
     changed_sections = []
     old_sections = {row[0]: row for row in old["sections"]}
     new_sections = {row[0]: row for row in new["sections"]}

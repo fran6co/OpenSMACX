@@ -198,3 +198,37 @@ def test_summary_keeps_command_failures_and_artifact_status(project, capsys):
     output = json.loads(capsys.readouterr().out)
     assert output["commands"][0]["exit_code"] == 0
     assert "stdout" not in output["commands"][0] and "stderr" not in output["commands"][0]
+
+
+def test_versioned_build_inputs_are_explicit_and_automatically_pinned(project):
+    graph = project / "BuildGraph.txt"
+    graph.write_text("code/main.c\n")
+    assert Build.read(project).versioned_inputs == ()
+    write_config(project, versioned_inputs=["BuildGraph.txt"])
+    settings = Build.read(project)
+    assert settings.versioned_inputs == ("BuildGraph.txt",)
+    assert "BuildGraph.txt" in settings.inputs
+    before = settings.snapshot(project)
+    graph.write_text("code/other.c\n")
+    assert settings.snapshot(project) != before
+
+
+@pytest.mark.parametrize("names", ["BuildGraph.txt", ["BuildGraph.txt", "BuildGraph.txt"],
+                                   ["../outside"], ["code/graph"], ["build/checks/graph"],
+                                   ["recovery/project.json"], ["recovery/build.json"],
+                                   ["graph", "graph/child"]])
+def test_invalid_versioned_build_input_boundaries_refuse(project, names):
+    write_config(project, versioned_inputs=names)
+    with pytest.raises(ValueError):
+        Build.read(project)
+
+
+@pytest.mark.parametrize("kind", ["missing", "symlink", "hardlink"])
+def test_versioned_build_inputs_require_existing_unaliased_files(project, kind):
+    import os
+    graph = project / "BuildGraph.txt"
+    if kind == "symlink": graph.symlink_to("code/main.c")
+    elif kind == "hardlink": os.link(project / "code/main.c", graph)
+    write_config(project, versioned_inputs=["BuildGraph.txt"])
+    with pytest.raises(ValueError, match="versioned build input"):
+        Build.read(project).snapshot(project)

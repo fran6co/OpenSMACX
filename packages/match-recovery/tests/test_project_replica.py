@@ -90,3 +90,53 @@ def test_git_path_override_is_refused(project, monkeypatch, variable):
     with pytest.raises(ValueError, match="Git path overrides"):
         with project_replica(project, ("code",), files(project)):
             pytest.fail("shared index override accepted")
+
+
+def test_explicit_versioned_graph_bytes_are_separate_from_source_tree_and_current_policy(project):
+    graph = project / "BuildGraph.txt"
+    graph.write_bytes(b"current unit list\n")
+    before = working_state(project)
+    policy = (project / "recovery/project.json").read_bytes()
+    with project_replica(project, ("code",), files(project), inputs=("BuildGraph.txt",),
+                         versioned_inputs=("BuildGraph.txt",),
+                         versioned_files={"BuildGraph.txt": b"historical unit list\n"}) as replica:
+        assert (replica / "BuildGraph.txt").read_bytes() == b"historical unit list\n"
+        assert (replica / "recovery/project.json").read_bytes() == policy
+        assert graph.read_bytes() == b"current unit list\n"
+    assert working_state(project) == before
+
+
+@pytest.mark.parametrize("damage", ["missing", "extra", "not_bytes", "source_overlap", "nested", "policy",
+                                     "symlink", "hardlink", "missing_current", "artifact_overlap"])
+def test_versioned_project_inputs_refuse_ambiguous_or_unavailable_substitution(project, damage):
+    graph = project / "BuildGraph.txt"
+    graph.write_bytes(b"current\n")
+    names, replacements = ("BuildGraph.txt",), {"BuildGraph.txt": b"historical\n"}
+    if damage == "missing": replacements = {}
+    elif damage == "extra": replacements["extra.txt"] = b"extra"
+    elif damage == "not_bytes": replacements["BuildGraph.txt"] = "not bytes"
+    elif damage == "source_overlap": names, replacements = ("code/model.h",), {"code/model.h": b"old"}
+    elif damage == "nested": names = ("BuildGraph.txt", "BuildGraph.txt/child"); replacements[names[-1]] = b"old"
+    elif damage == "policy": names, replacements = ("recovery/project.json",), {"recovery/project.json": b"{}"}
+    elif damage == "artifact_overlap":
+        names, replacements = ("build/recovery/preservation/graph",), {"build/recovery/preservation/graph": b"old"}
+    elif damage == "symlink": graph.unlink(); graph.symlink_to("code/model.h")
+    elif damage == "hardlink": graph.unlink(); os.link(project / "code/model.h", graph)
+    elif damage == "missing_current": graph.unlink()
+    before = working_state(project)
+    with pytest.raises(ValueError):
+        with project_replica(project, ("code",), files(project), versioned_inputs=names, versioned_files=replacements):
+            pytest.fail("unsafe versioned input admitted")
+    assert working_state(project) == before
+
+
+@pytest.mark.parametrize("location", ["original", "private"])
+def test_versioned_input_mutations_refuse_without_overwriting_original_edits(project, location):
+    graph = project / "BuildGraph.txt"
+    graph.write_bytes(b"current\n")
+    with pytest.raises(ValueError, match="changed"):
+        with project_replica(project, ("code",), files(project), versioned_inputs=("BuildGraph.txt",),
+                             versioned_files={"BuildGraph.txt": b"historical\n"}) as replica:
+            target = graph if location == "original" else replica / "BuildGraph.txt"
+            target.write_bytes(b"preserve mutation\n")
+    assert graph.read_bytes() == (b"preserve mutation\n" if location == "original" else b"current\n")

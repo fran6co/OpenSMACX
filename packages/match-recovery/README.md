@@ -2144,7 +2144,8 @@ cannot be waived by a matching-regression permission.
 `tasks check-preservation <task> [--unit path ...] [--summary]` adds native
 baseline/current compiled preservation evidence, without a project checker script
 or another ledger. It reads the task's immutable Git baseline and uses the same
-current measurement/compiler policy on both source versions. Every configured
+current measurement/compiler interaction on both source versions (explicit
+versioned build inputs may change generated recipes). Every configured
 non-seed TU is included by default, even units with no function annotations and
 dependency units. A diagnostic unit subset leaves the overall result unknown.
 No original executable argument is needed: this comparison does not claim that
@@ -2197,6 +2198,28 @@ task decisions, compiler policy and Git state are rechecked; no source, claim or
 baseline is edited. Temporary copies are disposed through the same compiler overlay
 path as candidate decks.
 
+Prepared projects can declare optional `versioned_inputs` in their preparation
+configuration, for example `"versioned_inputs": ["CMakeLists.txt"]`. These exact
+regular files are also fingerprinted build inputs. Their committed baseline bytes
+travel with baseline source; all undeclared compiler/provider implementation and
+policy remains current. Files must exist in both versions, outside source and
+artifact roots. No historical compiler command is inferred from a filename.
+
+Added/removed production TUs require independently regenerated recipe inventories
+that agree with each version's complete source coverage. Duplicate, missing or
+aliased recipes refuse. A missing TU is an explicit absence, never an empty
+synthetic object or a failed-compile inference. The present version needs fresh
+compilation and replica controls; its strict non-scoped residual is compared with
+absence. Types, directives, empty section metadata, private helpers, storage and
+implicit linker requirements are not guessed away as harmless scaffolding. This
+can conservatively fail a legitimate TU split; it is not full-link equivalence.
+The complete baseline's emitted unowned names remain protected when a new TU adds
+an annotation. Compiler `#error` controls run only against units present in the
+relevant source version. Versioned build files use fresh generation/fingerprints,
+not a claim that a C++ compiler observed their contents. Reports list changed
+build inputs, recipe membership and preparation failures separately. Compiler
+materialization without configured fresh preparation still cannot prove TU absence.
+
 For inexpensive investigation before the full sweep, run `recover tasks
 check-preservation <task> --unit code/model.cc --diagnostic --summary`. This
 compiles the selected current TU directly, checks its unchanged replica, and
@@ -2221,8 +2244,9 @@ Numeric COFF exception labels in explicitly associative sections are compared by
 their owner, section, exact offset, type and storage, not their compiler-assigned
 decimal spelling. Only the supported `$L` label and `$T` static forms without
 auxiliary records use this normalization. Relocation sites, kinds, addend bytes,
-target locations, contents and ownership remain protected. Duplicate normalized
-locations and raw symbols impersonating the internal identity refuse comparison.
+target locations, contents and ownership remain protected. Distinct numeric labels
+at one location retain every exact spelling and edge instead of being merged.
+Duplicate raw labels and symbols impersonating the internal identity still refuse.
 Numeric `$L` code labels in a non-associative root also qualify when one external
 function at offset zero exclusively owns that code COMDAT. All other symbol tuples
 remain part of the section identity; an owner name alone never replaces them.
