@@ -68,8 +68,8 @@ class Time {
                  uint32_t res);
   uint32_t start();
   uint32_t pulse();
-  // IN-CLASS so `close` and `~Time` inline them, which is what the image
-  // does: the destructor is the whole teardown, not a call to it.
+  // Visible to the lifecycle TU: both close and the destructor contain
+  // the original stop logic, while unrelated TUs call close out of line.
   MEASURED void stop() {         // 00616730
     // HOISTED, as the image has it: the flush test is read BEFORE the
     // kill block, not after.
@@ -86,20 +86,7 @@ class Time {
       flush_timer();
     }
   }
-  MEASURED void close() {        // 00616780
-    // IMAGE ORDER: oneshot_state_ after callback1_, resolution_ before
-    // tick_posted_.
-    stop();
-    callback1_ = 0;
-    oneshot_state_ = 0;
-    callback2_ = 0;
-    cb_param2_ = 0;
-    cb_param1_ = 0;
-    count_ = 0;
-    resolution_ = 5;
-    tick_posted_ = 0;
-    unk_2_ = 0;
-  }
+  void close(); // 00616780; implementation owned by time_lifecycle.cpp
   void set_modal();     // 00616860
   void release_modal(); // 00616870
 
@@ -120,6 +107,9 @@ class Time {
   static void __cdecl close_class(); // 00616890
 
  private:
+  // Shared by close and destruction; defined only in the lifecycle TU.
+  inline void close_impl();
+
   // ONE-SHOT EMULATION FOR THE `SetTimer` PATH, and nothing more general
   // than that. `timeSetEvent` has `TIME_ONESHOT` and `TIME_PERIODIC` and
   // picks between them directly; `SetTimer` has no one-shot mode at all, so
@@ -198,18 +188,9 @@ void __cdecl flush_timer();
 // MapWin::on_lose_mouse_capture (0x0046EB90) is a 5-byte tail `jmp` into it.
 void __cdecl go_reset();
 
-// OUT-OF-LINE forwarder over Time::close, defined in flatbutton.cpp. The
-// image CALLS Time::close from stop_timers (0x50F440) and EXPANDS it in the
-// two bodies that inline stop_timers (system_init 0x58F040, game_reload
-// 0x58F450). No single declaration of close() gives both - see the LEVER
-// note under 0x0050F440 in time.cpp - so stop_timers reaches it through a
-// real function the compiler cannot see into, which is the same
-// `sleep_call`/`base_cost_call`/`has_tech_call` idiom used across the tree.
-void __fastcall time_close_call(Time *timer);
-
 MEASURED inline void __cdecl stop_timers() {
-    time_close_call(&Blink2Timer);
-    time_close_call(&BlinkTimer);
-    time_close_call(&LineTimer);
+    Blink2Timer.close();
+    BlinkTimer.close();
+    LineTimer.close();
     // missing MP TurnTimer. TODO: In future determine if timer should be closed on stop
 }

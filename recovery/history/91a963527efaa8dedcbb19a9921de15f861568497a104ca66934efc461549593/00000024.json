@@ -1,0 +1,19 @@
+{
+  "event_id": "17b6633c007ca4221445149af00bf1455cc97ae7c4b632909aedc863606dffc5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json"
+    ],
+    "evidence": [
+      "Authorize only downward audit-ceiling maintenance for measured cleanup in this retained recovery: original vtable-slot dispatch 29 to 28, raw self-access 199 to 198, orphan redirect 194 to 193, and prior retained leaf marker cleanup 52 to 51. Keep all detector rules, exclusions, baselines, claims and acceptance policy unchanged. This is coordinator maintenance, not a worker gate waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "64ac0aed1602d7e95e7145d6df2c015a6a6e13832ad75d49ca59be2684ef21f5",
+  "request_id": "list-hook-audit-lowerings",
+  "schema_version": 1,
+  "sequence": 24,
+  "stream": "task:control-sprite-defaults"
+}

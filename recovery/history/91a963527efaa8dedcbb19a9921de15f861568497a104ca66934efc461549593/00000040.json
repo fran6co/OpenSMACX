@@ -1,0 +1,21 @@
+{
+  "event_id": "2728f22dc427d0729453710fa7c2bc6faceda24d89d378905d1ac8c6d6d5dd58",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/dialog.cpp",
+      "src/stringstruct.cpp",
+      "src/stringstruct.h"
+    ],
+    "evidence": [
+      "Current VC6 COFF proves qualified explicit StringList destruction invokes only the base-stage entry and omits virtual-base cleanup; original406820 owns both stages. Existing Dialog and BasePop TUs naturally emit ??_DStringList@@QAEXXZ with both direct destructor targets. No product StringList::destroy callers exist. Authorize retirement of the unused handwritten wrapper/declaration and source-writer move of intact original406820 identity/history to a FILE mapping of natural complete destructor in dialog.cpp. No fake emission/export, manual base destruction, dropped history, new byte claim or acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "77e3052ca6b1262e9da8d1dd7c7e48400ffe6f10a4d4310addda7879abdd2860",
+  "request_id": "stringlist-generated-complete-entry",
+  "schema_version": 1,
+  "sequence": 40,
+  "stream": "task:control-sprite-defaults"
+}

@@ -55,6 +55,12 @@ extern Sprite g_CHECKBOX_SPRITE_2;
 // not a repeat of this edit.
 class CheckBox : public virtual GraphicWin, public virtual Dialog {
  public:
+  // Seed identity: ?draw_item@CheckBox@@QAEXHHH@Z at 0x0060F030.
+  // The second explicit argument is the checked-state value. The third
+  // explicit argument is retained for the original ABI; its use is unknown.
+  void draw_item(int position, int state, int);
+
+ public:
   // 0x0060FAB0, a pending_bodies forwarder.
   void on_redraw();
 

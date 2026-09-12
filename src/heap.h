@@ -35,6 +35,9 @@ class Heap {
   // in heap.cpp each site emits the one call the image makes.
   ~Heap();  // 005D4580
 
+  // Dialog::close calls the cleanup body at 005D4580 while retaining its
+  // embedded Heap for later initialization. A reset does not end its lifetime.
+  void reset();
   void shutdown();
   void squeeze(int UNUSED(toggle) toggle);
   BOOL init(size_t req_size);

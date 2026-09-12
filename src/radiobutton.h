@@ -32,6 +32,12 @@ extern Sprite g_RADIOBUTTON_SPRITE_2;
 // or hand-installed table fields belong in the declaration.
 class RadioButton : public virtual GraphicWin, public virtual Dialog {
  public:
+  // Seed identity: ?draw_item@RadioButton@@QAEXHH@Z at 0x0060D750.
+  // The second explicit argument is both the selected-state value and the
+  // focus/current-row state used by the original draw path.
+  void draw_item(int position, int state);
+
+ public:
   // 0x0060E220, a pending_bodies forwarder.
   void on_redraw();
 

@@ -1,0 +1,25 @@
+{
+  "event_id": "44100b8f994dee35f35ef59f7a69cfb6e4c73ff3ad26b9c21f295a9520703fac",
+  "payload": {
+    "affects": [
+      "entity-b3c9b1a959cafb4c8d3719a004718802d52bb5174aa18c0bd3ecf49f9db48dfb",
+      "entity-fa2d5b1e0b4875cf51af1add3ecc7de2bb9f518b4b6b4ae5db4e268172fb6070"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-9179d4f271b1411aba274a041728fbd8",
+    "evidence": [
+      "Implemented CheckBox::draw_item and RadioButton::draw_item in their authorized product translation units using real virtual bases, Dialog item-list members, Buffer copy/drawing APIs, and Sprite pointer members.",
+      "Original CheckBox 0x0060F3DE reads the second explicit argument and selects checked_sprite_ for nonzero and unchecked_sprite_ for zero; the CheckBox implementation preserves that dataflow.",
+      "Original callers pass the CheckBox state as the second argument and focus/current-row mode as the third; RadioButton's original post-draw focus branch uses its state argument.",
+      "Added only minimal friend/declaration interfaces in authorized headers to access the evidence-backed Sprite and Dialog members without raw self-offset access.",
+      "Post-edit native verification remains unknown: the configured VC6 compilation attempts failed without diagnostics, and direct compilation reported 'Failed to create stream fd'. The new seed identities remain unbound and require coordinator binding plus fresh verification."
+    ],
+    "hypothesis": "The selected CheckBox and RadioButton draw paths now have evidence-backed real-member implementations with corrected sprite-state selection, but promotion and acceptance must wait for coordinator seed binding and successful native compiler verification.",
+    "kind": "discovery"
+  },
+  "previous_event": "cff132b16771760dbfba868155f680ad0f4adeb6dbe617b8b8d0f5efb3a71931",
+  "request_id": "worker-9179d4f271b1411aba274a041728fbd8",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:control-sprite-defaults"
+}

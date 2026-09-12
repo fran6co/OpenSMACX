@@ -1,0 +1,54 @@
+{
+  "event_id": "c7cb16cf132c4316385dde0fe74516156980c9108251e81bafd59479694119ef",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/stringlist_hooks_harness.cpp",
+      "recovery/tests/test_stringlist_recovery.py",
+      "src/basepop.cpp",
+      "src/dialog.cpp"
+    ],
+    "evidence": [
+      "Authorize the bounded virtual-hook step of control-close-list-lifecycle: replace StringStruct unk_slot00 with real insertion/removal methods and recover StringList overrides from retained 6086F0/608770 seeds. Original 401100 constructs a 0x18 payload with virtual allocation base at +0x10 and invokes primary slot0; 402970 invokes slot1 with the payload. Do not copy table words or delete old claims/seeds.",
+      "Type StringStruct allocator at +0x18 as Heap* and StringList pending text at +0x1C as char*. Permit only the coupled stores in Dialog::item 609990, BasePop::string 601980 and BasePop::button 6019F0, preserving metadata and caller behavior. New tests must exercise actual recovered bodies, virtual dispatch, null input, allocation failure and heap ownership. Existing authorized stringstruct source/header permissions remain. This grants no broader Dialog teardown, scope waiver, baseline reset, claim demotion or acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6326000,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6326128,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4204912,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6330768,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6298096,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6297984,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "f5fe0dbda0a44acd9b4f9ad8803d1a98fa353b908f8bbed10fd60edc6818b61b",
+  "request_id": "control-string-list-hooks",
+  "schema_version": 1,
+  "sequence": 21,
+  "stream": "task:control-sprite-defaults"
+}

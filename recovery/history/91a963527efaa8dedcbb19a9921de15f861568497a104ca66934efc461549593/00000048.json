@@ -1,0 +1,22 @@
+{
+  "event_id": "9e53f4d14b5b97a1b63851cfede2151a5696f10bc7beb778db536ed01b738508",
+  "payload": {
+    "affects": [
+      "entity-bbabe79f2077fc71579381a53b7b18de8b0bb1b1ec9f2461bff13a64006d35c8",
+      "entity-d4b0e6d473bfc83afd419719e0ba5b550bd727c060ada16fa4a3c63d9f7b005d"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "listbox-original-default-alias",
+    "evidence": [
+      "Fresh control-globals-binary.json ListBox close reports missing original absolute relocations at46,64,73,82 despite matching bytes. Header ListBoxCloseStaticDefaults is a uint32_t pointer constant to6970E0.",
+      "Pinned original609F4C/609F5E/609F67/609F70 independently read four DWORDs at6970E0/E4/E8/EC into fields24/2C/10/14. Initial values247,2,FFFFFFFF,FFFFFFFF."
+    ],
+    "hypothesis": "ListBox construction/close still read four initial defaults through a fixed executable pointer in listbox.h; masked matching conceals missing relocations. They need actual mutable source storage.",
+    "kind": "discovery"
+  },
+  "previous_event": "57e75550da54384621e228a4de2bfd3f9090b3499a9860895e452a76137f3824",
+  "request_id": "listbox-original-default-alias",
+  "schema_version": 1,
+  "sequence": 48,
+  "stream": "task:control-sprite-defaults"
+}

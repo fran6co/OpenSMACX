@@ -1,0 +1,26 @@
+{
+  "event_id": "a30631ad98b4c060f5e668d4a836e0e5b05201746f499c450d8ffab52823cb88",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/flatbutton.cpp",
+      "src/flatbutton.h"
+    ],
+    "evidence": [
+      "Independent closure review found FlatButton implicit BaseButton construction followed by BaseButton::construct placement-new: two member/base chains and overwritten derived table identity. Pinned607CF4 calls606F30 once before FlatButton table installs607CFB/607D01. Authorize removing the explicit reconstruction and replacing ctor raw-self writes with existing named members and three evidence-bounded arrays atABC,AC8,AD4, each3dwords from the original index loop. Verify actual ctor call count, layout/default publication and inherited lifetime once; retain all claims and seed notes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6323440,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "79fdbcf09f72ede648676e55f452200b4739d1b7f58bc1a59b5587f016e570af",
+  "request_id": "filewin-flatbutton-lifetime-closure",
+  "schema_version": 1,
+  "sequence": 37,
+  "stream": "task:control-sprite-defaults"
+}

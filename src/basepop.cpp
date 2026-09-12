@@ -2396,7 +2396,7 @@ int BasePop::string(char *text) {
     // THE POPUP'S COLOUR-PREFIXED STRING SLOT. `^` opens a colour escape and
     // the byte run that follows says which: one `^` and a code is colour
     // `count` 1, `^^x` is 2, `^^` alone is 3. The parsed pair lands in
-    // unit_ids_'s three own fields (StringList field_1C_/field_20_/field_24_,
+    // unit_ids_'s three own fields (StringList pending_text_/field_20_/field_24_,
     // 0x219c/0x21a0/0x21a4) and the entry is appended with id 0.
     int count = 0;
     if (text == 0) {
@@ -2427,7 +2427,7 @@ int BasePop::string(char *text) {
     //         earn that shared increment - 3 of 38, the shared increment goes
     //         with the separate variable.
     StringList *list = &unit_ids_;
-    list->field_1C_ = reinterpret_cast<uint32_t>(str);
+    list->pending_text_ = str;
     list->field_20_ = count;
     list->field_24_ = 0;
     return list->add(0) != 0;
@@ -2923,7 +2923,7 @@ int BasePop::button(char *text) {
     // the null test, the two stores and the push. Member access folds the
     // offset into each store and needs a second zero register instead.
     StringList *list = &item_ids_;
-    list->field_1C_ = reinterpret_cast<uint32_t>(text);
+    list->pending_text_ = text;
     list->field_20_ = 0;
     list->field_24_ = 0;
     if (list->add(0) != 0) {
@@ -3433,7 +3433,7 @@ int BasePop::start(char *text_file, const char *text_label, int value,
                         text = tok + 1;
                     }
                 }
-                unit_ids_.field_1C_ = reinterpret_cast<uint32_t>(text);
+                unit_ids_.pending_text_ = text;
                 unit_ids_.field_20_ = marks;
                 unit_ids_.field_24_ = 0;
                 unit_ids_.add(0);
@@ -3561,7 +3561,7 @@ int BasePop::start(char *text_file, const char *text_label, int value,
             purge_leading(tok + 7);
             text = tok + 7;
             if (*text != '\0') {
-                item_ids_.field_1C_ = reinterpret_cast<uint32_t>(text);
+                item_ids_.pending_text_ = text;
                 item_ids_.field_20_ = 0;
                 item_ids_.field_24_ = 0;
                 if (item_ids_.add(0) == 0) {

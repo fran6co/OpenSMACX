@@ -252,16 +252,6 @@ void __fastcall sub_633010(void *self) {
 // destructor and PlanWin's/Console's each reach it directly.
 
 
-// ??0EditBox@@QAE@XZ at 0x00614E50 - the EditBox subobject constructor
-// FileWin::FileWin reaches by name. See the note in editbox.h.
-
-// ??0ListBox@@QAE@H@Z at 0x00609DB0 - the ListBox subobject constructor
-// FileWin::FileWin reaches by name. See the note in listbox.h.
-void ListBox::construct(int a1) {
-    typedef void(__fastcall *pending)(ListBox *, void *, int);
-    PENDING_BODY(0x00609DB0, pending)(this, nullptr, a1);
-}
-
 // ?close@FileWin@@QAEXXZ at 0x00613900 - FileWin's own close(), which its
 // destructor calls first. See the note in filewin.h.
 void FileWin::close() {
@@ -471,14 +461,6 @@ int Scroll::init(int x, int y, int width, int height, Win *parent,
                                              height, parent, setting, options);
 }
 
-// ?add@StringStruct@@QAEHH@Z at 0x00401100 - allocates and links a new
-// entry; Dialog::item (src/dialog.cpp) and ListBox::item both call it BY
-// NAME on the list embedded at their own this+0xBC/this+... .
-int StringStruct::add(int id) {
-    typedef int(__fastcall *pending)(StringStruct *, void *, int);
-    return PENDING_BODY(0x00401100, pending)(this, nullptr, id);
-}
-
 // ?item@ListBox@@QAEHPADH@Z at 0x0060C920 - the item adder `Dialogs::item`
 // dispatches to for a ListBox.
 int ListBox::item(char *text, int index) {
@@ -526,11 +508,6 @@ int __cdecl X_pops(char *caption, const char *label, int a3, char *a4, int a5,
 
 // Five more bodies the tree called through function pointers. Each is
 // declared on its class now, so the call sites emit `call rel32`.
-void Dialog::close() {                                      // 0x00608F50
-    typedef void(__fastcall *pending)(Dialog *, void *);
-    PENDING_BODY(0x00608F50, pending)(this, nullptr);
-}
-
 void MainInterface::set_date(char *text) {              // 0x0045BE80
     typedef void(__fastcall *pending)(MainInterface *, void *, char *);
     PENDING_BODY(0x0045BE80, pending)(this, nullptr, text);
@@ -1016,11 +993,6 @@ WorldWin::~WorldWin() {  // ??1WorldWin@@QAE@XZ at 0x004C4A70
 AlphaSave::~AlphaSave() {  // ??1AlphaSave@@QAE@XZ at 0x00408170
     typedef void(__fastcall *pending)(AlphaSave *, void *);
     PENDING_BODY(0x00408170, pending)(this, nullptr);
-}
-
-EditBox::~EditBox() {  // ??1EditBox@@QAE@XZ at 0x00408010
-    typedef void(__fastcall *pending)(EditBox *, void *);
-    PENDING_BODY(0x00408010, pending)(this, nullptr);
 }
 
 FameWin::~FameWin() {  // ??1FameWin@@QAE@XZ at 0x0044B100
@@ -1881,13 +1853,6 @@ Status: Complete
 
 // ---- Forwarders for bodies the Win homing revealed as callable but not yet
 // ---- recovered. Each address is the catalogue's, not a guess.
-
-int Buffer::draw(Buffer *source, int index, int x, int y, int a, int b) {
-    typedef int(__fastcall *pending)(Buffer *, void *, Buffer *, int, int, int, int, int);
-    return PENDING_BODY(0x005D8370, pending)(this, nullptr, source, index, x, y, a, b);
-}
-
-
 
 void Buffer::copy_to_window(Win *target, int sx, int sy, int x, int y, int w, int h) {
     typedef void(__fastcall *pending)(Buffer *, void *, Win *, int, int, int, int, int, int);

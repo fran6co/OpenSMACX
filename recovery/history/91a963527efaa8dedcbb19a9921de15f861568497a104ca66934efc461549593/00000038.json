@@ -1,0 +1,17 @@
+{
+  "event_id": "cf9ea0456b1b2e151558ca7f09a5f7aa58b53670cf9461b80f1c49d128249f6a",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "filewin-duplicated-member-teardown",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "FileWin ctor/dtor now use one implicit member chain. ListBox initializes its own fields after genuine virtual-base construction and its native destructor owns609EC0; EditBox owns GraphicWin and Time and maps408010, with eight actual existing-slot overrides. FlatButton no longer reconstructs its already-constructed BaseButton. Native recorder restores four EditBox seed obligations and banks both native destructors; 13 current compiler/runtime tests pass, including member defaults and construction/close exception unwind. This resolves the duplicate-lifetime finding only, not task matching, CRT targets, outside preservation, legacy leaf callbacks or game acceptance."
+    ]
+  },
+  "previous_event": "a30631ad98b4c060f5e668d4a836e0e5b05201746f499c450d8ffab52823cb88",
+  "request_id": "filewin-native-lifetime-incorporated",
+  "schema_version": 1,
+  "sequence": 38,
+  "stream": "task:control-sprite-defaults"
+}

@@ -1,0 +1,19 @@
+{
+  "event_id": "06e5a1f6f162073d96a0a029323cb88a72fb788d7cf22c03fc5b91ff6480d249",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "listbox-original-default-alias",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/listbox.cpp owns four independent mutable default DWORDs at6970E0/E4/E8/EC; constructor and close use them. src/listbox.h no longer binds the retired fixed-address alias or describes a nonexistent close seam. The seed-only popups_normal writer remains unrecovered; no existing product writer was replaced.",
+      "recovery/tests/test_control_globals.py strict bounded ListBox close comparison passes bytes/references in both configured flag modes; replacing field24 source with field2C fails in both.13 coupled compiler/runtime tests pass;8 initial-data trials pass;540 historical byte claims across26 coupled units reproduce; fresh full application build/link passes. Source/mapping/claim/reference/all three debt audits pass with no ceiling changes.",
+      "Independent bounded source review found no defect. This incorporates the source-storage discovery without accepting the broader task, resetting its baseline or waiving remaining cleanup/matching obligations."
+    ]
+  },
+  "previous_event": "8b08f471e8ae8c8fee0f9e54c7d2acc0d307e62c5629c4a533bc266466107621",
+  "request_id": "listbox-default-storage-incorporated",
+  "schema_version": 1,
+  "sequence": 50,
+  "stream": "task:control-sprite-defaults"
+}

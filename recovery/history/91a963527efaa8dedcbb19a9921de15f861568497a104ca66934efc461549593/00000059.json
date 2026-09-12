@@ -1,0 +1,17 @@
+{
+  "event_id": "9de9bf2d0dcd664f360beb0a763e58c631a4d411d7b9a37e3387b3d553826894",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "control-list-accessor-semantics",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/stringstruct.h StringList::current_text guards head_ then follows current_->payload->text; draw callers preserve repeated reads and nullable paths. src/stringstruct.cpp retains original identity5E3630 and header body ownership. Semantic source incorporation only; separate inline ownership/emission discoveries remain pending."
+    ]
+  },
+  "previous_event": "cbbf5665754a56a4e3cb59e3ec25ae9b6dbfe3cf655b94b08d3e4d9b811305f0",
+  "request_id": "closeout-incorporated-control-list-accessor-semantics",
+  "schema_version": 1,
+  "sequence": 59,
+  "stream": "task:control-sprite-defaults"
+}

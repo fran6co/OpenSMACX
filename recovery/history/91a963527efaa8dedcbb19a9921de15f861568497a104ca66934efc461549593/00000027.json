@@ -1,0 +1,26 @@
+{
+  "event_id": "7205442364da3364cf6ff46d49ba4df60e7234b9fe41fd5459939d940c293e22",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/stringlist_construction_harness.cpp",
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "Expand the coupled lifecycle recovery to original StringStruct::add 401100 and removal of only its pending_bodies.cpp forwarder. Preserve seed, allocation owner precedence, fatal Heap allocation failure and CRT return4 partial-list mutations. Implement real node construction rather than vptr stores; bind add and observed node destructors via native writer only. Existing stringstruct/test/audit scope retained, only downward ceiling changes. No other pending body edits, demotion, baseline reset, or acceptance authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4198656,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "2514722dfc0ca02eadbf5e3c97d2385aa9248c9ccc19c4e6a330289c1ac8cfba",
+  "request_id": "list-node-real-construction",
+  "schema_version": 1,
+  "sequence": 27,
+  "stream": "task:control-sprite-defaults"
+}

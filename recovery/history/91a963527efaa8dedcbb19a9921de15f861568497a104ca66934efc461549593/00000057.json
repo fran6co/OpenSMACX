@@ -1,0 +1,17 @@
+{
+  "event_id": "c00aad38c2e95692b0398e5cf28bde53b49341e628b8f95b1a3abdcaac48c290",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "control-draw-buffer-and-geometry-dataflow",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Both draw_item bodies preserve parent-to-control copy direction, saved original geometry, callback-mutable rectangle, fresh width, Sprite height and focus geometry; only CheckBox adds font descent. Independent source review confirms incorporation. Dedicated callback-mutation runtime coverage remains to be added; matching/restoration is not discharged."
+    ]
+  },
+  "previous_event": "86ebe56bcc22c320a784964b372e3b8512deeb4f909182bfe018b51578974755",
+  "request_id": "closeout-incorporated-control-draw-buffer-and-geometry-dataflow",
+  "schema_version": 1,
+  "sequence": 57,
+  "stream": "task:control-sprite-defaults"
+}

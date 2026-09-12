@@ -1,0 +1,17 @@
+{
+  "event_id": "82684513c936b9a0d3b968bc1db14733eb05de7f2f1b2538fda8f3edb899c3d2",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "list-node-construction-emission",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/stringstruct.cpp now owns real StringStruct::add and typed node construction, with native FILE bindings for both observed node scalar deleting destructors. Only the obsolete add forwarder was removed from src/pending_bodies.cpp. Native runtime controls verify allocator precedence and failure-side mutations; native matching still reports add and both generated destructors as misses, so no exactness or acceptance is claimed. Existing hook/clearing obligations remain exact; broader lifecycle and strict-reference work remains."
+    ]
+  },
+  "previous_event": "7205442364da3364cf6ff46d49ba4df60e7234b9fe41fd5459939d940c293e22",
+  "request_id": "list-node-construction-incorporated",
+  "schema_version": 1,
+  "sequence": 28,
+  "stream": "task:control-sprite-defaults"
+}

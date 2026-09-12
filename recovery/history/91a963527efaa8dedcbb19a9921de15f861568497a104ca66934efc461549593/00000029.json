@@ -1,0 +1,30 @@
+{
+  "event_id": "b9e069c8a9bff2ebd5efc66533c34b39f7a467f5140f14e73df6b33493da3fda",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/stringlist_hooks_harness.cpp"
+    ],
+    "evidence": [
+      "Original 4066C0..406818 and EH support650980..650995, retained in 7eb1b2b0 parent stringstruct.cpp, perform derived then base cleanup. Current implicit StringList destructor only reaches base removal and skips text cleanup; a live test using real declarations/removal/base destructor fails its text-free assertion. Authorize a genuine derived destructor, native restoration of original identity/spans, existing StringList destroy caller rechecks and focused runtime tests. Do not change Dialog callers, retire wrappers, demote claims, reset baseline or grant acceptance in this step."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4220608,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4220960,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "82684513c936b9a0d3b968bc1db14733eb05de7f2f1b2538fda8f3edb899c3d2",
+  "request_id": "list-derived-destructor-stage",
+  "schema_version": 1,
+  "sequence": 29,
+  "stream": "task:control-sprite-defaults"
+}

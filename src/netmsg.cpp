@@ -61,6 +61,8 @@ NetMsg::NetMsg(int a1, int a2, int a3) {
 /*
 Purpose: Close an outstanding network message - stop its timer and hide the
          popup - doing nothing when none is showing.
+The historical forwarding notes below predate the separate timer lifecycle TU;
+this definition now calls the actual Time member.
 // ORIGINAL: 0x0047A7D0 ?close@NetMsg@@QAEXXZ 0x0047A7D0-0x0047A7FB BYTE_EXACT
 // LEVER (2026-09-03): time_close_call, not timer_.close(). The image CALLS
 //        0x00616780 here where time.h's in-class `MEASURED close` otherwise
@@ -77,20 +79,12 @@ Purpose: Close an outstanding network message - stop its timer and hide the
 Return Value: n/a
 Status: Complete
 */
-// A real out-of-line forwarder so this call site gets the `call 0x00616780`
-// the image emits, where `timer_.close()` directly would inline away under
-// /O2. `Time::close` keeps its own BYTE_EXACT COMDAT at 0x00616780
-// (time.cpp); this only keeps THIS caller from expanding it. __fastcall
-// because the image reaches Time::close as a __thiscall - the receiver in
-// ECX - and a __cdecl forwarder would cost a `push`/`add esp, 4` pair.
-static void __fastcall time_close_call(Time *timer) {
-    timer->close();
-}
+
 
 void NetMsg::close() {
     if (field_5384_) {
         field_5384_ = 0;
-        time_close_call(&timer_);
+        timer_.close();
         Popup::hide();
     }
 }

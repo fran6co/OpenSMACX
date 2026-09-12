@@ -1,0 +1,20 @@
+{
+  "event_id": "77e3052ca6b1262e9da8d1dd7c7e48400ffe6f10a4d4310addda7879abdd2860",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/stringlist_lifetime_harness.cpp",
+      "recovery/tests/test_stringlist_recovery.py"
+    ],
+    "evidence": [
+      "Original406820 directly calls4066C0 then publishes StringAllocationBase owner without virtual dispatch or deallocation; current unqualified this->~StringList() can dispatch a more-derived destructor (SpriteBoxList exists). Authorize bounded qualified complete-lifetime fix and actual-source negative-control/runtime/compiler tests; preserve all historical obligations and baseline, no new task acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "cf9ea0456b1b2e151558ca7f09a5f7aa58b53670cf9461b80f1c49d128249f6a",
+  "request_id": "stringlist-fixed-complete-teardown",
+  "schema_version": 1,
+  "sequence": 39,
+  "stream": "task:control-sprite-defaults"
+}

@@ -16,12 +16,12 @@
         "vtable": 0,
         "construct": 7,
         "free-function destructor": 5,
-        "explicit base construct/destroy": 8,
+        "explicit base construct/destroy": 5,
         "placement new on a subobject": 4,
         "hand-walked vbtable": 0,
         "VCall shim": 9,
-        "ORIGINAL() vtable-slot dispatch": 29,
-        "ORIGINAL() named-pointer seam": 92,
+        "ORIGINAL() vtable-slot dispatch": 27,
+        "ORIGINAL() named-pointer seam": 91,
         "vtable-as-member": 3,
         "vtable-initialiser store": 0,
         "vtable address constant": 0,
@@ -31,9 +31,9 @@
         "deleting_thunks.cpp markers": 72,
         "delegation_thunks.cpp markers": 25,
         "field_accessors.cpp markers": 41,
-        "leaf_recoveries.cpp markers": 52,
+        "leaf_recoveries.cpp markers": 50,
         "nullsub_thunks.cpp markers": 52,
-        "PENDING_BODY forwarders": 259,
+        "PENDING_BODY forwarders": 254,
         "artifact files (recovered/)": 939,
         "unrecovered files": 1020,
         "hypothesis_layouts.h lines": 2734
@@ -128,12 +128,12 @@
         "unk-method": 186,
         "evidence-free unk": 39,
         "function-address binding": 2,
-        "orphan redirect": 194,
+        "orphan redirect": 191,
         "pointer-as-int": 0,
         "undocumented trivial body": 0,
-        "raw self-access": 199,
+        "raw self-access": 195,
         "pointer-parameter as int": 102,
-        "scaffold name": 2996
+        "scaffold name": 2993
       },
       "counters": []
     }

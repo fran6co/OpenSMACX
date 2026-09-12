@@ -1,0 +1,21 @@
+{
+  "event_id": "f5fe0dbda0a44acd9b4f9ad8803d1a98fa353b908f8bbed10fd60edc6818b61b",
+  "payload": {
+    "affects": [
+      "entity-4f6b913de3d63d930038798b474e51a1b4ee6339162cb0e87b3b12b7924e30e2"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "control-header-caviar-scheduling",
+    "evidence": [
+      "Fresh native preservation at candidate a3423700 against destination bb38f1ec has matching direct/private replicas for Caviar in both configured trials and isolates its only retained section difference to Caviar::render, with unchanged references and symbols. The task baseline remains 6eae6dfbc5cee82b39e282315fb92b9754600251.",
+      "Private per-header substitutions isolate deterministic scheduling sensitivity to the new CheckBox and StringList declarations in both trials (RadioButton also changes the O2 trial). The only differing instruction pair loads ESI and EDI from distinct stack slots in reversed order after the scene-rotation copy; all other render bytes and references agree within each trial. This is evidence for independent semantic review, not a source change, original-byte match or acceptance waiver."
+    ],
+    "hypothesis": "The control/header changes also alter instruction scheduling in the otherwise unchanged Caviar::render. Stable compiler controls now expose this outside-scope effect; independently review its exact dataflow and authorize any coupled scope before admitting it. Do not revert justified control structure or weaken preservation to hide the difference.",
+    "kind": "discovery"
+  },
+  "previous_event": "e0f6f175f2260e5c124f29c70df51dcd4aa8076bde48dd895c44d9a4324b8b36",
+  "request_id": "control-header-caviar-scheduling",
+  "schema_version": 1,
+  "sequence": 20,
+  "stream": "task:control-sprite-defaults"
+}
