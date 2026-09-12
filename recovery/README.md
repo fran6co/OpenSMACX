@@ -54,6 +54,9 @@ unchanged policy enter the native comparison, and every source/graph change need
 editable task scope. Common commands and compiler identity plus ordered remaining
 link arguments are checked; only proven added/removed object arguments are projected
 out. Changed graphs remain unaccepted until remaining linked effects are proved.
+The real compiler-environment control exercises identical graphs and a fixture-only
+TU addition/removal in disposable application copies, including refusal without
+editable-file authority. It does not modify product C++ or establish recovery acceptance.
 
 The active agent/coordinator contract is [WORKFLOW.md](WORKFLOW.md). Historical
 compiler observations are in [COMPILER_EVIDENCE.md](COMPILER_EVIDENCE.md); they do
