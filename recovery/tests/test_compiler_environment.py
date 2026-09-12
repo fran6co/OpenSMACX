@@ -139,6 +139,7 @@ def test_release_link_preserves_the_selected_runtime_code_and_relocations():
 def test_private_application_context_builds_with_native_command_evidence():
     """Exercise actual isolated application generation, not migration acceptance."""
     from match_recovery.application_context import application_build
+    from match_recovery.build_graph_commands import compare_build_commands
     from match_recovery.build_check import Build
     from match_recovery.driver import working_state
     from match_recovery.source_replica import replica_snapshot
@@ -158,6 +159,13 @@ def test_private_application_context_builds_with_native_command_evidence():
         assert (application.directory / "OpenSMACX.exe").is_file()
         assert (application.root / "CMakeLists.txt").read_bytes() == graphs["CMakeLists.txt"]
         application.check_current()
+        with application_build(root, ("src",), sources, versioned_files=graphs) as repeated:
+            comparison = compare_build_commands(application, repeated, editable=())
+            assert comparison["result"] == "pass", comparison
+            assert comparison["sources"]["added"] == comparison["sources"]["removed"] == []
+            assert len(comparison["compilations"]) == len(proof["sources"])
+            assert comparison["linked_effects"] == "unknown"
+        assert not repeated.root.exists()
     assert not application.root.exists() and working_state(root) == before
 
 

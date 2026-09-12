@@ -534,6 +534,12 @@ configured in this project's driver. It checks source/mapping/claim integrity,
 audits, a fresh build, bounded declarations, references and outside-scope
 compiled preservation under unchanged build and compiler policy. A permitted
 measured byte regression yields a checkpoint (exit 2), never collection readiness.
+Explicit application `versioned_inputs` content changes now trigger native
+baseline/current graph comparison when every other policy input remains unchanged.
+Source and graph edits must fit authorized files; common commands and ordered
+remaining linker inputs are verified from fresh live builds. This does not yet
+admit changed graphs: independent linked initializer/common/COMDAT effects remain
+unknown and outside-scope preservation findings still refuse acceptance.
 Missing measurements, failed prerequisites and unsupported preservation cases
 still refuse admission: park the scoped work for review instead of calling it
 green or merging it as accepted. The driver never automatically reverts it.

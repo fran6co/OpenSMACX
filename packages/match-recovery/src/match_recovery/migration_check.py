@@ -9,9 +9,10 @@ policy, plus a fresh current build, not equivalence of the whole running program
 from pathlib import Path
 import hashlib
 import json
-import os
 
 from .build_check import Build, check_build
+from .build_policy import build_policy_changes, unchanged_build_policy
+from .build_graph import check_build_graph
 from .claim_integrity import check_claims
 from .driver import working_state
 from .mapping_check import check_mappings
@@ -23,7 +24,6 @@ from .records import read_json
 from .restoration import measure_restoration
 from .reviews import ReviewStore, merge_interpretations, pending_interpretations, validate_review
 from .source_audits import _validate_policy, audit_source
-from .source_history import _tree, git
 from .source_integrity import check_source
 from .source_obligations import task_obligations
 from .structural_requirements import declared_outcome
@@ -34,34 +34,6 @@ def _all(values):
     values = tuple(values)
     return (Result.UNKNOWN if not values or Result.UNKNOWN in values else
             Result.FAIL if Result.FAIL in values else Result.PASS)
-
-
-def unchanged_build_policy(root, task, settings, build, *, integration=None):
-    """Use unchanged task policy, or the explicitly authorized destination policy."""
-    from .integration import preservation_base
-    baseline_revision = preservation_base(root, task, integration)
-    project = read_json(root / "recovery/project.json")
-    def outside_source(name):
-        return not any(Path(name).is_relative_to(directory) for directory in settings.source.roots)
-    generators = [build]
-    if "preparation" in project:
-        generators.append(Build.read(root, key="preparation"))
-    policy_inputs = set(project.get("compiler", {}).get("inputs", []))
-    policy_roots = set()
-    for generator in generators:
-        policy_inputs.update(generator.snapshot(root)["inputs"])
-        policy_roots.update(generator.input_roots)
-    policy_files = {name for name in policy_inputs if outside_source(name)} | {"recovery/project.json"}
-    baseline = {name: entry for name, entry in _tree(
-        root, baseline_revision, tuple(sorted(policy_files | policy_roots))).items() if outside_source(name)}
-    unchanged = set(baseline) == policy_files
-    for name, (mode, kind, blob) in baseline.items():
-        path = root / name
-        expected = git(root, "cat-file", "blob", blob) if kind == "blob" else None
-        actual = (os.fsencode(os.readlink(path)) if mode == "120000" and path.is_symlink() else
-                  path.read_bytes() if mode in ("100644", "100755") and path.is_file() and not path.is_symlink() else None)
-        unchanged = unchanged and expected is not None and expected == actual
-    return unchanged
 
 
 def measure_migration(root: Path, task_name: str, image: Path, request: dict, *, progress=None) -> dict:
@@ -169,14 +141,19 @@ def measure_migration(root: Path, task_name: str, image: Path, request: dict, *,
     # The measurement compiler may use different helpers from the application
     # build. Those helpers must also retain their baseline contents; otherwise
     # both replicas could agree only because today's compiler adapter changed.
-    unchanged_policy = unchanged_build_policy(root, task, settings, build, integration=integration)
-    if not unchanged_policy:
+    policy_change = build_policy_changes(root, task, settings, build, integration=integration)
+    unchanged_policy = policy_change["unchanged"]
+    if not unchanged_policy and not policy_change["graph_only"]:
         diagnose("baseline-build-policy", {"result": Result.UNKNOWN,
                                            "reason": "compiler/build inputs differ from or lack the authorized preservation baseline; preserve work and request coordinator evidence"})
     checks = [run("source", lambda: check_source(root)), run("mappings", lambda: check_mappings(root)),
               run("claim-identities", lambda: check_claims(root))]
     checks += [run("audit:" + name, lambda name=name: audit_source(root, name)) for name in sorted(policy["audits"])]
-    built = run("build", lambda: check_build(root))
+    graph = (run("build-graph", lambda: check_build_graph(root, task_name, integration=integration))
+             if policy_change["graph_only"] else None)
+    built = graph.get("current_build") if graph is not None else None
+    if not isinstance(built, dict) or built.get("result") != Result.PASS:
+        built = run("build", lambda: check_build(root))
     if built["result"] != Result.PASS:
         return {"snapshot": request["snapshot"], "changed": sorted(scope), "build": built["result"],
                 "structure": Result.UNKNOWN, "references": Result.UNKNOWN, "outside_scope": Result.UNKNOWN,
@@ -197,6 +174,6 @@ def measure_migration(root: Path, task_name: str, image: Path, request: dict, *,
     return {"snapshot": request["snapshot"], "changed": sorted(scope), "build": built["result"],
             "structure": structural, "references": restored.get("references", Result.UNKNOWN),
             "outside_scope": _all([*(row["result"] for row in checks), preservation["result"],
-                                   Result.PASS if unchanged_policy else Result.UNKNOWN]),
+                                   Result.PASS if unchanged_policy else graph["result"] if graph is not None else Result.UNKNOWN]),
             "measurements": [measurements[key] for key in sorted(protected)], "current": current,
             "diagnostics": diagnostics}

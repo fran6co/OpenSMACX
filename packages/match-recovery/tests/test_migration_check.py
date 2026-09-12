@@ -270,6 +270,72 @@ def test_changed_measurement_compiler_cannot_borrow_baseline_preservation(migrat
     assert measure(migration)["outside_scope"] == "unknown"
 
 
+def test_native_graph_prerequisite_reuses_current_build_without_waiving_linked_effects(migration, monkeypatch):
+    calls = []
+    task = TaskStore(migration).read("owner")
+    monkeypatch.setattr(native, "build_policy_changes", lambda *a, **k: {
+        "unchanged": False, "graph_only": True, "changed_paths": ["BuildGraph.txt"]})
+
+    def graph(root, name, *, integration):
+        assert root == migration and name == "owner" and integration is None
+        calls.append("graph")
+        return {"result": "unknown", "commands": {"result": "pass"}, "linked_effects": "unknown",
+                "current_build": {"result": "pass", "test_fixture": "verified inside live graph context"}}
+
+    monkeypatch.setattr(native, "check_build_graph", graph)
+    monkeypatch.setattr(native, "check_build", lambda *a: pytest.fail("duplicated current application build"))
+    payload = request(migration)
+    report = measure(migration, payload)
+    assert calls == ["graph"] and report["build"] == "pass"
+    assert report["outside_scope"] == "unknown" and report["measurements"]
+    assert any(row["check"] == "build-graph" and '"linked_effects": "unknown"' in row["evidence"][0]
+               for row in report["diagnostics"])
+    with pytest.raises(ValueError, match="preservation"):
+        admission(migration, payload, report)
+    assert TaskStore(migration).read("owner") == task
+
+
+def test_refused_graph_context_still_checks_current_application_without_granting_acceptance(migration, monkeypatch):
+    monkeypatch.setattr(native, "build_policy_changes", lambda *a, **k: {"unchanged": False, "graph_only": True})
+    calls = []
+
+    def graph(*args, **kwargs):
+        calls.append("graph")
+        raise ValueError("baseline context unavailable")
+
+    monkeypatch.setattr(native, "check_build_graph", graph)
+    monkeypatch.setattr(native, "check_build", lambda *a: calls.append("current-build") or {"result": "pass"})
+    report = measure(migration)
+    assert calls == ["graph", "current-build"] and report["build"] == "pass"
+    assert report["outside_scope"] == "unknown"
+    assert "baseline context unavailable" in next(row for row in report["diagnostics"]
+                                                  if row["check"] == "build-graph")["evidence"][0]
+
+
+@pytest.mark.parametrize("changed_policy", [False, True])
+def test_unchanged_or_non_graph_policy_never_invokes_graph_exception_route(migration, monkeypatch, changed_policy):
+    if changed_policy:
+        path = migration / "recovery/compile.py"
+        path.write_text(path.read_text() + "\n# changed compiler policy\n")
+    monkeypatch.setattr(native, "check_build_graph", lambda *a, **k: pytest.fail("ineligible graph route"))
+    report = measure(migration)
+    assert report["outside_scope"] == ("unknown" if changed_policy else "pass")
+
+
+def test_graph_prerequisite_cannot_return_after_mutating_reviewed_source(migration, monkeypatch):
+    monkeypatch.setattr(native, "build_policy_changes", lambda *a, **k: {"unchanged": False, "graph_only": True})
+
+    def graph(*args, **kwargs):
+        path = migration / "code/unit.cc"
+        path.write_text(path.read_text() + "// preserve concurrent source change\n")
+        return {"result": "unknown", "current_build": {"result": "pass"}}
+
+    monkeypatch.setattr(native, "check_build_graph", graph)
+    with pytest.raises(ValueError, match="changed"):
+        measure(migration)
+    assert "preserve concurrent source change" in (migration / "code/unit.cc").read_text()
+
+
 def test_failed_build_prevents_compiler_checks(migration, monkeypatch):
     monkeypatch.setattr(native, "check_build", lambda *_: {"result": "fail"})
     monkeypatch.setattr(native, "measure_restoration", lambda *a, **k: pytest.fail("compiled after failed build"))

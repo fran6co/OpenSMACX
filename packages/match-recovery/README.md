@@ -221,8 +221,28 @@ retain their full relative names and nested pairs use the most specific anchor.
 Roles, codec syntax, cwd, stage, duplicate arguments and ordering remain visible.
 There is no token-deletion or flag-normalization interface. This is pure syntax
 evidence: callers still need fresh file/command capture, authorized source/output
-bindings, compiler/SDK policy and linked-effect verification. It is not yet wired
-into migration admission, and does not make a changed build graph acceptable.
+bindings, compiler/SDK policy and linked-effect verification. It does not make a
+changed build graph acceptable by itself.
+
+Native `tasks check-migration` now consumes application graph evidence when all
+non-source policy differences are content changes to explicitly declared application
+`versioned_inputs`. Changing compiler/toolchain helpers, preparation policy, graph
+declarations or graph file kind/mode cannot use this route. The graph files and
+every changed source file must also be coordinator-authorized editable paths.
+The verifier reads the original task/integration preservation baseline, holds both
+application contexts live, checks actual source/object membership and compares common
+compiler identities and commands. Only whole linker arguments naming independently
+bound added/removed application objects may be projected out; each is reported.
+Remaining objects, libraries, options and ordering must compare exactly through the
+derived root/build-directory pairs. No provider-supplied correspondence is accepted.
+The candidate build is reused rather than run a third time.
+
+Command agreement remains an **UNKNOWN** migration prerequisite until remaining
+linked effects are proved. Initializer ordering, common allocation, COMDAT selection,
+independent data and unowned code/references cannot disappear with an authorized TU
+addition. Existing restoration/preservation checks still run; the graph route neither
+waives their findings nor resets a baseline. Reports and temporary builds are
+disposable evidence, not acceptance records or a new command-line workflow.
 
 `recover inventory` reports source and seed populations, body-presence states,
 historical obligations and mapping conflicts. Body states derive from source

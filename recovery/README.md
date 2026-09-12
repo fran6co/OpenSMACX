@@ -26,7 +26,7 @@ Stable SDK header aliases are allowed: their logical targets and bytes are check
 before and after compilation, while the observation names physical files. This is
 not a durable include-search or alias inventory; that environment still needs its
 own binding when verifying a build-graph change.
-These ignored observations are prerequisites for future build-graph verification,
+These ignored observations are inputs to native build-graph verification,
 not admission or a replacement for linked-code/lifecycle preservation.
 The application's `recovery/build.json` enables native `compile_link` collection:
 `recover check-build` now requires fresh correspondence for every C++ recipe in
@@ -42,15 +42,18 @@ builds request these descriptions through the configured compiler client's batch
 `command_paths` operation, with explicit `command_stages` in the build policy.
 The package binds them to observed source/object files and ordered linker inputs,
 then rechecks the build's file evidence. The operation does not compile or supply
-an acceptance verdict. This is not a new CLI or migration-admission route;
-baseline/current graph comparison and remaining linked-effect proof are still needed.
+an acceptance verdict. Native migration checks now compare authorized baseline/current
+graph versions using this boundary; remaining linked-effect proof is still needed.
 The application build now explicitly declares `CMakeLists.txt` as a versioned
 build-graph input, independently of preparation policy. The package's live
 `application_build` context can generate isolated source/graph versions with the
 current compiler environment and keep their files available for comparison.
 That declaration does not exempt CMake changes from migration verification or
-reset a task's preservation baseline; changed graphs remain unaccepted until
-command, membership and remaining linked effects are proved.
+reset a task's preservation baseline. Only graph-content changes with otherwise
+unchanged policy enter the native comparison, and every source/graph change needs
+editable task scope. Common commands and compiler identity plus ordered remaining
+link arguments are checked; only proven added/removed object arguments are projected
+out. Changed graphs remain unaccepted until remaining linked effects are proved.
 
 The active agent/coordinator contract is [WORKFLOW.md](WORKFLOW.md). Historical
 compiler observations are in [COMPILER_EVIDENCE.md](COMPILER_EVIDENCE.md); they do
@@ -1151,6 +1154,10 @@ resume without committing; new permission/configuration needs a checkpoint.
 `tasks check-migration` verifier, not a local Python adapter. It combines fresh
 source/mapping/history/audit checks, a build, bounded structural restoration,
 references and full-TU compiled residuals under an unchanged build policy.
+For explicitly authorized graph-content changes, it now also builds and compares
+both application versions under unchanged compiler policy. This remains unknown
+for migration acceptance until independent linked-effect preservation is supplied;
+command agreement cannot waive initializer/data/residual findings.
 Source layout/table/object annotations create `declared_structure` requirements;
 they do not invent complete hierarchy/lifetime claims. Historical interpretations
 need explicit snapshot review, and current declarations must still measure.
