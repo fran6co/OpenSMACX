@@ -1927,6 +1927,17 @@ TUs stays visible. Static root spellings are retained; compiler renumbering is
 not guessed from byte similarity. A proven unowned-order failure refuses the
 generated migration; passing this dimension still cannot waive callback, storage,
 COMDAT or other linked-effect obligations.
+Failed order reports include the total positional mismatch count and the first
+16 baseline/current logical rows, alongside the complete sequences. These are
+diagnostics, not an inference that changed root spellings are equivalent.
+
+The native dependency-code graph also verifies ordinary COFF code sections with
+one external entry at offset zero. These are whole selected sections, not guessed
+function extents: internal assembler labels, jump vectors, padding, relocations
+and loader fixups are retained. Additional external entries or aliases and
+unsupported bounds refuse. Other sections and storage remain independent
+obligations; this does not relax the single-function COMDAT measurement API or
+turn a verified runtime-library section into recovered application code.
 
 The package supplies the native `migration_check` command:
 `recover tasks check-migration <task> --image <image>`. It consumes the driver's

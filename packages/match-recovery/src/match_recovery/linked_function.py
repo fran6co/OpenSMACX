@@ -14,6 +14,11 @@ def verify_function(obj, symbol, owner, mapping, image):
     subject = obj.function(symbol.name)
     if subject.index != symbol.index or len(obj.code_sections(subject)) != 1:
         raise ValueError("linked function requires one independently bounded code COMDAT")
+    return _verify_region(obj, subject, owner, mapping, image)
+
+
+def _verify_region(obj, subject, owner, mapping, image):
+    """Verify a caller-bounded zero-origin code region; does not infer ownership."""
     placements = mapping.statics if subject.storage == 3 else mapping.publics
     matches = [row for row in placements or () if row.symbol == subject.name
                and row.owner.casefold() == owner.casefold() and row.function and row.segment]

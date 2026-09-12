@@ -99,7 +99,13 @@ def test_explicit_empty_selection_proves_only_unchanged_unowned_order(tmp_path):
 
 def test_unapproved_added_identical_root_remains_an_order_difference(tmp_path):
     baseline, current = pair(tmp_path)
-    assert check(baseline, current, [])["projected_order"]["result"] == "fail"
+    order = check(baseline, current, [])["projected_order"]
+    assert order["result"] == "fail"
+    assert order["mismatch_count"] == len(order["mismatches"]) == 1
+    row, = order["mismatches"]
+    assert row["index"] == 1 and row["baseline"] is None
+    assert row["current"] == {key: order["current"]["sequence"][1][key]
+                              for key in ("identity", "body_fingerprint")}
 
 
 def test_global_swap_of_identical_root_bytes_is_not_hidden_by_fingerprints(tmp_path):
@@ -107,6 +113,12 @@ def test_global_swap_of_identical_root_bytes_is_not_hidden_by_fingerprints(tmp_p
     report = check(baseline, current, [])
     assert report["ordered_code_correspondence"] == "pass"
     assert report["projected_order"]["result"] == "fail", report["projected_order"]
+    order = report["projected_order"]
+    assert order["mismatch_count"] == len(order["mismatches"]) == 2
+    assert [row["index"] for row in order["mismatches"]] == [0, 1]
+    for row in order["mismatches"]:
+        assert row["baseline"]["body_fingerprint"] == row["current"]["body_fingerprint"]
+        assert row["baseline"]["identity"] != row["current"]["identity"]
 
 
 def test_object_basename_changes_do_not_replace_bound_source_ownership(tmp_path):
@@ -255,3 +267,44 @@ def test_noncanonical_or_nonphysical_input_identity_refuses(tmp_path, kind):
         path = directory
     with pytest.raises(ValueError, match="canonical physical input"):
         _input_identity(path, root, directory)
+
+
+@pytest.mark.parametrize("mode", ["symbol", "body", "added", "removed", "equal"])
+def test_mismatch_diagnostics_are_bounded_and_do_not_change_order_verdict(monkeypatch, mode):
+    from match_recovery import initializer_order as native
+
+    # Exercise only diagnostic formatting over controlled projection rows.
+    # The physical controls above independently cover actual PE/source binding.
+    old = [{"identity": {"kind": "compiled", "unit": "src/unit.cpp", "symbol": "_$E" + str(index)},
+            "body_fingerprint": "a" * 64, "slot": 0x401000 + 4 * index, "offsets": [4 * index]}
+           for index in range(21)]
+    new = deepcopy(old)
+    if mode == "symbol":
+        for row in new:
+            row["identity"]["symbol"] += "renumbered"
+    elif mode == "body":
+        for row in new:
+            row["body_fingerprint"] = "b" * 64
+    elif mode == "added":
+        old = []
+    elif mode == "removed":
+        new = []
+    projected = {"baseline": old, "current": new}
+    monkeypatch.setattr(native, "_project", lambda context, observed, changes: {
+        "sequence": projected[context], "covered": []})
+    report = native._compare_order("baseline", "current", {"result": "pass"}, {"result": "pass"}, [])
+    assert report["baseline"]["sequence"] == old and report["current"]["sequence"] == new
+    assert report["remaining_linked_effects"] == "unknown" and not report["ready_for_collection"]
+    if mode == "equal":
+        assert report["result"] == "pass"
+        assert "mismatch_count" not in report and "mismatches" not in report
+    else:
+        assert report["result"] == "fail"  # Renumbering is still not an alias.
+        assert report["mismatch_count"] == 21 and len(report["mismatches"]) == 16
+        assert [row["index"] for row in report["mismatches"]] == list(range(16))
+        for row in report["mismatches"]:
+            index = row["index"]
+            for version, sequence in (("baseline", old), ("current", new)):
+                expected = ({key: sequence[index][key] for key in ("identity", "body_fingerprint")}
+                            if index < len(sequence) else None)
+                assert row[version] == expected

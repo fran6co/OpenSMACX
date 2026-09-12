@@ -5,6 +5,7 @@ does not authorize projection, and this bounded result is not graph acceptance.
 """
 
 from collections import defaultdict
+from itertools import zip_longest
 from pathlib import Path
 
 from .build_graph_commands import _context
@@ -118,9 +119,18 @@ def _compare_order(baseline, current, old, new, changes):
             result[version] = _project(context, observed, [row for row in changes if row["version"] == version])
         def logical(version):
             return [{key: row[key] for key in ("identity", "body_fingerprint")} for row in result[version]["sequence"]]
-        equal = logical("baseline") == logical("current")
+        old_sequence, new_sequence = logical("baseline"), logical("current")
+        equal = old_sequence == new_sequence
         result.update(result=Result.PASS if equal else Result.FAIL,
-                      baseline_fingerprint=digest(logical("baseline")), current_fingerprint=digest(logical("current")))
+                      baseline_fingerprint=digest(old_sequence), current_fingerprint=digest(new_sequence))
+        if not equal:
+            mismatches, count = [], 0
+            for index, (before, after) in enumerate(zip_longest(old_sequence, new_sequence)):
+                if before != after:
+                    count += 1
+                    if len(mismatches) < 16:
+                        mismatches.append({"index": index, "baseline": before, "current": after})
+            result.update(mismatch_count=count, mismatches=mismatches)
     except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
         result.update(result=Result.UNKNOWN, reason=str(error))
     return result

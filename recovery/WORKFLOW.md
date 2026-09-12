@@ -553,6 +553,11 @@ using owner-qualified map placements and real object/linker evidence. Inspect it
 order, multiplicity and incomplete observations before reasoning about startup
 effects. An extra guarded registration is not automatically redundant; matching
 initializer code does not prove callback/storage behavior or grant residual ownership.
+The dependency graph can verify an ordinary code section from its sole external
+zero-offset entry, retaining internal labels, jump tables and all linked fixups.
+This is whole-section correspondence, not inferred function boundaries or a
+library-recovery task; other code/storage and initialization effects remain checked
+separately. Unsupported additional entries and associative-code cases still refuse.
 The native `projected_order` diagnostic now binds each compiled occurrence to
 its exact source/output receipt before comparing the remaining global order
 under generated-change permission. Equal body hashes from different TUs are not

@@ -8,7 +8,7 @@ not imply that the operand executes, or discover indirect targets through data.
 from collections import Counter
 import hashlib
 
-from .linked_function import verify_function
+from .linked_code_region import select_code_region, verify_code_region
 from .linked_imports import import_slots, resolve_import_slot
 from .binary import RelocationKind
 from .model import Result, digest
@@ -65,8 +65,8 @@ never merge distinct definitions. External symbol identity remains explicit.
             if item["sha256"] not in parsed:
                 parsed[item["sha256"]] = Coff(item["raw"])
             obj = parsed[item["sha256"]]
-            subject = obj.function(node["symbol"])
-            proof = verify_function(obj, subject, item["owner"], mapping, image)
+            subject = select_code_region(obj, node["symbol"])
+            proof = verify_code_region(obj, subject, item["owner"], mapping, image)
             node.update(input=item["identity"], object_sha256=item["sha256"],
                         section=subject.section, proof=proof, result=proof["result"])
             code, relocations, _ = obj.subject(subject)
@@ -121,6 +121,8 @@ never merge distinct definitions. External symbol identity remains explicit.
             node["edges"] = edges
             canonical[cursor] = {"code_sha256": hashlib.sha256(code).hexdigest(), "size": len(code),
                                  "flags": obj.sections[subject.section - 1].flags,
+                                 "extent_kind": proof.get("extent_kind", "function_comdat"),
+                                 "section_symbols": proof.get("section_symbols", []),
                                  "address_alias": alias, "edges": edges}
         except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
             # An observed code counterexample is not erased by a later gap in
@@ -147,7 +149,7 @@ never merge distinct definitions. External symbol identity remains explicit.
             "limitations": ["code reached by explicit COFF relocations only; data contents and indirect targets are unproved",
                             "code agreement is not guard, callback registration, storage or runtime effect equivalence",
                             "loader slots bind map symbols to actual PE import identities, not selected import-library intent or loaded DLL behavior",
-                            "one independently bounded COMDAT per function; unsupported selections/definitions refuse",
+                            "one bounded code COMDAT or an entire ordinary section with one external zero-offset entry; other definitions refuse",
                             "shared definitions, relocation order and linked address aliasing are retained"]}
 
 
