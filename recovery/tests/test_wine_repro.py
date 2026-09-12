@@ -135,6 +135,104 @@ def test_preprocessing_wrapper_preserves_raw_stdout_and_stderr(invocation, monke
     assert captured.out == output and captured.err == errors and len(calls) == 1
 
 
+@pytest.mark.parametrize("code,output,errors,expected", [
+    (1, b'header.h(1) : fatal error C1189: RECOVERY_HEADER_DAMAGE\r\n' +
+        b'int expanded_source;\r\n' * 1000, b'unit.cpp\r\n', 'RECOVERY_HEADER_DAMAGE'),
+    (0, b'Command line warning D9002: ignored option\r\n' + b'int expanded_source;\n' * 1000,
+        b'unit.cpp\n', 'warning D9002'),
+    (0, b'int expanded_source;\n' * 1000,
+        b'header.h(1) : error C2065: STDERR_MARKER\r\n', 'STDERR_MARKER'),
+    (0, b'', b'unexpected stderr even with exit zero', 'unexpected stderr'),
+    (1, b'header.h(1) : fatal error C1189: DUPLICATE_MARKER\r\n    detail\r\n'
+        b'header.h(2) : error C2065: ANOTHER_MARKER\r\n' + b'int expanded_source;\n' * 1000,
+        b'header.h(1) : fatal error C1189: DUPLICATE_MARKER\n', 'DUPLICATE_MARKER'),
+    (7, b'int expanded_source;\n' * 1000, b'unknown compiler failure\xfe\n',
+        'unknown compiler failure\ufffd'),
+    (7, b'x' * 100_000 + b'STDOUT_TAIL', b'', 'STDOUT_TAIL'),
+    (7, b'', b'', 'no compiler output'),
+    (1, b'header.h(1) : error C1189: LONG_MARKER ' + b'x' * 100_000,
+        b'', 'LONG_MARKER'),
+])
+def test_guard_failure_keeps_diagnostics_before_bounded_source_context(
+        invocation, monkeypatch, capsys, code, output, errors, expected):
+    root, _, args = invocation
+    (root / 'BIN').mkdir()
+    (root / 'BIN/CL.EXE').touch()
+    monkeypatch.setattr(wine, 'VC6_ROOT', root)
+    monkeypatch.chdir(root / 'build')
+    calls = []
+
+    def run(command, **options):
+        calls.append(command)
+        assert '/E' in command and '/c' not in command
+        assert options == {'cwd': root / 'build', 'binary': True, 'explicit_compiler': True}
+        return subprocess.CompletedProcess(command, code, output, errors)
+
+    monkeypatch.setattr(wine, 'run_tool', run)
+    assert wine.main(['vc6-cl', *args]) == 3
+    captured = capsys.readouterr()
+    assert captured.out == ''
+    assert expected in captured.err[:1800]  # Leave room for outer client error prefixes.
+    assert len(captured.err) <= 4100 and len(calls) == 1
+    assert not list(root.rglob('*.obj'))
+    if b'C1189' in output or b'D9002' in output or b'C2065' in errors:
+        assert 'expanded_source' not in captured.err
+    if expected == 'DUPLICATE_MARKER':
+        assert captured.err.count(expected) == 1
+        assert 'ANOTHER_MARKER' in captured.err and 'detail' in captured.err
+
+
+def test_preprocessing_failure_preserves_distinct_lines_and_bounded_continuations():
+    first = b'header.h(1) : fatal error C1189: FIRST_MARKER'
+    second = b'header.h(2) : error C2065: SECOND_MARKER'
+    output = first + b'\r\n    continuation detail\r\n' + second + b'\r\n' + b'int source;\n' * 1000
+    rendered = wine.preprocessing_diagnostics(output, first + b'\n' + second + b'\n')
+    assert rendered.count('FIRST_MARKER') == rendered.count('SECOND_MARKER') == 1
+    assert rendered.index('SECOND_MARKER') < rendered.index('continuation detail')
+    assert '\r' not in rendered and 'int source' not in rendered
+    assert len(rendered) < 4000
+
+
+def test_preprocessing_failure_bounds_many_diagnostics_and_long_context():
+    output = b''.join(f'header.h({index}) : error C1189: MARKER_{index}\n'.encode()
+                      for index in range(1000))
+    rendered = wine.preprocessing_diagnostics(output, b'')
+    assert 'MARKER_0' in rendered and 'additional diagnostic lines omitted' in rendered
+    assert len(rendered) <= 4000
+    rendered = wine.preprocessing_diagnostics(
+        b'error C1189: MARKER\n' + b' ' + b'x' * 100_000 + b'\n' +
+        b' ' + b'y' * 100_000, b'')
+    assert 'MARKER' in rendered and len(rendered) < 1000
+    rendered = wine.preprocessing_diagnostics(b'x' * 100_000, b'y' * 100_000)
+    assert len(rendered) < 1100
+
+
+def test_preprocessing_diagnostics_do_not_hide_non_compiler_stderr_failures():
+    rendered = wine.preprocessing_diagnostics(b'warning D9002: ignored option\n',
+                                             b'Wine tool terminated by signal SIGSYS\n')
+    assert rendered.startswith('warning D9002: ignored option')
+    assert 'Wine tool terminated by signal SIGSYS' in rendered
+
+
+@pytest.mark.parametrize('optimization', ['/O1', '/O2'])
+def test_real_vc6_header_damage_survives_long_preprocessed_output(invocation, optimization):
+    if not (wine.VC6_ROOT / 'BIN/CL.EXE').is_file():
+        pytest.skip('VC6 is not installed')
+    root, source, _ = invocation
+    (root / 'src/damage.h').write_text('#error RECOVERY_LONG_HEADER_DAMAGE\n')
+    source.write_text('#include "damage.h"\n' +
+                      ''.join(f'int expanded_value_{index};\n' for index in range(2000)))
+    output = root / 'build/unit.obj'
+    wrapper = [sys.executable, str(Path(wine.__file__)), '--tool=cl']
+    result = subprocess.run([*wrapper, '--repro-root=' + str(root), '/nologo', '/c',
+                             optimization, '/Fo' + str(output), str(source)],
+                            cwd=root / 'build', capture_output=True, text=True, timeout=60)
+    assert result.returncode == 3, result.stdout + result.stderr
+    assert 'RECOVERY_LONG_HEADER_DAMAGE' in result.stderr[:1800]
+    assert 'expanded_value_' not in result.stderr and len(result.stderr) <= 4100
+    assert not output.exists()
+
+
 @pytest.mark.parametrize("flag", ["/Brepro", "/B1custom", "/B2custom", "/d1Brepro",
                                   "-d1Brepro", "/Foout.obj", "/Fppch", "/Yc", "/P",
                                   "/FRbrowse", "/Fiout.i", "/link", "@hidden.rsp"])

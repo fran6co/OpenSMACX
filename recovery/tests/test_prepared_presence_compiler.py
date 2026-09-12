@@ -17,6 +17,15 @@ from match_recovery.preservation import check_preservation
 from match_recovery.tasks import Task, TaskStore
 
 
+def test_project_preparation_versions_build_graph_and_disables_pch_generation():
+    from match_recovery.build_check import Build
+    repository = Path(__file__).resolve().parents[2]
+    preparation = Build.read(repository, key="preparation")
+    assert preparation.versioned_inputs == ("CMakeLists.txt",)
+    command, = preparation.commands
+    assert command.argv.count("-DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON") == 1
+
+
 def test_real_prepared_added_unit_cannot_hide_unowned_storage(tmp_path, monkeypatch):
     from recovery.environment.wine import VC6_ROOT
     if not (VC6_ROOT / "BIN/CL.EXE").is_file():

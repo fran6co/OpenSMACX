@@ -107,8 +107,17 @@ package runs the CMake invocation declared in `prepare.json` in a fresh ignored
 directory, then validates and atomically publishes `build/compile_commands.json`.
 Debug here preserves the established measurement include/define environment;
 the separate fresh application build remains Release. Nothing in the library
-chooses CMake, VC6 or these flags. Existing build caches are not cleared. Generated
-headers/context and the previous database remain under `build/recovery/preparation/`
+chooses CMake, VC6 or these flags. Existing build caches are not cleared.
+PCH generation is explicitly disabled for both current and historical graphs:
+matching already uses standalone recipes, and an old graph must not introduce an
+unmeasured PCH TU. Complete recipe coverage is still checked, not filtered.
+Only the explicitly versioned `CMakeLists.txt` follows historical source; the
+compiler interaction remains current.
+Failed guarded preprocessing reports compiler diagnostics before bounded context,
+so a deliberate header-error witness cannot disappear behind a long expanded
+source tail. Failure still refuses object production; diagnostics do not grant
+acceptance or bypass reproducibility checks.
+Generated headers/context and the previous database remain under `build/recovery/preparation/`
 as disposable caches; do not delete the currently referenced context without
 preparing again. Failed commands, missing outputs and concurrent input/destination
 changes never count as a successful preparation. `recover check` runs this phase
