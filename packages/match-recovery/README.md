@@ -237,6 +237,19 @@ Remaining objects, libraries, options and ordering must compare exactly through 
 derived root/build-directory pairs. No provider-supplied correspondence is accepted.
 The candidate build is reused rather than run a third time.
 
+The live graph session now spans restoration and preservation, not just the build
+comparison. Preservation keeps each actual compiler trial's immutable object bytes
+in memory with its source version, original baseline, task decisions and flags.
+Native compile/link membership binds that trial to the corresponding application
+object; a different trial cannot borrow a favorable match. A guarded batch indexes
+membership once per build, checks each object against its fresh receipt, and refuses
+if either build or the original authorization changes before the session closes.
+Whole-object replica agreement is reported per unit/version/flag set. It establishes
+correspondence only: even matching objects cannot waive an outside-scope residual.
+Differing application and measurement output remains unknown for this binding.
+These disposable diagnostics neither change task baselines nor grant linked-effect
+coverage, and they cannot be supplied back as proof.
+
 While both application builds remain live, native graph verification also compares
 the MSVC `.CRT$XCU` initializer contribution when its linked artifacts are available.
 The strict map reader retains owner-qualified static functions and bounded section

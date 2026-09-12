@@ -7,12 +7,13 @@ policy, plus a fresh current build, not equivalence of the whole running program
 """
 
 from pathlib import Path
+from contextlib import ExitStack
 import hashlib
 import json
 
 from .build_check import Build, check_build
 from .build_policy import build_policy_changes, unchanged_build_policy
-from .build_graph import check_build_graph
+from .build_graph import application_graph
 from .claim_integrity import check_claims
 from .driver import working_state
 from .mapping_check import check_mappings
@@ -149,31 +150,44 @@ def measure_migration(root: Path, task_name: str, image: Path, request: dict, *,
     checks = [run("source", lambda: check_source(root)), run("mappings", lambda: check_mappings(root)),
               run("claim-identities", lambda: check_claims(root))]
     checks += [run("audit:" + name, lambda name=name: audit_source(root, name)) for name in sorted(policy["audits"])]
-    graph = (run("build-graph", lambda: check_build_graph(root, task_name, integration=integration))
-             if policy_change["graph_only"] else None)
-    built = graph.get("current_build") if graph is not None else None
-    if not isinstance(built, dict) or built.get("result") != Result.PASS:
-        built = run("build", lambda: check_build(root))
-    if built["result"] != Result.PASS:
-        return {"snapshot": request["snapshot"], "changed": sorted(scope), "build": built["result"],
-                "structure": Result.UNKNOWN, "references": Result.UNKNOWN, "outside_scope": Result.UNKNOWN,
-                "measurements": [], "current": {}, "diagnostics": diagnostics}
-    restored = run("restoration", lambda: measure_restoration(
-        root, task_name, image, review=request["review"], review_snapshot=request["snapshot"]))
-    preservation = run("preservation", lambda: check_preservation(
-        root, task_name, **({"integration": integration} if integration is not None else {})))
-    structural = (declared_outcome(restored.get("structural_requirements", []), interpretations,
-                                   review=request["review"])[0] if interpretations else Result.PASS)
-    measurements = {row["obligation_id"]: row for row in restored.get("measurements", [])}
-    current = {key: value for key, value in restored.get("current", {}).items() if key in protected}
-    for key in sorted(protected.keys() - measurements.keys()):
-        current[key] = digest({"inputs": before, "obligation": key})
-        measurements[key] = {"obligation_id": key, "fingerprint": current[key], "result": Result.UNKNOWN,
-                             "evidence": "protected requirement has no current native measurement"}
-    fresh()
-    return {"snapshot": request["snapshot"], "changed": sorted(scope), "build": built["result"],
-            "structure": structural, "references": restored.get("references", Result.UNKNOWN),
-            "outside_scope": _all([*(row["result"] for row in checks), preservation["result"],
-                                   Result.PASS if unchanged_policy else graph["result"] if graph is not None else Result.UNKNOWN]),
-            "measurements": [measurements[key] for key in sorted(protected)], "current": current,
-            "diagnostics": diagnostics}
+    try:
+        with ExitStack() as contexts:
+            application = None
+
+            def graph_evidence():
+                nonlocal application
+                application = contexts.enter_context(application_graph(root, task_name, integration=integration))
+                return application.report
+
+            graph = run("build-graph", graph_evidence) if policy_change["graph_only"] else None
+            built = graph.get("current_build") if graph is not None else None
+            if not isinstance(built, dict) or built.get("result") != Result.PASS:
+                built = run("build", lambda: check_build(root))
+            if built["result"] != Result.PASS:
+                return {"snapshot": request["snapshot"], "changed": sorted(scope), "build": built["result"],
+                        "structure": Result.UNKNOWN, "references": Result.UNKNOWN, "outside_scope": Result.UNKNOWN,
+                        "measurements": [], "current": {}, "diagnostics": diagnostics}
+            restored = run("restoration", lambda: measure_restoration(
+                root, task_name, image, review=request["review"], review_snapshot=request["snapshot"]))
+            preservation = run("preservation", lambda: check_preservation(
+                root, task_name, **({"integration": integration} if integration is not None else {}),
+                **({"application": application} if application is not None else {})))
+            structural = (declared_outcome(restored.get("structural_requirements", []), interpretations,
+                                           review=request["review"])[0] if interpretations else Result.PASS)
+            measurements = {row["obligation_id"]: row for row in restored.get("measurements", [])}
+            current = {key: value for key, value in restored.get("current", {}).items() if key in protected}
+            for key in sorted(protected.keys() - measurements.keys()):
+                current[key] = digest({"inputs": before, "obligation": key})
+                measurements[key] = {"obligation_id": key, "fingerprint": current[key], "result": Result.UNKNOWN,
+                                     "evidence": "protected requirement has no current native measurement"}
+            fresh()
+            return {"snapshot": request["snapshot"], "changed": sorted(scope), "build": built["result"],
+                    "structure": structural, "references": restored.get("references", Result.UNKNOWN),
+                    "outside_scope": _all([*(row["result"] for row in checks), preservation["result"],
+                                           Result.PASS if unchanged_policy else graph["result"] if graph is not None else Result.UNKNOWN]),
+                    "measurements": [measurements[key] for key in sorted(protected)], "current": current,
+                    "diagnostics": diagnostics}
+    finally:
+        # Context cleanup is part of the proof epoch, not post-verification
+        # housekeeping. A refused close cannot publish an earlier report.
+        fresh()

@@ -1,10 +1,13 @@
 """Native task application-graph evidence, with no linked-effect waiver."""
 
-from contextlib import ExitStack
+from contextlib import ExitStack, contextmanager
+from copy import deepcopy
+from dataclasses import dataclass
 from pathlib import Path
 import re
+from typing import Callable
 
-from .application_context import application_build
+from .application_context import ApplicationBuild, application_build
 from .build_check import Build
 from .build_graph_commands import compare_build_commands
 from .build_policy import build_policy_changes
@@ -18,7 +21,36 @@ from .source_replica import replica_roots, replica_snapshot
 from .tasks import TaskStore
 
 
-def check_build_graph(root, task_name, *, integration=None):
+@dataclass(frozen=True)
+class ApplicationGraph:
+    """Live graph evidence; neither the report nor source copies grant scope."""
+
+    root: Path
+    task_name: str
+    baseline_revision: str
+    roots: tuple[str, ...]
+    baseline: ApplicationBuild
+    current: ApplicationBuild
+    _sources: dict
+    _report: dict
+    _authorization: dict
+    check_current: Callable[[], None]
+
+    @property
+    def source_versions(self):
+        return deepcopy(self._sources)
+
+    @property
+    def report(self):
+        return deepcopy(self._report)
+
+    @property
+    def authorization(self):
+        return deepcopy(self._authorization)
+
+
+@contextmanager
+def application_graph(root, task_name, *, integration=None):
     """Build authorized source/graph versions under the same current policy.
 
     Called by native migration verification. Command/membership agreement is
@@ -42,7 +74,8 @@ def check_build_graph(root, task_name, *, integration=None):
     # Task history is never reset to HEAD or to a freshly built source tree.
     git(root, "merge-base", "--is-ancestor", task.base_revision, before["head"].decode().strip())
     roots = replica_roots(settings.source.roots)
-    current = {name: raw for name, raw in replica_snapshot(root, roots).items() if raw is not None}
+    source_before = replica_snapshot(root, roots)
+    current = {name: raw for name, raw in source_before.items() if raw is not None}
     prior = revision_files(root, baseline, roots)
     changed = sorted(name for name in current.keys() | prior.keys() if current.get(name) != prior.get(name))
     if set(changed) - set(editable):
@@ -65,6 +98,7 @@ def check_build_graph(root, task_name, *, integration=None):
 
     def fresh():
         if (working_state(root) != before or build.snapshot(root) != policy_before
+                or replica_snapshot(root, roots) != source_before or image_pin(root, settings.source) != pin
                 or store.read(task_name) != task or store.decisions(task_name) != decisions
                 or settings.snapshot(root, {"task": task, "decisions": decisions, "integration": integration}) != measured_before
                 or build_policy_changes(root, task, settings, build, integration=integration) != policy):
@@ -95,6 +129,37 @@ def check_build_graph(root, task_name, *, integration=None):
                                 + "; callback/storage/other residual effects remain unproved",
                       "limitations": ["bounded initializer table/code comparison is not startup effect, common allocation, COMDAT selection or residual proof",
                                       "source/graph versions retain original task and integration preservation baselines"]}
-        return result
+            live = True
+
+            def session_fresh():
+                if not live:
+                    raise ValueError("application graph context has expired")
+                # Refusals do not skip the other build or original authority
+                # guard; no participant can refresh another participant's epoch.
+                try:
+                    old.check_current()
+                finally:
+                    try:
+                        new.check_current()
+                    finally:
+                        fresh()
+
+            try:
+                session_fresh()
+                yield ApplicationGraph(root, task_name, baseline, roots, old, new,
+                                       deepcopy({"baseline": prior, "current": current}),
+                                       deepcopy(result), deepcopy({"task": task.to_dict(), "decisions": decisions,
+                                                                   "integration": integration}), session_fresh)
+            finally:
+                try:
+                    session_fresh()
+                finally:
+                    live = False
     finally:
         fresh()
+
+
+def check_build_graph(root, task_name, *, integration=None):
+    """Report a freshly verified graph context without retaining live files."""
+    with application_graph(root, task_name, integration=integration) as session:
+        return session.report

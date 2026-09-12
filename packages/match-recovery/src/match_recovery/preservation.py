@@ -11,6 +11,7 @@ from contextlib import ExitStack
 from dataclasses import asdict
 from pathlib import Path
 import re
+from weakref import WeakKeyDictionary
 
 from .coff_preservation import compare_outside_functions, compare_unit_presence
 from .coff_replica import object_signature
@@ -22,6 +23,7 @@ from .generated_source import parse_generated
 from .layout_source import parse_members, parse_bases
 from .model import Origin, Result, digest
 from .pe_coff import Coff
+from .preservation_objects import ObjectTrial, application_objects
 from .object_source import parse_objects
 from .shared_source import parse_shared
 from .import_source import parse_imports
@@ -168,7 +170,8 @@ def _explain_sources(comparison, old_sources, new_sources):
 
 
 def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | None = None,
-                       diagnostic: bool = False, compiler=None, integration: dict | None = None):
+                       diagnostic: bool = False, compiler=None, integration: dict | None = None,
+                       application=None):
     if type(diagnostic) is not bool:
         raise ValueError("diagnostic mode must be boolean")
     root = root.resolve()
@@ -194,6 +197,22 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
         roots = replica_roots((*settings.source.roots, *settings.input_roots))
     current = {name: data for name, data in replica_snapshot(root, roots).items() if data is not None}
     baseline = revision_files(root, baseline_revision, roots)
+    authorization = digest({"task": task.to_dict(), "decisions": decisions, "integration": integration})
+    source_digests = {}
+    if application is not None:
+        application.check_current()
+        if (application.root != root or application.task_name != task_name
+                or application.baseline_revision != baseline_revision
+                or digest(application.authorization) != authorization
+                or application.roots != replica_roots(settings.source.roots)):
+            raise ValueError("live application graph differs from preservation task or authorization")
+        sources = application.source_versions
+        for version, files in (("baseline", baseline), ("current", current)):
+            source_files = {name: raw for name, raw in files.items()
+                            if any(Path(name).is_relative_to(directory) for directory in application.roots)}
+            if source_files != sources[version]:
+                raise ValueError("live application graph differs from preservation source versions")
+            source_digests[version] = snapshot_digest(source_files)
     # Build graph inputs are distinct from compiler implementation/policy. Only
     # explicitly declared files travel with their historical source version.
     versioned_inputs, build_inputs = (), {"baseline": {}, "current": {}}
@@ -268,6 +287,10 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
     reports, controls, attempts = [], [], 0
     contexts, replicas = {}, ExitStack()
     membership, preparation_error = {}, None
+    # Only live Coff instances retain compiler bytes. Damage/replica objects
+    # discarded by the existing loop do not accumulate a second object cache.
+    object_trials = WeakKeyDictionary()
+    compare_application_object = None
 
     def fresh():
         if (settings.snapshot(root, metadata) != before or store.read(task_name) != task
@@ -298,9 +321,39 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                      compiler.materialize(root / unit, roots, replacements, (), flags) if tree_mode else
                      compiler.overlay(root / unit, replacements, (), flags))
         fresh()
-        return Coff(value)
+        raw = bytes(value)
+        obj = Coff(raw)
+        if application is not None:
+            files = (current if replacements is None else replacements if tree_mode else
+                     {**current, **replacements})
+            canonical = baseline if version == "baseline" else current
+            # A successful damage compile is not canonical trial evidence.
+            if files == canonical:
+                object_trials[obj] = ObjectTrial(
+                    raw, root, task_name, baseline_revision, authorization, source_digests[version],
+                    unit, version, tuple(flags), digest(before))
+        return obj
+
+    def linked_objects(unit, flags, prior, original):
+        evidence = []
+        for version, obj in (("baseline", prior), ("current", original)):
+            if obj is None:
+                continue  # Absence never has a fabricated object or receipt.
+            try:
+                report = compare_application_object(
+                    object_trials.get(obj), obj, unit=unit, version=version,
+                    flags=flags, input_fingerprint=digest(before))
+            except (OSError, ValueError) as error:
+                report = {"unit": unit, "version": version, "flags": list(flags),
+                          "result": Result.UNKNOWN, "reason": str(error), "linked_effects": Result.UNKNOWN}
+            evidence.append(report)
+        return evidence
 
     try:
+        if application is not None:
+            # Index native membership once, bracket the entire compiler epoch
+            # with live build checks, and bind each read to its captured receipt.
+            compare_application_object = replicas.enter_context(application_objects(application))
         if regenerated:
             try:
                 for version, files in (("baseline", baseline), ("current", current)):
@@ -418,13 +471,15 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                                        baseline_definition_coverage="omitted_for_diagnostics",
                                        scope_subtraction="omitted_for_diagnostics",
                                        reason="raw added-TU diagnostic; baseline definition protection and scope subtraction omitted")
+                            if application is not None:
+                                row["application_objects"] = linked_objects(unit, flags, None, original)
                             reports.append(row)
                             continue
                         prior = None
                         if unit in baseline:
                             if changed_units:
                                 prior = verified("baseline", unit)
-                            elif old_overlay or build_inputs["baseline"] != build_inputs["current"]:
+                            elif old_overlay or build_inputs["baseline"] != build_inputs["current"] or application is not None:
                                 prior = compile(unit, flags, old_overlay, version="baseline")
                             else:
                                 prior = same
@@ -459,6 +514,8 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                         _explain_sources(comparison, old_sources, new_sources)
                         row.update(comparison, replica=Result.PASS)
                         row["compiled_comparison"] = comparison["result"]
+                        if application is not None:
+                            row["application_objects"] = linked_objects(unit, flags, prior, original)
                         if control["result"] != Result.PASS:
                             row.update(result=Result.UNKNOWN, reason="per-file controls deliberately omitted for diagnostics" if diagnostic else
                                        "baseline substitutions lack per-file compiler controls")
@@ -471,7 +528,11 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
         try:
             replicas.close()
         finally:
-            fresh()
+            try:
+                fresh()
+            finally:
+                if application is not None:
+                    application.check_current()
     unmeasured = sorted(all_units - set(measured_units))
     counts = Counter(row["result"] for row in reports)
     result = (Result.UNKNOWN if diagnostic or unavailable or preparation_error or unmeasured or counts[Result.UNKNOWN] or not reports else
@@ -498,6 +559,7 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
             "limitations": ["compiled residuals only; no original-byte, full-link, runtime or lifecycle proof",
                             "current compiler interaction and measurement policy on both versions; explicit versioned build inputs may change recipes, not historical artifact recreation",
                             "configured preparation regenerates each private source context; current replicas must agree with direct output",
+                            "live application object agreement binds only the actual source/version/flag trial; it never subtracts compiled residuals or proves linked effects",
                             "only source-mapped function COMDAT ownership may vary; independent data/tables stay protected",
                             "header copies require an authorized explicit body path, canonical replica and per-version/flag body-damage witnesses; exports and outside callers remain protected",
                             "source interpretation must agree; added/deleted TUs require fresh per-version source/recipe coverage and strict present-object residual checks",

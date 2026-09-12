@@ -4,10 +4,14 @@ The compiler is a controlled test double; this is not a live agent/game pilot.
 Restoration, layout, outside-code comparison and admission policy are real.
 """
 
+from contextlib import contextmanager
 from dataclasses import asdict, replace
 import io
 import json
+from pathlib import Path
 import sys
+from tempfile import TemporaryDirectory
+from types import SimpleNamespace
 
 import pytest
 
@@ -270,23 +274,77 @@ def test_changed_measurement_compiler_cannot_borrow_baseline_preservation(migrat
     assert measure(migration)["outside_scope"] == "unknown"
 
 
-def test_native_graph_prerequisite_reuses_current_build_without_waiving_linked_effects(migration, monkeypatch):
-    calls = []
-    task = TaskStore(migration).read("owner")
+def live_graph(migration, monkeypatch, *, outcome="unknown", reusable_build=True,
+               enter_refusal=False, close_refusal=False, enter_mutate=None):
+    """Synthetic lifetime only; native graph/build producers have separate tests."""
+    calls, sessions = [], []
     monkeypatch.setattr(native, "build_policy_changes", lambda *a, **k: {
         "unchanged": False, "graph_only": True, "changed_paths": ["BuildGraph.txt"]})
 
+    @contextmanager
     def graph(root, name, *, integration):
         assert root == migration and name == "owner" and integration is None
-        calls.append("graph")
-        return {"result": "unknown", "commands": {"result": "pass"}, "linked_effects": "unknown",
-                "current_build": {"result": "pass", "test_fixture": "verified inside live graph context"}}
+        calls.append("enter")
+        if enter_refusal:
+            raise ValueError("baseline context unavailable")
+        with TemporaryDirectory(prefix="migration-live-graph-") as temporary:
+            baseline, current = Path(temporary) / "baseline", Path(temporary) / "current"
+            baseline.mkdir()
+            current.mkdir()
+            active = True
 
-    monkeypatch.setattr(native, "check_build_graph", graph)
+            def fresh():
+                assert active and baseline.is_dir() and current.is_dir()
+
+            report = {"result": outcome, "commands": {"result": "pass"}, "linked_effects": "unknown"}
+            if reusable_build:
+                report["current_build"] = {"result": "pass", "test_fixture": "live context producer fixture"}
+            session = SimpleNamespace(report=report, check_current=fresh,
+                                      baseline=SimpleNamespace(root=baseline, check_current=fresh),
+                                      current=SimpleNamespace(root=current, check_current=fresh))
+            sessions.append(session)
+            try:
+                if enter_mutate is not None:
+                    enter_mutate()
+                yield session
+            finally:
+                fresh()
+                calls.append("close")
+                active = False
+                if close_refusal:
+                    raise ValueError("graph context close refused")
+
+    monkeypatch.setattr(native, "application_graph", graph)
+    return calls, sessions
+
+
+def test_native_graph_prerequisite_reuses_current_build_without_waiving_linked_effects(migration, monkeypatch):
+    calls, sessions = live_graph(migration, monkeypatch)
+    task = TaskStore(migration).read("owner")
     monkeypatch.setattr(native, "check_build", lambda *a: pytest.fail("duplicated current application build"))
+    restoration = native.measure_restoration
+
+    def restore(*args, **kwargs):
+        assert calls == ["enter"]
+        sessions[0].baseline.check_current()
+        sessions[0].current.check_current()
+        calls.append("restoration")
+        return restoration(*args, **kwargs)
+
+    def preserve(root, name, *, application):
+        assert root == migration and name == "owner" and application is sessions[0]
+        assert calls == ["enter", "restoration"]
+        application.baseline.check_current()
+        application.current.check_current()
+        calls.append("preservation")
+        return {"result": "pass", "test_fixture": "consumer orchestration, not producer evidence"}
+
+    monkeypatch.setattr(native, "measure_restoration", restore)
+    monkeypatch.setattr(native, "check_preservation", preserve)
     payload = request(migration)
     report = measure(migration, payload)
-    assert calls == ["graph"] and report["build"] == "pass"
+    assert calls == ["enter", "restoration", "preservation", "close"] and report["build"] == "pass"
+    assert not sessions[0].baseline.root.exists() and not sessions[0].current.root.exists()
     assert report["outside_scope"] == "unknown" and report["measurements"]
     assert any(row["check"] == "build-graph" and '"linked_effects": "unknown"' in row["evidence"][0]
                for row in report["diagnostics"])
@@ -296,17 +354,10 @@ def test_native_graph_prerequisite_reuses_current_build_without_waiving_linked_e
 
 
 def test_refused_graph_context_still_checks_current_application_without_granting_acceptance(migration, monkeypatch):
-    monkeypatch.setattr(native, "build_policy_changes", lambda *a, **k: {"unchanged": False, "graph_only": True})
-    calls = []
-
-    def graph(*args, **kwargs):
-        calls.append("graph")
-        raise ValueError("baseline context unavailable")
-
-    monkeypatch.setattr(native, "check_build_graph", graph)
+    calls, sessions = live_graph(migration, monkeypatch, enter_refusal=True)
     monkeypatch.setattr(native, "check_build", lambda *a: calls.append("current-build") or {"result": "pass"})
     report = measure(migration)
-    assert calls == ["graph", "current-build"] and report["build"] == "pass"
+    assert calls == ["enter", "current-build"] and not sessions and report["build"] == "pass"
     assert report["outside_scope"] == "unknown"
     assert "baseline context unavailable" in next(row for row in report["diagnostics"]
                                                   if row["check"] == "build-graph")["evidence"][0]
@@ -317,23 +368,84 @@ def test_unchanged_or_non_graph_policy_never_invokes_graph_exception_route(migra
     if changed_policy:
         path = migration / "recovery/compile.py"
         path.write_text(path.read_text() + "\n# changed compiler policy\n")
-    monkeypatch.setattr(native, "check_build_graph", lambda *a, **k: pytest.fail("ineligible graph route"))
+    monkeypatch.setattr(native, "application_graph", lambda *a, **k: pytest.fail("ineligible graph route"))
     report = measure(migration)
     assert report["outside_scope"] == ("unknown" if changed_policy else "pass")
 
 
 def test_graph_prerequisite_cannot_return_after_mutating_reviewed_source(migration, monkeypatch):
-    monkeypatch.setattr(native, "build_policy_changes", lambda *a, **k: {"unchanged": False, "graph_only": True})
-
-    def graph(*args, **kwargs):
+    def mutate():
         path = migration / "code/unit.cc"
         path.write_text(path.read_text() + "// preserve concurrent source change\n")
-        return {"result": "unknown", "current_build": {"result": "pass"}}
 
-    monkeypatch.setattr(native, "check_build_graph", graph)
+    calls, sessions = live_graph(migration, monkeypatch, enter_mutate=mutate)
     with pytest.raises(ValueError, match="changed"):
         measure(migration)
+    assert calls == ["enter", "close"] and not sessions[0].baseline.root.exists()
     assert "preserve concurrent source change" in (migration / "code/unit.cc").read_text()
+
+
+def test_graph_context_close_refusal_prevents_returning_an_earlier_report(migration, monkeypatch):
+    calls, sessions = live_graph(migration, monkeypatch, close_refusal=True)
+    monkeypatch.setattr(native, "check_preservation", lambda *a, **k: {"result": "pass"})
+    monkeypatch.setattr(native, "check_build", lambda *a: pytest.fail("unnecessary current build"))
+    with pytest.raises(ValueError, match="graph context close refused"):
+        measure(migration)
+    assert calls == ["enter", "close"]
+    assert not sessions[0].baseline.root.exists() and not sessions[0].current.root.exists()
+
+
+@pytest.mark.parametrize("stage", ["restoration", "preservation"])
+def test_graph_lifetime_refuses_concurrent_changes_during_scoped_checks(migration, monkeypatch, stage):
+    calls, sessions = live_graph(migration, monkeypatch)
+    restoration = native.measure_restoration
+    source = migration / "code/unit.cc"
+
+    def mutate():
+        source.write_bytes(source.read_bytes() + b"// preserve changed recovery input\n")
+
+    def restore(*args, **kwargs):
+        sessions[0].check_current()
+        calls.append("restoration")
+        report = restoration(*args, **kwargs)
+        if stage == "restoration":
+            mutate()
+        return report
+
+    def preserve(*args, application, **kwargs):
+        assert application is sessions[0]
+        application.check_current()
+        calls.append("preservation")
+        assert stage == "preservation", "preservation ran after refused restoration epoch"
+        mutate()
+        return {"result": "pass"}
+
+    monkeypatch.setattr(native, "measure_restoration", restore)
+    monkeypatch.setattr(native, "check_preservation", preserve)
+    with pytest.raises(ValueError, match="changed"):
+        measure(migration)
+    assert calls == ["enter", "restoration", *(["preservation"] if stage == "preservation" else []), "close"]
+    assert source.read_bytes().endswith(b"// preserve changed recovery input\n")
+    assert not sessions[0].baseline.root.exists() and not sessions[0].current.root.exists()
+
+
+@pytest.mark.parametrize("built", ["pass", "fail"])
+def test_failed_graph_without_reusable_build_still_checks_current_application(migration, monkeypatch, built):
+    calls, sessions = live_graph(migration, monkeypatch, outcome="fail", reusable_build=False)
+    monkeypatch.setattr(native, "check_build", lambda *a: calls.append("current-build") or {"result": built})
+
+    def preserve(*args, application, **kwargs):
+        assert built == "pass" and application is sessions[0]
+        application.check_current()
+        calls.append("preservation")
+        return {"result": "pass"}
+
+    monkeypatch.setattr(native, "check_preservation", preserve)
+    report = measure(migration)
+    assert report["build"] == built
+    assert report["outside_scope"] == ("fail" if built == "pass" else "unknown")
+    assert calls == ["enter", "current-build", *(["preservation"] if built == "pass" else []), "close"]
+    assert not sessions[0].baseline.root.exists() and not sessions[0].current.root.exists()
 
 
 def test_failed_build_prevents_compiler_checks(migration, monkeypatch):

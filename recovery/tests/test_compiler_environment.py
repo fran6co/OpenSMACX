@@ -205,6 +205,103 @@ def test_private_application_context_builds_with_native_command_evidence(added, 
         # registration. The explicit dynamic initializer adds a second one.
         assert old_slots and len(new_slots) == len(old_slots) + int(added) + int(initializes)
         assert initializers["remaining_linked_effects"] == "unknown"
+        if not added:
+            # Reuse these two actual application builds. This fixture supplies
+            # explicit diagnostic identity, not a task/admission authorization.
+            from dataclasses import replace
+            from hashlib import sha256
+            import struct
+            from match_recovery.build_check import Build
+            from match_recovery.build_graph import ApplicationGraph
+            from match_recovery.coff_replica import object_signature
+            from match_recovery.driver import working_state
+            from match_recovery.measurement import Measurement
+            from match_recovery.model import digest
+            from match_recovery.pe_coff import Coff
+            from match_recovery.prepared_context import prepared_compiler, source_roots
+            from match_recovery.preservation_objects import ObjectTrial, application_objects
+            from match_recovery.source_replica import replica_snapshot, snapshot_digest
+
+            state = working_state(root)
+            revision = state["head"].decode().strip()
+            task_name = "actual-application-object-diagnostic"
+            authorization = {"task": {"task_id": task_name, "base_revision": revision,
+                                       "intent": "test-only compiler correspondence, never task acceptance"},
+                             "decisions": (), "integration": None}
+
+            def fresh():
+                try:
+                    application.check_current()
+                finally:
+                    repeated.check_current()
+                assert working_state(root) == state
+
+            graph = ApplicationGraph(root=root, task_name=task_name, baseline_revision=revision,
+                                     roots=("src",), baseline=application, current=repeated,
+                                     _sources={"baseline": dict(sources), "current": dict(candidate_sources)},
+                                     _report={"result": "unknown", "linked_effects": "unknown"},
+                                     _authorization=authorization, check_current=fresh)
+            settings = Measurement.read(root)
+            preparation_roots = source_roots(root, settings)
+            preparation_sources = {name: raw for name, raw in replica_snapshot(root, preparation_roots).items()
+                                   if raw is not None}
+            assert {name: raw for name, raw in preparation_sources.items()
+                    if Path(name).is_relative_to("src")} == sources
+            preparation = Build.read(root, key="preparation")
+            preparation_graphs = {name: (root / name).read_bytes() for name in preparation.versioned_inputs}
+            unit = "src/time.cpp"
+            application_objects_by_version = {}
+            for version, context in (("baseline", application), ("current", repeated)):
+                row, = (row for row in context.report["compile_link"]["compilations"]
+                        if row["source"] == str(context.root / unit))
+                output = Path(row["output"])
+                raw = output.read_bytes()
+                assert row["compilation"]["output"]["after"] == {"sha256": sha256(raw).hexdigest(), "size": len(raw)}
+                application_objects_by_version[version] = (output, raw, object_signature(Coff(raw)))
+
+            with prepared_compiler(root, preparation_roots, preparation_sources, settings,
+                                   versioned_files=preparation_graphs) as prepared:
+                assert unit in prepared.units
+                assert (prepared.root / unit).read_bytes() == sources[unit]
+                fingerprint = digest(Measurement.read(prepared.root).snapshot(prepared.root, {"fixture": authorization}))
+                with application_objects(graph) as compare_object:
+                    # /Od is a separate actual trial, never mislabeled as one
+                    # of the configured matching flag sets or used as a waiver.
+                    unoptimized = tuple(flag for flag in settings.flag_sets[0] if not flag.startswith("/O")) + ("/Od",)
+                    assert "/O2" not in unoptimized
+                    for flags in (*settings.flag_sets, unoptimized):
+                        prepared.check_current()
+                        raw = bytes(prepared(prepared.root / unit, (), flags))
+                        obj = Coff(raw)
+                        signature = object_signature(obj)
+                        for version in ("baseline", "current"):
+                            trial = ObjectTrial(raw, root, task_name, revision, digest(authorization),
+                                                snapshot_digest(graph.source_versions[version]), unit, version,
+                                                tuple(flags), fingerprint)
+                            report = compare_object(trial, obj, unit=unit, version=version,
+                                                    flags=flags, input_fingerprint=fingerprint)
+                            output, application_raw, application_signature = application_objects_by_version[version]
+                            assert report["trial_sha256"] == sha256(raw).hexdigest()
+                            assert report["application_sha256"] == sha256(application_raw).hexdigest()
+                            assert report["application_object"] == str(output)
+                            assert report["trial_signature"] == signature
+                            assert report["application_signature"] == application_signature
+                            assert report["result"] == ("pass" if signature == application_signature else "unknown"), report
+                            assert report["flags"] == list(flags) and report["linked_effects"] == "unknown"
+                            assert not report["persisted"] and not report["ready_for_collection"]
+
+                        # Damage only an in-memory captured code byte. Neither
+                        # source nor linked artifacts change during this epoch.
+                        section = next(index for index, row in enumerate(obj.sections) if row.flags & 0x20 and row.data)
+                        at, = struct.unpack_from("<I", raw, 20 + obj.optional_header_size + section * 40 + 20)
+                        damaged = bytearray(raw)
+                        damaged[at] ^= 1
+                        assert object_signature(Coff(bytes(damaged))) != signature
+                        with pytest.raises(ValueError, match="changed from captured compiler output"):
+                            compare_object(replace(trial, raw=bytes(damaged)), obj, unit=unit, version="current",
+                                           flags=flags, input_fingerprint=fingerprint)
+                        prepared.check_current()
+                graph.check_current()
         if added:
             reverse = compare_build_commands(repeated, application, editable=(extra,))
             assert reverse["result"] == "pass", reverse
