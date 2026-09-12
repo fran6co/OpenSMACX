@@ -31,6 +31,53 @@ VC6_PREFIX = Path(os.environ.get("VC6_PREFIX", VC6_ROOT / ".wineprefix"))
 TOOLS = {"cl": "CL.EXE", "link": "LINK.EXE", "lib": "LIB.EXE"}
 
 
+def preprocessing_diagnostics(stdout: bytes, stderr: bytes) -> str:
+    """Bound failed /E output without burying diagnostics in expanded source.
+
+    The compiler client retains the beginning of an error, so real diagnostic
+    lines precede any continuation or fallback context. This renders failures
+    only: it neither decides success nor changes successful preprocessor bytes.
+    """
+    diagnostic = re.compile(rb"(?:fatal error|warning|error) [CD][0-9]{4}:")
+    lines, context, seen = [], [], set()
+    omitted, stderr_context = False, ""
+    for stream_number, stream in enumerate((stdout, stderr)):
+        continuation = 0
+        for match in re.finditer(rb"[^\r\n]+", stream):
+            line = match.group()
+            if diagnostic.search(line):
+                continuation = 2
+                if line in seen:
+                    continue
+                if len(lines) == 16:
+                    omitted = True
+                    continue
+                seen.add(line)
+                text = line[:1024].decode(errors="replace")
+                lines.append(text + (" [line truncated]" if len(line) > 1024 else ""))
+            elif continuation and line.startswith((b" ", b"\t")):
+                if len(context) < 2:
+                    context.append(line[:256].decode(errors="replace"))
+                continuation -= 1
+            else:
+                continuation = 0
+                if stream_number == 1:
+                    stderr_context = (stderr_context + "\n" + line[-512:].decode(errors="replace"))[-512:]
+    if lines:
+        rendered = "\n".join(lines)
+        if context:
+            rendered += "\nDiagnostic continuation context:\n" + "\n".join(context)
+        if stderr_context:
+            rendered += "\nOther stderr context:" + stderr_context
+        if omitted:
+            rendered += "\n[additional diagnostic lines omitted]"
+    else:
+        rendered = "\n".join(label + stream[-512:].decode(errors="replace")
+                             for label, stream in (("stderr tail: ", stderr), ("stdout tail: ", stdout))
+                             if stream) or "no compiler output"
+    return rendered if len(rendered) <= 4000 else rendered[:3960] + "\n[diagnostic output truncated]"
+
+
 def run_tool(command: list, *, cwd=None, binary=False, explicit_compiler=False) -> subprocess.CompletedProcess:
     """Wait for the tool, not EOF from background Wine services.
 
@@ -347,7 +394,7 @@ def main(argv: list) -> int:
                 if (result.returncode or result.stderr not in (b"", echo + b"\r\n", echo + b"\n") or
                         re.search(rb"(?m)^.*(?:fatal error|warning|error) [CD][0-9]{4}:", result.stdout)):
                     raise ValueError("reproducibility preprocessing failed: " +
-                                     (result.stdout[-2000:] + result.stderr).decode(errors="replace"))
+                                     preprocessing_diagnostics(result.stdout, result.stderr))
                 return result.stdout
             if reproducible is not None:
                 arguments = reproducible.verify(preprocess)
