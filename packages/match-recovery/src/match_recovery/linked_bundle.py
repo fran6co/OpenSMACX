@@ -12,6 +12,7 @@ from .linked_fixups import check_image, check_selected, target_address, private_
 from .linked_fpo import verify_fpo
 from .linked_function import _constant_binding
 from .model import Result, Span, digest
+from .pe_coff import unaddressed_end_label
 
 
 def _owned(obj, root):
@@ -28,7 +29,7 @@ def _owned(obj, root):
     return (root, *sorted(owned - {root}))
 
 
-def verify_bundle(obj, subject, owner, mapping, image, *, objects, fixups):
+def verify_bundle(obj, subject, owner, mapping, image, *, objects, fixups, folded_frames=None):
     check_image(fixups, image)
     selected = check_selected(obj, owner, objects)
     family = _owned(obj, subject.section)
@@ -49,7 +50,8 @@ def verify_bundle(obj, subject, owner, mapping, image, *, objects, fixups):
     if len(roots) != 1:
         raise ValueError("associated family has no unique owner-qualified root placement")
     places = {subject.section: roots[0].address}
-    debug_regions = [{"parent": 0, **verify_fpo(obj, number, subject, image, roots[0].address, fixups)}
+    verify_frame = verify_fpo if folded_frames is None else folded_frames.verify
+    debug_regions = [{"parent": 0, **verify_frame(obj, number, subject, image, roots[0].address, fixups)}
                      for number in metadata]
     # Only independently placed source sites may supply another region's base.
     # All paths must agree; unused/unreachable companions still need placement.
@@ -141,7 +143,8 @@ def verify_bundle(obj, subject, owner, mapping, image, *, objects, fixups):
                     **({"external": item.name} if item.storage == 2 else {})}
                    for item in obj.symbols.values() if item.section == number
                    and item.name != section.name]
-        if any(not 0 <= item["offset"] < len(code) for item in symbols):
+        if any(not (0 <= item.value < len(code) or unaddressed_end_label(obj, item))
+               for item in obj.symbols.values() if item.section == number and item.name != section.name):
             raise ValueError("associated family has unbounded symbol aliases")
         regions.append({"section": number, "ordinal": ordinals[number],
                         "parent": ordinals.get(obj.associations.get(number)),

@@ -71,7 +71,7 @@ def local_data_bindings(obj, subject, owner, mapping, image, names, objects, fix
         target = obj.symbols[index]
         if target.name not in names:
             continue
-        address = target_address(fixups, image, roots[0].address, offset, kind)
+        address = target_address(fixups, image, roots[0].address - subject.value, offset, kind)
         binding = private_data_binding(obj, target, selected, image, address)
         if target.name in result and result[target.name] != binding:
             raise ValueError("private fixup targets disagree on symbol placement")

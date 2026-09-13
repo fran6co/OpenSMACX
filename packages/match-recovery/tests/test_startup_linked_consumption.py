@@ -207,6 +207,31 @@ def test_linked_helper_reference_remains_a_strict_residual_after_real_coverage(t
         assert any(row["symbol"] == "_dep" for row in report["symbol_changes"])
 
 
+def test_exact_initializer_cannot_grant_startup_coverage_with_unmeasurable_helper_graph(tmp_path):
+    def unsupported_helper(context):
+        path = context.directory / "dependency.obj"
+        raw = bytearray(path.read_bytes())
+        flags, = struct.unpack_from("<I", raw, 20 + 36)
+        # Physical code remains identical; the actual helper object no longer
+        # declares a supported alignment. The initializer's own call and table
+        # still verify, but its reached code graph cannot establish PASS.
+        struct.pack_into("<I", raw, 20 + 36, flags & ~0x00F00000)
+        path.write_bytes(raw)
+        receipt = json.loads((context.directory / "link.json").read_text())
+        row = next(row for row in receipt["files"] if row["path"] == str(path))
+        row["before"] = row["after"] = stamp(raw)
+        update_artifact(context, "link.json", json.dumps(receipt).encode())
+
+    graph, changes = graph_at(tmp_path, code=b"\xe8\0\0\0\0\xc3", reference="_dep", damage=unsupported_helper)
+    observed = observe_build_initializers(graph.current)
+    assert observed["result"] == "pass", observed
+    assert observed["code_dependencies"]["result"] == "unknown", observed
+    assert any("alignment" in row["reason"] for row in observed["code_dependencies"]["gaps"])
+    with application_objects(graph) as run:
+        with pytest.raises(ValueError, match="consistent fresh linked initializer evidence"):
+            cover(run, graph, changes, "current")
+
+
 def test_multi_owner_fixture_binds_each_physical_entry_to_its_native_source(tmp_path):
     from match_recovery.build_graph_commands import _context
 

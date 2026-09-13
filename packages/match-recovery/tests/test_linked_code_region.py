@@ -120,11 +120,19 @@ def test_additional_external_entries_or_aliases_refuse_whole_section_claim(tmp_p
     assert report["graph_fingerprint"] is None
 
 
-@pytest.mark.parametrize("options", [{"anchor": 4}, {"anchor": 48}, {"local_offset": 48},
+@pytest.mark.parametrize("options", [{"anchor": 48}, {"local_offset": 48},
                                     {"local_offset": 0xFFFFFFFF}, {"raw_missing": True}, {"cross_section": True}])
 def test_unsupported_section_boundaries_or_unplaced_targets_refuse(tmp_path, options):
     report = direct_graph(physical(tmp_path / "unsupported", **options))
     assert report["result"] == helper(report)["result"] == "unknown", report
+    assert report["graph_fingerprint"] is None
+
+
+def test_changed_entry_offset_cannot_reinterpret_unchanged_linked_section(tmp_path):
+    # Nonzero entries are supported, but this fixture's map and bytes still
+    # reflect the original zero-offset anchor. This is now measurable damage.
+    report = direct_graph(physical(tmp_path / "changed-entry", anchor=4))
+    assert report["result"] == helper(report)["result"] == "fail"
     assert report["graph_fingerprint"] is None
 
 

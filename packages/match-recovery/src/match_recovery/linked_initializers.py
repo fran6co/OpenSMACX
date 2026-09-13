@@ -151,6 +151,10 @@ def _observe(context, artifacts):
         raise ValueError("initializer table requires complete linked input candidate coverage")
     evidence = parse_link_files(artifacts["link-input-files"])
     objects = SelectedObjects(evidence, coverage, records)
+    folding = None
+    if fixups is not None:
+        from .linked_folding import bind_folding
+        folding = bind_folding(objects, mapping, image, fixups, artifacts["msvc-link-log"])
     selected = _selected_objects(evidence, coverage, records)
     functions, entries = {}, []
     for item in selected.values():
@@ -185,7 +189,7 @@ def _observe(context, artifacts):
     if not entries and not contributions:
         return {"result": Result.PASS, "table": TABLE, "entries": [], "sequence": [],
                 "contribution": None, "functions": [], "input_coverage": Result.PASS,
-                "code_dependencies": observe_code_graph(objects, mapping, image, [], fixups=fixups)}
+                "code_dependencies": observe_code_graph(objects, mapping, image, [], fixups=fixups, folding=folding)}
     if len(contributions) != 1:
         raise ValueError("initializer table requires one independently bounded linked contribution")
     table, = contributions
@@ -215,7 +219,7 @@ def _observe(context, artifacts):
     if table_ok:
         try:
             dependencies = observe_code_graph(objects, mapping, image,
-                                              [row["function"] for row in sequence], fixups=fixups)
+                                              [row["function"] for row in sequence], fixups=fixups, folding=folding)
         except (OSError, ValueError) as error:
             # Unsupported dependency metadata cannot erase a measured root
             # failure or turn a valid root observation into missing evidence.

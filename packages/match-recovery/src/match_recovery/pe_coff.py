@@ -394,3 +394,35 @@ class PeImage:
             else:
                 raise ValueError("unterminated PE import lookup table")
         raise ValueError("unterminated or oversized PE import directory")
+
+
+def unaddressed_end_label(obj, symbol: Symbol) -> bool:
+    """Recognize inert label metadata exactly at a bounded code section's end.
+
+    This never extends the section or supplies a relocation target. All object
+    sections participate in the incoming-reference check, including no-op and
+    debug relocations. Unsupported weak metadata cannot prove non-reference.
+    Callers must still retain the label's offset, type, storage and identity.
+    """
+    if (not isinstance(obj, Coff) or not isinstance(symbol, Symbol)
+            or obj.symbols.get(symbol.index) != symbol or symbol.storage != 6
+            or symbol.type != 0 or obj.auxiliary.get(symbol.index)
+            or not 1 <= symbol.section <= len(obj.sections)):
+        return False
+    section = obj.sections[symbol.section - 1]
+    if (not section.data or len(section.data) != obj.section_sizes[symbol.section - 1]
+            or symbol.value != len(section.data) or not section.flags & 0x20
+            or not section.flags & 0x20000000 or section.flags & 0x80):
+        return False
+    if any(target == symbol.index for section in obj.sections
+           for _, target, _ in section.relocations):
+        return False
+    for candidate in obj.symbols.values():
+        if candidate.storage == 105:
+            try:
+                target, _ = weak_external(obj, candidate)
+            except ValueError:
+                return False
+            if target.index == symbol.index:
+                return False
+    return True

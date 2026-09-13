@@ -53,7 +53,7 @@ def inputs(graph, monkeypatch):
     output = graph.current.directory / row["output"]
     output.write_bytes(raw)
     row["compilation"]["output"]["after"] = stamp(raw)
-    observation = {"result": "pass", "code_dependencies": {"result": "unknown"}, "entries": [
+    observation = {"result": "pass", "code_dependencies": {"result": "pass"}, "entries": [
         {"input": {"path": str(output)}, "object_sha256": stamp(raw)["sha256"],
          "section": 2, "offset": 0, "target": 0x401000,
          "function": {"owner": output.name, "symbol": "_$E1"}}]}
@@ -169,7 +169,7 @@ def test_other_flag_trial_cannot_inherit_application_correspondence(inputs):
     assert not calls
 
 
-@pytest.mark.parametrize("damage", ["table-fail", "table-unknown", "code-fail", "code-missing", "path", "archive",
+@pytest.mark.parametrize("damage", ["table-fail", "table-unknown", "code-fail", "code-unknown", "code-missing", "path", "archive",
                                      "duplicate", "offset", "symbol", "object-sha", "section"])
 def test_missing_inconsistent_or_unselected_link_evidence_refuses(inputs, damage):
     graph, changes, raw, observation, calls = inputs
@@ -177,6 +177,7 @@ def test_missing_inconsistent_or_unselected_link_evidence_refuses(inputs, damage
     if damage == "table-fail": observation["result"] = "fail"
     elif damage == "table-unknown": observation["result"] = "unknown"
     elif damage == "code-fail": observation["code_dependencies"]["result"] = "fail"
+    elif damage == "code-unknown": observation["code_dependencies"]["result"] = "unknown"
     elif damage == "code-missing": del observation["code_dependencies"]
     elif damage == "path": entry["input"]["path"] += ".other"
     elif damage == "archive": entry["input"]["member"] = "unit.obj"

@@ -13,11 +13,14 @@ from .pdb_fixups import BoundFixups
 from .pe_coff import Symbol, weak_external
 
 
-def verify_fpo(obj, number, root, image, address, fixups):
-    """Verify one selected leaf metadata child against one bound PDB record.
+def validate_fpo_source(obj, number, root, image, address, fixups):
+    """Validate an emitted leaf frame and linked extent, not PDB correspondence.
 
     The caller establishes native object selection and the root's linked entry;
     no byte search, section placement or owner inference happens here.
+    The image-bound sidecar must be valid, but this helper does not select or
+    consume any FPO record. Its canonical result cannot prove that a matching
+    record exists, is unique, or accounts for all folded members.
     """
     if (type(number) is not int or not 1 <= number <= len(obj.sections)
             or not isinstance(root, Symbol) or obj.symbols.get(root.index) != root
@@ -69,8 +72,14 @@ def verify_fpo(obj, number, root, image, address, fixups):
               if region.start <= span.start and span.end <= region.end]
     if len(owners) != 1 or not owners[0] & 0x20 or not owners[0] & 0x20000000:
         raise ValueError("FPO root is not inside linked executable code")
+    return {"format": "fpo_data", "data": section.data[4:].hex(), "code_size": code_size}
+
+
+def verify_fpo(obj, number, root, image, address, fixups):
+    """Verify one source-valid leaf frame against exactly one bound PDB record."""
+    frame = validate_fpo_source(obj, number, root, image, address, fixups)
     root_rva = address - image.base
     matches = [record for record in fixups.fpo_records if struct.unpack_from("<I", record)[0] == root_rva]
-    if len(matches) != 1 or matches[0] != struct.pack("<I", root_rva) + section.data[4:]:
+    if len(matches) != 1 or matches[0] != struct.pack("<I", root_rva) + bytes.fromhex(frame["data"]):
         raise ValueError("associated FPO has missing, ambiguous or different linked metadata")
-    return {"format": "fpo_data", "data": section.data[4:].hex(), "code_size": code_size}
+    return frame

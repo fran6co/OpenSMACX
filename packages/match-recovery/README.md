@@ -1975,13 +1975,29 @@ effects remain unknown; absent PE debug directories are not discard proof.
 Unsupported metadata or failed locality keeps exact names and reports the refusal.
 No startup code or metadata is removed, and no residual coverage is granted.
 
-The native dependency-code graph also verifies ordinary COFF code sections with
-one external entry at offset zero. These are whole selected sections, not guessed
-function extents: internal assembler labels, jump vectors, padding, relocations
-and loader fixups are retained. Additional external entries or aliases and
-unsupported bounds refuse. Other sections and storage remain independent
-obligations; this does not relax the single-function COMDAT measurement API or
-turn a verified runtime-library section into recovered application code.
+The native dependency-code graph also verifies whole ordinary COFF code sections,
+including multiple external entries and nonzero entry offsets. Every external
+entry must independently identify the same selected physical section placement;
+leading bytes, assembler labels, jump vectors, padding, relocations and loader
+fixups remain protected. Entry identities and offsets remain distinct. An inert
+end label is metadata only when no relocation or weak fallback addresses it.
+These are bounded sections, not guessed function extents, and do not relax the
+single-function COMDAT measurement API.
+
+Identical-code folding requires complete final-pass linker groups bound to fresh
+physical members and one independent map placement. Every original member's code
+and dependencies are verified, including private code attributed to another
+owner in the map. The exact multiset of source frame records must match the
+image-bound PDB; choosing one matching duplicate or deduplicating metadata is not
+proof. Shared code extents are admitted only within that verified group.
+
+Supported i386 short-import thunks use a separate six-byte linker recipe. A unique
+producer in the complete physical input population, final-pass library family,
+named map uses, independent PE import identity and exact operand/fixup all must
+agree. Repeated archive member names do not establish owner-only selection.
+This verifies the thunk, not the imported DLL. Storage, indirect targets, runtime
+effects and other residuals remain independent obligations; none of these checks
+turns runtime-library code into recovered application code or grants acceptance.
 
 The package supplies the native `migration_check` command:
 `recover tasks check-migration <task> --image <image>`. It consumes the driver's

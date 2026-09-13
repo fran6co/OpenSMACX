@@ -38,7 +38,7 @@ def _constant_binding(obj, target, mapping, bindings):
 
 
 def _verify_region(obj, subject, owner, mapping, image, *, objects=None, fixups=None):
-    """Verify a caller-bounded zero-origin code region; does not infer ownership."""
+    """Verify a caller-bounded whole section using its placed entry offset."""
     placements = mapping.statics if subject.storage == 3 else mapping.publics
     matches = [row for row in placements or () if row.symbol == subject.name
                and row.owner.casefold() == owner.casefold() and row.function and row.segment]
@@ -48,6 +48,9 @@ def _verify_region(obj, subject, owner, mapping, image, *, objects=None, fixups=
     if not image.section_flags[placed.segment - 1] & 0x20:
         raise ValueError("linked function placement is outside code")
     code, relocations, alignment = obj.subject(subject)
+    if not 0 <= subject.value < len(code):
+        raise ValueError("linked entry lies outside its caller-bounded code section")
+    base = placed.address - subject.value
     names = sorted({obj.symbols[int(row.target)].name for row in relocations
                     if obj.symbols[int(row.target)].storage == 2})
     # One before/final physical-population guard per code region, not per
@@ -77,7 +80,9 @@ def _verify_region(obj, subject, owner, mapping, image, *, objects=None, fixups=
                                "constant_binding": constant})
             continue
         if target.section == subject.section and 0 <= target.value < len(code):
-            address, identity = placed.address + target.value, {"self_offset": target.value}
+            address, identity = base + target.value, {"self_offset": target.value}
+            if target.storage == 2 and not obj.sections[subject.section - 1].flags & 0x1000:
+                identity["external"] = target.name
         else:
             if target.storage not in (2, 3) or target.section < 0:
                 raise ValueError("unsupported linked function relocation identity")
@@ -101,12 +106,12 @@ def _verify_region(obj, subject, owner, mapping, image, *, objects=None, fixups=
                            "identity": identity, "address": address})
         if target.name in private and target.storage == 3 and target.section != subject.section:
             references[-1]["private_binding"] = private[target.name]
-    span = Span(placed.address, placed.address + len(code))
+    span = Span(base, base + len(code))
     proof = compare_bound_code(span, image.read(span), code, relocations, targets,
                                original_absolute_sites=image.absolute_sites(span), alignment=alignment)
     fingerprint = digest({"code_sha256": hashlib.sha256(code).hexdigest(), "size": len(code),
                           "flags": obj.sections[subject.section - 1].flags,
                           "references": [{key: row[key] for key in ("offset", "kind", "identity")} for row in references]})
-    return {"symbol": subject.name, "owner": owner, "address": placed.address, "size": len(code),
+    return {"symbol": subject.name, "owner": owner, "address": base, "size": len(code),
             "body_fingerprint": fingerprint, "code": proof, "references": references,
             "target_contents": Result.UNKNOWN, "result": proof["result"]}

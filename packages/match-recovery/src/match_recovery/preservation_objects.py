@@ -155,7 +155,7 @@ def application_objects(graph):
                 linked = initializer_views[version]
                 dependencies = linked.get("code_dependencies", {})
                 if (linked.get("result") != Result.PASS or not isinstance(dependencies, dict)
-                        or dependencies.get("result") not in (Result.PASS, Result.UNKNOWN)):
+                        or dependencies.get("result") != Result.PASS):
                     raise ValueError("startup coverage lacks consistent fresh linked initializer evidence")
                 if object_signature(application_obj) != observed["application_signature"]:
                     raise ValueError("startup application object changed from its replica observation")

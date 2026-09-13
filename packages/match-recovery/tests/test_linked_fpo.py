@@ -5,7 +5,7 @@ import struct
 
 import pytest
 
-from match_recovery.linked_fpo import verify_fpo
+from match_recovery.linked_fpo import validate_fpo_source, verify_fpo
 from match_recovery.pdb_fixups import bound_fixups
 from match_recovery.pe_coff import Coff, PeImage
 from test_msf import small_msf
@@ -171,3 +171,55 @@ def test_two_coff_fpo_children_cannot_consume_the_same_linked_record():
     raw = bytes(header + sections + third + original[100:-4] + extra + original[-4:])
     with pytest.raises(ValueError, match="unsupported associated"):
         check(raw)
+
+
+@pytest.mark.parametrize("records", [b"", struct.pack("<IIIHH", 0x1000, 16, 4, 2, 0x0201),
+    struct.pack("<IIIHH", 0x1000, 16, 3, 2, 0x0201) * 2])
+def test_source_validation_does_not_claim_missing_different_or_duplicate_pdb_correspondence(records):
+    obj = Coff(object_bytes())
+    image, fixups = evidence(records)
+    root = obj.function("_f")
+    source = validate_fpo_source(obj, 2, root, image, 0x401000, fixups)
+    assert source == {"format": "fpo_data", "data": struct.pack("<IIHH", 16, 3, 2, 0x0201).hex(), "code_size": 16}
+    assert set(source) == {"format", "data", "code_size"}
+    assert fixups.fpo_records == tuple(records[at:at + 16] for at in range(0, len(records), 16))
+    with pytest.raises(ValueError, match="missing, ambiguous or different"):
+        verify_fpo(obj, 2, root, image, 0x401000, fixups)
+
+
+def test_source_and_unique_pdb_validation_return_the_same_canonical_frame():
+    obj = Coff(object_bytes())
+    image, fixups = evidence()
+    root = obj.function("_f")
+    assert validate_fpo_source(obj, 2, root, image, 0x401000, fixups) == verify_fpo(obj, 2, root, image, 0x401000, fixups)
+
+
+@pytest.mark.parametrize("address", [True, 0x3FFFFF, 0x4011F1, 0xFFFFFFFF])
+def test_extracted_source_validator_keeps_linked_extent_bounds(address):
+    obj = Coff(object_bytes())
+    image, fixups = evidence()
+    with pytest.raises(ValueError):
+        validate_fpo_source(obj, 2, obj.function("_f"), image, address, fixups)
+
+
+@pytest.mark.parametrize("damage", ["name", "relocation", "reserved_frame", "alignment", "image"])
+def test_extracted_source_validator_keeps_structural_and_image_obligations(damage):
+    raw = bytearray(object_bytes())
+    image, fixups = evidence()
+    if damage == "name":
+        raw[60:68] = b".debug$S"
+        raw[142 + 3 * 18:142 + 3 * 18 + 8] = b".debug$S"
+    elif damage == "relocation":
+        struct.pack_into("<H", raw, 140, 6)
+    elif damage == "reserved_frame":
+        struct.pack_into("<H", raw, 116 + 14, 0x2201)
+    elif damage == "alignment":
+        struct.pack_into("<I", raw, 116 + 4, 14)
+        raw[115] = 0
+    else:
+        changed = bytearray(image.data)
+        changed[0x200] ^= 1
+        image = PeImage(bytes(changed), hashlib.sha256(changed).hexdigest())
+    obj = Coff(bytes(raw))
+    with pytest.raises(ValueError):
+        validate_fpo_source(obj, 2, obj.function("_f"), image, 0x401000, fixups)
