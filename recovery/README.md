@@ -34,6 +34,15 @@ that build's database. The package rejects missing/substituted observations and
 changing build evidence; extra linker inputs such as zlib remain separately visible.
 Passing this check still does not accept a changed build graph or prove retained
 sections and initialization behavior.
+Fresh recovery builds also request a separate PDB with linker fixups, retaining
+explicit release optimization and non-incremental linking. The package binds
+that PDB to its exact PE before using symbol-base fixups to place selected COFF
+companion code/data or private data references. Associated FPO metadata is checked
+against the same PDB and retained in comparison fingerprints, not silently dropped.
+Missing companions, conflicting placements and unsupported metadata refuse proof.
+These checks establish emitted-region correspondence, not C++ ownership, shared
+multi-entry code coverage, data contents, runtime behavior or recovery acceptance.
+Older retained build policies and task baselines are not upgraded implicitly.
 The local `environment/command_paths.py` describes application command operands
 for the package's lossless comparison API. It distinguishes effective compiler
 arguments (including translated Wine paths) from host-stage linker arguments;

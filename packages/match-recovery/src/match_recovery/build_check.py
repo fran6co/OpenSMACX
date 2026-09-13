@@ -55,7 +55,7 @@ class Build:
             raise ValueError("build commands must use their fresh {build} directory")
         outputs = []
         for item in value["outputs"]:
-            if not isinstance(item, dict) or set(item) != {"path", "format"} or item["format"] not in ("file", "pe32-i386", "compilation-database", "msvc-map", "msvc-link-log", "link-input-files"):
+            if not isinstance(item, dict) or set(item) != {"path", "format"} or item["format"] not in ("file", "pe32-i386", "compilation-database", "msvc-map", "msvc-link-log", "link-input-files", "msvc-pdb"):
                 raise ValueError("build outputs require a path and supported format")
             outputs.append((relative_path(item["path"]), item["format"]))
         if len({path for path, _ in outputs}) != len(outputs):
@@ -211,6 +211,11 @@ def generate_build(root: Path, settings: Build, *, retain=False) -> dict:
                         elif format_name == "msvc-link-log":
                             from .msvc_link_log import parse_link_log
                             parse_link_log(data)
+                        elif format_name == "msvc-pdb":
+                            from .msf import SmallMsf
+                            # Container validity alone grants no image pairing,
+                            # fixup completeness or recovery acceptance.
+                            SmallMsf(data)
                         elif format_name == "link-input-files":
                             from .link_file_evidence import parse_link_files
                             parse_link_files(data)

@@ -10,11 +10,11 @@ from .binary import AbsoluteConstant, compare_bound_code
 from .model import Result, Span, digest
 
 
-def verify_function(obj, symbol, owner, mapping, image, *, objects=None):
+def verify_function(obj, symbol, owner, mapping, image, *, objects=None, fixups=None):
     subject = obj.function(symbol.name)
     if subject.index != symbol.index or len(obj.code_sections(subject)) != 1:
         raise ValueError("linked function requires one independently bounded code COMDAT")
-    return _verify_region(obj, subject, owner, mapping, image, objects=objects)
+    return _verify_region(obj, subject, owner, mapping, image, objects=objects, fixups=fixups)
 
 
 def _constant_binding(obj, target, mapping, bindings):
@@ -37,7 +37,7 @@ def _constant_binding(obj, target, mapping, bindings):
     return binding
 
 
-def _verify_region(obj, subject, owner, mapping, image, *, objects=None):
+def _verify_region(obj, subject, owner, mapping, image, *, objects=None, fixups=None):
     """Verify a caller-bounded zero-origin code region; does not infer ownership."""
     placements = mapping.statics if subject.storage == 3 else mapping.publics
     matches = [row for row in placements or () if row.symbol == subject.name
@@ -60,8 +60,12 @@ def _verify_region(obj, subject, owner, mapping, image, *, objects=None):
     if objects is not None and any(row.symbol in private_names
             for row in (*mapping.publics, *(mapping.statics or ()))):
         raise ValueError("private fallback conflicts with existing linked map evidence")
-    private = (objects.resolve_local_symbols(owner, private_names, image)
-               if objects is not None and private_names else {})
+    if private_names and fixups is not None:
+        from .linked_fixups import local_data_bindings
+        private = local_data_bindings(obj, subject, owner, mapping, image, private_names, objects, fixups)
+    else:
+        private = (objects.resolve_local_symbols(owner, private_names, image)
+                   if objects is not None and private_names else {})
     targets, references = {}, []
     for relocation in relocations:
         target = obj.symbols[int(relocation.target)]

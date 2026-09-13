@@ -2159,7 +2159,13 @@ must succeed and all expected outputs must be nonempty regular files. `file`
 checks only artifact existence/content identity; `pe32-i386` additionally parses
 the PE format. `msvc-map` parses an MSVC executable public-symbol map, refusing
 malformed or duplicate public rows; pairing it with a PE for address validation
-is a separate linked-code check. None validates application behavior or complete
+is a separate linked-code check. `msvc-pdb` validates an old SmallMSF container;
+linked observations separately require its NB10/DBI identity and section headers
+to match the exact PE. Supported linker fixups can independently place a selected
+COFF association family; every code/data region, relocation and associated FPO
+record must verify. Unsupported or missing companions remain unknown. Compiler
+flags and sidecar generation are project policy, not inferred by the library.
+None validates application behavior or complete
 source coverage.
 
 Input roots are re-enumerated and hashed, including headers without extensions.

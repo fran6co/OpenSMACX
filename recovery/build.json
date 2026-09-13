@@ -2,10 +2,11 @@
   "schema_version": 1,
   "artifacts": "build/recovery/builds",
   "commands": [
-    {"argv": ["cmake", "-S", "{root}", "-B", "{build}", "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release", "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON", "-DOPENSMACX_CAPTURE_COMPILES=ON"], "timeout": 120},
+    {"argv": ["cmake", "-S", "{root}", "-B", "{build}", "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release", "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON", "-DOPENSMACX_CAPTURE_COMPILES=ON", "-DCMAKE_EXE_LINKER_FLAGS_RELEASE:STRING=/DEBUG /DEBUGTYPE:CV,FIXUP /PDBTYPE:SEPT /OPT:REF /OPT:ICF /INCREMENTAL:NO"], "timeout": 120},
     {"argv": ["cmake", "--build", "{build}", "--parallel", "4"], "timeout": 3300}
   ],
   "outputs": [{"path": "OpenSMACX.exe", "format": "pe32-i386"},
+              {"path": "OpenSMACX.pdb", "format": "msvc-pdb"},
               {"path": "OpenSMACX.map", "format": "msvc-map"},
               {"path": "OpenSMACX.link.log", "format": "msvc-link-log"},
               {"path": "OpenSMACX.link.inputs.json", "format": "link-input-files"},

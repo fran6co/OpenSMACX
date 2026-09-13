@@ -18,7 +18,7 @@ from .pe_coff import Coff
 MAX_FUNCTIONS = 4096
 
 
-def observe_code_graph(objects, mapping, image, roots, *, max_functions=MAX_FUNCTIONS):
+def observe_code_graph(objects, mapping, image, roots, *, max_functions=MAX_FUNCTIONS, fixups=None):
     """Observe a deterministic rooted graph inside the caller's live epoch.
 
 Node numbering follows root/relocation order, not local compiler spellings.
@@ -28,6 +28,9 @@ never merge distinct definitions. External symbol identity remains explicit.
     if type(max_functions) is not int or not 1 <= max_functions <= MAX_FUNCTIONS:
         raise ValueError("linked code graph requires a bounded positive function limit")
     mapping.validate(image)
+    if fixups is not None:
+        from .linked_fixups import check_image
+        check_image(fixups, image)
     slots, slot_ids, imports = import_slots(image), {}, []
     nodes, keys, parsed, canonical, gaps = [], {}, {}, [], []
     storage, code_targets = [], []
@@ -53,7 +56,7 @@ never merge distinct definitions. External symbol identity remains explicit.
         public.setdefault(row.symbol, []).append(row)
     for row in mapping.statics or ():
         static.setdefault((row.owner.casefold(), row.symbol), []).append(row)
-    spans = []
+    spans, family_spans = [], []
     cursor = 0
     while cursor < len(nodes):
         node = nodes[cursor]
@@ -66,12 +69,84 @@ never merge distinct definitions. External symbol identity remains explicit.
                 parsed[item["sha256"]] = Coff(item["raw"])
             obj = parsed[item["sha256"]]
             subject = select_code_region(obj, node["symbol"])
-            proof = verify_code_region(obj, subject, item["owner"], mapping, image, objects=objects)
+            proof = verify_code_region(obj, subject, item["owner"], mapping, image, objects=objects, fixups=fixups)
             node.update(input=item["identity"], object_sha256=item["sha256"],
                         section=subject.section, proof=proof, result=proof["result"])
+            if "regions" in proof:
+                region_edges = []
+                for region in proof["regions"]:
+                    begin, end = region["address"], region["address"] + region["size"]
+                    overlaps = [(index, left, right) for index, left, right in spans if left < end and begin < right]
+                    if overlaps:
+                        # No partial/shared family attribution is inferred from
+                        # equal addresses. Ordinary single-region folding below
+                        # retains its separate established behavior.
+                        raise ValueError("associated family overlaps another observed owner")
+                    spans.append((cursor, begin, end))
+                    family_spans.append((begin, end))
+                    body = obj.sections[region["section"] - 1]
+                    by_offset = {offset: obj.symbols[index] for offset, index, kind in body.relocations if kind}
+                    edges = []
+                    for reference in region["references"]:
+                        target = by_offset[reference["offset"]]
+                        addend = int.from_bytes(body.data[reference["offset"]:reference["offset"] + 4], "little", signed=True)
+                        edge = {"offset": reference["offset"], "kind": reference["kind"]}
+                        identity = reference["identity"]
+                        if "absolute_constant" in identity:
+                            if reference["kind"] != RelocationKind.ABSOLUTE32:
+                                raise ValueError("relative linker constants require independent rebase semantics")
+                            edge["target"] = identity
+                        elif "owned_region" in identity:
+                            target_region = proof["regions"][identity["owned_region"]]
+                            if not 0 <= identity["offset"] + addend < target_region["size"]:
+                                raise ValueError("effective associated reference is outside its owned region")
+                            edge["target"] = identity
+                        elif "private_binding" in reference:
+                            edge["target"] = {"data": identity}
+                            storage.append({"node": cursor, "region": region["ordinal"], **edge,
+                                            "address": reference["address"],
+                                            "placement": reference["private_binding"], "contents": Result.UNKNOWN})
+                        else:
+                            matches = [row for row in (public.get(target.name, ()) if target.storage == 2 else
+                                       static.get((item["owner"].casefold(), target.name), ())) if row.segment]
+                            if len(matches) != 1 or matches[0].address != reference["address"]:
+                                raise ValueError("associated outward graph edge lacks its verified placement")
+                            placed, = matches
+                            imported = resolve_import_slot(target, placed, addend, slots)
+                            if imported is not None:
+                                if reference["kind"] != RelocationKind.ABSOLUTE32:
+                                    raise ValueError("loader slot requires an absolute pointer relocation")
+                                slot_id = slot_ids.setdefault(imported["address"], len(slot_ids))
+                                imported_identity = {key: imported[key] for key in ("module", "name", "ordinal", "symbol")}
+                                edge["target"] = {"loader_import": imported_identity, "slot": slot_id}
+                                imports.append({"node": cursor, "region": region["ordinal"], **edge,
+                                    "address": imported["address"], "implementation": Result.UNKNOWN, "selection": Result.UNKNOWN})
+                            elif placed.function:
+                                edge["target"] = {"node": add(placed.owner, placed.symbol)}
+                                code_targets.append((cursor, edge["target"]["node"], addend))
+                                if addend:
+                                    edge["target"]["addend"] = addend
+                                if target.storage == 2:
+                                    edge["target"]["external"] = target.name
+                            else:
+                                if target.type & 0x20:
+                                    raise ValueError("declared code target has a non-function linked placement")
+                                edge["target"] = {"data": identity}
+                                storage.append({"node": cursor, "region": region["ordinal"], **edge,
+                                                "address": placed.address, "contents": Result.UNKNOWN})
+                        edges.append(edge)
+                    region_edges.append({key: region[key] for key in
+                        ("ordinal", "parent", "flags", "code_sha256", "symbols")} | {"edges": edges})
+                node["edges"] = region_edges
+                canonical[cursor] = {"extent_kind": "associated_coff_regions", "regions": region_edges,
+                                     "debug_regions": proof["debug_regions"]}
+                cursor += 1
+                continue
             code, relocations, _ = obj.subject(subject)
             begin, end = proof["address"], proof["address"] + len(code)
             overlaps = [(index, left, right) for index, left, right in spans if left < end and begin < right]
+            if any(left < end and begin < right for left, right in family_spans):
+                raise ValueError("ordinary code overlaps an observed associated family")
             if any((left, right) != (begin, end) for _, left, right in overlaps):
                 raise ValueError("linked code graph has overlapping, differently bounded functions")
             alias = overlaps[0][0] if overlaps else cursor
@@ -160,7 +235,7 @@ never merge distinct definitions. External symbol identity remains explicit.
             "limitations": ["code reached by explicit COFF relocations only; data contents and indirect targets are unproved",
                             "code agreement is not guard, callback registration, storage or runtime effect equivalence",
                             "loader slots bind map symbols to actual PE import identities, not selected import-library intent or loaded DLL behavior",
-                            "one bounded code COMDAT or an entire ordinary section with one external zero-offset entry; other definitions refuse",
+                            "one bounded code COMDAT, a completely verified associated family, or an entire ordinary section with one external zero-offset entry; other definitions refuse",
                             "shared definitions, relocation order and linked address aliasing are retained"]}
 
 

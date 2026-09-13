@@ -48,8 +48,10 @@ def _artifacts(context):
             or report.get("compile_link", {}).get("result") != Result.PASS):
         raise ValueError("initializer observations require a successful live native application build")
     artifacts = {}
-    for kind in ("pe32-i386", "msvc-map", "link-input-files", "msvc-link-log"):
+    for kind in ("pe32-i386", "msvc-map", "link-input-files", "msvc-link-log", "msvc-pdb"):
         rows = [row for row in report["outputs"] if row["format"] == kind]
+        if kind == "msvc-pdb" and not rows:
+            continue
         if len(rows) != 1:
             raise ValueError("initializer observation requires one native artifact of format " + kind)
         row, = rows
@@ -136,6 +138,10 @@ def _selected_objects(evidence, coverage, records):
 
 def _observe(context, artifacts):
     image = PeImage(artifacts["pe32-i386"], hashlib.sha256(artifacts["pe32-i386"]).hexdigest())
+    fixups = None
+    if "msvc-pdb" in artifacts:
+        from .pdb_fixups import bound_fixups
+        fixups = bound_fixups(image, artifacts["msvc-pdb"])
     mapping = parse_link_map(artifacts["msvc-map"])
     mapping.validate(image)
     if mapping.contributions is None:
@@ -169,7 +175,8 @@ def _observe(context, artifacts):
                     raise ValueError("initializer entry does not target a defined zero-offset function")
                 key = (item["owner"].casefold(), symbol.name)
                 if key not in functions:
-                    functions[key] = _function(obj, symbol, item["owner"], mapping, image, objects=objects)
+                    functions[key] = _function(obj, symbol, item["owner"], mapping, image,
+                                               objects=objects, fixups=fixups)
                 function = functions[key]
                 entries.append({"input": item["identity"], "object_sha256": item["sha256"],
                                 "section": index, "offset": offset, "target": function["address"],
@@ -178,7 +185,7 @@ def _observe(context, artifacts):
     if not entries and not contributions:
         return {"result": Result.PASS, "table": TABLE, "entries": [], "sequence": [],
                 "contribution": None, "functions": [], "input_coverage": Result.PASS,
-                "code_dependencies": observe_code_graph(objects, mapping, image, [])}
+                "code_dependencies": observe_code_graph(objects, mapping, image, [], fixups=fixups)}
     if len(contributions) != 1:
         raise ValueError("initializer table requires one independently bounded linked contribution")
     table, = contributions
@@ -208,7 +215,7 @@ def _observe(context, artifacts):
     if table_ok:
         try:
             dependencies = observe_code_graph(objects, mapping, image,
-                                              [row["function"] for row in sequence])
+                                              [row["function"] for row in sequence], fixups=fixups)
         except (OSError, ValueError) as error:
             # Unsupported dependency metadata cannot erase a measured root
             # failure or turn a valid root observation into missing evidence.
