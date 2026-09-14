@@ -84,6 +84,22 @@ class LinkedBuild:
     inputs: LinkedInputs
     check_current: object
 
+    def data_section(self, owner, number):
+        from .linked_storage import observe_data_section
+        try:
+            self.check_current()
+            return deepcopy(observe_data_section(self.inputs, owner, number))
+        finally:
+            self.check_current()
+
+    def common_intersections(self, symbols, sections):
+        from .linked_storage import common_intersections
+        try:
+            self.check_current()
+            return deepcopy(common_intersections(self.inputs, symbols, sections))
+        finally:
+            self.check_current()
+
     def common(self, symbols):
         """Observe requested common storage, without granting trial coverage."""
         from .common_allocation import _verify_common_inputs

@@ -2848,6 +2848,26 @@ by checking public starts alone. Allocation isolation, guard writes, other linke
 storage, initializer effects and runtime behavior remain separate obligations.
 No task permission, COFF declaration exemption or original mapping is published.
 
+The live `LinkedBuild.data_section(owner, number)` observer independently places
+an ordinary data section using its exact selected physical object, declared COFF
+extent and consistent owner-qualified map/uniquely bound embedded-debug anchors.
+Nonzero symbol offsets locate the section base; neighboring labels never supply
+its size. Uninitialized sections retain their declared zero-fill extent. Ambiguous
+cross-section names, conflicting public/static/debug evidence, malformed relocation
+writes, unsupported special/COMDAT forms and incompatible PE placement refuse.
+This is a whole-section envelope, not an individual C++ object's extent or a
+contents/reference proof. The native context guards all input/output/parsed state
+before use and on normal or exceptional exit.
+
+`LinkedBuild.common_intersections(symbols, sections)` compares requested common
+allocations with those freshly placed ordinary sections (`sections` contains
+`owner`/`section` identities, never caller-supplied bounds). It can expose a
+preceding section extending into a common allocation even when every named label
+starts before that allocation. A positive overlap refutes isolation; an empty
+intersection list remains unknown because a requested subset does not establish
+retained-section or linker-generated-storage completeness. Missing sections stay
+explicit gaps. Neither result authorizes projection or acceptance.
+
 Passing means bounded **candidate linked-code correspondence**, not original
 equivalence or dependency admission. A map's common/public data address does not
 prove storage size, contents, initialization or ownership. Owner labels and
