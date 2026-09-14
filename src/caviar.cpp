@@ -3413,34 +3413,48 @@ int Caviar::render_scene(Buffer *buffer, int flags) {
 }
 
 // ---------------------------------------------------------------------------
-// The engine's geometry helpers the camera transform reaches. None of the
-// three is recovered yet - 0x006280E0 and 0x00627E20 sit beside vector_add
-// (0x00628150) and the scale helper (0x006281B0, homed in
-// src/leaf_recoveries.cpp), 0x0063A9D0 is the 900-byte AABB walk the transform
-// hands six vectors to. File-local stand-ins keep their calls `call rel32` the
-// way the image has them, the same device vox_draw_scene uses below.
+// Geometry helpers used by the camera transform. The matrix operations use
+// row-major 3x3 inputs. The AABB helper below still forwards to the original
+// image; the matrix helpers retain their analysis seeds in src/unrecovered.
 // ---------------------------------------------------------------------------
 
 // 0x006280E0. A 3x3 times a vector: three rows of three multiplies and a
-// store, 107 bytes, no calls of its own.
+// store. The grouping follows the two faddp operations in each original row;
+// sequential stores preserve the observed read-after-store behavior when
+// buffers overlap, without assuming an intended aliasing contract.
 OPENSMACX_NOINLINE
-void __cdecl vox_matrix_vector_mul(const float *matrix, const float *vector,
-                                  float *out) {
-    typedef void(__cdecl *pending)(const float *, const float *, float *);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x006280E0))(matrix,
-                                                                     vector,
-                                                                     out);
+// ORIGINAL: 0x006280E0 vox_matrix_vector_mul 0x006280E0-0x0062814B
+// RECOVERY_BINDING: v1 {"reason":"The original row-wise dot products and sequential float stores identify the scene/camera helper as row-major 3x3 matrix/vector multiplication.","evidence":["original:0x006280EC; output stores at 0x00628108, 0x00628127 and 0x00628147","src/unrecovered/006280e0.cpp","src/caviar.cpp: vox_matrix_vector_mul declaration and scene/camera callers"]}
+// symbol    ?vox_matrix_vector_mul@@YAXPBM0PAM@Z
+void __cdecl vox_matrix_vector_mul(const float *matrix,
+                                  const float *vector, float *out) {
+    out[0] = (matrix[1] * vector[1] + matrix[2] * vector[2]) +
+             vector[0] * matrix[0];
+    out[1] = (matrix[4] * vector[1] + matrix[5] * vector[2]) +
+             matrix[3] * vector[0];
+    out[2] = (matrix[8] * vector[2] + matrix[7] * vector[1]) +
+             matrix[6] * vector[0];
 }
 
-// 0x00627E20. A 3x3 times a 3x3, 303 bytes - nine dot products over the same
-// rows the vector multiply walks.
+// 0x00627E20. A 3x3 times a 3x3 - nine dot products over the same rows the
+// vector multiply walks. The term order is retained from the original FPU
+// trace rather than normalized into a loop, both to document the row-major
+// layout and to preserve alias-sensitive store order.
 OPENSMACX_NOINLINE
-void __cdecl vox_matrix_matrix_mul(const float *left, const float *right,
-                                  float *out) {
-    typedef void(__cdecl *pending)(const float *, const float *, float *);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x00627E20))(left,
-                                                                     right,
-                                                                     out);
+// ORIGINAL: 0x00627E20 vox_matrix_matrix_mul 0x00627E20-0x00627F4F
+// RECOVERY_BINDING: v1 {"reason":"The original nine dot products and sequential output stores identify the scene/camera composition helper as row-major 3x3 matrix multiplication.","evidence":["src/unrecovered/00627e20.cpp","src/caviar.cpp: vox_matrix_matrix_mul declaration and scene/camera composition callers"]}
+// symbol    ?vox_matrix_matrix_mul@@YAXPBM0PAM@Z
+void __cdecl vox_matrix_matrix_mul(const float *left,
+                                  const float *right, float *out) {
+    out[0] = left[1] * right[3] + left[2] * right[6] + right[0] * left[0];
+    out[1] = left[0] * right[1] + right[4] * left[1] + right[7] * left[2];
+    out[2] = left[0] * right[2] + left[2] * right[8] + left[1] * right[5];
+    out[3] = right[0] * left[3] + right[6] * left[5] + right[3] * left[4];
+    out[4] = right[1] * left[3] + right[7] * left[5] + right[4] * left[4];
+    out[5] = left[5] * right[8] + left[4] * right[5] + left[3] * right[2];
+    out[6] = right[0] * left[6] + left[7] * right[3] + left[8] * right[6];
+    out[7] = left[8] * right[7] + left[7] * right[4] + left[6] * right[1];
+    out[8] = left[6] * right[2] + left[7] * right[5] + left[8] * right[8];
 }
 
 // 0x0063A9D0. Builds the axis-aligned box one part covers: the centre, the
